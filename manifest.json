@@ -1,0 +1,36 @@
+{
+  "manifest_version": 2,
+  "name": "Auto Playlist",
+  "description": "Automatically adds watched videos to a playlist",
+  "version": "0.0.1",
+  "icons": {
+    "64": "icons/icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.mozilla.org/*"
+      ],
+      "js": [
+        "content_script.js"
+      ]
+    }
+  ],
+  "browser_action": {
+    "default_icon": {
+      "64": "icons/icon.png"
+    },
+    "default_popup": "browserAction/index.html",
+    "default_title": "Auto Playlist"
+  },
+  "page_action": {
+    "default_icon": {
+      "64": "icons/icon.png"
+    },
+    "default_popup": "pageAction/index.html",
+    "default_title": "Auto Playlist"
+  },
+  "options_ui": {
+    "page": "options/index.html"
+  }
+}
