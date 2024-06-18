@@ -1,36 +1,28 @@
 {
-  "manifest_version": 2,
-  "name": "Auto Playlist",
-  "description": "Automatically adds watched videos to a playlist",
-  "version": "0.0.1",
-  "icons": {
-    "64": "icons/icon.png"
+  "manifest_version": 3,
+  "name": "YouTube Playlist Tools",
+  "version": "1.0",
+  "description": "Add current YouTube video to specified playlists.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{5d688c97-0e70-4d4c-bfd5-df643264a5b5}",
+      "strict_min_version": "125.0"
+    }
+  },
+  "action": {
+    "default_popup": "src/popup.html",
+    "default_icon": {
+      "128": "icons/icon128.png"
+    }
   },
   "content_scripts": [
     {
-      "matches": [
-        "*://*.mozilla.org/*"
-      ],
-      "js": [
-        "content_script.js"
-      ]
+      "matches": ["*://www.youtube.com/*"],
+      "js": ["src/content.js"]
     }
   ],
-  "browser_action": {
-    "default_icon": {
-      "64": "icons/icon.png"
-    },
-    "default_popup": "browserAction/index.html",
-    "default_title": "Auto Playlist"
-  },
-  "page_action": {
-    "default_icon": {
-      "64": "icons/icon.png"
-    },
-    "default_popup": "pageAction/index.html",
-    "default_title": "Auto Playlist"
-  },
-  "options_ui": {
-    "page": "options/index.html"
+  "icons": {
+    "128": "icons/icon128.png"
   }
 }

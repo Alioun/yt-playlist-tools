@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Playlist Tools</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h5>YouTube Playlist Tools</h5>
+      <label for="playlists">Playlists to auto add current video to:</label>
+    <div id="playlistContainer">
+      <!-- Playlist inputs will be dynamically added here -->
+    </div>
+    <button id="addButton">Add Playlist</button>
+    <hr class="divider">
+    <div id="shortcutContainer" class="section">
+      <label for="shortcut">Shortcut for Watch Later:</label>
+      <button id="recordShortcutButton">Record Shortcut</button>
+      <span id="shortcutDisplay"></span>
+    </div>
+    <hr class="divider">
+    <div class="section">
+      <label>
+        <input type="checkbox" id="toastToggle">
+        Enable Toast Notifications
+      </label>
+    </div>
+    <hr class="divider">
+    <button id="debugButton">Clear Storage</button>
+  </div>
+  <div id="toastContainer"></div> <!-- Container for toast notifications -->
+  <script src="popup.js"></script>
+</body>
+</html>

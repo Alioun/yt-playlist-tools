@@ -1,0 +1,86 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+h5 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+#playlistContainer > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+input[type="text"] {
+  flex: 1;
+  padding: 5px;
+}
+
+button {
+  padding: 5px 10px;
+}
+
+#toastContainer {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+}
+
+.toast {
+  background-color: #333;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  opacity: 0;
+  transition: opacity 0.3s ease, bottom 0.3s ease;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.divider {
+      margin: 20px 0;
+      border: none;
+      height: 1px;
+      background-color: #ccc;
+      position: relative;
+    }
+
+.divider::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background-color: #ccc;
+    }
+
+.divider::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background-color: #ccc;
+    }
