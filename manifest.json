@@ -1,25 +1,24 @@
 {
-  "manifest_version": 3,
+  "manifest_version": 2,
   "name": "YouTube Playlist Tools",
-  "version": "1.1",
+  "version": "1.2",
   "description": "Add current YouTube video to specified playlists.",
-  "permissions": ["activeTab", "scripting", "storage"],
+  "permissions": ["activeTab", "storage", "*://*.youtube.com/*"],
   "browser_specific_settings": {
     "gecko": {
       "id": "{cc70cd21-2cc6-444b-bd89-496909346091}",
       "strict_min_version": "125.0"
     }
   },
-  "action": {
-    "default_popup": "src/popup.html",
-    "default_icon": {
-      "128": "icons/icon128.png"
-    }
+  "browser_action": {
+    "default_popup": "src/popup.html"
   },
   "content_scripts": [
     {
-      "matches": ["*://www.youtube.com/*"],
-      "js": ["src/content.js"]
+      "matches": ["*://*.youtube.com/*"],
+      "exclude_matches": ["*://*.music.youtube.com/*"],
+      "js": ["src/content.js"],
+      "run_at": "document_idle"
     }
   ],
   "icons": {

@@ -76,12 +76,24 @@ function isSearchBarFocused() {
   return activeElement.tagName.toLowerCase() === 'input' && activeElement.id === 'search';
 }
 async function addToPlaylists(playlists) {
+
   const videoId = new URLSearchParams(window.location.search).get('v');
   if (!videoId) return;
   try {
-    // Wait for the "Save" button to appear and click it
-    const saveButton = await waitForElement('button[aria-label="Save to playlist"]');
-    saveButton.click();
+//     Wait for the "Save" button to appear and click it
+
+  const topRow = document.querySelector('#top-row')
+  if(topRow.innerText.includes("Save")){
+  const saveButton =  document.querySelector('button[aria-label="Save to playlist"]')
+  saveButton.click();
+  }else {
+      const moreActionsButton = document.querySelector('button[aria-label="More actions"]');
+      moreActionsButton.click();
+      await new Promise(r => setTimeout(r, 100));
+      const moreActionsContainer = Array.from(document.querySelectorAll('tp-yt-iron-dropdown')).find(element => element.innerText.includes('Save'));
+      const hiddenSaveButton = Array.from(moreActionsContainer.querySelectorAll('ytd-menu-service-item-renderer')).find(element => element.innerText.includes('Save'));
+      hiddenSaveButton.click();
+    }
 
     // Wait for the playlist menu to appear
     const playlistMenu = await waitForElement('ytd-add-to-playlist-renderer');
@@ -101,24 +113,23 @@ async function addToPlaylists(playlists) {
         .querySelector('tp-yt-paper-checkbox');
 
       if (checkboxElement.hasAttribute('checked')) {
-        showToast(`Video is already in the playlist: ${playlistName}`);
-        console.log(`Video is already in the playlist: ${playlistName}`);
+        showToast(`Video[${videoId}] is already in the playlist: ${playlistName}`);
+        console.log(`Video[${videoId}] is already in the playlist: ${playlistName}`);
       } else {
         // Add the video to the playlist
         playlistCheckbox.click();
-        showToast(`Video added to playlist: ${playlistName}`);
-        console.log(`Video added to playlist: ${playlistName}`);
+        showToast(`Video[${videoId}] added to playlist: ${playlistName}`);
+        console.log(`Video[${videoId}] added to playlist: ${playlistName}`);
       }
     }
 
     // Close the playlist menu
-    const closeButton = playlistMenu.querySelector('button[aria-label="Cancel"]');
+    const closeButton = await waitForElement('tp-yt-iron-overlay-backdrop');
     closeButton.click();
-    showToast('Video added to playlists');
 
   } catch (error) {
-    showToast(`Failed to add video to playlists: ${error}`);
-    console.error('Failed to add video to playlists:', error);
+    showToast(`Failed to add Video[${videoId}] to playlists: ${error}`);
+    console.error(`Failed to add Video[${videoId}] to playlists:`, error);
   }
 }
 
@@ -152,18 +163,9 @@ async function handleShortcut(event) {
   }
 }
 
-// Function to handle URL changes after delay
-async function handleUrlChangeDelayed() {
-  clearTimeout(urlChangeTimeout); // Clear any existing timeout
-
-  // Set a new timeout to handle URL change after 20 seconds
-  urlChangeTimeout = setTimeout(async () => {
-    await handleUrlChange();
-  }, 20000); // Delay of 20 seconds (20000 milliseconds)
-}
-
 // Function to handle URL changes
 async function handleUrlChange() {
+  clearInterval(jsInitChecktimer)
   if (window.location.href.includes('youtube.com/watch')) {
     try {
       const data = await browser.storage.local.get('playlists');
@@ -236,7 +238,7 @@ async function setEventListeners(evt) {
   }
 
   if (jsInitChecktimer !== null) clearInterval(jsInitChecktimer);
-  jsInitChecktimer = setInterval(await checkForJS_Finish, 111);
+  jsInitChecktimer = setInterval(await checkForJS_Finish, 500);
 }
 
 // listeners
