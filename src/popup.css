@@ -58,29 +58,29 @@ button {
 }
 
 .divider {
-      margin: 20px 0;
-      border: none;
-      height: 1px;
-      background-color: #ccc;
-      position: relative;
-    }
+  margin: 20px 0;
+  border: none;
+  height: 1px;
+  background-color: #ccc;
+  position: relative;
+}
 
 .divider::before {
-      content: '';
-      position: absolute;
-      top: -5px;
-      left: 0;
-      width: 100%;
-      height: 1px;
-      background-color: #ccc;
-    }
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: #ccc;
+}
 
 .divider::after {
-      content: '';
-      position: absolute;
-      bottom: -5px;
-      left: 0;
-      width: 100%;
-      height: 1px;
-      background-color: #ccc;
-    }
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: #ccc;
+}
