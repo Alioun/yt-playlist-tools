@@ -76,6 +76,8 @@ function isSearchBarFocused() {
   return activeElement.tagName.toLowerCase() === 'input' && activeElement.id === 'search';
 }
 async function addToPlaylists(playlists) {
+  const videoId = new URLSearchParams(window.location.search).get('v');
+  if (!videoId) return;
   try {
     // Wait for the "Save" button to appear and click it
     const saveButton = await waitForElement('button[aria-label="Save to playlist"]');
@@ -112,6 +114,7 @@ async function addToPlaylists(playlists) {
     // Close the playlist menu
     const closeButton = playlistMenu.querySelector('button[aria-label="Cancel"]');
     closeButton.click();
+    showToast('Video added to playlists');
 
   } catch (error) {
     showToast(`Failed to add video to playlists: ${error}`);
@@ -120,71 +123,126 @@ async function addToPlaylists(playlists) {
 }
 
 async function addToWatchLater() {
-    try {
-      
-      // Wait for the "Save" button to appear and click it
-      const saveButton = await waitForElement('button[aria-label="Save to playlist"]');
-      saveButton.click();
-      
-      // Wait for the playlist menu to appear
-      const playlistMenu = await waitForElement('ytd-add-to-playlist-renderer');
-      const playlistName = "Watch later"
-      
-      const watchLaterCheckbox = Array.from(playlistMenu.querySelectorAll('yt-formatted-string'))
-        .find(element => element.innerText.trim() === playlistName);
-
-      if (!watchLaterCheckbox) {
-        showToast(`Playlist not found: ${playlistName}`);
-        console.warn('Playlist not found:', playlistName);
-        // Close the playlist menu
-        const closeButton = playlistMenu.querySelector('button[aria-label="Cancel"]');
-        closeButton.click();
-        throw Error;
-      }
-
-      // Check if the video is already in the playlist
-      const checkboxElement = watchLaterCheckbox.closest('ytd-playlist-add-to-option-renderer')
-        .querySelector('tp-yt-paper-checkbox');
-
-      if (checkboxElement.hasAttribute('checked')) {
-        showToast(`Video is already in the playlist: ${playlistName}`);
-        console.log(`Video is already in the playlist: ${playlistName}`);
-        
-      } else {
-        // Add the video to the playlist
-        watchLaterCheckbox.click();
-        showToast(`Video added to playlist: ${playlistName}`);
-        console.log(`Video added to playlist: ${playlistName}`);
-        
-      }
-      
-      // Close the playlist menu
-      const closeButton = playlistMenu.querySelector('button[aria-label="Cancel"]');
-      closeButton.click();
+  try {
+    await addToPlaylists(['Watch later']);
+  } catch (error) {
+    console.error('Failed to add video to Watch Later:', error);
+  }
+}
   
+// Function to handle keyboard shortcut
+async function handleShortcut(event) {
+  try {
+    // Fetch watchLaterShortcut from local storage
+    const data = await browser.storage.local.get('watchLaterShortcut');
+    const watchLaterShortcut = data.watchLaterShortcut;
+
+    if (watchLaterShortcut) {
+      // Parse the shortcut combination
+      const [key, ...modifiers] = watchLaterShortcut.split('+').reverse();
+      const allModifiersMatch = modifiers.every(mod => event[`${mod.toLowerCase()}Key`]);
+
+      // Check if the event matches the shortcut and the search bar is not focused
+      if (event.key.toLowerCase() === key.toLowerCase() && allModifiersMatch && !isSearchBarFocused()) {
+        await addToWatchLater();
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching watchLaterShortcut:', error);
+  }
+}
+
+// Function to handle URL changes after delay
+async function handleUrlChangeDelayed() {
+  clearTimeout(urlChangeTimeout); // Clear any existing timeout
+
+  // Set a new timeout to handle URL change after 20 seconds
+  urlChangeTimeout = setTimeout(async () => {
+    await handleUrlChange();
+  }, 20000); // Delay of 20 seconds (20000 milliseconds)
+}
+
+// Function to handle URL changes
+async function handleUrlChange() {
+  if (window.location.href.includes('youtube.com/watch')) {
+    try {
+      const data = await browser.storage.local.get('playlists');
+      const playlists = data.playlists || [];
+
+      if (playlists.length > 0) {
+          await addToPlaylists(playlists);
+      } else {
+        console.warn('No playlists found in storage.');
+      }
     } catch (error) {
-      console.error('Failed to add video to Watch Later:', error);
+      console.error('Error fetching playlists from storage:', error);
     }
   }
-  
-  function handleShortcut(event) {
-    browser.storage.local.get('watchLaterShortcut', (data) => {
-      if (data.watchLaterShortcut) {
-        const [key, ...modifiers] = data.watchLaterShortcut.split('+').reverse();
-        const allModifiersMatch = modifiers.every(mod => event[`${mod.toLowerCase()}Key`]);
-        if (event.key.toLowerCase() === key.toLowerCase() && allModifiersMatch && !isSearchBarFocused()) {
-          addToWatchLater().then(r => showToast("Added to Watch Later"));
-        }
-      }
-    });
-  }
+}
 
-browser.storage.local.get('playlists', (data) => {
-  if (data.playlists && data.playlists.length > 0) {
-    addToPlaylists(data.playlists).then(r => showToast("Added to Playlists"));
+// Below starts the "inspiration" from the return-youtube-dislike extension, thanks!
+
+// yoinked from https://github.com/Anarios/return-youtube-dislike/blob/main/Extensions/UserScript/Return%20Youtube%20Dislike.user.js#L519
+function isVideoLoaded() {
+  const videoId = getVideoId();
+  return (
+    // desktop: spring 2024 UI
+    document.querySelector(`ytd-watch-grid[video-id='${videoId}']`) !== null ||
+    // desktop: older UI
+    document.querySelector(`ytd-watch-flexy[video-id='${videoId}']`) !== null ||
+    // mobile: no video-id attribute
+    document.querySelector('#player[loading="false"]:not([hidden])') !== null
+  );
+}
+
+function getVideoId() {
+  const urlObject = new URL(window.location.href);
+  const pathname = urlObject.pathname;
+  if (pathname.startsWith("/clip")) {
+    return (document.querySelector("meta[itemprop='videoId']") || document.querySelector("meta[itemprop='identifier']")).content;
   } else {
-    console.warn('No playlists found in storage.');
+    if (pathname.startsWith("/shorts")) {
+      return pathname.slice(8);
+    }
+    return urlObject.searchParams.get("v");
   }
-});
+}
 
-window.addEventListener('keydown', handleShortcut);
+// yoinked from https://github.com/Anarios/return-youtube-dislike/blob/main/Extensions/UserScript/Return%20Youtube%20Dislike.user.js#L76
+function getButtons() {
+  if (document.getElementById("menu-container")?.offsetParent === null) {
+    return (
+      document.querySelector("ytd-menu-renderer.ytd-watch-metadata > div") ??
+      document.querySelector("ytd-menu-renderer.ytd-video-primary-info-renderer > div")
+    );
+  } else {
+    return document.getElementById("menu-container")?.querySelector("#top-level-buttons-computed");
+  }
+}
+
+let jsInitChecktimer = null;
+
+async function setEventListeners(evt) {
+  async function checkForJS_Finish() {
+    try {
+      if ((getButtons()?.offsetParent && isVideoLoaded())) {
+        clearInterval(jsInitChecktimer);
+        jsInitChecktimer = null;
+        await handleUrlChange();
+      }
+    } catch (exception) {
+      console.error('Error checking for JS_Finish:', exception);
+    }
+  }
+
+  if (jsInitChecktimer !== null) clearInterval(jsInitChecktimer);
+  jsInitChecktimer = setInterval(await checkForJS_Finish, 111);
+}
+
+// listeners
+window.addEventListener('keydown', async function(event) {
+        await handleShortcut(event);
+    });
+window.addEventListener('yt-navigate-finish', async function() {
+    await setEventListeners();
+});

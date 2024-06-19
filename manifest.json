@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
   "name": "YouTube Playlist Tools",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Add current YouTube video to specified playlists.",
   "permissions": ["activeTab", "scripting", "storage"],
   "browser_specific_settings": {
     "gecko": {
-      "id": "{5d688c97-0e70-4d4c-bfd5-df643264a5b5}",
+      "id": "{cc70cd21-2cc6-444b-bd89-496909346091}",
       "strict_min_version": "125.0"
     }
   },
