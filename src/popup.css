@@ -29,6 +29,22 @@ h5 {
   margin-bottom: 10px;
 }
 
+.slider-container {
+  display: flex;
+  align-items: center;
+}
+.slider {
+  margin-right: 10px;
+}
+.percentage-field {
+  width: 40px;
+}
+.authorized {
+  background-color: #4caf50;
+  color: white;
+  cursor: not-allowed;
+}
+
 input[type="text"] {
   flex: 1;
   padding: 5px;

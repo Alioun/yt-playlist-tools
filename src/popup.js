@@ -6,6 +6,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const debugButton = document.getElementById("debugButton");
   const toastToggle = document.getElementById("toastToggle");
   const toastContainer = document.getElementById("toastContainer");
+  const authorizeButton = document.getElementById("authorize");
+  const watchPercentageSlider = document.getElementById(
+    "watchPercentageSlider"
+  );
+  const watchPercentageField = document.getElementById("watchPercentageField");
   let shortcutKeys = [];
   let debounceTimeout;
 
@@ -34,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     input.type = "text";
     input.className = "playlist";
-    input.placeholder = "Playlist name";
+    input.placeholder = "Playlist ID";
     input.value = value;
     input.addEventListener("input", savePlaylists);
 
@@ -123,7 +128,13 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   browser.storage.local.get(
-    ["playlists", "watchLaterShortcut", "toastEnabled"],
+    [
+      "playlists",
+      "watchLaterShortcut",
+      "toastEnabled",
+      "requiredWatchPercentage",
+      "accessToken",
+    ],
     (data) => {
       if (data.playlists && data.playlists.length > 0) {
         data.playlists.forEach((playlist, index) => {
@@ -140,6 +151,73 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typeof data.toastEnabled !== "undefined") {
         toastToggle.checked = data.toastEnabled;
       }
+
+      if (data.requiredWatchPercentage) {
+        watchPercentageSlider.value = data.requiredWatchPercentage;
+        watchPercentageField.value = data.requiredWatchPercentage;
+      }
+
+      if (data.accessToken) {
+        authorizeButton.classList.add("authorized");
+        authorizeButton.textContent = "Authorized";
+        authorizeButton.disabled = true;
+      }
     }
   );
+});
+
+// Sync slider and number input, and save the value to storage
+document
+  .getElementById("watchPercentageSlider")
+  .addEventListener("input", (event) => {
+    const value = event.target.value;
+    document.getElementById("watchPercentageField").value = value;
+    browser.storage.local.set({ requiredWatchPercentage: value });
+  });
+
+document
+  .getElementById("watchPercentageField")
+  .addEventListener("input", (event) => {
+    const value = event.target.value;
+    if (value >= 0 && value <= 100) {
+      document.getElementById("watchPercentageSlider").value = value;
+      browser.storage.local.set({ requiredWatchPercentage: value });
+    }
+  });
+
+// Start the OAuth flow
+document.getElementById("authorize").addEventListener("click", () => {
+  const clientId =
+    "1075675665707-58cpdng6bp1holno32a5ivomf72d17fc.apps.googleusercontent.com";
+  const redirectUri =
+    "http://127.0.0.1/mozoauth2/3674d031f91c4d1f63992b40b32667c173e578cd";
+  const scopes = "https://www.googleapis.com/auth/youtube.force-ssl";
+
+  const authUrl = `https://accounts.google.com/o/oauth2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+    redirectUri
+  )}&response_type=token&scope=${encodeURIComponent(scopes)}`;
+
+  browser.identity
+    .launchWebAuthFlow({
+      interactive: true,
+      url: authUrl,
+    })
+    .then((redirectUrl) => {
+      const params = new URL(redirectUrl).hash.substring(1);
+      const accessToken = new URLSearchParams(params).get("access_token");
+
+      if (accessToken) {
+        browser.storage.local.set({ accessToken }).then(() => {
+          const authorizeButton = document.getElementById("authorize");
+          authorizeButton.classList.add("authorized");
+          authorizeButton.textContent = "Authorized";
+          authorizeButton.disabled = true;
+        });
+      } else {
+        console.error("Authorization failed");
+      }
+    })
+    .catch((error) => {
+      console.error("Error during authorization", error);
+    });
 });

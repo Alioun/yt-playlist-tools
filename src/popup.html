@@ -22,12 +22,32 @@
       </div>
       <hr class="divider" />
       <div class="section">
+        <div class="slider-container">
+          <input
+            type="range"
+            id="watchPercentageSlider"
+            class="slider"
+            min="0"
+            max="100"
+            value="50"
+          />
+          <input
+            type="number"
+            id="watchPercentageField"
+            class="percentage-field"
+            min="0"
+            max="100"
+            value="50"
+          />
+          %
+        </div>
         <label>
           <input type="checkbox" id="toastToggle" />
           Enable Toast Notifications
         </label>
       </div>
       <hr class="divider" />
+      <button id="authorize">Authorize YouTube</button>
       <button id="debugButton">Clear Storage</button>
     </div>
     <div id="toastContainer"></div>
