@@ -4,11 +4,7 @@
   "version": "1.4.4",
   "description": "Add current YouTube video to specified playlists.",
   "permissions": ["activeTab", "storage", "identity", "scripting"],
-  "host_permissions": [
-    "*://*.youtube.com/*",
-    "https://www.google.com/",
-    "https://www.googleapis.com/*"
-  ],
+  "host_permissions": ["*://*.youtube.com/*"],
   "background": {
     "scripts": ["src/background.js"]
   },
@@ -28,9 +24,6 @@
   },
   "icons": {
     "128": "icons/icon128.png"
-  },
-  "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; script-src-elem 'self'; style-src 'self' 'unsafe-inline'; connect-src https://www.google.com/ https://www.googleapis.com/; default-src 'self';"
   },
   "browser_specific_settings": {
     "gecko": {
