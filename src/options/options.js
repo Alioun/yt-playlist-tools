@@ -49,11 +49,9 @@ debugButton.addEventListener("click", () => {
   browser.storage.local
     .clear()
     .then(() => {
+      clientIDField.value = "";
+      clientSecretField.textContent = "";
       showToast("Storage cleared!");
-      playlistContainer.innerHTML = "";
-      shortcutDisplay.textContent = "";
-      addPlaylistInput("");
-      toastToggle.checked = false;
     })
     .catch((error) => {
       console.error("Error clearing storage:", error);
