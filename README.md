@@ -20,7 +20,7 @@ Adds a few small playlist tools.
 Planned:
 - Denylist for channels
 - Show playlist names
-
+- cache added videos locally so the same video isn't getting added multiple times 
 
 
 
