@@ -21,6 +21,7 @@ Planned:
 - Show playlist names
 - cache added videos locally so the same video isn't getting added multiple times 
 - automatic build and push to addons store
+- attach more reliably to youtubes fucked up SPA (not always attaching correctly when opening from external for example)
 
 
 
