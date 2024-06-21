@@ -62,7 +62,6 @@ function isSearchBarFocused() {
 
 async function handleShortcut(event) {
   let videoId = new URL(location.href).searchParams.get("v");
-  console.log(videoId);
   try {
     // Fetch watchLaterShortcut from local storage
     const data = await browser.storage.local.get("watchLaterShortcut");
@@ -123,10 +122,14 @@ browser.runtime.onMessage.addListener(async (message) => {
   }
 });
 
-window.addEventListener("keydown", async function (event) {
+document.addEventListener("keydown", async function (event) {
   await handleShortcut(event);
 });
 
-window.addEventListener("yt-navigate-finish", function () {
+document.addEventListener("yt-navigate-finish", function () {
+  addWatchListener();
+});
+
+document.addEventListener("yt-page-data-fetched", function () {
   addWatchListener();
 });
