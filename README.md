@@ -17,38 +17,41 @@ Adds a few small playlist tools.
 - Optional toasts for extension actions
 
 Planned:
+
 - Denylist for channels
 - Show playlist names
-- cache added videos locally so the same video isn't getting added multiple times 
+- cache added videos locally so the same video isn't getting added multiple times
 - automatic build and push to addons store
-
-
-
-
+- fetch a list of all the available playlists and make them selectable with a checkbox instead of adding the id
 
 # How to Get a Client ID and Client Secret from Google Developer Console
 
 ## Steps
 
 1. **Go to Google Developer Console**:
+
    - Navigate to [Google Developer Console](https://console.developers.google.com/).
 
 2. **Create a New Project**:
+
    - Click on the dropdown menu next to the Google APIs logo.
    - Select "New Project".
    - Enter a project name and click "Create".
 
 3. **Enable APIs and Services**:
+
    - In the left sidebar, click on "Library".
    - Search for the API you need (e.g., "Google Drive API").
    - Click on the API and then click "Enable".
 
 4. **Create OAuth Consent Screen**:
+
    - In the left sidebar, click on "OAuth consent screen".
    - Choose "External" for user type.
    - Fill out the required fields and save.
 
 5. **Create Credentials**:
+
    - In the left sidebar, click on "Credentials".
    - Click on "Create Credentials" and select "OAuth 2.0 Client IDs".
    - Configure the consent screen if prompted.
