@@ -48,7 +48,7 @@ debugButton.addEventListener("click", () => {
     .clear()
     .then(() => {
       clientIDField.value = "";
-      clientSecretField.textContent = "";
+      clientSecretField.value = "";
       showToast("Storage cleared!");
     })
     .catch((error) => {
