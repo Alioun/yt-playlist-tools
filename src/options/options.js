@@ -2,9 +2,7 @@ const clientIDField = document.getElementById("clientID");
 const clientSecretField = document.getElementById("clientSecret");
 const authButton = document.getElementById("auth");
 const debugButton = document.getElementById("debugButton");
-const redirectURI = `http://127.0.0.1/mozoauth2/${
-  new URL(browser.identity.getRedirectURL()).host.split(".")[0]
-}`;
+const redirectURI = browser.identity.getRedirectURL();
 
 function showToast(message) {
   const toast = document.createElement("div");
