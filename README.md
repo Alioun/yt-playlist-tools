@@ -16,12 +16,11 @@ Adds a few small playlist tools.
 - Set a custom shortcut for it to be added to a special playlist
 - Optional toasts for extension actions
 
-
 Planned:
 - Denylist for channels
 - Show playlist names
 - cache added videos locally so the same video isn't getting added multiple times 
-
+- automatic build and push to addons store
 
 
 
