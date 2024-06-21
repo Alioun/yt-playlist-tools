@@ -9,18 +9,29 @@
   <body>
     <div class="container">
       <h5>YouTube Playlist Tools</h5>
-      <label for="playlists">Playlists to auto add current video to:</label>
+      <div class="label">Playlists to auto add current video to</div>
       <div id="playlistContainer">
         <!-- Playlist inputs will be dynamically added here -->
       </div>
       <button id="addButton">Add Playlist</button>
       <hr class="divider" />
       <div id="shortcutContainer" class="section">
-        <label for="shortcut">Shortcut for Watch Later:</label>
-        <button id="recordShortcutButton">Record Shortcut</button>
+        <div class="label">Add to playlist shortcut</div>
+        <div class="disclaimer">
+          Watch Later doesn't work due to a Youtube Data API limitation.
+        </div>
+        <div id="addToPlaylistShortcutContainer">
+          <input
+            type="text"
+            id="addToPlaylistShortcutField"
+            placeholder="Playlist ID"
+          />
+          <button id="recordShortcutButton">Record Shortcut</button>
+        </div>
         <span id="shortcutDisplay"></span>
       </div>
       <hr class="divider" />
+      <div class="label">Required Watch Percentage</div>
       <div class="section">
         <div class="slider-container">
           <input
@@ -41,17 +52,16 @@
           />
           %
         </div>
-        <label>
-          <input type="checkbox" id="toastToggle" />
-          Enable Toast Notifications
-        </label>
       </div>
       <hr class="divider" />
-      <button id="authorize">Authorize YouTube</button>
-      <button id="debugButton">Clear Storage</button>
+      <div class="section">
+        <label class="form-control">
+          <input type="checkbox" id="toastToggle" />
+          <span>Enable Toast Notifications</span>
+        </label>
+      </div>
     </div>
     <div id="toastContainer"></div>
-    <!-- Container for toast notifications -->
     <script src="popup.js"></script>
   </body>
 </html>

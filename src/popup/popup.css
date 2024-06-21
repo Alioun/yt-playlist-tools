@@ -1,5 +1,5 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: system-ui, sans-serif;
   margin: 0;
   padding: 20px;
   background-color: #f9f9f9;
@@ -8,7 +8,22 @@ body {
 .container {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 5px;
+}
+
+.label {
+  color: crimson;
+  font-size: 12px;
+}
+
+.disclaimer {
+  color: gray;
+  font-size: 10px;
+  font-style: italic;
+}
+
+.form-control {
+  font-size: 14px;
 }
 
 h5 {
@@ -33,12 +48,16 @@ h5 {
   display: flex;
   align-items: center;
 }
+
 .slider {
   margin-right: 10px;
+  width: 100%;
 }
+
 .percentage-field {
   width: 40px;
 }
+
 .authorized {
   background-color: #4caf50;
   color: white;
@@ -74,7 +93,7 @@ button {
 }
 
 .divider {
-  margin: 20px 0;
+  margin: 5px 0;
   border: none;
   height: 1px;
   background-color: #ccc;

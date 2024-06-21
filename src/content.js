@@ -52,12 +52,51 @@ function showToast(message) {
   });
 }
 
+function isSearchBarFocused() {
+  const activeElement = document.activeElement;
+  return (
+    activeElement.tagName.toLowerCase() === "input" &&
+    activeElement.id === "search"
+  );
+}
+
+async function handleShortcut(event) {
+  let videoId = new URL(location.href).searchParams.get("v");
+  console.log(videoId);
+  try {
+    // Fetch watchLaterShortcut from local storage
+    const data = await browser.storage.local.get("watchLaterShortcut");
+    const watchLaterShortcut = data.watchLaterShortcut;
+
+    if (watchLaterShortcut) {
+      // Parse the shortcut combination
+      const [key, ...modifiers] = watchLaterShortcut.split("+").reverse();
+      const allModifiersMatch = modifiers.every(
+        (mod) => event[`${mod.toLowerCase()}Key`]
+      );
+
+      // Check if the event matches the shortcut and the search bar is not focused
+      if (
+        event.key.toLowerCase() === key.toLowerCase() &&
+        allModifiersMatch &&
+        !isSearchBarFocused()
+      ) {
+        await browser.runtime.sendMessage({
+          action: "addVideoToShortcutPlaylist",
+          videoId,
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching watchLaterShortcut:", error);
+  }
+}
+
 function addWatchListener() {
   let videoId = new URL(location.href).searchParams.get("v");
   let videoElement = document.querySelector("video");
-
   if (videoId && videoElement) {
-    videoElement.addEventListener("timeupdate", () => {
+    videoElement.addEventListener("timeupdate", function handler(event) {
       let watchedPercentage =
         (videoElement.currentTime / videoElement.duration) * 100;
       browser.storage.local.get("requiredWatchPercentage", (result) => {
@@ -67,10 +106,27 @@ function addWatchListener() {
             action: "addVideoToPlaylists",
             videoId,
           });
+          videoElement.removeEventListener(event.type, handler);
         }
       });
     });
   }
 }
 
-addWatchListener();
+browser.runtime.onMessage.addListener(async (message) => {
+  const toastEnabled = await browser.storage.local.get("toastEnabled");
+  if (!toastEnabled) return;
+
+  if (message.action === "showToast") {
+    const { toastMessage } = message;
+    showToast(toastMessage);
+  }
+});
+
+window.addEventListener("keydown", async function (event) {
+  await handleShortcut(event);
+});
+
+window.addEventListener("yt-navigate-finish", function () {
+  addWatchListener();
+});

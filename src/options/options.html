@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Options</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="options.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="section">
+        <div class="label">Redirect URI:</div>
+        <div id="redirectURI"></div>
+        <div class="label">Client ID:</div>
+        <input type="text" id="clientID" placeholder="Client ID" />
+      </div>
+      <div class="section">
+        <div class="label">Client Secret:</div>
+        <input type="text" id="clientSecret" placeholder="Client Secret" />
+      </div>
+      <button id="auth">Authorize</button>
+      <button id="debugButton">Clear Storage</button>
+    </div>
+    <div id="toastContainer"></div>
+    <script src="options.js"></script>
+  </body>
+</html>
