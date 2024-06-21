@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "YouTube Playlist Tools",
-  "version": "1.4",
+  "version": "1.4.1",
   "description": "Add current YouTube video to specified playlists.",
   "permissions": ["activeTab", "storage", "identity", "*://*.youtube.com/*"],
   "browser_specific_settings": {
