@@ -36,7 +36,7 @@ async function restoreOptions() {
   if (data.clientSecret)
     document.getElementById("clientSecret").value = data.clientSecret;
 
-  document.getElementById("redirectURI").innerHTML = redirectURI;
+  document.getElementById("redirectURI").innerText = redirectURI;
 
   if (data.refreshToken) {
     authButton.classList.add("authorized");
