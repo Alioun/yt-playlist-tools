@@ -1,16 +1,18 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "YouTube Playlist Tools",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "Add current YouTube video to specified playlists.",
-  "permissions": ["activeTab", "storage", "identity", "*://*.youtube.com/*"],
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "{cc70cd21-2cc6-444b-bd89-496909346091}",
-      "strict_min_version": "125.0"
-    }
+  "permissions": ["activeTab", "storage", "identity", "scripting"],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "https://www.google.com/",
+    "https://www.googleapis.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background.js"
   },
-  "browser_action": {
+  "action": {
     "default_popup": "src/popup/popup.html"
   },
   "content_scripts": [
@@ -21,23 +23,19 @@
       "run_at": "document_idle"
     }
   ],
-  "background": {
-    "scripts": ["src/background.js"],
-    "persistent": false
-  },
   "options_ui": {
     "page": "src/options/options.html"
   },
   "icons": {
     "128": "icons/icon128.png"
   },
-
-  "host_permissions": [
-    "https://www.google.com/",
-    "https://www.googleapis.com/*"
-  ],
-
   "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; font-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src https://www.google.com/ https://www.googleapis.com/; default-src 'none'"
+    "extension_pages": "script-src 'self'; object-src 'self'; script-src-elem 'self'; style-src 'self' 'unsafe-inline'; connect-src https://www.google.com/ https://www.googleapis.com/; default-src 'self';"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{cc70cd21-2cc6-444b-bd89-496909346091}",
+      "strict_min_version": "125.0"
+    }
   }
 }
