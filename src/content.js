@@ -129,7 +129,3 @@ document.addEventListener("keydown", async function (event) {
 document.addEventListener("yt-navigate-finish", function () {
   addWatchListener();
 });
-
-document.addEventListener("yt-page-data-fetched", function () {
-  addWatchListener();
-});

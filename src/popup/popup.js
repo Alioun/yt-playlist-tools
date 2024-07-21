@@ -6,6 +6,7 @@ const addToPlaylistShortcutField = document.getElementById(
 );
 const shortcutDisplay = document.getElementById("shortcutDisplay");
 const toastToggle = document.getElementById("toastToggle");
+const duplicateToggle = document.getElementById("duplicateToggle");
 const watchPercentageSlider = document.getElementById("watchPercentageSlider");
 const watchPercentageField = document.getElementById("watchPercentageField");
 let shortcutKeys = [];
@@ -69,6 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "addToPlaylistID",
       "watchLaterShortcut",
       "toastEnabled",
+      "preventDuplicates",
       "requiredWatchPercentage",
     ],
     (data) => {
@@ -90,6 +92,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (typeof data.toastEnabled !== "undefined") {
         toastToggle.checked = data.toastEnabled;
+      }
+
+      if (typeof data.preventDuplicates !== "undefined") {
+        duplicateToggle.checked = data.preventDuplicates;
       }
 
       if (data.requiredWatchPercentage) {
@@ -136,7 +142,9 @@ recordShortcutButton.addEventListener("click", () => {
 });
 
 toastToggle.addEventListener("change", () => {
-  browser.storage.local.set({ toastEnabled: toastToggle.checked }, () => {
-    showToast("Toast notification setting saved!");
-  });
+  browser.storage.local.set({ toastEnabled: toastToggle.checked });
+});
+
+duplicateToggle.addEventListener("change", () => {
+  browser.storage.local.set({ preventDuplicates: duplicateToggle.checked });
 });
