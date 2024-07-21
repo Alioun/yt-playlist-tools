@@ -41,7 +41,43 @@ async function refreshAccessToken() {
   }
 }
 
-async function addToPlaylist(playlistId, videoId, accessToken) {
+function preventDuplicates() {
+  return localStorage.getItem("preventDuplicates") === "true";
+}
+
+function getCachedVideos() {
+  return JSON.parse(localStorage.getItem("cachedVideos") || "{}");
+}
+
+function cacheVideo(playlistId, videoId) {
+  let cachedVideos = getCachedVideos();
+  if (!cachedVideos[playlistId]) {
+    cachedVideos[playlistId] = [];
+  }
+  if (!cachedVideos[playlistId].includes(videoId)) {
+    cachedVideos[playlistId].push(videoId);
+    localStorage.setItem("cachedVideos", JSON.stringify(cachedVideos));
+  }
+}
+
+function isVideoCached(playlistId, videoId) {
+  let cachedVideos = getCachedVideos();
+  if (cachedVideos && cachedVideos[playlistId])
+    return cachedVideos[playlistId].includes(videoId);
+  return false;
+}
+
+async function addToPlaylist(sender, playlistId, videoId, accessToken) {
+  if (preventDuplicates) {
+    if (isVideoCached(playlistId, videoId)) {
+      browser.tabs.sendMessage(sender.tab.id, {
+        action: "showToast",
+        toastMessage: `Video already in playlist.`,
+      });
+      return;
+    }
+  }
+
   const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet`;
   const body = {
     snippet: {
@@ -62,7 +98,14 @@ async function addToPlaylist(playlistId, videoId, accessToken) {
     body: JSON.stringify(body),
   });
 
-  if (response.status === 401) {
+  if (response.status === 200) {
+    cacheVideo(playlistId, videoId);
+
+    browser.tabs.sendMessage(sender.tab.id, {
+      action: "showToast",
+      toastMessage: `Added ${videoId} to shortcut playlist`,
+    });
+  } else if (response.status === 401) {
     // Token expired or invalid, try to refresh
     const newAccessToken = await refreshAccessToken();
     if (newAccessToken) {
@@ -88,7 +131,6 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
   if (message.action === "addVideoToPlaylists") {
     const { videoId } = message;
 
-    // Fetch the playlist IDs and access token from storage
     browser.storage.local.get(["playlists", "accessToken"], async (result) => {
       const playlists = result.playlists || [];
       const accessToken = result.accessToken;
@@ -103,12 +145,8 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
       }
 
       for (const playlistId of playlists) {
-        await addToPlaylist(playlistId, videoId, accessToken);
+        await addToPlaylist(sender, playlistId, videoId, accessToken);
       }
-      browser.tabs.sendMessage(sender.tab.id, {
-        action: "showToast",
-        toastMessage: `Added ${videoId} to playlists`,
-      });
     });
   } else if (message.action === "addVideoToShortcutPlaylist") {
     const { videoId } = message;
@@ -128,11 +166,6 @@ browser.runtime.onMessage.addListener(async (message, sender) => {
         }
 
         await addToPlaylist(playlistId, videoId, accessToken);
-
-        browser.tabs.sendMessage(sender.tab.id, {
-          action: "showToast",
-          toastMessage: `Added ${videoId} to shortcut playlist`,
-        });
       }
     );
   }
