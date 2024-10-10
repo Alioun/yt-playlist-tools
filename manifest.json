@@ -5,7 +5,8 @@
   "description": "Add current YouTube video to specified playlists.",
   "permissions": ["activeTab", "storage", "identity", "scripting"],
   "background": {
-    "scripts": ["src/background.js"]
+    "scripts": ["src/background.js", "src/utils.js"],
+    "type": "module"
   },
   "action": {
     "default_popup": "src/popup/popup.html"
