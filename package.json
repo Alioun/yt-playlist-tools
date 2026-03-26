@@ -1,0 +1,46 @@
+{
+  "name": "yt-playlist-tools",
+  "displayName": "YouTube Playlist Tools",
+  "version": "1.5.0",
+  "description": "Add current YouTube video to specified playlists.",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package"
+  },
+  "dependencies": {
+    "@plasmohq/storage": "^1.11.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.468.0",
+    "plasmo": "^0.89.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
+    "@types/chrome": "^0.0.287",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3"
+  },
+  "manifest": {
+    "permissions": [
+      "activeTab",
+      "storage",
+      "identity",
+      "scripting"
+    ],
+    "browser_specific_settings": {
+      "gecko": {
+        "id": "{cc70cd21-2cc6-444b-bd89-496909346091}",
+        "strict_min_version": "125.0"
+      }
+    }
+  }
+}
