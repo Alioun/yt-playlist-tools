@@ -1,3 +1,7 @@
+# Plasmo
+build/
+.plasmo/
+
 # Logs
 logs
 *.log
