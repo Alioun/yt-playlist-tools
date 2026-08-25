@@ -1,5 +1,45 @@
 import { refreshAccessToken } from "~utils"
 
+interface YouTubePlaylist {
+  id: string
+  title: string
+}
+
+async function fetchUserPlaylists(
+  accessToken: string
+): Promise<YouTubePlaylist[]> {
+  const playlists: YouTubePlaylist[] = []
+  let pageToken = ""
+
+  do {
+    const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&mine=true&maxResults=50${pageToken ? `&pageToken=${pageToken}` : ""}`
+    let response = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    })
+
+    if (response.status === 401) {
+      const newToken = await refreshAccessToken()
+      if (!newToken) break
+      response = await fetch(url, {
+        headers: { Authorization: `Bearer ${newToken}` }
+      })
+    }
+
+    if (!response.ok) break
+
+    const data = await response.json()
+    for (const item of data.items || []) {
+      playlists.push({
+        id: item.id,
+        title: item.snippet.title
+      })
+    }
+    pageToken = data.nextPageToken || ""
+  } while (pageToken)
+
+  return playlists
+}
+
 function getCachedVideos(): Record<string, string[]> {
   try {
     return JSON.parse(localStorage.getItem("cachedVideos") || "{}")
@@ -93,6 +133,23 @@ async function addToPlaylist(
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "fetchPlaylists") {
+    chrome.storage.local.get("accessToken", async (result) => {
+      const accessToken = result.accessToken
+      if (!accessToken) {
+        sendResponse({ error: "No access token", playlists: [] })
+        return
+      }
+      try {
+        const playlists = await fetchUserPlaylists(accessToken)
+        sendResponse({ playlists })
+      } catch (e) {
+        sendResponse({ error: String(e), playlists: [] })
+      }
+    })
+    return true // keep channel open for async response
+  }
+
   const tabId = sender.tab?.id
   if (!tabId) return
 
