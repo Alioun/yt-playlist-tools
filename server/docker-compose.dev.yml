@@ -1,0 +1,81 @@
+# Local development. NOT for deployment -- docker-compose.yml is the one to
+# point Dokploy at.
+#
+#   cd server
+#   cp .env.example .env          # add your client ID + secret
+#   docker compose -f docker-compose.dev.yml up --build
+#
+# Compose auto-loads the .env sitting next to this file for ${VAR} interpolation,
+# so no --env-file flag is needed.
+services:
+  token-broker:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+
+    # Published on loopback ONLY. This container holds your Google client secret
+    # and has no TLS in front of it, so it must not be reachable from the LAN.
+    # 3847 is what the extension defaults to (see .env.example at the repo root).
+    ports:
+      - "127.0.0.1:3847:3847"
+
+    environment:
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      # Optional locally: an unpacked extension's id changes per browser profile,
+      # so pinning it here would mean editing .env after every fresh load. The
+      # broker warns at startup when it is empty.
+      ALLOWED_EXTENSION_IDS: ${ALLOWED_EXTENSION_IDS:-}
+      PORT: "3847"
+
+    # The source is mounted over the copy baked into the image, so an edit is
+    # visible in the container immediately and no rebuild is needed. Read-only:
+    # the broker never writes here.
+    volumes:
+      - ./:/app/server:ro
+
+    # Reloading needs BOTH of these, because neither covers every host:
+    #
+    #   bun --watch      in-process reload, no container restart. Depends on
+    #                    inotify events crossing the mount, which they do on a
+    #                    Linux host and do NOT on Docker Desktop (verified: the
+    #                    edit lands in the container, the event never arrives).
+    #   develop.watch    Compose polls from the HOST, where file events work
+    #                    regardless, and restarts the container. Needs `up
+    #                    --watch` (or `docker compose watch`) to be running.
+    #
+    # On Linux the bun watcher wins the race and the restart is a no-op; on
+    # Docker Desktop the bun watcher never fires and Compose does the work.
+    entrypoint: ["bun", "--watch", "run", "server/index.ts"]
+
+    # `bun --watch` does not forward SIGTERM, so every reload otherwise sat out
+    # the full default grace period and exited 137. There is nothing to flush
+    # here -- the broker holds no state -- so cut it short.
+    stop_grace_period: 1s
+
+    develop:
+      watch:
+        # `restart`, not `sync`: the bind mount above already carries the new
+        # content in, so all that is missing is the signal to re-run it.
+        - path: ./
+          action: restart
+          ignore:
+            - .env
+            - "*.test.ts"
+
+    # Identical to the production healthcheck, just polled faster, so that
+    # `docker compose ps` here actually exercises what Dokploy will run --
+    # including that it works without curl or wget in the image.
+    healthcheck:
+      test:
+        - CMD
+        - bun
+        - -e
+        - "const r = await fetch('http://127.0.0.1:3847/health'); if (!r.ok) process.exit(1)"
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+    # Deliberately no `restart:` -- a crash should stay down and be visible here,
+    # not loop quietly in the background.

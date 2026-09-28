@@ -1,0 +1,82 @@
+version: 2
+
+updates:
+  # GitHub Actions used by the workflows in .github/workflows/
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "ci"
+    labels:
+      - dependencies
+      - github-actions
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  # Extension dependencies. `bun` is a first-class ecosystem and reads the
+  # text-based bun.lock (Bun >= 1.1.39); it does NOT read the legacy binary
+  # bun.lockb. Caveat: the bun ecosystem supports version updates only --
+  # Dependabot security updates are not available for it yet.
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+    labels:
+      - dependencies
+    groups:
+      # One PR per ecosystem cluster keeps review manageable and, more
+      # importantly, keeps pieces that must move together in the same PR.
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      wxt:
+        patterns:
+          - "wxt"
+          - "@wxt-dev/*"
+          - "web-ext"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+          - "tw-animate-css"
+      # shadcn regenerates components against the installed Base UI, so these
+      # two are only safe to bump together.
+      shadcn:
+        patterns:
+          - "shadcn"
+          - "@base-ui/*"
+          - "class-variance-authority"
+          - "clsx"
+          - "tailwind-merge"
+          - "lucide-react"
+      dev-tooling:
+        patterns:
+          - "typescript"
+          - "@types/*"
+        exclude-patterns:
+          - "@types/react"
+          - "@types/react-dom"
+
+  # Base image for the token broker (server/Dockerfile).
+  - package-ecosystem: docker
+    directory: /server
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "docker"
+    labels:
+      - dependencies
+      - docker
