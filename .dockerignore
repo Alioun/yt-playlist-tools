@@ -1,0 +1,20 @@
+node_modules
+.output
+.wxt
+.git
+.github
+src
+public
+web-ext-artifacts
+*.md
+
+# Anywhere, not just the context root: `COPY server ./server` would otherwise
+# bake server/.env -- the file holding the Google client secret -- into the
+# image, where anyone who can pull it can read it back out.
+**/.env
+**/.env.*
+!**/.env.example
+
+# Not needed at runtime; the broker runs index.ts + handler.ts and nothing else.
+**/*.test.ts
+server/docker-compose*.yml

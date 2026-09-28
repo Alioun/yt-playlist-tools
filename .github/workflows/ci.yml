@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Nothing here writes to the repo.
+permissions:
+  contents: read
+
+# A new push supersedes an in-flight run for the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # Reads the `packageManager` field, so CI runs the exact Bun the
+          # repo declares rather than drifting with "latest".
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run compile
+
+      - name: Test
+        run: bun run test
+
+      - name: Build (Chrome MV3)
+        run: bun run build
+
+      - name: Build (Firefox MV3)
+        run: bun run build:firefox
+
+      - name: Assert manifests are correct
+        run: |
+          set -euo pipefail
+
+          # Firefox is the trap here: WXT defaults it to MV2 unless pinned.
+          for target in chrome-mv3 firefox-mv3; do
+            version=$(jq -r '.manifest_version' ".output/$target/manifest.json")
+            [ "$version" = "3" ] || { echo "::error::$target is MV$version, expected MV3"; exit 1; }
+          done
+
+          # Chrome needs a service worker; Firefox MV3 needs an event page.
+          jq -e '.background.service_worker' .output/chrome-mv3/manifest.json > /dev/null \
+            || { echo "::error::chrome build is missing background.service_worker"; exit 1; }
+          jq -e '.background.scripts' .output/firefox-mv3/manifest.json > /dev/null \
+            || { echo "::error::firefox build is missing background.scripts"; exit 1; }
+
+          # Losing this ID would break updates for every existing AMO user.
+          id=$(jq -r '.browser_specific_settings.gecko.id' .output/firefox-mv3/manifest.json)
+          [ "$id" = "{cc70cd21-2cc6-444b-bd89-496909346091}" ] \
+            || { echo "::error::gecko id changed: $id"; exit 1; }
+
+          # Required for the Google API calls to work on Chrome.
+          jq -e '.host_permissions | length > 0' .output/chrome-mv3/manifest.json > /dev/null \
+            || { echo "::error::host_permissions missing"; exit 1; }
+
+          echo "All manifest assertions passed."
+
+  broker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build broker image
+        run: docker build -f server/Dockerfile -t yt-broker:ci .
+
+      - name: Smoke test the broker
+        run: |
+          set -euo pipefail
+          docker run -d --name broker \
+            -e GOOGLE_CLIENT_ID=ci-id \
+            -e GOOGLE_CLIENT_SECRET=ci-secret \
+            -p 3847:3847 yt-broker:ci
+
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3847/health > /dev/null 2>&1; then break; fi
+            sleep 1
+          done
+
+          curl -fsS http://127.0.0.1:3847/health
+          # The image has no curl/wget, so the healthcheck must work via bun.
+          docker exec broker bun -e "const r = await fetch('http://127.0.0.1:3847/health'); if (!r.ok) process.exit(1)"
+
+          # Firefox's loopback redirect must be accepted; anything else rejected.
+          code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+            http://127.0.0.1:3847/auth/exchange -H 'Content-Type: application/json' \
+            -d '{"code":"c","code_verifier":"v","redirect_uri":"https://evil.com/"}')
+          [ "$code" = "400" ] || { echo "::error::expected 400 for a bad redirect_uri, got $code"; exit 1; }
+
+          echo "Broker smoke test passed."
