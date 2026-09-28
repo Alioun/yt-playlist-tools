@@ -1,3 +1,9 @@
+# WXT
+.output/
+.wxt/
+stats.html
+stats-*.json
+
 # Logs
 logs
 *.log
@@ -78,6 +84,9 @@ web_modules/
 
 # dotenv environment variable files
 .env
+server/.env
+# Store-submission credentials read by `wxt submit`.
+.env.submit
 .env.development.local
 .env.test.local
 .env.production.local

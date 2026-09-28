@@ -1,0 +1,55 @@
+# Dokploy-ready.
+#
+# Deploy as a service of type "Compose" in mode "Docker Compose" -- NOT "Stack".
+# Only Docker Compose mode runs the real Compose CLI with --build, so `build:`
+# below works straight from the repo. Stack mode silently drops both `build:`
+# and `restart:` and would need a pre-built image in a registry.
+#
+# Domains: add the host in Dokploy's "Domains" tab with container port 3847 and
+# Let's Encrypt. Dokploy injects the Traefik labels at deploy time. Do NOT write
+# them by hand -- Dokploy only strips labels carrying its own generated prefix,
+# so hand-written routers survive its cleanup and compete for the same Host rule.
+services:
+  token-broker:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+
+    # Dokploy writes the Environment tab to a .env beside this file but does NOT
+    # inject it into containers. Compose auto-loads that .env for ${VAR}
+    # interpolation, so these explicit mappings are what actually pass it in.
+    # (env_file: would also leak Dokploy's own APP_NAME/COMPOSE_PROJECT_NAME.)
+    environment:
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      # Without this the broker will exchange tokens for any extension that
+      # asks, using your Google client. It warns at startup when empty.
+      ALLOWED_EXTENSION_IDS: ${ALLOWED_EXTENSION_IDS:-}
+      PORT: "3847"
+
+    # Documentation only. Deliberately NOT `ports:` -- Traefik reaches the
+    # container over dokploy-network by IP, and publishing to the host would
+    # expose the broker directly, bypassing TLS.
+    expose:
+      - "3847"
+
+    networks:
+      - dokploy-network
+
+    healthcheck:
+      test:
+        - CMD
+        - bun
+        - -e
+        - "const r = await fetch('http://127.0.0.1:3847/health'); if (!r.ok) process.exit(1)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# Traefik's Docker provider is scoped to this network; a container that is not
+# attached to it returns 404 even with correct labels.
+networks:
+  dokploy-network:
+    external: true

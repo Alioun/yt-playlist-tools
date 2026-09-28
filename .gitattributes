@@ -1,0 +1,6 @@
+# Store and check out text files with LF on every platform, regardless of
+# core.autocrlf. Shell scripts and the Dockerfile break under CRLF in Linux
+# containers, and mixed endings make diffs noisy.
+* text=auto eol=lf
+
+*.png binary

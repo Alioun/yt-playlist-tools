@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YouTube Playlist Tools - Settings</title>
+    <!--
+      Open settings as a normal tab in the main window instead of Chrome's
+      cramped modal dialog / Firefox's about:addons embed. WXT reads
+      `manifest.*` meta tags here; setting options_ui in wxt.config.ts does
+      NOT work, because WXT derives options_ui from this entrypoint and
+      overwrites it.
+    -->
+    <meta name="manifest.open_in_tab" content="true">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>
