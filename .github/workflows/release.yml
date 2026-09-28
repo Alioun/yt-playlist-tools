@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+# Artifacts upload via the workflow token; nothing needs write access to code.
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # Reads the `packageManager` field, so CI runs the exact Bun the
+          # repo declares rather than drifting with "latest".
+          bun-version-file: package.json
+
+      - run: bun install --frozen-lockfile
+
+      - name: Zip for Chrome Web Store
+        run: bun run zip
+
+      # Also emits the sources zip, which AMO requires so reviewers can rebuild.
+      - name: Zip for AMO
+        run: bun run zip:firefox
+
+      - name: Verify the AMO sources zip actually rebuilds
+        run: |
+          set -euo pipefail
+          sources=$(ls .output/*-sources.zip)
+          mkdir -p /tmp/sources-check
+          unzip -q "$sources" -d /tmp/sources-check
+          cd /tmp/sources-check
+          bun install --frozen-lockfile
+          bun run build:firefox
+          echo "Sources zip rebuilds successfully."
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: extension-packages
+          path: .output/*.zip
+          if-no-files-found: error
+
+  submit:
+    needs: package
+    runs-on: ubuntu-latest
+    # Only runs when store credentials are configured; safe to leave unset.
+    if: vars.PUBLISH_TO_STORES == 'true'
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # Reads the `packageManager` field, so CI runs the exact Bun the
+          # repo declares rather than drifting with "latest".
+          bun-version-file: package.json
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run zip
+      - run: bun run zip:firefox
+
+      - name: Submit to stores
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+        run: |
+          set -euo pipefail
+          bunx wxt submit \
+            --chrome-zip .output/*-chrome.zip \
+            --firefox-zip .output/*-firefox.zip \
+            --firefox-sources-zip .output/*-sources.zip

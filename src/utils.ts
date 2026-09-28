@@ -1,38 +1,57 @@
-import { AUTH_SERVER_URL } from "~config"
-import { storage } from "~storage"
+import { getAuthServerURL } from "@/config"
+import * as store from "@/lib/storage"
 
+/**
+ * Exchanges the stored refresh token for a fresh access token.
+ *
+ * Two tiers, matching the two sign-in paths: the broker (which holds the
+ * client secret) first, then the user's own credentials if they configured
+ * them. Returns null when neither can produce a token.
+ */
 export async function refreshAccessToken(): Promise<string | null> {
-  const refreshToken = await storage.get("refreshToken")
+  const refreshToken = await store.refreshToken.getValue()
   if (!refreshToken) {
     console.error("[YT Playlist Tools]: No refresh token found")
     return null
   }
 
-  // Try server-based refresh first (no client credentials needed)
-  try {
-    const response = await fetch(`${AUTH_SERVER_URL}/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: refreshToken })
-    })
+  // Users who deliberately configured their own Google client chose that to
+  // avoid involving the broker at all. Sending their refresh token to it
+  // anyway would leak a credential to a third party on every refresh -- and it
+  // would fail regardless, since the token belongs to a different client.
+  const mode = await store.authMode.getValue()
 
-    if (response.ok) {
-      const data = await response.json()
-      if (data.access_token) {
-        await storage.set("accessToken", data.access_token)
-        return data.access_token
+  // ── Tier 1: broker ─────────────────────────────────────────────────────
+  if (mode !== "manual") {
+    try {
+      const response = await fetch(`${await getAuthServerURL()}/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.access_token) {
+          await store.accessToken.setValue(data.access_token)
+          return data.access_token
+        }
       }
+    } catch {
+      // Broker unreachable -- fall through to the user's own credentials.
     }
-  } catch {
-    // Server unavailable, fall through to local refresh
   }
 
-  // Fallback: local refresh using user-provided credentials
-  const clientID = await storage.get("clientID")
-  const clientSecret = await storage.get("clientSecret")
+  // ── Tier 2: user-supplied credentials ──────────────────────────────────
+  const [clientID, clientSecret] = await Promise.all([
+    store.clientID.getValue(),
+    store.clientSecret.getValue()
+  ])
 
   if (!clientID || !clientSecret) {
-    console.error("[YT Playlist Tools]: No credentials for local refresh")
+    console.error(
+      "[YT Playlist Tools]: Auth server unreachable and no local credentials configured"
+    )
     return null
   }
 
@@ -49,8 +68,10 @@ export async function refreshAccessToken(): Promise<string | null> {
 
   if (response.ok) {
     const data = await response.json()
-    await storage.set("accessToken", data.access_token)
-    return data.access_token
+    if (data.access_token) {
+      await store.accessToken.setValue(data.access_token)
+      return data.access_token
+    }
   }
 
   console.error("[YT Playlist Tools]: Failed to refresh access token")

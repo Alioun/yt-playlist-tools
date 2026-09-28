@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YouTube Playlist Tools</title>
+    <meta name="manifest.type" content="browser_action" />
+    <!--
+      Critical styles, inline and before any script.
+
+      A browser action popup is sized from the rendered document, so until React
+      mounts the browser shows a small default-sized white rectangle. Declaring
+      the width, a min-height and the background here means the popup opens at
+      the right size in the right colour immediately, and React fills it in.
+      The colours mirror --background from assets/tailwind.css.
+    -->
+    <style>
+      :root { color-scheme: light dark; }
+      html, body {
+        width: 340px;
+        margin: 0;
+        background: oklch(1 0 0);
+      }
+      body { min-height: 320px; }
+      @media (prefers-color-scheme: dark) {
+        html, body { background: oklch(0.145 0 0); }
+      }
+      /* An explicit choice wins over the system preference. */
+      html.light, html.light body { background: oklch(1 0 0); }
+      html.dark, html.dark body { background: oklch(0.145 0 0); }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>
