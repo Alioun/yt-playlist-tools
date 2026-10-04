@@ -274,9 +274,19 @@ export default defineContentScript({
         stopCardMenu = null
       }
     }
-    ctx.onInvalidated(store.cardContextMenu.watch(() => void applyCardMenu()))
+    // Serialised for the same reason as syncQueueButtons: overlapping runs
+    // would each see stopCardMenu === null and register a second listener.
+    let cardMenuSync: Promise<void> = Promise.resolve()
+    function syncCardMenu(): void {
+      cardMenuSync = cardMenuSync
+        .then(applyCardMenu)
+        .catch((error) =>
+          console.error("[YT Playlist Tools]: card menu setup failed", error)
+        )
+    }
+    ctx.onInvalidated(store.cardContextMenu.watch(() => syncCardMenu()))
     ctx.onInvalidated(() => stopCardMenu?.())
-    void applyCardMenu()
+    syncCardMenu()
 
     try {
       // The bridge does the actual queueing; it must live in the page's world
