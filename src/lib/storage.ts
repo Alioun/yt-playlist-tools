@@ -56,6 +56,16 @@ export const queueButtonEnabled = storage.defineItem<boolean>(
   { fallback: true }
 )
 
+/**
+ * Right-clicking a video card opens YouTube's own ⋮ menu instead of the
+ * browser's context menu. Shift+right-click still gives the browser's. Off by
+ * default: hijacking right-click is surprising unless asked for.
+ */
+export const cardContextMenu = storage.defineItem<boolean>(
+  "local:cardContextMenu",
+  { fallback: false }
+)
+
 /** 0-100. Percentage of the video that must be watched before auto-adding. */
 export const requiredWatchPercentage = storage.defineItem<number>(
   "local:requiredWatchPercentage",
