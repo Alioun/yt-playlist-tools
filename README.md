@@ -4,8 +4,11 @@
 
 Get it on [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/youtube-playlist-tools/).
 
-![5rgHjnQUy2](https://github.com/Alioun/yt-playlist-tools/assets/14974659/049852da-b7bb-408b-901f-06582aa910cc)
-![firefox_0AvB0T8Vhu](https://github.com/Alioun/yt-playlist-tools/assets/14974659/ff37dbf7-fa6f-4452-a59a-ba465416ced4)
+<p>
+  <img src="docs/screenshots/popup-light.png" alt="Popup, light theme" width="260">
+  <img src="docs/screenshots/popup-dark.png" alt="Popup, dark theme" width="260">
+</p>
+<img src="docs/screenshots/settings.png" alt="Settings" width="400">
 
 ## Features
 
