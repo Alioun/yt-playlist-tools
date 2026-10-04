@@ -17,6 +17,7 @@ import {
   removeQueueStyles,
   shouldInjectOnPath
 } from "@/lib/queue"
+import { enableCardMenu } from "@/lib/card-menu"
 import { observe as observeQueueButtons } from "@/lib/queue-button"
 import * as store from "@/lib/storage"
 import "@/assets/tailwind.css"
@@ -257,6 +258,25 @@ export default defineContentScript({
       stopQueueButtons?.()
       removeQueueStyles()
     })
+
+    // ── Right-click opens YouTube's ⋮ menu ───────────────────────────────
+    // Independent of the queue bridge: it only clicks YouTube's own button.
+    let stopCardMenu: (() => void) | null = null
+    async function applyCardMenu() {
+      const enabled = await store.cardContextMenu.getValue()
+      if (enabled && !stopCardMenu) {
+        stopCardMenu = enableCardMenu({
+          cardSelectors: CARD_SELECTORS,
+          excludeSelectors: CARD_EXCLUDE_SELECTORS
+        })
+      } else if (!enabled && stopCardMenu) {
+        stopCardMenu()
+        stopCardMenu = null
+      }
+    }
+    ctx.onInvalidated(store.cardContextMenu.watch(() => void applyCardMenu()))
+    ctx.onInvalidated(() => stopCardMenu?.())
+    void applyCardMenu()
 
     try {
       // The bridge does the actual queueing; it must live in the page's world

@@ -25,6 +25,7 @@ export default function App() {
   const [toastEnabled, setToastEnabled] = useState(true)
   const [preventDuplicates, setPreventDuplicates] = useState(true)
   const [queueButton, setQueueButton] = useState(true)
+  const [cardMenu, setCardMenu] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -71,8 +72,9 @@ export default function App() {
       store.preventDuplicates.getValue(),
       store.requiredWatchPercentage.getValue(),
       store.cachedPlaylists.getValue(),
-      store.queueButtonEnabled.getValue()
-    ]).then(([saved, shortcutId, shortcut, toast, dupes, percentage, cached, queueBtn]) => {
+      store.queueButtonEnabled.getValue(),
+      store.cardContextMenu.getValue()
+    ]).then(([saved, shortcutId, shortcut, toast, dupes, percentage, cached, queueBtn, menu]) => {
       setSelectedIds(saved)
       setShortcutPlaylistId(shortcutId)
       setShortcutDisplay(shortcut)
@@ -80,6 +82,7 @@ export default function App() {
       setPreventDuplicates(dupes)
       setWatchPercentage(percentage)
       setQueueButton(queueBtn)
+      setCardMenu(menu)
       if (cached.length > 0 && !haveFresh.current) setAllPlaylists(cached)
       setHydrating(false)
     })
@@ -376,6 +379,23 @@ export default function App() {
               onCheckedChange={(checked) => {
                 setQueueButton(checked)
                 void store.queueButtonEnabled.setValue(checked)
+              }}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label
+              htmlFor="card-menu-toggle"
+              className="text-sm"
+              title="Shift+right-click still opens the browser's menu"
+            >
+              Right-click opens video menu
+            </Label>
+            <Switch
+              id="card-menu-toggle"
+              checked={cardMenu}
+              onCheckedChange={(checked) => {
+                setCardMenu(checked)
+                void store.cardContextMenu.setValue(checked)
               }}
             />
           </div>
