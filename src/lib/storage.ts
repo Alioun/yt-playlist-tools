@@ -5,7 +5,7 @@ import { storage } from "#imports"
  *
  * WXT requires an area prefix on every key. `local:playlists` maps to the plain
  * `browser.storage.local` key `playlists`, which is exactly what the pre-WXT
- * versions wrote — so existing users' settings survive the upgrade untouched.
+ * versions wrote, so existing users' settings survive the upgrade untouched.
  */
 
 export type Theme = "light" | "dark" | "system"

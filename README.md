@@ -48,7 +48,7 @@ bun run zip:firefox    # Firefox, packaged (+ the sources zip AMO requires)
 > `&&` operator, so chained forms fail there.
 
 > Firefox note: WXT defaults Firefox builds to MV2. `manifestVersion: 3` is
-> pinned in `wxt.config.ts` so both targets ship MV3 — don't remove it.
+> pinned in `wxt.config.ts` so both targets ship MV3; don't remove it.
 
 > Settings note: `open_in_tab` is set via `<meta name="manifest.open_in_tab">`
 > in [`options/index.html`](src/entrypoints/options/index.html), **not** in
@@ -94,7 +94,7 @@ branch lives in [`queue.ts`](src/lib/queue.ts).
 
 Both surfaces render the same [`SettingsPanel`](src/components/SettingsPanel.tsx),
 so they cannot drift. It is loaded with `React.lazy` from **both** the popup and
-the options page — the options page does not need the saving itself, but a
+the options page. The options page does not need the saving itself, but a
 static import there would place the panel (and sonner) into the chunk it
 *shares* with the popup, which the popup then preloads on every open. Lazy on
 both sides keeps it a genuinely separate chunk.
@@ -106,7 +106,7 @@ Measured on the production build, popup shell only:
 | Shared chunk executed before paint | 295 kB | 197 kB |
 | DOMContentLoaded | 113 ms | 59 ms |
 
-`popup/index.html` also carries a few inline critical styles — width,
+`popup/index.html` also carries a few inline critical styles: width,
 min-height and background. A browser-action popup is sized from the rendered
 document, so without them the browser shows a small white rectangle until React
 mounts.
@@ -114,25 +114,25 @@ mounts.
 **Preact was tried and does not work here.** Aliasing react/react-dom to
 `preact/compat` cuts the shared chunk from ~197 kB to ~38 kB, but Base UI's
 `useRender` passes element *types* as React element descriptors, which Preact
-renders literally as `<[object Object]>` — every primitive (Button, Checkbox,
+renders literally as `<[object Object]>`, and every primitive (Button, Checkbox,
 Switch, Slider) silently fails to render. It is not fixable by configuration;
 it would mean replacing the component library. Don't spend the afternoon on it
 a second time.
 
 Note also that the popup document is destroyed every time it closes, so the
 framework boots from scratch on each open. There is no way to keep a popup's JS
-context alive — a side panel (`chrome.sidePanel` / `sidebar_action`) is the only
+context alive; a side panel (`chrome.sidePanel` / `sidebar_action`) is the only
 surface that persists.
 
 > **Judging popup speed: use `bun run build`, not `bun run dev`.** `wxt dev`
-> does not bundle — it serves unbundled ES modules from a Vite dev server, so
+> does not bundle: it serves unbundled ES modules from a Vite dev server, so
 > the popup issues hundreds of module requests every time it opens. Measured
 > here: production 59 ms to DOMContentLoaded, bundled development build 168 ms,
 > `wxt dev` several seconds. Only the first number reflects what users get.
 
 The popup renders from a cached playlist list (`local:cachedPlaylists`) and
 refreshes behind it. Without that, every open blocked on waking the MV3 service
-worker and paging through the YouTube API — seconds of "Loading..." on an
+worker and paging through the YouTube API, which meant seconds of "Loading..." on an
 account with many playlists. The background writes the cache after each
 successful fetch, and deliberately leaves it untouched on failure: stale data
 beats an empty popup.
@@ -150,7 +150,7 @@ credentials to create.
 an OAuth client of type *Web application* can register the redirect URIs a
 browser extension needs (a *Desktop app* client has no redirect URI field at
 all), and that client type always requires a `client_secret` at the token
-endpoint — PKCE is not accepted as a substitute. Embedding the secret in the
+endpoint, and PKCE is not accepted as a substitute. Embedding the secret in the
 extension would make it trivially extractable from the published XPI/CRX, so it
 lives on the broker instead.
 
@@ -188,7 +188,7 @@ if you hit the cap described below.
    | Firefox | `http://127.0.0.1/mozoauth2/<sha1-of-extension-id>` |
 
    The options page prints the exact value for whichever browser you are
-   running — copy it from there rather than constructing it by hand. Google
+   running; copy it from there rather than constructing it by hand. Google
    matches the string **byte for byte**, so a stray trailing slash will fail
    with `redirect_uri_mismatch`.
 
@@ -196,7 +196,7 @@ if you hit the cap described below.
    `identity.getRedirectURL()` returns. It saves fine, but consent-screen
    verification later fails because nobody can prove ownership of
    `allizom.org`. The `127.0.0.1` loopback form (supported since Firefox 86)
-   sidesteps this — Firefox intercepts that redirect before it ever hits the
+   sidesteps this: Firefox intercepts that redirect before it ever hits the
    network, so nothing needs to listen on it.
 
 ## Running the broker
@@ -214,7 +214,7 @@ bun run server
 
 ### Locally, in Docker
 
-Use this to test the container itself — the same `Dockerfile` a deployment
+Use this to test the container itself. It uses the same `Dockerfile` a deployment
 builds, so a mistake in it surfaces here rather than in production.
 
 ```bash
@@ -225,7 +225,7 @@ cp server/.env.example server/.env
 docker compose -f server/docker-compose.dev.yml up --build --watch
 ```
 
-Compose reads `server/.env` automatically — it looks beside the compose file, so
+Compose reads `server/.env` automatically. It looks beside the compose file, so
 run this from the repository root as written, not from inside `server/`. `docker compose ps` reports
 **healthy** within about ten seconds; that healthcheck is deliberately identical
 to the deployed one, so it also proves the `bun -e` probe works in an image
@@ -234,7 +234,7 @@ shipping neither `curl` nor `wget`.
 Editing any file under `server/` reloads the broker in ~3s. Keep the `--watch`
 flag: the container also runs `bun --watch`, but that depends on inotify events
 crossing the bind mount, which they do on a Linux host and **do not** on Docker
-Desktop — the edit lands in the container and the event never arrives. Compose's
+Desktop: the edit lands in the container and the event never arrives. Compose's
 own watcher polls from the host, where file events work either way, and restarts
 the container. Without `--watch` the mount still carries edits in, but nothing
 re-runs them.
@@ -275,7 +275,7 @@ If you are standing one up for others to point at:
    consent-screen reputation; the broker warns loudly at startup when it is.
    Chrome's value is the extension ID; Firefox's is the sha1 shown in the
    `mozoauth2` redirect URI on the settings page.
-3. Register each of those extensions' redirect URIs on the client — Google
+3. Register each of those extensions' redirect URIs on the client. Google
    matches them byte for byte, and they are per-extension.
 4. Serve it over HTTPS. The broker sets `Access-Control-Allow-Origin: *`, which
    is required for an extension origin to call it, and it has no auth of its own
@@ -287,18 +287,18 @@ Your users then paste the URL into Settings → *Advanced* → *Token server*.
 
 `server/docker-compose.yml` is Dokploy-ready.
 
-1. Create a service of type **Compose**, mode **Docker Compose** — *not*
+1. Create a service of type **Compose**, mode **Docker Compose**, *not*
    **Stack**. Only Docker Compose mode runs the real Compose CLI with `--build`,
    so it builds straight from this repo. Stack mode drops `build:` and
    `restart:` and would need a pre-built image in a registry.
 2. Set the compose path to `server/docker-compose.yml` (**not** the `.dev.yml`
-   next to it — that one publishes a host port and mounts the source).
+   next to it; that one publishes a host port and mounts the source).
 3. Add `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and `ALLOWED_EXTENSION_IDS`
    in the **Environment** tab.
 4. In the **Domains** tab add your host with container port **3847**, HTTPS on,
    certificate **Let's Encrypt**.
 
-Dokploy injects the Traefik labels at deploy time — do not write them by hand.
+Dokploy injects the Traefik labels at deploy time; do not write them by hand.
 It only strips labels carrying its own generated prefix, so hand-written routers
 survive its cleanup and end up competing for the same `Host` rule.
 
@@ -311,13 +311,13 @@ nor `wget`.
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push to
 `main` and every PR:
 
-- **build** — install, `tsc --noEmit`, the unit suite, build both targets, then assert the
+- **build**: install, `tsc --noEmit`, the unit suite, build both targets, then assert the
   manifests are right. The assertions are the point: they catch the failure
-  modes that are easy to reintroduce and invisible until a user hits them —
+  modes that are easy to reintroduce and invisible until a user hits them:
   Firefox silently falling back to MV2, Chrome losing its `service_worker`,
   the gecko ID changing (which would break updates for every existing AMO
   user), and `host_permissions` going missing.
-- **broker** — builds the Docker image and smoke-tests it: `/health` responds,
+- **broker**: builds the Docker image and smoke-tests it: `/health` responds,
   the `bun -e` healthcheck works (the image has no `curl` or `wget`), and a
   bogus `redirect_uri` is rejected with a 400.
 
@@ -333,7 +333,7 @@ arrive in a single PR.
 | Project | Covers |
 | --- | --- |
 | `chrome` | Everything under `src/`, with `import.meta.env.BROWSER === "chrome"` |
-| `firefox` | Only `*.firefox.test.ts` — code that branches on the build target |
+| `firefox` | Only `*.firefox.test.ts`: code that branches on the build target |
 | `server` | The token broker, in a plain node environment |
 
 Extension APIs come from WXT's `fakeBrowser`, IndexedDB from `fake-indexeddb`,
@@ -347,7 +347,7 @@ Two things worth knowing before editing the setup:
 - **`WxtVitest()` does not actually set `import.meta.env.BROWSER`/`FIREFOX`
   under Vitest**, despite the docs saying so. Vitest rewrites `import.meta.env`
   to a `process.env`-backed proxy before Vite's `define` runs, and values that
-  do survive arrive as strings — so `FIREFOX` would be `"false"`, which is
+  do survive arrive as strings, so `FIREFOX` would be `"false"`, which is
   truthy. `vitest.config.ts` therefore carries a small `wxtTestGlobals`
   pre-transform plugin that substitutes real booleans. `auth.firefox.test.ts`
   asserts the flag itself, so if that ever regresses the suite fails loudly
@@ -363,7 +363,7 @@ secrets: `CHROME_EXTENSION_ID`, `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`,
 `FIREFOX_JWT_SECRET`.
 
 To publish from your own machine instead, put the same values in `.env.submit`
-(see [`.env.submit.example`](.env.submit.example)) — `wxt submit` reads that
+(see [`.env.submit.example`](.env.submit.example)); `wxt submit` reads that
 file automatically, and `bunx wxt submit init` will walk you through obtaining
 them. It is gitignored; CI does not use it.
 
@@ -371,10 +371,10 @@ them. It is gitignored; CI does not use it.
 
 | File | Holds | Copy from |
 | --- | --- | --- |
-| `.env` | `WXT_AUTH_SERVER_URL` — build-time broker URL | [`.env.example`](.env.example) |
+| `.env` | `WXT_AUTH_SERVER_URL`: build-time broker URL | [`.env.example`](.env.example) |
 | `server/.env` | Google OAuth client + broker settings | [`server/.env.example`](server/.env.example) |
 | `.env.submit` | Chrome Web Store + AMO publishing credentials | [`.env.submit.example`](.env.submit.example) |
 
 All three are gitignored; only the `.example` files are tracked. None is
-required to run `bun run dev` — the extension ships no credentials, and the
+required to run `bun run dev`: the extension ships no credentials, and the
 broker URL has a working default.
