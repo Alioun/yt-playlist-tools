@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   __resetTokenCacheForTests,
   addVideoToPlaylist,
+  fetchChannel,
   fetchUserPlaylists,
   fetchVideoChannel
 } from "@/lib/youtube"
@@ -233,5 +234,76 @@ describe("fetchVideoChannel", () => {
 
     await expect(fetchVideoChannel("vid", "token")).resolves.toBeNull()
     expect(spy).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe("fetchChannel", () => {
+  const LOFI_ID = "UCSJ4gkVC6NrvII8umztf0Ow"
+  const found = (customUrl?: string) => ({
+    body: {
+      items: [
+        { id: LOFI_ID, snippet: { title: "Lofi Girl", ...(customUrl ? { customUrl } : {}) } }
+      ]
+    }
+  })
+
+  it.each([
+    [{ by: "id", id: LOFI_ID } as const, "id", LOFI_ID],
+    [{ by: "handle", handle: "@LofiGirl" } as const, "forHandle", "@LofiGirl"],
+    [{ by: "username", username: "lofi" } as const, "forUsername", "lofi"]
+  ])("looks up %j with channels.list?%s=", async (query, param, value) => {
+    const spy = queueFetch(found("@lofigirl"))
+
+    await expect(fetchChannel(query, "token")).resolves.toEqual({
+      status: "found",
+      channel: { channelId: LOFI_ID, title: "Lofi Girl", handle: "@lofigirl" }
+    })
+
+    const url = new URL(spy.mock.calls[0]![0])
+    expect(url.pathname).toBe("/youtube/v3/channels")
+    expect(url.searchParams.get("part")).toBe("snippet")
+    expect(url.searchParams.get(param)).toBe(value)
+    expect(authHeader(spy, 0)).toBe("Bearer token")
+  })
+
+  it("keeps the typed handle when customUrl isn't one", async () => {
+    queueFetch(found("lofigirl"))
+
+    await expect(
+      fetchChannel({ by: "handle", handle: "@LofiGirl" }, "token")
+    ).resolves.toEqual({
+      status: "found",
+      channel: { channelId: LOFI_ID, title: "Lofi Girl", handle: "@LofiGirl" }
+    })
+  })
+
+  it("has no handle for an ID lookup whose customUrl isn't one", async () => {
+    queueFetch(found())
+
+    await expect(fetchChannel({ by: "id", id: LOFI_ID }, "token")).resolves.toEqual({
+      status: "found",
+      channel: { channelId: LOFI_ID, title: "Lofi Girl" }
+    })
+  })
+
+  it("reports a channel that doesn't exist as not found", async () => {
+    queueFetch({ body: {} })
+    await expect(
+      fetchChannel({ by: "handle", handle: "@nobody" }, "token")
+    ).resolves.toEqual({ status: "not-found" })
+  })
+
+  it("reports an error status as failed", async () => {
+    queueFetch({ status: 403, body: {} })
+    await expect(
+      fetchChannel({ by: "id", id: LOFI_ID }, "token")
+    ).resolves.toEqual({ status: "failed" })
+  })
+
+  it("reports a network failure as failed", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("offline") }))
+    await expect(
+      fetchChannel({ by: "id", id: LOFI_ID }, "token")
+    ).resolves.toEqual({ status: "failed" })
   })
 })

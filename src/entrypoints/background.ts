@@ -6,7 +6,13 @@ import {
 } from "@/lib/channel-filters"
 import * as store from "@/lib/storage"
 import { cacheVideo, isVideoCached } from "@/lib/video-cache"
-import { addVideoToPlaylist, fetchUserPlaylists } from "@/lib/youtube"
+import type { ChannelQuery } from "@/lib/channel-input"
+import {
+  addVideoToPlaylist,
+  fetchChannel,
+  fetchUserPlaylists,
+  type ChannelLookup
+} from "@/lib/youtube"
 
 /**
  * NOTE: every runtime statement must live inside main(). WXT imports this file
@@ -206,6 +212,19 @@ export default defineBackground(() => {
     }
   }
 
+  /** The popup's lookup of a channel the user typed into a filter. */
+  async function lookUpChannel(query: ChannelQuery): Promise<ChannelLookup> {
+    try {
+      const accessToken = await store.accessToken.getValue()
+      if (!accessToken) return { status: "failed" }
+      return await fetchChannel(query, accessToken)
+    } catch (error) {
+      // Must never reject, for the same reason as getPlaylists.
+      console.error("[YT Playlist Tools]:", error)
+      return { status: "failed" }
+    }
+  }
+
   async function getPlaylists() {
     try {
       const accessToken = await store.accessToken.getValue()
@@ -237,6 +256,12 @@ export default defineBackground(() => {
     // video it is, for lookups that need to ask the page.
     if (message?.action === "getChannelForTab") {
       getChannelForTab(message.tabId, message.videoId).then(sendResponse)
+      return true
+    }
+
+    // Also from the popup: a channel typed into a filter, already parsed.
+    if (message?.action === "lookUpChannel") {
+      lookUpChannel(message.query).then(sendResponse)
       return true
     }
 

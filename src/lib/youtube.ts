@@ -1,3 +1,4 @@
+import type { ChannelQuery } from "@/lib/channel-input"
 import { refreshAccessToken } from "@/utils"
 
 const API_BASE = "https://www.googleapis.com/youtube/v3"
@@ -158,5 +159,66 @@ export async function fetchVideoChannel(
   } catch (error) {
     console.error("[YT Playlist Tools]: Failed to look up the video's channel:", error)
     return null
+  }
+}
+
+export interface ChannelInfo {
+  channelId: string
+  title: string
+  handle?: string
+}
+
+export type ChannelLookup =
+  | { status: "found"; channel: ChannelInfo }
+  | { status: "not-found" }
+  | { status: "failed" }
+
+/**
+ * A typed channel, from `channels.list?part=snippet` (1 unit) by ID, handle or
+ * legacy username. The handle comes from `snippet.customUrl` when that holds
+ * one; otherwise a handle lookup keeps the handle as typed. Never throws.
+ */
+export async function fetchChannel(
+  query: ChannelQuery,
+  accessToken: string
+): Promise<ChannelLookup> {
+  const url = new URL(`${API_BASE}/channels`)
+  url.searchParams.set("part", "snippet")
+  if (query.by === "id") url.searchParams.set("id", query.id)
+  if (query.by === "handle") url.searchParams.set("forHandle", query.handle)
+  if (query.by === "username") url.searchParams.set("forUsername", query.username)
+
+  try {
+    const response = await authedFetch(url.toString(), accessToken)
+    if (!response.ok) {
+      console.error(
+        "[YT Playlist Tools]: Failed to look up the channel:",
+        response.status
+      )
+      return { status: "failed" }
+    }
+
+    const data = await response.json()
+    const item = data.items?.[0]
+    if (!item?.id) return { status: "not-found" }
+
+    const customUrl: unknown = item.snippet?.customUrl
+    const handle =
+      typeof customUrl === "string" && customUrl.startsWith("@")
+        ? customUrl
+        : query.by === "handle"
+          ? query.handle
+          : undefined
+    return {
+      status: "found",
+      channel: {
+        channelId: item.id,
+        title: item.snippet?.title ?? "",
+        ...(handle ? { handle } : {})
+      }
+    }
+  } catch (error) {
+    console.error("[YT Playlist Tools]: Failed to look up the channel:", error)
+    return { status: "failed" }
   }
 }

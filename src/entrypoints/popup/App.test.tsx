@@ -694,6 +694,142 @@ describe("channel filter editor", () => {
     })
     expect(screen.queryByRole("group", { name: "Edit channel filter" })).toBeNull()
   })
+
+  describe("typing a channel", () => {
+    const TYPED = { channelId: "UCtyped", title: "Typed Channel", handle: "@Typed" }
+
+    /** A watch page plus the background's answer to typed lookups. */
+    function withLookup(answer: unknown) {
+      const sendMessage = onWatchPage(LOFI)
+      const base = sendMessage.getMockImplementation()!
+      sendMessage.mockImplementation((async (message: { action: string }) =>
+        message.action === "lookUpChannel" ? answer : base(message)) as typeof base)
+      return sendMessage
+    }
+
+    const input = () => editor().getByRole("textbox", { name: "Channel to add" })
+
+    async function type(text: string) {
+      await userEvent.type(input(), `${text}{Enter}`)
+    }
+
+    it("looks up a typed @handle and lists the channel with its label", async () => {
+      await store.channelFilters.setValue({
+        PL1: { mode: "deny", enabled: true, channels: [] }
+      })
+      const sendMessage = withLookup({ status: "found", channel: TYPED })
+      render(<App />)
+      await openEditor()
+
+      await type("  youtube.com/@Typed/videos ")
+
+      expect(sendMessage).toHaveBeenCalledWith({
+        action: "lookUpChannel",
+        query: { by: "handle", handle: "@Typed" }
+      })
+      await waitFor(async () => {
+        await expect(store.channelFilters.getValue()).resolves.toEqual({
+          PL1: { mode: "deny", enabled: true, channels: ["UCtyped"] }
+        })
+      })
+      await expect(store.channelLabels.getValue()).resolves.toEqual({
+        UCtyped: { title: "Typed Channel", handle: "@Typed" }
+      })
+      expect(input()).toHaveValue("")
+      expect(editor().getByText("· @Typed")).toBeInTheDocument()
+    })
+
+    it("rejects a /c/ URL without a lookup", async () => {
+      await store.channelFilters.setValue({
+        PL1: { mode: "allow", enabled: true, channels: [] }
+      })
+      const sendMessage = withLookup({ status: "found", channel: TYPED })
+      render(<App />)
+      await openEditor()
+
+      await type("https://www.youtube.com/c/Typed")
+
+      expect(editor().getByRole("alert")).toHaveTextContent(
+        "Custom /c/ URLs can't be looked up. Paste the channel's @handle or /channel/ URL."
+      )
+      expect(sendMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ action: "lookUpChannel" })
+      )
+    })
+
+    it("shows an inline error and adds nothing for a channel that can't be found", async () => {
+      await store.channelFilters.setValue({
+        PL1: { mode: "deny", enabled: true, channels: [] }
+      })
+      withLookup({ status: "not-found" })
+      render(<App />)
+      await openEditor()
+
+      await type("@nobody")
+
+      expect(await editor().findByRole("alert")).toHaveTextContent(
+        "Couldn't find that channel on YouTube."
+      )
+      await expect(store.channelFilters.getValue()).resolves.toEqual({
+        PL1: { mode: "deny", enabled: true, channels: [] }
+      })
+      expect(input()).toHaveValue("@nobody")
+    })
+
+    it("shows an inline error when the lookup fails", async () => {
+      await store.channelFilters.setValue({
+        PL1: { mode: "deny", enabled: true, channels: [] }
+      })
+      withLookup({ status: "failed" })
+      render(<App />)
+      await openEditor()
+
+      await type("@Typed")
+
+      expect(await editor().findByRole("alert")).toHaveTextContent(
+        "Couldn't look up the channel. Try again."
+      )
+    })
+
+    it("says so when the typed channel is already listed", async () => {
+      await store.channelFilters.setValue({
+        PL1: { mode: "deny", enabled: true, channels: ["UCtyped"] }
+      })
+      withLookup({ status: "found", channel: TYPED })
+      render(<App />)
+      await openEditor()
+
+      await type("@Typed")
+
+      expect(await editor().findByRole("alert")).toHaveTextContent(
+        "Typed Channel is already listed."
+      )
+    })
+
+    it("has no input box while the filter is off", async () => {
+      await store.channelFilters.setValue({
+        PL1: { mode: "deny", enabled: false, channels: ["UClofi"] }
+      })
+      withLookup({ status: "not-found" })
+      render(<App />)
+      await openEditor()
+
+      expect(editor().queryByRole("textbox")).toBeNull()
+    })
+
+    it("is not on the channel card", async () => {
+      await store.channelFilters.setValue({
+        PL1: { mode: "deny", enabled: true, channels: [] }
+      })
+      withLookup({ status: "not-found" })
+      render(<App />)
+      await openEditor()
+      // The card shows once the tab has answered with its channel.
+      await screen.findByRole("button", { name: /add lofi girl \(this video\)/i })
+
+      expect(screen.getAllByRole("textbox", { name: "Channel to add" })).toHaveLength(1)
+    })
+  })
 })
 
 describe("channel card", () => {

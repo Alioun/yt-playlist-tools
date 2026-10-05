@@ -28,7 +28,8 @@ import {
 import { formatShortcut } from "@/lib/shortcut"
 import { cn } from "@/lib/utils"
 import * as store from "@/lib/storage"
-import type { YouTubePlaylist } from "@/lib/youtube"
+import type { ChannelQuery } from "@/lib/channel-input"
+import type { ChannelLookup, YouTubePlaylist } from "@/lib/youtube"
 
 export default function App() {
   const [allPlaylists, setAllPlaylists] = useState<YouTubePlaylist[]>([])
@@ -304,6 +305,7 @@ export default function App() {
                       onRemove={(channelId) =>
                         changeFilter(removeListedChannel(playlist.id, channelId))
                       }
+                      onLookUp={lookUpTypedChannel}
                     />
                   )}
                 </div>
@@ -531,4 +533,13 @@ async function lookUpCurrentChannel(
   } catch {
     report({ status: "unknown" })
   }
+}
+
+/** Asks the background to look up a channel the user typed into a filter. */
+async function lookUpTypedChannel(query: ChannelQuery): Promise<ChannelLookup> {
+  const response = await browser.runtime.sendMessage({
+    action: "lookUpChannel",
+    query
+  })
+  return response ?? { status: "failed" }
 }

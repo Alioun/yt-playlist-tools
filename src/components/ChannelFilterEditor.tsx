@@ -1,12 +1,19 @@
 import { Plus, X } from "lucide-react"
-import { useId, useState } from "react"
+import { useId, useState, type FormEvent } from "react"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   clearsList,
   filterSetting,
   type FilterSetting
 } from "@/lib/channel-filters"
+import {
+  LOOKUP_FAILED_ERROR,
+  NOT_FOUND_ERROR,
+  parseChannelInput,
+  type ChannelQuery
+} from "@/lib/channel-input"
 import type {
   ChannelFilter,
   ChannelFilterMode,
@@ -14,6 +21,7 @@ import type {
   VideoChannel
 } from "@/lib/storage"
 import { cn } from "@/lib/utils"
+import type { ChannelLookup } from "@/lib/youtube"
 
 /** The channel of the video in the active tab, as far as the popup knows. */
 export type CurrentChannel =
@@ -71,6 +79,8 @@ type Props = {
   onSettingChange: (setting: FilterSetting) => void
   onAdd: (channel: VideoChannel) => void
   onRemove: (channelId: string) => void
+  /** Looks up a channel the user typed. */
+  onLookUp: (query: ChannelQuery) => Promise<ChannelLookup>
 }
 
 export function ChannelFilterEditor({
@@ -79,7 +89,8 @@ export function ChannelFilterEditor({
   current,
   onSettingChange,
   onAdd,
-  onRemove
+  onRemove,
+  onLookUp
 }: Props) {
   const setting = filterSetting(filter)
   const channels = filter?.channels ?? []
@@ -154,6 +165,7 @@ export function ChannelFilterEditor({
             listed={channels}
             onAdd={onAdd}
           />
+          <AddTypedChannel listed={channels} onLookUp={onLookUp} onAdd={onAdd} />
         </>
       ) : (
         // Off keeps the list. Shown read-only so a kept count on the row
@@ -289,4 +301,86 @@ function AddCurrentChannel({
     return button(`${channel.title} is listed`, true)
   }
   return button(`Add ${channel.title} (this video)`, false, () => onAdd(channel))
+}
+
+/** The only place a channel can be typed in: an @handle, ID or channel URL. */
+function AddTypedChannel({
+  listed,
+  onLookUp,
+  onAdd
+}: {
+  listed: string[]
+  onLookUp: (query: ChannelQuery) => Promise<ChannelLookup>
+  onAdd: (channel: VideoChannel) => void
+}) {
+  const [text, setText] = useState("")
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const errorId = useId()
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault()
+    const parsed = parseChannelInput(text)
+    if ("error" in parsed) {
+      setError(parsed.error)
+      return
+    }
+
+    setError(null)
+    setBusy(true)
+    const result = await onLookUp(parsed.query).catch(
+      (): ChannelLookup => ({ status: "failed" })
+    )
+    setBusy(false)
+
+    if (result.status === "not-found") {
+      setError(NOT_FOUND_ERROR)
+      return
+    }
+    if (result.status !== "found") {
+      setError(LOOKUP_FAILED_ERROR)
+      return
+    }
+    const { channel } = result
+    if (listed.includes(channel.channelId)) {
+      setError(`${channel.title} is already listed.`)
+      return
+    }
+    onAdd(channel)
+    setText("")
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-1">
+      <div className="flex gap-1.5">
+        <Input
+          value={text}
+          onChange={(event) => {
+            setText(event.target.value)
+            setError(null)
+          }}
+          placeholder="@handle or channel URL"
+          aria-label="Channel to add"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
+          disabled={busy}
+          className="h-7 text-xs"
+        />
+        <Button
+          type="submit"
+          size="sm"
+          variant="outline"
+          disabled={busy || !text.trim()}
+          className="h-7 text-xs"
+        >
+          {busy ? "Looking up…" : "Add"}
+        </Button>
+      </div>
+      {error && (
+        <p id={errorId} role="alert" className="text-[10px] text-destructive">
+          {error}
+        </p>
+      )}
+    </form>
+  )
 }

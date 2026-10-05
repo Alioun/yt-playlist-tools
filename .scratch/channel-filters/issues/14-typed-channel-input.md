@@ -17,11 +17,22 @@ How each input form is handled:
 
 **Spec:** [Per-playlist channel filters](../spec.md), "Typed channel input". Terms are as defined in `GLOSSARY.md`.
 
-- [ ] Every input form above is parsed and resolved as listed, and `/c/` is rejected with the exact message.
-- [ ] The added channel is stored by its channel ID, with its label.
-- [ ] Unit tests cover parsing every form, including surrounding whitespace, a missing `@`, and trailing paths or query strings. They also cover the not-found case.
+- [x] Every input form above is parsed and resolved as listed, and `/c/` is rejected with the exact message.
+- [x] The added channel is stored by its channel ID, with its label.
+- [x] Unit tests cover parsing every form, including surrounding whitespace, a missing `@`, and trailing paths or query strings. They also cover the not-found case.
 - [ ] **Live check:** confirm whether `snippet.customUrl` holds the `@handle`. If it doesn't, keep the handle the user typed.
   - Run it in the built-in browser on a dev build.
   - Pause any video you start, and close the tab when done.
   - If no signed-in YouTube session is available, give the user the check as a checklist instead of skipping it.
-- [ ] `bun run compile` and the full test suite pass.
+- [x] `bun run compile` and the full test suite pass.
+
+## Comments
+
+2026-10-05: implemented on branch `feat/channel-filters-typed-input`, based on `main` (#20 has merged).
+
+- Parsing is `parseChannelInput` in `src/lib/channel-input.ts`. It returns a `channels.list` query (`id`, `handle` or `username`) or an error message. URLs work with or without the scheme, on any `*.youtube.com` host, with trailing paths and query strings. Anything else, such as a watch URL or a name with a space, gets "That doesn't look like a channel. Paste an @handle or a channel URL."
+- The lookup is `fetchChannel(query, token)` in `src/lib/youtube.ts`, which answers found, not found or failed and never throws. The popup sends `{action: "lookUpChannel", query}` and the background runs it with the stored token.
+- The handle comes from `snippet.customUrl` when it starts with `@`. Otherwise a handle lookup keeps the handle as typed, and an ID or username lookup stores no handle (ticket 13's page read fills it in on the next auto-add).
+- The input box is the last thing in the row editor, shown only while the filter is on. Errors are inline (`role="alert"`): the exact `/c/` message, "Couldn't find that channel on YouTube.", "Couldn't look up the channel. Try again." and "<Title> is already listed." Nothing is added on any error, and the typed text stays.
+- The channel is added through `addListedChannel(playlistId, channel)`, so its label goes through `updateFilter` as before.
+- The live check is still open: confirming what `snippet.customUrl` holds needs a signed-in API call. Google's reference only says "The channel's custom URL". The code handles both answers.

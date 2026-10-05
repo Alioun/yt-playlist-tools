@@ -8,7 +8,8 @@ import * as youtube from "@/lib/youtube"
 vi.mock("@/lib/youtube", () => ({
   fetchUserPlaylists: vi.fn(),
   addVideoToPlaylist: vi.fn(),
-  fetchVideoChannel: vi.fn()
+  fetchVideoChannel: vi.fn(),
+  fetchChannel: vi.fn()
 }))
 vi.mock("@/lib/video-cache", () => ({
   isVideoCached: vi.fn(async () => false),
@@ -100,6 +101,7 @@ describe("the onMessage contract", () => {
 
     expect(send({ action: "fetchPlaylists" }).returned).toBe(true)
     expect(send({ action: "getChannelForTab", tabId: 1, videoId: "v" }, false).returned).toBe(true)
+    expect(send({ action: "lookUpChannel", query: { by: "handle", handle: "@x" } }, false).returned).toBe(true)
     expect(send({ action: "addVideoToPlaylists", videoId: "v" }).returned).toBe(false)
     expect(send({ action: "addVideoToShortcutPlaylist", videoId: "v" }).returned).toBe(false)
     expect(send({ action: "unknown" }).returned).toBe(false)
@@ -723,5 +725,36 @@ describe("getChannelForTab", () => {
     await expect(
       awaitResponse({ action: "getChannelForTab", tabId: 7, videoId: "vid" })
     ).resolves.toEqual({ channel: null })
+  })
+})
+
+describe("lookUpChannel", () => {
+  const query = { by: "handle", handle: "@LofiGirl" }
+  const lookUp = () =>
+    new Promise<unknown>((resolve) =>
+      listener({ action: "lookUpChannel", query }, {}, resolve)
+    )
+
+  it("answers with the API's lookup", async () => {
+    await store.accessToken.setValue("at")
+    const found = {
+      status: "found",
+      channel: { channelId: "UClofi", title: "Lofi Girl", handle: "@LofiGirl" }
+    } as const
+    vi.mocked(youtube.fetchChannel).mockResolvedValue(found)
+
+    await expect(lookUp()).resolves.toEqual(found)
+    expect(youtube.fetchChannel).toHaveBeenCalledWith(query, "at")
+  })
+
+  it("fails without calling the API when signed out", async () => {
+    await expect(lookUp()).resolves.toEqual({ status: "failed" })
+    expect(youtube.fetchChannel).not.toHaveBeenCalled()
+  })
+
+  it("still answers when storage itself fails", async () => {
+    vi.spyOn(store.accessToken, "getValue").mockRejectedValue(new Error("boom"))
+
+    await expect(lookUp()).resolves.toEqual({ status: "failed" })
   })
 })
