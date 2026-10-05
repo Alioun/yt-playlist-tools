@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Pinned for reproducible builds and Dependabot. Has no curl or wget.
-FROM oven/bun:1.4.0-slim
+FROM oven/bun:1.4.2-slim
 
 WORKDIR /app
 ENV NODE_ENV=production
