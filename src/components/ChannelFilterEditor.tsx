@@ -1,5 +1,5 @@
 import { Plus, X } from "lucide-react"
-import { useState } from "react"
+import { useId, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -22,8 +22,14 @@ export type CurrentChannel =
   | { status: "unknown" }
   | { status: "found"; channel: VideoChannel }
 
-const MODE_LABEL = { allow: "Allow only", deny: "Deny" } as const
+export const MODE_LABEL = { allow: "Allow only", deny: "Deny" } as const
 const LISTED = { allow: "allowed", deny: "denied" } as const
+
+/** "3 denied channels", for confirmations that clear a list. */
+export function listedCount(filter: ChannelFilter): string {
+  const count = filter.channels.length
+  return `${count} ${LISTED[filter.mode]} ${count === 1 ? "channel" : "channels"}`
+}
 
 const SETTINGS: { setting: FilterSetting; text: string }[] = [
   { setting: "off", text: "Off" },
@@ -95,7 +101,7 @@ export function ChannelFilterEditor({
   }
 
   return (
-    <div className="space-y-2 px-2 pb-2">
+    <div role="group" aria-label="Edit channel filter" className="space-y-2 px-2 pb-2">
       <div
         role="group"
         aria-label="Channel filter"
@@ -122,10 +128,8 @@ export function ChannelFilterEditor({
 
       {pending && filter && (
         <ConfirmClear
-          to={pending}
-          from={filter.mode}
-          count={channels.length}
-          turningOn={setting === "off"}
+          question={`${setting === "off" ? "Turn on" : "Switch to"} ${MODE_LABEL[pending]}?`}
+          detail={`This clears the ${listedCount(filter)}.`}
           onConfirm={() => {
             setPending(null)
             onSettingChange(pending)
@@ -168,33 +172,28 @@ export function ChannelFilterEditor({
   )
 }
 
-/** Asks before a mode switch throws away the current list. */
-function ConfirmClear({
-  to,
-  from,
-  count,
-  turningOn,
+/** Asks before a mode switch throws away a list. */
+export function ConfirmClear({
+  question,
+  detail,
   onConfirm,
   onCancel
 }: {
-  to: ChannelFilterMode
-  from: ChannelFilterMode
-  count: number
-  turningOn: boolean
+  question: string
+  detail: string
   onConfirm: () => void
   onCancel: () => void
 }) {
-  const question = `${turningOn ? "Turn on" : "Switch to"} ${MODE_LABEL[to]}?`
-  const noun = count === 1 ? "channel" : "channels"
+  const detailId = useId()
   return (
     <div
       role="alertdialog"
       aria-label={question}
-      aria-describedby="channel-filter-confirm"
+      aria-describedby={detailId}
       className="space-y-1.5 rounded-md border border-destructive/50 p-2"
     >
-      <p id="channel-filter-confirm" className="text-xs">
-        {question} This clears the {count} {LISTED[from]} {noun}.
+      <p className="text-xs">
+        {question} <span id={detailId}>{detail}</span>
       </p>
       <div className="flex gap-1.5">
         <Button
