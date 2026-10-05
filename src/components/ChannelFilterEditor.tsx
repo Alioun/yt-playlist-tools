@@ -1,8 +1,15 @@
 import { Plus, X } from "lucide-react"
+import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import {
+  clearsList,
+  filterSetting,
+  type FilterSetting
+} from "@/lib/channel-filters"
 import type {
   ChannelFilter,
+  ChannelFilterMode,
   ChannelLabel,
   VideoChannel
 } from "@/lib/storage"
@@ -16,11 +23,27 @@ export type CurrentChannel =
   | { status: "found"; channel: VideoChannel }
 
 const MODE_LABEL = { allow: "Allow only", deny: "Deny" } as const
+const LISTED = { allow: "allowed", deny: "denied" } as const
+
+const SETTINGS: { setting: FilterSetting; text: string }[] = [
+  { setting: "off", text: "Off" },
+  { setting: "allow", text: MODE_LABEL.allow },
+  { setting: "deny", text: MODE_LABEL.deny }
+]
+
+const HINT: Record<FilterSetting, string> = {
+  off: "Every channel is auto-added.",
+  allow: "Only listed channels are auto-added.",
+  deny: "Listed channels are never auto-added."
+}
 
 /** The row label: what the filter currently does, at a glance. */
 export function filterSummary(filter: ChannelFilter | undefined): string {
-  if (!filter?.enabled) return "All channels"
-  return `${MODE_LABEL[filter.mode]} · ${filter.channels.length}`
+  if (!filter) return "All channels"
+  const count = filter.channels.length
+  if (filter.enabled) return `${MODE_LABEL[filter.mode]} · ${count}`
+  if (count === 0) return "All channels"
+  return `All channels · ${count} ${LISTED[filter.mode]} kept`
 }
 
 export function ChannelName({ label }: { label?: ChannelLabel }) {
@@ -39,7 +62,7 @@ type Props = {
   filter: ChannelFilter | undefined
   labels: Record<string, ChannelLabel>
   current: CurrentChannel
-  onEnabledChange: (enabled: boolean) => void
+  onSettingChange: (setting: FilterSetting) => void
   onAdd: (channel: VideoChannel) => void
   onRemove: (channelId: string) => void
 }
@@ -48,12 +71,28 @@ export function ChannelFilterEditor({
   filter,
   labels,
   current,
-  onEnabledChange,
+  onSettingChange,
   onAdd,
   onRemove
 }: Props) {
-  const enabled = filter?.enabled ?? false
+  const setting = filterSetting(filter)
   const channels = filter?.channels ?? []
+  // A switch into the other mode that is waiting for the user to confirm
+  // clearing the list.
+  const [pending, setPending] = useState<ChannelFilterMode | null>(null)
+
+  const choose = (next: FilterSetting) => {
+    if (next === setting) {
+      setPending(null)
+      return
+    }
+    if (next !== "off" && clearsList(filter, next)) {
+      setPending(next)
+      return
+    }
+    setPending(null)
+    onSettingChange(next)
+  }
 
   return (
     <div className="space-y-2 px-2 pb-2">
@@ -62,18 +101,15 @@ export function ChannelFilterEditor({
         aria-label="Channel filter"
         className="flex rounded-md border p-0.5 text-xs"
       >
-        {[
-          { on: false, text: "Off" },
-          { on: true, text: "Deny" }
-        ].map(({ on, text }) => (
+        {SETTINGS.map(({ setting: option, text }) => (
           <button
-            key={text}
+            key={option}
             type="button"
-            aria-pressed={enabled === on}
-            onClick={() => enabled !== on && onEnabledChange(on)}
+            aria-pressed={setting === option}
+            onClick={() => choose(option)}
             className={cn(
               "flex-1 rounded px-2 py-0.5",
-              enabled === on
+              setting === option
                 ? "bg-primary text-primary-foreground"
                 : "hover:bg-accent"
             )}
@@ -82,17 +118,29 @@ export function ChannelFilterEditor({
           </button>
         ))}
       </div>
-      <p className="text-[10px] text-muted-foreground">
-        {enabled
-          ? "Listed channels are never auto-added."
-          : "Every channel is auto-added."}
-      </p>
+      <p className="text-[10px] text-muted-foreground">{HINT[setting]}</p>
 
-      {enabled ? (
+      {pending && filter && (
+        <ConfirmClear
+          to={pending}
+          from={filter.mode}
+          count={channels.length}
+          turningOn={setting === "off"}
+          onConfirm={() => {
+            setPending(null)
+            onSettingChange(pending)
+          }}
+          onCancel={() => setPending(null)}
+        />
+      )}
+
+      {setting !== "off" ? (
         <>
           {channels.length === 0 ? (
             <p className="text-xs text-muted-foreground italic">
-              No channels listed yet.
+              {setting === "allow"
+                ? "No channels listed yet, so nothing is auto-added here."
+                : "No channels listed yet."}
             </p>
           ) : (
             <ChannelTags channels={channels} labels={labels} onRemove={onRemove} />
@@ -105,16 +153,68 @@ export function ChannelFilterEditor({
         </>
       ) : (
         // Off keeps the list. Shown read-only so a kept count on the row
-        // has something to point at; nothing edits it until Deny is back on.
+        // has something to point at; nothing edits it until its mode is back on.
+        filter &&
         channels.length > 0 && (
           <div className="space-y-1 opacity-60">
             <p className="text-[10px] text-muted-foreground">
-              Kept for when Deny is back on:
+              Kept for when {MODE_LABEL[filter.mode]} is back on:
             </p>
             <ChannelTags channels={channels} labels={labels} />
           </div>
         )
       )}
+    </div>
+  )
+}
+
+/** Asks before a mode switch throws away the current list. */
+function ConfirmClear({
+  to,
+  from,
+  count,
+  turningOn,
+  onConfirm,
+  onCancel
+}: {
+  to: ChannelFilterMode
+  from: ChannelFilterMode
+  count: number
+  turningOn: boolean
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  const question = `${turningOn ? "Turn on" : "Switch to"} ${MODE_LABEL[to]}?`
+  const noun = count === 1 ? "channel" : "channels"
+  return (
+    <div
+      role="alertdialog"
+      aria-label={question}
+      aria-describedby="channel-filter-confirm"
+      className="space-y-1.5 rounded-md border border-destructive/50 p-2"
+    >
+      <p id="channel-filter-confirm" className="text-xs">
+        {question} This clears the {count} {LISTED[from]} {noun}.
+      </p>
+      <div className="flex gap-1.5">
+        <Button
+          size="sm"
+          variant="destructive"
+          autoFocus
+          onClick={onConfirm}
+          className="h-6 flex-1 text-xs"
+        >
+          Clear and switch
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onCancel}
+          className="h-6 flex-1 text-xs"
+        >
+          Cancel
+        </Button>
+      </div>
     </div>
   )
 }

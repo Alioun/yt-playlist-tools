@@ -136,13 +136,16 @@ export default defineBackground(() => {
     const channel = await resolveVideoChannel(videoId)
     const channelId = channel?.channelId ?? null
     const blocked = playlistIds.filter((id) => isFilteredOut(filters[id], channelId))
-    if (blocked.length === 0 || !channel) return playlistIds
+    if (blocked.length === 0) return playlistIds
 
     const cached = await store.cachedPlaylists.getValue()
-    const titles = blocked.map(
-      (id) => cached.find((playlist) => playlist.id === id)?.title ?? id
-    )
-    const message = `${channel.title} filtered out of ${titles.join(", ")}`
+    const titles = blocked
+      .map((id) => cached.find((playlist) => playlist.id === id)?.title ?? id)
+      .join(", ")
+    // An unknown channel is only blocked by allowlists, and has no title.
+    const message = channel
+      ? `${channel.title} filtered out of ${titles}`
+      : `Couldn't identify the channel, so it was skipped for ${titles}`
     // The toast is dropped by the content script when toasts are off, so this
     // log is then the only record of the decision.
     console.info(`[YT Playlist Tools]: filtered ${message}`)

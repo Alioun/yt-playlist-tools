@@ -15,7 +15,7 @@ Get it on [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/youtu
 - Auto-add the current video to one or more playlists after a set watch percentage
 - Keyboard shortcut to add to a chosen playlist
 - Duplicate check, so a video is never added twice
-- Per-playlist channel filter for auto-add: deny a channel and its videos skip that playlist. The shortcut and Add to queue are never filtered
+- Per-playlist channel filter for auto-add: allow only some channels, or deny some. The shortcut and Add to queue are never filtered
 - One-click **Add to queue** button on thumbnails (not on Subscriptions, which has YouTube's own)
 - Optional: right-click a video card to open YouTube's ⋮ menu (Shift+right-click for the browser menu)
 - Optional toasts; light, dark and system themes
