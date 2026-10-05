@@ -35,16 +35,34 @@ What it covers, end to end:
 
 **Spec:** [Per-playlist channel filters](../spec.md), sections "Filter rules", "Auto-add flow", "Channel resolution", "Storage", "Playlist rows" and "Feedback". Terms are as defined in `GLOSSARY.md`.
 
-- [ ] Denying a channel on a playlist stops auto-add to that playlist for that channel's videos. Other playlists are unaffected.
-- [ ] No channel lookup and no extra API call happen when no remaining playlist has a filter switched on.
-- [ ] The resolver caches in `storage.session`, so a second auto-add of the same video makes no `videos.list` call.
-- [ ] Unknown channel in deny mode: the video is still added.
-- [ ] Each auto-add shows one "filtered out of …" toast naming every blocked playlist, using titles from the cached playlists. With toasts off, it only logs with `console.info`.
-- [ ] Removing the last use of a channel removes its label record.
-- [ ] Clear All Data clears `storage.session` too.
-- [ ] Unit tests for the filter decision, the resolver's order and caching, and label cleanup. A popup test for the editor.
+- [x] Denying a channel on a playlist stops auto-add to that playlist for that channel's videos. Other playlists are unaffected.
+- [x] No channel lookup and no extra API call happen when no remaining playlist has a filter switched on.
+- [x] The resolver caches in `storage.session`, so a second auto-add of the same video makes no `videos.list` call.
+- [x] Unknown channel in deny mode: the video is still added.
+- [x] Each auto-add shows one "filtered out of …" toast naming every blocked playlist, using titles from the cached playlists. With toasts off, it only logs with `console.info`.
+- [x] Removing the last use of a channel removes its label record.
+- [x] Clear All Data clears `storage.session` too.
+- [x] Unit tests for the filter decision, the resolver's order and caching, and label cleanup. A popup test for the editor.
 - [ ] **Live check:** `videos.list` works with the bearer token alone and returns `channelId` and `channelTitle`.
   - Run it in the built-in browser on a dev build.
   - Pause any video you start and close the tab when done.
   - If no signed-in YouTube session is available, give the user the check as a checklist rather than skipping it.
 - [ ] `bun run compile` and the full test suite pass.
+
+## Comments
+
+2026-10-05: implemented on branch `feat/channel-filters-denylist`, based on `main` (PRs #2 and #3 have merged).
+
+- Filter decision, resolver and label cleanup: `src/lib/channel-filters.ts`. Storage items: `channelFilters`, `channelLabels` (local) and `channelCache` (session) in `src/lib/storage.ts`.
+- The popup sends `{action: "getChannelForTab", tabId, videoId}`. `tabId` is unused until ticket 13's page read.
+- The live check is still open: it needs a signed-in dev build, which the agent could not drive.
+- `bun run compile` passes. The full suite has 291 tests; the only failure is the options page's "offers one-click sign in" timing flake, which also fails on `main`.
+
+2026-10-05, decisions settled with the user while grilling the implementation:
+
+- `getChannelForTab` carries both `tabId` and `videoId`; ticket 13 starts using `tabId`.
+- Filter decisions are logged with `console.info` every time, not only with toasts off.
+- With the filter Off, the editor shows the kept list read-only and dimmed ("Kept for when Deny is back on").
+- With no video in the tab, the editor shows "Open a YouTube video to add its channel." instead of the add button.
+- A blocked playlist missing from the cached playlists is named by its ID in the toast.
+- `GLOSSARY.md` gained **Channel label** and **Orphaned filter**.

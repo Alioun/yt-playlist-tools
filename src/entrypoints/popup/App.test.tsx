@@ -368,3 +368,172 @@ describe("shortcut playlist", () => {
     })
   })
 })
+
+describe("channel filter editor", () => {
+  const LOFI = { channelId: "UClofi", title: "Lofi Girl" }
+
+  /**
+   * A watch page in the active tab: the content script reports `videoId` and
+   * the background resolves it to `channel`.
+   */
+  function onWatchPage(
+    channel: typeof LOFI | null,
+    videoId: string | null = "vid"
+  ) {
+    const sendMessage = vi.fn(async (message: { action: string }) =>
+      message.action === "getChannelForTab"
+        ? { channel }
+        : { playlists: PLAYLISTS }
+    )
+    Object.assign(fakeBrowser.runtime, {
+      sendMessage,
+      openOptionsPage: vi.fn(async () => {})
+    })
+    Object.assign(fakeBrowser.tabs, {
+      query: vi.fn(async () => [{ id: 7 }]),
+      sendMessage: vi.fn(async () => ({ videoId }))
+    })
+    return sendMessage
+  }
+
+  async function openEditor(title = "Watch queue") {
+    const label = await screen.findByRole("button", {
+      name: new RegExp(`channel filter for ${title}`, "i")
+    })
+    await userEvent.click(label)
+    return label
+  }
+
+  beforeEach(async () => {
+    await store.playlists.setValue(["PL1"])
+  })
+
+  it("shows a label only on checked playlists", async () => {
+    onWatchPage(LOFI)
+    render(<App />)
+
+    expect(
+      await screen.findByRole("button", { name: /channel filter for watch queue: all channels/i })
+    ).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /channel filter for music/i })).toBeNull()
+  })
+
+  it("denies this video's channel on a playlist", async () => {
+    const sendMessage = onWatchPage(LOFI)
+    render(<App />)
+    await openEditor()
+
+    await userEvent.click(screen.getByRole("button", { name: "Deny" }))
+    await userEvent.click(
+      await screen.findByRole("button", { name: /add lofi girl \(this video\)/i })
+    )
+
+    expect(sendMessage).toHaveBeenCalledWith({
+      action: "getChannelForTab",
+      tabId: 7,
+      videoId: "vid"
+    })
+    await waitFor(async () => {
+      await expect(store.channelFilters.getValue()).resolves.toEqual({
+        PL1: { mode: "deny", enabled: true, channels: ["UClofi"] }
+      })
+    })
+    await expect(store.channelLabels.getValue()).resolves.toEqual({
+      UClofi: { title: "Lofi Girl" }
+    })
+    expect(
+      screen.getByRole("button", { name: /channel filter for watch queue: deny · 1/i })
+    ).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /lofi girl is listed/i })).toBeDisabled()
+  })
+
+  it("removes a listed channel and its label", async () => {
+    await store.channelFilters.setValue({
+      PL1: { mode: "deny", enabled: true, channels: ["UClofi"] }
+    })
+    await store.channelLabels.setValue({ UClofi: { title: "Lofi Girl", handle: "@LofiGirl" } })
+    onWatchPage(LOFI)
+    render(<App />)
+    await openEditor()
+
+    expect(screen.getByText("· @LofiGirl")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Remove Lofi Girl" }))
+
+    await waitFor(async () => {
+      await expect(store.channelLabels.getValue()).resolves.toEqual({})
+    })
+    await expect(store.channelFilters.getValue()).resolves.toEqual({
+      PL1: { mode: "deny", enabled: true, channels: [] }
+    })
+  })
+
+  it("switching off keeps the list", async () => {
+    await store.channelFilters.setValue({
+      PL1: { mode: "deny", enabled: true, channels: ["UClofi"] }
+    })
+    await store.channelLabels.setValue({ UClofi: { title: "Lofi Girl" } })
+    onWatchPage(LOFI)
+    render(<App />)
+    await openEditor()
+
+    await userEvent.click(screen.getByRole("button", { name: "Off" }))
+
+    await waitFor(async () => {
+      await expect(store.channelFilters.getValue()).resolves.toEqual({
+        PL1: { mode: "deny", enabled: false, channels: ["UClofi"] }
+      })
+    })
+    expect(
+      screen.getByRole("button", { name: /channel filter for watch queue: all channels/i })
+    ).toBeInTheDocument()
+    // The kept list stays visible, read-only, with nothing to add to it.
+    expect(screen.getByText(/kept for when deny is back on/i)).toBeInTheDocument()
+    expect(screen.getByText("Lofi Girl")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Remove Lofi Girl" })).toBeNull()
+    expect(screen.queryByRole("button", { name: /add lofi girl/i })).toBeNull()
+  })
+
+  it("disables the add button when the channel is unknown", async () => {
+    onWatchPage(null)
+    render(<App />)
+    await openEditor()
+    await userEvent.click(screen.getByRole("button", { name: "Deny" }))
+
+    expect(
+      await screen.findByRole("button", { name: /channel unknown/i })
+    ).toBeDisabled()
+  })
+
+  it("does not look up a channel when the tab has no video", async () => {
+    const sendMessage = onWatchPage(LOFI, null)
+    render(<App />)
+    await openEditor()
+    await userEvent.click(screen.getByRole("button", { name: "Deny" }))
+
+    expect(
+      await screen.findByText(/open a youtube video to add its channel/i)
+    ).toBeInTheDocument()
+    expect(sendMessage).not.toHaveBeenCalledWith(
+      expect.objectContaining({ action: "getChannelForTab" })
+    )
+  })
+
+  it("keeps the filter when its playlist is unchecked", async () => {
+    await store.channelFilters.setValue({
+      PL1: { mode: "deny", enabled: true, channels: ["UClofi"] }
+    })
+    onWatchPage(LOFI)
+    render(<App />)
+    await openEditor()
+
+    await userEvent.click((await screen.findAllByRole("checkbox"))[0]!)
+
+    await waitFor(async () => {
+      await expect(store.playlists.getValue()).resolves.toEqual([])
+    })
+    await expect(store.channelFilters.getValue()).resolves.toEqual({
+      PL1: { mode: "deny", enabled: true, channels: ["UClofi"] }
+    })
+    expect(screen.queryByRole("button", { name: "Deny" })).toBeNull()
+  })
+})

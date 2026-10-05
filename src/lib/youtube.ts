@@ -122,3 +122,41 @@ export async function addVideoToPlaylist(
 
   return true
 }
+
+export interface VideoChannelInfo {
+  channelId: string
+  title: string
+}
+
+/**
+ * The channel that uploaded a video, from `videos.list?part=snippet` (1 unit).
+ * Resolves to null for any failure, including a private, deleted or
+ * region-blocked video, which comes back as an empty result.
+ */
+export async function fetchVideoChannel(
+  videoId: string,
+  accessToken: string
+): Promise<VideoChannelInfo | null> {
+  const url = new URL(`${API_BASE}/videos`)
+  url.searchParams.set("part", "snippet")
+  url.searchParams.set("id", videoId)
+
+  try {
+    const response = await authedFetch(url.toString(), accessToken)
+    if (!response.ok) {
+      console.error(
+        "[YT Playlist Tools]: Failed to look up the video's channel:",
+        response.status
+      )
+      return null
+    }
+
+    const data = await response.json()
+    const snippet = data.items?.[0]?.snippet
+    if (!snippet?.channelId) return null
+    return { channelId: snippet.channelId, title: snippet.channelTitle ?? "" }
+  } catch (error) {
+    console.error("[YT Playlist Tools]: Failed to look up the video's channel:", error)
+    return null
+  }
+}

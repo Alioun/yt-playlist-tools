@@ -187,7 +187,13 @@ export default defineContentScript({
 
     ui.mount()
 
-    browser.runtime.onMessage.addListener((message: any) => {
+    browser.runtime.onMessage.addListener((message: any, _sender, sendResponse) => {
+      // The popup asks so it knows whether this tab has a video whose channel
+      // can be filtered. Answered synchronously, so no `return true`.
+      if (message?.action === "currentVideoId") {
+        sendResponse({ videoId: currentVideoId() })
+        return
+      }
       if (message?.action !== "showToast") return
       if (!toastEnabled) return
       toast(message.toastMessage)

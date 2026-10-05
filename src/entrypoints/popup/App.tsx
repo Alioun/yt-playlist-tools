@@ -1,5 +1,10 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react"
 
+import {
+  ChannelFilterEditor,
+  filterSummary,
+  type CurrentChannel
+} from "@/components/ChannelFilterEditor"
 import { YouTubeIcon } from "@/components/YouTubeIcon"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,8 +14,15 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
-import { ArrowLeft, Settings } from "lucide-react"
+import { ArrowLeft, ChevronDown, Settings } from "lucide-react"
 
+import {
+  addListedChannel,
+  loadFilterState,
+  removeListedChannel,
+  setDenylistEnabled,
+  type FilterState
+} from "@/lib/channel-filters"
 import { formatShortcut } from "@/lib/shortcut"
 import { cn } from "@/lib/utils"
 import * as store from "@/lib/storage"
@@ -35,6 +47,15 @@ export default function App() {
   // Settings render inside the popup rather than opening the options page --
   // one click, and the popup stays open.
   const [showSettings, setShowSettings] = useState(false)
+  const [filterState, setFilterState] = useState<FilterState>({
+    filters: {},
+    labels: {}
+  })
+  // The playlist whose channel filter editor is open under its row.
+  const [editing, setEditing] = useState<string | null>(null)
+  const [currentChannel, setCurrentChannel] = useState<CurrentChannel>({
+    status: "none"
+  })
 
   // Set once the background has answered, so the cached list (read in parallel)
   // cannot land afterwards and overwrite fresher data.
@@ -87,8 +108,11 @@ export default function App() {
       setHydrating(false)
     })
 
+    void loadFilterState().then(setFilterState)
+
     // Refresh behind the cached list; the UI stays interactive throughout.
     void loadPlaylists()
+    void lookUpCurrentChannel(setCurrentChannel)
   }, [loadPlaylists])
 
   const togglePlaylist = (playlistId: string, checked: boolean) => {
@@ -97,6 +121,10 @@ export default function App() {
       : selectedIds.filter((id) => id !== playlistId)
     setSelectedIds(updated)
     void store.playlists.setValue(updated)
+  }
+
+  const changeFilter = (saving: Promise<FilterState>) => {
+    void saving.then(setFilterState)
   }
 
   const selectShortcutPlaylist = (playlistId: string) => {
@@ -205,23 +233,66 @@ export default function App() {
             </p>
           )}
 
-          <div className="max-h-[160px] space-y-1 overflow-y-auto">
-            {allPlaylists.map((playlist) => (
-              <Label
-                key={playlist.id}
-                className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 font-normal hover:bg-accent"
-              >
-                <Checkbox
-                  checked={selectedIds.includes(playlist.id)}
-                  onCheckedChange={(checked) =>
-                    togglePlaylist(playlist.id, checked)
-                  }
-                />
-                <span className="truncate text-sm" title={playlist.title}>
-                  {playlist.title}
-                </span>
-              </Label>
-            ))}
+          <div className="max-h-[220px] space-y-1 overflow-y-auto">
+            {allPlaylists.map((playlist) => {
+              const selected = selectedIds.includes(playlist.id)
+              const filter = filterState.filters[playlist.id]
+              const open = selected && editing === playlist.id
+              const summary = filterSummary(filter)
+              return (
+                <div
+                  key={playlist.id}
+                  className={cn("rounded-md", open && "bg-accent/50")}
+                >
+                  <div className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent">
+                    <Label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 font-normal">
+                      <Checkbox
+                        checked={selected}
+                        onCheckedChange={(checked) =>
+                          togglePlaylist(playlist.id, checked)
+                        }
+                      />
+                      <span className="truncate text-sm" title={playlist.title}>
+                        {playlist.title}
+                      </span>
+                    </Label>
+                    {selected && (
+                      <button
+                        type="button"
+                        aria-expanded={open}
+                        aria-label={`Channel filter for ${playlist.title}: ${summary}`}
+                        onClick={() => setEditing(open ? null : playlist.id)}
+                        className={cn(
+                          "flex shrink-0 items-center gap-0.5 rounded-full border px-2 text-[10px]",
+                          filter?.enabled
+                            ? "border-primary text-primary"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        {summary}
+                        <ChevronDown className="size-3" />
+                      </button>
+                    )}
+                  </div>
+                  {open && (
+                    <ChannelFilterEditor
+                      filter={filter}
+                      labels={filterState.labels}
+                      current={currentChannel}
+                      onEnabledChange={(enabled) =>
+                        changeFilter(setDenylistEnabled(playlist.id, enabled))
+                      }
+                      onAdd={(channel) =>
+                        changeFilter(addListedChannel(playlist.id, channel))
+                      }
+                      onRemove={(channelId) =>
+                        changeFilter(removeListedChannel(playlist.id, channelId))
+                      }
+                    />
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
 
@@ -404,4 +475,44 @@ export default function App() {
       )}
     </Card>
   )
+}
+
+/**
+ * Asks the active tab for its video, then the background for that video's
+ * channel. A tab without the content script (not YouTube) or without a video
+ * (home, search, Shorts) has no channel to filter.
+ */
+async function lookUpCurrentChannel(
+  report: (current: CurrentChannel) => void
+): Promise<void> {
+  let videoId: string | undefined
+  let tabId: number | undefined
+  try {
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true })
+    tabId = tab?.id
+    if (!tabId) return
+    const reply = await browser.tabs.sendMessage(tabId, {
+      action: "currentVideoId"
+    })
+    videoId = reply?.videoId
+  } catch {
+    return
+  }
+  if (!videoId) return
+
+  report({ status: "loading" })
+  try {
+    const response = await browser.runtime.sendMessage({
+      action: "getChannelForTab",
+      tabId,
+      videoId
+    })
+    report(
+      response?.channel
+        ? { status: "found", channel: response.channel }
+        : { status: "unknown" }
+    )
+  } catch {
+    report({ status: "unknown" })
+  }
 }
