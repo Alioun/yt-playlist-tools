@@ -1,3 +1,8 @@
+import {
+  anyFilterOn,
+  isFilteredOut,
+  resolveVideoChannel
+} from "@/lib/channel-filters"
 import * as store from "@/lib/storage"
 import { cacheVideo, isVideoCached } from "@/lib/video-cache"
 import { addVideoToPlaylist, fetchUserPlaylists } from "@/lib/youtube"
@@ -116,6 +121,37 @@ export default defineBackground(() => {
   }
 
   /**
+   * Drops playlists whose channel filter keeps this video out, with one toast
+   * naming every one of them. The channel is only looked up when a remaining
+   * playlist has a filter switched on, so unfiltered users spend no quota.
+   */
+  async function withoutFilteredOut(
+    tabId: number,
+    playlistIds: string[],
+    videoId: string
+  ) {
+    const filters = await store.channelFilters.getValue()
+    if (!anyFilterOn(filters, playlistIds)) return playlistIds
+
+    const channel = await resolveVideoChannel(videoId)
+    const channelId = channel?.channelId ?? null
+    const blocked = playlistIds.filter((id) => isFilteredOut(filters[id], channelId))
+    if (blocked.length === 0 || !channel) return playlistIds
+
+    const cached = await store.cachedPlaylists.getValue()
+    const titles = blocked.map(
+      (id) => cached.find((playlist) => playlist.id === id)?.title ?? id
+    )
+    const message = `${channel.title} filtered out of ${titles.join(", ")}`
+    // The toast is dropped by the content script when toasts are off, so this
+    // log is then the only record of the decision.
+    console.info(`[YT Playlist Tools]: filtered ${message}`)
+    await notify(tabId, message)
+
+    return playlistIds.filter((id) => !blocked.includes(id))
+  }
+
+  /**
    * The auto-add path, kept apart from the shortcut so anything that should
    * only apply to auto-add (such as channel filters) has one place to go.
    */
@@ -125,7 +161,20 @@ export default defineBackground(() => {
 
     const { accessToken, checkDupes, targets } = ready
     const remaining = await withoutDuplicates(tabId, targets, videoId, checkDupes)
-    await addToPlaylists(tabId, remaining, videoId, accessToken)
+    const passing = await withoutFilteredOut(tabId, remaining, videoId)
+    await addToPlaylists(tabId, passing, videoId, accessToken)
+  }
+
+  /** The popup's channel lookup, through the same resolver as auto-add. */
+  async function getChannelForTab(videoId: unknown) {
+    if (typeof videoId !== "string" || !videoId) return { channel: null }
+    try {
+      return { channel: await resolveVideoChannel(videoId) }
+    } catch (error) {
+      // Must never reject, for the same reason as getPlaylists.
+      console.error("[YT Playlist Tools]:", error)
+      return { channel: null }
+    }
   }
 
   async function getPlaylists() {
@@ -152,6 +201,13 @@ export default defineBackground(() => {
     // the only pattern that works on both browsers.
     if (message?.action === "fetchPlaylists") {
       getPlaylists().then(sendResponse)
+      return true
+    }
+
+    // Sent by the popup, which has no sender tab. `tabId` is the tab whose
+    // video it is, for lookups that need to ask the page.
+    if (message?.action === "getChannelForTab") {
+      getChannelForTab(message.videoId).then(sendResponse)
       return true
     }
 

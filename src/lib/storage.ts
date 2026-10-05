@@ -82,6 +82,57 @@ export const cachedPlaylists = storage.defineItem<CachedPlaylist[]>(
   { fallback: [] }
 )
 
+// ── Channel filters ──────────────────────────────────────────────────────
+export type ChannelFilterMode = "allow" | "deny"
+
+/**
+ * An auto-add playlist's rule about which channels may be auto-added to it.
+ * Switching it off keeps the mode and the list. `channels` holds `UC…` IDs.
+ */
+export interface ChannelFilter {
+  mode: ChannelFilterMode
+  enabled: boolean
+  channels: string[]
+}
+
+/** Display text for a listed channel. Never used for matching. */
+export interface ChannelLabel {
+  title: string
+  handle?: string
+}
+
+/** What the resolver learned about a video's channel. */
+export interface VideoChannel extends ChannelLabel {
+  channelId: string
+}
+
+/**
+ * Keyed by playlist ID. Kept when a playlist is unchecked or disappears, and
+ * never pruned automatically.
+ */
+export const channelFilters = storage.defineItem<Record<string, ChannelFilter>>(
+  "local:channelFilters",
+  { fallback: {} }
+)
+
+/**
+ * One label per listed channel, shared by every filter and keyed by channel
+ * ID. A record goes once no filter (orphans included) lists its channel.
+ */
+export const channelLabels = storage.defineItem<Record<string, ChannelLabel>>(
+  "local:channelLabels",
+  { fallback: {} }
+)
+
+/**
+ * videoId → channel. Session storage survives MV3 service worker restarts and
+ * is dropped when the browser closes.
+ */
+export const channelCache = storage.defineItem<Record<string, VideoChannel>>(
+  "session:channelCache",
+  { fallback: {} }
+)
+
 // ── OAuth ────────────────────────────────────────────────────────────────
 export const accessToken = storage.defineItem<string>("local:accessToken", {
   fallback: ""
@@ -122,10 +173,11 @@ export const theme = storage.defineItem<Theme>("sync:theme", {
   fallback: "system"
 })
 
-/** Clears everything this extension owns, across both areas. */
+/** Clears everything this extension owns, across every area. */
 export async function clearAll(): Promise<void> {
   await Promise.all([
     browser.storage.local.clear(),
-    browser.storage.sync.clear()
+    browser.storage.sync.clear(),
+    browser.storage.session.clear()
   ])
 }

@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   __resetTokenCacheForTests,
   addVideoToPlaylist,
-  fetchUserPlaylists
+  fetchUserPlaylists,
+  fetchVideoChannel
 } from "@/lib/youtube"
 import { refreshAccessToken } from "@/utils"
 
@@ -190,5 +191,47 @@ describe("addVideoToPlaylist", () => {
     queueFetch({ status: 404, body: { error: "playlistNotFound" } })
 
     await expect(addVideoToPlaylist("missing", "vid", "token")).resolves.toBe(false)
+  })
+})
+
+describe("fetchVideoChannel", () => {
+  it("asks videos.list for the snippet and returns the channel ID and title", async () => {
+    const spy = queueFetch({
+      body: { items: [{ snippet: { channelId: "UClofi", channelTitle: "Lofi Girl" } }] }
+    })
+
+    await expect(fetchVideoChannel("vid", "token")).resolves.toEqual({
+      channelId: "UClofi",
+      title: "Lofi Girl"
+    })
+
+    const url = new URL(spy.mock.calls[0]![0])
+    expect(url.pathname).toBe("/youtube/v3/videos")
+    expect(url.searchParams.get("part")).toBe("snippet")
+    expect(url.searchParams.get("id")).toBe("vid")
+    expect(authHeader(spy, 0)).toBe("Bearer token")
+  })
+
+  it("resolves null for a private, deleted or region-blocked video", async () => {
+    queueFetch({ body: { items: [] } })
+    await expect(fetchVideoChannel("vid", "token")).resolves.toBeNull()
+  })
+
+  it("resolves null on an error status", async () => {
+    queueFetch({ status: 403, body: {} })
+    await expect(fetchVideoChannel("vid", "token")).resolves.toBeNull()
+  })
+
+  it("resolves null when the network fails", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("offline") }))
+    await expect(fetchVideoChannel("vid", "token")).resolves.toBeNull()
+  })
+
+  it("does not retry beyond the single refresh on 401", async () => {
+    mockRefresh.mockResolvedValue("fresh")
+    const spy = queueFetch({ status: 401 }, { status: 401 })
+
+    await expect(fetchVideoChannel("vid", "token")).resolves.toBeNull()
+    expect(spy).toHaveBeenCalledTimes(2)
   })
 })

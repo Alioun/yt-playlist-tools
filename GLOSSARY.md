@@ -34,6 +34,13 @@ _Avoid_: Blocklist, block mode
 A channel on a channel filter's list, identified by its channel ID. In allowlist mode it is allowed; in denylist mode it is denied.
 _Avoid_: Denied channel, allowed channel (as entry names), filter entry
 
+**Channel label**:
+The title and optional @handle shown for a listed channel. Display only; never used to identify the channel.
+_Avoid_: Channel name (as an identifier)
+
+**Orphaned filter**:
+A channel filter whose playlist no longer exists in the user's account. It is kept, never shown, and still counts as listing its channels.
+
 **Unknown channel**:
 The state where a video's channel can't be identified when auto-add fires. A filter in denylist mode lets the video through; one in allowlist mode does not.
 _Avoid_: Unresolved channel, missing channel

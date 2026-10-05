@@ -88,4 +88,27 @@ describe("clearAll", () => {
     // Theme lives in sync storage, so this proves both areas were cleared.
     await expect(store.theme.getValue()).resolves.toBe("system")
   })
+
+  it("empties the session channel cache and the channel filters too", async () => {
+    await store.channelCache.setValue({ vid: { channelId: "UC1", title: "One" } })
+    await store.channelFilters.setValue({
+      PL1: { mode: "deny", enabled: true, channels: ["UC1"] }
+    })
+    await store.channelLabels.setValue({ UC1: { title: "One" } })
+
+    await store.clearAll()
+
+    await expect(store.channelCache.getValue()).resolves.toEqual({})
+    await expect(store.channelFilters.getValue()).resolves.toEqual({})
+    await expect(store.channelLabels.getValue()).resolves.toEqual({})
+  })
+
+  it("keeps the channel cache in session storage", async () => {
+    await store.channelCache.setValue({ vid: { channelId: "UC1", title: "One" } })
+
+    expect(await fakeBrowser.storage.session.get("channelCache")).toHaveProperty(
+      "channelCache"
+    )
+    expect(await fakeBrowser.storage.local.get("channelCache")).toEqual({})
+  })
 })
