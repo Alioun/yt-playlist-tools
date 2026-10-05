@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   addListedChannel,
   anyFilterOn,
+  clearsList,
+  filterSetting,
   isFilteredOut,
   pruneLabels,
   removeListedChannel,
   resolveVideoChannel,
-  setDenylistEnabled
+  setFilterSetting
 } from "@/lib/channel-filters"
 import * as store from "@/lib/storage"
 import type { ChannelFilter } from "@/lib/storage"
@@ -21,30 +23,70 @@ const deny = (channels: string[], enabled = true): ChannelFilter => ({
   enabled,
   channels
 })
+const allow = (channels: string[], enabled = true): ChannelFilter => ({
+  mode: "allow",
+  enabled,
+  channels
+})
 
 beforeEach(() => {
   vi.mocked(fetchVideoChannel).mockReset()
 })
 
 describe("isFilteredOut", () => {
-  it("blocks a listed channel on a denylist that is on", () => {
-    expect(isFilteredOut(deny(["UClofi"]), "UClofi")).toBe(true)
-  })
-
-  it("lets other channels through", () => {
-    expect(isFilteredOut(deny(["UClofi"]), "UCother")).toBe(false)
-  })
-
-  it("lets everything through when the filter is off, list or not", () => {
-    expect(isFilteredOut(deny(["UClofi"], false), "UClofi")).toBe(false)
-  })
+  // Every combination of mode, switch and list, against a listed channel, an
+  // unlisted one and an unknown one. True means the playlist is skipped.
+  it.each([
+    // mode     enabled  list         listed  unlisted  unknown
+    ["deny",  true,  ["UClofi"], true,  false, false],
+    ["deny",  true,  [],         false, false, false],
+    ["deny",  false, ["UClofi"], false, false, false],
+    ["deny",  false, [],         false, false, false],
+    ["allow", true,  ["UClofi"], false, true,  true],
+    ["allow", true,  [],         true,  true,  true],
+    ["allow", false, ["UClofi"], false, false, false],
+    ["allow", false, [],         false, false, false]
+  ] as const)(
+    "%s, on: %s, list %j: listed %s, unlisted %s, unknown %s",
+    (mode, enabled, channels, listed, unlisted, unknown) => {
+      const filter: ChannelFilter = { mode, enabled, channels: [...channels] }
+      expect(isFilteredOut(filter, "UClofi")).toBe(listed)
+      expect(isFilteredOut(filter, "UCother")).toBe(unlisted)
+      expect(isFilteredOut(filter, null)).toBe(unknown)
+    }
+  )
 
   it("lets everything through when the playlist has no filter", () => {
     expect(isFilteredOut(undefined, "UClofi")).toBe(false)
+    expect(isFilteredOut(undefined, null)).toBe(false)
+  })
+})
+
+describe("filterSetting", () => {
+  it("is the mode when on and off otherwise", () => {
+    expect(filterSetting(allow(["UClofi"]))).toBe("allow")
+    expect(filterSetting(deny([]))).toBe("deny")
+    expect(filterSetting(allow(["UClofi"], false))).toBe("off")
+    expect(filterSetting(undefined)).toBe("off")
+  })
+})
+
+describe("clearsList", () => {
+  it("is true for a switch into the other mode with channels listed", () => {
+    expect(clearsList(deny(["UClofi"]), "allow")).toBe(true)
+    expect(clearsList(allow(["UClofi"]), "deny")).toBe(true)
   })
 
-  it("lets an unknown channel through a denylist", () => {
-    expect(isFilteredOut(deny(["UClofi"]), null)).toBe(false)
+  it("is true for turning a kept list back on in the other mode", () => {
+    expect(clearsList(deny(["UClofi"], false), "allow")).toBe(true)
+  })
+
+  it("is false for the same mode, for off and for an empty list", () => {
+    expect(clearsList(deny(["UClofi"], false), "deny")).toBe(false)
+    expect(clearsList(deny(["UClofi"]), "off")).toBe(false)
+    expect(clearsList(deny([]), "allow")).toBe(false)
+    expect(clearsList(allow([], false), "deny")).toBe(false)
+    expect(clearsList(undefined, "allow")).toBe(false)
   })
 })
 
@@ -123,7 +165,7 @@ describe("pruneLabels", () => {
 
 describe("editing a filter", () => {
   it("adding a channel lists it and stores its label", async () => {
-    await setDenylistEnabled("PL1", true)
+    await setFilterSetting("PL1", "deny")
     const state = await addListedChannel("PL1", LOFI)
 
     expect(state.filters.PL1).toEqual(deny(["UClofi"]))
@@ -160,11 +202,45 @@ describe("editing a filter", () => {
   it("switching off keeps the list, and switching back on restores it", async () => {
     await addListedChannel("PL1", LOFI)
 
-    const off = await setDenylistEnabled("PL1", false)
+    const off = await setFilterSetting("PL1", "off")
     expect(off.filters.PL1).toEqual(deny(["UClofi"], false))
     expect(off.labels).toHaveProperty("UClofi")
 
-    const on = await setDenylistEnabled("PL1", true)
+    const on = await setFilterSetting("PL1", "deny")
     expect(on.filters.PL1).toEqual(deny(["UClofi"]))
+  })
+
+  it("keeps an allowlist through off and back on", async () => {
+    await setFilterSetting("PL1", "allow")
+    await addListedChannel("PL1", LOFI)
+
+    await setFilterSetting("PL1", "off")
+    const on = await setFilterSetting("PL1", "allow")
+
+    expect(on.filters.PL1).toEqual(allow(["UClofi"]))
+  })
+
+  it("switching straight to the other mode clears the list and its labels", async () => {
+    await addListedChannel("PL1", LOFI)
+
+    const state = await setFilterSetting("PL1", "allow")
+
+    expect(state.filters.PL1).toEqual(allow([]))
+    await expect(store.channelLabels.getValue()).resolves.toEqual({})
+  })
+
+  it("turning a kept list back on in the other mode clears it", async () => {
+    await addListedChannel("PL1", LOFI)
+    await setFilterSetting("PL1", "off")
+
+    const state = await setFilterSetting("PL1", "allow")
+
+    expect(state.filters.PL1).toEqual(allow([]))
+  })
+
+  it("switching a playlist with no filter off stores an empty one", async () => {
+    const state = await setFilterSetting("PL1", "off")
+
+    expect(state.filters.PL1).toEqual(deny([], false))
   })
 })

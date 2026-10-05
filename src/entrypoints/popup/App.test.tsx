@@ -493,6 +493,159 @@ describe("channel filter editor", () => {
     expect(screen.queryByRole("button", { name: /add lofi girl/i })).toBeNull()
   })
 
+  it("allows only this video's channel on a playlist", async () => {
+    onWatchPage(LOFI)
+    render(<App />)
+    await openEditor()
+
+    await userEvent.click(screen.getByRole("button", { name: "Allow only" }))
+    expect(
+      screen.getByText(/no channels listed yet, so nothing is auto-added here/i)
+    ).toBeInTheDocument()
+    await userEvent.click(
+      await screen.findByRole("button", { name: /add lofi girl \(this video\)/i })
+    )
+
+    await waitFor(async () => {
+      await expect(store.channelFilters.getValue()).resolves.toEqual({
+        PL1: { mode: "allow", enabled: true, channels: ["UClofi"] }
+      })
+    })
+    expect(
+      screen.getByRole("button", { name: /channel filter for watch queue: allow only · 1/i })
+    ).toBeInTheDocument()
+  })
+
+  it("labels a kept list by its mode while the filter is off", async () => {
+    await store.channelFilters.setValue({
+      PL1: { mode: "allow", enabled: false, channels: ["UClofi", "UCother"] }
+    })
+    onWatchPage(LOFI)
+    render(<App />)
+
+    const label = await screen.findByRole("button", {
+      name: /channel filter for watch queue: all channels · 2 allowed kept/i
+    })
+    await userEvent.click(label)
+    expect(screen.getByText(/kept for when allow only is back on/i)).toBeInTheDocument()
+  })
+
+  it("turning back on in the same mode restores the list without asking", async () => {
+    await store.channelFilters.setValue({
+      PL1: { mode: "deny", enabled: false, channels: ["UClofi"] }
+    })
+    await store.channelLabels.setValue({ UClofi: { title: "Lofi Girl" } })
+    onWatchPage(LOFI)
+    render(<App />)
+    expect(
+      await screen.findByRole("button", {
+        name: /channel filter for watch queue: all channels · 1 denied kept/i
+      })
+    ).toBeInTheDocument()
+    await openEditor()
+
+    await userEvent.click(screen.getByRole("button", { name: "Deny" }))
+
+    expect(screen.queryByRole("alertdialog")).toBeNull()
+    await waitFor(async () => {
+      await expect(store.channelFilters.getValue()).resolves.toEqual({
+        PL1: { mode: "deny", enabled: true, channels: ["UClofi"] }
+      })
+    })
+    expect(screen.getByRole("button", { name: "Remove Lofi Girl" })).toBeInTheDocument()
+  })
+
+  it("asks before switching Deny to Allow only, and keeps the list on cancel", async () => {
+    const saved = { PL1: { mode: "deny" as const, enabled: true, channels: ["UClofi"] } }
+    await store.channelFilters.setValue(saved)
+    await store.channelLabels.setValue({ UClofi: { title: "Lofi Girl" } })
+    onWatchPage(LOFI)
+    render(<App />)
+    await openEditor()
+
+    await userEvent.click(screen.getByRole("button", { name: "Allow only" }))
+    const dialog = screen.getByRole("alertdialog", { name: "Switch to Allow only?" })
+    expect(dialog).toHaveTextContent("This clears the 1 denied channel.")
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }))
+
+    expect(screen.queryByRole("alertdialog")).toBeNull()
+    await expect(store.channelFilters.getValue()).resolves.toEqual(saved)
+    expect(screen.getByRole("button", { name: "Deny" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    )
+  })
+
+  it("clears the list once the switch to the other mode is confirmed", async () => {
+    await store.channelFilters.setValue({
+      PL1: { mode: "allow", enabled: true, channels: ["UClofi", "UCother"] }
+    })
+    await store.channelLabels.setValue({
+      UClofi: { title: "Lofi Girl" },
+      UCother: { title: "Other" }
+    })
+    onWatchPage(LOFI)
+    render(<App />)
+    await openEditor()
+
+    await userEvent.click(screen.getByRole("button", { name: "Deny" }))
+    expect(screen.getByRole("alertdialog")).toHaveTextContent(
+      "This clears the 2 allowed channels."
+    )
+    await userEvent.click(screen.getByRole("button", { name: "Clear and switch" }))
+
+    await waitFor(async () => {
+      await expect(store.channelFilters.getValue()).resolves.toEqual({
+        PL1: { mode: "deny", enabled: true, channels: [] }
+      })
+    })
+    await expect(store.channelLabels.getValue()).resolves.toEqual({})
+    expect(
+      screen.getByRole("button", { name: /channel filter for watch queue: deny · 0/i })
+    ).toBeInTheDocument()
+  })
+
+  it("asks before turning a kept list back on in the other mode", async () => {
+    await store.channelFilters.setValue({
+      PL1: { mode: "deny", enabled: false, channels: ["UClofi"] }
+    })
+    onWatchPage(LOFI)
+    render(<App />)
+    await openEditor()
+
+    await userEvent.click(screen.getByRole("button", { name: "Allow only" }))
+    await userEvent.click(
+      within(
+        screen.getByRole("alertdialog", { name: "Turn on Allow only?" })
+      ).getByRole("button", { name: "Clear and switch" })
+    )
+
+    await waitFor(async () => {
+      await expect(store.channelFilters.getValue()).resolves.toEqual({
+        PL1: { mode: "allow", enabled: true, channels: [] }
+      })
+    })
+  })
+
+  it("switches modes without asking when the list is empty", async () => {
+    await store.channelFilters.setValue({
+      PL1: { mode: "deny", enabled: true, channels: [] }
+    })
+    onWatchPage(LOFI)
+    render(<App />)
+    await openEditor()
+
+    await userEvent.click(screen.getByRole("button", { name: "Allow only" }))
+
+    expect(screen.queryByRole("alertdialog")).toBeNull()
+    await waitFor(async () => {
+      await expect(store.channelFilters.getValue()).resolves.toEqual({
+        PL1: { mode: "allow", enabled: true, channels: [] }
+      })
+    })
+  })
+
   it("disables the add button when the channel is unknown", async () => {
     onWatchPage(null)
     render(<App />)

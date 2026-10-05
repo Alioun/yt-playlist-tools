@@ -508,6 +508,84 @@ describe("channel filters on auto-add", () => {
     expect(toasts).toEqual(["Added vid to playlist"])
   })
 
+  it("adds a listed channel's video to an allowlist playlist", async () => {
+    await store.playlists.setValue(["PL1"])
+    await store.channelFilters.setValue({
+      PL1: { mode: "allow", enabled: true, channels: ["UClofi"] }
+    })
+
+    await autoAdd()
+
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL1", "vid", "at")
+    expect(toasts).toEqual(["Added vid to playlist"])
+  })
+
+  it("skips an allowlist playlist that doesn't list the channel", async () => {
+    await store.playlists.setValue(["PL1", "PL2"])
+    await store.channelFilters.setValue({
+      PL1: { mode: "allow", enabled: true, channels: ["UCother"] }
+    })
+
+    await autoAdd()
+
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(1)
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL2", "vid", "at")
+    expect(toasts).toEqual([
+      "Lofi Girl filtered out of Learning",
+      "Added vid to playlist"
+    ])
+  })
+
+  it("adds nothing to an empty allowlist", async () => {
+    await store.playlists.setValue(["PL1"])
+    await store.channelFilters.setValue({
+      PL1: { mode: "allow", enabled: true, channels: [] }
+    })
+
+    await autoAdd()
+
+    expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
+    expect(toasts).toEqual(["Lofi Girl filtered out of Learning"])
+  })
+
+  it("names allow and deny blocks together in one toast", async () => {
+    await store.playlists.setValue(["PL1", "PL2", "PL3"])
+    await store.channelFilters.setValue({
+      PL1: { mode: "deny", enabled: true, channels: ["UClofi"] },
+      PL2: { mode: "allow", enabled: true, channels: ["UCother"] }
+    })
+
+    await autoAdd()
+
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(1)
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL3", "vid", "at")
+    expect(toasts.filter((t) => t.includes("filtered"))).toEqual([
+      "Lofi Girl filtered out of Learning, Music"
+    ])
+  })
+
+  it("skips allowlists but not denylists when the channel is unknown", async () => {
+    vi.mocked(youtube.fetchVideoChannel).mockResolvedValue(null)
+    await store.playlists.setValue(["PL1", "PL2", "PL3"])
+    await store.channelFilters.setValue({
+      PL1: { mode: "deny", enabled: true, channels: ["UClofi"] },
+      PL2: { mode: "allow", enabled: true, channels: ["UClofi"] },
+      PL3: { mode: "allow", enabled: true, channels: [] }
+    })
+
+    await autoAdd()
+
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(1)
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL1", "vid", "at")
+    expect(toasts).toEqual([
+      "Couldn't identify the channel, so it was skipped for Music, Cooking",
+      "Added vid to playlist"
+    ])
+    expect(console.info).toHaveBeenCalledWith(
+      "[YT Playlist Tools]: filtered Couldn't identify the channel, so it was skipped for Music, Cooking"
+    )
+  })
+
   it("never filters the shortcut", async () => {
     await store.addToPlaylistID.setValue("PL1")
     await store.channelFilters.setValue({

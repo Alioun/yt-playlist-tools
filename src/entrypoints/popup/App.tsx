@@ -20,7 +20,7 @@ import {
   addListedChannel,
   loadFilterState,
   removeListedChannel,
-  setDenylistEnabled,
+  setFilterSetting,
   type FilterState
 } from "@/lib/channel-filters"
 import { formatShortcut } from "@/lib/shortcut"
@@ -279,8 +279,8 @@ export default function App() {
                       filter={filter}
                       labels={filterState.labels}
                       current={currentChannel}
-                      onEnabledChange={(enabled) =>
-                        changeFilter(setDenylistEnabled(playlist.id, enabled))
+                      onSettingChange={(setting) =>
+                        changeFilter(setFilterSetting(playlist.id, setting))
                       }
                       onAdd={(channel) =>
                         changeFilter(addListedChannel(playlist.id, channel))

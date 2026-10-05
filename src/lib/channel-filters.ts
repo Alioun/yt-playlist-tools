@@ -1,10 +1,14 @@
 import * as store from "@/lib/storage"
 import type {
   ChannelFilter,
+  ChannelFilterMode,
   ChannelLabel,
   VideoChannel
 } from "@/lib/storage"
 import { fetchVideoChannel } from "@/lib/youtube"
+
+/** The three positions of a filter's switch. Off is not a mode. */
+export type FilterSetting = "off" | ChannelFilterMode
 
 export type FilterState = {
   filters: Record<string, ChannelFilter>
@@ -13,14 +17,36 @@ export type FilterState = {
 
 /**
  * True when the playlist's filter keeps this video out of it. `channelId` is
- * null for an unknown channel, which a denylist lets through.
+ * null for an unknown channel, which a denylist lets through and an allowlist
+ * does not.
  */
 export function isFilteredOut(
   filter: ChannelFilter | undefined,
   channelId: string | null
 ): boolean {
-  if (!filter?.enabled || filter.mode !== "deny") return false
+  if (!filter?.enabled) return false
+  if (filter.mode === "allow") {
+    return channelId === null || !filter.channels.includes(channelId)
+  }
   return channelId !== null && filter.channels.includes(channelId)
+}
+
+/** Where the filter's switch stands. */
+export function filterSetting(filter: ChannelFilter | undefined): FilterSetting {
+  return filter?.enabled ? filter.mode : "off"
+}
+
+/**
+ * Whether moving the switch to `setting` clears a non-empty list, and so needs
+ * the user's confirmation first. That is any switch on into the other mode,
+ * whether from the other mode or from off.
+ */
+export function clearsList(
+  filter: ChannelFilter | undefined,
+  setting: FilterSetting
+): boolean {
+  if (!filter || setting === "off") return false
+  return setting !== filter.mode && filter.channels.length > 0
 }
 
 /** Whether any of these playlists has a filter that is switched on. */
@@ -106,15 +132,25 @@ async function updateFilter(
 }
 
 /**
- * Switches a playlist's denylist on or off. Off keeps the list, so turning it
- * back on restores it unchanged.
+ * Moves a playlist's filter switch. Off keeps the mode and the list, so
+ * turning it back on in the same mode restores the list unchanged. Turning it
+ * on in the other mode starts an empty list; ask first (see `clearsList`).
  */
-export function setDenylistEnabled(playlistId: string, enabled: boolean) {
-  return updateFilter(playlistId, (current) => ({
-    mode: "deny",
-    enabled,
-    channels: current?.mode === "deny" ? current.channels : []
-  }))
+export function setFilterSetting(playlistId: string, setting: FilterSetting) {
+  return updateFilter(playlistId, (current) => {
+    if (setting === "off") {
+      return {
+        mode: current?.mode ?? "deny",
+        enabled: false,
+        channels: current?.channels ?? []
+      }
+    }
+    return {
+      mode: setting,
+      enabled: true,
+      channels: current?.mode === setting ? current.channels : []
+    }
+  })
 }
 
 export function addListedChannel(playlistId: string, channel: VideoChannel) {
