@@ -299,3 +299,90 @@ describe("duplicate prevention", () => {
     expect(toasts.join(" ")).toMatch(/failed to add/i)
   })
 })
+
+describe("auto-add path", () => {
+  beforeEach(async () => {
+    await store.accessToken.setValue("at")
+    await store.preventDuplicates.setValue(true)
+  })
+
+  it("checks every playlist for duplicates, then adds only the new ones", async () => {
+    const { isVideoCached } = await import("@/lib/video-cache")
+    vi.mocked(isVideoCached).mockImplementation(async (id) => id === "PL2")
+    await store.playlists.setValue(["PL1", "PL2", "PL3"])
+
+    send({ action: "addVideoToPlaylists", videoId: "vid" })
+    await flush()
+    await flush()
+
+    expect(isVideoCached).toHaveBeenCalledTimes(3)
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(2)
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL1", "vid", "at")
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL3", "vid", "at")
+    // Duplicate checks run before any add, so their toasts come first.
+    expect(toasts).toEqual([
+      "Video already in playlist.",
+      "Added vid to playlist",
+      "Added vid to playlist"
+    ])
+  })
+
+  it("adds nothing when every playlist already has the video", async () => {
+    const { isVideoCached } = await import("@/lib/video-cache")
+    vi.mocked(isVideoCached).mockResolvedValue(true)
+    await store.playlists.setValue(["PL1", "PL2"])
+
+    send({ action: "addVideoToPlaylists", videoId: "vid" })
+    await flush()
+    await flush()
+
+    expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
+    expect(toasts).toEqual([
+      "Video already in playlist.",
+      "Video already in playlist."
+    ])
+  })
+})
+
+describe("shortcut path", () => {
+  beforeEach(async () => {
+    await store.accessToken.setValue("at")
+    await store.addToPlaylistID.setValue("PL-short")
+  })
+
+  it("keeps its own duplicate check", async () => {
+    const { isVideoCached } = await import("@/lib/video-cache")
+    vi.mocked(isVideoCached).mockResolvedValue(true)
+    await store.preventDuplicates.setValue(true)
+
+    send({ action: "addVideoToShortcutPlaylist", videoId: "vid" })
+    await flush()
+    await flush()
+
+    expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
+    expect(toasts).toEqual(["Video already in playlist."])
+  })
+
+  it("ignores the auto-add playlists", async () => {
+    await store.playlists.setValue(["PL1", "PL2"])
+
+    send({ action: "addVideoToShortcutPlaylist", videoId: "vid" })
+    await flush()
+    await flush()
+
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(1)
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL-short", "vid", "at")
+    expect(toasts).toEqual(["Added vid to playlist"])
+  })
+
+  it("tells the user when not signed in", async () => {
+    await store.accessToken.setValue("")
+
+    send({ action: "addVideoToShortcutPlaylist", videoId: "vid" })
+    await flush()
+    await flush()
+
+    expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
+    expect(toasts.join(" ")).toMatch(/no access token/i)
+  })
+})

@@ -10,7 +10,7 @@
 
 **Spec:** [Per-playlist channel filters](../spec.md), "Auto-add flow (background)". Terms are as defined in `GLOSSARY.md`.
 
-- [ ] Auto-add runs the duplicate check per playlist before the add step; the shortcut path is unchanged.
-- [ ] Existing toasts are unchanged on both paths: added, duplicate, failed, no playlists selected, and no access token.
-- [ ] Background tests cover auto-add with a mix of duplicate and new playlists, and confirm the shortcut add is unaffected.
-- [ ] `bun run compile` and the full test suite pass.
+- [x] Auto-add runs the duplicate check per playlist before the add step; the shortcut path is unchanged.
+- [x] Existing toasts are unchanged on both paths: added, duplicate, failed, no playlists selected, and no access token.
+- [x] Background tests cover auto-add with a mix of duplicate and new playlists, and confirm the shortcut add is unaffected.
+- [x] `bun run compile` and the full test suite pass.

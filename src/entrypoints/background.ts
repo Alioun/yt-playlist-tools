@@ -23,14 +23,8 @@ export default defineBackground(() => {
     tabId: number,
     playlistId: string,
     videoId: string,
-    accessToken: string,
-    checkDupes: boolean
+    accessToken: string
   ) {
-    if (checkDupes && (await isVideoCached(playlistId, videoId))) {
-      await notify(tabId, "Video already in playlist.")
-      return
-    }
-
     const added = await addVideoToPlaylist(playlistId, videoId, accessToken)
     if (added) {
       await cacheVideo(playlistId, videoId)
@@ -40,7 +34,11 @@ export default defineBackground(() => {
     }
   }
 
-  async function addToPlaylists(
+  /**
+   * Checks what every add needs before touching the API. Toasts and returns
+   * undefined when the add can't go ahead.
+   */
+  async function prepareAdd(
     tabId: number,
     playlistIds: string[],
     videoId: string
@@ -69,9 +67,65 @@ export default defineBackground(() => {
       return
     }
 
-    for (const playlistId of targets) {
-      await addToPlaylist(tabId, playlistId, videoId, accessToken, checkDupes)
+    return { accessToken, checkDupes, targets }
+  }
+
+  /** Drops playlists that already hold the video, toasting for each one. */
+  async function withoutDuplicates(
+    tabId: number,
+    playlistIds: string[],
+    videoId: string,
+    checkDupes: boolean
+  ) {
+    if (!checkDupes) return playlistIds
+
+    const remaining: string[] = []
+    for (const playlistId of playlistIds) {
+      if (await isVideoCached(playlistId, videoId)) {
+        await notify(tabId, "Video already in playlist.")
+      } else {
+        remaining.push(playlistId)
+      }
     }
+    return remaining
+  }
+
+  /** The shared add step. Callers have already removed duplicates. */
+  async function addToPlaylists(
+    tabId: number,
+    playlistIds: string[],
+    videoId: string,
+    accessToken: string
+  ) {
+    for (const playlistId of playlistIds) {
+      await addToPlaylist(tabId, playlistId, videoId, accessToken)
+    }
+  }
+
+  async function addToShortcutPlaylist(
+    tabId: number,
+    playlistId: string,
+    videoId: string
+  ) {
+    const ready = await prepareAdd(tabId, [playlistId], videoId)
+    if (!ready) return
+
+    const { accessToken, checkDupes, targets } = ready
+    const remaining = await withoutDuplicates(tabId, targets, videoId, checkDupes)
+    await addToPlaylists(tabId, remaining, videoId, accessToken)
+  }
+
+  /**
+   * The auto-add path, kept apart from the shortcut so anything that should
+   * only apply to auto-add (such as channel filters) has one place to go.
+   */
+  async function autoAdd(tabId: number, playlistIds: string[], videoId: string) {
+    const ready = await prepareAdd(tabId, playlistIds, videoId)
+    if (!ready) return
+
+    const { accessToken, checkDupes, targets } = ready
+    const remaining = await withoutDuplicates(tabId, targets, videoId, checkDupes)
+    await addToPlaylists(tabId, remaining, videoId, accessToken)
   }
 
   async function getPlaylists() {
@@ -107,7 +161,7 @@ export default defineBackground(() => {
     if (message?.action === "addVideoToPlaylists") {
       store.playlists
         .getValue()
-        .then((selected) => addToPlaylists(tabId, selected, message.videoId))
+        .then((selected) => autoAdd(tabId, selected, message.videoId))
         .catch((error) => console.error("[YT Playlist Tools]:", error))
       return false
     }
@@ -120,7 +174,7 @@ export default defineBackground(() => {
             await notify(tabId, "No shortcut playlist selected")
             return
           }
-          await addToPlaylists(tabId, [playlistId], message.videoId)
+          await addToShortcutPlaylist(tabId, playlistId, message.videoId)
         })
         .catch((error) => console.error("[YT Playlist Tools]:", error))
       return false
