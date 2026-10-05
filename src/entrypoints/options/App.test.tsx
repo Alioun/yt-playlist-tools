@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 import { fakeBrowser } from "wxt/testing/fake-browser"
 
 import { ThemeProvider } from "@/components/theme-provider"
@@ -27,6 +27,13 @@ function renderOptions() {
     </ThemeProvider>
   )
 }
+
+// App lazy-loads SettingsPanel. Warm the module here so the cold dynamic
+// import (1-2s under a parallel full run) is paid under the hook timeout
+// rather than eating the first findByRole's 1s budget.
+beforeAll(async () => {
+  await import("@/components/SettingsPanel")
+})
 
 beforeEach(() => {
   fakeBrowser.reset()
