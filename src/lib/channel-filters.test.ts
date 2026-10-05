@@ -6,6 +6,7 @@ import {
   clearsList,
   filterSetting,
   isFilteredOut,
+  listChannelIn,
   pruneLabels,
   removeListedChannel,
   resolveVideoChannel,
@@ -242,5 +243,40 @@ describe("editing a filter", () => {
     const state = await setFilterSetting("PL1", "off")
 
     expect(state.filters.PL1).toEqual(deny([], false))
+  })
+})
+
+describe("listChannelIn", () => {
+  it("switches a playlist with no filter on, listing the channel", async () => {
+    const state = await listChannelIn("PL1", "allow", LOFI)
+
+    expect(state.filters.PL1).toEqual(allow(["UClofi"]))
+    expect(state.labels).toEqual({ UClofi: { title: "Lofi Girl" } })
+  })
+
+  it("keeps a kept list in the same mode", async () => {
+    await store.channelFilters.setValue({ PL1: deny(["UCother"], false) })
+
+    const state = await listChannelIn("PL1", "deny", LOFI)
+
+    expect(state.filters.PL1).toEqual(deny(["UCother", "UClofi"]))
+  })
+
+  it("replaces a kept list in the other mode with just this channel", async () => {
+    await store.channelFilters.setValue({ PL1: deny(["UCother"], false) })
+    await store.channelLabels.setValue({ UCother: { title: "Other" } })
+
+    const state = await listChannelIn("PL1", "allow", LOFI)
+
+    expect(state.filters.PL1).toEqual(allow(["UClofi"]))
+    expect(state.labels).toEqual({ UClofi: { title: "Lofi Girl" } })
+  })
+
+  it("does not list a channel twice", async () => {
+    await store.channelFilters.setValue({ PL1: deny(["UClofi"], false) })
+
+    const state = await listChannelIn("PL1", "deny", LOFI)
+
+    expect(state.filters.PL1).toEqual(deny(["UClofi"]))
   })
 })

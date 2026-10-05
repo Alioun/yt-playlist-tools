@@ -1,5 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react"
 
+import { ChannelCard } from "@/components/ChannelCard"
 import {
   ChannelFilterEditor,
   filterSummary,
@@ -18,6 +19,7 @@ import { ArrowLeft, ChevronDown, Settings } from "lucide-react"
 
 import {
   addListedChannel,
+  listChannelIn,
   loadFilterState,
   removeListedChannel,
   setFilterSetting,
@@ -218,6 +220,20 @@ export default function App() {
                   : "Loading..."}
             </Button>
           </div>
+
+          <ChannelCard
+            current={currentChannel}
+            playlists={allPlaylists.filter((playlist) =>
+              selectedIds.includes(playlist.id)
+            )}
+            filters={filterState.filters}
+            onList={(playlistId, mode, channel) =>
+              changeFilter(listChannelIn(playlistId, mode, channel))
+            }
+            onRemove={(playlistId, channelId) =>
+              changeFilter(removeListedChannel(playlistId, channelId))
+            }
+          />
 
           {error && (
             <p className="text-xs text-destructive">

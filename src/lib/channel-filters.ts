@@ -153,6 +153,29 @@ export function setFilterSetting(playlistId: string, setting: FilterSetting) {
   })
 }
 
+/**
+ * Switches a playlist's filter on in `mode` with this channel listed. A kept
+ * list in the same mode is kept; one in the other mode is replaced by just
+ * this channel (ask first, see `clearsList`).
+ */
+export function listChannelIn(
+  playlistId: string,
+  mode: ChannelFilterMode,
+  channel: VideoChannel
+) {
+  return updateFilter(
+    playlistId,
+    (current) => {
+      const kept = current?.mode === mode ? current.channels : []
+      const channels = kept.includes(channel.channelId)
+        ? kept
+        : [...kept, channel.channelId]
+      return { mode, enabled: true, channels }
+    },
+    channel
+  )
+}
+
 export function addListedChannel(playlistId: string, channel: VideoChannel) {
   return updateFilter(
     playlistId,
