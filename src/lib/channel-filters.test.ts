@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   addListedChannel,
@@ -7,7 +7,9 @@ import {
   filterSetting,
   isFilteredOut,
   listChannelIn,
+  PAGE_READ_TIMEOUT_MS,
   pruneLabels,
+  refreshListedLabel,
   removeListedChannel,
   resolveVideoChannel,
   setFilterSetting
@@ -145,6 +147,138 @@ describe("resolveVideoChannel", () => {
 
     await expect(resolveVideoChannel("vid")).resolves.toBeNull()
     expect(fetchVideoChannel).not.toHaveBeenCalled()
+  })
+})
+
+describe("resolveVideoChannel with a page to read", () => {
+  const PAGE = {
+    videoId: "vid",
+    channelId: "UClofi",
+    author: "Lofi Girl",
+    ownerProfileUrl: "http://www.youtube.com/@LofiGirl"
+  }
+  const FROM_PAGE = { ...LOFI, handle: "@LofiGirl" }
+
+  beforeEach(async () => {
+    await store.accessToken.setValue("at")
+    vi.mocked(fetchVideoChannel).mockResolvedValue(LOFI)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("takes the page's answer without calling the API, and caches it with the handle", async () => {
+    await expect(
+      resolveVideoChannel("vid", async () => PAGE)
+    ).resolves.toEqual(FROM_PAGE)
+
+    expect(fetchVideoChannel).not.toHaveBeenCalled()
+    await expect(store.channelCache.getValue()).resolves.toEqual({ vid: FROM_PAGE })
+  })
+
+  it("answers from the cache before asking the page", async () => {
+    await store.channelCache.setValue({ vid: LOFI })
+    const readPage = vi.fn(async () => PAGE)
+
+    await expect(resolveVideoChannel("vid", readPage)).resolves.toEqual(LOFI)
+    expect(readPage).not.toHaveBeenCalled()
+  })
+
+  it("falls back to the API when the page holds another video", async () => {
+    await expect(
+      resolveVideoChannel("vid", async () => ({ ...PAGE, videoId: "previous" }))
+    ).resolves.toEqual(LOFI)
+
+    expect(fetchVideoChannel).toHaveBeenCalledWith("vid", "at")
+  })
+
+  it("falls back to the API when the page has no player", async () => {
+    await expect(resolveVideoChannel("vid", async () => null)).resolves.toEqual(LOFI)
+    expect(fetchVideoChannel).toHaveBeenCalledTimes(1)
+  })
+
+  it("falls back to the API when asking the page fails", async () => {
+    await expect(
+      resolveVideoChannel("vid", () => Promise.reject(new Error("no tab")))
+    ).resolves.toEqual(LOFI)
+    expect(fetchVideoChannel).toHaveBeenCalledTimes(1)
+  })
+
+  it("falls back to the API when the page doesn't answer in time", async () => {
+    vi.useFakeTimers()
+
+    const lookup = resolveVideoChannel("vid", () => new Promise(() => {}))
+    await vi.advanceTimersByTimeAsync(PAGE_READ_TIMEOUT_MS)
+
+    await expect(lookup).resolves.toEqual(LOFI)
+    expect(fetchVideoChannel).toHaveBeenCalledTimes(1)
+  })
+
+  it("reads the page even when signed out", async () => {
+    await store.accessToken.setValue("")
+
+    await expect(
+      resolveVideoChannel("vid", async () => PAGE)
+    ).resolves.toEqual(FROM_PAGE)
+  })
+})
+
+describe("refreshListedLabel", () => {
+  it("updates a listed channel's title and handle", async () => {
+    await store.channelFilters.setValue({ PL1: deny(["UClofi"]) })
+    await store.channelLabels.setValue({ UClofi: { title: "Old name" } })
+
+    await refreshListedLabel({ ...LOFI, handle: "@LofiGirl" })
+
+    await expect(store.channelLabels.getValue()).resolves.toEqual({
+      UClofi: { title: "Lofi Girl", handle: "@LofiGirl" }
+    })
+  })
+
+  it("keeps the stored handle when this lookup found none", async () => {
+    await store.channelFilters.setValue({ PL1: allow(["UClofi"]) })
+    await store.channelLabels.setValue({
+      UClofi: { title: "Old name", handle: "@LofiGirl" }
+    })
+
+    await refreshListedLabel(LOFI)
+
+    await expect(store.channelLabels.getValue()).resolves.toEqual({
+      UClofi: { title: "Lofi Girl", handle: "@LofiGirl" }
+    })
+  })
+
+  it("keeps the stored title when this lookup found none", async () => {
+    await store.channelFilters.setValue({ PL1: deny(["UClofi"]) })
+    await store.channelLabels.setValue({ UClofi: { title: "Lofi Girl" } })
+
+    await refreshListedLabel({ channelId: "UClofi", title: "" })
+
+    await expect(store.channelLabels.getValue()).resolves.toEqual({
+      UClofi: { title: "Lofi Girl" }
+    })
+  })
+
+  it("refreshes a channel listed only by an orphaned or switched-off filter", async () => {
+    await store.channelFilters.setValue({ gone: deny(["UClofi"], false) })
+
+    await refreshListedLabel(LOFI)
+
+    await expect(store.channelLabels.getValue()).resolves.toEqual({
+      UClofi: { title: "Lofi Girl" }
+    })
+  })
+
+  it("stores no label for a channel no filter lists", async () => {
+    await store.channelFilters.setValue({ PL1: deny(["UCother"]) })
+    await store.channelLabels.setValue({ UCother: { title: "Other" } })
+
+    await refreshListedLabel(LOFI)
+
+    await expect(store.channelLabels.getValue()).resolves.toEqual({
+      UCother: { title: "Other" }
+    })
   })
 })
 

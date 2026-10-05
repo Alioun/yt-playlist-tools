@@ -18,6 +18,7 @@ import {
   shouldInjectOnPath
 } from "@/lib/queue"
 import { enableCardMenu } from "@/lib/card-menu"
+import { readPlayerChannel } from "@/lib/page-channel"
 import { observe as observeQueueButtons } from "@/lib/queue-button"
 import * as store from "@/lib/storage"
 import "@/assets/tailwind.css"
@@ -193,6 +194,12 @@ export default defineContentScript({
       if (message?.action === "currentVideoId") {
         sendResponse({ videoId: currentVideoId() })
         return
+      }
+      // The background's free channel lookup. The bridge answers right away
+      // or times out, so sendResponse is always called.
+      if (message?.action === "readPlayerChannel") {
+        readPlayerChannel().then((page) => sendResponse({ page }))
+        return true
       }
       if (message?.action !== "showToast") return
       if (!toastEnabled) return

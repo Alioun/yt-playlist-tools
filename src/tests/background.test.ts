@@ -20,6 +20,13 @@ const TAB_ID = 42
 /** Captures toasts the background pushes to the content script. */
 let toasts: string[] = []
 
+/**
+ * What each tab's content script answers when the background reads its
+ * player, keyed by tab ID. A missing tab answers nothing, as on a tab with no
+ * content script.
+ */
+let pages: Record<number, unknown> = {}
+
 type Listener = (
   message: unknown,
   sender: { tab?: { id: number } },
@@ -51,6 +58,7 @@ const flush = () => new Promise((r) => setTimeout(r, 0))
 beforeEach(async () => {
   fakeBrowser.reset()
   toasts = []
+  pages = {}
   // vi.mock factory mocks are not reset by `restoreMocks`, so call counts
   // would accumulate across tests.
   vi.clearAllMocks()
@@ -63,9 +71,14 @@ beforeEach(async () => {
 
   // fakeBrowser does not implement tabs.sendMessage.
   Object.assign(fakeBrowser.tabs, {
-    sendMessage: vi.fn(async (_id: number, msg: { toastMessage?: string }) => {
-      if (msg?.toastMessage) toasts.push(msg.toastMessage)
-    })
+    sendMessage: vi.fn(
+      async (id: number, msg: { action?: string; toastMessage?: string }) => {
+        if (msg?.toastMessage) toasts.push(msg.toastMessage)
+        if (msg?.action === "readPlayerChannel" && id in pages) {
+          return { page: pages[id] }
+        }
+      }
+    )
   })
 
   const captured: Listener[] = []
@@ -598,6 +611,73 @@ describe("channel filters on auto-add", () => {
     expect(youtube.fetchVideoChannel).not.toHaveBeenCalled()
     expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL1", "vid", "at")
   })
+
+  describe("reading the channel from the page", () => {
+    const PAGE = {
+      videoId: "vid",
+      channelId: "UClofi",
+      author: "Lofi Girl",
+      ownerProfileUrl: "http://www.youtube.com/@LofiGirl"
+    }
+
+    beforeEach(async () => {
+      await store.playlists.setValue(["PL1", "PL2"])
+      await store.channelFilters.setValue({
+        PL1: { mode: "deny", enabled: true, channels: ["UClofi"] }
+      })
+    })
+
+    it("asks the video's own tab and makes no videos.list call", async () => {
+      pages[TAB_ID] = PAGE
+
+      await autoAdd()
+
+      expect(fakeBrowser.tabs.sendMessage).toHaveBeenCalledWith(TAB_ID, {
+        action: "readPlayerChannel"
+      })
+      expect(youtube.fetchVideoChannel).not.toHaveBeenCalled()
+      expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(1)
+      expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL2", "vid", "at")
+    })
+
+    it("falls back to videos.list when the player still holds the previous video", async () => {
+      pages[TAB_ID] = { ...PAGE, channelId: "UCother", videoId: "previous" }
+
+      await autoAdd()
+
+      expect(youtube.fetchVideoChannel).toHaveBeenCalledTimes(1)
+      expect(toasts).toContain("Lofi Girl filtered out of Learning")
+    })
+
+    it("refreshes the listed channel's label, handle included", async () => {
+      pages[TAB_ID] = PAGE
+      await store.channelLabels.setValue({ UClofi: { title: "Old name" } })
+
+      await autoAdd()
+
+      await expect(store.channelLabels.getValue()).resolves.toEqual({
+        UClofi: { title: "Lofi Girl", handle: "@LofiGirl" }
+      })
+    })
+
+    it("stores no label for a channel no filter lists", async () => {
+      pages[TAB_ID] = { ...PAGE, channelId: "UCother" }
+
+      await autoAdd()
+
+      await expect(store.channelLabels.getValue()).resolves.toEqual({})
+      expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(2)
+    })
+
+    it("still adds when the label refresh fails", async () => {
+      pages[TAB_ID] = PAGE
+      vi.spyOn(store.channelLabels, "setValue").mockRejectedValue(new Error("full"))
+
+      await autoAdd()
+
+      expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL2", "vid", "at")
+    })
+  })
 })
 
 describe("getChannelForTab", () => {
@@ -611,6 +691,22 @@ describe("getChannelForTab", () => {
     await expect(
       awaitResponse({ action: "getChannelForTab", tabId: 7, videoId: "vid" })
     ).resolves.toEqual({ channel: { channelId: "UClofi", title: "Lofi Girl" } })
+  })
+
+  it("reads the channel from the popup's tab first", async () => {
+    pages[7] = {
+      videoId: "vid",
+      channelId: "UClofi",
+      author: "Lofi Girl",
+      ownerProfileUrl: "http://www.youtube.com/@LofiGirl"
+    }
+
+    await expect(
+      awaitResponse({ action: "getChannelForTab", tabId: 7, videoId: "vid" })
+    ).resolves.toEqual({
+      channel: { channelId: "UClofi", title: "Lofi Girl", handle: "@LofiGirl" }
+    })
+    expect(youtube.fetchVideoChannel).not.toHaveBeenCalled()
   })
 
   it("answers null when the channel is unknown", async () => {

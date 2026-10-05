@@ -5,6 +5,7 @@ import type {
   ChannelLabel,
   VideoChannel
 } from "@/lib/storage"
+import { channelFromPage } from "@/lib/page-channel"
 import { fetchVideoChannel } from "@/lib/youtube"
 
 /** The three positions of a filter's switch. Off is not a mode. */
@@ -58,29 +59,89 @@ export function anyFilterOn(
 }
 
 /**
- * The one channel lookup shared by auto-add and the popup: the session cache,
- * then `videos.list`. Null means the channel is unknown. There are no retries
- * beyond the token refresh inside the API client.
+ * How long the resolver waits on the page before falling back to the API. The
+ * content script's own bridge timeout is shorter; this one covers a tab that
+ * never answers at all.
  */
-export async function resolveVideoChannel(
-  videoId: string
+export const PAGE_READ_TIMEOUT_MS = 1500
+
+/** Asks the video's tab what its player holds. See `@/lib/page-channel`. */
+export type PageReader = () => Promise<unknown>
+
+async function readPage(read: PageReader): Promise<unknown> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), PAGE_READ_TIMEOUT_MS)
+  })
+  try {
+    return await Promise.race([read().catch(() => null), timeout])
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function lookUp(
+  videoId: string,
+  readFromPage?: PageReader
 ): Promise<VideoChannel | null> {
-  const cache = await store.channelCache.getValue()
-  const cached = cache[videoId]
-  if (cached) return cached
+  if (readFromPage) {
+    const fromPage = channelFromPage(videoId, await readPage(readFromPage))
+    if (fromPage) return fromPage
+  }
 
   const accessToken = await store.accessToken.getValue()
   if (!accessToken) return null
 
   const found = await fetchVideoChannel(videoId, accessToken)
-  if (!found) return null
+  return found ? { channelId: found.channelId, title: found.title } : null
+}
 
-  const channel: VideoChannel = { channelId: found.channelId, title: found.title }
+/**
+ * The one channel lookup shared by auto-add and the popup: the session cache,
+ * then the page (free, and checked against `videoId`), then `videos.list`.
+ * Null means the channel is unknown. There are no retries beyond the token
+ * refresh inside the API client.
+ */
+export async function resolveVideoChannel(
+  videoId: string,
+  readFromPage?: PageReader
+): Promise<VideoChannel | null> {
+  const cache = await store.channelCache.getValue()
+  const cached = cache[videoId]
+  if (cached) return cached
+
+  const channel = await lookUp(videoId, readFromPage)
+  if (!channel) return null
+
   // Re-read: another lookup may have written while this one was waiting on
-  // the network.
+  // the page or the network.
   const latest = await store.channelCache.getValue()
   await store.channelCache.setValue({ ...latest, [videoId]: channel })
   return channel
+}
+
+/**
+ * Brings a listed channel's label up to date after auto-add resolved it: the
+ * title always, the handle only when this lookup found one (`videos.list`
+ * gives none, and that shouldn't erase one the page gave earlier). A channel
+ * no filter lists, orphans included, gets no label.
+ */
+export async function refreshListedLabel(channel: VideoChannel): Promise<void> {
+  const { filters, labels } = await loadFilterState()
+  const listed = Object.values(filters).some((f) =>
+    f.channels.includes(channel.channelId)
+  )
+  if (!listed) return
+
+  const current = labels[channel.channelId]
+  const title = channel.title || current?.title || ""
+  const handle = channel.handle ?? current?.handle
+  if (current?.title === title && current?.handle === handle) return
+
+  await store.channelLabels.setValue({
+    ...labels,
+    [channel.channelId]: { title, ...(handle ? { handle } : {}) }
+  })
 }
 
 /** Drops every label whose channel no filter lists, orphans included. */

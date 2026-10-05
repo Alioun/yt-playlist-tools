@@ -1,5 +1,6 @@
 /**
- * MAIN-world bridge that performs YouTube's native "Add to queue".
+ * MAIN-world bridge that performs YouTube's native "Add to queue", and reads
+ * the player's channel for the free channel lookup (`@/lib/page-channel`).
  *
  * Why a separate script: the action is a Polymer command, dispatched through
  * `element.resolveCommand(...)`. That method lives on the page's prototypes and
@@ -17,6 +18,8 @@
 
 export const QUEUE_REQUEST = "ytpt:add-to-queue"
 export const QUEUE_RESPONSE = "ytpt:add-to-queue:done"
+export const PLAYER_REQUEST = "ytpt:read-player"
+export const PLAYER_RESPONSE = "ytpt:read-player:done"
 
 export default defineUnlistedScript(() => {
   /**
@@ -146,5 +149,41 @@ export default defineUnlistedScript(() => {
       setTimeout(poll, 50)
     }
     setTimeout(poll, 50)
+  })
+
+  type Player = Element & { getPlayerResponse?: () => any }
+
+  /**
+   * Reports the channel of the video the player holds, for the free channel
+   * lookup. `getPlayerResponse()` is current from `yt-player-updated` on,
+   * unlike `ytInitialPlayerResponse`, which stays on the first video of an
+   * in-app session. The caller checks the videoId, since the player can still
+   * hold the previous video for a moment after navigating.
+   */
+  document.addEventListener(PLAYER_REQUEST, (event) => {
+    const { token } = ((event as CustomEvent).detail ?? {}) as { token?: string }
+
+    const read = (): Record<string, string> => {
+      try {
+        const player = document.querySelector("#movie_player") as Player | null
+        const response = player?.getPlayerResponse?.()
+        const details = response?.videoDetails
+        const microformat = response?.microformat?.playerMicroformatRenderer
+        const text = (value: unknown) => (typeof value === "string" ? value : "")
+        return {
+          videoId: text(details?.videoId),
+          channelId: text(details?.channelId),
+          author: text(details?.author),
+          ownerProfileUrl: text(microformat?.ownerProfileUrl)
+        }
+      } catch {
+        // No player, or YouTube changed it: the caller falls back to the API.
+        return {}
+      }
+    }
+
+    document.dispatchEvent(
+      new CustomEvent(PLAYER_RESPONSE, { detail: { token, ...read() } })
+    )
   })
 })

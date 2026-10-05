@@ -1,6 +1,7 @@
 import {
   anyFilterOn,
   isFilteredOut,
+  refreshListedLabel,
   resolveVideoChannel
 } from "@/lib/channel-filters"
 import * as store from "@/lib/storage"
@@ -21,6 +22,23 @@ export default defineBackground(() => {
       })
     } catch {
       // Content script not present on this tab -- nothing to do.
+    }
+  }
+
+  /**
+   * Reads the channel from the player in the video's tab, for the resolver's
+   * free lookup. Null when the tab has no content script to answer.
+   */
+  function pageReaderFor(tabId: number) {
+    return async () => {
+      try {
+        const reply = await browser.tabs.sendMessage(tabId, {
+          action: "readPlayerChannel"
+        })
+        return (reply as { page?: unknown } | undefined)?.page ?? null
+      } catch {
+        return null
+      }
     }
   }
 
@@ -133,7 +151,13 @@ export default defineBackground(() => {
     const filters = await store.channelFilters.getValue()
     if (!anyFilterOn(filters, playlistIds)) return playlistIds
 
-    const channel = await resolveVideoChannel(videoId)
+    const channel = await resolveVideoChannel(videoId, pageReaderFor(tabId))
+    if (channel) {
+      // Labels only feed the popup, so a failed refresh must not stop the add.
+      await refreshListedLabel(channel).catch((error) =>
+        console.error("[YT Playlist Tools]: label refresh failed", error)
+      )
+    }
     const channelId = channel?.channelId ?? null
     const blocked = playlistIds.filter((id) => isFilteredOut(filters[id], channelId))
     if (blocked.length === 0) return playlistIds
@@ -169,10 +193,12 @@ export default defineBackground(() => {
   }
 
   /** The popup's channel lookup, through the same resolver as auto-add. */
-  async function getChannelForTab(videoId: unknown) {
+  async function getChannelForTab(tabId: unknown, videoId: unknown) {
     if (typeof videoId !== "string" || !videoId) return { channel: null }
+    const readFromPage =
+      typeof tabId === "number" ? pageReaderFor(tabId) : undefined
     try {
-      return { channel: await resolveVideoChannel(videoId) }
+      return { channel: await resolveVideoChannel(videoId, readFromPage) }
     } catch (error) {
       // Must never reject, for the same reason as getPlaylists.
       console.error("[YT Playlist Tools]:", error)
@@ -210,7 +236,7 @@ export default defineBackground(() => {
     // Sent by the popup, which has no sender tab. `tabId` is the tab whose
     // video it is, for lookups that need to ask the page.
     if (message?.action === "getChannelForTab") {
-      getChannelForTab(message.videoId).then(sendResponse)
+      getChannelForTab(message.tabId, message.videoId).then(sendResponse)
       return true
     }
 
