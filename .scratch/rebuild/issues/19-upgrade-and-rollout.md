@@ -64,3 +64,11 @@ Also from [ticket 08](08-shortcuts.md):
 - the feature is on only if both a key and a playlist carry over;
 - upgraders get no Watch later preset;
 - the upgrade note names a carried Ctrl key (it never fired in 1.4.5) and explains unconvertible keys.
+
+Also from [ticket 18](18-breakage.md):
+- **Release gates:** the static watch green, the browser watch green or inconclusive, the signed-in live check run, and no live-check code in the zips.
+- **Hotfix lane:** a CI check that the manifest is unchanged apart from `version`; per-store publish switches; Chrome hotfixes publish on approval (`skipReview` tried, never relied on); a reviewer-notes template.
+- **Bad releases:** roll back first, then submit the fix (Chrome's rollback discards pending submissions).
+- **Support channel:** for reports (PROVISIONAL: GitHub issues).
+- **Watch alive:** GitHub disables scheduled workflows after 60 days of inactivity, so the checklist confirms the watch still runs.
+- **Beta:** AMO has no pre-release channel. Consider a self-hosted unlisted beta.

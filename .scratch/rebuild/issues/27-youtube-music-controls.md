@@ -26,3 +26,5 @@ Also from [ticket 12](12-adding.md): toasts wait while their tab is hidden or in
 Also from [ticket 28](28-queue-reorder.md) (adopted into ticket 26): queue items get Play next / Add to queue as moves. Prototype the "Moved" feedback and Undo.
 
 Also from [ticket 08](08-shortcuts.md): the undo key (Alt+U) works on YouTube Music toasts.
+
+Also from [ticket 18](18-breakage.md): the "not working" notice is a sticky variant of the shared toast. You own YouTube Music's item selectors, the row self-check and the anchor thresholds.

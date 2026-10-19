@@ -69,3 +69,9 @@ Also from [ticket 08](08-shortcuts.md):
 - **Recorder:** its states and copy; Esc cancels, Clear, clash warnings, "Use it here".
 - **Keys:** shown in each platform's style, with the help line.
 - **Also on YouTube Music:** the switch is reachable from the YouTube Music section.
+
+Also from [ticket 18](18-breakage.md):
+- a status line under each feature: working / partly working / not working;
+- a popup strip when something isn't working;
+- the amber "!" badge (the missing-access badge takes priority);
+- a Diagnostics section: Check now, report preview, Copy, "Known problems" / "Report a problem" links, and a detailed-log toggle.

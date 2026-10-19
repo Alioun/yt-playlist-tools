@@ -369,3 +369,5 @@ Used by both sites' quick-save ▾. On YouTube Music it behaves exactly as ticke
   - one failed playlist doesn't stop the others;
   - the queue is confirmed;
   - playlists can be created.
+
+Also from [ticket 18](18-breakage.md): ticket 07's "can't measure" adds a row to the failure copy. The first such video in a session gets a failure toast; three in a row mark auto-add as not working.

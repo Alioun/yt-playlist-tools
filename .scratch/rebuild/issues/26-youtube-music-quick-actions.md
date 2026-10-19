@@ -276,3 +276,5 @@ Also from [ticket 08](08-shortcuts.md), adopted:
 - a key can't fire two shortcuts on one site (the recorder offers "Use it here");
 - Alt+U undo also works on YouTube Music;
 - presets skip keys that are already taken.
+
+Also from [ticket 18](18-breakage.md): a key for an action that isn't working stays caught and explains itself on each press, instead of doing nothing. The pointed-at item self-check applies to YouTube Music rows too.

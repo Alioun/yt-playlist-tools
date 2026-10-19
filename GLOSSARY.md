@@ -18,6 +18,22 @@ _Avoid_: Host permission (in user-facing text), grant
 The YouTube or YouTube Music tab the extension works through for the popup or settings, chosen because it's signed in to the account being shown.
 _Avoid_: Host tab, proxy tab
 
+**Breakage signal**:
+A note, kept only in the browser, that something the extension relies on in YouTube or YouTube Music is missing or answered in a way the extension doesn't recognise. It never leaves the browser.
+_Avoid_: Error report, telemetry event, crash
+
+**Not working**:
+The state of a switched-on feature, or one of its actions, that can't do its job in a tab because YouTube or YouTube Music changed something it relies on. It's always shown, and clears by itself once the feature works again.
+_Avoid_: Broken, disabled, unavailable (which is by design, e.g. while casting)
+
+**Partly working**:
+The state of a feature that still does its job but has lost an optional part, such as the playlist picker's check marks.
+_Avoid_: Degraded, limited
+
+**Diagnostics report**:
+A plain-text summary of the extension's state and recent breakage signals, which the user reads and copies to share by choice. It never names a video, playlist, channel or account.
+_Avoid_: Bug report, log dump, telemetry
+
 ### Accounts
 
 **Account**:

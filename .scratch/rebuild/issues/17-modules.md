@@ -51,3 +51,13 @@ Also from [ticket 07](07-watched.md): the watch tracker is a deep module. A pure
 Also from [ticket 28](28-queue-reorder.md): the YouTube Music queue job queue also handles moves (check the item → fire the drop event → confirm the position). Inserts also turn off the responsive-radio flag.
 
 Also from [ticket 08](08-shortcuts.md) and [ADR-0004](../../../docs/adr/0004-shortcuts-caught-in-page.md): one shortcut engine for both sites. It has a pure matcher (character first, then physical key), pure recorder rules, and a target resolver per site (pointed-at item, whichever moved last, else the current video or playing song). It's testable under `bun test`, with no `commands` fake needed.
+
+Also from [ticket 18](18-breakage.md) and [ADR-0005](../../../docs/adr/0005-breakage-caught-on-device-fixed-by-releases.md):
+- **Seams:** the gateway (`run(job)`, `probe()`, a signal sink) and a YouTube page port with four adapters (live, recorded, node, recording).
+- **Breakage monitor:** one module in the background. Features declare their required jobs, optional jobs and anchors; the monitor derives each status.
+- **Logging:** the page world logs nothing.
+- **Watch list:** a module. Runtime probes ship; bundle needles stay in the tools.
+- **Fixtures:** the layout plus a privacy lint test.
+- **Live-check build:** a separate target, and the release check fails if a store zip contains any of it.
+- **Browser tooling:** Playwright works for Chromium only (`channel: "chromium"`); Firefox needs Puppeteer 24.8+ (Firefox 137+) or Selenium.
+- **To check:** whether WXT's fake browser covers `action.setBadgeText` and `storage.session`.

@@ -48,3 +48,5 @@ Also from [ticket 08](08-shortcuts.md):
 - Quick-save tooltips can show the picker key.
 - Every in-page shadow root uses `isolateEvents: true` and `mode: "open"`.
 - Verify in the dev build that Bits UI popovers still close on Escape with isolation on.
+
+Also from [ticket 18](18-breakage.md): the "not working" notice is a sticky variant of the shared toast. You own the theme-variable fallback palette, the card selectors and the card self-check, and the anchor thresholds.
