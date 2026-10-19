@@ -71,7 +71,7 @@ Two more targets exist only at build time: the live-check build ([§6.4.6](#646-
 - **ARC-ACC-01.** Every request to YouTube or YouTube Music is sent by the gateway, from the page (MAIN) world of an open, top-frame www or music tab. Nothing sends from the background, the popup, settings, the first-run page, an offscreen document or a frame. YouTube answers an extension origin with HTTP 403 (ticket 02).
 - **ARC-ACC-02.** A youtube.com job runs in a www tab. A YouTube Music job runs in a music tab, the installed YouTube Music app's window included (PROVISIONAL, M4). YouTube Music's membership fallback is the one exception: it runs in a www tab.
 - **ARC-ACC-03.** A job started inside a tab runs in that tab, as that tab's account. That covers in-page features, keys caught in the page and quick actions.
-- **ARC-ACC-04.** A job started from the popup, settings or the first-run page runs in a **serving tab** ([§6.2.11](#6211-serving-tab-routing)).
+- **ARC-ACC-04.** A job started from the popup, settings or the first-run page runs in a **serving tab** ([§6.2.11](#6211-serving-tab-routing)). The one exception is Playing now, whose read and saves run in the YouTube Music tab ARC-ACC-68 picks, as that tab's account.
   - Writes travel popup → background → serving tab, and the result reaches the cache through the background.
   - If the popup closes mid-write, only the answer is lost, never the write.
 - **ARC-ACC-05.** A job carries only what that job needs: a video ID, playlist IDs, a title, a channel input. Settings, channel filters and other accounts' data never enter the page, and nothing secret is sent into it.
@@ -175,7 +175,7 @@ Jobs cover reads and writes alike. Each job runs through its site's route table 
 |---|---|---|---|---|---|
 | `account` | www, music | — | `{ signedIn, datasyncId \| null }` (the raw ID; the core turns it into a key before anything leaves the tab) | none | no |
 | `accountLabel` | www, music | — | `{ name, handle?, avatar? }` | playlist | yes |
-| `membership` | www, music | `{ videoId }` | each playlist the account can add to: `{ id, title, privacy?, contains }`, in the site's Save-dialog order | playlist | yes |
+| `membership` | www, music | `{ videoId }` | each playlist the account can add to: `{ id, title, privacy?, count?, contains }`, in the site's Save-dialog order. `count` is the song or video count, when the answer carries one; without it, YouTube Music's picker shows privacy only ([YM-PICK-4](03-youtube-music.md#10-the-playlist-picker); R73) | playlist | yes |
 | `playlists` | www | — | each playlist: `{ id, title, privacy?, count?, thumb? }` | playlist | yes |
 | `add` | www | `{ playlistId, videoId }` | `{ setVideoId }` | playlist | yes |
 | `remove` | www | `{ playlistId, setVideoId }` | — | playlist | yes |
@@ -194,7 +194,7 @@ Jobs cover reads and writes alike. Each job runs through its site's route table 
 | `queueMove` | music | `{ id, to: "next" \| "end" \| number }` | `{ from }` | app-state | no |
 | `queueReinsert` | music | `{ videoId, index }` | `{ id }` | app-state | no |
 | `like` | music | `{ endpoint }` (like or remove-like) | — | app-state | yes |
-| `nowPlaying` | music | — | `{ videoId, title, artist, album?, pos, len }`, or `null` when nothing is playing (R8) | none | no |
+| `nowPlaying` | music | — | `{ videoId, title, artist, album?, artwork?, pos, len }`, or `null` when nothing is playing. `artwork` is the artwork's URL, for Playing now's art ([YM-POP-1](03-youtube-music.md#17-playing-now-in-the-popup)). (R8, R73) | none | no |
 | `castState` | music | — | `{ casting }` | none | no |
 
 **Streams** are continuous page reads, pushed to the isolated world while watched:
@@ -243,10 +243,10 @@ The sending context is either **the tab** (where the action happened) or **a ser
 | `membership` (picker; the read before a save) | **PROVISIONAL (M2):** `networkManager.fetch("/playlist/get_add_to_playlist")` | **Membership only:** a www serving tab of the same account, in a window of the same kind. Else the picker shows no ticks, with ticket 12's note. | The tab | M2 |
 | `create` | `networkManager.fetch("/playlist/create")`. YouTube Music's gated "feature enablement" answer counts as a failure. | — | The tab | M2 |
 | `accountLabel` | `networkManager.fetch("/account/account_menu")` | "Unnamed account" | The tab | M2 |
-| `nowPlaying` (job and stream) | **Page read:** `navigator.mediaSession.metadata` and the `<video>` element. The video ID comes from `#movie_player.getVideoData()`. Never the player bar, which an A/B test removes. | The queue's selected item (`app.queue`) | The tab | M1 |
+| `nowPlaying` (job and stream) | **Page read:** `navigator.mediaSession.metadata` (title, artist, album, and the largest `artwork` entry's URL; R73) and the `<video>` element. The video ID comes from `#movie_player.getVideoData()`. Never the player bar, which an A/B test removes. | The queue's selected item (`app.queue`) | The tab | M1 |
 | `castState` | **Page read:** `state.castStatus` in the app's state store, found signed out (ticket 25) | `#movie_player`'s API | The tab | M5 |
 
-- **ARC-ACC-21.** On YouTube Music, `networkManager` signs requests itself. The signed request never runs on music.youtube.com. When an internal is missing there, the action is removed from that tab rather than falling back (`ctx.can(job)` is false), and its buttons and keys hide in that tab. A feature with some actions unavailable is *partly working*, and its status detail names those actions (the Monitor, [§6.4.3](#643-background-srcbackground)). (R50)
+- **ARC-ACC-21.** On YouTube Music, `networkManager` signs requests itself. The signed request never runs on music.youtube.com. When an internal is missing there, the action is removed from that tab rather than falling back (`ctx.can(job)` is false), and its buttons hide in that tab. Its key stays caught, because a key never does nothing silently: each press answers "{Action} isn't working right now. The popup shows why." ([YM-KEY-12](03-youtube-music.md#12-keys-quick-action-shortcuts)). A feature with some actions unavailable is *partly working*, and its status detail names those actions (the Monitor, [§6.4.3](#643-background-srcbackground)). (R50, R68)
 - **ARC-ACC-22.** Nothing YouTube Music runs on our behalf shows a second toast:
   - **Menu-item route:** the endpoint's toast `commands` are removed before it's handed over.
   - **Queue replay:** never runs the answer's `onResponseReceivedCommands`, except to store `queueContextParams`.
@@ -305,7 +305,7 @@ On a queue item, Play next moves the item to right after the playing song, and A
   - `Array.isArray(panel.data)`;
   - `typeof panel.onDrop === "function"`.
 
-  If any fails, `queueMove` has no route, and every action that needs it is withdrawn in that tab.
+  If any fails, `queueMove` has no route, and every action that needs it is unavailable in that tab, as ARC-ACC-21 says. (R68)
 
 #### 6.2.8.3 Queue jobs and casting
 
@@ -329,7 +329,7 @@ YouTube's queue is a temporary server playlist (`TLPQ…`), owned by the session
   - **What it looks for:** the entry with our `videoId` whose `playlistSetVideoId` wasn't in the panel before our add. Comparing the before and after sets copes with duplicates.
   - **Budget:** 2 s.
   - **First add:** if the panel can't be read, the miniplayer turning active is the fallback signal.
-  - **No signal:** the result is `confirmed: false`, which the add flow reports as *unconfirmed*, never as success.
+  - **No signal:** the result is `confirmed: false`, which the queue button shows as *Sent, not confirmed*, never as success ([YT-Q-06](02-youtube.md#210-the-thumbnail-add-to-queue-button)). Add to queue isn't an add ([YT-Q-03](02-youtube.md#210-the-thumbnail-add-to-queue-button)): `queueAdd` runs in the tab and never goes through the add flow.
 - **ARC-ACC-36. Undo** (PROVISIONAL, T29.Q2, T29.Q5–Q7):
   1. Wait until the entry has its `playlistSetVideoId`, which shows the add's own edit has finished. T29.Q6 sets the wait.
   2. Resolve `playlistEditEndpoint {playlistId: "TLPQ…", actions: [{action: "ACTION_REMOVE_VIDEO", setVideoId}], params: "IAE%3D"}` with no `clientActions`.
@@ -355,7 +355,7 @@ YouTube's queue is a temporary server playlist (`TLPQ…`), owned by the session
   Page reads skip the lanes. A job that falls back from a page read to a request joins the playlist lane for that request. So a picker read never waits behind a 10 s queue check.
 - **ARC-ACC-43. Human scale** (ticket 03):
   - one request per user intent;
-  - nothing crawls: a playlist list refreshes only on ↻ "Refresh playlists", or by itself when it's opened and its cache is older than 5 minutes ([UI-PICK-25](05-ui.md#contents-and-behaviour-every-container), [§4.5](04-features-accounts-data.md#45-caches-and-expiry)) (R39);
+  - nothing crawls: a playlist list refreshes only on ↻ "Refresh playlists", by itself when it's opened and its cache is older than 5 minutes, and from every membership read, which an add or a picker open makes anyway ([UI-PICK-25](05-ui.md#contents-and-behaviour-every-container), [DATA-20, DATA-21](04-features-accounts-data.md#45-caches-and-expiry)) (R39);
   - on HTTP 429, the add flow pauses that account for 60 s.
 - **ARC-ACC-44. Timeouts:** pings 2 s, jobs 10 s, the YouTube queue confirmation 2 s, and the YouTube Music queue growth check 10 s.
 - **ARC-ACC-45. The page world logs nothing.** No `console` call exists under `src/page/`.
@@ -431,6 +431,8 @@ flowchart TD
 
   Candidates are filtered by window kind as in ARC-ACC-53. The row is read with the `nowPlaying` job in that tab, through the on-demand probe when the tab has no core ([ARC-MAN-15](#633-runtime-script-registration)), so it works whichever YouTube Music features are on. It's shown only while the section switch is on and YouTube Music has site access, and hidden when `nowPlaying` answers `null`. Ticket 10's order is kept for this alone; its first caller, a browser-level quick-action key, was removed by ADR-0004. (R8, R33)
 
+  **Playing now's saves run in that same tab, as that tab's account** ([YM-POP-2](03-youtube-music.md#17-playing-now-in-the-popup), [YM-POP-5](03-youtube-music.md#17-playing-now-in-the-popup)). `ui.playingNow` answers with the tab it read, and the row's Save, its ▾ picker's reads and adds, and their Undo name that tab. The background runs them there with `Tabs.runIn`, after checking that the tab's account key is still the one the row was read with. They never go through `Tabs.serve` or the account in view (ARC-ACC-52). If that tab has closed or its account has changed, the save is never sent to another tab: it fails, or answers with the account guard's message (ARC-ACC-47).
+
 ### 6.2.12 No tab; not signed in; no site access
 
 - **ARC-ACC-58. No YouTube tab** (no candidate is left):
@@ -449,10 +451,11 @@ flowchart TD
   - **Check:** the background calls `permissions.contains` per site on every start, and on `permissions.onAdded` and `onRemoved`.
   - **Missing:** a toolbar "!" on every tab, plus a button in the popup and settings that asks for access ([FT-13](04-features-accounts-data.md#12-switching-features), [§1.7](04-features-accounts-data.md#17-site-access-and-youtube-tabs) for the copy). The click handler calls `permissions.request` first and synchronously, before anything else. (R53)
     - **Every tab,** because without host access the extension can't tell which tabs are that site's.
-    - **YouTube Music:** missing access raises the "!" only while something that needs it is on: a YouTube Music feature, or "Also on YouTube Music" while playlist shortcuts is on, with the section switch on ([FT-47](04-features-accounts-data.md#17-site-access-and-youtube-tabs)).
-  - **Features:** a feature that's on for a site without access shows as on but held for access, and nothing is registered or injected for it until access is granted.
-  - **Refused at first run (Chrome):** if the user agrees but refuses YouTube Music access, consent and the other ticks still apply. The YouTube Music features are saved on, held for access in the same way, with the grant button in the popup and settings. (R14)
-  - **Chrome 133+:** while a feature for that site is on and access is missing, the registrar also calls `permissions.addHostAccessRequest` on open tabs of that site.
+    - **YouTube Music:** missing access raises the "!" only while something that needs it is on: a YouTube Music feature, or "Also on YouTube Music" while Playlist shortcuts is on, with the YouTube Music section switch on ([FT-47](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). That includes what first run's Agree saved on but held after a refused prompt (below).
+  - **Features:** a feature that's on for a site without access shows as on but held with "Needs site access", and nothing is registered or injected for it until access is granted.
+  - **Refused at first run's Agree (Chrome):** consent and the other ticks still apply. The ticked YouTube Music features are saved on but held in the same way, and so is Playlist shortcuts' "Also on YouTube Music", while Playlist shortcuts runs on YouTube. **Give access** shows in the popup and settings ([FT-40](04-features-accounts-data.md#16-first-run) step 2). (R14, R53)
+  - **Refused from a switch** in the popup or settings: the YouTube Music feature's switch, or "Also on YouTube Music", stays off ([FT-52](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). The exception is the click that first switches Playlist shortcuts on: Playlist shortcuts goes on, "Also on YouTube Music" is written off in the same change, and "No access to YouTube Music, so shortcuts work on YouTube only." shows in place, under Playlist shortcuts' row. (R71)
+  - **Chrome 133+, PROVISIONAL** ([ticket 09](../issues/09-where-things-live.md), at build; [FT-53](04-features-accounts-data.md#17-site-access-and-youtube-tabs)): while a feature for that site is on and access is missing, the registrar also calls `permissions.addHostAccessRequest` on open tabs of that site.
 
 ### 6.2.13 Private windows
 
@@ -462,9 +465,9 @@ flowchart TD
   - the store refuses such writes ([§6.9](#69-the-store-module-interface); the table is [04 §4.7](04-features-accounts-data.md#47-the-private-window-write-guard)). Shared-settings changes made in a private window are saved, because they carry nothing about the window's browsing ([DATA-32](04-features-accounts-data.md#47-the-private-window-write-guard); R58, PROVISIONAL on AMO question 3);
   - a private tab's registry entry, breakage signals, session skips, watch progress and the rest of [DATA-33](04-features-accounts-data.md#47-the-private-window-write-guard)'s list live in memory only: the tab's own, or the background's variables, never `storage.session`;
   - fetched playlist lists, membership and undo entries live only in that tab's memory.
-- **ARC-ACC-65.** Origin is computed from the sender, never taken from a message:
+- **ARC-ACC-65.** Origin is computed by the background from the sender. The one value a message supplies, the popup's window ID, is checked against the sender before it's used:
   - **content scripts and the settings tab:** `sender.tab.incognito`;
-  - **the popup:** it sends its window ID, and the background checks `windows.get(id).incognito`. A window that can't be found counts as private.
+  - **the popup:** it has no `sender.tab`, so it sends its window ID (ARC-MSG-06). The background accepts it only when the sender is the popup's own page (`sender.url` is the popup's, and there's no `sender.tab`); from any other sender the message is refused. It then reads `windows.get(id).incognito`. A window that can't be found counts as private.
   - `extension.inIncognitoContext` isn't used, because it's false in Chrome's spanning-mode incognito popup.
 - **ARC-ACC-66.** Routing never mixes window kinds (ARC-ACC-53).
 
@@ -497,13 +500,13 @@ What the signed-out run found:
 | **L5** | The shapes of `get_add_to_playlist` (renderer or view model, paging, privacy, Watch Later) and of the `FEplaylist_aggregation` lockups | Parsers fixed to those shapes | — (shape detail) |
 | **L6** | A duplicate add on www; `ACTION_REMOVE_VIDEO` by `setVideoId` removes one entry; the full-playlist error | [02-youtube.md](02-youtube.md)'s duplicate rules apply as written | Its PROVISIONAL rule for unattended adds applies ([YT-ADD-07](02-youtube.md#251-order-and-membership)) |
 | **L7** | `DATASYNC_ID` stability, and the presence of `responseContext…datasyncId` | The account guard as specified | Setups are re-attached by playlist ownership |
-| **L8** | After a queue add on an existing queue, the video shows in the panel data, and which field holds it | Confirmation reads that field | Only the fallback signal remains, and adds to an open queue report *unconfirmed* |
+| **L8** | After a queue add on an existing queue, the video shows in the panel data, and which field holds it | Confirmation reads that field | Only the fallback signal remains, and Add to queue on an open queue shows *Sent, not confirmed* ([YT-Q-06](02-youtube.md#210-the-thumbnail-add-to-queue-button)) |
 | **L9** | `#shorts-player`'s player API, and `yt-navigate-finish` on every swipe | Page reads as specified | The Shorts channel comes from a plain request, and progress from the `<video>` alone |
 | **M1** | The menu-item route queues correctly and shows nothing once `commands` are stripped; queue replay works signed in | Menu-item route primary, replay as fallback | Replay is primary. Either way, queue edits are unavailable while casting (ARC-ACC-31; R5, R46). |
 | **M2** | `networkManager.fetch` returns signed answers for `get_add_to_playlist`, `browse/edit_playlist`, `playlist/create` and `account/account_menu`; membership (`containsSelectedVideos`) is present; answers carry `datasyncId` | Membership is read on YouTube Music | Membership comes from a www serving tab, else there are no ticks. Without `datasyncId`, the YouTube Music guard uses only the page-load `ytcfg`. |
 | **M3** | A like through `handleServiceEndpoint` sticks, repaints the like button and shows no toast | As specified | YouTube Music's own toast stands in for ours on likes |
 | **M4** | In the installed YouTube Music app (Chrome, Edge), `tabs.query` finds its tab, `executeScript` and registered scripts run there, and the popup's active tab is the app's. No keyboard command other than `_execute_action` is tested (R33). | The app is first-class | The app gets only what reaches it, and the gap is recorded |
-| **M5** | Where an active cast session shows: `state.castStatus` (found signed out), or `#movie_player`'s API | Casting is detected | Queue actions stay available, and their toast names this tab's queue |
+| **M5** | Where an active cast session shows: `state.castStatus` (found signed out), or `#movie_player`'s API | Casting is detected, and every queue edit and its Undo, inserts included, is unavailable while casting (ARC-ACC-31; R46) | Casting can't be detected, so every queue edit (inserts, moves, Remove from queue and their Undo) stays available, and their toasts say "this tab's queue" instead of "the queue" ([YM-CAST-2](03-youtube-music.md#15-casting)). Wherever casting can be read, R46 still holds. |
 | **P1** | The exact install prompts for the final manifest; no prompt on the 1.4.5 → 2.0 Firefox update; Chrome's prompt for YouTube Music access | Listing and upgrade-note copy as drafted | [08 §5](08-release.md#5-permission-prompts-by-audience) adjusts its copy |
 | **P2** | Registered scripts apply at browser start before the background runs (`persistAcrossSessions`). That registrations are restored after an update is already answered from browser source. | As specified | The reconcile also listens for `runtime.onStartup` and injects into tabs already open |
 | **T28.1–T28.7** | Signed-in queue entries carry `playlistEditParams`, `playlistSetVideoId` and the queue's `playlistId`; the drop moves the entry and the server order follows; radio survives; panel states (before anything plays, Lyrics or Related showing); casting | `queueMove` as specified | No moves: queue items keep no Play next / Add to queue, and Remove's undo has no route |
@@ -521,7 +524,7 @@ What the signed-out run found:
 | `name` | "Playlist Pigeon for YouTube™" (PROVISIONAL, ticket 22: the user's call) | same |
 | `short_name` | "Pigeon" (PROVISIONAL, ticket 22; [08 §0](08-release.md#0-provisional-inputs)) | same |
 | `description` | One line of release copy, owned by [08-release.md](08-release.md) (PROVISIONAL, ticket 22) | same |
-| `icons` | Generated by `@wxt-dev/auto-icons` from the mark (PROVISIONAL, ticket 22) | same |
+| `icons` | Generated by `@wxt-dev/auto-icons` from the mark's source in `src/assets/brand/` ([§6.10](#610-folder-layout); PROVISIONAL, ticket 22; R73) | same |
 | `version` | `package.json` `version` | same |
 | `minimum_chrome_version` / `browser_specific_settings.gecko.strict_min_version` | `"121"` | `"140.0"` |
 | `browser_specific_settings.gecko.id` | — | `{cc70cd21-2cc6-444b-bd89-496909346091}` (kept from 1.x) |
@@ -540,7 +543,7 @@ What the signed-out run found:
 
 - **ARC-MAN-01.** The built manifests match this table exactly. `check:manifest` asserts it on both builds ([Q-CI-3](07-quality.md#771-ciyml), [REL-CI-20](08-release.md#141-ciyml)).
 - **ARC-MAN-02.** These are never requested: `tabs`, `activeTab`, `cookies`, `identity`, `offscreen`, `declarativeNetRequest*`, `webRequest*`, `unlimitedStorage`, `contextMenus` / `menus`, and any Google host other than YouTube's.
-- **ARC-MAN-03.** On Chrome, YouTube Music access is requested with `permissions.request({ origins: ["https://music.youtube.com/*"] })`, called first and synchronously in the click handler of Give access, or of the control that switches on the first thing that needs it: a YouTube Music feature, or "Also on YouTube Music" while playlist shortcuts is on. The shortcuts preset turns that option on, so the click that first switches on playlist shortcuts asks too ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). The YouTube Music section switch itself never asks. (R53)
+- **ARC-MAN-03.** On Chrome, YouTube Music access is requested with `permissions.request({ origins: ["https://music.youtube.com/*"] })`, called first and synchronously in the click handler of Give access, or of the control that switches on the first thing that needs it: a YouTube Music feature, or "Also on YouTube Music" while playlist shortcuts is on. The shortcuts preset turns that option on, so the click that first switches on playlist shortcuts asks too ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). The YouTube Music section switch itself never asks. A refused prompt is handled as [ARC-ACC-61](#6212-no-tab-not-signed-in-no-site-access) says: from a switch, that switch stays off, except that Playlist shortcuts' own first switch-on goes on with "Also on YouTube Music" written off (R71); at first run's Agree, what needs the access is saved on but held (R14). (R53, R71)
 - **ARC-MAN-04.** Dynamic script matches stay narrow on both browsers: `https://www.youtube.com/*` and `https://music.youtube.com/*`, top frame only.
 - **ARC-MAN-05.** The only keyboard command is the unbound `_execute_action`. Every shortcut is caught in the page (ADR-0004).
 
@@ -598,7 +601,7 @@ Page code is WXT **unlisted scripts** (`defineUnlistedScript`), registered by th
   - on every store change that alters switches or consent;
   - on `permissions.onAdded` and `permissions.onRemoved`.
 
-  The reconcile needs no `runtime.onInstalled` listener: the start-up run already covers install and update. Like recognising a 1.x upgrade (ARC-MOD-25), it never relies on that event, which Firefox can skip; the background uses it only to open first run on "install" ([DATA-47](04-features-accounts-data.md#410-schema-versions-and-migrations)). (R64)
+  The reconcile needs no `runtime.onInstalled` listener: the start-up run already covers install and update. Like recognising a 1.x upgrade (ARC-MOD-25), it never relies on that event, which Firefox can skip; the background uses it only to open first run on "install" ([ARC-MOD-34](#643-background-srcbackground), [DATA-47](04-features-accounts-data.md#410-schema-versions-and-migrations)). (R64)
 - **ARC-MAN-13. Switching a feature on** rewrites `pp-<site>` in one `updateContentScripts` call. Then, in each open matching tab, `scripting.executeScript` injects whatever is missing, in this order: the page half (`world: "MAIN"`), the core, the kit, then the feature. It works with no reload. The tab's new view arrives, and the core's host starts the feature.
 - **ARC-MAN-14. Switching a feature off** rewrites the list, and the background pushes the new view. The host disposes the feature's scope, removing every element, style, listener, observer and timer it made.
   - If no feature is left on a site, both of that site's registrations go, and the core disposes everything it added.
@@ -727,7 +730,7 @@ Names are the UI's ([FT-01](04-features-accounts-data.md#11-the-features), [YT-G
 | Feature (registry ID) | Sites | Deep part, and where its logic sits |
 |---|---|---|
 | Auto-add (`auto-add`) | www | The watch tracker, fed by the `player` stream. Progress is loaded and saved through the background. Due playlists go to `ctx.add`. Exposes `status` for the popup's This video. |
-| Playlist shortcuts (`shortcuts`) | www, music | Binds its keys and the picker key; the undo key is the core's (ARC-MOD-31, R2). Resolves the target with `ctx.items`, then calls `ctx.add` or opens the picker. A shortcut with no playlist on this account opens the picker in choose mode from its toast's **Choose**; the pick also saves the item, with Undo (R24, R45). One source, two files (`feature-shortcuts-www`, `feature-shortcuts-music`). |
+| Playlist shortcuts (`shortcuts`) | www, music | Binds its keys, and on www the picker key. The picker key works on YouTube only: on YouTube Music, Quick-action shortcuts' Alt+Shift+P does that job, so `feature-shortcuts-music` never binds it ([YM-PS-7](03-youtube-music.md#18-playlist-shortcuts-on-youtube-music)). The undo key is the core's (ARC-MOD-31, R2). Resolves the target with `ctx.items`, then calls `ctx.add` or opens the picker. A shortcut with no playlist on this account opens the picker in choose mode from its toast's **Choose**; the pick also saves the item, with Undo (R24, R45). One source, two files (`feature-shortcuts-www`, `feature-shortcuts-music`). |
 | Quick-save on thumbnails (`quick-save`) | www | A split button through the overlay. One click → `ctx.add`; ▾ → popovers. Hover on ▾ preloads them. |
 | Queue button on thumbnails (`queue-button`) | www | An overlay button with its states. `queueAdd` targeted at the card; Undo through `queueUndo`, after which the button is idle and clickable again (R27). It steps aside where YouTube draws its own hover Add to queue. |
 | Watch-page button (`watch-button`) | www | The pill after Share, before Save, showing auto-add's state. Its menu is in popovers; the menu's Save rows belong to this feature and use its Show feedback switch (default on), whether or not quick-save is on (R27, R42). |
@@ -765,7 +768,7 @@ type TrackerUpdate = { state: TrackerState; counted: number; due: PlaylistId[]; 
   - Bits UI positioning, focus and dismissal inside the kit's layer (`BitsConfig defaultPortalTo`, `strategy: "fixed"`, sized by Bits UI's available-height variable);
   - Escape, which the popovers handle themselves, because host key isolation stops Bits UI from seeing it;
   - search, membership states, per-row results and the new-playlist form.
-- **The loader** has a 5 s timeout and a visible failure when opened by a click, and stays silent when preloading on hover intent.
+- **The loader** has a 5 s timeout. Every explicit open that times out, keys included, shows the failure toast "Couldn't open the playlist list. Try again.": ▾, the picker key, the watch-page menu's **Save to…** and a toast's **Choose** on YouTube, and the same opens on YouTube Music ([YT-PK-11](02-youtube.md#26-the-playlist-picker), [YM-PICK-14](03-youtube-music.md#10-the-playlist-picker)). Only a preload on hover intent fails silently, to the console.
 
 ### 6.4.3 Background (`src/background/`)
 
@@ -784,7 +787,7 @@ interface Registrar {
   - `desired(...)` and the diff against `getRegisteredContentScripts()`;
   - injecting newly-on features (plus the page half, core and kit when they're missing) into open matching tabs;
   - re-injecting after an update;
-  - `addHostAccessRequest` on Chrome 133+.
+  - `addHostAccessRequest` on Chrome 133+ (PROVISIONAL, ARC-ACC-61, [FT-53](04-features-accounts-data.md#17-site-access-and-youtube-tabs)).
 - **Start-up:** nothing registers before `store.ready()` resolves `"ok"`, and nothing registers without consent.
 - **Seams:** `ScriptingPort` (`register`, `update`, `unregister`, `list`, `executeScript`) and `AccessPort` (`contains`, `request`, `onAdded`, `onRemoved`). Adapters: browser and fake. WXT's fake browser has neither `scripting` nor `permissions`.
 
@@ -827,7 +830,7 @@ interface AddFlow {
   - undo entries (memory only) and session skips;
   - private-window refusals;
   - Try again.
-- **Dependencies:** `exec`, which is `Tabs.runIn` for an in-tab add and `Tabs.serve` for one from the popup, plus the store and Playlists.
+- **Dependencies:** `exec`, which is `Tabs.runIn` for an in-tab add and for Playing now's saves (in the tab [ARC-ACC-68](#6211-serving-tab-routing) picked, as its account), and `Tabs.serve` for other adds from the popup, settings or the first-run page; plus the store and Playlists.
 
 **Monitor and Badge** (deep): the breakage monitor.
 
@@ -841,22 +844,23 @@ interface Monitor {
 ```
 
 - **What it hides:**
-  - `deriveStatus(registry health, signals) → statuses`, which is pure. Status is per feature, per site and tab ([HEALTH-07](04-features-accounts-data.md#52-status)). A YouTube Music feature with some actions unavailable in a tab is *partly working*, and its status detail names those actions, from the registry's `actions` (ARC-REG-01) (R50);
+  - `deriveStatus(registry health, signals) → statuses`, which is pure. Status is per feature, per site and tab ([HEALTH-07](04-features-accounts-data.md#52-status)). A YouTube Music feature with some actions unavailable in a tab is *partly working*, and its status detail names those actions, from the registry's `actions` (ARC-REG-01). That detail is what an unavailable action's key points to: its buttons hide in that tab, but the key stays caught and answers "{Action} isn't working right now. The popup shows why." (ARC-ACC-21) (R50, R68);
   - the thresholds;
   - notice-once memory;
   - signals from private tabs, kept in memory only.
 - **Badge** is a pure `badgeFor(tab, state) → { text, color, title }`, applied through `browser.action` ([HEALTH-15](04-features-accounts-data.md#53-where-it-shows)). (R12, R53)
   - **Priority:** consent or upgrade pending, then site access missing, then not working, then a Missing or Full playlist.
   - **Scope:** not working is per tab. Consent, site access and Missing or Full show on every tab: without host access the extension can't tell which tabs are that site's.
-  - **YouTube Music access** counts as missing only while something that needs it is on: a YouTube Music feature, or "Also on YouTube Music" while playlist shortcuts is on, with the section switch on (FT-47).
+  - **YouTube Music access** counts as missing only while something that needs it is on: a YouTube Music feature, or "Also on YouTube Music" while Playlist shortcuts is on, with the YouTube Music section switch on ([FT-47](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). That includes what first run's Agree saved on but held after Chrome's prompt was refused ([FT-40](04-features-accounts-data.md#16-first-run), ARC-ACC-61; R14). After R71's refusal, "Also on YouTube Music" is off, so it raises nothing.
   - **Colour:** "needs you" (consent, site access, Missing or Full) is the brand violet; "not working" is amber.
 
 **Smaller background modules:**
 - **Playlists:** `list(acct, { refresh, req })`, `create(...)`, `resolveChannel(input, req)` and `absorb(answer)`. It hides cache freshness (a list opened with a cache older than 5 minutes refreshes; `refresh` is ↻, R39) and the merge rules.
-- **Accounts:** `onSeen(acct, tab)`. It hides the 24 h label check, and claiming the unclaimed setup after consent with the pure `claim(unclaimed, owned, existing) → { setup, dropped }`.
+- **Accounts:** `onSeen(acct, tab)`. It hides the 24 h label check, and claiming the unclaimed setup after consent with the pure `claim(unclaimed, owned, existing) → { setup, dropped }`, written through the store's `claim` change ([§6.9](#69-the-store-module-interface); [ACC-30](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming), [REL-MIG-35](08-release.md#210-claiming-the-unclaimed-setup)).
 - **Diagnostics:** `report() → string` and `checkNow() → CheckResult | NoTab`. It hides the list of what a report never contains ([HEALTH-25](04-features-accounts-data.md#55-diagnostics-check-now-and-the-report)). With no YouTube tab, Check now is disabled with "Open YouTube to check" and a button (R15).
 - **Router:** maps each message kind to one module call, validates it with the contract's guard, and computes `Origin` from `sender`.
 - **Boot:** registers every listener synchronously in the worker's first turn, as MV3 requires. Each handler awaits `store.ready()` before doing anything.
+  - **ARC-MOD-34. The `runtime.onInstalled` listener** has one job: when the reason is "install", it opens first run in a tab ([FT-40](04-features-accounts-data.md#16-first-run), [DATA-47](04-features-accounts-data.md#410-schema-versions-and-migrations)). Other reasons do nothing, so no tab opens on an update; a 1.4.5 user with no 1.x key left is a fresh install whom the toolbar "!" and the popup's "Waiting for your OK" lead to first run (R76). Nothing else depends on the event: the reconcile (ARC-MAN-12) and recognising a 1.x upgrade (ARC-MOD-25) run on every start, because Firefox can skip it. (R64, R76)
 
 ### 6.4.4 Popup, settings and the first-run page (`src/ui/`)
 
@@ -998,7 +1002,7 @@ type FeatureDef = {
   }>>
   health: Partial<Record<Site, {
     required: JobId[]; optional: JobId[]; anchors: AnchorId[]
-    actions?: Record<ActionId, JobId[]>   // YouTube Music: the jobs each action needs; a lost one hides that action in the tab and is named in the status detail (R50)
+    actions?: Record<ActionId, JobId[]>   // YouTube Music: the jobs each action needs; a lost one hides that action's buttons in the tab, keeps its key caught with "{Action} isn't working right now. The popup shows why.", and is named in the status detail (R50, R68)
   }>>
 }
 ```
@@ -1085,7 +1089,7 @@ The eager page scripts share one Svelte copy: the kit carries the runtime, and f
 
 ### 6.7.4 Lazy popovers
 
-- **ARC-MOD-17.** `popovers.js` holds the playlist picker and the watch-page button's menu, with Bits UI and its own Svelte copy (ADR-0008). It's injected by `scripting.executeScript` on first use, or on hover intent.
+- **ARC-MOD-17.** `popovers.js` holds the playlist picker and the watch-page button's menu, with Bits UI and its own Svelte copy (ADR-0008). It's injected by `scripting.executeScript` on first use, or on hover intent. If it hasn't loaded within 5 s, every explicit open, by click or key, shows the loader's failure toast; only a hover preload fails silently ([§6.4.2](#642-isolated-world-srcsite)'s Popovers).
   - So a page briefly holds two Svelte copies once a popover opens.
   - It mounts into the kit's layer as plain DOM, never as a child component of the kit, because components from two Svelte copies can't nest.
 - **ARC-MOD-18. If `popovers.js` misses its weight or first-open budget** (ticket 27 measured 54.5 KB against 50), the fix order is:
@@ -1180,11 +1184,11 @@ sequenceDiagram
 | `ui.change { Change, windowId }` | Any settings or setup edit |
 | `ui.accountInView { windowId }` | The popup's header account |
 | `ui.playlists { acct, refresh }` | The playlist list, from cache, refreshed through a serving tab on ↻ or when older than 5 minutes (R39) |
-| `ui.add { AddRequest, windowId }` | A picker add from the popup |
+| `ui.add { AddRequest, windowId, tabId? }` | A picker add from the popup. Playing now's saves name the tab `ui.playingNow` read, and run there as its account (ARC-ACC-68) |
 | `ui.create { acct, title, privacy, videoId?, windowId }` | Create a playlist, with the video already in it when the popup's picker creates it |
 | `ui.resolveChannel { input, windowId }` | Typed channel lookup |
 | `ui.thisTab { windowId }` | This video, through `bg.query` |
-| `ui.playingNow { windowId }` | Playing now: `nowPlaying` in the tab ARC-ACC-68 picks, or nothing to show |
+| `ui.playingNow { windowId }` | Playing now: `nowPlaying` in the tab ARC-ACC-68 picks, with that tab's ID and account, or nothing to show |
 | `ui.syncedChoices` | First run, before Agree: the feature choices in the synced copy, to pre-tick them (ARC-MSG-12) |
 | `ui.syncJoin { choice }` | The settings-sync join answer |
 | `ui.clearAll { alsoSynced }` | Clear all data |
@@ -1193,7 +1197,7 @@ sequenceDiagram
 
 - **ARC-MSG-06.** The popup sends its window ID, because it has no `sender.tab`. Settings and the first-run page are identified by `sender.tab`.
 - **ARC-MSG-11.** Playing now is read with the `nowPlaying` job, never through a feature's `expose`, so it works whichever YouTube Music features are on. It's answered only after consent ([YM-POP-7](03-youtube-music.md#17-playing-now-in-the-popup)). (R8)
-- **ARC-MSG-12.** `ui.syncedChoices` is the one UI call answered before consent that touches `storage.sync`. It reads the synced copy once, read-only, at first run. Nothing is pushed, and the sync switch (`Device.syncOn`) isn't stored, until Agree; without Agree nothing is written but the `schema` marker (ARC-MOD-25) ([FT-31](04-features-accounts-data.md#15-the-consent-gate)). It's one of the two `storage.sync` calls allowed while sync is off; the other is `ui.clearAll { alsoSynced: true }` ([Q-PERF-11](07-quality.md#762-off-means-zero)). (R9, R54, R59)
+- **ARC-MSG-12.** Exactly two UI calls touch `storage.sync` before consent, and they're the only two allowed at any time while sync is off: `ui.syncedChoices`, and `ui.clearAll { alsoSynced: true }`, since Clear all data is always reachable, consent or not ([DATA-36](04-features-accounts-data.md#48-clear-all-data), [FT-21](04-features-accounts-data.md#13-off-costs-nothing), [Q-PERF-11](07-quality.md#762-off-means-zero)). `ui.syncedChoices` reads the synced copy once, read-only, at first run. Nothing is pushed, and the sync switch (`Device.syncOn`) isn't stored, until Agree; without Agree nothing is written but the `schema` marker (ARC-MOD-25) ([FT-31](04-features-accounts-data.md#15-the-consent-gate)). (R9, R54, R59)
 
 ### 6.8.4 Rules for every channel
 
@@ -1220,7 +1224,7 @@ interface Store {
   clearAll(origin: Origin, opts: { alsoSynced: boolean }): Promise<void>
 }
 
-type View = "settings" | "device" | "setup" | "filters" | "cache" | "progress" | "session" | "syncStatus" | "tabView"
+type View = "settings" | "device" | "setup" | "unclaimed" | "filters" | "cache" | "progress" | "session" | "syncStatus" | "tabView"   // "unclaimed": the 1.x setup waiting for its account (ACC-28)
 type ChangeResult = { ok: true } | { refused: "private" | "sync-full" | "update-needed" | "invalid" }
 type Origin =
   | { kind: "tab"; tabId: number; incognito: boolean }
@@ -1229,8 +1233,8 @@ type Origin =
   | { kind: "sync" }
 ```
 
-- **ARC-MOD-19.** `Change` is one discriminated union for every write: settings edits, setup edits (removing a setup included), filters, cache absorbs, marks, progress, session memory (pause, skips, recent adds, cooldowns, shown-once memory, breakage, the tab registry), device fields (the sync switch, `Device.syncOn`, included; R54), and the sync join choice.
-- **ARC-MOD-20.** `Origin` is computed by the router from `sender`, never taken from a message (ARC-ACC-65).
+- **ARC-MOD-19.** `Change` is one discriminated union for every write: settings edits, setup edits (removing a setup included), the unclaimed setup (`claim`, which merges it into an account's setup and deletes it, and `discard`, which deletes it; [ACC-30 to ACC-33](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming), [DATA-42](04-features-accounts-data.md#49-removing-a-setup-and-smaller-removals)), filters, cache absorbs, marks, progress, session memory (pause, skips, recent adds, cooldowns, shown-once memory, breakage, the tab registry), device fields (the sync switch, `Device.syncOn`, included; R54), and the sync join choice. A `claim` from a private window is refused, as every account-setup write there is ([DATA-33](04-features-accounts-data.md#47-the-private-window-write-guard)).
+- **ARC-MOD-20.** `Origin` is computed by the router from `sender`. The popup's window ID is the one value a message supplies, and it's checked against the sender first (ARC-ACC-65).
 - **ARC-MOD-33. `update-needed`** refuses only an edit to a synced document that a newer version wrote and this browser can't read. Every other edit goes through ([SYNC-23](04-features-accounts-data.md#37-different-2x-versions-update-needed)). The sync status reads `waiting` while the join question hasn't been answered. (R13)
 - **ARC-MOD-21. What the store hides:**
   - the storage layout and its prefixes, codecs and stamps;
@@ -1252,9 +1256,9 @@ type Origin =
   3. on `"newer-layout"`, nothing registers and nothing is written. (R20, R21)
 
   **Upgrade or fresh install** is decided in the same start-up step, on every background start ([REL-MIG-02](08-release.md#21-when-it-runs), [DATA-49](04-features-accounts-data.md#410-schema-versions-and-migrations)). (R64)
-  - If there's no consent record and no upgrade-note record (`device.consent` and `device.upgradeNote` are null or absent), and any 1.x key is in `storage.local`, it's an upgrade from 1.x: the upgrade-note path. With neither record and no 1.x key, it's a fresh install: the first-run path.
+  - If there's no consent record and no upgrade-note record (`device.consent` and `device.upgradeNote` are null or absent), and any 1.x key is in `storage.local`, it's an upgrade from 1.x: the upgrade-note path. With neither record and no 1.x key, it's a fresh install: the first-run path. That includes a 1.4.5 user with no 1.x key left, for whom no tab opens on the update (ARC-MOD-34; R76).
   - The 1.x keys are `playlists`, `addToPlaylistID`, `watchLaterShortcut`, `requiredWatchPercentage`, `toastEnabled`, `clientID`, `clientSecret`, `accessToken` and `refreshToken`.
-  - It never relies on `runtime.onInstalled`, which Firefox can skip (ticket 06), or on the `schema` marker, which the first start may already have written.
+  - It never relies on `runtime.onInstalled`, which Firefox can skip (ticket 06), or on the `schema` marker, which the first start may already have written. The event's one listener only opens first run on "install" (ARC-MOD-34).
 
 ## 6.10 Folder layout
 
@@ -1276,6 +1280,7 @@ src/
   background/             boot · router · store/ · registrar/ · tabs/ · adds/ · monitor/ · playlists/ · accounts/ · diagnostics/ · adapters/browser*.ts
   ui/                     backend/{backend,browser,fake} · components/ (shadcn-svelte) · popup/ · settings/ · onboarding/ · lib/
   livecheck/              live-check page (livecheck mode only)
+  assets/brand/           the mark (pigeon.svg, pigeon-dark.svg) and the toolbar icon source the manifest icons are generated from (R73)
 tests/                    setup/ · fakes/ · guards/ · integration/ · browser/       (07 §7.2)
 fixtures/                 youtube/<job>/<variant>.json · markup/
 tools/                    watch/ · fixtures/       (never shipped)
@@ -1285,6 +1290,7 @@ store/                    listing/ · notes/ · release-notes/ · live-checks/ �
 site/                     the GitHub Pages site: home · privacy/ · beta/       (not src/site/; never shipped)
 ```
 
+- `src/assets/brand/` holds the brand's files: the mark's SVGs ([UI-BRAND-03](05-ui.md#59-the-brand-provisional-ticket-22)) and the toolbar icon's source artwork, from which `@wxt-dev/auto-icons` makes the 16, 32, 48 and 128 px icons ([UI-BRAND-04](05-ui.md#59-the-brand-provisional-ticket-22), ARC-MAN-01's `icons`). The popup, settings and the first-run page import the SVGs from there. The files are PROVISIONAL with the name and mark (ticket 22). (R73)
 - The test folders are [07 §7.2](07-quality.md#72-test-layers), and the workflows [07 §7.7](07-quality.md#77-ci-jobs-and-the-hotfix-lane) and [08 §14](08-release.md#14-ci-and-release-workflows).
 - The release files are [08-release.md](08-release.md)'s: `store/` ([§9](08-release.md#9-store-listings), [§11](08-release.md#11-chrome-web-store-dashboard-answers), [§12.1](08-release.md#121-reviewer-notes-approval_notes), [REL-CI-30](08-release.md#142-releaseyml)), `site/` ([§10](08-release.md#10-privacy-policy), [REL-CI-43](08-release.md#145-pagesyml)), `scripts/amo-metadata.ts` (REL-CI-30), `scripts/upgrade-test/` ([REL-CHK-11](08-release.md#171-harness)), `SOURCE_CODE_REVIEW.md` ([REL-STORE-27](08-release.md#123-source_code_reviewmd-in-the-sources-zip)), `RELEASING.md` ([REL-CHK-18](08-release.md#18-release-checklist-releasingmd)), `.env.submit.example` ([REL-CI-50](08-release.md#146-secrets-variables-and-environments)) and the issue forms ([REL-STORE-35](08-release.md#16-support-channel)). The sources zip leaves out `store/`, `site/` and `tools/` ([REL-STORE-32](08-release.md#124-the-bun-and-arm64-build)). (R63)
 
@@ -1362,13 +1368,7 @@ These earlier statements are superseded and must not be built:
 
 ### Still open
 
-These disagree with another chapter on what this chapter owns, mechanisms and interfaces, so the other chapter should follow this one. Live checks, AMO's reply and the name stay PROVISIONAL where they're marked, and aren't repeated here.
-
-1. **The on-demand probe in the reviewer notes.**
-   - [REL-STORE-21](08-release.md#121-reviewer-notes-approval_notes)'s notes inject the gateway and core alone "only when the popup or settings needs an account or playlists".
-   - The probe also fetches other fresh data, Playing now's `nowPlaying` read included (ARC-MAN-15, ARC-ACC-68). The start-up reconcile also injects into open tabs after an update (ARC-MAN-17).
-   - Under R49 the notes describe the shipped mechanisms, so they should say "an account or fresh data" and mention the re-injection.
-2. **03's link for YouTube Music's `quiet-route-noisy`.** [YM-FAIL-12](03-youtube-music.md#14-failures-and-breakage) cites §6.2.8.1 (inserts) for the rule. The rule is ARC-ACC-22, in [§6.2.7](#627-route-table-youtube-music).
+None remain; see [Resolved during assembly](#resolved-during-assembly). Live checks, AMO's reply and the name stay PROVISIONAL where they're marked, and aren't repeated here.
 
 ### Resolved during assembly
 
@@ -1381,7 +1381,7 @@ These disagree with another chapter on what this chapter owns, mechanisms and in
 - The cookie lines when L3 passes (was Still open 1): they follow the final route table. If no shipped route reads the session cookie, because no job is left on the signed request or because L3 passes, the "Authentication information" tick and every cookie line go ([§6.2.4](#624-auth-signing-and-the-cookie-rule), the L3 row): R48.
 - The reviewer notes (was Still open 2): [REL-STORE-21](08-release.md#121-reviewer-notes-approval_notes) now describes the two registrations per site, `scripting.executeScript` for open tabs, the on-demand probe and `popovers.js`, and the resolver found on first use: R49.
 - Inserts while casting (was Still open 3): no exception, whatever M1 shows; re-allowing them needs a new decision. [YM-CAST-3](03-youtube-music.md#15-casting) agrees (ARC-ACC-31): R46.
-- Status per action on YouTube Music (was Still open 4): status stays per feature. A feature with some actions unavailable is *partly working*, its status detail names them, and their buttons and keys hide in that tab (ARC-ACC-21, the Monitor, the registry's `actions`): R50.
+- Status per action on YouTube Music (was Still open 4): status stays per feature. A feature with some actions unavailable is *partly working*, its status detail names them, and their buttons hide in that tab (ARC-ACC-21, the Monitor, the registry's `actions`): R50. Their keys no longer hide: R68, below.
 - Chrome's music.youtube.com prompt comes from the click that switches on the first thing that needs it, never from the section switch. The site-access "!" shows on every tab, and for YouTube Music only while something that needs it is on (ARC-MAN-03, ARC-ACC-61, the Badge): R53.
 - Accounts and settings mechanics follow 04: the account in view's fallback is ACC-13's (ARC-ACC-52), the sync switch is `Device.syncOn` (the registry's `setting`, ARC-MSG-12), and the footprint type has four tags ([§6.6](#66-the-feature-registry)): R54.
 - The undo key is the shared `undoKey`, set in Settings › Everywhere and preset to Alt+U at install; while a shortcut feature is on, a press with nothing to undo answers "Nothing to undo." (ARC-MOD-31): R44.
@@ -1389,4 +1389,17 @@ These disagree with another chapter on what this chapter owns, mechanisms and in
 - A 1.x upgrader is recognised at every start by its 1.x keys, with no `onInstalled` and whatever `schema` says; the reconcile needs no `onInstalled` either (ARC-MOD-25, ARC-MAN-12): R64.
 - An ambiguous resolver uses the first property whose `resolveCommand` is a function (ARC-ACC-13): R66.
 
-Also applied here: R41 (auto-add silent when signed out: ARC-ACC-60), R42 (the watch-page button's Show feedback: §6.4.2, ARC-REG-09), R43 (what drops remembered progress: the watch tracker), R45 (the Choose pick saves, with Undo: §6.4.2's popovers), R55 (the account-change toast: ARC-ACC-47), R56 (the "has no playlist" hint always shows: `rules/outcomes`), R58 (private-window settings changes are saved: ARC-ACC-64) and R59 (the two `storage.sync` calls while sync is off: ARC-MSG-12).
+Also applied here, second round: R41 (auto-add silent when signed out: ARC-ACC-60), R42 (the watch-page button's Show feedback: §6.4.2, ARC-REG-09), R43 (what drops remembered progress: the watch tracker), R45 (the Choose pick saves, with Undo: §6.4.2's popovers), R55 (the account-change toast: ARC-ACC-47), R56 (the "has no playlist" hint always shows: `rules/outcomes`), R58 (private-window settings changes are saved: ARC-ACC-64) and R59 (the two `storage.sync` calls while sync is off: ARC-MSG-12).
+
+Third round:
+- **The on-demand probe in the reviewer notes** (was Still open 1): [REL-STORE-21](08-release.md#121-reviewer-notes-approval_notes) now injects the gateway and core alone when the popup or settings needs an account or fresh data, Playing now's read included, and describes the start-up reconcile's re-injection after an update (ARC-MAN-15, ARC-MAN-17, ARC-ACC-68). Fixed in 08.
+- **03's link for YouTube Music's `quiet-route-noisy`** (was Still open 2): [YM-FAIL-12](03-youtube-music.md#14-failures-and-breakage) now cites ARC-ACC-22 in [§6.2.7](#627-route-table-youtube-music). Fixed in 03.
+- **An unavailable YouTube Music action's key:** its buttons hide in that tab, but its key stays caught and answers "{Action} isn't working right now. The popup shows why." (ARC-ACC-21, ARC-ACC-29, the Monitor, the registry's `actions`): R68.
+- **Playing now's art and YouTube Music's song counts** (03's and 05's Conflicts found): `nowPlaying` carries `artwork?`, and `membership` rows carry `count?` when the answer has one (§6.2.5, the `nowPlaying` route): R73.
+- **A folder for the brand's files** (05's Conflicts found): `src/assets/brand/` ([§6.10](#610-folder-layout), the manifest's `icons`): R73.
+- **Chrome's YouTube Music prompt refused while switching on Playlist shortcuts:** Playlist shortcuts goes on, and "Also on YouTube Music" is written off, with its line shown in place (ARC-MAN-03, ARC-ACC-61, the Badge): R71.
+- **A 1.4.5 user with no 1.x key left** is a fresh install, and no tab opens on the update (ARC-MOD-25, ARC-MOD-34): R76.
+- **Mismatches with 02, 03 and 04 found in the final check,** fixed here: the two `storage.sync` calls allowed before consent (ARC-MSG-12; 04 DATA-36, FT-21); the popup's window ID checked against the sender (ARC-ACC-65, ARC-MOD-20); FT-47's "with the YouTube Music section switch on" and FT-40's refused prompt at first run (ARC-ACC-61, the Badge); every membership read refreshing the list (ARC-ACC-43; 04 DATA-20, DATA-21); `addHostAccessRequest` PROVISIONAL as FT-53 (ARC-ACC-61, the Registrar); the unclaimed setup in the store's `View` and `Change` (ARC-MOD-19; 04 §2.6, 08 §2.10); the `onInstalled` listener that only opens first run (ARC-MOD-34; 04 FT-40, DATA-47); Playing now's saves run in the tab ARC-ACC-68 picked, as that tab's account (ARC-ACC-68, AddFlow, `ui.add`; 03 YM-POP-2, YM-POP-5); the picker key on YouTube only (the features table; 03 YM-PS-7); Add to queue's *Sent, not confirmed*, outside the add flow (ARC-ACC-35, L8; 02 YT-Q-03, YT-Q-06); the loader's failure toast on every explicit open, keys included (§6.4.2's Popovers, ARC-MOD-17; 02 YT-PK-11, 03 YM-PICK-14); M5's fail branch (§6.2.15; 03 YM-CAST-2, R46). No R-numbers: the owning chapters' text wins.
+- **02's earlier points on this chapter** (02's old C12 and C13): `create` carries `videoId?` (§6.2.5, PickerModel), and AddFlow cites [YT-ADD-15](02-youtube.md#252-feedback)'s copy instead of quoting it. Already fixed.
+
+Also applied, third round: R68 (ARC-ACC-21, ARC-ACC-29, the Monitor, the registry's `actions`), R71 (ARC-MAN-03, ARC-ACC-61, the Badge), R73 (§6.2.5's `membership` and `nowPlaying`, §6.2.7's `nowPlaying` route, the manifest's `icons`, §6.10) and R76 (ARC-MOD-25, ARC-MOD-34). R69, R70, R74, R75 and R77 change copy this chapter doesn't quote, and R72 is 07's and 08's.

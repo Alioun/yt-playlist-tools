@@ -28,7 +28,7 @@ It covers behaviour only.
   | `YT-CM` | The right-click card menu |
   | `YT-BRK` | What the user sees when YouTube changes something |
 
-- **(R-n)** at the end of a requirement means resolution R-n in [resolutions.md](resolutions.md) changed or added it while the spec was assembled. Both rounds are applied (R1–R40, then R41–R67).
+- **(R-n)** at the end of a requirement means resolution R-n in [resolutions.md](resolutions.md) changed or added it while the spec was assembled. All three rounds are applied (R1–R40, R41–R67, then R68–R77).
 - **Ownership:** under the resolutions' ownership rule, this chapter owns YouTube feature behaviour and copy. Where it shares a topic with another chapter, the owner's text wins: [04](04-features-accounts-data.md) for accounts, settings, data and status, [05](05-ui.md) for layout and visuals, [06](06-architecture.md) for mechanisms, [07](07-quality.md) for budgets, tests and breakage-signal identifiers, and [08](08-release.md) for upgrade and consent copy.
 - **PROVISIONAL** marks a rule that a pending check or user decision may change. The mark names what's pending: e.g. "PROVISIONAL (ticket 25: L6)" is live check L6 in [ticket 25](../issues/25-live-checks.md), whose L-checks are defined in [ticket 10](../issues/10-youtube-access.md). Where the tickets say what happens either way, so does this chapter.
 - **Placeholders in copy:**
@@ -37,7 +37,7 @@ It covers behaviour only.
   |---|---|
   | `{title}` | The video's title, in typographic double quotes (“{title}”) in the copy, cut per YT-ADD-18 (R45) |
   | `{list}` | The playlists, written as a list per YT-ADD-18 |
-  | `{Playlist}` | One playlist's title |
+  | `{Playlist}` | One playlist's title, unquoted in copy except in "{Shortcut} now saves to “{Playlist}”." (YT-ADD-18; R77) |
   | `{Channel}` | The channel's title |
   | `{Shortcut}` | A playlist shortcut's label, else its playlist's title on this account, else its key |
   | `{Account}` | The account's name from its label, else "Unnamed account". The tickets write it as `{Name}` (R65). |
@@ -354,7 +354,7 @@ The flags are read in this order: `isPostLiveDvr`, `isLive`, `isUpcoming`, `isLi
 
 ### 2.3.9 What auto-add shows about the current video
 
-**YT-AA-38: one state per playback,** shown by the watch-page button (YT-WB) and the popup's This video status ([05-ui.md](05-ui.md)). The copy below is the watch-page button's, from [ticket 14](../issues/14-in-page-controls.md). The popup's wording is in [05-ui.md](05-ui.md).
+**YT-AA-38: one state per playback,** shown by the watch-page button (YT-WB) and the popup's This video status ([05-ui.md](05-ui.md)). The copy below is the watch-page button's, from [ticket 14](../issues/14-in-page-controls.md). The popup's wording is in [05-ui.md](05-ui.md). "Couldn't save “{title}”. Try again." is the button's status line when auto-add failed for any reason but being offline; it's never a toast, and the menu's Save rows don't use it (YT-WB-09; R70).
 
 | State | Meaning | Button label | Status line (tooltip and menu) |
 |---|---|---|---|
@@ -362,7 +362,7 @@ The flags are read in this order: `isPostLiveDvr`, `isLive`, `isUpcoming`, `isLi
 | Partly added | Some playlists have had their outcome; others have higher goals | ◔ Auto-added · next at 90 % | Added to Music videos · Talks to watch at 90 % |
 | Added | Every playlist that takes the video has had its outcome, and at least one added it | ✓ Auto-added | Auto-added to Music videos and Talks to watch |
 | Already in | Every outcome was *already in* | ✓ Already in Music videos | Already in Music videos |
-| Failed | An add failed | (error glyph) Couldn't auto-add | Offline: Couldn't auto-add to Music videos. Check your connection. Any other failure: Couldn't save “{title}”. Try again. (R27) |
+| Failed | An add failed | (error glyph) Couldn't auto-add | Offline: Couldn't auto-add to Music videos. Check your connection. Any other failure: Couldn't save “{title}”. Try again. (R27, R70) |
 | Skipped | Session skip on every pending playlist | ⊘ Not auto-adding | Not auto-adding this video |
 | Paused | Auto-add is paused | ⏸ Auto-add paused | Auto-add paused until you resume it or restart the browser |
 | Live | Live, premiering, waiting room or post-live | (live glyph) Not auto-added | Live streams aren't auto-added |
@@ -602,7 +602,7 @@ The card menu raises no toasts of its own, apart from YT-BRK notices, which Show
 **YT-ADD-18: copy rules.**
 - Each toast is one sentence.
 - The video title is in typographic double quotes, “{title}”, cut at 40 characters with "…". If no title is known, it reads "this video". Every quote in copy is typographic (R45).
-- Playlist titles are unquoted, each also cut at 40. The one exception is "{Shortcut} now saves to “{Playlist}”.", where the quotes keep a shortcut's name and its playlist's title apart (R24).
+- Playlist titles are unquoted, each also cut at 40. The one exception is "{Shortcut} now saves to “{Playlist}”.", where the quotes keep a shortcut's name and its playlist's title apart (R24, R77).
 - Lists read "Music", "Music and Learning", "Music, Learning and Watch later", or "Music, Learning and 2 more".
 - Failures start with "Couldn't …".
 - YouTube's own words are used: "Saved to", "Watch later" (YouTube's capitalisation), "the queue".
@@ -793,7 +793,7 @@ The **playlist picker** is the extension's list of the user's playlists, with a 
 **YT-PK-08: pins.**
 - Each row has a pin, "Use for one-click save". It's visible on hover or focus, and always visible on the current quick-save playlist.
 - Pinning makes that playlist YouTube's quick-save playlist for this account.
-- In a private window, pins are disabled, because the quick-save playlist is part of the account setup (YT-GEN-10). Their tooltip says "Changes made here are saved; nothing about this window's browsing is." PROVISIONAL (ticket 23: AMO question 3) ([04](04-features-accounts-data.md) ACC-38; R58).
+- In a private window, pins are disabled, because the quick-save playlist is part of the account setup (YT-GEN-10, [04](04-features-accounts-data.md) DATA-33). Their tooltip says why: "Quick-save playlists can't be changed in a private window." This holds whatever AMO answers about shared settings (ACC-38; R58, R69).
 
 **YT-PK-09: choose mode.**
 - It's titled "Save videos to…", with "One click will save here from now on."
@@ -813,7 +813,7 @@ The **playlist picker** is the extension's list of the user's playlists, with a 
 **YT-PK-11: when it can't open.**
 - **Signed out:** the picker doesn't open, and the sign-in toast shows.
 - **Account can't use playlists:** the message (YT-ADD-38) shows at once.
-- **The picker's code doesn't load within 5 s:** an explicit open gets "Couldn't open the playlist list. Try again." A failed hover preload stays in the console.
+- **The picker's code doesn't load within 5 s:** every explicit open gets the failure toast "Couldn't open the playlist list. Try again.", whether it came from ▾, the picker key, the watch-page menu's **Save to…** or a toast's **Choose**. Only a failed hover preload stays in the console, with no toast.
 
 **YT-PK-12: where it opens.** From ▾ it opens below the split button, or above when there's no room. From the watch-page menu it opens on the button. From the picker key it opens beside the pointed-at card's thumbnail, else over the player, else at the top centre of the window. The measurements are in [05-ui.md](05-ui.md).
 
@@ -941,6 +941,10 @@ The rules for presets ([04](04-features-accounts-data.md) FT-04):
 - **The undo key** doesn't depend on it: it works on any page while a toast with Undo is on screen (YT-KEY-05). While this option is on, Playlist shortcuts counts as a shortcut feature on YouTube Music, so a press there with nothing to undo answers "Nothing to undo." (R44).
 - **Access on Chrome:** it needs YouTube Music access. That's asked from the click that switches it on while Playlist shortcuts is on, or that first switches Playlist shortcuts on, since the preset turns this option on. The section switch itself never asks ([04](04-features-accounts-data.md) FT-44; R53).
 - **Without access,** the row reads "Needs site access" with **Give access**. The violet "!" shows on every tab while Playlist shortcuts and this option are both on and the section is on (04 FT-13, FT-46, FT-47; R53).
+- **Access denied:**
+  - from the click that switches Playlist shortcuts on, in the popup or Settings: Playlist shortcuts goes on, this option turns off, and "No access to YouTube Music, so shortcuts work on YouTube only." shows in place, under Playlist shortcuts' row (04 FT-52; R71);
+  - from the click that switches this option on: it stays off (FT-52);
+  - at first run's Agree: it's saved on but held with "Needs site access" and **Give access**, and shortcuts work on YouTube meanwhile (R14, R53).
 
 ### 2.8.3 What a key acts on
 
@@ -1215,8 +1219,8 @@ The Save rows belong to the watch-page button, whether or not Quick-save on thum
 
 **YT-WB-08: with auto-add off,** only the Save rows and the settings row remain.
 
-**YT-WB-09: rows answer in place.** Rows show their own results (busy, done, "Couldn't save"). Save rows are explicit adds (section 2.5), never filtered. The menu raises only two toasts (R3, R27, R41, R42):
-- signed out, a Save row answers with the failure toast "Sign in to YouTube to save videos." with **Sign in**, as every explicit add does;
+**YT-WB-09: rows answer in place.** Rows show their own results (busy, done, "Couldn't save"). Save rows are explicit adds (section 2.5), never filtered. The menu raises toasts only in these cases (R3, R27, R41, R42, R70):
+- a Save row that fails shows "Couldn't save" in place and answers with the add flow's failure toast for that failure (YT-ADD-28, with its action), which always shows, as for every explicit add. Signed out, that's "Sign in to YouTube to save videos." with **Sign in**. The status line's "Couldn't save “{title}”. Try again." (YT-AA-38) is never used for a Save row;
 - choose mode's first pick, started from the menu, shows its confirmation under the watch-page button's own Show feedback (YT-PK-09).
 
 **YT-WB-10: it flips.** The menu opens above the button when there's no room below.
@@ -1260,7 +1264,7 @@ This section covers only what the user sees on YouTube. The breakage-signal iden
 **YT-BRK-02: the in-page notice.**
 - **When:** once per browser session per feature, at the moment the feature would act: when its buttons would be drawn (the first hover over a card), when the watch-page button would be placed, when auto-add would arm, at a right-click, or when a key is pressed.
 - **Where:** in the first visible tab where the problem is found.
-- **Batching:** features found within 60 ms share one notice, e.g. "Quick-save and the Add to queue button aren't working right now because YouTube changed something. Use YouTube's own buttons for now."
+- **Batching:** features found within 60 ms share one notice, which names them by their full feature names (YT-GEN-01), e.g. "Quick-save on thumbnails and Queue button on thumbnails aren't working right now because YouTube changed something. Use YouTube's own buttons for now." (R75)
 - **Behaviour:**
   - It's the failure toast made sticky: it stays until dismissed with ✕.
   - Its action is **Details**, which opens Settings at Diagnostics.
@@ -1313,7 +1317,10 @@ Later amendments and main-session decisions take precedence. These were applied 
 - **"On Shorts too":** off by default (ticket 14's "on" → R11).
 - **The watch-page button's Show feedback:** it has one, on by default, for its menu's Save rows. The chapters' first draft gave it none, because its rows answer in place (→ R27 → R42).
 - **Pause:** until resumed or the browser restarts, and an extension update also ends it ("or the browser closes" → R57).
-- **The picker's pin in a private window:** its tooltip says "Changes made here are saved; nothing about this window's browsing is." (ticket 14's "Private windows don't save settings" → R58).
+- **The picker's pin in a private window:** its tooltip says "Quick-save playlists can't be changed in a private window." (ticket 14's "Private windows don't save settings" → R58's "Changes made here are saved; nothing about this window's browsing is." → R69).
+- **The watch-page button's "Couldn't save “{title}”. Try again.":** it's the status line when auto-add failed; a failing Save row answers with the add flow's failure toast (R27's generic failure, which 05 also used for a Save row → R70).
+- **Batched not-working notices:** they use full feature names, "Quick-save on thumbnails and Queue button on thumbnails…" ("Quick-save and the Add to queue button…" → R75).
+- **Playlist shortcuts switched on with YouTube Music access denied:** it goes on and "Also on YouTube Music" turns off (FT-52's "that switch stays off", which would have kept a YouTube feature off → R71).
 - **"Also on YouTube Music" without access:** the row reads "Needs site access", and the "!" shows while it and Playlist shortcuts are on (this chapter's first draft: "Needs access to YouTube Music", and no badge → R53, 04 FT-13).
 - **The 1.x shortcut's upgrade-note copy:** 08's wording and conditions (→ R60).
 - **Copy:** typographic quotes, “{title}” (straight quotes → R45), and `{Product}` for the extension's name (`{Extension}` → R65).
@@ -1346,7 +1353,7 @@ Every conflict and gap this chapter raised in its earlier drafts, apart from N13
 - **N6. The confirmation after choosing a shortcut's playlist:** "{Shortcut} now saves to “{Playlist}”." (R24; YT-KEY-13).
 - **N7. Show feedback for the picker key's choose mode:** Playlist shortcuts' switch (R24; YT-PK-09).
 - **N8. Typed-channel errors:** 1.5.0's wording (R27; YT-CF-16).
-- **N9. The watch-page button's generic failure:** "Couldn't save “{title}”. Try again." (R27; YT-AA-38).
+- **N9. The watch-page button's generic failure:** "Couldn't save “{title}”. Try again.", the Failed state's status line when auto-add failed other than offline (R27, read per R70; YT-AA-38).
 - **N10. Videos shorter than 3 s:** the goal is capped at the length, and the 2 s slack applies only from 3 s (R27; YT-AA-17).
 - **N11. The card menu's not-working notice:** a kit-free notice in the site core (R28; YT-CM-05).
 
@@ -1376,20 +1383,28 @@ Also applied, second round:
 
 The other second-round resolutions don't touch this chapter's topics.
 
+Third round:
+- **C9. The watch-page button's Show feedback in 05** (was Conflict): [05](05-ui.md) UI-SET-10 and UI-YT-22 now give the button Show feedback, on by default, covering its menu's Save rows (R42). Fixed in 05.
+- **C10. The watch-page button's "generic failure"** (was Conflict): "Couldn't save “{title}”. Try again." is the Failed state's status line when auto-add failed. The menu's Save rows are explicit saves, so a failing row shows "Couldn't save" in place and answers with the add flow's failure toast (R70; YT-AA-38, YT-WB-09).
+- **C11. The picker pin's private-window tooltip** (was Conflict): "Quick-save playlists can't be changed in a private window.", in 02, [03](03-youtube-music.md) and [05](05-ui.md) (R69; YT-PK-08).
+- **C12. Creating a playlist with the video in it** (was Conflict): [06](06-architecture.md)'s `create` job takes `{ title, privacy, videoId? }` and creates the playlist with that video in it in one request, and PickerModel's `create(title, privacy)` puts the picker's item in the new playlist (YT-NEW-01, YT-ADD-39). Fixed in 06.
+- **C13. This chapter's copy quoted elsewhere** (was Conflict): 06's AddFlow now cites YT-ADD-15's copy instead of quoting it, and 08 REL-STORE-21's reviewer step 3 reads "Auto-added “…” to Reviewer A" (YT-ADD-15, YT-ADD-27). Fixed in 06 and 08.
+- **C14. The undo key in the upgrade note** (was Conflict): [08](08-release.md) REL-CON-04 now reads "Alt+U undoes a save while its message is on screen." (YT-KEY-25). Fixed in 08.
+- **N14. The disabled pin's tooltip in a private window** (was Not pinned down): the tooltip says why the pin is off, "Quick-save playlists can't be changed in a private window." (R69; YT-PK-08).
+
+Also applied, third round:
+- R69 (YT-PK-08);
+- R70 (YT-AA-38, YT-WB-09);
+- R71 (YT-KEY-15);
+- R75 (YT-BRK-02);
+- R77 (the `{Playlist}` placeholder, YT-ADD-18; no other copy here quoted a playlist name).
+
+R68, R72, R73, R74 and R76 don't touch this chapter's topics. YT-PK-11 now says outright that every explicit open, the picker key included, gets the loader-failure toast, which 06's popovers follow.
+
 ## Conflicts found
 
-These are open between this chapter and the others as of this pass. This chapter doesn't edit the others. Under the resolutions' ownership rule, this chapter owns each topic below (YouTube behaviour and copy), unless the entry names another owner.
-
-- **C9. The watch-page button's Show feedback in 05.** [05](05-ui.md) UI-YT-22 still calls the switch open, and UI-SET-10 lists only "On Shorts too" for the button. R42, 04 FT-01 and this chapter (YT-WB-01) give it Show feedback, on by default. 05 should follow.
-- **C10. The watch-page button's "generic failure" (R27).** This chapter reads R27 as the Failed state's status line for any failure other than offline: "Couldn't save “{title}”. Try again." (YT-AA-38). [05](05-ui.md) UI-YT-18 has only the offline line, and UI-YT-22 uses the string for a Save row's generic failure, while YT-WB-09 has Save rows answer inline with "Couldn't save". R27 is ambiguous, and as an auto-add status line it says "save" where YT-ADD-18 has auto-add's toasts say "auto-add". The main session should say which reading R27 meant.
-- **C11. The picker pin's private-window tooltip.** [05](05-ui.md) UI-PICK-10 still says "Private windows don't save settings". R58, 04 ACC-38 and [03](03-youtube-music.md) YM-ACC-8 replace it (YT-PK-08).
-- **C12. Creating a playlist with the video in it.** [06](06-architecture.md)'s `create` job (§6.2.5) takes `{ title, privacy }`, and PickerModel (§6.4.1) has `create(title, privacy)`. Neither can create the playlist with the current video already in it, in one request, as YT-NEW-01 requires and YT-ADD-39 relies on. 06 owns the interface, but it should carry the video ID.
-- **C13. This chapter's copy quoted elsewhere.**
-  - [06](06-architecture.md)'s AddFlow (§6.4.3) quotes the partial result as "Added to {n} playlists · filtered out of {m}". YT-ADD-15's copy is "Auto-added “{title}” to {n} playlists · filtered out of {m}".
-  - [08](08-release.md) REL-STORE-21's reviewer step 3 expects "Added … to Reviewer A". An auto-add reads "Auto-added “…” to Reviewer A" (YT-ADD-27).
-- **C14. The undo key in the upgrade note.** [08](08-release.md) REL-CON-04 says "Alt+U undoes the last save". The undo key acts only on a toast with Undo while it's on screen (YT-KEY-25). 08 owns the note's wording, which could read "Alt+U undoes a save while its message is on screen."
+None remain; see [Resolved during assembly](#resolved-during-assembly). Under the resolutions' ownership rule, this chapter owns YouTube behaviour and copy, and the other chapters now follow it.
 
 ## Not pinned down
 
-- **N13. Choose mode's title for a shortcut.** The picker's choose-mode title and subtitle, "Save videos to…" and "One click will save here from now on.", fit only the quick-save playlist. No wording is given for a shortcut's **Choose** (YT-PK-09).
-- **N14. The disabled pin's tooltip in a private window.** R58's sentence, "Changes made here are saved; nothing about this window's browsing is.", explains why shared settings are saved. But the pin stays disabled there, because the quick-save playlist is an account-setup choice (04 DATA-33), so the tooltip doesn't say why the pin can't be used (YT-PK-08).
+- **N13. Choose mode's title for a shortcut.** The picker's choose-mode title and subtitle, "Save videos to…" and "One click will save here from now on.", fit only the quick-save playlist. No ticket or resolution gives wording for a shortcut's **Choose** (YT-PK-09). [03](03-youtube-music.md#not-pinned-down) and [05](05-ui.md#not-pinned-down) note the same gap.

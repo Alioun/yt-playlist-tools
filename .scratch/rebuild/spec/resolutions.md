@@ -208,3 +208,18 @@ When chapters disagree, the owning chapter wins:
 - **R75 — Batched notices** use full feature names, e.g. "Quick-save on thumbnails".
 - **R76 (confirms 08's reading of R64) — A 1.4.5 user with no 1.x key left** counts as a fresh install. No tab opens on update; the toolbar "!" and "Waiting for your OK" lead them to first run. REL-MIG-09's crash-recovery rule stands.
 - **R77 — Quotes in copy.** Video and song titles take typographic quotes. Playlist names don't, except in R24's "{Shortcut} now saves to “{Playlist}”."
+
+## Final gaps
+
+These settle the remaining "not pinned down" copy and decisions. Where a chapter still lists one of them as a gap, this section governs.
+
+- **R78 — Choose mode opened from a shortcut's Choose.** Title "Choose a playlist for {Shortcut}", subtitle "{Shortcut} will save here on {Account}."
+- **R79 — Sync-status copy.**
+  - `joining`: "Looking for your synced settings…"
+  - `waiting`: "Choose which settings to keep."
+  - `ok`: "Synced"
+  - The join dialog uses ticket 16's two choices: "Use synced settings" and "Use this browser's settings".
+  - When the first-run sync card finds nothing: "No synced settings yet. This browser's settings will be shared."
+- **R80 — Check now before consent** is disabled, with "Agree first to check YouTube."
+- **R81 — Chrome's YouTube Music prompt denied during first run's Agree.** Consent is still set. The YouTube Music features are held for access as in R14, and Playlist shortcuts follows R71.
+- **R82 — Contrast.** Any future token change keeps WCAG AA: 4.5:1 for text and 3:1 for UI components and focus rings, in both themes. 07's axe-core check enforces it.

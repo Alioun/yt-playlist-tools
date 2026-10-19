@@ -120,4 +120,55 @@ From [ticket 17](issues/17-modules.md), for `/to-tickets`:
 
 ## Open items
 
-<!-- filled in once the chapters report their PROVISIONAL items and conflicts -->
+The chapters were checked mechanically on 2026-10-19: 1,009 links and 1,471 requirement IDs, with zero broken links, zero missing IDs, zero duplicate IDs and **no remaining contradictions between chapters**. [`spec/resolutions.md`](spec/resolutions.md) records every conflict settled during assembly (R1–R82). Its "Final gaps" section governs where a chapter still lists a detail as not pinned down.
+
+What's still open, and what settles it:
+
+### Decisions waiting on the user
+
+Each is tracked in [`for-the-user.md`](for-the-user.md).
+
+| Item | Where | Until answered, the spec assumes |
+|---|---|---|
+| **The name, mark and palette:** "Playlist Pigeon for YouTube™", or the runner-up "Playlist Courier for YouTube™" | [ticket 22](issues/22-name.md) | Playlist Pigeon, used throughout; the swap is mechanical |
+| Unticking a playlist in the picker removes the item | [ticket 26](issues/26-youtube-music-quick-actions.md), PAR-NEW-31 | It removes (PROVISIONAL) |
+| More YouTube Music quick actions: Save to library, Start mix, Go to artist / album | PAR-NEW-32 | Not included |
+| A "Recent adds" list in the popup | PAR-NEW-33 | Not included |
+| Live streams and premieres counting for auto-add | PAR-NEW-34 | They never count |
+| Keys that work from any tab (browser commands with no default key) | PAR-NEW-35 | In-page keys only (ADR-0004) |
+| Settings export and import to a file | PAR-NEW-36 | Not included |
+| A "Save to ▸" entry in the browser's right-click menu | PAR-NEW-37 | Not included |
+| A toolbar tick when auto-add added this tab's video, and "paused" on the icon | PAR-NEW-38, FT-01 | Tick off; no paused indicator |
+| Translation | PAR-NEW-39 | Translation-ready strings, English only |
+| Narrow Quick picks rows on YouTube Music squeeze the title while hovered | YM-NARROW-1, UI-YM-10 | Every switched-on button is kept |
+| Approving the privacy policy (published under the user's name), and whether to add a support e-mail beside GitHub issues | REL-STORE-17, HEALTH-22 | Drafted text, GitHub issues only |
+
+### Actions only the user can take
+
+- **Run the live-check probe** ([ticket 25](issues/25-live-checks.md), branch `task/live-checks`) signed in, in Chrome and Firefox, and paste the reports back.
+- **Send the AMO question** ([ticket 23](issues/23-ask-amo.md)) and paste the reply back.
+- **One-time store and GitHub setup** before release ([chapter 08 §19](spec/08-release.md)).
+
+### Waiting on live checks (ticket 25)
+
+These turn PROVISIONAL rows into settled ones. The design doesn't change, only data.
+- **YouTube access routes (L1–L9):** which route each job uses, playlist creation, whether the cookie is read at all (L3/L4, and with it every cookie line in the disclosures, R48), proceeding when membership can't be read (L6), `DATASYNC_ID` stability across browsers (L7, which re-attaching setups depends on), queue confirmation (L8), Shorts (L9).
+- **YouTube Music (M1–M5):** queue reads, membership in its answers, quiet likes, the installed app window, how casting shows; the Wiz miniplayer's Save anchor.
+- **YouTube's queue:** quiet adds and their Undo (T28, T29).
+- **Release inputs:** the exact permission-prompt strings (P1–P2), and open tabs surviving an update.
+- **Measurements on the reference machine:** `popovers.js` (54.5 KB against its 50 KB budget; R29's fix order applies), first-frame and picker timings, and breakage thresholds, which are also tuned in the first weeks of use.
+
+### Waiting on AMO (ticket 23)
+
+- **Q1:** Firefox's `data_collection_permissions` and the update prompt.
+- **Q2:** sync's data type, and whether it can be optional.
+- **Q3:** shared-settings changes made in a private window (R58).
+- **Q4:** the Bun install step in the reviewer build.
+
+[Chapter 08](spec/08-release.md) has the outcome table for every reply.
+
+### Not yet specified
+
+These are carried over from the map and left for the build:
+- visual detail beyond the prototypes: motion and iconography;
+- edge cases with members-only, age-restricted, private and deleted videos, and very large playlists, beyond the failure copy already specified.

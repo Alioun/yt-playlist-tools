@@ -1,5 +1,7 @@
 # For the user
 
+**The spec is assembled** ([spec.md](spec.md)). Everything below is what still needs you; the spec's Open items section states the default it uses for each until you answer.
+
 Items that need the user, collected while working the map. Clear each one when it's answered.
 
 ## Decisions only the user makes

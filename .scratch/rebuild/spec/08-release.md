@@ -21,7 +21,7 @@ Part of the [2.0 spec](../spec.md). This chapter covers how 1.4.5 users get to 2
 - [07](07-quality.md): the test layers ([§7.2](07-quality.md#72-test-layers)), fixtures ([§7.3](07-quality.md#73-fixtures)), the watch and the live check ([§7.5](07-quality.md#75-breakage-detection)), the budgets ([§7.6](07-quality.md#76-performance-budgets)) and the CI jobs ([§7.7](07-quality.md#77-ci-jobs-and-the-hotfix-lane)).
 - [09](09-parity.md): what 1.4.5 users had ([§1.12](09-parity.md#112-what-145-users-had), PAR-CAP-71 to PAR-CAP-79) and the platform and release rows ([§1.11](09-parity.md#111-platform-manifest-build-and-release)).
 
-The main session's resolutions ([resolutions.md](resolutions.md)) are applied, both rounds (R1–R40, then R41–R67). A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist". Under the resolutions' ownership rule, this chapter owns the migration, the upgrade note, and consent copy and conditions (R60); where it shares another topic with a chapter that owns it, that chapter's text wins, and [Conflicts found](#conflicts-found) lists what still differs.
+The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist". Under the resolutions' ownership rule, this chapter owns the migration, the upgrade note, and consent copy and conditions (R60); where it shares another topic with a chapter that owns it, that chapter's text wins, and [Conflicts found](#conflicts-found) lists what still differs.
 
 **Requirement IDs:**
 - `REL-MIG-`: the 1.4.5 migration.
@@ -83,11 +83,11 @@ These facts come from inventory.md, ticket 06 and 1.4.5's code at `e96dbf7`.
   - When the migration runs, it also converts and removes the 1.5.0 developer keys: `authMode`, `authServerURL`, `cachedPlaylists`, `preventDuplicates`, `queueButtonEnabled`, `cardContextMenu`, `channelFilters` and `channelLabels`. On their own, without a 1.x key, they don't make an upgrade; only developer profiles ever wrote them.
 
   It never reads `storage.sync`, because sync is off ([FT-21](04-features-accounts-data.md#13-off-costs-nothing)). 1.5.0's stray `theme` key there, which only developer profiles ever wrote, is left alone. (R20, R64)
-- **REL-MIG-03** A 1.4.5 user who never set anything up has no 1.x key, so REL-MIG-02 treats them as a fresh install: no migration and no note. Their update fires `onInstalled` with "update", not "install", so first run doesn't open by itself; the toolbar shows the "!" and the popup "Waiting for your OK" with **Review**, which opens first run (REL-MIG-04). This replaces R21's `onInstalled` "update" trigger, which gave them an empty note (R64).
+- **REL-MIG-03** A 1.4.5 user with no 1.x key left, such as one who never set anything up, counts as a fresh install under REL-MIG-02: no migration and no note. Their update fires `onInstalled` with "update", not "install", so no tab opens on the update; the toolbar shows the "!" and the popup "Waiting for your OK" with **Review**, which lead them to first run (REL-MIG-04). This replaces R21's `onInstalled` "update" trigger, which gave them an empty note. (R64, R76)
 - **REL-MIG-04** If REL-MIG-02 finds no upgrade, the state is fresh: a new install, an empty profile that updated while disabled, or a 1.4.5 user with no 1.x key.
   - The first background start writes `schema: 1` at once, before consent. A schema marker isn't user data ([DATA-46](04-features-accounts-data.md#410-schema-versions-and-migrations)). It never decides whether a start is an upgrade.
   - First run opens on `onInstalled` "install".
-  - Otherwise the popup shows "Waiting for your OK". (R21, R64)
+  - Otherwise no tab opens: the toolbar "!" and the popup's "Waiting for your OK" lead to first run. (R21, R64, R76)
 - **REL-MIG-05** The migration never depends on `onInstalled`. Firefox fires no `onInstalled` "update" when the add-on was disabled or the update was applied at browser start. In those cases the migration runs from stored state at the next background start, and the note opens then.
   - `onInstalled` is used only for work tied to the event: the first-run tab on "install". (R64)
 - **REL-MIG-06** The extension registers no `runtime.onUpdateAvailable` listener. One would postpone updates and suppress `onInstalled`.
@@ -109,7 +109,7 @@ These facts come from inventory.md, ticket 06 and 1.4.5's code at `e96dbf7`.
   4. **Write `schema: 1` last.**
   5. **Open the note** ([3.1](#31-opening-the-note)). (R20)
 - **REL-MIG-09** Every step is idempotent, and new keys are written before old ones are removed. A crash between any two steps re-runs cleanly at the next start and gives the same result. A test injects a failure at each step boundary.
-  - A crash after step 2 leaves the note's record written while 1.x keys remain, so REL-MIG-02 no longer sees an upgrade. A start that finds the note pending while a 1.x key is still present therefore finishes steps 3 and 4, and leaves the written keys as they are. (R64)
+  - A crash after step 2 leaves the note's record written while 1.x keys remain, so REL-MIG-02 no longer sees an upgrade. A start that finds the note pending while a 1.x key is still present therefore finishes steps 3 and 4, and leaves the written keys as they are. This crash-recovery rule stands alongside R76's fresh-install reading, which applies only when no note record exists. (R64, R76)
 - **REL-MIG-10** The old `localStorage` keys (`cachedVideos`, `playlists` and `preventDuplicates`, on the extension's own origin, left by unreleased builds) are removed by the first extension page that opens, because a service worker has no `localStorage`. That page then asks the background to set `device.legacyCleared = true`, since only the background writes storage ([ARC-MOD-23](06-architecture.md#69-the-store-module-interface)). Once the flag is set, no page touches `localStorage` again.
 
 ### 2.3 The mapping
@@ -268,7 +268,7 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
 | Case | What happens |
 |---|---|
 | The update lands while the add-on is disabled, or at browser start | No `onInstalled`. The migration still runs from stored state at the next start, and the note opens then (R64). |
-| 1.4.5 installed, but nothing ever set | No 1.x key, so it's a fresh install: no migration and no note. The "!" and the popup's "Waiting for your OK" lead to first run (REL-MIG-03; R64). |
+| 1.4.5 installed, but no 1.x key left (e.g. nothing ever set) | A fresh install: no migration, no note, and no tab opens on the update. The "!" and the popup's "Waiting for your OK" lead to first run (REL-MIG-03; R64, R76). |
 | No youtube.com access (installed on Firefox 125/126, or revoked) | The update still installs silently. The note shows "Playlist Pigeon doesn't have access to YouTube in this browser, so nothing can run there yet." with **Give access to YouTube**, which requests access first thing in the click. |
 | Firefox 125–139 (1.4.5's floor is 125) | Stays on 1.4.5 silently. AMO offers 2.0 only to Firefox 140 and later. |
 | Signed out, no YouTube tab, or another account at Agree | Ticket 11's outcomes, shown in the note (§3.4) |
@@ -489,6 +489,7 @@ The strings below were read from Firefox's `extensions.ftl` and Chromium's `gene
   - `none` doesn't hold an update.
 - **REL-CON-23** Neither `storage` nor `scripting` shows an install warning on either browser.
 - **REL-CON-24** Chrome asks only for www.youtube.com at install. Music.youtube.com is requested only from the click that switches on the first thing that needs it, whether that's first run's Agree, Settings or the popup: a YouTube Music feature, or "Also on YouTube Music" while Playlist shortcuts is on, which includes switching Playlist shortcuts on with that option preset on. The YouTube Music section switch never asks ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R53).
+  - If the user denies the prompt raised by switching Playlist shortcuts on in Settings or the popup, Playlist shortcuts goes on and "Also on YouTube Music" turns off, with "No access to YouTube Music, so shortcuts work on YouTube only." shown in place ([FT-52](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). First run's Agree keeps REL-CON-14's rule. (R71)
 
 ## 6. Versioning
 
@@ -514,7 +515,7 @@ Recorded as [ADR-0011](../../../docs/adr/0011-betas-from-github-pages.md): betas
 
 ### 7.1 Firefox
 
-- **REL-CI-10** `wxt build -b firefox --mode beta` builds `1.99.N` into `.output/firefox-mv3-beta/`, the way ticket 17's `livecheck` mode does. In that mode only, `build/manifest.ts` adds `browser_specific_settings.gecko.update_url = "https://alioun.github.io/yt-playlist-tools/beta/updates.json"`. Nothing else differs from the store build.
+- **REL-CI-10** The `build:beta` script, `wxt build -b firefox --mode beta` ([Q-TOOL-16](07-quality.md#718-scripts)), builds `1.99.N` into `.output/firefox-mv3-beta/`, the way ticket 17's `livecheck` mode does. In that mode only, `build/manifest.ts` adds `browser_specific_settings.gecko.update_url = "https://alioun.github.io/yt-playlist-tools/beta/updates.json"`. Nothing else differs from the store build.
 - **REL-CI-11** AMO signs the beta on the **unlisted** channel of the same add-on ID. AMO allows listed and unlisted versions under one ID, and rejects `update_url` only in listed versions.
 - **REL-CI-12** The signed `.xpi` is attached to a GitHub pre-release. `beta/updates.json` is regenerated from the pre-releases at deploy time, with each `.xpi`'s HTTPS asset URL and its `sha256` (REL-CI-44).
 - **REL-CI-13** Installing a beta over 1.4.5 counts as an upgrade for Firefox (ADDON_UPGRADE). Site access carries over and the migration runs, exactly as the real update will.
@@ -828,7 +829,8 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
   - CI fills the `{…}` placeholders from `store/notes/` and the `amo` environment's secrets (REL-CI-46).
   - The notes describe chapter 06's mechanisms, not ticket 19's draft wording, because reviewer notes must describe the shipped package (R17, R49):
     - ADR-0008's two registrations per site ([§6.3.3](06-architecture.md#633-runtime-script-registration), ARC-MAN-08 to ARC-MAN-12);
-    - `scripting.executeScript` for switching on in open tabs, the on-demand check and the popovers (ARC-MAN-13, ARC-MAN-15, ARC-MAN-16);
+    - `scripting.executeScript` for switching on in open tabs, the on-demand check when the popup or settings needs an account or fresh data (Playing now's read included), and the popovers (ARC-MAN-13, ARC-MAN-15, ARC-MAN-16);
+    - the start-up reconcile that registers again and re-injects into open tabs after an update ([ARC-MAN-17](06-architecture.md#633-runtime-script-registration));
     - the routes of [06 §6.2.2](06-architecture.md#622-routes) (ARC-ACC-10, ARC-ACC-11), and the resolver found by shape on first use and cached for the page ([§6.2.3](06-architecture.md#623-the-command-resolver-found-by-shape), ARC-ACC-13, ARC-ACC-14; R34, R66).
   - If no shipped route reads the session cookie, route 4 is described as the same same-origin request without signing, and the `SAPISIDHASH` wording goes (R48). (R17, R34, R48, R49, R66)
 
@@ -839,7 +841,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 > - Per site, two registrations, both made at runtime with `scripting.registerContentScripts` and only while a feature for that site is on:
 >   - a `world: "MAIN"` gateway that calls YouTube's own client code;
 >   - an isolated-world list: the site core, the UI kit (only if a switched-on feature draws), then one file per switched-on feature.
-> - When a feature is switched on, `scripting.executeScript` injects the same files into already-open tabs of that site, so no reload is needed. It also loads the playlist picker (`popovers.js`) on first use, and, only when the popup or settings needs an account or fresh data (playlists, or the song playing) from a tab that has none of our code, the gateway and site core alone into that one tab. After an extension update, the start-up run registers the scripts again and injects the current files into open tabs. Nothing is injected before the user's Agree.
+> - When a feature is switched on, `scripting.executeScript` injects the same files into already-open tabs of that site, so no reload is needed. It also loads the playlist picker (`popovers.js`) on first use, and, only when the popup or settings needs an account or fresh data (playlists, or the song playing) from a tab that has none of our code, the gateway and site core alone into that one tab; that core draws nothing. After an extension update, the start-up run registers the scripts again and injects the current files into open tabs, and the older copies there retire themselves. Nothing is injected before the user's Agree.
 > - There are no static content scripts and no web-accessible resources.
 >
 > **Routes, in order of preference:**
@@ -999,7 +1001,7 @@ meta ─► build ─► gates (all must pass) ─┬─► submit-amo  (environ
   - finds the previous release tag.
 - **REL-CI-25** **`build`** runs on ubuntu-24.04 with Node 24 and the Bun from `packageManager` (1.4.3). It:
   1. runs ticket 17's `check` steps (`typecheck`, `test:coverage`);
-  2. builds the Chrome zip, the Firefox zip and the sources zip, plus the `--mode beta` Firefox zip for betas;
+  2. builds the zips with the `zip` script (the Chrome zip, `wxt zip`), `zip:firefox` (the Firefox zip and, as WXT does for Firefox, the sources zip, `wxt zip -b firefox`) and, for betas, `zip:beta` (the `--mode beta` Firefox zip, `wxt zip -b firefox --mode beta`; REL-CI-10). The scripts are listed in [Q-TOOL-16](07-quality.md#718-scripts);
   3. uploads them as artifacts, together with both built manifests.
 - **REL-CI-26** **What's gated is what ships.** Every later job downloads these exact files (`actions/download-artifact@v8`). No job rebuilds what it ships.
 - **REL-CI-27** **`gates`** run in parallel, and every one is required:
@@ -1012,10 +1014,10 @@ meta ─► build ─► gates (all must pass) ─┬─► submit-amo  (environ
 | `zip` | `check:zip` (ticket 17): no live-check page, no `src/livecheck/` code and no recording adapter in any store zip (ticket 18; [Q-WATCH-19](07-quality.md#756-the-signed-in-live-check-and-the-live-check-build)) |
 | `browser` | Ticket 17's real-browser layer, on the store builds, with timings gated at 1.5× a budget in Chromium only, as in `ci.yml` ([Q-CI-7](07-quality.md#773-release-gates-summary); R31) |
 | `watch` | `watch.yml` through `workflow_call`, from **this commit's** watch list, so a fix's new needles are what's tested ([Q-CI-8](07-quality.md#773-release-gates-summary)). `static` must be green, and `browser-watch` (Chromium only, R40) green or inconclusive. Called from here, `browser-watch` tests this run's release artifacts and doesn't rebuild (REL-CI-26; R61). A red `static` passes only with `allow_red_watch` and a reason, which the summary records. |
-| `live-check-record` | `store/live-checks/{version}.json` exists. The live-check build (`build:livecheck`, `src/livecheck/`) exports it, redacted: version, commit, browser and its version, date, and pass or fail per check, with no values. It must cover Chrome and Firefox, contain no failures, and be dated within 7 days of the tag. For a patch release, a `scope: "hotfix"` record listing the affected jobs is accepted (ticket 18). |
+| `live-check-record` | `store/live-checks/{version}.json` exists. The live-check build (`build:livecheck`, `src/livecheck/`) exports it, redacted: version, commit, browser and its version, date, and pass or fail per check, with no values. It must cover Chrome and Firefox, contain no failures, and be dated within 7 days of the tag. Every release needs one, hotfixes for our own bugs included; the check is run signed in and takes a few minutes. For a patch release that fixes a YouTube change, a `scope: "hotfix"` record listing the affected jobs is accepted (ticket 18). A fix of our own that touches no YouTube job runs the whole check, and a record with no checks in it never passes (R72). |
 | `hotfix-freeze` (patch only) | REL-CI-38 |
 
-  The gates this chapter shares with 07 are summarised in [§7.7.3](07-quality.md#773-release-gates-summary) (Q-CI-6 to Q-CI-9). (R31, R40, R61)
+  The gates this chapter shares with 07 are summarised in [§7.7.3](07-quality.md#773-release-gates-summary) (Q-CI-6 to Q-CI-9). (R31, R40, R61, R72)
 
 - **REL-CI-28** Both `sources-*` gates must report identical trees. A difference on either architecture fails the release.
 - **REL-CI-29** **`submit-amo`** runs only when `vars.PUBLISH_AMO == 'true'` and `stores` is `both` or `amo`. It waits for the `amo` environment's approval.
@@ -1023,11 +1025,12 @@ meta ─► build ─► gates (all must pass) ─┬─► submit-amo  (environ
   - `scripts/amo-metadata.ts` builds the metadata file from `store/notes/` and `store/release-notes/{version}.md`.
   - The reviewer notes are the full template for major and minor releases, and the hotfix template for patches.
 - **REL-CI-31** AMO's v5 API wants `release_notes` as a locale object, `{"en-US": "…"}`. The metadata script never sends a plain string; publish-browser-extension's docs example does, and AMO rejects it.
-- **REL-CI-32** For a beta, `submit-amo` runs `web-ext sign --channel=unlisted` with the `--mode beta` zip, the sources zip and the same metadata, using the beta template. It waits for the signature and downloads the signed `.xpi` for `github-release`. The build confirms web-ext's flag for uploading sources.
+- **REL-CI-32** For a beta, `submit-amo` runs `web-ext sign --channel=unlisted` (`web-ext` is a dev dependency, [Q-TOOL-19](07-quality.md#719-type-checking-and-dependencies)) with the `--mode beta` zip, the sources zip and the same metadata, using the beta template. It waits for the signature and downloads the signed `.xpi` for `github-release`. The build confirms web-ext's flag for uploading sources.
 - **REL-CI-33** **`submit-cws`** runs only when `vars.PUBLISH_CWS == 'true'` and `stores` is `both` or `cws`, and never for a post-launch beta (`X.Y.9NN`). It waits for the `cws` environment's approval.
 - **REL-CI-34** `submit-cws` runs `bunx wxt submit --chrome-zip …` with `CHROME_API_VERSION=v2`.
   - The variable must be set explicitly, or the tool falls back to v1.1's variables. v1.1 was supported only until 2026-10-15.
-  - `CHROME_PUBLISH_TYPE` comes from `vars.CWS_PUBLISH_TYPE`, except that patch releases always use `DEFAULT_PUBLISH`. During the 2.0.0 soak `PUBLISH_CWS` is false, so this job doesn't run (REL-CHK-02).
+  - `CHROME_PUBLISH_TYPE` comes from `vars.CWS_PUBLISH_TYPE`, except that patch releases always use `DEFAULT_PUBLISH`.
+  - **The exception is the 2.0.0 soak.** `PUBLISH_CWS` is false then, so this job doesn't run: Chrome goes by hand in the dashboard, as Public with staged publishing (§8.1, REL-CHK-02, REL-CI-40; [Q-CI-15](07-quality.md#774-the-hotfix-lane); R21).
 - **REL-CI-35** `submit-cws` never sets `skipReview`. API v2 skips review only for updates that change nothing but declarativeNetRequest rules, and it errors otherwise. Ticket 18's "try `skipReview`" is dropped.
 - **REL-CI-36** **`github-release`** creates the GitHub release, or a pre-release for betas. It attaches:
   - the zips and the sources zip;
@@ -1052,10 +1055,10 @@ From ticket 18, made mechanical.
   - A fix for a YouTube change also updates its fixtures and watch-list entry.
   - It bumps no dependencies and refactors nothing: Chrome reviews "significant code changes" more closely, and AMO's queue ranks by the size of the change.
   - CI runs on its PRs as usual.
-- **REL-CI-40** A hotfix passes the usual gates, with a hotfix-scope live-check record.
+- **REL-CI-40** A hotfix passes the usual gates, with a signed-in live-check record: hotfix scope for a YouTube change, the whole check for a bug of our own that touches no YouTube job (REL-CI-27; R72).
   - Chrome uses `DEFAULT_PUBLISH`, so it publishes on approval.
   - Both stores are submitted in one run.
-  - **The exception is the 2.0.0 soak.** `PUBLISH_CWS` is false then, so the run submits to AMO only. The Chrome resubmission is made by hand in the dashboard, as Public with staged publishing, replacing the staged 2.0.0 (§8.1, REL-CHK-02, §18; [Q-CI-15](07-quality.md#774-the-hotfix-lane); R21).
+  - **The exception is the 2.0.0 soak.** `PUBLISH_CWS` is false then, so the run publishes to AMO only. The Chrome resubmission is made by hand in the dashboard, as Public with staged publishing, replacing the staged 2.0.0 (§8.1, REL-CHK-02, §18; [Q-CI-15](07-quality.md#774-the-hotfix-lane); R21).
 - **REL-CI-41** After a hotfix, the developer comments on its issue (for a YouTube change, the `youtube-change` issue): "Firefox users get it within about a day; Chrome users after review". Then the branch is merged back to `main`. (R62)
 
 ### 14.4 `watch.yml`
@@ -1067,7 +1070,7 @@ From ticket 18, made mechanical.
   - A red watch never blocks merges. It blocks a release tag unless that release is the fix.
   - The checklist confirms the schedule is still alive (REL-CHK-18), because GitHub disables scheduled workflows in public repos after 60 days without activity. (R40, R61)
 
-The watch itself, with its needles, the browser watch and the inconclusive rules, is specified in [07](07-quality.md): [§7.5.2 the watch list](07-quality.md#752-the-watch-list) (Q-WATCH-3 to Q-WATCH-8), [§7.5.3](07-quality.md#753-the-static-watch) and [§7.5.4](07-quality.md#754-the-browser-watch) (Q-WATCH-9 to Q-WATCH-14), and [§7.5.5 alerting](07-quality.md#755-alerting) (Q-WATCH-15 to Q-WATCH-17).
+The watch itself, with its needles, the browser watch and the inconclusive rules, is specified in [07](07-quality.md): [§7.5.2 the watch list](07-quality.md#752-the-watch-list) (Q-WATCH-3 to Q-WATCH-8); the static and browser watches (Q-WATCH-9 to Q-WATCH-14, in [§7.5.3](07-quality.md#753-the-static-watch) and [§7.5.4](07-quality.md#754-the-browser-watch)); and [§7.5.5 alerting](07-quality.md#755-alerting) (Q-WATCH-15 to Q-WATCH-17).
 
 ### 14.5 `pages.yml`
 
@@ -1165,7 +1168,7 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 |---|---|---|
 | S1 | Two playlist entries (one pasted URL, one half-typed); key `Shift+S`; percentage and toasts untouched | **No prompt.** `schema: 1`; `unclaimed.autoAdd` has 1 ID and `dropped: 1`; `pct 0` with `wasUnset`; feedback off; shortcut on with Shift+S; every legacy key and credential gone; the note tab opens once, in the background, with the percentage question; the badge is "!" |
 | S2 | Percentage `"75"`, toasts on, `Control+Shift+S`, a dummy client ID and secret | `pct 75` with no question; feedback on; the note says Ctrl+Shift+S never worked; `credentialsDeleted` |
-| S3 | 1.4.5 installed, nothing set | No 1.x key, so a fresh install (REL-MIG-03; R64): `schema: 1`, no migration keys, no upgrade note, and no tab opens. The "!" shows on every tab, and the popup's "Waiting for your OK" **Review** opens first run. |
+| S3 | 1.4.5 installed, nothing set | No 1.x key, so a fresh install (REL-MIG-03; R64, R76): `schema: 1`, no migration keys, no upgrade note, and no tab opens. The "!" shows on every tab, and the popup's "Waiting for your OK" **Review** opens first run. |
 | S4 | Key `Control+Alt+K` | Shortcut unticked, with "can't be used in 2.0" and `raw` shown |
 | S5 | youtube.com access removed in about:addons | Silent update; the note shows **Give access to YouTube**; after granting, Agree works |
 | S6 | Add-on disabled during the update, enabled a day later | No `onInstalled`; the migration still runs on enable, recognised from the 1.x keys (REL-MIG-02), and the note opens |
@@ -1183,7 +1186,7 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 
 ### 17.3 Fixtures, signed paths and Chrome
 
-- **REL-CHK-16** Each seeded profile's `storage.local` is dumped (about:debugging › Inspect › Storage) and committed as `src/…/migration/fixtures/1.4.5-S{n}.json`. `bun test` runs the pure migration against these real snapshots, not hand-made ones.
+- **REL-CHK-16** Each seeded profile's `storage.local` is dumped (about:debugging › Inspect › Storage) and committed as `src/background/store/fixtures/1.4.5-S{n}.json`, beside the store module that runs the migration ([§6.10](06-architecture.md#610-folder-layout)), as 07 places them ([Q-FIX-12](07-quality.md#735-the-privacy-lint)). `bun test` runs the pure migration against these real snapshots, not hand-made ones.
 - **REL-CHK-17** **Signed paths on release Firefox,** during the beta:
   1. the developer installs AMO's real 1.4.5 in a release-Firefox profile;
   2. installs `1.99.1` from the site (an upgrade by install);
@@ -1214,7 +1217,7 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 **Every release**
 - [ ] `package.json`'s version is bumped, and `store/release-notes/{version}.md` is written.
 - [ ] **The watch is alive:** `gh workflow view watch.yml` shows it enabled, with a scheduled run in the last 2 days. If not, run `gh workflow enable watch.yml`. GitHub disables schedules after 60 days without activity.
-- [ ] The signed-in live check is run in Chrome and Firefox from this commit's live-check build, the captures are imported, and `store/live-checks/{version}.json` is committed.
+- [ ] The signed-in live check is run in Chrome and Firefox from this commit's live-check build, the captures are imported, and `store/live-checks/{version}.json` is committed. Every release needs it, hotfixes for our own bugs included; it takes a few minutes (R72).
 - [ ] The timing test is run at 1× and 4× on the reference machine, and the figures are in the release PR (ticket 24). Chromium's must be within budget; Firefox's `performance.mark` figures are recorded for information only (R31).
 - [ ] The manual screen-reader pass of the popup and settings is done (REL-CHK-26; R38).
 - [ ] **Has the manifest changed?** Check the `--report-against` table in the `build` summary, and list each change.
@@ -1234,7 +1237,7 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 
 **Hotfix** (ticket 18; R62)
 - [ ] Cut `hotfix/X.Y.Z` from the last tag. Make only the fix: a YouTube change or a bug of our own, with no change to permissions, the disclosure, the consent version, the data schema, or any user-visible behaviour beyond the fix (REL-CI-39). A fix for a YouTube change also updates its fixtures and watch-list entry.
-- [ ] Pass the gates with a hotfix-scope live-check record, tag `vX.Y.Z`, and check that `hotfix-freeze` passes.
+- [ ] Run the signed-in live check: hotfix scope for a YouTube change, the whole check for a bug of our own (REL-CI-40; R72). Pass the gates, tag `vX.Y.Z`, and check that `hotfix-freeze` passes.
 - [ ] Use the hotfix template for the reviewer notes. Afterwards, comment on the fix's issue (the `youtube-change` issue for a YouTube change) and merge back.
 
 **Bad release**
@@ -1253,7 +1256,7 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 - [ ] Publish on Chrome, add the Chrome link to `/` and the README, and set `PUBLISH_CWS=true` and `CWS_PUBLISH_TYPE=DEFAULT_PUBLISH`.
 
 The IDs these items rest on:
-- **REL-CHK-19** A release is tagged only after the "Every release" items are done. The `live-check-record` and `watch` gates enforce two of them mechanically.
+- **REL-CHK-19** A release is tagged only after the "Every release" items are done, hotfixes included. The `live-check-record` and `watch` gates enforce two of them mechanically. (R72)
 - **REL-CHK-20** The timing test's figures (ticket 24) appear in the release PR for every release. Chromium's gate the release; Firefox's are for information ([Q-PERF-41](07-quality.md#767-enforcement)). (R31)
 - **REL-CHK-21** A release that changes a permission, host pattern, data-collection declaration or the disclosure is a minor or major release. Its PR lists each manifest change, and if data handling changed, it bumps the consent version and updates the policy and the dashboard's privacy tab in the same release.
 - **REL-CHK-22** A release that bumps `schema` says so in its PR.
@@ -1297,7 +1300,7 @@ The IDs these items rest on:
 - Once the v2 service account works, delete the Chrome Web Store API v1.1 OAuth client and its refresh token.
 
 **Before each release:**
-- Run the signed-in live check and the timing test.
+- Run the signed-in live check (every release, hotfixes included; a few minutes, R72) and the timing test.
 - Take screenshots only with videos the user owns or Creative Commons videos.
 - Optionally, recruit beta testers.
 
@@ -1335,11 +1338,23 @@ Settled in the second round:
 - **The release `browser` gate's timing threshold** (was Not pinned down): it gates at 1.5× a budget in Chromium, as `ci.yml` does ([Q-CI-7](07-quality.md#773-release-gates-summary), REL-CI-27). No R-number: 07 owns budgets (R52).
 - **Corrections the owning chapters asked for:** the reviewer notes' on-demand check and re-injection after an update (06; REL-STORE-21), the reviewer steps' toast copy (02; REL-STORE-21), the note's undo-key line (02; REL-CON-04), the store description's Quick actions line and screenshot 4 (03; §9.2, REL-STORE-08), the soak exception for patch releases (07; REL-CI-34, REL-CI-40), and the links to 05's first-run page (05; §4.2). No R-numbers.
 
+Third round:
+- **The live-check record for a fix of our own** (was Not pinned down): every release needs a signed-in live-check record, hotfixes for our own bugs included. A fix that touches no YouTube job runs the whole check, which takes a few minutes, and a record with no checks never passes (REL-CI-27, REL-CI-40, REL-CHK-19, §18, §19). R72.
+- **A 1.4.5 user with no 1.x key left** (confirms this chapter's reading of R64): a fresh install. No tab opens on the update; the toolbar "!" and "Waiting for your OK" lead to first run, and REL-MIG-09's crash recovery stands (REL-MIG-03, REL-MIG-04, REL-MIG-09, §2.11, S3). R76.
+- **Denying Chrome's YouTube Music prompt from Playlist shortcuts' switch:** Playlist shortcuts goes on and "Also on YouTube Music" turns off, with "No access to YouTube Music, so shortcuts work on YouTube only."; first run's Agree keeps REL-CON-14 (REL-CON-24). R71.
+- **The soak exception in `submit-cws`** (07's Still open 1): REL-CI-34 now says, as REL-CI-40 does, that during the 2.0.0 soak Chrome goes by hand, as Public with staged publishing. R21; fixed in 08.
+- **The reviewer notes' probe and injection scope** (06's Still open 1): REL-STORE-21 names the on-demand check for an account or fresh data, Playing now's read included, and the re-injection into open tabs after an update ([ARC-MAN-15](06-architecture.md#633-runtime-script-registration), ARC-MAN-17). R49; fixed in 08.
+- **The upgrade view's budget and first-view test** (was Not pinned down): the first-run page's 30 KB budget and its first-view test cover both of its views, first run and the upgrade note ([Q-PERF-31](07-quality.md#766-popup-settings-the-first-run-page-and-background), [Q-TEST-18](07-quality.md#725-layer-4-real-browser) item 10). Fixed in 07.
+- **The upgrade snapshots' path** (was Not pinned down): `src/background/store/fixtures/1.4.5-S{n}.json`, beside the store module (REL-CHK-16, [Q-FIX-12](07-quality.md#735-the-privacy-lint)). Fixed in 07 and 08.
+- **Script names** (was Not pinned down): the `build:beta`, `zip`, `zip:firefox` and `zip:beta` scripts (REL-CI-10, REL-CI-25), and `web-ext` as a dev dependency (REL-CI-32), as [Q-TOOL-16](07-quality.md#718-scripts) and [Q-TOOL-19](07-quality.md#719-type-checking-and-dependencies) list them. Fixed in 07 and 08.
+
 Also applied here: R10 (the policy's session-memory line: REL-STORE-17), R12 (the pending note's badge: REL-MIG-32), R14 (Chrome access denied at first run's Agree: REL-CON-14), R31 (timings gated in Chromium only: REL-CI-18, REL-CI-27, REL-CHK-04, REL-CHK-20, §18), R34 (the resolver found on first use: REL-STORE-21), R37 ("the first-run page": REL-CON-01 and prose), R38 (the screen-reader pass: REL-CHK-04, REL-CHK-26, §18), R39 (the README rewritten as a whole: REL-CI-54, REL-CHK-04) and R40 (the browser watch on Chromium only: REL-CI-27, REL-CI-42). From the second round: R43 (the policy's watch-progress line: REL-STORE-17), R44 (the undo key from install: REL-MIG-24, REL-CON-04), R45 (typographic quotes: §0, REL-STORE-08), R57 (session memory ends at an update too: REL-STORE-17) and R65 (`{Product}` and `{Account}` elsewhere: §0).
+
+Also applied, third round: R71 (REL-CON-24), R72 (REL-CI-27, REL-CI-40, REL-CHK-19, §18's "Every release" and "Hotfix" items, §19) and R76 (REL-MIG-03, REL-MIG-04, REL-MIG-09, §2.11, S3). R68, R69, R70, R73, R74, R75 and R77 change no copy this chapter quotes: its copy quotes only video and album titles, and never a playlist name.
 
 ### Open
 
-None remain. Every contradiction listed here before is settled above, and the other chapters now follow this one on the migration, the upgrade note and the consent copy (R60).
+None remain after all three rounds. Every contradiction listed here before is settled above, and the other chapters now follow this one on the migration, the upgrade note and the consent copy (R60).
 
 ### Settled by precedence (no action)
 
@@ -1353,7 +1368,4 @@ None remain. Every contradiction listed here before is settled above, and the ot
 
 ### Not pinned down
 
-- **The upgrade view's budget and first-view test.** R40 and R47 give "the first-run page" a 30 KB first frame, counted in JavaScript, and [Q-TEST-18](07-quality.md#725-layer-4-real-browser) item 10 renders its first view. Neither says whether the upgrade view (REL-CON-01), which is the same page, is covered.
-- **The live-check record for a fix of our own.** The `live-check-record` gate accepts a hotfix-scope record "listing the affected jobs" (REL-CI-27). R62 lets the hotfix lane take bugs of our own, such as a migration bug, that touch no YouTube job; whether an empty hotfix-scope record passes isn't said.
-- **The upgrade snapshots' path.** [Q-FIX-12](07-quality.md#735-the-privacy-lint) now covers REL-CHK-16's snapshots, with their seed IDs on the allowlist, so the seeded data should use fixture IDs and dummy credentials. Their path (`src/…/migration/fixtures/`) still needs fixing: the store lives in `src/background/store/` ([§6.10](06-architecture.md#610-folder-layout)), and 07 owns test placement (R52).
-- **Script names.** REL-CI-10 gives the beta build as a raw command, with no `build:beta` script, though [Q-TOOL-16](07-quality.md#718-scripts) leaves the beta mode to this chapter, and REL-CI-25 names no zip scripts. `web-ext` (REL-CI-32) isn't in [Q-TOOL-19](07-quality.md#719-type-checking-and-dependencies)'s dependencies.
+None remain; see [Resolved during assembly](#resolved-during-assembly). What still waits on the user, ticket 25's live checks or ticket 23's AMO reply is marked PROVISIONAL inline and listed in [§0](#0-provisional-inputs).

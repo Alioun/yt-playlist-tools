@@ -14,7 +14,7 @@ It covers behaviour only. Elsewhere:
 - **Routes,** gateway jobs, the queue mechanics and page registrations: [06-architecture.md](06-architecture.md) §6.2.7, §6.2.8 and §6.6.
 - **Budgets** and the breakage watch: [07-quality.md](07-quality.md) (Q-PERF-13, Q-PERF-14, §7.5).
 
-The main session's resolutions ([resolutions.md](resolutions.md), both rounds, R1–R67) are applied. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Where chapters disagree, the owning chapter wins (resolutions.md's ownership rule): this chapter owns YouTube Music behaviour and copy.
+The main session's resolutions ([resolutions.md](resolutions.md), all three rounds: R1–R40, R41–R67, then R68–R77) are applied. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Where chapters disagree, the owning chapter wins (resolutions.md's ownership rule): this chapter owns YouTube Music behaviour and copy.
 
 **Sources**, all resolved on 2026-10-19:
 - [26 Quick actions](../issues/26-youtube-music-quick-actions.md), the core, with its amendments after 28, 08, 18 and 25;
@@ -70,7 +70,7 @@ Later amendments, the main session's decisions and its resolutions supersede ear
 - **YM-FEAT-9** **Presets apply once,** the first time each feature is turned on: Quick actions' default buttons and Quick-action shortcuts' default keys ([FT-04](04-features-accounts-data.md#11-the-features)). Turning a feature off and on again keeps what the user had, and clearing a key never brings its preset back.
 - **YM-FEAT-10** **Site access on Chrome:** YouTube Music access is optional ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs)).
   - It's requested from the click that switches on the first thing that needs it, first run's Agree included: a YouTube Music feature, or Playlist shortcuts' "Also on YouTube Music" while Playlist shortcuts is on (YM-PS-2). The section switch itself never asks. (R53)
-  - **Denied from a switch** in the popup or Settings: the switch stays off ([FT-52](04-features-accounts-data.md#17-site-access-and-youtube-tabs)).
+  - **Denied from a switch** in the popup or Settings: the switch stays off ([FT-52](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). The one exception is the click that switches Playlist shortcuts on: Playlist shortcuts goes on, "Also on YouTube Music" turns off, and "No access to YouTube Music, so shortcuts work on YouTube only." shows in place, under Playlist shortcuts' row (YM-PS-2; R71).
   - **Denied at first run's Agree:** consent and the other ticks still apply. The ticked YouTube Music features are saved on but held with "Needs site access", with **Give access** in the popup and Settings. Nothing is registered or injected for them until access is granted. (R14)
   - **Switched on in another browser** and synced here: the same held state until access is granted here.
   - Missing YouTube Music access raises the violet "needs you" "!" only while something that needs it is on, with the section switch on. It shows on every tab, not only YouTube Music's, because without host access the extension can't tell which tabs those are. Only a pending consent or upgrade note comes before it ([UI-IA-08](05-ui.md#51-information-architecture), [FT-47](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R12, R53).
@@ -94,11 +94,12 @@ Later amendments, the main session's decisions and its resolutions supersede ear
   - Play next, Add to queue, moves and Remove from queue keep working, because they change only this tab's queue.
   - A like returns nothing the guard can read, so it relies on an earlier response having tripped the guard.
   - **PROVISIONAL** (ticket 25, M2): if YouTube Music responses carry no `datasyncId`, the guard relies on `ytcfg` at page load only.
-- **YM-ACC-7** **Account keys unreadable** (`DATASYNC_ID` or `LOGGED_IN` missing): Save and Like are unavailable in that tab, so nothing is written to an unknown account. Their buttons and keys hide, Quick actions and Quick-action shortcuts are partly working, and the notice is §13's "Account keys unreadable" row ([HEALTH-09](04-features-accounts-data.md#52-status); R50). Queue actions carry on. Playlist shortcuts, which only save, stop there too.
+- **YM-ACC-7** **Account keys unreadable** (`DATASYNC_ID` or `LOGGED_IN` missing): Save and Like are unavailable in that tab, so nothing is written to an unknown account. Their buttons hide, Quick actions and Quick-action shortcuts are partly working, and the notice is §13's "Account keys unreadable" row ([HEALTH-09](04-features-accounts-data.md#52-status); R50). Their keys stay caught and answer each press (YM-KEY-12; R68). Queue actions carry on. Playlist shortcuts, which only save, stop there too, and their keys answer the same way.
 - **YM-ACC-8** **Private windows,** only where the user allows the extension:
   - An account with a quick-save playlist uses it for one-click saves.
   - Choose mode still saves the song, but the pick isn't stored as the quick-save playlist.
-  - Pins are disabled, because the quick-save playlist belongs to the account setup. Their tooltip reads "Changes made here are saved; nothing about this window's browsing is." ([ACC-38](04-features-accounts-data.md#27-private-windows-and-containers); R58). **PROVISIONAL** (ticket 23, AMO question 3), with the shared-settings writes it describes.
+  - Pins are disabled, because the quick-save playlist belongs to the account setup. Their tooltip says why: "Quick-save playlists can't be changed in a private window." (R69)
+  - Changes to shared settings made in a private window are still saved ([ACC-38](04-features-accounts-data.md#27-private-windows-and-containers); R58). **PROVISIONAL** (ticket 23, AMO question 3).
   - Nothing from the session is stored: no Missing or Full marks, no remembered visibility, and new playlists stay in the tab's memory only.
 
 ## 3. Which items get which action
@@ -318,7 +319,7 @@ The picker is shared with YouTube ([ticket 12](../issues/12-adding.md); [02-yout
 - **YM-PICK-4** **Each playlist row shows:**
   - its check mark;
   - its title;
-  - its privacy and song count, e.g. "Private · 214 songs";
+  - its privacy and song count, e.g. "Private · 214 songs". The count shows when YouTube Music's answer carries one ([06's `membership` job](06-architecture.md#625-job-catalogue)); otherwise the row shows its privacy only, e.g. "Private" (R73);
   - the key of the playlist shortcut that saves to it on this account, if there is one and it's live here (Playlist shortcuts with "Also on YouTube Music" on), e.g. `Alt+J` (R6, as [YT-KEY-34](02-youtube.md#288-key-hints) applies it);
   - a pin, "Use for one-click save". The pin shows on hover or focus, and always on the quick-save playlist.
 - **YM-PICK-5** **Loading:**
@@ -449,7 +450,7 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
   For an item whose ⋮ doesn't offer the action, the key does nothing and answers "{Action} isn't available for {kind}." (YM-TGT-5). The Remove key is the exception: it always answers with YM-RM-5's hint. (R4, R67)
 - **YM-KEY-11** **Shared states:** if the pointed-at item shows the matching button, that button goes through the same busy, done or failed states as for a click.
 - **YM-KEY-12** **Unavailable or not working:**
-  - **An action unavailable in this tab** (its internals are missing, YM-FAIL-4) has its key withdrawn there: the key isn't caught and passes through untouched, as ticket 26 has it. The feature's notice (YM-FAIL-5) and status (YM-FAIL-6) say why. (R50)
+  - **An action unavailable in this tab** (its internals are missing, YM-FAIL-4): its buttons hide there, but its key stays caught. Each press answers with the failure "{Action} isn't working right now. The popup shows why.", e.g. "Play next isn't working right now. The popup shows why.", so a key never does nothing silently ([ticket 18](../issues/18-breakage.md)). For a playlist shortcut, `{Action}` is "Save to playlist". The feature's notice (YM-FAIL-5) and status (YM-FAIL-6) say why. (R50, R68)
   - **A feature that isn't working** in this tab (none of its actions left, YM-FAIL-4, or the whole site, YM-FAIL-9) keeps its keys caught. Each press answers with the failure, e.g. "Play next (Alt+N) isn't working right now because YouTube Music changed something. Use its ⋮ menu for now." ([HEALTH-10](04-features-accounts-data.md#52-status)).
 - **YM-KEY-13** **No highlight:** the acted-on item isn't highlighted. The toast names the song.
 
@@ -468,7 +469,7 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
 - **YM-FB-5** **Navigation:** toasts survive YouTube Music's in-app navigation, so Undo still works on the next page. A reload or closing the tab ends them.
 - **YM-FB-6** **Show feedback:**
   - A click follows Quick actions' switch, a quick-action key follows Quick-action shortcuts' switch, and a playlist shortcut follows Playlist shortcuts' switch.
-  - Off hides confirmations only, and the pending "Saving…" toast with them (R7). Failures and "nothing happened" hints always show, because an explicit click or key that silently does nothing is a defect ([FT-24, FT-25](04-features-accounts-data.md#14-show-feedback)).
+  - Off hides confirmations only, and the pending "Saving…" toast with them (R7). Failures and "nothing happened" hints always show, because an explicit click or key that silently does nothing is a defect ([FT-24, FT-25](04-features-accounts-data.md#14-show-feedback)). That includes the answer to a key whose action is unavailable in this tab (YM-KEY-12; R68).
   - A control's own state always shows: button states and picker rows.
   - *Runner-up:* off hides everything. It lost because failures would go silent.
 - **YM-FB-7** **Button states:**
@@ -491,15 +492,15 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
 
 - **YM-FB-9** **After Undo:** the toast closes once Undo succeeds. If Undo fails, the toast reads "Couldn't undo." While casting, the Undo of a queue edit answers "Not available while casting" instead (YM-CAST-2).
 - **YM-FB-10** **Copy rules:**
-  - Song, album and playlist titles are in typographic double quotes (“ ”), cut at 40 characters with "…" (R45).
-  - Playlist names in save toasts are unquoted, also cut at 40. The one exception is `{Shortcut} now saves to “{Playlist}”.`, where the quotes keep the two names apart (R24, R45, as YT-ADD-18).
+  - Song and album titles are in typographic double quotes (“ ”), cut at 40 characters with "…" (R45).
+  - Playlist names are unquoted, also cut at 40, whether the playlist is being queued or saved to, e.g. `Added 13 songs from Chill Mix to the queue`. The one exception is `{Shortcut} now saves to “{Playlist}”.`, where the quotes keep the two names apart (R24, R45, R77, as YT-ADD-18).
   - Failures start with "Couldn't …", and toasts say "song", not "video".
   - When an album's or playlist's song count is unknown, the count is dropped: `“Random Access Memories” will play next`.
   - Titles come from the item's data read at click time.
 - **YM-FB-11** **Styling:** failures lead with the error icon, and hints are neutral. No YouTube Music toast carries the extension mark, because every one answers the user's own click or key.
 - **YM-FB-12** **Console log:** every save logs its outcome to the tab's console, whatever Show feedback says.
 
-**All toast copy on YouTube Music** (ticket 26's table, ticket 27's additions, ticket 12's add-flow rows, ticket 18's breakage rows, and resolutions R3, R4, R5, R7, R24, R41, R45, R50, R56 and R67):
+**All toast copy on YouTube Music** (ticket 26's table, ticket 27's additions, ticket 12's add-flow rows, ticket 18's breakage rows, and resolutions R3, R4, R5, R7, R24, R41, R45, R50, R56, R67, R68 and R77):
 
 | When | Toast | Action | Kind |
 |---|---|---|---|
@@ -547,6 +548,7 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
 | Picker code didn't load in 5 s | Couldn't open the playlist list. Try again. | — | Failure |
 | A key pointing at an unrecognised item | Couldn't tell which item you meant. Point at it again, or use the player. | — | Failure (R4) |
 | A key while its feature isn't working (YM-KEY-12) | Play next (Alt+N) isn't working right now because YouTube Music changed something. Use its ⋮ menu for now. | — | Failure (R50) |
+| A key whose action is unavailable in this tab, its feature partly working (YM-KEY-12) | {Action} isn't working right now. The popup shows why. (e.g. Play next isn't working right now. The popup shows why.) | — | Failure: always shown, whatever Show feedback says (R68) |
 | Notice for actions that aren't working or are unavailable (sticky, once per session; YM-FAIL-5) | Play next and Add to queue aren't working right now because YouTube Music changed something. Use its ⋮ menu for now. | Details, ✕ | Failure (R50) |
 | Account keys unreadable | Saving isn't working right now because YouTube Music changed how it shows which account you're using. Nothing is saved, so nothing lands in the wrong account. † | Details | Failure |
 | The whole site | {Product} isn't working on YouTube Music right now because YouTube Music changed something. An update should fix it. | Details | Failure |
@@ -572,12 +574,12 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
   - *Runner-up:* an "Open menu" action in the toast. It lost because it means clicking YouTube Music's ⋮ for the user. That adds a markup dependency and stretches the "never drive the visible UI" exemption, to save one click on a ⋮ right beside our button.
 - **YM-FAIL-2** **The item's data can't be read** when its control is clicked or its key is pressed: that counts as a failure for that item.
 - **YM-FAIL-3** **Mid-action changes:** if the row is recycled, or the user navigates away, while an action runs, the action finishes on the data read at click time, and its toast still shows.
-- **YM-FAIL-4** **YouTube Music changed.** When the page loads, the extension checks that each action's internals exist. Status is per feature, so an action whose internals are missing is *unavailable* in that tab, not a status of its own (R50):
-  - its buttons and its key are withdrawn there: no button is drawn, and the key passes through untouched (YM-KEY-12; ticket 26);
+- **YM-FAIL-4** **YouTube Music changed.** When the page loads, the extension checks that each action's internals exist. Status is per feature, so an action whose internals are missing is *unavailable* in that tab, not a status of its own (R50, R68):
+  - its buttons are withdrawn there, but its key stays caught: no button is drawn, and each press answers "{Action} isn't working right now. The popup shows why." (YM-KEY-12; R68);
   - the feature is *partly working* in that tab while some of its actions still work, and its status detail names the unavailable ones, e.g. "Partly working: Play next and Add to queue are unavailable." ([HEALTH-07](04-features-accounts-data.md#52-status));
   - with none of its actions left, the feature is *not working* there.
 - **YM-FAIL-5** **The not-working notice:**
-  - It's a sticky toast with the error icon, **Details** and ✕. It names the actions that are unavailable or not working, so it's ticket 26's one notice for withdrawn actions too, the only in-page sign that their keys now pass through (R50).
+  - It's a sticky toast with the error icon, **Details** and ✕. It names the actions that are unavailable or not working, so it's ticket 26's one notice for withdrawn buttons too (R50). Their keys still answer each press (YM-KEY-12; R68).
   - It shows once per browser session per feature on YouTube Music, at the moment the feature would act: when the first hover would have drawn the buttons, or when a key is pressed.
   - It appears in the first visible tab where the problem is found, and several actions found at once share one notice.
   - It waits while the tab is hidden or fullscreen.
@@ -590,7 +592,7 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
 - **YM-FAIL-7** **No effect:** a recognised answer whose effect never shows counts as failed. That covers a queue that doesn't grow (YM-Q-8) and a moved item that isn't where it should be (YM-MOVE-4). A `no-effect` breakage signal is raised after 2 in a row *(starting value)*.
 - **YM-FAIL-8** **Anchors:**
   - The check runs 3 s after each navigation *(starting value)*. If the page holds at least 6 item links and fewer than half are recognised as items, an `anchor-missing` breakage signal is raised.
-  - A missing player-bar anchor isn't breakage (YM-BAR-3).
+  - A player-bar anchor that's missing in one of the cases YM-BAR-3 lists isn't breakage ([Q-WATCH-25](07-quality.md#757-runtime-breakage-signals)). Missing when YouTube Music should be drawing it, it makes Quick actions partly working (YM-FAIL-10).
 - **YM-FAIL-9** **The whole site:** if YouTube Music's app can't be found (`ytmusic-app`), every YouTube Music feature is not working in that tab.
 - **YM-FAIL-10** **Partly working** covers lost optional parts and unavailable actions:
   - the picker's check marks (YM-PICK-6);
@@ -598,7 +600,7 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
   - some of a feature's actions unavailable (YM-FAIL-4; R50);
   - Save and Like with the account keys unreadable (YM-ACC-7; R50).
 - **YM-FAIL-11** A tab's status clears by itself when the job next succeeds, or on reload when the check passes.
-- **YM-FAIL-12** **A quiet route turned noisy:** if YouTube Music shows its own toast after one of our queue edits, a `quiet-route-noisy` breakage signal is recorded and the feature that made the edit (Quick actions or Quick-action shortcuts) is *partly working* in that tab. The edit stands, and our own toast for it is suppressed, so only one shows ([Q-WATCH-28](07-quality.md#757-runtime-breakage-signals), [ARC-ACC-22](06-architecture.md#627-route-table-youtube-music)). The signal identifiers are chapter 07's ([Q-WATCH-24](07-quality.md#757-runtime-breakage-signals)). (R40, R51)
+- **YM-FAIL-12** **A quiet route turned noisy:** if YouTube Music shows its own toast after one of our queue edits, inserts, moves and Undo's re-inserts included, a `quiet-route-noisy` breakage signal is recorded and the feature that made the edit (Quick actions or Quick-action shortcuts) is *partly working* in that tab. The edit stands, and our own toast for it is suppressed, so only one shows ([Q-WATCH-28](07-quality.md#757-runtime-breakage-signals), [ARC-ACC-22](06-architecture.md#627-route-table-youtube-music)). The signal identifiers are chapter 07's ([Q-WATCH-24](07-quality.md#757-runtime-breakage-signals)). (R40, R51)
 
 ## 15. Casting
 
@@ -655,7 +657,7 @@ YouTube Music has been A/B testing a player UI without the classic player bar (t
 Its look is [UI-POP-17](05-ui.md#youtube-music-tab).
 
 - **YM-POP-1** **The row:** the popup's YouTube Music tab shows a compact **Playing now** row under the section switch, with:
-  - the playing song's art with an equaliser, its title and its artist;
+  - the playing song's art with an equaliser, its title and its artist. The art is the artwork URL in the `nowPlaying` job's answer ([06 §6.2.5](06-architecture.md#625-job-catalogue); R73);
   - a split **Save** / **▾** button.
 - **YM-POP-2** **Account:** Playing now acts as its tab's own account. It never acts as the account in view.
 - **YM-POP-3** **The split Save button:**
@@ -663,7 +665,7 @@ Its look is [UI-POP-17](05-ui.md#youtube-music-tab).
   - **Under it:** "One click saves to {Playlist}" or, with no quick-save playlist, "Your first pick becomes the quick-save playlist." (R37)
   - It follows YM-SAVE's rules, choose mode included.
 - **YM-POP-4** **The ▾** opens the playlist picker as the popup's sheet, loaded on demand. It behaves as in §10.
-- **YM-POP-5** **Routing:** the popup's saves go from the popup through the background to the tab. If the popup closes mid-save, only the answer is lost, not the save.
+- **YM-POP-5** **Routing:** the popup's saves go from the popup through the background to the tab Playing now reads (YM-POP-11), as that tab's account (YM-POP-2). If the popup closes mid-save, only the answer is lost, not the save.
 - **YM-POP-6** **No YouTube Music tab:** the YouTube Music tab shows cached data with **Open YouTube Music**. Playing now and every quick action need a tab.
 - **YM-POP-7** **No Playing now before consent.**
 - **YM-POP-8** **Quick-action shortcuts in the popup:** the popup lists their keys read-only. Keys are changed in Settings › YouTube Music, which **Change keys** opens at `#feature-music-keys` (R32).
@@ -683,7 +685,10 @@ Playlist shortcuts are a YouTube feature ([ticket 08](../issues/08-shortcuts.md)
   - *Runner-up:* off by default. It lost because a key that works on one site but not the other is surprising.
 - **YM-PS-2** **Site access on Chrome:** "Also on YouTube Music" needs YouTube Music access.
   - It's asked from the click that makes the option apply: switching it on while Playlist shortcuts is on, or the click that first switches Playlist shortcuts on, since the preset turns the option on. The section switch never asks ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R53).
-  - A denial from the option's own switch leaves it off ([FT-52](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). A denial at first run's Agree leaves it on but held. Playlist shortcuts keeps working on YouTube either way.
+  - A denial from the option's own switch leaves it off ([FT-52](04-features-accounts-data.md#17-site-access-and-youtube-tabs)).
+  - A denial from the click that switches Playlist shortcuts on, in the popup or Settings: Playlist shortcuts goes on, "Also on YouTube Music" turns off, and "No access to YouTube Music, so shortcuts work on YouTube only." shows in place, under Playlist shortcuts' row. (R71)
+  - A denial at first run's Agree leaves the option on but held (R14).
+  - Playlist shortcuts keeps working on YouTube in every case.
   - Without access, the row reads "Needs site access", with **Give access** ([FT-13](04-features-accounts-data.md#12-switching-features), [YT-KEY-15](02-youtube.md#282-the-playlist-shortcut-list)).
   - While Playlist shortcuts and the option are both on, with the section switch on, missing access raises the violet "!" on every tab (YM-FEAT-10; [FT-47](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R53).
 - **YM-PS-3** **What they act on:** songs only, the pointed-at song else the playing song.
@@ -761,7 +766,7 @@ These need the user's go-ahead as new capabilities (`for-the-user.md`). 2.0 does
 | `DATASYNC_ID` is stable | YM-ACC-2 | Ticket 25 (ticket 11's checks) |
 | Playlist titles are limited to 150 characters | YM-PICK-10 | Ticket 25 |
 | Toasts name "this tab's queue" if the cast state can't be read | YM-CAST-2 | Ticket 25, M5 |
-| Shared-settings changes in a private window are saved, and the pins' tooltip says so (R58) | YM-ACC-8 | [Ticket 23](../issues/23-ask-amo.md), AMO question 3 |
+| Shared-settings changes in a private window are saved (R58). The pins' tooltip is R69's either way. | YM-ACC-8 | [Ticket 23](../issues/23-ask-amo.md), AMO question 3 |
 | The name in `{Product}` | §13 | [Ticket 22](../issues/22-name.md), the user |
 
 Visual PROVISIONAL items (the toast action's blue, bundling YouTube Music's own icons) are in [05-ui.md](05-ui.md#provisional). The picker's 54.5 KB against its 50 KB budget, and R29's fix order, are in [07-quality.md](07-quality.md) (Q-PERF-14) and [UI-RULE-39](05-ui.md#budgets).
@@ -788,30 +793,37 @@ Second round:
 - **Like's signed-out wording** (was Not pinned down 1): Like keeps "Sign in to YouTube Music to like songs." as a failure with **Sign in**; R3 covers explicit actions only, so auto-add stays silent (YM-ACC-5, YM-LIKE-6). R41.
 - **The Remove key under R4** (was Not pinned down 2): it says "Point at a song in the queue to remove it." on anything that isn't a queue item (YM-RM-5, YM-KEY-10). R67.
 - **How often the account-change toast shows** (was Conflict 1): it answers every explicit press; once per tab is for auto-add only (YM-ACC-6). R55.
-- **Status per action** (was Conflict 2): status is per feature. An action whose internals are missing is unavailable: its buttons and keys hide in that tab, and the feature is partly working, with the status detail naming those actions (YM-FAIL-4, YM-FAIL-6, YM-FAIL-10, YM-KEY-12, YM-ACC-7). R50.
+- **Status per action** (was Conflict 2): status is per feature. An action whose internals are missing is unavailable: its buttons hide in that tab, and the feature is partly working, with the status detail naming those actions (YM-FAIL-4, YM-FAIL-6, YM-FAIL-10, YM-KEY-12, YM-ACC-7). R50. Its keys, which R50 also hid, stay caught under R68 (third round, below).
 - **The undo key's preset and home** (was Conflict 3): it belongs to no feature, is preset to Alt+U at install, and is set in Settings › Everywhere. While a shortcut feature is on, a press with nothing to undo answers "Nothing to undo." (YM-FEAT-3, YM-KEY-1, YM-KEY-4, YM-PS-1). R44.
 - **R24 in chapter 04** (was Conflict 4): the Choose pick sets the shortcut's playlist and saves the song, and its toast carries Undo, on both sites; copy uses typographic quotes (YM-PS-4, YM-FB-10, §13). R45.
 - **`quiet-route-noisy` on YouTube Music** (was Conflict 5): the signal identifiers are chapter 07's, and `quiet-route-noisy` applies on both sites (YM-FAIL-12). R51.
 
 Also applied here: R6 by analogy (shortcut keys in the picker: YM-PICK-4, as YT-KEY-34), R12 (badge priority and colours: YM-FEAT-10, YM-SAVE-8, YM-FAIL-6), R14 (access denied at first run: YM-FEAT-10), R22 (rate-limited saves always answer: YM-SAVE-14), R24 (a shortcut with no playlist: YM-PS-4), R25 (sign-in check first: YM-SAVE-5), R32 (kebab-case deep links: YM-POP-8), R37 ("quick-save playlist": YM-POP-3), R38 (a shortcut playlist's deep link: YM-PS-5), R39 (Refresh and Sort A–Z in the picker: YM-PICK-3, YM-PICK-5) and R40 (`quiet-route-noisy`: YM-FAIL-12). From the second round: R46 (no inserts while casting, even after M1: YM-CAST-3), R53 (who asks for YouTube Music access, and the "!" on every tab: YM-FEAT-10, YM-PS-2), R56 (the "has no playlist" toast is a hint: YM-PS-4, §13), R58 (private-window pins: YM-ACC-8) and R65 (`{Product}` and `{Account}`: Conventions, §13). R14's "Needs access" and "Grant" are written as the existing held reason "Needs site access" with **Give access** (FT-13, FT-46), as chapters 02, 04 and 05 do, now for "Also on YouTube Music" too (YM-PS-2).
 
+Third round:
+- **Playing now's art** (was Unresolved 1): [06's `nowPlaying` result](06-architecture.md#625-job-catalogue) carries the artwork URL, which YM-POP-1 shows. R73.
+- **Song counts in the picker** (was Unresolved 2): YouTube Music membership rows carry the song count when YouTube returns one; otherwise the row shows privacy only (YM-PICK-4). R73.
+- **08's store description** (was Unresolved 3): [08 §9.2](08-release.md#92-description-both-stores) now offers Play next and Add to queue for songs, albums and playlists, Save to playlist and Like for songs, and Remove from queue for queued songs, as YM-QA-2 and YM-QA-3 have it. Fixed in 08.
+- **08's screenshot 4** (was Unresolved 4): [08 §9.4](08-release.md#94-screenshots-and-images) now shows the block toast after the album header's Add to queue (YM-Q-3, YM-QA-9). Fixed in 08.
+- **Which titles take quotes** (was Unresolved 5): song and video titles take typographic quotes; playlist names don't, except in "{Shortcut} now saves to “{Playlist}”." (YM-FB-10, as [YT-ADD-18](02-youtube.md#252-feedback)). R77.
+- **How R50's "keys hide" reads** (was Not pinned down 2): an unavailable action's buttons hide, but its key stays caught, and each press answers "{Action} isn't working right now. The popup shows why.", so a key never does nothing silently (YM-KEY-12, YM-FAIL-4, YM-FAIL-5, YM-FB-6, YM-ACC-7, §13). R68.
+- **The pins' private-window tooltip** (was Not pinned down 3): it says why the pin is off, "Quick-save playlists can't be changed in a private window." (YM-ACC-8). R69.
+- **A denied prompt from Playlist shortcuts' own switch** (was Not pinned down 4): Playlist shortcuts goes on, "Also on YouTube Music" turns off, and "No access to YouTube Music, so shortcuts work on YouTube only." shows under its row (YM-FEAT-10, YM-PS-2). R71.
+- **The anchor check's player-bar exception** (YM-FAIL-8): narrowed to the cases YM-BAR-3 lists, as [Q-WATCH-25](07-quality.md#757-runtime-breakage-signals) has it. No R-number: 07 owns breakage signals.
+
+Also applied, third round: R68 (YM-ACC-7, YM-KEY-12, YM-FB-6, YM-FAIL-4, YM-FAIL-5, §13), R69 (YM-ACC-8, the PROVISIONAL table), R71 (YM-FEAT-10, YM-PS-2), R73 (YM-POP-1, YM-PICK-4) and R77 (YM-FB-10). R70, R72, R74, R75 and R76 don't touch this chapter's topics: its not-working notices name actions, not features, so R75 changes none of them.
+
 ## Conflicts found
 
 ### Unresolved
 
-These remain between this chapter and the others after both rounds of resolutions. They're noted here, not edited there.
-
-1. **Playing now's art.** YM-POP-1 shows the playing song's art. [06's `nowPlaying` result](06-architecture.md#625-job-catalogue), `{ videoId, title, artist, album?, pos, len }`, carries none. 06 owns the interface; the art can come from the media session's artwork or the video ID.
-2. **Song counts in the picker.** YM-PICK-4's rows read "Private · 214 songs". On YouTube Music the list comes from 06's `membership` job, whose rows are `{ id, title, privacy?, contains }`, with no count; the `playlists` job, which has `count?`, is YouTube-only.
-3. **08's store description.** [08 §9.2](08-release.md#92-description-both-stores) says Quick actions puts "Play next, Add to queue, Save to playlist, Like and Remove from queue, one click away on songs, albums and playlists". Save and Like are for songs only (YM-QA-2), and Remove from queue only for queue items (YM-QA-3).
-4. **08's screenshot 4.** [08 §9.4](08-release.md#94-screenshots-and-images) pairs "Play next / Add to queue on rows" with the toast "Added {n} songs from “{album}” to the queue". A row adds one song ("Added “Get Lucky” to the queue"); the block toast comes from the album header or a card (YM-Q-3, YM-QA-9).
-5. **Which titles take quotes.** 04's placeholder note says "Titles inside copy take typographic quotes, as in “{Playlist}”" (R45). Read literally, that quotes playlist names too. YM-FB-10, like [YT-ADD-18](02-youtube.md#252-feedback), quotes song, album and video titles, and a playlist name only in "{Shortcut} now saves to “{Playlist}”.". R45 sets the quote style, not which titles are quoted.
+None remain after all three rounds of resolutions; see [Resolved during assembly](#resolved-during-assembly).
 
 ### Resolved by precedence (for the record)
 
 - **Queue items:** ticket 26 kept Play next and Add to queue off queue items. Superseded by its amendment after ticket 28: they're moves.
 - **Pointer or focus:** ticket 26 said "pointer first". Superseded by ticket 08's "whichever moved last".
-- **Unarmed keys:** ticket 26's "no armed key" for missing internals. Ticket 18 superseded it (the key stays caught and answers), and R50 restored it for an action that's unavailable while its feature is partly working. A feature that isn't working keeps its keys caught (YM-KEY-12).
+- **Unarmed keys:** ticket 26's "no armed key" for missing internals. Ticket 18 superseded it (the key stays caught and answers). R50 restored it for an action that's unavailable while its feature is partly working, and R68 withdrew that again: the action's buttons hide, but its key stays caught and answers. Every key stays caught, whatever the feature's status (YM-KEY-12).
 - **Casting:** ticket 10 softened it to "available if no cast signal". Superseded by ticket 25, which found `state.castStatus`, and then by R5, which makes every queue edit unavailable while casting, with no exception for inserts M1 might show forwarded (YM-CAST-3).
 - **Row placement:** ticket 26 said buttons cover the trailing columns without reflow, and ticket 09 reserved a slot. Superseded by ticket 27's variant A, which ticket 26 allowed it to adjust, and settled by R35.
 - **Deleted quick-save playlist copy:** ticket 26 had "Favourites doesn't exist anymore". Superseded by ticket 12's `Couldn't save “{title}”: {Playlist} doesn't exist anymore.`; ticket 12 folds in ticket 26 and keeps its Choose action.
@@ -819,6 +831,5 @@ These remain between this chapter and the others after both rounds of resolution
 ## Not pinned down
 
 1. **Choose mode's title for a shortcut.** YM-PICK-3's choose-mode title and line, "Save songs to…" and "The playlist you pick here becomes your one-click Save.", fit only the quick-save playlist. No wording is given for a playlist shortcut's **Choose** (YM-PS-4), on either site ([02's Not pinned down](02-youtube.md#not-pinned-down)).
-2. **How R50's "keys hide" reads.** YM-KEY-12 reads it as ticket 26's "no armed key": an unavailable action's key passes through untouched, and only the once-per-session notice (YM-FAIL-5) and the status say why. That is the "silent key" ticket 18 had ruled out (YM-FB-6). Confirm, or keep such keys caught with a failure toast.
-3. **The pins' private-window tooltip (R58).** The pins stay disabled there, because the quick-save playlist belongs to the account setup, yet R58's tooltip, "Changes made here are saved; nothing about this window's browsing is.", says what's saved rather than why the pin is off (YM-ACC-8, as [YT-PK-08](02-youtube.md#26-the-playlist-picker)).
-4. **A denied prompt from Playlist shortcuts' own switch.** When the click that first switches Playlist shortcuts on asks for YouTube Music access (YM-PS-2) and the user denies it, what happens to "Also on YouTube Music" is open in [04's gaps](04-features-accounts-data.md#8-gaps) (FT-52).
+
+Items 2 to 4 of this list were settled in the third round; see [Resolved during assembly](#resolved-during-assembly).
