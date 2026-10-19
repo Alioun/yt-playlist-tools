@@ -18,3 +18,5 @@ Blocked by: 04, 10
 Use `codebase-design` for the seam.
 
 Also from [ticket 05](05-ui-stacks.md): YouTube's `--yt-sys-color-baseline--*` theme variables are undocumented and belong on the breakage watch list, along with any real-browser checks.
+
+Also from [ticket 04](04-bun-test.md): `bun test` can't reach real browsers, real YouTube or the built output (CSS, `injectScript`). Live and in-browser checks need a different tool.

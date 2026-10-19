@@ -14,3 +14,9 @@ Use `codebase-design` to design the module map: deep modules with small interfac
 - the folder layout.
 
 Also from [ticket 05](05-ui-stacks.md): happy-dom can't see Tailwind v4 styles or element positions. Decide whether a real-browser test layer is needed, and where it sits.
+
+Also from [ticket 04](04-bun-test.md):
+- **Constraints:** keep WXT at the entrypoints; auto-imports off (`imports: false`) with real import paths, or keep `#imports` behind a Bun plugin; read `import.meta.env` in one platform module and pass it in; use injected dependencies as the test seam rather than `mock.module`; run `bun test --isolate`.
+- **Bun version:** bump `packageManager` from `bun@1.4.0` to at least 1.4.3, since CI reads that field.
+- **Per-browser runs:** inject the platform and run once, or keep separate Chrome and Firefox runs.
+- **Coverage:** a policy that accepts no branch coverage.

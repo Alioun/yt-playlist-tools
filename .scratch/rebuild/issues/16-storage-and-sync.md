@@ -18,3 +18,5 @@ Approved: settings sync across the user's browsers. Decide:
 - **Clearing:** what "clear all data" clears.
 
 Also from [ticket 03](03-store-policy.md): whether `storage.sync` fits AMO's `none` declaration is open ([ticket 23](23-ask-amo.md)). Nothing may be persisted from private windows.
+
+Also from [ticket 04](04-bun-test.md): WXT's fake browser doesn't model `storage.sync`'s quota, so quota behaviour needs its own test double.
