@@ -40,3 +40,5 @@ Also from [ticket 17](17-modules.md):
   - a compile cache for the Svelte `bun test` plugin as the suite grows.
 
 Also from [ticket 19](19-upgrade-and-rollout.md): its Answer is the spec's upgrade-and-rollout chapter: copy, listings, privacy policy, workflows, test matrix and release checklist.
+
+Also from building [ticket 15](15-popup-and-settings.md)'s prototype: with ticket 24's clsx-only `cn` (no tailwind-merge), conflicting utilities between a component's base classes and its variants resolve silently by CSS order. For example, base `border-transparent` beat the outline variant's `border-border`, so light-mode outline buttons had no border. The spec needs a rule: no conflicting utilities across base and variants in generated shadcn-svelte components, ideally enforced by a lint or test. Also, the prototype's "fake" code-split group created an import cycle that blanked the settings page while its size numbers still looked fine, so the budget check must also assert that every page renders.
