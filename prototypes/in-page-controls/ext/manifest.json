@@ -1,0 +1,9 @@
+{
+  "manifest_version": 3,
+  "name": "Playlist Pigeon (ticket 14 dev build, PROTOTYPE)",
+  "version": "0.0.14",
+  "description": "Throwaway rough dev build of the in-page controls. Fake data, sends nothing.",
+  "permissions": ["storage", "scripting"],
+  "host_permissions": ["https://www.youtube.com/*"],
+  "background": { "service_worker": "background.js" }
+}

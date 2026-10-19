@@ -1,0 +1,28 @@
+{
+  "name": "prototype-in-page-controls",
+  "private": true,
+  "version": "0.0.0",
+  "description": "THROWAWAY PROTOTYPE for ticket 14 (how the controls inside YouTube look and behave). Not production code.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && $npm_execpath scripts/build-ext.ts",
+    "build:ext": "$npm_execpath scripts/build-ext.ts",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "shots": "node scripts/shots.mjs",
+    "live": "node scripts/live.mjs"
+  },
+  "devDependencies": {
+    "@internationalized/date": "^3.12.4",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@types/chrome": "^0.3.5",
+    "@webext-core/isolated-element": "^3.0.0",
+    "bits-ui": "^2.19.5",
+    "playwright-core": "^1.64.1",
+    "svelte": "^5.57.2",
+    "svelte-check": "^4.7.7",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4"
+  }
+}

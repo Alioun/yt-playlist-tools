@@ -1,0 +1,17 @@
+{
+ "when": "2026-10-19T12:37:49.692Z",
+ "notes": [
+  "registered (light): [\"pp-www-page [MAIN] page-www.js @document_start\",\"pp-www [ISOLATED] core-www.js → kit-www.js → feature-shortcuts-www.js → feature-quick-save.js → feature-queue-button.js → feature-watch-button.js → feature-card-menu.js @document_idle\"]",
+  "search light settle check: {\"links\":25,\"recognised\":25,\"ok\":true}",
+  "search light overlay before preview: {\"parent\":\"ytd-video-preview.\",\"rect\":[268,413,56,68],\"buttons\":[\"Add to queue\",\"Save to Music videos\",\"Save to another playlist…\"],\"onTop\":true}",
+  "search light overlay with the inline preview playing: {\"parent\":\"ytd-video-preview.\",\"rect\":[268,413,56,68],\"buttons\":[\"Add to queue\",\"Save to Music videos\",\"Save to another playlist…\"],\"onTop\":true}",
+  "shorts light button placed: {\"parent\":\"reel-action-bar-view-model\",\"next\":\"pivot-button-view-model\",\"rect\":{\"x\":1010.125,\"y\":742,\"width\":48,\"height\":78,\"top\":742,\"right\":1058.125,\"bottom\":820,\"left\":1010.125}}",
+  "registered (dark): [\"pp-www-page [MAIN] page-www.js @document_start\",\"pp-www [ISOLATED] core-www.js → kit-www.js → feature-shortcuts-www.js → feature-quick-save.js → feature-queue-button.js → feature-watch-button.js → feature-card-menu.js @document_idle\"]",
+  "search dark settle check: {\"links\":29,\"recognised\":29,\"ok\":true}",
+  "search dark overlay before preview: {\"parent\":\"ytd-video-preview.ytdVideoPreviewHost.ytdVideoPreviewActive.ytdVideoPreviewRoundedCornersLarge\",\"rect\":[268,624,56,68],\"buttons\":[\"Add to queue\",\"Save to Music videos\",\"Save to another playlist…\"],\"onTop\":true}",
+  "search dark overlay with the inline preview playing: {\"parent\":\"ytd-video-preview.ytdVideoPreviewHost.ytdVideoPreviewActive.ytdVideoPreviewPlaying.ytdVideoPreviewRoundedCornersLarge\",\"rect\":[268,624,56,68],\"buttons\":[\"Add to queue\",\"Save to Music videos\",\"Save to another playlist…\"],\"onTop\":true}",
+  "shorts dark button placed: {\"parent\":\"reel-action-bar-view-model\",\"next\":\"pivot-button-view-model\",\"rect\":{\"x\":1010.125,\"y\":742,\"width\":48,\"height\":78,\"top\":742,\"right\":1058.125,\"bottom\":820,\"left\":1010.125}}"
+ ],
+ "pages": {},
+ "shortsLink": "/shorts/1hehc7BqzDA"
+}
