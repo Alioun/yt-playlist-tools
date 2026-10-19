@@ -1,0 +1,27 @@
+{
+  "name": "prototype-youtube-music-controls",
+  "private": true,
+  "version": "0.0.0",
+  "description": "THROWAWAY PROTOTYPE for ticket 27 (the controls inside YouTube Music). Not production code.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && bun scripts/build-ext.ts",
+    "build:mock": "vite build",
+    "build:ext": "bun scripts/build-ext.ts",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "shoot:mock": "node scripts/shoot-mock.cjs",
+    "shoot:real": "node scripts/shoot-real.cjs"
+  },
+  "devDependencies": {
+    "@internationalized/date": "^3.12.4",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "bits-ui": "^2.19.5",
+    "playwright-core": "^1.64.1",
+    "svelte": "^5.57.2",
+    "svelte-check": "^4.7.7",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4"
+  }
+}

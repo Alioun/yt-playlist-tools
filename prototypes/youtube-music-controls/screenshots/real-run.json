@@ -1,0 +1,199 @@
+[
+ {
+  "k": "album header, empty queue",
+  "v": {
+   "queue": 13
+  }
+ },
+ {
+  "k": "album log",
+  "v": [
+   {
+    "what": "probe",
+    "app": true,
+    "fetch": true,
+    "queue": true,
+    "store": true,
+    "panel": true,
+    "wiz": false,
+    "signedIn": false
+   },
+   {
+    "what": "header attached",
+    "title": "Random Access Memories",
+    "count": 13,
+    "offered": {
+     "playNext": true,
+     "addToQueue": true
+    }
+   },
+   {
+    "what": "page settle",
+    "links": 35,
+    "recognised": 35,
+    "anchorMissing": false
+   }
+  ]
+ },
+ {
+  "k": "errors 1",
+  "v": []
+ },
+ {
+  "k": "quick picks play next: queue",
+  "v": [
+   50,
+   51
+  ]
+ },
+ {
+  "k": "card add to queue, then Alt+U: queue",
+  "v": [
+   152,
+   51
+  ]
+ },
+ {
+  "k": "keyboard: focused",
+  "v": "Play next: \"Giorgio by Moroder\""
+ },
+ {
+  "k": "errors 3",
+  "v": []
+ },
+ {
+  "k": "session 1",
+  "v": {
+   "wiz": true,
+   "actionBar": true
+  }
+ },
+ {
+  "k": "fullscreen element / kit host parent",
+  "v": [
+   "HTML",
+   "HTML"
+  ]
+ },
+ {
+  "k": "log wiz",
+  "v": [
+   {
+    "what": "probe",
+    "app": true,
+    "fetch": true,
+    "queue": true,
+    "store": true,
+    "panel": true,
+    "wiz": true,
+    "signedIn": false
+   },
+   {
+    "what": "bar save attached",
+    "kind": "wiz"
+   },
+   {
+    "what": "popovers injected",
+    "ms": 22
+   },
+   {
+    "what": "picker painted",
+    "ms": 32,
+    "centred": false
+   },
+   {
+    "what": "picker painted",
+    "ms": 13,
+    "centred": true
+   }
+  ]
+ },
+ {
+  "k": "errors wiz",
+  "v": []
+ },
+ {
+  "k": "session 2",
+  "v": {
+   "wiz": false,
+   "actionBar": false
+  }
+ },
+ {
+  "k": "log classic",
+  "v": [
+   {
+    "what": "probe",
+    "app": true,
+    "fetch": true,
+    "queue": true,
+    "store": true,
+    "panel": true,
+    "wiz": false,
+    "signedIn": false
+   },
+   {
+    "what": "bar save attached",
+    "kind": "classic"
+   },
+   {
+    "what": "popovers injected",
+    "ms": 21
+   },
+   {
+    "what": "picker painted",
+    "ms": 34,
+    "centred": false
+   },
+   {
+    "what": "picker painted",
+    "ms": 14,
+    "centred": true
+   }
+  ]
+ },
+ {
+  "k": "errors classic",
+  "v": []
+ },
+ {
+  "k": "quick picks 1280",
+  "v": {
+   "row": 436,
+   "titleWithYtmOwnButtons": 214,
+   "titleWithOurs": 124
+  }
+ },
+ {
+  "k": "quick picks 1366",
+  "v": {
+   "row": 289,
+   "titleWithYtmOwnButtons": 66,
+   "titleWithOurs": 0
+  }
+ },
+ {
+  "k": "quick picks 1440",
+  "v": {
+   "row": 312,
+   "titleWithYtmOwnButtons": 90,
+   "titleWithOurs": 0
+  }
+ },
+ {
+  "k": "quick picks 1536",
+  "v": {
+   "row": 345,
+   "titleWithYtmOwnButtons": 111,
+   "titleWithOurs": 21
+  }
+ },
+ {
+  "k": "quick picks 1920",
+  "v": {
+   "row": 473,
+   "titleWithYtmOwnButtons": 251,
+   "titleWithOurs": 161
+  }
+ }
+]

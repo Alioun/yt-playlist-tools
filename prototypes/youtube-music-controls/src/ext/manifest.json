@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Playlist Tools DEV (ticket 27 prototype)",
+  "version": "0.0.27",
+  "description": "THROWAWAY rough dev build of the YouTube Music controls. Not for release.",
+  "permissions": ["scripting", "storage"],
+  "host_permissions": ["https://music.youtube.com/*"],
+  "background": { "service_worker": "background.js" },
+  "minimum_chrome_version": "121"
+}
