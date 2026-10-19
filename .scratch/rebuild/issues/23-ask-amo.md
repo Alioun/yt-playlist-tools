@@ -25,7 +25,7 @@ Status: drafted on 2026-10-19 and waiting for the user to send it. Post it in Mo
 > 1. 2.0 makes no requests to any server of mine or any third party. Its only network requests go from a script in the user's YouTube tab to youtube.com itself, using the user's own signed-in session: listing their playlists, or adding a video to one of them. Where YouTube's own page code can't send a request, the script signs it the same way YouTube's code does, from the session cookie in that tab, and sends it only to YouTube. Is `data_collection_permissions: { required: ["none"] }` correct for that?
 > 2. 2.0 has an opt-in settings sync through `storage.sync` (off by default). It syncs a hash of the YouTube account ID, the account's display name, @handle and avatar URL, playlist IDs, and channel IDs and names used in per-playlist filters. Does Firefox Sync count as transmission here? If it does, which data type applies, and is it acceptable to declare it as an *optional* type requested from the click that switches sync on?
 > 3. In a private window, 2.0 never stores anything about the session, but it does save settings the user changes there, such as switching a feature on. Is that acceptable?
-> 4. The build uses Bun (`bun install --frozen-lockfile && bun run build`) instead of npm. Is that acceptable for the source-code submission if the README pins the Bun version and the build is reproducible? Is anything specific needed for the ARM64 review environment?
+> 4. Dependencies are installed with Bun (`npx --yes bun@1.4.3 install --frozen-lockfile`, from `bun.lock`); the build itself runs on Node 24 (`npm run build:firefox`), and CI rebuilds the sources zip that way on ARM64 and x86-64 and checks the output is identical. Is a Bun-installed dependency tree acceptable for the source-code submission, or do you need an npm lockfile (`npm ci`)?
 >
 > Thanks!
 
@@ -38,3 +38,5 @@ Also from [ticket 10](10-youtube-access.md): add a fourth question. Does signing
 Also from [ticket 16](16-storage-and-sync.md): question 2 should list exactly what syncs: account digests, names, handles and avatar URLs, playlist and channel IDs, and channel names. Also ask which data type applies, and whether an *optional* type requested from the click that switches sync on is acceptable.
 
 Also from [ticket 19](19-upgrade-and-rollout.md): record the reply against the table in its Answer, which gives the manifest, upgrade and copy change for each reply to each question. If AMO refuses Bun, only the install step falls back to npm, adding a second lockfile.
+
+Corrected on 2026-10-19 (spec chapter 08): question 4 now describes the real build: a Bun install, then a Node build.
