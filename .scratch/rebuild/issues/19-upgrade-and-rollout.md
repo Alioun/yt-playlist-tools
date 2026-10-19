@@ -1,7 +1,7 @@
 # How do 1.4.5 users upgrade, and how does 2.0 roll out?
 
 Type: grilling
-Status: open
+Status: claimed
 Labels: wayfinder:grilling
 Part of: [Rebuild (2.0)](../map.md)
 Blocked by: 06, 10, 16, 22, 23

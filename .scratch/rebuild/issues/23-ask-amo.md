@@ -22,9 +22,10 @@ Status: drafted on 2026-10-19 and waiting for the user to send it. Post it in Mo
 >
 > Hi! I maintain YouTube Playlist Tools (`{cc70cd21-2cc6-444b-bd89-496909346091}`, addons.mozilla.org/firefox/addon/youtube-playlist-tools). Version 2.0 is a rewrite, and I'd like to declare data collection correctly before submitting it:
 >
-> 1. 2.0 makes no requests to any server of mine or any third party. Its only network requests go from a script in the user's YouTube tab to youtube.com itself, using the user's own signed-in session: adding a video to one of their playlists, or listing their playlists. Is `data_collection_permissions: { required: ["none"] }` correct for that, or does sending the video ID back to YouTube count as transmitting "website activity"?
-> 2. 2.0 stores its settings with `storage.sync`: chosen playlist IDs, and channel IDs for per-playlist filters. Does Firefox Sync count as transmission under the data-collection rules, or is it treated as the browser's own feature?
-> 3. The build uses Bun (`bun install --frozen-lockfile && bun run build`) instead of npm. Is that acceptable for the source-code submission if the README pins the Bun version and the build is reproducible? Is anything specific needed for the ARM64 review environment?
+> 1. 2.0 makes no requests to any server of mine or any third party. Its only network requests go from a script in the user's YouTube tab to youtube.com itself, using the user's own signed-in session: listing their playlists, or adding a video to one of them. Where YouTube's own page code can't send a request, the script signs it the same way YouTube's code does, from the session cookie in that tab, and sends it only to YouTube. Is `data_collection_permissions: { required: ["none"] }` correct for that?
+> 2. 2.0 has an opt-in settings sync through `storage.sync` (off by default). It syncs a hash of the YouTube account ID, the account's display name, @handle and avatar URL, playlist IDs, and channel IDs and names used in per-playlist filters. Does Firefox Sync count as transmission here? If it does, which data type applies, and is it acceptable to declare it as an *optional* type requested from the click that switches sync on?
+> 3. In a private window, 2.0 never stores anything about the session, but it does save settings the user changes there, such as switching a feature on. Is that acceptable?
+> 4. The build uses Bun (`bun install --frozen-lockfile && bun run build`) instead of npm. Is that acceptable for the source-code submission if the README pins the Bun version and the build is reproducible? Is anything specific needed for the ARM64 review environment?
 >
 > Thanks!
 
