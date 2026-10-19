@@ -882,3 +882,12 @@ Also from [ticket 19](19-upgrade-and-rollout.md):
 - the AMO metadata script, the sources README and `build-for-amo`;
 - Node 24 in release jobs;
 - `watch.yml` callable from `release.yml`.
+
+Also from [ticket 14](14-in-page-controls.md):
+- **Shadow hosts:** "one shadow host per page" becomes one host for toasts and popovers, one moving overlay, and one host per in-row control.
+- **The kit's toast layer** exists only while a feature that needs it runs.
+- **Card menu notice:** the card menu loads no kit, so its not-working notice needs the kit injected on demand, or a notice that needs no kit.
+- **Escape** is handled inside popovers, because key isolation stops Bits UI from seeing it.
+- **Svelte `$state` proxies:** identity comparisons silently fail; add a guard or lint.
+- **Kit export list:** the generated list of Svelte exports needs property access, because some runtime names are reserved words.
+- **The popovers loader** needs a timeout, a visible failure on click, and a silent mode for hover preloads.

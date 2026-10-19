@@ -387,3 +387,7 @@ Read from primary sources on 2026-10-19.
   - the main hotkey manager drops keys with Ctrl or Alt held, except the arrows;
   - the Shorts handler doesn't.
 - **WXT `isolateEvents`** stops key events at the shadow root, in the bubble phase (webext-core isolated-element v3.0.0, `src/index.ts:89-97`).
+
+Also from [ticket 14](14-in-page-controls.md)'s real-YouTube build:
+- With key isolation on, Bits UI popovers don't close on Escape, so the popovers handle Escape themselves.
+- Typing in our picker never reached YouTube's hotkeys.

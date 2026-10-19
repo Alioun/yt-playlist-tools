@@ -377,3 +377,5 @@ Also from [ticket 19](19-upgrade-and-rollout.md):
 - **No AMO rollback for 2.0.0:** it would land on 1.4.5, which is useless once its credentials are deleted. So 2.0.0 is fixed forward; Chrome can roll back to the last beta.
 - **Releases are gated** by the signed-in live-check record.
 - **Support channel:** GitHub issues with a problem form.
+
+Also from [ticket 14](14-in-page-controls.md): its Answer lists the card-selector table and the new selectors and anchors (the action row after Share, the inline-preview layer, YouTube's own hover buttons on lockup cards) for the watch list.

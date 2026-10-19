@@ -314,3 +314,8 @@ Also from [ticket 17](17-modules.md), after resolution:
 - **New size-check rules:** Svelte only in the kits and `popovers.js`, Bits UI only in `popovers.js`, no kit code inside feature files.
 
 Also from [ticket 19](19-upgrade-and-rollout.md): the size check runs on the exact store builds.
+
+Also from [ticket 14](14-in-page-controls.md)'s real-YouTube build:
+- **Up front:** everything is 39.6 KB gzip (about 43.6 KB with auto-add), within the 49 KB site total.
+- **The kit:** 27.8 KB against its 18 KB line, 72 % of it the Svelte runtime, so the site's rows need rebalancing.
+- **The picker's first open:** 96–115 ms against 60 ms (headless). Hover preload was added but not re-measured.
