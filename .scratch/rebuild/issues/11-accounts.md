@@ -17,3 +17,5 @@ Approved: each YouTube account keeps its own setup. Decide:
 Update GLOSSARY.md with the term.
 
 Also from [ticket 03](03-store-policy.md): nothing may be stored from private windows. Decide how container tabs and private windows relate to accounts and setups.
+
+Also from [ticket 02](02-request-context.md): requests sent from a tab follow that tab's account, container and private window. Decide which tab the popup uses when several YouTube tabs differ, and whether 2.0 runs in private and incognito windows at all.

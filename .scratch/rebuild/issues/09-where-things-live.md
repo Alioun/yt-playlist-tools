@@ -23,3 +23,7 @@ The prototype is low-fidelity, clickable and uses fake data. It's about placemen
 Also from [ticket 03](03-store-policy.md): the Chrome Web Store requires an in-product disclosure that the user explicitly accepts before any data is handled. Place it in first run.
 
 Also from [ticket 06](06-upgrade-path.md): for upgraders, the one-time note doubles as the consent screen. Carried-over auto-add stays off until it's accepted.
+
+Also from [ticket 02](02-request-context.md):
+- With no YouTube tab open, the popup and settings may only have cached data plus an "Open YouTube" action, unless [ticket 25](25-live-checks.md) proves a hidden frame. Design for that state.
+- Include asking for youtube.com access when it's missing or revoked (Firefox).
