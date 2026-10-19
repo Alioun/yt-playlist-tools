@@ -77,12 +77,13 @@ A spec at `.scratch/rebuild/spec.md` for 2.0 of this extension: a ground-up rebu
 - [How do the controls inside YouTube Music look and behave?](issues/27-youtube-music-controls.md): every control copies YouTube Music's own, measured live, with YouTube Music's own icons. Row and queue buttons join the item's layout before its like and ⋮ on hover or focus (nothing reserved at rest). Card buttons sit bottom-left; header buttons are always visible; Save sits left of the like in both the classic bar and the Wiz miniplayer. The picker is drawn in the ⋮ menu's style. Play next, Add to queue, moves, Remove and Undo were done for real on music.youtube.com. Eager weight is 35.2 KB; the lazy picker (54.5 KB) is over budget, with a fix rule in ticket 24. Narrow Quick picks rows squeeze the title while hovered: PROVISIONAL, pending the user. Prototype on `prototype/youtube-music-controls`.
 - [How do the popup and settings look?](issues/15-popup-and-settings.md): hi-fi Svelte + shadcn-svelte prototypes of the popup (ticket 09's structure, unfolding in place), settings (left nav, one section at a time, deep links, feature cards with footprint tags) and a separate onboarding page (first run in three steps, the 1.4.5 note). One `PickerModel` and one key recorder on the fake `Backend`. Brand: the pigeon mark, with a teal-to-violet gradient only on the mark, switches that are on, the header hairline, progress and Agree. Popup first view is 35.8–39.4 KB; every page renders from the build. Eleven component and build rules for the build (no tailwind-merge conflicts, controlled switches, no top-level await, and more). Prototype with 73 screenshots on `prototype/popup-and-settings`.
 - [Write the rebuild spec](issues/20-write-spec.md): **the destination is reached.** [`spec.md`](spec.md) plus nine chapters, about 1,470 requirement IDs, checked for broken links, missing IDs and contradictions, with 82 assembly resolutions recorded. Open items wait only on the user's decisions, the signed-in live checks (ticket 25) and AMO's reply (ticket 23), each with a stated default.
+- [Ask AMO whether 2.0 can declare no data collection](issues/23-ask-amo.md): settled by decision from Mozilla's own docs, without sending: `none`, sync isn't collection, private-window settings allowed, Bun install kept. Firefox's prompt strings settle live check P1 ([R83](spec/resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)).
 
 ## Not yet specified
 
 - Visual detail beyond the prototypes: motion and iconography.
 - Edge cases with members-only, age-restricted, private and deleted videos, and very large playlists, beyond the failure copy already specified.
-- What hangs on the open tickets: the name (22), AMO's reply (23) and the signed-in live checks (25). The spec states a default for each.
+- What hangs on the open tickets: the name (22) and the signed-in live checks (25). The spec states a default for each.
 
 ## Out of scope
 

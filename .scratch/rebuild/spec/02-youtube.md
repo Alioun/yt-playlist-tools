@@ -28,7 +28,7 @@ It covers behaviour only.
   | `YT-CM` | The right-click card menu |
   | `YT-BRK` | What the user sees when YouTube changes something |
 
-- **(R-n)** at the end of a requirement means resolution R-n in [resolutions.md](resolutions.md) changed or added it while the spec was assembled. All three rounds are applied (R1–R40, R41–R67, then R68–R77).
+- **(R-n)** at the end of a requirement means resolution R-n in [resolutions.md](resolutions.md) changed or added it while the spec was assembled. All three rounds are applied (R1–R40, R41–R67, then R68–R77), and so is R83, settled after the spec.
 - **Ownership:** under the resolutions' ownership rule, this chapter owns YouTube feature behaviour and copy. Where it shares a topic with another chapter, the owner's text wins: [04](04-features-accounts-data.md) for accounts, settings, data and status, [05](05-ui.md) for layout and visuals, [06](06-architecture.md) for mechanisms, [07](07-quality.md) for budgets, tests and breakage-signal identifiers, and [08](08-release.md) for upgrade and consent copy.
 - **PROVISIONAL** marks a rule that a pending check or user decision may change. The mark names what's pending: e.g. "PROVISIONAL (ticket 25: L6)" is live check L6 in [ticket 25](../issues/25-live-checks.md), whose L-checks are defined in [ticket 10](../issues/10-youtube-access.md). Where the tickets say what happens either way, so does this chapter.
 - **Placeholders in copy:**
@@ -108,7 +108,7 @@ Pause and session skips aren't settings. They're this browser's session memory, 
 - **What works:** an account that already has a setup behaves as in a normal window: auto-add, shortcuts, quick-save and the picker.
 - **What's never written:** nothing that comes from the private session is stored. That means no new setups or setup edits (ticks, Takes, percentages, filters, shortcut targets, quick-save playlists, choose mode's first pick), no *Missing* or *Full* marks, no watch progress, no locally kept new playlists, and no remembered visibility.
 - **Session memory** (session skips, recent adds, rate-limit pauses, shown-once memory) stays in memory only, the tab's own or the background's, and never in a storage area (04 DATA-33).
-- **Still saved:** shared-settings changes made there (switches, options, keys, labels, Watch later on every account, the theme and the default percentage), because they carry nothing from the private session. PROVISIONAL (ticket 23: AMO question 3): if AMO says no, those writes are refused too (04 ACC-38, DATA-32; R58).
+- **Still saved:** shared-settings changes made there (switches, options, keys, labels, Watch later on every account, the theme and the default percentage), because they carry nothing from the private session. This is settled, not provisional: only if an AMO reviewer objects does [08 §13](08-release.md#13-if-an-amo-reviewer-objects)'s fallback refuse those writes too (04 ACC-38, DATA-32; R58, R83).
 - **Pause and Resume** work there too.
 
 **YT-GEN-11: where features run.** Features run in the top frame of youtube.com pages in desktop Chrome and Firefox. They don't run in YouTube embeds on other sites, on m.youtube.com, or in YouTube's live-chat frame. music.youtube.com is covered only where a feature says so, and only while the YouTube Music section is on: with it off, nothing of ours runs there (R1).
@@ -793,7 +793,7 @@ The **playlist picker** is the extension's list of the user's playlists, with a 
 **YT-PK-08: pins.**
 - Each row has a pin, "Use for one-click save". It's visible on hover or focus, and always visible on the current quick-save playlist.
 - Pinning makes that playlist YouTube's quick-save playlist for this account.
-- In a private window, pins are disabled, because the quick-save playlist is part of the account setup (YT-GEN-10, [04](04-features-accounts-data.md) DATA-33). Their tooltip says why: "Quick-save playlists can't be changed in a private window." This holds whatever AMO answers about shared settings (ACC-38; R58, R69).
+- In a private window, pins are disabled, because the quick-save playlist is part of the account setup (YT-GEN-10, [04](04-features-accounts-data.md) DATA-33). Their tooltip says why: "Quick-save playlists can't be changed in a private window." This holds even under 08 §13's private-window fallback (ACC-38; R58, R69, R83).
 
 **YT-PK-09: choose mode.**
 - It's titled "Save videos to…", with "One click will save here from now on."
@@ -922,7 +922,7 @@ The rules for presets ([04](04-features-accounts-data.md) FT-04):
 - Choosing Watch later for a shortcut makes it save to the current account's Watch later on every account that hasn't chosen another playlist for that shortcut. Accounts with their own choice keep it.
 - Choosing any other playlist sets it for the current account only.
 - Choosers show it as "Watch later (every account)".
-- Choosing Watch later is allowed in a private window, because it's a shared choice. PROVISIONAL (ticket 23: AMO question 3) ([04](04-features-accounts-data.md) DATA-32; R58).
+- Choosing Watch later is allowed in a private window, because it's a shared choice ([04](04-features-accounts-data.md) DATA-32; R58, R83).
 
 **YT-KEY-13: a shortcut with no playlist on this account** answers "{Shortcut} has no playlist on {Account} yet.", with a **Choose** action. It's a neutral hint, not a failure, and it always shows, even with Show feedback off. (R24, R56)
 - **Choose** opens the in-page picker in choose mode for that shortcut. The pick saves the video, as any choose-mode pick does ([ticket 14](../issues/14-in-page-controls.md)), and becomes the shortcut's playlist on this account.
@@ -1400,6 +1400,9 @@ Also applied, third round:
 - R77 (the `{Playlist}` placeholder, YT-ADD-18; no other copy here quoted a playlist name).
 
 R68, R72, R73, R74 and R76 don't touch this chapter's topics. YT-PK-11 now says outright that every explicit open, the picker key included, gets the loader-failure toast, which 06's popovers follow.
+
+After the spec ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)):
+- R83 (YT-GEN-10, YT-PK-08, YT-KEY-12): shared-settings changes made in a private window, Watch later's shared choice included, are saved as R58 decided, and are no longer PROVISIONAL on ticket 23's AMO question 3. [08 §13](08-release.md#13-if-an-amo-reviewer-objects) keeps the fallback if an AMO reviewer objects.
 
 ## Conflicts found
 

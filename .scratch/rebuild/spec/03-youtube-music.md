@@ -14,7 +14,7 @@ It covers behaviour only. Elsewhere:
 - **Routes,** gateway jobs, the queue mechanics and page registrations: [06-architecture.md](06-architecture.md) §6.2.7, §6.2.8 and §6.6.
 - **Budgets** and the breakage watch: [07-quality.md](07-quality.md) (Q-PERF-13, Q-PERF-14, §7.5).
 
-The main session's resolutions ([resolutions.md](resolutions.md), all three rounds: R1–R40, R41–R67, then R68–R77) are applied. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Where chapters disagree, the owning chapter wins (resolutions.md's ownership rule): this chapter owns YouTube Music behaviour and copy.
+The main session's resolutions ([resolutions.md](resolutions.md), all three rounds: R1–R40, R41–R67, then R68–R77) are applied, and so is R83, settled after the spec. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Where chapters disagree, the owning chapter wins (resolutions.md's ownership rule): this chapter owns YouTube Music behaviour and copy.
 
 **Sources**, all resolved on 2026-10-19:
 - [26 Quick actions](../issues/26-youtube-music-quick-actions.md), the core, with its amendments after 28, 08, 18 and 25;
@@ -99,7 +99,7 @@ Later amendments, the main session's decisions and its resolutions supersede ear
   - An account with a quick-save playlist uses it for one-click saves.
   - Choose mode still saves the song, but the pick isn't stored as the quick-save playlist.
   - Pins are disabled, because the quick-save playlist belongs to the account setup. Their tooltip says why: "Quick-save playlists can't be changed in a private window." (R69)
-  - Changes to shared settings made in a private window are still saved ([ACC-38](04-features-accounts-data.md#27-private-windows-and-containers); R58). **PROVISIONAL** (ticket 23, AMO question 3).
+  - Changes to shared settings made in a private window are still saved ([ACC-38](04-features-accounts-data.md#27-private-windows-and-containers); R58). This is settled, not provisional (R83).
   - Nothing from the session is stored: no Missing or Full marks, no remembered visibility, and new playlists stay in the tab's memory only.
 
 ## 3. Which items get which action
@@ -766,7 +766,6 @@ These need the user's go-ahead as new capabilities (`for-the-user.md`). 2.0 does
 | `DATASYNC_ID` is stable | YM-ACC-2 | Ticket 25 (ticket 11's checks) |
 | Playlist titles are limited to 150 characters | YM-PICK-10 | Ticket 25 |
 | Toasts name "this tab's queue" if the cast state can't be read | YM-CAST-2 | Ticket 25, M5 |
-| Shared-settings changes in a private window are saved (R58). The pins' tooltip is R69's either way. | YM-ACC-8 | [Ticket 23](../issues/23-ask-amo.md), AMO question 3 |
 | The name in `{Product}` | §13 | [Ticket 22](../issues/22-name.md), the user |
 
 Visual PROVISIONAL items (the toast action's blue, bundling YouTube Music's own icons) are in [05-ui.md](05-ui.md#provisional). The picker's 54.5 KB against its 50 KB budget, and R29's fix order, are in [07-quality.md](07-quality.md) (Q-PERF-14) and [UI-RULE-39](05-ui.md#budgets).
@@ -812,6 +811,9 @@ Third round:
 - **The anchor check's player-bar exception** (YM-FAIL-8): narrowed to the cases YM-BAR-3 lists, as [Q-WATCH-25](07-quality.md#757-runtime-breakage-signals) has it. No R-number: 07 owns breakage signals.
 
 Also applied, third round: R68 (YM-ACC-7, YM-KEY-12, YM-FB-6, YM-FAIL-4, YM-FAIL-5, §13), R69 (YM-ACC-8, the PROVISIONAL table), R71 (YM-FEAT-10, YM-PS-2), R73 (YM-POP-1, YM-PICK-4) and R77 (YM-FB-10). R70, R72, R74, R75 and R76 don't touch this chapter's topics: its not-working notices name actions, not features, so R75 changes none of them.
+
+After the spec ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)):
+- **Shared-settings changes in a private window** (was PROVISIONAL on ticket 23's AMO question 3): saved, as R58 decided, and no longer provisional; the row leaves the PROVISIONAL table. Only if an AMO reviewer objects does [08 §13](08-release.md#13-if-an-amo-reviewer-objects)'s fallback refuse them (YM-ACC-8). R83.
 
 ## Conflicts found
 

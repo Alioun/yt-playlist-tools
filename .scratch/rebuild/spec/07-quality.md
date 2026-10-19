@@ -678,7 +678,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 - **Q-CI-3.** `check:manifest` (`scripts/check-manifest.ts`) fails unless each built manifest has exactly:
   - **both:** `manifest_version` 3; `permissions` `["storage", "scripting"]`; no `content_scripts`; no `web_accessible_resources`; `commands` holding only `_execute_action`; no `update_url` unless the build mode is `beta`, whose Firefox build carries exactly the beta `update_url` ([REL-CI-10](08-release.md#71-firefox)); `version` equal to `package.json`'s;
   - **Chrome:** `host_permissions` `["https://www.youtube.com/*"]`; `optional_host_permissions` `["https://music.youtube.com/*"]`; `minimum_chrome_version` `"121"`;
-  - **Firefox:** `host_permissions` `["*://*.youtube.com/*"]`; `browser_specific_settings.gecko.id` `{cc70cd21-2cc6-444b-bd89-496909346091}`; `strict_min_version` `"140.0"`; `data_collection_permissions` `{ "required": ["none"] }` (**PROVISIONAL** on AMO's reply, see [08 §13](08-release.md#13-what-each-amo-reply-changes-provisional-ticket-23)).
+  - **Firefox:** `host_permissions` `["*://*.youtube.com/*"]`; `browser_specific_settings.gecko.id` `{cc70cd21-2cc6-444b-bd89-496909346091}`; `strict_min_version` `"140.0"`; `data_collection_permissions` `{ "required": ["none"] }` (R83; [08 §13](08-release.md#13-if-an-amo-reviewer-objects) keeps a fallback ready if an AMO reviewer objects).
 
   The full manifest outline is [06 §6.3.1](06-architecture.md#631-manifest-per-browser) (ARC-MAN-01); `check:manifest` asserts it. [REL-CI-20](08-release.md#141-ciyml) states the same rules for the release.
 
@@ -746,7 +746,7 @@ Page scripts aren't manifest content scripts, so WXT's dev mode doesn't know to 
 
 ## 7.9 Not decided
 
-Every item that was listed here has been settled; see [Resolved during assembly](#resolved-during-assembly). PROVISIONAL marks that wait on the signed-in live checks, AMO's reply or the name stay where they are.
+Every item that was listed here has been settled; see [Resolved during assembly](#resolved-during-assembly). PROVISIONAL marks that wait on the signed-in live checks or the name stay where they are. AMO's reply no longer waits: R83 settled it.
 
 ---
 
@@ -754,7 +754,7 @@ Every item that was listed here has been settled; see [Resolved during assembly]
 
 ### Still open
 
-None remain after all three rounds of resolutions (R1–R40, R41–R67, then R68–R77); see [Resolved during assembly](#resolved-during-assembly). Where the topic is this chapter's own (budgets, test placement and breakage-signal identifiers), the other chapters follow this one. Live checks, AMO's reply and the name stay PROVISIONAL where they're marked.
+None remain after all three rounds of resolutions (R1–R40, R41–R67, then R68–R77); see [Resolved during assembly](#resolved-during-assembly). Where the topic is this chapter's own (budgets, test placement and breakage-signal identifiers), the other chapters follow this one. Live checks and the name stay PROVISIONAL where they're marked; R83 settled AMO's reply.
 
 ### Resolved during assembly
 
@@ -797,3 +797,6 @@ Third round:
 - **Links into 05 and within this chapter:** Q-PERF-35 now links UI-POP-03's and UI-RULE-05's own sections, and Q-TEST-18 item 9 links Q-PERF-41's. Fixed in 07; [05's Conflicts found](05-ui.md#conflicts-found) raised the first.
 
 Also applied, third round: R68 (an unavailable action's keys stay caught and answer: Q-WATCH-23) and R72 (Q-WATCH-21, Q-WATCH-22, Q-CI-9, Q-CI-14). The other third-round resolutions don't touch this chapter's topics.
+
+After the spec ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)):
+- **Firefox's `data_collection_permissions`** (was PROVISIONAL on AMO's reply, ticket 23): `{ "required": ["none"] }` is settled, and `check:manifest` asserts it (Q-CI-3). [08 §13](08-release.md#13-if-an-amo-reviewer-objects) keeps the fallback if an AMO reviewer objects: R83.

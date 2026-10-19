@@ -8,7 +8,7 @@ Part of the [2.0 spec](../spec.md). This chapter covers how 1.4.5 users get to 2
 - release order, soak, rollback and fix-forward;
 - both store listings, the privacy policy, and the Chrome Web Store dashboard answers;
 - AMO's reviewer notes, `SOURCE_CODE_REVIEW.md` and the ARM64 rebuild;
-- what each AMO reply changes;
+- Firefox's data-collection declaration, and the fallback if an AMO reviewer objects;
 - the CI and release workflows, and retiring `server/`;
 - the upgrade-test matrix, the release checklist and the user's one-time setup.
 
@@ -21,7 +21,7 @@ Part of the [2.0 spec](../spec.md). This chapter covers how 1.4.5 users get to 2
 - [07](07-quality.md): the test layers ([§7.2](07-quality.md#72-test-layers)), fixtures ([§7.3](07-quality.md#73-fixtures)), the watch and the live check ([§7.5](07-quality.md#75-breakage-detection)), the budgets ([§7.6](07-quality.md#76-performance-budgets)) and the CI jobs ([§7.7](07-quality.md#77-ci-jobs-and-the-hotfix-lane)).
 - [09](09-parity.md): what 1.4.5 users had ([§1.12](09-parity.md#112-what-145-users-had), PAR-CAP-71 to PAR-CAP-79) and the platform and release rows ([§1.11](09-parity.md#111-platform-manifest-build-and-release)).
 
-The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist". Under the resolutions' ownership rule, this chapter owns the migration, the upgrade note, and consent copy and conditions (R60); where it shares another topic with a chapter that owns it, that chapter's text wins, and [Conflicts found](#conflicts-found) lists what still differs.
+The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist". Under the resolutions' ownership rule, this chapter owns the migration, the upgrade note, and consent copy and conditions (R60); where it shares another topic with a chapter that owns it, that chapter's text wins, and [Conflicts found](#conflicts-found) lists what still differs.
 
 **Requirement IDs:**
 - `REL-MIG-`: the 1.4.5 migration.
@@ -32,19 +32,19 @@ The main session's resolutions ([resolutions.md](resolutions.md)) are applied, a
 
 ## 0. PROVISIONAL inputs
 
-The plan works whichever way these land. Each dependent item is marked inline.
+The plan works whichever way these land. Each dependent item is marked inline. Rows marked **Settled** no longer wait on anything, and stay here for the record.
 
 | Input | Waits on | What depends on it | If it changes |
 |---|---|---|---|
 | **The name** | [Ticket 22](../issues/22-name.md), the user's call | Every string that says "Playlist Pigeon": the manifest `name`, `short_name` and `description`, the note, the disclosure, both listings, the policy, the reviewer notes and the screenshots | Swap "Playlist Pigeon for YouTube™" / "Playlist Pigeon" / "Pigeon" for "Playlist Courier for YouTube™" / "Playlist Courier" / "Courier". Nothing else changes. |
-| **AMO's reply** | [Ticket 23](../issues/23-ask-amo.md), sent by the user | Firefox's `data_collection_permissions`, the Firefox prompts (§5), the sync switch's prompt, private-window settings writes, and the Bun install step | Apply the matching row of [§13](#13-what-each-amo-reply-changes-provisional-ticket-23) |
+| **Firefox data collection** (was AMO's reply) | **Settled** by decision ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)), from Mozilla's own documentation. [Ticket 23](../issues/23-ask-amo.md)'s message to AMO isn't sent. | Firefox's `data_collection_permissions` (`required: ["none"]`), the Firefox prompts (§5), the sync switch (it declares no data type), private-window settings writes (allowed), and the Bun install step (as planned) | Nothing, unless an AMO reviewer objects. Then the matching row of [§13](#13-if-an-amo-reviewer-objects)'s fallback applies. |
 | **The session cookie** | [Ticket 25](../issues/25-live-checks.md)'s final route table | The **cookie lines**: the disclosure's cookie bullet, the policy's cookie bullet, Chrome's "Authentication information" tick, and the reviewer notes' signed route | If no shipped route reads the session cookie, remove all four together; the reviewer notes then describe the same-origin request without signing (R48) |
 | **The reviewer endpoint list** | Ticket 25's route table | §12.1 | Fill it from the table |
-| **Exact prompt strings** | Ticket 25's check P1 ([06 §6.2.15](06-architecture.md#6215-live-checks-that-settle-the-provisional-rows)) | §5 | Adjust §5 |
+| **Exact prompt strings** | **Settled** ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)): Firefox's from its own string files, code and support articles, and Chrome's from Chromium's source. Ticket 25's check P1 ([06 §6.2.15](06-architecture.md#6215-live-checks-that-settle-the-provisional-rows)) now only glances at the real dialogs. | §5 | If a real dialog differs, adjust §5 |
 | **A support e-mail** | The user | The policy's Contact section, both stores and Diagnostics | Add it in all of them |
 | **Open tabs surviving updates** (S11, S12) | Ticket 17's real-browser layer running a real update ([ARC-MAN-17](06-architecture.md#633-runtime-script-registration), [Q-TEST-18](07-quality.md#725-layer-4-real-browser) item 5) | §17 | Fix in the registrar or core before the beta ends |
 
-Ticket 23's message was corrected on 2026-10-19, before sending: its question 4 now describes the real build, where Bun installs the dependencies and Node builds ([§13](#13-what-each-amo-reply-changes-provisional-ticket-23)).
+Ticket 23's message was corrected on 2026-10-19 and then never sent: R83 settled its four questions from Mozilla's own documentation the same day ([§13](#13-if-an-amo-reviewer-objects)).
 
 **Unverified facts the plan already covers:**
 - whether Chrome re-reviews an Unlisted → Public change (the staged 2.0.0 submission covers both cases);
@@ -384,7 +384,7 @@ Then the disclosure ([4.1](#41-the-disclosure)), followed by **[Agree and turn o
 
   The reconciler then registers, and claiming ([2.10](#210-claiming-the-unclaimed-setup)) starts.
 - **REL-CON-08** On Chrome, if a YouTube Music feature is ticked, or Playlist shortcuts with "Also on YouTube Music" on, the same click calls `permissions.request` for music.youtube.com **first**, before anything is awaited ([ARC-MAN-03](06-architecture.md#631-manifest-per-browser)). (Chrome has no upgraders; the rule is shared with first run, REL-CON-14; R53.)
-- **REL-CON-09** On Firefox, if Settings sync is ticked and AMO makes sync an optional data type ([§13](#13-what-each-amo-reply-changes-provisional-ticket-23)), the same click first calls `permissions.request({data_collection: […]})`, before anything is awaited. **PROVISIONAL (ticket 23).**
+- **REL-CON-09** On Firefox, Settings sync declares no data type ([SYNC-26](04-features-accounts-data.md#39-firefoxs-data-collection-declaration)), so a ticked Settings sync makes Agree ask Firefox for nothing. Only under [§13](#13-if-an-amo-reviewer-objects)'s fallback, if a reviewer made sync an optional data type, would the same click first call `permissions.request({data_collection: […]})`, before anything is awaited. (R83)
 - **REL-CON-10** After Agree the note shows, in place:
 
 > ✓ **You're all set.**
@@ -442,7 +442,7 @@ First run's three steps (pick features › Before you start › Finish setting u
 
 - **REL-CON-16** One consent of our own gates every feature, on both browsers ([ADR-0010](../../../docs/adr/0010-one-consent-gates-every-feature.md)). It's stored as `device.consent = {v, at}`, per browser, and never synced.
   - It applies on Firefox too, even when Firefox shows its own data-collection prompt. Firefox's prompt covers data types; ours covers what each feature does, and it's the moment upgraders' choices take effect.
-  - *Runner-up:* let Firefox's built-in consent stand in on Firefox. It lost for three reasons: it exists only if AMO requires a data type; it covers neither the feature choice nor claiming; and two consent flows mean two code paths.
+  - *Runner-up:* let Firefox's built-in consent stand in on Firefox. It lost for three reasons: it exists only when a data type is required, and 2.0 declares `none` (R83); it covers neither the feature choice nor claiming; and two consent flows mean two code paths.
 - **REL-CON-17** Consent is versioned through one constant, and 2.0 writes `v: 1`.
   - The version is bumped only when the disclosure text changes.
   - A release must change the disclosure whenever data handling changes (Chrome: "proactively disclose … if data handling practices change").
@@ -464,30 +464,34 @@ The manifests are in [06 §6.3.1](06-architecture.md#631-manifest-per-browser) (
 - **Firefox:**
   - `host_permissions: ["*://*.youtube.com/*"]`, the exact pattern 1.4.5's content script was granted;
   - `strict_min_version: "140.0"`;
-  - `data_collection_permissions: {required: ["none"]}`, PROVISIONAL (ticket 23).
+  - `data_collection_permissions: {required: ["none"]}` (R83).
 - **Removed:** `identity`, `activeTab` and every Google host.
 
-The strings below were read from Firefox's `extensions.ftl` and Chromium's `generated_resources.grd` on 2026-10-19. **PROVISIONAL until ticket 25's P1 confirms them** on real browsers.
+The strings below are **settled** ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)), all read on 2026-10-19:
+- **Firefox's** come from its own `extensionPermissions.ftl`, `extensions.ftl` and `Extension.sys.mjs` (main branch), and Mozilla's support article "Permission request messages for Firefox extensions".
+- **Chrome's** come from Chromium's `generated_resources.grd`, and stay as read there.
+
+Ticket 25's check P1 now only glances at the real dialogs. If one differs, this table is adjusted.
 
 | Audience | When | What they see |
 |---|---|---|
-| **Firefox 1.4.5 upgrader** with youtube.com access (nearly all) | The update, within about a day | **Nothing from Firefox.** Then our note tab (§3). |
+| **Firefox 1.4.5 upgrader** with youtube.com access (nearly all) | The update, within about a day | **Nothing from Firefox** (REL-CON-22). Then our note tab (§3). |
 | Firefox 1.4.5 upgrader **without** access (125/126 installs, or revoked) | The update | Nothing from Firefox. The note's **Give access to YouTube** opens Firefox's permission prompt for the youtube.com domain. |
 | Firefox 1.4.5 upgrader on Firefox < 140 | — | Nothing. They stay on 1.4.5. |
-| Firefox upgrader, **if AMO requires a data type** (PROVISIONAL fallback, ticket 23) | The update | The update is **held**: an app-menu badge, then about:addons: "You must approve new permissions before the updated version will install…", listing the type (e.g. "website activity"). Cancel keeps 1.4.5 and asks again at the next daily check. |
-| **Firefox new install** (140+) | Install | "Add Playlist Pigeon for YouTube™?" with "Access your data for sites in youtube.com domains" and "Data collection: The developer says this extension doesn't require data collection." Then first run. |
-| Firefox, Settings sync switched on, **if AMO makes sync an optional type** (PROVISIONAL, ticket 23) | That click | "Playlist Pigeon for YouTube™ requests additional data collection" / "The developer says the extension wants to collect: {type}", with Allow / Deny |
+| Firefox upgrader, **only under [§13](#13-if-an-amo-reviewer-objects)'s fallback**, if a reviewer requires a data type | The update | The update is **held**: an app-menu badge, then about:addons: "You must approve new permissions before the updated version will install…", listing the type (e.g. "website activity"). Cancel keeps 1.4.5 and asks again at the next daily check. |
+| **Firefox new install** (140+) | Install | The header "Add Playlist Pigeon for YouTube™", with no question mark. Under "Required permissions:", one line: "Access your data for sites in youtube.com domains". `storage` and `scripting` have no line at all. Under "Data collection:": "The developer says this extension doesn't require data collection." Then first run. (about:addons later lists the same grant as "Access your data for sites in the youtube.com domain".) (R83) |
+| Firefox, Settings sync switched on | That click | **Nothing from Firefox:** sync declares no data type ([SYNC-26](04-features-accounts-data.md#39-firefoxs-data-collection-declaration); R83). Only under §13's fallback, with sync as an optional type, would it show "Playlist Pigeon for YouTube™ requests additional data collection", then "New data collection:" with "The developer says the extension wants to collect: {type}", and Allow / Deny. |
 | **Chrome new install** | Install | Add "Playlist Pigeon for YouTube™"? / It can: **Read and change your data on www.youtube.com**. Then first run. |
 | Chrome, the first thing that needs music.youtube.com: a YouTube Music feature, or Playlist shortcuts' "Also on YouTube Music" (at first run or later; R53) | That click | "Playlist Pigeon for YouTube™" has requested additional permissions. / It could: **Read and change your data on music.youtube.com**, with Allow / Deny |
 | Chrome, the user restricted site access | Any time | No prompt by itself. Our **Give access** button calls Chrome's prompt. On Chrome 133+, while a feature for that site is on, the extension also calls `addHostAccessRequest` on the site's open tabs, so Chrome's extensions menu offers the grant ([FT-53](04-features-accounts-data.md#17-site-access-and-youtube-tabs), [ARC-ACC-61](06-architecture.md#6212-no-tab-not-signed-in-no-site-access); PROVISIONAL). |
 | Either browser, any later 2.x | The update | **Nothing.** The hotfix lane freezes the manifest. A minor release that adds a warning would disable the Chrome extension until it's accepted and hold Firefox updates, so it needs the checklist's sign-off (REL-CHK-21). |
 
 - **REL-CON-22** The Firefox 1.4.5 → 2.0 update shows no Firefox prompt. This holds because:
-  - `storage` and `scripting` were already held, and `scripting` has no prompt;
+  - `storage` and `scripting` were already held, and neither has a message;
   - dropping `identity` and `activeTab` is silent;
-  - the origin is unchanged;
-  - `none` doesn't hold an update.
-- **REL-CON-23** Neither `storage` nor `scripting` shows an install warning on either browser.
+  - the origin is unchanged, so no message-bearing permission is new;
+  - on update, Firefox shows only added *required* data types, never `none`. (R83)
+- **REL-CON-23** Neither `storage` nor `scripting` shows an install warning on either browser. On Firefox they have no message at all (R83).
 - **REL-CON-24** Chrome asks only for www.youtube.com at install. Music.youtube.com is requested only from the click that switches on the first thing that needs it, whether that's first run's Agree, Settings or the popup: a YouTube Music feature, or "Also on YouTube Music" while Playlist shortcuts is on, which includes switching Playlist shortcuts on with that option preset on. The YouTube Music section switch never asks ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R53).
   - If the user denies the prompt raised by switching Playlist shortcuts on in Settings or the popup, Playlist shortcuts goes on and "Also on YouTube Music" turns off, with "No access to YouTube Music, so shortcuts work on YouTube only." shown in place ([FT-52](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). First run's Agree keeps REL-CON-14's rule. (R71)
 
@@ -572,7 +576,7 @@ Recorded as [ADR-0011](../../../docs/adr/0011-betas-from-github-pages.md): betas
 
 - **REL-CHK-04** 2.0.0 is tagged only when all of these hold:
   - ticket 22 is confirmed;
-  - ticket 23 is answered and its outcome applied (§13);
+  - the Firefox manifest declares R83's `data_collection_permissions: {required: ["none"]}`, or §13's matching fallback row if a reviewer has objected;
   - ticket 25's route table is filled;
   - the upgrade-test matrix (§17) is green on the release candidate;
   - at least 14 days of beta have run, including at least one Chrome review of a `1.99.N` update;
@@ -580,7 +584,7 @@ Recorded as [ADR-0011](../../../docs/adr/0011-betas-from-github-pages.md): betas
   - the signed-in live check is recorded for the candidate, and so are the timing figures: within budget in Chromium, which gates them, while Firefox's `performance.mark` timings are recorded for information only ([Q-PERF-40, Q-PERF-41](07-quality.md#767-enforcement); R31);
   - the manual screen-reader pass of the popup and settings is done on the candidate (R38);
   - the README is rewritten for 2.0 (REL-CI-54; R39);
-  - the AMO and Chrome listings, screenshots and the dashboard's privacy tab are final. The privacy page has been live since the first beta (REL-STORE-17; R18). (R18, R31, R38, R39)
+  - the AMO and Chrome listings, screenshots and the dashboard's privacy tab are final. The privacy page has been live since the first beta (REL-STORE-17; R18). (R18, R31, R38, R39, R83)
 
 ### 8.3 Rollback and fix-forward
 
@@ -657,7 +661,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 >
 > Not affiliated with or endorsed by YouTube or Google. YouTube and YouTube Music are trademarks of Google LLC. Use of these trademarks is subject to Google Permissions.
 
-- **REL-STORE-04** *PROVISIONAL, ticket 23 fallback only:* if AMO requires a data type, AMO's description adds "Firefox asks you to allow sharing 'website activity' because the extension sends YouTube the videos you save, through your own YouTube account. Nothing goes to the developer."
+- **REL-STORE-04** *Only under [§13](#13-if-an-amo-reviewer-objects)'s fallback, not at launch (R83):* if a reviewer requires a data type, AMO's description adds "Firefox asks you to allow sharing 'website activity' because the extension sends YouTube the videos you save, through your own YouTube account. Nothing goes to the developer."
 - **REL-STORE-05** During the beta, the AMO listing adds "A rebuilt 2.0 is in beta: {site}/beta". The line is removed at launch.
 
 ### 9.3 Release notes for 2.0.0
@@ -672,7 +676,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 > • New, and off until you switch them on: Watch Later, several named shortcuts, quick-save and queue buttons on thumbnails, a watch-page button, creating playlists, Shorts, YouTube Music quick actions, a setup per account, and settings sync.
 > • Needs Firefox 140 or later.
 
-- *PROVISIONAL, ticket 23 fallback only:* add "Firefox will ask you to approve sharing website activity: that's the videos you save, sent to YouTube through your own account."
+- *Only under §13's fallback, not at launch (R83):* add "Firefox will ask you to approve sharing website activity: that's the videos you save, sent to YouTube through your own account."
 
 ### 9.4 Screenshots and images
 
@@ -777,9 +781,9 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 >
 > Not affiliated with or endorsed by YouTube or Google. YouTube and YouTube Music are trademarks of Google LLC. Use of these trademarks is subject to Google Permissions.
 
-- **REL-STORE-18** Ticket 23's replies add these lines:
-  - **If sync counts as an optional type:** "On Firefox, switching sync on first asks for Firefox's permission."
-  - **If AMO answers Q3 "no":** the Private windows section also says settings can't be changed there.
+- **REL-STORE-18** The policy needs no Firefox data-collection line: settings sync declares no data type, and settings changed in a private window are saved (R83). Only [§13](#13-if-an-amo-reviewer-objects)'s fallback adds lines, if a reviewer objects:
+  - **If sync is made an optional type:** "On Firefox, switching sync on first asks for Firefox's permission."
+  - **If settings saved from private windows are refused:** the Private windows section also says settings can't be changed there.
 - **REL-STORE-19** A change to data handling updates this page, the dashboard's privacy tab and the consent version in the same minor release (REL-CON-17, REL-CHK-21).
 
 ## 11. Chrome Web Store dashboard answers
@@ -832,7 +836,13 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
     - `scripting.executeScript` for switching on in open tabs, the on-demand check when the popup or settings needs an account or fresh data (Playing now's read included), and the popovers (ARC-MAN-13, ARC-MAN-15, ARC-MAN-16);
     - the start-up reconcile that registers again and re-injects into open tabs after an update ([ARC-MAN-17](06-architecture.md#633-runtime-script-registration));
     - the routes of [06 §6.2.2](06-architecture.md#622-routes) (ARC-ACC-10, ARC-ACC-11), and the resolver found by shape on first use and cached for the page ([§6.2.3](06-architecture.md#623-the-command-resolver-found-by-shape), ARC-ACC-13, ARC-ACC-14; R34, R66).
-  - If no shipped route reads the session cookie, route 4 is described as the same same-origin request without signing, and the `SAPISIDHASH` wording goes (R48). (R17, R34, R48, R49, R66)
+  - If no shipped route reads the session cookie, route 4 is described as the same same-origin request without signing, and the `SAPISIDHASH` wording goes (R48).
+  - **The residual risk the notes answer** (R83). 2.0 declares data collection `none` without asking AMO first. AMO's policy defines transmission broadly ("collected, used, transferred, shared, or handled outside of the add-on or the local browser"), and lists "access to and placement of cookies" as personal data. A strict reviewer could apply that to route 4, which reads YouTube's session cookie to sign requests sent only to YouTube. So:
+    - the **Data collection** paragraph explains route 4 before the reviewer has to ask (R49);
+    - if live checks L3/L4 leave no shipped route reading the cookie, the point disappears with the cookie lines, and that sentence goes too (R48);
+    - if a reviewer objects anyway, [§13](#13-if-an-amo-reviewer-objects)'s fallback applies. The Firefox 140 floor it needs is already in place.
+
+  (R17, R34, R48, R49, R66, R83)
 
 > **What this is.** 2.0 is a ground-up rewrite of YouTube Playlist Tools, renamed Playlist Pigeon for YouTube™ (same ID and slug). 1.x used the YouTube Data API with users' own OAuth credentials; 2.0 drops that entirely: no `identity` permission, no Google hosts, no server.
 >
@@ -861,7 +871,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 > - `scripting`: per-feature registration and reading from an open tab for the popup;
 > - `*://*.youtube.com/*`: the only site. It's the exact pattern 1.x's content script was granted, kept so the update is silent.
 >
-> **Data collection: `none`.** Nothing is sent to the developer or any third party. The only requests are YouTube's own, from the user's YouTube tab, for actions the user takes or for auto-add, which the user switches on. A first-run screen discloses this and requires an explicit Agree before any feature runs. {PROVISIONAL: "As confirmed in {thread link} on {date}."}
+> **Data collection: `none`.** Nothing is sent to the developer or any third party. The only requests are YouTube's own, from the user's YouTube tab, for actions the user takes or for auto-add, which the user switches on. Route 4 reads YouTube's session cookie in that tab only to sign requests that go to YouTube itself; the cookie is never stored, logged or sent anywhere else. *(PROVISIONAL, ticket 25: this sentence goes if no shipped route reads the session cookie, R48)* Settings sync, off by default, uses the browser's own `storage.sync`, which the developer never sees. A first-run screen discloses this and requires an explicit Agree before any feature runs.
 >
 > **Private windows:** nothing from a private session is written to any storage area (one guarded write path in the background).
 >
@@ -936,35 +946,41 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 
 - **REL-STORE-28** `package.json` has `"packageManager": "bun@1.4.3"` and `"build-for-amo": "npx --yes bun@1.4.3 install --frozen-lockfile && npm run build:firefox"`.
   - Whether AMO's private automatic builder runs it, and with network access, is **unverified**. If it fails, the human reviewer follows `SOURCE_CODE_REVIEW.md`.
+  - The Bun install step stays as planned, without asking AMO first. If a reviewer asks for an npm lockfile, [§13](#13-if-an-amo-reviewer-objects)'s lockfile row applies. (R83)
 - **REL-STORE-29** `wxt.config.ts` and `build/` use only Node APIs, so `npm run build:firefox` builds on Node 24 with no Bun at build time (ticket 17).
 - **REL-STORE-30** CI fails if the Bun version in `SOURCE_CODE_REVIEW.md` or in `build-for-amo` differs from `packageManager`.
 - **REL-STORE-31** The release build and both source-rebuild jobs pin Node 24, the reviewers' version.
 - **REL-STORE-32** The sources zip leaves out `store/`, `site/` and `tools/` (`zip.excludeSources`), none of which are needed to build. `src/livecheck/` stays in, so the sources match the repo, and `SOURCE_CODE_REVIEW.md` says what it is.
 - **REL-STORE-33** Every release proves that the sources zip, unzipped and built per `SOURCE_CODE_REVIEW.md` on both ARM64 and x86-64, gives a tree identical to the shipped Firefox build (REL-CI-28).
 
-## 13. What each AMO reply changes (PROVISIONAL, ticket 23)
+## 13. If an AMO reviewer objects
 
-Ticket 23's message asks AMO four questions:
-- **Q1:** does `none` cover requests that go only to YouTube, through the user's session, including the page-signed request?
-- **Q2:** does sync through `storage.sync` count as transmission?
-- **Q3:** may settings the user changes in a private window be saved?
-- **Q4:** dependencies are installed with Bun (`npx --yes bun@1.4.3 install --frozen-lockfile`, from `bun.lock`), and the build itself runs on Node 24 (`npm run build:firefox`). Is a Bun-installed dependency tree acceptable for the source-code submission, or is an npm lockfile (`npm ci`) needed?
+Ticket 23 is **settled by decision** ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)), from Mozilla's own documentation, so the drafted message to AMO isn't sent. Its four questions are answered like this:
+- **Q1, `none`:** 2.0 declares `data_collection_permissions: {required: ["none"]}`. Firefox presents data collection to users as data the extension *shares with its developer* ("The developer says this extension collects: …"). 2.0 sends nothing to its developer or to any third party: its only requests go to YouTube or YouTube Music, the site the user is on, carrying the user's own actions there. Listed extensions that work the same way declare `none` (ticket 03).
+- **Q2, settings sync:** it declares no data type, because it uses the browser's own sync, which the developer never sees ([SYNC-26](04-features-accounts-data.md#39-firefoxs-data-collection-declaration)).
+- **Q3, settings changed in a private window:** allowed. A settings change the user makes isn't browsing data, and nothing about the window's browsing is stored ([ACC-38](04-features-accounts-data.md#27-private-windows-and-containers), [DATA-32](04-features-accounts-data.md#47-the-private-window-write-guard); R58).
+- **Q4, the Bun install step:** as planned in `SOURCE_CODE_REVIEW.md` (REL-STORE-27 to REL-STORE-29). The draft's Q4 had been corrected on 2026-10-19 to say Bun installs and Node builds ([ticket 23](../issues/23-ask-amo.md)).
 
-Q4 was corrected on 2026-10-19, before the message was sent. The unsent draft described an older build (`bun install --frozen-lockfile && bun run build`); tickets 17 and 19 had settled that Bun installs and Node builds ([ticket 23](../issues/23-ask-amo.md), REL-STORE-27 to REL-STORE-29).
+**The residual risk:**
+- AMO's policy defines transmission broadly ("collected, used, transferred, shared, or handled outside of the add-on or the local browser"), and lists "access to and placement of cookies" as personal data.
+- A strict reviewer could apply that to the page-signed route, which reads YouTube's session cookie to sign requests sent only to YouTube.
+- **Mitigations:**
+  - the reviewer notes explain the route ([§12.1](#121-reviewer-notes-approval_notes), REL-STORE-21; R49);
+  - if live checks L3/L4 show a cookie-free route works, no shipped route reads the cookie and the question disappears (R48);
+  - if a reviewer objects anyway, the table below applies. The Firefox 140 floor it needs is already in place (REL-CI-09).
 
-**REL-STORE-34** Once AMO replies, the reply is recorded in ticket 23, and the matching rows below are applied before the beta ends (REL-CHK-04).
+**REL-STORE-34** The table below is a **fallback that stays ready**. It's applied only if an AMO reviewer objects to one of the points above: the objection is recorded in ticket 23, and the matching row ships in the release that answers the reviewer. A change to the data-collection declaration follows REL-CHK-21. (R83)
 
-| AMO says | Firefox manifest | 1.4.5 update | Copy and policy |
+| If a reviewer… | Firefox manifest | 1.4.5 update | Copy and policy |
 |---|---|---|---|
-| **Q1: `none` is right; Q2: sync isn't transmission** (expected) | `data_collection_permissions: {required: ["none"]}` | Silent | As drafted |
-| Q1: `none`; **Q2: sync counts**, as an optional type | `required: ["none"]`, plus `optional: [<type>]` | Silent (an optional type never holds an update) | The sync switch asks Firefox first (ticket 16 §11); declining keeps sync off with "Sync needs your permission to send settings through Firefox Sync." The policy adds "On Firefox, switching sync on first asks for Firefox's permission." The note's Agree requests the type when sync is ticked (REL-CON-09). `permissions.onRemoved` switches sync off in that browser. |
-| **Q1: YouTube requests count** | `required: ["websiteActivity"]` (or the type named), keeping the 140 floor | **Held** behind Firefox's prompt; Cancel keeps 1.4.5 | AMO's description gets the fallback line (REL-STORE-04). The release notes get "Firefox will ask you to approve sharing website activity: that's the videos you save, sent to YouTube through your own account." Our note is unchanged. |
-| **Q3: settings changed in private windows must not be saved** | — | — | Ticket 16's write table also refuses shared-settings writes from private windows. The private-window popup says "Settings can't be changed in a private window." |
-| **Q4: a Bun install accepted** | — | — | As drafted |
-| **Q4: a Bun install not accepted** | — | — | Only the *install* step changes, because the build already runs on Node. Commit a `package-lock.json` that CI regenerates and checks against `bun.lock`'s resolved versions; `SOURCE_CODE_REVIEW.md` then says `npm ci && npm run build:firefox`. Bun stays for development, tests and scripts. **This adds a second lockfile, so the user is told when it happens.** |
+| **raises nothing** (what ships; R83) | `data_collection_permissions: {required: ["none"]}` | Silent | As drafted |
+| **counts settings sync** as an optional type | `required: ["none"]`, plus `optional: [<type>]` | Silent (an optional type never holds an update) | The sync switch asks Firefox first (ticket 16 §11); declining keeps sync off with "Sync needs your permission to send settings through Firefox Sync." The policy adds "On Firefox, switching sync on first asks for Firefox's permission." The note's Agree requests the type when sync is ticked (REL-CON-09). `permissions.onRemoved` switches sync off in that browser. |
+| **counts the requests to YouTube**, the page-signed route included | `required: ["websiteActivity"]` (or the type named), keeping the 140 floor | **Held** behind Firefox's prompt; Cancel keeps 1.4.5 | AMO's description gets the fallback line (REL-STORE-04). The release notes get "Firefox will ask you to approve sharing website activity: that's the videos you save, sent to YouTube through your own account." Our note is unchanged. |
+| **refuses settings saved from private windows** | — | — | Ticket 16's write table also refuses shared-settings writes from private windows. The private-window popup says "Settings can't be changed in a private window." |
+| **asks for an npm lockfile** instead of the Bun install | — | — | Only the *install* step changes, because the build already runs on Node. Commit a `package-lock.json` that CI regenerates and checks against `bun.lock`'s resolved versions; `SOURCE_CODE_REVIEW.md` then says `npm ci && npm run build:firefox`. Bun stays for development, tests and scripts. **This adds a second lockfile, so the user is told when it happens.** |
 
-- If AMO counts account names as `personallyIdentifyingInfo`, that type joins the optional list. The mechanism is the same.
-- If AMO insists a sync type is *required*, it moves to `required`, the runtime step disappears, and 1.4.5 updates are held as in the Q1 row.
+- If a reviewer counts account names as `personallyIdentifyingInfo`, that type joins the optional list. The mechanism is the same.
+- If a reviewer insists a sync type is *required*, it moves to `required`, the runtime step disappears, and 1.4.5 updates are held as in the requests-to-YouTube row.
 
 ## 14. CI and release workflows
 
@@ -1206,7 +1222,7 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 
 **Once, before the first beta**
 - [ ] Ticket 22's name is confirmed: the manifest's `name`, `short_name`, `description` and icons.
-- [ ] Ticket 23's reply is recorded and §13 applied. Ticket 25's route table is filled, and the cookie lines are kept or removed everywhere: the disclosure, the policy, the dashboard and the reviewer notes. They're removed if no shipped route reads the session cookie (R48).
+- [ ] The Firefox manifest declares `data_collection_permissions: {required: ["none"]}` (R83); §13's fallback is applied only if a reviewer has objected. Ticket 25's route table is filled, and the cookie lines are kept or removed everywhere: the disclosure, the policy, the dashboard and the reviewer notes. They're removed if no shipped route reads the session cookie (R48).
 - [ ] The Chrome Web Store developer account is ready: 2-Step Verification, the fee, the publisher name, a verified contact e-mail, and the trader / non-trader declaration. The Store listing and Privacy tabs are drafted from §9 and §11; the first upload is `v1.99.1` (see Beta).
 - [ ] The service account is created, the Chrome Web Store API is enabled, and the account is added under Account in the dashboard. The `amo` and `cws` environments, the variables and the tag ruleset are set up (§14.6), and the old secrets are deleted.
 - [ ] Pages is enabled (source: GitHub Actions); `/`, `/privacy/` and `/beta/` are live and have been read through. The policy is effective from 1.99.1 (R18, R21).
@@ -1275,8 +1291,9 @@ The IDs these items rest on:
 - Optionally, choose a custom domain (§10.1).
 
 **Actions before the beta:**
-- Send ticket 23's AMO question and paste the reply back.
 - Run ticket 25's live-check probe, signed in, in Chrome and Firefox, and paste the reports back.
+
+Ticket 23's message to AMO isn't sent: R83 settled its questions from Mozilla's own documentation (§13).
 
 **Chrome Web Store:**
 - Create a developer account: a dedicated Google account, 2-Step Verification, the one-time fee, the publisher name, a verified contact e-mail, and the trader declaration.
@@ -1311,7 +1328,7 @@ The IDs these items rest on:
 Settled by the main session in [resolutions.md](resolutions.md), or by the ticket's own correction:
 - **The reviewer notes' registrations** (was Open 1): they describe ADR-0008's two registrations per site, as this chapter corrected them (REL-STORE-21). R17.
 - **The privacy policy's scope and date** (was Open 2): it takes effect from the first beta, 1.99.1, and covers "version 1.99 (beta) and later" (REL-STORE-17). R18.
-- **Ticket 23's Q4** (was Open 3): corrected on 2026-10-19, before sending, to say Bun installs and Node builds (§0, §13). No R-number: the fix is in [ticket 23](../issues/23-ask-amo.md) itself.
+- **Ticket 23's Q4** (was Open 3): corrected on 2026-10-19, before sending, to say Bun installs and Node builds (§0, §13). No R-number: the fix is in [ticket 23](../issues/23-ask-amo.md) itself. The message was then never sent (R83, below).
 - **Where the screenshots come from** (was Open 4): the release candidate; the prototypes are layout references only (REL-STORE-10). R19.
 - **The migration reading `storage.sync`** (was Open 5): it doesn't touch `storage.sync` while sync is off, so 1.5.0's stray `theme` stays there (REL-MIG-02, REL-MIG-08, §2.3). R20.
 - **A non-numeric `requiredWatchPercentage`** (was Not pinned down): it counts as unset, 0 %, and the note asks the 50 % / 0 % question (§2.3, REL-MIG-11). R21.
@@ -1352,6 +1369,10 @@ Also applied here: R10 (the policy's session-memory line: REL-STORE-17), R12 (th
 
 Also applied, third round: R71 (REL-CON-24), R72 (REL-CI-27, REL-CI-40, REL-CHK-19, §18's "Every release" and "Hotfix" items, §19) and R76 (REL-MIG-03, REL-MIG-04, REL-MIG-09, §2.11, S3). R68, R69, R70, R73, R74, R75 and R77 change no copy this chapter quotes: its copy quotes only video and album titles, and never a playlist name.
 
+After the spec ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)):
+- **Firefox's prompt strings** (was a PROVISIONAL input, live check P1): settled from Firefox's own string files and code and Mozilla's support articles. The install header is "Add Playlist Pigeon for YouTube™", with no question mark; the one required line is "Access your data for sites in youtube.com domains"; `storage` and `scripting` have no message; the data-collection line is "The developer says this extension doesn't require data collection."; the 1.4.5 update shows no prompt. Chrome's strings stay as read from Chromium's source, and P1 only glances at the real dialogs (§0, §5, REL-CON-22, REL-CON-23). R83.
+- **AMO's reply** (was a PROVISIONAL input, ticket 23): settled by decision, and the message isn't sent. 2.0 declares `data_collection_permissions: {required: ["none"]}`; settings sync declares no data type; settings changed in a private window are saved; the Bun install stays as planned. §13 is now the fallback if a reviewer objects, and the residual cookie risk, which L3/L4 can make moot (R48), stays visible in §12.1 and §13 (§0, §5, REL-CON-09, REL-CON-16, REL-CHK-04, REL-STORE-04, §9.3, REL-STORE-18, REL-STORE-21, REL-STORE-28, REL-STORE-34, §18, §19). R83.
+
 ### Open
 
 None remain after all three rounds. Every contradiction listed here before is settled above, and the other chapters now follow this one on the migration, the upgrade note and the consent copy (R60).
@@ -1368,4 +1389,4 @@ None remain after all three rounds. Every contradiction listed here before is se
 
 ### Not pinned down
 
-None remain; see [Resolved during assembly](#resolved-during-assembly). What still waits on the user, ticket 25's live checks or ticket 23's AMO reply is marked PROVISIONAL inline and listed in [§0](#0-provisional-inputs).
+None remain; see [Resolved during assembly](#resolved-during-assembly). What still waits on the user or ticket 25's live checks is marked PROVISIONAL inline and listed in [§0](#0-provisional-inputs). Ticket 23 no longer waits: R83 settled it.

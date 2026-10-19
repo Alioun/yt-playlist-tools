@@ -462,7 +462,7 @@ flowchart TD
 - **ARC-ACC-62.** The manifest leaves `incognito` at its default. 2.0 runs in private and incognito windows only if the user allows it in the browser, which is off by default on both.
 - **ARC-ACC-63.** When it is allowed, a private tab gets its tab view as usual: an account that already has a setup works as in a normal window.
 - **ARC-ACC-64.** Nothing from a private session is ever persisted:
-  - the store refuses such writes ([§6.9](#69-the-store-module-interface); the table is [04 §4.7](04-features-accounts-data.md#47-the-private-window-write-guard)). Shared-settings changes made in a private window are saved, because they carry nothing about the window's browsing ([DATA-32](04-features-accounts-data.md#47-the-private-window-write-guard); R58, PROVISIONAL on AMO question 3);
+  - the store refuses such writes ([§6.9](#69-the-store-module-interface); the table is [04 §4.7](04-features-accounts-data.md#47-the-private-window-write-guard)). Shared-settings changes made in a private window are saved, because they carry nothing about the window's browsing ([DATA-32](04-features-accounts-data.md#47-the-private-window-write-guard); R58, R83);
   - a private tab's registry entry, breakage signals, session skips, watch progress and the rest of [DATA-33](04-features-accounts-data.md#47-the-private-window-write-guard)'s list live in memory only: the tab's own, or the background's variables, never `storage.session`;
   - fetched playlist lists, membership and undo entries live only in that tab's memory.
 - **ARC-ACC-65.** Origin is computed by the background from the sender. The one value a message supplies, the popup's window ID, is checked against the sender before it's used:
@@ -507,7 +507,7 @@ What the signed-out run found:
 | **M3** | A like through `handleServiceEndpoint` sticks, repaints the like button and shows no toast | As specified | YouTube Music's own toast stands in for ours on likes |
 | **M4** | In the installed YouTube Music app (Chrome, Edge), `tabs.query` finds its tab, `executeScript` and registered scripts run there, and the popup's active tab is the app's. No keyboard command other than `_execute_action` is tested (R33). | The app is first-class | The app gets only what reaches it, and the gap is recorded |
 | **M5** | Where an active cast session shows: `state.castStatus` (found signed out), or `#movie_player`'s API | Casting is detected, and every queue edit and its Undo, inserts included, is unavailable while casting (ARC-ACC-31; R46) | Casting can't be detected, so every queue edit (inserts, moves, Remove from queue and their Undo) stays available, and their toasts say "this tab's queue" instead of "the queue" ([YM-CAST-2](03-youtube-music.md#15-casting)). Wherever casting can be read, R46 still holds. |
-| **P1** | The exact install prompts for the final manifest; no prompt on the 1.4.5 → 2.0 Firefox update; Chrome's prompt for YouTube Music access | Listing and upgrade-note copy as drafted | [08 §5](08-release.md#5-permission-prompts-by-audience) adjusts its copy |
+| **P1** (settled from source, R83) | A glance at the real dialogs: the install prompts for the final manifest, no prompt on the 1.4.5 → 2.0 Firefox update, and Chrome's prompt for YouTube Music access. The strings are already settled: Firefox's from its own string files, code and support articles, and Chrome's from Chromium's source ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)). | [08 §5](08-release.md#5-permission-prompts-by-audience)'s copy stands | 08 §5 adjusts its copy to the real dialog |
 | **P2** | Registered scripts apply at browser start before the background runs (`persistAcrossSessions`). That registrations are restored after an update is already answered from browser source. | As specified | The reconcile also listens for `runtime.onStartup` and injects into tabs already open |
 | **T28.1–T28.7** | Signed-in queue entries carry `playlistEditParams`, `playlistSetVideoId` and the queue's `playlistId`; the drop moves the entry and the server order follows; radio survives; panel states (before anything plays, Lyrics or Related showing); casting | `queueMove` as specified | No moves: queue items keep no Play next / Add to queue, and Remove's undo has no route |
 | **T29.Q1–Q8** | YouTube's toast on later adds (Q1); quiet and plain removal (Q2, Q3); the panel's own remove item (Q4); after-effects (Q5); undo timing and HTTP 409 (Q6); where the panel data lives (Q7); the quiet add (Q8) | Quiet add, confirmation and Undo as specified | The queue button keeps no Undo. If only the quiet add fails, ARC-ACC-34 applies. |
@@ -528,7 +528,7 @@ What the signed-out run found:
 | `version` | `package.json` `version` | same |
 | `minimum_chrome_version` / `browser_specific_settings.gecko.strict_min_version` | `"121"` | `"140.0"` |
 | `browser_specific_settings.gecko.id` | — | `{cc70cd21-2cc6-444b-bd89-496909346091}` (kept from 1.x) |
-| `browser_specific_settings.gecko.data_collection_permissions` | — | `{ "required": ["none"] }` (PROVISIONAL, ticket 23: AMO's answer may add an optional type for settings sync, or a required one) |
+| `browser_specific_settings.gecko.data_collection_permissions` | — | `{ "required": ["none"] }`. Settings sync declares no data type (R83). [08 §13](08-release.md#13-if-an-amo-reviewer-objects) keeps a fallback ready if an AMO reviewer objects. |
 | `browser_specific_settings.gecko.update_url` | — | Only in `--mode beta` builds: `https://alioun.github.io/yt-playlist-tools/beta/updates.json` (ADR-0011) |
 | `permissions` | `["storage", "scripting"]` | `["storage", "scripting"]` |
 | `host_permissions` | `["https://www.youtube.com/*"]` | `["*://*.youtube.com/*"]` |
@@ -555,14 +555,14 @@ What the signed-out run found:
   - Making YouTube Music optional keeps the install prompt to www.youtube.com alone.
   - Optional permissions never disable the extension on update.
 
-**What users see** (PROVISIONAL until P1; the exact strings and the full list by audience are [08 §5](08-release.md#5-permission-prompts-by-audience)):
+**What users see** (settled from Firefox's and Chromium's sources, [R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83); P1 only glances at the real dialogs. The exact strings and the full list by audience are [08 §5](08-release.md#5-permission-prompts-by-audience)):
 
 | Situation | Prompt |
 |---|---|
 | Chrome install | "Read and change your data on www.youtube.com" only |
 | Chrome, the first thing that needs YouTube Music (ARC-MAN-03) | A site-access prompt for music.youtube.com |
-| Firefox install | One host line for the youtube.com domain, plus Firefox's data-collection line ([08 §5](08-release.md#5-permission-prompts-by-audience)) |
-| Firefox 1.4.5 → 2.0 update | None: `scripting` and `storage` were already held and `scripting` doesn't prompt, dropping `identity` and `activeTab` is silent, the origin is unchanged, and `data_collection_permissions: none` doesn't prompt |
+| Firefox install | "Add {Product}", with no question mark; one required line, "Access your data for sites in youtube.com domains" (no line for `storage` or `scripting`); and "Data collection: The developer says this extension doesn't require data collection." ([08 §5](08-release.md#5-permission-prompts-by-audience); R83) |
+| Firefox 1.4.5 → 2.0 update | None: `scripting` and `storage` were already held and neither has a message, dropping `identity` and `activeTab` is silent, the origin is unchanged, and on update Firefox shows only added required data types, never `none` (R83) |
 
 **Chrome Web Store justification for `scripting`:** "Adds each feature's script to YouTube pages only while that feature is switched on, and reads data from an open YouTube tab when the popup or settings need it."
 
@@ -575,7 +575,7 @@ What the signed-out run found:
   - `Tab.frozen` (132) and `permissions.addHostAccessRequest` (133) are used where present, and their absence is handled.
 - **ARC-MAN-07. Firefox 140.**
   - MAIN-world registration needs 128.
-  - 140 is Mozilla's recommended floor for `data_collection_permissions`, and supports optional data types requested at runtime. So any reply from AMO is covered without a second floor bump.
+  - 140 is Mozilla's recommended floor for `data_collection_permissions`, and supports optional data types requested at runtime. So [08 §13](08-release.md#13-if-an-amo-reviewer-objects)'s fallback, if an AMO reviewer ever objects, needs no second floor bump. (R83)
   - Users on Firefox 125–139 stay on 1.4.5, whose floor is 125 ([08 §2.11](08-release.md#211-edge-cases)). Choosing 140 over 128 adds only 128–139 to them.
 - **Testing:** the real-browser layer runs Playwright's bundled Chromium and Firefox release ([Q-TEST-16](07-quality.md#725-layer-4-real-browser)). The upgrade test adds Firefox ESR 140 (the floor), ESR 153 and Developer Edition ([REL-CHK-12](08-release.md#171-harness)).
 
@@ -1368,7 +1368,7 @@ These earlier statements are superseded and must not be built:
 
 ### Still open
 
-None remain; see [Resolved during assembly](#resolved-during-assembly). Live checks, AMO's reply and the name stay PROVISIONAL where they're marked, and aren't repeated here.
+None remain; see [Resolved during assembly](#resolved-during-assembly). Live checks and the name stay PROVISIONAL where they're marked, and aren't repeated here. AMO's reply is no longer awaited: R83 settled ticket 23.
 
 ### Resolved during assembly
 
@@ -1403,3 +1403,7 @@ Third round:
 - **02's earlier points on this chapter** (02's old C12 and C13): `create` carries `videoId?` (§6.2.5, PickerModel), and AddFlow cites [YT-ADD-15](02-youtube.md#252-feedback)'s copy instead of quoting it. Already fixed.
 
 Also applied, third round: R68 (ARC-ACC-21, ARC-ACC-29, the Monitor, the registry's `actions`), R71 (ARC-MAN-03, ARC-ACC-61, the Badge), R73 (§6.2.5's `membership` and `nowPlaying`, §6.2.7's `nowPlaying` route, the manifest's `icons`, §6.10) and R76 (ARC-MOD-25, ARC-MOD-34). R69, R70, R74, R75 and R77 change copy this chapter doesn't quote, and R72 is 07's and 08's.
+
+After the spec ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)):
+- **The permission prompts** (was PROVISIONAL until P1): settled from Firefox's own string files and code, Mozilla's support articles and Chromium's source. P1 now only glances at the real dialogs (§6.2.15's P1 row, §6.3.1's "What users see"). R83.
+- **Firefox's `data_collection_permissions`** (was PROVISIONAL on ticket 23): `{ "required": ["none"] }`, with no data type for settings sync, and private-window settings changes saved as R58 decided (§6.3.1's manifest table, ARC-MAN-07, ARC-ACC-64). [08 §13](08-release.md#13-if-an-amo-reviewer-objects) holds the fallback if an AMO reviewer objects. R83.

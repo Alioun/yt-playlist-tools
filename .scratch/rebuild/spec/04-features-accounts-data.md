@@ -10,7 +10,7 @@ This chapter covers the user-visible model and behaviour of features, consent, a
 - The upgrade note's copy, the disclosure text and the release process: [08 Upgrade and release](08-release.md).
 - What 1.4.5 did and how 2.0 covers it: [09 Parity](09-parity.md).
 
-The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID, placed where it belongs. Under the resolutions' ownership rule, this chapter owns user-visible accounts, settings, data and status behaviour (R54); where it shares a topic with another chapter, the owner's text wins. [§9](#9-conflicts-found) records that no difference remains.
+The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID, placed where it belongs. Under the resolutions' ownership rule, this chapter owns user-visible accounts, settings, data and status behaviour (R54); where it shares a topic with another chapter, the owner's text wins. [§9](#9-conflicts-found) records that no difference remains.
 
 **Placeholders in copy** (every chapter uses `{Product}` and `{Account}`, R65):
 - `{Product}` is the extension's in-product name. **PROVISIONAL** ([ticket 22](../issues/22-name.md)): "Playlist Pigeon", with "Playlist Courier" as the runner-up. The tickets wrote `{Name}` for both the product and the account; the spec splits them.
@@ -366,7 +366,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
   - an account that already has a setup works as in a normal window: auto-add, playlist shortcuts, quick-save and YouTube Music. Auto-add isn't paused there;
   - nothing that comes from the private session is written to any storage area. That rules out new setups, setup edits, labels, marks, caches, newly created playlists, watch progress, the last account, the last visibility, claiming and session memory;
   - fetched data (playlist lists, membership, undo entries, progress) lives only in that tab's memory and goes with it.
-- **ACC-38** **Shared-settings changes made in a private window are saved:** switches, options, keys, labels, the theme and the default percentage. They're the user's own configuration and carry nothing from the session (R58). The picker's pins stay disabled there, because the quick-save playlists belong to the account setup (DATA-33), and their tooltip says why: "Quick-save playlists can't be changed in a private window." (R69). **PROVISIONAL** ([ticket 23](../issues/23-ask-amo.md) Q3): if AMO says no, those writes are refused too, and the private-window popup says "Settings can't be changed in a private window."
+- **ACC-38** **Shared-settings changes made in a private window are saved:** switches, options, keys, labels, the theme and the default percentage. They're the user's own configuration and carry nothing from the session (R58). The picker's pins stay disabled there, because the quick-save playlists belong to the account setup (DATA-33), and their tooltip says why: "Quick-save playlists can't be changed in a private window." (R69). This is settled: a settings change the user makes isn't browsing data, and nothing about the window's browsing is stored, so [ticket 23](../issues/23-ask-amo.md)'s question 3 isn't put to AMO. Only if an AMO reviewer objects does [08 §13](08-release.md#13-if-an-amo-reviewer-objects)'s fallback refuse those writes too, with the private-window popup saying "Settings can't be changed in a private window." (R58, R69, R83)
 - **ACC-39** **Routing:** a normal window's popup or settings never works through a private tab. A private window's popup works only through private tabs.
 - **ACC-40** **Private-window popup copy:**
   - for an account with a setup: "Private window: {Account}'s setup is in use. You can change it only in a normal window.";
@@ -481,11 +481,10 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
   "Full" and "update needed" also show as the popup's sync banner ([UI-POP-10](05-ui.md#banners) row 9). The status is never synced. (R13)
 - **SYNC-25** Settings sync switches, the join choice and Clear all data are allowed from a private window. Documents arriving from the synced copy come from the user's other browsers, never from a private session, so they're accepted.
 
-### 3.9 PROVISIONAL: Firefox's data-collection permission
+### 3.9 Firefox's data-collection declaration
 
-- **SYNC-26** **PROVISIONAL** ([ticket 23](../issues/23-ask-amo.md) Q2), pending AMO's answer to whether syncing through `storage.sync` counts as data transmission. The design is the same either way; only the switch-on step and the Firefox manifest differ.
-  - **If it doesn't count** (expected): as above.
-  - **If it counts, as an optional data type:**
+- **SYNC-26** **Settings sync declares no Firefox data type.** It uses the browser's own sync, which the developer never sees, while Firefox presents data collection as data the extension shares with its developer. So switching sync on in Firefox asks Firefox for nothing, and neither does the upgrade note's Agree with sync ticked. This settles [ticket 23](../issues/23-ask-amo.md)'s question 2 by decision, without asking AMO. (R83)
+  - **Only if an AMO reviewer objects**, and sync becomes an optional data type ([08 §13](08-release.md#13-if-an-amo-reviewer-objects)'s fallback):
     - switching sync on in Firefox first asks for Firefox's data-collection permission;
     - if the user declines, sync stays off with "Sync needs your permission to send settings through Firefox Sync.";
     - if the permission is revoked later in about:addons, sync switches off in that browser and its settings stay;
@@ -773,7 +772,7 @@ type SyncState = {
 - **DATA-30** One write path. Only the background writes, and it decides where a write comes from from the sender, never from the message. A write whose window can't be found counts as private.
 - **DATA-31** A write from a private window is refused if it would store anything that comes from the private session. The user's own configuration carries nothing from the session, so it's allowed.
 - **DATA-32** Allowed from a private window:
-  - shared settings: switches, options, keys, labels, Watch later on every account, the theme, the default percentage (PROVISIONAL, ACC-38);
+  - shared settings: switches, options, keys, labels, Watch later on every account, the theme, the default percentage (ACC-38; R58, R83);
   - removing a playlist shortcut, including its target in every setup;
   - settings sync on or off, the join choice, Detailed console log;
   - Pause and Resume;
@@ -1003,8 +1002,6 @@ How breakage is caught before release is in [07 Quality](07-quality.md#751-the-c
 | Placeholders, FT-36, HEALTH-20 | The name `{Product}` ("Playlist Pigeon") | [Ticket 22](../issues/22-name.md) |
 | ACC-03, ACC-35, §2.9 | `DATASYNC_ID` stability across sign-out and browsers; collaborative playlists in claiming | [Ticket 25](../issues/25-live-checks.md) L7 and ticket 11's claiming check |
 | FT-39 | The disclosure's cookie line, removed if no shipped route reads the session cookie (R48) | [Ticket 25](../issues/25-live-checks.md) L3/L4 and its final route table |
-| ACC-38, DATA-32 | Saving shared-settings changes from private windows (R58) | [Ticket 23](../issues/23-ask-amo.md) Q3 |
-| SYNC-26 | Firefox's data-collection permission at the sync switch | [Ticket 23](../issues/23-ask-amo.md) Q2 |
 | FT-53 | `addHostAccessRequest` on Chrome 133+ | [Ticket 09](../issues/09-where-things-live.md), at build |
 | FT-01, DATA-12, FT-57 | Auto-add's toolbar tick: whether it exists. It's off until the user answers (R11) | The user: D10 ([for-the-user.md](../for-the-user.md); [ticket 09](../issues/09-where-things-live.md)'s new question; [ticket 15](../issues/15-popup-and-settings.md)) |
 | HEALTH-22 | A support e-mail beside GitHub issues | The user ([ticket 19](../issues/19-upgrade-and-rollout.md) §16) |
@@ -1057,7 +1054,7 @@ Settled in the second round:
 - **How often the account-change toast shows** (was Conflict C11): on every explicit press, and once per tab for auto-add (ACC-22). R55.
 - **The kind of the "has no playlist" toast** (was Conflict C12): a neutral hint, always shown, with **Choose** (FT-25, ACC-09). R56.
 - **How long Pause lasts** (was Conflict C13): until the user resumes it or the browser restarts; an extension update also clears it; the copy says "until you resume it or restart the browser" (DATA-03, DATA-11). R57.
-- **Private-window settings writes** (was Conflict C14): shared-settings changes are saved, still PROVISIONAL on ticket 23 Q3, and the pins' tooltip says so (ACC-38). R58.
+- **Private-window settings writes** (was Conflict C14): shared-settings changes are saved, and the pins' tooltip says so (ACC-38). R58. They were PROVISIONAL on ticket 23 Q3 until R83 settled it (below).
 - **`storage.sync` while sync is off** (was Conflict C15): exactly FT-21's two calls are allowed, and 07's test allows them (FT-21). R59.
 - **Placeholders, the version in Diagnostics, and a banner for an older build** (were three items of Conflict C16): `{Product}` and `{Account}` everywhere; Diagnostics shows the version with "(beta)"; the popup has a banner row for DATA-48 (placeholders, HEALTH-22, DATA-48). R65.
 - **"Needs site access"** (was an item of Conflict C16): [YM-PS-2](03-youtube-music.md#18-playlist-shortcuts-on-youtube-music) now uses FT-13's "Needs site access" with **Give access**. No R-number: 03 followed this chapter.
@@ -1078,6 +1075,10 @@ Settled in the third round:
 Also applied here: R2 (the undo key: FT-05), R3 (signed out: ACC-21, FT-25), R4 (unrecognised items: HEALTH-01, HEALTH-20), R7 (no pending toast with feedback off: FT-24), R8 (Playing now: FT-06, FT-16, FT-55), R20 (`storage.sync` untouched while sync is off: FT-21, DATA-49), R21 (`schema: 1` at first start, the unset percentage, a playlist with no key: DATA-07, DATA-46, DATA-47, DATA-49), R22 (DATA-11), R23 (DATA-25), R24 (ACC-09, FT-25), R25 (ACC-09, ACC-21), R26 (FT-25), R27 (FT-01), R28 (FT-17, HEALTH-13), R32 (FT-56, DATA-12), R33 (FT-55), R34 (HEALTH-01), R37 (FT-05), R39 (Refresh and Sort A–Z: DATA-04, DATA-05, DATA-12, DATA-20, DATA-21, FT-54) and R40 (`quiet-route-noisy`: HEALTH-01, HEALTH-07). From the second round: R43 (remembered progress: DATA-07, DATA-25), R45 (the Choose pick saves, with Undo; typographic quotes: ACC-09, HEALTH-11, placeholders), R48 (the cookie lines: FT-39, §6), R50 (status per feature: HEALTH-07, HEALTH-10, HEALTH-15, HEALTH-20, §7), R51 (signal identifiers: HEALTH-01), R60 (the note's copy and conditions are 08's: FT-43) and R66 (an ambiguous resolver: HEALTH-01).
 
 Also applied, third round: R68 (an unavailable YouTube Music action's key stays caught and answers: HEALTH-07, HEALTH-10, HEALTH-20, §7), R69 (the pins' private-window tooltip: ACC-38), R71 (a denied prompt from Playlist shortcuts' own switch: FT-12, FT-44, FT-47, FT-52, §8), R74 (ACC-40's copy in 05: §9's C17), R75 (full names in batched notices: HEALTH-13, HEALTH-20), R76 (a 1.4.5 user with no 1.x key: FT-40, DATA-47, DATA-49) and R77 (which titles take quotes: placeholders). R70, R72 and R73 don't touch this chapter's topics.
+
+After the spec ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)):
+- **Firefox's data-collection declaration for settings sync** (was PROVISIONAL on ticket 23 Q2): sync declares no data type, because the browser's own sync is invisible to the developer. The optional-type flow stays only as the fallback if an AMO reviewer objects (SYNC-26, §6). R83.
+- **Private-window settings writes** (were PROVISIONAL on ticket 23 Q3): allowed, as R58 decided, now no longer provisional. A settings change the user makes isn't browsing data, and nothing about the window's browsing is stored (ACC-38, DATA-32, §6). R83.
 
 ## 9. Conflicts found
 

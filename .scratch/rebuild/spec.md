@@ -146,7 +146,6 @@ Each is tracked in [`for-the-user.md`](for-the-user.md).
 ### Actions only the user can take
 
 - **Run the live-check probe** ([ticket 25](issues/25-live-checks.md), branch `task/live-checks`) signed in, in Chrome and Firefox, and paste the reports back.
-- **Send the AMO question** ([ticket 23](issues/23-ask-amo.md)) and paste the reply back.
 - **One-time store and GitHub setup** before release ([chapter 08 §19](spec/08-release.md)).
 
 ### Waiting on live checks (ticket 25)
@@ -155,17 +154,18 @@ These turn PROVISIONAL rows into settled ones. The design doesn't change, only d
 - **YouTube access routes (L1–L9):** which route each job uses, playlist creation, whether the cookie is read at all (L3/L4, and with it every cookie line in the disclosures, R48), proceeding when membership can't be read (L6), `DATASYNC_ID` stability across browsers (L7, which re-attaching setups depends on), queue confirmation (L8), Shorts (L9).
 - **YouTube Music (M1–M5):** queue reads, membership in its answers, quiet likes, the installed app window, how casting shows; the Wiz miniplayer's Save anchor.
 - **YouTube's queue:** quiet adds and their Undo (T28, T29).
-- **Release inputs:** the exact permission-prompt strings (P1–P2), and open tabs surviving an update.
+- **Release inputs:** open tabs surviving an update (P2). The prompt strings (P1) are settled from Firefox's and Chromium's sources ([R83](spec/resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)); the live check only glances at the dialogs.
 - **Measurements on the reference machine:** `popovers.js` (54.5 KB against its 50 KB budget; R29's fix order applies), first-frame and picker timings, and breakage thresholds, which are also tuned in the first weeks of use.
 
-### Waiting on AMO (ticket 23)
+### AMO (ticket 23): settled by decision
 
-- **Q1:** Firefox's `data_collection_permissions` and the update prompt.
-- **Q2:** sync's data type, and whether it can be optional.
-- **Q3:** shared-settings changes made in a private window (R58).
-- **Q4:** the Bun install step in the reviewer build.
+Mozilla's own docs settled this ([R83](spec/resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)), so the drafted message wasn't sent.
+- 2.0 declares `data_collection_permissions: { required: ["none"] }`.
+- Settings sync declares no data type.
+- Settings changes in private windows are allowed.
+- The Bun install step stays.
 
-[Chapter 08](spec/08-release.md) has the outcome table for every reply.
+**Residual risk:** a reviewer reading AMO's broad transmission definition against the page-signed route, which reads the session cookie. Live checks L3/L4 may make this moot, and [chapter 08 §13](spec/08-release.md) keeps the fallback ready.
 
 ### Not yet specified
 

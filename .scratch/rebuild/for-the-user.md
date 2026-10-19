@@ -22,7 +22,6 @@ Items that need the user, collected while working the map. Clear each one when i
 ## Actions only the user can take
 
 - **Run the live-check probe** ([ticket 25](issues/25-live-checks.md)) in Chrome and Firefox while signed in, and paste the reports back.
-- **Send the AMO question** ([ticket 23](issues/23-ask-amo.md)) and paste the reply back.
 
 ## Setup only the user can do (before release, from ticket 19)
 
@@ -61,3 +60,4 @@ Items that need the user, collected while working the map. Clear each one when i
 - **Upgraders keep what 1.4.5 actually did** ([ADR-0009](../docs/adr/0009-upgraders-keep-what-1-4-5-did.md)): 1.4.5 auto-added at 0 % unless set, even though its popup showed 50 %, so the upgrade note asks you once.
 - **Nothing runs until you agree** ([ADR-0010](../docs/adr/0010-one-consent-gates-every-feature.md)): one consent of our own, in every browser.
 - **Rollout:** a beta of at least 14 days (`1.99.N`, served from this repo's GitHub Pages, so don't rename the repo while betas are installed), then Firefox, a 7-day soak, then Chrome public. 2.0.0 can't usefully be rolled back on AMO, so it's fixed forward.
+- **AMO question settled without sending it** ([R83](spec/resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)): from Mozilla's permission-messages KB and docs. 2.0 declares no data collection, settings sync isn't collection, and the Firefox prompt strings are known exactly. The one residual risk: a strict reviewer counting the page reading YouTube's session cookie as "access to cookies". The live check may make that moot, and a fallback is ready.
