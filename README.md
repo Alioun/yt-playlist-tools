@@ -6,6 +6,8 @@ A browser extension for Chrome and Firefox that files the YouTube videos you wat
 
 **Install:** [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/youtube-playlist-tools/)
 
+Using 1.4.5 from Firefox Add-ons? [Setup guide](docs/legacy/1.4.5-setup.md)
+
 <p>
   <a href="docs/screenshots/popup-light.png"><img src="docs/screenshots/popup-light.png" alt="Popup, light theme" width="108"></a>
   <a href="docs/screenshots/popup-dark.png"><img src="docs/screenshots/popup-dark.png" alt="Popup, dark theme" width="108"></a>

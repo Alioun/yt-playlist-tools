@@ -1140,6 +1140,7 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
   - the `broker` job in `ci.yml`;
   - the `docker` ecosystem in `.github/dependabot.yml`;
   - the `docs/legacy/` pages (`README.md`, `authentication.md`, `token-broker.md`), which hold what used to be the README's "Authentication", "Registering an OAuth client" and "Token broker" sections, and their links in `docs/README.md` and the README;
+  - `docs/legacy/1.4.5-setup.md` (the setup guide for the 1.4.5 that AMO serves today) is **kept** until 2.0 is live on AMO, then removed in the next release, along with its README line;
   - the `.env` / `server/.env` rows in `docs/development/environment-files.md`.
 
   The docs were restructured into a nested `docs/` section on 2026-10-19.

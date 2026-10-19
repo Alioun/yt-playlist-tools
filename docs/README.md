@@ -6,6 +6,7 @@
 
 - [Features](features.md): what 1.5.0 does
 - [Screenshots](screenshots/): the 1.5.0 popup and settings
+- [Setting up 1.4.5](legacy/1.4.5-setup.md): the Google credentials the Firefox Add-ons version needs
 
 ## Working on 1.5.0
 
