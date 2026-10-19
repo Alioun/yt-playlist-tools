@@ -72,3 +72,5 @@ Also from [ticket 18](18-breakage.md):
 - **Support channel:** for reports (PROVISIONAL: GitHub issues).
 - **Watch alive:** GitHub disables scheduled workflows after 60 days of inactivity, so the checklist confirms the watch still runs.
 - **Beta:** AMO has no pre-release channel. Consider a self-hosted unlisted beta.
+
+Also from [ticket 24](24-performance-budget.md): the release checklist runs the timing test on the reference machine in both browsers, and `release.yml` runs the size check too.

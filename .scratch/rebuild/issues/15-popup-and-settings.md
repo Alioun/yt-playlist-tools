@@ -75,3 +75,8 @@ Also from [ticket 18](18-breakage.md):
 - a popup strip when something isn't working;
 - the amber "!" badge (the missing-access badge takes priority);
 - a Diagnostics section: Check now, report preview, Copy, "Known problems" / "Report a problem" links, and a detailed-log toggle.
+
+Also from [ticket 24](24-performance-budget.md):
+- **The popup's first view** is the switch list, painted from one storage read, in at most 40 KB and a 60 ms first frame. Pickers, search, the account view and Diagnostics load lazily.
+- **Lighter helpers:** `tailwind-variants/lite` and `clsx`, not shadcn's full helpers.
+- **Settings page:** 60 KB and a 100 ms first frame (PROVISIONAL), with Diagnostics a lazy section.

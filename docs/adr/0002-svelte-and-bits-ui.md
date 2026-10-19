@@ -12,3 +12,4 @@
 - Every component and test is rewritten. Nothing from 1.x's UI carries over.
 - Bits UI has one main maintainer, a supply risk the React options don't have.
 - `bun test` needs a ~20-line Svelte plugin and `--conditions browser`. The research spike proved this setup.
+- In YouTube and YouTube Music pages, Bits UI loads only on first use, and no Tailwind or shadcn styles are injected: eager in-page UI is plain Svelte with a hand-written YouTube skin (rebuild map, ticket 24). Svelte's speed-up in the popup only holds when its first view stays light.

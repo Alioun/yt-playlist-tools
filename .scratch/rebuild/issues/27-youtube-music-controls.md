@@ -28,3 +28,5 @@ Also from [ticket 28](28-queue-reorder.md) (adopted into ticket 26): queue items
 Also from [ticket 08](08-shortcuts.md): the undo key (Alt+U) works on YouTube Music toasts.
 
 Also from [ticket 18](18-breakage.md): the "not working" notice is a sticky variant of the shared toast. You own YouTube Music's item selectors, the row self-check and the anchor thresholds.
+
+Also from [ticket 24](24-performance-budget.md): one hover overlay per page, not buttons on every row. Inject the picker when the pointer reaches Save, to hide its first-open delay. YouTube Music budget: at most 43 KB with everything on (PROVISIONAL, sized by analogy).

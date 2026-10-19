@@ -63,3 +63,13 @@ Also from [ticket 18](18-breakage.md) and [ADR-0005](../../../docs/adr/0005-brea
 - **To check:** whether WXT's fake browser covers `action.setBadgeText` and `storage.session`.
 
 Also from [ticket 29](29-youtube-queue-undo.md): the YouTube queue job reads the new entry's `playlistSetVideoId` from the panel data after refresh. Undo removes by it, and overlapping edits are serialised (HTTP 409).
+
+Also from [ticket 24](24-performance-budget.md):
+- **One UI kit per site:** a shared kit (`ui-www`, `ui-music`) in its own runtime registration exposes Svelte on a global, and features compile against it. `import()` of shared chunks needs web-accessible resources, so it's out.
+- **Feature files:** keep WXT's 3 KB wrapper out of them. Its context also posts a page-visible `window.postMessage` unless that's turned off.
+- **Compilation:** page code compiles with `emitCss: false`, and the CSS lives in the JS.
+- **The lazy picker** is injected with `scripting.executeScript`.
+- **The feature registry** is the single source for both script registration and the size check (`perf-budget.json`).
+- **No `wxt:locationchange`:** it polls every second on Firefox before 147.
+- **Event budgets:** ≤ 0.1 ms per video tick, key or pointer event, and ≤ 2 ms per navigation. No polling to follow the miniplayer.
+- **Tests:** the real-browser layer (Playwright for Chromium, Puppeteer for Firefox) is required to enforce "off means zero", load time, idle cost and teardown.

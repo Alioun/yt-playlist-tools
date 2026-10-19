@@ -52,3 +52,10 @@ Also from [ticket 08](08-shortcuts.md):
 Also from [ticket 18](18-breakage.md): the "not working" notice is a sticky variant of the shared toast. You own the theme-variable fallback palette, the card selectors and the card self-check, and the anchor thresholds.
 
 Also from [ticket 29](29-youtube-queue-undo.md): the YouTube queue button's toast gets Undo, removing exactly the entry it added. Prototype the queue toast with Undo.
+
+Also from [ticket 24](24-performance-budget.md):
+- **Eager UI** is plain Svelte with a YouTube skin; Bits UI popovers and menus load on first use.
+- **One shadow host per page,** and one overlay for thumbnail buttons, not one per card. Keyboard reach for the overlay is unsolved, e.g. insert it after the focused card link.
+- **The toast** is hand-written (about 3 KB, not svelte-sonner).
+- **No Tailwind or shadcn styles in pages,** which closes ticket 13's `@property` question.
+- **Budgets:** YouTube at most 49 KB gzip with everything on; watch-page controls about 5 KB up front.
