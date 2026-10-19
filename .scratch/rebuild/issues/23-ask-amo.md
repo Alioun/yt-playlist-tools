@@ -1,7 +1,7 @@
 # Ask AMO whether 2.0 can declare no data collection
 
 Type: task
-Status: open
+Status: resolved
 Labels: wayfinder:task
 Part of: [Rebuild (2.0)](../map.md)
 
@@ -40,3 +40,13 @@ Also from [ticket 16](16-storage-and-sync.md): question 2 should list exactly wh
 Also from [ticket 19](19-upgrade-and-rollout.md): record the reply against the table in its Answer, which gives the manifest, upgrade and copy change for each reply to each question. If AMO refuses Bun, only the install step falls back to npm, adding a second lockfile.
 
 Corrected on 2026-10-19 (spec chapter 08): question 4 now describes the real build: a Bun install, then a Node build.
+
+## Answer
+
+**Resolved by decision on 2026-10-19, without sending the message.** The user pointed to Mozilla's KB article on permission request messages, which, together with Mozilla's other docs and Firefox's source, answers enough. The full reasoning and sources are in [R83](../spec/resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83).
+- **Q1 (`none` for requests only to YouTube):** yes. 2.0 declares `required: ["none"]`. Firefox frames data collection as data shared with the extension developer, and 2.0 shares nothing with its developer or any third party. Residual risk: AMO's broad transmission definition, and cookie access counting as personal data, applied to the page-signed route. This is mitigated by R48, R49 and chapter 08 §13's fallback.
+- **Q2 (settings sync):** not data collection. It's the browser's own sync, and the developer never sees it. No data type is declared.
+- **Q3 (settings changed in a private window):** allowed. These aren't browsing data.
+- **Q4 (Bun install):** as planned, with the npm-lockfile fallback.
+
+The drafted message above stays available if the user ever wants AMO's written confirmation.

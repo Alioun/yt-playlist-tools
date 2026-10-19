@@ -223,3 +223,37 @@ These settle the remaining "not pinned down" copy and decisions. Where a chapter
 - **R80 — Check now before consent** is disabled, with "Agree first to check YouTube."
 - **R81 — Chrome's YouTube Music prompt denied during first run's Agree.** Consent is still set. The YouTube Music features are held for access as in R14, and Playlist shortcuts follows R71.
 - **R82 — Contrast.** Any future token change keeps WCAG AA: 4.5:1 for text and 3:1 for UI components and focus rings, in both themes. 07's axe-core check enforces it.
+
+## After the spec: Firefox prompts and data collection (R83)
+
+**R83 — Settled 2026-10-19 from Mozilla's own sources,** pointed to by the user:
+- the KB articles ["Permission request messages for Firefox extensions"](https://support.mozilla.org/en-US/kb/permission-request-messages-firefox-extensions) (updated 2026-06-11) and ["Extension data collection"](https://support.mozilla.org/en-US/kb/extension-data-collection);
+- the Extension Workshop's ["Firefox built-in consent for data collection and transmission"](https://extensionworkshop.com/documentation/develop/firefox-builtin-data-consent/) (updated 2026-03-12);
+- the [Add-on Policies](https://extensionworkshop.com/documentation/publish/add-on-policies/) §6;
+- Firefox's own `extensionPermissions.ftl`, `extensions.ftl` and `Extension.sys.mjs` (main branch, read 2026-10-19).
+
+**Firefox prompt strings (settles live check P1 for Firefox).**
+- **Fresh install:**
+  - header "Add {Product}", with no question mark;
+  - "Required permissions:" followed by "Access your data for sites in youtube.com domains". This is the install prompt's full-domain-list form. about:addons lists the same grant as "Access your data for sites in the youtube.com domain".
+  - `storage` and `scripting` have no message at all.
+  - "Data collection:" followed by "The developer says this extension doesn't require data collection."
+- **Update from 1.4.5:** no prompt. No message-bearing permission is new, and on update Firefox shows added required data permissions only, never `none`.
+- **An optional data type requested at runtime** (not used, see below) would show "{Product} requests additional data collection", "New data collection:" and "The developer says the extension wants to collect: …".
+- **The live check:** P1 now only glances at the real dialogs. Chrome's strings stay as chapter 08 §5 read them from Chromium's source.
+
+**Data collection: 2.0 declares `required: ["none"]`.** This settles ticket 23 by decision; the drafted message to AMO isn't needed.
+
+- **Why:**
+  - Firefox presents data collection to users as data the extension *shares with its developer*: "Share … with extension developer", "The developer says this extension collects: …". 2.0 sends nothing to its developer or to any third party. Its only requests go to YouTube or YouTube Music, the site the user is on, carrying the user's own actions there.
+  - Settings sync uses the browser's own sync, which the developer never sees. So it declares no data type (SYNC-26).
+  - Listed extensions that work the same way declare `none` (ticket 03).
+- **Residual risk:**
+  - AMO's policy defines transmission broadly ("collected, used, transferred, shared, or handled outside of the add-on or the local browser"), and lists "access to and placement of cookies" as personal data.
+  - A strict reviewer could apply that to the page-signed route, which reads YouTube's session cookie to sign requests sent only to YouTube.
+- **Mitigations:**
+  - The reviewer notes explain the route (R49).
+  - If live checks L3/L4 show a cookie-free route works, the question disappears (R48).
+  - If a reviewer objects anyway, chapter 08 §13's fallback applies. The Firefox 140 floor it needs is already in place.
+- **AMO question 3 (settings changed in a private window):** allowed. A settings change the user makes isn't browsing data, and nothing about the window's browsing is stored (R58).
+- **AMO question 4 (the Bun install step):** as planned in `SOURCE_CODE_REVIEW.md`, with the npm-lockfile fallback if a reviewer asks for it.

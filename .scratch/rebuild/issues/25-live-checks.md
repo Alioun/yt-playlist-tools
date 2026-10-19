@@ -71,3 +71,5 @@ Also from [ticket 27](27-youtube-music-controls.md), signed in:
 - the installed app window.
 
 About 1 in 4 fresh signed-out profiles got the Wiz miniplayer; forcing the flag alone gives a Wiz bar with no like.
+
+**P1 settled from sources (2026-10-19):** Firefox's prompt strings come from Firefox's own string files and code, plus Mozilla's KB ([R83](../spec/resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)). Chrome's come from Chromium's source (chapter 08 §5). During the live check, P1 only glances at the real dialogs.
