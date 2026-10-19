@@ -43,3 +43,5 @@ Also from [ticket 10](10-youtube-access.md):
 - **Teardown:** every feature has one that removes its elements, styles and listeners.
 - **Assets:** no web-accessible resources, so in-page assets are inline. WXT's `registration: "runtime"` content-script option likely fits (unverified).
 - **Test seams:** recorded responses per job, plus fakes for `scripting.registerContentScripts` and `tabs.query` URL filtering. Check whether WXT's fake browser has them.
+
+Also from [ticket 12](12-adding.md): a single background coordinator orders adds and removals per account, playlist and video. Session memory (undo-skip, recent outcomes) stays in memory only. The private-window write guard covers Missing/Full marks and new-playlist records.

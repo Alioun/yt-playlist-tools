@@ -33,3 +33,9 @@ Also from [ticket 11](11-accounts.md): in-page UI shows only the tab's own accou
 Also from [ticket 26](26-youtube-music-quick-actions.md): share the toast component with YouTube Music, which gets its own skin. Confirm the term "quick-save playlist" for YouTube's thumbnail quick-save.
 
 Also from [ticket 10](10-youtube-access.md): there are no web-accessible resources, so icons and fonts in in-page UI are inline. Every feature has a teardown that removes its elements, styles and listeners.
+
+Also from [ticket 12](12-adding.md):
+- **Toasts:** bottom left, one at a time, failures not marked by colour alone. Decide whether toasts show in fullscreen or wait until it ends.
+- **Quick-save:** a split button in ticket 26's model, hidden on made-for-kids cards if that's detectable.
+- **The queue button** has four states, including "Sent, not confirmed".
+- **Open:** should our in-page toasts carry a small extension mark, so users can tell them from YouTube's own? That's "look like YouTube" against clarity.

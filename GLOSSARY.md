@@ -42,6 +42,30 @@ _Avoid_: Auto-save, auto-playlist
 A playlist the user has selected to receive auto-added videos.
 _Avoid_: Target playlist, selected playlist
 
+**Add**:
+One video put into one or more of the user's playlists by a single action of one feature: auto-add, a playlist shortcut, quick-save or Save to playlist. Putting a video in the queue is Add to queue, not an add.
+_Avoid_: Insert, save request
+
+**Outcome**:
+What an add did for one playlist: added, already in, filtered out, skipped or failed.
+_Avoid_: Result, status
+
+**Membership**:
+Which of the user's playlists contain a given video, as YouTube itself reports it at that moment.
+_Avoid_: Duplicate cache, saved state
+
+**Already in**:
+The outcome for a playlist that already contains the video. Nothing is added, because the extension never puts a second copy of a video in a playlist. It isn't a failure.
+_Avoid_: Duplicate (as an outcome)
+
+**Missing playlist**:
+A playlist chosen for a feature that YouTube no longer accepts adds to, because it was deleted or isn't the user's. It stays chosen, marked missing, until the user removes it.
+_Avoid_: Dead playlist, invalid playlist
+
+**Confirmation**:
+A toast saying an action did what was asked. It's the only kind a feature's Show feedback switch hides.
+_Avoid_: Success toast
+
 **Shortcut playlist**:
 The single playlist the keyboard shortcut adds the current video to.
 

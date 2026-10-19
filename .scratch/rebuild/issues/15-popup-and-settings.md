@@ -51,3 +51,10 @@ Also from [ticket 10](10-youtube-access.md):
 - **No tab:** cached data plus "Open YouTube" / "Open YouTube Music".
 - **Site access:** a "needs access" state per site.
 - **Chrome's YouTube Music access:** requested from the click that switches a YouTube Music feature on, including on the first-run screen.
+
+Also from [ticket 12](12-adding.md):
+- a Show feedback switch per feature;
+- the New playlist form: title rules, Private/Unlisted/Public defaulting to Private, a hint for an existing title, inline errors, and the no-channel state;
+- Missing/Full marks with Remove in the playlist lists;
+- a quick-save playlist per site, per account;
+- adds started from the popup report inline.

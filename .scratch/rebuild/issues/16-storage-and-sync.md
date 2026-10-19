@@ -35,3 +35,8 @@ Also from [ticket 11](11-accounts.md) and [ADR-0003](../../../docs/adr/0003-acco
 - **Removal:** removing one setup is separate from "clear all data".
 
 Also from [ticket 10](10-youtube-access.md): caches are per account and stamped with when they were fetched. Script registration is derived from the feature switches, never stored.
+
+Also from [ticket 12](12-adding.md):
+- **Store:** Show feedback per feature, shared; the last visibility picked, per device; newly created playlists for up to 24 h; Missing/Full marks in the account setup.
+- **Drop:** the `preventDuplicates` key and the IndexedDB `yt-playlist-tools` store. Clear the old `localStorage` keys from an extension page.
+- **Nothing about individual adds is stored.**

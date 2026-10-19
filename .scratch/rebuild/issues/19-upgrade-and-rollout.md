@@ -50,3 +50,7 @@ Also from [ticket 10](10-youtube-access.md):
 - **Disclosures:** add "Authentication information" and the privacy-policy line if the page-signed request ships.
 - **Listing:** the `scripting` justification is in section 11, and the reviewer notes list the routes and endpoints.
 - **Removed:** `identity` and the Google hosts.
+
+Also from [ticket 12](12-adding.md):
+- 1.4.5's toasts on → Show feedback on; off → off. Failures now still show for them.
+- Release note: auto-add no longer adds duplicates, and no longer claims "Added" when an add failed.
