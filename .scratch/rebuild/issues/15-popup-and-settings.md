@@ -63,3 +63,9 @@ Also from [ticket 07](07-watched.md):
 - **Default required percentage:** a 0–100 slider plus a field that saves on Enter, on leaving the field, or on slider release, labelled "As soon as it starts playing" / "Only when watched in full".
 - **Per playlist:** Takes (Videos / Shorts / Both) and a percentage override.
 - **In the popup:** Pause auto-add and "Don't auto-add this video".
+
+Also from [ticket 08](08-shortcuts.md):
+- **Playlist shortcuts list:** label, playlist per account (Watch later applies to every account), key, Remove with Undo, at most 20. Managed in the popup and in settings.
+- **Recorder:** its states and copy; Esc cancels, Clear, clash warnings, "Use it here".
+- **Keys:** shown in each platform's style, with the help line.
+- **Also on YouTube Music:** the switch is reachable from the YouTube Music section.

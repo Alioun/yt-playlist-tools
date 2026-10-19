@@ -49,3 +49,5 @@ Also from [ticket 12](12-adding.md): a single background coordinator orders adds
 Also from [ticket 07](07-watched.md): the watch tracker is a deep module. A pure core turns readings into counted seconds and the playlists now due, so `bun test` can cover it; a thin player adapter feeds it. Its page script runs on every YouTube page while auto-add is on, to follow the miniplayer.
 
 Also from [ticket 28](28-queue-reorder.md): the YouTube Music queue job queue also handles moves (check the item → fire the drop event → confirm the position). Inserts also turn off the responsive-radio flag.
+
+Also from [ticket 08](08-shortcuts.md) and [ADR-0004](../../../docs/adr/0004-shortcuts-caught-in-page.md): one shortcut engine for both sites. It has a pure matcher (character first, then physical key), pure recorder rules, and a target resolver per site (pointed-at item, whichever moved last, else the current video or playing song). It's testable under `bun test`, with no `commands` fake needed.

@@ -45,3 +45,7 @@ Also from [ticket 07](07-watched.md):
 - **Remembered watch progress:** per account, local, at most 30 days, dropped once auto-add has run, never synced, never written from private windows. It's deleted when auto-add is switched off, when the setup is removed, and by Clear All Data.
 - **Pause and session skips:** in memory only.
 - **Placement:** the default percentage is shared; Takes and the override travel with each playlist in the account setup.
+
+Also from [ticket 08](08-shortcuts.md):
+- **Shared:** shortcuts as `{id, key: {char?, code, ctrl, alt, shift, meta}, label, watchLaterOnEveryAccount}`, the picker key, the undo key, Also on YouTube Music, and Show feedback.
+- **Per account:** a map from shortcut ID to playlist ID.

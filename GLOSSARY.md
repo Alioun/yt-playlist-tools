@@ -15,7 +15,7 @@ The browser's permission for the extension to run on YouTube or on YouTube Music
 _Avoid_: Host permission (in user-facing text), grant
 
 **Serving tab**:
-The YouTube or YouTube Music tab the extension works through for the popup, settings or a browser-wide shortcut, chosen because it's signed in to the account being shown.
+The YouTube or YouTube Music tab the extension works through for the popup or settings, chosen because it's signed in to the account being shown.
 _Avoid_: Host tab, proxy tab
 
 ### Accounts
@@ -86,9 +86,6 @@ _Avoid_: Dead playlist, invalid playlist
 A toast saying an action did what was asked. It's the only kind a feature's Show feedback switch hides.
 _Avoid_: Success toast
 
-**Shortcut playlist**:
-The single playlist the keyboard shortcut adds the current video to.
-
 ### Queue
 
 **Queue**:
@@ -114,14 +111,6 @@ _Avoid_: Dequeue, delete from queue
 The song YouTube Music is on, playing or paused: the queue's current item. Never an ad.
 _Avoid_: Current track, now playing
 
-**Pointed-at item**:
-The song, album or playlist under the pointer, or holding keyboard focus, when a key is pressed.
-_Avoid_: Hovered row, target, selection
-
-**Quick-action shortcut**:
-A key that runs one quick action on the pointed-at item, else on the playing song.
-_Avoid_: Hotkey, music shortcut
-
 **Save to playlist**:
 YouTube Music's quick action that adds a song to one of the user's playlists: to its quick-save playlist in one click, or to any playlist through the playlist picker.
 _Avoid_: Add to playlist (on YouTube Music), bookmark
@@ -133,6 +122,32 @@ _Avoid_: Default playlist, one-click playlist, target playlist
 **Playlist picker**:
 The extension's list of the user's playlists, with a check mark on each one that already holds the song or video.
 _Avoid_: Save dialog (YouTube's own), playlist menu
+
+### Shortcuts
+
+**Shortcut**:
+A key the user gives one of the extension's actions on YouTube and YouTube Music pages: a playlist shortcut, a quick-action shortcut, the picker key or the undo key. It works only while one of those pages has keyboard focus.
+_Avoid_: Hotkey, keybinding, keyboard command (the browser's own)
+
+**Playlist shortcut**:
+A shortcut that saves the pointed-at item, else the current video or playing song, to the playlist chosen for it on the current account. Its key and label are shared by every account.
+_Avoid_: Shortcut playlist, hotkey
+
+**Shortcut label**:
+The user's own name for a playlist shortcut, shown instead of its playlist's title wherever the shortcut is listed. Toasts still name the playlist.
+_Avoid_: Shortcut name, shortcut title
+
+**Quick-action shortcut**:
+A key that runs one quick action on the pointed-at item, else on the playing song.
+_Avoid_: Hotkey, music shortcut
+
+**Pointed-at item**:
+The video, Short, song, album, playlist, channel or post under the pointer or holding keyboard focus when a key is pressed, whichever the user moved to last.
+_Avoid_: Hovered row, target, selection
+
+**Current video**:
+The video a YouTube tab is on, playing or paused: the watch page's video, the Short on screen, or the miniplayer's video. Ads never count.
+_Avoid_: Playing video, active video
 
 ### Channel filters
 

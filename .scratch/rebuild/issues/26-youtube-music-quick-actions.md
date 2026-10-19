@@ -268,3 +268,11 @@ Also from [ticket 10](10-youtube-access.md), and accepted by the main session: i
 - Autoplay suggestions can't be moved, so they keep no Play next / Add to queue.
 - **Every move:** check the item before firing, and confirm its new position afterwards; if it didn't move, show the failure toast.
 - **After inserts:** our insert also turns off the responsive-radio flag, as YouTube Music does.
+
+Also from [ticket 08](08-shortcuts.md), adopted:
+- character-first key matching;
+- "pointer or focus, whichever moved last";
+- Ctrl+Alt can't be recorded;
+- a key can't fire two shortcuts on one site (the recorder offers "Use it here");
+- Alt+U undo also works on YouTube Music;
+- presets skip keys that are already taken.

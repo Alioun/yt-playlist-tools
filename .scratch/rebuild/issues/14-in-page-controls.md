@@ -41,3 +41,10 @@ Also from [ticket 12](12-adding.md):
 - **Open:** should our in-page toasts carry a small extension mark, so users can tell them from YouTube's own? That's "look like YouTube" against clarity.
 
 Also from [ticket 07](07-watched.md): use its states table and draft copy for this video's auto-add status, the Shorts and miniplayer status (the miniplayer now counts), and fullscreen.
+
+Also from [ticket 08](08-shortcuts.md):
+- When the picker key (Alt+Shift+P) opens the picker, it anchors to the pointed-at card, else the player, else the window centre.
+- Card recognition includes playlist-page rows and the watch page's playlist panel.
+- Quick-save tooltips can show the picker key.
+- Every in-page shadow root uses `isolateEvents: true` and `mode: "open"`.
+- Verify in the dev build that Bits UI popovers still close on Escape with isolation on.

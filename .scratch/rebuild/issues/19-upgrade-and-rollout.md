@@ -58,3 +58,9 @@ Also from [ticket 12](12-adding.md):
 Also from [ticket 07](07-watched.md):
 - The one-time note could say "Auto-add now counts only what you actually watch. Skipping ahead and ads don't count."
 - The privacy policy mentions locally kept watch progress (up to 30 days).
+
+Also from [ticket 08](08-shortcuts.md):
+- the 1.4.5 key-conversion rules (in its Answer);
+- the feature is on only if both a key and a playlist carry over;
+- upgraders get no Watch later preset;
+- the upgrade note names a carried Ctrl key (it never fired in 1.4.5) and explains unconvertible keys.
