@@ -11,6 +11,7 @@ Items that need the user, collected while working the map. Clear each one when i
 - **Live streams and premieres counting for auto-add** ([ticket 07](issues/07-watched.md)), e.g. after N minutes, or credited to the replay. They never fire today, so this would be a new capability. They're left not counting.
 - **Keys that work from any tab, or system-wide on Chrome** ([ticket 08](issues/08-shortcuts.md)), e.g. liking the song in a background YouTube Music tab. They'd need browser commands with no default key. This is a new capability; 2.0's keys only work while a YouTube page has focus.
 - **Where problem reports go** ([ticket 18](issues/18-breakage.md)): provisionally GitHub issues, but those need a GitHub account. E-mail instead?
+- **Settings export and import to a file** ([ticket 16](issues/16-storage-and-sync.md)), for people without browser sync. This would be a new capability.
 - **Localisation:** should 2.0's UI be translated? English toasts stand out on a non-English YouTube Music (ticket 26). This would be a new capability.
 
 ## Actions only the user can take
@@ -31,3 +32,4 @@ Items that need the user, collected while working the map. Clear each one when i
 - **A recurring task for you** ([ticket 18](issues/18-breakage.md)): before each release, run a few minutes of signed-in live check in Chrome and Firefox. No Google account ever runs in CI. A daily signed-out check runs automatically.
 - **No remote config or kill switch** ([ADR-0005](../docs/adr/0005-breakage-caught-on-device-fixed-by-releases.md)): YouTube breakage is fixed only by store releases, so Chrome fixes can take days. Users always see which feature isn't working.
 - **Svelte alone doesn't make the popup faster** ([ticket 24](issues/24-performance-budget.md)). With shadcn's popover and search loaded up front, it measured slower than today's React popup on a slow CPU. It's fast only because the first view is a light switch list, with everything else loading on demand. Inside YouTube, Bits UI's popover code (about 32 KB) is the biggest cost, so it loads on first use. With everything on, 2.0 should weigh about half of 1.5.0 on YouTube pages.
+- **Feature switches sync along with your setups** ([ticket 16](issues/16-storage-and-sync.md)), so a new browser arrives set up and switched on. Each browser keeps its own copy as the truth, because both browsers wipe the synced copy whenever the extension is uninstalled anywhere. Clear All Data resets only this browser unless you tick the box.

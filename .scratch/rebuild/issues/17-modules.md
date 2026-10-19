@@ -73,3 +73,11 @@ Also from [ticket 24](24-performance-budget.md):
 - **No `wxt:locationchange`:** it polls every second on Firefox before 147.
 - **Event budgets:** ≤ 0.1 ms per video tick, key or pointer event, and ≤ 2 ms per navigation. No polling to follow the miniplayer.
 - **Tests:** the real-browser layer (Playwright for Chromium, Puppeteer for Firefox) is required to enforce "off means zero", load time, idle cost and teardown.
+
+Also from [ticket 16](16-storage-and-sync.md) and [ADR-0006](../../../docs/adr/0006-local-truth-sync-copies-documents.md):
+- **The store:** one deep module in the background with `ready`, `read(view)`, `change(origin, change)` (→ `ok` or a refusal: `private` / `sync-full` / `update-needed`), `subscribe`, `removeSetup` and `clearAll`.
+- **Seam:** one port for the three storage areas, with real adapters and a fake sync area enforcing 102,400 / 8,192 / 512 and Chrome's 120 writes a minute and 1,800 an hour. Two fakes on a fake "server" stand in for two browsers.
+- **Pure parts:** document codecs, migrations, the private-write table, the budget counter, the chunker and the conflict rule.
+- **Guard test:** it fails if anything outside the store calls `storage.*.set`, `remove` or `clear`. Content scripts get a tab view from the background and never read storage.
+- **Start-up order:** the migration runs first at background start. The reconciler waits for the store and registers nothing without consent.
+- **Watch progress:** written on pause, on leaving the video, when the tab is hidden, and every 60 s. At most 2,000 videos per account and 100 played stretches per video.

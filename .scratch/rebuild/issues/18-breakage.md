@@ -367,3 +367,5 @@ Each message is two sentences, uses YouTube's capitalisation, and says "YouTube 
 | Update button | None | Requesting an update check: Firefox lacks it, and Chrome throttles it to once per 5 h |
 
 Also from [ticket 29](29-youtube-queue-undo.md): add the `IAE%3D` quiet value, the `TLPQ` queue list, the panel data's location (`ytd-playlist-panel-renderer.data` / `.polymerController.data`), `yt-playlist-manager` and `yt-playlist-data-updated` to the watch list. If the quiet value stops working, YouTube's own toast appears: detect it and flag "partly working".
+
+Also from [ticket 16](16-storage-and-sync.md): the diagnostics report may include sync on/off, the sync status and the schema version, with no values.

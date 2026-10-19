@@ -80,3 +80,9 @@ Also from [ticket 24](24-performance-budget.md):
 - **The popup's first view** is the switch list, painted from one storage read, in at most 40 KB and a 60 ms first frame. Pickers, search, the account view and Diagnostics load lazily.
 - **Lighter helpers:** `tailwind-variants/lite` and `clsx`, not shadcn's full helpers.
 - **Settings page:** 60 KB and a 100 ms first frame (PROVISIONAL), with Diagnostics a lazy section.
+
+Also from [ticket 16](16-storage-and-sync.md):
+- **Sync:** the settings sync switch with its help text, and the join question ("Use synced settings" / "Use this browser's settings"). First run waits up to 10 s for synced settings.
+- **States:** "Synced settings are full", naming what takes the room, with "Remove kept filters"; and "Update {Name}" for a version mismatch.
+- **Clear All Data:** this browser only, with a checkbox to also delete the synced copy.
+- **Accounts not loaded here:** "3 auto-add playlists · Open YouTube as {Name}".

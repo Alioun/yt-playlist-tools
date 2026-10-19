@@ -34,6 +34,22 @@ _Avoid_: Degraded, limited
 A plain-text summary of the extension's state and recent breakage signals, which the user reads and copies to share by choice. It never names a video, playlist, channel or account.
 _Avoid_: Bug report, log dump, telemetry
 
+**Shared settings**:
+The settings every account uses: each feature's switch and options, the shortcuts' keys and labels, the default required percentage, and the theme.
+_Avoid_: Global settings, preferences
+
+**Settings sync**:
+The feature that keeps shared settings and account setups the same in every browser where the user switches it on, through the browser's own sync.
+_Avoid_: Cloud sync, backup
+
+**Synced copy**:
+The shared settings and account setups held in the browser's own sync storage, which every browser with settings sync on reads and writes.
+_Avoid_: Cloud copy, server copy
+
+**Clear all data**:
+Removing everything the extension keeps in this browser, so it starts as if just installed. The synced copy is deleted only if the user asks.
+_Avoid_: Reset, factory reset
+
 ### Accounts
 
 **Account**:
@@ -186,8 +202,12 @@ _Avoid_: Denied channel, allowed channel (as entry names), filter entry
 The title and optional @handle shown for a listed channel. Display only; never used to identify the channel.
 _Avoid_: Channel name (as an identifier)
 
+**Kept filter**:
+A channel filter whose playlist isn't an auto-add playlist right now, because it was unticked or no longer exists. It isn't applied or shown, and returns unchanged when the playlist is ticked again.
+_Avoid_: Inactive filter, stale filter
+
 **Orphaned filter**:
-A channel filter whose playlist no longer exists in the user's account. It is kept, never shown, and still counts as listing its channels.
+A kept filter whose playlist no longer exists in the user's account. It is never shown, and still counts as listing its channels.
 
 **Unknown channel**:
 The state where a video's channel can't be identified when auto-add fires. A filter in denylist mode lets the video through; one in allowlist mode does not.

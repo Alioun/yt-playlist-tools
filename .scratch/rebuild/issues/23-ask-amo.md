@@ -33,3 +33,5 @@ Status: drafted on 2026-10-19 and waiting for the user to send it. Post it in Mo
 Also from [ticket 11](11-accounts.md): consider adding a question on whether saving the user's own shared-settings changes made in a private window is acceptable.
 
 Also from [ticket 10](10-youtube-access.md): add a fourth question. Does signing requests in the page from the session cookie, sent only to YouTube, change `none`? With a Firefox floor of 140, the `websiteActivity` fallback costs nothing extra.
+
+Also from [ticket 16](16-storage-and-sync.md): question 2 should list exactly what syncs: account digests, names, handles and avatar URLs, playlist and channel IDs, and channel names. Also ask which data type applies, and whether an *optional* type requested from the click that switches sync on is acceptable.

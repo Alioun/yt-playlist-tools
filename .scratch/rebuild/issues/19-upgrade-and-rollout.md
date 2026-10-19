@@ -74,3 +74,10 @@ Also from [ticket 18](18-breakage.md):
 - **Beta:** AMO has no pre-release channel. Consider a self-hosted unlisted beta.
 
 Also from [ticket 24](24-performance-budget.md): the release checklist runs the timing test on the reference machine in both browsers, and `release.yml` runs the size check too.
+
+Also from [ticket 16](16-storage-and-sync.md):
+- **Migration table:** in its section 10.2, including cleaning typed playlist IDs and the 1.5.0 developer keys.
+- **Old stores:** IndexedDB is deleted from the background; the old `localStorage` keys are removed by the first extension page.
+- **Upgraders:** sync starts off, and the upgrade note is set to pending.
+- **Privacy policy:** list what's stored locally (watch progress up to 30 days, playlist lists with thumbnails, account name, handle and avatar URL) and what syncs when sync is on.
+- **Carry-over:** ticket 16 recommends carrying 1.4.5's real values (0 %, feedback off). Confirm, and plan for AMO's required-type case.

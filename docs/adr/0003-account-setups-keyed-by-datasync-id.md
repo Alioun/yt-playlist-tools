@@ -15,3 +15,4 @@ Playlist IDs only work on the account that owns them, while how a person wants Y
 
 - Storage and sync are keyed by `DATASYNC_ID`. If it proves unstable (rebuild map, ticket 25), setups are re-attached by playlist ownership.
 - Nothing about an account is stored until the user makes a choice for it. Private windows never create or change setups.
+- Keys are a 16-character digest of `DATASYNC_ID`; the raw ID is never stored (rebuild map, ticket 16).
