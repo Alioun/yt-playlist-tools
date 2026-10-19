@@ -1139,9 +1139,12 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
   - the `server` and `server:dev` scripts in `package.json`;
   - the `broker` job in `ci.yml`;
   - the `docker` ecosystem in `.github/dependabot.yml`;
-  - the README's "Authentication", "Registering an OAuth client" and "Token broker" sections (with "Using a different broker", "Hosting one for others" and "Dokploy"), and the `.env` / `server/.env` rows under "Environment files".
+  - the `docs/legacy/` pages (`README.md`, `authentication.md`, `token-broker.md`), which hold what used to be the README's "Authentication", "Registering an OAuth client" and "Token broker" sections, and their links in `docs/README.md` and the README;
+  - the `.env` / `server/.env` rows in `docs/development/environment-files.md`.
+
+  The docs were restructured into a nested `docs/` section on 2026-10-19.
 - **REL-CI-53** The 1.x OAuth code (`src/lib/auth*`) goes with the 2.0 rewrite.
-- **REL-CI-54** **The README is rewritten for 2.0 as a whole,** as part of the 2.0 release, rather than patched section by section after REL-CI-52's deletions. The rewrite is one of the launch criteria (REL-CHK-04). It includes:
+- **REL-CI-54** **The README and the nested `docs/` section are rewritten for 2.0 as a whole,** as part of the 2.0 release, rather than patched section by section after REL-CI-52's deletions. The rewrite is one of the launch criteria (REL-CHK-04). It includes:
   - a short "How it works" that links ADR-0001;
   - a "Releasing" section that links `RELEASING.md` (§18's checklist, created by the build);
   - the trademark attribution (REL-STORE-03);

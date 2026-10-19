@@ -1,0 +1,19 @@
+# Research
+
+[← 2.0 planning](README.md)
+
+Each note lives on its own `research/*` branch under `docs/research/`, opens with a short answer, and cites its sources at the end. All were researched on 2026-10-19.
+
+| Note | Ticket | Gist |
+| --- | --- | --- |
+| [Which YouTube-internal requests can do each job?](https://github.com/Alioun/yt-playlist-tools/blob/research/youtube-requests/docs/research/youtube-requests.md) | [01](../../.scratch/rebuild/issues/01-youtube-requests.md) | Every job (playlists and Watch Later, add and remove, create, queue, channel, account, Shorts) has an internal request, so nothing needs the Data API. Probe: [scripts](https://github.com/Alioun/yt-playlist-tools/tree/research/youtube-requests/docs/research/youtube-requests) |
+| [Where 2.0 can send YouTube's internal requests from](https://github.com/Alioun/yt-playlist-tools/blob/research/request-context/docs/research/request-context.md) | [02](../../.scratch/rebuild/issues/02-request-context.md) | YouTube rejects extension origins with a 403, so requests go from inside a YouTube tab; with no tab open, show cached data. Probe: [scripts](https://github.com/Alioun/yt-playlist-tools/tree/research/request-context/docs/research/request-context) |
+| [Store policy and YouTube's terms](https://github.com/Alioun/yt-playlist-tools/blob/research/store-policy/docs/research/store-policy.md) | [03](../../.scratch/rebuild/issues/03-store-policy.md) | AMO allows it, the Chrome Web Store allows it in practice, and YouTube's terms are a grey zone that binds users, not the stores |
+| [Can `bun test` cover a WXT extension?](https://github.com/Alioun/yt-playlist-tools/blob/research/bun-test/docs/research/bun-test.md) | [04](../../.scratch/rebuild/issues/04-bun-test.md) | Yes, with three preload files and a `bunfig.toml`; WXT itself only supports Vitest. Spike: [code](https://github.com/Alioun/yt-playlist-tools/tree/research/bun-test/docs/research/bun-test-spike) |
+| [UI stacks for 2.0](https://github.com/Alioun/yt-playlist-tools/blob/research/ui-stacks/docs/research/ui-stacks.md) | [05](../../.scratch/rebuild/issues/05-ui-stacks.md) | Benchmarked stacks for the popup, settings and shadow-root UI; Svelte 5 with Bits UI shipped half the JS of React and won ([ADR-0002](../adr/0002-svelte-and-bits-ui.md)) |
+| [What happens when a 1.4.5 user updates to 2.0](https://github.com/Alioun/yt-playlist-tools/blob/research/upgrade-path/docs/research/upgrade-path.md) | [06](../../.scratch/rebuild/issues/06-upgrade-path.md) | Firefox installs 2.0 silently unless it adds a permission that has a warning; also covers migration and both stores' requirements |
+| [YouTube Music: one-click song actions](https://github.com/Alioun/yt-playlist-tools/blob/research/youtube-music/docs/research/youtube-music.md) | [21](../../.scratch/rebuild/issues/21-youtube-music-internals.md) | YouTube Music routes commands through three layers, and only the ⋮ menu item's own code can insert into the queue. Live check: [snippet](https://github.com/Alioun/yt-playlist-tools/blob/research/youtube-music/docs/research/youtube-music/live-check.js) |
+| [Moving a song already in YouTube Music's queue](https://github.com/Alioun/yt-playlist-tools/blob/research/queue-reorder/docs/research/queue-reorder.md) | [28](../../.scratch/rebuild/issues/28-queue-reorder.md) | Fire the queue panel's own drop event; it moves the entry and updates the server's copy, as a drag does |
+| [Removing one entry from YouTube's queue quietly](https://github.com/Alioun/yt-playlist-tools/blob/research/youtube-queue-undo/docs/research/youtube-queue-undo.md) | [29](../../.scratch/rebuild/issues/29-youtube-queue-undo.md) | Possible through YouTube's own command resolver, with one quiet route for Undo; not yet tried signed in |
+
+Claims that need a signed-in browser are gathered in the [live-check probe](prototypes.md#live-check-probe).
