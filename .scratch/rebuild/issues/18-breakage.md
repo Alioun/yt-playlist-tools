@@ -1,0 +1,18 @@
+# How do we find out when YouTube breaks us?
+
+Type: grilling
+Status: open
+Labels: wayfinder:grilling
+Part of: [Rebuild (2.0)](../map.md)
+Blocked by: 04, 10
+
+## Question
+
+2.0 leans on YouTube internals that can change without notice. Decide how breakage gets caught and handled:
+- **Recorded tests:** tests against recorded YouTube responses at the gateway seam.
+- **Live check:** an on-demand check against real YouTube.
+- **User-facing failures:** what the user sees when a request fails or a response changes shape, instead of a silent failure.
+- **Diagnostics:** what's possible without telemetry, given `data_collection_permissions: none`.
+- **Fix speed:** how fast a fix can reach users through AMO and Chrome Web Store review.
+
+Use `codebase-design` for the seam.
