@@ -1,0 +1,18 @@
+/* THROWAWAY PROTOTYPE (ticket 15). Utilities for what settings loads after its first frame: the feature cards'
+   options, the other sections, the dialogs, the picker, the key recorder. No preflight (settings.css has it). */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "./sections";
+@source "./parts";
+@source "../components/*.svelte";
+@source "../components/picker";
+@source "../components/ui/checkbox";
+@source "../components/ui/popover";
+@source "../components/ui/slider";
+@source "../components/ui/input";
+@source "../components/ui/button";
+@source "../components/ui/switch";
+@source "../lib";
+@import "tw-animate-css";
+@import "../lib/theme.css";

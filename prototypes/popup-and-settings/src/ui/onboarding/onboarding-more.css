@@ -1,0 +1,17 @@
+/* THROWAWAY PROTOTYPE (ticket 15). Utilities for what onboarding loads later: step 3 (the account, the auto-add list,
+   the playlist choosers and the picker) and the simulated permission prompt. No preflight (onboarding.css has it). */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "./FinishStep.svelte";
+@source "../components/*.svelte";
+@source "../components/picker";
+@source "../components/ui/checkbox";
+@source "../components/ui/popover";
+@source "../components/ui/slider";
+@source "../components/ui/input";
+@source "../components/ui/button";
+@source "../components/ui/switch";
+@source "../backend/fake/FakePrompt.svelte";
+@import "tw-animate-css";
+@import "../lib/theme.css";

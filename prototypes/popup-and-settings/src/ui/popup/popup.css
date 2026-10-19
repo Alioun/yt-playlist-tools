@@ -1,0 +1,18 @@
+/* THROWAWAY PROTOTYPE (ticket 15). The popup's first-view stylesheet: Tailwind scans only what the first view draws,
+   so the 8 KB CSS budget holds (ticket 24). What unfolds later brings its own utilities in parts/parts.css, which
+   loads with it. Both sheets use Tailwind's cascade layers by name, so they stack like one. */
+@import "tailwindcss" source(none);
+@source "./*.svelte";
+@source "../components/PigeonMark.svelte";
+@source "../components/Avatar.svelte";
+@source "../components/KeyCombo.svelte";
+@source "../components/FeatureIcon.svelte";
+@source "../components/Lazy.svelte";
+@source "../components/ui/switch";
+@source "../components/ui/button";
+@import "../lib/theme.css";
+
+html,
+body {
+  width: 360px;
+}

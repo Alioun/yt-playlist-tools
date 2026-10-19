@@ -1,0 +1,14 @@
+/* THROWAWAY PROTOTYPE (ticket 15). The harness's stylesheet: its own chrome plus the real components the brand
+   sheet renders, on the product's theme (src/ui/lib/theme.css). */
+@import "tailwindcss" source(none);
+@source "./";
+@source "../ui/components/*.svelte";
+@source "../ui/components/ui/button";
+@source "../ui/components/ui/switch";
+@source "../ui/popup/Banner.svelte";
+@import "../ui/lib/theme.css";
+
+/* The harness chrome stays neutral whatever the product theme says. */
+body {
+  background: #ececee;
+}

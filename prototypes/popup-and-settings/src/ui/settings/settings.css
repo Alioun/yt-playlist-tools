@@ -1,0 +1,23 @@
+/* THROWAWAY PROTOTYPE (ticket 15). The settings page's first-load stylesheet: the shell, the YouTube section's cards
+   and the small shared pieces they use. Everything that loads later (the cards' options, the other sections, the
+   dialogs, the picker) brings its utilities in settings-more.css, which loads with it (ticket 24: 10 KB of CSS up
+   front, PROVISIONAL). The two sheets share Tailwind's cascade layers by name, so they stack like one. */
+@import "tailwindcss" source(none);
+@source "./Settings.svelte";
+@source "./route.svelte.ts";
+@source "./parts";
+@source "./sections/YouTubeSection.svelte";
+@source "../components/PigeonMark.svelte";
+@source "../components/Avatar.svelte";
+@source "../components/FeatureIcon.svelte";
+@source "../components/FootprintTag.svelte";
+@source "../components/Lazy.svelte";
+@source "../components/ui/switch";
+@source "../components/ui/button";
+@source "../backend/fake/FakePrompt.svelte";
+@import "tw-animate-css";
+@import "../lib/theme.css";
+
+html {
+  scroll-padding-top: 24px;
+}

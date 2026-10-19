@@ -1,0 +1,15 @@
+/* THROWAWAY PROTOTYPE (ticket 15). Utilities for what the popup loads on demand: unfolded rows, This video's details,
+   the picker, the key recorder, the account menu, the variants' shells. No preflight (popup.css has it). */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "./";
+@source "../variants";
+@source "../../components/*.svelte";
+@source "../../components/picker";
+@source "../../components/ui/button";
+@source "../../components/ui/switch";
+@source "../../components/ui/slider";
+@source "../../backend/fake/FakePrompt.svelte";
+@import "tw-animate-css";
+@import "../../lib/theme.css";

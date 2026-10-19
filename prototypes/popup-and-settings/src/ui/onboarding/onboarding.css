@@ -1,0 +1,35 @@
+/* THROWAWAY PROTOTYPE (ticket 15). The onboarding page's first stylesheet: what first run's steps 1–2 and the upgrade
+   note draw. Step 3 (pickers, choosers, the auto-add list) and the simulated permission prompt bring their utilities in
+   onboarding-more.css, which loads with them. Both sheets use Tailwind's cascade layers by name, so they stack. */
+@import "tailwindcss" source(none);
+@source "./Onboarding.svelte";
+@source "./FirstRun.svelte";
+@source "./StepIndicator.svelte";
+@source "./PickStep.svelte";
+@source "./ConsentStep.svelte";
+@source "./FeaturePick.svelte";
+@source "./UpgradeNote.svelte";
+@source "../components/PigeonMark.svelte";
+@source "../components/FeatureIcon.svelte";
+@source "../components/FootprintTag.svelte";
+@source "../components/Disclosure.svelte";
+@source "../components/KeyCombo.svelte";
+@source "../components/ui/switch";
+@source "../components/ui/button";
+@import "../lib/theme.css";
+
+/* The upgrade note's carried values: quiet dots, so the lines scan as a list. */
+.note-list > li {
+  position: relative;
+  padding-left: 1rem;
+}
+.note-list > li::before {
+  content: "";
+  position: absolute;
+  left: 0.1rem;
+  top: 0.62em;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 9999px;
+  background: color-mix(in oklch, var(--muted-foreground) 55%, transparent);
+}

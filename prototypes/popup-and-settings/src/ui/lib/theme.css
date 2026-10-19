@@ -1,0 +1,210 @@
+/* THROWAWAY PROTOTYPE (ticket 15). The extension's own design system: Playlist Pigeon (name PROVISIONAL, ticket 22).
+ *
+ * Brand (ticket 22's brief): a grey pigeon with a teal-to-violet neck. No YouTube red, no play triangle, and not
+ * YouTube's red/almost-black/white combination (ticket 03). Neutrals are tinted towards the pigeon's slate (hue 255),
+ * the action colour is the neck's violet, and teal marks "done / in this playlist / working".
+ *
+ * Where the gradient goes, and nowhere else:
+ *   - the pigeon mark's neck;
+ *   - a feature switch that's on (the most-seen control, so the brand lives in the first view);
+ *   - the hairline under the popup's and settings' header;
+ *   - first run's main call to action ("Agree and turn on N features").
+ * Everything else is solid: buttons and focus rings are violet, success is teal, warnings amber, danger crimson.
+ */
+
+@custom-variant dark (&:is(.dark *));
+
+/* The generated shadcn-svelte components style data-checked/-open/... but bits-ui 2.19 sets data-state and
+   data-orientation, so map the variants onto what bits-ui actually renders (stack bug carried over from ticket 09). */
+@custom-variant data-checked (&[data-state="checked"]);
+@custom-variant data-unchecked (&[data-state="unchecked"]);
+@custom-variant data-indeterminate (&[data-state="indeterminate"]);
+@custom-variant data-open (&[data-state="open"]);
+@custom-variant data-closed (&[data-state="closed"]);
+@custom-variant data-active (&[data-state="active"]);
+@custom-variant data-horizontal (&[data-orientation="horizontal"]);
+@custom-variant data-vertical (&[data-orientation="vertical"]);
+
+:root {
+  --radius: 0.625rem;
+
+  /* Brand, straight from ticket 22. */
+  --brand-teal: #14a39a;
+  --brand-violet: #7b5cd6;
+  --brand-slate: #5e6875;
+  --brand-gradient: linear-gradient(120deg, var(--brand-teal), var(--brand-violet));
+  --pigeon-body: #5e6875;
+  --pigeon-shade: #4a5360;
+  --pigeon-perch: #a3abb6;
+  --pigeon-wing: #eef1f5;
+
+  /* Surfaces: white and a whisper of slate. */
+  --background: oklch(0.985 0.003 255);
+  --foreground: oklch(0.24 0.018 262);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.24 0.018 262);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.24 0.018 262);
+  --muted: oklch(0.962 0.006 255);
+  --muted-foreground: oklch(0.5 0.016 258);
+  --accent: oklch(0.955 0.012 286);
+  --accent-foreground: oklch(0.3 0.06 286);
+  --secondary: oklch(0.955 0.007 255);
+  --secondary-foreground: oklch(0.28 0.018 262);
+  --border: oklch(0.915 0.008 255);
+  --input: oklch(0.875 0.012 255);
+
+  /* Action: the neck's violet, deepened to 6:1 on white. */
+  --primary: oklch(0.52 0.2 288);
+  --primary-foreground: oklch(0.99 0.005 288);
+  --ring: oklch(0.6 0.17 288);
+
+  /* Status. Teal = done / in this playlist / working. */
+  --success: oklch(0.5 0.09 182);
+  --success-soft: oklch(0.955 0.03 182);
+  --warning: oklch(0.47 0.1 65);
+  --warning-soft: oklch(0.972 0.04 85);
+  --warning-border: oklch(0.88 0.08 80);
+  --destructive: oklch(0.53 0.19 15);
+  --destructive-foreground: oklch(0.99 0 0);
+  --destructive-soft: oklch(0.965 0.02 15);
+  --info: oklch(0.47 0.09 250);
+  --info-soft: oklch(0.965 0.015 250);
+
+  --shadow-color: 255 20% 30%;
+}
+
+.dark {
+  --pigeon-body: #8b95a4;
+  --pigeon-shade: #6b7584;
+  --pigeon-perch: #555e6b;
+  --pigeon-wing: #e6eaf0;
+
+  --background: oklch(0.175 0.012 262);
+  --foreground: oklch(0.95 0.006 255);
+  --card: oklch(0.21 0.013 262);
+  --card-foreground: oklch(0.95 0.006 255);
+  --popover: oklch(0.23 0.014 262);
+  --popover-foreground: oklch(0.95 0.006 255);
+  --muted: oklch(0.255 0.013 262);
+  --muted-foreground: oklch(0.72 0.015 258);
+  --accent: oklch(0.29 0.04 286);
+  --accent-foreground: oklch(0.93 0.03 286);
+  --secondary: oklch(0.27 0.013 262);
+  --secondary-foreground: oklch(0.95 0.006 255);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 15%);
+
+  --primary: oklch(0.74 0.14 290);
+  --primary-foreground: oklch(0.2 0.03 290);
+  --ring: oklch(0.7 0.14 290);
+
+  --success: oklch(0.78 0.11 182);
+  --success-soft: oklch(0.3 0.04 182);
+  --warning: oklch(0.85 0.12 80);
+  --warning-soft: oklch(0.255 0.028 75);
+  --warning-border: oklch(0.4 0.06 75);
+  --destructive: oklch(0.72 0.16 15);
+  --destructive-foreground: oklch(0.2 0.04 15);
+  --destructive-soft: oklch(0.3 0.06 15);
+  --info: oklch(0.8 0.08 250);
+  --info-soft: oklch(0.28 0.03 250);
+
+  --shadow-color: 262 40% 3%;
+}
+
+@theme inline {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", "Ubuntu Sans", Ubuntu, Cantarell,
+    "Noto Sans", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Ubuntu Sans Mono", "DejaVu Sans Mono", monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-border: var(--warning-border);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-brand-teal: var(--brand-teal);
+  --color-brand-violet: var(--brand-violet);
+  --color-brand-slate: var(--brand-slate);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+@utility bg-brand-gradient {
+  background-image: var(--brand-gradient);
+}
+@utility text-brand-gradient {
+  background-image: var(--brand-gradient);
+  background-clip: text;
+  color: transparent;
+}
+@utility shadow-soft {
+  box-shadow:
+    0 1px 2px hsl(var(--shadow-color) / 0.06),
+    0 2px 6px hsl(var(--shadow-color) / 0.06);
+}
+@utility shadow-float {
+  box-shadow:
+    0 1px 2px hsl(var(--shadow-color) / 0.08),
+    0 8px 24px -4px hsl(var(--shadow-color) / 0.18),
+    0 24px 48px -12px hsl(var(--shadow-color) / 0.22);
+}
+@utility brand-hairline {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: -1px;
+    height: 2px;
+    background-image: var(--brand-gradient);
+    opacity: 0.85;
+  }
+}
