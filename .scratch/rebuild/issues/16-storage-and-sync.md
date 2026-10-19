@@ -27,3 +27,9 @@ Also include:
 - whether YouTube Music settings belong to the account or the device ([ticket 11](11-accounts.md)).
 
 Also from [ticket 01](01-youtube-requests.md): `DATASYNC_ID` keys per-account data. The playlist picker needs a cache of playlists with thumbnails and counts.
+
+Also from [ticket 11](11-accounts.md) and [ADR-0003](../../../docs/adr/0003-account-setups-keyed-by-datasync-id.md):
+- **Groups:** two storage groups, account setups keyed by `DATASYNC_ID` and shared settings. Account labels are stored with their setup.
+- **Local only:** the unclaimed setup and the last current account.
+- **Private windows:** writes are refused in one place.
+- **Removal:** removing one setup is separate from "clear all data".

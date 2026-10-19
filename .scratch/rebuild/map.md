@@ -59,11 +59,12 @@ A spec at `.scratch/rebuild/spec.md` for 2.0 of this extension: a ground-up rebu
 - [Where can the extension send those requests from, and with which permissions?](issues/02-request-context.md): from the YouTube tab's MAIN world (a manifest `world: "MAIN"` script; Firefox 128+), with popup and settings requests routed through a live YouTube tab. YouTube rejects extension origins with 403, so with no tab open only cached data is available unless a hidden frame works ([ticket 25](issues/25-live-checks.md)). Permissions: `storage` + youtube.com, with no install or upgrade prompt beyond that. Detail on branch `research/request-context`.
 - [Which UI stack?](issues/13-ui-stack.md): Svelte 5 with shadcn-svelte on Bits UI (the user's call), one stack with a YouTube skin for in-page UI. See [ADR-0002](../../docs/adr/0002-svelte-and-bits-ui.md).
 - [Which YouTube Music internals can do each music action?](issues/21-youtube-music-internals.md): every action works from a page script in a YouTube Music tab. Play next and Add to queue must repeat the menu handler (`get_queue`, then write the app's queue state). Likes must go through the page because of a bot check. Membership comes from youtube.com. Every Alt combination is free. Don't depend on the player bar, which a running A/B test removes. Detail on branch `research/youtube-music`.
+- [How do per-account setups work?](issues/11-accounts.md): an account is what `ytcfg.DATASYNC_ID` identifies (a Google or brand account). An account setup holds only the choices that name its playlists; everything else is shared. 2.0 never switches accounts. A 1.4.5 setup stays unclaimed until an account owning its playlists claims it after consent. Private windows never write setups. See [ADR-0003](../../docs/adr/0003-account-setups-keyed-by-datasync-id.md).
 
 ## Not yet specified
 
 - Visual detail past what the prototypes settle: motion, iconography, empty-state and error copy.
-- Edge cases the access research will expose: private, deleted, age-restricted or members-only videos; playlist size limits; brand accounts and channel switching.
+- Edge cases the access research will expose: private, deleted, age-restricted or members-only videos; playlist size limits; supervised accounts that can't edit playlists.
 - Accessibility beyond the component library's defaults.
 
 ## Out of scope

@@ -30,3 +30,8 @@ Also from [ticket 06](06-upgrade-path.md):
 - **Minimum Firefox:** 128, 140 or 153?
 - **Upgrade testing:** test it before release with a self-hosted `update_url`.
 - **CI:** move `release.yml` to Chrome Web Store API v2 and pass AMO notes through `FIREFOX_AMO_METADATA_FILE`.
+
+Also from [ticket 11](11-accounts.md):
+- 1.4.5 playlists become an unclaimed setup, claimed only after consent by the first account that owns them.
+- The upgrade note gains "Sign in to YouTube and your 1.x playlists will be picked up."
+- The store disclosures mention that account name, handle and avatar URL are stored locally, and synced if sync is on.

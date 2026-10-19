@@ -10,6 +10,20 @@ A browser extension that files the YouTube videos you watch into your own playli
 A part of the extension the user can switch on or off by itself, such as auto-add or YouTube Music's quick actions. A feature that's off leaves no trace on YouTube's pages.
 _Avoid_: Module, plugin, tool
 
+### Accounts
+
+**Account**:
+The YouTube identity a page is signed in as: a Google account, or a brand account it has switched to. Each account has its own playlists, Watch Later and account setup; a signed-out page has none.
+_Avoid_: Channel (a video's channel), profile, user, identity, Google account (when a brand account may be meant)
+
+**Account setup**:
+The settings that belong to one account: every choice that names one of its playlists, such as its auto-add playlists, their channel filters and the playlist each shortcut adds to. All other settings are shared by every account.
+_Avoid_: Profile, per-account settings, account config
+
+**Unclaimed setup**:
+An account setup that doesn't know its account yet, such as the one carried over from 1.x. It's never used until an account that owns its playlists claims it.
+_Avoid_: Legacy setup, orphaned setup
+
 ### Adding videos
 
 **Auto-add**:

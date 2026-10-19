@@ -30,3 +30,9 @@ Also include:
 Also from [ticket 21](21-youtube-music-internals.md): a side panel won't open in Chrome's installed-app windows, so YouTube Music app users need everything reachable from the popup.
 
 Also from [ticket 01](01-youtube-requests.md): a picker with thumbnails and counts needs two requests (`get_add_to_playlist` plus `FEplaylist_aggregation`) and a cache.
+
+Also from [ticket 11](11-accounts.md):
+- **Account header:** avatar, name and @handle, with a placeholder while loading (never a signed-out flash).
+- **Viewing another account's setup:** a picker only when two or more setups exist, only in normal windows, and never worded as "switch".
+- **Settings:** an Accounts list with Remove.
+- **States:** signed out, private-window read-only, the unclaimed 1.4.5 setup (Switch account / Discard) and the claim notice. The copy is in ticket 11's answer.
