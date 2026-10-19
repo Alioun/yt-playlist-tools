@@ -280,3 +280,5 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
 - **The picker over budget (54.5 KB):** link `popovers.js` to the kit's runtime, or replace Bits UI there with the Popover API? For ticket 17 or 24.
 - **Signed-in live checks for ticket 25:** the Wiz action bar signed in, the like's repaint after our Like, a YouTube Music toast with an action (its colour), and the header row at widths where YouTube Music stacks its header above the list.
 - **Installed app window:** still unchecked (headless can't install it).
+
+Also from [ticket 15](15-popup-and-settings.md): the popup's Playing now row reuses the split Save button's states and copy. Settings carries the narrow-row warning and the player-bar line.

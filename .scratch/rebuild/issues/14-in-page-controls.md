@@ -478,3 +478,8 @@ Also from [ticket 27](27-youtube-music-controls.md), which hit the same problems
 - re-measuring the toast's position and stacking it above the site's own promos;
 - Escape inside popovers;
 - a 5 s loader timeout.
+
+Also from [ticket 15](15-popup-and-settings.md):
+- The in-page picker uses the same `PickerModel`.
+- Settings answers the deep links `#feature-watchButton`, `#diagnostics` and `#feature-<id>`.
+- The popup shows auto-add progress as a linear meter with goal ticks; the in-page pie stays.

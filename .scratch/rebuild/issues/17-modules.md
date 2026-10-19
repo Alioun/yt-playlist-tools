@@ -897,3 +897,8 @@ Also from [ticket 27](27-youtube-music-controls.md):
 - **Hosts** must stop clicks and pointer events from reaching the page, not just keys.
 - **`popovers.js`** needs `strategy: "fixed"` and Bits UI's available-height variable.
 - **Proven live:** the gateway jobs that worked on real YouTube Music are listed in its Answer.
+
+Also from [ticket 15](15-popup-and-settings.md):
+- The prototype's `ui/` mirrors the module map; take its Change kinds and the `PickerSource` interface.
+- **Build rules:** per-page builds (or a popup-only build), first-view chunk grouping, no top-level await in entries (it blanked pages), and first-view icons as inline paths.
+- **Component rules:** a component's base never sets a property its variants set, because there's no tailwind-merge; callers add only margins and layout. Switches and checkboxes are controlled wherever a change can be refused. Popovers use `preventScroll`. Two stylesheets per page.

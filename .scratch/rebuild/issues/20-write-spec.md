@@ -48,3 +48,5 @@ Also from ticket 15's prototype: switches and checkboxes must be controlled wher
 Also from [ticket 14](14-in-page-controls.md): use its Answer's decisions, its card-selector table and the measured sizes. Its prototype's real-YouTube screenshots are on branch `prototype/in-page-controls`.
 
 Also from [ticket 27](27-youtube-music-controls.md): carry its placement and anchor table, the measured tokens (root 10 px, 36 px row buttons, 32 px card circles, 40 px header circles, the `#f1f1f1` toast 12 px above the player bar), the narrow-row table, the copy additions and the runner-ups. Prototype with real-site screenshots on `prototype/youtube-music-controls`.
+
+Also from [ticket 15](15-popup-and-settings.md): its Answer's Layout, Components, States, Copy, Brand tokens, Sizes and Rules sections are written to serve as the spec's UI chapter.

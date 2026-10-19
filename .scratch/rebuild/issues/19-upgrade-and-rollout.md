@@ -1161,3 +1161,5 @@ All read on 2026-10-19. Research agents read the primary sources listed here.
   - whether 1.4.5 users' own OAuth clients were in Testing (7-day refresh tokens);
   - the `extensions.update.url` override shortcut;
   - the Chrome Web Store fee amount (the docs' screenshot says US$5).
+
+Also from [ticket 15](15-popup-and-settings.md): prototype screenshots 01, 03, 60, 80 and 85 (branch `prototype/popup-and-settings`) can become the 1280×800 store screenshots.
