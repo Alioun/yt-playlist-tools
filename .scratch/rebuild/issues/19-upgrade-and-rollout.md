@@ -35,3 +35,9 @@ Also from [ticket 11](11-accounts.md):
 - 1.4.5 playlists become an unclaimed setup, claimed only after consent by the first account that owns them.
 - The upgrade note gains "Sign in to YouTube and your 1.x playlists will be picked up."
 - The store disclosures mention that account name, handle and avatar URL are stored locally, and synced if sync is on.
+
+Also from [ticket 22](22-name.md):
+- Both stores take the new name; the AMO slug and gecko ID stay.
+- The AMO description says "(formerly YouTube Playlist Tools)", and the upgrade note mentions the rename.
+- Add the attribution line: "YouTube and YouTube Music are trademarks of Google LLC. Use of these trademarks is subject to Google Permissions." plus "Not affiliated with or endorsed by YouTube or Google."
+- Store screenshots use the user's own or Creative Commons videos.

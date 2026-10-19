@@ -36,3 +36,8 @@ Also from [ticket 11](11-accounts.md):
 - **Viewing another account's setup:** a picker only when two or more setups exist, only in normal windows, and never worded as "switch".
 - **Settings:** an Accounts list with Remove.
 - **States:** signed out, private-window read-only, the unclaimed 1.4.5 setup (Switch account / Discard) and the claim notice. The copy is in ticket 11's answer.
+
+Also from [ticket 22](22-name.md) (name PROVISIONAL: "Playlist Pigeon for YouTube™"):
+- Replace 1.5.0's YouTube play-button logo (`src/components/YouTubeIcon.tsx`) and its YouTube-red primary colour.
+- The extension's own brand is a grey pigeon with a teal-to-violet accent: no red and no play triangle.
+- Show the attribution line where the extension names YouTube.
