@@ -1,0 +1,1375 @@
+# 6. Architecture
+
+This chapter says how 2.0 reaches YouTube and YouTube Music, what ships in each browser's manifest, and how the code is cut into modules, bundles and messages. It's assembled from tickets 01, 02, 10, 11, 16, 17, 21, 25, 28 and 29, the amendments that tickets 12, 14, 26 and 27 made to them, and ADR-0001, 0003, 0004, 0006, 0007, 0008 and 0010.
+
+- **Testing, CI, size budgets and tooling** are in [07-quality.md](07-quality.md).
+- **Release workflows, the manifest's copy and the permission prompts** are in [08-release.md](08-release.md).
+- **Storage schema, migrations, sync and the private-write table** are in [04-features-accounts-data.md](04-features-accounts-data.md). This chapter gives only the store module's interface.
+
+**How to read it:**
+- **Requirement IDs.** Each ID is a testable statement:
+  - `ARC-ACC-`: YouTube access;
+  - `ARC-MAN-`: manifest, permissions, version floors and script registration;
+  - `ARC-MOD-`: modules, bundles, store interface and folder layout;
+  - `ARC-MSG-`: messaging;
+  - `ARC-REG-`: the feature registry.
+- **PROVISIONAL (X):** the rule holds until live check X has run signed in. [§6.2.15](#6215-live-checks-that-settle-the-provisional-rows) says what each result changes. A result edits the route table, which is data; the design stays the same.
+- **Sites:** `www` is www.youtube.com and `music` is music.youtube.com. `Site = "www" | "music"`.
+- **Signatures** are TypeScript and normative in shape. Payload field names that only one module reads may be refined when that module is built, as long as the shape holds.
+- **Precedence:** where the tickets disagree, the later amendment or finding wins. What was resolved that way is listed in [§6.11](#611-resolved-by-precedence), and what's still open in [§6.12](#612-conflicts-found).
+- **Resolutions:** decisions made while the spec was assembled are cited by R-number, from [resolutions.md](resolutions.md). A requirement that a resolution changed keeps its ID and ends with "(R-n)".
+- **Names:** "the first-run page" is the extension page in `onboarding.html` that holds first run and the upgrade note (R37). Folder and file names keep `onboarding`.
+
+## 6.1 Overview
+
+```
+ popup ─────┐  ui.* messages                ┌──────────── background (Chrome service worker / Firefox event page) ───────────┐
+ settings ──┼──────────────────────────────▶│ Router ─┬─ Store ───────────── StorageAreas {local, session, sync}            │
+ first-run  ┘  storage.local: read-only,    │         ├─ Registrar ───────── ScriptingPort · AccessPort · feature registry   │
+               direct, for the first paint  │         ├─ Tabs ────────────── TabsPort   (tab registry, serving tab, account) │
+                                            │         ├─ AddFlow ─────────── exec(job) through Tabs                          │
+                                            │         ├─ Monitor · Badge ─── action                                          │
+                                            │         └─ Playlists · Accounts · Diagnostics                                  │
+                                            └──────────────────────────────────▲───┬───────────────────────────────────────────┘
+                                                      tab.* (runtime.sendMessage) │   │ bg.* (tabs.sendMessage, frame 0)
+ ┌─ a youtube.com tab ────────────────────────────────────────────────────────────┴───▼───────────────────────────────────────┐
+ │ ISOLATED world, registration pp-www, injected in this order:                                                              │
+ │   core-www.js      SiteCore: ExtLink · PageLink · TabView · FeatureHost · Scope · Items · Pointer · Keys                   │
+ │   kit-www.js       Kit: Svelte runtime (linked exports) · shadow hosts · Toaster · Overlay · components · YouTube skin     │
+ │   feature-*.js     one file per feature that is on: definePageFeature({ id, site, start(ctx) })                           │
+ │   popovers.js      lazy, by scripting.executeScript: playlist picker + watch-page menu (own Svelte + Bits UI)             │
+ │        ▲▼ PageChannel: CustomEvents with JSON-string detail; item jobs are dispatched on the item's element               │
+ │ MAIN world, registration pp-www-page:                                                                                     │
+ │   page-www.js      Gateway: route table · lanes · account guard · parsers · effect checks ── PagePort (live) ── YouTube    │
+ └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ A YouTube Music tab has the same shape: page-music.js, core-music.js, kit-music.js and its features.
+```
+
+**Runtime contexts:**
+
+| Context | What runs there | Talks to YouTube? |
+|---|---|---|
+| **Background** (Chrome service worker, Firefox event page) | Store, Registrar, Tabs, AddFlow, Monitor and Badge, Playlists, Accounts, Diagnostics, Router | Never directly. Only through jobs sent to a tab. |
+| **Page (MAIN) world** of a YouTube or YouTube Music tab | The gateway, and nothing else | Yes: it's the only sender |
+| **Isolated world** of that tab | Site core, kit, features, popovers | Only through gateway jobs and streams |
+| **Popup** | The toolbar popup (`ui/popup`) | Only through the background |
+| **Extension pages** | Settings (`options_ui`) and the first-run page (`onboarding.html`: first run and the upgrade note) | Only through the background |
+
+Two more targets exist only at build time: the live-check build ([§6.4.6](#646-live-check-build-and-tools)) and the CI watch tools ([07 §7.5](07-quality.md#75-breakage-detection)).
+
+**Rules that shape everything below:**
+- Every request to YouTube goes from an open YouTube tab's page world, as that tab's account (ADR-0001).
+- Only the gateway runs in the page world (ADR-0007).
+- Page code is WXT unlisted scripts, registered at runtime as two registrations per site, with one shared Svelte runtime (ADR-0008).
+- Everything that spans tabs or writes storage runs in the background. Tabs only run jobs and draw.
+- Messages are one-shot. There are no long-lived ports.
+
+## 6.2 YouTube access
+
+### 6.2.1 Where jobs run
+
+- **ARC-ACC-01.** Every request to YouTube or YouTube Music is sent by the gateway, from the page (MAIN) world of an open, top-frame www or music tab. Nothing sends from the background, the popup, settings, the first-run page, an offscreen document or a frame. YouTube answers an extension origin with HTTP 403 (ticket 02).
+- **ARC-ACC-02.** A youtube.com job runs in a www tab. A YouTube Music job runs in a music tab, the installed YouTube Music app's window included (PROVISIONAL, M4). YouTube Music's membership fallback is the one exception: it runs in a www tab.
+- **ARC-ACC-03.** A job started inside a tab runs in that tab, as that tab's account. That covers in-page features, keys caught in the page and quick actions.
+- **ARC-ACC-04.** A job started from the popup, settings or the first-run page runs in a **serving tab** ([§6.2.11](#6211-serving-tab-routing)).
+  - Writes travel popup → background → serving tab, and the result reaches the cache through the background.
+  - If the popup closes mid-write, only the answer is lost, never the write.
+- **ARC-ACC-05.** A job carries only what that job needs: a video ID, playlist IDs, a title, a channel input. Settings, channel filters and other accounts' data never enter the page, and nothing secret is sent into it.
+- **ARC-ACC-06.** The gateway reads `ytcfg` values when the job runs and never caches them across page loads: the client name and version, visitor data, `SESSION_INDEX`, `DELEGATED_SESSION_ID`, `USER_SESSION_ID` and the experiment flags.
+  - **Exception:** the tab's account (`LOGGED_IN` and `DATASYNC_ID`) is read once, at page load, and kept until the page reloads, just as YouTube's own page keeps it (ticket 11). The account guard compares against that value.
+  - A stale client version (HTTP 400) can't happen, because nothing is ever sent outside a live page.
+- **ARC-ACC-07.** No remote config, selectors or endpoint maps are ever fetched. Every route, parser, shape and fallback ships in the package (ADR-0005).
+- **ARC-ACC-08.** 2.0 never clicks or otherwise drives YouTube's visible UI to do work. One exception: the right-click card menu opens YouTube's own ⋮ menu, because that is the feature.
+- **ARC-ACC-09.** Until **consent** is given, no job runs and no extension script reaches a YouTube page. That includes the on-demand core (ADR-0010). `Tabs.serve` and `Registrar.ensure` refuse before consent.
+
+### 6.2.2 Routes
+
+A **route** is one way the gateway gets a job done.
+
+| Route | What it is | Who builds and signs the request |
+|---|---|---|
+| **YouTube command** | Hand a command object to YouTube's global command resolver, found by shape ([§6.2.3](#623-the-command-resolver-found-by-shape)). The answer comes back through the `commandController`'s `onSuccess` / `onServerError`. | YouTube's code |
+| **YouTube service request** | Fire YouTube's `yt-service-request` action with the endpoint, from a short-lived, invisible element under `ytd-app`. Read the answer from `yt-service-request-completed`, then remove the element. | YouTube's code |
+| **YouTube Music handler** | `ytmusic-app`'s own machinery: `networkManager.fetch`, `handleServiceEndpoint`, `handleNavigationEndpoint`, `app.queue`, the ⋮ menu item's queue behaviour, and the queue panel's reorder drop. | YouTube Music's code |
+| **Signed request** | The gateway's own same-origin `fetch` to `/youtubei/v1/<path>`, built and signed the way YouTube builds it ([§6.2.4](#624-auth-signing-and-the-cookie-rule)). www only. | The extension, in the page |
+| **Plain request** | The same `fetch` with no `Authorization`, for public data | The extension, in the page |
+| **Page read** | Read what the page already holds: `ytcfg`, the player response, YouTube's navigation events, the `<video>` element, `navigator.mediaSession`, renderer `data`, YouTube Music's state store. No request. | — |
+| **YouTube's own UI** | The card menu opens YouTube's ⋮ menu (exempt, ARC-ACC-08) | — |
+
+- **ARC-ACC-10.** A route qualifies for a job only if all three hold:
+  1. it hands the full answer back to the gateway;
+  2. it's quiet: YouTube shows nothing because of it, on success or on failure;
+  3. it needs no click on YouTube's visible UI.
+
+  Two visible changes are allowed, because each is the result the user asked for: the queue appearing or growing after Add to queue or Play next, and a like button's state changing after a like.
+- **ARC-ACC-11.** Among the routes that qualify, YouTube's own come first (YouTube command, service request, YouTube Music handler), then the signed request.
+- **ARC-ACC-12.** Each site's route table is one data constant, with one row per job listing its routes in order: `src/page/routes/www.ts` and `src/page/routes/music.ts`. Live-check results change only these constants.
+- **Rejected routes:**
+  - **Copying headers off YouTube's own requests** by wrapping `window.fetch`. It patches every YouTube page at `document_start` whether or not a feature needs it, it handles the same credential anyway, and it only works if YouTube has just made a signed-in request.
+  - **Background requests with the `cookies` permission and a rewritten Origin.** Ticket 03 rules this out. It also sees only the default cookie store, so it's blind to containers and private windows.
+  - **A hidden youtube.com frame** when no tab is open. See [§6.2.12](#6212-no-tab-not-signed-in-no-site-access).
+  - **The YouTube Data API.** See [§6.2.14](#6214-no-data-api).
+
+### 6.2.3 The command resolver, found by shape
+
+The signed-out live check (ticket 25, 2026-10-19) found that YouTube's resolver has moved:
+- no element on youtube.com has `resolveCommand` any more, so 1.5.0's `element.resolveCommand` lookup does nothing on today's YouTube;
+- `ytd-app.handleCommandWithCommandHandler` passes no `commandController`;
+- the working resolver is the global `default_kevlar_base.<key>.instance.resolveCommand`. Its key is minified (it was `O5`) and changes between builds. It calls `onSuccess` with the answer.
+
+Requirements:
+- **ARC-ACC-13.** The live www adapter finds the resolver by shape: an own property of `window.default_kevlar_base` whose `instance.resolveCommand` is a function. It never uses a fixed key, and never looks for `resolveCommand` on elements.
+  - If several properties match, the first in property order is used, and a `resolver-ambiguous` breakage signal is recorded ([Q-WATCH-24](07-quality.md#757-runtime-breakage-signals)). (R34)
+- **ARC-ACC-14.** The page half starts at `document_start`, before YouTube's app exists. So the adapter looks the resolver up at first use, caches it for the life of the page, and looks again once if the cached one has gone. (R34)
+  - If no property matches, the YouTube command route is unavailable for every job in that tab ([§6.2.9](#629-runtime-rules)).
+  - A breakage signal is raised, and each job moves to its next route.
+- **ARC-ACC-15.** A command is resolved as `resolveCommand(command, { commandController })`, where the controller carries `onSuccess(answer)` and `onServerError(error)`. L1 confirms that the options are forwarded.
+  - Every command has a timeout. An HTTP 400 or 409 may reach neither callback: depending on a YouTube flag, it either resolves to nothing or reaches `onSuccess` with an `error` body (ticket 29's research).
+  - Where an effect matters, such as a queue entry, it is confirmed from page state, never from the callbacks alone.
+- **ARC-ACC-16.** The resolver's shape check is on the breakage watch list ([Q-WATCH-8](07-quality.md#752-the-watch-list)).
+- **Where it's used:** `add` and `remove` (PROVISIONAL, L1), `queueAdd` and `queueUndo` (including `refreshPlaylistCommand`), and the card's `addToPlaylistCommand`.
+- **Where the command comes from:** for item jobs, the gateway reads the command from the targeted card's own data. The card element is the job's target; it is never what resolves the command.
+
+### 6.2.4 Auth signing and the cookie rule
+
+**The signed request** (www only) copies YouTube's own InnerTube transport (ticket 01, §1 of its research):
+- `POST https://www.youtube.com/youtubei/v1/<path>?prettyPrint=false` with `credentials: "same-origin"`. No API key.
+- **Headers:**
+  - `Content-Type: application/json`;
+  - `X-Goog-Visitor-Id` (`VISITOR_DATA`);
+  - `X-Youtube-Bootstrap-Logged-In` (`LOGGED_IN`);
+  - `X-Youtube-Client-Name` and `X-Youtube-Client-Version` (`INNERTUBE_CONTEXT_CLIENT_NAME` and `…_VERSION`), always the page's own values, never hard-coded;
+  - `X-Goog-AuthUser` (`SESSION_INDEX`);
+  - `X-Origin` (`location.origin`);
+  - `X-Goog-PageId` (`DELEGATED_SESSION_ID`), only when `ytcfg.EXPERIMENT_FLAGS.pageid_as_header_web` is on. Otherwise the context carries it as `context.user.onBehalfOfUser`, as YouTube's context builder does.
+- **Body:** `context.client {hl, gl, clientName, clientVersion, configInfo, userAgent, …}`, `context.request.internalExperimentFlags`, and `context.user`, built the way YouTube's context builder builds them, plus the job's own fields.
+- **`Authorization`:** up to three space-separated parts, computed the way YouTube computes them. Ticket 25 confirmed the construction matches yt-dlp's:
+  - `SAPISIDHASH <ts>_<sha1>[_u]` from `SAPISID`, falling back to `__Secure-3PAPISID`;
+  - `SAPISID1PHASH …` from `__Secure-1PAPISID`;
+  - `SAPISID3PHASH …` from `__Secure-3PAPISID`;
+  - each hash is `sha1("<USER_SESSION_ID> <ts> <cookie> <origin>")`, written `<ts>_<hex>_u`. When `USER_SESSION_ID` is absent, it's left out of the hash and the `_u` is dropped.
+
+**The cookie rule:**
+- **ARC-ACC-17.** The gateway reads `SAPISID`, `__Secure-1PAPISID` and `__Secure-3PAPISID` from `document.cookie`, through `PagePort.cookie`, only:
+  - in a www.youtube.com tab's page world, where YouTube's own code reads the same values;
+  - to sign a request for a job that no YouTube-built route qualifies for, or as a job's runtime fallback.
+- **ARC-ACC-18.** A cookie value is used only to compute the `Authorization` header of that one same-origin request. It's never stored, logged, put into a breakage signal or diagnostics, passed to the isolated world, or sent anywhere else.
+- **ARC-ACC-19.** The extension never:
+  - requests the `cookies` permission;
+  - reads cookies outside a YouTube page;
+  - rewrites `Origin` or `Referer`;
+  - strips security headers.
+- **ARC-ACC-20.** If live check L3 shows that YouTube accepts same-origin requests carrying cookies alone, the signed request drops `Authorization`, and nothing reads cookies at all.
+
+**Disclosure.** Whether the signed request ships is decided at release, from the route table.
+- **If it ships** (expected, because create's YouTube command drops the new ID and the account-menu and Save-dialog reads open popups as commands), the release keeps the four **cookie lines** of [08 §0](08-release.md#0-provisional-inputs): the first-run disclosure's cookie bullet ([REL-CON-12](08-release.md#41-the-disclosure)), the privacy policy's cookie bullet, Chrome's "Authentication information" tick ([REL-STORE-20](08-release.md#11-chrome-web-store-dashboard-answers)), and the signed route in the AMO reviewer notes ([REL-STORE-21](08-release.md#121-reviewer-notes-approval_notes)).
+- **If L2 and L3 leave no job on the signed request**, all four are left out together.
+
+The copy is in [08-release.md](08-release.md). What happens to the cookie lines when L3 passes but the signed request still ships is open ([§6.12](#612-conflicts-found)).
+
+### 6.2.5 Job catalogue
+
+Jobs cover reads and writes alike. Each job runs through its site's route table ([§6.2.6](#626-route-table-youtubecom), [§6.2.7](#627-route-table-youtube-music)). The **lane** says how the gateway serialises it ([§6.2.9](#629-runtime-rules)).
+
+| Job | Sites | Input | Result data | Lane | Needs signed in |
+|---|---|---|---|---|---|
+| `account` | www, music | — | `{ signedIn, datasyncId \| null }` (the raw ID; the core turns it into a key before anything leaves the tab) | none | no |
+| `accountLabel` | www, music | — | `{ name, handle?, avatar? }` | playlist | yes |
+| `membership` | www, music | `{ videoId }` | each playlist the account can add to: `{ id, title, privacy?, contains }`, in the site's Save-dialog order | playlist | yes |
+| `playlists` | www | — | each playlist: `{ id, title, privacy?, count?, thumb? }` | playlist | yes |
+| `add` | www | `{ playlistId, videoId }` | `{ setVideoId }` | playlist | yes |
+| `remove` | www | `{ playlistId, setVideoId }` | — | playlist | yes |
+| `save`, `unsave` | music | as `add`, `remove` | as `add`, `remove` | playlist | yes |
+| `create` | www, music | `{ title, privacy }` | `{ playlistId }` | playlist | yes |
+| `channelOf` | www | `{ videoId }` | `{ channelId \| null, title?, handle? }` | none, or playlist when it falls back to a request | no |
+| `resolveChannel` | www | `{ input }` (a typed handle, URL or ID) | `{ channelId, title, handle? }` | playlist | no |
+| `videoInfo` | www | target, or the current video | `{ videoId, title, length, kind: "video" \| "short" }` | none | no |
+| `queueAdd` | www | target card | `{ confirmed, quiet, undo?: { listId, setVideoId } }` | app-state | no |
+| `queueUndo` | www | `{ listId, setVideoId }` | — | app-state | no |
+| `openCardMenu` | www | target card | — | none | no |
+| `itemInfo` | music | target element | the item's menu endpoints, kind, like state, queue item ID, `selected`, header song count | none | no |
+| `queueInsert` | music | `{ endpoint, position: "next" \| "end" }` | `{ ids }`: the new queue item IDs | app-state | no |
+| `queueRemove` | music | `{ id }` | `{ index }` | app-state | no |
+| `queueRemoveIds` | music | `{ ids }` | `{ removed }` | app-state | no |
+| `queueMove` | music | `{ id, to: "next" \| "end" \| number }` | `{ from }` | app-state | no |
+| `queueReinsert` | music | `{ videoId, index }` | `{ id }` | app-state | no |
+| `like` | music | `{ endpoint }` (like or remove-like) | — | app-state | yes |
+| `nowPlaying` | music | — | `{ videoId, title, artist, album?, pos, len }`, or `null` when nothing is playing (R8) | none | no |
+| `castState` | music | — | `{ casting }` | none | no |
+
+**Streams** are continuous page reads, pushed to the isolated world while watched:
+
+| Stream | Sites | What it carries |
+|---|---|---|
+| `player` | www | Ticket 07's readings on each `timeupdate` of `#movie_player` or `#shorts-player`: `{ at, videoId, pos, len, rate, playing, seeking, ad, player: "watch" \| "shorts", live flags }` |
+| `nav` | www, music | Page type and current video, from YouTube's own navigation and player events |
+| `nowPlaying` | music | As the job, on each change |
+| `queue` | music | The queue's item IDs, in order, on each change |
+
+### 6.2.6 Route table: youtube.com
+
+The sending context is either **the tab** (where the action happened) or **a serving tab**. It's always the page world.
+
+| Job | Primary route | Fallbacks, in order | Sending context | Decided by |
+|---|---|---|---|---|
+| `account` | **Page read:** `ytcfg` `LOGGED_IN` and `DATASYNC_ID`, at page load. Every answer's `responseContext.mainAppWebResponseContext.datasyncId` is then checked against it ([§6.2.10](#6210-the-account-check)). | — | The tab, or a serving tab. From the popup, an on-demand probe. | Settled; stability L7 |
+| `accountLabel` | **PROVISIONAL (L2):** service request `account/account_menu` | Signed request `account/account_menu`. If neither works, the label is "Unnamed account". | Any tab of that account | L2 |
+| `membership` | **PROVISIONAL (L2, L5):** service request `playlist/get_add_to_playlist {videoIds: [id], excludeWatchLater: false}`. Both answer shapes are parsed: the old renderer and the view model. | Signed request, same path | The tab, or a serving tab for the popup and settings | L2, L5 |
+| `playlists` | **PROVISIONAL (L2, L5):** service request `browse {browseId: "FEplaylist_aggregation"}`. Watch Later (`WL`) is added as a fixed entry if it isn't listed. | Signed request. If the lockups carry no privacy, the privacy shown comes from the last membership read. | A serving tab | L2, L5 |
+| `add` (auto-add, shortcuts, quick-save, picker; Watch Later and Shorts included) | **PROVISIONAL (L1):** YouTube command `playlistEditEndpoint {playlistId, actions: [{action: "ACTION_ADD_VIDEO", addedVideoId}]}`. Success is read from `status`, never from the HTTP code. | Service request, if L2 passes for `playlistEditEndpoint`; then signed request `browse/edit_playlist` | The tab; a serving tab for adds from the popup's picker | L1, L2, L6 |
+| `remove` (undo, picker untick) | As `add`, with `ACTION_REMOVE_VIDEO` and the `setVideoId` the add returned | As `add` | The tab where the add ran, or the serving tab | L1, L6 |
+| `create` | **PROVISIONAL (L2):** service request `createPlaylistServiceEndpoint`. The YouTube command is excluded, because it drops the new ID. | Signed request `playlist/create`. With no tab: "Open YouTube to create playlists". | The tab, or a serving tab | L2 |
+| `queueAdd` | YouTube command; see [§6.2.8](#6284-youtubes-queue-quiet-add-confirmation-and-undo). Works signed out. | None: nothing else reaches the queue. YouTube's ⋮ menu stays available. | The tab | L8, T29.Q1, T29.Q6–Q8 |
+| `queueUndo` | YouTube command: the quiet removal ([§6.2.8](#6284-youtubes-queue-quiet-add-confirmation-and-undo)) | None: "Couldn't undo" | The tab | T29.Q2, T29.Q5–Q7 |
+| `channelOf` (channel filters) | **Page read:** the `yt-navigate-finish` detail, else `#movie_player.getPlayerResponse()`. On Shorts, the navigation event's reel data. | Watch pages: plain request `next`. Shorts: plain request `reel/reel_item_watch`. | The tab | L9 |
+| `resolveChannel` (typed channels) | **Plain request:** `navigation/resolve_url`, following up to 3 `urlEndpoint` hops and accepting only a `UC…` ID with `WEB_PAGE_TYPE_CHANNEL`. Then a plain `browse {browseId: "UC…"}` for the title and @handle. | With no tab, only `UC…` IDs and `/channel/UC…` URLs are accepted, parsed offline. Other forms show "Open YouTube to look up this channel". | A serving tab of any account, signed in or out | Settled |
+| `videoInfo` | **Page read:** the navigation event and the player | — | The tab | L9 |
+| `player` stream (watch progress) | **Page read:** the `<video>` inside `#movie_player` or `#shorts-player` | On Shorts, progress from the `<video>` alone if `#shorts-player`'s API is missing | The tab | L9 |
+| `openCardMenu` | YouTube's own UI (exempt) | The browser's own menu | The tab | Settled |
+
+### 6.2.7 Route table: YouTube Music
+
+| Job | Primary route | Fallbacks, in order | Sending context | Decided by |
+|---|---|---|---|---|
+| `account` | **Page read:** `ytcfg` `LOGGED_IN` and `DATASYNC_ID`, at page load | — | The tab | L7 |
+| `itemInfo` | **Page read** of the targeted renderer's `data`: the menu's endpoints by type (`queueAddEndpoint` by `queueInsertPosition`, `removeFromQueueEndpoint`, `addToPlaylistEndpoint`, `likeEndpoint`), the kind (`musicVideoType`, or the browse `pageType`), the top-level like, the queue item ID (`navigationEndpoint.watchEndpoint.index`), `selected`, and the header's song count. Menu items are matched by command type, never by position or label. | — | The tab | Proven signed out (ticket 27) |
+| `queueInsert` (Play next, Add to queue; song, album, playlist) | **PROVISIONAL (M1):** the menu-item route ([§6.2.8.1](#6281-youtube-music-inserts)) | Queue replay | The tab | M1 |
+| `queueRemove` (Remove from queue) | `app.queue.removeItem(itemId)`, which keeps the server's queue copy in step | None | The tab | M1 |
+| `queueRemoveIds` (undo of an insert) | `app.queue.removeItem` for each inserted ID still waiting | None | The tab | M1 |
+| `queueMove` (Play next and Add to queue on a queue item; undo of a move) | **PROVISIONAL (T28.1–T28.7):** the reorder drop ([§6.2.8.2](#6282-youtube-music-moves)) | None | The tab | T28.1–T28.7 |
+| `queueReinsert` (undo of Remove from queue) | Queue replay of the song, then `queueMove` to its old index | None: Undo reports "Couldn't undo" | The tab | M1, T28 |
+| `like` (like and unlike) | `app.handleServiceEndpoint({likeEndpoint})`. It's the only route, because YouTube attaches a bot check to each like. | None | The tab | M3 |
+| `save`, `unsave` (and their undo) | **PROVISIONAL (M2):** `networkManager.fetch("/browse/edit_playlist")`. It's quiet and returns `status` and `setVideoId`. A duplicate rejection reads as *already in*. | None. Save isn't offered in a tab whose `networkManager` is missing. | The tab | M2 |
+| `membership` (picker; the read before a save) | **PROVISIONAL (M2):** `networkManager.fetch("/playlist/get_add_to_playlist")` | **Membership only:** a www serving tab of the same account, in a window of the same kind. Else the picker shows no ticks, with ticket 12's note. | The tab | M2 |
+| `create` | `networkManager.fetch("/playlist/create")`. YouTube Music's gated "feature enablement" answer counts as a failure. | — | The tab | M2 |
+| `accountLabel` | `networkManager.fetch("/account/account_menu")` | "Unnamed account" | The tab | M2 |
+| `nowPlaying` (job and stream) | **Page read:** `navigator.mediaSession.metadata` and the `<video>` element. The video ID comes from `#movie_player.getVideoData()`. Never the player bar, which an A/B test removes. | The queue's selected item (`app.queue`) | The tab | M1 |
+| `castState` | **Page read:** `state.castStatus` in the app's state store, found signed out (ticket 25) | `#movie_player`'s API | The tab | M5 |
+
+- **ARC-ACC-21.** On YouTube Music, `networkManager` signs requests itself. The signed request never runs on music.youtube.com. When an internal is missing there, the action is removed from that tab rather than falling back (`ctx.can(job)` is false).
+- **ARC-ACC-22.** Nothing YouTube Music runs on our behalf shows a second toast:
+  - **Menu-item route:** the endpoint's toast `commands` are removed before it's handed over.
+  - **Queue replay:** never runs the answer's `onResponseReceivedCommands`, except to store `queueContextParams`.
+  - **Saves:** go through `networkManager.fetch`, which runs no response actions. `handlePlaylistEditEndpoint` is never used.
+  - **Likes:** if M3 shows YouTube Music's own toast, that toast stands in for ours on likes.
+  - **If YouTube Music shows its own toast after one of our queue edits anyway,** the edit stands, a `quiet-route-noisy` breakage signal is recorded, and the feature that made the edit is *partly working* ([YM-FAIL-12](03-youtube-music.md#14-failures-and-breakage)). (R40)
+
+### 6.2.8 Queue handling
+
+#### 6.2.8.1 YouTube Music inserts
+
+**Menu-item route** (primary, PROVISIONAL, M1):
+1. Build a detached `ytmusic-menu-service-item-renderer`.
+2. Hand its service-menu-item behaviour's `handleCommand` the item's `queueAddEndpoint`: `queueTarget` (`videoId`, or `playlistId` for albums, playlists and mixes, plus `onEmptyQueue`) and `queueInsertPosition` (`INSERT_AFTER_CURRENT_VIDEO` for Play next, `INSERT_AT_END` for Add to queue). The endpoint's toast `commands` are stripped first.
+
+This matches YouTube Music exactly: the empty queue, the server-queue context, and the cast session if M1 shows that it forwards. Ticket 25 proved it works on a detached element, signed out.
+
+**Queue replay** (fallback; page-internal, so it costs no disclosure):
+1. `networkManager.fetch("/music/get_queue", { queueContextParams, queueInsertPosition, videoIds: [id] | playlistId })`, with the store's current `queueContextParams`.
+2. Store the returned `queueContextParams`.
+3. Dispatch `ADD_ITEMS { nextQueueItemId, index, items: queueDatas[].content, shouldAssignIds: true }`. The index is `getCurrentItemIndex() + 1` for Play next and `items.length` for Add to queue.
+4. With an empty queue and a single target that has `onEmptyQueue`, call `handleNavigationEndpoint(onEmptyQueue)` instead.
+5. Clear the responsive-radio flag, as YouTube Music's own insert does (ticket 28).
+
+**Rules for both routes:**
+- **ARC-ACC-23.** After any insert, the responsive-radio flag is off, matching YouTube Music.
+- **ARC-ACC-24.** Success, and the IDs that undo needs, come from the queue itself, the same way on either route:
+  1. Before the insert, record the item IDs from `app.queue.getItems()`. Each item's ID is `navigationEndpoint.watchEndpoint.index`, which `ADD_ITEMS` assigns.
+  2. Afterwards, re-read until the queue has grown by the inserted block, within 10 s. An album or playlist goes in as one block.
+  3. The new IDs are the undo handle. `queueRemoveIds` removes those still waiting.
+
+  If the queue doesn't grow, the job has failed. Success is never assumed.
+- **ARC-ACC-25.** Albums and playlists go in as one block, and their undo takes the whole block out again.
+
+#### 6.2.8.2 YouTube Music moves
+
+On a queue item, Play next moves the item to right after the playing song, and Add to queue moves it to the end. No second copy is made. Autoplay suggestions can't be moved, so they offer neither action (ticket 28, adopted into ticket 26).
+
+- **Mechanism (PROVISIONAL, T28.1–T28.7):**
+  - In the page world, the gateway builds a stand-in `dragEl`: an element whose `data` is the queue entry, placed among a stand-in parent's children at the target index.
+  - It dispatches `new CustomEvent("ytmusic-reorderable-list-drop", { detail: { dragEl }, bubbles: true, composed: true })` on `ytmusic-player-queue#queue`.
+  - YouTube Music's own handler then does the rest, in its own order: it moves the item in the store (`MOVE_ITEM`), sends `browse/edit_playlist ACTION_MOVE_VIDEO_AFTER` to the server's copy, forwards the move to a cast device, and clears the responsive-radio flag.
+  - The event and `dragEl` must be built in the page world. A `CustomEvent` built in the isolated world would hide `detail` behind Firefox's Xray wrappers.
+- **ARC-ACC-26.** Before firing, the gateway checks:
+  - the entry is in `panel.data`;
+  - `panel.data` is the store's current `queue.items` array;
+  - the entry isn't the playing song.
+
+  If any check fails, it doesn't fire. A stand-in that matches no entry makes YouTube Music move the *last* entry instead.
+- **ARC-ACC-27.** After firing, the gateway confirms that the entry, found by its queue item ID (which a move doesn't change), sits at the target index. If it doesn't, the job fails.
+  - The server step can't be confirmed per move: it's fire-and-forget, exactly as YouTube Music's own drag is.
+- **ARC-ACC-28.** Undo moves the entry back to its old index by the same path. If the entry has started playing since, there's nothing to undo.
+- **ARC-ACC-29.** At page load the live music adapter checks that:
+  - `customElements.get("ytmusic-player-queue")` exists;
+  - `panel.queue === app.queue`;
+  - `Array.isArray(panel.data)`;
+  - `typeof panel.onDrop === "function"`.
+
+  If any fails, `queueMove` has no route, and every action that needs it is withdrawn in that tab.
+
+#### 6.2.8.3 Queue jobs and casting
+
+- **ARC-ACC-30.** Queue jobs run one at a time per tab, in the order they were triggered, in the app-state lane. That covers inserts, removes, moves, re-inserts and their undos, and likes.
+- **ARC-ACC-31.** Casting is read from `state.castStatus`. While casting, every YouTube Music queue edit is unavailable, with one message ([YM-CAST-2](03-youtube-music.md#15-casting)): inserts, moves, Remove from queue, and their Undo. Save and Like still work. (R5)
+  - There's no exception for inserts through the menu-item route, whatever M1 shows about forwarding to the cast device.
+  - Firefox has no casting, so the rule never applies there.
+
+#### 6.2.8.4 YouTube's queue: quiet add, confirmation and undo
+
+YouTube's queue is a temporary server playlist (`TLPQ…`), owned by the session that created it, and mirrored by the tab's playlist panel data. Each entry has its own `playlistSetVideoId`, so a video can be queued twice. A `setVideoId` is unique only within its own `TLPQ…` list, so it's always paired with that list's ID.
+
+- **ARC-ACC-32. First add** (no queue yet): the card's own `addToPlaylistCommand {listType: "PLAYLIST_EDIT_LIST_TYPE_QUEUE", …}`, the command 1.5.0 sends, resolved through the global resolver. The first add is quiet, because the create answer carries no toast.
+- **ARC-ACC-33. Later adds** (a `TLPQ…` queue exists; PROVISIONAL, T29.Q1, T29.Q8):
+  - resolve `playlistEditEndpoint {playlistId: "TLPQ…", actions: [{action: "ACTION_ADD_VIDEO", addedVideoId}], params: "IAE%3D"}`;
+  - its answer carries only `refreshPlaylistCommand`, and `onSuccess` gets `STATUS_SUCCEEDED` with the new entry's `setVideoId`;
+  - 1.5.0's command, used here, would make YouTube show its own "Added to Queue" toast for every add after the first.
+- **ARC-ACC-34. When the quiet value stops working:** if YouTube shows its own toast after a quiet queue edit (an add or its Undo), the edit stands. That's seen when the answer carries YouTube's toast action despite `IAE%3D`, or when YouTube's toast appears. Our own toast for an add is suppressed, so only one toast shows. A `quiet-route-noisy` breakage signal is recorded, and it marks the queue button *partly working* (tickets 12 and 18; [YT-Q-05](02-youtube.md#210-the-thumbnail-add-to-queue-button)). (R40)
+- **ARC-ACC-35. Confirmation** (PROVISIONAL, L8, T29.Q7):
+  - **Where it reads:** the queue panel's data: `ytd-playlist-panel-renderer`'s `.data`, `.polymerController.data` or `.inst.data`, whichever carries a `playlistId` starting `TLPQ`.
+  - **What it looks for:** the entry with our `videoId` whose `playlistSetVideoId` wasn't in the panel before our add. Comparing the before and after sets copes with duplicates.
+  - **Budget:** 2 s.
+  - **First add:** if the panel can't be read, the miniplayer turning active is the fallback signal.
+  - **No signal:** the result is `confirmed: false`, which the add flow reports as *unconfirmed*, never as success.
+- **ARC-ACC-36. Undo** (PROVISIONAL, T29.Q2, T29.Q5–Q7):
+  1. Wait until the entry has its `playlistSetVideoId`, which shows the add's own edit has finished. T29.Q6 sets the wait.
+  2. Resolve `playlistEditEndpoint {playlistId: "TLPQ…", actions: [{action: "ACTION_REMOVE_VIDEO", setVideoId}], params: "IAE%3D"}` with no `clientActions`.
+  3. Resolve `refreshPlaylistCommand {listId}`.
+  4. Confirm that the `setVideoId` is gone from the panel data. If it isn't, retry once, queued behind any edit YouTube has in flight; the likely cause is an HTTP 409 from overlapping edits. If it's still there, report "Couldn't undo".
+
+  The result comes from the refreshed panel, never from the callbacks.
+- **ARC-ACC-37.** The gateway never removes a queue entry by video ID, which removes every copy. It never uses the panel's own remove item or `playlistRemoveVideosAction`; both make YouTube show "Removed from Queue".
+- **ARC-ACC-38.** YouTube queue edits run in the app-state lane, so our own edits never overlap.
+
+### 6.2.9 Runtime rules
+
+- **ARC-ACC-39. Route unavailable vs. job failed.**
+  - **Route unavailable:** the hook is missing, it throws before sending, or no answer arrives within the budget. The gateway moves to the job's next route and raises a breakage signal.
+  - **Job failed:** YouTube answered: `STATUS_FAILED`, HTTP 4xx or 5xx, signed out, or a different account. The failure is reported as it is, and no second route is tried.
+  - When every route is unavailable, the job answers `unavailable`.
+- **ARC-ACC-40. Writes never run twice.** A write falls back only when the first route provably sent nothing: the hook was missing, or it threw synchronously. A write that may have been sent but whose answer was lost is reported as failed or unconfirmed, and never retried. Reads may fall back on a timeout.
+- **ARC-ACC-41. Success is read from the answer** (`status` and the expected fields), never from the HTTP code. `edit_playlist` reports a failure as HTTP 200 with `STATUS_FAILED`.
+- **ARC-ACC-42. Two lanes per tab.** Each runs one job at a time, in order:
+  - **app-state lane:** jobs that change YouTube's own state in the tab: queue edits on both sites, and likes;
+  - **playlist lane:** playlist reads and writes, and every other job that sends a request.
+
+  Page reads skip the lanes. A job that falls back from a page read to a request joins the playlist lane for that request. So a picker read never waits behind a 10 s queue check.
+- **ARC-ACC-43. Human scale** (ticket 03):
+  - one request per user intent;
+  - nothing crawls: a playlist list refreshes only on ↻ "Refresh playlists", or by itself when it's opened and its cache is older than 5 minutes ([UI-PICK-25](05-ui.md#contents-and-behaviour-every-container), [§4.5](04-features-accounts-data.md#45-caches-and-expiry)) (R39);
+  - on HTTP 429, the add flow pauses that account for 60 s.
+- **ARC-ACC-44. Timeouts:** pings 2 s, jobs 10 s, the YouTube queue confirmation 2 s, and the YouTube Music queue growth check 10 s.
+- **ARC-ACC-45. The page world logs nothing.** No `console` call exists under `src/page/`.
+
+### 6.2.10 The account check
+
+An **account** is whatever `ytcfg.DATASYNC_ID` identifies: a Google account or one of its brand accounts (ADR-0003).
+- A page is **signed in** when `ytcfg.LOGGED_IN` is true.
+- A signed-out page's `DATASYNC_ID` (`V…||`) is a visitor ID. It never becomes a key.
+- The ID is used whole and never parsed. It's never stored ([ACC-03](04-features-accounts-data.md#21-what-an-account-is)); only its account key is.
+
+**Requirements:**
+- **ARC-ACC-46. The raw `DATASYNC_ID` never leaves its tab.** The isolated core's PageLink turns it into the **account key**: the first 16 characters of the base64url SHA-256 of the whole ID. Only that key crosses to the background. The gateway works with the raw ID inside the page and never stores it.
+- **ARC-ACC-47. The account guard** applies in three places:
+  1. **Before a job:** the core forwards a job that names an account only if the job's account key equals the tab's account key. Otherwise it answers `accountChanged` without sending anything.
+  2. **Before every write:** every add, save, undo and picker untick starts with a `membership` read, which must answer for the same account. This read doubles as the account check (ticket 12).
+  3. **After every answer:** the gateway compares `responseContext.mainAppWebResponseContext.datasyncId` with the page-load `DATASYNC_ID`. On the first mismatch it trips: it answers `accountChanged`, and refuses every account job in that tab until reload. The core then disarms auto-add there, and the tab shows ticket 11's "Your YouTube account changed in another tab. Reload this page to keep saving here."
+
+  Watch Later is why this matters: its ID means "the current account's Watch Later", so a stale tab would save into the wrong account.
+- **ARC-ACC-48.** YouTube Music likes return nothing the gateway can read. They rely on the tab having already tripped on an earlier answer; there's no extra read per like.
+  - **PROVISIONAL (M2):** if YouTube Music's answers carry no `datasyncId`, the YouTube Music guard has only the page-load `ytcfg` check.
+- **ARC-ACC-49.** The background accepts `tab.add` only when its account key matches the tab registry's entry for that tab.
+- **ARC-ACC-50.** If `ytcfg`'s identity keys are missing, every job that needs an account answers `unavailable`, and the features that depend on an account stop instead of acting on an unknown account.
+- **ARC-ACC-51.** 2.0 never switches accounts. It only links to YouTube's own pages: `https://www.youtube.com/channel_switcher` for Switch account, and YouTube's sign-in page.
+- **PROVISIONAL (L7):** this assumes `DATASYNC_ID` survives sign-out and sign-in, and is the same in every browser and on both sites. If it doesn't, setups are re-attached by playlist ownership (ADR-0003).
+
+### 6.2.11 Serving-tab routing
+
+A job started from the popup, settings or the first-run page runs in a **serving tab**: a YouTube or YouTube Music tab that is signed in to the account the job is for. `Tabs.serve` chooses it.
+
+```mermaid
+flowchart TD
+  A[Job from popup / settings / first-run page] --> C{Consent given?}
+  C -- no --> X[Refuse: nothing reads YouTube]
+  C -- yes --> B[Account in view: active tab's account, else most recently active YouTube tab of the same window kind, else last account from cache. Settings: the account picked in it]
+  B --> Q["tabs.query({url: site pattern, discarded: false})"]
+  Q --> F[Filter: the job's site; same window kind; skip frozen tabs where reported]
+  F --> O[Order: requester's active tab, then tabs known to be on the account by lastAccessed, then unknown tabs by lastAccessed]
+  O --> P{Ping next candidate, 2 s, injecting the site core if needed}
+  P -- answers, account matches, signed in if needed --> R[Run the job there]
+  P -- timeout or mismatch --> P2{More candidates?}
+  P2 -- yes --> P
+  P2 -- no --> N[NoTab: cached data plus Open YouTube]
+```
+
+- **ARC-ACC-52. Account in view,** in ticket 11's order:
+  1. the active tab's account, when the popup sits over a YouTube or YouTube Music tab;
+  2. else the account of the most recently active YouTube tab, in a window of the same kind;
+  3. else the account last current in a normal window, from cache. A private window has no such fallback.
+
+  Settings uses the account picked in it.
+- **ARC-ACC-53. Candidates** come from `tabs.query({ url: [...the job's site pattern], discarded: false })`. Host access is enough for the `url` filter and for the `url`, `incognito` and `lastAccessed` fields, so no `tabs` permission is needed.
+  - **Site:** youtube.com jobs use www tabs. YouTube Music jobs use music tabs, the installed app's included. YouTube Music's membership fallback uses a www tab.
+  - **Window kind:** a normal window's popup or settings never uses a private tab, and a private window's popup uses only private tabs.
+  - **Skipped:** frozen tabs, where the browser reports them (`Tab.frozen`, Chrome 132+), and discarded tabs, up front without a ping.
+  - **Containers** are ignored, because the account decides.
+- **ARC-ACC-54. Order:**
+  1. the requester's active tab, if it's a candidate;
+  2. tabs known to be on the account in view, most recently accessed first (`lastAccessed`);
+  3. tabs whose account is unknown, most recently accessed first.
+- **ARC-ACC-55. Ping** each candidate in turn (`bg.ping`), with a 2 s budget that includes injecting the site core when it's missing. A tab is used only if:
+  - it answers;
+  - its account key is the account in view. Account-free jobs, such as `resolveChannel`, take any tab, signed in or out;
+  - it's signed in, when the job needs that.
+
+  On a timeout or a mismatch, the next candidate is tried.
+- **ARC-ACC-56.** Routing never wakes, reloads, activates or undiscards a tab.
+- **ARC-ACC-57. The tab registry** (each tab's site, account key, signed-in state and whether it's private) is filled from two sources: `tab.hello` from site cores (with `sender.tab.incognito`), and on-demand pings. Recency comes from `lastAccessed`, never from tracking events.
+- **ARC-ACC-68. Picking a YouTube Music tab for a job that names no tab.** The popup's Playing now row is the only caller ([YM-POP-11](03-youtube-music.md#17-playing-now-in-the-popup)). It reads:
+  1. the focused window's active tab, if it's YouTube Music;
+  2. else the audible YouTube Music tab (`tab.audible`);
+  3. else the most recently accessed one (`lastAccessed`).
+
+  Candidates are filtered by window kind as in ARC-ACC-53. The row is read with the `nowPlaying` job in that tab, through the on-demand probe when the tab has no core ([ARC-MAN-15](#633-runtime-script-registration)), so it works whichever YouTube Music features are on. It's shown only while the section switch is on and YouTube Music has site access, and hidden when `nowPlaying` answers `null`. Ticket 10's order is kept for this alone; its first caller, a browser-level quick-action key, was removed by ADR-0004. (R8, R33)
+
+### 6.2.12 No tab; not signed in; no site access
+
+- **ARC-ACC-58. No YouTube tab** (no candidate is left):
+  - **What shows:** the popup and settings show the account's cached data, stamped with when it was fetched, plus an **Open YouTube** button (**Open YouTube Music** in the YouTube Music section). The button opens `https://www.youtube.com/` or `https://music.youtube.com/` in a new tab, which needs no `tabs` permission.
+  - **Settings stays open** and refreshes when a tab of the account in view answers.
+  - **Copy:** the stamp, the banners and their wording are [UI-POP-27](05-ui.md#overlays-and-states) and [FT-54](04-features-accounts-data.md#17-site-access-and-youtube-tabs).
+  - **What needs a tab:** creating a playlist, the picker, typed handles, Playing now, every quick action, and Diagnostics' **Check now**, which is disabled with "Open YouTube to check" and a button ([HEALTH-23](04-features-accounts-data.md#55-diagnostics-check-now-and-the-report)). Everything else works from cache. (R15)
+- **ARC-ACC-59.** There's no hidden frame and no offscreen document.
+  - **Why:** a hidden frame sees only the default cookie store, so it's the wrong account for container and private users. It also loads YouTube's embed client on each wake-up, needs a second code path, and is unproven.
+  - **Reversible:** it could be added in a 2.x with no new prompt, because `offscreen` carries no warning.
+- **ARC-ACC-60. Not signed in** (`LOGGED_IN` false):
+  - jobs that need an account aren't sent; the gateway answers `signedOut`;
+  - Add to queue, the card menu and YouTube Music's queue actions keep working;
+  - what users see: auto-add stays silent, and every action that needs a signed-in account shows the same failure toast with a **Sign in** action ([YT-GEN-08](02-youtube.md#21-rules-shared-by-every-youtube-feature), [YM-ACC-5](03-youtube-music.md#2-accounts-and-private-windows)). (R3)
+- **ARC-ACC-61. No site access** (revoked on Firefox, Firefox 125–126 installs, Chrome's "on click" or a withheld site):
+  - **Check:** the background calls `permissions.contains` per site on every start, and on `permissions.onAdded` and `onRemoved`.
+  - **Missing:** a toolbar badge, plus a button in the popup and settings that asks for access ([FT-13](04-features-accounts-data.md#12-switching-features), [§1.7](04-features-accounts-data.md#17-site-access-and-youtube-tabs) for the copy). The click handler calls `permissions.request` first and synchronously, before anything else.
+  - **Features:** a feature that's on for a site without access shows as on but held for access, and nothing is registered or injected for it until access is granted.
+  - **Refused at first run (Chrome):** if the user agrees but refuses YouTube Music access, consent and the other ticks still apply. The YouTube Music features are saved on, held for access in the same way, with the grant button in the popup and settings. (R14)
+  - **Chrome 133+:** while a feature for that site is on and access is missing, the registrar also calls `permissions.addHostAccessRequest` on open tabs of that site.
+
+### 6.2.13 Private windows
+
+- **ARC-ACC-62.** The manifest leaves `incognito` at its default. 2.0 runs in private and incognito windows only if the user allows it in the browser, which is off by default on both.
+- **ARC-ACC-63.** When it is allowed, a private tab gets its tab view as usual: an account that already has a setup works as in a normal window.
+- **ARC-ACC-64.** Nothing from a private session is ever persisted:
+  - the store refuses such writes ([§6.9](#69-the-store-module-interface); the table is [04 §4.7](04-features-accounts-data.md#47-the-private-window-write-guard));
+  - a private tab's registry entry, breakage signals, session skips, watch progress and the rest of [DATA-33](04-features-accounts-data.md#47-the-private-window-write-guard)'s list live in memory only: the tab's own, or the background's variables, never `storage.session`;
+  - fetched playlist lists, membership and undo entries live only in that tab's memory.
+- **ARC-ACC-65.** Origin is computed from the sender, never taken from a message:
+  - **content scripts and the settings tab:** `sender.tab.incognito`;
+  - **the popup:** it sends its window ID, and the background checks `windows.get(id).incognito`. A window that can't be found counts as private.
+  - `extension.inIncognitoContext` isn't used, because it's false in Chrome's spanning-mode incognito popup.
+- **ARC-ACC-66.** Routing never mixes window kinds (ARC-ACC-53).
+
+### 6.2.14 No Data API
+
+- **ARC-ACC-67.** 2.0 never calls the YouTube Data API, not even as a fallback, and not on the user's own credentials.
+  - Every job has a session route (ticket 01).
+  - YouTube's API policies (§III.D, §III.E) forbid an API client that also uses undocumented YouTube APIs.
+  - No `googleapis.com` or `accounts.google.com` host and no `identity` permission ship.
+- If YouTube ever closes the session route altogether, 2.0 needs a new decision, not a fallback.
+
+### 6.2.15 Live checks that settle the PROVISIONAL rows
+
+**Status:** ticket 25's probe (branch `task/live-checks`, `probes/live-checks/`) passed its signed-out validation on 2026-10-19 in headless Chrome for Testing 155. The signed-in reports from Chrome and Firefox are still outstanding.
+
+What the signed-out run found:
+- the resolver moved ([§6.2.3](#623-the-command-resolver-found-by-shape));
+- ticket 29's quiet removal and quiet add work through the global resolver, and 1.5.0's command shows YouTube's "Added to Queue" for later adds;
+- YouTube Music's menu-item route works on a detached element;
+- `state.castStatus` holds the cast state;
+- `get_queue` returned 200 items of a 500-song radio;
+- the auth hash matches yt-dlp's construction.
+
+| Check | What it tests | If it passes | If it fails |
+|---|---|---|---|
+| **L1** | The resolver with `playlistEditEndpoint` and a `commandController`: options forwarded, `onSuccess` / `onServerError` get the answer, and nothing shows on success *or* on failure (a full or deleted playlist) | `add` and `remove` use the YouTube command | `add` and `remove` use the service request if L2 passes for `playlistEditEndpoint`, else the signed request |
+| **L2** | `yt-service-request` from a temporary element under `ytd-app` returns the answer with no popup, toast or navigation. Run once each for `get_add_to_playlist`, `FEplaylist_aggregation`, `createPlaylistServiceEndpoint`, `account/account_menu` and `playlistEditEndpoint`. | That job uses the service request | That job uses the signed request |
+| **L3** | A same-origin request with cookies and no `Authorization` gets a signed-in answer and can write | The signed request sends no hash, nothing reads cookies, and there's no Authentication-information disclosure | The signed request computes the hash |
+| **L4** | `SAPISID` (or `__Secure-3PAPISID`) is readable from `document.cookie` while signed in; the hash is checked against `Origin` / `X-Origin` | The signed request works as specified | The signed request can't exist. Jobs left without a qualifying route are unavailable, and each gap becomes a new ticket. Not expected. |
+| **L5** | The shapes of `get_add_to_playlist` (renderer or view model, paging, privacy, Watch Later) and of the `FEplaylist_aggregation` lockups | Parsers fixed to those shapes | — (shape detail) |
+| **L6** | A duplicate add on www; `ACTION_REMOVE_VIDEO` by `setVideoId` removes one entry; the full-playlist error | [02-youtube.md](02-youtube.md)'s duplicate rules apply as written | Its PROVISIONAL rule for unattended adds applies ([YT-ADD-07](02-youtube.md#251-order-and-membership)) |
+| **L7** | `DATASYNC_ID` stability, and the presence of `responseContext…datasyncId` | The account guard as specified | Setups are re-attached by playlist ownership |
+| **L8** | After a queue add on an existing queue, the video shows in the panel data, and which field holds it | Confirmation reads that field | Only the fallback signal remains, and adds to an open queue report *unconfirmed* |
+| **L9** | `#shorts-player`'s player API, and `yt-navigate-finish` on every swipe | Page reads as specified | The Shorts channel comes from a plain request, and progress from the `<video>` alone |
+| **M1** | The menu-item route queues correctly and shows nothing once `commands` are stripped; queue replay works signed in | Menu-item route primary, replay as fallback | Replay is primary. Either way, queue edits are unavailable while casting (ARC-ACC-31, R5). |
+| **M2** | `networkManager.fetch` returns signed answers for `get_add_to_playlist`, `browse/edit_playlist`, `playlist/create` and `account/account_menu`; membership (`containsSelectedVideos`) is present; answers carry `datasyncId` | Membership is read on YouTube Music | Membership comes from a www serving tab, else there are no ticks. Without `datasyncId`, the YouTube Music guard uses only the page-load `ytcfg`. |
+| **M3** | A like through `handleServiceEndpoint` sticks, repaints the like button and shows no toast | As specified | YouTube Music's own toast stands in for ours on likes |
+| **M4** | In the installed YouTube Music app (Chrome, Edge), `tabs.query` finds its tab, `executeScript` and registered scripts run there, and the popup's active tab is the app's. No keyboard command other than `_execute_action` is tested (R33). | The app is first-class | The app gets only what reaches it, and the gap is recorded |
+| **M5** | Where an active cast session shows: `state.castStatus` (found signed out), or `#movie_player`'s API | Casting is detected | Queue actions stay available, and their toast names this tab's queue |
+| **P1** | The exact install prompts for the final manifest; no prompt on the 1.4.5 → 2.0 Firefox update; Chrome's prompt for YouTube Music access | Listing and upgrade-note copy as drafted | [08 §5](08-release.md#5-permission-prompts-by-audience) adjusts its copy |
+| **P2** | Registered scripts apply at browser start before the background runs (`persistAcrossSessions`). That registrations are restored after an update is already answered from browser source. | As specified | The reconcile also listens for `runtime.onStartup` and injects into tabs already open |
+| **T28.1–T28.7** | Signed-in queue entries carry `playlistEditParams`, `playlistSetVideoId` and the queue's `playlistId`; the drop moves the entry and the server order follows; radio survives; panel states (before anything plays, Lyrics or Related showing); casting | `queueMove` as specified | No moves: queue items keep no Play next / Add to queue, and Remove's undo has no route |
+| **T29.Q1–Q8** | YouTube's toast on later adds (Q1); quiet and plain removal (Q2, Q3); the panel's own remove item (Q4); after-effects (Q5); undo timing and HTTP 409 (Q6); where the panel data lives (Q7); the quiet add (Q8) | Quiet add, confirmation and Undo as specified | The queue button keeps no Undo. If only the quiet add fails, ARC-ACC-34 applies. |
+
+## 6.3 Manifest, permissions and registration
+
+### 6.3.1 Manifest per browser
+
+`build/manifest.ts` produces both manifests from `wxt.config.ts`.
+
+| Key | Chrome build | Firefox build |
+|---|---|---|
+| `manifest_version` | 3 | 3 |
+| `name` | "Playlist Pigeon for YouTube™" (PROVISIONAL, ticket 22: the user's call) | same |
+| `short_name` | "Pigeon" (PROVISIONAL, ticket 22; [08 §0](08-release.md#0-provisional-inputs)) | same |
+| `description` | One line of release copy, owned by [08-release.md](08-release.md) (PROVISIONAL, ticket 22) | same |
+| `icons` | Generated by `@wxt-dev/auto-icons` from the mark (PROVISIONAL, ticket 22) | same |
+| `version` | `package.json` `version` | same |
+| `minimum_chrome_version` / `browser_specific_settings.gecko.strict_min_version` | `"121"` | `"140.0"` |
+| `browser_specific_settings.gecko.id` | — | `{cc70cd21-2cc6-444b-bd89-496909346091}` (kept from 1.x) |
+| `browser_specific_settings.gecko.data_collection_permissions` | — | `{ "required": ["none"] }` (PROVISIONAL, ticket 23: AMO's answer may add an optional type for settings sync, or a required one) |
+| `browser_specific_settings.gecko.update_url` | — | Only in `--mode beta` builds: `https://alioun.github.io/yt-playlist-tools/beta/updates.json` (ADR-0011) |
+| `permissions` | `["storage", "scripting"]` | `["storage", "scripting"]` |
+| `host_permissions` | `["https://www.youtube.com/*"]` | `["*://*.youtube.com/*"]` |
+| `optional_host_permissions` | `["https://music.youtube.com/*"]` | — (covered by the host permission) |
+| `background` | `service_worker` | `scripts` (event page) |
+| `action` | `default_popup`: the popup | same |
+| `options_ui` | the settings page, `open_in_tab: true` | same |
+| `commands` | `{ "_execute_action": {} }`: no `suggested_key`, no listener | same |
+| `content_scripts` | none | none |
+| `web_accessible_resources` | none | none |
+| `incognito` | absent (the browser's default) | absent |
+
+- **ARC-MAN-01.** The built manifests match this table exactly. `check:manifest` asserts it on both builds ([Q-CI-3](07-quality.md#771-ciyml), [REL-CI-20](08-release.md#141-ciyml)).
+- **ARC-MAN-02.** These are never requested: `tabs`, `activeTab`, `cookies`, `identity`, `offscreen`, `declarativeNetRequest*`, `webRequest*`, `unlimitedStorage`, `contextMenus` / `menus`, and any Google host other than YouTube's.
+- **ARC-MAN-03.** On Chrome, YouTube Music access is requested with `permissions.request({ origins: ["https://music.youtube.com/*"] })`, called first and synchronously in the click handler of the control that first switches on a YouTube Music feature (or "Also on YouTube Music"), or of Give access.
+- **ARC-MAN-04.** Dynamic script matches stay narrow on both browsers: `https://www.youtube.com/*` and `https://music.youtube.com/*`, top frame only.
+- **ARC-MAN-05.** The only keyboard command is the unbound `_execute_action`. Every shortcut is caught in the page (ADR-0004).
+
+**Why the hosts differ per browser:**
+- **Firefox keeps `*://*.youtube.com/*`,** the exact pattern 1.4.5's content script was granted.
+  - Firefox MV3 never grants new origins on update.
+  - Firefox's code marks "revoke origins no longer declared" as planned for every extension (Bug 2022704). Narrowing could then strip every upgrader's access.
+- **Chrome is narrow,** because it's a fresh listing and Chrome Web Store policy asks for the narrowest set.
+  - Making YouTube Music optional keeps the install prompt to www.youtube.com alone.
+  - Optional permissions never disable the extension on update.
+
+**What users see** (PROVISIONAL until P1; the exact strings and the full list by audience are [08 §5](08-release.md#5-permission-prompts-by-audience)):
+
+| Situation | Prompt |
+|---|---|
+| Chrome install | "Read and change your data on www.youtube.com" only |
+| Chrome, first YouTube Music feature | A site-access prompt for music.youtube.com |
+| Firefox install | One host line for the youtube.com domain, plus Firefox's data-collection line ([08 §5](08-release.md#5-permission-prompts-by-audience)) |
+| Firefox 1.4.5 → 2.0 update | None: `scripting` and `storage` were already held and `scripting` doesn't prompt, dropping `identity` and `activeTab` is silent, the origin is unchanged, and `data_collection_permissions: none` doesn't prompt |
+
+**Chrome Web Store justification for `scripting`:** "Adds each feature's script to YouTube pages only while that feature is switched on, and reads data from an open YouTube tab when the popup or settings need it."
+
+### 6.3.2 Version floors
+
+- **ARC-MAN-06. Chrome 121.**
+  - Tab routing relies on `Tab.lastAccessed`, which needs 121.
+  - Dynamic MAIN-world registration and `optional_host_permissions` need 102.
+  - Tailwind v4, under shadcn-svelte, needs 111.
+  - `Tab.frozen` (132) and `permissions.addHostAccessRequest` (133) are used where present, and their absence is handled.
+- **ARC-MAN-07. Firefox 140.**
+  - MAIN-world registration needs 128.
+  - 140 is Mozilla's recommended floor for `data_collection_permissions`, and supports optional data types requested at runtime. So any reply from AMO is covered without a second floor bump.
+  - Only users on 128–139 stay on 1.4.5.
+- **Testing:** the real-browser layer runs Playwright's bundled Chromium and Firefox release ([Q-TEST-16](07-quality.md#725-layer-4-real-browser)). The upgrade test adds Firefox ESR 140 (the floor), ESR 153 and Developer Edition ([REL-CHK-12](08-release.md#17-upgrade-test-matrix)).
+
+### 6.3.3 Runtime script registration
+
+Page code is WXT **unlisted scripts** (`defineUnlistedScript`), registered by the background with `scripting.registerContentScripts`. There are no WXT content scripts, no manifest `content_scripts` and no web-accessible resources (ADR-0008).
+
+| ID | World | `js`, in order | `runAt` | Registered while |
+|---|---|---|---|---|
+| `pp-www-page` | MAIN | `page-www.js` | `document_start` (PROVISIONAL, measured by the real-browser layer) | consent given, schema ok, www access granted, and at least one www feature on |
+| `pp-www` | ISOLATED | `core-www.js`, then `kit-www.js` if any feature that's on needs it, then each feature file that's on, in registry order | `document_idle` (PROVISIONAL, as above) | same |
+| `pp-music-page` | MAIN | `page-music.js` | `document_start` | consent, schema ok, music access granted, the YouTube Music section switch on (`musicSection`, R1), and at least one music page entry on: quick actions, quick-action shortcuts, or playlist shortcuts with "Also on YouTube Music" |
+| `pp-music` | ISOLATED | `core-music.js`, `kit-music.js`, then each music feature file that's on | `document_idle` | same |
+
+- **ARC-MAN-08.** Every registration matches only its site, in the top frame only (`allFrames: false`), with `persistAcrossSessions: true`.
+- **ARC-MAN-09.** Files in one registration's `js` list run in list order. So the core runs before the kit, and the kit before any feature. Nothing depends on order *between* registrations, which no browser specifies.
+- **ARC-MAN-10.** The page half starts at `document_start` so it sees the first navigation and player events. It only adds listeners. The isolated half waits for `document_idle` so it doesn't compete with YouTube's own start-up, and asks the gateway for a snapshot with `hello`.
+- **ARC-MAN-11. The registrar's desired set** is a pure function: `desired(registry, settings, consent, access, schemaOk) → RegisteredScript[]`.
+  - With no consent, or with a storage layout newer than this build knows, the set is empty.
+  - Registrations are derived, never stored.
+- **ARC-MAN-12. Reconcile** compares the desired set with `getRegisteredContentScripts()`, then registers, updates (`updateContentScripts`) or unregisters by ID. It's idempotent and serialised. It runs:
+  - on every background start, after `store.ready()` resolves `"ok"`. That also covers extension updates, after which both browsers clear dynamic registrations;
+  - on every store change that alters switches or consent;
+  - on `permissions.onAdded` and `permissions.onRemoved`;
+  - on install and update.
+- **ARC-MAN-13. Switching a feature on** rewrites `pp-<site>` in one `updateContentScripts` call. Then, in each open matching tab, `scripting.executeScript` injects whatever is missing, in this order: the page half (`world: "MAIN"`), the core, the kit, then the feature. It works with no reload. The tab's new view arrives, and the core's host starts the feature.
+- **ARC-MAN-14. Switching a feature off** rewrites the list, and the background pushes the new view. The host disposes the feature's scope, removing every element, style, listener, observer and timer it made.
+  - If no feature is left on a site, both of that site's registrations go, and the core disposes everything it added.
+  - Code already parsed stays until the page reloads, but nothing stays drawn or listening.
+- **ARC-MAN-15. On-demand probe:** `Registrar.ensure(tabId, { core: true })` injects only the page half and the core into one tab, when the popup or settings needs an account or fresh data from a tab without a core. The popup's Playing now is one such need (ARC-ACC-68). It's allowed only after consent ([FT-16](04-features-accounts-data.md#13-off-costs-nothing)). (R8)
+  - The core draws nothing and stays inert until reload.
+  - It's the only code that reaches a YouTube page while every feature is off, and only after the user opens the popup or settings.
+- **ARC-MAN-16. Popovers:** `ctx.popovers()` → `tab.need { popovers: true }` → `Registrar.ensure(tabId, { popovers: true })` → `executeScript` of `popovers.js`.
+- **ARC-MAN-17. After an extension update** (PROVISIONAL until the real-browser layer runs an update in both browsers):
+  - the start-up reconcile registers everything again and injects the current files into open tabs;
+  - the new core announces itself with a `ppt:retire { build }` event on `document`, and every older core and gateway in the tab disposes itself;
+  - an orphaned core also disposes itself the first time `browser.runtime.id` is gone.
+- **ARC-MAN-18.** Scripts are registered per browser, never per account. An account with no choices keeps its features idle.
+
+## 6.4 The module map
+
+Each deep module below gives its interface, its context, what it hides, its seams and adapters, and its test layer, which [07 §7.2](07-quality.md#72-test-layers) defines. The gateway and the page port have their own section, [§6.5](#65-the-gateway-and-the-page-port).
+
+**Decisions that shape the map:**
+- **ARC-MOD-01.** Only the gateway runs in the page world. Features never ship page-world code. Player readings, item `data`, `ytcfg` and YouTube Music's queue are reached only through gateway jobs and streams.
+- **ARC-MOD-02.** Page code is built with `defineUnlistedScript`, never `defineContentScript`. That avoids WXT's roughly 3 KB content-script context and its page-visible `window.postMessage`.
+- **ARC-MOD-03.** Everything that spans tabs or writes storage runs in the background: the store, registrar, tab router, add flow and breakage monitor. A tab runs jobs on request and draws its own UI.
+- **ARC-MOD-04.** One test run covers both browsers. Only `src/shared/platform.ts` reads `import.meta.env`, and code that differs per browser takes a `Platform` value.
+- **ARC-MOD-05.** The site core holds the in-page machinery that features share: item recognition, pointer and focus tracking, and the one key listener. It adds no listener, observer or element until a feature that's on asks for one.
+- **ARC-MOD-31. The undo key belongs to the site core,** not to a feature. Its binding is live on a site whenever a toast with Undo is on screen there, whichever feature made it, and while a shortcut feature is on there ([YT-KEY-25](02-youtube.md#285-feedback-and-the-undo-key), [YM-KEY-4](03-youtube-music.md#12-keys-quick-action-shortcuts)). It uses the one key listener, so it costs nothing extra. (R2)
+- **ARC-MOD-32. The card menu's "not working" notice is kit-free:** a tiny notice in the site core, drawn as plain DOM in the YouTube skin (about 0.5 KB in `core-www.js`), so the card menu alone still loads no kit ([UI-TOAST-16](05-ui.md#the-not-working-notice)). When the kit is on the page for another feature, the core hands the notice to the kit's toaster instead, so features found together still share one notice ([UI-TOAST-15](05-ui.md#the-not-working-notice)). (R28)
+
+### 6.4.1 Shared kernel (`src/shared/`)
+
+This is plain TypeScript that every context may import. It has no `browser`, no DOM side effects and no WXT.
+
+| Module | Interface (abridged) | What it holds |
+|---|---|---|
+| `platform` | `platform: Platform` = `{ browser: "chrome" \| "firefox", mode, build }` | The only reader of `import.meta.env` |
+| `contracts/` | `Job`, `JobResult`, `Stream`, `StreamData`, `TabView`, `Change`, `ChangeResult`, `AddRequest`, `AddReport`, `UndoHandle`, `BreakageSignal`, the three message maps, and a type guard per incoming message | The language every context speaks ([§6.8](#68-messaging-contracts)) |
+| `rpc` | `createRpc<Map>(transport)` → `call(kind, payload)` and `handle(handlers)`; `Transport = { send, listen }` | Typed request and answer over a transport. Adapters: `runtime` and `memory`. |
+| `model/` | `decodeSettings(raw) → Settings`, the same for `Setup`, `Filter` and `Device`; `defaults`; key and ID validators | The storage shapes: absent means defaults, unknown fields are kept ([04-features-accounts-data.md](04-features-accounts-data.md)) |
+| `features/registry` | `features: FeatureDef[]`, `libraries`, `filesFor(site, settings)`, `healthFor(id)` | [§6.6](#66-the-feature-registry) |
+| `rules/channel-filter` | `decide(filter \| undefined, channel: ChannelId \| null) → "pass" \| "filtered" \| "filtered-unknown-channel"` | The channel-filter rule. Both non-pass results are the *filtered out* outcome, never *failed*; the unknown-channel one keeps its own toast copy (R26) |
+| `rules/outcomes` | `failureOf(answer) → Failure`, `toastPlan(report, featureFeedback) → ToastPlan` | The add flow's failure table, and what shows with feedback off, as data: no pending toast with feedback off (R7), and the once-per-session suppression only for auto-add (R22) |
+| `copy/` | `toastText(plan, titles, site) → string` | Toast copy rules (quotes, 40-character cuts, lists, "song" on YouTube Music) |
+| `keys/` | `match(event: KeyFacts, bindings) → Binding \| null`, `recorder(state, event) → RecorderStep`, `display(key, os)` | The key matcher (character first, then physical key) and the recorder rules |
+| `picker/model.svelte.ts` | `new PickerModel({ source: PickerSource, site, mode: "save" \| "choose" \| "many" })` with `rows`, `query`, `membership`, `sortAZ`, `tick(id)`, `untick(id)`, `pin(id)`, `refresh()`, `create(title, privacy)` | One playlist-picker behaviour for the popup, settings, the first-run page and both sites' popovers ([UI-PICK-01](05-ui.md#one-picker-model-four-containers)). Rows keep the site's Save-dialog order unless `sortAZ`, which is stored per device; `refresh()` is ↻, and opening refreshes a cache older than 5 minutes (R39) |
+| `watchlist` | `watch: WatchEntry[]`: each entry's ID, site, dependent jobs and features, and runtime probe | The runtime half of the breakage watch list. The static needles live in `tools/` and never ship. |
+
+### 6.4.2 Isolated world (`src/site/`)
+
+**SiteCore** (`site/core/`, deep). There's one per tab, installed by `core-<site>.js` on `globalThis.__pp.core`. Features never import it; they're handed a context:
+
+```ts
+interface FeatureContext {
+  readonly site: Site
+  readonly view: Readable<TabView>          // this tab's view: features on here and their options, the tab's own account setup and filters, statuses
+  readonly scope: Scope                     // everything the feature adds goes through it; disposed on switch-off
+  run<J extends Job>(job: J, opts?: { target?: Element }): Promise<JobResult<J>>   // an in-tab job through the gateway
+  can(job: JobId): boolean                  // a route for this job exists in this tab (the gateway's probe at load)
+  watch<S extends Stream>(stream: S, cb: (d: StreamData<S>) => void): void         // auto-unwatched by the scope
+  add(req: AddRequest): Promise<AddReport>  // through the background add flow
+  undo(handle: UndoHandle): Promise<UndoReport>
+  change(c: Change): Promise<ChangeResult>  // e.g. "Don't auto-add this video", Pause
+  progress: {                               // auto-add only
+    load(video: VideoId): Promise<Parts | null>
+    save(video: VideoId, len: number, parts: Parts): void
+  }
+  items: Items                              // pointed-at item, current item, closest card, page-settle check
+  keys: Keys                                // bind(bindings) → auto-unbound by the scope
+  report(s: FeatureSignal): void            // anchors and cosmetic gaps → the background monitor
+  expose(name: string, fn: () => unknown): void   // answers background queries, e.g. the popup's This video
+  popovers(): Promise<Popovers>             // lazy: asks the background to inject popovers.js
+  kit?: Kit                                 // present when the registry lists "kit" for this feature
+}
+```
+
+What it hides:
+- **ExtLink:** the tab's side of [§6.8.2](#682-tab--background): `hello`, the tab view, pushes, jobs from the background, and noticing that the extension context is orphaned after an update.
+- **PageLink:** the isolated side of the page channel: request IDs, timeouts, the `hello` handshake, and the account-key digest (ARC-ACC-46). It checks a job's account key against the tab's before forwarding it (ARC-ACC-47).
+- **FeatureHost:** feature definitions arrive as their files run (`__pp.core.define`). A feature starts when its definition is present *and* the tab view says it's on, and is disposed when the view says off. Defining twice is a no-op, which makes injection idempotent.
+- **Scope:** `on(target, type, fn, opts)`, `observe(el, init, fn)`, `timeout(fn, ms)`, `mount(Component, props, where)` and `add(dispose)`. Disposing the scope removes everything the feature made, so teardown is guaranteed by construction.
+- **Items** (`items-www.ts`, `items-music.ts`):
+  - the card and row selectors;
+  - "pointer or focus, whichever moved last", tracked by delegated `pointerover` and `focusin` listeners that exist only while some feature tracks;
+  - the markup-independent self-check and the page-settle check;
+  - on YouTube Music, item details from the `itemInfo` job targeted at the row.
+- **Navigation** comes from the gateway's `nav` stream, never from WXT's `wxt:locationchange`, which polls on Firefox before 147. Nothing in the core polls.
+- **Keys:** one capture-phase `keydown` listener on `window`, present only while some binding exists.
+  - It ignores typing, IME, open menus and dialogs, auto-repeat and pending actions.
+  - It matches with `shared/keys`, and on a match calls `preventDefault()` and `stopImmediatePropagation()`.
+  - Bindings with the same action ID count once.
+  - The undo key is the core's own binding (ARC-MOD-31): it calls the kit toaster's `undoCurrent()`. (R2)
+- **Notice:** the card menu's kit-free "not working" notice (ARC-MOD-32), drawn from the tab view's due notices. (R28)
+
+Seams: `Transport` (runtime, memory) for ExtLink, and `PageChannel` (DOM events, direct) for PageLink. Tested in layer 3: happy-dom, a memory transport, and a direct page channel to a real gateway over the recorded page.
+
+**Kit** (`site/kit/`, deep). There's one per page, installed by `kit-<site>.js` on `globalThis.__pp.kit`:
+
+```ts
+interface Kit {
+  toast: Toaster     // show(spec): ToastHandle; undoCurrent(); notice(spec) for the sticky breakage notice
+  overlay: Overlay   // attach(anchor, content, { mode: "in-flow" | "corner", before? }): OverlayHandle; one moving overlay per page
+  host: ShadowRoot   // the top-level layer's open shadow root, which popovers.js mounts into
+  lib: KitLib        // the $kit module: IconButton (idle/busy/done/failed/unconfirmed), SplitButton, StatusPill, Toast; icons; skin tokens
+  setNeeded(on: boolean): void   // the core keeps the layer only while a kit feature runs
+}
+```
+
+What it hides:
+- the Svelte runtime and its linked exports ([§6.7.2](#672-linking-svelte));
+- **the hosts:** one top-level layer for toasts and popovers, one moving overlay, and one inline host per in-flow control, made with `scope.mount(…, where)`.
+  - Every host is built with `@webext-core/isolated-element`, with `mode: "open"` and `isolateEvents: true`.
+  - Each carries an inline `all: initial` reset.
+  - Each stops keys, clicks, pointer events, mouse down and up, and `contextmenu` from reaching the page.
+- the site skin: YouTube's theme variables (`--yt-sys-color-baseline--*`), with a fallback palette chosen by `html[dark]`, which one MutationObserver mirrors onto the hosts. A missing variable raises a `cosmetic` signal;
+- moving the layer into `document.fullscreenElement` when that element doesn't contain `<body>` ([UI-TOAST-08](05-ui.md#shared-rules));
+- the toaster's rules: one toast at a time for 6 s, held on hover or focus and while the tab is hidden, the newest failure kept, the position re-measured after showing and stacked above the site's own bottom-left surfaces;
+- state keyed by item identity, never by element, because YouTube recycles elements.
+
+The kit contains no Bits UI and no Tailwind or shadcn styles. It's tested in layer 3 for behaviour and layer 4 for positions, styles and fullscreen.
+
+**Features** (`site/features/<id>/`): each is `definePageFeature({ id, site, start(ctx) })`. `start` uses only the context and `$kit`, and returns nothing; teardown belongs to the scope.
+
+Names are the UI's ([FT-01](04-features-accounts-data.md#11-the-features), [YT-GEN-01](02-youtube.md#21-rules-shared-by-every-youtube-feature)); IDs are the registry's, kebab-case everywhere (R32).
+
+| Feature (registry ID) | Sites | Deep part, and where its logic sits |
+|---|---|---|
+| Auto-add (`auto-add`) | www | The watch tracker, fed by the `player` stream. Progress is loaded and saved through the background. Due playlists go to `ctx.add`. Exposes `status` for the popup's This video. |
+| Playlist shortcuts (`shortcuts`) | www, music | Binds its keys and the picker key; the undo key is the core's (ARC-MOD-31, R2). Resolves the target with `ctx.items`, then calls `ctx.add` or opens the picker. A shortcut with no playlist on this account opens the picker in choose mode from its toast's **Choose** (R24). One source, two files (`feature-shortcuts-www`, `feature-shortcuts-music`). |
+| Quick-save on thumbnails (`quick-save`) | www | A split button through the overlay. One click → `ctx.add`; ▾ → popovers. Hover on ▾ preloads them. |
+| Queue button on thumbnails (`queue-button`) | www | An overlay button with its states. `queueAdd` targeted at the card; Undo through `queueUndo`, after which the button is idle and clickable again (R27). It steps aside where YouTube draws its own hover Add to queue. |
+| Watch-page button (`watch-button`) | www | The pill after Share, before Save, showing auto-add's state. Its menu is in popovers; the menu's Save rows belong to this feature and use its feedback switch, whether or not quick-save is on (R27). |
+| Right-click for the video menu (`card-menu`) | www | No kit: a capture `contextmenu` listener, and `openCardMenu` targeted at the card. Its "not working" notice is the core's (ARC-MOD-32, R28). |
+| Quick actions (`music-actions`) | music | One hover overlay over rows, cards, headers and queue items. Availability comes from `itemInfo` at hover time; then queue jobs, Save and Like, with Undo. |
+| Quick-action shortcuts (`music-keys`) | music | Binds the quick-action keys, with targets from `ctx.items`; the undo key is the core's (R2) |
+| Settings sync (`sync`) | none | No page part. It's in the registry for the settings lists and first run. |
+
+**Watch tracker** (`site/features/auto-add/tracker.ts`, deep and pure):
+
+```ts
+createTracker(init: { video: VideoFacts; remembered?: Parts; goals: Goal[]; paused: boolean; skipped: PlaylistId[] }): Tracker
+interface Tracker {
+  reading(r: Reading): TrackerUpdate
+  settings(s: { goals?: Goal[]; paused?: boolean; skipped?: PlaylistId[] }): TrackerUpdate
+}
+type TrackerUpdate = { state: TrackerState; counted: number; due: PlaylistId[]; persist?: Parts }
+```
+
+- **What it hides:**
+  - the counting rule;
+  - excluding live videos, clips and made-for-kids videos;
+  - length checks and "can't measure";
+  - the goal clamp: goal = min(length, max(1 s, required percentage × length)), with the "≤ length − 2 s" bound only when length ≥ 3 s (R27);
+  - one run per playlist per playback;
+  - when auto-add has *run* for a video: only an add or *already in* counts, never a session skip, so a skip doesn't drop remembered progress; removing a skip (Undo of "Don't auto-add this video") checks the goal at once, through `settings({ skipped })` (R23);
+  - when progress should be saved: on pause, on leaving the video, when the tab is hidden, and every 60 s.
+- A thin player feed beside it turns `player` stream data into readings.
+- Tested in layer 1.
+
+**Popovers** (`site/popovers/`, lazy `popovers.js`):
+- **Interface:** `openPicker({ ctx, item, anchor, mode: "save" | "choose", choosing?: ShortcutId })` and `openWatchMenu({ ctx, anchor })`. Both views are thin; the picker's behaviour is `PickerModel`.
+  - **Choose mode** sets the playlist a shortcut saves to on this account, opened from the "{Shortcut} has no playlist on {Account} yet." toast's **Choose**. The picker key in choose mode uses the playlist-shortcuts feature's feedback switch (R24).
+- **What it hides:**
+  - Bits UI positioning, focus and dismissal inside the kit's layer (`BitsConfig defaultPortalTo`, `strategy: "fixed"`, sized by Bits UI's available-height variable);
+  - Escape, which the popovers handle themselves, because host key isolation stops Bits UI from seeing it;
+  - search, membership states, per-row results and the new-playlist form.
+- **The loader** has a 5 s timeout and a visible failure when opened by a click, and stays silent when preloading on hover intent.
+
+### 6.4.3 Background (`src/background/`)
+
+**Store** (deep): [§6.9](#69-the-store-module-interface).
+
+**Registrar** (deep):
+
+```ts
+interface Registrar {
+  reconcile(): Promise<void>   // idempotent, serialised; on start, on store changes, on access changes, on install and update
+  ensure(tabId: number, what: { core?: boolean; popovers?: boolean }): Promise<void>  // on-demand probe; lazy popovers
+}
+```
+
+- **What it hides:**
+  - `desired(...)` and the diff against `getRegisteredContentScripts()`;
+  - injecting newly-on features (plus the page half, core and kit when they're missing) into open matching tabs;
+  - re-injecting after an update;
+  - `addHostAccessRequest` on Chrome 133+.
+- **Start-up:** nothing registers before `store.ready()` resolves `"ok"`, and nothing registers without consent.
+- **Seams:** `ScriptingPort` (`register`, `update`, `unregister`, `list`, `executeScript`) and `AccessPort` (`contains`, `request`, `onAdded`, `onRemoved`). Adapters: browser and fake. WXT's fake browser has neither `scripting` nor `permissions`.
+
+**Tabs** (deep): the tab registry, the account-in-view resolver and the serving-tab router.
+
+```ts
+interface Tabs {
+  seen(tabId: number, info: TabInfo): void                       // from tab.hello and pings
+  accountInView(req: Requester): Promise<AccountInView>
+  runIn(tabId: number, job: Job): Promise<JobResult>             // the tab an action came from
+  serve(job: Job, need: { site: Site; acct?: AcctKey; signedIn?: boolean; req: Requester }): Promise<JobResult | NoTab>
+  push(fn: (tabId: number, info: TabInfo) => unknown): Promise<void>   // e.g. a new tab view to every known tab
+}
+```
+
+- **What it hides:** [§6.2.11](#6211-serving-tab-routing) in full. The registry is kept in `storage.session` through the store; private tabs are kept in memory only.
+- **Seam:** `TabsPort` `{ query(site), get(tabId), send(tabId, msg, timeoutMs), windowOf(windowId) }`.
+  - Adapters: browser, and a fake with `lastAccessed`, `discarded`, `frozen` and `incognito`, whose tabs can be wired to in-process site cores.
+  - WXT's fake `tabs.query` matches `url` only by exact string and has no `lastAccessed`, so it can't stand in.
+
+**AddFlow** (deep): one coordinator for every add.
+
+```ts
+interface AddFlow {
+  add(req: AddRequest, origin: Origin): Promise<AddReport>          // { outcomes: Record<PlaylistId, Outcome>, toast: ToastPlan | null, undo?: UndoHandle }
+  remove(req: RemoveRequest, origin: Origin): Promise<RemoveReport> // the picker's untick
+  undo(handle: UndoHandle, origin: Origin): Promise<UndoReport>
+}
+```
+
+- **What it hides:**
+  - the order of checks: feature → signed in → target (the item, and whether a shortcut has a playlist on this account) → session skip → filters → membership read and account check → add → one report. On a signed-out page the sign-in check answers first (R25);
+  - locks per account, playlist and video;
+  - the 60 s memory of recent adds;
+  - the 429 pause per account;
+  - the wait after creating a playlist;
+  - outcome mapping, and Missing and Full marks. An unknown channel that blocks auto-add is *filtered out*, not *failed* (R26). When membership can't be read, auto-add doesn't run and says so in its own toast; whether it may go ahead stays PROVISIONAL on L6 ([YT-ADD-07](02-youtube.md#251-order-and-membership), R27);
+  - one report per action: a partial result (some playlists added, some filtered out) gives one toast, "Added to {n} playlists · filtered out of {m}", with Undo for the adds (R27);
+  - shown-once limits, which apply to auto-add only; keys, clicks and the picker get a toast every time (R22);
+  - undo entries (memory only) and session skips;
+  - private-window refusals;
+  - Try again.
+- **Dependencies:** `exec`, which is `Tabs.runIn` for an in-tab add and `Tabs.serve` for one from the popup, plus the store and Playlists.
+
+**Monitor and Badge** (deep): the breakage monitor.
+
+```ts
+interface Monitor {
+  signal(tabId: number, s: BreakageSignal): void
+  succeeded(tabId: number, job: JobId): void
+  statuses(scope: { tabId?: number; site?: Site }): FeatureStatuses
+  subscribe(fn: () => void): () => void
+}
+```
+
+- **What it hides:**
+  - `deriveStatus(registry health, signals) → statuses`, which is pure;
+  - the thresholds;
+  - notice-once memory;
+  - signals from private tabs, kept in memory only.
+- **Badge** is a pure `badgeFor(tab, state) → { text, color, title }`, applied through `browser.action` ([HEALTH-15](04-features-accounts-data.md#53-where-it-shows)). (R12)
+  - **Priority:** consent or upgrade pending, then site access missing, then not working, then a Missing or Full playlist.
+  - **Scope:** site access and not working are per tab; consent and Missing or Full show on every tab.
+  - **Colour:** "needs you" (consent, site access, Missing or Full) is the brand violet; "not working" is amber.
+
+**Smaller background modules:**
+- **Playlists:** `list(acct, { refresh, req })`, `create(...)`, `resolveChannel(input, req)` and `absorb(answer)`. It hides cache freshness (a list opened with a cache older than 5 minutes refreshes; `refresh` is ↻, R39) and the merge rules.
+- **Accounts:** `onSeen(acct, tab)`. It hides the 24 h label check, and claiming the unclaimed setup after consent with the pure `claim(unclaimed, owned, existing) → { setup, dropped }`.
+- **Diagnostics:** `report() → string` and `checkNow() → CheckResult | NoTab`. It hides the list of what a report never contains ([HEALTH-25](04-features-accounts-data.md#55-diagnostics-check-now-and-the-report)). With no YouTube tab, Check now is disabled with "Open YouTube to check" and a button (R15).
+- **Router:** maps each message kind to one module call, validates it with the contract's guard, and computes `Origin` from `sender`.
+- **Boot:** registers every listener synchronously in the worker's first turn, as MV3 requires. Each handler awaits `store.ready()` before doing anything.
+
+### 6.4.4 Popup, settings and the first-run page (`src/ui/`)
+
+The UI has one seam, `Backend`:
+
+```ts
+interface Backend {
+  load(): Promise<UiSnapshot>                        // one storage.local.get for the first view
+  watch(fn: (e: UiEvent) => void): () => void        // storage.onChanged
+  change(c: Change): Promise<ChangeResult>           // through the background; the popup adds its window ID
+  call<K extends UiCall>(kind: K, args: UiArgs<K>): Promise<UiResult<K>>
+  access: { has(site: Site): Promise<boolean>; request(site: Site): Promise<boolean> }  // request() runs first in the click handler
+}
+```
+
+- **Adapters:** browser, and fake. The fake is in-memory and scripted. Component tests and the prototypes use it, so a prototype's views become the real ones.
+- **Apps:** `popup/`, `settings/` and `onboarding/` (the first-run page) share `ui/components/` (shadcn-svelte), one playlist picker on `PickerModel`, and one key recorder on `shared/keys`.
+- **Reads** go straight to `storage.local`, read-only. **Writes** always go through the background.
+
+### 6.4.5 Seams and adapters
+
+| Seam | Adapters | Used by |
+|---|---|---|
+| `PagePort` | live (`live-www`, `live-music`), recorded, node, recording | the gateway ([§6.5.2](#652-the-page-port)) |
+| `PageChannel` | DOM `CustomEvent`s; direct (still round-trips through `JSON.stringify`) | the gateway's page side, and the core's PageLink |
+| `Transport` | runtime messaging; in-memory | `rpc`: the core's ExtLink, the background router, the UI backend |
+| `StorageAreas` | browser; fake (WXT's fake for `local` and `session`, plus a quota-true sync area); fake sync server | the Store |
+| `ScriptingPort` | browser; fake | the Registrar |
+| `AccessPort` | browser; fake | the Registrar and the UI backend |
+| `TabsPort` | browser; fake | Tabs |
+| `Backend` | browser; fake | popup, settings, the first-run page |
+
+### 6.4.6 Live-check build and tools
+
+- **ARC-MOD-06. Live-check build** (`wxt build --mode livecheck`):
+  - it adds `src/livecheck/`, the page ticket 25's probe grows into, and wraps the live page adapter in the recording adapter;
+  - the `entrypoints:resolved` hook drops livecheck entrypoints in every other mode;
+  - the recording adapter sits behind `platform.mode === "livecheck"`, so other builds remove it as dead code;
+  - `scripts/check-zip.ts` fails any store zip that contains either.
+- **ARC-MOD-07.** `tools/` never ships. It holds the static and browser watch, the fixture import and the needles ([Q-WATCH-9](07-quality.md#753-the-static-watch), [Q-WATCH-12](07-quality.md#754-the-browser-watch), [Q-FIX-6](07-quality.md#733-capture-and-redaction)).
+
+## 6.5 The gateway and the page port
+
+### 6.5.1 The gateway
+
+There's one gateway per tab, created by `page-www.js` or `page-music.js`. It's the only code in YouTube's own JavaScript world: it logs nothing, imports no Svelte and holds no settings.
+
+```ts
+interface Gateway {
+  run<J extends Job>(job: J, ctx?: { target?: Element }): Promise<JobResult<J>>   // never throws
+  watch<S extends Stream>(stream: S, onData: (d: StreamData<S>) => void): () => void
+  probe(): Promise<ProbeReport>   // which watch-list entries are present: for breakage, ctx.can() and Check now
+}
+createGateway(opts: { site: Site; routes: RouteTable; page: PagePort; signals: (s: BreakageSignal) => void }): Gateway
+
+type JobResult<J> =
+  | { ok: true; data: JobData<J>; route: RouteId }
+  | { ok: false; reason: "signedOut" | "accountChanged" | "unavailable" | "unconfirmed" | "failed"; http?: number; status?: string }
+```
+
+**What it hides:**
+- the route table, one constant per site, and its order ([§6.2.6](#626-route-table-youtubecom), [§6.2.7](#627-route-table-youtube-music));
+- when a route qualifies, and route unavailable versus job failed (ARC-ACC-39);
+- that writes never run twice (ARC-ACC-40);
+- the account guard (ARC-ACC-47);
+- the two lanes (ARC-ACC-42);
+- **success by effect:**
+  - YouTube Music queue growth;
+  - the move position check;
+  - the YouTube queue's `playlistSetVideoId` read-back, and the retry after HTTP 409;
+  - clearing the responsive-radio flag after a replayed insert;
+- toast suppression: stripped `commands`, response actions never run, and the `IAE%3D` value;
+- the signed request's headers and `Authorization`, computed from the port's cookie read and never kept (ARC-ACC-18);
+- the parsers for every known answer shape, and which breakage signal each problem raises.
+
+**YouTube Music shares the playlist operations:** the gateway engine is the same, and so are the parsers for membership, saves, create and labels, and the add flow in the background. Only the route table and the live adapter differ per site.
+
+**Item jobs are targeted:**
+- **ARC-MOD-08.** The core dispatches an item's job event on the card or row element itself, and the gateway reads `event.target` there. No marker attributes are ever written into YouTube's DOM.
+
+### 6.5.2 The page port
+
+`PagePort` is the gateway's only way into YouTube's internals. It's the seam the recorded-response tests replay (ADR-0005, ADR-0007).
+
+```ts
+interface PagePort {
+  config(key: string): unknown                                   // ytcfg.get, read when the job runs
+  cookie(name: string): string | null                            // the signed request only (www)
+  request(path: string, body: unknown, headers: Record<string, string>): Promise<HttpAnswer>
+  command(cmd: unknown, target?: Element): Promise<CommandAnswer> // the global resolver, found by shape
+  serviceRequest(endpoint: unknown): Promise<CommandAnswer>      // yt-service-request
+  music: MusicPort
+  read(what: PageRead, target?: Element): unknown                // player response, nav detail, element data, panel data, mediaSession, <video>, state store
+  on(event: PageEvent, cb: (detail: unknown) => void): () => void
+  has(id: WatchId): boolean
+}
+
+interface MusicPort {                                            // one call per operation on ytmusic-app, no logic
+  fetch(path: string, body: unknown): Promise<HttpAnswer>        // networkManager.fetch
+  serviceEndpoint(endpoint: unknown): Promise<void>              // handleServiceEndpoint (likes)
+  navigationEndpoint(endpoint: unknown): void                    // handleNavigationEndpoint (onEmptyQueue)
+  menuItem(endpoint: unknown): Promise<void>                     // detached ytmusic-menu-service-item-renderer handleCommand
+  queue: { items(): unknown[]; currentIndex(): number; isEmpty(): boolean; remove(id: string): void; dispatch(action: unknown): void; state(): unknown }
+  drop(dragEl: { data: unknown; index: number }): void           // ytmusic-reorderable-list-drop on ytmusic-player-queue
+}
+```
+
+| Adapter | Where | What it does |
+|---|---|---|
+| **live** (`live-www.ts`, `live-music.ts`) | production page scripts | One call per operation on `window`, with no logic. It finds hooks by shape: the resolver on www, and on music the queue panel checks (ARC-ACC-29). |
+| **recorded** | `bun test` | Replays `fixtures/youtube/<job>/<variant>.json`, with small in-memory fakes for page state: YouTube Music's queue, YouTube's queue panel data, a scripted player |
+| **node** | `tools/watch` (CI static watch) | A plain signed-out `fetch` to youtube.com; every other operation reports "unavailable" |
+| **recording** | live-check build only | Wraps live, and captures answers for the fixture import |
+
+### 6.5.3 The page channel
+
+`servePage(gateway, { site, build }, win)` in `page/channel.ts`:
+- decodes `ppt:req` events and runs the job, with `event.target` as its target;
+- answers with `ppt:res` on `document`;
+- forwards stream data and breakage signals;
+- answers `hello` with the build and a snapshot.
+
+The protocol is in [§6.8.1](#681-page-channel-isolated-core--gateway-in-one-tab).
+
+## 6.6 The feature registry
+
+`src/shared/features/registry.ts` is one typed data constant:
+
+```ts
+type FeatureDef = {
+  id: FeatureId          // kebab-case (R32): "auto-add" | "shortcuts" | "quick-save" | "queue-button" | "watch-button" | "card-menu" | "music-actions" | "music-keys" | "sync"
+  setting: SettingsPath  // where its switch and options live; settings keys may stay camelCase (the settings shape is in 04-features-accounts-data.md)
+  footprint: "none" | "keys-only" | "adds-buttons" | "changes-right-click"   // the tag shown in Settings (UI-SET-08)
+  pages: Partial<Record<Site, {   // every `music` entry is gated by the section switch (ARC-REG-03)
+    file: string         // the unlisted script, e.g. "feature-quick-save"
+    needs: Library[]     // "kit"; the core is implied
+    lazy?: "popovers"
+    when?: (s: Settings) => boolean   // e.g. shortcuts on music only with "Also on YouTube Music"
+  }>>
+  health: Partial<Record<Site, { required: JobId[]; optional: JobId[]; anchors: AnchorId[] }>>
+}
+```
+
+- **ARC-REG-01.** The registry is the single source for:
+  - the Registrar: which files to register per site, in registry order;
+  - `scripts/check-budget.ts`: which files make each piece, each feature alone, and each site with everything on. `perf-budget.json` holds only the numbers, keyed by registry IDs;
+  - the Monitor: each feature's required jobs, optional jobs and anchors;
+  - settings, the popup and the first-run page: the feature list, sites, footprint tags and deep links. A deep link is `#feature-<id>` with the registry ID (`#feature-watch-button`), and `#feature-<id>&playlist=<playlistId>` scrolls to that playlist's row and highlights it, as failure toasts about a Missing or Full playlist use ([UI-SET-05](05-ui.md#frame));
+  - the real-browser tests: "each feature alone" and "everything on", named by registry ID. (R32, R38)
+- **ARC-REG-02.** A guard test fails unless:
+  - every registry `file` has an `src/entrypoints/<file>.ts`;
+  - every page entrypoint is in the registry or is a library (`page-*`, `core-*`, `kit-*`, `popovers`);
+  - `perf-budget.json` has exactly the registry's pieces.
+- **ARC-REG-03.** Every `pages.music` entry is also gated by the YouTube Music section switch, `musicSection` ([FT-06](04-features-accounts-data.md#11-the-features)): off means nothing of ours on music.youtube.com, including playlist shortcuts' "Also on YouTube Music". The switch is a shared setting, synced with the others, and on by default; it gates only the section, and the features inside it still start off. (R1)
+- **The plug-in contract:**
+  - **ARC-REG-04.** A feature's entrypoint is one line: `export default defineUnlistedScript(() => definePageFeature(quickSave))`.
+  - **ARC-REG-05.** `start(ctx)` runs when the tab view says the feature is on. Everything the feature adds goes through `ctx.scope`.
+  - **ARC-REG-06.** Option changes arrive through `ctx.view`, and the feature reacts without a restart.
+  - **ARC-REG-07.** Switching off disposes the scope, leaving no element, style, listener, observer or timer. The real-browser layer checks this.
+  - **ARC-REG-08.** A feature reaches YouTube only through `ctx.run` and `ctx.watch`, and storage only through `ctx.add`, `ctx.undo`, `ctx.change`, `ctx.progress` and its view.
+- **ARC-REG-09. Adding a feature** touches:
+  - a settings entry of the form `{ on, feedback?, …options }`;
+  - a registry entry;
+  - `src/site/features/<id>/`;
+  - a one-line entrypoint;
+  - a `perf-budget.json` row;
+  - watch-list entries for any new internal;
+  - fixtures for any new job;
+  - its settings row in `ui/`.
+
+  The guard tests fail until all of them agree.
+
+## 6.7 Per-site bundles
+
+### 6.7.1 Files
+
+| File | World | Contents | Loads while |
+|---|---|---|---|
+| `page-www.js` | MAIN | Gateway, www route table, parsers, live www adapter, page channel | any www feature is on, or the popup's on-demand probe |
+| `core-www.js` | isolated | SiteCore with www items, and the card menu's kit-free notice (ARC-MOD-32) | same |
+| `kit-www.js` | isolated | Svelte runtime (linked exports), hosts, toaster, overlay, components, YouTube skin, icons | any www feature that needs the kit is on: every www feature except the card menu |
+| `feature-auto-add.js` | isolated | tracker, player feed, status | on |
+| `feature-shortcuts-www.js` | isolated | bindings and actions | on |
+| `feature-quick-save.js` | isolated | split button | on |
+| `feature-queue-button.js` | isolated | queue button | on |
+| `feature-watch-button.js` | isolated | the pill | on |
+| `feature-card-menu.js` | isolated | `contextmenu` handler | on |
+| `page-music.js` | MAIN | Gateway, music route table, queue-state code, parsers, live music adapter | any music page entry is on and the section switch is on |
+| `core-music.js` | isolated | SiteCore with music items | same |
+| `kit-music.js` | isolated | as `kit-www`, with the YouTube Music skin | same |
+| `feature-music-actions.js` | isolated | overlay, availability, actions | on |
+| `feature-music-keys.js` | isolated | bindings | on |
+| `feature-shortcuts-music.js` | isolated | bindings and actions | on, with "Also on YouTube Music" |
+| `popovers.js` | isolated, lazy | picker and watch-page menu, with their own Svelte and Bits UI | first open, or hover intent |
+
+- **ARC-MOD-09.** With every feature off, no file in this table reaches any page, except the on-demand probe's page half and core in one tab, once the user opens the popup or settings (ARC-MAN-15, [FT-16](04-features-accounts-data.md#13-off-costs-nothing)). With the section switch off, no `*-music.js` file reaches music.youtube.com (R1).
+- **ARC-MOD-10.** The gateway carries every job of its site and stays inert until asked, so a little unused job code loads with the site core (ADR-0007).
+- **Size budgets** per file, per site and for the lazy picker, with the CI size gate, are in [07 §7.6](07-quality.md#76-performance-budgets): [Q-PERF-12](07-quality.md#763-in-page-weight) to Q-PERF-14 and [Q-PERF-37](07-quality.md#767-enforcement).
+
+### 6.7.2 Linking Svelte
+
+The eager page scripts share one Svelte copy: the kit carries the runtime, and features link to it.
+
+- **ARC-MOD-11.** The kit bundles Svelte and installs its module namespaces on `globalThis.__pp.svelte`, and its own library on `__pp.kit.lib`.
+- **ARC-MOD-12.** Feature builds mark `svelte`, `svelte/*` and `$kit` as external, mapped to those globals with `output.globals`, through WXT's `vite:build:extendConfig` hook (`build/page-link.ts`). An unknown Svelte specifier fails the build.
+- **ARC-MOD-13.** A transform hook records every name the linked builds import from `svelte` and `svelte/internal/client`.
+  - `entrypoints:grouped` moves both kit groups to the end of the build.
+  - The kit imports a generated virtual module that exports exactly those names, using property access, because some runtime names are reserved words.
+  - Development builds export the full namespaces.
+- **ARC-MOD-14.** Page code under `src/site/**` compiles with `css: "injected"`, so styles land in the shadow roots and no `.css` file is emitted. Our own files compile with `runes: true`, set through vite-plugin-svelte's `dynamicCompileOptions`. Runes are never forced on `node_modules`, because that breaks Bits UI. The popup, settings and the first-run page keep emitted CSS files.
+- **ARC-MOD-15.** The build fails if:
+  - any page file other than the kits and `popovers.js` contains the Svelte runtime;
+  - any file other than `popovers.js` contains Bits UI;
+  - any feature file contains kit code;
+  - any `.css` file is emitted for page code.
+- The gateway, the cores, `popovers.js`, the popup and settings aren't linked.
+
+### 6.7.3 The shared global
+
+- **ARC-MOD-16.** `globalThis.__pp` in the isolated world holds `core`, `kit`, `svelte` and `popovers`.
+  - Every isolated script of ours in one frame shares it, because each browser keeps one isolated world per extension per frame, for registered and `executeScript` scripts alike.
+  - The page world never sees it.
+
+### 6.7.4 Lazy popovers
+
+- **ARC-MOD-17.** `popovers.js` holds the playlist picker and the watch-page button's menu, with Bits UI and its own Svelte copy (ADR-0008). It's injected by `scripting.executeScript` on first use, or on hover intent.
+  - So a page briefly holds two Svelte copies once a popover opens.
+  - It mounts into the kit's layer as plain DOM, never as a child component of the kit, because components from two Svelte copies can't nest.
+- **ARC-MOD-18. If `popovers.js` misses its weight or first-open budget** (ticket 27 measured 54.5 KB against 50), the fix order is:
+  1. trim the picker's use of Bits UI;
+  2. if it still overruns, replace Bits UI in the picker with the native Popover API and a hand-written listbox.
+
+  `popovers.js` is never linked to the kit's Svelte runtime, so the kit doesn't grow on every page (ADR-0008). The first-open budget is measured with no hover preload, because the picker key opens it without a hover ([Q-PERF-42](07-quality.md#767-enforcement), [Q-PERF-29](07-quality.md#765-in-page-time)). (R29)
+
+## 6.8 Messaging contracts
+
+All three channels are typed in `src/shared/contracts/` and carried by `shared/rpc`.
+
+```mermaid
+sequenceDiagram
+  participant F as Feature (isolated)
+  participant C as SiteCore
+  participant B as Background (AddFlow, Tabs)
+  participant G as Gateway (page)
+  participant Y as YouTube
+  F->>C: ctx.add(AddRequest)
+  C->>B: tab.add {AddRequest} (acct key)
+  B->>B: checks: target, signed in, skips, filters
+  B->>C: bg.job {membership}
+  C->>G: ppt:req run {membership} (on document)
+  G->>Y: route per table
+  Y-->>G: answer (datasyncId checked)
+  G-->>C: ppt:res {JobResult}
+  C-->>B: JobResult
+  B->>C: bg.job {add} (per playlist, playlist lane)
+  C->>G: ppt:req run {add}
+  G->>Y: route per table
+  Y-->>G: answer (status, setVideoId)
+  G-->>C: ppt:res
+  C-->>B: JobResult
+  B-->>C: AddReport {outcomes, toast, undo}
+  C-->>F: AddReport → kit toast with Undo
+```
+
+### 6.8.1 Page channel (isolated core ↔ gateway, in one tab)
+
+- **ARC-MSG-01. Transport:** `CustomEvent("ppt:req")` from the core and `CustomEvent("ppt:res")` from the gateway, with `bubbles` and `composed`, carrying a JSON **string** as `detail`. No `cloneInto` is needed.
+  - A job about an item is dispatched on that item's element.
+  - Everything else is dispatched on `document`.
+
+| Request | Answer |
+|---|---|
+| `hello { build }` | `{ site, build, snapshot: { signedIn, datasyncId \| null, pageType, video? } }` |
+| `run { id, job }` | `{ id, result: JobResult }` |
+| `watch { id, stream }` / `unwatch { id }` | `stream { id, data }` events until unwatched |
+| `probe { id }` | `{ id, report: ProbeReport }` |
+| — | unsolicited `signal { BreakageSignal }` |
+| `retire { build }` (on `document`) | older cores and gateways stop and dispose themselves |
+
+- **ARC-MSG-02.** The core treats every answer as page data: it's parsed, never trusted. Nothing secret is ever sent into the page.
+- **ARC-MSG-03.** The raw `datasyncId` in `hello` and `account` answers is turned into the account key in PageLink, and never forwarded (ARC-ACC-46).
+
+### 6.8.2 Tab ↔ background
+
+- **ARC-MSG-04.** Messages are one-shot. Tabs call `runtime.sendMessage`, and the background calls `tabs.sendMessage(tabId, msg, { frameId: 0 })`. There are no long-lived ports, because ports keep neither background alive.
+
+| Message (tab → background) | Answer | Notes |
+|---|---|---|
+| `tab.hello { site, build, acct, signedIn }` | `TabView` | Registers the tab; `incognito` comes from `sender.tab` |
+| `tab.add { AddRequest }` | `AddReport` | `acct` must match the tab registry's (ARC-ACC-49) |
+| `tab.undo { handle }` | `UndoReport` | |
+| `tab.change { Change }` | `ChangeResult` | Pause, "Don't auto-add this video", channel filter edits from the watch-page menu |
+| `tab.progress.load { video }` / `tab.progress.save { video, len, parts }` | `Parts \| null` / — | Refused for private tabs, which keep progress in memory |
+| `tab.signals { signals[], successes[] }` | — | Batched |
+| `tab.need { popovers: true }` | `ok` | |
+| `tab.noticeShown { features }` | — | |
+
+| Message (background → tab, frame 0) | Answer | Notes |
+|---|---|---|
+| `bg.view { TabView }` | — | Pushed after any change that alters that tab's view |
+| `bg.job { job }` | `JobResult` | Add-flow steps, serving-tab jobs, and the popup's Playing now (`nowPlaying`, ARC-ACC-68) |
+| `bg.ping` | `{ site, build, acct, signedIn }` | 2 s budget |
+| `bg.query { name }` | whatever the feature exposes | The popup's This video (auto-add's `status`) |
+
+- **ARC-MSG-05. `TabView`** holds:
+  - the features on for this site, and their options from shared settings;
+  - the undo key, which the core binds itself (ARC-MOD-31), and the other keys;
+  - this browser's `pickerSortAZ` ([DATA-12](04-features-accounts-data.md#shapes)), so the in-page picker follows Sort A–Z ([UI-PICK-26](05-ui.md#contents-and-behaviour-every-container));
+  - the tab's own account key, setup, filters and session skips. A tab never receives another account's data;
+  - `signedIn`, `private`, `paused`;
+  - this tab's feature statuses and due notices;
+  - `build`. (R2, R39)
+
+### 6.8.3 UI ↔ background
+
+| Message | Purpose |
+|---|---|
+| `ui.change { Change, windowId }` | Any settings or setup edit |
+| `ui.accountInView { windowId }` | The popup's header account |
+| `ui.playlists { acct, refresh }` | The playlist list, from cache, refreshed through a serving tab on ↻ or when older than 5 minutes (R39) |
+| `ui.add { AddRequest, windowId }` | A picker add from the popup |
+| `ui.create { acct, title, privacy, windowId }` | Create a playlist |
+| `ui.resolveChannel { input, windowId }` | Typed channel lookup |
+| `ui.thisTab { windowId }` | This video, through `bg.query` |
+| `ui.playingNow { windowId }` | Playing now: `nowPlaying` in the tab ARC-ACC-68 picks, or nothing to show |
+| `ui.syncedChoices` | First run, before Agree: the feature choices in the synced copy, to pre-tick them (ARC-MSG-12) |
+| `ui.syncJoin { choice }` | The settings-sync join answer |
+| `ui.clearAll { alsoSynced }` | Clear all data |
+| `ui.checkNow` | Diagnostics' Check now; answers `NoTab` with no YouTube tab (R15) |
+| `ui.diagnostics` | The diagnostics report |
+
+- **ARC-MSG-06.** The popup sends its window ID, because it has no `sender.tab`. Settings and the first-run page are identified by `sender.tab`.
+- **ARC-MSG-11.** Playing now is read with the `nowPlaying` job, never through a feature's `expose`, so it works whichever YouTube Music features are on. It's answered only after consent ([YM-POP-7](03-youtube-music.md#17-playing-now-in-the-popup)). (R8)
+- **ARC-MSG-12.** `ui.syncedChoices` is the one UI call answered before consent that touches `storage.sync`. It reads the synced copy once, read-only, at first run. Nothing is pushed, and the sync switch isn't stored, until Agree; without Agree nothing is written but the `schema` marker (ARC-MOD-25) ([FT-31](04-features-accounts-data.md#15-the-consent-gate)). (R9)
+
+### 6.8.4 Rules for every channel
+
+- **ARC-MSG-07. Validation at the receiver:**
+  - the background accepts only `sender.id === runtime.id`;
+  - tab messages only from frame 0 of a tab;
+  - UI messages only from extension pages.
+
+  Each payload must pass its contract guard. Anything else is dropped.
+- **ARC-MSG-08. Timeouts:** pings 2 s, jobs 10 s. A write that times out is reported, never retried.
+- **ARC-MSG-09. Versioning:** every message carries `v`, the contract version. Messages that cross worlds or an update also carry `build`. Both ends of every channel ship in one build, so a `build` mismatch only happens across an update, and the retire rule handles it (ARC-MAN-17).
+- **ARC-MSG-10. Logging:** only the isolated world and the background log, with the extension's name as prefix.
+
+## 6.9 The store module interface
+
+The store is one deep module in the background, and the only writer of every storage area (ADR-0006). The layout, shapes, sync, budget, migrations and private-write table are in [04-features-accounts-data.md](04-features-accounts-data.md): [§4.3](04-features-accounts-data.md#43-storage-layout), [§4.7](04-features-accounts-data.md#47-the-private-window-write-guard), [§4.10](04-features-accounts-data.md#410-schema-versions-and-migrations) and [§3](04-features-accounts-data.md#3-settings-sync).
+
+```ts
+interface Store {
+  ready(): Promise<"ok" | "newer-layout">       // migrations run once per start, first
+  read<V extends View>(view: V, args?: ViewArgs<V>): Promise<ViewData<V>>
+  change(origin: Origin, change: Change): Promise<ChangeResult>
+  subscribe(fn: (e: StoreEvent) => void): () => void   // which documents changed, edited here or synced in
+  clearAll(origin: Origin, opts: { alsoSynced: boolean }): Promise<void>
+}
+
+type View = "settings" | "device" | "setup" | "filters" | "cache" | "progress" | "session" | "syncStatus" | "tabView"
+type ChangeResult = { ok: true } | { refused: "private" | "sync-full" | "update-needed" | "invalid" }
+type Origin =
+  | { kind: "tab"; tabId: number; incognito: boolean }
+  | { kind: "ui"; windowId: number; incognito: boolean }
+  | { kind: "background" }
+  | { kind: "sync" }
+```
+
+- **ARC-MOD-19.** `Change` is one discriminated union for every write: settings edits, setup edits (removing a setup included), filters, cache absorbs, marks, progress, session memory (pause, skips, recent adds, cooldowns, shown-once memory, breakage, the tab registry), device fields, and the sync join choice.
+- **ARC-MOD-20.** `Origin` is computed by the router from `sender`, never taken from a message (ARC-ACC-65).
+- **ARC-MOD-33. `update-needed`** refuses only an edit to a synced document that a newer version wrote and this browser can't read. Every other edit goes through ([SYNC-23](04-features-accounts-data.md#37-different-2x-versions-update-needed)). The sync status reads `waiting` while the join question hasn't been answered. (R13)
+- **ARC-MOD-21. What the store hides:**
+  - the storage layout and its prefixes, codecs and stamps;
+  - migrations from 1.4.5 and 1.5.0;
+  - the private-write table;
+  - the budget counter, the chunker and tombstones;
+  - the replicator: join, conflicts, push scheduling, rate-limit retry;
+  - progress pruning and caps;
+  - cache freshness.
+- **ARC-MOD-22. Seam: `StorageAreas` `{ local, session, sync }`,** each with `{ get, set, remove, clear, onChanged }`.
+  - Adapters: browser (`browser.storage.*`); fake (WXT's fake browser for `local` and `session`, plus a sync area with the real quotas, Chrome's write rates, and delayed, reordered or dropped delivery); and a fake server that joins two or more fake sync areas to stand in for browsers.
+- **ARC-MOD-23. One write path:** a guard test fails if any code outside `background/store/` and its adapter calls `storage.*.set`, `remove` or `clear`.
+- **ARC-MOD-24. Who reads:**
+  - content scripts never read storage; they get the `TabView` from the background;
+  - the popup, settings and the first-run page read `storage.local` directly, read-only, for a fast first paint, and follow `storage.onChanged`.
+- **ARC-MOD-25. Start-up order** ([DATA-47](04-features-accounts-data.md#410-schema-versions-and-migrations)):
+  1. the migration runs at the top of every background start, before the reconciler, the replicator or any message handler. On a fresh install it writes `schema: 1` at the first start, before consent: a schema marker isn't user data. While settings sync is off it never touches `storage.sync`, so 1.5.0's stray `theme` key there stays (only developer profiles wrote it);
+  2. every other module awaits `ready()`;
+  3. on `"newer-layout"`, nothing registers and nothing is written. (R20, R21)
+
+## 6.10 Folder layout
+
+```
+bunfig.toml  perf-budget.json  wxt.config.ts  package.json  tsconfig.json
+build/                    page-link.ts · manifest.ts · livecheck.ts       (imported by wxt.config.ts and scripts)
+src/
+  entrypoints/            WXT only: background.ts · popup/ · options/ · onboarding/ · page-*.ts · core-*.ts · kit-*.ts · feature-*.ts · popovers.ts · livecheck/
+  shared/                 platform · contracts/ · rpc · model/ · features/registry · rules/ · copy/ · keys/ · picker/ · watchlist
+  page/                   MAIN world: start · channel · gateway/ (gateway, lanes, guard, sign, effects) · routes/{www,music} · parsers/ · port · adapters/{live-www,live-music,recorded,recording}
+  site/                   isolated world:
+    core/                 core · ext-link · page-link · view · host · scope · items-www · items-music · pointer · keys · adapters/runtime
+    kit/                  kit · index ($kit) · toaster/ · overlay/ · components/*.svelte · skins/{www,music} · icons/
+    features/<id>/        feature.ts · *.svelte · pure helpers (auto-add/tracker.ts)
+    popovers/             popovers · Picker.svelte · WatchMenu.svelte
+    feature.ts            definePageFeature
+  background/             boot · router · store/ · registrar/ · tabs/ · adds/ · monitor/ · playlists/ · accounts/ · diagnostics/ · adapters/browser*.ts
+  ui/                     backend/{backend,browser,fake} · components/ (shadcn-svelte) · popup/ · settings/ · onboarding/ · lib/
+  livecheck/              live-check page (livecheck mode only)
+tests/                    setup/ · fakes/ · guards/ · integration/ · browser/       (07 §7.2)
+fixtures/                 youtube/<job>/<variant>.json · markup/
+tools/                    watch/ · fixtures/       (never shipped)
+scripts/                  check-budget.ts · check-manifest.ts · check-zip.ts · coverage.ts · amo-metadata.ts · upgrade-test/
+store/  site/             release files: listings, notes, live-check records; the Pages site (privacy policy, beta page)   (08 §14, §10, §17)
+```
+
+- The test folders are [07 §7.2](07-quality.md#72-test-layers). The release files, `scripts/amo-metadata.ts` ([REL-CI-30](08-release.md#142-releaseyml)), `scripts/upgrade-test/` ([REL-CHK-11](08-release.md#17-upgrade-test-matrix)), `SOURCE_CODE_REVIEW.md` ([REL-STORE-27](08-release.md#123-source_code_reviewmd-in-the-sources-zip)) and `RELEASING.md` ([REL-CHK-18](08-release.md#18-release-checklist-releasingmd)) are [08-release.md](08-release.md)'s.
+
+- **ARC-MOD-26. Thin entrypoints:**
+  - `wxt.config.ts` sets `imports: false`, and code imports real paths (`wxt/browser`, `wxt/utils/define-*`);
+  - every entrypoint builds its browser adapters and hands them to a plain module, in at most 15 lines;
+  - `wxt/utils/define-*` appears only in `src/entrypoints/**`;
+  - `wxt/browser` appears only in `src/entrypoints/**` and `*/adapters/browser*.ts` (and `ui/backend/browser.ts`, `site/core/adapters/`).
+
+```ts
+// src/entrypoints/background.ts
+import { defineBackground } from "wxt/utils/define-background"
+import { browser } from "wxt/browser"
+import { boot } from "@/background/boot"
+import { browserAdapters } from "@/background/adapters/browser"
+import { platform } from "@/shared/platform"
+export default defineBackground(() => boot(browserAdapters(browser, platform)))
+
+// src/entrypoints/page-www.ts            (MAIN world, registered at runtime)
+import { defineUnlistedScript } from "wxt/utils/define-unlisted-script"
+import { startPage } from "@/page/start"
+export default defineUnlistedScript(() => startPage("www", window))
+```
+
+- **The entrypoint list:**
+  - `background.ts`;
+  - `popup/`, `options/` and `onboarding/` (HTML);
+  - `page-www.ts`, `page-music.ts`, `core-www.ts`, `core-music.ts`, `kit-www.ts`, `kit-music.ts`;
+  - one entrypoint per feature file in [§6.7.1](#671-files);
+  - `popovers.ts`;
+  - `livecheck/`, in livecheck mode only.
+- **`wxt.config.ts`** stays declarative and delegates to `build/`:
+  - `srcDir: "src"`, `imports: false`, `manifestVersion: 3`;
+  - modules `@wxt-dev/module-svelte` and `@wxt-dev/auto-icons`;
+  - `manifest: ({ browser }) => manifestFor(browser)`;
+  - hooks `entrypoints:resolved` (livecheck), `entrypoints:grouped` (kits last) and `vite:build:extendConfig` (linking).
+
+  It uses Node APIs only, so AMO's reviewers can rebuild it.
+- **ARC-MOD-27. Import rules,** checked by a guard test:
+
+| From | May import |
+|---|---|
+| `shared/` | `shared/` only (and `svelte` in `picker/`) |
+| `page/` | `shared/`, `page/` |
+| `site/` | `shared/`, `site/`; `wxt/browser` only in `site/core/adapters/` |
+| `background/` | `shared/`, `background/`; `wxt/browser` only in `background/adapters/` |
+| `ui/` | `shared/`, `ui/`; `wxt/browser` only in `ui/backend/browser.ts` |
+| `entrypoints/` | anything |
+
+- **ARC-MOD-28.** `import.meta.env` appears only in `shared/platform.ts`, and `console` never appears in `page/`.
+- **ARC-MOD-29.** Unit tests sit beside their module (`*.test.ts`). `tests/` holds only setup, fakes, guards, cross-context integration and the real-browser layer.
+- **ARC-MOD-30.** Nothing from 1.x moves over wholesale. Three pieces are re-homed with their tests rewritten in `bun:test`: the channel-filter rule (`shared/rules`), typed-channel parsing (`background/playlists`) and the queue command (the www route table).
+
+## 6.11 Resolved by precedence
+
+These earlier statements are superseded and must not be built:
+
+| Earlier | Superseded by |
+|---|---|
+| Ticket 10: the YouTube command is `resolveCommand` "on `ytd-app` or the card's own element"; ticket 29: "through `ytd-app.resolveCommand`" | Ticket 25: the global `default_kevlar_base.<key>.instance.resolveCommand`, found by shape ([§6.2.3](#623-the-command-resolver-found-by-shape)) |
+| Ticket 10: registrations `core-www`, `core-music` and `feature-<name>`; ticket 24: `ui-www` and `ui-music` waiting on a promise | Ticket 17 D3 and ADR-0008: `pp-<site>-page` plus the ordered `pp-<site>` list |
+| Ticket 10: a separate "bridge" content script | The site core's PageLink |
+| Ticket 10: one job queue per tab for YouTube Music queue actions; one request at a time per tab | Two lanes per tab (ARC-ACC-42) |
+| Ticket 10: undo of Remove from queue is `ADD_ITEMS` at the old index | Tickets 26 (amendment) and 27: re-insert, then a move to the old index (`queueReinsert`) |
+| Ticket 26: no Play next / Add to queue on queue items | Ticket 28, adopted into ticket 26: they move the item |
+| Ticket 12: the YouTube queue button has no Undo | Ticket 29, adopted into ticket 12: quiet add and quiet Undo |
+| Ticket 16 §3: the background computes the account key | Ticket 17 D10: the tab's isolated core computes it, and the raw ID never leaves the tab ([ACC-03](04-features-accounts-data.md#21-what-an-account-is) matches) |
+| Ticket 16: the store has six members, including `removeSetup` | Ticket 17: five members; removing a setup is a `Change` kind, and `"invalid"` joins the refusals |
+| Ticket 11: discarded tabs are pinged | Ticket 10: discarded tabs are skipped up front |
+| Ticket 10: the manifest's `commands` row is "ticket 08" | Ticket 08 and ADR-0004: only an unbound `_execute_action` |
+| Ticket 10: if no cast signal is found, queue actions stay available | Ticket 25 found `state.castStatus`, so queue actions are unavailable while casting (ticket 26's amendment). R5 drops the exception for forwarded inserts. |
+| Ticket 24: "one shadow host per page" | Tickets 14 and 27: one layer, one moving overlay, and an inline host per in-flow control |
+
+## 6.12 Conflicts found
+
+### Still open
+
+These disagree with another chapter and need a decision. Live checks, AMO's reply and the name stay PROVISIONAL where they're marked, and aren't repeated here.
+
+1. **The cookie lines when L3 passes.**
+   - [§6.2.15](#6215-live-checks-that-settle-the-provisional-rows)'s L3 row: if YouTube accepts same-origin requests with cookies alone, the signed request ships with no hash, nothing reads cookies, and there's no "Authentication information" disclosure.
+   - [08 §0](08-release.md#0-provisional-inputs) drops its four cookie lines only "if no signed request ships".
+   - Nobody has said which rule holds when the signed request ships unsigned.
+2. **The reviewer notes describe less than ships.**
+   - R17 settles the two registrations per site, and [REL-STORE-21](08-release.md#121-reviewer-notes-approval_notes) follows ADR-0008.
+   - But the notes say scripts reach a page "only while a feature for that site is on". They leave out `scripting.executeScript`:
+     - injecting into open tabs when a feature is switched on (ARC-MAN-13);
+     - `popovers.js` (ARC-MAN-16);
+     - the on-demand probe, which reaches one page with every feature off once the user opens the popup or settings (ARC-MAN-15).
+   - They also say the resolver is "located by shape at page load". ARC-ACC-14 and R34 say it's found at first use.
+   - Reviewer notes must describe the shipped package, so the notes should change.
+3. **Inserts while casting.**
+   - [YM-CAST-3](03-youtube-music.md#15-casting) keeps a PROVISIONAL (M1) exception, citing ARC-ACC-31: inserts through the menu-item route could stay available while casting.
+   - R5 has no exception, and ARC-ACC-31 now follows R5.
+   - Either 03 drops YM-CAST-3, or R5 is amended.
+4. **Status per action on YouTube Music.**
+   - [YM-FAIL-4](03-youtube-music.md#14-failures-and-breakage) and YM-FAIL-6 mark a single action *not working*.
+   - The Monitor derives one status per feature from the registry's required and optional jobs ([HEALTH-07](04-features-accounts-data.md#52-status), [Q-WATCH-23](07-quality.md#757-runtime-breakage-signals)). A lost optional job gives *partly working*.
+   - Either the registry and the Monitor gain per-action statuses, or 03 maps a lost action to *partly working*, with `ctx.can` withdrawing that action.
+
+### Resolved during assembly
+
+- "Also on YouTube Music" is behind the section switch, which is the shared, synced `musicSection` setting (ARC-REG-03, [§6.3.3](#633-runtime-script-registration)): R1.
+- The popovers over-budget fix no longer contradicts ADR-0008: there's no linking, and the fix is to trim Bits UI and then use the Popover API (ARC-MOD-18): R29.
+- The kit's eager size: its rows are rebalanced to about 28 KB and 27 KB within unchanged site totals ([Q-PERF-12](07-quality.md#763-in-page-weight), Q-PERF-13): R30.
+- The card menu's "not working" notice is kit-free, in the site core (ARC-MOD-32): R28.
+- Feature IDs and deep links are kebab-case everywhere, with `&playlist=` for one playlist's row (ARC-REG-01): R32, R38.
+- The YouTube Music tab-picking rule's only caller is Playing now, and M4 no longer covers keyboard commands (ARC-ACC-68): R8, R33.
