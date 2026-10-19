@@ -412,3 +412,5 @@ ADR-0001's fallback clause is withdrawn. No `googleapis.com` or `accounts.google
 | Account guard for YouTube Music likes | Rely on the tab's guard | An extra read per like: doubles requests to prevent a reversible mistake |
 | Chrome minimum | 121 | 111: a second tab-ordering path for no real users |
 | Firefox minimum | 140 | 153 strands ESR 140 users mid-migration; 128 forces a custom consent screen if AMO says data collection counts |
+
+Also from [ticket 29](29-youtube-queue-undo.md) (adopted after resolution): YouTube's queue adds use `playlistEditEndpoint` `ACTION_ADD_VIDEO` with `params: "IAE%3D"` when a queue exists. Undo uses `ACTION_REMOVE_VIDEO` by `setVideoId`, then `refreshPlaylistCommand`, all through `ytd-app.resolveCommand`. Confirm and retry on HTTP 409. PROVISIONAL on ticket 25's Q1–Q8.

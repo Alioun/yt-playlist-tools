@@ -371,3 +371,11 @@ Used by both sites' quick-save ▾. On YouTube Music it behaves exactly as ticke
   - playlists can be created.
 
 Also from [ticket 18](18-breakage.md): ticket 07's "can't measure" adds a row to the failure copy. The first such video in a session gets a failure toast; three in a row mark auto-add as not working.
+
+## Amendment after ticket 29 (main session, 2026-10-19)
+
+[Ticket 29](29-youtube-queue-undo.md) found a quiet removal for YouTube's queue. Adopted as an improvement:
+- **YouTube's Add to queue button gets Undo,** removing exactly the entry it added (by `playlistSetVideoId`, never by video ID). This supersedes "The YouTube queue button keeps its "Added" state and has no undo".
+- **Adds also use the quiet route** (`IAE%3D`) when there's already a queue, so YouTube never shows its own "Added to Queue" toast alongside ours, keeping "nothing shows twice".
+
+Both are PROVISIONAL until [ticket 25](25-live-checks.md)'s Q1–Q8 pass. Fallback if the quiet value stops working: keep the add, and suppress our own toast so only one toast shows.

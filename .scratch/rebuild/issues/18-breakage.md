@@ -365,3 +365,5 @@ Each message is two sentences, uses YouTube's capitalisation, and says "YouTube 
 | Diagnostics | Console log, a copyable report shown in full, read-only Check now | Opt-in error reporting: needs a server and ends `none`. A report in a prefilled URL: sends before the user decides. |
 | Fix delivery | Releases only, through a hotfix lane with a frozen manifest | Remote selectors: banned by AMO, a server in all but name, and leaks usage |
 | Update button | None | Requesting an update check: Firefox lacks it, and Chrome throttles it to once per 5 h |
+
+Also from [ticket 29](29-youtube-queue-undo.md): add the `IAE%3D` quiet value, the `TLPQ` queue list, the panel data's location (`ytd-playlist-panel-renderer.data` / `.polymerController.data`), `yt-playlist-manager` and `yt-playlist-data-updated` to the watch list. If the quiet value stops working, YouTube's own toast appears: detect it and flag "partly working".

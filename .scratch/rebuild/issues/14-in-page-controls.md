@@ -50,3 +50,5 @@ Also from [ticket 08](08-shortcuts.md):
 - Verify in the dev build that Bits UI popovers still close on Escape with isolation on.
 
 Also from [ticket 18](18-breakage.md): the "not working" notice is a sticky variant of the shared toast. You own the theme-variable fallback palette, the card selectors and the card self-check, and the anchor thresholds.
+
+Also from [ticket 29](29-youtube-queue-undo.md): the YouTube queue button's toast gets Undo, removing exactly the entry it added. Prototype the queue toast with Undo.

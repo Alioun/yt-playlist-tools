@@ -61,3 +61,5 @@ Also from [ticket 18](18-breakage.md) and [ADR-0005](../../../docs/adr/0005-brea
 - **Live-check build:** a separate target, and the release check fails if a store zip contains any of it.
 - **Browser tooling:** Playwright works for Chromium only (`channel: "chromium"`); Firefox needs Puppeteer 24.8+ (Firefox 137+) or Selenium.
 - **To check:** whether WXT's fake browser covers `action.setBadgeText` and `storage.session`.
+
+Also from [ticket 29](29-youtube-queue-undo.md): the YouTube queue job reads the new entry's `playlistSetVideoId` from the panel data after refresh. Undo removes by it, and overlapping edits are serialised (HTTP 409).
