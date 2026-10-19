@@ -16,3 +16,5 @@ Blocked by: 04, 10
 - **Fix speed:** how fast a fix can reach users through AMO and Chrome Web Store review.
 
 Use `codebase-design` for the seam.
+
+Also from [ticket 05](05-ui-stacks.md): YouTube's `--yt-sys-color-baseline--*` theme variables are undocumented and belong on the breakage watch list, along with any real-browser checks.

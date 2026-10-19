@@ -25,3 +25,5 @@ Settle:
 - **Conflicts:** with YouTube's own keys, and with typing in fields.
 - **Feedback.**
 - **Channel filters:** do shortcuts respect them? Today they never do.
+
+Also from [ticket 05](05-ui-stacks.md): how in-page key events are isolated from YouTube's player hotkeys, using WXT's `isolateEvents` or relying on `preventDefault`. For example, typeahead in a menu must not trigger player shortcuts.

@@ -12,3 +12,5 @@ Use `codebase-design` to design the module map: deep modules with small interfac
 - where the seams go, so that `bun test` can cover them (see [ticket 04](04-bun-test.md));
 - how WXT entrypoints stay thin;
 - the folder layout.
+
+Also from [ticket 05](05-ui-stacks.md): happy-dom can't see Tailwind v4 styles or element positions. Decide whether a real-browser test layer is needed, and where it sits.

@@ -16,3 +16,8 @@ Prototype the controls inside YouTube, in YouTube's own look:
 - the right-click card menu.
 
 Once the static look is agreed, make a rough dev build and try it on real YouTube (settled while charting).
+
+Also from [ticket 05](05-ui-stacks.md):
+- **Theme source:** does in-page UI follow YouTube's own dark mode through its `--yt-sys-color-baseline--*` variables, ignoring the extension's theme setting? These variables are undocumented.
+- **Sizing:** YouTube sets `<html>` to `font-size: 62.5%`, so use px or YouTube-style rem?
+- **Fullscreen:** auto-add fires while watching, but anything outside the fullscreen player is invisible.
