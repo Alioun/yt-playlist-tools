@@ -46,3 +46,5 @@ Also from building [ticket 15](15-popup-and-settings.md)'s prototype: with ticke
 Also from ticket 15's prototype: switches and checkboxes must be controlled wherever a change can be refused or deferred (consent, the sync join question, site-access prompts, a refused store change). The generated shadcn-svelte switch flipped its own state before asking the parent, so a cancelled change left it showing "on". Make this a component rule, with a test.
 
 Also from [ticket 14](14-in-page-controls.md): use its Answer's decisions, its card-selector table and the measured sizes. Its prototype's real-YouTube screenshots are on branch `prototype/in-page-controls`.
+
+Also from [ticket 27](27-youtube-music-controls.md): carry its placement and anchor table, the measured tokens (root 10 px, 36 px row buttons, 32 px card circles, 40 px header circles, the `#f1f1f1` toast 12 px above the player bar), the narrow-row table, the copy additions and the runner-ups. Prototype with real-site screenshots on `prototype/youtube-music-controls`.

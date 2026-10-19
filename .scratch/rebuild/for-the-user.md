@@ -14,6 +14,7 @@ Items that need the user, collected while working the map. Clear each one when i
 - **Settings export and import to a file** ([ticket 16](issues/16-storage-and-sync.md)), for people without browser sync. This would be a new capability.
 - **A "Save to ▸" entry in the browser's right-click menu** ([ticket 09](issues/09-where-things-live.md)): a quick-save that leaves YouTube's page untouched. It would need the menus permission. New capability.
 - **A toolbar tick when this tab's video was auto-added, and showing "paused" on the toolbar icon** ([ticket 09](issues/09-where-things-live.md)): wanted? On by default?
+- **Narrow rows on YouTube Music's Home (Quick picks)** ([ticket 27](issues/27-youtube-music-controls.md)): at 1366–1536 px window widths, a hovered row's title shrinks to almost nothing while our buttons show (tooltips then name the song). Keep every button you've switched on (current choice), or drop buttons on those rows to keep the title?
 - **Localisation:** should 2.0's UI be translated? English toasts stand out on a non-English YouTube Music (ticket 26). This would be a new capability.
 
 ## Actions only the user can take

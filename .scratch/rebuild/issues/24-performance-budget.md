@@ -319,3 +319,5 @@ Also from [ticket 14](14-in-page-controls.md)'s real-YouTube build:
 - **Up front:** everything is 39.6 KB gzip (about 43.6 KB with auto-add), within the 49 KB site total.
 - **The kit:** 27.8 KB against its 18 KB line, 72 % of it the Svelte runtime, so the site's rows need rebalancing.
 - **The picker's first open:** 96–115 ms against 60 ms (headless). Hover preload was added but not re-measured.
+
+Also from [ticket 27](27-youtube-music-controls.md): YouTube Music's eager weight is 35.2 KB, within its 43 KB. The lazy picker is 54.5 KB, over its 50 KB (ticket 14 also measured a 96–115 ms first open against 60 ms). Decision for the spec: the picker must meet its budget. If the build overruns, first link `popovers.js` to the kit's Svelte runtime; failing that, replace Bits UI in the picker with the native Popover API and a hand-written listbox.

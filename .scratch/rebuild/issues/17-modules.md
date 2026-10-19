@@ -891,3 +891,9 @@ Also from [ticket 14](14-in-page-controls.md):
 - **Svelte `$state` proxies:** identity comparisons silently fail; add a guard or lint.
 - **Kit export list:** the generated list of Svelte exports needs property access, because some runtime names are reserved words.
 - **The popovers loader** needs a timeout, a visible failure on click, and a silent mode for hover preloads.
+
+Also from [ticket 27](27-youtube-music-controls.md):
+- **The kit's Overlay** needs an in-flow mode (it joins the row's own layout) and a corner mode (cards).
+- **Hosts** must stop clicks and pointer events from reaching the page, not just keys.
+- **`popovers.js`** needs `strategy: "fixed"` and Bits UI's available-height variable.
+- **Proven live:** the gateway jobs that worked on real YouTube Music are listed in its Answer.

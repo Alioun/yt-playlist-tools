@@ -62,3 +62,12 @@ These ran in headless Chrome for Testing 155 against live YouTube, signed out: 1
 Also from [ticket 17](17-modules.md): half of P2 is answered from browser source. Both browsers clear script registrations on every update, and the start-up reconcile restores them. The probe becomes 2.0's `src/livecheck/`, and YouTube's resolver-by-shape lives in the live adapter's `command()`.
 
 Also from [ticket 19](19-upgrade-and-rollout.md): P1 should confirm the expected prompt strings, including Chrome's music.youtube.com prompt. These results also decide the cookie line in the consent text and privacy policy, and Chrome's "Authentication information" disclosure.
+
+Also from [ticket 27](27-youtube-music-controls.md), signed in:
+- the Wiz like bar, and our Save next to it;
+- whether the like repaints after our like;
+- a YouTube Music toast that has an action, to compare colours;
+- the album header at stacked widths;
+- the installed app window.
+
+About 1 in 4 fresh signed-out profiles got the Wiz miniplayer; forcing the flag alone gives a Wiz bar with no like.

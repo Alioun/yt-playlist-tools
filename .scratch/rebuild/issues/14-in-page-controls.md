@@ -470,3 +470,11 @@ The setup, matching production as ticket 17 asks:
 - **Our Add to queue button stays, stepping aside where YouTube draws its own** hover Add to queue (lockup cards). It still fills the gaps YouTube leaves, and it carries our Undo and confirmation. Revisit if YouTube's own button covers every card.
 - **The watch-page button hides at widths where even its icon would push YouTube's Save into "…".** YouTube's own controls keep their place; the popup and keys still offer everything. This follows the user's principle that changing YouTube's look is opt-in, and never at the cost of YouTube's own controls.
 - **The one-off synthetic `resize` on a narrow first load is acceptable.** It asks YouTube to re-measure its own row; it isn't driving YouTube's UI to do work.
+
+Also from [ticket 27](27-youtube-music-controls.md), which hit the same problems on YouTube Music. Reuse its fixes:
+- the moving in-flow host;
+- an inline `all: initial` reset on every host, because the site's CSS stretched hosts in cards;
+- state keyed by the item's identity, because recycled elements showed stale states;
+- re-measuring the toast's position and stacking it above the site's own promos;
+- Escape inside popovers;
+- a 5 s loader timeout.
