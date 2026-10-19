@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "ytpt prompt check (2.0 Firefox permissions)",
+  "version": "0.1.0",
+  "description": "Throwaway: carries exactly the permissions ticket 10 plans for the 2.0 Firefox build, so their prompt text can be read. Does nothing else.",
+  "permissions": ["storage", "scripting"],
+  "host_permissions": ["*://*.youtube.com/*"],
+  "action": { "default_title": "ytpt prompt check", "default_popup": "popup.html" },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "ytpt-prompt-check@example.invalid",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": { "required": ["none"] }
+    }
+  }
+}

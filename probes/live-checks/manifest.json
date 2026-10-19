@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "ytpt live-check probe (throwaway)",
+  "short_name": "ytpt probe",
+  "version": "0.2.0",
+  "description": "Throwaway probe for yt-playlist-tools ticket 25. Runs live checks against YouTube in your own signed-in session. Remove it when done.",
+  "minimum_chrome_version": "111",
+  "permissions": ["storage", "scripting", "webRequest"],
+  "host_permissions": ["https://www.youtube.com/*", "https://music.youtube.com/*"],
+  "optional_host_permissions": ["*://*.youtube.com/*"],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "action": {
+    "default_title": "ytpt probe",
+    "default_popup": "popup.html"
+  },
+  "commands": {
+    "probe-command": {
+      "suggested_key": { "default": "Alt+Shift+9" },
+      "description": "ytpt probe: record that a keyboard command fired in this window"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*", "https://music.youtube.com/*"],
+      "js": ["lib.js", "player-watch.js", "page-main.js"],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://www.youtube.com/*", "https://music.youtube.com/*"],
+      "js": ["page-isolated.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "ytpt-live-checks-probe@example.invalid",
+      "strict_min_version": "128.0"
+    }
+  }
+}

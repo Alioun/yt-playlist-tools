@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>ytpt probe</title>
+    <style>
+      body { font: 13px/1.4 system-ui, sans-serif; width: 320px; margin: 10px; }
+      button { font: inherit; margin: 4px 0; }
+      .muted { color: #555; }
+      code { background: #eee; padding: 0 3px; }
+    </style>
+  </head>
+  <body>
+    <b>ytpt live-check probe</b>
+    <p id="where" class="muted">…</p>
+    <p class="muted">M4: opening this popup records which window and tab it sits over. Now go back to the page and press Run probe.</p>
+    <p class="muted">P1: to see the permission prompt for every youtube.com site, press the button, copy the prompt's text into the panel's “P1: prompt text” box, then remove the access again.</p>
+    <button id="request">Request access to all youtube.com sites</button>
+    <button id="remove">Remove that access again</button>
+    <p id="result" class="muted"></p>
+    <script src="popup.js"></script>
+  </body>
+</html>

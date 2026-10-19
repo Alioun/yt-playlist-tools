@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "ytpt prompt check (2.0 Chrome permissions)",
+  "version": "0.1.0",
+  "description": "Throwaway: carries exactly the permissions ticket 10 plans for the 2.0 Chrome build, so their prompt text can be read. Does nothing else.",
+  "minimum_chrome_version": "121",
+  "permissions": ["storage", "scripting"],
+  "host_permissions": ["https://www.youtube.com/*"],
+  "optional_host_permissions": ["https://music.youtube.com/*"],
+  "action": { "default_title": "ytpt prompt check", "default_popup": "popup.html" }
+}

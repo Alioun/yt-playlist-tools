@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { font: 13px/1.4 system-ui, sans-serif; width: 320px; margin: 10px; }
+      button { font: inherit; margin: 4px 0; }
+      pre { white-space: pre-wrap; background: #eee; padding: 4px; }
+    </style>
+  </head>
+  <body>
+    <b>ytpt prompt check (Chrome)</b>
+    <p>1. Copy the lines under “Permissions” / “Site access” on this extension's details page in chrome://extensions.</p>
+    <p>2. Press the button below and copy the prompt Chrome shows for YouTube Music.</p>
+    <button id="request">Request music.youtube.com access</button>
+    <button id="remove">Remove it again</button>
+    <pre id="state"></pre>
+    <script src="popup.js"></script>
+  </body>
+</html>
