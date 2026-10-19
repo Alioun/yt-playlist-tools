@@ -54,3 +54,7 @@ Also from [ticket 10](10-youtube-access.md):
 Also from [ticket 12](12-adding.md):
 - 1.4.5's toasts on → Show feedback on; off → off. Failures now still show for them.
 - Release note: auto-add no longer adds duplicates, and no longer claims "Added" when an add failed.
+
+Also from [ticket 07](07-watched.md):
+- The one-time note could say "Auto-add now counts only what you actually watch. Skipping ahead and ads don't count."
+- The privacy policy mentions locally kept watch progress (up to 30 days).

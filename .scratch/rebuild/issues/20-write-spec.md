@@ -18,3 +18,5 @@ Assemble `.scratch/rebuild/spec.md` from every resolved ticket. It covers:
 - upgrade and rollout.
 
 Any gap found goes back on the map as a ticket.
+
+Also from [ticket 07](07-watched.md): tickets 11 and 12 say "watch threshold"; standardise on "required percentage" (glossary).

@@ -8,6 +8,7 @@ Items that need the user, collected while working the map. Clear each one when i
 - **Unticking in the playlist picker removes the item from that playlist** ([ticket 26](issues/26-youtube-music-quick-actions.md)), as YouTube's own Save dialog does. Is this a capability you want?
 - **More YouTube Music quick actions** ([ticket 26](issues/26-youtube-music-quick-actions.md), all feasible per ticket 21): Save to library, Start mix, Go to artist / album. These are new capabilities: in or out?
 - **A "recent adds" list** ([ticket 12](issues/12-adding.md)), so a missed toast can be looked up later, e.g. in the popup. This would be a new capability.
+- **Live streams and premieres counting for auto-add** ([ticket 07](issues/07-watched.md)), e.g. after N minutes, or credited to the replay. They never fire today, so this would be a new capability. They're left not counting.
 - **Localisation:** should 2.0's UI be translated? English toasts stand out on a non-English YouTube Music (ticket 26). This would be a new capability.
 
 ## Actions only the user can take
@@ -22,3 +23,5 @@ Items that need the user, collected while working the map. Clear each one when i
 - **Minimum versions:** Chrome 121, Firefox 140.
 - **"Prevent duplicates" is dropped** ([ticket 12](issues/12-adding.md)): 2.0 never adds a second copy of a video to a playlist, using YouTube's real membership. No released version ever had the setting.
 - **Failures always show, even with a feature's feedback off.** Only confirmations can be silenced (tickets 12 and 26).
+- **"Watched" now means actually played** ([ticket 07](issues/07-watched.md)): skipping ahead, resume points and ads no longer count. Progress is remembered locally for up to 30 days so long videos can be finished over several sittings, and the miniplayer now counts too.
+- **Each auto-add playlist can take Videos, Shorts or both, and override the percentage** ([ticket 07](issues/07-watched.md)), e.g. a 5 % "history" playlist next to a 90 % "finished" one.

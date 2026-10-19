@@ -58,3 +58,8 @@ Also from [ticket 12](12-adding.md):
 - Missing/Full marks with Remove in the playlist lists;
 - a quick-save playlist per site, per account;
 - adds started from the popup report inline.
+
+Also from [ticket 07](07-watched.md):
+- **Default required percentage:** a 0–100 slider plus a field that saves on Enter, on leaving the field, or on slider release, labelled "As soon as it starts playing" / "Only when watched in full".
+- **Per playlist:** Takes (Videos / Shorts / Both) and a percentage override.
+- **In the popup:** Pause auto-add and "Don't auto-add this video".

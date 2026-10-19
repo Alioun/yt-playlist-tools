@@ -45,3 +45,5 @@ Also from [ticket 10](10-youtube-access.md):
 - **Test seams:** recorded responses per job, plus fakes for `scripting.registerContentScripts` and `tabs.query` URL filtering. Check whether WXT's fake browser has them.
 
 Also from [ticket 12](12-adding.md): a single background coordinator orders adds and removals per account, playlist and video. Session memory (undo-skip, recent outcomes) stays in memory only. The private-window write guard covers Missing/Full marks and new-playlist records.
+
+Also from [ticket 07](07-watched.md): the watch tracker is a deep module. A pure core turns readings into counted seconds and the playlists now due, so `bun test` can cover it; a thin player adapter feeds it. Its page script runs on every YouTube page while auto-add is on, to follow the miniplayer.

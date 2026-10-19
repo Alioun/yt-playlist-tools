@@ -35,12 +35,32 @@ _Avoid_: Legacy setup, orphaned setup
 ### Adding videos
 
 **Auto-add**:
-Adding the current video to every auto-add playlist once the user has watched the required percentage of it. The only add path that happens without an explicit user action.
+Adding the current video to each auto-add playlist once its watch progress reaches that playlist's required percentage. The only add path that happens without an explicit user action.
 _Avoid_: Auto-save, auto-playlist
 
 **Auto-add playlist**:
-A playlist the user has selected to receive auto-added videos.
+A playlist the user has selected to receive auto-added videos. Each one takes videos, Shorts or both, and may set its own required percentage.
 _Avoid_: Target playlist, selected playlist
+
+**Watch progress**:
+How much of a video the user has actually played, as a share of its length. Each part counts once, at any speed; ads and anything skipped over don't count.
+_Avoid_: Playhead position, watch time, watched percentage
+
+**Required percentage**:
+The watch progress at which auto-add adds a video to an auto-add playlist. One default is shared by every account; an auto-add playlist can set its own.
+_Avoid_: Watch threshold, threshold, trigger point
+
+**Short**:
+A video played in YouTube's Shorts player. The same video opened on a watch page is a video, not a Short.
+_Avoid_: Reel
+
+**Session skip**:
+A video that auto-add leaves out of some or all of an account's auto-add playlists until the browser restarts, because the user undid or unticked its auto-add or chose "Don't auto-add this video". Explicit adds ignore it.
+_Avoid_: Excluded video, blocklist, ignore list
+
+**Paused auto-add**:
+Auto-add stopped by the user until they resume it or the browser restarts; nothing watched meanwhile counts. Unlike switching the feature off, its settings and page code stay.
+_Avoid_: Disabled, off
 
 **Add**:
 One video put into one or more of the user's playlists by a single action of one feature: auto-add, a playlist shortcut, quick-save or Save to playlist. Putting a video in the queue is Add to queue, not an add.

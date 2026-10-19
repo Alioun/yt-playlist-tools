@@ -39,3 +39,5 @@ Also from [ticket 12](12-adding.md):
 - **Quick-save:** a split button in ticket 26's model, hidden on made-for-kids cards if that's detectable.
 - **The queue button** has four states, including "Sent, not confirmed".
 - **Open:** should our in-page toasts carry a small extension mark, so users can tell them from YouTube's own? That's "look like YouTube" against clarity.
+
+Also from [ticket 07](07-watched.md): use its states table and draft copy for this video's auto-add status, the Shorts and miniplayer status (the miniplayer now counts), and fullscreen.
