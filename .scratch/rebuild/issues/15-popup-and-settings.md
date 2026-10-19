@@ -28,3 +28,5 @@ Also include:
 - the feature switches from the modularity principle (map Notes).
 
 Also from [ticket 21](21-youtube-music-internals.md): a side panel won't open in Chrome's installed-app windows, so YouTube Music app users need everything reachable from the popup.
+
+Also from [ticket 01](01-youtube-requests.md): a picker with thumbnails and counts needs two requests (`get_add_to_playlist` plus `FEplaylist_aggregation`) and a cache.

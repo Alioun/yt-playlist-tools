@@ -25,3 +25,5 @@ Also from [ticket 05](05-ui-stacks.md):
 Also from [ticket 13](13-ui-stack.md): choose the toast component (shadcn-svelte's toast or another), and keep Tailwind's `@property` rules and any library CSS out of YouTube's `<head>`.
 
 Scope: this ticket covers YouTube. YouTube Music's controls are [ticket 27](27-youtube-music-controls.md). Every control here belongs to a feature the user can switch off, and switching it off removes it from the page completely (map Notes).
+
+Also from [ticket 01](01-youtube-requests.md): sending edits through YouTube's commands lets YouTube show its own error toast, and maybe a confirmation, alongside ours. The queue's create path appears to append, not replace (unverified).

@@ -33,3 +33,8 @@ Also from [ticket 02](02-request-context.md):
 - **Host access:** detect missing or withheld youtube.com access at startup.
 
 Also: 2.0 runs on music.youtube.com too. Check that the final content-script matches stay inside the `*://*.youtube.com/*` access 1.4.5 users already granted, so the Firefox upgrade stays silent ([ticket 06](06-upgrade-path.md)).
+
+Also from [ticket 01](01-youtube-requests.md):
+- **Auth for reads and create:** these need either the `yt-service-request` route (if [ticket 25](25-live-checks.md) proves it), reading `SAPISID` in the page to build the auth hash (declared as "Authentication information" on the Chrome Web Store), or copying headers off YouTube's own requests. Re-decide ticket 03's cookie rule with that in hand.
+- **Results:** read success from the response's `status`, not the HTTP code.
+- **Client version:** requests sent outside a tab need a fresh client version.

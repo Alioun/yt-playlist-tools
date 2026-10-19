@@ -25,3 +25,5 @@ Also include:
 - the YouTube Music section's settings;
 - each feature's on/off state and its own settings;
 - whether YouTube Music settings belong to the account or the device ([ticket 11](11-accounts.md)).
+
+Also from [ticket 01](01-youtube-requests.md): `DATASYNC_ID` keys per-account data. The playlist picker needs a cache of playlists with thumbnails and counts.

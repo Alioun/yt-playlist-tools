@@ -24,3 +24,5 @@ Also from [ticket 04](04-bun-test.md): `bun test` can't reach real browsers, rea
 Also include: YouTube Music's internals ([ticket 21](21-youtube-music-internals.md)) belong on the same breakage watch list.
 
 Also from [ticket 21](21-youtube-music-internals.md): the queue path depends on `ytmusic-app.networkManager`, `/music/get_queue` and `app.queue` internals. YouTube Music's new-player A/B test (since 2026-09-29) already broke several YouTube Music tools.
+
+Also from [ticket 01](01-youtube-requests.md): `docs/research/youtube-requests/bundle-check.mjs` (branch `research/youtube-requests`) checks that the live YouTube client still has what 2.0 relies on, and can seed the breakage check. The add-to-playlist response is the piece most likely to change.

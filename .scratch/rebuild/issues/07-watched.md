@@ -26,3 +26,5 @@ Settle:
 - background tabs and the miniplayer;
 - the threshold's range, and whether it's per playlist;
 - an on/off switch, and pausing auto-add for one video or session.
+
+Also from [ticket 01](01-youtube-requests.md): Shorts play in `#shorts-player` and loop, so progress wraps to 0. Take the ID from the URL or YouTube's navigation event. Watch the right player, not the first `<video>`, since hover previews have their own player.

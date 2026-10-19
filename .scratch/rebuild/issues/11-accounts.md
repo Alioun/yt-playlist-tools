@@ -21,3 +21,5 @@ Also from [ticket 03](03-store-policy.md): nothing may be stored from private wi
 Also from [ticket 02](02-request-context.md): requests sent from a tab follow that tab's account, container and private window. Decide which tab the popup uses when several YouTube tabs differ, and whether 2.0 runs in private and incognito windows at all.
 
 Also: YouTube Music uses the same account. Decide whether the YouTube Music section's choices belong to the account or the device.
+
+Also from [ticket 01](01-youtube-requests.md): `DATASYNC_ID` from `ytcfg` is YouTube's own identity key, and the natural key for per-account setups (not the `authuser` index). Switching account is a full-page sign-in redirect, so the extension can't switch accounts itself.

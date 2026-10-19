@@ -20,3 +20,12 @@ Several facts the access decision ([ticket 10](10-youtube-access.md)) depends on
 Record what was run and the results.
 
 Also: run `docs/research/youtube-music/live-check.js` (branch `research/youtube-music`) signed in, in Chrome, Firefox and the installed YouTube Music app windows.
+
+Also from [ticket 01](01-youtube-requests.md):
+- which response shape `get_add_to_playlist` returns;
+- whether `resolveCommand` hands back the response when given callbacks;
+- whether the `yt-service-request` route reads data without opening YouTube's UI;
+- whether a request with cookies but no auth hash counts as signed out;
+- what a duplicate add does;
+- whether `DATASYNC_ID` survives sign-out;
+- how `#shorts-player` behaves.

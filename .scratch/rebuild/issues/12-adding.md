@@ -17,3 +17,9 @@ Decide the add flow for auto-add, shortcuts, quick-save and the queue:
 - **Creating a playlist (approved):** where it's offered, and with which options (title, privacy).
 
 Also from the YouTube Music charting (Q19): Save to playlist on YouTube Music uses this same flow, including the picker that shows where the song already is.
+
+Also from [ticket 01](01-youtube-requests.md):
+- **Duplicates:** what a duplicate add does on youtube.com is unknown until [ticket 25](25-live-checks.md).
+- **Undo:** remove the exact entry ID the add returned.
+- **New playlists:** they can take minutes to appear in listings, and creation is rate-limited (daily caps on public playlists).
+- **Success:** read it from `status`, not the HTTP code.
