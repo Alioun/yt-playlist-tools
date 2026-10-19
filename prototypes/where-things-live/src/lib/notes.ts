@@ -1,0 +1,97 @@
+// THROWAWAY PROTOTYPE (ticket 09). The placement decisions, shown in the "What to look at" panel beside each surface.
+import type { Surface } from "./state.svelte";
+
+export const notes: Record<Surface, { title: string; points: string[] }> = {
+  map: {
+    title: "The rule of thumb",
+    points: [
+      "Popup = this tab, this account, right now. Settings = everything, for good. The page shows only what a feature you switched on draws.",
+      "Per-account choices (which playlists) are made in the popup, where you are when you think of them, and shown again in Settings. Shared behaviour (switches, keys, threshold, feedback) lives in Settings, with one-click switches in the popup.",
+      "Features are switched in three places only: first run (or the upgrade note), Settings, and the popup. Never on YouTube's pages.",
+      "No side panel, no browser right-click entries, no extra pages. The toolbar badge is the only thing outside the popup and Settings, and it's provisional.",
+      "Toggle any switch and look at the YouTube mocks: switched-off features leave nothing on the page.",
+    ],
+  },
+  popup: {
+    title: "Toolbar popup",
+    points: [
+      "Header: the account this tab uses (avatar, name, @handle; a placeholder while it's read). With 2+ setups it becomes a 'Showing' picker that never says 'switch'. The gear opens Settings in a tab.",
+      "One banner at a time, most urgent first: consent or upgrade › site access (per site) › account changed in another tab › signed out › private window › no YouTube tab › another account's tab not open › 1.x setup unclaimed › 1.x claim notice.",
+      "It works through a serving tab (ticket 10): the active YouTube tab, else the most recent one on the same account. Adds made here report on the picker row, never as a page toast.",
+      "Missing or full playlists are marked in the choosers, with Remove.",
+      "Recent adds at the bottom is a PROPOSAL (a new capability): where to look after missing a toast.",
+      "Two tabs, YouTube and YouTube Music, preselected by the site you're on.",
+      "YouTube tab: This video (watch page, Shorts, or the miniplayer) › Auto-add (switch, Pause, this account's playlists with their options) › Playlist shortcuts' playlists › Quick-save playlist › the other features as one-line switches › All settings.",
+      "This video carries ticket 07's status line ('Auto-adds at 50 % · 34 % watched', 'Added to … · … at 90 %', 'Auto-add paused · Resume', 'Not auto-adding this video · Undo') and 'Don't auto-add this video'. When nothing is tracked it says what's missing.",
+      "Each auto-add playlist's pill opens its options: Takes (Videos / Shorts / Both), its own percentage, its channel filter.",
+      "Playlist shortcuts are managed here too (ticket 08): each key with the recorder, its name, this account's playlist, Add and Remove. That's what 'Choose one in the popup' points to.",
+      "Ticket 18: a feature that isn't working gets a status line, and a strip under the header says so with Details (Settings › Diagnostics). Try Scenario › YouTube changed something.",
+      "YouTube Music tab: the section switch › Playing now (Save and the picker) › Quick actions › Quick-action shortcuts › Playlist shortcuts here too.",
+      "A switched-off feature is one row with its switch, exactly as in Settings.",
+      "No YouTube tab: cached, read-only lists with their age and Open YouTube. Switches still work.",
+      "Use the scenario chips above to walk every state.",
+    ],
+  },
+  settings: {
+    title: "Settings page",
+    points: [
+      "Opens in a tab from the popup's gear or the browser's extension menu. Left nav: YouTube, YouTube Music, Everywhere, Accounts, Appearance, Privacy & data, Diagnostics, About.",
+      "Diagnostics (ticket 18): Check now, the report shown in full before Copy, Known problems / Report a problem, the detailed log. Status lines sit under each feature's switch.",
+      "Shortcuts (ticket 08): up to 20, each with label, key recorder and this account's playlist; the picker key and the undo key; a link to set a key for this popup in the browser's own shortcut settings.",
+      "Each feature is one row: name, one line, a tag saying whether it changes the page, and its switch. Switching it on unfolds its settings right there.",
+      "Playlist choices are marked 'for {account}'. A 'Showing setup for' picker appears only with 2+ setups.",
+      "Accounts lists every account with a setup, each with Remove. Sign in and Switch account link to YouTube's own pages.",
+      "Privacy & data: what you agreed to (review, withdraw), clear data with a confirmation, old Google access.",
+      "Connection problems show as a strip at the top, the same wording as the popup. Site access is asked for per site, from a click.",
+      "A failure toast's Settings action lands on the feature here, where the playlist is marked Missing or Full with Remove (ticket 12).",
+      "Switching a YouTube Music feature on in Chrome asks for YouTube Music site access from that click (ticket 10).",
+    ],
+  },
+  "first-run": {
+    title: "First run",
+    points: [
+      "Opens once in a tab on install. Three steps: pick features (all unticked) › Before you start (the store consent, explicit Agree) › Finish setting up.",
+      "Each feature says whether it changes the page, so someone can pick only auto-add and shortcuts and keep YouTube untouched.",
+      "Nothing touches YouTube until a feature is ticked and the consent is agreed.",
+      "Step 3 handles the YouTube states: no tab (Open YouTube), signed out (Sign in), no site access (Give access, from a click).",
+      "Chrome: ticking a YouTube Music feature means the Agree click also asks for YouTube Music site access (ticket 10). The install prompt names www.youtube.com only.",
+      "Closing without agreeing leaves everything off; the popup says 'Waiting for your OK' and any switch asks for consent first.",
+    ],
+  },
+  upgrade: {
+    title: "1.4.5 upgrade note",
+    points: [
+      "Opens once in a tab after the migration, and the toolbar icon shows '!' until it's handled.",
+      "One page: what changed (no Google credentials needed) › what was kept (ticked) › what's new (all unticked) › Before you continue (the consent). Agree applies the ticks, so the choices come before it.",
+      "Auto-add and the shortcut stay paused until Agree. Agree then hands the 1.x playlists to the signed-in account that owns them (ticket 11).",
+      "Not now keeps everything paused, and the popup keeps a Review banner.",
+    ],
+  },
+  youtube: {
+    title: "Inside YouTube",
+    points: [
+      "Thumbnails: our queue button and the quick-save split button (one click, ▾ for the picker) stack at the top-left on hover. YouTube's own hover buttons keep the top-right; the duration keeps the bottom-right.",
+      "Failure toasts look different from confirmations and carry Settings (or Choose for quick-save), per ticket 12.",
+      "Ticket 18: a feature that isn't working draws nothing; one sticky notice per session says so, with Details. Try Scenario › YouTube changed something (no queue buttons).",
+      "Watch page: the watch-page button sits in YouTube's action row after Save. Its menu repeats the popup's This video card.",
+      "Shorts: the watch-page button joins the action column; quick-save works on Shorts shelves.",
+      "Toasts sit bottom-left where YouTube's own appear, one at a time.",
+      "Auto-add and shortcuts draw nothing on the page except their toasts.",
+      "Miniplayer: auto-add keeps counting there (ticket 07), but nothing of ours is drawn in it. Its status is in the popup and the toolbar tick.",
+      "The watch-page button's menu: status line, each playlist's outcome, Don't auto-add this video, Pause auto-add, this channel's filter, Save to….",
+      "Right-click: YouTube's ⋮ menu on cards. Links inside cards keep the browser's menu, Shift always does.",
+      "Dashed outlines mark what the extension draws. Toggle features on the right to see them come and go.",
+    ],
+  },
+  music: {
+    title: "Inside YouTube Music",
+    points: [
+      "Song rows: hover buttons in the trailing area, left of YouTube Music's own like and ⋮ (ticket 26).",
+      "Cards: along the bottom of the hover overlay, beside YouTube Music's play button.",
+      "Album and playlist headers: always-visible Play next and Add to queue, among YouTube Music's own header buttons.",
+      "Queue items: Save, Like and Remove from queue, left of the item's ⋮. The playing song's queue item is how the playing song gets its buttons.",
+      "Player bar: only Save, opt-in, beside YouTube Music's like. Nothing depends on the bar; switch to 'new player (no bar)' to check.",
+      "The YouTube Music switch off: nothing at all on music.youtube.com.",
+    ],
+  },
+};
