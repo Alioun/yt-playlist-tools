@@ -4,6 +4,12 @@ A browser extension that files the YouTube videos you watch into your own playli
 
 ## Language
 
+### The extension
+
+**Feature**:
+A part of the extension the user can switch on or off by itself, such as auto-add or YouTube Music's quick actions. A feature that's off leaves no trace on YouTube's pages.
+_Avoid_: Module, plugin, tool
+
 ### Adding videos
 
 **Auto-add**:

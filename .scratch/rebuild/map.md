@@ -29,6 +29,15 @@ A spec at `.scratch/rebuild/spec.md` for 2.0 of this extension: a ground-up rebu
     - A switched-off feature leaves no trace: nothing drawn on the page, no code loaded there, no settings in the way.
     - Changing how YouTube or YouTube Music looks is always the user's choice. Someone can use only auto-add and shortcuts and keep YouTube untouched.
     - Defaults never override what the user chose, and there's no behaviour the user can't turn off.
+    - **Settled 2026-10-19 (Q22–Q25; the user delegated with "you have the shared understanding", so the recommended answers were taken):**
+      - **The word:** each switchable part is a **feature** (glossary).
+      - **What counts as a feature:** anything that does something on its own, with its options inside it.
+        - YouTube: auto-add (channel filters inside it), playlist shortcuts, thumbnail quick-save, the thumbnail Add to queue button, the right-click card menu, and whatever ticket 09 puts on the watch page.
+        - YouTube Music: quick actions (each button chosen separately) and quick-action shortcuts.
+        - Global: settings sync.
+      - **Feedback:** toasts aren't a feature; each feature has its own "show feedback" option.
+      - **First run:** every feature starts off. A first-run screen, which doubles as the store consent screen, lets the user tick what they want, so nothing on YouTube changes until it's chosen. 1.4.5 upgraders keep auto-add and their shortcut on once they accept; everything new starts off.
+      - **Off costs nothing:** a switched-off feature injects no code, CSS or elements, and its settings collapse to a single row with its switch. Page scripts are registered per feature only while it's on (the `scripting` permission returns for this; it carries no install warning on Chrome).
   - **YouTube Music (added 2026-10-19, Q14–Q21):**
     - **The quick actions** use YouTube Music's own names: Play next, Add to queue, Save to playlist (one click, plus a picker showing where the song already is), Like / unlike, and Remove from queue.
     - **Where they appear:** inline hover buttons on song rows and cards, on the player bar, and as keyboard shortcuts (hovered row, else the playing song).
