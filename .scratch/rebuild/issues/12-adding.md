@@ -15,3 +15,5 @@ Decide the add flow for auto-add, shortcuts, quick-save and the queue:
 - **Failures:** signed out, network, a playlist that's gone, a full playlist, a private video.
 - **Concurrency:** two tabs, or auto-add and a shortcut at once.
 - **Creating a playlist (approved):** where it's offered, and with which options (title, privacy).
+
+Also from the YouTube Music charting (Q19): Save to playlist on YouTube Music uses this same flow, including the picker that shows where the song already is.

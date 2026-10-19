@@ -1,6 +1,6 @@
 # YouTube Playlist Tools
 
-A browser extension that files the YouTube videos you watch into your own playlists.
+A browser extension that files the YouTube videos you watch into your own playlists, and puts YouTube Music's everyday actions one click away.
 
 ## Language
 
@@ -16,6 +16,23 @@ _Avoid_: Target playlist, selected playlist
 
 **Shortcut playlist**:
 The single playlist the keyboard shortcut adds the current video to.
+
+### Queue
+
+**Queue**:
+The list of videos or songs that play after the current one, on YouTube or YouTube Music.
+_Avoid_: Up next (YouTube Music's tab label), playlist
+
+**Play next**:
+Putting a song, album or playlist into the queue directly after what's playing.
+
+**Add to queue**:
+Putting a video, song, album or playlist at the end of the queue.
+_Avoid_: Enqueue, append
+
+**Quick action**:
+An action on a song, album or playlist that YouTube Music only offers through its ⋮ menu, made available in one click or one key.
+_Avoid_: Hover action, menu shortcut
 
 ### Channel filters
 

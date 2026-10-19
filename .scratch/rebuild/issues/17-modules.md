@@ -20,3 +20,9 @@ Also from [ticket 04](04-bun-test.md):
 - **Bun version:** bump `packageManager` from `bun@1.4.0` to at least 1.4.3, since CI reads that field.
 - **Per-browser runs:** inject the platform and run once, or keep separate Chrome and Firefox runs.
 - **Coverage:** a policy that accepts no branch coverage.
+
+Also from [ticket 13](13-ui-stack.md): the UI is Svelte 5 + shadcn-svelte / Bits UI ([ADR-0002](../../../docs/adr/0002-svelte-and-bits-ui.md)). The `bun test` setup needs the Svelte plugin and `--conditions browser` from the ticket 05 spike.
+
+Also include:
+- **YouTube Music:** its own page adapter, which shares the playlist operations.
+- **Modularity:** each feature is an independently loadable unit. A feature that's switched off injects nothing into pages, for example through dynamic content-script registration.

@@ -31,3 +31,8 @@ Also from [ticket 05](05-ui-stacks.md): how in-page key events are isolated from
 Also from [ticket 06](06-upgrade-path.md): Firefox's `commands.update` requires Ctrl or Alt, so with manifest `commands` a carried-over bare-key or Shift-only shortcut can't be kept as is.
 
 Also from [ticket 04](04-bun-test.md): WXT's fake browser doesn't implement `commands` or `contextMenus`, so shortcuts and any context-menu entries need their own port or fake to be testable.
+
+Also from the YouTube Music charting (Q16–Q19):
+- every YouTube Music quick action can have a shortcut, acting on the hovered row, else the playing song;
+- playlist shortcuts work on YouTube Music too;
+- avoid clashes with YouTube Music's own keys ([ticket 21](21-youtube-music-internals.md)).

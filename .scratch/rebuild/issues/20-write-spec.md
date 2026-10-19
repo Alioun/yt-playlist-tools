@@ -4,7 +4,7 @@ Type: task
 Status: open
 Labels: wayfinder:task
 Part of: [Rebuild (2.0)](../map.md)
-Blocked by: 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22, 23, 24, 25
+Blocked by: 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22, 23, 24, 25, 26, 27
 
 ## Question
 

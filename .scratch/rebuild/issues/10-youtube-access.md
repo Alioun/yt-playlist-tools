@@ -31,3 +31,5 @@ Also from [ticket 02](02-request-context.md):
 - **Several tabs:** which tab is used when YouTube tabs differ in account or container (with [ticket 11](11-accounts.md)), and what happens with discarded or frozen tabs.
 - **Version floors:** Chrome 111 or higher; Firefox 128, 140 or 153.
 - **Host access:** detect missing or withheld youtube.com access at startup.
+
+Also: 2.0 runs on music.youtube.com too. Check that the final content-script matches stay inside the `*://*.youtube.com/*` access 1.4.5 users already granted, so the Firefox upgrade stays silent ([ticket 06](06-upgrade-path.md)).

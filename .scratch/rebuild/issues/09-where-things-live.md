@@ -27,3 +27,7 @@ Also from [ticket 06](06-upgrade-path.md): for upgraders, the one-time note doub
 Also from [ticket 02](02-request-context.md):
 - With no YouTube tab open, the popup and settings may only have cached data plus an "Open YouTube" action, unless [ticket 25](25-live-checks.md) proves a hidden frame. Design for that state.
 - Include asking for youtube.com access when it's missing or revoked (Firefox).
+
+Also from the YouTube Music charting (Q20–Q21): YouTube Music gets its own tab or section, with its own on/off switch, button choices and shortcuts. Account, theme and sync stay shared at the top level. Map both sections, and the installed YouTube Music app.
+
+Also from the modularity principle (map Notes): show where each feature is switched on and off, and what first run offers.

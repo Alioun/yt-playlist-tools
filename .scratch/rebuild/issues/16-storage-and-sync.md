@@ -20,3 +20,8 @@ Approved: settings sync across the user's browsers. Decide:
 Also from [ticket 03](03-store-policy.md): whether `storage.sync` fits AMO's `none` declaration is open ([ticket 23](23-ask-amo.md)). Nothing may be persisted from private windows.
 
 Also from [ticket 04](04-bun-test.md): WXT's fake browser doesn't model `storage.sync`'s quota, so quota behaviour needs its own test double.
+
+Also include:
+- the YouTube Music section's settings;
+- each feature's on/off state and its own settings;
+- whether YouTube Music settings belong to the account or the device ([ticket 11](11-accounts.md)).

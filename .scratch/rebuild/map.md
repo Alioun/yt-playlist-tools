@@ -4,7 +4,7 @@ Labels: wayfinder:map
 
 ## Destination
 
-A spec at `.scratch/rebuild/spec.md` for 2.0 of this extension: a ground-up rebuild that keeps every capability, works through the user's own YouTube session, and puts UI/UX first. Every decision is settled and it's ready to hand to `/to-tickets`.
+A spec at `.scratch/rebuild/spec.md` for 2.0 of this extension: a ground-up rebuild that keeps every capability and adds YouTube Music quick actions. It works through the user's own YouTube session, puts UI/UX first, and lets the user switch off any part of it. Every decision is settled and it's ready to hand to `/to-tickets`.
 
 ## Notes
 
@@ -23,7 +23,20 @@ A spec at `.scratch/rebuild/spec.md` for 2.0 of this extension: a ground-up rebu
   - **UI is decided through clickable prototypes:** first throwaway pages with realistic fake data in the candidate component library, then a rough dev build on real YouTube for in-page parts once the look is agreed.
   - **Today's friction counts as defects** 2.0 must fix (inventory.md, "Friction").
   - **Browsers:** desktop Chrome and Firefox, MV3. Chromium browsers ride along on the Chrome build.
-  - **Tooling:** WXT, TypeScript and Bun stay. Tests run on `bun test`, not Vitest. The UI stack (framework, component library, styling) is the user's call after research.
+  - **Tooling:** WXT, TypeScript and Bun stay. Tests run on `bun test`, not Vitest. The UI is Svelte 5 with shadcn-svelte / Bits UI ([ADR-0002](../../docs/adr/0002-svelte-and-bits-ui.md)).
+  - **Modular, opt-in, never bloated (the user's principle):**
+    - Every part of 2.0 is a feature the user can switch off.
+    - A switched-off feature leaves no trace: nothing drawn on the page, no code loaded there, no settings in the way.
+    - Changing how YouTube or YouTube Music looks is always the user's choice. Someone can use only auto-add and shortcuts and keep YouTube untouched.
+    - Defaults never override what the user chose, and there's no behaviour the user can't turn off.
+  - **YouTube Music (added 2026-10-19, Q14–Q21):**
+    - **The quick actions** use YouTube Music's own names: Play next, Add to queue, Save to playlist (one click, plus a picker showing where the song already is), Like / unlike, and Remove from queue.
+    - **Where they appear:** inline hover buttons on song rows and cards, on the player bar, and as keyboard shortcuts (hovered row, else the playing song).
+    - **Buttons:** the user picks which inline buttons show (default: Play next and Add to queue).
+    - **Albums and playlists:** they work too.
+    - **Carried over:** playlist shortcuts and quick-save work there. Auto-add and channel filters stay YouTube-only.
+    - **In the app:** YouTube Music gets its own tab or section with its own switch, buttons and shortcuts.
+    - **Installed app:** the YouTube Music app is first-class if extensions run in it.
 
 ## Decisions so far
 
@@ -34,6 +47,7 @@ A spec at `.scratch/rebuild/spec.md` for 2.0 of this extension: a ground-up rebu
 - [What happens when a 1.4.5 user updates to 2.0?](issues/06-upgrade-path.md): the Firefox update is silent while origins stay under `*://*.youtube.com/*`, because MV3 updates never grant new host permissions. Run the migration from stored state on every start, not from `onInstalled`. 1.4.5's real defaults were 0 % and toasts off. Lists the AMO and Chrome Web Store submission requirements, and `release.yml` must move to Web Store API v2. Detail on branch `research/upgrade-path`.
 - [Can `bun test` cover a WXT extension?](issues/04-bun-test.md): yes, with a `bunfig.toml`, three preloads (fake browser, happy-dom, Testing Library) and `--isolate`, on Bun ≥ 1.4.3. WXT stays at the entrypoints, auto-imports go off, and dependencies are injected. No branch coverage, and nothing that needs the build or a real browser. Detail on branch `research/bun-test`.
 - [Where can the extension send those requests from, and with which permissions?](issues/02-request-context.md): from the YouTube tab's MAIN world (a manifest `world: "MAIN"` script; Firefox 128+), with popup and settings requests routed through a live YouTube tab. YouTube rejects extension origins with 403, so with no tab open only cached data is available unless a hidden frame works ([ticket 25](issues/25-live-checks.md)). Permissions: `storage` + youtube.com, with no install or upgrade prompt beyond that. Detail on branch `research/request-context`.
+- [Which UI stack?](issues/13-ui-stack.md): Svelte 5 with shadcn-svelte on Bits UI (the user's call), one stack with a YouTube skin for in-page UI. See [ADR-0002](../../docs/adr/0002-svelte-and-bits-ui.md).
 
 ## Not yet specified
 

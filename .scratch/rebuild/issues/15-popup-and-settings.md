@@ -22,3 +22,7 @@ Prototype the popup and the settings page in the chosen stack, with realistic fa
 Also from [ticket 03](03-store-policy.md):
 - Include the first-run disclosure and consent screen.
 - The extension's own UI must not imitate YouTube's look and feel, so YouTube red can't stay as the primary colour.
+
+Also include:
+- the YouTube Music tab: its on/off switch, the choice of inline buttons, and its shortcuts;
+- the feature switches from the modularity principle (map Notes).

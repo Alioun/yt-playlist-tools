@@ -21,3 +21,7 @@ Also from [ticket 05](05-ui-stacks.md):
 - **Theme source:** does in-page UI follow YouTube's own dark mode through its `--yt-sys-color-baseline--*` variables, ignoring the extension's theme setting? These variables are undocumented.
 - **Sizing:** YouTube sets `<html>` to `font-size: 62.5%`, so use px or YouTube-style rem?
 - **Fullscreen:** auto-add fires while watching, but anything outside the fullscreen player is invisible.
+
+Also from [ticket 13](13-ui-stack.md): choose the toast component (shadcn-svelte's toast or another), and keep Tailwind's `@property` rules and any library CSS out of YouTube's `<head>`.
+
+Scope: this ticket covers YouTube. YouTube Music's controls are [ticket 27](27-youtube-music-controls.md). Every control here belongs to a feature the user can switch off, and switching it off removes it from the page completely (map Notes).
