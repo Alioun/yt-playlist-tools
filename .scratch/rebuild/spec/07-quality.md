@@ -179,8 +179,8 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
 - **Q-TEST-2.** Every pure module has unit tests with no DOM and no fake browser. That covers at least:
   - the channel-filter rule, the outcome and toast rules, and the copy rules;
   - the key matcher and the key recorder;
-  - the watch tracker's counting rule (table-driven: stretches, gaps, playback rate, the goal clamp with R27's rows for videos under 3 s, live/clip/made-for-kids exclusion, "can't measure", and a session skip that doesn't count as a run, R23);
-  - document codecs, migrations (including the 1.4.5 storage snapshots from the upgrade test, [REL-CHK-16](08-release.md#173-fixtures-signed-paths-and-chrome)), the private-write table, the sync budget counter, the chunker and the conflict rule;
+  - the watch tracker's counting rule (table-driven: stretches, gaps, playback rate, the goal clamp with R27's rows for videos under 3 s, live/clip/made-for-kids exclusion, "can't measure", and which outcomes count as a run: only *added* and *already in*, never *filtered out*, *failed* or a session skip; R23, R43);
+  - document codecs, migrations (including the 1.4.5 storage snapshots from the upgrade test, [REL-CHK-16](08-release.md#173-fixtures-signed-paths-and-chrome)), the start-up check that tells a 1.x upgrade from a fresh install, with no `onInstalled` and whatever `schema` says ([ARC-MOD-25](06-architecture.md#69-the-store-module-interface); R64), the private-write table, the sync budget counter, the chunker and the conflict rule;
   - the registry derivations: the registrar's `desired()` and its diff, the monitor's `deriveStatus()`, and `badgeFor()`;
   - each parser's shape handling.
 - **Q-TEST-3.** Decision logic is written as data tables and tested row by row: the route tables, the private-write table, the failure and outcome mapping, status derivation and badge priority. Each row is one test case (this is also how decisions get coverage without branch coverage, §7.4).
@@ -244,12 +244,12 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
   7. **Styles, positions and fullscreen:** our controls' computed styles and positions at their anchors; the toast layer visible when the page makes `<html>` the fullscreen element; the layer moved into a fullscreen element that doesn't contain `<body>`.
   8. **Isolation and popovers:** the popovers close on Escape while the hosts isolate events (Bits UI's own `document` listener can't hear it), and Escape doesn't reach the page; typing in the picker's search doesn't reach the page's hotkeys; clicks, pointer and mouse down/up and `contextmenu` stop at our hosts.
   9. **Timings and per-card cost** (Chromium): the time budgets of [§7.6.5](#765-in-page-time), gated at 1.5× in CI (Q-PERF-41). Firefox records the same cases with `performance.mark` for information only (Q-TEST-19).
-  10. **Extension pages render:** the built `popup.html`, settings page and first-run page (`onboarding.html`) each render their first view (a known landmark is present and no uncaught error is logged). This catches import cycles between code-split groups and top-level await deadlocks, which blanked pages in the prototype while their size numbers still looked fine.
+  10. **Extension pages render:** the built `popup.html`, settings page and first-run page (`onboarding.html`) each render their first view (a known landmark is present and no uncaught error is logged). This catches import cycles between code-split groups and top-level await deadlocks, which blanked pages in the prototype while their size numbers still looked fine. It's a real-browser test, not part of `check:budget`, which only measures bytes ([UI-RULE-17](05-ui.md#extension-pages); R52).
   11. **Accessibility:** Q-TEST-20.
 - **Q-TEST-19.** On Firefox, which has no Chrome DevTools Protocol, the checks marked Chromium above (execution contexts, `scriptParsed`, `getEventListeners`, `Performance.getMetrics`, CPU throttling) are replaced by DOM, network and registration checks. Firefox gates sizes and behaviour, never time: its timings are recorded with `performance.mark` and reported for information. (R31)
 - **Q-TEST-20.** **Accessibility checks** run in layer 4, in both browsers ([UI-RULE-40](05-ui.md#511-accessibility-as-decided), UI-RULE-42):
   - axe-core runs against the popup, settings and the first-run page, and against our in-page hosts on YouTube and YouTube Music (the layer host with a toast and a notice, the overlay, an inline control and an open picker). Any violation fails the run;
-  - with reduced motion emulated (`prefers-reduced-motion: reduce`), nothing of ours animates anything but `opacity`: sheets, popovers and toasts fade instead of sliding, and the deep-link ring doesn't move.
+  - with reduced motion emulated (`prefers-reduced-motion: reduce`), nothing of ours animates anything but `opacity`: sheets, popovers and toasts fade instead of sliding, and the deep-link ring and pulsing placeholders don't animate beyond opacity ([UI-RULE-42](05-ui.md#511-accessibility-as-decided)).
 
   The manual screen-reader pass is a release step, not a test (Q-CI-18). (R38)
 
@@ -268,8 +268,8 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
 | `fixtures-privacy` | the privacy lint (Q-FIX-12) finds anything |
 | `watchlist` | a watch ID used in `src/` or `tools/` isn't in the watch list; an entry has neither a static check nor a runtime probe; anything in `src/` imports from `tools/` |
 
-- **Q-TEST-31.** **No conflicting utilities in UI components.** The extension pages use a `clsx`-only `cn`, with no `tailwind-merge`, so two utilities for one CSS property resolve by Tailwind's CSS order, not by the class string. A test reads every component in `src/ui/components/` and fails if a component's base classes and any of its variants' classes set the same CSS property (for example base `border-transparent` with an outline variant's `border-border`, which left light-mode outline buttons without a border).
-- **Q-TEST-32.** **Switches and checkboxes are controlled.** A layer-3 test renders the Switch and Checkbox with a listener that refuses the change, and with one that defers it, and asserts that the control keeps showing the stored state. The generated shadcn-svelte switch flipped itself before asking its parent, so a cancelled change kept showing "on". The places that refuse or defer are consent, the sync join question, a site-access prompt, "sync full" and a private window.
+- **Q-TEST-31.** **No conflicting utilities in UI components.** The extension pages use a `clsx`-only `cn`, with no `tailwind-merge`, so two utilities for one CSS property resolve by Tailwind's CSS order, not by the class string. A test reads every component in `src/ui/components/` and fails if a component's base classes and any of its variants' or sizes' classes set the same CSS property ([UI-RULE-12](05-ui.md#extension-pages)) (for example base `border-transparent` with an outline variant's `border-border`, which left light-mode outline buttons without a border).
+- **Q-TEST-32.** **Switches and checkboxes are controlled.** A layer-3 test renders the Switch and Checkbox with a listener that refuses the change, and with one that defers it, and asserts that the control keeps showing the stored state. The generated shadcn-svelte switch flipped itself before asking its parent, so a cancelled change kept showing "on". The places that refuse or defer are consent, the sync join question, a site-access prompt, "sync full", an "update needed" refusal (R13) and a private window ([UI-RULE-13](05-ui.md#extension-pages), [FT-12](04-features-accounts-data.md#12-switching-features)).
 - **Q-TEST-33.** **No identity comparisons of `$state`-held objects** in kit and feature code ([UI-RULE-33](05-ui.md#page-ui-youtube-and-youtube-music)): `$state` proxies objects, so `===` against the original silently fails (two bugs in the in-page prototype). Compare by ID or by element. A CI check enforces it on every push and PR. Whether it's a lint rule or a guard test, and its exact pattern, is the build's choice. (R40)
 
 ---
@@ -414,7 +414,7 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
   - the `entrypoints:resolved` hook (`build/livecheck.ts`) drops the livecheck entrypoints in every other mode;
   - the recording adapter sits behind `platform.mode === "livecheck"`, so store builds remove it as dead code;
   - `scripts/check-zip.ts` fails if a store zip contains the live-check page, any `src/livecheck/` code or the recording adapter.
-  - The Firefox sources zip keeps `src/livecheck/`, so the sources match the repo; the sources README says what it is.
+  - The Firefox sources zip keeps `src/livecheck/`, so the sources match the repo; `SOURCE_CODE_REVIEW.md` says what it is ([REL-STORE-32](08-release.md#124-the-bun-and-arm64-build)).
 - **Q-WATCH-20.** The live-check page's first version is the probe extension that checked the request routes (`probes/live-checks/` on branch `task/live-checks`), so its checks keep running after 2.0 ships.
 - **Q-WATCH-21.** The developer runs the signed-in live check in their own Chrome and Firefox: before every release, when a watch goes red, and on a user report. It:
   - sends **every job through every shipped route**, forcing each route in turn, which fills the per-job route table (the routes stay **PROVISIONAL** until the first full run, see [06 §6.2.15](06-architecture.md#6215-live-checks-that-settle-the-provisional-rows));
@@ -429,8 +429,8 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
 
 The user-facing side is in [04 §5](04-features-accounts-data.md#5-breakage-status): status per feature ([HEALTH-07](04-features-accounts-data.md#52-status)), the notice, the badge, the popup strip and settings' status line ([HEALTH-13](04-features-accounts-data.md#53-where-it-shows) to HEALTH-17), and the wording ([HEALTH-20](04-features-accounts-data.md#54-wording)). Each site's copy is [YT-BRK-06](02-youtube.md#213-when-youtube-changes-something) and [03 §14](03-youtube-music.md#14-failures-and-breakage). This section fixes what raises a signal and the thresholds.
 
-- **Q-WATCH-23.** Signals come from two places and go to one **breakage monitor** in the background: the gateway (routes, answers, page reads) and each feature's drawing code (anchors, theme variables). No feature carries its own breakage logic; each declares its required jobs, optional jobs and anchors in the feature registry, and the monitor derives every status from those declarations.
-- **Q-WATCH-24.** These situations raise these signals ([HEALTH-01](04-features-accounts-data.md#51-what-counts-as-breakage) lists them for users). (R34, R40)
+- **Q-WATCH-23.** Signals come from two places and go to one **breakage monitor** in the background: the gateway (routes, answers, page reads) and each feature's drawing code (anchors, theme variables). No feature carries its own breakage logic; each declares its required jobs, optional jobs and anchors in the feature registry, and on YouTube Music the jobs each action needs ([§6.6](06-architecture.md#66-the-feature-registry)). The monitor derives every status from those declarations, one per feature: a YouTube Music feature with some actions unavailable in a tab is *partly working*, and its status detail names those actions ([HEALTH-07](04-features-accounts-data.md#52-status)). (R50)
+- **Q-WATCH-24.** These situations raise these signals. The identifiers below are this chapter's, in kebab-case, and [HEALTH-01](04-features-accounts-data.md#51-what-counts-as-breakage) lists them all for users. (R34, R40, R51)
 
 | What happened | What the job does | Signal |
 |---|---|---|
@@ -444,8 +444,8 @@ The user-facing side is in [04 §5](04-features-accounts-data.md#5-breakage-stat
 | Theme variables missing | In-page UI uses the built-in palette, picked by YouTube's dark-mode attribute | `cosmetic` (diagnostics only) |
 | Auto-add can't measure a playback (the lengths disagree, for example stitched ads) | That playback isn't counted | `cannot-measure` |
 | A route fell back and the job succeeded | Succeeded | `fell-back` (diagnostics only) |
-| YouTube or YouTube Music shows its own toast after one of our quiet queue edits (an add, a removal or their Undo) | The edit stands; our own toast for it is suppressed | `quiet-route-noisy`: the feature that made the edit is **partly working** (Q-WATCH-28) |
-| More than one property of `default_kevlar_base` has the resolver's shape | The first in property order is used | `resolver-ambiguous` (diagnostics only) |
+| YouTube or YouTube Music shows its own toast after one of our quiet queue edits (an add, a removal or their Undo) | The edit stands; our own toast for it is suppressed | `quiet-route-noisy`, on both sites: the feature that made the edit is **partly working** (Q-WATCH-28) |
+| More than one property of `default_kevlar_base` has the resolver's shape | The first property whose `instance.resolveCommand` is a function is used ([ARC-ACC-13](06-architecture.md#623-the-command-resolver-found-by-shape); R66) | `resolver-ambiguous` (diagnostics only) |
 | Signed out, account changed, 429, 5xx, offline, or a recognised `STATUS_FAILED` | As the add and access rules say | none: these aren't breakage |
 
 - **Q-WATCH-25.** **Anchor check.** A feature checks its anchors once the page settles, 3 s after navigation *(starting value)*. It raises `anchor-missing` only when the page shows that kind of content and none of it, or too little, was recognised: at least 6 distinct video links in the main content (not the player, description or comments), with fewer than half of them recognised as cards *(starting values)*. On YouTube Music the same numbers apply to its item links. A YouTube Music player-bar anchor that's missing in the cases [YM-BAR-3](03-youtube-music.md#16-the-player-bar-and-the-wiz-miniplayer) lists (a narrow window, signed out, a new-player bar without its action bar, among others) is not breakage. The users' side is [YT-ITEM-08](02-youtube.md#22-cards-the-current-video-and-the-pointed-at-item), [YM-FAIL-8](03-youtube-music.md#14-failures-and-breakage) and [HEALTH-02](04-features-accounts-data.md#51-what-counts-as-breakage).
@@ -473,7 +473,7 @@ The user-facing side is in [04 §5](04-features-accounts-data.md#5-breakage-stat
 ### 7.6.1 How the budgets count
 
 - **Q-PERF-1.** **Weight** is the gzip level 9 size of built files. Every weight budget holds for both the Chrome and the Firefox store build (they measured byte for byte the same). Budgets apply to store builds; dev builds aren't checked (their kit exports the whole Svelte namespace, §7.8.1).
-- **Q-PERF-2.** **Eager** code loads with the page; **lazy** code loads on first use (the popovers, Diagnostics, the popup's and settings' later parts). Each lazy piece has a weight budget, and the ones a user waits for also have a first-use time budget.
+- **Q-PERF-2.** **Eager** code loads with the page; **lazy** code loads on first use (the popovers, Diagnostics, the popup's and settings' later parts). Each lazy piece has a weight budget, and the ones a user waits for also have a first-use time budget. The one exception is the first-run page's lazy step 3, which is reported, not gated (Q-PERF-31).
 - **Q-PERF-3.** **Time** is main-thread time, net of what the same page costs with nothing of ours injected, measured as the change in the Chrome DevTools Protocol's `Performance.getMetrics` `TaskDuration` across injection plus 400–500 ms of settling, in a fresh page each run. It's measured on the **reference machine** (Ryzen 5 5600X, Chromium 156) at 1× and at 4× CPU throttling; 4× stands in for a slow laptop. Time budgets are gated on Chromium only. Firefox has none of these methods, so it records the same cases with `performance.mark` for information, and is gated on sizes and behaviour (Q-TEST-19). (R31)
 - **Q-PERF-4.** In-page CSS ships inside the script (Svelte injects it into our shadow roots), so it counts as JS. Icons are inline SVG paths and count. Fonts cost nothing: in-page UI uses the Roboto and YouTube Sans the site already loads, and bundles none.
 
@@ -485,17 +485,17 @@ The user-facing side is in [04 §5](04-features-accounts-data.md#5-breakage-stat
 - **Q-PERF-8.** With some features on, only their files load, plus what they share: the site's page half and core, and the kit if one of them draws. A switched-off feature's file never loads.
 - **Q-PERF-9.** The on-demand probe (for the popup or settings, including the popup's Playing now) is the only code that reaches a page while every feature on that site is off ([FT-16](04-features-accounts-data.md#13-off-costs-nothing), [ARC-MAN-15](06-architecture.md#633-runtime-script-registration)). It runs only when asked, in one tab, draws nothing, and is the page half plus the core, so it has their budgets.
 - **Q-PERF-10.** Switching a feature off in an open tab removes its elements, styles, listeners, observers and timers at once. Its parsed code stays until the tab reloads, because a browser can't unload a script.
-- **Q-PERF-11.** With settings sync off, nothing reads or writes `storage.sync` (layer 3: the fake sync area records zero calls), with two exceptions, each with its own layer-3 test ([FT-21](04-features-accounts-data.md#13-off-costs-nothing)):
+- **Q-PERF-11.** With settings sync off, nothing reads or writes `storage.sync` (layer 3: the fake sync area records zero calls), with exactly two exceptions, which the test allows and each of which has its own layer-3 test ([FT-21](04-features-accounts-data.md#13-off-costs-nothing); R59):
   - at first run, before Agree, one read-only look at the synced copy to pre-tick the features chosen in other browsers; nothing is pushed and the sync switch isn't stored until Agree ([ARC-MSG-12](06-architecture.md#683-ui--background));
   - Clear all data with "Also delete synced settings from all your browsers" ticked.
 
-  The 1.x migration never touches `storage.sync` while sync is off. (R9, R20)
+  The 1.x migration never touches `storage.sync` while sync is off. (R9, R20, R59)
 
 ### 7.6.3 In-page weight
 
 Budgets are KB, eager, per page. Each piece counts once per page, however many features use it. The rows are the feature registry's pieces and live in `perf-budget.json` (§7.6.7).
 
-- **Q-PERF-12.** YouTube (`www.youtube.com`), rows set from the measured build (Q-PERF-15). (R28, R30)
+- **Q-PERF-12.** YouTube (`www.youtube.com`), rows set from the measured build (Q-PERF-15). These rows are the authoritative ones; 05 and the other chapters follow them, the watch-page button's 3.5 KB included. (R28, R30, R52)
 
 | File | Contents | Loads while | Budget | Measured, rough build (ticket 14) |
 |---|---|---|---|---|
@@ -598,8 +598,6 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
   - **Per card: constant.** With 24 cards and with 120, we add the same number of elements, shadow roots and listeners.
   - **Memory (PROVISIONAL):** ≤ 500 KB of isolated-world JS heap with everything on (the eager stand-in measured 301–314 KB; 1.5.0 measures 709 KB).
 
-<a id="766-popup-settings-onboarding-and-background"></a>
-
 ### 7.6.6 Popup, settings, the first-run page and background
 
 - **Q-PERF-31.** Budgets ([05 §5.10](05-ui.md#budgets-and-measurements) states the same for the UI). (R40)
@@ -614,13 +612,13 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 | **Popup, picker open including its first load** | 50 / 160 ms | 30.1 / 132.8 ms |
 | **Settings, initial = the first frame** | 60 KB JS + 10 KB CSS; first frame within 100 ms cold at 1× | 38.8 + 8.5 KB |
 | **Settings, each lazy section** (Diagnostics included) | 45 KB | shortcuts 33.5, auto-add 25.9, privacy 11.5 |
-| **First-run page, first frame** (`onboarding.html`) | 30 KB JS; its CSS and the lazy step 3 are reported, not gated | 23.2 + 8.2 KB; step 3 +39.1 KB |
+| **First-run page, first frame** (`onboarding.html`) | 30 KB JS; its CSS and the lazy step 3 are reported, not gated (R47) | 23.2 + 8.2 KB; step 3 +39.1 KB |
 | **Background** (**PROVISIONAL**) | 25 KB, with no UI code | 1.5.0: 7.5 KB |
 
 - **Q-PERF-32.** The popup's budget stays 40 KB on both sites. To keep the YouTube Music popup inside it, banner copy loads only when a banner shows. Any addition to the YouTube Music popup's first view needs a matching cut.
 - **Q-PERF-33.** Settings' 60 KB is the first frame only. The shown section's options load right after the first frame, without a click; every other section loads when opened. Each is a lazy section ([UI-SET-06](05-ui.md#frame)).
 - **Q-PERF-34.** The popup paints from storage: its first frame needs one `storage.local.get` for everything the first view shows. It never waits on a YouTube tab or the network first.
-- **Q-PERF-35.** Extension-page build rules ([UI-RULE-14](05-ui.md#extension-pages) to UI-RULE-21 state them for the UI):
+- **Q-PERF-35.** Extension-page build rules. [05 §5.12](05-ui.md#extension-pages) states them for the UI: rules 1–3 are UI-RULE-14 to UI-RULE-16, rule 4 is UI-POP-03 (the popup), rule 5 is UI-RULE-19, rule 6 UI-RULE-20, rule 7 UI-RULE-12 and UI-RULE-21, and rule 8 UI-RULE-05 and UI-RULE-21.
   1. Each extension page (popup, settings, the first-run page) is built on its own, or the popup gets its own build. A multi-page build shares chunks and put about 10 KB of settings-only Svelte runtime into the popup.
   2. Each page's first view is one chunk (Rolldown `codeSplitting.groups` with `tags: ["$initial"]`). Code-split groups never import each other: a cycle let the HTML run the wrong chunk first and the page rendered blank.
   3. No top-level `await` in an entry whose chunk lazy chunks import: the first-view chunk waited on a lazy chunk that waited on it, and the page rendered blank.
@@ -653,7 +651,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
   - *Runner-up:* hard time gates in CI. They'd make builds flaky on shared runners.
 - **Q-PERF-42.** **The picker-overrun rule.** `popovers.js` must meet its 50 KB and its first-open time budget, measured with no hover preload, on both sites. If a store build overruns either:
   1. first, trim the picker's use of Bits UI;
-  2. if it still overruns, replace Bits UI in `popovers.js` with the browser's Popover API, hand-written positioning and a hand-written listbox (the floating part estimated at about 5 KB).
+  2. if it still overruns, replace Bits UI in the picker with the browser's Popover API, hand-written positioning and a hand-written listbox (the floating part estimated at about 5 KB).
 
   `popovers.js` is never linked to the kit's Svelte runtime (ADR-0008, [ARC-MOD-18](06-architecture.md#674-lazy-popovers)): that would make the eager kit export the Svelte names Bits UI needs on every page. The hover-intent preload stays in either case. (R29)
 - **Q-PERF-43.** **Real pages.** The fixture pages could flatter us, so the same measurements are also run on a real signed-in YouTube home page and watch page. **PROVISIONAL:** the rough build measured only signed out; the signed-in run is still owed.
@@ -675,7 +673,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 
 - **Q-CI-2.** The old `broker` job goes with `server/`, and the Vitest and `jq` checks go, replaced by `check` and `build`.
 - **Q-CI-3.** `check:manifest` (`scripts/check-manifest.ts`) fails unless each built manifest has exactly:
-  - **both:** `manifest_version` 3; `permissions` `["storage", "scripting"]`; no `content_scripts`; no `web_accessible_resources`; `commands` holding only `_execute_action`; no `update_url` unless the build mode is `beta`; `version` equal to `package.json`'s;
+  - **both:** `manifest_version` 3; `permissions` `["storage", "scripting"]`; no `content_scripts`; no `web_accessible_resources`; `commands` holding only `_execute_action`; no `update_url` unless the build mode is `beta`, whose Firefox build carries exactly the beta `update_url` ([REL-CI-10](08-release.md#71-firefox)); `version` equal to `package.json`'s;
   - **Chrome:** `host_permissions` `["https://www.youtube.com/*"]`; `optional_host_permissions` `["https://music.youtube.com/*"]`; `minimum_chrome_version` `"121"`;
   - **Firefox:** `host_permissions` `["*://*.youtube.com/*"]`; `browser_specific_settings.gecko.id` `{cc70cd21-2cc6-444b-bd89-496909346091}`; `strict_min_version` `"140.0"`; `data_collection_permissions` `{ "required": ["none"] }` (**PROVISIONAL** on AMO's reply, see [08 §13](08-release.md#13-what-each-amo-reply-changes-provisional-ticket-23)).
 
@@ -685,7 +683,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 
 - **Q-CI-4.** `watch.yml` is triggered by a daily schedule, by `workflow_dispatch`, and by `workflow_call` (so the release workflow can run it as a gate). Its jobs:
   - `static`: `watch:static`, uploading the JSON artifact;
-  - `browser-watch`: builds the store extension and runs `tools/watch/browser.ts`;
+  - `browser-watch`: runs `tools/watch/browser.ts` against a store build. On the schedule and on demand it builds one. Called from `release.yml`, it downloads the release's own artifacts and doesn't rebuild, so it tests what ships (Q-CI-6; R61);
   - `report`: needs both, has `issues: write`, and opens, updates or closes the one `youtube-change` issue (Q-WATCH-15).
 - **Q-CI-5.** Each watch job ends green, red or inconclusive (Q-WATCH-11), and the run summary says which and why.
 
@@ -694,26 +692,29 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 `release.yml` is specified in [08 §14.2](08-release.md#142-releaseyml), with its gate table in [REL-CI-27](08-release.md#142-releaseyml). The gates this chapter defines are:
 
 - **Q-CI-6.** Every gate runs on the exact files that ship: `release.yml` builds once and every gate downloads those artifacts ([REL-CI-26](08-release.md#142-releaseyml)).
-- **Q-CI-7.** `budget`: `check:budget` on the store builds. `zip`: `check:zip` (Q-WATCH-19). `browser`: layer 4 on the store builds, in Chromium and Firefox; this is Firefox's pre-release real-browser check (Q-WATCH-14). `manifest`: `check:manifest`. (R40)
-- **Q-CI-8.** `watch`: `watch.yml` through `workflow_call`, from the release commit's watch list. `static` must be green and `browser-watch` green or inconclusive. A red `static` passes only with the `allow_red_watch` input and a reason, which the summary records.
+- **Q-CI-7.** `budget`: `check:budget` on the store builds. `zip`: `check:zip` (Q-WATCH-19). `browser`: layer 4 on the store builds, in Chromium and Firefox, with timings gated at 1.5× in Chromium only, as in `ci.yml` (Q-PERF-41); this is Firefox's pre-release real-browser check (Q-WATCH-14). `manifest`: `check:manifest`. (R31, R40)
+- **Q-CI-8.** `watch`: `watch.yml` through `workflow_call`, from the release commit's watch list, with `browser-watch` on the release's artifacts (Q-CI-4; R61). `static` must be green and `browser-watch` green or inconclusive. A red `static` passes only with the `allow_red_watch` input and a reason, which the summary records.
 - **Q-CI-9.** `live-check-record`: `store/live-checks/{version}.json` exists, covers Chrome and Firefox, has no failures, and is dated within 7 days of the tag (a `scope: "hotfix"` record for patch releases).
 - **Q-CI-18.** Not a gate, but a release step: before each release the developer does a manual screen-reader pass of the popup and settings, as an item in the release checklist ([UI-RULE-41](05-ui.md#511-accessibility-as-decided), [08 §18](08-release.md#18-release-checklist-releasingmd)). The automated checks are Q-TEST-20. (R38)
 
 ### 7.7.4 The hotfix lane
 
-The hotfix lane is for "YouTube changed something". Fixes reach users only as store releases: there is no remote configuration, selector list, endpoint map, experiment flag or kill switch, and nothing fetched changes behaviour. Every fallback ships in the package.
+The hotfix lane is the fast way to ship a fix. Its usual case is "YouTube changed something", but it takes any fix, our own bugs included (R62). Fixes reach users only as store releases: there is no remote configuration, selector list, endpoint map, experiment flag or kill switch, and nothing fetched changes behaviour. Every fallback ships in the package.
 
 - **Q-CI-10.** A hotfix is a branch `hotfix/X.Y.Z` from the last release tag. CI runs on its PRs as usual.
-- **Q-CI-11.** A hotfix changes only the broken route, parser or anchor, plus its fixtures and watch-list entry: no dependency bumps and no refactors. (Chrome reviews significant code changes more closely, and AMO's queue ranks by the size of the change.)
+- **Q-CI-11.** A hotfix changes only what the fix needs: for a YouTube change, the broken route, parser or anchor, plus its fixtures and watch-list entry; for a bug of our own, the faulty code and its tests. (R62)
+  - It changes no permission, disclosure, consent version or data schema, and no user-visible behaviour beyond the fix.
+  - No dependency bumps and no refactors. (Chrome reviews significant code changes more closely, and AMO's queue ranks by the size of the change.)
 - **Q-CI-12.** A hotfix is a patch version bump, and only hotfixes are patch releases.
 - **Q-CI-13.** `hotfix-freeze` ([REL-CI-38](08-release.md#143-the-hotfix-lane)) runs for every patch release and fails unless:
   - `check:manifest --against v{previous}` finds both manifests identical to the previous release's apart from `version`, reading the old manifests from that release's GitHub Release assets;
   - `git diff --quiet {previous tag} -- store/listing store/cws-dashboard.md store/notes/reviewer-full.md site/privacy` passes;
-  - the consent version constant is unchanged.
-- **Q-CI-14.** A hotfix's gates are `bun test`, the static watch green with the new needles, and a hotfix-scope live-check record for the affected jobs in both browsers, plus the usual release gates.
+  - the consent version constant is unchanged;
+  - the storage layout version the build writes (`schema`, [DATA-46](04-features-accounts-data.md#410-schema-versions-and-migrations)) is unchanged. (R62)
+- **Q-CI-14.** A hotfix's gates are `bun test`, the static watch green with the fix's new needles (if it has any), and a hotfix-scope live-check record for the affected jobs in both browsers, plus the usual release gates.
 - **Q-CI-15.** A hotfix is submitted to both stores in one run, through the per-store switches. Chrome publishes on approval (`DEFAULT_PUBLISH`, never `skipReview`, which Chrome's API v2 allows only for declarativeNetRequest-only updates). The reviewer notes use the hotfix template ([REL-STORE-22](08-release.md#121-reviewer-notes-approval_notes)).
   - **During the 2.0.0 soak** the Chrome item is staged by hand. A Chrome resubmission then is done by hand in the dashboard, as Public with staged publishing, not by the run ([08 §18](08-release.md#18-release-checklist-releasingmd), "The 2.0 launch, once"). (R21)
-- **Q-CI-16.** Afterwards the version is commented on the `youtube-change` issue ("Firefox users get it within about a day; Chrome users after review"), and the branch is merged back to `main` ([REL-CI-41](08-release.md#143-the-hotfix-lane)).
+- **Q-CI-16.** Afterwards the version is commented on the issue it fixes, the `youtube-change` issue for a YouTube change ("Firefox users get it within about a day; Chrome users after review"), and the branch is merged back to `main` ([REL-CI-41](08-release.md#143-the-hotfix-lane)).
 - **Q-CI-17.** A release that itself breaks something is rolled back in the store dashboards first, then fixed forward. 2.0.0 on AMO is the exception: it's fixed forward. The rollback rules are [REL-CHK-05](08-release.md#83-rollback-and-fix-forward) to REL-CHK-10.
 
 ---
@@ -742,8 +743,7 @@ Page scripts aren't manifest content scripts, so WXT's dev mode doesn't know to 
 
 ## 7.9 Not decided
 
-Every item that was listed here has been settled; see [Resolved during assembly](#resolved-during-assembly). PROVISIONAL marks that wait on the signed-in live checks, AMO's reply or the name stay where they are. One reading needs confirming:
-- **The first-run page's 30 KB** (R40) is read here as the first frame's JavaScript, like the popup's and settings' rows. Its CSS (8.2 KB measured) is reported, not gated (Q-PERF-31). [05 §5.10](05-ui.md#budgets-and-measurements) states "30 KB" with no split.
+Every item that was listed here has been settled; see [Resolved during assembly](#resolved-during-assembly). PROVISIONAL marks that wait on the signed-in live checks, AMO's reply or the name stay where they are.
 
 ---
 
@@ -751,23 +751,12 @@ Every item that was listed here has been settled; see [Resolved during assembly]
 
 ### Still open
 
-These disagree with another chapter and need that chapter, or a decision, to change:
+These disagree with another chapter and need that chapter, or a decision, to change. Where the topic is this chapter's own (budgets, test placement and breakage-signal identifiers), the other chapter should follow this one.
 
-1. **08's release checklist hasn't taken R31 and R38.**
-   - [08 §18](08-release.md#18-release-checklist-releasingmd)'s "Every release" runs the timing test "at 1× and 4× on the reference machine in Chromium and Firefox", and [REL-CHK-20](08-release.md#18-release-checklist-releasingmd) names no browser. Under R31 only Chromium's figures are gated; Firefox's are recorded for information (Q-PERF-41).
-   - The same list has no manual screen-reader pass, which R38 and [UI-RULE-41](05-ui.md#511-accessibility-as-decided) put there (Q-CI-18).
-2. **Chrome hotfixes during the soak.**
-   - [REL-CI-40](08-release.md#143-the-hotfix-lane) and REL-CI-34 send every patch release to both stores in one run, with `DEFAULT_PUBLISH`.
-   - R21 says a Chrome resubmission during the soak is done by hand, as Public with staged publishing. 08 §18's launch list agrees.
-   - Q-CI-15 carries the exception; REL-CI-40 doesn't.
-3. **Signal kinds in 04.** [HEALTH-01](04-features-accounts-data.md#51-what-counts-as-breakage)'s table:
-   - writes `fell back`, where the kind's identifier is `fell-back` (Q-WATCH-24);
-   - doesn't list `quiet-route-noisy` (R40) or `resolver-ambiguous` (R34).
-4. **Who checks that built pages render.**
-   - [UI-RULE-17](05-ui.md#extension-pages) says "the budget check also asserts that each built page renders".
-   - Rendering needs a browser, so here it's layer 4 (Q-TEST-18 item 10). `check:budget` only measures bytes (Q-PERF-37).
-5. **The watch-page button's eager row.** [05 §5.10](05-ui.md#budgets-and-measurements) still lists the watch-page button at 5 KB eager. Under R30 its row is 3.5 KB (Q-PERF-12). The rest of 05's table already defers to Q-PERF-12 and Q-PERF-13.
-6. **Status per action on YouTube Music.** [YM-FAIL-4](03-youtube-music.md#14-failures-and-breakage) marks a single action *not working*, while the monitor derives one status per feature from the registry (Q-WATCH-23). [06 §6.12](06-architecture.md#612-conflicts-found), item 4, has the two ways out.
+1. **Chrome hotfixes during the soak.**
+   - [REL-CI-40](08-release.md#143-the-hotfix-lane) and [REL-CI-34](08-release.md#142-releaseyml) still send every patch release to both stores in one run, with `DEFAULT_PUBLISH`.
+   - R21, and 08's own [REL-CHK-02](08-release.md#81-phases), §8.1 and §18's launch list, have a Chrome resubmission during the soak done by hand, as Public with staged publishing.
+   - Q-CI-15 carries that exception; REL-CI-40 doesn't.
 
 ### Resolved during assembly
 
@@ -779,6 +768,7 @@ From "Not decided":
 - The `$state` identity guard is a CI check, lint or test as the build chooses (Q-TEST-33): R40.
 - The test compile cache comes once the suite takes more than 60 s (Q-TOOL-35): R40.
 - The first-run page's budget is 30 KB for the first frame (Q-PERF-31): R40.
+- The first-run page's 30 KB counts JavaScript; its CSS is reported, not gated (Q-PERF-31): R47.
 
 From "Conflicts found":
 - The kit's row against its measured size: rows set to 28 and 27 KB, the other rows cut, totals unchanged (Q-PERF-15): R30.
@@ -786,3 +776,14 @@ From "Conflicts found":
 - The picker's first-open budget measures the no-preload case (Q-PERF-29): R29.
 - Timing on Firefox: time is gated on Chromium only; Firefox gates sizes and behaviour and records `performance.mark` timings (Q-PERF-3, Q-PERF-41, Q-TEST-19): R31.
 - The card menu's "not working" notice is kit-free, in the site core, so "card menu alone" needs no exception (Q-TEST-18 item 2, Q-PERF-28): R28.
+- 08's release checklist (was Still open 1): §18 and [REL-CHK-20](08-release.md#18-release-checklist-releasingmd) gate Chromium's timings and record Firefox's, and the checklist has the manual screen-reader pass (Q-PERF-41, Q-CI-18): R31, R38.
+- Signal identifiers in 04 (was Still open 3): [HEALTH-01](04-features-accounts-data.md#51-what-counts-as-breakage) now uses this chapter's kebab-case identifiers and lists them all, `fell-back`, `quiet-route-noisy` on both sites and `resolver-ambiguous` included (Q-WATCH-24): R51.
+- Who checks that built pages render (was Still open 4): a real-browser test (Q-TEST-18 item 10), as [UI-RULE-17](05-ui.md#extension-pages) now says: R52.
+- The watch-page button's eager row (was Still open 5): 3.5 KB, in [05 §5.10](05-ui.md#budgets-and-measurements) too (Q-PERF-12): R52.
+- Status per action on YouTube Music (was Still open 6): status stays per feature, and a feature with some actions unavailable is *partly working*, its status detail naming them (Q-WATCH-23): R50.
+- The browser watch called from `release.yml` tests the release's own artifacts and doesn't rebuild (Q-CI-4, Q-CI-8), as [REL-CI-42](08-release.md#144-watchyml) now says: R61.
+- The hotfix lane takes any fix, our own bugs included, within R62's limits (§7.7.4, Q-CI-11, Q-CI-13), as [REL-CI-38](08-release.md#143-the-hotfix-lane) and REL-CI-39 now say: R62.
+- `storage.sync` while sync is off: exactly two calls are allowed, and the test allows them (Q-PERF-11): R59.
+- An ambiguous resolver uses the first property whose `resolveCommand` is a function (Q-WATCH-24): R66.
+
+Also applied here: R43 (what counts as a run: Q-TEST-2) and R64 (the upgrade-or-fresh-install check: Q-TEST-2).

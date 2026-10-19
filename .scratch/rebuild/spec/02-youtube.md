@@ -28,19 +28,20 @@ It covers behaviour only.
   | `YT-CM` | The right-click card menu |
   | `YT-BRK` | What the user sees when YouTube changes something |
 
-- **(R-n)** at the end of a requirement means resolution R-n in [resolutions.md](resolutions.md) changed or added it while the spec was assembled.
+- **(R-n)** at the end of a requirement means resolution R-n in [resolutions.md](resolutions.md) changed or added it while the spec was assembled. Both rounds are applied (R1–R40, then R41–R67).
+- **Ownership:** under the resolutions' ownership rule, this chapter owns YouTube feature behaviour and copy. Where it shares a topic with another chapter, the owner's text wins: [04](04-features-accounts-data.md) for accounts, settings, data and status, [05](05-ui.md) for layout and visuals, [06](06-architecture.md) for mechanisms, [07](07-quality.md) for budgets, tests and breakage-signal identifiers, and [08](08-release.md) for upgrade and consent copy.
 - **PROVISIONAL** marks a rule that a pending check or user decision may change. The mark names what's pending: e.g. "PROVISIONAL (ticket 25: L6)" is live check L6 in [ticket 25](../issues/25-live-checks.md), whose L-checks are defined in [ticket 10](../issues/10-youtube-access.md). Where the tickets say what happens either way, so does this chapter.
 - **Placeholders in copy:**
 
   | Placeholder | Means |
   |---|---|
-  | `{title}` | The video's title, in double quotes in the copy, cut per YT-ADD-18 |
+  | `{title}` | The video's title, in typographic double quotes (“{title}”) in the copy, cut per YT-ADD-18 (R45) |
   | `{list}` | The playlists, written as a list per YT-ADD-18 |
   | `{Playlist}` | One playlist's title |
   | `{Channel}` | The channel's title |
   | `{Shortcut}` | A playlist shortcut's label, else its playlist's title on this account, else its key |
-  | `{Account}` | The account's name from its label, else "Unnamed account". The tickets write it as `{Name}`. |
-  | `{Extension}` | The extension's name: "Playlist Pigeon", PROVISIONAL (ticket 22: the name) |
+  | `{Account}` | The account's name from its label, else "Unnamed account". The tickets write it as `{Name}` (R65). |
+  | `{Product}` | The extension's in-product name: "Playlist Pigeon", PROVISIONAL (ticket 22: the name). Every chapter uses `{Product}` (R65). |
   | `{Feature}` | A feature's name (YT-GEN-01) |
   | `{Key}`, `{Other}` | A key, and another shortcut's name |
   | `{n}`, `{m}` | Counts of playlists, written "1 playlist", "2 playlists" |
@@ -53,18 +54,24 @@ It covers behaviour only.
 
 | Feature | What it does on youtube.com | Needs the user signed in? |
 |---|---|---|
-| **Auto-add** | Adds the current video to each auto-add playlist once its watch progress reaches that playlist's required percentage. Channel filters are an option inside it. | Yes. It stays silent when signed out. |
-| **Playlist shortcuts** | Keys that save the pointed-at item, else the current video, to a playlist. It also holds the picker key and the undo key. | Yes |
+| **Auto-add** | Adds the current video to each auto-add playlist once its watch progress reaches that playlist's required percentage. Channel filters are an option inside it. | Yes. It stays silent when signed out (R41). |
+| **Playlist shortcuts** | Keys that save the pointed-at item, else the current video, to a playlist. It also holds the picker key. The undo key belongs to no feature (YT-KEY-05; R44). | Yes |
 | **Quick-save on thumbnails** | A split button on video thumbnails: one click saves to the quick-save playlist, and ▾ opens the playlist picker. | Yes |
 | **Queue button on thumbnails** | An Add to queue button on video thumbnails | No |
 | **Watch-page button** | A button in the watch page's action row that shows auto-add's state, with a menu of this video's actions | Only for its Save rows |
 | **Right-click for the video menu** | Right-clicking a video card opens YouTube's own ⋮ menu for it | No |
 
-**YT-GEN-02: everything starts off.** On a fresh install every feature is off, and nothing on YouTube changes until the user picks a feature at first run, in Settings or in the popup. Features are never switched from inside YouTube's pages. 1.4.5 upgraders keep auto-add and their shortcut on once they accept the upgrade note; everything new starts off.
+**YT-GEN-02: everything starts off.** On a fresh install every feature is off, and nothing on YouTube changes until the user picks a feature at first run, in Settings or in the popup. Features are never switched from inside YouTube's pages.
+- **1.4.5 upgraders** get auto-add on if any of their auto-add playlists carried over, and Playlist shortcuts on if both their key and its playlist carried over. Either takes effect once they agree on the upgrade note with its row still ticked. Everything new starts off ([08](08-release.md) REL-MIG-22, REL-MIG-23, REL-CON-07; R60).
+- **Settings sync** can also bring switches set in the user's other browsers ([04](04-features-accounts-data.md) FT-03).
 
 **YT-GEN-03: consent first.** Until consent is given, no feature runs and nothing is read from YouTube ([ADR-0010](../../../docs/adr/0010-one-consent-gates-every-feature.md)).
 
-**YT-GEN-04: off leaves no trace.** A feature that's off injects no code, CSS, elements or listeners into youtube.com. With every YouTube feature off, nothing at all is injected. Switching a feature off removes everything it added to open pages.
+**YT-GEN-04: off leaves no trace.** The mechanics are [04](04-features-accounts-data.md)'s FT-15 to FT-19.
+- A feature that's off loads none of its own code, and adds no CSS, elements, listeners or requests to youtube.com.
+- While another YouTube feature is on, the shared site core is there, and the off feature's share of it stays inert (FT-17, FT-18).
+- With every YouTube feature off, nothing is injected. The one exception is the inert on-demand probe: after consent, when the popup or Settings needs data from a tab, it goes into that one tab and draws nothing (FT-16).
+- Switching a feature off removes everything it added to open pages.
 
 **YT-GEN-05: each tab acts as its own account.**
 - A tab's account is what `ytcfg` `DATASYNC_ID` identifies at page load. It stays the tab's account until the tab reloads.
@@ -74,28 +81,35 @@ It covers behaviour only.
 
 **YT-GEN-06: what belongs to the account.**
 
+The rule and the full table are [04](04-features-accounts-data.md)'s ACC-06 (R54). On YouTube:
+
 | In the account setup (per account) | Shared by every account |
 |---|---|
-| Auto-add playlists, each with what it takes (Videos / Shorts / Both), its own required percentage if set, and its channel filter (kept and orphaned filters included) | Every feature's switch, options and Show feedback |
+| Auto-add playlists, each with what it takes (Videos / Shorts / Both) and its own required percentage if set | Every feature's switch, options and Show feedback |
+| Their channel filters, kept and orphaned filters included, with their channel labels | The shortcuts' keys and labels, and "Watch later on every account"; the picker key; the undo key; Also on YouTube Music |
 | The playlist each playlist shortcut adds to | The default required percentage |
-| YouTube's quick-save playlist | The shortcuts' keys and labels, the picker key and the undo key |
-| The *Missing* and *Full* marks | Pause, and the theme |
+| YouTube's quick-save playlist | Whether presets were applied, and the theme |
+| The *Missing* and *Full* marks | |
+| The account label: name, @handle and avatar | |
+
+Pause and session skips aren't settings. They're this browser's session memory, and never sync (04 DATA-11).
 
 **YT-GEN-07: an account with no choices is idle.** Auto-add tracks nothing there, and nothing extra is drawn on the page. Explicit actions still answer (YT-ADD-27, YT-ADD-28). A new account's first choice creates its setup.
 
 **YT-GEN-08: signed out** (`ytcfg` `LOGGED_IN` false):
-- auto-add does nothing and shows nothing;
-- playlist shortcuts, quick-save, the picker and the watch-page menu's Save rows all answer with the same failure toast, "Sign in to YouTube to save videos.", with **Sign in**, and the picker doesn't open (R3);
+- auto-add does nothing and shows nothing, so 1.5.0's toast on every video doesn't come back (R41);
+- playlist shortcuts, quick-save, the picker and the watch-page menu's Save rows are explicit actions, so they all answer with the same failure toast, "Sign in to YouTube to save videos.", with **Sign in**, and the picker doesn't open (R3, R41);
 - the queue button and the card menu keep working;
 - every account setup is kept.
 
-**YT-GEN-09: account changed in another tab.** A tab whose YouTube answers come back for a different account stops writing and disarms auto-add (YT-ADD-10).
+**YT-GEN-09: account changed in another tab.** A tab whose YouTube answers come back for a different account refuses every job that needs an account, reads included, until it reloads, and disarms auto-add (YT-ADD-10).
 
 **YT-GEN-10: private windows.** 2.0 runs in a private or incognito window only if the user allows the extension there.
 - **What works:** an account that already has a setup behaves as in a normal window: auto-add, shortcuts, quick-save and the picker.
 - **What's never written:** nothing that comes from the private session is stored. That means no new setups or setup edits (ticks, Takes, percentages, filters, shortcut targets, quick-save playlists, choose mode's first pick), no *Missing* or *Full* marks, no watch progress, no locally kept new playlists, and no remembered visibility.
-- **Session memory** (session skips, recent adds, rate-limit pauses, shown-once memory) stays in that tab's memory.
-- **Still allowed:** shared settings, Pause and Resume can be changed from a private window.
+- **Session memory** (session skips, recent adds, rate-limit pauses, shown-once memory) stays in memory only, the tab's own or the background's, and never in a storage area (04 DATA-33).
+- **Still saved:** shared-settings changes made there (switches, options, keys, labels, Watch later on every account, the theme and the default percentage), because they carry nothing from the private session. PROVISIONAL (ticket 23: AMO question 3): if AMO says no, those writes are refused too (04 ACC-38, DATA-32; R58).
+- **Pause and Resume** work there too.
 
 **YT-GEN-11: where features run.** Features run in the top frame of youtube.com pages in desktop Chrome and Firefox. They don't run in YouTube embeds on other sites, on m.youtube.com, or in YouTube's live-chat frame. music.youtube.com is covered only where a feature says so, and only while the YouTube Music section is on: with it off, nothing of ours runs there (R1).
 
@@ -137,9 +151,9 @@ It's read from the player's own video ID, and on Shorts from YouTube's navigatio
 **YT-ITEM-07: recognition checks itself at every key press.** A markup-independent test asks whether the pointer, or focus, is on something that looks like a video: a link to `/watch?v=` or `/shorts/`, or an element holding exactly one such link, outside any player. If the test says yes but no item was recognised:
 - the key does nothing;
 - it never falls back to the current video;
-- it shows YT-BRK-06's message and raises an `item-unrecognised` breakage signal.
+- it shows YT-BRK-06's failure toast and raises an `item-unrecognised` breakage signal ([07](07-quality.md) Q-WATCH-24, Q-WATCH-26; R51).
 
-**YT-ITEM-08: recognition checks itself once the page settles,** 3 s after navigation *(starting value)*. If the main content holds at least 6 distinct video links and fewer than half are recognised *(starting values)*, it raises `anchor-missing`, even if some cards still work. The main content excludes the player, the description and the comments.
+**YT-ITEM-08: recognition checks itself once the page settles,** 3 s after navigation *(starting value)*. If the main content holds at least 6 distinct video links and fewer than half are recognised *(starting values)*, it raises `anchor-missing`, even if some cards still work. The main content excludes the player, the description and the comments ([07](07-quality.md) Q-WATCH-25; R51).
 
 ---
 
@@ -162,7 +176,7 @@ Its options are:
 **YT-AA-02: on, but nothing to add to.** This covers an account with no auto-add playlists, no playlist that takes this kind of video, or a signed-out page. Auto-add then tracks nothing and shows nothing on the page, and the popup says what's missing. This fixes 1.x's "No auto-add playlists selected" and "No access token found" toasts on every video.
 
 **YT-AA-03: Pause auto-add.**
-- It stops auto-add in every tab until the user chooses **Resume** or the browser closes.
+- It stops auto-add in every tab until the user chooses **Resume** or the browser restarts. An extension update also ends it, because session memory is lost (04 DATA-11; R57).
 - Nothing watched while paused counts. After resuming mid-video, counting starts from that moment.
 - Settings and the page code stay as they are, which is what separates pausing from switching off.
 - Pause is shown, with **Resume**, wherever auto-add's state is shown.
@@ -170,14 +184,14 @@ Its options are:
 
 **YT-AA-04: "Don't auto-add this video".**
 - It sets a **session skip** for the current video on every auto-add playlist of the tab's account.
-- Auto-add then leaves the video alone until the browser restarts, however much of it is watched.
+- Auto-add then leaves the video alone until the browser restarts or the extension updates, however much of it is watched (R57).
 - A session skip doesn't count as auto-add having *run* (YT-AA-36), so the video's remembered progress is kept, and progress keeps counting while it's skipped.
 - Its undo, "Auto-add this video again", removes the skip and checks each playlist's goal at once. A playlist whose goal is already reached is auto-added straight away; the others carry on from the progress so far.
 - It never removes earlier adds; that's Undo's job (YT-ADD-30). (R23)
 
 **YT-AA-05: other ways a session skip is set.** Undoing an auto-add (YT-ADD-33), or unticking an auto-add playlist in the picker (PROVISIONAL, YT-PK-05), sets the session skip for that video on those playlists only.
 - Explicit adds ignore session skips.
-- Session skips last until the browser restarts and are never written to disk.
+- Session skips last until the browser restarts or the extension updates, and are never written to disk (04 DATA-11; R57).
 
 **YT-AA-06: account changed in another tab.** Auto-add is disarmed in that tab until it reloads (YT-ADD-10).
 
@@ -331,7 +345,7 @@ The flags are read in this order: `isPostLiveDvr`, `isLive`, `isUpcoming`, `isLi
 - It's never stored from a private window. There it lasts as long as the tab.
 - If the video's length has changed by more than 2 s since, the remembered progress is dropped.
 
-**YT-AA-36: dropped once auto-add has run.** Auto-add has *run* for a video once every playlist that takes it has been *added* or found *already in*. Its remembered progress is then dropped, and the next visit starts from zero. Only those two outcomes count: a session skip, *filtered out* or *failed* leaves the progress remembered (R23).
+**YT-AA-36: dropped once auto-add has run.** Auto-add has *run* for a video once every playlist that takes it has been *added* or found *already in*. Its remembered progress is then dropped, and the next visit starts from zero. Only those two outcomes count: a session skip, *filtered out* or *failed* leaves the progress remembered (R23, R43).
 
 **YT-AA-37: once per playback.**
 - Within one playback, auto-add runs at most once per playlist. Replaying, seeking back or looping on the same page adds nothing new.
@@ -348,23 +362,23 @@ The flags are read in this order: `isPostLiveDvr`, `isLive`, `isUpcoming`, `isLi
 | Partly added | Some playlists have had their outcome; others have higher goals | ◔ Auto-added · next at 90 % | Added to Music videos · Talks to watch at 90 % |
 | Added | Every playlist that takes the video has had its outcome, and at least one added it | ✓ Auto-added | Auto-added to Music videos and Talks to watch |
 | Already in | Every outcome was *already in* | ✓ Already in Music videos | Already in Music videos |
-| Failed | An add failed | (error glyph) Couldn't auto-add | Offline: Couldn't auto-add to Music videos. Check your connection. Any other failure: Couldn't save "{title}". Try again. (R27) |
+| Failed | An add failed | (error glyph) Couldn't auto-add | Offline: Couldn't auto-add to Music videos. Check your connection. Any other failure: Couldn't save “{title}”. Try again. (R27) |
 | Skipped | Session skip on every pending playlist | ⊘ Not auto-adding | Not auto-adding this video |
 | Paused | Auto-add is paused | ⏸ Auto-add paused | Auto-add paused until you resume it or restart the browser |
 | Live | Live, premiering, waiting room or post-live | (live glyph) Not auto-added | Live streams aren't auto-added |
 | Can't measure | The lengths disagree (stitched ads) | ⚠ Can't follow progress | Auto-add can't follow this video's progress, so it won't be added |
 | Ad | An ad is playing (momentary) | No change; counting resumes after the ad | |
-| Not tracked | Clip, made for kids, no playlist takes this kind, nothing to add to, or auto-add off | Icon only, with the extension's mark | {Extension}: save this video |
+| Not tracked | Clip, made for kids, no playlist takes this kind, nothing to add to, or auto-add off | Icon only, with the extension's mark | {Product}: save this video |
 
 ### 2.3.10 Auto-add's feedback
 
-**YT-AA-39: auto-add's toasts name themselves,** e.g. "Auto-added …" and "Couldn't auto-add …", because they appear without the user doing anything. They carry the extension's mark (YT-ADD-17). They wait while the tab is hidden (YT-ADD-20) and until fullscreen ends (YT-ADD-21).
+**YT-AA-39: auto-add's toasts name themselves,** e.g. "Auto-added …" and "Couldn't auto-add …", because they appear without the user doing anything. Their confirmations and notes carry the extension's mark, and their failures the error icon (YT-ADD-17). They wait while the tab is hidden (YT-ADD-20) and until fullscreen ends (YT-ADD-21).
 
 **YT-AA-40: Show feedback** (default on) hides only "Auto-added …" and the filtered-out note. Failures always show, rate-limited per YT-ADD-25. "Already in" everywhere shows no toast, whatever the switch says.
 
 **YT-AA-41: can't measure.** The first playback in a browser session that can't be measured shows a failure toast, even with Show feedback off:
 
-> Auto-add can't follow this video's progress, so "{title}" won't be added.
+> Auto-add can't follow this video's progress, so “{title}” won't be added.
 
 Later ones are logged to the console only. YT-BRK-04 says when auto-add counts as partly working or not working because of this.
 
@@ -373,7 +387,7 @@ Later ones are logged to the console only. YT-BRK-04 says when auto-add counts a
 ### 2.3.11 Carried over from 1.4.5
 
 **YT-AA-43:**
-- **The percentage carries over** under [ADR-0009](../../../docs/adr/0009-upgraders-keep-what-1-4-5-did.md): an unset 1.4.5 value means 0 %, and the upgrade note asks once about the 50 % / 0 % mismatch. A value that isn't a number counts as unset (R21).
+- **The percentage carries over** under [ADR-0009](../../../docs/adr/0009-upgraders-keep-what-1-4-5-did.md). A set value carries over, rounded and clamped to 0–100. An unset 1.4.5 value means 0 %, and only then does the upgrade note ask once about the 50 % / 0 % mismatch. A value that isn't a number counts as unset (R21). The note's copy and conditions are [08](08-release.md)'s (REL-MIG-11, REL-CON-05; R60).
 - **Its meaning changes:** skipping ahead, `&t=` starts and resume points no longer count. Users on 0 % see no difference.
 - **Carried-over auto-add playlists** take Videos only and use the default percentage.
 - **1.4.5's toasts setting** becomes auto-add's Show feedback.
@@ -471,19 +485,19 @@ The editor sits in each auto-add playlist's options, in the popup and in Setting
 - **Unticked playlist:** its filter becomes a **kept filter**. It isn't applied or shown, and it returns unchanged when the playlist is ticked again.
 - **Renamed playlist:** no effect, because filters are keyed by playlist ID.
 - **Deleted playlist, or one missing from a refresh:** the filter becomes an **orphaned filter**. It's never shown, never pruned automatically, and still counts as listing its channels, so their labels are kept.
-- **Removal:** a filter goes when its account setup is removed, with Clear All Data, or with "Remove kept filters" when the synced copy is full.
+- **Removal:** a filter goes when its account setup is removed, with Clear all data, or with "Remove kept filters" when the synced copy is full.
 - **Other accounts:** filters belong to their account's setup, and other accounts never see or apply them.
-- **Sync:** with settings sync on, a filter change that doesn't fit the synced budget is refused and explained ([06-architecture.md](06-architecture.md)).
+- **Sync:** with settings sync on, a filter change that doesn't fit the synced budget is refused and explained ([04 §3.5](04-features-accounts-data.md#35-budget-and-full), SYNC-14, SYNC-15).
 - **Private windows:** filter edits are refused there (YT-GEN-10).
 
 ### 2.4.5 Feedback
 
 **YT-CF-18:**
-- **All remaining playlists filtered out:** "Didn't auto-add "{title}": {Channel} is filtered out of {list}". It's a confirmation, so Show feedback hides it.
-- **Unknown channel with an allowlist-mode filter:** the outcome is *filtered out*, with the reason "unknown channel", never *failed* (R26). It keeps its own toast, "Didn't auto-add "{title}" to {list}: couldn't tell which channel it's from." The toast is neutral, not a failure. It shows even with Show feedback off, once per browser session (YT-ADD-25).
+- **All remaining playlists filtered out:** "Didn't auto-add “{title}”: {Channel} is filtered out of {list}". It's a confirmation, so Show feedback hides it.
+- **Unknown channel with an allowlist-mode filter:** the outcome is *filtered out*, with the reason "unknown channel", never *failed* (R26). It keeps its own toast, "Didn't auto-add “{title}” to {list}: couldn't tell which channel it's from." The toast is neutral, not a failure. It shows even with Show feedback off, once per browser session (YT-ADD-25).
 - **Unknown channel with a denylist-mode filter:** the video is added as normal.
 - **Console:** each filter decision is logged to the tab's console.
-- **Mixed outcomes:** when some playlists were added and the rest filtered out, for whatever reason, one toast reads "Auto-added "{title}" to {n} playlists · filtered out of {m}", with Undo for the adds (YT-ADD-15; R27).
+- **Mixed outcomes:** when some playlists were added and the rest filtered out, for whatever reason, one toast reads "Auto-added “{title}” to {n} playlists · filtered out of {m}", with Undo for the adds (YT-ADD-15; R27).
 
 ---
 
@@ -505,10 +519,10 @@ The thumbnail Add to queue button isn't an add, and shares only the feedback rul
 **YT-ADD-02: the order of checks.**
 1. **Signed in.** This check comes first, because a signed-out page has no account and so no setup to check (R25).
    - If not, auto-add does nothing and shows nothing.
-   - An explicit add shows the failure "Sign in to YouTube to save videos." with **Sign in** (R3).
+   - An explicit add shows the failure "Sign in to YouTube to save videos." with **Sign in** (R3, R41).
 2. **The feature has a target on this account.**
    - Auto-add with no target does nothing and shows nothing.
-   - A playlist shortcut with no target answers "{Shortcut} has no playlist on {Account} yet." with **Choose** (YT-KEY-13; R24).
+   - A playlist shortcut with no target answers with the neutral hint "{Shortcut} has no playlist on {Account} yet." and **Choose** (YT-KEY-13; R24, R56).
    - A quick-save with no quick-save playlist opens the picker in choose mode instead (YT-PK-09).
 3. **Auto-add only: the session skip.** A playlist with a session skip for this video is *skipped*, silently.
 4. **Auto-add only: channel filters** (section 2.4).
@@ -534,7 +548,7 @@ The thumbnail Add to queue button isn't an add, and shares only the feedback rul
 
 **YT-ADD-07: when membership can't be read.** PROVISIONAL (ticket 25: L6). This covers a read whose account part checks out but whose membership part is missing or unrecognised.
 - An explicit add goes ahead. The user asked for it, and the worst case is one visible duplicate.
-- Auto-add goes ahead only if L6 shows that youtube.com rejects duplicate adds itself. Otherwise it fails, because an unattended add would add a copy on every rewatch. Its toast then reads "Couldn't check "{title}"'s playlists, so auto-add didn't run." (R27). This proceed rule stays PROVISIONAL on L6.
+- Auto-add goes ahead only if L6 shows that youtube.com rejects duplicate adds itself. Otherwise it fails, because an unattended add would add a copy on every rewatch. Its toast then reads "Couldn't check “{title}”'s playlists, so auto-add didn't run." (R27). This proceed rule stays PROVISIONAL on L6.
 - A read that fails outright (network, signed out, account mismatch) never leads to a write.
 
 **YT-ADD-08: an unlisted playlist is still tried.** New playlists can take minutes to appear in YouTube's lists, so only the add's own answer can show a playlist is missing.
@@ -546,17 +560,17 @@ The thumbnail Add to queue button isn't an add, and shares only the feedback rul
 - **Removals** (Undo, a picker untick) start with the same read.
 - **On a mismatch:**
   - nothing is written;
-  - the tab sends no further writes until it reloads, and auto-add is disarmed there;
-  - the tab shows "Your YouTube account changed in another tab. Reload this page to keep saving here." with **Reload**: once for auto-add, and again for every later explicit add, without a request (R22).
+  - the tab refuses every job that needs an account until it reloads, reads included, and auto-add is disarmed there;
+  - the tab shows "Your YouTube account changed in another tab. Reload this page to keep saving here." with **Reload**: once per tab for auto-add, and on every later explicit add, without a request (R22, R55).
 - Watch Later is why this matters: its ID means "this account's Watch Later", so a stale tab would otherwise save into the wrong account.
 
 **YT-ADD-11: nothing shows twice.** YouTube's own toast or dialog never appears for one of the extension's actions, so YouTube can't show a toast the user switched off, or offer "Add anyway".
 
 ### 2.5.2 Feedback
 
-**YT-ADD-12: Show feedback.** Each feature has its own Show feedback switch, shared by every account.
+**YT-ADD-12: Show feedback.** Each feature that raises toasts has its own Show feedback switch, the watch-page button included, shared by every account ([04](04-features-accounts-data.md) FT-23; R42).
 - **Off hides confirmations only:** toasts saying an action did what was asked, and auto-add's filtered-out note.
-- **Always shown:** failures, and explicit actions that did nothing, such as *already in*. An explicit click or key that silently does nothing is a defect.
+- **Always shown:** failures; explicit actions that did nothing, such as *already in*; and the "has no playlist" hint (R56). An explicit click or key that silently does nothing is a defect.
 - **Toasts only:** the switch never hides a control's own state (a picker row, a quick-save or queue button), or the *Missing* and *Full* marks in settings.
 
 **YT-ADD-13: defaults.**
@@ -567,9 +581,9 @@ The thumbnail Add to queue button isn't an add, and shares only the feedback rul
 | Playlist shortcuts | On | Same as auto-add |
 | Quick-save on thumbnails | On | — |
 | Queue button on thumbnails | On, because its toast carries Undo. This supersedes ticket 12's "off". | — |
-| Watch-page button | On (see Not pinned down, N12). It covers its menu's Save rows (R27). | — |
+| Watch-page button | On. It covers its menu's Save rows (R27, R42). | — |
 
-The card menu raises no toasts of its own, apart from YT-BRK notices, so it has no Show feedback switch.
+The card menu raises no toasts of its own, apart from YT-BRK notices, which Show feedback never hides, so it has no Show feedback switch (04 FT-23).
 
 **YT-ADD-14: one toast at a time.**
 - One add gets one toast covering every playlist, not one per playlist as in 1.x.
@@ -579,16 +593,16 @@ The card menu raises no toasts of its own, apart from YT-BRK notices, so it has 
 
 **YT-ADD-15: partial results.**
 - **Saved and failed:** the toast names both, saves first, and carries the failure's action instead of Undo. The picker can still undo.
-- **Saved and filtered out** (auto-add only): one toast, "Auto-added "{title}" to {n} playlists · filtered out of {m}", with Undo for the adds. It's a confirmation, so Show feedback off hides it. (R27)
+- **Saved and filtered out** (auto-add only): one toast, "Auto-added “{title}” to {n} playlists · filtered out of {m}", with Undo for the adds. It's a confirmation, so Show feedback off hides it. (R27)
 
 **YT-ADD-16: failures look different.** A failure carries an error icon and error treatment, is announced as an alert, and starts with "Couldn't …". Colour alone never marks it. *Already in* and other did-nothing answers are neutral, not failures.
 
-**YT-ADD-17: the extension's mark.** A small mark starts only the toasts the user didn't ask for: auto-add's toasts and the not-working notices. Answers to the user's own click or key carry none. Failures show the error icon in its place.
+**YT-ADD-17: the extension's mark.** A small mark starts only the toasts the user didn't ask for that aren't failures: auto-add's confirmations and notes. Failures, auto-add's and the not-working notices included, show the error icon in its place. Answers to the user's own click or key carry no mark. The look is [05](05-ui.md)'s (UI-TOAST-07).
 
 **YT-ADD-18: copy rules.**
 - Each toast is one sentence.
-- The video title is in double quotes, cut at 40 characters with "…". If no title is known, it reads "this video".
-- Playlist titles are unquoted, each also cut at 40. The one exception is "{Shortcut} now saves to "{Playlist}".", where the quotes keep a shortcut's name and its playlist's title apart (R24).
+- The video title is in typographic double quotes, “{title}”, cut at 40 characters with "…". If no title is known, it reads "this video". Every quote in copy is typographic (R45).
+- Playlist titles are unquoted, each also cut at 40. The one exception is "{Shortcut} now saves to “{Playlist}”.", where the quotes keep a shortcut's name and its playlist's title apart (R24).
 - Lists read "Music", "Music and Learning", "Music, Learning and Watch later", or "Music, Learning and 2 more".
 - Failures start with "Couldn't …".
 - YouTube's own words are used: "Saved to", "Watch later" (YouTube's capitalisation), "the queue".
@@ -606,7 +620,7 @@ The card menu raises no toasts of its own, apart from YT-BRK notices, so it has 
 - Toasts answering the user's own click or key show over the video.
 - Toasts the user didn't ask for (auto-add's confirmations and failures, and notices) wait until fullscreen ends.
 
-**YT-ADD-22: pending.** A key-triggered add with no visible button and no outcome after 1 s shows "Saving "{title}" to {list}…". It then turns into the outcome in place. Buttons show their own busy state instead. With the feature's Show feedback off, the pending toast isn't shown either; only a failure shows when the outcome arrives (R7).
+**YT-ADD-22: pending.** A key-triggered add with no visible button and no outcome after 1 s shows "Saving “{title}” to {list}…". It then turns into the outcome in place. Buttons show their own busy state instead. With the feature's Show feedback off, the pending toast isn't shown either; only a failure shows when the outcome arrives (R7).
 
 **YT-ADD-23: no answer.** An add with no answer after 10 s counts as failed.
 
@@ -619,7 +633,7 @@ The card menu raises no toasts of its own, apart from YT-BRK notices, so it has 
 | *Missing* and *Full* failures | Once per playlist per browser session |
 | The unknown-channel note (YT-CF-18); YouTube refusing a video | Once per browser session (R22) |
 | Adds during a rate-limit pause (YT-ADD-37) | None, since the toast for the 429 that started the pause already said so (R22) |
-| An account that can't use playlists; an account change | Once per tab |
+| An account that can't use playlists; an account change | Once per tab (R55) |
 | Can't measure (YT-AA-41) | Once per browser session |
 
 **YT-ADD-26: console log.** Every add logs each playlist's outcome to the tab's console, whatever Show feedback says.
@@ -630,40 +644,40 @@ The card menu raises no toasts of its own, apart from YT-BRK notices, so it has 
 
 | Situation | Toast | Action | Shown with Show feedback off |
 |---|---|---|---|
-| An explicit add saved it | Saved "{title}" to {list} | Undo | No |
-| First pick in choose mode | Saved "{title}" to {list}. One click now saves there. | Undo | No |
-| Auto-add saved it | Auto-added "{title}" to {list} | Undo | No |
-| A playlist shortcut's playlist chosen through **Choose** (YT-KEY-13) | {Shortcut} now saves to "{Playlist}". | Undo | No (R24) |
-| An explicit add found it already in | "{title}" is already in {list} | — | Yes |
-| A playlist shortcut with no playlist on this account | {Shortcut} has no playlist on {Account} yet. | Choose (YT-KEY-13) | Yes (R24) |
+| An explicit add saved it | Saved “{title}” to {list} | Undo | No |
+| First pick in choose mode | Saved “{title}” to {list}. One click now saves there. | Undo | No |
+| Auto-add saved it | Auto-added “{title}” to {list} | Undo | No |
+| A playlist shortcut's playlist chosen through **Choose** (YT-KEY-13) | {Shortcut} now saves to “{Playlist}”. | Undo | No (R24, R45) |
+| An explicit add found it already in | “{title}” is already in {list} | — | Yes |
+| A playlist shortcut with no playlist on this account (a neutral hint) | {Shortcut} has no playlist on {Account} yet. | Choose (YT-KEY-13) | Yes (R24, R56) |
 | Auto-add found it already in everywhere | *(no toast)* | | |
-| Auto-add: every remaining playlist filtered out | Didn't auto-add "{title}": {Channel} is filtered out of {list} | — | No |
-| Auto-add: unknown channel, allowlist-mode filter (*filtered out*, YT-CF-18) | Didn't auto-add "{title}" to {list}: couldn't tell which channel it's from. | — | Yes, once per browser session (R26) |
-| Auto-add: some saved, the rest filtered out | Auto-added "{title}" to {n} playlists · filtered out of {m} | Undo | No (R27) |
-| Partial: some saved, some failed | e.g. Auto-added "{title}" to Music. Couldn't add it to Old stuff: it doesn't exist anymore. | The failure's action | Yes |
-| Pending key-triggered add (YT-ADD-22) | Saving "{title}" to {list}… | — | No (R7) |
+| Auto-add: every remaining playlist filtered out | Didn't auto-add “{title}”: {Channel} is filtered out of {list} | — | No |
+| Auto-add: unknown channel, allowlist-mode filter (*filtered out*, YT-CF-18) | Didn't auto-add “{title}” to {list}: couldn't tell which channel it's from. | — | Yes, once per browser session (R26) |
+| Auto-add: some saved, the rest filtered out | Auto-added “{title}” to {n} playlists · filtered out of {m} | Undo | No (R27) |
+| Partial: some saved, some failed | e.g. Auto-added “{title}” to Music. Couldn't add it to Old stuff: it doesn't exist anymore. | The failure's action | Yes |
+| Pending key-triggered add (YT-ADD-22) | Saving “{title}” to {list}… | — | No (R7) |
 
 **YT-ADD-28: failures.** These all show with Show feedback off.
 
 | Situation | Toast | Action |
 |---|---|---|
-| Signed out (every explicit add: shortcuts, quick-save, the picker, the watch-page menu's Save rows) | Sign in to YouTube to save videos. | Sign in (R3) |
-| Offline, so nothing was sent | Couldn't save "{title}" to {list}. Check your connection. | Try again (auto-add only) |
-| Sent, but no answer within 10 s | Couldn't confirm "{title}" was saved to {list}. YouTube didn't answer. | Try again (auto-add only) |
-| Missing playlist | Couldn't save "{title}": {Playlist} doesn't exist anymore. | Settings (auto-add, shortcuts); Choose (quick-save) |
-| Full playlist | Couldn't save "{title}": {Playlist} is full. | Settings; Choose (quick-save) |
-| YouTube refuses the video (made for kids, private, removed, region-blocked) | YouTube doesn't allow saving "{title}" to playlists. | — |
-| Rate-limited (HTTP 429) | Couldn't save "{title}". YouTube is limiting requests, so try again in a minute. | — |
-| Account changed in another tab | Your YouTube account changed in another tab. Reload this page to keep saving here. | Reload |
+| Signed out (every explicit add: shortcuts, quick-save, the picker, the watch-page menu's Save rows; auto-add stays silent) | Sign in to YouTube to save videos. | Sign in (R3, R41) |
+| Offline, so nothing was sent | Couldn't save “{title}” to {list}. Check your connection. | Try again (auto-add only) |
+| Sent, but no answer within 10 s | Couldn't confirm “{title}” was saved to {list}. YouTube didn't answer. | Try again (auto-add only) |
+| Missing playlist | Couldn't save “{title}”: {Playlist} doesn't exist anymore. | Settings (auto-add, shortcuts); Choose (quick-save) |
+| Full playlist | Couldn't save “{title}”: {Playlist} is full. | Settings; Choose (quick-save) |
+| YouTube refuses the video (made for kids, private, removed, region-blocked) | YouTube doesn't allow saving “{title}” to playlists. | — |
+| Rate-limited (HTTP 429) | Couldn't save “{title}”. YouTube is limiting requests, so try again in a minute. | — |
+| Account changed in another tab (every explicit add; once per tab for auto-add) | Your YouTube account changed in another tab. Reload this page to keep saving here. | Reload (R55) |
 | Account can't use playlists (supervised or Kids-style) | YouTube doesn't let this account save to playlists. | — |
-| Auto-add, membership can't be read (YT-ADD-07, PROVISIONAL) | Couldn't check "{title}"'s playlists, so auto-add didn't run. | — (R27) |
-| Unrecognised answer | Couldn't save "{title}" to {list}. Use YouTube's own Save for now. | Try again (auto-add only) |
+| Auto-add, membership can't be read (YT-ADD-07, PROVISIONAL) | Couldn't check “{title}”'s playlists, so auto-add didn't run. | — (R27) |
+| Unrecognised answer | Couldn't save “{title}” to {list}. Use YouTube's own Save for now. | Try again (auto-add only) |
 | Undo failed | Couldn't undo. | — |
 
 **YT-ADD-29: the actions.**
 - **Try again** appears only on auto-add's toasts, because an explicit add is retried by pressing the button or key again. It re-runs the add for the failed playlists only, starting from the membership read, so an add that was slow but succeeded isn't doubled.
-- **Settings** opens Settings at that feature's playlist, through the deep link `#feature-<id>&playlist=<playlistId>` (feature IDs per [04-features-accounts-data.md](04-features-accounts-data.md) FT-01, e.g. `auto-add`). It scrolls to the playlist's row and highlights it, where the playlist is marked *Missing* or *Full* with **Remove** (R32, R38).
-- **Choose** opens the in-page picker in choose mode: for the quick-save playlist after a *Missing* or *Full* failure, or for that shortcut after a shortcut with no playlist (R24).
+- **Settings** opens Settings at that feature's playlist, through the deep link `#feature-<id>&playlist=<playlistId>` (feature IDs per [04-features-accounts-data.md](04-features-accounts-data.md) FT-01 and FT-56, e.g. `auto-add`). It scrolls to the playlist's row and highlights it, where the playlist is marked *Missing* or *Full* with **Remove** (R32, R38).
+- **Choose** opens the in-page picker in choose mode: for the quick-save playlist after a *Missing* or *Full* failure, or for that shortcut after a shortcut with no playlist. Either way the pick also saves the item, with Undo (R24, R45).
 - **Sign in** opens YouTube's sign-in page, which returns to this page.
 - **Reload** reloads the tab.
 
@@ -703,7 +717,7 @@ The card menu raises no toasts of its own, apart from YT-BRK notices, so it has 
 **YT-ADD-36: missing and full playlists.**
 - The playlist stays chosen, marked *Missing* (or *Full*) in settings, and is never removed automatically, since only the user removes their choices.
 - Later adds keep trying it. Each try is one cheap request, and it heals a wrong mark.
-- The *Missing* mark clears when the playlist appears in a YouTube list again.
+- The *Missing* mark clears when the playlist appears in a YouTube list again. A successful add to a marked playlist clears its *Missing* or *Full* mark ([04](04-features-accounts-data.md) DATA-21).
 - Auto-add's toast for it is rate-limited (YT-ADD-25).
 
 **YT-ADD-37: rate limits.** After a 429, all adds for that account pause for 60 s. Adds that start during the pause fail at once, without a request. Auto-adds then show no further toast; every explicit add answers with the rate-limited toast (R22).
@@ -779,14 +793,14 @@ The **playlist picker** is the extension's list of the user's playlists, with a 
 **YT-PK-08: pins.**
 - Each row has a pin, "Use for one-click save". It's visible on hover or focus, and always visible on the current quick-save playlist.
 - Pinning makes that playlist YouTube's quick-save playlist for this account.
-- In a private window, pins are disabled with the tooltip "Private windows don't save settings".
+- In a private window, pins are disabled, because the quick-save playlist is part of the account setup (YT-GEN-10). Their tooltip says "Changes made here are saved; nothing about this window's browsing is." PROVISIONAL (ticket 23: AMO question 3) ([04](04-features-accounts-data.md) ACC-38; R58).
 
 **YT-PK-09: choose mode.**
 - It's titled "Save videos to…", with "One click will save here from now on."
-- A pick saves the video, becomes the quick-save playlist, closes the picker, and shows "Saved "{title}" to {list}. One click now saves there." with Undo.
-- Opened by a shortcut's **Choose**, the pick saves the video and becomes that shortcut's playlist instead (YT-KEY-13; R24).
+- A pick saves the video, becomes the quick-save playlist, closes the picker, and shows "Saved “{title}” to {list}. One click now saves there." with Undo.
+- Opened by a shortcut's **Choose**, the pick saves the video and becomes that shortcut's playlist instead, and its toast carries Undo for the save (YT-KEY-13; R24, R45).
 - In a private window, the pick saves the video but isn't stored as the quick-save playlist.
-- **Which Show feedback governs the first-pick toast:** that of the feature that opened the picker (R24, R27):
+- **Which Show feedback governs the first-pick toast:** that of the feature that opened the picker (R24, R27, R42):
   - quick-save's button, ▾ or **Choose**: Quick-save on thumbnails;
   - the watch-page menu: the watch-page button;
   - the picker key, or **Choose** on a playlist shortcut's toast: Playlist shortcuts.
@@ -855,38 +869,40 @@ Watch Later and existing playlists keep working when creating can't.
 
 ## 2.8 Playlist shortcuts, the picker key and the undo key
 
-All shortcuts are caught by the site core's one key listener inside YouTube's pages ([ADR-0004](../../../docs/adr/0004-shortcuts-caught-in-page.md)). It listens for shortcut keys only while a shortcut feature is on, and for the undo key also while a toast with Undo is on screen (YT-KEY-05; R2). The extension records and stores the keys itself.
+All shortcuts are caught by the site core's one key listener inside YouTube's pages ([ADR-0004](../../../docs/adr/0004-shortcuts-caught-in-page.md)). It listens for shortcut keys only while a shortcut feature is on, and for the undo key also while a toast with Undo is on screen (YT-KEY-05; R2, R44). The extension records and stores the keys itself.
 
 ### 2.8.1 The feature and its keys
 
 **YT-KEY-01: the Playlist shortcuts feature** holds:
 - up to 20 playlist shortcuts;
 - the picker key;
-- the undo key;
 - "Also on YouTube Music";
 - Show feedback.
+
+The undo key isn't part of it: it belongs to no feature (YT-KEY-05; R44).
 
 **YT-KEY-02: presets.** The first time the feature is turned on, it presets:
 - one playlist shortcut, **Alt+W** → Watch later, on every account;
 - the picker key **Alt+Shift+P**;
-- the undo key **Alt+U**;
 - Also on YouTube Music: on;
 - Show feedback: on.
 
-The rules for presets:
+The rules for presets ([04](04-features-accounts-data.md) FT-04):
 - They apply once. Turning the feature off and on keeps what the user had, and removing every shortcut never brings the preset back.
 - A preset never takes a key already used on the same site. It's left without a key, and its row says "No key: {Key} is used by {Other}".
 - 1.4.5 upgraders get no Watch later preset (YT-KEY-33).
+- The undo key isn't preset here: it's Alt+U from install (YT-KEY-05; R44).
 
 **YT-KEY-03: where keys work.** Keys work only while a youtube.com page has keyboard focus. They don't work from another tab, from the address bar, or from YouTube's live-chat frame. Settings says: "Shortcuts work while a YouTube or YouTube Music page is in focus. If one does nothing, the browser or another extension may be using that key."
 
 **YT-KEY-04: the picker key** ("Save to playlist…") opens the playlist picker (section 2.6) for the pointed-at item, else the current video.
 
-**YT-KEY-05: the undo key** is Alt+U unless the user changed or cleared it. It's one setting shared with YouTube Music's quick-action shortcuts, so changing it in either place changes both. (R2)
+**YT-KEY-05: the undo key** belongs to no feature. It's a key used on every page, preset to **Alt+U** at install, and the user can change or clear it. It's one setting for both sites. It lives in Settings › Everywhere, which shows whenever any feature on either site is on ([04](04-features-accounts-data.md) FT-05; R2, R44).
 - It works on a page whenever a toast with Undo is on screen there, whichever feature raised it. So it works with only the queue button, quick-save or auto-add on.
-- While Playlist shortcuts is on, the key is always caught on YouTube. With no Undo toast on screen it then answers "Nothing to undo." (YT-KEY-25).
-- While Playlist shortcuts is off, a press with no Undo toast on screen passes through untouched.
+- While a shortcut feature is on there (on YouTube, Playlist shortcuts), the key is always caught. With no Undo toast on screen it then answers "Nothing to undo." (YT-KEY-25).
+- While none is on, a press with no Undo toast on screen passes through untouched.
 - Its listener is the site core's one key listener, so this costs nothing extra.
+- The picker key isn't like this: it stays with Playlist shortcuts (YT-KEY-04).
 
 **YT-KEY-06: the browser's own popup key.** The manifest declares only the browser's "open the popup" entry, with no default key, so users can bind one in the browser's shortcut settings. Settings › Everywhere links there.
 
@@ -906,11 +922,11 @@ The rules for presets:
 - Choosing Watch later for a shortcut makes it save to the current account's Watch later on every account that hasn't chosen another playlist for that shortcut. Accounts with their own choice keep it.
 - Choosing any other playlist sets it for the current account only.
 - Choosers show it as "Watch later (every account)".
-- Choosing Watch later is allowed in a private window, because it's a shared choice.
+- Choosing Watch later is allowed in a private window, because it's a shared choice. PROVISIONAL (ticket 23: AMO question 3) ([04](04-features-accounts-data.md) DATA-32; R58).
 
-**YT-KEY-13: a shortcut with no playlist on this account** answers "{Shortcut} has no playlist on {Account} yet.", with a **Choose** action. It's a did-nothing answer, so it shows even with Show feedback off. (R24)
+**YT-KEY-13: a shortcut with no playlist on this account** answers "{Shortcut} has no playlist on {Account} yet.", with a **Choose** action. It's a neutral hint, not a failure, and it always shows, even with Show feedback off. (R24, R56)
 - **Choose** opens the in-page picker in choose mode for that shortcut. The pick saves the video, as any choose-mode pick does ([ticket 14](../issues/14-in-page-controls.md)), and becomes the shortcut's playlist on this account.
-- The toast then reads "{Shortcut} now saves to "{Playlist}".", with Undo for the saved video. The shortcut keeps its new playlist. It's a confirmation under Playlist shortcuts' Show feedback.
+- The toast then reads "{Shortcut} now saves to “{Playlist}”.", with Undo for the saved video. The shortcut keeps its new playlist. It's a confirmation under Playlist shortcuts' Show feedback. The same holds on YouTube Music (R45).
 
 **YT-KEY-14: labels.**
 - A label is optional, trimmed, and up to 40 characters.
@@ -920,7 +936,11 @@ The rules for presets:
 - Toasts name the playlist the video went to, never the label.
 - Playlists always show by their YouTube titles; 1.4.5 made users paste IDs. There are no local nicknames for playlists.
 
-**YT-KEY-15: Also on YouTube Music** (on by default) makes playlist shortcuts and the undo key work on music.youtube.com too, acting on songs ([03-youtube-music.md](03-youtube-music.md) YM-PS-1). It takes effect only while the YouTube Music section is on: with the section off, nothing of ours runs there, and the option is kept for when it's back on (R1). It also needs YouTube Music access. Without access, the row reads "Needs access to YouTube Music", with **Give access**, and no missing-access badge is raised.
+**YT-KEY-15: Also on YouTube Music** (on by default) makes playlist shortcuts work on music.youtube.com too, acting on songs ([03-youtube-music.md](03-youtube-music.md) YM-PS-1).
+- **The section switch:** it takes effect only while the YouTube Music section is on. With the section off, nothing of ours runs there, and the option is kept for when it's back on (R1).
+- **The undo key** doesn't depend on it: it works on any page while a toast with Undo is on screen (YT-KEY-05). While this option is on, Playlist shortcuts counts as a shortcut feature on YouTube Music, so a press there with nothing to undo answers "Nothing to undo." (R44).
+- **Access on Chrome:** it needs YouTube Music access. That's asked from the click that switches it on while Playlist shortcuts is on, or that first switches Playlist shortcuts on, since the preset turns this option on. The section switch itself never asks ([04](04-features-accounts-data.md) FT-44; R53).
+- **Without access,** the row reads "Needs site access" with **Give access**. The violet "!" shows on every tab while Playlist shortcuts and this option are both on and the section is on (04 FT-13, FT-46, FT-47; R53).
 
 ### 2.8.3 What a key acts on
 
@@ -943,7 +963,7 @@ The rules for presets:
 | Live stream, premiere, members-only, private or made-for-kids video | Sent like any add; YouTube's answer decides, with the refusal copy (YT-ADD-28) |
 | Pointer on something that looks like a video but isn't recognised | YT-ITEM-07 |
 
-These messages answer an explicit key, so they show even with Show feedback off, and they're neutral, not failures.
+These messages answer an explicit key, so they show even with Show feedback off. They're neutral, not failures, except the unrecognised-item answer, which is a breakage failure (YT-ITEM-07, YT-BRK-06).
 
 **YT-KEY-18: never filtered.** Playlist shortcuts are never channel-filtered.
 
@@ -991,8 +1011,8 @@ One engine serves every shortcut on both sites.
 
 There's no highlight on the card a key acted on, because the toast names the video.
 
-**YT-KEY-25: the undo key (Alt+U)** runs Undo on the toast showing in this tab: any toast carrying Undo, whether from a save, an auto-add, the queue button or a YouTube Music quick action. It behaves exactly as clicking Undo, and works whichever feature raised the toast, even with both shortcut features off (YT-KEY-05; R2).
-- With no such toast on screen, and Playlist shortcuts on, it shows "Nothing to undo.", even with Show feedback off. With Playlist shortcuts off, the press passes through (R2).
+**YT-KEY-25: the undo key** (Alt+U unless changed or cleared) runs Undo on the toast showing in this tab: any toast carrying Undo, whether from a save, an auto-add, the queue button or a YouTube Music quick action. It behaves exactly as clicking Undo, and works whichever feature raised the toast, even with both shortcut features off (YT-KEY-05; R2, R44).
+- With no such toast on screen, and Playlist shortcuts on, it shows "Nothing to undo.", even with Show feedback off. With Playlist shortcuts off, the press passes through (R2, R44).
 - With Show feedback off, confirmations are hidden, so there's then never anything to undo by key.
 
 **YT-KEY-26: keys of a feature that isn't working** stay caught, and every press gets that feature's failure toast (YT-BRK-03).
@@ -1002,12 +1022,12 @@ There's no highlight on the card a key acted on, because the toast names the vid
 The popup and Settings use one recorder for every shortcut. Its look is in [05-ui.md](05-ui.md).
 
 **YT-KEY-27: idle.**
-- A set key shows in the platform's style, with **Change** and **Clear**. Unset, it shows "No key" with **Set key**.
+- A set key shows as keycaps in the platform's style, with a small × to clear it. Unset, it shows "No key". The look is [05](05-ui.md)'s (UI-PICK-23, UI-PICK-24).
 - **Style:** on macOS, ⌃⌥⇧⌘ symbols, e.g. "⌥⇧P". Elsewhere, "Ctrl+Alt+Shift+Win+Key" in that order ("Super" on Linux), e.g. "Alt+Shift+P".
 - **The key's label** is the character the layout gave when the key was recorded, else the key's name ("F2", "↑", "Page Down").
 
 **YT-KEY-28: recording.**
-- It shows "Press a key combination… (Esc to cancel)". The first non-modifier key, together with the modifiers held, is the result.
+- It shows "Press keys…", with the held modifiers shown live ("Alt+…"), and "Esc to cancel" ([05](05-ui.md) UI-PICK-23). The first non-modifier key, together with the modifiers held, is the result.
 - **Esc** cancels and keeps the old key.
 - **Tab** and Shift+Tab move focus as usual, and cancel.
 - A click elsewhere, or the popup closing, cancels.
@@ -1036,7 +1056,7 @@ The browser shortcut list ships in the package, per browser and OS.
 
 ### 2.8.7 Carried over from 1.4.5
 
-**YT-KEY-33:**
+**YT-KEY-33:** the migration and the upgrade note's copy and conditions are [08](08-release.md)'s (REL-MIG-16 to REL-MIG-24, REL-MIG-39, REL-CON-04; R60). In short:
 - **Where it goes:** the 1.4.5 shortcut's key becomes shortcut 1's key, and its playlist goes into the unclaimed setup.
 - **Converting the key:** split the stored value on "+" and de-duplicate the modifiers (`Control`, `Alt`, `Shift`, `Meta`, in any order). The last token is the key. It carries over if it's a letter, a digit, or a named key such as ARROWUP, HOME, PAGEDOWN, DELETE or F1–F12.
 - **What doesn't carry over:**
@@ -1046,11 +1066,12 @@ The browser shortcut list ships in the package, per browser and OS.
   - a modifier as the last token;
   - any Ctrl+Alt combination.
 
-  Shortcut 1 is then created with no key, and the upgrade note says "Your 1.x shortcut key can't be used in 2.0. Set a new one in Settings."
+  Shortcut 1 is then created with no key. The note's row is unticked and says "Your 1.x key ({raw}) can't be used in 2.0. Set a new one in Settings.", where {raw} is 1.4.5's stored value.
 - **A playlist with no key:** if 1.4.5 had a shortcut playlist but no key, shortcut 1 is created with no key, its playlist goes into the unclaimed setup, and the upgrade note says "Your 1.x shortcut had no key. Its playlist is kept; set a key in Settings." (R21)
-- **Bare keys and Ctrl keys carry over as they are,** because they were the user's choice. Bare keys no longer fire while typing. Ctrl keys never fired in 1.4.5, so the upgrade note names the key and its playlist.
-- **When the feature turns on:** after the user accepts the upgrade note, and only if both a converted key and a playlist carried over. Otherwise it stays off, and what carried over is kept.
-- **The list:** an upgrader's list holds only their own shortcut, with no Watch later preset. The picker and undo keys are preset as for anyone, unless those keys are taken.
+- **A key with no playlist:** the key carries over, and the note's row is unticked and says "Your 1.x key {Key} had no playlist. Choose one after you agree."
+- **Bare keys and Ctrl keys carry over as they are,** because they were the user's choice. Bare keys no longer fire while typing. Ctrl keys never fired in 1.4.5, so when their playlist came over too, the note says "{Key} never worked in 1.4.5 because of a bug. It works now."
+- **When the feature turns on:** only if both a converted key and a playlist carried over, once the user agrees on the upgrade note with its row still ticked (REL-MIG-23, REL-CON-07). Otherwise it stays off, and what carried over is kept.
+- **The list:** an upgrader's list holds only their own shortcut, with no Watch later preset. The picker key is preset unless the carried key uses it. The undo key is Alt+U, as for every install, unless the carried key uses it ([04](04-features-accounts-data.md) FT-04; R44).
 
 ### 2.8.8 Key hints
 
@@ -1092,7 +1113,7 @@ Clicking a card that shows saved reports *already in*. States belong to the item
 
 **YT-QS-08: made-for-kids cards** can't be told apart from their markup, so the button is drawn. Every click shows the failed state and the refusal toast, because a click is explicit (R22).
 
-**YT-QS-09: signed out.** The button stays. A click answers "Sign in to YouTube to save videos." with **Sign in**, and the picker doesn't open.
+**YT-QS-09: signed out.** The button stays. A click answers "Sign in to YouTube to save videos." with **Sign in**, and the picker doesn't open (R3, R41).
 
 **YT-QS-10: Shorts shelves** get quick-save only, and only when "On Shorts shelves too" is on. They never get a queue button.
 
@@ -1106,7 +1127,7 @@ Clicking a card that shows saved reports *already in*. States belong to the item
 
 **YT-Q-01: the feature.** Queue button on thumbnails has one option: Show feedback, on by default (YT-ADD-13).
 
-**YT-Q-02: what it does.** An Add to queue button sits on recognised items' thumbnails, on hover or keyboard focus, above quick-save. A click puts the card's video at the end of YouTube's queue, through YouTube's own queue command. The first add starts the queue in the miniplayer, as YouTube's own Add to queue does.
+**YT-Q-02: what it does.** An Add to queue button sits on recognised items' thumbnails, on hover or keyboard focus, beside quick-save (placement: [05](05-ui.md) UI-YT-07). A click puts the card's video at the end of YouTube's queue, through YouTube's own queue command. The first add starts the queue in the miniplayer, as YouTube's own Add to queue does.
 
 **YT-Q-03: Add to queue isn't an add.** It needs no sign-in, has no membership or duplicate check, is never channel-filtered, and ignores session skips. It works signed out, and it carries on when the account keys are missing (YT-BRK-05).
 
@@ -1117,7 +1138,7 @@ Clicking a card that shows saved reports *already in*. States belong to the item
 
 **YT-Q-05: it's quiet.** When a queue already exists, the add uses YouTube's quiet route, so YouTube's own "Added to Queue" toast never shows beside ours. PROVISIONAL (ticket 25: [ticket 29](../issues/29-youtube-queue-undo.md)'s Q1–Q8, signed in; confirmed signed out). If the quiet route stops working:
 - the add is kept, and our own toast is suppressed, so only YouTube's shows;
-- once YouTube's own toast is detected after a quiet add, a `quiet-route-noisy` breakage signal is recorded and the feature is marked partly working (R40).
+- once YouTube's own toast is detected after a quiet queue edit, an add or its Undo, a `quiet-route-noisy` breakage signal is recorded and the feature is marked partly working ([07](07-quality.md) Q-WATCH-24, Q-WATCH-28; R40, R51).
 
 **YT-Q-06: success is confirmed.** Success is shown only once YouTube confirms the video is in the queue: it appears in the queue's own data within 2 s, or, for a first add, the miniplayer turns active. Without either signal, the result is *Sent, not confirmed*, never success. PROVISIONAL (ticket 25: L8).
 
@@ -1137,13 +1158,13 @@ States belong to the item, never to a recycled element.
 
 | Situation | Toast | Action | Shown with Show feedback off |
 |---|---|---|---|
-| Confirmed | Added "{title}" to the queue | Undo | No |
-| Not confirmed | Couldn't confirm "{title}" was added to the queue. Check the miniplayer. | — | Yes |
-| Failed | Couldn't add "{title}" to the queue. Try YouTube's ⋮ menu. | — | Yes |
+| Confirmed | Added “{title}” to the queue | Undo | No |
+| Not confirmed | Couldn't confirm “{title}” was added to the queue. Check the miniplayer. | — | Yes |
+| Failed | Couldn't add “{title}” to the queue. Try YouTube's ⋮ menu. | — | Yes |
 
 **YT-Q-09: Undo** removes exactly the queue entry this click added. The entry is identified by its own queue entry ID (`playlistSetVideoId`), taken from the quiet add's answer or the queue's data once it has refreshed.
 - Undo never removes by video ID, because that would remove every copy of the video from the queue.
-- The removal is quiet: YouTube shows no "Removed from Queue" toast.
+- The removal is quiet: YouTube shows no "Removed from Queue" toast. If YouTube shows it anyway, the removal stands and `quiet-route-noisy` is recorded, as in YT-Q-05.
 - The toast closes once Undo succeeds; otherwise it reads "Couldn't undo."
 - The undo key works on it.
 - PROVISIONAL (ticket 25: ticket 29's Q1–Q8, signed in).
@@ -1157,7 +1178,7 @@ States belong to the item, never to a recycled element.
 
 **YT-WB-01: the feature.** The watch-page button shows auto-add's state for the current video and opens a menu of this video's actions. Its options are:
 - "On Shorts too", off by default (R11);
-- Show feedback, for its menu's Save rows (YT-WB-09), on by default (R27; see Not pinned down, N12).
+- Show feedback, for its menu's Save rows (YT-WB-09), on by default (R27, R42).
 
 **YT-WB-02: where it sits.**
 - In the watch page's action row, after Share and before Save. That's the only slot that survives YouTube's re-rendering.
@@ -1165,7 +1186,7 @@ States belong to the item, never to a recycled element.
 - Measurements are in [05-ui.md](05-ui.md).
 
 **YT-WB-03: its label** follows auto-add's state (YT-AA-38): the button label column, with the status line as its tooltip.
-- With no status to show (Not tracked, or auto-add off), it's icon-only, with the extension's mark and the tooltip "{Extension}: save this video".
+- With no status to show (Not tracked, or auto-add off), it's icon-only, with the extension's mark and the tooltip "{Product}: save this video".
 - Progress shows as a pie inside a full outline, never as a ring, which would read as loading.
 
 **YT-WB-04: it gives way to YouTube's Save.**
@@ -1188,13 +1209,13 @@ States belong to the item, never to a recycled element.
 - **Channel filters · {Channel}:** one row per auto-add playlist with its mode, and a chip that lists or unlists this channel (YT-CF-15);
 - **Save to {Playlist}:** one click to the quick-save playlist, which then reads "Saved to …". In choose mode it reads "Save to playlist…" and opens the picker in choose mode;
 - **Save to…**, with the picker key while Playlist shortcuts is on (YT-KEY-34), which opens the picker on the same anchor;
-- **{Extension} settings**, which opens Settings › YouTube at the watch-page button (`#feature-watch-button`, R32).
+- **{Product} settings**, which opens Settings › YouTube at the watch-page button (`#feature-watch-button`, R32).
 
 The Save rows belong to the watch-page button, whether or not Quick-save on thumbnails is on (R27).
 
 **YT-WB-08: with auto-add off,** only the Save rows and the settings row remain.
 
-**YT-WB-09: rows answer in place.** Rows show their own results (busy, done, "Couldn't save"). Save rows are explicit adds (section 2.5), never filtered. The menu raises only two toasts (R3, R27):
+**YT-WB-09: rows answer in place.** Rows show their own results (busy, done, "Couldn't save"). Save rows are explicit adds (section 2.5), never filtered. The menu raises only two toasts (R3, R27, R41, R42):
 - signed out, a Save row answers with the failure toast "Sign in to YouTube to save videos." with **Sign in**, as every explicit add does;
 - choose mode's first pick, started from the menu, shows its confirmation under the watch-page button's own Show feedback (YT-PK-09).
 
@@ -1223,9 +1244,9 @@ The Save rows belong to the watch-page button, whether or not Quick-save on thum
 
 ## 2.13 When YouTube changes something
 
-This section covers only what the user sees on YouTube. Detection, signals and diagnostics are in [06-architecture.md](06-architecture.md), and the popup, settings and badge surfaces are in [05-ui.md](05-ui.md).
+This section covers only what the user sees on YouTube. The breakage-signal identifiers and thresholds are in [07-quality.md](07-quality.md) §7.5 (Q-WATCH-23 to Q-WATCH-30; R51). Status, the badge rules and diagnostics are in [04-features-accounts-data.md](04-features-accounts-data.md) §5. The detection mechanisms are in [06-architecture.md](06-architecture.md), and the popup, settings and badge surfaces in [05-ui.md](05-ui.md).
 
-**YT-BRK-01: three statuses.** Each feature has a status per tab: **working**, **partly working** or **not working**.
+**YT-BRK-01: three statuses.** Status is per feature: each feature has one status per tab, **working**, **partly working** or **not working** ([04](04-features-accounts-data.md) HEALTH-07; R50).
 - **Not working:** a job the feature needs has no route left, or an anchor it needs is missing where the page clearly has that content.
 - **Partly working:** only an optional part is out. Examples:
   - the picker's check marks (membership);
@@ -1270,7 +1291,7 @@ This section covers only what the user sees on YouTube. Detection, signals and d
 | Watch-page button | The watch-page button isn't working right now because YouTube changed something. This video's status is still in the toolbar popup. |
 | A key pointing at an unrecognised item | Couldn't tell which item you meant. Point at it again, or use the player. This action-neutral wording is shared with YouTube Music and replaces the save-only wording (R4). |
 | Account keys missing | Saving isn't working right now because YouTube changed how it shows which account you're using. Nothing is saved, so nothing lands in the wrong account. |
-| The whole site | {Extension} isn't working on YouTube right now because YouTube changed something. An update should fix it. |
+| The whole site | {Product} isn't working on YouTube right now because YouTube changed something. An update should fix it. |
 
 **YT-BRK-07: theme fallback.** If YouTube's theme variables are missing, in-page UI uses a built-in palette picked from YouTube's dark-mode attribute. Diagnostics alone shows this.
 
@@ -1282,12 +1303,21 @@ Later amendments and main-session decisions take precedence. These were applied 
 
 - **Queue button Show feedback:** on, not off (ticket 12 → ticket 14's recommendation → ticket 15's decision).
 - **Queue button Undo:** the button gets Undo, and adds are quiet (ticket 12's "no undo on YouTube" → ticket 29 amendment).
-- **The undo key:** it works whenever a toast with Undo is on screen, whichever feature raised it (ticket 08's "only while a shortcut feature is on" → R2).
+- **The undo key:** it works whenever a toast with Undo is on screen, whichever feature raised it (ticket 08's "only while a shortcut feature is on" → R2). It belongs to no feature: it's preset to Alt+U at install and set in Settings › Everywhere (ticket 08's shortcuts preset → R44).
 - **Once-per-session toasts:** they apply to auto-add only, and explicit actions answer every time (ticket 12's limits, which ticket 14 applied to quick-save clicks → R22).
 - **A shortcut with no playlist:** "{Shortcut} has no playlist on {Account} yet." with **Choose** (tickets 11 and 12's "… Choose one in the popup." → ticket 14's Choose action → R24).
+- **A shortcut's Choose pick:** it saves the item as well as setting the shortcut's playlist, and its toast carries Undo, on both sites (→ R45).
+- **The "has no playlist" toast:** a neutral hint that always shows (→ R56).
 - **The order of checks:** signed in comes before "has a target" (ticket 12's order → ticket 11 → R25).
+- **Signed out, auto-add stays silent:** R3's list of actions that show the sign-in toast named auto-add (R3 → R41).
 - **"On Shorts too":** off by default (ticket 14's "on" → R11).
-- **The watch-page button's Show feedback:** it has one, for its menu's Save rows. The chapters' first draft gave it none, because its rows answer in place (→ R27).
+- **The watch-page button's Show feedback:** it has one, on by default, for its menu's Save rows. The chapters' first draft gave it none, because its rows answer in place (→ R27 → R42).
+- **Pause:** until resumed or the browser restarts, and an extension update also ends it ("or the browser closes" → R57).
+- **The picker's pin in a private window:** its tooltip says "Changes made here are saved; nothing about this window's browsing is." (ticket 14's "Private windows don't save settings" → R58).
+- **"Also on YouTube Music" without access:** the row reads "Needs site access", and the "!" shows while it and Playlist shortcuts are on (this chapter's first draft: "Needs access to YouTube Music", and no badge → R53, 04 FT-13).
+- **The 1.x shortcut's upgrade-note copy:** 08's wording and conditions (→ R60).
+- **Copy:** typographic quotes, “{title}” (straight quotes → R45), and `{Product}` for the extension's name (`{Extension}` → R65).
+- **The key recorder's look and copy:** keycaps with ×, and "Press keys…" with "Esc to cancel" (ticket 08's Change and Clear buttons and "Press a key combination…" → ticket 15, as 05 UI-PICK-23 has it).
 - **The unrecognised-item copy:** action-neutral (ticket 18's save-only wording → R4).
 - **Watch-page button slot:** after Share, before Save (ticket 09's "after Save" → ticket 14).
 - **Watch-page button at narrow widths:** it hides where even its icon would push Save into "…" (ticket 14's runner-up → main-session decision).
@@ -1301,7 +1331,7 @@ Later amendments and main-session decisions take precedence. These were applied 
 
 ## Resolved during assembly
 
-Every conflict and gap in this chapter's first draft was settled while the spec was assembled ([resolutions.md](resolutions.md)). The requirements above state the resolved behaviour.
+Every conflict and gap this chapter raised in its earlier drafts, apart from N13, was settled while the spec was assembled ([resolutions.md](resolutions.md)). The requirements above state the resolved behaviour.
 
 - **C1. Rate limits against "explicit actions always answer":** the once-per-session limits apply to auto-add only (R22; YT-ADD-25, YT-ADD-37, YT-QS-08).
 - **C2. A skipped outcome against undoing the skip:** a session skip doesn't count as auto-add having run, and undoing it checks the goal at once (R23; YT-AA-04, YT-AA-36).
@@ -1313,34 +1343,53 @@ Every conflict and gap in this chapter's first draft was settled while the spec 
 - **N3. The watch-page menu's Save rows:** they belong to the watch-page button and use its Show feedback (R27; YT-WB-07, YT-WB-09).
 - **N4. Mixed auto-add toasts:** "Auto-added … to {n} playlists · filtered out of {m}" with Undo, and an unknown channel counts as filtered out (R26, R27; YT-ADD-15, YT-CF-18).
 - **N5. Auto-add when membership can't be read:** its copy is given; the proceed rule stays PROVISIONAL on L6 (R27; YT-ADD-07, YT-ADD-28).
-- **N6. The confirmation after choosing a shortcut's playlist:** "{Shortcut} now saves to "{Playlist}"." (R24; YT-KEY-13).
+- **N6. The confirmation after choosing a shortcut's playlist:** "{Shortcut} now saves to “{Playlist}”." (R24; YT-KEY-13).
 - **N7. Show feedback for the picker key's choose mode:** Playlist shortcuts' switch (R24; YT-PK-09).
 - **N8. Typed-channel errors:** 1.5.0's wording (R27; YT-CF-16).
-- **N9. The watch-page button's generic failure:** "Couldn't save "{title}". Try again." (R27; YT-AA-38).
+- **N9. The watch-page button's generic failure:** "Couldn't save “{title}”. Try again." (R27; YT-AA-38).
 - **N10. Videos shorter than 3 s:** the goal is capped at the length, and the 2 s slack applies only from 3 s (R27; YT-AA-17).
 - **N11. The card menu's not-working notice:** a kit-free notice in the site core (R28; YT-CM-05).
 
-Also applied: R1 (YT-GEN-11, YT-KEY-15), R2 (YT-KEY-05, YT-KEY-25), R3 (YT-GEN-08, YT-ADD-02, YT-WB-09), R4 (YT-BRK-06), R6 (YT-KEY-34, by analogy), R7 (YT-ADD-22, YT-KEY-24), R21 (YT-AA-43, YT-KEY-33), R32 and R38 (YT-ADD-29, YT-WB-07, YT-KEY-11), R39 (YT-PK-01, YT-PK-02, YT-PK-13, YT-PK-14) and R40 (YT-Q-05).
+- **C6. Where the undo key is set:** it belongs to no feature. It's preset to Alt+U at install and set in Settings › Everywhere, which shows whenever any feature on either site is on (R44; YT-KEY-01, YT-KEY-02, YT-KEY-05, YT-KEY-33).
+- **C7. What a shortcut's Choose pick does:** it sets the shortcut's playlist and saves the item, and the toast carries Undo, on both sites (R45; YT-KEY-13, YT-PK-09). [03](03-youtube-music.md) YM-PS-4 and [05](05-ui.md) UI-PICK-18 now say the same.
+- **C8. Whether the watch-page button has a Show feedback switch:** it does, on by default, and it covers its menu's Save rows (R42; YT-ADD-13, YT-WB-01, YT-PK-09). [04](04-features-accounts-data.md) FT-01 and FT-23 now agree. The signed-out half is settled too: a Save row answers with the sign-in failure toast, as every explicit action does, while auto-add stays silent (R3, R41; YT-GEN-08, YT-WB-09).
+- **N12. The watch-page button's Show feedback default:** on (R42; YT-ADD-13, YT-WB-01).
+
+Also applied, first round: R1 (YT-GEN-11, YT-KEY-15), R2 (YT-KEY-05, YT-KEY-25), R3 (YT-GEN-08, YT-ADD-02, YT-WB-09), R4 (YT-BRK-06), R6 (YT-KEY-34, by analogy), R7 (YT-ADD-22, YT-KEY-24), R21 (YT-AA-43, YT-KEY-33), R32 and R38 (YT-ADD-29, YT-WB-07, YT-KEY-11), R39 (YT-PK-01, YT-PK-02, YT-PK-13, YT-PK-14) and R40 (YT-Q-05).
+
+Also applied, second round:
+- R41 (YT-GEN-01, YT-GEN-08, YT-ADD-02, YT-ADD-28, YT-QS-09, YT-WB-09);
+- R42 (YT-ADD-12, YT-ADD-13, YT-PK-09, YT-WB-01, YT-WB-09);
+- R43 (YT-AA-36);
+- R44 (YT-GEN-01, §2.8's opening, YT-KEY-01, YT-KEY-02, YT-KEY-05, YT-KEY-15, YT-KEY-25, YT-KEY-33);
+- R45 (YT-ADD-18, every quoted title in copy, YT-ADD-27, YT-ADD-29, YT-PK-09, YT-KEY-13);
+- R50 (YT-BRK-01);
+- R51 (YT-ITEM-07, YT-ITEM-08, YT-Q-05, §2.13's opening);
+- R53 (YT-KEY-15);
+- R54 (YT-GEN-06);
+- R55 (YT-ADD-10, YT-ADD-25, YT-ADD-28);
+- R56 (YT-ADD-02, YT-ADD-12, YT-ADD-27, YT-KEY-13);
+- R57 (YT-AA-03, YT-AA-04, YT-AA-05);
+- R58 (YT-GEN-10, YT-PK-08);
+- R60 (YT-GEN-02, YT-AA-43, YT-KEY-33);
+- R65 (the placeholders; `{Product}` in YT-AA-38, YT-WB-03, YT-WB-07 and YT-BRK-06).
+
+The other second-round resolutions don't touch this chapter's topics.
 
 ## Conflicts found
 
-These are open between this chapter and the others. This chapter doesn't edit the others.
+These are open between this chapter and the others as of this pass. This chapter doesn't edit the others. Under the resolutions' ownership rule, this chapter owns each topic below (YouTube behaviour and copy), unless the entry names another owner.
 
-- **C6. Where the undo key is set.**
-  - R2 makes the undo key live with both shortcut features off, e.g. with only the queue button on (YT-KEY-05).
-  - But [04](04-features-accounts-data.md) FT-14 shows a feature's options only while it's on, and [05](05-ui.md) places the undo key among Playlist shortcuts' options.
-  - So a user with neither shortcut feature on has a live key they can't change or clear. The undo key needs a home outside both features, such as Settings › Everywhere.
-- **C7. What a shortcut's Choose pick does.**
-  - This chapter keeps ticket 14's choose mode, where the pick saves the video. So R24's toast carries Undo for that save (YT-KEY-13, YT-ADD-30).
-  - [03](03-youtube-music.md) YM-PS-4 and [05](05-ui.md) UI-PICK-18 say only that the pick becomes the shortcut's playlist, and give the toast no action.
-  - The three chapters should agree.
-- **C8. Whether the watch-page button has a Show feedback switch.**
-  - R27 says the menu's Save rows "use its feedback switch". This chapter reads that literally: the button gains a Show feedback switch, which governs choose mode's first-pick toast started from the menu (YT-ADD-13, YT-WB-01, YT-PK-09). Its default is N12.
-  - [04](04-features-accounts-data.md) FT-01 reads R27 the other way: the button has no Show feedback, and its rows, Save rows included, answer in place.
-  - [05](05-ui.md) UI-YT-22 says the menu raises no toasts. That also leaves out R3's signed-out failure toast for the Save rows (YT-WB-09).
-  - The main session should say which reading R27 meant.
+- **C9. The watch-page button's Show feedback in 05.** [05](05-ui.md) UI-YT-22 still calls the switch open, and UI-SET-10 lists only "On Shorts too" for the button. R42, 04 FT-01 and this chapter (YT-WB-01) give it Show feedback, on by default. 05 should follow.
+- **C10. The watch-page button's "generic failure" (R27).** This chapter reads R27 as the Failed state's status line for any failure other than offline: "Couldn't save “{title}”. Try again." (YT-AA-38). [05](05-ui.md) UI-YT-18 has only the offline line, and UI-YT-22 uses the string for a Save row's generic failure, while YT-WB-09 has Save rows answer inline with "Couldn't save". R27 is ambiguous, and as an auto-add status line it says "save" where YT-ADD-18 has auto-add's toasts say "auto-add". The main session should say which reading R27 meant.
+- **C11. The picker pin's private-window tooltip.** [05](05-ui.md) UI-PICK-10 still says "Private windows don't save settings". R58, 04 ACC-38 and [03](03-youtube-music.md) YM-ACC-8 replace it (YT-PK-08).
+- **C12. Creating a playlist with the video in it.** [06](06-architecture.md)'s `create` job (§6.2.5) takes `{ title, privacy }`, and PickerModel (§6.4.1) has `create(title, privacy)`. Neither can create the playlist with the current video already in it, in one request, as YT-NEW-01 requires and YT-ADD-39 relies on. 06 owns the interface, but it should carry the video ID.
+- **C13. This chapter's copy quoted elsewhere.**
+  - [06](06-architecture.md)'s AddFlow (§6.4.3) quotes the partial result as "Added to {n} playlists · filtered out of {m}". YT-ADD-15's copy is "Auto-added “{title}” to {n} playlists · filtered out of {m}".
+  - [08](08-release.md) REL-STORE-21's reviewer step 3 expects "Added … to Reviewer A". An auto-add reads "Auto-added “…” to Reviewer A" (YT-ADD-27).
+- **C14. The undo key in the upgrade note.** [08](08-release.md) REL-CON-04 says "Alt+U undoes the last save". The undo key acts only on a toast with Undo while it's on screen (YT-KEY-25). 08 owns the note's wording, which could read "Alt+U undoes a save while its message is on screen."
 
 ## Not pinned down
 
-- **N12. The watch-page button's Show feedback default.** Read as in C8, R27 gives the button a switch for its Save rows, but no default. This chapter uses on, as for every other feature that raises toasts (YT-ADD-13, YT-WB-01).
 - **N13. Choose mode's title for a shortcut.** The picker's choose-mode title and subtitle, "Save videos to…" and "One click will save here from now on.", fit only the quick-save playlist. No wording is given for a shortcut's **Choose** (YT-PK-09).
+- **N14. The disabled pin's tooltip in a private window.** R58's sentence, "Changes made here are saved; nothing about this window's browsing is.", explains why shared settings are saved. But the pin stays disabled there, because the quick-save playlist is an account-setup choice (04 DATA-33), so the tooltip doesn't say why the pin can't be used (YT-PK-08).

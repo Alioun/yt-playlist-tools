@@ -190,3 +190,21 @@ When chapters disagree, the owning chapter wins:
   - The popup has a banner row for the "older than your settings" state (DATA-48).
   - The broken link in 05 to 07's old §7.6.6 anchor is fixed.
 - **R66 (confirms R34) — An ambiguous resolver:** use the first property whose `resolveCommand` is a function. 06 and 07 align.
+
+## Third round (final mop-up)
+
+- **R68 (amends R50) — Never silent.** When a YouTube Music action is unavailable in a tab, its buttons hide there, but its key stays caught. Each press answers "{Action} isn't working right now. The popup shows why." This keeps ticket 18's rule that a key never does nothing silently.
+- **R69 (amends R58) — The pin tooltip in a private window** says why the pin is disabled: "Quick-save playlists can't be changed in a private window."
+- **R70 (settles R27's reading) — "Couldn't save" wording.**
+  - "Couldn't save “{Title}”. Try again." is the watch-page button's status line when auto-add failed, as chapters 02 and 05 now have it.
+  - The watch-page menu's Save rows are explicit saves, so their failures use the add flow's failure copy (02).
+- **R71 — Chrome's YouTube Music prompt denied while switching on Playlist shortcuts.** Playlist shortcuts goes on, and "Also on YouTube Music" turns off, with "No access to YouTube Music, so shortcuts work on YouTube only."
+- **R72 — Every release needs a signed-in live-check record,** hotfixes for our own bugs included. It takes a few minutes.
+- **R73 — Chapter 06's interface gaps.**
+  - The `nowPlaying` result carries the artwork URL.
+  - YouTube Music membership rows carry the song count when YouTube returns one; otherwise the UI shows privacy only.
+  - §6.10 gains `assets/brand/` for the icons and mark files.
+- **R74 — Private-window copy.** 05's UI-POP-10 row 6 takes 04's ACC-40 copy: "{Account} has no setup yet. A private window can't save one, so set it up in a normal window."
+- **R75 — Batched notices** use full feature names, e.g. "Quick-save on thumbnails".
+- **R76 (confirms 08's reading of R64) — A 1.4.5 user with no 1.x key left** counts as a fresh install. No tab opens on update; the toolbar "!" and "Waiting for your OK" lead them to first run. REL-MIG-09's crash-recovery rule stands.
+- **R77 — Quotes in copy.** Video and song titles take typographic quotes. Playlist names don't, except in R24's "{Shortcut} now saves to “{Playlist}”."

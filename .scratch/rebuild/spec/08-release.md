@@ -21,7 +21,7 @@ Part of the [2.0 spec](../spec.md). This chapter covers how 1.4.5 users get to 2
 - [07](07-quality.md): the test layers ([§7.2](07-quality.md#72-test-layers)), fixtures ([§7.3](07-quality.md#73-fixtures)), the watch and the live check ([§7.5](07-quality.md#75-breakage-detection)), the budgets ([§7.6](07-quality.md#76-performance-budgets)) and the CI jobs ([§7.7](07-quality.md#77-ci-jobs-and-the-hotfix-lane)).
 - [09](09-parity.md): what 1.4.5 users had ([§1.12](09-parity.md#112-what-145-users-had), PAR-CAP-71 to PAR-CAP-79) and the platform and release rows ([§1.11](09-parity.md#111-platform-manifest-build-and-release)).
 
-The main session's resolutions ([resolutions.md](resolutions.md), R1–R40) are applied. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist".
+The main session's resolutions ([resolutions.md](resolutions.md)) are applied, both rounds (R1–R40, then R41–R67). A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist". Under the resolutions' ownership rule, this chapter owns the migration, the upgrade note, and consent copy and conditions (R60); where it shares another topic with a chapter that owns it, that chapter's text wins, and [Conflicts found](#conflicts-found) lists what still differs.
 
 **Requirement IDs:**
 - `REL-MIG-`: the 1.4.5 migration.
@@ -38,7 +38,7 @@ The plan works whichever way these land. Each dependent item is marked inline.
 |---|---|---|---|
 | **The name** | [Ticket 22](../issues/22-name.md), the user's call | Every string that says "Playlist Pigeon": the manifest `name`, `short_name` and `description`, the note, the disclosure, both listings, the policy, the reviewer notes and the screenshots | Swap "Playlist Pigeon for YouTube™" / "Playlist Pigeon" / "Pigeon" for "Playlist Courier for YouTube™" / "Playlist Courier" / "Courier". Nothing else changes. |
 | **AMO's reply** | [Ticket 23](../issues/23-ask-amo.md), sent by the user | Firefox's `data_collection_permissions`, the Firefox prompts (§5), the sync switch's prompt, private-window settings writes, and the Bun install step | Apply the matching row of [§13](#13-what-each-amo-reply-changes-provisional-ticket-23) |
-| **The signed request** | [Ticket 25](../issues/25-live-checks.md)'s route table | The **cookie lines**: the disclosure's cookie bullet, the policy's cookie bullet, Chrome's "Authentication information" tick, and the reviewer notes' signed route | Drop all four together if no signed request ships |
+| **The session cookie** | [Ticket 25](../issues/25-live-checks.md)'s final route table | The **cookie lines**: the disclosure's cookie bullet, the policy's cookie bullet, Chrome's "Authentication information" tick, and the reviewer notes' signed route | If no shipped route reads the session cookie, remove all four together; the reviewer notes then describe the same-origin request without signing (R48) |
 | **The reviewer endpoint list** | Ticket 25's route table | §12.1 | Fill it from the table |
 | **Exact prompt strings** | Ticket 25's check P1 ([06 §6.2.15](06-architecture.md#6215-live-checks-that-settle-the-provisional-rows)) | §5 | Adjust §5 |
 | **A support e-mail** | The user | The policy's Contact section, both stores and Diagnostics | Add it in all of them |
@@ -53,7 +53,7 @@ Ticket 23's message was corrected on 2026-10-19, before sending: its question 4 
 - the `extensions.update.url` override shortcut (§17);
 - the Chrome Web Store fee (the docs' screenshot says US$5).
 
-All copy in this chapter uses ticket 22's recommendation: "Playlist Pigeon for YouTube™" on the stores, "Playlist Pigeon" in the product, and `short_name` "Pigeon". **Every occurrence is PROVISIONAL on ticket 22.**
+All copy in this chapter uses ticket 22's recommendation: "Playlist Pigeon for YouTube™" on the stores, "Playlist Pigeon" in the product, and `short_name` "Pigeon". **Every occurrence is PROVISIONAL on ticket 22.** This chapter writes the name out, because its store and policy texts are published as they stand; the other chapters' copy writes it `{Product}`, and the account `{Account}` (R65). Quotes in copy are typographic (“ ”, R45).
 
 ## 1. What 1.4.5 is
 
@@ -77,18 +77,19 @@ These facts come from inventory.md, ticket 06 and 1.4.5's code at `e96dbf7`.
 ### 2.1 When it runs
 
 - **REL-MIG-01** The migration runs at the top of every background start, before the reconciler, the replicator and any message handler. Every other background module awaits the store's `ready()`; the popup, settings and the first-run page only read `storage.local`, and follow its changes ([ARC-MOD-24, ARC-MOD-25](06-architecture.md#69-the-store-module-interface)).
-- **REL-MIG-02** It runs when `schema` is absent from `storage.local` and any **legacy key** exists in `storage.local`:
-  - any of 1.4.5's nine keys;
-  - the 1.5.0 developer keys: `authMode`, `authServerURL`, `cachedPlaylists`, `preventDuplicates`, `queueButtonEnabled`, `cardContextMenu`, `channelFilters` and `channelLabels`.
+- **REL-MIG-02** **Recognising an upgrader.** At every background start, if there's no consent and no upgrade-note record (`device.consent` and `device.upgradeNote` absent or `null`), and any **1.x key** is present in `storage.local`, it's an upgrade: the migration runs and the note follows (the note path). Otherwise it's a fresh install: the first-run path (REL-MIG-04). ([DATA-49](04-features-accounts-data.md#410-schema-versions-and-migrations); R64)
+  - The 1.x keys are 1.4.5's nine: `playlists`, `addToPlaylistID`, `watchLaterShortcut`, `requiredWatchPercentage`, `toastEnabled`, `clientID`, `clientSecret`, `accessToken` and `refreshToken`.
+  - The check never relies on `onInstalled`, which Firefox can skip (REL-MIG-05; ticket 06), or on the `schema` marker, which the first background start may already have written (REL-MIG-04).
+  - When the migration runs, it also converts and removes the 1.5.0 developer keys: `authMode`, `authServerURL`, `cachedPlaylists`, `preventDuplicates`, `queueButtonEnabled`, `cardContextMenu`, `channelFilters` and `channelLabels`. On their own, without a 1.x key, they don't make an upgrade; only developer profiles ever wrote them.
 
-  It never reads `storage.sync`, because sync is off ([FT-21](04-features-accounts-data.md#13-off-costs-nothing)). 1.5.0's stray `theme` key there, which only developer profiles ever wrote, is left alone. (R20)
-- **REL-MIG-03** A 1.4.5 user who never set anything up has no legacy key, so the migration finds nothing to convert. They still get the note: when `runtime.onInstalled` reports `reason: "update"` with a `previousVersion` starting with `1.`, and `device.upgradeNote` and `device.consent` are both `null`, the background writes a pending upgrade note whose "Kept" section is empty, and opens it (REL-CON-01). This doesn't depend on `schema`, because the first background start may already have written `schema: 1` (REL-MIG-04). (R21)
-- **REL-MIG-04** If neither applies, the state is fresh: a new install, or an empty profile that updated while disabled.
-  - The first background start writes `schema: 1` at once, before consent. A schema marker isn't user data. Every later start then skips the legacy-key check ([DATA-46](04-features-accounts-data.md#410-schema-versions-and-migrations)).
+  It never reads `storage.sync`, because sync is off ([FT-21](04-features-accounts-data.md#13-off-costs-nothing)). 1.5.0's stray `theme` key there, which only developer profiles ever wrote, is left alone. (R20, R64)
+- **REL-MIG-03** A 1.4.5 user who never set anything up has no 1.x key, so REL-MIG-02 treats them as a fresh install: no migration and no note. Their update fires `onInstalled` with "update", not "install", so first run doesn't open by itself; the toolbar shows the "!" and the popup "Waiting for your OK" with **Review**, which opens first run (REL-MIG-04). This replaces R21's `onInstalled` "update" trigger, which gave them an empty note (R64).
+- **REL-MIG-04** If REL-MIG-02 finds no upgrade, the state is fresh: a new install, an empty profile that updated while disabled, or a 1.4.5 user with no 1.x key.
+  - The first background start writes `schema: 1` at once, before consent. A schema marker isn't user data ([DATA-46](04-features-accounts-data.md#410-schema-versions-and-migrations)). It never decides whether a start is an upgrade.
   - First run opens on `onInstalled` "install".
-  - Otherwise the popup shows "Waiting for your OK". (R21)
-- **REL-MIG-05** The migration never depends on `onInstalled` alone. Firefox fires no `onInstalled` "update" when the add-on was disabled or the update was applied at browser start. In those cases the migration runs from stored state at the next background start, and the note opens then.
-  - `onInstalled` is used only for work tied to the event: the first-run tab on "install", and the trigger in REL-MIG-03.
+  - Otherwise the popup shows "Waiting for your OK". (R21, R64)
+- **REL-MIG-05** The migration never depends on `onInstalled`. Firefox fires no `onInstalled` "update" when the add-on was disabled or the update was applied at browser start. In those cases the migration runs from stored state at the next background start, and the note opens then.
+  - `onInstalled` is used only for work tied to the event: the first-run tab on "install". (R64)
 - **REL-MIG-06** The extension registers no `runtime.onUpdateAvailable` listener. One would postpone updates and suppress `onInstalled`.
 - **REL-MIG-07** WXT's per-item `version` and `migrations` aren't used: they run per key in every context and skip absent values, while this migration spans keys.
 
@@ -101,13 +102,14 @@ These facts come from inventory.md, ticket 06 and 1.4.5's code at `e96dbf7`.
      - `device`, with `consent: null`, `syncOn: false` and `upgradeNote: {state: "pending", details, opened: false}` ([2.9](#29-what-the-note-is-built-from)).
   2. **Write** all the new keys in one `storage.local.set`.
   3. **Remove the old stores:**
-     - every legacy key in one `storage.local.remove`, including `clientID`, `clientSecret`, `accessToken`, `refreshToken` and the 1.5.0 developer keys;
+     - every 1.x key and 1.5.0 developer key (REL-MIG-02) in one `storage.local.remove`, including `clientID`, `clientSecret`, `accessToken` and `refreshToken`;
      - nothing in `storage.sync`, which the migration never touches (R20);
      - the IndexedDB database `yt-playlist-tools`, with `indexedDB.deleteDatabase` from the background;
      - `channelCache` from `storage.session`.
   4. **Write `schema: 1` last.**
   5. **Open the note** ([3.1](#31-opening-the-note)). (R20)
 - **REL-MIG-09** Every step is idempotent, and new keys are written before old ones are removed. A crash between any two steps re-runs cleanly at the next start and gives the same result. A test injects a failure at each step boundary.
+  - A crash after step 2 leaves the note's record written while 1.x keys remain, so REL-MIG-02 no longer sees an upgrade. A start that finds the note pending while a 1.x key is still present therefore finishes steps 3 and 4, and leaves the written keys as they are. (R64)
 - **REL-MIG-10** The old `localStorage` keys (`cachedVideos`, `playlists` and `preventDuplicates`, on the extension's own origin, left by unreleased builds) are removed by the first extension page that opens, because a service worker has no `localStorage`. That page then asks the background to set `device.legacyCleared = true`, since only the background writes storage ([ARC-MOD-23](06-architecture.md#69-the-store-module-interface)). Once the flag is set, no page touches `localStorage` again.
 
 ### 2.3 The mapping
@@ -188,7 +190,8 @@ From ticket 08.
 - **REL-MIG-22** Auto-add is switched on if at least one auto-add playlist was kept.
 - **REL-MIG-23** Playlist shortcuts are switched on only if **both** a converted key and a cleaned playlist came over (`note` is `ok` or `ctrl-never-fired`). Otherwise the feature stays off, and whatever came over is kept.
 - **REL-MIG-24** Upgraders get **no Watch later preset**: their list holds only their own shortcut, and `shortcuts.preset` is `true`, so the preset is never added later.
-  - The picker key (Alt+Shift+P) and the undo key (Alt+U) are preset as for anyone, unless the carried key already uses them.
+  - The picker key (Alt+Shift+P) is preset as for anyone, unless the carried key already uses it.
+  - The undo key belongs to no feature and is Alt+U from install, for upgraders as for anyone, unless the carried key already uses it ([FT-05](04-features-accounts-data.md#11-the-features); R44).
 - **REL-MIG-25** Every other feature is off, settings sync is off (`device.syncOn: false`), and `device.consent` is `null`.
 - **REL-MIG-26** None of these switches takes effect until consent ([2.8](#28-before-consent)). Agree on the note applies the note's ticks over these values ([3.4](#34-agree-and-not-now)).
 
@@ -221,7 +224,7 @@ From ticket 08.
 
 ```ts
 type UpgradeDetails = {
-  from: string                              // previousVersion when known, else "1.x"
+  from: "1.4.5" | "1.5.0"                   // as unclaimed.from: read from the keys found, never from onInstalled (R64)
   autoAdd: { kept: number; dropped: number } // IDs kept in `unclaimed`; entries left out by the clean-up
   pct: { value: number; wasUnset: boolean }  // wasUnset → the note asks (§3.3)
   feedback: boolean                          // from toastEnabled
@@ -264,7 +267,8 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
 
 | Case | What happens |
 |---|---|
-| The update lands while the add-on is disabled, or at browser start | No `onInstalled`. The migration still runs from stored state at the next start, and the note opens then. |
+| The update lands while the add-on is disabled, or at browser start | No `onInstalled`. The migration still runs from stored state at the next start, and the note opens then (R64). |
+| 1.4.5 installed, but nothing ever set | No 1.x key, so it's a fresh install: no migration and no note. The "!" and the popup's "Waiting for your OK" lead to first run (REL-MIG-03; R64). |
 | No youtube.com access (installed on Firefox 125/126, or revoked) | The update still installs silently. The note shows "Playlist Pigeon doesn't have access to YouTube in this browser, so nothing can run there yet." with **Give access to YouTube**, which requests access first thing in the click. |
 | Firefox 125–139 (1.4.5's floor is 125) | Stays on 1.4.5 silently. AMO offers 2.0 only to Firefox 140 and later. |
 | Signed out, no YouTube tab, or another account at Agree | Ticket 11's outcomes, shown in the note (§3.4) |
@@ -279,8 +283,15 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
 - **REL-CON-01** After the migration, if `upgradeNote.state` is `pending` and `opened` is false, the background opens the first-run page's upgrade view (`onboarding.html`) with `tabs.create({active: false})` next to the current tab. It then sets `upgradeNote.opened = true`.
   - The tab opens in the background, so a playing video isn't interrupted.
   - The toolbar "!" points to it. (R37)
-- **REL-CON-02** The note opens **once.** After that, the popup's banner "Playlist Pigeon 2.0 is waiting for your OK" with **Review** reopens it.
+- **REL-CON-02** The note opens **once.** After that, the popup's banner reopens it with **Review**.
   - Restarting the browser before or after Agree never reopens it (S7).
+  - The banner's title is "Playlist Pigeon 2.0 is waiting for your OK". Its line names only what actually carried over, the same features the note's "Kept" section shows ticked (R60):
+    - auto-add and the shortcut: "Auto-add and your shortcut are paused until you agree.";
+    - auto-add only: "Auto-add is paused until you agree.";
+    - the shortcut only: "Your shortcut is paused until you agree.";
+    - neither: "Nothing runs until you agree."
+
+    Then, in every case: "No Google credentials needed anymore." The banner's place among the others is [05's UI-POP-10](05-ui.md#banners) row 1.
 - **REL-CON-03** The note is decided when the page opens. After Agree it shows its outcome in place, and doesn't switch to first run (ticket 15).
 - *Runner-ups:*
   - a foreground tab, which interrupts a playing video;
@@ -310,6 +321,8 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
 
 > ## Kept from 1.4.5 · *Paused until you agree below*
 
+This section lists only what actually carried over, and shows only when at least one of its rows does (R60).
+
 **[✓] Auto-add** · *Doesn't change the page*
 
 The row shows only when a playlist came over (`autoAdd.kept` > 0).
@@ -330,7 +343,7 @@ The row is ticked only when `note` is `ok` or `ctrl-never-fired`. It's shown whe
 - *`ctrl-never-fired`:* {Key} never worked in 1.4.5 because of a bug. It works now.
 - *A bare or Shift-only key:* It no longer fires while you type in a search box or a comment.
 - *`clash` set:* ticket 08's warning, e.g. "YouTube uses K for Play/pause. This shortcut replaces it on YouTube."
-- *If the presets got their keys:* Also new: Alt+Shift+P opens a playlist picker, and Alt+U undoes the last save.
+- *If the picker and undo keys got their keys:* Also new: Alt+Shift+P opens a playlist picker, and Alt+U undoes a save while its message is on screen. (R44; [YT-KEY-25](02-youtube.md#285-feedback-and-the-undo-key))
 - *`unconvertible` (unticked):* Your 1.x key ({raw}) can't be used in 2.0. Set a new one in Settings.
 - *`no-playlist` (unticked):* Your 1.x key {Key} had no playlist. Choose one after you agree.
 - *`no-key` (unticked):* Your 1.x shortcut had no key. Its playlist is kept; set a key in Settings. (R21)
@@ -370,7 +383,7 @@ Then the disclosure ([4.1](#41-the-disclosure)), followed by **[Agree and turn o
   3. sets `upgradeNote.state = "done"`.
 
   The reconciler then registers, and claiming ([2.10](#210-claiming-the-unclaimed-setup)) starts.
-- **REL-CON-08** On Chrome, if a YouTube Music feature is ticked, the same click calls `permissions.request` for music.youtube.com **first**, before anything is awaited ([ARC-MAN-03](06-architecture.md#631-manifest-per-browser)). (Chrome has no upgraders; the rule is shared with first run, REL-CON-14.)
+- **REL-CON-08** On Chrome, if a YouTube Music feature is ticked, or Playlist shortcuts with "Also on YouTube Music" on, the same click calls `permissions.request` for music.youtube.com **first**, before anything is awaited ([ARC-MAN-03](06-architecture.md#631-manifest-per-browser)). (Chrome has no upgraders; the rule is shared with first run, REL-CON-14; R53.)
 - **REL-CON-09** On Firefox, if Settings sync is ticked and AMO makes sync an optional data type ([§13](#13-what-each-amo-reply-changes-provisional-ticket-23)), the same click first calls `permissions.request({data_collection: […]})`, before anything is awaited. **PROVISIONAL (ticket 23).**
 - **REL-CON-10** After Agree the note shows, in place:
 
@@ -401,7 +414,7 @@ Then **[Open YouTube]** **[Open Settings]**.
 > Playlist Pigeon works inside your YouTube and YouTube Music tabs, as the account you're signed in to there. For the features you switch on, it:
 > - **reads what you watch and listen to there:** the video or song, its channel, and how much of it you've played;
 > - **reads and changes your playlists, as you:** it lists them, checks which ones already hold a video, and adds or removes videos when you ask or when auto-add does, using YouTube's own requests;
-> - **signs those requests the way YouTube's page does,** with YouTube's sign-in cookie, inside the YouTube tab. It never stores that cookie or sends it anywhere else; *(PROVISIONAL, ticket 25: drop this line if no signed request ships)*
+> - **signs those requests the way YouTube's page does,** with YouTube's sign-in cookie, inside the YouTube tab. It never stores that cookie or sends it anywhere else; *(PROVISIONAL, ticket 25: removed if no shipped route reads the session cookie, R48)*
 > - **watches for the shortcut keys you set** on YouTube and YouTube Music pages, and ignores every other key;
 > - **keeps its settings in this browser,** including your account's name, @handle and picture, a list of your playlists, and how much of each video you've watched (for up to 30 days).
 >
@@ -409,17 +422,17 @@ Then **[Open YouTube]** **[Open Settings]**.
 > [Privacy policy ↗]
 
 - **REL-CON-13** On first run and the upgrade note, the buttons are **Agree and turn on {N} features**, **Agree** (when N = 0) and **Not now**. "Before this feature can run" has **Agree and turn on {Feature}** and **Cancel** (UI-ONB-09).
-- **REL-CON-14** On Chrome, when a YouTube Music feature is ticked:
+- **REL-CON-14** On Chrome, when a YouTube Music feature is ticked, or Playlist shortcuts, whose preset turns "Also on YouTube Music" on ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R53):
   - Agree calls `permissions.request` for music.youtube.com first in the click;
   - step 1 says beforehand: "Chrome will ask for access to music.youtube.com when you agree.";
-  - if the user denies it, consent and the other ticks still apply. The ticked YouTube Music features are saved on but held with "Needs site access", with **Give access** in the popup and Settings, and nothing is registered or injected for them until access is granted ([FT-40, FT-52](04-features-accounts-data.md#16-first-run)). (R14)
+  - if the user denies it, consent and the other ticks still apply. The ticked YouTube Music features, and Playlist shortcuts' "Also on YouTube Music", are saved on but held with "Needs site access", with **Give access** in the popup and Settings. Playlist shortcuts runs on YouTube, and nothing is registered or injected on music.youtube.com until access is granted ([FT-40](04-features-accounts-data.md#16-first-run), [FT-52](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). (R14, R53)
 - **Why it reads this way:**
   - **Chrome:** it names Chrome's categories in plain words (web history, user activity, website content, authentication, the account's name), says what each is for, and gets an explicit OK. That's the prominent in-product disclosure Chrome requires. The listing repeats it, because Chrome's two help pages disagree on whether the listing alone is enough (ticket 03).
   - **AMO:** it also meets AMO §6.2's "shown … immediately after the update" for upgraders.
 
 ### 4.2 The rest of first run's copy
 
-First run's three steps (pick features › Before you start › Finish setting up) are [FT-40](04-features-accounts-data.md#16-first-run), and their layout is [05's first run](05-ui.md#first-run) (UI-ONB-01 to UI-ONB-05). **REL-CON-15** These lines are final:
+First run's three steps (pick features › Before you start › Finish setting up) are [FT-40](04-features-accounts-data.md#16-first-run), and their layout is [05's first-run page](05-ui.md#54-the-first-run-page-first-run-and-the-upgrade-note) (UI-ONB-01 to UI-ONB-05). **REL-CON-15** These lines are final:
 - **Step 1 heading:** What should Playlist Pigeon do? / Tick what you want. Everything else stays off.
 - **Step 1 footer:** Nothing changes on YouTube until you pick it. You can change this any time in Settings. **[Continue with {N} features]** / **[Continue without features]**
 - **After Not now:** **Nothing is running.** Agree later from the toolbar icon or Settings. Until then, Playlist Pigeon does nothing on YouTube. **[Back]**
@@ -465,7 +478,7 @@ The strings below were read from Firefox's `extensions.ftl` and Chromium's `gene
 | **Firefox new install** (140+) | Install | "Add Playlist Pigeon for YouTube™?" with "Access your data for sites in youtube.com domains" and "Data collection: The developer says this extension doesn't require data collection." Then first run. |
 | Firefox, Settings sync switched on, **if AMO makes sync an optional type** (PROVISIONAL, ticket 23) | That click | "Playlist Pigeon for YouTube™ requests additional data collection" / "The developer says the extension wants to collect: {type}", with Allow / Deny |
 | **Chrome new install** | Install | Add "Playlist Pigeon for YouTube™"? / It can: **Read and change your data on www.youtube.com**. Then first run. |
-| Chrome, first YouTube Music feature (at first run or later) | That click | "Playlist Pigeon for YouTube™" has requested additional permissions. / It could: **Read and change your data on music.youtube.com**, with Allow / Deny |
+| Chrome, the first thing that needs music.youtube.com: a YouTube Music feature, or Playlist shortcuts' "Also on YouTube Music" (at first run or later; R53) | That click | "Playlist Pigeon for YouTube™" has requested additional permissions. / It could: **Read and change your data on music.youtube.com**, with Allow / Deny |
 | Chrome, the user restricted site access | Any time | No prompt by itself. Our **Give access** button calls Chrome's prompt. On Chrome 133+, while a feature for that site is on, the extension also calls `addHostAccessRequest` on the site's open tabs, so Chrome's extensions menu offers the grant ([FT-53](04-features-accounts-data.md#17-site-access-and-youtube-tabs), [ARC-ACC-61](06-architecture.md#6212-no-tab-not-signed-in-no-site-access); PROVISIONAL). |
 | Either browser, any later 2.x | The update | **Nothing.** The hotfix lane freezes the manifest. A minor release that adds a warning would disable the Chrome extension until it's accepted and hold Firefox updates, so it needs the checklist's sign-off (REL-CHK-21). |
 
@@ -475,7 +488,7 @@ The strings below were read from Firefox's `extensions.ftl` and Chromium's `gene
   - the origin is unchanged;
   - `none` doesn't hold an update.
 - **REL-CON-23** Neither `storage` nor `scripting` shows an install warning on either browser.
-- **REL-CON-24** Chrome asks only for www.youtube.com at install. Music.youtube.com is requested only from the click that first switches on a YouTube Music feature, whether that's first run's Agree, Settings or the popup.
+- **REL-CON-24** Chrome asks only for www.youtube.com at install. Music.youtube.com is requested only from the click that switches on the first thing that needs it, whether that's first run's Agree, Settings or the popup: a YouTube Music feature, or "Also on YouTube Music" while Playlist shortcuts is on, which includes switching Playlist shortcuts on with that option preset on. The YouTube Music section switch never asks ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R53).
 
 ## 6. Versioning
 
@@ -488,7 +501,7 @@ The strings below were read from Firefox's `extensions.ftl` and Chromium's `gene
   - CI derives the channel from this pattern (REL-CI-24);
   - betas after the launch are Firefox-only, because the Chrome item is public by then.
 - **REL-CI-05** A beta number is never reused, because AMO version numbers are unique across channels.
-- **REL-CI-06** **PATCH** is the hotfix lane only. The manifest is identical apart from `version`, and the listing, privacy and consent files are unchanged (REL-CI-38).
+- **REL-CI-06** **PATCH** is the hotfix lane only (REL-CI-39). The manifest is identical apart from `version`, the listing, privacy and consent files are unchanged, and so is the storage `schema` (REL-CI-38; R62).
 - **REL-CI-07** **MINOR** covers features, UI, dependency bumps and `schema` migrations. A change to a permission, a host, data collection or the disclosure is allowed only in a minor release, with the checklist's sign-off (REL-CHK-21).
 - **REL-CI-08** **MAJOR** is reserved for a break in the synced copy's layout (`s:meta.v`, ticket 16), or for anything that needs every user to see an upgrade note again.
 - **REL-CI-09** The floors are Firefox `strict_min_version` "140.0" and `minimum_chrome_version` "121" (ticket 10), confirmed for ticket 06's question.
@@ -506,7 +519,7 @@ Recorded as [ADR-0011](../../../docs/adr/0011-betas-from-github-pages.md): betas
 - **REL-CI-12** The signed `.xpi` is attached to a GitHub pre-release. `beta/updates.json` is regenerated from the pre-releases at deploy time, with each `.xpi`'s HTTPS asset URL and its `sha256` (REL-CI-44).
 - **REL-CI-13** Installing a beta over 1.4.5 counts as an upgrade for Firefox (ADDON_UPGRADE). Site access carries over and the migration runs, exactly as the real update will.
 - **REL-CI-14** **The hand-off.** Firefox keeps using the *installed* version's `update_url`. So once AMO publishes 2.0.0, AMO's signed listed `.xpi` (downloaded from the Developer Hub) is attached to the `v2.0.0` GitHub release, and `updates.json` serves it as the last entry. Testers move to 2.0.0, which has no `update_url`, and follow AMO from then on.
-- **REL-CI-15** Diagnostics shows "{version} (beta)" for a beta, derived from the version pattern. Nothing else in the product differs from the store build.
+- **REL-CI-15** Diagnostics shows "{version} (beta)" for a beta, derived from the version pattern ([HEALTH-22](04-features-accounts-data.md#55-diagnostics-check-now-and-the-report); R65). Nothing else in the product differs from the store build.
 
 ### 7.2 Chrome
 
@@ -577,7 +590,7 @@ Recorded as [ADR-0011](../../../docs/adr/0011-betas-from-github-pages.md): betas
   - Use the next free patch number for the rollback; the fix then takes the one after.
   - Users get it within 24 h.
 - **REL-CHK-07** Chrome's rollback goes back to the previous published version with no review, and it's live within a minute.
-- **REL-CHK-08** **The exception is 2.0.0 on AMO.** Its predecessor is 1.4.5, which is inert after the migration. So 2.0.0 is **fixed forward** through the hotfix lane. It's rolled back only to stop harm: writes to the wrong account, a request storm, or data loss. Users then sit on an inert 1.4.5 until the fix.
+- **REL-CHK-08** **The exception is 2.0.0 on AMO.** Its predecessor is 1.4.5, which is inert after the migration. So 2.0.0 is **fixed forward** through the hotfix lane, which takes our own bugs too (REL-CI-39; R62). It's rolled back only to stop harm: writes to the wrong account, a request storm, or data loss. Users then sit on an inert 1.4.5 until the fix.
 - **REL-CHK-09** Chrome 2.0.0 rolls back to the last `1.99.N`, which is on the same item with the same `schema`. One dashboard rollback is rehearsed during the beta.
 - **REL-CHK-10** A release that bumps `schema` makes rolling back past it inert (ticket 16 §10.1). The release PR says so (REL-CHK-22).
 - **Fix speed** (ticket 18):
@@ -627,7 +640,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 > • Create playlists from any chooser. Watch Later works everywhere.
 >
 > **On YouTube Music**
-> • Quick actions: Play next, Add to queue, Save to playlist, Like and Remove from queue, one click away on songs, albums and playlists. You pick which buttons show.
+> • Quick actions: Play next and Add to queue for songs, albums and playlists; Save to playlist and Like for songs; Remove from queue for queued songs. Each is one click away, and you pick which buttons show.
 > • Quick-action shortcuts: a key for each.
 >
 > **Everywhere**
@@ -670,7 +683,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 | 1 | Settings › YouTube: feature rows with footprint tags, two of them on | Pick only what you want. Everything starts off. |
 | 2 | A watch page with the popup open: This video shows a partly-added status line, e.g. "Added to Finished · Music for work at 90 %" ([UI-YT-18](05-ui.md#the-watch-page-button)), with the auto-add playlists unfolded | Auto-add what you actually watch. |
 | 3 | The YouTube home page: the thumbnail stack, and the picker open with check marks and keys | Save from any thumbnail. |
-| 4 | A YouTube Music album page: Play next / Add to queue on rows, and the toast "Added {n} songs from "{album}" to the queue" with **Undo** ([03 §13](03-youtube-music.md#13-feedback-toasts-and-undo)) | YouTube Music, one click away. |
+| 4 | A YouTube Music album page: Play next / Add to queue in the album header and on rows, and, after the header's Add to queue, the toast "Added {n} songs from “{album}” to the queue" with **Undo** (R45; [YM-QA-9](03-youtube-music.md#4-where-the-controls-appear), [YM-Q-3](03-youtube-music.md#6-play-next-and-add-to-queue), [03 §13](03-youtube-music.md#13-feedback-toasts-and-undo)) | YouTube Music, one click away. |
 | 5 | Settings › YouTube › Playlist shortcuts: three labelled shortcuts and the recorder | Your keys, your labels. |
 
 - **REL-STORE-09** The screenshots' content (ticket 22):
@@ -708,7 +721,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 
 ### 10.2 Text
 
-- **REL-STORE-17** `/privacy/` publishes this text. It's published under the user's name, so the user reads and approves it before it goes live (§19). It takes effect from the first beta, 1.99.1, because Chrome's Privacy tab needs it for the first Unlisted upload and beta testers run 1.99.N (R18). Its "What's kept" lines match [DATA-03](04-features-accounts-data.md#41-where-data-lives) (R10). The cookie bullet is PROVISIONAL (ticket 25), and the Contact line's e-mail is PROVISIONAL (the user). (R10, R18)
+- **REL-STORE-17** `/privacy/` publishes this text. It's published under the user's name, so the user reads and approves it before it goes live (§19). It takes effect from the first beta, 1.99.1, because Chrome's Privacy tab needs it for the first Unlisted upload and beta testers run 1.99.N (R18). Its "What's kept" lines match [DATA-03](04-features-accounts-data.md#41-where-data-lives) (R10, R43, R57). The cookie bullet is PROVISIONAL (ticket 25): it's removed if no shipped route reads the session cookie (R48). The Contact line's e-mail is PROVISIONAL (the user). (R10, R18, R43, R48, R57)
 
 > # Privacy policy: Playlist Pigeon for YouTube™
 >
@@ -722,7 +735,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 > - **Your playlists:** their names, privacy setting, number of items and thumbnail links, and which of them hold a given video. Used to let you choose playlists, to show where a video already is, and to never add it twice.
 > - **Your YouTube account's name, @handle and picture link,** and a code derived from YouTube's internal account ID (the ID itself is never stored). Used to keep a separate setup per account and to show which one is in use.
 > - **Keys you press on YouTube and YouTube Music pages:** only to recognise the shortcut keys you set. Other keys are ignored and never recorded.
-> - **YouTube's sign-in cookie, inside your YouTube tab:** to sign the extension's requests to YouTube the same way YouTube's own page does, where YouTube's code can't send a request itself. It's used on the spot and never stored, logged or sent anywhere but YouTube. *(PROVISIONAL, ticket 25)*
+> - **YouTube's sign-in cookie, inside your YouTube tab:** to sign the extension's requests to YouTube the same way YouTube's own page does, where YouTube's code can't send a request itself. It's used on the spot and never stored, logged or sent anywhere but YouTube. *(PROVISIONAL, ticket 25: removed if no shipped route reads the session cookie, R48)*
 > - **Channels you add to channel filters:** their IDs, names and @handles.
 >
 > ## What leaves your browser
@@ -733,9 +746,9 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 > ## What's kept in your browser
 > - Your settings and each account's setup, and your consent.
 > - A list of each account's playlists (names, counts, thumbnail links), refreshed when it's shown and more than 5 minutes old; playlists you created in the last 24 hours.
-> - Watch progress per video (which stretches you played, the length, when it last played). It's deleted once auto-add has run for that video, if the video's length changes, 30 days after it last played, or when you switch auto-add off.
+> - Watch progress per video (which stretches you played, the length, when it last played). It's deleted once auto-add has added the video or found it already there, if the video's length changes, 30 days after it last played, or when you switch auto-add off.
 > - Settings from 1.x that are waiting for their account.
-> - Until the browser closes: pause, videos you chose not to auto-add, recent adds (one minute), and notes about YouTube changes that stop a feature. Skipped videos and recent adds may name videos and playlists, but they stay in this browser's memory until it closes, and are never synced or sent anywhere. The notes about YouTube changes name no video, playlist, channel or account.
+> - Until the browser closes, or the extension updates: pause, videos you chose not to auto-add, recent adds (one minute), and notes about YouTube changes that stop a feature. Skipped videos and recent adds may name videos and playlists, but they stay in this browser's memory until it closes, and are never synced or sent anywhere. The notes about YouTube changes name no video, playlist, channel or account.
 >
 > ## Private windows
 > The extension runs there only if you allow it in your browser. Nothing from a private session is stored: no setups, lists, watch progress or account details.
@@ -779,7 +792,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 - **`storage`:** "Keeps the user's settings in the browser: which features are on, the playlists each feature uses per YouTube account, shortcut keys and labels, channel filters, a cached list of the user's playlists, and auto-add's watch progress (deleted after 30 days)."
 - **`scripting`:** "Adds each feature's script to YouTube pages only while that feature is switched on, and reads data from an open YouTube tab when the popup or settings need it."
 - **`https://www.youtube.com/*`:** "The extension's features run on YouTube: they read which video is playing and how much has been played (auto-add), catch the user's shortcut keys, draw the buttons the user switched on, and send YouTube's own playlist requests from the user's YouTube tab, as the signed-in user."
-- **`https://music.youtube.com/*` (optional):** "Requested only when the user switches on a YouTube Music feature: it adds the quick-action buttons and keys to YouTube Music and runs YouTube Music's own queue, save and like actions in that tab."
+- **`https://music.youtube.com/*` (optional):** "Requested only when the user switches on a YouTube Music feature, or lets their playlist shortcuts work on YouTube Music too: it adds the quick-action buttons and keys to YouTube Music, catches the shortcut keys there, and runs YouTube Music's own queue, save and like actions in that tab." (R53)
 
 **Remote code:** "No, I am not using remote code." Everything ships in the package. The extension sends YouTube's own requests and hands YouTube's command objects back to YouTube's page code; it fetches and evaluates nothing.
 
@@ -789,7 +802,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 |---|---|---|
 | Personally identifiable information | ✔ | The account's display name and @handle are stored, and synced if sync is on (ticket 11) |
 | Health, Financial and payment, Personal communications, Location | — | Not handled |
-| Authentication information | ✔ **PROVISIONAL (ticket 25)** | The page reads YouTube's sign-in cookie to sign requests (ticket 10 §3) |
+| Authentication information | ✔ **PROVISIONAL (ticket 25)**: unticked if no shipped route reads the session cookie (R48) | The page reads YouTube's sign-in cookie to sign requests (ticket 10 §3) |
 | Web history | ✔ | Which videos were watched, kept as watch progress for up to 30 days |
 | User activity | ✔ | Playback progress, the shortcut keys pressed, clicks on our controls |
 | Website content | ✔ | Playlist names and thumbnails, video and channel titles |
@@ -813,8 +826,11 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 - **REL-STORE-21** 2.0.0 and every minor release send the full template below.
   - It lives in `store/notes/reviewer-full.md`.
   - CI fills the `{…}` placeholders from `store/notes/` and the `amo` environment's secrets (REL-CI-46).
-  - The architecture paragraph describes ADR-0008's two registrations per site ([§6.3.3](06-architecture.md#633-runtime-script-registration), ARC-MAN-08 to ARC-MAN-16), not ticket 19's draft wording, because reviewer notes must describe the shipped package (R17).
-  - The routes follow [06 §6.2.2](06-architecture.md#622-routes) (ARC-ACC-10, ARC-ACC-11) and the resolver [§6.2.3](06-architecture.md#623-the-command-resolver-found-by-shape) (ARC-ACC-13, ARC-ACC-14; R34). (R17, R34)
+  - The notes describe chapter 06's mechanisms, not ticket 19's draft wording, because reviewer notes must describe the shipped package (R17, R49):
+    - ADR-0008's two registrations per site ([§6.3.3](06-architecture.md#633-runtime-script-registration), ARC-MAN-08 to ARC-MAN-12);
+    - `scripting.executeScript` for switching on in open tabs, the on-demand check and the popovers (ARC-MAN-13, ARC-MAN-15, ARC-MAN-16);
+    - the routes of [06 §6.2.2](06-architecture.md#622-routes) (ARC-ACC-10, ARC-ACC-11), and the resolver found by shape on first use and cached for the page ([§6.2.3](06-architecture.md#623-the-command-resolver-found-by-shape), ARC-ACC-13, ARC-ACC-14; R34, R66).
+  - If no shipped route reads the session cookie, route 4 is described as the same same-origin request without signing, and the `SAPISIDHASH` wording goes (R48). (R17, R34, R48, R49, R66)
 
 > **What this is.** 2.0 is a ground-up rewrite of YouTube Playlist Tools, renamed Playlist Pigeon for YouTube™ (same ID and slug). 1.x used the YouTube Data API with users' own OAuth credentials; 2.0 drops that entirely: no `identity` permission, no Google hosts, no server.
 >
@@ -823,14 +839,14 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 > - Per site, two registrations, both made at runtime with `scripting.registerContentScripts` and only while a feature for that site is on:
 >   - a `world: "MAIN"` gateway that calls YouTube's own client code;
 >   - an isolated-world list: the site core, the UI kit (only if a switched-on feature draws), then one file per switched-on feature.
-> - When a feature is switched on, `scripting.executeScript` injects the same files into already-open tabs of that site, so no reload is needed. It also loads the playlist picker (`popovers.js`) on first use, and, only when the popup or settings needs an account or playlists from a tab that has none of our code, the gateway and site core alone into that one tab. Nothing is injected before the user's Agree.
+> - When a feature is switched on, `scripting.executeScript` injects the same files into already-open tabs of that site, so no reload is needed. It also loads the playlist picker (`popovers.js`) on first use, and, only when the popup or settings needs an account or fresh data (playlists, or the song playing) from a tab that has none of our code, the gateway and site core alone into that one tab. After an extension update, the start-up run registers the scripts again and injects the current files into open tabs. Nothing is injected before the user's Agree.
 > - There are no static content scripts and no web-accessible resources.
 >
 > **Routes, in order of preference:**
-> 1. YouTube's own command resolver (found by shape on first use and cached for the page: `default_kevlar_base.<key>.instance.resolveCommand`);
+> 1. YouTube's own command resolver (found by shape on first use and cached for the page: the first `default_kevlar_base.<key>` whose `instance.resolveCommand` is a function);
 > 2. YouTube's `yt-service-request` action;
 > 3. YouTube Music's own `ytmusic-app` handlers (`networkManager.fetch`, `app.queue`);
-> 4. only where none of these can do a job quietly, a same-origin `fetch` to `/youtubei/v1/…` signed in the page from YouTube's session cookie exactly as YouTube's code does (`SAPISIDHASH`). *(PROVISIONAL, ticket 25)*
+> 4. only where none of these can do a job quietly, a same-origin `fetch` to `/youtubei/v1/…` signed in the page from YouTube's session cookie exactly as YouTube's code does (`SAPISIDHASH`). *(PROVISIONAL, ticket 25: without signing if no shipped route reads the session cookie, R48)*
 >
 > Public data that needs no account (looking up a typed channel, or a video's channel when the page doesn't show it) uses the same same-origin `fetch` without signing.
 >
@@ -856,14 +872,14 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 > **Try it (5 minutes):**
 > 1. On the first-run page, tick Auto-add, Playlist shortcuts and Queue button on thumbnails, then Agree.
 > 2. Sign in to youtube.com. In "Finish setting up", tick the playlist "Reviewer A".
-> 3. Set Settings › YouTube › Auto-add › required percentage to 0 %, then open any video: "Added … to Reviewer A" appears.
-> 4. Press Alt+W: "Saved … to Watch later", with Undo; Alt+U undoes.
+> 3. Set Settings › YouTube › Auto-add › required percentage to 0 %, then open any video: "Auto-added “…” to Reviewer A" appears.
+> 4. Press Alt+W: "Saved “…” to Watch later", with Undo; Alt+U undoes it while that message is on screen.
 > 5. On the home page, hover a thumbnail: the queue button adds it to the queue.
 > 6. On music.youtube.com, switch on Quick actions (Settings › YouTube Music) and hover a song: Play next.
 >
 > Without signing in, the queue button and YouTube Music's queue actions still work.
 
-- **REL-STORE-22** Patch releases send the **hotfix template**, with the test-account lines appended: "Fixes {feature} after a YouTube change to {internal}. No permission, data or listing changes. Same build instructions as {previous version}."
+- **REL-STORE-22** Patch releases send the **hotfix template**, with the test-account lines appended: "Fixes {feature} after a YouTube change to {internal}. No permission, data or listing changes. Same build instructions as {previous version}." For a bug of our own (REL-CI-39), the first sentence is "Fixes {what went wrong} in {feature}." (R62)
 - **REL-STORE-23** Unlisted betas send the **beta template**: "Pre-release {version} of {next release}, self-distributed to testers. Same build instructions."
 - **REL-STORE-24** The reviewer credentials reach CI only through the `amo` environment secret `AMO_REVIEWER_LOGIN`, and never appear in the repo.
   - This isn't ADR-0005's "no Google account in CI": CI never signs in to anything. It only pastes text that AMO shows to reviewers.
@@ -994,12 +1010,12 @@ meta ─► build ─► gates (all must pass) ─┬─► submit-amo  (environ
 | `manifest` | `check:manifest` on the store builds, with ticket 17's rules plus REL-CI-20. The beta build carries exactly the beta `update_url`. |
 | `budget` | `check:budget` on the store builds (ticket 24); the table goes to the job summary |
 | `zip` | `check:zip` (ticket 17): no live-check page, no `src/livecheck/` code and no recording adapter in any store zip (ticket 18; [Q-WATCH-19](07-quality.md#756-the-signed-in-live-check-and-the-live-check-build)) |
-| `browser` | Ticket 17's real-browser layer, on the store builds, with timings gated in Chromium only (R31) |
-| `watch` | `watch.yml` through `workflow_call`, from **this commit's** watch list, so a fix's new needles are what's tested ([Q-CI-8](07-quality.md#773-release-gates-summary)). `static` must be green, and `browser-watch` (Chromium only, R40) green or inconclusive. A red `static` passes only with `allow_red_watch` and a reason, which the summary records. |
+| `browser` | Ticket 17's real-browser layer, on the store builds, with timings gated at 1.5× a budget in Chromium only, as in `ci.yml` ([Q-CI-7](07-quality.md#773-release-gates-summary); R31) |
+| `watch` | `watch.yml` through `workflow_call`, from **this commit's** watch list, so a fix's new needles are what's tested ([Q-CI-8](07-quality.md#773-release-gates-summary)). `static` must be green, and `browser-watch` (Chromium only, R40) green or inconclusive. Called from here, `browser-watch` tests this run's release artifacts and doesn't rebuild (REL-CI-26; R61). A red `static` passes only with `allow_red_watch` and a reason, which the summary records. |
 | `live-check-record` | `store/live-checks/{version}.json` exists. The live-check build (`build:livecheck`, `src/livecheck/`) exports it, redacted: version, commit, browser and its version, date, and pass or fail per check, with no values. It must cover Chrome and Firefox, contain no failures, and be dated within 7 days of the tag. For a patch release, a `scope: "hotfix"` record listing the affected jobs is accepted (ticket 18). |
 | `hotfix-freeze` (patch only) | REL-CI-38 |
 
-  The gates this chapter shares with 07 are summarised in [§7.7.3](07-quality.md#773-release-gates-summary) (Q-CI-6 to Q-CI-9). (R31, R40)
+  The gates this chapter shares with 07 are summarised in [§7.7.3](07-quality.md#773-release-gates-summary) (Q-CI-6 to Q-CI-9). (R31, R40, R61)
 
 - **REL-CI-28** Both `sources-*` gates must report identical trees. A difference on either architecture fails the release.
 - **REL-CI-29** **`submit-amo`** runs only when `vars.PUBLISH_AMO == 'true'` and `stores` is `both` or `amo`. It waits for the `amo` environment's approval.
@@ -1011,7 +1027,7 @@ meta ─► build ─► gates (all must pass) ─┬─► submit-amo  (environ
 - **REL-CI-33** **`submit-cws`** runs only when `vars.PUBLISH_CWS == 'true'` and `stores` is `both` or `cws`, and never for a post-launch beta (`X.Y.9NN`). It waits for the `cws` environment's approval.
 - **REL-CI-34** `submit-cws` runs `bunx wxt submit --chrome-zip …` with `CHROME_API_VERSION=v2`.
   - The variable must be set explicitly, or the tool falls back to v1.1's variables. v1.1 was supported only until 2026-10-15.
-  - `CHROME_PUBLISH_TYPE` comes from `vars.CWS_PUBLISH_TYPE`, except that patch releases always use `DEFAULT_PUBLISH`.
+  - `CHROME_PUBLISH_TYPE` comes from `vars.CWS_PUBLISH_TYPE`, except that patch releases always use `DEFAULT_PUBLISH`. During the 2.0.0 soak `PUBLISH_CWS` is false, so this job doesn't run (REL-CHK-02).
 - **REL-CI-35** `submit-cws` never sets `skipReview`. API v2 skips review only for updates that change nothing but declarativeNetRequest rules, and it errors otherwise. Ticket 18's "try `skipReview`" is dropped.
 - **REL-CI-36** **`github-release`** creates the GitHub release, or a pre-release for betas. It attaches:
   - the zips and the sources zip;
@@ -1029,23 +1045,27 @@ From ticket 18, made mechanical.
 - **REL-CI-38** **`hotfix-freeze`** runs for every patch release, and fails on any of these:
   - `check:manifest --against v{previous}` finds a difference between the new manifests and the previous release's, with `version` removed. It reads the old manifests from that tag's GitHub release assets (REL-CI-36) rather than rebuilding the tag. "Previous" is the release tag the hotfix branch was cut from.
   - `git diff --quiet {previous tag} -- store/listing store/cws-dashboard.md store/notes/reviewer-full.md site/privacy` fails;
-  - the consent version constant changed.
-- **REL-CI-39** A hotfix branch is `hotfix/X.Y.Z`, cut from the last release tag.
-  - It changes only the broken route, parser or anchor, plus its fixtures and watch-list entry.
+  - the consent version constant changed;
+  - the storage layout version the build writes (`schema`, [DATA-46](04-features-accounts-data.md#410-schema-versions-and-migrations)) changed. (R62)
+- **REL-CI-39** A hotfix branch is `hotfix/X.Y.Z`, cut from the last release tag. (R62)
+  - **What it takes:** any fix, our own bugs included (a migration bug, for example), that changes no permission, disclosure, consent version or data schema, and no user-visible behaviour beyond the fix.
+  - A fix for a YouTube change also updates its fixtures and watch-list entry.
   - It bumps no dependencies and refactors nothing: Chrome reviews "significant code changes" more closely, and AMO's queue ranks by the size of the change.
   - CI runs on its PRs as usual.
 - **REL-CI-40** A hotfix passes the usual gates, with a hotfix-scope live-check record.
   - Chrome uses `DEFAULT_PUBLISH`, so it publishes on approval.
   - Both stores are submitted in one run.
-- **REL-CI-41** After a hotfix, the developer comments on the `youtube-change` issue ("Firefox users get it within about a day; Chrome users after review"), then merges the branch back to `main`.
+  - **The exception is the 2.0.0 soak.** `PUBLISH_CWS` is false then, so the run submits to AMO only. The Chrome resubmission is made by hand in the dashboard, as Public with staged publishing, replacing the staged 2.0.0 (§8.1, REL-CHK-02, §18; [Q-CI-15](07-quality.md#774-the-hotfix-lane); R21).
+- **REL-CI-41** After a hotfix, the developer comments on its issue (for a YouTube change, the `youtube-change` issue): "Firefox users get it within about a day; Chrome users after review". Then the branch is merged back to `main`. (R62)
 
 ### 14.4 `watch.yml`
 
 - **REL-CI-42** `watch.yml` is a separate workflow with three triggers: a daily schedule, `workflow_dispatch` and `workflow_call`, so `release.yml` can run it as a gate.
   - **Jobs:** `static`, `browser-watch` (on Chromium only; Firefox is covered by the pre-release real-browser check, R40), then `report` ([Q-CI-4](07-quality.md#772-watchyml)).
+  - On a schedule or dispatch, `browser-watch` builds the store extension itself. Through `workflow_call` from `release.yml`, it takes the caller's artifacts instead and doesn't rebuild (R61).
   - `report` has `issues: write`. It opens, updates or closes the single `youtube-change` issue: opened on a red watch, or after three inconclusive days in a row; closed when the watch is green again.
   - A red watch never blocks merges. It blocks a release tag unless that release is the fix.
-  - The checklist confirms the schedule is still alive (REL-CHK-18), because GitHub disables scheduled workflows in public repos after 60 days without activity. (R40)
+  - The checklist confirms the schedule is still alive (REL-CHK-18), because GitHub disables scheduled workflows in public repos after 60 days without activity. (R40, R61)
 
 The watch itself, with its needles, the browser watch and the inconclusive rules, is specified in [07](07-quality.md): [§7.5.2 the watch list](07-quality.md#752-the-watch-list) (Q-WATCH-3 to Q-WATCH-8), [§7.5.3](07-quality.md#753-the-static-watch) and [§7.5.4](07-quality.md#754-the-browser-watch) (Q-WATCH-9 to Q-WATCH-14), and [§7.5.5 alerting](07-quality.md#755-alerting) (Q-WATCH-15 to Q-WATCH-17).
 
@@ -1145,10 +1165,10 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 |---|---|---|
 | S1 | Two playlist entries (one pasted URL, one half-typed); key `Shift+S`; percentage and toasts untouched | **No prompt.** `schema: 1`; `unclaimed.autoAdd` has 1 ID and `dropped: 1`; `pct 0` with `wasUnset`; feedback off; shortcut on with Shift+S; every legacy key and credential gone; the note tab opens once, in the background, with the percentage question; the badge is "!" |
 | S2 | Percentage `"75"`, toasts on, `Control+Shift+S`, a dummy client ID and secret | `pct 75` with no question; feedback on; the note says Ctrl+Shift+S never worked; `credentialsDeleted` |
-| S3 | 1.4.5 installed, nothing set | No migration keys. `schema: 1` and the note pending (from `onInstalled` "update" from 1.x), with no "Kept" rows |
+| S3 | 1.4.5 installed, nothing set | No 1.x key, so a fresh install (REL-MIG-03; R64): `schema: 1`, no migration keys, no upgrade note, and no tab opens. The "!" shows on every tab, and the popup's "Waiting for your OK" **Review** opens first run. |
 | S4 | Key `Control+Alt+K` | Shortcut unticked, with "can't be used in 2.0" and `raw` shown |
 | S5 | youtube.com access removed in about:addons | Silent update; the note shows **Give access to YouTube**; after granting, Agree works |
-| S6 | Add-on disabled during the update, enabled a day later | No `onInstalled`; the migration still runs on enable, and the note opens |
+| S6 | Add-on disabled during the update, enabled a day later | No `onInstalled`; the migration still runs on enable, recognised from the 1.x keys (REL-MIG-02), and the note opens |
 | S7 | S1, then a browser restart before and after Agree | The note doesn't reopen; no second migration; Agree survives |
 | S8 | S1, with Agree while signed out / with no YouTube tab / on an account that doesn't own the playlists | Ticket 11's outcomes, in the note |
 | S9 | S1 on ESR 140, ESR 153 and DevEdition | The same results |
@@ -1159,7 +1179,7 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 - **REL-CHK-15** Every scenario also checks that:
   - before Agree, **nothing** runs on YouTube: `scripting.getRegisteredContentScripts()` is empty, and the page has no element, request or listener of ours. Firefox has no execution-context check, so the matrix uses DOM, network and registration checks ([Q-TEST-19](07-quality.md#725-layer-4-real-browser));
   - after Agree, auto-add adds, the shortcut fires, and claiming shows its outcome;
-  - "Not now" keeps everything inert, with the banner.
+  - "Not now" keeps everything inert, with the banner, whose line names only what carried over (REL-CON-02; R60).
 
 ### 17.3 Fixtures, signed paths and Chrome
 
@@ -1183,7 +1203,7 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 
 **Once, before the first beta**
 - [ ] Ticket 22's name is confirmed: the manifest's `name`, `short_name`, `description` and icons.
-- [ ] Ticket 23's reply is recorded and §13 applied. Ticket 25's route table is filled, and the cookie lines are kept or removed everywhere: the disclosure, the policy, the dashboard and the reviewer notes.
+- [ ] Ticket 23's reply is recorded and §13 applied. Ticket 25's route table is filled, and the cookie lines are kept or removed everywhere: the disclosure, the policy, the dashboard and the reviewer notes. They're removed if no shipped route reads the session cookie (R48).
 - [ ] The Chrome Web Store developer account is ready: 2-Step Verification, the fee, the publisher name, a verified contact e-mail, and the trader / non-trader declaration. The Store listing and Privacy tabs are drafted from §9 and §11; the first upload is `v1.99.1` (see Beta).
 - [ ] The service account is created, the Chrome Web Store API is enabled, and the account is added under Account in the dashboard. The `amo` and `cws` environments, the variables and the tag ruleset are set up (§14.6), and the old secrets are deleted.
 - [ ] Pages is enabled (source: GitHub Actions); `/`, `/privacy/` and `/beta/` are live and have been read through. The policy is effective from 1.99.1 (R18, R21).
@@ -1212,10 +1232,10 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 - [ ] The first beta only: tag `v1.99.1` with `PUBLISH_CWS=false`, upload that run's Chrome zip by hand as **Unlisted**, fill the Store listing and Privacy tabs, then set `PUBLISH_CWS=true` (REL-CHK-02; R21).
 - [ ] Tag `v1.99.N`. The unlisted signature is downloaded and attached to the pre-release, `…/beta/updates.json` and the `/beta/` page list it, and from `1.99.2` on the Unlisted Chrome item is updated through the API.
 
-**Hotfix** (ticket 18)
-- [ ] Cut `hotfix/X.Y.Z` from the last tag. Change only the broken route, parser or anchor, plus its fixtures and watch-list entry.
+**Hotfix** (ticket 18; R62)
+- [ ] Cut `hotfix/X.Y.Z` from the last tag. Make only the fix: a YouTube change or a bug of our own, with no change to permissions, the disclosure, the consent version, the data schema, or any user-visible behaviour beyond the fix (REL-CI-39). A fix for a YouTube change also updates its fixtures and watch-list entry.
 - [ ] Pass the gates with a hotfix-scope live-check record, tag `vX.Y.Z`, and check that `hotfix-freeze` passes.
-- [ ] Use the hotfix template for the reviewer notes. Afterwards, comment on the `youtube-change` issue and merge back.
+- [ ] Use the hotfix template for the reviewer notes. Afterwards, comment on the fix's issue (the `youtube-change` issue for a YouTube change) and merge back.
 
 **Bad release**
 - [ ] Roll back first: AMO Developer Hub › Roll back, with the next patch number; then the Chrome dashboard's rollback. Then submit the fix.
@@ -1295,24 +1315,31 @@ Settled by the main session in [resolutions.md](resolutions.md), or by the ticke
 - **The first Chrome upload** (was Not pinned down): `v1.99.1`, by hand, as Unlisted (§8.1, REL-CHK-02, §18). R21.
 - **A `/beta/` page** (was Not pinned down): a minimal `{site}/beta/` page with the signed `.xpi` link and install steps (REL-STORE-12). R21.
 - **`FIREFOX_EXTENSION_ID` in CI** (was Not pinned down): a variable in the `amo` environment (REL-CI-46). R21.
-- **When a fresh install writes `schema: 1`** (was Not pinned down): at the first background start, before consent (REL-MIG-04). REL-MIG-03 no longer depends on `schema`, so a 1.4.5 user with nothing set up still gets the note. R21.
+- **When a fresh install writes `schema: 1`** (was Not pinned down): at the first background start, before consent (REL-MIG-04). R21. Its side effect on REL-MIG-03's `onInstalled` trigger is fixed by R64, below.
 - **A shortcut playlist with no key** (was Not pinned down): the note says "Your 1.x shortcut had no key. Its playlist is kept; set a key in Settings." (REL-MIG-20, REL-MIG-39, REL-CON-04). R21.
 - **Chrome's soak resubmission** (was Not pinned down): by hand, as Public with staged publishing (§8.1, REL-CHK-02, §18). R21.
 
-Also applied here: R10 (the policy's session-memory line: REL-STORE-17), R12 (the pending note's badge: REL-MIG-32), R14 (Chrome access denied at first run's Agree: REL-CON-14), R31 (timings gated in Chromium only: REL-CI-18, REL-CI-27, REL-CHK-04, REL-CHK-20, §18), R34 (the resolver found on first use: REL-STORE-21), R37 ("the first-run page": REL-CON-01 and prose), R38 (the screen-reader pass: REL-CHK-04, REL-CHK-26, §18), R39 (the README rewritten as a whole: REL-CI-54, REL-CHK-04) and R40 (the browser watch on Chromium only: REL-CI-27, REL-CI-42).
+Settled in the second round:
+- **How a 1.x upgrader is recognised** (fixes R21's side effect): at every background start, by a 1.x key in `storage.local` with no consent and no note record; never by `onInstalled` or the `schema` marker. A 1.4.5 user with no key is a fresh install (REL-MIG-02 to REL-MIG-05, REL-MIG-09, `UpgradeDetails.from`, §2.11, S3, S6). R64.
+- **Who asks Chrome for music.youtube.com access** (was Open 1): the click that switches on the first thing that needs it, a YouTube Music feature or "Also on YouTube Music" while Playlist shortcuts is on; never the section switch (REL-CON-08, REL-CON-14, REL-CON-24, §5, the dashboard's justification). R53.
+- **The upgrade note's "Kept" rows** (was Open 3): this chapter's conditions win, and the section lists only what carried over (REL-CON-04). R60.
+- **The popup's upgrade banner** (was Open 4): its line names only what carried over (REL-CON-02). R60.
+- **The watch gate rebuilding the extension** (was Open 5): called from `release.yml`, `browser-watch` tests the release artifacts and doesn't rebuild (REL-CI-27, REL-CI-42). R61.
+- **The hotfix lane and fix-forward** (was Open 6): the lane takes any fix, our own bugs included, that changes no permission, disclosure, consent version or data schema, and no user-visible behaviour beyond the fix; `hotfix-freeze` also checks `schema` (REL-CI-06, REL-CI-38 to REL-CI-41, REL-STORE-22, REL-CHK-08, §18). R62.
+- **Repo-root files in 06's layout** (was Open 7): 06's folder layout has `store/`, `site/`, `RELEASING.md`, `SOURCE_CODE_REVIEW.md` and the release scripts. R63.
+- **The version in Diagnostics** (was Open 8): shown there with "(beta)" (REL-CI-15). R65.
+- **The cookie lines** (was a PROVISIONAL input): removed together if, after ticket 25, no shipped route reads the session cookie (§0, REL-CON-12, REL-STORE-17, §11, REL-STORE-21, §18). Whether they go is still PROVISIONAL on ticket 25. R48.
+- **What the reviewer notes describe** (detail of R17): chapter 06's mechanisms, `executeScript` for the on-demand check and the popovers, and the resolver found on first use (REL-STORE-21). R49, with R66 for an ambiguous resolver.
+- **06's manifest table** (was Open 2): [ARC-MAN-01](06-architecture.md#631-manifest-per-browser)'s table now has `short_name`, `description` and `icons`, so `check:manifest` (REL-CI-20) can pass with §0's, §9.1's and §18's values. No R-number: 06 fixed it.
+- **`onInstalled` and the reconcile** (was Open 9): [ARC-MAN-12](06-architecture.md#633-runtime-script-registration) no longer reconciles on install and update, because its start-up run covers both, and nothing relies on `onInstalled` but first run's tab (REL-MIG-05). R64.
+- **The release `browser` gate's timing threshold** (was Not pinned down): it gates at 1.5× a budget in Chromium, as `ci.yml` does ([Q-CI-7](07-quality.md#773-release-gates-summary), REL-CI-27). No R-number: 07 owns budgets (R52).
+- **Corrections the owning chapters asked for:** the reviewer notes' on-demand check and re-injection after an update (06; REL-STORE-21), the reviewer steps' toast copy (02; REL-STORE-21), the note's undo-key line (02; REL-CON-04), the store description's Quick actions line and screenshot 4 (03; §9.2, REL-STORE-08), the soak exception for patch releases (07; REL-CI-34, REL-CI-40), and the links to 05's first-run page (05; §4.2). No R-numbers.
+
+Also applied here: R10 (the policy's session-memory line: REL-STORE-17), R12 (the pending note's badge: REL-MIG-32), R14 (Chrome access denied at first run's Agree: REL-CON-14), R31 (timings gated in Chromium only: REL-CI-18, REL-CI-27, REL-CHK-04, REL-CHK-20, §18), R34 (the resolver found on first use: REL-STORE-21), R37 ("the first-run page": REL-CON-01 and prose), R38 (the screen-reader pass: REL-CHK-04, REL-CHK-26, §18), R39 (the README rewritten as a whole: REL-CI-54, REL-CHK-04) and R40 (the browser watch on Chromium only: REL-CI-27, REL-CI-42). From the second round: R43 (the policy's watch-progress line: REL-STORE-17), R44 (the undo key from install: REL-MIG-24, REL-CON-04), R45 (typographic quotes: §0, REL-STORE-08), R57 (session memory ends at an update too: REL-STORE-17) and R65 (`{Product}` and `{Account}` elsewhere: §0).
 
 ### Open
 
-These contradictions with other chapters remain. They're noted here rather than edited there.
-1. **Who asks Chrome for music.youtube.com access.** REL-CON-24 and [FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs) ask only from the click that first switches on a YouTube Music feature. [ARC-MAN-03](06-architecture.md#631-manifest-per-browser) also asks from "Also on YouTube Music", which the shortcuts preset turns on; [UI-POP-16](05-ui.md#youtube-music-tab) also asks from the section switch. Chapter 04's [C6](04-features-accounts-data.md#c6-who-asks-chrome-for-musicyoutubecom-access-and-whether-also-on-youtube-music-raises-the-badge) has the detail.
-2. **06's manifest table is incomplete.** [ARC-MAN-01](06-architecture.md#631-manifest-per-browser) says the built manifests match its table exactly, but the table has no `short_name`, `description` or `icons`, which §0, §9.1 and §18 need. `check:manifest` (REL-CI-20) can't pass both.
-3. **The upgrade note's "Kept" rows.** [UI-ONB-06](05-ui.md#the-upgrade-note) shows "Auto-add and Playlist shortcuts, ticked". REL-CON-04 shows auto-add only when a playlist came over, and leaves the shortcut unticked for `unconvertible`, `no-playlist` and `no-key`.
-4. **The popup's upgrade banner.** [UI-POP-10](05-ui.md#banners) row 1 says "Auto-add and your shortcut are paused until you agree." That's untrue for a user with nothing carried over (REL-MIG-03, S3) or whose shortcut is unticked.
-5. **The watch gate rebuilds the extension.** [Q-CI-4](07-quality.md#772-watchyml) has `browser-watch` build the store extension, also when `release.yml` calls it, while REL-CI-26 and [Q-CI-6](07-quality.md#773-release-gates-summary) say no gate rebuilds what ships. On `workflow_call`, it should take the caller's artifact.
-6. **The hotfix lane and fix-forward.** REL-CHK-06 gives a fix the next patch number, and REL-CHK-08 fixes 2.0.0 forward through the hotfix lane. But REL-CI-39 and [§7.7.4](07-quality.md#774-the-hotfix-lane) limit a hotfix to "the broken route, parser or anchor", so a fix for a bug of our own, such as a migration bug, fits neither lane. Needs a decision: for example, widen the lane to "the smallest fix", and keep `hotfix-freeze`.
-7. **Repo-root files missing from 06's layout.** [§6.10](06-architecture.md#610-folder-layout) has no `store/` (listing, notes, release notes, live-check records, `cws-dashboard.md`), `site/`, `scripts/amo-metadata.ts`, `scripts/upgrade-test/`, `RELEASING.md`, `SOURCE_CODE_REVIEW.md` or `.github/workflows/`. The site's `site/` also shares a name with `src/site/`.
-8. **The version in Diagnostics.** REL-CI-15 and [HEALTH-22](04-features-accounts-data.md#55-diagnostics-check-now-and-the-report) show "{version} (beta)" in Diagnostics; [UI-SET-17](05-ui.md#sections) lists the version only under About.
-9. **`onInstalled` and the reconcile.** REL-MIG-05 uses `onInstalled` only for first run and the note. [ARC-MAN-12](06-architecture.md#633-runtime-script-registration) also reconciles on install and update, which its start-up reconcile already covers. Low impact.
+None remain. Every contradiction listed here before is settled above, and the other chapters now follow this one on the migration, the upgrade note and the consent copy (R60).
 
 ### Settled by precedence (no action)
 
@@ -1326,7 +1353,7 @@ These contradictions with other chapters remain. They're noted here rather than 
 
 ### Not pinned down
 
-- **The upgrade view's budget and first-view test.** R40 gives "the first-run page" a 30 KB first frame, and [Q-TEST-18](07-quality.md#725-layer-4-real-browser) item 10 renders its first view. Neither says whether the upgrade view (REL-CON-01) is covered.
-- **Upgrade snapshots and the privacy lint.** REL-CHK-16 commits profiles seeded "as a user would", which must pass [Q-FIX-12](07-quality.md#735-the-privacy-lint)'s ID allowlist. The seeded data should use fixture IDs and dummy credentials, and the snapshots' path (`src/…/migration/fixtures/`) needs fixing; the store lives in `src/background/store/` ([§6.10](06-architecture.md#610-folder-layout)).
-- **The release `browser` gate's timing threshold.** REL-CI-27 and [Q-CI-7](07-quality.md#773-release-gates-summary) don't say whether it gates at 1.5×, as `ci.yml` does.
-- **Script names.** REL-CI-10 gives the beta build as a raw command, with no `build:beta` script, and REL-CI-25 names no zip scripts. `web-ext` (REL-CI-32) isn't in [Q-TOOL-19](07-quality.md#719-type-checking-and-dependencies)'s dependencies.
+- **The upgrade view's budget and first-view test.** R40 and R47 give "the first-run page" a 30 KB first frame, counted in JavaScript, and [Q-TEST-18](07-quality.md#725-layer-4-real-browser) item 10 renders its first view. Neither says whether the upgrade view (REL-CON-01), which is the same page, is covered.
+- **The live-check record for a fix of our own.** The `live-check-record` gate accepts a hotfix-scope record "listing the affected jobs" (REL-CI-27). R62 lets the hotfix lane take bugs of our own, such as a migration bug, that touch no YouTube job; whether an empty hotfix-scope record passes isn't said.
+- **The upgrade snapshots' path.** [Q-FIX-12](07-quality.md#735-the-privacy-lint) now covers REL-CHK-16's snapshots, with their seed IDs on the allowlist, so the seeded data should use fixture IDs and dummy credentials. Their path (`src/…/migration/fixtures/`) still needs fixing: the store lives in `src/background/store/` ([§6.10](06-architecture.md#610-folder-layout)), and 07 owns test placement (R52).
+- **Script names.** REL-CI-10 gives the beta build as a raw command, with no `build:beta` script, though [Q-TOOL-16](07-quality.md#718-scripts) leaves the beta mode to this chapter, and REL-CI-25 names no zip scripts. `web-ext` (REL-CI-32) isn't in [Q-TOOL-19](07-quality.md#719-type-checking-and-dependencies)'s dependencies.
