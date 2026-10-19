@@ -1,0 +1,19 @@
+# Spike config: the Firefox variant.
+#   BUN_RUNTIME_TRANSPILER_CACHE_PATH=0 bun test --config=bunfig.firefox.toml
+# The cache has to be off: Bun's runtime transpiler cache (files over 4 KB)
+# does not key on `define`, so after a Chrome run, big files keep the Chrome
+# values. See the research doc.
+
+[define]
+"import.meta.env.BROWSER" = "'firefox'"
+"import.meta.env.CHROME" = "false"
+"import.meta.env.FIREFOX" = "true"
+"import.meta.env.SAFARI" = "false"
+"import.meta.env.EDGE" = "false"
+"import.meta.env.OPERA" = "false"
+"import.meta.env.MANIFEST_VERSION" = "3"
+
+[test]
+preload = ["./setup/happydom.ts", "./setup/wxt.ts", "./setup/testing-library.ts"]
+pathIgnorePatterns = ["isolation/**", "parity/**", "probes/**"]
+coverageReporter = ["text", "lcov"]

@@ -1,0 +1,5 @@
+# Spike config for isolation/: module-mock leakage across files.
+#   bun test --config=bunfig.isolation.toml ./isolation
+#   bun test --config=bunfig.isolation.toml --isolate ./isolation
+[test]
+preload = ["./setup/wxt.ts"]

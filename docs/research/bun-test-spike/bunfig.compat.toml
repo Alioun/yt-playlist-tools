@@ -1,0 +1,24 @@
+# Experiment only: today's unchanged Vitest suite under `bun test`. From the
+# repo root:
+#   bun test --config=docs/research/bun-test-spike/bunfig.compat.toml ./src
+# Preload paths are relative to the working directory, not to this file.
+
+[define]
+"import.meta.env.BROWSER" = "'chrome'"
+"import.meta.env.CHROME" = "true"
+"import.meta.env.FIREFOX" = "false"
+"import.meta.env.SAFARI" = "false"
+"import.meta.env.EDGE" = "false"
+"import.meta.env.OPERA" = "false"
+"import.meta.env.MANIFEST_VERSION" = "3"
+
+[test]
+preload = [
+  "./docs/research/bun-test-spike/setup/happydom.ts",
+  "./docs/research/bun-test-spike/setup/fake-browser.ts",
+  # 1.x relies on auto-imports, so the #imports shim alone is not enough.
+  "./docs/research/bun-test-spike/setup/wxt-unimport.ts",
+  "./docs/research/bun-test-spike/setup/testing-library.ts",
+  "./docs/research/bun-test-spike/setup/vitest-compat.ts",
+]
+pathIgnorePatterns = ["**/*.firefox.test.ts", "docs/**", "server/**"]

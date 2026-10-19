@@ -1,0 +1,4 @@
+# Spike config: the least a module with explicit WXT imports needs.
+#   bun test --config=bunfig.minimal.toml ./explicit-imports.test.ts
+[test]
+preload = ["./setup/fake-browser.ts"]

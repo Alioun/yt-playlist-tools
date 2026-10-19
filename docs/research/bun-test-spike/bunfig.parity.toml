@@ -1,0 +1,4 @@
+# Spike config for parity/: WXT's auto-import transform as a runtime plugin.
+#   bun test --config=bunfig.parity.toml ./parity
+[test]
+preload = ["./setup/fake-browser.ts", "./setup/wxt-unimport.ts"]

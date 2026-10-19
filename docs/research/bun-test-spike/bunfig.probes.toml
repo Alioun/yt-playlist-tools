@@ -1,0 +1,7 @@
+# Spike config for probes/.
+#   bun test --config=bunfig.probes.toml ./probes
+[define]
+"import.meta.env.FIREFOX" = "false"
+
+[test]
+preload = ["./probes/plugin.ts"]
