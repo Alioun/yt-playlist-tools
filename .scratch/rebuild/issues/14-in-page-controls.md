@@ -29,3 +29,5 @@ Scope: this ticket covers YouTube. YouTube Music's controls are [ticket 27](27-y
 Also from [ticket 01](01-youtube-requests.md): sending edits through YouTube's commands lets YouTube show its own error toast, and maybe a confirmation, alongside ours. The queue's create path appears to append, not replace (unverified).
 
 Also from [ticket 11](11-accounts.md): in-page UI shows only the tab's own account's data. Optionally, offer an in-page "choose a playlist" for a shortcut that has none on this account.
+
+Also from [ticket 26](26-youtube-music-quick-actions.md): share the toast component with YouTube Music, which gets its own skin. Confirm the term "quick-save playlist" for YouTube's thumbnail quick-save.

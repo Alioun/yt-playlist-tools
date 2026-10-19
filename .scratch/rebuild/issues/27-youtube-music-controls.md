@@ -13,3 +13,8 @@ Prototype the quick-action controls in YouTube Music's own look: inline buttons 
 Also from [ticket 21](21-youtube-music-internals.md): don't hang controls off the player bar, because the A/B-tested new player UI removes it. The side panel doesn't open in Chrome's installed-app windows.
 
 Also from [ticket 11](11-accounts.md): the YouTube Music section's choices are shared by every account; only Save to playlist's one-click target is per account.
+
+Also from [ticket 26](26-youtube-music-quick-actions.md):
+- Start from its placements.
+- Prototype the split Save button and the picker, anchored to the button or centred when opened by key, using YouTube Music's own icons.
+- In fullscreen (`f`), toasts must render inside the fullscreen element.

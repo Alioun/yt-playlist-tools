@@ -28,3 +28,7 @@ Also from [ticket 21](21-youtube-music-internals.md): the queue path depends on 
 Also from [ticket 01](01-youtube-requests.md): `docs/research/youtube-requests/bundle-check.mjs` (branch `research/youtube-requests`) checks that the live YouTube client still has what 2.0 relies on, and can seed the breakage check. The add-to-playlist response is the piece most likely to change.
 
 Also from [ticket 11](11-accounts.md): if `ytcfg`'s identity keys disappear, account-dependent features stop rather than act on an unknown account. Add `DATASYNC_ID` and `LOGGED_IN` to the bundle check.
+
+Also from [ticket 26](26-youtube-music-quick-actions.md):
+- An action whose internals are missing hides its button and key in that tab, with one notice rather than a toast per click.
+- Add to the watch list: both like-button anchors (classic bar and Wiz miniplayer), `ytmusic-player-queue-item`, and the header button area.

@@ -28,3 +28,11 @@ Also include:
 - **Modularity:** each feature is an independently loadable unit. A feature that's switched off injects nothing into pages, for example through dynamic content-script registration.
 
 Also from [ticket 11](11-accounts.md): modules for the account reader (main world), the tab registry, the current-account resolver and the private-write guard. A tab only ever receives its own account's setup.
+
+Also from [ticket 26](26-youtube-music-quick-actions.md): the YouTube Music page adapter
+- reads availability from each item's menu at hover time;
+- checks each action's internals when the page loads;
+- serialises queue actions;
+- loads only when a YouTube Music feature or playlist shortcuts is on.
+
+The playlist picker loads lazily.

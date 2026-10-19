@@ -41,3 +41,8 @@ Also from [ticket 22](22-name.md) (name PROVISIONAL: "Playlist Pigeon for YouTub
 - Replace 1.5.0's YouTube play-button logo (`src/components/YouTubeIcon.tsx`) and its YouTube-red primary colour.
 - The extension's own brand is a grey pigeon with a teal-to-violet accent: no red and no play triangle.
 - Show the attribution line where the extension names YouTube.
+
+Also from [ticket 26](26-youtube-music-quick-actions.md):
+- **YouTube Music features:** Quick actions has six button checkboxes; Play next and Add to queue are on by default. Quick-action shortcuts has the key list.
+- **Quick-save playlist:** shows under whichever of the two is on.
+- **Proposed:** a "playing" row in the popup with Save and the picker, reachable from the installed app's title bar.

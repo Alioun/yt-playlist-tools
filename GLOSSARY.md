@@ -51,8 +51,36 @@ Putting a video, song, album or playlist at the end of the queue.
 _Avoid_: Enqueue, append
 
 **Quick action**:
-An action on a song, album or playlist that YouTube Music only offers through its ⋮ menu, made available in one click or one key.
+One of YouTube Music's own actions on a song, album or playlist (Play next, Add to queue, Save to playlist, Like, Remove from queue), offered by the extension in one click or one key.
 _Avoid_: Hover action, menu shortcut
+
+**Remove from queue**:
+Taking one entry out of the queue.
+_Avoid_: Dequeue, delete from queue
+
+**Playing song**:
+The song YouTube Music is on, playing or paused: the queue's current item. Never an ad.
+_Avoid_: Current track, now playing
+
+**Pointed-at item**:
+The song, album or playlist under the pointer, or holding keyboard focus, when a key is pressed.
+_Avoid_: Hovered row, target, selection
+
+**Quick-action shortcut**:
+A key that runs one quick action on the pointed-at item, else on the playing song.
+_Avoid_: Hotkey, music shortcut
+
+**Save to playlist**:
+YouTube Music's quick action that adds a song to one of the user's playlists: to its quick-save playlist in one click, or to any playlist through the playlist picker.
+_Avoid_: Add to playlist (on YouTube Music), bookmark
+
+**Quick-save playlist**:
+The playlist a one-click save adds to. YouTube's thumbnail quick-save and YouTube Music's Save to playlist each have their own, per account.
+_Avoid_: Default playlist, one-click playlist, target playlist
+
+**Playlist picker**:
+The extension's list of the user's playlists, with a check mark on each one that already holds the song or video.
+_Avoid_: Save dialog (YouTube's own), playlist menu
 
 ### Channel filters
 
