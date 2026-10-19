@@ -36,3 +36,5 @@ Also from [ticket 11](11-accounts.md): consider adding a question on whether sav
 Also from [ticket 10](10-youtube-access.md): add a fourth question. Does signing requests in the page from the session cookie, sent only to YouTube, change `none`? With a Firefox floor of 140, the `websiteActivity` fallback costs nothing extra.
 
 Also from [ticket 16](16-storage-and-sync.md): question 2 should list exactly what syncs: account digests, names, handles and avatar URLs, playlist and channel IDs, and channel names. Also ask which data type applies, and whether an *optional* type requested from the click that switches sync on is acceptable.
+
+Also from [ticket 19](19-upgrade-and-rollout.md): record the reply against the table in its Answer, which gives the manifest, upgrade and copy change for each reply to each question. If AMO refuses Bun, only the install step falls back to npm, adding a second lockfile.

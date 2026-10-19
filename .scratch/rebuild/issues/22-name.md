@@ -151,3 +151,5 @@ Not done here, because this ticket may not touch those files:
   - the result of a real trade-off.
 - **Downstream tickets:** [ticket 15](15-popup-and-settings.md) carries the popup and settings branding, [ticket 19](19-upgrade-and-rollout.md) the rename note, and [ticket 20](20-write-spec.md) the listing text.
 - **If the user picks the runner-up:** swap in "Playlist Courier for YouTube™" everywhere above. The brief's rules stay the same; only the concept changes, to something like a list in motion. Avoid a parcel, which reads as a shipping app.
+
+Also from [ticket 19](19-upgrade-and-rollout.md): all drafted copy uses "Playlist Pigeon", so choosing Courier is a straight swap. Don't rename the GitHub repo while betas are installed ([ADR-0011](../../../docs/adr/0011-betas-from-github-pages.md)).

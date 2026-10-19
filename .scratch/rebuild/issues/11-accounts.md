@@ -197,3 +197,5 @@ Each **account** gets its own **account setup**. An account is the YouTube ident
 - **Labels:** what does the account menu return for a brand account, and for an account without a channel?
 - **Managers:** what `DATASYNC_ID` does a delegated manager get?
 - **Switcher:** does `/channel_switcher` list brand accounts and return to YouTube afterwards?
+
+Also from [ticket 19](19-upgrade-and-rollout.md): the outcome line for upgraders is "Open YouTube and your 1.x playlists will be picked up."

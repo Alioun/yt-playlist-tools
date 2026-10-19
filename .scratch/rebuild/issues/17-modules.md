@@ -875,3 +875,10 @@ All three are throwaway and outside the repo.
 - **[24](24-performance-budget.md) (budget):** take the rebalanced rows in [section 5.1](#51-files), expect the kit to need headroom, count the watch-page menu inside `popovers.js`, and extend `check-budget.ts` with section 5.3's rules.
 - **[25](25-live-checks.md) (live checks):** P2's second half is answered from source: both browsers clear registrations on update, and the start-up reconcile restores them. The probe extension becomes `src/livecheck/` (ticket 18). The resolver found by shape lives in the live adapter's `command()`.
 - **[16](16-storage-and-sync.md), [10](10-youtube-access.md), [08](08-shortcuts.md):** the refinements in [section 11](#11-where-earlier-tickets-conflicted) (digest in the tab, registration IDs, the key listener in the core). Nothing in their behaviour changes.
+
+Also from [ticket 19](19-upgrade-and-rollout.md):
+- a `beta` build mode;
+- extra `check:manifest` checks;
+- the AMO metadata script, the sources README and `build-for-amo`;
+- Node 24 in release jobs;
+- `watch.yml` callable from `release.yml`.

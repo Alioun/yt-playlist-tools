@@ -10,6 +10,22 @@ A browser extension that files the YouTube videos you watch into your own playli
 A part of the extension the user can switch on or off by itself, such as auto-add or YouTube Music's quick actions. A feature that's off leaves no trace on YouTube's pages.
 _Avoid_: Module, plugin, tool
 
+**Consent**:
+The user's agreement, in this browser, to how the extension handles their data, given on the first-run page or the upgrade note. Until it's given, no feature runs and nothing is read from YouTube.
+_Avoid_: Opt-in, permission, acceptance
+
+**First run**:
+The page that opens once after install, where the user picks features and gives consent.
+_Avoid_: Onboarding, welcome wizard
+
+**Upgrade note**:
+The page that opens once after a 1.x user updates to 2.0, showing what carried over and asking for consent.
+_Avoid_: What's new, changelog
+
+**Beta**:
+A pre-release version the user installs from the project's site; it updates from there until the release it precedes.
+_Avoid_: Preview, dev build
+
 **Site access**:
 The browser's permission for the extension to run on YouTube or on YouTube Music, which the user can withhold or revoke.
 _Avoid_: Host permission (in user-facing text), grant

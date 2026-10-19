@@ -281,3 +281,5 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
 
 - **[22](22-name.md):** "Playlist Tools" and the "PT" icon are placeholders.
 - **[19](19-upgrade-and-rollout.md):** decides the carried-over values and the support channel.
+
+Also from [ticket 19](19-upgrade-and-rollout.md), after resolution: before Agree, the upgrade note can show only stored values ("{N} playlists you chose in 1.x", the real percentage, the 50 % / 0 % question). Showing playlist titles or signed-in state needs a YouTube request, and none is made before consent ([ADR-0010](../../../docs/adr/0010-one-consent-gates-every-feature.md)). The final copy is in ticket 19's §3–§4.

@@ -312,3 +312,5 @@ Also from [ticket 17](17-modules.md), after resolution:
 - **Rebalanced rows:** core 5 → 8 KB, playlist shortcuts 4 → 1 KB, quick-action shortcuts 3 → 1 KB. Site totals unchanged.
 - **The kit's 18 KB** probably needs about 4 KB of headroom (PROVISIONAL), and the watch-page menu counts inside `popovers.js` (50 KB).
 - **New size-check rules:** Svelte only in the kits and `popovers.js`, Bits UI only in `popovers.js`, no kit code inside feature files.
+
+Also from [ticket 19](19-upgrade-and-rollout.md): the size check runs on the exact store builds.

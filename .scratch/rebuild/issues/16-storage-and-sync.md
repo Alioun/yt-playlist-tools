@@ -757,3 +757,9 @@ Read on 2026-10-19 from Chromium `main`, Firefox `main`, mozilla/application-ser
 **Unverified:**
 - whether Chrome delivers several keys from one remote write together (assumed not; [5.4](#54-conflicts-while-syncing) doesn't need it);
 - what happens to synced data when the user signs out of the browser's own sync.
+
+Also from [ticket 19](19-upgrade-and-rollout.md):
+- the upgrade note's `details` shape and its `opened` flag;
+- the consent version starts at 1;
+- toasts were off by default in 1.4.5's popup too (correcting ticket 06);
+- the private-window fallback if AMO says no.

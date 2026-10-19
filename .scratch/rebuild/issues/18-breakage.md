@@ -371,3 +371,9 @@ Also from [ticket 29](29-youtube-queue-undo.md): add the `IAE%3D` quiet value, t
 Also from [ticket 16](16-storage-and-sync.md): the diagnostics report may include sync on/off, the sync status and the schema version, with no values.
 
 Also from [ticket 25](25-live-checks.md)'s signed-out validation: the command resolver now lives at `default_kevlar_base.<minified key>.instance.resolveCommand`, located by shape. Put the shape check on the watch list. 1.5.0's `element.resolveCommand` lookup already broke, which is the kind of silent breakage this ticket exists for.
+
+Also from [ticket 19](19-upgrade-and-rollout.md):
+- **`skipReview` is dropped:** Chrome API v2 allows it only for declarativeNetRequest-only updates.
+- **No AMO rollback for 2.0.0:** it would land on 1.4.5, which is useless once its credentials are deleted. So 2.0.0 is fixed forward; Chrome can roll back to the last beta.
+- **Releases are gated** by the signed-in live-check record.
+- **Support channel:** GitHub issues with a problem form.

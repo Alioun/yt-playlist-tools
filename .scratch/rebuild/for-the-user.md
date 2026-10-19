@@ -21,6 +21,25 @@ Items that need the user, collected while working the map. Clear each one when i
 - **Run the live-check probe** ([ticket 25](issues/25-live-checks.md)) in Chrome and Firefox while signed in, and paste the reports back.
 - **Send the AMO question** ([ticket 23](issues/23-ask-amo.md)) and paste the reply back.
 
+## Setup only the user can do (before release, from ticket 19)
+
+- **Chrome Web Store:**
+  - a developer account: dedicated Google account, 2-Step Verification, the one-time fee, publisher name, verified contact e-mail, trader declaration;
+  - the first upload by hand as Unlisted, plus the listing and privacy tabs;
+  - a service account with the Chrome Web Store API, added in the dashboard.
+- **AMO:**
+  - check the API keys;
+  - at launch, edit the listing: name, summary, description, category, homepage, support link, privacy policy, icon, screenshots;
+  - a dedicated reviewer Google account with a channel, three playlists, 2-Step Verification and backup codes.
+- **GitHub:**
+  - enable Pages;
+  - create `amo` and `cws` environments with you as approver, and move the store secrets into them;
+  - set the per-store variables, and optionally a ruleset for `v*` tags;
+  - delete the old Chrome v1.1 secrets.
+- **Privacy page:** read and approve the drafted privacy policy (it's published under your name), and decide on a support e-mail, if any.
+- **Cleanup:** shut down any deployed token broker and delete its Google OAuth client.
+- **Before each release:** the signed-in live check and the timing test; screenshot videos you own or that are Creative Commons; optionally, beta testers.
+
 ## Decided on the user's behalf, worth knowing
 
 - **The Data API is gone completely** ([ticket 10](issues/10-youtube-access.md)), including the "last resort" fallback from charting Q4. No job needs it, and YouTube's API policies forbid an app that uses both the Data API and YouTube's internal requests.
@@ -36,3 +55,6 @@ Items that need the user, collected while working the map. Clear each one when i
 - **Svelte alone doesn't make the popup faster** ([ticket 24](issues/24-performance-budget.md)). With shadcn's popover and search loaded up front, it measured slower than today's React popup on a slow CPU. It's fast only because the first view is a light switch list, with everything else loading on demand. Inside YouTube, Bits UI's popover code (about 32 KB) is the biggest cost, so it loads on first use. With everything on, 2.0 should weigh about half of 1.5.0 on YouTube pages.
 - **Feature switches sync along with your setups** ([ticket 16](issues/16-storage-and-sync.md)), so a new browser arrives set up and switched on. Each browser keeps its own copy as the truth, because both browsers wipe the synced copy whenever the extension is uninstalled anywhere. Clear All Data resets only this browser unless you tick the box.
 - **"Off costs nothing" is per feature, with one shared core per site** ([ticket 17](issues/17-modules.md)). A switched-off feature's own code never loads. But while any feature on a site is on, that site's small shared core loads too, and it holds code other features use: for example, about 3 KB of unused key and card code when only auto-add is on. A site with everything off still gets nothing.
+- **Upgraders keep what 1.4.5 actually did** ([ADR-0009](../docs/adr/0009-upgraders-keep-what-1-4-5-did.md)): 1.4.5 auto-added at 0 % unless set, even though its popup showed 50 %, so the upgrade note asks you once.
+- **Nothing runs until you agree** ([ADR-0010](../docs/adr/0010-one-consent-gates-every-feature.md)): one consent of our own, in every browser.
+- **Rollout:** a beta of at least 14 days (`1.99.N`, served from this repo's GitHub Pages, so don't rename the repo while betas are installed), then Firefox, a 7-day soak, then Chrome public. 2.0.0 can't usefully be rolled back on AMO, so it's fixed forward.

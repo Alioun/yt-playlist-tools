@@ -38,3 +38,5 @@ Also from [ticket 17](17-modules.md):
   - accessibility testing (axe-core in a test layer?);
   - dev workflow with runtime-registered scripts (reloading open tabs after rebuilds);
   - a compile cache for the Svelte `bun test` plugin as the suite grows.
+
+Also from [ticket 19](19-upgrade-and-rollout.md): its Answer is the spec's upgrade-and-rollout chapter: copy, listings, privacy policy, workflows, test matrix and release checklist.
