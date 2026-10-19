@@ -21,3 +21,5 @@ Cover these flows:
 The prototype is low-fidelity, clickable and uses fake data. It's about placement and flow, not looks.
 
 Also from [ticket 03](03-store-policy.md): the Chrome Web Store requires an in-product disclosure that the user explicitly accepts before any data is handled. Place it in first run.
+
+Also from [ticket 06](06-upgrade-path.md): for upgraders, the one-time note doubles as the consent screen. Carried-over auto-add stays off until it's accepted.

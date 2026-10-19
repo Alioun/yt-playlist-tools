@@ -227,7 +227,13 @@ The popup's gear view and the Options tab show the same panel:
 | IndexedDB | `yt-playlist-tools` v1, store `cachedVideos` | key `[playlistId, videoId]`, value `{playlistId, videoId, addedAt}` | empty |
 
 **1.4.5:**
-- **Stored keys:** it uses the same bare keys in `storage.local`: `playlists`, `addToPlaylistID`, `watchLaterShortcut`, `requiredWatchPercentage`, `toastEnabled`, `clientID`, `clientSecret`, `accessToken` and `refreshToken`. In 1.4.5, playlist IDs were typed in by hand, so empty IDs can occur. WXT's `local:` prefix maps onto the same keys.
+- **Stored keys:** it uses the same bare keys in `storage.local`: `playlists`, `addToPlaylistID`, `watchLaterShortcut`, `requiredWatchPercentage`, `toastEnabled`, `clientID`, `clientSecret`, `accessToken` and `refreshToken`. In 1.4.5, playlist IDs were typed in by hand. Empty ones are filtered out, but half-typed IDs and pasted URLs can occur. WXT's `local:` prefix maps onto the same keys.
+- **1.4.5 defaults differ from 1.5.0's table above:**
+  - an absent `toastEnabled` meant **off**;
+  - an absent or empty `requiredWatchPercentage` meant **0 %** (stored as a string), although the popup showed 50;
+  - Ctrl shortcuts never fired, because it checked `event.controlKey`.
+
+  See [ticket 06](issues/06-upgrade-path.md).
 - **Manifest:** permissions `activeTab, storage, identity, scripting`; no host permissions; a content script on `*://*.youtube.com/*` excluding music.youtube.com; `strict_min_version` 125.0.
 - **Migrations:** no storage item has a version, and there are no migrations. An older `localStorage.cachedVideos` duplicate cache (`d73027e`) is never migrated or cleared.
 
