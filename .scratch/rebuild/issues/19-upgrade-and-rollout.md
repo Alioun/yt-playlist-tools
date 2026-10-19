@@ -41,3 +41,12 @@ Also from [ticket 22](22-name.md):
 - The AMO description says "(formerly YouTube Playlist Tools)", and the upgrade note mentions the rename.
 - Add the attribution line: "YouTube and YouTube Music are trademarks of Google LLC. Use of these trademarks is subject to Google Permissions." plus "Not affiliated with or endorsed by YouTube or Google."
 - Store screenshots use the user's own or Creative Commons videos.
+
+Also from [ticket 10](10-youtube-access.md):
+- **Manifests:** both are in its section 11.
+- **Firefox:** the 1.4.5 → 2.0 update shows no prompt.
+- **Chrome:** www.youtube.com only at install; YouTube Music access is requested when that feature is switched on.
+- **Floors:** Chrome 121, Firefox 140.
+- **Disclosures:** add "Authentication information" and the privacy-policy line if the page-signed request ships.
+- **Listing:** the `scripting` justification is in section 11, and the reviewer notes list the routes and endpoints.
+- **Removed:** `identity` and the Google hosts.

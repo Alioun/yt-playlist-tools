@@ -18,3 +18,5 @@ Also from [ticket 26](26-youtube-music-quick-actions.md):
 - Start from its placements.
 - Prototype the split Save button and the picker, anchored to the button or centred when opened by key, using YouTube Music's own icons.
 - In fullscreen (`f`), toasts must render inside the fullscreen element.
+
+Also from [ticket 10](10-youtube-access.md): in-page icons and fonts are inline, since there are no web-accessible resources.

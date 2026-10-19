@@ -46,3 +46,8 @@ Also from [ticket 26](26-youtube-music-quick-actions.md):
 - **YouTube Music features:** Quick actions has six button checkboxes; Play next and Add to queue are on by default. Quick-action shortcuts has the key list.
 - **Quick-save playlist:** shows under whichever of the two is on.
 - **Proposed:** a "playing" row in the popup with Save and the picker, reachable from the installed app's title bar.
+
+Also from [ticket 10](10-youtube-access.md):
+- **No tab:** cached data plus "Open YouTube" / "Open YouTube Music".
+- **Site access:** a "needs access" state per site.
+- **Chrome's YouTube Music access:** requested from the click that switches a YouTube Music feature on, including on the first-run screen.

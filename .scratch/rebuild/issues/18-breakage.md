@@ -32,3 +32,16 @@ Also from [ticket 11](11-accounts.md): if `ytcfg`'s identity keys disappear, acc
 Also from [ticket 26](26-youtube-music-quick-actions.md):
 - An action whose internals are missing hides its button and key in that tab, with one notice rather than a toast per click.
 - Add to the watch list: both like-button anchors (classic bar and Wiz miniplayer), `ytmusic-player-queue-item`, and the header button area.
+
+Also from [ticket 10](10-youtube-access.md):
+- **Two outcomes:** "route unavailable" falls back to the next route and records a breakage signal; "job failed" is reported with no retry. Writes are never retried if they may have been sent.
+- **Watch list:**
+  - `ytd-app.resolveCommand` with `commandController`;
+  - `yt-service-request` / `-completed`;
+  - the `ytcfg` keys and the three-part auth hash;
+  - both shapes of the add-to-playlist response;
+  - the miniplayer's queue data;
+  - `ytmusic-app`'s handlers, network layer, `app.queue`, `ADD_ITEMS` and the menu-item behaviour property;
+  - the cast state.
+
+  Extend `bundle-check.mjs` to cover them.

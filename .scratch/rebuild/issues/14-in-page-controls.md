@@ -31,3 +31,5 @@ Also from [ticket 01](01-youtube-requests.md): sending edits through YouTube's c
 Also from [ticket 11](11-accounts.md): in-page UI shows only the tab's own account's data. Optionally, offer an in-page "choose a playlist" for a shortcut that has none on this account.
 
 Also from [ticket 26](26-youtube-music-quick-actions.md): share the toast component with YouTube Music, which gets its own skin. Confirm the term "quick-save playlist" for YouTube's thumbnail quick-save.
+
+Also from [ticket 10](10-youtube-access.md): there are no web-accessible resources, so icons and fonts in in-page UI are inline. Every feature has a teardown that removes its elements, styles and listeners.

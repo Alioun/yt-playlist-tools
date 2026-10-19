@@ -33,3 +33,5 @@ Also from [ticket 11](11-accounts.md) and [ADR-0003](../../../docs/adr/0003-acco
 - **Local only:** the unclaimed setup and the last current account.
 - **Private windows:** writes are refused in one place.
 - **Removal:** removing one setup is separate from "clear all data".
+
+Also from [ticket 10](10-youtube-access.md): caches are per account and stamped with when they were fetched. Script registration is derived from the feature switches, never stored.

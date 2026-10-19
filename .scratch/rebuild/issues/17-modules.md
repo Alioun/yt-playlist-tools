@@ -36,3 +36,10 @@ Also from [ticket 26](26-youtube-music-quick-actions.md): the YouTube Music page
 - loads only when a YouTube Music feature or playlist shortcuts is on.
 
 The playlist picker loads lazily.
+
+Also from [ticket 10](10-youtube-access.md):
+- **The gateway:** one deep module with a `run(job)` interface. Its route table (job → route order) is a data constant.
+- **Other modules:** the site core (bridge plus gateway) per site; a registration reconciler in the background; a serving-tab router; a one-at-a-time job queue per tab for YouTube Music queue actions.
+- **Teardown:** every feature has one that removes its elements, styles and listeners.
+- **Assets:** no web-accessible resources, so in-page assets are inline. WXT's `registration: "runtime"` content-script option likely fits (unverified).
+- **Test seams:** recorded responses per job, plus fakes for `scripting.registerContentScripts` and `tabs.query` URL filtering. Check whether WXT's fake browser has them.

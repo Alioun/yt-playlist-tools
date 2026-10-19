@@ -10,6 +10,14 @@ A browser extension that files the YouTube videos you watch into your own playli
 A part of the extension the user can switch on or off by itself, such as auto-add or YouTube Music's quick actions. A feature that's off leaves no trace on YouTube's pages.
 _Avoid_: Module, plugin, tool
 
+**Site access**:
+The browser's permission for the extension to run on YouTube or on YouTube Music, which the user can withhold or revoke.
+_Avoid_: Host permission (in user-facing text), grant
+
+**Serving tab**:
+The YouTube or YouTube Music tab the extension works through for the popup, settings or a browser-wide shortcut, chosen because it's signed in to the account being shown.
+_Avoid_: Host tab, proxy tab
+
 ### Accounts
 
 **Account**:

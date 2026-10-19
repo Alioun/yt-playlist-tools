@@ -13,3 +13,9 @@ Items that need the user, collected while working the map. Clear each one when i
 
 - **Run the live-check probe** ([ticket 25](issues/25-live-checks.md)) in Chrome and Firefox while signed in, and paste the reports back.
 - **Send the AMO question** ([ticket 23](issues/23-ask-amo.md)) and paste the reply back.
+
+## Decided on the user's behalf, worth knowing
+
+- **The Data API is gone completely** ([ticket 10](issues/10-youtube-access.md)), including the "last resort" fallback from charting Q4. No job needs it, and YouTube's API policies forbid an app that uses both the Data API and YouTube's internal requests.
+- **The page may read YouTube's session cookie to sign requests** ([ticket 10](issues/10-youtube-access.md)), only where YouTube's own client can't do the job quietly. Creating a playlist and some reads are expected to need it. Cost: the Chrome Web Store privacy tab declares "Authentication information", plus one privacy-policy line. No `cookies` permission and no faked origins.
+- **Minimum versions:** Chrome 121, Firefox 140.

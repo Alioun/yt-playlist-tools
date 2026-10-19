@@ -31,3 +31,5 @@ Status: drafted on 2026-10-19 and waiting for the user to send it. Post it in Mo
 **If the answer to 1 or 2 is "it counts":** declare `websiteActivity` (required or optional, as advised), raise `strict_min_version` to 140, and expect 1.4.5 users' updates to be held behind a consent prompt ([ticket 06](06-upgrade-path.md)).
 
 Also from [ticket 11](11-accounts.md): consider adding a question on whether saving the user's own shared-settings changes made in a private window is acceptable.
+
+Also from [ticket 10](10-youtube-access.md): add a fourth question. Does signing requests in the page from the session cookie, sent only to YouTube, change `none`? With a Firefox floor of 140, the `websiteActivity` fallback costs nothing extra.

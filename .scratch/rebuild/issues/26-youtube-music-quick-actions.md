@@ -257,3 +257,5 @@ These aren't decided here:
 - the look and exact placement: [27](27-youtube-music-controls.md), [09](09-where-things-live.md) and [15](15-popup-and-settings.md);
 - where the breakage notice shows: [18](18-breakage.md);
 - what syncs: [16](16-storage-and-sync.md). The split between account and shared settings is ticket 11's, folded in above.
+
+Also from [ticket 10](10-youtube-access.md), and accepted by the main session: if no cast signal can be read (live check M5), queue actions stay available while casting, and the toast says it changed this tab's queue. This softens "unavailable while casting". If M3 shows likes trigger YouTube Music's own toast, there's no quiet route for likes.
