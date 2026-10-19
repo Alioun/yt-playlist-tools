@@ -17,9 +17,17 @@ Items that need the user, collected while working the map. Clear each one when i
 - **A "Save to ▸" entry in the browser's right-click menu** ([ticket 09](issues/09-where-things-live.md)): a quick-save that leaves YouTube's page untouched. It would need the menus permission. New capability.
 - **A toolbar tick when this tab's video was auto-added, and showing "paused" on the toolbar icon** ([ticket 09](issues/09-where-things-live.md)): wanted? On by default?
 - **Narrow rows on YouTube Music's Home (Quick picks)** ([ticket 27](issues/27-youtube-music-controls.md)): at 1366–1536 px window widths, a hovered row's title shrinks to almost nothing while our buttons show (tooltips then name the song). Keep every button you've switched on (current choice), or drop buttons on those rows to keep the title?
+- **Re-lead the store listing** ([ticket 30](issues/30-market-and-users.md)): lead with saving to any playlist (one click or a named key), not auto-add. Use the drafted summaries (AMO 246, Chrome 132 characters) in users' words. Keep "no Google sign-in" out of the lead, since ten or more rivals say it.
+- **Upgrade-note fixes S1–S3** ([ticket 30](issues/30-market-and-users.md)):
+  - S1: never-authorised 1.4.5 users default to "once half is watched", not 0 %;
+  - S2: reopen the note once if it was never seen, and add a "Pin Playlist Pigeon" line;
+  - S3: the tab title says "YouTube Playlist Tools is now Playlist Pigeon".
+- **D6 / PAR-NEW-35, keys from any tab, now has evidence** ([ticket 30](issues/30-market-and-users.md)): it's the only pending item with voiced demand (global YouTube Music keys; five rivals have them). Recommended as opt-in browser commands with no default key; 2.0.0 or 2.x is your call.
 - **Localisation:** should 2.0's UI be translated? English toasts stand out on a non-English YouTube Music (ticket 26). This would be a new capability.
 
 ## Actions only the user can take
+
+- **Fix the live AMO listing now (S4)** ([ticket 30](issues/30-market-and-users.md)): edit AMO's description so it links the new 1.4.5 setup guide (`docs/legacy/1.4.5-setup.md`, live once `main` is pushed) instead of "the github readme", and add "2.0, coming soon, needs no credentials". No new version is needed.
 
 - **Run the live-check probe** ([ticket 25](issues/25-live-checks.md)) in Chrome and Firefox while signed in, and paste the reports back.
 
