@@ -1,0 +1,163 @@
+{
+  "clientVersion": "2.20261016.01.00",
+  "ranAt": "2026-10-19T04:46:25.360Z",
+  "resolve_url": [
+    {
+      "url": "https://www.youtube.com/@mkbhd",
+      "status": 200,
+      "browseId": "UCBJycsmduvYEL83R_U4JriQ",
+      "webPageType": "WEB_PAGE_TYPE_CHANNEL"
+    },
+    {
+      "url": "https://www.youtube.com/c/mkbhd",
+      "status": 200,
+      "browseId": "UCBJycsmduvYEL83R_U4JriQ",
+      "webPageType": "WEB_PAGE_TYPE_CHANNEL"
+    },
+    {
+      "url": "https://www.youtube.com/c/vsauce1",
+      "status": 200,
+      "browseId": "UC6nSFpj9HTCZ5t-N3Rm3-HA",
+      "webPageType": "WEB_PAGE_TYPE_CHANNEL"
+    },
+    {
+      "url": "https://www.youtube.com/user/Vsauce",
+      "status": 200,
+      "browseId": "UC6nSFpj9HTCZ5t-N3Rm3-HA",
+      "webPageType": "WEB_PAGE_TYPE_CHANNEL"
+    },
+    {
+      "url": "https://www.youtube.com/user/vsauce1",
+      "status": 404,
+      "error": {
+        "code": 404,
+        "status": "NOT_FOUND",
+        "message": "Requested entity was not found."
+      }
+    },
+    {
+      "url": "https://www.youtube.com/channel/UCBJycsmduvYEL83R_U4JriQ",
+      "status": 200,
+      "browseId": "UCBJycsmduvYEL83R_U4JriQ",
+      "webPageType": "WEB_PAGE_TYPE_CHANNEL"
+    },
+    {
+      "url": "https://www.youtube.com/mkbhd",
+      "status": 200,
+      "browseId": "UCBJycsmduvYEL83R_U4JriQ",
+      "webPageType": "WEB_PAGE_TYPE_CHANNEL"
+    },
+    {
+      "url": "https://www.youtube.com/@ThisHandleDoesNotExist9x7q",
+      "status": 404,
+      "error": {
+        "code": 404,
+        "status": "NOT_FOUND",
+        "message": "Requested entity was not found."
+      }
+    },
+    {
+      "url": "https://www.youtube.com/c/ThisNameDoesNotExist9x7q",
+      "status": 404,
+      "error": {
+        "code": 404,
+        "status": "NOT_FOUND",
+        "message": "Requested entity was not found."
+      }
+    },
+    {
+      "url": "https://www.youtube.com/feed/playlists",
+      "status": 200,
+      "browseId": "FEplaylist_aggregation",
+      "webPageType": "WEB_PAGE_TYPE_BROWSE"
+    },
+    {
+      "url": "https://www.youtube.com/playlist?list=WL",
+      "status": 200,
+      "browseId": "VLWL",
+      "webPageType": "WEB_PAGE_TYPE_PLAYLIST"
+    },
+    {
+      "url": "https://www.youtube.com/shorts/jNQXAC9IVRw",
+      "status": 200,
+      "urlEndpoint": "/watch?v=jNQXAC9IVRw",
+      "webPageType": "WEB_PAGE_TYPE_UNKNOWN"
+    }
+  ],
+  "channel_browse": {
+    "status": 200,
+    "title": "Marques Brownlee",
+    "externalId": "UCBJycsmduvYEL83R_U4JriQ",
+    "vanityChannelUrl": "http://www.youtube.com/@mkbhd",
+    "header": [
+      "pageHeaderRenderer"
+    ],
+    "headerHandle": "@mkbhd"
+  },
+  "next_owner": {
+    "status": 200,
+    "title": "Rick Astley",
+    "browseId": "UCuAXFkgsw1L7xaCfnd5JJOw",
+    "canonicalBaseUrl": "/@RickAstleyYT",
+    "loggedOut": true
+  },
+  "reel_item_watch": {
+    "status": 200,
+    "channelName": "@jawed",
+    "channelBrowseId": "UC4QobU6STFB0P71PMvOGN5A",
+    "saveToPlaylistCommand": {
+      "videoId": "jNQXAC9IVRw",
+      "params": "R0FRJTNE"
+    }
+  },
+  "get_add_to_playlist": {
+    "status": 401,
+    "error": {
+      "code": 401,
+      "status": "UNAUTHENTICATED",
+      "message": "You must be signed in to perform this operation."
+    },
+    "activeAccountHeader": false
+  },
+  "edit_playlist_WL": {
+    "status": 200,
+    "bodyStatus": "STATUS_FAILED",
+    "loggedOut": true,
+    "firstActionPopup": "modalWithTitleAndButtonRenderer",
+    "activeAccountHeader": false
+  },
+  "create_private": {
+    "status": 401,
+    "error": {
+      "code": 401,
+      "status": "UNAUTHENTICATED",
+      "message": "You must be signed in to perform this operation."
+    },
+    "activeAccountHeader": false
+  },
+  "browse_FEplaylist_aggregation": {
+    "status": 401,
+    "error": {
+      "code": 401,
+      "status": "UNAUTHENTICATED",
+      "message": "Request is missing required authentication credential. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project."
+    },
+    "activeAccountHeader": false
+  },
+  "browse_VLWL": {
+    "status": 200,
+    "loggedOut": true,
+    "alert": "The playlist does not exist.",
+    "activeAccountHeader": false
+  },
+  "account_menu": {
+    "status": 200,
+    "loggedOut": true,
+    "firstActionPopup": "multiPageMenuRenderer",
+    "activeAccountHeader": false
+  },
+  "queue_create": {
+    "status": 200,
+    "playlistIdPrefix": "TLPQ"
+  }
+}
