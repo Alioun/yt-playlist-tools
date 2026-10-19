@@ -30,3 +30,10 @@ Also from [ticket 08](08-shortcuts.md): the undo key (Alt+U) works on YouTube Mu
 Also from [ticket 18](18-breakage.md): the "not working" notice is a sticky variant of the shared toast. You own YouTube Music's item selectors, the row self-check and the anchor thresholds.
 
 Also from [ticket 24](24-performance-budget.md): one hover overlay per page, not buttons on every row. Inject the picker when the pointer reaches Save, to hide its first-open delay. YouTube Music budget: at most 43 KB with everything on (PROVISIONAL, sized by analogy).
+
+Also from [ticket 09](09-where-things-live.md) and its [prototype](https://github.com/Alioun/yt-playlist-tools/tree/prototype/where-things-live/prototypes/where-things-live) (branch `prototype/where-things-live`):
+- **Rows:** reserve the button slot's width on song rows, so buttons never cover titles in narrow queue panels.
+- **Album track rows:** no Like of ours.
+- **Queue items:** Save, Like and Remove, plus ticket 28's moves.
+- **Popup:** the "Playing now" row is in.
+- **YouTube Music site-wide switch:** only YouTube Music gets one.

@@ -59,3 +59,10 @@ Also from [ticket 24](24-performance-budget.md):
 - **The toast** is hand-written (about 3 KB, not svelte-sonner).
 - **No Tailwind or shadcn styles in pages,** which closes ticket 13's `@property` question.
 - **Budgets:** YouTube at most 49 KB gzip with everything on; watch-page controls about 5 KB up front.
+
+Also from [ticket 09](09-where-things-live.md) and its [prototype](https://github.com/Alioun/yt-playlist-tools/tree/prototype/where-things-live/prototypes/where-things-live) (branch `prototype/where-things-live`):
+- **Thumbnails:** try the stack (quick-save and queue at the top-left) drawn by one hover overlay.
+- **Watch-page button:** its own feature, placed after YouTube's Save in the action row. Test it when YouTube folds the row into "…" at narrow widths, on the Shorts action column, with toasts at the bottom left, and in fullscreen. Its labels come from ticket 07's states, and its menu repeats the popup's "This video" card.
+- **Not working:** a feature that isn't working draws nothing and shows a sticky notice.
+- **Miniplayer:** gets nothing of ours.
+- **Stack bugs found:** shadcn-svelte's generated components style `data-checked`/`data-open` but Bits UI 2.19 sets `data-state` (mapped in the prototype's `app.css`); vite-plugin-svelte 7 with rolldown 1.2 breaks `vite dev` (svelte excluded from SSR pre-bundling).

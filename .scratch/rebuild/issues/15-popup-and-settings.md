@@ -86,3 +86,10 @@ Also from [ticket 16](16-storage-and-sync.md):
 - **States:** "Synced settings are full", naming what takes the room, with "Remove kept filters"; and "Update {Name}" for a version mismatch.
 - **Clear All Data:** this browser only, with a checkbox to also delete the synced copy.
 - **Accounts not loaded here:** "3 auto-add playlists · Open YouTube as {Name}".
+
+Also from [ticket 09](09-where-things-live.md) and its [prototype](https://github.com/Alioun/yt-playlist-tools/tree/prototype/where-things-live/prototypes/where-things-live) (branch `prototype/where-things-live`): keep its structure.
+- **Popup:** "this tab, this account, right now": account header, breakage strip, one banner at a time (fixed priority order), YouTube / YouTube Music tabs chosen by the site you're on, a status line, and feature rows that unfold. Per-account playlist choices are made here.
+- **Settings:** in a tab, with a left nav (YouTube, YouTube Music, Everywhere, Accounts, Appearance, Privacy & data, Diagnostics, About). Each feature is one row with a "changes the page" tag; it unfolds when on.
+- **Shared pieces:** one playlist picker and one key recorder.
+- **Ticket 16's pieces:** the join question, the "full" message, the update status and Clear All Data's checkbox.
+- **Stack bugs to carry over:** map `data-state` for shadcn-svelte vs Bits UI 2.19, and exclude svelte from Vite's SSR pre-bundling with rolldown 1.2.

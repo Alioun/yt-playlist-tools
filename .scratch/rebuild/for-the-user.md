@@ -12,6 +12,8 @@ Items that need the user, collected while working the map. Clear each one when i
 - **Keys that work from any tab, or system-wide on Chrome** ([ticket 08](issues/08-shortcuts.md)), e.g. liking the song in a background YouTube Music tab. They'd need browser commands with no default key. This is a new capability; 2.0's keys only work while a YouTube page has focus.
 - **Where problem reports go** ([ticket 18](issues/18-breakage.md)): provisionally GitHub issues, but those need a GitHub account. E-mail instead?
 - **Settings export and import to a file** ([ticket 16](issues/16-storage-and-sync.md)), for people without browser sync. This would be a new capability.
+- **A "Save to ▸" entry in the browser's right-click menu** ([ticket 09](issues/09-where-things-live.md)): a quick-save that leaves YouTube's page untouched. It would need the menus permission. New capability.
+- **A toolbar tick when this tab's video was auto-added, and showing "paused" on the toolbar icon** ([ticket 09](issues/09-where-things-live.md)): wanted? On by default?
 - **Localisation:** should 2.0's UI be translated? English toasts stand out on a non-English YouTube Music (ticket 26). This would be a new capability.
 
 ## Actions only the user can take
