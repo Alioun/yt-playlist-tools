@@ -16,3 +16,8 @@ With [ticket 01](01-youtube-requests.md), [ticket 02](02-request-context.md) and
 - the minimum Chrome and Firefox versions.
 
 Update ADR-0001 if the mechanism changes it.
+
+Also from [ticket 03](03-store-policy.md):
+- Don't read session cookies, and don't fake request origins. Let YouTube's own page authenticate requests.
+- Fetch no remote config or selectors.
+- A Data API fallback is nearly unavailable, because YouTube's API policies forbid mixing it with undocumented APIs. Settle the fallback clause of ADR-0001 accordingly.

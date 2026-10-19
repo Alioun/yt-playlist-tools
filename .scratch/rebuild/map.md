@@ -29,13 +29,14 @@ A spec at `.scratch/rebuild/spec.md` for 2.0 of this extension: a ground-up rebu
 
 <!-- one line per closed ticket: [title](issues/NN-slug.md): gist -->
 
+- [What do store policies and YouTube's terms allow?](issues/03-store-policy.md): both stores allow working through the user's session (listed precedents exist). Chrome forbids "YouTube" as the name, which led to [ticket 22](issues/22-name.md). The Data API fallback is nearly unavailable under YouTube's API policies. No cookie reading and no remote config. Chrome needs a privacy policy, disclosures and an in-product consent. Detail on branch `research/store-policy`.
+
 ## Not yet specified
 
 - Visual detail past what the prototypes settle: motion, iconography, empty-state and error copy.
 - Edge cases the access research will expose: private, deleted, age-restricted or members-only videos; playlist size limits; brand accounts and channel switching.
 - A performance budget for the popup and in-page UI. The popup opens in about 60 ms today.
 - Accessibility beyond the component library's defaults.
-- The extension's name and store presentation, if store policy forces a rename.
 
 ## Out of scope
 

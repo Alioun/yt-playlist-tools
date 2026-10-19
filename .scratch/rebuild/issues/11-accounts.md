@@ -15,3 +15,5 @@ Approved: each YouTube account keeps its own setup. Decide:
 - **Migration:** which account a migrated 1.4.5 setup belongs to.
 
 Update GLOSSARY.md with the term.
+
+Also from [ticket 03](03-store-policy.md): nothing may be stored from private windows. Decide how container tabs and private windows relate to accounts and setups.

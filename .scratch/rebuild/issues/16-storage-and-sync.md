@@ -4,7 +4,7 @@ Type: grilling
 Status: open
 Labels: wayfinder:grilling
 Part of: [Rebuild (2.0)](../map.md)
-Blocked by: 08, 11, 12
+Blocked by: 08, 11, 12, 23
 
 ## Question
 
@@ -16,3 +16,5 @@ Approved: settings sync across the user's browsers. Decide:
 - **Migrations:** schema versioning and migrations, including from 1.4.5.
 - **Caches:** for playlists, channels and membership, and when they expire.
 - **Clearing:** what "clear all data" clears.
+
+Also from [ticket 03](03-store-policy.md): whether `storage.sync` fits AMO's `none` declaration is open ([ticket 23](23-ask-amo.md)). Nothing may be persisted from private windows.

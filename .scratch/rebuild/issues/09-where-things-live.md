@@ -19,3 +19,5 @@ Cover these flows:
 - where per-account setups, channel filters and shortcuts are managed.
 
 The prototype is low-fidelity, clickable and uses fake data. It's about placement and flow, not looks.
+
+Also from [ticket 03](03-store-policy.md): the Chrome Web Store requires an in-product disclosure that the user explicitly accepts before any data is handled. Place it in first run.

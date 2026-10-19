@@ -18,3 +18,7 @@ Prototype the popup and the settings page in the chosen stack, with realistic fa
 - resetting data;
 - first run;
 - the upgrade note.
+
+Also from [ticket 03](03-store-policy.md):
+- Include the first-run disclosure and consent screen.
+- The extension's own UI must not imitate YouTube's look and feel, so YouTube red can't stay as the primary colour.
