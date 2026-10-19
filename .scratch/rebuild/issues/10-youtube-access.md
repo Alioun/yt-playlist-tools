@@ -414,3 +414,5 @@ ADR-0001's fallback clause is withdrawn. No `googleapis.com` or `accounts.google
 | Firefox minimum | 140 | 153 strands ESR 140 users mid-migration; 128 forces a custom consent screen if AMO says data collection counts |
 
 Also from [ticket 29](29-youtube-queue-undo.md) (adopted after resolution): YouTube's queue adds use `playlistEditEndpoint` `ACTION_ADD_VIDEO` with `params: "IAE%3D"` when a queue exists. Undo uses `ACTION_REMOVE_VIDEO` by `setVideoId`, then `refreshPlaylistCommand`, all through `ytd-app.resolveCommand`. Confirm and retry on HTTP 409. PROVISIONAL on ticket 25's Q1–Q8.
+
+Also from [ticket 25](25-live-checks.md)'s signed-out validation (after resolution): **YouTube's command resolver has moved.** No element has `resolveCommand`, and `ytd-app`'s handler passes no `commandController`. The working resolver is the global `default_kevlar_base.<key>.instance.resolveCommand`, found by shape (the key is minified, e.g. `O5`), and it calls `onSuccess` with the response. The route table's "YouTube's own command" means that resolver, located by shape at page load. The cast state on YouTube Music is readable at `state.castStatus` (M5).

@@ -29,3 +29,32 @@ Also from [ticket 01](01-youtube-requests.md):
 - what a duplicate add does;
 - whether `DATASYNC_ID` survives sign-out;
 - how `#shorts-player` behaves.
+
+## Probe
+
+Branch `task/live-checks`, folder [`probes/live-checks/`](https://github.com/Alioun/yt-playlist-tools/tree/task/live-checks/probes/live-checks); the full steps are in its `CHECKLIST.md`. Each report entry is labelled with its check ID from tickets 07, 08, 10 (L1–L9, M1–M5, P1–P2), 11, 12, 26, 28 and 29. The hidden-frame spike was left out, since ticket 10 made it optional. Reports never contain cookie values, auth hashes or the `DATASYNC_ID` value.
+
+1. Load `probes/live-checks` unpacked in Chrome (`chrome://extensions`, Developer mode), and as a temporary add-on in Firefox (`about:debugging`, pick `manifest.json`).
+2. On a signed-in youtube.com tab and a music.youtube.com tab, tick **Allow write checks** in the red panel and press **Run probe**. Then do the by-hand extras from the checklist.
+3. Press **Copy report** in each browser and paste the JSON back.
+
+### Signed-out validation (2026-10-19)
+
+These ran in headless Chrome for Testing 155 against live YouTube, signed out: 103 entries, no page errors, and redaction verified.
+
+- **`resolveCommand` has moved.** No element on youtube.com has `resolveCommand` any more, and `ytd-app.handleCommandWithCommandHandler` passes no `commandController`. 1.5.0's queue bridge looks for `element.resolveCommand`, so it **likely does nothing on today's YouTube**. The global resolver can be found by shape at `default_kevlar_base.<key>.instance.resolveCommand` (the key was `O5`, which is minified and changes), and it does call `onSuccess` with the response.
+- **Ticket 29 confirmed, signed out:**
+  - the 1.5.0 queue command shows YouTube's "Added to Queue" for later adds;
+  - removal with `params: "IAE%3D"` is quiet, and `onSuccess` gets `STATUS_SUCCEEDED`;
+  - removal without params shows "Removed from Queue";
+  - the quiet add returns a `setVideoId` with no toast;
+  - an immediate quiet Undo got HTTP 200.
+- **YouTube Music, signed out:**
+  - the menu-item route works on a detached element;
+  - the cast state is readable at `state.castStatus`;
+  - `get_queue` returned 200 of a 500-song radio;
+  - the store-only `MOVE_ITEM` comparison was inconclusive, because there's no server queue copy when signed out.
+- **The auth hash** matches yt-dlp's three-part construction, and every signed-out request reads as signed out.
+- **The made-for-kids flag:** `PLAYBACK_MODE_PAUSED_ONLY` on a made-for-kids test video, `ALLOW` on an ordinary one.
+
+**Status:** waiting for the user's signed-in reports from Chrome and Firefox.

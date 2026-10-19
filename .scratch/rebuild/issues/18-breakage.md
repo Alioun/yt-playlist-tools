@@ -369,3 +369,5 @@ Each message is two sentences, uses YouTube's capitalisation, and says "YouTube 
 Also from [ticket 29](29-youtube-queue-undo.md): add the `IAE%3D` quiet value, the `TLPQ` queue list, the panel data's location (`ytd-playlist-panel-renderer.data` / `.polymerController.data`), `yt-playlist-manager` and `yt-playlist-data-updated` to the watch list. If the quiet value stops working, YouTube's own toast appears: detect it and flag "partly working".
 
 Also from [ticket 16](16-storage-and-sync.md): the diagnostics report may include sync on/off, the sync status and the schema version, with no values.
+
+Also from [ticket 25](25-live-checks.md)'s signed-out validation: the command resolver now lives at `default_kevlar_base.<minified key>.instance.resolveCommand`, located by shape. Put the shape check on the watch list. 1.5.0's `element.resolveCommand` lookup already broke, which is the kind of silent breakage this ticket exists for.

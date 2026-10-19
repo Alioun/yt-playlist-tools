@@ -74,6 +74,7 @@ A spec at `.scratch/rebuild/spec.md` for 2.0 of this extension: a ground-up rebu
 
 ## Not yet specified
 
+- 1.5.0's Add to queue button probably does nothing on today's YouTube: `element.resolveCommand` is gone ([ticket 25](issues/25-live-checks.md)). This doesn't affect 2.0's design, but 1.5.0 was never released anyway.
 - Visual detail past what the prototypes settle: motion, iconography, empty-state and error copy.
 - Edge cases the access research will expose: private, deleted, age-restricted or members-only videos; playlist size limits; supervised accounts that can't edit playlists.
 - Accessibility beyond the component library's defaults.

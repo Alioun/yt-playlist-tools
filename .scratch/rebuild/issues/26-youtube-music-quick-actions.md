@@ -278,3 +278,5 @@ Also from [ticket 08](08-shortcuts.md), adopted:
 - presets skip keys that are already taken.
 
 Also from [ticket 18](18-breakage.md): a key for an action that isn't working stays caught and explains itself on each press, instead of doing nothing. The pointed-at item self-check applies to YouTube Music rows too.
+
+Also from [ticket 25](25-live-checks.md)'s signed-out validation: the cast state is readable at `state.castStatus`, so the original "queue actions are unavailable while casting" stands (ticket 10's fallback isn't needed). `get_queue` returned 200 items of a 500-song radio.

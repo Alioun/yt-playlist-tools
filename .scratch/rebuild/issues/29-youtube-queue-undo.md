@@ -22,3 +22,5 @@ Yes, quietly, through YouTube's own command resolver. This was verified at the r
   - The panel data's location and `ytd-app.resolveCommand` can change.
   - Overlapping edits can get HTTP 409, so confirm and retry.
 - **Side finding:** today's Add to queue button probably makes YouTube show its own "Added to Queue" toast, with Undo, for every add after the first. A quiet add route exists (`ACTION_ADD_VIDEO` with `IAE%3D`).
+
+Confirmed signed out by [ticket 25](25-live-checks.md)'s probe: quiet removal and quiet add work through the global resolver, and the plain routes show YouTube's toasts. Signed-in confirmation is pending.
