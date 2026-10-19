@@ -1,23 +1,24 @@
 <script lang="ts">
-  // What you agreed to (review, withdraw), clear data, and 1.x leftovers.
+  // What you agreed to (review, withdraw), clear data (ticket 16), and 1.x leftovers.
   import ExternalLink from "@lucide/svelte/icons/external-link";
   import * as Dialog from "$lib/components/ui/dialog/index.js";
-  import * as RadioGroup from "$lib/components/ui/radio-group/index.js";
+  import { Checkbox } from "$lib/components/ui/checkbox/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
-  import { features } from "$lib/ia";
-  import { app, acceptConsent } from "$lib/state.svelte";
+  import { app, acceptConsent, clearAllData, go } from "$lib/state.svelte";
   import ConsentDialog from "./ConsentDialog.svelte";
 
   let readOpen = $state(false);
   let agreeOpen = $state(false);
   let clearOpen = $state(false);
-  let scope = $state<"here" | "everywhere">("here");
+  let alsoSynced = $state(false);
 
-  function clearAll() {
-    app.setups = { alioun: null, studio: null };
-    for (const f of features) app.features[f.id].on = false;
-    app.consent = "pending";
+  const showSyncedChoice = $derived(app.features.sync.on || app.sync.joinedBefore);
+
+  function clear() {
+    clearAllData(showSyncedChoice && alsoSynced);
     clearOpen = false;
+    alsoSynced = false;
+    go("first-run");
   }
 </script>
 
@@ -39,7 +40,7 @@
   <div class="flex flex-wrap items-center gap-3 p-4">
     <div class="min-w-0 flex-1">
       <h4 class="text-sm font-medium">Clear all data</h4>
-      <p class="text-muted-foreground text-sm">Account setups, feature choices and saved lists. Your playlists on YouTube aren't touched.</p>
+      <p class="text-muted-foreground text-sm">Start again as if just installed. Your playlists on YouTube aren't touched.</p>
     </div>
     <Button variant="destructive" size="sm" onclick={() => (clearOpen = true)}>Clear all data…</Button>
   </div>
@@ -59,21 +60,19 @@
     <Dialog.Header>
       <Dialog.Title>Clear all data?</Dialog.Title>
       <Dialog.Description>
-        Every account setup, channel filter and feature choice is deleted, and every feature switches off. Your playlists on
-        YouTube aren't touched.
+        Playlist Tools forgets everything it keeps in this browser: features, shortcuts, account setups, channel filters, cached
+        playlists and watch progress. It starts again as if just installed. Your playlists on YouTube aren't touched.
       </Dialog.Description>
     </Dialog.Header>
-    {#if app.features.sync.on}
-      <RadioGroup.Root bind:value={scope}>
-        <label class="flex items-center gap-2 text-sm"><RadioGroup.Item value="here" /> This browser only</label>
-        <label class="flex items-center gap-2 text-sm"
-          ><RadioGroup.Item value="everywhere" /> This browser and every browser that syncs</label
-        >
-      </RadioGroup.Root>
+    {#if showSyncedChoice}
+      <label class="flex items-center gap-2 text-sm">
+        <Checkbox bind:checked={alsoSynced} />
+        Also delete synced settings from all your browsers
+      </label>
     {/if}
     <Dialog.Footer>
       <Button variant="outline" onclick={() => (clearOpen = false)}>Cancel</Button>
-      <Button variant="destructive" onclick={clearAll}>Clear</Button>
+      <Button variant="destructive" onclick={clear}>Clear</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>

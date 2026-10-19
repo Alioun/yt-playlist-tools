@@ -128,7 +128,13 @@
         {
           name: "Settings sync",
           feature: "sync",
-          cells: ["—", "Everywhere › Settings sync.", "—", "Pick.", "—"],
+          cells: [
+            "No row; a sync problem (full, update needed) becomes a banner with Details.",
+            "Everywhere › Settings sync: help text, the join question (Use synced settings / Use this browser's settings), status line, Remove kept filters when full.",
+            "—",
+            "Top of step 1: looks for synced settings for up to 10 s and pre-ticks them for review.",
+            "Per browser; feature switches and account setups sync.",
+          ],
         },
       ],
     },
@@ -139,7 +145,7 @@
           name: "Account and account setups",
           cells: [
             "Header: avatar, name, @handle (placeholder while read). With 2+ setups: a Showing picker that never switches YouTube's account.",
-            "Showing setup for (2+ setups). Accounts: every setup with Remove; Sign in / Switch account link to YouTube.",
+            "Showing setup for (2+ setups). Accounts: every setup with Remove; Sign in / Switch account link to YouTube. A setup that only came by sync reads '3 auto-add playlists · Open YouTube as {Name} to see them'.",
             "—",
             "Step 3 shows the account. Upgrade: Agree claims the 1.x playlists for the owning account.",
             "—",
@@ -227,7 +233,7 @@
           name: "Clear data, old Google access",
           cells: [
             "—",
-            "Privacy & data: Clear all data (confirm, scope), and the 1.x Google access link.",
+            "Privacy & data: Clear all data (resets this browser; 'Also delete synced settings' only if ticked), and the 1.x Google access link.",
             "—",
             "Upgrade note links to removing 1.x's Google access.",
             "—",
@@ -262,7 +268,8 @@
     <p class="max-w-3xl text-sm text-neutral-600">
       Popup = this tab, this account, right now. Settings = everything, for good. The page shows only what a switched-on feature draws.
       Playlist choices (per account) are made in the popup and shown again in Settings; shared behaviour lives in Settings with
-      one-click switches in the popup.
+      one-click switches in the popup. The popup opens on its switch list (ticket 24's budget); each feature's choices and This
+      video's details unfold on demand.
     </p>
   </div>
 

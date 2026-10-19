@@ -12,7 +12,7 @@
   import Link from "@lucide/svelte/icons/link";
   import TriangleAlert from "@lucide/svelte/icons/triangle-alert";
   import { app, playlistsFor, createPlaylist, removeChosenPlaylist, keyForPlaylist } from "$lib/state.svelte";
-  import { WATCH_LATER, type AccountId, type Playlist } from "$lib/data";
+  import { WATCH_LATER, accounts, type AccountId, type Playlist } from "$lib/data";
   import { cn } from "$lib/utils";
 
   let {
@@ -87,6 +87,13 @@
   const yt = $derived(skin === "yt");
 </script>
 
+{#if app.notLoaded[account]}
+  <!-- Ticket 16: a setup that came by sync, for an account whose playlists this browser hasn't loaded yet. -->
+  <p class={cn("rounded-md px-2 py-2 text-sm", yt ? "bg-white/5" : "bg-muted")}>
+    {#if mode === "multi" && selected.length}{selected.length} auto-add playlist{selected.length === 1 ? "" : "s"} ·
+    {/if}Open YouTube as {accounts[account].name} to see them.
+  </p>
+{:else}
 <div class={cn("flex min-w-0 flex-col", yt ? "text-yt-text text-sm" : "text-sm")}>
   <label
     class={cn(
@@ -232,3 +239,4 @@
     {/if}
   {/if}
 </div>
+{/if}

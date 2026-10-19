@@ -15,7 +15,7 @@
   }: {
     id: FeatureId;
     checked?: boolean;
-    tag?: "kept" | "new" | null;
+    tag?: "kept" | "new" | "sync" | null;
     /** Extra detail under the blurb (e.g. what was carried over). */
     children?: Snippet;
   } = $props();
@@ -36,6 +36,7 @@
       <span class="font-medium">{f.name}</span>
       {#if tag === "kept"}<Badge variant="secondary">Kept from 1.4.5</Badge>{/if}
       {#if tag === "new"}<Badge variant="outline">New</Badge>{/if}
+      {#if tag === "sync"}<Badge variant="secondary">From sync</Badge>{/if}
     </label>
     <p class="text-muted-foreground mt-0.5 text-sm">{f.blurb}</p>
     <FootprintTag footprint={f.footprint} class="mt-1.5" />

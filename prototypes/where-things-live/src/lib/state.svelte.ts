@@ -129,6 +129,23 @@ export const app = $state({
   /** Ticket 08: Alt+U undoes the toast on screen. One key, part of both shortcut features, on both sites. */
   undoKey: "Alt+U",
 
+  /**
+   * Ticket 16: settings sync. The switch (features.sync.on) is per browser and never syncs. Feature switches and
+   * account setups sync. `remoteHasSettings` = a synced copy exists and this browser has settings of its own,
+   * so switching on asks once.
+   */
+  sync: {
+    status: "ok" as "joining" | "ok" | "full" | "update-needed",
+    joinedBefore: false,
+    remoteHasSettings: false,
+    askJoin: false,
+    largest: "Music videos' channel filter uses 39 KB",
+  },
+  /** Ticket 16: accounts whose setup arrived by sync but whose playlists aren't cached in this browser yet. */
+  notLoaded: {} as Partial<Record<AccountId, boolean>>,
+  /** Ticket 16: shown once after Clear All Data with "delete synced settings" ticked in another browser. */
+  remoteResetNotice: false,
+
   /** Ticket 18: each feature's status in this tab. Missing = working. */
   health: {} as Partial<Record<FeatureId, { status: Health; gap?: string }>>,
   /** Ticket 18: the in-page "not working" notice shows once per browser session per feature and site. */
@@ -413,6 +430,70 @@ export function keyOwners(): KeyOwner[] {
   return owners;
 }
 
+// ---------- settings sync (ticket 16) ----------
+
+/** Switching sync on: the join (ask once if both sides have settings, else wait up to 10 s for a synced copy). */
+export function startSync() {
+  if (app.sync.remoteHasSettings) {
+    app.sync.askJoin = true;
+    return;
+  }
+  app.features.sync.on = true;
+  app.sync.status = "joining";
+  app.sync.joinedBefore = true;
+  setTimeout(() => {
+    if (app.sync.status === "joining") app.sync.status = "ok";
+  }, 1500);
+}
+
+/** The join question: "Use synced settings" (default), "Use this browser's settings", or Cancel (sync stays off). */
+export function answerJoin(choice: "synced" | "local" | "cancel") {
+  app.sync.askJoin = false;
+  if (choice === "cancel") return;
+  app.sync.remoteHasSettings = false;
+  app.features.sync.on = true;
+  app.sync.joinedBefore = true;
+  app.sync.status = "ok";
+}
+
+/** Ticket 16's status line under the Settings sync switch, or null when it's off. */
+export function syncStatusLine(): { text: string; problem: boolean } | null {
+  if (!app.features.sync.on) return null;
+  const browser = app.env.browser === "firefox" ? "Firefox's" : "Chrome's";
+  switch (app.sync.status) {
+    case "joining":
+      return { text: "Looking for synced settings from your other browsers…", problem: false };
+    case "full":
+      return { text: `Synced settings are full. ${app.sync.largest}: remove some, or turn off sync in this browser to keep more here.`, problem: true };
+    case "update-needed":
+      return { text: "Update Playlist Tools in this browser to keep syncing.", problem: true };
+    default:
+      return { text: `Synced through ${browser} own sync.`, problem: false };
+  }
+}
+
+/** "Remove kept filters": filters of playlists the account no longer auto-adds to (ticket 16). */
+export function removeKeptFilters() {
+  for (const a of Object.keys(app.setups) as AccountId[]) {
+    const s = app.setups[a];
+    if (!s) continue;
+    for (const pid of Object.keys(s.filters)) if (!s.autoAdd.includes(pid)) delete s.filters[pid];
+  }
+  if (app.sync.status === "full") app.sync.status = "ok";
+}
+
+/** Ticket 16: Clear All Data resets this browser; the synced copy only if `alsoSynced` is ticked. */
+export function clearAllData(alsoSynced: boolean) {
+  app.setups = { alioun: null, studio: null };
+  for (const id of Object.keys(app.features) as FeatureId[]) app.features[id].on = false;
+  app.consent = "pending";
+  app.sync.status = "ok";
+  app.sync.joinedBefore = alsoSynced ? false : app.sync.joinedBefore;
+  app.marks = {};
+  app.recent = [];
+  app.notLoaded = {};
+}
+
 // ---------- feature health (ticket 18) ----------
 
 export const healthOf = (id: FeatureId): Health => app.health[id]?.status ?? "working";
@@ -558,6 +639,7 @@ export function switchOn(id: FeatureId) {
   const g = featureById[id].group;
   if (g === "music") requestAccess("music", () => (app.features[id].on = true));
   else if (g === "youtube") requestAccess("youtube", () => (app.features[id].on = true));
+  else if (id === "sync") startSync();
   else app.features[id].on = true;
 }
 
@@ -801,6 +883,11 @@ export type ScenarioId =
   | "no-music-access"
   | "missing-playlist"
   | "youtube-changed"
+  | "sync-join"
+  | "sync-full"
+  | "sync-update"
+  | "synced-account"
+  | "sync-reset-elsewhere"
   | "reading-account"
   | "signed-out"
   | "new-account"
@@ -828,6 +915,11 @@ export const scenarios: { id: ScenarioId; name: string; hint: string; group: str
   { id: "new-account", group: "Account", name: "A different account", hint: "Signed in as a brand account seen for the first time" },
   { id: "private-window", group: "Account", name: "Private window", hint: "Setups are in use but read-only" },
   { id: "stale-tab", group: "Account", name: "Account changed in another tab", hint: "This tab stops saving until it reloads" },
+  { id: "sync-join", group: "Sync", name: "Turning sync on (both have settings)", hint: "Ticket 16: switching Settings sync on asks once: Use synced settings or Use this browser's settings" },
+  { id: "sync-full", group: "Sync", name: "Synced settings are full", hint: "Ticket 16: a change that doesn't fit is refused; Remove kept filters frees room" },
+  { id: "sync-update", group: "Sync", name: "Another browser has a newer version", hint: "Ticket 16: Update {Name} in this browser to keep syncing" },
+  { id: "synced-account", group: "Sync", name: "An account only synced here", hint: "Ticket 16: Alioun Studio's setup came by sync; its playlists aren't loaded in this browser yet" },
+  { id: "sync-reset-elsewhere", group: "Sync", name: "Reset from another browser", hint: "Ticket 16: Clear All Data with 'delete synced settings' ticked in another browser" },
   { id: "consent-pending", group: "Consent and upgrade", name: "Waiting for consent", hint: "First run closed without agreeing" },
   { id: "upgrade-pending", group: "Consent and upgrade", name: "Upgraded from 1.4.5", hint: "The upgrade note hasn't been accepted yet" },
   { id: "unclaimed-1x", group: "Consent and upgrade", name: "1.x setup unclaimed", hint: "Accepted, but signed in as an account that doesn't own the 1.x playlists" },
@@ -866,6 +958,11 @@ export function applyScenario(id: ScenarioId) {
   app.health = {};
   app.noticeShown = {};
   app.toasts = [];
+  app.notLoaded = {};
+  app.remoteResetNotice = false;
+  Object.assign(app.sync, { status: "ok", remoteHasSettings: false, askJoin: false });
+  // Baseline: sync off in this browser; the sync scenarios switch it on.
+  app.features.sync.on = id === "sync-full" || id === "sync-update" || id === "synced-account";
   if (upgradeDemo) {
     // Leaving an upgrade or marks scenario: back to the configured baseline.
     app.setups = { alioun: baselineSetup(), studio: null };
@@ -906,6 +1003,34 @@ export function applyScenario(id: ScenarioId) {
       e.browser = "chrome";
       e.musicAccess = false;
       e.activeSite = "music";
+      break;
+    case "sync-join":
+      app.sync.remoteHasSettings = true;
+      app.sync.joinedBefore = true;
+      break;
+    case "sync-full":
+      app.sync.status = "full";
+      app.sync.joinedBefore = true;
+      break;
+    case "sync-update":
+      app.sync.status = "update-needed";
+      app.sync.joinedBefore = true;
+      break;
+    case "synced-account":
+      upgradeDemo = true;
+      app.sync.joinedBefore = true;
+      app.setups.studio = {
+        autoAdd: ["PLref", "PLrev", "PLx_old"],
+        filters: {},
+        playlistOptions: {},
+        shortcutTargets: {},
+        quickSave: null,
+        musicQuickSave: null,
+      };
+      app.notLoaded = { studio: true };
+      break;
+    case "sync-reset-elsewhere":
+      app.remoteResetNotice = true;
       break;
     case "youtube-changed":
       app.health = {

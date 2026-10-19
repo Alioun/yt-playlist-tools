@@ -16,11 +16,12 @@ export const notes: Record<Surface, { title: string; points: string[] }> = {
     title: "Toolbar popup",
     points: [
       "Header: the account this tab uses (avatar, name, @handle; a placeholder while it's read). With 2+ setups it becomes a 'Showing' picker that never says 'switch'. The gear opens Settings in a tab.",
-      "One banner at a time, most urgent first: consent or upgrade › site access (per site) › account changed in another tab › signed out › private window › no YouTube tab › another account's tab not open › 1.x setup unclaimed › 1.x claim notice.",
+      "One banner at a time, most urgent first: consent or upgrade › reset from another browser › site access (per site) › account changed in another tab › signed out › private window › no YouTube tab › another account's tab not open › a sync problem › Missing or Full playlists › 1.x setup unclaimed › 1.x claim notice.",
       "It works through a serving tab (ticket 10): the active YouTube tab, else the most recent one on the same account. Adds made here report on the picker row, never as a page toast.",
       "Missing or full playlists are marked in the choosers, with Remove.",
       "Recent adds at the bottom is a PROPOSAL (a new capability): where to look after missing a toast.",
       "Two tabs, YouTube and YouTube Music, preselected by the site you're on.",
+      "First view (ticket 24: 40 KB, 60 ms, one storage read): header, one banner, the tabs and the feature switch list with one-line summaries. Each feature's playlists, This video's details and the picker unfold on demand.",
       "YouTube tab: This video (watch page, Shorts, or the miniplayer) › Auto-add (switch, Pause, this account's playlists with their options) › Playlist shortcuts' playlists › Quick-save playlist › the other features as one-line switches › All settings.",
       "This video carries ticket 07's status line ('Auto-adds at 50 % · 34 % watched', 'Added to … · … at 90 %', 'Auto-add paused · Resume', 'Not auto-adding this video · Undo') and 'Don't auto-add this video'. When nothing is tracked it says what's missing.",
       "Each auto-add playlist's pill opens its options: Takes (Videos / Shorts / Both), its own percentage, its channel filter.",
@@ -36,6 +37,7 @@ export const notes: Record<Surface, { title: string; points: string[] }> = {
     title: "Settings page",
     points: [
       "Opens in a tab from the popup's gear or the browser's extension menu. Left nav: YouTube, YouTube Music, Everywhere, Accounts, Appearance, Privacy & data, Diagnostics, About.",
+      "Settings sync (ticket 16): its help text, the join question when both sides have settings, and a status line (looking, full with Remove kept filters, update needed). Clear all data resets this browser; the synced copy only if its checkbox is ticked.",
       "Diagnostics (ticket 18): Check now, the report shown in full before Copy, Known problems / Report a problem, the detailed log. Status lines sit under each feature's switch.",
       "Shortcuts (ticket 08): up to 20, each with label, key recorder and this account's playlist; the picker key and the undo key; a link to set a key for this popup in the browser's own shortcut settings.",
       "Each feature is one row: name, one line, a tag saying whether it changes the page, and its switch. Switching it on unfolds its settings right there.",
@@ -50,6 +52,7 @@ export const notes: Record<Surface, { title: string; points: string[] }> = {
   "first-run": {
     title: "First run",
     points: [
+      "Settings sync sits at the top of step 1 (ticket 16): turning it on looks for synced settings for up to 10 s and pre-ticks what they have, for review before this browser's own consent.",
       "Opens once in a tab on install. Three steps: pick features (all unticked) › Before you start (the store consent, explicit Agree) › Finish setting up.",
       "Each feature says whether it changes the page, so someone can pick only auto-add and shortcuts and keep YouTube untouched.",
       "Nothing touches YouTube until a feature is ticked and the consent is agreed.",
@@ -81,6 +84,7 @@ export const notes: Record<Surface, { title: string; points: string[] }> = {
       "The watch-page button's menu: status line, each playlist's outcome, Don't auto-add this video, Pause auto-add, this channel's filter, Save to….",
       "Right-click: YouTube's ⋮ menu on cards. Links inside cards keep the browser's menu, Shift always does.",
       "Dashed outlines mark what the extension draws. Toggle features on the right to see them come and go.",
+      "Ticket 24: in the real build the thumbnail buttons are one overlay that moves to the hovered card, not a button on every card; the watch-page button is about 5 KB and its menu loads on first click. Placement is the same.",
     ],
   },
   music: {
@@ -88,6 +92,7 @@ export const notes: Record<Surface, { title: string; points: string[] }> = {
     points: [
       "Song rows: hover buttons in the trailing area, left of YouTube Music's own like and ⋮ (ticket 26).",
       "Cards: along the bottom of the hover overlay, beside YouTube Music's play button.",
+      "Ticket 24: rows and cards share one hover overlay in the real build; the picker loads on first use.",
       "Album and playlist headers: always-visible Play next and Add to queue, among YouTube Music's own header buttons.",
       "Queue items: Save, Like and Remove from queue, left of the item's ⋮. The playing song's queue item is how the playing song gets its buttons.",
       "Player bar: only Save, opt-in, beside YouTube Music's like. Nothing depends on the bar; switch to 'new player (no bar)' to check.",

@@ -22,6 +22,7 @@
     breakageStrip,
     brokenFeatures,
     openDiagnostics,
+    syncStatusLine,
   } from "$lib/state.svelte";
   import { cn } from "$lib/utils";
 
@@ -58,6 +59,12 @@
         tone: "warn",
         text: "Waiting for your OK. Nothing runs on YouTube until you agree.",
         actions: [{ label: "Review", run: () => go("first-run"), primary: true }],
+      };
+    if (app.remoteResetNotice)
+      return {
+        tone: "info",
+        text: "Your synced settings were deleted in another browser, so Playlist Tools was reset here.",
+        actions: [{ label: "OK", run: () => (app.remoteResetNotice = false), primary: true }],
       };
     if (tab === "youtube" && !e.hostAccess)
       return {
@@ -130,6 +137,10 @@
           ],
         };
     }
+    // Ticket 16: sync has no row in the first view, so a sync problem reaches the popup as a banner.
+    const sync = syncStatusLine();
+    if (sync?.problem)
+      return { tone: "warn", text: sync.text, actions: [{ label: "Details", run: () => go("settings"), primary: true }] };
     const marked = Object.keys(app.marks).length;
     if (marked)
       return {

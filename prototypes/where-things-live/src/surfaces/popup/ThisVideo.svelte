@@ -1,9 +1,11 @@
 <script lang="ts">
-  // "This video": what auto-add is doing with what's playing in this tab (watch page, Short, or the miniplayer),
-  // each auto-add playlist's outcome, this channel's filter, and Save to….
-  // The watch-page button's menu repeats this card on the page itself.
-  // Ticket 07: one status line per playback, "Don't auto-add this video" (Undo on the status line), no "Add now".
+  // "This video": one status line at the top of the YouTube tab (ticket 24's light first view), with reserved
+  // height so nothing shifts. It comes from the serving tab, not storage, so a skeleton shows briefly first.
+  // "Details ›" unfolds the full card on demand: each auto-add playlist's outcome, this channel's Allow/Deny,
+  // "Don't auto-add this video" and Save to…. The watch-page button's menu repeats that card on the page.
+  // Ticket 07: one status line per playback (Undo on the status line), no "Add now".
   // Ticket 12: saves from the popup report inline; the picker row turning checked is the feedback.
+  import ChevronRight from "@lucide/svelte/icons/chevron-right";
   import ChevronDown from "@lucide/svelte/icons/chevron-down";
   import Clock from "@lucide/svelte/icons/clock";
   import Check from "@lucide/svelte/icons/check";
@@ -15,6 +17,7 @@
   import Pause from "@lucide/svelte/icons/pause";
   import { Button } from "$lib/components/ui/button/index.js";
   import PlaylistPicker from "$lib/components/PlaylistPicker.svelte";
+  import OnDemand from "./OnDemand.svelte";
   import {
     app,
     tabSetup,
@@ -33,6 +36,7 @@
     type VideoStatus,
   } from "$lib/state.svelte";
   import { channels, watchVideo, shorts, thumb } from "$lib/data";
+  import { cn } from "$lib/utils";
   import { sectionLabel } from "./helpers";
 
   const isShort = $derived(app.env.ytPage === "shorts");
@@ -43,7 +47,16 @@
   const setup = $derived(tabSetup());
   const readonly = $derived(setupReadOnly());
   const aa = $derived(autoAddState(channelKey));
+  const label = $derived(isShort ? "This Short" : inMiniplayer ? "Playing in the miniplayer" : "This video");
 
+  /** The line comes from the serving tab: a brief skeleton after the popup opens. */
+  let reading = $state(true);
+  $effect(() => {
+    const t = setTimeout(() => (reading = false), 150);
+    return () => clearTimeout(t);
+  });
+
+  let open = $state(false);
   let saving = $state(false);
 
   const icon: Record<VideoStatus, { c: typeof Check; cls: string }> = {
@@ -86,88 +99,119 @@
   }
 </script>
 
-<section class="bg-muted/50 mb-3 rounded-lg border p-2.5">
-  <div class="mb-2 flex gap-2.5">
-    <div class="h-10 w-16 shrink-0 rounded" style={thumb(video.hue)}></div>
-    <div class="min-w-0">
-      <p class={sectionLabel}>{isShort ? "This Short" : inMiniplayer ? "Playing in the miniplayer" : "This video"}</p>
-      <p class="line-clamp-2 text-sm leading-tight font-medium">{video.title}</p>
-      <p class="text-muted-foreground truncate text-xs">{channel.title}{channel.handle ? ` · ${channel.handle}` : ""}</p>
-    </div>
-  </div>
-
-  {#if running("autoAdd")}
-    {#if aa.kind === "not-tracked"}
-      <p class="text-muted-foreground mb-2 text-xs">{aa.missing}</p>
+<section class="bg-muted/50 mb-3 rounded-lg border px-2.5 py-2">
+  <!-- the status line: reserved height, so nothing shifts when it fills in -->
+  <div class="flex min-h-10 items-center gap-2">
+    {#if reading}
+      <div class="flex-1 space-y-1.5" aria-busy="true" aria-label="Reading this tab">
+        <div class="bg-muted h-2.5 w-16 animate-pulse rounded"></div>
+        <div class="bg-muted h-3 w-48 animate-pulse rounded"></div>
+      </div>
     {:else}
-      <!-- the one status line (ticket 07's states; draft copy) -->
-      <div class="mb-1.5 flex items-center gap-2 text-xs">
-        {#if aa.kind === "paused"}<Pause class="size-3.5 shrink-0 text-amber-600" />{/if}
-        <span class="min-w-0 flex-1 font-medium">{aa.text}</span>
-        {#if aa.action === "Resume"}
-          <Button size="xs" variant="outline" onclick={togglePause}>Resume</Button>
-        {:else if aa.action === "Undo"}
-          <Button size="xs" variant="outline" onclick={toggleSkip}>Undo</Button>
+      <div class="min-w-0 flex-1">
+        <p class={sectionLabel}>{label}</p>
+        {#if !running("autoAdd")}
+          <p class="text-muted-foreground truncate text-xs">Auto-add is off</p>
+        {:else if aa.kind === "not-tracked"}
+          <p class="text-muted-foreground truncate text-xs" title={aa.missing}>{aa.missing}</p>
+        {:else}
+          <p class="flex items-center gap-1 truncate text-xs font-medium" title={aa.text}>
+            {#if aa.kind === "paused"}<Pause class="size-3 shrink-0 text-amber-600" />{/if}
+            <span class="truncate">{aa.text}</span>
+          </p>
         {/if}
       </div>
-      {#if aa.kind === "counting" || aa.kind === "partly"}
-        <div class="bg-border relative mb-2 h-1 rounded-full">
-          <div class="bg-primary h-full rounded-full" style="width: {app.watch.progress}%"></div>
-          {#each goals as g (g)}
-            <span class="bg-foreground/60 absolute -top-0.5 h-2 w-px" style="left: {g}%" title="{g} %"></span>
-          {/each}
-        </div>
+      {#if running("autoAdd") && aa.action === "Resume"}
+        <Button size="xs" variant="outline" onclick={togglePause}>Resume</Button>
+      {:else if running("autoAdd") && aa.action === "Undo"}
+        <Button size="xs" variant="outline" onclick={toggleSkip}>Undo</Button>
       {/if}
-
-      <ul class="mb-2 space-y-1">
-        {#each setup?.autoAdd ?? [] as pid (pid)}
-          {@const s = videoStatus(pid, channelKey)}
-          {@const action = filterAction(pid)}
-          {@const I = icon[s]}
-          <li class="flex items-center gap-2 text-xs">
-            {#if takesThis(pid)}<I.c class="size-3.5 shrink-0 {I.cls}" />{:else}<Minus class="text-muted-foreground size-3.5 shrink-0" />{/if}
-            <span class="min-w-0 flex-1">
-              <span class="block truncate font-medium">{playlistTitle(pid)}</span>
-              {#if !takesThis(pid)}
-                <span class="text-muted-foreground block truncate">Takes {optionsFor(pid).takes === "shorts" ? "Shorts" : "videos"} only</span>
-              {:else}
-                <span class="block truncate {s === 'failed' ? 'text-destructive' : 'text-muted-foreground'}"
-                  >{s === "will-add" ? `At ${goalFor(pid)} %` : videoStatusText[s]}</span
-                >
-              {/if}
-            </span>
-            <Button
-              size="xs"
-              variant="ghost"
-              disabled={readonly}
-              title="Channel filter on {playlistTitle(pid)} for {channel.title}"
-              onclick={action.run}>{action.label}</Button
-            >
-          </li>
-        {/each}
-      </ul>
-      <p class="text-muted-foreground mb-2 text-[11px]">Allow and Deny change each playlist's channel filter for {channel.title}.</p>
-      {#if !app.watch.skipped && (aa.kind === "counting" || aa.kind === "partly")}
-        <Button size="xs" variant="outline" class="mb-2" onclick={toggleSkip}>Don't auto-add this video</Button>
-      {/if}
+      <button
+        type="button"
+        class="text-muted-foreground hover:bg-muted hover:text-foreground flex shrink-0 items-center rounded px-1 py-0.5 text-xs"
+        aria-expanded={open}
+        onclick={() => (open = !open)}
+        >Details <ChevronRight class={cn("size-3.5 transition-transform", open && "rotate-90")} /></button
+      >
     {/if}
-  {/if}
+  </div>
 
-  <Button size="xs" variant="outline" class="w-full justify-between" onclick={() => (saving = !saving)} aria-expanded={saving}>
-    Save to… <ChevronDown class="size-3" />
-  </Button>
-  {#if saving}
-    <div class="bg-background mt-2 rounded-md border p-2">
-      <!-- The row turning checked is the feedback (ticket 12: no page toast for adds from the popup). -->
-      <PlaylistPicker
-        account={app.env.account}
-        mode="action"
-        membership={app.watch.inPlaylists}
-        maxHeight="12rem"
-        onpick={(id) => {
-          if (!app.watch.inPlaylists.includes(id)) app.watch.inPlaylists.push(id);
-        }}
-      />
+  {#if open && !reading}
+    <div class="mt-2 border-t pt-2">
+      <OnDemand lines={4}>
+        <div class="mb-2 flex gap-2.5">
+          <div class="h-9 w-14 shrink-0 rounded" style={thumb(video.hue)}></div>
+          <div class="min-w-0">
+            <p class="line-clamp-2 text-sm leading-tight font-medium">{video.title}</p>
+            <p class="text-muted-foreground truncate text-xs">{channel.title}{channel.handle ? ` · ${channel.handle}` : ""}</p>
+          </div>
+        </div>
+
+        {#if running("autoAdd") && aa.kind !== "not-tracked"}
+          {#if aa.kind === "counting" || aa.kind === "partly"}
+            <div class="bg-border relative mb-2 h-1 rounded-full" title="{app.watch.progress} % watched">
+              <div class="bg-primary h-full rounded-full" style="width: {app.watch.progress}%"></div>
+              {#each goals as g (g)}
+                <span class="bg-foreground/60 absolute -top-0.5 h-2 w-px" style="left: {g}%" title="{g} %"></span>
+              {/each}
+            </div>
+          {/if}
+
+          <ul class="mb-2 space-y-1">
+            {#each setup?.autoAdd ?? [] as pid (pid)}
+              {@const s = videoStatus(pid, channelKey)}
+              {@const action = filterAction(pid)}
+              {@const I = icon[s]}
+              <li class="flex items-center gap-2 text-xs">
+                {#if takesThis(pid)}<I.c class="size-3.5 shrink-0 {I.cls}" />{:else}<Minus class="text-muted-foreground size-3.5 shrink-0" />{/if}
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate font-medium">{playlistTitle(pid)}</span>
+                  {#if !takesThis(pid)}
+                    <span class="text-muted-foreground block truncate"
+                      >Takes {optionsFor(pid).takes === "shorts" ? "Shorts" : "videos"} only</span
+                    >
+                  {:else}
+                    <span class="block truncate {s === 'failed' ? 'text-destructive' : 'text-muted-foreground'}"
+                      >{s === "will-add" ? `At ${goalFor(pid)} %` : videoStatusText[s]}</span
+                    >
+                  {/if}
+                </span>
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  disabled={readonly}
+                  title="Channel filter on {playlistTitle(pid)} for {channel.title}"
+                  onclick={action.run}>{action.label}</Button
+                >
+              </li>
+            {/each}
+          </ul>
+          <p class="text-muted-foreground mb-2 text-[11px]">Allow and Deny change each playlist's channel filter for {channel.title}.</p>
+          {#if !app.watch.skipped && (aa.kind === "counting" || aa.kind === "partly")}
+            <Button size="xs" variant="outline" class="mb-2" onclick={toggleSkip}>Don't auto-add this video</Button>
+          {/if}
+        {/if}
+
+        <Button size="xs" variant="outline" class="w-full justify-between" onclick={() => (saving = !saving)} aria-expanded={saving}>
+          Save to… <ChevronDown class="size-3" />
+        </Button>
+        {#if saving}
+          <div class="bg-background mt-2 rounded-md border p-2">
+            <OnDemand lines={4}>
+              <!-- The row turning checked is the feedback (ticket 12: no page toast for adds from the popup). -->
+              <PlaylistPicker
+                account={app.env.account}
+                mode="action"
+                membership={app.watch.inPlaylists}
+                maxHeight="12rem"
+                onpick={(id) => {
+                  if (!app.watch.inPlaylists.includes(id)) app.watch.inPlaylists.push(id);
+                }}
+              />
+            </OnDemand>
+          </div>
+        {/if}
+      </OnDemand>
     </div>
   {/if}
 </section>

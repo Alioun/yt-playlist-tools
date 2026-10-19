@@ -14,6 +14,7 @@
     togglePause,
     healthLine,
     healthOf,
+    syncStatusLine,
   } from "$lib/state.svelte";
   import { Button } from "$lib/components/ui/button/index.js";
   import { cn } from "$lib/utils";
@@ -26,6 +27,7 @@
   const blocked = $derived(on ? blockReason(id) : null);
   /** Ticket 18: partly working (amber) or not working (error). */
   const health = $derived(healthLine(id));
+  const syncLine = $derived(id === "sync" ? syncStatusLine() : null);
 
   let consentOpen = $state(false);
 
@@ -66,6 +68,17 @@
           )}
         >
           {health}
+        </p>
+      {/if}
+      {#if id === "sync" && syncLine}
+        <!-- Ticket 16: sync's status line under its switch. -->
+        <p
+          class={cn(
+            "mt-1 text-xs",
+            syncLine.problem ? "font-medium text-amber-700 dark:text-amber-400" : "text-muted-foreground",
+          )}
+        >
+          {syncLine.text}
         </p>
       {/if}
       {#if id === "autoAdd" && on && app.autoAddPaused}

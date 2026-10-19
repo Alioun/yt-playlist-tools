@@ -6,7 +6,9 @@
   import ExternalLink from "@lucide/svelte/icons/external-link";
   import LogIn from "@lucide/svelte/icons/log-in";
   import KeyRound from "@lucide/svelte/icons/key-round";
+  import RefreshCw from "@lucide/svelte/icons/refresh-cw";
   import { Button } from "$lib/components/ui/button/index.js";
+  import { Switch } from "$lib/components/ui/switch/index.js";
   import BrowserFrame from "$lib/components/BrowserFrame.svelte";
   import PlaylistPicker from "$lib/components/PlaylistPicker.svelte";
   import AccountChip from "$lib/components/AccountChip.svelte";
@@ -41,8 +43,40 @@
 
   const musicChosen = $derived(chosenIds.some((id) => featureById[id].group === "music"));
 
+  // ---- Settings sync at the top of step 1 (ticket 16) ----
+  // First run waits up to 10 s for a synced copy; the review happens before consent, which stays this browser's own.
+  /** The fake synced copy's switched-on features. */
+  const syncedOn: FeatureId[] = ["autoAdd", "shortcuts", "queueButton", "musicQuickActions"];
+  let syncPhase = $state<"off" | "looking" | "found">("off");
+  let ownTicks: Record<FeatureId, boolean> = allOff();
+  let fromSync = $state<FeatureId[]>([]);
+  let syncTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function toggleSync(on: boolean) {
+    clearTimeout(syncTimer);
+    if (on) {
+      ownTicks = { ...chosen };
+      chosen.sync = true;
+      syncPhase = "looking";
+      syncTimer = setTimeout(() => {
+        syncPhase = "found";
+        for (const id of syncedOn) chosen[id] = true;
+        fromSync = [...syncedOn];
+      }, 1500);
+    } else {
+      chosen = { ...ownTicks, sync: false };
+      fromSync = [];
+      syncPhase = "off";
+    }
+  }
+
   function agree() {
     for (const f of features) app.features[f.id].on = chosen[f.id];
+    if (chosen.sync) {
+      // No join question: a fresh install has nothing of its own (ticket 16).
+      app.features.sync.on = true;
+      app.sync.joinedBefore = true;
+    }
     acceptConsent();
     declined = false;
     step = 3;
@@ -58,7 +92,11 @@
   function restart() {
     step = 1;
     declined = false;
+    clearTimeout(syncTimer);
     chosen = allOff();
+    ownTicks = allOff();
+    fromSync = [];
+    syncPhase = "off";
   }
 
   // ---- step 3: YouTube status, first that applies ----
@@ -84,7 +122,9 @@
     } else ensureSetup(acc).quickSave = v;
   }
 
+  // Settings sync has its own card at the top of step 1, so it's left out of the groups.
   const groups: Group[] = ["youtube", "music", "everywhere"];
+  const groupFeatures = (g: Group) => byGroup(g).filter((f) => f.id !== "sync");
   const selectClass =
     "border-input bg-background h-8 min-w-48 rounded-md border px-2 text-sm disabled:opacity-50 dark:bg-input/30";
   const url = $derived(`${env.browser === "firefox" ? "moz-extension" : "chrome-extension"}://…/welcome.html`);
@@ -126,7 +166,30 @@
             <h1 class="text-2xl font-semibold">What should Playlist Tools do?</h1>
             <p class="text-muted-foreground mt-1 text-sm">Tick what you want. Everything else stays off.</p>
 
-            {#each groups as g (g)}
+            <!-- Settings sync (ticket 16) -->
+            <section class="bg-card mt-6 rounded-xl border p-4">
+              <div class="flex items-start gap-3">
+                <RefreshCw class="text-primary mt-0.5 size-5 shrink-0" />
+                <div class="min-w-0 flex-1">
+                  <label for="first-run-sync" class="cursor-pointer font-medium">Settings sync</label>
+                  <p class="text-muted-foreground text-sm">
+                    Use Playlist Tools in another browser already? Turn on Settings sync to bring your settings here.
+                  </p>
+                </div>
+                <Switch id="first-run-sync" bind:checked={() => chosen.sync, (v) => toggleSync(v)} />
+              </div>
+              {#if syncPhase === "looking"}
+                <p class="text-muted-foreground mt-3 flex items-center gap-2 text-sm">
+                  <RefreshCw class="size-3.5 animate-spin" /> Looking for your synced settings… (up to 10 s)
+                </p>
+              {:else if syncPhase === "found"}
+                <p class="mt-3 flex items-center gap-2 text-sm">
+                  <Check class="size-4 text-emerald-600" /> Found your settings from another browser. Review the features below.
+                </p>
+              {/if}
+            </section>
+
+            {#each groups.filter((g) => groupFeatures(g).length) as g (g)}
               <section class="mt-6">
                 <h2 class="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">On {groupLabel[g]}</h2>
                 {#if g === "youtube"}
@@ -137,8 +200,8 @@
                   <p class="text-muted-foreground mb-2 text-xs">Chrome will ask for access to music.youtube.com when you agree.</p>
                 {/if}
                 <div class="grid gap-2">
-                  {#each byGroup(g) as f (f.id)}
-                    <FeatureChoice id={f.id} bind:checked={chosen[f.id]} />
+                  {#each groupFeatures(g) as f (f.id)}
+                    <FeatureChoice id={f.id} bind:checked={chosen[f.id]} tag={fromSync.includes(f.id) ? "sync" : null} />
                   {/each}
                 </div>
               </section>
@@ -288,6 +351,10 @@
                     {:else if id === "musicQuickActions"}
                       <p class="mt-0.5 flex items-center gap-1.5 text-sm">
                         <Check class="size-4 text-emerald-600" /> Ready: Play next and Add to queue buttons. Change them in Settings.
+                      </p>
+                    {:else if id === "sync"}
+                      <p class="mt-0.5 flex items-center gap-1.5 text-sm">
+                        <Check class="size-4 text-emerald-600" /> On in this browser. Feature switches and account setups sync.
                       </p>
                     {:else}
                       <p class="mt-0.5 flex items-center gap-1.5 text-sm">

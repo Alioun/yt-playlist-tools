@@ -18,8 +18,10 @@
     accountName,
     optionsFor,
     togglePause,
+    shortcutTarget,
     go,
   } from "$lib/state.svelte";
+  import { WATCH_LATER } from "$lib/data";
   import { optionsPill, sectionLabel, selectClass } from "./helpers";
 
   const account = $derived(popupAccount());
@@ -40,12 +42,19 @@
   const autoAddSummary = $derived(
     app.autoAddPaused
       ? "Paused until you resume or restart the browser"
-      : `${setup?.autoAdd.length ?? 0} playlist${setup?.autoAdd.length === 1 ? "" : "s"} · adds at ${app.features.autoAdd.threshold} % unless a playlist says otherwise`,
+      : account && app.notLoaded[account]
+        ? // Ticket 16: a setup that came by sync, for an account this browser hasn't loaded playlists for yet.
+          `${setup?.autoAdd.length ?? 0} auto-add playlist${setup?.autoAdd.length === 1 ? "" : "s"} · Open YouTube as ${accountName(account)} to see them`
+        : `${setup?.autoAdd.length ?? 0} playlist${setup?.autoAdd.length === 1 ? "" : "s"} · adds at ${app.features.autoAdd.threshold} %`,
   );
+  /** From storage, for the first view: "Alt+W → Watch later, Alt+K → All-time favourites". */
   const shortcutSummary = $derived(
     app.features.shortcuts.list
-      .map((s) => s.key)
-      .filter(Boolean)
+      .filter((s) => s.key)
+      .map((s) => {
+        const t = account ? shortcutTarget(account, s) : null;
+        return `${s.key} → ${t === WATCH_LATER ? "Watch later" : t ? playlistTitle(t, account!) : "no playlist yet"}`;
+      })
       .join(", ") || "No keys yet",
   );
 </script>

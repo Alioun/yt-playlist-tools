@@ -17,6 +17,7 @@
   import YouTubeSurface from "./surfaces/YouTubeSurface.svelte";
   import MusicSurface from "./surfaces/MusicSurface.svelte";
   import PermissionPrompt from "$lib/components/PermissionPrompt.svelte";
+  import SyncJoinDialog from "$lib/components/SyncJoinDialog.svelte";
 
   const params = new URLSearchParams(location.search);
   const s = params.get("surface") as Surface | null;
@@ -134,6 +135,7 @@
 </div>
 
 <PermissionPrompt />
+<SyncJoinDialog />
 
 <Sheet.Root bind:open={showState}>
   <Sheet.Content side="right" class="w-[32rem] sm:max-w-[32rem]">

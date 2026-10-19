@@ -23,6 +23,7 @@
     ensureSetup,
     setupReadOnly,
     requestAccess,
+    removeKeptFilters,
   } from "$lib/state.svelte";
   import { cn } from "$lib/utils";
   import FeatureCard from "./settings/FeatureCard.svelte";
@@ -273,9 +274,21 @@
               <h2 class="text-lg font-semibold">Everywhere</h2>
               <FeatureCard id="sync">
                 <p class="text-muted-foreground text-sm">
-                  Synced: feature switches, keys, labels, theme and account setups. Caches stay on each device. (What syncs exactly:
-                  ticket 16.)
+                  Uses {app.env.browser === "firefox" ? "Firefox's" : "Chrome's"} own sync. Your settings reach your other browsers
+                  only if you're signed in to the browser and it syncs extensions{app.env.browser === "firefox"
+                    ? " (Add-ons in Firefox Sync)"
+                    : ""}.
                 </p>
+                <p class="text-muted-foreground text-sm">
+                  Synced: feature switches, keys, labels and account setups. This switch, site access and caches stay in each
+                  browser.
+                </p>
+                {#if app.sync.status === "full"}
+                  <div class="flex flex-wrap items-center gap-3 border-t pt-3">
+                    <Button size="sm" variant="outline" onclick={removeKeptFilters}>Remove kept filters</Button>
+                    <span class="text-muted-foreground text-xs">Filters of playlists you no longer auto-add to</span>
+                  </div>
+                {/if}
               </FeatureCard>
               <!-- Ticket 08: the manifest declares the popup command with no key; the browser's own settings bind it. -->
               <div class="bg-card rounded-xl border p-4 text-sm">

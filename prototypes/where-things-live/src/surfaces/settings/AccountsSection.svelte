@@ -4,7 +4,15 @@
   import * as Dialog from "$lib/components/ui/dialog/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
   import AccountChip from "$lib/components/AccountChip.svelte";
-  import { app, accountsWithSetup, removeSetup, discardLegacy, playlistTitle, accountName } from "$lib/state.svelte";
+  import {
+    app,
+    accountsWithSetup,
+    removeSetup,
+    discardLegacy,
+    playlistTitle,
+    accountName,
+    shortcutTarget,
+  } from "$lib/state.svelte";
   import { accounts, type AccountId } from "$lib/data";
 
   let confirming = $state<AccountId | null>(null);
@@ -15,7 +23,9 @@
   function summary(a: AccountId): string {
     const s = app.setups[a]!;
     const n = s.autoAdd.length;
-    const m = Object.keys(s.shortcutTargets).length;
+    // Ticket 16: a setup that came by sync, whose playlists aren't loaded in this browser yet.
+    if (app.notLoaded[a]) return `${n} auto-add playlist${n === 1 ? "" : "s"} · Open YouTube as ${accountName(a)} to see them`;
+    const m = app.features.shortcuts.list.filter((sc) => shortcutTarget(a, sc)).length;
     return `${n} auto-add playlist${n === 1 ? "" : "s"} · ${m} shortcut playlist${m === 1 ? "" : "s"} · quick-save: ${playlistTitle(s.quickSave, a)}`;
   }
 </script>
