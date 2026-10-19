@@ -20,3 +20,21 @@ Assemble `.scratch/rebuild/spec.md` from every resolved ticket. It covers:
 Any gap found goes back on the map as a ticket.
 
 Also from [ticket 07](07-watched.md): tickets 11 and 12 say "watch threshold"; standardise on "required percentage" (glossary).
+
+Also from [ticket 17](17-modules.md):
+- **Mapping:** sections 1–8 of its Answer are the architecture, 9 is testing, 10 is the build.
+- **Suggested order for build tickets (for `/to-tickets` after the spec):**
+  1. scaffold, tooling and guard tests;
+  2. shared kernel and contracts;
+  3. gateway with recorded fixtures for youtube.com;
+  4. store and migrations;
+  5. registrar, tabs, site core and kit;
+  6. features, one at a time;
+  7. popup, settings and onboarding;
+  8. YouTube Music;
+  9. real-browser layer and watch;
+  10. live-check build.
+- **For the spec's open items:**
+  - accessibility testing (axe-core in a test layer?);
+  - dev workflow with runtime-registered scripts (reloading open tabs after rebuilds);
+  - a compile cache for the Svelte `bun test` plugin as the suite grows.

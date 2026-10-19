@@ -50,6 +50,10 @@ _Avoid_: Cloud copy, server copy
 Removing everything the extension keeps in this browser, so it starts as if just installed. The synced copy is deleted only if the user asks.
 _Avoid_: Reset, factory reset
 
+**Job**:
+One thing the extension asks YouTube or YouTube Music to do or tell it, such as adding a video to a playlist or reading which playlists hold it. A job is done in one tab, as that tab's account.
+_Avoid_: Request (one job may send several requests, or none), call, task
+
 ### Accounts
 
 **Account**:
@@ -63,6 +67,10 @@ _Avoid_: Profile, per-account settings, account config
 **Unclaimed setup**:
 An account setup that doesn't know its account yet, such as the one carried over from 1.x. It's never used until an account that owns its playlists claims it.
 _Avoid_: Legacy setup, orphaned setup
+
+**Account in view**:
+The account whose playlists and setup the popup or settings are showing. It changes only what the extension shows, never which account YouTube uses.
+_Avoid_: Current account, selected account, active account
 
 ### Adding videos
 

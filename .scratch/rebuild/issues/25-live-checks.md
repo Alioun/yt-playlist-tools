@@ -58,3 +58,5 @@ These ran in headless Chrome for Testing 155 against live YouTube, signed out: 1
 - **The made-for-kids flag:** `PLAYBACK_MODE_PAUSED_ONLY` on a made-for-kids test video, `ALLOW` on an ordinary one.
 
 **Status:** waiting for the user's signed-in reports from Chrome and Firefox.
+
+Also from [ticket 17](17-modules.md): half of P2 is answered from browser source. Both browsers clear script registrations on every update, and the start-up reconcile restores them. The probe becomes 2.0's `src/livecheck/`, and YouTube's resolver-by-shape lives in the live adapter's `command()`.
