@@ -259,3 +259,12 @@ These aren't decided here:
 - what syncs: [16](16-storage-and-sync.md). The split between account and shared settings is ticket 11's, folded in above.
 
 Also from [ticket 10](10-youtube-access.md), and accepted by the main session: if no cast signal can be read (live check M5), queue actions stay available while casting, and the toast says it changed this tab's queue. This softens "unavailable while casting". If M3 shows likes trigger YouTube Music's own toast, there's no quiet route for likes.
+
+## Amendment after ticket 28 (main session, 2026-10-19)
+
+[Ticket 28](28-queue-reorder.md) found that a queued item can be moved through YouTube Music's own reorder path, so this improvement is adopted. It improves an existing capability, so no check-in was needed. It supersedes "Queue items don't get Play next or Add to queue":
+- On a queue item, **Play next** moves it to right after the playing song, and **Add to queue** moves it to the end. No second copy is made. The toast says "Moved …", and Undo moves it back.
+- **Remove from queue's Undo** puts the item back at its old position the same way.
+- Autoplay suggestions can't be moved, so they keep no Play next / Add to queue.
+- **Every move:** check the item before firing, and confirm its new position afterwards; if it didn't move, show the failure toast.
+- **After inserts:** our insert also turns off the responsive-radio flag, as YouTube Music does.

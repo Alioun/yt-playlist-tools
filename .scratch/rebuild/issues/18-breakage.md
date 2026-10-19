@@ -45,3 +45,5 @@ Also from [ticket 10](10-youtube-access.md):
   - the cast state.
 
   Extend `bundle-check.mjs` to cover them.
+
+Also from [ticket 28](28-queue-reorder.md): add the queue panel's `ytmusic-reorderable-list-drop` event and its private contents to the watch list. The move is fire-and-forget, so confirm the item's position afterwards.

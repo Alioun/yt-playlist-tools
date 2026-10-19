@@ -22,3 +22,5 @@ Also from [ticket 26](26-youtube-music-quick-actions.md):
 Also from [ticket 10](10-youtube-access.md): in-page icons and fonts are inline, since there are no web-accessible resources.
 
 Also from [ticket 12](12-adding.md): toasts wait while their tab is hidden or in fullscreen. A picker untick sets the undo-skip.
+
+Also from [ticket 28](28-queue-reorder.md) (adopted into ticket 26): queue items get Play next / Add to queue as moves. Prototype the "Moved" feedback and Undo.
