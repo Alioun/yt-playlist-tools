@@ -22,3 +22,5 @@ Also from [ticket 05](05-ui-stacks.md): YouTube's `--yt-sys-color-baseline--*` t
 Also from [ticket 04](04-bun-test.md): `bun test` can't reach real browsers, real YouTube or the built output (CSS, `injectScript`). Live and in-browser checks need a different tool.
 
 Also include: YouTube Music's internals ([ticket 21](21-youtube-music-internals.md)) belong on the same breakage watch list.
+
+Also from [ticket 21](21-youtube-music-internals.md): the queue path depends on `ytmusic-app.networkManager`, `/music/get_queue` and `app.queue` internals. YouTube Music's new-player A/B test (since 2026-09-29) already broke several YouTube Music tools.

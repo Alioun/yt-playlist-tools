@@ -26,3 +26,5 @@ Also from [ticket 03](03-store-policy.md):
 Also include:
 - the YouTube Music tab: its on/off switch, the choice of inline buttons, and its shortcuts;
 - the feature switches from the modularity principle (map Notes).
+
+Also from [ticket 21](21-youtube-music-internals.md): a side panel won't open in Chrome's installed-app windows, so YouTube Music app users need everything reachable from the popup.

@@ -25,3 +25,9 @@ Decide the behaviour:
 - **Keys:** default keys, and clashes with YouTube Music's own shortcuts (from ticket 21).
 - **Placement:** where exactly the buttons sit on rows, cards and the player bar.
 - **Failures:** what happens when an action fails.
+
+Also from [ticket 21](21-youtube-music-internals.md):
+- **Player bar:** the Q16 "player bar" placement is at risk. YouTube Music is A/B testing a player UI without one, so decide where the now-playing actions live when the bar is missing.
+- **Feedback:** YouTube Music's own toast is reachable through `handleAddToToastAction`. Decide whether to use it.
+- **Membership:** the Save-to-playlist picker's membership comes from youtube.com's answer, since YouTube Music's client never reads it.
+- **Keys:** every Alt combination is free on YouTube Music's side.

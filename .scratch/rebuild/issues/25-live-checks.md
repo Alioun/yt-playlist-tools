@@ -18,3 +18,5 @@ Several facts the access decision ([ticket 10](10-youtube-access.md)) depends on
 - **Prompt text:** the exact Firefox prompt text for the final permission set.
 
 Record what was run and the results.
+
+Also: run `docs/research/youtube-music/live-check.js` (branch `research/youtube-music`) signed in, in Chrome, Firefox and the installed YouTube Music app windows.

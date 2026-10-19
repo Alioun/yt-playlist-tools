@@ -36,3 +36,5 @@ Also from the YouTube Music charting (Q16–Q19):
 - every YouTube Music quick action can have a shortcut, acting on the hovered row, else the playing song;
 - playlist shortcuts work on YouTube Music too;
 - avoid clashes with YouTube Music's own keys ([ticket 21](21-youtube-music-internals.md)).
+
+Also from [ticket 21](21-youtube-music-internals.md): YouTube Music binds Space, `;`, j, k, l, h, s, r, =, -, m, q, Esc, f, +, _, ?, /, g-sequences and a few Shift and Ctrl+Shift combinations. Every Alt combination is free on its side. In Chrome and Edge app windows, keyboard commands reach the installed YouTube Music app.
