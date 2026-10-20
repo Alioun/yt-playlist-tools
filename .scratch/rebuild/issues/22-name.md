@@ -1,7 +1,7 @@
 # What is 2.0 called?
 
 Type: grilling
-Status: open (round 3)
+Status: open (round 4)
 Labels: wayfinder:grilling
 Part of: [Rebuild (2.0)](../map.md)
 
@@ -15,7 +15,79 @@ Decide:
 - the attribution line;
 - how the icon and store images avoid imitating YouTube's look and feel.
 
+## Round 4 (2026-10-20)
+
+The user rejected round 3: "those are all awful, pigeon should be the direction". So the name is led by the bird. Short, warm names that sound like a product win over puns. The PigeonPod overlap is weighed, not treated as an automatic kill.
+
+**PROVISIONAL, pending the user's choice. This round supersedes round 3 below.**
+
+Full screening: [`docs/research/naming-round-4.md`](../../../docs/research/naming-round-4.md). All checks ran on 2026-10-20.
+- **What ran:** the three extension stores, GitHub, USPTO, WIPO Madrid, the App Store, Google Play, the web and RDAP.
+- **What didn't:** EUIPO joined TMview behind the same firewall this round, so EU marks weren't checked today. UKIPO, DPMA, IP Australia, Singapore and WIPO's Global Brand Database stay unchecked.
+
+- **Screened 64 pigeon-led names.** 11 finalists pass everything else under round 2's strict rules.
+- **The overlaps, weighed:**
+  - **PigeonPod** is the one that counts. It's a commercial YouTube-to-podcast service (self-hosted, plus paid plans at $6.90–$10.90 a month) with 1,196 stars, releasing monthly. It isn't a browser extension and holds no mark, so the risk is confusion, not law.
+  - **`playlist-pigeon`** has 0 stars and no commits since 2022-05-29. It was never launched.
+  - **Pigeon Music** is an Android Latin-radio app (5K+ downloads).
+  - **PigeonCast** turned up too: a casting app (100K+ downloads) with a registered US mark PIGEONCAST in class 9. It weighs most against "Pigeon" plus a media word.
+- **Playlist Pigeon, re-checked today:** clean on every store, both app stores, GitHub, USPTO, Madrid and the web; `playlistpigeon.com` and `.app` are free. Overlaps: PigeonPod medium, `playlist-pigeon` low, Pigeon Music low. **Honest rating: low to medium, workable.** Legal risk is low; the confusion risk comes from PigeonPod. The Cabinet-bird icon keeps clear of PigeonPod's striped-wing pigeon.
+- **Bare "Pigeon for YouTube™" collides anyway:**
+  - Chrome already has a "Pigeon" listing (97 users);
+  - live PIGEON software marks exist in the US;
+  - Mo Willems' THE PIGEON! is a live mark that includes videos.
+
+### Finalists
+
+Overlap columns are PigeonPod / `playlist-pigeon` / Pigeon Music. PigeonCast is low for every name with "Pigeon" in it, except Pigeon Queue (medium). Other checks (2026-10-20): no listing, app, same-name repo or mark for any finalist.
+
+| # | Store name | Chars | Tone | Overlaps | Room for queue, YouTube Music, gathering | `.com` / `.app` |
+|---|---|---|---|---|---|---|
+| 1 | Plump Pigeon for YouTube™ | 25 | Warm, cute | low / none / low | Yes | free / free |
+| 2 | Pigeon Courier for YouTube™ | 27 | Dependable | medium / none / low | Yes | taken / free |
+| 3 | Playlist Pigeon for YouTube™ | 28 | Friendly, descriptive | medium / low / low | Leads with playlists | free / free |
+| 4 | Pigeon Desk for YouTube™ | 24 | Tidy | medium / none / low | Yes | taken / free |
+| 5 | Pigeon Tray for YouTube™ | 24 | Tidy, office-like | medium / none / low | Yes | free / free |
+| 6 | Clever Pigeon for YouTube™ | 26 | Warm, bright | low / none / low | Yes | taken / free |
+| 7 | Good Pigeon for YouTube™ | 24 | Warm, pet-like | low / none / low | Yes | taken / free |
+| 8 | Pigeon Runner for YouTube™ | 26 | Brisk | medium / none / low | Yes | free / free |
+| 9 | Pigeon Queue for YouTube™ | 25 | Functional | medium / none / low | Leads with the queue | taken / free |
+| 10 | Pigeonling for YouTube™ | 23 | Soft, coined | medium / none / low | Yes | free / free |
+| 11 | Playlist Pidge for YouTube™ | 27 | Casual | low / none / none | Leads with playlists | free / free |
+
+**"Playlist" in the summary:** every name except the two "Playlist …" ones relies on it. The drafted summaries in spec 08 §9.1 already lead with "Watch Later or any playlist".
+
+**The Cabinet-bird icon** ([ticket 34](34-icon.md)) fits best with:
+- **Plump Pigeon:** the plump, boxy body is the cabinet.
+- **Pigeon Desk:** a pigeonhole desk is the cabinet.
+- **Pigeon Courier, Pigeon Tray and Playlist Pigeon:** good fits.
+
+### Top three
+
+These are recommendations; the choice is yours.
+
+1. **Plump Pigeon for YouTube™.**
+   - Short, warm, and it sounds like a product.
+   - "Plump" leads, so the PigeonPod overlap is the lowest of any "Pigeon" name.
+   - Both domains are free, it names no single job, and it matches the Cabinet bird exactly.
+2. **Pigeon Courier for YouTube™.**
+   - Plain and dependable, and it carries every job.
+   - Its cost is a medium PigeonPod overlap.
+3. **Playlist Pigeon for YouTube™.**
+   - Your original: it says the job and keeps the search word.
+   - Its costs: it leads with playlists, and its PigeonPod overlap is medium.
+
+**Close behind:** Clever Pigeon, Good Pigeon and Pigeon Desk.
+
+### What's left
+
+- **The user picks a name.**
+- **Before launch,** a professional search should cover the EU and the registers that didn't run.
+- **Round 1's "After the user confirms" steps apply** with the chosen name. The icon is ticket 34's Cabinet bird.
+
 ## Round 3 (2026-10-20)
+
+> **Superseded by round 4 above (2026-10-20).** Kept for the record. The user rejected the pigeonhole-based names.
 
 The user, after round 2: "I liked the pigeon idea more, but the pigeonhole grid seems cute, what about general pigeonhole thing so were not limited by playlists so to say not to be pigeonholed". So the name builds on "pigeonhole", isn't tied to "Playlist", and winks at "not to be pigeonholed". The icon is a hand-drawn pigeonhole grid.
 
