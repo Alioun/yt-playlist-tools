@@ -2,7 +2,7 @@
 
 While the chapters were being written, their authors flagged conflicts between tickets, and details no ticket pinned down. The main session settled each one here on 2026-10-19, under the user's delegation ("you have the shared understanding"). Every resolution follows the map's principles. The chapters apply them, and each one is cited by its R-number.
 
-Items that are genuinely the user's call are **not** settled here; they stay in the spec's [Open items](../spec.md#open-items). The user's own answers of 2026-10-20 are recorded as [R84–R99](#the-users-decisions-of-2026-10-20-r84r99), the running-cost rules as [R100–R117](#running-costs-r100r117), and the GatherTube fold as [R120–R139](#gathertube-r120r139). R118 and R119 are unused.
+Items that are genuinely the user's call are **not** settled here; they stay in the spec's [Open items](../spec.md#open-items). The user's own answers of 2026-10-20 are recorded as [R84–R99](#the-users-decisions-of-2026-10-20-r84r99), the running-cost rules as [R100–R117](#running-costs-r100r117), the GatherTube fold as [R120–R139](#gathertube-r120r139), and the icon as [R140](#the-icon-perch-r140). R118 and R119 are unused.
 
 ## Sites and features
 
@@ -527,3 +527,25 @@ Settled 2026-10-20 for [ticket 31](../issues/31-gathertube.md). The user decided
   - **Running cost:** off, or on with no trigger, nothing runs and nothing is registered; trigger 1 adds at most one `tabs.query` a minute to wakes that happen anyway; triggers 2 and 3 add no wake beyond `tab.hello`; a gather of 50 tabs takes at most 20 ms of background time; one session write per gather.
   - Q-PERF-51 lists the browser start. Q-PERF-58's rule 5 names YouTube's player, which is what opens `watch_videos`; automatic gathering never uses it. The release check's session opens video tabs in the background with every automatic option on.
   - **Tests:** layers 1 and 3 for the rules and triggers over the fake tabs, and layer 4 for tabs opened in the background, restored tabs, closing in one call, and the 20 ms.
+
+## The icon: Perch (R140)
+
+The user picked **Perch** on 2026-10-20 from [ticket 34](../issues/34-icon.md)'s five concepts. The name is still pending ([ticket 22](../issues/22-name.md)), so the mark has no wordmark yet.
+
+- **R140 — The mark and the toolbar icon are Perch** (UI-BRAND-03, UI-BRAND-04, UI-BRAND-06, UI-BRAND-08, UI-BRAND-09, the token table; ARC-MAN-01's `icons` and `action`, 06 §6.10 and `wxt.config.ts`; 08 §9.1, REL-STORE-08, REL-STORE-11, REL-STORE-40; PAR-CAP-46).
+  - **What it is:** a grey pigeon perched on top of a small cabinet of pigeonholes, not in one. The bird has a grey head and body, a folded wing, a tail over the ledge's edge, and the teal-to-violet gradient on its neck. It stands on a teal ledge over a light-violet cabinet of 3×2 pigeonholes holding cards. At 16 px it's a separate drawing with one row of three pigeonholes and a solid teal band over a violet one for the neck.
+  - **Why it replaces the provisional pigeon:** ticket 15's slate side-view pigeon, with a wing of light lines, was close to PigeonPod's logo, a slate pigeon with a striped white wing. Perch's bird has no patterned wing, and the cabinet carries the pigeonhole idea.
+  - **Files:** `assets/icon/` holds the sources, the exports, a README that maps each file to the build and the stores, and the sheet (`sheet.html`, with its light and dark renders). The sources are:
+    - `icon.svg`, the master, used for 48 px and up;
+    - `icon-16.svg` and `icon-32.svg`, drawn on their own pixel grids;
+    - `icon-mono.svg`, the monochrome mark for pages.
+  - **Built from those files, not generated:**
+    - `@wxt-dev/auto-icons` leaves the build, because it scales one image over the hand-tuned 16 and 32 px.
+    - The manifests name the PNGs per browser. Chrome's 128 is `store-128.png`, with 16 px of transparent padding; Firefox's is full bleed, plus a 96. `action.default_icon` is 16, 24 and 32 on both.
+    - The PNGs sit in `brand/` in the public directory. `wxt.config.ts` sets `publicDir: "src/public"`, which §6.10's `src/public/_locales/` already assumed: WXT's default is the project root's `public/`, found while placing the icons.
+  - **One drawing for light and dark:**
+    - The silhouette's colours sit near 3:1 on Chrome's and Firefox's light and dark toolbars. The cabinet is a light tint of brand violet, `#8E74E2`, because brand violet falls to 2.3:1 on Chrome's dark toolbar.
+    - There's no dark variant. Chrome can't switch, Firefox's `context-fill` is reserved for Mozilla's extensions, and a Firefox-only `theme_icons` pair would gain little.
+  - **The gradient** stays in UI-BRAND-06's first place, the mark's neck, from 32 px up. The rest of the mark is flat.
+  - **Badges** don't change (UI-IA-08). The pigeon's head sits top-left, clear of Chrome's bottom-right badge and Firefox's top-right one.
+  - **Store icons:** Chrome takes `store-128.png` from the manifest. AMO's listing icon is a separate Developer Hub upload, `amo-128.png`, which AMO keeps at 32, 64 and 128.

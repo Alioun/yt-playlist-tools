@@ -1,10 +1,10 @@
 # What does the icon look like?
 
 Type: prototype
-Status: open
+Status: resolved
 Labels: wayfinder:prototype
 Part of: [Rebuild (2.0)](../map.md)
-Blocked by: [ticket 22](22-name.md)
+Related: [ticket 22](22-name.md) (the wordmark waits on the name)
 
 ## Question
 
@@ -17,7 +17,34 @@ Blocked by: [ticket 22](22-name.md)
 
 ## Answer
 
-**PROVISIONAL: the user picks.** Five concepts on the pigeonhole theme, after the user's direction (2026-10-20): "general pigeonhole thing so we're not limited by playlists, so to say not to be pigeonholed". Every shape is hand-placed SVG geometry. Nothing is generated, traced or copied. Prototype: [`prototypes/icon/`](https://github.com/Alioun/yt-playlist-tools/tree/prototype/icon/prototypes/icon) on branch `prototype/icon`:
+**Settled by the user (2026-10-20): Perch,** a grey pigeon perched on top of a small cabinet of pigeonholes, not in one ([R140](../spec/resolutions.md#the-icon-perch-r140)). The user picked it from the five concepts below, and it was then polished into the final icon. The name is still pending ([ticket 22](22-name.md)), so the wordmark waits.
+
+- **Final files, in [`assets/icon/`](../../../assets/icon/README.md):**
+  - **`icon.svg`:** the master, used for 48 px and up.
+  - **`icon-16.svg` and `icon-32.svg`:** separate drawings on their own pixel grids.
+  - **`icon-mono.svg`:** the monochrome mark in `currentColor` for pages (UI-BRAND-08).
+  - **PNG exports** at 16, 19, 24, 32, 38, 48, 64, 96 and 128 px.
+  - **`store-128.png`:** Chrome, 96 px art with 16 px of transparent padding.
+  - **`amo-128.png`:** AMO's listing upload.
+  - **`README.md`:** which file goes where in WXT's public directory, the manifests and the stores, plus every colour.
+  - **`sheet.html`,** with `sheet-light.png` and `sheet-dark.png`; and `tools/build.mjs`, which re-exports everything.
+- **What changed from the concept:**
+  - **The bird:** one continuous body path, plumper, with its chest up and a rounded back. A proper folded wing ends in darker primaries, with no stripes, keeping it clear of PigeonPod's logo. The tail droops over the ledge's edge instead of pointing up, and the eye has a highlight.
+  - **The cabinet:** 3×2 short, wide pigeonholes, like a real sorting rack, from 32 px up; one row of three at 16 px. Flat light violet `#8E74E2` replaces the concept's darker violet gradient, so the cabinet holds about 3:1 on dark toolbars too (brand violet is 2.3:1 on Chrome's). The ledge has a darker underside.
+  - **16 px:** redrawn to keep the concept's clear silhouette, with a dip at the nape and a distinct tail. The head was pulled left, so it ends at x = 6, clear of Firefox's top-right badge.
+  - **The gradient:** only on the neck, from 32 px up (UI-BRAND-06). Everything else is flat.
+- **Light and dark:**
+  - One drawing serves both, with no dark variant. Chrome can't switch, and `context-fill` is Mozilla-only.
+  - A Firefox `theme_icons` pair would gain little over these ratios, and would make the two browsers differ.
+- **Spec:**
+  - 05 UI-BRAND-03, UI-BRAND-04, UI-BRAND-06 and UI-BRAND-08, a new UI-BRAND-09, and the token table;
+  - 06's manifest table, folder layout and `wxt.config.ts` (`publicDir: "src/public"`, no `@wxt-dev/auto-icons`);
+  - 08's store fields, REL-STORE-08 and REL-STORE-11, a new REL-STORE-40 for the store icons, and the checklist;
+  - 09's PAR-CAP-46.
+
+### The concepts (2026-10-20, before the pick)
+
+Five concepts on the pigeonhole theme, after the user's direction (2026-10-20): "general pigeonhole thing so we're not limited by playlists, so to say not to be pigeonholed". Every shape is hand-placed SVG geometry. Nothing is generated, traced or copied. Prototype: [`prototypes/icon/`](https://github.com/Alioun/yt-playlist-tools/tree/prototype/icon/prototypes/icon) on branch `prototype/icon`:
 - `sheet.html` is self-contained. It shows every size, light and dark toolbars, the three badges, ×8 zooms, and captions.
 - `renders/` holds `sheet-light.png`, `sheet-dark.png` and each concept at 16, 32, 48 and 128 px.
 
@@ -77,10 +104,10 @@ Blocked by: [ticket 22](22-name.md)
   - **Palette:** ticket 15's teal and violet. The 16 px files use solid fills only; the gradient appears only on the neck from 32 px up.
 - **Finding for ticket 15:** its provisional mark (a slate side-view pigeon whose wing is light list lines) is close to PigeonPod's logo. Whichever concept is picked should replace it. UI-BRAND-03's description of the mark changes with it.
 
-### What's left
+### What was left before the pick
 
-- **The user picks a concept,** or asks for a mix.
-- **Final polish of the pick:**
+- **The user picks a concept,** or asks for a mix. *Done: Perch.*
+- **Final polish of the pick:** *done; see above.*
   - optical tweaks and a hand-checked 48 px;
   - a 24 px file if wanted;
   - PNG exports into `src/assets/brand/`;

@@ -2,7 +2,7 @@
 
 The destination of the [Rebuild (2.0) map](map.md): a ground-up rebuild of this extension that keeps every capability, adds YouTube Music quick actions, works through the user's own YouTube session, puts UI/UX first, and lets the user switch off any part of it. Every decision below was made in the map's tickets; this spec assembles them so `/to-tickets` and implementers can work from it without reading the tickets.
 
-Status: **assembled 2026-10-19; the user's decisions folded in on 2026-10-20** ([R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)), **with the running-cost budgets** ([R100–R117](spec/resolutions.md#running-costs-r100r117)) **and the GatherTube port** ([R120–R139](spec/resolutions.md#gathertube-r120r139)). Items marked PROVISIONAL wait on the inputs listed in [Open items](#open-items). Each one names the ticket and check that settles it.
+Status: **assembled 2026-10-19; the user's decisions folded in on 2026-10-20** ([R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)), **with the running-cost budgets** ([R100–R117](spec/resolutions.md#running-costs-r100r117)) **and the GatherTube port** ([R120–R139](spec/resolutions.md#gathertube-r120r139)), **and the icon** ([R140](spec/resolutions.md#the-icon-perch-r140)). Items marked PROVISIONAL wait on the inputs listed in [Open items](#open-items). Each one names the ticket and check that settles it.
 
 ## How to read this spec
 
@@ -147,7 +147,7 @@ Each is tracked in [`for-the-user.md`](for-the-user.md). The user answered every
 
 | Item | Where | Until answered, the spec assumes |
 |---|---|---|
-| **The name, mark and palette:** a second naming round is running, to list options that don't collide | [ticket 22](issues/22-name.md) (round 2), [ticket 34](issues/34-icon.md) | "Playlist Pigeon for YouTube™", used throughout as a placeholder; the swap is mechanical |
+| **The name:** another naming round is running, to list options that don't collide. The mark and palette are settled: the icon is Perch ([ticket 34](issues/34-icon.md), [R140](spec/resolutions.md#the-icon-perch-r140)) | [ticket 22](issues/22-name.md) | "Playlist Pigeon for YouTube™", used throughout as a placeholder; the swap is mechanical |
 | Approving the privacy policy (published under the user's name) | REL-STORE-17 | The drafted text, with GitHub issues as the only contact and no support e-mail (R89) |
 
 ### Actions only the user can take

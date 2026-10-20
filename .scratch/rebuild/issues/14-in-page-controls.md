@@ -258,7 +258,7 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
 - **The mark (ticket 12's open question):** a small monochrome mark starts toasts the user didn't ask for, which are auto-add's and the "not working" notice. Answers to the user's own click or key carry none, and failures show the error glyph instead.
   - *Runner-up (variant B):* no mark anywhere, the purest YouTube look. It lost because an unexpected "Auto-added …" or notice needs a source the user can find in order to switch it off.
   - *Second runner-up:* a mark on every toast. It lost because it clutters the common case, where the user just clicked.
-  - The mark is a placeholder pigeon until ticket 22 settles the name and icon.
+  - The mark is a placeholder pigeon until ticket 22 settles the name and icon. *Settled on 2026-10-20: the mark is Perch, and in pages its monochrome version, `assets/icon/icon-mono.svg` ([ticket 34](34-icon.md), R140).*
 - **Fullscreen (ticket 12's choice):**
   - **Toasts answering the user's own click or key show** over the video, at bottom 88 px and left 24 px, above YouTube's control bar.
   - **Toasts the user didn't ask for wait** until fullscreen ends: auto-add confirmations and failures, and notices.
