@@ -1,0 +1,19 @@
+browser: Chrome/155.0.8059.84
+reliable   | en:100                 | Rick Astley - Never Gonna Give You Up (Official Video) - YouTube
+unreliable | en:100                 | Me at the zoo - YouTube
+unreliable | en:100                 | How to cook rice - YouTube
+unreliable | es:100                 | La casa de papel: tráiler oficial - YouTube
+unreliable | de:100                 | Wie funktioniert ein Motor? - YouTube
+unreliable | fr:100                 | Comment faire une crêpe - YouTube
+unreliable | tr:100                 | Türkçe rap şarkıları 2025 - YouTube
+unreliable | vi:100                 | Cách nấu phở bò - YouTube
+unreliable | ru:100                 | Как приготовить борщ - YouTube
+unreliable | ar:100                 | كيف تتعلم البرمجة - YouTube
+unreliable | ja:100                 | (3) 日本の料理 - YouTube
+unreliable | ko:100                 | 강남스타일 - YouTube
+unreliable | hi:100                 | हिंदी गाने - YouTube
+unreliable | lb:100                 | Kurzgesagt erklärt das Universum - YouTube
+unreliable | pt:100                 | Bom dia, como vai? - YouTube
+unreliable | cy:46,ko:41,no:12      | PSY - GANGNAM STYLE(강남스타일) M/V - YouTube
+unreliable | it:100                 | Despacito - YouTube
+unreliable | da:100                 | Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film - YouTube

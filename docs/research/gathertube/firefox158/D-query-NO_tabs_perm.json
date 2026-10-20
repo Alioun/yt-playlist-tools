@@ -1,0 +1,126 @@
+{
+ "currentWindow": [
+  {
+   "id": 1,
+   "url": "<absent>",
+   "title": "<absent>",
+   "favIconUrl": "<absent>",
+   "lastAccessed": 1792459069913,
+   "index": 0,
+   "discarded": false,
+   "status": "complete",
+   "active": false,
+   "pendingUrl": "<absent>"
+  },
+  {
+   "id": 2,
+   "url": "<absent>",
+   "title": "<absent>",
+   "favIconUrl": "<absent>",
+   "lastAccessed": 1792459073043,
+   "index": 1,
+   "discarded": false,
+   "status": "complete",
+   "active": false,
+   "pendingUrl": "<absent>"
+  },
+  {
+   "id": 3,
+   "url": "moz-extension://44444444-4444-4444-8444-444444444444/d.html",
+   "title": "D page",
+   "favIconUrl": "<absent>",
+   "lastAccessed": 1792459076113,
+   "index": 2,
+   "discarded": false,
+   "status": "complete",
+   "active": false,
+   "pendingUrl": "<absent>"
+  },
+  {
+   "id": 4,
+   "url": "<absent>",
+   "title": "<absent>",
+   "favIconUrl": "<absent>",
+   "lastAccessed": 1792459079212,
+   "index": 3,
+   "discarded": false,
+   "status": "complete",
+   "active": false,
+   "pendingUrl": "<absent>"
+  },
+  {
+   "id": 5,
+   "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+   "title": "Me at the zoo - YouTube",
+   "favIconUrl": "data:image/x-icon;base64,AAABAAIAAAAAAAEAIADhAQAAJgAAAAAAAAABACAA5QIAAAcCAACJUE5HDQoaCgAAA",
+   "lastAccessed": 1792459080669,
+   "index": 4,
+   "discarded": false,
+   "status": "complete",
+   "active": false,
+   "pendingUrl": "<absent>"
+  },
+  {
+   "id": 6,
+   "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+   "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube",
+   "favIconUrl": "data:image/x-icon;base64,AAABAAIAAAAAAAEAIADhAQAAJgAAAAAAAAABACAA5QIAAAcCAACJUE5HDQoaCgAAA",
+   "lastAccessed": 1792459082001,
+   "index": 5,
+   "discarded": false,
+   "status": "complete",
+   "active": false,
+   "pendingUrl": "<absent>"
+  },
+  {
+   "id": 7,
+   "url": "https://www.youtube.com/",
+   "title": "YouTube",
+   "favIconUrl": "data:image/x-icon;base64,AAABAAIAAAAAAAEAIADhAQAAJgAAAAAAAAABACAA5QIAAAcCAACJUE5HDQoaCgAAA",
+   "lastAccessed": 1792459083177,
+   "index": 6,
+   "discarded": false,
+   "status": "complete",
+   "active": false,
+   "pendingUrl": "<absent>"
+  },
+  {
+   "id": 8,
+   "url": "<absent>",
+   "title": "<absent>",
+   "favIconUrl": "<absent>",
+   "lastAccessed": 1792459091525,
+   "index": 7,
+   "discarded": false,
+   "status": "complete",
+   "active": true,
+   "pendingUrl": "<absent>"
+  }
+ ],
+ "urlWatch": [
+  {
+   "id": 5,
+   "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+   "title": "Me at the zoo - YouTube",
+   "favIconUrl": "data:image/x-icon;base64,AAABAAIAAAAAAAEAIADhAQAAJgAAAAAAAAABACAA5QIAAAcCAACJUE5HDQoaCgAAA",
+   "lastAccessed": 1792459080669,
+   "index": 4,
+   "discarded": false,
+   "status": "complete",
+   "active": false,
+   "pendingUrl": "<absent>"
+  },
+  {
+   "id": 6,
+   "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+   "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube",
+   "favIconUrl": "data:image/x-icon;base64,AAABAAIAAAAAAAEAIADhAQAAJgAAAAAAAAABACAA5QIAAAcCAACJUE5HDQoaCgAAA",
+   "lastAccessed": 1792459082001,
+   "index": 5,
+   "discarded": false,
+   "status": "complete",
+   "active": false,
+   "pendingUrl": "<absent>"
+  }
+ ]
+}

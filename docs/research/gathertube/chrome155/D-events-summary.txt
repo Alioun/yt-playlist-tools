@@ -1,0 +1,167 @@
+== tabsprobe-noperm: 53 events
+  created ytWatch1 url=(absent) pendingUrl=https://www.youtube.com/watch?v=jNQXAC9IVRw title=(absent) lastAccessed=1792459042494.079
+  updated ytWatch1             changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=jNQXAC9IVRw"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=youtube.com/watch?v=jNQXAC9IVR
+  updated ytWatch1             changeInfo={"title":"Me at the zoo - YouTube"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=Me at the zoo - YouTube
+  created ytWatch2 url=(absent) pendingUrl=https://www.youtube.com/watch?v=dQw4w9WgXcQ title=(absent) lastAccessed=1792459044010.214
+  updated ytWatch2             changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=youtube.com/watch?v=dQw4w9WgXc
+  updated ytWatch2             changeInfo={"title":"Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=Rick Astley - Never Gonna Give
+  updated ytWatch1             changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=YouTube
+  updated ytWatch1             changeInfo={"title":"Me at the zoo - YouTube"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=Me at the zoo - YouTube
+  updated ytWatch1             changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=Me at the zoo - YouTube
+  updated ytWatch1             changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=Me at the zoo - YouTube
+  created ytHome url=(absent) pendingUrl=https://www.youtube.com/ title=(absent) lastAccessed=1792459045527.637
+  updated ytHome               changeInfo={"status":"loading","url":"https://www.youtube.com/"} tab.url=https://www.youtube.com/ tab.title=youtube.com
+  updated ytHome               changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/ tab.title=YouTube
+  updated ytWatch2             changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=YouTube
+  updated ytWatch2             changeInfo={"title":"Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=Rick Astley - Never Gonna Give
+  updated ytWatch2             changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=Rick Astley - Never Gonna Give
+  updated ytWatch2             changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=Rick Astley - Never Gonna Give
+  updated ytHome               changeInfo={"status":"complete"} tab.url=https://www.youtube.com/ tab.title=YouTube
+  updated ytHome               changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/ tab.title=YouTube
+  created example url=(absent) pendingUrl=(absent) title=(absent) lastAccessed=1792459047042.07
+  updated example              changeInfo={"status":"loading"} tab.url=(absent) tab.title=(absent)
+  updated example              changeInfo={"status":"complete"} tab.url=(absent) tab.title=(absent)
+  created youtuBe url=(absent) pendingUrl=(absent) title=(absent) lastAccessed=1792459048559
+  updated youtuBe              changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be tab.title=youtube.com/watch?v=9bZkp7q19f
+  created ytBgNeverActive url=(absent) pendingUrl=https://www.youtube.com/watch?v=kJQP7kiw5Fk title=(absent) lastAccessed=1792459048981.678
+  created exampleBgNeverActive url=(absent) pendingUrl=(absent) title=(absent) lastAccessed=1792459048993.799
+  updated ytBgNeverActive      changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=kJQP7kiw5Fk"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=youtube.com/watch?v=kJQP7kiw5F
+  updated youtuBe              changeInfo={"title":"PSY - GANGNAM STYLE(강남스타일) M/V - YouTube"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated exampleBgNeverActive changeInfo={"status":"loading"} tab.url=(absent) tab.title=(absent)
+  updated exampleBgNeverActive changeInfo={"status":"complete"} tab.url=(absent) tab.title=(absent)
+  updated ytBgNeverActive      changeInfo={"title":"Luis Fonsi - Despacito ft. Daddy Yankee - YouTube"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=Luis Fonsi - Despacito ft. Dad
+  updated youtuBe              changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated youtuBe              changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated youtuBe              changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=9bZkp7q19f0"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0 tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated youtuBe              changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0 tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated youtuBe              changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0 tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated youtuBe              changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0 tab.title=YouTube
+  updated youtuBe              changeInfo={"title":"PSY - GANGNAM STYLE(강남스타일) M/V - YouTube"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0 tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated ytBgNeverActive      changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=Luis Fonsi - Despacito ft. Dad
+  updated ytBgNeverActive      changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=Luis Fonsi - Despacito ft. Dad
+  updated ytBgNeverActive      changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=YouTube
+  updated ytBgNeverActive      changeInfo={"title":"Luis Fonsi - Despacito ft. Daddy Yankee - YouTube"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=Luis Fonsi - Despacito ft. Dad
+  created tab2064726552 url=(absent) pendingUrl=https://www.youtube.com/watch?v=M7lc1UVf-VE title=(absent) lastAccessed=1792459061046.959
+  updated tab2064726552        changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=M7lc1UVf-VE"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=youtube.com/watch?v=M7lc1UVf-V
+  updated tab2064726552        changeInfo={"title":"YouTube Developers Live: Embedded Web Player Customization - YouTube"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=YouTube Developers Live: Embed
+  updated tab2064726552        changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=YouTube Developers Live: Embed
+  updated tab2064726552        changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=YouTube Developers Live: Embed
+  updated tab2064726552        changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=YouTube
+  updated tab2064726552        changeInfo={"title":"YouTube Developers Live: Embedded Web Player Customization - YouTube"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=YouTube Developers Live: Embed
+  removed ytWatch2 {"isWindowClosing":false,"windowId":2064726542}
+  removed example {"isWindowClosing":false,"windowId":2064726542}
+== tabsprobe-noperm-plus-youtu.be: 53 events
+  created ytWatch1 url=(absent) pendingUrl=https://www.youtube.com/watch?v=jNQXAC9IVRw title=(absent) lastAccessed=1792459042494.079
+  updated ytWatch1             changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=jNQXAC9IVRw"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=youtube.com/watch?v=jNQXAC9IVR
+  updated ytWatch1             changeInfo={"title":"Me at the zoo - YouTube"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=Me at the zoo - YouTube
+  created ytWatch2 url=(absent) pendingUrl=https://www.youtube.com/watch?v=dQw4w9WgXcQ title=(absent) lastAccessed=1792459044010.214
+  updated ytWatch2             changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=youtube.com/watch?v=dQw4w9WgXc
+  updated ytWatch2             changeInfo={"title":"Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=Rick Astley - Never Gonna Give
+  updated ytWatch1             changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=YouTube
+  updated ytWatch1             changeInfo={"title":"Me at the zoo - YouTube"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=Me at the zoo - YouTube
+  updated ytWatch1             changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=Me at the zoo - YouTube
+  updated ytWatch1             changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=Me at the zoo - YouTube
+  created ytHome url=(absent) pendingUrl=https://www.youtube.com/ title=(absent) lastAccessed=1792459045527.637
+  updated ytHome               changeInfo={"status":"loading","url":"https://www.youtube.com/"} tab.url=https://www.youtube.com/ tab.title=youtube.com
+  updated ytHome               changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/ tab.title=YouTube
+  updated ytWatch2             changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=YouTube
+  updated ytWatch2             changeInfo={"title":"Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=Rick Astley - Never Gonna Give
+  updated ytWatch2             changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=Rick Astley - Never Gonna Give
+  updated ytWatch2             changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=Rick Astley - Never Gonna Give
+  updated ytHome               changeInfo={"status":"complete"} tab.url=https://www.youtube.com/ tab.title=YouTube
+  updated ytHome               changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/ tab.title=YouTube
+  created example url=(absent) pendingUrl=(absent) title=(absent) lastAccessed=1792459047042.07
+  updated example              changeInfo={"status":"loading"} tab.url=(absent) tab.title=(absent)
+  updated example              changeInfo={"status":"complete"} tab.url=(absent) tab.title=(absent)
+  created youtuBe url=(absent) pendingUrl=https://youtu.be/9bZkp7q19f0 title=(absent) lastAccessed=1792459048559
+  updated youtuBe              changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be tab.title=youtube.com/watch?v=9bZkp7q19f
+  created ytBgNeverActive url=(absent) pendingUrl=https://www.youtube.com/watch?v=kJQP7kiw5Fk title=(absent) lastAccessed=1792459048981.678
+  created exampleBgNeverActive url=(absent) pendingUrl=(absent) title=(absent) lastAccessed=1792459048993.799
+  updated ytBgNeverActive      changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=kJQP7kiw5Fk"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=youtube.com/watch?v=kJQP7kiw5F
+  updated youtuBe              changeInfo={"title":"PSY - GANGNAM STYLE(강남스타일) M/V - YouTube"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated exampleBgNeverActive changeInfo={"status":"loading"} tab.url=(absent) tab.title=(absent)
+  updated exampleBgNeverActive changeInfo={"status":"complete"} tab.url=(absent) tab.title=(absent)
+  updated ytBgNeverActive      changeInfo={"title":"Luis Fonsi - Despacito ft. Daddy Yankee - YouTube"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=Luis Fonsi - Despacito ft. Dad
+  updated youtuBe              changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated youtuBe              changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated youtuBe              changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=9bZkp7q19f0"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0 tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated youtuBe              changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0 tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated youtuBe              changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0 tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated youtuBe              changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0 tab.title=YouTube
+  updated youtuBe              changeInfo={"title":"PSY - GANGNAM STYLE(강남스타일) M/V - YouTube"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0 tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated ytBgNeverActive      changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=Luis Fonsi - Despacito ft. Dad
+  updated ytBgNeverActive      changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=Luis Fonsi - Despacito ft. Dad
+  updated ytBgNeverActive      changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=YouTube
+  updated ytBgNeverActive      changeInfo={"title":"Luis Fonsi - Despacito ft. Daddy Yankee - YouTube"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=Luis Fonsi - Despacito ft. Dad
+  created tab2064726552 url=(absent) pendingUrl=https://www.youtube.com/watch?v=M7lc1UVf-VE title=(absent) lastAccessed=1792459061046.959
+  updated tab2064726552        changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=M7lc1UVf-VE"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=youtube.com/watch?v=M7lc1UVf-V
+  updated tab2064726552        changeInfo={"title":"YouTube Developers Live: Embedded Web Player Customization - YouTube"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=YouTube Developers Live: Embed
+  updated tab2064726552        changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=YouTube Developers Live: Embed
+  updated tab2064726552        changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=YouTube Developers Live: Embed
+  updated tab2064726552        changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=YouTube
+  updated tab2064726552        changeInfo={"title":"YouTube Developers Live: Embedded Web Player Customization - YouTube"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=YouTube Developers Live: Embed
+  removed ytWatch2 {"isWindowClosing":false,"windowId":2064726542}
+  removed example {"isWindowClosing":false,"windowId":2064726542}
+== tabsprobe-tabs: 53 events
+  created ytWatch1 url= pendingUrl=https://www.youtube.com/watch?v=jNQXAC9IVRw title= lastAccessed=1792459042494.079
+  updated ytWatch1             changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=jNQXAC9IVRw"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=youtube.com/watch?v=jNQXAC9IVR
+  updated ytWatch1             changeInfo={"title":"Me at the zoo - YouTube"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=Me at the zoo - YouTube
+  created ytWatch2 url= pendingUrl=https://www.youtube.com/watch?v=dQw4w9WgXcQ title= lastAccessed=1792459044010.214
+  updated ytWatch2             changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=youtube.com/watch?v=dQw4w9WgXc
+  updated ytWatch2             changeInfo={"title":"Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=Rick Astley - Never Gonna Give
+  updated ytWatch1             changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=YouTube
+  updated ytWatch1             changeInfo={"title":"Me at the zoo - YouTube"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=Me at the zoo - YouTube
+  updated ytWatch1             changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=Me at the zoo - YouTube
+  updated ytWatch1             changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=jNQXAC9IVRw tab.title=Me at the zoo - YouTube
+  created ytHome url= pendingUrl=https://www.youtube.com/ title= lastAccessed=1792459045527.637
+  updated ytHome               changeInfo={"status":"loading","url":"https://www.youtube.com/"} tab.url=https://www.youtube.com/ tab.title=youtube.com
+  updated ytHome               changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/ tab.title=YouTube
+  updated ytWatch2             changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=YouTube
+  updated ytWatch2             changeInfo={"title":"Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=Rick Astley - Never Gonna Give
+  updated ytWatch2             changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=Rick Astley - Never Gonna Give
+  updated ytWatch2             changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=dQw4w9WgXcQ tab.title=Rick Astley - Never Gonna Give
+  updated ytHome               changeInfo={"status":"complete"} tab.url=https://www.youtube.com/ tab.title=YouTube
+  updated ytHome               changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/ tab.title=YouTube
+  created example url= pendingUrl=https://example.com/ title= lastAccessed=1792459047042.07
+  updated example              changeInfo={"status":"loading","url":"https://example.com/"} tab.url=https://example.com/ tab.title=example.com
+  updated example              changeInfo={"title":"Example Domain"} tab.url=https://example.com/ tab.title=Example Domain
+  updated example              changeInfo={"status":"complete"} tab.url=https://example.com/ tab.title=Example Domain
+  created youtuBe url= pendingUrl=https://youtu.be/9bZkp7q19f0 title= lastAccessed=1792459048559
+  updated youtuBe              changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be tab.title=youtube.com/watch?v=9bZkp7q19f
+  created ytBgNeverActive url= pendingUrl=https://www.youtube.com/watch?v=kJQP7kiw5Fk title= lastAccessed=1792459048981.678
+  created exampleBgNeverActive url= pendingUrl=https://example.com/?bg title= lastAccessed=1792459048993.799
+  updated ytBgNeverActive      changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=kJQP7kiw5Fk"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=youtube.com/watch?v=kJQP7kiw5F
+  updated youtuBe              changeInfo={"title":"PSY - GANGNAM STYLE(강남스타일) M/V - YouTube"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated exampleBgNeverActive changeInfo={"status":"loading","url":"https://example.com/?bg"} tab.url=https://example.com/?bg tab.title=example.com/?bg
+  updated exampleBgNeverActive changeInfo={"title":"Example Domain"} tab.url=https://example.com/?bg tab.title=Example Domain
+  updated exampleBgNeverActive changeInfo={"status":"complete"} tab.url=https://example.com/?bg tab.title=Example Domain
+  updated ytBgNeverActive      changeInfo={"title":"Luis Fonsi - Despacito ft. Daddy Yankee - YouTube"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=Luis Fonsi - Despacito ft. Dad
+  updated youtuBe              changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated youtuBe              changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated youtuBe              changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=9bZkp7q19f0"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0 tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated youtuBe              changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0 tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated youtuBe              changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0 tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated youtuBe              changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0 tab.title=YouTube
+  updated youtuBe              changeInfo={"title":"PSY - GANGNAM STYLE(강남스타일) M/V - YouTube"} tab.url=https://www.youtube.com/watch?v=9bZkp7q19f0 tab.title=PSY - GANGNAM STYLE(강남스타일) M/V
+  updated ytBgNeverActive      changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=Luis Fonsi - Despacito ft. Dad
+  updated ytBgNeverActive      changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=Luis Fonsi - Despacito ft. Dad
+  updated ytBgNeverActive      changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=YouTube
+  updated ytBgNeverActive      changeInfo={"title":"Luis Fonsi - Despacito ft. Daddy Yankee - YouTube"} tab.url=https://www.youtube.com/watch?v=kJQP7kiw5Fk tab.title=Luis Fonsi - Despacito ft. Dad
+  created tab2064726552 url= pendingUrl=https://www.youtube.com/watch?v=M7lc1UVf-VE title= lastAccessed=1792459061046.959
+  updated tab2064726552        changeInfo={"status":"loading","url":"https://www.youtube.com/watch?v=M7lc1UVf-VE"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=youtube.com/watch?v=M7lc1UVf-V
+  updated tab2064726552        changeInfo={"title":"YouTube Developers Live: Embedded Web Player Customization - YouTube"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=YouTube Developers Live: Embed
+  updated tab2064726552        changeInfo={"status":"complete"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=YouTube Developers Live: Embed
+  updated tab2064726552        changeInfo={"favIconUrl":"https://www.youtube.com/s/desktop/2fe123f7/img/favicon.ico"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=YouTube Developers Live: Embed
+  updated tab2064726552        changeInfo={"title":"YouTube"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=YouTube
+  updated tab2064726552        changeInfo={"title":"YouTube Developers Live: Embedded Web Player Customization - YouTube"} tab.url=https://www.youtube.com/watch?v=M7lc1UVf-VE tab.title=YouTube Developers Live: Embed
+  removed ytWatch2 {"isWindowClosing":false,"windowId":2064726542}
+  removed example {"isWindowClosing":false,"windowId":2064726542}
+lastAccessed (tabs perm view), now=1792459072340
+  tab2064726543          active=false lastAccessed=1792459038252.42 ageS=34.1
+  ytWatch1               active=false lastAccessed=1792459042494.079 ageS=29.8
+  ytHome                 active=false lastAccessed=1792459045527.637 ageS=26.8
+  youtuBe                active=true lastAccessed=1792459048559 ageS=23.8
+  ytBgNeverActive        active=false lastAccessed=1792459048981.678 ageS=23.4
+  exampleBgNeverActive   active=false lastAccessed=1792459048993.799 ageS=23.3
+  tab2064726552          active=true lastAccessed=1792459061055.978 ageS=11.3
+created at (onCreated event time): {"ytWatch1":1792459042496,"ytWatch2":1792459044011,"ytHome":1792459045529,"example":1792459047043,"youtuBe":1792459048561,"ytBgNeverActive":1792459048990,"exampleBgNeverActive":1792459049001,"tab2064726552":1792459061055}

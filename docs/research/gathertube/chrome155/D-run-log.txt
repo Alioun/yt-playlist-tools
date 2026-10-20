@@ -1,0 +1,44 @@
+workers [
+  'tabsprobe-noperm',
+  'tabsprobe-noperm-plus-youtu.be',
+  'tabsprobe-tabs'
+]
+
+== tabsprobe-noperm query({currentWindow:true}) -> 8 tabs
+  tab2064726543          url=- | pendingUrl=- | title=- | favIconUrl=- | lastAccessed=1792459038252.42 | index=0 | discarded=false
+  ytWatch1               url=https://www.youtube.com/watch?v=jNQXAC9IVRw | pendingUrl=- | title=Me at the zoo - YouTube | favIconUrl=https://www.youtube.com/s/desktop/2fe123f7/im | lastAccessed=1792459042494.079 | index=1 | discarded=false
+  ytWatch2               url=https://www.youtube.com/watch?v=dQw4w9WgXcQ | pendingUrl=- | title=Rick Astley - Never Gonna Give You Up (Offici | favIconUrl=https://www.youtube.com/s/desktop/2fe123f7/im | lastAccessed=1792459044010.214 | index=2 | discarded=false
+  ytHome                 url=https://www.youtube.com/ | pendingUrl=- | title=YouTube | favIconUrl=https://www.youtube.com/s/desktop/2fe123f7/im | lastAccessed=1792459045527.637 | index=3 | discarded=false
+  example                url=- | pendingUrl=- | title=- | favIconUrl=- | lastAccessed=1792459047042.07 | index=4 | discarded=false
+  youtuBe                url=https://www.youtube.com/watch?v=9bZkp7q19f0 | pendingUrl=- | title=PSY - GANGNAM STYLE(강남스타일) M/V - YouTube | favIconUrl=https://www.youtube.com/s/desktop/2fe123f7/im | lastAccessed=1792459048559 | index=5 | discarded=false
+  ytBgNeverActive        url=https://www.youtube.com/watch?v=kJQP7kiw5Fk | pendingUrl=- | title=Luis Fonsi - Despacito ft. Daddy Yankee - You | favIconUrl=https://www.youtube.com/s/desktop/2fe123f7/im | lastAccessed=1792459048981.678 | index=6 | discarded=false
+  exampleBgNeverActive   url=- | pendingUrl=- | title=- | favIconUrl=- | lastAccessed=1792459048993.799 | index=7 | discarded=false
+
+== tabsprobe-noperm-plus-youtu.be query({currentWindow:true}) -> 8 tabs
+  tab2064726543          url=- | pendingUrl=- | title=- | favIconUrl=- | lastAccessed=1792459038252.42 | index=0 | discarded=false
+  ytWatch1               url=https://www.youtube.com/watch?v=jNQXAC9IVRw | pendingUrl=- | title=Me at the zoo - YouTube | favIconUrl=https://www.youtube.com/s/desktop/2fe123f7/im | lastAccessed=1792459042494.079 | index=1 | discarded=false
+  ytWatch2               url=https://www.youtube.com/watch?v=dQw4w9WgXcQ | pendingUrl=- | title=Rick Astley - Never Gonna Give You Up (Offici | favIconUrl=https://www.youtube.com/s/desktop/2fe123f7/im | lastAccessed=1792459044010.214 | index=2 | discarded=false
+  ytHome                 url=https://www.youtube.com/ | pendingUrl=- | title=YouTube | favIconUrl=https://www.youtube.com/s/desktop/2fe123f7/im | lastAccessed=1792459045527.637 | index=3 | discarded=false
+  example                url=- | pendingUrl=- | title=- | favIconUrl=- | lastAccessed=1792459047042.07 | index=4 | discarded=false
+  youtuBe                url=https://www.youtube.com/watch?v=9bZkp7q19f0 | pendingUrl=- | title=PSY - GANGNAM STYLE(강남스타일) M/V - YouTube | favIconUrl=https://www.youtube.com/s/desktop/2fe123f7/im | lastAccessed=1792459048559 | index=5 | discarded=false
+  ytBgNeverActive        url=https://www.youtube.com/watch?v=kJQP7kiw5Fk | pendingUrl=- | title=Luis Fonsi - Despacito ft. Daddy Yankee - You | favIconUrl=https://www.youtube.com/s/desktop/2fe123f7/im | lastAccessed=1792459048981.678 | index=6 | discarded=false
+  exampleBgNeverActive   url=- | pendingUrl=- | title=- | favIconUrl=- | lastAccessed=1792459048993.799 | index=7 | discarded=false
+
+== tabsprobe-tabs query({currentWindow:true}) -> 8 tabs
+  tab2064726543          url=about:blank | pendingUrl=- | title=about:blank | favIconUrl=- | lastAccessed=1792459038252.42 | index=0 | discarded=false
+  ytWatch1               url=https://www.youtube.com/watch?v=jNQXAC9IVRw | pendingUrl=- | title=Me at the zoo - YouTube | favIconUrl=https://www.youtube.com/s/desktop/2fe123f7/im | lastAccessed=1792459042494.079 | index=1 | discarded=false
+  ytWatch2               url=https://www.youtube.com/watch?v=dQw4w9WgXcQ | pendingUrl=- | title=Rick Astley - Never Gonna Give You Up (Offici | favIconUrl=https://www.youtube.com/s/desktop/2fe123f7/im | lastAccessed=1792459044010.214 | index=2 | discarded=false
+  ytHome                 url=https://www.youtube.com/ | pendingUrl=- | title=YouTube | favIconUrl=https://www.youtube.com/s/desktop/2fe123f7/im | lastAccessed=1792459045527.637 | index=3 | discarded=false
+  example                url=https://example.com/ | pendingUrl=- | title=Example Domain | favIconUrl=- | lastAccessed=1792459047042.07 | index=4 | discarded=false
+  youtuBe                url=https://www.youtube.com/watch?v=9bZkp7q19f0 | pendingUrl=- | title=PSY - GANGNAM STYLE(강남스타일) M/V - YouTube | favIconUrl=https://www.youtube.com/s/desktop/2fe123f7/im | lastAccessed=1792459048559 | index=5 | discarded=false
+  ytBgNeverActive        url=https://www.youtube.com/watch?v=kJQP7kiw5Fk | pendingUrl=- | title=Luis Fonsi - Despacito ft. Daddy Yankee - You | favIconUrl=https://www.youtube.com/s/desktop/2fe123f7/im | lastAccessed=1792459048981.678 | index=6 | discarded=false
+  exampleBgNeverActive   url=https://example.com/?bg | pendingUrl=- | title=Example Domain | favIconUrl=- | lastAccessed=1792459048993.799 | index=7 | discarded=false
+queryUrlWatch {"tabsprobe-noperm":["ytWatch1","ytWatch2","youtuBe","ytBgNeverActive"],"tabsprobe-noperm-plus-youtu.be":["ytWatch1","ytWatch2","youtuBe","ytBgNeverActive"],"tabsprobe-tabs":["ytWatch1","ytWatch2","youtuBe","ytBgNeverActive"]}
+queryUrlYoutuBe {"tabsprobe-noperm":[],"tabsprobe-noperm-plus-youtu.be":[],"tabsprobe-tabs":[]}
+queryUrlExample {"tabsprobe-noperm":[],"tabsprobe-noperm-plus-youtu.be":[],"tabsprobe-tabs":["example","exampleBgNeverActive"]}
+queryTitle {"tabsprobe-noperm":["ytWatch1","ytWatch2","ytHome","youtuBe","ytBgNeverActive"],"tabsprobe-noperm-plus-youtu.be":["ytWatch1","ytWatch2","ytHome","youtuBe","ytBgNeverActive"],"tabsprobe-tabs":["ytWatch1","ytWatch2","ytHome","youtuBe","ytBgNeverActive"]}
+youtuBeImmediate {"tabsprobe-noperm":[{"url":"(absent)","pendingUrl":"(absent)","status":"loading"}],"tabsprobe-noperm-plus-youtu.be":[{"url":"(absent)","pendingUrl":"https://youtu.be/9bZkp7q19f0","status":"loading"}],"tabsprobe-tabs":[{"url":"","pendingUrl":"https://youtu.be/9bZkp7q19f0","status":"loading"}]}
+youtuBe400ms {"tabsprobe-noperm":[{"url":"https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be","pendingUrl":"(absent)","status":"loading"}],"tabsprobe-noperm-plus-youtu.be":[{"url":"https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be","pendingUrl":"(absent)","status":"loading"}],"tabsprobe-tabs":[{"url":"https://www.youtube.com/watch?v=9bZkp7q19f0&feature=youtu.be","pendingUrl":"(absent)","status":"loading"}]}
+twoWindows {"win2":{"id":2064726551,"focused":true},"getCurrent":{"tabsprobe-noperm":{"id":2064726542,"focused":true},"tabsprobe-noperm-plus-youtu.be":{"id":2064726542,"focused":true},"tabsprobe-tabs":{"id":2064726542,"focused":true}},"getLastFocused":{"tabsprobe-noperm":{"id":2064726551,"focused":true},"tabsprobe-noperm-plus-youtu.be":{"id":2064726551,"focused":true},"tabsprobe-tabs":{"id":2064726551,"focused":true}},"getAll":{"tabsprobe-noperm":[{"id":2064726542,"focused":true,"type":"normal","state":"normal"},{"id":2064726551,"focused":true,"type":"normal","state":"normal"}],"tabsprobe-noperm-plus-youtu.be":[{"id":2064726542,"focused":true,"type":"normal","state":"normal"},{"id":2064726551,"focused":true,"type":"normal","state":"normal"}],"tabsprobe-tabs":[{"id":2064726542,"focused":true,"type":"normal","state":"normal"},{"id":2064726551,"focused":true,"type":"normal","state":"normal"}]},"currentWindowTabs":{"tabsprobe-noperm":[{"id":2064726552,"windowId":2064726551,"url":"https://www.youtube.com/watch?v=M7lc1UVf-VE"}],"tabsprobe-noperm-plus-youtu.be":[{"id":2064726552,"windowId":2064726551,"url":"https://www.youtube.com/watch?v=M7lc1UVf-VE"}],"tabsprobe-tabs":[{"id":2064726552,"windowId":2064726551,"url":"https://www.youtube.com/watch?v=M7lc1UVf-VE"}]},"lastFocusedWindowTabs":{"tabsprobe-noperm":[{"id":2064726552,"windowId":2064726551,"url":"https://www.youtube.com/watch?v=M7lc1UVf-VE"}],"tabsprobe-noperm-plus-youtu.be":[{"id":2064726552,"windowId":2064726551,"url":"https://www.yout
+refocus {"getCurrent":{"tabsprobe-noperm":{"id":2064726542,"focused":true},"tabsprobe-noperm-plus-youtu.be":{"id":2064726542,"focused":true},"tabsprobe-tabs":{"id":2064726542,"focused":true}},"getLastFocused":{"tabsprobe-noperm":{"id":2064726551,"focused":true},"tabsprobe-noperm-plus-youtu.be":{"id":2064726551,"focused":true},"tabsprobe-tabs":{"id":2064726551,"focused":true}},"currentWindowTabCount":{"tabsprobe-noperm":{"n":1,"windows":[2064726551]},"tabsprobe-noperm-plus-youtu.be":{"n":1,"windows":[2064726551]},"tabsprobe-tabs":{"n":1,"windows":[2064726551]}}}
+remove removed removed

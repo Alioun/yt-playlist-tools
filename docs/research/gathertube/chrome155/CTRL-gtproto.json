@@ -1,0 +1,119 @@
+{
+ "browser": "Chrome/155.0.8059.84",
+ "cases": {
+  "gtproto-natural-end": {
+   "events": {
+    "initialDelivery": 1,
+    "onReady": 1,
+    "infoDelivery": 79,
+    "apiInfoDelivery": 2,
+    "alreadyInitialized": 2
+   },
+   "origins": [
+    "https://www.youtube-nocookie.com"
+   ],
+   "stateSeq": [
+    "infoDelivery.playerState:1",
+    "infoDelivery.playerState:0"
+   ],
+   "endSeen": true,
+   "secondsToEnd": 23,
+   "videoDataTitle": "Me at the zoo",
+   "initialKeys": [
+    "apiInterface",
+    "videoBytesLoaded",
+    "videoBytesTotal",
+    "videoLoadedFraction",
+    "videoStartBytes",
+    "playlist",
+    "playlistIndex",
+    "playlistId",
+    "option",
+    "options",
+    "muted",
+    "volume",
+    "playerMode",
+    "playerState",
+    "availablePlaybackRates",
+    "playbackQuality",
+    "availableQualityLevels",
+    "currentTime",
+    "duration",
+    "debugText",
+    "videoEmbedCode",
+    "videoUrl",
+    "mediaReferenceTime",
+    "size",
+    "videoInfoVisible",
+    "playbackRate",
+    "sphericalProperties",
+    "videoData",
+    "currentTimeLastUpdated_"
+   ]
+  },
+  "gtproto-seekTo-command": {
+   "events": {
+    "initialDelivery": 1,
+    "onReady": 1,
+    "infoDelivery": 42,
+    "apiInfoDelivery": 2,
+    "alreadyInitialized": 1
+   },
+   "origins": [
+    "https://www.youtube-nocookie.com"
+   ],
+   "stateSeq": [
+    "infoDelivery.playerState:1",
+    "t=0",
+    "t=1",
+    "t=2",
+    "t=3",
+    "t=4",
+    "infoDelivery.playerState:3",
+    "t=15",
+    "infoDelivery.playerState:1",
+    "t=15",
+    "t=16",
+    "t=17",
+    "t=18",
+    "t=19",
+    "infoDelivery.playerState:0",
+    "t=19"
+   ],
+   "endSeen": true,
+   "secondsToEnd": 9,
+   "videoDataTitle": "Me at the zoo",
+   "initialKeys": [
+    "apiInterface",
+    "videoBytesLoaded",
+    "videoBytesTotal",
+    "videoLoadedFraction",
+    "videoStartBytes",
+    "playlist",
+    "playlistIndex",
+    "playlistId",
+    "option",
+    "options",
+    "muted",
+    "volume",
+    "playerMode",
+    "playerState",
+    "availablePlaybackRates",
+    "playbackQuality",
+    "availableQualityLevels",
+    "currentTime",
+    "duration",
+    "debugText",
+    "videoEmbedCode",
+    "videoUrl",
+    "mediaReferenceTime",
+    "size",
+    "videoInfoVisible",
+    "playbackRate",
+    "sphericalProperties",
+    "videoData",
+    "currentTimeLastUpdated_"
+   ]
+  }
+ }
+}

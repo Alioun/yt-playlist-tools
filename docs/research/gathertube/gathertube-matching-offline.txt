@@ -1,0 +1,39 @@
+GATHER dQw4w9WgXcQ | https://www.youtube.com/watch?v=dQw4w9WgXcQ | Rick Astley - Never Gonna Give You Up (Official Video) - YouTube
+GATHER dQw4w9WgXcQ | https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLx0sYbCqOb8TBPRdmBHs5I | x - YouTube
+GATHER jNQXAC9IVRw | https://www.youtube.com/watch?app=desktop&v=jNQXAC9IVRw&t=10s | Me at the zoo - YouTube
+GATHER jNQXAC9IVRw | https://m.youtube.com/watch?v=jNQXAC9IVRw | Me at the zoo - YouTube
+GATHER dQw4w9WgXcQ | https://music.youtube.com/watch?v=dQw4w9WgXcQ&list=RDAMVMdQw4w9WgXcQ | Never Gonna Give You Up - YouTube Music
+GATHER jfKfPfyJRdk | https://www.youtube.com/live/jfKfPfyJRdk?si=abc | lofi hip hop radio - YouTube
+skip               | https://www.youtube.com/shorts/aqz-KE-bpKQ | Big Buck Bunny #shorts - YouTube
+GATHER Unbelievabl | https://www.youtube.com/shorts/aqz-KE-bpKQ | Unbelievable trick #shorts - YouTube
+skip               | https://www.youtube.com/embed/dQw4w9WgXcQ | YouTube
+GATHER dQw4w9WgXcQ | https://youtu.be/dQw4w9WgXcQ | 
+skip               | https://www.youtube.com/@Veritasium/videos | Veritasium - YouTube
+GATHER 3Blue1Brown | https://www.youtube.com/@3blue1brown | 3Blue1Brown - YouTube
+GATHER Connections | https://www.youtube.com/@TechnologyConnections | Technology Connections - YouTube
+skip               | https://www.youtube.com/ | YouTube
+skip               | https://www.youtube.com/playlist?list=WL | Watch later - YouTube
+skip               | https://www.google.com/search?q=youtube+downloader | youtube downloader - Google Search
+skip               | https://en.wikipedia.org/wiki/YouTube | YouTube - Wikipedia
+GATHER Communities | https://www.reddit.com/r/youtube/ | YouTube Communities - r/youtube
+GATHER subscriptio | https://news.example/article | Why YouTube Premium subscriptions are skyrocketing
+skip               | https://studio.youtube.com/channel/UCabc/videos | Channel content - YouTube Studio
+GATHER dQw4w9WgXcQ | chrome-extension://noogafoofpebimajpfpamcfhoaifemoa/suspended.html#ttl=R | Rick Astley - Never Gonna Give You Up - YouTube
+skip               | https://www.youtube.com/watch?v=PLAYLISTabc | starts with PL
+
+--- isLikelyEnglish on tab titles (as Chrome shows them) ---
+english     | Never Gonna Give You Up - YouTube
+english     | La casa de papel: tráiler oficial - YouTube
+english     | Wie funktioniert ein Motor? - YouTube
+english     | Comment faire une crêpe - YouTube
+non-english | Türkçe rap şarkıları 2025 - YouTube
+english     | Cách nấu phở bò - YouTube
+non-english | Как приготовить борщ - YouTube
+non-english | Как приготовить борщ: рецепт от шефа и советы - YouTube
+non-english | كيف تتعلم البرمجة - YouTube
+non-english | 日本の料理 - YouTube
+non-english | (3) 日本の料理 - YouTube
+non-english | 강남스타일 - YouTube
+non-english | हिंदी गाने - YouTube
+english     | Kurzgesagt erklärt das Universum - YouTube
+english     | Bom dia, como vai? - YouTube
