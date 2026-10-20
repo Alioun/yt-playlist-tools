@@ -1,7 +1,7 @@
 # What is 2.0 called?
 
 Type: grilling
-Status: open (round 4)
+Status: open (round 5)
 Labels: wayfinder:grilling
 Part of: [Rebuild (2.0)](../map.md)
 
@@ -15,7 +15,78 @@ Decide:
 - the attribution line;
 - how the icon and store images avoid imitating YouTube's look and feel.
 
+## Round 5 (2026-10-20)
+
+The user's answer to round 4: "what about something with perch". The icon is now **Perch** ([ticket 34](34-icon.md)): a pigeon perched on top of a shelf of pigeonholes with filed cards. They like the pigeon, and they disliked clunky puns.
+
+**PROVISIONAL, pending the user's choice. This round supersedes round 4 below.**
+
+Full screening: [`docs/research/naming-round-5.md`](../../../docs/research/naming-round-5.md). All checks ran on 2026-10-20 with round 2's strict rules, and with round 4's weighed overlaps wherever "Pigeon" appears.
+- **What ran:** the three extension stores, GitHub, USPTO, WIPO Madrid, the App Store, Google Play, the web and RDAP.
+- **What didn't:** TMview and EUIPO, still blocked at 05:40. UKIPO, DPMA, IP Australia, Singapore and WIPO's Global Brand Database stay unchecked.
+
+- **Screened 56 perch-based names.**
+- **Bare "Perch for YouTube™" collides:**
+  - Chrome already has seven extensions called "Perch", two of them bookmark tools.
+  - Edge has "Perch – Picture in Picture for every video", a YouTube video tool updated last week.
+  - Four companies hold live US PERCH marks for software. The closest is GM Labs' registered PERCH for Perch Reader, an app that reads, organises and stores saved content. Its goods border ours.
+  - `perch.com` and `.app` are taken.
+  - The brief's names are minor: Perch CMS looks dormant, the 2015 Perch home-security app is gone, Perch Energy's marks cover solar, and Perch Credit is now Altro.
+- **Do compounds escape?**
+  - **"Playlist Perch" and "Perch + word" don't.** "Perch" stays the brand word, so the Edge listing and Perch Reader's mark still apply. Round 2 rejected Playlist Perch for this.
+  - **Adjective + Perch (Plump, Snug) mostly doesn't.**
+  - **"Pigeon Perch", "Pigeon's Perch" and "Pigeon Shelf" do:** the pair is the brand.
+  - **Derived words (Perchling, Perchy, Percher)** escape the strict rule but read close to the Perch brands (medium).
+  - This is the round's judgment call, so the finalists come in two groups.
+
+### Finalists
+
+Ratings: Pigeon overlaps are PigeonPod / `playlist-pigeon` / Pigeon Music. Perch overlaps are the Edge "Perch" PiP extension / Perch Reader and the PERCH marks / Chrome's seven "Perch" extensions. Other checks (2026-10-20): no listing, app, same-name repo or mark for any finalist.
+
+| # | Store name | Chars | Tone | Perch icon fit | Pigeon | Perch | `.com` / `.app` |
+|---|---|---|---|---|---|---|---|
+| A1 | Pigeon Perch for YouTube™ | 25 | Warm, plain | Exact | medium / none / low | low / low / low | taken / free |
+| A2 | Perchling for YouTube™ | 22 | Soft, coined | Good | — | medium / medium / medium | taken / free |
+| A3 | Pigeon Shelf for YouTube™ | 25 | Tidy | Exact | medium / none / low | none | free / free |
+| A4 | Pigeon's Perch for YouTube™ | 27 | Cosy | Exact | medium / none / low | low / low / low | taken / free |
+| A5 | Perchy for YouTube™ | 19 | Cute | Good | — | medium / medium / medium | taken / taken |
+| A6 | Percher for YouTube™ | 20 | Plain, odd | Good | — | medium / medium / medium | taken / taken |
+| B1 | Plump Perch for YouTube™ | 24 | Warm, cute | Good | — | medium / medium / medium | free / free |
+| B2 | Playlist Perch for YouTube™ | 27 | Descriptive | Good | — | medium / medium / medium | free / free |
+| B3 | Snug Perch for YouTube™ | 23 | Cosy | Good | — | medium / medium / medium | free / free |
+| B4 | Perch Shelf for YouTube™ | 24 | Tidy | Exact | — | medium / medium / medium | taken / free |
+| B5 | Perch Tray for YouTube™ | 23 | Office-like | Fair | — | medium / medium / medium | free / free |
+
+A = clean under round 2's strict rules. B = pass only if the Edge "Perch" listing is weighed rather than auto-killed.
+
+**"Playlist" in the summary:** every name but Playlist Perch relies on the drafted summaries in spec 08 §9.1, which already lead with "Watch Later or any playlist".
+
+### Top three
+
+These are recommendations; the choice is yours.
+
+1. **Pigeon Perch for YouTube™.**
+   - The icon in two words: warm, plain, no pun.
+   - Clean under the strict rules.
+   - **Cost:** "Pigeon" leads, so the PigeonPod overlap is medium.
+2. **Perchling for YouTube™.**
+   - One soft word, clean under the strict rules.
+   - **Cost:** it reads close to the Perch brands.
+3. **Plump Perch for YouTube™.**
+   - Round 4's favourite word, and both domains are free.
+   - **Cost:** it's in group B, so it carries the judgment call.
+
+**Close behind:** Pigeon Shelf (exact icon match, no Perch overlap) and Playlist Perch (descriptive, group B).
+
+### What's left
+
+- **The user picks a name.**
+- **Before launch,** a professional search should cover the EU and the registers that didn't run.
+- **Round 1's "After the user confirms" steps apply** with the chosen name. The icon is ticket 34's Perch.
+
 ## Round 4 (2026-10-20)
+
+> **Superseded by round 5 above (2026-10-20).** Kept for the record. The user moved to a perch-based name.
 
 The user rejected round 3: "those are all awful, pigeon should be the direction". So the name is led by the bird. Short, warm names that sound like a product win over puns. The PigeonPod overlap is weighed, not treated as an automatic kill.
 
