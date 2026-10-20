@@ -6,7 +6,7 @@ Items that need the user, collected while working the map. Clear each one when i
 
 ## Decisions only the user makes
 
-- **The 2.0 name** ([ticket 22](issues/22-name.md), round 2): you asked to workshop it again, with a list of options that don't collide. The icon follows the name ([ticket 34](issues/34-icon.md)). Until then the spec keeps "Playlist Pigeon for YouTube™" as a placeholder.
+- **The 2.0 name** ([ticket 22](issues/22-name.md), round 2): you asked to workshop it again, with a list of options that don't collide. The icon is settled: you picked Perch ([ticket 34](issues/34-icon.md), [R140](spec/resolutions.md#the-icon-perch-r140)); its wordmark waits on the name. Until then the spec keeps "Playlist Pigeon for YouTube™" as a placeholder.
 
 ## Actions only the user can take
 

@@ -494,7 +494,7 @@ All text below is **PROVISIONAL on the name** (ticket 22). It lives in `store/li
 | Homepage | `https://alioun.github.io/yt-playlist-tools/` | Same |
 | Support | `https://github.com/Alioun/yt-playlist-tools/issues/new/choose` | Support URL: same |
 | Privacy policy | `…/privacy/`, linked in the description; also pasted into AMO's privacy-policy field while the Developer Hub offers it | Privacy tab URL: `…/privacy/` |
-| Icon | Upload the pigeon in the Developer Hub (the listing shows AMO's default today) | 128×128 (96×96 artwork) |
+| Icon | Upload the pigeon in the Developer Hub (the listing shows AMO's default today). *Now `assets/icon/amo-128.png`, Perch ([ticket 34](34-icon.md), R140).* | 128×128 (96×96 artwork); *now `store-128.png`* |
 | License | MPL-2.0 (unchanged) | — |
 | Compatibility | Firefox desktop only. Leave Firefox for Android unticked (map: out of scope). | — |
 

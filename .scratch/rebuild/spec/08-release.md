@@ -21,7 +21,7 @@ Part of the [2.0 spec](../spec.md). This chapter covers how 1.4.5 users get to 2
 - [07](07-quality.md): the test layers ([§7.2](07-quality.md#72-test-layers)), fixtures ([§7.3](07-quality.md#73-fixtures)), the watch and the live check ([§7.5](07-quality.md#75-breakage-detection)), the budgets ([§7.6](07-quality.md#76-performance-budgets)) and the CI jobs ([§7.7](07-quality.md#77-ci-jobs-and-the-hotfix-lane)).
 - [09](09-parity.md): what 1.4.5 users had ([§1.12](09-parity.md#112-what-145-users-had), PAR-CAP-71 to PAR-CAP-79) and the platform and release rows ([§1.11](09-parity.md#111-platform-manifest-build-and-release)).
 
-The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too, and so are the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, and the GatherTube fold, R120–R139. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist". Under the resolutions' ownership rule, this chapter owns the migration, the upgrade note, and consent copy and conditions (R60); where it shares another topic with a chapter that owns it, that chapter's text wins, and [Conflicts found](#conflicts-found) lists what still differs.
+The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too, and so are the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, the GatherTube fold, R120–R139, and the icon, R140. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist". Under the resolutions' ownership rule, this chapter owns the migration, the upgrade note, and consent copy and conditions (R60); where it shares another topic with a chapter that owns it, that chapter's text wins, and [Conflicts found](#conflicts-found) lists what still differs.
 
 **Requirement IDs:**
 - `REL-MIG-`: the 1.4.5 migration.
@@ -648,7 +648,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22). It leads wi
 | Homepage | `https://alioun.github.io/yt-playlist-tools/` | Same |
 | Support | `https://github.com/Alioun/yt-playlist-tools/issues/new/choose` | Support URL: the same |
 | Privacy policy | `https://alioun.github.io/yt-playlist-tools/privacy/`, linked in the description, and also pasted into AMO's privacy-policy field while the Developer Hub offers it | Privacy tab URL: `https://alioun.github.io/yt-playlist-tools/privacy/` |
-| Icon | Upload the pigeon in the Developer Hub (today the listing shows AMO's default) | 128×128, with 96×96 artwork |
+| Icon | Upload `assets/icon/amo-128.png`, Perch, in the Developer Hub (today the listing shows AMO's default; REL-STORE-40) | From the manifest: `store-128.png`, 128×128 with 96×96 artwork (REL-STORE-40) |
 | License | MPL-2.0 (unchanged) | — |
 | Compatibility | Firefox desktop only. Firefox for Android stays unticked (out of scope). | — |
 
@@ -715,7 +715,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22). It leads wi
 ### 9.4 Screenshots and images
 
 - **REL-STORE-07** Both stores get the same five screenshots, at 1280×800 PNG. They replace AMO's two 2024 previews.
-- **REL-STORE-08** Each screenshot has a caption band in the extension's own type and palette ([05 §5.9](05-ui.md#59-the-brand-provisional-ticket-22), UI-BRAND-03 to UI-BRAND-07): the pigeon's grey with the teal-to-violet accent, and never YouTube red.
+- **REL-STORE-08** Each screenshot has a caption band in the extension's own type and palette ([05 §5.9](05-ui.md#59-the-brand-provisional-ticket-22), UI-BRAND-03 to UI-BRAND-07): Perch's grey with the teal-to-violet accent, and never YouTube red (R140).
 
 The order follows ticket 30's ranking: saving first, Settings last (R95).
 
@@ -733,11 +733,11 @@ The order follows ticket 30's ranking: saving first, Settings last (R95).
   - no real personal data;
   - YouTube's logo cropped or out of focus.
 - **REL-STORE-10** The screenshots are taken from the release candidate in a clean profile, in the light theme at 100 % zoom. The prototypes are layout references only, never the source: [05's catalogue](05-ui.md#513-prototypes-and-screenshots) gives [ps-60](https://github.com/Alioun/yt-playlist-tools/blob/prototype/popup-and-settings/prototypes/popup-and-settings/screenshots/60-settings-youtube.png) for shot 5, and [ps-62](https://github.com/Alioun/yt-playlist-tools/blob/prototype/popup-and-settings/prototypes/popup-and-settings/screenshots/62-settings-playlist-shortcuts.png) with [ps-08](https://github.com/Alioun/yt-playlist-tools/blob/prototype/popup-and-settings/prototypes/popup-and-settings/screenshots/08-popup-key-recorder-recording.png) for shot 2. (R19, R95)
-- **REL-STORE-11** Chrome's small promo tile (440×280) is required. It shows the pigeon and "Playlist Pigeon" on the palette, with no YouTube imagery. The 1400×560 marquee is skipped at launch.
-- **Icon brief (ticket 22):**
-  - **Shape:** a small, round, perched grey pigeon in profile. Its wing is three stacked list lines; at 16 px it's the body plus two lines.
-  - **Colours:** a slate body (about `#5E6875`) with a teal-to-violet neck (about `#14A39A` to `#7B5CD6`). No red, and no play triangle.
-  - **Size:** 96×96 artwork inside 128×128, shipped at 16, 32, 48 and 128 px. Test it on light and dark toolbars.
+- **REL-STORE-11** Chrome's small promo tile (440×280) is required. It shows Perch, the mark (R140), and the name (PROVISIONAL, ticket 22) on the palette, with no YouTube imagery. The 1400×560 marquee is skipped at launch.
+- **REL-STORE-40** **The store icons** are Perch, from [`assets/icon/`](../../../assets/icon/README.md) ([UI-BRAND-03](05-ui.md#59-the-brand-provisional-ticket-22), UI-BRAND-04; R140):
+  - **Chrome Web Store:** the item's icon is the manifest's 128, `store-128.png`: 96×96 artwork with 16 px of transparent padding, no border, and legible on light and dark backgrounds. If the dashboard asks for a store icon as well, it's the same file.
+  - **AMO:** the listing icon is a separate Developer Hub upload, `amo-128.png`, full bleed and with no letters. AMO resizes it to 32, 64 and 128 and shows the 64 on the listing; it doesn't take the manifest's icon.
+  - Both files are exports of the hand-drawn `icon.svg`, and are checked against `sheet.html` before upload. A wordmark waits on the name (ticket 22).
 
 ### 9.5 Credit for GatherTube
 
@@ -1297,14 +1297,14 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 - **REL-CHK-18** The build creates `RELEASING.md` with the checklist below, and `release.yml`'s job summary links to it. Each item is a checkbox.
 
 **Once, before the first beta**
-- [ ] Ticket 22's name is confirmed: the manifest's `name`, `short_name`, `description` and icons.
+- [ ] Ticket 22's name is confirmed: the manifest's `name`, `short_name` and `description`. The icons are Perch, settled (R140).
 - [ ] The Firefox manifest declares `data_collection_permissions: {required: ["none"]}` (R83); §13's fallback is applied only if a reviewer has objected. Ticket 25's route table is filled, and the cookie lines are kept or removed everywhere: the disclosure, the policy, the dashboard and the reviewer notes. They're removed if no shipped route reads the session cookie (R48).
 - [ ] The Chrome Web Store developer account is ready: 2-Step Verification, the fee, the publisher name, a verified contact e-mail, and the trader / non-trader declaration. The Store listing and Privacy tabs are drafted from §9 and §11; the first upload is `v1.99.1` (see Beta).
 - [ ] The service account is created, the Chrome Web Store API is enabled, and the account is added under Account in the dashboard. The `amo` and `cws` environments, the variables and the tag ruleset are set up (§14.6), and the old secrets are deleted.
 - [ ] Pages is enabled (source: GitHub Actions); `/`, `/privacy/` and `/beta/` are live and have been read through. The policy is effective from 1.99.1 (R18, R21).
 - [ ] The reviewer test account is ready, and `AMO_REVIEWER_LOGIN` is set.
 - [ ] `server/` is retired, any deployment is shut down, and its OAuth client is deleted (§15).
-- [ ] The screenshots and the promo tile are in `store/listing/`.
+- [ ] The screenshots and the promo tile are in `store/listing/`. AMO's listing icon, `assets/icon/amo-128.png`, is uploaded (REL-STORE-40).
 
 **Every release**
 - [ ] `package.json`'s version is bumped, and `store/release-notes/{version}.md` is written.
@@ -1482,6 +1482,10 @@ None remain after all three rounds. Every contradiction listed here before is se
 - **The Ctrl-key line:** ticket 09's prototype says "This key didn't work in 1.4.5. It does now."; ticket 19's final copy is used.
 - **Repo renames:** ticket 22 says a rename is fine because GitHub redirects. That holds for github.com URLs, but not for the Pages URL. ADR-0011: no rename while betas are installed.
 - **The toasts default:** ticket 06 says 1.4.5's popup showed toasts on. Ticket 19 corrects it to off, so only the percentage mismatches.
+
+The icon, settled on 2026-10-20 ([R140](resolutions.md#the-icon-perch-r140)):
+- **Store icons** (new REL-STORE-40): Chrome's `store-128.png` from the manifest, AMO's `amo-128.png` uploaded in the Developer Hub; the old icon brief is replaced. R140.
+- **Screenshots, promo tile and checklist** name Perch (REL-STORE-08, REL-STORE-11, REL-CHK-18). R140.
 
 ### Not pinned down
 

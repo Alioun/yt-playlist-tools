@@ -135,7 +135,7 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
   - **Settings:** 38.8 KB + 8.5 KB.
   - All are inside ticket 24's 40 + 8 and 60 + 10. The popup's cold first frame is about 42 ms here (see [Sizes](#sizes)).
 - **One picker, one recorder:** popup, settings and onboarding share one playlist picker (a sheet in the popup, a popover elsewhere, `PickerModel` underneath) and one key recorder.
-- **Brand:** a grey pigeon whose wing is three list lines, with a teal-to-violet neck.
+- **Brand:** a grey pigeon whose wing is three list lines, with a teal-to-violet neck. *Superseded on 2026-10-20: the mark is Perch ([ticket 34](34-icon.md), R140); this provisional pigeon was too close to PigeonPod's logo.*
   - **Where the gradient goes:** the mark's neck, switches that are on, the header hairline, progress fills and first run's main button.
   - **Everything else:** violet acts, teal confirms, amber asks, crimson destroys.
   - **Never:** YouTube red or a play triangle.
@@ -376,7 +376,7 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
 
 - **Type:** the system stack (`-apple-system`, Segoe UI, Ubuntu Sans, …), with no bundled fonts. Popup body 13 px, settings 13.5–15 px.
 - **Shape:** 10 px base radius, 14–16 px cards, popup rows at least 54 px. Shadows are tinted slate.
-- **The mark** (`components/PigeonMark.svelte`, plus `public/pigeon.svg` and `pigeon-dark.svg`):
+- **The mark** (`components/PigeonMark.svelte`, plus `public/pigeon.svg` and `pigeon-dark.svg`). *Superseded on 2026-10-20: the mark is Perch ([ticket 34](34-icon.md), R140); this provisional pigeon was too close to PigeonPod's logo.*
   - a perched pigeon in profile, its wing three list lines and its neck the gradient;
   - below 20 px it drops the perch and feet and keeps two lines;
   - dark mode lightens the body to #8b95a4.
@@ -471,7 +471,7 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
 
 ### PROVISIONAL
 
-- **The name and mark:** "Playlist Pigeon", the pigeon and the palette, until ticket 22 is confirmed.
+- **The name and mark:** "Playlist Pigeon", the pigeon and the palette, until ticket 22 is confirmed. *The mark and palette are now settled as Perch ([ticket 34](34-icon.md), R140); only the name waits.*
 - **The disclosure's cookie line** (ticket 25).
 - **Unticking a checked playlist removes the video** (tickets 12, 26). *Settled 2026-10-20: it does, with Undo (R84).*
 - **Ticket 24's settings budget:** proposed as the first frame only (now 38.8 + 8.5 KB), with each lazy part ≤ 45 KB.

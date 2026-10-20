@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <rect x="1" y="10" width="14" height="6" fill="#8E74E2"/>
+  <rect x="2" y="12" width="3" height="3" fill="#26223C"/>
+  <rect x="6" y="12" width="4" height="3" fill="#26223C"/>
+  <rect x="11" y="12" width="3" height="3" fill="#26223C"/>
+  <rect x="2" y="13" width="2" height="2" fill="#F5F7FA"/>
+  <rect x="7" y="13" width="2" height="2" fill="#F5F7FA"/>
+  <rect x="0" y="9" width="16" height="2" fill="#14A39A"/>
+  <path d="M11.4 5.8 L15.7 6.9 L15.3 8.6 L11.2 8.2 Z" fill="#727C8B"/>
+  <ellipse cx="8" cy="6.7" rx="4.4" ry="2.3" fill="#8B95A4"/>
+  <path d="M2.2 4.4 L6.4 4 L7.2 7 L3.2 7.6 Z" fill="#8B95A4"/>
+  <rect x="8" y="6" width="4" height="1" fill="#6B7584"/>
+  <rect x="2" y="5" width="4" height="1" fill="#14A39A"/>
+  <rect x="3" y="6" width="3" height="1" fill="#7B5CD6"/>
+  <circle cx="3.7" cy="3.2" r="2.3" fill="#8B95A4"/>
+  <path d="M1.6 2.5 L0 3.5 L1.6 4.1 Z" fill="#3D4552"/>
+  <rect x="3" y="2" width="1" height="1" fill="#1A1E27"/>
+</svg>

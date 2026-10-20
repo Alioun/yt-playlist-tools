@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <defs>
+    <mask id="cut" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+      <rect width="24" height="24" fill="#FFFFFF"/>
+      <circle cx="5.3" cy="3.7" r="0.95" fill="#000000"/>
+      <path d="M11.4 9.4 C13.6 8.6 16.4 8.8 18.4 9.9" fill="none" stroke="#000000" stroke-width="0.9" stroke-linecap="round"/>
+      <rect x="1" y="15.5" width="22" height="0.9" fill="#000000"/>
+      <rect x="4" y="17.5" width="4" height="3.5" fill="#000000"/>
+      <rect x="10" y="17.5" width="4" height="3.5" fill="#000000"/>
+      <rect x="16" y="17.5" width="4" height="3.5" fill="#000000"/>
+    </mask>
+  </defs>
+  <g fill="currentColor" mask="url(#cut)">
+    <rect x="1" y="13" width="22" height="3" rx="1"/>
+    <rect x="2.5" y="15" width="19" height="7.5" rx="1"/>
+    <path d="M17.6 8.2 L23.4 9.8 L22.9 12.3 L17.3 11.8 Z"/>
+    <ellipse cx="12.5" cy="9.6" rx="6.6" ry="3.4"/>
+    <path d="M3.8 6.1 L10.1 5.5 L11.3 10 L5.3 10.9 Z"/>
+    <circle cx="6" cy="4.3" r="3.4"/>
+    <path d="M2.9 3.25 L0.6 4.75 L2.9 5.65 Z"/>
+  </g>
+</svg>
