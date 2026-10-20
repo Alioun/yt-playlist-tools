@@ -2,7 +2,7 @@
 
 While the chapters were being written, their authors flagged conflicts between tickets, and details no ticket pinned down. The main session settled each one here on 2026-10-19, under the user's delegation ("you have the shared understanding"). Every resolution follows the map's principles. The chapters apply them, and each one is cited by its R-number.
 
-Items that are genuinely the user's call are **not** settled here; they stay in the spec's [Open items](../spec.md#open-items). The user's own answers of 2026-10-20 are recorded as [R84–R99](#the-users-decisions-of-2026-10-20-r84r99), the running-cost rules as [R100–R117](#running-costs-r100r117), the GatherTube fold as [R120–R139](#gathertube-r120r139), and the icon as [R140](#the-icon-perch-r140). R118 and R119 are unused.
+Items that are genuinely the user's call are **not** settled here; they stay in the spec's [Open items](../spec.md#open-items). The user's own answers of 2026-10-20 are recorded as [R84–R99](#the-users-decisions-of-2026-10-20-r84r99), the running-cost rules as [R100–R117](#running-costs-r100r117), the GatherTube fold as [R120–R139](#gathertube-r120r139), the icon as [R140](#the-icon-perch-r140), and the wordmark and store images as [R145–R147](#wordmark-and-store-images-r145r147). R118 and R119 are unused.
 
 ## Sites and features
 
@@ -549,3 +549,24 @@ The user picked **Perch** on 2026-10-20 from [ticket 34](../issues/34-icon.md)'s
   - **The gradient** stays in UI-BRAND-06's first place, the mark's neck, from 32 px up. The rest of the mark is flat.
   - **Badges** don't change (UI-IA-08). The pigeon's head sits top-left, clear of Chrome's bottom-right badge and Firefox's top-right one.
   - **Store icons:** Chrome takes `store-128.png` from the manifest. AMO's listing icon is a separate Developer Hub upload, `amo-128.png`, which AMO keeps at 32, 64 and 128.
+
+## Wordmark and store images (R145–R147)
+
+The name was decided as "Perchling for YouTube™" (short form "Perchling"; [ticket 22](../issues/22-name.md)), which unblocked the wordmark and the images that carry it. The files and their notes are in [`assets/brand/`](../../../assets/brand/README.md).
+
+- **R145 — The wordmark** (UI-BRAND-10, UI-BRAND-11).
+  - **The face:** "Perchling" in Nunito ExtraBold, weight 800, version 3.602. It's under the SIL Open Font License 1.1, from google/fonts, and converted to outlines. Only outlines ship; the font file isn't redistributed.
+  - **Why Nunito:** the spec names no brand typeface, and the UI bundles none. Nunito's rounded stroke ends match Perch's round head and soft corners, and its even letterforms stay tidy and legible at small sizes. Rubik was the runner-up.
+  - **The details:** light hand kerning, the i's dot in brand teal, ink `#262B36` on light, and paper `#F1F3F6` on dark. The lockup sets the icon beside the wordmark, the name's baseline level with the ledge.
+  - **Where it appears:** images and documents only. The extension's pages keep writing the name as text in the system font stack, so nothing is bundled and no budget changes.
+- **R146 — The store images** (REL-STORE-41, REL-STORE-42; amends REL-STORE-11's marquee sentence).
+  - **Chrome Web Store:** the required 440 × 280 small promo tile and the optional 1400 × 560 marquee, both uploaded at launch.
+  - **Google's image guidelines,** as they read on 2026-10-20: saturated colour filling the region, well-defined edges on the store's light grey, little or no text, no screenshot, and readable at half size.
+  - **What they show:** the mark and the wordmark only, on a saturated violet (`#2B2170`), with a faint wall of pigeonholes behind.
+  - **No YouTube:** no name, logo or red, so Google's branding guidelines don't apply, and no attribution line is needed on the images. The listing's name beside the tile carries "for YouTube™".
+  - **AMO:** its listing takes only the icon and screenshots (Extension Workshop), so it gets no promotional images.
+  - **Screenshots** still come from the release candidate at release (REL-STORE-07 to REL-STORE-10).
+- **R147 — The GitHub social preview** (REL-STORE-43, §19).
+  - A 1280 × 640 PNG, as GitHub recommends: the lockup, "for YouTube™" as plain text, and "Save to any playlist in one click."
+  - It's the one image that writes the full name. It has no YouTube logo or red.
+  - The user uploads it in the repository's settings; it's a one-time setup task.

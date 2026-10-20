@@ -42,6 +42,8 @@ Related: [ticket 22](22-name.md) (the wordmark waits on the name)
   - 08's store fields, REL-STORE-08 and REL-STORE-11, a new REL-STORE-40 for the store icons, and the checklist;
   - 09's PAR-CAP-46.
 
+- **Brand assets** (once the name, Perchling, was decided): [`assets/brand/`](../../../assets/brand/README.md) holds the wordmark in Nunito ExtraBold outlines, the lockups, Chrome's promo tile and marquee, and the GitHub social preview ([R145–R147](../spec/resolutions.md#wordmark-and-store-images-r145r147)).
+
 ### The concepts (2026-10-20, before the pick)
 
 Five concepts on the pigeonhole theme, after the user's direction (2026-10-20): "general pigeonhole thing so we're not limited by playlists, so to say not to be pigeonholed". Every shape is hand-placed SVG geometry. Nothing is generated, traced or copied. Prototype: [`prototypes/icon/`](https://github.com/Alioun/yt-playlist-tools/tree/prototype/icon/prototypes/icon) on branch `prototype/icon`:
