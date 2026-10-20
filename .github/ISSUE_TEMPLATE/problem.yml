@@ -1,0 +1,62 @@
+name: Something went wrong
+description: Something in the extension didn't do what you expected. For 1.4.5 (on Firefox Add-ons today) and for 2.0.
+title: "[Problem] "
+labels: ["problem"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Issues here are **public**, so leave out anything you want to keep private: your e-mail, your account's name, or links to private playlists.
+
+        **Before you start**
+        - **On 1.4.5**, most problems come from the Google credentials it needs. Read the [1.4.5 setup guide](https://github.com/Alioun/yt-playlist-tools/blob/main/docs/legacy/1.4.5-setup.md) first. If a message says "Added" but the playlist didn't change, the authorisation has probably expired.
+        - **On 2.0**, if the extension says a feature isn't working, use the form "A feature says it isn't working" instead, and check [Known problems](https://github.com/Alioun/yt-playlist-tools/issues?q=is%3Aissue%20label%3Ayoutube-change) first.
+        - **On 2.0**, Settings › Diagnostics › Report a problem fills in the version, browser, feature and status for you.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Find it in about:addons (Firefox) or chrome://extensions (Chrome), or in 2.0's Settings › About.
+      placeholder: "e.g. 1.4.5, 1.5.0 (built from this repo) or 2.0.0"
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and its version
+      placeholder: "e.g. Firefox 141 or Chrome 142"
+    validations:
+      required: true
+  - type: input
+    id: feature
+    attributes:
+      label: Which part
+      description: The feature or screen involved.
+      placeholder: "e.g. Auto-add, the shortcut, Quick actions on YouTube Music, the popup, the upgrade from 1.x"
+  - type: input
+    id: status
+    attributes:
+      label: Its status in the extension (2.0 only)
+      description: What Settings › Diagnostics says for that feature, e.g. "Working" or "Partly working". Leave it empty on 1.4.5.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead. Quote any message word for word.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen again
+      description: List the steps if you can. Name the kind of page (a watch page, Home, a Short, a YouTube Music album), but leave out links you want to keep private.
+      placeholder: |
+        1.
+        2.
+        3.
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics report (2.0 only)
+      description: In 2.0, open Settings › Diagnostics, click Copy, and paste the report here if you want to share it. It names no video, playlist, channel or account. 1.4.5 has no report, so leave this empty.
+      render: text

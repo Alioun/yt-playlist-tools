@@ -9,3 +9,7 @@
 ## Consequences
 
 - Most upgraders keep auto-adding at 0 % unless they answer the note's question.
+
+## Amendment (2026-10-20): upgraders whose 1.4.5 never got access
+
+The user approved ticket 30's fix S1 (rebuild spec, R96). An upgrader whose 1.4.5 never stored a `refreshToken` never got access to their account, so 1.4.5 never added anything for them, and there's no behaviour to keep. For them, an unset percentage carries over as 50 %, the value their popup showed, and the note's question defaults to "Once half of it is watched". Upgraders with a `refreshToken` keep this decision unchanged: 0 %, as 1.4.5 did.

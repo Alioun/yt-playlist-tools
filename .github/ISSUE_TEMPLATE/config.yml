@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Known problems
+    url: https://github.com/Alioun/yt-playlist-tools/issues?q=is%3Aissue%20label%3Ayoutube-change
+    about: Features that stopped working because YouTube or YouTube Music changed something. If yours is listed, add a 👍 there.
+  - name: Setting up 1.4.5 (the version on Firefox Add-ons today)
+    url: https://github.com/Alioun/yt-playlist-tools/blob/main/docs/legacy/1.4.5-setup.md
+    about: 1.4.5 needs Google credentials you create yourself. The guide answers most 1.4.5 problems.

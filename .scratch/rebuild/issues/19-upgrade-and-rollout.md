@@ -636,7 +636,7 @@ These go in the AMO release notes (sent as `{"en-US": …}`, §12.2), the GitHub
 > Changes are dated on this page; earlier versions are in the project's history on GitHub. If a new version handles your data in a new way, the extension asks for your agreement again before it does.
 >
 > ## Contact
-> Questions and problems: https://github.com/Alioun/yt-playlist-tools/issues *(PROVISIONAL: an e-mail address, if the user adds one)*
+> Questions and problems: https://github.com/Alioun/yt-playlist-tools/issues *(PROVISIONAL: an e-mail address, if the user adds one. Settled 2026-10-20: no e-mail, R89)*
 >
 > Not affiliated with or endorsed by YouTube or Google. YouTube and YouTube Music are trademarks of Google LLC. Use of these trademarks is subject to Google Permissions.
 
@@ -1033,7 +1033,7 @@ This goes into `RELEASING.md` in the build; `release.yml`'s summary links to it.
   - both stores' support fields and the privacy page link `issues/new/choose`.
 - **People without a GitHub account** can use the stores' review sections, which the developer reads weekly.
 - *Runner-up:* e-mail only. It lost because it gives no public "known problems" list and publishes a personal address.
-- **PROVISIONAL:** adding an e-mail as a second channel stays the user's call (for-the-user.md). The Chrome Web Store's contact e-mail is the developer account's verified address either way.
+- **PROVISIONAL:** adding an e-mail as a second channel stays the user's call (for-the-user.md). *Settled 2026-10-20: no e-mail (R89).* The Chrome Web Store's contact e-mail is the developer account's verified address either way.
 
 ### 17. Judgement calls at a glance
 
@@ -1068,7 +1068,7 @@ This goes into `RELEASING.md` in the build; `release.yml`'s summary links to it.
 | The cookie line in the disclosure and policy, Chrome's "Authentication information" tick, and the reviewer notes' signed route | [25](25-live-checks.md) | Drop them if no signed request ships |
 | The reviewer endpoint list | [25](25-live-checks.md) | Fill it from the route table |
 | Exact prompt strings | [25](25-live-checks.md) P1 | Adjust §5 |
-| A support e-mail | The user | Add it to the policy, the stores and Diagnostics |
+| A support e-mail | The user. *Settled 2026-10-20: none (R89).* | Add it to the policy, the stores and Diagnostics |
 | Whether going Unlisted → Public on Chrome triggers a full review | Unverified | The staged 2.0.0 submission covers both cases |
 | AMO's automatic builder running `build-for-amo` | Unverified | The human reviewer follows the README |
 | Open tabs surviving updates (S11, S12) | Ticket 17's real-browser layer running an update | Fix in the registrar or core before the beta ends |
@@ -1163,3 +1163,12 @@ All read on 2026-10-19. Research agents read the primary sources listed here.
   - the Chrome Web Store fee amount (the docs' screenshot says US$5).
 
 Also from [ticket 15](15-popup-and-settings.md): prototype screenshots 01, 03, 60, 80 and 85 (branch `prototype/popup-and-settings`) can become the 1280×800 store screenshots.
+
+## Settled by the user (2026-10-20)
+
+The user took ticket 30's calls ([R95–R98](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)), which chapter 08 of the spec now carries:
+- **The listings** lead with saving to any playlist in one click or a named key, with the drafted summaries (R95).
+- **S1:** upgraders whose 1.4.5 never stored a `refreshToken` get 50 % by default, with their own question and Kept line ([ADR-0009](../../../docs/adr/0009-upgraders-keep-what-1-4-5-did.md), amended; R96).
+- **S2:** a note nobody saw reopens once at the next browser start, in the background, and the note asks to be pinned (R97).
+- **S3:** the note's tab title is "YouTube Playlist Tools is now Playlist Pigeon" (R98).
+- **Support:** GitHub issues only, through prefilled forms (R89).

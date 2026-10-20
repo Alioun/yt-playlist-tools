@@ -251,13 +251,13 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
 
 ### PROVISIONAL
 
-- **Narrow rows keep every button** (judgement call 2): for the user to confirm.
+- **Narrow rows keep every button** (judgement call 2): for the user to confirm. *Settled 2026-10-20: every switched-on button stays (R94).*
 - **Variant A instead of ticket 09's reserved slot:** for the user to confirm.
 - **The toast action's blue on YouTube Music:** unverified against a YouTube Music toast with an action (none show signed out).
 - **The Wiz Save's anchor signed in:** seen only in signed-out Wiz sessions, where the action bar was present.
 - **The picker's weight:** 54.5 KB against 50.
 - **Bundling YouTube Music's own icon paths** versus Material Symbols equivalents.
-- **Unticking removes** (tickets 12 and 26).
+- **Unticking removes** (tickets 12 and 26). *Settled 2026-10-20, with an Undo toast (R84).*
 
 ### Notes for other tickets
 
@@ -282,3 +282,9 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
 - **Installed app window:** still unchecked (headless can't install it).
 
 Also from [ticket 15](15-popup-and-settings.md): the popup's Playing now row reuses the split Save button's states and copy. Settings carries the narrow-row warning and the player-bar line.
+
+## Settled by the user (2026-10-20)
+
+- **Narrow Quick picks rows** ([R94](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): every switched-on button stays, and tooltips name the song.
+- **Unticking removes** ([R84](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)), with an Undo toast.
+- **Four more buttons** ([R85](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): Save to library, Start mix, Go to album and Go to artist, all off by default, after the five existing buttons, with YouTube Music's own icons. No second library button where YouTube Music shows its own, and nothing new on the player bar. Spec: 03 §21, 05 UI-YM-04, UI-YM-06.

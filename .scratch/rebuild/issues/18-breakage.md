@@ -302,7 +302,7 @@ Each message is two sentences, uses YouTube's capitalisation, and says "YouTube 
   - *Runner-up:* a "Report on GitHub" link that puts the report in the URL. It lost because opening that URL sends the report to GitHub before the user has decided to submit it.
 - **Check now** runs the probes and one read per read job in a serving tab, only when it's clicked. It writes nothing, and it works even if no feature has run this session.
   - *Runner-up:* report only what has already happened. It lost because the report is empty after a reload, and YouTube's A/B tests mean the developer often can't reproduce the user's setup.
-- **Links:** **Known problems** opens the public `youtube-change` issues. **Report a problem** opens a blank issue form. Both are plain links and attach nothing. **PROVISIONAL:** they point to GitHub until [ticket 19](19-upgrade-and-rollout.md) settles the support channel.
+- **Links:** **Known problems** opens the public `youtube-change` issues. **Report a problem** opens a blank issue form. Both are plain links and attach nothing. **PROVISIONAL:** they point to GitHub until [ticket 19](19-upgrade-and-rollout.md) settles the support channel. *Settled 2026-10-20: see below.*
 - **Cost:** the Diagnostics section loads lazily in settings. Nothing of it reaches a YouTube page, except Check now's probe when clicked.
 
 ### 7. Fix speed
@@ -379,3 +379,7 @@ Also from [ticket 19](19-upgrade-and-rollout.md):
 - **Support channel:** GitHub issues with a problem form.
 
 Also from [ticket 14](14-in-page-controls.md): its Answer lists the card-selector table and the new selectors and anchors (the action row after Share, the inline-preview layer, YouTube's own hover buttons on lockup cards) for the watch list.
+
+## Settled by the user (2026-10-20)
+
+**Where problem reports go** ([R89](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): GitHub issues, with **no support e-mail**, but with a few prefilled choices and directions. **Report a problem** opens a short chooser (a feature says it isn't working, something went wrong, an idea), each with a line on what to include. It then opens the matching issue form with the version, browser, feature and status prefilled. The diagnostics report still never goes into the address, as this ticket's runner-up required: the user pastes it if they want to. Spec: 04 HEALTH-27, 05 UI-SET-21, 08 §16; the forms are in `.github/ISSUE_TEMPLATE/`.

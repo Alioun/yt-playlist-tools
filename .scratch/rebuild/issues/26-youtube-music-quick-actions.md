@@ -139,7 +139,7 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
     - If neither can be read, the list still works without check marks and shows "Couldn't check where this song already is".
   - **Ticking and unticking:**
     - Ticking saves the song there at once.
-    - **Unticking removes the song from that playlist. PROVISIONAL:** youtube.com's own Save dialog does this, but for the extension it's arguably a new capability, so it needs the user's go-ahead.
+    - **Unticking removes the song from that playlist.** youtube.com's own Save dialog does this. It was PROVISIONAL on the user's go-ahead, which came on 2026-10-20, with an Undo toast (R84).
     - Runner-up: checked rows can't be changed. It lost because a checklist you can't untick is surprising, and it forces a trip to the playlist page.
   - **Pins:** each row has a pin, "Use for one-click save".
   - **New playlist:**
@@ -280,3 +280,10 @@ Also from [ticket 08](08-shortcuts.md), adopted:
 Also from [ticket 18](18-breakage.md): a key for an action that isn't working stays caught and explains itself on each press, instead of doing nothing. The pointed-at item self-check applies to YouTube Music rows too.
 
 Also from [ticket 25](25-live-checks.md)'s signed-out validation: the cast state is readable at `state.castStatus`, so the original "queue actions are unavailable while casting" stands (ticket 10's fallback isn't needed). `get_queue` returned 200 items of a 500-song radio.
+
+## Settled by the user (2026-10-20)
+
+- **Unticking removes** ([R84](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): approved, with an Undo toast.
+- **More quick actions** ([R85](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): Save to library, Start mix, Go to album and Go to artist are added as buttons and keys, all off by default, offered exactly where YouTube Music's own ⋮ offers them, with ticket 21's research covering how. Start mix replaces the queue, so it has no Undo and is unavailable while casting. Spec: 03 §21.
+- **Keys from another tab** ([R88](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): the feature Keys from any tab, with two YouTube Music commands (save and like the playing song). Spec: 03 §22.
+- **Translation** ([R93](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): 2.0 is built ready for translation but ships English only, so toasts stay English on a non-English YouTube Music.

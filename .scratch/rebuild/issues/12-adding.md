@@ -204,7 +204,7 @@ Failures (all shown with feedback off; "save" reads "auto-add" in auto-add's toa
 - **Results:** the toast closes once Undo succeeds. If it fails anywhere, the toast reads "Couldn't undo." (ticket 26).
 - **Undoing an auto-add also stops auto-add from re-adding that video to those playlists until the browser restarts.** This is held in memory only, and explicit adds ignore it.
   - Why: undo is the user's choice about this video, and re-adding it a minute later on a rewatch would override that choice.
-- **After the toast is gone:** use the picker (untick, if approved) or YouTube.
+- **After the toast is gone:** untick in the picker (approved 2026-10-20, R84) or use YouTube. The popup's Recent adds list shows what was added (R86).
 - **Keyboard:** a keyboard path to Undo, beyond the toast's focusable button, is [ticket 08](08-shortcuts.md)'s call.
 
 ### Failures
@@ -274,8 +274,8 @@ Used by both sites' quick-save ▾. On YouTube Music it behaves exactly as ticke
 - **A check mark means the video is already in that playlist.**
   - **Ticking a row runs an add** for that playlist: membership read, account guard, then the add.
   - **The row shows its own result:** busy, then checked, or an inline "Couldn't save". Nothing in the picker raises a toast (ticket 26), because the row is the feedback and the user is looking at it.
-- **Unticking (PROVISIONAL, as in ticket 26):** unticking removes the video from that playlist, as YouTube's own Save dialog does. It's arguably a new capability, so it needs the user's go-ahead.
-  - **If approved, the add flow treats an untick as an explicit removal:**
+- **Unticking (approved by the user on 2026-10-20, R84):** unticking removes the video from that playlist, as YouTube's own Save dialog does.
+  - **The add flow treats an untick as an explicit removal:**
     - **Guard first:** membership read and account guard, never filtered.
     - **Ordering:** the coordinator orders it with any add of the same video and playlist.
     - **What it removes:** if this picker's own tick added the entry, exactly that entry (`setVideoId`). Otherwise whatever YouTube's own Save dialog removes for that playlist: the removal the membership answer offers for that row, so the result matches YouTube's.
@@ -379,3 +379,8 @@ Also from [ticket 18](18-breakage.md): ticket 07's "can't measure" adds a row to
 - **Adds also use the quiet route** (`IAE%3D`) when there's already a queue, so YouTube never shows its own "Added to Queue" toast alongside ours, keeping "nothing shows twice".
 
 Both are PROVISIONAL until [ticket 25](25-live-checks.md)'s Q1–Q8 pass. Fallback if the quiet value stops working: keep the add, and suppress our own toast so only one toast shows.
+
+## Settled by the user (2026-10-20)
+
+- **Unticking removes** ([R84](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): approved, and its toast carries **Undo**, which puts the video back at the end of the playlist. In the popup's picker sheet, the row reads "Removed · Undo" for 6 s instead. Spec: 02 YT-PK-05, 03 YM-PICK-8.
+- **Recent adds** ([R86](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): approved, as a popup list of this browser session's adds, so a missed toast can be looked up. Spec: 04 DATA-52.

@@ -2,8 +2,9 @@
 
 This chapter specifies everything 2.0 does on music.youtube.com:
 - the two YouTube Music features, Quick actions and Quick-action shortcuts;
-- each quick action;
+- each quick action, including the four the user added on 2026-10-20 (§21);
 - playlist shortcuts carried over to YouTube Music;
+- keys from any tab on YouTube Music (§22);
 - the popup's Playing now row;
 - the installed YouTube Music app.
 
@@ -14,7 +15,7 @@ It covers behaviour only. Elsewhere:
 - **Routes,** gateway jobs, the queue mechanics and page registrations: [06-architecture.md](06-architecture.md) §6.2.7, §6.2.8 and §6.6.
 - **Budgets** and the breakage watch: [07-quality.md](07-quality.md) (Q-PERF-13, Q-PERF-14, §7.5).
 
-The main session's resolutions ([resolutions.md](resolutions.md), all three rounds: R1–R40, R41–R67, then R68–R77) are applied, and so is R83, settled after the spec. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Where chapters disagree, the owning chapter wins (resolutions.md's ownership rule): this chapter owns YouTube Music behaviour and copy.
+The main session's resolutions ([resolutions.md](resolutions.md), all three rounds: R1–R40, R41–R67, then R68–R77) are applied, and so are R83, settled after the spec, and the user's decisions of 2026-10-20, R84–R99. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Where chapters disagree, the owning chapter wins (resolutions.md's ownership rule): this chapter owns YouTube Music behaviour and copy.
 
 **Sources**, all resolved on 2026-10-19:
 - [26 Quick actions](../issues/26-youtube-music-quick-actions.md), the core, with its amendments after 28, 08, 18 and 25;
@@ -30,7 +31,7 @@ Later amendments, the main session's decisions and its resolutions supersede ear
 ## Conventions
 
 - **IDs.** Every requirement has a stable ID: `YM-<AREA>-<n>`. Each is written to be testable.
-- **Terms** are [GLOSSARY.md](../../../GLOSSARY.md)'s, in particular: feature, quick action, queue, Play next, Add to queue, Remove from queue, playing song, Save to playlist, quick-save playlist, playlist picker, pointed-at item, quick-action shortcut, playlist shortcut, account, account setup, add, outcome, membership, already in, missing playlist, confirmation, not working, partly working, breakage signal, site access, serving tab.
+- **Terms** are [GLOSSARY.md](../../../GLOSSARY.md)'s, in particular: feature, quick action, queue, Play next, Add to queue, Remove from queue, Save to library, Start mix, any-tab key, playing song, Save to playlist, quick-save playlist, playlist picker, pointed-at item, quick-action shortcut, playlist shortcut, account, account setup, add, outcome, membership, already in, missing playlist, confirmation, not working, partly working, breakage signal, site access, serving tab.
 - **A song** here is a single playable item: a song, a music video, an upload or an episode. Albums, playlists and artists aren't songs.
 - **A queue item** is an entry in the queue panel. **Autoplay suggestions** are the items YouTube Music appends after the user's queue (`#automix-contents`). They are queue items too, but they can't be moved.
 - **Copy examples** use the song "Get Lucky", the album "Random Access Memories" (13 songs), the queued song "Lady" and the quick-save playlist "Favourites". `{title}` and `{list}` are placeholders. `{Shortcut}`, `{Account}`, `{Playlist}`, `{Key}` and `{Other}` mean what they mean in [02-youtube.md](02-youtube.md#conventions), and `{Product}` is the extension's in-product name, as in every chapter (R65). `{Action}` is a quick action's name and `{kind}` an item kind in the plural ("albums", "artists"). Quotes inside copy are typographic (“ ”); straight quotes in this chapter's prose only mark where copy starts and ends (R45).
@@ -47,10 +48,12 @@ Later amendments, the main session's decisions and its resolutions supersede ear
     - Save to playlist: off;
     - Like: off;
     - Remove from queue: off;
-    - Save on the player bar: off.
+    - Save on the player bar: off;
+    - Save to library, Start mix, Go to album and Go to artist: off (§21; R85).
   - **Show feedback:** **on**.
 - **YM-FEAT-3** **Quick-action shortcuts** is a second feature, also off until switched on. It has:
   - one key per action: Play next, Add to queue, Save to playlist (quick-save), Save to playlist… (the picker), Like / unlike, and Remove from queue. Each key can be changed or cleared.
+  - a key for each of Save to library, Start mix, Go to album and Go to artist, which starts with no key (§21; R85);
   - **Show feedback**, on by default.
 
   The undo key isn't part of it: it belongs to no feature, is preset at install, and is set in Settings › Everywhere (YM-KEY-4). (R44)
@@ -64,10 +67,10 @@ Later amendments, the main session's decisions and its resolutions supersede ear
   - the section switch is off;
   - or Quick actions, Quick-action shortcuts and Playlist shortcuts' "Also on YouTube Music" are all off.
 
-  The one exception is the second case's on-demand probe: with the section on and consent given, the popup's Playing now may inject the site core into one YouTube Music tab to read the playing song. It draws nothing and stays inert ([FT-16](04-features-accounts-data.md#13-off-costs-nothing), YM-POP-10; R8).
+  The one exception is the second case's on-demand probe: with the section on and consent given, the popup's Playing now may inject the site core into one YouTube Music tab to read the playing song. It draws nothing and stays inert ([FT-16](04-features-accounts-data.md#13-off-costs-nothing), YM-POP-10; R8). In the second case, a key from any tab also injects the page half, core and kit into the one tab it acts in, when it's pressed (§22; [FT-59](04-features-accounts-data.md#13-off-costs-nothing); R88).
 - **YM-FEAT-7** Each feature's page code loads only while that feature is on. Quick-action shortcuts alone adds no element to the page until a key shows a toast or opens the picker. The picker's code loads in either of two cases: the first time the pointer reaches a Save control (hover intent), or when the picker first opens.
 - **YM-FEAT-8** Changes reach open YouTube Music tabs without a reload. That covers buttons, keys, Show feedback, the quick-save playlist and the switches. Switching a feature off removes its elements, styles and listeners from open tabs.
-- **YM-FEAT-9** **Presets apply once,** the first time each feature is turned on: Quick actions' default buttons and Quick-action shortcuts' default keys ([FT-04](04-features-accounts-data.md#11-the-features)). Turning a feature off and on again keeps what the user had, and clearing a key never brings its preset back.
+- **YM-FEAT-9** **Presets apply once,** the first time each feature is turned on: Quick actions' default buttons and Quick-action shortcuts' default keys ([FT-04](04-features-accounts-data.md#11-the-features)). Turning a feature off and on again keeps what the user had, and clearing a key never brings its preset back. Presets never switch on or give a key to the four actions in §21 (R85).
 - **YM-FEAT-10** **Site access on Chrome:** YouTube Music access is optional ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs)).
   - It's requested from the click that switches on the first thing that needs it, first run's Agree included: a YouTube Music feature, or Playlist shortcuts' "Also on YouTube Music" while Playlist shortcuts is on (YM-PS-2). The section switch itself never asks. (R53)
   - **Denied from a switch** in the popup or Settings: the switch stays off ([FT-52](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). The one exception is the click that switches Playlist shortcuts on: Playlist shortcuts goes on, "Also on YouTube Music" turns off, and "No access to YouTube Music, so shortcuts work on YouTube only." shows in place, under Playlist shortcuts' row (YM-PS-2; R71).
@@ -86,15 +89,15 @@ Later amendments, the main session's decisions and its resolutions supersede ear
 - **YM-ACC-3** A YouTube Music tab uses its own account and that account's setup. It reads the account from `ytcfg` at page load and keeps it until it reloads, even when a youtube.com tab is on a different account. The installed app's window counts as an ordinary tab.
 - **YM-ACC-4** An account seen for the first time has no setup, so Save is in choose mode (YM-SAVE-3). Its first pick creates its account setup. Nothing about the account is stored before that.
 - **YM-ACC-5** **Signed out** (`LOGGED_IN` false):
-  - Play next, Add to queue, moves and Remove from queue work.
-  - Save and Like aren't drawn, because YouTube Music's own menu items are sign-in prompts there.
-  - Their keys, and playlist shortcuts, answer with the signed-out failure toast and its **Sign in** action (§13). Like keeps its own wording, "Sign in to YouTube Music to like songs." (R3, R41)
+  - Play next, Add to queue, moves, Remove from queue, Start mix, Go to album and Go to artist work.
+  - Save, Like and Save to library aren't drawn, because YouTube Music's own menu items are sign-in prompts there.
+  - Their keys, and playlist shortcuts, answer with the signed-out failure toast and its **Sign in** action (§13). Like keeps its own wording, "Sign in to YouTube Music to like songs.", and Save to library its own, "Sign in to YouTube Music to save to your library." (R3, R41, R85)
 - **YM-ACC-6** **Account changed in another tab:** any response naming a different `datasyncId` than the tab's trips the tab's guard.
-  - From then until reload, Save and Like do nothing in this tab. Their buttons show failed, and the toast reads "Your YouTube account changed in another tab. Reload this page to keep saving here.", with **Reload**. It answers every press, because every save and like on YouTube Music is explicit; the once-per-tab toast is auto-add's alone (R22, R55).
-  - Play next, Add to queue, moves and Remove from queue keep working, because they change only this tab's queue.
+  - From then until reload, Save, Like and Save to library do nothing in this tab (R85). Their buttons show failed, and the toast reads "Your YouTube account changed in another tab. Reload this page to keep saving here.", with **Reload**. It answers every press, because every save and like on YouTube Music is explicit; the once-per-tab toast is auto-add's alone (R22, R55).
+  - Play next, Add to queue, moves, Remove from queue, Start mix, Go to album and Go to artist keep working, because they change only this tab's queue or page.
   - A like returns nothing the guard can read, so it relies on an earlier response having tripped the guard.
   - **PROVISIONAL** (ticket 25, M2): if YouTube Music responses carry no `datasyncId`, the guard relies on `ytcfg` at page load only.
-- **YM-ACC-7** **Account keys unreadable** (`DATASYNC_ID` or `LOGGED_IN` missing): Save and Like are unavailable in that tab, so nothing is written to an unknown account. Their buttons hide, Quick actions and Quick-action shortcuts are partly working, and the notice is §13's "Account keys unreadable" row ([HEALTH-09](04-features-accounts-data.md#52-status); R50). Their keys stay caught and answer each press (YM-KEY-12; R68). Queue actions carry on. Playlist shortcuts, which only save, stop there too, and their keys answer the same way.
+- **YM-ACC-7** **Account keys unreadable** (`DATASYNC_ID` or `LOGGED_IN` missing): Save, Like and Save to library are unavailable in that tab, so nothing is written to an unknown account. Their buttons hide, Quick actions and Quick-action shortcuts are partly working, and the notice is §13's "Account keys unreadable" row ([HEALTH-09](04-features-accounts-data.md#52-status); R50). Their keys stay caught and answer each press (YM-KEY-12; R68). Queue actions carry on. Playlist shortcuts, which only save, stop there too, and their keys answer the same way.
 - **YM-ACC-8** **Private windows,** only where the user allows the extension:
   - An account with a quick-save playlist uses it for one-click saves.
   - Choose mode still saves the song, but the pick isn't stored as the quick-save playlist.
@@ -105,11 +108,11 @@ Later amendments, the main session's decisions and its resolutions supersede ear
 ## 3. Which items get which action
 
 - **YM-QA-1** **The rule:** an action is offered on an item exactly when YouTube Music's own ⋮ menu for that item offers it.
-  - Menu items are matched by their command, never by position or label: the queue-add command for each insert position, the remove-from-queue command, the add-to-playlist command and the like command.
+  - Menu items are matched by their command, never by position or label: the queue-add command for each insert position, the remove-from-queue command, the add-to-playlist command and the like command, and for §21's actions the library toggle, the mix's watch endpoint and the artist or album browse endpoint (R85).
   - The menu is read when the pointer or keyboard focus arrives on the item.
   - The rule covers songs, videos, episodes, uploads, artists, signed-out rows and item types YouTube Music adds later. It never offers something YouTube Music would refuse.
 - **YM-QA-2** **Save to playlist and Like apply to songs only.** Albums and playlists get Play next and Add to queue.
-  - *Runner-up:* Like on an album meaning "Save to library". It lost because that's a different YouTube Music concept, sits on its most-churned endpoint, and isn't an approved quick action.
+  - *Runner-up:* Like on an album meaning "Save to library". It lost because that's a different YouTube Music concept and sits on its most-churned endpoint. Save to library is now its own action, off by default (§21; R85).
 - **YM-QA-3** **Remove from queue** is offered only on queue items. On the playing song's queue item, it's offered only if that item's ⋮ offers it.
 - **YM-QA-4** **On a queue item, Play next and Add to queue move it** (§7) instead of adding a copy.
   - On the playing song's queue item and on autoplay suggestions, they aren't offered as buttons.
@@ -135,7 +138,7 @@ Later amendments, the main session's decisions and its resolutions supersede ear
 | Queue item, autoplay suggestion | — | — | ✓ | ✓ | if its ⋮ offers it |
 | Player bar (the playing song) | — | — | ✓ (opt-in, §16) | — (YouTube Music's own) | — |
 
-✓ means offered, still subject to YM-QA-1 and YM-QA-6.
+✓ means offered, still subject to YM-QA-1 and YM-QA-6. §21's four actions have their own table (YM-MORE-2).
 
 ## 4. Where the controls appear
 
@@ -145,17 +148,18 @@ Exact placement and look are in [05-ui.md](05-ui.md) (UI-YM-09 to UI-YM-16, with
   - The buttons appear while the pointer is on the row, or while keyboard focus reached by keyboard (`:focus-visible`) is inside it. They leave 120 ms after the pointer leaves.
   - They join the row's own layout just before YouTube Music's like and ⋮, and the title narrows to make room. They never cover the title.
   - At rest, every row looks untouched: no space is reserved.
-  - Joining the row on hover is settled, instead of ticket 09's reserved slot. What happens on narrow Quick picks rows is still the user's call (YM-NARROW-1). (R35)
+  - Joining the row on hover is settled, instead of ticket 09's reserved slot. On narrow Quick picks rows every switched-on button stays, as the user decided (YM-NARROW-1). (R35, R94)
 - **YM-QA-8** **Cards** (Home, Explore, artist shelves): the buttons sit on the thumbnail's hover overlay, beside YouTube Music's own play button. They appear when that overlay does.
 - **YM-QA-9** **Album and playlist page headers:** Play next and Add to queue sit among YouTube Music's header buttons, before its ⋮. Like those buttons, they're always visible.
   - Why: queueing the album you're looking at shouldn't need the ⋮ menu.
 - **YM-QA-10** **Queue items:** the buttons appear on hover or keyboard focus, before the item's ⋮.
-- **YM-QA-11** **Order** is the same everywhere: Play next, Add to queue, Save to playlist, Like, Remove from queue. That's YouTube Music's own menu order, and there's no setting to change it.
+- **YM-QA-11** **Order** is the same everywhere: Play next, Add to queue, Save to playlist, Like, Remove from queue. That's YouTube Music's own menu order, and there's no setting to change it. §21's actions follow them: Save to library, Start mix, Go to album, Go to artist, so switching one on never moves a button the user already knows (R85).
 - **YM-QA-12** **Tooltip:** the action's name, plus its key when it has one. Examples:
   - "Play next (Alt+N)";
   - "Save to Favourites (Alt+P)";
   - the ▾: "Save to playlist… (Alt+Shift+P)";
-  - choose mode: "Save to playlist…".
+  - choose mode: "Save to playlist…";
+  - Start mix: "Start mix (replaces the queue)" (R85).
 
   The key is shown only while Quick-action shortcuts is on, because only then is it live; with the feature off the tooltip is the action alone. The accessible name is always the action plus the item's title, e.g. "Play next: Giorgio by Moroder". (R6)
 - **YM-QA-13** **Keyboard:** tabbing into a row shows its buttons. The next Tabs reach our buttons, then YouTube Music's like and ⋮.
@@ -337,16 +341,15 @@ The picker is shared with YouTube ([ticket 12](../issues/12-adding.md); [02-yout
   - **PROVISIONAL** (ticket 25, M2): whether YouTube Music's answer carries membership.
 - **YM-PICK-7** **Ticking a row** saves the song there at once, through YM-SAVE-5's flow.
   - The row shows its own result: busy, then checked, or an inline "Couldn't save".
-  - Nothing in the picker raises a toast. The one exception is the choose-mode pick (YM-SAVE-3).
-- **YM-PICK-8** **Unticking a checked row: PROVISIONAL** (the user's go-ahead, tickets 12 and 26; listed in `for-the-user.md`). youtube.com's own Save dialog does this, but for the extension it's arguably a new capability.
-  - **If approved,** unticking removes the song from that playlist:
-    - It starts with the membership read and account guard, and is never filtered.
-    - It's ordered with any add of the same song and playlist.
-    - It removes exactly the entry this picker's own tick added, if it did. Otherwise it removes whatever YouTube's own Save dialog removes for that row.
-    - The row shows busy, then unchecked, or reverts to checked with an inline "Couldn't remove".
-    - Ticking again is the undo, and puts the song at the end of the playlist.
-    - If the playlist is one of the account's auto-add playlists, the untick also sets the session skip for that song.
-  - **If declined,** checked rows show "Already in" and do nothing.
+  - Nothing in the picker raises a toast, with two exceptions: the choose-mode pick (YM-SAVE-3) and an untick (YM-PICK-8). (R84)
+- **YM-PICK-8** **Unticking a checked row** removes the song from that playlist, as youtube.com's own Save dialog does. The user approved it (R84).
+  - It starts with the membership read and account guard, and is never filtered.
+  - It's ordered with any add of the same song and playlist.
+  - It removes exactly the entry this picker's own tick added, if it did. Otherwise it removes whatever YouTube's own Save dialog removes for that row.
+  - The row shows busy, then unchecked, or reverts to checked with an inline "Couldn't remove".
+  - **Undo:** the untick shows one toast, `Removed “Get Lucky” from Favourites`, with **Undo**, which puts the song back at the end of the playlist. It's a confirmation under the Show feedback of what opened the picker: Quick actions for a click, Quick-action shortcuts for a key. The undo key runs it. In the popup's picker sheet, the row reads "Removed · **Undo**" in place for 6 s instead ([UI-PICK-09](05-ui.md#contents-and-behaviour-every-container)).
+  - Ticking the row again also puts the song back, at the end of the playlist.
+  - If the playlist is one of the account's auto-add playlists, the untick also sets the session skip for that song.
   - *Runner-up:* checked rows can't be changed. It lost because a checklist you can't untick is surprising, and it forces a trip to the playlist page.
 - **YM-PICK-9** **The pin** makes that playlist the account's quick-save playlist. In private windows the pins are disabled (YM-ACC-8).
 - **YM-PICK-10** **New playlist** uses the shared create flow and opens an inline form:
@@ -406,10 +409,11 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
   | Remove from queue | Alt+R |
 
   - **The undo key, Alt+U,** isn't one of these. It's preset at install and set in Settings › Everywhere (YM-KEY-4; R44).
+  - **§21's four actions** start with no key; the user records one if they want it (R85).
   - **Why these keys:** every Alt combination is free on YouTube Music's side. These letters also avoid the browsers' menu keys: Firefox's Alt+F/E/V/S/B/T/H, Chrome's Alt+D/E/F, and Chrome's reserved Alt+Shift+A/B/I/N/R/T.
   - **Why set by default:** 1.x's unset-by-default shortcut is on the friction list, and keys leave no trace on the page.
 - **YM-KEY-2** **A preset never takes a key** that another shortcut already uses on YouTube Music. That preset is left without a key, and its row says "No key: Alt+P is used by {Other}".
-- **YM-KEY-3** **Where keys are caught:** in the music.youtube.com page's top frame, only while that page has focus. There are no browser keyboard commands. Settings says: "Shortcuts work while a YouTube or YouTube Music page is in focus. If one does nothing, the browser or another extension may be using that key."
+- **YM-KEY-3** **Where keys are caught:** in the music.youtube.com page's top frame, only while that page has focus. Quick-action shortcuts use no browser keyboard commands; keys from any tab are a separate feature (§22; R88). Settings says: "Shortcuts work while a YouTube or YouTube Music page is in focus. If one does nothing, the browser or another extension may be using that key."
 - **YM-KEY-4** **The undo key** (Alt+U unless changed or cleared) belongs to no feature. It's one key for every page of both sites, preset to Alt+U at install and set in Settings › Everywhere, whose row for it shows whenever any feature on either site is on ([FT-05](04-features-accounts-data.md#11-the-features), [YT-KEY-05](02-youtube.md#281-the-feature-and-its-keys)). (R2, R44)
   - It works on YouTube Music whenever a toast with Undo is on screen there, whichever feature raised it. So it works with only Quick actions on. Its listener is the site core's one key listener, so this costs nothing extra.
   - It runs Undo on the toast showing in this tab, exactly as clicking Undo would.
@@ -447,7 +451,7 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
   | Like | toggle | "Like isn't available for albums." / "…for playlists." | toggle | toggle the playing song |
   | Remove | "Point at a song in the queue to remove it." | same | remove it | "Point at a song in the queue to remove it." |
 
-  For an item whose ⋮ doesn't offer the action, the key does nothing and answers "{Action} isn't available for {kind}." (YM-TGT-5). The Remove key is the exception: it always answers with YM-RM-5's hint. (R4, R67)
+  For an item whose ⋮ doesn't offer the action, the key does nothing and answers "{Action} isn't available for {kind}." (YM-TGT-5). The Remove key is the exception: it always answers with YM-RM-5's hint. (R4, R67) §21's four keys follow YM-MORE-7.
 - **YM-KEY-11** **Shared states:** if the pointed-at item shows the matching button, that button goes through the same busy, done or failed states as for a click.
 - **YM-KEY-12** **Unavailable or not working:**
   - **An action unavailable in this tab** (its internals are missing, YM-FAIL-4): its buttons hide there, but its key stays caught. Each press answers with the failure "{Action} isn't working right now. The popup shows why.", e.g. "Play next isn't working right now. The popup shows why.", so a key never does nothing silently ([ticket 18](../issues/18-breakage.md)). For a playlist shortcut, `{Action}` is "Save to playlist". The feature's notice (YM-FAIL-5) and status (YM-FAIL-6) say why. (R50, R68)
@@ -488,7 +492,10 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
   | Remove from queue | Puts the song back at its old position. |
   | Save | Removes exactly the entry the save created. |
   | Like or unlike by key | Restores the previous like state. |
+  | Save to library by key | Restores the previous library state (R85). |
   | Empty queue started playback | No Undo. |
+  | Start mix, Go to album, Go to artist | No Undo: playback or the page is the answer (R85). |
+  | A picker untick | Puts the song back, at the end of the playlist (R84). |
 
 - **YM-FB-9** **After Undo:** the toast closes once Undo succeeds. If Undo fails, the toast reads "Couldn't undo." While casting, the Undo of a queue edit answers "Not available while casting" instead (YM-CAST-2).
 - **YM-FB-10** **Copy rules:**
@@ -500,7 +507,7 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
 - **YM-FB-11** **Styling:** failures lead with the error icon, and hints are neutral. No YouTube Music toast carries the extension mark, because every one answers the user's own click or key.
 - **YM-FB-12** **Console log:** every save logs its outcome to the tab's console, whatever Show feedback says.
 
-**All toast copy on YouTube Music** (ticket 26's table, ticket 27's additions, ticket 12's add-flow rows, ticket 18's breakage rows, and resolutions R3, R4, R5, R7, R24, R41, R45, R50, R56, R67, R68 and R77):
+**All toast copy on YouTube Music** (ticket 26's table, ticket 27's additions, ticket 12's add-flow rows, ticket 18's breakage rows, and resolutions R3, R4, R5, R7, R24, R41, R45, R50, R56, R67, R68, R77, R84, R85 and R88):
 
 | When | Toast | Action | Kind |
 |---|---|---|---|
@@ -515,6 +522,8 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
 | Save | Saved “Get Lucky” to Favourites | Undo | Confirmation |
 | Save, first pick in choose mode | Saved “Get Lucky” to Favourites. One click now saves there. | Undo | Confirmation |
 | Like or unlike by key | Liked “Get Lucky” / Unliked “Get Lucky” | Undo | Confirmation |
+| Save to library or out of it, by key | Saved “Get Lucky” to your library / Removed “Get Lucky” from your library | Undo | Confirmation (R85) |
+| A picker untick | Removed “Get Lucky” from Favourites | Undo | Confirmation (R84) |
 | A playlist shortcut's playlist chosen through **Choose** (the song is saved too) | {Shortcut} now saves to “{Playlist}”. | Undo | Confirmation (R24, R45) |
 | Save by key, pending after 1 s | Saving “Get Lucky” to Favourites… (turns into the outcome) | — | Progress: hidden with Show feedback off, like a confirmation (R7) |
 | Save, already in | “Get Lucky” is already in Favourites | — | Hint |
@@ -526,10 +535,15 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
 | Any other key on an item that doesn't support its action | {Action} isn't available for {kind}. (e.g. Like isn't available for albums. / Play next isn't available for artists.) | — | Hint (R4) |
 | Move key on an autoplay suggestion | Autoplay suggestions can't be moved. Use YouTube Music's ⋮ menu to add a copy. | — | Hint |
 | A playlist shortcut with no playlist on this account | {Shortcut} has no playlist on {Account} yet. | Choose | Hint: neutral, shown even with Show feedback off (R24, R56) |
-| Any queue edit while casting: insert, move, Remove from queue, or the Undo of one | Not available while casting | — | Hint (R5, R46) |
+| Any queue edit while casting: insert, move, Remove from queue, Start mix, or the Undo of one | Not available while casting | — | Hint (R5, R46, R85) |
 | Undo key with nothing to undo | Nothing to undo. | — | Hint |
 | Signed out, Save key or a playlist shortcut | Sign in to YouTube Music to save songs. † | Sign in | Failure (R3) |
 | Signed out, Like key | Sign in to YouTube Music to like songs. † | Sign in | Failure (R3, R41) |
+| Signed out, Save to library key | Sign in to YouTube Music to save to your library. † | Sign in | Failure (R85) |
+| Save to library failed | Couldn't save “Get Lucky” to your library. Try YouTube Music's ⋮ menu. | — | Failure (R85) |
+| Start mix failed | Couldn't start a mix from “Get Lucky”. Try YouTube Music's ⋮ menu. | — | Failure (R85) |
+| Go to album or Go to artist failed (the page didn't change within 10 s) | Couldn't open the album page for “Get Lucky”. Try YouTube Music's ⋮ menu. / Couldn't open the artist page for “Get Lucky”. Try YouTube Music's ⋮ menu. | — | Failure (R85) |
+| Keys from any tab: Save with no quick-save playlist on this account | {Account} has no quick-save playlist on YouTube Music yet. Choose one in the popup. | — | Hint (R88) |
 | Play next or Add to queue failed (song, album or playlist) | Couldn't add “Get Lucky” to the queue. Try YouTube Music's ⋮ menu. | — | Failure |
 | Move failed | Couldn't move “Lady”. Try YouTube Music's ⋮ menu. | — | Failure |
 | Remove failed | Couldn't remove “Get Lucky” from the queue. Try YouTube Music's ⋮ menu. | — | Failure |
@@ -574,7 +588,7 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
   - *Runner-up:* an "Open menu" action in the toast. It lost because it means clicking YouTube Music's ⋮ for the user. That adds a markup dependency and stretches the "never drive the visible UI" exemption, to save one click on a ⋮ right beside our button.
 - **YM-FAIL-2** **The item's data can't be read** when its control is clicked or its key is pressed: that counts as a failure for that item.
 - **YM-FAIL-3** **Mid-action changes:** if the row is recycled, or the user navigates away, while an action runs, the action finishes on the data read at click time, and its toast still shows.
-- **YM-FAIL-4** **YouTube Music changed.** When the page loads, the extension checks that each action's internals exist. Status is per feature, so an action whose internals are missing is *unavailable* in that tab, not a status of its own (R50, R68):
+- **YM-FAIL-4** **YouTube Music changed.** When the page loads, the extension checks that each action's internals exist, the handlers §21's actions use included (R85). Status is per feature, so an action whose internals are missing is *unavailable* in that tab, not a status of its own (R50, R68):
   - its buttons are withdrawn there, but its key stays caught: no button is drawn, and each press answers "{Action} isn't working right now. The popup shows why." (YM-KEY-12; R68);
   - the feature is *partly working* in that tab while some of its actions still work, and its status detail names the unavailable ones, e.g. "Partly working: Play next and Add to queue are unavailable." ([HEALTH-07](04-features-accounts-data.md#52-status));
   - with none of its actions left, the feature is *not working* there.
@@ -609,6 +623,7 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
   - inserts by Play next and Add to queue, including inserting a copy of the playing song;
   - moves of a queued song;
   - Remove from queue;
+  - Start mix, which replaces the queue (R85);
   - the Undo of any of them.
 
   Casting is read from YouTube Music's own cast state ([ARC-ACC-31](06-architecture.md#6283-queue-jobs-and-casting)).
@@ -618,7 +633,7 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
   - **PROVISIONAL** (ticket 25, M5): if the cast state can't be read, queue edits stay available, and their toasts say "this tab's queue" instead of "the queue", e.g. "Added “Get Lucky” to this tab's queue" ([06 §6.2.15](06-architecture.md#6215-live-checks-that-settle-the-provisional-rows)).
 - **YM-CAST-3** **No exception for forwarded inserts:** whatever ticket 25's M1 shows about the menu-item route forwarding inserts to the cast device, inserts stay unavailable while casting ([ARC-ACC-31](06-architecture.md#6283-queue-jobs-and-casting)). M1 now only picks the insert route. Re-allowing inserts after M1 would need a new decision. (R5, R46)
 - **YM-CAST-4** **Moves** are unavailable while casting too, although YouTube Music's own reorder path forwards a move to the cast device (ticket 28, not checked live). (R5)
-- **YM-CAST-5** **Save and Like** don't touch the queue, so casting doesn't affect them. (R5)
+- **YM-CAST-5** **Save and Like** don't touch the queue, so casting doesn't affect them, and neither do Save to library, Go to album and Go to artist. (R5, R85)
 
 ## 16. The player bar and the Wiz miniplayer
 
@@ -645,6 +660,7 @@ YouTube Music has been A/B testing a player UI without the classic player bar (t
   - Play next and Add to queue would only mean "play it again".
   - The bar already has YouTube Music's own Like.
   - Remove from queue belongs to the queue panel.
+  - §21's actions don't go there either; their keys reach the playing song (R85).
   - *Runner-up:* our own floating "now playing" pill. It lost because it invents a control YouTube Music doesn't have, covers content, and is bloat.
   - *Runner-up:* dropping the player-bar placement. It lost because most users still have the classic bar, and saving the song you're hearing belongs there.
 - **YM-BAR-5** **Independent switches:** "Save on the player bar" and the Save to playlist button for rows, cards and queue items are separate switches. Either can be on without the other.
@@ -726,7 +742,7 @@ Playlist shortcuts are a YouTube feature ([ticket 08](../issues/08-shortcuts.md)
 
 ## 20. Narrow rows
 
-- **YM-NARROW-1** **PROVISIONAL** (the user; ticket 27's judgement call 2, listed in `for-the-user.md`): every switched-on button stays on narrow rows. On Home's Quick picks at common laptop widths, the row's title is squeezed while hovered, down to nothing.
+- **YM-NARROW-1** **Every switched-on button stays on narrow rows,** as the user decided on 2026-10-20 (ticket 27's judgement call 2; R94). On Home's Quick picks at common laptop widths, the row's title is squeezed while hovered, down to nothing. §21's buttons, when switched on, squeeze it more.
   - *Runner-up:* drop buttons until the title keeps 48 px. It lost because at a 1366 px window no button would fit, so the feature would vanish from Quick picks at the most common laptop width.
   - *Second runner-up:* a combined queue split (Play next | ▾ Add to queue). It lost because Add to queue would take two clicks.
 - **YM-NARROW-2** **Tooltips name the song** when a hovered row's title would drop under 48 px: "Play next: Shape of You (Alt+N)", with the key only while Quick-action shortcuts is on (R6). The accessible name always names the song.
@@ -745,19 +761,62 @@ Measured on real YouTube Music by ticket 27, Quick picks rows with the two defau
 
 Wide rows (album, playlist and search pages) lose about 82 px of title only while hovered. In the queue panel, the title keeps about 180 px with the two default buttons, and about 38 px with all five.
 
-## 21. Not in 2.0
+## 21. More quick actions
 
-These need the user's go-ahead as new capabilities (`for-the-user.md`). 2.0 doesn't include them unless approved:
-- **More quick actions:** Save to library, Start mix, and Go to artist / album.
-- **Keys from another tab,** or system-wide on Chrome, e.g. liking the song in a background YouTube Music tab.
-- **Translated UI.** English toasts stand out on a non-English YouTube Music.
+The user added these four on 2026-10-20 (R85). Each is an option of Quick actions (a button) and of Quick-action shortcuts (a key), and every one starts off. [Ticket 21](../issues/21-youtube-music-internals.md)'s research (§2.4, §2.6, §2.7) found the internals for each.
+
+- **YM-MORE-1** **The actions:** Save to library, Start mix, Go to album and Go to artist. Each button is off, and each key starts with no key. Presets never set them (YM-FEAT-9).
+- **YM-MORE-2** **Where they're offered:** exactly where YouTube Music's own ⋮ menu offers them for that item (YM-QA-1), matched by command. Narrowed like Like (YM-QA-5):
+  - no second library button where YouTube Music shows its own, such as album and playlist page headers;
+  - page headers keep only Play next and Add to queue (YM-QA-9);
+  - nothing new goes on the player bar (YM-BAR-4); keys reach the playing song.
+
+  | Item | Save to library | Start mix | Go to album | Go to artist |
+  |---|---|---|---|---|
+  | Song row | if its ⋮ offers it | ✓ | if the song has an album | ✓ |
+  | Song or video card | if its ⋮ offers it | ✓ | if the song has an album | ✓ |
+  | Album or playlist card | ✓ | ✓ | — | if its ⋮ offers it |
+  | Album or playlist page header | — (YouTube Music's own) | — | — | — |
+  | Queue item | if its ⋮ offers it | ✓ | if the song has an album | ✓ |
+  | Player bar | — | — | — | — |
+
+  ✓ means offered when the item's ⋮ offers it, still subject to YM-QA-6.
+- **YM-MORE-3** **Save to library** toggles the item's library state, as YouTube Music's own item does. It behaves like Like (§11):
+  - the icon is outlined or filled by YouTube Music's own library state, and stays in step with it;
+  - a click shows no toast; the icon is the answer. Busy and failed show on the button;
+  - a key shows `Saved “Get Lucky” to your library` or `Removed “Get Lucky” from your library`, with **Undo**, which restores the previous state;
+  - it goes through YouTube Music's own handling, with the endpoint the item carries; tokens are never built;
+  - if YouTube Music shows its own toast for it, that toast stands in for ours, so only one shows (as YM-LIKE-7);
+  - it needs a signed-in account (YM-ACC-5), and stops after an account change in another tab (YM-ACC-6).
+- **YM-MORE-4** **Start mix** plays a mix from the item and replaces the queue, exactly as YouTube Music's own Start mix does.
+  - It has no Undo and no confirmation toast: playback is the answer.
+  - Its tooltip is "Start mix (replaces the queue)".
+  - It's unavailable while casting, because it changes the queue (YM-CAST-2).
+  - It works signed out.
+- **YM-MORE-5** **Go to album** and **Go to artist** open that page in the tab, as YouTube Music's own items do, with no reload and no toast.
+  - With nothing pointed at, the key opens the playing song's album or artist.
+  - If the page hasn't changed within 10 s, the action has failed (§13).
+  - They work signed out and while casting.
+- **YM-MORE-6** **Order:** after the five other actions, in this order: Save to library, Start mix, Go to album, Go to artist (YM-QA-11).
+- **YM-MORE-7** **Keys** act on the pointed-at item, else the playing song (§5). On an item whose ⋮ doesn't offer the action, the key answers "{Action} isn't available for {kind}." (YM-TGT-5).
+- **YM-MORE-8** **Failures and breakage:** the failure copy is in §13's table. An action whose handler is missing is unavailable in that tab, like any other (YM-FAIL-4, YM-KEY-12).
+- **YM-MORE-9** **PROVISIONAL** ([ticket 25](../issues/25-live-checks.md), M3): Save to library's signed-in shape, and whether YouTube Music shows its own toast for it.
+
+## 22. Keys from any tab
+
+Keys from any tab is one feature for both sites, specified in [02 §2.14](02-youtube.md#214-keys-from-any-tab) (R88). On YouTube Music:
+
+- **YM-ANY-1** **Which tab:** the focused window's active YouTube Music tab, else the one playing audio, else the most recently used, as Playing now picks it (YM-POP-11; [YT-ANY-04](02-youtube.md#214-keys-from-any-tab)). The installed app's window counts as a tab (YM-APP-2).
+- **YM-ANY-2** **"Save the playing song to your quick-save playlist"** saves the playing song as the Save key does with nothing pointed at (YM-SAVE-5, YM-KEY-10). With no quick-save playlist on that tab's account, it can't open a picker in a tab the user isn't looking at, so it answers with the hint "{Account} has no quick-save playlist on YouTube Music yet. Choose one in the popup."
+- **YM-ANY-3** **"Like or unlike the playing song"** toggles the playing song's like, as the Like key does with nothing pointed at (YM-LIKE-4), with **Undo**.
+- **YM-ANY-4** **Answers:** the toast in that tab, held until the tab is visible (YM-FB-3), and the 3 s ✓ or ✕ on the toolbar icon ([YT-ANY-06](02-youtube.md#214-keys-from-any-tab)). Nothing playing answers ✕ "Nothing is playing"; an ad answers ✕ "An ad is playing" (YM-TGT-6).
+- **YM-ANY-5** **Off:** with the section switch off, or without YouTube Music access on Chrome, both keys answer ✕ and do nothing ([YT-ANY-08](02-youtube.md#214-keys-from-any-tab); R1, R88).
 
 ## PROVISIONAL items in this chapter
 
 | Item | Requirement | Settled by |
 |---|---|---|
-| Unticking in the picker removes the song | YM-PICK-8 | The user (tickets 12, 26) |
-| Narrow Quick picks rows keep every button | YM-NARROW-1 | The user (ticket 27; R35 leaves it with the user) |
+| Save to library's signed-in shape and toast | YM-MORE-9 | Ticket 25, M3 |
 | YouTube Music's answer carries membership; YouTube Music responses carry `datasyncId` | YM-PICK-6, YM-ACC-6 | Ticket 25, M2 |
 | Likes are quiet and repaint, including in the Wiz miniplayer | YM-LIKE-7 | Ticket 25, M3 |
 | The installed app is first-class | YM-APP-4 | Ticket 25, M4 |
@@ -814,6 +873,15 @@ Also applied, third round: R68 (YM-ACC-7, YM-KEY-12, YM-FB-6, YM-FAIL-4, YM-FAIL
 
 After the spec ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)):
 - **Shared-settings changes in a private window** (was PROVISIONAL on ticket 23's AMO question 3): saved, as R58 decided, and no longer provisional; the row leaves the PROVISIONAL table. Only if an AMO reviewer objects does [08 §13](08-release.md#13-if-an-amo-reviewer-objects)'s fallback refuse them (YM-ACC-8). R83.
+
+The user's decisions of 2026-10-20 ([R84–R99](resolutions.md#the-users-decisions-of-2026-10-20-r84r99)):
+- **Unticking in the picker** (was PROVISIONAL on YM-PICK-8): it removes, with an Undo toast (YM-PICK-7, YM-PICK-8, YM-FB-8, §13). R84.
+- **More quick actions** (was §21, "Not in 2.0"): Save to library, Start mix, Go to album and Go to artist, every one off by default (YM-FEAT-2, YM-FEAT-3, YM-FEAT-9, YM-ACC-5 to YM-ACC-7, YM-QA-1, YM-QA-2, YM-QA-11, YM-QA-12, YM-KEY-1, YM-KEY-10, YM-FB-8, YM-FAIL-4, YM-CAST-2, YM-CAST-5, YM-BAR-4, §13, §21). R85.
+- **Keys from another tab** (was §21, "Not in 2.0"): keys from any tab, one feature for both sites (YM-KEY-3, §22). R88.
+- **Translated UI** (was §21, "Not in 2.0"): 2.0 is built ready for translation and ships English only, so toasts stay English on a non-English YouTube Music ([06](06-architecture.md) ARC-MOD-35). R93.
+- **Narrow Quick picks rows** (was PROVISIONAL on YM-NARROW-1): every switched-on button stays (YM-QA-7, YM-NARROW-1). R94.
+
+R86, R87, R89 to R92 and R95 to R99 change nothing this chapter states.
 
 ## Conflicts found
 

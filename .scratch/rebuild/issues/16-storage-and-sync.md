@@ -763,3 +763,8 @@ Also from [ticket 19](19-upgrade-and-rollout.md):
 - the consent version starts at 1;
 - toasts were off by default in 1.4.5's popup too (correcting ticket 06);
 - the private-window fallback if AMO says no.
+
+## Settled by the user (2026-10-20)
+
+- **Settings export and import to a file** ([R90](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): approved. The file holds the shared settings and every account setup with its filters, the documents sync carries, and never consent, caches, watch progress or session memory. Importing replaces what the file covers, as one edit that sync then carries. Spec: 04 DATA-53 to DATA-55, 06 ARC-MOD-36.
+- **Recent adds** ([R86](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): a `storage.session` list of up to 50 adds, kept until the browser closes, never synced. Spec: 04 DATA-52.

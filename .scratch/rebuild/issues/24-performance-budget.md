@@ -327,3 +327,11 @@ Also from [ticket 15](15-popup-and-settings.md):
 - **Settings first frame:** 38.8 KB.
 - **Onboarding:** 23.2 KB.
 - **Cold first frame:** about 42 ms (about 150 ms at 4× slowdown), measured off the reference machine.
+
+## Settled by the user (2026-10-20)
+
+**No budget number changes** after the user's decisions ([R99](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99); spec 07 Q-PERF-44):
+- **Four more YouTube Music actions** (R85): about 1–1.5 KB more in `feature-music-actions.js`, a few bindings and two small jobs, rebalanced within YouTube Music's 43 KB; if they don't fit, their code loads on first use.
+- **Keys from any tab and Save from the browser's menu** (R88, R91): nothing eager on any page; on use they inject the page half, core and kit, which have budgets, and their background code counts toward the 25 KB background.
+- **Recent adds** (R86): only a header button in the popup's first view, and a lazy sheet. The YouTube Music popup's 0.6 KB headroom stays tight, so the matching-cut rule applies; moving copy into `messages.json` (R93) is expected to cover it.
+- **The toolbar tick and "paused"** (R92): background only.
