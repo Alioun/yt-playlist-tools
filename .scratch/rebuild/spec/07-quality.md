@@ -716,7 +716,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 - **Q-PERF-49. Observers,** beyond Q-PERF-27:
   - an observer is connected only on the page types its feature acts on, and disconnects while the tab is hidden;
   - attribute observers name their attributes (`attributeFilter`);
-  - no subtree observer on the app root (`ytd-app`, `ytmusic-app`) either, which is the whole page in practice. The YouTube Music rough build had one, re-syncing its header and player-bar controls on every change: it was the only work of ours while nothing was clicked, 7–15 ms a minute during playback;
+  - no subtree observer on the app root (`ytd-app`, `ytmusic-app`) either, which is the whole page in practice. The YouTube Music rough build had one, re-syncing its header and player-bar controls on every change: it was the only work of ours while nothing was clicked, about 6–7 ms a minute during playback;
   - an observer watches a container's own children (`childList` without `subtree`) unless it must go deeper. On a channel grid, a scroll that loaded 30 more cards gave the grid container's own children 2–3 records, a whole-document child-list observer about 177, and about 470 with attributes. Our observers together receive at most 10 records a minute during steady playback and at most 20 per page of cards loaded *(starting values)*;
   - a ResizeObserver watches only our own hosts or one anchor, and resize and scroll work runs at most once per animation frame ([UI-RULE-44](05-ui.md#page-ui-youtube-and-youtube-music)). (R101, R115)
 - **Q-PERF-50. Hidden tabs.** In a hidden tab only auto-add's counting runs, while a video it counts plays ([FT-62](04-features-accounts-data.md#13-off-costs-nothing)). No layout read, DOM write, observer, anchor check or toast timer of ours runs there. A hidden tab playing nothing shows no activity of ours at all. (R104)
@@ -732,7 +732,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 | A user action: a click, key, popup open, browser-menu click or command | What the action needs |
 
   (R105, R110)
-- **Q-PERF-52. Work per wake.** A routine wake (`tab.hello`, a progress save, signals) makes at most 2 storage reads before it handles its event and at most 1 write, and no `scripting` call when the desired set hasn't changed ([ARC-MOD-37](06-architecture.md#643-background-srcbackground)). It handles its event within 10 ms of background time at 1×, not counting the browser's own start of the worker. A cold start measured about 25 ms from message to answer, against 1.4 ms warm. (R109)
+- **Q-PERF-52. Work per wake.** A routine wake (`tab.hello`, a progress save, signals) makes at most 2 storage reads before it handles its event and at most 1 write, and no `scripting` call when the desired set hasn't changed ([ARC-MOD-37](06-architecture.md#643-background-srcbackground)). It handles its event within 10 ms of background time at 1×, not counting the browser's own start of the worker. A cold start measured about 25 ms from message to answer (23–41 ms), against 1.4 ms warm. (R109)
 - **Q-PERF-53. Background timers and alarms:** no interval, no alarm, and one-shot follow-ups only, each at most 25 s ([ARC-MOD-39](06-architecture.md#643-background-srcbackground)). (R103)
 - **Q-PERF-54. Storage:**
 
@@ -752,7 +752,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 
   Nothing else fetches by itself: no prefetch, no cache refreshed on a timer, nothing read from YouTube to keep something current. Refreshing a stale list when a view opens follows the user's open (ARC-ACC-43). (R116)
 - **Q-PERF-56. Memory.**
-  - In a page, Q-PERF-30's 500 KB of isolated-world heap still holds after 30 minutes with 500 cards scrolled past. Per-item state is capped ([UI-RULE-44](05-ui.md#page-ui-youtube-and-youtube-music)), and the tracker holds only the current video.
+  - In a page, Q-PERF-30's 500 KB of isolated-world heap still holds after 30 minutes with 500 cards scrolled past. The in-page prototype held about 115–135 KB of its own on a watch page ([ticket 33](../issues/33-resource-mindful-defaults.md)). Per-item state is capped ([UI-RULE-44](05-ui.md#page-ui-youtube-and-youtube-music)), and the tracker holds only the current video.
   - The background holds nothing between wakes that it can't rebuild from storage. `storage.session` stays under 1 MB: at most 200 tabs in the registry ([ARC-ACC-70](06-architecture.md#6211-serving-tab-routing)), 200 signals ([HEALTH-28](04-features-accounts-data.md#51-what-counts-as-breakage)) and 50 recent adds (R86).
   - `storage.local` stays under 5 MB, half of Chrome's 10 MB, with progress capped by [DATA-26](04-features-accounts-data.md#46-watch-progress). (R101)
 - **Q-PERF-57. Tabs that need nothing.** Automatic work never wakes, reloads, activates, injects into or messages a discarded or frozen tab, and never touches a tab of another site. Injecting into several open tabs goes one tab at a time ([ARC-MAN-22](06-architecture.md#633-runtime-script-registration), [ARC-ACC-56](06-architecture.md#6211-serving-tab-routing)). (R104, R109)

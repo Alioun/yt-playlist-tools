@@ -19,7 +19,7 @@ The user's requirement (2026-10-20): "with all of the automatic options added th
   - `storage.onChanged` is copied into every listening content script: in a burst, a 57 KB write cost each listening tab 7–11 ms [BG 18, M 4].
   - Firefox's `menus.onShown` wakes the background on every right-click anywhere [BG 23].
   - Long Animation Frames can't see isolated-world code, and Firefox has no long-task API, so our cost is measured from traces and profiles [PG 9].
-- **What 2.0 costs today, measured:** prototype A did nothing at all while idle, visible or hidden, and its worker never woke [M 2]. Prototype B did nothing while idle, but spent 7–15 ms a minute during YouTube Music playback through a subtree observer on the whole app, which the budgets now forbid [M 7]. A stand-in tracker cost 7–18 ms a minute of playback, visible or hidden, against YouTube's own 1,070 ms visible and 585 ms hidden [M 1, M 4].
+- **What 2.0 costs today, measured:** prototype A did nothing at all while idle, visible or hidden, and its worker never woke [M 2]. Prototype B did nothing while idle, but spent 6–7 ms a minute during YouTube Music playback through a subtree observer on the whole app, which the budgets now forbid [M 7]. Prototype A's own heap was about 115–135 KB, under the 500 KB budget [M 2]. A stand-in tracker cost 7–18 ms a minute of playback, visible or hidden, against YouTube's own 1,070 ms visible and 585 ms hidden [M 1, M 4].
 - **Budgets** (07 §7.6.8, Q-PERF-45 to Q-PERF-58), with everything on:
 
   | What | Budget |
@@ -136,7 +136,7 @@ Measured on 2026-10-20, signed out, on real youtube.com unless marked. The throw
 | Watch page, playing, hidden | 585 ms | 166 ms | 0 | 5–6 |
 | Channel grid, idle, visible | 27 ms | 6 ms | 0 | about 3 |
 
-**[M 2] Prototype A while idle.** In every traced idle window (watch page visible, watch page hidden, grid) there were **zero** function calls from `chrome-extension://` URLs and zero CPU-profile samples of ours. Its only timers were the watch-page button's placement retries after a navigation (0, 150, 500, 1,500 and 4,000 ms), outside the windows. Whole-page time with A was 1,185 ms a minute visible (script 249) against 1,073 (script 258), and 589 hidden against 585: within the noise. Its worker woke **0** times in a 3-minute session with three YouTube tabs, because it listens only to messages and install events.
+**[M 2] Prototype A while idle.** In every traced idle window (watch page visible, watch page hidden, grid) there were **zero** function calls from `chrome-extension://` URLs and zero CPU-profile samples of ours. Its only timers were the watch-page button's placement retries after a navigation (0, 150, 500, 1,500 and 4,000 ms), outside the windows. Whole-page time with A was 1,185 ms a minute visible (script 249) against 1,073 (script 258), and 589 hidden against 585: within the noise. Its worker woke **0** times in each of three 3-minute sessions with three YouTube tabs, because it listens only to messages and install events. **Memory:** about 211 KB of JS was reachable from its isolated world, against 74–96 KB for a near-empty world, so about 115–135 KB was its own: roughly 0.5 % of the page's 44.5–46.6 MB heap, and inside Q-PERF-30's 500 KB.
 
 **[M 3] `timeupdate`.** 3.8 a second on real YouTube, visible **and** hidden, at 1× **and** 2× speed: a fixed 250 ms cadence, not tied to media time [PG 1, PG 2]. 3.6 a second on the local page.
 
@@ -150,7 +150,7 @@ Measured on 2026-10-20, signed out, on real youtube.com unless marked. The throw
   | One video's entry, 147 bytes | 0.1 ms | about 1 ms | about 0.13 ms |
   | A whole progress record of 1,000 videos, 56.7 KB | about 4 ms | about 12 ms (8.6–20) | 7–11 ms |
 
-  Every listening tab received every write. The listener's own code took 0.01–0.05 ms; the rest is the browser turning the old and new values into objects in each listening context [BG 18].
+  Every listening tab received every write. The listener's own code took 0.01–0.05 ms; the rest is the browser turning the old and new values into objects in each listening context [BG 18]. The first write in a browser session took about 200–260 ms to land, without blocking the main thread.
 
 **[M 5] `MutationObserver` on real YouTube** (an isolated world; the callback walks the records and matches added elements):
 
@@ -163,9 +163,9 @@ Measured on 2026-10-20, signed out, on real youtube.com unless marked. The throw
 So YouTube is quiet during steady playback; the bursts come with navigation and scrolling, and scoping an observer to one container's own children cuts the records about 60-fold. The time is small here only because the stand-in callback does almost nothing per record.
 
 **[M 6] The background.**
-- **Cold and warm:** a message from a content script to the worker and back took about 25 ms (23–30, n = 10) with the worker stopped first, and 1.5 ms (1.2–1.8) with it running. A no-op message: 23.6 and 1.25 ms.
+- **Cold and warm:** a message from a content script to the worker and back took 25.1 ms (23–41, n = 30) with the worker stopped first, and 1.4 ms (1.1–2.5) with it running.
 - **Memory:** the extension's process held about 15.5 MB (PSS; 9.5 MB private). Prototype A's worker used 0.5 MB of JS heap.
-- **A test worker with an unfiltered `tabs.onUpdated` listener** got 40 events in a 3-minute session with three YouTube tabs (`status` 18, `title` 10, `url` 7, `audible` 6, `favIconUrl` 6), and started twice: it stayed up while events kept coming and started again on the next navigation after 30 s of quiet. Per navigation:
+- **A test worker with an unfiltered `tabs.onUpdated` listener** got 40–53 events in each of three 3-minute sessions with three YouTube tabs (in the first: `status` 18, `title` 10, `url` 7, `audible` 6, `favIconUrl` 6), and started 1–2 times per session: it stays up while events keep coming and starts again on the next navigation after 30 s of quiet. Per navigation, the same in all three runs:
 
   | What happened | `tabs.onUpdated` events |
   |---|---|
@@ -179,12 +179,12 @@ So YouTube is quiet during steady playback; the bursts come with navigation and 
 **[M 7] YouTube Music, with prototype B** (ticket 27's rough build, `prototype/youtube-music-controls`: quick actions through one hover overlay, header buttons and the player-bar Save), signed out, Home with 60 recognised items:
 - **YouTube Music itself** is busy even when idle: about 2,200–2,300 ms of main-thread time a minute on Home with nothing playing, and 1,850–2,400 ms while a song plays visible (script 320–440 ms).
 - **Idle:** no function call of ours on Home.
-- **Playing:** B's quick-actions file ran 7–15 ms a minute (trace-attributed), the only work of ours while nothing was clicked. Its source shows why: one `MutationObserver` on `ytmusic-app` with `subtree: true`, which re-syncs the header and player-bar controls on every change, and YouTube Music changes its own page as the song plays. This is what Q-PERF-49 and UI-RULE-44 now forbid. The same build also polls twice: up to 40 tries 250 ms apart for the gateway at start, and every 40 ms for up to 5 s while `popovers.js` loads. Both are rough-build shortcuts that Q-PERF-25 already rules out.
+- **Playing:** B's quick-actions file ran 6–7 ms a minute (median of three runs; up to 15 ms under tracing), the only work of ours while nothing was clicked. Its source shows why: one `MutationObserver` on `ytmusic-app` with `subtree: true`, which re-syncs the header and player-bar controls on every change, and YouTube Music changes its own page as the song plays. This is what Q-PERF-49 and UI-RULE-44 now forbid. The same build also polls twice: up to 40 tries 250 ms apart for the gateway at start, and every 40 ms for up to 5 s while `popovers.js` loads. Both are rough-build shortcuts that Q-PERF-25 already rules out.
 
 **[M 8] Firefox 158**, the stand-in tracker on the local page (real YouTube kept pausing itself in headless Firefox):
 - `timeupdate` fired 3.6 times a second visible **and hidden**, and 3.8 at 2× hidden, which settles [PG 2]'s open point for Firefox: media events aren't throttled in a hidden tab there either.
 - The tracker cost 24 ms a minute visible (mean 113 µs, at most 5.7 ms) and 12–14 ms hidden. Firefox's times are recorded for information only (Q-TEST-19), but this is close to the 30 ms budget, so the real tracker needs watching there.
-- `storage.local.set` didn't block the writer (0.2 ms either way), but took 1.5 ms to land for 147 bytes and 10–11 ms for 57 KB (p90 43–65 ms; one write during playback took 128–553 ms).
+- `storage.local.set` didn't block the writer (0.2 ms either way), but took 1.5 ms to land for 147 bytes and 10–11 ms for 57 KB (p90 43–65 ms). The first write in a browser session took about 550 ms to land.
 
 
 ---
@@ -211,7 +211,7 @@ So YouTube is quiet during steady playback; the bursts come with navigation and 
 | 14 | **The browser menu** (R91) | Created when the feature goes on | Nothing until clicked [BG 22] | **Changes:** created on switch-on and on `onInstalled` while on; never `menus.onShown` or `refresh()`, which would wake the background on every right-click anywhere in Firefox [BG 23] (ARC-MAN-23). R113 |
 | 15 | **Keys from any tab** (R88) | A key press | Nothing until pressed [BG 24]; then one wake, one query, at most one injection | **Complies.** The 3 s answer is an allowed one-shot timer. R113 |
 | 16 | **YouTube Music state** (`nowPlaying`, `queue` streams, YM-Q-8, YM-BAR-7) | The app's own changes; a queue action | "Re-read until the queue has grown… within 10 s", interval unstated | **Changes:** streams are driven by the app's own events and cost nothing without a watcher; the growth check re-reads at most 6 times on a backing-off schedule (YM-Q-14); the player-bar Save follows song changes only while it's drawn (YM-BAR-9). R114 |
-| 17 | **In-page controls** (overlay, watch-page button, theme mirror) | Hover, navigation, resize, theme change | A page round trip per hover on YouTube Music; per-item state that grows with scrolling; an unthrottled `resize` listener; a theme observer without a filter; in the YouTube Music rough build, a subtree observer on `ytmusic-app` costing 7–15 ms a minute of playback [M 7] | **Complies** in shape (UI-RULE-36/37). **Changes:** per-item state capped at 200 items; resize and scroll work at most once per frame; attribute observers name their attributes; no subtree observer on the app root; no observer or layout read while hidden (UI-RULE-44, Q-PERF-49). R115 |
+| 17 | **In-page controls** (overlay, watch-page button, theme mirror) | Hover, navigation, resize, theme change | A page round trip per hover on YouTube Music; per-item state that grows with scrolling; an unthrottled `resize` listener; a theme observer without a filter; in the YouTube Music rough build, a subtree observer on `ytmusic-app` costing 6–7 ms a minute of playback [M 7] | **Complies** in shape (UI-RULE-36/37). **Changes:** per-item state capped at 200 items; resize and scroll work at most once per frame; attribute observers name their attributes; no subtree observer on the app root; no observer or layout read while hidden (UI-RULE-44, Q-PERF-49). R115 |
 | 18 | **Toasts** (YT-ADD-19/20) | An outcome | A 6 s timer | **Complies:** the timer runs only while the tab is visible. |
 | 19 | **Requests nobody clicked for** (ARC-ACC-43, ACC-18, ACC-30) | Auto-add's goal; the 24 h label check; claiming the 1.x setup | The claim check can fetch a playlist list for every account on every page load | **Changes:** a closed list of named exceptions, each bounded (Q-PERF-55); the claim check runs once per account per browser session (ACC-46). R116 |
 | 20 | **Automatic gathering** (ticket 31) | Not chosen yet | Every candidate trigger would be 2.0's first tab or window listener or alarm | **Constraints** in §6 (Q-PERF-58): whichever trigger the user picks must meet them. R117 |
