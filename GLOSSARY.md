@@ -31,7 +31,7 @@ The browser's permission for the extension to run on YouTube or on YouTube Music
 _Avoid_: Host permission (in user-facing text), grant
 
 **Serving tab**:
-The YouTube or YouTube Music tab the extension works through for the popup or settings, chosen because it's signed in to the account being shown.
+The YouTube or YouTube Music tab the extension works through for the popup, settings or automatic gathering, chosen because it's signed in to the account being shown or saved to.
 _Avoid_: Host tab, proxy tab
 
 **Breakage signal**:
@@ -103,7 +103,7 @@ _Avoid_: Current account, selected account, active account
 ### Adding videos
 
 **Auto-add**:
-Adding the current video to each auto-add playlist once its watch progress reaches that playlist's required percentage. The only add path that happens without an explicit user action.
+Adding the current video to each auto-add playlist once its watch progress reaches that playlist's required percentage. One of two add paths that happen without an explicit user action; the other is automatic gathering.
 _Avoid_: Auto-save, auto-playlist
 
 **Auto-add playlist**:
@@ -131,7 +131,7 @@ Auto-add stopped by the user until they resume it or the browser restarts; nothi
 _Avoid_: Disabled, off
 
 **Add**:
-One video put into one or more of the user's playlists by a single action of one feature: auto-add, a playlist shortcut, quick-save or Save to playlist. Putting a video in the queue is Add to queue, not an add.
+One video put into one or more of the user's playlists by a single action of one feature: auto-add, a playlist shortcut, quick-save, Save to playlist, or a gather into the gather playlist, which makes one add per video and reports them together. Putting a video in the queue is Add to queue, not an add.
 _Avoid_: Insert, save request
 
 **Outcome**:
@@ -161,7 +161,7 @@ _Avoid_: History, activity log, add history
 ### Queue
 
 **Queue**:
-The list of videos or songs that play after the current one, on YouTube or YouTube Music.
+The list of videos or songs that play after the current one, on YouTube or YouTube Music. A gather can fill it.
 _Avoid_: Up next (YouTube Music's tab label), playlist
 
 **Play next**:
@@ -202,6 +202,44 @@ _Avoid_: Default playlist, one-click playlist, target playlist
 **Playlist picker**:
 The extension's list of the user's playlists, with a check mark on each one that already holds the song or video. Ticking a row adds the item there, and unticking takes it out.
 _Avoid_: Save dialog (YouTube's own), playlist menu
+
+### Gathering
+
+**Gather**:
+Collecting the video tabs open in one window into one destination, each video once and in the gather order, optionally closing their tabs.
+_Avoid_: Vacuum, collect, sweep, merge
+
+**Video tab**:
+A tab on one YouTube video's watch page or live page, or on a YouTube Music song's page. Shorts, channels, playlists and search results aren't video tabs, and neither is a page whose title merely names a video.
+_Avoid_: YouTube tab (any youtube.com page), video page
+
+**Destination**:
+Where a gather puts its videos: YouTube's player, YouTube's queue or the gather playlist.
+_Avoid_: Mode, queue behaviour, target
+
+**Temporary list**:
+The list YouTube makes from up to 50 videos when a gather opens them in YouTube's player, shown as "Untitled List" with Shuffle and Loop. It's neither the queue nor one of the user's playlists.
+_Avoid_: Queue, playlist, watch_videos list
+
+**Gather playlist**:
+The playlist a gather adds to when its destination is a playlist, and where automatic gathering saves: one per account, part of its account setup.
+_Avoid_: Vacuum playlist, vacuumed playlist, target playlist, gathered playlist
+
+**Gather order**:
+The order a gather puts its videos in: newest tabs first, oldest tabs first, English first, non-English first, left to right, right to left, or shuffled.
+_Avoid_: Sort order, video order
+
+**Automatic gathering**:
+Gathering that runs by itself, into the gather playlist only, and closes the tabs it saved. Each of its triggers is switched on separately: unvisited tabs, tabs opened in the background, and a window reaching a set number of video tabs.
+_Avoid_: Auto-gather (too close to auto-add), auto-vacuum
+
+**Unvisited tab**:
+A video tab the user hasn't switched to for at least the chosen time. A tab never switched to counts from when it was opened.
+_Avoid_: Idle tab (the browser's idle state means the user is away), stale tab, inactive tab (the browser's word for any tab that isn't selected)
+
+**Tab opened in the background**:
+A video tab that loaded without being shown, as a middle-clicked link does, and hasn't been switched to since. A tab the browser restores at start isn't one.
+_Avoid_: Hidden tab (any tab not on screen), new tab, background tab (any tab that isn't selected)
 
 ### Shortcuts
 

@@ -17,7 +17,7 @@ This chapter says how 2.0 reaches YouTube and YouTube Music, what ships in each 
 - **Sites:** `www` is www.youtube.com and `music` is music.youtube.com. `Site = "www" | "music"`.
 - **Signatures** are TypeScript and normative in shape. Payload field names that only one module reads may be refined when that module is built, as long as the shape holds.
 - **Precedence:** where the tickets disagree, the later amendment or finding wins. What was resolved that way is listed in [§6.11](#611-resolved-by-precedence), and what's still open in [§6.12](#612-conflicts-found).
-- **Resolutions:** decisions made while the spec was assembled are cited by R-number, from [resolutions.md](resolutions.md). A requirement that a resolution changed keeps its ID and ends with "(R-n)". The user's decisions of 2026-10-20 are R84–R99.
+- **Resolutions:** decisions made while the spec was assembled are cited by R-number, from [resolutions.md](resolutions.md). A requirement that a resolution changed keeps its ID and ends with "(R-n)". The user's decisions of 2026-10-20 are R84–R99, the running-cost rules R100–R117, and the GatherTube fold R120–R139.
 - **Names:** "the first-run page" is the extension page in `onboarding.html` that holds first run and the upgrade note (R37). Folder and file names keep `onboarding`.
 
 ## 6.1 Overview
@@ -179,6 +179,8 @@ Jobs cover reads and writes alike. Each job runs through its site's route table 
 | `playlists` | www | — | each playlist: `{ id, title, privacy?, count?, thumb? }` | playlist | yes |
 | `add` | www | `{ playlistId, videoId }` | `{ setVideoId }` | playlist | yes |
 | `remove` | www | `{ playlistId, setVideoId }` | — | playlist | yes |
+| `addBatch` | www | `{ playlistId, videoIds }`: up to 50 videos of a gather into the gather playlist, sent together after their membership reads ([YT-GT-18](02-youtube.md#2164-gathering-into-a-playlist); R126) | `{ results: { videoId, setVideoId?, failure? }[] }`, one per video, in order | playlist | yes |
+| `removeBatch` | www | `{ playlistId, setVideoIds }`: up to 50 entries, a gather's Undo ([YT-GT-21](02-youtube.md#2164-gathering-into-a-playlist); R127) | `{ removed }` | playlist | yes |
 | `save`, `unsave` | music | as `add`, `remove` | as `add`, `remove` | playlist | yes |
 | `create` | www, music | `{ title, privacy, videoId? }`: with `videoId`, the playlist is created with that video already in it, in one request ([YT-NEW-01](02-youtube.md#27-creating-playlists), [YM-PICK-10](03-youtube-music.md#10-the-playlist-picker)) | `{ playlistId }` | playlist | yes |
 | `channelOf` | www | `{ videoId }` | `{ channelId \| null, title?, handle? }` | none, or playlist when it falls back to a request | no |
@@ -186,6 +188,7 @@ Jobs cover reads and writes alike. Each job runs through its site's route table 
 | `videoInfo` | www | target, or the current video | `{ videoId, title, length, kind: "video" \| "short" }` | none | no |
 | `queueAdd` | www | target card | `{ confirmed, quiet, undo?: { listId, setVideoId } }` | app-state | no |
 | `queueUndo` | www | `{ listId, setVideoId }` | — | app-state | no |
+| `queueAddList` | www | `{ videoIds }`: the rest of a gather into YouTube's queue, after the first video, which the tab the gather opened plays; at most 199 ([YT-GT-14](02-youtube.md#2163-destinations); R123) | `{ confirmed, count }` | app-state | no |
 | `openCardMenu` | www | target card | — | none | no |
 | `itemInfo` | music | target element | the item's menu endpoints (the library toggle with its state, the mix's watch endpoint and the artist and album browse endpoints included, R85), kind, like state, queue item ID, `selected`, header song count | none | no |
 | `queueInsert` | music | `{ endpoint, position: "next" \| "end" }` | `{ ids }`: the new queue item IDs | app-state | no |
@@ -220,9 +223,12 @@ The sending context is either **the tab** (where the action happened) or **a ser
 | `playlists` | **PROVISIONAL (L2, L5):** service request `browse {browseId: "FEplaylist_aggregation"}`. Watch Later (`WL`) is added as a fixed entry if it isn't listed. | Signed request. If the lockups carry no privacy, the privacy shown comes from the last membership read. | A serving tab | L2, L5 |
 | `add` (auto-add, shortcuts, quick-save, picker; Watch Later and Shorts included) | **PROVISIONAL (L1):** YouTube command `playlistEditEndpoint {playlistId, actions: [{action: "ACTION_ADD_VIDEO", addedVideoId}]}`. Success is read from `status`, never from the HTTP code. | Service request, if L2 passes for `playlistEditEndpoint`; then signed request `browse/edit_playlist` | The tab; a serving tab for adds from the popup's picker | L1, L2, L6 |
 | `remove` (undo, picker untick) | As `add`, with `ACTION_REMOVE_VIDEO` and the `setVideoId` the add returned | As `add` | The tab where the add ran, or the serving tab | L1, L6 |
+| `addBatch` (Gather tabs into the gather playlist; R126) | **PROVISIONAL (L1, G1, G2):** as `add`, with one `ACTION_ADD_VIDEO` action per video in one `playlistEditEndpoint`. Each video's `setVideoId` or failure is read from the answer's per-action results; success is still read from `status` | As `add`: the service request, then the signed request `browse/edit_playlist` with the same actions | A serving tab ([ARC-ACC-73](#6216-gathering-tabs)) | L1, G1, G2 |
+| `removeBatch` (a gather's Undo; R127) | **PROVISIONAL (G5):** as `remove`, with one `ACTION_REMOVE_VIDEO` per `setVideoId` in one request | As `remove` | A serving tab of that account | L1, G5 |
 | `create` | **PROVISIONAL (L2):** service request `createPlaylistServiceEndpoint`. The YouTube command is excluded, because it drops the new ID. | Signed request `playlist/create`. With no tab: "Open YouTube to create playlists". | The tab, or a serving tab | L2 |
 | `queueAdd` | YouTube command; see [§6.2.8](#6284-youtubes-queue-quiet-add-confirmation-and-undo). Works signed out. | None: nothing else reaches the queue. YouTube's ⋮ menu stays available. | The tab | L8, T29.Q1, T29.Q6–Q8 |
 | `queueUndo` | YouTube command: the quiet removal ([§6.2.8](#6284-youtubes-queue-quiet-add-confirmation-and-undo)) | None: "Couldn't undo" | The tab | T29.Q2, T29.Q5–Q7 |
+| `queueAddList` (Gather tabs into YouTube's queue; R123) | **PROVISIONAL (G3):** YouTube command `addToPlaylistCommand {listType: "PLAYLIST_EDIT_LIST_TYPE_QUEUE", …}` carrying every video ID, through the global resolver, in the watch tab the gather opened. `confirmed` once the queue panel's data ([ARC-ACC-35](#6284-youtubes-queue-quiet-add-confirmation-and-undo)) holds every ID sent. Works signed out. | None: the gather closes nothing and says so | The tab the gather opened ([ARC-ACC-75](#6216-gathering-tabs)) | G3 |
 | `channelOf` (channel filters) | **Page read:** the `yt-navigate-finish` detail, else `#movie_player.getPlayerResponse()`. On Shorts, the navigation event's reel data. | Watch pages: plain request `next`. Shorts: plain request `reel/reel_item_watch`. | The tab | L9 |
 | `resolveChannel` (typed channels) | **Plain request:** `navigation/resolve_url`, following up to 3 `urlEndpoint` hops and accepting only a `UC…` ID with `WEB_PAGE_TYPE_CHANNEL`. Then a plain `browse {browseId: "UC…"}` for the title and @handle. | With no tab, only `UC…` IDs and `/channel/UC…` URLs are accepted, parsed offline. Other forms show "Open YouTube to look up this channel". | A serving tab of any account, signed in or out | Settled |
 | `videoInfo` | **Page read:** the navigation event and the player | — | The tab | L9 |
@@ -428,7 +434,7 @@ flowchart TD
 
   On a timeout or a mismatch, the next candidate is tried.
 - **ARC-ACC-56.** Routing never wakes, reloads, activates or undiscards a tab.
-- **ARC-ACC-57. The tab registry** (each tab's site, account key, signed-in state and whether it's private) is filled from two sources: `tab.hello` from site cores (with `sender.tab.incognito`), and on-demand pings. Recency comes from `lastAccessed`, never from tracking events.
+- **ARC-ACC-57. The tab registry** (each tab's site, account key, signed-in state and whether it's private, and from `tab.hello` whether its page started hidden on a first load, with when it said so, for automatic gathering's second trigger) is filled from two sources: `tab.hello` from site cores (with `sender.tab.incognito`), and on-demand pings. Recency comes from `lastAccessed`, never from tracking events. (R133)
 - **ARC-ACC-68. Picking a YouTube Music tab for a job that names no tab.** The popup's Playing now row is one caller ([YM-POP-11](03-youtube-music.md#17-playing-now-in-the-popup)); keys from any tab are the other (ARC-ACC-69; R88). It reads:
   1. the focused window's active tab, if it's YouTube Music;
   2. else the audible YouTube Music tab (`tab.audible`);
@@ -528,6 +534,49 @@ What the signed-out run found:
 | **P2** | Registered scripts apply at browser start before the background runs (`persistAcrossSessions`). That registrations are restored after an update is already answered from browser source. | As specified | The reconcile also listens for `runtime.onStartup` and injects into tabs already open |
 | **T28.1–T28.7** | Signed-in queue entries carry `playlistEditParams`, `playlistSetVideoId` and the queue's `playlistId`; the drop moves the entry and the server order follows; radio survives; panel states (before anything plays, Lyrics or Related showing); casting | `queueMove` as specified | No moves: queue items keep no Play next / Add to queue, and Remove's undo has no route |
 | **T29.Q1–Q8** | YouTube's toast on later adds (Q1); quiet and plain removal (Q2, Q3); the panel's own remove item (Q4); after-effects (Q5); undo timing and HTTP 409 (Q6); where the panel data lives (Q7); the quiet add (Q8) | Quiet add, confirmation and Undo as specified | The queue button keeps no Undo. If only the quiet add fails, ARC-ACC-34 applies. |
+| **G1** (R126) | `edit_playlist` with 2, 50 and 200 `ACTION_ADD_VIDEO` actions in one request: accepted, order kept, a `setVideoId` for each | `addBatch` sends up to 50 per request | Batches shrink to the largest size that passes, down to one video per request |
+| **G2** (R126) | The same request with one video already in the playlist: refused, or a copy added, and whether the rest still go in | As specified | Nothing changes: a batch never holds a video its membership read found in the playlist ([YT-GT-18](02-youtube.md#2164-gathering-into-a-playlist)) |
+| **G3** (R123) | YouTube's queue built with one `addToPlaylistCommand` carrying a list, signed in, from a fresh watch tab: every video present, in order, and how many it takes (100 passed signed out) | `queueAddList` as specified, up to 200 a gather | YouTube's queue takes as many as pass; a gather over that count sends that many and keeps the rest of its tabs open ([YT-GT-14](02-youtube.md#2163-destinations)) |
+| **G4** (R123) | `watch_videos` signed in: still capped at 50, and nothing written to the account | As specified | Recorded; the design doesn't change |
+| **G5** (R127) | `edit_playlist` with several `ACTION_REMOVE_VIDEO` actions by `setVideoId` in one request | `removeBatch` as specified | Undo removes one entry per request |
+| **G6** (R129, R130) | In Chrome and Firefox: how a tab opened in the background (middle-click, "Open all"), a tab restored at browser start, one reopened with Ctrl+Shift+T and a hidden tab that reloads report their start visibility, navigation type and `lastAccessed`; and whether `lastAccessed` survives a restart | Triggers 1 and 2 as specified ([YT-GT-23, YT-GT-24](02-youtube.md#2165-automatic-gathering)) | If restored tabs look opened in the background, trigger 2 also ignores any tab whose `lastAccessed` is more than 10 s older than its page's start. If `lastAccessed` doesn't survive a restart, trigger 1 counts from the restart |
+| **G7** (R127) | Reopening tabs for a gather's Undo: Firefox's `tabs.create` with `discarded: true` and `title`; what Chrome does with several tabs created in the background at once | As specified ([ARC-ACC-76](#6216-gathering-tabs)) | Chrome reopens them one at a time, each after the previous one was created; Firefox opens them loaded if `discarded` is refused |
+
+### 6.2.16 Gathering tabs
+
+Gather tabs ([02 §2.16](02-youtube.md#216-gather-tabs); R120–R135) reads a window's tabs, opens tabs and closes them. Its logic is the background's Gather module (ARC-MOD-40); its YouTube jobs are `addBatch`, `removeBatch` and `queueAddList` (§6.2.5).
+
+- **ARC-ACC-72. Reading tabs for a gather.**
+  - A gather reads its window with one `tabs.query({ windowId, url })`, with `https://www.youtube.com/watch*` and `https://www.youtube.com/live/*`, plus `https://music.youtube.com/watch*` while the YouTube Music section is on and has site access. Automatic gathering's trigger-1 check leaves out `windowId` and reads every window at once, then drops private ones.
+  - Host access is enough for the `url` filter and for each matching tab's `url` and `title`; `index`, `windowId`, `lastAccessed`, `active`, `pinned`, `audible`, `discarded` and `incognito` come with every tab. No `tabs` permission (ARC-MAN-25).
+  - The video ID comes from the URL alone (ARC-MOD-41). Titles are read only for the language orders.
+  - A gathered tab is never messaged, injected into, activated, reloaded or un-discarded, and automatic gathering never pings it as a serving tab (ARC-ACC-73). Discarded and frozen tabs are gathered as they are.
+  - **The window:** for the popup, its window ID, checked against the sender (ARC-ACC-65); for triggers 2 and 3, the `sender.tab.windowId` of the `tab.hello` that started the burst; for trigger 1, each normal window its query found. (R121, R129)
+- **ARC-ACC-73. The serving tab for gathers.**
+  - **From the popup:** `Tabs.serve` with the account in view (ARC-ACC-52), as for any popup job. One of the gathered tabs may serve; it then closes last, in the same `tabs.remove` call, after the report.
+  - **Automatic gathering** picks its own tab, without `Tabs.serve` or the account in view, among youtube.com tabs:
+    1. the focused window's active youtube.com tab;
+    2. then the gathering window's youtube.com tabs;
+    3. then other normal windows' youtube.com tabs, each group most recently accessed first (`lastAccessed`).
+
+    A candidate is never a tab being gathered, never private, never discarded or frozen, and must answer its ping signed in, on an account whose gather playlist is set and isn't marked Missing or Full. ARC-ACC-70's bounds hold: at most 3 pings and one injected core per gather.
+  - The batch runs as `AddFlow.batch` through `Tabs.runIn` in that tab, as that tab's account. With no candidate, nothing runs and nothing closes, and the Gather module keeps the "waiting" state for the popup row. (R126, R132)
+- **ARC-ACC-74. YouTube's player.**
+  - At most 50 IDs: `tabs.create({ windowId, url: "https://www.youtube.com/watch_videos?video_ids=ID1,ID2,…", active: true })`, at the end of the window. The IDs come only from tab URLs, so they're well formed: one malformed ID would lose the whole list.
+  - **Confirmation:** two one-shot `tabs.get` checks, 2 s and 10 s after the tab opens, set together; the second is cancelled once the first finds `list=` in the tab's `url`. Only then do the gathered tabs close (ARC-ACC-76). If neither finds it, nothing closes, and the Gather module reports a `no-effect` signal for Gather tabs to the Monitor ([Q-WATCH-24](07-quality.md#757-runtime-breakage-signals)).
+  - Nothing of ours is injected into the new tab. (R123, R124)
+- **ARC-ACC-75. YouTube's queue.**
+  - `tabs.create({ windowId, url: "https://www.youtube.com/watch?v=FIRST", active: true })`, at the end of the window.
+  - **Waiting for it to load:** its own `tab.hello`, if our core is registered on watch pages; else one-shot `tabs.get` checks of its `status` 1, 3 and 10 s after it opens, set together, the rest cancelled once it reads `complete`. If it hasn't loaded by 10 s, nothing is sent and nothing closes.
+  - Then `Registrar.ensure(tabId, { core: true })` injects the page half and the core if the tab has none (ARC-MAN-15), and `queueAddList` runs there with `Tabs.runIn`, with the other videos in gather order: at most 199, so 200 a gather. PROVISIONAL (G3).
+  - **Confirmation:** `queueAddList` answers `confirmed` once the queue panel's data holds every ID sent, within the job's 10 s (ARC-ACC-44). Only then do the gathered tabs close.
+  - The new tab is ours, not a gathered tab, so injecting into it keeps ARC-ACC-72's rule; it's the one core this job injects (ARC-ACC-70). (R123)
+- **ARC-ACC-76. Closing and reopening tabs.**
+  - A gather closes its tabs in one `tabs.remove([...ids])` call, once its destination has confirmed their videos (ARC-ACC-74, ARC-ACC-75, the batch's report).
+  - For a gather into the gather playlist, each closed tab's `url`, `title`, `index` and `windowId` go into the gather's Undo record first ([DATA-58](04-features-accounts-data.md#413-gather-tabs-memory)).
+  - **Undo:** one `membership` read for the account guard, then `removeBatch` with the entries the gather added, from a serving tab of that account (ARC-ACC-73's order for automatic gathers, `Tabs.serve` from the popup). Then one `tabs.create({ windowId, index, url, active: false })` per closed tab, in their old order; Firefox adds `discarded: true` and `title`, so they open unloaded. If the window has closed, one `windows.create({ url: [...], focused: false })` holds them. PROVISIONAL (G7).
+  - The reopened tabs' IDs go to the session's `kept` list (DATA-58), which automatic gathering skips until a tab's `lastAccessed` moves.
+  - If `removeBatch` fails, no tab reopens, and Undo reports "Couldn't undo.". (R124, R127)
 
 ## 6.3 Manifest, permissions and registration
 
@@ -563,7 +612,7 @@ What the signed-out run found:
 - **ARC-MAN-01.** The built manifests match this table exactly. `check:manifest` asserts it on both builds ([Q-CI-3](07-quality.md#771-ciyml), [REL-CI-20](08-release.md#141-ciyml)).
 - **ARC-MAN-02.** These are never requested: `tabs`, `activeTab`, `cookies`, `identity`, `offscreen`, `declarativeNetRequest*`, `webRequest*`, `unlimitedStorage`, `menus`, `notifications`, `downloads`, and any Google host other than YouTube's. `contextMenus` is requested only as an optional permission, when Save from the browser's menu is switched on (ARC-MAN-20; R91).
 - **ARC-MAN-03.** On Chrome, YouTube Music access is requested with `permissions.request({ origins: ["https://music.youtube.com/*"] })`, called first and synchronously in the click handler of Give access, or of the control that switches on the first thing that needs it: a YouTube Music feature, or "Also on YouTube Music" while playlist shortcuts is on. The shortcuts preset turns that option on, so the click that first switches on playlist shortcuts asks too ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). The YouTube Music section switch itself never asks. A refused prompt is handled as [ARC-ACC-61](#6212-no-tab-not-signed-in-no-site-access) says: from a switch, that switch stays off, except that Playlist shortcuts' own first switch-on goes on with "Also on YouTube Music" written off (R71); at first run's Agree, what needs the access is saved on but held (R14). Keys from any tab asks too when it's switched on; refused, it still goes on, and its YouTube Music keys answer "No access to YouTube Music." (R88). (R53, R71)
-- **ARC-MAN-04.** Dynamic script matches stay narrow on both browsers: `https://www.youtube.com/*` and `https://music.youtube.com/*`, top frame only.
+- **ARC-MAN-04.** Dynamic script matches stay narrow on both browsers: `https://www.youtube.com/*` and `https://music.youtube.com/*`, top frame only. A page entry may narrow its paths within those hosts: Gather tabs' covers only watch and live pages (ARC-MAN-24). (R133)
 - **ARC-MAN-05.** The keyboard commands are the unbound `_execute_action` and keys from any tab's three unbound commands (ARC-MAN-19). Every shortcut the user records is caught in the page (ADR-0004, amended 2026-10-20; R88).
 - **ARC-MAN-19. Keys from any tab's commands** (R88):
   - The manifest declares them, because commands can't be added at runtime. None has a `suggested_key`, so no key is reserved until the user sets one in the browser, and neither browser shows a prompt for `commands`.
@@ -616,7 +665,7 @@ Page code is WXT **unlisted scripts** (`defineUnlistedScript`), registered by th
 
 | ID | World | `js`, in order | `runAt` | Registered while |
 |---|---|---|---|---|
-| `pp-www-page` | MAIN | `page-www.js` | `document_start` (PROVISIONAL, measured by the real-browser layer) | consent given, schema ok, www access granted, and at least one www feature on |
+| `pp-www-page` | MAIN | `page-www.js` | `document_start` (PROVISIONAL, measured by the real-browser layer) | consent given, schema ok, www access granted, and at least one www page entry on, Gather tabs' included (ARC-MAN-24; R133) |
 | `pp-www` | ISOLATED | `core-www.js`, then `kit-www.js` if any feature that's on needs it, then each feature file that's on, in registry order | `document_idle` (PROVISIONAL, as above) | same |
 | `pp-music-page` | MAIN | `page-music.js` | `document_start` | consent, schema ok, music access granted, the YouTube Music section switch on (`musicSection`, R1), and at least one music page entry on: quick actions, quick-action shortcuts, or playlist shortcuts with "Also on YouTube Music" |
 | `pp-music` | ISOLATED | `core-music.js`, `kit-music.js`, then each music feature file that's on | `document_idle` | same |
@@ -633,7 +682,7 @@ Page code is WXT **unlisted scripts** (`defineUnlistedScript`), registered by th
   - on `permissions.onAdded` and `permissions.onRemoved`.
 
   The reconcile needs no `runtime.onInstalled` listener: the start-up run already covers install and update. Like recognising a 1.x upgrade (ARC-MOD-25), it never relies on that event, which Firefox can skip; the background uses it only to open first run on "install" ([ARC-MOD-34](#643-background-srcbackground), [DATA-47](04-features-accounts-data.md#410-schema-versions-and-migrations)). (R64)
-- **ARC-MAN-13. Switching a feature on** rewrites `pp-<site>` in one `updateContentScripts` call. Then, in each open matching tab, `scripting.executeScript` injects whatever is missing, in this order: the page half (`world: "MAIN"`), the core, the kit, then the feature. It works with no reload. The tab's new view arrives, and the core's host starts the feature.
+- **ARC-MAN-13. Switching a feature on** rewrites `pp-<site>` in one `updateContentScripts` call. Then, in each open matching tab, `scripting.executeScript` injects whatever is missing, in this order: the page half (`world: "MAIN"`), the core, the kit, then the feature. It works with no reload. The tab's new view arrives, and the core's host starts the feature. A page entry with no file of its own, such as Gather tabs' (ARC-MAN-24), injects nothing into open tabs: only pages that load afterwards need it. (R133)
 - **ARC-MAN-14. Switching a feature off** rewrites the list, and the background pushes the new view. The host disposes the feature's scope, removing every element, style, listener, observer and timer it made.
   - If no feature is left on a site, both of that site's registrations go, and the core disposes everything it added.
   - Code already parsed stays until the page reloads, but nothing stays drawn or listening.
@@ -657,6 +706,16 @@ Page code is WXT **unlisted scripts** (`defineUnlistedScript`), registered by th
   - They're scoped with `documentUrlPatterns` (youtube.com) and `targetUrlPatterns` (video and Short links), so the browser decides where they show, with no wake.
   - The only menu listener is `contextMenus.onClicked`. `menus.onShown` and `menus.refresh()` are never used: in Firefox, an `onShown` listener wakes the background for every right-click anywhere.
   - Commands have one `commands.onCommand` listener. While Keys from any tab is off, held or waiting for consent, it returns after one storage read. (R113)
+- **ARC-MAN-24. Gather tabs' page entry** (R130, R133):
+  - The registry gives Gather tabs `pages.www = { needs: [], matches: ["https://www.youtube.com/watch*", "https://www.youtube.com/live/*"], when: (s) => s.gather.on && (s.gather.auto.background || s.gather.auto.count) }`, with no `file` (ARC-REG-11).
+  - The desired set's `pp-www-page` and `pp-www` match the union of the matches of their entries that are on. With Gather tabs the only www page entry on, they cover only watch and live pages; with any other www feature on, every youtube.com page, as before. Their `js` lists don't change: Gather tabs adds no file and no kit.
+  - Switching trigger 2 or 3 on injects nothing into open tabs (ARC-MAN-13). Switching both off, or Gather tabs off, drops the entry from the desired set: the reconcile narrows or unregisters the registrations, and open tabs keep the inert core until they reload (ARC-MAN-14).
+  - The core sends `tab.hello` with `hidden` and `fresh` (ARC-MSG-15) and starts nothing for Gather tabs. It draws nothing, so the footprint stays "Doesn't change the page".
+  - Trigger 1 alone needs no page entry.
+- **ARC-MAN-25. Gathering needs no new permission** (R121):
+  - `tabs.query` with `url` works with host access, which exposes `url` and `title` for YouTube's tabs only (Chrome 121+, Firefox 86+).
+  - `tabs.create`, `tabs.get`, `tabs.remove`, `windows.create` and `i18n.detectLanguage` need no permission in either browser.
+  - `tabs` stays out (ARC-MAN-02), so tabs a suspender extension parked under its own address aren't seen, and aren't gathered. The manifests (§6.3.1) don't change.
 
 ## 6.4 The module map
 
@@ -691,6 +750,13 @@ This is plain TypeScript that every context may import. It has no `browser`, no 
 | `keys/` | `match(event: KeyFacts, bindings) → Binding \| null`, `recorder(state, event) → RecorderStep`, `display(key, os)` | The key matcher (character first, then physical key) and the recorder rules |
 | `picker/model.svelte.ts` | `new PickerModel({ source: PickerSource, site, mode: "save" \| "choose" \| "many" })` with `rows`, `query`, `membership`, `sortAZ`, `tick(id)`, `untick(id)`, `pin(id)`, `refresh()`, `create(title, privacy)` (with the picker's item already in the new playlist, where there is one) | One playlist-picker behaviour for the popup, settings, the first-run page and both sites' popovers ([UI-PICK-01](05-ui.md#one-picker-model-four-containers)). Rows keep the site's Save-dialog order unless `sortAZ`, which is stored per device; `refresh()` is ↻, and opening refreshes a cache older than 5 minutes (R39) |
 | `watchlist` | `watch: WatchEntry[]`: each entry's ID, site, dependent jobs and features, and runtime probe | The runtime half of the breakage watch list. The static needles live in `tools/` and never ship. |
+| `rules/gather` | `videoOf(url, access)`, `order(tabs, order, languages, random)`, `pick(tabs, settings, now, memory)` | Gather tabs' rules (ARC-MOD-41; R121, R122, R132) |
+
+- **ARC-MOD-41. Gather tabs' rules are pure** (`shared/rules/gather.ts`; R121, R122, R132):
+  - `videoOf(url, access)` answers a video ID for a video tab's address ([YT-GT-03](02-youtube.md#2161-the-feature-and-what-it-gathers)), or nothing, and never reads a title;
+  - `order(tabs, order, languages, random)` puts tabs in a gather order with each video once. `languages` maps each tab to the language detector's answer, and `random` is passed in, so Shuffled is testable;
+  - `pick(tabs, settings, now, memory)` answers the tabs each automatic trigger takes, with the reason for every tab it leaves out ([YT-GT-26](02-youtube.md#2165-automatic-gathering)), and whether the window's pace allows a gather now;
+  - they touch no browser API, and are tested in layer 1.
 
 ### 6.4.2 Isolated world (`src/site/`)
 
@@ -777,6 +843,7 @@ Names are the UI's ([FT-01](04-features-accounts-data.md#11-the-features), [YT-G
 | Queue button on thumbnails (`queue-button`) | www | An overlay button with its states. `queueAdd` targeted at the card; Undo through `queueUndo`, after which the button is idle and clickable again (R27). It steps aside where YouTube draws its own hover Add to queue. |
 | Watch-page button (`watch-button`) | www | The pill after Share, before Save, showing auto-add's state. Its menu is in popovers; the menu's Save rows belong to this feature and use its Show feedback switch (default on), whether or not quick-save is on (R27, R42). |
 | Right-click for the video menu (`card-menu`) | www | No kit: a capture `contextmenu` listener, and `openCardMenu` targeted at the card. Its "not working" notice is the core's (ARC-MOD-32, R28). |
+| Gather tabs (`gather`) | www, from the background | No page part of its own. While trigger 2 or 3 is on, it needs only the site core on watch and live pages, whose `tab.hello` says how the page started (ARC-MAN-24, ARC-MSG-15). Its logic is the background's Gather module (ARC-MOD-40). (R133) |
 | Quick actions (`music-actions`) | music | One hover overlay over rows, cards and queue items, plus a small in-flow host on each album or playlist header and the player-bar Save ([UI-YM-07](05-ui.md#hosts-1)). Availability comes from `itemInfo` at hover time; then queue jobs, Save and Like, with Undo. |
 | Quick-action shortcuts (`music-keys`) | music | Binds the quick-action keys, with targets from `ctx.items`; the undo key is the core's (R2) |
 | Settings sync (`sync`) | none | No page part. It's in the registry for the settings lists and first run. Its switch is `Device.syncOn`, per browser, not a shared setting (R54). |
@@ -847,8 +914,8 @@ interface Tabs {
 ```
 
 - **What it hides:** [§6.2.11](#6211-serving-tab-routing) in full. The registry is kept in `storage.session` through the store; private tabs are kept in memory only.
-- **Seam:** `TabsPort` `{ query(site), get(tabId), send(tabId, msg, timeoutMs), windowOf(windowId) }`.
-  - Adapters: browser, and a fake with `lastAccessed`, `discarded`, `frozen` and `incognito`, whose tabs can be wired to in-process site cores.
+- **Seam:** `TabsPort` `{ query(site), get(tabId), send(tabId, msg, timeoutMs), windowOf(windowId) }`, plus, for Gather tabs, `queryVideos(windowId?)`, `create(props)`, `remove(tabIds)` and `createWindow(urls)` (ARC-ACC-72, ARC-ACC-76; R121).
+  - Adapters: browser, and a fake with `lastAccessed`, `discarded`, `frozen` and `incognito`, and for Gather tabs `windowId`, `index`, `title`, `active`, `pinned` and `audible`, whose tabs can be wired to in-process site cores.
   - WXT's fake `tabs.query` matches `url` only by exact string and has no `lastAccessed`, so it can't stand in.
 
 **AddFlow** (deep): one coordinator for every add.
@@ -858,6 +925,7 @@ interface AddFlow {
   add(req: AddRequest, origin: Origin): Promise<AddReport>          // { outcomes: Record<PlaylistId, Outcome>, toast: ToastPlan | null, undo?: UndoHandle }
   remove(req: RemoveRequest, origin: Origin): Promise<RemoveReport> // the picker's untick
   undo(handle: UndoHandle, origin: Origin): Promise<UndoReport>
+  batch(req: BatchRequest, origin: Origin): Promise<BatchReport>    // a gather into the gather playlist (R126)
 }
 ```
 
@@ -872,8 +940,32 @@ interface AddFlow {
   - shown-once limits, which apply to auto-add only; keys, clicks and the picker get a toast every time (R22);
   - undo entries (memory only) and session skips;
   - private-window refusals;
-  - Try again.
+  - Try again;
+  - batches: a gather into the gather playlist is one `batch` call. It reads membership one video at a time, sends the rest with `addBatch` in chunks of up to 50, keeps an outcome per video, and makes one report; its Undo is `removeBatch` after one membership read (R126, R127).
 - **Dependencies:** `exec`, which is `Tabs.runIn` for an in-tab add and for Playing now's saves (in the tab [ARC-ACC-68](#6211-serving-tab-routing) picked, as its account), and `Tabs.serve` for other adds from the popup, settings or the first-run page; plus the store and Playlists.
+
+**Gather** (deep): Gather tabs ([02 §2.16](02-youtube.md#216-gather-tabs); R128–R135).
+
+```ts
+interface Gather {
+  now(windowId: number, origin: Origin): Promise<GatherReport>   // Gather in the popup, with the shared settings
+  seen(tabId: number, hello: TabHello): void                     // every tab.hello: triggers 2 and 3
+  woke(reason: "hello" | "ui" | "startup"): void                 // trigger 1's check, at most once a minute
+  undo(id: GatherId, origin: Origin): Promise<UndoReport>
+  last(): Promise<GatherState>                                   // the last gathers and the waiting state, for ui.gathers
+}
+```
+
+- **ARC-MOD-40. What the Gather module hides:**
+  - which tabs are video tabs, the orders (the language groups through `i18n.detectLanguage`, and Shuffled), and each video once (ARC-MOD-41);
+  - the three triggers: trigger 1's check, at most once a minute, kept in memory, on any `tab.hello`, `ui.*` message or `runtime.onStartup`; the bursts of triggers 2 and 3, a quiet second after the last new video tab and at most 10 s after the first; the first minute after the browser starts, which trigger 2 ignores; and each window's one gather a minute (ARC-MOD-39's one-shot timers);
+  - the exclusions, the 50 a round, and the serving tab automatic gathering picks (ARC-ACC-73);
+  - the destinations: YouTube's player (ARC-ACC-74), YouTube's queue (ARC-ACC-75) and the gather playlist (`AddFlow.batch`);
+  - closing in one call, the Undo records and reopening (ARC-ACC-76);
+  - where a result goes: the popup row through `ui.gathers` and `ui.gatherProgress`, the add flow's toast in the serving tab, the Badge's 3 s ✓ or ✕ when the gathering window is focused, and one Recent entry per gather into a playlist ([YT-GT-31](02-youtube.md#2166-feedback-keys-and-copy)).
+- **Its state** is the store's `gather` session record ([DATA-58](04-features-accounts-data.md#413-gather-tabs-memory)), written once per gather or Undo and never on a check that gathers nothing. A private window's gathers stay in its memory only.
+- **Dependencies:** `TabsPort`, `AddFlow.batch`, `Registrar.ensure`, the Store, the Badge, Recent and the Monitor. Off, or on with no automatic option, its wake handlers return after the settings read the wake already made.
+- **Tests:** layer 1 for its rules (ARC-MOD-41), and layer 3 over the fake `TabsPort` with a fake clock ([Q-TEST-49](07-quality.md#724-layer-3-fake-browser-and-dom)).
 
 **Monitor and Badge** (deep): the breakage monitor.
 
@@ -892,7 +984,7 @@ interface Monitor {
   - notice-once memory;
   - signals from private tabs, kept in memory only.
 - **Badge** is a pure `badgeFor(tab, state) → { text, color, title }`, applied through `browser.action` ([HEALTH-15](04-features-accounts-data.md#53-where-it-shows)). (R12, R53)
-  - **Priority:** consent or upgrade pending, then site access missing, then not working, then a Missing or Full playlist; then auto-add's "paused", then its tick, each only while its option is on (R92). A key from any tab's 3 s ✓ or ✕ goes over all of them, then the badge is recomputed (R88).
+  - **Priority:** consent or upgrade pending, then site access missing, then not working, then a Missing or Full playlist; then auto-add's "paused", then its tick, each only while its option is on (R92). A key from any tab's 3 s ✓ or ✕, or a gather's, goes over all of them, then the badge is recomputed (R88, R134).
   - **Scope:** not working is per tab. Consent, site access and Missing or Full show on every tab: without host access the extension can't tell which tabs are that site's.
   - **YouTube Music access** counts as missing only while something that needs it is on: a YouTube Music feature, or "Also on YouTube Music" while Playlist shortcuts is on, with the YouTube Music section switch on ([FT-47](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). That includes what first run's Agree saved on but held after Chrome's prompt was refused ([FT-40](04-features-accounts-data.md#16-first-run), ARC-ACC-61; R14). After R71's refusal, "Also on YouTube Music" is off, so it raises nothing.
   - **Colour:** "needs you" (consent, site access, Missing or Full) is the brand violet; "not working" is amber.
@@ -902,7 +994,7 @@ interface Monitor {
 - **Accounts:** `onSeen(acct, tab)`. It hides the 24 h label check, and claiming the unclaimed setup after consent with the pure `claim(unclaimed, owned, existing) → { setup, dropped }`, written through the store's `claim` change ([§6.9](#69-the-store-module-interface); [ACC-30](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming), [REL-MIG-35](08-release.md#210-claiming-the-unclaimed-setup)).
 - **Diagnostics:** `report() → string` and `checkNow() → CheckResult | NoTab`. It hides the list of what a report never contains ([HEALTH-25](04-features-accounts-data.md#55-diagnostics-check-now-and-the-report)). With no YouTube tab, Check now is disabled with "Open YouTube to check" and a button (R15). It also builds Report a problem's address, `reportUrl(kind, feature) → { url, shown }`, from the version, the browser, the feature and its status only; `shown` is the line the chooser displays ([HEALTH-27](04-features-accounts-data.md#55-diagnostics-check-now-and-the-report); R89).
 - **Commands and Menus** (R88, R91): `onCommand(name)` and `onMenuClick(info, tab)`, which hand off to ARC-ACC-69. Menus also creates and removes the browser menu's entries as the feature and its permission change (ARC-MAN-20).
-- **Recent:** `record(report, origin)` after each add with an *added* outcome, `forget(undo)` after its Undo, and `list(acct)`. It keeps `storage.session`'s `recentAdds` through the store, at most 50 entries, and nothing from a private tab ([DATA-52](04-features-accounts-data.md#411-recent-adds); R86).
+- **Recent:** `record(report, origin)` after each add with an *added* outcome, `forget(undo)` after its Undo, and `list(acct)`. It keeps `storage.session`'s `recentAdds` through the store, at most 50 entries, and nothing from a private tab ([DATA-52](04-features-accounts-data.md#411-recent-adds); R86). A gather into the gather playlist records one entry for all the videos it added (R134).
 - **SettingsFile:** `exportFile() → Blob` and `importFile(text) → ImportPlan | Refusal`, both pure over the store's documents, plus the `import` change that applies a plan ([DATA-53 to DATA-55](04-features-accounts-data.md#412-the-settings-file); ARC-MOD-36; R90).
 - **Router:** maps each message kind to one module call, validates it with the contract's guard, and computes `Origin` from `sender`.
 - **Boot:** registers every listener synchronously in the worker's first turn, as MV3 requires. Each handler awaits `store.ready()` before doing anything.
@@ -915,14 +1007,14 @@ interface Monitor {
   - **ARC-MOD-38. The toolbar icon costs only on change** (R92):
     - Badge calls `browser.action` only when `badgeFor`'s answer differs from what it last applied, which it keeps beside the tab registry in `storage.session`, because a stopped worker forgets;
     - states shown on every tab (consent, site access, Missing or Full, and auto-add paused) use the browser's tab-less value, one call each, never a loop over tabs;
-    - per-tab states (not working, the tick, a key's 3 s answer) are set on that tab only;
+    - per-tab states (not working, the tick, a key's or a gather's 3 s answer) are set on that tab only;
     - nothing listens to tab events to keep them right. The browser drops a tab's own values when the tab closes or loads a new page. A tick on a tab whose video changes in-app is cleared by one `tab.videoChanged` message, which the tab sends only while its view says it's ticked;
     - pausing auto-add clears the ticks the background set, so "paused" shows on every tab, as R92's order wants;
     - states are badge text and colour, not changing icon images, which cost an image decode or encode per call. (R112)
-  - **ARC-MOD-39. The background's listeners and timers** (R103, R110):
-    - its only listeners are `runtime.onMessage`, `runtime.onInstalled` (ARC-MOD-34, and the browser menu after an update, ARC-MAN-23), `permissions.onAdded` and `onRemoved`, `storage.sync.onChanged` ([SYNC-27](04-features-accounts-data.md#32-the-local-copy-comes-first)), `commands.onCommand` (R88) and `contextMenus.onClicked` (R91, present only while its optional permission is held), plus `runtime.onStartup` only if live check P2 calls for its fallback (§6.2.15);
+  - **ARC-MOD-39. The background's listeners and timers** (R103, R110, R133):
+    - its only listeners are `runtime.onMessage`, `runtime.onInstalled` (ARC-MOD-34, and the browser menu after an update, ARC-MAN-23), `permissions.onAdded` and `onRemoved`, `storage.sync.onChanged` ([SYNC-27](04-features-accounts-data.md#32-the-local-copy-comes-first)), `commands.onCommand` (R88), `contextMenus.onClicked` (R91, present only while its optional permission is held) and `runtime.onStartup`, for the upgrade note's one reopening ([REL-CON-25](08-release.md#31-opening-the-note); R97), automatic gathering's trigger-1 check (R129) and, if live check P2 calls for it, P2's fallback (§6.2.15). That one wakes the background once per browser start, and returns after one storage read when none of them needs it (R133);
     - it never listens to an event that every tab or window fires: no `tabs.on*`, `windows.on*` or `webNavigation` listener, and no `menus.onShown`. Chrome can't filter these, so each would wake the background for every tab in the browser, including tabs it has no access to;
-    - it sets no interval and no alarm (FT-22, [FT-61](04-features-accounts-data.md#13-off-costs-nothing)). A timer is a one-shot follow-up of the event being handled (sync's 2 s and 5 s, a command's 3 s answer), at most 25 s long, and never set again by its own callback. Longer waits, such as the 60 s pause after a 429 and a new playlist's 30 s, are timestamps checked at the next event, because a stopped worker loses its timers.
+    - it sets no interval and no alarm (FT-22, [FT-61](04-features-accounts-data.md#13-off-costs-nothing)). A timer is a one-shot follow-up of the event being handled (sync's 2 s and 5 s, a command's or a gather's 3 s answer, a gather's quiet second and its 10 s cap, the 2 s and 10 s checks of YouTube's player tab, and the 1, 3 and 10 s checks of YouTube's queue tab; R133), at most 25 s long, and never set again by its own callback. Longer waits, such as the 60 s pause after a 429 and a new playlist's 30 s, are timestamps checked at the next event, because a stopped worker loses its timers.
 
 ### 6.4.4 Popup, settings and the first-run page (`src/ui/`)
 
@@ -1059,11 +1151,12 @@ The protocol is in [§6.8.1](#681-page-channel-isolated-core--gateway-in-one-tab
 
 ```ts
 type FeatureDef = {
-  id: FeatureId          // kebab-case (R32): "auto-add" | "shortcuts" | "quick-save" | "queue-button" | "watch-button" | "card-menu" | "browser-menu" | "music-actions" | "music-keys" | "any-tab-keys" | "sync"
+  id: FeatureId          // kebab-case (R32): "auto-add" | "shortcuts" | "quick-save" | "queue-button" | "watch-button" | "card-menu" | "browser-menu" | "music-actions" | "music-keys" | "any-tab-keys" | "gather" | "sync"
   setting: SettingsPath | "device.syncOn"   // where its switch and options live: shared Settings, except sync's switch, which is Device.syncOn (R54); settings keys may stay camelCase (the shapes are 04's DATA-12)
   footprint: "none" | "keys-only" | "adds-buttons" | "changes-right-click"   // the four tags shown in Settings (UI-SET-08, FT-01): "Doesn't change the page", "Keys only, doesn't change the page", "Adds buttons to the page", "Changes right-click on the page" (R54)
   pages: Partial<Record<Site, {   // every `music` entry is gated by the section switch (ARC-REG-03)
-    file: string         // the unlisted script, e.g. "feature-quick-save"
+    file?: string        // the unlisted script, e.g. "feature-quick-save"; absent for an entry that needs only the core (Gather tabs, R133)
+    matches?: string[]   // narrower paths within the site; absent means every page of the site (ARC-MAN-24)
     needs: Library[]     // "kit"; the core is implied
     lazy?: "popovers"
     when?: (s: Settings) => boolean   // e.g. shortcuts on music only with "Also on YouTube Music"
@@ -1087,6 +1180,10 @@ type FeatureDef = {
   - `perf-budget.json` has exactly the registry's pieces.
 - **ARC-REG-03.** Every `pages.music` entry is also gated by the YouTube Music section switch, `musicSection` ([FT-06](04-features-accounts-data.md#11-the-features)): off means nothing of ours on music.youtube.com, including playlist shortcuts' "Also on YouTube Music". The switch is a shared setting, synced with the others, and on by default; it gates only the section, and the features inside it still start off. (R1)
 - **ARC-REG-10.** **Features with no page entry** (R88, R91): `browser-menu` and `any-tab-keys` have an empty `pages`, so the Registrar never registers anything for them, and `check:budget` gives them no row. They name their sites in `health`, and need `{ core, kit }` on use through `Registrar.ensure` (ARC-ACC-69). `sync` also has no page entry.
+- **ARC-REG-11. Gather tabs' registry entry** (R120, R133, R136):
+  - `id: "gather"`, `setting: "gather"`, `footprint: "none"` ("Doesn't change the page").
+  - `pages.www` is ARC-MAN-24's entry, with no `file`. `check:budget` gives it no row, like ARC-REG-10's features, and the `registry` guard expects none in `perf-budget.json`.
+  - `health.www = { required: [], optional: ["queueAddList", "membership", "addBatch", "removeBatch"], anchors: [] }`. YouTube's player needs no job; the Gather module's own check reports its `no-effect` (ARC-ACC-74). The Monitor turns these into a status per destination ([HEALTH-29](04-features-accounts-data.md#52-status)).
 - **The plug-in contract:**
   - **ARC-REG-04.** A feature's entrypoint is one line: `export default defineUnlistedScript(() => definePageFeature(quickSave))`.
   - **ARC-REG-05.** `start(ctx)` runs when the tab view says the feature is on. Everything the feature adds goes through `ctx.scope`.
@@ -1205,7 +1302,7 @@ sequenceDiagram
 
 | Request | Answer |
 |---|---|
-| `hello { build }` | `{ site, build, snapshot: { signedIn, datasyncId \| null, pageType, video? } }` |
+| `hello { build }` | `{ site, build, snapshot: { signedIn, datasyncId \| null, pageType, video?, startedHidden, navType } }`; the last two are read by the page half at `document_start` (ARC-MSG-15; R133) |
 | `run { id, job }` | `{ id, result: JobResult }` |
 | `watch { id, stream }` / `unwatch { id }` | `stream { id, data }` events until unwatched |
 | `probe { id }` | `{ id, report: ProbeReport }` |
@@ -1221,7 +1318,7 @@ sequenceDiagram
 
 | Message (tab → background) | Answer | Notes |
 |---|---|---|
-| `tab.hello { site, build, acct, signedIn }` | `TabView` | Registers the tab; `incognito` comes from `sender.tab` |
+| `tab.hello { site, build, acct, signedIn, hidden, fresh }` | `TabView` | Registers the tab; `incognito` and `windowId` come from `sender.tab`. `hidden` and `fresh` serve Gather tabs' automatic triggers (ARC-MSG-15; R133) |
 | `tab.add { AddRequest }` | `AddReport` | `acct` must match the tab registry's (ARC-ACC-49) |
 | `tab.undo { handle }` | `UndoReport` | |
 | `tab.change { Change }` | `ChangeResult` | Pause, "Don't auto-add this video", channel filter edits from the watch-page menu |
@@ -1245,6 +1342,10 @@ sequenceDiagram
   - `signedIn`, `private`, `paused`;
   - this tab's feature statuses and due notices;
   - `build`. (R2, R39)
+- **ARC-MSG-15. `tab.hello` says how the page started** (R130, R133):
+  - `hidden`: the page was hidden at `document_start`, when the page half read `document.visibilityState`, and is still hidden when the core starts. Two reads, no listener.
+  - `fresh`: the page's navigation type is `navigate` (`performance.getEntriesByType("navigation")[0].type`), not `reload` or `back_forward`.
+  - Both go with every `tab.hello`, once per page load, whatever is on, and cost nothing when unread. Gather tabs' automatic triggers are their only reader (ARC-MOD-40). How restored tabs report themselves is PROVISIONAL (G6).
 
 ### 6.8.3 UI ↔ background
 
@@ -1267,10 +1368,15 @@ sequenceDiagram
 | `ui.recentAdds { acct }` | Recent adds for the account in view, from `storage.session` (R86) |
 | `ui.exportSettings` / `ui.importCheck { text }` | The settings file's contents; an import's plan or refusal before its `import` change (R90) |
 | `ui.commandKeys` | Keys from any tab's keys, from `commands.getAll()` (R88) |
+| `ui.gather { windowId }` | Gather tabs: gather this window now, with the shared settings (R120) |
+| `ui.gatherUndo { id, windowId }` | Undo one gather into the gather playlist (R127) |
+| `ui.gathers { windowId }` | The last gathers, with their Undo, and automatic gathering's waiting state, for the popup row and the Settings card (R134) |
+| `ui.gatherProgress { id, done, total }` | Pushed by the background to open extension pages with `runtime.sendMessage`: a long gather's progress, at most every 250 ms (R134) |
 
 - **ARC-MSG-06.** The popup sends its window ID, because it has no `sender.tab`. Settings and the first-run page are identified by `sender.tab`.
 - **ARC-MSG-11.** Playing now is read with the `nowPlaying` job, never through a feature's `expose`, so it works whichever YouTube Music features are on. It's answered only after consent ([YM-POP-7](03-youtube-music.md#17-playing-now-in-the-popup)). (R8)
 - **ARC-MSG-12.** Exactly two UI calls touch `storage.sync` before consent, and they're the only two allowed at any time while sync is off: `ui.syncedChoices`, and `ui.clearAll { alsoSynced: true }`, since Clear all data is always reachable, consent or not ([DATA-36](04-features-accounts-data.md#48-clear-all-data), [FT-21](04-features-accounts-data.md#13-off-costs-nothing), [Q-PERF-11](07-quality.md#762-off-means-zero)). `ui.syncedChoices` reads the synced copy once, read-only, at first run. Nothing is pushed, and the sync switch (`Device.syncOn`) isn't stored, until Agree; without Agree nothing is written but the `schema` marker (ARC-MOD-25) ([FT-31](04-features-accounts-data.md#15-the-consent-gate)). (R9, R54, R59)
+- **ARC-MSG-16. Gather tabs' UI calls** (R129, R134). `ui.gather`, `ui.gatherUndo` and `ui.gathers` are answered only after consent and while Gather tabs is on, and the popup's window ID is checked as ARC-ACC-65 says. Any `ui.*` message that wakes the background also lets automatic gathering's trigger-1 check run, at most once a minute (ARC-MOD-40). A long gather's progress is pushed to open extension pages as `ui.gatherProgress`; a popup that closed misses nothing, because the result waits in the session record ([DATA-58](04-features-accounts-data.md#413-gather-tabs-memory)).
 
 ### 6.8.4 Rules for every channel
 
@@ -1315,7 +1421,7 @@ type Origin =
   | { kind: "sync" }
 ```
 
-- **ARC-MOD-19.** `Change` is one discriminated union for every write: settings edits, setup edits (removing a setup included), the unclaimed setup (`claim`, which merges it into an account's setup and deletes it, and `discard`, which deletes it; [ACC-30 to ACC-33](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming), [DATA-42](04-features-accounts-data.md#49-removing-a-setup-and-smaller-removals)), filters, cache absorbs, marks, progress, session memory (pause, skips, recent adds, cooldowns, shown-once memory, breakage, the tab registry), device fields (the sync switch, `Device.syncOn`, included; R54), the sync join choice, and `import`, which replaces the shared settings and the setups and filters of the accounts in a settings file in one write (R90). A `claim` from a private window is refused, as every account-setup write there is ([DATA-33](04-features-accounts-data.md#47-the-private-window-write-guard)).
+- **ARC-MOD-19.** `Change` is one discriminated union for every write: settings edits, setup edits (removing a setup included), the unclaimed setup (`claim`, which merges it into an account's setup and deletes it, and `discard`, which deletes it; [ACC-30 to ACC-33](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming), [DATA-42](04-features-accounts-data.md#49-removing-a-setup-and-smaller-removals)), filters, cache absorbs, marks, progress, session memory (pause, skips, recent adds, cooldowns, shown-once memory, breakage, the tab registry, Gather tabs' record; R135), device fields (the sync switch, `Device.syncOn`, included; R54), the sync join choice, and `import`, which replaces the shared settings and the setups and filters of the accounts in a settings file in one write (R90). A `claim` from a private window is refused, as every account-setup write there is ([DATA-33](04-features-accounts-data.md#47-the-private-window-write-guard)).
 - **ARC-MOD-20.** `Origin` is computed by the router from `sender`. The popup's window ID is the one value a message supplies, and it's checked against the sender first (ARC-ACC-65).
 - **ARC-MOD-33. `update-needed`** refuses only an edit to a synced document that a newer version wrote and this browser can't read. Every other edit goes through ([SYNC-23](04-features-accounts-data.md#37-different-2x-versions-update-needed)). The sync status reads `waiting` while the join question hasn't been answered. (R13)
 - **ARC-MOD-21. What the store hides:**
@@ -1352,7 +1458,7 @@ build/                    page-link.ts · manifest.ts · livecheck.ts       (imp
 src/
   entrypoints/            WXT only: background.ts · popup/ · options/ · onboarding/ · page-*.ts · core-*.ts · kit-*.ts · feature-*.ts · popovers.ts · livecheck/
   public/_locales/en/     messages.json: every user-facing string (ARC-MOD-35; R93)
-  shared/                 platform · contracts/ · rpc · model/ · features/registry · rules/ · copy/ · i18n · keys/ · picker/ · watchlist
+  shared/                 platform · contracts/ · rpc · model/ · features/registry · rules/ (gather.ts: R121) · copy/ · i18n · keys/ · picker/ · watchlist
   page/                   MAIN world: start · channel · gateway/ (gateway, lanes, guard, sign, effects) · routes/{www,music} · parsers/ · port · adapters/{live-www,live-music,recorded,recording}
   site/                   isolated world:
     core/                 core · ext-link · page-link · view · host · scope · items-www · items-music · pointer · keys · adapters/runtime
@@ -1360,7 +1466,7 @@ src/
     features/<id>/        feature.ts · *.svelte · pure helpers (auto-add/tracker.ts)
     popovers/             popovers · Picker.svelte · WatchMenu.svelte
     feature.ts            definePageFeature
-  background/             boot · router · store/ · registrar/ · tabs/ · adds/ · monitor/ · playlists/ · accounts/ · diagnostics/ · commands/ · menus/ · recent/ · settings-file/ · adapters/browser*.ts
+  background/             boot · router · store/ · registrar/ · tabs/ · adds/ · monitor/ · playlists/ · accounts/ · diagnostics/ · commands/ · menus/ · recent/ · settings-file/ · gather/ · adapters/browser*.ts
   ui/                     backend/{backend,browser,fake} · components/ (shadcn-svelte) · popup/ · settings/ · onboarding/ · lib/
   livecheck/              live-check page (livecheck mode only)
   assets/brand/           the mark (pigeon.svg, pigeon-dark.svg) and the toolbar icon source the manifest icons are generated from (R73)
@@ -1502,3 +1608,13 @@ The user's decisions of 2026-10-20 ([R84–R99](resolutions.md#the-users-decisio
 - **Recent adds:** the Recent module and `ui.recentAdds` (§6.4.3, §6.8.3, §6.10). R86.
 
 R84 needs no new mechanism: the picker's untick is AddFlow's `remove`, and its Undo an add. R87 and R94 to R99 change nothing here.
+
+GatherTube, folded in on 2026-10-20 ([R120–R139](resolutions.md#gathertube-r120r139)):
+- **Gather tabs' jobs:** `addBatch`, `removeBatch` and `queueAddList`, their routes, and live checks G1 to G7 (§6.2.5, §6.2.6, §6.2.15). R123, R126, R127, R129, R130, R136.
+- **Reading, opening and closing tabs:** §6.2.16, ARC-ACC-72 to ARC-ACC-76, with no new permission (ARC-MAN-25). R121, R123, R124, R126, R127, R132.
+- **Page code for triggers 2 and 3:** ARC-MAN-24, the registry's `file?` and `matches?`, ARC-REG-11, ARC-MAN-04, ARC-MAN-13, §6.3.3's table, and `tab.hello`'s `hidden` and `fresh` (ARC-MSG-15, §6.8.1, §6.8.2). R130, R133.
+- **The background:** the Gather module and its pure rules (ARC-MOD-40, ARC-MOD-41, §6.4.1, §6.4.2), `AddFlow.batch`, the `TabsPort` additions, the Badge's 3 s mark for gathers (ARC-MOD-38), Recent's gather entries, the session record in `Change` (ARC-MOD-19), the gather's one-shot timers, and `runtime.onStartup` in ARC-MOD-39, which settles its difference with R97's reopening of the upgrade note ([REL-CON-25](08-release.md#31-opening-the-note)). R122, R127 to R135.
+- **UI calls:** ARC-MSG-16 and §6.8.3's rows. R129, R134.
+- §6.10's `background/gather/` and `shared/rules/gather.ts`.
+
+R120 adds `gather` to the registry's IDs (§6.6). R137 and R138 are copy and release text, 02's and 08's, and R139's budgets are 07's.

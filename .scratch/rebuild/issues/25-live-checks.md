@@ -79,3 +79,14 @@ About 1 in 4 fresh signed-out profiles got the Wiz miniplayer; forcing the flag 
 Two checks grow with the user's decisions ([R84–R99](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99); spec 06 §6.2.15):
 - **M3** also covers Save to library: its signed-in shape, and whether YouTube Music shows its own toast for it (R85).
 - **M4** also checks that a key from any tab, set in the browser, reaches the background while the installed YouTube Music app's window has focus (R88).
+
+## Added by ticket 31 (2026-10-20)
+
+Gather tabs ([ticket 31](31-gathertube.md); [R136](../spec/resolutions.md#gathertube-r120r139); spec 06 §6.2.15) adds seven checks. G1 to G5 run signed in, on the scratch playlist; G6 and G7 are browser behaviour and need no account.
+- **G1:** `edit_playlist` with 2, 50 and 200 `ACTION_ADD_VIDEO` actions in one request: accepted? Order kept? A `setVideoId` for each video?
+- **G2:** the same request with one video already in the playlist: does youtube.com reject the whole request, skip that video, or add a copy?
+- **G3:** YouTube's queue built with one `addToPlaylistCommand` carrying every ID, signed in, from a freshly opened watch tab: does it take 100 and 200 in order, and what's the most it takes?
+- **G4:** `watch_videos` signed in: still the first 50 only, and nothing written to the account?
+- **G5:** one `edit_playlist` with several `ACTION_REMOVE_VIDEO` actions by `setVideoId`: are exactly those entries removed?
+- **G6:** in Chrome and Firefox, how each kind of tab reports itself to page code (`document.visibilityState` at `document_start`, the navigation type) and in `tabs.query` (`lastAccessed`): a middle-clicked video, "Open all in tabs", a tab restored at browser start (Chrome's "Continue where you left off", Firefox's "Open previous windows and tabs", with and without loading them on demand), a reopened closed tab, and a hidden tab reloaded. Also: does `lastAccessed` survive a browser restart?
+- **G7:** reopening closed tabs for Undo: Firefox's `tabs.create({ discarded: true, title })` keeps them unloaded at their old place; what Chrome does with 20 tabs created in the background.

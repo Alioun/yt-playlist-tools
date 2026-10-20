@@ -21,7 +21,7 @@ Part of the [2.0 spec](../spec.md). This chapter covers how 1.4.5 users get to 2
 - [07](07-quality.md): the test layers ([§7.2](07-quality.md#72-test-layers)), fixtures ([§7.3](07-quality.md#73-fixtures)), the watch and the live check ([§7.5](07-quality.md#75-breakage-detection)), the budgets ([§7.6](07-quality.md#76-performance-budgets)) and the CI jobs ([§7.7](07-quality.md#77-ci-jobs-and-the-hotfix-lane)).
 - [09](09-parity.md): what 1.4.5 users had ([§1.12](09-parity.md#112-what-145-users-had), PAR-CAP-71 to PAR-CAP-79) and the platform and release rows ([§1.11](09-parity.md#111-platform-manifest-build-and-release)).
 
-The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too, and so are the user's decisions of 2026-10-20, R84–R99. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist". Under the resolutions' ownership rule, this chapter owns the migration, the upgrade note, and consent copy and conditions (R60); where it shares another topic with a chapter that owns it, that chapter's text wins, and [Conflicts found](#conflicts-found) lists what still differs.
+The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too, and so are the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, and the GatherTube fold, R120–R139. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist". Under the resolutions' ownership rule, this chapter owns the migration, the upgrade note, and consent copy and conditions (R60); where it shares another topic with a chapter that owns it, that chapter's text wins, and [Conflicts found](#conflicts-found) lists what still differs.
 
 **Requirement IDs:**
 - `REL-MIG-`: the 1.4.5 migration.
@@ -436,7 +436,8 @@ Then **[Open YouTube]** **[Open Settings]**.
 
 > Playlist Pigeon works inside your YouTube and YouTube Music tabs, as the account you're signed in to there. For the features you switch on, it:
 > - **reads what you watch and listen to there:** the video or song, its channel, and how much of it you've played;
-> - **reads and changes your playlists, as you:** it lists them, checks which ones already hold a video, and adds or removes videos when you ask or when auto-add does, using YouTube's own requests;
+> - **reads and changes your playlists, as you:** it lists them, checks which ones already hold a video, and adds or removes videos when you ask, or when auto-add or automatic gathering does, using YouTube's own requests;
+> - **reads the YouTube tabs open in a window when you gather them,** or when automatic gathering does: their addresses and titles, to collect their videos. It closes those tabs only if you've asked it to; *(R138)*
 > - **signs those requests the way YouTube's page does,** with YouTube's sign-in cookie, inside the YouTube tab. It never stores that cookie or sends it anywhere else; *(PROVISIONAL, ticket 25: removed if no shipped route reads the session cookie, R48)*
 > - **watches for the shortcut keys you set** on YouTube and YouTube Music pages, and ignores every other key. Keys you set in your browser for Keys from any tab are caught by the browser itself; *(R88)*
 > - **keeps its settings in this browser,** including your account's name, @handle and picture, a list of your playlists, and how much of each video you've watched (for up to 30 days).
@@ -444,6 +445,7 @@ Then **[Open YouTube]** **[Open Settings]**.
 > Nothing is sent to us or to anyone but YouTube. There are no ads and no analytics. If you turn on Settings sync, your settings also travel through {Firefox's | Chrome's} own sync.
 > [Privacy policy ↗]
 
+  The gathering bullet and "automatic gathering" joined the text with Gather tabs (R138). 2.0 hasn't shipped, so the consent version stays 1 (REL-CON-17).
 - **REL-CON-13** On first run and the upgrade note, the buttons are **Agree and turn on {N} features**, **Agree** (when N = 0) and **Not now**. "Before this feature can run" has **Agree and turn on {Feature}** and **Cancel** (UI-ONB-09).
 - **REL-CON-14** On Chrome, when a YouTube Music feature is ticked, or Playlist shortcuts, whose preset turns "Also on YouTube Music" on, or Keys from any tab ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R53, R88):
   - Agree calls `permissions.request` for music.youtube.com first in the click;
@@ -669,6 +671,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22). It leads wi
 > • Queue button on thumbnails: adds a video to the end of the queue, with Undo.
 > • Right-click a video for YouTube's own ⋮ menu, or add Save to ▸ to your browser's own right-click menu instead.
 > • Create playlists from any chooser.
+> • Gather tabs: gathers the YouTube videos open in a window into one list, YouTube's queue or a playlist, and can close their tabs, by itself too if you want. A port of GatherTube by Karim Elgazar.
 >
 > **On YouTube Music**
 > • Quick actions: Play next and Add to queue right on songs, albums and playlists; Save to playlist and Like for songs; Remove from queue for queued songs. If you want them: Save to library, Start mix, Go to album and Go to artist. Each is one click away, and you pick which buttons show.
@@ -688,6 +691,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22). It leads wi
 >
 > Not affiliated with or endorsed by YouTube or Google. YouTube and YouTube Music are trademarks of Google LLC. Use of these trademarks is subject to Google Permissions.
 
+- The Gather tabs bullet closes "On YouTube", after the features the listing leads with, so the lead and both summaries stay as R95 set them. It carries GatherTube's credit (REL-STORE-38; R95, R138).
 - **REL-STORE-04** *Only under [§13](#13-if-an-amo-reviewer-objects)'s fallback, not at launch (R83):* if a reviewer requires a data type, AMO's description adds "Firefox asks you to allow sharing 'website activity' because the extension sends YouTube the videos you save, through your own YouTube account. Nothing goes to the developer."
 - **REL-STORE-05** During the beta, the AMO listing adds "A rebuilt 2.0 is in beta: {site}/beta". The line is removed at launch.
 
@@ -700,11 +704,13 @@ All text in this section is **PROVISIONAL on the name** (ticket 22). It leads wi
 > • Your auto-add playlists, shortcut, watch percentage and toast setting carry over. Nothing runs until you've reviewed them on the page that opens after the update.
 > • Auto-add counts only what you actually watch, never adds a video twice, and no longer says "Added" when an add failed.
 > • Shortcuts no longer fire while you type, can be cleared, and Ctrl shortcuts work.
-> • New, and off until you switch them on: Watch Later, several named shortcuts, quick-save and queue buttons on thumbnails, a watch-page button, Save to ▸ in the browser's right-click menu, creating playlists, Shorts, YouTube Music quick actions, keys from any tab, a setup per account, and settings sync.
+> • New, and off until you switch them on: Watch Later, several named shortcuts, quick-save and queue buttons on thumbnails, a watch-page button, Save to ▸ in the browser's right-click menu, creating playlists, Shorts, YouTube Music quick actions, keys from any tab, Gather tabs, a setup per account, and settings sync.
+> • Gather tabs is a port of GatherTube by Karim Elgazar: it gathers the YouTube videos open in a window into one list, YouTube's queue or a playlist, and can close their tabs.
 > • Also new: unticking a playlist in the picker takes the video out, with Undo; the popup lists what you saved since the browser started; and you can save your settings to a file.
 > • Needs Firefox 140 or later.
 
 - *Only under §13's fallback, not at launch (R83):* add "Firefox will ask you to approve sharing website activity: that's the videos you save, sent to YouTube through your own account."
+- The Gather tabs line and its credit are R138's (REL-STORE-38).
 
 ### 9.4 Screenshots and images
 
@@ -733,6 +739,19 @@ The order follows ticket 30's ranking: saving first, Settings last (R95).
   - **Colours:** a slate body (about `#5E6875`) with a teal-to-violet neck (about `#14A39A` to `#7B5CD6`). No red, and no play triangle.
   - **Size:** 96×96 artwork inside 128×128, shipped at 16, 32, 48 and 128 px. Test it on light and dark toolbars.
 
+### 9.5 Credit for GatherTube
+
+Gather tabs is a port of [GatherTube](https://github.com/karimelgazar/gathertube) by Karim Elgazar (MIT), which is no longer maintained ([02 §2.16](02-youtube.md#216-gather-tabs); R120).
+
+- **REL-STORE-38** Credit for GatherTube appears exactly in these places:
+  - the feature's Settings card: "Based on GatherTube by Karim Elgazar", linking to `https://github.com/karimelgazar/gathertube` ([UI-SET-24](05-ui.md#53-the-settings-page));
+  - Settings › About ([UI-SET-18](05-ui.md#sections));
+  - both store descriptions (§9.2) and the 2.0.0 release notes (§9.3);
+  - at release, `docs/features.md` and the README's credits.
+
+  "GatherTube" appears only as credit, never as the feature's name or icon. [Ticket 32](../issues/32-gathertube-upstream-fix.md)'s pull request is where its author hears of the port. (R138)
+- **REL-STORE-39** No licence notice is needed: nothing of GatherTube's is copied, neither code, strings, logo nor icons. Its MIT grant is in its `firefox-build/LICENSE` ("Copyright (c) 2024 GatherTube"). If code is ever copied, `THIRD-PARTY-NOTICES.md` carries that MIT text, and review checks it. (R138)
+
 ## 10. Privacy policy
 
 ### 10.1 Hosting
@@ -756,7 +775,7 @@ The order follows ticket 30's ranking: saving first, Settings last (R95).
 
 ### 10.2 Text
 
-- **REL-STORE-17** `/privacy/` publishes this text. It's published under the user's name, so the user reads and approves it before it goes live (§19). It takes effect from the first beta, 1.99.1, because Chrome's Privacy tab needs it for the first Unlisted upload and beta testers run 1.99.N (R18). Its "What's kept" lines match [DATA-03](04-features-accounts-data.md#41-where-data-lives) (R10, R43, R57). The cookie bullet is PROVISIONAL (ticket 25): it's removed if no shipped route reads the session cookie (R48). The Contact line has no e-mail, as the user decided (R89). It also covers recent adds, keys from any tab, the problem report and the settings file (R86, R88, R89, R90). (R10, R18, R43, R48, R57)
+- **REL-STORE-17** `/privacy/` publishes this text. It's published under the user's name, so the user reads and approves it before it goes live (§19). It takes effect from the first beta, 1.99.1, because Chrome's Privacy tab needs it for the first Unlisted upload and beta testers run 1.99.N (R18). Its "What's kept" lines match [DATA-03](04-features-accounts-data.md#41-where-data-lives) (R10, R43, R57). The cookie bullet is PROVISIONAL (ticket 25): it's removed if no shipped route reads the session cookie (R48). The Contact line has no e-mail, as the user decided (R89). It also covers recent adds, keys from any tab, the problem report and the settings file (R86, R88, R89, R90), and gathering tabs, with what a gather reads and what leaves (R138). (R10, R18, R43, R48, R57)
 
 > # Privacy policy: Playlist Pigeon for YouTube™
 >
@@ -772,9 +791,10 @@ The order follows ticket 30's ranking: saving first, Settings last (R95).
 > - **Keys you press on YouTube and YouTube Music pages:** only to recognise the shortcut keys you set. Other keys are ignored and never recorded. Keys you set in your browser for Keys from any tab are caught by the browser, which tells the extension only which of its actions you asked for.
 > - **YouTube's sign-in cookie, inside your YouTube tab:** to sign the extension's requests to YouTube the same way YouTube's own page does, where YouTube's code can't send a request itself. It's used on the spot and never stored, logged or sent anywhere but YouTube. *(PROVISIONAL, ticket 25: removed if no shipped route reads the session cookie, R48)*
 > - **Channels you add to channel filters:** their IDs, names and @handles.
+> - **The YouTube tabs open in a window, when you gather them** (Gather tabs, or its automatic options if you switch them on): their addresses, titles, place in the window and when you last switched to them. Used to collect their videos in the order you chose, and to close those tabs if you asked. Only the videos' IDs leave your browser, sent to YouTube to build the list or add them to your playlist.
 >
 > ## What leaves your browser
-> - **Requests to YouTube (youtube.com and music.youtube.com), as you.** They're the requests YouTube's own buttons send: listing your playlists, checking which playlists hold a video, adding or removing a video, creating a playlist, the queue, likes, and your YouTube Music library. They're sent from your YouTube tab with your YouTube session, when you act or when auto-add adds a video you watched. YouTube's own privacy policy applies to them: https://policies.google.com/privacy.
+> - **Requests to YouTube (youtube.com and music.youtube.com), as you.** They're the requests YouTube's own buttons send: listing your playlists, checking which playlists hold a video, adding or removing a video, creating a playlist, the queue, likes, and your YouTube Music library. When you gather tabs, they also build YouTube's queue from a list, or open YouTube's own list of the videos you gathered. They're sent from your YouTube tab with your YouTube session, when you act, when auto-add adds a video you watched, or when automatic gathering saves your tabs. YouTube's own privacy policy applies to them: https://policies.google.com/privacy.
 > - **Settings sync, only if you switch it on,** through your browser's own sync (Chrome Sync or Firefox Sync, under your browser account). It carries which features are on and their options, your shortcut keys and labels, and for each account: its code, name, @handle and picture link, the playlists you chose, and your channel filters. Watch progress, cached lists and your consent never sync. The developer can't see synced data.
 > - **A problem report, only if you start one.** Report a problem opens GitHub's new-issue page with the extension's version, your browser and its version, the feature you picked and its status already filled in, and shows you those values first. They reach GitHub when its page opens, and the developer only if you submit the issue, which needs a GitHub account and is public. The diagnostics report goes in only if you paste it. GitHub's own privacy statement applies there.
 > - **A settings file, only if you export one.** It goes where you save it, and holds your settings, your accounts' names and the IDs of the playlists and channels you chose.
@@ -785,7 +805,7 @@ The order follows ticket 30's ranking: saving first, Settings last (R95).
 > - A list of each account's playlists (names, counts, thumbnail links), refreshed when it's shown and more than 5 minutes old; playlists you created in the last 24 hours.
 > - Watch progress per video (which stretches you played, the length, when it last played). It's deleted once auto-add has added the video or found it already there, if the video's length changes, 30 days after it last played, or when you switch auto-add off.
 > - Settings from 1.x that are waiting for their account.
-> - Until the browser closes, or the extension updates: pause, videos you chose not to auto-add, the list of your recent adds (you can switch it off in Settings › Privacy & data), and notes about YouTube changes that stop a feature. Skipped videos and recent adds name videos and playlists, but they stay in this browser's memory until it closes, and are never synced or sent anywhere. The notes about YouTube changes name no video, playlist, channel or account.
+> - Until the browser closes, or the extension updates: pause, videos you chose not to auto-add, the list of your recent adds (you can switch it off in Settings › Privacy & data), the last gathers, with the addresses of the tabs they closed, so you can undo them, and notes about YouTube changes that stop a feature. Skipped videos and recent adds name videos and playlists, but they stay in this browser's memory until it closes, and are never synced or sent anywhere. The notes about YouTube changes name no video, playlist, channel or account.
 >
 > ## Private windows
 > The extension runs there only if you allow it in your browser. Nothing from a private session is stored: no setups, lists, watch progress or account details.
@@ -825,12 +845,14 @@ The order follows ticket 30's ranking: saving first, Settings last (R95).
 - **REL-STORE-20** These answers are kept in `store/cws-dashboard.md`, which the hotfix check freezes (REL-CI-38). They're pasted into the dashboard's Privacy tab.
 
 **Single purpose:**
-> Playlist Pigeon organises what the user watches and listens to on YouTube and YouTube Music into their own playlists, queue and likes: automatically after a video is watched (optionally filtered by channel), with keyboard shortcuts, or with one-click buttons for YouTube's and YouTube Music's own save, queue and like actions.
+> Playlist Pigeon organises what the user watches and listens to on YouTube and YouTube Music into their own playlists, queue and likes: automatically after a video is watched (optionally filtered by channel), with keyboard shortcuts, with one-click buttons for YouTube's and YouTube Music's own save, queue and like actions, or by gathering the YouTube videos open in a window into one list or playlist.
+
+The purpose still holds with Gather tabs: gathering files the user's own YouTube videos into their playlists and queue. Its clause is named so a reviewer finds it there (R138).
 
 **Permission justifications:**
 - **`storage`:** "Keeps the user's settings in the browser: which features are on, the playlists each feature uses per YouTube account, shortcut keys and labels, channel filters, a cached list of the user's playlists, and auto-add's watch progress (deleted after 30 days)."
 - **`scripting`:** "Adds each feature's script to YouTube pages only while that feature is switched on, and reads data from an open YouTube tab when the popup or settings need it."
-- **`https://www.youtube.com/*`:** "The extension's features run on YouTube: they read which video is playing and how much has been played (auto-add), catch the user's shortcut keys, draw the buttons the user switched on, and send YouTube's own playlist requests from the user's YouTube tab, as the signed-in user."
+- **`https://www.youtube.com/*`:** "The extension's features run on YouTube: they read which video is playing and how much has been played (auto-add), catch the user's shortcut keys, draw the buttons the user switched on, and send YouTube's own playlist requests from the user's YouTube tab, as the signed-in user, and, for Gather tabs, read the addresses and titles of the YouTube tabs open in a window, to collect their videos and close those tabs when the user asks." (R138)
 - **`https://music.youtube.com/*` (optional):** "Requested only when the user switches on a YouTube Music feature, lets their playlist shortcuts work on YouTube Music too, or switches on keys from any tab: it adds the quick-action buttons and keys to YouTube Music, catches the shortcut keys there, and runs YouTube Music's own queue, save and like actions in that tab." (R53, R88)
 - **`contextMenus` (optional):** "Requested only when the user switches on Save from the browser's menu: it adds a Save to ▸ entry to the browser's right-click menu on YouTube video links and watch pages. It's given back when the user switches that off." (R91)
 
@@ -843,7 +865,7 @@ The order follows ticket 30's ranking: saving first, Settings last (R95).
 | Personally identifiable information | ✔ | The account's display name and @handle are stored, and synced if sync is on (ticket 11) |
 | Health, Financial and payment, Personal communications, Location | — | Not handled |
 | Authentication information | ✔ **PROVISIONAL (ticket 25)**: unticked if no shipped route reads the session cookie (R48) | The page reads YouTube's sign-in cookie to sign requests (ticket 10 §3) |
-| Web history | ✔ | Which videos were watched, kept as watch progress for up to 30 days |
+| Web history | ✔ | Which videos were watched, kept as watch progress for up to 30 days, and the YouTube videos open in a window, read when the user gathers them (R138) |
 | User activity | ✔ | Playback progress, the shortcut keys pressed, clicks on our controls |
 | Website content | ✔ | Playlist names and thumbnails, video and channel titles |
 
@@ -878,6 +900,7 @@ The order follows ticket 30's ranking: saving first, Settings last (R95).
     - if a reviewer objects anyway, [§13](#13-if-an-amo-reviewer-objects)'s fallback applies. The Firefox 140 floor it needs is already in place.
 
   - They also describe keys from any tab's commands, the browser menu's optional `contextMenus`, and the injection on use both rely on ([ARC-MAN-19, ARC-MAN-20](06-architecture.md#631-manifest-per-browser), ARC-MAN-15; R88, R91), and the user-started problem report ([§16](#16-support-channel); R89).
+  - And they describe Gather tabs: reading one window's YouTube tabs with host access alone, no `tabs` permission, and the site core on watch pages only while an automatic trigger that needs it is on ([06](06-architecture.md) ARC-ACC-72, ARC-MAN-24; R138).
 
   (R17, R34, R48, R49, R66, R83)
 
@@ -891,6 +914,7 @@ The order follows ticket 30's ranking: saving first, Settings last (R95).
 > - When a feature is switched on, `scripting.executeScript` injects the same files into already-open tabs of that site, so no reload is needed. It also loads the playlist picker (`popovers.js`) on first use, and, only when the popup or settings needs an account or fresh data (playlists, or the song playing) from a tab that has none of our code, the gateway and site core alone into that one tab; that core draws nothing. After an extension update, the start-up run registers the scripts again and injects the current files into open tabs, and the older copies there retire themselves. Nothing is injected before the user's Agree.
 > - There are no static content scripts and no web-accessible resources.
 > - Two opt-in features register nothing at all. "Keys from any tab" declares three `commands` with no suggested key, which the user binds in Firefox's shortcut settings; "Save from the browser's menu" adds a Save to ▸ menu entry through the optional `contextMenus` permission, requested when the user switches it on and removed when they switch it off. When either is used, the gateway, core and UI kit are injected into that one YouTube tab with `scripting.executeScript`, to run the save there and show its message.
+> - Gather tabs reads the YouTube tabs of one window with `tabs.query({ windowId, url })`, which host access allows without the `tabs` permission. It opens YouTube's own `watch_videos` list in a tab, or adds the videos to YouTube's queue or a playlist through the routes below, then closes those tabs with `tabs.remove` if asked. Its optional automatic triggers use no alarm and no tab or window listener: on watch pages only, while a trigger that needs it is on, the site core tells the background whether the page loaded in the background.
 >
 > **Routes, in order of preference:**
 > 1. YouTube's own command resolver (found by shape on first use and cached for the page: the first `default_kevlar_base.<key>` whose `instance.resolveCommand` is a function);
@@ -902,7 +926,7 @@ The order follows ticket 30's ranking: saving first, Settings last (R95).
 >
 > No `cookies` permission, no Origin rewriting, no remote code, config or selectors.
 >
-> **Endpoints:** `playlist/get_add_to_playlist`, `browse` (`FEplaylist_aggregation`; channel pages), `browse/edit_playlist`, `playlist/create`, `account/account_menu`, `navigation/resolve_url`, `next`, `reel/reel_item_watch`, `music/get_queue`, YouTube's queue commands through its resolver (`addToPlaylistCommand` for the queue, `playlistEditEndpoint` on the queue list, `refreshPlaylistCommand`), and like / queue commands through YouTube Music's handlers. *(PROVISIONAL: the final list is ticket 25's route table, [06 §6.2.6](06-architecture.md#626-route-table-youtubecom) and [§6.2.7](06-architecture.md#627-route-table-youtube-music).)*
+> **Endpoints:** `playlist/get_add_to_playlist`, `browse` (`FEplaylist_aggregation`; channel pages), `browse/edit_playlist` (with several actions per request when gathering), `watch_videos` (opened as a page, never fetched), `playlist/create`, `account/account_menu`, `navigation/resolve_url`, `next`, `reel/reel_item_watch`, `music/get_queue`, YouTube's queue commands through its resolver (`addToPlaylistCommand` for the queue, `playlistEditEndpoint` on the queue list, `refreshPlaylistCommand`), and like / queue commands through YouTube Music's handlers. *(PROVISIONAL: the final list is ticket 25's route table, [06 §6.2.6](06-architecture.md#626-route-table-youtubecom) and [§6.2.7](06-architecture.md#627-route-table-youtube-music).)*
 >
 > **Permissions:**
 > - `storage`: settings;
@@ -1436,6 +1460,14 @@ The user's decisions of 2026-10-20 ([R84–R99](resolutions.md#the-users-decisio
 - **The note's tab title** names the old name (REL-CON-04, S1). R98.
 - **Support:** no e-mail, three prefilled forms through a chooser (§0, REL-STORE-17, REL-STORE-35 to REL-STORE-37, §13, §19). R89.
 - **New features in the copy and prompts:** the note's "New in 2.0" list, the disclosure's key line, the prompts by audience, the policy, the dashboard's justifications and the reviewer notes (REL-CON-04, REL-CON-12, REL-CON-14, REL-CON-22, §5, REL-STORE-17, §11, REL-STORE-21). R84 to R91.
+
+GatherTube, folded in on 2026-10-20 ([R120–R139](resolutions.md#gathertube-r120r139)):
+- **The disclosure** names reading a window's YouTube tabs and automatic gathering; consent stays version 1, because 2.0 hasn't shipped (REL-CON-12). R138.
+- **The listings and release notes** gain a Gather tabs line with its credit; the lead and summaries don't change (§9.2, §9.3). R95, R138.
+- **Credit and licence** (new REL-STORE-38, REL-STORE-39, §9.5). R138.
+- **The privacy policy** says what a gather reads, that only video IDs leave, and that the last gathers are kept until the browser closes (REL-STORE-17). R135, R138.
+- **Chrome's dashboard:** the single purpose still holds and now names gathering; the host justification and the web-history line name it too (REL-STORE-20, §11). R138.
+- **AMO's reviewer notes** describe gathering, `watch_videos` and batched `edit_playlist` actions (REL-STORE-21). R138.
 
 ### Open
 
