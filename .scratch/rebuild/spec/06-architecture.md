@@ -1456,6 +1456,7 @@ RELEASING.md  SOURCE_CODE_REVIEW.md                                       (relea
 .github/                  workflows/{ci,watch,release,pages}.yml · ISSUE_TEMPLATE/ (problem, not-working and idea forms, config.yml; R89) · dependabot.yml
 build/                    page-link.ts · manifest.ts · livecheck.ts       (imported by wxt.config.ts and scripts)
 assets/icon/              the mark's sources (icon.svg, icon-16.svg, icon-32.svg, icon-mono.svg), PNG exports, README and sheet; tools/build.mjs exports them (R140)
+assets/brand/             the wordmark, lockups, Chrome promo images and GitHub social preview, with their sources, README and sheet (R145–R147)
 src/
   entrypoints/            WXT only: background.ts · popup/ · options/ · onboarding/ · page-*.ts · core-*.ts · kit-*.ts · feature-*.ts · popovers.ts · livecheck/
   public/_locales/en/     messages.json: every user-facing string (ARC-MOD-35; R93)

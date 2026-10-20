@@ -738,6 +738,14 @@ The order follows ticket 30's ranking: saving first, Settings last (R95).
   - **Chrome Web Store:** the item's icon is the manifest's 128, `store-128.png`: 96×96 artwork with 16 px of transparent padding, no border, and legible on light and dark backgrounds. If the dashboard asks for a store icon as well, it's the same file.
   - **AMO:** the listing icon is a separate Developer Hub upload, `amo-128.png`, full bleed and with no letters. AMO resizes it to 32, 64 and 128 and shows the 64 on the listing; it doesn't take the manifest's icon.
   - Both files are exports of the hand-drawn `icon.svg`, and are checked against `sheet.html` before upload. A wordmark waits on the name (ticket 22).
+- **REL-STORE-41** **The Chrome promo images** are [`assets/brand/`](../../../assets/brand/README.md)'s `promo-small-440x280.png` (required) and `marquee-1400x560.png`. Both are uploaded at launch: the marquee is no longer skipped, which supersedes REL-STORE-11's last sentence.
+  - **What they show:** the mark and the wordmark only, on a saturated violet that fills the region, with a faint wall of pigeonholes behind.
+  - **What they leave out,** following Google's image guidelines: other text, screenshots, claims, and YouTube's name, logo or red.
+  - They're copied into `store/listing/` with the screenshots (REL-STORE-01). (R146)
+- **REL-STORE-42** **AMO takes no promotional images.** Its listing has the icon (REL-STORE-40) and the screenshots (REL-STORE-07) only. (R146)
+- **REL-STORE-43** **The GitHub social preview** is `assets/brand/social-preview-1280x640.png`, at 1280 × 640.
+  - It shows the lockup, "for YouTube™" as plain text, and "Save to any playlist in one click.", with no YouTube logo or red.
+  - The user sets it in the repository's settings (§19). (R147)
 
 ### 9.5 Credit for GatherTube
 
@@ -1390,6 +1398,7 @@ Ticket 23's message to AMO isn't sent: R83 settled its questions from Mozilla's 
 - Set `PUBLISH_AMO`, `PUBLISH_CWS` and `CWS_PUBLISH_TYPE`, and add the `v*` tag ruleset.
 - Delete the old secrets: `PUBLISH_TO_STORES` and the Chrome v1.1 client ID, secret and refresh token.
 - Create the issue labels the forms set, `problem`, `youtube-change` and `idea`, so GitHub applies them (REL-STORE-37; R89).
+- Set the repository's social preview: Settings › General › Social preview › upload `assets/brand/social-preview-1280x640.png` (REL-STORE-43; R147).
 
 **Cleanup:**
 - Stop any deployed token broker (e.g. the Dokploy service).
@@ -1486,6 +1495,11 @@ None remain after all three rounds. Every contradiction listed here before is se
 The icon, settled on 2026-10-20 ([R140](resolutions.md#the-icon-perch-r140)):
 - **Store icons** (new REL-STORE-40): Chrome's `store-128.png` from the manifest, AMO's `amo-128.png` uploaded in the Developer Hub; the old icon brief is replaced. R140.
 - **Screenshots, promo tile and checklist** name Perch (REL-STORE-08, REL-STORE-11, REL-CHK-18). R140.
+
+The wordmark and store images, made once the name was decided ([R145–R147](resolutions.md#wordmark-and-store-images-r145r147)):
+- **Promo images** (new REL-STORE-41): the small tile and the marquee from `assets/brand/`; the marquee is now uploaded at launch. R146.
+- **AMO** (new REL-STORE-42): no promotional images beyond the icon and screenshots. R146.
+- **GitHub social preview** (new REL-STORE-43), set by the user (§19). R147.
 
 ### Not pinned down
 
