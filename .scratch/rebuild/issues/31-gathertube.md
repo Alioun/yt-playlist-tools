@@ -55,7 +55,19 @@ Full report, with test logs in `docs/research/gathertube/`: [`docs/research/gath
 - **Credit:** in the feature's card, Settings › About, the docs and both listings. Nothing is copied, so no licence notice is needed.
 - **Glossary:** Gather, Video tab, Destination, Temporary list, Gather playlist, Gather order, Automatic gathering, Unvisited tab, plus edits to Auto-add, Add and Queue (report §8).
 
-### Questions for the user
+### The user's answers (2026-10-20)
+
+1. **The player page:** YouTube's own queue, plus a **Shuffled** gather order, so GatherTube's shuffle survives.
+2. **The automatic option:** **all three triggers**, each its own opt-in choice:
+   - video tabs left unopened for a while (default a day), checked by one hourly alarm;
+   - a video tab opened in the background;
+   - a window reaching N video tabs.
+
+   Every trigger saves into the gather playlist. Each must meet [ticket 33](33-resource-mindful-defaults.md)'s running-cost budgets, which rules out waking on every new tab of every site.
+3. **Closing:** automatic gathering always closes what it saved (decided on the user's behalf, as recommended).
+4. **Suspender-parked tabs** aren't gathered; no `tabs` permission (decided on the user's behalf, as recommended).
+
+### Questions for the user (answered above)
 
 1. **What replaces GatherTube's embedded player?** Recommended: YouTube's own queue. It loses Shuffle inside the queue, surviving a reload, and the player page's own keys. The alternatives are dropping that destination, or an embed that needs a faked Referer and breaks ADR-0001's footing.
 2. **Which automatic option?** Recommended: gather video tabs not opened for a day into the gather playlist, checked hourly. The others are: on opening in the background, at N tabs, on window close, and on browser start.
