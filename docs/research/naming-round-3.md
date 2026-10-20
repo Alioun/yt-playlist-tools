@@ -2,6 +2,8 @@
 
 Research for [ticket 22](../../.scratch/rebuild/issues/22-name.md), round 3. Every check ran on 2026-10-20 with [round 2's](naming-round-2.md) method and collision rules, except where [Limits](#limits) says otherwise. Store searches are fuzzy, and a register search isn't legal clearance.
 
+> **Outcome (2026-10-20):** after round 5, the user chose **Perchling for YouTube™** ([ticket 22](../../.scratch/rebuild/issues/22-name.md), [ADR-0013](../adr/0013-named-perchling-for-youtube.md)). This note is kept as the record.
+
 ## Answer
 
 - **The ask:** you liked the pigeonhole grid and want a name built on "pigeonhole", not tied to "Playlist", with a "not to be pigeonholed" wink.

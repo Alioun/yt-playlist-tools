@@ -2,6 +2,8 @@
 
 Research for [ticket 22](../../.scratch/rebuild/issues/22-name.md), round 4. Every check ran on 2026-10-20 with [round 2's](naming-round-2.md) method and rules, with one change: the PigeonPod overlap is weighed, not treated as an automatic kill. Store searches are fuzzy, and a register search isn't legal clearance.
 
+> **Outcome (2026-10-20):** after round 5, the user chose **Perchling for YouTube™** ([ticket 22](../../.scratch/rebuild/issues/22-name.md), [ADR-0013](../adr/0013-named-perchling-for-youtube.md)). This note is kept as the record.
+
 ## Answer
 
 - **The ask:** you rejected round 3 ("those are all awful, pigeon should be the direction"). This round shortlists names led by the bird. It favours short, warm names that sound like a product.
