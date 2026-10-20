@@ -1,6 +1,6 @@
 # For the user
 
-**The spec is assembled** ([spec.md](spec.md)), and your answers of 2026-10-20 are folded in as [R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99). Everything below is what still needs you; the spec's Open items section states the default it uses until you answer.
+**The spec is assembled** ([spec.md](spec.md)), and your answers of 2026-10-20 are folded in as [R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99), with your GatherTube answers as [R120–R139](spec/resolutions.md#gathertube-r120r139). Everything below is what still needs you; the spec's Open items section states the default it uses until you answer.
 
 Items that need the user, collected while working the map. Clear each one when it's answered.
 
@@ -14,7 +14,7 @@ Items that need the user, collected while working the map. Clear each one when i
 
 - **Fix the live AMO listing now (S4)** ([ticket 30](issues/30-market-and-users.md)): edit AMO's description so it links the new 1.4.5 setup guide (`docs/legacy/1.4.5-setup.md`, live once `main` is pushed) instead of "the github readme", and add "2.0, coming soon, needs no credentials". No new version is needed.
 
-- **Run the live-check probe** ([ticket 25](issues/25-live-checks.md)) in Chrome and Firefox while signed in, and paste the reports back.
+- **Run the live-check probe** ([ticket 25](issues/25-live-checks.md)) in Chrome and Firefox while signed in, and paste the reports back. Gather tabs added seven checks (G1–G7); they join the probe before you run it.
 
 ## Setup only the user can do (before release, from ticket 19)
 
@@ -67,3 +67,16 @@ You answered the principles; these are the details settled to build them ([R84�
 - **Save from the browser's menu:** on youtube.com only, with three fixed items: Quick-save playlist, Watch later, and Choose a playlist…. Chrome can't rebuild a menu per tab before it opens, so the items can't name the account's playlists. Its `contextMenus` permission is optional and asked when you switch it on, with no prompt in either browser (Chrome lists no warning for it; Firefox has no message for it and grants such a permission silently), and it's given back when you switch the feature off (R91).
 - **The toolbar marks:** "paused" shows as a slate "II" on every tab, and the tick as a teal ✓ on the tab whose video was added. The "!" comes first, then "paused", then the tick (R92).
 - **Translation-ready:** every string comes from one message file, the manifest's included, and layouts allow 40 % longer text. Only English ships (R93).
+
+### Details filled in while folding in GatherTube
+
+You chose the destinations, the Shuffled order, all three automatic triggers, and the running-cost limits; these are the details settled to build them ([R120–R139](spec/resolutions.md#gathertube-r120r139), [02 §2.16](spec/02-youtube.md#216-gather-tabs)). Say if any should go another way.
+- **"A window reaching N video tabs" defaults to 10,** from 5, 10, 15, 20, 30 or 50, and then gathers every video tab in that window except the one you're on, pinned tabs and tabs playing sound. Recommended as is: ten is well above the few videos someone opens to watch next. The alternative, gathering only the oldest tabs to bring the window back under N, leaves an unpredictable set open (R131).
+- **"Opened in the background" turns a middle-click on a video into "save for later and close"** a second after the tab loads, unless you switch to it first. That's what the trigger means, so its option says it in those words. Tabs your browser restores at start never count; how each browser reports them is a live check (G6) (R130).
+- **"Unvisited for a while" can run hours late,** because nothing checks on a timer: it looks when you open the popup, when a YouTube page with one of its features loads, or when the browser starts. Its option says so (R129).
+- **A gather you start closes the tab you're on too,** if it's a video tab and Close gathered tabs is on, as GatherTube did. Automatic gathering never does (R124, R132).
+- **Gathering into a playlist checks each video's playlists first,** one request per video, as every save does, so it never adds a second copy. An automatic round takes at most 50 videos. Batched adds go 50 at a time, pending live check G1 (R126).
+- **YouTube's queue takes up to 200 videos a gather,** pending live check G3; 100 were tested. More stay open, and the result says how many (R123).
+- **Undo for a gather into a playlist** removes what it added and reopens the tabs it closed. Chrome loads them again; Firefox reopens them asleep (R127).
+- **Nothing new to approve in the stores:** no new permission and no new prompt. The consent text gains one line about reading a window's YouTube tabs, and Chrome's single-purpose statement now names gathering; 2.0 hasn't shipped, so consent stays at version 1 (R138).
+- **Credit to GatherTube by Karim Elgazar** shows on the feature's Settings card, in Settings › About, in both store descriptions and in the 2.0.0 release notes. Nothing is copied, so no licence notice is needed (R138).

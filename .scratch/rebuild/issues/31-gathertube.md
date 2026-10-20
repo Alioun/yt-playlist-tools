@@ -1,7 +1,7 @@
 # How does GatherTube's functionality fold into 2.0?
 
 Type: research
-Status: open
+Status: resolved
 Labels: wayfinder:research
 Part of: [Rebuild (2.0)](../map.md)
 
@@ -55,11 +55,25 @@ Full report, with test logs in `docs/research/gathertube/`: [`docs/research/gath
 - **Credit:** in the feature's card, Settings › About, the docs and both listings. Nothing is copied, so no licence notice is needed.
 - **Glossary:** Gather, Video tab, Destination, Temporary list, Gather playlist, Gather order, Automatic gathering, Unvisited tab, plus edits to Auto-add, Add and Queue (report §8).
 
+### Folded into the spec (2026-10-20)
+
+Resolved: the port is specified as **Gather tabs** in [02 §2.16](../spec/02-youtube.md#216-gather-tabs) (YT-GT-01 to YT-GT-36), with the decisions recorded as [R120–R139](../spec/resolutions.md#gathertube-r120r139) and every GatherTube item mapped in [09 §4](../spec/09-parity.md#4-gathertube).
+
+- **The feature:** one opt-in YouTube feature, "Doesn't change the page", credited to GatherTube by Karim Elgazar. No new permission and nothing copied.
+- **Destinations:** YouTube's player for up to 50 videos; YouTube's queue in place of the embedded player, and for anything over 50; the gather playlist, one per account, through the add flow as one batch, with Undo that reopens the closed tabs.
+- **Orders:** GatherTube's six, plus Shuffled. The language orders use the browser's own detection.
+- **Automatic gathering:** all three triggers, each its own choice, all off, each saving into the gather playlist and closing what it saved. They meet [ticket 33](33-resource-mindful-defaults.md)'s constraints (Q-PERF-58), which supersede the hourly alarm below:
+  - **unvisited for a while** (a day by default) is checked only when something already wakes the background, so it can run late, and says so;
+  - **opened in the background** is learnt from the site core's `tab.hello`, registered on watch and live pages only while this trigger or the next is on;
+  - **a window reaching N video tabs** defaults to 10.
+- **Constraints kept:** never the tab the user is on, pinned or audible tabs, or private windows; one gather per burst, at most once a minute per window and 50 videos a round; no alarm, no tab listener; one `tabs.remove`.
+- **Live checks added to [ticket 25](25-live-checks.md):** G1 to G7.
+
 ### The user's answers (2026-10-20)
 
 1. **The player page:** YouTube's own queue, plus a **Shuffled** gather order, so GatherTube's shuffle survives.
 2. **The automatic option:** **all three triggers**, each its own opt-in choice:
-   - video tabs left unopened for a while (default a day), checked by one hourly alarm;
+   - video tabs left unopened for a while (default a day), checked by one hourly alarm (superseded: no alarm, it's checked when something already wakes the background; R129);
    - a video tab opened in the background;
    - a window reaching N video tabs.
 

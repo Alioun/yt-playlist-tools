@@ -56,6 +56,7 @@ A spec at `.scratch/rebuild/spec.md` for 2.0 of this extension: a ground-up rebu
     - Every feature of GatherTube (MIT, unmaintained) is ported and credited ([ticket 31](issues/31-gathertube.md)).
     - Exactly two additions: gathering into a playlist the user picks, and an automatic option. Nothing else.
     - We fix its broken options upstream ([ticket 32](issues/32-gathertube-upstream-fix.md)).
+    - Folded into the spec as Gather tabs, [R120–R139](spec/resolutions.md#gathertube-r120r139).
   - **Resources (2026-10-20):** automatic work must be very mindful of browser resources and never degrade the browser ([ticket 33](issues/33-resource-mindful-defaults.md)).
 
 ## Decisions so far
@@ -91,12 +92,13 @@ A spec at `.scratch/rebuild/spec.md` for 2.0 of this extension: a ground-up rebu
 - [Ask AMO whether 2.0 can declare no data collection](issues/23-ask-amo.md): settled by decision from Mozilla's own docs, without sending: `none`, sync isn't collection, private-window settings allowed, Bun install kept. Firefox's prompt strings settle live check P1 ([R83](spec/resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)).
 - [What sets 2.0 apart, and who is it for?](issues/30-market-and-users.md): the USP is any playlist in one click or one named key, with YouTube Music one-click in the page, auto-add by actual watching, and Undo everywhere, all opt-in. "No sign-in" and Watch Later buttons are not differentiators. The listing re-leads with saving; the user took the re-led listing and upgrade fixes S1–S3 on 2026-10-20 (R95–R98); the live AMO listing fix S4 is the user's action. Detail on branch `research/market-differentiation`.
 - [What may automatic work cost the browser?](issues/33-resource-mindful-defaults.md): automatic work is event-driven, scoped to the tabs that need it, never on a clock, and paced ([ADR-0012](../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)). Running-cost budgets in 07 §7.6.8: an idle page costs nothing, playback at most 30 ms a minute of ours (YouTube's own is about 1,070), no wake for other sites' tabs, at most 1 local write a minute per playing tab, sync at most 12 a minute, four named, bounded requests nobody asked for. Progress is saved at checkpoints and at most every 5 minutes, one shard at a time. Enforced by a guard, soaks, `check:runtime` and a release check. Constraints for ticket 31's automatic gathering. R100–R117. Detail on branch `research/running-costs`.
+- [How does GatherTube's functionality fold into 2.0?](issues/31-gathertube.md): one opt-in YouTube feature, **Gather tabs**, credited to GatherTube by Karim Elgazar, with no new permission and nothing copied ([02 §2.16](spec/02-youtube.md#216-gather-tabs)). A window's video tabs go, each video once and in one of seven orders (GatherTube's six plus Shuffled), to YouTube's player (up to 50), YouTube's queue (replacing its embedded player, which YouTube's Error 153 and API policies rule out, and taking anything over 50), or the account's gather playlist through the add flow as one batch, with Undo that reopens the closed tabs. Tabs close only once their videos are confirmed. Automatic gathering offers all three triggers the user chose, each off until picked, each saving into the gather playlist and closing what it saved: unvisited for a day (checked only when something already wakes the background, so it can run late), opened in the background (from the site core's `tab.hello`, registered on watch pages only while needed), and a window reaching 10 video tabs. No alarm, no tab listener, one gather per burst, never the tab the user is on. Live checks G1–G7 join ticket 25. R120–R139.
 
 ## Not yet specified
 
 - Visual detail beyond the prototypes: motion and iconography.
 - Edge cases with members-only, age-restricted, private and deleted videos, and very large playlists, beyond the failure copy already specified.
-- What hangs on the open tickets: the name (22), the signed-in live checks (25), GatherTube (31, 32) and the icon (34). The spec states a default for the name and the live checks.
+- What hangs on the open tickets: the name (22), the signed-in live checks (25), GatherTube's upstream fix (32) and the icon (34). The spec states a default for the name and the live checks.
 
 ## Out of scope
 

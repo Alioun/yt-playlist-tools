@@ -2,7 +2,7 @@
 
 The destination of the [Rebuild (2.0) map](map.md): a ground-up rebuild of this extension that keeps every capability, adds YouTube Music quick actions, works through the user's own YouTube session, puts UI/UX first, and lets the user switch off any part of it. Every decision below was made in the map's tickets; this spec assembles them so `/to-tickets` and implementers can work from it without reading the tickets.
 
-Status: **assembled 2026-10-19; the user's decisions folded in on 2026-10-20** ([R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)). Items marked PROVISIONAL wait on the inputs listed in [Open items](#open-items). Each one names the ticket and check that settles it.
+Status: **assembled 2026-10-19; the user's decisions folded in on 2026-10-20** ([R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)), **with the running-cost budgets** ([R100–R117](spec/resolutions.md#running-costs-r100r117)) **and the GatherTube port** ([R120–R139](spec/resolutions.md#gathertube-r120r139)). Items marked PROVISIONAL wait on the inputs listed in [Open items](#open-items). Each one names the ticket and check that settles it.
 
 ## How to read this spec
 
@@ -17,7 +17,7 @@ Status: **assembled 2026-10-19; the user's decisions folded in on 2026-10-20** (
 | # | Chapter | Covers |
 |---|---|---|
 | 01 | Overview (this page) | Scope, principles, approved capabilities, ADRs, open items |
-| 02 | [YouTube capabilities](spec/02-youtube.md) | Auto-add, channel filters, the add flow and feedback, playlist shortcuts, quick-save, Add to queue, the watch-page button, the card menu, keys from any tab, Save from the browser's menu |
+| 02 | [YouTube capabilities](spec/02-youtube.md) | Auto-add, channel filters, the add flow and feedback, playlist shortcuts, quick-save, Add to queue, the watch-page button, the card menu, keys from any tab, Save from the browser's menu, Gather tabs |
 | 03 | [YouTube Music capabilities](spec/03-youtube-music.md) | Quick actions (with Save to library, Start mix, Go to album and Go to artist), quick-action shortcuts, queue moves, Save to playlist, Playing now |
 | 04 | [Features, accounts and data](spec/04-features-accounts-data.md) | The feature model, consent, accounts and setups, settings sync, the storage layout, recent adds, the settings file, Clear All Data, breakage status, Report a problem |
 | 05 | [UI](spec/05-ui.md) | Where everything lives; popup, settings, onboarding; in-page controls on both sites; picker, toasts, brand, design rules; prototypes |
@@ -50,6 +50,10 @@ Status: **assembled 2026-10-19; the user's decisions folded in on 2026-10-20** (
 - Save from the browser's menu;
 - the toolbar tick and "paused" on the icon, both on;
 - a UI ready for translation, shipped in English.
+
+**Approved with [ticket 31](issues/31-gathertube.md) on 2026-10-20** ([R120–R139](spec/resolutions.md#gathertube-r120r139)): **Gather tabs**, a port of every capability of [GatherTube](https://github.com/karimelgazar/gathertube) by Karim Elgazar (MIT), credited, off by default ([02 §2.16](spec/02-youtube.md#216-gather-tabs)). It gathers the YouTube videos open in a window into YouTube's player, YouTube's queue or a playlist, in one of seven orders, and can close their tabs. Its exactly two additions are:
+- the gather playlist, one per account, filled through the add flow with Undo;
+- automatic gathering, with three triggers the user switches on one by one: unvisited tabs, tabs opened in the background, and a window reaching a set number of video tabs.
 
 **Declined:** counting live streams and premieres for auto-add. **Scope stays whole:** nothing moves to 2.x ([ticket 30](issues/30-market-and-users.md)).
 
@@ -133,7 +137,7 @@ From [ticket 17](issues/17-modules.md), for `/to-tickets`:
 
 ## Open items
 
-The chapters were checked mechanically on 2026-10-19: 1,009 links and 1,471 requirement IDs, with zero broken links, zero missing IDs, zero duplicate IDs and **no remaining contradictions between chapters**. [`spec/resolutions.md`](spec/resolutions.md) records every conflict settled during assembly (R1–R82). Its "Final gaps" section governs where a chapter still lists a detail as not pinned down. After the user's decisions were folded in (R84–R99), the check ran again on 2026-10-20: 1,149 internal links and 1,529 requirement IDs, again with none broken, missing or duplicated.
+The chapters were checked mechanically on 2026-10-19: 1,009 links and 1,471 requirement IDs, with zero broken links, zero missing IDs, zero duplicate IDs and **no remaining contradictions between chapters**. [`spec/resolutions.md`](spec/resolutions.md) records every conflict settled during assembly (R1–R82). Its "Final gaps" section governs where a chapter still lists a detail as not pinned down. After the user's decisions were folded in (R84–R99), the check ran again on 2026-10-20: 1,149 internal links and 1,529 requirement IDs, again with none broken, missing or duplicated. After the GatherTube fold (R120–R139), it ran once more on 2026-10-20: 1,337 internal links and 1,696 requirement IDs, with none broken, missing or duplicated.
 
 What's still open, and what settles it:
 
@@ -158,6 +162,7 @@ These turn PROVISIONAL rows into settled ones. The design doesn't change, only d
 - **YouTube access routes (L1–L9):** which route each job uses, playlist creation, whether the cookie is read at all (L3/L4, and with it every cookie line in the disclosures, R48), proceeding when membership can't be read (L6), `DATASYNC_ID` stability across browsers (L7, which re-attaching setups depends on), queue confirmation (L8), Shorts (L9).
 - **YouTube Music (M1–M5):** queue reads, membership in its answers, quiet likes and Save to library (R85), the installed app window and keys from any tab reaching it (R88), how casting shows; the Wiz miniplayer's Save anchor.
 - **YouTube's queue:** quiet adds and their Undo (T28, T29).
+- **Gather tabs (G1–G7):** batched adds and removals, a video already in a batch, YouTube's queue built with one command and how many it takes, `watch_videos` signed in, how tabs opened in the background or restored report themselves, and reopening tabs for Undo ([R136](spec/resolutions.md#gathertube-r120r139)).
 - **Release inputs:** open tabs surviving an update (P2). The prompt strings (P1) are settled from Firefox's and Chromium's sources ([R83](spec/resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)); the live check only glances at the dialogs.
 - **Measurements on the reference machine:** `popovers.js` (54.5 KB against its 50 KB budget; R29's fix order applies), first-frame and picker timings, and breakage thresholds, which are also tuned in the first weeks of use.
 
