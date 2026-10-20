@@ -19,7 +19,70 @@ Decide:
 
 The user wants to workshop the name again: "list a variety of options for me to choose from with only ones that do not collide". 2.0 now also gathers open YouTube tabs into a queue or playlist ([ticket 31](31-gathertube.md)), so the name's job is broader than filing. The icon follows the name ([ticket 34](34-icon.md)).
 
+**PROVISIONAL, pending the user's choice. This round supersedes round 1's answer below.**
+
+Full screening, with every rejected name and its collision: [`docs/research/naming-round-2.md`](../../../docs/research/naming-round-2.md) (on branch `research/name-round-2`). All checks ran on 2026-10-20.
+
+- **Screened 352 names in five styles:**
+  - **18 finalists** pass every check;
+  - one near miss has a check unfinished;
+  - 196 collide;
+  - 64 pass but fit less well;
+  - 73 still wait on TMview, which blocked this machine partway through.
+- **Checks:** Chrome Web Store, AMO and Edge Add-ons, GitHub, USPTO, TMview, the App Store, Google Play, a web search, and RDAP for `.com` and `.app`.
+  - **New this round:** marks matching a name's main word are read for their goods, and GitHub is searched for the main word next to "youtube", "music" and "playlist".
+- **Round 1's pick fails now.** "Pigeon" is the brand of [PigeonPod](https://github.com/aizhimou/pigeon-pod), an active tool that turns YouTube channels and playlists into podcasts (1,195 stars, pigeonpod.cloud). Two smaller hits add to it: GitHub's `playlist-pigeon` (a playlist converter) and Google Play's "Pigeon Music". Round 1 missed all three.
+- **Round 1's runner-up, Playlist Courier, still passes.**
+
+### Finalists
+
+Style key: Plain = descriptive, Tool = tidy and tool-like, Mascot = an animal, Coinage = a short made-up word, Playful = light. Chars count the full store name. Every icon idea is hand-drawn vector work with no YouTube red and no play shapes.
+
+| # | Store name | Style | Chars | Why it fits | Icon | Nearest thing found |
+|---|---|---|---|---|---|---|
+| 1 | Playlist Courier for YouTube™ | Plain | 29 | Carries each video or song to the right playlist or queue | List card with speed lines | "Courier Web", an AI sidebar (Chrome, 8 users) |
+| 2 | Playlist Postie for YouTube™ | Plain | 28 | The friendly postman: right box, stray tabs collected | Card going into a mail slot | Nothing; "postie" is less known in the US |
+| 3 | Playlist Bellhop for YouTube™ | Plain | 29 | Takes what you hold to the right room when you ring | Pillbox cap | BELLHOP marks for a moving app and a voice device |
+| 4 | Playlist Satchel for YouTube™ | Plain | 29 | One bag for everything worth keeping | Buckled satchel | SATCHEL marks for school software |
+| 5 | Playlist Roundup for YouTube™ | Plain | 29 | Rounds up what you watch, and stray tabs | Rope loop round list lines | "One-Click Tab Round Up" (Chrome, 22 users) |
+| 6 | Save, Queue & Gather for YouTube™ | Plain | 33 | Three jobs in plain words | None that isn't YouTube's Save glyph | Nothing; omits auto-add and "Playlist" |
+| 7 | Playlist Mailroom for YouTube™ | Tool | 30 | The sorting room; keeps round 1's pigeonhole idea | Pigeonhole grid | One MAILROOM mark, for HR software |
+| 8 | Playlist Quickfile for YouTube™ | Tool | 31 | Files it in one action | Folder tab with a lightning notch | QuickFile, a UK accounting product |
+| 9 | Playlist Hotbar for YouTube™ | Tool | 28 | Quick slots: named keys, one click | Row of slots, one lit | Nothing; says less about auto-add |
+| 10 | Playlist Sheepdog for YouTube™ | Mascot | 30 | Herds what you watch, rounds up tabs | Collie's head in profile | The band The Sheepdogs |
+| 11 | Playlist Bowerbird for YouTube™ | Mascot | 31 | Collects and arranges treasures | Bird beside a small arch | The band Bowerbirds |
+| 12 | Playlist Stork for YouTube™ | Mascot | 27 | Delivers each video to the right home | Stork with a list card | STORK marks for baby monitors |
+| 13 | Listbird for YouTube™ | Coinage | 21 | A bird that carries your lists | Bird whose wing is list lines | Nothing; listbird.com taken |
+| 14 | Listwing for YouTube™ | Coinage | 21 | Lists on wings | A wing of list lines | Nothing; listwing.com taken |
+| 15 | Playstow for YouTube™ | Coinage | 21 | Stow what's playing | Small chest with list lines | Nothing; "Play" first may recall Google Play |
+| 16 | Bop Bucket for YouTube™ | Playful | 23 | Toss any bop in the bucket | Bucket with a note | Nothing; leans to music |
+| 17 | Queue Crew for YouTube™ | Playful | 23 | A crew that lines up your queue | Three figures in a line | Nothing; omits "Playlist" |
+| 18 | Playlist Packrat for YouTube™ | Playful | 29 | Hoards what's worth keeping, sorted | Packrat holding a card | A "PackRat" card game |
+
+The research doc gives each finalist's short form, tone, and per-check results with domain status.
+
+### Top three
+
+These are recommendations; the choice is yours.
+
+1. **Playlist Sheepdog for YouTube™.** It covers every job, herding what you watch into playlists and rounding up stray tabs into a queue. A sheepdog does only what it's told, which suits an opt-in tool. It's clean down to the word, and a collie's head is an icon with nothing of YouTube in it.
+2. **Playlist Courier for YouTube™.** It's still clean, the most sober option, and covers saving, auto-add, YouTube Music and gathering equally. Drafted copy that says "Playlist Pigeon" swaps straight over.
+3. **Playlist Mailroom for YouTube™.** The sorting room keeps round 1's pigeonhole idea without the taken word, and the only MAILROOM mark is for HR software. A pigeonhole grid reads well at 16 px.
+
+### Near miss
+
+**Playlist Starling for YouTube™** (30 chars) is clean on the stores, GitHub, USPTO and the web. Two French STARLING marks (classes 9, 38 and 41) and a Brazilian one (class 9) couldn't be read. Its sheen matches the drafted teal-to-violet palette. Read those marks before choosing it.
+
+### What's left
+
+- **The user picks a name.**
+- **If a name from the "waiting on TMview" list appeals,** run TMview for it first.
+- **Round 1's "After the user confirms" steps still apply** with the chosen name, and so does the attribution line.
+- **The icon brief changes with the name** ([ticket 34](34-icon.md)).
+
 ## Answer
+
+> **Superseded by round 2 above (2026-10-20).** This is round 1's answer, kept for the record. Its recommendation, Playlist Pigeon, now collides with PigeonPod.
 
 **PROVISIONAL, pending the user's confirmation. The name is the user's call; everything below is a recommendation.**
 
