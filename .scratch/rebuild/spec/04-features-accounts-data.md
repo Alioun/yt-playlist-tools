@@ -10,7 +10,7 @@ This chapter covers the user-visible model and behaviour of features, consent, a
 - The upgrade note's copy, the disclosure text and the release process: [08 Upgrade and release](08-release.md).
 - What 1.4.5 did and how 2.0 covers it: [09 Parity](09-parity.md).
 
-The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID, placed where it belongs. Under the resolutions' ownership rule, this chapter owns user-visible accounts, settings, data and status behaviour (R54); where it shares a topic with another chapter, the owner's text wins. [§9](#9-conflicts-found) records that no difference remains.
+The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too, and so are the user's decisions of 2026-10-20, R84–R99. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID, placed where it belongs. Under the resolutions' ownership rule, this chapter owns user-visible accounts, settings, data and status behaviour (R54); where it shares a topic with another chapter, the owner's text wins. [§9](#9-conflicts-found) records that no difference remains.
 
 **Placeholders in copy** (every chapter uses `{Product}` and `{Account}`, R65):
 - `{Product}` is the extension's in-product name. **PROVISIONAL** ([ticket 22](../issues/22-name.md)): "Playlist Pigeon", with "Playlist Courier" as the runner-up. The tickets wrote `{Name}` for both the product and the account; the spec splits them.
@@ -26,18 +26,20 @@ Requirements are numbered `FT-`, `ACC-`, `SYNC-`, `DATA-` and `HEALTH-`. Each is
 
 ### 1.1 The features
 
-- **FT-01** The extension has exactly these nine features. Each one is switched on and off by itself, and nothing else in the extension acts by itself.
+- **FT-01** The extension has exactly these eleven features. Each one is switched on and off by itself, and nothing else in the extension acts by itself. Save from the browser's menu and Keys from any tab joined on 2026-10-20 (R88, R91).
 
 | Feature (name as shown) | Registry ID | Site | Footprint tag | Show feedback default | Options and their defaults |
 |---|---|---|---|---|---|
-| **Auto-add** | `auto-add` | YouTube | Doesn't change the page | On | Default required percentage **50 %**. Toolbar tick for an auto-added video **off** until the user decides whether it exists (PROVISIONAL, see [§6](#6-provisional-items); R11). Per account: auto-add playlists, each with Takes, an optional percentage override and a channel filter. |
+| **Auto-add** | `auto-add` | YouTube | Doesn't change the page | On | Default required percentage **50 %**. "Tick the toolbar icon when this tab's video is auto-added" **on**, and "Show on the toolbar icon while auto-add is paused" **on** (R92, which amends R11). Per account: auto-add playlists, each with Takes, an optional percentage override and a channel filter. |
 | **Playlist shortcuts** | `shortcuts` | YouTube, and YouTube Music while "Also on YouTube Music" and the YouTube Music section switch are both on (FT-06; R1) | Keys only, doesn't change the page | On | Preset on first switch-on (FT-04): one shortcut, **Alt+W** → Watch later on every account; picker key **Alt+Shift+P**; Also on YouTube Music **on**. Up to 20 shortcuts, each with a key and an optional label. Per account: each shortcut's playlist. The undo key isn't part of the preset: it belongs to no feature (FT-05; R44). |
 | **Quick-save on thumbnails** | `quick-save` | YouTube | Adds buttons to the page | On | "On Shorts shelves too": **off** (R11). Per account: the quick-save playlist. |
 | **Queue button on thumbnails** | `queue-button` | YouTube | Adds buttons to the page | On | — |
 | **Watch-page button** | `watch-button` | YouTube | Adds buttons to the page | On, for its menu's Save rows (R42) | "On Shorts too": **off** (R11). Its menu's Save rows belong to this feature whether or not Quick-save on thumbnails is on, use its Show feedback, and save to YouTube's quick-save playlist ([YT-WB-07](02-youtube.md#211-the-watch-page-button); R27, R42). |
 | **Right-click for the video menu** | `card-menu` | YouTube | Changes right-click on the page | None: it raises no toasts of its own, only breakage notices, which Show feedback never hides ([YT-ADD-13](02-youtube.md#252-feedback)) | "Links inside cards keep the browser's menu": **off** (R11). Shift+right-click always gives the browser's menu. |
-| **Quick actions** | `music-actions` | YouTube Music | Adds buttons to the page | On | Buttons: Play next **on**, Add to queue **on**, Save to playlist off, Like off, Remove from queue off, Save on the player bar off. Per account: YouTube Music's quick-save playlist, shared with quick-action shortcuts. |
-| **Quick-action shortcuts** | `music-keys` | YouTube Music | Keys only, doesn't change the page | On | Preset on first switch-on: Play next **Alt+N**, Add to queue **Alt+Q**, Save to playlist **Alt+P**, the picker **Alt+Shift+P**, Like **Alt+L**, Remove from queue **Alt+R**. The undo key works here too, but isn't part of this preset (FT-05; R44). |
+| **Save from the browser's menu** | `browser-menu` | YouTube | Doesn't change the page | On | None. It adds Save to ▸ to the browser's own right-click menu and uses YouTube's quick-save playlist ([02 §2.15](02-youtube.md#215-save-from-the-browsers-menu); R91). Needs the optional `contextMenus` permission (FT-60). |
+| **Quick actions** | `music-actions` | YouTube Music | Adds buttons to the page | On | Buttons: Play next **on**, Add to queue **on**, Save to playlist off, Like off, Remove from queue off, Save on the player bar off, Save to library off, Start mix off, Go to album off, Go to artist off (R85). Per account: YouTube Music's quick-save playlist, shared with quick-action shortcuts. |
+| **Quick-action shortcuts** | `music-keys` | YouTube Music | Keys only, doesn't change the page | On | Preset on first switch-on: Play next **Alt+N**, Add to queue **Alt+Q**, Save to playlist **Alt+P**, the picker **Alt+Shift+P**, Like **Alt+L**, Remove from queue **Alt+R**. Save to library, Start mix, Go to album and Go to artist start with no key (R85). The undo key works here too, but isn't part of this preset (FT-05; R44). |
+| **Keys from any tab** | `any-tab-keys` | Everywhere: acts in YouTube and YouTube Music tabs | Keys only, doesn't change the page | On | None. Three browser commands with no default key, set in the browser's own shortcut settings ([02 §2.14](02-youtube.md#214-keys-from-any-tab); R88). |
 | **Settings sync** | `sync` | Everywhere | Doesn't change the page | — | Its switch is per browser, lives in `Device.syncOn` rather than the shared settings, and never syncs ([§3](#3-settings-sync); R54). |
 
   There are exactly four footprint tags, the ones in the table: "Doesn't change the page", "Keys only, doesn't change the page", "Adds buttons to the page" and "Changes right-click on the page". Settings sync has one too. (R1, R11, R27, R42, R44, R54)
@@ -77,13 +79,13 @@ Requirements are numbered `FT-`, `ACC-`, `SYNC-`, `DATA-` and `HEALTH-`. Each is
   - a denied site-access prompt (FT-52), except from Playlist shortcuts' own switch, which goes on with "Also on YouTube Music" off (R71);
   - a refusal because sync is full (SYNC-14);
   - a refusal because a newer version wrote the synced document being edited (SYNC-23). (R13, R71)
-- **FT-13** **Held:** a feature that's on but can't run shows as on but held, with its reason: "Waiting for your OK", "Needs site access" or "YouTube Music is off". A held feature registers nothing.
+- **FT-13** **Held:** a feature that's on but can't run shows as on but held, with its reason: "Waiting for your OK", "Needs site access", "YouTube Music is off", or, for Save from the browser's menu without its permission, "Needs your OK" with **Allow** (FT-60; R91). A held feature registers nothing.
 - **FT-14** A feature that's off takes one row in Settings: its name, footprint tag, one-line description and switch. Its options show only while it's on. In the popup, an off feature's row never unfolds. YouTube Music's quick-save playlist row shows only while a YouTube Music feature is on.
 
 ### 1.3 Off costs nothing
 
 - **FT-15** **Every feature for a site off or held:** nothing is registered or injected there. That means no script in either world, and no CSS, element, listener, timer or request. The manifest has no `content_scripts` and no `web_accessible_resources`.
-- **FT-16** **The on-demand probe** is the only exception to FT-15.
+- **FT-16** **The on-demand probe** is one of two exceptions to FT-15; the other is FT-59's injection on use.
   - It runs only after consent, and only when the popup or settings needs an account or fresh data from a tab that has no site core. Playing now uses it when no YouTube Music feature is on ([YM-POP-10](03-youtube-music.md#17-playing-now-in-the-popup); R8).
   - It injects the site core (gateway and isolated core) into that one tab ([ARC-MAN-15](06-architecture.md#633-runtime-script-registration)).
   - It draws nothing and stays inert until the tab reloads.
@@ -102,6 +104,12 @@ Requirements are numbered `FT-`, `ACC-`, `SYNC-`, `DATA-` and `HEALTH-`. Each is
 
   Those two are the only calls allowed, and the test expects exactly them. The 1.x migration isn't an exception: it doesn't touch `storage.sync` while sync is off, so it leaves 1.5.0's stray `theme` key there (DATA-49). Only developer profiles ever wrote it. The test is [Q-PERF-11](07-quality.md#762-off-means-zero). (R9, R20, R59)
 - **FT-22** The background never polls. There's no `setInterval`, and no alarm unless a feature that's on needs a schedule.
+- **FT-59** **Injection on use.** Keys from any tab and Save from the browser's menu register no page script. When one is used, after consent and with site access, the background injects the site's page half, core and kit into that one tab if it has none, runs the job there, and leaves the injected code inert until the tab reloads. It draws nothing but that action's toast. ([ARC-MAN-15](06-architecture.md#633-runtime-script-registration); R88, R91)
+  - **What stays when they're off:** Keys from any tab's three commands must be declared in the manifest, so the browser's shortcut settings list them, without keys, even while it's off. No key is reserved until the user sets one, and the background ignores them while the feature is off, held or waiting for consent ([YT-ANY-07](02-youtube.md#214-keys-from-any-tab)). Save from the browser's menu leaves nothing: its menu entry and its optional permission go when it's switched off (FT-60).
+- **FT-60** **The browser menu's permission.** Save from the browser's menu needs `contextMenus`, an optional permission on both browsers.
+  - It's requested first, synchronously, in the click that switches the feature on: the switch in Settings or the popup, or first run's Agree. Neither browser shows a prompt for it.
+  - Switching the feature off removes its entry and gives the permission back.
+  - Without it, the feature is held with "Needs your OK" and **Allow**, which requests it. That happens when the feature arrives by sync, or when the user removes the permission in the browser. It sets no "!". (R91)
 
 The size and timing budgets that enforce this, and the real-browser "off means zero" test, are in [07 Quality](07-quality.md): [§7.6.2 Off means zero](07-quality.md#762-off-means-zero) (Q-PERF-5 to Q-PERF-11: FT-15 ↔ Q-PERF-5/6, FT-16 ↔ Q-PERF-9, FT-17 ↔ Q-PERF-8, FT-19 ↔ Q-PERF-10, FT-21 ↔ Q-PERF-11, FT-22 ↔ Q-PERF-7), [§7.6.3 In-page weight](07-quality.md#763-in-page-weight), [§7.6.5 In-page time](07-quality.md#765-in-page-time) and the real-browser layer, [§7.2.5](07-quality.md#725-layer-4-real-browser) (Q-TEST-18).
 
@@ -163,13 +171,14 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
   It has three steps:
   1. **"What should {Product} do?"**
      - Settings sync comes first, as a card: "Use {Product} in another browser already? Turn on Settings sync to bring your settings here." Turning it on looks for synced settings for up to 10 s, then pre-ticks the features they have switched on, marked "From sync", for review (SYNC-08). It only reads: nothing is pushed, and the sync switch isn't stored, until Agree (FT-31; R9).
-     - Then every other feature, grouped YouTube and YouTube Music, all unticked, each with its footprint tag. A hint says that picking only "Doesn't change the page" features keeps YouTube as it is.
-     - On Chrome, ticking a YouTube Music feature, or Playlist shortcuts (whose preset turns "Also on YouTube Music" on, FT-01), shows "Chrome will ask for access to music.youtube.com when you agree." ([REL-CON-14](08-release.md#41-the-disclosure); R53).
+     - Then every other feature, grouped YouTube and YouTube Music, then Keys from any tab under Everywhere, all unticked, each with its footprint tag. A hint says that picking only "Doesn't change the page" features keeps YouTube as it is.
+     - On Chrome, ticking a YouTube Music feature, Playlist shortcuts (whose preset turns "Also on YouTube Music" on, FT-01) or Keys from any tab shows "Chrome will ask for access to music.youtube.com when you agree." ([REL-CON-14](08-release.md#41-the-disclosure); R53, R88).
      - The step ends with **Continue with {N} features** or **Continue without features**.
   2. **"Before you start":**
      - the disclosure, with **Agree and turn on {N} features** (**Agree** when N is 0) and **Not now**;
      - **Agree** sets consent and applies the ticks in one change, the sync switch included. Presets apply for each feature switched on (FT-04), and page scripts register;
-     - **on Chrome, with a YouTube Music feature or Playlist shortcuts ticked,** the same click first calls the site-access request for music.youtube.com, before anything is awaited (FT-44). If the user denies it, consent and the other ticks still apply. The ticked YouTube Music features are saved on but held with "Needs site access" (FT-13), and so is Playlist shortcuts' "Also on YouTube Music", while Playlist shortcuts runs on YouTube. **Give access** shows in the popup and Settings, and nothing is registered or injected on music.youtube.com until access is granted (R14, R53).
+     - **with Save from the browser's menu ticked,** the same click first requests its optional permission, which shows no prompt (FT-60; R91);
+     - **on Chrome, with a YouTube Music feature, Playlist shortcuts or Keys from any tab ticked,** the same click first calls the site-access request for music.youtube.com, before anything is awaited (FT-44). If the user denies it, consent and the other ticks still apply. The ticked YouTube Music features are saved on but held with "Needs site access" (FT-13), and so is Playlist shortcuts' "Also on YouTube Music", while Playlist shortcuts runs on YouTube. **Give access** shows in the popup and Settings, and nothing is registered or injected on music.youtube.com until access is granted (R14, R53).
   3. **"Finish setting up":**
      - first, the YouTube state: **Give access**, **Open YouTube**, **Sign in**, or the signed-in account; and, when something ticked lacks YouTube Music access, **Give access to YouTube Music** (R14, R53);
      - then a row per chosen feature: auto-add's playlists, Alt+W's playlist (Watch later on every account), both quick-save playlists, or "Ready";
@@ -190,16 +199,17 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 - **FT-44** **Site access** is per site:
   - **Chrome:** www.youtube.com is asked for at install. music.youtube.com is optional. It's asked for from the click that switches on the first thing that needs it, first run's Agree included (R53):
     - a YouTube Music feature;
-    - or "Also on YouTube Music" while Playlist shortcuts is on. Since the shortcuts preset turns that option on, the click that first switches on Playlist shortcuts asks too. If that prompt is denied, Playlist shortcuts still goes on, on YouTube only (FT-52; R71).
+    - or "Also on YouTube Music" while Playlist shortcuts is on. Since the shortcuts preset turns that option on, the click that first switches on Playlist shortcuts asks too. If that prompt is denied, Playlist shortcuts still goes on, on YouTube only (FT-52; R71);
+    - or Keys from any tab, whose YouTube Music keys need it. If that prompt is denied, the feature still goes on, and its YouTube Music keys answer "No access to YouTube Music." until access is given (R88).
 
-    The YouTube Music section switch itself never asks. (R53, R71)
+    The YouTube Music section switch itself never asks. (R53, R71, R88)
   - **Firefox:** one grant for `*://*.youtube.com/*` covers both sites.
 - **FT-45** Site access is checked per site at every background start, and whenever the browser reports a permission added or removed.
 - **FT-46** **A site without access:**
   - its switched-on features stay on but are held with "Needs site access", and nothing is registered there;
   - the toolbar shows the violet "!" on every tab, not only on that site's tabs, because without host access the extension can't tell which tabs are that site's (FT-57, FT-58; R53);
   - the popup's banner ([UI-POP-10](05-ui.md#banners), row 3) and settings' connection strip ([UI-SET-02](05-ui.md#frame)) say "{Product} doesn't have access to YouTube." with **Give access to YouTube**, or the same for YouTube Music. (R12, R53)
-- **FT-47** **Missing YouTube Music access** raises the "!" only while something that needs it is on: a YouTube Music feature, or "Also on YouTube Music" while Playlist shortcuts is on (FT-44), with the YouTube Music section switch on. "Also on YouTube Music" without access shows **Give access** ([YM-PS-2](03-youtube-music.md#18-playlist-shortcuts-on-youtube-music)). A prompt denied from Playlist shortcuts' own switch turns "Also on YouTube Music" off, so it raises no "!" (FT-52). (R53, R71)
+- **FT-47** **Missing YouTube Music access** raises the "!" only while something that needs it is on: a YouTube Music feature, or "Also on YouTube Music" while Playlist shortcuts is on (FT-44), with the YouTube Music section switch on. "Also on YouTube Music" without access shows **Give access** ([YM-PS-2](03-youtube-music.md#18-playlist-shortcuts-on-youtube-music)). A prompt denied from Playlist shortcuts' own switch turns "Also on YouTube Music" off, so it raises no "!" (FT-52). Keys from any tab without YouTube Music access raises no "!" either: its Settings card says "No access to YouTube Music, so its YouTube Music keys do nothing." with **Give access** (R88). (R53, R71)
 - **FT-48** The site-access check is local, so it also runs before consent. The upgrade note can show **Give access to YouTube** before Agree.
 - **FT-49** A feature that's on in a browser without that site's access, for example one switched on by sync, shows "Needs site access" until access is granted there. Site access never syncs.
 - **FT-50** **Give access** calls the browser's permission request first, synchronously in the click handler.
@@ -224,7 +234,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
   3. a feature isn't working (HEALTH-15);
   4. a playlist in a setup is marked Missing or Full (ACC-06).
 
-  Partly working sets no badge. The "!" always wins over auto-add's toolbar tick (FT-01; [ticket 15](../issues/15-popup-and-settings.md)). (R12, R53)
+  Partly working sets no badge. The "!" always wins over auto-add's two marks, which come next in this order: "paused" (a slate "II" on every tab), then the tick (a teal ✓ on the tab whose video was auto-added) ([YT-AA-42](02-youtube.md#2310-auto-adds-feedback)). A key from any tab shows its 3 s ✓ or ✕ over everything, then the icon returns to what it showed ([YT-ANY-06](02-youtube.md#214-keys-from-any-tab)). (R12, R53, R88, R92)
 - **FT-58** **Scope and colour:**
   - **Per tab:** "not working" shows only on the tabs it concerns.
   - **Every tab:** consent, missing site access and Missing or Full. Site access is on every tab because, without it, the extension can't tell which tabs are that site's (R53).
@@ -507,24 +517,24 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
   - a list of each account's playlists (names, counts and thumbnail links), refreshed when it's shown and more than 5 minutes old, plus playlists created in the last 24 hours;
   - watch progress per video, for up to 30 days ([§4.6](#46-watch-progress));
   - settings from 1.x that are waiting for their account;
-  - until the browser closes, or the extension updates (DATA-11): Pause, videos the user chose not to auto-add, recent adds (one minute), and breakage signals. Session skips and recent adds may name videos and playlists, but they stay in this browser's memory until it closes, and are never synced or sent anywhere. Breakage signals name nothing (HEALTH-03).
+  - until the browser closes, or the extension updates (DATA-11): Pause, videos the user chose not to auto-add, the list of recent adds (DATA-52), and breakage signals. Session skips and recent adds name videos and playlists, but they stay in this browser's memory until it closes, and are never synced or sent anywhere. Breakage signals name nothing (HEALTH-03).
 
-  Nothing is sent anywhere except the requests to YouTube and, if switched on, settings sync. The privacy policy's matching lines are in [REL-STORE-17](08-release.md#102-text). (R10, R57)
+  Nothing is sent anywhere except the requests to YouTube and, if switched on, settings sync. Two things leave only when the user acts: a settings file goes where the user saves it (DATA-53), and Report a problem opens GitHub with a few prefilled facts (HEALTH-27). The privacy policy's matching lines are in [REL-STORE-17](08-release.md#102-text). (R10, R57, R86, R89, R90)
 - **DATA-04** **Groups:**
 
 | Group | Examples | Area | Syncs while settings sync is on |
 |---|---|---|---|
 | **Shared settings** | Feature switches and options, Show feedback, the YouTube Music section switch, the shortcuts' keys and labels, the default required percentage, the theme | `storage.local` | Yes |
 | **Account setups** | Auto-add playlists (Takes, percentage override), channel filters with their channel labels, shortcut targets, both quick-save playlists, Missing/Full marks, the account label | `storage.local` | Yes |
-| **This browser** | Consent, the sync switch, the upgrade note, the unclaimed 1.x setup, the last account, the last visibility, the picker's Sort A–Z, Detailed console log | `storage.local` | Never |
+| **This browser** | Consent, the sync switch, the upgrade note, the unclaimed 1.x setup, the last account, the last visibility, the picker's Sort A–Z, Detailed console log, whether to keep recent adds | `storage.local` | Never |
 | **Caches** (per account) | Playlist list, thumbnails, counts, Save-dialog order, newly created playlists, the label check stamp | `storage.local` | Never |
 | **Watch progress** (per account) | The played stretches of each video, for up to 30 days | `storage.local` | Never |
 | **Session memory** | Pause, session skips, recent adds, 429 pauses, shown-once memory, breakage signals and notices, the tab registry | `storage.session` | Never |
 | **Memory only** | Undo entries, locks, the picker's membership, anything from a private tab | The tab, or the background's own variables | Never |
 | **Not stored** | Script registrations (derived from the switches, consent and site access), membership, a video's channel | — | — |
-| **The browser's own** | Site access (YouTube Music is optional on Chrome), Firefox data-collection grants | Browser permissions | Never |
+| **The browser's own** | Site access (YouTube Music is optional on Chrome), the browser menu's optional permission, the keys for Keys from any tab, Firefox data-collection grants | Browser permissions and settings | Never |
 
-  (R1, R39)
+  (R1, R39, R86, R88, R91)
 
 ### 4.2 What syncs, setting by setting
 
@@ -538,7 +548,8 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 | Playlist shortcuts: key, label, Watch later on every account | Shared | Yes |
 | The picker key, the undo key, Also on YouTube Music | Shared | Yes |
 | The YouTube Music section switch (R1) | Shared | Yes |
-| Quick actions' buttons, quick-action keys | Shared | Yes |
+| Quick actions' buttons, quick-action keys, the four more actions' included (R85) | Shared | Yes |
+| Auto-add's toolbar tick and "paused" options (R92) | Shared | Yes |
 | Whether each feature's presets were applied | Shared | Yes |
 | Theme | Shared | Yes |
 | Auto-add playlists, their Takes and percentage override | Account | Yes |
@@ -554,6 +565,8 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 | The last visibility picked for new playlists | This browser | Never |
 | The picker's Sort A–Z ([UI-PICK-26](05-ui.md#contents-and-behaviour-every-container); R39) | This browser | Never |
 | Detailed console log | This browser | Never |
+| Whether to keep recent adds (R86) | This browser | Never |
+| The keys for Keys from any tab (the browser's own settings, R88) | This browser | Never |
 | The playlist cache and newly created playlists | This browser, per account | Never |
 | Watch progress | This browser, per account | Never |
 | Pause, session skips, recent adds, 429 pauses, shown-once memory | Browser session | Never |
@@ -609,7 +622,8 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 |---|---|
 | `paused` | Auto-add's Pause |
 | `skips:<acct>` | Session skips: video ID → `"all"` or a list of playlist IDs |
-| `recent` | Adds in the last 60 s, each `{acct, playlist, video, at}` |
+| `recent` | Adds in the last 60 s, each `{acct, playlist, video, at}`: the add coordinator's memory (YT-ADD-41) |
+| `recentAdds` | Recent adds: up to 50 entries, newest first (DATA-52; R86) |
 | `cooldown:<acct>` | When a 429 pause ends |
 | `shown` | Which once-per-session toasts were shown: auto-add's only, because explicit actions answer every time ([YT-ADD-25](02-youtube.md#252-feedback); R22) |
 | `breakage` | Breakage signals, feature statuses, the notice-shown memory, the can't-measure run and the last Check now result |
@@ -631,7 +645,8 @@ type Settings = {
   theme: "system" | "light" | "dark"       // default "system" (R11)
   undoKey: Key | null                      // belongs to no feature; Alt+U at install (FT-05; R44)
   autoAdd: { on: boolean; feedback: boolean; pct: number /* default required percentage, 0–100 */
-             toolbarTick: boolean }        // options: toolbar tick, default false (PROVISIONAL, R11)
+             toolbarTick: boolean          // options: the toolbar tick, default true (R92)
+             toolbarPaused: boolean }      // options: "paused" on the toolbar icon, default true (R92)
   shortcuts: {
     on: boolean; feedback: boolean; music: boolean /* Also on YouTube Music */; preset: boolean
     picker: Key | null
@@ -641,15 +656,19 @@ type Settings = {
   queueButton: { on: boolean; feedback: boolean }
   watchButton: { on: boolean; feedback: boolean; shorts: boolean }     // feedback default true (R42); options: On Shorts too, default false (R11)
   cardMenu: { on: boolean; keepLinkMenu: boolean }                     // options: Links inside cards keep the browser's menu, default false (R11)
+  browserMenu: { on: boolean; feedback: boolean }                      // Save from the browser's menu (R91)
   musicSection: boolean                                                // the YouTube Music section switch, default true (FT-06; R1)
   musicActions: {
     on: boolean; feedback: boolean; preset: boolean
-    buttons: { next: boolean; queue: boolean; save: boolean; like: boolean; remove: boolean; bar: boolean }
+    buttons: { next: boolean; queue: boolean; save: boolean; like: boolean; remove: boolean; bar: boolean
+               library: boolean; mix: boolean; album: boolean; artist: boolean } // the last four default false (R85)
   }
   musicKeys: {
     on: boolean; feedback: boolean; preset: boolean
-    keys: Record<"next" | "queue" | "save" | "picker" | "like" | "remove", Key | null>
+    keys: Record<"next" | "queue" | "save" | "picker" | "like" | "remove"
+                 | "library" | "mix" | "album" | "artist", Key | null> // the last four start null (R85)
   }
+  anyTabKeys: { on: boolean; feedback: boolean }  // Keys from any tab; its keys are the browser's own (R88)
 }
 
 type Setup = {
@@ -667,12 +686,14 @@ type Device = {
   id: string // random; appears only in stamps
   consent: { v: number; at: number } | null
   syncOn: boolean // Settings sync's switch: per browser, never in Settings (SYNC-01; R54)
-  upgradeNote: { state: "pending" | "done"; details: UpgradeDetails; opened: boolean } | null // UpgradeDetails: 08-release
+  upgradeNote: { state: "pending" | "done"; details: UpgradeDetails; opened: boolean
+                 seen: boolean; reopened: boolean } | null // UpgradeDetails: 08-release; seen and reopened: REL-CON-25 (R97)
   claimNotice: { acct: string; dropped: number } | null // shown once
   lastAccount: string | null // the last account with a setup that was current, normal windows only
   newPlaylistVisibility: "PRIVATE" | "UNLISTED" | "PUBLIC" | null // the last pick here
   pickerSortAZ: boolean // the picker's Sort A–Z, default false; this browser only (R39)
   detailedLog: boolean
+  recentAdds: boolean // keep the list of recent adds, default true; this browser only (R86)
   legacyCleared: boolean // 1.x localStorage keys removed
 }
 
@@ -784,7 +805,8 @@ type SyncState = {
   - caches and newly created playlists;
   - watch progress;
   - the last account and the last visibility;
-  - session memory (skips, recent adds, 429 pauses, shown-once memory, breakage signals, tab registry entries), which stays in the tab's or the background's memory instead.
+  - session memory (skips, recent adds, 429 pauses, shown-once memory, breakage signals, tab registry entries), which stays in the tab's or the background's memory instead;
+  - importing a settings file (DATA-54; R90).
 - **DATA-34** A refusal is answered as "private", so the surface can explain it (ACC-40). Surfaces disable those controls first. A refusal is also logged to the console.
 - **DATA-35** Documents arriving from the synced copy are accepted (SYNC-25).
 
@@ -877,6 +899,35 @@ type SyncState = {
   - consent stays `null` and the upgrade note is set to pending, so nothing runs until Agree (FT-43).
 - **DATA-51** The upgrade note's `details` shape ([REL-MIG-33](08-release.md#29-what-the-note-is-built-from)), the note's copy ([§3.2](08-release.md#32-copy)) and the upgrade test matrix ([§17](08-release.md#17-upgrade-test-matrix)) are in 08 Upgrade and release. What 1.4.5 users had is [09's §1.12](09-parity.md#112-what-145-users-had) (PAR-CAP-71 to PAR-CAP-79).
 
+### 4.11 Recent adds
+
+The user approved this on 2026-10-20 (R86).
+
+- **DATA-52** **Recent adds** is the popup's list of this browser session's adds ([UI-POP-33, UI-POP-34](05-ui.md#overlays-and-states)).
+  - **What's kept:** each add whose outcome was *added*, by any feature, as one entry: the account key, the video's ID and title, the playlists' IDs and titles, what made it (the feature, or a shortcut's key) and when. At most 50 entries, newest first; the oldest drops off.
+  - **What isn't:** *already in*, *filtered out*, *skipped* and *failed* outcomes, removals, and queue adds, which aren't adds. An add that's undone leaves the list.
+  - **Where:** `storage.session`'s `recentAdds` (DATA-11), so it's memory only: it ends when the browser closes or the extension updates. It never syncs and is never sent anywhere.
+  - **Private windows:** nothing from a private window is kept (DATA-33), so their adds aren't listed.
+  - **Removals:** removing a setup removes its entries (DATA-44), and Clear all data removes them all (DATA-39).
+  - **The switch:** "Keep a list of recent adds until the browser closes" in Settings › Privacy & data, **on** by default, for this browser only (`device.recentAdds`). Off, nothing is recorded and the list is cleared at once. It's a setting, not a feature: it changes nothing on any page.
+
+### 4.12 The settings file
+
+The user approved this on 2026-10-20 (R90).
+
+- **DATA-53** **Export.** Settings › Privacy & data's **Export settings** saves a file named `playlist-pigeon-settings-{YYYY-MM-DD}.json` (PROVISIONAL with the name), through the page's own download link, so no new permission is needed.
+  - **It holds** a header (`format: 1`, the product, the version, the date), the shared settings, and every account setup with its channel filters, kept filters included. Those are the documents settings sync carries (DATA-05), keyed by the same account keys.
+  - **It never holds** consent, the sync switch or anything else from `device`, caches, watch progress, session memory, or the unclaimed 1.x setup.
+  - A line beside the button says: "The file holds your playlist IDs, channel filters and account names. Keep it private."
+  - Export works in any window, before consent included, because it reads only this browser's settings.
+- **DATA-54** **Import.** **Import settings** reads a file the user picks, checks it, then asks: "Import settings from {file}? Your shared settings, and the setups of the {N} accounts in the file, are replaced. Other accounts' setups are kept." with **Import** and **Cancel**.
+  - It's one store change, stamped as a fresh edit, so settings sync carries it like any edit. A change too big for the synced copy is refused, as any edit is (SYNC-14).
+  - Imported switches run only after this browser's consent and with its site access, as switches that arrive by sync do (FT-34, FT-49). Presets already applied stay applied.
+  - It's refused from a private window: "Import settings in a normal window." (DATA-33).
+- **DATA-55** **A file it can't use** is refused, with nothing changed:
+  - a newer `format`: "This file was made by a newer version of {Product}. Update it here first.";
+  - anything else: "This isn't a {Product} settings file."
+
 ## 5. Breakage status
 
 ### 5.1 What counts as breakage
@@ -964,12 +1015,12 @@ type SyncState = {
 
 ### 5.5 Diagnostics, Check now and the report
 
-- **HEALTH-21** **Nothing is ever sent:** no error reporting, analytics or crash upload, opt-in or not. Fixes reach users only as releases; there's no remote config or kill switch ([ADR-0005](../../../docs/adr/0005-breakage-caught-on-device-fixed-by-releases.md)).
+- **HEALTH-21** **Nothing is ever sent:** no error reporting, analytics or crash upload, opt-in or not. Fixes reach users only as releases; there's no remote config or kill switch ([ADR-0005](../../../docs/adr/0005-breakage-caught-on-device-fixed-by-releases.md)). The one thing the user can send is a problem report they start, see and submit themselves (HEALTH-27; R89).
 - **HEALTH-22** **Settings › Diagnostics** loads only when shown. It holds:
   - each feature's status per site;
   - **Check now**;
   - the diagnostics report, shown in full, with **Copy**;
-  - **Known problems**, which opens the public issues labelled `youtube-change`, and **Report a problem**, which opens the GitHub Problem form. Both are plain links and attach nothing;
+  - **Known problems**, a plain link to the public issues labelled `youtube-change`, and **Report a problem**, which opens HEALTH-27's chooser. There's no support e-mail (R89);
   - **Detailed console log**, off by default, this browser only;
   - the version, with "(beta)" on beta builds ([REL-CI-15](08-release.md#71-firefox)), and a note that updates install by themselves. There's no update button. (R65)
 - **HEALTH-23** **Check now** runs only when clicked. It runs the runtime probes plus one read per read job in a serving tab, writes nothing, and works even if no feature has run this session. Its result is kept for the session and feeds the report.
@@ -992,6 +1043,15 @@ type SyncState = {
   - the prefix is the extension's name;
   - the page world never logs; the isolated world and the background do ([ARC-MSG-10](06-architecture.md#684-rules-for-every-channel), [Q-WATCH-34](07-quality.md#758-what-a-signal-holds));
   - Detailed console log adds a line for every route attempt, with timings.
+- **HEALTH-27** **Report a problem** goes to GitHub issues, with a few prefilled choices and directions (the user, 2026-10-20; R89). It's in Settings › Diagnostics and Settings › About. Its layout is [UI-SET-21](05-ui.md#sections); the forms are [08 §16](08-release.md#16-support-channel).
+  - **The chooser** first says: "Reports go to GitHub, where they're public. You need a GitHub account. There's no support e-mail." Then the user picks one of three kinds, each with its direction:
+    - **A feature says it isn't working:** "YouTube probably changed something. Check Known problems first: if it's listed there, a 👍 on it helps more than a new report.";
+    - **Something went wrong:** "Say what you did, what you expected and what happened instead. Paste the diagnostics report if you can.";
+    - **An idea:** "Say what you'd like to do, and where you'd look for it."
+  - **Feature:** a choice of every feature, plus "Upgrade from 1.x", "The popup or Settings" and "Something else", preselected when the chooser opens from a feature's status.
+  - **What goes to GitHub** is shown before it's sent, e.g. "GitHub opens with: {Product} 2.0.0 · Firefox 141 · Auto-add · Not working.": the version ("(beta)" on betas), the browser and its major version, the chosen feature's name, and its status in this browser (HEALTH-07's words, with its gap for partly working). Nothing else. It never names a video, playlist, channel or account.
+  - **The diagnostics report** never goes into the address. **Copy diagnostics report** copies it, with "Paste it into the form's Diagnostics field if you want to share it."
+  - **Open GitHub** opens GitHub's new-issue page in a new tab, with the matching form and those values prefilled. They reach GitHub when its page opens, and the developer only if the user submits the issue.
 
 How breakage is caught before release is in [07 Quality](07-quality.md#751-the-checks-at-a-glance): recorded answers ([§7.2.3](07-quality.md#723-layer-2-recorded-responses), Q-TEST-4 to Q-TEST-8), the daily watch ([§7.5.3](07-quality.md#753-the-static-watch), Q-WATCH-9 to Q-WATCH-11, and [§7.5.4](07-quality.md#754-the-browser-watch), Q-WATCH-12 to Q-WATCH-14) and the signed-in live check ([§7.5.6](07-quality.md#756-the-signed-in-live-check-and-the-live-check-build), Q-WATCH-18 to Q-WATCH-22).
 
@@ -1003,8 +1063,6 @@ How breakage is caught before release is in [07 Quality](07-quality.md#751-the-c
 | ACC-03, ACC-35, §2.9 | `DATASYNC_ID` stability across sign-out and browsers; collaborative playlists in claiming | [Ticket 25](../issues/25-live-checks.md) L7 and ticket 11's claiming check |
 | FT-39 | The disclosure's cookie line, removed if no shipped route reads the session cookie (R48) | [Ticket 25](../issues/25-live-checks.md) L3/L4 and its final route table |
 | FT-53 | `addHostAccessRequest` on Chrome 133+ | [Ticket 09](../issues/09-where-things-live.md), at build |
-| FT-01, DATA-12, FT-57 | Auto-add's toolbar tick: whether it exists. It's off until the user answers (R11) | The user: D10 ([for-the-user.md](../for-the-user.md); [ticket 09](../issues/09-where-things-live.md)'s new question; [ticket 15](../issues/15-popup-and-settings.md)) |
-| HEALTH-22 | A support e-mail beside GitHub issues | The user ([ticket 19](../issues/19-upgrade-and-rollout.md) §16) |
 | HEALTH-06 | Breakage thresholds | Ticket 25 and the first weeks of use |
 | ACC-22 | YouTube Music's answers carry `datasyncId` for the account guard | [Ticket 25](../issues/25-live-checks.md) M2 |
 
@@ -1019,7 +1077,7 @@ Later decisions overrode earlier text in these places; nothing here is open.
 - **Nothing is read before consent:** the popup shows no account before consent ([tickets 15](../issues/15-popup-and-settings.md) and [19](../issues/19-upgrade-and-rollout.md) over [ticket 09](../issues/09-where-things-live.md)'s prototype).
 - **Keys of a not-working feature** stay caught and answer with a failure toast ([ticket 18](../issues/18-breakage.md) over [ticket 26](../issues/26-youtube-music-quick-actions.md)'s "no armed key"). R50 brought ticket 26's rule back for one case, a YouTube Music action that's unavailable while its feature is partly working, and R68 narrows it again: that action's buttons hide in that tab, but its key stays caught and answers "{Action} isn't working right now. The popup shows why.", so no key ever does nothing silently (HEALTH-07, HEALTH-10).
 - **Registrations** are two per site, an ordered list ([ticket 17](../issues/17-modules.md) over [ticket 10](../issues/10-youtube-access.md)'s per-feature IDs). The behaviour, "a feature's file loads only while it's on", is unchanged.
-- **The support channel** is GitHub issues with a Problem form ([ticket 19](../issues/19-upgrade-and-rollout.md) §16 over ticket 18's PROVISIONAL links).
+- **The support channel** is GitHub issues with a Problem form ([ticket 19](../issues/19-upgrade-and-rollout.md) §16 over ticket 18's PROVISIONAL links), reached through Report a problem's chooser with prefilled forms and no support e-mail (the user, 2026-10-20; HEALTH-27, R89).
 - **The last account** is the last account *with a setup* that was current in a normal window (ticket 16 §3, refining ticket 11).
 
 ## 8. Gaps
@@ -1036,7 +1094,7 @@ Settled by the main session in [resolutions.md](resolutions.md):
 - **What the YouTube Music section switch holds** (was Conflict C1): everything on music.youtube.com, "Also on YouTube Music" included; `musicSection`, a synced shared setting, on by default (FT-06, DATA-12). R1.
 - **Settings sync before consent at first run** (was Conflict C2): the synced copy may be read before Agree; nothing is pushed and the switch isn't stored until Agree (FT-31, FT-41, SYNC-08). R9.
 - **The privacy policy's session-memory line** (was Conflict C3): corrected to say session skips and recent adds may name videos and playlists, but stay in memory and are never synced or sent; the storage choice stays (DATA-03, [REL-STORE-17](08-release.md#102-text)). R10.
-- **Option defaults** (was a gap): "On Shorts shelves too" off, "On Shorts too" off, "Links inside cards keep the browser's menu" off, theme System, toolbar tick off until D10 (FT-01, FT-05, DATA-12). R11.
+- **Option defaults** (was a gap): "On Shorts shelves too" off, "On Shorts too" off, "Links inside cards keep the browser's menu" off, theme System, toolbar tick off until D10, which R92 later turned on (FT-01, FT-05, DATA-12). R11.
 - **Badge precedence** (was a gap): consent or upgrade > site access > not working > Missing or Full, with per-tab and every-tab scopes and two colours (FT-57, FT-58, HEALTH-15). R12.
 - **The `waiting` sync status** (was a gap): the join question is unanswered (SYNC-08, SYNC-24). R13.
 - **The `update-needed` refusal** (was a gap): only edits to synced documents a newer version wrote are refused (SYNC-23, FT-12). R13.
@@ -1079,6 +1137,15 @@ Also applied, third round: R68 (an unavailable YouTube Music action's key stays 
 After the spec ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)):
 - **Firefox's data-collection declaration for settings sync** (was PROVISIONAL on ticket 23 Q2): sync declares no data type, because the browser's own sync is invisible to the developer. The optional-type flow stays only as the fallback if an AMO reviewer objects (SYNC-26, §6). R83.
 - **Private-window settings writes** (were PROVISIONAL on ticket 23 Q3): allowed, as R58 decided, now no longer provisional. A settings change the user makes isn't browsing data, and nothing about the window's browsing is stored (ACC-38, DATA-32, §6). R83.
+
+The user's decisions of 2026-10-20 ([R84–R99](resolutions.md#the-users-decisions-of-2026-10-20-r84r99)):
+- **The toolbar tick** (was PROVISIONAL on FT-01, DATA-12 and FT-57): it exists and is on by default, beside "paused" on the icon, also on (FT-01, FT-57, DATA-05, DATA-12). R92.
+- **A support e-mail** (was PROVISIONAL on HEALTH-22): none. Report a problem goes to GitHub issues through a chooser with prefilled forms (HEALTH-21, HEALTH-22, HEALTH-27, DATA-03, §7). R89.
+- **New features:** Save from the browser's menu and Keys from any tab, both off until picked, with injection on use and the menu's optional permission (FT-01, FT-13, FT-16, FT-40, FT-44, FT-47, FT-59, FT-60, DATA-04, DATA-05, DATA-12). R88, R91.
+- **New data:** Recent adds (§4.11, DATA-03, DATA-04, DATA-05, DATA-11, DATA-12) and the settings file (§4.12, DATA-03, DATA-33). R86, R90.
+- **Quick actions' four more buttons and keys** (FT-01, DATA-05, DATA-12). R85.
+
+R84, R87 and R93 to R99 change nothing this chapter states; R96's migration detail is 08's.
 
 ## 9. Conflicts found
 

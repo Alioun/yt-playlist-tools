@@ -20,3 +20,4 @@ We chose this because the Data API path never worked for ordinary users. A share
 - Fresh data needs an open YouTube tab. The popup and settings work from cache otherwise.
 - Where the extension signs requests itself, it reads the session cookie in the page. This is declared as "Authentication information" on the Chrome Web Store and explained to AMO reviewers. It never uses the `cookies` permission or rewrites a request's origin.
 - The only permissions are `storage`, `scripting` and YouTube's own hosts. The routes, the tab choice and the manifest are specified in the rebuild map's ticket 10.
+- Amended 2026-10-20 (rebuild spec, R88 and R91): two opt-in features the user approved keep this rule. Keys from any tab and the browser menu's Save to ▸ start in the background, but each runs its job in one open YouTube or YouTube Music tab, as that tab's account. The menu adds `contextMenus` as an optional permission, held only while it's on; it gives no access to any site.

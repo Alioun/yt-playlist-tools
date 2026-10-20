@@ -13,7 +13,7 @@ This chapter says how 2.0 is built and tested, how it finds out that YouTube or 
 - *(starting value)* marks a number to be tuned once the signed-in live checks have run and after the first weeks of use. Tuning it is a code change, not a spec change.
 - **PROVISIONAL** marks a decision that waits on an open input. The input is named inline.
 - **Store build** means the production build that goes into a store zip (`wxt build`, `wxt build -b firefox`). **Dev build** means `wxt` in development mode. **Live-check build** means `wxt build --mode livecheck`.
-- **Resolutions:** decisions made while the spec was assembled are cited by R-number, from [resolutions.md](resolutions.md). A requirement that a resolution changed keeps its ID and ends with "(R-n)".
+- **Resolutions:** decisions made while the spec was assembled are cited by R-number, from [resolutions.md](resolutions.md). A requirement that a resolution changed keeps its ID and ends with "(R-n)". The user's decisions of 2026-10-20 are R84–R99.
 - **The first-run page** is the extension page in `onboarding.html` that holds first run and the upgrade note (R37).
 
 ---
@@ -274,6 +274,16 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
 - **Q-TEST-31.** **No conflicting utilities in UI components.** The extension pages use a `clsx`-only `cn`, with no `tailwind-merge`, so two utilities for one CSS property resolve by Tailwind's CSS order, not by the class string. A test reads every component in `src/ui/components/` and fails if a component's base classes and any of its variants' or sizes' classes set the same CSS property ([UI-RULE-12](05-ui.md#extension-pages)) (for example base `border-transparent` with an outline variant's `border-border`, which left light-mode outline buttons without a border).
 - **Q-TEST-32.** **Switches and checkboxes are controlled.** A layer-3 test renders the Switch and Checkbox with a listener that refuses the change, and with one that defers it, and asserts that the control keeps showing the stored state. The generated shadcn-svelte switch flipped itself before asking its parent, so a cancelled change kept showing "on". The places that refuse or defer are consent, the sync join question, a site-access prompt, "sync full", an "update needed" refusal (R13) and a private window ([UI-RULE-13](05-ui.md#extension-pages), [FT-12](04-features-accounts-data.md#12-switching-features)).
 - **Q-TEST-33.** **No identity comparisons of `$state`-held objects** in kit and feature code ([UI-RULE-33](05-ui.md#page-ui-youtube-and-youtube-music)): `$state` proxies objects, so `===` against the original silently fails (two bugs in the in-page prototype). Compare by ID or by element. A CI check enforces it on every push and PR. Whether it's a lint rule or a guard test, and its exact pattern, is the build's choice. (R40)
+- **Q-TEST-44.** **Ready for translation** ([UI-RULE-43](05-ui.md#extension-pages), [ARC-MOD-35](06-architecture.md#644-popup-settings-and-the-first-run-page-srcui); R93):
+  - an `i18n` guard fails on a message key the code uses that `_locales/en/messages.json` lacks, on a key no code uses, and on a placeholder a message and its callers disagree on;
+  - a lint flags string literals rendered as text in `src/ui/` and `src/site/` components;
+  - layer-3 component tests render the popup's first view, the settings cards and the in-page toasts in a pseudo-locale 40 % longer than English, and assert that nothing is clipped or overlaps.
+- **Q-TEST-45.** **The features of 2026-10-20** are tested like every feature, with the browser fakes extended where WXT's fake lacks an API (R84–R92):
+  - **Keys from any tab:** a fake `commands` (`onCommand`, `getAll`) drives ARC-ACC-69: the tab order, discarded tabs skipped, no answer while the feature is off or held, the 3 s badge mark, and injection on use;
+  - **Save from the browser's menu:** a fake `contextMenus` and `permissions`: entries created only while the feature is on and the permission held, removed with the permission when it's switched off, and the held state after `permissions.onRemoved`;
+  - **the picker's untick and its Undo, Recent adds, the settings file** (export, import, every refusal) and **the toolbar marks' priority**, in layers 1 and 3;
+  - `check:manifest` asserts the four commands with no `suggested_key`, `optional_permissions: ["contextMenus"]` and `default_locale` (Q-CI-3);
+  - the watch list gains entries for `ytmusic-app`'s `handleNavigationEndpoint` and the library toggle's shape, which the four YouTube Music actions use (ARC-REG-09; R85).
 
 ---
 
@@ -305,6 +315,7 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
 | Player and video reads | `videoInfo`, `channelOf`, the `player` and `nav` streams | navigation details (watch and Shorts); player responses for an ordinary video, a live stream, a premiere, a waiting room, post-live, a replay, a clip (`clipConfig`), a made-for-kids video (`PLAYBACK_MODE_PAUSED_ONLY`) and a Shorts ad (`adClientParams.isAd`); `next`; `reel_item_watch`; a collaboration video |
 | Queue, YouTube | `queueAdd`, `queueUndo` | the miniplayer's queue data before and after an add; the quiet removal answer |
 | Queue, YouTube Music | `queueInsert`, `queueRemove`, `queueRemoveIds`, `queueMove`, `queueReinsert`, `itemInfo` | `get_queue` answers (song, album, playlist); `app.queue` snapshots, including before and after a move; row `data` for a song row, a card, a queue item and a signed-out row |
+| More quick actions, YouTube Music (R85) | `library`, `navigate`, `itemInfo` | row and card `data` with the library toggle in both states, a mix endpoint and artist and album browse endpoints; a song with no album |
 
 ### 7.3.3 Capture and redaction
 
@@ -486,7 +497,7 @@ The user-facing side is in [04 §5](04-features-accounts-data.md#5-breakage-stat
 - **Q-PERF-6.** Neither manifest has `content_scripts` or `web_accessible_resources` (`check:manifest` and `check:budget`).
 - **Q-PERF-7.** The background only reacts to events: no `setInterval`, and no alarm unless a feature that's on needs a schedule.
 - **Q-PERF-8.** With some features on, only their files load, plus what they share: the site's page half and core, and the kit if one of them draws. A switched-off feature's file never loads.
-- **Q-PERF-9.** The on-demand probe (for the popup or settings, including the popup's Playing now) is the only code that reaches a page while every feature on that site is off ([FT-16](04-features-accounts-data.md#13-off-costs-nothing), [ARC-MAN-15](06-architecture.md#633-runtime-script-registration)). It runs only when asked, in one tab, draws nothing, and is the page half plus the core, so it has their budgets.
+- **Q-PERF-9.** The on-demand probe (for the popup or settings, including the popup's Playing now) is the only code that reaches a page while every feature on that site is off ([FT-16](04-features-accounts-data.md#13-off-costs-nothing), [ARC-MAN-15](06-architecture.md#633-runtime-script-registration)). It runs only when asked, in one tab, draws nothing, and is the page half plus the core, so it has their budgets. Keys from any tab and Save from the browser's menu register nothing either; when used, they inject the page half, core and kit into that one tab, which also have their budgets ([FT-59](04-features-accounts-data.md#13-off-costs-nothing); R88, R91).
 - **Q-PERF-10.** Switching a feature off in an open tab removes its elements, styles, listeners, observers and timers at once. Its parsed code stays until the tab reloads, because a browser can't unload a script.
 - **Q-PERF-11.** With settings sync off, nothing reads or writes `storage.sync` (layer 3: the fake sync area records zero calls), with exactly two exceptions, which the test allows and each of which has its own layer-3 test ([FT-21](04-features-accounts-data.md#13-off-costs-nothing); R59):
   - at first run, before Agree, one read-only look at the synced copy to pre-tick the features chosen in other browsers; nothing is pushed and the sync switch isn't stored until Agree ([ARC-MSG-12](06-architecture.md#683-ui--background));
@@ -553,6 +564,12 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
   Once the real gateways and auto-add are built, rows may move again within a site's total (Q-PERF-16).
 - **Q-PERF-16.** The site totals, the popup's 40 KB and `popovers.js`'s 50 KB are decided numbers. Rows may be rebalanced within a site total; raising any budget means editing `perf-budget.json` in the same PR, with the reason in the commit message.
 - **Q-PERF-17.** YouTube Music's weights are backed by the rough build's measurement (35.2 KB eager). Its **time** budgets are **PROVISIONAL**: they're set by analogy with YouTube and haven't been measured on YouTube Music.
+- **Q-PERF-44.** **The decisions of 2026-10-20 change no budget number** ([ticket 24](../issues/24-performance-budget.md); R99):
+  - **Four more YouTube Music actions (R85)** add an estimated 1–1.5 KB to `feature-music-actions.js`, four bindings to `feature-music-keys.js`, and the `library` and `navigate` jobs to `page-music.js`. They're rebalanced within YouTube Music's 43 KB (Q-PERF-16). If they still don't fit, their code moves to a lazy file loaded the first time one of them is used. The site total stays 43 KB.
+  - **Keys from any tab (R88) and Save from the browser's menu (R91)** have no row: they register nothing, and when used they inject the page half, core and kit, which have rows (Q-PERF-9). Their background code counts toward the background's 25 KB (PROVISIONAL, Q-PERF-31).
+  - **Recent adds (R86):** the popup's first view gains only the header button; the sheet is a lazy chunk under the 45 KB lazy budget, expected under 4 KB. The YouTube Music popup's 0.6 KB of headroom is tight, so Q-PERF-32's matching-cut rule applies. Moving copy into `_locales/en/messages.json` (R93), which isn't JavaScript and isn't counted, is expected to cover it.
+  - **Save from the browser's menu** adds one row to the popup's YouTube tab; Keys from any tab adds none.
+  - **The toolbar tick and "paused" (R92)** are background code only.
 
 ### 7.6.4 What keeps pages within budget
 
@@ -676,7 +693,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 
 - **Q-CI-2.** The old `broker` job goes with `server/`, and the Vitest and `jq` checks go, replaced by `check` and `build`.
 - **Q-CI-3.** `check:manifest` (`scripts/check-manifest.ts`) fails unless each built manifest has exactly:
-  - **both:** `manifest_version` 3; `permissions` `["storage", "scripting"]`; no `content_scripts`; no `web_accessible_resources`; `commands` holding only `_execute_action`; no `update_url` unless the build mode is `beta`, whose Firefox build carries exactly the beta `update_url` ([REL-CI-10](08-release.md#71-firefox)); `version` equal to `package.json`'s;
+  - **both:** `manifest_version` 3; `permissions` `["storage", "scripting"]`; no `content_scripts`; no `web_accessible_resources`; `commands` holding `_execute_action` and keys from any tab's three commands, none with a `suggested_key` (R88); `optional_permissions` exactly `["contextMenus"]` (R91); `default_locale` `"en"` (R93); no `update_url` unless the build mode is `beta`, whose Firefox build carries exactly the beta `update_url` ([REL-CI-10](08-release.md#71-firefox)); `version` equal to `package.json`'s;
   - **Chrome:** `host_permissions` `["https://www.youtube.com/*"]`; `optional_host_permissions` `["https://music.youtube.com/*"]`; `minimum_chrome_version` `"121"`;
   - **Firefox:** `host_permissions` `["*://*.youtube.com/*"]`; `browser_specific_settings.gecko.id` `{cc70cd21-2cc6-444b-bd89-496909346091}`; `strict_min_version` `"140.0"`; `data_collection_permissions` `{ "required": ["none"] }` (R83; [08 §13](08-release.md#13-if-an-amo-reviewer-objects) keeps a fallback ready if an AMO reviewer objects).
 
@@ -800,3 +817,10 @@ Also applied, third round: R68 (an unavailable action's keys stay caught and ans
 
 After the spec ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)):
 - **Firefox's `data_collection_permissions`** (was PROVISIONAL on AMO's reply, ticket 23): `{ "required": ["none"] }` is settled, and `check:manifest` asserts it (Q-CI-3). [08 §13](08-release.md#13-if-an-amo-reviewer-objects) keeps the fallback if an AMO reviewer objects: R83.
+
+The user's decisions of 2026-10-20 ([R84–R99](resolutions.md#the-users-decisions-of-2026-10-20-r84r99)):
+- **Budgets:** no number changes; how each decision fits is Q-PERF-44, and Q-PERF-9 covers injection on use (R99).
+- **Tests and fixtures** for the new features, the untick and the toolbar marks: Q-TEST-45 and Q-FIX-5's new row (R84 to R92).
+- **Ready for translation:** Q-TEST-44 (R93).
+
+R94 to R98 change nothing this chapter states.

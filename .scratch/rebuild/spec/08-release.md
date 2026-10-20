@@ -21,7 +21,7 @@ Part of the [2.0 spec](../spec.md). This chapter covers how 1.4.5 users get to 2
 - [07](07-quality.md): the test layers ([§7.2](07-quality.md#72-test-layers)), fixtures ([§7.3](07-quality.md#73-fixtures)), the watch and the live check ([§7.5](07-quality.md#75-breakage-detection)), the budgets ([§7.6](07-quality.md#76-performance-budgets)) and the CI jobs ([§7.7](07-quality.md#77-ci-jobs-and-the-hotfix-lane)).
 - [09](09-parity.md): what 1.4.5 users had ([§1.12](09-parity.md#112-what-145-users-had), PAR-CAP-71 to PAR-CAP-79) and the platform and release rows ([§1.11](09-parity.md#111-platform-manifest-build-and-release)).
 
-The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist". Under the resolutions' ownership rule, this chapter owns the migration, the upgrade note, and consent copy and conditions (R60); where it shares another topic with a chapter that owns it, that chapter's text wins, and [Conflicts found](#conflicts-found) lists what still differs.
+The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too, and so are the user's decisions of 2026-10-20, R84–R99. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist". Under the resolutions' ownership rule, this chapter owns the migration, the upgrade note, and consent copy and conditions (R60); where it shares another topic with a chapter that owns it, that chapter's text wins, and [Conflicts found](#conflicts-found) lists what still differs.
 
 **Requirement IDs:**
 - `REL-MIG-`: the 1.4.5 migration.
@@ -41,7 +41,7 @@ The plan works whichever way these land. Each dependent item is marked inline. R
 | **The session cookie** | [Ticket 25](../issues/25-live-checks.md)'s final route table | The **cookie lines**: the disclosure's cookie bullet, the policy's cookie bullet, Chrome's "Authentication information" tick, and the reviewer notes' signed route | If no shipped route reads the session cookie, remove all four together; the reviewer notes then describe the same-origin request without signing (R48) |
 | **The reviewer endpoint list** | Ticket 25's route table | §12.1 | Fill it from the table |
 | **Exact prompt strings** | **Settled** ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)): Firefox's from its own string files, code and support articles, and Chrome's from Chromium's source. Ticket 25's check P1 ([06 §6.2.15](06-architecture.md#6215-live-checks-that-settle-the-provisional-rows)) now only glances at the real dialogs. | §5 | If a real dialog differs, adjust §5 |
-| **A support e-mail** | The user | The policy's Contact section, both stores and Diagnostics | Add it in all of them |
+| **A support e-mail** | **Settled** by the user on 2026-10-20: none. Problems go to GitHub issues through Report a problem's prefilled forms (§16; R89). | The policy's Contact section, both stores and Diagnostics | Nothing |
 | **Open tabs surviving updates** (S11, S12) | Ticket 17's real-browser layer running a real update ([ARC-MAN-17](06-architecture.md#633-runtime-script-registration), [Q-TEST-18](07-quality.md#725-layer-4-real-browser) item 5) | §17 | Fix in the registrar or core before the beta ends |
 
 Ticket 23's message was corrected on 2026-10-19 and then never sent: R83 settled its four questions from Mozilla's own documentation the same day ([§13](#13-if-an-amo-reviewer-objects)).
@@ -123,11 +123,12 @@ This table merges ticket 16 §10.2 with ticket 19 §2.2. Ticket 19 confirms carr
 | `watchLaterShortcut` (local), with `Control` | **Never fired** | The key | Converted by [2.5](#25-converting-the-1x-shortcut). The note says it never worked. |
 | `watchLaterShortcut` (local), other keys | Fired; extra modifiers also matched | The key | Converted by [2.5](#25-converting-the-1x-shortcut). Matching is exact in 2.0. |
 | `requiredWatchPercentage` (local) absent or `""` | **Added at once** (`… \|\| 0`) | **50** | `settings.autoAdd.pct = 0`, with `details.pct.wasUnset = true`, so the note asks ([3.3](#33-the-one-question-the-note-asks)) |
+| …the same, with no `refreshToken` stored (1.4.5 never got access) | **Nothing:** it never added anything | **50** | `settings.autoAdd.pct = 50`, with `wasUnset = true` and `authorised = false`, so the note asks with 50 % as the default (REL-MIG-40; R96) |
 | `requiredWatchPercentage` `"0"`–`"100"` | That value | That value (`"0"` is a truthy string, so it showed 0) | That number, rounded |
 | `requiredWatchPercentage`, any other value | — | — | A number is rounded and clamped to 0–100. Anything that isn't a number counts as unset: **0**, with `details.pct.wasUnset = true`, so the note asks the 50 % / 0 % question (R21). |
 | `toastEnabled` (local) absent | **Off** | **Off** (checkbox unchecked) | Show feedback **off** for auto-add and playlist shortcuts |
 | `toastEnabled` `true` / `false` | On / off | On / off | `true` → on. Anything else → off. |
-| `clientID`, `clientSecret`, `accessToken`, `refreshToken` (local) | The Data API credentials | — | **Deleted.** `details.credentialsDeleted = true` if any existed. |
+| `clientID`, `clientSecret`, `accessToken`, `refreshToken` (local) | The Data API credentials | — | **Deleted.** `details.credentialsDeleted = true` if any existed. Before that, `details.pct.authorised` records whether a `refreshToken` was there (REL-MIG-40; R96). |
 | `authMode`, `authServerURL`, `cachedPlaylists`, `preventDuplicates`, `queueButtonEnabled`, `cardContextMenu` (local; 1.5.0, developer profiles only) | — | — | Deleted. New features start off. |
 | `channelFilters` and `channelLabels` (local; 1.5.0) | — | — | `unclaimed.filters`, with the labels embedded. They're claimed with the setup. |
 | `theme` (sync; 1.5.0) | — | — | Not read and not removed: the migration doesn't touch `storage.sync` while sync is off (R20). `settings.theme` starts at System. |
@@ -136,14 +137,19 @@ This table merges ticket 16 §10.2 with ticket 19 §2.2. Ticket 19 confirms carr
 | `localStorage` `cachedVideos`, `playlists`, `preventDuplicates` (unreleased builds) | — | — | Removed by the first extension page (REL-MIG-10) |
 
 - **REL-MIG-11** The migration writes exactly the 2.0 values in the table's last column. Most notably:
-  - an absent, empty or non-numeric percentage becomes 0 with `wasUnset: true`;
+  - an absent, empty or non-numeric percentage becomes 0 with `wasUnset: true`, or 50 when no `refreshToken` was stored (REL-MIG-40);
   - an absent `toastEnabled` becomes Show feedback off;
-  - a Ctrl key is carried over. (R21)
+  - a Ctrl key is carried over. (R21, R96)
 - **REL-MIG-12** Show feedback off hides only **confirmations**. Failures still show, which 1.4.5 never did ([ticket 12](../issues/12-adding.md)). The note says so.
 - **REL-MIG-13** Each carried auto-add playlist takes **Videos** only and has no override, so it uses the default required percentage ([ticket 07](../issues/07-watched.md)).
 - **Why 1.4.5's real values:** users experienced 0 % and no toasts. In 2.0, 0 % means "as soon as 1 s of the video plays", which matches what they had.
   - *Runner-up:* the popup's values (50 %, toasts on). It lost on two counts: it changes behaviour nobody asked to change, and on toasts it's simply wrong, because the popup showed them off too. Ticket 06's "toasts on" came from 1.5.0's defaults.
   - **The one mismatch is the percentage.** The note asks about it once, defaulting to what 1.4.5 did ([3.3](#33-the-one-question-the-note-asks)).
+- **REL-MIG-40** **Upgraders whose 1.4.5 never got access** (ticket 30's S1; [ADR-0009](../../../docs/adr/0009-upgraders-keep-what-1-4-5-did.md)'s amendment; R96). Before step 3 deletes the credentials, the conversion records `details.pct.authorised`: true if `refreshToken` was a non-empty string, else false.
+  - With an unset percentage and `authorised` false, 1.4.5 never added anything, so there's nothing to keep: the migration writes `settings.autoAdd.pct = 50`, the value the popup showed, and the note's question defaults to it (REL-CON-05, REL-CON-06).
+  - With `authorised` true, nothing changes: 0 %, as 1.4.5 did.
+  - A set percentage carries over either way. `refreshToken` stays one of the nine 1.x keys that mark an upgrade (REL-MIG-02; R64).
+  - *Runner-up:* 0 % for them too, as for everyone. It lost because, for someone whose 1.4.5 never worked, it could flood a playlist they half set up long ago the moment they agree.
 
 ### 2.4 Cleaning typed playlist IDs
 
@@ -226,7 +232,7 @@ From ticket 08.
 type UpgradeDetails = {
   from: "1.4.5" | "1.5.0"                   // as unclaimed.from: read from the keys found, never from onInstalled (R64)
   autoAdd: { kept: number; dropped: number } // IDs kept in `unclaimed`; entries left out by the clean-up
-  pct: { value: number; wasUnset: boolean }  // wasUnset → the note asks (§3.3)
+  pct: { value: number; wasUnset: boolean; authorised: boolean }  // wasUnset → the note asks (§3.3); authorised: a refreshToken was stored (REL-MIG-40; R96)
   feedback: boolean                          // from toastEnabled
   shortcut: {
     raw: string                              // 1.4.5's string, shown only when it can't be used
@@ -237,7 +243,8 @@ type UpgradeDetails = {
   }
   credentialsDeleted: boolean
 }
-// device.upgradeNote = { state: "pending" | "done"; details: UpgradeDetails; opened: boolean } | null
+// device.upgradeNote = { state: "pending" | "done"; details: UpgradeDetails; opened: boolean; seen: boolean; reopened: boolean } | null
+// seen: the note was visible at least once; reopened: it was opened a second time because it never was (REL-CON-25; R97)
 ```
 
 - **REL-MIG-34** `unclaimed` has ticket 16's shape:
@@ -283,8 +290,8 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
 - **REL-CON-01** After the migration, if `upgradeNote.state` is `pending` and `opened` is false, the background opens the first-run page's upgrade view (`onboarding.html`) with `tabs.create({active: false})` next to the current tab. It then sets `upgradeNote.opened = true`.
   - The tab opens in the background, so a playing video isn't interrupted.
   - The toolbar "!" points to it. (R37)
-- **REL-CON-02** The note opens **once.** After that, the popup's banner reopens it with **Review**.
-  - Restarting the browser before or after Agree never reopens it (S7).
+- **REL-CON-02** The note opens **once,** or twice if the first time it was never seen (REL-CON-25). After that, the popup's banner reopens it with **Review**.
+  - Restarting the browser before or after Agree never reopens a note that was seen (S7). (R97)
   - The banner's title is "Playlist Pigeon 2.0 is waiting for your OK". Its line names only what actually carried over, the same features the note's "Kept" section shows ticked (R60):
     - auto-add and the shortcut: "Auto-add and your shortcut are paused until you agree.";
     - auto-add only: "Auto-add is paused until you agree.";
@@ -293,6 +300,11 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
 
     Then, in every case: "No Google credentials needed anymore." The banner's place among the others is [05's UI-POP-10](05-ui.md#banners) row 1.
 - **REL-CON-03** The note is decided when the page opens. After Agree it shows its outcome in place, and doesn't switch to first run (ticket 15).
+- **REL-CON-25** **A note nobody saw reopens once** (ticket 30's S2; R97). 1.4.5 had no `default_area`, so its button may sit unpinned in Firefox's Extensions panel, where the "!" isn't seen, and a background tab closed unread would leave auto-add paused with no sign.
+  - The note page sets `upgradeNote.seen = true` the first time `document.visibilityState` is "visible" while it's open.
+  - At a later background start, if the note is still pending, `seen` is false and `reopened` is false, the background opens it again with `tabs.create({active: false})`, and sets `reopened = true`.
+  - It never opens a third time, and a note that was seen never reopens. The badge and the popup's **Review** stay either way.
+  - *Runner-up:* an active tab at the next browser start. It lost as more intrusive.
 - *Runner-ups:*
   - a foreground tab, which interrupts a playing video;
   - only a badge and a popup banner, which reads as "2.0 broke auto-add" (ticket 09).
@@ -306,12 +318,14 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
 
 **REL-CON-04** The note renders this copy, with its conditions. Its layout is [05's upgrade note](05-ui.md#the-upgrade-note) (UI-ONB-06, UI-ONB-07).
 
-**Tab title:** Playlist Pigeon 2.0
+**Tab title:** YouTube Playlist Tools is now Playlist Pigeon (ticket 30's S3; R98). The old name in the tab tells someone who forgot 1.4.5 what this is.
 
 > # YouTube Playlist Tools is now Playlist Pigeon
 >
 > **2.0 needs no Google credentials anymore.** It works through the YouTube account you're signed in to in this browser, the way YouTube's own buttons do. The client ID, client secret and sign-in tokens you set up for 1.x have been deleted from this browser.
 > [Remove 1.x's access from your Google account ↗](https://myaccount.google.com/permissions) · If you made a Google Cloud project just for 1.x, you can delete that too.
+>
+> **Pin Playlist Pigeon to your toolbar** to see when it needs you: click the Extensions button (the puzzle piece), then ⚙ › Pin to Toolbar. *(ticket 30's S2; R97)*
 >
 > **Why the new name:** Google's rules don't allow extensions to be named after YouTube, so YouTube Playlist Tools is now Playlist Pigeon for YouTube™. It's the same add-on, and your settings came along.
 
@@ -327,6 +341,7 @@ This section lists only what actually carried over, and shows only when at least
 
 The row shows only when a playlist came over (`autoAdd.kept` > 0).
 - Adds to {N} playlists you chose in 1.x.
+  - *Instead, when 1.4.5 never got access (`authorised` false):* You chose {N} playlists in 1.x, but 1.x never got access to your account, so nothing has been added to them yet. (R96)
   - *If `dropped` > 0:* {M} entries weren't playlist IDs and were left out.
 - *Percentage set (`wasUnset` false):* Adds a video once you've watched {P} % of it.
   - *Unset:* the question in [3.3](#33-the-one-question-the-note-asks).
@@ -356,7 +371,9 @@ Then one unticked row per other feature, with [FT-01](04-features-accounts-data.
 - Queue button on thumbnails;
 - Watch-page button;
 - Right-click for the video menu;
+- Save from the browser's menu (R91);
 - Quick actions and Quick-action shortcuts (YouTube Music);
+- Keys from any tab (R88);
 - Settings sync.
 
 > ## Before you continue
@@ -371,7 +388,13 @@ Then the disclosure ([4.1](#41-the-disclosure)), followed by **[Agree and turn o
 > (•) As soon as a video starts playing, like 1.4.5 did
 > ( ) Once half of it is watched, as 1.4.5 showed
 
-- **REL-CON-06** The first option is the default. The choice is applied on Agree: the first option keeps `settings.autoAdd.pct = 0`, and the second sets 50. Every other carried value is stated, not asked.
+  When 1.4.5 never got access (`details.pct.authorised` false; REL-MIG-40), the question reads instead (R96):
+
+> 1.4.5 showed 50 % here, but it never got access to your account, so it never added anything. Which do you want?
+> (•) Once half of it is watched, as 1.4.5 showed
+> ( ) As soon as a video starts playing
+
+- **REL-CON-06** The first option is the default. The choice is applied on Agree: "As soon as a video starts playing" sets `settings.autoAdd.pct = 0`, and "Once half of it is watched" sets 50. So an authorised upgrader keeps 0 % by default, and one whose 1.4.5 never got access gets 50 % (R96). Every other carried value is stated, not asked.
 - *Runner-up:* state 0 % silently, as ticket 16 assumed. It lost because the note would show a number the user never saw. Since auto-add waits for Agree anyway, asking costs nothing, and the user's own choice beats either guess.
 - *Second runner-up:* ask about every value. It lost as noise: the other values showed what they did.
 
@@ -415,14 +438,14 @@ Then **[Open YouTube]** **[Open Settings]**.
 > - **reads what you watch and listen to there:** the video or song, its channel, and how much of it you've played;
 > - **reads and changes your playlists, as you:** it lists them, checks which ones already hold a video, and adds or removes videos when you ask or when auto-add does, using YouTube's own requests;
 > - **signs those requests the way YouTube's page does,** with YouTube's sign-in cookie, inside the YouTube tab. It never stores that cookie or sends it anywhere else; *(PROVISIONAL, ticket 25: removed if no shipped route reads the session cookie, R48)*
-> - **watches for the shortcut keys you set** on YouTube and YouTube Music pages, and ignores every other key;
+> - **watches for the shortcut keys you set** on YouTube and YouTube Music pages, and ignores every other key. Keys you set in your browser for Keys from any tab are caught by the browser itself; *(R88)*
 > - **keeps its settings in this browser,** including your account's name, @handle and picture, a list of your playlists, and how much of each video you've watched (for up to 30 days).
 >
 > Nothing is sent to us or to anyone but YouTube. There are no ads and no analytics. If you turn on Settings sync, your settings also travel through {Firefox's | Chrome's} own sync.
 > [Privacy policy ↗]
 
 - **REL-CON-13** On first run and the upgrade note, the buttons are **Agree and turn on {N} features**, **Agree** (when N = 0) and **Not now**. "Before this feature can run" has **Agree and turn on {Feature}** and **Cancel** (UI-ONB-09).
-- **REL-CON-14** On Chrome, when a YouTube Music feature is ticked, or Playlist shortcuts, whose preset turns "Also on YouTube Music" on ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R53):
+- **REL-CON-14** On Chrome, when a YouTube Music feature is ticked, or Playlist shortcuts, whose preset turns "Also on YouTube Music" on, or Keys from any tab ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R53, R88):
   - Agree calls `permissions.request` for music.youtube.com first in the click;
   - step 1 says beforehand: "Chrome will ask for access to music.youtube.com when you agree.";
   - if the user denies it, consent and the other ticks still apply. The ticked YouTube Music features, and Playlist shortcuts' "Also on YouTube Music", are saved on but held with "Needs site access", with **Give access** in the popup and Settings. Playlist shortcuts runs on YouTube, and nothing is registered or injected on music.youtube.com until access is granted ([FT-40](04-features-accounts-data.md#16-first-run), [FT-52](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). (R14, R53)
@@ -483,11 +506,14 @@ Ticket 25's check P1 now only glances at the real dialogs. If one differs, this 
 | Firefox, Settings sync switched on | That click | **Nothing from Firefox:** sync declares no data type ([SYNC-26](04-features-accounts-data.md#39-firefoxs-data-collection-declaration); R83). Only under §13's fallback, with sync as an optional type, would it show "Playlist Pigeon for YouTube™ requests additional data collection", then "New data collection:" with "The developer says the extension wants to collect: {type}", and Allow / Deny. |
 | **Chrome new install** | Install | Add "Playlist Pigeon for YouTube™"? / It can: **Read and change your data on www.youtube.com**. Then first run. |
 | Chrome, the first thing that needs music.youtube.com: a YouTube Music feature, or Playlist shortcuts' "Also on YouTube Music" (at first run or later; R53) | That click | "Playlist Pigeon for YouTube™" has requested additional permissions. / It could: **Read and change your data on music.youtube.com**, with Allow / Deny |
+| Either browser, Save from the browser's menu switched on | That click | **Nothing:** its optional `contextMenus` permission has no warning on Chrome and no message on Firefox, and Firefox grants an optional permission with no message without a dialog ([ARC-MAN-20](06-architecture.md#631-manifest-per-browser); R91) |
+| Either browser, Keys from any tab | Install, update or switch-on | **Nothing from the commands:** they carry no permission and no default key. They're listed, unbound, in the browser's shortcut settings. On Chrome, switching the feature on asks for music.youtube.com access as above (R88). |
 | Chrome, the user restricted site access | Any time | No prompt by itself. Our **Give access** button calls Chrome's prompt. On Chrome 133+, while a feature for that site is on, the extension also calls `addHostAccessRequest` on the site's open tabs, so Chrome's extensions menu offers the grant ([FT-53](04-features-accounts-data.md#17-site-access-and-youtube-tabs), [ARC-ACC-61](06-architecture.md#6212-no-tab-not-signed-in-no-site-access); PROVISIONAL). |
 | Either browser, any later 2.x | The update | **Nothing.** The hotfix lane freezes the manifest. A minor release that adds a warning would disable the Chrome extension until it's accepted and hold Firefox updates, so it needs the checklist's sign-off (REL-CHK-21). |
 
 - **REL-CON-22** The Firefox 1.4.5 → 2.0 update shows no Firefox prompt. This holds because:
   - `storage` and `scripting` were already held, and neither has a message;
+  - `commands` and the optional `contextMenus` have no message, and optional permissions are never asked on update (R88, R91);
   - dropping `identity` and `activeTab` is silent;
   - the origin is unchanged, so no message-bearing permission is new;
   - on update, Firefox shows only added *required* data types, never `none`. (R83)
@@ -605,7 +631,7 @@ Recorded as [ADR-0011](../../../docs/adr/0011-betas-from-github-pages.md): betas
 
 ## 9. Store listings
 
-All text in this section is **PROVISIONAL on the name** (ticket 22).
+All text in this section is **PROVISIONAL on the name** (ticket 22). It leads with saving to any playlist in one click or a named key, not with auto-add, as the user decided from [ticket 30](../issues/30-market-and-users.md)'s market check (R95). "Save" is the verb throughout, Watch Later appears two or three times, and nothing claims to be the "only" or "first". "No Google sign-in" stays out of the summaries and the lead: ten or more rivals say it. It stays in "How it works", the release notes and the upgrade note.
 
 - **REL-STORE-01** The listing text lives in `store/listing/`, so the hotfix check can freeze it (REL-CI-38). The screenshots and promo tile live there too.
 
@@ -614,7 +640,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 | Field | AMO (existing listing) | Chrome Web Store (new item) |
 |---|---|---|
 | Name | **Playlist Pigeon for YouTube™**. Set it in the manifest *and* edit it in the Developer Hub. The slug `youtube-playlist-tools` and the gecko ID stay unchanged. | From the manifest |
-| Summary | "Files the YouTube videos you watch into your own playlists, and puts YouTube Music's queue, save and like one click away. Every feature is opt-in. (Formerly YouTube Playlist Tools.)" (181 of 250) | Manifest `description` (121 of 132): "Files the YouTube videos you watch into your own playlists, and puts YouTube Music's queue, save and like one click away." |
+| Summary | "Save YouTube videos to Watch Later or any playlist in one click or with a shortcut, auto-add the videos you actually watch, and get one-click Play next and Add to queue on YouTube Music. Every feature is opt-in. (Formerly YouTube Playlist Tools.)" (246 of 250; R95) | Manifest `description` (132 of 132; R95): "Save to Watch Later or any playlist in one click or a shortcut, auto-add what you actually watch, and Add to queue on YouTube Music." If the name's swap or a translation ever needs room, end it with "…and queue on YouTube Music." (130). |
 | Description | §9.2, with the "formerly" line first | §9.2, without the "formerly" line |
 | Category | **Photos, Music & Videos** (today "Other") | **Tools** (Productivity). *Runner-up:* "Functionality & UI", which reads as page tweaks. |
 | Homepage | `https://alioun.github.io/yt-playlist-tools/` | Same |
@@ -633,31 +659,32 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 
 > *(AMO only)* Formerly YouTube Playlist Tools.
 >
-> Playlist Pigeon files what you watch into your own YouTube playlists, the way you set it up. Every feature starts off: switch on only what you want, and YouTube looks exactly as before until you do.
+> Save the video or song you're looking at to Watch Later or any of your playlists, in one click or with one key, right where you are on YouTube and YouTube Music. Every feature starts off: switch on only what you want, and YouTube looks exactly as before until you do.
 >
 > **On YouTube**
-> • Auto-add: adds the videos you actually watch to playlists you pick, once you've watched enough of each. You choose how much, per playlist, and can filter by channel. Shorts too, if you want.
-> • Playlist shortcuts: up to 20 keys, each saving to its own playlist, with your own labels. Alt+W saves to Watch later.
-> • Quick-save on thumbnails: one click saves a video to your quick-save playlist; the arrow opens a picker that shows where it already is.
-> • Queue button on thumbnails: adds a video to the end of the queue.
+> • Quick-save on thumbnails: one click saves a video to the playlist you pick; the arrow opens a picker that shows where it already is, and unticking takes it out.
+> • Playlist shortcuts: up to 20 keys, each saving to its own playlist, with your own labels. Alt+W saves to Watch Later.
+> • Auto-add: saves the videos you actually watch to playlists you pick, once you've watched enough of each. You choose how much, per playlist, and can filter by channel. Shorts too, if you want.
 > • Watch-page button: shows auto-add's status under the video, with Save to any playlist.
-> • Right-click a video for YouTube's own ⋮ menu.
-> • Create playlists from any chooser. Watch Later works everywhere.
+> • Queue button on thumbnails: adds a video to the end of the queue, with Undo.
+> • Right-click a video for YouTube's own ⋮ menu, or add Save to ▸ to your browser's own right-click menu instead.
+> • Create playlists from any chooser.
 >
 > **On YouTube Music**
-> • Quick actions: Play next and Add to queue for songs, albums and playlists; Save to playlist and Like for songs; Remove from queue for queued songs. Each is one click away, and you pick which buttons show.
-> • Quick-action shortcuts: a key for each.
+> • Quick actions: Play next and Add to queue right on songs, albums and playlists; Save to playlist and Like for songs; Remove from queue for queued songs. If you want them: Save to library, Start mix, Go to album and Go to artist. Each is one click away, and you pick which buttons show.
+> • Quick-action shortcuts: a key for each, for the song you point at.
 >
 > **Everywhere**
+> • Keys from any tab: save or like the song that's playing, or save the current video to Watch Later, while YouTube is in another tab. You set the keys in your browser.
+> • Undo on every save, and a list of what you saved since the browser started.
 > • A separate setup for each of your YouTube accounts.
-> • Undo on every save.
-> • Settings sync across your browsers, through your browser's own sync, off until you turn it on.
+> • Settings sync across your browsers, through your browser's own sync, off until you turn it on, or save your settings to a file.
 >
 > **How it works**
 > It works inside your YouTube and YouTube Music tabs, as the account you're signed in to there, using the same requests YouTube's own buttons send. It needs no Google sign-in, API key or password. Nothing is sent to the developer or to anyone other than YouTube, and there are no analytics or ads. Your settings stay in your browser, and in your browser's own sync if you turn it on.
 > It relies on how YouTube's website works today, so a YouTube change can stop a feature until an update ships. Playlist Pigeon tells you when that happens.
 >
-> Privacy policy: https://alioun.github.io/yt-playlist-tools/privacy/ · Source code: https://github.com/Alioun/yt-playlist-tools · Problems and ideas: https://github.com/Alioun/yt-playlist-tools/issues
+> Privacy policy: https://alioun.github.io/yt-playlist-tools/privacy/ · Source code: https://github.com/Alioun/yt-playlist-tools · Problems and ideas (a GitHub account is needed): https://github.com/Alioun/yt-playlist-tools/issues/new/choose
 >
 > Not affiliated with or endorsed by YouTube or Google. YouTube and YouTube Music are trademarks of Google LLC. Use of these trademarks is subject to Google Permissions.
 
@@ -673,7 +700,8 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 > • Your auto-add playlists, shortcut, watch percentage and toast setting carry over. Nothing runs until you've reviewed them on the page that opens after the update.
 > • Auto-add counts only what you actually watch, never adds a video twice, and no longer says "Added" when an add failed.
 > • Shortcuts no longer fire while you type, can be cleared, and Ctrl shortcuts work.
-> • New, and off until you switch them on: Watch Later, several named shortcuts, quick-save and queue buttons on thumbnails, a watch-page button, creating playlists, Shorts, YouTube Music quick actions, a setup per account, and settings sync.
+> • New, and off until you switch them on: Watch Later, several named shortcuts, quick-save and queue buttons on thumbnails, a watch-page button, Save to ▸ in the browser's right-click menu, creating playlists, Shorts, YouTube Music quick actions, keys from any tab, a setup per account, and settings sync.
+> • Also new: unticking a playlist in the picker takes the video out, with Undo; the popup lists what you saved since the browser started; and you can save your settings to a file.
 > • Needs Firefox 140 or later.
 
 - *Only under §13's fallback, not at launch (R83):* add "Firefox will ask you to approve sharing website activity: that's the videos you save, sent to YouTube through your own account."
@@ -683,20 +711,22 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 - **REL-STORE-07** Both stores get the same five screenshots, at 1280×800 PNG. They replace AMO's two 2024 previews.
 - **REL-STORE-08** Each screenshot has a caption band in the extension's own type and palette ([05 §5.9](05-ui.md#59-the-brand-provisional-ticket-22), UI-BRAND-03 to UI-BRAND-07): the pigeon's grey with the teal-to-violet accent, and never YouTube red.
 
+The order follows ticket 30's ranking: saving first, Settings last (R95).
+
 | # | Shows | Caption |
 |---|---|---|
-| 1 | Settings › YouTube: feature rows with footprint tags, two of them on | Pick only what you want. Everything starts off. |
-| 2 | A watch page with the popup open: This video shows a partly-added status line, e.g. "Added to Finished · Music for work at 90 %" ([UI-YT-18](05-ui.md#the-watch-page-button)), with the auto-add playlists unfolded | Auto-add what you actually watch. |
-| 3 | The YouTube home page: the thumbnail stack, and the picker open with check marks and keys | Save from any thumbnail. |
-| 4 | A YouTube Music album page: Play next / Add to queue in the album header and on rows, and, after the header's Add to queue, the toast "Added {n} songs from “{album}” to the queue" with **Undo** (R45; [YM-QA-9](03-youtube-music.md#4-where-the-controls-appear), [YM-Q-3](03-youtube-music.md#6-play-next-and-add-to-queue), [03 §13](03-youtube-music.md#13-feedback-toasts-and-undo)) | YouTube Music, one click away. |
-| 5 | Settings › YouTube › Playlist shortcuts: three labelled shortcuts and the recorder | Your keys, your labels. |
+| 1 | The YouTube home page: the thumbnail stack, and the picker open with check marks and keys | Save to any playlist in one click. |
+| 2 | Settings › YouTube › Playlist shortcuts: three labelled shortcuts and the recorder | Your keys, your labels. |
+| 3 | A YouTube Music album page: Play next / Add to queue in the album header and on rows, and, after the header's Add to queue, the toast "Added {n} songs from “{album}” to the queue" with **Undo** (R45; [YM-QA-9](03-youtube-music.md#4-where-the-controls-appear), [YM-Q-3](03-youtube-music.md#6-play-next-and-add-to-queue), [03 §13](03-youtube-music.md#13-feedback-toasts-and-undo)) | YouTube Music, one click away. |
+| 4 | A watch page with the popup open: This video shows a partly-added status line, e.g. "Added to Finished · Music for work at 90 %" ([UI-YT-18](05-ui.md#the-watch-page-button)), with the auto-add playlists unfolded | Auto-add what you actually watch. |
+| 5 | Settings › YouTube: feature rows with footprint tags, two of them on | Everything starts off. |
 
 - **REL-STORE-09** The screenshots' content (ticket 22):
   - only videos the user owns, or Creative Commons videos;
   - a demo account, "Pigeon Demo", with neutral playlists ("Recipes to try", "Finished", "Music for work");
   - no real personal data;
   - YouTube's logo cropped or out of focus.
-- **REL-STORE-10** The screenshots are taken from the release candidate in a clean profile, in the light theme at 100 % zoom. The prototypes are layout references only, never the source: [05's catalogue](05-ui.md#513-prototypes-and-screenshots) gives [ps-60](https://github.com/Alioun/yt-playlist-tools/blob/prototype/popup-and-settings/prototypes/popup-and-settings/screenshots/60-settings-youtube.png) for shot 1, and [ps-62](https://github.com/Alioun/yt-playlist-tools/blob/prototype/popup-and-settings/prototypes/popup-and-settings/screenshots/62-settings-playlist-shortcuts.png) with [ps-08](https://github.com/Alioun/yt-playlist-tools/blob/prototype/popup-and-settings/prototypes/popup-and-settings/screenshots/08-popup-key-recorder-recording.png) for shot 5. (R19)
+- **REL-STORE-10** The screenshots are taken from the release candidate in a clean profile, in the light theme at 100 % zoom. The prototypes are layout references only, never the source: [05's catalogue](05-ui.md#513-prototypes-and-screenshots) gives [ps-60](https://github.com/Alioun/yt-playlist-tools/blob/prototype/popup-and-settings/prototypes/popup-and-settings/screenshots/60-settings-youtube.png) for shot 5, and [ps-62](https://github.com/Alioun/yt-playlist-tools/blob/prototype/popup-and-settings/prototypes/popup-and-settings/screenshots/62-settings-playlist-shortcuts.png) with [ps-08](https://github.com/Alioun/yt-playlist-tools/blob/prototype/popup-and-settings/prototypes/popup-and-settings/screenshots/08-popup-key-recorder-recording.png) for shot 2. (R19, R95)
 - **REL-STORE-11** Chrome's small promo tile (440×280) is required. It shows the pigeon and "Playlist Pigeon" on the palette, with no YouTube imagery. The 1400×560 marquee is skipped at launch.
 - **Icon brief (ticket 22):**
   - **Shape:** a small, round, perched grey pigeon in profile. Its wing is three stacked list lines; at 16 px it's the body plus two lines.
@@ -726,7 +756,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 
 ### 10.2 Text
 
-- **REL-STORE-17** `/privacy/` publishes this text. It's published under the user's name, so the user reads and approves it before it goes live (§19). It takes effect from the first beta, 1.99.1, because Chrome's Privacy tab needs it for the first Unlisted upload and beta testers run 1.99.N (R18). Its "What's kept" lines match [DATA-03](04-features-accounts-data.md#41-where-data-lives) (R10, R43, R57). The cookie bullet is PROVISIONAL (ticket 25): it's removed if no shipped route reads the session cookie (R48). The Contact line's e-mail is PROVISIONAL (the user). (R10, R18, R43, R48, R57)
+- **REL-STORE-17** `/privacy/` publishes this text. It's published under the user's name, so the user reads and approves it before it goes live (§19). It takes effect from the first beta, 1.99.1, because Chrome's Privacy tab needs it for the first Unlisted upload and beta testers run 1.99.N (R18). Its "What's kept" lines match [DATA-03](04-features-accounts-data.md#41-where-data-lives) (R10, R43, R57). The cookie bullet is PROVISIONAL (ticket 25): it's removed if no shipped route reads the session cookie (R48). The Contact line has no e-mail, as the user decided (R89). It also covers recent adds, keys from any tab, the problem report and the settings file (R86, R88, R89, R90). (R10, R18, R43, R48, R57)
 
 > # Privacy policy: Playlist Pigeon for YouTube™
 >
@@ -739,13 +769,15 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 > - **What you watch and listen to on YouTube and YouTube Music:** the video or song you're on, its channel, and how much of it you've actually played. Used by auto-add, channel filters, shortcuts and the watch-page button.
 > - **Your playlists:** their names, privacy setting, number of items and thumbnail links, and which of them hold a given video. Used to let you choose playlists, to show where a video already is, and to never add it twice.
 > - **Your YouTube account's name, @handle and picture link,** and a code derived from YouTube's internal account ID (the ID itself is never stored). Used to keep a separate setup per account and to show which one is in use.
-> - **Keys you press on YouTube and YouTube Music pages:** only to recognise the shortcut keys you set. Other keys are ignored and never recorded.
+> - **Keys you press on YouTube and YouTube Music pages:** only to recognise the shortcut keys you set. Other keys are ignored and never recorded. Keys you set in your browser for Keys from any tab are caught by the browser, which tells the extension only which of its actions you asked for.
 > - **YouTube's sign-in cookie, inside your YouTube tab:** to sign the extension's requests to YouTube the same way YouTube's own page does, where YouTube's code can't send a request itself. It's used on the spot and never stored, logged or sent anywhere but YouTube. *(PROVISIONAL, ticket 25: removed if no shipped route reads the session cookie, R48)*
 > - **Channels you add to channel filters:** their IDs, names and @handles.
 >
 > ## What leaves your browser
-> - **Requests to YouTube (youtube.com and music.youtube.com), as you.** They're the requests YouTube's own buttons send: listing your playlists, checking which playlists hold a video, adding or removing a video, creating a playlist, the queue, and likes. They're sent from your YouTube tab with your YouTube session, when you act or when auto-add adds a video you watched. YouTube's own privacy policy applies to them: https://policies.google.com/privacy.
+> - **Requests to YouTube (youtube.com and music.youtube.com), as you.** They're the requests YouTube's own buttons send: listing your playlists, checking which playlists hold a video, adding or removing a video, creating a playlist, the queue, likes, and your YouTube Music library. They're sent from your YouTube tab with your YouTube session, when you act or when auto-add adds a video you watched. YouTube's own privacy policy applies to them: https://policies.google.com/privacy.
 > - **Settings sync, only if you switch it on,** through your browser's own sync (Chrome Sync or Firefox Sync, under your browser account). It carries which features are on and their options, your shortcut keys and labels, and for each account: its code, name, @handle and picture link, the playlists you chose, and your channel filters. Watch progress, cached lists and your consent never sync. The developer can't see synced data.
+> - **A problem report, only if you start one.** Report a problem opens GitHub's new-issue page with the extension's version, your browser and its version, the feature you picked and its status already filled in, and shows you those values first. They reach GitHub when its page opens, and the developer only if you submit the issue, which needs a GitHub account and is public. The diagnostics report goes in only if you paste it. GitHub's own privacy statement applies there.
+> - **A settings file, only if you export one.** It goes where you save it, and holds your settings, your accounts' names and the IDs of the playlists and channels you chose.
 > - **Nothing else.** No error or crash reports, no analytics, no remote configuration. The extension downloads no code.
 >
 > ## What's kept in your browser
@@ -753,19 +785,21 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 > - A list of each account's playlists (names, counts, thumbnail links), refreshed when it's shown and more than 5 minutes old; playlists you created in the last 24 hours.
 > - Watch progress per video (which stretches you played, the length, when it last played). It's deleted once auto-add has added the video or found it already there, if the video's length changes, 30 days after it last played, or when you switch auto-add off.
 > - Settings from 1.x that are waiting for their account.
-> - Until the browser closes, or the extension updates: pause, videos you chose not to auto-add, recent adds (one minute), and notes about YouTube changes that stop a feature. Skipped videos and recent adds may name videos and playlists, but they stay in this browser's memory until it closes, and are never synced or sent anywhere. The notes about YouTube changes name no video, playlist, channel or account.
+> - Until the browser closes, or the extension updates: pause, videos you chose not to auto-add, the list of your recent adds (you can switch it off in Settings › Privacy & data), and notes about YouTube changes that stop a feature. Skipped videos and recent adds name videos and playlists, but they stay in this browser's memory until it closes, and are never synced or sent anywhere. The notes about YouTube changes name no video, playlist, channel or account.
 >
 > ## Private windows
 > The extension runs there only if you allow it in your browser. Nothing from a private session is stored: no setups, lists, watch progress or account details.
 >
 > ## Diagnostics report
-> Settings › Diagnostics can show a report about the extension's state. It names no video, playlist, channel or account. It's shown only to you, and leaves your browser only if you copy and share it yourself.
+> Settings › Diagnostics can show a report about the extension's state. It names no video, playlist, channel or account. It's shown only to you, and leaves your browser only if you copy and share it yourself, for example by pasting it into a problem report.
 >
 > ## Your choices
 > - Switch any feature off in the popup or Settings.
 > - Withdraw your consent in Settings › Privacy & data: everything stops.
 > - Remove one account's setup in Settings › Accounts.
 > - **Clear all data** in Settings › Privacy & data deletes everything the extension keeps in this browser. Tick the box to also delete the synced copy.
+> - Export your settings to a file, or import them, in Settings › Privacy & data.
+> - Switch off the list of recent adds there too.
 > - Uninstalling deletes all of it.
 > - Your playlists on YouTube are yours, on YouTube; the extension never deletes them.
 > - Upgraded from 1.x? 2.0 deleted 1.x's Google credentials from your browser. You can remove 1.x's access at https://myaccount.google.com/permissions.
@@ -777,7 +811,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 > Changes are dated on this page; earlier versions are in the project's history on GitHub. If a new version handles your data in a new way, the extension asks for your agreement again before it does.
 >
 > ## Contact
-> Questions and problems: https://github.com/Alioun/yt-playlist-tools/issues *(PROVISIONAL: an e-mail address, if the user adds one)*
+> Questions and problems: https://github.com/Alioun/yt-playlist-tools/issues/new/choose (a GitHub account is needed). There's no support e-mail. Without a GitHub account, you can leave a review on the extension's store page, which the developer reads.
 >
 > Not affiliated with or endorsed by YouTube or Google. YouTube and YouTube Music are trademarks of Google LLC. Use of these trademarks is subject to Google Permissions.
 
@@ -797,7 +831,8 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 - **`storage`:** "Keeps the user's settings in the browser: which features are on, the playlists each feature uses per YouTube account, shortcut keys and labels, channel filters, a cached list of the user's playlists, and auto-add's watch progress (deleted after 30 days)."
 - **`scripting`:** "Adds each feature's script to YouTube pages only while that feature is switched on, and reads data from an open YouTube tab when the popup or settings need it."
 - **`https://www.youtube.com/*`:** "The extension's features run on YouTube: they read which video is playing and how much has been played (auto-add), catch the user's shortcut keys, draw the buttons the user switched on, and send YouTube's own playlist requests from the user's YouTube tab, as the signed-in user."
-- **`https://music.youtube.com/*` (optional):** "Requested only when the user switches on a YouTube Music feature, or lets their playlist shortcuts work on YouTube Music too: it adds the quick-action buttons and keys to YouTube Music, catches the shortcut keys there, and runs YouTube Music's own queue, save and like actions in that tab." (R53)
+- **`https://music.youtube.com/*` (optional):** "Requested only when the user switches on a YouTube Music feature, lets their playlist shortcuts work on YouTube Music too, or switches on keys from any tab: it adds the quick-action buttons and keys to YouTube Music, catches the shortcut keys there, and runs YouTube Music's own queue, save and like actions in that tab." (R53, R88)
+- **`contextMenus` (optional):** "Requested only when the user switches on Save from the browser's menu: it adds a Save to ▸ entry to the browser's right-click menu on YouTube video links and watch pages. It's given back when the user switches that off." (R91)
 
 **Remote code:** "No, I am not using remote code." Everything ships in the package. The extension sends YouTube's own requests and hands YouTube's command objects back to YouTube's page code; it fetches and evaluates nothing.
 
@@ -842,6 +877,8 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
     - if live checks L3/L4 leave no shipped route reading the cookie, the point disappears with the cookie lines, and that sentence goes too (R48);
     - if a reviewer objects anyway, [§13](#13-if-an-amo-reviewer-objects)'s fallback applies. The Firefox 140 floor it needs is already in place.
 
+  - They also describe keys from any tab's commands, the browser menu's optional `contextMenus`, and the injection on use both rely on ([ARC-MAN-19, ARC-MAN-20](06-architecture.md#631-manifest-per-browser), ARC-MAN-15; R88, R91), and the user-started problem report ([§16](#16-support-channel); R89).
+
   (R17, R34, R48, R49, R66, R83)
 
 > **What this is.** 2.0 is a ground-up rewrite of YouTube Playlist Tools, renamed Playlist Pigeon for YouTube™ (same ID and slug). 1.x used the YouTube Data API with users' own OAuth credentials; 2.0 drops that entirely: no `identity` permission, no Google hosts, no server.
@@ -853,6 +890,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 >   - an isolated-world list: the site core, the UI kit (only if a switched-on feature draws), then one file per switched-on feature.
 > - When a feature is switched on, `scripting.executeScript` injects the same files into already-open tabs of that site, so no reload is needed. It also loads the playlist picker (`popovers.js`) on first use, and, only when the popup or settings needs an account or fresh data (playlists, or the song playing) from a tab that has none of our code, the gateway and site core alone into that one tab; that core draws nothing. After an extension update, the start-up run registers the scripts again and injects the current files into open tabs, and the older copies there retire themselves. Nothing is injected before the user's Agree.
 > - There are no static content scripts and no web-accessible resources.
+> - Two opt-in features register nothing at all. "Keys from any tab" declares three `commands` with no suggested key, which the user binds in Firefox's shortcut settings; "Save from the browser's menu" adds a Save to ▸ menu entry through the optional `contextMenus` permission, requested when the user switches it on and removed when they switch it off. When either is used, the gateway, core and UI kit are injected into that one YouTube tab with `scripting.executeScript`, to run the save there and show its message.
 >
 > **Routes, in order of preference:**
 > 1. YouTube's own command resolver (found by shape on first use and cached for the page: the first `default_kevlar_base.<key>` whose `instance.resolveCommand` is a function);
@@ -870,8 +908,9 @@ All text in this section is **PROVISIONAL on the name** (ticket 22).
 > - `storage`: settings;
 > - `scripting`: per-feature registration and reading from an open tab for the popup;
 > - `*://*.youtube.com/*`: the only site. It's the exact pattern 1.x's content script was granted, kept so the update is silent.
+> - `contextMenus` (optional): only while "Save from the browser's menu" is on.
 >
-> **Data collection: `none`.** Nothing is sent to the developer or any third party. The only requests are YouTube's own, from the user's YouTube tab, for actions the user takes or for auto-add, which the user switches on. Route 4 reads YouTube's session cookie in that tab only to sign requests that go to YouTube itself; the cookie is never stored, logged or sent anywhere else. *(PROVISIONAL, ticket 25: this sentence goes if no shipped route reads the session cookie, R48)* Settings sync, off by default, uses the browser's own `storage.sync`, which the developer never sees. A first-run screen discloses this and requires an explicit Agree before any feature runs.
+> **Data collection: `none`.** Nothing is sent to the developer or any third party. The only requests are YouTube's own, from the user's YouTube tab, for actions the user takes or for auto-add, which the user switches on. Route 4 reads YouTube's session cookie in that tab only to sign requests that go to YouTube itself; the cookie is never stored, logged or sent anywhere else. *(PROVISIONAL, ticket 25: this sentence goes if no shipped route reads the session cookie, R48)* Settings sync, off by default, uses the browser's own `storage.sync`, which the developer never sees. A first-run screen discloses this and requires an explicit Agree before any feature runs. "Report a problem" only opens GitHub's new-issue page in a tab, with the version, browser, feature and status filled in for the user to see; nothing reaches the developer unless the user submits the issue on GitHub.
 >
 > **Private windows:** nothing from a private session is written to any storage area (one guarded write path in the background).
 >
@@ -977,6 +1016,7 @@ Ticket 23 is **settled by decision** ([R83](resolutions.md#after-the-spec-firefo
 | **counts settings sync** as an optional type | `required: ["none"]`, plus `optional: [<type>]` | Silent (an optional type never holds an update) | The sync switch asks Firefox first (ticket 16 §11); declining keeps sync off with "Sync needs your permission to send settings through Firefox Sync." The policy adds "On Firefox, switching sync on first asks for Firefox's permission." The note's Agree requests the type when sync is ticked (REL-CON-09). `permissions.onRemoved` switches sync off in that browser. |
 | **counts the requests to YouTube**, the page-signed route included | `required: ["websiteActivity"]` (or the type named), keeping the 140 floor | **Held** behind Firefox's prompt; Cancel keeps 1.4.5 | AMO's description gets the fallback line (REL-STORE-04). The release notes get "Firefox will ask you to approve sharing website activity: that's the videos you save, sent to YouTube through your own account." Our note is unchanged. |
 | **refuses settings saved from private windows** | — | — | Ticket 16's write table also refuses shared-settings writes from private windows. The private-window popup says "Settings can't be changed in a private window." |
+| **counts Report a problem's prefilled address** as technical data (R89) | — | — | The address keeps only `template`, `title` and `feature`; the form asks for the version and browser instead, and the chooser shows them for the user to copy. The policy's problem-report line drops them. |
 | **asks for an npm lockfile** instead of the Bun install | — | — | Only the *install* step changes, because the build already runs on Node. Commit a `package-lock.json` that CI regenerates and checks against `bun.lock`'s resolved versions; `SOURCE_CODE_REVIEW.md` then says `npm ci && npm run build:firefox`. Bun stays for development, tests and scripts. **This adds a second lockfile, so the user is told when it happens.** |
 
 - If a reviewer counts account names as `personallyIdentifyingInfo`, that type joins the optional list. The mechanism is the same.
@@ -992,7 +1032,7 @@ Ticket 23 is **settled by decision** ([R83](resolutions.md#after-the-spec-firefo
   - `browser`: the real-browser layer, with timings gated at 1.5× ticket 24's budgets in Chromium only; Firefox records its `performance.mark` timings for information ([Q-PERF-41](07-quality.md#767-enforcement)). (R31)
 - **REL-CI-19** `ci.yml` no longer has the `broker` job, Vitest or the `jq` manifest checks.
 - **REL-CI-20** `check:manifest` asserts ticket 10 §11 per browser: permissions, hosts, floors, the gecko ID, `data_collection_permissions`, no `content_scripts` and no `web_accessible_resources`. It also asserts that:
-  - `commands` holds only `_execute_action` (ticket 08);
+  - `commands` holds `_execute_action` and keys from any tab's three commands, none with a `suggested_key` (ticket 08; R88), and `optional_permissions` is exactly `["contextMenus"]` (R91);
   - there's no `update_url` unless the mode is `beta`;
   - each manifest's `version` equals `package.json`'s.
 - **REL-CI-21** In `build`, `check:manifest --report-against <last release tag>` reports without failing: it writes any manifest difference from the last release to the job summary. A permission or host change is then visible in the PR that makes it.
@@ -1156,18 +1196,24 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 
 ## 16. Support channel
 
-- **REL-STORE-35** GitHub issues is the one support channel, with two issue forms:
-  - **Problem:** what happened, the browser and its version, and a "Diagnostics report" field for the report copied from Settings;
-  - **Idea.**
-- **REL-STORE-36** The links:
-  - Diagnostics' **Report a problem** opens `https://github.com/Alioun/yt-playlist-tools/issues/new?template=problem.yml`;
-  - **Known problems** opens the issues labelled `youtube-change`;
-  - both stores' support fields and the privacy page link `issues/new/choose`.
+- **REL-STORE-35** GitHub issues is the one support channel, with three issue forms, and **no support e-mail** (the user, 2026-10-20; R89):
+  - **Something isn't working** (`problem.yml`): what happened, the steps, the version, the browser, the feature and its status, and a "Diagnostics report" field for the report copied from Settings;
+  - **A feature says it isn't working** (`not-working.yml`, labelled `youtube-change`): the feature, its status, the version, the browser and what the page looked like;
+  - **An idea** (`idea.yml`).
 
-  The links are plain and attach nothing.
-- People without a GitHub account can use the stores' review sections, which the developer reads weekly.
-- *Runner-up:* e-mail only. It lost because it gives no public list of known problems, and it publishes a personal address.
-- **PROVISIONAL:** adding an e-mail as a second channel is the user's call. The Chrome Web Store's contact e-mail is the developer account's verified address either way.
+  The forms carry their own directions, and are worded for 1.4.5 and 1.5 users too, so they're added to the repo before 2.0 ships. `config.yml` turns blank issues off and links Known problems, the 1.4.5 setup guide (`docs/legacy/1.4.5-setup.md`) and the privacy page.
+- **REL-STORE-36** The links:
+  - Diagnostics' and About's **Report a problem** opens the chooser ([HEALTH-27](04-features-accounts-data.md#55-diagnostics-check-now-and-the-report), [UI-SET-21](05-ui.md#sections)), which opens the matching form prefilled (REL-STORE-37);
+  - **Known problems** opens the issues labelled `youtube-change`;
+  - both stores' support fields and the privacy page link `issues/new/choose`, and say a GitHub account is needed.
+- **REL-STORE-37** **The prefilled address** (R89): `https://github.com/Alioun/yt-playlist-tools/issues/new?template={form}&title={title}&version={version}&browser={browser}&feature={feature}&status={status}`, with every value URL-encoded.
+  - GitHub fills an issue form's field from the query parameter named by the field's `id`, and documents this for text fields. So `version`, `browser`, `feature` and `status` are `input` fields in every form that takes them.
+  - The values are the extension's version ("(beta)" on betas), the browser and its major version, the chosen feature's name and its status in this browser. Nothing else: never a video, playlist, channel or account, and never the diagnostics report.
+  - The title is "{Feature}: " for a problem, "{Feature} isn't working" for a not-working report, and empty for an idea.
+  - GitHub drops a form's labels that don't exist in the repo, so `problem`, `youtube-change` and `idea` are created first (§19).
+  - A signed-out visitor is asked to sign in to GitHub before the form shows.
+- People without a GitHub account can use the stores' review sections, which the developer reads weekly. The chooser, the stores' support fields and the privacy page say so.
+- *Runner-up:* e-mail only. It lost because it gives no public list of known problems, and it publishes a personal address. A second channel by e-mail was declined by the user (R89). The Chrome Web Store's contact e-mail is the developer account's verified address, shown only to the store.
 
 ## 17. Upgrade-test matrix
 
@@ -1186,18 +1232,20 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 
 | # | Seeded state | Must hold after "Check for Updates" |
 |---|---|---|
-| S1 | Two playlist entries (one pasted URL, one half-typed); key `Shift+S`; percentage and toasts untouched | **No prompt.** `schema: 1`; `unclaimed.autoAdd` has 1 ID and `dropped: 1`; `pct 0` with `wasUnset`; feedback off; shortcut on with Shift+S; every legacy key and credential gone; the note tab opens once, in the background, with the percentage question; the badge is "!" |
+| S1 | Two playlist entries (one pasted URL, one half-typed); key `Shift+S`; percentage and toasts untouched; never authorised, so no `refreshToken` | **No prompt.** `schema: 1`; `unclaimed.autoAdd` has 1 ID and `dropped: 1`; `pct 50` with `wasUnset` and `authorised: false` (R96); feedback off; shortcut on with Shift+S; every legacy key and credential gone; the note tab opens once, in the background, titled "YouTube Playlist Tools is now Playlist Pigeon" (R98), with the Pin line (R97), the "nothing has been added yet" line, and the percentage question defaulting to "Once half of it is watched"; the badge is "!" |
 | S2 | Percentage `"75"`, toasts on, `Control+Shift+S`, a dummy client ID and secret | `pct 75` with no question; feedback on; the note says Ctrl+Shift+S never worked; `credentialsDeleted` |
 | S3 | 1.4.5 installed, nothing set | No 1.x key, so a fresh install (REL-MIG-03; R64, R76): `schema: 1`, no migration keys, no upgrade note, and no tab opens. The "!" shows on every tab, and the popup's "Waiting for your OK" **Review** opens first run. |
 | S4 | Key `Control+Alt+K` | Shortcut unticked, with "can't be used in 2.0" and `raw` shown |
 | S5 | youtube.com access removed in about:addons | Silent update; the note shows **Give access to YouTube**; after granting, Agree works |
 | S6 | Add-on disabled during the update, enabled a day later | No `onInstalled`; the migration still runs on enable, recognised from the 1.x keys (REL-MIG-02), and the note opens |
-| S7 | S1, then a browser restart before and after Agree | The note doesn't reopen; no second migration; Agree survives |
+| S7 | S1, with the note tab shown once, then a browser restart before and after Agree | The note doesn't reopen; no second migration; Agree survives (R97) |
 | S8 | S1, with Agree while signed out / with no YouTube tab / on an account that doesn't own the playlists | Ticket 11's outcomes, in the note |
 | S9 | S1 on ESR 140, ESR 153 and DevEdition | The same results |
 | S10 | (Optional) the AMO rollback drill: serve "1.4.5's code as 2.0.1", then a fixed 2.0.2 | 1.4.5 stays inert; 2.0.2 finds `schema: 1` and keeps the data |
 | S11 | S1, with a YouTube watch page and the home page already open (a video playing) when the update lands | Before Agree: 1.4.5's leftover script in those tabs does nothing visible (its extension context is gone, so its sends fail), and nothing of 2.0 is injected. After Agree: the registrar injects into those open tabs **without a reload**, and auto-add and the shortcut work there. |
 | S12 | A 2.0 → 2.0 update with features on and YouTube and YouTube Music tabs open: the `1.99.N` → `1.99.N+1` beta updates on both browsers, and the harness on Firefox | Both browsers clear registrations on update. The start-up reconcile registers them again and injects into the open tabs. The new core's `ppt:retire` makes the old core and gateway dispose of themselves. No doubled buttons, toasts or key handling; auto-add keeps counting; fresh tabs get the scripts. **PROVISIONAL until ticket 17's real-browser layer has run an update in both browsers.** |
+| S13 | S1, plus a `refreshToken` written into `storage.local` (1.4.5 had got access) | `pct 0` with `wasUnset` and `authorised: true`; the Kept row says "Adds to 1 playlist you chose in 1.x."; the question defaults to "As soon as a video starts playing" (R96) |
+| S14 | S1, with the note's background tab closed without ever being shown; then two browser restarts | At the first restart the note opens again, once, in the background, and `reopened` is set; at the second it doesn't. The badge and **Review** stay (R97) |
 
 - **REL-CHK-15** Every scenario also checks that:
   - before Agree, **nothing** runs on YouTube: `scripting.getRegisteredContentScripts()` is empty, and the page has no element, request or listener of ours. Firefox has no execution-context check, so the matrix uses DOM, network and registration checks ([Q-TEST-19](07-quality.md#725-layer-4-real-browser));
@@ -1291,8 +1339,9 @@ The IDs these items rest on:
 **Decisions:**
 - Confirm the name (ticket 22): Playlist Pigeon, or the runner-up, Playlist Courier.
 - Read and approve the privacy policy (§10.2), which is published under the user's name.
-- Decide whether to add a support e-mail (§16).
 - Optionally, choose a custom domain (§10.1).
+
+A support e-mail isn't wanted: the user decided on GitHub issues alone on 2026-10-20 (§16; R89).
 
 **Actions before the beta:**
 - Run ticket 25's live-check probe, signed in, in Chrome and Firefox, and paste the reports back.
@@ -1314,6 +1363,7 @@ Ticket 23's message to AMO isn't sent: R83 settled its questions from Mozilla's 
 - Create the `amo` and `cws` environments with the user as approver, and move the store secrets into them.
 - Set `PUBLISH_AMO`, `PUBLISH_CWS` and `CWS_PUBLISH_TYPE`, and add the `v*` tag ruleset.
 - Delete the old secrets: `PUBLISH_TO_STORES` and the Chrome v1.1 client ID, secret and refresh token.
+- Create the issue labels the forms set, `problem`, `youtube-change` and `idea`, so GitHub applies them (REL-STORE-37; R89).
 
 **Cleanup:**
 - Stop any deployed token broker (e.g. the Dokploy service).
@@ -1377,6 +1427,14 @@ After the spec ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-col
 - **Firefox's prompt strings** (was a PROVISIONAL input, live check P1): settled from Firefox's own string files and code and Mozilla's support articles. The install header is "Add Playlist Pigeon for YouTube™", with no question mark; the one required line is "Access your data for sites in youtube.com domains"; `storage` and `scripting` have no message; the data-collection line is "The developer says this extension doesn't require data collection."; the 1.4.5 update shows no prompt. Chrome's strings stay as read from Chromium's source, and P1 only glances at the real dialogs (§0, §5, REL-CON-22, REL-CON-23). R83.
 - **AMO's reply** (was a PROVISIONAL input, ticket 23): settled by decision, and the message isn't sent. 2.0 declares `data_collection_permissions: {required: ["none"]}`; settings sync declares no data type; settings changed in a private window are saved; the Bun install stays as planned. §13 is now the fallback if a reviewer objects, and the residual cookie risk, which L3/L4 can make moot (R48), stays visible in §12.1 and §13 (§0, §5, REL-CON-09, REL-CON-16, REL-CHK-04, REL-STORE-04, §9.3, REL-STORE-18, REL-STORE-21, REL-STORE-28, REL-STORE-34, §18, §19). R83.
 
+The user's decisions of 2026-10-20 ([R84–R99](resolutions.md#the-users-decisions-of-2026-10-20-r84r99)):
+- **The store listings** re-lead with saving: the summaries, the description's opening and order, the release notes and the screenshot order (§9; REL-STORE-10). R95.
+- **Never-authorised upgraders** get 50 % by default, with their own question and Kept line (§2.3, REL-MIG-11, REL-MIG-40, `UpgradeDetails`, REL-CON-04, REL-CON-05, REL-CON-06, S1, S13). R96.
+- **The note reopens once if nobody saw it,** and asks to be pinned (REL-CON-02, REL-CON-25, REL-CON-04, `device.upgradeNote`, S7, S14). R97.
+- **The note's tab title** names the old name (REL-CON-04, S1). R98.
+- **Support:** no e-mail, three prefilled forms through a chooser (§0, REL-STORE-17, REL-STORE-35 to REL-STORE-37, §13, §19). R89.
+- **New features in the copy and prompts:** the note's "New in 2.0" list, the disclosure's key line, the prompts by audience, the policy, the dashboard's justifications and the reviewer notes (REL-CON-04, REL-CON-12, REL-CON-14, REL-CON-22, §5, REL-STORE-17, §11, REL-STORE-21). R84 to R91.
+
 ### Open
 
 None remain after all three rounds. Every contradiction listed here before is settled above, and the other chapters now follow this one on the migration, the upgrade note and the consent copy (R60).
@@ -1386,7 +1444,7 @@ None remain after all three rounds. Every contradiction listed here before is se
 - **The Bun version in `SOURCE_CODE_REVIEW.md`:** ticket 06 says Bun 1.4.0, which is today's `packageManager`. Tickets 17 and 19 say 1.4.3, and this chapter uses 1.4.3.
 - **`skipReview`:** ticket 18 says to try it; ticket 19 drops it (REL-CI-35).
 - **The hotfix reviewer template:** ticket 19 adds "Same build instructions as {previous version}." to ticket 18's text.
-- **Diagnostics' Report a problem:** ticket 18 says it opens a blank form; ticket 19 says it opens `template=problem.yml`.
+- **Diagnostics' Report a problem:** ticket 18 says it opens a blank form; ticket 19 says it opens `template=problem.yml`. The user's decision of 2026-10-20 replaces both: a chooser that opens one of three forms, prefilled (REL-STORE-36, REL-STORE-37; R89).
 - **The Ctrl-key line:** ticket 09's prototype says "This key didn't work in 1.4.5. It does now."; ticket 19's final copy is used.
 - **Repo renames:** ticket 22 says a rename is fine because GitHub redirects. That holds for github.com URLs, but not for the Pages URL. ADR-0011: no rename while betas are installed.
 - **The toasts default:** ticket 06 says 1.4.5's popup showed toasts on. Ticket 19 corrects it to off, so only the percentage mismatches.

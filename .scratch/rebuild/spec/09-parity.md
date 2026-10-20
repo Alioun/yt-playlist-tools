@@ -7,7 +7,7 @@ Sources:
 - `map.md`;
 - `for-the-user.md`;
 - the tickets' Answers in `issues/`;
-- the resolutions made while assembling the spec ([resolutions.md](resolutions.md): R1–R40, then the second round, R41–R67, then the third, R68–R77), and R83, settled after the spec;
+- the resolutions made while assembling the spec ([resolutions.md](resolutions.md): R1–R40, then the second round, R41–R67, then the third, R68–R77), R83, settled after the spec, and the user's decisions of 2026-10-20, R84–R99;
 - the assembled chapters 02–08, which every row was checked against. Where they disagree, the resolutions' ownership rule picks the owning chapter, and the rows follow it.
 
 Use this chapter as the acceptance checklist: every row should trace to at least one build ticket.
@@ -25,7 +25,8 @@ Use this chapter as the acceptance checklist: every row should trace to at least
 | ADOPTED | An improvement adopted in a ticket or a resolution, needing no separate go-ahead. |
 | PROVISIONAL | Decided, but it rests on a check that hasn't run yet. That's usually [ticket 25](../issues/25-live-checks.md)'s signed-in live check, which is waiting for the user. If the check fails, the row needs a new decision: there's no Data API fallback (ticket 10 §10). |
 | **GAP** | No ticket or resolution decides it. None remain: R39 settled the last three (see [Resolved during assembly](#resolved-during-assembly)). |
-| **PENDING USER** | A new capability that's still waiting for the user's go-ahead (`for-the-user.md`). It isn't in 2.0 unless approved. |
+| **PENDING USER** | A new capability that's still waiting for the user's go-ahead (`for-the-user.md`). It isn't in 2.0 unless approved. None remain: the user answered on 2026-10-20 (R84–R99). |
+| DECLINED | A proposed new capability the user turned down. It isn't in 2.0. |
 
 **(R-n)** at the end of a cell means resolution R-n changed or added that behaviour.
 
@@ -33,7 +34,7 @@ Use this chapter as the acceptance checklist: every row should trace to at least
 
 | No. | File | Holds | IDs |
 |---|---|---|---|
-| 02 | [02-youtube.md](02-youtube.md) | YouTube features: auto-add and watch progress (07), channel filters, the add flow with its feedback, copy, undo and failures (12), the playlist picker, playlist shortcuts and the key recorder (08), quick-save, the queue button, the watch-page button, the card menu (14), and what the user sees when YouTube changes (18) | YT-GEN, YT-ITEM, YT-AA, YT-CF, YT-ADD, YT-PK, YT-NEW, YT-KEY, YT-QS, YT-Q, YT-WB, YT-CM, YT-BRK |
+| 02 | [02-youtube.md](02-youtube.md) | YouTube features: auto-add and watch progress (07), channel filters, the add flow with its feedback, copy, undo and failures (12), the playlist picker, playlist shortcuts and the key recorder (08), quick-save, the queue button, the watch-page button, the card menu (14), what the user sees when YouTube changes (18), and keys from any tab and Save from the browser's menu (R88, R91) | YT-GEN, YT-ITEM, YT-AA, YT-CF, YT-ADD, YT-PK, YT-NEW, YT-KEY, YT-QS, YT-Q, YT-WB, YT-CM, YT-BRK, YT-ANY, YT-BM |
 | 03 | [03-youtube-music.md](03-youtube-music.md) | YouTube Music: 21, 26, 27, 28 | YM-* |
 | 04 | [04-features-accounts-data.md](04-features-accounts-data.md) | The feature model, Show feedback, consent, site access, accounts (11), settings sync, storage, caches, watch progress, Clear all data and migrations' data (16), and breakage status and diagnostics (18) | FT, ACC, SYNC, DATA, HEALTH |
 | 05 | [05-ui.md](05-ui.md) | Where things live, the popup, settings and the first-run page (09, 15), in-page look on both sites, the picker's look, toasts, and the brand | UI-IA, UI-POP, UI-SET, UI-ONB, UI-YT, UI-YM, UI-PICK, UI-TOAST, UI-RULE, UI-BRAND |
@@ -59,7 +60,7 @@ Use this chapter as the acceptance checklist: every row should trace to at least
 
 PAR-CAP-67, PAR-NEW-06, PAR-NEW-27's saved shared settings in private windows (R58) and PAR-DEF-28's Firefox data-collection prompt no longer wait on AMO's reply: [R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83) settled ticket 23 by decision. If an AMO reviewer objects, [08 §13](08-release.md#13-if-an-amo-reviewer-objects)'s fallback applies.
 
-**PENDING USER:** PAR-NEW-31 to PAR-NEW-39, and the three user decisions listed after them.
+**PENDING USER:** none. The user answered PAR-NEW-31 to PAR-NEW-39 on 2026-10-20: eight approved and one declined (R84–R93). Of the three user decisions listed after them, only the name (ticket 22) is still open.
 
 ## 1. Capabilities
 
@@ -72,7 +73,7 @@ PAR-CAP-67, PAR-NEW-06, PAR-NEW-27's saved shared settings in private windows (R
 | PAR-CAP-03 | One global required percentage, 0–100, default 50. It updates live. | A shared default (0–100, default 50 %) plus an optional override per playlist. Changes apply at once, including to videos already playing. | IMPROVED | 07, 15 | 02 YT-AA-30, YT-AA-31, YT-AA-33; 05 UI-PICK-20, UI-PICK-22 |
 | PAR-CAP-04 | It fires once per arming. Replays and loops on the same page don't fire again. Navigating back re-arms it. | At most once per playlist per playback. A new playback (coming back, a reload, a Short swiped back to, the miniplayer reloading) starts again, and YouTube's "already in" ends it silently. Progress is remembered across visits for up to 30 days, until every playlist that takes the video has added it or found it already in. A session skip, a filtered-out playlist or a failure keeps it. (R23, R43) | IMPROVED | 07, 12, 16 | 02 YT-AA-35, YT-AA-36, YT-AA-37; 04 DATA-24, DATA-25 |
 | PAR-CAP-05 | Paused: nothing fires. | Nothing counts while paused, buffering, or showing "Continue watching?". | KEPT | 07 | 02 YT-AA-15 |
-| PAR-CAP-06 | Live streams, and premieres while waiting or live, never fire. | Same, and post-live recordings don't count either. Replays and finished premieres count like any video. Counting live streams is PAR-NEW-34 (PENDING USER). | KEPT | 07 | 02 YT-AA-24, YT-AA-25 |
+| PAR-CAP-06 | Live streams, and premieres while waiting or live, never fire. | Same, and post-live recordings don't count either. Replays and finished premieres count like any video. Counting live streams was PAR-NEW-34, which the user declined (R87). | KEPT | 07 | 02 YT-AA-24, YT-AA-25 |
 | PAR-CAP-07 | Shorts never fire (no `?v=`). | Auto-add on Shorts: each playlist takes Videos (the default), Shorts or Both. | CHANGED: approved new capability (PAR-NEW-07) | map Notes, 07 | 02 YT-AA-26, YT-AA-27, YT-AA-29 |
 | PAR-CAP-08 | Videos inside playlists and mixes count, by `v`. | They still count, as do autoplayed next videos. The video ID comes from the player (`getVideoData().video_id`) and must match the navigation; the URL alone is never used. | KEPT | 07 | 02 YT-AA-07, YT-AA-10 |
 | PAR-CAP-09 | Leaving `/watch` (the miniplayer) disarms it. | The miniplayer and the queue items played in it count. | IMPROVED | 07 | 02 YT-AA-07 |
@@ -102,7 +103,7 @@ PAR-CAP-67, PAR-NEW-06, PAR-NEW-27's saved shared settings in private windows (R
 
 | ID | 1.5.0 | 2.0 | Status | Tickets | Chapter |
 |---|---|---|---|---|---|
-| PAR-CAP-26 | One shortcut, caught by a `keydown` listener in YouTube pages, with no manifest `commands`. | The **Playlist shortcuts** feature: up to 20 shortcuts, caught in the page (capture phase on `window`) only while the feature is on. The manifest declares only `_execute_action`, with no key. | IMPROVED (approved: several shortcuts) | 08, ADR-0004 | 02 YT-KEY-01, YT-KEY-08, YT-KEY-21; 06 ARC-MAN-05 |
+| PAR-CAP-26 | One shortcut, caught by a `keydown` listener in YouTube pages, with no manifest `commands`. | The **Playlist shortcuts** feature: up to 20 shortcuts, caught in the page (capture phase on `window`) only while the feature is on. The manifest declares `_execute_action` and keys from any tab's three commands, none with a key (R88). | IMPROVED (approved: several shortcuts) | 08, ADR-0004 | 02 YT-KEY-01, YT-KEY-08, YT-KEY-21; 06 ARC-MAN-05 |
 | PAR-CAP-27 | Unset by default. | When the feature is first turned on, it presets Alt+W → Watch later on every account and Alt+Shift+P for the picker. 1.4.5 upgraders keep their own key if it converts, and get no Alt+W preset. The undo key belongs to no feature: it's preset to Alt+U at install, set in Settings › Everywhere, and works whenever a toast with Undo is on screen (R2, R44). | CHANGED | 08 | 02 YT-KEY-02, YT-KEY-05, YT-KEY-33; 04 FT-04, FT-05; 08 REL-MIG-17, REL-MIG-24 |
 | PAR-CAP-28 | Recorded in the popup: it takes the next non-modifier key. Bare keys, Esc and Tab are accepted, and there's no cancel or clear. | One recorder in the popup and Settings. Esc, Tab or a click elsewhere cancels, and a × clears the key. Enter or Space alone and any Ctrl+Alt combination are refused. It warns on clashes and offers "Use it here". Bare keys are still allowed. | IMPROVED | 08, 15 | 05 UI-PICK-23; 02 YT-KEY-28, YT-KEY-29, YT-KEY-30 |
 | PAR-CAP-29 | Matching: the modifier set must match exactly, the key is case-insensitive, auto-repeat is ignored, and the key is swallowed with `preventDefault`. | The modifier set must match exactly. Letters and digits match by character, everything else by physical key. Auto-repeat is ignored. Only a matching key is consumed (`preventDefault` + `stopImmediatePropagation`). | KEPT | 08 | 02 YT-KEY-19, YT-KEY-20, YT-KEY-21 |
@@ -174,7 +175,7 @@ PAR-CAP-67, PAR-NEW-06, PAR-NEW-27's saved shared settings in private windows (R
 | PAR-CAP-60 | A 340 px popup holding every feature setting. | A 360 px popup for "this tab, this account, right now", top to bottom: the account header, the breakage strip, one banner, YouTube and YouTube Music tabs, This video or Playing now, and feature rows that unfold in place. | CHANGED | 09, 15 | 05 UI-POP-01, UI-POP-20 |
 | PAR-CAP-61 | The channel card ("THIS VIDEO'S CHANNEL"), shown on `?v=` pages. | The This video card: a status line, a watched meter, and Details (each playlist's outcome, Don't auto-add, Allow/Deny this channel, Save to…). It also shows for Shorts and the miniplayer. | IMPROVED | 09, 15 | 05 UI-POP-12, UI-POP-13, UI-POP-14 |
 | PAR-CAP-62 | Settings, in the popup's gear view and the Options tab, with Account, Advanced and Theme. | A Settings page in a tab (`options_ui`, `open_in_tab`). Its left nav has YouTube, YouTube Music, Everywhere, Accounts, Appearance, Privacy & data, Diagnostics and About. It's every feature's home and answers deep links. | CHANGED | 09, 15 | 05 UI-SET-01, UI-SET-03, UI-SET-05; 06 ARC-MAN-01 |
-| PAR-CAP-63 | Inside YouTube: the toaster, queue buttons and the right-click takeover. No status indicator, badge, context-menu items or onboarding. | Only switched-on features draw anything. 2.0 adds the watch-page button (auto-add status), the "!" badge and the first-run page (R37). There are still no browser context-menu entries (PAR-NEW-37, PENDING USER). | IMPROVED | 09, 14 | 05 UI-IA-01, UI-IA-02, UI-IA-08; 02 YT-GEN-04, YT-WB-01 |
+| PAR-CAP-63 | Inside YouTube: the toaster, queue buttons and the right-click takeover. No status indicator, badge, context-menu items or onboarding. | Only switched-on features draw anything. 2.0 adds the watch-page button (auto-add status), the "!" badge and the first-run page (R37). The browser's right-click menu gets a Save to ▸ entry only while Save from the browser's menu is on (PAR-NEW-37; R91). | IMPROVED | 09, 14 | 05 UI-IA-01, UI-IA-02, UI-IA-08; 02 YT-GEN-04, YT-WB-01 |
 
 ### 1.11 Platform, manifest, build and release
 
@@ -182,7 +183,7 @@ PAR-CAP-67, PAR-NEW-06, PAR-NEW-27's saved shared settings in private windows (R
 |---|---|---|---|---|---|
 | PAR-CAP-64 | AMO only: 1.4.5 live, with about 66 daily users. Never listed on the Chrome Web Store. | The same AMO listing and gecko ID `{cc70cd21-2cc6-444b-bd89-496909346091}`, plus a first Chrome Web Store listing. Chromium browsers ride along on the Chrome build. | KEPT; Chrome is new (PAR-NEW-14) | map Notes, 19 | 08 REL-STORE-01, REL-STORE-02, REL-CI-16; [spec.md](../spec.md) "Targets" (Chromium browsers) |
 | PAR-CAP-65 | Firefox `strict_min_version` 125. | Minimum versions are Chrome 121 and Firefox 140, so Firefox below 140 stays on 1.4.5. | CHANGED (decided on the user's behalf) | 10 §12 | 06 ARC-MAN-06, ARC-MAN-07; 08 REL-CI-09 |
-| PAR-CAP-66 | Permissions `activeTab`, `storage`, `identity` and `scripting`, plus Google API hosts. A static content script on `*://*.youtube.com/*`, and the bridge injected as a web-accessible resource. | `storage` and `scripting`. Hosts: `https://www.youtube.com/*` on Chrome (YouTube Music optional), `*://*.youtube.com/*` on Firefox (for a silent update). No content scripts and no web-accessible resources: page scripts are registered at runtime as two registrations per site, the MAIN-world gateway and one ordered isolated list (the core, the kit if needed, then each feature that's on), and only the gateway runs in the MAIN world (R17, R49). | CHANGED | 06, 10 §11, 17, ADR-0007, ADR-0008 | 06 ARC-MAN-01, ARC-MAN-02, ARC-MAN-08, ARC-MAN-09, ARC-MOD-01 |
+| PAR-CAP-66 | Permissions `activeTab`, `storage`, `identity` and `scripting`, plus Google API hosts. A static content script on `*://*.youtube.com/*`, and the bridge injected as a web-accessible resource. | `storage` and `scripting`. Hosts: `https://www.youtube.com/*` on Chrome (YouTube Music optional), `*://*.youtube.com/*` on Firefox (for a silent update). No content scripts and no web-accessible resources: page scripts are registered at runtime as two registrations per site, the MAIN-world gateway and one ordered isolated list (the core, the kit if needed, then each feature that's on), and only the gateway runs in the MAIN world (R17, R49). `contextMenus` is an optional permission, held only while Save from the browser's menu is on (R91). | CHANGED | 06, 10 §11, 17, ADR-0007, ADR-0008 | 06 ARC-MAN-01, ARC-MAN-02, ARC-MAN-08, ARC-MAN-09, ARC-MOD-01 |
 | PAR-CAP-67 | Firefox `data_collection_permissions: none`. | `{ "required": ["none"] }`, and settings sync declares no data type. If an AMO reviewer objects, 08 §13's fallback applies (R83). | KEPT | 10, 16 §11, 19 §11.4 | 08 REL-STORE-34, REL-CON-22; 06 ARC-MAN-01 |
 | PAR-CAP-68 | Messaging: untyped messages, a string contract (`"No access token"`) and DOM events to the bridge. | Typed, versioned contracts on three channels, each validated at the receiver. | CHANGED | 17 §6 | 06 ARC-MSG-01, ARC-MSG-07, ARC-MSG-09 |
 | PAR-CAP-69 | CI: `tsc`, Vitest, both builds, `jq` manifest checks, and a broker image smoke test. | `bun test` (unit, recorded responses, fake browser and DOM, real browser), `check:manifest`, `check:budget`, a coverage gate, and a daily static watch and browser watch, the browser watch on Chromium only (R40). The broker job goes. | CHANGED | 04, 17 §9–10, 18, 19 §12.1 | 07 Q-CI-1, Q-CI-4, Q-TEST-41, Q-WATCH-14; 08 REL-CI-18, REL-CI-19 |
@@ -194,7 +195,7 @@ PAR-CAP-67, PAR-NEW-06, PAR-NEW-27's saved shared settings in private windows (R
 |---|---|---|---|---|---|
 | PAR-CAP-71 | Auto-add playlists typed in as IDs, which may hold URLs or half-typed IDs. | Cleaned up (`list=` taken out, `^PL…` kept, de-duplicated) into an unclaimed setup. After consent, the signed-in account that owns them claims them. IDs it doesn't own are dropped, and a notice says how many. | KEPT (now per account) | 11, 16 §10.2, 19 §2 | 08 REL-MIG-14, REL-MIG-15; 04 ACC-28, ACC-31, ACC-32 |
 | PAR-CAP-72 | One shortcut key with its playlist ID. Ctrl keys never fired. | The key becomes shortcut 1's. Bare and Ctrl keys carry over; punctuation, Esc, Tab, Enter or Space alone, a modifier as the last token, and Ctrl+Alt don't, and the note then says "Your 1.x key ({raw}) can't be used in 2.0. Set a new one in Settings." The playlist goes into the unclaimed setup. For a Ctrl key whose playlist came over too, the note says "{Key} never worked in 1.4.5 because of a bug. It works now." A key with no playlist gets "Your 1.x key {Key} had no playlist. Choose one after you agree." A playlist with no key is kept, and the note says "Your 1.x shortcut had no key. Its playlist is kept; set a key in Settings." (R21) The feature turns on only if both a key and a playlist came over, once the user agrees with its row still ticked. The note's copy and conditions are 08's (R60). | KEPT | 08, 16, 19 | 08 REL-MIG-17, REL-MIG-18, REL-MIG-20, REL-MIG-23, REL-MIG-39, REL-CON-04; 02 YT-KEY-33 |
-| PAR-CAP-73 | The required percentage, stored as a string. Absent or empty meant 0 %, although the popup showed 50. | A set value carries over, rounded and clamped to 0–100. Absent, empty or non-numeric becomes 0 % (R21), and only then does the upgrade note ask once about the 50 % / 0 % mismatch, defaulting to what 1.4.5 did (R60). The meaning changes to watch progress. | KEPT (ADR-0009) | 07, 16, 19, ADR-0009 | 08 REL-MIG-11, REL-CON-05, REL-CON-06; 02 YT-AA-43; 04 DATA-49 |
+| PAR-CAP-73 | The required percentage, stored as a string. Absent or empty meant 0 %, although the popup showed 50. | A set value carries over, rounded and clamped to 0–100. Absent, empty or non-numeric becomes 0 % (R21), and only then does the upgrade note ask once about the 50 % / 0 % mismatch, defaulting to what 1.4.5 did (R60). If 1.4.5 never stored a `refreshToken`, it never added anything, so the value becomes 50 % and the question defaults to it (R96). The meaning changes to watch progress. | KEPT (ADR-0009) | 07, 16, 19, ADR-0009 | 08 REL-MIG-11, REL-CON-05, REL-CON-06; 02 YT-AA-43; 04 DATA-49 |
 | PAR-CAP-74 | `toastEnabled`, where absent meant off. | Show feedback for auto-add and shortcuts is on only if the value was `true`. Failures show either way. | KEPT | 12, 16, 19 | 08 REL-MIG-11, REL-MIG-12; 04 FT-27 |
 | PAR-CAP-75 | Auto-add and the shortcut ran with no consent. | They're paused until the user agrees on the one-time upgrade note, which doubles as consent. Agree then turns on whatever is still ticked: auto-add if any of its playlists carried over, and the shortcut if both its key and its playlist did (R60). Nothing is read from YouTube before that. | CHANGED (ADR-0010) | 09, 19, ADR-0010 | 08 REL-MIG-22, REL-MIG-23, REL-MIG-29, REL-MIG-30, REL-CON-07; 04 FT-43, DATA-50 |
 | PAR-CAP-76 | Data API OAuth credentials pasted in by the user. | Deleted. The note says "2.0 needs no Google credentials anymore." and links to removing 1.x's Google access. | RETIRED | map Notes, 19 | 08 REL-MIG-27, REL-MIG-28, REL-CON-04; 05 UI-ONB-06, UI-SET-16 |
@@ -267,7 +268,7 @@ These aren't on the Friction list, but the inventory describes them, and 2.0's d
 | PAR-DEF-40 | The broker's `/auth/refresh` isn't checked against `ALLOWED_EXTENSION_IDS`, and CI and release builds point it at `localhost:3847`. | The broker is deleted. | 19 §13 | 08 REL-CI-51, REL-CI-52; 07 Q-CI-2 |
 | PAR-DEF-41 | 1.5.0's queue bridge likely does nothing on today's YouTube, because `element.resolveCommand` is gone. | The gateway reaches YouTube's resolver by shape on first use, caches it for the page and retries once. If several properties match, the first whose `resolveCommand` is a function is used, and `resolver-ambiguous` is recorded for diagnostics (R34, R51, R66). Ticket 18's watch checks it daily. | 10, 17, 18 · PROVISIONAL (25) | 06 ARC-ACC-13, ARC-ACC-14, ARC-ACC-16; 07 Q-WATCH-8, Q-WATCH-10, Q-WATCH-24 |
 | PAR-DEF-42 | When YouTube changes, features break silently: buttons go missing, the queue gives a false "ok", triggers never arm. | Breakage signals give each feature a working, partly or not-working status, shown in the page, on the badge, in the popup and in Settings. Nothing fails silently. | 18, ADR-0005 | 04 HEALTH-07, HEALTH-13, HEALTH-15; 07 Q-WATCH-23 |
-| PAR-DEF-43 | 1.4.5's popup showed 50 % while auto-adding at 0 %. | The upgrade note states a set value. When the value was unset or isn't a number, which is when 1.4.5 showed 50 % but added at 0 %, it asks once instead (R21, R60). | 19 §2.3, ADR-0009 | 08 REL-CON-05, REL-CON-06, REL-MIG-11; 04 DATA-49 |
+| PAR-DEF-43 | 1.4.5's popup showed 50 % while auto-adding at 0 %. | The upgrade note states a set value. When the value was unset or isn't a number, which is when 1.4.5 showed 50 % but added at 0 %, it asks once instead (R21, R60). For an upgrader whose 1.4.5 never got access, the default is 50 % (R96). | 19 §2.3, 30, ADR-0009 | 08 REL-CON-05, REL-CON-06, REL-MIG-11, REL-MIG-40; 04 DATA-49 |
 
 ## 3. New capabilities and improvements in 2.0
 
@@ -316,26 +317,28 @@ These improve existing capabilities, or are required by policy, so no separate g
 | PAR-NEW-30 | Shortcuts act on the pointed-at item: cards, the sidebar, end-screen tiles, Shorts shelves, and the miniplayer's video. | ADOPTED | 08 | 02 YT-ITEM-06, YT-KEY-16, YT-KEY-17 |
 | PAR-NEW-40 | A "Sort A–Z" toggle in the picker's header, stored per device and never synced. Off, rows keep YouTube's Save-dialog order. It answers the Friction list's "no sort" (PAR-DEF-14). (R39) | ADOPTED | 12, 15 | 05 UI-PICK-26; 02 YT-PK-14; 03 YM-PICK-3 |
 
-### 3.3 Waiting for the user (not in 2.0 unless approved)
+### 3.3 Decided by the user (2026-10-20)
+
+These waited on the user's go-ahead. The user answered on 2026-10-20 ([R84–R99](resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): eight are in 2.0, and one isn't.
 
 | ID | Capability | Status | Tickets | Chapter |
 |---|---|---|---|---|
-| PAR-NEW-31 | Unticking a playlist in the picker removes the video from it, as YouTube's Save dialog does. If declined, checked rows read "Already in" and do nothing. | **PENDING USER** | 12, 14, 15, 26 | 02 YT-PK-05; 03 YM-PICK-8 |
-| PAR-NEW-32 | More YouTube Music quick actions: Save to library, Start mix, Go to artist / album. | **PENDING USER** | 26 | 03 §21 "Not in 2.0" |
-| PAR-NEW-33 | A "Recent adds" list, e.g. in the popup, so a missed toast can be looked up. | **PENDING USER** | 09, 12 | 05 "Not pinned down" |
-| PAR-NEW-34 | Live streams and premieres counting for auto-add, e.g. after N minutes or credited to the replay. | **PENDING USER** | 07 | 02 YT-AA-24 |
-| PAR-NEW-35 | Keys that work from any tab, or system-wide on Chrome (browser `commands` with no default key). | **PENDING USER** | 08 | 03 §21 "Not in 2.0"; 02 YT-KEY-03; 06 ARC-MAN-05 |
-| PAR-NEW-36 | Exporting and importing settings to a file. | **PENDING USER** | 16 | None yet: recorded only here |
-| PAR-NEW-37 | A "Save to ▸" entry in the browser's right-click menu. It needs `menus`/`contextMenus`, and the Firefox prompt line must be checked first. | **PENDING USER** | 09, 10 §11 | 05 UI-IA-02; 06 ARC-MAN-02 (2.0 has none) |
-| PAR-NEW-38 | A toolbar tick when this tab's video was auto-added, and "paused" shown on the icon. Drafted as an auto-add option, off until the user answers D10 (R11). | **PENDING USER** | 09, 15 | 02 YT-AA-42; 04 FT-01; 05 UI-IA-08 |
-| PAR-NEW-39 | Translating 2.0's UI. | **PENDING USER** | 26 (via for-the-user) | 03 §21 "Not in 2.0" |
+| PAR-NEW-31 | Unticking a playlist in the picker removes the video from it, as YouTube's Save dialog does, with an Undo toast in pages and an inline Undo in the popup's sheet. (R84) | APPROVED | 12, 14, 15, 26 | 02 YT-PK-05; 03 YM-PICK-8; 05 UI-PICK-09 |
+| PAR-NEW-32 | More YouTube Music quick actions: Save to library, Start mix, Go to album and Go to artist, as buttons and keys, all off by default, offered where YouTube Music's own ⋮ offers them. (R85) | APPROVED | 21, 26 | 03 §21 (YM-MORE-1 to YM-MORE-9); 05 UI-YM-04, UI-SET-11; 06 §6.2.7 |
+| PAR-NEW-33 | A Recent adds list in the popup, kept until the browser closes, so a missed toast can be looked up. On by default, switchable in Privacy & data. (R86) | APPROVED | 09, 12 | 04 DATA-52; 05 UI-POP-33, UI-POP-34 |
+| PAR-NEW-34 | Live streams and premieres counting for auto-add, e.g. after N minutes or credited to the replay. (R87) | DECLINED | 07 | 02 YT-AA-24 |
+| PAR-NEW-35 | Keys from any tab: three browser commands with no default key, for the playing song and the current video, set in the browser's own shortcut settings. In 2.0.0. (R88) | APPROVED | 08, 30 | 02 §2.14 (YT-ANY-01 to YT-ANY-09); 03 §22; 04 FT-01, FT-59; 06 ARC-MAN-19, ARC-ACC-69 |
+| PAR-NEW-36 | Exporting and importing settings to a file. (R90) | APPROVED | 16 | 04 DATA-53 to DATA-55; 05 UI-SET-22; 06 ARC-MOD-36 |
+| PAR-NEW-37 | Save from the browser's menu: a "Save to ▸" entry in the browser's right-click menu, off by default, through the optional `contextMenus` permission, which shows no prompt on either browser. (R91) | APPROVED | 09, 10 §11 | 02 §2.15 (YT-BM-01 to YT-BM-09); 04 FT-60; 06 ARC-MAN-20 |
+| PAR-NEW-38 | A toolbar tick when this tab's video was auto-added, and "paused" shown on the icon, both on by default and both switchable. (R92) | APPROVED | 09, 15 | 02 YT-AA-42; 04 FT-01, FT-57; 05 UI-IA-08 |
+| PAR-NEW-39 | 2.0 is built ready for translation, and ships English only. (R93) | APPROVED | 26 (via for-the-user) | 05 UI-RULE-43; 06 ARC-MAN-21, ARC-MOD-35; 07 Q-TEST-44 |
+| PAR-NEW-41 | Report a problem: a chooser of three kinds with directions, opening GitHub issue forms prefilled with the version, browser, feature and status; no support e-mail. (R89) | APPROVED | 18, 19 | 04 HEALTH-27; 05 UI-SET-21; 08 REL-STORE-35 to REL-STORE-37 |
 
 **User decisions that shape approved items** (not new capabilities):
-- **The name and mark:** ticket 22, recommended "Playlist Pigeon for YouTube™" (05 UI-BRAND-01, UI-BRAND-03).
-- **Narrow Quick picks rows on YouTube Music:** ticket 27. Keep every switched-on button, or drop buttons to keep the title. R35 leaves it to the user (03 YM-NARROW-1; 05 UI-YM-10).
-- **A support e-mail beside GitHub issues:** problem reports go to GitHub issues with a Problem form (ticket 19 §16, settled in 04 §7). Whether to add an e-mail is open (04 HEALTH-22; 08 REL-STORE-35, REL-STORE-36).
-
-All three are **PENDING USER**.
+- **The name and mark:** ticket 22, now in a second naming round. The spec keeps "Playlist Pigeon for YouTube™" as a placeholder (05 UI-BRAND-01, UI-BRAND-03). **PENDING USER.**
+- **Narrow Quick picks rows on YouTube Music:** every switched-on button stays (R94; 03 YM-NARROW-1; 05 UI-YM-10).
+- **A support e-mail beside GitHub issues:** none (R89; 04 HEALTH-22; 08 REL-STORE-35).
+- **The store listings and the upgrade note** (ticket 30): the listings lead with saving (R95), never-authorised upgraders default to 50 % (R96; PAR-CAP-73), the note reopens once if nobody saw it and asks to be pinned (R97), and its tab title names the old name (R98).
 
 ## Resolved during assembly
 
@@ -391,8 +394,13 @@ R73, R74 and R75 change no row: no row states Playing now's art, the picker's so
 After the spec:
 - R83 (PAR-CAP-67, PAR-NEW-06, PAR-NEW-27, PAR-DEF-28, and the AMO line under Open rows at a glance): Firefox's prompt strings are settled from source, and ticket 23 is settled by decision. 2.0 declares `none`, settings sync declares no data type, and settings changed in a private window are saved. None of these rows is PROVISIONAL any longer.
 
+The user's decisions of 2026-10-20:
+- R84 to R93 (PAR-NEW-31 to PAR-NEW-39, new PAR-NEW-41, PAR-CAP-06, PAR-CAP-63, and Open rows at a glance): eight new capabilities approved, live streams declined, and Report a problem settled;
+- R94 (narrow rows), R95 (the listings), R96 (PAR-CAP-73, PAR-DEF-43), R97 and R98 (the upgrade note): the user decisions listed under §3.3;
+- R99 changes no row: budgets are 07's.
+
 ## Conflicts found
 
-No contradiction between this chapter and the others remains: every row follows the owning chapter. One note for the main session stays, because it concerns the spec's overview, which isn't edited in this pass:
+No contradiction between this chapter and the others remains: every row follows the owning chapter.
 
-- **Pending-user items recorded only here.** This isn't a contradiction; it's where two PENDING USER items are listed. PAR-NEW-36 (export and import) is recorded in no other chapter. PAR-NEW-37's open question (the right-click "Save to ▸" entry, and the Firefox prompt line to check first) isn't either: [05 UI-IA-02](05-ui.md#51-information-architecture) and [06 ARC-MAN-02](06-architecture.md#631-manifest-per-browser) state only that 2.0 has no such entry. The spec's [Open items](../spec.md#open-items) should carry both.
+- **Pending-user items recorded only here** (resolved): PAR-NEW-36 and PAR-NEW-37 were once recorded only in this chapter. Both are now specified in their owning chapters (04 §4.12; 02 §2.15, 06 ARC-MAN-20), and the spec's Open items no longer list them (R90, R91).
