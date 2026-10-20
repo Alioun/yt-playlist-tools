@@ -50,6 +50,10 @@ _Avoid_: Degraded, limited
 A plain-text summary of the extension's state and recent breakage signals, which the user reads and copies to share by choice. It never names a video, playlist, channel or account.
 _Avoid_: Bug report, log dump, telemetry
 
+**Problem report**:
+A public issue the user opens on the project's GitHub page through Report a problem, which starts it with the kind of problem, the extension's version, the browser, a feature and its status. The user reads it, adds the diagnostics report only by pasting it, and decides whether to submit it.
+_Avoid_: Bug report, support ticket, feedback (that's a feature's toasts)
+
 **Shared settings**:
 The settings every account uses: each feature's switch and options, the shortcuts' keys and labels, the default required percentage, and the theme.
 _Avoid_: Global settings, preferences
@@ -65,6 +69,14 @@ _Avoid_: Cloud copy, server copy
 **Clear all data**:
 Removing everything the extension keeps in this browser, so it starts as if just installed. The synced copy is deleted only if the user asks.
 _Avoid_: Reset, factory reset
+
+**Settings file**:
+A file the user saves from Settings holding their shared settings and account setups, to bring into another browser or back later. It never holds consent, cached lists or watch progress, and it replaces what it covers when imported.
+_Avoid_: Backup, export (as a noun), profile
+
+**Browser menu**:
+The browser's own right-click menu, as opposed to YouTube's ⋮ menu. One feature can add a Save to ▸ entry to it on YouTube pages; the card menu feature replaces it with YouTube's ⋮ menu on cards.
+_Avoid_: Context menu, right-click menu (it's ambiguous on cards)
 
 **Job**:
 One thing the extension asks YouTube or YouTube Music to do or tell it, such as adding a video to a playlist or reading which playlists hold it. A job is done in one tab, as that tab's account.
@@ -142,6 +154,10 @@ _Avoid_: Dead playlist, invalid playlist
 A toast saying an action did what was asked. It's the only kind a feature's Show feedback switch hides.
 _Avoid_: Success toast
 
+**Recent adds**:
+The popup's list of the adds made in this browser since it started, newest first, so a missed toast can be looked up. It names videos and playlists, so it's kept only until the browser closes and never leaves the browser.
+_Avoid_: History, activity log, add history
+
 ### Queue
 
 **Queue**:
@@ -156,8 +172,16 @@ Putting a video, song, album or playlist at the end of the queue.
 _Avoid_: Enqueue, append
 
 **Quick action**:
-One of YouTube Music's own actions on a song, album or playlist (Play next, Add to queue, Save to playlist, Like, Remove from queue), offered by the extension in one click or one key.
+One of YouTube Music's own actions on a song, album or playlist (Play next, Add to queue, Save to playlist, Like, Remove from queue, and, if the user switches them on, Save to library, Start mix, Go to album and Go to artist), offered by the extension in one click or one key.
 _Avoid_: Hover action, menu shortcut
+
+**Save to library**:
+YouTube Music's own action that puts a song, album or playlist into the user's YouTube Music library, or takes it out if it's there. It doesn't touch any playlist or like.
+_Avoid_: Like (for albums), add to library, Save (alone, which means Save to playlist)
+
+**Start mix**:
+YouTube Music's own action that starts an endless mix from a song, album or playlist, replacing the queue.
+_Avoid_: Start radio (YouTube Music's older label), autoplay
 
 **Remove from queue**:
 Taking one entry out of the queue.
@@ -176,14 +200,18 @@ The playlist a one-click save adds to. YouTube's thumbnail quick-save and YouTub
 _Avoid_: Default playlist, one-click playlist, target playlist
 
 **Playlist picker**:
-The extension's list of the user's playlists, with a check mark on each one that already holds the song or video.
+The extension's list of the user's playlists, with a check mark on each one that already holds the song or video. Ticking a row adds the item there, and unticking takes it out.
 _Avoid_: Save dialog (YouTube's own), playlist menu
 
 ### Shortcuts
 
 **Shortcut**:
 A key the user gives one of the extension's actions on YouTube and YouTube Music pages: a playlist shortcut, a quick-action shortcut, the picker key or the undo key. It works only while one of those pages has keyboard focus.
-_Avoid_: Hotkey, keybinding, keyboard command (the browser's own)
+_Avoid_: Hotkey, keybinding, keyboard command (the browser's own; see any-tab key)
+
+**Any-tab key**:
+A key the user sets in the browser's own shortcut settings for one of a few fixed actions, such as liking the playing song, which works while YouTube or YouTube Music is in another tab. The extension never records or sets it; it isn't a shortcut.
+_Avoid_: Global shortcut, global hotkey, browser command (in user-facing text)
 
 **Playlist shortcut**:
 A shortcut that saves the pointed-at item, else the current video or playing song, to the playlist chosen for it on the current account. Its key and label are shared by every account.
