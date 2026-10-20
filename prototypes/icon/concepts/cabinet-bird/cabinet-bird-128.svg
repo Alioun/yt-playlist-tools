@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -16 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="cbird-body-128" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="88">
+      <stop offset="0" stop-color="#8568DD"/>
+      <stop offset="1" stop-color="#6A4DC6"/>
+    </linearGradient>
+    <linearGradient id="cbird-neck-128" gradientUnits="userSpaceOnUse" x1="10" y1="30" x2="40" y2="40">
+      <stop offset="0" stop-color="#14A39A"/>
+      <stop offset="1" stop-color="#7B5CD6"/>
+    </linearGradient>
+  </defs>
+  <path d="M78 38 L92 30.6 Q95 29 95 32.4 V47 Q95 49.4 92.6 50.2 L82 54 Z" fill="#6B7584"/>
+  <path d="M89 32.2 L92 30.6 Q95 29 95 32.4 V47 Q95 49.4 92.6 50.2 L89 51.4 Z" fill="#4A5360"/>
+  <path d="M26 40 H84 V76 C84 83 78.6 88 72 88 H44 C30.8 88 20 77.2 20 64 V46 C20 42.6 22.6 40 26 40 Z" fill="url(#cbird-body-128)"/>
+  <rect x="30" y="48" width="20" height="17" rx="2" fill="#26223C"/>
+  <rect x="56" y="48" width="22" height="17" rx="2" fill="#26223C"/>
+  <rect x="30" y="70" width="20" height="13" rx="2" fill="#26223C"/>
+  <rect x="56" y="70" width="22" height="13" rx="2" fill="#26223C"/>
+  <rect x="60" y="53" width="14" height="12" fill="#C9D0DB" transform="rotate(5 67 59)"/>
+  <rect x="58" y="55" width="16" height="10" fill="#F5F7FA"/>
+  <rect x="61" y="58" width="9" height="2.4" rx="1.2" fill="#7B5CD6"/>
+  <rect x="32" y="74" width="15" height="9" fill="#F5F7FA"/>
+  <rect x="35" y="77" width="7" height="2.4" rx="1.2" fill="#7B5CD6"/>
+  <rect x="59" y="75" width="15" height="8" fill="#14A39A"/>
+  <path d="M40 88 V94 M36 94 H44 M62 88 V94 M58 94 H66" stroke="#6B7584" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="26" cy="24" r="17" fill="#8B95A4"/>
+  <path d="M11.2 32.6 A17 17 0 0 0 40.8 32.6 L35.6 29.8 A11.4 11.4 0 0 1 16.4 29.8 Z" fill="url(#cbird-neck-128)"/>
+  <path d="M10.8 18.4 Q4.6 19.4 1 24.2 L10.8 28.4 Z" fill="#3D4552"/>
+  <ellipse cx="11.6" cy="20.2" rx="3.1" ry="2.2" fill="#E9EDF2"/>
+  <circle cx="22.6" cy="19.4" r="4.6" fill="#F5F7FA"/>
+  <circle cx="21.7" cy="19.4" r="2.8" fill="#1A1E27"/>
+</svg>

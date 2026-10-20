@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -16 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="odd-neck-128" gradientUnits="userSpaceOnUse" x1="4" y1="32" x2="40" y2="42">
+      <stop offset="0" stop-color="#14A39A"/>
+      <stop offset="1" stop-color="#7B5CD6"/>
+    </linearGradient>
+  </defs>
+  <rect x="52" y="0" width="44" height="44" rx="9" fill="#14A39A"/>
+  <rect x="0" y="52" width="44" height="44" rx="9" fill="#4A80BA"/>
+  <rect x="52" y="52" width="44" height="44" rx="9" fill="#7B5CD6"/>
+  <rect x="64" y="9" width="20" height="22" rx="1.5" fill="#F5F7FA"/>
+  <rect x="68" y="14" width="12" height="2.6" rx="1.3" fill="#14A39A"/>
+  <rect x="68" y="19.5" width="8" height="2.6" rx="1.3" fill="#14A39A"/>
+  <rect x="60" y="26" width="28" height="8" rx="3" fill="#0E7C75"/>
+  <rect x="12" y="61" width="20" height="22" rx="1.5" fill="#F5F7FA"/>
+  <rect x="16" y="66" width="12" height="2.6" rx="1.3" fill="#4A80BA"/>
+  <rect x="16" y="71.5" width="8" height="2.6" rx="1.3" fill="#4A80BA"/>
+  <rect x="8" y="78" width="28" height="8" rx="3" fill="#335F8E"/>
+  <rect x="64" y="61" width="20" height="22" rx="1.5" fill="#F5F7FA"/>
+  <rect x="68" y="66" width="12" height="2.6" rx="1.3" fill="#7B5CD6"/>
+  <rect x="68" y="71.5" width="8" height="2.6" rx="1.3" fill="#7B5CD6"/>
+  <rect x="60" y="78" width="28" height="8" rx="3" fill="#5A41AE"/>
+  <circle cx="22" cy="22" r="21" fill="#8B95A4"/>
+  <path d="M4.4 33.4 A21 21 0 0 0 39.6 33.4 L34.6 29.6 A15 15 0 0 1 9.4 29.6 Z" fill="url(#odd-neck-128)"/>
+  <path d="M40.6 14.4 Q50 15.6 55.6 21.4 L40.6 25.6 Z" fill="#3D4552"/>
+  <ellipse cx="41.4" cy="16.4" rx="3.2" ry="2.3" fill="#E9EDF2"/>
+  <circle cx="27" cy="16.4" r="5" fill="#F5F7FA"/>
+  <circle cx="28" cy="16.4" r="3.1" fill="#1A1E27"/>
+</svg>

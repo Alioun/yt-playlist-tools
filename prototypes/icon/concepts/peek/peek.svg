@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+  <defs>
+    <linearGradient id="peek-body" gradientUnits="userSpaceOnUse" x1="0" y1="2" x2="0" y2="94">
+      <stop offset="0" stop-color="#8568DD"/>
+      <stop offset="1" stop-color="#6A4DC6"/>
+    </linearGradient>
+    <linearGradient id="peek-neck" gradientUnits="userSpaceOnUse" x1="16" y1="40" x2="52" y2="50">
+      <stop offset="0" stop-color="#14A39A"/>
+      <stop offset="1" stop-color="#7B5CD6"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="92" height="92" rx="6" fill="url(#peek-body)"/>
+  <rect x="2" y="2" width="92" height="6" rx="3" fill="#14A39A"/>
+  <path d="M8 60 V28 A18 18 0 0 1 26 10 H42 A18 18 0 0 1 60 28 V60 Z" fill="#26223C"/>
+  <path d="M66 32 V21 A11 11 0 0 1 88 21 V32 Z" fill="#26223C"/>
+  <path d="M66 60 V49 A11 11 0 0 1 88 49 V60 Z" fill="#26223C"/>
+  <path d="M8 88 V77 A11 11 0 0 1 30 77 V88 Z" fill="#26223C"/>
+  <path d="M37 88 V77 A11 11 0 0 1 59 77 V88 Z" fill="#26223C"/>
+  <path d="M66 88 V77 A11 11 0 0 1 88 77 V88 Z" fill="#26223C"/>
+  <rect x="68" y="46" width="16" height="14" fill="#C9D0DB" transform="rotate(-6 76 53)"/>
+  <rect x="70" y="48" width="16" height="12" fill="#F5F7FA"/>
+  <rect x="73" y="51.5" width="9" height="2.4" rx="1.2" fill="#7B5CD6"/>
+  <rect x="11" y="74" width="17" height="14" fill="#F5F7FA"/>
+  <rect x="14" y="78" width="9" height="2.4" rx="1.2" fill="#7B5CD6"/>
+  <rect x="14" y="82.5" width="6" height="2.4" rx="1.2" fill="#7B5CD6"/>
+  <rect x="40" y="70" width="16" height="18" fill="#14A39A"/>
+  <rect x="43" y="74" width="9" height="2.4" rx="1.2" fill="#F5F7FA"/>
+  <rect x="43" y="78.5" width="6" height="2.4" rx="1.2" fill="#F5F7FA"/>
+  <path d="M10 60 C10 46 19 38.5 33 38.5 C47 38.5 57 46 57 60 Z" fill="#8B95A4"/>
+  <path d="M15.6 44.6 C25 37.6 42 37.6 52 44.6 L54.8 51 C43 45 24 45 13.2 51 Z" fill="url(#peek-neck)"/>
+  <circle cx="34" cy="30" r="12" fill="#8B95A4"/>
+  <path d="M44.2 26.4 Q52 27.4 57.6 32 L44.2 34.6 Z" fill="#3D4552"/>
+  <ellipse cx="44.6" cy="28" rx="2.8" ry="2" fill="#E9EDF2"/>
+  <circle cx="37.6" cy="26.6" r="3.8" fill="#F5F7FA"/>
+  <circle cx="38.4" cy="26.6" r="2.3" fill="#1A1E27"/>
+</svg>

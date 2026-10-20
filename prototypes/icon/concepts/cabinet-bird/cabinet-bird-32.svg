@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="cbird32-neck" gradientUnits="userSpaceOnUse" x1="3" y1="10" x2="15" y2="13">
+      <stop offset="0" stop-color="#14A39A"/>
+      <stop offset="1" stop-color="#7B5CD6"/>
+    </linearGradient>
+  </defs>
+  <path d="M26 12 L31 9.6 Q32 9.2 32 10.4 V15.6 L28 17.6 Z" fill="#6B7584"/>
+  <path d="M30 9.9 L31 9.6 Q32 9.2 32 10.4 V15.6 L30 16.6 Z" fill="#4A5360"/>
+  <path d="M8 14 H28 V26 C28 28.2 26.4 30 24 30 H14 C9.6 30 6 26.4 6 22 V16 C6 14.8 6.8 14 8 14 Z" fill="#7B5CD6"/>
+  <rect x="10" y="16" width="6" height="6" rx="0.5" fill="#26223C"/>
+  <rect x="18" y="16" width="8" height="6" rx="0.5" fill="#26223C"/>
+  <rect x="10" y="24" width="6" height="4" rx="0.5" fill="#26223C"/>
+  <rect x="18" y="24" width="8" height="4" rx="0.5" fill="#26223C"/>
+  <rect x="19" y="18" width="6" height="4" fill="#F5F7FA"/>
+  <rect x="20" y="19" width="3" height="1" fill="#7B5CD6"/>
+  <rect x="10" y="25" width="5" height="3" fill="#F5F7FA"/>
+  <rect x="13" y="30" width="2" height="2" rx="0.5" fill="#6B7584"/>
+  <rect x="21" y="30" width="2" height="2" rx="0.5" fill="#6B7584"/>
+  <circle cx="9.2" cy="7.6" r="6.2" fill="#8B95A4"/>
+  <path d="M3.6 10.6 A6.2 6.2 0 0 0 14.8 10.6 L13.2 9.4 A4.4 4.4 0 0 1 5.2 9.4 Z" fill="url(#cbird32-neck)"/>
+  <path d="M3.5 5.7 Q1.4 6.1 0.2 7.9 L3.5 9.2 Z" fill="#3D4552"/>
+  <ellipse cx="3.9" cy="6.3" rx="1.1" ry="0.8" fill="#E9EDF2"/>
+  <circle cx="8" cy="5.6" r="1.6" fill="#F5F7FA"/>
+  <circle cx="7.7" cy="5.6" r="1" fill="#1A1E27"/>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="perch32-neck" gradientUnits="userSpaceOnUse" x1="5" y1="10" x2="14" y2="14">
+      <stop offset="0" stop-color="#14A39A"/>
+      <stop offset="1" stop-color="#7B5CD6"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="20" width="28" height="12" rx="1" fill="#7B5CD6"/>
+  <rect x="4" y="24" width="6" height="6" fill="#26223C"/>
+  <rect x="12" y="24" width="8" height="6" fill="#26223C"/>
+  <rect x="22" y="24" width="6" height="6" fill="#26223C"/>
+  <rect x="6" y="25" width="4" height="5" fill="#C9D0DB"/>
+  <rect x="4" y="26" width="5" height="4" fill="#F5F7FA"/>
+  <rect x="13" y="26" width="6" height="4" fill="#F5F7FA"/>
+  <rect x="14" y="27" width="3" height="1" fill="#7B5CD6"/>
+  <rect x="0" y="18" width="32" height="4" rx="1" fill="#14A39A"/>
+  <path d="M22 12 L30 9.4 Q31.2 9 31.4 10.2 L31.8 12.8 Q32 13.8 30.9 14 L23.6 16 Z" fill="#6B7584"/>
+  <ellipse cx="16.5" cy="13.4" rx="8.6" ry="4.6" fill="#8B95A4"/>
+  <path d="M14 11 C18 9.4 22.6 10 25 12.6 C23 15 18.6 15.6 15.4 14.6 C13.6 13.6 13.4 12 14 11 Z" fill="#7C8696"/>
+  <path d="M4.6 7.4 C3.6 11.6 5.4 15.4 9.4 17.2 C11.4 18 14 18.2 16.6 18 L17.4 12 C15.4 10.6 13.4 8.6 12.6 5.4 Z" fill="#8B95A4"/>
+  <path d="M4.8 9.2 C6.4 11.4 9.8 11.8 12.8 10.4 L13.6 12.8 C10.6 14.8 6.6 14.2 4.6 11.8 Z" fill="url(#perch32-neck)"/>
+  <circle cx="8.6" cy="6.4" r="4.2" fill="#8B95A4"/>
+  <path d="M4.9 5.3 Q2.4 5.6 0.6 7.4 L4.9 8.2 Z" fill="#3D4552"/>
+  <ellipse cx="5.2" cy="5.7" rx="1.1" ry="0.8" fill="#E9EDF2"/>
+  <circle cx="7.8" cy="5.3" r="1.5" fill="#F5F7FA"/>
+  <circle cx="7.5" cy="5.3" r="0.95" fill="#1A1E27"/>
+</svg>

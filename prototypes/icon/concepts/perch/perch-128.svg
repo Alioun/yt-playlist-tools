@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -16 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="perch-neck-128" gradientUnits="userSpaceOnUse" x1="16" y1="28" x2="40" y2="42">
+      <stop offset="0" stop-color="#14A39A"/>
+      <stop offset="1" stop-color="#7B5CD6"/>
+    </linearGradient>
+    <linearGradient id="perch-body-128" gradientUnits="userSpaceOnUse" x1="0" y1="62" x2="0" y2="92">
+      <stop offset="0" stop-color="#8366DC"/>
+      <stop offset="1" stop-color="#6A4DC6"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="62" width="80" height="30" rx="3" fill="url(#perch-body-128)"/>
+  <rect x="13" y="68" width="20" height="18" rx="2" fill="#26223C"/>
+  <rect x="38" y="68" width="20" height="18" rx="2" fill="#26223C"/>
+  <rect x="63" y="68" width="20" height="18" rx="2" fill="#26223C"/>
+  <rect x="18" y="72" width="12" height="14" fill="#C9D0DB"/>
+  <rect x="15" y="75" width="13" height="11" fill="#F5F7FA"/>
+  <rect x="41" y="73" width="14" height="13" fill="#F5F7FA"/>
+  <rect x="44" y="77" width="8" height="2" rx="1" fill="#7B5CD6"/>
+  <rect x="44" y="81" width="5" height="2" rx="1" fill="#7B5CD6"/>
+  <rect x="4" y="56" width="88" height="8" rx="3" fill="#14A39A"/>
+  <rect x="8" y="64" width="80" height="2" fill="#1A1630" opacity=".2"/>
+  <rect x="41" y="51" width="3" height="6" rx="1" fill="#6B7584"/>
+  <rect x="53" y="51" width="3" height="6" rx="1" fill="#6B7584"/>
+  <path d="M68 36 L90 29 Q93 28 93.6 31 L94.6 38 Q95 41 92 41.6 L72 47 Z" fill="#6B7584"/>
+  <path d="M88 29.6 L90 29 Q93 28 93.6 31 L94.6 38 Q95 41 92 41.6 L90.4 42 Z" fill="#4A5360"/>
+  <ellipse cx="50" cy="41" rx="25" ry="13.5" fill="#8B95A4"/>
+  <path d="M42 33 C54 28 68 30 75 38 C69 45 56 47 46 44 C41 41 40 36 42 33 Z" fill="#7C8696"/>
+  <path d="M15 22 C12 34 17 45 28 51 C34 54 42 55 50 54.5 L52 36 C46 32 40 26 37.6 16 Z" fill="#8B95A4"/>
+  <path d="M15.5 27 C20 33.5 30 35 38.5 30.5 L41 38 C32 44.5 20 42.5 14.6 35 Z" fill="url(#perch-neck-128)"/>
+  <circle cx="26" cy="19" r="12" fill="#8B95A4"/>
+  <path d="M15.6 16.2 Q9 16.8 5 21.4 L15.6 23.4 Z" fill="#3D4552"/>
+  <ellipse cx="16.4" cy="17.2" rx="2.8" ry="1.9" fill="#E9EDF2"/>
+  <circle cx="23.5" cy="16" r="3.6" fill="#F5F7FA"/>
+  <circle cx="22.8" cy="16" r="2.2" fill="#1A1E27"/>
+</svg>
