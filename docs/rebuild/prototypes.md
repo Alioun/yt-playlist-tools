@@ -4,6 +4,16 @@
 
 Throwaway Svelte apps, one per `prototype/*` branch, that settled the 2.0 UI. They're layout references only: where a screenshot and the spec differ, the spec wins ([chapter 05, §5.13](../../.scratch/rebuild/spec/05-ui.md#513-prototypes-and-screenshots)). Click a thumbnail for the full image.
 
+To click through one locally, check its branch out beside the repo and start it:
+
+```sh
+git worktree add ../yt-prototypes/where-things-live prototype/where-things-live
+cd ../yt-prototypes/where-things-live/prototypes/where-things-live
+bun install && bun run dev   # then open the printed localhost URL
+```
+
+Swap in `popup-and-settings`, `in-page-controls` or `youtube-music-controls` for the others.
+
 ## Where things live
 
 Low-fi map of where everything lives: placement and flow only, since its look predates the three prototypes below. [Ticket 09](../../.scratch/rebuild/issues/09-where-things-live.md) · [prototype](https://github.com/Alioun/yt-playlist-tools/tree/prototype/where-things-live/prototypes/where-things-live) · [all 33 screenshots](https://github.com/Alioun/yt-playlist-tools/tree/prototype/where-things-live/prototypes/where-things-live/screenshots) · run with `bun install && bun run dev`
