@@ -1,6 +1,6 @@
 # 2. YouTube capabilities
 
-This chapter is the complete behaviour of 2.0 on youtube.com: auto-add and its channel filters, the shared add flow and its feedback, the playlist picker, playlist shortcuts with the picker and undo keys, thumbnail quick-save, the thumbnail Add to queue button, the watch-page button and the right-click card menu. It also holds two features the user approved on 2026-10-20: keys from any tab, which serve both sites, and Save from the browser's menu.
+This chapter is the complete behaviour of 2.0 on youtube.com: auto-add and its channel filters, the shared add flow and its feedback, the playlist picker, playlist shortcuts with the picker and undo keys, thumbnail quick-save, the thumbnail Add to queue button, the watch-page button and the right-click card menu. It also holds three features the user approved on 2026-10-20: keys from any tab, which serve both sites, Save from the browser's menu, and Gather tabs, a port of GatherTube.
 
 It covers behaviour only.
 - Look, layout, placement measurements and visual states are in [05-ui.md](05-ui.md).
@@ -29,8 +29,9 @@ It covers behaviour only.
   | `YT-BRK` | What the user sees when YouTube changes something |
   | `YT-ANY` | Keys from any tab (both sites) |
   | `YT-BM` | Save from the browser's menu |
+  | `YT-GT` | Gather tabs (R120) |
 
-- **(R-n)** at the end of a requirement means resolution R-n in [resolutions.md](resolutions.md) changed or added it while the spec was assembled. All three rounds are applied (R1–R40, R41–R67, then R68–R77), and so are R83, settled after the spec, and the user's decisions of 2026-10-20, R84–R99.
+- **(R-n)** at the end of a requirement means resolution R-n in [resolutions.md](resolutions.md) changed or added it while the spec was assembled. All three rounds are applied (R1–R40, R41–R67, then R68–R77), and so are R83, settled after the spec, the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, and the GatherTube fold, R120–R139.
 - **Ownership:** under the resolutions' ownership rule, this chapter owns YouTube feature behaviour and copy. Where it shares a topic with another chapter, the owner's text wins: [04](04-features-accounts-data.md) for accounts, settings, data and status, [05](05-ui.md) for layout and visuals, [06](06-architecture.md) for mechanisms, [07](07-quality.md) for budgets, tests and breakage-signal identifiers, and [08](08-release.md) for upgrade and consent copy.
 - **PROVISIONAL** marks a rule that a pending check or user decision may change. The mark names what's pending: e.g. "PROVISIONAL (ticket 25: L6)" is live check L6 in [ticket 25](../issues/25-live-checks.md), whose L-checks are defined in [ticket 10](../issues/10-youtube-access.md). Where the tickets say what happens either way, so does this chapter.
 - **Placeholders in copy:**
@@ -64,6 +65,7 @@ It covers behaviour only.
 | **Right-click for the video menu** | Right-clicking a video card opens YouTube's own ⋮ menu for it | No |
 | **Save from the browser's menu** | A Save to ▸ entry in the browser's own right-click menu, on video links and on the watch page (section 2.15; R91) | Yes |
 | **Keys from any tab** | A few keys, set in the browser's own shortcut settings, that act on the current video or the playing song while YouTube or YouTube Music is in another tab. It serves both sites (section 2.14; R88). | Yes |
+| **Gather tabs** | Gathers the YouTube videos open in a window into YouTube's player, YouTube's queue or the gather playlist, can close their tabs, and can do it by itself. A port of GatherTube (section 2.16; R120). | Only into the gather playlist |
 
 **YT-GEN-02: everything starts off.** On a fresh install every feature is off, and nothing on YouTube changes until the user picks a feature at first run, in Settings or in the popup. Features are never switched from inside YouTube's pages.
 - **1.4.5 upgraders** get auto-add on if any of their auto-add playlists carried over, and Playlist shortcuts on if both their key and its playlist carried over. Either takes effect once they agree on the upgrade note with its row still ticked. Everything new starts off ([08](08-release.md) REL-MIG-22, REL-MIG-23, REL-CON-07; R60).
@@ -76,6 +78,7 @@ It covers behaviour only.
 - While another YouTube feature is on, the shared site core is there, and the off feature's share of it stays inert (FT-17, FT-18).
 - With every YouTube feature off, nothing is injected. The one exception is the inert on-demand probe: after consent, when the popup or Settings needs data from a tab, it goes into that one tab and draws nothing (FT-16).
 - Keys from any tab and Save from the browser's menu register nothing. When one is used, the page half, core and kit go into that one tab, and draw only the answer's toast (YT-ANY-07, YT-BM-08; FT-59; R88, R91).
+- Gather tabs registers nothing of its own. Only while one of its automatic options that watches new tabs is on does it need the page half and core on watch and live pages, which draw nothing ([04](04-features-accounts-data.md) FT-63; R133).
 - Switching a feature off removes everything it added to open pages.
 
 **YT-GEN-05: each tab acts as its own account.**
@@ -164,7 +167,7 @@ It's read from the player's own video ID, and on Shorts from YouTube's navigatio
 
 ## 2.3 Auto-add
 
-**Auto-add** adds the current video to each **auto-add playlist** once its **watch progress** reaches that playlist's **required percentage**. It's the only add that happens without an explicit user action.
+**Auto-add** adds the current video to each **auto-add playlist** once its **watch progress** reaches that playlist's **required percentage**. It's one of two add paths that happen without an explicit user action; the other is automatic gathering (section 2.16.5; R128).
 
 Its options are:
 - the auto-add playlists, per account; each one sets what it takes (Videos, Shorts or Both), may set its own required percentage, and may have a channel filter (section 2.4);
@@ -532,7 +535,8 @@ Every playlist add goes through one flow, whatever triggers it:
 - a playlist shortcut;
 - thumbnail quick-save, including the watch-page menu's quick-save row;
 - the playlist picker;
-- YouTube Music's Save to playlist (see the YouTube Music chapter).
+- YouTube Music's Save to playlist (see the YouTube Music chapter);
+- Gather tabs, into the gather playlist, as one batch (section 2.16.4; R126).
 
 The thumbnail Add to queue button isn't an add, and shares only the feedback rules (section 2.10).
 
@@ -606,6 +610,7 @@ The thumbnail Add to queue button isn't an add, and shares only the feedback rul
 | Quick-save on thumbnails | On | — |
 | Queue button on thumbnails | On, because its toast carries Undo. This supersedes ticket 12's "off". | — |
 | Watch-page button | On. It covers its menu's Save rows (R27, R42). | — |
+| Gather tabs | On. It covers automatic gathers and results that arrive after the popup closed; the popup row's own result always shows (YT-GT-31; R134). | — |
 
 The card menu raises no toasts of its own, apart from YT-BRK notices, which Show feedback never hides, so it has no Show feedback switch (04 FT-23).
 
@@ -1411,6 +1416,244 @@ It never shows on music.youtube.com, where Quick actions does this job, or outsi
 
 ---
 
+## 2.16 Gather tabs
+
+The user approved this on 2026-10-20 ([ticket 31](../issues/31-gathertube.md); R120): a port of every capability of [GatherTube](https://github.com/karimelgazar/gathertube) by Karim Elgazar (MIT), which is no longer maintained, with exactly two additions: gathering into a playlist the user picks, and gathering by itself. Nothing of GatherTube's is copied. Its full inventory and where each item went are [09 §4](09-parity.md#4-gathertube); the research is [`docs/research/gathertube.md`](../../../docs/research/gathertube.md).
+
+### 2.16.1 The feature and what it gathers
+
+**YT-GT-01: the feature.** **Gather tabs** (`gather`) is a YouTube feature, off until the user picks it. Its footprint tag is "Doesn't change the page", and its Show feedback is **on** by default. It has a row in the popup's YouTube tab, a card in Settings › YouTube and a row at first run. Its options, shared by every account except the gather playlist:
+
+| Option | Choices | Default |
+|---|---|---|
+| Gather into | YouTube's player, YouTube's queue, A playlist | YouTube's player |
+| The gather playlist (per account, YT-GT-16) | Any playlist the account can add to | None |
+| Order | Newest tabs first, Oldest tabs first, English videos first, Non-English videos first, Tabs from left to right, Tabs from right to left, Shuffled | Newest tabs first |
+| Close gathered tabs | On, off | Off |
+| Automatically (YT-GT-22) | Three choices, each on or off, with a time and a count | All off; a day; 10 tabs |
+| Show feedback | On, off | On |
+
+(R120, R137)
+
+**YT-GT-02: what a gather does.** One action, Gather, collects the video tabs open in one window, puts their videos in the chosen order with each video once, and sends them to the destination: YouTube's player, YouTube's queue, or the gather playlist. With Close gathered tabs on, the tabs close once their videos are safely there. A gather is started from the popup (YT-GT-34), or by automatic gathering (section 2.16.5). (R120)
+
+**YT-GT-03: video tabs.** A **video tab** is a tab on:
+- a youtube.com watch page (`/watch?v=ID`, with or without `list=` or `t=`, which are dropped) or live page (`/live/ID`);
+- a music.youtube.com watch page, while the YouTube Music section is on and has site access ([04](04-features-accounts-data.md) FT-06, FT-44).
+
+Only the tab's address counts. (R121)
+
+**YT-GT-04: what isn't gathered.**
+- Shorts, embeds, channels, playlists, feeds, search and every other YouTube page.
+- A tab whose address isn't a video's, whatever its title says. GatherTube guessed IDs from titles, and gathered, and could close, Reddit threads, news articles and channel pages; 2.0 doesn't.
+- m.youtube.com tabs, which 2.0 doesn't cover and Chrome can't see.
+- A `youtu.be` tab that hasn't reached youtube.com yet. A loaded one is already on a watch page.
+- Tabs parked by a suspender extension under its own address. Reading those would need the `tabs` permission, whose "Read your browsing history" warning every user would see. The browser's own sleeping tabs (Chrome's Memory Saver, Firefox's unloaded tabs) keep their address and are gathered. (R121)
+
+**YT-GT-05: gathered tabs are only read.** A gather reads each tab's address, title, place and when it was last switched to, and nothing else. It never messages, injects into, activates, reloads or wakes a tab it gathers. (R121)
+
+**YT-GT-06: one window.** A gather reads only the window it was started from: the popup's own window, or, for automatic gathering, the window it's looking at. Any tab it opens opens in that window, and only that window's tabs close. Gathering from every window isn't offered, as GatherTube removed it. (R121)
+
+**YT-GT-07: each video once.** A video open in several tabs is gathered once, at its first place after ordering. All its tabs close together. (R121)
+
+### 2.16.2 Orders
+
+**YT-GT-08: the orders.** GatherTube's six, plus Shuffled (the user's choice, so GatherTube's shuffle survives):
+
+| Order | Puts first |
+|---|---|
+| Newest tabs first (default) | The tab switched to most recently; a tab never switched to counts from when it was opened |
+| Oldest tabs first | The tab switched to longest ago |
+| English videos first | Videos whose titles are in English (YT-GT-09) |
+| Non-English videos first | Videos whose titles are in other languages (YT-GT-09) |
+| Tabs from left to right | The leftmost tab |
+| Tabs from right to left | The rightmost tab |
+| Shuffled | A new random order each gather |
+
+(R122)
+
+**YT-GT-09: language orders.** English first and non-English first ask the browser's own language detection about each tab's title, without YouTube's " - YouTube" or " - YouTube Music" ending and the "(3) " notification count. Videos fall into three groups: English, no answer, then other languages. Non-English first reverses the groups. Within a group, tabs keep their left-to-right order. GatherTube's "mostly Latin letters" test, which counted Spanish, German and French titles as English, is gone. (R122)
+
+**YT-GT-10: Shuffled.** Each gather shuffles anew, so gathering the same tabs twice gives two orders. YouTube's player also keeps YouTube's own Shuffle button. (R122)
+
+### 2.16.3 Destinations
+
+**YT-GT-11: three destinations.** **YouTube's player**, the default, as GatherTube's "YouTube Native"; **YouTube's queue**, in place of GatherTube's embedded player page; and **A playlist**, the gather playlist. The embedded player page doesn't come back in any form: extension pages get YouTube's Error 153, and embedding YouTube's player would put all of 2.0 under YouTube's API policies, which forbid the requests it's built on ([ADR-0001](../../../docs/adr/0001-youtube-access-through-the-users-session.md)). (R123)
+
+**YT-GT-12: YouTube's player.** Up to 50 videos open as YouTube's own temporary list ("Untitled List"), in a new tab at the end of the window, which becomes the active tab. YouTube's watch page plays the list through, with its own Shuffle, Loop, next and previous. It needs no sign-in, and nothing of ours runs in that tab. (R123)
+
+**YT-GT-13: more than 50 for YouTube's player.** YouTube keeps only the first 50 videos of such a list and silently drops the rest; GatherTube then closed the dropped videos' tabs too. A gather of more than 50 for YouTube's player goes to YouTube's queue instead, and its result says so (YT-GT-32). (R123)
+
+**YT-GT-14: YouTube's queue.**
+- The first video opens in a new tab at the end of the window, which becomes the active tab. Once it has loaded, the rest are added to YouTube's queue with one command, in gather order, the way YouTube's own Add to queue adds a video. If the tab hasn't loaded within 10 s, nothing is added and nothing closes.
+- YouTube's queue panel then holds the list, with its own reorder, remove, clear and play now. It doesn't survive a reload, as YouTube's queue never does.
+- It needs no sign-in.
+- **Up to 200 videos a gather.** Beyond that, the first 200 in gather order go, the rest stay open, and the result says how many. PROVISIONAL (ticket 25: G3; 100 were tested signed out). (R123)
+
+**YT-GT-15: a playlist.** The videos go into the account's gather playlist, through the add flow (section 2.16.4). Nothing opens. (R123, R125)
+
+**YT-GT-16: the gather playlist.** Each account has at most one, in its account setup ([04](04-features-accounts-data.md) ACC-06).
+- It's chosen with the usual chooser, Watch later and New playlist included, in the popup and Settings.
+- A gather into a playlist, or switching on an automatic option, with no gather playlist for the account in view opens the chooser first, with "Choose a gather playlist for {Account} first." The gather starts once one is picked.
+- It can be marked *Missing* or *Full*, with **Remove**, like any chosen playlist (YT-ADD-36).
+- In a private window it can't be changed, because it's part of the account setup (YT-GEN-10). The chooser is disabled there, with "The gather playlist can't be changed in a private window." (R125)
+
+**YT-GT-17: closing gathered tabs.** With **Close gathered tabs** on, a gather closes its tabs once their videos are confirmed in the destination, never before:
+- **YouTube's player:** once the new tab's address shows YouTube's list, within 10 s. Otherwise nothing closes, and the result says so;
+- **YouTube's queue:** once the queue panel holds every video sent. Otherwise nothing closes;
+- **a playlist:** each video's tabs close once it's *added* or *already in*. A failed video's tabs stay open.
+
+All its tabs close at once. As in GatherTube, the tab the user is on closes too if it's a video tab. Automatic gathering always closes what it saved, whatever this option says (YT-GT-22). (R124)
+
+### 2.16.4 Gathering into a playlist
+
+**YT-GT-18: one add flow, as a batch.** A gather into a playlist is the add flow (section 2.5), run once for all its videos, from one serving tab of the account ([06](06-architecture.md) ARC-ACC-73):
+1. **Signed in.** Otherwise: "Sign in to YouTube to gather into a playlist." with **Sign in**, and nothing closes.
+2. **The gather playlist** of that account (YT-GT-16).
+3. **Membership read and account guard,** for each video in turn (YT-ADD-06, YT-ADD-10). *Already in* is settled here.
+4. **The adds,** in gather order, in batches, up to 50 videos per request. PROVISIONAL (ticket 25: G1, G2).
+5. **One report** (YT-GT-19).
+
+It's never filtered and never skipped: channel filters and session skips belong to auto-add. A video is never added twice (YT-ADD-05). New videos go at the end of the playlist, in gather order; a playlist YouTube sorts by date or popularity shows YouTube's order. (R126)
+
+**YT-GT-19: one report.** Each video ends *added*, *already in* or *failed*, and the gather reports them together, saves first: "Saved 9 videos to Later. 2 were already in it. Couldn't save 1: YouTube doesn't allow saving it." Long gathers show their progress ("Checking 12 of 40…"). The popup may close meanwhile; the gather still finishes, and its result shows as YT-GT-31 says. (R126, R134)
+
+**YT-GT-20: failures.** A failure affects only its own videos, whose tabs stay open.
+- **YouTube refuses a video** (made for kids, private, removed): that video fails.
+- **No answer, or offline:** the videos not yet confirmed fail. They're never sent again by themselves (YT-ADD-35).
+- **Rate-limited (HTTP 429):** the account pauses for 60 s, and the rest fail (YT-ADD-37).
+- **Missing or Full playlist:** every video fails, and the playlist is marked (YT-ADD-36).
+- **Account changed in another tab:** nothing is written, and that tab refuses until it reloads (YT-ADD-10). A gather from the popup tries the next serving tab.
+- **Try again** reruns a gather's failed videos from the membership read, so nothing is doubled. It's offered in the popup row.
+- **Two adds of one video at once,** such as auto-add and a gather, end with one add; the later reads *already in* (YT-ADD-40). (R126)
+
+**YT-GT-21: Undo.** A gather into a playlist can be undone:
+- Undo removes exactly the entries that gather added (YT-ADD-31), after one membership read for the account guard, and reopens the tabs it closed, at their old places in their window, in the background. If that window has closed, they open in a new window. Undoing only the add would leave the videos neither in the playlist nor open.
+- Tabs Undo reopened are left out of automatic gathering until the user switches to them.
+- It's offered until the browser closes, for the last 5 gathers: the popup row and the Settings card offer it for the newest gather, and a gather's own toast for its gather. The undo key runs it on that toast (YT-KEY-25).
+- If Undo fails anywhere, it reads "Couldn't undo." and reopens nothing.
+- A gather into YouTube's player or queue has no Undo, as in GatherTube: the videos are safe in the list, and YouTube's panel removes them. (R127)
+
+### 2.16.5 Automatic gathering
+
+**YT-GT-22: three choices, each its own.** Gather tabs can also gather by itself. The user picks any of three triggers, each switched on by itself, all **off** by default:
+1. **Unvisited for a while** (YT-GT-23);
+2. **Opened in the background** (YT-GT-24);
+3. **A window reaching N video tabs** (YT-GT-25).
+
+Every one of them:
+- saves into the gather playlist only, whatever "Gather into" says, through the add flow (section 2.16.4);
+- always closes the tabs it saved, whatever Close gathered tabs says, because filing a tab without closing it isn't gathering;
+- never opens a tab, never touches a tab it doesn't gather, and never runs in a private window.
+
+Automatic gathering is the second way videos are added without an explicit action, after auto-add. Closing a window isn't a trigger: by then the browser no longer says which tabs were in it. (R128)
+
+**YT-GT-23: unvisited for a while.** Video tabs the user hasn't switched to for at least the chosen time: 1 hour, **1 day** (the default) or 1 week. A tab never switched to counts from when it was opened.
+- No timer checks for them. They're looked for when {Product} is woken anyway: when one of its YouTube features loads in a page, when the popup or Settings opens, or when the browser starts. At most once a minute, across every normal window.
+- So a tab can be gathered late, by hours if {Product} isn't woken. The option says so (YT-GT-32). (R129)
+
+**YT-GT-24: opened in the background.** A video tab that loads without being shown, as a middle-clicked video does, is gathered a second after it loads, unless the user has switched to it by then.
+- Only a tab's first load counts: a reload, or going back or forward, doesn't.
+- Tabs the browser restores at start aren't tabs the user opened. Tabs that load in the first minute after the browser starts are never gathered this way. PROVISIONAL (ticket 25: G6).
+- So a middle-click files that video into the gather playlist and closes its tab. The option says so. (R130)
+
+**YT-GT-25: a window reaching N video tabs.** When a video tab loads and its window then holds **N** or more video tabs that automatic gathering may take (YT-GT-26), it gathers all of them. The tab the user is on stays.
+- **N** is 5, 10, 15, 20, 30 or 50; **10** by default. Ten is well above the few videos someone opens to watch next, so ordinary browsing doesn't trip it.
+- It's checked only when a video tab loads in that window. A window already over N when the option is switched on is gathered when its next video tab loads. (R131)
+
+**YT-GT-26: never gathered automatically.**
+- The active tab of any window.
+- Pinned tabs.
+- Tabs playing sound.
+- Any tab in a private window.
+- Tabs a gather's Undo reopened, until the user switches to them.
+- A video that failed this session for a lasting reason, such as YouTube refusing it. Its tabs stay open.
+
+(R132)
+
+**YT-GT-27: when it runs.**
+- **One gather per burst.** Video tabs that arrive together in a window are gathered once, a second after the last of them, and at most 10 s after the first.
+- **At most once a minute per window.** A burst that arrives sooner waits for the next time {Product} is woken after that minute.
+- **At most 50 videos a gather.** More wait for the next one.
+- When more than one trigger is on, one gather in a window takes what each of them picks. (R132)
+
+**YT-GT-28: where it saves from.** Automatic gathering saves from a signed-in YouTube tab that isn't being gathered: the focused window's active tab first, then the gathering window's YouTube tabs, then other normal windows', most recently used first. That tab's account's gather playlist receives the videos.
+- An account with no gather playlist is passed over.
+- With no such tab, nothing is gathered and nothing closes, and the popup row says "Waiting for a signed-in YouTube tab to save from." The next check tries again. (R132)
+
+**YT-GT-29: when it fails.**
+- A failed video's tabs stay open (YT-GT-20). A lasting failure leaves that video out for the rest of the session (YT-GT-26); a passing one, such as no answer or a 429, is tried again at the next gather.
+- A gather playlist marked *Missing* or *Full* stops automatic gathering for its account until the mark clears or the user chooses another playlist. The toolbar's "!" already says a chosen playlist needs attention ([04](04-features-accounts-data.md) FT-57).
+- Its failure toasts are limited as auto-add's are (YT-ADD-25): a Missing or Full gather playlist once per browser session, YouTube refusing a video once per session, and nothing more during a 429 pause. (R132, R134)
+
+**YT-GT-30: private windows.** A gather the user starts in a private window gathers that window's tabs, where the user allows the extension there, and saves as any explicit add does there (YT-GEN-10): its Undo is kept in memory only, and it isn't listed in Recent adds. Automatic gathering never runs in a private window and never counts its tabs. (R132, R135)
+
+### 2.16.6 Feedback, keys and copy
+
+**YT-GT-31: where a result shows.**
+- **A gather started in the popup** answers in its row, never as a toast: progress, the result with **Undo**, and failures with their fix. That's the control's own state, so Show feedback never hides it (YT-ADD-12).
+- **When the popup has closed first** (YouTube's player and queue open a tab, which closes it; a long gather into a playlist can outlast it), **and for every automatic gather,** the result shows:
+  - for a gather into a playlist, as the add flow's toast, with **Undo**, in the tab it saved from. That tab is picked visible first (YT-GT-28), so the toast usually shows at once; otherwise it waits until the tab is visible (YT-ADD-20). An automatic gather's toast is one the user didn't ask for: it carries the extension's mark and waits while fullscreen (YT-ADD-17, YT-ADD-21);
+  - as a ✓ or ✕ on the focused tab's toolbar icon for 3 s, with the result as its tooltip, when the gathering window is focused. It's the mark keys from any tab use (YT-ANY-06);
+  - in the popup row and the Settings card, as "Last gather", until the next gather or the browser closes;
+  - for a gather into a playlist, as one entry in Recent adds ([04](04-features-accounts-data.md) DATA-52).
+- **Show feedback** hides only confirmations: the toast and the ✓. Failures, their toast and the ✕ always show.
+- Gather tabs sets no "!" of its own. (R134)
+
+**YT-GT-32: results.**
+
+| Situation | Popup row | Toast, when there is one | Action |
+|---|---|---|---|
+| Into YouTube's player | Gathered {n} videos into YouTube's player. | — | — |
+| More than 50 for YouTube's player | Gathered {n} videos into YouTube's queue: YouTube's player takes 50. | — | — |
+| Into YouTube's queue | Gathered {n} videos into YouTube's queue. | — | — |
+| Over YouTube's queue's 200 | Gathered 200 videos into YouTube's queue. {m} tabs stay open: it takes 200 at a time. | — | — |
+| Into the gather playlist | Saved {n} videos to {Playlist}. {m} were already in it. | Gathered {n} videos into {Playlist} | Undo |
+| Into the gather playlist, tabs closed | Saved {n} videos to {Playlist} and closed their tabs. | Gathered {n} videos into {Playlist} and closed their tabs | Undo |
+| Automatic | Gathered {n} videos into {Playlist} by itself, {2 h ago}. | Automatically gathered {n} videos into {Playlist} and closed their tabs | Undo |
+| In progress | Checking {i} of {n}… / Saving {n} videos… | — | — |
+| No video tabs in the window | No YouTube videos are open in this window. | — | — |
+| No gather playlist yet | Choose a gather playlist for {Account} first. | — | The chooser opens |
+| Automatic, waiting | Waiting for a signed-in YouTube tab to save from. | — | — |
+| Undone | Removed {n} videos from {Playlist} and reopened their tabs. | (the toast closes) | — |
+| "Last gather" line | Last gather: {n} videos into {destination}, {5 min ago} | — | Undo, while it's offered |
+
+Counts read "1 video", "2 videos"; `{Playlist}` follows YT-ADD-18. Into the gather playlist, "{m} were already in it." shows only when some were. (R137)
+
+**YT-GT-33: failures.** These always show.
+
+| Situation | Popup row, or toast | Action |
+|---|---|---|
+| Some videos failed | Saved {n} videos to {Playlist}. Couldn't save {m}: {reason}. Their tabs stay open. | Try again (popup row) |
+| YouTube refuses a video | …Couldn't save 1: YouTube doesn't allow saving it. | — |
+| Rate-limited | Couldn't save {m}: YouTube is limiting requests, so try again in a minute. Their tabs stay open. | — |
+| Missing gather playlist | Couldn't gather into {Playlist}: it doesn't exist anymore. No tabs were closed. | Choose (popup); Settings (toast) |
+| Full gather playlist | Couldn't gather into {Playlist}: it's full. No tabs were closed. | Choose (popup); Settings (toast) |
+| Signed out | Sign in to YouTube to gather into a playlist. | Sign in |
+| No YouTube tab to save from (from the popup) | Open YouTube to gather into a playlist. Nothing was closed. | Open YouTube |
+| YouTube's player showed no list in 10 s | Couldn't confirm YouTube made the list, so no tabs were closed. | — |
+| YouTube's queue didn't take every video | Couldn't confirm all {n} videos reached YouTube's queue, so no tabs were closed. | — |
+| The queue tab didn't load in 10 s | Couldn't build YouTube's queue: its tab didn't load in time. No tabs were closed. | — |
+| Undo failed | Couldn't undo. | — |
+| A destination isn't working (YT-GT-36) | Gathering into {YouTube's player \| YouTube's queue \| a playlist} isn't working right now because YouTube changed something. | — |
+
+**Settings** opens Settings at the gather playlist (`#feature-gather&playlist=<playlistId>`, YT-ADD-29). (R137)
+
+**YT-GT-34: keys.**
+- **In the popup,** Enter gathers while Gather tabs is on and nothing in the popup has focus, which is how it opens. Enter on a focused control keeps its own meaning. It's our own page, so it's no in-page shortcut ([ADR-0004](../../../docs/adr/0004-shortcuts-caught-in-page.md)).
+- **On YouTube,** none of ours. YouTube's own Shift+N and Shift+P step through YouTube's list. GatherTube's player-page keys lived on a page that doesn't come back.
+- No browser command gathers. (R123)
+
+**YT-GT-35: credit.** Gather tabs credits GatherTube where users look: "Based on GatherTube by Karim Elgazar" on its Settings card, linking to `https://github.com/karimelgazar/gathertube`, and a line in Settings › About ([05](05-ui.md) UI-SET-24, UI-SET-18). The name "GatherTube" appears only as credit, never as the feature's name or icon. The listings and release notes credit it too ([08](08-release.md) REL-STORE-38). (R138)
+
+**YT-GT-36: when YouTube changes something.** Gather tabs' status follows its destinations ([04](04-features-accounts-data.md) HEALTH-29):
+- **not working** while YouTube's player can't be reached: its tab keeps showing no list ([07](07-quality.md) Q-WATCH-24's `no-effect`);
+- **partly working** while YouTube's queue or the playlist route isn't working; YouTube's player still works.
+
+A gather into a destination that isn't working answers with YT-GT-33's line, and nothing closes. (R136)
+
+---
+
 ## Superseded earlier text
 
 Later amendments and main-session decisions take precedence. These were applied above, and are listed so nobody restores the older text:
@@ -1527,6 +1770,12 @@ The user's decisions of 2026-10-20 ([R84–R99](resolutions.md#the-users-decisio
 - R96 (YT-AA-43): never-authorised upgraders get 50 %.
 
 R85, R89, R90, R93 to R95, R97, R98 and R99 change nothing on youtube.com that this chapter states.
+
+GatherTube, folded in on 2026-10-20 ([R120–R139](resolutions.md#gathertube-r120r139)):
+- R120 to R137 (§2.16, YT-GT-01 to YT-GT-36; YT-GEN-01, YT-GEN-04, §2.3's opening, §2.5's list, YT-ADD-13): Gather tabs, with the gather playlist and automatic gathering;
+- R138 (YT-GT-35): the credit.
+
+R139 changes nothing this chapter states: budgets and tests are [07](07-quality.md)'s.
 
 ## Conflicts found
 
