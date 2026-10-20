@@ -1,0 +1,38 @@
+name: An idea
+description: Suggest something the extension could do, or do better.
+title: "[Idea] "
+labels: ["idea"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are welcome. Please search the [existing ideas](https://github.com/Alioun/yt-playlist-tools/issues?q=is%3Aissue%20label%3Aidea) first; if yours is there, a 👍 and your reason help.
+
+        Every feature is opt-in: it's off until you switch it on, and while it's off it changes nothing on YouTube. Ideas that fit that way of working are the easiest to take on.
+  - type: textarea
+    id: what
+    attributes:
+      label: What you'd like to do
+      description: Describe what you're trying to get done, rather than a particular button. For example, "file the songs I like into a playlist without opening YouTube Music's ⋮ menu".
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where you'd look for it
+      description: For example a button on thumbnails or song rows, a key, the toolbar popup, or Settings.
+  - type: input
+    id: feature
+    attributes:
+      label: Related feature, if any
+      placeholder: "e.g. Playlist shortcuts, Quick actions (YouTube Music)"
+  - type: input
+    id: version
+    attributes:
+      label: Version you use, if you know it
+      placeholder: "e.g. 1.4.5 or 2.0.0"
+  - type: input
+    id: browser
+    attributes:
+      label: Browser, if it matters
+      placeholder: "e.g. Firefox 141 or Chrome 142"

@@ -1,0 +1,67 @@
+name: A feature says it isn't working
+description: 2.0 shows "Not working" or "Partly working" for a feature. Usually YouTube or YouTube Music changed something.
+title: "[Not working] "
+labels: ["youtube-change"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        2.0 tells you when YouTube or YouTube Music changes something a feature relies on. Fixes ship as updates, so a clear report helps most.
+
+        **Before you start:** check [Known problems](https://github.com/Alioun/yt-playlist-tools/issues?q=is%3Aissue%20label%3Ayoutube-change). If your problem is listed there, a 👍 on it, and any detail the issue doesn't have yet, helps more than a new report.
+
+        On 1.4.5, which has no status, use the form "Something went wrong" instead.
+
+        Issues here are **public**, so leave out anything you want to keep private.
+  - type: input
+    id: feature
+    attributes:
+      label: Feature
+      description: The feature the extension names, e.g. in the popup's strip or Settings › Diagnostics.
+      placeholder: "e.g. Quick-save on thumbnails, Quick actions (YouTube Music)"
+    validations:
+      required: true
+  - type: input
+    id: status
+    attributes:
+      label: Its status
+      description: What the extension shows for it, word for word.
+      placeholder: "e.g. Not working, or Partly working: it can't show where a video is already saved"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Settings › About, or about:addons (Firefox) or chrome://extensions (Chrome).
+      placeholder: "e.g. 2.0.0 or 1.99.3 (beta)"
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and its version
+      placeholder: "e.g. Firefox 141 or Chrome 142"
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where you saw it
+      description: |
+        The kind of page (a watch page, Home, a Short, search, a YouTube Music album or the queue), whether you were signed in, and anything unusual about YouTube's look at the time, such as a new player or miniplayer. Leave out links you want to keep private.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics report
+      description: Open Settings › Diagnostics, click **Check now** if it's enabled, then **Copy**, and paste the report here. It names no video, playlist, channel or account, and it's the most useful thing you can add.
+      render: text
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: Known problems
+      options:
+        - label: I looked through Known problems and didn't find this one.
+          required: true

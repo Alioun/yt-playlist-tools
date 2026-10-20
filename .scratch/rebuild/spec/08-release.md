@@ -302,7 +302,7 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
 - **REL-CON-03** The note is decided when the page opens. After Agree it shows its outcome in place, and doesn't switch to first run (ticket 15).
 - **REL-CON-25** **A note nobody saw reopens once** (ticket 30's S2; R97). 1.4.5 had no `default_area`, so its button may sit unpinned in Firefox's Extensions panel, where the "!" isn't seen, and a background tab closed unread would leave auto-add paused with no sign.
   - The note page sets `upgradeNote.seen = true` the first time `document.visibilityState` is "visible" while it's open.
-  - At a later background start, if the note is still pending, `seen` is false and `reopened` is false, the background opens it again with `tabs.create({active: false})`, and sets `reopened = true`.
+  - At the next browser start (`runtime.onStartup`; a restart of the background alone doesn't count), if the note is still pending, `seen` is false and `reopened` is false, the background opens it again with `tabs.create({active: false})`, and sets `reopened = true`.
   - It never opens a third time, and a note that was seen never reopens. The badge and the popup's **Review** stay either way.
   - *Runner-up:* an active tab at the next browser start. It lost as more intrusive.
 - *Runner-ups:*
@@ -1197,11 +1197,11 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 ## 16. Support channel
 
 - **REL-STORE-35** GitHub issues is the one support channel, with three issue forms, and **no support e-mail** (the user, 2026-10-20; R89):
-  - **Something isn't working** (`problem.yml`): what happened, the steps, the version, the browser, the feature and its status, and a "Diagnostics report" field for the report copied from Settings;
+  - **Something went wrong** (`problem.yml`, labelled `problem`): what happened, the steps, the version, the browser, the feature and its status, and a "Diagnostics report" field for the report copied from Settings;
   - **A feature says it isn't working** (`not-working.yml`, labelled `youtube-change`): the feature, its status, the version, the browser and what the page looked like;
-  - **An idea** (`idea.yml`).
+  - **An idea** (`idea.yml`, labelled `idea`): what the user wants to do, where they'd look for it, and optionally the feature, version and browser.
 
-  The forms carry their own directions, and are worded for 1.4.5 and 1.5 users too, so they're added to the repo before 2.0 ships. `config.yml` turns blank issues off and links Known problems, the 1.4.5 setup guide (`docs/legacy/1.4.5-setup.md`) and the privacy page.
+  The forms carry their own directions, and are worded for 1.4.5 and 1.5 users too, so they're added to the repo before 2.0 ships. `config.yml` turns blank issues off and links Known problems and the 1.4.5 setup guide (`docs/legacy/1.4.5-setup.md`). The privacy page joins its links once the site is live, at the first beta (REL-STORE-12).
 - **REL-STORE-36** The links:
   - Diagnostics' and About's **Report a problem** opens the chooser ([HEALTH-27](04-features-accounts-data.md#55-diagnostics-check-now-and-the-report), [UI-SET-21](05-ui.md#sections)), which opens the matching form prefilled (REL-STORE-37);
   - **Known problems** opens the issues labelled `youtube-change`;
@@ -1209,7 +1209,7 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 - **REL-STORE-37** **The prefilled address** (R89): `https://github.com/Alioun/yt-playlist-tools/issues/new?template={form}&title={title}&version={version}&browser={browser}&feature={feature}&status={status}`, with every value URL-encoded.
   - GitHub fills an issue form's field from the query parameter named by the field's `id`, and documents this for text fields. So `version`, `browser`, `feature` and `status` are `input` fields in every form that takes them.
   - The values are the extension's version ("(beta)" on betas), the browser and its major version, the chosen feature's name and its status in this browser. Nothing else: never a video, playlist, channel or account, and never the diagnostics report.
-  - The title is "{Feature}: " for a problem, "{Feature} isn't working" for a not-working report, and empty for an idea.
+  - The title is "{Feature}: " for a problem, "{Feature} isn't working" for a not-working report, and empty for an idea. An idea's address leaves out `status`, which its form doesn't have.
   - GitHub drops a form's labels that don't exist in the repo, so `problem`, `youtube-change` and `idea` are created first (§19).
   - A signed-out visitor is asked to sign in to GitHub before the form shows.
 - People without a GitHub account can use the stores' review sections, which the developer reads weekly. The chooser, the stores' support fields and the privacy page say so.
