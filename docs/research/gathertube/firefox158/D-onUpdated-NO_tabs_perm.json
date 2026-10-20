@@ -1,0 +1,449 @@
+[
+ {
+  "t": 1792459079223,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "status": "loading"
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459079225,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "status": "complete"
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459079282,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "status": "loading"
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459079404,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "isArticle": false
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459079406,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "title": "youtube.com/robots.txt"
+  },
+  "tabUrl": "https://www.youtube.com/robots.txt"
+ },
+ {
+  "t": 1792459079412,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "status": "loading",
+   "url": "https://www.youtube.com/robots.txt"
+  },
+  "tabUrl": "https://www.youtube.com/robots.txt"
+ },
+ {
+  "t": 1792459079419,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "status": "complete"
+  },
+  "tabUrl": "https://www.youtube.com/robots.txt"
+ },
+ {
+  "t": 1792459079457,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "favIconUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAArUlEQVQ4T6"
+  },
+  "tabUrl": "https://www.youtube.com/robots.txt"
+ },
+ {
+  "t": 1792459079475,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "status": "loading"
+  },
+  "tabUrl": "https://www.youtube.com/robots.txt"
+ },
+ {
+  "t": 1792459079623,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "isArticle": false
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459079629,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "title": "youtube.com/watch?v=jNQXAC9IVRw"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+ },
+ {
+  "t": 1792459079635,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "status": "loading",
+   "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+ },
+ {
+  "t": 1792459079635,
+  "listener": "filtered",
+  "tabId": 5,
+  "changeInfo": {
+   "status": "loading",
+   "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+ },
+ {
+  "t": 1792459080118,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "title": "Me at the zoo - YouTube"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+ },
+ {
+  "t": 1792459080680,
+  "listener": "unfiltered",
+  "tabId": 6,
+  "changeInfo": {
+   "status": "loading"
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459080684,
+  "listener": "unfiltered",
+  "tabId": 6,
+  "changeInfo": {
+   "status": "complete"
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459080794,
+  "listener": "unfiltered",
+  "tabId": 6,
+  "changeInfo": {
+   "status": "loading"
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459080876,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "favIconUrl": null
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+ },
+ {
+  "t": 1792459080877,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "status": "complete"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+ },
+ {
+  "t": 1792459080877,
+  "listener": "filtered",
+  "tabId": 5,
+  "changeInfo": {
+   "status": "complete"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+ },
+ {
+  "t": 1792459080886,
+  "listener": "unfiltered",
+  "tabId": 6,
+  "changeInfo": {
+   "title": "youtube.com/watch?v=dQw4w9WgXcQ"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+ },
+ {
+  "t": 1792459080891,
+  "listener": "unfiltered",
+  "tabId": 6,
+  "changeInfo": {
+   "status": "loading",
+   "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+ },
+ {
+  "t": 1792459080891,
+  "listener": "filtered",
+  "tabId": 6,
+  "changeInfo": {
+   "status": "loading",
+   "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+ },
+ {
+  "t": 1792459081049,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "favIconUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJAAAACQCAYAAADnRuK4AAAJ0UlEQVR4Xu"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+ },
+ {
+  "t": 1792459081060,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "favIconUrl": "data:image/x-icon;base64,AAABAAIAAAAAAAEAIADhAQAAJgAAAAAAAAABACAA5QIAAAcCAACJUE5"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+ },
+ {
+  "t": 1792459081568,
+  "listener": "unfiltered",
+  "tabId": 6,
+  "changeInfo": {
+   "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+ },
+ {
+  "t": 1792459082013,
+  "listener": "unfiltered",
+  "tabId": 7,
+  "changeInfo": {
+   "status": "loading"
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459082016,
+  "listener": "unfiltered",
+  "tabId": 7,
+  "changeInfo": {
+   "status": "complete"
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459082090,
+  "listener": "unfiltered",
+  "tabId": 6,
+  "changeInfo": {
+   "favIconUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJAAAACQCAYAAADnRuK4AAAJ0UlEQVR4Xu"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+ },
+ {
+  "t": 1792459082115,
+  "listener": "unfiltered",
+  "tabId": 7,
+  "changeInfo": {
+   "status": "loading"
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459082118,
+  "listener": "unfiltered",
+  "tabId": 6,
+  "changeInfo": {
+   "favIconUrl": "data:image/x-icon;base64,AAABAAIAAAAAAAEAIADhAQAAJgAAAAAAAAABACAA5QIAAAcCAACJUE5"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+ },
+ {
+  "t": 1792459082216,
+  "listener": "unfiltered",
+  "tabId": 7,
+  "changeInfo": {
+   "title": "youtube.com/"
+  },
+  "tabUrl": "https://www.youtube.com/"
+ },
+ {
+  "t": 1792459082221,
+  "listener": "unfiltered",
+  "tabId": 7,
+  "changeInfo": {
+   "status": "loading",
+   "url": "https://www.youtube.com/"
+  },
+  "tabUrl": "https://www.youtube.com/"
+ },
+ {
+  "t": 1792459082226,
+  "listener": "unfiltered",
+  "tabId": 7,
+  "changeInfo": {
+   "title": "YouTube"
+  },
+  "tabUrl": "https://www.youtube.com/"
+ },
+ {
+  "t": 1792459082247,
+  "listener": "unfiltered",
+  "tabId": 6,
+  "changeInfo": {
+   "status": "complete"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+ },
+ {
+  "t": 1792459082248,
+  "listener": "filtered",
+  "tabId": 6,
+  "changeInfo": {
+   "status": "complete"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+ },
+ {
+  "t": 1792459083193,
+  "listener": "unfiltered",
+  "tabId": 8,
+  "changeInfo": {
+   "status": "loading"
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459083197,
+  "listener": "unfiltered",
+  "tabId": 7,
+  "changeInfo": {
+   "status": "complete"
+  },
+  "tabUrl": "https://www.youtube.com/"
+ },
+ {
+  "t": 1792459083198,
+  "listener": "unfiltered",
+  "tabId": 8,
+  "changeInfo": {
+   "status": "complete"
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459083200,
+  "listener": "unfiltered",
+  "tabId": 7,
+  "changeInfo": {
+   "favIconUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJAAAACQCAYAAADnRuK4AAAJ0UlEQVR4Xu"
+  },
+  "tabUrl": "https://www.youtube.com/"
+ },
+ {
+  "t": 1792459083216,
+  "listener": "unfiltered",
+  "tabId": 7,
+  "changeInfo": {
+   "favIconUrl": "data:image/x-icon;base64,AAABAAIAAAAAAAEAIADhAQAAJgAAAAAAAAABACAA5QIAAAcCAACJUE5"
+  },
+  "tabUrl": "https://www.youtube.com/"
+ },
+ {
+  "t": 1792459083239,
+  "listener": "unfiltered",
+  "tabId": 8,
+  "changeInfo": {
+   "status": "loading"
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459083408,
+  "listener": "unfiltered",
+  "tabId": 8,
+  "changeInfo": {
+   "isArticle": false
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459083415,
+  "listener": "unfiltered",
+  "tabId": 8,
+  "changeInfo": {
+   "status": "loading"
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459083504,
+  "listener": "unfiltered",
+  "tabId": 8,
+  "changeInfo": {
+   "status": "complete"
+  },
+  "tabUrl": "<absent>"
+ },
+ {
+  "t": 1792459087874,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "title": "YouTube"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+ },
+ {
+  "t": 1792459089242,
+  "listener": "unfiltered",
+  "tabId": 5,
+  "changeInfo": {
+   "title": "Me at the zoo - YouTube"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=jNQXAC9IVRw"
+ },
+ {
+  "t": 1792459089404,
+  "listener": "unfiltered",
+  "tabId": 6,
+  "changeInfo": {
+   "title": "YouTube"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+ },
+ {
+  "t": 1792459090783,
+  "listener": "unfiltered",
+  "tabId": 6,
+  "changeInfo": {
+   "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube"
+  },
+  "tabUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+ }
+]

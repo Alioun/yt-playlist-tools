@@ -1,0 +1,139 @@
+{
+ "live": [
+  {
+   "ch": "@LofiGirl",
+   "href": "https://www.youtube.com/@LofiGirl/live",
+   "videoId": "1-LpQekNa9g",
+   "isLive": true,
+   "isLiveContent": true,
+   "status": "OK"
+  },
+  {
+   "ch": "@SkyNews",
+   "href": "https://www.youtube.com/@SkyNews/live",
+   "videoId": "xDWQ3LkccY8",
+   "isLive": true,
+   "isLiveContent": true,
+   "status": "OK"
+  },
+  {
+   "ch": "@aljazeeraenglish",
+   "href": "https://www.youtube.com/@aljazeeraenglish/live",
+   "videoId": "gCNeDWCI0vo",
+   "isLive": true,
+   "isLiveContent": true,
+   "status": "OK"
+  },
+  {
+   "ch": "@NASA",
+   "href": "https://www.youtube.com/@NASA/live",
+   "videoId": "M3HKLzjvKPc",
+   "isLive": true,
+   "isLiveContent": true,
+   "status": "OK"
+  }
+ ],
+ "kidsMarkers": {
+  "XqZsoesa55w": {
+   "title": "Baby Shark Dance | #babyshark Most Viewed Video | Animal Songs | PINKFONG Songs for Children - YouTube",
+   "markers": [
+    "isFamilySafe=true"
+   ],
+   "lengthSeconds": "136"
+  },
+  "dQw4w9WgXcQ": {
+   "title": "Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube",
+   "markers": [
+    "isFamilySafe=true"
+   ],
+   "lengthSeconds": "213"
+  }
+ },
+ "kidsShorts": [
+  "c0PKVFgjxLI",
+  "LfFGEqq55ks",
+  "mVTO6OvJxI8",
+  "T3m_6o9P8Kk",
+  "qBGTnoZh1jQ"
+ ],
+ "kidsShortMarkers": {
+  "title": "👀 Can Baby Grinch Help Daddy Shark Turn Back to Normal? #happyhalloween #drseuss #pinkfong - YouTube",
+  "markers": [
+   "isFamilySafe=true"
+  ],
+  "lengthSeconds": "14"
+ },
+ "persistence": {
+  "decode": {
+   "hex": "0859547b9b7b745a3230313032303236",
+   "tailAscii": "20102026"
+  },
+  "watchWithV": {
+   "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw&list=TLGGCFlUe5t7dFoyMDEwMjAyNg",
+   "status": 200,
+   "href": "https://www.youtube.com/watch?v=jNQXAC9IVRw&list=TLGGCFlUe5t7dFoyMDEwMjAyNg",
+   "title": "Me at the zoo - YouTube",
+   "list": {
+    "id": "TLGGCFlUe5t7dFoyMDEwMjAyNg",
+    "total": 2,
+    "ids": [
+     "jNQXAC9IVRw",
+     "dQw4w9WgXcQ"
+    ],
+    "title": "Untitled List"
+   }
+  },
+  "watchWithOtherV": {
+   "url": "https://www.youtube.com/watch?v=9bZkp7q19f0&list=TLGGCFlUe5t7dFoyMDEwMjAyNg",
+   "status": 200,
+   "href": "https://www.youtube.com/watch?v=9bZkp7q19f0&list=TLGGCFlUe5t7dFoyMDEwMjAyNg",
+   "title": "PSY - GANGNAM STYLE(강남스타일) M/V - YouTube",
+   "list": {
+    "id": "TLGGCFlUe5t7dFoyMDEwMjAyNg",
+    "total": 2,
+    "ids": [
+     "jNQXAC9IVRw",
+     "dQw4w9WgXcQ"
+    ],
+    "title": "Untitled List"
+   }
+  },
+  "watchListOnly": {
+   "url": "https://www.youtube.com/watch?list=TLGGCFlUe5t7dFoyMDEwMjAyNg",
+   "status": 200,
+   "href": "https://www.youtube.com/watch?v=&list=TLGGCFlUe5t7dFoyMDEwMjAyNg",
+   "title": "YouTube is not currently available on this device. - YouTube",
+   "list": {
+    "id": "TLGGCFlUe5t7dFoyMDEwMjAyNg",
+    "total": 2,
+    "ids": [
+     "jNQXAC9IVRw",
+     "dQw4w9WgXcQ"
+    ],
+    "title": "Untitled List"
+   }
+  },
+  "playlistPage": {
+   "url": "https://www.youtube.com/playlist?list=TLGGCFlUe5t7dFoyMDEwMjAyNg",
+   "status": 200,
+   "href": "https://www.youtube.com/playlist?list=TLGGCFlUe5t7dFoyMDEwMjAyNg",
+   "title": "Untitled List - YouTube",
+   "bodyStart": "DE Skip navigation Sign in Home Shorts Subscriptions You History Sign in to like videos, comment, and subscribe. Sign in Explore Music Movies & TV Hype Show more More from YouTube YouTube Premium YouT"
+  },
+  "sameHashDateChangedTo19Oct": {
+   "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw&list=TLGGCFlUe5t7dFoxOTEwMjAyNg",
+   "status": 200,
+   "href": "https://www.youtube.com/watch?v=jNQXAC9IVRw&list=TLGGCFlUe5t7dFoxOTEwMjAyNg",
+   "title": "Me at the zoo - YouTube",
+   "list": {
+    "id": "TLGGCFlUe5t7dFoxOTEwMjAyNg",
+    "total": 2,
+    "ids": [
+     "jNQXAC9IVRw",
+     "dQw4w9WgXcQ"
+    ],
+    "title": "Untitled List"
+   }
+  }
+ }
+}

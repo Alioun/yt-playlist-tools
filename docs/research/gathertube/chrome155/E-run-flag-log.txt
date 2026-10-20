@@ -1,0 +1,13 @@
+{"flag":true,"tabInfoBg":{"active":false,"status":"complete","discarded":false,"frozen":false,"audible":false,"title":"Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube"},"directProbeBg":{"vis":"hidden","hidden":true,"focus":false,"video":{"paused":false,"t":0,"rs":0},"title":"Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube"},"tabInfoAfterActivate":{"active":true,"status":"complete","audible":false},"directProbeAfterActivate":{"vis":"visible","hidden":false,"focus":true,"video":{"paused":false,"t":14.8,"rs":4},"title":"Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) - YouTube"}}
+log:https://www.youtube.com/watch?v=dQw4w9WgXcQ:document_idle:1792459161010 {"runAt":"document_idle","readyState":"interactive","vis0":"hidden","hidden0":true,"visEvents":[{"dt":24724,"vis":"visible"}]}
+    {"ad":false,"dt":1015,"focus":false,"playBtn":"Pause","video":{"muted":false,"paused":false,"rs":0,"t":0},"vis":"hidden"}
+    {"ad":false,"dt":5007,"focus":false,"playBtn":"Pause","video":{"muted":false,"paused":false,"rs":0,"t":0},"vis":"hidden"}
+    {"ad":false,"dt":10963,"focus":false,"playBtn":"Pause","video":{"muted":false,"paused":false,"rs":0,"t":0},"vis":"hidden"}
+    {"ad":false,"dt":14963,"focus":false,"playBtn":"Pause","video":{"muted":false,"paused":false,"rs":0,"t":0},"vis":"hidden"}
+    {"ad":false,"dt":18963,"focus":false,"playBtn":"Pause","video":{"muted":false,"paused":false,"rs":0,"t":0},"vis":"hidden"}
+    {"ad":false,"dt":22963,"focus":false,"playBtn":"Pause","video":{"muted":false,"paused":false,"rs":0,"t":0},"vis":"hidden"}
+    {"ad":false,"dt":26963,"focus":true,"playBtn":"Pause","video":{"muted":false,"paused":false,"rs":4,"t":2.1},"vis":"visible"}
+    {"ad":false,"dt":30963,"focus":true,"playBtn":"Pause","video":{"muted":false,"paused":false,"rs":4,"t":6.1},"vis":"visible"}
+    {"ad":false,"dt":34963,"focus":true,"playBtn":"Pause","video":{"muted":false,"paused":false,"rs":4,"t":10.1},"vis":"visible"}
+    {"ad":false,"dt":38963,"focus":true,"playBtn":"Pause","video":{"muted":false,"paused":false,"rs":4,"t":14.1},"vis":"visible"}
+log:https://www.youtube.com/watch?v=dQw4w9WgXcQ:document_start:1792459161010 {"runAt":"document_start","readyState":"loading","vis0":"hidden","hidden0":true,"visEvents":[]}

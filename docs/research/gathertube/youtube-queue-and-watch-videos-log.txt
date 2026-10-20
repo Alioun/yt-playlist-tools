@@ -1,0 +1,7 @@
+browser Chrome/155.0.8059.84 2026-10-20T01:09:04.323Z
+ids 100
+A watch_videos url https://www.youtube.com/watch?v=8SbUC-UaAxE&list=TLGGzsn0jdI_K9AyMDEwMjAyNg
+A panel {"playlistId":"TLGGzsn0jdI_K9AyMDEwMjAyNg","title":"Untitled List","count":20,"inOrder":true,"isInfinite":false,"keys":["menuRenderer","playlistLoopButtonRenderer","toggleButtonRenderer","metadataBadgeRenderer"],"visibleButtons":["Collapse","Loop playlist","Shuffle playlist","I like this","I dislike this","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu"]}
+B queue url https://www.youtube.com/watch?v=8SbUC-UaAxE
+B queue panel {"playlistId":"TLPQMjAxMDIwMjbATmsvrAyZDw","title":"Queue","count":20,"inOrder":true,"isInfinite":false,"keys":["menuRenderer","buttonRenderer"],"visibleButtons":["Clear queue","Collapse","Clear queue","I like this","I dislike this","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu","Action menu"]}
+C reopen TLPQ by URL in a new tab https://www.youtube.com/watch?v=8SbUC-UaAxE&list=TLPQMjAxMDIwMjbATmsvrAyZDw {"none":true,"title":"Guns N' Roses - November Rain - YouTube"}

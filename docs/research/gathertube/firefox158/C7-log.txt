@@ -1,0 +1,5 @@
+browser firefox/158.0
+embed/dQw4w9WgXcQ?playlist=jNQXAC9IVRw,aqz-KE-bpKQ {"videoId":"jNQXAC9IVRw","playlist":["jNQXAC9IVRw","aqz-KE-bpKQ"],"index":0,"err":null}
+embed/jNQXAC9IVRw?playlist=jNQXAC9IVRw,dQw4w9WgXcQ,aqz-KE-bpKQ {"videoId":"jNQXAC9IVRw","playlist":["jNQXAC9IVRw","dQw4w9WgXcQ","aqz-KE-bpKQ"],"index":0,"err":null}
+embed/jNQXAC9IVRw?playlist=dQw4w9WgXcQ,aqz-KE-bpKQ {"videoId":"dQw4w9WgXcQ","playlist":["dQw4w9WgXcQ","aqz-KE-bpKQ"],"index":0,"err":null}
+embed/aqz-KE-bpKQ?playlist=dQw4w9WgXcQ {"videoId":"dQw4w9WgXcQ","playlist":["dQw4w9WgXcQ"],"index":0,"err":null}
