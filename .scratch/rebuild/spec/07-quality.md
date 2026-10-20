@@ -230,6 +230,11 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
 | `core` | the site core, for feature tests | a scripted `FeatureContext` |
 
 - **Q-TEST-15.** WXT's fake browser is used only where it's faithful. Checked in the spikes, it implements `storage` local, session and sync (no quotas; `getBytesInUse` throws), `runtime` (`sendMessage` reaches `onMessage` in the same context), `tabs` (`query` matches `url` only by exact string, no `lastAccessed`, and after `reset()` no window is focused), `windows`, `action` with per-tab badge text, `alarms`, `notifications` and part of `webNavigation`. `scripting`, `permissions`, `commands`, `contextMenus`, `identity` and `i18n` throw `MockNotImplementedError`. So `storage.sync`, `tabs`, `scripting` and `permissions` always go through our own fakes.
+- **Q-TEST-45.** **Running-cost soaks** in layer 3, with fake timers (`jest.useFakeTimers()`), a counting transport and the counting storage fakes ([Q-PERF-60](#768-running-cost)):
+  1. **Idle hour:** the core, the kit and every www feature in happy-dom, on a watch page and on a grid, with the clock advanced 60 minutes and no events. No timer is left pending, and nothing is sent or stored.
+  2. **Playback hour:** a scripted player fires `timeupdate` every 250 ms for 60 minutes, with two pauses, a seek, 10 minutes hidden and two video changes. `tab.progress.save` messages and store writes stay within [Q-PERF-46](#768-running-cost) and [Q-PERF-53](#768-running-cost), and once every goal is reached the tracker's listener is gone ([YT-AA-44](02-youtube.md#2312-what-tracking-costs)).
+  3. **A day in the background:** 200 page loads, 4 hours of playback in two tabs, 50 user actions and 20 sync arrivals, replayed through the background over fakes. Routine wakes make no `scripting` call, only [ARC-MOD-37](06-architecture.md#643-background-srcbackground)'s listeners are registered, and writes stay within Q-PERF-53.
+  4. **Sync pacing:** 100 edits in 10 s make at most 3 `storage.sync.set()` calls, and an edit that changes nothing makes none ([SYNC-27](04-features-accounts-data.md#32-the-local-copy-comes-first)). (R102)
 
 ### 7.2.5 Layer 4: real browser
 
@@ -255,6 +260,11 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
   - with reduced motion emulated (`prefers-reduced-motion: reduce`), nothing of ours animates anything but `opacity`: sheets, popovers and toasts fade instead of sliding, and the deep-link ring and pulsing placeholders don't animate beyond opacity ([UI-RULE-42](05-ui.md#511-accessibility-as-decided)).
 
   The manual screen-reader pass is a release step, not a test (Q-CI-18). (R38)
+- **Q-TEST-46.** **Running-cost soak** in layer 4, with everything on ([Q-PERF-60](#768-running-cost)):
+  - **The scenario:** the fixture watch page with a real `<video>` (a looping WebM clip behind the fixture's player API) plays for 3 minutes visible and 3 minutes hidden behind another tab; then the grid page sits idle for 60 s.
+  - **Chromium:** a trace attributes main-thread time, timers, animation frames, observer callbacks and the longest task to our scripts ([Q-PERF-44](#768-running-cost)). CDP target events count worker starts, an extension page counts writes by area through `storage.onChanged`, and route interception counts requests.
+  - **Firefox:** the same counts come from the **counting build**: the store build compiled with `platform.mode === "test"`, which adds counters for starts, messages, writes, timers and observer callbacks behind that flag and nothing else. `check:zip` keeps it out of store zips. Time is recorded with the Firefox Profiler, for information (Q-TEST-19).
+  - Counts gate in both browsers; times as [Q-PERF-61](#768-running-cost). (R102)
 
 ### 7.2.6 Guard tests
 
@@ -274,6 +284,12 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
 - **Q-TEST-31.** **No conflicting utilities in UI components.** The extension pages use a `clsx`-only `cn`, with no `tailwind-merge`, so two utilities for one CSS property resolve by Tailwind's CSS order, not by the class string. A test reads every component in `src/ui/components/` and fails if a component's base classes and any of its variants' or sizes' classes set the same CSS property ([UI-RULE-12](05-ui.md#extension-pages)) (for example base `border-transparent` with an outline variant's `border-border`, which left light-mode outline buttons without a border).
 - **Q-TEST-32.** **Switches and checkboxes are controlled.** A layer-3 test renders the Switch and Checkbox with a listener that refuses the change, and with one that defers it, and asserts that the control keeps showing the stored state. The generated shadcn-svelte switch flipped itself before asking its parent, so a cancelled change kept showing "on". The places that refuse or defer are consent, the sync join question, a site-access prompt, "sync full", an "update needed" refusal (R13) and a private window ([UI-RULE-13](05-ui.md#extension-pages), [FT-12](04-features-accounts-data.md#12-switching-features)).
 - **Q-TEST-33.** **No identity comparisons of `$state`-held objects** in kit and feature code ([UI-RULE-33](05-ui.md#page-ui-youtube-and-youtube-music)): `$state` proxies objects, so `===` against the original silently fails (two bugs in the in-page prototype). Compare by ID or by element. A CI check enforces it on every push and PR. Whether it's a lint rule or a guard test, and its exact pattern, is the build's choice. (R40)
+- **Q-TEST-44.** **The `running-cost` guard** in `tests/guards/` runs with the others ([Q-PERF-58](#768-running-cost)). It fails, with the file and line, when:
+  - `setInterval` or the `alarms` API appears anywhere in `src/`;
+  - a `tabs.on*`, `windows.on*`, `webNavigation` or `menus.onShown` listener, or `menus.refresh`, appears anywhere in `src/`;
+  - `storage.onChanged`, or an area's own `onChanged`, appears in `src/site/` or `src/page/`;
+  - `addEventListener`, `MutationObserver`, `ResizeObserver`, `IntersectionObserver`, `setTimeout` or `requestAnimationFrame` appears in feature or kit code (`src/site/features/`, `src/site/kit/`) instead of going through the core's `Scope` ([UI-RULE-36](05-ui.md#page-ui-youtube-and-youtube-music));
+  - an observer is given `document`, `document.documentElement` or `document.body` with `subtree: true` ([Q-PERF-27](#764-what-keeps-pages-within-budget)). (R102)
 
 ---
 
@@ -592,7 +608,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
   - The budget is measured without the hover preload, because the picker key opens it with no hover. The preload only makes the common case feel faster. (R29)
   - The time a sleeping service worker or event page takes to wake isn't included and hasn't been measured.
 - **Q-PERF-30.** While the page is in use, at 1×:
-  - **Idle costs nothing:** five idle seconds with everything on show no script activity of ours.
+  - **Idle costs nothing:** five idle seconds with everything on show no script activity of ours. [Q-PERF-45](#768-running-cost) extends this to 60 s, hidden tabs and playback (R101).
   - Auto-add's `timeupdate` handler (about 4 calls a second while playing): ≤ 0.1 ms per call.
   - The key listener, for a key that matches nothing: ≤ 0.1 ms.
   - Pointer and focus tracking: ≤ 0.1 ms per event.
@@ -659,6 +675,100 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
   `popovers.js` is never linked to the kit's Svelte runtime (ADR-0008, [ARC-MOD-18](06-architecture.md#674-lazy-popovers)): that would make the eager kit export the Svelte names Bits UI needs on every page. The hover-intent preload stays in either case. (R29)
 - **Q-PERF-43.** **Real pages.** The fixture pages could flatter us, so the same measurements are also run on a real signed-in YouTube home page and watch page. **PROVISIONAL:** the rough build measured only signed out; the signed-in run is still owed.
 
+### 7.6.8 Running cost
+
+§7.6.5 budgets what a page pays when our code loads. This section budgets what 2.0 costs while it runs, with everything on: in YouTube's and YouTube Music's pages, in the background, in storage and on the network. The rules are [ADR-0012](../../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)'s. The evidence and measurements are in [`docs/research/running-costs.md`](../../../docs/research/running-costs.md) ([ticket 33](../issues/33-resource-mindful-defaults.md)). (R100, R101)
+
+- **Q-PERF-44. How running cost counts.**
+  - **Our time** is main-thread time in our scripts. In Chromium it's read from a trace: script, timer and observer callbacks attributed to `chrome-extension://<id>/` URLs, with the layout and style work they cause. Long Animation Frames can't be used, because it doesn't attribute isolated-world code. In Firefox it's the Firefox Profiler's `moz-extension` samples, for information.
+  - A **wake** is a start of the service worker (Chrome) or event page (Firefox). A **write** is one `set`, `remove` or `clear` call. A **message** is one `runtime.sendMessage` or `tabs.sendMessage`.
+  - **Counts** (wakes, writes, messages, timers, records, requests) are exact, and gated in both browsers. **Times** are the reference machine's at 1×, gated in Chromium as Q-PERF-41 says.
+  - Per-minute figures are medians over a scenario's runs.
+- **Q-PERF-45. Idle costs nothing.** With everything on, a page left alone for 60 s, visible or hidden, with nothing playing, shows no script time, timer, animation frame, idle callback, observer callback, message or storage call of ours, and the background doesn't wake. This extends Q-PERF-30's five idle seconds. (R101)
+- **Q-PERF-46. Playback.** On a watch page playing a video, with everything on and auto-add counting it, per minute of playback:
+
+| Case | Our main-thread time, 1× | Timers of ours fired | Messages to the background | Storage writes |
+|---|---|---|---|---|
+| Visible | ≤ 30 ms | 0 | ≤ 1 | ≤ 1 |
+| Hidden behind another tab | ≤ 30 ms | 0 | ≤ 1 | ≤ 1 |
+| Every goal reached, or auto-add off | ≤ 2 ms | 0 | 0 | 0 |
+
+  - Messages and writes average about one every 5 minutes while a video simply plays ([DATA-27](04-features-accounts-data.md#46-watch-progress)).
+  - *For scale:* YouTube itself spent about 1,070 ms of main-thread time a minute on a watch page while it played visible (258 ms of it script), and about 585 ms hidden. A stand-in tracker took 7–18 ms a minute, visible or hidden, so 30 ms leaves room for the page-world reads and the crossing it didn't have, and stays under 3 % of YouTube's own visible cost ([ticket 33](../issues/33-resource-mindful-defaults.md)). (R101)
+- **Q-PERF-47. No long task of ours.** No task that runs our code takes 50 ms or more at 1×, at load or later. One callback of ours in a page (an event handler, observer callback, message handler or timer) takes at most 5 ms at 1×. Longer work is cut into pieces of at most 5 ms that yield in between, with `scheduler.yield()` where it exists (Chrome 129+, Firefox 142+) and a 0 ms timeout elsewhere, and it stops while the tab is hidden. (R101)
+- **Q-PERF-48. Observers,** beyond Q-PERF-27:
+  - an observer is connected only on the page types its feature acts on, and disconnects while the tab is hidden;
+  - attribute observers name their attributes (`attributeFilter`);
+  - an observer watches a container's own children (`childList` without `subtree`) unless it must go deeper. On a channel grid, a scroll that loaded 30 more cards gave the grid container's own children 2–3 records, a whole-document child-list observer about 177, and about 470 with attributes. Our observers together receive at most 10 records a minute during steady playback and at most 20 per page of cards loaded *(starting values)*;
+  - a ResizeObserver watches only our own hosts or one anchor, and resize and scroll work runs at most once per animation frame ([UI-RULE-43](05-ui.md#page-ui-youtube-and-youtube-music)). (R101, R115)
+- **Q-PERF-49. Hidden tabs.** In a hidden tab only auto-add's counting runs, while a video it counts plays ([FT-60](04-features-accounts-data.md#13-off-costs-nothing)). No layout read, DOM write, observer, anchor check or toast timer of ours runs there. A hidden tab playing nothing shows no activity of ours at all. (R104)
+- **Q-PERF-50. Background wakes:**
+
+| Situation | Wakes allowed |
+|---|---|
+| Nothing happens on YouTube or YouTube Music: no page loads, no input, nothing playing with auto-add on | 0 |
+| Anything in a tab of another site | 0 |
+| A YouTube or YouTube Music page load | ≤ 1 (`tab.hello`) |
+| An in-app navigation | 0, or 1 to clear that tab's toolbar tick ([ARC-MOD-36](06-architecture.md#643-background-srcbackground)) |
+| A minute of playback with auto-add on | ≤ 1, and about 0.2 while a video simply plays |
+| A user action: a click, key, popup open, browser-menu click or command | What the action needs |
+
+  (R105, R110)
+- **Q-PERF-51. Work per wake.** A routine wake (`tab.hello`, a progress save, signals) makes at most 2 storage reads before it handles its event and at most 1 write, and no `scripting` call when the desired set hasn't changed ([ARC-MOD-35](06-architecture.md#643-background-srcbackground)). It handles its event within 10 ms of background time at 1×, not counting the browser's own start of the worker. A cold start measured about 25 ms from message to answer, against 1.4 ms warm. (R109)
+- **Q-PERF-52. Background timers and alarms:** no interval, no alarm, and one-shot follow-ups only, each at most 25 s ([ARC-MOD-37](06-architecture.md#643-background-srcbackground)). (R103)
+- **Q-PERF-53. Storage:**
+
+| Area | Allowed |
+|---|---|
+| `storage.local` | Idle: no write. Playback with auto-add on: at most 1 write a minute per playing tab, and none when nothing new was played ([DATA-27](04-features-accounts-data.md#46-watch-progress)). A progress save rewrites one shard ([DATA-52](04-features-accounts-data.md#46-watch-progress)): writing a 57 KB record blocked the caller for about 4 ms and took 12 ms to land, against 0.1 ms and 1 ms for a 147-byte key. Every other write follows a user action or an outcome, and only when the value changed ([DATA-53](04-features-accounts-data.md#45-caches-and-expiry)) |
+| `storage.session` | At most 1 write per page load (the tab registry), and at most 1 every 10 s for signals ([HEALTH-27](04-features-accounts-data.md#51-what-counts-as-breakage)) |
+| `storage.sync` | Only after a local change to a synced document: one `set()` per push, so at most 12 a minute ([SYNC-06, SYNC-27](04-features-accounts-data.md#32-the-local-copy-comes-first)) |
+
+  - No page script registers `storage.onChanged`, for any area: every listening context gets its own copy of every change, content scripts in every tab included. In a burst of 20 writes of a 57 KB record, each of three listening tabs spent 144–223 ms of main-thread time, against under 3 ms for a 147-byte key.
+  - The background listens only to `storage.sync.onChanged` (SYNC-27). Extension pages listen to `storage.local.onChanged` and skip progress, cache and registry keys. (R108)
+- **Q-PERF-54. Requests nobody asked for.** 2.0 sends a request to YouTube or YouTube Music only for a user action, with these exceptions, each bounded:
+  1. auto-add, when a goal is reached: one membership read for every due playlist, then the adds ([YT-ADD-06](02-youtube.md#251-order-and-membership)), at most once per playlist per playback;
+  2. the account label check: at most once per account per 24 h ([ACC-18](04-features-accounts-data.md#23-which-account-is-shown));
+  3. claiming the unclaimed 1.x setup: one playlist-list read per account, at most once per browser session ([ACC-46](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming));
+  4. automatic gathering into a playlist, if the user picks it ([ticket 31](../issues/31-gathertube.md)), within Q-PERF-57.
+
+  Nothing else fetches by itself: no prefetch, no cache refreshed on a timer, nothing read from YouTube to keep something current. Refreshing a stale list when a view opens follows the user's open (ARC-ACC-43). (R116)
+- **Q-PERF-55. Memory.**
+  - In a page, Q-PERF-30's 500 KB of isolated-world heap still holds after 30 minutes with 500 cards scrolled past. Per-item state is capped ([UI-RULE-43](05-ui.md#page-ui-youtube-and-youtube-music)), and the tracker holds only the current video.
+  - The background holds nothing between wakes that it can't rebuild from storage. `storage.session` stays under 1 MB: at most 200 tabs in the registry ([ARC-ACC-69](06-architecture.md#6211-serving-tab-routing)), 200 signals ([HEALTH-27](04-features-accounts-data.md#51-what-counts-as-breakage)) and 50 recent adds (R86).
+  - `storage.local` stays under 5 MB, half of Chrome's 10 MB, with progress capped by [DATA-26](04-features-accounts-data.md#46-watch-progress). (R101)
+- **Q-PERF-56. Tabs that need nothing.** Automatic work never wakes, reloads, activates, injects into or messages a discarded or frozen tab, and never touches a tab of another site. Injecting into several open tabs goes one tab at a time ([ARC-MAN-19](06-architecture.md#633-runtime-script-registration), [ARC-ACC-56](06-architecture.md#6211-serving-tab-routing)). (R104, R109)
+- **Q-PERF-57. Automatic triggers.** Any automatic option, ticket 31's automatic gathering first, meets these before it's accepted, whichever trigger the user picks. (R117)
+  1. **Events only.** No alarm, interval or timer that checks tabs. A condition over time, such as "left unvisited for an hour", is evaluated when something else already wakes the background (a YouTube tab's `tab.hello`, the popup opening, the browser starting), from `Tab.lastAccessed`.
+  2. **No browser-wide listener,** and no new permission with an install warning: no `tabs.on*` or `windows.on*` listener in either browser, and no `webNavigation`. New YouTube tabs are learnt from our own page code in them: the site core's `tab.hello` says whether the page started hidden. While the option is on, that's all the page code it loads.
+  3. **Reads tabs, never wakes them.** It reads only the tabs' own fields, through `tabs.query({ windowId, url })` with host access: URL, title, index, `lastAccessed` and `discarded`. That's all GatherTube's sort orders use. It never messages, injects into, activates, reloads or un-discards a gathered tab.
+  4. **One gather per burst.** Tabs that arrive together are gathered once, after a quiet second with no new one (a one-shot timer, ARC-MOD-37), and at most once a minute per window *(starting values)*.
+  5. **Bounded requests.** Into YouTube's queue: no request of ours, because it opens YouTube's own `watch_videos` page. Into a playlist: through the add flow, from one serving tab, never a request per gathered tab.
+  6. **Closing is one call:** one `tabs.remove` with every gathered ID.
+  7. **Off costs nothing:** while the option is off, it has no listener, permission, page code, storage key or timer of its own.
+  8. **Budget:** with 50 YouTube tabs in the window, a gather takes at most 20 ms of background time at 1×, not counting the request. It adds no wake beyond the `tab.hello` each new YouTube tab already sends, and none for tabs of other sites.
+
+  Closing a window fails rules 2 and 3: by then the browser reports only the window's ID, so every YouTube tab's URL would have to be tracked all along, and nothing can be sent while the browser quits.
+
+**Enforcement**
+
+- **Q-PERF-58. Guards:** the `running-cost` guard ([Q-TEST-44](#726-guard-tests)) runs in every `bun test` run. (R102)
+- **Q-PERF-59. `check:runtime`** (`scripts/check-runtime.ts`), the size check's sibling, reads both store builds and fails if:
+  - any built file calls `setInterval` or the `alarms` API;
+  - the built background's `addListener` calls aren't exactly [ARC-MOD-37](06-architecture.md#643-background-srcbackground)'s list;
+  - any built file, dependencies included, listens to `tabs.on*`, `windows.on*`, `webNavigation` or `menus.onShown`, or calls `menus.refresh`;
+  - a page file registers `storage.onChanged` for any area.
+
+  It's deterministic, so it's a hard gate, like `check:budget` (Q-CI-19). (R102)
+- **Q-PERF-60. Soaks:** layer 3's ([Q-TEST-45](#724-layer-3-fake-browser-and-dom)) on every push, and layer 4's ([Q-TEST-46](#725-layer-4-real-browser)) on every PR and release. (R102)
+- **Q-PERF-61. Gates:** counts are hard gates in both browsers, because they don't depend on the machine. Times are gated at 1.5× in Chromium CI and checked exactly on the reference machine before each release, as Q-PERF-41 says. (R102)
+- **Q-PERF-62. The release check** ([REL-CHK-27](08-release.md#18-release-checklist-releasingmd)). `RELEASING.md` scripts a 15-minute session, signed in, with the store build on the reference machine:
+  - one YouTube tab playing a long video that auto-add counts, hidden behind a second YouTube tab on a channel grid; one YouTube Music tab playing, hidden;
+  - after 5 minutes: the popup opened twice, two saves by key, one feature switched off and on again; then 10 minutes untouched.
+
+  Chrome: Task Manager's CPU time, Idle wake ups and Memory footprint for the extension and each tab, read at the start and the end, with the worker's DevTools closed (they keep it alive). Firefox: a Firefox Profiler capture of the session, filtered to `moz-extension`. The same session then runs with the extension disabled. The release PR gets the table. Budgets, as *starting values*: each YouTube or YouTube Music tab's CPU time at most 5 % above the run without the extension (Q-PERF-46's 30 ms a minute is under 3 % of YouTube's own), its memory footprint at most 5 MB above, and the extension's own row at most 2 s of CPU time over the session. A figure over budget blocks the tag. A figure over 1.5× the previous release's is explained in the PR before tagging. (R102)
+- **Q-PERF-63. Firefox's slow-extension warning.** The live-check build's page listens to `runtime.onPerformanceWarning` (Firefox 124+) during its run, and fails the run if it fires: Firefox fires it, and tells the user "… is slowing down Firefox", when a content script hangs. Store builds don't listen. (R102)
+
 ---
 
 ## 7.7 CI jobs and the hotfix lane
@@ -681,6 +791,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
   - **Firefox:** `host_permissions` `["*://*.youtube.com/*"]`; `browser_specific_settings.gecko.id` `{cc70cd21-2cc6-444b-bd89-496909346091}`; `strict_min_version` `"140.0"`; `data_collection_permissions` `{ "required": ["none"] }` (R83; [08 §13](08-release.md#13-if-an-amo-reviewer-objects) keeps a fallback ready if an AMO reviewer objects).
 
   The full manifest outline is [06 §6.3.1](06-architecture.md#631-manifest-per-browser) (ARC-MAN-01); `check:manifest` asserts it. [REL-CI-20](08-release.md#141-ciyml) states the same rules for the release.
+- **Q-CI-19.** The `build` job runs `check:runtime` ([Q-PERF-59](#768-running-cost)) on both store builds right after `check:budget`, and fails on any finding. `release.yml`'s `budget` gate runs it too, on the release's own artifacts (Q-CI-6). (R102)
 
 ### 7.7.2 `watch.yml`
 

@@ -392,6 +392,22 @@ Later ones are logged to the console only. YT-BRK-04 says when auto-add counts a
 - **Carried-over auto-add playlists** take Videos only and use the default percentage.
 - **1.4.5's toasts setting** becomes auto-add's Show feedback.
 
+### 2.3.12 What tracking costs
+
+Auto-add is the one feature that keeps working while a video plays, so it gets its own running-cost rules ([ADR-0012](../../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)). The numbers are [07 §7.6.8](07-quality.md#768-running-cost)'s.
+
+**YT-AA-44: it listens only while there's a goal left.** Auto-add follows a player only while all of these hold:
+- auto-add is on and not paused;
+- the page is signed in (YT-AA-02);
+- the video counts (§2.3.2, §2.3.5);
+- at least one auto-add playlist of the account takes it and hasn't reached its goal in this playback. A session-skipped playlist still counts, because its progress keeps counting (YT-AA-04).
+
+Otherwise it stops listening until the video, the setup or the pause changes. So once a video has reached every goal, the rest of its playback costs nothing. (R106)
+
+**YT-AA-45: hidden tabs.** In a hidden tab, auto-add only counts. Readings, goals and adds go on as in a visible tab (YT-AA-07). What it shows waits until the tab is visible: the watch-page button and the toast (YT-ADD-20). (R106)
+
+**YT-AA-46: a reading is cheap.** Each reading is arithmetic on the player's position. It makes no DOM query, layout read, storage call or message. A reading never turns into a write or a message by itself: progress goes to the background only at [DATA-27](04-features-accounts-data.md#46-watch-progress)'s checkpoints, and a goal reached goes to the add flow (YT-AA-18). The per-reading budget is [Q-PERF-30](07-quality.md#765-in-page-time)'s. (R105, R106)
+
 ---
 
 ## 2.4 Channel filters

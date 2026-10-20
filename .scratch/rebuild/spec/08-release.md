@@ -1240,6 +1240,7 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 - [ ] The signed-in live check is run in Chrome and Firefox from this commit's live-check build, the captures are imported, and `store/live-checks/{version}.json` is committed. Every release needs it, hotfixes for our own bugs included; it takes a few minutes (R72).
 - [ ] The timing test is run at 1× and 4× on the reference machine, and the figures are in the release PR (ticket 24). Chromium's must be within budget; Firefox's `performance.mark` figures are recorded for information only (R31).
 - [ ] The manual screen-reader pass of the popup and settings is done (REL-CHK-26; R38).
+- [ ] The running-cost check is done in Chrome and Firefox, and its table is in the release PR (REL-CHK-27; R102).
 - [ ] **Has the manifest changed?** Check the `--report-against` table in the `build` summary, and list each change.
   - A new install warning disables Chrome until it's accepted and holds Firefox updates, so prefer none.
   - Has data handling changed? Then bump the consent `v`, and update the privacy policy and the dashboard's privacy tab in the same release.
@@ -1283,6 +1284,7 @@ The IDs these items rest on:
 - **REL-CHK-23** After every release, the developer watches store reviews and issues for 48 h.
 - **REL-CHK-24** After every submission whose backup codes were used, the reviewer account's codes are refreshed.
 - **REL-CHK-26** Before each release is tagged, the developer does a manual screen-reader pass of the popup and settings. It's a release step, not a gate ([Q-CI-18](07-quality.md#773-release-gates-summary)); the automated axe-core checks run in the real-browser layer ([Q-TEST-20](07-quality.md#725-layer-4-real-browser)). (R38)
+- **REL-CHK-27** **The running-cost check** ([Q-PERF-62](07-quality.md#768-running-cost), [ADR-0012](../../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)). Before each release is tagged, hotfixes included, the developer runs `RELEASING.md`'s 15-minute signed-in session on the reference machine with the store build, in Chrome and in Firefox, and once more with the extension disabled. The release PR gets the table: the browsers' own figures for the extension (Chrome's Task Manager; the Firefox Profiler's `moz-extension` samples) and the session's counts. A figure over its budget blocks the tag. One more than 1.5× the previous release's is explained in the PR before tagging. (R102)
 
 ## 19. The user's one-time setup
 

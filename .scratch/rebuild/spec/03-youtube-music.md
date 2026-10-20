@@ -210,6 +210,7 @@ Exact placement and look are in [05-ui.md](05-ui.md) (UI-YM-09 to UI-YM-16, with
   - A busy button ignores further clicks, and a held key's auto-repeat is ignored.
 - **YM-Q-12** **Undo** removes the inserted entries that are still waiting. Any entry that has already started playing stays.
 - **YM-Q-13** While casting, inserts and their Undo are unavailable (§15).
+- **YM-Q-14** **The growth check doesn't poll** ([ADR-0012](../../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)). YM-Q-8's check reads the queue in the page, never with a request. It re-reads when the app reports a queue change, where that can be heard. Otherwise it re-reads at most 6 times, backing off (after about 0.25, 0.5, 1, 2, 3 and 3 s), and stops at the first growth or at 10 s. Moves (§7) confirm the same way. (R114)
 
 ## 7. Moving queued items
 
@@ -651,6 +652,7 @@ YouTube Music has been A/B testing a player UI without the classic player bar (t
 - **YM-BAR-6** **No expanding:** clicking our player-bar controls never expands the Wiz miniplayer.
 - **YM-BAR-7** **Song changes:** the player-bar Save acts on the song that's playing when it's clicked, and follows song changes.
 - **YM-BAR-8** **PROVISIONAL** (ticket 25): the Wiz anchor was seen only in signed-out sessions that had the action bar. It must be checked signed in.
+- **YM-BAR-9** **Following the song costs nothing while nothing is drawn.** The player-bar Save follows song changes (YM-BAR-7) from the app's own events, through the `nowPlaying` stream, and only while it's drawn. With "Save on the player bar" off, with no anchor (YM-BAR-3) or in a hidden tab, nothing watches the song. (R114)
 
 ## 17. Playing now in the popup
 
@@ -674,6 +676,7 @@ Its look is [UI-POP-17](05-ui.md#youtube-music-tab).
 - **YM-POP-11** **Which tab it reads:** the focused window's active YouTube Music tab, else the one playing audio, else the most recently used. This is ticket 10's order, kept for Playing now only ([ARC-ACC-68](06-architecture.md#6211-serving-tab-routing); read with the `nowPlaying` job, ARC-MSG-11). (R8, R33)
 - **YM-POP-12** **Nothing playing:** the row is hidden. (R8)
 - **YM-POP-13** **Signed out:** the row is one line, "Sign in to YouTube Music to save songs." (R8)
+- **YM-POP-14** **Read when the popup opens.** Playing now reads its tab when the popup opens, and after the row's own actions. Nothing reads a YouTube Music tab for it while the popup is closed, and nothing polls while it's open. (R114)
 
 ## 18. Playlist shortcuts on YouTube Music
 
