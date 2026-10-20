@@ -359,7 +359,7 @@ YouTube's queue is a temporary server playlist (`TLPQ…`), owned by the session
   - on HTTP 429, the add flow pauses that account for 60 s.
 - **ARC-ACC-44. Timeouts:** pings 2 s, jobs 10 s, the YouTube queue confirmation 2 s, and the YouTube Music queue growth check 10 s.
 - **ARC-ACC-45. The page world logs nothing.** No `console` call exists under `src/page/`.
-- **ARC-ACC-70. Streams cost nothing without a watcher.** The gateway's streams (`nav`, `player`, `nowPlaying`, `queue`) attach to the page's own events only while something watches them, and detach when the last watcher goes. They never use a timer. The `player` stream emits only for the counting player (`movie_player` or `shorts-player`), and only while auto-add's tracker watches it ([YT-AA-44](02-youtube.md#2312-what-tracking-costs)). (R106, R114)
+- **ARC-ACC-71. Streams cost nothing without a watcher.** The gateway's streams (`nav`, `player`, `nowPlaying`, `queue`) attach to the page's own events only while something watches them, and detach when the last watcher goes. They never use a timer. The `player` stream emits only for the counting player (`movie_player` or `shorts-player`), and only while auto-add's tracker watches it ([YT-AA-44](02-youtube.md#2312-what-tracking-costs)). (R106, R114)
 
 ### 6.2.10 The account check
 
@@ -434,7 +434,7 @@ flowchart TD
 
   **Playing now's saves run in that same tab, as that tab's account** ([YM-POP-2](03-youtube-music.md#17-playing-now-in-the-popup), [YM-POP-5](03-youtube-music.md#17-playing-now-in-the-popup)). `ui.playingNow` answers with the tab it read, and the row's Save, its ▾ picker's reads and adds, and their Undo name that tab. The background runs them there with `Tabs.runIn`, after checking that the tab's account key is still the one the row was read with. They never go through `Tabs.serve` or the account in view (ARC-ACC-52). If that tab has closed or its account has changed, the save is never sent to another tab: it fails, or answers with the account guard's message (ARC-ACC-47).
 
-- **ARC-ACC-69. The tab registry and pings stay small** ([ADR-0012](../../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)):
+- **ARC-ACC-70. The tab registry and pings stay small** ([ADR-0012](../../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)):
   - a site core sends `tab.hello` once per page load, never per in-app navigation;
   - the registry holds at most 200 tabs. A `tab.hello` replaces the tab's entry, and an entry goes when a send or ping finds its tab gone, or when it's the oldest beyond 200. No tab event is needed for this;
   - a job pings at most 3 candidates (ARC-ACC-55), then answers `NoTab`;
@@ -622,12 +622,12 @@ Page code is WXT **unlisted scripts** (`defineUnlistedScript`), registered by th
   - the new core announces itself with a `ppt:retire { build }` event on `document`, and every older core and gateway in the tab disposes itself;
   - an orphaned core also disposes itself the first time `browser.runtime.id` is gone.
 - **ARC-MAN-18.** Scripts are registered per browser, never per account. An account with no choices keeps its features idle.
-- **ARC-MAN-19. Injecting into open tabs is paced.** When a feature goes on (ARC-MAN-13), or after an update (ARC-MAN-17), the registrar injects into open matching tabs:
+- **ARC-MAN-22. Injecting into open tabs is paced.** When a feature goes on (ARC-MAN-13), or after an update (ARC-MAN-17), the registrar injects into open matching tabs:
   - one tab at a time, each after the previous one finished;
   - the focused window's active tab first, then audible tabs, then the rest by `lastAccessed`;
   - never into a discarded or frozen tab, which gets the registered scripts when it next loads;
   - never activating or reloading a tab. (R109)
-- **ARC-MAN-20. The browser menu and commands cost nothing until used** (R88, R91):
+- **ARC-MAN-23. The browser menu and commands cost nothing until used** (R88, R91):
   - The browser-menu entries are created when Save from the browser's menu goes on, and again in `runtime.onInstalled` after an update while it's on. Both browsers keep them across restarts and drop them on an update. They're removed when the feature goes off.
   - They're scoped with `documentUrlPatterns` (youtube.com) and `targetUrlPatterns` (video and Short links), so the browser decides where they show, with no wake.
   - The only menu listener is `contextMenus.onClicked`. `menus.onShown` and `menus.refresh()` are never used: in Firefox, an `onShown` listener wakes the background for every right-click anywhere.
@@ -879,22 +879,22 @@ interface Monitor {
 - **Router:** maps each message kind to one module call, validates it with the contract's guard, and computes `Origin` from `sender`.
 - **Boot:** registers every listener synchronously in the worker's first turn, as MV3 requires. Each handler awaits `store.ready()` before doing anything.
   - **ARC-MOD-34. The `runtime.onInstalled` listener** has one job: when the reason is "install", it opens first run in a tab ([FT-40](04-features-accounts-data.md#16-first-run), [DATA-47](04-features-accounts-data.md#410-schema-versions-and-migrations)). Other reasons do nothing, so no tab opens on an update; a 1.4.5 user with no 1.x key left is a fresh install whom the toolbar "!" and the popup's "Waiting for your OK" lead to first run (R76). Nothing else depends on the event: the reconcile (ARC-MAN-12) and recognising a 1.x upgrade (ARC-MOD-25) run on every start, because Firefox can skip it. (R64, R76)
-  - **ARC-MOD-35. A routine start is cheap.** Every wake of the service worker (Chrome) or event page (Firefox) is a start, so start-up work is sized for it ([ADR-0012](../../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)):
+  - **ARC-MOD-37. A routine start is cheap.** Every wake of the service worker (Chrome) or event page (Firefox) is a start, so start-up work is sized for it ([ADR-0012](../../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)):
     - the migration check reads the `schema` marker and the consent and upgrade-note records in one `storage.local.get`, and reads more only when those say a migration or a 1.x check is due;
     - the reconcile compares `getRegisteredContentScripts()` with the desired set and calls `register`, `update` or `unregister` only for a difference. A start with nothing changed registers nothing and injects into no tab. Registering again would re-send every script to every renderer process (ticket 33);
     - pruning watch progress isn't start-up work ([DATA-26](04-features-accounts-data.md#46-watch-progress));
     - so a routine start makes at most 2 storage reads, plus the per-site `permissions.contains`, before it handles the event that woke it. (R109)
-  - **ARC-MOD-36. The toolbar icon costs only on change** (R92):
+  - **ARC-MOD-38. The toolbar icon costs only on change** (R92):
     - Badge calls `browser.action` only when `badgeFor`'s answer differs from what it last applied, which it keeps beside the tab registry in `storage.session`, because a stopped worker forgets;
     - states shown on every tab (consent, site access, Missing or Full, and auto-add paused) use the browser's tab-less value, one call each, never a loop over tabs;
     - per-tab states (not working, the tick, a key's 3 s answer) are set on that tab only;
     - nothing listens to tab events to keep them right. The browser drops a tab's own values when the tab closes or loads a new page. A tick on a tab whose video changes in-app is cleared by one `tab.videoChanged` message, which the tab sends only while its view says it's ticked;
     - pausing auto-add clears the ticks the background set, so "paused" shows on every tab, as R92's order wants;
     - states are badge text and colour, not changing icon images, which cost an image decode or encode per call. (R112)
-  - **ARC-MOD-37. The background's listeners and timers** (R103, R110):
-    - its only listeners are `runtime.onMessage`, `runtime.onInstalled` (ARC-MOD-34, and the browser menu after an update, ARC-MAN-20), `permissions.onAdded` and `onRemoved`, `storage.sync.onChanged` ([SYNC-27](04-features-accounts-data.md#32-the-local-copy-comes-first)), `commands.onCommand` (R88) and `contextMenus.onClicked` (R91, present only while its optional permission is held), plus `runtime.onStartup` only if live check P2 calls for its fallback (§6.2.15);
+  - **ARC-MOD-39. The background's listeners and timers** (R103, R110):
+    - its only listeners are `runtime.onMessage`, `runtime.onInstalled` (ARC-MOD-34, and the browser menu after an update, ARC-MAN-23), `permissions.onAdded` and `onRemoved`, `storage.sync.onChanged` ([SYNC-27](04-features-accounts-data.md#32-the-local-copy-comes-first)), `commands.onCommand` (R88) and `contextMenus.onClicked` (R91, present only while its optional permission is held), plus `runtime.onStartup` only if live check P2 calls for its fallback (§6.2.15);
     - it never listens to an event that every tab or window fires: no `tabs.on*`, `windows.on*` or `webNavigation` listener, and no `menus.onShown`. Chrome can't filter these, so each would wake the background for every tab in the browser, including tabs it has no access to;
-    - it sets no interval and no alarm (FT-22, [FT-59](04-features-accounts-data.md#13-off-costs-nothing)). A timer is a one-shot follow-up of the event being handled (sync's 2 s and 5 s, a command's 3 s answer), at most 25 s long, and never set again by its own callback. Longer waits, such as the 60 s pause after a 429 and a new playlist's 30 s, are timestamps checked at the next event, because a stopped worker loses its timers.
+    - it sets no interval and no alarm (FT-22, [FT-61](04-features-accounts-data.md#13-off-costs-nothing)). A timer is a one-shot follow-up of the event being handled (sync's 2 s and 5 s, a command's 3 s answer), at most 25 s long, and never set again by its own callback. Longer waits, such as the 60 s pause after a 429 and a new playlist's 30 s, are timestamps checked at the next event, because a stopped worker loses its timers.
 
 ### 6.4.4 Popup, settings and the first-run page (`src/ui/`)
 
@@ -1246,11 +1246,11 @@ sequenceDiagram
 - **ARC-MSG-10. Logging:** only the isolated world and the background log, with the extension's name as prefix.
 - **ARC-MSG-13. A view goes only where it can change.** After a store change, the background pushes a new `TabView` only to the tabs that change can alter: a setup or filter edit to that account's tabs, a status to its own tab, and a shared setting or switch to every known tab. Writes to progress, caches and the tab registry never change a view, and neither does a signal that changes no status. Pushes to one tab are coalesced: at most one per 250 ms, carrying the latest view. (R110)
 - **ARC-MSG-14. Hot events never become messages.** A tab sends to the background only:
-  - `tab.hello`, once per page load (ARC-ACC-69);
+  - `tab.hello`, once per page load (ARC-ACC-70);
   - what a user action needs: `tab.add`, `tab.undo`, `tab.change`, `tab.need`, `tab.noticeShown`;
   - auto-add's goals reached (`tab.add`), and progress at [DATA-27](04-features-accounts-data.md#46-watch-progress)'s checkpoints (`tab.progress.load` once per video, `tab.progress.save`);
-  - `tab.signals`, at most every 5 s, only with a new signal, or a success for a job that has a signal in that tab ([HEALTH-27](04-features-accounts-data.md#51-what-counts-as-breakage));
-  - `tab.videoChanged`, only while its toolbar tick shows (ARC-MOD-36).
+  - `tab.signals`, at most every 5 s, only with a new signal, or a success for a job that has a signal in that tab ([HEALTH-28](04-features-accounts-data.md#51-what-counts-as-breakage));
+  - `tab.videoChanged`, only while its toolbar tick shows (ARC-MOD-38).
 
   A `timeupdate`, a pointer or focus move, a key that matches nothing, a page mutation or an in-app navigation never sends anything by itself. (R105, R110, R111, R112)
 
