@@ -2,6 +2,8 @@
 
 Research for [ticket 22](../../.scratch/rebuild/issues/22-name.md), round 2. Every check ran on 2026-10-20. Store searches are fuzzy, and a register search isn't legal clearance.
 
+> **Outcome (2026-10-20):** after round 5, the user chose **Perchling for YouTube™** ([ticket 22](../../.scratch/rebuild/issues/22-name.md), [ADR-0013](../adr/0013-named-perchling-for-youtube.md)). This note is kept as the record.
+
 ## Answer
 
 - **Screened:** 352 names in five styles. **18 finalists** passed every check. One more (Playlist Starling) is a near miss with one check unfinished. 196 names collide with something. 64 more passed but weren't shortlisted, and 73 are still waiting on one register (see [Limits](#limits)).

@@ -87,7 +87,7 @@ Also from [ticket 16](16-storage-and-sync.md):
 Resolved 2026-10-19. The user delegated the decisions, so each judgement call names its runner-up and why it lost. This answer folds in every "Also from" note above, plus the Answers of tickets [03](03-store-policy.md), [06](06-upgrade-path.md), [07](07-watched.md), [08](08-shortcuts.md), [09](09-where-things-live.md) (resolved while this was written), [10](10-youtube-access.md), [11](11-accounts.md), [12](12-adding.md), [16](16-storage-and-sync.md), [17](17-modules.md) (resolved while this was written: build targets, CI jobs, `check:*` scripts, the live-check build, re-injection after updates), [18](18-breakage.md), [22](22-name.md), [23](23-ask-amo.md)'s final draft and [24](24-performance-budget.md). Store, browser and GitHub facts were re-read from primary sources on 2026-10-19 ([section 20](#20-facts-this-rests-on)).
 
 **Three inputs are still open, and every part that depends on them is marked PROVISIONAL.** The plan works whichever way they land:
-- **[22](22-name.md), the name.** Copy below uses the recommendation, "Playlist Pigeon for YouTube™" (in-product "Playlist Pigeon", `short_name` "Pigeon"). If the user picks the runner-up, swap in "Playlist Courier" / "Courier"; nothing else changes.
+- **[22](22-name.md), the name.** Copy below uses the recommendation, "Playlist Pigeon for YouTube™" (in-product "Playlist Pigeon", `short_name` "Pigeon"). If the user picks the runner-up, swap in "Playlist Courier" / "Courier"; nothing else changes. *Settled 2026-10-20: Perchling for YouTube™, in-product and `short_name` "Perchling" ([ticket 22](22-name.md), R141). The final copy is in the spec's chapter 08.*
 - **[23](23-ask-amo.md), AMO's reply** on `data_collection_permissions`, sync, private windows and Bun. [Section 11.4](#114-provisional-what-each-amo-reply-changes) gives the change for each possible reply.
 - **[25](25-live-checks.md), the signed request.** The "Authentication information" disclosure and the cookie lines ship only if the signed request ships (ticket 10 §3). They're drafted in and marked.
 
@@ -1061,7 +1061,7 @@ This goes into `RELEASING.md` in the build; `release.yml`'s summary links to it.
 
 | What | Waits on | If it changes |
 |---|---|---|
-| The name in every string: the manifest, note, disclosure, listings, policy and screenshots | [22](22-name.md) | Swap in "Playlist Courier" / "Courier" |
+| The name in every string: the manifest, note, disclosure, listings, policy and screenshots | [22](22-name.md) | Swap in "Playlist Courier" / "Courier". *Settled 2026-10-20: Perchling (R141).* |
 | `data_collection_permissions`, the Firefox prompts in §5, and the sync-switch prompt | [23](23-ask-amo.md) | §11.4 |
 | Private-window settings writes | [23](23-ask-amo.md) Q3 | §11.4 |
 | The Bun install in the source build | [23](23-ask-amo.md) Q4 | §11.4: an npm lockfile for the install step only; the user is told |

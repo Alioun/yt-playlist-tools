@@ -2,6 +2,8 @@
 
 Research for [ticket 22](../../.scratch/rebuild/issues/22-name.md), round 5. Every check ran on 2026-10-20 with [round 2's](naming-round-2.md) strict rules. Where "Pigeon" appears, it also uses [round 4's](naming-round-4.md) weighed overlaps for PigeonPod, `playlist-pigeon` and Pigeon Music. Store searches are fuzzy, and a register search isn't legal clearance.
 
+> **Outcome (2026-10-20):** the user chose A2, **Perchling for YouTube™** ([ticket 22](../../.scratch/rebuild/issues/22-name.md), [ADR-0013](../adr/0013-named-perchling-for-youtube.md)). The EU check in [Limits](#limits) is still due, as a professional search before launch. This note is kept as the record.
+
 ## Answer
 
 - **The ask:** after round 4 you said "what about something with perch". The icon is now **Perch** ([ticket 34](../../.scratch/rebuild/issues/34-icon.md)): a pigeon perched on top of a shelf of pigeonholes with filed cards. You like the pigeon, and you disliked clunky puns.

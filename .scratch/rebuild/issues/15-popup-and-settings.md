@@ -37,7 +37,7 @@ Also from [ticket 11](11-accounts.md):
 - **Settings:** an Accounts list with Remove.
 - **States:** signed out, private-window read-only, the unclaimed 1.4.5 setup (Switch account / Discard) and the claim notice. The copy is in ticket 11's answer.
 
-Also from [ticket 22](22-name.md) (name PROVISIONAL: "Playlist Pigeon for YouTube™"):
+Also from [ticket 22](22-name.md) (name PROVISIONAL: "Playlist Pigeon for YouTube™"; *settled 2026-10-20 as Perchling for YouTube™, R141*):
 - Replace 1.5.0's YouTube play-button logo (`src/components/YouTubeIcon.tsx`) and its YouTube-red primary colour.
 - The extension's own brand is a grey pigeon with a teal-to-violet accent: no red and no play triangle.
 - Show the attribution line where the extension names YouTube.
@@ -471,7 +471,7 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
 
 ### PROVISIONAL
 
-- **The name and mark:** "Playlist Pigeon", the pigeon and the palette, until ticket 22 is confirmed. *The mark and palette are now settled as Perch ([ticket 34](34-icon.md), R140); only the name waits.*
+- **The name and mark:** "Playlist Pigeon", the pigeon and the palette, until ticket 22 is confirmed. *The mark and palette are now settled as Perch ([ticket 34](34-icon.md), R140); only the name waits.* *The name was settled the same day: Perchling ([ticket 22](22-name.md), R141).*
 - **The disclosure's cookie line** (ticket 25).
 - **Unticking a checked playlist removes the video** (tickets 12, 26). *Settled 2026-10-20: it does, with Undo (R84).*
 - **Ticket 24's settings budget:** proposed as the first frame only (now 38.8 + 8.5 KB), with each lazy part ≤ 45 KB.
@@ -508,7 +508,7 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
   - Raise the popup's budget to 44 KB, or keep 40 and require another cut?
   - The cut on the table: banner copy loaded only when a banner shows.
 - **Settings' first load:** is "60 KB" the first frame (as proposed) or everything the YouTube section shows without a click (106 KB here)?
-- **The name:** this prototype is the clearest view yet of "Playlist Pigeon" in use (90, 80), so it's a good moment to confirm ticket 22.
+- **The name:** this prototype is the clearest view yet of "Playlist Pigeon" in use (90, 80), so it's a good moment to confirm ticket 22. *Settled 2026-10-20: Perchling (R141).*
 
 ## Decisions on the open questions (main session, 2026-10-19)
 

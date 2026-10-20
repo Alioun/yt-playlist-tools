@@ -189,7 +189,7 @@ ul.notes li{margin-bottom:5px}
   <div class="heroes"><div class="hero on-light"><img src="${P['icon-128.png']}" width="128" height="128" alt=""></div><div class="hero on-dark"><img src="${P['icon-128.png']}" width="128" height="128" alt=""></div></div>
   <div>
     <h1>Perch</h1>
-    <p class="muted">The 2.0 icon: a pigeon sits on top of the pigeonholes, not in one. Hand-drawn SVG; the 16 and 32 px files are their own pixel-grid drawings. Every image on this page is the exported PNG that ships. The name is pending, so there's no wordmark yet.</p>
+    <p class="muted">The 2.0 icon: a pigeon sits on top of the pigeonholes, not in one. Hand-drawn SVG; the 16 and 32 px files are their own pixel-grid drawings. Every image on this page is the exported PNG that ships. The name is Perchling; the wordmark and lockups are in assets/brand/.</p>
   </div>
   <button class="toggle" id="theme">Dark page</button>
 </header>

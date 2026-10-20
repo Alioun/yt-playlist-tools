@@ -4,7 +4,7 @@ Type: prototype
 Status: resolved
 Labels: wayfinder:prototype
 Part of: [Rebuild (2.0)](../map.md)
-Related: [ticket 22](22-name.md) (the wordmark waits on the name)
+Related: [ticket 22](22-name.md) (the name, Perchling, settled; the wordmark is in `assets/brand/`)
 
 ## Question
 

@@ -1,8 +1,8 @@
 # 2.0 spec
 
-The destination of the [Rebuild (2.0) map](map.md): a ground-up rebuild of this extension that keeps every capability, adds YouTube Music quick actions, works through the user's own YouTube session, puts UI/UX first, and lets the user switch off any part of it. Every decision below was made in the map's tickets; this spec assembles them so `/to-tickets` and implementers can work from it without reading the tickets.
+The destination of the [Rebuild (2.0) map](map.md): a ground-up rebuild of this extension, renamed **Perchling for YouTube™**, that keeps every capability, adds YouTube Music quick actions, works through the user's own YouTube session, puts UI/UX first, and lets the user switch off any part of it. Every decision below was made in the map's tickets; this spec assembles them so `/to-tickets` and implementers can work from it without reading the tickets.
 
-Status: **assembled 2026-10-19; the user's decisions folded in on 2026-10-20** ([R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)), **with the running-cost budgets** ([R100–R117](spec/resolutions.md#running-costs-r100r117)) **and the GatherTube port** ([R120–R139](spec/resolutions.md#gathertube-r120r139)), **and the icon** ([R140](spec/resolutions.md#the-icon-perch-r140)). Items marked PROVISIONAL wait on the inputs listed in [Open items](#open-items). Each one names the ticket and check that settles it.
+Status: **assembled 2026-10-19; the user's decisions folded in on 2026-10-20** ([R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)), **with the running-cost budgets** ([R100–R117](spec/resolutions.md#running-costs-r100r117)) **and the GatherTube port** ([R120–R139](spec/resolutions.md#gathertube-r120r139)), **the icon** ([R140](spec/resolutions.md#the-icon-perch-r140)) **and the name** ([R141–R144](spec/resolutions.md#the-name-perchling-r141r144)). Items marked PROVISIONAL wait on the inputs listed in [Open items](#open-items). Each one names the ticket and check that settles it.
 
 ## How to read this spec
 
@@ -59,7 +59,7 @@ Status: **assembled 2026-10-19; the user's decisions folded in on 2026-10-20** (
 
 **AMO reviews answered:** "Could you update it for latest Firefox and YouTube?" and "Would be cool to have multiple 'Add to playlist' shortcut options. And maybe with some manual labels/titles?" (playlist shortcuts with labels; titles instead of IDs everywhere).
 
-**Targets:** desktop Chrome and Firefox, MV3; Chromium browsers ride along on the Chrome build. It ships as the next major version of the same extension: an update on the existing AMO listing (same gecko ID and slug) and a first Chrome Web Store listing.
+**Targets:** desktop Chrome and Firefox, MV3; Chromium browsers ride along on the Chrome build. It ships as the next major version of the same extension: an update on the existing AMO listing (same gecko ID and slug) and a first Chrome Web Store listing, both named Perchling for YouTube™ ([ADR-0013](../../docs/adr/0013-named-perchling-for-youtube.md)).
 
 **Out of scope:**
 - Firefox for Android, Safari and m.youtube.com.
@@ -108,6 +108,7 @@ These are the user's, and every chapter follows them.
 | [0010](../../docs/adr/0010-one-consent-gates-every-feature.md) | One consent of our own gates every feature, in every browser |
 | [0011](../../docs/adr/0011-betas-from-github-pages.md) | Betas are unlisted builds of the same add-on, served from this repo's GitHub Pages |
 | [0012](../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md) | Automatic work is event-driven, scoped to where it's needed, and paced; never on a clock, never in tabs that don't need it |
+| [0013](../../docs/adr/0013-named-perchling-for-youtube.md) | 2.0 is named Perchling for YouTube™ on both stores; AMO's slug, the gecko ID and the repo's name stay |
 
 ## Prototypes
 
@@ -137,21 +138,21 @@ From [ticket 17](issues/17-modules.md), for `/to-tickets`:
 
 ## Open items
 
-The chapters were checked mechanically on 2026-10-19: 1,009 links and 1,471 requirement IDs, with zero broken links, zero missing IDs, zero duplicate IDs and **no remaining contradictions between chapters**. [`spec/resolutions.md`](spec/resolutions.md) records every conflict settled during assembly (R1–R82). Its "Final gaps" section governs where a chapter still lists a detail as not pinned down. After the user's decisions were folded in (R84–R99), the check ran again on 2026-10-20: 1,149 internal links and 1,529 requirement IDs, again with none broken, missing or duplicated. After the GatherTube fold (R120–R139), it ran once more on 2026-10-20: 1,337 internal links and 1,696 requirement IDs, with none broken, missing or duplicated.
+The chapters were checked mechanically on 2026-10-19: 1,009 links and 1,471 requirement IDs, with zero broken links, zero missing IDs, zero duplicate IDs and **no remaining contradictions between chapters**. [`spec/resolutions.md`](spec/resolutions.md) records every conflict settled during assembly (R1–R82). Its "Final gaps" section governs where a chapter still lists a detail as not pinned down. After the user's decisions were folded in (R84–R99), the check ran again on 2026-10-20: 1,149 internal links and 1,529 requirement IDs, again with none broken, missing or duplicated. After the GatherTube fold (R120–R139), it ran once more on 2026-10-20: 1,337 internal links and 1,696 requirement IDs, with none broken, missing or duplicated. After the icon and the name (R140–R144), it ran again the same day: 1,366 internal links and 1,697 requirement IDs, again with none broken, missing or duplicated.
 
 What's still open, and what settles it:
 
 ### Decisions waiting on the user
 
-Each is tracked in [`for-the-user.md`](for-the-user.md). The user answered every other decision on 2026-10-20: they're settled in [R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99) and no longer listed here.
+Each is tracked in [`for-the-user.md`](for-the-user.md). The user answered every other decision on 2026-10-20: they're settled in [R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99), and the name, Perchling for YouTube™, in [R141–R144](spec/resolutions.md#the-name-perchling-r141r144). They're no longer listed here.
 
 | Item | Where | Until answered, the spec assumes |
 |---|---|---|
-| **The name:** another naming round is running, to list options that don't collide. The mark and palette are settled: the icon is Perch ([ticket 34](issues/34-icon.md), [R140](spec/resolutions.md#the-icon-perch-r140)) | [ticket 22](issues/22-name.md) | "Playlist Pigeon for YouTube™", used throughout as a placeholder; the swap is mechanical |
 | Approving the privacy policy (published under the user's name) | REL-STORE-17 | The drafted text, with GitHub issues as the only contact and no support e-mail (R89) |
 
 ### Actions only the user can take
 
+- **Have a professional trademark search run** for "Perchling", the EU above all, before launch. TMview and EUIPO couldn't be checked from here (REL-CHK-04; R144).
 - **Create the issue labels** `problem`, `youtube-change` and `idea`, so the issue forms added on 2026-10-20 apply them (REL-STORE-37).
 - **Run the live-check probe** ([ticket 25](issues/25-live-checks.md), branch `task/live-checks`) signed in, in Chrome and Firefox, and paste the reports back.
 - **One-time store and GitHub setup** before release ([chapter 08 §19](spec/08-release.md)).

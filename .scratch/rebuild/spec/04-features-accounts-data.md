@@ -10,10 +10,10 @@ This chapter covers the user-visible model and behaviour of features, consent, a
 - The upgrade note's copy, the disclosure text and the release process: [08 Upgrade and release](08-release.md).
 - What 1.4.5 did and how 2.0 covers it: [09 Parity](09-parity.md).
 
-The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too, and so are the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, and the GatherTube fold, R120–R139. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID, placed where it belongs. Under the resolutions' ownership rule, this chapter owns user-visible accounts, settings, data and status behaviour (R54); where it shares a topic with another chapter, the owner's text wins. [§9](#9-conflicts-found) records that no difference remains.
+The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too, and so are the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, the GatherTube fold, R120–R139, and the name, R141–R144. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID, placed where it belongs. Under the resolutions' ownership rule, this chapter owns user-visible accounts, settings, data and status behaviour (R54); where it shares a topic with another chapter, the owner's text wins. [§9](#9-conflicts-found) records that no difference remains.
 
 **Placeholders in copy** (every chapter uses `{Product}` and `{Account}`, R65):
-- `{Product}` is the extension's in-product name. **PROVISIONAL** ([ticket 22](../issues/22-name.md)): "Playlist Pigeon", with "Playlist Courier" as the runner-up. The tickets wrote `{Name}` for both the product and the account; the spec splits them.
+- `{Product}` is the extension's in-product name: "Perchling" ([ticket 22](../issues/22-name.md); R141). The tickets wrote `{Name}` for both the product and the account; the spec splits them.
 - `{Account}` is the account label's name, else "Unnamed account".
 - `{Feature}` is the feature's name from [FT-01](#11-the-features).
 - `{Shortcut}` is a playlist shortcut's label, else its playlist's title on this account, else its key ([02's placeholders](02-youtube.md#conventions); ACC-10).
@@ -959,7 +959,7 @@ The user approved this on 2026-10-20 (R86).
 
 The user approved this on 2026-10-20 (R90).
 
-- **DATA-53** **Export.** Settings › Privacy & data's **Export settings** saves a file named `playlist-pigeon-settings-{YYYY-MM-DD}.json` (PROVISIONAL with the name), through the page's own download link, so no new permission is needed.
+- **DATA-53** **Export.** Settings › Privacy & data's **Export settings** saves a file named `perchling-settings-{YYYY-MM-DD}.json` (R142), through the page's own download link, so no new permission is needed.
   - **It holds** a header (`format: 1`, the product, the version, the date), the shared settings, and every account setup with its channel filters, kept filters included. Those are the documents settings sync carries (DATA-05), keyed by the same account keys.
   - **It never holds** consent, the sync switch or anything else from `device`, caches, watch progress, session memory, or the unclaimed 1.x setup.
   - A line beside the button says: "The file holds your playlist IDs, channel filters and account names. Keep it private."
@@ -1138,7 +1138,6 @@ How breakage is caught before release is in [07 Quality](07-quality.md#751-the-c
 
 | Requirement | What | Settled by |
 |---|---|---|
-| Placeholders, FT-36, HEALTH-20 | The name `{Product}` ("Playlist Pigeon") | [Ticket 22](../issues/22-name.md) |
 | ACC-03, ACC-35, §2.9 | `DATASYNC_ID` stability across sign-out and browsers; collaborative playlists in claiming | [Ticket 25](../issues/25-live-checks.md) L7 and ticket 11's claiming check |
 | FT-39 | The disclosure's cookie line, removed if no shipped route reads the session cookie (R48) | [Ticket 25](../issues/25-live-checks.md) L3/L4 and its final route table |
 | FT-53 | `addHostAccessRequest` on Chrome 133+ | [Ticket 09](../issues/09-where-things-live.md), at build |
@@ -1237,6 +1236,10 @@ GatherTube, folded in on 2026-10-20 ([R120–R139](resolutions.md#gathertube-r12
 - **Its status** (HEALTH-29). R136.
 
 R121 to R124, R126, R127, R137 and R138 are behaviour, copy and release text that 02, 05 and 08 own; R139's budgets and tests are 07's.
+
+The name, settled on 2026-10-20 ([R141–R144](resolutions.md#the-name-perchling-r141r144)):
+- **`{Product}`** is "Perchling", and the name leaves [§6](#6-provisional-items)'s table (Placeholders, FT-36, HEALTH-20). R141.
+- **The settings file** is `perchling-settings-{YYYY-MM-DD}.json` (DATA-53). R142.
 
 ## 9. Conflicts found
 

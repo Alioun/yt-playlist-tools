@@ -16,12 +16,12 @@ Part of the [2.0 spec](../spec.md). This chapter covers how 1.4.5 users get to 2
 
 **Neighbouring chapters:**
 - [04](04-features-accounts-data.md): the storage layout ([§4.3](04-features-accounts-data.md#43-storage-layout)), migrations ([§4.10](04-features-accounts-data.md#410-schema-versions-and-migrations), DATA-46 to DATA-51), the consent model ([§1.5](04-features-accounts-data.md#15-the-consent-gate)), first run ([§1.6](04-features-accounts-data.md#16-first-run)), accounts and claiming ([§2.6](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming)).
-- [05](05-ui.md): the first-run page's layout ([§5.4](05-ui.md#54-the-first-run-page-first-run-and-the-upgrade-note), UI-ONB-01 to UI-ONB-09), the brand ([§5.9](05-ui.md#59-the-brand-provisional-ticket-22)) and every other piece of UI copy.
+- [05](05-ui.md): the first-run page's layout ([§5.4](05-ui.md#54-the-first-run-page-first-run-and-the-upgrade-note), UI-ONB-01 to UI-ONB-09), the brand ([§5.9](05-ui.md#59-the-brand)) and every other piece of UI copy.
 - [06](06-architecture.md): the manifests and registration ([§6.3](06-architecture.md#63-manifest-permissions-and-registration), ARC-MAN-01 to ARC-MAN-18), and the folder layout ([§6.10](06-architecture.md#610-folder-layout)).
 - [07](07-quality.md): the test layers ([§7.2](07-quality.md#72-test-layers)), fixtures ([§7.3](07-quality.md#73-fixtures)), the watch and the live check ([§7.5](07-quality.md#75-breakage-detection)), the budgets ([§7.6](07-quality.md#76-performance-budgets)) and the CI jobs ([§7.7](07-quality.md#77-ci-jobs-and-the-hotfix-lane)).
 - [09](09-parity.md): what 1.4.5 users had ([§1.12](09-parity.md#112-what-145-users-had), PAR-CAP-71 to PAR-CAP-79) and the platform and release rows ([§1.11](09-parity.md#111-platform-manifest-build-and-release)).
 
-The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too, and so are the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, the GatherTube fold, R120–R139, and the icon, R140. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist". Under the resolutions' ownership rule, this chapter owns the migration, the upgrade note, and consent copy and conditions (R60); where it shares another topic with a chapter that owns it, that chapter's text wins, and [Conflicts found](#conflicts-found) lists what still differs.
+The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too, and so are the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, the GatherTube fold, R120–R139, the icon, R140, and the name, R141–R144. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist". Under the resolutions' ownership rule, this chapter owns the migration, the upgrade note, and consent copy and conditions (R60); where it shares another topic with a chapter that owns it, that chapter's text wins, and [Conflicts found](#conflicts-found) lists what still differs.
 
 **Requirement IDs:**
 - `REL-MIG-`: the 1.4.5 migration.
@@ -36,7 +36,7 @@ The plan works whichever way these land. Each dependent item is marked inline. R
 
 | Input | Waits on | What depends on it | If it changes |
 |---|---|---|---|
-| **The name** | [Ticket 22](../issues/22-name.md), the user's call | Every string that says "Playlist Pigeon": the manifest `name`, `short_name` and `description`, the note, the disclosure, both listings, the policy, the reviewer notes and the screenshots | Swap "Playlist Pigeon for YouTube™" / "Playlist Pigeon" / "Pigeon" for "Playlist Courier for YouTube™" / "Playlist Courier" / "Courier". Nothing else changes. |
+| **The name** | **Settled** by the user on 2026-10-20: Perchling for YouTube™ ([R141](resolutions.md#the-name-perchling-r141r144), [ticket 22](../issues/22-name.md)). A professional trademark search, the EU above all, is still due before launch (R144). | Every string that says "Perchling": the manifest `name`, `short_name` and `description`, the note, the disclosure, both listings, the policy, the reviewer notes and the screenshots | Only if the search finds a blocking mark: swap "Perchling for YouTube™" / "Perchling" for the new name. Nothing else changes. |
 | **Firefox data collection** (was AMO's reply) | **Settled** by decision ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)), from Mozilla's own documentation. [Ticket 23](../issues/23-ask-amo.md)'s message to AMO isn't sent. | Firefox's `data_collection_permissions` (`required: ["none"]`), the Firefox prompts (§5), the sync switch (it declares no data type), private-window settings writes (allowed), and the Bun install step (as planned) | Nothing, unless an AMO reviewer objects. Then the matching row of [§13](#13-if-an-amo-reviewer-objects)'s fallback applies. |
 | **The session cookie** | [Ticket 25](../issues/25-live-checks.md)'s final route table | The **cookie lines**: the disclosure's cookie bullet, the policy's cookie bullet, Chrome's "Authentication information" tick, and the reviewer notes' signed route | If no shipped route reads the session cookie, remove all four together; the reviewer notes then describe the same-origin request without signing (R48) |
 | **The reviewer endpoint list** | Ticket 25's route table | §12.1 | Fill it from the table |
@@ -53,7 +53,7 @@ Ticket 23's message was corrected on 2026-10-19 and then never sent: R83 settled
 - the `extensions.update.url` override shortcut (§17);
 - the Chrome Web Store fee (the docs' screenshot says US$5).
 
-All copy in this chapter uses ticket 22's recommendation: "Playlist Pigeon for YouTube™" on the stores, "Playlist Pigeon" in the product, and `short_name` "Pigeon". **Every occurrence is PROVISIONAL on ticket 22.** This chapter writes the name out, because its store and policy texts are published as they stand; the other chapters' copy writes it `{Product}`, and the account `{Account}` (R65). Quotes in copy are typographic (“ ”, R45).
+All copy in this chapter uses the name the user chose ([R141](resolutions.md#the-name-perchling-r141r144)): "Perchling for YouTube™" on the stores and in the manifest's `name`, and "Perchling" in the product and as `short_name`. This chapter writes the name out, because its store and policy texts are published as they stand; the other chapters' copy writes it `{Product}`, and the account `{Account}` (R65). Quotes in copy are typographic (“ ”, R45).
 
 ## 1. What 1.4.5 is
 
@@ -276,12 +276,12 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
 |---|---|
 | The update lands while the add-on is disabled, or at browser start | No `onInstalled`. The migration still runs from stored state at the next start, and the note opens then (R64). |
 | 1.4.5 installed, but no 1.x key left (e.g. nothing ever set) | A fresh install: no migration, no note, and no tab opens on the update. The "!" and the popup's "Waiting for your OK" lead to first run (REL-MIG-03; R64, R76). |
-| No youtube.com access (installed on Firefox 125/126, or revoked) | The update still installs silently. The note shows "Playlist Pigeon doesn't have access to YouTube in this browser, so nothing can run there yet." with **Give access to YouTube**, which requests access first thing in the click. |
+| No youtube.com access (installed on Firefox 125/126, or revoked) | The update still installs silently. The note shows "Perchling doesn't have access to YouTube in this browser, so nothing can run there yet." with **Give access to YouTube**, which requests access first thing in the click. |
 | Firefox 125–139 (1.4.5's floor is 125) | Stays on 1.4.5 silently. AMO offers 2.0 only to Firefox 140 and later. |
 | Signed out, no YouTube tab, or another account at Agree | Ticket 11's outcomes, shown in the note (§3.4) |
 | The user never agrees | Everything stays inert, with the badge. 1.4.5's carried choices are kept indefinitely. |
 | AMO rolls back 2.0.0 | It lands on 1.4.5's code, which is **inert** because its credentials were deleted, and it leaves 2.0's data alone. Hence fix forward for 2.0.0 (REL-CHK-08). |
-| A later downgrade below a `schema` bump | Inert. The popup says "This version of Playlist Pigeon is older than your settings. Update it to continue." ([DATA-48](04-features-accounts-data.md#410-schema-versions-and-migrations)) |
+| A later downgrade below a `schema` bump | Inert. The popup says "This version of Perchling is older than your settings. Update it to continue." ([DATA-48](04-features-accounts-data.md#410-schema-versions-and-migrations)) |
 
 ## 3. The upgrade note
 
@@ -292,7 +292,7 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
   - The toolbar "!" points to it. (R37)
 - **REL-CON-02** The note opens **once,** or twice if the first time it was never seen (REL-CON-25). After that, the popup's banner reopens it with **Review**.
   - Restarting the browser before or after Agree never reopens a note that was seen (S7). (R97)
-  - The banner's title is "Playlist Pigeon 2.0 is waiting for your OK". Its line names only what actually carried over, the same features the note's "Kept" section shows ticked (R60):
+  - The banner's title is "Perchling 2.0 is waiting for your OK". Its line names only what actually carried over, the same features the note's "Kept" section shows ticked (R60):
     - auto-add and the shortcut: "Auto-add and your shortcut are paused until you agree.";
     - auto-add only: "Auto-add is paused until you agree.";
     - the shortcut only: "Your shortcut is paused until you agree.";
@@ -311,27 +311,27 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
 
 ### 3.2 Copy
 
-**PROVISIONAL name** (ticket 22). The copy rules:
+The copy rules:
 - `{…}` are values from `details` and the store;
 - one sentence per line;
 - the glossary's words.
 
 **REL-CON-04** The note renders this copy, with its conditions. Its layout is [05's upgrade note](05-ui.md#the-upgrade-note) (UI-ONB-06, UI-ONB-07).
 
-**Tab title:** YouTube Playlist Tools is now Playlist Pigeon (ticket 30's S3; R98). The old name in the tab tells someone who forgot 1.4.5 what this is.
+**Tab title:** YouTube Playlist Tools is now Perchling (ticket 30's S3; R98, R142). The old name in the tab tells someone who forgot 1.4.5 what this is.
 
-> # YouTube Playlist Tools is now Playlist Pigeon
+> # YouTube Playlist Tools is now Perchling
 >
 > **2.0 needs no Google credentials anymore.** It works through the YouTube account you're signed in to in this browser, the way YouTube's own buttons do. The client ID, client secret and sign-in tokens you set up for 1.x have been deleted from this browser.
 > [Remove 1.x's access from your Google account ↗](https://myaccount.google.com/permissions) · If you made a Google Cloud project just for 1.x, you can delete that too.
 >
-> **Pin Playlist Pigeon to your toolbar** to see when it needs you: click the Extensions button (the puzzle piece), then ⚙ › Pin to Toolbar. *(ticket 30's S2; R97)*
+> **Pin Perchling to your toolbar** to see when it needs you: click the Extensions button (the puzzle piece), then ⚙ › Pin to Toolbar. *(ticket 30's S2; R97, R142)*
 >
-> **Why the new name:** Google's rules don't allow extensions to be named after YouTube, so YouTube Playlist Tools is now Playlist Pigeon for YouTube™. It's the same add-on, and your settings came along.
+> **Why the new name:** Google's rules don't allow extensions to be named after YouTube, so YouTube Playlist Tools is now Perchling for YouTube™. It's the same add-on, and your settings came along.
 
 *Only if site access is missing* (placed above "Kept"):
 
-> ⚠ Playlist Pigeon doesn't have access to YouTube in this browser, so nothing can run there yet. **[Give access to YouTube]**
+> ⚠ Perchling doesn't have access to YouTube in this browser, so nothing can run there yet. **[Give access to YouTube]**
 
 > ## Kept from 1.4.5 · *Paused until you agree below*
 
@@ -434,7 +434,7 @@ Then **[Open YouTube]** **[Open Settings]**.
   - the upgrade note: "Before you continue";
   - Settings' dialog, or the popup's sheet, when a feature is switched on without consent: "Before this feature can run" ([FT-32](04-features-accounts-data.md#15-the-consent-gate), [UI-ONB-09](05-ui.md#the-disclosure)).
 
-> Playlist Pigeon works inside your YouTube and YouTube Music tabs, as the account you're signed in to there. For the features you switch on, it:
+> Perchling works inside your YouTube and YouTube Music tabs, as the account you're signed in to there. For the features you switch on, it:
 > - **reads what you watch and listen to there:** the video or song, its channel, and how much of it you've played;
 > - **reads and changes your playlists, as you:** it lists them, checks which ones already hold a video, and adds or removes videos when you ask, or when auto-add or automatic gathering does, using YouTube's own requests;
 > - **reads the YouTube tabs open in a window when you gather them,** or when automatic gathering does: their addresses and titles, to collect their videos. It closes those tabs only if you've asked it to; *(R138)*
@@ -458,10 +458,10 @@ Then **[Open YouTube]** **[Open Settings]**.
 ### 4.2 The rest of first run's copy
 
 First run's three steps (pick features › Before you start › Finish setting up) are [FT-40](04-features-accounts-data.md#16-first-run), and their layout is [05's first-run page](05-ui.md#54-the-first-run-page-first-run-and-the-upgrade-note) (UI-ONB-01 to UI-ONB-05). **REL-CON-15** These lines are final:
-- **Step 1 heading:** What should Playlist Pigeon do? / Tick what you want. Everything else stays off.
+- **Step 1 heading:** What should Perchling do? / Tick what you want. Everything else stays off.
 - **Step 1 footer:** Nothing changes on YouTube until you pick it. You can change this any time in Settings. **[Continue with {N} features]** / **[Continue without features]**
-- **After Not now:** **Nothing is running.** Agree later from the toolbar icon or Settings. Until then, Playlist Pigeon does nothing on YouTube. **[Back]**
-- **The popup while consent is missing:** Waiting for your OK. **[Review]** (for upgraders: "Playlist Pigeon 2.0 is waiting for your OK")
+- **After Not now:** **Nothing is running.** Agree later from the toolbar icon or Settings. Until then, Perchling does nothing on YouTube. **[Back]**
+- **The popup while consent is missing:** Waiting for your OK. **[Review]** (for upgraders: "Perchling 2.0 is waiting for your OK")
 
 ### 4.3 Consent rules
 
@@ -471,7 +471,7 @@ First run's three steps (pick features › Before you start › Finish setting u
 - **REL-CON-17** Consent is versioned through one constant, and 2.0 writes `v: 1`.
   - The version is bumped only when the disclosure text changes.
   - A release must change the disclosure whenever data handling changes (Chrome: "proactively disclose … if data handling practices change").
-- **REL-CON-18** When the stored `v` is lower than the build's, features pause. The popup and the note page then show "Playlist Pigeon {version} handles your data in a new way. Review and agree to keep it running."
+- **REL-CON-18** When the stored `v` is lower than the build's, features pause. The popup and the note page then show "Perchling {version} handles your data in a new way. Review and agree to keep it running."
 - **REL-CON-19** A patch release can never change the consent version constant. `hotfix-freeze` enforces this (REL-CI-38).
 - **REL-CON-20** Settings › Privacy & data shows "You agreed on {date}." with **[Read it again]** and **[Withdraw and pause everything]**.
   - Withdraw asks: "**Withdraw your consent?** Every feature stops in this browser and nothing is read from YouTube until you agree again. Your settings are kept." with **[Withdraw]** **[Cancel]**.
@@ -504,10 +504,10 @@ Ticket 25's check P1 now only glances at the real dialogs. If one differs, this 
 | Firefox 1.4.5 upgrader **without** access (125/126 installs, or revoked) | The update | Nothing from Firefox. The note's **Give access to YouTube** opens Firefox's permission prompt for the youtube.com domain. |
 | Firefox 1.4.5 upgrader on Firefox < 140 | — | Nothing. They stay on 1.4.5. |
 | Firefox upgrader, **only under [§13](#13-if-an-amo-reviewer-objects)'s fallback**, if a reviewer requires a data type | The update | The update is **held**: an app-menu badge, then about:addons: "You must approve new permissions before the updated version will install…", listing the type (e.g. "website activity"). Cancel keeps 1.4.5 and asks again at the next daily check. |
-| **Firefox new install** (140+) | Install | The header "Add Playlist Pigeon for YouTube™", with no question mark. Under "Required permissions:", one line: "Access your data for sites in youtube.com domains". `storage` and `scripting` have no line at all. Under "Data collection:": "The developer says this extension doesn't require data collection." Then first run. (about:addons later lists the same grant as "Access your data for sites in the youtube.com domain".) (R83) |
-| Firefox, Settings sync switched on | That click | **Nothing from Firefox:** sync declares no data type ([SYNC-26](04-features-accounts-data.md#39-firefoxs-data-collection-declaration); R83). Only under §13's fallback, with sync as an optional type, would it show "Playlist Pigeon for YouTube™ requests additional data collection", then "New data collection:" with "The developer says the extension wants to collect: {type}", and Allow / Deny. |
-| **Chrome new install** | Install | Add "Playlist Pigeon for YouTube™"? / It can: **Read and change your data on www.youtube.com**. Then first run. |
-| Chrome, the first thing that needs music.youtube.com: a YouTube Music feature, or Playlist shortcuts' "Also on YouTube Music" (at first run or later; R53) | That click | "Playlist Pigeon for YouTube™" has requested additional permissions. / It could: **Read and change your data on music.youtube.com**, with Allow / Deny |
+| **Firefox new install** (140+) | Install | The header "Add Perchling for YouTube™", with no question mark. Under "Required permissions:", one line: "Access your data for sites in youtube.com domains". `storage` and `scripting` have no line at all. Under "Data collection:": "The developer says this extension doesn't require data collection." Then first run. (about:addons later lists the same grant as "Access your data for sites in the youtube.com domain".) (R83) |
+| Firefox, Settings sync switched on | That click | **Nothing from Firefox:** sync declares no data type ([SYNC-26](04-features-accounts-data.md#39-firefoxs-data-collection-declaration); R83). Only under §13's fallback, with sync as an optional type, would it show "Perchling for YouTube™ requests additional data collection", then "New data collection:" with "The developer says the extension wants to collect: {type}", and Allow / Deny. |
+| **Chrome new install** | Install | Add "Perchling for YouTube™"? / It can: **Read and change your data on www.youtube.com**. Then first run. |
+| Chrome, the first thing that needs music.youtube.com: a YouTube Music feature, or Playlist shortcuts' "Also on YouTube Music" (at first run or later; R53) | That click | "Perchling for YouTube™" has requested additional permissions. / It could: **Read and change your data on music.youtube.com**, with Allow / Deny |
 | Either browser, Save from the browser's menu switched on | That click | **Nothing:** its optional `contextMenus` permission has no warning on Chrome and no message on Firefox, and Firefox grants an optional permission with no message without a dialog ([ARC-MAN-20](06-architecture.md#631-manifest-per-browser); R91) |
 | Either browser, Keys from any tab | Install, update or switch-on | **Nothing from the commands:** they carry no permission and no default key. They're listed, unbound, in the browser's shortcut settings. On Chrome, switching the feature on asks for music.youtube.com access as above (R88). |
 | Chrome, the user restricted site access | Any time | No prompt by itself. Our **Give access** button calls Chrome's prompt. On Chrome 133+, while a feature for that site is on, the extension also calls `addHostAccessRequest` on the site's open tabs, so Chrome's extensions menu offers the grant ([FT-53](04-features-accounts-data.md#17-site-access-and-youtube-tabs), [ARC-ACC-61](06-architecture.md#6212-no-tab-not-signed-in-no-site-access); PROVISIONAL). |
@@ -603,7 +603,7 @@ Recorded as [ADR-0011](../../../docs/adr/0011-betas-from-github-pages.md): betas
 ### 8.2 Leaving the beta (launch criteria)
 
 - **REL-CHK-04** 2.0.0 is tagged only when all of these hold:
-  - ticket 22 is confirmed;
+  - a professional trademark search for "Perchling", the EU above all, has found nothing blocking (R144);
   - the Firefox manifest declares R83's `data_collection_permissions: {required: ["none"]}`, or §13's matching fallback row if a reviewer has objected;
   - ticket 25's route table is filled;
   - the upgrade-test matrix (§17) is green on the release candidate;
@@ -612,7 +612,7 @@ Recorded as [ADR-0011](../../../docs/adr/0011-betas-from-github-pages.md): betas
   - the signed-in live check is recorded for the candidate, and so are the timing figures: within budget in Chromium, which gates them, while Firefox's `performance.mark` timings are recorded for information only ([Q-PERF-40, Q-PERF-41](07-quality.md#767-enforcement); R31);
   - the manual screen-reader pass of the popup and settings is done on the candidate (R38);
   - the README is rewritten for 2.0 (REL-CI-54; R39);
-  - the AMO and Chrome listings, screenshots and the dashboard's privacy tab are final. The privacy page has been live since the first beta (REL-STORE-17; R18). (R18, R31, R38, R39, R83)
+  - the AMO and Chrome listings, screenshots and the dashboard's privacy tab are final. The privacy page has been live since the first beta (REL-STORE-17; R18). (R18, R31, R38, R39, R83, R144)
 
 ### 8.3 Rollback and fix-forward
 
@@ -633,7 +633,7 @@ Recorded as [ADR-0011](../../../docs/adr/0011-betas-from-github-pages.md): betas
 
 ## 9. Store listings
 
-All text in this section is **PROVISIONAL on the name** (ticket 22). It leads with saving to any playlist in one click or a named key, not with auto-add, as the user decided from [ticket 30](../issues/30-market-and-users.md)'s market check (R95). "Save" is the verb throughout, Watch Later appears two or three times, and nothing claims to be the "only" or "first". "No Google sign-in" stays out of the summaries and the lead: ten or more rivals say it. It stays in "How it works", the release notes and the upgrade note.
+The name is Perchling for YouTube™ ([R141](resolutions.md#the-name-perchling-r141r144)). It doesn't say "playlist", so both summaries carry the word early (R143). The text leads with saving to any playlist in one click or a named key, not with auto-add, as the user decided from [ticket 30](../issues/30-market-and-users.md)'s market check (R95). "Save" is the verb throughout, Watch Later appears two or three times, and nothing claims to be the "only" or "first". "No Google sign-in" stays out of the summaries and the lead: ten or more rivals say it. It stays in "How it works", the release notes and the upgrade note.
 
 - **REL-STORE-01** The listing text lives in `store/listing/`, so the hotfix check can freeze it (REL-CI-38). The screenshots and promo tile live there too.
 
@@ -641,8 +641,8 @@ All text in this section is **PROVISIONAL on the name** (ticket 22). It leads wi
 
 | Field | AMO (existing listing) | Chrome Web Store (new item) |
 |---|---|---|
-| Name | **Playlist Pigeon for YouTube™**. Set it in the manifest *and* edit it in the Developer Hub. The slug `youtube-playlist-tools` and the gecko ID stay unchanged. | From the manifest |
-| Summary | "Save YouTube videos to Watch Later or any playlist in one click or with a shortcut, auto-add the videos you actually watch, and get one-click Play next and Add to queue on YouTube Music. Every feature is opt-in. (Formerly YouTube Playlist Tools.)" (246 of 250; R95) | Manifest `description` (132 of 132; R95): "Save to Watch Later or any playlist in one click or a shortcut, auto-add what you actually watch, and Add to queue on YouTube Music." If the name's swap or a translation ever needs room, end it with "…and queue on YouTube Music." (130). |
+| Name | **Perchling for YouTube™** (R141). Set it in the manifest *and* edit it in the Developer Hub. The slug `youtube-playlist-tools` and the gecko ID stay unchanged. | From the manifest: **Perchling for YouTube™** |
+| Summary | "Save YouTube videos to Watch Later or any playlist in one click or with a shortcut, auto-add the videos you actually watch, and get one-click Play next and Add to queue on YouTube Music. Every feature is opt-in. (Formerly YouTube Playlist Tools.)" (246 of 250; R95, R143) | Manifest `description` (132 of 132; R95, R143): "Save to Watch Later or any playlist in one click or a shortcut, auto-add what you actually watch, and Add to queue on YouTube Music." If a translation ever needs room, end it with "…and queue on YouTube Music." (125). |
 | Description | §9.2, with the "formerly" line first | §9.2, without the "formerly" line |
 | Category | **Photos, Music & Videos** (today "Other") | **Tools** (Productivity). *Runner-up:* "Functionality & UI", which reads as page tweaks. |
 | Homepage | `https://alioun.github.io/yt-playlist-tools/` | Same |
@@ -685,7 +685,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22). It leads wi
 >
 > **How it works**
 > It works inside your YouTube and YouTube Music tabs, as the account you're signed in to there, using the same requests YouTube's own buttons send. It needs no Google sign-in, API key or password. Nothing is sent to the developer or to anyone other than YouTube, and there are no analytics or ads. Your settings stay in your browser, and in your browser's own sync if you turn it on.
-> It relies on how YouTube's website works today, so a YouTube change can stop a feature until an update ships. Playlist Pigeon tells you when that happens.
+> It relies on how YouTube's website works today, so a YouTube change can stop a feature until an update ships. Perchling tells you when that happens.
 >
 > Privacy policy: https://alioun.github.io/yt-playlist-tools/privacy/ · Source code: https://github.com/Alioun/yt-playlist-tools · Problems and ideas (a GitHub account is needed): https://github.com/Alioun/yt-playlist-tools/issues/new/choose
 >
@@ -699,7 +699,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22). It leads wi
 
 - **REL-STORE-06** These notes go to AMO's release notes (sent as `{"en-US": …}`, REL-CI-31), the GitHub release and the site. They live in `store/release-notes/2.0.0.md`.
 
-> 2.0 is a rebuild, and YouTube Playlist Tools is now Playlist Pigeon for YouTube™.
+> 2.0 is a rebuild, and YouTube Playlist Tools is now Perchling for YouTube™.
 > • No Google Cloud credentials anymore: it works through the YouTube account you're signed in to. Your old client ID, secret and tokens are deleted from your browser.
 > • Your auto-add playlists, shortcut, watch percentage and toast setting carry over. Nothing runs until you've reviewed them on the page that opens after the update.
 > • Auto-add counts only what you actually watch, never adds a video twice, and no longer says "Added" when an add failed.
@@ -715,7 +715,7 @@ All text in this section is **PROVISIONAL on the name** (ticket 22). It leads wi
 ### 9.4 Screenshots and images
 
 - **REL-STORE-07** Both stores get the same five screenshots, at 1280×800 PNG. They replace AMO's two 2024 previews.
-- **REL-STORE-08** Each screenshot has a caption band in the extension's own type and palette ([05 §5.9](05-ui.md#59-the-brand-provisional-ticket-22), UI-BRAND-03 to UI-BRAND-07): Perch's grey with the teal-to-violet accent, and never YouTube red (R140).
+- **REL-STORE-08** Each screenshot has a caption band in the extension's own type and palette ([05 §5.9](05-ui.md#59-the-brand), UI-BRAND-03 to UI-BRAND-07): Perch's grey with the teal-to-violet accent, and never YouTube red (R140).
 
 The order follows ticket 30's ranking: saving first, Settings last (R95).
 
@@ -729,15 +729,15 @@ The order follows ticket 30's ranking: saving first, Settings last (R95).
 
 - **REL-STORE-09** The screenshots' content (ticket 22):
   - only videos the user owns, or Creative Commons videos;
-  - a demo account, "Pigeon Demo", with neutral playlists ("Recipes to try", "Finished", "Music for work");
+  - a demo account, "Perchling Demo" (R142), with neutral playlists ("Recipes to try", "Finished", "Music for work");
   - no real personal data;
   - YouTube's logo cropped or out of focus.
 - **REL-STORE-10** The screenshots are taken from the release candidate in a clean profile, in the light theme at 100 % zoom. The prototypes are layout references only, never the source: [05's catalogue](05-ui.md#513-prototypes-and-screenshots) gives [ps-60](https://github.com/Alioun/yt-playlist-tools/blob/prototype/popup-and-settings/prototypes/popup-and-settings/screenshots/60-settings-youtube.png) for shot 5, and [ps-62](https://github.com/Alioun/yt-playlist-tools/blob/prototype/popup-and-settings/prototypes/popup-and-settings/screenshots/62-settings-playlist-shortcuts.png) with [ps-08](https://github.com/Alioun/yt-playlist-tools/blob/prototype/popup-and-settings/prototypes/popup-and-settings/screenshots/08-popup-key-recorder-recording.png) for shot 2. (R19, R95)
-- **REL-STORE-11** Chrome's small promo tile (440×280) is required. It shows Perch, the mark (R140), and the name (PROVISIONAL, ticket 22) on the palette, with no YouTube imagery. The 1400×560 marquee is skipped at launch.
-- **REL-STORE-40** **The store icons** are Perch, from [`assets/icon/`](../../../assets/icon/README.md) ([UI-BRAND-03](05-ui.md#59-the-brand-provisional-ticket-22), UI-BRAND-04; R140):
+- **REL-STORE-11** Chrome's small promo tile (440×280) is required. It shows Perch, the mark (R140), and the name, Perchling (R141, R143), on the palette, with no YouTube imagery. The 1400×560 marquee ships too (REL-STORE-41).
+- **REL-STORE-40** **The store icons** are Perch, from [`assets/icon/`](../../../assets/icon/README.md) ([UI-BRAND-03](05-ui.md#59-the-brand), UI-BRAND-04; R140):
   - **Chrome Web Store:** the item's icon is the manifest's 128, `store-128.png`: 96×96 artwork with 16 px of transparent padding, no border, and legible on light and dark backgrounds. If the dashboard asks for a store icon as well, it's the same file.
   - **AMO:** the listing icon is a separate Developer Hub upload, `amo-128.png`, full bleed and with no letters. AMO resizes it to 32, 64 and 128 and shows the 64 on the listing; it doesn't take the manifest's icon.
-  - Both files are exports of the hand-drawn `icon.svg`, and are checked against `sheet.html` before upload. A wordmark waits on the name (ticket 22).
+  - Both files are exports of the hand-drawn `icon.svg`, and are checked against `sheet.html` before upload. The wordmark no longer waits on the name: it's Perchling (R141), drawn in [`assets/brand/`](../../../assets/brand/README.md) (R145).
 - **REL-STORE-41** **The Chrome promo images** are [`assets/brand/`](../../../assets/brand/README.md)'s `promo-small-440x280.png` (required) and `marquee-1400x560.png`. Both are uploaded at launch: the marquee is no longer skipped, which supersedes REL-STORE-11's last sentence.
   - **What they show:** the mark and the wordmark only, on a saturated violet that fills the region, with a faint wall of pigeonholes behind.
   - **What they leave out,** following Google's image guidelines: other text, screenshots, claims, and YouTube's name, logo or red.
@@ -776,7 +776,7 @@ Gather tabs is a port of [GatherTube](https://github.com/karimelgazar/gathertube
   - It's in both stores' privacy fields, and baked into every installed beta's `update_url`.
   - Renaming the repo moves it, and Pages leaves no redirect. So **the repo isn't renamed while betas are installed.**
   - A later rename (ticket 22 calls it optional) updates both stores' fields the same day.
-  - A custom domain (e.g. playlistpigeon.app) would decouple the URL from the repo name. That's the user's call, and it costs a yearly fee.
+  - A custom domain (e.g. perchling.app, free on 2026-10-20; R141) would decouple the URL from the repo name. That's the user's call, and it costs a yearly fee.
 - *Runner-ups:*
   - a `PRIVACY.md` viewed on github.com: Chrome asks for "a website belonging to your extension", and a blob page sits inside GitHub's own UI;
   - Pages from `/docs`: it would publish ADRs and agent docs as the site.
@@ -785,11 +785,11 @@ Gather tabs is a port of [GatherTube](https://github.com/karimelgazar/gathertube
 
 - **REL-STORE-17** `/privacy/` publishes this text. It's published under the user's name, so the user reads and approves it before it goes live (§19). It takes effect from the first beta, 1.99.1, because Chrome's Privacy tab needs it for the first Unlisted upload and beta testers run 1.99.N (R18). Its "What's kept" lines match [DATA-03](04-features-accounts-data.md#41-where-data-lives) (R10, R43, R57). The cookie bullet is PROVISIONAL (ticket 25): it's removed if no shipped route reads the session cookie (R48). The Contact line has no e-mail, as the user decided (R89). It also covers recent adds, keys from any tab, the problem report and the settings file (R86, R88, R89, R90), and gathering tabs, with what a gather reads and what leaves (R138). (R10, R18, R43, R48, R57)
 
-> # Privacy policy: Playlist Pigeon for YouTube™
+> # Privacy policy: Perchling for YouTube™
 >
-> *Effective {1.99.1 release date}. Covers version 1.99 (beta) and later of the Playlist Pigeon for YouTube™ browser extension (formerly YouTube Playlist Tools) for Firefox and Chrome. Developer: Alioun (github.com/Alioun).*
+> *Effective {1.99.1 release date}. Covers version 1.99 (beta) and later of the Perchling for YouTube™ browser extension (formerly YouTube Playlist Tools) for Firefox and Chrome. Developer: Alioun (github.com/Alioun).*
 >
-> **In short:** Playlist Pigeon has no server. It works inside your YouTube and YouTube Music tabs, as the account you're signed in to there, and keeps its settings in your browser. Nothing is sent to the developer or to anyone else. No analytics, no ads, no tracking.
+> **In short:** Perchling has no server. It works inside your YouTube and YouTube Music tabs, as the account you're signed in to there, and keeps its settings in your browser. Nothing is sent to the developer or to anyone else. No analytics, no ads, no tracking.
 >
 > ## What it handles, and why
 > Only for features you switch on, and only after you agree to the notice the extension shows first:
@@ -853,7 +853,7 @@ Gather tabs is a port of [GatherTube](https://github.com/karimelgazar/gathertube
 - **REL-STORE-20** These answers are kept in `store/cws-dashboard.md`, which the hotfix check freezes (REL-CI-38). They're pasted into the dashboard's Privacy tab.
 
 **Single purpose:**
-> Playlist Pigeon organises what the user watches and listens to on YouTube and YouTube Music into their own playlists, queue and likes: automatically after a video is watched (optionally filtered by channel), with keyboard shortcuts, with one-click buttons for YouTube's and YouTube Music's own save, queue and like actions, or by gathering the YouTube videos open in a window into one list or playlist.
+> Perchling organises what the user watches and listens to on YouTube and YouTube Music into their own playlists, queue and likes: automatically after a video is watched (optionally filtered by channel), with keyboard shortcuts, with one-click buttons for YouTube's and YouTube Music's own save, queue and like actions, or by gathering the YouTube videos open in a window into one list or playlist.
 
 The purpose still holds with Gather tabs: gathering files the user's own YouTube videos into their playlists and queue. Its clause is named so a reviewer finds it there (R138).
 
@@ -912,7 +912,7 @@ The purpose still holds with Gather tabs: gathering files the user's own YouTube
 
   (R17, R34, R48, R49, R66, R83)
 
-> **What this is.** 2.0 is a ground-up rewrite of YouTube Playlist Tools, renamed Playlist Pigeon for YouTube™ (same ID and slug). 1.x used the YouTube Data API with users' own OAuth credentials; 2.0 drops that entirely: no `identity` permission, no Google hosts, no server.
+> **What this is.** 2.0 is a ground-up rewrite of YouTube Playlist Tools, renamed Perchling for YouTube™ (same ID and slug). 1.x used the YouTube Data API with users' own OAuth credentials; 2.0 drops that entirely: no `identity` permission, no Google hosts, no server.
 >
 > **How it works.**
 > - Every request goes from an open youtube.com or music.youtube.com tab, through the user's own signed-in session, to youtube.com itself.
@@ -983,7 +983,7 @@ The purpose still holds with Gather tabs: gathering files the user's own YouTube
 
 - **REL-STORE-27** The sources zip contains this file, `SOURCE_CODE_REVIEW.md`, at its root. It's separate from the repo's README (REL-CI-54):
 
-> # Building Playlist Pigeon for YouTube™ from source
+> # Building Perchling for YouTube™ from source
 >
 > Built and checked on Ubuntu 24.04 **ARM64** and x86-64 with Node 24 (the AMO reviewer environment). No secrets, environment variables or network access are needed beyond the npm registry.
 >
@@ -1264,7 +1264,7 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 
 | # | Seeded state | Must hold after "Check for Updates" |
 |---|---|---|
-| S1 | Two playlist entries (one pasted URL, one half-typed); key `Shift+S`; percentage and toasts untouched; never authorised, so no `refreshToken` | **No prompt.** `schema: 1`; `unclaimed.autoAdd` has 1 ID and `dropped: 1`; `pct 50` with `wasUnset` and `authorised: false` (R96); feedback off; shortcut on with Shift+S; every legacy key and credential gone; the note tab opens once, in the background, titled "YouTube Playlist Tools is now Playlist Pigeon" (R98), with the Pin line (R97), the "nothing has been added yet" line, and the percentage question defaulting to "Once half of it is watched"; the badge is "!" |
+| S1 | Two playlist entries (one pasted URL, one half-typed); key `Shift+S`; percentage and toasts untouched; never authorised, so no `refreshToken` | **No prompt.** `schema: 1`; `unclaimed.autoAdd` has 1 ID and `dropped: 1`; `pct 50` with `wasUnset` and `authorised: false` (R96); feedback off; shortcut on with Shift+S; every legacy key and credential gone; the note tab opens once, in the background, titled "YouTube Playlist Tools is now Perchling" (R98), with the Pin line (R97), the "nothing has been added yet" line, and the percentage question defaulting to "Once half of it is watched"; the badge is "!" |
 | S2 | Percentage `"75"`, toasts on, `Control+Shift+S`, a dummy client ID and secret | `pct 75` with no question; feedback on; the note says Ctrl+Shift+S never worked; `credentialsDeleted` |
 | S3 | 1.4.5 installed, nothing set | No 1.x key, so a fresh install (REL-MIG-03; R64, R76): `schema: 1`, no migration keys, no upgrade note, and no tab opens. The "!" shows on every tab, and the popup's "Waiting for your OK" **Review** opens first run. |
 | S4 | Key `Control+Alt+K` | Shortcut unticked, with "can't be used in 2.0" and `raw` shown |
@@ -1305,7 +1305,7 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 - **REL-CHK-18** The build creates `RELEASING.md` with the checklist below, and `release.yml`'s job summary links to it. Each item is a checkbox.
 
 **Once, before the first beta**
-- [ ] Ticket 22's name is confirmed: the manifest's `name`, `short_name` and `description`. The icons are Perch, settled (R140).
+- [ ] The manifest says Perchling: `name` "Perchling for YouTube™", `short_name` "Perchling", and §9.1's `description` (R141). The icons are Perch (R140). The professional trademark search is under way, or done (R144).
 - [ ] The Firefox manifest declares `data_collection_permissions: {required: ["none"]}` (R83); §13's fallback is applied only if a reviewer has objected. Ticket 25's route table is filled, and the cookie lines are kept or removed everywhere: the disclosure, the policy, the dashboard and the reviewer notes. They're removed if no shipped route reads the session cookie (R48).
 - [ ] The Chrome Web Store developer account is ready: 2-Step Verification, the fee, the publisher name, a verified contact e-mail, and the trader / non-trader declaration. The Store listing and Privacy tabs are drafted from §9 and §11; the first upload is `v1.99.1` (see Beta).
 - [ ] The service account is created, the Chrome Web Store API is enabled, and the account is added under Account in the dashboard. The `amo` and `cws` environments, the variables and the tag ruleset are set up (§14.6), and the old secrets are deleted.
@@ -1371,13 +1371,13 @@ The IDs these items rest on:
 **REL-CHK-25** These are the tasks only the user can do. They're tracked in [for-the-user.md](../for-the-user.md) until done.
 
 **Decisions:**
-- Confirm the name (ticket 22): Playlist Pigeon, or the runner-up, Playlist Courier.
 - Read and approve the privacy policy (§10.2), which is published under the user's name.
 - Optionally, choose a custom domain (§10.1).
 
-A support e-mail isn't wanted: the user decided on GitHub issues alone on 2026-10-20 (§16; R89).
+The name is settled: Perchling for YouTube™, chosen on 2026-10-20 (R141). A support e-mail isn't wanted: the user decided on GitHub issues alone on 2026-10-20 (§16; R89).
 
 **Actions before the beta:**
+- Have a professional trademark search run for "Perchling", the EU above all, since TMview and EUIPO couldn't be checked. It must be done before launch (REL-CHK-04; R144).
 - Run ticket 25's live-check probe, signed in, in Chrome and Firefox, and paste the reports back.
 
 Ticket 23's message to AMO isn't sent: R83 settled its questions from Mozilla's own documentation (§13).
@@ -1459,7 +1459,7 @@ Also applied here: R10 (the policy's session-memory line: REL-STORE-17), R12 (th
 Also applied, third round: R71 (REL-CON-24), R72 (REL-CI-27, REL-CI-40, REL-CHK-19, §18's "Every release" and "Hotfix" items, §19) and R76 (REL-MIG-03, REL-MIG-04, REL-MIG-09, §2.11, S3). R68, R69, R70, R73, R74, R75 and R77 change no copy this chapter quotes: its copy quotes only video and album titles, and never a playlist name.
 
 After the spec ([R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)):
-- **Firefox's prompt strings** (was a PROVISIONAL input, live check P1): settled from Firefox's own string files and code and Mozilla's support articles. The install header is "Add Playlist Pigeon for YouTube™", with no question mark; the one required line is "Access your data for sites in youtube.com domains"; `storage` and `scripting` have no message; the data-collection line is "The developer says this extension doesn't require data collection."; the 1.4.5 update shows no prompt. Chrome's strings stay as read from Chromium's source, and P1 only glances at the real dialogs (§0, §5, REL-CON-22, REL-CON-23). R83.
+- **Firefox's prompt strings** (was a PROVISIONAL input, live check P1): settled from Firefox's own string files and code and Mozilla's support articles. The install header is "Add Perchling for YouTube™", with no question mark; the one required line is "Access your data for sites in youtube.com domains"; `storage` and `scripting` have no message; the data-collection line is "The developer says this extension doesn't require data collection."; the 1.4.5 update shows no prompt. Chrome's strings stay as read from Chromium's source, and P1 only glances at the real dialogs (§0, §5, REL-CON-22, REL-CON-23). R83.
 - **AMO's reply** (was a PROVISIONAL input, ticket 23): settled by decision, and the message isn't sent. 2.0 declares `data_collection_permissions: {required: ["none"]}`; settings sync declares no data type; settings changed in a private window are saved; the Bun install stays as planned. §13 is now the fallback if a reviewer objects, and the residual cookie risk, which L3/L4 can make moot (R48), stays visible in §12.1 and §13 (§0, §5, REL-CON-09, REL-CON-16, REL-CHK-04, REL-STORE-04, §9.3, REL-STORE-18, REL-STORE-21, REL-STORE-28, REL-STORE-34, §18, §19). R83.
 
 The user's decisions of 2026-10-20 ([R84–R99](resolutions.md#the-users-decisions-of-2026-10-20-r84r99)):
@@ -1495,6 +1495,12 @@ None remain after all three rounds. Every contradiction listed here before is se
 The icon, settled on 2026-10-20 ([R140](resolutions.md#the-icon-perch-r140)):
 - **Store icons** (new REL-STORE-40): Chrome's `store-128.png` from the manifest, AMO's `amo-128.png` uploaded in the Developer Hub; the old icon brief is replaced. R140.
 - **Screenshots, promo tile and checklist** name Perch (REL-STORE-08, REL-STORE-11, REL-CHK-18). R140.
+
+The name, settled on 2026-10-20 ([R141–R144](resolutions.md#the-name-perchling-r141r144)):
+- **The name** is Perchling for YouTube™, and §0's row is settled (§0, §9.1, REL-STORE-16). R141.
+- **Every line of copy** that carried the provisional name now says Perchling: the note, the banner, first run, the disclosure, the prompts, the description, the release notes, the policy, the dashboard, the reviewer notes, `SOURCE_CODE_REVIEW.md` and the demo account (§2.11, REL-CON-02, REL-CON-04, REL-CON-12, REL-CON-15, REL-CON-18, §5, §9.2, REL-STORE-06, REL-STORE-09, REL-STORE-17, REL-STORE-20, REL-STORE-21, REL-STORE-27, S1). R142.
+- **The summaries** don't change; they already carry "playlist" early. The Chrome fallback's count is corrected to 125 (§9.1, REL-STORE-11). R143.
+- **A professional trademark search** replaces "ticket 22 is confirmed" in the launch criteria, and joins the checklist and the user's setup (REL-CHK-04, REL-CHK-18, §19). R144.
 
 The wordmark and store images, made once the name was decided ([R145–R147](resolutions.md#wordmark-and-store-images-r145r147)):
 - **Promo images** (new REL-STORE-41): the small tile and the marquee from `assets/brand/`; the marquee is now uploaded at launch. R146.

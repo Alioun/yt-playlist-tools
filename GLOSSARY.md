@@ -1,4 +1,4 @@
-# YouTube Playlist Tools
+# Perchling (formerly YouTube Playlist Tools)
 
 A browser extension that files the YouTube videos you watch into your own playlists, and puts YouTube Music's everyday actions one click away.
 

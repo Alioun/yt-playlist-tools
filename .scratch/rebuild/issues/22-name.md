@@ -1,9 +1,29 @@
 # What is 2.0 called?
 
 Type: grilling
-Status: open (round 5)
+Status: resolved
 Labels: wayfinder:grilling
 Part of: [Rebuild (2.0)](../map.md)
+
+## Decision (2026-10-20)
+
+**Perchling for YouTube™,** on both stores. The user picked it on 2026-10-20 from round 5's finalists, after five rounds and about 580 names.
+
+- **Where it goes:**
+  - the manifest `name` and both store names: "Perchling for YouTube™" (22 characters);
+  - `short_name` and the product's own pages: "Perchling", with no ™ where YouTube isn't named.
+- **What stays:** AMO's slug `youtube-playlist-tools`, the gecko ID, and the repo's name and Pages URL ([ADR-0011](../../../docs/adr/0011-betas-from-github-pages.md)). Recorded in [ADR-0013](../../../docs/adr/0013-named-perchling-for-youtube.md).
+- **The other questions:** AMO matches Chrome. Round 1's attribution line stays as written. The icon and store images follow round 1's brief, with the icon settled as Perch.
+- **Why:**
+  - One soft word for a small bird on its perch. It matches the Perch icon ([ticket 34](34-icon.md)) without a pun.
+  - It doesn't tie the product to playlists, so the queue, YouTube Music and Gather tabs keep room. The store summaries carry "playlist" early.
+  - It's clean under round 2's strict rules.
+- **The checks** (round 5, 2026-10-20; [research](../../../docs/research/naming-round-5.md)):
+  - **Clean:** no listing on Chrome, AMO or Edge, no app on the App Store or Google Play, no mark on USPTO or WIPO Madrid, nothing on the web. GitHub has only a 1-star desktop-pet repo.
+  - **The cost:** a fused "Perch-" word reads close to the Perch brands, rated medium: Edge's "Perch" picture-in-picture extension, Perch Reader's registered PERCH mark, and Chrome's seven "Perch" extensions.
+  - **Domains:** `perchling.com` is taken; `perchling.app` was free.
+- **Still open:** a professional trademark search before launch, the EU above all. TMview and EUIPO were blocked in round 5, so no EU mark was checked for "Perchling", and neither were UKIPO, DPMA, IP Australia, Singapore or WIPO's Global Brand Database. If it finds a blocking mark, the user picks again from round 5's finalists; the swap stays mechanical.
+- **Applied:** the spec's [R141–R144](../spec/resolutions.md#the-name-perchling-r141r144), ADR-0013, the glossary's title, and notes in tickets [14](14-in-page-controls.md), [15](15-popup-and-settings.md) and [19](19-upgrade-and-rollout.md). Round 1's "After the user confirms" steps are done.
 
 ## Question
 
@@ -16,6 +36,8 @@ Decide:
 - how the icon and store images avoid imitating YouTube's look and feel.
 
 ## Round 5 (2026-10-20)
+
+> **Settled by the [Decision](#decision-2026-10-20) above (2026-10-20).** Kept for the record. The user picked A2, Perchling.
 
 The user's answer to round 4: "what about something with perch". The icon is now **Perch** ([ticket 34](34-icon.md)): a pigeon perched on top of a shelf of pigeonholes with filed cards. They like the pigeon, and they disliked clunky puns.
 
@@ -409,6 +431,8 @@ The extension's own UI:
 - In-page UI still follows YouTube's theme, per the map's "Inside YouTube, look like YouTube".
 
 ### After the user confirms
+
+> **Done on 2026-10-20 with Perchling for YouTube™** (see the [Decision](#decision-2026-10-20)). The ADR is [ADR-0013](../../../docs/adr/0013-named-perchling-for-youtube.md). The runner-up step no longer applies.
 
 Not done here, because this ticket may not touch those files:
 - **Ticket:** set `Status: resolved` and add the map line.
