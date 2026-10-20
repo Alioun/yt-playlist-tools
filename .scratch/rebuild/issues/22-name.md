@@ -1,7 +1,7 @@
 # What is 2.0 called?
 
 Type: grilling
-Status: open
+Status: open (round 2)
 Labels: wayfinder:grilling
 Part of: [Rebuild (2.0)](../map.md)
 
@@ -14,6 +14,10 @@ Decide:
 - whether AMO keeps the old name or both stores match;
 - the attribution line;
 - how the icon and store images avoid imitating YouTube's look and feel.
+
+## Round 2 (2026-10-20)
+
+The user wants to workshop the name again: "list a variety of options for me to choose from with only ones that do not collide". 2.0 now also gathers open YouTube tabs into a queue or playlist ([ticket 31](31-gathertube.md)), so the name's job is broader than filing. The icon follows the name ([ticket 34](34-icon.md)).
 
 ## Answer
 

@@ -46,6 +46,16 @@ A spec at `.scratch/rebuild/spec.md` for 2.0 of this extension: a ground-up rebu
     - **Carried over:** playlist shortcuts and quick-save work there. Auto-add and channel filters stay YouTube-only.
     - **In the app:** YouTube Music gets its own tab or section with its own switch, buttons and shortcuts.
     - **Installed app:** the YouTube Music app is first-class if extensions run in it.
+  - **Settled 2026-10-20 (the user's answers to D1–D11 and ticket 30):**
+    - D2–D6 and D8–D11 take the recommended answers. D6's keys from any tab ship in 2.0.0.
+    - D7: GitHub issues, with a few prefilled choices and directions.
+    - The listing re-leads with saving; upgrade fixes S1–S3 are in; scope stays whole; the narrow Quick picks rows keep their buttons.
+    - The name is workshopped again ([ticket 22](issues/22-name.md), round 2), and a hand-made icon follows it ([ticket 34](issues/34-icon.md)). No AI-generated pictures.
+  - **GatherTube (added 2026-10-20):**
+    - Every feature of GatherTube (MIT, unmaintained) is ported and credited ([ticket 31](issues/31-gathertube.md)).
+    - Exactly two additions: gathering into a playlist the user picks, and an automatic option. Nothing else.
+    - We fix its broken options upstream ([ticket 32](issues/32-gathertube-upstream-fix.md)).
+  - **Resources (2026-10-20):** automatic work must be very mindful of browser resources and never degrade the browser ([ticket 33](issues/33-resource-mindful-defaults.md)).
 
 ## Decisions so far
 
@@ -84,7 +94,7 @@ A spec at `.scratch/rebuild/spec.md` for 2.0 of this extension: a ground-up rebu
 
 - Visual detail beyond the prototypes: motion and iconography.
 - Edge cases with members-only, age-restricted, private and deleted videos, and very large playlists, beyond the failure copy already specified.
-- What hangs on the open tickets: the name (22) and the signed-in live checks (25). The spec states a default for each.
+- What hangs on the open tickets: the name (22), the signed-in live checks (25), GatherTube (31, 32), running costs (33) and the icon (34). The spec states a default for the name and the live checks.
 
 ## Out of scope
 
