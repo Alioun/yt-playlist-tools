@@ -1,7 +1,7 @@
 # What is 2.0 called?
 
 Type: grilling
-Status: open (round 2)
+Status: open (round 3)
 Labels: wayfinder:grilling
 Part of: [Rebuild (2.0)](../map.md)
 
@@ -15,7 +15,65 @@ Decide:
 - the attribution line;
 - how the icon and store images avoid imitating YouTube's look and feel.
 
+## Round 3 (2026-10-20)
+
+The user, after round 2: "I liked the pigeon idea more, but the pigeonhole grid seems cute, what about general pigeonhole thing so were not limited by playlists so to say not to be pigeonholed". So the name builds on "pigeonhole", isn't tied to "Playlist", and winks at "not to be pigeonholed". The icon is a hand-drawn pigeonhole grid.
+
+**PROVISIONAL, pending the user's choice. This round supersedes round 2 below.**
+
+Full screening: [`docs/research/naming-round-3.md`](../../../docs/research/naming-round-3.md). All checks ran on 2026-10-20 with round 2's method and rules.
+- **What ran:** Chrome Web Store, AMO, Edge Add-ons, GitHub, USPTO, the App Store, Google Play, the web and RDAP. EUIPO and WIPO Madrid stood in for TMview, which was still blocked.
+- **What didn't run:** TMview, UKIPO, DPMA, IP Australia, Singapore's register and WIPO's Global Brand Database. Each was blocked or needs a manual form.
+
+- **Screened 51 names:** 5 bare forms, 28 "Pigeonhole + word" compounds, 10 puns and 8 backup cousins.
+- **Bare "Pigeonhole" collides.** Chrome already has a "PigeonHole" listing (a Gmail switcher, 12 users), and Google Play a "Pigeonhole" app. The App Store has "The Pigeonhole" (books), and GitHub has Dovecot's Pigeonhole (100 stars). A personal Spotify app named pigeonhole even does our job with our pun: "finally, being pigeonholed is a good thing. add any song to the perfect playlist in one tap." No live PIGEONHOLE mark blocks it in software classes, so it's crowding more than law. Pigeonholes, Pigeon Hole, The Pigeonhole and Pigeonholed collide too.
+- **Pigeonhole Live** (pigeonhole.at; PigeonLab Pte Ltd, Singapore) does audience Q&A and polls for events. No marks turned up on USPTO, EUIPO or WIPO Madrid; Singapore's register couldn't be checked. Different field, so not a collision for the finalists, but it adds weight against the bare name.
+- **PigeonPod** brands the bird ("Pigeon" + "Pod"); "pigeonhole" is a different word. Judgment call: low risk, lower with a grid icon. Not a collision.
+- **The judgment call:** three hobby repos use "pigeonhole" for music or video (0 to 2 stars, none on a store, no marks). Round 2's word rule would count the 2-star one and fail every "Pigeonhole + word" name. I treat them as notes for compounds. The derived words below don't depend on this.
+
+### Finalists
+
+A = clean under round 2's strict rules. B = clean if the three hobby repos are notes. All suit the pigeonhole-grid icon.
+
+| # | Store name | Chars | How the pun reads | Checks (2026-10-20) | `.com` / `.app` |
+|---|---|---|---|---|---|
+| A1 | Unpigeonholed for YouTube™ | 26 | The wink in one word: not boxed in, while it boxes everything | Clean everywhere it ran | free / free |
+| A2 | Not Pigeonholed for YouTube™ | 28 | The wink spelled out, like a slogan | Clean everywhere it ran | free / free |
+| A3 | Pigeonholer for YouTube™ | 24 | "The one who pigeonholes"; no wink | Clean everywhere it ran | taken / free |
+| B1 | Pigeonhole Post for YouTube™ | 28 | Post each thing into its slot | Clean; judgment call | free / free |
+| B2 | Pigeonhole Desk for YouTube™ | 28 | The desk full of pigeonholes | Clean; judgment call | free / free |
+| B3 | Pigeonhole Everything for YouTube™ | 34 | Everything, not just playlists | Clean; judgment call | free / free |
+| B4 | Pigeonhole It for YouTube™ | 26 | An order with a grin | Clean; judgment call | free / free |
+| B5 | Pigeonhole Box for YouTube™ | 27 | A box of pigeonholes | Clean; judgment call | free / free |
+| B6 | Pigeonhole Grid for YouTube™ | 28 | Names the icon | Clean; judgment call | free / free |
+| B7 | Pigeonhole Pal for YouTube™ | 27 | A friendly filer | Clean; judgment call | free / free |
+| B8 | Pigeonhole Kit for YouTube™ | 27 | "Kit" reads like an SDK | Clean; judgment call | free / free |
+| B9 | Pigeonhole Sorter for YouTube™ | 30 | Literal; recalls the "pigeonhole sort" algorithm | Clean; judgment call | free / free |
+
+**Discoverability:** none of these names says "playlist", round 1's search word, so the summaries must find the users.
+- Both drafted summaries in spec 08 §9.1 already lead with "Watch Later or any playlist".
+- If you want the word in the store name too, use one subtitle, for example "Unpigeonholed: Playlist Saver for YouTube™" (42 chars). It narrows the name back towards playlists, so it's optional.
+
+### Recommendation
+
+1. **Unpigeonholed for YouTube™.**
+   - The pigeonhole idea with the wink, not tied to playlists.
+   - Clean even under the strict rules, and both domains are free.
+   - Icon: the grid with one card popping out of its slot.
+2. **Pigeonhole Post for YouTube™,** if you'd rather lead with "Pigeonhole". It accepts the judgment call.
+3. **Pigeonholer for YouTube™,** if you want it short.
+
+**Backup** if pigeonhole is dropped: Sorting Desk for YouTube™ is the only cousin that passes.
+
+### What's left
+
+- **The user picks a name.**
+- **Before launch,** a professional search should cover the registers that couldn't run, Singapore and the UK above all.
+- **Round 1's "After the user confirms" steps still apply** with the chosen name. The icon brief moves to the grid ([ticket 34](34-icon.md)).
+
 ## Round 2 (2026-10-20)
+
+> **Superseded by round 3 above (2026-10-20).** Kept for the record. Its finalists stay valid, but the user moved to a pigeonhole-based name.
 
 The user wants to workshop the name again: "list a variety of options for me to choose from with only ones that do not collide". 2.0 now also gathers open YouTube tabs into a queue or playlist ([ticket 31](31-gathertube.md)), so the name's job is broader than filing. The icon follows the name ([ticket 34](34-icon.md)).
 
