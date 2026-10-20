@@ -103,7 +103,7 @@ This follows [ticket 26](26-youtube-music-quick-actions.md)'s rules, so YouTube 
 
 - **Each feature has its own Show feedback switch, shared by all accounts.**
   - **Off** hides confirmations: toasts saying an action did what was asked, and auto-add's "filtered out" note.
-  - **Failures, and explicit actions that did nothing (such as "already in"), always show.** An explicit click or key that silently does nothing is a defect, and auto-add's failures are rate-limited (see [Timing](#timing)), so they stay rare.
+  - **Failures, and explicit actions that did nothing (such as "already in"), always show.** An explicit click or key that silently does nothing is a defect, and auto-add's failures are rate-limited (see "Rate-limited failures" under [Feedback](#feedback)), so they stay rare.
   - **The switch governs toasts only.** A control's own state always shows: a picker row, a quick-save or queue button. So do the *Missing* and *Full* marks in settings.
   - *Runner-up (this answer's first draft):* three levels per feature, all / problems only / none. It lost because "none" makes failures silent, failures are already rate-limited, and a switch matches the map's wording and ticket 26.
 - **Defaults:**
