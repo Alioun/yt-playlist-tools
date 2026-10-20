@@ -90,12 +90,13 @@ A spec at `.scratch/rebuild/spec.md` for 2.0 of this extension: a ground-up rebu
 - [Write the rebuild spec](issues/20-write-spec.md): **the destination is reached.** [`spec.md`](spec.md) plus nine chapters, about 1,470 requirement IDs, checked for broken links, missing IDs and contradictions, with 82 assembly resolutions recorded. Open items wait only on the user's decisions, the signed-in live checks (ticket 25) and AMO's reply (ticket 23), each with a stated default.
 - [Ask AMO whether 2.0 can declare no data collection](issues/23-ask-amo.md): settled by decision from Mozilla's own docs, without sending: `none`, sync isn't collection, private-window settings allowed, Bun install kept. Firefox's prompt strings settle live check P1 ([R83](spec/resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)).
 - [What sets 2.0 apart, and who is it for?](issues/30-market-and-users.md): the USP is any playlist in one click or one named key, with YouTube Music one-click in the page, auto-add by actual watching, and Undo everywhere, all opt-in. "No sign-in" and Watch Later buttons are not differentiators. The listing re-leads with saving; the user took the re-led listing and upgrade fixes S1–S3 on 2026-10-20 (R95–R98); the live AMO listing fix S4 is the user's action. Detail on branch `research/market-differentiation`.
+- [What may automatic work cost the browser?](issues/33-resource-mindful-defaults.md): automatic work is event-driven, scoped to the tabs that need it, never on a clock, and paced ([ADR-0012](../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)). Running-cost budgets in 07 §7.6.8: an idle page costs nothing, playback at most 30 ms a minute of ours (YouTube's own is about 1,070), no wake for other sites' tabs, at most 1 local write a minute per playing tab, sync at most 12 a minute, four named, bounded requests nobody asked for. Progress is saved at checkpoints and at most every 5 minutes, one shard at a time. Enforced by a guard, soaks, `check:runtime` and a release check. Constraints for ticket 31's automatic gathering. R100–R117. Detail on branch `research/running-costs`.
 
 ## Not yet specified
 
 - Visual detail beyond the prototypes: motion and iconography.
 - Edge cases with members-only, age-restricted, private and deleted videos, and very large playlists, beyond the failure copy already specified.
-- What hangs on the open tickets: the name (22), the signed-in live checks (25), GatherTube (31, 32), running costs (33) and the icon (34). The spec states a default for the name and the live checks.
+- What hangs on the open tickets: the name (22), the signed-in live checks (25), GatherTube (31, 32) and the icon (34). The spec states a default for the name and the live checks.
 
 ## Out of scope
 

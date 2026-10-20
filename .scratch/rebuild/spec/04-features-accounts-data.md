@@ -110,6 +110,8 @@ Requirements are numbered `FT-`, `ACC-`, `SYNC-`, `DATA-` and `HEALTH-`. Each is
   - It's requested first, synchronously, in the click that switches the feature on: the switch in Settings or the popup, or first run's Agree. Neither browser shows a prompt for it.
   - Switching the feature off removes its entry and gives the permission back.
   - Without it, the feature is held with "Needs your OK" and **Allow**, which requests it. That happens when the feature arrives by sync, or when the user removes the permission in the browser. It sets no "!". (R91)
+- **FT-61** **Automatic work never degrades the browser** ([ADR-0012](../../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)). What a feature does without a click runs only on an event it needs, only in the tabs that need it, and never on a clock. It stays within the running-cost budgets of [07 §7.6.8](07-quality.md#768-running-cost), with its defaults and with every option. No 2.0 feature needs a schedule, so 2.0 sets no alarm at all (FT-22). (R100)
+- **FT-62** **Hidden tabs.** In a tab the user can't see, features do only what can't wait: auto-add keeps counting a video that's playing ([YT-AA-45](02-youtube.md#2312-what-tracking-costs)). Drawing, anchor checks, observers and toast timers wait until the tab is shown. Discarded and frozen tabs are never woken, reloaded, injected into or messaged ([Q-PERF-57](07-quality.md#768-running-cost)). (R104)
 
 The size and timing budgets that enforce this, and the real-browser "off means zero" test, are in [07 Quality](07-quality.md): [§7.6.2 Off means zero](07-quality.md#762-off-means-zero) (Q-PERF-5 to Q-PERF-11: FT-15 ↔ Q-PERF-5/6, FT-16 ↔ Q-PERF-9, FT-17 ↔ Q-PERF-8, FT-19 ↔ Q-PERF-10, FT-21 ↔ Q-PERF-11, FT-22 ↔ Q-PERF-7), [§7.6.3 In-page weight](07-quality.md#763-in-page-weight), [§7.6.5 In-page time](07-quality.md#765-in-page-time) and the real-browser layer, [§7.2.5](07-quality.md#725-layer-4-real-browser) (Q-TEST-18).
 
@@ -368,6 +370,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 - **ACC-33** **Unmatched:** on an account that doesn't own its playlists, the popup says "Your playlists from 1.x belong to another YouTube account. Switch to it on YouTube to use them, or set up {Account} below." with **Switch account** and **Discard**. Discard deletes the unclaimed setup.
 - **ACC-34** **At Agree with nothing to claim from yet:** the upgrade note says "Sign in to YouTube and your 1.x playlists will be picked up." when not signed in, and "Open YouTube and your 1.x playlists will be picked up." when no tab is open.
 - **ACC-35** Ticket 25 checks whether YouTube's playlist list includes collaborative playlists, which decides whether those count as owned for claiming.
+- **ACC-46** **Claiming looks once per account.** The playlist-list read that claiming needs (ACC-30) happens at most once per account per browser session. "Checked, no match" is kept in session memory, so an account that doesn't own the playlists isn't fetched again on every page load. (R116)
 
 ### 2.7 Private windows and containers
 
@@ -430,6 +433,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 - **SYNC-05** Each browser's `storage.local` is always its truth. The **synced copy** in `storage.sync` is a copy, kept as whole documents: the shared settings, one document per account setup, and one per channel filter.
 - **SYNC-06** **Changes travel within seconds** on Chrome, and within Firefox's sync interval there. This browser pushes a changed document 2 s after the last change, and at most once every 5 s. Documents arriving from other browsers apply as ordinary local changes: open pages and tabs pick them up without a reload.
 - **SYNC-07** **A synced copy that vanishes isn't a deletion.** If the synced copy loses documents without a tombstone (an uninstall in another browser, a reset of the browser's own sync, or Chrome's first sync after sign-in), this browser pushes its own documents back. Nothing local is lost.
+- **SYNC-27** **One write per push.** A push writes every changed document, with its chunks, in one `storage.sync.set()` call. So SYNC-06's pace keeps sync at no more than 12 writes a minute, a tenth of Chrome's 120 (Firefox doesn't limit the rate). A document whose synced copy is already the same is never pushed, so two browsers can't keep pushing the same documents back and forth (SYNC-07). The background listens only to the sync area's own change event, and ignores it while sync is off in this browser ([Q-PERF-54](07-quality.md#768-running-cost)). (R108)
 
 ### 3.3 Switching on: the join
 
@@ -593,7 +597,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 | `doc:filter:<acct>:<playlistId>` | One channel filter of that account, kept filters included | `Stamped<Filter>` | Until removed with its setup, or by Clear all data |
 | `unclaimed` | The 1.x setup waiting for its account | `Unclaimed` | Until claimed or discarded |
 | `cache:<acct>` | The account's playlist cache | `AccountCache` | While the account has a setup |
-| `progress:<acct>` | The account's remembered watch progress | `Progress` | Per video: until auto-add has added it or found it already in (DATA-25), the length changes, or 30 days pass |
+| `progress:<acct>:<n>` | The account's remembered watch progress, in 16 shards, `n` 0–15 (DATA-56; R105) | `Progress` | Per video: until auto-add has added it or found it already in (DATA-25), the length changes, or 30 days pass |
 | `sync` | The replicator's bookkeeping | `SyncState` | Once sync has been on |
 
   (R21, R23, R43)
@@ -775,18 +779,25 @@ type SyncState = {
   - a Missing mark clears when the playlist appears in a list read again, and a successful add to a marked playlist clears its mark ([YT-ADD-36](02-youtube.md#255-failures)). That's a setup write, so it syncs. (R39)
 - **DATA-22** **No membership cache.** Membership is read fresh before every add and every time the picker opens. A list of which videos are in which playlists would be a record of what was watched, and stale ticks mislead.
 - **DATA-23** **No channel cache.** A video's channel is read from the page; a fallback request's answer lives only as long as the add or popup that asked for it.
+- **DATA-57** **No write without a change.** The store compares before it writes. A membership read or list read that leaves the cache as it was, a tab registry entry that's the same, or a setting set to its current value writes nothing. Only one refresh of an account's playlist list is in flight at a time; a second view that opens meanwhile waits for it. (R108)
 
 ### 4.6 Watch progress
 
-- **DATA-24** Remembered watch progress is kept in `progress:<acct>`. For each video it holds the length, the merged stretches that were played (at most 100; beyond that the shortest are dropped, which can only undercount), and when it last played.
+- **DATA-24** Remembered watch progress is kept in `progress:<acct>:<n>`, 16 shards per account (DATA-56). For each video it holds the length, the merged stretches that were played (at most 100; beyond that the shortest are dropped, which can only undercount), and when it last played.
 - **DATA-25** A video's progress is kept until whichever comes first:
   - auto-add has run for it, which means only *added* or *already in*. *Filtered out*, *failed* and a session skip ("Don't auto-add this video") don't count, so they keep remembered progress; undoing the skip checks the goal at once ([YT-AA-04](02-youtube.md#231-switching-off-pausing-and-leaving-a-video-out));
   - its length changes by more than 2 s;
   - 30 days pass since it last played. (R23, R43)
-- **DATA-26** At most 2,000 videos per account are kept, oldest dropped first. Expired entries are pruned at every background start and every write.
-- **DATA-27** It's written when playback pauses, when the tab leaves the video, when the tab is hidden or closed, and every 60 s of continuous playback, so a crash loses at most a minute.
+- **DATA-26** At most 2,000 videos per account are kept, oldest dropped first. Expired entries are pruned when the account's progress is next written, at most once a day per account; a background start that doesn't write progress never reads it. (R107)
+- **DATA-27** **Checkpoints.** It's written:
+  - when the tab leaves the video or closes;
+  - when playback pauses or ends, or the tab is hidden, unless the last save was under a minute ago;
+  - after 5 minutes of continuous playback since the last save.
+
+  Nothing is written when nothing new was played. So a playing tab saves at most once a minute, and about once every 5 minutes while a video simply plays; a crash loses at most 5 minutes of counting. (R105)
 - **DATA-28** It never syncs and is never written from a private tab; there, progress lives in the tab.
 - **DATA-29** It's deleted when auto-add is switched off (every account), when a setup is removed (that account), and by Clear all data.
+- **DATA-56** **A save rewrites one shard.** Each account's progress is split into 16 shards by a small hash of the video ID. Loading a video's progress reads its shard, and saving rewrites only that shard, so a save doesn't grow with the history: a shard holds about a sixteenth of the account's videos. The daily prune and the 2,000-video cap (DATA-26) read the account's 16 shards in one call and rewrite only the shards that changed. (R105, R107)
 
 ### 4.7 The private-window write guard
 
@@ -957,6 +968,10 @@ The user approved this on 2026-10-20 (R90).
 - **HEALTH-04** A shape outline records keys and value types to depth 6, merges array items, keeps no values, writes keys that don't look like schema names as `<key>`, and is capped at 2 KB.
 - **HEALTH-05** Signals live in `storage.session` and never leave the browser. Signals from private tabs stay in memory.
 - **HEALTH-06** Starting values (3 timeouts, 2 no-effects, 3 can't-measure, 3 s settle, 6 links, one half; [Q-WATCH-29](07-quality.md#757-runtime-breakage-signals)) are tuned after ticket 25 and the first weeks of use.
+- **HEALTH-28** **Checking costs little.**
+  - The anchor check (HEALTH-02) runs only in a visible tab. In a hidden tab it waits until the tab is shown, then runs once.
+  - A tab sends signals at most every 5 s, and only new ones, or a success for a job that has a signal in that tab ([ARC-MSG-14](06-architecture.md#684-rules-for-every-channel)).
+  - The monitor counts them in memory and writes `storage.session` at most every 10 s. It keeps at most 200 distinct signals, dropping the oldest first. (R111)
 
 ### 5.2 Status
 
