@@ -2,7 +2,7 @@
 
 [← Docs](../README.md)
 
-2.0 is a ground-up rebuild that keeps every 1.5.0 capability and adds YouTube Music quick actions. It works through the user's own signed-in YouTube session, puts UI/UX first, and every part of it is a feature the user can switch off. It's fully planned and not yet built.
+2.0, named **Perchling for YouTube™** ([ADR-0013](../adr/0013-named-perchling-for-youtube.md)), is a ground-up rebuild that keeps every 1.5.0 capability and adds YouTube Music quick actions. It works through the user's own signed-in YouTube session, puts UI/UX first, and every part of it is a feature the user can switch off. It's fully planned and not yet built.
 
 **Start here:** the [2.0 spec](../../.scratch/rebuild/spec.md): scope, principles, stack, decisions and open items.
 
@@ -18,7 +18,7 @@
 | 07 | [Quality](../../.scratch/rebuild/spec/07-quality.md) | Tooling, test layers, fixtures, breakage detection, performance budgets, CI |
 | 08 | [Upgrade and release](../../.scratch/rebuild/spec/08-release.md) | The 1.4.5 migration, consent, betas, store listings, privacy policy, workflows |
 | 09 | [Parity and defects](../../.scratch/rebuild/spec/09-parity.md) | Every 1.5.0 capability and friction item mapped to 2.0, plus what's new |
-| | [Resolutions](../../.scratch/rebuild/spec/resolutions.md) | Every conflict settled during and after assembly (R1–R83) |
+| | [Resolutions](../../.scratch/rebuild/spec/resolutions.md) | Every conflict settled during and after assembly, and the user's decisions (R1–R144) |
 
 ## Behind the spec
 

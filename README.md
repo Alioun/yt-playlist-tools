@@ -20,7 +20,7 @@ Using 1.4.5 from Firefox Add-ons? [Setup guide](docs/legacy/1.4.5-setup.md)
 - **On Firefox Add-ons:** 1.4.5
 - **Next:** 2.0, fully planned and not yet built
 
-2.0 is a ground-up rebuild. It works through your own signed-in YouTube session, so you no longer need to set up Google credentials. It also adds YouTube Music quick actions, and every part of it can be switched off. Read the [2.0 spec](.scratch/rebuild/spec.md), or start at the [planning hub](docs/rebuild/README.md).
+2.0 will be called **Perchling for YouTube™**: Google's rules don't allow extensions to be named after YouTube. It's a ground-up rebuild. It works through your own signed-in YouTube session, so you no longer need to set up Google credentials. It also adds YouTube Music quick actions, and every part of it can be switched off. Read the [2.0 spec](.scratch/rebuild/spec.md), or start at the [planning hub](docs/rebuild/README.md).
 
 ## Docs
 
