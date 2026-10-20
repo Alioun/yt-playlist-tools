@@ -15,7 +15,7 @@ It covers behaviour only. Elsewhere:
 - **Routes,** gateway jobs, the queue mechanics and page registrations: [06-architecture.md](06-architecture.md) §6.2.7, §6.2.8 and §6.6.
 - **Budgets** and the breakage watch: [07-quality.md](07-quality.md) (Q-PERF-13, Q-PERF-14, §7.5).
 
-The main session's resolutions ([resolutions.md](resolutions.md), all three rounds: R1–R40, R41–R67, then R68–R77) are applied, and so are R83, settled after the spec, and the user's decisions of 2026-10-20, R84–R99. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Where chapters disagree, the owning chapter wins (resolutions.md's ownership rule): this chapter owns YouTube Music behaviour and copy.
+The main session's resolutions ([resolutions.md](resolutions.md), all three rounds: R1–R40, R41–R67, then R68–R77) are applied, and so are R83, settled after the spec, the user's decisions of 2026-10-20, R84–R99, and the name, R141–R144. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Where chapters disagree, the owning chapter wins (resolutions.md's ownership rule): this chapter owns YouTube Music behaviour and copy.
 
 **Sources**, all resolved on 2026-10-19:
 - [26 Quick actions](../issues/26-youtube-music-quick-actions.md), the core, with its amendments after 28, 08, 18 and 25;
@@ -578,7 +578,7 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
   - **Reload** reloads the tab.
   - **Details** opens Settings at Diagnostics (`#diagnostics`).
   - **Settings** opens Settings at the shortcut's playlist row, `#feature-shortcuts&playlist=<playlistId>` (R38).
-- `{Product}` is the extension's in-product name, **PROVISIONAL** on [ticket 22](../issues/22-name.md) ("Playlist Pigeon"). Every chapter writes it `{Product}` (R65).
+- `{Product}` is the extension's in-product name, "Perchling" ([ticket 22](../issues/22-name.md); R141). Every chapter writes it `{Product}` (R65).
 
 ## 14. Failures and breakage
 
@@ -828,7 +828,6 @@ Keys from any tab is one feature for both sites, specified in [02 §2.14](02-you
 | `DATASYNC_ID` is stable | YM-ACC-2 | Ticket 25 (ticket 11's checks) |
 | Playlist titles are limited to 150 characters | YM-PICK-10 | Ticket 25 |
 | Toasts name "this tab's queue" if the cast state can't be read | YM-CAST-2 | Ticket 25, M5 |
-| The name in `{Product}` | §13 | [Ticket 22](../issues/22-name.md), the user |
 
 Visual PROVISIONAL items (the toast action's blue, bundling YouTube Music's own icons) are in [05-ui.md](05-ui.md#provisional). The picker's 54.5 KB against its 50 KB budget, and R29's fix order, are in [07-quality.md](07-quality.md) (Q-PERF-14) and [UI-RULE-39](05-ui.md#budgets).
 
@@ -885,6 +884,8 @@ The user's decisions of 2026-10-20 ([R84–R99](resolutions.md#the-users-decisio
 - **Narrow Quick picks rows** (was PROVISIONAL on YM-NARROW-1): every switched-on button stays (YM-QA-7, YM-NARROW-1). R94.
 
 R86, R87, R89 to R92 and R95 to R99 change nothing this chapter states.
+
+The name, settled on 2026-10-20 ([R141–R144](resolutions.md#the-name-perchling-r141r144)): `{Product}` is "Perchling" (§13), and the name leaves the PROVISIONAL table. R141.
 
 ## Conflicts found
 

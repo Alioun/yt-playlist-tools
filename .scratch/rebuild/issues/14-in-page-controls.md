@@ -423,7 +423,7 @@ The setup, matching production as ticket 17 asks:
 - **YouTube's hover toggles:** whether signed-in feeds draw them. The step-aside handles both cases.
 - **The queue toast's Show feedback default:** on.
 - **Unticking removes:** inherited from tickets 12 and 26. *Settled 2026-10-20 (R84).*
-- **The pigeon mark and the name "Playlist Pigeon":** placeholders for ticket 22.
+- **The pigeon mark and the name "Playlist Pigeon":** placeholders for ticket 22. *Settled 2026-10-20: the name is Perchling ([ticket 22](22-name.md), R141), so the spec writes "Perchling" where this ticket says "Playlist Pigeon".*
 - **Signed-in and Firefox behaviour,** which are untested.
 
 ### For other tickets

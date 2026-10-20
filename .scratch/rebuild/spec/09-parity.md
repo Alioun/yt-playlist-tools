@@ -7,7 +7,7 @@ Sources:
 - `map.md`;
 - `for-the-user.md`;
 - the tickets' Answers in `issues/`;
-- the resolutions made while assembling the spec ([resolutions.md](resolutions.md): R1–R40, then the second round, R41–R67, then the third, R68–R77), R83, settled after the spec, the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, the GatherTube fold, R120–R139, and the icon, R140;
+- the resolutions made while assembling the spec ([resolutions.md](resolutions.md): R1–R40, then the second round, R41–R67, then the third, R68–R77), R83, settled after the spec, the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, the GatherTube fold, R120–R139, the icon, R140, and the name, R141–R144;
 - GatherTube 1.1.0's inventory and fold, in [`docs/research/gathertube.md`](../../../docs/research/gathertube.md) ([ticket 31](../issues/31-gathertube.md)), for §4;
 - the assembled chapters 02–08, which every row was checked against. Where they disagree, the resolutions' ownership rule picks the owning chapter, and the rows follow it.
 
@@ -64,7 +64,7 @@ Use this chapter as the acceptance checklist: every row should trace to at least
 
 PAR-CAP-67, PAR-NEW-06, PAR-NEW-27's saved shared settings in private windows (R58) and PAR-DEF-28's Firefox data-collection prompt no longer wait on AMO's reply: [R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83) settled ticket 23 by decision. If an AMO reviewer objects, [08 §13](08-release.md#13-if-an-amo-reviewer-objects)'s fallback applies.
 
-**PENDING USER:** none. The user answered PAR-NEW-31 to PAR-NEW-39 on 2026-10-20: eight approved and one declined (R84–R93). Of the three user decisions listed after them, only the name (ticket 22) is still open.
+**PENDING USER:** none. The user answered PAR-NEW-31 to PAR-NEW-39 on 2026-10-20: eight approved and one declined (R84–R93). The user decisions listed after them are settled too; the name, Perchling, came last (R141).
 
 ## 1. Capabilities
 
@@ -147,7 +147,7 @@ PAR-CAP-67, PAR-NEW-06, PAR-NEW-27's saved shared settings in private windows (R
 |---|---|---|---|---|---|
 | PAR-CAP-44 | `sync:theme`: light, dark or system (default system), set only in Settings. System follows the OS. | `settings.theme`, a shared setting that syncs only while settings sync is on, set in Settings › Appearance. System follows the OS, and it's the default (R11). While sync is off, the migration leaves `storage.sync` alone, so 1.5.0's stray `sync:theme` key isn't moved or removed; only developer profiles ever wrote it (R20). The only `storage.sync` calls while sync is off are first run's read before Agree and Clear all data with its box ticked (R59). | KEPT | 15, 16 | 04 FT-05, FT-21, DATA-49; 05 UI-SET-15 |
 | PAR-CAP-45 | The theme covers the popup, the options page and the in-page toasts. | It covers the popup, Settings and the first-run page. In-page UI follows YouTube's own theme. (R37) | CHANGED | map Notes, 14, 15 | 05 UI-IA-06, UI-SET-15, UI-YT-02; 04 FT-05 |
-| PAR-CAP-46 | YouTube red is the primary colour. | Perch, a grey pigeon on a cabinet of pigeonholes, with a teal-to-violet neck, never YouTube red (R140). The name waits on ticket 22 (PENDING USER). | CHANGED | 15, 22, 34 | 05 UI-BRAND-01, UI-BRAND-03, UI-BRAND-04, UI-BRAND-05 |
+| PAR-CAP-46 | YouTube red is the primary colour. | Perch, a grey pigeon on a cabinet of pigeonholes, with a teal-to-violet neck, never YouTube red (R140). The name is Perchling for YouTube™ (R141). | CHANGED | 15, 22, 34 | 05 UI-BRAND-01, UI-BRAND-03, UI-BRAND-04, UI-BRAND-05 |
 
 ### 1.8 Playlist list
 
@@ -343,7 +343,7 @@ These waited on the user's go-ahead. The user answered on 2026-10-20 ([R84–R99
 | PAR-NEW-45 | The Shuffled gather order, so GatherTube's shuffle survives without its player page. (R122) | APPROVED | 31 | 02 YT-GT-08, YT-GT-10 |
 
 **User decisions that shape approved items** (not new capabilities):
-- **The name:** ticket 22, still being workshopped. The spec keeps "Playlist Pigeon for YouTube™" as a placeholder (05 UI-BRAND-01). **PENDING USER.** The mark is settled: Perch (R140; 05 UI-BRAND-03).
+- **The name:** Perchling for YouTube™, chosen on 2026-10-20 after five naming rounds (ticket 22; R141; 05 UI-BRAND-01). A professional trademark search is due before launch (R144). The mark is Perch (R140; 05 UI-BRAND-03).
 - **Narrow Quick picks rows on YouTube Music:** every switched-on button stays (R94; 03 YM-NARROW-1; 05 UI-YM-10).
 - **A support e-mail beside GitHub issues:** none (R89; 04 HEALTH-22; 08 REL-STORE-35).
 - **The store listings and the upgrade note** (ticket 30): the listings lead with saving (R95), never-authorised upgraders default to 50 % (R96; PAR-CAP-73), the note reopens once if nobody saw it and asks to be pinned (R97), and its tab title names the old name (R98).
@@ -492,6 +492,10 @@ The user's decisions of 2026-10-20:
 GatherTube, folded in on 2026-10-20 ([R120–R139](resolutions.md#gathertube-r120r139)):
 - R120 to R138 (new §4, PAR-GT-01 to PAR-GT-46; new PAR-NEW-42 to PAR-NEW-45; the chapter table, the row IDs and Open rows at a glance): Gather tabs, the gather playlist, automatic gathering and the Shuffled order;
 - R139 changes no row: budgets and tests are 07's.
+
+The name, settled on 2026-10-20 ([R141–R144](resolutions.md#the-name-perchling-r141r144)):
+- R141 and R144 (PAR-CAP-46, §3.3's name line and the PENDING USER line): the name is Perchling for YouTube™, with a professional trademark search before launch;
+- R142 and R143 change no row: copy and listings are 05's and 08's.
 
 ## Conflicts found
 

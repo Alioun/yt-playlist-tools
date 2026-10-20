@@ -1,14 +1,16 @@
 # For the user
 
-**The spec is assembled** ([spec.md](spec.md)), and your answers of 2026-10-20 are folded in as [R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99), with your GatherTube answers as [R120–R139](spec/resolutions.md#gathertube-r120r139). Everything below is what still needs you; the spec's Open items section states the default it uses until you answer.
+**The spec is assembled** ([spec.md](spec.md)), and your answers of 2026-10-20 are folded in as [R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99), with your GatherTube answers as [R120–R139](spec/resolutions.md#gathertube-r120r139) and your name as [R141–R144](spec/resolutions.md#the-name-perchling-r141r144). Everything below is what still needs you; the spec's Open items section states the default it uses until you answer.
 
 Items that need the user, collected while working the map. Clear each one when it's answered.
 
 ## Decisions only the user makes
 
-- **The 2.0 name** ([ticket 22](issues/22-name.md), round 2): you asked to workshop it again, with a list of options that don't collide. The icon is settled: you picked Perch ([ticket 34](issues/34-icon.md), [R140](spec/resolutions.md#the-icon-perch-r140)); its wordmark waits on the name. Until then the spec keeps "Playlist Pigeon for YouTube™" as a placeholder.
+None open. The last one, the 2.0 name, is settled: you chose **Perchling for YouTube™** on 2026-10-20 ([ticket 22](issues/22-name.md), [R141–R144](spec/resolutions.md#the-name-perchling-r141r144)), with the Perch icon ([ticket 34](issues/34-icon.md)).
 
 ## Actions only the user can take
+
+- **Have a professional trademark search run for "Perchling" before launch** ([R144](spec/resolutions.md#the-name-perchling-r141r144)), the EU above all. TMview and EUIPO were blocked in round 5, so no EU mark was checked for "Perchling", and neither were UKIPO, DPMA, IP Australia, Singapore or WIPO's Global Brand Database. It's best done before the beta, because beta testers and the Chrome item already show the name.
 
 - **Create three issue labels** on GitHub: `problem`, `youtube-change` and `idea`. The new issue forms in `.github/ISSUE_TEMPLATE/` set them, and GitHub drops a label that doesn't exist (R89).
 
@@ -80,3 +82,11 @@ You chose the destinations, the Shuffled order, all three automatic triggers, an
 - **Undo for a gather into a playlist** removes what it added and reopens the tabs it closed. Chrome loads them again; Firefox reopens them asleep (R127).
 - **Nothing new to approve in the stores:** no new permission and no new prompt. The consent text gains one line about reading a window's YouTube tabs, and Chrome's single-purpose statement now names gathering; 2.0 hasn't shipped, so consent stays at version 1 (R138).
 - **Credit to GatherTube by Karim Elgazar** shows on the feature's Settings card, in Settings › About, in both store descriptions and in the 2.0.0 release notes. Nothing is copied, so no licence notice is needed (R138).
+
+### Details filled in with the name
+
+These follow from your pick ([R141–R144](spec/resolutions.md#the-name-perchling-r141r144)). Say if any should go another way.
+- **The store summaries don't change.** The name doesn't say "playlist", so the summaries carry it, near the start: AMO's is 246 of 250 characters and Chrome's 132 of 132. AMO's keeps "(Formerly YouTube Playlist Tools.)" through 2.x (R143).
+- **Everything else keeps its name:** AMO's address (`…/addon/youtube-playlist-tools/`), the add-on's ID, and this repo with its Pages site, which beta testers update from. A domain such as `perchling.app` stays optional (R141).
+- **Copy swaps the name and nothing else:** the upgrade note says "YouTube Playlist Tools is now Perchling" and "Pin Perchling to your toolbar"; the settings file is `perchling-settings-{date}.json`; the screenshots' demo account is "Perchling Demo" (R142).
+- **The trademark lines stay as written,** because they name Google's marks, not ours (R143).

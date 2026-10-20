@@ -17,7 +17,7 @@ This chapter says how 2.0 reaches YouTube and YouTube Music, what ships in each 
 - **Sites:** `www` is www.youtube.com and `music` is music.youtube.com. `Site = "www" | "music"`.
 - **Signatures** are TypeScript and normative in shape. Payload field names that only one module reads may be refined when that module is built, as long as the shape holds.
 - **Precedence:** where the tickets disagree, the later amendment or finding wins. What was resolved that way is listed in [§6.11](#611-resolved-by-precedence), and what's still open in [§6.12](#612-conflicts-found).
-- **Resolutions:** decisions made while the spec was assembled are cited by R-number, from [resolutions.md](resolutions.md). A requirement that a resolution changed keeps its ID and ends with "(R-n)". The user's decisions of 2026-10-20 are R84–R99, the running-cost rules R100–R117, the GatherTube fold R120–R139, and the icon R140.
+- **Resolutions:** decisions made while the spec was assembled are cited by R-number, from [resolutions.md](resolutions.md). A requirement that a resolution changed keeps its ID and ends with "(R-n)". The user's decisions of 2026-10-20 are R84–R99, the running-cost rules R100–R117, the GatherTube fold R120–R139, the icon R140, and the name R141–R144.
 - **Names:** "the first-run page" is the extension page in `onboarding.html` that holds first run and the upgrade note (R37). Folder and file names keep `onboarding`.
 
 ## 6.1 Overview
@@ -588,10 +588,10 @@ Gather tabs ([02 §2.16](02-youtube.md#216-gather-tabs); R120–R135) reads a wi
 |---|---|---|
 | `manifest_version` | 3 | 3 |
 | `default_locale` | `"en"` (R93) | same |
-| `name` | `__MSG_extName__`: "Playlist Pigeon for YouTube™" (PROVISIONAL, ticket 22: the user's call) | same |
-| `short_name` | `__MSG_extShortName__`: "Pigeon" (PROVISIONAL, ticket 22; [08 §0](08-release.md#0-provisional-inputs)) | same |
-| `description` | `__MSG_extDescription__`: one line of release copy, owned by [08-release.md](08-release.md) (PROVISIONAL, ticket 22) | same |
-| `icons` | `brand/icon-16.png`, `brand/icon-32.png`, `brand/icon-48.png`, and `brand/store-128.png` for 128 (96 px art, 16 px padding): the exports in `assets/icon/` ([UI-BRAND-04](05-ui.md#59-the-brand-provisional-ticket-22); R73, R140) | `brand/icon-16.png`, `-32`, `-48`, `-96` and the full-bleed `brand/icon-128.png` |
+| `name` | `__MSG_extName__`: "Perchling for YouTube™" (R141) | same |
+| `short_name` | `__MSG_extShortName__`: "Perchling" (R141; [08 §0](08-release.md#0-provisional-inputs)) | same |
+| `description` | `__MSG_extDescription__`: one line of release copy, owned by [08-release.md](08-release.md) (§9.1; R143) | same |
+| `icons` | `brand/icon-16.png`, `brand/icon-32.png`, `brand/icon-48.png`, and `brand/store-128.png` for 128 (96 px art, 16 px padding): the exports in `assets/icon/` ([UI-BRAND-04](05-ui.md#59-the-brand); R73, R140) | `brand/icon-16.png`, `-32`, `-48`, `-96` and the full-bleed `brand/icon-128.png` |
 | `version` | `package.json` `version` | same |
 | `minimum_chrome_version` / `browser_specific_settings.gecko.strict_min_version` | `"121"` | `"140.0"` |
 | `browser_specific_settings.gecko.id` | — | `{cc70cd21-2cc6-444b-bd89-496909346091}` (kept from 1.x) |
@@ -640,7 +640,7 @@ Gather tabs ([02 §2.16](02-youtube.md#216-gather-tabs); R120–R135) reads a wi
 |---|---|
 | Chrome install | "Read and change your data on www.youtube.com" only |
 | Chrome, the first thing that needs YouTube Music (ARC-MAN-03) | A site-access prompt for music.youtube.com |
-| Firefox install | "Add {Product}", with no question mark; one required line, "Access your data for sites in youtube.com domains" (no line for `storage` or `scripting`); and "Data collection: The developer says this extension doesn't require data collection." ([08 §5](08-release.md#5-permission-prompts-by-audience); R83) |
+| Firefox install | "Add Perchling for YouTube™", with no question mark; one required line, "Access your data for sites in youtube.com domains" (no line for `storage` or `scripting`); and "Data collection: The developer says this extension doesn't require data collection." ([08 §5](08-release.md#5-permission-prompts-by-audience); R83) |
 | Firefox 1.4.5 → 2.0 update | None: `scripting` and `storage` were already held and neither has a message, dropping `identity` and `activeTab` is silent, the origin is unchanged, and on update Firefox shows only added required data types, never `none` (R83). The new `commands` and the optional `contextMenus` add nothing (R88, R91). |
 | Either browser, Save from the browser's menu switched on | None: `contextMenus` has no warning on Chrome and no message on Firefox (ARC-MAN-20; R91) |
 
@@ -1481,7 +1481,7 @@ store/                    listing/ · notes/ · release-notes/ · live-checks/ �
 site/                     the GitHub Pages site: home · privacy/ · beta/       (not src/site/; never shipped)
 ```
 
-- `assets/icon/` is the mark's source of truth (R140): the hand-drawn SVGs, the PNG exports, a README mapping each file to the manifests and stores, and the sheet. The build copies the mark's SVGs into `src/assets/brand/`, which the popup, settings and the first-run page import ([UI-BRAND-03](05-ui.md#59-the-brand-provisional-ticket-22)), and the PNGs into `src/public/brand/`, which ARC-MAN-01's `icons` and `action.default_icon` name ([UI-BRAND-04](05-ui.md#59-the-brand-provisional-ticket-22)). `brand/` keeps the PNGs out of WXT's icon auto-discovery. (R73, R140)
+- `assets/icon/` is the mark's source of truth (R140): the hand-drawn SVGs, the PNG exports, a README mapping each file to the manifests and stores, and the sheet. The build copies the mark's SVGs into `src/assets/brand/`, which the popup, settings and the first-run page import ([UI-BRAND-03](05-ui.md#59-the-brand)), and the PNGs into `src/public/brand/`, which ARC-MAN-01's `icons` and `action.default_icon` name ([UI-BRAND-04](05-ui.md#59-the-brand)). `brand/` keeps the PNGs out of WXT's icon auto-discovery. (R73, R140)
 - The test folders are [07 §7.2](07-quality.md#72-test-layers), and the workflows [07 §7.7](07-quality.md#77-ci-jobs-and-the-hotfix-lane) and [08 §14](08-release.md#14-ci-and-release-workflows).
 - The release files are [08-release.md](08-release.md)'s: `store/` ([§9](08-release.md#9-store-listings), [§11](08-release.md#11-chrome-web-store-dashboard-answers), [§12.1](08-release.md#121-reviewer-notes-approval_notes), [REL-CI-30](08-release.md#142-releaseyml)), `site/` ([§10](08-release.md#10-privacy-policy), [REL-CI-43](08-release.md#145-pagesyml)), `scripts/amo-metadata.ts` (REL-CI-30), `scripts/upgrade-test/` ([REL-CHK-11](08-release.md#171-harness)), `SOURCE_CODE_REVIEW.md` ([REL-STORE-27](08-release.md#123-source_code_reviewmd-in-the-sources-zip)), `RELEASING.md` ([REL-CHK-18](08-release.md#18-release-checklist-releasingmd)), `.env.submit.example` ([REL-CI-50](08-release.md#146-secrets-variables-and-environments)) and the issue forms ([REL-STORE-35](08-release.md#16-support-channel)). The sources zip leaves out `store/`, `site/` and `tools/` ([REL-STORE-32](08-release.md#124-the-bun-and-arm64-build)). (R63)
 
@@ -1559,7 +1559,7 @@ These earlier statements are superseded and must not be built:
 
 ### Still open
 
-None remain; see [Resolved during assembly](#resolved-during-assembly). Live checks and the name stay PROVISIONAL where they're marked, and aren't repeated here. AMO's reply is no longer awaited: R83 settled ticket 23.
+None remain; see [Resolved during assembly](#resolved-during-assembly). Live checks stay PROVISIONAL where they're marked, and aren't repeated here. AMO's reply is no longer awaited: R83 settled ticket 23. The name is settled too (R141).
 
 ### Resolved during assembly
 
@@ -1620,3 +1620,5 @@ GatherTube, folded in on 2026-10-20 ([R120–R139](resolutions.md#gathertube-r12
 - §6.10's `background/gather/` and `shared/rules/gather.ts`.
 
 R120 adds `gather` to the registry's IDs (§6.6). R137 and R138 are copy and release text, 02's and 08's, and R139's budgets are 07's.
+
+The name, settled on 2026-10-20 ([R141–R144](resolutions.md#the-name-perchling-r141r144)): ARC-MAN-01's `name` and `short_name` are "Perchling for YouTube™" and "Perchling", and §6.3.1's "What users see" names it for the Firefox install. R141, R142.

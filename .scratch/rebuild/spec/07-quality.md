@@ -918,7 +918,7 @@ Every item that was listed here has been settled; see [Resolved during assembly]
 
 ### Still open
 
-None remain after all three rounds of resolutions (R1–R40, R41–R67, then R68–R77); see [Resolved during assembly](#resolved-during-assembly). Where the topic is this chapter's own (budgets, test placement and breakage-signal identifiers), the other chapters follow this one. Live checks and the name stay PROVISIONAL where they're marked; R83 settled AMO's reply.
+None remain after all three rounds of resolutions (R1–R40, R41–R67, then R68–R77); see [Resolved during assembly](#resolved-during-assembly). Where the topic is this chapter's own (budgets, test placement and breakage-signal identifiers), the other chapters follow this one. Live checks stay PROVISIONAL where they're marked; R83 settled AMO's reply, and R141 the name.
 
 ### Resolved during assembly
 

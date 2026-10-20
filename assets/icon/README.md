@@ -10,7 +10,7 @@ A grey pigeon perched on top of a small cabinet of pigeonholes, not in one. The 
 |---|---|
 | `icon.svg` | The master artwork (96 × 96 viewBox). The source for 48 px and up. |
 | `icon-32.svg`, `icon-16.svg` | Separate drawings on 32 and 16 px grids, for the toolbar at 2x and 1x. Never scale the master down for these sizes. |
-| `icon-mono.svg` | The monochrome mark in `currentColor`, on a 24 px grid, for the places inside YouTube where the mark takes the site's colours ([UI-BRAND-08](../../.scratch/rebuild/spec/05-ui.md#59-the-brand-provisional-ticket-22)). |
+| `icon-mono.svg` | The monochrome mark in `currentColor`, on a 24 px grid, for the places inside YouTube where the mark takes the site's colours ([UI-BRAND-08](../../.scratch/rebuild/spec/05-ui.md#59-the-brand)). |
 | `icon-16.png` … `icon-128.png` | PNG exports at 16, 19, 24, 32, 38, 48, 64, 96 and 128 px. 16 and 19 come from `icon-16.svg`, 24 to 38 from `icon-32.svg`, and 48 and up from `icon.svg`. |
 | `store-128.png` | Chrome's 128 px icon: the 96 px artwork with 16 px of transparent padding, as the Chrome Web Store asks. |
 | `amo-128.png` | The AMO listing icon: full bleed, 128 px. |

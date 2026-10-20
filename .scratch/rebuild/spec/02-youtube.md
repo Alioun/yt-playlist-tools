@@ -31,7 +31,7 @@ It covers behaviour only.
   | `YT-BM` | Save from the browser's menu |
   | `YT-GT` | Gather tabs (R120) |
 
-- **(R-n)** at the end of a requirement means resolution R-n in [resolutions.md](resolutions.md) changed or added it while the spec was assembled. All three rounds are applied (R1–R40, R41–R67, then R68–R77), and so are R83, settled after the spec, the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, and the GatherTube fold, R120–R139.
+- **(R-n)** at the end of a requirement means resolution R-n in [resolutions.md](resolutions.md) changed or added it while the spec was assembled. All three rounds are applied (R1–R40, R41–R67, then R68–R77), and so are R83, settled after the spec, the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, the GatherTube fold, R120–R139, and the name, R141–R144.
 - **Ownership:** under the resolutions' ownership rule, this chapter owns YouTube feature behaviour and copy. Where it shares a topic with another chapter, the owner's text wins: [04](04-features-accounts-data.md) for accounts, settings, data and status, [05](05-ui.md) for layout and visuals, [06](06-architecture.md) for mechanisms, [07](07-quality.md) for budgets, tests and breakage-signal identifiers, and [08](08-release.md) for upgrade and consent copy.
 - **PROVISIONAL** marks a rule that a pending check or user decision may change. The mark names what's pending: e.g. "PROVISIONAL (ticket 25: L6)" is live check L6 in [ticket 25](../issues/25-live-checks.md), whose L-checks are defined in [ticket 10](../issues/10-youtube-access.md). Where the tickets say what happens either way, so does this chapter.
 - **Placeholders in copy:**
@@ -44,7 +44,7 @@ It covers behaviour only.
   | `{Channel}` | The channel's title |
   | `{Shortcut}` | A playlist shortcut's label, else its playlist's title on this account, else its key |
   | `{Account}` | The account's name from its label, else "Unnamed account". The tickets write it as `{Name}` (R65). |
-  | `{Product}` | The extension's in-product name: "Playlist Pigeon", PROVISIONAL (ticket 22: the name). Every chapter uses `{Product}` (R65). |
+  | `{Product}` | The extension's in-product name: "Perchling" (ticket 22; R141). Every chapter uses `{Product}` (R65). |
   | `{Feature}` | A feature's name (YT-GEN-01) |
   | `{Key}`, `{Other}` | A key, and another shortcut's name |
   | `{n}`, `{m}` | Counts of playlists, written "1 playlist", "2 playlists" |
@@ -1776,6 +1776,8 @@ GatherTube, folded in on 2026-10-20 ([R120–R139](resolutions.md#gathertube-r12
 - R138 (YT-GT-35): the credit.
 
 R139 changes nothing this chapter states: budgets and tests are [07](07-quality.md)'s.
+
+The name, settled on 2026-10-20 ([R141–R144](resolutions.md#the-name-perchling-r141r144)): `{Product}` is "Perchling" (Conventions). R141.
 
 ## Conflicts found
 

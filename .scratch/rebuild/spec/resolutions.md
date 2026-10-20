@@ -2,7 +2,7 @@
 
 While the chapters were being written, their authors flagged conflicts between tickets, and details no ticket pinned down. The main session settled each one here on 2026-10-19, under the user's delegation ("you have the shared understanding"). Every resolution follows the map's principles. The chapters apply them, and each one is cited by its R-number.
 
-Items that are genuinely the user's call are **not** settled here; they stay in the spec's [Open items](../spec.md#open-items). The user's own answers of 2026-10-20 are recorded as [R84–R99](#the-users-decisions-of-2026-10-20-r84r99), the running-cost rules as [R100–R117](#running-costs-r100r117), the GatherTube fold as [R120–R139](#gathertube-r120r139), and the icon as [R140](#the-icon-perch-r140). R118 and R119 are unused.
+Items that are genuinely the user's call are **not** settled here; they stay in the spec's [Open items](../spec.md#open-items). The user's own answers of 2026-10-20 are recorded as [R84–R99](#the-users-decisions-of-2026-10-20-r84r99), the running-cost rules as [R100–R117](#running-costs-r100r117), the GatherTube fold as [R120–R139](#gathertube-r120r139), the icon as [R140](#the-icon-perch-r140), and the name as [R141–R144](#the-name-perchling-r141r144). R118 and R119 are unused.
 
 ## Sites and features
 
@@ -260,7 +260,7 @@ These settle the remaining "not pinned down" copy and decisions. Where a chapter
 
 ## The user's decisions of 2026-10-20 (R84–R99)
 
-On 2026-10-20 the user answered the spec's open decisions D2–D11, the narrow-rows question and ticket 30's calls ("rest sounds good"), each worded so that yes is the recommendation. D7 came with one change: GitHub issues, but with a few prefilled choices and directions. The name (D1) is **not** settled: a second naming round runs in [ticket 22](../issues/22-name.md), and the spec keeps the provisional name. These resolutions fold the answers into the chapters. Where they amend an earlier resolution, they say so, and they win.
+On 2026-10-20 the user answered the spec's open decisions D2–D11, the narrow-rows question and ticket 30's calls ("rest sounds good"), each worded so that yes is the recommendation. D7 came with one change: GitHub issues, but with a few prefilled choices and directions. The name (D1) is **not** settled: a second naming round runs in [ticket 22](../issues/22-name.md), and the spec keeps the provisional name. *(Settled later that day: Perchling for YouTube™, [R141–R144](#the-name-perchling-r141r144).)* These resolutions fold the answers into the chapters. Where they amend an earlier resolution, they say so, and they win.
 
 ### New capabilities and their details
 
@@ -314,7 +314,7 @@ On 2026-10-20 the user answered the spec's open decisions D2–D11, the narrow-r
   - **Nothing is sent by itself:** HEALTH-21 keeps "no error reporting, analytics or crash upload", with one user-started exception, this link. The privacy policy says so. AMO's `none` stays: the user starts it, sees every value first, and nothing reaches the developer unless they submit. If a reviewer counts it as technical data, the fallback drops `version` and `browser` from the address, and the form asks for them instead.
 - **R90 — Export and import settings to a file (D8).** It settles PAR-NEW-36.
   - **Where:** Settings › Privacy & data, **Export settings** and **Import settings**.
-  - **Export** saves `playlist-pigeon-settings-{YYYY-MM-DD}.json` (PROVISIONAL with the name) through the page's own download link, with no new permission. It holds a header (`format: 1`, the product, the version, the date), the shared settings, and every account setup with its channel filters, kept filters included: the documents settings sync carries. It never holds consent, the sync switch, anything else from `device`, caches, watch progress, session memory or the unclaimed 1.x setup. A line warns: "The file holds your playlist IDs, channel filters and account names. Keep it private."
+  - **Export** saves `playlist-pigeon-settings-{YYYY-MM-DD}.json` (PROVISIONAL with the name; *now `perchling-settings-{YYYY-MM-DD}.json`, R142*) through the page's own download link, with no new permission. It holds a header (`format: 1`, the product, the version, the date), the shared settings, and every account setup with its channel filters, kept filters included: the documents settings sync carries. It never holds consent, the sync switch, anything else from `device`, caches, watch progress, session memory or the unclaimed 1.x setup. A line warns: "The file holds your playlist IDs, channel filters and account names. Keep it private."
   - **Import** reads a file the user picks, checks it, then confirms: "Import settings from {file}? Your shared settings, and the setups of the {N} accounts in the file, are replaced. Other accounts' setups are kept." with **Import** and **Cancel**. It's one store change, stamped as a fresh edit, so settings sync carries it like any edit, and a change too big for the synced copy is refused (SYNC-14).
   - **Never a shortcut around consent or access:** imported switches run only after this browser's consent and site access, as switches that arrive by sync do (FT-34, FT-49).
   - **Refused:** a newer format ("This file was made by a newer version of {Product}. Update it here first."), anything that isn't a settings file ("This isn't a {Product} settings file."), and any import from a private window ("Import settings in a normal window.").
@@ -357,8 +357,8 @@ On 2026-10-20 the user answered the spec's open decisions D2–D11, the narrow-r
 - **R97 — The note reopens once if it was never seen, and asks to be pinned (S2).** It amends REL-CON-02's "never reopens".
   - The note page records `upgradeNote.seen` the first time it's actually visible (`document.visibilityState` is "visible").
   - At the next browser start (`runtime.onStartup`, not a mere restart of the background), if the note is still pending and was never seen, the background opens it once more, again in a background tab, and sets `upgradeNote.reopened`. It never opens a third time. A note that was seen never reopens. The badge and the popup's **Review** stay either way.
-  - The note gains a line under its first paragraph: "**Pin Playlist Pigeon to your toolbar** to see when it needs you: click the Extensions button (the puzzle piece), then ⚙ › Pin to Toolbar." (PROVISIONAL with the name.)
-- **R98 — The note's tab title names the old name (S3).** It's "YouTube Playlist Tools is now Playlist Pigeon" (PROVISIONAL with the name), not "Playlist Pigeon 2.0".
+  - The note gains a line under its first paragraph: "**Pin Playlist Pigeon to your toolbar** to see when it needs you: click the Extensions button (the puzzle piece), then ⚙ › Pin to Toolbar." (PROVISIONAL with the name.) *Now "**Pin Perchling to your toolbar**" (R142).*
+- **R98 — The note's tab title names the old name (S3).** It's "YouTube Playlist Tools is now Playlist Pigeon" (PROVISIONAL with the name), not "Playlist Pigeon 2.0". *Now "YouTube Playlist Tools is now Perchling" (R142).*
 
 ### Budgets
 
@@ -530,7 +530,7 @@ Settled 2026-10-20 for [ticket 31](../issues/31-gathertube.md). The user decided
 
 ## The icon: Perch (R140)
 
-The user picked **Perch** on 2026-10-20 from [ticket 34](../issues/34-icon.md)'s five concepts. The name is still pending ([ticket 22](../issues/22-name.md)), so the mark has no wordmark yet.
+The user picked **Perch** on 2026-10-20 from [ticket 34](../issues/34-icon.md)'s five concepts. The name is still pending ([ticket 22](../issues/22-name.md)), so the mark has no wordmark yet. *(The name was settled later that day: Perchling for YouTube™, [R141](#the-name-perchling-r141r144).)*
 
 - **R140 — The mark and the toolbar icon are Perch** (UI-BRAND-03, UI-BRAND-04, UI-BRAND-06, UI-BRAND-08, UI-BRAND-09, the token table; ARC-MAN-01's `icons` and `action`, 06 §6.10 and `wxt.config.ts`; 08 §9.1, REL-STORE-08, REL-STORE-11, REL-STORE-40; PAR-CAP-46).
   - **What it is:** a grey pigeon perched on top of a small cabinet of pigeonholes, not in one. The bird has a grey head and body, a folded wing, a tail over the ledge's edge, and the teal-to-violet gradient on its neck. It stands on a teal ledge over a light-violet cabinet of 3×2 pigeonholes holding cards. At 16 px it's a separate drawing with one row of three pigeonholes and a solid teal band over a violet one for the neck.
@@ -549,3 +549,38 @@ The user picked **Perch** on 2026-10-20 from [ticket 34](../issues/34-icon.md)'s
   - **The gradient** stays in UI-BRAND-06's first place, the mark's neck, from 32 px up. The rest of the mark is flat.
   - **Badges** don't change (UI-IA-08). The pigeon's head sits top-left, clear of Chrome's bottom-right badge and Firefox's top-right one.
   - **Store icons:** Chrome takes `store-128.png` from the manifest. AMO's listing icon is a separate Developer Hub upload, `amo-128.png`, which AMO keeps at 32, 64 and 128.
+
+## The name: Perchling (R141–R144)
+
+The user chose **Perchling for YouTube™** on 2026-10-20, after five naming rounds ([ticket 22](../issues/22-name.md); [ADR-0013](../../../docs/adr/0013-named-perchling-for-youtube.md)). It replaces the provisional "Playlist Pigeon" everywhere the spec states current copy. The strings R90, R97 and R98 wrote change with it; nothing else in them does.
+
+- **R141 — The name is Perchling for YouTube™** (UI-BRAND-01, ARC-MAN-01's `name` and `short_name`, `{Product}` in 02 to 04, 08 §0 and §9.1, REL-STORE-16, PAR-CAP-46).
+  - **The manifest `name` and both store names:** "Perchling for YouTube™", 22 characters, well under AMO's 50 and Chrome's 75. AMO's listing name is also edited in the Developer Hub, as before.
+  - **`short_name`:** "Perchling", 9 characters, within Chrome's recommended 12.
+  - **In the product:** "Perchling", with no ™ where YouTube isn't named. It's what `{Product}` stands for in every chapter (R65).
+  - **Unchanged:** AMO's slug `youtube-playlist-tools`, the gecko ID, the repo's name and the Pages URL ([ADR-0011](../../../docs/adr/0011-betas-from-github-pages.md)).
+  - **A custom domain** stays optional (REL-STORE-16). `perchling.app` was free on 2026-10-20; `perchling.com` is taken.
+  - **The glossary's title** is "Perchling (formerly YouTube Playlist Tools)". The name stays out of its body, because it's a product name, not a domain term.
+- **R142 — The copy that carries the name** (REL-CON-02, REL-CON-04, REL-CON-12, REL-CON-15, REL-CON-18, 08 §2.11 and §5, REL-STORE-06, REL-STORE-09, REL-STORE-17, REL-STORE-20, REL-STORE-21, REL-STORE-27, 08 §9.2; UI-POP-06, UI-POP-10, UI-POP-36, UI-SET-01, UI-SET-16, UI-SET-18, UI-ONB-03, UI-ONB-04, UI-ONB-06, UI-ONB-08, UI-YT-18, UI-YT-22; DATA-53).
+  - "Playlist Pigeon for YouTube™" becomes "Perchling for YouTube™", and "Playlist Pigeon" becomes "Perchling". The rest of each line stays as it was.
+  - **The upgrade note's tab title and heading** (R98): "YouTube Playlist Tools is now Perchling".
+  - **The Pin line** (R97): "**Pin Perchling to your toolbar** to see when it needs you: click the Extensions button (the puzzle piece), then ⚙ › Pin to Toolbar."
+  - **Why the new name:** "…so YouTube Playlist Tools is now Perchling for YouTube™. It's the same add-on, and your settings came along."
+  - **The privacy policy's title:** "Privacy policy: Perchling for YouTube™". It covers "the Perchling for YouTube™ browser extension (formerly YouTube Playlist Tools)".
+  - **The 2.0.0 release notes:** "2.0 is a rebuild, and YouTube Playlist Tools is now Perchling for YouTube™."
+  - **AMO's reviewer notes:** "…renamed Perchling for YouTube™ (same ID and slug)". `SOURCE_CODE_REVIEW.md` is titled "Building Perchling for YouTube™ from source".
+  - **The prompts:** Firefox's install header is "Add Perchling for YouTube™"; Chrome's is Add "Perchling for YouTube™"?.
+  - **The settings file** (R90): `perchling-settings-{YYYY-MM-DD}.json`.
+  - **The screenshots' demo account** (REL-STORE-09): "Perchling Demo".
+  - **Consent stays version 1.** The disclosure changes only in the name, and 2.0 hasn't shipped (REL-CON-17).
+- **R143 — The listing text keeps R95's lead** (§9.1, REL-STORE-02, REL-STORE-03, REL-STORE-11).
+  - **"Playlist" comes early.** The name doesn't say it, so the summaries must. AMO's has it at character 43 and Chrome's at 28, so neither changes.
+  - **AMO's summary** stays: "Save YouTube videos to Watch Later or any playlist in one click or with a shortcut, auto-add the videos you actually watch, and get one-click Play next and Add to queue on YouTube Music. Every feature is opt-in. (Formerly YouTube Playlist Tools.)" (246 of 250).
+  - **Chrome's `description`** stays: "Save to Watch Later or any playlist in one click or a shortcut, auto-add what you actually watch, and Add to queue on YouTube Music." (132 of 132). Its shorter form, "…and queue on YouTube Music.", is 125 characters, not 130 as R95 said.
+  - **"Formerly YouTube Playlist Tools"** stays on AMO through 2.x (REL-STORE-02). Chrome has no "formerly" line, because 1.x was never on Chrome.
+  - **The attribution lines** stay exactly as written (REL-STORE-03). They name Google's marks, not ours, so the name doesn't touch them.
+  - **The promo tile** shows Perch and the name (REL-STORE-11).
+- **R144 — A professional trademark search before launch** (REL-CHK-04, REL-CHK-18, REL-CHK-25).
+  - **Why:** round 5 couldn't check the EU. TMview and EUIPO were blocked, and UKIPO, DPMA, IP Australia, Singapore and WIPO's Global Brand Database weren't checked either. "Perchling" also reads close to the "Perch" brands, one with a registered US mark for organising saved content.
+  - **What:** a professional search covers those registers, the EU above all. It replaces "ticket 22 is confirmed" in the launch criteria. It's best done before the first beta, because the Chrome item and the beta testers already show the name.
+  - **If it finds a blocking mark,** the user picks again from round 5's finalists. Pigeon Shelf has no "Perch" overlap at all, and Pigeon Perch only a low one. The swap stays mechanical: `{Product}` in chapters 02 to 04, and the strings 08 §0 lists.
