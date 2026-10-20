@@ -289,7 +289,7 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
   - a `tabs.on*`, `windows.on*`, `webNavigation` or `menus.onShown` listener, or `menus.refresh`, appears anywhere in `src/`;
   - `storage.onChanged`, or an area's own `onChanged`, appears in `src/site/` or `src/page/`;
   - `addEventListener`, `MutationObserver`, `ResizeObserver`, `IntersectionObserver`, `setTimeout` or `requestAnimationFrame` appears in feature or kit code (`src/site/features/`, `src/site/kit/`) instead of going through the core's `Scope` ([UI-RULE-36](05-ui.md#page-ui-youtube-and-youtube-music));
-  - an observer is given `document`, `document.documentElement` or `document.body` with `subtree: true` ([Q-PERF-27](#764-what-keeps-pages-within-budget)). (R102)
+  - an observer is given `document`, `document.documentElement`, `document.body` or the app root (`ytd-app`, `ytmusic-app`) with `subtree: true` ([Q-PERF-27](#764-what-keeps-pages-within-budget), [Q-PERF-48](#768-running-cost)). (R102)
 
 ---
 
@@ -699,6 +699,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 - **Q-PERF-48. Observers,** beyond Q-PERF-27:
   - an observer is connected only on the page types its feature acts on, and disconnects while the tab is hidden;
   - attribute observers name their attributes (`attributeFilter`);
+  - no subtree observer on the app root (`ytd-app`, `ytmusic-app`) either, which is the whole page in practice. The YouTube Music rough build had one, re-syncing its header and player-bar controls on every change: it was the only work of ours while nothing was clicked, 7–15 ms a minute during playback;
   - an observer watches a container's own children (`childList` without `subtree`) unless it must go deeper. On a channel grid, a scroll that loaded 30 more cards gave the grid container's own children 2–3 records, a whole-document child-list observer about 177, and about 470 with attributes. Our observers together receive at most 10 records a minute during steady playback and at most 20 per page of cards loaded *(starting values)*;
   - a ResizeObserver watches only our own hosts or one anchor, and resize and scroll work runs at most once per animation frame ([UI-RULE-43](05-ui.md#page-ui-youtube-and-youtube-music)). (R101, R115)
 - **Q-PERF-49. Hidden tabs.** In a hidden tab only auto-add's counting runs, while a video it counts plays ([FT-60](04-features-accounts-data.md#13-off-costs-nothing)). No layout read, DOM write, observer, anchor check or toast timer of ours runs there. A hidden tab playing nothing shows no activity of ours at all. (R104)
