@@ -7,7 +7,8 @@ Sources:
 - `map.md`;
 - `for-the-user.md`;
 - the tickets' Answers in `issues/`;
-- the resolutions made while assembling the spec ([resolutions.md](resolutions.md): R1–R40, then the second round, R41–R67, then the third, R68–R77), R83, settled after the spec, and the user's decisions of 2026-10-20, R84–R99;
+- the resolutions made while assembling the spec ([resolutions.md](resolutions.md): R1–R40, then the second round, R41–R67, then the third, R68–R77), R83, settled after the spec, the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, and the GatherTube fold, R120–R139;
+- GatherTube 1.1.0's inventory and fold, in [`docs/research/gathertube.md`](../../../docs/research/gathertube.md) ([ticket 31](../issues/31-gathertube.md)), for §4;
 - the assembled chapters 02–08, which every row was checked against. Where they disagree, the resolutions' ownership rule picks the owning chapter, and the rows follow it.
 
 Use this chapter as the acceptance checklist: every row should trace to at least one build ticket.
@@ -34,13 +35,15 @@ Use this chapter as the acceptance checklist: every row should trace to at least
 
 | No. | File | Holds | IDs |
 |---|---|---|---|
-| 02 | [02-youtube.md](02-youtube.md) | YouTube features: auto-add and watch progress (07), channel filters, the add flow with its feedback, copy, undo and failures (12), the playlist picker, playlist shortcuts and the key recorder (08), quick-save, the queue button, the watch-page button, the card menu (14), what the user sees when YouTube changes (18), and keys from any tab and Save from the browser's menu (R88, R91) | YT-GEN, YT-ITEM, YT-AA, YT-CF, YT-ADD, YT-PK, YT-NEW, YT-KEY, YT-QS, YT-Q, YT-WB, YT-CM, YT-BRK, YT-ANY, YT-BM |
+| 02 | [02-youtube.md](02-youtube.md) | YouTube features: auto-add and watch progress (07), channel filters, the add flow with its feedback, copy, undo and failures (12), the playlist picker, playlist shortcuts and the key recorder (08), quick-save, the queue button, the watch-page button, the card menu (14), what the user sees when YouTube changes (18), keys from any tab and Save from the browser's menu (R88, R91), and Gather tabs (31; R120) | YT-GEN, YT-ITEM, YT-AA, YT-CF, YT-ADD, YT-PK, YT-NEW, YT-KEY, YT-QS, YT-Q, YT-WB, YT-CM, YT-BRK, YT-ANY, YT-BM, YT-GT |
 | 03 | [03-youtube-music.md](03-youtube-music.md) | YouTube Music: 21, 26, 27, 28 | YM-* |
 | 04 | [04-features-accounts-data.md](04-features-accounts-data.md) | The feature model, Show feedback, consent, site access, accounts (11), settings sync, storage, caches, watch progress, Clear all data and migrations' data (16), and breakage status and diagnostics (18) | FT, ACC, SYNC, DATA, HEALTH |
 | 05 | [05-ui.md](05-ui.md) | Where things live, the popup, settings and the first-run page (09, 15), in-page look on both sites, the picker's look, toasts, and the brand | UI-IA, UI-POP, UI-SET, UI-ONB, UI-YT, UI-YM, UI-PICK, UI-TOAST, UI-RULE, UI-BRAND |
 | 06 | [06-architecture.md](06-architecture.md) | YouTube access and routes (10, ADR-0001), the manifest and permissions, modules, the gateway, registry and messaging (17) | ARC-ACC, ARC-MAN, ARC-MOD, ARC-REG, ARC-MSG |
 | 07 | [07-quality.md](07-quality.md) | Tooling, test layers and fixtures (04, 17 §9), the breakage watch (18), performance budgets (24) and CI | Q-TOOL, Q-TEST, Q-FIX, Q-WATCH, Q-PERF, Q-CI |
 | 08 | [08-release.md](08-release.md) | The 1.4.5 migration and upgrade note, consent copy, betas, release order, store listings, the privacy policy and workflows (06, 19) | REL-MIG, REL-CON, REL-STORE, REL-CI, REL-CHK |
+
+**Row IDs:** `PAR-CAP-` rows are 1.5.0's capabilities (§1), `PAR-DEF-` rows its defects (§2), `PAR-NEW-` rows new capabilities and improvements (§3), and `PAR-GT-` rows GatherTube's items (§4; R120).
 
 ## Open rows at a glance
 
@@ -57,6 +60,7 @@ Use this chapter as the acceptance checklist: every row should trace to at least
 - PAR-DEF-25: stitched and Shorts ads.
 - PAR-NEW-13: the installed YouTube Music app.
 - PAR-NEW-16: queue Undo and quiet adds.
+- PAR-NEW-43, PAR-NEW-44, PAR-GT-08, PAR-GT-09 and PAR-GT-13: Gather tabs' batched adds and removals, YouTube's queue built with one command, `watch_videos` signed in, how tabs opened in the background or restored report themselves, and reopening tabs for Undo (G1–G7; R136).
 
 PAR-CAP-67, PAR-NEW-06, PAR-NEW-27's saved shared settings in private windows (R58) and PAR-DEF-28's Firefox data-collection prompt no longer wait on AMO's reply: [R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83) settled ticket 23 by decision. If an AMO reviewer objects, [08 §13](08-release.md#13-if-an-amo-reviewer-objects)'s fallback applies.
 
@@ -319,7 +323,7 @@ These improve existing capabilities, or are required by policy, so no separate g
 
 ### 3.3 Decided by the user (2026-10-20)
 
-These waited on the user's go-ahead. The user answered on 2026-10-20 ([R84–R99](resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): eight are in 2.0, and one isn't.
+These waited on the user's go-ahead. The user answered on 2026-10-20 ([R84–R99](resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): eight are in 2.0, and one isn't. The same day the user approved porting GatherTube, with exactly two additions and the Shuffled order ([ticket 31](../issues/31-gathertube.md); [R120–R139](resolutions.md#gathertube-r120r139)): PAR-NEW-42 to PAR-NEW-45. GatherTube's own items are §4.
 
 | ID | Capability | Status | Tickets | Chapter |
 |---|---|---|---|---|
@@ -333,12 +337,98 @@ These waited on the user's go-ahead. The user answered on 2026-10-20 ([R84–R99
 | PAR-NEW-38 | A toolbar tick when this tab's video was auto-added, and "paused" shown on the icon, both on by default and both switchable. (R92) | APPROVED | 09, 15 | 02 YT-AA-42; 04 FT-01, FT-57; 05 UI-IA-08 |
 | PAR-NEW-39 | 2.0 is built ready for translation, and ships English only. (R93) | APPROVED | 26 (via for-the-user) | 05 UI-RULE-43; 06 ARC-MAN-21, ARC-MOD-35; 07 Q-TEST-44 |
 | PAR-NEW-41 | Report a problem: a chooser of three kinds with directions, opening GitHub issue forms prefilled with the version, browser, feature and status; no support e-mail. (R89) | APPROVED | 18, 19 | 04 HEALTH-27; 05 UI-SET-21; 08 REL-STORE-35 to REL-STORE-37 |
+| PAR-NEW-42 | Gather tabs, a port of GatherTube (MIT, by Karim Elgazar): one opt-in feature that gathers the YouTube videos open in a window into YouTube's player, YouTube's queue or a playlist, and can close their tabs. Credited, with nothing copied. Every GatherTube item is in §4. (R120) | APPROVED | 31 | 02 §2.16 (YT-GT-01 to YT-GT-36); 04 FT-01, FT-63; 05 UI-POP-35 to UI-POP-37, UI-SET-24; 06 ARC-MOD-40; 08 REL-STORE-38 |
+| PAR-NEW-43 | Gathering into a playlist (the first addition): one gather playlist per account, filled through the add flow as one batch, with Undo that also reopens the closed tabs. (R125 to R127) | APPROVED · PROVISIONAL (25: G1, G2, G5, G7) | 31 | 02 YT-GT-15, YT-GT-16, YT-GT-18 to YT-GT-21; 05 UI-PICK-27; 06 ARC-ACC-73, ARC-ACC-76 |
+| PAR-NEW-44 | Automatic gathering (the second addition): three triggers, each off by default (tabs unvisited for a while, a tab opened in the background, a window reaching N video tabs), always into the gather playlist and always closing what it saved, within the running-cost rules. (R128 to R133) | APPROVED · PROVISIONAL (25: G6) | 31, 33 | 02 YT-GT-22 to YT-GT-30; 04 FT-64; 07 Q-PERF-58, Q-PERF-66 |
+| PAR-NEW-45 | The Shuffled gather order, so GatherTube's shuffle survives without its player page. (R122) | APPROVED | 31 | 02 YT-GT-08, YT-GT-10 |
 
 **User decisions that shape approved items** (not new capabilities):
 - **The name and mark:** ticket 22, now in a second naming round. The spec keeps "Playlist Pigeon for YouTube™" as a placeholder (05 UI-BRAND-01, UI-BRAND-03). **PENDING USER.**
 - **Narrow Quick picks rows on YouTube Music:** every switched-on button stays (R94; 03 YM-NARROW-1; 05 UI-YM-10).
 - **A support e-mail beside GitHub issues:** none (R89; 04 HEALTH-22; 08 REL-STORE-35).
 - **The store listings and the upgrade note** (ticket 30): the listings lead with saving (R95), never-authorised upgraders default to 50 % (R96; PAR-CAP-73), the note reopens once if nobody saw it and asks to be pinned (R97), and its tab title names the old name (R98).
+
+## 4. GatherTube
+
+The user approved porting every capability of [GatherTube](https://github.com/karimelgazar/gathertube), by Karim Elgazar (MIT), on 2026-10-20 ([ticket 31](../issues/31-gathertube.md); R120). This section lists every item of GatherTube 1.1.0, from the research's inventory ([`docs/research/gathertube.md`](../../../docs/research/gathertube.md) §2), and where it went in 2.0 ([02 §2.16](02-youtube.md#216-gather-tabs)). "GatherTube" means both of its builds: 1.1.0 on Chrome (its repository's root) and 1.1.1 on Firefox (`firefox-build/`); where they differ, the row says so. GatherTube's own item numbers (G1, P1, S1) are in brackets, and the status words are the ones above. Its two additions and the Shuffled order are new capabilities: PAR-NEW-43 to PAR-NEW-45.
+
+### 4.1 Gathering
+
+| ID | GatherTube 1.1.0 | 2.0 | Status | Tickets | Chapter |
+|---|---|---|---|---|---|
+| PAR-GT-01 | [G1] "Gather YT Videos" in the popup; Enter anywhere in the popup gathers. | A **Gather** button on Gather tabs' popup row. Enter gathers while the feature is on and nothing in the popup has focus; Enter on a focused control keeps its own meaning, because the 2.0 popup has many controls. (R120) | CHANGED | 31 | 02 YT-GT-02, YT-GT-34; 05 UI-POP-35 |
+| PAR-GT-02 | [G2] The current window only ("all windows" was removed). | The popup's own window, passed explicitly, never guessed. Automatic gathering looks at one window at a time. (R121) | KEPT | 31 | 02 YT-GT-06; 06 ARC-ACC-72 |
+| PAR-GT-03 | [G3] Video tabs: watch pages on any subdomain (`www.`, `m.`, `music.`), `/live/ID` and `youtu.be/ID`. | Watch and live pages on youtube.com, and watch pages on music.youtube.com while the YouTube Music section is on and has access. A `youtu.be` tab counts once it has reached youtube.com. m.youtube.com isn't gathered: 2.0 doesn't cover it, and Chrome's host access can't see it. (R121) | KEPT within 2.0's site access; m.youtube.com CHANGED | 31 | 02 YT-GT-03, YT-GT-04 |
+| PAR-GT-04 | [G4] The title fallback: a non-video tab whose title mentions YouTube is gathered with any 11-character word of its title as the ID; suspender-parked tabs are read from the address inside theirs. | Only a tab's address counts. Suspender-parked tabs aren't gathered: reading them would need the `tabs` permission and its "Read your browsing history" warning (the user's answer 4). The browser's own sleeping tabs are gathered. (R121) | DROPPED | 31 | 02 YT-GT-04; 06 ARC-MAN-25 |
+| PAR-GT-05 | [G5] Duplicates removed by video ID, keeping the first after sorting. | The same. Every tab of that video closes with it. (R121) | KEPT | 31 | 02 YT-GT-07 |
+| PAR-GT-06 | [G6] Six orders, default Newest tabs first. | The same six, with the same names and default, plus Shuffled (PAR-NEW-45). English first and non-English first use the browser's own language detection (PAR-GT-44). (R122) | KEPT; language orders IMPROVED | 31 | 02 YT-GT-08, YT-GT-09 |
+| PAR-GT-07 | [G7] Two destinations, "Queue behavior": YouTube Native (the default) and Embedded Player. | Three: YouTube's player (the default, as YouTube Native), YouTube's queue (in place of the embedded player, the user's answer 1), and the gather playlist (PAR-NEW-43). (R123) | CHANGED | 31 | 02 YT-GT-11 to YT-GT-15; 05 UI-POP-36 |
+| PAR-GT-08 | [G8] YouTube Native opens `watch_videos?video_ids=…` in a new active tab. | The same, up to 50 videos, in a new active tab at the end of the window. (R123) | KEPT · PROVISIONAL (25: G4, signed in) | 31 | 02 YT-GT-12; 06 ARC-ACC-74 |
+| PAR-GT-09 | [G9] Over 8,000 characters (about 660 videos), it silently opens the embedded player instead. | Over 50 videos, YouTube's real cap, a gather for YouTube's player goes to YouTube's queue and says so. YouTube's queue takes up to 200 a gather. (R123) | IMPROVED · PROVISIONAL (25: G3) | 31 | 02 YT-GT-13, YT-GT-14 |
+| PAR-GT-10 | [G10] Close original tabs, off by default: every gathered tab closes right after the new tab is created, errors ignored. | Close gathered tabs, off by default. A tab closes only once its video is confirmed in the destination, and all close in one call. Automatic gathering always closes what it saved. (R124) | KEPT; timing IMPROVED | 31 | 02 YT-GT-17; 06 ARC-ACC-76 |
+| PAR-GT-11 | [G11] "Successfully gathered N video(s)!", then the popup closes after 1.5 s. | The row says what happened, in 2.0's voice. The popup closes by itself when YouTube's player or queue opens a tab; a gather into a playlist keeps it open with the result and Undo. A result that arrives after the popup closed shows as a toast, the toolbar's 3 s mark and "Last gather". (R134) | CHANGED for the playlist | 31 | 02 YT-GT-31, YT-GT-32; 05 UI-POP-37 |
+| PAR-GT-12 | [G12] Three settings (`embedMode`, `closeTabs`, `sortOrder`) in `storage.local`; the popup and the settings page edit the same values. | Gather tabs' shared settings, which sync with settings sync, and the gather playlist in each account's setup. The popup and Settings edit the same values. (R135) | KEPT | 31, 16 | 02 YT-GT-01; 04 DATA-12 |
+
+### 4.2 The embedded player page
+
+GatherTube's own player page is replaced by YouTube's queue (the user's answer 1; R123): it can't come back as an embed, because extension pages get YouTube's Error 153, and embedding would bring all of 2.0 under YouTube's API policies ([ADR-0001](../../../docs/adr/0001-youtube-access-through-the-users-session.md)).
+
+| ID | GatherTube 1.1.0 | 2.0 | Status | Tickets | Chapter |
+|---|---|---|---|---|---|
+| PAR-GT-13 | [P1] One player page per window; gathering again replaces that window's page. | One new YouTube's queue tab per gather, in the gathering window. YouTube's queue lives in its own tab, so gathering again opens a new one. (R123) | CHANGED · PROVISIONAL (25: G3) | 31 | 02 YT-GT-14; 06 ARC-ACC-75 |
+| PAR-GT-14 | [P2] An embedded `youtube-nocookie.com` player in an extension page. | No embed. YouTube's own watch page plays the list. (R123) | CHANGED | 31 | 02 YT-GT-11 |
+| PAR-GT-15 | [P3] Auto-advance by messaging the player every 10 s. | YouTube's watch page moves on by itself, and nothing of ours polls. (R123) | CHANGED | 31 | 02 YT-GT-12, YT-GT-14 |
+| PAR-GT-16 | [P4] Header: Open Queue On YouTube, the queue toggle with a count, Open On YouTube. | Not needed: the list is already on YouTube, and YouTube's panel shows the count. (R123) | CHANGED | 31 | 02 YT-GT-14 |
+| PAR-GT-17 | [P5] "Video N of M", with previous and next buttons. | YouTube's own: "1 / 100" in its panel, and its player's previous and next. (R123) | CHANGED | 31 | 02 YT-GT-12, YT-GT-14 |
+| PAR-GT-18 | [P6] Queue panel: thumbnails, oEmbed titles, play a row, the count, Clear and Remove. | YouTube's queue panel, with real titles and durations, play now and Clear queue. (R123) | CHANGED | 31 | 02 YT-GT-14 |
+| PAR-GT-19 | [P7] Drag-and-drop reordering, on Chrome only: Firefox kept the handles without the handlers. | YouTube's queue panel reorders by drag, in both browsers. (R123) | IMPROVED | 31 | 02 YT-GT-14 |
+| PAR-GT-20 | [P8] Remove a row; removing the playing video plays the next. | YouTube's own per-row menu removes. (R123) | CHANGED | 31 | 02 YT-GT-14 |
+| PAR-GT-21 | [P9] Shuffle, keeping the playing video. | The Shuffled order shuffles before the list is built (PAR-NEW-45), and YouTube's player keeps YouTube's own Shuffle. YouTube's queue has none. (R122) | CHANGED | 31 | 02 YT-GT-08, YT-GT-10 |
+| PAR-GT-22 | [P10] Clear the queue (playback carried on, because the code called a player that was always null). | YouTube's "Clear queue", which also stops playback. (R123) | CHANGED | 31 | 02 YT-GT-14 |
+| PAR-GT-23 | [P11] Loading and error overlays, and Retry, which called a method that didn't exist. | Not needed: there's no player page. A gather that can't build its list says so, and nothing closes. (R123) | DROPPED | 31 | 02 YT-GT-33 |
+| PAR-GT-24 | [P12] The list kept in the page's address and in `storage.local`; edits lost on reload; the keys never deleted. | YouTube's player keeps its list in its own address, so it survives a reload. YouTube's queue doesn't survive one, as YouTube's queue never does. Nothing is stored per window. (R123) | CHANGED: partly lost for the queue | 31 | 02 YT-GT-12, YT-GT-14 |
+
+### 4.3 Keys
+
+| ID | GatherTube 1.1.0 | 2.0 | Status | Tickets | Chapter |
+|---|---|---|---|---|---|
+| PAR-GT-25 | Enter in the popup gathers, wherever focus is. | Enter gathers while nothing in the popup has focus. (R120) | CHANGED | 31 | 02 YT-GT-34; 05 UI-POP-35 |
+| PAR-GT-26 | P toggles the player page's queue panel. | YouTube's own panel button; no key of ours on YouTube's pages. (R123) | DROPPED with the player page | 31 | 02 YT-GT-34 |
+| PAR-GT-27 | Escape closes the panel. | YouTube's own panel. (R123) | DROPPED with the player page | 31 | 02 YT-GT-34 |
+| PAR-GT-28 | Shift+→ and N: the next video, wrapping round. | YouTube's own Shift+N steps through its list. (R123) | CHANGED | 31 | 02 YT-GT-34 |
+| PAR-GT-29 | Shift+← and B: the previous video, wrapping round. | YouTube's own Shift+P. (R123) | CHANGED | 31 | 02 YT-GT-34 |
+| PAR-GT-30 | A red chip naming each key for 1 s, on Chrome only. | Nothing: YouTube's own keys need none. (R123) | DROPPED | 31 | 02 YT-GT-34 |
+
+### 4.4 The settings page
+
+| ID | GatherTube 1.1.0 | 2.0 | Status | Tickets | Chapter |
+|---|---|---|---|---|---|
+| PAR-GT-31 | [S1] Default Behavior: the same three settings as the popup, saved on change. | Settings › YouTube › Gather tabs: the destination, the gather playlist, the order, Close gathered tabs, the automatic options and Show feedback, saved on change. (R120) | KEPT | 31, 15 | 02 YT-GT-01; 05 UI-SET-24 |
+| PAR-GT-32 | [S2] A read-only list of keys. | One line on the card: "In the popup, Enter gathers. On YouTube, Shift+N and Shift+P move through YouTube's list." (R137) | KEPT, reworded | 31 | 02 YT-GT-34; 05 UI-SET-24 |
+| PAR-GT-33 | [S3] The version, "Videos in current queue" and "Last queue update", which always read 0 and "Never". | The version is in Settings › About. The card and the popup row show "Last gather", which works. (R134) | IMPROVED | 31 | 02 YT-GT-32; 05 UI-SET-24, UI-POP-37 |
+| PAR-GT-34 | [S4] Reset All Settings: clears all of `storage.local`, queues included. | Clear all data, for the whole extension. Switching Gather tabs off keeps its settings. (R135) | CHANGED | 31, 16 | 04 DATA-36, FT-11 |
+| PAR-GT-35 | [S5] Report Issue and View Source. | Report a problem; the credit line links GatherTube's repository. (R138) | CHANGED | 31 | 04 HEALTH-27; 05 UI-SET-24; 08 REL-STORE-38 |
+| PAR-GT-36 | [S5] Rate Extension, whose store link had no item ID. | Not ported: it rated GatherTube, and its link was broken. (R120) | DROPPED | 31 | — |
+| PAR-GT-37 | [S6] On Firefox, the settings page is dead: "Failed to load settings", nothing saves, and the version reads "1.0.0". | One settings page for both browsers, from one codebase. (R120) | IMPROVED | 31 | 05 UI-SET-24 |
+
+### 4.5 Messages, addresses and promises
+
+| ID | GatherTube 1.1.0 | 2.0 | Status | Tickets | Chapter |
+|---|---|---|---|---|---|
+| PAR-GT-38 | Messages: "Successfully gathered N video(s)!", "No YouTube video tabs found.", "Failed to gather videos: …", "Failed to create watch_videos queue: …" and the rest. | Rewritten in 2.0's voice, each saying what happened to the tabs. (R137) | CHANGED | 31 | 02 YT-GT-32, YT-GT-33 |
+| PAR-GT-39 | Which addresses count: watch pages (with `list=` and `t=` dropped), `m.` and `music.` watch pages, `/live/` and `youtu.be`; Shorts and embeds skipped unless a title guess caught them. | Watch pages with `list=` and `t=` dropped, `/live/`, music.youtube.com where 2.0 has access, and a loaded `youtu.be` tab. Not m.youtube.com, Shorts, embeds, channels or other sites, whatever their titles say. (R121) | KEPT; m.youtube.com and title guesses CHANGED | 31 | 02 YT-GT-03, YT-GT-04 |
+| PAR-GT-40 | Listing promises that didn't hold: drag reordering on Firefox, "queue persistence", "Add" to queues, the IFrame API, "100% feature parity", queue statistics and "~50KB". | Drag reordering works in both browsers, in YouTube's panel. YouTube's player list survives a reload and the queue doesn't, and nothing claims otherwise. Gathering again opens a new list rather than adding to one. One codebase serves both browsers. "Last gather" works. 2.0's weight is budgeted, and its listing promises only what ships. (R123, R138) | IMPROVED | 31 | 02 YT-GT-12, YT-GT-14, YT-GT-32; 07 Q-PERF-67; 08 §9.2 |
+
+### 4.6 GatherTube's defects
+
+| ID | GatherTube 1.1.0 | 2.0 | Status | Tickets | Chapter |
+|---|---|---|---|---|---|
+| PAR-GT-41 | The embedded player shows YouTube's Error 153 in both browsers, because extension pages send no Referer. | YouTube's queue replaces it, with no embed (PAR-GT-14). (R123) | IMPROVED: fixed | 31 | 02 YT-GT-11, YT-GT-14 |
+| PAR-GT-42 | Over 50 videos, `watch_videos` silently drops the rest, and Close original tabs closes their tabs too, so videos are lost. | More than 50 go to YouTube's queue, and a tab closes only once its video is confirmed there. (R123, R124) | IMPROVED: fixed | 31 | 02 YT-GT-13, YT-GT-17; 06 ARC-ACC-74, ARC-ACC-76 |
+| PAR-GT-43 | The title fallback gathers, and can close, tabs that aren't videos: a Reddit thread, a news article, channel pages. | Only addresses count. (R121) | IMPROVED: fixed | 31 | 02 YT-GT-04 |
+| PAR-GT-44 | "English first" means "mostly Latin letters": Spanish, German, French, Vietnamese and Portuguese titles count as English. | The browser's own language detection, with a group for titles it can't place. (R122) | IMPROVED: fixed | 31 | 02 YT-GT-09 |
+| PAR-GT-45 | Firefox has no drag reordering, though both listings promise it. | YouTube's queue panel reorders in both browsers. (R123) | IMPROVED: fixed | 31 | 02 YT-GT-14 |
+| PAR-GT-46 | Firefox's settings page is dead. | One settings page for both browsers (PAR-GT-37). (R120) | IMPROVED: fixed | 31 | 05 UI-SET-24 |
 
 ## Resolved during assembly
 
@@ -398,6 +488,10 @@ The user's decisions of 2026-10-20:
 - R84 to R93 (PAR-NEW-31 to PAR-NEW-39, new PAR-NEW-41, PAR-CAP-06, PAR-CAP-63, and Open rows at a glance): eight new capabilities approved, live streams declined, and Report a problem settled;
 - R94 (narrow rows), R95 (the listings), R96 (PAR-CAP-73, PAR-DEF-43), R97 and R98 (the upgrade note): the user decisions listed under §3.3;
 - R99 changes no row: budgets are 07's.
+
+GatherTube, folded in on 2026-10-20 ([R120–R139](resolutions.md#gathertube-r120r139)):
+- R120 to R138 (new §4, PAR-GT-01 to PAR-GT-46; new PAR-NEW-42 to PAR-NEW-45; the chapter table, the row IDs and Open rows at a glance): Gather tabs, the gather playlist, automatic gathering and the Shuffled order;
+- R139 changes no row: budgets and tests are 07's.
 
 ## Conflicts found
 

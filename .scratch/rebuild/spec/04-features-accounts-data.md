@@ -10,7 +10,7 @@ This chapter covers the user-visible model and behaviour of features, consent, a
 - The upgrade note's copy, the disclosure text and the release process: [08 Upgrade and release](08-release.md).
 - What 1.4.5 did and how 2.0 covers it: [09 Parity](09-parity.md).
 
-The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too, and so are the user's decisions of 2026-10-20, R84–R99. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID, placed where it belongs. Under the resolutions' ownership rule, this chapter owns user-visible accounts, settings, data and status behaviour (R54); where it shares a topic with another chapter, the owner's text wins. [§9](#9-conflicts-found) records that no difference remains.
+The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too, and so are the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, and the GatherTube fold, R120–R139. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID, placed where it belongs. Under the resolutions' ownership rule, this chapter owns user-visible accounts, settings, data and status behaviour (R54); where it shares a topic with another chapter, the owner's text wins. [§9](#9-conflicts-found) records that no difference remains.
 
 **Placeholders in copy** (every chapter uses `{Product}` and `{Account}`, R65):
 - `{Product}` is the extension's in-product name. **PROVISIONAL** ([ticket 22](../issues/22-name.md)): "Playlist Pigeon", with "Playlist Courier" as the runner-up. The tickets wrote `{Name}` for both the product and the account; the spec splits them.
@@ -26,7 +26,7 @@ Requirements are numbered `FT-`, `ACC-`, `SYNC-`, `DATA-` and `HEALTH-`. Each is
 
 ### 1.1 The features
 
-- **FT-01** The extension has exactly these eleven features. Each one is switched on and off by itself, and nothing else in the extension acts by itself. Save from the browser's menu and Keys from any tab joined on 2026-10-20 (R88, R91).
+- **FT-01** The extension has exactly these twelve features. Each one is switched on and off by itself, and nothing else in the extension acts by itself. Save from the browser's menu, Keys from any tab and Gather tabs joined on 2026-10-20 (R88, R91, R120).
 
 | Feature (name as shown) | Registry ID | Site | Footprint tag | Show feedback default | Options and their defaults |
 |---|---|---|---|---|---|
@@ -37,6 +37,7 @@ Requirements are numbered `FT-`, `ACC-`, `SYNC-`, `DATA-` and `HEALTH-`. Each is
 | **Watch-page button** | `watch-button` | YouTube | Adds buttons to the page | On, for its menu's Save rows (R42) | "On Shorts too": **off** (R11). Its menu's Save rows belong to this feature whether or not Quick-save on thumbnails is on, use its Show feedback, and save to YouTube's quick-save playlist ([YT-WB-07](02-youtube.md#211-the-watch-page-button); R27, R42). |
 | **Right-click for the video menu** | `card-menu` | YouTube | Changes right-click on the page | None: it raises no toasts of its own, only breakage notices, which Show feedback never hides ([YT-ADD-13](02-youtube.md#252-feedback)) | "Links inside cards keep the browser's menu": **off** (R11). Shift+right-click always gives the browser's menu. |
 | **Save from the browser's menu** | `browser-menu` | YouTube | Doesn't change the page | On | None. It adds Save to ▸ to the browser's own right-click menu and uses YouTube's quick-save playlist ([02 §2.15](02-youtube.md#215-save-from-the-browsers-menu); R91). Needs the optional `contextMenus` permission (FT-60). |
+| **Gather tabs** | `gather` | YouTube | Doesn't change the page | On, for automatic gathers and for results that arrive after the popup closed; the popup row's own result always shows ([YT-GT-31](02-youtube.md#2166-feedback-keys-and-copy); R134) | Gather into **YouTube's player** (or YouTube's queue, or A playlist). Order **Newest tabs first** (or Oldest tabs first, English videos first, Non-English videos first, Tabs from left to right, Tabs from right to left, Shuffled). Close gathered tabs **off**. Automatically: three choices, all **off**: tabs unvisited for **1 day**, tabs opened in the background, and a window reaching **10** video tabs. Per account: the gather playlist ([02 §2.16](02-youtube.md#216-gather-tabs); R120, R128). |
 | **Quick actions** | `music-actions` | YouTube Music | Adds buttons to the page | On | Buttons: Play next **on**, Add to queue **on**, Save to playlist off, Like off, Remove from queue off, Save on the player bar off, Save to library off, Start mix off, Go to album off, Go to artist off (R85). Per account: YouTube Music's quick-save playlist, shared with quick-action shortcuts. |
 | **Quick-action shortcuts** | `music-keys` | YouTube Music | Keys only, doesn't change the page | On | Preset on first switch-on: Play next **Alt+N**, Add to queue **Alt+Q**, Save to playlist **Alt+P**, the picker **Alt+Shift+P**, Like **Alt+L**, Remove from queue **Alt+R**. Save to library, Start mix, Go to album and Go to artist start with no key (R85). The undo key works here too, but isn't part of this preset (FT-05; R44). |
 | **Keys from any tab** | `any-tab-keys` | Everywhere: acts in YouTube and YouTube Music tabs | Keys only, doesn't change the page | On | None. Three browser commands with no default key, set in the browser's own shortcut settings ([02 §2.14](02-youtube.md#214-keys-from-any-tab); R88). |
@@ -112,6 +113,15 @@ Requirements are numbered `FT-`, `ACC-`, `SYNC-`, `DATA-` and `HEALTH-`. Each is
   - Without it, the feature is held with "Needs your OK" and **Allow**, which requests it. That happens when the feature arrives by sync, or when the user removes the permission in the browser. It sets no "!". (R91)
 - **FT-61** **Automatic work never degrades the browser** ([ADR-0012](../../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)). What a feature does without a click runs only on an event it needs, only in the tabs that need it, and never on a clock. It stays within the running-cost budgets of [07 §7.6.8](07-quality.md#768-running-cost), with its defaults and with every option. No 2.0 feature needs a schedule, so 2.0 sets no alarm at all (FT-22). (R100)
 - **FT-62** **Hidden tabs.** In a tab the user can't see, features do only what can't wait: auto-add keeps counting a video that's playing ([YT-AA-45](02-youtube.md#2312-what-tracking-costs)). Drawing, anchor checks, observers and toast timers wait until the tab is shown. Discarded and frozen tabs are never woken, reloaded, injected into or messaged ([Q-PERF-57](07-quality.md#768-running-cost)). (R104)
+- **FT-63** **Gather tabs' page code.** Gather tabs registers no file of its own.
+  - While its trigger for tabs opened in the background, or for a window reaching N video tabs, is on, it needs the site core alone (the page half and the core, no kit, no feature file), on youtube.com watch and live pages only. The core's `tab.hello` says whether the page started hidden and whether it's the tab's first load ([ARC-MAN-24](06-architecture.md#633-runtime-script-registration)). When another YouTube feature already registers the core for every page, it adds nothing.
+  - Switching either trigger on injects nothing into open tabs: only tabs that load afterwards matter. Switching both off unregisters it, and open tabs keep the inert core until they reload.
+  - Its trigger for unvisited tabs alone registers nothing. With Gather tabs off, or on with no automatic option, nothing is registered and nothing runs. (R133)
+- **FT-64** **Automatic gathering acts without a click.** It's the second add path that does, after auto-add ([02 §2.16.5](02-youtube.md#2165-automatic-gathering)).
+  - Every trigger is event-driven: no alarm, interval or timer checks tabs, and it stays within FT-61 and [07's Q-PERF-58 and Q-PERF-66](07-quality.md#768-running-cost).
+  - It never touches a tab it doesn't gather, and never runs in a private window (ACC-47).
+  - It runs only after consent and with YouTube's site access, like every feature (FT-30, FT-46).
+  - The trigger for unvisited tabs rides on wakes that happen anyway: a YouTube page with our code loading, the popup or Settings opening, the browser starting. So it can run late, by hours, and its option says so. (R128, R129, R130, R131, R132)
 
 The size and timing budgets that enforce this, and the real-browser "off means zero" test, are in [07 Quality](07-quality.md): [§7.6.2 Off means zero](07-quality.md#762-off-means-zero) (Q-PERF-5 to Q-PERF-11: FT-15 ↔ Q-PERF-5/6, FT-16 ↔ Q-PERF-9, FT-17 ↔ Q-PERF-8, FT-19 ↔ Q-PERF-10, FT-21 ↔ Q-PERF-11, FT-22 ↔ Q-PERF-7), [§7.6.3 In-page weight](07-quality.md#763-in-page-weight), [§7.6.5 In-page time](07-quality.md#765-in-page-time) and the real-browser layer, [§7.2.5](07-quality.md#725-layer-4-real-browser) (Q-TEST-18).
 
@@ -274,12 +284,13 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 | Their channel filters, kept and orphaned filters included, with their channel labels | The playlist shortcuts' keys, labels and "Watch later on every account"; the picker key; the undo key; Also on YouTube Music |
 | Each playlist shortcut's playlist | The default required percentage |
 | The quick-save playlist on YouTube, and the one on YouTube Music | Quick actions' buttons and the quick-action keys |
+| The gather playlist (R125) | |
 | Missing and Full marks | Whether presets were applied; the theme |
 | The account label: name, @handle and avatar URL | |
 
 - **ACC-07** Caches of an account's playlists are per account but outside the setup. Each browser keeps its own and never syncs it (DATA-20).
 - **ACC-08** **A new account has no setup.** Nothing about it is stored (no setup, cache or label, and it never becomes the last account) until the user makes a choice for it, such as ticking a playlist or choosing a shortcut's playlist. That choice creates the setup.
-  - A setup is deleted, with its label, cache and synced copy, once it holds nothing: no auto-add playlists, targets, quick-save playlists or kept filters.
+  - A setup is deleted, with its label, cache and synced copy, once it holds nothing: no auto-add playlists, targets, quick-save playlists, gather playlist or kept filters. A setup holding only a gather playlist isn't empty (R125).
   - Kept filters count as choices, so re-ticking a playlist brings its filter back unchanged.
 - **ACC-09** **An account with no choices is idle:**
   - auto-add tracks nothing there;
@@ -387,6 +398,11 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 
   Setup controls are disabled there, and a refused write is answered as "private".
 - **ACC-41** **Containers** need no special handling. A container is just another place an account can be signed in. The same account in two containers shares one setup, a different account gets its own, and no container ID is stored.
+- **ACC-47** **Private windows and gathering** ([02 §2.16](02-youtube.md#216-gather-tabs)):
+  - a gather the user starts in a private window gathers that window's tabs, and saves as any explicit add does there;
+  - its Undo stays in the background's memory, never in a storage area, and it isn't listed in Recent adds (DATA-33);
+  - the gather playlist can't be changed there, because it's part of the account setup. Its chooser is disabled, with "The gather playlist can't be changed in a private window.";
+  - automatic gathering never runs in a private window, and never counts its tabs. (R125, R132, R135)
 
 ### 2.8 YouTube Music
 
@@ -521,24 +537,24 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
   - a list of each account's playlists (names, counts and thumbnail links), refreshed when it's shown and more than 5 minutes old, plus playlists created in the last 24 hours;
   - watch progress per video, for up to 30 days ([§4.6](#46-watch-progress));
   - settings from 1.x that are waiting for their account;
-  - until the browser closes, or the extension updates (DATA-11): Pause, videos the user chose not to auto-add, the list of recent adds (DATA-52), and breakage signals. Session skips and recent adds name videos and playlists, but they stay in this browser's memory until it closes, and are never synced or sent anywhere. Breakage signals name nothing (HEALTH-03).
+  - until the browser closes, or the extension updates (DATA-11): Pause, videos the user chose not to auto-add, the list of recent adds (DATA-52), the last gathers, with the tabs they closed, so they can be undone (DATA-58), and breakage signals. Session skips, recent adds and the last gathers name videos and playlists, but they stay in this browser's memory until it closes, and are never synced or sent anywhere. Breakage signals name nothing (HEALTH-03).
 
-  Nothing is sent anywhere except the requests to YouTube and, if switched on, settings sync. Two things leave only when the user acts: a settings file goes where the user saves it (DATA-53), and Report a problem opens GitHub with a few prefilled facts (HEALTH-27). The privacy policy's matching lines are in [REL-STORE-17](08-release.md#102-text). (R10, R57, R86, R89, R90)
+  Nothing is sent anywhere except the requests to YouTube and, if switched on, settings sync. Two things leave only when the user acts: a settings file goes where the user saves it (DATA-53), and Report a problem opens GitHub with a few prefilled facts (HEALTH-27). The privacy policy's matching lines are in [REL-STORE-17](08-release.md#102-text). (R10, R57, R86, R89, R90, R135)
 - **DATA-04** **Groups:**
 
 | Group | Examples | Area | Syncs while settings sync is on |
 |---|---|---|---|
-| **Shared settings** | Feature switches and options, Show feedback, the YouTube Music section switch, the shortcuts' keys and labels, the default required percentage, the theme | `storage.local` | Yes |
-| **Account setups** | Auto-add playlists (Takes, percentage override), channel filters with their channel labels, shortcut targets, both quick-save playlists, Missing/Full marks, the account label | `storage.local` | Yes |
+| **Shared settings** | Feature switches and options (Gather tabs' destination, order and automatic options included), Show feedback, the YouTube Music section switch, the shortcuts' keys and labels, the default required percentage, the theme | `storage.local` | Yes |
+| **Account setups** | Auto-add playlists (Takes, percentage override), channel filters with their channel labels, shortcut targets, both quick-save playlists, the gather playlist, Missing/Full marks, the account label | `storage.local` | Yes |
 | **This browser** | Consent, the sync switch, the upgrade note, the unclaimed 1.x setup, the last account, the last visibility, the picker's Sort A–Z, Detailed console log, whether to keep recent adds | `storage.local` | Never |
 | **Caches** (per account) | Playlist list, thumbnails, counts, Save-dialog order, newly created playlists, the label check stamp | `storage.local` | Never |
 | **Watch progress** (per account) | The played stretches of each video, for up to 30 days | `storage.local` | Never |
-| **Session memory** | Pause, session skips, recent adds, 429 pauses, shown-once memory, breakage signals and notices, the tab registry | `storage.session` | Never |
-| **Memory only** | Undo entries, locks, the picker's membership, anything from a private tab | The tab, or the background's own variables | Never |
+| **Session memory** | Pause, session skips, recent adds, the last gathers, 429 pauses, shown-once memory, breakage signals and notices, the tab registry | `storage.session` | Never |
+| **Memory only** | Undo entries, locks, the picker's membership, anything from a private tab, a private window's gathers | The tab, or the background's own variables | Never |
 | **Not stored** | Script registrations (derived from the switches, consent and site access), membership, a video's channel | — | — |
 | **The browser's own** | Site access (YouTube Music is optional on Chrome), the browser menu's optional permission, the keys for Keys from any tab, Firefox data-collection grants | Browser permissions and settings | Never |
 
-  (R1, R39, R86, R88, R91)
+  (R1, R39, R86, R88, R91, R125, R135)
 
 ### 4.2 What syncs, setting by setting
 
@@ -554,12 +570,14 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 | The YouTube Music section switch (R1) | Shared | Yes |
 | Quick actions' buttons, quick-action keys, the four more actions' included (R85) | Shared | Yes |
 | Auto-add's toolbar tick and "paused" options (R92) | Shared | Yes |
+| Gather tabs' destination, order, Close gathered tabs and automatic options (R135) | Shared | Yes |
 | Whether each feature's presets were applied | Shared | Yes |
 | Theme | Shared | Yes |
 | Auto-add playlists, their Takes and percentage override | Account | Yes |
 | Channel filters: mode, on/off, listed channels and their channel labels; kept filters included | Account | Yes |
 | Shortcut targets | Account | Yes |
 | Quick-save playlists for YouTube and YouTube Music | Account | Yes |
+| The gather playlist (R125) | Account | Yes |
 | Missing and Full marks | Account | Yes |
 | The account label: name, @handle, avatar URL | Account | Yes |
 | Settings sync on/off | This browser | Never |
@@ -574,6 +592,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 | The playlist cache and newly created playlists | This browser, per account | Never |
 | Watch progress | This browser, per account | Never |
 | Pause, session skips, recent adds, 429 pauses, shown-once memory | Browser session | Never |
+| The last gathers and their Undo (R135) | Browser session | Never |
 | Breakage signals, notice memory, feature statuses | Browser session | Never |
 
 - **DATA-06** **Labels sync; playlist titles don't.**
@@ -631,7 +650,8 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 | `cooldown:<acct>` | When a 429 pause ends |
 | `shown` | Which once-per-session toasts were shown: auto-add's only, because explicit actions answer every time ([YT-ADD-25](02-youtube.md#252-feedback); R22) |
 | `breakage` | Breakage signals, feature statuses, the notice-shown memory, the can't-measure run and the last Check now result |
-| `tabs` | The tab registry: tab ID → `{site, acct, signedIn}` |
+| `tabs` | The tab registry: tab ID → `{site, acct, signedIn, hidden?, fresh?, at?}`. `hidden` and `fresh` come from the site core's `tab.hello`, and `at` is when it said hello: Gather tabs' trigger for tabs opened in the background reads them (R133) |
+| `gather` | Gather tabs' session memory: the last gathers for Undo, each window's last gather, the tabs Undo reopened, and lasting failures (DATA-58; R135) |
 
 #### Shapes
 
@@ -673,6 +693,17 @@ type Settings = {
                  | "library" | "mix" | "album" | "artist", Key | null> // the last four start null (R85)
   }
   anyTabKeys: { on: boolean; feedback: boolean }  // Keys from any tab; its keys are the browser's own (R88)
+  gather: {                                        // Gather tabs (R120)
+    on: boolean; feedback: boolean                 // feedback default true
+    to: "player" | "queue" | "playlist"         // Gather into, default "player"
+    order: "newest" | "oldest" | "english" | "non-english" | "left-to-right" | "right-to-left" | "shuffled" // default "newest"
+    close: boolean                                 // Close gathered tabs, default false
+    auto: {                                        // automatic gathering, every choice default false (R128)
+      unvisited: boolean; after: "1h" | "1d" | "1w" // after default "1d" (R129)
+      background: boolean                          // tabs opened in the background (R130)
+      count: boolean; n: 5 | 10 | 15 | 20 | 30 | 50 // n default 10 (R131)
+    }
+  }
 }
 
 type Setup = {
@@ -681,6 +712,7 @@ type Setup = {
   targets: Record<string /* shortcut ID */, string /* playlist ID */>
   quickSave: string | null // YouTube's thumbnail quick-save playlist
   musicSave: string | null // YouTube Music's Save to playlist
+  gather: string | null // the gather playlist (R125)
   marks: Record<string /* playlist ID */, "missing" | "full">
 }
 
@@ -728,7 +760,7 @@ type SyncState = {
 - **DATA-13** **Limits stored with the data:** at most 20 playlist shortcuts; a shortcut label up to 40 characters; a channel title up to 100 and a handle up to 30; an account name up to 100. Longer values are cut when saved. Shortcut IDs are random, 6 characters long.
 - **DATA-14** **Unknown fields are kept.** A browser that reads a document with fields it doesn't know writes them back unchanged.
 - **DATA-15** **Dangling references are ignored.** A target for a shortcut ID that no longer exists, and a mark for a playlist that's no longer chosen, are skipped when read and dropped at that document's next write.
-- **DATA-16** **A setup is deleted when it holds nothing:** no auto-add playlists, targets, quick-save playlists or kept filters.
+- **DATA-16** **A setup is deleted when it holds nothing:** no auto-add playlists, targets, quick-save playlists, gather playlist or kept filters. (R125)
 
 #### Sizes against the sync quotas
 
@@ -811,13 +843,13 @@ type SyncState = {
   - consent, given or withdrawn;
   - Clear all data.
 - **DATA-33** Refused from a private window:
-  - any account-setup change: ticks, Takes, percentages, filters, targets, quick-save (including choose mode's first pick), creating, claiming or removing a setup;
+  - any account-setup change: ticks, Takes, percentages, filters, targets, quick-save (including choose mode's first pick), the gather playlist, creating, claiming or removing a setup;
   - labels, Missing and Full marks;
   - caches and newly created playlists;
   - watch progress;
   - the last account and the last visibility;
-  - session memory (skips, recent adds, 429 pauses, shown-once memory, breakage signals, tab registry entries), which stays in the tab's or the background's memory instead;
-  - importing a settings file (DATA-54; R90).
+  - session memory (skips, recent adds, 429 pauses, shown-once memory, breakage signals, tab registry entries, a gather's Undo), which stays in the tab's or the background's memory instead;
+  - importing a settings file (DATA-54; R90). (R125, R135)
 - **DATA-34** A refusal is answered as "private", so the surface can explain it (ACC-40). Surfaces disable those controls first. A refusal is also logged to the console.
 - **DATA-35** Documents arriving from the synced copy are accepted (SYNC-25).
 
@@ -853,11 +885,11 @@ type SyncState = {
 
 | Removed | Where |
 |---|---|
-| The setup: auto-add playlists, Takes, overrides, targets, quick-save playlists, marks, label | Here, and with sync on, in every syncing browser (as a tombstone) |
+| The setup: auto-add playlists, Takes, overrides, targets, quick-save playlists, the gather playlist, marks, label | Here, and with sync on, in every syncing browser (as a tombstone) |
 | All its channel filters, kept filters included | Same |
 | Its playlist cache and newly created playlists | Here |
 | Its watch progress | Here |
-| Its session memory: skips, recent adds, 429 pause | Here |
+| Its session memory: skips, recent adds, 429 pause, its gathers' records (DATA-58; R135) | Here |
 | The last account, if it was this account | Here |
 
   Shared settings stay: the shortcuts keep their keys and labels, and only this account's targets go. Other setups and YouTube are untouched.
@@ -921,6 +953,7 @@ The user approved this on 2026-10-20 (R86).
   - **Private windows:** nothing from a private window is kept (DATA-33), so their adds aren't listed.
   - **Removals:** removing a setup removes its entries (DATA-44), and Clear all data removes them all (DATA-39).
   - **The switch:** "Keep a list of recent adds until the browser closes" in Settings › Privacy & data, **on** by default, for this browser only (`device.recentAdds`). Off, nothing is recorded and the list is cleared at once. It's a setting, not a feature: it changes nothing on any page.
+  - **Gathers:** a gather into a playlist is one entry, "{n} videos", which unfolds to their titles, each linking to its video, with the playlist, what made it ("Gather tabs" or "Automatic gathering") and when. Undoing the gather removes the entry ([YT-GT-31](02-youtube.md#2166-feedback-keys-and-copy); R134).
 
 ### 4.12 The settings file
 
@@ -938,6 +971,33 @@ The user approved this on 2026-10-20 (R90).
 - **DATA-55** **A file it can't use** is refused, with nothing changed:
   - a newer `format`: "This file was made by a newer version of {Product}. Update it here first.";
   - anything else: "This isn't a {Product} settings file."
+
+### 4.13 Gather tabs' memory
+
+The user approved Gather tabs on 2026-10-20 (R120).
+
+- **DATA-58** **What Gather tabs keeps** is `storage.session`'s `gather` (DATA-11), so it's memory only and ends when the browser closes or the extension updates:
+
+```ts
+type GatherMemory = {
+  last: GatherRecord[]                  // newest first, at most 5: what Undo needs
+  paced: Record<string /* window ID */, number /* ms */> // each window's last gather, for once a minute
+  kept: number[]                        // tab IDs Undo reopened: out of automatic gathering until switched to
+  refused: Record<string /* account key */, string[] /* video IDs */> // lasting failures this session
+}
+type GatherRecord = {
+  id: string; at: number; auto: boolean; windowId: number
+  to: "player" | "queue" | "playlist"; count: number
+  acct?: string; playlist?: string                       // into a playlist only
+  added?: { video: string; setVideoId: string }[]        // what Undo removes
+  closed?: { url: string; index: number; title: string }[] // what Undo reopens
+}
+```
+
+  - It's written once per gather or Undo, in the same `set()` as its Recent adds entry, and never on a check that gathers nothing.
+  - Nothing from a private window is kept: a private window's gathers stay in the background's memory (ACC-47, DATA-33).
+  - It never syncs and is never sent anywhere. Clear all data removes it (DATA-39), and removing a setup removes that account's records (DATA-44).
+  - Nothing about gathers is kept in `storage.local`: no video IDs and no tab addresses. (R127, R132, R135)
 
 ## 5. Breakage status
 
@@ -988,6 +1048,10 @@ The user approved this on 2026-10-20 (R90).
   - some playbacks can't be measured: auto-add is partly working;
   - 3 in a row with none measured in between: auto-add is not working. It's working again after the next playback that can be measured.
 - **HEALTH-12** **Clearing:** a tab's status clears when the job next succeeds, or on reload when the probe passes. There's no manual reset.
+- **HEALTH-29** **Gather tabs' status follows its destinations** ([YT-GT-36](02-youtube.md#2166-feedback-keys-and-copy)):
+  - **not working** while YouTube's player isn't: its new tab keeps showing no list (`no-effect`);
+  - **partly working** while YouTube's queue or the playlist route isn't, because YouTube's player still works. The health line names the destination, e.g. "Partly working: it can't gather into YouTube's queue right now.";
+  - a gather into a destination that isn't working answers in its own result, and nothing closes. (R136)
 
 ### 5.3 Where it shows
 
@@ -1080,6 +1144,7 @@ How breakage is caught before release is in [07 Quality](07-quality.md#751-the-c
 | FT-53 | `addHostAccessRequest` on Chrome 133+ | [Ticket 09](../issues/09-where-things-live.md), at build |
 | HEALTH-06 | Breakage thresholds | Ticket 25 and the first weeks of use |
 | ACC-22 | YouTube Music's answers carry `datasyncId` for the account guard | [Ticket 25](../issues/25-live-checks.md) M2 |
+| FT-63, FT-64 | How tabs opened in the background, restored and reloaded report themselves, for automatic gathering's second trigger (R130) | [Ticket 25](../issues/25-live-checks.md) G6 |
 
 ## 7. Precedence applied
 
@@ -1161,6 +1226,17 @@ The user's decisions of 2026-10-20 ([R84–R99](resolutions.md#the-users-decisio
 - **Quick actions' four more buttons and keys** (FT-01, DATA-05, DATA-12). R85.
 
 R84, R87 and R93 to R99 change nothing this chapter states; R96's migration detail is 08's.
+
+GatherTube, folded in on 2026-10-20 ([R120–R139](resolutions.md#gathertube-r120r139)):
+- **Gather tabs** as a twelfth feature (FT-01). R120.
+- **The gather playlist** in the account setup (ACC-06, ACC-08, DATA-04, DATA-05, DATA-12, DATA-16, DATA-33, DATA-44). R125.
+- **Automatic gathering,** acting without a click (FT-64). R128 to R132.
+- **Its page code** on watch and live pages for two of its triggers, and `tab.hello`'s new fields in the tab registry (FT-63, DATA-11). R133.
+- **Gathers in Recent adds** (DATA-52). R134.
+- **Its settings and session memory,** and private windows (DATA-03, DATA-04, DATA-05, DATA-11, DATA-12, DATA-58, ACC-47). R135.
+- **Its status** (HEALTH-29). R136.
+
+R121 to R124, R126, R127, R137 and R138 are behaviour, copy and release text that 02, 05 and 08 own; R139's budgets and tests are 07's.
 
 ## 9. Conflicts found
 

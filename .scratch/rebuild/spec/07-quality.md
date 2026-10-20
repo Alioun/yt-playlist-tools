@@ -13,7 +13,7 @@ This chapter says how 2.0 is built and tested, how it finds out that YouTube or 
 - *(starting value)* marks a number to be tuned once the signed-in live checks have run and after the first weeks of use. Tuning it is a code change, not a spec change.
 - **PROVISIONAL** marks a decision that waits on an open input. The input is named inline.
 - **Store build** means the production build that goes into a store zip (`wxt build`, `wxt build -b firefox`). **Dev build** means `wxt` in development mode. **Live-check build** means `wxt build --mode livecheck`.
-- **Resolutions:** decisions made while the spec was assembled are cited by R-number, from [resolutions.md](resolutions.md). A requirement that a resolution changed keeps its ID and ends with "(R-n)". The user's decisions of 2026-10-20 are R84–R99.
+- **Resolutions:** decisions made while the spec was assembled are cited by R-number, from [resolutions.md](resolutions.md). A requirement that a resolution changed keeps its ID and ends with "(R-n)". The user's decisions of 2026-10-20 are R84–R99, the running-cost rules R100–R117, and the GatherTube fold R120–R139.
 - **The first-run page** is the extension page in `onboarding.html` that holds first run and the upgrade note (R37).
 
 ---
@@ -223,7 +223,8 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
 |---|---|---|
 | `sync-area` | `storage.sync` | 102,400 bytes in total (counted the way the store counts them), 8,192 bytes per item, 512 items; Chrome's 120 writes a minute and 1,800 an hour; an atomic multi-key `set`; the quota error by kind; per-key change delivery that can be delayed, reordered or dropped |
 | `sync-server` | the browser vendor's sync | Joins two or more `sync-area` fakes so tests can play two browsers: join, conflicts, chunks, uninstall wipe |
-| `tabs` | `TabsPort` | URL-pattern queries per site, `lastAccessed`, `discarded`, `frozen`, `incognito`, message timeouts |
+| `tabs` | `TabsPort` | URL-pattern queries per site, `lastAccessed`, `discarded`, `frozen`, `incognito`, message timeouts; for Gather tabs, `windowId`, `index`, `title`, `active`, `pinned`, `audible`, `create` and `remove` (R139) |
+| `i18n` | `i18n.detectLanguage` | Scripted answers per title, no answer included, for Gather tabs' language orders; WXT's fake throws (Q-TEST-15; R139) |
 | `scripting` | `ScriptingPort` | register, update (all-or-nothing, applies from the next load), unregister, list, `executeScript` |
 | `access` | `AccessPort` | `contains`, `onAdded`, `onRemoved` |
 | `transport` | `Transport` | the `memory` adapter of `shared/rpc` |
@@ -235,6 +236,15 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
   2. **Playback hour:** a scripted player fires `timeupdate` every 250 ms for 60 minutes, with two pauses, a seek, 10 minutes hidden and two video changes. `tab.progress.save` messages and store writes stay within [Q-PERF-47](#768-running-cost) and [Q-PERF-54](#768-running-cost), and once every goal is reached the tracker's listener is gone ([YT-AA-44](02-youtube.md#2312-what-tracking-costs)).
   3. **A day in the background:** 200 page loads, 4 hours of playback in two tabs, 50 user actions and 20 sync arrivals, replayed through the background over fakes. Routine wakes make no `scripting` call, only [ARC-MOD-39](06-architecture.md#643-background-srcbackground)'s listeners are registered, and writes stay within Q-PERF-54.
   4. **Sync pacing:** 100 edits in 10 s make at most 3 `storage.sync.set()` calls, and an edit that changes nothing makes none ([SYNC-27](04-features-accounts-data.md#32-the-local-copy-comes-first)). (R102)
+- **Q-TEST-49.** **Gather tabs in layers 1 and 3** ([02 §2.16](02-youtube.md#216-gather-tabs); R139):
+  - **Layer 1, the rules** ([ARC-MOD-41](06-architecture.md#641-shared-kernel-srcshared)): `videoOf` against GatherTube's 22 test addresses (the research's [L5]), Shorts, embeds, channel pages, suspender pages and other sites included; every order, the language groups with a scripted detector, and Shuffled with a seeded random; each video once; every exclusion; the pace; and each trigger on a fake clock.
+  - **Layer 3, the Gather module** over the fake `TabsPort`, a counting transport and the counting storage fakes:
+    1. an idle hour with all three triggers on leaves no timer, `tabs.query` or write;
+    2. a burst of 10 tabs opened in the background makes one gather, one `tabs.remove` and one `storage.session` write;
+    3. 200 `tab.hello` wakes in an hour make at most one trigger-1 query a minute;
+    4. with Gather tabs off, or on with no automatic option, a wake does nothing of Gather's;
+    5. a reloaded hidden tab, a tab switched to within the quiet second, and tabs loading in the first minute after `runtime.onStartup` aren't gathered by trigger 2.
+  - **Integration** (`tests/integration/`): Gather in the popup → `AddFlow.batch` over recorded `addBatch` answers → one report → Undo removes exactly what was added and reopens the tabs.
 
 ### 7.2.5 Layer 4: real browser
 
@@ -265,6 +275,11 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
   - **Chromium:** a trace attributes main-thread time, timers, animation frames, observer callbacks and the longest task to our scripts ([Q-PERF-45](#768-running-cost)). CDP target events count worker starts, an extension page counts writes by area through `storage.onChanged`, and route interception counts requests.
   - **Firefox:** the same counts come from the **counting build**: the store build compiled with `platform.mode === "test"`, which adds counters for starts, messages, writes, timers and observer callbacks behind that flag and nothing else. `check:zip` keeps it out of store zips. Time is recorded with the Firefox Profiler, for information (Q-TEST-19).
   - Counts gate in both browsers; times as [Q-PERF-62](#768-running-cost). (R102)
+- **Q-TEST-50.** **Gather tabs in layer 4** (R139):
+  - a fixture watch tab opened in the background sends `tab.hello` with `hidden` and `fresh` ([ARC-MSG-15](06-architecture.md#682-tab--background)), and a hidden tab that reloads doesn't send `fresh`;
+  - with Gather tabs alone and trigger 2 or 3 on, `scripting.getRegisteredContentScripts()` shows the page half and core matching only watch and live pages; with trigger 1 alone, nothing is registered ([ARC-MAN-24](06-architecture.md#633-runtime-script-registration));
+  - a gather closes its tabs in one `tabs.remove`, and a gather of 50 fixture tabs takes at most 20 ms of background time at 1× (Chromium trace, [Q-PERF-66](#768-running-cost));
+  - YouTube's player and YouTube's queue open their tab on the fixture pages, and Undo reopens closed tabs at their old places.
 
 ### 7.2.6 Guard tests
 
@@ -330,6 +345,7 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
 | Typed channel | `resolveChannel` | each input form; a redirect hop; a 404; a terminated channel |
 | Player and video reads | `videoInfo`, `channelOf`, the `player` and `nav` streams | navigation details (watch and Shorts); player responses for an ordinary video, a live stream, a premiere, a waiting room, post-live, a replay, a clip (`clipConfig`), a made-for-kids video (`PLAYBACK_MODE_PAUSED_ONLY`) and a Shorts ad (`adClientParams.isAd`); `next`; `reel_item_watch`; a collaboration video |
 | Queue, YouTube | `queueAdd`, `queueUndo` | the miniplayer's queue data before and after an add; the quiet removal answer |
+| Gathering (R126) | `addBatch`, `removeBatch`, `queueAddList` | 2 and 50 adds in one request, with their `setVideoId`s; one already in; one refused (made for kids); 429; a missing playlist; a batch removal; the queue panel before and after a list add |
 | Queue, YouTube Music | `queueInsert`, `queueRemove`, `queueRemoveIds`, `queueMove`, `queueReinsert`, `itemInfo` | `get_queue` answers (song, album, playlist); `app.queue` snapshots, including before and after a move; row `data` for a song row, a card, a queue item and a signed-out row |
 | More quick actions, YouTube Music (R85) | `library`, `navigate`, `itemInfo` | row and card `data` with the library toggle in both states, a mix endpoint and artist and album browse endpoints; a song with no album |
 
@@ -404,6 +420,7 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
 | **Both sites** | `ytcfg`: `LOGGED_IN`, `DATASYNC_ID`, the client name and version, visitor data, `SESSION_INDEX`, `DELEGATED_SESSION_ID`, `USER_SESSION_ID`, `WEB_PLAYER_CONTEXT_CONFIGS`. The experiment flags of Q-WATCH-6 (report only). |
 | **YouTube requests** | YouTube's command resolver, located by shape at `default_kevlar_base.<minified key>.instance.resolveCommand` (no element carries `resolveCommand` any more) on first use, and how many keys match ([ARC-ACC-13](06-architecture.md#623-the-command-resolver-found-by-shape), R34), with `commandController` (`onSuccess` / `onServerError`). `yt-service-request` and `yt-service-request-completed`. Every job's request path. The three-part auth hash: `SAPISIDHASH`, `SAPISID1PHASH`, `SAPISID3PHASH`, the `_u` part, `X-Goog-AuthUser`, and `X-Goog-PageId` / `onBehalfOfUser`. Both `get_add_to_playlist` shapes: `playlistAddToOptionRenderer` with `containsSelectedVideos`, and `toggleableListItemViewModel` with `saveToPlaylistListEntity`. The `FEplaylist_aggregation` lockups. `edit_playlist` results (`STATUS_*`, `setVideoId`). `createPlaylistServiceEndpoint`. `addToPlaylistCommand` with `PLAYLIST_EDIT_LIST_TYPE_QUEUE`. |
 | **YouTube queue** | The miniplayer's queue data; the temporary `TLPQ` queue list; the panel data at `ytd-playlist-panel-renderer.data` / `.polymerController.data`; `yt-playlist-manager`; the `yt-playlist-data-updated` event; `playlistEditEndpoint` `ACTION_REMOVE_VIDEO` by `setVideoId` with the quiet value `params: "IAE%3D"`; `playlistSetVideoId` |
+| **Gather tabs** (R136) | `watch_videos?video_ids=` answering 303 to a `watch?v=…&list=TLGG…` list of at most 50; `addToPlaylistCommand` with `PLAYLIST_EDIT_LIST_TYPE_QUEUE` carrying several video IDs; `edit_playlist` with several `ACTION_ADD_VIDEO` or `ACTION_REMOVE_VIDEO` actions |
 | **YouTube player** | Player ids `movie_player` and `shorts-player`. Methods `getVideoData`, `getCurrentTime`, `getDuration`, `getPresentingPlayerType`, `getPlayerResponse`. Player events `onAdStart`, `onAdEnd`, `onVideoDataChange`. Page events `yt-player-updated` and `yt-navigate-finish`. Markers: `ad-showing`; the `videoDetails` flags `isLive`, `isLiveContent`, `isUpcoming`, `isPostLiveDvr`; `clipConfig`; `adClientParams.isAd`; `PLAYBACK_MODE_PAUSED_ONLY`. |
 | **YouTube page** | `ytd-app`. The card selectors: `yt-lockup-view-model` (`a.ytLockupViewModelContentImage`, `yt-thumbnail-view-model`, `a.ytLockupMetadataViewModelTitle`, `.ytLockupMetadataViewModelMenuButton button`); `ytd-video-renderer`, `ytd-rich-grid-media`, `ytd-grid-video-renderer`, `ytd-compact-video-renderer` (`a#thumbnail`, `ytd-thumbnail`, `a#video-title`, `a#video-title-link`, `#menu ytd-menu-renderer yt-icon-button#button button`); `ytd-playlist-panel-video-renderer` (`a#thumbnail`, `#thumbnail-container`, `a#wc-endpoint`, `#video-title`); `ytm-shorts-lockup-view-model` (`a.shortsLockupViewModelHostEndpoint`, `h3 a.shortsLockupViewModelHostOutsideMetadataEndpoint`, `.shortsLockupViewModelHostOutsideMetadataMenu button`). The watch page's action row `ytd-menu-renderer #top-level-buttons-computed` and `#flexible-item-buttons button[aria-label='Save to playlist']`. The Shorts column `reel-action-bar-view-model` and `pivot-button-view-model`. Search's preview layer `#video-preview ytd-video-preview`. YouTube's own hover toggles `[aria-label='Add to queue']`. The theme: `html[dark]` and the `--yt-sys-color-baseline--*` variables. |
 | **YouTube Music app** | `ytmusic-app`'s `handleServiceEndpoint`, `handleNavigationEndpoint`, `handlePlaylistEditEndpoint` and `handleCommandWithCommandHandler`. `networkManager.fetch`. `app.queue` (`getItems`, `getCurrentItemIndex`, `removeItem`, `isEmpty`, `store`), `ADD_ITEMS`, `SET_QUEUE_CONTEXT_PARAMS` and `/music/get_queue`. The menu item's behaviour property `ytmusicServiceMenuItemBehavior` on `ytmusic-menu-service-item-renderer`. `queueAddEndpoint` with both insert positions, `removeFromQueueEndpoint`, `addToPlaylistEndpoint`, `likeEndpoint`. The queue panel's `ytmusic-reorderable-list-drop` event and the contents it reads. `navigator.mediaSession` and `#movie_player.getVideoData()`. The cast state at `state.castStatus`. |
@@ -418,6 +435,7 @@ These go to the real-browser layer (§7.2.5), the watch (§7.5) or the live chec
   4. sends the signed-in endpoints signed out, and checks the gateway still reads each answer as "signed out".
 - **Q-WATCH-10.** The static watch exits non-zero when red, and writes a JSON artifact. Each miss names its watch-list entry, the features it breaks and the effect, for example "missing the command resolver → add and undo fall back to the service request".
 - **Q-WATCH-11.** A run that meets a bot wall or a consent page (common for player requests from CI's datacenter IPs) is **inconclusive** for the checks it blocked, not red.
+- **Q-WATCH-35.** **Gather tabs' watch** (R136). The static watch requests `watch_videos` signed out for 3 and for 51 fixed public video IDs, and checks the 303 to a `TLGG` list holding 3 and 50 of them, in order. The browser watch builds a 3-video queue signed out with `queueAddList` from a fresh watch tab, and checks that the queue panel holds all three. A miss names Gather tabs' destination it breaks ([HEALTH-29](04-features-accounts-data.md#52-status)).
 
 ### 7.5.4 The browser watch
 
@@ -729,17 +747,18 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 | A YouTube or YouTube Music page load | ≤ 1 (`tab.hello`) |
 | An in-app navigation | 0, or 1 to clear that tab's toolbar tick ([ARC-MOD-38](06-architecture.md#643-background-srcbackground)) |
 | A minute of playback with auto-add on | ≤ 1, and about 0.2 while a video simply plays |
+| The browser starting | ≤ 1 (`runtime.onStartup`: the upgrade note, R97, and automatic gathering's check, R129) |
 | A user action: a click, key, popup open, browser-menu click or command | What the action needs |
 
-  (R105, R110)
-- **Q-PERF-52. Work per wake.** A routine wake (`tab.hello`, a progress save, signals) makes at most 2 storage reads before it handles its event and at most 1 write, and no `scripting` call when the desired set hasn't changed ([ARC-MOD-37](06-architecture.md#643-background-srcbackground)). It handles its event within 10 ms of background time at 1×, not counting the browser's own start of the worker. A cold start measured about 25 ms from message to answer (23–41 ms), against 1.4 ms warm. (R109)
+  (R105, R110, R133)
+- **Q-PERF-52. Work per wake.** A routine wake (`tab.hello`, a progress save, signals) makes at most 2 storage reads before it handles its event and at most 1 write, and no `scripting` call when the desired set hasn't changed ([ARC-MOD-37](06-architecture.md#643-background-srcbackground)). It handles its event within 10 ms of background time at 1×, not counting the browser's own start of the worker. A cold start measured about 25 ms from message to answer (23–41 ms), against 1.4 ms warm. While Gather tabs' automatic options are on, a routine wake may add one `tabs.query`, at most once a minute, within those 10 ms; a wake that leads to a gather is no longer routine, and Q-PERF-66 budgets it (R139). (R109)
 - **Q-PERF-53. Background timers and alarms:** no interval, no alarm, and one-shot follow-ups only, each at most 25 s ([ARC-MOD-39](06-architecture.md#643-background-srcbackground)). (R103)
 - **Q-PERF-54. Storage:**
 
 | Area | Allowed |
 |---|---|
 | `storage.local` | Idle: no write. Playback with auto-add on: at most 1 write a minute per playing tab, and none when nothing new was played ([DATA-27](04-features-accounts-data.md#46-watch-progress)). A progress save rewrites one shard ([DATA-56](04-features-accounts-data.md#46-watch-progress)): writing a 57 KB record blocked the caller for about 4 ms and took 12 ms to land, against 0.1 ms and 1 ms for a 147-byte key. Every other write follows a user action or an outcome, and only when the value changed ([DATA-57](04-features-accounts-data.md#45-caches-and-expiry)) |
-| `storage.session` | At most 1 write per page load (the tab registry), and at most 1 every 10 s for signals ([HEALTH-28](04-features-accounts-data.md#51-what-counts-as-breakage)) |
+| `storage.session` | At most 1 write per page load (the tab registry), and at most 1 every 10 s for signals ([HEALTH-28](04-features-accounts-data.md#51-what-counts-as-breakage)). Gather tabs' record: one write per gather or Undo, none for a check that gathers nothing (Q-PERF-66; R135) |
 | `storage.sync` | Only after a local change to a synced document: one `set()` per push, so at most 12 a minute ([SYNC-06, SYNC-27](04-features-accounts-data.md#32-the-local-copy-comes-first)) |
 
   - No page script registers `storage.onChanged`, for any area: every listening context gets its own copy of every change, content scripts in every tab included. In a burst of 20 writes of a 57 KB record, each of three listening tabs spent 144–223 ms of main-thread time, against under 3 ms for a 147-byte key.
@@ -748,7 +767,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
   1. auto-add, when a goal is reached: one membership read for every due playlist, then the adds ([YT-ADD-06](02-youtube.md#251-order-and-membership)), at most once per playlist per playback;
   2. the account label check: at most once per account per 24 h ([ACC-18](04-features-accounts-data.md#23-which-account-is-shown));
   3. claiming the unclaimed 1.x setup: one playlist-list read per account, at most once per browser session ([ACC-46](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming));
-  4. automatic gathering into a playlist, if the user picks it ([ticket 31](../issues/31-gathertube.md)), within Q-PERF-58.
+  4. automatic gathering into the gather playlist ([02 §2.16.5](02-youtube.md#2165-automatic-gathering)), within Q-PERF-58 and Q-PERF-66: at most 50 membership reads and two batched adds a round (R128).
 
   Nothing else fetches by itself: no prefetch, no cache refreshed on a timer, nothing read from YouTube to keep something current. Refreshing a stale list when a view opens follows the user's open (ARC-ACC-43). (R116)
 - **Q-PERF-56. Memory.**
@@ -756,17 +775,33 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
   - The background holds nothing between wakes that it can't rebuild from storage. `storage.session` stays under 1 MB: at most 200 tabs in the registry ([ARC-ACC-70](06-architecture.md#6211-serving-tab-routing)), 200 signals ([HEALTH-28](04-features-accounts-data.md#51-what-counts-as-breakage)) and 50 recent adds (R86).
   - `storage.local` stays under 5 MB, half of Chrome's 10 MB, with progress capped by [DATA-26](04-features-accounts-data.md#46-watch-progress). (R101)
 - **Q-PERF-57. Tabs that need nothing.** Automatic work never wakes, reloads, activates, injects into or messages a discarded or frozen tab, and never touches a tab of another site. Injecting into several open tabs goes one tab at a time ([ARC-MAN-22](06-architecture.md#633-runtime-script-registration), [ARC-ACC-56](06-architecture.md#6211-serving-tab-routing)). (R104, R109)
-- **Q-PERF-58. Automatic triggers.** Any automatic option, ticket 31's automatic gathering first, meets these before it's accepted, whichever trigger the user picks. (R117)
-  1. **Events only.** No alarm, interval or timer that checks tabs. A condition over time, such as "left unvisited for an hour", is evaluated when something else already wakes the background (a YouTube tab's `tab.hello`, the popup opening, the browser starting), from `Tab.lastAccessed`.
+- **Q-PERF-58. Automatic triggers.** Any automatic option, ticket 31's automatic gathering first, meets these before it's accepted, whichever trigger the user picks. Automatic gathering meets them with all three of its triggers (Q-PERF-66). (R117, R139)
+  1. **Events only.** No alarm, interval or timer that checks tabs. A condition over time, such as "left unvisited for an hour", is evaluated when something else already wakes the background (a YouTube tab's `tab.hello`, the popup or Settings opening, or any other message from them, the browser starting), from `Tab.lastAccessed`.
   2. **No browser-wide listener,** and no new permission with an install warning: no `tabs.on*` or `windows.on*` listener in either browser, and no `webNavigation`. New YouTube tabs are learnt from our own page code in them: the site core's `tab.hello` says whether the page started hidden. While the option is on, that's all the page code it loads.
-  3. **Reads tabs, never wakes them.** It reads only the tabs' own fields, through `tabs.query({ windowId, url })` with host access: URL, title, index, `lastAccessed` and `discarded`. That's all GatherTube's sort orders use. It never messages, injects into, activates, reloads or un-discards a gathered tab.
+  3. **Reads tabs, never wakes them.** It reads only the tabs' own fields, through `tabs.query({ windowId, url })` with host access: URL, title, index, `lastAccessed` and `discarded`, plus `active`, `pinned` and `audible` for automatic gathering's exclusions. That's all GatherTube's sort orders use. It never messages, injects into, activates, reloads or un-discards a gathered tab.
   4. **One gather per burst.** Tabs that arrive together are gathered once, after a quiet second with no new one (a one-shot timer, ARC-MOD-39), and at most once a minute per window *(starting values)*.
-  5. **Bounded requests.** Into YouTube's queue: no request of ours, because it opens YouTube's own `watch_videos` page. Into a playlist: through the add flow, from one serving tab, never a request per gathered tab.
+  5. **Bounded requests.** Into YouTube's player: no request of ours, because it opens YouTube's own `watch_videos` page; automatic gathering never uses it. Into a playlist: through the add flow, from one serving tab, never a request per gathered tab.
   6. **Closing is one call:** one `tabs.remove` with every gathered ID.
   7. **Off costs nothing:** while the option is off, it has no listener, permission, page code, storage key or timer of its own.
   8. **Budget:** with 50 YouTube tabs in the window, a gather takes at most 20 ms of background time at 1×, not counting the request. It adds no wake beyond the `tab.hello` each new YouTube tab already sends, and none for tabs of other sites.
 
   Closing a window fails rules 2 and 3: by then the browser reports only the window's ID, so every YouTube tab's URL would have to be tracked all along, and nothing can be sent while the browser quits.
+- **Q-PERF-65. Gather tabs' page cost** (R133). Gather tabs has no page file. With it the only YouTube page need, watch and live pages load the page half and core alone, within their 5 + 5 KB rows ([Q-PERF-12](#763-in-page-weight)), drawing nothing and adding no listener of their own; other youtube.com pages load nothing ([ARC-MAN-24](06-architecture.md#633-runtime-script-registration)). With any other YouTube feature on, it adds nothing to any page. The core alone at load takes at most 5 ms at 1× and 20 ms at 4× *(starting values, Chromium)*.
+- **Q-PERF-66. Gather tabs' running cost** ([02 §2.16.5](02-youtube.md#2165-automatic-gathering); R128 to R133, R139):
+
+| State | Allowed |
+|---|---|
+| Off, or on with no automatic option | Nothing registered, and no listener, check, timer or write of its own. Its code runs only on a click in the popup |
+| Trigger 1 (unvisited for a while) | No wake of its own. At most one `tabs.query` a minute, on wakes that happen anyway. No write when nothing is gathered |
+| Trigger 2 or 3 (opened in the background, N video tabs) | The page half and core on watch and live pages. No wake beyond `tab.hello`. Per burst: one `tabs.query` and one-shot timers of at most 10 s |
+| A gather | At most 20 ms of background time with 50 tabs at 1×, not counting requests or the wait for the language detector. One `tabs.remove`. One `storage.session` `set()` |
+| An automatic round's requests | At most 50 membership reads and two batched adds, one at a time, from one serving tab. None through a gathered tab |
+
+- **Q-PERF-67. Gather tabs changes no budget number** (R139):
+  - the popup's first view gains one row, a few hundred bytes, inside the 40 KB ([Q-PERF-31](#766-popup-settings-the-first-run-page-and-background));
+  - its unfolded options in the popup and its Settings card are lazy chunks, each at most 45 KB;
+  - its background code (gathering, ordering and the triggers), an estimated 3–4 KB gzip, counts toward the background's 25 KB (PROVISIONAL);
+  - it has no page file, so `perf-budget.json` has no row for it ([ARC-REG-11](06-architecture.md#66-the-feature-registry)).
 
 **Enforcement**
 
@@ -782,9 +817,9 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 - **Q-PERF-62. Gates:** counts are hard gates in both browsers, because they don't depend on the machine. Times are gated at 1.5× in Chromium CI and checked exactly on the reference machine before each release, as Q-PERF-41 says. (R102)
 - **Q-PERF-63. The release check** ([REL-CHK-27](08-release.md#18-release-checklist-releasingmd)). `RELEASING.md` scripts a 15-minute session, signed in, with the store build on the reference machine:
   - one YouTube tab playing a long video that auto-add counts, hidden behind a second YouTube tab on a channel grid; one YouTube Music tab playing, hidden;
-  - after 5 minutes: the popup opened twice, two saves by key, one feature switched off and on again; then 10 minutes untouched.
+  - after 5 minutes: the popup opened twice, two saves by key, three videos opened in the background from the channel grid with Gather tabs' three automatic options on (one gather), one feature switched off and on again; then 10 minutes untouched.
 
-  Chrome: Task Manager's CPU time, Idle wake ups and Memory footprint for the extension and each tab, read at the start and the end, with the worker's DevTools closed (they keep it alive). Firefox: a Firefox Profiler capture of the session, filtered to `moz-extension`. The same session then runs with the extension disabled. The release PR gets the table. Budgets, as *starting values*: each YouTube or YouTube Music tab's CPU time at most 5 % above the run without the extension (Q-PERF-47's 30 ms a minute is under 3 % of YouTube's own), its memory footprint at most 5 MB above, and the extension's own row at most 2 s of CPU time over the session. A figure over budget blocks the tag. A figure over 1.5× the previous release's is explained in the PR before tagging. (R102)
+  Chrome: Task Manager's CPU time, Idle wake ups and Memory footprint for the extension and each tab, read at the start and the end, with the worker's DevTools closed (they keep it alive). Firefox: a Firefox Profiler capture of the session, filtered to `moz-extension`. The same session then runs with the extension disabled. The release PR gets the table. Budgets, as *starting values*: each YouTube or YouTube Music tab's CPU time at most 5 % above the run without the extension (Q-PERF-47's 30 ms a minute is under 3 % of YouTube's own), its memory footprint at most 5 MB above, and the extension's own row at most 2 s of CPU time over the session. A figure over budget blocks the tag. A figure over 1.5× the previous release's is explained in the PR before tagging. (R102, R139)
 - **Q-PERF-64. Firefox's slow-extension warning.** The live-check build's page listens to `runtime.onPerformanceWarning` (Firefox 124+) during its run, and fails the run if it fires: Firefox fires it, and tells the user "… is slowing down Firefox", when a content script hangs. Store builds don't listen. (R102)
 
 ---
@@ -936,3 +971,10 @@ The user's decisions of 2026-10-20 ([R84–R99](resolutions.md#the-users-decisio
 - **Ready for translation:** Q-TEST-44 (R93).
 
 R94 to R98 change nothing this chapter states.
+
+GatherTube, folded in on 2026-10-20 ([R120–R139](resolutions.md#gathertube-r120r139)):
+- **Budgets and running cost:** Q-PERF-65 to Q-PERF-67; Q-PERF-51's browser start (R133); Q-PERF-54's session write per gather (R135); Q-PERF-55's item 4 (R128); Q-PERF-58, which names YouTube's player and the wakes trigger 1 rides on; and Q-PERF-63's session (R139). No budget number changes.
+- **Tests:** Q-TEST-49, Q-TEST-50 and Q-TEST-14's fakes (R139).
+- **Breakage and fixtures:** Q-WATCH-8's Gather tabs row, Q-WATCH-35 and Q-FIX-5's gathering row (R126, R136).
+
+R120 to R127, R129 to R132, R134, R135, R137 and R138 are behaviour, data and copy, which 02, 04, 05, 06 and 08 hold; this chapter budgets and tests them.
