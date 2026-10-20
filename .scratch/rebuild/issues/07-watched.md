@@ -301,3 +301,7 @@ The facts were gathered on 2026-10-19 from YouTube's player script (`/s/player/0
    - how far apart `timeupdate` events are;
    - whether a muted watch-page video gets paused in Chrome.
 9. **`getVideoData()` before playback starts:** Nova reports `isLive` as unreliable then.
+
+## Settled by the user (2026-10-20)
+
+Live streams and premieres counting for auto-add: **declined.** They keep not counting in 2.0, as this ticket left them ([R87](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99); spec 02 YT-AA-24).

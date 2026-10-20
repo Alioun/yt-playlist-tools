@@ -2,7 +2,7 @@
 
 The destination of the [Rebuild (2.0) map](map.md): a ground-up rebuild of this extension that keeps every capability, adds YouTube Music quick actions, works through the user's own YouTube session, puts UI/UX first, and lets the user switch off any part of it. Every decision below was made in the map's tickets; this spec assembles them so `/to-tickets` and implementers can work from it without reading the tickets.
 
-Status: **assembled 2026-10-19.** Items marked PROVISIONAL wait on the user's inputs listed in [Open items](#open-items). Each one names the ticket and check that settles it.
+Status: **assembled 2026-10-19; the user's decisions folded in on 2026-10-20** ([R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)). Items marked PROVISIONAL wait on the inputs listed in [Open items](#open-items). Each one names the ticket and check that settles it.
 
 ## How to read this spec
 
@@ -17,9 +17,9 @@ Status: **assembled 2026-10-19.** Items marked PROVISIONAL wait on the user's in
 | # | Chapter | Covers |
 |---|---|---|
 | 01 | Overview (this page) | Scope, principles, approved capabilities, ADRs, open items |
-| 02 | [YouTube capabilities](spec/02-youtube.md) | Auto-add, channel filters, the add flow and feedback, playlist shortcuts, quick-save, Add to queue, the watch-page button, the card menu |
-| 03 | [YouTube Music capabilities](spec/03-youtube-music.md) | Quick actions, quick-action shortcuts, queue moves, Save to playlist, Playing now |
-| 04 | [Features, accounts and data](spec/04-features-accounts-data.md) | The feature model, consent, accounts and setups, settings sync, the storage layout, Clear All Data, breakage status |
+| 02 | [YouTube capabilities](spec/02-youtube.md) | Auto-add, channel filters, the add flow and feedback, playlist shortcuts, quick-save, Add to queue, the watch-page button, the card menu, keys from any tab, Save from the browser's menu |
+| 03 | [YouTube Music capabilities](spec/03-youtube-music.md) | Quick actions (with Save to library, Start mix, Go to album and Go to artist), quick-action shortcuts, queue moves, Save to playlist, Playing now |
+| 04 | [Features, accounts and data](spec/04-features-accounts-data.md) | The feature model, consent, accounts and setups, settings sync, the storage layout, recent adds, the settings file, Clear All Data, breakage status, Report a problem |
 | 05 | [UI](spec/05-ui.md) | Where everything lives; popup, settings, onboarding; in-page controls on both sites; picker, toasts, brand, design rules; prototypes |
 | 06 | [Architecture](spec/06-architecture.md) | YouTube access and routes, manifest and permissions, the module map, gateway, registry, bundles, messaging |
 | 07 | [Quality](spec/07-quality.md) | Tooling, test layers, fixtures, breakage detection, performance budgets, CI |
@@ -40,7 +40,18 @@ Status: **assembled 2026-10-19.** Items marked PROVISIONAL wait on the user's in
 - creating playlists from the extension;
 - the YouTube Music section and its quick actions.
 
-Further candidates await the user ([Open items](#open-items)).
+**Approved by the user on 2026-10-20** ([R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)), each off by default where it's a feature:
+- unticking in the picker removes, with Undo;
+- four more YouTube Music quick actions: Save to library, Start mix, Go to album and Go to artist;
+- a Recent adds list in the popup, kept until the browser closes;
+- keys from any tab, in 2.0.0 ([ADR-0004](../../docs/adr/0004-shortcuts-caught-in-page.md), amended);
+- Report a problem, with prefilled GitHub issue forms and no support e-mail;
+- export and import of settings to a file;
+- Save from the browser's menu;
+- the toolbar tick and "paused" on the icon, both on;
+- a UI ready for translation, shipped in English.
+
+**Declined:** counting live streams and premieres for auto-add. **Scope stays whole:** nothing moves to 2.x ([ticket 30](issues/30-market-and-users.md)).
 
 **AMO reviews answered:** "Could you update it for latest Firefox and YouTube?" and "Would be cool to have multiple 'Add to playlist' shortcut options. And maybe with some manual labels/titles?" (playlist shortcuts with labels; titles instead of IDs everywhere).
 
@@ -83,12 +94,12 @@ These are the user's, and every chapter follows them.
 | [0001](../../docs/adr/0001-youtube-access-through-the-users-session.md) | YouTube access goes through the user's own session, from inside their YouTube tabs; no Data API, not even as a fallback |
 | [0002](../../docs/adr/0002-svelte-and-bits-ui.md) | The UI is Svelte 5 + shadcn-svelte / Bits UI; Bits UI loads only on first use inside pages |
 | [0003](../../docs/adr/0003-account-setups-keyed-by-datasync-id.md) | Account setups hold only playlist choices, keyed by a digest of YouTube's `DATASYNC_ID` |
-| [0004](../../docs/adr/0004-shortcuts-caught-in-page.md) | Shortcuts are caught in YouTube's pages, not with the browser's keyboard commands |
+| [0004](../../docs/adr/0004-shortcuts-caught-in-page.md) | Shortcuts are caught in YouTube's pages, not with the browser's keyboard commands; amended 2026-10-20 for three unbound commands behind the opt-in Keys from any tab |
 | [0005](../../docs/adr/0005-breakage-caught-on-device-fixed-by-releases.md) | YouTube breakage is caught on the device and fixed only by releases |
 | [0006](../../docs/adr/0006-local-truth-sync-copies-documents.md) | Each browser keeps its own settings; settings sync copies whole documents |
 | [0007](../../docs/adr/0007-only-the-gateway-runs-in-the-page-world.md) | Only the gateway runs in YouTube's page world |
 | [0008](../../docs/adr/0008-unlisted-scripts-one-ordered-registration-per-site.md) | Page scripts are unlisted scripts in one ordered registration per site, sharing one Svelte runtime |
-| [0009](../../docs/adr/0009-upgraders-keep-what-1-4-5-did.md) | Upgraders keep what 1.4.5 did, not what its popup showed |
+| [0009](../../docs/adr/0009-upgraders-keep-what-1-4-5-did.md) | Upgraders keep what 1.4.5 did, not what its popup showed; amended 2026-10-20 so upgraders whose 1.4.5 never got access default to 50 % |
 | [0010](../../docs/adr/0010-one-consent-gates-every-feature.md) | One consent of our own gates every feature, in every browser |
 | [0011](../../docs/adr/0011-betas-from-github-pages.md) | Betas are unlisted builds of the same add-on, served from this repo's GitHub Pages |
 
@@ -120,31 +131,22 @@ From [ticket 17](issues/17-modules.md), for `/to-tickets`:
 
 ## Open items
 
-The chapters were checked mechanically on 2026-10-19: 1,009 links and 1,471 requirement IDs, with zero broken links, zero missing IDs, zero duplicate IDs and **no remaining contradictions between chapters**. [`spec/resolutions.md`](spec/resolutions.md) records every conflict settled during assembly (R1–R82). Its "Final gaps" section governs where a chapter still lists a detail as not pinned down.
+The chapters were checked mechanically on 2026-10-19: 1,009 links and 1,471 requirement IDs, with zero broken links, zero missing IDs, zero duplicate IDs and **no remaining contradictions between chapters**. [`spec/resolutions.md`](spec/resolutions.md) records every conflict settled during assembly (R1–R82). Its "Final gaps" section governs where a chapter still lists a detail as not pinned down. After the user's decisions were folded in (R84–R99), the check ran again on 2026-10-20: 1,149 internal links and 1,529 requirement IDs, again with none broken, missing or duplicated.
 
 What's still open, and what settles it:
 
 ### Decisions waiting on the user
 
-Each is tracked in [`for-the-user.md`](for-the-user.md).
+Each is tracked in [`for-the-user.md`](for-the-user.md). The user answered every other decision on 2026-10-20: they're settled in [R84–R99](spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99) and no longer listed here.
 
 | Item | Where | Until answered, the spec assumes |
 |---|---|---|
-| **The name, mark and palette:** "Playlist Pigeon for YouTube™", or the runner-up "Playlist Courier for YouTube™" | [ticket 22](issues/22-name.md) | Playlist Pigeon, used throughout; the swap is mechanical |
-| Unticking a playlist in the picker removes the item | [ticket 26](issues/26-youtube-music-quick-actions.md), PAR-NEW-31 | It removes (PROVISIONAL) |
-| More YouTube Music quick actions: Save to library, Start mix, Go to artist / album | PAR-NEW-32 | Not included |
-| A "Recent adds" list in the popup | PAR-NEW-33 | Not included |
-| Live streams and premieres counting for auto-add | PAR-NEW-34 | They never count |
-| Keys that work from any tab (browser commands with no default key) | PAR-NEW-35 | In-page keys only (ADR-0004) |
-| Settings export and import to a file | PAR-NEW-36 | Not included |
-| A "Save to ▸" entry in the browser's right-click menu | PAR-NEW-37 | Not included |
-| A toolbar tick when auto-add added this tab's video, and "paused" on the icon | PAR-NEW-38, FT-01 | Tick off; no paused indicator |
-| Translation | PAR-NEW-39 | Translation-ready strings, English only |
-| Narrow Quick picks rows on YouTube Music squeeze the title while hovered | YM-NARROW-1, UI-YM-10 | Every switched-on button is kept |
-| Approving the privacy policy (published under the user's name), and whether to add a support e-mail beside GitHub issues | REL-STORE-17, HEALTH-22 | Drafted text, GitHub issues only |
+| **The name, mark and palette:** a second naming round is running, to list options that don't collide | [ticket 22](issues/22-name.md) (round 2), [ticket 34](issues/34-icon.md) | "Playlist Pigeon for YouTube™", used throughout as a placeholder; the swap is mechanical |
+| Approving the privacy policy (published under the user's name) | REL-STORE-17 | The drafted text, with GitHub issues as the only contact and no support e-mail (R89) |
 
 ### Actions only the user can take
 
+- **Create the issue labels** `problem`, `youtube-change` and `idea`, so the issue forms added on 2026-10-20 apply them (REL-STORE-37).
 - **Run the live-check probe** ([ticket 25](issues/25-live-checks.md), branch `task/live-checks`) signed in, in Chrome and Firefox, and paste the reports back.
 - **One-time store and GitHub setup** before release ([chapter 08 §19](spec/08-release.md)).
 
@@ -152,7 +154,7 @@ Each is tracked in [`for-the-user.md`](for-the-user.md).
 
 These turn PROVISIONAL rows into settled ones. The design doesn't change, only data.
 - **YouTube access routes (L1–L9):** which route each job uses, playlist creation, whether the cookie is read at all (L3/L4, and with it every cookie line in the disclosures, R48), proceeding when membership can't be read (L6), `DATASYNC_ID` stability across browsers (L7, which re-attaching setups depends on), queue confirmation (L8), Shorts (L9).
-- **YouTube Music (M1–M5):** queue reads, membership in its answers, quiet likes, the installed app window, how casting shows; the Wiz miniplayer's Save anchor.
+- **YouTube Music (M1–M5):** queue reads, membership in its answers, quiet likes and Save to library (R85), the installed app window and keys from any tab reaching it (R88), how casting shows; the Wiz miniplayer's Save anchor.
 - **YouTube's queue:** quiet adds and their Undo (T28, T29).
 - **Release inputs:** open tabs surviving an update (P2). The prompt strings (P1) are settled from Firefox's and Chromium's sources ([R83](spec/resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)); the live check only glances at the dialogs.
 - **Measurements on the reference machine:** `popovers.js` (54.5 KB against its 50 KB budget; R29's fix order applies), first-frame and picker timings, and breakage thresholds, which are also tuned in the first weeks of use.

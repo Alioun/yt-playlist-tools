@@ -73,3 +73,9 @@ Also from [ticket 27](27-youtube-music-controls.md), signed in:
 About 1 in 4 fresh signed-out profiles got the Wiz miniplayer; forcing the flag alone gives a Wiz bar with no like.
 
 **P1 settled from sources (2026-10-19):** Firefox's prompt strings come from Firefox's own string files and code, plus Mozilla's KB ([R83](../spec/resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83)). Chrome's come from Chromium's source (chapter 08 §5). During the live check, P1 only glances at the real dialogs.
+
+## Settled by the user (2026-10-20)
+
+Two checks grow with the user's decisions ([R84–R99](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99); spec 06 §6.2.15):
+- **M3** also covers Save to library: its signed-in shape, and whether YouTube Music shows its own toast for it (R85).
+- **M4** also checks that a key from any tab, set in the browser, reaches the background while the installed YouTube Music app's window has focus (R88).

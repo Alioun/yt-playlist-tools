@@ -288,7 +288,7 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
 - **Behaviour:**
   - **Check marks** pulse while membership loads. Rows work before membership arrives.
   - **Each row shows its own result:** busy, checked, or "Couldn't save". There are no toasts.
-  - **Unticking removes:** still PROVISIONAL, as in tickets 12 and 26.
+  - **Unticking removes:** approved by the user on 2026-10-20, with an Undo toast (R84).
   - **Membership unreadable:** "Couldn't check where this video already is."
   - **Choose mode:** a pick saves, becomes the quick-save playlist, closes the picker and shows ticket 12's "… One click now saves there." toast with Undo.
 - **Anchoring:**
@@ -422,7 +422,7 @@ The setup, matching production as ticket 17 asks:
 - **The fold's synthetic `resize` nudge,** used only on a narrow first load.
 - **YouTube's hover toggles:** whether signed-in feeds draw them. The step-aside handles both cases.
 - **The queue toast's Show feedback default:** on.
-- **Unticking removes:** inherited from tickets 12 and 26.
+- **Unticking removes:** inherited from tickets 12 and 26. *Settled 2026-10-20 (R84).*
 - **The pigeon mark and the name "Playlist Pigeon":** placeholders for ticket 22.
 - **Signed-in and Firefox behaviour,** which are untested.
 
@@ -483,3 +483,8 @@ Also from [ticket 15](15-popup-and-settings.md):
 - The in-page picker uses the same `PickerModel`.
 - Settings answers the deep links `#feature-watchButton`, `#diagnostics` and `#feature-<id>`.
 - The popup shows auto-add progress as a linear meter with goal ticks; the in-page pie stays.
+
+## Settled by the user (2026-10-20)
+
+- **Unticking removes**, with an Undo toast ([R84](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)).
+- **Save from the browser's menu** ([R91](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): a Save to ▸ entry in the browser's own menu, for people who want YouTube's page untouched. It draws nothing in the page but its toasts. Spec: 02 §2.15.

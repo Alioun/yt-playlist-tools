@@ -74,7 +74,7 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
 - **First-run tab** and **upgrade-note tab:** each opens once.
 - **Toolbar badge:**
   - "!" means the user must act: consent, site access, a Missing or Full playlist, or a feature that isn't working (ticket 18, amber; site access takes priority).
-  - A per-tab tick when that tab's video was auto-added (PROVISIONAL).
+  - A per-tab tick when that tab's video was auto-added, and "paused" on the icon: both on by default and switchable (settled 2026-10-20, R92).
 - **Not used:** a side panel, entries in the browser's right-click menu, new-tab or dashboard pages, and switches inside YouTube's pages.
 
 ### Where each capability lives
@@ -227,12 +227,12 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
 
 ### PROVISIONAL
 
-- **The per-tab tick on the toolbar icon** for an auto-added video, offered as an auto-add option. Its default belongs to ticket 15.
-- **The Recent adds list:** a proposal only.
+- **The per-tab tick on the toolbar icon** for an auto-added video, offered as an auto-add option. Its default belongs to ticket 15. *Settled 2026-10-20: on by default, beside "paused" on the icon (R92).*
+- **The Recent adds list:** a proposal only. *Settled 2026-10-20: approved, as a popup sheet kept until the browser closes (R86).*
 - **Exact in-page positions** of the watch-page button, the thumbnail stack and the Shorts column, until ticket 14 tries them on real YouTube.
 - **Quick-save on Shorts shelves,** as an option.
 - **`addHostAccessRequest`** on Chrome 133+.
-- **The Diagnostics links:** they point to GitHub until ticket 19 picks the support channel (ticket 18).
+- **The Diagnostics links:** they point to GitHub until ticket 19 picks the support channel (ticket 18). *Settled 2026-10-20: GitHub issues through a chooser with prefilled forms, and no e-mail (R89).*
 
 ### Notes for the hi-fi prototypes
 
@@ -283,3 +283,10 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
 - **[19](19-upgrade-and-rollout.md):** decides the carried-over values and the support channel.
 
 Also from [ticket 19](19-upgrade-and-rollout.md), after resolution: before Agree, the upgrade note can show only stored values ("{N} playlists you chose in 1.x", the real percentage, the 50 % / 0 % question). Showing playlist titles or signed-in state needs a YouTube request, and none is made before consent ([ADR-0010](../../../docs/adr/0010-one-consent-gates-every-feature.md)). The final copy is in ticket 19's §3–§4.
+
+## Settled by the user (2026-10-20)
+
+The user answered this ticket's new questions ([R84–R99](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)):
+- **"Save to ▸" in the browser's right-click menu:** approved as the opt-in feature Save from the browser's menu, with an optional `contextMenus` permission that shows no prompt on either browser (R91; spec 02 §2.15).
+- **Recent adds:** approved, as a sheet opened from the popup's header, kept until the browser closes (R86; spec 04 DATA-52, 05 UI-POP-33).
+- **The toolbar tick** and **"paused" on the toolbar icon:** both exist, both on by default, both switchable (R92).

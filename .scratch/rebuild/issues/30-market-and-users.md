@@ -42,10 +42,14 @@ Full report, with the three cited source reports in `docs/research/market/`: [`d
   - 66 daily users, most of whom probably never got 1.4.5 working;
   - what they asked for (no credentials, labelled shortcuts, "update it") is what 2.0 does;
   - the rename, opt-in defaults and the new "watched" meaning are low risk.
-- **Upgrade risks, with fixes S1–S3 pending the user:**
+- **Upgrade risks, with fixes S1–S3 (taken by the user on 2026-10-20, R96–R98):**
   - never-authorised upgraders get the 0 % default;
   - the badge is invisible when unpinned;
   - the tab title should carry the old name.
 - **The live listing is broken now (S4):** AMO points to a README that no longer describes 1.4.5. Fix: `docs/legacy/1.4.5-setup.md` plus an AMO description edit.
 - **Positioning and store summaries:** drafted in users' own words (Save, Watch Later, any playlist, one click, shortcut, Add to queue), with AMO at 246 and Chrome at 132 characters.
 - **Scope:** keep the approved scope. If room is needed, move auto-add on Shorts first, then settings sync, to 2.x. Never move YouTube Music or the save features.
+
+## Settled by the user (2026-10-20)
+
+The user took the recommendations ([R95–R98](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)): the listings re-lead with saving, with the drafted summaries and "no Google sign-in" kept out of the lead (R95); upgrade fixes S1 to S3 are in (R96–R98); and scope stays whole. Of the open decisions, keys from any tab ships in 2.0.0 (R88). The user also approved D3, D4 and D8 to D10, which this report's §6.3 had suggested leaving out, and declined counting live streams (R84–R92). The name goes to a second round ([ticket 22](22-name.md)). S4 is the user's own action.

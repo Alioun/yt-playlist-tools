@@ -391,3 +391,7 @@ Read from primary sources on 2026-10-19.
 Also from [ticket 14](14-in-page-controls.md)'s real-YouTube build:
 - With key isolation on, Bits UI popovers don't close on Escape, so the popovers handle Escape themselves.
 - Typing in our picker never reached YouTube's hotkeys.
+
+## Settled by the user (2026-10-20)
+
+**Keys from any tab: approved, in 2.0.0** ([R88](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)). A separate opt-in feature, Keys from any tab, declares three browser commands with no default key (save the playing song, like or unlike it, save the current video to Watch later). The user sets their keys in the browser's own shortcut settings. Each runs in one open YouTube or YouTube Music tab, picked as Playing now picks its tab. [ADR-0004](../../../docs/adr/0004-shortcuts-caught-in-page.md) is amended, not replaced: this ticket's in-page design still holds for every shortcut the user builds and names. The key recorder warns when an in-page key is also bound to one of these commands. Spec: 02 §2.14, 03 §22, 06 ARC-MAN-19.

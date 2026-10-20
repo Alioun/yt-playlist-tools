@@ -473,11 +473,11 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
 
 - **The name and mark:** "Playlist Pigeon", the pigeon and the palette, until ticket 22 is confirmed.
 - **The disclosure's cookie line** (ticket 25).
-- **Unticking a checked playlist removes the video** (tickets 12, 26).
+- **Unticking a checked playlist removes the video** (tickets 12, 26). *Settled 2026-10-20: it does, with Undo (R84).*
 - **Ticket 24's settings budget:** proposed as the first frame only (now 38.8 + 8.5 KB), with each lazy part ≤ 45 KB.
 - **The 2 KB browser-adapter allowance** in the size check: an estimate until `ui/backend/browser.ts` exists.
 - **The first-frame timings:** measured on the development machine, not the reference rig.
-- **The toolbar tick's default (off).**
+- **The toolbar tick's default (off).** *Settled 2026-10-20: on, with "paused" on the icon also on (R92).*
 - **The popup's 0.6 KB headroom on YouTube Music:** any first-view addition there needs a matching cut.
 
 ### Notes for other tickets
@@ -514,3 +514,13 @@ Resolved 2026-10-19. The user delegated the decisions, so each judgement call na
 
 - **The popup's budget stays at 40 KB on both sites.** Banner copy loads only when a banner shows, which buys the YouTube Music popup its headroom; never bloated beats a quiet budget raise.
 - **Settings' 60 KB means the first frame.** Section options load right after it, without a click.
+
+## Settled by the user (2026-10-20)
+
+The user's answers change these surfaces ([R84–R99](../spec/resolutions.md#the-users-decisions-of-2026-10-20-r84r99)):
+- **The toolbar tick** is on by default, and a second option shows "paused" on the icon, also on (R92; spec 05 UI-IA-08, UI-SET-10).
+- **The popup** gains a Recent adds button in its header, which opens a sheet loaded on demand (R86; UI-POP-33, UI-POP-34), and a seventh YouTube row, Save from the browser's menu (R91).
+- **Settings** gains the four extra YouTube Music buttons and keys (R85), Keys from any tab's card in Everywhere (R88; UI-SET-23), export and import in Privacy & data (R90; UI-SET-22), and Report a problem's chooser (R89; UI-SET-21).
+- **The upgrade note** gets the old name in its tab title, a Pin line, and its own question for upgraders whose 1.4.5 never got access (R96–R98).
+- **Strings** come from one message catalogue, ready for translation; only English ships (R93; UI-RULE-43).
+- **Budgets:** no number changes; the popup's first view gains only the Recent adds button (R99).
