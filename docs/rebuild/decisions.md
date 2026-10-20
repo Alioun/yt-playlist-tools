@@ -17,3 +17,4 @@ Decisions for 2.0 that are hard to reverse. The records live in [`docs/adr/`](..
 | [0009](../adr/0009-upgraders-keep-what-1-4-5-did.md) | Upgraders keep what 1.4.5 did, not what its popup showed |
 | [0010](../adr/0010-one-consent-gates-every-feature.md) | One consent of our own gates every feature, in every browser |
 | [0011](../adr/0011-betas-from-github-pages.md) | Betas are unlisted builds of the same add-on, served from this repo's GitHub Pages |
+| [0012](../adr/0012-automatic-work-is-event-driven-scoped-and-paced.md) | Automatic work is event-driven, scoped to where it's needed, and paced; never on a clock, never in tabs that don't need it |
