@@ -109,6 +109,7 @@ These are the user's, and every chapter follows them.
 | [0011](../../docs/adr/0011-betas-from-github-pages.md) | Betas are unlisted builds of the same add-on, served from this repo's GitHub Pages |
 | [0012](../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md) | Automatic work is event-driven, scoped to where it's needed, and paced; never on a clock, never in tabs that don't need it |
 | [0013](../../docs/adr/0013-named-perchling-for-youtube.md) | 2.0 is named Perchling for YouTube™ on both stores; AMO's slug, the gecko ID and the repo's name stay |
+| [0014](../../docs/adr/0014-dev-integrates-main-releases-on-a-version-bump.md) | `dev` integrates; a merge to `main` with a new version tags and releases it, and a pushed tag triggers nothing |
 
 ## Prototypes
 

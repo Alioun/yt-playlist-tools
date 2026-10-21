@@ -35,6 +35,9 @@ jobs:
       - name: Test
         run: bun run test
 
+      - name: Release decision cases
+        run: scripts/release-meta.test.sh
+
       - name: Build (Chrome MV3)
         run: bun run build
         env:
