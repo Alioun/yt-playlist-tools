@@ -84,6 +84,8 @@ jobs:
         with:
           name: firefox-sources-${{ steps.sha.outputs.short }}
           path: .output/*-sources.zip
+          # .output is hidden, and a wildcard skips hidden paths without this.
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 30
 
