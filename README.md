@@ -1,6 +1,6 @@
 # yt-playlist-tools
 
-[![CI](https://github.com/Alioun/yt-playlist-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/Alioun/yt-playlist-tools/actions/workflows/ci.yml)
+[![CI](https://github.com/Alioun/yt-playlist-tools/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Alioun/yt-playlist-tools/actions/workflows/ci.yml)
 
 A browser extension for Chrome and Firefox that files the YouTube videos you watch into your own playlists. It can auto-add a video after a set watch percentage, add it to a chosen playlist with a shortcut key, and put a one-click **Add to queue** button on thumbnails.
 
