@@ -12,8 +12,8 @@ This chapter says how 2.0 is built and tested, how it finds out that YouTube or 
 - **KB** means kilobytes of gzip level 9 output of a built file, unless the text says otherwise.
 - *(starting value)* marks a number to be tuned once the signed-in live checks have run and after the first weeks of use. Tuning it is a code change, not a spec change.
 - **PROVISIONAL** marks a decision that waits on an open input. The input is named inline.
-- **Store build** means the production build that goes into a store zip (`wxt build`, `wxt build -b firefox`). **Dev build** means `wxt` in development mode. **Live-check build** means `wxt build --mode livecheck`.
-- **Resolutions:** decisions made while the spec was assembled are cited by R-number, from [resolutions.md](resolutions.md). A requirement that a resolution changed keeps its ID and ends with "(R-n)". The user's decisions of 2026-10-20 are R84–R99, the running-cost rules R100–R117, and the GatherTube fold R120–R139.
+- **Store build** means the production build that goes into a store zip (`wxt build`, `wxt build -b firefox`). **Development build** means `wxt` in development mode; it isn't a **dev build**, which is CI's unsigned production build of a `dev` commit or a PR ([GLOSSARY](../../../GLOSSARY.md)). **Live-check build** means `wxt build --mode livecheck`.
+- **Resolutions:** decisions made while the spec was assembled are cited by R-number, from [resolutions.md](resolutions.md). A requirement that a resolution changed keeps its ID and ends with "(R-n)". The user's decisions of 2026-10-20 are R84–R99, the running-cost rules R100–R117, the GatherTube fold R120–R139, and releases from `main` R148.
 - **The first-run page** is the extension page in `onboarding.html` that holds first run and the upgrade note (R37).
 
 ---
@@ -520,7 +520,7 @@ The user-facing side is in [04 §5](04-features-accounts-data.md#5-breakage-stat
 
 ### 7.6.1 How the budgets count
 
-- **Q-PERF-1.** **Weight** is the gzip level 9 size of built files. Every weight budget holds for both the Chrome and the Firefox store build (they measured byte for byte the same). Budgets apply to store builds; dev builds aren't checked (their kit exports the whole Svelte namespace, §7.8.1).
+- **Q-PERF-1.** **Weight** is the gzip level 9 size of built files. Every weight budget holds for both the Chrome and the Firefox store build (they measured byte for byte the same). Budgets apply to store builds; development builds aren't checked (their kit exports the whole Svelte namespace, §7.8.1).
 - **Q-PERF-2.** **Eager** code loads with the page; **lazy** code loads on first use (the popovers, Diagnostics, the popup's and settings' later parts). Each lazy piece has a weight budget, and the ones a user waits for also have a first-use time budget. The one exception is the first-run page's lazy step 3, which is reported, not gated (Q-PERF-31).
 - **Q-PERF-3.** **Time** is main-thread time, net of what the same page costs with nothing of ours injected, measured as the change in the Chrome DevTools Protocol's `Performance.getMetrics` `TaskDuration` across injection plus 400–500 ms of settling, in a fresh page each run. It's measured on the **reference machine** (Ryzen 5 5600X, Chromium 156) at 1× and at 4× CPU throttling; 4× stands in for a slow laptop. Time budgets are gated on Chromium only. Firefox has none of these methods, so it records the same cases with `performance.mark` for information, and is gated on sizes and behaviour (Q-TEST-19). (R31)
 - **Q-PERF-4.** In-page CSS ships inside the script (Svelte injects it into our shadow roots), so it counts as JS. Icons are inline SVG paths and count. Fonts cost nothing: in-page UI uses the Roboto and YouTube Sans the site already loads, and bundles none.
@@ -835,7 +835,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 | `check` | `setup-bun` from `packageManager` → `bun install --frozen-lockfile` → `typecheck` → `test:coverage` (guards included) → check that the Bun version in `SOURCE_CODE_REVIEW.md` and in the `build-for-amo` script equals `packageManager`'s |
 | `build` | `build` and `build:firefox` → `check:manifest` on both → `check:manifest --report-against <last release tag>` (report only: writes any manifest difference from the last release to the job summary) → `check:budget` (table to the job summary) → upload both `.output` folders |
 | `browser` | needs `build` → `playwright install --with-deps chromium` and Puppeteer's Firefox → `test:browser` in both, with axe-core (Q-TEST-20), and timings gated at 1.5× in Chromium only (R31, R38) |
-| `sources` | pushes to `main` only, on `ubuntu-24.04-arm`: builds the Firefox sources zip and rebuilds it as `SOURCE_CODE_REVIEW.md` says, on Node 24, so ARM64 drift shows before a release |
+| `sources` | pushes to `dev` only, on `ubuntu-24.04-arm`: builds the Firefox sources zip and rebuilds it as `SOURCE_CODE_REVIEW.md` says, on Node 24, so ARM64 drift shows before a release ([R148](resolutions.md#releases-from-main-r148)) |
 
 - **Q-CI-2.** The old `broker` job goes with `server/`, and the Vitest and `jq` checks go, replaced by `check` and `build`.
 - **Q-CI-3.** `check:manifest` (`scripts/check-manifest.ts`) fails unless each built manifest has exactly:
@@ -861,14 +861,14 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 - **Q-CI-6.** Every gate runs on the exact files that ship: `release.yml` builds once and every gate downloads those artifacts ([REL-CI-26](08-release.md#142-releaseyml)).
 - **Q-CI-7.** `budget`: `check:budget` on the store builds. `zip`: `check:zip` (Q-WATCH-19). `browser`: layer 4 on the store builds, in Chromium and Firefox, with timings gated at 1.5× in Chromium only, as in `ci.yml` (Q-PERF-41); this is Firefox's pre-release real-browser check (Q-WATCH-14). `manifest`: `check:manifest`. (R31, R40)
 - **Q-CI-8.** `watch`: `watch.yml` through `workflow_call`, from the release commit's watch list, with `browser-watch` on the release's artifacts (Q-CI-4; R61). `static` must be green and `browser-watch` green or inconclusive. A red `static` passes only with the `allow_red_watch` input and a reason, which the summary records.
-- **Q-CI-9.** `live-check-record`: `store/live-checks/{version}.json` exists, covers Chrome and Firefox, has no failures, and is dated within 7 days of the tag (a `scope: "hotfix"` record for patch releases). Every release needs one, hotfixes for our own bugs included, and an empty record never passes (Q-WATCH-22; R72).
+- **Q-CI-9.** `live-check-record`: `store/live-checks/{version}.json` exists, covers Chrome and Firefox, has no failures, and is dated within 7 days of the release run (a `scope: "hotfix"` record for patch releases). Every release needs one, hotfixes for our own bugs included, and an empty record never passes (Q-WATCH-22; R72, R148).
 - **Q-CI-18.** Not a gate, but a release step: before each release the developer does a manual screen-reader pass of the popup and settings, as an item in the release checklist ([UI-RULE-41](05-ui.md#511-accessibility-as-decided), [08 §18](08-release.md#18-release-checklist-releasingmd)). The automated checks are Q-TEST-20. (R38)
 
 ### 7.7.4 The hotfix lane
 
 The hotfix lane is the fast way to ship a fix. Its usual case is "YouTube changed something", but it takes any fix, our own bugs included (R62). Fixes reach users only as store releases: there is no remote configuration, selector list, endpoint map, experiment flag or kill switch, and nothing fetched changes behaviour. Every fallback ships in the package.
 
-- **Q-CI-10.** A hotfix is a branch `hotfix/X.Y.Z` from the last release tag. CI runs on its PRs as usual.
+- **Q-CI-10.** A hotfix is a branch `hotfix/X.Y.Z` from the last release tag. Its PR targets `main`, and merging it releases the fix ([REL-CI-39](08-release.md#143-the-hotfix-lane)). CI runs on its PRs as usual. (R148)
 - **Q-CI-11.** A hotfix changes only what the fix needs: for a YouTube change, the broken route, parser or anchor, plus its fixtures and watch-list entry; for a bug of our own, the faulty code and its tests. (R62)
   - It changes no permission, disclosure, consent version or data schema, and no user-visible behaviour beyond the fix.
   - No dependency bumps and no refactors. (Chrome reviews significant code changes more closely, and AMO's queue ranks by the size of the change.)
@@ -881,16 +881,16 @@ The hotfix lane is the fast way to ship a fix. Its usual case is "YouTube change
 - **Q-CI-14.** A hotfix's gates are `bun test`, the static watch green with the fix's new needles (if it has any), and a hotfix-scope live-check record for the affected jobs in both browsers, plus the usual release gates. A fix of our own that affects no YouTube job still runs the signed-in live check, in full (Q-WATCH-22; R72).
 - **Q-CI-15.** A hotfix is submitted to both stores in one run, through the per-store switches. Chrome publishes on approval (`DEFAULT_PUBLISH`, never `skipReview`, which Chrome's API v2 allows only for declarativeNetRequest-only updates). The reviewer notes use the hotfix template ([REL-STORE-22](08-release.md#121-reviewer-notes-approval_notes)).
   - **During the 2.0.0 soak** the Chrome item is staged by hand. A Chrome resubmission then is done by hand in the dashboard, as Public with staged publishing, not by the run ([08 §18](08-release.md#18-release-checklist-releasingmd), "The 2.0 launch, once"). (R21)
-- **Q-CI-16.** Afterwards the version is commented on the issue it fixes, the `youtube-change` issue for a YouTube change ("Firefox users get it within about a day; Chrome users after review"), and the branch is merged back to `main` ([REL-CI-41](08-release.md#143-the-hotfix-lane)).
+- **Q-CI-16.** Afterwards the version is commented on the issue it fixes, the `youtube-change` issue for a YouTube change ("Firefox users get it within about a day; Chrome users after review"), and `main` is merged back into `dev` ([REL-CI-41](08-release.md#143-the-hotfix-lane)). (R148)
 - **Q-CI-17.** A release that itself breaks something is rolled back in the store dashboards first, then fixed forward. 2.0.0 on AMO is the exception: it's fixed forward. The rollback rules are [REL-CHK-05](08-release.md#83-rollback-and-fix-forward) to REL-CHK-10.
 
 ---
 
 ## 7.8 Developer workflow
 
-### 7.8.1 Dev builds
+### 7.8.1 Development builds
 
-- **Q-TOOL-30.** In dev builds the kit exports the whole Svelte namespace instead of the generated list, so any feature can link while code changes (a dev kit measured 44.9 KB). Budgets apply only to store builds.
+- **Q-TOOL-30.** In development builds the kit exports the whole Svelte namespace instead of the generated list, so any feature can link while code changes (a dev kit measured 44.9 KB). Budgets apply only to store builds.
 - **Q-TOOL-31.** Any rough or prototype build used to measure in-page cost uses the real registrar and runtime registration, never a static content script, so its numbers match production.
 - **Q-TOOL-32.** `vite dev` for the extension pages needs `svelte` excluded from SSR pre-bundling (vite-plugin-svelte 7 with Rolldown 1.2 breaks otherwise).
 

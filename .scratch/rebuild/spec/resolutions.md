@@ -2,7 +2,7 @@
 
 While the chapters were being written, their authors flagged conflicts between tickets, and details no ticket pinned down. The main session settled each one here on 2026-10-19, under the user's delegation ("you have the shared understanding"). Every resolution follows the map's principles. The chapters apply them, and each one is cited by its R-number.
 
-Items that are genuinely the user's call are **not** settled here; they stay in the spec's [Open items](../spec.md#open-items). The user's own answers of 2026-10-20 are recorded as [R84–R99](#the-users-decisions-of-2026-10-20-r84r99), the running-cost rules as [R100–R117](#running-costs-r100r117), the GatherTube fold as [R120–R139](#gathertube-r120r139), the icon as [R140](#the-icon-perch-r140), the name as [R141–R144](#the-name-perchling-r141r144), and the wordmark and store images as [R145–R147](#wordmark-and-store-images-r145r147). R118 and R119 are unused.
+Items that are genuinely the user's call are **not** settled here; they stay in the spec's [Open items](../spec.md#open-items). The user's own answers of 2026-10-20 are recorded as [R84–R99](#the-users-decisions-of-2026-10-20-r84r99), the running-cost rules as [R100–R117](#running-costs-r100r117), the GatherTube fold as [R120–R139](#gathertube-r120r139), the icon as [R140](#the-icon-perch-r140), the name as [R141–R144](#the-name-perchling-r141r144), the wordmark and store images as [R145–R147](#wordmark-and-store-images-r145r147), and releases from `main` as [R148](#releases-from-main-r148). R118 and R119 are unused.
 
 ## Sites and features
 
@@ -605,3 +605,28 @@ The name was decided as "Perchling for YouTube™" (short form "Perchling"; [tic
   - A 1280 × 640 PNG, as GitHub recommends: the lockup, "for YouTube™" as plain text, and "Save to any playlist in one click."
   - It's the one image that writes the full name. It has no YouTube logo or red.
   - The user uploads it in the repository's settings; it's a one-time setup task.
+
+## Releases from `main` (R148)
+
+The user decided on 2026-10-21 that `dev` integrates and `main` releases ([ADR-0014](../../../docs/adr/0014-dev-integrates-main-releases-on-a-version-bump.md)). `dev` is the default branch, and every push to it builds dev builds: unsigned CI artifacts for the developer's own testing. A release is a version bump on `dev`, merged into `main`.
+
+- **R148 — A push to `main` releases a new version; a pushed tag triggers nothing** (amends REL-CI-22, REL-CI-23, REL-CI-24, REL-CI-29, REL-CI-32, REL-CI-33, REL-CI-36, REL-CI-37, REL-CI-39, REL-CI-41, REL-CI-42, REL-CI-46, REL-CI-49, REL-CI-50, REL-CHK-04, REL-CHK-19, REL-CHK-26, REL-CHK-27, Q-CI-1, Q-CI-9, Q-CI-10, Q-CI-16, 08 §8.1's phase 2, §18 and §19; REL-CI-02 still holds).
+  - **The trigger** (REL-CI-23): every push to `main`, and `workflow_dispatch` as a dry run only, which runs `meta` and `build` and never tags or submits.
+    - The `stores` input is deferred: rejecting an environment holds that store for the run (REL-CI-47).
+    - `allow_red_watch` and its `reason` return with the `watch` gate. A push-triggered run takes no inputs, so that ticket settles how the override is given.
+  - **`meta` decides from tags only** (REL-CI-24), never from `github.event.before`, so force pushes, merges of several commits, an all-zero `before` and runs replaced in the concurrency queue can't confuse it.
+    - **It releases only** on a push to `main` when the version is a strict `N.N.N`, `v{version}` doesn't exist, and the version is above the highest `v*` tag, compared numerically per part.
+    - **With no `v*` tag yet,** the version must be exactly `1.99.1`. `1.5.0` is rejected outright (REL-CI-03).
+    - **Otherwise it skips,** with the reason in the job summary. A version below the last release, or malformed, fails the run instead.
+    - The kind is measured against the highest tag, or against 1.4.5 when there's none.
+  - **The run creates the tag** (REL-CI-36). `github-release` runs after the gates and before the submit jobs. It makes the tag and the GitHub (pre-)release in one step, `gh release create v{version} --target $GITHUB_SHA`, with `GITHUB_TOKEN`, so a failure leaves neither. A tag made with that token starts no other workflow.
+    - So `submit-amo` attaches the signed beta `.xpi` to the existing pre-release itself, and needs `contents: write` too (REL-CI-32, REL-CI-37).
+    - `submit-amo` and `submit-cws` lose the `stores` condition (REL-CI-29, REL-CI-33).
+    - **Recovery** is "Re-run failed jobs", which keeps `meta`'s outputs and `build`'s artifact. "Re-run all jobs" isn't one: `meta` would see the tag and skip everything.
+  - **A `main` ruleset replaces the `v*` tag ruleset** (REL-CI-49): PRs required, the CI `build` check required, no force pushes. The workflow's own token creates the tags.
+  - **Hotfixes** (REL-CI-39, REL-CI-41, Q-CI-16): a PR from `hotfix/X.Y.Z`, cut from the last release tag, into `main`. Merging it releases the fix, and `main` is then merged back into `dev`.
+  - **Branches:** `dev → main` is merged with a merge commit, never squashed. Dependabot's security updates land on `dev` and are promoted to `main` promptly; a merge with no version bump releases nothing.
+  - **The §18 checklist:** "Tag `v{version}`" becomes "merge to `main` with the bumped version" in Every release, Beta, Hotfix and the 2.0 launch. "Tagged" in REL-CHK-04, REL-CHK-19, REL-CHK-26 and REL-CHK-27, "a release tag" in REL-CI-42, and "the tag" in the `live-check-record` gate's 7 days ([Q-CI-9](07-quality.md#773-release-gates-summary)) follow.
+  - **The ARM `sources` job runs on pushes to `dev`** (REL-CI-22, Q-CI-1), since a push to `main` is now the release itself.
+  - **AMO finds a GUID-style ID only with its braces** (checked against the live API on 2026-10-21: `{…}` answers 200, the bare GUID 404). publish-browser-extension 6.1.1 strips the braces, so `wxt submit` gets the slug `youtube-playlist-tools` (REL-CI-50). `scripts/amo-version.ts` and `web-ext` send the GUID with its braces. `release.yml` holds both, so the `amo` environment's `FIREFOX_EXTENSION_ID` variable goes (REL-CI-46).
+  - **What's built now:** the current `release.yml` is the pre-2.0 subset: `meta`, `build`, `github-release`, `submit-amo` and `submit-cws`. The `watch`, `live-check-record`, `budget`, `zip`, `browser`, `hotfix-freeze` and ARM `sources` gates are added by the 2.0 build tickets.
