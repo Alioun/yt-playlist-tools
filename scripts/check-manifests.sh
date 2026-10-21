@@ -49,12 +49,14 @@ for dir in "$@"; do
         || fail "$target gecko id changed: $id"
 
       # AMO rejects update_url in listed versions; only the beta has one.
-      update_url=$(jq -r '.browser_specific_settings.gecko.update_url // empty' "$manifest")
       if [[ "$target" == *-beta ]]; then
+        update_url=$(jq -r '.browser_specific_settings.gecko.update_url // empty' "$manifest")
         [ "$update_url" = "$BETA_UPDATE_URL" ] \
           || fail "$target must have update_url $BETA_UPDATE_URL, has '${update_url}'"
       else
-        [ -z "$update_url" ] || fail "$target is not a beta build but has update_url $update_url"
+        # Presence, not value: an empty or null update_url is still one.
+        jq -e '.browser_specific_settings.gecko | has("update_url") | not' "$manifest" > /dev/null \
+          || fail "$target is not a beta build but has update_url"
       fi
       ;;
     *)
