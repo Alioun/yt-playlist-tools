@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      short-sha: ${{ steps.sha.outputs.short }}
     steps:
       - uses: actions/checkout@v7
 
@@ -45,8 +47,9 @@ jobs:
           # can still override it at runtime.
           WXT_AUTH_SERVER_URL: ${{ vars.WXT_AUTH_SERVER_URL }}
 
+      # zip:firefox also writes the sources zip AMO wants when signing.
       - name: Build (Firefox MV3)
-        run: bun run build:firefox
+        run: bun run zip:firefox
         env:
           WXT_AUTH_SERVER_URL: ${{ vars.WXT_AUTH_SERVER_URL }}
 
@@ -72,6 +75,15 @@ jobs:
         with:
           name: firefox-mv3-${{ steps.sha.outputs.short }}
           path: .output/firefox-mv3/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Firefox sources
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        uses: actions/upload-artifact@v7
+        with:
+          name: firefox-sources-${{ steps.sha.outputs.short }}
+          path: .output/*-sources.zip
           if-no-files-found: error
           retention-days: 30
 
@@ -121,3 +133,133 @@ jobs:
           [ "$code" = "400" ] || { echo "::error::expected 400 for a bad redirect_uri, got $code"; exit 1; }
 
           echo "Broker smoke test passed."
+
+  # Firefox drops an unsigned add-on when it restarts, so on dev the Firefox
+  # build is also signed on AMO's unlisted channel (R149). Chrome keeps an
+  # unpacked extension across restarts and won't install a CRX from outside
+  # the store, so its build stays unsigned.
+  sign-firefox:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && vars.SIGN_DEV_BUILDS == 'true'
+    runs-on: ubuntu-latest
+    # No reviewer, so every push signs unattended; only dev may deploy to it,
+    # so no other branch can read the key.
+    environment: amo-dev
+    env:
+      SHORT_SHA: ${{ needs.build.outputs.short-sha }}
+      # Public, and asserted in check-manifests.sh. AMO finds it only with braces.
+      FIREFOX_EXTENSION_ID: "{cc70cd21-2cc6-444b-bd89-496909346091}"
+      FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+      FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      # For the lockfile's web-ext.
+      - run: bun install --frozen-lockfile
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: firefox-mv3-${{ env.SHORT_SHA }}
+          path: unpacked
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: firefox-sources-${{ env.SHORT_SHA }}
+          path: sources
+
+      # AMO numbers are unique forever, across channels. A fourth part never
+      # collides with a release (always three parts) and sorts just above the
+      # version it's built from. A re-run keeps the run number.
+      - name: Give the build its own version
+        id: version
+        run: |
+          set -euo pipefail
+          version="$(jq -r .version package.json).$GITHUB_RUN_NUMBER"
+          [[ "$version" =~ ^(0|[1-9][0-9]{0,8})(\.(0|[1-9][0-9]{0,8})){3}$ ]] \
+            || { echo "::error::$version isn't a valid four-part AMO version"; exit 1; }
+          jq --arg v "$version" '.version = $v' unpacked/manifest.json > manifest.json
+          mv manifest.json unpacked/manifest.json
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Is this version already on AMO?
+        id: amo
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          status=$(bun scripts/amo-version.ts status "$VERSION")
+          case "$status" in
+            missing|no-source|present) ;;
+            *) echo "::error::unexpected AMO status '$status'"; exit 1 ;;
+          esac
+          echo "AMO has version $VERSION: $status"
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Sign on AMO (unlisted)
+        if: steps.amo.outputs.status == 'missing'
+        run: |
+          set -euo pipefail
+          bunx web-ext sign --source-dir unpacked --artifacts-dir signed \
+            --channel unlisted \
+            --api-key "$FIREFOX_JWT_ISSUER" --api-secret "$FIREFOX_JWT_SECRET" \
+            --upload-source-code "$(ls sources/*-sources.zip)" \
+            --approval-timeout 1800000
+
+      - name: Attach the missing sources
+        if: steps.amo.outputs.status == 'no-source'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: bun scripts/amo-version.ts attach-source "$VERSION" "$(ls sources/*-sources.zip)"
+
+      # Whichever way the version got there, it must now have its sources.
+      - name: Check AMO has the version with its sources
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          status=$(bun scripts/amo-version.ts status "$VERSION")
+          [ "$status" = present ] || { echo "::error::AMO's version $VERSION is '$status', not present with sources"; exit 1; }
+
+      - name: Fetch the signed build from AMO
+        if: steps.amo.outputs.status != 'missing'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: bun scripts/amo-version.ts download "$VERSION" signed 30
+
+      # web-ext repackages the directory; the signed files must be the built ones.
+      - name: Check the signed build matches the CI build
+        id: xpi
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir from-amo
+          unzip -q "$(ls signed/*.xpi)" -d from-amo
+          hashes() { (cd "$1" && find . -type f ! -path './META-INF/*' -print0 | sort -z | xargs -0 sha256sum); }
+          diff <(hashes unpacked) <(hashes from-amo)
+          name="yt-playlist-tools-$VERSION-firefox-signed.xpi"
+          mv "$(ls signed/*.xpi)" "$name"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      # Not zipped, so it downloads as an .xpi Firefox installs directly.
+      - name: Upload the signed build
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ steps.xpi.outputs.name }}
+          archive: false
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Install instructions
+        env:
+          NAME: ${{ steps.xpi.outputs.name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Signed Firefox build
+
+          Download \`${NAME}\` from [this run](${RUN_URL}#artifacts), then open \`about:addons\`, click the gear, and **Install Add-on From File…**. It stays installed across restarts, and replaces an installed 1.4.5 from AMO.
+          EOF

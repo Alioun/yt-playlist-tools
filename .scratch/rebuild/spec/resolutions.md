@@ -2,7 +2,7 @@
 
 While the chapters were being written, their authors flagged conflicts between tickets, and details no ticket pinned down. The main session settled each one here on 2026-10-19, under the user's delegation ("you have the shared understanding"). Every resolution follows the map's principles. The chapters apply them, and each one is cited by its R-number.
 
-Items that are genuinely the user's call are **not** settled here; they stay in the spec's [Open items](../spec.md#open-items). The user's own answers of 2026-10-20 are recorded as [R84–R99](#the-users-decisions-of-2026-10-20-r84r99), the running-cost rules as [R100–R117](#running-costs-r100r117), the GatherTube fold as [R120–R139](#gathertube-r120r139), the icon as [R140](#the-icon-perch-r140), the name as [R141–R144](#the-name-perchling-r141r144), the wordmark and store images as [R145–R147](#wordmark-and-store-images-r145r147), and releases from `main` as [R148](#releases-from-main-r148). R118 and R119 are unused.
+Items that are genuinely the user's call are **not** settled here; they stay in the spec's [Open items](../spec.md#open-items). The user's own answers of 2026-10-20 are recorded as [R84–R99](#the-users-decisions-of-2026-10-20-r84r99), the running-cost rules as [R100–R117](#running-costs-r100r117), the GatherTube fold as [R120–R139](#gathertube-r120r139), the icon as [R140](#the-icon-perch-r140), the name as [R141–R144](#the-name-perchling-r141r144), the wordmark and store images as [R145–R147](#wordmark-and-store-images-r145r147), releases from `main` as [R148](#releases-from-main-r148), and signed Firefox dev builds as [R149](#signed-firefox-dev-builds-r149). R118 and R119 are unused.
 
 ## Sites and features
 
@@ -632,3 +632,15 @@ The user decided on 2026-10-21 that `dev` integrates and `main` releases ([ADR-0
   - **Store submissions are resumable** (REL-CI-30, REL-CI-32, REL-CI-34). `scripts/amo-version.ts status` reports a version as missing, created without its sources, or present. `submit-amo` uploads only a missing version, attaches the sources when they're missing, and then requires them. Chrome goes through `scripts/cws-submit.ts` instead of `wxt submit`: API v2 may answer an upload with `IN_PROGRESS` and expects `fetchStatus` to be polled, but publish-browser-extension (6.1.1 and 6.2.0) fails at once. The script also skips a version that's already submitted or published.
   - **Version parts are capped at 65535**, Chrome's limit, which also keeps `release-meta.sh`'s arithmetic exact. A version below the last release fails even if it was tagged once.
   - **What's built now:** the current `release.yml` is the pre-2.0 subset: `meta`, `build`, `github-release`, `submit-amo` and `submit-cws`. The `watch`, `live-check-record`, `budget`, `zip`, `browser`, `hotfix-freeze` and ARM `sources` gates are added by the 2.0 build tickets.
+
+## Signed Firefox dev builds (R149)
+
+The user asked on 2026-10-21 for CI to sign the dev builds, after first choosing unsigned temporary add-ons.
+
+- **R149 — On `dev`, CI also signs the Firefox dev build on AMO's unlisted channel** (amends R148's "unsigned" dev builds, the glossary's **Dev build**, and REL-CI-18's `ci.yml` jobs).
+  - **Job:** `ci.yml`'s `sign-firefox` runs after `build`, on pushes to `dev` only, and only while the repo variable `SIGN_DEV_BUILDS` is `true`. PRs aren't signed: fork PRs can't read secrets, and every signing uses up an AMO version number.
+  - **Version:** `{package.json version}.{run number}`, for example `1.5.0.57`. AMO allows four parts (up to nine digits each), and release versions are always three, so the two never collide (REL-CI-05). The fourth part sorts just above the version it's built from, so a dev build of `1.99.2` sits between `1.99.2` and `1.99.3`. Only the copy that's signed gets this version; `check-manifests.sh` still sees `package.json`'s.
+  - **What's signed is what was built:** the job unpacks the `build` job's Firefox artifact, sets the version, signs it with `web-ext sign --channel unlisted` and the sources zip, and hash-compares the signed files with the unpacked ones, ignoring `META-INF/`. A re-run keeps its run number, so it finds the version on AMO and downloads it instead (`scripts/amo-version.ts`, as in R148).
+  - **Key:** the environment `amo-dev`, with no reviewer so pushes sign unattended, and deployments limited to the `dev` branch so no other branch can read the AMO key.
+  - **No update URL:** a signed dev build never updates itself. The developer installs each one by hand, and it replaces an installed 1.4.5 or beta of the same ID.
+  - **Chrome stays unsigned:** an unpacked Chrome extension survives restarts, and Chrome won't install a CRX from outside the store, so signing wouldn't help.

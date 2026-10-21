@@ -24,10 +24,10 @@ _Avoid_: What's new, changelog
 
 **Beta**:
 A pre-release version the user installs from the project's site; it updates from there until the release it precedes.
-_Avoid_: Preview, dev build (that's unsigned and never published)
+_Avoid_: Preview, dev build (that's for the developer only, and never offered to testers)
 
 **Dev build**:
-An unsigned build of a `dev` commit or a PR that CI keeps as an artifact for the developer's own testing. It's never signed or published, which is how it differs from a beta.
+A build of a `dev` commit or a PR that CI keeps as an artifact for the developer's own testing. On `dev`, its Firefox build is also signed unlisted on AMO with a four-part version. It's never listed, offered to testers or given an update URL, which is how it differs from a beta.
 _Avoid_: Nightly, beta, development build (that's `wxt` in development mode)
 
 **Site access**:

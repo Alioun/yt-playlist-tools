@@ -51,11 +51,13 @@ Once, in the repository settings:
 
 - **Environments** `amo` and `cws`, each with you as required reviewer and self-review allowed.
   - `amo`: the secrets `FIREFOX_JWT_ISSUER` and `FIREFOX_JWT_SECRET`, from addons.mozilla.org › Tools › Manage API Keys. The add-on's GUID and slug are in the workflow.
+  - `amo-dev`: the same two secrets, for [signed Firefox dev builds](testing-and-ci.md#installing-a-dev-build). No required reviewer, so every push to `dev` signs unattended. Under **Deployment branches**, allow only `dev`, so no other branch can read the key.
   - `cws`: the secrets `CHROME_PUBLISHER_ID`, `CHROME_EXTENSION_ID`, `CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL` and `CHROME_SERVICE_ACCOUNT_PRIVATE_KEY`. Store the PEM with real newlines.
 - **Repo variables:**
   - `PUBLISH_AMO`, `true` to submit to AMO.
   - `PUBLISH_CWS`, `true` to submit to the Chrome Web Store. It stays `false` until the item exists: the API can't create one, so `v1.99.1`'s Chrome zip is uploaded by hand, as Unlisted, from the run's artifacts.
   - `CWS_PUBLISH_TYPE`, `DEFAULT_PUBLISH` or `STAGED_PUBLISH`.
+  - `SIGN_DEV_BUILDS`, `true` to sign the Firefox dev build on every push to `dev`.
   - Optionally `WXT_AUTH_SERVER_URL`, the broker the builds default to.
 - **A ruleset on `main`:** pull requests required, the CI `build` check required, no force pushes.
 - Before setting `PUBLISH_AMO`, check that the API key works: run `bun scripts/amo-version.ts status 1.4.5` with `FIREFOX_EXTENSION_ID` set to the GUID (with braces) and the JWT pair. It should print `present` or `no-source`; an error means the key is wrong.
