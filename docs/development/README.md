@@ -20,6 +20,14 @@ Judge popup speed with `bun run build`. `wxt dev` serves unbundled modules and t
 
 None of the [environment files](environment-files.md) is needed for `bun run dev`.
 
+## Branches
+
+`dev` is the default branch: PRs target it, and every push builds installable [dev builds](testing-and-ci.md#installing-a-dev-build). `main` is what's released: merging `dev` into it with a version bump publishes that version ([Releasing](releasing.md)).
+
+Some things follow the default branch, so they land on `dev` first:
+- **Dependabot**, including its security updates for the GitHub Actions the workflows use. Promote those to `main` straight away; a `dev` → `main` merge with no version bump releases nothing.
+- **Scheduled workflows** run from `dev`.
+
 ## More
 
 - [Gotchas](gotchas.md): config and build traps
