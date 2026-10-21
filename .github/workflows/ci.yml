@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [dev, main]
   pull_request:
 
 # Nothing here writes to the repo.
@@ -37,36 +37,54 @@ jobs:
 
       - name: Build (Chrome MV3)
         run: bun run build
+        env:
+          # Empty falls back to localhost (src/config.ts); Settings › Advanced
+          # can still override it at runtime.
+          WXT_AUTH_SERVER_URL: ${{ vars.WXT_AUTH_SERVER_URL }}
 
       - name: Build (Firefox MV3)
         run: bun run build:firefox
+        env:
+          WXT_AUTH_SERVER_URL: ${{ vars.WXT_AUTH_SERVER_URL }}
 
       - name: Assert manifests are correct
+        run: scripts/check-manifests.sh .output/chrome-mv3 .output/firefox-mv3
+
+      - name: Short SHA
+        id: sha
+        run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      # Uploaded as folders: GitHub zips each with manifest.json at the root,
+      # which Firefox loads as a temporary add-on as it is.
+      - name: Upload Chrome build
+        uses: actions/upload-artifact@v7
+        with:
+          name: chrome-mv3-${{ steps.sha.outputs.short }}
+          path: .output/chrome-mv3/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Firefox build
+        uses: actions/upload-artifact@v7
+        with:
+          name: firefox-mv3-${{ steps.sha.outputs.short }}
+          path: .output/firefox-mv3/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Install instructions
+        env:
+          SHORT_SHA: ${{ steps.sha.outputs.short }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          set -euo pipefail
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Dev build \`${SHORT_SHA}\`
 
-          # Firefox is the trap here: WXT defaults it to MV2 unless pinned.
-          for target in chrome-mv3 firefox-mv3; do
-            version=$(jq -r '.manifest_version' ".output/$target/manifest.json")
-            [ "$version" = "3" ] || { echo "::error::$target is MV$version, expected MV3"; exit 1; }
-          done
+          Download from [this run](${RUN_URL}#artifacts), or \`gh run download ${GITHUB_RUN_ID}\`.
 
-          # Chrome needs a service worker; Firefox MV3 needs an event page.
-          jq -e '.background.service_worker' .output/chrome-mv3/manifest.json > /dev/null \
-            || { echo "::error::chrome build is missing background.service_worker"; exit 1; }
-          jq -e '.background.scripts' .output/firefox-mv3/manifest.json > /dev/null \
-            || { echo "::error::firefox build is missing background.scripts"; exit 1; }
-
-          # Losing this ID would break updates for every existing AMO user.
-          id=$(jq -r '.browser_specific_settings.gecko.id' .output/firefox-mv3/manifest.json)
-          [ "$id" = "{cc70cd21-2cc6-444b-bd89-496909346091}" ] \
-            || { echo "::error::gecko id changed: $id"; exit 1; }
-
-          # Required for the Google API calls to work on Chrome.
-          jq -e '.host_permissions | length > 0' .output/chrome-mv3/manifest.json > /dev/null \
-            || { echo "::error::host_permissions missing"; exit 1; }
-
-          echo "All manifest assertions passed."
+          - **Chrome** (\`chrome-mv3-${SHORT_SHA}\`): unzip it, open \`chrome://extensions\`, turn on Developer mode, then **Load unpacked** and pick the folder.
+          - **Firefox** (\`firefox-mv3-${SHORT_SHA}\`): open \`about:debugging#/runtime/this-firefox\`, **Load Temporary Add-on…**, and pick the downloaded zip as it is. It's gone when Firefox restarts.
+          EOF
 
   broker:
     runs-on: ubuntu-latest
