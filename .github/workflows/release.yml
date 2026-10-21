@@ -107,22 +107,24 @@ jobs:
           bun scripts/amo-metadata.ts --version "$VERSION" --kind "$KIND" \
             --channel "$CHANNEL" --out .output/amo-metadata.json $STRICT
 
-      # Later patch releases compare against these (REL-CI-36).
-      - name: Collect the manifests
+      # The manifests too: later patch releases compare against them (REL-CI-36).
+      # Collected outside .output/, which upload-artifact skips as hidden.
+      - name: Collect the release files
         run: |
+          set -euo pipefail
           firefox=.output/firefox-mv3
           [ "$CHANNEL" = beta ] && firefox=.output/firefox-mv3-beta
-          cp .output/chrome-mv3/manifest.json .output/manifest.chrome.json
-          cp "$firefox/manifest.json" .output/manifest.firefox.json
+          mkdir -p dist
+          cp .output/*.zip .output/amo-metadata.json dist/
+          cp .output/chrome-mv3/manifest.json dist/manifest.chrome.json
+          cp "$firefox/manifest.json" dist/manifest.firefox.json
+          ls -l dist
 
       # What's gated is what ships: every later job uses these exact files.
       - uses: actions/upload-artifact@v7
         with:
           name: release-${{ needs.meta.outputs.version }}
-          path: |
-            .output/*.zip
-            .output/manifest.*.json
-            .output/amo-metadata.json
+          path: dist/
           if-no-files-found: error
 
   github-release:
