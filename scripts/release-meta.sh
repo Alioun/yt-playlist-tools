@@ -43,6 +43,14 @@ NEVER_SHIPS="1.5.0"
 
 strict='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
 
+# Chrome allows 0-65535 per part; the cap also keeps bash arithmetic exact.
+in_range() {
+  local IFS=. part
+  for part in $1; do
+    [ "${#part}" -le 5 ] && [ "$part" -le 65535 ] || return 1
+  done
+}
+
 summary() {
   if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then echo "$1" >> "$GITHUB_STEP_SUMMARY"; fi
   echo "$1" >&2
@@ -62,13 +70,14 @@ compare() {
 }
 
 [[ "$version" =~ $strict ]] || fail "package.json version '$version' isn't MAJOR.MINOR.PATCH with numbers only (REL-CI-01)"
+in_range "$version" || fail "package.json version '$version' has a part above 65535, which Chrome rejects"
 
 highest=""
 tag_exists=false
 for tag in $tags; do
   v="${tag#v}"
-  if ! [[ "$v" =~ $strict ]]; then
-    echo "::warning::ignoring tag $tag, which isn't vMAJOR.MINOR.PATCH"
+  if ! [[ "$v" =~ $strict ]] || ! in_range "$v"; then
+    echo "::warning::ignoring tag $tag, which isn't vMAJOR.MINOR.PATCH with parts up to 65535"
     continue
   fi
   [ "$v" = "$version" ] && tag_exists=true
@@ -102,10 +111,11 @@ fi
 release=false
 if [ "$version" = "$NEVER_SHIPS" ]; then
   reason="$version never ships (REL-CI-03); the first release is $FIRST_RELEASE."
+elif [ -n "$highest" ] && [ "$(compare "$version" "$highest")" = -1 ]; then
+  # Even when this version was tagged once: main has gone backwards.
+  fail "version $version is below the last release v$highest"
 elif [ "$tag_exists" = true ]; then
   reason="v$version is already released."
-elif [ -n "$highest" ] && [ "$(compare "$version" "$highest")" != 1 ]; then
-  fail "version $version is below the last release v$highest"
 elif [ -z "$highest" ] && [ "$version" != "$FIRST_RELEASE" ]; then
   reason="there are no releases yet, and the first must be $FIRST_RELEASE, not $version."
 elif [ "$event" != "push" ] || [ "$ref" != "refs/heads/main" ]; then

@@ -1117,12 +1117,11 @@ meta ─► build ─► gates (all must pass) ─► github-release ─┬─�
 - **REL-CI-31** AMO's v5 API wants `release_notes` as a locale object, `{"en-US": "…"}`. The metadata script never sends a plain string; publish-browser-extension's docs example does, and AMO rejects it.
 - **REL-CI-32** For a beta, `submit-amo` runs `web-ext sign --channel=unlisted` (`web-ext` is a dev dependency, [Q-TOOL-19](07-quality.md#719-type-checking-and-dependencies)) with the `--mode beta` zip, the sources zip and the same metadata, using the beta template. It waits for the signature, downloads the signed `.xpi` and attaches it to the pre-release (REL-CI-36). The build confirms web-ext's flag for uploading sources. (R148)
 - **REL-CI-33** **`submit-cws`** runs only for a release (REL-CI-24) and when `vars.PUBLISH_CWS == 'true'`, and never for a post-launch beta (`X.Y.9NN`). It waits for the `cws` environment's approval. (R148)
-- **REL-CI-34** `submit-cws` runs `bunx wxt submit --chrome-zip …` with `CHROME_API_VERSION=v2`.
-  - The variable must be set explicitly, or the tool falls back to v1.1's variables. v1.1 was supported only until 2026-10-15.
+- **REL-CI-34** `submit-cws` runs `scripts/cws-submit.ts` on API v2, which polls `fetchStatus` while an upload is `IN_PROGRESS` and skips a version already submitted (R148). For `bunx wxt submit` by hand, `CHROME_API_VERSION=v2` must be set explicitly, or the tool falls back to v1.1's variables. v1.1 was supported only until 2026-10-15.
   - `CHROME_PUBLISH_TYPE` comes from `vars.CWS_PUBLISH_TYPE`, except that patch releases always use `DEFAULT_PUBLISH`.
   - **The exception is the 2.0.0 soak.** `PUBLISH_CWS` is false then, so this job doesn't run: Chrome goes by hand in the dashboard, as Public with staged publishing (§8.1, REL-CHK-02, REL-CI-40; [Q-CI-15](07-quality.md#774-the-hotfix-lane); R21).
 - **REL-CI-35** `submit-cws` never sets `skipReview`. API v2 skips review only for updates that change nothing but declarativeNetRequest rules, and it errors otherwise. Ticket 18's "try `skipReview`" is dropped.
-- **REL-CI-36** **`github-release`** creates the tag `v{version}` on the run's commit and the GitHub release, or a pre-release for betas, in one step (`gh release create … --target $GITHUB_SHA`) with `GITHUB_TOKEN`, so a failure leaves neither. A tag made with that token starts no other workflow. It attaches:
+- **REL-CI-36** **`github-release`** creates the tag `v{version}` on the run's commit and the GitHub release, or a pre-release for betas, with `gh release create … --target $GITHUB_SHA` and `GITHUB_TOKEN`. That isn't atomic, so a re-run that finds the release checks its tag is the run's commit and finishes it. A tag made with that token starts no other workflow (R148). It attaches:
   - the zips and the sources zip;
   - `manifest.chrome.json` and `manifest.firefox.json`, which later patch releases compare against;
   - the release notes.

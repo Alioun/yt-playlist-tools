@@ -4,8 +4,11 @@
  * REL-CI-05).
  *
  * Usage:
- *   bun scripts/amo-version.ts exists <version>
- *     Prints "true" or "false".
+ *   bun scripts/amo-version.ts status <version>
+ *     Prints "missing", "no-source" (created, but its sources upload never
+ *     finished) or "present".
+ *   bun scripts/amo-version.ts attach-source <version> <sources zip>
+ *     Uploads the sources of a version that has none.
  *   bun scripts/amo-version.ts download <version> <dir> [timeout minutes]
  *     Waits for the version's file to be signed, then downloads the .xpi.
  *
@@ -44,22 +47,42 @@ function get(url: string): Promise<Response> {
   return fetch(url, { headers: { Authorization: `JWT ${jwt()}` } })
 }
 
-type Version = { file: { url: string; status: string } | null }
+// `source` is only returned to the add-on's authors, and is null when none was uploaded.
+type Version = { source: string | null; file: { url: string; status: string } | null }
+
+function versionUrl(version: string): string {
+  // The "v" prefix forces a lookup by version number rather than by id.
+  return `${API}/addons/addon/${encodeURIComponent(addonId)}/versions/v${version}/`
+}
 
 /** The version's details, or null if AMO has no such version. */
 async function getVersion(version: string): Promise<Version | null> {
-  // The "v" prefix forces a lookup by version number rather than by id.
-  const response = await get(`${API}/addons/addon/${encodeURIComponent(addonId)}/versions/v${version}/`)
+  const response = await get(versionUrl(version))
   if (response.status === 404) return null
   if (!response.ok) throw new Error(`AMO answered ${response.status}: ${await response.text()}`)
   return (await response.json()) as Version
 }
 
-const [command, version, dir, timeoutMinutes = "30"] = process.argv.slice(2)
+// `path` is the sources zip for attach-source, the download dir for download.
+const [command, version, path, timeoutMinutes = "30"] = process.argv.slice(2)
 
-if (command === "exists" && version) {
-  console.log((await getVersion(version)) ? "true" : "false")
-} else if (command === "download" && version && dir) {
+if (command === "status" && version) {
+  const details = await getVersion(version)
+  if (!details) console.log("missing")
+  else if (!("source" in details)) throw new Error("AMO didn't return `source`; are these the add-on author's API keys?")
+  else console.log(details.source ? "present" : "no-source")
+} else if (command === "attach-source" && version && path) {
+  // Sources can't be sent as JSON; AMO wants multipart form data.
+  const form = new FormData()
+  form.set("source", Bun.file(path))
+  const response = await fetch(versionUrl(version), {
+    method: "PATCH",
+    headers: { Authorization: `JWT ${jwt()}` },
+    body: form
+  })
+  if (!response.ok) throw new Error(`attaching sources failed with ${response.status}: ${await response.text()}`)
+  console.log(`Attached ${path} to version ${version}`)
+} else if (command === "download" && version && path) {
   const deadline = Date.now() + Number(timeoutMinutes) * 60_000
   let details = await getVersion(version)
   while (details?.file?.status !== "public") {
@@ -72,11 +95,13 @@ if (command === "exists" && version) {
   }
   const response = await get(details.file.url)
   if (!response.ok) throw new Error(`downloading ${details.file.url} failed with ${response.status}`)
-  mkdirSync(dir, { recursive: true })
-  const path = join(dir, decodeURIComponent(new URL(details.file.url).pathname.split("/").pop()!))
-  writeFileSync(path, Buffer.from(await response.arrayBuffer()))
-  console.log(`Downloaded ${path}`)
+  mkdirSync(path, { recursive: true })
+  const xpi = join(path, decodeURIComponent(new URL(details.file.url).pathname.split("/").pop()!))
+  writeFileSync(xpi, Buffer.from(await response.arrayBuffer()))
+  console.log(`Downloaded ${xpi}`)
 } else {
-  console.error("usage: amo-version.ts exists <version> | download <version> <dir> [timeout minutes]")
+  console.error(
+    "usage: amo-version.ts status <version> | attach-source <version> <zip> | download <version> <dir> [timeout minutes]"
+  )
   process.exit(2)
 }
