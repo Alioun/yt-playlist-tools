@@ -40,6 +40,13 @@ expect "false beta minor true"   1.99.1  ""                     workflow_dispatc
 expect "false beta minor true"   1.99.1  ""                     push refs/heads/dev
 # Versions compare numerically, not as strings: 1.99.10 is above 1.99.9.
 expect "true beta patch true"    1.99.10 "v1.99.1 v1.99.9"      push $main
+# main went backwards to a version that was released once.
+expect "fail"                    2.0.0   "v2.0.0 v2.0.1"        push $main
+# Parts above Chrome's 65535 fail, and such tags are ignored rather than
+# overflowing the comparison.
+expect "fail"                    70000.0.0 ""                   push $main
+expect "fail"                    1.99.18446744073709551617 ""   push $main
+expect "true beta patch true"    1.99.2  "v1.99.1 v18446744073709551617.0.0" push $main
 # Tags that aren't vMAJOR.MINOR.PATCH are ignored.
 expect "true beta patch true"    1.99.2  "v1.99.1 v2.0.0-rc1"   push $main
 

@@ -35,7 +35,10 @@ To check a release without publishing, run the workflow by hand (**Actions › R
 ## Retrying and holding
 
 - **Hold a store:** reject its environment in the run.
-- **Resume:** use **Re-run failed jobs**. It keeps `meta`'s and `build`'s outputs and the checked artifact. `submit-amo` first asks AMO whether the version is already there. If it is, it skips the upload, and for a beta fetches the signed file instead. The Chrome Web Store rejects a version it already has, so a re-run there fails harmlessly.
+- **Resume:** use **Re-run failed jobs**. It keeps `meta`'s and `build`'s outputs and the checked artifact, and every job picks up where it stopped:
+  - `github-release` finishes a release that's already there, if its tag is this commit;
+  - `submit-amo` uploads only a version AMO doesn't have, attaches the sources if they're missing, and for a beta fetches the signed file;
+  - `submit-cws` skips a version that's already submitted or published.
 - **Re-run all jobs** isn't a recovery path: `meta` would see the tag and skip everything.
 
 ## Hotfixes
@@ -55,8 +58,16 @@ Once, in the repository settings:
   - `CWS_PUBLISH_TYPE`, `DEFAULT_PUBLISH` or `STAGED_PUBLISH`.
   - Optionally `WXT_AUTH_SERVER_URL`, the broker the builds default to.
 - **A ruleset on `main`:** pull requests required, the CI `build` check required, no force pushes.
-- Before setting `PUBLISH_AMO`, check that the API key works: run `bun scripts/amo-version.ts exists 1.4.5` with the three `FIREFOX_*` variables set. It should print `true`.
+- Before setting `PUBLISH_AMO`, check that the API key works: run `bun scripts/amo-version.ts status 1.4.5` with `FIREFOX_EXTENSION_ID` set to the GUID (with braces) and the JWT pair. It should print `present` or `no-source`; an error means the key is wrong.
 
 ## Publishing by hand
 
-Fill in `.env.submit` (or run `bunx wxt submit init`), then run `bunx wxt submit`. See [Environment files](environment-files.md).
+Fill in `.env.submit` (or run `bunx wxt submit init`), then build the zips and the AMO metadata it points at, and submit:
+
+```bash
+bun run zip && bun run zip:firefox
+bun scripts/amo-metadata.ts --version <version> --kind <major|minor|patch> --channel stable --out .output/amo-metadata.json --strict
+bunx wxt submit --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip
+```
+
+For the Chrome Web Store, prefer `bun scripts/cws-submit.ts .output/*-chrome.zip <version>` with the `CHROME_*` variables set: `wxt submit` fails an upload the store is still processing. See [Environment files](environment-files.md).

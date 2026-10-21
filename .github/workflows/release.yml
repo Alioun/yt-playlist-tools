@@ -143,14 +143,26 @@ jobs:
           name: release-${{ needs.meta.outputs.version }}
           path: dist
 
-      # Creates the tag and the release in one step, so a failure leaves
-      # neither. A GITHUB_TOKEN tag starts no other workflow, which is why
-      # releasing happens here rather than on a tag push.
+      # `gh release create` makes the tag too, but in several requests, so a
+      # re-run may find the release already there: it then checks the tag is
+      # this commit and finishes the job. A GITHUB_TOKEN tag starts no other
+      # workflow, which is why releasing happens here rather than on a tag push.
       - name: Tag and create the GitHub release
         run: |
-          gh release create "v$VERSION" --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes $PRERELEASE \
-            dist/*.zip dist/manifest.*.json
+          set -euo pipefail
+          tag="v$VERSION"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            sha=$(gh api "repos/$GITHUB_REPOSITORY/commits/$tag" --jq .sha)
+            [ "$sha" = "$GITHUB_SHA" ] \
+              || { echo "::error::$tag already exists at $sha, not $GITHUB_SHA"; exit 1; }
+            echo "$tag already exists at this commit; finishing it."
+            gh release upload "$tag" --repo "$GITHUB_REPOSITORY" --clobber dist/*.zip dist/manifest.*.json
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --draft=false
+          else
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" --title "$tag" --generate-notes $PRERELEASE \
+              dist/*.zip dist/manifest.*.json
+          fi
 
   submit-amo:
     needs: [meta, build, github-release]
@@ -181,15 +193,24 @@ jobs:
           name: release-${{ needs.meta.outputs.version }}
           path: dist
 
-      # A re-run after a partial success must not upload the same version again.
+      # A re-run after a partial success must not upload the same version
+      # again, and a version created without its sources isn't done.
       - name: Is this version already on AMO?
         id: amo
         env:
           FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
-        run: echo "exists=$(bun scripts/amo-version.ts exists "$VERSION")" >> "$GITHUB_OUTPUT"
+        run: |
+          set -euo pipefail
+          status=$(bun scripts/amo-version.ts status "$VERSION")
+          case "$status" in
+            missing|no-source|present) ;;
+            *) echo "::error::unexpected AMO status '$status'"; exit 1 ;;
+          esac
+          echo "AMO has version $VERSION: $status"
+          echo "status=$status" >> "$GITHUB_OUTPUT"
 
       - name: Submit to AMO (listed)
-        if: env.CHANNEL == 'stable' && steps.amo.outputs.exists == 'false'
+        if: env.CHANNEL == 'stable' && steps.amo.outputs.status == 'missing'
         env:
           FIREFOX_EXTENSION_ID: ${{ env.AMO_SLUG }}
           FIREFOX_CHANNEL: listed
@@ -202,7 +223,7 @@ jobs:
 
       # web-ext signs a directory, so the checked zip is unpacked as it is.
       - name: Sign the beta on AMO (unlisted)
-        if: env.CHANNEL == 'beta' && steps.amo.outputs.exists == 'false'
+        if: env.CHANNEL == 'beta' && steps.amo.outputs.status == 'missing'
         run: |
           set -euo pipefail
           mkdir -p unpacked signed
@@ -214,8 +235,25 @@ jobs:
             --amo-metadata dist/amo-metadata.json \
             --approval-timeout 1800000
 
+      - name: Attach the missing sources
+        if: steps.amo.outputs.status == 'no-source'
+        env:
+          FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
+        run: |
+          suffix=""
+          [ "$CHANNEL" = beta ] && suffix=-beta
+          bun scripts/amo-version.ts attach-source "$VERSION" "$(ls dist/*-sources"$suffix".zip)"
+
+      # Whichever way the version got there, it must now have its sources.
+      - name: Check AMO has the version with its sources
+        env:
+          FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
+        run: |
+          status=$(bun scripts/amo-version.ts status "$VERSION")
+          [ "$status" = present ] || { echo "::error::AMO's version $VERSION is '$status', not present with sources"; exit 1; }
+
       - name: Fetch the signed beta from AMO
-        if: env.CHANNEL == 'beta' && steps.amo.outputs.exists == 'true'
+        if: env.CHANNEL == 'beta' && steps.amo.outputs.status != 'missing'
         env:
           FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
         run: bun scripts/amo-version.ts download "$VERSION" signed 30
@@ -256,16 +294,17 @@ jobs:
           name: release-${{ needs.meta.outputs.version }}
           path: dist
 
-      # The store rejects a version it already has, so a re-run after success
-      # fails loudly and harmlessly. skipReview is never set (REL-CI-35).
+      # Not `wxt submit`: publish-browser-extension fails a v2 upload that
+      # is still processing instead of polling for it. The script skips a
+      # version already submitted, so a re-run is safe. skipReview is never set
+      # (REL-CI-35).
       - name: Submit to the Chrome Web Store
         env:
-          # Must be explicit, or the tool falls back to v1.1's variables (REL-CI-34).
-          CHROME_API_VERSION: v2
+          VERSION: ${{ needs.meta.outputs.version }}
           CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
           CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
           CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
           # Patches always publish on approval; others follow CWS_PUBLISH_TYPE.
           CHROME_PUBLISH_TYPE: ${{ needs.meta.outputs.kind == 'patch' && 'DEFAULT_PUBLISH' || vars.CWS_PUBLISH_TYPE || 'DEFAULT_PUBLISH' }}
-        run: bunx wxt submit --chrome-zip "$(ls dist/*-chrome.zip)"
+        run: bun scripts/cws-submit.ts "$(ls dist/*-chrome.zip)" "$VERSION"
