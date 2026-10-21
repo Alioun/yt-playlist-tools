@@ -21,7 +21,7 @@ Part of the [2.0 spec](../spec.md). This chapter covers how 1.4.5 users get to 2
 - [07](07-quality.md): the test layers ([§7.2](07-quality.md#72-test-layers)), fixtures ([§7.3](07-quality.md#73-fixtures)), the watch and the live check ([§7.5](07-quality.md#75-breakage-detection)), the budgets ([§7.6](07-quality.md#76-performance-budgets)) and the CI jobs ([§7.7](07-quality.md#77-ci-jobs-and-the-hotfix-lane)).
 - [09](09-parity.md): what 1.4.5 users had ([§1.12](09-parity.md#112-what-145-users-had), PAR-CAP-71 to PAR-CAP-79) and the platform and release rows ([§1.11](09-parity.md#111-platform-manifest-build-and-release)).
 
-The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too, and so are the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, the GatherTube fold, R120–R139, the icon, R140, and the name, R141–R144. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist". Under the resolutions' ownership rule, this chapter owns the migration, the upgrade note, and consent copy and conditions (R60); where it shares another topic with a chapter that owns it, that chapter's text wins, and [Conflicts found](#conflicts-found) lists what still differs.
+The main session's resolutions ([resolutions.md](resolutions.md)) are applied, all three rounds (R1–R40, R41–R67, then R68–R77). R83, settled after the spec, is applied too, and so are the user's decisions of 2026-10-20, R84–R99, the running-cost rules, R100–R117, the GatherTube fold, R120–R139, the icon, R140, the name, R141–R144, and releases from `main`, R148. A requirement they changed keeps its ID and ends with its R-number; one they added has a new ID. Following R37, prose calls `onboarding.html` "the first-run page", and copy says "quick-save playlist". Under the resolutions' ownership rule, this chapter owns the migration, the upgrade note, and consent copy and conditions (R60); where it shares another topic with a chapter that owns it, that chapter's text wins, and [Conflicts found](#conflicts-found) lists what still differs.
 
 **Requirement IDs:**
 - `REL-MIG-`: the 1.4.5 migration.
@@ -578,7 +578,7 @@ Recorded as [ADR-0011](../../../docs/adr/0011-betas-from-github-pages.md): betas
 |---|---|---|---|
 | **0. Ready** | API key; listing edits drafted | Developer account ready; the Store listing and Privacy tabs drafted | §18's "Once" items are done |
 | **1. Beta** (≥ 14 days) | Versions `1.99.N`, **unlisted**, on the *same* add-on ID, with `update_url` pointing at `https://alioun.github.io/yt-playlist-tools/beta/updates.json`. Testers install from the site's `/beta/` page. | The first Chrome upload is `v1.99.1`'s Chrome zip, **by hand** as **Unlisted** (the API can't create items), with the Store listing and Privacy tabs filled. From `1.99.2` on, the same item gets each `1.99.N` through the API. Testers install from its link. | REL-CHK-04 |
-| **2. Firefox release** | Tag `v2.0.0`, which goes to AMO **listed**. It's auto-published within about 24 h, and 1.4.5 users update over the following day. | The same day, **by hand** in the dashboard: visibility → Public, upload 2.0.0, and "publish manually after approval" (staged). The API can't change visibility, and items publish with their existing visibility. | Released |
+| **2. Firefox release** | Merge `2.0.0` to `main`, which goes to AMO **listed** (R148). It's auto-published within about 24 h, and 1.4.5 users update over the following day. | The same day, **by hand** in the dashboard: visibility → Public, upload 2.0.0, and "publish manually after approval" (staged). The API can't change visibility, and items publish with their existing visibility. | Released |
 | **3. Soak** (7 days) | 66 real upgrades plus the beta testers. Hotfixes ship here in 1–2 days. | Review runs in parallel (days, up to weeks) | No open blocker; the static watch is green, and the browser watch green or inconclusive ([Q-CI-8](07-quality.md#773-release-gates-summary)) |
 | **4. Chrome public** | — | Publish the staged version. If a 2.0.x shipped during the soak, cancel the staged 2.0.0 and submit that version instead, by hand in the dashboard, with visibility Public and "publish manually after approval" (staged), as in phase 2 (R21). After this, every Chrome release goes through the API. | — |
 
@@ -602,7 +602,7 @@ Recorded as [ADR-0011](../../../docs/adr/0011-betas-from-github-pages.md): betas
 
 ### 8.2 Leaving the beta (launch criteria)
 
-- **REL-CHK-04** 2.0.0 is tagged only when all of these hold:
+- **REL-CHK-04** 2.0.0 is merged to `main` only when all of these hold (R148):
   - a professional trademark search for "Perchling", the EU above all, has found nothing blocking (R144);
   - the Firefox manifest declares R83's `data_collection_permissions: {required: ["none"]}`, or §13's matching fallback row if a reviewer has objected;
   - ticket 25's route table is filled;
@@ -1068,25 +1068,27 @@ Ticket 23 is **settled by decision** ([R83](resolutions.md#after-the-spec-firefo
   - there's no `update_url` unless the mode is `beta`;
   - each manifest's `version` equals `package.json`'s.
 - **REL-CI-21** In `build`, `check:manifest --report-against <last release tag>` reports without failing: it writes any manifest difference from the last release to the job summary. A permission or host change is then visible in the PR that makes it.
-- **REL-CI-22** A `sources` job runs on pushes to `main` only, on `ubuntu-24.04-arm`. It builds the Firefox sources zip and rebuilds it per `SOURCE_CODE_REVIEW.md` on Node 24, so ARM64 drift shows up before a release.
+- **REL-CI-22** A `sources` job runs on pushes to `dev` only, on `ubuntu-24.04-arm`. It builds the Firefox sources zip and rebuilds it per `SOURCE_CODE_REVIEW.md` on Node 24, so ARM64 drift shows up before a release, since a push to `main` is the release (R148).
 
 ### 14.2 `release.yml`
 
 - **REL-CI-23** **Triggers:**
-  - a pushed tag `v*`;
-  - `workflow_dispatch`, with the inputs `stores` (a choice: `both` / `amo` / `cws` / `none`), `allow_red_watch` (boolean) and `reason` (required when `allow_red_watch` is true).
+  - every push to `main`; `meta` decides whether it releases (REL-CI-24);
+  - `workflow_dispatch`, as a dry run only: `meta` and `build` run, and nothing is tagged or submitted.
+  - A pushed tag triggers nothing. There's no `stores` input: rejecting an environment holds that store (REL-CI-47). `allow_red_watch` and its `reason` return with the `watch` gate, which settles how a push-triggered run takes them. (R148)
 - **Job graph:**
 
 ```
-meta ─► build ─► gates (all must pass) ─┬─► submit-amo  (environment: amo)
-                                        ├─► submit-cws  (environment: cws)
-                                        └─► github-release
+meta ─► build ─► gates (all must pass) ─► github-release ─┬─► submit-amo  (environment: amo)
+                                                          └─► submit-cws  (environment: cws)
 ```
 
-- **REL-CI-24** **`meta`:**
-  - fails unless the tag equals `v{package.json version}` and the version is above the last release tag;
-  - derives the **channel** (beta when the version matches `1.99.N` or `X.Y.9NN`) and the **kind** (major, minor or patch);
+- **REL-CI-24** **`meta`** decides from the tags only, never from `github.event.before`. It:
+  - releases only on a push to `main` when `package.json`'s version is a strict `N.N.N`, `v{version}` doesn't exist, and the version is above the highest `v*` tag, compared numerically per part. With no `v*` tag yet, the version must be exactly `1.99.1`; `1.5.0` is rejected outright (REL-CI-03);
+  - otherwise skips, with the reason in the job summary. A version below the last release, or malformed, fails the run instead;
+  - derives the **channel** (beta when the version matches `1.99.N` or `X.Y.9NN`) and the **kind** (major, minor or patch, against the highest tag, or 1.4.5 when there's none);
   - finds the previous release tag.
+  - The run creates the tag itself, in `github-release` (REL-CI-36). A failed or held store is retried with "Re-run failed jobs"; "Re-run all jobs" would see the tag and skip everything. (R148)
 - **REL-CI-25** **`build`** runs on ubuntu-24.04 with Node 24 and the Bun from `packageManager` (1.4.3). It:
   1. runs ticket 17's `check` steps (`typecheck`, `test:coverage`);
   2. builds the zips with the `zip` script (the Chrome zip, `wxt zip`), `zip:firefox` (the Firefox zip and, as WXT does for Firefox, the sources zip, `wxt zip -b firefox`) and, for betas, `zip:beta` (the `--mode beta` Firefox zip, `wxt zip -b firefox --mode beta`; REL-CI-10). The scripts are listed in [Q-TOOL-16](07-quality.md#718-scripts);
@@ -1102,32 +1104,30 @@ meta ─► build ─► gates (all must pass) ─┬─► submit-amo  (environ
 | `zip` | `check:zip` (ticket 17): no live-check page, no `src/livecheck/` code and no recording adapter in any store zip (ticket 18; [Q-WATCH-19](07-quality.md#756-the-signed-in-live-check-and-the-live-check-build)) |
 | `browser` | Ticket 17's real-browser layer, on the store builds, with timings gated at 1.5× a budget in Chromium only, as in `ci.yml` ([Q-CI-7](07-quality.md#773-release-gates-summary); R31) |
 | `watch` | `watch.yml` through `workflow_call`, from **this commit's** watch list, so a fix's new needles are what's tested ([Q-CI-8](07-quality.md#773-release-gates-summary)). `static` must be green, and `browser-watch` (Chromium only, R40) green or inconclusive. Called from here, `browser-watch` tests this run's release artifacts and doesn't rebuild (REL-CI-26; R61). A red `static` passes only with `allow_red_watch` and a reason, which the summary records. |
-| `live-check-record` | `store/live-checks/{version}.json` exists. The live-check build (`build:livecheck`, `src/livecheck/`) exports it, redacted: version, commit, browser and its version, date, and pass or fail per check, with no values. It must cover Chrome and Firefox, contain no failures, and be dated within 7 days of the tag. Every release needs one, hotfixes for our own bugs included; the check is run signed in and takes a few minutes. For a patch release that fixes a YouTube change, a `scope: "hotfix"` record listing the affected jobs is accepted (ticket 18). A fix of our own that touches no YouTube job runs the whole check, and a record with no checks in it never passes (R72). |
+| `live-check-record` | `store/live-checks/{version}.json` exists. The live-check build (`build:livecheck`, `src/livecheck/`) exports it, redacted: version, commit, browser and its version, date, and pass or fail per check, with no values. It must cover Chrome and Firefox, contain no failures, and be dated within 7 days of the release run (R148). Every release needs one, hotfixes for our own bugs included; the check is run signed in and takes a few minutes. For a patch release that fixes a YouTube change, a `scope: "hotfix"` record listing the affected jobs is accepted (ticket 18). A fix of our own that touches no YouTube job runs the whole check, and a record with no checks in it never passes (R72). |
 | `hotfix-freeze` (patch only) | REL-CI-38 |
 
   The gates this chapter shares with 07 are summarised in [§7.7.3](07-quality.md#773-release-gates-summary) (Q-CI-6 to Q-CI-9). (R31, R40, R61, R72)
 
 - **REL-CI-28** Both `sources-*` gates must report identical trees. A difference on either architecture fails the release.
-- **REL-CI-29** **`submit-amo`** runs only when `vars.PUBLISH_AMO == 'true'` and `stores` is `both` or `amo`. It waits for the `amo` environment's approval.
+- **REL-CI-29** **`submit-amo`** runs only for a release (REL-CI-24) and when `vars.PUBLISH_AMO == 'true'`. It waits for the `amo` environment's approval. (R148)
 - **REL-CI-30** For a release, `submit-amo` runs `bunx wxt submit --firefox-zip … --firefox-sources-zip …`, with `FIREFOX_CHANNEL=listed` and `FIREFOX_AMO_METADATA_FILE` set.
   - `scripts/amo-metadata.ts` builds the metadata file from `store/notes/` and `store/release-notes/{version}.md`.
   - The reviewer notes are the full template for major and minor releases, and the hotfix template for patches.
 - **REL-CI-31** AMO's v5 API wants `release_notes` as a locale object, `{"en-US": "…"}`. The metadata script never sends a plain string; publish-browser-extension's docs example does, and AMO rejects it.
-- **REL-CI-32** For a beta, `submit-amo` runs `web-ext sign --channel=unlisted` (`web-ext` is a dev dependency, [Q-TOOL-19](07-quality.md#719-type-checking-and-dependencies)) with the `--mode beta` zip, the sources zip and the same metadata, using the beta template. It waits for the signature and downloads the signed `.xpi` for `github-release`. The build confirms web-ext's flag for uploading sources.
-- **REL-CI-33** **`submit-cws`** runs only when `vars.PUBLISH_CWS == 'true'` and `stores` is `both` or `cws`, and never for a post-launch beta (`X.Y.9NN`). It waits for the `cws` environment's approval.
-- **REL-CI-34** `submit-cws` runs `bunx wxt submit --chrome-zip …` with `CHROME_API_VERSION=v2`.
-  - The variable must be set explicitly, or the tool falls back to v1.1's variables. v1.1 was supported only until 2026-10-15.
+- **REL-CI-32** For a beta, `submit-amo` runs `web-ext sign --channel=unlisted` (`web-ext` is a dev dependency, [Q-TOOL-19](07-quality.md#719-type-checking-and-dependencies)) with the `--mode beta` zip, the sources zip and the same metadata, using the beta template. It waits for the signature, downloads the signed `.xpi` and attaches it to the pre-release (REL-CI-36). The build confirms web-ext's flag for uploading sources. (R148)
+- **REL-CI-33** **`submit-cws`** runs only for a release (REL-CI-24) and when `vars.PUBLISH_CWS == 'true'`, and never for a post-launch beta (`X.Y.9NN`). It waits for the `cws` environment's approval. (R148)
+- **REL-CI-34** `submit-cws` runs `scripts/cws-submit.ts` on API v2, which polls `fetchStatus` while an upload is `IN_PROGRESS` and skips a version already submitted (R148). For `bunx wxt submit` by hand, `CHROME_API_VERSION=v2` must be set explicitly, or the tool falls back to v1.1's variables. v1.1 was supported only until 2026-10-15.
   - `CHROME_PUBLISH_TYPE` comes from `vars.CWS_PUBLISH_TYPE`, except that patch releases always use `DEFAULT_PUBLISH`.
   - **The exception is the 2.0.0 soak.** `PUBLISH_CWS` is false then, so this job doesn't run: Chrome goes by hand in the dashboard, as Public with staged publishing (§8.1, REL-CHK-02, REL-CI-40; [Q-CI-15](07-quality.md#774-the-hotfix-lane); R21).
 - **REL-CI-35** `submit-cws` never sets `skipReview`. API v2 skips review only for updates that change nothing but declarativeNetRequest rules, and it errors otherwise. Ticket 18's "try `skipReview`" is dropped.
-- **REL-CI-36** **`github-release`** creates the GitHub release, or a pre-release for betas. It attaches:
+- **REL-CI-36** **`github-release`** creates the tag `v{version}` on the run's commit and the GitHub release, or a pre-release for betas, with `gh release create … --target $GITHUB_SHA` and `GITHUB_TOKEN`. That isn't atomic, so a re-run that finds the release checks its tag is the run's commit and finishes it. A tag made with that token starts no other workflow (R148). It attaches:
   - the zips and the sources zip;
-  - the signed beta `.xpi`;
   - `manifest.chrome.json` and `manifest.firefox.json`, which later patch releases compare against;
   - the release notes.
 
-  It then triggers `pages.yml`.
-- **REL-CI-37** Permissions are `contents: read` everywhere except `github-release` (`contents: write`). `PUBLISH_TO_STORES` is retired.
+  `submit-amo` attaches the signed beta `.xpi` (REL-CI-32). `pages.yml` is then triggered: by `github-release`, or for a beta by `submit-amo` once the `.xpi` is attached. (R148)
+- **REL-CI-37** Permissions are `contents: read` everywhere except `github-release` and `submit-amo` (`contents: write`, for the beta `.xpi`). `PUBLISH_TO_STORES` is retired. (R148)
 
 ### 14.3 The hotfix lane
 
@@ -1138,7 +1138,7 @@ From ticket 18, made mechanical.
   - `git diff --quiet {previous tag} -- store/listing store/cws-dashboard.md store/notes/reviewer-full.md site/privacy` fails;
   - the consent version constant changed;
   - the storage layout version the build writes (`schema`, [DATA-46](04-features-accounts-data.md#410-schema-versions-and-migrations)) changed. (R62)
-- **REL-CI-39** A hotfix branch is `hotfix/X.Y.Z`, cut from the last release tag. (R62)
+- **REL-CI-39** A hotfix branch is `hotfix/X.Y.Z`, cut from the last release tag. Its PR targets `main`, and merging it releases the fix. (R62, R148)
   - **What it takes:** any fix, our own bugs included (a migration bug, for example), that changes no permission, disclosure, consent version or data schema, and no user-visible behaviour beyond the fix.
   - A fix for a YouTube change also updates its fixtures and watch-list entry.
   - It bumps no dependencies and refactors nothing: Chrome reviews "significant code changes" more closely, and AMO's queue ranks by the size of the change.
@@ -1147,7 +1147,7 @@ From ticket 18, made mechanical.
   - Chrome uses `DEFAULT_PUBLISH`, so it publishes on approval.
   - Both stores are submitted in one run.
   - **The exception is the 2.0.0 soak.** `PUBLISH_CWS` is false then, so the run publishes to AMO only. The Chrome resubmission is made by hand in the dashboard, as Public with staged publishing, replacing the staged 2.0.0 (§8.1, REL-CHK-02, §18; [Q-CI-15](07-quality.md#774-the-hotfix-lane); R21).
-- **REL-CI-41** After a hotfix, the developer comments on its issue (for a YouTube change, the `youtube-change` issue): "Firefox users get it within about a day; Chrome users after review". Then the branch is merged back to `main`. (R62)
+- **REL-CI-41** After a hotfix, the developer comments on its issue (for a YouTube change, the `youtube-change` issue): "Firefox users get it within about a day; Chrome users after review". Then `main` is merged back into `dev`. (R62, R148)
 
 ### 14.4 `watch.yml`
 
@@ -1155,7 +1155,7 @@ From ticket 18, made mechanical.
   - **Jobs:** `static`, `browser-watch` (on Chromium only; Firefox is covered by the pre-release real-browser check, R40), then `report` ([Q-CI-4](07-quality.md#772-watchyml)).
   - On a schedule or dispatch, `browser-watch` builds the store extension itself. Through `workflow_call` from `release.yml`, it takes the caller's artifacts instead and doesn't rebuild (R61).
   - `report` has `issues: write`. It opens, updates or closes the single `youtube-change` issue: opened on a red watch, or after three inconclusive days in a row; closed when the watch is green again.
-  - A red watch never blocks merges. It blocks a release tag unless that release is the fix.
+  - A red watch never blocks merges. It blocks a release unless that release is the fix (R148).
   - The checklist confirms the schedule is still alive (REL-CHK-18), because GitHub disables scheduled workflows in public repos after 60 days without activity. (R40, R61)
 
 The watch itself, with its needles, the browser watch and the inconclusive rules, is specified in [07](07-quality.md): [§7.5.2 the watch list](07-quality.md#752-the-watch-list) (Q-WATCH-3 to Q-WATCH-8); the static and browser watches (Q-WATCH-9 to Q-WATCH-14, in [§7.5.3](07-quality.md#753-the-static-watch) and [§7.5.4](07-quality.md#754-the-browser-watch)); and [§7.5.5 alerting](07-quality.md#755-alerting) (Q-WATCH-15 to Q-WATCH-17).
@@ -1172,13 +1172,13 @@ The watch itself, with its needles, the browser watch and the inconclusive rules
 ### 14.6 Secrets, variables and environments
 
 - **REL-CI-46** There are two GitHub environments. Both are free on public repos, have the developer as required reviewer, and allow self-review.
-  - **`amo`:** the secrets `FIREFOX_JWT_ISSUER`, `FIREFOX_JWT_SECRET` and `AMO_REVIEWER_LOGIN`, and the variable `FIREFOX_EXTENSION_ID` (`{cc70cd21-2cc6-444b-bd89-496909346091}`), which is public, so it isn't a secret (R21).
+  - **`amo`:** the secrets `FIREFOX_JWT_ISSUER`, `FIREFOX_JWT_SECRET` and `AMO_REVIEWER_LOGIN`, The add-on's GUID and slug are public, so `release.yml` holds them itself rather than an environment variable (R21, R148).
   - **`cws`:** `CHROME_PUBLISHER_ID`, `CHROME_EXTENSION_ID`, `CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL` and `CHROME_SERVICE_ACCOUNT_PRIVATE_KEY`. Store the PEM with real newlines, because the submit path doesn't convert `\n`. (R21)
 - **REL-CI-47** Repo variables:
   - `PUBLISH_AMO` and `PUBLISH_CWS` are the standing per-store switches. The environment approval is the per-run "go", and **Reject** holds one store for that run.
   - `CWS_PUBLISH_TYPE` is `DEFAULT_PUBLISH`, or `STAGED_PUBLISH` when Chrome should wait for a manual publish.
 - **REL-CI-48** These are deleted: `PUBLISH_TO_STORES`, `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`, `CHROME_REFRESH_TOKEN`, and any repo-level copies of the store secrets.
-- **REL-CI-49** A tag ruleset, "Restrict creations" on `v*` (free on public repos), means only the maintainer can trigger a release.
+- **REL-CI-49** A `main` ruleset (free on public repos) requires PRs and the CI `build` check, and blocks force pushes. It replaces the `v*` tag ruleset, because the workflow's own token creates the tags. (R148)
 - **REL-CI-50** `.env.submit.example` becomes:
 
 ```sh
@@ -1191,8 +1191,9 @@ CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL=
 CHROME_SERVICE_ACCOUNT_PRIVATE_KEY=
 CHROME_PUBLISH_TYPE=DEFAULT_PUBLISH
 
-# AMO: JWT pair from addons.mozilla.org > Tools > Manage API Keys. The ID must match the gecko ID.
-FIREFOX_EXTENSION_ID={cc70cd21-2cc6-444b-bd89-496909346091}
+# AMO: JWT pair from addons.mozilla.org > Tools > Manage API Keys.
+# The slug, because `wxt submit` strips a GUID's braces and AMO then can't find it (R148).
+FIREFOX_EXTENSION_ID=youtube-playlist-tools
 FIREFOX_JWT_ISSUER=
 FIREFOX_JWT_SECRET=
 FIREFOX_CHANNEL=listed
@@ -1308,14 +1309,14 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 - [ ] The manifest says Perchling: `name` "Perchling for YouTube™", `short_name` "Perchling", and §9.1's `description` (R141). The icons are Perch (R140). The professional trademark search is under way, or done (R144).
 - [ ] The Firefox manifest declares `data_collection_permissions: {required: ["none"]}` (R83); §13's fallback is applied only if a reviewer has objected. Ticket 25's route table is filled, and the cookie lines are kept or removed everywhere: the disclosure, the policy, the dashboard and the reviewer notes. They're removed if no shipped route reads the session cookie (R48).
 - [ ] The Chrome Web Store developer account is ready: 2-Step Verification, the fee, the publisher name, a verified contact e-mail, and the trader / non-trader declaration. The Store listing and Privacy tabs are drafted from §9 and §11; the first upload is `v1.99.1` (see Beta).
-- [ ] The service account is created, the Chrome Web Store API is enabled, and the account is added under Account in the dashboard. The `amo` and `cws` environments, the variables and the tag ruleset are set up (§14.6), and the old secrets are deleted.
+- [ ] The service account is created, the Chrome Web Store API is enabled, and the account is added under Account in the dashboard. The `amo` and `cws` environments, the variables and the `main` ruleset are set up (§14.6; R148), and the old secrets are deleted.
 - [ ] Pages is enabled (source: GitHub Actions); `/`, `/privacy/` and `/beta/` are live and have been read through. The policy is effective from 1.99.1 (R18, R21).
 - [ ] The reviewer test account is ready, and `AMO_REVIEWER_LOGIN` is set.
 - [ ] `server/` is retired, any deployment is shut down, and its OAuth client is deleted (§15).
 - [ ] The screenshots and the promo tile are in `store/listing/`. AMO's listing icon, `assets/icon/amo-128.png`, is uploaded (REL-STORE-40).
 
 **Every release**
-- [ ] `package.json`'s version is bumped, and `store/release-notes/{version}.md` is written.
+- [ ] `package.json`'s version is bumped on `dev`, and `store/release-notes/{version}.md` is written.
 - [ ] **The watch is alive:** `gh workflow view watch.yml` shows it enabled, with a scheduled run in the last 2 days. If not, run `gh workflow enable watch.yml`. GitHub disables schedules after 60 days without activity.
 - [ ] The signed-in live check is run in Chrome and Firefox from this commit's live-check build, the captures are imported, and `store/live-checks/{version}.json` is committed. Every release needs it, hotfixes for our own bugs included; it takes a few minutes (R72).
 - [ ] The timing test is run at 1× and 4× on the reference machine, and the figures are in the release PR (ticket 24). Chromium's must be within budget; Firefox's `performance.mark` figures are recorded for information only (R31).
@@ -1325,7 +1326,7 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
   - A new install warning disables Chrome until it's accepted and holds Firefox updates, so prefer none.
   - Has data handling changed? Then bump the consent `v`, and update the privacy policy and the dashboard's privacy tab in the same release.
 - [ ] **Has `schema` been bumped?** Then note in the release PR: "Rolling back past this version leaves the extension inert."
-- [ ] Tag `v{version}`. Read the gate summary (sizes against `main`, the manifest diff, the watch), then approve `amo` and `cws`, or reject one.
+- [ ] Merge `dev` to `main` with the bumped version, as a merge commit, not a squash (R148). Read the gate summary (sizes against `main`, the manifest diff, the watch), then approve `amo` and `cws`, or reject one.
 - [ ] Afterwards:
   - AMO shows the version public (within 24 h), and Chrome shows it approved and published;
   - the GitHub release is out;
@@ -1333,13 +1334,13 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
   - the reviewer account's backup codes are refreshed if they were used.
 
 **Beta**
-- [ ] The first beta only: tag `v1.99.1` with `PUBLISH_CWS=false`, upload that run's Chrome zip by hand as **Unlisted**, fill the Store listing and Privacy tabs, then set `PUBLISH_CWS=true` (REL-CHK-02; R21).
-- [ ] Tag `v1.99.N`. The unlisted signature is downloaded and attached to the pre-release, `…/beta/updates.json` and the `/beta/` page list it, and from `1.99.2` on the Unlisted Chrome item is updated through the API.
+- [ ] The first beta only: merge to `main` with the version `1.99.1` and `PUBLISH_CWS=false`, upload that run's Chrome zip by hand as **Unlisted**, fill the Store listing and Privacy tabs, then set `PUBLISH_CWS=true` (REL-CHK-02; R21).
+- [ ] Merge to `main` with the version bumped to `1.99.N` (R148). The unlisted signature is downloaded and attached to the pre-release, `…/beta/updates.json` and the `/beta/` page list it, and from `1.99.2` on the Unlisted Chrome item is updated through the API.
 
 **Hotfix** (ticket 18; R62)
 - [ ] Cut `hotfix/X.Y.Z` from the last tag. Make only the fix: a YouTube change or a bug of our own, with no change to permissions, the disclosure, the consent version, the data schema, or any user-visible behaviour beyond the fix (REL-CI-39). A fix for a YouTube change also updates its fixtures and watch-list entry.
-- [ ] Run the signed-in live check: hotfix scope for a YouTube change, the whole check for a bug of our own (REL-CI-40; R72). Pass the gates, tag `vX.Y.Z`, and check that `hotfix-freeze` passes.
-- [ ] Use the hotfix template for the reviewer notes. Afterwards, comment on the fix's issue (the `youtube-change` issue for a YouTube change) and merge back.
+- [ ] Run the signed-in live check: hotfix scope for a YouTube change, the whole check for a bug of our own (REL-CI-40; R72). Merge its PR into `main` with the version `X.Y.Z`, and check that the gates, `hotfix-freeze` included, pass (R148).
+- [ ] Use the hotfix template for the reviewer notes. Afterwards, comment on the fix's issue (the `youtube-change` issue for a YouTube change) and merge `main` back into `dev`.
 
 **Bad release**
 - [ ] Roll back first: AMO Developer Hub › Roll back, with the next patch number; then the Chrome dashboard's rollback. Then submit the fix.
@@ -1347,7 +1348,7 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 
 **The 2.0 launch, once**
 - [ ] REL-CHK-04's criteria are met.
-- [ ] Tag `v2.0.0` with `PUBLISH_CWS=false`, and approve `amo`.
+- [ ] Merge to `main` with the version `2.0.0` and `PUBLISH_CWS=false` (R148), and approve `amo`.
 - [ ] By hand in the Chrome dashboard: set visibility to Public, upload the `v2.0.0` Chrome zip from the run's artifacts, and choose "publish manually after approval".
 - [ ] When AMO shows 2.0.0 public, edit the AMO listing:
   - the name, summary, description, category, homepage, support URL, privacy policy, icon and screenshots (§9);
@@ -1357,14 +1358,14 @@ FIREFOX_AMO_METADATA_FILE=.output/amo-metadata.json
 - [ ] Publish on Chrome, add the Chrome link to `/` and the README, and set `PUBLISH_CWS=true` and `CWS_PUBLISH_TYPE=DEFAULT_PUBLISH`.
 
 The IDs these items rest on:
-- **REL-CHK-19** A release is tagged only after the "Every release" items are done, hotfixes included. The `live-check-record` and `watch` gates enforce two of them mechanically. (R72)
+- **REL-CHK-19** A release is merged to `main` only after the "Every release" items are done, hotfixes included. The `live-check-record` and `watch` gates enforce two of them mechanically. (R72, R148)
 - **REL-CHK-20** The timing test's figures (ticket 24) appear in the release PR for every release. Chromium's gate the release; Firefox's are for information ([Q-PERF-41](07-quality.md#767-enforcement)). (R31)
 - **REL-CHK-21** A release that changes a permission, host pattern, data-collection declaration or the disclosure is a minor or major release. Its PR lists each manifest change, and if data handling changed, it bumps the consent version and updates the policy and the dashboard's privacy tab in the same release.
 - **REL-CHK-22** A release that bumps `schema` says so in its PR.
 - **REL-CHK-23** After every release, the developer watches store reviews and issues for 48 h.
 - **REL-CHK-24** After every submission whose backup codes were used, the reviewer account's codes are refreshed.
-- **REL-CHK-26** Before each release is tagged, the developer does a manual screen-reader pass of the popup and settings. It's a release step, not a gate ([Q-CI-18](07-quality.md#773-release-gates-summary)); the automated axe-core checks run in the real-browser layer ([Q-TEST-20](07-quality.md#725-layer-4-real-browser)). (R38)
-- **REL-CHK-27** **The running-cost check** ([Q-PERF-63](07-quality.md#768-running-cost), [ADR-0012](../../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)). Before each release is tagged, hotfixes included, the developer runs `RELEASING.md`'s 15-minute signed-in session on the reference machine with the store build, in Chrome and in Firefox, and once more with the extension disabled. The release PR gets the table: the browsers' own figures for the extension (Chrome's Task Manager; the Firefox Profiler's `moz-extension` samples) and the session's counts. A figure over its budget blocks the tag. One more than 1.5× the previous release's is explained in the PR before tagging. (R102)
+- **REL-CHK-26** Before each release is merged to `main`, the developer does a manual screen-reader pass of the popup and settings. It's a release step, not a gate ([Q-CI-18](07-quality.md#773-release-gates-summary)); the automated axe-core checks run in the real-browser layer ([Q-TEST-20](07-quality.md#725-layer-4-real-browser)). (R38, R148)
+- **REL-CHK-27** **The running-cost check** ([Q-PERF-63](07-quality.md#768-running-cost), [ADR-0012](../../../docs/adr/0012-automatic-work-is-event-driven-scoped-and-paced.md)). Before each release is merged to `main`, hotfixes included, the developer runs `RELEASING.md`'s 15-minute signed-in session on the reference machine with the store build, in Chrome and in Firefox, and once more with the extension disabled. The release PR gets the table: the browsers' own figures for the extension (Chrome's Task Manager; the Firefox Profiler's `moz-extension` samples) and the session's counts. A figure over its budget blocks the release. One more than 1.5× the previous release's is explained in the PR before it merges. (R102, R148)
 
 ## 19. The user's one-time setup
 
@@ -1393,9 +1394,10 @@ Ticket 23's message to AMO isn't sent: R83 settled its questions from Mozilla's 
 - Create the dedicated reviewer Google account (REL-STORE-26).
 
 **GitHub:**
+- Make `dev` the default branch (R148; done 2026-10-21).
 - Enable Pages, with GitHub Actions as the source.
 - Create the `amo` and `cws` environments with the user as approver, and move the store secrets into them.
-- Set `PUBLISH_AMO`, `PUBLISH_CWS` and `CWS_PUBLISH_TYPE`, and add the `v*` tag ruleset.
+- Set `PUBLISH_AMO`, `PUBLISH_CWS` and `CWS_PUBLISH_TYPE`, and add the `main` ruleset (R148).
 - Delete the old secrets: `PUBLISH_TO_STORES` and the Chrome v1.1 client ID, secret and refresh token.
 - Create the issue labels the forms set, `problem`, `youtube-change` and `idea`, so GitHub applies them (REL-STORE-37; R89).
 - Set the repository's social preview: Settings › General › Social preview › upload `assets/brand/social-preview-1280x640.png` (REL-STORE-43; R147).

@@ -14,7 +14,7 @@ bun run test:coverage
 
 ## CI
 
-[`ci.yml`](../../.github/workflows/ci.yml) runs on pushes to `dev` and `main` and on every PR. It typechecks, tests, builds both targets, checks the manifests with [`check-manifests.sh`](../../scripts/check-manifests.sh) (MV3, background type, version, gecko ID, `update_url`, host permissions), uploads both builds as artifacts, and smoke-tests the broker image. [Dependabot](../../.github/dependabot.yml) groups packages that must update together.
+[`ci.yml`](../../.github/workflows/ci.yml) runs on pushes to `dev` and `main` and on every PR. It typechecks, tests, builds both targets, checks the manifests with [`check-manifests.sh`](../../scripts/check-manifests.sh) (MV3, background type, version, gecko ID, `update_url`, host permissions), uploads both builds as artifacts, runs the [release decision](releasing.md) cases in [`release-meta.test.sh`](../../scripts/release-meta.test.sh), and smoke-tests the broker image. [Dependabot](../../.github/dependabot.yml) groups packages that must update together.
 
 ## Installing a dev build
 

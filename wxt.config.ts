@@ -21,7 +21,7 @@ export default defineConfig({
       postcss: {}
     }
   }),
-  manifest: ({ browser }) => ({
+  manifest: ({ browser, mode }) => ({
     name: "YouTube Playlist Tools",
     description: "Add current YouTube video to specified playlists.",
     permissions: ["activeTab", "storage", "identity", "scripting"],
@@ -49,7 +49,13 @@ export default defineConfig({
           // stateless: it relays the OAuth code to Google and returns the
           // tokens without persisting anything. If the broker ever starts
           // storing user data, this declaration must be revisited.
-          data_collection_permissions: { required: ["none"] }
+          data_collection_permissions: { required: ["none"] },
+          // Betas (`--mode beta`) are signed unlisted and update from this
+          // repo's Pages. AMO rejects update_url in listed versions, so the
+          // store build never has it (REL-CI-10, ADR-0011).
+          ...(mode === "beta" && {
+            update_url: "https://alioun.github.io/yt-playlist-tools/beta/updates.json"
+          })
         }
       }
     })
