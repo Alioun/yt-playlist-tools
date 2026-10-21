@@ -24,7 +24,11 @@ _Avoid_: What's new, changelog
 
 **Beta**:
 A pre-release version the user installs from the project's site; it updates from there until the release it precedes.
-_Avoid_: Preview, dev build
+_Avoid_: Preview, dev build (that's unsigned and never published)
+
+**Dev build**:
+An unsigned build of a `dev` commit or a PR that CI keeps as an artifact for the developer's own testing. It's never signed or published, which is how it differs from a beta.
+_Avoid_: Nightly, beta, development build (that's `wxt` in development mode)
 
 **Site access**:
 The browser's permission for the extension to run on YouTube or on YouTube Music, which the user can withhold or revoke.

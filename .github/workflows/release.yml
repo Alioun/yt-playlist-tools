@@ -1,17 +1,56 @@
 name: Release
 
+# A push to main releases when package.json has a version that isn't tagged
+# yet; release-meta.sh decides (ADR-0014). Dispatch is a dry run: meta and
+# build only, so it can never tag or submit.
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
   workflow_dispatch:
 
-# Artifacts upload via the workflow token; nothing needs write access to code.
+# Only github-release and submit-amo (for the signed beta) write, and they
+# ask for it themselves.
 permissions:
   contents: read
 
+# Never cancelled. A newer push that replaces a pending run loses nothing: it
+# sees the same untagged version and releases its own SHA, which contains it.
+concurrency:
+  group: ${{ github.event_name == 'push' && 'release' || format('release-dry-run-{0}', github.ref) }}
+  cancel-in-progress: false
+
+env:
+  # Public, and asserted in check-manifests.sh. AMO finds it only with braces.
+  AMO_GUID: "{cc70cd21-2cc6-444b-bd89-496909346091}"
+  # publish-browser-extension strips the GUID's braces, which AMO then can't
+  # find, so `wxt submit` gets the slug. It doesn't change (ADR-0013).
+  AMO_SLUG: youtube-playlist-tools
+
 jobs:
-  package:
+  meta:
     runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.meta.outputs.release }}
+      version: ${{ steps.meta.outputs.version }}
+      channel: ${{ steps.meta.outputs.channel }}
+      kind: ${{ steps.meta.outputs.kind }}
+      cws: ${{ steps.meta.outputs.cws }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Decide
+        id: meta
+        run: scripts/release-meta.sh
+
+  build:
+    needs: meta
+    if: needs.meta.outputs.release == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.meta.outputs.version }}
+      CHANNEL: ${{ needs.meta.outputs.channel }}
+      # The same as ci.yml, so a release behaves like the dev build you tested.
+      WXT_AUTH_SERVER_URL: ${{ vars.WXT_AUTH_SERVER_URL }}
     steps:
       - uses: actions/checkout@v7
 
@@ -22,62 +61,250 @@ jobs:
           bun-version-file: package.json
 
       - run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run compile
+
+      - name: Test
+        run: bun run test
 
       - name: Zip for Chrome Web Store
         run: bun run zip
 
       # Also emits the sources zip, which AMO requires so reviewers can rebuild.
       - name: Zip for AMO
+        if: env.CHANNEL == 'stable'
         run: bun run zip:firefox
+
+      - name: Zip the Firefox beta
+        if: env.CHANNEL == 'beta'
+        run: bun run zip:beta
+
+      - name: Assert manifests are correct
+        run: |
+          firefox=.output/firefox-mv3
+          [ "$CHANNEL" = beta ] && firefox=.output/firefox-mv3-beta
+          scripts/check-manifests.sh .output/chrome-mv3 "$firefox"
 
       - name: Verify the AMO sources zip actually rebuilds
         run: |
           set -euo pipefail
-          sources=$(ls .output/*-sources.zip)
+          suffix=""; script=build:firefox
+          [ "$CHANNEL" = beta ] && { suffix=-beta; script=build:beta; }
+          sources=$(ls .output/*-sources"$suffix".zip)
           mkdir -p /tmp/sources-check
           unzip -q "$sources" -d /tmp/sources-check
           cd /tmp/sources-check
           bun install --frozen-lockfile
-          bun run build:firefox
+          bun run "$script"
           echo "Sources zip rebuilds successfully."
 
+      - name: AMO metadata
+        env:
+          KIND: ${{ needs.meta.outputs.kind }}
+          STRICT: ${{ needs.meta.outputs.release == 'true' && '--strict' || '' }}
+        run: |
+          bun scripts/amo-metadata.ts --version "$VERSION" --kind "$KIND" \
+            --channel "$CHANNEL" --out .output/amo-metadata.json $STRICT
+
+      # The manifests too: later patch releases compare against them (REL-CI-36).
+      # Collected outside .output/, which upload-artifact skips as hidden.
+      - name: Collect the release files
+        run: |
+          set -euo pipefail
+          firefox=.output/firefox-mv3
+          [ "$CHANNEL" = beta ] && firefox=.output/firefox-mv3-beta
+          mkdir -p dist
+          cp .output/*.zip .output/amo-metadata.json dist/
+          cp .output/chrome-mv3/manifest.json dist/manifest.chrome.json
+          cp "$firefox/manifest.json" dist/manifest.firefox.json
+          ls -l dist
+
+      # What's gated is what ships: every later job uses these exact files.
       - uses: actions/upload-artifact@v7
         with:
-          name: extension-packages
-          path: .output/*.zip
+          name: release-${{ needs.meta.outputs.version }}
+          path: dist/
           if-no-files-found: error
 
-  submit:
-    needs: package
+  github-release:
+    needs: [meta, build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.meta.outputs.release == 'true'
     runs-on: ubuntu-latest
-    # Only runs when store credentials are configured; safe to leave unset.
-    if: vars.PUBLISH_TO_STORES == 'true'
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.meta.outputs.version }}
+      PRERELEASE: ${{ needs.meta.outputs.channel == 'beta' && '--prerelease' || '' }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-${{ needs.meta.outputs.version }}
+          path: dist
+
+      # `gh release create` makes the tag too, but in several requests, so a
+      # re-run may find the release already there: it then checks the tag is
+      # this commit and finishes the job. A GITHUB_TOKEN tag starts no other
+      # workflow, which is why releasing happens here rather than on a tag push.
+      - name: Tag and create the GitHub release
+        run: |
+          set -euo pipefail
+          tag="v$VERSION"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            sha=$(gh api "repos/$GITHUB_REPOSITORY/commits/$tag" --jq .sha)
+            [ "$sha" = "$GITHUB_SHA" ] \
+              || { echo "::error::$tag already exists at $sha, not $GITHUB_SHA"; exit 1; }
+            echo "$tag already exists at this commit; finishing it."
+            gh release upload "$tag" --repo "$GITHUB_REPOSITORY" --clobber dist/*.zip dist/manifest.*.json
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --draft=false
+          else
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" --title "$tag" --generate-notes $PRERELEASE \
+              dist/*.zip dist/manifest.*.json
+          fi
+
+  submit-amo:
+    needs: [meta, build, github-release]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.meta.outputs.release == 'true' && vars.PUBLISH_AMO == 'true'
+    runs-on: ubuntu-latest
+    environment: amo
+    permissions:
+      # To attach the signed beta .xpi to the pre-release.
+      contents: write
+    env:
+      VERSION: ${{ needs.meta.outputs.version }}
+      CHANNEL: ${{ needs.meta.outputs.channel }}
+      FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+      FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
         with:
-          # Reads the `packageManager` field, so CI runs the exact Bun the
-          # repo declares rather than drifting with "latest".
+          bun-version-file: package.json
+
+      # For the lockfile's wxt and web-ext.
+      - run: bun install --frozen-lockfile
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-${{ needs.meta.outputs.version }}
+          path: dist
+
+      # A re-run after a partial success must not upload the same version
+      # again, and a version created without its sources isn't done.
+      - name: Is this version already on AMO?
+        id: amo
+        env:
+          FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
+        run: |
+          set -euo pipefail
+          status=$(bun scripts/amo-version.ts status "$VERSION")
+          case "$status" in
+            missing|no-source|present) ;;
+            *) echo "::error::unexpected AMO status '$status'"; exit 1 ;;
+          esac
+          echo "AMO has version $VERSION: $status"
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Submit to AMO (listed)
+        if: env.CHANNEL == 'stable' && steps.amo.outputs.status == 'missing'
+        env:
+          FIREFOX_EXTENSION_ID: ${{ env.AMO_SLUG }}
+          FIREFOX_CHANNEL: listed
+          FIREFOX_AMO_METADATA_FILE: dist/amo-metadata.json
+        run: |
+          set -euo pipefail
+          bunx wxt submit \
+            --firefox-zip "$(ls dist/*-firefox.zip)" \
+            --firefox-sources-zip "$(ls dist/*-sources.zip)"
+
+      # web-ext signs a directory, so the checked zip is unpacked as it is.
+      - name: Sign the beta on AMO (unlisted)
+        if: env.CHANNEL == 'beta' && steps.amo.outputs.status == 'missing'
+        run: |
+          set -euo pipefail
+          mkdir -p unpacked signed
+          unzip -q "$(ls dist/*-firefox-beta.zip)" -d unpacked
+          bunx web-ext sign --source-dir unpacked --artifacts-dir signed \
+            --channel unlisted \
+            --api-key "$FIREFOX_JWT_ISSUER" --api-secret "$FIREFOX_JWT_SECRET" \
+            --upload-source-code "$(ls dist/*-sources-beta.zip)" \
+            --amo-metadata dist/amo-metadata.json \
+            --approval-timeout 1800000
+
+      - name: Attach the missing sources
+        if: steps.amo.outputs.status == 'no-source'
+        env:
+          FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
+        run: |
+          suffix=""
+          [ "$CHANNEL" = beta ] && suffix=-beta
+          bun scripts/amo-version.ts attach-source "$VERSION" "$(ls dist/*-sources"$suffix".zip)"
+
+      # Whichever way the version got there, it must now have its sources.
+      - name: Check AMO has the version with its sources
+        env:
+          FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
+        run: |
+          status=$(bun scripts/amo-version.ts status "$VERSION")
+          [ "$status" = present ] || { echo "::error::AMO's version $VERSION is '$status', not present with sources"; exit 1; }
+
+      - name: Fetch the signed beta from AMO
+        if: env.CHANNEL == 'beta' && steps.amo.outputs.status != 'missing'
+        env:
+          FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
+        run: bun scripts/amo-version.ts download "$VERSION" signed 30
+
+      # web-ext repackages the directory; the signed files must be the checked ones.
+      - name: Check the signed beta matches the checked build
+        if: env.CHANNEL == 'beta'
+        run: |
+          set -euo pipefail
+          rm -rf checked from-amo
+          mkdir checked from-amo
+          unzip -q "$(ls dist/*-firefox-beta.zip)" -d checked
+          unzip -q "$(ls signed/*.xpi)" -d from-amo
+          hashes() { (cd "$1" && find . -type f ! -path './META-INF/*' -print0 | sort -z | xargs -0 sha256sum); }
+          diff <(hashes checked) <(hashes from-amo)
+          echo "The signed beta holds exactly the checked files."
+
+      - name: Attach the signed beta to the pre-release
+        if: env.CHANNEL == 'beta'
+        run: gh release upload "v$VERSION" signed/*.xpi --clobber --repo "$GITHUB_REPOSITORY"
+
+  submit-cws:
+    needs: [meta, build, github-release]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.meta.outputs.release == 'true' && vars.PUBLISH_CWS == 'true' && needs.meta.outputs.cws == 'true'
+    runs-on: ubuntu-latest
+    environment: cws
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
           bun-version-file: package.json
 
       - run: bun install --frozen-lockfile
 
-      - run: bun run zip
-      - run: bun run zip:firefox
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-${{ needs.meta.outputs.version }}
+          path: dist
 
-      - name: Submit to stores
+      # Not `wxt submit`: publish-browser-extension fails a v2 upload that
+      # is still processing instead of polling for it. The script skips a
+      # version already submitted, so a re-run is safe. skipReview is never set
+      # (REL-CI-35).
+      - name: Submit to the Chrome Web Store
         env:
+          VERSION: ${{ needs.meta.outputs.version }}
+          CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
-          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
-          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
-          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
-        run: |
-          set -euo pipefail
-          bunx wxt submit \
-            --chrome-zip .output/*-chrome.zip \
-            --firefox-zip .output/*-firefox.zip \
-            --firefox-sources-zip .output/*-sources.zip
+          CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
+          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
+          # Patches always publish on approval; others follow CWS_PUBLISH_TYPE.
+          CHROME_PUBLISH_TYPE: ${{ needs.meta.outputs.kind == 'patch' && 'DEFAULT_PUBLISH' || vars.CWS_PUBLISH_TYPE || 'DEFAULT_PUBLISH' }}
+        run: bun scripts/cws-submit.ts "$(ls dist/*-chrome.zip)" "$VERSION"
