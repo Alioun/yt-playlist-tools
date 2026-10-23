@@ -64,6 +64,13 @@ describe("trusted message boundary", () => {
     expect(sessionService.findSession).not.toHaveBeenCalled()
     expect(youtube.fetchUserPlaylists).not.toHaveBeenCalled()
   })
+  it("does not authorize legacy claims from playlist enumeration", async () => {
+    await store.playlists.setValue(["PLold"])
+    await expect(send({ action: "claimLegacy", session: snapshot }, ui)).resolves.toMatchObject({ kind: "unavailable" })
+    expect(await store.playlists.getValue()).toEqual(["PLold"])
+    expect((await store.getAccountSetup(snapshot)).playlists).toEqual(["PL1"])
+    expect(youtube.fetchUserPlaylists).not.toHaveBeenCalled()
+  })
   it("refuses a private snapshot from a normal caller", async () => {
     await expect(send({ action: "changeSetup", session: { ...snapshot, incognito: true }, change: { kind: "shortcut", playlistId: "PL1" } }, ui)).resolves.toMatchObject({ kind: "accountChanged" })
   })

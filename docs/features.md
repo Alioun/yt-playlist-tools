@@ -11,6 +11,6 @@
 - Optional toasts; light, dark and system themes
 - Settings inside the popup (gear icon) or as a tab via the Options entry
 
-Dev builds use your signed-in YouTube tab after you agree to session access in the popup. Keep a YouTube tab open, and reload it after signing in or changing accounts. Each account has separate playlist settings. Existing 1.x playlist choices need an ownership check before you claim them.
+Dev builds use your signed-in YouTube tab after you agree to session access in the popup. Keep a YouTube tab open, and reload it after signing in or changing accounts. Each account has separate playlist settings. Existing 1.x playlist choices stay saved and inactive. Choose playlists for each account manually while ownership verification remains unavailable.
 
 Released 1.5.0 uses a Google OAuth token. See [legacy authentication](legacy/authentication.md). The full [2.0 rebuild](rebuild/README.md) is separate from this access migration.

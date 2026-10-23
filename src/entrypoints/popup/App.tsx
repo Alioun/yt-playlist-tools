@@ -52,7 +52,6 @@ function PlaylistControls({ view }: { view: ReadyView }) {
   const [selectedIds, setSelectedIds] = useState(view.setup.playlists)
   const [shortcutPlaylistId, setShortcutPlaylistId] = useState(view.setup.shortcutPlaylistId)
   const [filterState, setFilterState] = useState<FilterState>({ filters: view.setup.filters, labels: view.setup.labels })
-  const [unclaimed, setUnclaimed] = useState(view.unclaimed)
   const [shortcutDisplay, setShortcutDisplay] = useState("")
   const [watchPercentage, setWatchPercentage] = useState(50)
   const [toastEnabled, setToastEnabled] = useState(true)
@@ -89,13 +88,6 @@ function PlaylistControls({ view }: { view: ReadyView }) {
       else setError(isRecord(reply) && typeof reply.error === "string" ? reply.error : "Couldn't save choices. Check again.")
     }).catch(() => { if (live.current) setError("Couldn't save choices. Check again.") })
   }
-  const claimLegacy = () => {
-    void sendSessionMessage({ action: "claimLegacy", session: view.session }).then(reply => {
-      if (!live.current) return
-      if (isRecord(reply) && isSetup(reply.setup)) { applySetup(reply.setup); setUnclaimed(false) }
-      else setError("Couldn't verify the old setup. Check again.")
-    }).catch(() => { if (live.current) setError("Couldn't verify the old setup. Check again.") })
-  }
   const togglePlaylist = (playlistId: string, checked: boolean) => changeSetup({ kind: "auto", playlistId, checked })
   const selectShortcutPlaylist = (playlistId: string) => changeSetup({ kind: "shortcut", playlistId })
   const updateWatchPercentage = (value: number) => {
@@ -118,9 +110,8 @@ function PlaylistControls({ view }: { view: ReadyView }) {
       <div className="space-y-4">
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         {view.session.incognito && <p className="text-sm text-muted-foreground">Private window. You can use this account's existing setup; change playlist choices in a normal window.</p>}
-        {unclaimed && !view.session.incognito && <div className="space-y-2 rounded-md border p-3">
-          <p className="text-sm">Your old setup is unclaimed. Only playlists verified in this account's list will be copied. Other choices remain saved and inactive.</p>
-          <Button size="sm" variant="outline" onClick={claimLegacy}>Claim old setup for this account</Button>
+        {view.unclaimed && !view.session.incognito && <div className="space-y-2 rounded-md border p-3">
+          <p className="text-sm">Your old playlist choices are saved and inactive. Choose playlists for this account below.</p>
         </div>}
         <fieldset disabled={view.session.incognito || !!error} className="space-y-4">
         {/* Auto-add playlists */}

@@ -170,36 +170,6 @@ export async function hasUnclaimedSetup(): Promise<boolean> {
   return selected.length > 0 || !!shortcut || Object.keys(filters).length > 0
 }
 
-export async function claimLegacySetup(context: AccountContext, owned: CachedPlaylist[]): Promise<AccountSetup> {
-  if (context.incognito) throw new Error("Claim your old setup in a normal window")
-  if (!await hasUnclaimedSetup()) return getAccountSetup(context)
-  const [selected, shortcut, filters, labels, existing] = await Promise.all([
-    playlists.getValue(), addToPlaylistID.getValue(), channelFilters.getValue(),
-    channelLabels.getValue(), getAccountSetup(context)
-  ])
-  const ids = new Set(owned.map(playlist => playlist.id))
-  const verifiedFilters = Object.fromEntries(Object.entries(filters).filter(([id]) => ids.has(id)))
-  const listed = new Set(Object.values(verifiedFilters).flatMap(filter => filter.channels))
-  const verifiedLabels = Object.fromEntries(Object.entries(labels).filter(([id]) => listed.has(id)))
-  const setup: AccountSetup = {
-    playlists: [...new Set([...existing.playlists, ...selected.filter(id => ids.has(id))])],
-    shortcutPlaylistId: existing.shortcutPlaylistId || (ids.has(shortcut) ? shortcut : ""),
-    filters: { ...verifiedFilters, ...existing.filters },
-    labels: { ...verifiedLabels, ...existing.labels },
-    cachedPlaylists: owned,
-    cachedAt: Date.now()
-  }
-  await saveAccountSetup(context, setup)
-  const remaining = selected.filter(id => !ids.has(id))
-  const remainingFilters = Object.fromEntries(Object.entries(filters).filter(([id]) => !ids.has(id)))
-  const remainingShortcut = ids.has(shortcut) ? "" : shortcut
-  await Promise.all([
-    playlists.setValue(remaining), addToPlaylistID.setValue(remainingShortcut), channelFilters.setValue(remainingFilters)
-  ])
-  await legacyClaimed.setValue(!remaining.length && !remainingShortcut && !Object.keys(remainingFilters).length)
-  return setup
-}
-
 /** Removes credential keys without reading any credential value. */
 export async function removeLegacyCredentials(): Promise<void> {
   await browser.storage.local.remove([

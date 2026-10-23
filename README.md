@@ -24,7 +24,7 @@ Using 1.4.5 from Firefox Add-ons? [Setup guide](docs/legacy/1.4.5-setup.md)
 
 ## Dev sign-in
 
-Dev builds use your signed-in YouTube tab. Google credentials and a token server are no longer used. Agree to the session-access disclosure in the popup, allow access to YouTube, and keep a YouTube tab open. Your 1.x playlist choices stay unclaimed until you confirm the account that owns them.
+Dev builds use your signed-in YouTube tab. Google credentials and a token server are no longer used. Agree to the session-access disclosure in the popup, allow access to YouTube, and keep a YouTube tab open. Your 1.x playlist choices stay saved and inactive. Choose playlists separately for each account. Automatic migration remains unavailable until playlist ownership can be verified.
 
 This is the access migration for the planned 2.0 rebuild. The additional 2.0 features and interface are separate work. The Firefox Add-ons version still uses the legacy setup linked above.
 

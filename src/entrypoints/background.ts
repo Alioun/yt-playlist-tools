@@ -160,11 +160,6 @@ export default defineBackground(() => {
     if (fromPage) throw new SessionFailure("unavailable")
     if (message.action === "fetchPlaylists") return view(caller)
     const session = await snapshotFor(caller, message.session)
-    if (message.action === "claimLegacy") return serial(session, async () => {
-      const owned = await fetchUserPlaylists(session)
-      await checkSession(session)
-      return { setup: await store.claimLegacySetup(session, owned) }
-    })
     if (message.action === "changeSetup") return serial(session, () => changeSetup(session, message.change))
     if (message.action === "lookUpChannel") return fetchChannel(session, queryFrom(message.query))
     if (message.action === "getChannelForTab") {

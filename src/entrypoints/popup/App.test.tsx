@@ -77,11 +77,12 @@ describe("account choices", () => {
     })))
     expect(await store.playlists.getValue()).toEqual([])
   })
-  it("offers an explicit claim rather than silently applying legacy choices", async () => {
+  it("keeps old choices inactive while ownership cannot be verified", async () => {
     await store.sessionConsent.setValue(store.CONSENT_VERSION)
     vi.spyOn(fakeBrowser.runtime, "sendMessage").mockImplementation(async () => ({ ...view, unclaimed: true }))
     render(<App />)
-    expect(await screen.findByRole("button", { name: "Claim old setup for this account" })).toBeInTheDocument()
+    expect(await screen.findByText(/Your old playlist choices are saved and inactive/)).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /Claim old setup/ })).not.toBeInTheDocument()
   })
   it("disables account edits in a private window", async () => {
     await store.sessionConsent.setValue(store.CONSENT_VERSION)

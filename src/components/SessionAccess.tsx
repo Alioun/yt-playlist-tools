@@ -80,7 +80,7 @@ export function SessionAccess({ children }: { children?: (view: ReadyView) => Re
           <p className="text-sm text-muted-foreground">
             Your chosen playlist settings stay in your browser. No YouTube data is read and no features run until you agree. You can revoke access here at any time.
           </p>
-          <p className="text-xs text-muted-foreground">Every add checks YouTube for membership. The old duplicate-prevention switch is no longer needed. Your old setup stays inactive until you claim its verified playlists.</p>
+          <p className="text-xs text-muted-foreground">Every add checks YouTube for membership. The old duplicate-prevention switch is no longer needed. Your old playlist choices stay saved and inactive. Choose playlists for each account after you agree.</p>
           <Button className="w-full" onClick={() => void check("grantSession")}>Agree and continue</Button>
         </section>
       ) : view.kind === "checking" ? <p role="status" className="text-sm text-muted-foreground">Checking YouTube session...</p> : (
