@@ -30,7 +30,9 @@ function wxtTestGlobals(browser: TargetBrowser, manifestVersion: number): Plugin
     "import.meta.env.COMMAND": JSON.stringify("serve")
   }
   return {
-    name: "wxt:test-globals",
+    // Vitest 5 hashes plugin names, not their closed-over options, for its
+    // persistent transform cache. Chrome and Firefox must not share an entry.
+    name: `wxt:test-globals:${browser}:mv${manifestVersion}`,
     enforce: "pre",
     transform(code) {
       if (!code.includes("import.meta.env.")) return null
