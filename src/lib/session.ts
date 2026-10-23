@@ -120,7 +120,6 @@ export async function findSession(caller: Caller): Promise<SessionState> {
       try {
         const reply = await execute(tab.id, { kind: "account" }, 2000)
         if (reply.kind === "account") {
-          // The active YouTube tab defines the account, including signed out.
           if (!reply.signedIn) return { kind: "signedOut" }
           return { kind: "ready", session: { tabId: tab.id, accountKey: reply.accountKey, incognito: caller.incognito } }
         }
@@ -208,7 +207,6 @@ export async function reconcileScripts(): Promise<void> {
   return registration
 }
 
-/** One page command. No listeners survive the call. */
 export async function queueInPage(videoId: string): Promise<boolean> {
   if (("__ytptSessionAccess" in window && window.__ytptSessionAccess === false) || !/^[\w-]{11}$/.test(videoId)) return false
   const app = document.querySelector("ytd-app")

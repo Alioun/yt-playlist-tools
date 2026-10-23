@@ -71,8 +71,7 @@ export const requiredWatchPercentage = storage.defineItem<number>(
   { fallback: 50 }
 )
 
-/** Legacy list retained on disk. New views use the verified account's list. */
-export const cachedPlaylists = storage.defineItem<CachedPlaylist[]>(
+export const legacyCachedPlaylists = storage.defineItem<CachedPlaylist[]>(
   "local:cachedPlaylists",
   { fallback: [] }
 )

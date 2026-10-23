@@ -21,7 +21,7 @@ beforeEach(async () => {
 describe("consent and session states", () => {
   it("reads no account setup or page data before agreement", async () => {
     const send = vi.spyOn(fakeBrowser.runtime, "sendMessage")
-    const cached = vi.spyOn(store.cachedPlaylists, "getValue")
+    const cached = vi.spyOn(store.legacyCachedPlaylists, "getValue")
     render(<App />)
     expect(await screen.findByRole("button", { name: "Agree and continue" })).toBeInTheDocument()
     expect(screen.getByText(/Cookies never leave the page/)).toBeInTheDocument()
