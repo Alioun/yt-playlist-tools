@@ -40,6 +40,9 @@ jobs:
       - name: Release decision cases
         run: scripts/release-meta.test.sh
 
+      - name: Signed build comparison cases
+        run: scripts/check-signed-build.test.sh
+
       - name: Build (Chrome MV3)
         run: bun run build
         env:
@@ -240,8 +243,7 @@ jobs:
           set -euo pipefail
           mkdir from-amo
           unzip -q "$(ls signed/*.xpi)" -d from-amo
-          hashes() { (cd "$1" && find . -type f ! -path './META-INF/*' -print0 | sort -z | xargs -0 sha256sum); }
-          diff <(hashes unpacked) <(hashes from-amo)
+          scripts/check-signed-build.sh unpacked from-amo
           name="yt-playlist-tools-$VERSION-firefox-signed.xpi"
           mv "$(ls signed/*.xpi)" "$name"
           echo "name=$name" >> "$GITHUB_OUTPUT"
