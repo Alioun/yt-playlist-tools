@@ -7,7 +7,7 @@ import { CARD_EXCLUDE_SELECTORS, CARD_SELECTORS, THUMBNAIL_SELECTORS, injectQueu
 import { enableCardMenu } from "@/lib/card-menu"
 import { observe as observeQueueButtons } from "@/lib/queue-button"
 import * as store from "@/lib/storage"
-import { isAccountKey, isRecord } from "@/lib/session"
+import { isConsentGeneration, isRecord, isSnapshot } from "@/lib/session"
 import "@/assets/tailwind.css"
 import "sonner/dist/styles.css"
 
@@ -22,6 +22,8 @@ export default defineContentScript({
   cssInjectionMode: "ui",
   async main(ctx) {
     if (await store.sessionConsent.getValue() !== store.CONSENT_VERSION) return
+    const consentGeneration = await store.sessionGeneration.getValue()
+    if (!isConsentGeneration(consentGeneration)) return
     globalThis.__ytptStop?.()
     let stopped = false
     const cleanup: (() => void)[] = []
@@ -37,7 +39,11 @@ export default defineContentScript({
     cleanup.push(store.sessionConsent.watch(value => {
       if (value !== store.CONSENT_VERSION) stop()
     }))
-    const allowed = async () => !stopped && await store.sessionConsent.getValue() === store.CONSENT_VERSION && !stopped
+    cleanup.push(store.sessionGeneration.watch(value => {
+      if (value !== consentGeneration) stop()
+    }))
+    const allowed = async () => !stopped && await store.sessionConsent.getValue() === store.CONSENT_VERSION &&
+      await store.sessionGeneration.getValue() === consentGeneration && !stopped
     const [key, percentage, feedback] = await Promise.all([
       store.watchLaterShortcut.getValue(), store.requiredWatchPercentage.getValue(), store.toastEnabled.getValue()
     ])
@@ -50,13 +56,13 @@ export default defineContentScript({
     cleanup.push(store.toastEnabled.watch(value => { toastEnabled = value ?? true }))
 
     const state: unknown = await browser.runtime.sendMessage({ action: "sessionForTab" }).catch(() => null)
-    const accountKey = isRecord(state) && state.kind === "ready" && isRecord(state.session) && isAccountKey(state.session.accountKey)
+    const accountKey = isRecord(state) && state.kind === "ready" && isSnapshot(state.session) && state.session.consentGeneration === consentGeneration
       ? state.session.accountKey : null
     if (!await allowed()) return stop()
 
     const currentVideoId = () => new URL(location.href).searchParams.get("v")
     async function sendAdd(action: string, videoId: string) {
-      if (accountKey && await allowed()) await browser.runtime.sendMessage({ action, videoId, accountKey }).catch(() => {})
+      if (accountKey && await allowed()) await browser.runtime.sendMessage({ action, videoId, accountKey, consentGeneration }).catch(() => {})
     }
     const keydown = (event: KeyboardEvent) => {
       if (stopped || event.repeat || !accountKey || !matchesShortcut(event, shortcut)) return
@@ -137,7 +143,7 @@ export default defineContentScript({
             cardSelectors: CARD_SELECTORS, excludeSelectors: CARD_EXCLUDE_SELECTORS, thumbnailSelectors: THUMBNAIL_SELECTORS,
             onQueue: async videoId => {
               if (!await allowed()) return false
-              const reply: unknown = await browser.runtime.sendMessage({ action: "queueVideo", videoId }).catch(() => null)
+              const reply: unknown = await browser.runtime.sendMessage({ action: "queueVideo", videoId, consentGeneration }).catch(() => null)
               return isRecord(reply) && reply.ok === true
             }
           })

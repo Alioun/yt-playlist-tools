@@ -137,7 +137,8 @@ describe("shared settings without a live account", () => {
   })
   it.each(["signedOut", "noTab", "unavailable", "accountChanged"])("saves only shared settings while %s", async kind => {
     await store.sessionConsent.setValue(store.CONSENT_VERSION)
-    const savedAccount = { accountKey: session.accountKey, incognito: false }
+    const savedAccount = { ...session, incognito: false }
+    await store.sessionGeneration.setValue(session.consentGeneration)
     await store.saveAccountSetup(savedAccount, view.setup)
     const saveAccount = vi.spyOn(store, "saveAccountSetup")
     const legacyChoices = vi.spyOn(store.playlists, "setValue")
