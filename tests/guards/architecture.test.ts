@@ -3,6 +3,7 @@ import { createHash } from "node:crypto"
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
+import { parse } from "svelte/compiler"
 import { inspect, inventoryChanges, readAliases, readSources, rules, type Finding, type Rule } from "./checker"
 import { legacyInventory } from "./legacy-inventory"
 
@@ -103,6 +104,36 @@ describe("import boundaries", () => {
 })
 
 describe("environment and page logging", () => {
+  for (const prefix of ["const", "export const"]) {
+    test.each([
+      "{ env }",
+      "{ env: environment }",
+      "{ env: { FIREFOX } }",
+      "{ env: { FIREFOX: firefox } }",
+      '{ ["env"]: { FIREFOX: firefox } }',
+    ])(`rejects an unused ${prefix} environment extraction through %s`, pattern => {
+      for (const file of ["src/site/core/example.ts", "src/shared/platform.ts"]) {
+        const actual = findings(file, `// synthetic\n\n${prefix} ${pattern} = import.meta`)
+        expect(actual.filter(finding => finding.rule === "env").map(finding => [finding.file, finding.line, finding.reason]))
+          .toEqual([[file, 3, file === "src/shared/platform.ts" ? "indirect-platform-env" : "env-outside-platform"]])
+      }
+    })
+  }
+
+  test("checks environment extraction through an import.meta alias before an export reference", () => {
+    for (const file of ["src/site/core/example.ts", "src/shared/platform.ts"]) {
+      hasRule(file, "const meta = import.meta; const { env: { FIREFOX: firefox } } = meta; export { firefox }", "env")
+    }
+  })
+
+  test.each([
+    'export const { env: { FIREFOX: firefox } } = { env: { FIREFOX: false } }',
+    'const { env: environment } = { env: {} }; export { environment }',
+    'type Environment = { env: { FIREFOX: boolean } }',
+  ])("permits unrelated or erased environment references through %s", text => {
+    for (const file of ["src/site/core/example.ts", "src/shared/platform.ts"]) expect(findings(file, text)).toEqual([])
+  })
+
   test.each([
     "import.meta.env.FIREFOX",
     'import.meta["env"]["FIREFOX"]',
@@ -143,6 +174,30 @@ describe("environment and page logging", () => {
   test("reads Svelte scripts with their original line numbers", () => {
     const result = findings("src/page/Gateway.svelte", '<p>synthetic 😀</p>\n<script lang="ts">\nconsole.log("synthetic")\n</script>')
     expect(result.filter(finding => finding.rule === "page-console").map(finding => finding.line)).toEqual([3])
+  })
+
+  test.each([
+    '<script lang="ts" generics="T extends Record<string, unknown>">\nlet value: T | undefined\n</script>\n<p>synthetic</p>',
+    '<!-- <script>import "@/background/boot"; console.log("synthetic")</script> -->\n<p>synthetic</p>',
+    '<script module lang="ts">export const value = 1</script>\n<script lang="ts">const other = value</script>',
+    '<script context="module" lang="ts">export const value = 1</script>\n<script lang="ts">const other = value</script>',
+  ])("accepts a component accepted by the installed Svelte parser through %s", text => {
+    expect(() => parse(text, { modern: true })).not.toThrow()
+    expect(findings("src/page/Gateway.svelte", text)).toEqual([])
+  })
+
+  test("keeps exact offsets in generic and module scripts after comments and Unicode", () => {
+    const text = '<!-- 😀 <script>console.log("ignored")</script> -->\r\n'
+      + '<script module lang="ts">\r\nimport "@/background/boot"\r\n</script>\r\n'
+      + '<script lang="ts" generics="T extends Record<string, unknown>">\r\nconsole.log("synthetic")\r\n</script>'
+    expect(() => parse(text, { modern: true })).not.toThrow()
+    expect(findings("src/page/Gateway.svelte", text).map(finding => [finding.rule, finding.line, finding.evidence]))
+      .toEqual([["imports", 3, "@/background/boot"], ["page-console", 6, "console.log"]])
+  })
+
+  test("reports a Svelte parse error on its original source line", () => {
+    const actual = findings("src/page/Gateway.svelte", '<p>synthetic</p>\n<script lang="ts">\nconst broken = ;\n</script>')
+    expect(actual.map(finding => [finding.reason, finding.line])).toEqual([["syntax-error", 3]])
   })
 })
 
@@ -234,8 +289,49 @@ describe("event driven running cost", () => {
     'const root = document.documentElement; observer.observe(root, { subtree: true })',
     'const root = document.querySelector("ytd-app"); const options = { subtree: true }; observer.observe(root, options)',
     'observer.observe(document.querySelector("ytmusic-app"), { subtree: true })',
+    'observer.observe(document.getElementsByTagName("ytd-app")[0], { subtree: true })',
+    'observer.observe(document.getElementsByTagName("ytmusic-app")[0], { subtree: true })',
+    'observer.observe(document.querySelectorAll("ytd-app")[0], { subtree: true })',
+    'observer.observe(document.querySelectorAll("ytmusic-app").item(0), { subtree: true })',
+    'observer.observe(document.getElementsByTagName("body").item(0), { subtree: true })',
+    'observer.observe(document.querySelectorAll("html")[0], { subtree: true })',
+    'const roots = document.getElementsByTagName("ytd-app"); const root = roots[0]; observer.observe(root, { subtree: true })',
   ])("rejects a broad subtree observation through %s", text => {
     hasRule("src/site/core/items.ts", text, "running-cost")
+  })
+
+  test("an indexed app-root observer receives descendant mutations and the guard rejects it", async () => {
+    const app = document.createElement("ytd-app")
+    const container = document.createElement("section")
+    app.append(container)
+    document.body.append(app)
+    const target = document.getElementsByTagName("ytd-app")[0]
+    expect(target).toBe(app)
+    if (!target) throw new Error("The app-root fixture is missing")
+    const records: MutationRecord[] = []
+    let delivered = () => {}
+    const delivery = new Promise<void>(resolve => { delivered = resolve })
+    const observer = new MutationObserver(batch => { records.push(...batch); delivered() })
+    try {
+      observer.observe(target, { childList: true, subtree: true })
+      container.append(document.createElement("button"))
+      await delivery
+      expect(records.map(record => record.target)).toEqual([container])
+      const actual = findings("src/site/core/items.ts", '// synthetic\nobserver.observe(document.getElementsByTagName("ytd-app")[0], { childList: true, subtree: true })')
+      expect(actual.map(finding => [finding.reason, finding.line])).toEqual([["broad-subtree-observer", 2]])
+    } finally {
+      observer.disconnect()
+      app.remove()
+    }
+  })
+
+  test.each([
+    'observer.observe(document.getElementsByTagName("section")[0], { subtree: true })',
+    'observer.observe(document.querySelectorAll("ytd-app section")[0], { subtree: true })',
+    'observer.observe(document.getElementsByTagName("ytd-app")[0], { childList: true })',
+    'const document = { getElementsByTagName() { return [] } }; observer.observe(document.getElementsByTagName("ytd-app")[0], { subtree: true })',
+  ])("permits a bounded or unrelated collection target through %s", text => {
+    expect(findings("src/site/core/items.ts", text)).toEqual([])
   })
 
   test("permits scoped resources, bounded observers, and allowed background listeners", () => {
