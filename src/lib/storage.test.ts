@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { fakeBrowser } from "wxt/testing/fake-browser"
+import { openDB } from "idb"
 import * as store from "@/lib/storage"
 
 const first = { accountKey: "account0000000001", incognito: false }
@@ -54,4 +55,21 @@ describe("account setups", () => {
     expect(await store.requiredWatchPercentage.getValue()).toBe(82)
     expect(await store.theme.getValue()).toBe("dark")
   })
+})
+
+it("removes the retired video history when clearing all data", async () => {
+  const db = await openDB("yt-playlist-tools", 1, { upgrade(db) { db.createObjectStore("cachedVideos") } })
+  await db.put("cachedVideos", { playlistId: "PLold", videoId: "oldvideo001", addedAt: 1 }, "old")
+  db.close()
+  await store.clearAll()
+  expect((await indexedDB.databases()).some(database => database.name === "yt-playlist-tools")).toBe(false)
+})
+
+it("lists saved account caches only for a consenting normal window", async () => {
+  await store.saveAccountSetup(first, { ...store.emptySetup(), playlists: ["PL1"] })
+  await store.cacheAccountPlaylists(first, [{ id: "PL1", title: "Saved playlist" }])
+  expect(await store.getSavedAccounts(false)).toEqual([{ accountKey: first.accountKey, setup: await store.getAccountSetup(first) }])
+  expect(await store.getSavedAccounts(true)).toEqual([])
+  await store.sessionConsent.setValue(-1)
+  expect(await store.getSavedAccounts(false)).toEqual([])
 })

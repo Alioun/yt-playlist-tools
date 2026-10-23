@@ -118,6 +118,8 @@ export const channelLabels = storage.defineItem<Record<string, ChannelLabel>>(
   { fallback: {} }
 )
 
+export const sessionGeneration = storage.defineItem<string>("local:sessionGeneration", { fallback: "" })
+
 export const CONSENT_VERSION = 1
 export const sessionConsent = storage.defineItem<number>("local:sessionConsent", { fallback: 0 })
 export const legacyClaimed = storage.defineItem<boolean>("local:legacyClaimed", { fallback: false })
@@ -149,10 +151,19 @@ export function getAccountSetup(context: AccountContext): Promise<AccountSetup> 
   return accountItem(context.accountKey).getValue()
 }
 
-export async function saveAccountSetup(context: AccountContext, setup: AccountSetup): Promise<void> {
-  if (context.incognito) throw new Error("Account choices cannot be saved in private windows")
-  if (await sessionConsent.getValue() !== CONSENT_VERSION) throw new Error("Access revoked")
-  await accountItem(context.accountKey).setValue(setup)
+const savedAccountKeys = storage.defineItem<string[]>("local:savedAccountKeys", { fallback: [] })
+let saveLane: Promise<unknown> = Promise.resolve()
+
+export function saveAccountSetup(context: AccountContext, setup: AccountSetup): Promise<void> {
+  const work = saveLane.catch(() => {}).then(async () => {
+    if (context.incognito) throw new Error("Account choices cannot be saved in private windows")
+    if (await sessionConsent.getValue() !== CONSENT_VERSION) throw new Error("Access revoked")
+    await accountItem(context.accountKey).setValue(setup)
+    const keys = await savedAccountKeys.getValue()
+    if (!keys.includes(context.accountKey)) await savedAccountKeys.setValue([...keys, context.accountKey])
+  })
+  saveLane = work
+  return work
 }
 
 export async function cacheAccountPlaylists(context: AccountContext, list: CachedPlaylist[]): Promise<void> {
@@ -188,9 +199,34 @@ export const theme = storage.defineItem<Theme>("sync:theme", {
 
 /** Clears everything this extension owns, across every area. */
 export async function clearAll(): Promise<void> {
-  await Promise.all([
-    browser.storage.local.clear(),
-    browser.storage.sync.clear(),
-    browser.storage.session.clear()
-  ])
+  await sessionGeneration.setValue(crypto.randomUUID())
+  await sessionConsent.setValue(-1)
+  const work = saveLane.catch(() => {}).then(async () => {
+    await Promise.all([
+      retireLegacyVideoCache(), browser.storage.local.clear(),
+      browser.storage.sync.clear(), browser.storage.session.clear()
+    ])
+  })
+  saveLane = work
+  return work
+}
+
+export function retireLegacyVideoCache(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.deleteDatabase("yt-playlist-tools")
+    request.onsuccess = () => resolve()
+    request.onerror = () => reject(request.error)
+    request.onblocked = () => reject(new Error("Close other extension pages and try clearing data again."))
+  })
+}
+
+export interface SavedAccount {
+  accountKey: string
+  setup: AccountSetup
+}
+
+export async function getSavedAccounts(incognito: boolean): Promise<SavedAccount[]> {
+  if (incognito || await sessionConsent.getValue() !== CONSENT_VERSION) return []
+  const keys = await savedAccountKeys.getValue()
+  return Promise.all(keys.map(async accountKey => ({ accountKey, setup: await accountItem(accountKey).getValue() })))
 }
