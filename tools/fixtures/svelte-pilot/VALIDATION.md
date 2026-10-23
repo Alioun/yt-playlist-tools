@@ -4,7 +4,8 @@ These results were measured on macOS arm64 from base `54cab5b` on 2026-10-24.
 Bun was 1.4.3, the normal local Node was 25.0.0, and the transient Node was 24.22.1.
 The transient Node archive came from nodejs.org and matched its published SHA-256 checksum.
 The Node 24 run reported `{"node":"24.22.1","bun":null}`.
-No production source file or production WXT config changed in this slice.
+The original pilot did not change production source files or the production WXT config.
+The packaging follow-up below changes the production source ZIP exclusion.
 
 ## Commands and results
 
@@ -80,7 +81,7 @@ Happy-dom results are limited to DOM interaction, injected style presence, and c
 | R30 | No size-budget compliance is claimed for this deliberately self-contained fixture |
 | R83 | Fixture Firefox manifest declares a synthetic ID and no data collection; production manifest assertions pass |
 | R148 and R149 | Release triggers and signing configuration stay unchanged; their existing local case suites pass |
-| REL-STORE-32 | Runtime outputs and Firefox extension ZIP exclude the fixture; AMO source exclusion of `tools/**` needs the production config owner's change |
+| REL-STORE-32 | Runtime outputs, Firefox runtime ZIP, and AMO sources ZIP exclude `tools/fixtures/svelte-pilot/**`; other build tooling remains eligible for source packaging |
 
 The added tests cover only this slice. Model and guard tests from other workers are absent from this base worktree.
 Guard `*.test.ts` files and model `*.test.ts` files are discovered recursively.
@@ -88,3 +89,59 @@ The actual model file, `src/shared/model/model.bun-test.ts`, is also named expli
 A temporary probe with the same suffix proved that an explicit path executes it; the probe was then deleted.
 The parent reported 48 passing model tests from commit `874c85e39b3fb6dd09827b6c1d78a0a8ec5bc21e`; that is parent evidence, not part of the five local pilot tests.
 Independent Sol review and integration verification belong to the parent before landing.
+
+## Source packaging follow-up
+
+The follow-up starts from `17275877fcd94f92306623991e856c2b53366467` on 2026-10-24.
+It uses Bun 1.4.3 and local Node 25.0.0, with Node 24.22.1 for extracted-source builds.
+The Node 24 archive matches the SHA-256 published by nodejs.org.
+
+A fresh ZIP before the exclusion reproduced the source leak.
+The new checker exited 1 with `fixture leaked into yt-playlist-tools-1.5.0-sources.zip: tools/fixtures/svelte-pilot/README.md`.
+The production config now excludes only `tools/fixtures/svelte-pilot/**` through `zip.excludeSources`.
+
+| Exact command | Actual result |
+| --- | --- |
+| `bun install --frozen-lockfile` | Passed without package or lockfile edits |
+| `bun run zip:firefox` | Generated `.output/yt-playlist-tools-1.5.0-firefox.zip` and `.output/yt-playlist-tools-1.5.0-sources.zip` |
+| `node tools/fixtures/svelte-pilot/check-archives.mjs` | Sources ZIP had 202 entries, runtime ZIP had 16 entries; neither included the pilot fixture |
+| `unzip -Z1 .output/yt-playlist-tools-1.5.0-sources.zip` | Exact entry list saved locally at `.output/evidence/sources-entries.txt` |
+| `unzip -Z1 .output/yt-playlist-tools-1.5.0-firefox.zip` | 16 runtime entries, with no pilot or Svelte filenames |
+| `bun run compile` | Exit 0 |
+| `bun run typecheck:pilot` | 0 errors and 0 warnings |
+| `bun test --isolate --conditions=browser ./tests/integration` | 5 passed across 2 files, 14 expectations |
+| `bun run build` | Production Chrome MV3 build passed |
+| `scripts/check-manifests.sh .output/chrome-mv3 .output/firefox-mv3` | Both production manifests passed |
+| `bun --bun run build:pilot` and `bun --bun run build:pilot:firefox` | Both fixture builds passed |
+| `bun run check:pilot` | Archive contents, fixture manifests, injected styles, and production output checks passed |
+
+The standalone checker requires both source and runtime archives and reads their entries with system `unzip -Z1`.
+CI's build job runs it after `zip:firefox`; the pilot job also generates ZIPs before `check:pilot`, which imports the same assertion.
+Synthetic controls passed for a clean archive containing unrelated `tools/required-build-tool.mjs`.
+They exited 1 for a contaminated sources ZIP, missing sources ZIP, missing runtime ZIP, empty output directory, and corrupt ZIP.
+
+To repeat the contamination control, create two synthetic archives and run the checker against their directory.
+The final command must exit 1 and name `tools/fixtures/svelte-pilot/probe.txt`.
+
+```sh
+python3 - <<'PY'
+from pathlib import Path
+from zipfile import ZipFile
+output = Path('.output/archive-negative-control')
+output.mkdir(parents=True, exist_ok=True)
+with ZipFile(output / 'probe-sources.zip', 'w') as archive:
+    archive.writestr('tools/fixtures/svelte-pilot/probe.txt', 'synthetic')
+with ZipFile(output / 'probe-firefox.zip', 'w') as archive:
+    archive.writestr('manifest.json', '{}')
+PY
+node tools/fixtures/svelte-pilot/check-archives.mjs .output/archive-negative-control
+```
+
+The generated sources ZIP was extracted under `.output/evidence/source-rebuild` and had no pilot directory.
+With Node 24.22.1 first on `PATH`, `bun install --frozen-lockfile --cwd .output/evidence/source-rebuild` and `npm --prefix .output/evidence/source-rebuild run build:firefox` passed.
+The extracted build's Firefox manifest also passed `scripts/check-manifests.sh`.
+Restoring the pilot fixture from the pre-exclusion sources ZIP and rebuilding in the same extracted tree produced identical paths and SHA-256 hashes across all 16 runtime files.
+The restored fixture was then removed from the extracted tree.
+This proves that excluding the pilot does not change that extracted-source build.
+It does not establish byte-for-byte reproducibility between the working-tree runtime ZIP and a build from extracted sources.
+The reviewer observed differences between those two build contexts before this fix.

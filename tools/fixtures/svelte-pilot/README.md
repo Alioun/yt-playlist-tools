@@ -71,19 +71,23 @@ python3 -m http.server 41873 --bind 127.0.0.1 --directory tools/fixtures/svelte-
 
 ```sh
 bun run build
-bun run build:firefox
+bun run zip:firefox
 scripts/check-manifests.sh .output/chrome-mv3 .output/firefox-mv3
 bun run check:pilot
 ```
 
 The fixture config has its own source root, entrypoints, and output directory under `tools/`.
 Production WXT still discovers `src/entrypoints` and keeps its React module.
-`check:pilot` requires both fixture and production builds. It checks injected fixture CSS, fixture manifests, and the absence of fixture code and filenames in both production outputs.
+`check:pilot` requires both fixture and production builds and fresh Firefox archives. It checks injected fixture CSS, fixture manifests, and the absence of fixture code and filenames in both production outputs.
 
-The existing Firefox extension ZIP contains no fixture files.
-WXT's separate AMO sources ZIP still includes fixture source under its existing defaults.
-The production config owner can exclude `tools/**` through `zip.excludeSources` when implementing the target source-package rule.
-This pilot does not change production WXT config or the release and signing workflows.
+The production config excludes only `tools/fixtures/svelte-pilot/**` from the AMO sources ZIP through `zip.excludeSources`.
+Other files under `tools/` remain eligible for source packaging.
+Both the Firefox runtime ZIP and AMO sources ZIP exclude the fixture.
+
+Run the archive check separately after `bun run zip:firefox` with `node tools/fixtures/svelte-pilot/check-archives.mjs`.
+The checker uses system `unzip` to inspect archive entries, requires both archive types, and fails for missing, unreadable, or contaminated archives.
+Its optional argument selects an output directory for synthetic archive checks.
+The main CI build job runs it immediately after ZIP generation.
 
 The `svelte-pilot` CI job repeats the fixture builds and Chromium checks with Bun and Node 24.
 It then builds the production extension and checks the boundary.

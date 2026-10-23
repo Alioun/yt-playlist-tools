@@ -50,6 +50,9 @@ jobs:
       - name: Build (Firefox MV3)
         run: bun run zip:firefox
 
+      - name: Assert Firefox archives exclude the pilot fixture
+        run: node tools/fixtures/svelte-pilot/check-archives.mjs
+
       - name: Assert manifests are correct
         run: scripts/check-manifests.sh .output/chrome-mv3 .output/firefox-mv3
 
@@ -137,7 +140,7 @@ jobs:
       - name: Check production excludes the fixture
         run: |
           bun run build
-          bun run build:firefox
+          bun run zip:firefox
           bun run check:pilot
 
   # Firefox drops an unsigned add-on when it restarts, so on dev the Firefox

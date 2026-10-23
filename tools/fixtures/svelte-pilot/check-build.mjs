@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import { readFile, readdir } from "node:fs/promises"
+import "./check-archives.mjs"
 
 const fixtureRoot = new URL("./.output/", import.meta.url)
 const productionRoot = new URL("../../../.output/", import.meta.url)

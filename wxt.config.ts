@@ -5,6 +5,9 @@ import tailwindcss from "@tailwindcss/vite"
 export default defineConfig({
   srcDir: "src",
   imports: false,
+  zip: {
+    excludeSources: ["tools/fixtures/svelte-pilot/**"]
+  },
   // REQUIRED: WXT defaults Firefox to MV2. We ship MV3 on both browsers.
   manifestVersion: 3,
   modules: ["@wxt-dev/module-react", "@wxt-dev/auto-icons"],
