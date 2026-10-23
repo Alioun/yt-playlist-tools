@@ -267,8 +267,7 @@ jobs:
           mkdir checked from-amo
           unzip -q "$(ls dist/*-firefox-beta.zip)" -d checked
           unzip -q "$(ls signed/*.xpi)" -d from-amo
-          hashes() { (cd "$1" && find . -type f ! -path './META-INF/*' -print0 | sort -z | xargs -0 sha256sum); }
-          diff <(hashes checked) <(hashes from-amo)
+          scripts/check-signed-build.sh checked from-amo
           echo "The signed beta holds exactly the checked files."
 
       - name: Attach the signed beta to the pre-release
