@@ -15,3 +15,5 @@ Old 1.x choices remain saved and inactive. Choose playlists for each account man
 The migration deletes OAuth credential keys by name without reading their values. It also removes the retired IndexedDB video history. Clear All Data removes both extension storage and that database.
 
 Chrome 121 or newer and Firefox 140 or newer are required. After signing in or changing accounts, reload YouTube if the popup cannot establish the account.
+
+The [verification record](session-access-verification.md) describes the checks, design decisions, and remaining live-session limits.
