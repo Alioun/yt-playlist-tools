@@ -31,6 +31,7 @@ Some things follow the default branch, so they land on `dev` first:
 ## More
 
 - [Gotchas](gotchas.md): config and build traps
+- [YouTube session access](session-access.md)
 - [How Add to queue works](add-to-queue.md)
 - [Tests and CI](testing-and-ci.md)
 - [Releasing](releasing.md)
