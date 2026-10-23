@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
+import { SharedSettings } from "@/components/SharedSettings"
 import * as store from "@/lib/storage"
-import { isRecord, isSnapshot, sessionMessage, type SessionSnapshot } from "@/lib/session"
+import { isAccountKey, isRecord, isSnapshot, sessionMessage, type SessionSnapshot } from "@/lib/session"
 
 export interface ReadyView {
   kind: "ready"
@@ -11,7 +12,8 @@ export interface ReadyView {
   unclaimed: boolean
 }
 
-type View = ReadyView | { kind: "checking" | "consent" | "revoked" | "signedOut" | "noTab" | "accountChanged" | "unavailable" }
+type View = ReadyView | { kind: "cached"; accounts: store.SavedAccount[] } |
+  { kind: "checking" | "consent" | "revoked" | "signedOut" | "noTab" | "accountChanged" | "unavailable" }
 
 export async function sendSessionMessage(message: Record<string, unknown>): Promise<unknown> {
   const window = await browser.windows.getCurrent()
@@ -30,10 +32,18 @@ function isPlaylistList(value: unknown): value is store.CachedPlaylist[] {
   return Array.isArray(value) && value.every(row => isRecord(row) && typeof row.id === "string" && typeof row.title === "string")
 }
 
+function isSavedAccounts(value: unknown): value is store.SavedAccount[] {
+  return Array.isArray(value) && value.every(account =>
+    isRecord(account) && isAccountKey(account.accountKey) && isSetup(account.setup))
+}
+
 function parseView(value: unknown): View {
   if (!isRecord(value)) return { kind: "unavailable" }
   if (value.kind === "ready" && isSnapshot(value.session) && isPlaylistList(value.playlists) && isSetup(value.setup) && typeof value.unclaimed === "boolean") {
     return { kind: "ready", session: value.session, playlists: value.playlists, setup: value.setup, unclaimed: value.unclaimed }
+  }
+  if (value.kind === "cached" && isSavedAccounts(value.accounts)) {
+    return { kind: "cached", accounts: value.accounts }
   }
   switch (value.kind) {
     case "consent": case "revoked": case "signedOut": case "noTab": case "accountChanged": return { kind: value.kind }
@@ -43,6 +53,7 @@ function parseView(value: unknown): View {
 
 export function SessionAccess({ children }: { children?: (view: ReadyView) => ReactNode }) {
   const [view, setView] = useState<View>({ kind: "checking" })
+  const [consented, setConsented] = useState(false)
   const generation = useRef(0)
   const check = useCallback(async (action = "fetchPlaylists") => {
     const request = ++generation.current
@@ -59,6 +70,7 @@ export function SessionAccess({ children }: { children?: (view: ReadyView) => Re
     let live = true
     const update = (value: number | null) => {
       if (!live) return
+      setConsented(value === store.CONSENT_VERSION)
       if (value === store.CONSENT_VERSION) void check()
       else { generation.current++; setView({ kind: value === -1 ? "revoked" : "consent" }) }
     }
@@ -86,7 +98,7 @@ export function SessionAccess({ children }: { children?: (view: ReadyView) => Re
       ) : view.kind === "checking" ? <p role="status" className="text-sm text-muted-foreground">Checking YouTube session...</p> : (
         <>
           <div className="space-y-2">
-            <p role="status" className="text-sm">{view.kind === "ready" ? "Using the account in your YouTube tab." : sessionMessage(view.kind)}</p>
+            <p role="status" className="text-sm">{view.kind === "ready" ? "Using the account in your YouTube tab." : sessionMessage(view.kind === "cached" ? "noTab" : view.kind)}</p>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="outline" onClick={() => void browser.tabs.create({ url: "https://www.youtube.com/" })}>Open YouTube</Button>
               <Button size="sm" variant="outline" onClick={() => void check()}>Check again</Button>
@@ -94,8 +106,42 @@ export function SessionAccess({ children }: { children?: (view: ReadyView) => Re
             </div>
           </div>
           {view.kind === "ready" && children?.(view)}
+          {view.kind === "cached" && <CachedSetups accounts={view.accounts} />}
         </>
       )}
+      {consented && !needsConsent && <SharedSettings />}
     </div>
+  )
+}
+
+function CachedSetups({ accounts }: { accounts: store.SavedAccount[] }) {
+  return (
+    <section aria-label="Cached playlists" className="space-y-3">
+      <h2 className="text-sm font-semibold">Cached playlists</h2>
+      <p className="text-sm text-muted-foreground">Saved playlist titles and choices. Open YouTube and check again to edit an account setup.</p>
+      {accounts.map(({ accountKey, setup }, index) => (
+        <section key={accountKey} aria-label={`Saved setup ${index + 1}`} className="space-y-2">
+          <h3 className="text-xs font-semibold">Saved setup {index + 1}</h3>
+          {setup.cachedPlaylists.length === 0 ? <p className="text-sm text-muted-foreground">No cached playlist titles.</p> : (
+            <ul className="max-h-[220px] space-y-1 overflow-y-auto">
+              {setup.cachedPlaylists.map(playlist => {
+                const selected = setup.playlists.includes(playlist.id)
+                const shortcut = setup.shortcutPlaylistId === playlist.id
+                return (
+                  <li key={playlist.id} className="space-y-0.5 px-2 py-1.5">
+                    <p className="truncate text-sm" title={playlist.title}>{playlist.title}</p>
+                    <p className="text-xs text-muted-foreground">{[
+                      ...(selected ? ["Auto-add"] : []),
+                      ...(shortcut ? ["Shortcut playlist"] : []),
+                      ...(!selected && !shortcut ? ["Not selected"] : [])
+                    ].join(", ")}</p>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </section>
+      ))}
+    </section>
   )
 }

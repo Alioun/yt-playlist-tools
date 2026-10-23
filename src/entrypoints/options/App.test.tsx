@@ -19,6 +19,7 @@ it("replaces Google authorization controls with session consent and keeps theme 
   expect(screen.queryByText(/Sign in with Google/)).not.toBeInTheDocument()
   expect(screen.getByText("Theme")).toBeInTheDocument()
   expect(screen.getByRole("button", { name: "Clear All Data" })).toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "Record Shortcut" })).not.toBeInTheDocument()
 })
 it("can revoke access without claiming to sign out of YouTube", async () => {
   await store.sessionConsent.setValue(store.CONSENT_VERSION)
@@ -35,4 +36,16 @@ it("keeps Clear All Data reachable before agreement", async () => {
   await userEvent.click(await screen.findByRole("button", { name: "Clear All Data" }))
   await waitFor(async () => expect(await store.playlists.getValue()).toEqual([]))
   expect(await store.theme.getValue()).toBe("system")
+})
+
+it("offers the same shared settings without a live account", async () => {
+  await store.sessionConsent.setValue(store.CONSENT_VERSION)
+  vi.spyOn(fakeBrowser.runtime, "sendMessage").mockImplementation(async () => ({ kind: "noTab" }))
+  render(<ThemeProvider><App /></ThemeProvider>)
+  expect(await screen.findByRole("button", { name: "Record Shortcut" })).toBeEnabled()
+  expect(screen.getByRole("spinbutton", { name: "Required watch percentage" })).toBeEnabled()
+  expect(screen.getByRole("switch", { name: "Toast notifications" })).toBeEnabled()
+  expect(screen.getByRole("switch", { name: "One-click queue button" })).toBeEnabled()
+  expect(screen.getByRole("switch", { name: "Right-click opens video menu" })).toBeEnabled()
+  expect(screen.queryByText("Auto-add playlists")).not.toBeInTheDocument()
 })
