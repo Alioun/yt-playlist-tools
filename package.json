@@ -20,7 +20,7 @@
     "test:coverage": "vitest run --coverage",
     "postinstall": "wxt prepare",
     "test:legacy": "vitest run",
-    "test:bun": "bun test --isolate --conditions=browser ./tests ./src/shared/model ./src/shared/model/model.bun-test.ts",
+    "test:bun": "bun run scripts/run-bun-tests.ts",
     "build:pilot": "wxt build tools/fixtures/svelte-pilot",
     "build:pilot:firefox": "wxt build tools/fixtures/svelte-pilot -b firefox",
     "typecheck:pilot": "node tools/fixtures/svelte-pilot/typecheck.mjs",
