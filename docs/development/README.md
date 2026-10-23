@@ -35,4 +35,4 @@ Some things follow the default branch, so they land on `dev` first:
 - [Tests and CI](testing-and-ci.md)
 - [Releasing](releasing.md)
 - [Environment files](environment-files.md)
-- [Google sign-in and the token broker](../legacy/README.md) (legacy, retiring in 2.0)
+- [Google sign-in and the token broker](../legacy/README.md) (legacy, historical setup for released versions)

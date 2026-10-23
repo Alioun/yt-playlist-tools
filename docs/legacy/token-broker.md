@@ -1,14 +1,16 @@
 # Token broker (1.5.0)
 
-[← Legacy](README.md) · Retiring in 2.0 ([ADR-0001](../adr/0001-youtube-access-through-the-users-session.md))
+[← Legacy](README.md) · Historical setup for released 1.5.0
 
-A single stateless file, [`server/index.ts`](../../server/index.ts). No database. It holds the OAuth client secret for [Sign in with Google](authentication.md).
+Use the [archived source](https://github.com/Alioun/yt-playlist-tools/tree/55af2295b59df5efade2b3ea0680ca92a289e989) for these commands. Current dev builds have no broker.
+
+A single stateless file, [`server/index.ts`](https://github.com/Alioun/yt-playlist-tools/blob/55af2295b59df5efade2b3ea0680ca92a289e989/server/index.ts). No database. It holds the OAuth client secret for [Sign in with Google](authentication.md).
 
 ```bash
 cp server/.env.example server/.env
 ```
 
-Fill in `server/.env` (see the comments in [`server/.env.example`](../../server/.env.example)), then run it with Bun:
+Fill in `server/.env` (see the comments in [`server/.env.example`](https://github.com/Alioun/yt-playlist-tools/blob/55af2295b59df5efade2b3ea0680ca92a289e989/server/.env.example)), then run it with Bun:
 
 ```bash
 bun run server

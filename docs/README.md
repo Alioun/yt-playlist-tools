@@ -16,7 +16,7 @@
   - [Tests and CI](development/testing-and-ci.md)
   - [Releasing](development/releasing.md)
   - [Environment files](development/environment-files.md)
-- [Legacy: Google sign-in and the token broker](legacy/README.md), retiring in 2.0
+- [Legacy: Google sign-in and the token broker](legacy/README.md), historical setup for released versions
   - [Authentication](legacy/authentication.md)
   - [Token broker](legacy/token-broker.md)
 

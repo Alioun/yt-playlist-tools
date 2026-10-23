@@ -32,7 +32,7 @@ This is the access migration for the planned 2.0 rebuild. The additional 2.0 fea
 
 - [Features](docs/features.md): what 1.5.0 does
 - [Development](docs/development/README.md): setup, commands, gotchas, tests and CI, releasing
-- [Legacy sign-in and token broker](docs/legacy/README.md): retiring in 2.0
+- [Legacy sign-in and token broker](docs/legacy/README.md): historical setup for released versions
 - [2.0 planning](docs/rebuild/README.md): the spec, decisions, glossary, research and prototypes
 - [Further reading](docs/further-reading.md): external docs, grouped by topic
 - [All docs](docs/README.md)
