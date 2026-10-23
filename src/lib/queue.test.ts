@@ -3,33 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   CARD_EXCLUDE_SELECTORS,
   CARD_SELECTORS,
-  QUEUE_REQUEST,
-  QUEUE_RESPONSE,
   THUMBNAIL_SELECTORS,
-  addToQueue,
   shouldInjectOnPath,
   injectQueueStyles,
   removeQueueStyles
 } from "@/lib/queue"
-
-/** Stands in for the MAIN-world bridge. */
-function fakeBridge(reply: (videoId: string) => boolean | null) {
-  const seen: Array<{ videoId: string; token: string }> = []
-  const handler = (event: Event) => {
-    const detail = (event as CustomEvent).detail
-    seen.push(detail)
-    const ok = reply(detail.videoId)
-    if (ok === null) return // simulate a bridge that never answers
-    document.dispatchEvent(
-      new CustomEvent(QUEUE_RESPONSE, { detail: { token: detail.token, ok } })
-    )
-  }
-  document.addEventListener(QUEUE_REQUEST, handler)
-  return {
-    seen,
-    stop: () => document.removeEventListener(QUEUE_REQUEST, handler)
-  }
-}
 
 beforeEach(() => {
   document.head.innerHTML = ""
@@ -39,86 +17,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers()
   vi.restoreAllMocks()
-})
-
-describe("addToQueue", () => {
-  it("sends the video id to the bridge and resolves its answer", async () => {
-    const bridge = fakeBridge(() => true)
-    try {
-      await expect(addToQueue("abc123")).resolves.toBe(true)
-      expect(bridge.seen[0]!.videoId).toBe("abc123")
-    } finally {
-      bridge.stop()
-    }
-  })
-
-  it("resolves false when the bridge reports failure", async () => {
-    const bridge = fakeBridge(() => false)
-    try {
-      await expect(addToQueue("abc123")).resolves.toBe(false)
-    } finally {
-      bridge.stop()
-    }
-  })
-
-  it("ignores a reply carrying a different token", async () => {
-    // The bridge is shared across every button on the page, so replies must be
-    // correlated -- otherwise one click resolves another click's promise.
-    const handler = (event: Event) => {
-      const { token } = (event as CustomEvent).detail
-      document.dispatchEvent(
-        new CustomEvent(QUEUE_RESPONSE, { detail: { token: "someone-else", ok: true } })
-      )
-      // Then the real one.
-      document.dispatchEvent(
-        new CustomEvent(QUEUE_RESPONSE, { detail: { token, ok: false } })
-      )
-    }
-    document.addEventListener(QUEUE_REQUEST, handler)
-    try {
-      await expect(addToQueue("abc123")).resolves.toBe(false)
-    } finally {
-      document.removeEventListener(QUEUE_REQUEST, handler)
-    }
-  })
-
-  it("gives each request a distinct token", async () => {
-    const bridge = fakeBridge(() => true)
-    try {
-      await Promise.all([addToQueue("a"), addToQueue("b")])
-      expect(bridge.seen).toHaveLength(2)
-      expect(bridge.seen[0]!.token).not.toBe(bridge.seen[1]!.token)
-    } finally {
-      bridge.stop()
-    }
-  })
-
-  it("resolves false rather than hanging when the bridge never answers", async () => {
-    vi.useFakeTimers()
-    const bridge = fakeBridge(() => null)
-    try {
-      const promise = addToQueue("abc123")
-      await vi.advanceTimersByTimeAsync(2500)
-      await expect(promise).resolves.toBe(false)
-    } finally {
-      bridge.stop()
-    }
-  })
-
-  it("stops listening once settled", async () => {
-    const bridge = fakeBridge(() => true)
-    try {
-      await addToQueue("abc123")
-      const before = document.querySelectorAll("*").length
-      // A stray late reply must not throw or resurrect anything.
-      document.dispatchEvent(
-        new CustomEvent(QUEUE_RESPONSE, { detail: { token: "stale", ok: true } })
-      )
-      expect(document.querySelectorAll("*").length).toBe(before)
-    } finally {
-      bridge.stop()
-    }
-  })
 })
 
 describe("styles", () => {

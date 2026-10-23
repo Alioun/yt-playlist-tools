@@ -1,15 +1,4 @@
 /**
- * Isolated-world client for the MAIN-world queue bridge, plus the YouTube
- * selectors the button injector needs.
- */
-
-export const QUEUE_REQUEST = "ytpt:add-to-queue"
-export const QUEUE_RESPONSE = "ytpt:add-to-queue:done"
-
-/** Give up rather than leaving the button spinning forever. */
-const TIMEOUT_MS = 2000
-
-/**
  * Card elements that should get a button.
  *
  * `yt-lockup-view-model` is the newer component YouTube moved search results
@@ -55,58 +44,6 @@ export const THUMBNAIL_SELECTORS = [
   "ytd-thumbnail",
   "a#thumbnail"
 ]
-
-/**
- * Firefox isolated worlds cannot hand a plain object to page scripts; the
- * detail has to be structured-cloned into the page's compartment first. Chrome
- * has no `cloneInto` and needs no equivalent.
- */
-declare const cloneInto: (<T>(value: T, scope: Window) => T) | undefined
-
-function toPageDetail<T>(detail: T): T {
-  return typeof cloneInto === "function" ? cloneInto(detail, window) : detail
-}
-
-let counter = 0
-
-/**
- * Asks the MAIN-world bridge to queue a video. Resolves false on failure or
- * timeout rather than throwing, so the caller can just show a failed state.
- */
-export function addToQueue(videoId: string): Promise<boolean> {
-  const token = `${Date.now()}-${counter++}`
-
-  return new Promise<boolean>((resolve) => {
-    let settled = false
-
-    const finish = (ok: boolean) => {
-      if (settled) return
-      settled = true
-      document.removeEventListener(QUEUE_RESPONSE, onDone)
-      clearTimeout(timer)
-      resolve(ok)
-    }
-
-    const onDone = (event: Event) => {
-      const detail = (event as CustomEvent).detail as {
-        token?: string
-        ok?: boolean
-      }
-      // The bridge is shared, so ignore replies meant for another click.
-      if (detail?.token !== token) return
-      finish(Boolean(detail.ok))
-    }
-
-    const timer = setTimeout(() => finish(false), TIMEOUT_MS)
-    document.addEventListener(QUEUE_RESPONSE, onDone)
-
-    document.dispatchEvent(
-      new CustomEvent(QUEUE_REQUEST, {
-        detail: toPageDetail({ videoId, token })
-      })
-    )
-  })
-}
 
 /**
  * Styles for the injected button. These live in the page, not the shadow root,

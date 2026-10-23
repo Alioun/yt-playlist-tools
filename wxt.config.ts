@@ -26,14 +26,6 @@ export default defineConfig({
     description: "Add current YouTube video to specified playlists.",
     permissions: ["storage", "scripting"],
     ...(browser === "chrome" && { minimum_chrome_version: "121" }),
-    // The MAIN-world queue bridge is injected as a page script, so it has to
-    // be fetchable from youtube.com. See src/entrypoints/yt-queue-bridge.ts.
-    web_accessible_resources: [
-      {
-        resources: ["yt-queue-bridge.js"],
-        matches: ["*://*.youtube.com/*"]
-      }
-    ],
     host_permissions: [
       "https://www.youtube.com/*"
     ],
