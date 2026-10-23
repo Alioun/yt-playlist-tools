@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite"
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   srcDir: "src",
+  imports: false,
   // REQUIRED: WXT defaults Firefox to MV2. We ship MV3 on both browsers.
   manifestVersion: 3,
   modules: ["@wxt-dev/module-react", "@wxt-dev/auto-icons"],
