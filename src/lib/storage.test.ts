@@ -3,9 +3,12 @@ import { fakeBrowser } from "wxt/testing/fake-browser"
 import { openDB } from "idb"
 import * as store from "@/lib/storage"
 
-const first = { accountKey: "account0000000001", incognito: false }
-const second = { accountKey: "account0000000002", incognito: false }
-beforeEach(async () => { await store.sessionConsent.setValue(store.CONSENT_VERSION) })
+const first = { accountKey: "account0000000001", incognito: false, consentGeneration: "generation-1" }
+const second = { accountKey: "account0000000002", incognito: false, consentGeneration: "generation-1" }
+beforeEach(async () => {
+  await store.sessionGeneration.setValue("generation-1")
+  await store.sessionConsent.setValue(store.CONSENT_VERSION)
+})
 
 describe("account setups", () => {
   it("separates each account's selections, shortcut and filters", async () => {
@@ -72,4 +75,10 @@ it("lists saved account caches only for a consenting normal window", async () =>
   expect(await store.getSavedAccounts(true)).toEqual([])
   await store.sessionConsent.setValue(-1)
   expect(await store.getSavedAccounts(false)).toEqual([])
+})
+
+it("refuses an old generation after revoke and regrant", async () => {
+  await store.sessionGeneration.setValue("generation-2")
+  await expect(store.saveAccountSetup(first, { ...store.emptySetup(), playlists: ["PLold"] })).rejects.toThrow(/revoked/)
+  expect(await store.getAccountSetup(first)).toEqual(store.emptySetup())
 })

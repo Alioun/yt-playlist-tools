@@ -129,6 +129,10 @@ export interface AccountContext {
   incognito: boolean
 }
 
+export interface WriteAccountContext extends AccountContext {
+  consentGeneration: string
+}
+
 export interface AccountSetup {
   playlists: string[]
   shortcutPlaylistId: string
@@ -154,10 +158,10 @@ export function getAccountSetup(context: AccountContext): Promise<AccountSetup> 
 const savedAccountKeys = storage.defineItem<string[]>("local:savedAccountKeys", { fallback: [] })
 let saveLane: Promise<unknown> = Promise.resolve()
 
-export function saveAccountSetup(context: AccountContext, setup: AccountSetup): Promise<void> {
+export function saveAccountSetup(context: WriteAccountContext, setup: AccountSetup): Promise<void> {
   const work = saveLane.catch(() => {}).then(async () => {
     if (context.incognito) throw new Error("Account choices cannot be saved in private windows")
-    if (await sessionConsent.getValue() !== CONSENT_VERSION) throw new Error("Access revoked")
+    if (await sessionConsent.getValue() !== CONSENT_VERSION || await sessionGeneration.getValue() !== context.consentGeneration) throw new Error("Access revoked")
     await accountItem(context.accountKey).setValue(setup)
     const keys = await savedAccountKeys.getValue()
     if (!keys.includes(context.accountKey)) await savedAccountKeys.setValue([...keys, context.accountKey])
@@ -166,7 +170,7 @@ export function saveAccountSetup(context: AccountContext, setup: AccountSetup): 
   return work
 }
 
-export async function cacheAccountPlaylists(context: AccountContext, list: CachedPlaylist[]): Promise<void> {
+export async function cacheAccountPlaylists(context: WriteAccountContext, list: CachedPlaylist[]): Promise<void> {
   if (context.incognito) return
   const setup = await getAccountSetup(context)
   if (!setup.playlists.length && !setup.shortcutPlaylistId && !Object.keys(setup.filters).length) return
