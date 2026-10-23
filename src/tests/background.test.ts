@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { fakeBrowser } from "wxt/testing/fake-browser"
 import background from "@/entrypoints/background"
 import * as store from "@/lib/storage"
@@ -6,7 +6,7 @@ import * as youtube from "@/lib/youtube"
 import * as sessionService from "@/lib/session"
 
 vi.mock("@/lib/youtube", () => ({ fetchUserPlaylists: vi.fn(), addVideoToPlaylist: vi.fn(), fetchVideoChannel: vi.fn(), fetchChannel: vi.fn() }))
-vi.mock("@/lib/session", async original => ({ ...await original<typeof import("@/lib/session")>(), findSession: vi.fn(), checkSession: vi.fn(), reconcileScripts: vi.fn(async () => {}) }))
+vi.mock("@/lib/session", async original => ({ ...await original<typeof import("@/lib/session")>(), findSession: vi.fn(), checkSession: vi.fn() }))
 
 type Listener = Parameters<typeof fakeBrowser.runtime.onMessage.addListener>[0]
 type Sender = Parameters<Listener>[1]
@@ -35,6 +35,11 @@ beforeEach(async () => {
   origin = { id: fakeBrowser.runtime.id, url: tab.url, frameId: 0, tab: { ...tab, id: 42, incognito: false } }
   ui = { id: fakeBrowser.runtime.id, url: fakeBrowser.runtime.getURL("/popup.html") }
   vi.spyOn(fakeBrowser.runtime.onMessage, "addListener").mockImplementation(fn => { listener = fn })
+  vi.spyOn(sessionService, "reconcileScripts")
+  vi.spyOn(fakeBrowser.scripting, "getRegisteredContentScripts").mockImplementation(async () => [])
+  vi.spyOn(fakeBrowser.scripting, "registerContentScripts").mockResolvedValue()
+  vi.spyOn(fakeBrowser.scripting, "unregisterContentScripts").mockResolvedValue()
+  vi.spyOn(fakeBrowser.tabs, "query").mockImplementation(async () => [])
   vi.spyOn(fakeBrowser.tabs, "sendMessage").mockImplementation(async () => (undefined))
   vi.mocked(sessionService.findSession).mockImplementation(async () => ({
     kind: "ready", session: { ...snapshot, consentGeneration: await store.sessionGeneration.getValue() }
@@ -45,7 +50,10 @@ beforeEach(async () => {
   vi.mocked(youtube.fetchVideoChannel).mockImplementation(async () => (null))
   await store.saveAccountSetup(snapshot, { ...store.emptySetup(), playlists: ["PL1"], shortcutPlaylistId: "WL" })
   background.main()
+  await sessionService.reconcileScripts()
 })
+
+afterEach(() => vi.useRealTimers())
 
 describe("trusted message boundary", () => {
   it("refuses page callers that ask for extension-page data", async () => {
@@ -156,6 +164,24 @@ describe("generation-bound messages and queues", () => {
     expect(inject).toHaveBeenCalledOnce()
   })
 
+  it("does not renew a queue job's lifetime while its consent check is pending", async () => {
+    vi.useFakeTimers()
+    const started = Date.now()
+    const getGeneration = store.sessionGeneration.getValue.bind(store.sessionGeneration)
+    let release = () => {}
+    const read = vi.spyOn(store.sessionGeneration, "getValue")
+      .mockImplementationOnce(getGeneration)
+      .mockImplementationOnce(() => new Promise(resolve => { release = () => resolve(snapshot.consentGeneration) }))
+    const inject = vi.spyOn(fakeBrowser.scripting, "executeScript").mockImplementation(async () => [{ frameId: 0, result: false }])
+    const pending = send({ action: "queueVideo", videoId, consentGeneration: snapshot.consentGeneration })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(read).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(10001)
+    release()
+    await expect(pending).resolves.toEqual({ ok: false })
+    expect(inject).toHaveBeenCalledWith(expect.objectContaining({ args: [videoId, snapshot.consentGeneration, started + 10000] }))
+  })
+
   it("rejects queued adds and setup changes captured before revoke and regrant", async () => {
     let release: (result: { alreadyIn: boolean }) => void = () => {}
     vi.mocked(youtube.addVideoToPlaylist).mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
@@ -264,6 +290,65 @@ describe("read-only saved-account view", () => {
 })
 
 describe("background-owned data clearing", () => {
+  it("clears data and permits later transitions after frozen-tab invalidations never settle", async () => {
+    vi.useFakeTimers()
+    if (!origin.tab) throw new Error("Serving tab missing")
+    const servingTab = origin.tab
+    vi.mocked(fakeBrowser.tabs.query).mockImplementation(async () => [{ ...servingTab, frozen: true }])
+    vi.spyOn(fakeBrowser.scripting, "executeScript").mockImplementation(details => {
+      if (details.func === sessionService.setPageAccess && "args" in details && details.args?.[0] === false) return new Promise(() => {})
+      return Promise.resolve([])
+    })
+    vi.mocked(sessionService.findSession).mockResolvedValue({ kind: "noTab" })
+    const clearLocal = vi.spyOn(fakeBrowser.storage.local, "clear")
+    let finished = false
+    const clearing = send({ action: "clearAllData" }, ui).then(reply => { finished = true; return reply })
+    const granting = send({ action: "grantSession" }, ui)
+    await vi.advanceTimersByTimeAsync(9999)
+    expect(finished).toBe(false)
+    expect(clearLocal).not.toHaveBeenCalled()
+    expect(await store.sessionConsent.getValue()).toBe(-1)
+    await vi.advanceTimersByTimeAsync(4002)
+    expect(finished).toBe(true)
+    await expect(clearing).resolves.toEqual({ ok: true })
+    await expect(granting).resolves.toEqual({ kind: "noTab" })
+    expect(await fakeBrowser.storage.local.get([`account:${snapshot.accountKey}`, "savedAccountKeys"])).toEqual({})
+    expect(await store.sessionConsent.getValue()).toBe(store.CONSENT_VERSION)
+    const revoke = send({ action: "revokeSession" }, ui)
+    await vi.advanceTimersByTimeAsync(14001)
+    await expect(revoke).resolves.toEqual({ kind: "revoked" })
+    await expect(send({ action: "grantSession" }, ui)).resolves.toEqual({ kind: "noTab" })
+  })
+
+  it("waits for sibling deletions before reporting a failure or allowing a new grant", async () => {
+    const clearLocal = fakeBrowser.storage.local.clear.bind(fakeBrowser.storage.local)
+    let release = () => {}
+    const held = new Promise<void>(resolve => { release = resolve })
+    vi.spyOn(fakeBrowser.storage.local, "clear").mockImplementationOnce(async () => {
+      await held
+      await clearLocal()
+    })
+    const clearSync = vi.spyOn(fakeBrowser.storage.sync, "clear").mockRejectedValueOnce(new Error("Synthetic deletion failure"))
+    vi.mocked(sessionService.findSession).mockResolvedValue({ kind: "noTab" })
+    let finished = false
+    const clearing = send({ action: "clearAllData" }, ui).then(reply => { finished = true; return reply })
+    await vi.waitFor(() => expect(clearSync).toHaveBeenCalledOnce())
+    const granting = send({ action: "grantSession" }, ui)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 0))
+      expect(finished).toBe(false)
+      expect(await store.sessionConsent.getValue()).toBe(-1)
+    } finally {
+      release()
+      await clearing
+      await granting
+    }
+    await expect(clearing).resolves.toMatchObject({ kind: "unavailable" })
+    await expect(granting).resolves.toEqual({ kind: "noTab" })
+    expect(await store.sessionConsent.getValue()).toBe(store.CONSENT_VERSION)
+    expect(await store.sessionGeneration.getValue()).toMatch(/^[0-9a-f-]{36}$/)
+  })
+
   it.each(["/popup.html", "/options.html"])("allows %s to erase data before consent", async page => {
     await store.sessionConsent.setValue(0)
     await store.theme.setValue("dark")

@@ -204,10 +204,12 @@ export const theme = storage.defineItem<Theme>("sync:theme", {
 /** Background only. Revoke access and reconcile scripts before draining and deleting. */
 export async function clearAll(): Promise<void> {
   const work = saveLane.catch(() => {}).then(async () => {
-    await Promise.all([
+    const deletions = await Promise.allSettled([
       retireLegacyVideoCache(), browser.storage.local.clear(),
       browser.storage.sync.clear(), browser.storage.session.clear()
     ])
+    const failed = deletions.find(result => result.status === "rejected")
+    if (failed?.status === "rejected") throw failed.reason
   })
   saveLane = work
   return work

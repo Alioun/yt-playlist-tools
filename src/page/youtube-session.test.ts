@@ -88,6 +88,61 @@ afterEach(() => {
 })
 
 describe("revoked access", () => {
+  it.each(["signed request", "page command"])("expires a pending %s write before retirement and ignores late access injections after regrant", async route => {
+    vi.useFakeTimers()
+    await store.sessionGeneration.setValue(generation)
+    await store.sessionConsent.setValue(store.CONSENT_VERSION)
+    const tab = await fakeBrowser.tabs.create({ url: "https://www.youtube.com/", active: false })
+    vi.spyOn(fakeBrowser.tabs, "query").mockImplementation(async () => [{ ...tab, frozen: true }])
+    vi.spyOn(fakeBrowser.scripting, "getRegisteredContentScripts").mockImplementation(async () => [{ id: "ytpt-youtube" }])
+    vi.spyOn(fakeBrowser.scripting, "unregisterContentScripts").mockResolvedValue()
+    const delayed: (() => void)[] = []
+    let delayInjections = true
+    vi.spyOn(fakeBrowser.scripting, "executeScript").mockImplementation(details => {
+      if (details.func !== setPageAccess || !("args" in details) || !Array.isArray(details.args)) throw new Error("Unexpected page invocation")
+      const [enabled, token, expiresAt] = details.args
+      if (typeof enabled !== "boolean" || typeof token !== "string" || typeof expiresAt !== "number") throw new Error("Invalid access marker")
+      const invoke = () => setPageAccess(enabled, token, expiresAt)
+      if (!delayInjections) { invoke(); return Promise.resolve([]) }
+      return new Promise(resolve => { delayed.push(() => { invoke(); resolve([]) }) })
+    })
+    let release = (_response: Response) => {}
+    network.mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
+    const command = vi.fn()
+    if (route === "page command") setResolver(command)
+    const pending = runPageJob(addJob)
+    await flush()
+    const queued = runPageJob(addJob)
+    const oldGrant = expect(reconcileScripts()).rejects.toMatchObject({ code: "unavailable" })
+    await vi.advanceTimersByTimeAsync(2001)
+    await oldGrant
+    await store.sessionGeneration.setValue("generation-revoked")
+    await store.sessionConsent.setValue(-1)
+    let retired = false
+    const revoke = reconcileScripts().then(() => { retired = true })
+    await vi.advanceTimersByTimeAsync(9999)
+    expect(retired).toBe(false)
+    expect(network).toHaveBeenCalledTimes(1)
+    expect(command).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(2)
+    expect(retired).toBe(true)
+    await revoke
+    await store.sessionGeneration.setValue("generation-after-regrant")
+    await store.sessionConsent.setValue(store.CONSENT_VERSION)
+    delayInjections = false
+    await reconcileScripts()
+    expect(delayed).toHaveLength(2)
+    for (const invoke of delayed) invoke()
+    expect(Reflect.get(window, "__ytptSessionGeneration")).toBe("generation-after-regrant")
+    expect(Reflect.get(window, "__ytptSessionAccess")).toBe(true)
+    release(answer(membership()))
+    expect(await pending).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(await queued).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(await runPageJob({ kind: "account" }, "generation-after-regrant")).toEqual({ kind: "account", signedIn: true, accountKey: key })
+    expect(network).toHaveBeenCalledTimes(1)
+    expect(command).not.toHaveBeenCalled()
+  })
+
   it.each(["signed request", "page command"])("does not revive a %s write when the page misses the disabled interval", async (route) => {
     let release: (response: Response) => void = () => {}
     network.mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
@@ -95,7 +150,7 @@ describe("revoked access", () => {
     if (route === "page command") setResolver(command)
     const pending = runPageJob(addJob)
     await flush()
-    setPageAccess(true, "generation-after-regrant")
+    setPageAccess(true, "generation-after-regrant", Date.now() + 2000)
     release(answer(membership()))
     expect(await pending).toMatchObject({ kind: "error", code: "unavailable" })
     expect(network).toHaveBeenCalledTimes(1)
@@ -108,7 +163,7 @@ describe("revoked access", () => {
     const blocking = runPageJob({ kind: "playlists", accountKey: key })
     await flush()
     const queued = runPageJob(addJob)
-    setPageAccess(true, "generation-after-regrant")
+    setPageAccess(true, "generation-after-regrant", Date.now() + 2000)
     release(answer({ ...identity(), contents: [] }))
     expect(await blocking).toMatchObject({ kind: "error", code: "unavailable" })
     expect(await queued).toMatchObject({ kind: "error", code: "unavailable" })
@@ -125,9 +180,9 @@ describe("revoked access", () => {
     vi.spyOn(fakeBrowser.scripting, "getRegisteredContentScripts").mockImplementation(async () => [])
     const injection = vi.spyOn(fakeBrowser.scripting, "executeScript").mockImplementation(async details => {
       if (details.func !== setPageAccess || !("args" in details) || !Array.isArray(details.args)) throw new Error("Unexpected page invocation")
-      const [enabled, token] = details.args
-      if (typeof enabled !== "boolean" || typeof token !== "string") throw new Error("Invalid access marker")
-      setPageAccess(enabled, token)
+      const [enabled, token, expiresAt] = details.args
+      if (typeof enabled !== "boolean" || typeof token !== "string" || typeof expiresAt !== "number") throw new Error("Invalid access marker")
+      setPageAccess(enabled, token, expiresAt)
       return []
     })
     let release: (response: Response) => void = () => {}
@@ -140,7 +195,7 @@ describe("revoked access", () => {
     await store.sessionConsent.setValue(-1)
     await reconcileScripts()
     expect(injection).toHaveBeenCalledWith(expect.objectContaining({
-      target: { tabId: tab.id }, world: "MAIN", func: setPageAccess, args: [false, "generation-revoked"]
+      target: { tabId: tab.id }, world: "MAIN", func: setPageAccess, args: [false, "generation-revoked", expect.any(Number)]
     }))
     release(answer(membership()))
     expect(await pending).toMatchObject({ kind: "error", code: "unavailable" })

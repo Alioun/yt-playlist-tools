@@ -106,6 +106,66 @@ describe("bound writes", () => {
 })
 
 describe("runtime registration", () => {
+  it.each(["lookup", "registration", "tabs", "access", "liveness", "content"])("bounds a stalled %s call and permits the next reconciliation", async stalled => {
+    vi.useFakeTimers()
+    const target = await tab(1)
+    const query = vi.spyOn(fakeBrowser.tabs, "query").mockImplementation(async () => [target])
+    const register = vi.spyOn(fakeBrowser.scripting, "registerContentScripts").mockResolvedValue()
+    const inject = vi.spyOn(fakeBrowser.scripting, "executeScript").mockImplementation(async () => [])
+    const never = () => new Promise<never>(() => {})
+    switch (stalled) {
+      case "lookup": vi.mocked(fakeBrowser.scripting.getRegisteredContentScripts).mockImplementationOnce(never); break
+      case "registration": register.mockImplementationOnce(never); break
+      case "tabs": query.mockImplementationOnce(never); break
+      case "access": inject.mockImplementationOnce(never); break
+      case "liveness": vi.mocked(fakeBrowser.tabs.sendMessage).mockImplementationOnce(never); break
+      case "content": inject.mockImplementationOnce(async () => []).mockImplementationOnce(never); break
+    }
+    const failure = expect(reconcileScripts()).rejects.toMatchObject({ code: "unavailable" })
+    await vi.advanceTimersByTimeAsync(2001)
+    await failure
+    await expect(reconcileScripts()).resolves.toBeUndefined()
+  })
+
+  it("retires old page jobs and releases registration when a frozen-tab invalidation never settles", async () => {
+    vi.useFakeTimers()
+    await store.sessionConsent.setValue(-1)
+    vi.spyOn(fakeBrowser.tabs, "query").mockImplementation(async () => [await tab(1, { frozen: true })])
+    let release = () => {}
+    vi.spyOn(fakeBrowser.scripting, "executeScript").mockImplementationOnce(() => new Promise(resolve => {
+      release = () => resolve([])
+    }))
+    let finished = false
+    const pending = reconcileScripts().then(() => { finished = true })
+    try {
+      await vi.advanceTimersByTimeAsync(10001)
+      expect(finished).toBe(true)
+    } finally {
+      release()
+      await pending
+    }
+  })
+
+  it("waits for retirement when a marker acknowledges after the reconciliation deadline", async () => {
+    vi.useFakeTimers()
+    await store.sessionGeneration.setValue("generation-late-ack")
+    await store.sessionConsent.setValue(-1)
+    vi.spyOn(fakeBrowser.tabs, "query").mockImplementation(async () => [await tab(1)])
+    vi.spyOn(fakeBrowser.scripting, "executeScript").mockImplementation(async () => {
+      vi.setSystemTime(Date.now() + 2001)
+      return []
+    })
+    let finished = false
+    const pending = reconcileScripts().then(() => { finished = true })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(finished).toBe(false)
+    await vi.advanceTimersByTimeAsync(7998)
+    expect(finished).toBe(false)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(finished).toBe(true)
+    await pending
+  })
+
   it("registers idempotently and injects only after agreement", async () => {
     const target = await tab(1)
     vi.spyOn(fakeBrowser.tabs, "query").mockImplementation(async () => [target])
@@ -128,7 +188,23 @@ describe("runtime registration", () => {
     await reconcileScripts()
     expect(unregister).toHaveBeenCalledWith({ ids: ["ytpt-youtube"] })
     expect(inject).toHaveBeenCalledOnce()
-    expect(inject).toHaveBeenCalledWith(expect.objectContaining({ world: "MAIN", args: [false, "generation-1"] }))
+    expect(inject).toHaveBeenCalledWith(expect.objectContaining({ world: "MAIN", args: [false, "generation-1", expect.any(Number)] }))
+  })
+
+  it("ignores access markers delivered after their deadline, including after a later grant", () => {
+    vi.useFakeTimers()
+    const expiresAt = Date.now() + 2000
+    vi.advanceTimersByTime(2000)
+    setPageAccess(true, "new-generation", Date.now() + 2000)
+    setPageAccess(true, "old-generation", expiresAt)
+    setPageAccess(false, "revoked-generation", expiresAt)
+    try {
+      expect(Reflect.get(window, "__ytptSessionAccess")).toBe(true)
+      expect(Reflect.get(window, "__ytptSessionGeneration")).toBe("new-generation")
+    } finally {
+      Reflect.deleteProperty(window, "__ytptSessionAccess")
+      Reflect.deleteProperty(window, "__ytptSessionGeneration")
+    }
   })
 })
 
@@ -147,7 +223,7 @@ it("allows page replies inside the page's deadline plus injection overhead", asy
 })
 
 it("does no queue work after the page access flag is revoked", async () => {
-  setPageAccess(false, session.consentGeneration)
+  setPageAccess(false, session.consentGeneration, Date.now() + 2000)
   const read = vi.spyOn(document, "querySelector")
   try {
     await expect(queueInPage("abcdefghijk", session.consentGeneration, Date.now() + 10000)).resolves.toBe(false)
@@ -168,6 +244,18 @@ it("does not dispatch an add that expires while its account check is pending", a
   await vi.advanceTimersByTimeAsync(1501)
   await assertion
   expect(inject).toHaveBeenCalledOnce()
+})
+
+it("caps an externally supplied job deadline at the maximum page lifetime", async () => {
+  vi.useFakeTimers()
+  const started = Date.now()
+  vi.spyOn(fakeBrowser.tabs, "get").mockImplementation(async () => await tab(1))
+  const inject = vi.spyOn(fakeBrowser.scripting, "executeScript")
+    .mockImplementationOnce(async () => [{ frameId: 0, result: { kind: "account", signedIn: true, accountKey } }])
+    .mockImplementationOnce(async () => [{ frameId: 0, result: { kind: "add", accountKey, alreadyIn: false } }])
+  const job = { kind: "add", accountKey, playlistId: "WL", videoId: "abcdefghijk" } as const
+  await runSessionJob(session, job, started + 60000)
+  expect(inject).toHaveBeenLastCalledWith(expect.objectContaining({ args: [job, session.consentGeneration, started + 10000] }))
 })
 
 describe("consent generation boundaries", () => {
@@ -233,11 +321,11 @@ describe("consent generation boundaries", () => {
     await store.sessionGeneration.setValue("generation-after-regrant")
     await reconcileScripts()
     expect(inject).toHaveBeenCalledOnce()
-    expect(inject).toHaveBeenCalledWith(expect.objectContaining({ func: setPageAccess, args: [true, "generation-after-regrant"] }))
+    expect(inject).toHaveBeenCalledWith(expect.objectContaining({ func: setPageAccess, args: [true, "generation-after-regrant", expect.any(Number)] }))
   })
 
   it("rejects queue work from a previous generation even after access is enabled", async () => {
-    setPageAccess(true, "generation-after-regrant")
+    setPageAccess(true, "generation-after-regrant", Date.now() + 2000)
     const read = vi.spyOn(document, "querySelector")
     try {
       await expect(queueInPage("abcdefghijk", session.consentGeneration, Date.now() + 10000)).resolves.toBe(false)

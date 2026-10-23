@@ -4,6 +4,8 @@ import * as store from "@/lib/storage"
 
 export type { SessionSnapshot } from "@/lib/session-types"
 
+export const PAGE_JOB_LIFETIME_MS = 10000
+
 export type SessionState =
   | { kind: "consent" | "revoked" | "noTab" | "signedOut" | "unavailable" | "accountChanged" }
   | { kind: "ready"; session: SessionSnapshot }
@@ -91,7 +93,7 @@ async function bounded<T>(work: Promise<T>, timeoutMs: number, code: string): Pr
   }
 }
 
-async function execute(tabId: number, job: PageJob, consentGeneration: string, timeoutMs = 12000, expiresAt = Date.now() + 10000): Promise<PageReply> {
+async function execute(tabId: number, job: PageJob, consentGeneration: string, timeoutMs = 12000, expiresAt = Date.now() + PAGE_JOB_LIFETIME_MS): Promise<PageReply> {
   await requireConsent(consentGeneration)
   if (Date.now() >= expiresAt) throw new SessionFailure("unavailable")
   try {
@@ -155,13 +157,14 @@ export async function checkSession(session: SessionSnapshot): Promise<void> {
 }
 
 export async function runSessionJob(session: SessionSnapshot, job: Exclude<PageJob, { kind: "account" }>, expiresAt?: number): Promise<PageReply> {
-  const deadline = expiresAt ?? Date.now() + 10000
+  const deadline = Math.min(expiresAt ?? Infinity, Date.now() + PAGE_JOB_LIFETIME_MS)
   await checkSession(session)
   if ("accountKey" in job && job.accountKey !== session.accountKey) throw new SessionFailure("accountChanged")
   return execute(session.tabId, job, session.consentGeneration, 12000, deadline)
 }
 
-export function setPageAccess(enabled: boolean, consentGeneration: string): void {
+export function setPageAccess(enabled: boolean, consentGeneration: string, expiresAt: number): void {
+  if (Date.now() >= expiresAt) return
   Object.defineProperty(window, "__ytptSessionGeneration", { value: consentGeneration, writable: true, configurable: true })
   Object.defineProperty(window, "__ytptSessionAccess", { value: enabled, writable: true, configurable: true })
 }
@@ -169,50 +172,68 @@ export function setPageAccess(enabled: boolean, consentGeneration: string): void
 const SCRIPT_ID = "ytpt-youtube"
 const CONTENT_FILE = "/content-scripts/youtube.js"
 let registration: Promise<void> = Promise.resolve()
+let retirement: { consentGeneration: string; expiresAt: number } | undefined
 
 export function reconcileScripts(): Promise<void> {
   registration = registration.catch(() => {}).then(async () => {
     const consent = await store.sessionConsent.getValue()
     const consentGeneration = await store.sessionGeneration.getValue()
-    const registered = await browser.scripting.getRegisteredContentScripts({ ids: [SCRIPT_ID] })
+    const expiresAt = Date.now() + 2000
+    const step = async <T>(work: Promise<T>): Promise<T> => {
+      const result = await bounded(work, Math.max(0, expiresAt - Date.now()), "unavailable")
+      if (Date.now() >= expiresAt) throw new SessionFailure("unavailable")
+      return result
+    }
     if (consent !== store.CONSENT_VERSION) {
-      if (!registered.length && consent !== -1) return
-      if (registered.length) await browser.scripting.unregisterContentScripts({ ids: [SCRIPT_ID] })
-      const tabs = await browser.tabs.query({ url: "https://www.youtube.com/*", discarded: false })
-      await Promise.all(tabs.map(async tab => {
-        if (tab.id === undefined || tab.discarded) return
-        await browser.scripting.executeScript({
-          target: { tabId: tab.id }, world: "MAIN", func: setPageAccess, args: [false, consentGeneration]
-        })
-      }))
+      if (retirement?.consentGeneration !== consentGeneration) {
+        retirement = { consentGeneration, expiresAt: Date.now() + PAGE_JOB_LIFETIME_MS }
+      }
+      const retiredAt = retirement.expiresAt
+      try {
+        const registered = await step(browser.scripting.getRegisteredContentScripts({ ids: [SCRIPT_ID] }))
+        if (!registered.length && consent !== -1) return
+        if (registered.length) await step(browser.scripting.unregisterContentScripts({ ids: [SCRIPT_ID] }))
+        const tabs = await step(browser.tabs.query({ url: "https://www.youtube.com/*", discarded: false }))
+        await Promise.all(tabs.map(async tab => {
+          if (tab.id === undefined || tab.discarded) return
+          await step(browser.scripting.executeScript({
+            target: { tabId: tab.id }, world: "MAIN", func: setPageAccess, args: [false, consentGeneration, expiresAt]
+          }))
+        }))
+      } catch {
+        // Missing page invalidation is safe only after every old job's original deadline.
+        await new Promise(resolve => setTimeout(resolve, Math.max(0, retiredAt - Date.now())))
+      }
       return
     }
+    retirement = undefined
+    const registered = await step(browser.scripting.getRegisteredContentScripts({ ids: [SCRIPT_ID] }))
     await requireConsent(consentGeneration)
     if (!registered.length) {
-      await browser.scripting.registerContentScripts([{
+      await step(browser.scripting.registerContentScripts([{
         id: SCRIPT_ID, matches: ["https://www.youtube.com/*"], js: [CONTENT_FILE],
         runAt: "document_idle", persistAcrossSessions: false
-      }])
+      }]))
     }
     try {
       await requireConsent(consentGeneration)
-      const tabs = await browser.tabs.query({ url: "https://www.youtube.com/*", discarded: false })
+      const tabs = await step(browser.tabs.query({ url: "https://www.youtube.com/*", discarded: false }))
       for (const tab of tabs) {
         if (tab.id === undefined || tab.discarded) continue
         await requireConsent(consentGeneration)
-        await browser.scripting.executeScript({
-          target: { tabId: tab.id }, world: "MAIN", func: setPageAccess, args: [true, consentGeneration]
-        })
+        await step(browser.scripting.executeScript({
+          target: { tabId: tab.id }, world: "MAIN", func: setPageAccess, args: [true, consentGeneration, expiresAt]
+        }))
         if ("frozen" in tab && tab.frozen) continue
         await requireConsent(consentGeneration)
-        const alive: unknown = await browser.tabs.sendMessage(tab.id, { action: "sessionContentAlive" }).catch(() => null)
+        const alive: unknown = await step(browser.tabs.sendMessage(tab.id, { action: "sessionContentAlive" }).catch(() => null))
         if (isRecord(alive) && alive.alive === true) continue
         await requireConsent(consentGeneration)
-        await browser.scripting.executeScript({ target: { tabId: tab.id }, files: [CONTENT_FILE] }).catch(() => {})
+        await step(browser.scripting.executeScript({ target: { tabId: tab.id }, files: [CONTENT_FILE] }).catch(() => {}))
       }
     } catch (error) {
       if (await store.sessionConsent.getValue() !== store.CONSENT_VERSION) {
-        await browser.scripting.unregisterContentScripts({ ids: [SCRIPT_ID] }).catch(() => {})
+        await step(browser.scripting.unregisterContentScripts({ ids: [SCRIPT_ID] })).catch(() => {})
       }
       throw error
     }

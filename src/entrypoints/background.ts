@@ -2,7 +2,7 @@ import { anyFilterOn, isFilteredOut, addListedChannel, listChannelIn, removeList
 import { parseChannelInput, type ChannelQuery } from "@/lib/channel-input"
 import * as store from "@/lib/storage"
 import { addVideoToPlaylist, fetchChannel, fetchUserPlaylists, fetchVideoChannel } from "@/lib/youtube"
-import { checkSession, findSession, isAccountKey, isConsentGeneration, isRecord, isSnapshot, queueInPage, reconcileScripts, requireConsent, SessionFailure, sessionMessage, type Caller, type SessionSnapshot } from "@/lib/session"
+import { checkSession, findSession, isAccountKey, isConsentGeneration, isRecord, isSnapshot, PAGE_JOB_LIFETIME_MS, queueInPage, reconcileScripts, requireConsent, SessionFailure, sessionMessage, type Caller, type SessionSnapshot } from "@/lib/session"
 
 type Sender = Parameters<Parameters<typeof browser.runtime.onMessage.addListener>[0]>[1]
 
@@ -75,7 +75,7 @@ export default defineBackground(() => {
     const consentGeneration = await requireConsent(message.consentGeneration)
     const session: SessionSnapshot = { tabId: caller.tabId, accountKey: message.accountKey, incognito: caller.incognito, consentGeneration }
     const videoId = message.videoId
-    const expires = Date.now() + 10000
+    const expires = Date.now() + PAGE_JOB_LIFETIME_MS
     return serial(session, async () => {
       const alive = () => { if (Date.now() >= expires) throw new SessionFailure("unavailable") }
       alive()
@@ -180,10 +180,11 @@ export default defineBackground(() => {
     if (message.action === "queueVideo" && caller.tabId !== undefined) {
       if (typeof message.videoId !== "string" || !/^[\w-]{11}$/.test(message.videoId)) throw new SessionFailure("unavailable")
       if (!isConsentGeneration(message.consentGeneration)) throw new SessionFailure("unavailable")
+      const expiresAt = Date.now() + PAGE_JOB_LIFETIME_MS
       const consentGeneration = await requireConsent(message.consentGeneration)
       const results = await browser.scripting.executeScript({
         target: { tabId: caller.tabId }, world: "MAIN", func: queueInPage,
-        args: [message.videoId, consentGeneration, Date.now() + 10000]
+        args: [message.videoId, consentGeneration, expiresAt]
       })
       await requireConsent(consentGeneration)
       return { ok: results[0]?.result === true }

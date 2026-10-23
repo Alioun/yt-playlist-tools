@@ -68,6 +68,37 @@ it("removes the retired video history when clearing all data", async () => {
   expect((await indexedDB.databases()).some(database => database.name === "yt-playlist-tools")).toBe(false)
 })
 
+it("keeps the save lane closed until history deletion settles after a sibling fails", async () => {
+  const remove = indexedDB.deleteDatabase.bind(indexedDB)
+  let release: (() => void) | undefined
+  vi.spyOn(indexedDB, "deleteDatabase").mockImplementationOnce(name => {
+    const request = remove(name)
+    request.addEventListener("success", event => {
+      event.stopImmediatePropagation()
+      release = () => request.onsuccess?.call(request, event)
+    }, { once: true })
+    return request
+  })
+  vi.spyOn(fakeBrowser.storage.sync, "clear").mockRejectedValueOnce(new Error("Synthetic deletion failure"))
+  let cleared = false
+  const clearing = store.clearAll().catch(error => { cleared = true; return error })
+  await vi.waitFor(() => expect(release).toBeTypeOf("function"))
+  await store.sessionGeneration.setValue("generation-2")
+  await store.sessionConsent.setValue(store.CONSENT_VERSION)
+  let saved = false
+  const saving = store.saveAccountSetup({ ...first, consentGeneration: "generation-2" }, { ...store.emptySetup(), playlists: ["PLnew"] }).then(() => { saved = true })
+  try {
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(cleared).toBe(false)
+    expect(saved).toBe(false)
+  } finally {
+    release?.()
+    await saving
+  }
+  await expect(clearing).resolves.toMatchObject({ message: "Synthetic deletion failure" })
+  expect((await store.getAccountSetup(first)).playlists).toEqual(["PLnew"])
+})
+
 it("lists saved account caches only for a consenting normal window", async () => {
   await store.saveAccountSetup(first, { ...store.emptySetup(), playlists: ["PL1"] })
   await store.cacheAccountPlaylists(first, [{ id: "PL1", title: "Saved playlist" }])
