@@ -2,19 +2,24 @@ import { anyFilterOn, isFilteredOut, addListedChannel, listChannelIn, removeList
 import { parseChannelInput, type ChannelQuery } from "@/lib/channel-input"
 import * as store from "@/lib/storage"
 import { addVideoToPlaylist, fetchChannel, fetchUserPlaylists, fetchVideoChannel } from "@/lib/youtube"
-import { checkSession, findSession, isAccountKey, isRecord, isSnapshot, queueInPage, reconcileScripts, requireConsent, SessionFailure, sessionMessage, type Caller, type SessionSnapshot } from "@/lib/session"
+import { checkSession, findSession, isAccountKey, isConsentGeneration, isRecord, isSnapshot, queueInPage, reconcileScripts, requireConsent, SessionFailure, sessionMessage, type Caller, type SessionSnapshot } from "@/lib/session"
 
 type Sender = Parameters<Parameters<typeof browser.runtime.onMessage.addListener>[0]>[1]
 
 export default defineBackground(() => {
   const lanes = new Map<string, Promise<unknown>>()
+  let transitions: Promise<unknown> = Promise.resolve()
   store.sessionConsent.watch(() => { void reconcileScripts().catch(() => {}) })
   void store.removeLegacyCredentials().catch(() => {})
+  void store.retireLegacyVideoCache().catch(() => {})
   void reconcileScripts().catch(() => {})
 
   function serial<T>(session: SessionSnapshot, action: () => Promise<T>): Promise<T> {
     const key = `${session.incognito}:${session.accountKey}`
-    const pending = (lanes.get(key) ?? Promise.resolve()).catch(() => {}).then(action)
+    const pending = (lanes.get(key) ?? Promise.resolve()).catch(() => {}).then(async () => {
+      await requireConsent(session.consentGeneration)
+      return action()
+    })
     lanes.set(key, pending)
     void pending.finally(() => { if (lanes.get(key) === pending) lanes.delete(key) }).catch(() => {})
     return pending
@@ -39,12 +44,17 @@ export default defineBackground(() => {
     if (!isSnapshot(value) || value.incognito !== caller.incognito || (caller.tabId !== undefined && caller.tabId !== value.tabId)) {
       throw new SessionFailure("accountChanged")
     }
+    await requireConsent(value.consentGeneration)
     await checkSession(value)
     return value
   }
 
   async function view(caller: Caller) {
     const state = await findSession(caller)
+    if (state.kind === "noTab") {
+      const accounts = await store.getSavedAccounts(caller.incognito)
+      return accounts.length ? { kind: "cached", accounts } : state
+    }
     if (state.kind !== "ready") return state
     const playlists = await fetchUserPlaylists(state.session)
     await serial(state.session, () => store.cacheAccountPlaylists(state.session, playlists))
@@ -60,8 +70,10 @@ export default defineBackground(() => {
 
   async function add(caller: Caller, message: Record<string, unknown>) {
     if (caller.tabId === undefined || !isAccountKey(message.accountKey) ||
-      typeof message.videoId !== "string" || !/^[\w-]{11}$/.test(message.videoId)) throw new SessionFailure("unavailable")
-    const session: SessionSnapshot = { tabId: caller.tabId, accountKey: message.accountKey, incognito: caller.incognito }
+      typeof message.videoId !== "string" || !/^[\w-]{11}$/.test(message.videoId) ||
+      !isConsentGeneration(message.consentGeneration)) throw new SessionFailure("unavailable")
+    const consentGeneration = await requireConsent(message.consentGeneration)
+    const session: SessionSnapshot = { tabId: caller.tabId, accountKey: message.accountKey, incognito: caller.incognito, consentGeneration }
     const videoId = message.videoId
     const expires = Date.now() + 10000
     return serial(session, async () => {
@@ -77,7 +89,11 @@ export default defineBackground(() => {
       }
       if (automatic && anyFilterOn(setup.filters, targets)) {
         alive()
-        const channel = await fetchVideoChannel(session, videoId)
+        const channel = await fetchVideoChannel(session, videoId).catch(error => {
+          if (error instanceof SessionFailure && ["consent", "revoked", "accountChanged", "signedOut"].includes(error.code)) throw error
+          return null
+        })
+        await requireConsent(session.consentGeneration)
         const blocked = targets.filter(id => isFilteredOut(setup.filters[id], channel?.channelId ?? null))
         targets = targets.filter(id => !blocked.includes(id))
         if (blocked.length) await notify(session.tabId, channel ? `${channel.title} filtered out` : "Couldn't identify the channel, so allowlisted playlists were skipped")
@@ -105,7 +121,9 @@ export default defineBackground(() => {
 
   async function changeSetup(session: SessionSnapshot, change: unknown) {
     if (!isRecord(change) || typeof change.playlistId !== "string" || !/^[\w-]{1,150}$/.test(change.playlistId)) throw new SessionFailure("unavailable")
+    await checkSession(session)
     const setup = await store.getAccountSetup(session)
+    await requireConsent(session.consentGeneration)
     const id = change.playlistId
     switch (change.kind) {
       case "auto":
@@ -131,6 +149,7 @@ export default defineBackground(() => {
       default: throw new SessionFailure("unavailable")
     }
     await checkSession(session)
+    await requireConsent(session.consentGeneration)
     await store.saveAccountSetup(session, setup)
     return { setup }
   }
@@ -138,22 +157,28 @@ export default defineBackground(() => {
   async function handle(message: Record<string, unknown>, sender: Sender) {
     const caller = await callerFor(sender, message)
     const fromPage = caller.tabId !== undefined
-    if (message.action === "grantSession" && !fromPage) {
-      await store.sessionConsent.setValue(store.CONSENT_VERSION)
-      await reconcileScripts()
-      return view(caller)
-    }
-    if (message.action === "revokeSession" && !fromPage) {
-      await store.sessionConsent.setValue(-1)
-      await reconcileScripts()
-      return { kind: "revoked" }
+    if ((message.action === "grantSession" || message.action === "revokeSession") && !fromPage) {
+      const enabled = message.action === "grantSession"
+      const transition = transitions.catch(() => {}).then(async () => {
+        await store.sessionGeneration.setValue(crypto.randomUUID())
+        await store.sessionConsent.setValue(enabled ? store.CONSENT_VERSION : -1)
+        await reconcileScripts()
+      })
+      transitions = transition
+      await transition
+      return enabled ? view(caller) : { kind: "revoked" }
     }
     await requireConsent()
     if (message.action === "sessionForTab" && fromPage) return findSession(caller)
     if (message.action === "queueVideo" && caller.tabId !== undefined) {
       if (typeof message.videoId !== "string" || !/^[\w-]{11}$/.test(message.videoId)) throw new SessionFailure("unavailable")
-      await requireConsent()
-      const results = await browser.scripting.executeScript({ target: { tabId: caller.tabId }, world: "MAIN", func: queueInPage, args: [message.videoId] })
+      if (!isConsentGeneration(message.consentGeneration)) throw new SessionFailure("unavailable")
+      const consentGeneration = await requireConsent(message.consentGeneration)
+      const results = await browser.scripting.executeScript({
+        target: { tabId: caller.tabId }, world: "MAIN", func: queueInPage,
+        args: [message.videoId, consentGeneration, Date.now() + 10000]
+      })
+      await requireConsent(consentGeneration)
       return { ok: results[0]?.result === true }
     }
     if (message.action === "addVideoToPlaylists" || message.action === "addVideoToShortcutPlaylist") return add(caller, message)

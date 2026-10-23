@@ -1,7 +1,15 @@
 import { createHash, webcrypto } from "node:crypto"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { fakeBrowser } from "wxt/testing/fake-browser"
+import * as store from "@/lib/storage"
+import { reconcileScripts, setPageAccess } from "@/lib/session"
 import type { PageJob } from "@/lib/session-types"
-import { runPageJob } from "./youtube-session"
+import { runPageJob as runSerializedPageJob } from "./youtube-session"
+
+const generation = "generation-1"
+function runPageJob(job: PageJob, consentGeneration = generation, deadline = Date.now() + 10000) {
+  return runSerializedPageJob(job, consentGeneration, deadline)
+}
 
 const rawId = "synthetic-brand||synthetic-google"
 const key = createHash("sha256").update(rawId).digest("base64url").slice(0, 16)
@@ -47,7 +55,8 @@ async function flush(): Promise<void> {
 beforeEach(() => {
   window.location.href = "https://www.youtube.com/watch?v=video000001"
   document.body.innerHTML = ""
-  for (const property of ["__ytptSessionV1", "__ytptSessionAccess", "ytInitialPlayerResponse", "default_kevlar_base"]) Reflect.deleteProperty(window, property)
+  for (const property of ["__ytptSessionV1", "__ytptSessionAccess", "__ytptSessionGeneration", "ytInitialPlayerResponse", "default_kevlar_base"]) Reflect.deleteProperty(window, property)
+  Reflect.set(window, "__ytptSessionGeneration", generation)
   cfg = {
     LOGGED_IN: true,
     DATASYNC_ID: rawId,
@@ -75,10 +84,70 @@ afterEach(() => {
   vi.useRealTimers()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
-  for (const property of ["__ytptSessionV1", "__ytptSessionAccess", "ytcfg", "ytInitialPlayerResponse", "default_kevlar_base"]) Reflect.deleteProperty(window, property)
+  for (const property of ["__ytptSessionV1", "__ytptSessionAccess", "__ytptSessionGeneration", "ytcfg", "ytInitialPlayerResponse", "default_kevlar_base"]) Reflect.deleteProperty(window, property)
 })
 
 describe("revoked access", () => {
+  it.each(["signed request", "page command"])("does not revive a %s write when the page misses the disabled interval", async (route) => {
+    let release: (response: Response) => void = () => {}
+    network.mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
+    const command = vi.fn()
+    if (route === "page command") setResolver(command)
+    const pending = runPageJob(addJob)
+    await flush()
+    setPageAccess(true, "generation-after-regrant")
+    release(answer(membership()))
+    expect(await pending).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(network).toHaveBeenCalledTimes(1)
+    expect(command).not.toHaveBeenCalled()
+  })
+
+  it("rejects old queued page work after regrant and permits a fresh invocation", async () => {
+    let release: (response: Response) => void = () => {}
+    network.mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
+    const blocking = runPageJob({ kind: "playlists", accountKey: key })
+    await flush()
+    const queued = runPageJob(addJob)
+    setPageAccess(true, "generation-after-regrant")
+    release(answer({ ...identity(), contents: [] }))
+    expect(await blocking).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(await queued).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(network).toHaveBeenCalledTimes(1)
+    expect(await runPageJob({ kind: "account" }, "generation-after-regrant")).toEqual({ kind: "account", signedIn: true, accountKey: key })
+  })
+
+  it("delivers revocation to a frozen tab before its pending membership resumes", async () => {
+    await store.sessionGeneration.setValue(generation)
+    await store.sessionConsent.setValue(store.CONSENT_VERSION)
+    const tab = await fakeBrowser.tabs.create({ url: "https://www.youtube.com/", active: false })
+    if (tab.id === undefined) throw new Error("Synthetic tab missing")
+    vi.spyOn(fakeBrowser.tabs, "query").mockImplementation(async () => [{ ...tab, frozen: true, discarded: false }])
+    vi.spyOn(fakeBrowser.scripting, "getRegisteredContentScripts").mockImplementation(async () => [])
+    const injection = vi.spyOn(fakeBrowser.scripting, "executeScript").mockImplementation(async details => {
+      if (details.func !== setPageAccess || !("args" in details) || !Array.isArray(details.args)) throw new Error("Unexpected page invocation")
+      const [enabled, token] = details.args
+      if (typeof enabled !== "boolean" || typeof token !== "string") throw new Error("Invalid access marker")
+      setPageAccess(enabled, token)
+      return []
+    })
+    let release: (response: Response) => void = () => {}
+    network.mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
+    const command = vi.fn()
+    setResolver(command)
+    const pending = runPageJob(addJob)
+    await flush()
+    await store.sessionGeneration.setValue("generation-revoked")
+    await store.sessionConsent.setValue(-1)
+    await reconcileScripts()
+    expect(injection).toHaveBeenCalledWith(expect.objectContaining({
+      target: { tabId: tab.id }, world: "MAIN", func: setPageAccess, args: [false, "generation-revoked"]
+    }))
+    release(answer(membership()))
+    expect(await pending).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(network).toHaveBeenCalledTimes(1)
+    expect(command).not.toHaveBeenCalled()
+  })
+
   it.each<PageJob>([
     { kind: "account" },
     { kind: "playlists", accountKey: key },
@@ -533,11 +602,36 @@ describe("public channel lookups", () => {
 })
 
 describe("deadlines and serialization", () => {
+  it.each(["signed request", "page command"])("preserves the original expiry when a %s starts after background queueing", async route => {
+    await runPageJob({ kind: "account" })
+    const started = Date.now()
+    const clock = vi.spyOn(Date, "now").mockReturnValue(started + 8000)
+    let release: (response: Response) => void = () => {}
+    network.mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
+    const command = vi.fn()
+    if (route === "page command") setResolver(command)
+    const pending = runPageJob(addJob, generation, started + 10000)
+    await flush()
+    clock.mockReturnValue(started + 11000)
+    release(answer(membership()))
+    expect(await pending).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(network).toHaveBeenCalledTimes(1)
+    expect(command).not.toHaveBeenCalled()
+  })
+
+  it("rejects an invocation whose original expiry passed before injection", async () => {
+    const readConfig = vi.fn()
+    Reflect.set(window, "ytcfg", { get: readConfig })
+    expect(await runPageJob(addJob, generation, Date.now() - 1)).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(readConfig).not.toHaveBeenCalled()
+    expect(network).not.toHaveBeenCalled()
+  })
+
   it("runs the serialized function with no module closure for both a read and guarded write", async () => {
-    const serialized: typeof runPageJob = new Function(`return (${runPageJob.toString()})`)()
-    expect(await serialized({ kind: "account" })).toEqual({ kind: "account", signedIn: true, accountKey: key })
+    const serialized: typeof runSerializedPageJob = new Function(`return (${runSerializedPageJob.toString()})`)()
+    expect(await serialized({ kind: "account" }, generation, Date.now() + 10000)).toEqual({ kind: "account", signedIn: true, accountKey: key })
     network.mockResolvedValueOnce(answer(membership())).mockResolvedValueOnce(answer(success()))
-    expect(await serialized(addJob)).toEqual({ kind: "add", accountKey: key, alreadyIn: false })
+    expect(await serialized(addJob, generation, Date.now() + 10000)).toEqual({ kind: "add", accountKey: key, alreadyIn: false })
     expect(network).toHaveBeenCalledTimes(2)
   })
 

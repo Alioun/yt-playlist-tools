@@ -7,8 +7,7 @@ import type {
 } from "@/lib/session-types"
 
 // executeScript serializes this function without its module scope.
-export async function runPageJob(job: PageJob): Promise<PageReply> {
-  const deadline = Date.now() + 10000
+export async function runPageJob(job: PageJob, consentGeneration: string, deadline: number): Promise<PageReply> {
   type JsonObject = Record<string, unknown>
   type Identity =
     | { kind: "unknown"; rawId: null }
@@ -26,6 +25,7 @@ export async function runPageJob(job: PageJob): Promise<PageReply> {
     ytInitialPlayerResponse?: unknown
     default_kevlar_base?: unknown
     __ytptSessionAccess?: boolean
+    __ytptSessionGeneration?: string
     __ytptSessionV1?: PageState
   }
   const messages = {
@@ -117,14 +117,17 @@ export async function runPageJob(job: PageJob): Promise<PageReply> {
   }
 
   try {
-    if (page.__ytptSessionAccess === false) fail("unavailable")
+    if (page.__ytptSessionAccess === false || !consentGeneration || !Number.isFinite(deadline) || Date.now() >= deadline) fail("unavailable")
+    // New documents have no marker until their first authorized invocation.
+    if (page.__ytptSessionGeneration === undefined) page.__ytptSessionGeneration = consentGeneration
+    if (page.__ytptSessionGeneration !== consentGeneration) fail("unavailable")
     if (location.origin !== "https://www.youtube.com" || window.top !== window) fail("unavailable")
     const state = page.__ytptSessionV1 ??= { identity: pinIdentity(), tripped: false, lane: Promise.resolve() }
     const abort = new AbortController()
     let expired = false
     let writeSent = false
     function active(): void {
-      if (page.__ytptSessionAccess === false) fail(writeSent ? "unconfirmed" : "unavailable")
+      if (page.__ytptSessionAccess === false || page.__ytptSessionGeneration !== consentGeneration) fail(writeSent ? "unconfirmed" : "unavailable")
       if (Date.now() >= deadline) expired = true
       if (expired) fail(writeSent ? "unconfirmed" : "unavailable")
       if (state.tripped && (job.kind === "account" || "accountKey" in job)) fail("accountChanged")
@@ -453,6 +456,7 @@ export async function runPageJob(job: PageJob): Promise<PageReply> {
         if (typeof read === "function") {
           try { answer = read.call(player) } catch {}
         }
+        active()
         verifyAnswer(answer)
         const channel = playerChannel(answer, job.videoId)
         if (channel) return { kind: "channel", channel }

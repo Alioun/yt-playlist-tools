@@ -1,4 +1,10 @@
+import type { AccountContext } from "@/lib/storage"
 import type { ChannelQuery } from "@/lib/channel-input"
+
+export interface SessionSnapshot extends AccountContext {
+  tabId: number
+  consentGeneration: string
+}
 
 export interface SessionPlaylist {
   id: string
