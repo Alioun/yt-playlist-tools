@@ -1,4 +1,4 @@
-import { checked, isRecord, object, optional, boolean } from "./codec"
+import { checked, isRecord, object, optional, boolean, text } from "./codec"
 import type { Key } from "./types"
 
 const namedCodes = new Set([
@@ -20,13 +20,13 @@ function isPhysicalCode(raw: unknown): raw is string {
 
 export function isKey(raw: unknown): raw is Key {
   return isRecord(raw) && isPhysicalCode(raw.code) &&
-    (raw.char === undefined || (typeof raw.char === "string" && /^[A-Za-z0-9]$/.test(raw.char))) &&
+    (raw.char === undefined || typeof raw.char === "string") &&
     typeof raw.ctrl === "boolean" && typeof raw.alt === "boolean" &&
     typeof raw.shift === "boolean" && typeof raw.meta === "boolean"
 }
 
 export const decodeKey = object<Key>({
-  char: optional(checked((raw): raw is string => typeof raw === "string" && /^[A-Za-z0-9]$/.test(raw), "an ASCII letter or digit")),
+  char: optional(text),
   code: checked(isPhysicalCode, "a physical non-modifier key code"),
   ctrl: boolean, alt: boolean, shift: boolean, meta: boolean
 })

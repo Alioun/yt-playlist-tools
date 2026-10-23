@@ -305,7 +305,9 @@ describe("keys and identifiers", () => {
     const key = { code: "KeyK", char: "k", ctrl: true, alt: true, shift: false, meta: false, future: 1 }
     expect(isKey(key)).toBe(true)
     expect(decodeKey(key)).toEqual(key)
-    expect(isKey({ ...key, char: "two" })).toBe(false)
+    expect(isKey({ ...key, char: "two" })).toBe(true)
+    expect(isKey({ ...key, char: 2 })).toBe(false)
+    expect(() => decodeKey({ ...key, char: null })).toThrow(DecodeError)
     expect(isKey({ ...key, code: "ShiftLeft" })).toBe(false)
     expect(isKey({ ...key, code: "Unidentified" })).toBe(false)
     expect(isKey({ ...key, code: "invented" })).toBe(false)

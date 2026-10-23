@@ -31,6 +31,6 @@ Filter handles remain optional strings in the model. The decoder reads a JSON `n
 
 `validation.ts` exports branded ID guards, `isPercent`, `DocumentKey`, `parseDocumentKey` and `documentKey`. Account keys are exactly 16 base64url characters. Shortcut IDs are six base64url characters. Channel IDs have `UC` and 22 base64url characters. Video IDs have 11 base64url characters. Playlist IDs use the existing page boundary's URL-safe 2 to 100 character envelope, including `WL`. This is syntax validation, never a claim about ownership or addability. REL-MIG-14's narrower `PL` pattern applies only to legacy free text and is not applied to 2.x playlist choices.
 
-`decodeKey` and `isKey` validate the persisted physical code, optional ASCII character and modifier booleans. They do not impose recorder policy, resolve site clashes or match keyboard events.
+`decodeKey` and `isKey` validate the persisted physical code, optional `char` string and modifier booleans. DATA-12 does not restrict `char` to ASCII. The recorder retains printable characters for display; the shortcut engine compares characters only when both are ASCII letters or digits. These model functions do not impose recorder policy, resolve site clashes or match keyboard events.
 
 The focused tests run with `bun test ./src/shared/model/model.bun-test.ts`. The filename avoids the existing Vitest discovery patterns. The root Bun pilot must include this path in its eventual discovery command. No preload or configuration change is required for this module.
