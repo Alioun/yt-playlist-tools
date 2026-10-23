@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs"
 import { posix, resolve } from "node:path"
+import { parse } from "svelte/compiler"
 import ts from "typescript"
 
 export const rules = ["imports", "env", "page-console", "entrypoints", "storage-writes", "running-cost"] as const
@@ -47,11 +48,15 @@ export function readAliases(root: string): Aliases {
 
 function scriptText(source: Source): string {
   if (!source.file.endsWith(".svelte")) return source.text
-  const characters: string[] = source.text.split("").map(character => character === "\n" ? "\n" : " ")
-  for (const match of source.text.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/g)) {
-    const content = match[1] ?? ""
-    const start = (match.index ?? 0) + match[0].indexOf(">") + 1
-    for (let offset = 0; offset < content.length; offset++) characters[start + offset] = content[offset] ?? " "
+  const component = parse(source.text, { modern: true, filename: source.file })
+  const characters = source.text.split("").map(character => /[\r\n\u2028\u2029]/.test(character) ? character : " ")
+  for (const script of [component.instance, component.module]) {
+    if (!script) continue
+    const content = script.content
+    if (!("start" in content) || typeof content.start !== "number" || !("end" in content) || typeof content.end !== "number") {
+      throw new Error("Svelte parser did not provide script content offsets")
+    }
+    for (let offset = content.start; offset < content.end; offset++) characters[offset] = source.text[offset] ?? " "
   }
   return characters.join("")
 }
@@ -74,7 +79,17 @@ function moduleTargets(file: string, specifier: string, aliases: Aliases): strin
 export function inspect(sources: Source[], aliases: Aliases = { "@/*": ["src/*"], "~/*": ["src/*"] }): Finding[] {
   const findings: Finding[] = []
   for (const source of sources) {
-    const file = ts.createSourceFile(source.file, scriptText(source), ts.ScriptTarget.Latest, true,
+    let text: string
+    try {
+      text = scriptText(source)
+    } catch (error) {
+      if (!(error instanceof Error) || !("position" in error) || !Array.isArray(error.position)
+        || typeof error.position[0] !== "number") throw error
+      findings.push({ file: source.file, line: source.text.slice(0, error.position[0]).split(/\r\n|[\r\n\u2028\u2029]/).length,
+        rule: "imports", reason: "syntax-error", evidence: error.message.replace(/\s+/g, " ").trim() })
+      continue
+    }
+    const file = ts.createSourceFile(source.file, text, ts.ScriptTarget.Latest, true,
       source.file.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS)
     const host: ts.CompilerHost = {
       getSourceFile: name => name === source.file ? file : undefined,
@@ -133,6 +148,23 @@ export function inspect(sources: Source[], aliases: Aliases = { "@/*": ["src/*"]
     function access(node: ts.Node, visited = new Set<ts.Symbol>()): string[] | undefined {
       node = unwrap(node)
       if (ts.isMetaProperty(node) && node.keywordToken === ts.SyntaxKind.ImportKeyword) return ["import.meta"]
+      if (ts.isBindingElement(node)) {
+        const parts: string[] = []
+        let current: ts.Node = node
+        while (ts.isBindingElement(current)) {
+          const name = current.propertyName ? literal(current.propertyName)
+            ?? (ts.isComputedPropertyName(current.propertyName) ? member(current.propertyName.expression) : undefined)
+            : literal(current.name)
+          if (!name || current.dotDotDotToken || !ts.isObjectBindingPattern(current.parent)) return undefined
+          parts.unshift(name)
+          current = current.parent.parent
+        }
+        if (ts.isVariableDeclaration(current) && current.initializer) {
+          const base = access(current.initializer, visited)
+          return base ? [...base, ...parts] : undefined
+        }
+        return undefined
+      }
       if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
         const base = access(node.expression, new Set(visited))
         const name = ts.isPropertyAccessExpression(node) ? node.name.text : node.argumentExpression && member(node.argumentExpression)
@@ -152,22 +184,7 @@ export function inspect(sources: Source[], aliases: Aliases = { "@/*": ["src/*"]
         }
         if (ts.isVariableDeclaration(declaration) && declaration.initializer) return access(declaration.initializer, visited) ?? [`local:${node.text}`]
         if (ts.isParameter(declaration) && ["browser", "chrome", "storage"].includes(node.text)) return [node.text]
-        if (ts.isBindingElement(declaration)) {
-          const parts: string[] = []
-          let current: ts.Node = declaration
-          while (ts.isBindingElement(current)) {
-            const name = current.propertyName ? literal(current.propertyName)
-              ?? (ts.isComputedPropertyName(current.propertyName) ? member(current.propertyName.expression) : undefined)
-              : literal(current.name)
-            if (!name || current.dotDotDotToken || !ts.isObjectBindingPattern(current.parent)) return undefined
-            parts.unshift(name)
-            current = current.parent.parent
-          }
-          if (ts.isVariableDeclaration(current) && current.initializer) {
-            const base = access(current.initializer, visited)
-            return base ? [...base, ...parts] : undefined
-          }
-        }
+        if (ts.isBindingElement(declaration)) return access(declaration, visited)
       }
       return [`local:${node.text}`]
     }
@@ -218,7 +235,22 @@ export function inspect(sources: Source[], aliases: Aliases = { "@/*": ["src/*"]
       const path = canonical(node).join(".")
       if (["document", "document.body", "document.documentElement"].includes(path)) return true
       node = value(node)
-      if (!ts.isCallExpression(node) || !["document.querySelector", "document.getElementsByTagName"].includes(canonical(node.expression).join("."))) return false
+      let indexed = false
+      if (ts.isElementAccessExpression(node) && node.argumentExpression) {
+        const index = value(node.argumentExpression)
+        indexed = (ts.isNumericLiteral(index) || ts.isStringLiteralLike(index)) && /^\d+$/.test(index.text)
+        if (!indexed) return false
+        node = value(node.expression)
+      } else if (ts.isCallExpression(node) && property(node.expression) === "item"
+        && (ts.isPropertyAccessExpression(node.expression) || ts.isElementAccessExpression(node.expression))) {
+        const index = node.arguments[0] && value(node.arguments[0])
+        indexed = !!index && (ts.isNumericLiteral(index) || ts.isStringLiteralLike(index)) && /^\d+$/.test(index.text)
+        if (!indexed) return false
+        node = value(node.expression.expression)
+      }
+      const selections = indexed ? ["document.querySelectorAll", "document.getElementsByTagName"]
+        : ["document.querySelector", "document.getElementsByTagName"]
+      if (!ts.isCallExpression(node) || !selections.includes(canonical(node.expression).join("."))) return false
       const selector = node.arguments[0] && member(node.arguments[0])
       return selector === "ytd-app" || selector === "ytmusic-app" || selector === "body" || selector === "html"
     }
@@ -239,6 +271,9 @@ export function inspect(sources: Source[], aliases: Aliases = { "@/*": ["src/*"]
         else report("imports", node, "nonliteral-module", node.getText(file))
       }
       if (runtime(node)) {
+        if (ts.isBindingElement(node) && canonical(node).join(".") === "import.meta.env") {
+          report("env", node, source.file === "src/shared/platform.ts" ? "indirect-platform-env" : "env-outside-platform")
+        }
         if ((ts.isIdentifier(node) && reference(node)) || ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
           const parts = canonical(node)
           const path = parts.join(".")

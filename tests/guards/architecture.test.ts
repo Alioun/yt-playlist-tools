@@ -108,6 +108,7 @@ describe("environment and page logging", () => {
     test.each([
       "{ env }",
       "{ env: environment }",
+      "{ env: {} }",
       "{ env: { FIREFOX } }",
       "{ env: { FIREFOX: firefox } }",
       '{ ["env"]: { FIREFOX: firefox } }',
@@ -126,8 +127,16 @@ describe("environment and page logging", () => {
     }
   })
 
+  test("reports the line where a nested binding reads the environment", () => {
+    expect(findings("src/shared/platform.ts", 'export const {\n  env: { FIREFOX: firefox }\n} = import.meta')
+      .map(finding => [finding.reason, finding.line, finding.evidence]))
+      .toEqual([["indirect-platform-env", 2, "env: { FIREFOX: firefox }"]])
+  })
+
   test.each([
     'export const { env: { FIREFOX: firefox } } = { env: { FIREFOX: false } }',
+    'const { env: { FIREFOX } } = { env: { FIREFOX: false } }',
+    'export const { env: environment } = { env: {} }',
     'const { env: environment } = { env: {} }; export { environment }',
     'type Environment = { env: { FIREFOX: boolean } }',
   ])("permits unrelated or erased environment references through %s", text => {
@@ -295,7 +304,10 @@ describe("event driven running cost", () => {
     'observer.observe(document.querySelectorAll("ytmusic-app").item(0), { subtree: true })',
     'observer.observe(document.getElementsByTagName("body").item(0), { subtree: true })',
     'observer.observe(document.querySelectorAll("html")[0], { subtree: true })',
+    'observer.observe(document.getElementsByTagName("ytd-app")["0"], { subtree: true })',
+    'observer.observe(document.querySelectorAll("ytmusic-app")["item"](0), { subtree: true })',
     'const roots = document.getElementsByTagName("ytd-app"); const root = roots[0]; observer.observe(root, { subtree: true })',
+    'const roots = document.querySelectorAll("ytd-app"); const index = 0; const root = roots[index]!; observer.observe(root, { subtree: true })',
   ])("rejects a broad subtree observation through %s", text => {
     hasRule("src/site/core/items.ts", text, "running-cost")
   })
