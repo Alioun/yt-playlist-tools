@@ -201,10 +201,8 @@ export const theme = storage.defineItem<Theme>("sync:theme", {
   fallback: "system"
 })
 
-/** Clears everything this extension owns, across every area. */
+/** Background only. Revoke access and reconcile scripts before draining and deleting. */
 export async function clearAll(): Promise<void> {
-  await sessionGeneration.setValue(crypto.randomUUID())
-  await sessionConsent.setValue(-1)
   const work = saveLane.catch(() => {}).then(async () => {
     await Promise.all([
       retireLegacyVideoCache(), browser.storage.local.clear(),

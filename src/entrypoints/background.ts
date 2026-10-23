@@ -148,6 +148,10 @@ export default defineBackground(() => {
       }
       default: throw new SessionFailure("unavailable")
     }
+    if (!session.incognito && setup.cachedAt === null) {
+      setup.cachedPlaylists = await fetchUserPlaylists(session)
+      setup.cachedAt = Date.now()
+    }
     await checkSession(session)
     await requireConsent(session.consentGeneration)
     await store.saveAccountSetup(session, setup)
@@ -157,15 +161,18 @@ export default defineBackground(() => {
   async function handle(message: Record<string, unknown>, sender: Sender) {
     const caller = await callerFor(sender, message)
     const fromPage = caller.tabId !== undefined
-    if ((message.action === "grantSession" || message.action === "revokeSession") && !fromPage) {
+    if (message.action === "grantSession" || message.action === "revokeSession" || message.action === "clearAllData") {
+      if (fromPage) throw new SessionFailure("unavailable")
       const enabled = message.action === "grantSession"
       const transition = transitions.catch(() => {}).then(async () => {
         await store.sessionGeneration.setValue(crypto.randomUUID())
         await store.sessionConsent.setValue(enabled ? store.CONSENT_VERSION : -1)
         await reconcileScripts()
+        if (message.action === "clearAllData") await store.clearAll()
       })
       transitions = transition
       await transition
+      if (message.action === "clearAllData") return { ok: true }
       return enabled ? view(caller) : { kind: "revoked" }
     }
     await requireConsent()

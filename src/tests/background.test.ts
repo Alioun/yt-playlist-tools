@@ -262,3 +262,101 @@ describe("read-only saved-account view", () => {
     expect(retire).toHaveBeenCalledOnce()
   })
 })
+
+describe("background-owned data clearing", () => {
+  it.each(["/popup.html", "/options.html"])("allows %s to erase data before consent", async page => {
+    await store.sessionConsent.setValue(0)
+    await store.theme.setValue("dark")
+    await store.watchLaterShortcut.setValue("Control+S")
+    await expect(send({ action: "clearAllData" }, { ...ui, url: fakeBrowser.runtime.getURL(page) })).resolves.toEqual({ ok: true })
+    expect(await fakeBrowser.storage.local.get([`account:${snapshot.accountKey}`, "savedAccountKeys", "watchLaterShortcut"])).toEqual({})
+    expect(await store.theme.getValue()).toBe("system")
+    expect(sessionService.findSession).not.toHaveBeenCalled()
+    expect(youtube.fetchUserPlaylists).not.toHaveBeenCalled()
+  })
+
+  it.each([0, store.CONSENT_VERSION])("rejects content, foreign, subframe and unrelated extension senders with consent %s", async consent => {
+    await store.sessionConsent.setValue(consent)
+    for (const sender of [origin, { ...ui, id: "foreign" }, { ...ui, frameId: 2 }, { ...ui, url: fakeBrowser.runtime.getURL("/other.html") }]) {
+      await expect(send({ action: "clearAllData" }, sender)).resolves.toMatchObject({ kind: "unavailable" })
+    }
+    expect((await store.getAccountSetup(snapshot)).playlists).toEqual(["PL1"])
+    expect(await store.sessionConsent.getValue()).toBe(consent)
+  })
+
+  it("revokes page work before draining writes and serializes a concurrent grant behind deletion", async () => {
+    let release = () => {}
+    const held = new Promise<void>(resolve => { release = resolve })
+    const set = fakeBrowser.storage.local.set.bind(fakeBrowser.storage.local)
+    const account = `account:${snapshot.accountKey}`
+    const writing = vi.spyOn(fakeBrowser.storage.local, "set").mockImplementation(async values => {
+      if (account in values) await held
+      await set(values)
+    })
+    const first = send({ action: "changeSetup", session: snapshot, change: { kind: "auto", playlistId: "PL2", checked: true } }, ui)
+    try {
+      await vi.waitFor(() => expect(writing).toHaveBeenCalledWith(expect.objectContaining({ [account]: expect.any(Object) })))
+      const queued = send({ action: "changeSetup", session: snapshot, change: { kind: "shortcut", playlistId: "PL2" } }, ui)
+      await vi.waitFor(() => expect(sessionService.checkSession).toHaveBeenCalledTimes(4))
+      const clearStorage = vi.spyOn(fakeBrowser.storage.local, "clear")
+      const clearing = send({ action: "clearAllData" }, ui)
+      await vi.waitFor(async () => expect(await store.sessionConsent.getValue()).toBe(-1))
+      expect(vi.mocked(sessionService.reconcileScripts).mock.calls.length).toBeGreaterThan(1)
+      expect(await store.sessionConsent.getValue()).toBe(-1)
+      expect(await store.sessionGeneration.getValue()).not.toBe(snapshot.consentGeneration)
+      expect(clearStorage).not.toHaveBeenCalled()
+      const granting = send({ action: "grantSession" }, ui)
+      await new Promise(resolve => setTimeout(resolve, 0))
+      expect(await store.sessionConsent.getValue()).toBe(-1)
+      vi.mocked(sessionService.findSession).mockResolvedValue({ kind: "noTab" })
+      release()
+      await first
+      await expect(clearing).resolves.toEqual({ ok: true })
+      await expect(granting).resolves.toEqual({ kind: "noTab" })
+      await expect(queued).resolves.toMatchObject({ kind: expect.stringMatching(/revoked|consent/) })
+      expect(await fakeBrowser.storage.local.get([account, "savedAccountKeys"])).toEqual({})
+    } finally {
+      release()
+      await first
+    }
+  })
+
+  it("reports deletion failure instead of acknowledging success", async () => {
+    vi.spyOn(fakeBrowser.storage.local, "clear").mockRejectedValueOnce(new Error("Storage unavailable"))
+    await expect(send({ action: "clearAllData" }, ui)).resolves.toMatchObject({ kind: "unavailable" })
+    expect(await store.sessionConsent.getValue()).not.toBe(store.CONSENT_VERSION)
+  })
+})
+
+describe("first account choice cache", () => {
+  it("saves fetched titles with the first explicit choice, while leaving an untouched account unregistered", async () => {
+    await fakeBrowser.storage.local.remove([`account:${snapshot.accountKey}`, "savedAccountKeys"])
+    await expect(send({ action: "fetchPlaylists" }, ui)).resolves.toMatchObject({ kind: "ready", playlists: [{ id: "PL1", title: "Owned" }] })
+    expect(await fakeBrowser.storage.local.get([`account:${snapshot.accountKey}`, "savedAccountKeys"])).toEqual({})
+    await send({ action: "changeSetup", session: snapshot, change: { kind: "auto", playlistId: "PL1", checked: true } }, ui)
+    vi.mocked(sessionService.findSession).mockResolvedValue({ kind: "noTab" })
+    await expect(send({ action: "fetchPlaylists" }, ui)).resolves.toMatchObject({
+      kind: "cached", accounts: [{ accountKey: snapshot.accountKey, setup: {
+        playlists: ["PL1"], cachedPlaylists: [{ id: "PL1", title: "Owned" }], cachedAt: expect.any(Number)
+      } }]
+    })
+  })
+
+  it("does not persist first-choice titles or selections for a private caller", async () => {
+    await fakeBrowser.storage.local.remove([`account:${snapshot.accountKey}`, "savedAccountKeys"])
+    vi.spyOn(fakeBrowser.windows, "get").mockImplementation(async () => ({ id: windowId, incognito: true, focused: true, alwaysOnTop: false }))
+    await expect(send({ action: "changeSetup", session: { ...snapshot, incognito: true }, change: { kind: "auto", playlistId: "PL1", checked: true } }, ui)).resolves.toMatchObject({ kind: "unavailable" })
+    expect(await fakeBrowser.storage.local.get([`account:${snapshot.accountKey}`, "savedAccountKeys"])).toEqual({})
+  })
+
+  it.each(["revoked", "accountChanged"])("rejects %s after fetching first-choice titles", async code => {
+    await fakeBrowser.storage.local.remove([`account:${snapshot.accountKey}`, "savedAccountKeys"])
+    vi.mocked(youtube.fetchUserPlaylists).mockImplementationOnce(async () => {
+      if (code === "revoked") await store.sessionGeneration.setValue("generation-after-regrant")
+      else vi.mocked(sessionService.checkSession).mockRejectedValueOnce(new sessionService.SessionFailure("accountChanged"))
+      return [{ id: "PL1", title: "Owned" }]
+    })
+    await expect(send({ action: "changeSetup", session: snapshot, change: { kind: "auto", playlistId: "PL1", checked: true } }, ui)).resolves.toMatchObject({ kind: code })
+    expect(await fakeBrowser.storage.local.get([`account:${snapshot.accountKey}`, "savedAccountKeys"])).toEqual({})
+  })
+})

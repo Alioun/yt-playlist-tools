@@ -30,12 +30,11 @@ it("can revoke access without claiming to sign out of YouTube", async () => {
   expect(screen.queryByRole("button", { name: "Sign Out" })).not.toBeInTheDocument()
 })
 it("keeps Clear All Data reachable before agreement", async () => {
-  await store.theme.setValue("dark")
-  await store.playlists.setValue(["PLlegacy"])
+  const send = vi.spyOn(fakeBrowser.runtime, "sendMessage").mockImplementation(async () => ({ ok: true }))
   render(<ThemeProvider><App /></ThemeProvider>)
   await userEvent.click(await screen.findByRole("button", { name: "Clear All Data" }))
-  await waitFor(async () => expect(await store.playlists.getValue()).toEqual([]))
-  expect(await store.theme.getValue()).toBe("system")
+  await waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ action: "clearAllData" })))
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument()
 })
 
 it("offers the same shared settings without a live account", async () => {
