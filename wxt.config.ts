@@ -24,31 +24,18 @@ export default defineConfig({
   manifest: ({ browser, mode }) => ({
     name: "YouTube Playlist Tools",
     description: "Add current YouTube video to specified playlists.",
-    permissions: ["activeTab", "storage", "identity", "scripting"],
-    // The MAIN-world queue bridge is injected as a page script, so it has to
-    // be fetchable from youtube.com. See src/entrypoints/yt-queue-bridge.ts.
-    web_accessible_resources: [
-      {
-        resources: ["yt-queue-bridge.js"],
-        matches: ["*://*.youtube.com/*"]
-      }
-    ],
+    permissions: ["storage", "scripting"],
+    ...(browser === "chrome" && { minimum_chrome_version: "121" }),
     host_permissions: [
-      "https://www.googleapis.com/*",
-      "https://oauth2.googleapis.com/*",
-      "https://accounts.google.com/*"
+      "https://www.youtube.com/*"
     ],
     ...(browser === "firefox" && {
       browser_specific_settings: {
         gecko: {
           // Must be preserved so AMO updates keep working.
           id: "{cc70cd21-2cc6-444b-bd89-496909346091}",
-          strict_min_version: "125.0",
+          strict_min_version: "140.0",
           // Required by AMO for new extensions since 2025-11-03.
-          // "none" is accurate on the assumption the token broker stays
-          // stateless: it relays the OAuth code to Google and returns the
-          // tokens without persisting anything. If the broker ever starts
-          // storing user data, this declaration must be revisited.
           data_collection_permissions: { required: ["none"] },
           // Betas (`--mode beta`) are signed unlisted and update from this
           // repo's Pages. AMO rejects update_url in listed versions, so the

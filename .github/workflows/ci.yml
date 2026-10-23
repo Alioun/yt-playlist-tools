@@ -45,16 +45,10 @@ jobs:
 
       - name: Build (Chrome MV3)
         run: bun run build
-        env:
-          # Empty falls back to localhost (src/config.ts); Settings › Advanced
-          # can still override it at runtime.
-          WXT_AUTH_SERVER_URL: ${{ vars.WXT_AUTH_SERVER_URL }}
 
       # zip:firefox also writes the sources zip AMO wants when signing.
       - name: Build (Firefox MV3)
         run: bun run zip:firefox
-        env:
-          WXT_AUTH_SERVER_URL: ${{ vars.WXT_AUTH_SERVER_URL }}
 
       - name: Assert manifests are correct
         run: scripts/check-manifests.sh .output/chrome-mv3 .output/firefox-mv3
@@ -105,39 +99,6 @@ jobs:
           - **Chrome** (\`chrome-mv3-${SHORT_SHA}\`): unzip it, open \`chrome://extensions\`, turn on Developer mode, then **Load unpacked** and pick the folder.
           - **Firefox** (\`firefox-mv3-${SHORT_SHA}\`): open \`about:debugging#/runtime/this-firefox\`, **Load Temporary Add-on…**, and pick the downloaded zip as it is. It's gone when Firefox restarts.
           EOF
-
-  broker:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Build broker image
-        run: docker build -f server/Dockerfile -t yt-broker:ci .
-
-      - name: Smoke test the broker
-        run: |
-          set -euo pipefail
-          docker run -d --name broker \
-            -e GOOGLE_CLIENT_ID=ci-id \
-            -e GOOGLE_CLIENT_SECRET=ci-secret \
-            -p 3847:3847 yt-broker:ci
-
-          for _ in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:3847/health > /dev/null 2>&1; then break; fi
-            sleep 1
-          done
-
-          curl -fsS http://127.0.0.1:3847/health
-          # The image has no curl/wget, so the healthcheck must work via bun.
-          docker exec broker bun -e "const r = await fetch('http://127.0.0.1:3847/health'); if (!r.ok) process.exit(1)"
-
-          # Firefox's loopback redirect must be accepted; anything else rejected.
-          code=$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
-            http://127.0.0.1:3847/auth/exchange -H 'Content-Type: application/json' \
-            -d '{"code":"c","code_verifier":"v","redirect_uri":"https://evil.com/"}')
-          [ "$code" = "400" ] || { echo "::error::expected 400 for a bad redirect_uri, got $code"; exit 1; }
-
-          echo "Broker smoke test passed."
 
   # Firefox drops an unsigned add-on when it restarts, so on dev the Firefox
   # build is also signed on AMO's unlisted channel (R149). Chrome keeps an

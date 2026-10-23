@@ -1,213 +1,50 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
+import { beforeEach, expect, it, vi } from "vitest"
 import { fakeBrowser } from "wxt/testing/fake-browser"
-
-import { ThemeProvider } from "@/components/theme-provider"
 import App from "@/entrypoints/options/App"
-import * as auth from "@/lib/auth"
+import { ThemeProvider } from "@/components/theme-provider"
 import * as store from "@/lib/storage"
 
-vi.mock("@/lib/auth", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/auth")>()
-  return {
-    ...actual,
-    getRedirectURI: vi.fn(() => "https://ext-id.chromiumapp.org/"),
-    signInWithBroker: vi.fn(),
-    signInWithOwnCredentials: vi.fn(),
-    signOut: vi.fn(),
-    isAuthorized: vi.fn(async () => false)
-  }
-})
-
-function renderOptions() {
-  return render(
-    <ThemeProvider>
-      <App />
-    </ThemeProvider>
-  )
-}
-
-// App lazy-loads SettingsPanel. Warm the module here so the cold dynamic
-// import (1-2s under a parallel full run) is paid under the hook timeout
-// rather than eating the first findByRole's 1s budget.
-beforeAll(async () => {
+beforeEach(async () => {
+  const window = await fakeBrowser.windows.create({})
+  vi.spyOn(fakeBrowser.windows, "getCurrent").mockImplementation(async () => (window))
+  vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })))
   await import("@/components/SettingsPanel")
 })
 
-beforeEach(() => {
-  fakeBrowser.reset()
-  vi.mocked(auth.isAuthorized).mockResolvedValue(false)
-  vi.stubGlobal(
-    "matchMedia",
-    vi.fn(() => ({
-      matches: false,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn()
-    }))
-  )
+it("replaces Google authorization controls with session consent and keeps theme settings", async () => {
+  render(<ThemeProvider><App /></ThemeProvider>)
+  expect(await screen.findByRole("button", { name: "Agree and continue" })).toBeInTheDocument()
+  expect(screen.queryByText(/Sign in with Google/)).not.toBeInTheDocument()
+  expect(screen.getByText("Theme")).toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "Clear All Data" })).toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "Record Shortcut" })).not.toBeInTheDocument()
+})
+it("can revoke access without claiming to sign out of YouTube", async () => {
+  await store.sessionConsent.setValue(store.CONSENT_VERSION)
+  const send = vi.spyOn(fakeBrowser.runtime, "sendMessage").mockImplementation(async () => ({ kind: "signedOut" }))
+  render(<ThemeProvider><App /></ThemeProvider>)
+  await userEvent.click(await screen.findByRole("button", { name: "Revoke access" }))
+  await waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ action: "revokeSession" })))
+  expect(screen.queryByRole("button", { name: "Sign Out" })).not.toBeInTheDocument()
+})
+it("keeps Clear All Data reachable before agreement", async () => {
+  const send = vi.spyOn(fakeBrowser.runtime, "sendMessage").mockImplementation(async () => ({ ok: true }))
+  render(<ThemeProvider><App /></ThemeProvider>)
+  await userEvent.click(await screen.findByRole("button", { name: "Clear All Data" }))
+  await waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ action: "clearAllData" })))
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument()
 })
 
-describe("signed out", () => {
-  it("offers one-click sign in", async () => {
-    renderOptions()
-    expect(
-      await screen.findByRole("button", { name: /sign in with google/i })
-    ).toBeInTheDocument()
-  })
-
-  it("calls the broker sign-in flow", async () => {
-    vi.mocked(auth.signInWithBroker).mockResolvedValue(undefined)
-    renderOptions()
-
-    await userEvent.click(
-      await screen.findByRole("button", { name: /sign in with google/i })
-    )
-
-    expect(auth.signInWithBroker).toHaveBeenCalled()
-  })
-
-  it("shows the sign-out controls once authorized", async () => {
-    vi.mocked(auth.signInWithBroker).mockImplementation(async () => {
-      vi.mocked(auth.isAuthorized).mockResolvedValue(true)
-    })
-    renderOptions()
-
-    await userEvent.click(
-      await screen.findByRole("button", { name: /sign in with google/i })
-    )
-
-    expect(
-      await screen.findByRole("button", { name: /sign out/i })
-    ).toBeInTheDocument()
-  })
-
-  it("surfaces a sign-in failure instead of silently doing nothing", async () => {
-    vi.mocked(auth.signInWithBroker).mockRejectedValue(
-      new Error("Auth server is unreachable")
-    )
-    renderOptions()
-
-    await userEvent.click(
-      await screen.findByRole("button", { name: /sign in with google/i })
-    )
-
-    expect(
-      await screen.findByText(/Auth server is unreachable/i)
-    ).toBeInTheDocument()
-    // And must not claim success.
-    expect(screen.queryByRole("button", { name: /sign out/i })).toBeNull()
-  })
-})
-
-describe("advanced: own credentials", () => {
-  it("is collapsed by default", async () => {
-    renderOptions()
-    await screen.findByRole("button", { name: /advanced/i })
-    expect(screen.queryByLabelText(/client id/i)).toBeNull()
-  })
-
-  it("reveals the redirect URI to copy into the Google console", async () => {
-    renderOptions()
-
-    await userEvent.click(await screen.findByRole("button", { name: /advanced/i }))
-
-    // Users must copy this verbatim -- Google matches byte-for-byte.
-    expect(
-      await screen.findByText("https://ext-id.chromiumapp.org/")
-    ).toBeInTheDocument()
-  })
-
-  it("persists the credentials as they are typed", async () => {
-    renderOptions()
-    await userEvent.click(await screen.findByRole("button", { name: /advanced/i }))
-
-    await userEvent.type(await screen.findByLabelText(/client id/i), "my-id")
-
-    await waitFor(async () => {
-      await expect(store.clientID.getValue()).resolves.toBe("my-id")
-    })
-  })
-
-  it("masks the client secret", async () => {
-    renderOptions()
-    await userEvent.click(await screen.findByRole("button", { name: /advanced/i }))
-
-    const secret = await screen.findByLabelText(/client secret/i)
-    expect(secret).toHaveAttribute("type", "password")
-  })
-
-  it("authorizes with the entered credentials", async () => {
-    vi.mocked(auth.signInWithOwnCredentials).mockResolvedValue(undefined)
-    await store.clientID.setValue("saved-id")
-    await store.clientSecret.setValue("saved-secret")
-
-    renderOptions()
-    await userEvent.click(await screen.findByRole("button", { name: /advanced/i }))
-    await userEvent.click(
-      await screen.findByRole("button", { name: /authorize with own credentials/i })
-    )
-
-    expect(auth.signInWithOwnCredentials).toHaveBeenCalledWith(
-      "saved-id",
-      "saved-secret"
-    )
-  })
-})
-
-describe("signed in", () => {
-  beforeEach(() => {
-    vi.mocked(auth.isAuthorized).mockResolvedValue(true)
-  })
-
-  it("hides the advanced credentials panel", async () => {
-    renderOptions()
-    await screen.findByRole("button", { name: /sign out/i })
-    expect(screen.queryByRole("button", { name: /advanced/i })).toBeNull()
-  })
-
-  it("signs out", async () => {
-    vi.mocked(auth.signOut).mockImplementation(async () => {
-      vi.mocked(auth.isAuthorized).mockResolvedValue(false)
-    })
-    renderOptions()
-
-    await userEvent.click(await screen.findByRole("button", { name: /sign out/i }))
-
-    expect(auth.signOut).toHaveBeenCalled()
-    expect(
-      await screen.findByRole("button", { name: /sign in with google/i })
-    ).toBeInTheDocument()
-  })
-
-  it("clears all extension data", async () => {
-    await store.playlists.setValue(["PL1"])
-    await store.clientID.setValue("cid")
-    vi.mocked(auth.isAuthorized).mockResolvedValue(true)
-
-    renderOptions()
-    await userEvent.click(
-      await screen.findByRole("button", { name: /clear all data/i })
-    )
-
-    await waitFor(async () => {
-      await expect(store.playlists.getValue()).resolves.toEqual([])
-      await expect(store.clientID.getValue()).resolves.toBe("")
-    })
-  })
-})
-
-describe("theme toggle", () => {
-  it("offers all three modes and persists a choice", async () => {
-    renderOptions()
-
-    const group = await screen.findByRole("group", { name: /theme/i })
-    expect(group).toBeInTheDocument()
-
-    await userEvent.click(await screen.findByRole("button", { name: /^dark$/i }))
-
-    await waitFor(async () => {
-      await expect(store.theme.getValue()).resolves.toBe("dark")
-    })
-  })
+it("offers the same shared settings without a live account", async () => {
+  await store.sessionConsent.setValue(store.CONSENT_VERSION)
+  vi.spyOn(fakeBrowser.runtime, "sendMessage").mockImplementation(async () => ({ kind: "noTab" }))
+  render(<ThemeProvider><App /></ThemeProvider>)
+  expect(await screen.findByRole("button", { name: "Record Shortcut" })).toBeEnabled()
+  expect(screen.getByRole("spinbutton", { name: "Required watch percentage" })).toBeEnabled()
+  expect(screen.getByRole("switch", { name: "Toast notifications" })).toBeEnabled()
+  expect(screen.getByRole("switch", { name: "One-click queue button" })).toBeEnabled()
+  expect(screen.getByRole("switch", { name: "Right-click opens video menu" })).toBeEnabled()
+  expect(screen.queryByText("Auto-add playlists")).not.toBeInTheDocument()
 })

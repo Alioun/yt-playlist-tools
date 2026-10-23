@@ -1,760 +1,447 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { fakeBrowser } from "wxt/testing/fake-browser"
-
 import background from "@/entrypoints/background"
 import * as store from "@/lib/storage"
 import * as youtube from "@/lib/youtube"
+import * as sessionService from "@/lib/session"
 
-vi.mock("@/lib/youtube", () => ({
-  fetchUserPlaylists: vi.fn(),
-  addVideoToPlaylist: vi.fn(),
-  fetchVideoChannel: vi.fn(),
-  fetchChannel: vi.fn()
-}))
-vi.mock("@/lib/video-cache", () => ({
-  isVideoCached: vi.fn(async () => false),
-  cacheVideo: vi.fn(async () => {})
-}))
+vi.mock("@/lib/youtube", () => ({ fetchUserPlaylists: vi.fn(), addVideoToPlaylist: vi.fn(), fetchVideoChannel: vi.fn(), fetchChannel: vi.fn() }))
+vi.mock("@/lib/session", async original => ({ ...await original<typeof import("@/lib/session")>(), findSession: vi.fn(), checkSession: vi.fn() }))
 
-const TAB_ID = 42
+type Listener = Parameters<typeof fakeBrowser.runtime.onMessage.addListener>[0]
+type Sender = Parameters<Listener>[1]
+let listener: Listener | undefined
+let origin: Sender
+let ui: Sender
+let windowId: number
+const snapshot = { tabId: 42, accountKey: "account0000000001", incognito: false, consentGeneration: "generation-1" }
+const videoId = "abcdefghijk"
 
-/** Captures toasts the background pushes to the content script. */
-let toasts: string[] = []
-
-/**
- * What each tab's content script answers when the background reads its
- * player, keyed by tab ID. A missing tab answers nothing, as on a tab with no
- * content script.
- */
-let pages: Record<number, unknown> = {}
-
-type Listener = (
-  message: unknown,
-  sender: { tab?: { id: number } },
-  sendResponse: (response?: unknown) => void
-) => unknown
-
-let listener: Listener
-
-function send(message: unknown, withTab = true) {
-  const responses: unknown[] = []
-  const returned = listener(
-    message,
-    withTab ? { tab: { id: TAB_ID } } : {},
-    (r) => responses.push(r)
-  )
-  return { returned, responses }
+function send(message: Record<string, unknown>, sender = origin): Promise<unknown> {
+  return new Promise(resolve => {
+    if (!listener) throw new Error("Background listener missing")
+    expect(listener({ windowId, ...message }, sender, resolve)).toBe(true)
+  })
 }
-
-/** Resolves once sendResponse has been called (or times out). */
-async function awaitResponse(message: unknown) {
-  let resolve!: (v: unknown) => void
-  const promise = new Promise<unknown>((r) => (resolve = r))
-  listener(message, { tab: { id: TAB_ID } }, resolve)
-  return promise
-}
-
-const flush = () => new Promise((r) => setTimeout(r, 0))
 
 beforeEach(async () => {
-  fakeBrowser.reset()
-  toasts = []
-  pages = {}
-  // vi.mock factory mocks are not reset by `restoreMocks`, so call counts
-  // would accumulate across tests.
   vi.clearAllMocks()
-  const cache = await import("@/lib/video-cache")
-  vi.mocked(cache.isVideoCached).mockResolvedValue(false)
-  vi.mocked(cache.cacheVideo).mockResolvedValue(undefined)
-  vi.mocked(youtube.addVideoToPlaylist).mockResolvedValue(true)
-  vi.mocked(youtube.fetchUserPlaylists).mockResolvedValue([])
-  vi.mocked(youtube.fetchVideoChannel).mockResolvedValue(null)
-
-  // fakeBrowser does not implement tabs.sendMessage.
-  Object.assign(fakeBrowser.tabs, {
-    sendMessage: vi.fn(
-      async (id: number, msg: { action?: string; toastMessage?: string }) => {
-        if (msg?.toastMessage) toasts.push(msg.toastMessage)
-        if (msg?.action === "readPlayerChannel" && id in pages) {
-          return { page: pages[id] }
-        }
-      }
-    )
-  })
-
-  const captured: Listener[] = []
-  Object.assign(fakeBrowser.runtime, {
-    onMessage: { addListener: (fn: Listener) => captured.push(fn) }
-  })
-  vi.spyOn(console, "error").mockImplementation(() => {})
-
+  await store.sessionGeneration.setValue("generation-1")
+  await store.sessionConsent.setValue(store.CONSENT_VERSION)
+  const window = await fakeBrowser.windows.create({ incognito: false })
+  if (!window || window.id === undefined) throw new Error("Window missing")
+  windowId = window.id
+  const tab = await fakeBrowser.tabs.create({ url: "https://www.youtube.com/watch?v=abcdefghijk", windowId })
+  origin = { id: fakeBrowser.runtime.id, url: tab.url, frameId: 0, tab: { ...tab, id: 42, incognito: false } }
+  ui = { id: fakeBrowser.runtime.id, url: fakeBrowser.runtime.getURL("/popup.html") }
+  vi.spyOn(fakeBrowser.runtime.onMessage, "addListener").mockImplementation(fn => { listener = fn })
+  vi.spyOn(sessionService, "reconcileScripts")
+  vi.spyOn(fakeBrowser.scripting, "getRegisteredContentScripts").mockImplementation(async () => [])
+  vi.spyOn(fakeBrowser.scripting, "registerContentScripts").mockResolvedValue()
+  vi.spyOn(fakeBrowser.scripting, "unregisterContentScripts").mockResolvedValue()
+  vi.spyOn(fakeBrowser.tabs, "query").mockImplementation(async () => [])
+  vi.spyOn(fakeBrowser.tabs, "sendMessage").mockImplementation(async () => (undefined))
+  vi.mocked(sessionService.findSession).mockImplementation(async () => ({
+    kind: "ready", session: { ...snapshot, consentGeneration: await store.sessionGeneration.getValue() }
+  }))
+  vi.mocked(sessionService.checkSession).mockImplementation(async () => (undefined))
+  vi.mocked(youtube.fetchUserPlaylists).mockImplementation(async () => ([{ id: "PL1", title: "Owned" }]))
+  vi.mocked(youtube.addVideoToPlaylist).mockImplementation(async () => ({ alreadyIn: false }))
+  vi.mocked(youtube.fetchVideoChannel).mockImplementation(async () => (null))
+  await store.saveAccountSetup(snapshot, { ...store.emptySetup(), playlists: ["PL1"], shortcutPlaylistId: "WL" })
   background.main()
-  listener = captured[0]!
+  await sessionService.reconcileScripts()
 })
 
-describe("the onMessage contract", () => {
-  it("returns true only for the request that answers asynchronously", async () => {
-    // Chrome ignores a returned Promise (crbug 1185241), so `return true` +
-    // sendResponse is the only cross-browser pattern. Returning true on a
-    // branch that never calls sendResponse would hang the sender forever.
-    await store.accessToken.setValue("at")
+afterEach(() => vi.useRealTimers())
 
-    expect(send({ action: "fetchPlaylists" }).returned).toBe(true)
-    expect(send({ action: "getChannelForTab", tabId: 1, videoId: "v" }, false).returned).toBe(true)
-    expect(send({ action: "lookUpChannel", query: { by: "handle", handle: "@x" } }, false).returned).toBe(true)
-    expect(send({ action: "addVideoToPlaylists", videoId: "v" }).returned).toBe(false)
-    expect(send({ action: "addVideoToShortcutPlaylist", videoId: "v" }).returned).toBe(false)
-    expect(send({ action: "unknown" }).returned).toBe(false)
+describe("trusted message boundary", () => {
+  it("refuses page callers that ask for extension-page data", async () => {
+    await expect(send({ action: "fetchPlaylists" })).resolves.toMatchObject({ kind: "unavailable" })
+    expect(youtube.fetchUserPlaylists).not.toHaveBeenCalled()
   })
-
-  it("ignores tab-scoped actions with no sender tab", () => {
-    expect(send({ action: "addVideoToPlaylists", videoId: "v" }, false).returned).toBe(false)
+  it("refuses foreign senders and subframes", async () => {
+    await expect(send({ action: "addVideoToPlaylists", videoId, accountKey: snapshot.accountKey, consentGeneration: snapshot.consentGeneration }, { ...origin, id: "other" })).resolves.toMatchObject({ kind: "unavailable" })
+    await expect(send({ action: "addVideoToPlaylists", videoId, accountKey: snapshot.accountKey, consentGeneration: snapshot.consentGeneration }, { ...origin, frameId: 3 })).resolves.toMatchObject({ kind: "unavailable" })
+    expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
   })
-})
-
-describe("fetchPlaylists", () => {
-  it("reports the unauthorized case with the exact string the popup matches", async () => {
-    // The popup turns this literal into "Sign in from Options"; renaming it
-    // here silently degrades the popup to showing a raw string.
-    await expect(awaitResponse({ action: "fetchPlaylists" })).resolves.toEqual({
-      error: "No access token",
-      playlists: []
-    })
+  it("uses trusted window privacy instead of a payload incognito flag", async () => {
+    await send({ action: "fetchPlaylists", incognito: true }, ui)
+    expect(sessionService.findSession).toHaveBeenCalledWith({ windowId, incognito: false })
   })
-
-  it("returns the fetched playlists", async () => {
-    await store.accessToken.setValue("at")
-    vi.mocked(youtube.fetchUserPlaylists).mockResolvedValue([
-      { id: "PL1", title: "One" }
-    ])
-
-    await expect(awaitResponse({ action: "fetchPlaylists" })).resolves.toEqual({
-      playlists: [{ id: "PL1", title: "One" }]
-    })
+  it("does no page operation before consent", async () => {
+    await store.sessionConsent.setValue(0)
+    await expect(send({ action: "fetchPlaylists" }, ui)).resolves.toMatchObject({ kind: "consent" })
+    expect(sessionService.findSession).not.toHaveBeenCalled()
+    expect(youtube.fetchUserPlaylists).not.toHaveBeenCalled()
   })
-
-  it("caches the result so the next popup open paints instantly", async () => {
-    await store.accessToken.setValue("at")
-    vi.mocked(youtube.fetchUserPlaylists).mockResolvedValue([
-      { id: "PL1", title: "One" }
-    ])
-
-    await awaitResponse({ action: "fetchPlaylists" })
-
-    await expect(store.cachedPlaylists.getValue()).resolves.toEqual([
-      { id: "PL1", title: "One" }
-    ])
+  it("does not authorize legacy claims from playlist enumeration", async () => {
+    await store.playlists.setValue(["PLold"])
+    await expect(send({ action: "claimLegacy", session: snapshot }, ui)).resolves.toMatchObject({ kind: "unavailable" })
+    expect(await store.playlists.getValue()).toEqual(["PLold"])
+    expect((await store.getAccountSetup(snapshot)).playlists).toEqual(["PL1"])
+    expect(youtube.fetchUserPlaylists).not.toHaveBeenCalled()
   })
-
-  it("leaves the cache untouched when the fetch fails", async () => {
-    await store.accessToken.setValue("at")
-    await store.cachedPlaylists.setValue([{ id: "old", title: "Old" }])
-    vi.mocked(youtube.fetchUserPlaylists).mockRejectedValue(new Error("quota"))
-
-    await awaitResponse({ action: "fetchPlaylists" })
-
-    // Stale data beats an empty popup.
-    await expect(store.cachedPlaylists.getValue()).resolves.toEqual([
-      { id: "old", title: "Old" }
-    ])
-  })
-
-  it("still answers when the API throws", async () => {
-    await store.accessToken.setValue("at")
-    vi.mocked(youtube.fetchUserPlaylists).mockRejectedValue(new Error("quota"))
-
-    const response = (await awaitResponse({ action: "fetchPlaylists" })) as {
-      error: string
-    }
-    expect(response.error).toMatch(/quota/)
-  })
-
-  it("still answers when storage itself fails", async () => {
-    // The storage read used to sit outside the try block, so a rejection left
-    // sendResponse uncalled and the popup stuck on "Loading..." forever.
-    vi.spyOn(store.accessToken, "getValue").mockRejectedValue(new Error("boom"))
-
-    const response = (await awaitResponse({ action: "fetchPlaylists" })) as {
-      error: string
-    }
-    expect(response.error).toMatch(/boom/)
+  it("refuses a private snapshot from a normal caller", async () => {
+    await expect(send({ action: "changeSetup", session: { ...snapshot, incognito: true }, change: { kind: "shortcut", playlistId: "PL1" } }, ui)).resolves.toMatchObject({ kind: "accountChanged" })
   })
 })
 
-describe("addVideoToPlaylists", () => {
-  beforeEach(async () => {
-    await store.accessToken.setValue("at")
+describe("automatic and shortcut adds", () => {
+  it("binds the selected account's writes to the original tab", async () => {
+    await expect(send({ action: "addVideoToPlaylists", videoId, accountKey: snapshot.accountKey, consentGeneration: snapshot.consentGeneration })).resolves.toEqual({ ok: true })
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith(snapshot, "PL1", videoId, expect.any(Number))
   })
-
-  it("adds the video to every selected playlist", async () => {
-    await store.playlists.setValue(["PL1", "PL2"])
-
-    send({ action: "addVideoToPlaylists", videoId: "vid" })
-    await flush()
-    await flush()
-
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(2)
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL1", "vid", "at")
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL2", "vid", "at")
+  it("reports authoritative membership as already present", async () => {
+    vi.mocked(youtube.addVideoToPlaylist).mockImplementation(async () => ({ alreadyIn: true }))
+    await send({ action: "addVideoToPlaylists", videoId, accountKey: snapshot.accountKey, consentGeneration: snapshot.consentGeneration })
+    expect(fakeBrowser.tabs.sendMessage).toHaveBeenCalledWith(42, { action: "showToast", toastMessage: "Video already in playlist." })
   })
-
-  it("tells the user when no playlists are selected", async () => {
-    // Previously the loop simply did not run: the watch threshold passed and
-    // nothing happened at all, with no toast and no log.
-    await store.playlists.setValue([])
-
-    send({ action: "addVideoToPlaylists", videoId: "vid" })
-    await flush()
-    await flush()
-
+  it("applies allowlists to unknown channels and leaves shortcut behavior independent", async () => {
+    await store.saveAccountSetup(snapshot, { ...store.emptySetup(), playlists: ["PL1"], shortcutPlaylistId: "PL1", filters: { PL1: { mode: "allow", enabled: true, channels: [] } } })
+    await send({ action: "addVideoToPlaylists", videoId, accountKey: snapshot.accountKey, consentGeneration: snapshot.consentGeneration })
     expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
-    expect(toasts.join(" ")).toMatch(/no auto-add playlists/i)
+    await send({ action: "addVideoToShortcutPlaylist", videoId, accountKey: snapshot.accountKey, consentGeneration: snapshot.consentGeneration })
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith(snapshot, "PL1", videoId, expect.any(Number))
   })
-
-  it("tells the user when not signed in", async () => {
-    await store.accessToken.setValue("")
-    await store.playlists.setValue(["PL1"])
-
-    send({ action: "addVideoToPlaylists", videoId: "vid" })
-    await flush()
-    await flush()
-
-    expect(toasts.join(" ")).toMatch(/no access token/i)
-    expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
+  it("stops after a write error without retrying or switching the account", async () => {
+    await store.saveAccountSetup(snapshot, { ...store.emptySetup(), playlists: ["PL1", "PL2"] })
+    vi.mocked(youtube.addVideoToPlaylist).mockRejectedValue(new sessionService.SessionFailure("unconfirmed"))
+    await expect(send({ action: "addVideoToPlaylists", videoId, accountKey: snapshot.accountKey, consentGeneration: snapshot.consentGeneration })).resolves.toMatchObject({ kind: "unconfirmed" })
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledOnce()
+    expect(sessionService.findSession).not.toHaveBeenCalled()
   })
-
-  it("does not call the API when the message carries no videoId", async () => {
-    // JSON.stringify drops an undefined videoId, so the request would go out
-    // malformed and come back as a generic "failed to add".
-    await store.playlists.setValue(["PL1"])
-
-    send({ action: "addVideoToPlaylists" })
-    await flush()
-    await flush()
-
-    expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
+  it("expires queued adds before any delayed dispatch", async () => {
+    let release: ((result: { alreadyIn: boolean }) => void) | undefined
+    const waiting = new Promise<{ alreadyIn: boolean }>(resolve => { release = resolve })
+    vi.mocked(youtube.addVideoToPlaylist).mockImplementationOnce(() => (waiting))
+    const first = send({ action: "addVideoToPlaylists", videoId, accountKey: snapshot.accountKey, consentGeneration: snapshot.consentGeneration })
+    await vi.waitFor(() => expect(youtube.addVideoToPlaylist).toHaveBeenCalledOnce())
+    const second = send({ action: "addVideoToPlaylists", videoId: "lmnopqrstuv", accountKey: snapshot.accountKey, consentGeneration: snapshot.consentGeneration })
+    await new Promise(resolve => setTimeout(resolve, 0))
+    const now = Date.now()
+    vi.spyOn(Date, "now").mockImplementation(() => (now + 10001))
+    release?.({ alreadyIn: false })
+    await first
+    await expect(second).resolves.toMatchObject({ kind: "unavailable" })
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledOnce()
+  })
+  it("refuses changes when the original tab's account changed", async () => {
+    vi.mocked(sessionService.checkSession).mockRejectedValue(new sessionService.SessionFailure("accountChanged"))
+    await expect(send({ action: "changeSetup", session: snapshot, change: { kind: "auto", playlistId: "PL2", checked: true } }, ui)).resolves.toMatchObject({ kind: "accountChanged" })
+    expect((await store.getAccountSetup(snapshot)).playlists).toEqual(["PL1"])
   })
 })
 
-describe("addVideoToShortcutPlaylist", () => {
-  beforeEach(async () => {
-    await store.accessToken.setValue("at")
-  })
-
-  it("adds to the configured shortcut playlist", async () => {
-    await store.addToPlaylistID.setValue("PL-short")
-
-    send({ action: "addVideoToShortcutPlaylist", videoId: "vid" })
-    await flush()
-    await flush()
-
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL-short", "vid", "at")
-  })
-
-  it("tells the user when no shortcut playlist is configured", async () => {
-    await store.addToPlaylistID.setValue("")
-
-    send({ action: "addVideoToShortcutPlaylist", videoId: "vid" })
-    await flush()
-    await flush()
-
-    expect(toasts.join(" ")).toMatch(/no shortcut playlist/i)
-    expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
-  })
-})
-
-describe("duplicate prevention", () => {
-  beforeEach(async () => {
-    await store.accessToken.setValue("at")
-    await store.playlists.setValue(["PL1"])
-  })
-
-  it("skips a cached video when the setting is on", async () => {
-    const { isVideoCached } = await import("@/lib/video-cache")
-    vi.mocked(isVideoCached).mockResolvedValue(true)
-    await store.preventDuplicates.setValue(true)
-
-    send({ action: "addVideoToPlaylists", videoId: "vid" })
-    await flush()
-    await flush()
-
-    expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
-    expect(toasts.join(" ")).toMatch(/already in playlist/i)
-  })
-
-  it("adds anyway when the setting is off", async () => {
-    const { isVideoCached } = await import("@/lib/video-cache")
-    vi.mocked(isVideoCached).mockResolvedValue(true)
-    await store.preventDuplicates.setValue(false)
-
-    send({ action: "addVideoToPlaylists", videoId: "vid" })
-    await flush()
-    await flush()
-
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalled()
-  })
-
-  it("records a successful add so the next one is suppressed", async () => {
-    const { cacheVideo } = await import("@/lib/video-cache")
-    await store.preventDuplicates.setValue(true)
-
-    send({ action: "addVideoToPlaylists", videoId: "vid" })
-    await flush()
-    await flush()
-
-    expect(cacheVideo).toHaveBeenCalledWith("PL1", "vid")
-  })
-
-  it("does not record a failed add", async () => {
-    const { cacheVideo } = await import("@/lib/video-cache")
-    vi.mocked(youtube.addVideoToPlaylist).mockResolvedValue(false)
-
-    send({ action: "addVideoToPlaylists", videoId: "vid" })
-    await flush()
-    await flush()
-
-    expect(cacheVideo).not.toHaveBeenCalled()
-    expect(toasts.join(" ")).toMatch(/failed to add/i)
-  })
-})
-
-describe("auto-add path", () => {
-  beforeEach(async () => {
-    await store.accessToken.setValue("at")
-    await store.preventDuplicates.setValue(true)
-  })
-
-  it("checks every playlist for duplicates, then adds only the new ones", async () => {
-    const { isVideoCached } = await import("@/lib/video-cache")
-    vi.mocked(isVideoCached).mockImplementation(async (id) => id === "PL2")
-    await store.playlists.setValue(["PL1", "PL2", "PL3"])
-
-    send({ action: "addVideoToPlaylists", videoId: "vid" })
-    await flush()
-    await flush()
-
-    expect(isVideoCached).toHaveBeenCalledTimes(3)
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(2)
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL1", "vid", "at")
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL3", "vid", "at")
-    // Duplicate checks run before any add, so their toasts come first.
-    expect(toasts).toEqual([
-      "Video already in playlist.",
-      "Added vid to playlist",
-      "Added vid to playlist"
-    ])
-  })
-
-  it("adds nothing when every playlist already has the video", async () => {
-    const { isVideoCached } = await import("@/lib/video-cache")
-    vi.mocked(isVideoCached).mockResolvedValue(true)
-    await store.playlists.setValue(["PL1", "PL2"])
-
-    send({ action: "addVideoToPlaylists", videoId: "vid" })
-    await flush()
-    await flush()
-
-    expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
-    expect(toasts).toEqual([
-      "Video already in playlist.",
-      "Video already in playlist."
-    ])
-  })
-})
-
-describe("shortcut path", () => {
-  beforeEach(async () => {
-    await store.accessToken.setValue("at")
-    await store.addToPlaylistID.setValue("PL-short")
-  })
-
-  it("keeps its own duplicate check", async () => {
-    const { isVideoCached } = await import("@/lib/video-cache")
-    vi.mocked(isVideoCached).mockResolvedValue(true)
-    await store.preventDuplicates.setValue(true)
-
-    send({ action: "addVideoToShortcutPlaylist", videoId: "vid" })
-    await flush()
-    await flush()
-
-    expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
-    expect(toasts).toEqual(["Video already in playlist."])
-  })
-
-  it("ignores the auto-add playlists", async () => {
-    await store.playlists.setValue(["PL1", "PL2"])
-
-    send({ action: "addVideoToShortcutPlaylist", videoId: "vid" })
-    await flush()
-    await flush()
-
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(1)
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL-short", "vid", "at")
-    expect(toasts).toEqual(["Added vid to playlist"])
-  })
-
-  it("tells the user when not signed in", async () => {
-    await store.accessToken.setValue("")
-
-    send({ action: "addVideoToShortcutPlaylist", videoId: "vid" })
-    await flush()
-    await flush()
-
-    expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
-    expect(toasts.join(" ")).toMatch(/no access token/i)
-  })
-})
-
-describe("channel filters on auto-add", () => {
-  const LOFI = { channelId: "UClofi", title: "Lofi Girl" }
-
-  beforeEach(async () => {
-    await store.accessToken.setValue("at")
-    await store.cachedPlaylists.setValue([
-      { id: "PL1", title: "Learning" },
-      { id: "PL2", title: "Music" },
-      { id: "PL3", title: "Cooking" }
-    ])
-    vi.mocked(youtube.fetchVideoChannel).mockResolvedValue(LOFI)
-    vi.spyOn(console, "info").mockImplementation(() => {})
-  })
-
-  async function autoAdd() {
-    send({ action: "addVideoToPlaylists", videoId: "vid" })
-    for (let i = 0; i < 5; i++) await flush()
-  }
-
-  it("skips a playlist that denies the channel and still adds to the others", async () => {
-    await store.playlists.setValue(["PL1", "PL2"])
-    await store.channelFilters.setValue({
-      PL1: { mode: "deny", enabled: true, channels: ["UClofi"] }
-    })
-
-    await autoAdd()
-
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(1)
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL2", "vid", "at")
-    expect(toasts).toEqual([
-      "Lofi Girl filtered out of Learning",
-      "Added vid to playlist"
-    ])
-  })
-
-  it("names every blocked playlist in one toast", async () => {
-    await store.playlists.setValue(["PL1", "PL2", "PL3"])
-    await store.channelFilters.setValue({
-      PL1: { mode: "deny", enabled: true, channels: ["UClofi"] },
-      PL3: { mode: "deny", enabled: true, channels: ["UClofi"] }
-    })
-
-    await autoAdd()
-
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(1)
-    expect(toasts.filter((t) => t.includes("filtered"))).toEqual([
-      "Lofi Girl filtered out of Learning, Cooking"
-    ])
-  })
-
-  it("logs the decision, so it is still recorded with toasts off", async () => {
-    await store.playlists.setValue(["PL1"])
-    await store.channelFilters.setValue({
-      PL1: { mode: "deny", enabled: true, channels: ["UClofi"] }
-    })
-
-    await autoAdd()
-
-    expect(console.info).toHaveBeenCalledWith(
-      "[YT Playlist Tools]: filtered Lofi Girl filtered out of Learning"
-    )
+describe("generation-bound messages and queues", () => {
+  it.each([undefined, null, 1, "", " "])("rejects malformed add generation %s", async consentGeneration => {
+    await expect(send({ action: "addVideoToPlaylists", accountKey: snapshot.accountKey, videoId, consentGeneration })).resolves.toMatchObject({ kind: "unavailable" })
     expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
   })
 
-  it("makes no lookup when no remaining playlist has a filter switched on", async () => {
-    await store.playlists.setValue(["PL1", "PL2"])
-    await store.channelFilters.setValue({
-      PL1: { mode: "deny", enabled: false, channels: ["UClofi"] },
-      PL3: { mode: "deny", enabled: true, channels: ["UClofi"] }
-    })
+  it("rejects a stale content sender after regrant", async () => {
+    await store.sessionGeneration.setValue("generation-after-regrant")
+    await expect(send({ action: "addVideoToPlaylists", accountKey: snapshot.accountKey, videoId, consentGeneration: snapshot.consentGeneration })).resolves.toMatchObject({ kind: "revoked" })
+    expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
+  })
 
-    await autoAdd()
+  it("rejects stale or missing UI snapshot generations", async () => {
+    const change = { kind: "auto", playlistId: "PL2", checked: true }
+    await expect(send({ action: "changeSetup", session: { ...snapshot, consentGeneration: undefined }, change }, ui)).resolves.toMatchObject({ kind: "accountChanged" })
+    await store.sessionGeneration.setValue("generation-after-regrant")
+    await expect(send({ action: "changeSetup", session: snapshot, change }, ui)).resolves.toMatchObject({ kind: "revoked" })
+    expect((await store.getAccountSetup(snapshot)).playlists).toEqual(["PL1"])
+  })
 
-    expect(youtube.fetchVideoChannel).not.toHaveBeenCalled()
+  it("passes generation and expiry to queue dispatch and refuses an old sender", async () => {
+    const inject = vi.spyOn(fakeBrowser.scripting, "executeScript").mockImplementation(async () => [{ frameId: 0, result: true }])
+    await expect(send({ action: "queueVideo", videoId, consentGeneration: snapshot.consentGeneration })).resolves.toEqual({ ok: true })
+    expect(inject).toHaveBeenCalledWith(expect.objectContaining({
+      func: sessionService.queueInPage, args: [videoId, snapshot.consentGeneration, expect.any(Number)]
+    }))
+    await store.sessionGeneration.setValue("generation-after-regrant")
+    await expect(send({ action: "queueVideo", videoId, consentGeneration: snapshot.consentGeneration })).resolves.toMatchObject({ kind: "revoked" })
+    expect(inject).toHaveBeenCalledOnce()
+  })
+
+  it("does not renew a queue job's lifetime while its consent check is pending", async () => {
+    vi.useFakeTimers()
+    const started = Date.now()
+    const getGeneration = store.sessionGeneration.getValue.bind(store.sessionGeneration)
+    let release = () => {}
+    const read = vi.spyOn(store.sessionGeneration, "getValue")
+      .mockImplementationOnce(getGeneration)
+      .mockImplementationOnce(() => new Promise(resolve => { release = () => resolve(snapshot.consentGeneration) }))
+    const inject = vi.spyOn(fakeBrowser.scripting, "executeScript").mockImplementation(async () => [{ frameId: 0, result: false }])
+    const pending = send({ action: "queueVideo", videoId, consentGeneration: snapshot.consentGeneration })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(read).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(10001)
+    release()
+    await expect(pending).resolves.toEqual({ ok: false })
+    expect(inject).toHaveBeenCalledWith(expect.objectContaining({ args: [videoId, snapshot.consentGeneration, started + 10000] }))
+  })
+
+  it("rejects queued adds and setup changes captured before revoke and regrant", async () => {
+    let release: (result: { alreadyIn: boolean }) => void = () => {}
+    vi.mocked(youtube.addVideoToPlaylist).mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
+    const first = send({ action: "addVideoToPlaylists", videoId, accountKey: snapshot.accountKey, consentGeneration: snapshot.consentGeneration })
+    await vi.waitFor(() => expect(youtube.addVideoToPlaylist).toHaveBeenCalledOnce())
+    const queued = send({ action: "addVideoToPlaylists", videoId: "lmnopqrstuv", accountKey: snapshot.accountKey, consentGeneration: snapshot.consentGeneration })
+    const setupChange = send({ action: "changeSetup", session: snapshot, change: { kind: "auto", playlistId: "PL2", checked: true } }, ui)
+    await vi.waitFor(() => expect(sessionService.checkSession).toHaveBeenCalledTimes(2))
+    await expect(send({ action: "revokeSession" }, ui)).resolves.toEqual({ kind: "revoked" })
+    const newGeneration = "generation-after-regrant"
+    await store.sessionGeneration.setValue(newGeneration)
+    await store.sessionConsent.setValue(store.CONSENT_VERSION)
+    release({ alreadyIn: false })
+    await first
+    await expect(queued).resolves.toMatchObject({ kind: "revoked" })
+    await expect(setupChange).resolves.toMatchObject({ kind: "revoked" })
+    expect((await store.getAccountSetup(snapshot)).playlists).toEqual(["PL1"])
+    expect(youtube.addVideoToPlaylist).toHaveBeenCalledOnce()
+    await expect(send({ action: "addVideoToPlaylists", videoId, accountKey: snapshot.accountKey, consentGeneration: newGeneration })).resolves.toEqual({ ok: true })
     expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(2)
   })
 
-  it("makes no lookup when the filtered playlist was already dropped as a duplicate", async () => {
-    const { isVideoCached } = await import("@/lib/video-cache")
-    vi.mocked(isVideoCached).mockImplementation(async (id) => id === "PL1")
-    await store.preventDuplicates.setValue(true)
-    await store.playlists.setValue(["PL1", "PL2"])
-    await store.channelFilters.setValue({
-      PL1: { mode: "deny", enabled: true, channels: ["UClofi"] }
-    })
-
-    await autoAdd()
-
-    expect(youtube.fetchVideoChannel).not.toHaveBeenCalled()
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL2", "vid", "at")
+  it("does not save an in-progress settings change whose read finishes after regrant", async () => {
+    const saved = await store.getAccountSetup(snapshot)
+    let release: (setup: store.AccountSetup) => void = () => {}
+    const get = vi.spyOn(store, "getAccountSetup").mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
+    const pending = send({ action: "changeSetup", session: snapshot, change: { kind: "auto", playlistId: "PL2", checked: true } }, ui)
+    await vi.waitFor(() => expect(get).toHaveBeenCalledOnce())
+    await store.sessionConsent.setValue(-1)
+    await store.sessionGeneration.setValue("generation-after-regrant")
+    await store.sessionConsent.setValue(store.CONSENT_VERSION)
+    release(saved)
+    await expect(pending).resolves.toMatchObject({ kind: "revoked" })
+    expect((await store.getAccountSetup(snapshot)).playlists).toEqual(["PL1"])
   })
 
-  it("makes no videos.list call the second time the same video is auto-added", async () => {
-    await store.playlists.setValue(["PL1", "PL2"])
-    await store.channelFilters.setValue({
-      PL1: { mode: "deny", enabled: true, channels: ["UClofi"] }
+  it("serializes concurrent consent transitions and rotates the token before each consent write", async () => {
+    const events: (string | number)[] = []
+    const setGeneration = store.sessionGeneration.setValue.bind(store.sessionGeneration)
+    const setConsent = store.sessionConsent.setValue.bind(store.sessionConsent)
+    vi.spyOn(store.sessionGeneration, "setValue").mockImplementation(async token => {
+      events.push(token)
+      await setGeneration(token)
     })
-
-    await autoAdd()
-    await autoAdd()
-
-    expect(youtube.fetchVideoChannel).toHaveBeenCalledTimes(1)
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(2)
-  })
-
-  it("still adds the video when the channel is unknown", async () => {
-    vi.mocked(youtube.fetchVideoChannel).mockResolvedValue(null)
-    await store.playlists.setValue(["PL1"])
-    await store.channelFilters.setValue({
-      PL1: { mode: "deny", enabled: true, channels: ["UClofi"] }
+    vi.spyOn(store.sessionConsent, "setValue").mockImplementation(async value => {
+      events.push(value)
+      await setConsent(value)
     })
-
-    await autoAdd()
-
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL1", "vid", "at")
-    expect(toasts).toEqual(["Added vid to playlist"])
-  })
-
-  it("adds a listed channel's video to an allowlist playlist", async () => {
-    await store.playlists.setValue(["PL1"])
-    await store.channelFilters.setValue({
-      PL1: { mode: "allow", enabled: true, channels: ["UClofi"] }
-    })
-
-    await autoAdd()
-
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL1", "vid", "at")
-    expect(toasts).toEqual(["Added vid to playlist"])
-  })
-
-  it("skips an allowlist playlist that doesn't list the channel", async () => {
-    await store.playlists.setValue(["PL1", "PL2"])
-    await store.channelFilters.setValue({
-      PL1: { mode: "allow", enabled: true, channels: ["UCother"] }
-    })
-
-    await autoAdd()
-
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(1)
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL2", "vid", "at")
-    expect(toasts).toEqual([
-      "Lofi Girl filtered out of Learning",
-      "Added vid to playlist"
+    await Promise.all([send({ action: "grantSession" }, ui), send({ action: "revokeSession" }, ui), send({ action: "grantSession" }, ui)])
+    expect(events).toEqual([
+      expect.any(String), store.CONSENT_VERSION, expect.any(String), -1, expect.any(String), store.CONSENT_VERSION
     ])
+    const tokens = [events[0], events[2], events[4]]
+    expect(new Set(tokens).size).toBe(3)
+    expect(tokens.every(token => typeof token === "string" && /^[0-9a-f-]{36}$/.test(token))).toBe(true)
+    expect(await store.sessionGeneration.getValue()).toBe(events[4])
+  })
+})
+
+describe("unknown-channel failures", () => {
+  it.each([new Error("Synthetic lookup failure"), new sessionService.SessionFailure("unavailable"), new sessionService.SessionFailure("failed")])("keeps unfiltered and denylist destinations after %s", async error => {
+    await store.saveAccountSetup(snapshot, {
+      ...store.emptySetup(), playlists: ["PLplain", "PLallow", "PLdeny"], filters: {
+        PLallow: { mode: "allow", enabled: true, channels: [] },
+        PLdeny: { mode: "deny", enabled: true, channels: [] }
+      }
+    })
+    vi.mocked(youtube.fetchVideoChannel).mockRejectedValueOnce(error)
+    await expect(send({ action: "addVideoToPlaylists", videoId, accountKey: snapshot.accountKey, consentGeneration: snapshot.consentGeneration })).resolves.toEqual({ ok: true })
+    expect(vi.mocked(youtube.addVideoToPlaylist).mock.calls.map(call => call[1])).toEqual(["PLplain", "PLdeny"])
   })
 
-  it("adds nothing to an empty allowlist", async () => {
-    await store.playlists.setValue(["PL1"])
-    await store.channelFilters.setValue({
-      PL1: { mode: "allow", enabled: true, channels: [] }
+  it.each(["consent", "revoked", "accountChanged", "signedOut"])("aborts all destinations after a %s failure", async code => {
+    await store.saveAccountSetup(snapshot, {
+      ...store.emptySetup(), playlists: ["PLplain", "PLallow"], filters: {
+        PLallow: { mode: "allow", enabled: true, channels: [] }
+      }
     })
-
-    await autoAdd()
-
+    vi.mocked(youtube.fetchVideoChannel).mockRejectedValueOnce(new sessionService.SessionFailure(code))
+    await expect(send({ action: "addVideoToPlaylists", videoId, accountKey: snapshot.accountKey, consentGeneration: snapshot.consentGeneration })).resolves.toMatchObject({ kind: code })
     expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
-    expect(toasts).toEqual(["Lofi Girl filtered out of Learning"])
-  })
-
-  it("names allow and deny blocks together in one toast", async () => {
-    await store.playlists.setValue(["PL1", "PL2", "PL3"])
-    await store.channelFilters.setValue({
-      PL1: { mode: "deny", enabled: true, channels: ["UClofi"] },
-      PL2: { mode: "allow", enabled: true, channels: ["UCother"] }
-    })
-
-    await autoAdd()
-
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(1)
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL3", "vid", "at")
-    expect(toasts.filter((t) => t.includes("filtered"))).toEqual([
-      "Lofi Girl filtered out of Learning, Music"
-    ])
-  })
-
-  it("skips allowlists but not denylists when the channel is unknown", async () => {
-    vi.mocked(youtube.fetchVideoChannel).mockResolvedValue(null)
-    await store.playlists.setValue(["PL1", "PL2", "PL3"])
-    await store.channelFilters.setValue({
-      PL1: { mode: "deny", enabled: true, channels: ["UClofi"] },
-      PL2: { mode: "allow", enabled: true, channels: ["UClofi"] },
-      PL3: { mode: "allow", enabled: true, channels: [] }
-    })
-
-    await autoAdd()
-
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(1)
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL1", "vid", "at")
-    expect(toasts).toEqual([
-      "Couldn't identify the channel, so it was skipped for Music, Cooking",
-      "Added vid to playlist"
-    ])
-    expect(console.info).toHaveBeenCalledWith(
-      "[YT Playlist Tools]: filtered Couldn't identify the channel, so it was skipped for Music, Cooking"
-    )
-  })
-
-  it("never filters the shortcut", async () => {
-    await store.addToPlaylistID.setValue("PL1")
-    await store.channelFilters.setValue({
-      PL1: { mode: "deny", enabled: true, channels: ["UClofi"] }
-    })
-
-    send({ action: "addVideoToShortcutPlaylist", videoId: "vid" })
-    for (let i = 0; i < 5; i++) await flush()
-
-    expect(youtube.fetchVideoChannel).not.toHaveBeenCalled()
-    expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL1", "vid", "at")
-  })
-
-  describe("reading the channel from the page", () => {
-    const PAGE = {
-      videoId: "vid",
-      channelId: "UClofi",
-      author: "Lofi Girl",
-      ownerProfileUrl: "http://www.youtube.com/@LofiGirl"
-    }
-
-    beforeEach(async () => {
-      await store.playlists.setValue(["PL1", "PL2"])
-      await store.channelFilters.setValue({
-        PL1: { mode: "deny", enabled: true, channels: ["UClofi"] }
-      })
-    })
-
-    it("asks the video's own tab and makes no videos.list call", async () => {
-      pages[TAB_ID] = PAGE
-
-      await autoAdd()
-
-      expect(fakeBrowser.tabs.sendMessage).toHaveBeenCalledWith(TAB_ID, {
-        action: "readPlayerChannel"
-      })
-      expect(youtube.fetchVideoChannel).not.toHaveBeenCalled()
-      expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(1)
-      expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL2", "vid", "at")
-    })
-
-    it("falls back to videos.list when the player still holds the previous video", async () => {
-      pages[TAB_ID] = { ...PAGE, channelId: "UCother", videoId: "previous" }
-
-      await autoAdd()
-
-      expect(youtube.fetchVideoChannel).toHaveBeenCalledTimes(1)
-      expect(toasts).toContain("Lofi Girl filtered out of Learning")
-    })
-
-    it("refreshes the listed channel's label, handle included", async () => {
-      pages[TAB_ID] = PAGE
-      await store.channelLabels.setValue({ UClofi: { title: "Old name" } })
-
-      await autoAdd()
-
-      await expect(store.channelLabels.getValue()).resolves.toEqual({
-        UClofi: { title: "Lofi Girl", handle: "@LofiGirl" }
-      })
-    })
-
-    it("stores no label for a channel no filter lists", async () => {
-      pages[TAB_ID] = { ...PAGE, channelId: "UCother" }
-
-      await autoAdd()
-
-      await expect(store.channelLabels.getValue()).resolves.toEqual({})
-      expect(youtube.addVideoToPlaylist).toHaveBeenCalledTimes(2)
-    })
-
-    it("still adds when the label refresh fails", async () => {
-      pages[TAB_ID] = PAGE
-      vi.spyOn(store.channelLabels, "setValue").mockRejectedValue(new Error("full"))
-
-      await autoAdd()
-
-      expect(youtube.addVideoToPlaylist).toHaveBeenCalledWith("PL2", "vid", "at")
-    })
   })
 })
 
-describe("getChannelForTab", () => {
-  it("answers with the resolved channel", async () => {
-    await store.accessToken.setValue("at")
-    vi.mocked(youtube.fetchVideoChannel).mockResolvedValue({
-      channelId: "UClofi",
-      title: "Lofi Girl"
-    })
-
-    await expect(
-      awaitResponse({ action: "getChannelForTab", tabId: 7, videoId: "vid" })
-    ).resolves.toEqual({ channel: { channelId: "UClofi", title: "Lofi Girl" } })
+describe("read-only saved-account view", () => {
+  it("returns saved account playlists without a serving tab", async () => {
+    vi.mocked(sessionService.findSession).mockResolvedValue({ kind: "noTab" })
+    const result = await send({ action: "fetchPlaylists" }, ui)
+    expect(result).toMatchObject({ kind: "cached", accounts: [{ accountKey: snapshot.accountKey, setup: { playlists: ["PL1"] } }] })
+    expect(result).not.toHaveProperty("session")
+    expect(youtube.fetchUserPlaylists).not.toHaveBeenCalled()
   })
 
-  it("reads the channel from the popup's tab first", async () => {
-    pages[7] = {
-      videoId: "vid",
-      channelId: "UClofi",
-      author: "Lofi Girl",
-      ownerProfileUrl: "http://www.youtube.com/@LofiGirl"
-    }
-
-    await expect(
-      awaitResponse({ action: "getChannelForTab", tabId: 7, videoId: "vid" })
-    ).resolves.toEqual({
-      channel: { channelId: "UClofi", title: "Lofi Girl", handle: "@LofiGirl" }
-    })
-    expect(youtube.fetchVideoChannel).not.toHaveBeenCalled()
+  it("keeps a private no-tab caller isolated from normal-window saved accounts", async () => {
+    vi.mocked(sessionService.findSession).mockResolvedValue({ kind: "noTab" })
+    vi.spyOn(fakeBrowser.windows, "get").mockImplementation(async () => ({ id: windowId, incognito: true, focused: true, alwaysOnTop: false }))
+    await expect(send({ action: "fetchPlaylists" }, ui)).resolves.toEqual({ kind: "noTab" })
+    expect(youtube.fetchUserPlaylists).not.toHaveBeenCalled()
   })
 
-  it("answers null when the channel is unknown", async () => {
-    await store.accessToken.setValue("at")
-
-    await expect(
-      awaitResponse({ action: "getChannelForTab", tabId: 7, videoId: "vid" })
-    ).resolves.toEqual({ channel: null })
-  })
-
-  it("still answers when storage itself fails", async () => {
-    vi.spyOn(store.channelCache, "getValue").mockRejectedValue(new Error("boom"))
-
-    await expect(
-      awaitResponse({ action: "getChannelForTab", tabId: 7, videoId: "vid" })
-    ).resolves.toEqual({ channel: null })
+  it("retires legacy video history on background startup", async () => {
+    const retire = vi.spyOn(store, "retireLegacyVideoCache").mockResolvedValue()
+    background.main()
+    expect(retire).toHaveBeenCalledOnce()
   })
 })
 
-describe("lookUpChannel", () => {
-  const query = { by: "handle", handle: "@LofiGirl" }
-  const lookUp = () =>
-    new Promise<unknown>((resolve) =>
-      listener({ action: "lookUpChannel", query }, {}, resolve)
-    )
-
-  it("answers with the API's lookup", async () => {
-    await store.accessToken.setValue("at")
-    const found = {
-      status: "found",
-      channel: { channelId: "UClofi", title: "Lofi Girl", handle: "@LofiGirl" }
-    } as const
-    vi.mocked(youtube.fetchChannel).mockResolvedValue(found)
-
-    await expect(lookUp()).resolves.toEqual(found)
-    expect(youtube.fetchChannel).toHaveBeenCalledWith(query, "at")
+describe("background-owned data clearing", () => {
+  it("clears data and permits later transitions after frozen-tab invalidations never settle", async () => {
+    vi.useFakeTimers()
+    if (!origin.tab) throw new Error("Serving tab missing")
+    const servingTab = origin.tab
+    vi.mocked(fakeBrowser.tabs.query).mockImplementation(async () => [{ ...servingTab, frozen: true }])
+    vi.spyOn(fakeBrowser.scripting, "executeScript").mockImplementation(details => {
+      if (details.func === sessionService.setPageAccess && "args" in details && details.args?.[0] === false) return new Promise(() => {})
+      return Promise.resolve([])
+    })
+    vi.mocked(sessionService.findSession).mockResolvedValue({ kind: "noTab" })
+    const clearLocal = vi.spyOn(fakeBrowser.storage.local, "clear")
+    let finished = false
+    const clearing = send({ action: "clearAllData" }, ui).then(reply => { finished = true; return reply })
+    const granting = send({ action: "grantSession" }, ui)
+    await vi.advanceTimersByTimeAsync(9999)
+    expect(finished).toBe(false)
+    expect(clearLocal).not.toHaveBeenCalled()
+    expect(await store.sessionConsent.getValue()).toBe(-1)
+    await vi.advanceTimersByTimeAsync(4002)
+    expect(finished).toBe(true)
+    await expect(clearing).resolves.toEqual({ ok: true })
+    await expect(granting).resolves.toEqual({ kind: "noTab" })
+    expect(await fakeBrowser.storage.local.get([`account:${snapshot.accountKey}`, "savedAccountKeys"])).toEqual({})
+    expect(await store.sessionConsent.getValue()).toBe(store.CONSENT_VERSION)
+    const revoke = send({ action: "revokeSession" }, ui)
+    await vi.advanceTimersByTimeAsync(14001)
+    await expect(revoke).resolves.toEqual({ kind: "revoked" })
+    await expect(send({ action: "grantSession" }, ui)).resolves.toEqual({ kind: "noTab" })
   })
 
-  it("fails without calling the API when signed out", async () => {
-    await expect(lookUp()).resolves.toEqual({ status: "failed" })
-    expect(youtube.fetchChannel).not.toHaveBeenCalled()
+  it("waits for sibling deletions before reporting a failure or allowing a new grant", async () => {
+    const clearLocal = fakeBrowser.storage.local.clear.bind(fakeBrowser.storage.local)
+    let release = () => {}
+    const held = new Promise<void>(resolve => { release = resolve })
+    vi.spyOn(fakeBrowser.storage.local, "clear").mockImplementationOnce(async () => {
+      await held
+      await clearLocal()
+    })
+    const clearSync = vi.spyOn(fakeBrowser.storage.sync, "clear").mockRejectedValueOnce(new Error("Synthetic deletion failure"))
+    vi.mocked(sessionService.findSession).mockResolvedValue({ kind: "noTab" })
+    let finished = false
+    const clearing = send({ action: "clearAllData" }, ui).then(reply => { finished = true; return reply })
+    await vi.waitFor(() => expect(clearSync).toHaveBeenCalledOnce())
+    const granting = send({ action: "grantSession" }, ui)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 0))
+      expect(finished).toBe(false)
+      expect(await store.sessionConsent.getValue()).toBe(-1)
+    } finally {
+      release()
+      await clearing
+      await granting
+    }
+    await expect(clearing).resolves.toMatchObject({ kind: "unavailable" })
+    await expect(granting).resolves.toEqual({ kind: "noTab" })
+    expect(await store.sessionConsent.getValue()).toBe(store.CONSENT_VERSION)
+    expect(await store.sessionGeneration.getValue()).toMatch(/^[0-9a-f-]{36}$/)
   })
 
-  it("still answers when storage itself fails", async () => {
-    vi.spyOn(store.accessToken, "getValue").mockRejectedValue(new Error("boom"))
+  it.each(["/popup.html", "/options.html"])("allows %s to erase data before consent", async page => {
+    await store.sessionConsent.setValue(0)
+    await store.theme.setValue("dark")
+    await store.watchLaterShortcut.setValue("Control+S")
+    await expect(send({ action: "clearAllData" }, { ...ui, url: fakeBrowser.runtime.getURL(page) })).resolves.toEqual({ ok: true })
+    expect(await fakeBrowser.storage.local.get([`account:${snapshot.accountKey}`, "savedAccountKeys", "watchLaterShortcut"])).toEqual({})
+    expect(await store.theme.getValue()).toBe("system")
+    expect(sessionService.findSession).not.toHaveBeenCalled()
+    expect(youtube.fetchUserPlaylists).not.toHaveBeenCalled()
+  })
 
-    await expect(lookUp()).resolves.toEqual({ status: "failed" })
+  it.each([0, store.CONSENT_VERSION])("rejects content, foreign, subframe and unrelated extension senders with consent %s", async consent => {
+    await store.sessionConsent.setValue(consent)
+    for (const sender of [origin, { ...ui, id: "foreign" }, { ...ui, frameId: 2 }, { ...ui, url: fakeBrowser.runtime.getURL("/other.html") }]) {
+      await expect(send({ action: "clearAllData" }, sender)).resolves.toMatchObject({ kind: "unavailable" })
+    }
+    expect((await store.getAccountSetup(snapshot)).playlists).toEqual(["PL1"])
+    expect(await store.sessionConsent.getValue()).toBe(consent)
+  })
+
+  it("revokes page work before draining writes and serializes a concurrent grant behind deletion", async () => {
+    let release = () => {}
+    const held = new Promise<void>(resolve => { release = resolve })
+    const set = fakeBrowser.storage.local.set.bind(fakeBrowser.storage.local)
+    const account = `account:${snapshot.accountKey}`
+    const writing = vi.spyOn(fakeBrowser.storage.local, "set").mockImplementation(async values => {
+      if (account in values) await held
+      await set(values)
+    })
+    const first = send({ action: "changeSetup", session: snapshot, change: { kind: "auto", playlistId: "PL2", checked: true } }, ui)
+    try {
+      await vi.waitFor(() => expect(writing).toHaveBeenCalledWith(expect.objectContaining({ [account]: expect.any(Object) })))
+      const queued = send({ action: "changeSetup", session: snapshot, change: { kind: "shortcut", playlistId: "PL2" } }, ui)
+      await vi.waitFor(() => expect(sessionService.checkSession).toHaveBeenCalledTimes(4))
+      const clearStorage = vi.spyOn(fakeBrowser.storage.local, "clear")
+      const clearing = send({ action: "clearAllData" }, ui)
+      await vi.waitFor(async () => expect(await store.sessionConsent.getValue()).toBe(-1))
+      expect(vi.mocked(sessionService.reconcileScripts).mock.calls.length).toBeGreaterThan(1)
+      expect(await store.sessionConsent.getValue()).toBe(-1)
+      expect(await store.sessionGeneration.getValue()).not.toBe(snapshot.consentGeneration)
+      expect(clearStorage).not.toHaveBeenCalled()
+      const granting = send({ action: "grantSession" }, ui)
+      await new Promise(resolve => setTimeout(resolve, 0))
+      expect(await store.sessionConsent.getValue()).toBe(-1)
+      vi.mocked(sessionService.findSession).mockResolvedValue({ kind: "noTab" })
+      release()
+      await first
+      await expect(clearing).resolves.toEqual({ ok: true })
+      await expect(granting).resolves.toEqual({ kind: "noTab" })
+      await expect(queued).resolves.toMatchObject({ kind: expect.stringMatching(/revoked|consent/) })
+      expect(await fakeBrowser.storage.local.get([account, "savedAccountKeys"])).toEqual({})
+    } finally {
+      release()
+      await first
+    }
+  })
+
+  it("reports deletion failure instead of acknowledging success", async () => {
+    vi.spyOn(fakeBrowser.storage.local, "clear").mockRejectedValueOnce(new Error("Storage unavailable"))
+    await expect(send({ action: "clearAllData" }, ui)).resolves.toMatchObject({ kind: "unavailable" })
+    expect(await store.sessionConsent.getValue()).not.toBe(store.CONSENT_VERSION)
+  })
+})
+
+describe("first account choice cache", () => {
+  it("saves fetched titles with the first explicit choice, while leaving an untouched account unregistered", async () => {
+    await fakeBrowser.storage.local.remove([`account:${snapshot.accountKey}`, "savedAccountKeys"])
+    await expect(send({ action: "fetchPlaylists" }, ui)).resolves.toMatchObject({ kind: "ready", playlists: [{ id: "PL1", title: "Owned" }] })
+    expect(await fakeBrowser.storage.local.get([`account:${snapshot.accountKey}`, "savedAccountKeys"])).toEqual({})
+    await send({ action: "changeSetup", session: snapshot, change: { kind: "auto", playlistId: "PL1", checked: true } }, ui)
+    vi.mocked(sessionService.findSession).mockResolvedValue({ kind: "noTab" })
+    await expect(send({ action: "fetchPlaylists" }, ui)).resolves.toMatchObject({
+      kind: "cached", accounts: [{ accountKey: snapshot.accountKey, setup: {
+        playlists: ["PL1"], cachedPlaylists: [{ id: "PL1", title: "Owned" }], cachedAt: expect.any(Number)
+      } }]
+    })
+  })
+
+  it("does not persist first-choice titles or selections for a private caller", async () => {
+    await fakeBrowser.storage.local.remove([`account:${snapshot.accountKey}`, "savedAccountKeys"])
+    vi.spyOn(fakeBrowser.windows, "get").mockImplementation(async () => ({ id: windowId, incognito: true, focused: true, alwaysOnTop: false }))
+    await expect(send({ action: "changeSetup", session: { ...snapshot, incognito: true }, change: { kind: "auto", playlistId: "PL1", checked: true } }, ui)).resolves.toMatchObject({ kind: "unavailable" })
+    expect(await fakeBrowser.storage.local.get([`account:${snapshot.accountKey}`, "savedAccountKeys"])).toEqual({})
+  })
+
+  it.each(["revoked", "accountChanged"])("rejects %s after fetching first-choice titles", async code => {
+    await fakeBrowser.storage.local.remove([`account:${snapshot.accountKey}`, "savedAccountKeys"])
+    vi.mocked(youtube.fetchUserPlaylists).mockImplementationOnce(async () => {
+      if (code === "revoked") await store.sessionGeneration.setValue("generation-after-regrant")
+      else vi.mocked(sessionService.checkSession).mockRejectedValueOnce(new sessionService.SessionFailure("accountChanged"))
+      return [{ id: "PL1", title: "Owned" }]
+    })
+    await expect(send({ action: "changeSetup", session: snapshot, change: { kind: "auto", playlistId: "PL1", checked: true } }, ui)).resolves.toMatchObject({ kind: code })
+    expect(await fakeBrowser.storage.local.get([`account:${snapshot.accountKey}`, "savedAccountKeys"])).toEqual({})
   })
 })

@@ -9,7 +9,6 @@ import { storage } from "#imports"
  */
 
 export type Theme = "light" | "dark" | "system"
-export type AuthMode = "server" | "manual"
 
 /**
  * Structurally identical to YouTubePlaylist in @/lib/youtube. Declared here
@@ -72,12 +71,7 @@ export const requiredWatchPercentage = storage.defineItem<number>(
   { fallback: 50 }
 )
 
-/**
- * Last known playlist list, so the popup can paint instantly instead of
- * waiting on a service-worker wake-up plus a paginated YouTube round-trip.
- * Refreshed in the background on every open.
- */
-export const cachedPlaylists = storage.defineItem<CachedPlaylist[]>(
+export const legacyCachedPlaylists = storage.defineItem<CachedPlaylist[]>(
   "local:cachedPlaylists",
   { fallback: [] }
 )
@@ -124,45 +118,79 @@ export const channelLabels = storage.defineItem<Record<string, ChannelLabel>>(
   { fallback: {} }
 )
 
-/**
- * videoId → channel. Session storage survives MV3 service worker restarts and
- * is dropped when the browser closes.
- */
-export const channelCache = storage.defineItem<Record<string, VideoChannel>>(
-  "session:channelCache",
-  { fallback: {} }
-)
+export const sessionGeneration = storage.defineItem<string>("local:sessionGeneration", { fallback: "" })
 
-// ── OAuth ────────────────────────────────────────────────────────────────
-export const accessToken = storage.defineItem<string>("local:accessToken", {
-  fallback: ""
-})
+export const CONSENT_VERSION = 1
+export const sessionConsent = storage.defineItem<number>("local:sessionConsent", { fallback: 0 })
+export const legacyClaimed = storage.defineItem<boolean>("local:legacyClaimed", { fallback: false })
 
-export const refreshToken = storage.defineItem<string>("local:refreshToken", {
-  fallback: ""
-})
+export interface AccountContext {
+  accountKey: string
+  incognito: boolean
+}
 
-export const authMode = storage.defineItem<AuthMode>("local:authMode", {
-  fallback: "server"
-})
+export interface WriteAccountContext extends AccountContext {
+  consentGeneration: string
+}
 
-/**
- * Overrides the build-time broker URL, so a user of a published build can
- * point the extension at their own server. Empty means "use the default".
- * Read through getAuthServerURL() in @/config, never directly.
- */
-export const authServerURL = storage.defineItem<string>("local:authServerURL", {
-  fallback: ""
-})
+export interface AccountSetup {
+  playlists: string[]
+  shortcutPlaylistId: string
+  filters: Record<string, ChannelFilter>
+  labels: Record<string, ChannelLabel>
+  cachedPlaylists: CachedPlaylist[]
+  cachedAt: number | null
+}
 
-/** Only used by the "bring your own credentials" fallback path. */
-export const clientID = storage.defineItem<string>("local:clientID", {
-  fallback: ""
-})
+export function emptySetup(): AccountSetup {
+  return { playlists: [], shortcutPlaylistId: "", filters: {}, labels: {}, cachedPlaylists: [], cachedAt: null }
+}
 
-export const clientSecret = storage.defineItem<string>("local:clientSecret", {
-  fallback: ""
-})
+function accountItem(accountKey: string) {
+  if (!/^[A-Za-z0-9_-]{16,64}$/.test(accountKey)) throw new Error("Invalid account key")
+  return storage.defineItem<AccountSetup>(`local:account:${accountKey}`, { fallback: emptySetup() })
+}
+
+export function getAccountSetup(context: AccountContext): Promise<AccountSetup> {
+  return accountItem(context.accountKey).getValue()
+}
+
+const savedAccountKeys = storage.defineItem<string[]>("local:savedAccountKeys", { fallback: [] })
+let saveLane: Promise<unknown> = Promise.resolve()
+
+export function saveAccountSetup(context: WriteAccountContext, setup: AccountSetup): Promise<void> {
+  const work = saveLane.catch(() => {}).then(async () => {
+    if (context.incognito) throw new Error("Account choices cannot be saved in private windows")
+    if (await sessionConsent.getValue() !== CONSENT_VERSION || await sessionGeneration.getValue() !== context.consentGeneration) throw new Error("Access revoked")
+    await accountItem(context.accountKey).setValue(setup)
+    const keys = await savedAccountKeys.getValue()
+    if (!keys.includes(context.accountKey)) await savedAccountKeys.setValue([...keys, context.accountKey])
+  })
+  saveLane = work
+  return work
+}
+
+export async function cacheAccountPlaylists(context: WriteAccountContext, list: CachedPlaylist[]): Promise<void> {
+  if (context.incognito) return
+  const setup = await getAccountSetup(context)
+  if (!setup.playlists.length && !setup.shortcutPlaylistId && !Object.keys(setup.filters).length) return
+  await saveAccountSetup(context, { ...setup, cachedPlaylists: list, cachedAt: Date.now() })
+}
+
+export async function hasUnclaimedSetup(): Promise<boolean> {
+  if (await legacyClaimed.getValue()) return false
+  const [selected, shortcut, filters] = await Promise.all([
+    playlists.getValue(), addToPlaylistID.getValue(), channelFilters.getValue()
+  ])
+  return selected.length > 0 || !!shortcut || Object.keys(filters).length > 0
+}
+
+/** Removes credential keys without reading any credential value. */
+export async function removeLegacyCredentials(): Promise<void> {
+  await browser.storage.local.remove([
+    "accessToken", "refreshToken", "clientID", "clientSecret", "authMode", "authServerURL"
+  ])
+}
 
 // ── UI ───────────────────────────────────────────────────────────────────
 /**
@@ -173,11 +201,36 @@ export const theme = storage.defineItem<Theme>("sync:theme", {
   fallback: "system"
 })
 
-/** Clears everything this extension owns, across every area. */
+/** Background only. Revoke access and reconcile scripts before draining and deleting. */
 export async function clearAll(): Promise<void> {
-  await Promise.all([
-    browser.storage.local.clear(),
-    browser.storage.sync.clear(),
-    browser.storage.session.clear()
-  ])
+  const work = saveLane.catch(() => {}).then(async () => {
+    const deletions = await Promise.allSettled([
+      retireLegacyVideoCache(), browser.storage.local.clear(),
+      browser.storage.sync.clear(), browser.storage.session.clear()
+    ])
+    const failed = deletions.find(result => result.status === "rejected")
+    if (failed?.status === "rejected") throw failed.reason
+  })
+  saveLane = work
+  return work
+}
+
+export function retireLegacyVideoCache(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.deleteDatabase("yt-playlist-tools")
+    request.onsuccess = () => resolve()
+    request.onerror = () => reject(request.error)
+    request.onblocked = () => reject(new Error("Close other extension pages and try clearing data again."))
+  })
+}
+
+export interface SavedAccount {
+  accountKey: string
+  setup: AccountSetup
+}
+
+export async function getSavedAccounts(incognito: boolean): Promise<SavedAccount[]> {
+  if (incognito || await sessionConsent.getValue() !== CONSENT_VERSION) return []
+  const keys = await savedAccountKeys.getValue()
+  return Promise.all(keys.map(async accountKey => ({ accountKey, setup: await accountItem(accountKey).getValue() })))
 }

@@ -2,12 +2,8 @@
 
 [← Development](README.md)
 
-All gitignored; copy from the `.example` next to each. None is needed for `bun run dev`.
+No environment file is needed for development or session access. The extension uses an open YouTube tab after you agree in the popup.
 
-| File | Contents |
-| --- | --- |
-| [`.env`](../../.env.example) | Build-time broker URL ([token broker](../legacy/token-broker.md#using-a-different-broker)) |
-| [`server/.env`](../../server/.env.example) | Google OAuth client, broker settings ([token broker](../legacy/token-broker.md)) |
-| [`.env.submit`](../../.env.submit.example) | Chrome Web Store and AMO credentials ([releasing](releasing.md)) |
+The gitignored `.env.submit` holds store submission credentials. Copy [`.env.submit.example`](../../.env.submit.example) and follow [Releasing](releasing.md).
 
-The first two go away with the token broker in 2.0 ([legacy](../legacy/README.md)).
+The OAuth broker and its environment files were removed from dev builds. [Legacy setup](../legacy/README.md) describes older versions.

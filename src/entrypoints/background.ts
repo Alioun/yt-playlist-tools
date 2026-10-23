@@ -1,295 +1,214 @@
-import {
-  anyFilterOn,
-  isFilteredOut,
-  refreshListedLabel,
-  resolveVideoChannel
-} from "@/lib/channel-filters"
+import { anyFilterOn, isFilteredOut, addListedChannel, listChannelIn, removeListedChannel, setFilterSetting } from "@/lib/channel-filters"
+import { parseChannelInput, type ChannelQuery } from "@/lib/channel-input"
 import * as store from "@/lib/storage"
-import { cacheVideo, isVideoCached } from "@/lib/video-cache"
-import type { ChannelQuery } from "@/lib/channel-input"
-import {
-  addVideoToPlaylist,
-  fetchChannel,
-  fetchUserPlaylists,
-  type ChannelLookup
-} from "@/lib/youtube"
+import { addVideoToPlaylist, fetchChannel, fetchUserPlaylists, fetchVideoChannel } from "@/lib/youtube"
+import { checkSession, findSession, isAccountKey, isConsentGeneration, isRecord, isSnapshot, PAGE_JOB_LIFETIME_MS, queueInPage, reconcileScripts, requireConsent, SessionFailure, sessionMessage, type Caller, type SessionSnapshot } from "@/lib/session"
 
-/**
- * NOTE: every runtime statement must live inside main(). WXT imports this file
- * in Node during the build, so top-level extension API calls would throw.
- * main() itself must stay synchronous.
- */
+type Sender = Parameters<Parameters<typeof browser.runtime.onMessage.addListener>[0]>[1]
+
 export default defineBackground(() => {
-  async function notify(tabId: number, toastMessage: string) {
+  const lanes = new Map<string, Promise<unknown>>()
+  let transitions: Promise<unknown> = Promise.resolve()
+  store.sessionConsent.watch(() => { void reconcileScripts().catch(() => {}) })
+  void store.removeLegacyCredentials().catch(() => {})
+  void store.retireLegacyVideoCache().catch(() => {})
+  void reconcileScripts().catch(() => {})
+
+  function serial<T>(session: SessionSnapshot, action: () => Promise<T>): Promise<T> {
+    const key = `${session.incognito}:${session.accountKey}`
+    const pending = (lanes.get(key) ?? Promise.resolve()).catch(() => {}).then(async () => {
+      await requireConsent(session.consentGeneration)
+      return action()
+    })
+    lanes.set(key, pending)
+    void pending.finally(() => { if (lanes.get(key) === pending) lanes.delete(key) }).catch(() => {})
+    return pending
+  }
+
+  async function callerFor(sender: Sender, message: Record<string, unknown>): Promise<Caller> {
+    if (sender.id !== browser.runtime.id || (sender.frameId !== undefined && sender.frameId !== 0)) throw new SessionFailure("unavailable")
+    const validPage = sender.url === browser.runtime.getURL("/popup.html") || sender.url === browser.runtime.getURL("/options.html")
+    if (validPage) {
+      if (typeof message.windowId !== "number" || !Number.isInteger(message.windowId) ||
+        (sender.tab && sender.tab.windowId !== message.windowId)) throw new SessionFailure("unavailable")
+      const window = await browser.windows.get(message.windowId)
+      return { incognito: window.incognito, windowId: message.windowId }
+    }
+    if (sender.tab && sender.frameId === 0 && sender.tab.id !== undefined && sender.url?.startsWith("https://www.youtube.com/")) {
+      return { tabId: sender.tab.id, incognito: sender.tab.incognito, windowId: sender.tab.windowId }
+    }
+    throw new SessionFailure("unavailable")
+  }
+
+  async function snapshotFor(caller: Caller, value: unknown): Promise<SessionSnapshot> {
+    if (!isSnapshot(value) || value.incognito !== caller.incognito || (caller.tabId !== undefined && caller.tabId !== value.tabId)) {
+      throw new SessionFailure("accountChanged")
+    }
+    await requireConsent(value.consentGeneration)
+    await checkSession(value)
+    return value
+  }
+
+  async function view(caller: Caller) {
+    const state = await findSession(caller)
+    if (state.kind === "noTab") {
+      const accounts = await store.getSavedAccounts(caller.incognito)
+      return accounts.length ? { kind: "cached", accounts } : state
+    }
+    if (state.kind !== "ready") return state
+    const playlists = await fetchUserPlaylists(state.session)
+    await serial(state.session, () => store.cacheAccountPlaylists(state.session, playlists))
+    return { ...state, playlists, setup: await store.getAccountSetup(state.session), unclaimed: await store.hasUnclaimedSetup() }
+  }
+
+  async function notify(tabId: number, message: string) {
     try {
-      await browser.tabs.sendMessage(tabId, {
-        action: "showToast",
-        toastMessage
+      await requireConsent()
+      await browser.tabs.sendMessage(tabId, { action: "showToast", toastMessage: message })
+    } catch {}
+  }
+
+  async function add(caller: Caller, message: Record<string, unknown>) {
+    if (caller.tabId === undefined || !isAccountKey(message.accountKey) ||
+      typeof message.videoId !== "string" || !/^[\w-]{11}$/.test(message.videoId) ||
+      !isConsentGeneration(message.consentGeneration)) throw new SessionFailure("unavailable")
+    const consentGeneration = await requireConsent(message.consentGeneration)
+    const session: SessionSnapshot = { tabId: caller.tabId, accountKey: message.accountKey, incognito: caller.incognito, consentGeneration }
+    const videoId = message.videoId
+    const expires = Date.now() + PAGE_JOB_LIFETIME_MS
+    return serial(session, async () => {
+      const alive = () => { if (Date.now() >= expires) throw new SessionFailure("unavailable") }
+      alive()
+      await checkSession(session)
+      const setup = await store.getAccountSetup(session)
+      const automatic = message.action === "addVideoToPlaylists"
+      let targets = automatic ? setup.playlists : [setup.shortcutPlaylistId].filter(Boolean)
+      if (!targets.length) {
+        await notify(session.tabId, automatic ? "No auto-add playlists selected" : "No shortcut playlist selected")
+        return { ok: false }
+      }
+      if (automatic && anyFilterOn(setup.filters, targets)) {
+        alive()
+        const channel = await fetchVideoChannel(session, videoId).catch(error => {
+          if (error instanceof SessionFailure && ["consent", "revoked", "accountChanged", "signedOut"].includes(error.code)) throw error
+          return null
+        })
+        await requireConsent(session.consentGeneration)
+        const blocked = targets.filter(id => isFilteredOut(setup.filters[id], channel?.channelId ?? null))
+        targets = targets.filter(id => !blocked.includes(id))
+        if (blocked.length) await notify(session.tabId, channel ? `${channel.title} filtered out` : "Couldn't identify the channel, so allowlisted playlists were skipped")
+      }
+      for (const playlistId of targets) {
+        alive()
+        const result = await addVideoToPlaylist(session, playlistId, videoId, expires)
+        await notify(session.tabId, result.alreadyIn ? "Video already in playlist." : `Added ${videoId} to playlist`)
+      }
+      return { ok: true }
+    })
+  }
+
+  function queryFrom(value: unknown): ChannelQuery {
+    if (!isRecord(value)) throw new SessionFailure("unavailable")
+    let input: string
+    if (value.by === "id" && typeof value.id === "string") input = value.id
+    else if (value.by === "handle" && typeof value.handle === "string") input = value.handle
+    else if (value.by === "username" && typeof value.username === "string") input = `https://www.youtube.com/user/${encodeURIComponent(value.username)}`
+    else throw new SessionFailure("unavailable")
+    const parsed = parseChannelInput(input)
+    if ("error" in parsed) throw new SessionFailure("unavailable")
+    return parsed.query
+  }
+
+  async function changeSetup(session: SessionSnapshot, change: unknown) {
+    if (!isRecord(change) || typeof change.playlistId !== "string" || !/^[\w-]{1,150}$/.test(change.playlistId)) throw new SessionFailure("unavailable")
+    await checkSession(session)
+    const setup = await store.getAccountSetup(session)
+    await requireConsent(session.consentGeneration)
+    const id = change.playlistId
+    switch (change.kind) {
+      case "auto":
+        if (typeof change.checked !== "boolean") throw new SessionFailure("unavailable")
+        setup.playlists = change.checked ? [...new Set([...setup.playlists, id])] : setup.playlists.filter(value => value !== id)
+        break
+      case "shortcut": setup.shortcutPlaylistId = setup.shortcutPlaylistId === id ? "" : id; break
+      case "setting":
+        if (change.setting !== "off" && change.setting !== "allow" && change.setting !== "deny") throw new SessionFailure("unavailable")
+        Object.assign(setup, setFilterSetting(setup, id, change.setting)); break
+      case "remove":
+        if (typeof change.channelId !== "string") throw new SessionFailure("unavailable")
+        Object.assign(setup, removeListedChannel(setup, id, change.channelId)); break
+      case "channel": {
+        const channel = change.channel
+        if (!isRecord(channel) || typeof channel.channelId !== "string" || !/^UC[\w-]{22}$/.test(channel.channelId) ||
+          typeof channel.title !== "string" || (channel.handle !== undefined && typeof channel.handle !== "string")) throw new SessionFailure("unavailable")
+        const valid = { channelId: channel.channelId, title: channel.title, ...(typeof channel.handle === "string" ? { handle: channel.handle } : {}) }
+        if (change.mode === "allow" || change.mode === "deny") Object.assign(setup, listChannelIn(setup, id, change.mode, valid))
+        else Object.assign(setup, addListedChannel(setup, id, valid))
+        break
+      }
+      default: throw new SessionFailure("unavailable")
+    }
+    if (!session.incognito && setup.cachedAt === null) {
+      setup.cachedPlaylists = await fetchUserPlaylists(session)
+      setup.cachedAt = Date.now()
+    }
+    await checkSession(session)
+    await requireConsent(session.consentGeneration)
+    await store.saveAccountSetup(session, setup)
+    return { setup }
+  }
+
+  async function handle(message: Record<string, unknown>, sender: Sender) {
+    const caller = await callerFor(sender, message)
+    const fromPage = caller.tabId !== undefined
+    if (message.action === "grantSession" || message.action === "revokeSession" || message.action === "clearAllData") {
+      if (fromPage) throw new SessionFailure("unavailable")
+      const enabled = message.action === "grantSession"
+      const transition = transitions.catch(() => {}).then(async () => {
+        await store.sessionGeneration.setValue(crypto.randomUUID())
+        await store.sessionConsent.setValue(enabled ? store.CONSENT_VERSION : -1)
+        await reconcileScripts()
+        if (message.action === "clearAllData") await store.clearAll()
       })
-    } catch {
-      // Content script not present on this tab -- nothing to do.
+      transitions = transition
+      await transition
+      if (message.action === "clearAllData") return { ok: true }
+      return enabled ? view(caller) : { kind: "revoked" }
     }
+    await requireConsent()
+    if (message.action === "sessionForTab" && fromPage) return findSession(caller)
+    if (message.action === "queueVideo" && caller.tabId !== undefined) {
+      if (typeof message.videoId !== "string" || !/^[\w-]{11}$/.test(message.videoId)) throw new SessionFailure("unavailable")
+      if (!isConsentGeneration(message.consentGeneration)) throw new SessionFailure("unavailable")
+      const expiresAt = Date.now() + PAGE_JOB_LIFETIME_MS
+      const consentGeneration = await requireConsent(message.consentGeneration)
+      const results = await browser.scripting.executeScript({
+        target: { tabId: caller.tabId }, world: "MAIN", func: queueInPage,
+        args: [message.videoId, consentGeneration, expiresAt]
+      })
+      await requireConsent(consentGeneration)
+      return { ok: results[0]?.result === true }
+    }
+    if (message.action === "addVideoToPlaylists" || message.action === "addVideoToShortcutPlaylist") return add(caller, message)
+    if (fromPage) throw new SessionFailure("unavailable")
+    if (message.action === "fetchPlaylists") return view(caller)
+    const session = await snapshotFor(caller, message.session)
+    if (message.action === "changeSetup") return serial(session, () => changeSetup(session, message.change))
+    if (message.action === "lookUpChannel") return fetchChannel(session, queryFrom(message.query))
+    if (message.action === "getChannelForTab") {
+      if (message.tabId !== session.tabId || typeof message.videoId !== "string" || !/^[\w-]{11}$/.test(message.videoId)) throw new SessionFailure("unavailable")
+      return { channel: await fetchVideoChannel(session, message.videoId) }
+    }
+    throw new SessionFailure("unavailable")
   }
 
-  /**
-   * Reads the channel from the player in the video's tab, for the resolver's
-   * free lookup. Null when the tab has no content script to answer.
-   */
-  function pageReaderFor(tabId: number) {
-    return async () => {
-      try {
-        const reply = await browser.tabs.sendMessage(tabId, {
-          action: "readPlayerChannel"
-        })
-        return (reply as { page?: unknown } | undefined)?.page ?? null
-      } catch {
-        return null
-      }
-    }
-  }
-
-  async function addToPlaylist(
-    tabId: number,
-    playlistId: string,
-    videoId: string,
-    accessToken: string
-  ) {
-    const added = await addVideoToPlaylist(playlistId, videoId, accessToken)
-    if (added) {
-      await cacheVideo(playlistId, videoId)
-      await notify(tabId, `Added ${videoId} to playlist`)
-    } else {
-      await notify(tabId, "Failed to add video to playlist")
-    }
-  }
-
-  /**
-   * Checks what every add needs before touching the API. Toasts and returns
-   * undefined when the add can't go ahead.
-   */
-  async function prepareAdd(
-    tabId: number,
-    playlistIds: string[],
-    videoId: string
-  ) {
-    if (!videoId) {
-      console.error("[YT Playlist Tools]: message had no videoId")
-      return
-    }
-
-    const [accessToken, checkDupes] = await Promise.all([
-      store.accessToken.getValue(),
-      store.preventDuplicates.getValue()
-    ])
-
-    if (!accessToken) {
-      await notify(tabId, "No access token found")
-      console.error("[YT Playlist Tools]: No access token found")
-      return
-    }
-
-    const targets = playlistIds.filter(Boolean)
-    if (targets.length === 0) {
-      // Otherwise the watch threshold passes and absolutely nothing happens --
-      // no toast, no log -- which reads as a broken extension.
-      await notify(tabId, "No auto-add playlists selected")
-      return
-    }
-
-    return { accessToken, checkDupes, targets }
-  }
-
-  /** Drops playlists that already hold the video, toasting for each one. */
-  async function withoutDuplicates(
-    tabId: number,
-    playlistIds: string[],
-    videoId: string,
-    checkDupes: boolean
-  ) {
-    if (!checkDupes) return playlistIds
-
-    const remaining: string[] = []
-    for (const playlistId of playlistIds) {
-      if (await isVideoCached(playlistId, videoId)) {
-        await notify(tabId, "Video already in playlist.")
-      } else {
-        remaining.push(playlistId)
-      }
-    }
-    return remaining
-  }
-
-  /** The shared add step. Callers have already removed duplicates. */
-  async function addToPlaylists(
-    tabId: number,
-    playlistIds: string[],
-    videoId: string,
-    accessToken: string
-  ) {
-    for (const playlistId of playlistIds) {
-      await addToPlaylist(tabId, playlistId, videoId, accessToken)
-    }
-  }
-
-  async function addToShortcutPlaylist(
-    tabId: number,
-    playlistId: string,
-    videoId: string
-  ) {
-    const ready = await prepareAdd(tabId, [playlistId], videoId)
-    if (!ready) return
-
-    const { accessToken, checkDupes, targets } = ready
-    const remaining = await withoutDuplicates(tabId, targets, videoId, checkDupes)
-    await addToPlaylists(tabId, remaining, videoId, accessToken)
-  }
-
-  /**
-   * Drops playlists whose channel filter keeps this video out, with one toast
-   * naming every one of them. The channel is only looked up when a remaining
-   * playlist has a filter switched on, so unfiltered users spend no quota.
-   */
-  async function withoutFilteredOut(
-    tabId: number,
-    playlistIds: string[],
-    videoId: string
-  ) {
-    const filters = await store.channelFilters.getValue()
-    if (!anyFilterOn(filters, playlistIds)) return playlistIds
-
-    const channel = await resolveVideoChannel(videoId, pageReaderFor(tabId))
-    if (channel) {
-      // Labels only feed the popup, so a failed refresh must not stop the add.
-      await refreshListedLabel(channel).catch((error) =>
-        console.error("[YT Playlist Tools]: label refresh failed", error)
-      )
-    }
-    const channelId = channel?.channelId ?? null
-    const blocked = playlistIds.filter((id) => isFilteredOut(filters[id], channelId))
-    if (blocked.length === 0) return playlistIds
-
-    const cached = await store.cachedPlaylists.getValue()
-    const titles = blocked
-      .map((id) => cached.find((playlist) => playlist.id === id)?.title ?? id)
-      .join(", ")
-    // An unknown channel is only blocked by allowlists, and has no title.
-    const message = channel
-      ? `${channel.title} filtered out of ${titles}`
-      : `Couldn't identify the channel, so it was skipped for ${titles}`
-    // The toast is dropped by the content script when toasts are off, so this
-    // log is then the only record of the decision.
-    console.info(`[YT Playlist Tools]: filtered ${message}`)
-    await notify(tabId, message)
-
-    return playlistIds.filter((id) => !blocked.includes(id))
-  }
-
-  /**
-   * The auto-add path, kept apart from the shortcut so anything that should
-   * only apply to auto-add (such as channel filters) has one place to go.
-   */
-  async function autoAdd(tabId: number, playlistIds: string[], videoId: string) {
-    const ready = await prepareAdd(tabId, playlistIds, videoId)
-    if (!ready) return
-
-    const { accessToken, checkDupes, targets } = ready
-    const remaining = await withoutDuplicates(tabId, targets, videoId, checkDupes)
-    const passing = await withoutFilteredOut(tabId, remaining, videoId)
-    await addToPlaylists(tabId, passing, videoId, accessToken)
-  }
-
-  /** The popup's channel lookup, through the same resolver as auto-add. */
-  async function getChannelForTab(tabId: unknown, videoId: unknown) {
-    if (typeof videoId !== "string" || !videoId) return { channel: null }
-    const readFromPage =
-      typeof tabId === "number" ? pageReaderFor(tabId) : undefined
-    try {
-      return { channel: await resolveVideoChannel(videoId, readFromPage) }
-    } catch (error) {
-      // Must never reject, for the same reason as getPlaylists.
-      console.error("[YT Playlist Tools]:", error)
-      return { channel: null }
-    }
-  }
-
-  /** The popup's lookup of a channel the user typed into a filter. */
-  async function lookUpChannel(query: ChannelQuery): Promise<ChannelLookup> {
-    try {
-      const accessToken = await store.accessToken.getValue()
-      if (!accessToken) return { status: "failed" }
-      return await fetchChannel(query, accessToken)
-    } catch (error) {
-      // Must never reject, for the same reason as getPlaylists.
-      console.error("[YT Playlist Tools]:", error)
-      return { status: "failed" }
-    }
-  }
-
-  async function getPlaylists() {
-    try {
-      const accessToken = await store.accessToken.getValue()
-      if (!accessToken) return { error: "No access token", playlists: [] }
-
-      const playlists = await fetchUserPlaylists(accessToken)
-      // Cached so the next popup open paints immediately.
-      await store.cachedPlaylists.setValue(playlists)
-      return { playlists }
-    } catch (error) {
-      // Must never reject: the listener has already returned true, so a
-      // rejection here would leave sendResponse uncalled and the popup stuck
-      // on "Loading..." forever.
-      return { error: String(error), playlists: [] }
-    }
-  }
-
-  browser.runtime.onMessage.addListener((message: any, sender, sendResponse) => {
-    // Chrome does NOT support returning a Promise from an onMessage listener
-    // (crbug 1185241), and WXT ships no webextension-polyfill -- on Chrome
-    // `browser` IS `chrome`. Returning `true` and calling sendResponse later is
-    // the only pattern that works on both browsers.
-    if (message?.action === "fetchPlaylists") {
-      getPlaylists().then(sendResponse)
-      return true
-    }
-
-    // Sent by the popup, which has no sender tab. `tabId` is the tab whose
-    // video it is, for lookups that need to ask the page.
-    if (message?.action === "getChannelForTab") {
-      getChannelForTab(message.tabId, message.videoId).then(sendResponse)
-      return true
-    }
-
-    // Also from the popup: a channel typed into a filter, already parsed.
-    if (message?.action === "lookUpChannel") {
-      lookUpChannel(message.query).then(sendResponse)
-      return true
-    }
-
-    const tabId = sender.tab?.id
-    if (!tabId) return false
-
-    if (message?.action === "addVideoToPlaylists") {
-      store.playlists
-        .getValue()
-        .then((selected) => autoAdd(tabId, selected, message.videoId))
-        .catch((error) => console.error("[YT Playlist Tools]:", error))
-      return false
-    }
-
-    if (message?.action === "addVideoToShortcutPlaylist") {
-      store.addToPlaylistID
-        .getValue()
-        .then(async (playlistId) => {
-          if (!playlistId) {
-            await notify(tabId, "No shortcut playlist selected")
-            return
-          }
-          await addToShortcutPlaylist(tabId, playlistId, message.videoId)
-        })
-        .catch((error) => console.error("[YT Playlist Tools]:", error))
-      return false
-    }
-
-    return false
+  browser.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
+    if (!isRecord(message) || typeof message.action !== "string") return false
+    void handle(message, sender).then(sendResponse).catch(error => {
+      const code = error instanceof SessionFailure ? error.code : "unavailable"
+      sendResponse({ kind: code, error: sessionMessage(code) })
+      if (sender.tab?.id !== undefined) void notify(sender.tab.id, sessionMessage(code))
+    })
+    return true
   })
 })
