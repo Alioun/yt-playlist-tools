@@ -9,7 +9,6 @@ import { storage } from "#imports"
  */
 
 export type Theme = "light" | "dark" | "system"
-export type AuthMode = "server" | "manual"
 
 /**
  * Structurally identical to YouTubePlaylist in @/lib/youtube. Declared here
@@ -72,11 +71,7 @@ export const requiredWatchPercentage = storage.defineItem<number>(
   { fallback: 50 }
 )
 
-/**
- * Last known playlist list, so the popup can paint instantly instead of
- * waiting on a service-worker wake-up plus a paginated YouTube round-trip.
- * Refreshed in the background on every open.
- */
+/** Legacy list retained on disk. New views use the verified account's list. */
 export const cachedPlaylists = storage.defineItem<CachedPlaylist[]>(
   "local:cachedPlaylists",
   { fallback: [] }
@@ -124,45 +119,94 @@ export const channelLabels = storage.defineItem<Record<string, ChannelLabel>>(
   { fallback: {} }
 )
 
-/**
- * videoId → channel. Session storage survives MV3 service worker restarts and
- * is dropped when the browser closes.
- */
-export const channelCache = storage.defineItem<Record<string, VideoChannel>>(
-  "session:channelCache",
-  { fallback: {} }
-)
+export const CONSENT_VERSION = 1
+export const sessionConsent = storage.defineItem<number>("local:sessionConsent", { fallback: 0 })
+export const legacyClaimed = storage.defineItem<boolean>("local:legacyClaimed", { fallback: false })
 
-// ── OAuth ────────────────────────────────────────────────────────────────
-export const accessToken = storage.defineItem<string>("local:accessToken", {
-  fallback: ""
-})
+export interface AccountContext {
+  accountKey: string
+  incognito: boolean
+}
 
-export const refreshToken = storage.defineItem<string>("local:refreshToken", {
-  fallback: ""
-})
+export interface AccountSetup {
+  playlists: string[]
+  shortcutPlaylistId: string
+  filters: Record<string, ChannelFilter>
+  labels: Record<string, ChannelLabel>
+  cachedPlaylists: CachedPlaylist[]
+  cachedAt: number | null
+}
 
-export const authMode = storage.defineItem<AuthMode>("local:authMode", {
-  fallback: "server"
-})
+export function emptySetup(): AccountSetup {
+  return { playlists: [], shortcutPlaylistId: "", filters: {}, labels: {}, cachedPlaylists: [], cachedAt: null }
+}
 
-/**
- * Overrides the build-time broker URL, so a user of a published build can
- * point the extension at their own server. Empty means "use the default".
- * Read through getAuthServerURL() in @/config, never directly.
- */
-export const authServerURL = storage.defineItem<string>("local:authServerURL", {
-  fallback: ""
-})
+function accountItem(accountKey: string) {
+  if (!/^[A-Za-z0-9_-]{16,64}$/.test(accountKey)) throw new Error("Invalid account key")
+  return storage.defineItem<AccountSetup>(`local:account:${accountKey}`, { fallback: emptySetup() })
+}
 
-/** Only used by the "bring your own credentials" fallback path. */
-export const clientID = storage.defineItem<string>("local:clientID", {
-  fallback: ""
-})
+export function getAccountSetup(context: AccountContext): Promise<AccountSetup> {
+  return accountItem(context.accountKey).getValue()
+}
 
-export const clientSecret = storage.defineItem<string>("local:clientSecret", {
-  fallback: ""
-})
+export async function saveAccountSetup(context: AccountContext, setup: AccountSetup): Promise<void> {
+  if (context.incognito) throw new Error("Account choices cannot be saved in private windows")
+  if (await sessionConsent.getValue() !== CONSENT_VERSION) throw new Error("Access revoked")
+  await accountItem(context.accountKey).setValue(setup)
+}
+
+export async function cacheAccountPlaylists(context: AccountContext, list: CachedPlaylist[]): Promise<void> {
+  if (context.incognito) return
+  const setup = await getAccountSetup(context)
+  if (!setup.playlists.length && !setup.shortcutPlaylistId && !Object.keys(setup.filters).length) return
+  await saveAccountSetup(context, { ...setup, cachedPlaylists: list, cachedAt: Date.now() })
+}
+
+export async function hasUnclaimedSetup(): Promise<boolean> {
+  if (await legacyClaimed.getValue()) return false
+  const [selected, shortcut, filters] = await Promise.all([
+    playlists.getValue(), addToPlaylistID.getValue(), channelFilters.getValue()
+  ])
+  return selected.length > 0 || !!shortcut || Object.keys(filters).length > 0
+}
+
+export async function claimLegacySetup(context: AccountContext, owned: CachedPlaylist[]): Promise<AccountSetup> {
+  if (context.incognito) throw new Error("Claim your old setup in a normal window")
+  if (!await hasUnclaimedSetup()) return getAccountSetup(context)
+  const [selected, shortcut, filters, labels, existing] = await Promise.all([
+    playlists.getValue(), addToPlaylistID.getValue(), channelFilters.getValue(),
+    channelLabels.getValue(), getAccountSetup(context)
+  ])
+  const ids = new Set(owned.map(playlist => playlist.id))
+  const verifiedFilters = Object.fromEntries(Object.entries(filters).filter(([id]) => ids.has(id)))
+  const listed = new Set(Object.values(verifiedFilters).flatMap(filter => filter.channels))
+  const verifiedLabels = Object.fromEntries(Object.entries(labels).filter(([id]) => listed.has(id)))
+  const setup: AccountSetup = {
+    playlists: [...new Set([...existing.playlists, ...selected.filter(id => ids.has(id))])],
+    shortcutPlaylistId: existing.shortcutPlaylistId || (ids.has(shortcut) ? shortcut : ""),
+    filters: { ...verifiedFilters, ...existing.filters },
+    labels: { ...verifiedLabels, ...existing.labels },
+    cachedPlaylists: owned,
+    cachedAt: Date.now()
+  }
+  await saveAccountSetup(context, setup)
+  const remaining = selected.filter(id => !ids.has(id))
+  const remainingFilters = Object.fromEntries(Object.entries(filters).filter(([id]) => !ids.has(id)))
+  const remainingShortcut = ids.has(shortcut) ? "" : shortcut
+  await Promise.all([
+    playlists.setValue(remaining), addToPlaylistID.setValue(remainingShortcut), channelFilters.setValue(remainingFilters)
+  ])
+  await legacyClaimed.setValue(!remaining.length && !remainingShortcut && !Object.keys(remainingFilters).length)
+  return setup
+}
+
+/** Removes credential keys without reading any credential value. */
+export async function removeLegacyCredentials(): Promise<void> {
+  await browser.storage.local.remove([
+    "accessToken", "refreshToken", "clientID", "clientSecret", "authMode", "authServerURL"
+  ])
+}
 
 // ── UI ───────────────────────────────────────────────────────────────────
 /**

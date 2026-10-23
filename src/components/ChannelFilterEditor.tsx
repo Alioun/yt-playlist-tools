@@ -1,5 +1,5 @@
 import { Plus, X } from "lucide-react"
-import { useId, useState, type FormEvent } from "react"
+import { useEffect, useId, useRef, useState, type FormEvent } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -317,6 +317,11 @@ function AddTypedChannel({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const errorId = useId()
+  const live = useRef(true)
+  useEffect(() => {
+    live.current = true
+    return () => { live.current = false }
+  }, [])
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -331,6 +336,7 @@ function AddTypedChannel({
     const result = await onLookUp(parsed.query).catch(
       (): ChannelLookup => ({ status: "failed" })
     )
+    if (!live.current) return
     setBusy(false)
 
     if (result.status === "not-found") {

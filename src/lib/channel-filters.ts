@@ -1,12 +1,11 @@
-import * as store from "@/lib/storage"
 import type {
   ChannelFilter,
   ChannelFilterMode,
   ChannelLabel,
   VideoChannel
 } from "@/lib/storage"
-import { channelFromPage } from "@/lib/page-channel"
 import { fetchVideoChannel } from "@/lib/youtube"
+import type { SessionSnapshot } from "@/lib/session"
 
 /** The three positions of a filter's switch. Off is not a mode. */
 export type FilterSetting = "off" | ChannelFilterMode
@@ -58,90 +57,16 @@ export function anyFilterOn(
   return playlistIds.some((id) => filters[id]?.enabled)
 }
 
-/**
- * How long the resolver waits on the page before falling back to the API. The
- * content script's own bridge timeout is shorter; this one covers a tab that
- * never answers at all.
- */
-export const PAGE_READ_TIMEOUT_MS = 1500
-
-/** Asks the video's tab what its player holds. See `@/lib/page-channel`. */
-export type PageReader = () => Promise<unknown>
-
-async function readPage(read: PageReader): Promise<unknown> {
-  let timer: ReturnType<typeof setTimeout> | undefined
-  const timeout = new Promise<null>((resolve) => {
-    timer = setTimeout(() => resolve(null), PAGE_READ_TIMEOUT_MS)
-  })
-  try {
-    return await Promise.race([read().catch(() => null), timeout])
-  } finally {
-    clearTimeout(timer)
-  }
+export function resolveVideoChannel(session: SessionSnapshot, videoId: string): Promise<VideoChannel | null> {
+  return fetchVideoChannel(session, videoId)
 }
 
-async function lookUp(
-  videoId: string,
-  readFromPage?: PageReader
-): Promise<VideoChannel | null> {
-  if (readFromPage) {
-    const fromPage = channelFromPage(videoId, await readPage(readFromPage))
-    if (fromPage) return fromPage
-  }
-
-  const accessToken = await store.accessToken.getValue()
-  if (!accessToken) return null
-
-  const found = await fetchVideoChannel(videoId, accessToken)
-  return found ? { channelId: found.channelId, title: found.title } : null
-}
-
-/**
- * The one channel lookup shared by auto-add and the popup: the session cache,
- * then the page (free, and checked against `videoId`), then `videos.list`.
- * Null means the channel is unknown. There are no retries beyond the token
- * refresh inside the API client.
- */
-export async function resolveVideoChannel(
-  videoId: string,
-  readFromPage?: PageReader
-): Promise<VideoChannel | null> {
-  const cache = await store.channelCache.getValue()
-  const cached = cache[videoId]
-  if (cached) return cached
-
-  const channel = await lookUp(videoId, readFromPage)
-  if (!channel) return null
-
-  // Re-read: another lookup may have written while this one was waiting on
-  // the page or the network.
-  const latest = await store.channelCache.getValue()
-  await store.channelCache.setValue({ ...latest, [videoId]: channel })
-  return channel
-}
-
-/**
- * Brings a listed channel's label up to date after auto-add resolved it: the
- * title always, the handle only when this lookup found one (`videos.list`
- * gives none, and that shouldn't erase one the page gave earlier). A channel
- * no filter lists, orphans included, gets no label.
- */
-export async function refreshListedLabel(channel: VideoChannel): Promise<void> {
-  const { filters, labels } = await loadFilterState()
-  const listed = Object.values(filters).some((f) =>
-    f.channels.includes(channel.channelId)
-  )
-  if (!listed) return
-
-  const current = labels[channel.channelId]
+export function refreshListedLabel(state: FilterState, channel: VideoChannel): FilterState {
+  if (!Object.values(state.filters).some(filter => filter.channels.includes(channel.channelId))) return state
+  const current = state.labels[channel.channelId]
   const title = channel.title || current?.title || ""
   const handle = channel.handle ?? current?.handle
-  if (current?.title === title && current?.handle === handle) return
-
-  await store.channelLabels.setValue({
-    ...labels,
-    [channel.channelId]: { title, ...(handle ? { handle } : {}) }
-  })
+  return { ...state, labels: { ...state.labels, [channel.channelId]: { title, ...(handle ? { handle } : {}) } } }
 }
 
 /** Drops every label whose channel no filter lists, orphans included. */
@@ -155,24 +80,16 @@ export function pruneLabels(
   )
 }
 
-export async function loadFilterState(): Promise<FilterState> {
-  const [filters, labels] = await Promise.all([
-    store.channelFilters.getValue(),
-    store.channelLabels.getValue()
-  ])
-  return { filters, labels }
-}
-
 /**
  * Applies one change to a playlist's filter, optionally records a label, and
  * removes labels nothing lists any more. Returns the state as saved.
  */
-async function updateFilter(
+function updateFilter(
+  state: FilterState,
   playlistId: string,
   change: (current: ChannelFilter | undefined) => ChannelFilter,
   label?: VideoChannel
-): Promise<FilterState> {
-  const state = await loadFilterState()
+): FilterState {
   const filters = { ...state.filters, [playlistId]: change(state.filters[playlistId]) }
   const withNew = label
     ? {
@@ -185,10 +102,6 @@ async function updateFilter(
     : state.labels
   const labels = pruneLabels(filters, withNew)
 
-  await Promise.all([
-    store.channelFilters.setValue(filters),
-    store.channelLabels.setValue(labels)
-  ])
   return { filters, labels }
 }
 
@@ -197,8 +110,8 @@ async function updateFilter(
  * turning it back on in the same mode restores the list unchanged. Turning it
  * on in the other mode starts an empty list; ask first (see `clearsList`).
  */
-export function setFilterSetting(playlistId: string, setting: FilterSetting) {
-  return updateFilter(playlistId, (current) => {
+export function setFilterSetting(state: FilterState, playlistId: string, setting: FilterSetting) {
+  return updateFilter(state, playlistId, (current) => {
     if (setting === "off") {
       return {
         mode: current?.mode ?? "deny",
@@ -220,11 +133,13 @@ export function setFilterSetting(playlistId: string, setting: FilterSetting) {
  * this channel (ask first, see `clearsList`).
  */
 export function listChannelIn(
+  state: FilterState,
   playlistId: string,
   mode: ChannelFilterMode,
   channel: VideoChannel
 ) {
   return updateFilter(
+    state,
     playlistId,
     (current) => {
       const kept = current?.mode === mode ? current.channels : []
@@ -237,8 +152,9 @@ export function listChannelIn(
   )
 }
 
-export function addListedChannel(playlistId: string, channel: VideoChannel) {
+export function addListedChannel(state: FilterState, playlistId: string, channel: VideoChannel) {
   return updateFilter(
+    state,
     playlistId,
     (current) => {
       const filter = current ?? { mode: "deny", enabled: true, channels: [] }
@@ -249,8 +165,8 @@ export function addListedChannel(playlistId: string, channel: VideoChannel) {
   )
 }
 
-export function removeListedChannel(playlistId: string, channelId: string) {
-  return updateFilter(playlistId, (current) => ({
+export function removeListedChannel(state: FilterState, playlistId: string, channelId: string) {
+  return updateFilter(state, playlistId, (current) => ({
     mode: current?.mode ?? "deny",
     enabled: current?.enabled ?? false,
     channels: (current?.channels ?? []).filter((id) => id !== channelId)
