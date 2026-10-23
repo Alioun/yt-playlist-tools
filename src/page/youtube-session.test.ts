@@ -87,6 +87,12 @@ describe("page identity", () => {
     expect(network).not.toHaveBeenCalled()
   })
 
+  it("reports an unavailable account when hashing fails", async () => {
+    vi.stubGlobal("crypto", { subtle: { digest: vi.fn().mockRejectedValue(new Error("synthetic digest failure")) } })
+    expect(await runPageJob({ kind: "account" })).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(network).not.toHaveBeenCalled()
+  })
+
   it("never turns a signed-out visitor ID into an account", async () => {
     cfg.LOGGED_IN = false
     cfg.DATASYNC_ID = "Vsynthetic-visitor||"

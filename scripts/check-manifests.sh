@@ -41,7 +41,6 @@ for dir in "$@"; do
       jq -e '.background.service_worker' "$manifest" > /dev/null \
         || fail "$target is missing background.service_worker"
 
-      # Session jobs run in YouTube tabs.
       jq -e '.host_permissions | length > 0' "$manifest" > /dev/null \
         || fail "$target is missing host_permissions"
       ;;

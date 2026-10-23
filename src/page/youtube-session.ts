@@ -13,7 +13,7 @@ export async function runPageJob(job: PageJob): Promise<PageReply> {
   type Identity =
     | { kind: "unknown"; rawId: null }
     | { kind: "signedOut"; rawId: string | null }
-    | { kind: "signedIn"; rawId: string; key: Promise<string> }
+    | { kind: "signedIn"; rawId: string }
   type Resolver = { instance: JsonObject; method: (command: unknown, options: unknown) => unknown }
   type PageState = {
     identity: Identity
@@ -81,7 +81,7 @@ export async function runPageJob(job: PageJob): Promise<PageReply> {
     const rawId = typeof id === "string" && id.length > 0 ? id : null
     if (loggedIn === false) return { kind: "signedOut", rawId }
     if (loggedIn !== true || rawId === null) return { kind: "unknown", rawId: null }
-    return { kind: "signedIn", rawId, key: accountKey(rawId) }
+    return { kind: "signedIn", rawId }
   }
   function walk(value: unknown, visit: (node: JsonObject) => void): void {
     const pending = [value]
@@ -118,8 +118,6 @@ export async function runPageJob(job: PageJob): Promise<PageReply> {
   try {
     if (location.origin !== "https://www.youtube.com" || window.top !== window) fail("unavailable")
     const state = page.__ytptSessionV1 ??= { identity: pinIdentity(), tripped: false, lane: Promise.resolve() }
-    // A rejected digest must not become an unhandled rejection while a job waits in the lane.
-    if (state.identity.kind === "signedIn") void state.identity.key.catch(() => {})
     const abort = new AbortController()
     let expired = false
     let writeSent = false
@@ -140,7 +138,7 @@ export async function runPageJob(job: PageJob): Promise<PageReply> {
       const currentId = config("DATASYNC_ID")
       if (config("LOGGED_IN") === false || (typeof currentId === "string" && currentId !== state.identity.rawId)) trip()
       if (config("LOGGED_IN") !== true || typeof currentId !== "string" || !currentId) fail("unavailable")
-      const pinnedKey = await state.identity.key
+      const pinnedKey = await accountKey(state.identity.rawId)
       active()
       if (state.tripped) fail("accountChanged")
       if (key !== undefined && key !== pinnedKey) fail("accountChanged")
@@ -205,7 +203,6 @@ export async function runPageJob(job: PageJob): Promise<PageReply> {
         headers.Authorization = parts.join(" ")
         await requireAccount("accountKey" in job ? job.accountKey : undefined)
       } else {
-        // Public lookups carry only client context, never delegated user context.
         delete context.user
       }
       active()
@@ -451,7 +448,7 @@ export async function runPageJob(job: PageJob): Promise<PageReply> {
         const read = player && "getPlayerResponse" in player ? player.getPlayerResponse : undefined
         let answer: unknown = page.ytInitialPlayerResponse
         if (typeof read === "function") {
-          try { answer = read.call(player) } catch { /* A stale player can disappear during navigation. */ }
+          try { answer = read.call(player) } catch {}
         }
         verifyAnswer(answer)
         const channel = playerChannel(answer, job.videoId)
