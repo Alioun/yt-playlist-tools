@@ -167,6 +167,33 @@ describe("read, edit, serialize and read again", () => {
     const decoded = decodeFilter(roundtrip(raw))
     expect(roundtrip(normalizeFilterForWrite({ ...decoded, on: false }))).toEqual({ ...raw, on: false })
   })
+  test.each([
+    { name: "two columns", tuple: [channel, "Synthetic channel"], saved: [channel, "Synthetic channel"] },
+    { name: "explicit undefined", tuple: [channel, "Synthetic channel", undefined], saved: [channel, "Synthetic channel"] },
+    { name: "JSON placeholder", tuple: [channel, "Synthetic channel", null], saved: [channel, "Synthetic channel"] },
+    { name: "real handle", tuple: [channel, "Synthetic channel", "@synthetic"], saved: [channel, "Synthetic channel", "@synthetic"] },
+    { name: "undefined before future columns", tuple: [channel, "Synthetic channel", undefined, { future: [1, null] }, false],
+      saved: [channel, "Synthetic channel", null, { future: [1, null] }, false] },
+    { name: "placeholder before future columns", tuple: [channel, "Synthetic channel", null, { future: [1, null] }, false],
+      saved: [channel, "Synthetic channel", null, { future: [1, null] }, false] }
+  ])("filter $name survives a normalized JSON write and redecode", ({ tuple, saved }) => {
+    const raw = { channels: [tuple], futureFilter: { keep: true } }
+    const original = structuredClone(raw)
+    const decoded = decodeFilter(raw)
+    expect(decoded.channels[0]?.[2]).toBe(typeof tuple[2] === "string" ? tuple[2] : undefined)
+    const written = normalizeFilterForWrite({ ...decoded, on: true })
+    const persisted = roundtrip({ ...stamp, futureEnvelope: true, data: written })
+    expect(persisted).toEqual({ ...stamp, futureEnvelope: true,
+      data: { mode: "deny", on: true, channels: [saved], futureFilter: { keep: true } } })
+    expect(decodeDocument(persisted, decodeFilter)).toEqual({ kind: "value",
+      document: { ...stamp, futureEnvelope: true, data: written } })
+    expect(normalizeFilterForWrite(written)).toEqual(written)
+    expect(raw).toEqual(original)
+  })
+  test.each([false, 0, {}, [], ["@synthetic"]].map(handle => ({ handle })))("rejects malformed filter handles %p", ({ handle }) => {
+    expect(() => decodeFilter({ channels: [[channel, "Synthetic channel", handle]] })).toThrow(DecodeError)
+    expect(() => decodeFilter({ channels: [[channel, "Synthetic channel", handle, "future"]] })).toThrow(DecodeError)
+  })
   test("device and upgrade details retain R96 and R97 plus future fields", () => {
     const raw = { id: "synthetic-device", futureDevice: "x", upgradeNote: { state: "pending", details: {
       ...upgradeDetails, futureDetails: [1], pct: { ...upgradeDetails.pct, futurePct: 2 },
@@ -217,6 +244,18 @@ describe("write normalization", () => {
     const settings = decodeSettings({ shortcuts: { list: [{ ...shortcut, label: "  Later  " }] } })
     expect(normalizeSettingsForWrite(settings).shortcuts.list[0]?.label).toBe("Later")
     expect(settings.shortcuts.list[0]?.label).toBe("  Later  ")
+  })
+  test.each([
+    { label: "x".repeat(39) + " rest", saved: "x".repeat(39) },
+    { label: "  " + "😀".repeat(39) + "\u2003rest  ", saved: "😀".repeat(39) },
+    { label: "  " + "😀".repeat(40) + " rest  ", saved: "😀".repeat(40) }
+  ])("truncated shortcut labels stay trimmed and idempotent %p", ({ label, saved }) => {
+    const settings = decodeSettings({ shortcuts: { list: [{ ...shortcut, label }] } })
+    const written = normalizeSettingsForWrite(settings)
+    expect(written.shortcuts.list[0]?.label).toBe(saved)
+    expect(normalizeSettingsForWrite(written)).toEqual(written)
+    expect(decodeSettings(roundtrip(written))).toEqual(written)
+    expect(settings.shortcuts.list[0]?.label).toBe(label)
   })
   test("kept filters and a gather playlist prevent deleting an otherwise empty setup", () => {
     const labelOnly = decodeSetup({ label: { name: "Synthetic account" }, marks: { WL: "full" } })
