@@ -31,4 +31,4 @@ The remembered value is an exact domain snapshot, not a storage document or a wr
 
 Explicit adds bypass this tracker, session skips, and channel filters. Only auto-add outcomes for the emitted destinations go to `recordOutcome`.
 
-Focused verification uses `bun test ./src/site/features/auto-add/tracker.bun-test.ts ./src/shared/rules/channel-filter.bun-test.ts` and `bun run compile`. The root Bun discovery command needs both paths added by its owner.
+Focused verification uses `bun test ./src/site/features/auto-add/tracker.bun-test.ts ./src/shared/rules/channel-filter.bun-test.ts` and `bun run compile`. Run `bun run test:bun` for the full Bun suite, which discovers both test files automatically.

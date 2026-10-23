@@ -6,4 +6,4 @@ An absent or switched-off filter passes every channel. An allowlist passes only 
 
 The auto-add flow calls this rule after session skips and before membership, using the video's channel at the moment the add starts. The caller selects only filters for current auto-add playlists, leaving kept and orphaned filters untouched. Explicit adds bypass this rule.
 
-Tests use `bun test ./src/shared/rules/channel-filter.bun-test.ts`. The root Bun discovery command needs this path added by its owner.
+Tests use `bun test ./src/shared/rules/channel-filter.bun-test.ts`. Run `bun run test:bun` for the full Bun suite, which discovers this test file automatically.
