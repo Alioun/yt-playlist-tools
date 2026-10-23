@@ -180,14 +180,16 @@ describe("read, edit, serialize and read again", () => {
     const raw = { channels: [tuple], futureFilter: { keep: true } }
     const original = structuredClone(raw)
     const decoded = decodeFilter(raw)
+    const originalDecoded = structuredClone(decoded)
     expect(decoded.channels[0]?.[2]).toBe(typeof tuple[2] === "string" ? tuple[2] : undefined)
     const written = normalizeFilterForWrite({ ...decoded, on: true })
     const persisted = roundtrip({ ...stamp, futureEnvelope: true, data: written })
     expect(persisted).toEqual({ ...stamp, futureEnvelope: true,
       data: { mode: "deny", on: true, channels: [saved], futureFilter: { keep: true } } })
-    expect(decodeDocument(persisted, decodeFilter)).toEqual({ kind: "value",
-      document: { ...stamp, futureEnvelope: true, data: written } })
+    const document = { ...stamp, futureEnvelope: true, data: written }
+    expect(decodeDocument(persisted, decodeFilter)).toEqual({ kind: "value", document })
     expect(normalizeFilterForWrite(written)).toEqual(written)
+    expect(decoded).toEqual(originalDecoded)
     expect(raw).toEqual(original)
   })
   test.each([false, 0, {}, [], ["@synthetic"]].map(handle => ({ handle })))("rejects malformed filter handles %p", ({ handle }) => {

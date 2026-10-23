@@ -11,7 +11,7 @@ export function normalizeSettingsForWrite(settings: Settings): Settings {
   const value = decodeSettings(settings)
   return {
     ...value,
-    shortcuts: { ...value.shortcuts, list: value.shortcuts.list.map(shortcut => ({ ...shortcut, label: cut(shortcut.label.trim(), 40) })) }
+    shortcuts: { ...value.shortcuts, list: value.shortcuts.list.map(shortcut => ({ ...shortcut, label: cut(shortcut.label.trim(), 40).trim() })) }
   }
 }
 
@@ -23,6 +23,7 @@ export function normalizeFilterForWrite(filter: Filter): Filter {
       const result = channel.slice() as Filter["channels"][number]
       result[1] = cut(channel[1], 100)
       if (channel[2] !== undefined) result[2] = cut(channel[2], 30)
+      else if (result.length === 3) result.pop()
       return result
     })
   }

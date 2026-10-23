@@ -21,6 +21,8 @@ This module owns the browser-independent document bodies in DATA-12 and the enve
 
 Known objects retain unknown fields through decode, object-spread edits and JSON serialization. Filter tuples also retain future columns. Reconstructing an edited object from known fields alone discards extensions. The write normalization helpers preserve them. Unknown values must stay unchanged when the caller edits known fields.
 
+Filter handles remain optional strings in the model. The decoder reads a JSON `null` handle slot as `undefined`. Write normalization omits an absent final handle slot. If future columns follow it, the slot stays in place and JSON writes it as `null`.
+
 `normalizeSettingsForWrite`, `normalizeFilterForWrite` and `normalizeSetupForWrite` cut the DATA-13 labels only at save time. Shortcut labels are also trimmed under YT-KEY-14. Character limits count Unicode code points. They do not split surrogate pairs. Percentages must already be integers in 0 to 100. There is no rounding or clamping of 2.x settings. Legacy conversion belongs to the migration.
 
 `normalizeSetupForWrite(setup, { shortcutIds })` removes targets for absent shortcuts and marks for unchosen playlists. Chosen playlists include auto-add playlists, surviving shortcut targets, both quick-save playlists and the gather playlist. The optional `additionalChosenPlaylists` context preserves marks for shared choices resolved by the caller, such as a Watch later shortcut without an account override. Decoding retains these references so a read cannot silently change the saved document. The store skips dangling references in its read views and calls normalization before the next write.

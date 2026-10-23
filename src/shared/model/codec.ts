@@ -52,7 +52,6 @@ export function object<T extends object>(
       if (decoded === undefined) delete result[key]
       else Object.defineProperty(result, key, { value: decoded, enumerable: true, writable: true, configurable: true })
     }
-    // Every declared field has passed its decoder; extra fields remain untouched.
     return result as T
   }
 }
