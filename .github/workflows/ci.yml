@@ -50,6 +50,9 @@ jobs:
       - name: Build (Firefox MV3)
         run: bun run zip:firefox
 
+      - name: Assert Firefox archives exclude the pilot fixture
+        run: node tools/fixtures/svelte-pilot/check-archives.mjs
+
       - name: Assert manifests are correct
         run: scripts/check-manifests.sh .output/chrome-mv3 .output/firefox-mv3
 
@@ -99,6 +102,46 @@ jobs:
           - **Chrome** (\`chrome-mv3-${SHORT_SHA}\`): unzip it, open \`chrome://extensions\`, turn on Developer mode, then **Load unpacked** and pick the folder.
           - **Firefox** (\`firefox-mv3-${SHORT_SHA}\`): open \`about:debugging#/runtime/this-firefox\`, **Load Temporary Add-on…**, and pick the downloaded zip as it is. It's gone when Firefox restarts.
           EOF
+
+  svelte-pilot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck:pilot
+      - run: bunx --no-install playwright install --with-deps chromium
+
+      - name: Build Svelte fixture with Bun
+        run: |
+          bun --bun run build:pilot
+          bun --bun run build:pilot:firefox
+
+      - name: Check Bun-built fixture in Chromium
+        run: bun run test:pilot:browser
+
+      - name: Build Svelte fixture with Node 24
+        run: |
+          node --version
+          npm run build:pilot
+          npm run build:pilot:firefox
+
+      - name: Check Node-built fixture in Chromium
+        run: npm run test:pilot:browser
+
+      - name: Check production excludes the fixture
+        run: |
+          bun run build
+          bun run zip:firefox
+          bun run check:pilot
 
   # Firefox drops an unsigned add-on when it restarts, so on dev the Firefox
   # build is also signed on AMO's unlisted channel (R149). Chrome keeps an
