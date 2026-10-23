@@ -18,9 +18,15 @@ Using 1.4.5 from Firefox Add-ons? [Setup guide](docs/legacy/1.4.5-setup.md)
 
 - **Code on `main`:** 1.5.0
 - **On Firefox Add-ons:** 1.4.5
-- **Next:** 2.0, fully planned and not yet built
+- **Dev:** session-based YouTube access is being implemented. The full 2.0 rebuild is planned.
 
 2.0 will be called **Perchling for YouTube™**: Google's rules don't allow extensions to be named after YouTube. It's a ground-up rebuild. It works through your own signed-in YouTube session, so you no longer need to set up Google credentials. It also adds YouTube Music quick actions, and every part of it can be switched off. Read the [2.0 spec](.scratch/rebuild/spec.md), or start at the [planning hub](docs/rebuild/README.md).
+
+## Dev sign-in
+
+Dev builds use your signed-in YouTube tab. Google credentials and a token server are no longer used. Agree to the session-access disclosure in the popup, allow access to YouTube, and keep a YouTube tab open. Your 1.x playlist choices stay unclaimed until you confirm the account that owns them.
+
+This is the access migration for the planned 2.0 rebuild. The additional 2.0 features and interface are separate work. The Firefox Add-ons version still uses the legacy setup linked above.
 
 ## Docs
 

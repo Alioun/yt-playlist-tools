@@ -75,30 +75,16 @@ function project(browser: TargetBrowser): ViteUserConfig {
   }
 }
 
-/**
- * The token-broker server is plain Bun/Node code -- no extension APIs, no
- * auto-imports. Running it through WxtVitest would only slow it down.
- */
-const serverProject: ViteUserConfig = {
-  test: {
-    name: "server",
-    globals: true,
-    environment: "node",
-    include: ["server/**/*.{test,spec}.ts"]
-  }
-}
-
 export default defineConfig({
   test: {
-    projects: [project("chrome"), project("firefox"), serverProject],
+    projects: [project("chrome"), project("firefox")],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov"],
-      include: ["src/**/*.{ts,tsx}", "server/**/*.ts"],
+      include: ["src/**/*.{ts,tsx}"],
       exclude: [
         "src/components/ui/**",       // vendored shadcn components
         "src/**/*.test.{ts,tsx}",
-        "server/index.ts",            // process entry: env + Bun.serve only
         "src/entrypoints/**/main.tsx" // ReactDOM.createRoot bootstrap
       ]
     }

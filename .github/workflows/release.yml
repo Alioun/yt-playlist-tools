@@ -49,8 +49,6 @@ jobs:
     env:
       VERSION: ${{ needs.meta.outputs.version }}
       CHANNEL: ${{ needs.meta.outputs.channel }}
-      # The same as ci.yml, so a release behaves like the dev build you tested.
-      WXT_AUTH_SERVER_URL: ${{ vars.WXT_AUTH_SERVER_URL }}
     steps:
       - uses: actions/checkout@v7
 

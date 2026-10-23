@@ -28,13 +28,20 @@ for dir in "$@"; do
   v=$(jq -r '.version' "$manifest")
   [ "$v" = "$package_version" ] || fail "$target has version $v, package.json has $package_version"
 
+  jq -e '.permissions | index("identity") | not' "$manifest" > /dev/null \
+    || fail "$target still requests OAuth identity access"
+  jq -e '.host_permissions == ["https://www.youtube.com/*"]' "$manifest" > /dev/null \
+    || fail "$target must request only YouTube site access"
+  jq -e '(.content_scripts // []) | length == 0' "$manifest" > /dev/null \
+    || fail "$target injects scripts before consent"
+
   case "$target" in
     chrome-*)
       # Chrome needs a service worker.
       jq -e '.background.service_worker' "$manifest" > /dev/null \
         || fail "$target is missing background.service_worker"
 
-      # Required for the Google API calls to work on Chrome.
+      # Session jobs run in YouTube tabs.
       jq -e '.host_permissions | length > 0' "$manifest" > /dev/null \
         || fail "$target is missing host_permissions"
       ;;
