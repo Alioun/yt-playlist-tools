@@ -25,7 +25,7 @@ function settingsWithShortcut(): Settings {
   return settings
 }
 
-function recordContext(settings = defaultSettings(), platform = chrome): RecorderContext {
+function recordContext(settings: Settings = { ...defaultSettings(), undoKey: null }, platform = chrome): RecorderContext {
   return { settings, platform, target: picker }
 }
 
@@ -318,9 +318,9 @@ describe("recorder", () => {
 
   test.each([
     ["AZERTY", facts({ key: "w", code: "KeyZ" }), { ...key("w"), code: "KeyZ" }],
-    ["Option", facts({ key: "∑" }), { code: "KeyW", ...bare, alt: true }],
+    ["Option", facts({ key: "∑" }), { code: "KeyW", char: "∑", ...bare, alt: true }],
     ["dead", facts({ key: "Dead", code: "Quote" }), { code: "Quote", ...bare, alt: true }],
-    ["punctuation", facts({ key: ";", code: "Semicolon" }), { code: "Semicolon", ...bare, alt: true }],
+    ["punctuation", facts({ key: ";", code: "Semicolon" }), { code: "Semicolon", char: ";", ...bare, alt: true }],
     ["named", facts({ key: "F2", code: "F2" }), { code: "F2", ...bare, alt: true }]
   ])("records %s without duplicating the model", (_, event, expected) => {
     const result = recorder(recording(), { kind: "keydown", facts: event }, recordContext())
@@ -372,7 +372,7 @@ describe("browser policy and display", () => {
       expect(isReserved({ code: "F4", ...bare, ctrl: true }, platform)).toBe(true)
       for (const char of ["a", "b", "i", "n", "r", "t"]) expect(isReserved(key(char, { alt: true, shift: true }), platform)).toBe(true)
     }
-    if (os !== "windows") expect(isReserved(key("q", primary), platform)).toBe(true)
+    expect(isReserved(key("q", primary), platform)).toBe(os === "macos")
     expect(isReserved({ code: "Tab", ...bare, ctrl: true, shift: true }, platform)).toBe(true)
     expect(isReserved(key("d", primary), platform)).toBe(false)
     expect(isReserved({ code: "F5", ...bare }, platform)).toBe(false)

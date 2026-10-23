@@ -1,5 +1,5 @@
 import type { Key } from "../model"
-import { keyMatches } from "./match"
+import { isASCIICharacter, keyMatches } from "./match"
 import type { BrowserCommand, Modifiers, Platform, ShortcutWarning, Site } from "./types"
 
 type BrowserRule = { key: Key; action: string; reserved: boolean }
@@ -27,7 +27,6 @@ function browserRules(platform: Platform): BrowserRule[] {
       add(["KeyA", "KeyB", "KeyI", "KeyN", "KeyR", "KeyT"], { alt: true, shift: true }, true, "browser control")
     }
     if (platform.os === "macos") add(["KeyQ"], { meta: true }, true, "quit")
-    if (platform.os === "linux") add(["KeyQ"], { ctrl: true }, true, "quit")
   } else {
     add(["KeyQ"], platform.os === "macos" ? { meta: true } : { ctrl: true, shift: platform.os === "windows" }, true, "quit")
   }
@@ -65,12 +64,19 @@ const musicKeys = [
   ["Escape", "Toggle queue / expanded player"], ["KeyF", "Fullscreen"], ["Slash", "Search"], ["KeyG", "Navigation sequence"]
 ] satisfies [string, string][]
 
+const youtubeShiftKeys = [["KeyN", "Next video"], ["KeyP", "Previous video"]] satisfies [string, string][]
+
 export function shortcutWarnings(key: Readonly<Key>, context: { sites: readonly Site[]; platform: Platform; commands: readonly BrowserCommand[] }): ShortcutWarning[] {
   const warnings: ShortcutWarning[] = []
   for (const site of context.sites) {
     const table = site === "www" ? youtubeKeys : musicKeys
     for (const [code, action] of table) {
       if (matchesKey(chord(code), key)) warnings.push({ kind: "site", site, action })
+    }
+    if (site === "www") {
+      for (const [code, action] of youtubeShiftKeys) {
+        if (matchesKey(chord(code, { shift: true }), key)) warnings.push({ kind: "site", site, action })
+      }
     }
     if (site === "music" && key.shift && !key.ctrl && !key.alt && !key.meta && ["Equal", "Minus", "Slash"].includes(key.code)) {
       warnings.push({ kind: "site", site, action: key.code === "Slash" ? "Keyboard shortcuts" : key.code === "Equal" ? "Like current song" : "Dislike current song" })
@@ -111,6 +117,7 @@ export function displayModifiers(held: Modifiers, os: Platform["os"]): string {
 
 export function display(key: Readonly<Key>, os: Platform["os"]): string {
   const held = displayModifiers(key, os)
-  const label = key.char?.toUpperCase() ?? names[key.code] ?? key.code.replace(/^Key|^Digit/, "")
+  const char = key.char === undefined ? undefined : isASCIICharacter(key.char) ? key.char.toUpperCase() : key.char
+  const label = char ?? names[key.code] ?? key.code.replace(/^Key|^Digit/, "")
   return `${held}${held && os !== "macos" ? "+" : ""}${label}`
 }

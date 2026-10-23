@@ -1,11 +1,12 @@
 import { isKey } from "../model"
 import { findConflicts } from "./bindings"
-import { isASCIICharacter, isComposing, modifiers } from "./match"
+import { isComposing, modifiers } from "./match"
 import { isReserved } from "./policy"
 import type { RecorderContext, RecorderEvent, RecorderState, RecorderStep, Refusal } from "./types"
 
 const noModifiers = { ctrl: false, alt: false, shift: false, meta: false }
 const modifierNames = new Set(["Control", "Alt", "Shift", "Meta", "OS", "AltGraph", "Fn", "FnLock", "Hyper", "Super"])
+const characters = new Intl.Segmenter("und", { granularity: "grapheme" })
 
 export function recorder(state: RecorderState, event: RecorderEvent, context: RecorderContext): RecorderStep {
   const unchanged = { state, consume: false, outcome: { kind: "none" } } satisfies RecorderStep
@@ -37,7 +38,8 @@ export function recorder(state: RecorderState, event: RecorderEvent, context: Re
   if (!held.ctrl && !held.alt && !held.shift && !held.meta && ["Enter", "NumpadEnter", "Space"].includes(facts.code)) {
     return waiting("plain-enter-space", true)
   }
-  const candidate = { code: facts.code, ...held, ...(isASCIICharacter(facts.key) ? { char: facts.key.toLowerCase() } : {}) }
+  const char = facts.key !== " " && Array.from(characters.segment(facts.key)).length === 1 ? facts.key : undefined
+  const candidate = { code: facts.code, ...held, ...(char === undefined ? {} : { char }) }
   if (!isKey(candidate)) return waiting("unsupported-key", true)
   if (isReserved(candidate, context.platform)) return waiting("reserved", true)
   const conflicts = findConflicts(context.settings, context.target, candidate)

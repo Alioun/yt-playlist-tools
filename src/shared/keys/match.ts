@@ -3,6 +3,10 @@ import type { Binding, KeyFacts, MatchContext, Modifiers, PathDescriptor, Shortc
 
 const nonTypingInputs = new Set(["checkbox", "radio", "range", "button", "submit", "reset", "image", "color", "file"])
 const typingRoles = new Set(["textbox", "searchbox", "combobox", "spinbutton"])
+const printableCodes = new Set([
+  "Backquote", "Backslash", "BracketLeft", "BracketRight", "Comma", "Equal", "Minus", "Period", "Quote", "Semicolon", "Slash",
+  "IntlBackslash", "IntlRo", "IntlYen"
+])
 
 export function modifiers(facts: KeyFacts): Modifiers {
   return { ctrl: facts.ctrlKey, alt: facts.altKey, shift: facts.shiftKey, meta: facts.metaKey }
@@ -16,15 +20,28 @@ export function isASCIICharacter(char: string): boolean {
   return /^[a-z0-9]$/i.test(char)
 }
 
+function compareCharacters(left: string | undefined, right: string | undefined): boolean | undefined {
+  if (left === undefined || right === undefined || !isASCIICharacter(left) || !isASCIICharacter(right)) return undefined
+  return left.toLowerCase() === right.toLowerCase()
+}
+
 export function keyMatches(key: Readonly<Key>, facts: KeyFacts): boolean {
   if (facts.altGraph || !sameModifiers(key, modifiers(facts))) return false
-  if (key.char !== undefined && isASCIICharacter(facts.key)) return key.char.toLowerCase() === facts.key.toLowerCase()
-  return key.code === facts.code
+  return compareCharacters(key.char, facts.key) ?? key.code === facts.code
+}
+
+function overlapsCharacter(character: Readonly<Key>, physical: Readonly<Key>): boolean {
+  if (character.char === undefined || !isASCIICharacter(character.char)) return false
+  const compared = compareCharacters(character.char, physical.char)
+  if (compared !== undefined) return compared
+  // Layouts can place ASCII characters on any printable position, but not on named keys.
+  return /^(?:Key[A-Z]|Digit[0-9])$/.test(physical.code) || printableCodes.has(physical.code) ||
+    (/^Numpad[0-9]$/.test(physical.code) && /^[0-9]$/.test(character.char))
 }
 
 export function keysOverlap(left: Readonly<Key>, right: Readonly<Key>): boolean {
   return sameModifiers(left, right) && (left.code === right.code ||
-    (left.char !== undefined && right.char !== undefined && left.char.toLowerCase() === right.char.toLowerCase()))
+    overlapsCharacter(left, right) || overlapsCharacter(right, left))
 }
 
 export function sameTarget(left: ShortcutTarget, right: ShortcutTarget): boolean {
