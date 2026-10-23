@@ -1,4 +1,5 @@
-import { storage } from "#imports"
+import { browser } from "wxt/browser"
+import { storage } from "wxt/utils/storage"
 
 /**
  * Typed storage items.

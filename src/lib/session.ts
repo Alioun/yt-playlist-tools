@@ -1,3 +1,4 @@
+import { browser } from "wxt/browser"
 import { runPageJob } from "@/page/youtube-session"
 import type { PageJob, PageReply, SessionChannel, SessionSnapshot } from "@/lib/session-types"
 import * as store from "@/lib/storage"

@@ -1,3 +1,4 @@
+import { browser } from "wxt/browser"
 import { Suspense, lazy, useEffect, useRef, useState } from "react"
 
 import { ChannelCard } from "@/components/ChannelCard"

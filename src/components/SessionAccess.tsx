@@ -1,3 +1,4 @@
+import { browser } from "wxt/browser"
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
 import { SharedSettings } from "@/components/SharedSettings"

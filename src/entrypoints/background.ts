@@ -1,3 +1,5 @@
+import { browser } from "wxt/browser"
+import { defineBackground } from "wxt/utils/define-background"
 import { anyFilterOn, isFilteredOut, addListedChannel, listChannelIn, removeListedChannel, setFilterSetting } from "@/lib/channel-filters"
 import { parseChannelInput, type ChannelQuery } from "@/lib/channel-input"
 import * as store from "@/lib/storage"

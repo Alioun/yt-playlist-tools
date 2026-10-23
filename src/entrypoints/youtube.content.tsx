@@ -1,3 +1,6 @@
+import { browser } from "wxt/browser"
+import { defineContentScript } from "wxt/utils/define-content-script"
+import { createShadowRootUi } from "wxt/utils/content-script-ui/shadow-root"
 import ReactDOM from "react-dom/client"
 import { toast } from "sonner"
 import { ThemeProvider } from "@/components/theme-provider"
