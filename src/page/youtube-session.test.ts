@@ -47,7 +47,7 @@ async function flush(): Promise<void> {
 beforeEach(() => {
   window.location.href = "https://www.youtube.com/watch?v=video000001"
   document.body.innerHTML = ""
-  for (const property of ["__ytptSessionV1", "ytInitialPlayerResponse", "default_kevlar_base"]) Reflect.deleteProperty(window, property)
+  for (const property of ["__ytptSessionV1", "__ytptSessionAccess", "ytInitialPlayerResponse", "default_kevlar_base"]) Reflect.deleteProperty(window, property)
   cfg = {
     LOGGED_IN: true,
     DATASYNC_ID: rawId,
@@ -75,7 +75,103 @@ afterEach(() => {
   vi.useRealTimers()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
-  for (const property of ["__ytptSessionV1", "ytcfg", "ytInitialPlayerResponse", "default_kevlar_base"]) Reflect.deleteProperty(window, property)
+  for (const property of ["__ytptSessionV1", "__ytptSessionAccess", "ytcfg", "ytInitialPlayerResponse", "default_kevlar_base"]) Reflect.deleteProperty(window, property)
+})
+
+describe("revoked access", () => {
+  it.each<PageJob>([
+    { kind: "account" },
+    { kind: "playlists", accountKey: key },
+    addJob,
+    { kind: "videoChannel", videoId },
+    { kind: "resolveChannel", query: { by: "id", id: channelId } }
+  ])("rejects $kind before reading page data", async (job) => {
+    Reflect.set(window, "__ytptSessionAccess", false)
+    const configRead = vi.fn((name: string) => cfg[name])
+    Reflect.set(window, "ytcfg", { get: configRead })
+    const playerRead = vi.spyOn(document, "getElementById")
+    const cookieRead = vi.spyOn(document, "cookie", "get")
+    const stateRead = vi.fn(() => undefined)
+    Object.defineProperty(window, "__ytptSessionV1", { configurable: true, get: stateRead })
+    expect(await runPageJob(job)).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(configRead).not.toHaveBeenCalled()
+    expect(playerRead).not.toHaveBeenCalled()
+    expect(cookieRead).not.toHaveBeenCalled()
+    expect(stateRead).not.toHaveBeenCalled()
+    expect(network).not.toHaveBeenCalled()
+  })
+
+  it.each(["signed request", "page command"])("stops before a %s write when access is revoked during membership", async (route) => {
+    let release: (response: Response) => void = () => {}
+    network.mockImplementationOnce(() => new Promise((resolve) => { release = resolve }))
+    const command = vi.fn()
+    if (route === "page command") setResolver(command)
+    const pending = runPageJob(addJob)
+    await flush()
+    Reflect.set(window, "__ytptSessionAccess", false)
+    release(answer(membership()))
+    expect(await pending).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(network).toHaveBeenCalledTimes(1)
+    expect(command).not.toHaveBeenCalled()
+  })
+
+  it("stops a queued add after revocation without reading page configuration again", async () => {
+    let release: (response: Response) => void = () => {}
+    network.mockImplementationOnce(() => new Promise((resolve) => { release = resolve }))
+    const blocking = runPageJob({ kind: "playlists", accountKey: key })
+    await flush()
+    const queued = runPageJob(addJob)
+    Reflect.set(window, "__ytptSessionAccess", false)
+    const configRead = vi.fn((name: string) => cfg[name])
+    Reflect.set(window, "ytcfg", { get: configRead })
+    release(answer({ ...identity(), contents: [] }))
+    expect(await blocking).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(await queued).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(configRead).not.toHaveBeenCalled()
+    expect(network).toHaveBeenCalledTimes(1)
+  })
+
+  it("stops before fetching when access is revoked while a signing digest is pending", async () => {
+    let release: () => void = () => {}
+    const blocked = new Promise<void>((resolve) => { release = resolve })
+    const digest = vi.fn(async (algorithm: string, data: Parameters<typeof webcrypto.subtle.digest>[1]) => {
+      if (algorithm === "SHA-1") await blocked
+      return webcrypto.subtle.digest(algorithm, data)
+    })
+    vi.stubGlobal("crypto", { subtle: { digest } })
+    const pending = runPageJob({ kind: "playlists", accountKey: key })
+    await vi.waitFor(() => expect(digest.mock.calls.some(([algorithm]) => algorithm === "SHA-1")).toBe(true))
+    Reflect.set(window, "__ytptSessionAccess", false)
+    const configRead = vi.fn((name: string) => cfg[name])
+    Reflect.set(window, "ytcfg", { get: configRead })
+    release()
+    expect(await pending).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(configRead).not.toHaveBeenCalled()
+    expect(network).not.toHaveBeenCalled()
+  })
+
+  it("stops public channel lookups before another request after revocation", async () => {
+    let release: (response: Response) => void = () => {}
+    network.mockImplementationOnce(() => new Promise((resolve) => { release = resolve }))
+    const pending = runPageJob({ kind: "resolveChannel", query: { by: "handle", handle: "synthetic" } })
+    await flush()
+    Reflect.set(window, "__ytptSessionAccess", false)
+    release(answer({ endpoint: { browseEndpoint: { browseId: channelId }, commandMetadata: { webCommandMetadata: { webPageType: "WEB_PAGE_TYPE_CHANNEL" } } } }))
+    expect(await pending).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(network).toHaveBeenCalledTimes(1)
+  })
+
+  it("reports a dispatched write as unconfirmed if access is revoked before its answer", async () => {
+    let release: (response: Response) => void = () => {}
+    network.mockResolvedValueOnce(answer(membership()))
+      .mockImplementationOnce(() => new Promise((resolve) => { release = resolve }))
+    const pending = runPageJob(addJob)
+    await vi.waitFor(() => expect(network).toHaveBeenCalledTimes(2))
+    Reflect.set(window, "__ytptSessionAccess", false)
+    release(answer(success()))
+    expect(await pending).toMatchObject({ kind: "error", code: "unconfirmed" })
+    expect(network).toHaveBeenCalledTimes(2)
+  })
 })
 
 describe("page identity", () => {
@@ -175,6 +271,25 @@ describe("playlist reads", () => {
   it("adds the fixed Watch Later entry when aggregation omits it", async () => {
     network.mockResolvedValueOnce(answer({ ...identity(), contents: [] }))
     expect(await runPageJob({ kind: "playlists", accountKey: key })).toEqual({ kind: "playlists", accountKey: key, playlists: [{ id: "WL", title: "Watch Later" }] })
+  })
+
+  it.each(["initial page", "continuation"])("requires response identity on the %s", async (page) => {
+    if (page === "continuation") {
+      network.mockResolvedValueOnce(answer({ ...identity(), continuations: [{ nextContinuationData: { continuation: "synthetic-next" } }] }))
+    }
+    network.mockResolvedValueOnce(answer({ contents: [] }))
+    expect(await runPageJob({ kind: "playlists", accountKey: key })).toMatchObject({ kind: "error", code: "unavailable" })
+    expect(network).toHaveBeenCalledTimes(page === "continuation" ? 2 : 1)
+  })
+
+  it("latches a mismatched initial playlist response before returning IDs", async () => {
+    network.mockResolvedValueOnce(answer({
+      ...identity("synthetic-other||account"),
+      contents: [{ playlistRenderer: { playlistId, title: { simpleText: "Another account's playlist" } } }]
+    }))
+    expect(await runPageJob({ kind: "playlists", accountKey: key })).toMatchObject({ kind: "error", code: "accountChanged" })
+    expect(await runPageJob({ kind: "account" })).toMatchObject({ kind: "error", code: "accountChanged" })
+    expect(network).toHaveBeenCalledTimes(1)
   })
 
   it("checks the account on continuation responses", async () => {

@@ -25,6 +25,7 @@ export async function runPageJob(job: PageJob): Promise<PageReply> {
     ytcfg?: unknown
     ytInitialPlayerResponse?: unknown
     default_kevlar_base?: unknown
+    __ytptSessionAccess?: boolean
     __ytptSessionV1?: PageState
   }
   const messages = {
@@ -116,12 +117,14 @@ export async function runPageJob(job: PageJob): Promise<PageReply> {
   }
 
   try {
+    if (page.__ytptSessionAccess === false) fail("unavailable")
     if (location.origin !== "https://www.youtube.com" || window.top !== window) fail("unavailable")
     const state = page.__ytptSessionV1 ??= { identity: pinIdentity(), tripped: false, lane: Promise.resolve() }
     const abort = new AbortController()
     let expired = false
     let writeSent = false
     function active(): void {
+      if (page.__ytptSessionAccess === false) fail(writeSent ? "unconfirmed" : "unavailable")
       if (Date.now() >= deadline) expired = true
       if (expired) fail(writeSent ? "unconfirmed" : "unavailable")
       if (state.tripped && (job.kind === "account" || "accountKey" in job)) fail("accountChanged")
@@ -408,7 +411,7 @@ export async function runPageJob(job: PageJob): Promise<PageReply> {
       if (job.kind === "playlists") {
         const key = await requireAccount(job.accountKey)
         const playlists = new Map<string, SessionPlaylist>()
-        await pages("browse", { browseId: "FEplaylist_aggregation" }, (answer) => parsePlaylists(answer, playlists))
+        await pages("browse", { browseId: "FEplaylist_aggregation" }, (answer) => parsePlaylists(answer, playlists), true)
         if (!playlists.has("WL")) playlists.set("WL", { id: "WL", title: "Watch Later" })
         return { kind: "playlists", accountKey: key, playlists: [...playlists.values()] }
       }
