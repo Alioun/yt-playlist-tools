@@ -67,6 +67,8 @@ function project(browser: TargetBrowser): ViteUserConfig {
           : ["src/**/*.firefox.{test,spec}.{ts,tsx}"],
       exclude: [
         ...configDefaults.exclude,
+        "src/shared/model/**/*.test.ts",
+        "src/shared/model/model.bun-test.ts",
         ...(browser === "chrome" ? ["src/**/*.firefox.{test,spec}.{ts,tsx}"] : [])
       ],
       css: false,

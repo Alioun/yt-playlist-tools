@@ -1,0 +1,13 @@
+[define]
+"import.meta.env.BROWSER" = "'chrome'"
+"import.meta.env.CHROME" = "true"
+"import.meta.env.FIREFOX" = "false"
+"import.meta.env.MANIFEST_VERSION" = "3"
+"import.meta.env.MODE" = "'test'"
+"import.meta.env.PP_BUILD" = "'test'"
+
+[test]
+preload = ["./tests/setup/svelte.ts", "./tests/setup/happydom.ts", "./tests/setup/fake-browser.ts", "./tests/setup/testing-library.ts"]
+pathIgnorePatterns = ["tests/browser/**", "tools/**", ".output/**"]
+coverageReporter = ["text", "lcov"]
+coveragePathIgnorePatterns = ["tests/**", "src/entrypoints/**", "**/adapters/browser*.ts", "**/adapters/live-*.ts", "**/*.svelte", "node_modules/**"]
