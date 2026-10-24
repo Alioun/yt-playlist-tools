@@ -310,7 +310,10 @@ Setup is excluded from the receive API.
 
 The operation requires initialized consent, sync on, a steady joined history,
 and an existing supported local target. Filter additionally requires a supported
-Setup selecting the playlist. Settings needs no Setup, account, window lookup,
+existing live Setup for the same account, including an empty Setup retained by
+that kept Filter. Reception does not require playlist selection. Local UI edits
+still require selection. Missing, null, malformed, future, or deleted Setup
+remains unavailable before sync access. Settings needs no Setup, account, window lookup,
 or permission query. Its per-device-looking extensions remain inert data.
 Interim legacy markers make it unavailable before sync access. A complete
 same-history incoming Settings or Filter
@@ -324,6 +327,11 @@ defaults without merging the losing local body. One local set contains exactly
 the target and current raw history with only that target's pushed generation
 updated. Unrelated pending documents and bookkeeping stay exact. Finite local
 and sync preflight reads check the captured authority and raw observations again.
+Filter reception retains every raw Setup equality check, including unknown fields.
+A pending Setup does not block an acknowledged Filter while that raw Setup stays
+exact. Its body and acknowledgement remain untouched. Selection changes authorize
+no Filter deletion, cache or progress purge, account removal, or ownership claim.
+Setup reception and remote-only Filter creation remain excluded.
 After the set resolves, local and sync readbacks must match before `adopted` is
 returned. The lane remains held through those reads.
 

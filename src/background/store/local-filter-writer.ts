@@ -367,8 +367,8 @@ export function createLocalFilterWriter(deps: {
       const setupName = documentKey({ kind: "setup", acct: key.acct }), setup = records[setupName]
       if (!Object.hasOwn(records, setupName) || !isJsonObject(setup)) return unavailable("account-context")
       try {
-        const selected = decodeDocument(setup, decodeSetup)
-        if (selected.kind !== "value" || !selected.document.data.autoAdd.some(entry => entry.pl === key.playlist)) return unavailable("account-context")
+        const supported = decodeDocument(setup, decodeSetup)
+        if (supported.kind !== "value") return unavailable("account-context")
       } catch (error) {
         if (error instanceof DecodeError) return unavailable("account-context")
         throw error
