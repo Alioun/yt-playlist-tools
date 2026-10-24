@@ -4,13 +4,15 @@ import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises"
 import { resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { createPageLink } from "../../../../build/page-link.ts"
+import { fixtureEntries } from "./src/registration.ts"
 
 if (process.argv.length !== 2) throw Error("check-negative.mjs accepts no arguments")
 const root = fileURLToPath(new URL("./", import.meta.url))
 const repository = resolve(root, "../../../..")
 const cases = resolve(root, ".output/cases")
 const results = []
-const hooks = createPageLink({ siteRoot: resolve(root, "src/site"), kitIndex: resolve(root, "src/site/kit/index.ts"), evidenceDir: resolve(root, ".output/hook-checks") }).hooks
+const hooks = createPageLink({ entries: fixtureEntries, siteRoot: resolve(root, "src/site"), kitIndex: resolve(root, "src/site/kit/index.ts"), evidenceDir: resolve(root, ".output/hook-checks") }).hooks
+assert.throws(() => hooks["vite:build:extendConfig"]([{ type: "unlisted-script", name: "undeclared-www" }], {}), /missing entry ownership/)
 const feature = { type: "unlisted-script", name: "consumer-www" }
 const kitWww = { type: "unlisted-script", name: "kit-www" }
 const kitMusic = { type: "unlisted-script", name: "kit-music" }
@@ -48,6 +50,8 @@ async function fixture(name) {
   await rm(path, { recursive: true, force: true })
   await mkdir(path, { recursive: true })
   await cp(resolve(root, "src"), resolve(path, "src"), { recursive: true })
+  const registration = resolve(path, "src/registration.ts")
+  await writeFile(registration, (await readFile(registration, "utf8")).replaceAll('"../../../../../src/shared/', `"${repository}/src/shared/`))
   await cp(resolve(root, "tsconfig.json"), resolve(path, "tsconfig.json"))
   const config = (await readFile(resolve(root, "wxt.config.ts"), "utf8")).replace('"../../../../build/page-link"', JSON.stringify(resolve(repository, "build/page-link.ts")))
   await writeFile(resolve(path, "wxt.config.ts"), config)
@@ -99,6 +103,14 @@ for (const negative of negatives) {
   results.push({ name: negative.name, status: result.status, predicate: negative.predicate })
   console.log(`${negative.name} rejected by ${negative.predicate}`)
 }
+const suffix = await fixture("old-suffix-classification")
+const suffixConfig = resolve(suffix, "wxt.config.ts")
+await writeFile(suffixConfig, (await readFile(suffixConfig, "utf8")).replace("entries: fixtureEntries", 'entries: { ...fixtureEntries, "feature-auto-add": { kind: "page" } }'))
+const suffixResult = await build(suffix)
+await writeFile(resolve(cases, "old-suffix-classification.log"), suffixResult.output)
+assert.notEqual(suffixResult.status, 0, "Old suffix classification unexpectedly accepted the unsuffixed Svelte feature")
+assert(suffixResult.output.includes("noFeatureRuntime feature-auto-add"), suffixResult.output)
+results.push({ name: "old-suffix-classification", status: suffixResult.status, predicate: "noFeatureRuntime feature-auto-add" })
 const precision = await fixture("precision")
 const consumer = resolve(precision, "src/entrypoints/consumer-music.ts")
 const original = await readFile(consumer, "utf8")
@@ -133,6 +145,6 @@ export { flushSync as fixtureFlush } from "svelte";\nfunction shadow(S) { return
 result = await build(alias)
 assert.equal(result.status, 0, result.output)
 const boundNames = JSON.parse(await readFile(resolve(alias, ".output/evidence/chrome-build/kit-www.json"), "utf8")).names
-assert.deepEqual(boundNames, { ...before.www, root: [...before.www.root, "untrack", "flushSync", "unmount", "hydratable", "getAllContexts"].sort(), client: [...before.www.client, "index"].sort() })
+assert.deepEqual(boundNames, { ...before.www, root: [...new Set([...before.www.root, "untrack", "flushSync", "unmount", "hydratable", "getAllContexts"])].sort(), client: [...new Set([...before.www.client, "index"])].sort() })
 await writeFile(resolve(root, ".output/negative.json"), JSON.stringify({ hooks: { grouping: "pass", mixedKit: "rejected", externals: "callback and string/regexp arrays preserved", globals: "object and callback output arrays preserved" }, negatives: results, precision: { before, added, removed: before.music, runtimeFixtures: ["precision-added", "precision-removed"] }, bindings: boundNames, beta: beta.names }, null, 2))
 console.log("Per-site add/remove, beta-mode subset, aliases, reserved properties and lexical shadowing passed")

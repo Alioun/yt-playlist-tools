@@ -1,11 +1,5 @@
 import { browser } from "@wxt-dev/browser"
-
-const registrations = [
-  { id: "pp-www-page", matches: ["https://www.youtube.com/*"], js: ["page-www.js"], world: "MAIN", runAt: "document_start" },
-  { id: "pp-www", matches: ["https://www.youtube.com/*"], js: ["core-www.js", "kit-www.js", "consumer-www.js"], world: "ISOLATED", runAt: "document_idle" },
-  { id: "pp-music-page", matches: ["https://music.youtube.com/*"], js: ["page-music.js"], world: "MAIN", runAt: "document_start" },
-  { id: "pp-music", matches: ["https://music.youtube.com/*"], js: ["core-music.js", "kit-music.js", "consumer-music.js"], world: "ISOLATED", runAt: "document_idle" }
-] satisfies Parameters<typeof browser.scripting.registerContentScripts>[0]
+import { fixturePlan, type Selection } from "../../registration"
 
 let lazyTarget: number | undefined
 let lazyLoad: Promise<unknown> | undefined
@@ -22,10 +16,12 @@ const control = {
     if (!lazyLoad) throw Error("Click the fixture lazy button first")
     return lazyLoad
   },
-  async register() {
+  plan: fixturePlan,
+  async register(selection: Selection = "consumers") {
     const current = await browser.scripting.getRegisteredContentScripts()
     if (current.length) await browser.scripting.unregisterContentScripts({ ids: current.map((entry) => entry.id) })
-    await browser.scripting.registerContentScripts(registrations)
+    const { expected } = fixturePlan(selection)
+    if (expected.length) await browser.scripting.registerContentScripts(expected)
     return browser.scripting.getRegisteredContentScripts()
   },
   async unregister() { await browser.scripting.unregisterContentScripts() },
@@ -34,6 +30,9 @@ const control = {
     const id = tabs[0]?.id
     if (id === undefined) throw Error(`Missing fixture tab ${url}`)
     return id
+  },
+  async probe(tabId: number) {
+    return browser.scripting.executeScript({ target: { tabId }, world: "ISOLATED", func: () => ({ trace: globalThis.__pp?.core?.trace ?? [], kit: !!globalThis.__pp?.kit, host: !!document.querySelector("#fixture-host") }) })
   },
   async inspect(tabId: number) {
     return browser.scripting.executeScript({ target: { tabId }, world: "ISOLATED", func: () => ({

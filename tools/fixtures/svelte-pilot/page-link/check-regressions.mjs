@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url"
 import { chromium } from "playwright"
 import { parseSync } from "vite"
 import { createPageLink } from "../../../../build/page-link.ts"
+import { fixtureEntries } from "./src/registration.ts"
 
 if (process.argv.length !== 2) throw Error("check-regressions.mjs accepts no arguments")
 const root = fileURLToPath(new URL("./", import.meta.url))
@@ -28,7 +29,7 @@ async function check(name, run) {
 }
 
 await check("transformed-module-identity", async () => {
-  const link = createPageLink({ siteRoot: resolve(root, "src/site"), kitIndex: resolve(root, "src/site/kit/index.ts"), evidenceDir: resolve(cases, "state") })
+  const link = createPageLink({ entries: fixtureEntries, siteRoot: resolve(root, "src/site"), kitIndex: resolve(root, "src/site/kit/index.ts"), evidenceDir: resolve(cases, "state") })
   const entry = (name) => ({ type: "unlisted-script", name })
   const plugin = (name) => {
     const config = {}
@@ -64,6 +65,8 @@ async function fixture(name) {
   await rm(path, { recursive: true, force: true })
   await mkdir(path, { recursive: true })
   await cp(resolve(root, "src"), resolve(path, "src"), { recursive: true })
+  const registration = resolve(path, "src/registration.ts")
+  await writeFile(registration, (await readFile(registration, "utf8")).replaceAll('"../../../../../src/shared/', `"${repository}/src/shared/`))
   await cp(resolve(root, "tsconfig.json"), resolve(path, "tsconfig.json"))
   await writeFile(resolve(path, "wxt.config.ts"), (await readFile(resolve(root, "wxt.config.ts"), "utf8")).replace('"../../../../build/page-link"', JSON.stringify(resolve(repository, "build/page-link.ts"))))
   return path

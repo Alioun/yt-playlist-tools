@@ -35,7 +35,9 @@ This command fails explicitly. The dependency owner must install Puppeteer 24.43
 
 `wxt.config.ts` creates one linker with absolute `siteRoot`, `kitIndex`, and `evidenceDir` paths. It installs `pageCompileOptions` through the public WXT Svelte module and passes the factory's hooks to WXT.
 
-Unlisted names ending in `-www` or `-music` are linked consumers, except `core-*`, `page-*`, and the exact kit names. `kit-www` and `kit-music` build last. Other unlisted entries remain independent. Extension pages and the background keep their normal WXT builds.
+`src/registration.ts` declares the fixture's actual page consumers and derives an exact ownership map from the shared `pageLinkEntries` projection. The shared site-bundle description owns page, core, kit, and lazy bundle names. The linker requires ownership for every unlisted entry. It never infers a site from a filename. Declared kits build last. Extension pages and the background keep their normal WXT builds.
+
+`feature-auto-add.ts` is an unsuffixed synthetic Svelte consumer. It mounts its own real component with a rune-backed list. Its `each` runtime export contributes to the www kit without changing the music kit. It is not production auto-add. The negative checker reproduces the old suffix classifier's page classification and requires its build to fail at `noFeatureRuntime feature-auto-add`. The normally classified artifact must build and run.
 
 The collector parses every transformed feature module after component and rune-module compilation. Decoded specifiers determine collection, including escaped string literals. Contributions use the full transformed ID so executable, raw, and other query variants stay independent. It resolves namespace bindings through lexical scopes, keeps original named imports through aliases, and accepts static properties including `["if"]`. Foreign import and source re-export names are declaration syntax. Local namespace exports, production namespace escapes, and computed dynamic properties fail with the importer and expression. Unknown Svelte entrypoints fail closed. Named re-exports contribute their original names. Namespace re-exports cannot produce a finite production export set.
 
@@ -57,6 +59,20 @@ The checkers write their artifacts under the ignored `.output` directory.
 - `source-rebuild.json` and `source-*.log` record the fresh source ZIP and extracted production rebuilds.
 - `sizes.json` records byte counts and gzip level 9 sizes for every fixture script. These are fixture data, not final product budget results.
 
-The literal control page registers MAIN at `document_start` and ISOLATED at `document_idle`. The isolated registration lists core, kit, and consumer in that order. Its lazy button injects `popovers.js` only after the checker selects a synthetic tab and clicks. Real Bits UI mounts into plain DOM inside the kit's shadow layer with its own Svelte runtime.
+The control page calls the pure shared `desired` function with canonical synthetic settings. It installs the returned registrations with native register, list, and unregister APIs. The installed checker compares all effective fields to planner data. Native match order is normalized as a set. Script order is compared exactly.
+
+The default selection registers MAIN at `document_start` and ISOLATED at `document_idle`. The isolated registration lists core, kit, and consumer in that order. MAIN behavior is checked independently. No execution order between worlds is assumed.
+
+The `unsuffixed`, `off`, and `gather` selections exercise fresh future page loads. Gather installs only page and core on watch and live routes, with nothing on the homepage. Switching registration selections does not tear down scripts already running in a page. The checker keeps the unsuffixed page open across the off switch and verifies its component remains present. The control page's lazy button injects `popovers.js` only after the checker selects a synthetic tab and clicks. Real Bits UI mounts into plain DOM inside the kit's shadow layer with its own Svelte runtime.
 
 The working React extension, original pilot, production registrar, shared contracts, and production WXT configuration are outside this fixture.
+
+The focused planner suite uses synthetic declarations for all twelve canonical features. It covers consent, schema, access, musicSection, extra page predicates, no-page features, file-free Gather, kit-free card-menu, lazy exclusion, registry order, input immutability, and invalid declarations.
+
+```sh
+bun test ./src/shared/features/registration.bun-test.ts
+bun test ./tests/guards/architecture.test.ts
+bun run compile
+```
+
+Copied fixture projects rewrite only their shared source import prefix to the repository's absolute `src/shared` path. The standalone fixture TypeScript configuration permits those explicit `.ts` imports for Node 24's native type stripping. The source checker verifies that the packaged planner and linker exactly match the working source.

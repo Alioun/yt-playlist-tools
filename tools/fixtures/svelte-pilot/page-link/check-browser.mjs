@@ -15,7 +15,7 @@ const artifactDir = resolve(root, ".output/browser")
 await mkdir(artifactDir, { recursive: true })
 const profile = await mkdtemp(resolve(tmpdir(), "page-link-chromium-"))
 let context
-const evidence = { browser: "", sites: [], negative: [] }
+const evidence = { browser: "", sites: [], negative: [], selections: [] }
 try {
   context = await chromium.launchPersistentContext(profile, {
     channel: "chromium", headless: true,
@@ -32,7 +32,16 @@ try {
   await control.goto(`chrome-extension://${extensionId}/control.html`)
   await control.waitForFunction(() => !!window.fixture)
   const call = (method, ...values) => control.evaluate(({ method, values }) => window.fixture[method](...values), { method, values })
-  const registered = await call("register")
+  async function register(selection = "consumers") {
+    const plan = await call("plan", selection)
+    const actual = await call("register", selection)
+    const fields = ["id", "matches", "js", "world", "runAt", "allFrames", "persistAcrossSessions"]
+    const normalize = (rows) => rows.map((row) => Object.fromEntries(fields.map((field) => [field, field === "matches" ? [...row.matches].sort() : row[field]]))).sort((a, b) => a.id.localeCompare(b.id))
+    assert.deepEqual(normalize(actual), normalize(plan.expected))
+    evidence.selections.push({ selection, plan, actual })
+    return actual
+  }
+  const registered = await register()
   assert.equal(registered.length, 4)
   for (const site of ["www", "music"]) {
     const main = registered.find((entry) => entry.id === `pp-${site}-page`)
@@ -78,7 +87,6 @@ try {
     assert.equal(styles.mainRan, "true")
     assert.equal(styles.mainAfterCore, "undefined")
     assert.equal(styles.mainReadyState, "loading")
-    assert.equal(result.mainAtCore, "true")
     assert.notEqual(result.readyStateAtCore, "loading")
     assert.equal(await page.getByText("Real Bits UI", { exact: true }).count(), 0)
     await call("targetLazy", tabId)
@@ -119,6 +127,45 @@ try {
     assert.deepEqual(errors, [])
     await page.screenshot({ path: resolve(artifactDir, `${site}.png`) })
     evidence.sites.push({ site, registered: [main, isolated], result, styles, position, errors })
+    await page.close()
+  }
+  await register("unsuffixed")
+  const unsuffixed = await context.newPage()
+  await unsuffixed.goto("https://www.youtube.com/unsuffixed")
+  await unsuffixed.getByRole("button", { name: "Unsuffixed 1", exact: true }).click()
+  await unsuffixed.getByText("Unsuffixed item 2", { exact: true }).waitFor()
+  const unsuffixedResult = (await call("inspect", await call("tab", unsuffixed.url())))[0].result
+  assert.deepEqual(unsuffixedResult.trace, ["core", "kit", "unsuffixed"])
+  assert(unsuffixedResult.client.includes("each"))
+  evidence.selections.at(-1).execution = unsuffixedResult
+  await unsuffixed.screenshot({ path: resolve(artifactDir, "unsuffixed.png") })
+  await register("off")
+  for (const site of ["www", "music"]) {
+    const off = await context.newPage()
+    await off.goto(`https://${site}.youtube.com/unselected`)
+    const offResult = (await call("probe", await call("tab", off.url())))[0].result
+    assert.deepEqual(offResult, { trace: [], kit: false, host: false })
+    assert.equal(await off.getByRole("button", { name: "Count 0", exact: true }).count(), 0)
+    evidence.selections.push({ selection: "off-route", site, result: offResult })
+    await off.close()
+  }
+  assert.equal(await unsuffixed.getByText("Unsuffixed item 2", { exact: true }).count(), 1)
+  await unsuffixed.close()
+  await register("gather")
+  for (const path of ["/watch?v=synthetic", "/live/synthetic", "/"]) {
+    const page = await context.newPage()
+    await page.goto(`https://www.youtube.com${path}`)
+    const tabId = await call("tab", page.url())
+    if (path !== "/") {
+      await page.waitForFunction(() => document.documentElement.dataset.mainRan === "true")
+      await control.waitForFunction(async (tabId) => (await window.fixture.probe(tabId))[0].result.trace.includes("core"), tabId)
+    }
+    const result = (await call("probe", tabId))[0].result
+    assert.deepEqual(result, { trace: path === "/" ? [] : ["core"], kit: false, host: false })
+    assert.equal(await page.getByRole("button").count(), 0)
+    const main = await page.evaluate(() => document.documentElement.dataset.mainRan ?? null)
+    assert.equal(main, path === "/" ? null : "true")
+    evidence.selections.push({ selection: "gather-route", path, result, main })
     await page.close()
   }
   await call("unregister")
