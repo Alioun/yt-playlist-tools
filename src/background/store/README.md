@@ -290,3 +290,11 @@ Start and sync events inspect fresh whole snapshots. Each external event may own
 `onSyncResult` receives automatic flush results or `{ kind: "rejected", error }` for a rejected preflight. Native set failures, acknowledgement failures, unconfirmed sets, and rejected passes retain their original errors and stage information. They cancel automatic work for the instance. Later starts, events, and edits cannot clear that stop. Explicit manual calls remain paced and observable and never clear the stop. Deterministic `blocked` and `unavailable` plans can be checked by another independent event.
 
 This is an incomplete internal component. Native Error text supplies no approved rate discriminator. It adds no error parser, fallback retry, persisted rate journal, user-intent replay, incoming adoption, status rewrite, join or reset choice, chunk cleanup, or production recovery. The initial five-second barrier does not preserve the specified sixty-second hold after a genuinely classified rate failure. Native success proves this browser's sync-area acceptance only.
+
+## Pure sync inventory
+
+`readSyncInventory({ items })` in `sync-inventory.ts` reads a supplied complete physical snapshot. It returns exact canonical bases in input order, each with its unchanged `readSyncDocument` result, and whole physical occupancy from `projectSyncWrite` with an empty set. Invalid physical JSON or duplicate keys invalidate the inventory. A semantically invalid document remains an individual result. Over-budget snapshots remain readable with `full` occupancy.
+
+Metadata, unknown keys, and retained old chunks count toward occupancy. Chunks alone do not create a document record. A physically present null base produces a record with an `absent` result, while an omitted base produces no record. Raw additive fields retain the codec's semantics. The helper performs no normalization, storage access, caching, timers, or mutation.
+
+This is an observation of the supplied items. It establishes no freshness, lock, Device authority, joined history, adoption, ownership, supersession, recovery, or deletion permission. Callers retain the original items. Production callers are unchanged. Native verification of this unit is waived and unproven.
