@@ -1,13 +1,14 @@
 import {
   CONSENT_VERSION, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError,
-  decodeDevice, decodeDocument, decodeFilter, decodeSetup, decodeSyncState, documentKey,
-  type AccountKey, type PlaylistId
+  decodeDevice, decodeDocument, decodeFilter, decodeSetup, decodeSyncState, decodeSyncMeta, documentKey,
+  type AccountKey, type PlaylistId, type DocumentKey
 } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
 import { changeFilterSetting, type FilterSettingInput } from "./channel-filter-edit"
 import { planSyncWrite, sameSyncJson, type SyncDocumentRecord } from "./sync-write-admission"
 import { readSyncDocument } from "./sync-codec"
+import { readSyncInventory } from "./sync-inventory"
 import { prepareDocumentBody } from "./write-preparation"
 
 type UiOrigin = Extract<Origin, { kind: "ui" }>
@@ -59,6 +60,18 @@ export type SyncFlushResult =
   | { kind: "unconfirmed"; sent: readonly SyncDocumentRecord[]; cause:
     | { kind: "authority" | "readback" }
     | { kind: "read-failed"; error: unknown }
+  }
+
+export type SyncFilterKey = Extract<DocumentKey, { kind: "filter" }>
+
+export type SyncReceiveFilterResult =
+  | { readonly kind: "idle" }
+  | { readonly kind: "adopted"; readonly received: SyncDocumentRecord }
+  | { readonly kind: "unavailable"; readonly reason: "authority" | "history" | "account-context" | "document" | "pending" | "conflict" }
+  | { readonly kind: "local-set-failed"; readonly error: unknown; readonly received: SyncDocumentRecord }
+  | { readonly kind: "unconfirmed"; readonly received: SyncDocumentRecord; readonly cause:
+    | { readonly kind: "authority" | "readback" }
+    | { readonly kind: "read-failed"; readonly error: unknown }
   }
 
 export type SyncAutomaticResult = SyncFlushResult | { kind: "rejected"; error: unknown }
@@ -124,6 +137,7 @@ export function createLocalFilterWriter(deps: {
   readonly onSyncResult: (result: SyncAutomaticResult) => void
 }): {
   change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>
+  receiveSyncFilter(key: SyncFilterKey): Promise<SyncReceiveFilterResult>
   flushSync(): Promise<SyncFlushResult>
   startSync(): Promise<void>
   dispose(): Promise<void>
@@ -278,6 +292,129 @@ export function createLocalFilterWriter(deps: {
     }
   }
 
+  async function receive(key: SyncFilterKey): Promise<SyncReceiveFilterResult> {
+    const unavailable = (reason: Extract<SyncReceiveFilterResult, { kind: "unavailable" }>["reason"]) => ({ kind: "unavailable", reason } as const)
+    const name = documentKey(key), setupName = documentKey({ kind: "setup", acct: key.acct })
+    function context(records: Readonly<Record<string, unknown>>) {
+      const ready = authority(records)
+      if (lifetime.kind === "disposed" || ready.kind !== "ready" || !ready.device.syncOn || !ready.history ||
+        Object.keys(records).some(name => name.startsWith("account:") ||
+          ["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"].includes(name))) return unavailable("authority")
+      const raw = records[name], setup = records[setupName]
+      if (!Object.hasOwn(records, name) || !isJsonObject(raw)) return unavailable("document")
+      let filter
+      try { filter = decodeDocument(raw, decodeFilter) } catch (error) {
+        if (error instanceof DecodeError) return unavailable("document")
+        throw error
+      }
+      if (filter.kind !== "value") return unavailable("document")
+      if (!Object.hasOwn(records, setupName) || !isJsonObject(setup)) return unavailable("account-context")
+      try {
+        const selected = decodeDocument(setup, decodeSetup)
+        if (selected.kind !== "value" || !selected.document.data.autoAdd.some(entry => entry.pl === key.playlist)) return unavailable("account-context")
+      } catch (error) {
+        if (error instanceof DecodeError) return unavailable("account-context")
+        throw error
+      }
+      return { kind: "ready", device: ready.rawDevice, history: ready.history.raw, joined: ready.history.joined,
+        setup, raw, filter: filter.document } as const
+    }
+    function observation(records: Readonly<Record<string, unknown>>, joined: string | null) {
+      if (records === null || typeof records !== "object" || Array.isArray(records) ||
+        ![Object.prototype, null].includes(Object.getPrototypeOf(records)) || Reflect.ownKeys(records).some(key => {
+          const descriptor = Object.getOwnPropertyDescriptor(records, key)
+          return typeof key !== "string" || !descriptor || !("value" in descriptor) || !descriptor.enumerable
+        })) return unavailable("document")
+      const metadata = records["s:meta"]
+      if (!Object.hasOwn(records, "s:meta") || !isJsonObject(metadata)) return unavailable("history")
+      try {
+        const meta = decodeSyncMeta(metadata)
+        if (meta.v !== 1 || meta.id !== joined || meta.reset === true) return unavailable("history")
+      } catch (error) {
+        if (error instanceof DecodeError) return unavailable("history")
+        throw error
+      }
+      const items = Object.entries(records).map(([key, value]) => ({ key, value }))
+      const inventory = readSyncInventory({ items })
+      if (inventory.kind !== "read") return unavailable("document")
+      const candidate = inventory.documents.find(entry => entry.baseKey === `s:${name.slice(4)}`)?.result
+      if (candidate?.kind !== "value" || candidate.value.kind !== "filter") return unavailable("document")
+      return { kind: "ready", metadata, candidate } as const
+    }
+    const disposed = () => lifetime.kind === "disposed"
+    const initial = context(await deps.local.get(null))
+    if (initial.kind !== "ready") return initial
+    // Native reads are snapshots. Capture the raw baseline independently of later IO.
+    function snapshot(raw: JsonObject): JsonObject {
+      const copy: JsonObject = {}
+      const pending: { source: JsonObject | JsonValue[]; target: JsonObject | JsonValue[] }[] = [{ source: raw, target: copy }]
+      while (pending.length > 0) {
+        const entry = pending.pop()
+        if (!entry) break
+        for (const [name, value] of Object.entries(entry.source)) {
+          const child: JsonValue = value !== null && typeof value === "object" ? Array.isArray(value) ? [] : {} : value
+          Object.defineProperty(entry.target, name, { value: child, enumerable: true, writable: true, configurable: true })
+          if (value !== null && typeof value === "object" && child !== null && typeof child === "object") {
+            pending.push({ source: value, target: child })
+          }
+        }
+      }
+      return copy
+    }
+    const baseline = { device: snapshot(initial.device), history: snapshot(initial.history), setup: snapshot(initial.setup), raw: snapshot(initial.raw) }
+    const unchanged = (current: ReturnType<typeof context>) => current.kind === "ready" &&
+      sameSyncJson(current.device, baseline.device) && sameSyncJson(current.history, baseline.history) &&
+      sameSyncJson(current.setup, baseline.setup) && sameSyncJson(current.raw, baseline.raw)
+    const remote = observation(await deps.sync.get(), initial.joined)
+    if (disposed()) return unavailable("authority")
+    if (remote.kind !== "ready") return remote
+    if (sameSyncJson(initial.raw, remote.candidate.json)) return { kind: "idle" }
+    const history = decodeSyncState(initial.history)
+    if (!Object.hasOwn(history.pushed, name) || history.pushed[name] !== initial.filter.gen) return unavailable("pending")
+    const incoming = remote.candidate.value.document
+    if (incoming.gen === initial.filter.gen || incoming.at <= initial.filter.at) return unavailable("conflict")
+    const metadata = snapshot(remote.metadata)
+    const document = snapshot(remote.candidate.json)
+    const received: SyncDocumentRecord = { key, name, gen: incoming.gen, document }
+    const current = context(await deps.local.get(null))
+    if (!unchanged(current)) return unavailable("authority")
+    const preflight = observation(await deps.sync.get(), initial.joined)
+    if (disposed()) return unavailable("authority")
+    if (preflight.kind !== "ready") return preflight
+    if (!sameSyncJson(metadata, preflight.metadata)) return unavailable("history")
+    if (!sameSyncJson(document, preflight.candidate.json)) return unavailable("document")
+    const latest = context(await deps.local.get(null))
+    if (latest.kind !== "ready" || !unchanged(latest)) return unavailable("authority")
+    const next = repairedHistory(latest.history, [received])
+    if (!next) throw new TypeError("Missing incoming acknowledgement")
+    try { await deps.local.set({ [name]: document, sync: next }) } catch (error) {
+      return { kind: "local-set-failed", received, error }
+    }
+    try {
+      const records = await deps.local.get(null), post = context(records)
+      if (post.kind === "unavailable" && post.reason === "authority" || disposed()) {
+        return { kind: "unconfirmed", received, cause: { kind: "authority" } }
+      }
+      if (post.kind !== "ready" || post.joined !== initial.joined || !sameSyncJson(post.device, baseline.device) || !sameSyncJson(post.setup, baseline.setup)) {
+        return { kind: "unconfirmed", received, cause: { kind: post.kind === "ready" || post.reason === "account-context" ? "authority" : "readback" } }
+      }
+      if (!sameSyncJson(post.raw, document) || !sameSyncJson(post.history, next)) {
+        return { kind: "unconfirmed", received, cause: { kind: "readback" } }
+      }
+      const confirmed = observation(await deps.sync.get(), initial.joined)
+      if (disposed() || confirmed.kind === "unavailable" && confirmed.reason === "history" ||
+        confirmed.kind === "ready" && !sameSyncJson(metadata, confirmed.metadata)) {
+        return { kind: "unconfirmed", received, cause: { kind: "authority" } }
+      }
+      if (confirmed.kind !== "ready" || !sameSyncJson(document, confirmed.candidate.json)) {
+        return { kind: "unconfirmed", received, cause: { kind: "readback" } }
+      }
+      return { kind: "adopted", received }
+    } catch (error) {
+      return { kind: "unconfirmed", received, cause: { kind: "read-failed", error } }
+    }
+  }
+
   async function flush(): Promise<SyncFlushResult> {
     const records = await deps.local.get(null)
     const ready = authority(records)
@@ -339,6 +476,16 @@ export function createLocalFilterWriter(deps: {
   }
 
   return {
+    receiveSyncFilter(key) {
+      if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
+      return enqueue(async () => {
+        try {
+          const result = await receive(key)
+          if (result.kind === "local-set-failed" || result.kind === "unconfirmed") deactivate("stopped")
+          return result
+        } catch (error) { deactivate("stopped"); throw error }
+      })
+    },
     flushSync() {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
       return enqueue(attempt)

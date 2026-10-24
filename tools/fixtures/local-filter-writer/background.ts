@@ -1,3 +1,4 @@
+import type { SyncReceiveFilterResult } from "../../../src/background/store/local-filter-writer"
 import { encodeSyncDocument } from "../../../src/background/store/sync-codec"
 import { parseDocumentKey } from "../../../src/shared/model"
 import { createBrowserLocalFilterWriter } from "../../../src/background/adapters/local-filter-writer"
@@ -140,6 +141,11 @@ Object.assign(globalThis, {
       lastInvocation = lastEditCommit = -Infinity
       writer = createBrowserLocalFilterWriter(chrome, { onSyncResult(result) { automaticResults.push({ at: performance.now(), result: observable(result) }) } })
       createdBy = performance.now()
+    },
+    async receiveFilter(name: string): Promise<SyncReceiveFilterResult> {
+      const key = parseDocumentKey(name)
+      if (key?.kind !== "filter") throw new TypeError("Invalid synthetic Filter key")
+      return writer.receiveSyncFilter(key)
     },
     async flush() {
       flushing++

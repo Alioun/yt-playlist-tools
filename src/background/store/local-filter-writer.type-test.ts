@@ -1,8 +1,9 @@
-import type { AccountKey, PlaylistId } from "../../shared/model"
+import type { AccountKey, PlaylistId, DocumentKey } from "../../shared/model"
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
 import type { JsonObject, JsonValue } from "../../shared/contracts/json"
 import type { FilterSettingInput } from "./channel-filter-edit"
-import type { createLocalFilterWriter, LocalFilterChange, LocalFilterWriteResult, LocalWriteStorage, SyncStorage, SyncClock, SyncAutomaticResult, SyncFlushResult } from "./local-filter-writer"
+import type { createLocalFilterWriter, LocalFilterChange, LocalFilterWriteResult, LocalWriteStorage, SyncStorage, SyncClock, SyncAutomaticResult, SyncFlushResult, SyncFilterKey, SyncReceiveFilterResult } from "./local-filter-writer"
+import type { SyncDocumentRecord } from "./sync-write-admission"
 import type { createBrowserLocalFilterWriter } from "../adapters/local-filter-writer"
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
@@ -30,17 +31,30 @@ type ExpectedFactory = (deps: {
   readonly generation: () => string
   readonly syncClock: SyncClock
   readonly onSyncResult: (result: SyncAutomaticResult) => void
-}) => { change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>; flushSync(): Promise<SyncFlushResult>; startSync(): Promise<void>; dispose(): Promise<void> }
+}) => { change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>; receiveSyncFilter(key: SyncFilterKey): Promise<SyncReceiveFilterResult>; flushSync(): Promise<SyncFlushResult>; startSync(): Promise<void>; dispose(): Promise<void> }
 type NativeBrowser = Parameters<typeof createBrowserLocalFilterWriter>[0]
 type NativeSender = Parameters<Parameters<NativeBrowser["runtime"]["onMessage"]["addListener"]>[0]>[1]
 type ExpectedAdapter = (nativeBrowser: NativeBrowser, options: { onSyncResult: (result: SyncAutomaticResult) => void }) => {
   changeFromSettings(raw: unknown, sender: NativeSender): Promise<LocalFilterWriteResult>
+  receiveSyncFilter(key: SyncFilterKey): Promise<SyncReceiveFilterResult>
   flushSync(): Promise<SyncFlushResult>
   startSync(): Promise<void>
   dispose(): Promise<void>
 }
 
+type ExpectedReceive =
+  | { readonly kind: "idle" }
+  | { readonly kind: "adopted"; readonly received: SyncDocumentRecord }
+  | { readonly kind: "unavailable"; readonly reason: "authority" | "history" | "account-context" | "document" | "pending" | "conflict" }
+  | { readonly kind: "local-set-failed"; readonly error: unknown; readonly received: SyncDocumentRecord }
+  | { readonly kind: "unconfirmed"; readonly received: SyncDocumentRecord; readonly cause:
+    | { readonly kind: "authority" | "readback" }
+    | { readonly kind: "read-failed"; readonly error: unknown }
+  }
+
 export type LocalWriterProofs = [
+  Check<Equal<SyncFilterKey, Extract<DocumentKey, { kind: "filter" }>>>,
+  Check<Equal<SyncReceiveFilterResult, ExpectedReceive>>,
   Check<Equal<LocalFilterChange, ExpectedChange>>,
   Check<Equal<LocalFilterWriteResult, ExpectedResult>>,
   Check<Equal<LocalWriteStorage, ExpectedStorage>>,

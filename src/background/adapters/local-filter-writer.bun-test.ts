@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, mock, spyOn, test } from "bun:test"
 import { fakeBrowser } from "wxt/testing/fake-browser"
 import { isJsonValue } from "../../shared/contracts/json"
 import { createBrowserLocalFilterWriter } from "./local-filter-writer"
-import type { LocalFilterWriteResult, SyncAutomaticResult, SyncFlushResult } from "../store/local-filter-writer"
+import type { LocalFilterWriteResult, SyncAutomaticResult, SyncFlushResult, SyncFilterKey, SyncReceiveFilterResult } from "../store/local-filter-writer"
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
 type Check<T extends true> = T
@@ -10,6 +10,7 @@ type NativeBrowser = typeof import("wxt/browser").browser
 type ExpectedSender = Parameters<Parameters<NativeBrowser["runtime"]["onMessage"]["addListener"]>[0]>[1]
 export type BrowserAdapterProof = Check<Equal<typeof createBrowserLocalFilterWriter, (native: NativeBrowser, options: { onSyncResult: (result: SyncAutomaticResult) => void }) => {
   changeFromSettings(raw: unknown, sender: ExpectedSender): Promise<LocalFilterWriteResult>
+  receiveSyncFilter(key: SyncFilterKey): Promise<SyncReceiveFilterResult>
   flushSync(): Promise<SyncFlushResult>
   startSync(): Promise<void>
   dispose(): Promise<void>
@@ -278,4 +279,51 @@ test("synthetic active start owns one area listener forwards original automatic 
   expect(subscribe).toHaveBeenCalledTimes(1)
   await adapter.dispose()
   expect(unsubscribe).toHaveBeenCalledTimes(1)
+})
+
+test("manual receive forwards raw native storage on the existing adapter owner", async () => {
+  const target = { acct: "AAAAAAAAAAAAAAAA", playlist: "PL_P" }
+  const { isAccountKey, isPlaylistId } = await import("../../shared/model")
+  if (!isAccountKey(target.acct) || !isPlaylistId(target.playlist)) throw Error("Invalid synthetic key")
+  const addressed = { kind: "filter", acct: target.acct, playlist: target.playlist } as const
+  const setup = "doc:setup:AAAAAAAAAAAAAAAA", before = await fakeBrowser.storage.local.get(null)
+  const incoming = JSON.parse('{"v":1,"gen":"incoming","at":20,"by":"other","extra":true,"data":{"mode":"allow","on":false,"channels":[["UCaaaaaaaaaaaaaaaaaaaaaa","Title",null,{"future":1}]]},"__proto__":{"keep":true},"toJSON":"inert"}')
+  const history = { joined: "h", pushed: { [key]: "old", [setup]: "setup" }, status: "ok", editedSinceOff: false, extra: true }
+  await fakeBrowser.storage.local.set({ device: { id: "synthetic", consent: { v: 1, at: 1 }, syncOn: true }, sync: history })
+  await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "h", created: 1 }, [key.replace("doc:", "s:")]: incoming, [setup.replace("doc:", "s:")]: before[setup] })
+  const get = spyOn(fakeBrowser.storage.local, "get"), syncGet = spyOn(fakeBrowser.storage.sync, "get"), syncSet = spyOn(fakeBrowser.storage.sync, "set")
+  const original = fakeBrowser.storage.local.set.bind(fakeBrowser.storage.local), set = spyOn(fakeBrowser.storage.local, "set")
+  const subscribe = spyOn(fakeBrowser.storage.sync.onChanged, "addListener"), results: SyncAutomaticResult[] = []
+  const adapter = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult(result) { results.push(result) } })
+  await adapter.startSync()
+  expect(subscribe).toHaveBeenCalledTimes(1)
+  let release!: () => void, entered = false, settled = false
+  const gate = new Promise<void>(done => { release = done })
+  set.mockImplementationOnce(async items => { entered = true; await gate; await original(items) })
+  const receive = adapter.receiveSyncFilter(addressed); void receive.then(() => { settled = true })
+  for (let i = 0; i < 60; i++) await Promise.resolve()
+  expect(entered).toBe(true)
+  const reads = get.mock.calls.length, remoteReads = syncGet.mock.calls.length
+  const stale = adapter.changeFromSettings({ ...request, clearListedChannels: "confirmed", expectedGeneration: "old" }, sender)
+  const flush = adapter.flushSync(), again = adapter.receiveSyncFilter(addressed)
+  const listener = subscribe.mock.calls[0]?.[0]
+  if (!listener) throw Error("Missing same-owner sync listener")
+  Reflect.apply(listener, undefined, [{}])
+  for (let i = 0; i < 60; i++) await Promise.resolve()
+  expect(settled).toBe(false)
+  expect(get).toHaveBeenCalledTimes(reads)
+  expect(syncGet).toHaveBeenCalledTimes(remoteReads)
+  release()
+  expect(await receive).toEqual({ kind: "adopted", received: { key: addressed, name: key, gen: "incoming", document: incoming } })
+  expect(await stale).toEqual({ kind: "result", result: { refused: "invalid" } })
+  expect(await flush).toEqual({ kind: "idle" })
+  expect(await again).toEqual({ kind: "idle" })
+  for (let i = 0; i < 60; i++) await Promise.resolve()
+  expect<unknown>(set.mock.calls).toEqual([[{ [key]: incoming, sync: { ...history, pushed: { [key]: "incoming", [setup]: "setup" } } }]])
+  expect(syncSet).not.toHaveBeenCalled()
+  expect(subscribe).toHaveBeenCalledTimes(1)
+  expect(await adapter.changeFromSettings({ ...request, desired: { mode: "allow", on: true } }, sender)).toEqual({ kind: "result", result: { ok: true } })
+  expect((await fakeBrowser.storage.local.get("sync")).sync).toEqual({ ...history, pushed: { [key]: "incoming", [setup]: "setup" } })
+  await adapter.dispose()
+  await expect(adapter.receiveSyncFilter(addressed)).rejects.toThrow("Writer disposed")
 })

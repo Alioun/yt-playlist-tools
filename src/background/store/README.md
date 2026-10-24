@@ -298,3 +298,40 @@ This is an incomplete internal component. Native Error text supplies no approved
 Metadata, unknown keys, and retained old chunks count toward occupancy. Chunks alone do not create a document record. A physically present null base produces a record with an `absent` result, while an omitted base produces no record. Raw additive fields retain the codec's semantics. The helper performs no normalization, storage access, caching, timers, or mutation.
 
 This is an observation of the supplied items. It establishes no freshness, lock, Device authority, joined history, adoption, ownership, supersession, recovery, or deletion permission. Callers retain the original items. Production callers are unchanged. Native verification of this unit is waived and unproven.
+
+`receiveSyncFilter(key)` manually receives one Filter on the same serial owner as
+edits, flushes, and sync events. The browser adapter forwards to that owner. The
+synthetic worker exposes `localFilterFixture.receiveFilter(name)`, which parses a
+canonical Filter key and rejects invalid input before storage access.
+
+The operation requires initialized consent, sync on, a steady joined history,
+and an existing supported Setup selecting the playlist. Interim legacy markers
+make it unavailable before sync access. A complete same-history incoming Filter
+can replace an existing acknowledged Filter only when its generation differs and
+its edit time is strictly later. Equal times, pending targets, future versions,
+tombstones, absent or incomplete documents, joins, and resets stay unavailable.
+An exact raw match is idle and does not repair acknowledgement debt.
+
+Adoption replaces the whole raw envelope. It preserves unknown fields and omitted
+defaults without merging the losing local body. One local set contains exactly
+the Filter and current raw history with only that Filter's pushed generation
+updated. Unrelated pending documents and bookkeeping stay exact. Finite local
+and sync preflight reads check the captured authority and raw observations again.
+After the set resolves, local and sync readbacks must match before `adopted` is
+returned. The lane remains held through those reads.
+
+A precommit read rejection preserves the original error and rejects the call.
+A rejected local set returns `local-set-failed` with the original error and
+attempted record. Contradictory postflight observations return `unconfirmed` with
+an authority or readback cause. A postflight read rejection returns `unconfirmed`
+with its original error. These opaque failures stop automatic work. A successful
+manual retry does not clear that stop. A native rejection has unknown effects;
+there is no rollback, retry, durability guarantee, or remote lock. Foreign writers
+can race after the final observation, including during the last sync read.
+
+Successful, idle, and deterministic unavailable receives do not change outbound
+tickets, quiet periods, pacing, subscriptions, or automatic-result callbacks.
+The receiver writes nothing remotely and creates no stamp. Automatic incoming
+composition, Store view propagation, losing pending-edit visibility, ownership,
+identity conversion, cleanup, and production startup remain outside this fixture.
+Static worker builds and synthetic VM tests do not establish native execution.
