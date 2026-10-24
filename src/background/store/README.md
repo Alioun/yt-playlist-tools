@@ -206,3 +206,30 @@ bun --no-env-file build ./src/background/store/write-preparation.ts --target=bro
 git diff --check
 git diff --cached --check
 ```
+
+# Serialized local filter-setting writer
+
+`local-filter-writer.ts` exports `createLocalFilterWriter` and the types `LocalFilterChange`, `LocalFilterWriteResult`, and `LocalWriteStorage`. One instance serializes selected-playlist mode/on changes through one promise lane. Production startup and routing do not use it yet.
+
+`change(origin, change)` accepts a trusted UI origin and branded account/playlist IDs. The browser adapter in `../adapters/local-filter-writer.ts` derives its API and sender types from WXT. Its `changeFromSettings(raw, sender)` authenticates this extension's exact options page and frame, requires a tab, validates the strict request, and rechecks the native window. Private or unknown native context refuses. Client origin, source, privacy, and window fields are invalid.
+
+The executor reads only `schema`, `device`, `sync`, the complete addressed setup, and the complete addressed filter. It requires supported initialized consented state and a live setup selecting that playlist in `autoAdd`. Selection establishes component context, not playlist ownership. Newer layout, startup, sync-writer, and account-context prerequisites return `unavailable` separately from `ChangeResult`. Sync on or any present local sync record requires the later sync writer. This component never reads or writes `storage.sync`.
+
+Every operation reads fresh records inside the lane. Rejection does not poison later requests. No-ops retain the original persisted JSON without preparation, normalization, stamping, or a set. A nonempty mode change needs confirmation bound to the current envelope generation. An already achieved desired state remains a no-op even with an old confirmation.
+
+A real mutation uses `changeFilterSetting` and `prepareDocumentBody`, preserves own envelope extensions, removes the owned `deleted` field when replacing a tombstone, and replaces only the owned stamp/body fields. Edit time comes from admission, generation is created only for a mutation, and `by` reuses the stored device ID. Strict JSON validation precedes decoding and the native write. Success follows exactly one awaited local set containing only the complete addressed filter.
+
+The separate synthetic extension in `tools/fixtures/local-filter-writer/` uses the actual emitted adapter and executor. Its verifier checks the exact extension worker ID, real settings sender, native local effects/readback, clean full-browser restart, and desired-state retry convergence. It creates a fresh automation profile and uses no YouTube host access. Synthetic sender metadata tests and native incognito checks are reported separately. A resolved set is the local acknowledgement boundary. Clean restart evidence does not prove power-loss atomicity or the outcome of an interrupted unresolved set.
+
+With the pinned dependencies and generated declarations prepared, run:
+
+```sh
+bun test --no-env-file --isolate --conditions=browser ./src/background/store/local-filter-writer.bun-test.ts ./src/background/adapters/local-filter-writer.bun-test.ts
+bun run --no-env-file compile
+bun test --no-env-file ./tests/guards/architecture.test.ts
+bun --no-env-file build ./tools/fixtures/local-filter-writer/background.ts --target=browser --format=iife --outfile=/tmp/ytpt-local-filter-writer-fixture/background.js
+bun --no-env-file build ./tools/fixtures/local-filter-writer/options.ts --target=browser --format=iife --outfile=/tmp/ytpt-local-filter-writer-fixture/options.js
+node ./tools/fixtures/local-filter-writer/check-browser.mjs --fixture-dir /tmp/ytpt-local-filter-writer-fixture --evidence-dir /tmp/ytpt-local-filter-writer-acceptance
+```
+
+The verifier copies its manifest and options HTML. `--executable-path` selects an explicit testing-browser executable; otherwise it uses installed Playwright Chromium. The final Store's ready/migration lifecycle, consent invalidation, sync bookkeeping/projection, views, and production routing remain separate cutover gates. Existing account/session safeguards remain authoritative.
