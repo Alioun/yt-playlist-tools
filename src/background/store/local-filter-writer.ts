@@ -1,6 +1,6 @@
 import {
   CONSENT_VERSION, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError,
-  decodeDevice, decodeDocument, decodeFilter, decodeSetup, decodeSyncState, decodeSyncMeta, documentKey, parseDocumentKey,
+  decodeDevice, decodeDocument, decodeFilter, decodeSettings, decodeSetup, decodeSyncState, decodeSyncMeta, documentKey, parseDocumentKey,
   type AccountKey, type PlaylistId, type DocumentKey
 } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
@@ -62,9 +62,9 @@ export type SyncFlushResult =
     | { kind: "read-failed"; error: unknown }
   }
 
-export type SyncFilterKey = Extract<DocumentKey, { kind: "filter" }>
+export type SyncReceiveKey = Extract<DocumentKey, { kind: "settings" | "filter" }>
 
-export type SyncReceiveFilterResult =
+export type SyncReceiveResult =
   | { readonly kind: "idle" }
   | { readonly kind: "adopted"; readonly received: SyncDocumentRecord }
   | { readonly kind: "unavailable"; readonly reason: "authority" | "history" | "account-context" | "document" | "pending" | "conflict" }
@@ -142,7 +142,7 @@ export function createLocalFilterWriter(deps: {
   readonly onSyncResult: (result: SyncAutomaticResult) => void
 }): {
   change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>
-  receiveSyncFilter(key: SyncFilterKey): Promise<SyncReceiveFilterResult>
+  receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>
   flushSync(): Promise<SyncFlushResult>
   startSync(): Promise<void>
   dispose(): Promise<void>
@@ -190,7 +190,7 @@ export function createLocalFilterWriter(deps: {
     if (lifetime.kind !== "active") return
     let result: SyncAutomaticResult
     try {
-      const incoming = event ? await receiveIncomingFilters() : undefined
+      const incoming = event ? await receiveIncomingDocuments() : undefined
       if (incoming) result = incoming
       else {
         if (lifetime.kind !== "active") return
@@ -203,7 +203,7 @@ export function createLocalFilterWriter(deps: {
     deps.onSyncResult(result)
   }
 
-  async function receiveAttempt(key: SyncFilterKey): Promise<SyncReceiveFilterResult> {
+  async function receiveAttempt(key: SyncReceiveKey): Promise<SyncReceiveResult> {
     try {
       const result = await receive(key)
       if (result.kind === "local-set-failed" || result.kind === "unconfirmed") deactivate("stopped")
@@ -211,7 +211,7 @@ export function createLocalFilterWriter(deps: {
     } catch (error) { deactivate("stopped"); throw error }
   }
 
-  async function receiveIncomingFilters(): Promise<SyncAutomaticResult | undefined> {
+  async function receiveIncomingDocuments(): Promise<SyncAutomaticResult | undefined> {
     if (lifetime.kind !== "active") return
     const records = await deps.local.get(null)
     if (lifetime.kind !== "active") return
@@ -220,10 +220,10 @@ export function createLocalFilterWriter(deps: {
     observeOff(ready.device.syncOn)
     if (!ready.device.syncOn) return
     if (hasInterimMarkers(records)) return { kind: "unavailable" }
-    const targets: SyncFilterKey[] = []
+    const targets: SyncReceiveKey[] = []
     for (const name of Object.keys(records).sort()) {
       const key = parseDocumentKey(name)
-      if (key?.kind === "filter" && documentKey(key) === name) targets.push(key)
+      if ((key?.kind === "settings" || key?.kind === "filter") && documentKey(key) === name) targets.push(key)
     }
     for (const key of targets) {
       if (lifetime.kind !== "active") return
@@ -346,21 +346,25 @@ export function createLocalFilterWriter(deps: {
     }
   }
 
-  async function receive(key: SyncFilterKey): Promise<SyncReceiveFilterResult> {
-    const unavailable = (reason: Extract<SyncReceiveFilterResult, { kind: "unavailable" }>["reason"]) => ({ kind: "unavailable", reason } as const)
-    const name = documentKey(key), setupName = documentKey({ kind: "setup", acct: key.acct })
+  async function receive(key: SyncReceiveKey): Promise<SyncReceiveResult> {
+    const unavailable = (reason: Extract<SyncReceiveResult, { kind: "unavailable" }>["reason"]) => ({ kind: "unavailable", reason } as const)
+    const name = documentKey(key)
     function context(records: Readonly<Record<string, unknown>>) {
       const ready = authority(records)
       if (lifetime.kind === "disposed" || ready.kind !== "ready" || !ready.device.syncOn || !ready.history ||
         hasInterimMarkers(records)) return unavailable("authority")
-      const raw = records[name], setup = records[setupName]
+      const raw = records[name]
       if (!Object.hasOwn(records, name) || !isJsonObject(raw)) return unavailable("document")
-      let filter
-      try { filter = decodeDocument(raw, decodeFilter) } catch (error) {
+      let document
+      try { document = key.kind === "settings" ? decodeDocument(raw, decodeSettings) : decodeDocument(raw, decodeFilter) } catch (error) {
         if (error instanceof DecodeError) return unavailable("document")
         throw error
       }
-      if (filter.kind !== "value") return unavailable("document")
+      if (document.kind !== "value") return unavailable("document")
+      const shared = { kind: "ready", device: ready.rawDevice, history: ready.history.raw, joined: ready.history.joined,
+        raw, stamp: document.document } as const
+      if (key.kind === "settings") return { ...shared, selection: { kind: "settings" } } as const
+      const setupName = documentKey({ kind: "setup", acct: key.acct }), setup = records[setupName]
       if (!Object.hasOwn(records, setupName) || !isJsonObject(setup)) return unavailable("account-context")
       try {
         const selected = decodeDocument(setup, decodeSetup)
@@ -369,8 +373,7 @@ export function createLocalFilterWriter(deps: {
         if (error instanceof DecodeError) return unavailable("account-context")
         throw error
       }
-      return { kind: "ready", device: ready.rawDevice, history: ready.history.raw, joined: ready.history.joined,
-        setup, raw, filter: filter.document } as const
+      return { ...shared, selection: { kind: "filter", setup } } as const
     }
     function observation(records: Readonly<Record<string, unknown>>, joined: string | null) {
       if (records === null || typeof records !== "object" || Array.isArray(records) ||
@@ -391,7 +394,7 @@ export function createLocalFilterWriter(deps: {
       const inventory = readSyncInventory({ items })
       if (inventory.kind !== "read") return unavailable("document")
       const candidate = inventory.documents.find(entry => entry.baseKey === `s:${name.slice(4)}`)?.result
-      if (candidate?.kind !== "value" || candidate.value.kind !== "filter") return unavailable("document")
+      if (candidate?.kind !== "value" || candidate.value.kind !== key.kind) return unavailable("document")
       return { kind: "ready", metadata, candidate } as const
     }
     const initial = context(await deps.local.get(null))
@@ -413,18 +416,22 @@ export function createLocalFilterWriter(deps: {
       }
       return copy
     }
-    const baseline = { device: snapshot(initial.device), history: snapshot(initial.history), setup: snapshot(initial.setup), raw: snapshot(initial.raw) }
+    const baseline = { device: snapshot(initial.device), history: snapshot(initial.history), raw: snapshot(initial.raw),
+      selection: initial.selection.kind === "filter" ? { kind: "filter", setup: snapshot(initial.selection.setup) } as const : { kind: "settings" } as const }
+    const sameSelection = (current: typeof initial.selection) => current.kind === "settings"
+      ? baseline.selection.kind === "settings"
+      : baseline.selection.kind === "filter" && sameSyncJson(current.setup, baseline.selection.setup)
     const unchanged = (current: ReturnType<typeof context>) => current.kind === "ready" &&
       sameSyncJson(current.device, baseline.device) && sameSyncJson(current.history, baseline.history) &&
-      sameSyncJson(current.setup, baseline.setup) && sameSyncJson(current.raw, baseline.raw)
+      sameSelection(current.selection) && sameSyncJson(current.raw, baseline.raw)
     const remote = observation(await deps.sync.get(), initial.joined)
     if (disposed()) return unavailable("authority")
     if (remote.kind !== "ready") return remote
     if (sameSyncJson(initial.raw, remote.candidate.json)) return { kind: "idle" }
     const history = decodeSyncState(initial.history)
-    if (!Object.hasOwn(history.pushed, name) || history.pushed[name] !== initial.filter.gen) return unavailable("pending")
+    if (!Object.hasOwn(history.pushed, name) || history.pushed[name] !== initial.stamp.gen) return unavailable("pending")
     const incoming = remote.candidate.value.document
-    if (incoming.gen === initial.filter.gen || incoming.at <= initial.filter.at) return unavailable("conflict")
+    if (incoming.gen === initial.stamp.gen || incoming.at <= initial.stamp.at) return unavailable("conflict")
     const metadata = snapshot(remote.metadata)
     const document = snapshot(remote.candidate.json)
     const received: SyncDocumentRecord = { key, name, gen: incoming.gen, document }
@@ -447,7 +454,7 @@ export function createLocalFilterWriter(deps: {
       if (post.kind === "unavailable" && post.reason === "authority" || disposed()) {
         return { kind: "unconfirmed", received, cause: { kind: "authority" } }
       }
-      if (post.kind !== "ready" || post.joined !== initial.joined || !sameSyncJson(post.device, baseline.device) || !sameSyncJson(post.setup, baseline.setup)) {
+      if (post.kind !== "ready" || post.joined !== initial.joined || !sameSyncJson(post.device, baseline.device) || !sameSelection(post.selection)) {
         return { kind: "unconfirmed", received, cause: { kind: post.kind === "ready" || post.reason === "account-context" ? "authority" : "readback" } }
       }
       if (!sameSyncJson(post.raw, document) || !sameSyncJson(post.history, next)) {
@@ -528,7 +535,7 @@ export function createLocalFilterWriter(deps: {
   }
 
   return {
-    receiveSyncFilter(key) {
+    receiveSyncDocument(key) {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
       return enqueue(() => receiveAttempt(key))
     },

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, mock, spyOn, test } from "bun:test"
 import { fakeBrowser } from "wxt/testing/fake-browser"
 import { isJsonValue } from "../../shared/contracts/json"
 import { createBrowserLocalFilterWriter } from "./local-filter-writer"
-import type { LocalFilterWriteResult, SyncAutomaticResult, SyncFlushResult, SyncFilterKey, SyncReceiveFilterResult } from "../store/local-filter-writer"
+import type { LocalFilterWriteResult, SyncAutomaticResult, SyncFlushResult, SyncReceiveKey, SyncReceiveResult } from "../store/local-filter-writer"
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
 type Check<T extends true> = T
@@ -10,7 +10,7 @@ type NativeBrowser = typeof import("wxt/browser").browser
 type ExpectedSender = Parameters<Parameters<NativeBrowser["runtime"]["onMessage"]["addListener"]>[0]>[1]
 export type BrowserAdapterProof = Check<Equal<typeof createBrowserLocalFilterWriter, (native: NativeBrowser, options: { onSyncResult: (result: SyncAutomaticResult) => void }) => {
   changeFromSettings(raw: unknown, sender: ExpectedSender): Promise<LocalFilterWriteResult>
-  receiveSyncFilter(key: SyncFilterKey): Promise<SyncReceiveFilterResult>
+  receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>
   flushSync(): Promise<SyncFlushResult>
   startSync(): Promise<void>
   dispose(): Promise<void>
@@ -302,12 +302,12 @@ test("manual receive forwards raw native storage on the existing adapter owner",
   let release!: () => void, entered = false, settled = false
   const gate = new Promise<void>(done => { release = done })
   set.mockImplementationOnce(async items => { entered = true; await gate; await original(items) })
-  const receive = adapter.receiveSyncFilter(addressed); void receive.then(() => { settled = true })
+  const receive = adapter.receiveSyncDocument(addressed); void receive.then(() => { settled = true })
   for (let i = 0; i < 60; i++) await Promise.resolve()
   expect(entered).toBe(true)
   const reads = get.mock.calls.length, remoteReads = syncGet.mock.calls.length
   const stale = adapter.changeFromSettings({ ...request, clearListedChannels: "confirmed", expectedGeneration: "old" }, sender)
-  const flush = adapter.flushSync(), again = adapter.receiveSyncFilter(addressed)
+  const flush = adapter.flushSync(), again = adapter.receiveSyncDocument(addressed)
   const listener = subscribe.mock.calls[0]?.[0]
   if (!listener) throw Error("Missing same-owner sync listener")
   Reflect.apply(listener, undefined, [{}])
@@ -327,7 +327,7 @@ test("manual receive forwards raw native storage on the existing adapter owner",
   expect(await adapter.changeFromSettings({ ...request, desired: { mode: "allow", on: true } }, sender)).toEqual({ kind: "result", result: { ok: true } })
   expect((await fakeBrowser.storage.local.get("sync")).sync).toEqual({ ...history, pushed: { [key]: "incoming", [setup]: "setup" } })
   await adapter.dispose()
-  await expect(adapter.receiveSyncFilter(addressed)).rejects.toThrow("Writer disposed")
+  await expect(adapter.receiveSyncDocument(addressed)).rejects.toThrow("Writer disposed")
 })
 
 test("actual adapter startup and area listener automatically adopt on the same owner", async () => {
@@ -361,5 +361,47 @@ test("actual adapter startup and area listener automatically adopt on the same o
   if (!sender.tab) throw Error("Missing synthetic tab")
   expect(await adapter.changeFromSettings(request, { ...sender, tab: { ...sender.tab, incognito: true } })).toEqual({ kind: "result", result: { refused: "private" } })
   expect(localSet).toHaveBeenCalledTimes(2)
+  await adapter.dispose()
+})
+
+test("shared Settings manual start and area consumers need no Setup or native authority lookup", async () => {
+  await fakeBrowser.storage.local.clear()
+  const old = { v: 1, gen: "s0", at: 10, by: "device-a", data: {} }
+  const incoming = JSON.parse('{"v":1,"gen":"s1","at":20,"by":"device-b","data":{"theme":"dark","browserMenu":{"on":true},"anyTabKeys":{"on":true},"gather":{"on":true},"syncOn":false,"consent":{"v":999}},"__proto__":{"keep":true},"toJSON":"inert"}')
+  const device = { id: "synthetic", consent: { v: 1, at: 1 }, syncOn: true, detailedLog: false, recentAdds: false }
+  const history = { joined: "h", pushed: { "doc:settings": "s0" }, status: "ok", editedSinceOff: false }
+  await fakeBrowser.storage.local.set({ schema: 1, device, sync: history, "doc:settings": old })
+  await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "h", created: 1 }, "s:settings": incoming })
+  const originalSet = fakeBrowser.storage.local.set.bind(fakeBrowser.storage.local)
+  const set = spyOn(fakeBrowser.storage.local, "set"), get = spyOn(fakeBrowser.storage.local, "get")
+  const windows = spyOn(fakeBrowser.windows, "get").mockImplementation(() => { throw Error("Settings must not query windows") })
+  const permissions = spyOn(fakeBrowser.permissions, "contains").mockImplementation(() => { throw Error("Settings must not query permissions") })
+  const syncSet = spyOn(fakeBrowser.storage.sync, "set"), subscribe = spyOn(fakeBrowser.storage.sync.onChanged, "addListener")
+  const results: SyncAutomaticResult[] = []
+  const adapter = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult: result => { results.push(result) } })
+  let entered = false, release!: () => void
+  const gate = new Promise<void>(done => { release = done })
+  set.mockImplementationOnce(async items => { entered = true; await gate; await originalSet(items) })
+  const receiving = adapter.receiveSyncDocument({ kind: "settings" })
+  for (let i = 0; i < 80; i++) await Promise.resolve()
+  expect(entered).toBe(true)
+  const reads = get.mock.calls.length, flush = adapter.flushSync(), start = adapter.startSync()
+  for (let i = 0; i < 80; i++) await Promise.resolve()
+  expect(get).toHaveBeenCalledTimes(reads)
+  release()
+  expect((await receiving).kind).toBe("adopted")
+  expect(await flush).toEqual({ kind: "idle" }); await start
+  expect<unknown>(set.mock.calls).toEqual([[{ "doc:settings": incoming, sync: { ...history, pushed: { "doc:settings": "s1" } } }]])
+  expect(await adapter.receiveSyncDocument({ kind: "settings" })).toEqual({ kind: "idle" })
+  const later = { ...incoming, gen: "s2", at: 30 }
+  await fakeBrowser.storage.sync.set({ "s:settings": later }); syncSet.mockClear()
+  const listener = subscribe.mock.calls[0]?.[0]
+  if (!listener) throw Error("Missing Settings area listener")
+  Reflect.apply(listener, undefined, [{}])
+  for (let i = 0; i < 500; i++) await Promise.resolve()
+  expect((await fakeBrowser.storage.local.get("doc:settings"))["doc:settings"]).toEqual(later)
+  expect((await fakeBrowser.storage.local.get("device")).device).toEqual(device)
+  expect(results.every(result => result.kind === "idle")).toBe(true)
+  expect(syncSet).not.toHaveBeenCalled(); expect(windows).not.toHaveBeenCalled(); expect(permissions).not.toHaveBeenCalled()
   await adapter.dispose()
 })

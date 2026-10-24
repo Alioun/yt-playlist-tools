@@ -299,22 +299,29 @@ Metadata, unknown keys, and retained old chunks count toward occupancy. Chunks a
 
 This is an observation of the supplied items. It establishes no freshness, lock, Device authority, joined history, adoption, ownership, supersession, recovery, or deletion permission. Callers retain the original items. Production callers are unchanged. Native verification of this unit is waived and unproven.
 
-`receiveSyncFilter(key)` manually receives one Filter on the same serial owner as
+`receiveSyncDocument(key)` manually receives shared Settings or one Filter on the
+same serial owner as
 edits, flushes, and sync events. The browser adapter forwards to that owner. The
 synthetic worker exposes `localFilterFixture.receiveFilter(name)`, which parses a
 canonical Filter key and rejects invalid input before storage access.
+`localFilterFixture.receiveSettings()` forwards the Settings address on the same
+adapter. Both factory contracts use `SyncReceiveKey` and `SyncReceiveResult`.
+Setup is excluded from the receive API.
 
 The operation requires initialized consent, sync on, a steady joined history,
-and an existing supported Setup selecting the playlist. Interim legacy markers
-make it unavailable before sync access. A complete same-history incoming Filter
-can replace an existing acknowledged Filter only when its generation differs and
+and an existing supported local target. Filter additionally requires a supported
+Setup selecting the playlist. Settings needs no Setup, account, window lookup,
+or permission query. Its per-device-looking extensions remain inert data.
+Interim legacy markers make it unavailable before sync access. A complete
+same-history incoming Settings or Filter
+can replace an existing acknowledged target only when its generation differs and
 its edit time is strictly later. Equal times, pending targets, future versions,
 tombstones, absent or incomplete documents, joins, and resets stay unavailable.
 An exact raw match is idle and does not repair acknowledgement debt.
 
 Adoption replaces the whole raw envelope. It preserves unknown fields and omitted
 defaults without merging the losing local body. One local set contains exactly
-the Filter and current raw history with only that Filter's pushed generation
+the target and current raw history with only that target's pushed generation
 updated. Unrelated pending documents and bookkeeping stay exact. Finite local
 and sync preflight reads check the captured authority and raw observations again.
 After the set resolves, local and sync readbacks must match before `adopted` is
@@ -337,13 +344,13 @@ production startup remain outside this fixture.
 Static worker builds and synthetic VM tests do not establish native execution.
 
 
-## Automatic incoming Filters on the fixture owner
+## Automatic incoming Settings and Filters on the fixture owner
 
 `startSync()` and the existing sync-area listener receive supported incoming
-Filters before their ordinary outbound attempt. Startup checks consent, schema,
+Settings and Filters before their ordinary outbound attempt. Startup checks consent, schema,
 steady history, sync-on state, and interim markers before subscribing. Each event
-captures one sorted list of own canonical local Filter addresses inside the same
-lane. It calls the shared private receiver serially, once per captured address.
+captures one sorted list of own existing canonical local Settings and Filter
+addresses inside the same lane. It calls the shared private receiver serially, once per captured address.
 Each receiver reads fresh bodies and authority. The list supplies addresses only.
 Remote-only documents, chunks, unknown names, and opaque pushed entries create no
 targets. A new local address waits for another independent event.
@@ -360,7 +367,7 @@ After a completed incoming pass, the unchanged outbound attempt rereads whole
 local and sync snapshots. It can send an independent pending Q after adopting F.
 An unsupported divergent document still blocks the complete batch. No partial
 send bypasses that document. An `idle` callback describes outbound work even
-when an incoming Filter changed locally. Adoption does not change sync status.
+when an incoming document changed locally. Adoption does not change sync status.
 
 Incoming adoption changes no edit stamp, quiet deadline, invocation deadline,
 or outbound ticket. The subsequent attempt owns the ticket's existing terminal
@@ -378,7 +385,18 @@ There is no all-pass transaction, rollback, automatic retry, new conflict policy
 account claim, join, reset, tombstone execution, cleanup, or production activation.
 
 Source tests, saved minified browser-target core execution in fresh Node VMs,
-and the unchanged saved fixture worker exercise this composition with synthetic
+and the saved fixture worker exercise this composition with synthetic
 storage and clocks. Native verification is waived and unproven. These checks do
 not prove native durability, account transport, interrupted IO, Firefox, minimum
 versions, or full Store notifications.
+
+Incoming Settings never runs `prepareDocumentBody`, applies presets, inserts
+defaults into storage, or changes Device choices. Sparse supported bodies and
+untrimmed shortcut labels remain raw. An absent Settings target is never
+synthesized. A Settings adoption writes exactly `doc:settings` and `sync` in one
+local batch. Each target rereads current history, so a later Settings adoption
+retains a Filter acknowledgement from earlier in the same sorted pass.
+
+This document-only component remains uninstalled. It does not complete Store
+notifications, TabView delivery, feature reconfiguration, permission handling,
+progress purge, or any production effect.

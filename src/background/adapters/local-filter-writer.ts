@@ -1,7 +1,7 @@
 import { isJsonValue } from "../../shared/contracts/json"
 import { isAccountKey, isPlaylistId } from "../../shared/model"
 import {
-  createLocalFilterWriter, type LocalFilterChange, type LocalFilterWriteResult, type SyncAutomaticResult, type SyncFlushResult, type SyncFilterKey, type SyncReceiveFilterResult
+  createLocalFilterWriter, type LocalFilterChange, type LocalFilterWriteResult, type SyncAutomaticResult, type SyncFlushResult, type SyncReceiveKey, type SyncReceiveResult
 } from "../store/local-filter-writer"
 
 type NativeBrowser = typeof import("wxt/browser").browser
@@ -28,7 +28,7 @@ function parseChange(raw: unknown): LocalFilterChange | undefined {
 
 export function createBrowserLocalFilterWriter(nativeBrowser: NativeBrowser, options: { onSyncResult: (result: SyncAutomaticResult) => void }): {
   changeFromSettings(raw: unknown, sender: NativeSender): Promise<LocalFilterWriteResult>
-  receiveSyncFilter(key: SyncFilterKey): Promise<SyncReceiveFilterResult>
+  receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>
   flushSync(): Promise<SyncFlushResult>
   startSync(): Promise<void>
   dispose(): Promise<void>
@@ -59,7 +59,7 @@ export function createBrowserLocalFilterWriter(nativeBrowser: NativeBrowser, opt
     generation: () => crypto.randomUUID()
   })
   return {
-    receiveSyncFilter: key => writer.receiveSyncFilter(key),
+    receiveSyncDocument: key => writer.receiveSyncDocument(key),
     flushSync: () => writer.flushSync(),
     startSync: () => writer.startSync(),
     dispose: () => writer.dispose(),

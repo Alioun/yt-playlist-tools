@@ -2,7 +2,7 @@ import type { AccountKey, PlaylistId, DocumentKey } from "../../shared/model"
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
 import type { JsonObject, JsonValue } from "../../shared/contracts/json"
 import type { FilterSettingInput } from "./channel-filter-edit"
-import type { createLocalFilterWriter, LocalFilterChange, LocalFilterWriteResult, LocalWriteStorage, SyncStorage, SyncClock, SyncAutomaticResult, SyncFlushResult, SyncFilterKey, SyncReceiveFilterResult } from "./local-filter-writer"
+import type { createLocalFilterWriter, LocalFilterChange, LocalFilterWriteResult, LocalWriteStorage, SyncStorage, SyncClock, SyncAutomaticResult, SyncFlushResult, SyncReceiveKey, SyncReceiveResult } from "./local-filter-writer"
 import type { SyncDocumentRecord } from "./sync-write-admission"
 import type { createBrowserLocalFilterWriter } from "../adapters/local-filter-writer"
 
@@ -31,12 +31,12 @@ type ExpectedFactory = (deps: {
   readonly generation: () => string
   readonly syncClock: SyncClock
   readonly onSyncResult: (result: SyncAutomaticResult) => void
-}) => { change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>; receiveSyncFilter(key: SyncFilterKey): Promise<SyncReceiveFilterResult>; flushSync(): Promise<SyncFlushResult>; startSync(): Promise<void>; dispose(): Promise<void> }
+}) => { change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>; receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>; flushSync(): Promise<SyncFlushResult>; startSync(): Promise<void>; dispose(): Promise<void> }
 type NativeBrowser = Parameters<typeof createBrowserLocalFilterWriter>[0]
 type NativeSender = Parameters<Parameters<NativeBrowser["runtime"]["onMessage"]["addListener"]>[0]>[1]
 type ExpectedAdapter = (nativeBrowser: NativeBrowser, options: { onSyncResult: (result: SyncAutomaticResult) => void }) => {
   changeFromSettings(raw: unknown, sender: NativeSender): Promise<LocalFilterWriteResult>
-  receiveSyncFilter(key: SyncFilterKey): Promise<SyncReceiveFilterResult>
+  receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>
   flushSync(): Promise<SyncFlushResult>
   startSync(): Promise<void>
   dispose(): Promise<void>
@@ -53,8 +53,8 @@ type ExpectedReceive =
   }
 
 export type LocalWriterProofs = [
-  Check<Equal<SyncFilterKey, Extract<DocumentKey, { kind: "filter" }>>>,
-  Check<Equal<SyncReceiveFilterResult, ExpectedReceive>>,
+  Check<Equal<SyncReceiveKey, Extract<DocumentKey, { kind: "settings" | "filter" }>>>,
+  Check<Equal<SyncReceiveResult, ExpectedReceive>>,
   Check<Equal<LocalFilterChange, ExpectedChange>>,
   Check<Equal<LocalFilterWriteResult, ExpectedResult>>,
   Check<Equal<LocalWriteStorage, ExpectedStorage>>,
@@ -71,3 +71,26 @@ export type LocalWriterProofs = [
   Check<Equal<Extract<Origin, { kind: "background" | "sync" | "tab" }> extends UiOrigin ? true : false, false>>,
   Check<Equal<LocalFilterChange["desired"], Readonly<LocalFilterChange["desired"]>>>
 ]
+
+function receiveTypeBoundaries(writer: ReturnType<typeof createLocalFilterWriter>, adapter: ReturnType<typeof createBrowserLocalFilterWriter>, acct: AccountKey, playlist: PlaylistId, result: SyncReceiveResult) {
+  void writer.receiveSyncDocument({ kind: "settings" })
+  void adapter.receiveSyncDocument({ kind: "settings" })
+  void writer.receiveSyncDocument({ kind: "filter", acct, playlist })
+  // @ts-expect-error Setup has no supported receive context.
+  void writer.receiveSyncDocument({ kind: "setup", acct })
+  // @ts-expect-error The adapter keeps the same bounded receive contract.
+  void adapter.receiveSyncDocument({ kind: "setup", acct })
+  // @ts-expect-error Filter addresses require branded account and playlist values.
+  void writer.receiveSyncDocument({ kind: "filter", acct: "AAAAAAAAAAAAAAAA", playlist: "PL_P" })
+  if (result.kind === "adopted") {
+    // @ts-expect-error The adopted record cannot be replaced.
+    result.received = result.received
+  }
+  // @ts-expect-error Receive outcomes are immutable.
+  result.kind = "idle"
+  const key: Readonly<SyncReceiveKey> = { kind: "filter", acct, playlist }
+  void writer.receiveSyncDocument(key)
+  // @ts-expect-error Immutable caller keys stay immutable.
+  key.playlist = playlist
+}
+void receiveTypeBoundaries

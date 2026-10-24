@@ -1,6 +1,6 @@
-import type { SyncReceiveFilterResult } from "../../../src/background/store/local-filter-writer"
+import type { SyncReceiveResult } from "../../../src/background/store/local-filter-writer"
 import { encodeSyncDocument } from "../../../src/background/store/sync-codec"
-import { parseDocumentKey } from "../../../src/shared/model"
+import { documentKey, parseDocumentKey } from "../../../src/shared/model"
 import { createBrowserLocalFilterWriter } from "../../../src/background/adapters/local-filter-writer"
 
 declare const chrome: typeof import("wxt/browser").browser
@@ -142,10 +142,13 @@ Object.assign(globalThis, {
       writer = createBrowserLocalFilterWriter(chrome, { onSyncResult(result) { automaticResults.push({ at: performance.now(), result: observable(result) }) } })
       createdBy = performance.now()
     },
-    async receiveFilter(name: string): Promise<SyncReceiveFilterResult> {
+    async receiveSettings(): Promise<SyncReceiveResult> {
+      return writer.receiveSyncDocument({ kind: "settings" })
+    },
+    async receiveFilter(name: string): Promise<SyncReceiveResult> {
       const key = parseDocumentKey(name)
-      if (key?.kind !== "filter") throw new TypeError("Invalid synthetic Filter key")
-      return writer.receiveSyncFilter(key)
+      if (key?.kind !== "filter" || documentKey(key) !== name) throw new TypeError("Invalid synthetic Filter key")
+      return writer.receiveSyncDocument(key)
     },
     async flush() {
       flushing++
