@@ -34,6 +34,8 @@ Finite numbers and numeric strings use legacy rounding and clamping. Unset value
 
 Shortcut conversion preserves the approved bare and Ctrl keys independently of recorder reservations. The first matching canonical warning supplies the note's clash ID. Stable IDs are `site:<site>:<action-id>`, `browser:<action-id>`, or `command:<command-id>`. The explicit action-ID table in `legacy-shortcut.ts` maps the kernel's warning metadata. Site warning precedence is YouTube, then YouTube Music, then browser warnings and commands in supplied order. No translated text becomes an ID.
 
+The initial three-record batch saves the carried row's ID as `unclaimed.originalShortcutId`, including key-only, keyless and unusable-key rows. No row means no provenance field. Startup uses the shared `decodeUnclaimed` decoder. Resume preserves raw canonical records and the saved ID through row deletion, replacement, label edits and key edits. Older records remain readable without guessed provenance. Pending-ID exclusion and an atomic guarded claim consumer remain required before claim safety.
+
 The carried shortcut has no Watch Later default. The picker and Undo presets use canonical overlap checks. A key or playlist that survives creates the carried row, including unusable raw keys and playlists with no key.
 
 ## Cleanup and restart boundary

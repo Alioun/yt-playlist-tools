@@ -3,11 +3,13 @@ import { readFile } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
 import { runInNewContext } from "node:vm"
 import ts from "typescript"
-import { decodeDevice, decodeDocument, decodeSettings, defaultDevice } from "../../shared/model"
+import { decodeDevice, decodeDocument, decodeSettings, defaultDevice, defaultSettings, isShortcutId, normalizeSettingsForWrite } from "../../shared/model"
 import type { Key } from "../../shared/model"
 import { LEGACY_DELETE_KEYS, UPGRADE_TRIGGER_KEYS } from "./legacy"
 import type { LegacyEvidence } from "./legacy"
 import { planLegacyStartup } from "./legacy-startup"
+import { assignKey } from "../../shared/keys"
+import { removeSharedShortcut } from "./accounts"
 import type { CanonicalUpgrade, MigrationContext, StartupPlan, StartupSnapshot } from "./legacy-startup"
 
 const playlist = `PL${"a".repeat(16)}`
@@ -163,7 +165,7 @@ describe("canonical conversion", () => {
           from: "1.4.5", autoAdd: { kept: 1, dropped: 1 }, pct: { value: 50, wasUnset: true, authorised: false }, feedback: false,
           shortcut: { raw: "Shift+S", key: key("s", { shift: true }), playlist: true, note: "ok" }, credentialsDeleted: false
         } }, claimNotice: null, lastAccount: null, newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: false },
-      unclaimed: { from: "1.4.5", autoAdd: [playlist], shortcutPlaylist: playlist, filters: {}, at: 1234 }
+      unclaimed: { from: "1.4.5", autoAdd: [playlist], shortcutPlaylist: playlist, originalShortcutId: "save01", filters: {}, at: 1234 }
     })
     expect(decodeDocument(plan.write["doc:settings"], decodeSettings)).toEqual({ kind: "value", document: plan.write["doc:settings"] })
     expect(decodeDevice(plan.write.device)).toEqual(plan.write.device)
@@ -585,4 +587,151 @@ test("the actual minified public module imports and runs without browser, DOM, t
   expect(run(input)).toEqual({ exports: ["planLegacyStartup"], plan: upgraded(input) })
   expect(run(pending(upgraded(input).write)).plan.kind).toBe("resume")
   expect(run({ ...snapshot(), schema: 2 }).plan).toEqual({ kind: "newer-layout", version: 2 })
+})
+
+describe("original shortcut migration association", () => {
+  test.each([
+    { raw: "Alt+W", target: playlist, note: "ok", converted: key("w", { alt: true }) },
+    { raw: "", target: playlist, note: "no-key", converted: null },
+    { raw: "!", target: playlist, note: "unconvertible", converted: null },
+    { raw: "Alt+W", target: "", note: "no-playlist", converted: key("w", { alt: true }) },
+    { raw: "!", target: "", note: "unconvertible", converted: null },
+    { raw: "", target: "", note: "none", converted: null }
+  ] as const)("the complete $note batch saves exactly the actual row ID", ({ raw, target, note, converted }) => {
+    const supplied = { ...context, shortcutId: "orig01" }
+    const plan = upgraded(snapshot({ playlists: [playlist], watchLaterShortcut: raw, addToPlaylistID: target }), supplied)
+    const settings = defaultSettings()
+    settings.autoAdd = { ...settings.autoAdd, on: true, feedback: false }
+    settings.shortcuts = { ...settings.shortcuts, on: converted !== null && target !== "", feedback: false, preset: true,
+      picker: key("p", { alt: true, shift: true }),
+      list: note === "none" ? [] : [{ id: "orig01", key: converted, label: "", watchLaterOnEveryAccount: false }] }
+    const device = defaultDevice(context.deviceId)
+    device.upgradeNote = { state: "pending", opened: false, seen: false, reopened: false,
+      details: { from: "1.4.5", autoAdd: { kept: 1, dropped: 0 }, pct: { value: 50, wasUnset: true, authorised: false },
+        feedback: false, shortcut: { raw, key: converted, playlist: target !== "", note }, credentialsDeleted: false } }
+    expect(plan).toEqual({ kind: "upgrade", write: {
+      "doc:settings": { v: 1, gen: context.settingsGen, at: context.at, by: context.deviceId, data: settings }, device,
+      unclaimed: { from: "1.4.5", autoAdd: [playlist], shortcutPlaylist: target || null,
+        ...(note === "none" ? {} : { originalShortcutId: "orig01" }), filters: {}, at: context.at }
+    }, cleanup: { steps: [
+      { kind: "local-remove", keys: expectedDeleteKeys },
+      { kind: "await-cleanup", database: "yt-playlist-tools", sessionKeys: ["channelCache"] },
+      { kind: "schema-last", value: 1, required: true }
+    ] } })
+    expect(Object.hasOwn(plan.write.unclaimed, "originalShortcutId")).toBe(note !== "none")
+  })
+
+  test.each([null, 123456, {}, [], "short", "longer1", "bad!id"].map(originalShortcutId => ({ originalShortcutId })))("malformed present origin %p refuses both startup paths without cleanup", ({ originalShortcutId }) => {
+    const write = upgraded(snapshot({ playlists: [playlist], addToPlaylistID: playlist })).write
+    for (const device of [write.device, { ...write.device, upgradeNote: null }]) {
+      const input = { ...pending(write), device, unclaimed: { ...write.unclaimed, originalShortcutId } }
+      const before = structuredClone(input)
+      expect(planLegacyStartup(input, context)).toEqual({ kind: "invalid", field: "unclaimed" })
+      expect(input).toEqual(before)
+    }
+  })
+
+  test("old records are readable without inferring an original row", () => {
+    const write = upgraded(snapshot({ watchLaterShortcut: "Alt+W", addToPlaylistID: playlist })).write
+    delete write.unclaimed.originalShortcutId
+    const input = pending(write)
+    const before = structuredClone(input)
+    expect(planLegacyStartup(input, { ...context, shortcutId: "other1" }).kind).toBe("resume")
+    expect(input).toEqual(before)
+    expect(Object.hasOwn(write.unclaimed, "originalShortcutId")).toBe(false)
+  })
+
+  test("ordinary key assignment, clearing and label normalization preserve the saved association", () => {
+    for (const nextKey of [key("x", { alt: true }), null]) {
+      const write = upgraded(snapshot({ watchLaterShortcut: "Alt+W", addToPlaylistID: playlist }), { ...context, shortcutId: "orig01" }).write
+      const assigned = assignKey(write["doc:settings"].data, { kind: "playlist", id: "orig01" }, nextKey)
+      if (assigned.kind !== "assigned") throw new Error("Expected ordinary key assignment")
+      const row = assigned.settings.shortcuts.list[0]
+      if (!row) throw new Error("Missing original row")
+      row.label = "  Renamed  "
+      write["doc:settings"].data = normalizeSettingsForWrite(assigned.settings)
+      expect(write["doc:settings"].data.shortcuts.list).toEqual([{ id: "orig01", key: nextKey, label: "Renamed", watchLaterOnEveryAccount: false }])
+      const input = pending(write)
+      const before = structuredClone(input)
+      expect(planLegacyStartup(input, { ...context, shortcutId: "other1" }).kind).toBe("resume")
+      expect(write.unclaimed.originalShortcutId).toBe("orig01")
+      expect(input).toEqual(before)
+    }
+  })
+
+  test("literal old-record ambiguity remains unknowable while new provenance distinguishes histories", () => {
+    const a = upgraded(snapshot({ watchLaterShortcut: "Alt+W", addToPlaylistID: playlist }), { ...context, shortcutId: "repl01" }).write
+    const b = upgraded(snapshot({ watchLaterShortcut: "Alt+W", addToPlaylistID: playlist }), { ...context, shortcutId: "orig01" }).write
+    a["doc:settings"] = { ...a["doc:settings"], gen: "later", at: 20 }
+    const originalId = b.unclaimed.originalShortcutId
+    if (!isShortcutId(originalId)) throw new Error("Missing validated original ID")
+    const removed = removeSharedShortcut({ settings: b["doc:settings"].data, shortcut: originalId, accounts: [] })
+    if (removed.kind !== "removed") throw new Error("Expected ordinary deletion")
+    expect(removed.settings.shortcuts.list).toEqual([])
+    expect(removed.settings.shortcuts.preset).toBe(true)
+    b["doc:settings"] = { ...a["doc:settings"], data: { ...removed.settings,
+      shortcuts: { ...removed.settings.shortcuts, list: structuredClone(a["doc:settings"].data.shortcuts.list) } } }
+    expect(a.unclaimed.originalShortcutId).toBe("repl01")
+    expect(b.unclaimed.originalShortcutId).toBe("orig01")
+    expect(a).not.toEqual(b)
+    const oldA = structuredClone(a), oldB = structuredClone(b)
+    delete oldA.unclaimed.originalShortcutId
+    delete oldB.unclaimed.originalShortcutId
+    expect(JSON.stringify(oldA)).toBe(JSON.stringify(oldB))
+    for (const write of [a, b, oldA, oldB]) {
+      const input = pending(write)
+      const before = structuredClone(input)
+      expect(planLegacyStartup(input, { ...context, shortcutId: "third1" }).kind).toBe("resume")
+      expect(input).toEqual(before)
+    }
+  })
+
+  for (const schema of [undefined, 1] as const) for (let boundary = 1; boundary <= 6; boundary++) {
+    test(`serialized cleanup boundary ${boundary}, schema ${schema ?? "absent"}, preserves later envelopes and original identity`, () => {
+      const initial = upgraded(snapshot({ playlists: [playlist], watchLaterShortcut: "Alt+W", addToPlaylistID: playlist }), { ...context, shortcutId: "orig01" })
+      for (const edit of ["deleted", "replacement", "renamed", "key-changed", "key-cleared"] as const) {
+        const write = structuredClone(initial.write)
+        const row = write["doc:settings"].data.shortcuts.list[0]
+        if (!row) throw new Error("Missing original")
+        if (edit === "deleted") write["doc:settings"].data.shortcuts.list = []
+        if (edit === "replacement") row.id = "repl01"
+        if (edit === "renamed") row.label = "Renamed"
+        if (edit === "key-changed") row.key = key("x", { alt: true })
+        if (edit === "key-cleared") row.key = null
+        const settings = write["doc:settings"]
+        settings.gen = "later-edit"; settings.at = 7890; settings.by = "later-device"
+        settings.data.autoAdd.pct = 19
+        settings.data.shortcuts.on = false
+        Object.assign(settings, { futureEnvelope: [1], toJSON: "inert" })
+        Object.assign(settings.data, { futureBody: { keep: true } })
+        Object.assign(write.device, { futureDevice: [2] })
+        if (write.device.upgradeNote === null) throw new Error("Missing pending note")
+        Object.assign(write.device.upgradeNote, { opened: true, seen: true, reopened: true })
+        write.unclaimed = { ...write.unclaimed, ...JSON.parse('{"__proto__":{"keep":true},"toJSON":"inert","futureUnclaimed":[3]}') }
+        write.unclaimed.filters = JSON.parse(`{"WL":{"mode":"allow","on":false,"channels":[["${channel}","Title",null,{"future":4}]],"futureFilter":true}}`)
+        const local: Record<string, unknown> = { ...write }
+        if (schema !== undefined || boundary === 6) local.schema = 1
+        if (boundary === 1) Object.assign(local, { playlists: [playlist], watchLaterShortcut: "Alt+W", addToPlaylistID: playlist })
+        const durable = { local, databasePresent: boundary < 3, session: boundary < 4 ? { channelCache: true } : {} }
+        const restarted: typeof durable = JSON.parse(JSON.stringify(durable))
+        const before = structuredClone(restarted)
+        const values = boundary === 1 ? { playlists: [playlist], watchLaterShortcut: "Alt+W", addToPlaylistID: playlist } : {}
+        const input: StartupSnapshot = { schema: restarted.local.schema, device: restarted.local.device,
+          settingsDocument: restarted.local["doc:settings"], unclaimed: restarted.local.unclaimed, interimKeysPresent: [],
+          legacy: { values, presentKeys: boundary === 1 ? ["playlists", "watchLaterShortcut", "addToPlaylistID"] : [], refreshTokenWasNonempty: false } }
+        for (const shortcutId of ["again1", "again2"]) {
+          const plan = planLegacyStartup(input, { ...context, shortcutId, deviceId: "restart-device", settingsGen: "restart-gen", at: 9999 })
+          expect(plan).toEqual({ kind: "resume", cleanup: { steps: [
+            { kind: "local-remove", keys: expectedDeleteKeys },
+            { kind: "await-cleanup", database: "yt-playlist-tools", sessionKeys: ["channelCache"] },
+            { kind: "schema-last", value: 1, required: restarted.local.schema === undefined }
+          ] } })
+          expect(restarted).toEqual(before)
+          expect(restarted.local.unclaimed).toEqual(write.unclaimed)
+          expect(restarted.local["doc:settings"]).toEqual(write["doc:settings"])
+          expect(restarted.local.device).toEqual(write.device)
+        }
+      }
+    })
+  }
 })

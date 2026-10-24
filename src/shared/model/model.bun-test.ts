@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import {
-  DecodeError, decodeSyncMeta, decodeDevice, decodeDocument, decodeFilter, decodeKey, decodeSettings, decodeSetup, decodeSyncState,
+  DecodeError, decodeUnclaimed, decodeSyncMeta, decodeDevice, decodeDocument, decodeFilter, decodeKey, decodeSettings, decodeSetup, decodeSyncState,
   defaultDevice, defaultFilter, defaultSettings, defaultSetup, documentKey, isAccountKey, isChannelId,
   isKey, isPercent, isPlaylistId, isSetupEmpty, isShortcutId, isVideoId,
   normalizeFilterForWrite, normalizeSettingsForWrite, normalizeSetupForWrite, parseDocumentKey
@@ -430,4 +430,54 @@ test("ordinary sync metadata requires owned fields and retains extensions", () =
     { v: 1, id: "history", created: -1 }, { v: 1, id: "history", created: 0, reset: 0 }]) {
     expect(() => decodeSyncMeta(raw)).toThrow(DecodeError)
   }
+})
+
+describe("unclaimed migration provenance", () => {
+  const old = { from: "1.4.5" as const, autoAdd: [playlist], shortcutPlaylist: playlist, filters: {}, at: 0 }
+
+  test("old records stay provenance-less and valid original IDs remain exact", () => {
+    expect(decodeUnclaimed(old)).toEqual(old)
+    expect(Object.hasOwn(decodeUnclaimed(old), "originalShortcutId")).toBe(false)
+    for (const originalShortcutId of ["orig01", "_-0123", "ABCdef"]) {
+      expect(decodeUnclaimed({ ...old, originalShortcutId })).toEqual({ ...old, originalShortcutId })
+    }
+  })
+
+  test.each([null, 123456, {}, [], "short", "longer1", "bad!id", "é12345"].map(originalShortcutId => ({ originalShortcutId })))("rejects malformed provenance %p at the exact path", ({ originalShortcutId }) => {
+    const raw = { ...old, originalShortcutId }
+    const before = structuredClone(raw)
+    try {
+      decodeUnclaimed(raw)
+      throw new Error("Expected invalid provenance")
+    } catch (error) {
+      expect(error).toBeInstanceOf(DecodeError)
+      if (!(error instanceof DecodeError)) throw error
+      expect(error.path).toBe("unclaimed.originalShortcutId")
+      expect(error.message).toBe("unclaimed.originalShortcutId: expected a six-character shortcut ID")
+    }
+    expect(raw).toEqual(before)
+  })
+
+  test("root own keys and Filter extensions survive without changing the raw tuple", () => {
+    const raw = JSON.parse(`{"from":"1.5.0","autoAdd":["WL"],"shortcutPlaylist":null,"originalShortcutId":"orig01","at":5,"__proto__":{"keep":true},"toJSON":"inert","future":{"items":[1,null]},"filters":{"WL":{"mode":"allow","on":false,"channels":[["${channel}","Title",null,{"futureColumn":true}]],"__proto__":{"filter":true},"toJSON":"filter-data","futureFilter":[2]}}}`)
+    const before = structuredClone(raw)
+    const decoded = decodeUnclaimed(raw)
+    expect(decoded).toEqual({ ...raw, filters: { ...raw.filters, WL: { ...raw.filters.WL, channels: [[channel, "Title", undefined, { futureColumn: true }]] } } })
+    expect(Object.hasOwn(decoded, "__proto__")).toBe(true)
+    const filter = decoded.filters.WL
+    if (!filter) throw new Error("Missing carried Filter")
+    expect(Object.hasOwn(filter, "__proto__")).toBe(true)
+    expect(JSON.parse(JSON.stringify(decoded))).toEqual(raw)
+    expect(raw).toEqual(before)
+  })
+
+  test("moving the decoder preserves all existing required-field validation", () => {
+    for (const raw of [undefined, null, [], 1, "unclaimed", {},
+      ...Object.keys(old).map(key => Object.fromEntries(Object.entries(old).filter(([field]) => field !== key))),
+      { ...old, from: "2.0" }, { ...old, autoAdd: null }, { ...old, autoAdd: ["bad key"] },
+      { ...old, shortcutPlaylist: "bad key" }, { ...old, filters: [] },
+      { ...old, filters: { "bad key": {} } }, { ...old, filters: { WL: { mode: "bad" } } },
+      { ...old, at: -1 }, { ...old, at: 0.5 }, { ...old, at: "0" }
+    ]) expect(() => decodeUnclaimed(raw)).toThrow(DecodeError)
+  })
 })

@@ -1,9 +1,9 @@
 import {
-  DecodeError, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, decodeDevice, decodeDocument, decodeFilter,
-  decodeSettings, defaultDevice, defaultSettings, isKey, isPlaylistId, isShortcutId
+  DecodeError, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, decodeDevice, decodeDocument, decodeUnclaimed,
+  decodeSettings, defaultDevice, defaultSettings, isKey, isShortcutId
 } from "../../shared/model"
 import type { Device, Settings, Stamped, Unclaimed } from "../../shared/model"
-import { dictionary, isRecord, list, natural, nullable, object, oneOf } from "../../shared/model/codec"
+import { isRecord, natural } from "../../shared/model/codec"
 import { keysOverlap } from "../../shared/keys"
 import type { BrowserCommand, Platform } from "../../shared/keys"
 import { CREDENTIAL_KEYS, LEGACY_DELETE_KEYS, UPGRADE_TRIGGER_KEYS, convertLegacy, validateLegacyEvidence } from "./legacy"
@@ -43,19 +43,6 @@ export type StartupPlan =
   | { kind: "upgrade"; write: CanonicalUpgrade; cleanup: LegacyCleanup }
   | { kind: "resume"; cleanup: LegacyCleanup }
 
-const decodeUnclaimed = object<Unclaimed>({
-  from: oneOf("1.4.5", "1.5.0"),
-  autoAdd: list((raw, path) => {
-    if (!isPlaylistId(raw)) throw new DecodeError(path ?? "unclaimed.autoAdd", "a playlist ID")
-    return raw
-  }),
-  shortcutPlaylist: nullable((raw, path) => {
-    if (!isPlaylistId(raw)) throw new DecodeError(path ?? "unclaimed.shortcutPlaylist", "a playlist ID")
-    return raw
-  }),
-  filters: dictionary(isPlaylistId, decodeFilter), at: natural
-})
-
 function validateContext(context: MigrationContext): void {
   if (!isRecord(context)) throw new DecodeError("context", "a migration context")
   for (const field of ["deviceId", "settingsGen"] as const) {
@@ -88,13 +75,14 @@ function hasDeviceState(device: Device | undefined): boolean {
 function upgrade(evidence: LegacyEvidence, context: MigrationContext): CanonicalUpgrade {
   const legacy = convertLegacy(evidence)
   const shortcut = legacyShortcut(legacy.rawShortcut, legacy.shortcutPlaylist !== null, context)
+  const hasShortcut = shortcut.note !== "none"
   const settings = defaultSettings()
   settings.autoAdd = { ...settings.autoAdd, on: legacy.autoAdd.length > 0, pct: legacy.pct.value, feedback: legacy.feedback }
   const picker = { char: "p", code: "KeyP", ctrl: false, alt: true, shift: true, meta: false }
   settings.shortcuts = {
     ...settings.shortcuts, on: shortcut.key !== null && shortcut.playlist, feedback: legacy.feedback, preset: true,
     picker: shortcut.key && keysOverlap(shortcut.key, picker) ? null : picker,
-    list: shortcut.note === "none" ? [] : [{ id: context.shortcutId, key: shortcut.key, label: "", watchLaterOnEveryAccount: false }]
+    list: hasShortcut ? [{ id: context.shortcutId, key: shortcut.key, label: "", watchLaterOnEveryAccount: false }] : []
   }
   if (shortcut.key && settings.undoKey && keysOverlap(shortcut.key, settings.undoKey)) settings.undoKey = null
   const device = defaultDevice(context.deviceId)
@@ -109,7 +97,10 @@ function upgrade(evidence: LegacyEvidence, context: MigrationContext): Canonical
   return {
     "doc:settings": { v: DOCUMENT_VERSION, gen: context.settingsGen, at: context.at, by: context.deviceId, data: settings },
     device,
-    unclaimed: { from: legacy.from, autoAdd: legacy.autoAdd, shortcutPlaylist: legacy.shortcutPlaylist, filters: legacy.filters, at: context.at }
+    unclaimed: {
+      from: legacy.from, autoAdd: legacy.autoAdd, shortcutPlaylist: legacy.shortcutPlaylist,
+      ...(hasShortcut ? { originalShortcutId: context.shortcutId } : {}), filters: legacy.filters, at: context.at
+    }
   }
 }
 

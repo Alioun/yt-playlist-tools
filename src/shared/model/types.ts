@@ -124,6 +124,7 @@ export type Unclaimed = {
   from: "1.4.5" | "1.5.0"
   autoAdd: string[]
   shortcutPlaylist: string | null
+  originalShortcutId?: string
   filters: Record<string, Filter>
   at: number
 }

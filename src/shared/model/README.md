@@ -8,6 +8,8 @@ This module owns the browser-independent document bodies in DATA-12 and the enve
 
 `decodeDevice(raw, fallbackId?)` reads the device body. A missing device needs a caller-supplied ID. A stored ID needs no fallback. `defaultDevice(id)` also requires an ID. Generation belongs to the caller. These functions never create consent, apply migration policy or infer an account.
 
+`decodeUnclaimed(raw)` validates local-only migration choices and optional `originalShortcutId` with the six-character ID guard. Omitted provenance stays absent. Malformed known provenance throws `DecodeError` at `unclaimed.originalShortcutId`. Unknown fields and Filter tuple extensions survive decoding.
+
 `defaultSettings`, `defaultSetup`, `defaultFilter` and `defaultDevice` return independent mutable values. The `defaults` object names the same factories. An absent filter has no effect, represented by an empty, switched-off denylist.
 
 `decodeDocument(raw, decodeBody)` reads a stamped document. Its result is discriminated by `kind`:
