@@ -1,6 +1,5 @@
-import { existsSync, mkdirSync, realpathSync, writeFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs"
+import { dirname, isAbsolute, resolve } from "node:path"
 import type { Options } from "@sveltejs/vite-plugin-svelte"
 import type { ESTree, Plugin } from "vite"
 import type { Entrypoint, WxtHooks } from "wxt"
@@ -126,6 +125,7 @@ function collect(ast: ESTree.Program, code: string, id: string, development: boo
   }
   prepare(ast, root)
   function visit(node: ESTree.Node) {
+    if (node.type === "ImportDeclaration" || ((node.type === "ExportNamedDeclaration" || node.type === "ExportAllDeclaration") && node.source)) return
     if (node.type === "Identifier" && !declarations.has(node)) {
       let scope = scopes.get(node)
       while (scope && !scope.bindings.has(node.name)) scope = scope.parent
@@ -155,17 +155,34 @@ function collect(ast: ESTree.Program, code: string, id: string, development: boo
 export function createPageLink(options: { siteRoot: string; kitIndex: string; evidenceDir: string }) {
   const siteRoot = clean(realpathSync(resolve(options.siteRoot)))
   const kitRoot = clean(realpathSync(dirname(resolve(options.kitIndex))))
-  const packageRoot = (name: string) => {
-    let directory = dirname(realpathSync(fileURLToPath(import.meta.resolve(name))))
-    while (!existsSync(resolve(directory, "package.json"))) {
+  const packageOwners = new Map<string, string | null>()
+  const packageOwner = (id: string): string | null => {
+    const path = clean(id)
+    if (!isAbsolute(path) || !existsSync(path)) return null
+    let directory = dirname(realpathSync(path))
+    const visited: string[] = []
+    let owner: string | null = null
+    while (true) {
+      if (packageOwners.has(directory)) {
+        owner = packageOwners.get(directory) ?? null
+        break
+      }
+      visited.push(directory)
+      const manifestPath = resolve(directory, "package.json")
+      if (existsSync(manifestPath)) {
+        const manifest: unknown = JSON.parse(readFileSync(manifestPath, "utf8"))
+        if (typeof manifest === "object" && manifest !== null && "name" in manifest && typeof manifest.name === "string") {
+          owner = manifest.name
+          break
+        }
+      }
       const parent = dirname(directory)
-      if (parent === directory) throw Error(`page-link cannot locate package root for ${name}`)
+      if (parent === directory) break
       directory = parent
     }
-    return clean(directory)
+    for (const path of visited) packageOwners.set(path, owner)
+    return owner
   }
-  const svelteRoot = packageRoot("svelte")
-  const bitsRoot = packageRoot("bits-ui")
   const imports = new Map<Site, Map<string, ImportedNames>>()
   let pageBuild = false
   let development = false
@@ -185,6 +202,7 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
   }
   const buildKitsLast: WxtHooks["entrypoints:grouped"] = (_wxt, groups) => {
     imports.clear()
+    packageOwners.clear()
     buildOrder.length = 0
     const kits: typeof groups = []
     const others: typeof groups = []
@@ -201,6 +219,7 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
     pageBuild = bundle.kind !== "unrelated"
     if (bundle.kind === "unrelated") return
     const label = entries.map((entry) => entry.name).join(",")
+    const composedExternals = new Set<string>()
     config.plugins ??= []
     if (bundle.kind === "feature") {
       config.build ??= {}
@@ -209,9 +228,9 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
       rollup.external = (id, importer, resolved) => {
         if (specifiers.has(id)) return true
         if (id.startsWith("svelte/")) throw Error(`knownSvelteSpecifier ${importer}: ${id}`)
-        if (typeof external === "function") return external(id, importer, resolved)
-        if (typeof external === "boolean") return external
-        return (typeof external === "string" ? [external] : external instanceof RegExp ? [external] : external ?? []).some((item) => {
+        const inherited = typeof external === "function" ? external(id, importer, resolved)
+          : typeof external === "boolean" ? external
+          : (typeof external === "string" ? [external] : external instanceof RegExp ? [external] : external ?? []).some((item) => {
           if (typeof item === "string") return item === id
           const lastIndex = item.lastIndex
           item.lastIndex = 0
@@ -219,6 +238,8 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
           item.lastIndex = lastIndex
           return matches
         })
+        if (inherited) composedExternals.add(id)
+        return inherited
       }
       const outputs = Array.isArray(rollup.output) ? rollup.output : [rollup.output ?? {}]
       for (const output of outputs) {
@@ -247,14 +268,14 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
         order: "post",
         handler(code, id) {
           if (bundle.kind !== "feature") return
-          if (!/\bsvelte\b/.test(code)) {
-            imports.get(bundle.site)?.delete(clean(id))
+          const names = collect(this.parse(code), code, id, development)
+          if (!names.root.size && !names.client.size && !names.disclose) {
+            imports.get(bundle.site)?.delete(id)
             return
           }
-          const names = collect(this.parse(code), code, id, development)
           let modules = imports.get(bundle.site)
           if (!modules) imports.set(bundle.site, modules = new Map())
-          modules.set(clean(id), names)
+          modules.set(id, names)
         }
       },
       generateBundle(outputOptions, output) {
@@ -265,14 +286,13 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
             if (artifact.fileName.endsWith(".css")) this.error(`noPageCss ${label}: ${artifact.fileName}`)
             continue
           }
-          if (artifact.imports.some((id) => !specifiers.has(id)) || artifact.dynamicImports.length) this.error(`unlistedIifeOnly ${label}`)
+          if (artifact.imports.some((id) => !specifiers.has(id) && !composedExternals.has(id)) || artifact.dynamicImports.length) this.error(`unlistedIifeOnly ${label}`)
           const modules = Object.keys(artifact.modules).map(clean)
           for (const id of modules) {
-            const fromSvelte = id.startsWith(`${svelteRoot}/`) || id.includes("/node_modules/svelte/")
-            const fromBits = id.startsWith(`${bitsRoot}/`) || id.includes("/node_modules/bits-ui/")
-            if (fromSvelte && bundle.kind !== "kit" && label !== "popovers") this.error(`noFeatureRuntime ${label}: ${id}`)
+            const owner = packageOwner(id)
+            if (owner === "svelte" && bundle.kind !== "kit" && label !== "popovers") this.error(`noFeatureRuntime ${label}: ${id}`)
             if (id.startsWith(`${kitRoot}/`) && bundle.kind === "feature") this.error(`noFeatureKitImplementation ${label}: ${id}`)
-            if (fromBits && label !== "popovers") this.error(`lazyBitsOnly ${label}: ${id}`)
+            if (owner === "bits-ui" && label !== "popovers") this.error(`lazyBitsOnly ${label}: ${id}`)
           }
           chunks.push({ file: artifact.fileName, modules, imports: artifact.imports, dynamicImports: artifact.dynamicImports })
         }

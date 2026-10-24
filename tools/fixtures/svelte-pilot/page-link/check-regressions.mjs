@@ -143,7 +143,7 @@ async function installed(path) {
     evidence.state = (await control.evaluate((tabId) => chrome.scripting.executeScript({ target: { tabId }, world: "ISOLATED", func: () => ({
       trace: globalThis.__pp.core.trace, root: Object.keys(globalThis.__pp.svelte.root).sort(), client: Object.keys(globalThis.__pp.svelte.client).sort(),
       value: globalThis.__regressionValue ?? null, raw: globalThis.__regressionRaw ?? null,
-      disclosed: [...(window.__svelte?.v ?? [])], safe: globalThis.__safeAlias ?? null
+      disclosed: [...(window.__svelte?.v ?? [])], safe: globalThis.__safeAlias ?? null, querySecond: typeof globalThis.__querySecond
     }) }), tabId))[0].result
     evidence.rendered = await page.getByRole("button", { name: "Count 0", exact: true }).count()
     await page.screenshot({ path: resolve(path, "installed.png") })
@@ -185,7 +185,7 @@ const positives = [
     await writeFile(resolve(path, "src/site/consumer/query.js"), "")
     await configure(path, `plugins: [{ name: "fixture-query-transform", transform(code, id) {
       if (id.endsWith("query.js?first")) return 'import { untrack } from "svelte"; globalThis.__regressionValue = untrack(() => 42);';
-      if (id.endsWith("query.js?second")) return 'import { tick } from "svelte"; globalThis.__queryTick = tick;';
+      if (id.endsWith("query.js?second")) return 'import { unmount } from "svelte"; globalThis.__querySecond = unmount;';
     } }],`)
   }, value: 42 },
   { name: "foreign-reexport-names", code: 'import * as S from "svelte"; export { S as scalar } from "./helper.js"; export { tick as S } from "svelte"; globalThis.__regressionValue = S.untrack(() => 42);', setup: async (path) => {
@@ -206,6 +206,7 @@ for (const item of positives) await check(item.name, async () => {
   assert.equal(result.status, 0, result.output)
   const runtime = await installed(path)
   if (item.value !== undefined) assert.equal(runtime.state.value, item.value)
+  if (item.name === "query-variants") assert.equal(runtime.state.querySecond, "function")
   if (item.name.startsWith("raw-")) {
     const late = item.name === "raw-later-entry"
     const names = JSON.parse(await readFile(resolve(path, ".output/evidence/chrome-build/kit-www.json"), "utf8")).names
@@ -239,7 +240,7 @@ await check("safe-alias-and-lazy-packages", async () => {
   await prepend(path, "site/consumer/mount.ts", 'import { answer } from "fixture-safe"; globalThis.__safeAlias = answer;')
   for (const file of ["entrypoints/popovers.ts", "site/popovers/Popover.svelte"]) {
     const target = resolve(path, `src/${file}`)
-    await writeFile(target, (await readFile(target, "utf8")).replaceAll('from "svelte"', 'from "fixture-svelte"').replaceAll('from "bits-ui"', 'from "fixture-bits-ui"'))
+    await writeFile(target, (await readFile(target, "utf8")).replaceAll('from "bits-ui"', 'from "fixture-bits-ui"'))
   }
   const result = await build(path)
   assert.equal(result.status, 0, result.output)

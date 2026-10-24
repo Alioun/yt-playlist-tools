@@ -13,6 +13,7 @@ node node_modules/wxt/bin/wxt.mjs build tools/fixtures/svelte-pilot/page-link -b
 node tools/fixtures/svelte-pilot/page-link/check-build.mjs
 node tools/fixtures/svelte-pilot/page-link/check-negative.mjs
 bunx --no-install playwright install chromium
+node tools/fixtures/svelte-pilot/page-link/check-regressions.mjs
 node tools/fixtures/svelte-pilot/page-link/check-browser.mjs --browser chromium
 node tools/fixtures/svelte-pilot/page-link/check-development.mjs
 node tools/fixtures/svelte-pilot/page-link/check-source.mjs
@@ -36,11 +37,11 @@ This command fails explicitly. The dependency owner must install Puppeteer 24.43
 
 Unlisted names ending in `-www` or `-music` are linked consumers, except `core-*`, `page-*`, and the exact kit names. `kit-www` and `kit-music` build last. Other unlisted entries remain independent. Extension pages and the background keep their normal WXT builds.
 
-The collector runs after component and rune-module compilation. It resolves namespace bindings through lexical scopes, keeps original named imports through aliases, and accepts static properties including `["if"]`. Production namespace escapes and computed dynamic properties fail with the importer and expression. Unknown Svelte entrypoints fail closed. Named re-exports contribute their original names. Namespace re-exports cannot produce a finite production export set.
+The collector parses every transformed feature module after component and rune-module compilation. Decoded specifiers determine collection, including escaped string literals. Contributions use the full transformed ID so executable, raw, and other query variants stay independent. It resolves namespace bindings through lexical scopes, keeps original named imports through aliases, and accepts static properties including `["if"]`. Foreign import and source re-export names are declaration syntax. Local namespace exports, production namespace escapes, and computed dynamic properties fail with the importer and expression. Unknown Svelte entrypoints fail closed. Named re-exports contribute their original names. Namespace re-exports cannot produce a finite production export set.
 
 Each site's kit imports `virtual:page-link-svelte`, installs the generated namespace dictionaries, and exposes its compiled `Badge` through `$kit`. The default real `svelte/internal/disclose-version` side effect runs in the kit. The kit preserves the core. Development uses the actual WXT command to choose complete namespaces, even before production collection.
 
-The public hooks keep WXT's native callback types. Existing external predicates and global mappings compose with linked mappings. Output filenames and IIFE configuration remain WXT's. Module provenance rejects bundled Svelte in consumers, cores, or page entries; direct kit implementation in consumers; and Bits UI outside the lazy page bundle. Every page group rejects CSS assets, dynamic chunks, and non-IIFE output.
+The public hooks keep WXT's native callback types. Existing external predicates and global mappings compose with linked mappings. Static imports accepted by the caller's external configuration pass the output guard. Output filenames and IIFE configuration remain WXT's. Cached filesystem lookups identify each rendered module's package owner by its manifest name, including renamed installations and symlinks. Module provenance rejects bundled Svelte in consumers, cores, or page entries; direct kit implementation in consumers; and Bits UI outside the lazy page bundle. Every page group rejects CSS assets, dynamic chunks, and non-IIFE output.
 
 ## Evidence
 
@@ -49,6 +50,7 @@ The checkers write their artifacts under the ignored `.output` directory.
 - `evidence/chrome-build` and `evidence/firefox-build` contain the exact collected sets, contributing modules, build order, and rendered module provenance.
 - `browser/chromium.json` and the site screenshots record registrations, execution order, worlds, component and rune behavior, exact namespace keys, styles, lazy Bits UI focus, Escape, positioning, and later `executeScript` sharing. Runtime negatives capture the missing-export and absent-kit exceptions through Chromium's debugger protocol.
 - `negative.json` records deliberate build failures, hook composition, lexical bindings, and the music-only construct added and removed across clean builds. Both mutated states also pass the installed-browser checks on both sites. Generated case trees and failure logs remain under `cases`.
+- `regressions/results.json` records escaped specifiers, transformed-ID replacement and removal, query variants, later raw imports, foreign import and re-export names, copied and symlinked packages, composed externals, and escape controls. Copied WXT projects retain build logs and installed Chromium evidence. The checker runs every case before failing so a broken linker retains its runtime exceptions and working controls.
 - `development.json` and `development.log` record the real WXT dev command, full namespace equality, and a consumer edit. The initial and rebuilt outputs run in separate fresh installed profiles. This checker does not test registration retention across WXT's extension reload.
 - `source-rebuild.json` and `source-*.log` record the fresh source ZIP and extracted production rebuilds.
 - `sizes.json` records byte counts and gzip level 9 sizes for every fixture script. These are fixture data, not final product budget results.
