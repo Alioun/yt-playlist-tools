@@ -3,8 +3,10 @@ import { fileURLToPath } from "node:url"
 import { defineConfig } from "wxt"
 import { createPageLink } from "../../../../build/page-link"
 
+import { fixtureEntries } from "./src/registration"
+
 const path = (relative: string) => fileURLToPath(new URL(relative, import.meta.url))
-const link = createPageLink({ siteRoot: path("./src/site"), kitIndex: path("./src/site/kit/index.ts"), evidenceDir: path("./.output/evidence") })
+const link = createPageLink({ siteRoot: path("./src/site"), kitIndex: path("./src/site/kit/index.ts"), evidenceDir: path("./.output/evidence"), entries: fixtureEntries })
 
 export default defineConfig({
   srcDir: "src",

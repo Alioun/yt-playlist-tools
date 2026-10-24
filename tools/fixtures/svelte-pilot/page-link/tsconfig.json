@@ -9,6 +9,7 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "types": ["svelte", "node"],
     "paths": { "$kit": ["./src/site/kit/index.ts"] }
   },

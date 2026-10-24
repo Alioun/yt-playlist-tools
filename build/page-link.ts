@@ -3,9 +3,9 @@ import { dirname, isAbsolute, resolve } from "node:path"
 import type { Options } from "@sveltejs/vite-plugin-svelte"
 import type { ESTree, Plugin } from "vite"
 import type { Entrypoint, WxtHooks } from "wxt"
+import type { Site } from "../src/shared/contracts/vocabulary"
+import { popoversBundle, type EntryOwnership, type PageBundle } from "../src/shared/features/registration.ts"
 
-type Site = "www" | "music"
-type PageBundle = { kind: "feature" | "kit"; site: Site } | { kind: "page" | "unrelated" }
 type Namespace = "root" | "client"
 type ImportedNames = { root: Set<string>; client: Set<string>; disclose: boolean }
 type Scope = { parent?: Scope; functionScope: boolean; bindings: Map<string, Namespace | null> }
@@ -22,15 +22,13 @@ const resolvedVirtualId = `\0${virtualId}`
 const clean = (id: string) => id.replace(/\?.*$/, "").replaceAll("\\", "/")
 const emptyNames = (): ImportedNames => ({ root: new Set(), client: new Set(), disclose: false })
 
-function classify(entries: readonly Entrypoint[]): PageBundle {
+function classify(entries: readonly Entrypoint[], ownership: EntryOwnership): PageBundle {
   if (!entries.every((entry) => entry.type === "unlisted-script")) return { kind: "unrelated" }
   const entry = entries[0]
   if (!entry || entries.length !== 1) throw Error("page-link requires independent unlisted IIFEs")
-  for (const site of ["www", "music"] satisfies Site[]) {
-    if (entry.name === `kit-${site}`) return { kind: "kit", site }
-    if (entry.name.endsWith(`-${site}`) && !/^(core|page)-/.test(entry.name)) return { kind: "feature", site }
-  }
-  return { kind: "page" }
+  const bundle = Object.hasOwn(ownership, entry.name) ? ownership[entry.name] : undefined
+  if (!bundle) throw Error(`page-link missing entry ownership ${entry.name}`)
+  return bundle
 }
 
 function children(node: ESTree.Node): ESTree.Node[] {
@@ -152,7 +150,7 @@ function collect(ast: ESTree.Program, code: string, id: string, development: boo
   return names
 }
 
-export function createPageLink(options: { siteRoot: string; kitIndex: string; evidenceDir: string }) {
+export function createPageLink(options: { siteRoot: string; kitIndex: string; evidenceDir: string; entries: EntryOwnership }) {
   const siteRoot = clean(realpathSync(resolve(options.siteRoot)))
   const kitRoot = clean(realpathSync(dirname(resolve(options.kitIndex))))
   const packageOwners = new Map<string, string | null>()
@@ -208,14 +206,14 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
     const others: typeof groups = []
     for (const group of groups) {
       const entries = Array.isArray(group) ? group : [group]
-      const kitCount = entries.filter((entry) => entry.type === "unlisted-script" && /^kit-(www|music)$/.test(entry.name)).length
+      const kitCount = entries.filter((entry) => entry.type === "unlisted-script" && options.entries[entry.name]?.kind === "kit").length
       if (kitCount && kitCount !== entries.length) throw Error("page-link mixed kit group")
       ;(kitCount ? kits : others).push(group)
     }
     groups.splice(0, groups.length, ...others, ...kits)
   }
   const linkPageScripts: WxtHooks["vite:build:extendConfig"] = (entries, config) => {
-    const bundle = classify(entries)
+    const bundle = classify(entries, options.entries)
     pageBuild = bundle.kind !== "unrelated"
     if (bundle.kind === "unrelated") return
     const label = entries.map((entry) => entry.name).join(",")
@@ -328,9 +326,9 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
           const modules = Object.keys(artifact.modules).map(clean)
           for (const id of modules) {
             const owner = packageOwner(id)
-            if (owner === "svelte" && bundle.kind !== "kit" && label !== "popovers") this.error(`noFeatureRuntime ${label}: ${id}`)
+            if (owner === "svelte" && bundle.kind !== "kit" && label !== popoversBundle) this.error(`noFeatureRuntime ${label}: ${id}`)
             if (id.startsWith(`${kitRoot}/`) && bundle.kind === "feature") this.error(`noFeatureKitImplementation ${label}: ${id}`)
-            if (owner === "bits-ui" && label !== "popovers") this.error(`lazyBitsOnly ${label}: ${id}`)
+            if (owner === "bits-ui" && label !== popoversBundle) this.error(`lazyBitsOnly ${label}: ${id}`)
           }
           chunks.push({ file: artifact.fileName, modules, imports: artifact.imports, dynamicImports: artifact.dynamicImports })
         }
