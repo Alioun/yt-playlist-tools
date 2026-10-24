@@ -173,3 +173,36 @@ git diff --check
 ```
 
 The adjacent suite compares complete frozen outcomes for the eight fixture groups and executes the actual minified browser CJS exports with throwing ambient globals. It checks the exact runtime exports and pure model import graph. Compiler fixtures prove recursive readonly snapshots, branded IDs and required effective-default context. Native storage, private-window authorization and runtime integration remain unverified here.
+
+# Pure canonical document body preparation
+
+`write-preparation.ts` exports only `prepareDocumentBody` at runtime. It prepares one complete decoded Settings, Setup, or Filter body and returns either `{kind:"prepared", data: JsonObject}` or `{kind:"invalid", reason:"json"|"shape"}`. It is an uninstalled pure library imported directly from `./write-preparation`.
+
+`PrepareBodyInput` has recursively readonly canonical data. Only the setup variant requires `context`, with both `shortcutIds` and `additionalChosenPlaylists` derived from the existing `SetupContext`. The caller supplies surviving shortcut IDs and resolved effective shared defaults from the same proposed snapshot. Watch Later belongs in that context only when a surviving shared default applies to the account. An explicit account target can override it. The function never mutates either set.
+
+Preparation checks own data descriptors before copying known containers. It rejects invalid representations before a decoder or normalizer can discard them. It validates the candidate with the existing strict JSON validator, refuses enumerable Object prototype members before invoking the unchanged model, decodes the canonical body, and calls its authoritative save-time normalizer. A final narrow materialization and strict JSON check produce the result. An unsuitable root, including an unsupported root prototype, refuses shape. Invalid representations within record bodies refuse JSON. Only `DecodeError` becomes a model shape refusal. Other programmer errors propagate.
+
+The representation exceptions are limited to these known optional positions:
+
+- Settings omits undefined `char` on Undo, the shortcut picker, each shortcut key, and each canonical music-action key plus its picker. Unknown music-key entries stay opaque.
+- Setup omits undefined label `handle` and `avatar`, and auto-add entry `pct`. Zero and empty strings remain values. Null reaches canonical validation.
+- Filter omits a missing or undefined final handle at index two. When future columns follow, that one slot becomes null. Required slots and future columns never shift. Other holes and undefined values refuse.
+
+Unknown own JSON fields survive at every level, including future tuple columns, inert string `toJSON` fields, and own `__proto__` data. Repairs depend on the known path. An invalid unknown alias remains invalid even when its known occurrence can be repaired. Unknown branches remain intact for the iterative validator, including deep extensions and repeated acyclic references. Input and output may share branches and remain immutable snapshots. No detached mutable copy or native browser serialization guarantee is provided.
+
+This boundary accepts neither raw intake nor an envelope. It produces no stamp, key, quota verdict, no-op decision, permission result, storage transaction, or effect. The later writer preserves complete prior envelope JSON, supplies its owned stamp changes, validates the full envelope even with sync off, and encodes genuinely changed documents. Complete account-operation filter inventory does not authorize preparing or rewriting untouched kept filters. Production ownership checks, the carried-shortcut decision, and existing session-access safeguards remain separate.
+
+The adjacent test compares literal complete bodies, checks invalid representations without getter access, exercises unsafe alternatives, and runs all variants on the actual minified browser CJS in a fresh guarded Node VM. Synthetic integration uses real account operations, normalizers, single and chunked wire encoding, and readback with preserved envelope extensions. The compiler fixture proves the exact API, canonical correspondence, readonly inputs, and unsupported-input refusal. These checks establish no production writer or native storage behavior.
+
+Run the focused acceptance checks with prepared pinned dependencies and WXT types:
+
+```sh
+bun test --no-env-file --isolate --conditions=browser ./src/background/store/write-preparation.bun-test.ts ./src/background/store/accounts.bun-test.ts ./src/background/store/sync-codec.bun-test.ts ./src/shared/model/model.bun-test.ts ./src/shared/contracts/foundation.bun-test.ts
+bun test --no-env-file ./tests/guards/architecture.test.ts
+bun run --no-env-file compile
+bun test --no-env-file --isolate --conditions=browser ./src/background/store/write-preparation.bun-test.ts -t 'actual browser artifact'
+prep_evidence_dir=$(mktemp -d /tmp/ytpt-write-preparation-acceptance.XXXXXX)
+bun --no-env-file build ./src/background/store/write-preparation.ts --target=browser --format=cjs --minify --outfile="$prep_evidence_dir/browser.cjs"
+git diff --check
+git diff --cached --check
+```
