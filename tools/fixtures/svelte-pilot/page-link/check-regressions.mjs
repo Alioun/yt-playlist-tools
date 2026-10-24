@@ -154,6 +154,9 @@ async function installed(path) {
     assert(evidence.state.disclosed.includes("5"))
     await page.getByRole("button", { name: "Count 0", exact: true }).click()
     await page.getByText("Branch 1", { exact: true }).waitFor()
+    evidence.updated = true
+    await page.screenshot({ path: resolve(path, "installed-updated.png") })
+    await writeFile(resolve(path, "installed.json"), JSON.stringify(evidence, null, 2))
     return evidence
   } finally {
     if (context) await context.close()
@@ -201,7 +204,14 @@ for (const mapping of ["object", "callback", "array"]) positives.push({
   name: `external-paths-${mapping}`, code: 'import { answer } from "fixture-existing"; globalThis.__regressionValue = answer;', value: 42,
   setup: async (path) => {
     const output = `{ globals: { "fixture-existing": "globalThis.__fixtureExisting" }, paths: ${mapping === "object" ? '{ "fixture-existing": "mapped-existing" }' : '(id) => id === "fixture-existing" ? "mapped-existing" : id'} }`
-    await configure(path, `build: { rollupOptions: { external: ["fixture-existing"], output: ${mapping === "array" ? `[${output}]` : output} } },`)
+    await configure(path, `build: { rollupOptions: { external: ["fixture-existing"], output: ${output} } },`)
+    if (mapping === "array") {
+      const target = resolve(path, "wxt.config.ts")
+      await writeFile(target, (await readFile(target, "utf8")).replace("hooks: link.hooks,", `hooks: { ...link.hooks, "vite:build:extendConfig": (entries, config) => {
+        if (entries.some(entry => /^(consumer|late)-/.test(entry.name))) config.build.rollupOptions.output = [{ ...config.build.rollupOptions.output, format: "iife", name: config.build.lib.name }];
+        link.hooks["vite:build:extendConfig"](entries, config);
+      } },`))
+    }
     await externalGlobal(path)
   }
 })
@@ -210,6 +220,14 @@ for (const relative of [undefined, true, false, "ifRelativeSource"]) positives.p
   setup: async (path) => {
     await writeFile(resolve(path, "src/site/consumer/external-helper.js"), "export const answer = 42;")
     await configure(path, `build: { rollupOptions: { external: (id) => id === path("./src/site/consumer/external-helper.js"), ${relative === undefined ? "" : `makeAbsoluteExternalsRelative: ${JSON.stringify(relative)},`} output: { globals: (id) => "globalThis.__fixtureExisting" } } },`)
+    await externalGlobal(path)
+  }
+})
+for (const relative of [true, false, "ifRelativeSource"]) positives.push({
+  name: `external-relative-${String(relative)}`, code: 'import { answer } from "./external-helper.js"; globalThis.__regressionValue = answer;', value: 42,
+  setup: async (path) => {
+    await writeFile(resolve(path, "src/site/consumer/external-helper.js"), "export const answer = 42;")
+    await configure(path, `build: { rollupOptions: { external: ["./external-helper.js"], makeAbsoluteExternalsRelative: ${JSON.stringify(relative)}, output: { globals: (id) => "globalThis.__fixtureExisting" } } },`)
     await externalGlobal(path)
   }
 })
@@ -255,7 +273,7 @@ await check("external-injected-output", async () => {
     link.hooks["vite:build:extendConfig"](entries, config);
     const guard = config.plugins?.find(plugin => plugin?.name === "page-link:consumer-www");
     if (guard) config.plugins.unshift({ name: "fixture-output-import", generateBundle(_, output) {
-      for (const artifact of Object.values(output)) if (artifact.type === "chunk") artifact.imports.push("fixture-unaccepted");
+      for (const artifact of Object.values(output)) if (artifact.type === "chunk") artifact.imports = [...artifact.imports, "fixture-unaccepted"];
     } });
   } },`))
   const result = await build(path)
