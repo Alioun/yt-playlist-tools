@@ -59,7 +59,7 @@
     "@wxt-dev/module-svelte": "2.0.5",
     "bits-ui": "2.19.5",
     "fake-indexeddb": "^6.2.5",
-    "happy-dom": "^21.0.3",
+    "happy-dom": "^21.0.4",
     "playwright": "1.64.1",
     "svelte": "5.57.2",
     "svelte-check": "4.7.7",
