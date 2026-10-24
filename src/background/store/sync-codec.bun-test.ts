@@ -240,6 +240,7 @@ describe("6. ordinary, newer and absent records", () => {
     for (const document of [
       { ...stamp, v: 2, data: { theme: false }, n: 0 },
       { ...stamp, v: 2, n: "future" },
+      { ...stamp, v: 2, deleted: true },
       { ...stamp, v: 2, deleted: false }
     ]) {
       expect(read([{ key: "s:settings", value: document }])).toEqual({ kind: "newer-version", version: 2, raw: document })
