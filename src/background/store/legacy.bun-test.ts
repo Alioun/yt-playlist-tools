@@ -90,6 +90,28 @@ describe("startup classification", () => {
     }
     expect(planLegacyStartup({ ...snapshot({ playlists: [] }), device: defaultDevice(context.deviceId) }, context).kind).toBe("upgrade")
   })
+  test.each([undefined, 1])("a different persisted device ID refuses conversion with schema %p", schema => {
+    const device = defaultDevice("persisted-device")
+    const input = { ...snapshot({ playlists: [playlist] }), schema, device }
+    const before = structuredClone(input)
+    const local: Record<string, unknown> = { ...input.legacy.values, device: structuredClone(device) }
+    const saved = structuredClone(local)
+    const plan = planLegacyStartup(input, { ...context, deviceId: "replacement-device" })
+    if (plan.kind === "upgrade") Object.assign(local, plan.write)
+    if (plan.kind === "upgrade" || plan.kind === "resume") for (const name of plan.cleanup.steps[0].keys) delete local[name]
+    expect(local).toEqual(saved)
+    expect(plan).toEqual({ kind: "unsupported-state", reason: "canonical-collision" })
+    expect(input).toEqual(before)
+  })
+  test("a matching persisted device ID is retained in the upgrade and settings stamp", () => {
+    const device = defaultDevice(context.deviceId)
+    const input = { ...snapshot({ playlists: [playlist] }), device }
+    const before = structuredClone(input)
+    const { write } = upgraded(input)
+    expect(write.device).toEqual({ ...device, upgradeNote: write.device.upgradeNote })
+    expect(write["doc:settings"].by).toBe(device.id)
+    expect(input).toEqual(before)
+  })
   test.each([
     { deviceId: "" }, { deviceId: "   " }, { settingsGen: "" }, { settingsGen: 1 }, { at: -1 }, { at: 1.5 }, { at: NaN }, { at: Infinity },
     { at: Number.MAX_SAFE_INTEGER + 1 }, { shortcutId: "short" }, { shortcutId: "longer1" }, { shortcutId: "bad!id" },
@@ -309,6 +331,94 @@ describe("durable restart planning", () => {
     const write = upgraded(snapshot({ playlists: [playlist] })).write
     expect(planLegacyStartup({ ...pending(write), unclaimed: { ...write.unclaimed, from: "1.5.0" } }, context))
       .toEqual({ kind: "unsupported-state", reason: "canonical-collision" })
+  })
+  test.each([
+    { autoAdd: [] }, { autoAdd: [playlist, second] }, { shortcutPlaylist: null }
+  ])("contradictory captured choices %p cannot delete their legacy originals", patch => {
+    for (const schema of [undefined, 1] as const) {
+      const original = snapshot({ playlists: [playlist], addToPlaylistID: second }, true)
+      const write = upgraded(original).write
+      const input = { ...pending(write, schema), legacy: original.legacy, unclaimed: { ...write.unclaimed, ...patch } }
+      const before = structuredClone(input)
+      const local: Record<string, unknown> = { ...original.legacy.values, ...write, unclaimed: input.unclaimed }
+      const saved = structuredClone(local)
+      const plan = planLegacyStartup(input, context)
+      if (plan.kind === "upgrade") Object.assign(local, plan.write)
+      if (plan.kind === "upgrade" || plan.kind === "resume") for (const name of plan.cleanup.steps[0].keys) delete local[name]
+      expect(local).toEqual(saved)
+      expect(plan).toEqual({ kind: "unsupported-state", reason: "canonical-collision" })
+      expect(input).toEqual(before)
+      expect(planLegacyStartup({ ...input, legacy: snapshot().legacy }, context)).toEqual(plan)
+    }
+  })
+  test.each([{ autoAdd: [playlist] }, { shortcutPlaylist: playlist }])("unexpected choices %p contradict an empty captured batch", patch => {
+    const write = upgraded(snapshot({ playlists: [] })).write
+    const input = { ...pending(write), unclaimed: { ...write.unclaimed, ...patch } }
+    expect(planLegacyStartup(input, context)).toEqual({ kind: "unsupported-state", reason: "canonical-collision" })
+  })
+  test("duplicated IDs cannot substitute for the captured number of kept playlists", () => {
+    const write = upgraded(snapshot({ playlists: [playlist, second] })).write
+    const input = { ...pending(write), unclaimed: { ...write.unclaimed, autoAdd: [playlist, playlist] } }
+    expect(planLegacyStartup(input, context)).toEqual({ kind: "unsupported-state", reason: "canonical-collision" })
+  })
+  test.each([
+    { autoAdd: undefined }, { autoAdd: null }, { autoAdd: "invalid" }, { autoAdd: ["bad key"] },
+    { shortcutPlaylist: undefined }, { shortcutPlaylist: false }, { shortcutPlaylist: "bad key" }
+  ])("malformed unclaimed choices %p refuse cleanup", patch => {
+    const write = upgraded(snapshot({ playlists: [playlist], addToPlaylistID: second })).write
+    const input = { ...pending(write), unclaimed: { ...write.unclaimed, ...patch } }
+    expect(planLegacyStartup(input, context)).toEqual({ kind: "invalid", field: "unclaimed" })
+  })
+  test.each([undefined, null, -1, 0.5, "1", Number.MAX_SAFE_INTEGER + 1])("malformed captured kept count %p refuses cleanup", kept => {
+    const write = upgraded(snapshot({ playlists: [playlist] })).write
+    const note = write.device.upgradeNote
+    if (note === null) throw new Error("Expected pending note")
+    const device = { ...write.device, upgradeNote: { ...note, details: { ...note.details, autoAdd: { ...note.details.autoAdd, kept } } } }
+    expect(planLegacyStartup({ ...pending(write), device }, context)).toEqual({ kind: "invalid", field: "device" })
+  })
+  test.each([undefined, null, 0, "true"])("malformed captured shortcut flag %p refuses cleanup", playlistFlag => {
+    const write = upgraded(snapshot({ playlists: [playlist], addToPlaylistID: second })).write
+    const note = write.device.upgradeNote
+    if (note === null) throw new Error("Expected pending note")
+    const device = { ...write.device, upgradeNote: { ...note, details: { ...note.details, shortcut: { ...note.details.shortcut, playlist: playlistFlag } } } }
+    expect(planLegacyStartup({ ...pending(write), device }, context)).toEqual({ kind: "invalid", field: "device" })
+  })
+  test.each([[], [playlist], [playlist, second]].map(autoAdd => ({ autoAdd })))("consistent captured choices %p resume after settings and context change", ({ autoAdd }) => {
+    for (const target of ["", second]) {
+      const original = snapshot({ playlists: autoAdd, addToPlaylistID: target, watchLaterShortcut: "Alt+W" }, true)
+      const write = upgraded(original).write
+      const note = write.device.upgradeNote
+      if (note === null) throw new Error("Expected pending note")
+      const input = {
+        ...pending(write), legacy: original.legacy,
+        settingsDocument: { ...write["doc:settings"], gen: "later-edit", at: 0, by: "another-device", futureEnvelope: true,
+          data: { ...write["doc:settings"].data, autoAdd: { ...write["doc:settings"].data.autoAdd, on: false, pct: 19, feedback: true },
+            shortcuts: { ...write["doc:settings"].data.shortcuts, on: false, list: [] }, futureSettings: [1] } },
+        device: { ...write.device, futureDevice: [1], upgradeNote: { ...note, opened: true, futureNote: true,
+          details: { ...note.details, futureDetails: true, pct: { ...note.details.pct, futureEvidence: [1] } } } },
+        unclaimed: { ...write.unclaimed, futureUnclaimed: true }
+      }
+      const before = structuredClone(input)
+      function freeze(value: unknown): void {
+        if (value !== null && typeof value === "object") {
+          Object.freeze(value)
+          for (const child of Object.values(value)) freeze(child)
+        }
+      }
+      const supplied = { ...context, deviceId: "restart-device", at: 5678, settingsGen: "new-gen", shortcutId: "other1" }
+      freeze(input)
+      freeze(supplied)
+      const plan = planLegacyStartup(input, supplied)
+      expect(plan.kind).toBe("resume")
+      expect("write" in plan).toBe(false)
+      const local: Record<string, unknown> = structuredClone({ ...original.legacy.values, ...write, device: input.device, "doc:settings": input.settingsDocument, unclaimed: input.unclaimed })
+      if (plan.kind === "resume") for (const name of plan.cleanup.steps[0].keys) delete local[name]
+      expect(local.unclaimed).toEqual(input.unclaimed)
+      expect(local.device).toEqual(input.device)
+      expect(local["doc:settings"]).toEqual(input.settingsDocument)
+      expect(LEGACY_DELETE_KEYS.some(name => Object.hasOwn(local, name))).toBe(false)
+      expect(input).toEqual(before)
+    }
   })
   test("pending recovery preserves a valid subsequent shared-settings edit with its own stamp", () => {
     const write = upgraded(snapshot({ playlists: [playlist] })).write
