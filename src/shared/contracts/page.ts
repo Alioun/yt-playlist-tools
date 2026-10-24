@@ -35,3 +35,13 @@ export function isPageJobResultFor<J extends Job>(job: J, value: unknown): value
       value.ok === true && isRouteId(value.route) && isPageJobDataFor(job, value.data))
   } catch { return false }
 }
+
+export type {
+  PageNavigationType, PageHelloSnapshot, PageHelloAnswer, PageRequestPayloadByKind,
+  PageRequestMessage, PageRetireMessage, PageCoreMessage, PageRunAnswer, PageStreamEvent,
+  PageProbeAnswer, PageSignalEvent, PageAnswerByKind, PageGatewayMessage
+} from "./page-messages"
+export {
+  isPageRequestMessage, isPageHelloAnswer, isPageRunAnswerFor, isPageStreamEventFor,
+  isPageProbeAnswerFor, isPageSignalEvent, isPageRetireMessage
+} from "./page-messages"
