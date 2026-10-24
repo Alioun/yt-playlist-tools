@@ -1,7 +1,7 @@
 import { isJsonValue } from "../../shared/contracts/json"
 import { isAccountKey, isPlaylistId } from "../../shared/model"
 import {
-  createLocalFilterWriter, type LocalFilterChange, type LocalFilterWriteResult
+  createLocalFilterWriter, type LocalFilterChange, type LocalFilterWriteResult, type SyncFlushResult
 } from "../store/local-filter-writer"
 
 type NativeBrowser = typeof import("wxt/browser").browser
@@ -28,17 +28,19 @@ function parseChange(raw: unknown): LocalFilterChange | undefined {
 
 export function createBrowserLocalFilterWriter(nativeBrowser: NativeBrowser): {
   changeFromSettings(raw: unknown, sender: NativeSender): Promise<LocalFilterWriteResult>
+  flushSync(): Promise<SyncFlushResult>
 } {
   const writer = createLocalFilterWriter({
     local: {
       get: keys => nativeBrowser.storage.local.get(keys === null ? null : [...keys]),
       set: items => nativeBrowser.storage.local.set(items)
     },
-    sync: { get: () => nativeBrowser.storage.sync.get(null) },
+    sync: { get: () => nativeBrowser.storage.sync.get(null), set: items => nativeBrowser.storage.sync.set(items) },
     now: () => Date.now(),
     generation: () => crypto.randomUUID()
   })
   return {
+    flushSync: () => writer.flushSync(),
     async changeFromSettings(raw, sender) {
       if (sender.id !== nativeBrowser.runtime.id || sender.frameId !== 0 ||
         sender.url !== nativeBrowser.runtime.getURL("/options.html") || !sender.tab) {

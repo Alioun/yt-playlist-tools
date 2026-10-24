@@ -14,9 +14,43 @@ const nativeSyncRemove = syncArea.remove.bind(syncArea)
 const nativeSyncClear = syncArea.clear.bind(syncArea)
 const nativeLocalClear = chrome.storage.local.clear.bind(chrome.storage.local)
 const nativeLocalRemove = chrome.storage.local.remove.bind(chrome.storage.local)
-for (const method of ["set", "remove", "clear"] as const) {
+let releasePaddingOnAckFailure = false
+let fillSyncBeforeSet = false
+let flushing = 0
+let holdNextSet = false
+let releaseSet: (() => void) | undefined
+let heldSet = false
+let changeAuthority: "off" | "metadata" | undefined
+Object.defineProperty(syncArea, "set", { value: new Proxy(syncArea.set, {
+  async apply(target, receiver, args) {
+    if (flushing === 0) throw Error("Writer attempted sync set outside manual flush")
+    syncWrites.push(args[0])
+    if (fillSyncBeforeSet) {
+      fillSyncBeforeSet = false
+      await nativeSyncSet(Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`fixture-sync-occupancy:${i}`, "x".repeat(7800)])))
+    }
+    await Reflect.apply(target, receiver, args)
+    if (changeAuthority === "off") {
+      changeAuthority = undefined
+      const records = await nativeGet(["device", "sync"])
+      const device = records.device, history = records.sync
+      if (!device || typeof device !== "object" || Array.isArray(device) || !history || typeof history !== "object" || Array.isArray(history)) throw Error("Missing synthetic authority")
+      await nativeSet({ device: { ...device, syncOn: false }, sync: { ...history, status: "off" } })
+    } else if (changeAuthority === "metadata") {
+      changeAuthority = undefined
+      await nativeSyncSet({ "s:meta": { v: 1, id: "changed-history", created: 0 } })
+    }
+    if (holdNextSet) {
+      holdNextSet = false
+      heldSet = true
+      await new Promise<void>(done => { releaseSet = done })
+      heldSet = false
+    }
+  }
+}) })
+for (const method of ["remove", "clear"] as const) {
   Object.defineProperty(syncArea, method, { value: new Proxy(syncArea[method], {
-    apply() { syncWrites.push(method); throw Error("Writer attempted forbidden sync write") }
+    apply() { syncWrites.push(method); throw Error("Writer attempted forbidden sync removal") }
   }) })
 }
 syncArea.get = new Proxy(syncArea.get, {
@@ -28,10 +62,26 @@ chrome.storage.local.get = new Proxy(chrome.storage.local.get, {
   apply(target, receiver, args) { reads.push(args[0]); return Reflect.apply(target, receiver, args) }
 })
 chrome.storage.local.set = new Proxy(chrome.storage.local.set, {
-  apply(target, receiver, args) { sets.push(args[0]); return Reflect.apply(target, receiver, args) }
+  async apply(target, receiver, args) {
+    sets.push(args[0])
+    try { return await Reflect.apply(target, receiver, args) } catch (error) {
+      if (releasePaddingOnAckFailure && flushing > 0 && Object.keys(args[0]).join() === "sync") {
+        releasePaddingOnAckFailure = false
+        await nativeLocalRemove("fixture-quota-padding")
+      }
+      throw error
+    }
+  }
 })
 Object.defineProperty(chrome.storage, "sync", { get() { syncAccesses++; return syncArea } })
-chrome.storage.onChanged.addListener((changes, area) => { events.push({ area, changes }) })
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (Object.hasOwn(changes, "fixture-quota-padding")) {
+    const padding = changes["fixture-quota-padding"]
+    changes = { ...changes, "fixture-quota-padding": Object.fromEntries(Object.entries(padding ?? {}).map(([name, value]) =>
+      [name, typeof value === "string" ? { syntheticPaddingLength: value.length } : value])) }
+  }
+  events.push({ area, changes })
+})
 const writer = createBrowserLocalFilterWriter(chrome)
 chrome.runtime.onMessage.addListener((raw: unknown, sender, respond) => {
   senders.push({ id: sender.id, frameId: sender.frameId, url: sender.url, tab: sender.tab && {
@@ -43,6 +93,24 @@ chrome.runtime.onMessage.addListener((raw: unknown, sender, respond) => {
 Object.assign(globalThis, {
   localFilterFixture: {
     reads, sets, events, senders, syncReads, syncWrites,
+    async flush() {
+      flushing++
+      try {
+        const result = await writer.flushSync()
+        if ("error" in result) {
+          const error = result.error
+          return { ...result, error: error instanceof Error ? { name: error.name, message: error.message, fields: Object.getOwnPropertyNames(error) } : String(error) }
+        }
+        return result
+      } finally { flushing-- }
+    },
+    fillSyncBeforeNextSet() { fillSyncBeforeSet = true },
+    releaseQuotaPaddingAfterAckFailure() { releasePaddingOnAckFailure = true },
+    holdNextSyncSet() { holdNextSet = true },
+    isSetHeld: () => heldSet,
+    releaseSyncSet() { releaseSet?.(); releaseSet = undefined },
+    switchOffAfterNextSet() { changeAuthority = "off" },
+    changeMetadataAfterNextSet() { changeAuthority = "metadata" },
     syncRead: nativeSyncGet,
     syncSeed: nativeSyncSet,
     async seedSyncDocuments(documents: Record<string, unknown>) {

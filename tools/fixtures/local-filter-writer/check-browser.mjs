@@ -1,3 +1,4 @@
+import { writeFileSync } from "node:fs"
 import assert from "node:assert/strict"
 import { createHash } from "node:crypto"
 import { copyFile, mkdir, mkdtemp, readFile, realpath, writeFile } from "node:fs/promises"
@@ -54,6 +55,9 @@ const stable = value => JSON.stringify(value, (_, item) => item && typeof item =
   ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b))) : item)
 const equal = (actual, expected, message) => assert.equal(stable(actual), stable(expected), message)
 const result = { extensionId, extensionPath, profile, executable, artifactHashes, rounds: [], limits: [] }
+process.on("uncaughtExceptionMonitor", error => {
+  writeFileSync(join(evidence, "failed-native-result.json"), JSON.stringify({ ...result, failure: { name: error.name, message: error.message } }, null, 2) + "\n")
+})
 async function exactWorker(context) {
   const url = `chrome-extension://${extensionId}/background.js`
   return context.serviceWorkers().find(worker => worker.url() === url)
@@ -454,6 +458,188 @@ try {
   const retry = await joinedInert(browser, ok)
   equal(retry.observed.syncReads, [null], "restarted achieved intent rechecks full remote")
   result.rounds.push({ stage: "native-joined-full-browser-restart", native: browser.native, ...retry })
+} finally { await browser.context.close() }
+
+const flushKey = key, flushBase = key.replace("doc:", "s:"), tombKey = "doc:filter:BBBBBBBBBBBBBBBB:PL_T"
+const flushG0 = { v: 1, gen: "g0", at: 1, by: "old", ...own, data: { mode: "deny", on: true, channels: [], future: { keep: true } } }
+const flushG1 = { ...flushG0, gen: "g1", at: 10, data: { ...flushG0.data, on: false } }
+const flushSettings = { v: 1, gen: "settings-pending", at: 1, by: "old", data: { future: "x".repeat(9000) } }
+const flushTomb = { v: 1, gen: "tomb", at: 0, by: "old", deleted: true }
+const flushHistory = { joined: "H", pushed: { [key]: "g0", [setupKey]: "setup" }, status: "full", editedSinceOff: true,
+  future: { keep: [1, null, own] }, v: 99, ...own }
+const flushLocal = { schema: 1, device: { ...initial.device, syncOn: true }, sync: flushHistory,
+  [setupKey]: initial[setupKey], [key]: flushG1, "doc:settings": flushSettings, [tombKey]: flushTomb,
+  [keptKey]: { ...flushG0, gen: "protected-local" } }
+const flushRemote = { "s:meta": { v: 1, id: "H", created: 0, extra: own }, [flushBase]: flushG0,
+  "s:settings@old.0": "old chunk", "unknown:occupied": "x", [keptBase]: { v: 2, gen: "protected-newer", at: 20, by: "other", data: { future: true } } }
+const prefix = '{"at":1,"by":"old","data":{"future":"'
+const flushItems = { [setupKey.replace("doc:", "s:")]: initial[setupKey], [flushBase]: flushG1,
+  "s:settings": { v: 1, gen: "settings-pending", at: 1, by: "old", n: 2 },
+  "s:settings@settings-pending.0": prefix + "x".repeat(8109),
+  "s:settings@settings-pending.1": 'x'.repeat(891) + '"},"gen":"settings-pending","v":1}', "s:filter:BBBBBBBBBBBBBBBB:PL_T": flushTomb }
+const flushAck = { ...flushHistory, pushed: { ...flushHistory.pushed, [key]: "g1", "doc:settings": "settings-pending", [tombKey]: "tomb" } }
+const flushRecord = (name, document, documentKey) => ({ key: documentKey, name, gen: document.gen, document })
+const capturedFilter = flushRecord(key, flushG1, { kind: "filter", acct: request.acct, playlist: request.playlist })
+const capturedBatch = [flushRecord(setupKey, initial[setupKey], { kind: "setup", acct: request.acct }), capturedFilter,
+  flushRecord("doc:settings", flushSettings, { kind: "settings" }), flushRecord(tombKey, flushTomb, { kind: "filter", acct: "BBBBBBBBBBBBBBBB", playlist: "PL_T" })]
+function orderedOutcome(outcome) {
+  for (const name of ["sent", "repaired", "repairs"]) if (Array.isArray(outcome[name])) outcome[name].sort((a, b) => a.name.localeCompare(b.name))
+  if (outcome.source) orderedOutcome(outcome.source)
+  return outcome
+}
+async function flush(browser) { return orderedOutcome(JSON.parse(await browser.worker.evaluate(async () => JSON.stringify(await globalThis.localFilterFixture.flush())))) }
+async function meaningfulRead(browser) {
+  return JSON.parse(await browser.worker.evaluate(async () => {
+    const records = await globalThis.localFilterFixture.read(null)
+    delete records["fixture-quota-padding"]
+    return JSON.stringify(records)
+  }))
+}
+async function recordFlush(browser, stage, outcome) {
+  await settle(browser)
+  const observed = await effects(browser), fullReadback = await meaningfulRead(browser), fullSyncSnapshot = await syncRead(browser)
+  const round = { stage, outcome, observed, fullReadback, fullSyncSnapshot }
+  result.rounds.push(round)
+  await writeFile(join(evidence, "native-progress.json"), JSON.stringify(result, null, 2) + "\n")
+  console.log(JSON.stringify({ stage, kind: outcome.kind }))
+  return round
+}
+async function padLocal(browser) {
+  const quota = await browser.worker.evaluate(async () => {
+    const f = globalThis.localFilterFixture, limit = chrome.storage.local.QUOTA_BYTES
+    const before = await chrome.storage.local.getBytesInUse(null), paddingKey = "fixture-quota-padding"
+    await f.seed({ [paddingKey]: "x".repeat(limit - before - paddingKey.length - 2 - 8) })
+    return { limit, before, filled: await chrome.storage.local.getBytesInUse(null), paddingKey }
+  })
+  assert.equal(quota.filled, quota.limit - 8)
+  await reset(browser)
+  return quota
+}
+browser = await open()
+let outboundDurable, outboundRemoteDurable
+try {
+  await seedJoined(browser, flushLocal, flushRemote)
+  const pushed = await recordFlush(browser, "outbound-six-item-whole-push", await flush(browser))
+  equal(pushed.outcome, { kind: "pushed", sent: [...capturedBatch].sort((a, b) => a.name.localeCompare(b.name)), repaired: [] }, "native complete captured generation result")
+  equal(pushed.observed.syncWrites, [flushItems], "native literal complete six-item set")
+  equal(pushed.observed.sets, [{ sync: flushAck }], "native exact full raw acknowledgement")
+  equal(pushed.fullReadback, { ...flushLocal, sync: flushAck }, "native flush does not edit local documents")
+  equal(pushed.fullSyncSnapshot, { ...flushRemote, ...flushItems }, "native preserves unknown protected and old occupancy")
+  equal(pushed.observed.syncReads, [null, null], "native complete preflight and postflight")
+  const syncChanges = Object.fromEntries(Object.entries(flushItems).map(([name, value]) => [name, { ...(Object.hasOwn(flushRemote, name) ? { oldValue: flushRemote[name] } : {}), newValue: value }]))
+  equal(pushed.observed.events.filter(event => event.area === "sync"), [{ area: "sync", changes: syncChanges }], "one exact sync native event")
+  equal(pushed.observed.events.filter(event => event.area === "local"), [{ area: "local", changes: { sync: { oldValue: flushHistory, newValue: flushAck } } }], "one exact local acknowledgement event")
+  await reset(browser)
+  const repeat = await recordFlush(browser, "outbound-identical-repeat", await flush(browser))
+  equal(repeat.outcome, { kind: "idle" }, "native identical repeat idle")
+  equal(repeat.observed.syncWrites, [], "native duplicate sends nothing")
+  equal(repeat.observed.sets, [], "native duplicate acknowledges nothing")
+  await browser.worker.evaluate(base => globalThis.localFilterFixture.syncRemove(base), flushBase)
+  await reset(browser)
+  const restored = await recordFlush(browser, "outbound-acknowledged-disappearance-restoration", await flush(browser))
+  equal(restored.outcome, { kind: "pushed", sent: [capturedFilter], repaired: [] }, "native restoration preserves generation")
+  equal(restored.observed.syncWrites, [{ [flushBase]: flushG1 }], "native restoration complete one item")
+  equal(restored.observed.sets, [], "already pushed restoration needs no acknowledgement")
+  const small = { v: 1, gen: "small", at: 30, by: "device", data: {} }
+  await seed(browser, { "doc:settings": small })
+  const replaced = await recordFlush(browser, "outbound-chunked-to-single-retained-occupancy", await flush(browser))
+  equal(replaced.observed.syncWrites, [{ "s:settings": small }], "native replacement only current small envelope")
+  equal(replaced.fullSyncSnapshot, { ...restored.fullSyncSnapshot, "s:settings": small }, "native replacement retains every old chunk")
+  await seedJoined(browser, { ...flushLocal, sync: flushHistory }, { ...flushRemote, ...flushItems })
+  const repair = await recordFlush(browser, "outbound-readback-only-repair", await flush(browser))
+  equal(repair.outcome, { kind: "reconciled", repaired: [capturedFilter, capturedBatch[2], capturedBatch[3]].sort((a, b) => a.name.localeCompare(b.name)) }, "native repair identifies exact stale generations")
+  equal(repair.observed.syncWrites, [], "native repair no resend")
+  equal(repair.observed.sets, [{ sync: flushAck }], "native readback only full history repair")
+  await seedJoined(browser, flushLocal, { ...flushRemote, "s:settings": flushItems["s:settings"], "s:settings@settings-pending.0": flushItems["s:settings@settings-pending.0"] })
+  const incomplete = await recordFlush(browser, "outbound-incomplete-known-refusal", await flush(browser))
+  equal(incomplete.outcome, { kind: "unavailable" }, "native incomplete delivery unavailable")
+  equal(incomplete.observed.syncWrites, [], "native incomplete no partial push")
+  equal(incomplete.observed.sets, [], "native incomplete no acknowledgement")
+  for (const authority of ["off", "metadata"]) {
+    await seedJoined(browser, flushLocal, flushRemote)
+    await browser.worker.evaluate(authority => {
+      const f = globalThis.localFilterFixture
+      if (authority === "off") f.switchOffAfterNextSet()
+      else f.changeMetadataAfterNextSet()
+    }, authority)
+    const changed = await recordFlush(browser, `outbound-post-set-authority-${authority}`, await flush(browser))
+    equal(changed.outcome, { kind: "unconfirmed", sent: [...capturedBatch].sort((a, b) => a.name.localeCompare(b.name)), cause: { kind: authority === "off" ? "authority" : "readback" } }, "native authority loss retains resolved set outcome")
+    equal(changed.observed.syncWrites, [flushItems], "native stale authority had actual resolved set")
+    equal(changed.observed.sets, [], "native stale authority never acknowledges")
+    equal(changed.observed.syncReads, authority === "off" ? [null] : [null, null], "native off declines further sync access")
+  }
+  await seedJoined(browser, flushLocal, flushRemote)
+  await browser.worker.evaluate(() => globalThis.localFilterFixture.fillSyncBeforeNextSet())
+  const syncRejected = await recordFlush(browser, "outbound-genuine-native-sync-set-rejection", await flush(browser))
+  equal(syncRejected.outcome.kind, "sync-set-failed", "native occupancy race rejects actual planned sync call")
+  equal(syncRejected.outcome.sent, [...capturedBatch].sort((a, b) => a.name.localeCompare(b.name)), "native rejected call retains exact captured generations")
+  equal(syncRejected.outcome.error.name, "Error", "native rejection preserves unclassified error")
+  equal(syncRejected.observed.syncWrites, [flushItems], "native rejected actual complete set was attempted once")
+  equal(syncRejected.observed.sets, [], "native sync rejection acknowledges nothing")
+  equal(syncRejected.fullReadback, flushLocal, "native sync rejection preserves complete local state")
+  equal(syncRejected.fullSyncSnapshot, { ...flushRemote, ...Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`fixture-sync-occupancy:${i}`, "x".repeat(7800)])) }, "observed native rejection left only injected occupancy")
+  await settle(browser)
+  equal((await effects(browser)).syncWrites, [flushItems], "native rejected call schedules no automatic retry")
+  await seedJoined(browser, flushLocal, flushRemote)
+  const quota = await padLocal(browser)
+  const failed = await recordFlush(browser, "outbound-genuine-local-quota-acknowledgement-failure", await flush(browser))
+  equal(failed.outcome.kind, "acknowledgement-failed", "native quota failure is acknowledgement failure")
+  equal(failed.outcome.source, { kind: "set", sent: [...capturedBatch].sort((a, b) => a.name.localeCompare(b.name)), repairs: [] }, "native quota preserves resolved sync set")
+  assert.equal(failed.outcome.error.name, "Error")
+  equal(failed.observed.syncWrites, [flushItems], "native quota remote set resolved once")
+  equal(failed.observed.sets, [{ sync: flushAck }], "native quota attempted exact acknowledgement")
+  equal(failed.fullReadback, flushLocal, "native quota leaves full old history and local generations")
+  equal(failed.fullSyncSnapshot, { ...flushRemote, ...flushItems }, "native quota retains all pushed remote records")
+  failed.quota = quota
+  await settle(browser)
+  equal((await effects(browser)).syncWrites, [flushItems], "native quota never automatically resends")
+  await browser.worker.evaluate(() => globalThis.localFilterFixture.localRemove("fixture-quota-padding"))
+  await reset(browser)
+  const recovered = await recordFlush(browser, "outbound-quota-repair-without-resend", await flush(browser))
+  equal(recovered.outcome.kind, "reconciled", "native quota recovery is readback repair")
+  equal(recovered.observed.syncWrites, [], "native quota recovery never resends identical documents")
+  equal(recovered.fullReadback, { ...flushLocal, sync: flushAck }, "native quota recovery repairs exact full raw history")
+  await seedJoined(browser, flushLocal, flushRemote)
+  const queuedQuota = await padLocal(browser)
+  await browser.worker.evaluate(() => {
+    const f = globalThis.localFilterFixture
+    f.releaseQuotaPaddingAfterAckFailure()
+    f.holdNextSyncSet()
+    globalThis.pendingFixtureFlush = f.flush()
+  })
+  await browser.page.waitForTimeout(100)
+  assert.equal(await browser.worker.evaluate(() => globalThis.localFilterFixture.isSetHeld()), true)
+  const queuedEdit = send(browser, { ...request, desired: { mode: "deny", on: true } })
+  await browser.page.waitForTimeout(100)
+  equal((await effects(browser)).reads, [null], "actual native queued edit waits behind unresolved flush")
+  await browser.worker.evaluate(() => globalThis.localFilterFixture.releaseSyncSet())
+  const queuedFailure = orderedOutcome(JSON.parse(await browser.worker.evaluate(async () => JSON.stringify(await globalThis.pendingFixtureFlush))))
+  equal(queuedFailure.kind, "acknowledgement-failed", "actual queued edit follows genuine acknowledgement quota failure")
+  equal(await queuedEdit, ok, "actual settings sender repairs represented debt with new edit")
+  const combined = await recordFlush(browser, "outbound-genuine-ack-failure-queued-edit-combined-repair", queuedFailure)
+  const newDoc = combined.fullReadback[key]
+  assert.notEqual(newDoc.gen, "g1")
+  equal(newDoc.data, { ...flushG1.data, on: true }, "queued actual changed intent saved")
+  equal(combined.fullReadback.sync, flushAck, "queued edit records old captured g1 never current generation")
+  equal(combined.observed.sets, [{ sync: flushAck }, { [key]: newDoc, sync: flushAck }], "actual queued replacement repairs in one combined local set")
+  equal(combined.observed.syncWrites, [flushItems], "actual queued edit did not push its own new generation")
+  combined.quota = queuedQuota
+  outboundDurable = combined.fullReadback
+  outboundRemoteDurable = combined.fullSyncSnapshot
+} finally { await browser.context.close() }
+browser = await open()
+try {
+  equal(await read(browser), outboundDurable, "native clean full restart retains queued repair and pending new gen")
+  equal(await syncRead(browser), outboundRemoteDurable, "native clean full restart retains exact remote batch")
+  const restart = await recordFlush(browser, "outbound-clean-full-browser-restart-pushes-pending-generation", await flush(browser))
+  equal(restart.outcome.kind, "pushed", "restarted owner classifies pending new generation")
+  equal(restart.observed.syncWrites, [{ [key.replace("doc:", "s:")]: outboundDurable[key] }], "restart sends only unrepresented new generation")
+  equal(restart.fullReadback.sync, { ...flushAck, pushed: { ...flushAck.pushed, [key]: outboundDurable[key].gen } }, "restart acknowledges exact pending generation")
+  await reset(browser)
+  const repeated = await recordFlush(browser, "outbound-final-identical-repeat", await flush(browser))
+  equal(repeated.outcome, { kind: "idle" }, "restarted repeat converges")
+  equal(repeated.observed.syncWrites, [], "restarted repeat no resend")
+  equal(repeated.observed.sets, [], "restarted repeat no local write")
 } finally { await browser.context.close() }
 
 result.limits.push("Clean restart proves resolved native persistence and desired-state retry convergence. It does not prove power-loss atomicity, uncertain in-flight set behavior, Firefox, or production integration.")

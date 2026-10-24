@@ -1,8 +1,8 @@
 import type { AccountKey, PlaylistId } from "../../shared/model"
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
-import type { JsonObject } from "../../shared/contracts/json"
+import type { JsonObject, JsonValue } from "../../shared/contracts/json"
 import type { FilterSettingInput } from "./channel-filter-edit"
-import type { createLocalFilterWriter, LocalFilterChange, LocalFilterWriteResult, LocalWriteStorage, SyncReadStorage } from "./local-filter-writer"
+import type { createLocalFilterWriter, LocalFilterChange, LocalFilterWriteResult, LocalWriteStorage, SyncStorage, SyncFlushResult } from "./local-filter-writer"
 import type { createBrowserLocalFilterWriter } from "../adapters/local-filter-writer"
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
@@ -25,21 +25,22 @@ type ExpectedStorage = {
 }
 type ExpectedFactory = (deps: {
   readonly local: LocalWriteStorage
-  readonly sync: SyncReadStorage
+  readonly sync: SyncStorage
   readonly now: () => number
   readonly generation: () => string
-}) => { change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult> }
+}) => { change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>; flushSync(): Promise<SyncFlushResult> }
 type NativeBrowser = Parameters<typeof createBrowserLocalFilterWriter>[0]
 type NativeSender = Parameters<Parameters<NativeBrowser["runtime"]["onMessage"]["addListener"]>[0]>[1]
 type ExpectedAdapter = (nativeBrowser: NativeBrowser) => {
   changeFromSettings(raw: unknown, sender: NativeSender): Promise<LocalFilterWriteResult>
+  flushSync(): Promise<SyncFlushResult>
 }
 
 export type LocalWriterProofs = [
   Check<Equal<LocalFilterChange, ExpectedChange>>,
   Check<Equal<LocalFilterWriteResult, ExpectedResult>>,
   Check<Equal<LocalWriteStorage, ExpectedStorage>>,
-  Check<Equal<SyncReadStorage, { get(): Promise<Readonly<Record<string, unknown>>> }>>,
+  Check<Equal<SyncStorage, { get(): Promise<Readonly<Record<string, unknown>>>; set(items: Readonly<Record<string, JsonValue>>): Promise<void> }>>,
   Check<Equal<typeof createLocalFilterWriter, ExpectedFactory>>,
   Check<Equal<typeof createBrowserLocalFilterWriter, ExpectedAdapter>>,
   Check<Equal<keyof typeof import("./local-filter-writer"), "createLocalFilterWriter">>,
