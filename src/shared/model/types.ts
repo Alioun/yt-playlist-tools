@@ -101,6 +101,17 @@ export type UpgradeDetails = {
   }
   credentialsDeleted: boolean
 }
+export type ClaimShortcutOutcome =
+  | { kind: "not-carried" | "not-owned" }
+  | { kind: "filled" | "already-set"; shortcut: string }
+  | { kind: "skipped"; reason: "missing-provenance" | "deleted-original" | "target-filled" }
+export type ClaimNoticeDetails = {
+  autoAddAdded: number
+  filtersAdded: number
+  shortcut: ClaimShortcutOutcome
+}
+export type ClaimNotice = { acct: string; dropped: number; claim?: ClaimNoticeDetails }
+
 export type Device = {
   id: string
   consent: { v: number; at: number } | null
@@ -112,7 +123,7 @@ export type Device = {
     seen: boolean
     reopened: boolean
   } | null
-  claimNotice: { acct: string; dropped: number } | null
+  claimNotice: ClaimNotice | null
   lastAccount: string | null
   newPlaylistVisibility: "PRIVATE" | "UNLISTED" | "PUBLIC" | null
   pickerSortAZ: boolean

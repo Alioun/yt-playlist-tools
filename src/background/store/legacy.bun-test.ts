@@ -779,3 +779,22 @@ describe("original shortcut migration association", () => {
     })
   }
 })
+
+describe("consumed unclaimed startup", () => {
+  test("null is canonical presence and cannot retrigger migration", () => {
+    const input = { ...snapshot(), unclaimed: null }
+    expect(planLegacyStartup(input, context)).toEqual({ kind: "current" })
+    input.legacy = snapshot({ playlists: [playlist] }).legacy
+    expect(planLegacyStartup(input, context)).toEqual({ kind: "unsupported-state", reason: "canonical-collision" })
+  })
+  test("null cannot excuse a torn pending migration or erase an exact saved notice", () => {
+    const write = upgraded(snapshot({ playlists: [playlist] })).write
+    expect(planLegacyStartup({ ...pending(write), unclaimed: null }, context)).toEqual({ kind: "invalid", field: "unclaimed" })
+    const device = { ...defaultDevice("fixture"), claimNotice: { acct: "synthetic_acct01", dropped: 2,
+      claim: { autoAddAdded: 0, filtersAdded: 0, shortcut: { kind: "skipped" as const, reason: "deleted-original" as const } } } }
+    const input = { ...snapshot(), schema: 1, device, unclaimed: null }
+    const before = JSON.stringify(input)
+    expect(planLegacyStartup(input, context)).toEqual({ kind: "current" })
+    expect(JSON.stringify(input)).toBe(before)
+  })
+})

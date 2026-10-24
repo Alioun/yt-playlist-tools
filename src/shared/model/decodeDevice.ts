@@ -1,8 +1,20 @@
 import { boolean, checked, DecodeError, isRecord, natural, nonempty, nullable, object, oneOf, optional, positive, text } from "./codec"
 import { defaultDevice } from "./defaults"
 import { decodeKey } from "./keys"
-import type { Device, UpgradeDetails } from "./types"
-import { isAccountKey, isPercent } from "./validation"
+import type { ClaimShortcutOutcome, Device, UpgradeDetails } from "./types"
+import { isAccountKey, isPercent, isShortcutId } from "./validation"
+
+function decodeClaimShortcut(raw: unknown, path = "claim.shortcut"): ClaimShortcutOutcome {
+  if (!isRecord(raw)) throw new DecodeError(path, "a shortcut outcome")
+  switch (raw.kind) {
+    case "not-carried":
+    case "not-owned": return object({ kind: oneOf("not-carried", "not-owned") })(raw, path)
+    case "filled":
+    case "already-set": return object({ kind: oneOf("filled", "already-set"), shortcut: checked(isShortcutId, "a six-character shortcut ID") })(raw, path)
+    case "skipped": return object({ kind: oneOf("skipped"), reason: oneOf("missing-provenance", "deleted-original", "target-filled") })(raw, path)
+    default: throw new DecodeError(`${path}.kind`, "a shortcut outcome kind")
+  }
+}
 
 export const decodeUpgradeDetails = object<UpgradeDetails>({
   from: oneOf("1.4.5", "1.5.0"),
@@ -29,7 +41,10 @@ export function decodeDevice(raw?: unknown, fallbackId?: string): Device {
       state: oneOf("pending", "done"), details: decodeUpgradeDetails,
       opened: boolean, seen: boolean, reopened: boolean
     }, () => ({ opened: false, seen: false, reopened: false }))),
-    claimNotice: nullable(object({ acct: checked(isAccountKey, "a 16-character account key"), dropped: natural })),
+    claimNotice: nullable(object({
+      acct: checked(isAccountKey, "a 16-character account key"), dropped: natural,
+      claim: optional(object({ autoAddAdded: natural, filtersAdded: natural, shortcut: decodeClaimShortcut }))
+    })),
     lastAccount: nullable(checked(isAccountKey, "a 16-character account key")),
     newPlaylistVisibility: nullable(oneOf("PRIVATE", "UNLISTED", "PUBLIC")),
     pickerSortAZ: boolean, detailedLog: boolean, recentAdds: boolean, legacyCleared: boolean

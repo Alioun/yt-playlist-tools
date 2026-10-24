@@ -46,3 +46,8 @@ export type PreparationProofs = [
   Check<Equal<{ kind: "settings"; data: Partial<Settings> } extends PrepareBodyInput ? true : false, false>>,
   Check<Equal<Extract<PrepareBodyResult, { kind: "prepared" }>["data"] extends Filter ? true : false, false>>
 ]
+
+export type MaterializeProofs = [
+  Check<Equal<import("./write-preparation").MaterializeBodyInput, Omit<SetupInput, "context"> | SettingsInput | FilterInput>>,
+  Check<Equal<typeof import("./write-preparation").materializeDocumentBody, (input: Omit<SetupInput, "context"> | SettingsInput | FilterInput) => PrepareBodyResult>>
+]

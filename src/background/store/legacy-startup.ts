@@ -1,5 +1,5 @@
 import {
-  DecodeError, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, decodeDevice, decodeDocument, decodeUnclaimed,
+  DecodeError, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, decodeDevice, decodeDocument, readStoredUnclaimed,
   decodeSettings, defaultDevice, defaultSettings, isKey, isShortcutId
 } from "../../shared/model"
 import type { Device, Settings, Stamped, Unclaimed } from "../../shared/model"
@@ -118,7 +118,7 @@ export function planLegacyStartup(input: StartupSnapshot, context: MigrationCont
     field = "settingsDocument"
     const settings = decodeDocument(input.settingsDocument, decodeSettings)
     field = "unclaimed"
-    const unclaimed = input.unclaimed === undefined ? undefined : decodeUnclaimed(input.unclaimed)
+    const storedUnclaimed = readStoredUnclaimed(input.unclaimed)
     field = "interimKeysPresent"
     if (!Array.isArray(input.interimKeysPresent) || !Array.from(input.interimKeysPresent).every((key: unknown) => typeof key === "string")) throw new DecodeError(field, "key names")
     if (input.interimKeysPresent.some(key => key.startsWith("account:") || ["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"].includes(key))) {
@@ -128,7 +128,8 @@ export function planLegacyStartup(input: StartupSnapshot, context: MigrationCont
     validateLegacyEvidence(input.legacy)
     if (device?.upgradeNote?.state === "pending") {
       if (settings.kind !== "value") return { kind: "invalid", field: "settingsDocument" }
-      if (unclaimed === undefined) return { kind: "invalid", field: "unclaimed" }
+      if (storedUnclaimed.kind !== "pending") return { kind: "invalid", field: "unclaimed" }
+      const unclaimed = storedUnclaimed.data
       const details = device.upgradeNote.details
       if (unclaimed.from !== details.from || unclaimed.autoAdd.length !== details.autoAdd.kept ||
         new Set(unclaimed.autoAdd).size !== unclaimed.autoAdd.length ||
@@ -138,7 +139,7 @@ export function planLegacyStartup(input: StartupSnapshot, context: MigrationCont
       return { kind: "resume", cleanup: cleanup(input.schema) }
     }
     const triggered = input.legacy.presentKeys.some(key => UPGRADE_TRIGGER_KEYS.some(trigger => trigger === key))
-    const canonical = settings.kind !== "absent" || unclaimed !== undefined || hasDeviceState(device) ||
+    const canonical = settings.kind !== "absent" || storedUnclaimed.kind !== "absent" || hasDeviceState(device) ||
       (device !== undefined && device.id !== context.deviceId)
     if (canonical) return triggered ? { kind: "unsupported-state", reason: "canonical-collision" } : { kind: "current" }
     if (triggered) return { kind: "upgrade", write: upgrade(input.legacy, context), cleanup: cleanup(input.schema) }

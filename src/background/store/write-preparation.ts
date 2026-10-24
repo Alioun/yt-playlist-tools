@@ -22,6 +22,10 @@ export type PrepareBodyResult =
   | { kind: "prepared"; data: JsonObject }
   | { kind: "invalid"; reason: "json" | "shape" }
 
+export type MaterializeBodyInput =
+  | Omit<Extract<PrepareBodyInput, { kind: "setup" }>, "context">
+  | Exclude<PrepareBodyInput, { kind: "setup" }>
+
 const invalidJson = Symbol("invalid JSON representation")
 const musicKeyNames = {
   next: true, queue: true, save: true, like: true, remove: true,
@@ -146,7 +150,7 @@ function isJsonObject(value: unknown): value is JsonObject {
   return isJsonValue(value) && value !== null && typeof value === "object" && !Array.isArray(value)
 }
 
-export function prepareDocumentBody(input: PrepareBodyInput): PrepareBodyResult {
+export function materializeDocumentBody(input: MaterializeBodyInput): PrepareBodyResult {
   if (input.data === null || typeof input.data !== "object" || Array.isArray(input.data)) return { kind: "invalid", reason: "shape" }
   const prototype: unknown = Object.getPrototypeOf(input.data)
   if (prototype !== Object.prototype && prototype !== null) return { kind: "invalid", reason: "shape" }
@@ -154,14 +158,22 @@ export function prepareDocumentBody(input: PrepareBodyInput): PrepareBodyResult 
     const candidate = materialize(input.kind, input.data)
     if (!isJsonObject(candidate)) return { kind: "invalid", reason: "json" }
     if (Object.keys(Object.prototype).length > 0) return { kind: "invalid", reason: "shape" }
-    let normalized: Settings | Setup | Filter
+    return { kind: "prepared", data: candidate }
+  } catch (error) {
+    if (error === invalidJson) return { kind: "invalid", reason: "json" }
+    throw error
+  }
+}
+
+export function prepareDocumentBody(input: PrepareBodyInput): PrepareBodyResult {
+  const candidate = materializeDocumentBody(input)
+  if (candidate.kind !== "prepared") return candidate
+  try {
     switch (input.kind) {
-      case "settings": normalized = normalizeSettingsForWrite(decodeSettings(candidate)); break
-      case "setup": normalized = normalizeSetupForWrite(decodeSetup(candidate), input.context); break
-      case "filter": normalized = normalizeFilterForWrite(decodeFilter(candidate)); break
+      case "settings": return materializeDocumentBody({ kind: "settings", data: normalizeSettingsForWrite(decodeSettings(candidate.data)) })
+      case "setup": return materializeDocumentBody({ kind: "setup", data: normalizeSetupForWrite(decodeSetup(candidate.data), input.context) })
+      case "filter": return materializeDocumentBody({ kind: "filter", data: normalizeFilterForWrite(decodeFilter(candidate.data)) })
     }
-    const data = materialize(input.kind, normalized)
-    return isJsonObject(data) ? { kind: "prepared", data } : { kind: "invalid", reason: "json" }
   } catch (error) {
     if (error === invalidJson) return { kind: "invalid", reason: "json" }
     if (error instanceof DecodeError) return { kind: "invalid", reason: "shape" }

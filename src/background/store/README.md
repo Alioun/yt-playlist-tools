@@ -34,7 +34,7 @@ Finite numbers and numeric strings use legacy rounding and clamping. Unset value
 
 Shortcut conversion preserves the approved bare and Ctrl keys independently of recorder reservations. The first matching canonical warning supplies the note's clash ID. Stable IDs are `site:<site>:<action-id>`, `browser:<action-id>`, or `command:<command-id>`. The explicit action-ID table in `legacy-shortcut.ts` maps the kernel's warning metadata. Site warning precedence is YouTube, then YouTube Music, then browser warnings and commands in supplied order. No translated text becomes an ID.
 
-The initial three-record batch saves the carried row's ID as `unclaimed.originalShortcutId`, including key-only, keyless and unusable-key rows. No row means no provenance field. Startup uses the shared `decodeUnclaimed` decoder. Resume preserves raw canonical records and the saved ID through row deletion, replacement, label edits and key edits. Older records remain readable without guessed provenance. Pending-ID exclusion and an atomic guarded claim consumer remain required before claim safety.
+The initial three-record batch saves the carried row's ID as `unclaimed.originalShortcutId`, including key-only, keyless and unusable-key rows. No row means no provenance field. Startup uses the shared `readStoredUnclaimed` reader. Resume preserves raw canonical records and the saved ID through row deletion, replacement, label edits and key edits. Older records remain readable without guessed provenance. Preset creation accepts required pending-ID reservations. The separate synthetic claim fixture does not establish production claim safety.
 
 The carried shortcut has no Watch Later default. The picker and Undo presets use canonical overlap checks. A key or playlist that survives creates the carried row, including unusable raw keys and playlists with no key.
 
@@ -161,7 +161,7 @@ Shared deletion removes the shortcut row and its target from every supplied pres
 
 These facts execute no deletion. The future writer owns private-origin enforcement, the shared-deletion cascade exception, version checks, complete snapshot reads, fresh stamps, JSON materialization, quota projection, session reducers, conditional device edits and native effects. With sync on it creates setup and filter tombstones and retains them for 30 days. With sync off it removes the local documents. Existing session-access safeguards remain in place.
 
-The policy is ACC-06 through ACC-10, DATA-14 through DATA-16, DATA-32, DATA-44, DATA-45 and DATA-57 in the approved chapter 04, with R108, R125 and R135. Unclaimed merging and the carried-shortcut decision remain separate future work.
+The policy is ACC-06 through ACC-10, DATA-14 through DATA-16, DATA-32, DATA-44, DATA-45 and DATA-57 in the approved chapter 04, with R108, R125 and R135. `mergeUnclaimedChoices` implements the separate bulk claim policy and is consumed by the synthetic claim fixture.
 
 Run the acceptance suites with prepared pinned dependencies and WXT types:
 
@@ -434,3 +434,16 @@ and cascades, remote-only creation, tombstones, joins, reset, conflict policies,
 Store notifications, and production account behavior remain separate work. Timers
 remain outbound-only. Global unresolved debt can still block every outbound send.
 Native browser behavior and durability remain unproven.
+
+
+# Synthetic local claim writer
+
+`local-claim-writer.ts` owns one serial lane over complete synthetic local snapshots. Its only executable consumer is [the claim fixture](../../../tools/fixtures/claim-transaction/README.md). Production registration and the existing filter writer remain unchanged. These separate lanes cannot own the same storage.
+
+`mergeUnclaimedChoices` appends missing owned choices, preserves current Filters and explicit targets, and fills only the saved original row's empty target. It resolves surviving Watch Later defaults after the proposed target map and normalizes only a real Setup save. `materializeDocumentBody` copies its JSON representation without another normalization. Existing `prepareDocumentBody` retains its normalization behavior.
+
+The writer refuses sync-on, incomplete or unsupported inventory, uncertain lineage, semantic removal, and a pending prior notice. It rechecks authority and the full raw snapshot before one atomic fixture batch. That batch contains changed envelopes, the exact Device notice, `unclaimed: null`, and any required off-sync history bit. Unchanged documents and Settings receive no write.
+
+Both resolved and rejected sets require complete readback. Only the exact candidate plus unchanged nonwritten baseline confirms commitment. An exact old baseline after rejection reports `failed/set-not-observed` with the original error. Mixed, newer, unreadable, or authority-lost outcomes are unconfirmed. This stops queued and new calls with `unavailable/stale` and no IO until disposal. Disposal rejects new calls and drains accepted lane work.
+
+Consumed null prevents another claim after restart and preserves the saved notice. No remove port, compaction callback, content journal, or digest exists. Native crash atomicity, the last-observation race, and live ownership remain unproven. Native checks are waived. Installation still requires one Store owner, complete sync and removal admission, verified sender/session ownership, current-row identity paths, and exact notice delivery and acknowledgement.

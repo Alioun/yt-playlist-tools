@@ -1,9 +1,9 @@
 import {
   decodeFilter, decodeSettings, decodeSetup, defaultSetup, isPercent, isPlaylistId,
-  isSetupEmpty, normalizeSettingsForWrite, normalizeSetupForWrite
+  isSetupEmpty, isShortcutId, normalizeSettingsForWrite, normalizeSetupForWrite
 } from "../../shared/model"
 import type {
-  AccountKey, AutoAddPlaylist, DocumentKey, Filter, PlaylistId, Settings, Setup, ShortcutId
+  AccountKey, AutoAddPlaylist, ClaimNoticeDetails, ClaimShortcutOutcome, DocumentKey, Filter, PlaylistId, Settings, Setup, ShortcutId, Unclaimed
 } from "../../shared/model"
 
 type Snapshot<T> = T extends object
@@ -177,4 +177,92 @@ export function removeSharedShortcut(input: {
     accounts.push(finishChoice({ ...account, setup, filters: account.current.bodies.filters, settings }))
   }
   return { kind: "removed", settings, accounts }
+}
+
+export type ClaimMergeNotice = {
+  readonly acct: AccountKey
+  readonly dropped: number
+  readonly claim: Readonly<ClaimNoticeDetails>
+}
+export type ClaimAccountEffect =
+  | { readonly kind: "empty-absent" }
+  | { readonly kind: "remove"; readonly removal: SetupRemoval }
+  | {
+    readonly kind: "retain"
+    readonly setup: { readonly kind: "unchanged" } | { readonly kind: "save"; readonly data: Setup }
+    readonly filtersToAdd: readonly { readonly playlist: PlaylistId; readonly data: Filter }[]
+  }
+export type ClaimMergeResult =
+  | { readonly kind: "absent" | "empty-source" | "no-match" }
+  | { readonly kind: "matched"; readonly account: ClaimAccountEffect; readonly notice: ClaimMergeNotice }
+
+export function mergeUnclaimedChoices(input: {
+  readonly acct: AccountKey
+  readonly unclaimed: Snapshot<Unclaimed> | undefined
+  readonly current: AccountSnapshot
+  readonly settings: Snapshot<Settings>
+  readonly ownedPlaylistIds: ReadonlySet<PlaylistId>
+}): ClaimMergeResult {
+  const source = input.unclaimed
+  if (source === undefined) return { kind: "absent" }
+  const sources = new Set([...source.autoAdd, ...Object.keys(source.filters)])
+  if (source.shortcutPlaylist !== null) sources.add(source.shortcutPlaylist)
+  if (sources.size === 0) return { kind: "empty-source" }
+  const owned = (playlist: string) => isPlaylistId(playlist) && input.ownedPlaylistIds.has(playlist)
+  if (![...sources].some(owned)) return { kind: "no-match" }
+  const current = input.current.kind === "present" ? input.current.bodies : undefined
+  const setup = current ? decodeSetup(current.setup) : defaultSetup()
+  const selected = new Set(setup.autoAdd.map(entry => entry.pl))
+  let autoAddAdded = 0
+  for (const playlist of source.autoAdd) {
+    if (!owned(playlist) || selected.has(playlist)) continue
+    setup.autoAdd.push({ pl: playlist, takes: "videos" })
+    selected.add(playlist)
+    autoAddAdded++
+  }
+  const filtersToAdd: { playlist: PlaylistId; data: Filter }[] = []
+  for (const [playlist, data] of Object.entries(source.filters)) {
+    if (isPlaylistId(playlist) && owned(playlist) && !Object.hasOwn(current?.filters ?? {}, playlist)) {
+      filtersToAdd.push({ playlist, data: decodeFilter(data) })
+    }
+  }
+  let shortcut: ClaimShortcutOutcome
+  if (source.shortcutPlaylist === null) shortcut = { kind: "not-carried" }
+  else if (!owned(source.shortcutPlaylist)) shortcut = { kind: "not-owned" }
+  else if (!isShortcutId(source.originalShortcutId)) shortcut = { kind: "skipped", reason: "missing-provenance" }
+  else if (!input.settings.shortcuts.list.some(row => row.id === source.originalShortcutId)) {
+    shortcut = { kind: "skipped", reason: "deleted-original" }
+  } else if (Object.hasOwn(setup.targets, source.originalShortcutId)) {
+    shortcut = setup.targets[source.originalShortcutId] === source.shortcutPlaylist
+      ? { kind: "already-set", shortcut: source.originalShortcutId }
+      : { kind: "skipped", reason: "target-filled" }
+  } else {
+    Object.defineProperty(setup.targets, source.originalShortcutId, {
+      value: source.shortcutPlaylist, enumerable: true, configurable: true, writable: true
+    })
+    shortcut = { kind: "filled", shortcut: source.originalShortcutId }
+  }
+  const notice: ClaimMergeNotice = {
+    acct: input.acct, dropped: [...sources].filter(playlist => !owned(playlist)).length,
+    claim: { autoAddAdded, filtersAdded: filtersToAdd.length, shortcut }
+  }
+  const shortcutIds = new Set(input.settings.shortcuts.list.map(row => row.id))
+  const liveTargets = Object.fromEntries(Object.entries(setup.targets).filter(([id]) => shortcutIds.has(id)))
+  const hasKeptFilters = [...Object.keys(current?.filters ?? {}), ...filtersToAdd.map(filter => filter.playlist)]
+    .some(playlist => !selected.has(playlist))
+  if (isSetupEmpty({ ...setup, targets: liveTargets }, hasKeptFilters)) {
+    return { kind: "matched", notice, account: current
+      ? { kind: "remove", removal: removalFor(input.acct, current.filters) }
+      : { kind: "empty-absent" } }
+  }
+  const changed = !current || autoAddAdded > 0 || shortcut.kind === "filled"
+  if (!changed) return { kind: "matched", notice, account: { kind: "retain", setup: { kind: "unchanged" }, filtersToAdd } }
+  const additionalChosenPlaylists = new Set<string>()
+  if (input.settings.shortcuts.list.some(row => row.watchLaterOnEveryAccount && !Object.hasOwn(liveTargets, row.id))) {
+    additionalChosenPlaylists.add("WL")
+  }
+  return { kind: "matched", notice, account: {
+    kind: "retain", filtersToAdd,
+    setup: { kind: "save", data: normalizeSetupForWrite(setup, { shortcutIds, additionalChosenPlaylists }) }
+  } }
 }

@@ -10,6 +10,10 @@ This module owns the browser-independent document bodies in DATA-12 and the enve
 
 `decodeUnclaimed(raw)` validates local-only migration choices and optional `originalShortcutId` with the six-character ID guard. Omitted provenance stays absent. Malformed known provenance throws `DecodeError` at `unclaimed.originalShortcutId`. Unknown fields and Filter tuple extensions survive decoding.
 
+`readStoredUnclaimed(raw)` separates absent `undefined`, consumed `null`, and a strictly decoded pending record. Direct `decodeUnclaimed(null)` still refuses. Null retains no source content or provenance. Startup treats it as canonical presence for migration collisions, while pending migration recovery still requires a real pending record.
+
+`Device.claimNotice` uses `ClaimNotice`, with optional `claim` details. Counts are nonnegative integers. Its shortcut outcome distinguishes filled, already-set, not-carried, not-owned, and missing-provenance, deleted-original, or target-filled skips. Filled outcomes validate the six-character ID. Old notices omit the new field, and unknown nested extensions survive decoding.
+
 `defaultSettings`, `defaultSetup`, `defaultFilter` and `defaultDevice` return independent mutable values. The `defaults` object names the same factories. An absent filter has no effect, represented by an empty, switched-off denylist.
 
 `decodeDocument(raw, decodeBody)` reads a stamped document. Its result is discriminated by `kind`:

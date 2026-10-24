@@ -19,3 +19,8 @@ export type MigrationContractProofs = [
   Check<Equal<CanonicalUpgrade, { "doc:settings": Stamped<Settings>; device: Device; unclaimed: Unclaimed }>>,
   Check<Equal<typeof planLegacyStartup, (input: StartupSnapshot, context: MigrationContext) => StartupPlan>>
 ]
+
+export type StoredClaimProofs = [
+  Check<Equal<typeof import("../../shared/model").readStoredUnclaimed, (raw: unknown) => import("../../shared/model").StoredUnclaimed>>,
+  Check<Equal<import("../../shared/model").StoredUnclaimed, { kind: "absent" } | { kind: "consumed" } | { kind: "pending"; data: Unclaimed }>>
+]

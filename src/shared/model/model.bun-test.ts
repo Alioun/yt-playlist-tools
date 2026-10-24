@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import {
-  DecodeError, decodeUnclaimed, decodeSyncMeta, decodeDevice, decodeDocument, decodeFilter, decodeKey, decodeSettings, decodeSetup, decodeSyncState,
+  DecodeError, readStoredUnclaimed, decodeUnclaimed, decodeSyncMeta, decodeDevice, decodeDocument, decodeFilter, decodeKey, decodeSettings, decodeSetup, decodeSyncState,
   defaultDevice, defaultFilter, defaultSettings, defaultSetup, documentKey, isAccountKey, isChannelId,
   isKey, isPercent, isPlaylistId, isSetupEmpty, isShortcutId, isVideoId,
   normalizeFilterForWrite, normalizeSettingsForWrite, normalizeSetupForWrite, parseDocumentKey
@@ -479,5 +479,30 @@ describe("unclaimed migration provenance", () => {
       { ...old, filters: { "bad key": {} } }, { ...old, filters: { WL: { mode: "bad" } } },
       { ...old, at: -1 }, { ...old, at: 0.5 }, { ...old, at: "0" }
     ]) expect(() => decodeUnclaimed(raw)).toThrow(DecodeError)
+  })
+})
+
+describe("stored claim compatibility", () => {
+  test("stored reader separates absence, consumption and pending; strict decoder still refuses null", () => {
+    expect(readStoredUnclaimed(undefined)).toEqual({ kind: "absent" })
+    expect(readStoredUnclaimed(null)).toEqual({ kind: "consumed" })
+    const data = { from: "1.5.0" as const, autoAdd: [], shortcutPlaylist: null, filters: {}, at: 1 }
+    expect(readStoredUnclaimed(data)).toEqual({ kind: "pending", data })
+    expect(() => decodeUnclaimed(null)).toThrow(DecodeError)
+  })
+  test("old notices omit detail, new discriminants validate and nested extensions survive", () => {
+    const old = { acct: "synthetic_acct01", dropped: 0 }
+    expect(decodeDevice({ id: "fixture", claimNotice: old }).claimNotice).toEqual(old)
+    for (const shortcut of [{ kind: "not-carried" }, { kind: "not-owned" }, { kind: "filled", shortcut: "orig01" },
+      { kind: "already-set", shortcut: "orig01" }, { kind: "skipped", reason: "deleted-original" }] as const) {
+      const claimNotice = { ...old, extension: false, claim: { autoAddAdded: 0, filtersAdded: 1, shortcut: { ...shortcut, extension: [false] } } }
+      expect(decodeDevice({ id: "fixture", claimNotice }).claimNotice).toEqual(claimNotice)
+    }
+    for (const shortcut of [{ kind: "filled", shortcut: "bad" }, { kind: "already-set" }, { kind: "skipped", reason: "invented" }, { kind: "unknown" }, null]) {
+      expect(() => decodeDevice({ id: "fixture", claimNotice: { ...old, claim: { autoAddAdded: 0, filtersAdded: 1, shortcut } } })).toThrow(DecodeError)
+    }
+    for (const autoAddAdded of [-1, 1.5, "1", null]) {
+      expect(() => decodeDevice({ id: "fixture", claimNotice: { ...old, claim: { autoAddAdded, filtersAdded: 0, shortcut: { kind: "not-carried" } } } })).toThrow(DecodeError)
+    }
   })
 })

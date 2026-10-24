@@ -304,6 +304,77 @@ describe("actual browser artifact", () => {
         return JSON.stringify({exports:Object.keys(module.exports).sort(),fixtures:fixtures.length,guarded});
       })()
     `, { module: { exports: {} } }, { timeout: 15000 }))
-    expect(evidence).toEqual({ exports: ["changeAccountChoice", "planSetupRemoval", "removeSharedShortcut"], fixtures: fixtures.length, guarded: 3 })
+    expect(evidence).toEqual({ exports: ["changeAccountChoice", "mergeUnclaimedChoices", "planSetupRemoval", "removeSharedShortcut"], fixtures: fixtures.length, guarded: 3 })
+  })
+})
+
+describe("bulk unclaimed choices", () => {
+  const carried = { from: "1.5.0" as const, autoAdd: [one, two, two, orphan], shortcutPlaylist: two,
+    originalShortcutId: keep, filters: { [one]: offFilter, [two]: offFilter, [orphan]: offFilter }, at: 1 }
+  const base = { acct, settings, unclaimed: carried, current: absent, ownedPlaylistIds: new Set([one, two]) }
+  test("full non-overwrite merge, independent drops and append order", () => {
+    const currentSetup = decodeSetup({ ...defaultSetup(), autoAdd: [{ pl: one, takes: "shorts", pct: 0, extension: true }],
+      targets: { [save]: one }, gather: orphan, marks: { [one]: "missing", WL: "full" }, extension: [false] })
+    const input = { ...base, current: present(currentSetup, { [one]: futureFilter }) }
+    const before = JSON.stringify(input)
+    expect<unknown>(operations.mergeUnclaimedChoices(input)).toEqual({ kind: "matched",
+      notice: { acct, dropped: 1, claim: { autoAddAdded: 1, filtersAdded: 1, shortcut: { kind: "filled", shortcut: keep } } },
+      account: { kind: "retain", setup: { kind: "save", data: {
+        ...currentSetup, autoAdd: [{ pl: one, takes: "shorts", pct: 0, extension: true }, { pl: two, takes: "videos" }],
+        targets: { [save]: one, [keep]: two }, marks: { [one]: "missing" }
+      } }, filtersToAdd: [{ playlist: two, data: offFilter }] } })
+    expect(JSON.stringify(input)).toBe(before)
+    expect([...input.ownedPlaylistIds]).toEqual([one, two])
+  })
+  test.each([
+    { targets: { [keep]: two }, outcome: { kind: "already-set", shortcut: keep } },
+    { targets: { [keep]: one }, outcome: { kind: "skipped", reason: "target-filled" } }
+  ])("existing explicit target stays exact", ({ targets, outcome }) => {
+    const result = operations.mergeUnclaimedChoices({ ...base,
+      current: present({ ...defaultSetup(), autoAdd: [{ pl: one, takes: "both", pct: 0 }, { pl: two, takes: "shorts" }], targets },
+        { [one]: offFilter, [two]: offFilter }) })
+    expect(result).toEqual({ kind: "matched", notice: { acct, dropped: 1, claim: { autoAddAdded: 0, filtersAdded: 0, shortcut: outcome } },
+      account: { kind: "retain", setup: { kind: "unchanged" }, filtersToAdd: [] } })
+  })
+  test.each(["missing-provenance", "deleted-original"] as const)("%s never infers row zero", reason => {
+    const unclaimed = { ...carried, originalShortcutId: reason === "deleted-original" ? "gone01" : undefined }
+    const result = operations.mergeUnclaimedChoices({ ...base, unclaimed })
+    expect(result.kind).toBe("matched")
+    if (result.kind !== "matched") throw new Error("Expected match")
+    expect(result.notice).toEqual({ acct, dropped: 1, claim: { autoAddAdded: 2, filtersAdded: 2, shortcut: { kind: "skipped", reason } } })
+    expect(result.account.kind).toBe("retain")
+    if (result.account.kind === "retain" && result.account.setup.kind === "save") expect(result.account.setup.data.targets).toEqual({})
+  })
+  test("WL marks depend on surviving defaults after explicit override", () => {
+    for (const extraDefault of [false, true]) {
+      const shared = { ...settingsWithDefaults, shortcuts: { ...settingsWithDefaults.shortcuts,
+        list: extraDefault ? settingsWithDefaults.shortcuts.list : settingsWithDefaults.shortcuts.list.filter(row => row.id === keep) } }
+      const result = operations.mergeUnclaimedChoices({ ...base, settings: shared,
+        current: present({ ...defaultSetup(), quickSave: one, marks: { WL: "full", [orphan]: "missing" }, targets: { gone01: orphan } }) })
+      if (result.kind !== "matched" || result.account.kind !== "retain" || result.account.setup.kind !== "save") throw new Error("Expected saved setup")
+      expect(result.account.setup.data.marks).toEqual(extraDefault ? { WL: "full" } : {})
+      expect(result.account.setup.data.targets).toEqual({ [keep]: two })
+    }
+  })
+  test("filter-only match creates a retained setup; skipped-only match does not", () => {
+    expect(operations.mergeUnclaimedChoices({ ...base, unclaimed: { ...carried, autoAdd: [], shortcutPlaylist: null, filters: { [two]: offFilter } } })).toEqual({
+      kind: "matched", notice: { acct, dropped: 0, claim: { autoAddAdded: 0, filtersAdded: 1, shortcut: { kind: "not-carried" } } },
+      account: { kind: "retain", setup: { kind: "save", data: defaultSetup() }, filtersToAdd: [{ playlist: two, data: offFilter }] } })
+    const unclaimed = { ...carried, autoAdd: [], shortcutPlaylist: two, originalShortcutId: "gone01", filters: {} }
+    expect(operations.mergeUnclaimedChoices({ ...base, unclaimed })).toEqual({ kind: "matched", account: { kind: "empty-absent" },
+      notice: { acct, dropped: 0, claim: { autoAddAdded: 0, filtersAdded: 0, shortcut: { kind: "skipped", reason: "deleted-original" } } } })
+    const removed = operations.mergeUnclaimedChoices({ ...base, unclaimed, current: present({ ...defaultSetup(), marks: { WL: "full" } }) })
+    expect(removed.kind === "matched" && removed.account).toEqual({ kind: "remove", removal: removal(acct) })
+  })
+  test("no-op preserves dangling data until a real setup write", () => {
+    const currentSetup = { ...defaultSetup(), autoAdd: [{ pl: one, takes: "videos" as const }], targets: { gone01: orphan }, marks: { [orphan]: "missing" as const } }
+    expect(operations.mergeUnclaimedChoices({ ...base, unclaimed: { ...carried, autoAdd: [one], shortcutPlaylist: null, filters: {} }, current: present(currentSetup) })).toEqual({
+      kind: "matched", notice: { acct, dropped: 0, claim: { autoAddAdded: 0, filtersAdded: 0, shortcut: { kind: "not-carried" } } },
+      account: { kind: "retain", setup: { kind: "unchanged" }, filtersToAdd: [] } })
+  })
+  test("absent, empty and unmatched remain distinct", () => {
+    expect(operations.mergeUnclaimedChoices({ ...base, unclaimed: undefined })).toEqual({ kind: "absent" })
+    expect(operations.mergeUnclaimedChoices({ ...base, unclaimed: { ...carried, autoAdd: [], shortcutPlaylist: null, filters: {} } })).toEqual({ kind: "empty-source" })
+    expect(operations.mergeUnclaimedChoices({ ...base, ownedPlaylistIds: new Set() })).toEqual({ kind: "no-match" })
   })
 })

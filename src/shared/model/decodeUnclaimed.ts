@@ -20,3 +20,14 @@ const decode = object<Unclaimed>({
 export function decodeUnclaimed(raw: unknown): Unclaimed {
   return decode(raw, "unclaimed")
 }
+
+export type StoredUnclaimed =
+  | { kind: "absent" }
+  | { kind: "consumed" }
+  | { kind: "pending"; data: Unclaimed }
+
+export function readStoredUnclaimed(raw: unknown): StoredUnclaimed {
+  if (raw === undefined) return { kind: "absent" }
+  if (raw === null) return { kind: "consumed" }
+  return { kind: "pending", data: decodeUnclaimed(raw) }
+}

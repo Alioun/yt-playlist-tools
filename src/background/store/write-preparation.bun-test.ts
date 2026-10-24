@@ -7,7 +7,7 @@ import * as model from "../../shared/model"
 import { isJsonValue } from "../../shared/contracts/json"
 import * as wire from "./sync-codec"
 import * as accounts from "./accounts"
-import { prepareDocumentBody, type PrepareBodyInput } from "./write-preparation"
+import { materializeDocumentBody, prepareDocumentBody, type PrepareBodyInput } from "./write-preparation"
 
 type Dependencies = typeof model & typeof wire & typeof accounts
 
@@ -485,12 +485,26 @@ describe("actual browser artifact", () => {
       JSON.stringify({exports:Object.keys(preparation),fixtures,integration,guardControls,protectedReads,forbiddenReads});
     `
     const result = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; console.log(runInNewContext(readFileSync(0,"utf8"), {TextEncoder}, {timeout:30000}));'], { input: script, encoding: "utf8", timeout: 35000 }))
-    expect(result.exports).toEqual(["prepareDocumentBody"])
+    expect(result.exports).toEqual(["materializeDocumentBody", "prepareDocumentBody"])
     expect(result.fixtures.controls).toHaveLength(9)
     expect(result.fixtures.hookProbes).toBe(8)
     expect(result.guardControls).toBe(5)
     expect(result.protectedReads).toBe(0)
     expect(result.forbiddenReads).toBeGreaterThanOrEqual(5)
     assertIntegration(result.integration)
+  })
+})
+
+describe("JSON-only materialization", () => {
+  test("copies omissions without normalization, pruning, defaults or stamps", () => {
+    const data = model.decodeSetup({ ...model.defaultSetup(), label: { name: "N".repeat(120), handle: undefined },
+      autoAdd: [{ pl: "PLone", takes: "shorts", pct: undefined }], targets: { gone01: "PLone" }, marks: { PLother: "full" }, extension: false })
+    expect(materializeDocumentBody({ kind: "setup", data })).toEqual({ kind: "prepared", data: {
+      ...data, label: { name: "N".repeat(120) }, autoAdd: [{ pl: "PLone", takes: "shorts" }]
+    } })
+    expect(materializeDocumentBody({ kind: "filter", data: model.decodeFilter({ mode: "deny", on: false,
+      channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "T".repeat(120), null, { extension: true }]], extension: { keep: true } }) })).toEqual({
+      kind: "prepared", data: { mode: "deny", on: false, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "T".repeat(120), null, { extension: true }]], extension: { keep: true } }
+    })
   })
 })
