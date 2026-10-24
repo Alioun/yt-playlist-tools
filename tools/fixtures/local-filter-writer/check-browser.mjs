@@ -170,6 +170,8 @@ try {
   equal((await read(browser))[key].data, { mode: "deny", on: true, channels: [] }, "literal default creation")
   await remove(browser, [setupKey])
   await inert(browser, request, { kind: "unavailable", reason: "account-context" })
+  await remove(browser, [key])
+  await inert(browser, { ...request, desired: { mode: "deny", on: true } }, { kind: "unavailable", reason: "account-context" })
   await seed(browser, { [setupKey]: initial[setupKey], [key]: initial[key] })
   equal(await browser.page.evaluate(async raw => Promise.all([
     globalThis.requestLocalFilterChange(raw), globalThis.requestLocalFilterChange(raw)

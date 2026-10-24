@@ -93,6 +93,11 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     check(x.sets.length === 1, "one replacement set")
     const saved = x.records[filterKey]
     check(saved && typeof saved === "object" && !Object.hasOwn(saved, "deleted"), "replacement removes tombstone")
+    if (raw && typeof raw === "object" && "deleted" in raw) {
+      equal(saved, { v: 1, gen: "g1", at: 101, by: "device-fixture", envelope: "kept", data: {
+        mode: "allow", on: true, channels: []
+      } }, "literal tombstone replacement retains its envelope extension")
+    }
   }
   for (const raw of [undefined, null, {}, { v: 2, gen: "new", at: 1, by: "x", data: {} },
     { v: 1, gen: "dead", at: 1, by: "x", deleted: true },
@@ -100,6 +105,15 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     const x = harness(); x.records[setupKey] = raw
     equal(await x.change({ mode: "deny", on: false }), { kind: "unavailable", reason: "account-context" }, "complete selected setup required even no-op")
     equal(x.sets.length, 0, "no setup bootstrap")
+  }
+  {
+    const x = harness()
+    delete x.records[setupKey]
+    delete x.records[filterKey]
+    const before = stable(x.records)
+    equal(await x.change({ mode: "deny", on: true }), { kind: "unavailable", reason: "account-context" }, "bare IDs do not create a setup or filter")
+    equal(stable(x.records), before, "bare context leaves every record unchanged")
+    equal(x.sets.length, 0, "bare context no set")
   }
   for (const history of [null, undefined, false, 0, "", {}, { joined: null, pushed: {}, status: "off", editedSinceOff: false }]) {
     const x = harness(); x.records.sync = history
