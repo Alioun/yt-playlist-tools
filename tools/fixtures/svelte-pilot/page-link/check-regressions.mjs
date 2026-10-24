@@ -197,6 +197,26 @@ const positives = [
     await writeFile(target, (await readFile(target, "utf8")).replace("=> {", "=> {\nObject.assign(globalThis, { __fixtureExisting: { answer: 42 } });"))
   }, value: 42 }))
 ]
+for (const mapping of ["object", "callback", "array"]) positives.push({
+  name: `external-paths-${mapping}`, code: 'import { answer } from "fixture-existing"; globalThis.__regressionValue = answer;', value: 42,
+  setup: async (path) => {
+    const output = `{ globals: { "fixture-existing": "globalThis.__fixtureExisting" }, paths: ${mapping === "object" ? '{ "fixture-existing": "mapped-existing" }' : '(id) => id === "fixture-existing" ? "mapped-existing" : id'} }`
+    await configure(path, `build: { rollupOptions: { external: ["fixture-existing"], output: ${mapping === "array" ? `[${output}]` : output} } },`)
+    await externalGlobal(path)
+  }
+})
+for (const relative of [undefined, true, false, "ifRelativeSource"]) positives.push({
+  name: `external-absolute-${String(relative)}`, code: 'import { answer } from "./external-helper.js"; globalThis.__regressionValue = answer;', value: 42,
+  setup: async (path) => {
+    await writeFile(resolve(path, "src/site/consumer/external-helper.js"), "export const answer = 42;")
+    await configure(path, `build: { rollupOptions: { external: (id) => id === path("./src/site/consumer/external-helper.js"), ${relative === undefined ? "" : `makeAbsoluteExternalsRelative: ${JSON.stringify(relative)},`} output: { globals: (id) => "globalThis.__fixtureExisting" } } },`)
+    await externalGlobal(path)
+  }
+})
+async function externalGlobal(path) {
+  const target = resolve(path, "src/entrypoints/core-www.ts")
+  await writeFile(target, (await readFile(target, "utf8")).replace("=> {", "=> {\nObject.assign(globalThis, { __fixtureExisting: { answer: 42 } });"))
+}
 for (const item of positives) await check(item.name, async () => {
   const path = await fixture(item.name)
   await writeFile(resolve(path, "src/site/consumer/probe.js"), item.code)
@@ -213,6 +233,35 @@ for (const item of positives) await check(item.name, async () => {
     for (const name of late ? ["untrack"] : ["get", "state", "update"]) assert(names[late ? "root" : "client"].includes(name))
   }
   return { build: result.status, runtime }
+})
+
+for (const dynamic of [false, true]) await check(`external-${dynamic ? "dynamic-accepted" : "static-unaccepted"}`, async () => {
+  const path = await fixture(`external-${dynamic ? "dynamic-accepted" : "static-unaccepted"}`)
+  await prepend(path, "site/consumer/mount.ts", dynamic
+    ? 'globalThis.__dynamic = import("fixture-existing");'
+    : 'import { answer } from "fixture-foreign"; globalThis.__regressionValue = answer;')
+  await configure(path, `build: { rollupOptions: { external: ["fixture-existing"], output: { globals: (id) => "globalThis.__fixtureExisting", paths: (id) => "mapped-existing" } } },
+    plugins: [{ name: "fixture-foreign-external", resolveId(id) { if (id === "fixture-foreign") return { id, external: true }; } }],`)
+  const result = await build(path)
+  assert.notEqual(result.status, 0, "forbidden external unexpectedly built")
+  assert(result.output.includes("unlistedIifeOnly"), result.output)
+  return { build: result.status, predicate: "unlistedIifeOnly" }
+})
+
+await check("external-injected-output", async () => {
+  const path = await fixture("external-injected-output")
+  const target = resolve(path, "wxt.config.ts")
+  await writeFile(target, (await readFile(target, "utf8")).replace("hooks: link.hooks,", `hooks: { ...link.hooks, "vite:build:extendConfig": (entries, config) => {
+    link.hooks["vite:build:extendConfig"](entries, config);
+    const guard = config.plugins?.find(plugin => plugin?.name === "page-link:consumer-www");
+    if (guard) config.plugins.unshift({ name: "fixture-output-import", generateBundle(_, output) {
+      for (const artifact of Object.values(output)) if (artifact.type === "chunk") artifact.imports.push("fixture-unaccepted");
+    } });
+  } },`))
+  const result = await build(path)
+  assert.notEqual(result.status, 0, "unknown output import unexpectedly built")
+  assert(result.output.includes("unlistedIifeOnly"), result.output)
+  return { build: result.status, predicate: "unlistedIifeOnly" }
 })
 
 for (const linked of [false, true]) for (const name of ["svelte", "bits-ui"]) await check(`aliased-${name}-${linked ? "symlink" : "copy"}`, async () => {
