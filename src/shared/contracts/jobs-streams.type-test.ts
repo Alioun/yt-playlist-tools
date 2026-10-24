@@ -6,7 +6,7 @@ import type {
 } from "./index"
 import { isJobResultFor, isJobDataFor, isStreamData } from "./index"
 import type { PageAccountData, PageJobData, PageJobResult } from "./page"
-import { isPageJobResultFor } from "./page"
+import { isPageJobDataFor, isPageJobResultFor } from "./page"
 import type { VideoId, PlaylistId, AccountKey } from "../model"
 // @ts-expect-error Raw account data belongs to the explicit page entrypoint.
 import type { PageAccountData as RootPageAccountData } from "./index"
@@ -192,4 +192,76 @@ export function trackerProjection(player: Extract<PlayerData, { ad: false }>) {
     isUpcoming: player.isUpcoming, isLiveContent: player.isLiveContent
   }
   return facts
+}
+
+
+type PageReads = { kind: "account" | "accountLabel" }
+type VideoReads = { kind: "membership" | "channelOf"; videoId: VideoId }
+export type UnionKindRelationships = [
+  Assert<Equal<PageJobData<PageReads>, PageAccountData | JobData<JobOf<"accountLabel">>>>,
+  Assert<Equal<PageJobData<Job>, PageAccountData | JobData<Exclude<Job, JobOf<"account">>>>>
+]
+
+export function unionPageRelationships(job: PageReads, raw: unknown) {
+  const acceptedJob: Job = job
+  const rawAccount: PageJobData<PageReads> = { signedIn: true, datasyncId: "synthetic-identity" }
+  const label: PageJobData<PageReads> = { name: "Synthetic" }
+  // @ts-expect-error A union-valued page kind never accepts a safe account projection.
+  const safeAccount: PageJobData<PageReads> = { signedIn: true, acct }
+  if (isPageJobDataFor(job, raw) && "signedIn" in raw && raw.signedIn) {
+    const identity: string = raw.datasyncId
+    // @ts-expect-error Guarded raw page data never claims a safe account key.
+    const key: AccountKey = raw.acct
+    void [identity, key]
+  }
+  if (isPageJobResultFor(job, raw) && raw.ok && "signedIn" in raw.data && raw.data.signedIn) {
+    const identity: string = raw.data.datasyncId
+    // @ts-expect-error Guarded raw page results never claim a safe account key.
+    const key: AccountKey = raw.data.acct
+    void [identity, key]
+  }
+  void [acceptedJob, rawAccount, label, safeAccount]
+}
+
+export function unionInvocationRelationships() {
+  const pinned: JobInvocation<VideoReads> = { job: { kind: "membership", videoId: video }, acct }
+  const publicJob: JobInvocation<VideoReads> = { job: { kind: "channelOf", videoId: video } }
+  const label: JobInvocation<PageReads> = { job: { kind: "accountLabel" }, acct }
+  const account: JobInvocation<PageReads> = { job: { kind: "account" } }
+  const defaultPinned: JobInvocation = pinned
+  const defaultPublic: JobInvocation = publicJob
+  const objectUnion: JobInvocation<JobOf<"membership" | "channelOf">> = pinned
+  // @ts-expect-error The membership branch of a union-valued kind requires a pin.
+  const unpinned: JobInvocation<VideoReads> = { job: { kind: "membership", videoId: video } }
+  // @ts-expect-error The channelOf branch of a union-valued kind forbids a pin.
+  const publicPin: JobInvocation<VideoReads> = { job: { kind: "channelOf", videoId: video }, acct }
+  // @ts-expect-error The accountLabel branch requires a pin even beside public account.
+  const unpinnedLabel: JobInvocation<PageReads> = { job: { kind: "accountLabel" } }
+  // @ts-expect-error The public account branch forbids a pin even beside accountLabel.
+  const accountPin: JobInvocation<PageReads> = { job: { kind: "account" }, acct }
+  // @ts-expect-error An object-union membership branch still requires a pin.
+  const objectUnpinned: JobInvocation<JobOf<"membership" | "channelOf">> = { job: { kind: "membership", videoId: video } }
+  void [pinned, publicJob, label, account, defaultPinned, defaultPublic, objectUnion,
+    unpinned, publicPin, unpinnedLabel, accountPin, objectUnpinned]
+}
+
+export function forwardInvocation<J extends Job>(invocation: JobInvocation<J>, send: (value: JobInvocation<J>) => void) {
+  const job: J = invocation.job
+  send(invocation)
+  return job
+}
+
+export function forwardedInvocationRelationships() {
+  const send = (invocation: JobInvocation<VideoReads>) => invocation
+  const member: VideoReads = forwardInvocation<VideoReads>({ job: { kind: "membership", videoId: video }, acct }, send)
+  const channel: VideoReads = forwardInvocation<VideoReads>({ job: { kind: "channelOf", videoId: video } }, send)
+  // @ts-expect-error Generic forwarding cannot remove the membership pin.
+  forwardInvocation<VideoReads>({ job: { kind: "membership", videoId: video } }, send)
+  // @ts-expect-error Generic forwarding cannot pin a public channel read.
+  forwardInvocation<VideoReads>({ job: { kind: "channelOf", videoId: video }, acct }, send)
+  type RefinedRead = { kind: "membership" | "channelOf"; videoId: VideoId; trace: "synthetic" }
+  const refined: JobInvocation<RefinedRead> = { job: { kind: "membership", videoId: video, trace: "synthetic" }, acct }
+  // @ts-expect-error Narrowing each discriminant must retain specialised job fields.
+  const missingTrace: JobInvocation<RefinedRead> = { job: { kind: "membership", videoId: video }, acct }
+  void [member, channel, refined, missingTrace]
 }

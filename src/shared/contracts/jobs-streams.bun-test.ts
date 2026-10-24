@@ -471,3 +471,112 @@ describe("descriptor safety through public boundaries", () => {
     expect(isJob(hidden)).toBe(false)
   })
 })
+
+
+test("union-valued page kinds preserve raw account data through both guards", () => {
+  const job: { kind: "account" | "accountLabel" } = { kind: "account" }
+  const raw: unknown = { signedIn: true, datasyncId: "synthetic-identity" }
+  expect(isPageJobDataFor(job, raw)).toBe(true)
+  if (!isPageJobDataFor(job, raw) || !("signedIn" in raw) || !raw.signedIn) throw new Error("Expected raw page identity")
+  const identity: string = raw.datasyncId
+  expect(identity).toBe("synthetic-identity")
+  const result = success(raw)
+  if (!isPageJobResultFor(job, result) || !result.ok || !("signedIn" in result.data) || !result.data.signedIn) throw new Error("Expected raw page result")
+  const resultIdentity: string = result.data.datasyncId
+  expect(resultIdentity).toBe(identity)
+  expect(isPageJobDataFor(job, { signedIn: true, acct })).toBe(false)
+})
+
+for (const mode of ["data", "getter", "own-getter"]) {
+  test(`own evidence rejects ${mode} prototype substitutions without invoking accessors`, () => {
+    const script = `
+      import * as safe from ${JSON.stringify(import.meta.resolve("./index"))};
+      import * as page from ${JSON.stringify(import.meta.resolve("./page"))};
+      const mode = ${JSON.stringify(mode)};
+      const failures = [];
+      let calls = 0;
+      const eq = (actual, expected, name) => { if (actual !== expected) failures.push({name, actual, expected}); };
+      const success = data => ({ok:true, data, route:"synthetic-route"});
+      const fixtures = [
+        [safe.isQueueInsertEndpoint, "queueAddEndpoint", {queueInsertPosition:"INSERT_AT_END", queueTarget:{videoId:"synthetic01"}, opaque:[null,true]}],
+        [safe.isLikeEndpoint, "likeEndpoint", {opaque:true}],
+        [safe.isLibraryEndpoint, "feedbackEndpoint", {opaque:true}],
+        [safe.isNavigationEndpoint, "browseEndpoint", {browseId:"synthetic-browse", opaque:true}],
+        [safe.isNavigationEndpoint, "watchPlaylistEndpoint", {playlistId:"WL", opaque:true}],
+        [safe.isNavigationEndpoint, "watchEndpoint", {videoId:"synthetic01", opaque:true}],
+        [safe.isAddToPlaylistEndpoint, "addToPlaylistEndpoint", {opaque:true}],
+        [safe.isRemoveFromQueueEndpoint, "removeFromQueueEndpoint", {opaque:true}]
+      ];
+      const changed = (object, key, value, check) => {
+        const own = mode === "own-getter";
+        const target = own ? object : Object.prototype;
+        const descriptor = Object.getOwnPropertyDescriptor(target, key);
+        const original = Object.getOwnPropertyDescriptor(object, key);
+        if (!own) delete object[key];
+        try {
+          Object.defineProperty(target, key, mode === "data"
+            ? {configurable:true, value}
+            : {configurable:true, enumerable:own, get(){calls++; throw Error("synthetic getter");}});
+          check();
+        } finally {
+          if (descriptor) Object.defineProperty(target, key, descriptor); else delete target[key];
+          if (!own && original) Object.defineProperty(object, key, original);
+        }
+      };
+      for (const [guard, family, body] of fixtures) {
+        const endpoint = {[family]:body, metadata:{native:[null,true]}};
+        eq(guard(endpoint), true, family+" own valid extras");
+        changed(endpoint, family, body, () => eq(guard(endpoint), false, family+" own family required"));
+        eq(guard(endpoint), true, family+" restored");
+      }
+      const evidence = [
+        ["browseEndpoint", {browseId:"synthetic-browse", opaque:true}, "browseId", safe.isNavigationEndpoint],
+        ["watchPlaylistEndpoint", {playlistId:"WL", opaque:true}, "playlistId", safe.isNavigationEndpoint],
+        ["watchEndpoint", {videoId:"synthetic01", opaque:true}, "videoId", safe.isNavigationEndpoint],
+        ["queueAddEndpoint", {queueInsertPosition:"INSERT_AT_END", queueTarget:{videoId:"synthetic01"}, opaque:true}, "queueInsertPosition", safe.isQueueInsertEndpoint],
+        ["queueAddEndpoint", {queueInsertPosition:"INSERT_AT_END", queueTarget:{videoId:"synthetic01"}, opaque:true}, "queueTarget", safe.isQueueInsertEndpoint]
+      ];
+      for (const [family, body, key, guard] of evidence) {
+        const endpoint = {[family]:body};
+        const job = family === "queueAddEndpoint" ? {kind:"queueInsert", endpoint, position:"end"} : {kind:"navigate", endpoint};
+        changed(body, key, body[key], () => {
+          eq(guard(endpoint), false, key+" endpoint evidence");
+          eq(safe.isJob(job), false, key+" job evidence");
+          eq(safe.isJobDataFor(job, {ids:[0]}), false, key+" data pending job");
+          eq(safe.isJobResultFor(job, {ok:false,reason:"failed"}), false, key+" result pending job");
+          eq(safe.isJobInvocation({job}), false, key+" invocation");
+          eq(page.isPageJobDataFor(job, {navigated:true}), false, key+" page data pending job");
+          eq(page.isPageJobResultFor(job, {ok:false,reason:"failed"}), false, key+" page result pending job");
+        });
+        eq(guard(endpoint), true, key+" own restored");
+      }
+      for (const key of ["videoId", "playlistId"]) {
+        const target = {[key]:key === "videoId" ? "synthetic01" : "WL", opaque:true};
+        const endpoint = {queueAddEndpoint:{queueInsertPosition:"INSERT_AT_END",queueTarget:target}};
+        changed(target, key, target[key], () => eq(safe.isQueueInsertEndpoint(endpoint), false, key+" target evidence"));
+      }
+      const job = {kind:"account"};
+      changed(job, "kind", "account", () => {
+        eq(safe.isJob(job), false, "own job kind");
+        eq(safe.isJobDataFor(job, {signedIn:false,acct:null}), false, "data own job kind");
+        eq(safe.isJobResultFor(job, {ok:false,reason:"failed"}), false, "result own job kind");
+        eq(safe.isJobInvocation({job}), false, "invocation own job kind");
+        eq(page.isPageJobDataFor(job, {signedIn:false,datasyncId:null}), false, "page data own job kind");
+        eq(page.isPageJobResultFor(job, {ok:false,reason:"failed"}), false, "page result own job kind");
+      });
+      for (const key of ["ok", "data", "route"]) {
+        const result = success({signedIn:false,acct:null});
+        changed(result, key, result[key], () => eq(safe.isJobResultFor(job, result), false, key+" safe envelope"));
+        const raw = success({signedIn:false,datasyncId:null});
+        changed(raw, key, raw[key], () => eq(page.isPageJobResultFor(job, raw), false, key+" page envelope"));
+      }
+      eq(calls, 0, "no getters invoked");
+      console.log(JSON.stringify({mode, failures, getterCalls:calls}));
+      if (failures.length) process.exitCode = 1;
+    `
+    const result = Bun.spawnSync([process.execPath, "--no-env-file", "--eval", script], { stdout: "pipe", stderr: "pipe" })
+    expect(result.stdout.toString()).toContain('"failures":[]')
+    expect(result.stderr.toString()).toBe("")
+    expect(result.exitCode).toBe(0)
+  })
+}
