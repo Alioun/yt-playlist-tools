@@ -233,7 +233,7 @@ One ephemeral map collects every sendable pending or restoration document. The e
 
 An admitted sync-on edit normally sets only the addressed Filter. If remote readback exactly represents a current local generation whose pushed entry lags, the same local set also repairs the complete raw history. Replacing local g1 with g2 records pushed g1, never g2. This preserves the only local evidence needed after a prior push lost its acknowledgement. The new Filter remains pending. Refused and unchanged intents repair nothing. No user edit performs a native sync set, incoming adoption, or status update. A sync-on no-op still reads fresh snapshots and checks addressed readiness and version, but skips preparation, generation, encoding, quota projection, and persistence. Its success reports an achieved local intent without claiming reconciliation.
 
-The separate synthetic extension in `tools/fixtures/local-filter-writer/` uses the actual emitted adapter and executor. Its verifier checks the exact extension worker ID, real settings sender, the exact two-key native set/event/readback, real multi-key quota rejection, complete joined native reads, Filter-only writes, pending and restoration quota refusals, incomplete chunks, protected newer data, local quota-error recovery, clean full-browser restart, and desired-state retry convergence. Separate captured native methods seed and read synthetic data without contaminating writer counters. Only the fixture-only manual flush hook permits and records writer sync sets. Writer removes and clears remain forbidden. The same adapter instance receives settings edits and manual flushes. JSON-text fixture transfer preserves own `__proto__` data. It creates a fresh automation profile and uses no YouTube host access. Synthetic sender metadata tests and native incognito permission denial are separate evidence. Native private settings admission with incognito access granted remains unproven.
+The separate synthetic extension in `tools/fixtures/local-filter-writer/` uses the actual emitted adapter and executor. Its verifier checks the exact extension worker ID, real settings sender, the exact two-key native set/event/readback, real multi-key quota rejection, complete joined native reads, Filter-only writes, pending and restoration quota refusals, incomplete chunks, protected newer data, local quota-error recovery, clean full-browser restart, and desired-state retry convergence. Separate captured native methods seed and read synthetic data without contaminating writer counters. The fixture records writer sync sets from explicit flushes and its started automatic driver. Writer removes and clears remain forbidden. The same adapter instance receives settings edits and manual flushes. JSON-text fixture transfer preserves own `__proto__` data. It creates a fresh automation profile and uses no YouTube host access. Synthetic sender metadata tests and native incognito permission denial are separate evidence. Native private settings admission with incognito access granted remains unproven.
 
 A resolved local set is the local edit acknowledgement boundary. Native IO errors during edits reject without automatic retry or rollback. Each explicit later intent rereads storage. A fresh writer after a lost reply returns unchanged if the desired state persisted. Clean restart does not prove power-loss atomicity or the outcome of an interrupted unresolved set. If a platform tears the two records into well-formed inconsistent values, the approved history has no switch-off generation baseline to reconstruct the bit reliably. This slice makes no stronger crash guarantee.
 
@@ -289,7 +289,7 @@ Start and sync events inspect fresh whole snapshots. Each external event may own
 
 `onSyncResult` receives automatic flush results or `{ kind: "rejected", error }` for a rejected preflight. Native set failures, acknowledgement failures, unconfirmed sets, and rejected passes retain their original errors and stage information. They cancel automatic work for the instance. Later starts, events, and edits cannot clear that stop. Explicit manual calls remain paced and observable and never clear the stop. Deterministic `blocked` and `unavailable` plans can be checked by another independent event.
 
-This is an incomplete internal component. Native Error text supplies no approved rate discriminator. It adds no error parser, fallback retry, persisted rate journal, user-intent replay, incoming adoption, status rewrite, join or reset choice, chunk cleanup, or production recovery. The initial five-second barrier does not preserve the specified sixty-second hold after a genuinely classified rate failure. Native success proves this browser's sync-area acceptance only.
+This is an incomplete internal component. Native Error text supplies no approved rate discriminator. It adds no error parser, fallback retry, persisted rate journal, user-intent replay, status rewrite, join or reset choice, chunk cleanup, or production recovery. The initial five-second barrier does not preserve the specified sixty-second hold after a genuinely classified rate failure. Native success proves this browser's sync-area acceptance only.
 
 ## Pure sync inventory
 
@@ -331,7 +331,54 @@ can race after the final observation, including during the last sync read.
 
 Successful, idle, and deterministic unavailable receives do not change outbound
 tickets, quiet periods, pacing, subscriptions, or automatic-result callbacks.
-The receiver writes nothing remotely and creates no stamp. Automatic incoming
-composition, Store view propagation, losing pending-edit visibility, ownership,
-identity conversion, cleanup, and production startup remain outside this fixture.
+The receiver writes nothing remotely and creates no stamp. Store view propagation,
+losing pending-edit visibility, ownership, identity conversion, cleanup, and
+production startup remain outside this fixture.
 Static worker builds and synthetic VM tests do not establish native execution.
+
+
+## Automatic incoming Filters on the fixture owner
+
+`startSync()` and the existing sync-area listener receive supported incoming
+Filters before their ordinary outbound attempt. Startup checks consent, schema,
+steady history, sync-on state, and interim markers before subscribing. Each event
+captures one sorted list of own canonical local Filter addresses inside the same
+lane. It calls the shared private receiver serially, once per captured address.
+Each receiver reads fresh bodies and authority. The list supplies addresses only.
+Remote-only documents, chunks, unknown names, and opaque pushed entries create no
+targets. A new local address waits for another independent event.
+
+Adopted, idle, and target-specific unavailable results allow the next address.
+Authority or history unavailability ends the pass. At most one local-only read
+can observe off after authority loss. Rejected reads, rejected local sets, and
+uncertain readbacks stop automatic lifetime and cancel its listener and ticket.
+The callback uses the existing `rejected` variant with the original error, or
+`unavailable` for authority or readback uncertainty. It emits no adopted result.
+Successful explicit manual calls never clear a stopped lifetime.
+
+After a completed incoming pass, the unchanged outbound attempt rereads whole
+local and sync snapshots. It can send an independent pending Q after adopting F.
+An unsupported divergent document still blocks the complete batch. No partial
+send bypasses that document. An `idle` callback describes outbound work even
+when an incoming Filter changed locally. Adoption does not change sync status.
+
+Incoming adoption changes no edit stamp, quiet deadline, invocation deadline,
+or outbound ticket. The subsequent attempt owns the ticket's existing terminal
+cancellation or deferral. Changed user commits alone set the two-second quiet
+period. Every actual sync set retains the five-second invocation spacing and
+the fresh owner's initial barrier. Timer callbacks remain outbound-only. They
+consume one ticket, perform no incoming scan, and never rearm themselves.
+
+The captured address count bounds each pass. An adopted target uses four local
+reads, three sync reads, and one local set. Enumeration adds one local read.
+The ordinary outbound attempt adds at most four reads and two sets. This is a
+finite IO bound, not a native performance measurement or production approval.
+The receiver's last-read foreign-writer limit and all manual exclusions remain.
+There is no all-pass transaction, rollback, automatic retry, new conflict policy,
+account claim, join, reset, tombstone execution, cleanup, or production activation.
+
+Source tests, saved minified browser-target core execution in fresh Node VMs,
+and the unchanged saved fixture worker exercise this composition with synthetic
+storage and clocks. Native verification is waived and unproven. These checks do
+not prove native durability, account transport, interrupted IO, Firefox, minimum
+versions, or full Store notifications.

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { execFileSync } from "node:child_process"
+import { execFileSync, spawnSync } from "node:child_process"
 import { readFile } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
 import { isAccountKey, isPlaylistId, type AccountKey, type PlaylistId } from "../../shared/model"
@@ -703,7 +703,7 @@ test("actual browser artifact rejects six observable admission defects", async (
       source: planner.replace('if (remote.kind === "newer-version") continue',
         'if (remote.kind === "newer-version") { documents.set(name, {key, name, gen: raw.gen, document:raw}); continue }') },
     { name: "stale-full-read", assertion: "fresh achieved state overrides stale preliminary changed value", path: writerPath,
-      source: writer.replace('records = await deps.local.get(null)', 'const stale = records[filterKey]; records = { ...await deps.local.get(null), [filterKey]: stale }') },
+      source: writer.replace('          records = await deps.local.get(null)', 'const stale = records[filterKey]; records = { ...await deps.local.get(null), [filterKey]: stale }') },
     { name: "noop-newer-bypass", assertion: "achieved intent checks addressed newer remote", path: writerPath,
       source: writer.replace('if (!device.syncOn) return ok', 'return ok') },
     { name: "superseded-chunks", assertion: "superseded pending chunks never enter projection", path: plannerPath,
@@ -1043,7 +1043,7 @@ test("actual browser artifact rejects five observable outbound defects", async (
     const bytes = await build.outputs[0]!.text()
     const script = `(async()=>{const module={exports:{}};${bytes};try {await (${flushAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");return {caught:false}} catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0]}}})()`
     const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
-    expect(observed).toEqual({ caught: true, assertion: fault.assertion })
+    expect({ name: fault.name, ...observed }).toEqual({ name: fault.name, caught: true, assertion: fault.assertion })
   }
 })
 
@@ -1363,7 +1363,7 @@ test("actual browser artifact rejects six observable event driver defects", asyn
     const bytes = await build.outputs[0]!.text()
     const script = `(async()=>{const module={exports:{}};${bytes};try {await (${driverAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");return {caught:false}}catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0]}}})()`
     const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
-    expect(observed).toEqual({ caught: true, assertion: fault.assertion })
+    expect({ name: fault.name, ...observed }).toEqual({ name: fault.name, caught: true, assertion: fault.assertion })
   }
 })
 
@@ -1712,7 +1712,7 @@ test("receiver wrong alternatives fail at their intended observable assertions",
     { name: "target-pending-overwrite", assertion: "target pending remains unavailable", source: original.replace('if (!Object.hasOwn(history.pushed, name) || history.pushed[name] !== initial.filter.gen)', 'if (false)') },
     { name: "equal-stamp-tie", assertion: "equal lower same-generation conflict", source: original.replace('incoming.at <= initial.filter.at', 'incoming.at < initial.filter.at') },
     { name: "stale-metadata", assertion: "remote observation stage 2created", source: original.replace('if (!sameSyncJson(metadata, preflight.metadata))', 'if (false)') },
-    { name: "outside-lane", assertion: "receive holds owner lane L0", source: original.replace('return enqueue(async () => {\n        try {\n          const result = await receive(key)', 'return (async () => {\n        try {\n          const result = await receive(key)').replace('} catch (error) { deactivate("stopped"); throw error }\n      })\n    },\n    flushSync()', '} catch (error) { deactivate("stopped"); throw error }\n      })()\n    },\n    flushSync()') },
+    { name: "outside-lane", assertion: "receive holds owner lane L0", source: original.replace('return enqueue(() => receiveAttempt(key))', 'return receiveAttempt(key)') },
     { name: "unchanged-echo", assertion: "unchanged adopted filter never echoes", source: original }
   ]
   for (const fault of cases) {
@@ -1726,6 +1726,462 @@ test("receiver wrong alternatives fail at their intended observable assertions",
     const bytes = await build.outputs[0]!.text()
     const script = `(async()=>{const module={exports:{}};${bytes};try{await (${receiveAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");return {caught:false}}catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0]}}})()`
     const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
-    expect(observed).toEqual({ caught: true, assertion: fault.assertion })
+    expect({ name: fault.name, ...observed }).toEqual({ name: fault.name, caught: true, assertion: fault.assertion })
+  }
+})
+
+async function automaticIncomingAcceptance(create: typeof createLocalFilterWriter, acct: AccountKey, playlist: PlaylistId) {
+  let assertions = 0
+  const cases: string[] = []
+  const stable = (value: unknown): string => JSON.stringify(value, (_, item: unknown) => item && typeof item === "object" && !Array.isArray(item)
+    ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b))) : item)
+  function equal(actual: unknown, expected: unknown, label: string) {
+    assertions++
+    if (stable(actual) !== stable(expected)) throw Error(label + ": " + stable(actual) + " != " + stable(expected))
+  }
+  const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
+  const F = "doc:filter:AAAAAAAAAAAAAAAA:PL_P", Q = "doc:filter:AAAAAAAAAAAAAAAA:PL_Q", S = "doc:setup:AAAAAAAAAAAAAAAA"
+  const B = F.replace("doc:", "s:"), C = Q.replace("doc:", "s:")
+  const key = { kind: "filter", acct, playlist } as const
+  const local = JSON.parse('{"schema":1,"device":{"id":"device-a","consent":{"v":1,"at":1},"syncOn":true},"sync":{"joined":"h","pushed":{"doc:filter:AAAAAAAAAAAAAAAA:PL_P":"f0","doc:setup:AAAAAAAAAAAAAAAA":"s0","doc:filter:AAAAAAAAAAAAAAAA:PL_Q":"q0"},"status":"ok","editedSinceOff":false,"extra":{"keep":true}},"doc:setup:AAAAAAAAAAAAAAAA":{"v":1,"gen":"s0","at":1,"by":"device-a","data":{"autoAdd":[{"pl":"PL_P","takes":"both"},{"pl":"PL_Q","takes":"videos"}]}},"doc:filter:AAAAAAAAAAAAAAAA:PL_P":{"v":1,"gen":"f0","at":10,"by":"device-a","data":{"mode":"deny","on":true,"channels":[]},"oldOnly":"discard"},"doc:filter:AAAAAAAAAAAAAAAA:PL_Q":{"v":1,"gen":"q1","at":15,"by":"device-a","data":{"on":true},"pending":{"keep":true}}}')
+  const remote = JSON.parse('{"s:meta":{"v":1,"id":"h","created":1,"extension":{"keep":true}},"s:setup:AAAAAAAAAAAAAAAA":{"v":1,"gen":"s0","at":1,"by":"device-a","data":{"autoAdd":[{"pl":"PL_P","takes":"both"},{"pl":"PL_Q","takes":"videos"}]}},"s:filter:AAAAAAAAAAAAAAAA:PL_P":{"v":1,"gen":"f1","at":20,"by":"device-b","envelope":{"future":true},"__proto__":{"keep":true},"toJSON":"inert","data":{"mode":"allow","on":false,"channels":[["UCaaaaaaaaaaaaaaaaaaaaaa","Title",null,{"future":1}]],"future":{"keep":[null,1]}}},"s:filter:AAAAAAAAAAAAAAAA:PL_Q":{"v":1,"gen":"q0","at":5,"by":"device-a","data":{}}}')
+  const f0 = local[F], f1 = remote[B], q0 = remote[C], q1 = local[Q]
+  const expectedSet = { [F]: f1, sync: { ...local.sync, pushed: { ...local.sync.pushed, [F]: "f1" } } }
+  const settle = async () => { for (let i = 0; i < 700; i++) await Promise.resolve() }
+  function harness(records = clone(local), synced = clone(remote)) {
+    let time = 0, generation = 0, wall = 0, clock = 0, serial = 0, lr = 0, rr = 0, ls = 0
+    const sets: unknown[] = [], writes: unknown[] = [], invocations: number[] = [], reads: string[] = []
+    const results: Parameters<Parameters<typeof create>[0]["onSyncResult"]>[0][] = []
+    const listeners = new Set<() => void>(), timers = new Map<number, { due: number; run: () => void }>()
+    const hooks = { local: async (_n: number) => {}, remote: async (_n: number) => {}, set: async (_n: number, _items: unknown) => {}, afterSet: async (_n: number) => {}, snapshot: (value: typeof remote) => value }
+    const writer = create({ local: {
+      async get() { reads.push("L" + ++lr); await hooks.local(lr); return clone(records) },
+      async set(items) { const n = ++ls; sets.push(clone(items)); await hooks.set(n, items); Object.assign(records, clone(items)); await hooks.afterSet(n) }
+    }, sync: {
+      async get() { reads.push("R" + ++rr); await hooks.remote(rr); return hooks.snapshot(clone(synced)) },
+      async set(items) { invocations.push(time); writes.push(clone(items)); Object.assign(synced, clone(items)); for (const run of listeners) run() },
+      subscribe(run) { listeners.add(run); return () => { listeners.delete(run) } }
+    }, now: () => { wall++; return 100 + time }, generation: () => { generation++; return generation === 1 ? "f2" : "q2" },
+    syncClock: { now: () => { clock++; return time }, after(ms, run) { const id = ++serial; timers.set(id, { due: time + ms, run }); return () => { timers.delete(id) } } },
+    onSyncResult: result => { results.push(result) } })
+    return { writer, records, synced, sets, writes, invocations, results, listeners, timers, hooks, reads,
+      counts: () => ({ generation, wall, clock }), move: (at: number) => { time = at },
+      event: async () => { for (const run of listeners) run(); await settle() },
+      fire: async (at: number) => { time = at; for (const [id, timer] of [...timers]) if (timer.due <= time) { timers.delete(id); timer.run() } await settle() },
+      change: (mode: "deny" | "allow", on: boolean, confirm?: string) => writer.change({ kind: "ui", windowId: 1, incognito: false },
+        confirm === undefined ? { acct, playlist, desired: { mode, on }, clearListedChannels: "not-confirmed" }
+          : { acct, playlist, desired: { mode, on }, clearListedChannels: "confirmed", expectedGeneration: confirm }) }
+  }
+  const first = harness()
+  equal(first.reads, [], "construction has no IO")
+  await first.writer.startSync()
+  equal(first.writes, [], "no sync invocation before five-second barrier")
+  equal(first.sets, [expectedSet], "automatic exact raw adoption before outbound")
+  equal(first.reads, ["L1", "L2", "L3", "R1", "L4", "R2", "L5", "L6", "R3", "L7", "R4", "L8", "R5"], "incoming precedes outbound observations")
+  equal(first.records, { ...local, ...expectedSet }, "automatic whole replacement and independent Q acknowledgement")
+  equal(first.synced, remote, "automatic receive leaves remote exact")
+  equal(first.results, [{ kind: "deferred", notBefore: 5000 }], "automatic primary callback")
+  equal(first.counts().generation, 0, "incoming creates no generation")
+  equal(first.counts().wall, 0, "incoming creates no edit stamp")
+  equal([...first.timers.values()].map(t => t.due), [5000], "incoming does not reset quiet")
+  await first.fire(4999); equal(first.writes, [], "five-second pacing before invocation")
+  await first.fire(5000)
+  equal(first.writes, [{ [C]: q1 }], "Q-only send without F echo")
+  equal(first.invocations, [5000], "actual primary invocation time")
+  equal(first.records.sync.pushed, { [F]: "f1", [S]: "s0", [Q]: "q1" }, "exact Q acknowledgement after readback")
+  equal(first.results[1], { kind: "pushed", sent: [{ key: { kind: "filter", acct, playlist: "PL_Q" }, name: Q, gen: "q1", document: q1 }], repaired: [] }, "ordinary pushed result names exact Q")
+  equal(first.results.at(-1), { kind: "idle" }, "own-write event idle")
+  await first.event(); equal(first.writes.length, 1, "repeat event no echo")
+  equal(first.timers.size, 0, "terminal attempt cancels ticket")
+  const fresh = harness(clone(first.records), clone(first.synced)); await fresh.writer.startSync()
+  equal(fresh.results, [{ kind: "idle" }], "fresh owner final snapshot idle"); equal(fresh.writes, [], "fresh owner no echo")
+  await fresh.writer.dispose(); await first.writer.dispose(); cases.push("literal-start-Q-send-own-event-fresh-owner")
+  {
+    const h = harness(), omitted = { ...clone(f1), data: { future: true } }
+    h.synced[B] = omitted
+    Object.defineProperty(h.records.sync, "__proto__", { value: { keep: true }, enumerable: true, configurable: true })
+    h.records.sync.toJSON = "inert"
+    const rawHistory = clone(h.records.sync)
+    await h.writer.startSync()
+    equal(h.records[F], omitted, "automatic raw omissions preserved")
+    equal(h.sets, [{ [F]: omitted, sync: { ...rawHistory, pushed: { ...rawHistory.pushed, [F]: "f1" } } }], "automatic own special history fields retained")
+    await h.writer.dispose(); cases.push("raw-omissions-special-history")
+  }
+  {
+    const h = harness(); h.records[Q] = clone(q0); await h.writer.startSync()
+    equal(h.sets, [expectedSet], "incoming-only exact adoption"); equal(h.results, [{ kind: "idle" }], "incoming-only callback is outbound idle")
+    equal(h.timers.size, 0, "incoming-only no timer"); await h.writer.dispose(); cases.push("incoming-only")
+  }
+  {
+    const h = harness(); h.synced[B] = clone(f0); await h.writer.startSync()
+    const ticket = [...h.timers][0], before = h.counts()
+    h.move(1000); h.synced[B] = clone(f1)
+    let receiverTicket: unknown, receiverCounts: unknown
+    h.hooks.set = async () => { receiverTicket = [...h.timers.values()][0]; receiverCounts = h.counts() }
+    await h.event()
+    equal(receiverTicket === ticket?.[1], true, "receiver retains ticket identity")
+    equal(receiverCounts, before, "receiver changes no scheduling clocks")
+    equal(h.records[F], f1, "actual area event adopts")
+    equal([...h.timers.values()].map(t => t.due), [5000], "area event preserves original deadline")
+    h.hooks.set = async () => {}; await h.fire(5000); equal(h.writes, [{ [C]: q1 }], "event sends independent Q only")
+    await h.writer.dispose(); cases.push("event-ticket-identity-deadline")
+  }
+  {
+    const h = harness(); h.synced[B] = clone(f0); await h.writer.startSync()
+    let release!: () => void, entered = false
+    const gate = new Promise<void>(done => { release = done })
+    let once = true
+    h.hooks.local = async () => { if (once) { once = false; entered = true; await gate } }
+    const held = h.writer.flushSync(); await settle(); equal(entered, true, "burst owns lane")
+    for (const [gen, at] of [["f1", 20], ["f2", 30], ["f3", 40]] as const) { h.synced[B] = { ...clone(f1), gen, at }; void h.event() }
+    release(); await held; await settle()
+    equal(h.records[F], { ...f1, gen: "f3", at: 40 }, "burst reads current complete snapshot")
+    equal(h.sets.length, 1, "burst never echoes intermediate F")
+    await h.fire(5000); equal(h.writes, [{ [C]: q1 }], "burst one Q set"); await h.writer.dispose(); cases.push("burst-current-snapshot")
+  }
+  const addR = (h: ReturnType<typeof harness>) => {
+    const R = "doc:filter:AAAAAAAAAAAAAAAA:PL_R"
+    const r0 = { v: 1, gen: "r0", at: 10, by: "device-a", data: {} }, r1 = { v: 1, gen: "r1", at: 30, by: "device-b", data: { on: true }, extra: "R" }
+    h.records[S].data.autoAdd.push({ pl: "PL_R", takes: "both" }); h.synced[S.replace("doc:", "s:")] = clone(h.records[S])
+    h.records[R] = r0; h.records.sync.pushed[R] = "r0"; h.synced[R.replace("doc:", "s:")] = r1
+    return { R, r0, r1 }
+  }
+  {
+    const h = harness(), { R, r1 } = addR(h)
+    const T = "doc:setup:BBBBBBBBBBBBBBBB", U = "doc:filter:BBBBBBBBBBBBBBBB:PL_U"
+    const u0 = { v: 1, gen: "u0", at: 1, by: "device-a", data: {} }, u1 = { v: 1, gen: "u1", at: 50, by: "device-b", data: { on: true } }
+    h.records[T] = { v: 1, gen: "t0", at: 1, by: "device-a", data: { autoAdd: [{ pl: "PL_U", takes: "videos" }] } }
+    h.records[U] = u0; Object.assign(h.records.sync.pushed, { [T]: "t0", [U]: "u0" })
+    h.synced[T.replace("doc:", "s:")] = clone(h.records[T]); h.synced[U.replace("doc:", "s:")] = u1
+    await h.writer.startSync()
+    equal(h.sets, [
+      { [F]: f1, sync: { ...h.records.sync, pushed: { ...local.sync.pushed, [R]: "r0", [T]: "t0", [U]: "u0", [F]: "f1" } } },
+      { [R]: r1, sync: { ...h.records.sync, pushed: { ...local.sync.pushed, [R]: "r1", [T]: "t0", [U]: "u0", [F]: "f1" } } },
+      { [U]: u1, sync: h.records.sync }
+    ], "serial targets retain current history across accounts")
+    equal(h.records[Q], q1, "serial adoption keeps pending Q"); await h.fire(5000); equal(h.writes, [{ [C]: q1 }], "serial whole flush Q only")
+    await h.writer.dispose(); cases.push("serial-F-R-second-account")
+  }
+  for (const fault of ["pending", "equal", "lower", "same-generation", "future", "tombstone", "null", "missing", "incomplete", "missing-setup", "unselected", "absent-local", "local-future", "local-tombstone", "local-null", "local-malformed"]) {
+    const h = harness(), { R, r1 } = addR(h)
+    const excluded: Record<string, unknown> = {}
+    for (const pl of ["PL_A", "PL_PP", "PL_Z"]) {
+      const name = `doc:filter:${acct}:${pl}`, base = name.replace("doc:", "s:")
+      const old = { v: 1, gen: pl + "0", at: 10, by: "device-a", data: {} }
+      h.records[S].data.autoAdd.push({ pl, takes: "both" }); h.records[name] = clone(old); h.records.sync.pushed[name] = old.gen
+      h.synced[base] = { ...old, gen: pl + "1", at: 20, data: { on: true } }
+      if (fault === "pending") h.records[name].gen = pl + "pending"
+      if (fault === "equal") h.synced[base].at = 10
+      if (fault === "lower") h.synced[base].at = 5
+      if (fault === "same-generation") h.synced[base].gen = old.gen
+      if (fault === "future") h.synced[base].v = 2
+      if (fault === "local-future") h.records[name].v = 2
+      if (fault === "local-tombstone") h.records[name] = { v: 1, gen: old.gen, at: 10, by: "device-a", deleted: true }
+      if (fault === "local-null") h.records[name] = null
+      if (fault === "local-malformed") h.records[name] = { v: 1, data: {} }
+      if (fault === "tombstone") h.synced[base] = { v: 1, gen: pl + "1", at: 20, by: "device-b", deleted: true }
+      if (fault === "null") h.synced[base] = null
+      if (fault === "missing") delete h.synced[base]
+      if (fault === "incomplete") h.synced[base] = { v: 1, gen: pl + "1", at: 20, by: "device-b", n: 2 }
+      if (fault === "unselected") h.records[S].data.autoAdd = h.records[S].data.autoAdd.filter((x: { pl: string }) => x.pl !== pl)
+      if (fault === "absent-local") { delete h.records[name]; delete h.records.sync.pushed[name] }
+      if (fault === "missing-setup") {
+        const other = name.replace(acct, "CCCCCCCCCCCCCCCC"); h.records[other] = h.records[name]; delete h.records[name]; delete h.records.sync.pushed[name]; h.records.sync.pushed[other] = old.gen
+        h.synced[other.replace("doc:", "s:")] = h.synced[base]; delete h.synced[base]; excluded[other] = clone(h.records[other])
+      } else if (Object.hasOwn(h.records, name)) excluded[name] = clone(h.records[name])
+    }
+    h.synced[S.replace("doc:", "s:")] = clone(h.records[S])
+    await h.writer.startSync()
+    equal(h.records[F], f1, "exclusions continue to F " + fault); equal(h.records[R], r1, "exclusions continue to R " + fault)
+    for (const [name, raw] of Object.entries(excluded)) equal(h.records[name], raw, "excluded target exact " + fault + name)
+    if (fault === "absent-local") equal(Object.keys(h.records).filter(n => /PL_(A|PP|Z)$/.test(n)), [], "absent local never created")
+    await h.writer.dispose(); cases.push("exclusions-" + fault)
+  }
+  for (const fault of ["pending", "disappeared", "future", "equal-divergence"]) {
+    const h = harness()
+    if (fault === "disappeared") delete h.synced[C]
+    if (fault === "future") h.synced[C] = { ...q0, v: 2, gen: "protected" }
+    if (fault === "equal-divergence") {
+      const V = "doc:filter:AAAAAAAAAAAAAAAA:PL_V", v0 = { v: 1, gen: "v0", at: 10, by: "device-a", data: {} }
+      h.records[V] = v0; h.records.sync.pushed[V] = "v0"; h.records[S].data.autoAdd.push({ pl: "PL_V", takes: "both" })
+      h.synced[S.replace("doc:", "s:")] = clone(h.records[S]); h.synced[V.replace("doc:", "s:")] = { ...v0, gen: "v1", data: { on: true } }
+    }
+    await h.writer.startSync(); equal(h.records[F], f1, "independent F adoption " + fault)
+    await h.fire(5000)
+    equal(h.writes, fault === "pending" || fault === "disappeared" ? [{ [C]: q1 }] : [], "whole planner independent Q outcome " + fault)
+    if (fault === "equal-divergence") { equal(h.results.at(-1), { kind: "unavailable" }, "global conflict no partial send"); equal(h.timers.size, 0, "global unavailable cancels ticket") }
+    if (fault === "future") equal(h.records.sync.pushed[Q], "q0", "protected Q not acknowledged")
+    await h.writer.dispose(); cases.push("independent-Q-" + fault)
+  }
+  const chunk0 = '{"v":1,"gen":"f1","at":20,"by":"device-b","data":'
+  const chunk1 = '{"mode":"allow","on":false,"channels":[]},"chunkExtra":true}'
+  for (const incomplete of [false, true]) {
+    const h = harness(); h.synced[B] = { v: 1, gen: "f1", at: 20, by: "device-b", n: 2 }
+    h.synced[B + "@f1.0"] = chunk0; if (!incomplete) h.synced[B + "@f1.1"] = chunk1
+    h.synced[B + "@old.0"] = "retained"; h.synced.unknown = { keep: true }; const before = clone(h.synced)
+    await h.writer.startSync(); equal(h.records[F], incomplete ? f0 : JSON.parse(chunk0 + chunk1), "complete chunk assembly " + incomplete)
+    equal(h.synced, before, "chunks and unknown occupancy retained")
+    equal(h.timers.size, incomplete ? 0 : 1, "incomplete assembly never retries on timer")
+    if (incomplete) { h.synced[B + "@f1.1"] = chunk1; await h.event(); equal(h.records[F], JSON.parse(chunk0 + chunk1), "independent chunk arrival adopts") }
+    await h.writer.dispose(); cases.push("chunks-" + incomplete)
+  }
+  for (const fault of ["opaque-pushed", "full", "orphan", "malformed"]) {
+    const h = harness()
+    if (fault === "opaque-pushed") h.records.sync.pushed.opaque = "opaque-generation"
+    if (fault === "full") h.synced.occupancy = "x".repeat(99000)
+    if (fault === "orphan") h.synced["s:filter:BBBBBBBBBBBBBBBB:PL_orphan@x.0"] = "unknown"
+    if (fault === "malformed") h.hooks.snapshot = value => ({ ...value, bad: undefined })
+    if (fault !== "malformed") {
+      await h.writer.startSync(); equal(h.records[F], f1, "occupancy does not own adoption " + fault)
+      if (fault === "opaque-pushed") equal(h.records.sync.pushed.opaque, "opaque-generation", "opaque pushed retained")
+      if (fault === "full") equal(h.results.at(-1), { kind: "blocked" }, "full occupancy permits adoption but blocks outbound")
+      equal(Object.hasOwn(h.records, "doc:filter:BBBBBBBBBBBBBBBB:PL_orphan"), false, "remote-only address never enumerates")
+    }
+    if (fault === "malformed") {
+      await h.writer.startSync(); equal(h.records[F], f0, "malformed physical JSON remains unavailable")
+      equal(h.results.at(-1), { kind: "unavailable" }, "malformed physical diagnostic"); equal(h.sets, [], "malformed physical no adoption")
+    }
+    await h.writer.dispose(); cases.push("raw-" + fault)
+  }
+  {
+    const h = harness(), added = addR(h)
+    delete h.records[added.R]; delete h.records.sync.pushed[added.R]
+    h.hooks.remote = async n => { if (n === 1) h.records[added.R] = clone(added.r0) }
+    await h.writer.startSync()
+    equal(h.records[added.R], added.r0, "enumeration never rescans addresses during awaits")
+    equal(h.sets.length, 1, "each captured address receives once")
+    equal(h.results.at(-1), { kind: "unavailable" }, "new divergent address remains in complete outbound plan")
+    h.records.sync.pushed[added.R] = "r0"
+    await h.event(); equal(h.records[added.R], added.r1, "new address waits for independent event")
+    await h.writer.dispose(); cases.push("finite-enumeration")
+  }
+  for (const field of ["device", "history", "setup", "target"]) for (const n of [4, 5, 6]) {
+    const h = harness()
+    h.hooks.local = async count => { if (count === n) {
+      if (field === "device") h.records.device.extra = "changed"
+      if (field === "history") h.records.sync.extra = { changed: true }
+      if (field === "setup") h.records[S].extra = "changed"
+      if (field === "target") h.records[F].extra = "changed"
+    } }
+    await h.writer.startSync()
+    equal(h.results.at(-1), { kind: "unavailable" }, "local boundary diagnostic " + field + n)
+    equal(h.sets.length, n === 6 ? 1 : 0, "local boundary commit stage " + field + n)
+    equal(h.writes, [], "local stale no outbound " + field + n)
+    if (n === 6) equal(h.listeners.size, 0, "uncertain local readback stops lifetime")
+    await h.writer.dispose(); cases.push("local-mutation-" + field + n)
+  }
+  for (const field of ["id", "created", "additive", "generation", "body", "chunks"]) for (const n of [1, 2, 3]) {
+    const h = harness()
+    h.hooks.remote = async count => { if (count === n) {
+      if (field === "id") h.synced["s:meta"].id = "other"
+      if (field === "created") h.synced["s:meta"].created = 2
+      if (field === "additive") h.synced["s:meta"].extra = true
+      if (field === "generation") h.synced[B].gen = "fChanged"
+      if (field === "body") h.synced[B].data.future = "changed"
+      if (field === "chunks") h.synced[B] = { v: 1, gen: "f1", at: 20, by: "device-b", n: 2 }
+    } }
+    await h.writer.startSync()
+    equal(h.sets.length, n === 3 || n === 1 && !["id", "chunks"].includes(field) ? 1 : 0, "remote mutation commit boundary " + field + n)
+    if (n === 3) { equal(h.listeners.size, 0, "remote readback uncertainty stops"); equal(h.results.at(-1), { kind: "unavailable" }, "remote readback diagnostic") }
+    if (n > 1 || field === "id" || field === "chunks") equal(h.writes, [], "stale remote never partially sends")
+    await h.writer.dispose(); cases.push("remote-mutation-" + field + n)
+  }
+  {
+    const h = harness(), { R, r0 } = addR(h)
+    h.hooks.local = async n => { if (n === 9) h.records[R].extra = "changed" }
+    await h.writer.startSync(); equal(h.records[F], f1, "prior F stays committed when R stale")
+    equal(h.records[R], { ...r0, extra: "changed" }, "later stale R never rolled back")
+    equal(h.sets.length, 1, "no all-pass rollback or retry"); await h.writer.dispose(); cases.push("later-target-stale")
+  }
+  for (const action of ["off", "dispose"]) {
+    const h = harness(); let release!: () => void, entered = false
+    const gate = new Promise<void>(done => { release = done })
+    h.hooks.local = async n => { if (n === 1) { entered = true; await gate } }
+    const start = h.writer.startSync(); await settle(); equal(entered, true, "startup authority await entered")
+    let disposed: Promise<void> | undefined
+    if (action === "dispose") disposed = h.writer.dispose()
+    else { h.records.device.syncOn = false; h.records.sync.status = "off" }
+    release(); await start; await disposed
+    equal(h.listeners.size, 0, "startup await loss before subscription " + action)
+    equal(h.reads.filter(x => x.startsWith("R")), [], "startup await loss zero sync access " + action)
+    await h.writer.dispose(); cases.push("startup-held-" + action)
+  }
+  for (const fault of ["authority", "history"]) {
+    const h = harness(); addR(h)
+    if (fault === "authority") h.hooks.local = async n => { if (n === 4) h.records.device.extra = "changed" }
+    else h.hooks.remote = async n => { if (n === 2) h.synced["s:meta"].created = 2 }
+    await h.writer.startSync()
+    equal(h.sets, [], "common loss aborts entire pass " + fault)
+    equal(h.reads.filter(x => x.startsWith("R")), fault === "authority" ? ["R1"] : ["R1", "R2"], "common loss begins no later target or outbound " + fault)
+    equal(h.reads.filter(x => x.startsWith("L")).length, fault === "authority" ? 5 : 4, "common loss bounded local observation " + fault)
+    equal(h.listeners.size, 1, "deterministic unavailable does not stop lifetime " + fault)
+    await h.writer.dispose(); cases.push("common-abort-" + fault)
+  }
+  const boundaries = ["enumeration", "L0", "R0", "L1", "R1", "L2", "set", "L3", "R2"]
+  for (const stage of boundaries) {
+    const h = harness(); h.synced[B] = clone(f0); await h.writer.startSync(); h.synced[B] = clone(f1)
+    const staleTimer = [...h.timers.values()][0]!
+    let entered = false, release!: () => void, lr = 0, rr = 0
+    const gate = new Promise<void>(done => { release = done })
+    const hold = async () => { entered = true; await gate }
+    h.hooks.local = async () => { if (["enumeration", "L0", "L1", "L2", "L3"][lr++] === stage) await hold() }
+    h.hooks.remote = async () => { if (["R0", "R1", "R2"][rr++] === stage) await hold() }
+    h.hooks.set = async () => { if (stage === "set") await hold() }
+    void h.event(); await settle(); equal(entered, true, "automatic held boundary entered " + stage)
+    const before = clone(h.reads)
+    const destructive = h.change("deny", true, "f0"), manual = h.writer.receiveSyncFilter(key), flush = h.writer.flushSync(), start = h.writer.startSync()
+    const edit = h.change("allow", true)
+    const qAddress = JSON.parse('{"acct":"AAAAAAAAAAAAAAAA","playlist":"PL_Q"}')
+    const editQ = h.writer.change({ kind: "ui", windowId: 1, incognito: false }, { ...qAddress, desired: { mode: "deny", on: false }, clearListedChannels: "not-confirmed" })
+    void h.event(); h.move(5000); staleTimer.run()
+    await settle(); equal(h.reads, before, "automatic held lane excludes all queued IO " + stage)
+    release(); await destructive; await manual; await flush; await start; await edit; await editQ; await settle()
+    equal(await destructive, { kind: "result", result: { refused: "invalid" } }, "stale f0 confirmation after f1 " + stage)
+    equal(h.records[F].gen, "f2", "queued edit gets own generation " + stage)
+    equal(h.records.sync.pushed[F], "f1", "receive never acknowledges queued f2 " + stage)
+    equal(h.writes, [{ [C]: q1 }], "held Q captures exact body " + stage)
+    equal(h.records.sync.pushed[Q], "q1", "held Q exact readback acknowledgement " + stage)
+    equal(h.records[Q].gen, "q2", "queued Q edit remains unacknowledged " + stage)
+    await h.writer.dispose(); cases.push("held-" + stage)
+  }
+  for (const stage of boundaries) for (const action of ["off", "dispose"]) {
+    const h = harness(); let entered = false, release!: () => void
+    const gate = new Promise<void>(done => { release = done })
+    const hold = async () => { entered = true; await gate }
+    h.hooks.local = async n => { if ({ enumeration: 2, L0: 3, L1: 4, L2: 5, L3: 6 }[stage] === n) await hold() }
+    h.hooks.remote = async n => { if ({ R0: 1, R1: 2, R2: 3 }[stage] === n) await hold() }
+    h.hooks.set = async () => { if (stage === "set") await hold() }
+    const start = h.writer.startSync(); await settle(); equal(entered, true, "lifetime held boundary entered " + action + stage)
+    let disposed: Promise<void> | undefined, drained = false
+    if (action === "dispose") {
+      disposed = h.writer.dispose(); void disposed.then(() => { drained = true })
+      await settle(); equal(drained, false, "dispose waits for held incoming IO " + stage)
+    }
+    else { h.records.device.syncOn = false; h.records.sync.status = "off" }
+    const remoteReads = h.reads.filter(x => x.startsWith("R")).length
+    release(); await start; await disposed
+    if (action === "dispose") equal(drained, true, "dispose drains accepted incoming IO " + stage)
+    equal(h.writes, [], "lifetime loss prevents outbound " + action + stage)
+    equal(h.listeners.size, 0, "lifetime loss removes listener " + action + stage)
+    equal(h.timers.size, 0, "lifetime loss cancels ticket " + action + stage)
+    equal(h.reads.filter(x => x.startsWith("R")).length, remoteReads, "no new sync access after observed loss " + action + stage)
+    if (action === "off" && stage === "R2") equal(h.records[F], f1, "last R2 retains finite foreign-writer limit")
+    if (action === "dispose") { let rejected = false; try { await h.writer.startSync() } catch { rejected = true }; equal(rejected, true, "disposed rejects new public work") }
+    await h.writer.dispose(); cases.push("lifetime-" + action + stage)
+  }
+  for (const stage of ["enumeration", "L0", "R0", "L1", "R1", "L2", "set-before", "set-after", "L3", "R2", "torn", "contradict"]) {
+    const h = harness(); h.synced[B] = clone(f0); await h.writer.startSync(); h.synced[B] = clone(f1)
+    const { R, r0 } = addR(h), failureHistory = clone(h.records.sync)
+    const stale = [...h.timers.values()][0]!, marker = Error("sentinel-" + stage)
+    let lr = 0, rr = 0
+    h.hooks.local = async () => { if (["enumeration", "L0", "L1", "L2", "L3"][lr++] === stage) throw marker }
+    h.hooks.remote = async () => { if (["R0", "R1", "R2"][rr++] === stage) throw marker }
+    h.hooks.set = async () => { if (stage === "set-before") throw marker }
+    h.hooks.afterSet = async () => { if (stage === "set-after") throw marker; if (stage === "torn") h.records.sync = clone(failureHistory); if (stage === "contradict") h.records[F] = clone(f0) }
+    await h.event()
+    const result = h.results.at(-1)
+    equal(result?.kind, ["torn", "contradict"].includes(stage) ? "unavailable" : "rejected", "automatic failure diagnostic " + stage)
+    if (result?.kind === "rejected") equal(result.error === marker, true, "automatic retains original Error " + stage)
+    equal(h.listeners.size, 0, "opaque failure stops listener " + stage); equal(h.timers.size, 0, "opaque failure cancels ticket " + stage)
+    equal(h.writes, [], "failure stops before outbound " + stage)
+    equal(h.records[R], r0, "failure skips remaining supported target " + stage)
+    h.hooks.local = async () => {}; h.hooks.remote = async () => {}; h.hooks.set = async () => {}; h.hooks.afterSet = async () => {}
+    await h.writer.receiveSyncFilter(key)
+    await h.writer.receiveSyncFilter({ kind: "filter", ...JSON.parse('{"acct":"AAAAAAAAAAAAAAAA","playlist":"PL_R"}') })
+    const before = h.reads.length, resultCount = h.results.length
+    await h.writer.startSync(); await h.event(); stale.run(); await settle()
+    equal(h.reads.length, before, "successful manual retry never restarts stopped lifetime " + stage)
+    equal(h.results.length, resultCount, "stopped lifetime emits no new automatic result " + stage)
+    equal(await h.writer.flushSync(), { kind: "deferred", notBefore: 5000 }, "stopped manual flush remains paced " + stage)
+    await h.change("allow", true); await h.event(); stale.run(); await settle()
+    equal(h.timers.size, 0, "later edit cannot restart automatic work " + stage)
+    equal(h.results.length, resultCount, "later edit emits no automatic callback " + stage)
+    await h.writer.dispose(); cases.push("failure-" + stage)
+  }
+  for (const guard of ["off", "consent", "upgrade", "schema", "history", "account:synthetic", "savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"]) {
+    const h = harness()
+    if (guard === "off") { h.records.device.syncOn = false; h.records.sync.status = "off" }
+    else if (guard === "consent") h.records.device.consent = null
+    else if (guard === "upgrade") h.records.device.upgradeNote = { state: "pending", from: "1.4.5" }
+    else if (guard === "schema") h.records.schema = 2
+    else if (guard === "history") h.records.sync.joined = null
+    else h.records[guard] = null
+    await h.writer.startSync(); equal(h.listeners.size, 0, "startup guard precedes subscription " + guard)
+    equal(h.reads.filter(n => n.startsWith("R")), [], "startup guard zero sync reads " + guard)
+    equal(h.sets, [], "startup guard zero writes " + guard); await h.writer.dispose(); cases.push("guard-" + guard)
+  }
+  {
+    const h = harness(); h.synced[B] = clone(f0); await h.writer.startSync(); h.synced[B] = clone(f1)
+    await h.fire(5000); equal(h.records[F], f0, "timer remains outbound-only")
+    equal(h.writes, [], "timer cannot bypass incoming conflict"); equal(h.timers.size, 0, "timer never rearms")
+    await h.writer.dispose(); cases.push("timer-outbound-only")
+  }
+  return { assertions, cases, primary: { local, remote, expectedSet, key, f1, q1 }, observed: { sets: first.sets, writes: first.writes, results: first.results, invocations: first.invocations } }
+}
+
+test("automatic incoming composition literal event lifetime and held IO matrix", async () => {
+  const acct = "AAAAAAAAAAAAAAAA", playlist = "PL_P"
+  if (!isAccountKey(acct) || !isPlaylistId(playlist)) throw Error("Invalid fixture")
+  expect((await automaticIncomingAcceptance(createLocalFilterWriter, acct, playlist)).assertions).toBeGreaterThan(400)
+})
+
+test("saved browser composition executes in two fresh guarded realms", async () => {
+  const built = await Bun.build({ entrypoints: [resolve(import.meta.dir, "local-filter-writer.ts")], target: "browser", format: "cjs", minify: true })
+  expect(built.success).toBe(true)
+  const bytes = await built.outputs[0]!.text()
+  for (let realm = 0; realm < 2; realm++) {
+    const script = `(async()=>{let accesses=0;const names=["Date","performance","setTimeout","clearTimeout","setInterval","clearInterval","browser","chrome","fetch","crypto","Bun","process","localStorage","indexedDB","navigator","WebSocket"];for(const name of names)Object.defineProperty(globalThis,name,{get(){accesses++;throw Error("guard "+name)}});Object.defineProperty(Math,"random",{get(){accesses++;throw Error("guard random")}});const module={exports:{}};${bytes};const result=await (${automaticIncomingAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");if(accesses)throw Error("ambient access");let controls=0;for(const name of [...names,"random"]){let caught;try{name==="random"?Math.random:globalThis[name]}catch(error){caught=error.message}if(caught!=="guard "+name)throw Error("inactive guard "+name);controls++}return {assertions:result.assertions,controls}})()`
+    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
+    expect(observed.assertions).toBeGreaterThan(400); expect(observed.controls).toBe(17)
+  }
+})
+
+test("automatic composition wrong alternatives fail at intended observations", async () => {
+  const path = resolve(import.meta.dir, "local-filter-writer.ts"), original = await readFile(path, "utf8")
+  const cases = [
+    { name: "flush-before-receive", assertion: "incoming precedes outbound observations", source: original.replace('event ? await receiveIncomingFilters() : undefined', 'event ? (await attempt(), await receiveIncomingFilters()) : undefined') },
+    { name: "decoded-adoption", assertion: "automatic raw omissions preserved", source: original.replace('const document = snapshot(remote.candidate.json)', 'const document = snapshot(JSON.parse(JSON.stringify(remote.candidate.value.document)))') },
+    { name: "stale-history", assertion: "serial targets retain current history across accounts", source: original.replace('let lane: Promise<void>', 'let incomingHistory: JsonObject; let lane: Promise<void>').replace('const targets: SyncFilterKey[] = []', 'incomingHistory = records.sync as JsonObject; const targets: SyncFilterKey[] = []').replace('repairedHistory(latest.history, [received])', 'repairedHistory(incomingHistory, [received])') },
+    { name: "pending-overwrite", assertion: "excluded target exact pendingdoc:filter:AAAAAAAAAAAAAAAA:PL_A", source: original.replace('if (!Object.hasOwn(history.pushed, name) || history.pushed[name] !== initial.filter.gen)', 'if (false)') },
+    { name: "premature-Q-ack", assertion: "automatic exact raw adoption before outbound", source: original.replace('const next = repairedHistory(latest.history, [received])', 'const next = repairedHistory(latest.history, [received]); if(next && typeof next.pushed === "object" && next.pushed) Object.assign(next.pushed, {"doc:filter:AAAAAAAAAAAAAAAA:PL_Q":"q1"})') },
+    { name: "incoming-quiet", assertion: "receiver changes no scheduling clocks", source: original.replace('const next = repairedHistory(latest.history, [received])', 'quietUntil = deps.syncClock.now() + 2000; const next = repairedHistory(latest.history, [received])') },
+    { name: "bypassed-pacing", assertion: "no sync invocation before five-second barrier", source: original.replace('let nextInvocation = deps.syncClock.now() + 5000', 'let nextInvocation = deps.syncClock.now()') },
+    { name: "timer-receives", assertion: "timer remains outbound-only", source: original.replace('await automatic()', 'await automatic("sync")') },
+    { name: "stopped-restart", assertion: "successful manual retry never restarts stopped lifetime enumeration", source: original.replace('if (lifetime.kind === "stopped" || lifetime.kind === "disposed") return', 'if (lifetime.kind === "disposed") return; if (lifetime.kind === "stopped") lifetime = {kind:"inactive"}') },
+    { name: "second-owner", assertion: "receiver changes no scheduling clocks", source: original.replace('const result = await receiveAttempt(key)', 'const result = await createLocalFilterWriter(deps).receiveSyncFilter(key)') },
+    { name: "F-echo", assertion: "Q-only send without F echo", source: original.replace('const plan = planSyncWrite({ local: records, sync: await deps.sync.get(), intent: { kind: "flush" } })', 'const echo = await deps.sync.get(); const plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(echo).filter(([name]) => name !== "s:filter:AAAAAAAAAAAAAAAA:PL_P")), intent: { kind: "flush" } })') },
+    { name: "outside-lane", assertion: "automatic held lane excludes all queued IO enumeration", source: original.replace('return enqueue(() => receiveAttempt(key))', 'return receiveAttempt(key)') }
+  ]
+  for (const fault of cases) {
+    expect(fault.source).not.toBe(original)
+    const built = await Bun.build({ entrypoints: [path], target: "browser", format: "cjs", minify: true, plugins: [{ name: fault.name, setup(builder) {
+      builder.onLoad({ filter: /\/local-filter-writer\.ts$/ }, () => ({ loader: "ts", contents: fault.source }))
+    } }] })
+    expect(built.success).toBe(true)
+    const bytes = await built.outputs[0]!.text()
+    const script = `(async()=>{const module={exports:{}};${bytes};try{await (${automaticIncomingAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");return {caught:false}}catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0]}}})()`
+    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
+    expect({ name: fault.name, ...observed }).toEqual({ name: fault.name, caught: true, assertion: fault.assertion })
+  }
+})
+
+
+test("public re-enqueue deadlock is detected by an entered-lane external watchdog", async () => {
+  const path = resolve(import.meta.dir, "local-filter-writer.ts"), original = await readFile(path, "utf8")
+  for (const deadlock of [false, true]) {
+    const source = deadlock ? original.replace("const result = await receiveAttempt(key)", "const result = await enqueue(() => receiveAttempt(key))") : original
+    if (deadlock) expect(source).not.toBe(original)
+    const built = await Bun.build({ entrypoints: [path], target: "browser", format: "cjs", minify: true, plugins: [{ name: "re-enqueue", setup(builder) {
+      builder.onLoad({ filter: /\/local-filter-writer\.ts$/ }, () => ({ loader: "ts", contents: source }))
+    } }] })
+    expect(built.success).toBe(true)
+    const bytes = await built.outputs[0]!.text()
+    const script = `(async()=>{const module={exports:{}};${bytes};let signalled=false;const create=deps=>{let reads=0;const get=deps.local.get;deps.local.get=async keys=>{const result=await get(keys);if(++reads===2&&!signalled){signalled=true;entered()}return result};return module.exports.createLocalFilterWriter(deps)};return (${automaticIncomingAcceptance.toString()})(create,"AAAAAAAAAAAAAAAA","PL_P")})()`
+    const runner = 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";const watchdog=setTimeout(()=>{console.error("entered-lane-watchdog");process.exit(124)},2000);try{await runInNewContext(readFileSync(0,"utf8"),{entered(){console.log("entered-lane")}},{timeout:30000});clearTimeout(watchdog);console.log("completed")}catch(error){clearTimeout(watchdog);console.error(error);process.exit(1)}'
+    const observed = spawnSync("node", ["--input-type=module", "-e", runner], { input: script, encoding: "utf8", timeout: 5000 })
+    expect(observed.error).toBeUndefined()
+    expect(observed.status).toBe(deadlock ? 124 : 0)
+    expect(observed.stdout).toBe(deadlock ? "entered-lane\n" : "entered-lane\ncompleted\n")
+    expect(observed.stderr).toBe(deadlock ? "entered-lane-watchdog\n" : "")
   }
 })

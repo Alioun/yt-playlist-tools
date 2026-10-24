@@ -1,6 +1,6 @@
 import {
   CONSENT_VERSION, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError,
-  decodeDevice, decodeDocument, decodeFilter, decodeSetup, decodeSyncState, decodeSyncMeta, documentKey,
+  decodeDevice, decodeDocument, decodeFilter, decodeSetup, decodeSyncState, decodeSyncMeta, documentKey, parseDocumentKey,
   type AccountKey, type PlaylistId, type DocumentKey
 } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
@@ -78,6 +78,11 @@ export type SyncAutomaticResult = SyncFlushResult | { kind: "rejected"; error: u
 
 function isJsonObject(value: unknown): value is JsonObject {
   return value !== null && typeof value === "object" && !Array.isArray(value) && isJsonValue(value)
+}
+
+function hasInterimMarkers(records: Readonly<Record<string, unknown>>): boolean {
+  return Object.keys(records).some(name => name.startsWith("account:") ||
+    ["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"].includes(name))
 }
 
 function authority(records: Readonly<Record<string, unknown>>) {
@@ -184,10 +189,57 @@ export function createLocalFilterWriter(deps: {
   async function automatic(event?: "start" | "sync") {
     if (lifetime.kind !== "active") return
     let result: SyncAutomaticResult
-    try { result = await attempt() } catch (error) { result = { kind: "rejected", error } }
+    try {
+      const incoming = event ? await receiveIncomingFilters() : undefined
+      if (incoming) result = incoming
+      else {
+        if (lifetime.kind !== "active") return
+        result = await attempt()
+      }
+    } catch (error) { result = { kind: "rejected", error } }
     if (result.kind === "rejected") deactivate("stopped")
     else if (event && result.kind === "deferred") arm(result.notBefore, event)
+    if (result.kind !== "deferred") cancelTicket()
     deps.onSyncResult(result)
+  }
+
+  async function receiveAttempt(key: SyncFilterKey): Promise<SyncReceiveFilterResult> {
+    try {
+      const result = await receive(key)
+      if (result.kind === "local-set-failed" || result.kind === "unconfirmed") deactivate("stopped")
+      return result
+    } catch (error) { deactivate("stopped"); throw error }
+  }
+
+  async function receiveIncomingFilters(): Promise<SyncAutomaticResult | undefined> {
+    if (lifetime.kind !== "active") return
+    const records = await deps.local.get(null)
+    if (lifetime.kind !== "active") return
+    const ready = authority(records)
+    if (ready.kind !== "ready") return { kind: "unavailable" }
+    observeOff(ready.device.syncOn)
+    if (!ready.device.syncOn) return
+    if (hasInterimMarkers(records)) return { kind: "unavailable" }
+    const targets: SyncFilterKey[] = []
+    for (const name of Object.keys(records).sort()) {
+      const key = parseDocumentKey(name)
+      if (key?.kind === "filter" && documentKey(key) === name) targets.push(key)
+    }
+    for (const key of targets) {
+      if (lifetime.kind !== "active") return
+      const result = await receiveAttempt(key)
+      if (result.kind === "local-set-failed") return { kind: "rejected", error: result.error }
+      if (result.kind === "unconfirmed") return result.cause.kind === "read-failed"
+        ? { kind: "rejected", error: result.cause.error } : { kind: "unavailable" }
+      if (lifetime.kind !== "active") return
+      if (result.kind === "unavailable" && (result.reason === "authority" || result.reason === "history")) {
+        if (result.reason === "authority") {
+          const current = authority(await deps.local.get(null))
+          if (current.kind === "ready") observeOff(current.device.syncOn)
+        }
+        return { kind: "unavailable" }
+      }
+    }
   }
 
   async function attempt(): Promise<SyncFlushResult> {
@@ -201,6 +253,8 @@ export function createLocalFilterWriter(deps: {
   function observeOff(syncOn: boolean) {
     if (!syncOn) deactivate("inactive")
   }
+
+  function disposed() { return lifetime.kind === "disposed" }
 
   async function execute(change: LocalFilterChange, at: number): Promise<LocalFilterWriteResult> {
     const invalid = { kind: "result", result: { refused: "invalid" } } as const
@@ -298,8 +352,7 @@ export function createLocalFilterWriter(deps: {
     function context(records: Readonly<Record<string, unknown>>) {
       const ready = authority(records)
       if (lifetime.kind === "disposed" || ready.kind !== "ready" || !ready.device.syncOn || !ready.history ||
-        Object.keys(records).some(name => name.startsWith("account:") ||
-          ["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"].includes(name))) return unavailable("authority")
+        hasInterimMarkers(records)) return unavailable("authority")
       const raw = records[name], setup = records[setupName]
       if (!Object.hasOwn(records, name) || !isJsonObject(raw)) return unavailable("document")
       let filter
@@ -341,7 +394,6 @@ export function createLocalFilterWriter(deps: {
       if (candidate?.kind !== "value" || candidate.value.kind !== "filter") return unavailable("document")
       return { kind: "ready", metadata, candidate } as const
     }
-    const disposed = () => lifetime.kind === "disposed"
     const initial = context(await deps.local.get(null))
     if (initial.kind !== "ready") return initial
     // Native reads are snapshots. Capture the raw baseline independently of later IO.
@@ -478,13 +530,7 @@ export function createLocalFilterWriter(deps: {
   return {
     receiveSyncFilter(key) {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
-      return enqueue(async () => {
-        try {
-          const result = await receive(key)
-          if (result.kind === "local-set-failed" || result.kind === "unconfirmed") deactivate("stopped")
-          return result
-        } catch (error) { deactivate("stopped"); throw error }
-      })
+      return enqueue(() => receiveAttempt(key))
     },
     flushSync() {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
@@ -496,9 +542,15 @@ export function createLocalFilterWriter(deps: {
         if (lifetime.kind === "stopped" || lifetime.kind === "disposed") return
         let ready
         try {
-          ready = authority(await deps.local.get(null))
+          const records = await deps.local.get(null)
+          if (disposed()) return
+          ready = authority(records)
           if (ready.kind === "ready") {
             observeOff(ready.device.syncOn)
+            if (hasInterimMarkers(records)) {
+              deps.onSyncResult({ kind: "unavailable" })
+              return
+            }
             if (ready.device.syncOn && lifetime.kind === "inactive") {
               const unsubscribe = deps.sync.subscribe(() => {
                 void enqueue(() => automatic("sync"))

@@ -290,12 +290,14 @@ test("manual receive forwards raw native storage on the existing adapter owner",
   const incoming = JSON.parse('{"v":1,"gen":"incoming","at":20,"by":"other","extra":true,"data":{"mode":"allow","on":false,"channels":[["UCaaaaaaaaaaaaaaaaaaaaaa","Title",null,{"future":1}]]},"__proto__":{"keep":true},"toJSON":"inert"}')
   const history = { joined: "h", pushed: { [key]: "old", [setup]: "setup" }, status: "ok", editedSinceOff: false, extra: true }
   await fakeBrowser.storage.local.set({ device: { id: "synthetic", consent: { v: 1, at: 1 }, syncOn: true }, sync: history })
-  await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "h", created: 1 }, [key.replace("doc:", "s:")]: incoming, [setup.replace("doc:", "s:")]: before[setup] })
+  await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "h", created: 1 }, [key.replace("doc:", "s:")]: before[key], [setup.replace("doc:", "s:")]: before[setup] })
   const get = spyOn(fakeBrowser.storage.local, "get"), syncGet = spyOn(fakeBrowser.storage.sync, "get"), syncSet = spyOn(fakeBrowser.storage.sync, "set")
   const original = fakeBrowser.storage.local.set.bind(fakeBrowser.storage.local), set = spyOn(fakeBrowser.storage.local, "set")
   const subscribe = spyOn(fakeBrowser.storage.sync.onChanged, "addListener"), results: SyncAutomaticResult[] = []
   const adapter = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult(result) { results.push(result) } })
   await adapter.startSync()
+  const snapshot = await fakeBrowser.storage.sync.get(null)
+  syncGet.mockImplementation(async () => ({ ...snapshot, [key.replace("doc:", "s:")]: incoming }))
   expect(subscribe).toHaveBeenCalledTimes(1)
   let release!: () => void, entered = false, settled = false
   const gate = new Promise<void>(done => { release = done })
@@ -326,4 +328,38 @@ test("manual receive forwards raw native storage on the existing adapter owner",
   expect((await fakeBrowser.storage.local.get("sync")).sync).toEqual({ ...history, pushed: { [key]: "incoming", [setup]: "setup" } })
   await adapter.dispose()
   await expect(adapter.receiveSyncFilter(addressed)).rejects.toThrow("Writer disposed")
+})
+
+test("actual adapter startup and area listener automatically adopt on the same owner", async () => {
+  const setup = "doc:setup:AAAAAAAAAAAAAAAA", base = key.replace("doc:", "s:")
+  const before = await fakeBrowser.storage.local.get(null)
+  const incoming = JSON.parse('{"v":1,"gen":"f1","at":20,"by":"device-b","data":{"on":false,"channels":[["UCaaaaaaaaaaaaaaaaaaaaaa","Title",null,{"future":1}]]},"__proto__":{"keep":true},"toJSON":"inert"}')
+  const history = { joined: "h", pushed: { [key]: "old", [setup]: "setup" }, status: "ok", editedSinceOff: false, extra: { keep: true } }
+  await fakeBrowser.storage.local.set({ device: { id: "synthetic", consent: { v: 1, at: 1 }, syncOn: true }, sync: history })
+  await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "h", created: 1 }, [base]: incoming, [setup.replace("doc:", "s:")]: before[setup] })
+  const localSet = spyOn(fakeBrowser.storage.local, "set"), syncSet = spyOn(fakeBrowser.storage.sync, "set")
+  const subscribe = spyOn(fakeBrowser.storage.sync.onChanged, "addListener"), windows = spyOn(fakeBrowser.windows, "get")
+  const results: SyncAutomaticResult[] = []
+  const adapter = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult: result => { results.push(result) } })
+  await adapter.startSync()
+  const nextHistory = { ...history, pushed: { ...history.pushed, [key]: "f1" } }
+  expect<unknown>(localSet.mock.calls).toEqual([[{ [key]: incoming, sync: nextHistory }]])
+  expect(results).toEqual([{ kind: "idle" }])
+  expect(subscribe).toHaveBeenCalledTimes(1)
+  const f2 = { ...incoming, gen: "f2", at: 30, extra: "later-event" }
+  await fakeBrowser.storage.sync.set({ [base]: f2 })
+  syncSet.mockClear()
+  const listener = subscribe.mock.calls[0]?.[0]
+  if (!listener) throw Error("Missing actual area listener")
+  Reflect.apply(listener, undefined, [{}])
+  for (let i = 0; i < 400; i++) await Promise.resolve()
+  expect<unknown>(localSet.mock.calls).toEqual([[{ [key]: incoming, sync: nextHistory }], [{ [key]: f2, sync: { ...nextHistory, pushed: { ...nextHistory.pushed, [key]: "f2" } } }]])
+  expect((await fakeBrowser.storage.local.get(key))[key]).toEqual(f2)
+  expect(results.at(-1)).toEqual({ kind: "idle" })
+  expect(syncSet).not.toHaveBeenCalled()
+  expect(windows).not.toHaveBeenCalled()
+  if (!sender.tab) throw Error("Missing synthetic tab")
+  expect(await adapter.changeFromSettings(request, { ...sender, tab: { ...sender.tab, incognito: true } })).toEqual({ kind: "result", result: { refused: "private" } })
+  expect(localSet).toHaveBeenCalledTimes(2)
+  await adapter.dispose()
 })
