@@ -138,13 +138,17 @@ export function planLegacyStartup(input: StartupSnapshot, context: MigrationCont
     if (device?.upgradeNote?.state === "pending") {
       if (settings.kind !== "value") return { kind: "invalid", field: "settingsDocument" }
       if (unclaimed === undefined) return { kind: "invalid", field: "unclaimed" }
-      if (unclaimed.from !== device.upgradeNote.details.from) {
+      const details = device.upgradeNote.details
+      if (unclaimed.from !== details.from || unclaimed.autoAdd.length !== details.autoAdd.kept ||
+        new Set(unclaimed.autoAdd).size !== unclaimed.autoAdd.length ||
+        (unclaimed.shortcutPlaylist !== null) !== details.shortcut.playlist) {
         return { kind: "unsupported-state", reason: "canonical-collision" }
       }
       return { kind: "resume", cleanup: cleanup(input.schema) }
     }
     const triggered = input.legacy.presentKeys.some(key => UPGRADE_TRIGGER_KEYS.some(trigger => trigger === key))
-    const canonical = settings.kind !== "absent" || unclaimed !== undefined || hasDeviceState(device)
+    const canonical = settings.kind !== "absent" || unclaimed !== undefined || hasDeviceState(device) ||
+      (device !== undefined && device.id !== context.deviceId)
     if (canonical) return triggered ? { kind: "unsupported-state", reason: "canonical-collision" } : { kind: "current" }
     if (triggered) return { kind: "upgrade", write: upgrade(input.legacy, context), cleanup: cleanup(input.schema) }
     return input.schema === undefined ? { kind: "fresh", schema: STORAGE_SCHEMA_VERSION } : { kind: "current" }
