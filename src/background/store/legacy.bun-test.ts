@@ -3,12 +3,12 @@ import { readFile } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
 import { runInNewContext } from "node:vm"
 import ts from "typescript"
-import { decodeDevice, decodeDocument, decodeSettings, defaultDevice, defaultSettings, isShortcutId, normalizeSettingsForWrite } from "../../shared/model"
-import type { Key } from "../../shared/model"
+import { decodeDevice, decodeDocument, decodeSettings, decodeUnclaimed, defaultDevice, defaultSettings, isShortcutId, normalizeSettingsForWrite } from "../../shared/model"
+import type { Key, ShortcutId } from "../../shared/model"
 import { LEGACY_DELETE_KEYS, UPGRADE_TRIGGER_KEYS } from "./legacy"
 import type { LegacyEvidence } from "./legacy"
 import { planLegacyStartup } from "./legacy-startup"
-import { assignKey } from "../../shared/keys"
+import { applyPresets, assignKey } from "../../shared/keys"
 import { removeSharedShortcut } from "./accounts"
 import type { CanonicalUpgrade, MigrationContext, StartupPlan, StartupSnapshot } from "./legacy-startup"
 
@@ -590,6 +590,50 @@ test("the actual minified public module imports and runs without browser, DOM, t
 })
 
 describe("original shortcut migration association", () => {
+  test("decoded migrated origin remains reserved after actual deletion, while a different fresh ID is accepted", () => {
+    const write = upgraded(snapshot({ watchLaterShortcut: "Alt+W", addToPlaylistID: playlist }), { ...context, shortcutId: "orig01" }).write
+    const unclaimed = decodeUnclaimed(JSON.parse(JSON.stringify(write.unclaimed)))
+    const original = unclaimed.originalShortcutId
+    if (!isShortcutId(original)) throw new Error("Missing validated original ID")
+    const originalRow = write["doc:settings"].data.shortcuts.list[0]
+    if (!originalRow) throw new Error("Missing original row")
+    const removed = removeSharedShortcut({ settings: write["doc:settings"].data, shortcut: original, accounts: [] })
+    if (removed.kind !== "removed") throw new Error("Expected ordinary deletion")
+    expect(removed.settings.shortcuts.list).toEqual([])
+    expect(removed.settings.shortcuts.preset).toBe(true)
+    const reservedShortcutIds = new Set([original])
+    expect(applyPresets(removed.settings, { feature: "shortcuts", shortcutId: original, reservedShortcutIds }))
+      .toEqual({ kind: "unchanged", settings: removed.settings, blocked: [] })
+    const fresh = { ...removed.settings, shortcuts: { ...removed.settings.shortcuts, preset: false } }
+    const before = structuredClone(fresh)
+    expect(() => applyPresets(fresh, { feature: "shortcuts", shortcutId: original, reservedShortcutIds })).toThrow(TypeError)
+    expect(fresh).toEqual(before)
+    const other = applyPresets(fresh, { feature: "shortcuts", shortcutId: "fresh1", reservedShortcutIds })
+    expect(other.settings.shortcuts.list).toEqual([{ id: "fresh1", key: key("w", { alt: true }), label: "", watchLaterOnEveryAccount: true }])
+    expect(other.blocked).toEqual([])
+    expect([...reservedShortcutIds]).toEqual([original])
+    expect(unclaimed).toEqual(write.unclaimed)
+    const explicitlyRestored = { ...removed.settings, shortcuts: { ...removed.settings.shortcuts, list: [originalRow] } }
+    expect(explicitlyRestored.shortcuts.list[0]).toBe(originalRow)
+    expect(explicitlyRestored.shortcuts.list[0]?.id).toBe(original)
+  })
+
+  test("unknown old provenance supplies no invented reservation and malformed known origin is refused", () => {
+    const write = upgraded(snapshot({ watchLaterShortcut: "Alt+W", addToPlaylistID: playlist }), { ...context, shortcutId: "orig01" }).write
+    delete write.unclaimed.originalShortcutId
+    const old = decodeUnclaimed(write.unclaimed)
+    const reservedShortcutIds = new Set<ShortcutId>()
+    if (isShortcutId(old.originalShortcutId)) reservedShortcutIds.add(old.originalShortcutId)
+    expect([...reservedShortcutIds]).toEqual([])
+    expect(Object.hasOwn(old, "originalShortcutId")).toBe(false)
+    const fresh = defaultSettings()
+    expect(applyPresets(fresh, { feature: "shortcuts", shortcutId: "orig01", reservedShortcutIds }).settings.shortcuts.list[0]?.id).toBe("orig01")
+    const malformed = { ...old, originalShortcutId: "bad!id" }
+    const before = structuredClone(malformed)
+    expect(() => decodeUnclaimed(malformed)).toThrow("unclaimed.originalShortcutId: expected a six-character shortcut ID")
+    expect(malformed).toEqual(before)
+  })
+
   test.each([
     { raw: "Alt+W", target: playlist, note: "ok", converted: key("w", { alt: true }) },
     { raw: "", target: playlist, note: "no-key", converted: null },

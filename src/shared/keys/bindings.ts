@@ -1,5 +1,5 @@
 import { isShortcutId } from "../model"
-import type { Key, Settings } from "../model"
+import type { Key, Settings, ShortcutId } from "../model"
 import { keysOverlap, sameTarget } from "./match"
 import type { Binding, Conflict, ShortcutTarget, Site } from "./types"
 
@@ -85,7 +85,7 @@ const musicPresets = [
   { action: "like", key: alt("l") }, { action: "remove", key: alt("r") }
 ] satisfies { action: keyof Settings["musicKeys"]["keys"]; key: Key }[]
 
-export type PresetRequest = { feature: "shortcuts"; shortcutId: string } | { feature: "music-keys" }
+export type PresetRequest = { feature: "shortcuts"; shortcutId: string; readonly reservedShortcutIds: ReadonlySet<ShortcutId> } | { feature: "music-keys" }
 export type PresetConflict = { target: ShortcutTarget; key: Readonly<Key>; conflicts: readonly Conflict[] }
 export type PresetResult = { kind: "applied" | "unchanged"; settings: Readonly<Settings>; blocked: readonly PresetConflict[] }
 
@@ -101,7 +101,7 @@ export function applyPresets(settings: Readonly<Settings>, request: PresetReques
     if (result.kind === "assigned") next = result.settings
   }
   if (request.feature === "shortcuts") {
-    if (!isShortcutId(request.shortcutId) || settings.shortcuts.list.some(shortcut => shortcut.id === request.shortcutId)) {
+    if (!isShortcutId(request.shortcutId) || settings.shortcuts.list.some(shortcut => shortcut.id === request.shortcutId) || request.reservedShortcutIds.has(request.shortcutId)) {
       throw new TypeError("A new six-character shortcut ID is required")
     }
     if (settings.shortcuts.list.length >= 20) throw new RangeError("At most 20 playlist shortcuts are allowed")

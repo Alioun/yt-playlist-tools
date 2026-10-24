@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import { decodeSettings, defaultSettings } from "../model"
-import type { Key, Settings } from "../model"
+import { decodeSettings, defaultSettings, isShortcutId } from "../model"
+import type { Key, Settings, ShortcutId } from "../model"
 import { applyPresets, assignKey, bindingsForSite, display, displayModifiers, findConflicts, isReserved, isTyping, keyMatches, keysOverlap, match, recorder, shortcutWarnings } from "./index"
 import type { Binding, KeyFacts, MatchContext, Modifiers, PathDescriptor, Platform, RecorderContext, RecorderState, ShortcutTarget } from "./index"
 
@@ -193,10 +193,80 @@ describe("site bindings and conflicts", () => {
 })
 
 describe("one-time presets", () => {
+  test("a reserved absent ID refuses fresh creation without changing settings or reservations", () => {
+    const original = "orig01"
+    if (!isShortcutId(original)) throw new Error("Invalid fixture ID")
+    const reservedShortcutIds = new Set([original])
+    Object.defineProperties(reservedShortcutIds, {
+      add: { value() { throw new Error("Reservation mutation") } },
+      delete: { value() { throw new Error("Reservation mutation") } },
+      clear: { value() { throw new Error("Reservation mutation") } }
+    })
+    const settings = decodeSettings({ ...settingsWithShortcut(), futureRoot: { keep: true }, shortcuts: {
+      ...settingsWithShortcut().shortcuts, futureShortcuts: [1],
+      list: [{ ...settingsWithShortcut().shortcuts.list[0], futureRow: { keep: true } }]
+    } })
+    const before = structuredClone(settings)
+    freeze(settings)
+    expect(settings.shortcuts.list.some(row => row.id === original)).toBe(false)
+    expect(() => applyPresets(settings, { feature: "shortcuts", shortcutId: original, reservedShortcutIds }))
+      .toThrow(new TypeError("A new six-character shortcut ID is required"))
+    expect(settings).toEqual(before)
+    expect([...reservedShortcutIds]).toEqual([original])
+    const result = applyPresets(settings, { feature: "shortcuts", shortcutId: "fresh1", reservedShortcutIds })
+    expect(result).toEqual({ kind: "applied", blocked: [{ target: { kind: "playlist", id: "fresh1" }, key: key("w"),
+      conflicts: [{ target: playlist, sites: ["www", "music"] }] }], settings: {
+      ...before, shortcuts: { ...before.shortcuts, preset: true, picker: key("p", { alt: true, shift: true }), list: [
+        ...before.shortcuts.list, { id: "fresh1", key: null, label: "", watchLaterOnEveryAccount: true }
+      ] }
+    } })
+    expect(settings).toEqual(before)
+    expect([...reservedShortcutIds]).toEqual([original])
+  })
+
+  test("already-applied playlist presets return the exact input without reading candidate or reservations", () => {
+    const settings = defaultSettings()
+    settings.shortcuts.preset = true
+    freeze(settings)
+    const request = { feature: "shortcuts", shortcutId: "orig01", reservedShortcutIds: new Set<ShortcutId>() } as const
+    Object.defineProperties(request, {
+      shortcutId: { get() { throw new Error("No fresh candidate needed") } },
+      reservedShortcutIds: { get() { throw new Error("No reservation evidence needed for a no-op") } }
+    })
+    expect(applyPresets(settings, request)).toEqual({ kind: "unchanged", settings, blocked: [] })
+    expect(applyPresets(settings, request).settings).toBe(settings)
+    const original = "orig01"
+    if (!isShortcutId(original)) throw new Error("Invalid fixture ID")
+    expect(applyPresets(settings, { feature: "shortcuts", shortcutId: original, reservedShortcutIds: new Set([original]) }))
+      .toEqual({ kind: "unchanged", settings, blocked: [] })
+  })
+
+  test.each(["", "short", "longer1", "bad!id", "é12345"])("invalid fresh candidate %p leaves all inputs unchanged", shortcutId => {
+    const settings = defaultSettings()
+    const before = structuredClone(settings)
+    const reservedShortcutIds = new Set<ShortcutId>()
+    freeze(settings)
+    expect(() => applyPresets(settings, { feature: "shortcuts", shortcutId, reservedShortcutIds })).toThrow(TypeError)
+    expect(settings).toEqual(before)
+    expect([...reservedShortcutIds]).toEqual([])
+  })
+
+  test("playlist offer order and complete blocked conflicts survive the ID fence", () => {
+    const settings = settingsWithShortcut()
+    settings.undoKey = key("p", { alt: true, shift: true })
+    freeze(settings)
+    const result = applyPresets(settings, { feature: "shortcuts", shortcutId: "fresh1", reservedShortcutIds: new Set<ShortcutId>() })
+    expect(result).toEqual({ kind: "applied", settings: { ...settings, shortcuts: { ...settings.shortcuts, preset: true,
+      list: [...settings.shortcuts.list, { id: "fresh1", key: null, label: "", watchLaterOnEveryAccount: true }] } }, blocked: [
+      { target: { kind: "playlist", id: "fresh1" }, key: key("w"), conflicts: [{ target: playlist, sites: ["www", "music"] }] },
+      { target: { kind: "picker" }, key: key("p", { alt: true, shift: true }), conflicts: [{ target: { kind: "undo" }, sites: ["www"] }] }
+    ] })
+  })
+
   test("playlist defaults create Watch Later and the YouTube-only picker without enabling features", () => {
     const settings = defaultSettings()
     freeze(settings)
-    const result = applyPresets(settings, { feature: "shortcuts", shortcutId: "later1" })
+    const result = applyPresets(settings, { feature: "shortcuts", shortcutId: "later1", reservedShortcutIds: new Set<ShortcutId>() })
     expect(result.kind).toBe("applied")
     expect(result.settings.shortcuts).toEqual({ on: false, feedback: true, music: true, preset: true,
       picker: key("p", { alt: true, shift: true }), list: [{ id: "later1", key: key("w"), label: "", watchLaterOnEveryAccount: true }] })
@@ -219,7 +289,7 @@ describe("one-time presets", () => {
     expect(music.settings.musicKeys.keys.next).toBeNull()
     expect(music.blocked).toEqual([{ target: { kind: "music", action: "next" }, key: key("n"), conflicts: [{ target: { kind: "undo" }, sites: ["music"] }] }])
     expect(music.settings.musicKeys.keys.picker).toEqual(key("p", { alt: true, shift: true }))
-    const shortcuts = applyPresets(settings, { feature: "shortcuts", shortcutId: "later1" })
+    const shortcuts = applyPresets(settings, { feature: "shortcuts", shortcutId: "later1", reservedShortcutIds: new Set<ShortcutId>() })
     expect(shortcuts.settings.shortcuts.list[1]?.key).toBeNull()
     expect(shortcuts.blocked[0]?.conflicts).toEqual([{ target: playlist, sites: ["www", "music"] }])
   })
@@ -231,7 +301,7 @@ describe("one-time presets", () => {
     const changed = { ...first.settings, undoKey: null, musicKeys: { ...first.settings.musicKeys, on: true, keys: { ...first.settings.musicKeys.keys, queue: null } } }
     expect(applyPresets(changed, { feature: "music-keys" })).toEqual({ kind: "unchanged", settings: changed, blocked: [] })
     const empty = { ...settings, shortcuts: { ...settings.shortcuts, preset: true, list: [], picker: null } }
-    expect(applyPresets(empty, { feature: "shortcuts", shortcutId: "later1" }).settings).toBe(empty)
+    expect(applyPresets(empty, { feature: "shortcuts", shortcutId: "later1", reservedShortcutIds: new Set<ShortcutId>() }).settings).toBe(empty)
   })
 
   test("presets preserve explicit choices and reject invalid, duplicate or overflow IDs before writes", () => {
@@ -239,13 +309,13 @@ describe("one-time presets", () => {
     settings.shortcuts.music = false
     settings.shortcuts.feedback = false
     settings.shortcuts.picker = key("x")
-    const result = applyPresets(settings, { feature: "shortcuts", shortcutId: "later1" })
+    const result = applyPresets(settings, { feature: "shortcuts", shortcutId: "later1", reservedShortcutIds: new Set<ShortcutId>() })
     expect(result.settings.shortcuts).toMatchObject({ music: false, feedback: false, picker: key("x") })
-    expect(() => applyPresets(settings, { feature: "shortcuts", shortcutId: "save01" })).toThrow(TypeError)
-    expect(() => applyPresets(settings, { feature: "shortcuts", shortcutId: "bad" })).toThrow(TypeError)
+    expect(() => applyPresets(settings, { feature: "shortcuts", shortcutId: "save01", reservedShortcutIds: new Set<ShortcutId>() })).toThrow(TypeError)
+    expect(() => applyPresets(settings, { feature: "shortcuts", shortcutId: "bad", reservedShortcutIds: new Set<ShortcutId>() })).toThrow(TypeError)
     settings.shortcuts.list = Array.from({ length: 20 }, (_, index) => ({ id: `save${String(index).padStart(2, "0")}`, key: null, label: "", watchLaterOnEveryAccount: false }))
     freeze(settings)
-    expect(() => applyPresets(settings, { feature: "shortcuts", shortcutId: "later1" })).toThrow(RangeError)
+    expect(() => applyPresets(settings, { feature: "shortcuts", shortcutId: "later1", reservedShortcutIds: new Set<ShortcutId>() })).toThrow(RangeError)
     expect(settings.shortcuts.preset).toBe(false)
   })
 })
