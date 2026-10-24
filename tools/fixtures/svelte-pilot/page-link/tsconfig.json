@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["svelte", "node"],
+    "paths": { "$kit": ["./src/site/kit/index.ts"] }
+  },
+  "include": ["src/**/*", "wxt.config.ts", "../../../../build/page-link.ts"]
+}
