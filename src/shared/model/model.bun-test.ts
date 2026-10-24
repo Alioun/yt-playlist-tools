@@ -1,10 +1,23 @@
 import { describe, expect, test } from "bun:test"
 import {
-  DecodeError, decodeDevice, decodeDocument, decodeFilter, decodeKey, decodeSettings, decodeSetup,
+  DecodeError, decodeDevice, decodeDocument, decodeFilter, decodeKey, decodeSettings, decodeSetup, decodeSyncState,
   defaultDevice, defaultFilter, defaultSettings, defaultSetup, documentKey, isAccountKey, isChannelId,
   isKey, isPercent, isPlaylistId, isSetupEmpty, isShortcutId, isVideoId,
   normalizeFilterForWrite, normalizeSettingsForWrite, normalizeSetupForWrite, parseDocumentKey
 } from "./index"
+import type { SyncState } from "./index"
+
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Check<T extends true> = T
+export type SyncStateProofs = [
+  Check<Equal<SyncState, {
+    joined: string | null
+    pushed: Record<string, string>
+    status: "off" | "joining" | "ok" | "full" | "update-needed" | "waiting"
+    editedSinceOff: boolean
+  }>>,
+  Check<Equal<typeof decodeSyncState, (raw: unknown) => SyncState>>
+]
 
 const account = "synthetic_acct01"
 const channel = `UC${"a".repeat(22)}`
@@ -20,6 +33,30 @@ const upgradeDetails = {
 function roundtrip(value: unknown): unknown {
   return JSON.parse(JSON.stringify(value))
 }
+
+describe("canonical sync history", () => {
+  test("requires the exact owned shape and retains opaque pushed keys and every extension", () => {
+    const raw = JSON.parse('{"joined":"history-id","pushed":{"doc:settings":"g1","unrecognized:key":"g2","":"g3","__proto__":"g4"},"status":"off","editedSinceOff":false,"future":{"nested":[1,null]},"__proto__":{"keep":true},"toJSON":"inert","v":99}')
+    expect(decodeSyncState(raw)).toEqual(raw)
+    expect(Object.hasOwn(decodeSyncState(raw), "__proto__")).toBe(true)
+    expect(Object.hasOwn(decodeSyncState(raw).pushed, "__proto__")).toBe(true)
+    for (const status of ["off", "joining", "ok", "full", "update-needed", "waiting"]) {
+      expect(decodeSyncState({ ...raw, joined: null, status })).toEqual({ ...raw, joined: null, status })
+    }
+    expect(raw.editedSinceOff).toBe(false)
+  })
+
+  test("never defaults missing or malformed bookkeeping", () => {
+    const valid = { joined: null, pushed: {}, status: "off", editedSinceOff: false }
+    for (const raw of [undefined, null, false, 0, "off", [], {},
+      ...Object.keys(valid).map(key => Object.fromEntries(Object.entries(valid).filter(([field]) => field !== key))),
+      { ...valid, joined: "" }, { ...valid, joined: 1 }, { ...valid, pushed: null },
+      { ...valid, pushed: [] }, { ...valid, pushed: { opaque: "" } }, { ...valid, pushed: { opaque: 1 } },
+      { ...valid, pushed: { opaque: undefined } }, { ...valid, status: "future" },
+      { ...valid, editedSinceOff: 0 }, { ...valid, editedSinceOff: undefined }
+    ]) expect(() => decodeSyncState(raw)).toThrow(DecodeError)
+  })
+})
 
 
 describe("fresh documents", () => {
@@ -347,7 +384,7 @@ describe("keys and identifiers", () => {
 
 test("imports and operates without browser, DOM, clock or randomness access", () => {
   const result = Bun.spawnSync({
-    cmd: [process.execPath, "--eval", `
+    cmd: [process.execPath, "--no-env-file", "--eval", `
       for (const name of ["window", "document", "browser", "chrome", "localStorage", "fetch", "crypto",
         "navigator", "indexedDB", "MutationObserver", "KeyboardEvent"]) {
         Object.defineProperty(globalThis, name, {

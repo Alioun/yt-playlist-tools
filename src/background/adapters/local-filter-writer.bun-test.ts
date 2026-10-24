@@ -138,3 +138,36 @@ test("synthetic sync history stays unavailable with zero sync calls", async () =
   expect(h.syncGet).not.toHaveBeenCalled()
   expect(h.syncSet).not.toHaveBeenCalled()
 })
+
+test("synthetic supported off history batches with unchanged native provenance", async () => {
+  const sync = { joined: null, pushed: { opaque: "old-push" }, status: "off", editedSinceOff: false, future: { keep: true } }
+  await fakeBrowser.storage.local.set({ sync })
+  const h = instrument()
+  expect(await h.adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
+  expect(h.set).toHaveBeenCalledTimes(1)
+  expect(Object.keys(h.set.mock.calls[0]?.[0] ?? {})).toEqual([key, "sync"])
+  expect(h.set.mock.calls[0]?.[0]).toMatchObject({ sync: { ...sync, editedSinceOff: true } })
+  expect(await h.adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
+  expect(h.set).toHaveBeenCalledTimes(1)
+  expect(h.syncGet).not.toHaveBeenCalled()
+  expect(h.syncSet).not.toHaveBeenCalled()
+})
+
+test("synthetic false history remains inert for private provenance and failed batches", async () => {
+  const sync = { joined: "joined", pushed: {}, status: "off", editedSinceOff: false }
+  await fakeBrowser.storage.local.set({ sync })
+  const h = instrument(), marker = new Error("batch rejected")
+  if (!sender.tab) throw Error("Missing synthetic tab")
+  expect(await h.adapter.changeFromSettings(request, { ...sender, tab: { ...sender.tab, incognito: true } })).toEqual({ kind: "result", result: { refused: "private" } })
+  expect(h.get).not.toHaveBeenCalled()
+  expect(h.set).not.toHaveBeenCalled()
+  h.set.mockImplementationOnce(async () => { throw marker })
+  await expect(h.adapter.changeFromSettings(request, sender)).rejects.toBe(marker)
+  expect(h.set).toHaveBeenCalledTimes(1)
+  expect((await fakeBrowser.storage.local.get("sync")).sync).toEqual(sync)
+  expect(await h.adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
+  expect(h.set).toHaveBeenCalledTimes(2)
+  expect(Object.keys(h.set.mock.calls[1]?.[0] ?? {})).toEqual([key, "sync"])
+  expect(h.syncGet).not.toHaveBeenCalled()
+  expect(h.syncSet).not.toHaveBeenCalled()
+})

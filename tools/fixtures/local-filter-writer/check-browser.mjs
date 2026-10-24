@@ -32,6 +32,8 @@ const request = { acct: "AAAAAAAAAAAAAAAA", playlist: "PL_P", desired: { mode: "
 const ok = { kind: "result", result: { ok: true } }
 const invalid = { kind: "result", result: { refused: "invalid" } }
 const own = JSON.parse('{"__proto__":{"keep":"own"},"toJSON":"inert"}')
+const offHistory = { joined: "history-id", pushed: { [key]: "pushed-old", "unrecognized:key": "opaque-gen" },
+  status: "off", editedSinceOff: false, future: { nested: [1, null] }, ...own, v: 99 }
 const initial = {
   schema: 1,
   device: { id: "synthetic-durable-device", consent: { v: 1, at: 1 }, syncOn: false, upgradeNote: null,
@@ -99,6 +101,27 @@ async function inert(browser, raw, expected) {
   assert.equal(observed.events.length, 0)
   assert.equal(observed.syncAccesses, 0)
   return observed
+}
+async function accepted(browser, raw, data, nextHistory) {
+  const before = await read(browser)
+  await reset(browser)
+  const started = Date.now()
+  equal(await send(browser, raw), ok, "native history edit acknowledged")
+  await settle(browser)
+  const after = await read(browser), observed = await effects(browser), saved = after[key]
+  assert.equal(typeof saved.gen, "string")
+  assert.notEqual(saved.gen, before[key]?.gen)
+  assert(saved.at >= started && saved.at <= Date.now())
+  const expected = { ...before[key], v: 1, gen: saved.gen, at: saved.at, by: "synthetic-durable-device", data }
+  const items = nextHistory === undefined ? { [key]: expected } : { [key]: expected, sync: nextHistory }
+  equal(after, { ...before, ...items }, "native edit changes exact full records")
+  equal(observed.sets, [items], "one exact native set contains the full candidate batch")
+  equal(observed.reads, [["schema", "device", "sync", setupKey, key]], "native history edit reads exact keys")
+  const changes = { [key]: { oldValue: before[key], newValue: expected } }
+  if (nextHistory !== undefined) changes.sync = { oldValue: before.sync, newValue: nextHistory }
+  equal(observed.events, [{ area: "local", changes }], "one native event contains exact old and new values")
+  assert.equal(observed.syncAccesses, 0)
+  return { fullReadback: after, observed }
 }
 let browser = await open()
 let durable
@@ -187,17 +210,63 @@ try {
     channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "L".repeat(300), null, { future: true }]]
   } } })
   await inert(browser, request, ok)
-  await remove(browser, [key])
+  await seed(browser, { ...initial, sync: offHistory })
+  equal(await read(browser), { ...initial, sync: offHistory }, "full raw off history seed survives JSON text transfer")
+  await inert(browser, { ...request, desired: { mode: "allow", on: false } }, invalid)
+  await inert(browser, { ...request, desired: { mode: "allow", on: false }, clearListedChannels: "confirmed", expectedGeneration: "stale" }, invalid)
+  const batch = await accepted(browser, request, { ...initial[key].data, on: false }, { ...offHistory, editedSinceOff: true })
+  result.rounds.push({ stage: "native-off-history-batch", ...batch })
+  await inert(browser, request, ok)
+  const back = await accepted(browser, { ...request, desired: { mode: "deny", on: true } }, initial[key].data)
+  result.rounds.push({ stage: "native-already-true-history", ...back })
+  await seed(browser, { sync: { ...offHistory, joined: null }, [key]: initial[key] })
+  result.rounds.push({ stage: "native-null-joined-history", ...await accepted(browser, request,
+    { ...initial[key].data, on: false }, { ...offHistory, joined: null, editedSinceOff: true }) })
+  await seed(browser, { sync: offHistory })
+  const current = (await read(browser))[key]
+  await inert(browser, { ...request, clearListedChannels: "confirmed", expectedGeneration: "stale" }, ok)
+  await inert(browser, { ...request, desired: { mode: "allow", on: false } }, invalid)
+  await inert(browser, { ...request, desired: { mode: "allow", on: false }, clearListedChannels: "confirmed", expectedGeneration: "stale" }, invalid)
+  result.rounds.push({ stage: "native-confirmed-history-batch", ...await accepted(browser,
+    { ...request, desired: { mode: "allow", on: false }, clearListedChannels: "confirmed", expectedGeneration: current.gen },
+    { ...initial[key].data, mode: "allow", on: false, channels: [] }, { ...offHistory, editedSinceOff: true }) })
+  for (const raw of [undefined, { v: 1, gen: "omitted", at: 1, by: "old", data: {} },
+    { v: 1, gen: "long", at: 1, by: "old", data: { channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "L".repeat(300), null, { future: true }]] } }]) {
+    await seed(browser, { sync: offHistory })
+    if (raw === undefined) await remove(browser, [key])
+    else await seed(browser, { [key]: raw })
+    await inert(browser, request, ok)
+  }
+  for (const sync of [null, false, 0, "malformed", {},
+    ...["joined", "pushed", "status", "editedSinceOff"].map(key => Object.fromEntries(Object.entries(offHistory).filter(([field]) => field !== key))),
+    { ...offHistory, joined: "" }, { ...offHistory, pushed: { opaque: "" } },
+    ...["joining", "ok", "full", "update-needed", "waiting", "future"].map(status => ({ ...offHistory, status }))]) {
+    await seed(browser, { sync })
+    await inert(browser, request, { kind: "unavailable", reason: "sync-writer-required" })
+  }
+  await seed(browser, { [key]: initial[key], sync: offHistory })
+  equal(await browser.page.evaluate(async raw => Promise.all([
+    globalThis.requestLocalFilterChange(raw), globalThis.requestLocalFilterChange(raw)
+  ]), request), [ok, ok], "overlapping native history intents converge")
+  await settle(browser)
+  const queued = await effects(browser), queuedReadback = await read(browser)
+  assert.equal(queued.reads.length, 2)
+  equal(queued.sets, [{ [key]: queuedReadback[key], sync: { ...offHistory, editedSinceOff: true } }], "overlapping intents commit one full history batch")
+  assert.equal(queued.events.length, 1)
+  equal(Object.keys(queued.events[0].changes).sort(), [key, "sync"].sort(), "overlapping native event carries both keys")
+  assert.equal(queued.syncAccesses, 0)
+  result.rounds.push({ stage: "native-overlapping-history", fullReadback: queuedReadback, observed: queued })
+  await seed(browser, { [key]: initial[key], sync: offHistory })
+  const beforeQuota = await read(browser)
   const quota = await browser.worker.evaluate(async () => {
     const limit = chrome.storage.local.QUOTA_BYTES
     const before = await chrome.storage.local.getBytesInUse(null)
     const paddingKey = "fixture-quota-padding"
-    await globalThis.localFilterFixture.seed({ [paddingKey]: "x".repeat(limit - before - paddingKey.length - 2 - 32) })
+    await globalThis.localFilterFixture.seed({ [paddingKey]: "x".repeat(limit - before - paddingKey.length - 2 - 8) })
     return { limit, before, filled: await chrome.storage.local.getBytesInUse(null), paddingKey }
   })
   await reset(browser)
-  const createRequest = { ...request, desired: { mode: "deny", on: true } }
-  const failed = await send(browser, createRequest)
+  const failed = await send(browser, request)
   assert.equal(typeof failed.fixtureError, "string")
   assert.match(failed.fixtureError, /quota/i)
   await settle(browser)
@@ -205,17 +274,18 @@ try {
   assert.equal(failedEffects.sets.length, 1)
   assert.equal(failedEffects.events.length, 0)
   assert.equal(failedEffects.syncAccesses, 0)
-  const absentAfterFailure = await browser.worker.evaluate(key => globalThis.localFilterFixture.read([key]), key)
-  assert.equal(Object.hasOwn(absentAfterFailure, key), false)
-  await remove(browser, [quota.paddingKey])
-  equal(await send(browser, createRequest), ok, "native lane recovers after real quota rejection")
+  equal(Object.keys(failedEffects.sets[0]).sort(), [key, "sync"].sort(), "quota rejects the actual two-key batch")
+  const afterQuota = await read(browser)
+  delete afterQuota[quota.paddingKey]
+  equal(afterQuota, beforeQuota, "native quota rejection preserves old Filter and false history exactly")
   await settle(browser)
-  const recovered = await effects(browser)
-  assert.equal(recovered.sets.length, 1)
-  assert.equal(recovered.events.length, 1)
+  equal(await effects(browser), failedEffects, "quota rejection schedules no retry")
+  await remove(browser, [quota.paddingKey])
+  const recovery = await accepted(browser, request, { ...initial[key].data, on: false }, { ...offHistory, editedSinceOff: true })
+  const recovered = recovery.observed
   assert.notEqual(recovered.sets[0][key].gen, failedEffects.sets[0][key].gen)
-  result.rounds.push({ stage: "native-IO-rejection-and-recovery", quota, failed, failedEffects, recovered })
-  await seed(browser, { [setupKey]: initial[setupKey], [key]: durable[key] })
+  durable = recovery.fullReadback
+  result.rounds.push({ stage: "native-history-quota-rejection-and-recovery", quota, failed, beforeQuota, afterQuota, failedEffects, ...recovery })
   const permission = await browser.worker.evaluate(() => globalThis.localFilterFixture.incognitoAllowed())
   result.nativeIncognito = { allowed: permission, privateSettingsAdmissionExecuted: false }
   assert.equal(permission, false, "fresh extension has no incognito permission")
@@ -239,7 +309,7 @@ try {
 browser = await open()
 try {
   equal(await read(browser), durable, "full browser restart preserves exact complete storage")
-  const retry = { ...request, desired: { mode: "allow", on: false }, clearListedChannels: "confirmed", expectedGeneration: "old" }
+  const retry = { ...request, clearListedChannels: "confirmed", expectedGeneration: "old" }
   const observed = await inert(browser, retry, ok)
   result.rounds.push({ stage: "clean-full-browser-restart", native: browser.native, fullReadback: await read(browser), observed })
   result.desiredStateRetryConverged = true

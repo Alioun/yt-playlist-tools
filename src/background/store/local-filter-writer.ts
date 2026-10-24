@@ -1,6 +1,6 @@
 import {
   CONSENT_VERSION, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError,
-  decodeDevice, decodeDocument, decodeFilter, decodeSetup, documentKey,
+  decodeDevice, decodeDocument, decodeFilter, decodeSetup, decodeSyncState, documentKey,
   type AccountKey, type PlaylistId
 } from "../../shared/model"
 import { isJsonValue, type JsonObject } from "../../shared/contracts/json"
@@ -69,7 +69,20 @@ export function createLocalFilterWriter(deps: {
     if (device.consent?.v !== CONSENT_VERSION || device.upgradeNote?.state === "pending") {
       return { kind: "unavailable", reason: "startup" }
     }
-    if (device.syncOn || Object.hasOwn(records, "sync")) return { kind: "unavailable", reason: "sync-writer-required" }
+    if (device.syncOn) return { kind: "unavailable", reason: "sync-writer-required" }
+    let history: { raw: JsonObject; editedSinceOff: boolean } | undefined
+    if (Object.hasOwn(records, "sync")) {
+      const raw = records.sync
+      if (!isJsonObject(raw)) return { kind: "unavailable", reason: "sync-writer-required" }
+      try {
+        const decoded = decodeSyncState(raw)
+        if (decoded.status !== "off") return { kind: "unavailable", reason: "sync-writer-required" }
+        history = { raw, editedSinceOff: decoded.editedSinceOff }
+      } catch (error) {
+        if (error instanceof DecodeError) return { kind: "unavailable", reason: "sync-writer-required" }
+        throw error
+      }
+    }
 
     const rawSetup = records[setupKey]
     if (!isJsonObject(rawSetup)) return { kind: "unavailable", reason: "account-context" }
@@ -107,7 +120,14 @@ export function createLocalFilterWriter(deps: {
     if ("deleted" in envelope) delete envelope.deleted
     if (!isJsonObject(envelope)) throw new TypeError("Writer produced a non-JSON envelope")
     if (decodeDocument(envelope, decodeFilter).kind !== "value") throw new TypeError("Writer produced an unsupported Filter")
-    await deps.local.set({ [filterKey]: envelope })
+    const items: Record<string, JsonObject> = { [filterKey]: envelope }
+    if (history && !history.editedSinceOff) {
+      const sync = { ...history.raw, editedSinceOff: true }
+      if (!isJsonObject(sync)) throw new TypeError("Writer produced a non-JSON history")
+      decodeSyncState(sync)
+      items.sync = sync
+    }
+    await deps.local.set(items)
     return ok
   }
 
