@@ -219,7 +219,9 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
     pageBuild = bundle.kind !== "unrelated"
     if (bundle.kind === "unrelated") return
     const label = entries.map((entry) => entry.name).join(",")
+    const inheritedExternals = new Map<string, Set<string | undefined>>()
     const composedExternals = new Set<string>()
+    const renderedImports = new Map<string | null, Set<string>>()
     config.plugins ??= []
     if (bundle.kind === "feature") {
       config.build ??= {}
@@ -238,7 +240,11 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
           item.lastIndex = lastIndex
           return matches
         })
-        if (inherited) composedExternals.add(id)
+        if (inherited) {
+          let importers = inheritedExternals.get(id)
+          if (!importers) inheritedExternals.set(id, importers = new Set())
+          importers.add(importer)
+        }
         return inherited
       }
       const outputs = Array.isArray(rollup.output) ? rollup.output : [rollup.output ?? {}]
@@ -278,6 +284,38 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
           modules.set(id, names)
         }
       },
+      async renderStart() {
+        renderedImports.clear()
+        composedExternals.clear()
+        for (const [id, importers] of [...inheritedExternals]) {
+          if (this.getModuleInfo(id)) {
+            composedExternals.add(id)
+            continue
+          }
+          for (const importer of importers) {
+            const resolved = await this.resolve(id, importer)
+            if (!resolved?.external) this.error(`unlistedIifeOnly ${label}: missing external provenance ${id}`)
+            composedExternals.add(resolved.id)
+          }
+        }
+      },
+      renderChunk: {
+        order: "pre",
+        handler(_code, chunk) {
+          const modules = new Set(chunk.moduleIds)
+          for (const moduleId of this.getModuleIds()) {
+            if (!modules.has(moduleId)) continue
+            const module = this.getModuleInfo(moduleId)
+            if (!module) this.error(`unlistedIifeOnly ${label}: missing module provenance ${moduleId}`)
+            for (const id of module.importedIds) {
+              const dependency = this.getModuleInfo(id)
+              if (!dependency || (dependency.code === null && !specifiers.has(id) && !composedExternals.has(id))) this.error(`unlistedIifeOnly ${label}: unaccepted external ${id}`)
+            }
+          }
+          renderedImports.set(chunk.facadeModuleId, new Set(chunk.imports))
+          return null
+        }
+      },
       generateBundle(outputOptions, output) {
         if (outputOptions.format !== "iife") this.error(`unlistedIifeOnly ${label}: expected iife output`)
         const chunks: { file: string; modules: string[]; imports: string[]; dynamicImports: string[] }[] = []
@@ -286,7 +324,7 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
             if (artifact.fileName.endsWith(".css")) this.error(`noPageCss ${label}: ${artifact.fileName}`)
             continue
           }
-          if (artifact.imports.some((id) => !specifiers.has(id) && !composedExternals.has(id)) || artifact.dynamicImports.length) this.error(`unlistedIifeOnly ${label}`)
+          if (artifact.imports.some((id) => !renderedImports.get(artifact.facadeModuleId)?.has(id)) || artifact.dynamicImports.length) this.error(`unlistedIifeOnly ${label}`)
           const modules = Object.keys(artifact.modules).map(clean)
           for (const id of modules) {
             const owner = packageOwner(id)
