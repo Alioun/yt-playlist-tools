@@ -5,7 +5,26 @@ import { createBrowserLocalFilterWriter } from "../../../src/background/adapters
 declare const chrome: typeof import("wxt/browser").browser
 
 const reads: unknown[] = [], sets: unknown[] = [], events: unknown[] = [], senders: unknown[] = []
+const unhandledRejections: string[] = []
+globalThis.addEventListener("unhandledrejection", event => { if ("reason" in event) unhandledRejections.push(String(event.reason)) })
 let syncAccesses = 0
+let lastInvocation = -Infinity, lastEditCommit = -Infinity
+const timers: { at: number; milliseconds: number; kind: string }[] = []
+const pendingTimers = new Set<ReturnType<typeof setTimeout>>()
+const nativeTimeout = setTimeout, nativeClearTimeout = clearTimeout
+Object.defineProperty(globalThis, "setTimeout", { value: new Proxy(nativeTimeout, {
+  apply(target, receiver, args) {
+    timers.push({ at: performance.now(), milliseconds: args[1], kind: "armed" })
+    const run = args[0]
+    let timer: ReturnType<typeof setTimeout>
+    timer = Reflect.apply(target, receiver, [() => { pendingTimers.delete(timer); timers.push({ at: performance.now(), milliseconds: args[1], kind: "fired" }); run() }, ...args.slice(1)])
+    pendingTimers.add(timer)
+    return timer
+  }
+}) })
+Object.defineProperty(globalThis, "clearTimeout", { value: new Proxy(nativeClearTimeout, {
+  apply(target, receiver, args) { pendingTimers.delete(args[0]); return Reflect.apply(target, receiver, args) }
+}) })
 const syncReads: unknown[] = [], syncWrites: unknown[] = []
 const syncArea = chrome.storage.sync
 const nativeSyncGet = syncArea.get.bind(syncArea)
@@ -17,18 +36,22 @@ const nativeLocalRemove = chrome.storage.local.remove.bind(chrome.storage.local)
 let releasePaddingOnAckFailure = false
 let fillSyncBeforeSet = false
 let flushing = 0
+let started = false
+const automaticResults: unknown[] = [], nativeInvocations: number[] = []
 let holdNextSet = false
 let releaseSet: (() => void) | undefined
 let heldSet = false
 let changeAuthority: "off" | "metadata" | undefined
 Object.defineProperty(syncArea, "set", { value: new Proxy(syncArea.set, {
   async apply(target, receiver, args) {
-    if (flushing === 0) throw Error("Writer attempted sync set outside manual flush")
+    if (flushing === 0 && !started) throw Error("Writer attempted sync set outside authorized fixture driver")
     syncWrites.push(args[0])
     if (fillSyncBeforeSet) {
       fillSyncBeforeSet = false
       await nativeSyncSet(Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`fixture-sync-occupancy:${i}`, "x".repeat(7800)])))
     }
+    lastInvocation = performance.now()
+    nativeInvocations.push(lastInvocation)
     await Reflect.apply(target, receiver, args)
     if (changeAuthority === "off") {
       changeAuthority = undefined
@@ -64,8 +87,12 @@ chrome.storage.local.get = new Proxy(chrome.storage.local.get, {
 chrome.storage.local.set = new Proxy(chrome.storage.local.set, {
   async apply(target, receiver, args) {
     sets.push(args[0])
-    try { return await Reflect.apply(target, receiver, args) } catch (error) {
-      if (releasePaddingOnAckFailure && flushing > 0 && Object.keys(args[0]).join() === "sync") {
+    try {
+      const result = await Reflect.apply(target, receiver, args)
+      if (Object.keys(args[0]).some(key => key.startsWith("doc:"))) lastEditCommit = performance.now()
+      return result
+    } catch (error) {
+      if (releasePaddingOnAckFailure && (flushing > 0 || started) && Object.keys(args[0]).join() === "sync") {
         releasePaddingOnAckFailure = false
         await nativeLocalRemove("fixture-quota-padding")
       }
@@ -82,7 +109,14 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
   events.push({ area, changes })
 })
-const writer = createBrowserLocalFilterWriter(chrome)
+function observable(result: unknown): unknown {
+  if (!result || typeof result !== "object") return result
+  return Object.fromEntries(Object.entries(result).map(([key, value]) => [key,
+    value instanceof Error ? { name: value.name, message: value.message, fields: Object.getOwnPropertyNames(value) } : value]))
+}
+let createdAt = performance.now()
+let writer = createBrowserLocalFilterWriter(chrome, { onSyncResult(result) { automaticResults.push({ at: performance.now(), result: observable(result) }) } })
+let createdBy = performance.now()
 chrome.runtime.onMessage.addListener((raw: unknown, sender, respond) => {
   senders.push({ id: sender.id, frameId: sender.frameId, url: sender.url, tab: sender.tab && {
     id: sender.tab.id, windowId: sender.tab.windowId, incognito: sender.tab.incognito
@@ -92,7 +126,21 @@ chrome.runtime.onMessage.addListener((raw: unknown, sender, respond) => {
 })
 Object.assign(globalThis, {
   localFilterFixture: {
-    reads, sets, events, senders, syncReads, syncWrites,
+    reads, sets, events, senders, syncReads, syncWrites, automaticResults, nativeInvocations,
+    createdAt: () => createdAt,
+    createdBy: () => createdBy,
+    pacingDelay: () => Math.max(0, createdBy + 5000 - performance.now(), lastInvocation + 5000 - performance.now(), lastEditCommit + 2000 - performance.now()),
+    timers, pendingTimers: () => pendingTimers.size, unhandledRejections,
+    async start() { started = true; await writer.startSync() },
+    async dispose() { await writer.dispose(); started = false },
+    async freshOwner() {
+      await writer.dispose()
+      started = false
+      createdAt = performance.now()
+      lastInvocation = lastEditCommit = -Infinity
+      writer = createBrowserLocalFilterWriter(chrome, { onSyncResult(result) { automaticResults.push({ at: performance.now(), result: observable(result) }) } })
+      createdBy = performance.now()
+    },
     async flush() {
       flushing++
       try {
@@ -130,7 +178,7 @@ Object.assign(globalThis, {
     localRemove: nativeLocalRemove,
     read: nativeGet,
     seed: nativeSet,
-    clearEffects() { reads.length = sets.length = events.length = senders.length = syncReads.length = syncWrites.length = 0; syncAccesses = 0 },
+    clearEffects() { reads.length = sets.length = events.length = senders.length = syncReads.length = syncWrites.length = automaticResults.length = nativeInvocations.length = 0; syncAccesses = 0 },
     syncAccesses: () => syncAccesses,
     incognitoAllowed: () => chrome.extension.isAllowedIncognitoAccess()
   }

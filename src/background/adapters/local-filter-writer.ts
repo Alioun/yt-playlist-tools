@@ -1,7 +1,7 @@
 import { isJsonValue } from "../../shared/contracts/json"
 import { isAccountKey, isPlaylistId } from "../../shared/model"
 import {
-  createLocalFilterWriter, type LocalFilterChange, type LocalFilterWriteResult, type SyncFlushResult
+  createLocalFilterWriter, type LocalFilterChange, type LocalFilterWriteResult, type SyncAutomaticResult, type SyncFlushResult
 } from "../store/local-filter-writer"
 
 type NativeBrowser = typeof import("wxt/browser").browser
@@ -26,21 +26,41 @@ function parseChange(raw: unknown): LocalFilterChange | undefined {
   }
 }
 
-export function createBrowserLocalFilterWriter(nativeBrowser: NativeBrowser): {
+export function createBrowserLocalFilterWriter(nativeBrowser: NativeBrowser, options: { onSyncResult: (result: SyncAutomaticResult) => void }): {
   changeFromSettings(raw: unknown, sender: NativeSender): Promise<LocalFilterWriteResult>
   flushSync(): Promise<SyncFlushResult>
+  startSync(): Promise<void>
+  dispose(): Promise<void>
 } {
   const writer = createLocalFilterWriter({
     local: {
       get: keys => nativeBrowser.storage.local.get(keys === null ? null : [...keys]),
       set: items => nativeBrowser.storage.local.set(items)
     },
-    sync: { get: () => nativeBrowser.storage.sync.get(null), set: items => nativeBrowser.storage.sync.set(items) },
+    sync: {
+      get: () => nativeBrowser.storage.sync.get(null),
+      set: items => nativeBrowser.storage.sync.set(items),
+      subscribe(changed) {
+        const event = nativeBrowser.storage.sync.onChanged
+        event.addListener(changed)
+        return () => event.removeListener(changed)
+      }
+    },
+    syncClock: {
+      now: () => performance.now(),
+      after(milliseconds, run) {
+        const timer = setTimeout(run, milliseconds)
+        return () => clearTimeout(timer)
+      }
+    },
+    onSyncResult: options.onSyncResult,
     now: () => Date.now(),
     generation: () => crypto.randomUUID()
   })
   return {
     flushSync: () => writer.flushSync(),
+    startSync: () => writer.startSync(),
+    dispose: () => writer.dispose(),
     async changeFromSettings(raw, sender) {
       if (sender.id !== nativeBrowser.runtime.id || sender.frameId !== 0 ||
         sender.url !== nativeBrowser.runtime.getURL("/options.html") || !sender.tab) {

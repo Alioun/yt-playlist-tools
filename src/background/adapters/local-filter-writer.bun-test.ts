@@ -2,15 +2,17 @@ import { afterEach, beforeEach, expect, mock, spyOn, test } from "bun:test"
 import { fakeBrowser } from "wxt/testing/fake-browser"
 import { isJsonValue } from "../../shared/contracts/json"
 import { createBrowserLocalFilterWriter } from "./local-filter-writer"
-import type { LocalFilterWriteResult, SyncFlushResult } from "../store/local-filter-writer"
+import type { LocalFilterWriteResult, SyncAutomaticResult, SyncFlushResult } from "../store/local-filter-writer"
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
 type Check<T extends true> = T
 type NativeBrowser = typeof import("wxt/browser").browser
 type ExpectedSender = Parameters<Parameters<NativeBrowser["runtime"]["onMessage"]["addListener"]>[0]>[1]
-export type BrowserAdapterProof = Check<Equal<typeof createBrowserLocalFilterWriter, (native: NativeBrowser) => {
+export type BrowserAdapterProof = Check<Equal<typeof createBrowserLocalFilterWriter, (native: NativeBrowser, options: { onSyncResult: (result: SyncAutomaticResult) => void }) => {
   changeFromSettings(raw: unknown, sender: ExpectedSender): Promise<LocalFilterWriteResult>
   flushSync(): Promise<SyncFlushResult>
+  startSync(): Promise<void>
+  dispose(): Promise<void>
 }>>
 
 type NativeSender = Parameters<ReturnType<typeof createBrowserLocalFilterWriter>["changeFromSettings"]>[1]
@@ -42,7 +44,7 @@ function instrument() {
   }))
   const syncGet = spyOn(fakeBrowser.storage.sync, "get").mockImplementation(() => { throw Error("Forbidden sync get") })
   const syncSet = spyOn(fakeBrowser.storage.sync, "set").mockImplementation(() => { throw Error("Forbidden sync set") })
-  const adapter = createBrowserLocalFilterWriter(fakeBrowser)
+  const adapter = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
   return { adapter, set, get, syncGet, syncSet }
 }
 
@@ -180,7 +182,7 @@ test("synthetic joined adapter reads native null snapshots lazily and writes onl
   await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "history", created: 0 }, [key.replace("doc:", "s:")]: before[key], unknown: true })
   const get = spyOn(fakeBrowser.storage.local, "get"), set = spyOn(fakeBrowser.storage.local, "set")
   const syncGet = spyOn(fakeBrowser.storage.sync, "get"), syncSet = spyOn(fakeBrowser.storage.sync, "set")
-  const adapter = createBrowserLocalFilterWriter(fakeBrowser)
+  const adapter = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
   expect(syncGet).not.toHaveBeenCalled()
   expect(get).not.toHaveBeenCalled()
   expect(await adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
@@ -198,7 +200,7 @@ test("synthetic joined sync-read rejection propagates and recovers without write
   await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "history", created: 0 } })
   const marker = Error("native sync read"), get = spyOn(fakeBrowser.storage.sync, "get"), set = spyOn(fakeBrowser.storage.local, "set")
   get.mockImplementationOnce(async () => { throw marker })
-  const adapter = createBrowserLocalFilterWriter(fakeBrowser)
+  const adapter = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
   await expect(adapter.changeFromSettings(request, sender)).rejects.toBe(marker)
   expect(set).not.toHaveBeenCalled()
   expect(await adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
@@ -214,9 +216,13 @@ test("synthetic manual flush forwards native object and string items on the same
   await fakeBrowser.storage.local.set({ device: { id: "synthetic", consent: { v: 1, at: 1 }, syncOn: true }, sync: history, [key]: g1, "doc:settings": settings })
   await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "H", created: 0 }, [base]: before[key], [setup.replace("doc:", "s:")]: before[setup] })
   const get = spyOn(fakeBrowser.storage.sync, "get"), set = spyOn(fakeBrowser.storage.sync, "set"), localSet = spyOn(fakeBrowser.storage.local, "set")
-  const adapter = createBrowserLocalFilterWriter(fakeBrowser)
+  const adapter = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
   expect(get).not.toHaveBeenCalled()
   expect(set).not.toHaveBeenCalled()
+  expect((await adapter.flushSync()).kind).toBe("deferred")
+  expect<unknown>(get.mock.calls).toEqual([[null]])
+  get.mockClear()
+  await new Promise(resolve => setTimeout(resolve, 5000))
   expect((await adapter.flushSync()).kind).toBe("pushed")
   const prefix = '{"v":1,"gen":"settings-pending","at":1,"by":"old","data":{"future":"'
   expect<unknown>(set.mock.calls).toEqual([[{ [base]: g1, "s:settings": { v: 1, gen: "settings-pending", at: 1, by: "old", n: 2 },
@@ -226,7 +232,7 @@ test("synthetic manual flush forwards native object and string items on the same
   expect(await adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
   expect(set).toHaveBeenCalledTimes(1)
   expect(await adapter.flushSync()).toEqual({ kind: "idle" })
-})
+}, 10000)
 
 test("synthetic off manual flush retains zero native sync access", async () => {
   const h = instrument()
@@ -234,4 +240,42 @@ test("synthetic off manual flush retains zero native sync access", async () => {
   expect(h.syncGet).not.toHaveBeenCalled()
   expect(h.syncSet).not.toHaveBeenCalled()
   expect(h.set).not.toHaveBeenCalled()
+})
+
+
+test("synthetic off start is lazy and dispose rejects later work", async () => {
+  const h = instrument(), subscribe = spyOn(fakeBrowser.storage.sync.onChanged, "addListener")
+  await h.adapter.startSync(); await h.adapter.startSync()
+  expect(subscribe).not.toHaveBeenCalled()
+  expect(h.syncGet).not.toHaveBeenCalled()
+  expect(h.syncSet).not.toHaveBeenCalled()
+  await h.adapter.dispose()
+  await expect(h.adapter.startSync()).rejects.toThrow("Writer disposed")
+  await expect(h.adapter.flushSync()).rejects.toThrow("Writer disposed")
+})
+
+test("synthetic active start owns one area listener forwards original automatic errors and never restarts", async () => {
+  const before = await fakeBrowser.storage.local.get(null)
+  const rawSync = { joined: "H", pushed: { [key]: "old", "doc:setup:AAAAAAAAAAAAAAAA": "setup" }, status: "ok", editedSinceOff: false }
+  await fakeBrowser.storage.local.set({ device: { id: "synthetic", consent: { v: 1, at: 1 }, syncOn: true }, sync: rawSync })
+  await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "H", created: 0 }, [key.replace("doc:", "s:")]: before[key], "s:setup:AAAAAAAAAAAAAAAA": before["doc:setup:AAAAAAAAAAAAAAAA"] })
+  const subscribe = spyOn(fakeBrowser.storage.sync.onChanged, "addListener"), unsubscribe = spyOn(fakeBrowser.storage.sync.onChanged, "removeListener")
+  const get = spyOn(fakeBrowser.storage.sync, "get"), marker = { opaque: "native preflight" }, results: SyncAutomaticResult[] = []
+  const adapter = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult(result) { results.push(result) } })
+  expect(subscribe).not.toHaveBeenCalled()
+  await adapter.startSync(); await adapter.startSync()
+  expect(subscribe).toHaveBeenCalledTimes(1)
+  expect(results.map(result => result.kind)).toEqual(["idle", "idle"])
+  get.mockImplementationOnce(async () => { throw marker })
+  await adapter.startSync()
+  expect(results.at(-1)).toEqual({ kind: "rejected", error: marker })
+  const last = results.at(-1)
+  expect(last && "error" in last && last.error).toBe(marker)
+  expect(unsubscribe).toHaveBeenCalledTimes(1)
+  const count = get.mock.calls.length
+  await adapter.startSync()
+  expect(get).toHaveBeenCalledTimes(count)
+  expect(subscribe).toHaveBeenCalledTimes(1)
+  await adapter.dispose()
+  expect(unsubscribe).toHaveBeenCalledTimes(1)
 })

@@ -1,4 +1,5 @@
 import { writeFileSync } from "node:fs"
+import { execFileSync } from "node:child_process"
 import assert from "node:assert/strict"
 import { createHash } from "node:crypto"
 import { copyFile, mkdir, mkdtemp, readFile, realpath, writeFile } from "node:fs/promises"
@@ -54,9 +55,14 @@ const initial = {
 const stable = value => JSON.stringify(value, (_, item) => item && typeof item === "object" && !Array.isArray(item)
   ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b))) : item)
 const equal = (actual, expected, message) => assert.equal(stable(actual), stable(expected), message)
-const result = { extensionId, extensionPath, profile, executable, artifactHashes, rounds: [], limits: [] }
+function evidenceJson(value) {
+  const padding = item => typeof item === "string" ? { syntheticPaddingLength: item.length }
+    : item && typeof item === "object" ? Object.fromEntries(Object.entries(item).map(([name, field]) => [name, padding(field)])) : item
+  return JSON.stringify(value, (name, field) => name === "fixture-quota-padding" || name.startsWith("fixture-sync-occupancy:") ? padding(field) : field, 2)
+}
+const result = { extensionId, extensionPath, profile, executable, artifactHashes, processes: [], rounds: [], limits: [] }
 process.on("uncaughtExceptionMonitor", error => {
-  writeFileSync(join(evidence, "failed-native-result.json"), JSON.stringify({ ...result, failure: { name: error.name, message: error.message } }, null, 2) + "\n")
+  writeFileSync(join(evidence, "failed-native-result.json"), evidenceJson({ ...result, failure: { name: error.name, message: error.message } }) + "\n")
 })
 async function exactWorker(context) {
   const url = `chrome-extension://${extensionId}/background.js`
@@ -72,6 +78,19 @@ async function open() {
       "--host-resolver-rules=MAP * ~NOTFOUND"]
   })
   try {
+    const processIds = execFileSync("pgrep", ["-f", profile], { encoding: "utf8" }).trim().split(/\s+/).map(Number)
+    assert(processIds.length > 0 && processIds.every(Number.isSafeInteger), "identify only fresh fixture profile processes")
+    const receipt = { processIds, openedAt: Date.now(), exited: false }
+    result.processes.push(receipt)
+    const close = context.close.bind(context)
+    context.close = async () => {
+      await close()
+      const alive = pid => { try { process.kill(pid, 0); return true } catch (error) { if (error.code === "ESRCH") return false; throw error } }
+      for (let i = 0; i < 100 && processIds.some(alive); i++) await new Promise(done => setTimeout(done, 10))
+      assert.equal(processIds.some(alive), false, "previous fixture browser processes exited before replacement owner")
+      receipt.exited = true
+      receipt.closedAt = Date.now()
+    }
     const worker = await exactWorker(context)
     assert.equal(worker.url(), `chrome-extension://${extensionId}/background.js`)
     const native = await worker.evaluate(() => ({ href: location.href, id: chrome.runtime.id, storage: typeof chrome.storage.local.get }))
@@ -85,7 +104,7 @@ async function open() {
 async function effects(browser) {
   return JSON.parse(await browser.worker.evaluate(() => {
     const f = globalThis.localFilterFixture
-    return JSON.stringify({ reads: f.reads, sets: f.sets, events: f.events, senders: f.senders, syncAccesses: f.syncAccesses(), syncReads: f.syncReads, syncWrites: f.syncWrites })
+    return JSON.stringify({ reads: f.reads, sets: f.sets, events: f.events, senders: f.senders, syncAccesses: f.syncAccesses(), syncReads: f.syncReads, syncWrites: f.syncWrites, automaticResults: f.automaticResults, nativeInvocations: f.nativeInvocations, heldSet: f.isSetHeld(), timers: f.timers, pendingTimers: f.pendingTimers(), unhandledRejections: f.unhandledRejections })
   }))
 }
 async function read(browser) { return JSON.parse(await browser.worker.evaluate(async () => JSON.stringify(await globalThis.localFilterFixture.read(null)))) }
@@ -487,7 +506,14 @@ function orderedOutcome(outcome) {
   if (outcome.source) orderedOutcome(outcome.source)
   return outcome
 }
-async function flush(browser) { return orderedOutcome(JSON.parse(await browser.worker.evaluate(async () => JSON.stringify(await globalThis.localFilterFixture.flush())))) }
+async function waitForPacing(browser) {
+  const delay = await browser.worker.evaluate(() => globalThis.localFilterFixture.pacingDelay())
+  if (delay > 0) await browser.page.waitForTimeout(delay + 25)
+}
+async function flush(browser) {
+  await waitForPacing(browser)
+  return orderedOutcome(JSON.parse(await browser.worker.evaluate(async () => JSON.stringify(await globalThis.localFilterFixture.flush()))))
+}
 async function meaningfulRead(browser) {
   return JSON.parse(await browser.worker.evaluate(async () => {
     const records = await globalThis.localFilterFixture.read(null)
@@ -500,7 +526,7 @@ async function recordFlush(browser, stage, outcome) {
   const observed = await effects(browser), fullReadback = await meaningfulRead(browser), fullSyncSnapshot = await syncRead(browser)
   const round = { stage, outcome, observed, fullReadback, fullSyncSnapshot }
   result.rounds.push(round)
-  await writeFile(join(evidence, "native-progress.json"), JSON.stringify(result, null, 2) + "\n")
+  await writeFile(join(evidence, "native-progress.json"), evidenceJson(result) + "\n")
   console.log(JSON.stringify({ stage, kind: outcome.kind }))
   return round
 }
@@ -601,14 +627,14 @@ try {
   equal(recovered.fullReadback, { ...flushLocal, sync: flushAck }, "native quota recovery repairs exact full raw history")
   await seedJoined(browser, flushLocal, flushRemote)
   const queuedQuota = await padLocal(browser)
+  await waitForPacing(browser)
   await browser.worker.evaluate(() => {
     const f = globalThis.localFilterFixture
     f.releaseQuotaPaddingAfterAckFailure()
     f.holdNextSyncSet()
     globalThis.pendingFixtureFlush = f.flush()
   })
-  await browser.page.waitForTimeout(100)
-  assert.equal(await browser.worker.evaluate(() => globalThis.localFilterFixture.isSetHeld()), true)
+  await driverWait(browser, observed => observed.heldSet, "manual native set reaches held state")
   const queuedEdit = send(browser, { ...request, desired: { mode: "deny", on: true } })
   await browser.page.waitForTimeout(100)
   equal((await effects(browser)).reads, [null], "actual native queued edit waits behind unresolved flush")
@@ -642,6 +668,168 @@ try {
   equal(repeated.observed.sets, [], "restarted repeat no local write")
 } finally { await browser.context.close() }
 
+
+const driverSetup = { v: 1, gen: "S", at: 1, by: "synthetic-device", data: { autoAdd: [{ pl: "PL_P", takes: "videos" }] } }
+const driverG0 = { v: 1, gen: "g0", at: 1, by: "synthetic-device", data: { mode: "deny", on: true, channels: [] }, future: { keep: 1 } }
+const driverHistory = { joined: "H", pushed: { [key]: "g0", [setupKey]: "S" }, status: "ok", editedSinceOff: false, future: { keep: true } }
+const driverLocal = { schema: 1, device: { id: "synthetic-device", consent: { v: 1, at: 0 }, syncOn: true }, sync: driverHistory, [setupKey]: driverSetup, [key]: driverG0 }
+const driverRemote = { "s:meta": { v: 1, id: "H", created: 0 }, [setupKey.replace("doc:", "s:")]: driverSetup, [syncBase]: driverG0 }
+async function driverWait(browser, condition, message) {
+  for (let i = 0; i < 600; i++) {
+    const observed = await effects(browser)
+    if (condition(observed)) return observed
+    await browser.page.waitForTimeout(25)
+  }
+  throw Error("Native driver timeout: " + message)
+}
+async function startDriver(browser) { await browser.worker.evaluate(() => globalThis.localFilterFixture.start()) }
+async function driverRecord(browser, stage) {
+  const round = { stage, observed: await effects(browser), fullReadback: await meaningfulRead(browser), fullSyncSnapshot: await syncRead(browser) }
+  result.rounds.push(round)
+  await writeFile(join(evidence, "native-progress.json"), evidenceJson(result) + "\n")
+  console.log(JSON.stringify({ stage, invocations: round.observed.nativeInvocations, pendingTimers: round.observed.pendingTimers }))
+  return round
+}
+function assertDriverIdle(observed) {
+  equal(observed.unhandledRejections, [], "no native unhandled Promise rejection")
+  assert.equal(observed.pendingTimers, 0, "no pending driver timer at terminal idle")
+  assert(observed.timers.every(timer => timer.milliseconds >= 0 && timer.milliseconds <= 25000), "only bounded one-shot timers")
+}
+let driverDurable, driverRemoteDurable
+browser = await open()
+try {
+  await seedJoined(browser, driverLocal, driverRemote)
+  await startDriver(browser); await startDriver(browser)
+  const createdAt = await browser.worker.evaluate(() => globalThis.localFilterFixture.createdAt())
+  equal(await send(browser), ok, "driver first real settings edit")
+  await browser.page.waitForTimeout(150)
+  equal(await send(browser, { ...request, desired: { mode: "deny", on: true } }), ok, "driver second real settings edit")
+  const burstLocal = await read(browser), g2 = burstLocal[key]
+  await browser.page.waitForTimeout(150)
+  equal(await send(browser, { ...request, desired: { mode: "deny", on: true } }), ok, "driver real no-op")
+  await driverWait(browser, o => o.automaticResults.some(entry => entry.result.kind === "pushed") && o.pendingTimers === 0, "first burst")
+  await settle(browser)
+  const first = await driverRecord(browser, "driver-native-burst-coalesces-exact-generation")
+  equal(first.observed.syncWrites, [{ [syncBase]: g2 }], "automatic burst has one complete native set")
+  assert(first.observed.nativeInvocations[0] >= createdAt + 5000, "real initial barrier at native invocation")
+  equal(first.fullReadback, { ...burstLocal, sync: { ...driverHistory, pushed: { ...driverHistory.pushed, [key]: g2.gen } } }, "automatic exact raw acknowledgement")
+  equal(first.fullSyncSnapshot, { ...driverRemote, [syncBase]: g2 }, "automatic complete sync readback")
+  assertDriverIdle(first.observed)
+  equal(await send(browser), ok, "driver second burst settings edit")
+  await browser.page.waitForTimeout(100)
+  equal(await send(browser, { ...request, desired: { mode: "deny", on: true } }), ok, "driver second burst latest generation")
+  const secondLocal = await read(browser), g4 = secondLocal[key]
+  const deferred = await browser.worker.evaluate(() => globalThis.localFilterFixture.flush())
+  assert.equal(deferred.kind, "deferred", "native manual shares debounce and spacing")
+  assert(deferred.notBefore >= first.observed.nativeInvocations[0] + 5000)
+  await waitForPacing(browser)
+  const manual = await browser.worker.evaluate(() => globalThis.localFilterFixture.flush())
+  assert(["pushed", "idle"].includes(manual.kind), "manual and automatic race converge")
+  await driverWait(browser, o => o.syncWrites.length === 2 && o.pendingTimers === 0, "manual race")
+  await settle(browser)
+  const second = await driverRecord(browser, "driver-native-second-burst-manual-race-spacing")
+  equal(second.observed.syncWrites, [{ [syncBase]: g2 }, { [syncBase]: g4 }], "manual race produces one second complete set")
+  assert(second.observed.nativeInvocations[1] - second.observed.nativeInvocations[0] >= 5000, "actual native invocations at least five seconds apart")
+  assertDriverIdle(second.observed)
+  await browser.worker.evaluate(() => globalThis.localFilterFixture.holdNextSyncSet())
+  equal(await send(browser), ok, "held-pass triggering real edit")
+  await driverWait(browser, o => o.syncWrites.length === 3 && o.heldSet, "held native set begins")
+  assert.equal(await browser.worker.evaluate(() => globalThis.localFilterFixture.isSetHeld()), true)
+  const held = await read(browser), count = (await effects(browser)).reads.length
+  const queued = send(browser, { ...request, desired: { mode: "deny", on: true } })
+  await browser.page.waitForTimeout(150)
+  assert.equal((await effects(browser)).reads.length, count, "real queued edit performs no reads while native set held")
+  await browser.worker.evaluate(() => globalThis.localFilterFixture.releaseSyncSet())
+  equal(await queued, ok, "real queued edit resolves after prior acknowledgement")
+  const queuedLocal = await read(browser)
+  equal(queuedLocal.sync.pushed[key], held[key].gen, "held set only acknowledges captured generation")
+  assert.notEqual(queuedLocal[key].gen, held[key].gen)
+  await driverWait(browser, o => o.syncWrites.length === 4 && o.pendingTimers === 0, "queued real edit follow-up")
+  await settle(browser)
+  const heldRound = await driverRecord(browser, "driver-native-held-set-and-queued-real-edit")
+  equal(heldRound.observed.syncWrites.slice(2), [{ [syncBase]: held[key] }, { [syncBase]: queuedLocal[key] }], "held and queued generations each sent exactly once")
+  const times = heldRound.observed.nativeInvocations
+  assert(times.every((time, i) => i === 0 || time - times[i - 1] >= 5000), "all actual invocation spacing")
+  assertDriverIdle(heldRound.observed)
+  await browser.worker.evaluate(base => globalThis.localFilterFixture.syncRemove(base), syncBase)
+  await driverWait(browser, o => o.syncWrites.length === 5 && o.pendingTimers === 0, "vanished-base restoration")
+  await settle(browser)
+  const restoration = await driverRecord(browser, "driver-native-area-event-restores-vanished-base")
+  equal(restoration.observed.syncWrites[4], { [syncBase]: queuedLocal[key] }, "restoration preserves exact generation")
+  assertDriverIdle(restoration.observed)
+  await browser.page.waitForTimeout(300)
+  assert.equal((await effects(browser)).syncWrites.length, 5, "own native events do not resend")
+  await browser.worker.evaluate(() => globalThis.localFilterFixture.dispose())
+  equal(await send(browser, { ...request, desired: { mode: "deny", on: false } }), { fixtureError: "Error: Writer disposed" }, "disposed native owner refuses new edit")
+  const before = await read(browser)
+  driverDurable = { ...before, [key]: { ...before[key], gen: "restart-pending", at: 1234567, data: { ...before[key].data, on: false } } }
+  await browser.worker.evaluate(text => globalThis.localFilterFixture.seed(JSON.parse(text)), JSON.stringify(driverDurable))
+  driverRemoteDurable = await syncRead(browser)
+} finally { await browser.context.close() }
+browser = await open()
+try {
+  equal(await read(browser), driverDurable, "clean full browser restart retains pending driver generation")
+  equal(await syncRead(browser), driverRemoteDurable, "clean full browser restart retains native sync state")
+  const createdAt = await browser.worker.evaluate(() => globalThis.localFilterFixture.createdAt())
+  const createdBy = await browser.worker.evaluate(() => globalThis.localFilterFixture.createdBy())
+  await startDriver(browser)
+  const manual = await browser.worker.evaluate(() => globalThis.localFilterFixture.flush())
+  assert.equal(manual.kind, "deferred", "clean restart first manual barrier")
+  assert(manual.notBefore >= createdAt + 5000 && manual.notBefore <= createdBy + 5000, "restart boundary uses the core's actual construction time")
+  await driverWait(browser, o => o.syncWrites.length === 1 && o.pendingTimers === 0, "restart automatic barrier")
+  const restarted = await driverRecord(browser, "driver-native-clean-restart-first-set-barrier")
+  assert(restarted.observed.nativeInvocations[0] >= createdAt + 5000)
+  equal(restarted.observed.syncWrites, [{ [syncBase]: driverDurable[key] }], "restart reconstructs exact pending batch")
+  assertDriverIdle(restarted.observed)
+} finally { await browser.context.close() }
+for (const failure of ["sync-set", "acknowledgement"]) {
+  browser = await open()
+  try {
+    await seedJoined(browser, flushLocal, flushRemote)
+    const createdAt = await browser.worker.evaluate(() => globalThis.localFilterFixture.createdAt())
+    let quota
+    if (failure === "sync-set") await browser.worker.evaluate(() => globalThis.localFilterFixture.fillSyncBeforeNextSet())
+    else quota = await padLocal(browser)
+    await startDriver(browser)
+    const expected = failure === "sync-set" ? "sync-set-failed" : "acknowledgement-failed"
+    await driverWait(browser, o => o.automaticResults.some(entry => entry.result.kind === expected), "genuine native " + failure + " stop")
+    const failed = await driverRecord(browser, "driver-native-genuine-" + failure + "-opaque-stop")
+    const outcome = failed.observed.automaticResults.find(entry => entry.result.kind === expected).result
+    assert.equal(outcome.error.name, "Error", "original native Error remains unclassified")
+    assert.deepEqual(outcome.error.fields.sort(), ["message", "stack"])
+    assert(failed.observed.nativeInvocations[0] >= createdAt + 5000)
+    equal(failed.observed.syncWrites, [flushItems], "genuine native failing pass attempted complete batch once")
+    if (failure === "acknowledgement") {
+      equal(outcome.source.kind, "set", "native sync acceptance precedes local failure")
+      equal(failed.fullSyncSnapshot, { ...flushRemote, ...flushItems }, "native accepted batch remains for readback repair")
+      failed.quota = quota
+      await browser.worker.evaluate(() => globalThis.localFilterFixture.localRemove("fixture-quota-padding"))
+    } else await browser.worker.evaluate(() => globalThis.localFilterFixture.syncRemove(Array.from({ length: 12 }, (_, i) => `fixture-sync-occupancy:${i}`)))
+    await startDriver(browser)
+    await browser.worker.evaluate(() => globalThis.localFilterFixture.syncSeed({ "fixture-independent-event": true }))
+    const beforeEdit = await read(browser)
+    equal(await send(browser, { ...request, desired: { mode: "deny", on: true } }), ok, "ordinary real edit remains available after automatic stop")
+    await browser.page.waitForTimeout(5200)
+    const stopped = await driverRecord(browser, "driver-native-" + failure + "-stop-survives-start-event-edit")
+    equal(stopped.observed.syncWrites, [flushItems], "opaque error never automatically retries")
+    assertDriverIdle(stopped.observed)
+    const current = stopped.fullReadback[key]
+    assert.notEqual(current.gen, beforeEdit[key].gen)
+    if (failure === "acknowledgement") {
+      await browser.worker.evaluate(async text => {
+        const f = globalThis.localFilterFixture
+        await f.seed(JSON.parse(text)); await f.freshOwner(); f.clearEffects(); await f.start()
+      }, JSON.stringify(flushLocal))
+      await driverWait(browser, o => o.automaticResults.some(entry => entry.result.kind === "reconciled"), "fresh experimental owner repairs accepted generation")
+      const repaired = await driverRecord(browser, "driver-native-fresh-owner-readback-repair-without-resend")
+      equal(repaired.observed.syncWrites, [], "fresh owner repairs accepted native generations during barrier")
+      equal(repaired.fullReadback.sync, flushAck, "fresh owner repairs full raw history")
+      assertDriverIdle(repaired.observed)
+    }
+    await browser.worker.evaluate(() => globalThis.localFilterFixture.dispose())
+  } finally { await browser.context.close() }
+}
+
 result.limits.push("Clean restart proves resolved native persistence and desired-state retry convergence. It does not prove power-loss atomicity, uncertain in-flight set behavior, Firefox, or production integration.")
-await writeFile(join(evidence, "native-result.json"), JSON.stringify(result, null, 2) + "\n")
+await writeFile(join(evidence, "native-result.json"), evidenceJson(result) + "\n")
 console.log(JSON.stringify({ extensionId, version: result.version, stages: result.rounds.map(round => round.stage), nativeIncognito: result.nativeIncognito, desiredStateRetryConverged: result.desiredStateRetryConverged, evidence }, null, 2))

@@ -33,15 +33,22 @@ export type LocalWriteStorage = {
   set(items: Readonly<Record<string, JsonObject>>): Promise<void>
 }
 
+export type SyncClock = {
+  now(): number
+  after(milliseconds: number, run: () => void): () => void
+}
+
 export type SyncStorage = {
   get(): Promise<Readonly<Record<string, unknown>>>
   set(items: Readonly<Record<string, JsonValue>>): Promise<void>
+  subscribe(changed: () => void): () => void
 }
 
 type FlushSource =
   | { kind: "set"; sent: readonly SyncDocumentRecord[]; repairs: readonly SyncDocumentRecord[] }
   | { kind: "readback"; repairs: readonly SyncDocumentRecord[] }
 export type SyncFlushResult =
+  | { kind: "deferred"; notBefore: number }
   | { kind: "idle" }
   | { kind: "reconciled"; repaired: readonly SyncDocumentRecord[] }
   | { kind: "pushed"; sent: readonly SyncDocumentRecord[]; repaired: readonly SyncDocumentRecord[] }
@@ -53,6 +60,8 @@ export type SyncFlushResult =
     | { kind: "authority" | "readback" }
     | { kind: "read-failed"; error: unknown }
   }
+
+export type SyncAutomaticResult = SyncFlushResult | { kind: "rejected"; error: unknown }
 
 function isJsonObject(value: unknown): value is JsonObject {
   return value !== null && typeof value === "object" && !Array.isArray(value) && isJsonValue(value)
@@ -111,11 +120,73 @@ export function createLocalFilterWriter(deps: {
   readonly sync: SyncStorage
   readonly now: () => number
   readonly generation: () => string
+  readonly syncClock: SyncClock
+  readonly onSyncResult: (result: SyncAutomaticResult) => void
 }): {
   change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>
   flushSync(): Promise<SyncFlushResult>
+  startSync(): Promise<void>
+  dispose(): Promise<void>
 } {
   let lane: Promise<void> = Promise.resolve()
+  let lifetime: { kind: "inactive" | "stopped" | "disposed" } | { kind: "active"; unsubscribe: () => void } = { kind: "inactive" }
+  let ticket: { event: "edit" | "start" | "sync"; cancel: () => void } | undefined
+  let quietUntil = 0
+  let nextInvocation = deps.syncClock.now() + 5000
+
+  function enqueue<T>(run: () => Promise<T>): Promise<T> {
+    const work = lane.then(run)
+    lane = work.then(() => {}, () => {})
+    return work
+  }
+
+  function cancelTicket() {
+    ticket?.cancel()
+    ticket = undefined
+  }
+
+  function deactivate(kind: "inactive" | "stopped" | "disposed") {
+    cancelTicket()
+    if (lifetime.kind === "active") lifetime.unsubscribe()
+    if (lifetime.kind !== "disposed" && (lifetime.kind !== "stopped" || kind === "disposed")) lifetime = { kind }
+  }
+
+  function arm(notBefore: number, event: "edit" | "start" | "sync") {
+    if (lifetime.kind !== "active") return
+    cancelTicket()
+    const milliseconds = Math.max(0, notBefore - deps.syncClock.now())
+    if (milliseconds > 25000) return
+    const current = { event, cancel: () => {} }
+    ticket = current
+    current.cancel = deps.syncClock.after(milliseconds, () => {
+      void enqueue(async () => {
+        if (ticket !== current || lifetime.kind !== "active") return
+        ticket = undefined
+        await automatic()
+      })
+    })
+  }
+
+  async function automatic(event?: "start" | "sync") {
+    if (lifetime.kind !== "active") return
+    let result: SyncAutomaticResult
+    try { result = await attempt() } catch (error) { result = { kind: "rejected", error } }
+    if (result.kind === "rejected") deactivate("stopped")
+    else if (event && result.kind === "deferred") arm(result.notBefore, event)
+    deps.onSyncResult(result)
+  }
+
+  async function attempt(): Promise<SyncFlushResult> {
+    let result: SyncFlushResult
+    try { result = await flush() } catch (error) { deactivate("stopped"); throw error }
+    if (result.kind === "sync-set-failed" || result.kind === "acknowledgement-failed" || result.kind === "unconfirmed") deactivate("stopped")
+    if (result.kind !== "deferred") cancelTicket()
+    return result
+  }
+
+  function observeOff(syncOn: boolean) {
+    if (!syncOn) deactivate("inactive")
+  }
 
   async function execute(change: LocalFilterChange, at: number): Promise<LocalFilterWriteResult> {
     const invalid = { kind: "result", result: { refused: "invalid" } } as const
@@ -128,6 +199,7 @@ export function createLocalFilterWriter(deps: {
       const ready = authority(records)
       if (ready.kind === "unavailable") return ready
       const { device, history } = ready
+      observeOff(device.syncOn)
       if (!device.syncOn && exhaustive) return { kind: "unavailable", reason: "sync-writer-required" }
 
       const rawSetup = records[setupKey]
@@ -198,6 +270,10 @@ export function createLocalFilterWriter(deps: {
         items.sync = sync
       }
       await deps.local.set(items)
+      if (device.syncOn) {
+        quietUntil = deps.syncClock.now() + 2000
+        arm(Math.max(quietUntil, nextInvocation), "edit")
+      }
       return ok
     }
   }
@@ -206,6 +282,7 @@ export function createLocalFilterWriter(deps: {
     const records = await deps.local.get(null)
     const ready = authority(records)
     if (ready.kind !== "ready") return { kind: "unavailable" }
+    observeOff(ready.device.syncOn)
     if (!ready.device.syncOn) return { kind: "idle" }
     const plan = planSyncWrite({ local: records, sync: await deps.sync.get(), intent: { kind: "flush" } })
     if (plan.kind === "refused") return plan.reason === "sync-full" ? { kind: "blocked" } : { kind: "unavailable" }
@@ -215,6 +292,11 @@ export function createLocalFilterWriter(deps: {
       ? { kind: "set", sent: plan.sent, repairs: plan.repairs }
       : { kind: "readback", repairs: plan.repairs }
     if (source.kind === "set") {
+      const invokedAt = deps.syncClock.now()
+      const notBefore = Math.max(quietUntil, nextInvocation)
+      if (invokedAt < notBefore) return { kind: "deferred", notBefore }
+      cancelTicket()
+      nextInvocation = invokedAt + 5000
       try { await deps.sync.set(Object.fromEntries(plan.items.map(item => [item.key, item.value]))) } catch (error) {
         return { kind: "sync-set-failed", error, sent: plan.sent }
       }
@@ -258,18 +340,45 @@ export function createLocalFilterWriter(deps: {
 
   return {
     flushSync() {
-      const work = lane.then(flush)
-      lane = work.then(() => {}, () => {})
-      return work
+      if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
+      return enqueue(attempt)
+    },
+    startSync() {
+      if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
+      return enqueue(async () => {
+        if (lifetime.kind === "stopped" || lifetime.kind === "disposed") return
+        let ready
+        try {
+          ready = authority(await deps.local.get(null))
+          if (ready.kind === "ready") {
+            observeOff(ready.device.syncOn)
+            if (ready.device.syncOn && lifetime.kind === "inactive") {
+              const unsubscribe = deps.sync.subscribe(() => {
+                void enqueue(() => automatic("sync"))
+              })
+              lifetime = { kind: "active", unsubscribe }
+            }
+          }
+        } catch (error) {
+          deactivate("stopped")
+          deps.onSyncResult({ kind: "rejected", error })
+          return
+        }
+        if (ready.kind !== "ready") { deps.onSyncResult({ kind: "unavailable" }); return }
+        if (ready.device.syncOn) await automatic("start")
+      })
+    },
+    dispose() {
+      deactivate("disposed")
+      return lane
     },
     async change(origin, change) {
+      if (lifetime.kind === "disposed") throw new Error("Writer disposed")
       if (origin.kind !== "ui" || origin.incognito !== false || !Number.isInteger(origin.windowId) || origin.windowId < 0) {
         return { kind: "result", result: { refused: "private" } }
       }
       const at = deps.now()
-      const work = lane.then(() => execute(change, at))
-      lane = work.then(() => {}, () => {})
-      return work
+      return enqueue(() => execute(change, at))
     }
   }
 }
