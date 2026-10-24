@@ -140,3 +140,36 @@ git diff --check
 ```
 
 The adjacent test covers 13 fixture groups with an independent byte oracle and explicit red controls. It builds the actual browser-target minified CJS entry, verifies its seven runtime exports, inspects the pure runtime import graph and executes the emitted operations in a fresh VM with ambient-effect guards. Prototype-hook poisoning and native JSON red controls run in that isolated realm. These checks do not establish extension installation, native storage atomicity, live sync delivery or browser UI behavior.
+
+# Pure account choice operations
+
+`accounts.ts` exports `changeAccountChoice`, `removeSharedShortcut` and `planSetupRemoval`. It is an uninstalled library imported directly from `./accounts`. It returns decoded canonical bodies or semantic removal facts. It performs no storage, authorization, claim, ownership, stamping, sync or UI work.
+
+`AccountSnapshot` distinguishes an absent setup from a present setup with its complete filter inventory, including kept and orphaned filters. Inputs are recursively readonly. Outputs may share unknown fields with inputs, so callers treat both as immutable. A positive playlist choice can create a setup. Clearing an absent choice and repeating a desired state return `unchanged` before normalization.
+
+Auto-add selections append Videos without a percentage override. Unticking removes only the entry and keeps every filter unchanged. Takes and percentage edits require an existing entry and preserve its extensions. Percentages must be integers from 0 through 100. A null percentage deletes the override. A shortcut target requires an existing shared shortcut, even when its key is null or its feature is off. A null target removes only that account's override.
+
+Every real account edit uses the existing model normalizer with actual shared shortcut IDs. The required `additionalChosenPlaylists` is the caller-resolved set of effective shared defaults after the operation. It includes Watch Later only when a surviving shared default actually applies to that account. The caller resolves this context from the same serialized snapshot as the edit. These IDs establish no ownership.
+
+Kept filters retain a setup regardless of their switch, mode or channel count. A gather playlist also retains it. Labels and marks alone do not. Real writes drop dangling targets and marks. No-ops do not request sanitation writes. Filter bodies retain their decoded tuple extensions without normalization or JSON conversion. The JSON materialization boundary described above still belongs to the later writer.
+
+Shared deletion removes the shortcut row and its target from every supplied present setup that contains that target. It preserves the preset flag and all unrelated settings, then normalizes changed settings and affected setups. Untouched setups receive no write. Removing the final row does not reapply a preset. Clearing a key remains the key engine's separate operation.
+
+`SetupRemoval.documents` names exactly the setup and every supplied filter document. It also names `cache:<acct>` and all sixteen `progress:<acct>:0` through `progress:<acct>:15` shards. `clearAccountSession` requires the future executor to remove only that account's skips, cooldown, recent and recent-add entries, Gather records and account-scoped once-only memory. Global Pause and other accounts' session data survive. `clearLastAccountIfMatches` requires clearing only a matching `device.lastAccount`, preserving all other device fields. Shared settings, consent, sync state, unclaimed data and YouTube playlists survive.
+
+These facts execute no deletion. The future writer owns private-origin enforcement, the shared-deletion cascade exception, version checks, complete snapshot reads, fresh stamps, JSON materialization, quota projection, session reducers, conditional device edits and native effects. With sync on it creates setup and filter tombstones and retains them for 30 days. With sync off it removes the local documents. Existing session-access safeguards remain in place.
+
+The policy is ACC-06 through ACC-10, DATA-14 through DATA-16, DATA-32, DATA-44, DATA-45 and DATA-57 in the approved chapter 04, with R108, R125 and R135. Unclaimed merging and the carried-shortcut decision remain separate future work.
+
+Run the acceptance suites with prepared pinned dependencies and WXT types:
+
+```sh
+bun test --no-env-file --isolate --conditions=browser ./src/background/store/accounts.bun-test.ts ./src/shared/model/model.bun-test.ts ./src/shared/keys/engine.bun-test.ts ./src/shared/keys/review-regressions.bun-test.ts ./src/background/store/sync-codec.bun-test.ts
+bun test --no-env-file ./tests/guards/architecture.test.ts
+bun run --no-env-file compile
+bun test --no-env-file --isolate --conditions=browser ./src/background/store/accounts.bun-test.ts -t 'actual browser artifact'
+bun --no-env-file build ./src/background/store/accounts.ts --target=browser --format=cjs --minify --outfile=/tmp/ytpt-accounts-artifact.cjs
+git diff --check
+```
+
+The adjacent suite compares complete frozen outcomes for the eight fixture groups and executes the actual minified browser CJS exports with throwing ambient globals. It checks the exact runtime exports and pure model import graph. Compiler fixtures prove recursive readonly snapshots, branded IDs and required effective-default context. Native storage, private-window authorization and runtime integration remain unverified here.
