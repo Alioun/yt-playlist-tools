@@ -81,6 +81,15 @@ describe("startup classification", () => {
     expect(planLegacyStartup({ ...snapshot({ playlists: [] }), settingsDocument: write["doc:settings"] }, context))
       .toEqual({ kind: "unsupported-state", reason: "canonical-collision" })
   })
+  test("existing device choices and unknown fields refuse replacement while an empty device can upgrade", () => {
+    for (const saved of [{ recentAdds: false }, { syncOn: true }, { legacyCleared: true }, { futureDevice: { keep: true } }]) {
+      const device = { ...defaultDevice(context.deviceId), ...saved }
+      expect(planLegacyStartup({ ...snapshot({ playlists: [] }), device }, context))
+        .toEqual({ kind: "unsupported-state", reason: "canonical-collision" })
+      expect(planLegacyStartup({ ...snapshot(), device }, context)).toEqual({ kind: "current" })
+    }
+    expect(planLegacyStartup({ ...snapshot({ playlists: [] }), device: defaultDevice(context.deviceId) }, context).kind).toBe("upgrade")
+  })
   test.each([
     { deviceId: "" }, { deviceId: "   " }, { settingsGen: "" }, { settingsGen: 1 }, { at: -1 }, { at: 1.5 }, { at: NaN }, { at: Infinity },
     { at: Number.MAX_SAFE_INTEGER + 1 }, { shortcutId: "short" }, { shortcutId: "longer1" }, { shortcutId: "bad!id" },

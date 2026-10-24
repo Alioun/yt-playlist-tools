@@ -79,6 +79,12 @@ function cleanup(schema: unknown): LegacyCleanup {
   ] }
 }
 
+function hasDeviceState(device: Device | undefined): boolean {
+  if (device === undefined) return false
+  const empty = new Map(Object.entries(defaultDevice(device.id)))
+  return Object.entries(device).some(([key, value]) => key !== "id" && (!empty.has(key) || empty.get(key) !== value))
+}
+
 function upgrade(evidence: LegacyEvidence, context: MigrationContext): CanonicalUpgrade {
   const legacy = convertLegacy(evidence)
   const shortcut = legacyShortcut(legacy.rawShortcut, legacy.shortcutPlaylist !== null, context)
@@ -138,7 +144,7 @@ export function planLegacyStartup(input: StartupSnapshot, context: MigrationCont
       return { kind: "resume", cleanup: cleanup(input.schema) }
     }
     const triggered = input.legacy.presentKeys.some(key => UPGRADE_TRIGGER_KEYS.some(trigger => trigger === key))
-    const canonical = settings.kind !== "absent" || unclaimed !== undefined || device?.consent != null || device?.upgradeNote != null
+    const canonical = settings.kind !== "absent" || unclaimed !== undefined || hasDeviceState(device)
     if (canonical) return triggered ? { kind: "unsupported-state", reason: "canonical-collision" } : { kind: "current" }
     if (triggered) return { kind: "upgrade", write: upgrade(input.legacy, context), cleanup: cleanup(input.schema) }
     return input.schema === undefined ? { kind: "fresh", schema: STORAGE_SCHEMA_VERSION } : { kind: "current" }
