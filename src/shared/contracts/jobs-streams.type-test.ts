@@ -245,14 +245,17 @@ export function unionInvocationRelationships() {
     unpinned, publicPin, unpinnedLabel, accountPin, objectUnpinned]
 }
 
-export function forwardInvocation<J extends Job>(invocation: JobInvocation<J>, send: (value: JobInvocation<J>) => void) {
+export function forwardInvocation<J extends Job>(invocation: JobInvocation<J>, send: (value: JobInvocation) => void) {
   const job: J = invocation.job
-  send(invocation)
+  const general: JobInvocation = invocation
+  send(general)
   return job
 }
 
 export function forwardedInvocationRelationships() {
-  const send = (invocation: JobInvocation<VideoReads>) => invocation
+  const send = (invocation: JobInvocation) => invocation
+  const inferredMember: JobOf<"membership"> = forwardInvocation({ job: { kind: "membership", videoId: video }, acct }, send)
+  const inferredChannel: JobOf<"channelOf"> = forwardInvocation({ job: { kind: "channelOf", videoId: video } }, send)
   const member: VideoReads = forwardInvocation<VideoReads>({ job: { kind: "membership", videoId: video }, acct }, send)
   const channel: VideoReads = forwardInvocation<VideoReads>({ job: { kind: "channelOf", videoId: video } }, send)
   // @ts-expect-error Generic forwarding cannot remove the membership pin.
@@ -263,5 +266,5 @@ export function forwardedInvocationRelationships() {
   const refined: JobInvocation<RefinedRead> = { job: { kind: "membership", videoId: video, trace: "synthetic" }, acct }
   // @ts-expect-error Narrowing each discriminant must retain specialised job fields.
   const missingTrace: JobInvocation<RefinedRead> = { job: { kind: "membership", videoId: video }, acct }
-  void [member, channel, refined, missingTrace]
+  void [member, channel, inferredMember, inferredChannel, refined, missingTrace]
 }

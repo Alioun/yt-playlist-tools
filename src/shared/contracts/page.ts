@@ -1,4 +1,4 @@
-import type { Job, JobData } from "./jobs"
+import type { Job, JobDataById } from "./jobs"
 import { isJob, isJobDataFor } from "./jobs"
 import type { JobFailure } from "./results"
 import { isJobFailure } from "./results"
@@ -10,7 +10,8 @@ import type { JsonObject } from "./json"
 export type PageAccountData =
   | { signedIn: true; datasyncId: string }
   | { signedIn: false; datasyncId: null }
-export type PageJobData<J extends Job> = J extends { kind: "account" } ? PageAccountData : JobData<J>
+type PageJobDataById = Omit<JobDataById, "account"> & { account: PageAccountData }
+export type PageJobData<J extends Job> = PageJobDataById[J["kind"]]
 export type PageJobResult<J extends Job = Job> =
   | { ok: true; data: PageJobData<J>; route: RouteId }
   | JobFailure

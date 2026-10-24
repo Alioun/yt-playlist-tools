@@ -526,7 +526,11 @@ for (const mode of ["data", "getter", "own-getter"]) {
       for (const [guard, family, body] of fixtures) {
         const endpoint = {[family]:body, metadata:{native:[null,true]}};
         eq(guard(endpoint), true, family+" own valid extras");
-        changed(endpoint, family, body, () => eq(guard(endpoint), false, family+" own family required"));
+        const complete = JSON.parse(JSON.stringify(endpoint));
+        changed(endpoint, family, body, () => {
+          eq(guard(endpoint), false, family+" own family required");
+          eq(guard(complete), true, family+" own family shadows prototype");
+        });
         eq(guard(endpoint), true, family+" restored");
       }
       const evidence = [
@@ -539,7 +543,9 @@ for (const mode of ["data", "getter", "own-getter"]) {
       for (const [family, body, key, guard] of evidence) {
         const endpoint = {[family]:body};
         const job = family === "queueAddEndpoint" ? {kind:"queueInsert", endpoint, position:"end"} : {kind:"navigate", endpoint};
+        const complete = JSON.parse(JSON.stringify(endpoint));
         changed(body, key, body[key], () => {
+          eq(guard(complete), true, key+" own evidence shadows prototype");
           eq(guard(endpoint), false, key+" endpoint evidence");
           eq(safe.isJob(job), false, key+" job evidence");
           eq(safe.isJobDataFor(job, {ids:[0]}), false, key+" data pending job");
@@ -557,6 +563,7 @@ for (const mode of ["data", "getter", "own-getter"]) {
       }
       const job = {kind:"account"};
       changed(job, "kind", "account", () => {
+        eq(safe.isJob({kind:"account"}), true, "own kind shadows prototype");
         eq(safe.isJob(job), false, "own job kind");
         eq(safe.isJobDataFor(job, {signedIn:false,acct:null}), false, "data own job kind");
         eq(safe.isJobResultFor(job, {ok:false,reason:"failed"}), false, "result own job kind");

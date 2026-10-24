@@ -34,6 +34,7 @@ function target(value: unknown, exclusive: boolean): boolean {
 }
 export function isQueueInsertEndpoint(value: unknown): value is QueueInsertEndpoint {
   return family(value, ["queueAddEndpoint"], (_, body) =>
+    Object.hasOwn(body, "queueInsertPosition") && Object.hasOwn(body, "queueTarget") &&
     (body.queueInsertPosition === "INSERT_AFTER_CURRENT_VIDEO" || body.queueInsertPosition === "INSERT_AT_END") &&
     target(body.queueTarget, true))
 }
@@ -47,8 +48,8 @@ export function isNavigationEndpoint(value: unknown): value is NavigationEndpoin
   return family(value, ["watchEndpoint", "watchPlaylistEndpoint", "browseEndpoint"], (key, body) => {
     switch (key) {
       case "watchEndpoint": return target(body, false)
-      case "watchPlaylistEndpoint": return isPlaylistId(body.playlistId)
-      case "browseEndpoint": return typeof body.browseId === "string" && body.browseId.length > 0
+      case "watchPlaylistEndpoint": return Object.hasOwn(body, "playlistId") && isPlaylistId(body.playlistId)
+      case "browseEndpoint": return Object.hasOwn(body, "browseId") && typeof body.browseId === "string" && body.browseId.length > 0
       default: return false
     }
   })

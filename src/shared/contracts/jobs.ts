@@ -94,7 +94,11 @@ export type AccountJobId =
   | "accountLabel" | "membership" | "playlists" | "add" | "remove" | "addBatch"
   | "removeBatch" | "save" | "unsave" | "create" | "like" | "library"
 export type AccountJob = JobOf<AccountJobId>
-export type JobInvocation<J extends Job = Job> = J extends AccountJob ? { job: J; acct: AccountKey } : { job: J; acct?: never }
+export type JobInvocation<J extends Job = Job> = {
+  [K in J["kind"]]: K extends AccountJobId
+    ? { job: J & JobOf<K>; acct: AccountKey }
+    : { job: J & JobOf<K>; acct?: never }
+}[J["kind"]]
 
 type Check = (value: unknown) => boolean
 type Fields = Record<string, Check>
@@ -139,7 +143,7 @@ const inputFields = {
 } satisfies Record<JobId, Fields>
 export function isJob(value: unknown): value is Job {
   try {
-    if (value === null || typeof value !== "object" || !isJsonValue(value) || Array.isArray(value) || !isJobId(value.kind)) return false
+    if (value === null || typeof value !== "object" || !isJsonValue(value) || Array.isArray(value) || !Object.hasOwn(value, "kind") || !isJobId(value.kind)) return false
     if (!shape(value, { kind: isJobId, ...inputFields[value.kind] }, value.kind === "create" ? { videoId: isVideoId } : {})) return false
     if (value.kind !== "queueInsert") return true
     const endpoint = value.endpoint
