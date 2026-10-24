@@ -11,7 +11,9 @@ node scripts/check-source-rebuild.mjs --keep
 The checker snapshots tracked and nonignored untracked working-tree files into
 a new temporary directory. It skips deleted files, environment files, local
 credential configuration, dependency directories, and generated output.
-It rejects symlinks. Commit or unignore any intended build input before checking.
+It preserves whitespace in filenames and rejects symlinks in every path component
+below the checkout before copying a file. Commit or unignore any intended build
+input before checking.
 Ignored local source files are outside this check.
 
 The checker installs dependencies with `bun install --frozen-lockfile` in the

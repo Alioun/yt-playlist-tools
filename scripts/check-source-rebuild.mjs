@@ -82,7 +82,7 @@ try {
       writeFileSync(join(scratch, "commands.json"), JSON.stringify(commands, null, 2) + "\n");
       if (result.error || result.status !== 0) throw new Error(`${label} failed. See ${log}`);
       console.log(`${label}: ok`);
-      return readFileSync(log, "utf8").trim();
+      return readFileSync(log, "utf8");
     }
 
     const paths = run("source-paths", root, "git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"])
@@ -93,15 +93,24 @@ try {
       if (path.split("/").some(privateName)) continue;
       const source = resolve(root, path);
       if (!source.startsWith(root + sep)) throw new Error("Source path escapes the checkout");
-      const entry = lstatSync(source, { throwIfNoEntry: false });
+      const components = path.split("/");
+      let current = root;
+      let entry;
+      for (const [index, component] of components.entries()) {
+        current = join(current, component);
+        entry = lstatSync(current, { throwIfNoEntry: false });
+        if (!entry) break;
+        if (index === components.length - 1 ? !entry.isFile() : !entry.isDirectory()) {
+          throw new Error("Source snapshot requires regular files");
+        }
+      }
       if (!entry) continue;
-      if (!entry.isFile()) throw new Error("Source snapshot requires regular files");
       const destination = join(full, path);
       mkdirSync(dirname(destination), { recursive: true });
       copyFileSync(source, destination);
     }
     const expectedBun = JSON.parse(readFileSync(join(full, "package.json"), "utf8")).packageManager;
-    const bunVersion = run("bun-version", full, "bun", ["--version"]);
+    const bunVersion = run("bun-version", full, "bun", ["--version"]).trim();
     if (`bun@${bunVersion}` !== expectedBun) throw new Error(`Install Bun matching packageManager (${expectedBun})`);
     run("working-tree-install", full, "bun", ["install", "--frozen-lockfile"]);
     const cli = "node_modules/wxt/bin/wxt.mjs";
@@ -124,7 +133,7 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
             raise SystemExit("Unsafe source archive entry")
     archive.extractall(sys.argv[2])
     print(json.dumps(sorted(entry.filename for entry in entries)))
-`, archive, extracted]);
+`, archive, extracted]).trim();
     writeFileSync(join(scratch, "archive-paths.json"), entries + "\n");
     run("extracted-source-install", extracted, "bun", ["install", "--frozen-lockfile"]);
     const comparisons = {};
