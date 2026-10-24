@@ -100,7 +100,7 @@ These facts come from inventory.md, ticket 06 and 1.4.5's code at `e96dbf7`.
      - `doc:settings`;
      - `unclaimed`;
      - `device`, with `consent: null`, `syncOn: false` and `upgradeNote: {state: "pending", details, opened: false}` ([2.9](#29-what-the-note-is-built-from)).
-  2. **Write** all the new keys in one `storage.local.set`.
+  2. **Write** all the new keys in one `storage.local.set`, including the validated local association between the unclaimed shortcut playlist and the actual migration-created shortcut ID (REL-MIG-34; R152).
   3. **Remove the old stores:**
      - every 1.x key and 1.5.0 developer key (REL-MIG-02) in one `storage.local.remove`, including `clientID`, `clientSecret`, `accessToken` and `refreshToken`;
      - nothing in `storage.sync`, which the migration never touches (R20);
@@ -189,7 +189,7 @@ From ticket 08.
 
   (R21)
 - **REL-MIG-21** If the converted key matches one of ticket 08's clash warnings (for example YouTube's K for Play/pause), `details.shortcut.clash` holds that warning's ID.
-- **REL-MIG-39** **A shortcut playlist with no key.** If `addToPlaylistID` survives cleaning but `watchLaterShortcut` is absent or empty, the playlist is kept: shortcut 1 is created with `key: null`, its playlist goes into `unclaimed.shortcutPlaylist`, and claiming makes it that shortcut's playlist. Playlist shortcuts stays off (REL-MIG-23). The note says "Your 1.x shortcut had no key. Its playlist is kept; set a key in Settings." (REL-CON-04). (R21)
+- **REL-MIG-39** **A shortcut playlist with no key.** If `addToPlaylistID` survives cleaning but `watchLaterShortcut` is absent or empty, the playlist is kept: shortcut 1 is created with `key: null`, its playlist goes into `unclaimed.shortcutPlaylist`, and claiming fills only that original shortcut's empty target for the claiming account, if the row still exists and its original ID is proven (R150, R152). Playlist shortcuts stays off (REL-MIG-23). The note says "Your 1.x shortcut had no key. Its playlist is kept; set a key in Settings." (REL-CON-04). (R21)
 
 ### 2.6 Switches after the migration
 
@@ -247,14 +247,16 @@ type UpgradeDetails = {
 // seen: the note was visible at least once; reopened: it was opened a second time because it never was (REL-CON-25; R97)
 ```
 
-- **REL-MIG-34** `unclaimed` has ticket 16's shape:
+- **REL-MIG-34** `unclaimed` keeps ticket 16's data plus the minimum original-ID association (R152):
   - `from`, which is `"1.4.5"` or `"1.5.0"`;
   - `autoAdd`, a list of IDs;
   - `shortcutPlaylist`;
   - `filters`;
   - `at`.
 
-  It stays in this browser, never syncs, and is kept until it's claimed or discarded.
+  The association is validated local-only bookkeeping tying the retained shortcut playlist to the actual row created in the initial migration batch. It survives name/key edits and restart, never guesses from a replacement, and reserves that original ID against reuse while the record remains. Older records without valid provenance remain readable; their shortcut is skipped without guessing, while other eligible choices proceed. The precise additive representation is engineering work, not a new synced wire schema.
+
+  The record and association stay in this browser, never sync, and end together on claim, discard, or Clear all data.
 
 ### 2.10 Claiming the unclaimed setup
 
@@ -264,8 +266,8 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
   - Matching is by playlist ID, never by title.
 - **REL-MIG-36** IDs the claiming account doesn't own are dropped and counted.
   - If the account already has a setup, the claimed choices are merged in without replacing anything: missing auto-add playlists are added.
-  - The shortcut's playlist is used only if that shortcut has none.
-- **REL-MIG-37** The outcome shows in the note if the note is still open ([3.4](#34-agree-and-not-now)). Otherwise it shows as ticket 11's one-time popup notice ([ACC-32](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming)): "Your auto-add playlists and shortcut from 1.x are now set up for {Account}." plus, if any were dropped, "{N} of them weren't on this account and were left out."
+  - The shortcut playlist fills only the empty account target of the original migration-created row, after checking the current shared row by exact original ID. Name/key edits preserve that ID. A deleted row is never recreated, and its playlist is never rebound to a replacement. Missing or invalid provenance takes the same no-guess skip path. Other eligible choices still claim (R150, R152).
+- **REL-MIG-37** The outcome shows in the note if the note is still open ([3.4](#34-agree-and-not-now)). Otherwise it shows as the one-time popup notice ([ACC-32](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming)). It names only choices actually claimed. When the shortcut is skipped, use "Your choices from 1.x were checked for {Account}." and state the reason separately: "Your 1.x shortcut was deleted and was left out." or "Your original 1.x shortcut could not be identified and was left out." Existing chosen targets are kept and reported as such. Only ownership drops add "{N} of them weren't on this account and were left out." A deleted or unproven shortcut is not an ownership drop. When nothing was skipped, the existing "Your auto-add playlists and shortcut from 1.x are now set up for {Account}." remains (R150, R152).
 - **REL-MIG-38** An unclaimed setup is never used.
   - On an account that doesn't own its playlists, the popup says "Your playlists from 1.x belong to another YouTube account. Switch to it on YouTube to use them, or set up {Account} below.", with **Switch account** and **Discard**.
   - Claiming is refused from private windows.
@@ -413,7 +415,7 @@ Then the disclosure ([4.1](#41-the-disclosure)), followed by **[Agree and turn o
 > ✓ **You're all set.**
 
 Then one of these, from ticket 11's outcomes:
-- Your auto-add playlists and shortcut from 1.x are now set up for {Account}: {titles}. *(If any were dropped: "{M} of them weren't on this account and were left out.")*
+- Your auto-add playlists and shortcut from 1.x are now set up for {Account}: {titles}. Only choices actually claimed are named. If the shortcut was skipped, REL-MIG-37's line for checked choices and separate reason replace this line; titles list only claimed choices. Only ownership drops add "{M} of them weren't on this account and were left out." (R150, R152)
 - Sign in to YouTube and your 1.x playlists will be picked up. *(Signed out.)*
 - Open YouTube and your 1.x playlists will be picked up. *(No YouTube tab open.)*
 - Your playlists from 1.x belong to another YouTube account. Switch to it on YouTube to use them. **[Switch account]**
@@ -468,6 +470,7 @@ First run's three steps (pick features › Before you start › Finish setting u
 - **REL-CON-16** One consent of our own gates every feature, on both browsers ([ADR-0010](../../../docs/adr/0010-one-consent-gates-every-feature.md)). It's stored as `device.consent = {v, at}`, per browser, and never synced.
   - It applies on Firefox too, even when Firefox shows its own data-collection prompt. Firefox's prompt covers data types; ours covers what each feature does, and it's the moment upgraders' choices take effect.
   - *Runner-up:* let Firefox's built-in consent stand in on Firefox. It lost for three reasons: it exists only when a data type is required, and 2.0 declares `none` (R83); it covers neither the feature choice nor claiming; and two consent flows mean two code paths.
+  - In "Before this feature can run", an explicit Agree stays saved if the subsequent site-access request is denied. The affected feature stays off and the popup or Settings explains the missing access. This settles FT-32 with FT-52; first-run saved-on/held behavior and Playlist shortcuts' YouTube-only exception remain unchanged (R154).
 - **REL-CON-17** Consent is versioned through one constant, and 2.0 writes `v: 1`.
   - The version is bumped only when the disclosure text changes.
   - A release must change the disclosure whenever data handling changes (Chrome: "proactively disclose … if data handling practices change").
