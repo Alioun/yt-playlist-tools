@@ -57,7 +57,7 @@ function fixtureSuite(prepare: typeof prepareDocumentBody, dependencies: Depende
   const shapeInvalid = { kind: "invalid", reason: "shape" }
   const plainKey = { code: "KeyA", ctrl: false, alt: true, shift: false, meta: false }
   const id = "UCaaaaaaaaaaaaaaaaaaaaaa"
-  const context = freeze({ shortcutIds: new Set(["save01"]), additionalChosenPlaylists: new Set(["WL"]) })
+  const context = freeze({ shortcutIds: new Set(["save01", "save03"]), additionalChosenPlaylists: new Set(["WL"]) })
   function raw(input: unknown) { return prepare(freeze(input) as PrepareBodyInput) }
   function settings() {
     return {
@@ -69,7 +69,7 @@ function fixtureSuite(prepare: typeof prepareDocumentBody, dependencies: Depende
         list: [
           { id: "save01", key: { ...plainKey, char: undefined, future: "key" }, label: "  " + "🙂".repeat(41) + "  ", watchLaterOnEveryAccount: true, future: "row" },
           { id: "save02", key: null, label: "  Second  ", watchLaterOnEveryAccount: false },
-          { id: "save03", key: { ...plainKey, char: "非" }, label: "Third", watchLaterOnEveryAccount: false }
+          { id: "save03", key: { ...plainKey, char: "非" }, label: "Third", watchLaterOnEveryAccount: true }
         ], future: { char: "unknown" }
       },
       quickSave: { on: false, feedback: true, shortsShelves: true },
@@ -94,7 +94,7 @@ function fixtureSuite(prepare: typeof prepareDocumentBody, dependencies: Depende
     shortcuts: { on: false, feedback: true, music: false, preset: true, picker: { ...plainKey, char: "" }, list: [
       { id: "save01", key: { code: "KeyA", ctrl: false, alt: true, shift: false, meta: false, future: "key" }, label: "🙂".repeat(40), watchLaterOnEveryAccount: true, future: "row" },
       { id: "save02", key: null, label: "Second", watchLaterOnEveryAccount: false },
-      { id: "save03", key: { ...plainKey, char: "非" }, label: "Third", watchLaterOnEveryAccount: false }
+      { id: "save03", key: { ...plainKey, char: "非" }, label: "Third", watchLaterOnEveryAccount: true }
     ], future: { char: "unknown" } },
     quickSave: { on: false, feedback: true, shortsShelves: true }, queueButton: { on: true, feedback: false }, watchButton: { on: false, feedback: true, shorts: false },
     cardMenu: { on: true, keepLinkMenu: true }, browserMenu: { on: false, feedback: true }, musicSection: false,
@@ -140,11 +140,14 @@ function fixtureSuite(prepare: typeof prepareDocumentBody, dependencies: Depende
   const marksWithoutWL = { PL_A: "full", PL_B: "missing", PL_C: "full", PL_T: "missing", PL_Q: "full", PL_M: "missing", PL_G: "full" }
   equal(raw({ kind: "setup", data: setupInput, context: noWL }), { kind: "prepared", data: { ...expectedSetup, marks: marksWithoutWL } }, "no effective WL")
   check(settingsInput.shortcuts.list[0]!.watchLaterOnEveryAccount, "shared default exists")
-  equal(raw({ kind: "setup", data: setupInput, context: noWL }), { kind: "prepared", data: { ...expectedSetup, marks: marksWithoutWL } }, "explicit target overrides shared WL")
+  const overridden = freeze({ ...setupInput, targets: { save01: "PL_T", save03: "PL_T" } })
+  equal(raw({ kind: "setup", data: overridden, context: { shortcutIds: new Set(["save01", "save03"]), additionalChosenPlaylists: new Set() } }), {
+    kind: "prepared", data: { ...expectedSetup, targets: { save01: "PL_T", save03: "PL_T" }, marks: marksWithoutWL }
+  }, "every surviving shared WL default has an explicit account override")
   equal(raw({ kind: "setup", data: freeze({ ...setupInput, label: { name: "Account", handle: "🙂".repeat(31), avatar: "", future: 1 } }), context }), {
     kind: "prepared", data: { ...expectedSetup, label: { name: "Account", handle: "🙂".repeat(30), avatar: "", future: 1 } }
   }, "setup known handle truncation and empty avatar")
-  check(context.shortcutIds.size === 1 && context.additionalChosenPlaylists.has("WL"), "context immutable")
+  check(context.shortcutIds.size === 2 && context.additionalChosenPlaylists.has("WL"), "context immutable")
 
   const hole = [id, "hole", null, { future: ["é", null] }, "tail"]
   delete hole[2]
@@ -347,18 +350,22 @@ function integrationSuite(prepare: typeof prepareDocumentBody, dependencies: Dep
   if (!isAccountKey(acct) || !isPlaylistId(playlist)) throw new Error("Invalid synthetic brands")
   const channel = "UCaaaaaaaaaaaaaaaaaaaaaa"
   const settings = defaultSettings()
-  settings.shortcuts.list = [{ id: "save01", key: null, label: "Save", watchLaterOnEveryAccount: true }]
+  settings.shortcuts.list = [
+    { id: "save01", key: null, label: "Save", watchLaterOnEveryAccount: true },
+    { id: "wl0001", key: null, label: "Later", watchLaterOnEveryAccount: true }
+  ]
   const oldFilter = { v: 1, gen: "old", at: 1, by: "b", data: { mode: "deny", on: true, channels: [[channel, "🙂".repeat(101), null, { future: ["é", null] }, "tail"]], extension: "body" }, envelopeExtension: { "名": "e\u0301\ud800" } }
   const filter = decodeFilter(oldFilter.data)
   const setup = decodeSetup({ autoAdd: [{ pl: playlist, takes: "videos" }], targets: { save01: "PL_T" }, marks: { WL: "missing", PL_A: "full" } })
   freeze([settings, oldFilter, setup, filter])
-  const result = changeAccountChoice(freeze({ acct, current: { kind: "present", bodies: { setup, filters: { PL_A: filter } } }, settings, additionalChosenPlaylists: new Set(["WL"].filter(isPlaylistId)), choice: { kind: "percentage", playlist, pct: 0 } }))
+  const result = changeAccountChoice(freeze({ acct, current: { kind: "present", bodies: { setup, filters: { PL_A: filter } } }, settings, additionalChosenPlaylists: new Set(["WL"].filter(isPlaylistId)), choice: { kind: "auto-add", playlist, chosen: false } }))
   if (result.kind !== "save") throw new Error("Expected account save")
   freeze(result)
-  const preparedSetup = prepare(freeze({ kind: "setup", data: result.bodies.setup, context: { shortcutIds: new Set(["save01"]), additionalChosenPlaylists: new Set(["WL"]) } }))
+  const preparedSetup = prepare(freeze({ kind: "setup", data: result.bodies.setup, context: { shortcutIds: new Set(settings.shortcuts.list.map(row => row.id)), additionalChosenPlaylists: new Set(["WL"]) } }))
   const key = { kind: "filter", acct, playlist } as const
   const before = encodeSyncDocument({ key, document: { ...oldFilter, data: result.bodies.filters.PL_A } })
-  const preparedFilter = prepare(freeze({ kind: "filter", data: result.bodies.filters.PL_A! }))
+  const changedFilter = freeze({ ...result.bodies.filters.PL_A!, on: false })
+  const preparedFilter = prepare(freeze({ kind: "filter", data: changedFilter }))
   if (preparedSetup.kind !== "prepared" || preparedFilter.kind !== "prepared") throw new Error("Expected preparation")
   const envelope = { ...oldFilter, gen: "new", at: 2, data: preparedFilter.data }
   const reads = []
@@ -392,8 +399,8 @@ describe("canonical document body preparation", () => {
 
 function assertIntegration(result: ReturnType<typeof integrationSuite>) {
   expect(result.before).toEqual({ kind: "invalid", field: "document", reason: "json" })
-  expect(result.preparedFilter).toEqual({ kind: "prepared", data: { mode: "deny", on: true, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "🙂".repeat(100), null, { future: ["é", null] }, "tail"]], extension: "body" } })
-  expect(result.preparedSetup).toEqual({ kind: "prepared", data: { label: null, autoAdd: [{ pl: "PL_A", takes: "videos", pct: 0 }], targets: { save01: "PL_T" }, quickSave: null, musicSave: null, gather: null, marks: { WL: "missing", PL_A: "full" } } })
+  expect(result.preparedFilter).toEqual({ kind: "prepared", data: { mode: "deny", on: false, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "🙂".repeat(100), null, { future: ["é", null] }, "tail"]], extension: "body" } })
+  expect(result.preparedSetup).toEqual({ kind: "prepared", data: { label: null, autoAdd: [], targets: { save01: "PL_T" }, quickSave: null, musicSave: null, gather: null, marks: { WL: "missing" } } })
   expect(result.reads.map(value => value.mode)).toEqual(["single", "chunked"])
   for (const [index, { read }] of result.reads.entries()) {
     expect(read.kind).toBe("value")
