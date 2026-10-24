@@ -171,3 +171,35 @@ test("synthetic false history remains inert for private provenance and failed ba
   expect(h.syncGet).not.toHaveBeenCalled()
   expect(h.syncSet).not.toHaveBeenCalled()
 })
+
+test("synthetic joined adapter reads native null snapshots lazily and writes only Filter", async () => {
+  const rawSync = { joined: "history", pushed: { [key]: "old" }, status: "ok", editedSinceOff: true, future: true }
+  const before = await fakeBrowser.storage.local.get(null)
+  await fakeBrowser.storage.local.set({ device: { id: "synthetic", consent: { v: 1, at: 1 }, syncOn: true }, sync: rawSync })
+  await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "history", created: 0 }, [key.replace("doc:", "s:")]: before[key], unknown: true })
+  const get = spyOn(fakeBrowser.storage.local, "get"), set = spyOn(fakeBrowser.storage.local, "set")
+  const syncGet = spyOn(fakeBrowser.storage.sync, "get"), syncSet = spyOn(fakeBrowser.storage.sync, "set")
+  const adapter = createBrowserLocalFilterWriter(fakeBrowser)
+  expect(syncGet).not.toHaveBeenCalled()
+  expect(get).not.toHaveBeenCalled()
+  expect(await adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
+  expect<unknown>(get.mock.calls).toEqual([[["schema", "device", "sync", "doc:setup:AAAAAAAAAAAAAAAA", key]], [null]])
+  expect<unknown>(syncGet.mock.calls).toEqual([[null]])
+  expect(set).toHaveBeenCalledTimes(1)
+  expect(Object.keys(set.mock.calls[0]?.[0] ?? {})).toEqual([key])
+  expect(syncSet).not.toHaveBeenCalled()
+  expect((await fakeBrowser.storage.local.get("sync")).sync).toEqual(rawSync)
+})
+
+test("synthetic joined sync-read rejection propagates and recovers without writes", async () => {
+  await fakeBrowser.storage.local.set({ device: { id: "synthetic", consent: { v: 1, at: 1 }, syncOn: true },
+    sync: { joined: "history", pushed: {}, status: "ok", editedSinceOff: false } })
+  await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "history", created: 0 } })
+  const marker = Error("native sync read"), get = spyOn(fakeBrowser.storage.sync, "get"), set = spyOn(fakeBrowser.storage.local, "set")
+  get.mockImplementationOnce(async () => { throw marker })
+  const adapter = createBrowserLocalFilterWriter(fakeBrowser)
+  await expect(adapter.changeFromSettings(request, sender)).rejects.toBe(marker)
+  expect(set).not.toHaveBeenCalled()
+  expect(await adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
+  expect(set).toHaveBeenCalledTimes(1)
+})

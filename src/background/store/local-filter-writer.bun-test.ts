@@ -47,12 +47,12 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     let times = 0, generations = 0
     const local: LocalWriteStorage = {
       async get(keys) {
-        reads.push([...keys])
-        return Object.fromEntries(keys.filter(key => Object.hasOwn(records, key)).map(key => [key, records[key]]))
+        reads.push([...(keys ?? Object.keys(records))])
+        return Object.fromEntries((keys ?? Object.keys(records)).filter(key => Object.hasOwn(records, key)).map(key => [key, records[key]]))
       },
       async set(items) { sets.push(items); Object.assign(records, items) }
     }
-    const writer = create({ local, now: () => 100 + times++, generation: () => `g${++generations}` })
+    const writer = create({ local, sync: { async get() { throw Error("Off writer accessed sync") } }, now: () => 100 + times++, generation: () => `g${++generations}` })
     const change = (desired: LocalFilterChange["desired"], expectedGeneration?: string | null) => writer.change(
       { kind: "ui", windowId: 1, incognito: false },
       expectedGeneration === undefined ? { acct, playlist, desired, clearListedChannels: "not-confirmed" }
@@ -309,7 +309,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
   }
   {
     const x = harness({ ...seed(), sync: history() }), marker = new Error("programmer error")
-    const writer = create({ local: x.local, now: () => 1, generation: () => { throw marker } })
+    const writer = create({ local: x.local, sync: { async get() { throw Error("Off writer accessed sync") } }, now: () => 1, generation: () => { throw marker } })
     let rejected: unknown
     try { await writer.change({ kind: "ui", windowId: 1, incognito: false }, { acct, playlist, desired: { mode: "deny", on: false }, clearListedChannels: "not-confirmed" }) } catch (error) { rejected = error }
     check(rejected === marker, "programmer exception propagates")
@@ -318,7 +318,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
   }
   {
     const x = harness(), marker = new Error("clock failure")
-    const writer = create({ local: x.local, now: () => { throw marker }, generation: () => "unused" })
+    const writer = create({ local: x.local, sync: { async get() { throw Error("Off writer accessed sync") } }, now: () => { throw marker }, generation: () => "unused" })
     let rejected: unknown
     try { await writer.change({ kind: "ui", windowId: 1, incognito: false }, { acct, playlist, desired: { mode: "deny", on: false }, clearListedChannels: "not-confirmed" }) } catch (error) { rejected = error }
     check(rejected === marker, "admission programmer exception rejects")
@@ -404,7 +404,7 @@ test("preparation refusal leaves false history untouched before generation in th
       "doc:filter:AAAAAAAAAAAAAAAA:PL_P":{v:1,gen:"old",at:1,by:"device",data:{mode:"deny",on:true,channels:[]}}};
     const before=JSON.stringify(records);
     let generations=0,sets=0,reads=0;
-    const writer=module.exports.createLocalFilterWriter({local:{async get(){reads++;return records},async set(){sets++;throw Error("Unexpected set")}},now:()=>1,generation:()=>{generations++;return "unexpected"}});
+    const writer=module.exports.createLocalFilterWriter({sync:{async get(){throw Error("Forbidden sync")}},local:{async get(){reads++;return records},async set(){sets++;throw Error("Unexpected set")}},now:()=>1,generation:()=>{generations++;return "unexpected"}});
     const result=await writer.change({kind:"ui",windowId:1,incognito:false},{acct:"AAAAAAAAAAAAAAAA",playlist:"PL_P",desired:{mode:"deny",on:false},clearListedChannels:"not-confirmed"});
     return {result,preparations,generations,sets,reads,unchanged:before===JSON.stringify(records)};
   })()`
@@ -421,7 +421,7 @@ test("actual browser artifact executes the acceptance matrix with injected effec
     visited.add(file)
     expect(file.startsWith(resolve(import.meta.dir, "../../shared/model") + "/") ||
       file === resolve(import.meta.dir, "../../shared/contracts/json.ts") ||
-      [entry, resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts")].includes(file)).toBe(true)
+      [entry, resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts")].includes(file)).toBe(true)
     for (const imported of new Bun.Transpiler({ loader: "ts" }).scanImports(await readFile(file, "utf8"))) {
       expect(imported.path.startsWith(".")).toBe(true)
       const base = resolve(dirname(file), imported.path)
@@ -440,6 +440,8 @@ test("actual browser artifact executes the acceptance matrix with injected effec
     Object.defineProperty(Math,"random",{get(){ambientReads++;throw Error("Math.random")}});
     const module = {exports:{}}; ${bytes};
     const result = await (${acceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P",FixtureDate);
+    const syncResult = await (${syncAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");
+    if(syncResult.assertions<200) throw Error("Sync matrix did not run");
     if(ambientReads!==0) throw Error("Unexpected ambient effects");
     const beforeControls = ambientReads;
     let positiveControls = 0;
@@ -454,4 +456,325 @@ test("actual browser artifact executes the acceptance matrix with injected effec
   expect(result.beforeControls).toBe(0)
   expect(result.positiveControls).toBe(13)
   expect(result.positiveReads).toBeGreaterThanOrEqual(13)
+})
+
+async function syncAcceptance(create: typeof createLocalFilterWriter, acct: AccountKey, playlist: PlaylistId) {
+  let assertions = 0
+  const stable = (value: unknown): string => JSON.stringify(value, (_, item: unknown) => item && typeof item === "object" && !Array.isArray(item)
+    ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b))) : item)
+  function equal(actual: unknown, expected: unknown, message: string) {
+    assertions++
+    if (stable(actual) !== stable(expected)) throw Error(message + ": " + stable(actual) + " != " + stable(expected))
+  }
+  const key = `doc:filter:${acct}:${playlist}`, base = `s:filter:${acct}:${playlist}`, setup = `doc:setup:${acct}`
+  const kept = `doc:filter:${acct}:PL_kept`, keptBase = `s:filter:${acct}:PL_kept`, other = "doc:filter:BBBBBBBBBBBBBBBB:PL_T"
+  const own = JSON.parse('{"__proto__":{"keep":true},"toJSON":"inert"}')
+  const stamp = { v: 1, gen: "old", at: 1, by: "old" }
+  const original = { ...stamp, extra: { keep: true }, ...own, data: { mode: "deny", on: true,
+    channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "Title", null, { future: true }]], future: { body: true }, ...own } }
+  const seed = (): Record<string, unknown> => ({ schema: 1, device: { id: "device-fixture", consent: { v: 1, at: 1 }, syncOn: true },
+    sync: { joined: "history", pushed: { [key]: "old" }, status: "ok", editedSinceOff: false, future: { keep: true }, v: 99, ...own },
+    "doc:settings": { ...stamp, gen: "settings-pending", data: {} },
+    [setup]: { ...stamp, gen: "setup-pending", data: { autoAdd: [{ pl: playlist, takes: "videos" }] } },
+    [key]: original, [kept]: { ...stamp, gen: "kept-pending", data: { mode: "allow", on: false, channels: [] } },
+    [other]: { ...stamp, gen: "tomb-pending", deleted: true }, cache: { keep: true } })
+  const remote = (): Record<string, unknown> => ({ "s:meta": { v: 1, id: "history", created: 0, future: { keep: true } },
+    [base]: original, "unknown:occupied": "x", [`${base}@old-orphan.0`]: "old chunk" })
+  function harness(records = seed(), syncRecords = remote()) {
+    const reads: (readonly string[] | null)[] = [], sets: Readonly<Record<string, unknown>>[] = []
+    let generations = 0, syncReads = 0
+    const local: LocalWriteStorage = {
+      async get(keys) { reads.push(keys); return keys === null ? { ...records } : Object.fromEntries(keys.filter(k => Object.hasOwn(records, k)).map(k => [k, records[k]])) },
+      async set(items) { sets.push(items); Object.assign(records, items) }
+    }
+    const sync = { async get() { syncReads++; return syncRecords } }
+    const writer = create({ local, sync, now: () => 100, generation: () => `g${++generations}` })
+    const change = (on = false, mode: "deny" | "allow" = "deny", expectedGeneration?: string) => writer.change({ kind: "ui", windowId: 1, incognito: false },
+      expectedGeneration === undefined ? { acct, playlist, desired: { mode, on }, clearListedChannels: "not-confirmed" }
+        : { acct, playlist, desired: { mode, on }, clearListedChannels: "confirmed", expectedGeneration })
+    return { records, syncRecords, reads, sets, local, sync, change, counts: () => ({ generations, syncReads }) }
+  }
+  const ok = { kind: "result", result: { ok: true } }, unavailable = { kind: "unavailable", reason: "sync-writer-required" }
+  const refused = (reason: string) => ({ kind: "result", result: { refused: reason } })
+  async function inert(h: ReturnType<typeof harness>, expected: unknown, on = false, message = "sync intent result") {
+    const before = stable(h.records)
+    equal(await h.change(on), expected, message)
+    equal(h.sets, [], "refusal has zero local sets")
+    equal(stable(h.records), before, "refusal retains raw local state")
+  }
+  for (const status of ["ok", "full", "update-needed"]) for (const editedSinceOff of [false, true]) {
+    const records = seed(); records.sync = { joined: "history", pushed: { [key]: "old" }, status, editedSinceOff, future: { keep: true }, v: 99, ...own }
+    const h = harness(records), before = { ...records }, syncBefore = stable(h.syncRecords)
+    equal(await h.change(), ok, "fitting complete edit admitted regardless global status/flag")
+    const expected = { ...original, gen: "g1", at: 100, by: "device-fixture", data: { ...original.data, on: false } }
+    equal(h.sets, [{ [key]: expected }], "literal one Filter local set")
+    equal(h.records, { ...before, [key]: expected }, "all raw records and history retained")
+    equal(h.reads, [["schema", "device", "sync", setup, key], null], "full authoritative local read")
+    equal(h.counts(), { generations: 1, syncReads: 1 }, "one candidate one full sync read")
+    equal(stable(h.syncRecords), syncBefore, "no native sync mutation")
+    equal(await h.change(), ok, "accepted pending generation achieved no-op")
+    equal(h.sets.length, 1, "achieved no set")
+    equal(h.counts().generations, 1, "achieved no stamp")
+  }
+  for (const meta of [undefined, null, {}, { id: "history", created: 0 }, { v: 1, created: 0 }, { v: 1, id: "history" },
+    { v: "1", id: "history", created: 0 }, { v: 1, id: "history", created: -1 }, { reset: true, id: "history", created: 0 },
+    { v: 1, id: "history", created: 0, reset: true }, { v: 2, id: "history", created: 0 }, { v: 1, id: "other", created: 0 }]) {
+    const h = harness(); if (meta === undefined) delete h.syncRecords["s:meta"]; else h.syncRecords["s:meta"] = meta
+    await inert(h, unavailable)
+  }
+  { const h = harness(); h.syncRecords["s:meta"] = { v: 1, id: "history", created: 0, reset: false }; equal(await h.change(), ok, "reset false ordinary metadata") }
+  for (const status of ["off", "joining", "waiting", "unknown"]) {
+    const h = harness(); h.records.sync = { joined: "history", pushed: {}, status, editedSinceOff: false }; await inert(h, unavailable)
+    equal(h.counts().syncReads, 0, "not-ready history never reads sync")
+  }
+  for (const [name, raw] of [["doc:future:thing", original], [kept, null], [kept, undefined], [kept, {}], [kept, { ...stamp, data: { mode: "invalid" } }]] as const) {
+    const h = harness(); h.records[name] = raw; await inert(h, unavailable)
+  }
+  for (const pushed of [{ opaque: "old" }, { "doc:settings": "old", "doc:filter:AAAAAAAAAAAAAAAA:PL_missing": "old" }]) {
+    const h = harness(); h.records.sync = { joined: "history", pushed, status: "ok", editedSinceOff: false }; await inert(h, unavailable)
+  }
+  const large = (gen: string) => ({ ...stamp, gen, data: { mode: "deny", on: false, channels: [], future: "x".repeat(51000) } })
+  {
+    const h = harness(); h.records[kept] = large("pending-one"); h.records[other] = large("pending-two")
+    await inert(h, refused("sync-full"), false, "complete pending set refuses combined quota")
+  }
+  {
+    const h = harness(); h.records[kept] = large("pushed-restore"); h.records[other] = large("pending-two")
+    h.records.sync = { joined: "history", pushed: { [key]: "old", [kept]: "pushed-restore" }, status: "ok", editedSinceOff: false }
+    await inert(h, refused("sync-full"), false, "acknowledged disappearance restoration is charged")
+  }
+  {
+    const h = harness(); h.records[kept] = large("superseded")
+    h.syncRecords[keptBase] = { v: 2, gen: "protected", at: 2, by: "new", data: { future: true } }
+    h.records[other] = large("pending")
+    equal(await h.change(), ok, "unrelated newer remote protects large older pending from projection")
+    equal(h.records[kept], large("superseded"), "protected local data retained")
+  }
+  for (const achieved of [false, true]) {
+    const h = harness(); h.syncRecords[base] = { v: 2, gen: "new", at: 1, by: "other", data: {} }
+    await inert(h, refused("update-needed"), achieved, achieved ? "achieved intent checks addressed newer remote" : "changed intent checks addressed newer remote")
+    if (achieved) equal(h.counts().generations, 0, "no-op remote version check no generation")
+  }
+  {
+    const h = harness(), future = { v: 2, gen: "new", at: 2, by: "future", data: { future: true } }
+    h.records[kept] = future; h.syncRecords[keptBase] = future
+    equal(await h.change(), ok, "represented unsupported local stays protected")
+  }
+  { const h = harness(); h.records[kept] = { v: 2, gen: "new", at: 2, by: "future", data: {} }; await inert(h, unavailable) }
+  for (const raw of [null, {}, { ...stamp, n: 2 }, { ...original, data: { ...original.data, on: false } },
+    { ...original, gen: "incoming" }, { ...stamp, gen: "incoming", deleted: true }]) {
+    const h = harness(); h.syncRecords[base] = raw; await inert(h, unavailable)
+  }
+  { const h = harness(); h.syncRecords["s:filter:BBBBBBBBBBBBBBBB:PL_remote"] = original; await inert(h, unavailable) }
+  { const h = harness(); delete h.syncRecords[base]; equal(await h.change(), ok, "missing base with orphan chunks restores in projection") }
+  {
+    const h = harness(); h.records[key] = { ...original, gen: "local-pending" }
+    equal(await h.change(), ok, "acknowledged baseline plus local pending is classifiable")
+  }
+  {
+    const h = harness(); h.records[key] = { ...original, gen: "never-pushed", extra: "x".repeat(110000), data: { mode: "deny", on: true, channels: [] } }
+    delete h.syncRecords[base]
+    h.local.get = async keys => { h.reads.push(keys); return keys === null ? { ...h.records, [key]: { ...original, gen: "fresh", data: {} } }
+      : Object.fromEntries((keys ?? []).filter(k => Object.hasOwn(h.records, k)).map(k => [k, h.records[k]])) }
+    equal(await h.change(), ok, "fresh achieved state overrides stale preliminary changed value")
+    equal(h.counts().generations, 0, "authoritative no-op never prepares")
+    equal(h.sets.length, 0, "authoritative no-op no set")
+  }
+  {
+    const h = harness()
+    h.records[key] = { ...original, gen: "superseded-large", data: { mode: "deny", on: true, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "L".repeat(99000)]] } }
+    delete h.syncRecords[base]
+    equal(await h.change(), ok, "superseded pending chunks never enter projection")
+    equal(h.sets.length, 1, "replacement commits one small normalized candidate")
+  }
+  {
+    const h = harness(), get = h.local.get
+    h.local.get = async keys => keys === null ? { ...h.records, device: { id: "fresh-device", consent: { v: 1, at: 1 }, syncOn: true } } : get(keys)
+    equal(await h.change(), ok, "authoritative Device supplies stamp identity")
+    const saved = h.sets[0]?.[key]
+    equal(saved && typeof saved === "object" && "by" in saved ? saved.by : undefined, "fresh-device", "no stale Device identity")
+  }
+  {
+    const h = harness(), get = h.local.get
+    h.local.get = async keys => keys === null ? { ...h.records, [key]: { ...original, gen: "fresh-local" } } : get(keys)
+    equal(await h.change(false, "allow", "old"), refused("invalid"), "full snapshot invalidates stale destructive confirmation")
+    equal(h.sets.length, 0, "stale full confirmation no set")
+    equal(h.counts().generations, 0, "stale full confirmation no generation")
+    equal(await h.change(false, "allow", "fresh-local"), ok, "fresh full confirmation clears")
+  }
+  for (const field of ["schema", "device", "sync", setup, key]) {
+    const h = harness(), before = h.local.get
+    h.local.get = async keys => keys === null ? { ...h.records, [field]: field === "schema" ? 2 : null } : before(keys)
+    const expected = field === "schema" ? { kind: "unavailable", reason: "newer-layout" }
+      : field === "device" ? { kind: "unavailable", reason: "startup" }
+      : field === setup ? { kind: "unavailable", reason: "account-context" }
+      : unavailable
+    equal(await h.change(), expected, "full snapshot revalidates " + field)
+    equal(h.sets.length, 0, "fresh invalid context no set")
+  }
+  {
+    const h = harness(); h.records[key] = { ...original, gen: "superseded", data: { mode: "deny", on: true, channels: [] } }
+    delete h.syncRecords[base]
+    const beforeGet = h.local.get
+    h.local.get = async keys => {
+      const values = await beforeGet(keys)
+      return { ...values, ...(Object.hasOwn(values, key) ? { [key]: { ...original, gen: "superseded", data: { mode: "deny", on: true, channels: [] }, discarded: undefined } } : {}) }
+    }
+    await inert(h, refused("invalid"))
+  }
+  for (const on of [false, true]) {
+    const h = harness(); h.records[key] = { ...stamp, data: { channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "L".repeat(300), null, { future: true }]] } }
+    h.syncRecords[base] = h.records[key]
+    for (let i = 0; i < 481; i++) h.syncRecords["unknown:" + i] = "x"
+    if (!on) { equal(await h.change(false, "deny", "stale"), ok, "omitted-default no-op bypasses overquota projection"); equal(h.counts().generations, 0, "no-op no normalization/stamp") }
+    else await inert(h, refused("sync-full"), true)
+  }
+  {
+    const h = harness(); equal(await h.change(false, "allow"), refused("invalid"), "unconfirmed destructive clearing")
+    equal(await h.change(false, "allow", "stale"), refused("invalid"), "stale destructive clearing")
+    equal(await h.change(false, "allow", "old"), ok, "fresh destructive clearing")
+    equal(h.sets.length, 1, "only confirmed clearing persists")
+  }
+  for (const failure of ["exact", "full", "sync", "set"]) {
+    const h = harness(), marker = Error("native " + failure), get = h.local.get, set = h.local.set, syncGet = h.sync.get
+    h.local.get = async keys => { if ((failure === "full" && keys === null) || (failure === "exact" && keys !== null)) throw marker; return get(keys) }
+    h.sync.get = async () => { if (failure === "sync") throw marker; return syncGet() }
+    h.local.set = async items => { if (failure === "set") throw marker; return set(items) }
+    let caught: unknown
+    try { await h.change() } catch (error) { caught = error }
+    equal(caught === marker, true, "native error identity propagates " + failure)
+    equal(h.sets.length, 0, "no false success or automatic retry")
+    h.local.get = get; h.local.set = set; h.sync.get = syncGet
+    equal(await h.change(), ok, "lane recovers on explicit request " + failure)
+    equal(h.sets.length, 1, "one explicit recovered write")
+  }
+  {
+    const h = harness(), set = h.local.set, marker = Error("lost response")
+    h.local.set = async items => { await set(items); throw marker }
+    try { await h.change() } catch (error) { equal(error === marker, true, "accepted local set lost response rejects") }
+    const fresh = harness(h.records, h.syncRecords)
+    equal(await fresh.change(), ok, "fresh writer converges after lost response")
+    equal(fresh.counts().generations, 0, "lost response no restamp")
+    equal(fresh.sets, [], "lost response no replay")
+  }
+  {
+    const h = harness(); let release!: () => void, enter!: () => void
+    const blocked = new Promise<void>(done => { release = done }), entered = new Promise<void>(done => { enter = done }), set = h.local.set
+    h.local.set = async items => { enter(); await blocked; await set(items) }
+    const first = h.change(); await entered
+    const second = h.change(true)
+    equal(h.reads.length, 2, "second intent waits inside existing lane")
+    release(); equal(await first, ok, "queued first commits"); equal(await second, ok, "queued next sees pending gen")
+    equal(h.sets.length, 2, "two opposite explicit intents persist")
+    equal(h.reads.length, 4, "queued next rereads complete local")
+    equal(await h.change(true), ok, "queued achieved repeat no-op")
+    equal(h.sets.length, 2, "achieved repeat no third set")
+  }
+  let getterCalls = 0
+  const bad = Object.defineProperty({}, "bad", { enumerable: true, get() { getterCalls++; throw Error("getter") } })
+  for (const location of ["local", "sync", "meta"]) {
+    const h = harness()
+    if (location === "local") h.records[kept] = { ...original, bad }
+    if (location === "sync") h.syncRecords.unknown = bad
+    if (location === "meta") h.syncRecords["s:meta"] = bad
+    equal(await h.change(), unavailable, "descriptor-aware snapshot refusal")
+    equal(h.sets, [], "accessor refusal has no effects")
+  }
+  equal(getterCalls, 0, "snapshot validation never invokes accessors")
+  return { assertions }
+}
+
+test("joined sync writer consumes complete pending and restoration admission", async () => {
+  expect((await syncAcceptance(createLocalFilterWriter, acct, playlist)).assertions).toBeGreaterThan(200)
+})
+
+test("actual browser artifact rejects six observable admission defects", async () => {
+  const plannerPath = resolve(import.meta.dir, "sync-write-admission.ts"), writerPath = resolve(import.meta.dir, "local-filter-writer.ts")
+  const planner = await readFile(plannerPath, "utf8"), writer = await readFile(writerPath, "utf8")
+  const cases = [
+    { name: "latest-only", assertion: "complete pending set refuses combined quota", path: plannerPath,
+      source: planner.replace('documents.set(addressed, { key: intent.key, document: intent.document })',
+        'documents.clear(); documents.set(addressed, { key: intent.key, document: intent.document })') },
+    { name: "missing-restoration", assertion: "acknowledged disappearance restoration is charged", path: plannerPath,
+      source: planner.replace('documents.set(name, { key, document: raw })\n      continue',
+        'if (raw.gen !== state.pushed[name]) documents.set(name, { key, document: raw });\n      continue') },
+    { name: "protected-overwrite", assertion: "unrelated newer remote protects large older pending from projection", path: plannerPath,
+      source: planner.replace('if (remote.kind === "newer-version") continue',
+        'if (remote.kind === "newer-version") { documents.set(name, {key, document:raw}); continue }') },
+    { name: "stale-full-read", assertion: "fresh achieved state overrides stale preliminary changed value", path: writerPath,
+      source: writer.replace('records = await deps.local.get(null)', 'const stale = records[filterKey]; records = { ...await deps.local.get(null), [filterKey]: stale }') },
+    { name: "noop-newer-bypass", assertion: "achieved intent checks addressed newer remote", path: writerPath,
+      source: writer.replace('if (!device.syncOn) return ok', 'return ok') },
+    { name: "superseded-chunks", assertion: "superseded pending chunks never enter projection", path: plannerPath,
+      source: planner.replace('documents.set(addressed, { key: intent.key, document: intent.document })',
+        'const superseded = documents.get(addressed); documents.set(addressed, { key: intent.key, document: intent.document })')
+        .replace('const set = new Map<string, JsonValue>()',
+          'const set = new Map<string, JsonValue>(); if(superseded) { const old=encodeSyncDocument(superseded); if(old.kind==="encoded") for(const item of old.encoded.items) if(item.key!==old.encoded.baseKey) set.set(item.key,item.value) }') }
+  ]
+  for (const fault of cases) {
+    expect(fault.source).not.toBe(fault.path === plannerPath ? planner : writer)
+    const build = await Bun.build({ entrypoints: [writerPath], target: "browser", format: "cjs", minify: true,
+      plugins: [{ name: fault.name, setup(builder) {
+        builder.onLoad({ filter: /\/(?:sync-write-admission|local-filter-writer)\.ts$/ }, args => args.path === fault.path ? { loader: "ts", contents: fault.source } : undefined)
+      } }] })
+    expect(build.success).toBe(true)
+    const bytes = await build.outputs[0]!.text()
+    const script = `(async()=>{const module={exports:{}};${bytes};try {await (${syncAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");return {caught:false}} catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0]}}})()`
+    const result = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
+    expect(result).toEqual({ caught: true, assertion: fault.assertion })
+  }
+})
+
+test("actual browser artifact projects literal complete raw inventory exactly once per edit", async () => {
+  const codecPath = resolve(import.meta.dir, "sync-codec.ts"), source = await readFile(codecPath, "utf8")
+  const build = await Bun.build({ entrypoints: [resolve(import.meta.dir, "local-filter-writer.ts")], target: "browser", format: "cjs", minify: true,
+    plugins: [{ name: "projection-observation", setup(builder) {
+      builder.onLoad({ filter: /\/sync-codec\.ts$/ }, () => ({ loader: "ts", contents: source
+        .replace("export function encodeSyncDocument(", "function actualEncodeSyncDocument(")
+        .replace("export function projectSyncWrite(", "function actualProjectSyncWrite(") + `
+        export function encodeSyncDocument(input: Parameters<typeof actualEncodeSyncDocument>[0]) {
+          globalThis.encodedInputs.push(input); return actualEncodeSyncDocument(input)
+        }
+        export function projectSyncWrite(input: Parameters<typeof actualProjectSyncWrite>[0]) {
+          if (!globalThis.firstProjection) globalThis.firstProjection = input
+          globalThis.projections++; return actualProjectSyncWrite(input)
+        }` }))
+    } }] })
+  expect(build.success).toBe(true)
+  const bytes = await build.outputs[0]!.text()
+  const script = `(async()=>{globalThis.projections=0;globalThis.firstProjection=null;globalThis.encodedInputs=[];
+    const module={exports:{}};${bytes};
+    const matrix=await (${syncAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");
+    const first=globalThis.firstProjection,firstEncoded=globalThis.encodedInputs.slice(0,5),projections=globalThis.projections;
+    const records={schema:1,device:{id:"d",consent:{v:1,at:1},syncOn:true},sync:{joined:"history",pushed:{},status:"ok",editedSinceOff:false},
+      "doc:setup:AAAAAAAAAAAAAAAA":{v:1,gen:"s",at:1,by:"d",data:{autoAdd:[{pl:"PL_P"}]}},
+      "doc:filter:AAAAAAAAAAAAAAAA:PL_P":{v:1,gen:"f",at:1,by:"d",data:{mode:"deny",on:true,channels:[]}}};
+    let gens=0;globalThis.projections=0;globalThis.encodedInputs=[];
+    const writer=module.exports.createLocalFilterWriter({local:{async get(){return records},async set(items){Object.assign(records,items)}},sync:{async get(){return {"s:meta":{v:1,id:"history",created:0}}}},now:()=>100,generation:()=>"g"+(++gens)});
+    const change={acct:"AAAAAAAAAAAAAAAA",playlist:"PL_P",desired:{mode:"deny",on:false},clearListedChannels:"not-confirmed"};
+    await writer.change({kind:"ui",windowId:1,incognito:false},change);
+    const changedCount=globalThis.projections,changedEncodes=globalThis.encodedInputs.length;
+    await writer.change({kind:"ui",windowId:1,incognito:false},change);
+    return {matrix,first,firstEncoded,projections,changedCount,noopCount:globalThis.projections,changedEncodes,noopEncodes:globalThis.encodedInputs.length,gens};})()`
+  const result = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
+  const own = JSON.parse('{"__proto__":{"keep":true},"toJSON":"inert"}')
+  const original = { v: 1, gen: "old", at: 1, by: "old", extra: { keep: true }, ...own,
+    data: { mode: "deny", on: true, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "Title", null, { future: true }]], future: { body: true }, ...own } }
+  expect(result.first.current).toEqual([
+    { key: "s:meta", value: { v: 1, id: "history", created: 0, future: { keep: true } } },
+    { key: "s:filter:AAAAAAAAAAAAAAAA:PL_P", value: original },
+    { key: "unknown:occupied", value: "x" }, { key: "s:filter:AAAAAAAAAAAAAAAA:PL_P@old-orphan.0", value: "old chunk" }
+  ])
+  const literal = [
+    { key: "s:settings", value: { v: 1, gen: "settings-pending", at: 1, by: "old", data: {} } },
+    { key: "s:setup:AAAAAAAAAAAAAAAA", value: { v: 1, gen: "setup-pending", at: 1, by: "old", data: { autoAdd: [{ pl: "PL_P", takes: "videos" }] } } },
+    { key: "s:filter:AAAAAAAAAAAAAAAA:PL_kept", value: { v: 1, gen: "kept-pending", at: 1, by: "old", data: { mode: "allow", on: false, channels: [] } } },
+    { key: "s:filter:BBBBBBBBBBBBBBBB:PL_T", value: { v: 1, gen: "tomb-pending", at: 1, by: "old", deleted: true } },
+    { key: "s:filter:AAAAAAAAAAAAAAAA:PL_P", value: { ...original, gen: "g1", at: 100, by: "device-fixture", data: { ...original.data, on: false } } }
+  ]
+  expect(result.first.set).toEqual(literal)
+  expect(result.firstEncoded.map((item: { document: unknown }) => item.document)).toEqual(literal.map(item => item.value))
+  expect(result.projections).toBeGreaterThan(10)
+  expect({ changed: result.changedCount, noop: result.noopCount, gens: result.gens }).toEqual({ changed: 1, noop: 1, gens: 1 })
+  expect(result.noopEncodes).toBe(result.changedEncodes)
 })

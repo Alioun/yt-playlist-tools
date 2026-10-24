@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test"
 import {
-  DecodeError, decodeDevice, decodeDocument, decodeFilter, decodeKey, decodeSettings, decodeSetup, decodeSyncState,
+  DecodeError, decodeSyncMeta, decodeDevice, decodeDocument, decodeFilter, decodeKey, decodeSettings, decodeSetup, decodeSyncState,
   defaultDevice, defaultFilter, defaultSettings, defaultSetup, documentKey, isAccountKey, isChannelId,
   isKey, isPercent, isPlaylistId, isSetupEmpty, isShortcutId, isVideoId,
   normalizeFilterForWrite, normalizeSettingsForWrite, normalizeSetupForWrite, parseDocumentKey
 } from "./index"
-import type { SyncState } from "./index"
+import type { SyncMeta, SyncState } from "./index"
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
 type Check<T extends true> = T
@@ -412,4 +412,22 @@ test("imports and operates without browser, DOM, clock or randomness access", ()
   expect(result.stderr.toString()).toBe("")
   expect(result.exitCode).toBe(0)
   expect(result.stdout.toString()).toBe("pure model operations passed\n")
+})
+
+export type SyncMetaProofs = [
+  Check<Equal<SyncMeta, { v: number; id: string; created: number; reset?: boolean }>>,
+  Check<Equal<typeof decodeSyncMeta, (raw: unknown) => SyncMeta>>
+]
+
+test("ordinary sync metadata requires owned fields and retains extensions", () => {
+  const own = JSON.parse('{"__proto__":{"keep":true},"toJSON":"inert","future":[null,1]}')
+  for (const reset of [undefined, false, true]) {
+    const raw = { v: 1, id: "history", created: 0, ...own, ...(reset === undefined ? {} : { reset }) }
+    expect(decodeSyncMeta(raw)).toEqual(raw)
+  }
+  for (const raw of [undefined, null, {}, { id: "history", created: 0 }, { v: 1, created: 0 },
+    { v: 1, id: "history" }, { v: 0, id: "history", created: 0 }, { v: 1, id: "", created: 0 },
+    { v: 1, id: "history", created: -1 }, { v: 1, id: "history", created: 0, reset: 0 }]) {
+    expect(() => decodeSyncMeta(raw)).toThrow(DecodeError)
+  }
 })

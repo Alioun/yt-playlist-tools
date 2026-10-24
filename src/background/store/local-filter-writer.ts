@@ -6,6 +6,7 @@ import {
 import { isJsonValue, type JsonObject } from "../../shared/contracts/json"
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
 import { changeFilterSetting, type FilterSettingInput } from "./channel-filter-edit"
+import { admitSyncWrite } from "./sync-write-admission"
 import { prepareDocumentBody } from "./write-preparation"
 
 type UiOrigin = Extract<Origin, { kind: "ui" }>
@@ -27,8 +28,12 @@ export type LocalFilterWriteResult =
   }
 
 export type LocalWriteStorage = {
-  get(keys: readonly string[]): Promise<Readonly<Record<string, unknown>>>
+  get(keys: readonly string[] | null): Promise<Readonly<Record<string, unknown>>>
   set(items: Readonly<Record<string, JsonObject>>): Promise<void>
+}
+
+export type SyncReadStorage = {
+  get(): Promise<Readonly<Record<string, unknown>>>
 }
 
 function isJsonObject(value: unknown): value is JsonObject {
@@ -37,6 +42,7 @@ function isJsonObject(value: unknown): value is JsonObject {
 
 export function createLocalFilterWriter(deps: {
   readonly local: LocalWriteStorage
+  readonly sync: SyncReadStorage
   readonly now: () => number
   readonly generation: () => string
 }): {
@@ -49,86 +55,115 @@ export function createLocalFilterWriter(deps: {
     const ok = { kind: "result", result: { ok: true } } as const
     const setupKey = documentKey({ kind: "setup", acct: change.acct })
     const filterKey = documentKey({ kind: "filter", acct: change.acct, playlist: change.playlist })
-    const records = await deps.local.get(["schema", "device", "sync", setupKey, filterKey])
-    const schema = records.schema
-    if (typeof schema === "number" && Number.isSafeInteger(schema) && schema > STORAGE_SCHEMA_VERSION) {
-      return { kind: "unavailable", reason: "newer-layout" }
-    }
-    if (schema !== STORAGE_SCHEMA_VERSION || !isJsonObject(records.device) || Object.keys(Object.prototype).length > 0) {
-      return { kind: "unavailable", reason: "startup" }
-    }
-    const rawDevice = records.device
-    if (!["id", "consent", "syncOn"].every(key => Object.hasOwn(rawDevice, key))) {
-      return { kind: "unavailable", reason: "startup" }
-    }
-    let device
-    try { device = decodeDevice(rawDevice) } catch (error) {
-      if (error instanceof DecodeError) return { kind: "unavailable", reason: "startup" }
-      throw error
-    }
-    if (device.consent?.v !== CONSENT_VERSION || device.upgradeNote?.state === "pending") {
-      return { kind: "unavailable", reason: "startup" }
-    }
-    if (device.syncOn) return { kind: "unavailable", reason: "sync-writer-required" }
-    let history: { raw: JsonObject; editedSinceOff: boolean } | undefined
-    if (Object.hasOwn(records, "sync")) {
-      const raw = records.sync
-      if (!isJsonObject(raw)) return { kind: "unavailable", reason: "sync-writer-required" }
-      try {
-        const decoded = decodeSyncState(raw)
-        if (decoded.status !== "off") return { kind: "unavailable", reason: "sync-writer-required" }
-        history = { raw, editedSinceOff: decoded.editedSinceOff }
-      } catch (error) {
-        if (error instanceof DecodeError) return { kind: "unavailable", reason: "sync-writer-required" }
+    let records = await deps.local.get(["schema", "device", "sync", setupKey, filterKey])
+    let exhaustive = false
+    for (;;) {
+      if (records === null || typeof records !== "object" || Array.isArray(records) ||
+        ![Object.prototype, null].includes(Object.getPrototypeOf(records)) || Reflect.ownKeys(records).some(key => {
+          const descriptor = Object.getOwnPropertyDescriptor(records, key)
+          return typeof key !== "string" || !descriptor || !("value" in descriptor) || !descriptor.enumerable
+        })) return { kind: "unavailable", reason: "startup" }
+      const schema = records.schema
+      if (typeof schema === "number" && Number.isSafeInteger(schema) && schema > STORAGE_SCHEMA_VERSION) {
+        return { kind: "unavailable", reason: "newer-layout" }
+      }
+      if (!Object.hasOwn(records, "schema") || !Object.hasOwn(records, "device") || schema !== STORAGE_SCHEMA_VERSION || !isJsonObject(records.device) || Object.keys(Object.prototype).length > 0) {
+        return { kind: "unavailable", reason: "startup" }
+      }
+      const rawDevice = records.device
+      if (!["id", "consent", "syncOn"].every(key => Object.hasOwn(rawDevice, key))) {
+        return { kind: "unavailable", reason: "startup" }
+      }
+      let device
+      try { device = decodeDevice(rawDevice) } catch (error) {
+        if (error instanceof DecodeError) return { kind: "unavailable", reason: "startup" }
         throw error
       }
-    }
-
-    const rawSetup = records[setupKey]
-    if (!isJsonObject(rawSetup)) return { kind: "unavailable", reason: "account-context" }
-    try {
-      const setup = decodeDocument(rawSetup, decodeSetup)
-      if (setup.kind !== "value" || !setup.document.data.autoAdd.some(entry => entry.pl === change.playlist)) {
-        return { kind: "unavailable", reason: "account-context" }
+      if (device.consent?.v !== CONSENT_VERSION || device.upgradeNote?.state === "pending") {
+        return { kind: "unavailable", reason: "startup" }
       }
-    } catch (error) {
-      if (error instanceof DecodeError) return { kind: "unavailable", reason: "account-context" }
-      throw error
-    }
+      let history: { raw: JsonObject; editedSinceOff: boolean } | undefined
+      if (Object.hasOwn(records, "sync")) {
+        const raw = records.sync
+        if (!isJsonObject(raw)) return { kind: "unavailable", reason: "sync-writer-required" }
+        try {
+          const decoded = decodeSyncState(raw)
+          if (device.syncOn ? decoded.joined === null || !["ok", "full", "update-needed"].includes(decoded.status) : decoded.status !== "off") return { kind: "unavailable", reason: "sync-writer-required" }
+          history = { raw, editedSinceOff: decoded.editedSinceOff }
+        } catch (error) {
+          if (error instanceof DecodeError) return { kind: "unavailable", reason: "sync-writer-required" }
+          throw error
+        }
+      }
 
-    const rawFilter = records[filterKey]
-    if (Object.hasOwn(records, filterKey) && !isJsonValue(rawFilter)) return invalid
-    let filter
-    try { filter = decodeDocument(rawFilter, decodeFilter) } catch (error) {
-      if (error instanceof DecodeError) return invalid
-      throw error
-    }
-    if (filter.kind === "newer-version") return { kind: "result", result: { refused: "update-needed" } }
-    const current = filter.kind === "value" ? filter.document.data : undefined
-    const result = changeFilterSetting({ current, desired: change.desired, clearListedChannels: change.clearListedChannels })
-    if (result.kind === "unchanged") return ok
-    if (result.kind === "confirmation-required") return invalid
-    if (filter.kind === "value" && current && current.mode !== change.desired.mode && current.channels.length > 0 &&
-      (change.clearListedChannels !== "confirmed" || change.expectedGeneration !== filter.document.gen)) return invalid
+      if ((device.syncOn && !history) || (!device.syncOn && exhaustive)) return { kind: "unavailable", reason: "sync-writer-required" }
 
-    const prepared = prepareDocumentBody({ kind: "filter", data: result.filter })
-    if (prepared.kind !== "prepared") return invalid
-    const envelope = {
-      ...(isJsonObject(rawFilter) ? rawFilter : {}),
-      v: DOCUMENT_VERSION, gen: deps.generation(), at, by: device.id, data: prepared.data
+      const rawSetup = records[setupKey]
+      if (!isJsonObject(rawSetup)) return { kind: "unavailable", reason: "account-context" }
+      try {
+        const setup = decodeDocument(rawSetup, decodeSetup)
+        if (setup.kind !== "value" || !setup.document.data.autoAdd.some(entry => entry.pl === change.playlist)) {
+          return { kind: "unavailable", reason: "account-context" }
+        }
+      } catch (error) {
+        if (error instanceof DecodeError) return { kind: "unavailable", reason: "account-context" }
+        throw error
+      }
+
+      const rawFilter = records[filterKey]
+      if (Object.hasOwn(records, filterKey) && !isJsonValue(rawFilter)) return invalid
+      let filter
+      try { filter = decodeDocument(rawFilter, decodeFilter) } catch (error) {
+        if (error instanceof DecodeError) return invalid
+        throw error
+      }
+      if (filter.kind === "newer-version") return { kind: "result", result: { refused: "update-needed" } }
+      if (device.syncOn) {
+        if (!exhaustive) {
+          records = await deps.local.get(null)
+          exhaustive = true
+          continue
+        }
+      }
+
+      const current = filter.kind === "value" ? filter.document.data : undefined
+      const result = changeFilterSetting({ current, desired: change.desired, clearListedChannels: change.clearListedChannels })
+      if (result.kind === "unchanged") {
+        if (!device.syncOn) return ok
+        const admission = admitSyncWrite({ local: records, sync: await deps.sync.get(),
+          intent: { kind: "unchanged", key: { kind: "filter", acct: change.acct, playlist: change.playlist } } })
+        if (admission.kind === "unavailable") return { kind: "unavailable", reason: "sync-writer-required" }
+        return admission.kind === "refused" ? { kind: "result", result: { refused: admission.reason } } : ok
+      }
+      if (result.kind === "confirmation-required") return invalid
+      if (filter.kind === "value" && current && current.mode !== change.desired.mode && current.channels.length > 0 &&
+        (change.clearListedChannels !== "confirmed" || change.expectedGeneration !== filter.document.gen)) return invalid
+
+      const prepared = prepareDocumentBody({ kind: "filter", data: result.filter })
+      if (prepared.kind !== "prepared") return invalid
+      const envelope = {
+        ...(isJsonObject(rawFilter) ? rawFilter : {}),
+        v: DOCUMENT_VERSION, gen: deps.generation(), at, by: device.id, data: prepared.data
+      }
+      if ("deleted" in envelope) delete envelope.deleted
+      if (!isJsonObject(envelope)) throw new TypeError("Writer produced a non-JSON envelope")
+      if (decodeDocument(envelope, decodeFilter).kind !== "value") throw new TypeError("Writer produced an unsupported Filter")
+      const items: Record<string, JsonObject> = { [filterKey]: envelope }
+      if (device.syncOn) {
+        const admission = admitSyncWrite({ local: records, sync: await deps.sync.get(), intent: {
+          kind: "changed", key: { kind: "filter", acct: change.acct, playlist: change.playlist }, document: envelope
+        } })
+        if (admission.kind === "unavailable") return { kind: "unavailable", reason: "sync-writer-required" }
+        if (admission.kind === "refused") return { kind: "result", result: { refused: admission.reason } }
+      } else if (history && !history.editedSinceOff) {
+        const sync = { ...history.raw, editedSinceOff: true }
+        if (!isJsonObject(sync)) throw new TypeError("Writer produced a non-JSON history")
+        decodeSyncState(sync)
+        items.sync = sync
+      }
+      await deps.local.set(items)
+      return ok
     }
-    if ("deleted" in envelope) delete envelope.deleted
-    if (!isJsonObject(envelope)) throw new TypeError("Writer produced a non-JSON envelope")
-    if (decodeDocument(envelope, decodeFilter).kind !== "value") throw new TypeError("Writer produced an unsupported Filter")
-    const items: Record<string, JsonObject> = { [filterKey]: envelope }
-    if (history && !history.editedSinceOff) {
-      const sync = { ...history.raw, editedSinceOff: true }
-      if (!isJsonObject(sync)) throw new TypeError("Writer produced a non-JSON history")
-      decodeSyncState(sync)
-      items.sync = sync
-    }
-    await deps.local.set(items)
-    return ok
   }
 
   return {

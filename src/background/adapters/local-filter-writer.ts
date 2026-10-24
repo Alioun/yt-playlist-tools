@@ -31,9 +31,10 @@ export function createBrowserLocalFilterWriter(nativeBrowser: NativeBrowser): {
 } {
   const writer = createLocalFilterWriter({
     local: {
-      get: keys => nativeBrowser.storage.local.get([...keys]),
+      get: keys => nativeBrowser.storage.local.get(keys === null ? null : [...keys]),
       set: items => nativeBrowser.storage.local.set(items)
     },
+    sync: { get: () => nativeBrowser.storage.sync.get(null) },
     now: () => Date.now(),
     generation: () => crypto.randomUUID()
   })

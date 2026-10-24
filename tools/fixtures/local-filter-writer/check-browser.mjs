@@ -81,7 +81,7 @@ async function open() {
 async function effects(browser) {
   return JSON.parse(await browser.worker.evaluate(() => {
     const f = globalThis.localFilterFixture
-    return JSON.stringify({ reads: f.reads, sets: f.sets, events: f.events, senders: f.senders, syncAccesses: f.syncAccesses() })
+    return JSON.stringify({ reads: f.reads, sets: f.sets, events: f.events, senders: f.senders, syncAccesses: f.syncAccesses(), syncReads: f.syncReads, syncWrites: f.syncWrites })
   }))
 }
 async function read(browser) { return JSON.parse(await browser.worker.evaluate(async () => JSON.stringify(await globalThis.localFilterFixture.read(null)))) }
@@ -314,6 +314,148 @@ try {
   result.rounds.push({ stage: "clean-full-browser-restart", native: browser.native, fullReadback: await read(browser), observed })
   result.desiredStateRetryConverged = true
 } finally { await browser.context.close() }
+const syncBase = key.replace("doc:", "s:"), keptKey = "doc:filter:AAAAAAAAAAAAAAAA:PL_kept", keptBase = keptKey.replace("doc:", "s:")
+const syncState = { joined: "history", pushed: { [key]: "old" }, status: "ok", editedSinceOff: false, future: { keep: true }, ...own, v: 99 }
+const syncInitial = { schema: 1, device: { ...initial.device, syncOn: true }, sync: syncState,
+  "doc:settings": { v: 1, gen: "settings-pending", at: 1, by: "old", data: {} }, [setupKey]: initial[setupKey], [key]: initial[key],
+  [keptKey]: { v: 1, gen: "kept-pending", at: 1, by: "old", data: { mode: "allow", on: false, channels: [] } },
+  "doc:filter:BBBBBBBBBBBBBBBB:PL_T": { v: 1, gen: "tomb-pending", at: 1, by: "old", deleted: true } }
+const syncNative = { "s:meta": { v: 1, id: "history", created: 0, future: { keep: true } }, [syncBase]: initial[key],
+  "unknown:occupied": "x", [`${syncBase}@old-orphan.0`]: "old chunk" }
+async function syncRead(browser) { return JSON.parse(await browser.worker.evaluate(async () => JSON.stringify(await globalThis.localFilterFixture.syncRead(null)))) }
+async function seedJoined(browser, local = syncInitial, remote = syncNative) {
+  await browser.worker.evaluate(async text => {
+    const { local, remote } = JSON.parse(text), f = globalThis.localFilterFixture
+    await f.localClear(); await f.syncClear(); await f.seed(local); await f.syncSeed(remote)
+  }, JSON.stringify({ local, remote }))
+  await reset(browser)
+}
+async function joinedInert(browser, expected, raw = request) {
+  const before = await read(browser), beforeSync = await syncRead(browser)
+  await reset(browser)
+  equal(await send(browser, raw), expected, "joined refusal/no-op result")
+  await settle(browser)
+  const observed = await effects(browser)
+  equal(await read(browser), before, "joined refusal/no-op local unchanged")
+  equal(await syncRead(browser), beforeSync, "joined refusal/no-op sync unchanged")
+  equal(observed.sets, [], "joined refusal/no-op no set")
+  equal(observed.events, [], "joined refusal/no-op no event")
+  equal(observed.syncWrites, [], "zero writer sync writes")
+  return { observed, fullReadback: before, fullSyncSnapshot: beforeSync }
+}
+async function joinedAccepted(browser, raw = request) {
+  const before = await read(browser), beforeSync = await syncRead(browser)
+  await reset(browser)
+  const started = Date.now()
+  equal(await send(browser, raw), ok, "joined edit acknowledged after preflight")
+  await settle(browser)
+  const after = await read(browser), observed = await effects(browser), saved = after[key]
+  assert.equal(typeof saved.gen, "string"); assert.notEqual(saved.gen, before[key]?.gen)
+  assert(saved.at >= started && saved.at <= Date.now())
+  const data = { ...before[key].data, on: raw.desired.on, mode: raw.desired.mode }
+  if (before[key].data.mode !== raw.desired.mode) data.channels = []
+  const expected = { ...before[key], v: 1, gen: saved.gen, at: saved.at, by: initial.device.id, data }
+  equal(after, { ...before, [key]: expected }, "joined exact local effect with full raw retention")
+  equal(observed.sets, [{ [key]: expected }], "joined one Filter-only set")
+  equal(observed.reads, [["schema", "device", "sync", setupKey, key], null], "joined native full local read")
+  equal(observed.syncReads, [null], "joined native full sync read")
+  equal(observed.syncWrites, [], "joined zero writer sync writes")
+  equal(await syncRead(browser), beforeSync, "joined no outgoing sync effect")
+  equal(observed.events, [{ area: "local", changes: { [key]: { oldValue: before[key], newValue: expected } } }], "joined one exact Filter event and no history/sync event")
+  return { observed, fullReadback: after, fullSyncSnapshot: beforeSync }
+}
+const largePending = gen => ({ v: 1, gen, at: 1, by: "old", data: { mode: "deny", on: false, channels: [], future: "x".repeat(51000) } })
+browser = await open()
+let syncDurable
+try {
+  for (const status of ["ok", "full", "update-needed"]) {
+    await seedJoined(browser, { ...syncInitial, sync: { ...syncState, status, editedSinceOff: status === "full" } })
+    result.rounds.push({ stage: `native-joined-${status}`, ...await joinedAccepted(browser) })
+    result.rounds.push({ stage: `native-joined-${status}-noop`, ...await joinedInert(browser, ok) })
+  }
+  await seedJoined(browser, { ...syncInitial, [keptKey]: largePending("pending-one"), "doc:filter:BBBBBBBBBBBBBBBB:PL_T": largePending("pending-two") })
+  result.rounds.push({ stage: "native-combined-pending-quota-refusal", ...await joinedInert(browser, { kind: "result", result: { refused: "sync-full" } }) })
+  await seedJoined(browser, { ...syncInitial, [keptKey]: largePending("pushed-restore"),
+    sync: { ...syncState, pushed: { [key]: "old", [keptKey]: "pushed-restore" } }, "doc:filter:BBBBBBBBBBBBBBBB:PL_T": largePending("pending-two") })
+  await browser.worker.evaluate(async text => {
+    const f = globalThis.localFilterFixture
+    await f.seedSyncDocuments(JSON.parse(text))
+  }, JSON.stringify({ [keptKey]: largePending("pushed-restore") }))
+  await browser.worker.evaluate(base => globalThis.localFilterFixture.syncRemove(base), keptBase)
+  await reset(browser)
+  result.rounds.push({ stage: "native-disappeared-acknowledged-restoration-quota-refusal", ...await joinedInert(browser, { kind: "result", result: { refused: "sync-full" } }) })
+  await seedJoined(browser, { ...syncInitial, [keptKey]: largePending("protected-local"), "doc:filter:BBBBBBBBBBBBBBBB:PL_T": largePending("pending") },
+    { ...syncNative, [keptBase]: { v: 2, gen: "newer", at: 2, by: "future", data: { future: true } } })
+  result.rounds.push({ stage: "native-protected-newer-unrelated", ...await joinedAccepted(browser) })
+  await seedJoined(browser, syncInitial, { ...syncNative, [syncBase]: { v: 2, gen: "newer", at: 2, by: "future", data: {} } })
+  result.rounds.push({ stage: "native-addressed-newer", ...await joinedInert(browser, { kind: "result", result: { refused: "update-needed" } }) })
+  result.rounds.push({ stage: "native-achieved-addressed-newer", ...await joinedInert(browser, { kind: "result", result: { refused: "update-needed" } }, { ...request, desired: { mode: "deny", on: true } }) })
+  const chunked = { ...initial[key], data: { ...initial[key].data, futureChunk: "x".repeat(15000) } }
+  await seedJoined(browser, { ...syncInitial, [key]: chunked })
+  await browser.worker.evaluate(text => globalThis.localFilterFixture.seedSyncDocuments(JSON.parse(text)), JSON.stringify({ [key]: chunked }))
+  const completeSnapshot = await syncRead(browser), chunk = Object.keys(completeSnapshot).find(name => name.startsWith(`${syncBase}@old.`))
+  assert(chunk)
+  await browser.worker.evaluate(chunk => globalThis.localFilterFixture.syncRemove(chunk), chunk)
+  await reset(browser)
+  result.rounds.push({ stage: "native-incomplete-known-chunk", completeSnapshot, removedChunk: chunk,
+    ...await joinedInert(browser, { kind: "unavailable", reason: "sync-writer-required" }) })
+  await browser.worker.evaluate(base => globalThis.localFilterFixture.syncRemove(base), syncBase)
+  await reset(browser)
+  result.rounds.push({ stage: "native-removed-base-counted-orphans", ...await joinedAccepted(browser) })
+  for (const meta of [null, { reset: true, id: "history", created: 0 }, { v: 1, id: "different", created: 0 }]) {
+    await seedJoined(browser, syncInitial, { ...syncNative, "s:meta": meta })
+    result.rounds.push({ stage: "native-unready-metadata", meta, ...await joinedInert(browser, { kind: "unavailable", reason: "sync-writer-required" }) })
+  }
+  for (const editedSinceOff of [false, true]) {
+    const omitted = { v: 1, gen: "omitted", at: 1, by: "old", extra: own,
+      data: { channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "L".repeat(300), null, { future: true }]], ...own } }
+    await seedJoined(browser, { ...syncInitial, sync: { ...syncState, editedSinceOff }, [key]: omitted },
+      { ...syncNative, [syncBase]: omitted, ...Object.fromEntries(Array.from({ length: 481 }, (_, i) => [`unknown:${i}`, 0])) })
+    const noOp = await joinedInert(browser, ok, { ...request, clearListedChannels: "confirmed", expectedGeneration: "stale" })
+    equal(noOp.observed.syncReads, [null], "omitted-default no-op still reads full native sync")
+    result.rounds.push({ stage: "native-joined-overfull-raw-noop", editedSinceOff, ...noOp })
+    result.rounds.push({ stage: "native-joined-overfull-changed-refusal", ...await joinedInert(browser,
+      { kind: "result", result: { refused: "sync-full" } }, { ...request, desired: { mode: "deny", on: true } }) })
+  }
+  await seedJoined(browser, { ...syncInitial, [key]: { ...initial[key], data: { ...initial[key].data, on: false } } },
+    { ...syncNative, [syncBase]: { ...initial[key], data: { ...initial[key].data, on: false } } })
+  const clear = { ...request, desired: { mode: "allow", on: false } }
+  await joinedInert(browser, invalid, clear)
+  await joinedInert(browser, invalid, { ...clear, clearListedChannels: "confirmed", expectedGeneration: "stale" })
+  result.rounds.push({ stage: "native-joined-confirmed-off-list-clear", ...await joinedAccepted(browser,
+    { ...clear, clearListedChannels: "confirmed", expectedGeneration: "old" }) })
+  await seedJoined(browser)
+  const beforeQuota = await read(browser)
+  const quota = await browser.worker.evaluate(async () => {
+    const limit = chrome.storage.local.QUOTA_BYTES, before = await chrome.storage.local.getBytesInUse(null), paddingKey = "fixture-quota-padding"
+    await globalThis.localFilterFixture.seed({ [paddingKey]: "x".repeat(limit - before - paddingKey.length - 2 - 8) })
+    return { limit, before, filled: await chrome.storage.local.getBytesInUse(null), paddingKey }
+  })
+  await reset(browser)
+  const failed = await send(browser)
+  assert.equal(typeof failed.fixtureError, "string"); assert.match(failed.fixtureError, /quota/i)
+  await settle(browser)
+  const failedEffects = await effects(browser)
+  equal(failedEffects.syncReads, [null], "native local quota follows complete sync preflight")
+  equal(failedEffects.syncWrites, [], "native quota failure no sync writes")
+  assert.equal(failedEffects.sets.length, 1); equal(Object.keys(failedEffects.sets[0]), [key], "native quota attempted one Filter only")
+  equal(failedEffects.events, [], "native quota rejection no events")
+  const afterQuota = await read(browser); delete afterQuota[quota.paddingKey]
+  equal(afterQuota, beforeQuota, "native quota rejection preserves all preceding records")
+  await settle(browser); equal(await effects(browser), failedEffects, "no automatic retry")
+  await remove(browser, [quota.paddingKey])
+  const recovered = await joinedAccepted(browser)
+  syncDurable = recovered.fullReadback
+  result.rounds.push({ stage: "native-joined-local-quota-recovery", quota, beforeQuota, afterQuota, failed, failedEffects, ...recovered })
+} finally { await browser.context.close() }
+browser = await open()
+try {
+  equal(await read(browser), syncDurable, "full clean browser restart preserves joined accepted document and unchanged history")
+  const retry = await joinedInert(browser, ok)
+  equal(retry.observed.syncReads, [null], "restarted achieved intent rechecks full remote")
+  result.rounds.push({ stage: "native-joined-full-browser-restart", native: browser.native, ...retry })
+} finally { await browser.context.close() }
+
 result.limits.push("Clean restart proves resolved native persistence and desired-state retry convergence. It does not prove power-loss atomicity, uncertain in-flight set behavior, Firefox, or production integration.")
 await writeFile(join(evidence, "native-result.json"), JSON.stringify(result, null, 2) + "\n")
 console.log(JSON.stringify({ extensionId, version: result.version, stages: result.rounds.map(round => round.stage), nativeIncognito: result.nativeIncognito, desiredStateRetryConverged: result.desiredStateRetryConverged, evidence }, null, 2))

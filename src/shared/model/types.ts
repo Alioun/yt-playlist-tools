@@ -2,6 +2,13 @@ export type Stamp = { v: number; gen: string; at: number; by: string }
 export type Stamped<T> = Stamp & { data: T }
 export type Tombstone = Stamp & { deleted: true }
 
+export type SyncMeta = {
+  v: number
+  id: string
+  created: number
+  reset?: boolean
+}
+
 export type SyncState = {
   joined: string | null
   pushed: Record<string, string>
