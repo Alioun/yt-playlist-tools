@@ -3,6 +3,7 @@ import {
   isBuildId, isRouteId, isWatchId, isPageRequestId, isPageWatchId,
   isProbeReport, isProbeReportFor, isBreakageSignal, isShapeOutline, makeShapeOutline
 } from "./index"
+import { isPageSignalEvent } from "./page"
 import type { BreakageKind, BreakageSignal, DiagnosticVocabulary, JsonValue, ShapeOutline } from "./index"
 
 function checked<T>(guard: (value: unknown) => value is T, value: unknown): T {
@@ -194,4 +195,87 @@ test("independent malformed ASTs fail without trusting the producer", () => {
   expect(getterCalls).toBe(0)
   const parsed: unknown = JSON.parse('{"__proto__":{"private":"value"},"data":1}')
   expect(isShapeOutline(parsed, ["data"])).toBe(false)
+})
+
+describe("outline serialization ignores inherited hooks", () => {
+  for (const prototype of [Object.prototype, Array.prototype]) {
+    for (const accessor of [false, true]) {
+      for (const throws of [false, true]) {
+        const name = prototype === Object.prototype ? "Object" : "Array"
+        test(`${name} toJSON ${accessor ? "getter" : "function"} ${throws ? "throwing" : "returning"}`, () => {
+          const bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length
+          const keys = Array.from({ length: 65 }, (_, i) => `schema${String(i).padStart(2, "0")}`)
+          const source = Object.freeze(Object.fromEntries(keys.map(key => [key, "SYNTHETIC_PRIVATE_SCALAR"])))
+          const before = JSON.stringify(source)
+          const oversized = { kind: "object", fields: keys.map(key => ({ key, value: { kind: "string" } })) }
+          const nullRoot: unknown = Object.assign(Object.create(null), oversized)
+          const fixtures = [oversized, nullRoot]
+          const shell = bytes({ kind: "object", fields: [{ key: "", value: { kind: "string" } }] })
+          for (const size of [2047, 2048, 2049]) {
+            for (const unit of ["a", "é", "😀", "\ud800", '"\\\n']) {
+              const width = bytes(unit) - 2
+              const count = Math.floor((size - shell) / width)
+              const key = unit.repeat(count) + "a".repeat(size - shell - count * width)
+              keys.push(key)
+              fixtures.push({ kind: "object", fields: [{ key, value: { kind: "string" } }] })
+            }
+          }
+          const expected = fixtures.map(value => bytes(value) <= 2048)
+          const valid = makeShapeOutline({ data: [null, { private_key: "PRIVATE", value: true }] }, ["data", "value"])
+          const expectedProduced = makeShapeOutline(source, keys)
+          const diagnosticVocabulary = { ...vocabulary, schemaKeys: keys }
+          const build = checked(isBuildId, "synthetic-build")
+          const previous = Object.getOwnPropertyDescriptor(prototype, "toJSON")
+          let getterReads = 0
+          let calls = 0
+          const hook = () => {
+            calls++
+            if (throws) throw new Error("Inherited serialization function ran")
+            return "tiny"
+          }
+          const results: boolean[][] = []
+          let produced: ShapeOutline | undefined
+          let unchanged: ShapeOutline | undefined
+          let failure: unknown
+          try {
+            Object.defineProperty(prototype, "toJSON", accessor ? {
+              configurable: true,
+              get() {
+                getterReads++
+                if (throws) throw new Error("Inherited serialization getter ran")
+                return hook
+              }
+            } : { configurable: true, value: hook })
+            for (const shape of fixtures) {
+              const fact = { ...signal, kind: "unrecognised", shape }
+              results.push([
+                isShapeOutline(shape, keys),
+                isBreakageSignal(fact, diagnosticVocabulary),
+                isPageSignalEvent({ v: 1, build, kind: "signal", signal: fact }, {
+                  build, site: "www", vocabulary: diagnosticVocabulary
+                })
+              ])
+            }
+            produced = makeShapeOutline(source, keys)
+            unchanged = makeShapeOutline({ data: [null, { private_key: "OTHER", value: false }] }, ["data", "value"])
+          } catch (error) { failure = error }
+          finally {
+            if (previous) Object.defineProperty(prototype, "toJSON", previous)
+            else Reflect.deleteProperty(prototype, "toJSON")
+          }
+          expect(getterReads).toBe(0)
+          expect(calls).toBe(0)
+          expect(failure).toBeUndefined()
+          expect(bytes(oversized)).toBe(2953)
+          expect(results).toEqual(expected.map(accepted => [accepted, accepted, accepted]))
+          expect(produced).toEqual(expectedProduced)
+          expect(bytes(produced)).toBeLessThanOrEqual(2048)
+          expect(isShapeOutline(produced, keys)).toBe(true)
+          expect(unchanged).toEqual(valid)
+          expect(JSON.stringify(source)).toBe(before)
+          expect(JSON.stringify(produced)).not.toContain("SYNTHETIC_PRIVATE_SCALAR")
+        })
+      }
+    }
+  }
 })
