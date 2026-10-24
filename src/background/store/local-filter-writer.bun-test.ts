@@ -1777,7 +1777,7 @@ async function automaticIncomingAcceptance(create: typeof createLocalFilterWrite
   await first.writer.startSync()
   equal(first.writes, [], "no sync invocation before five-second barrier")
   equal(first.sets, [expectedSet], "automatic exact raw adoption before outbound")
-  equal(first.reads, ["L1", "L2", "L3", "R1", "L4", "R2", "L5", "L6", "R3", "L7", "R4", "L8", "R5"], "incoming precedes outbound observations")
+  equal(first.reads, ["L1", "L2", "L3", "R1", "L4", "R2", "L5", "L6", "R3", "L7", "R4", "L8", "R5", "L9", "R6"], "incoming precedes outbound observations")
   equal(first.records, { ...local, ...expectedSet }, "automatic whole replacement and independent Q acknowledgement")
   equal(first.synced, remote, "automatic receive leaves remote exact")
   equal(first.results, [{ kind: "deferred", notBefore: 5000 }], "automatic primary callback")
@@ -2679,12 +2679,12 @@ async function keptIncomingAcceptance(create: typeof createLocalFilterWriter, ac
     equal(h.records.device, device, "selection changes no Device ownership or lastAccount"); await h.writer.dispose()
   }
   {
-    const h = harness(); h.synced[S.replace("doc:", "s:")] = { ...clone(local[S]), gen: "a1", at: 30 }
+    const h = harness(); h.synced[S.replace("doc:", "s:")] = { ...clone(local[S]), gen: "a1", at: 30, data: {} }
     await h.writer.startSync()
     equal(h.sets, [expectedSet], "kept adopts despite unrelated Setup incoming debt")
     equal(h.results, [{ kind: "unavailable" }], "kept global attempt cannot bypass blocking document")
     await h.fire(5000); equal(await h.writer.flushSync(), { kind: "unavailable" }, "kept manual flush cannot bypass blocking document")
-    equal(h.writes, [], "kept blocking debt sends nothing"); equal(h.records[S], local[S], "kept no Setup receiver"); await h.writer.dispose()
+    equal(h.writes, [], "kept blocking debt sends nothing"); equal(h.records[S], local[S], "kept empty Setup remains deferred"); await h.writer.dispose()
   }
   for (const stage of ["R0", "L1", "R1", "L2", "set", "L3", "R2"]) {
     const h = harness(); let release!: () => void, entered = false
@@ -2789,7 +2789,7 @@ async function keptFixtureAcceptance(input: Awaited<ReturnType<typeof keptIncomi
     local.sync.pushed[P] = "p0"; local.sync.pushed[T] = "t0"
     remote[P.replace("doc:", "s:")] = { ...clone(local[P]), gen: "p1", at: 20 }
     remote[T.replace("doc:", "s:")] = { ...clone(local[T]), gen: "t1", at: 20 }
-    remote[S.replace("doc:", "s:")] = { ...clone(local[S]), gen: "a1", at: 30 }
+    remote[S.replace("doc:", "s:")] = { ...clone(local[S]), gen: "a1", at: 30, data: {} }
   }
   const before = clone(local), refused = ["missing", "future", "deleted", "malformed", "null"].includes(mode)
   Object.assign(globalThis, { chrome: { storage: { local: area(local, sets), sync: area(remote, writes, true), onChanged: changed },
@@ -2897,5 +2897,473 @@ test("kept matrix executes saved minified core bytes in two fresh guarded Node r
     const script = `(async()=>{let accesses=0;const names=["Date","performance","setTimeout","clearTimeout","setInterval","clearInterval","browser","chrome","fetch","crypto","Bun","process","localStorage","indexedDB","navigator","WebSocket"];for(const name of names)Object.defineProperty(globalThis,name,{get(){accesses++;throw Error("guard "+name)}});Object.defineProperty(Math,"random",{get(){accesses++;throw Error("guard random")}});const isPlaylistId=${isPlaylistId.toString()};const module={exports:{}};${bytes};const result=await (${keptIncomingAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA");if(accesses)throw Error("ambient access");let controls=0;for(const name of [...names,"random"]){let caught;try{name==="random"?Math.random:globalThis[name]}catch(error){caught=error.message}if(caught!=="guard "+name)throw Error("inactive guard "+name);controls++}return {result,controls,accessesBeforeControls:0}})()`
     const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
     expect(observed.result).toEqual(source); expect(observed.controls).toBe(17); expect(observed.accessesBeforeControls).toBe(0)
+  }
+})
+
+async function setupIncomingAcceptance(create: typeof createLocalFilterWriter, acct: AccountKey) {
+  let assertions = 0
+  const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
+  const stable = (value: unknown): string => JSON.stringify(value, (_, item: unknown) => item && typeof item === "object" && !Array.isArray(item)
+    ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b))) : item)
+  function equal(actual: unknown, expected: unknown, label: string) {
+    assertions++
+    if (stable(actual) !== stable(expected)) throw Error(label + ": " + stable(actual) + " != " + stable(expected))
+  }
+  const S = "doc:setup:AAAAAAAAAAAAAAAA", K = "doc:filter:AAAAAAAAAAAAAAAA:PL_K", P = "doc:filter:AAAAAAAAAAAAAAAA:PL_P"
+  const Q = "doc:filter:AAAAAAAAAAAAAAAA:PL_Q", T = "doc:settings", B = S.replace("doc:", "s:"), C = Q.replace("doc:", "s:")
+  const playlist = "PL_K"
+  if (!isPlaylistId(playlist)) throw Error("Invalid synthetic playlist")
+  const key = { kind: "setup", acct } as const, filterKey = { kind: "filter", acct, playlist } as const
+  const local = JSON.parse('{"schema":1,"device":{"id":"synthetic-local","consent":{"v":1,"at":0},"syncOn":true,"lastAccount":"AAAAAAAAAAAAAAAA","extension":{"keep":true}},"sync":{"joined":"synthetic-history","pushed":{"doc:setup:AAAAAAAAAAAAAAAA":"a0","doc:filter:AAAAAAAAAAAAAAAA:PL_K":"k0","doc:filter:AAAAAAAAAAAAAAAA:PL_P":"p0","doc:filter:AAAAAAAAAAAAAAAA:PL_Q":"q0"},"status":"ok","editedSinceOff":false,"extension":{"keep":true}},"doc:setup:AAAAAAAAAAAAAAAA":{"v":1,"gen":"a0","at":10,"by":"synthetic-local","data":{"autoAdd":[{"pl":"PL_P","takes":"both"}],"gather":"PL_OLD"},"oldOnly":true},"doc:filter:AAAAAAAAAAAAAAAA:PL_K":{"v":1,"gen":"k0","at":10,"by":"synthetic-local","data":{"on":false,"channels":[]}},"doc:filter:AAAAAAAAAAAAAAAA:PL_P":{"v":1,"gen":"p0","at":10,"by":"synthetic-local","data":{}},"doc:filter:AAAAAAAAAAAAAAAA:PL_Q":{"v":1,"gen":"q1","at":15,"by":"synthetic-local","data":{"on":true}},"cache:AAAAAAAAAAAAAAAA":{"fixture":"retain"},"progress:AAAAAAAAAAAAAAAA:0":{"fixture":"retain"}}')
+  const incoming = JSON.parse('{"v":1,"gen":"a1","at":30,"by":"synthetic-remote","__proto__":{"keep":true},"extension":{"future":[null,1]},"data":{"autoAdd":[{"pl":"PL_N","takes":"shorts","pct":40}],"gather":"PL_G","targets":{"gone99":"PL_T"},"marks":{"PL_UNUSED":"full"},"future":{"constructor":{"keep":true},"__proto__":{"keep":true}}}}')
+  const remote = { "s:meta": { v: 1, id: "synthetic-history", created: 0, extension: { keep: true } }, [B]: clone(incoming),
+    [K.replace("doc:", "s:")]: clone(local[K]), [P.replace("doc:", "s:")]: clone(local[P]),
+    [C]: { v: 1, gen: "q0", at: 5, by: "synthetic-local", data: {} } }
+  const expectedSet = { [S]: incoming, sync: { ...local.sync, pushed: { ...local.sync.pushed, [S]: "a1" } } }
+  const adopted = { kind: "adopted", received: { key, name: S, gen: "a1", document: incoming } }
+  const unavailable = (reason: string) => ({ kind: "unavailable", reason })
+  const settle = async () => { for (let i = 0; i < 1800; i++) await Promise.resolve() }
+  function harness(records = clone(local), synced: Record<string, unknown> = clone(remote)) {
+    let time = 0, generation = 0, wall = 0, clock = 0, serial = 0, lr = 0, rr = 0
+    const reads: string[] = [], sets: unknown[] = [], writes: unknown[] = [], results: unknown[] = []
+    const listeners = new Set<() => void>(), timers = new Map<number, { due: number; run: () => void }>()
+    const hooks = { io: async (_stage: string) => {}, afterSet: async () => {}, snapshot: (raw: Record<string, unknown>) => clone(raw) }
+    const writer = create({ local: {
+      async get() { const stage = "L" + lr++; reads.push(stage); await hooks.io(stage); return hooks.snapshot(records) },
+      async set(items) { reads.push("set"); await hooks.io("set"); sets.push(clone(items)); Object.assign(records, clone(items)); await hooks.afterSet() }
+    }, sync: {
+      async get() { const stage = "R" + rr++; reads.push(stage); await hooks.io(stage); return hooks.snapshot(synced) },
+      async set(items) { writes.push(clone(items)); Object.assign(synced, clone(items)); for (const run of listeners) run() },
+      subscribe(run) { listeners.add(run); return () => { listeners.delete(run) } }
+    }, now: () => { wall++; return time + 100 }, generation: () => { generation++; return "unexpected-generation" },
+    syncClock: { now: () => { clock++; return time }, after(ms, run) { const id = ++serial; timers.set(id, { due: time + ms, run }); return () => { timers.delete(id) } } },
+    onSyncResult: result => { results.push(result) } })
+    return { writer, records, synced, reads, sets, writes, results, listeners, timers, hooks, counts: () => ({ generation, wall, clock }),
+      event: async () => { for (const run of listeners) run(); await settle() },
+      fire: async (at: number) => { time = at; for (const [id, timer] of [...timers]) if (timer.due <= time) { timers.delete(id); timer.run() } await settle() },
+      change: () => writer.change({ kind: "ui", windowId: 1, incognito: false }, { acct, playlist: filterKey.playlist,
+        desired: { mode: "deny", on: true }, clearListedChannels: "not-confirmed" }) }
+  }
+  const first = harness()
+  {
+    const h = first, counts = h.counts()
+    const result = await h.writer.receiveSyncDocument(key)
+    equal(h.records[S], incoming, "Setup raw special keys omissions and dangling references")
+    equal(result.kind, "adopted", "Setup ordinary replacement adopted at L3")
+    equal(result, adopted, "Setup exact received record")
+    equal(h.sets, [expectedSet], "Setup one exact target-history batch")
+    equal(h.records, { ...local, ...expectedSet }, "Setup raw special keys omissions and dangling references")
+    equal(Object.hasOwn(h.records[S], "__proto__"), true, "Setup own special envelope key")
+    equal(Object.hasOwn(h.records[S].data.future, "__proto__"), true, "Setup own nested special key")
+    equal(h.reads, ["L0", "R0", "L1", "R1", "L2", "set", "L3", "R2"], "Setup finite IO trace")
+    equal(h.counts(), counts, "Setup no generation stamp or scheduling clock")
+    equal(h.synced, remote, "Setup remote exact"); equal(h.writes, [], "Setup manual no echo")
+    equal(await h.writer.receiveSyncDocument(key), { kind: "idle" }, "Setup immediate repeat idle")
+    const next = harness(clone(h.records)); equal(await next.writer.receiveSyncDocument(key), { kind: "idle" }, "Setup fresh owner repeat idle")
+    equal(h.sets, [expectedSet], "Setup repeat no set"); await h.writer.dispose(); await next.writer.dispose()
+  }
+  const empty = [{}, { label: null, autoAdd: [], targets: {}, quickSave: null, musicSave: null, gather: null, marks: {} },
+    { label: { name: "Only label" } }, { marks: { PL_UNUSED: "full" } }, { targets: { gone99: "PL_T" } }, { targets: { valid1: "PL_T" } }]
+  const positive = [{ gather: "PL_G" }, { quickSave: "WL" }, { musicSave: "PL_M" }, { autoAdd: [{ pl: "PL_N" }] }]
+  const inventories = ["kept", "none", "future", "tombstone", "malformed", "incomplete"]
+  function inventory(h: ReturnType<typeof harness>, kind: string) {
+    for (const name of [K, P, Q]) { delete h.records[name]; delete h.records.sync.pushed[name]; delete h.synced[name.replace("doc:", "s:")] }
+    if (kind !== "none") {
+      const filter = kind === "future" ? { ...local[K], v: 2 } : kind === "tombstone" ? { v: 1, gen: "dead", at: 10, by: "b", deleted: true }
+        : kind === "malformed" ? { ...local[K], data: { on: 2 } } : clone(local[K])
+      h.records[K] = filter; h.synced[K.replace("doc:", "s:")] = kind === "incomplete" ? { v: 1, gen: "k0", at: 10, by: "b", n: 2 } : clone(filter)
+    }
+  }
+  for (const [index, data] of empty.entries()) for (const kind of inventories) {
+    const h = harness(); inventory(h, kind); h.synced[B] = { ...clone(incoming), data: clone(data) }
+    h.records[T] = { v: 1, gen: "t0", at: 1, by: "b", data: { shortcuts: { list: [{ id: "valid1", key: null, label: "Valid", watchLaterOnEveryAccount: false }] } } }
+    const before = clone(h.records)
+    equal(await h.writer.receiveSyncDocument(key), unavailable("account-context"), "Setup deferred incoming " + index + kind)
+    equal(h.reads, ["L0", "R0"], "Setup deferred stops at R0"); equal(h.records, before, "Setup deferred no acknowledgement or cascade")
+    equal(h.sets, [], "Setup deferred no set"); await h.writer.dispose()
+  }
+  for (const data of empty) {
+    const h = harness(); h.records[S].data = clone(data); h.synced[B] = clone(h.records[S])
+    equal(await h.writer.receiveSyncDocument(key), unavailable("account-context"), "Setup deferred before exact-match idle")
+    equal(h.sets, [], "Setup empty exact match no repair"); await h.writer.dispose()
+  }
+  for (const data of positive) for (const extension of [{}, { label: { name: "  Keep label  " }, marks: { PL_UNUSED: "full" }, targets: { gone99: "PL_T" }, extra: { keep: true } }]) {
+    const h = harness(), raw = { ...clone(incoming), data: { ...clone(data), ...clone(extension) } }; h.synced[B] = raw
+    equal((await h.writer.receiveSyncDocument(key)).kind, "adopted", "Setup positive sparse adoption " + Object.keys(data)[0])
+    equal(h.records[S], raw, "Setup positive sparse raw omissions"); await h.writer.dispose()
+  }
+  for (const data of [...empty, { gather: "PL_OLD" }]) for (const kind of inventories) {
+    const h = harness(); inventory(h, kind); h.records[S].data = clone(data); h.synced[B] = { ...clone(incoming), data: { gather: "PL_G" } }
+    equal((await h.writer.receiveSyncDocument(key)).kind, "adopted", "Setup local sparse to incoming gather " + kind)
+    equal(h.records[S], h.synced[B], "Setup no local retention prerequisite"); await h.writer.dispose()
+  }
+  {
+    const h = harness(); delete h.records.device.lastAccount; inventory(h, "none"); h.synced[B] = { ...clone(incoming), data: { gather: "PL_G" } }
+    equal((await h.writer.receiveSyncDocument(key)).kind, "adopted", "Setup no live account requirement"); await h.writer.dispose()
+  }
+  for (const value of [undefined, null, { ...local[S], v: 2 }, { v: 1, gen: "dead", at: 1, by: "b", deleted: true }, { ...local[S], data: { autoAdd: 2 } }]) {
+    const h = harness(); if (value === undefined) delete h.records[S]; else h.records[S] = value
+    equal(await h.writer.receiveSyncDocument(key), unavailable("document"), "Setup unsupported local before sync")
+    equal(h.reads, ["L0"], "Setup unsupported local no remote IO"); equal(h.sets, [], "Setup absent target never created"); await h.writer.dispose()
+  }
+  for (const fault of ["pending", "same-gen", "equal", "older", "future", "deleted", "malformed", "incomplete", "non-json", "reset", "history", "overbudget"]) {
+    const h = harness()
+    if (fault === "pending") h.records[S].gen = "pending"
+    if (fault === "same-gen") h.synced[B] = { ...clone(incoming), gen: "a0" }
+    if (fault === "equal" || fault === "older") h.synced[B] = { ...clone(incoming), at: fault === "equal" ? 10 : 9 }
+    if (fault === "future") h.synced[B] = { ...clone(incoming), v: 2 }
+    if (fault === "deleted") h.synced[B] = { v: 1, gen: "dead", at: 30, by: "b", deleted: true }
+    if (fault === "malformed") h.synced[B] = { ...clone(incoming), data: { gather: 2 } }
+    if (fault === "incomplete") h.synced[B] = { v: 1, gen: "a1", at: 30, by: "b", n: 2 }
+    if (fault === "non-json") { h.synced.occupancy = undefined; h.hooks.snapshot = raw => raw }
+    if (fault === "reset") h.synced["s:meta"] = { ...remote["s:meta"], reset: true }
+    if (fault === "history") h.synced["s:meta"] = { ...remote["s:meta"], id: "other" }
+    if (fault === "overbudget") h.synced.occupancy = "x".repeat(99000)
+    const result = await h.writer.receiveSyncDocument(key)
+    equal(result.kind, fault === "overbudget" ? "adopted" : "unavailable", "Setup conflict and inventory " + fault)
+    if (fault !== "overbudget") equal(h.sets, [], "Setup conflict no set " + fault)
+    if (fault === "pending") equal(result, unavailable("pending"), "Setup own pending reason")
+    if (["same-gen", "equal", "older"].includes(fault)) equal(result, unavailable("conflict"), "Setup strict conflict reason")
+    await h.writer.dispose()
+  }
+  {
+    const h = harness(); await h.writer.startSync()
+    equal(h.sets, [expectedSet], "Setup automatic start adoption")
+    equal(h.results, [{ kind: "deferred", notBefore: 5000 }], "Setup global Q deferred")
+    await h.fire(4999); equal(h.writes, [], "Setup Q pacing at 4999")
+    await h.fire(5000); equal(h.writes, [{ [C]: local[Q] }], "Setup Q-only send no echo")
+    equal(h.records.sync.pushed, { ...local.sync.pushed, [S]: "a1", [Q]: "q1" }, "Setup cumulative Q repair")
+    await h.writer.dispose()
+  }
+  {
+    const h = harness(); h.synced[B] = { ...clone(incoming), data: {} }; await h.writer.startSync(); await h.fire(5000)
+    equal(h.records[S], local[S], "Setup deferred debt keeps old target"); equal(h.writes, [], "Setup global unresolved debt blocks Q")
+    equal(h.sets, [], "Setup deferred debt no local effects"); equal(h.results.at(-1), { kind: "unavailable" }, "Setup global debt unavailable")
+    await h.writer.dispose()
+  }
+  {
+    const h = harness(); h.synced[B] = clone(local[S]); await h.writer.startSync(); h.synced[B] = clone(incoming)
+    const reads = h.reads.length; await h.fire(5000)
+    equal(h.records[S], local[S], "Setup timer remains outbound-only")
+    equal(h.reads.length - reads, 2, "Setup timer no enumeration"); equal(h.writes, [], "Setup timer cannot bypass incoming debt")
+    await h.event(); equal(h.records[S], incoming, "Setup genuine event adoption"); await h.writer.dispose()
+  }
+  {
+    const h = harness(), k1 = { ...clone(local[K]), gen: "k1", at: 20 }, p1 = { ...clone(local[P]), gen: "p1", at: 20 }
+    const t0 = { v: 1, gen: "t0", at: 10, by: "b", data: {} }, t1 = { ...t0, gen: "t1", at: 20, data: { theme: "dark" } }
+    h.records[T] = t0; h.records.sync.pushed[T] = "t0"
+    h.synced[K.replace("doc:", "s:")] = k1; h.synced[P.replace("doc:", "s:")] = p1; h.synced["s:settings"] = t1
+    h.synced["s:setup:BBBBBBBBBBBBBBBB"] = clone(incoming); h.synced["s:filter:BBBBBBBBBBBBBBBB:PL_X"] = k1
+    const history = clone(h.records.sync), pushed = history.pushed
+    await h.writer.startSync()
+    equal(h.sets, [
+      { [K]: k1, sync: { ...history, pushed: { ...pushed, [K]: "k1" } } },
+      { [P]: p1, sync: { ...history, pushed: { ...pushed, [K]: "k1", [P]: "p1" } } },
+      { [T]: t1, sync: { ...history, pushed: { ...pushed, [K]: "k1", [P]: "p1", [T]: "t1" } } },
+      { [S]: incoming, sync: { ...history, pushed: { ...pushed, [K]: "k1", [P]: "p1", [T]: "t1", [S]: "a1" } } }
+    ], "Setup K P T S cumulative lexical batches")
+    equal(Object.hasOwn(h.records, "doc:setup:BBBBBBBBBBBBBBBB"), false, "Setup remote-only never created")
+    equal(Object.hasOwn(h.records, "doc:filter:AAAAAAAAAAAAAAAA:PL_N"), false, "Setup newly selected missing Filter never created")
+    equal(await h.change(), unavailable("account-context"), "Setup kept UI selection remains required")
+    const pl = "PL_P"; if (!isPlaylistId(pl)) throw Error("Invalid fixture")
+    equal(await h.writer.change({ kind: "ui", windowId: 1, incognito: false }, { acct, playlist: pl, desired: { mode: "deny", on: true }, clearListedChannels: "not-confirmed" }), unavailable("account-context"), "Setup unticked P UI remains refused")
+    await h.writer.dispose()
+  }
+  for (const reverse of [false, true]) {
+    const h = harness(); h.synced[B] = clone(local[S])
+    const k1 = { ...clone(local[K]), gen: "k1", at: 20 }; h.synced[K.replace("doc:", "s:")] = k1
+    if (!reverse) equal((await h.writer.receiveSyncDocument(filterKey)).kind, "adopted", "Setup kept Filter arrives first")
+    h.synced[B] = { ...clone(incoming), data: { autoAdd: [{ pl: "PL_K" }] } }
+    equal((await h.writer.receiveSyncDocument(key)).kind, "adopted", "Setup selection event independent order")
+    if (reverse) equal((await h.writer.receiveSyncDocument(filterKey)).kind, "adopted", "Setup kept Filter arrives later")
+    const pl = "PL_P"; if (!isPlaylistId(pl)) throw Error("Invalid fixture")
+    h.synced[P.replace("doc:", "s:")] = { ...clone(local[P]), gen: "p1", at: 20 }
+    equal((await h.writer.receiveSyncDocument({ kind: "filter", acct, playlist: pl })).kind, "adopted", "Setup unticked P remains receivable")
+    await h.writer.dispose()
+  }
+  for (const targetOnly of [false, true]) {
+    const h = harness(); h.synced[B] = { ...clone(incoming), data: targetOnly ? { targets: { gone99: "PL_T" } } : { gather: "PL_G", targets: { gone99: "PL_T" } } }
+    const raw = clone(h.synced[B]), initial = clone(h.records[S])
+    h.records[T] = { v: 1, gen: "t0", at: 10, by: "b", data: {} }; h.records.sync.pushed[T] = "t0"
+    equal((await h.writer.receiveSyncDocument(key)).kind, targetOnly ? "unavailable" : "adopted", "Setup before referenced Settings arrival")
+    for (const [gen, at, list] of [["t1", 20, [{ id: "gone99", key: null, label: "Later", watchLaterOnEveryAccount: false }]], ["t2", 40, []]] as const) {
+      h.synced["s:settings"] = { v: 1, gen, at, by: "b", data: { shortcuts: { list: clone(list) } } }
+      equal((await h.writer.receiveSyncDocument({ kind: "settings" })).kind, "adopted", "Setup independent actual Settings arrival " + gen)
+      equal((await h.writer.receiveSyncDocument(key)).kind, targetOnly ? "unavailable" : "idle", "Setup Settings arrival changes no intrinsic decision")
+      equal(h.records[S], targetOnly ? initial : raw, "Setup dangling reference stays raw across Settings arrivals")
+    }
+    await h.writer.dispose()
+  }
+  for (const stage of ["R0", "L1", "R1", "L2", "set", "L3", "R2"]) for (const field of [S, "sync", "device"]) {
+    const h = harness(); let changed = false
+    const mutate = () => { changed = true; h.records[field].unknown = { stale: true } }
+    if (stage === "set") h.hooks.afterSet = async () => { mutate() }
+    else h.hooks.io = async current => { if (!changed && current === stage) mutate() }
+    const result = await h.writer.receiveSyncDocument(key)
+    equal(changed, true, "Setup stale stage reached " + stage + field)
+    equal(result.kind, ["set", "L3"].includes(stage) ? "unconfirmed" : stage === "R2" ? "adopted" : "unavailable", "Setup target authority stale " + stage + field)
+    equal(h.sets.length, ["set", "L3", "R2"].includes(stage) ? 1 : 0, "Setup no stale precommit overwrite " + stage + field)
+    await h.writer.dispose()
+  }
+  for (const stage of ["R0", "L1", "R1", "L2", "set", "L3", "R2"]) {
+    const h = harness(); h.hooks.snapshot = raw => raw
+    h.hooks.io = async current => { if (current === stage) h.records[S].extensionOnly = { changed: true } }
+    const result = await h.writer.receiveSyncDocument(key)
+    equal(result.kind, stage === "R2" ? "adopted" : stage === "L3" ? "unconfirmed" : stage === "set" ? "adopted" : "unavailable", "Setup independently captured mutable target " + stage)
+    await h.writer.dispose()
+  }
+  for (const stage of ["R1", "R2"]) for (const field of ["metadata", "candidate"]) {
+    const h = harness(); h.hooks.io = async current => { if (current === stage) {
+      if (field === "metadata") h.synced["s:meta"] = { ...remote["s:meta"], extension: { keep: false } }
+      else h.synced[B] = { ...clone(incoming), extension: { keep: false } }
+    } }
+    equal((await h.writer.receiveSyncDocument(key)).kind, stage === "R2" ? "unconfirmed" : "unavailable", "Setup exact remote baseline " + stage + field)
+    await h.writer.dispose()
+  }
+  for (const stage of ["L0", "R0", "L1", "R1", "L2", "set", "L3", "R2"]) {
+    const h = harness(), marker = new Error("synthetic IO " + stage); h.hooks.io = async current => { if (current === stage) throw marker }
+    let result, caught
+    try { result = await h.writer.receiveSyncDocument(key) } catch (error) { caught = error }
+    if (["L0", "R0", "L1", "R1", "L2"].includes(stage)) equal(caught === marker, true, "Setup original precommit Error " + stage)
+    else {
+      equal(result?.kind, stage === "set" ? "local-set-failed" : "unconfirmed", "Setup error category " + stage)
+      equal(result && ("error" in result ? result.error === marker : "cause" in result && result.cause.kind === "read-failed" && result.cause.error === marker), true, "Setup original postcommit Error " + stage)
+    }
+    await h.writer.dispose()
+  }
+  for (const stage of ["L0", "R0", "L1", "R1", "L2", "set", "L3", "R2"]) {
+    const h = harness(); let entered = false, release!: () => void
+    const gate = new Promise<void>(done => { release = done })
+    h.hooks.io = async current => { if (current === stage) { entered = true; await gate } }
+    const receive = h.writer.receiveSyncDocument(key); await settle(); equal(entered, true, "Setup held IO entered " + stage)
+    const before = [...h.reads], manual = h.writer.receiveSyncDocument(key), edit = h.change(), start = h.writer.startSync(), flush = h.writer.flushSync()
+    await h.event(); await h.fire(5000); equal(h.reads, before, "Setup same lane held IO " + stage)
+    release(); equal(await receive, adopted, "Setup held adoption " + stage); await manual; await edit; await start; await flush
+    await h.writer.dispose()
+  }
+  for (const action of ["off", "dispose"]) for (const stage of ["L0", "R0", "L1", "R1", "L2", "set", "L3", "R2"]) {
+    const h = harness(); let entered = false, release!: () => void
+    const gate = new Promise<void>(done => { release = done })
+    h.hooks.io = async current => { if (current === stage) { entered = true; await gate } }
+    const receive = h.writer.receiveSyncDocument(key); await settle(); equal(entered, true, "Setup authority held " + action + stage)
+    let dispose: Promise<void> | undefined
+    if (action === "dispose") dispose = h.writer.dispose()
+    else { h.records.device.syncOn = false; h.records.sync.status = "off" }
+    release(); const result = await receive; await dispose
+    equal(result.kind, stage === "R2" && action === "off" ? "adopted" : ["set", "L3", "R2"].includes(stage) ? "unconfirmed" : "unavailable", "Setup finite off disposal boundary " + action + stage)
+    await h.writer.dispose()
+  }
+  for (const stage of ["R0", "L1", "R1", "L2", "set", "L3", "R2"]) {
+    const h = harness(), pending = { ...clone(local[Q]), gen: "q-external", extension: { keep: true } }
+    h.hooks.io = async current => { if (current === stage) h.records[Q] = clone(pending) }
+    equal(await h.writer.receiveSyncDocument(key), adopted, "Setup independent pending Q change " + stage)
+    equal(h.records[Q], pending, "Setup pending Q never overwritten " + stage)
+    equal(h.records.sync.pushed[Q], "q0", "Setup pending Q never acknowledged " + stage); await h.writer.dispose()
+  }
+  for (const stage of ["enumeration", "L0", "R0", "L1", "R1", "L2", "set", "L3", "R2"]) {
+    const h = harness(); h.synced[B] = clone(local[S])
+    for (const name of [K, P]) { delete h.records[name]; delete h.records.sync.pushed[name]; delete h.synced[name.replace("doc:", "s:")] }
+    await h.writer.startSync()
+    const due = [...h.timers.values()][0]; equal(Boolean(due), true, "Setup healthy due timer before hold " + stage)
+    const lr = h.reads.filter(name => name.startsWith("L")).length, rr = h.reads.filter(name => name.startsWith("R")).length
+    const boundary = { enumeration: "L" + lr, L0: "L" + (lr + 2), R0: "R" + (rr + 1), L1: "L" + (lr + 3),
+      R1: "R" + (rr + 2), L2: "L" + (lr + 4), set: "set", L3: "L" + (lr + 5), R2: "R" + (rr + 3) }[stage]
+    let entered = false, release!: () => void
+    const gate = new Promise<void>(done => { release = done })
+    h.synced[B] = clone(incoming); h.hooks.io = async current => { if (current === boundary) { entered = true; await gate } }
+    void h.event(); await settle(); equal(entered, true, "Setup automatic held IO entered " + stage)
+    const before = [...h.reads], manual = h.writer.receiveSyncDocument(key), edit = h.change(), start = h.writer.startSync(), flush = h.writer.flushSync()
+    void h.event(); await h.fire(5000); equal(h.reads, before, "Setup automatic same lane all queued IO " + stage)
+    release(); await manual; await edit; await start; await flush; await settle()
+    equal(h.records[S], incoming, "Setup automatic held adoption before timer " + stage)
+    equal(h.writes, [{ [C]: local[Q] }], "Setup automatic held Q-only outbound " + stage); await h.writer.dispose()
+  }
+  for (const stage of ["R0", "L1", "R1", "L2", "set", "L3", "R2"]) {
+    const h = harness(); for (const name of [K, P, Q]) { delete h.records[name]; delete h.records.sync.pushed[name]; delete h.synced[name.replace("doc:", "s:")] }
+    h.synced[B] = clone(local[S]); await h.writer.startSync()
+    const lr = h.reads.filter(name => name.startsWith("L")).length, rr = h.reads.filter(name => name.startsWith("R")).length
+    const boundary = { R0: "R" + rr, L1: "L" + (lr + 2), R1: "R" + (rr + 1), L2: "L" + (lr + 3), set: "set", L3: "L" + (lr + 4), R2: "R" + (rr + 2) }[stage]
+    const marker = new Error("automatic Setup failure " + stage)
+    h.synced[B] = clone(incoming); h.hooks.io = async current => { if (current === boundary) throw marker }
+    await h.event(); equal(h.listeners.size, 0, "Setup automatic failure unsubscribes " + stage); equal(h.timers.size, 0, "Setup automatic failure cancels ticket " + stage)
+    h.hooks.io = async () => {}
+    equal((await h.writer.receiveSyncDocument(key)).kind, ["L3", "R2"].includes(stage) ? "idle" : "adopted", "Setup stopped manual recovery " + stage)
+    const reads = [...h.reads]; await h.writer.startSync(); await h.event(); await h.fire(5000)
+    equal(h.reads, reads, "Setup manual success cannot restart automatic lifetime " + stage); await h.writer.dispose()
+  }
+  return { assertions, literals: { local, remote, incoming, expectedSet }, observed: { local: first.records, remote: first.synced, reads: first.reads, sets: first.sets, writes: first.writes } }
+}
+
+test("intrinsic incoming Setup preserves raw targets through the finite shared owner", async () => {
+  expect((await setupIncomingAcceptance(createLocalFilterWriter, acct)).assertions).toBeGreaterThan(400)
+})
+
+async function setupFixtureAcceptance(input: Awaited<ReturnType<typeof setupIncomingAcceptance>>["literals"], mode: string, execute: () => void) {
+  let assertions = 0, time = 0, serial = 0, lookups = 0, stamps = 0, generations = 0, sessionAccesses = 0
+  const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
+  const stable = (value: unknown): string => JSON.stringify(value, (_, item: unknown) => item && typeof item === "object" && !Array.isArray(item)
+    ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b))) : item)
+  function equal(actual: unknown, expected: unknown, label: string) { assertions++; if (stable(actual) !== stable(expected)) throw Error(label + ": " + stable(actual) + " != " + stable(expected)) }
+  const S = "doc:setup:AAAAAAAAAAAAAAAA", K = "doc:filter:AAAAAAAAAAAAAAAA:PL_K", P = "doc:filter:AAAAAAAAAAAAAAAA:PL_P", Q = "doc:filter:AAAAAAAAAAAAAAAA:PL_Q", T = "doc:settings"
+  const B = S.replace("doc:", "s:"), local = clone(input.local), remote = clone(input.remote)
+  const session = { skips: { AAAAAAAAAAAAAAAA: ["synthetic-video"] }, cooldown: { AAAAAAAAAAAAAAAA: 1 }, recent: { AAAAAAAAAAAAAAAA: ["synthetic"] }, gather: { AAAAAAAAAAAAAAAA: ["synthetic"] }, pause: true }
+  const retained = Object.fromEntries(Array.from({ length: 16 }, (_, shard) => [`progress:AAAAAAAAAAAAAAAA:${shard}`, { fixture: "retain" }]))
+  Object.assign(local, clone(retained))
+  const sets: unknown[] = [], writes: unknown[] = [], timers = new Map<number, { at: number; run: () => void }>()
+  const settle = async () => { for (let i = 0; i < 2200; i++) await Promise.resolve() }
+  function event() {
+    const listeners = new Set<(...args: unknown[]) => void>()
+    return { addListener: (run: (...args: unknown[]) => void) => { listeners.add(run) }, removeListener: (run: (...args: unknown[]) => void) => { listeners.delete(run) },
+      emit: (...args: unknown[]) => { for (const run of listeners) run(...args) }, count: () => listeners.size }
+  }
+  const changed = event(), syncChanged = event()
+  function area(records: Record<string, unknown>, calls: unknown[], sync = false) {
+    return { onChanged: sync ? syncChanged : event(),
+      async get(keys: readonly string[] | string | null) { const names = keys == null ? Object.keys(records) : typeof keys === "string" ? [keys] : keys; return clone(Object.fromEntries(names.filter(name => Object.hasOwn(records, name)).map(name => [name, records[name]]))) },
+      async set(items: Record<string, unknown>) { calls.push(clone(items)); Object.assign(records, clone(items)); changed.emit({}, sync ? "sync" : "local"); if (sync) syncChanged.emit({}) },
+      async remove() { throw Error("forbidden remove") }, async clear() { throw Error("forbidden clear") } }
+  }
+  if (["event", "chunks", "timer"].includes(mode)) remote[B] = clone(local[S])
+  if (mode === "sparse-local") local[S].data = {}
+  if (mode === "deferred") remote[B] = { ...clone(input.incoming), data: {} }
+  if (mode === "mixed") {
+    local[T] = { v: 1, gen: "t0", at: 10, by: "b", data: {} }; local.sync.pushed[T] = "t0"
+    remote["s:settings"] = { ...clone(local[T]), gen: "t1", at: 20 }
+    for (const [name, gen] of [[K, "k1"], [P, "p1"]]) remote[name!.replace("doc:", "s:")] = { ...clone(local[name!]), gen, at: 20 }
+  }
+  const before = clone(local), beforeSession = clone(session)
+  const storage = { local: area(local, sets), sync: area(remote, writes, true), onChanged: changed,
+    get session(): never { sessionAccesses++; throw Error("session storage forbidden") } }
+  Object.assign(globalThis, { chrome: { storage,
+    runtime: { id: "synthetic", getURL: (path: string) => "chrome-extension://synthetic" + path, onMessage: event() },
+    windows: { async get() { lookups++; throw Error("account lookup forbidden") } }, permissions: { async contains() { lookups++; throw Error("permission lookup forbidden") } }, extension: { async isAllowedIncognitoAccess() { lookups++; throw Error("permission lookup forbidden") } } },
+    performance: { now: () => time }, setTimeout(run: () => void, ms: number) { const id = ++serial; timers.set(id, { at: time + ms, run }); return id }, clearTimeout: (id: number) => { timers.delete(id) },
+    addEventListener() {}, Date: { now() { stamps++; throw Error("stamp forbidden") } }, crypto: { randomUUID() { generations++; throw Error("generation forbidden") } } })
+  execute(); const fixture = Reflect.get(globalThis, "localFilterFixture")
+  equal(typeof fixture.receiveSetup, "function", "actual consumed receiveSetup exists")
+  for (const name of ["doc:settings", K, "doc:setup:invalid", S + ":extra", "s:setup:AAAAAAAAAAAAAAAA"]) {
+    let caught = false; try { await fixture.receiveSetup(name) } catch (error) { caught = error instanceof TypeError }
+    equal(caught, true, "actual receiveSetup rejects noncanonical key"); equal(fixture.reads, [], "actual invalid Setup before IO")
+  }
+  if (mode === "manual" || mode === "sparse-local") {
+    const result = await fixture.receiveSetup(S)
+    equal(result.kind, "adopted", "actual manual Setup adoption")
+    equal(await fixture.receiveSetup(S), { kind: "idle" }, "actual Setup manual repeat idle")
+    await fixture.freshOwner(); equal(await fixture.receiveSetup(S), { kind: "idle" }, "actual Setup fresh owner idle")
+  }
+  fixture.receiveFilter = () => { throw Error("manual Filter proxy forbidden") }
+  fixture.receiveSettings = () => { throw Error("manual Settings proxy forbidden") }
+  fixture.receiveSetup = () => { throw Error("manual Setup proxy forbidden") }
+  fixture.flush = () => { throw Error("manual flush proxy forbidden") }
+  await fixture.start()
+  const fire = async (at: number) => { time = at; for (const [id, timer] of [...timers]) if (timer.at <= time) { timers.delete(id); timer.run() } await settle() }
+  let expected = clone(input.incoming)
+  if (["event", "chunks", "timer"].includes(mode)) {
+    equal(sets, [], "actual Setup initial idle")
+    if (mode === "chunks") {
+      expected = { ...clone(input.incoming), data: { ...clone(input.incoming.data), large: "x".repeat(9000) } }
+      await fixture.seedSyncDocuments({ [S]: expected })
+      const chunkName = Object.keys(remote).find(name => name.startsWith(B + "@a1.") && name.endsWith(".1"))
+      if (!chunkName) throw Error("Missing actual encoded Setup chunk")
+      const chunk = remote[chunkName]; delete remote[chunkName]; syncChanged.emit({}); await settle()
+      equal(local[S], before[S], "actual incomplete Setup chunks keep a0")
+      remote[chunkName] = chunk; syncChanged.emit({}); await settle()
+      equal(local[S], expected, "actual complete encoded Setup chunk event")
+    } else {
+      remote[B] = clone(input.incoming)
+      if (mode === "timer") { await fire(5000); equal(local[S], before[S], "actual Setup timer outbound-only"); equal(writes, [], "actual Setup timer cannot bypass debt") }
+      syncChanged.emit({}); await settle(); equal(local[S], expected, "actual automatic Setup event adoption")
+    }
+  } else equal(local[S], mode === "deferred" ? before[S] : expected, "actual automatic Setup start adoption")
+  if (mode === "mixed") {
+    const history = before.sync, pushed = history.pushed
+    equal(sets, [
+      { [K]: remote[K.replace("doc:", "s:")], sync: { ...history, pushed: { ...pushed, [K]: "k1" } } },
+      { [P]: remote[P.replace("doc:", "s:")], sync: { ...history, pushed: { ...pushed, [K]: "k1", [P]: "p1" } } },
+      { [T]: remote["s:settings"], sync: { ...history, pushed: { ...pushed, [K]: "k1", [P]: "p1", [T]: "t1" } } },
+      { [S]: expected, sync: { ...history, pushed: { ...pushed, [K]: "k1", [P]: "p1", [T]: "t1", [S]: "a1" } } }
+    ], "actual Setup K P T S cumulative batches")
+  } else if (mode === "deferred") {
+    equal(sets, [], "actual deferred Setup no writes"); equal(fixture.automaticResults.at(-1).result, { kind: "unavailable" }, "actual deferred Setup global unavailable")
+  } else {
+    const expectedSets: unknown[] = [{ [S]: expected, sync: { ...before.sync, pushed: { ...before.sync.pushed, [S]: "a1" } } }]
+    if (mode === "timer") expectedSets.push({ sync: { ...before.sync, pushed: { ...before.sync.pushed, [S]: "a1", [Q]: "q1" } } })
+    equal(sets, expectedSets, "actual Setup sole target-history batch")
+    if (mode === "timer") equal(writes, [{ [Q.replace("doc:", "s:")]: before[Q] }], "actual Setup delayed event sends only Q")
+  }
+  if (mode !== "chunks" && mode !== "timer") {
+    await fire(4999); equal(writes, [], "actual Setup Q pacing 4999")
+    await fire(5000); equal(writes, mode === "deferred" ? [] : [{ [Q.replace("doc:", "s:")]: before[Q] }], "actual Setup Q-only send without echo or debt bypass")
+  }
+  equal(local.device, before.device, "actual Setup Device and lastAccount exact")
+  equal(session, beforeSession, "actual Setup synthetic session sentinels exact"); equal(sessionAccesses, 0, "actual Setup no session storage access")
+  for (const [name, value] of Object.entries(retained)) equal(local[name], value, "actual Setup sixteen progress shards exact " + name)
+  equal(local["cache:AAAAAAAAAAAAAAAA"], before["cache:AAAAAAAAAAAAAAAA"], "actual Setup cache exact")
+  if (mode !== "mixed") { equal(local[K], before[K], "actual Setup kept Filter exact"); equal(local[P], before[P], "actual Setup unticked Filter exact") }
+  equal(Object.hasOwn(local, "doc:filter:AAAAAAAAAAAAAAAA:PL_N"), false, "actual Setup selected missing Filter stays absent")
+  equal(lookups, 0, "actual Setup no account or permission lookup"); equal(stamps, 0, "actual Setup no edit stamp"); equal(generations, 0, "actual Setup no generation")
+  equal(fixture.unhandledRejections, [], "actual Setup no unhandled rejections")
+  await fixture.dispose(); equal(syncChanged.count(), 0, "actual Setup unsubscribed"); equal(timers.size, 0, "actual Setup timers disposed")
+  return { mode, assertions, sets, writes, final: local, callbacks: fixture.automaticResults }
+}
+
+test("actual fixture receiveSetup start events and encoded chunks consume the same owner", async () => {
+  const literals = (await setupIncomingAcceptance(createLocalFilterWriter, acct)).literals
+  const built = await Bun.build({ entrypoints: [resolve(import.meta.dir, "../../../tools/fixtures/local-filter-writer/background.ts")], target: "browser", format: "cjs", minify: true })
+  expect(built.success).toBe(true)
+  const bytes = await built.outputs[0]!.text()
+  for (const mode of ["manual", "start", "event", "chunks", "mixed", "deferred", "timer", "sparse-local"]) {
+    const script = `(async()=>{return (${setupFixtureAcceptance.toString()})(JSON.parse(${JSON.stringify(JSON.stringify(literals))}),${JSON.stringify(mode)},()=>{const module={exports:{}};${bytes}})})()`
+    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
+    expect(observed.assertions).toBeGreaterThan(35)
+  }
+})
+
+function setupIncomingFaults(original: string) {
+  const predicate = 'setup.autoAdd.length > 0 || setup.quickSave !== null || setup.musicSave !== null || setup.gather !== null'
+  const flush = 'const plan = planSyncWrite({ local: records, sync: await deps.sync.get(), intent: { kind: "flush" } })'
+  return [
+    { name: "admit-all", assertion: "Setup deferred incoming 0kept", source: original.replace(predicate, 'true') },
+    { name: "label-retains", assertion: "Setup deferred incoming 2kept", source: original.replace(predicate, predicate + ' || setup.label !== null') },
+    { name: "marks-retain", assertion: "Setup deferred incoming 3kept", source: original.replace(predicate, predicate + ' || Object.keys(setup.marks).length > 0') },
+    { name: "targets-retain", assertion: "Setup deferred incoming 4kept", source: original.replace(predicate, predicate + ' || Object.keys(setup.targets).length > 0') },
+    { name: "Filter-key-retains", assertion: "Setup deferred incoming 0kept", source: original.replace(predicate, predicate + ' || Object.keys(records).some(name => name.startsWith("s:filter:"))') },
+    { name: "future-Filter-retains", assertion: "Setup deferred incoming 0future", source: original.replace(predicate, predicate + ' || Object.values(records).some(raw => raw && typeof raw === "object" && "v" in raw && raw.v === 2)') },
+    { name: "omit-gather", assertion: "Setup positive sparse adoption gather", source: original.replace(predicate, 'setup.autoAdd.length > 0 || setup.quickSave !== null || setup.musicSave !== null') },
+    { name: "selection-required", assertion: "Setup positive sparse adoption gather", source: original.replace(predicate, 'setup.autoAdd.length > 0') },
+    { name: "live-account-required", assertion: "Setup no live account requirement", source: original.replace('if (key.kind === "setup") return { ...shared, selection: { kind: "setup" } } as const', 'if (key.kind === "setup") { if (!Object.hasOwn(ready.rawDevice, "lastAccount")) return unavailable("account-context"); return { ...shared, selection: { kind: "setup" } } as const }') },
+    { name: "local-retention-required", assertion: "Setup local sparse to incoming gather kept", source: original.replace('if (key.kind === "setup") return { ...shared, selection: { kind: "setup" } } as const', 'if (key.kind === "setup") { const old = decodeSetup(raw.data); if (!(old.autoAdd.length || old.quickSave || old.musicSave || old.gather)) return unavailable("account-context"); return { ...shared, selection: { kind: "setup" } } as const }') },
+    { name: "decoded-Setup", assertion: "Setup raw special keys omissions and dangling references", source: original.replace('const document = snapshot(remote.candidate.json)', 'const document = snapshot(JSON.parse(JSON.stringify(remote.candidate.value.document)))') },
+    { name: "normalized-Setup", assertion: "Setup raw special keys omissions and dangling references", source: original.replace('const document = snapshot(remote.candidate.json)', 'const document = snapshot(remote.candidate.json); if (key.kind === "setup") { const prepared = prepareDocumentBody({kind:"setup",data:decodeSetup(document.data),context:{shortcutIds:new Set(),additionalChosenPlaylists:new Set()}}); if (prepared.kind === "prepared") document.data = prepared.data }') },
+    { name: "merged-Setup", assertion: "Setup raw special keys omissions and dangling references", source: original.replace('const document = snapshot(remote.candidate.json)', 'const document = { ...snapshot(initial.raw), ...snapshot(remote.candidate.json) }') },
+    { name: "Setup-as-supporting-baseline", assertion: "Setup ordinary replacement adopted at L3", source: original.replace('!sameSelection(post.selection)', '(!sameSelection(post.selection) || key.kind === "setup" && !sameSyncJson(post.raw, baseline.raw))') },
+    { name: "no-target-precommit-equality", assertion: "Setup target authority stale R0doc:setup:AAAAAAAAAAAAAAAA", source: original.replace('sameSelection(current.selection) && sameSyncJson(current.raw, baseline.raw)', 'sameSelection(current.selection)') },
+    { name: "split-Setup-history", assertion: "Setup one exact target-history batch", source: original.replace('await deps.local.set({ [name]: document, sync: next })', 'await deps.local.set({ [name]: document }); await deps.local.set({ sync: next })') },
+    { name: "Setup-ack-Q", assertion: "Setup one exact target-history batch", source: original.replace('const next = repairedHistory(latest.history, [received])', 'const next = repairedHistory(latest.history, [received]); if (next && typeof next.pushed === "object" && next.pushed) Object.assign(next.pushed, {"doc:filter:AAAAAAAAAAAAAAAA:PL_Q":"q1"})') },
+    { name: "Setup-early-history", assertion: "Setup K P T S cumulative lexical batches", source: original.replace('let lane: Promise<void>', 'let incomingHistory: JsonObject | undefined; let lane: Promise<void>').replace('const targets: SyncReceiveKey[] = []', 'incomingHistory = records.sync as JsonObject; const targets: SyncReceiveKey[] = []').replace('repairedHistory(latest.history, [received])', 'repairedHistory(incomingHistory ?? latest.history, [received])') },
+    { name: "skip-Setup-enumeration", assertion: "actual automatic Setup start adoption", fixture: true, source: original.replace(' || key?.kind === "setup"', '') },
+    { name: "outside-Setup-lane", assertion: "Setup same lane held IO L0", source: original.replace('return enqueue(() => receiveAttempt(key))', 'return receiveAttempt(key)') },
+    { name: "Setup-timer-incoming", assertion: "Setup timer remains outbound-only", source: original.replace('await automatic()', 'await automatic("sync")') },
+    { name: "Setup-echo", assertion: "Setup Q-only send no echo", source: original.replace(flush, 'const echo = await deps.sync.get(); const plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(echo).filter(([name]) => name !== "s:setup:AAAAAAAAAAAAAAAA")), intent: { kind: "flush" } })') },
+    { name: "Setup-bypass-debt", assertion: "Setup global unresolved debt blocks Q", source: original.replace(flush, 'const bypass = await deps.sync.get(); const plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(bypass).filter(([name, raw]) => !(name === "s:setup:AAAAAAAAAAAAAAAA" && raw && typeof raw === "object" && "gen" in raw && raw.gen === "a1" && "data" in raw && Object.keys(raw.data as object).length === 0))), intent: { kind: "flush" } })') }
+  ]
+}
+
+test("Setup wrong alternatives fail at intended observations in fresh saved-byte realms", async () => {
+  const path = resolve(import.meta.dir, "local-filter-writer.ts"), original = await readFile(path, "utf8")
+  const literals = (await setupIncomingAcceptance(createLocalFilterWriter, acct)).literals
+  for (const fault of setupIncomingFaults(original)) {
+    expect(fault.source).not.toBe(original)
+    const built = await Bun.build({ entrypoints: [fault.fixture ? resolve(import.meta.dir, "../../../tools/fixtures/local-filter-writer/background.ts") : path], target: "browser", format: "cjs", minify: true, plugins: [{ name: fault.name, setup(builder) {
+      builder.onLoad({ filter: /\/local-filter-writer\.ts$/ }, ({ path: loaded }) => loaded === path ? { loader: "ts", contents: fault.source } : undefined)
+    } }] })
+    expect(built.success).toBe(true)
+    const bytes = await built.outputs[0]!.text()
+    const execute = fault.fixture
+      ? `await (${setupFixtureAcceptance.toString()})(JSON.parse(${JSON.stringify(JSON.stringify(literals))}),"start",()=>{const module={exports:{}};${bytes}})`
+      : `const isPlaylistId=${isPlaylistId.toString()};const module={exports:{}};${bytes};await (${setupIncomingAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA")`
+    const script = `(async()=>{try{${execute};return {caught:false}}catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0]}}})()`
+    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
+    expect({ name: fault.name, ...observed }).toEqual({ name: fault.name, caught: true, assertion: fault.assertion.split(": ")[0] })
   }
 })

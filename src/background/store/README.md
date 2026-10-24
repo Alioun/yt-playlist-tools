@@ -299,14 +299,14 @@ Metadata, unknown keys, and retained old chunks count toward occupancy. Chunks a
 
 This is an observation of the supplied items. It establishes no freshness, lock, Device authority, joined history, adoption, ownership, supersession, recovery, or deletion permission. Callers retain the original items. Production callers are unchanged. Native verification of this unit is waived and unproven.
 
-`receiveSyncDocument(key)` manually receives shared Settings or one Filter on the
-same serial owner as
-edits, flushes, and sync events. The browser adapter forwards to that owner. The
+`receiveSyncDocument(key)` manually receives shared Settings, one Filter, or one
+bounded Setup on the same serial owner as edits, flushes, and sync events. The browser adapter forwards to that owner. The
 synthetic worker exposes `localFilterFixture.receiveFilter(name)`, which parses a
 canonical Filter key and rejects invalid input before storage access.
 `localFilterFixture.receiveSettings()` forwards the Settings address on the same
 adapter. Both factory contracts use `SyncReceiveKey` and `SyncReceiveResult`.
-Setup is excluded from the receive API.
+The worker also exposes `receiveSetup(name)`, which requires an exact canonical Setup key.
+The derived key union includes only Settings, Filter, and Setup.
 
 The operation requires initialized consent, sync on, a steady joined history,
 and an existing supported local target. Filter additionally requires a supported
@@ -316,7 +316,7 @@ still require selection. Missing, null, malformed, future, or deleted Setup
 remains unavailable before sync access. Settings needs no Setup, account, window lookup,
 or permission query. Its per-device-looking extensions remain inert data.
 Interim legacy markers make it unavailable before sync access. A complete
-same-history incoming Settings or Filter
+same-history incoming Settings, Filter, or intrinsically retaining Setup
 can replace an existing acknowledged target only when its generation differs and
 its edit time is strictly later. Equal times, pending targets, future versions,
 tombstones, absent or incomplete documents, joins, and resets stay unavailable.
@@ -331,7 +331,24 @@ Filter reception retains every raw Setup equality check, including unknown field
 A pending Setup does not block an acknowledged Filter while that raw Setup stays
 exact. Its body and acknowledgement remain untouched. Selection changes authorize
 no Filter deletion, cache or progress purge, account removal, or ownership claim.
-Setup reception and remote-only Filter creation remain excluded.
+Remote-only document creation remains excluded.
+
+Setup reception requires a supported existing acknowledged local target. Its old
+body may be sparse or empty. The supported incoming body must contain a nonempty
+`autoAdd` or a non-null `quickSave`, `musicSave`, or `gather`. This proves retention
+independently of Filter and shared Settings inventories. Incoming empty, label-only,
+marks-only, and target-only bodies return `unavailable/account-context`, even before
+exact-match idle. A valid shared shortcut or a kept Filter does not widen this
+partial capability. Deferred candidates receive no write, acknowledgement, or marker.
+
+Setup's target is its own raw stale baseline through L2. L3 compares it with the
+incoming raw value. Only Filter has a separate supporting Setup baseline. Successful
+manual adoption retains exactly L0/R0/L1/R1/L2/set/L3/R2, four local gets, three sync
+gets, and one two-key local set. No normalization, default insertion, pruning,
+merging, generation, or edit stamp occurs. Dangling targets and unchosen marks stay
+raw. Unticked Filters, cache, progress, account-session data, and Device stay exact.
+This component does not infer account identity or playlist ownership.
+
 After the set resolves, local and sync readbacks must match before `adopted` is
 returned. The lane remains held through those reads.
 
@@ -352,12 +369,12 @@ production startup remain outside this fixture.
 Static worker builds and synthetic VM tests do not establish native execution.
 
 
-## Automatic incoming Settings and Filters on the fixture owner
+## Automatic incoming documents on the fixture owner
 
 `startSync()` and the existing sync-area listener receive supported incoming
-Settings and Filters before their ordinary outbound attempt. Startup checks consent, schema,
+Settings, Filters, and intrinsically retaining Setups before their ordinary outbound attempt. Startup checks consent, schema,
 steady history, sync-on state, and interim markers before subscribing. Each event
-captures one sorted list of own existing canonical local Settings and Filter
+captures one sorted list of own existing canonical local Settings, Filter, and Setup
 addresses inside the same lane. It calls the shared private receiver serially, once per captured address.
 Each receiver reads fresh bodies and authority. The list supplies addresses only.
 Remote-only documents, chunks, unknown names, and opaque pushed entries create no
@@ -408,3 +425,10 @@ retains a Filter acknowledgement from earlier in the same sorted pass.
 This document-only component remains uninstalled. It does not complete Store
 notifications, TabView delivery, feature reconfiguration, permission handling,
 progress purge, or any production effect.
+
+This incoming Setup capability remains uninstalled and partial. Full Setup lifecycle
+reconciliation, Filter-dependent empty and shortcut-target witnesses, empty removal
+and cascades, remote-only creation, tombstones, joins, reset, conflict policies,
+Store notifications, and production account behavior remain separate work. Timers
+remain outbound-only. Global unresolved debt can still block every outbound send.
+Native browser behavior and durability remain unproven.

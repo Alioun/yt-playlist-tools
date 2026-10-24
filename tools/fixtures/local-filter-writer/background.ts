@@ -145,6 +145,11 @@ Object.assign(globalThis, {
     async receiveSettings(): Promise<SyncReceiveResult> {
       return writer.receiveSyncDocument({ kind: "settings" })
     },
+    async receiveSetup(name: string): Promise<SyncReceiveResult> {
+      const key = parseDocumentKey(name)
+      if (key?.kind !== "setup" || documentKey(key) !== name) throw new TypeError("Invalid synthetic Setup key")
+      return writer.receiveSyncDocument(key)
+    },
     async receiveFilter(name: string): Promise<SyncReceiveResult> {
       const key = parseDocumentKey(name)
       if (key?.kind !== "filter" || documentKey(key) !== name) throw new TypeError("Invalid synthetic Filter key")

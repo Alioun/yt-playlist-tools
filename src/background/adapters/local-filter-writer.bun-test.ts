@@ -405,3 +405,51 @@ test("shared Settings manual start and area consumers need no Setup or native au
   expect(syncSet).not.toHaveBeenCalled(); expect(windows).not.toHaveBeenCalled(); expect(permissions).not.toHaveBeenCalled()
   await adapter.dispose()
 })
+
+test("intrinsic Setup forwarding shares the native owner without UI authority calls", async () => {
+  const { isAccountKey } = await import("../../shared/model")
+  const acct = "AAAAAAAAAAAAAAAA", S = `doc:setup:${acct}`, B = S.replace("doc:", "s:")
+  if (!isAccountKey(acct)) throw Error("Invalid synthetic account")
+  const addressed = { kind: "setup", acct } as const
+  const old = { v: 1, gen: "a0", at: 10, by: "synthetic", data: {} }
+  const incoming = JSON.parse('{"v":1,"gen":"a1","at":20,"by":"other","__proto__":{"keep":true},"data":{"gather":"PL_G","targets":{"gone99":"PL_T"},"marks":{"PL_UNUSED":"full"}}}')
+  const device = { id: "synthetic", consent: { v: 1, at: 1 }, syncOn: true, lastAccount: acct }
+  const history = { joined: "h", pushed: { [S]: "a0", [key]: "old" }, status: "ok", editedSinceOff: false, extension: { keep: true } }
+  const before = await fakeBrowser.storage.local.get(null)
+  await fakeBrowser.storage.local.set({ device, sync: history, [S]: old })
+  await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "h", created: 0 }, [B]: incoming, [key.replace("doc:", "s:")]: before[key] })
+  const original = fakeBrowser.storage.local.set.bind(fakeBrowser.storage.local)
+  const set = spyOn(fakeBrowser.storage.local, "set"), get = spyOn(fakeBrowser.storage.local, "get")
+  const windows = spyOn(fakeBrowser.windows, "get").mockImplementation(() => { throw Error("Setup must not query windows") })
+  const permissions = spyOn(fakeBrowser.permissions, "contains").mockImplementation(() => { throw Error("Setup must not query permissions") })
+  const syncSet = spyOn(fakeBrowser.storage.sync, "set"), subscribe = spyOn(fakeBrowser.storage.sync.onChanged, "addListener")
+  const adapter = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
+  let entered = false, release!: () => void
+  const gate = new Promise<void>(done => { release = done })
+  set.mockImplementationOnce(async items => { entered = true; await gate; await original(items) })
+  const receiving = adapter.receiveSyncDocument(addressed)
+  for (let i = 0; i < 80; i++) await Promise.resolve()
+  expect(entered).toBe(true)
+  const reads = get.mock.calls.length, flush = adapter.flushSync(), start = adapter.startSync(), repeat = adapter.receiveSyncDocument(addressed)
+  for (let i = 0; i < 80; i++) await Promise.resolve()
+  expect(get).toHaveBeenCalledTimes(reads)
+  release()
+  expect(await receiving).toEqual({ kind: "adopted", received: { key: addressed, name: S, gen: "a1", document: incoming } })
+  expect(await flush).toEqual({ kind: "idle" }); await start; expect(await repeat).toEqual({ kind: "idle" })
+  expect<unknown>(set.mock.calls).toEqual([[{ [S]: incoming, sync: { ...history, pushed: { ...history.pushed, [S]: "a1" } } }]])
+  expect(windows).not.toHaveBeenCalled(); expect(permissions).not.toHaveBeenCalled(); expect(syncSet).not.toHaveBeenCalled()
+  const later = { ...incoming, gen: "a2", at: 30 }
+  await fakeBrowser.storage.sync.set({ [B]: later }); syncSet.mockClear()
+  const listener = subscribe.mock.calls[0]?.[0]
+  if (!listener) throw Error("Missing same-owner listener")
+  Reflect.apply(listener, undefined, [{}])
+  for (let i = 0; i < 600; i++) await Promise.resolve()
+  expect((await fakeBrowser.storage.local.get(S))[S]).toEqual(later)
+  expect((await fakeBrowser.storage.local.get("device")).device).toEqual(device)
+  expect(windows).not.toHaveBeenCalled(); expect(permissions).not.toHaveBeenCalled(); expect(syncSet).not.toHaveBeenCalled()
+  if (!sender.tab) throw Error("Missing synthetic tab")
+  expect(await adapter.changeFromSettings(request, { ...sender, tab: { ...sender.tab, incognito: true } })).toEqual({ kind: "result", result: { refused: "private" } })
+  expect(await adapter.changeFromSettings(request, { ...sender, frameId: 1 })).toEqual({ kind: "result", result: { refused: "invalid" } })
+  expect(set).toHaveBeenCalledTimes(2)
+  await adapter.dispose()
+})

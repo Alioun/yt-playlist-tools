@@ -62,7 +62,7 @@ export type SyncFlushResult =
     | { kind: "read-failed"; error: unknown }
   }
 
-export type SyncReceiveKey = Extract<DocumentKey, { kind: "settings" | "filter" }>
+export type SyncReceiveKey = Extract<DocumentKey, { kind: "settings" | "filter" | "setup" }>
 
 export type SyncReceiveResult =
   | { readonly kind: "idle" }
@@ -223,7 +223,7 @@ export function createLocalFilterWriter(deps: {
     const targets: SyncReceiveKey[] = []
     for (const name of Object.keys(records).sort()) {
       const key = parseDocumentKey(name)
-      if ((key?.kind === "settings" || key?.kind === "filter") && documentKey(key) === name) targets.push(key)
+      if ((key?.kind === "settings" || key?.kind === "filter" || key?.kind === "setup") && documentKey(key) === name) targets.push(key)
     }
     for (const key of targets) {
       if (lifetime.kind !== "active") return
@@ -356,7 +356,8 @@ export function createLocalFilterWriter(deps: {
       const raw = records[name]
       if (!Object.hasOwn(records, name) || !isJsonObject(raw)) return unavailable("document")
       let document
-      try { document = key.kind === "settings" ? decodeDocument(raw, decodeSettings) : decodeDocument(raw, decodeFilter) } catch (error) {
+      try { document = key.kind === "settings" ? decodeDocument(raw, decodeSettings)
+        : key.kind === "setup" ? decodeDocument(raw, decodeSetup) : decodeDocument(raw, decodeFilter) } catch (error) {
         if (error instanceof DecodeError) return unavailable("document")
         throw error
       }
@@ -364,6 +365,7 @@ export function createLocalFilterWriter(deps: {
       const shared = { kind: "ready", device: ready.rawDevice, history: ready.history.raw, joined: ready.history.joined,
         raw, stamp: document.document } as const
       if (key.kind === "settings") return { ...shared, selection: { kind: "settings" } } as const
+      if (key.kind === "setup") return { ...shared, selection: { kind: "setup" } } as const
       const setupName = documentKey({ kind: "setup", acct: key.acct }), setup = records[setupName]
       if (!Object.hasOwn(records, setupName) || !isJsonObject(setup)) return unavailable("account-context")
       try {
@@ -395,6 +397,12 @@ export function createLocalFilterWriter(deps: {
       if (inventory.kind !== "read") return unavailable("document")
       const candidate = inventory.documents.find(entry => entry.baseKey === `s:${name.slice(4)}`)?.result
       if (candidate?.kind !== "value" || candidate.value.kind !== key.kind) return unavailable("document")
+      if (candidate.value.kind === "setup") {
+        const setup = candidate.value.document.data
+        if (!(setup.autoAdd.length > 0 || setup.quickSave !== null || setup.musicSave !== null || setup.gather !== null)) {
+          return unavailable("account-context")
+        }
+      }
       return { kind: "ready", metadata, candidate } as const
     }
     const initial = context(await deps.local.get(null))
@@ -417,9 +425,9 @@ export function createLocalFilterWriter(deps: {
       return copy
     }
     const baseline = { device: snapshot(initial.device), history: snapshot(initial.history), raw: snapshot(initial.raw),
-      selection: initial.selection.kind === "filter" ? { kind: "filter", setup: snapshot(initial.selection.setup) } as const : { kind: "settings" } as const }
-    const sameSelection = (current: typeof initial.selection) => current.kind === "settings"
-      ? baseline.selection.kind === "settings"
+      selection: initial.selection.kind === "filter" ? { kind: "filter", setup: snapshot(initial.selection.setup) } as const : initial.selection }
+    const sameSelection = (current: typeof initial.selection) => current.kind !== "filter"
+      ? baseline.selection.kind === current.kind
       : baseline.selection.kind === "filter" && sameSyncJson(current.setup, baseline.selection.setup)
     const unchanged = (current: ReturnType<typeof context>) => current.kind === "ready" &&
       sameSyncJson(current.device, baseline.device) && sameSyncJson(current.history, baseline.history) &&

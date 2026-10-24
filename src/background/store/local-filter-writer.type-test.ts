@@ -53,7 +53,7 @@ type ExpectedReceive =
   }
 
 export type LocalWriterProofs = [
-  Check<Equal<SyncReceiveKey, Extract<DocumentKey, { kind: "settings" | "filter" }>>>,
+  Check<Equal<SyncReceiveKey, Extract<DocumentKey, { kind: "settings" | "filter" | "setup" }>>>,
   Check<Equal<SyncReceiveResult, ExpectedReceive>>,
   Check<Equal<LocalFilterChange, ExpectedChange>>,
   Check<Equal<LocalFilterWriteResult, ExpectedResult>>,
@@ -76,10 +76,14 @@ function receiveTypeBoundaries(writer: ReturnType<typeof createLocalFilterWriter
   void writer.receiveSyncDocument({ kind: "settings" })
   void adapter.receiveSyncDocument({ kind: "settings" })
   void writer.receiveSyncDocument({ kind: "filter", acct, playlist })
-  // @ts-expect-error Setup has no supported receive context.
   void writer.receiveSyncDocument({ kind: "setup", acct })
-  // @ts-expect-error The adapter keeps the same bounded receive contract.
   void adapter.receiveSyncDocument({ kind: "setup", acct })
+  // @ts-expect-error Setup requires its account address.
+  void writer.receiveSyncDocument({ kind: "setup" })
+  // @ts-expect-error Setup accounts require the validated brand.
+  void adapter.receiveSyncDocument({ kind: "setup", acct: "AAAAAAAAAAAAAAAA" })
+  // @ts-expect-error Other document kinds are outside the receiver.
+  void writer.receiveSyncDocument({ kind: "device", acct })
   // @ts-expect-error Filter addresses require branded account and playlist values.
   void writer.receiveSyncDocument({ kind: "filter", acct: "AAAAAAAAAAAAAAAA", playlist: "PL_P" })
   if (result.kind === "adopted") {
