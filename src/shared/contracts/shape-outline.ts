@@ -14,9 +14,15 @@ const MAX_BYTES = 2048
 const compare = (left: string, right: string): number => left < right ? -1 : left > right ? 1 : 0
 const sourceType = (value: ShapeOutline): string => value.kind === "cut" ? value.type : value.kind
 
-function byteLength(value: unknown): number {
+function dataText(value: JsonValue): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value)
+  if (Array.isArray(value)) return `[${value.map(dataText).join(",")}]`
+  return `{${Object.entries(value).map(([key, child]) => `${JSON.stringify(key)}:${dataText(child)}`).join(",")}}`
+}
+
+function byteLength(value: ShapeOutline): number {
   let bytes = 0
-  for (const character of JSON.stringify(value)) {
+  for (const character of dataText(value)) {
     const point = character.codePointAt(0) ?? 0
     bytes += point <= 0x7f ? 1 : point <= 0x7ff ? 2 : point <= 0xffff ? 3 : 4
   }
@@ -170,6 +176,6 @@ function validNode(value: unknown, keys: ReadonlySet<string>, depth: number): va
 
 export function isShapeOutline(value: unknown, schemaKeys: readonly string[]): value is ShapeOutline {
   try {
-    return isJsonValue(value) && byteLength(value) <= MAX_BYTES && validNode(value, new Set(schemaKeys), 0)
+    return isJsonValue(value) && validNode(value, new Set(schemaKeys), 0) && byteLength(value) <= MAX_BYTES
   } catch { return false }
 }
