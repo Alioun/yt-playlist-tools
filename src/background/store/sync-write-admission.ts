@@ -1,9 +1,11 @@
 import {
-  DecodeError, decodeSyncMeta, decodeSyncState, documentKey, parseDocumentKey,
+  DecodeError, decodeSyncMeta, decodeSyncState, documentKey, parseDocumentKey, isAccountKey, isPlaylistId,
   type DocumentKey, type Stamp
 } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import { encodeSyncDocument, projectSyncWrite, readSyncDocument, type ReadSyncResult, type SyncItem } from "./sync-codec"
+
+type Candidate = Extract<SyncWritePlanInput["intent"], { kind: "changed-batch" }>["documents"][number]
 
 export type SyncWritePlanInput = {
   readonly local: Readonly<Record<string, unknown>>
@@ -12,6 +14,10 @@ export type SyncWritePlanInput = {
     | { readonly kind: "flush" }
     | { readonly kind: "unchanged"; readonly key: DocumentKey }
     | { readonly kind: "changed"; readonly key: DocumentKey; readonly document: JsonObject }
+    | { readonly kind: "changed-batch"; readonly documents: readonly [
+      { readonly key: DocumentKey; readonly document: JsonObject },
+      ...{ readonly key: DocumentKey; readonly document: JsonObject }[]
+    ] }
 }
 export type SyncDocumentRecord = {
   readonly key: DocumentKey
@@ -76,11 +82,29 @@ export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
     throw error
   }
   const current = Object.entries(sync).map(([key, value]) => ({ key, value }))
-  const addressed = intent.kind === "flush" ? undefined : documentKey(intent.key)
-  const remoteAddressed = intent.kind === "flush" ? undefined : readSyncDocument({ key: intent.key, items: current })
-  if (remoteAddressed?.kind === "newer-version") return { kind: "refused", reason: "update-needed" }
-  if (remoteAddressed?.kind === "invalid" || remoteAddressed?.kind === "incomplete" ||
-    (addressed !== undefined && Object.hasOwn(sync, `s:${addressed.slice(4)}`) && sync[`s:${addressed.slice(4)}`] === null)) return unavailable
+  const invalid = { kind: "refused", reason: "invalid" } as const
+  const proposed = intent.kind === "changed" ? [intent] : intent.kind === "changed-batch" ? intent.documents : []
+  if (intent.kind === "changed" || intent.kind === "changed-batch") {
+    if (!isJsonValue({ intent }) || !Array.isArray(proposed) || proposed.length === 0) return invalid
+  }
+  const addressed = intent.kind === "flush" || intent.kind === "changed-batch" ? undefined : documentKey(intent.key)
+  const remotes = new Map<string, ReadSyncResult>()
+  for (const item of proposed) {
+    if (!jsonObject(item) || !jsonObject(item.key)) return invalid
+    if (item.key.kind !== "settings" && (!isAccountKey(item.key.acct) ||
+      (item.key.kind === "filter" && !isPlaylistId(item.key.playlist)))) return invalid
+    if (intent.kind === "changed-batch" && Object.keys(item).some(field => field !== "key" && field !== "document")) return invalid
+    const name = documentKey(item.key), key = parseDocumentKey(name)
+    if (!key || remotes.has(name)) return invalid
+    remotes.set(name, readSyncDocument({ key, items: current }))
+  }
+  if (intent.kind === "unchanged" && addressed !== undefined) remotes.set(addressed, readSyncDocument({ key: intent.key, items: current }))
+  if ([...remotes.values()].some(remote => remote.kind === "newer-version")) return { kind: "refused", reason: "update-needed" }
+  for (const [name, remote] of remotes) {
+    const base = `s:${name.slice(4)}`
+    if (remote.kind === "invalid" || remote.kind === "incomplete" ||
+      (Object.hasOwn(sync, base) && sync[base] === null)) return unavailable
+  }
 
   const documents = new Map<string, SyncDocumentRecord>()
   const repairs: SyncDocumentRecord[] = []
@@ -91,7 +115,7 @@ export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
     if (!key || documentKey(key) !== name || !jsonObject(raw)) return unavailable
     const base = `s:${name.slice(4)}`
     const own = readSyncDocument({ key, items: [{ key: base, value: raw }] })
-    const remote = name === addressed && remoteAddressed ? remoteAddressed : readSyncDocument({ key, items: current })
+    const remote = remotes.get(name) ?? readSyncDocument({ key, items: current })
     if (own.kind === "newer-version") {
       if ((!Object.hasOwn(raw, "data") && raw.deleted !== true) || remote.kind !== "newer-version" || !sameSyncJson(raw, remote.raw)) return unavailable
       continue
@@ -112,7 +136,10 @@ export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
     } else if (remote.json.gen !== state.pushed[name] || raw.gen === state.pushed[name]) return unavailable
     if (raw.gen !== state.pushed[name]) documents.set(name, record)
   }
-  if (intent.kind === "unchanged") return !Object.hasOwn(local, documentKey(intent.key)) && remoteAddressed && complete(remoteAddressed) ? unavailable : { kind: "unchanged" }
+  if (intent.kind === "unchanged") {
+    const remote = remotes.get(documentKey(intent.key))
+    return !Object.hasOwn(local, documentKey(intent.key)) && remote && complete(remote) ? unavailable : { kind: "unchanged" }
+  }
 
   for (const name of Object.keys(state.pushed)) {
     const key = parseDocumentKey(name)
@@ -125,17 +152,22 @@ export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
     const remote = readSyncDocument({ key, items: current })
     if (remote.kind !== "newer-version") return unavailable
   }
+  let candidates: readonly Candidate[] = intent.kind === "changed-batch" ? intent.documents : []
   if (intent.kind === "changed") {
-    const candidate = readSyncDocument({ key: intent.key, items: [{ key: `s:${documentKey(intent.key).slice(4)}`, value: intent.document }] })
-    if (!complete(candidate)) return { kind: "refused", reason: "invalid" }
-    documents.set(documentKey(intent.key), { key: intent.key, name: documentKey(intent.key),
-      gen: candidate.kind === "value" ? candidate.value.document.gen : candidate.document.gen, document: intent.document })
+    candidates = [intent]
+  }
+  for (const item of candidates) {
+    const name = documentKey(item.key)
+    const candidate = readSyncDocument({ key: item.key, items: [{ key: `s:${name.slice(4)}`, value: item.document }] })
+    if (!complete(candidate)) return invalid
+    documents.set(name, { key: item.key, name,
+      gen: candidate.kind === "value" ? candidate.value.document.gen : candidate.document.gen, document: item.document })
   }
   const set = new Map<string, JsonValue>()
   for (const [name, outgoing] of documents) {
     const encoded = encodeSyncDocument(outgoing)
     if (encoded.kind === "item-too-large") return { kind: "refused", reason: "sync-full" }
-    if (encoded.kind !== "encoded") return name === addressed
+    if (encoded.kind !== "encoded") return remotes.has(name)
       ? { kind: "refused", reason: "invalid" } : unavailable
     for (const item of encoded.encoded.items) {
       if (set.has(item.key)) return unavailable

@@ -14,6 +14,10 @@ export type AdmissionProofs = [
     readonly sync: Readonly<Record<string, unknown>>
     readonly intent: { readonly kind: "flush" } | { readonly kind: "unchanged"; readonly key: DocumentKey }
       | { readonly kind: "changed"; readonly key: DocumentKey; readonly document: JsonObject }
+      | { readonly kind: "changed-batch"; readonly documents: readonly [
+        { readonly key: DocumentKey; readonly document: JsonObject },
+        ...{ readonly key: DocumentKey; readonly document: JsonObject }[]
+      ] }
   }>>
 ]
 const acct = "AAAAAAAAAAAAAAAA", playlist = "PL_P"
@@ -132,4 +136,86 @@ test("consumed plan separates exact readback repair from candidate and actual se
   expect(planSyncWrite({ ...debt, intent: { kind: "unchanged", key } })).toEqual({ kind: "unchanged" })
   expect(planSyncWrite({ ...debt, local: { ...debt.local, sync: rawHistory }, sync: { ...f.sync,
     ...Object.fromEntries(Array.from({ length: 481 }, (_, i) => [`unknown:${i}`, 0])) }, intent: { kind: "flush" } })).toEqual({ kind: "planned", items: [], sent: [], repairs: [record], metadata })
+})
+
+function batchFixture(): SyncWritePlanInput & { intent: Extract<SyncWritePlanInput["intent"], { kind: "changed-batch" }> } {
+  const f = fixture(), settingsKey: DocumentKey = { kind: "settings" }
+  const settings = { ...stamp, data: {} }, nextSettings = { ...settings, gen: "settings-next", extension: "kept" }
+  return { ...f, local: { ...f.local, "doc:settings": settings }, sync: { ...f.sync, "s:settings": settings },
+    intent: { kind: "changed-batch", documents: [{ key, document: candidate }, { key: settingsKey, document: nextSettings }] } satisfies SyncWritePlanInput["intent"] }
+}
+
+test("batch replaces all addressed records and retains exact envelopes without acknowledging", () => {
+  const f = batchFixture(), before = JSON.stringify(f)
+  const result = planSyncWrite(f)
+  expect(result).toEqual({ kind: "planned", items: [
+    { key: base, value: candidate }, { key: "s:settings", value: f.intent.documents[1]!.document }
+  ], sent: [
+    { key, name: localKey, gen: candidate.gen, document: candidate },
+    { key: { kind: "settings" }, name: "doc:settings", gen: "settings-next", document: f.intent.documents[1]!.document }
+  ], repairs: [{ key: { kind: "settings" }, name: "doc:settings", gen: "old", document: { ...stamp, data: {} } }], metadata: { v: 1, id: "history", created: 0 } })
+  expect(JSON.stringify(f)).toBe(before)
+  expect(planSyncWrite({ ...fixture(), intent: { kind: "changed-batch", documents: [{ key, document: candidate }] } })).toEqual(planSyncWrite(fixture()))
+})
+
+test("any addressed newer document refuses the batch regardless of order", () => {
+  const f = batchFixture(), future = { v: 2, gen: "future", at: 2, by: "other", data: {} }
+  for (const name of [base, "s:settings"]) expect(planSyncWrite({ ...f, sync: { ...f.sync, [name]: future } })).toEqual({ kind: "refused", reason: "update-needed" })
+  expect(planSyncWrite({ ...f, sync: { ...f.sync, [base]: {}, "s:settings": future } })).toEqual({ kind: "refused", reason: "update-needed" })
+  expect(planSyncWrite({ ...f, sync: { ...f.sync, "s:setup:BBBBBBBBBBBBBBBB": future } })).toMatchObject(admitted)
+})
+
+test("batch candidate sets reject runtime empty duplicate malformed and accessor inputs", () => {
+  const f = batchFixture()
+  const call = (intent: unknown) => Reflect.apply(planSyncWrite, undefined, [{ ...f, intent }])
+  let calls = 0
+  const accessor = Object.defineProperty({}, "document", { enumerable: true, get() { calls++; throw Error("candidate accessor") } })
+  for (const documents of [[], [f.intent.documents[0], { ...f.intent.documents[0], document: { ...candidate, gen: "different" } }],
+    [null], [{ key: null, document: candidate }], [{ key: { kind: "filter", acct: "bad", playlist }, document: candidate }],
+    [{ key: { kind: "unknown" }, document: candidate }],
+    [{ key: { kind: "setup", acct: { toString: "inert" } }, document: candidate }],
+    [{ key: { kind: "filter", acct, playlist: { toString: "inert" } }, document: candidate }],
+    [accessor], [{ key, document: {} }],
+    [{ key, document: { ...candidate, v: 2 } }],
+    ...["name", "gen", "stamp", "origin", "local", "remove"].map(field => [{ key, document: candidate, [field]: "forbidden" }]), null]) {
+    expect(call({ kind: "changed-batch", documents })).toEqual({ kind: "refused", reason: "invalid" })
+  }
+  expect(calls).toBe(0)
+})
+
+test("each batch address must have complete remote baseline lineage", () => {
+  const f = batchFixture()
+  for (const [name, raw] of [[base, old], ["s:settings", { ...stamp, data: {} }]] as const) {
+    for (const remote of [null, {}, { ...stamp, gen: "parts", n: 2 }, { ...raw, extra: true }, { ...raw, gen: "unadopted" }]) {
+      expect(planSyncWrite({ ...f, sync: { ...f.sync, [name]: remote } })).toEqual(unavailable)
+    }
+  }
+  expect(planSyncWrite({ ...f, local: { ...f.local, [localKey]: {} } })).toEqual(unavailable)
+  expect(planSyncWrite({ ...f, local: { ...f.local, [localKey]: { ...old, v: 2 } } })).toEqual(unavailable)
+})
+
+test("one combined batch projection charges count and retains superseded physical chunks", () => {
+  const f = batchFixture()
+  const sync = { ...f.sync, ...Object.fromEntries(Array.from({ length: 477 }, (_, i) => [`unknown:${i}`, 0])) }
+  expect(planSyncWrite({ ...f, sync })).toMatchObject(admitted)
+  expect(planSyncWrite({ ...f, sync: { ...sync, extra: 0 } })).toEqual(full)
+  const large = { ...old, gen: "unsent", extra: "x".repeat(100000) }
+  expect(planSyncWrite({ ...f, local: { ...f.local, [localKey]: large, "doc:settings": { ...large, data: {} } }, sync: { "s:meta": f.sync["s:meta"] } })).toMatchObject(admitted)
+  const occupied = { ...f.sync, ...Object.fromEntries(encoded(key, large).map(item => [item.key, item.value])) }
+  expect(planSyncWrite({ ...f, local: { ...f.local, [localKey]: large }, sync: occupied })).toEqual(full)
+})
+
+test("batch preserves own extension-bearing tombstones and nonenumerable rejection", () => {
+  const f = batchFixture(), document = JSON.parse('{"v":1,"gen":"dead","at":2,"by":"fixture","deleted":true,"__proto__":{"keep":true},"toJSON":"inert","extension":[null,1]}')
+  const input = { ...f, intent: { kind: "changed-batch", documents: [{ key, document }] } satisfies SyncWritePlanInput["intent"] }
+  const before = Object.getOwnPropertyDescriptors(document)
+  const result = planSyncWrite(input)
+  expect(result.kind).toBe("planned")
+  if (result.kind !== "planned") throw Error("Missing plan")
+  expect(result.sent.at(-1)?.document).toBe(document)
+  expect(Object.getOwnPropertyDescriptors(document)).toEqual(before)
+  expect(Object.hasOwn(document, "data")).toBe(false)
+  expect(Object.hasOwn(document, "__proto__")).toBe(true)
+  const hidden = Object.defineProperty({ ...document }, "hidden", { value: 1 })
+  expect(planSyncWrite({ ...input, intent: { kind: "changed-batch", documents: [{ key, document: hidden }] } })).toEqual({ kind: "refused", reason: "invalid" })
 })
