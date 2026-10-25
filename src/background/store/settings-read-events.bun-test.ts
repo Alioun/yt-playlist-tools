@@ -2,7 +2,7 @@ import { expect, test } from "bun:test"
 import { createLocalFilterWriter, createStartingLocalFilterWriter, StartupReadinessError, type SettingsRead } from "./local-filter-writer"
 import { isAccountKey, isPlaylistId, type AccountKey, type PlaylistId } from "../../shared/model"
 import type { JsonValue } from "../../shared/contracts/json"
-import type { StartupHost } from "./legacy-execution"
+import { isInterimSourceKey, isInterimCanonicalKey, type StoreStartupHost } from "./interim-persistence"
 
 export async function settingsAcceptance(api: { create: typeof createLocalFilterWriter; starting: typeof createStartingLocalFilterWriter; Error: typeof StartupReadinessError }, acct: AccountKey, playlist: PlaylistId) {
   let checks = 0
@@ -39,8 +39,16 @@ export async function settingsAcceptance(api: { create: typeof createLocalFilter
     let syncReadHook: (() => void) | undefined
     const original = { name: "SyntheticOpaque", message: "original" }
     const selected = (keys: readonly string[] | null) => copy(Object.fromEntries(Object.entries(records).filter(([key]) => keys === null || keys.includes(key))))
-    const startup: StartupHost = {
+    const startup: StoreStartupHost = {
       context: { deviceId: "fixture", settingsGen: "migration", at: 1, shortcutId: "orig01", platform: { browser: "chrome", os: "linux" }, commands: [] },
+      async readInterimSnapshot() {
+        effects.push("interim-snapshot"); if (snapshotWait) await snapshotWait(); if (snapshotError) throw snapshotError
+        const saved = copy(records)
+        return { source: Object.fromEntries(Object.entries(saved).filter(([key]) => isInterimSourceKey(key))),
+          canonical: Object.fromEntries(Object.entries(saved).filter(([key]) => isInterimCanonicalKey(key))),
+          checkpoint: Object.hasOwn(saved, "interimConversion") ? { kind: "present" as const, value: saved.interimConversion } : { kind: "absent" as const },
+          historicalAuthorization: { kind: "unknown" as const }, priorCredentialPresence: { kind: "unknown" as const } }
+      },
       async readSnapshot() {
         effects.push("startup-snapshot"); if (snapshotWait) await snapshotWait(); if (snapshotError) throw snapshotError
         return { schema: records.schema, device: records.device, settingsDocument: records["doc:settings"], unclaimed: records.unclaimed,

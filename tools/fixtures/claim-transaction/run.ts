@@ -4,14 +4,21 @@ import type { ClaimAuthority, ClaimAuthorityState } from "../../../src/backgroun
 import { createStartingLocalFilterWriter, type SettingsRead } from "../../../src/background/store/local-filter-writer"
 
 import { LEGACY_DELETE_KEYS, type LegacyEvidence } from "../../../src/background/store/legacy"
-import type { StartupHost } from "../../../src/background/store/legacy-execution"
+import { isInterimSourceKey, isInterimCanonicalKey, type StoreStartupHost } from "../../../src/background/store/interim-persistence"
 
-const context: StartupHost["context"] = { deviceId: "fixture-device", settingsGen: "migration", at: 1,
+const context: StoreStartupHost["context"] = { deviceId: "fixture-device", settingsGen: "migration", at: 1,
   shortcutId: "orig01", platform: { browser: "chrome", os: "linux" }, commands: [] }
 
-function startupHost(area: { read(): Record<string, unknown>; remove(keys: readonly string[]): void }, effects: unknown[]): StartupHost {
+function startupHost(area: { read(): Record<string, unknown>; remove(keys: readonly string[]): void }, effects: unknown[]): StoreStartupHost {
   return {
     context,
+    async readInterimSnapshot() {
+      const saved = area.read()
+      return { source: Object.fromEntries(Object.entries(saved).filter(([key]) => isInterimSourceKey(key))),
+        canonical: Object.fromEntries(Object.entries(saved).filter(([key]) => isInterimCanonicalKey(key))),
+        checkpoint: Object.hasOwn(saved, "interimConversion") ? { kind: "present" as const, value: saved.interimConversion } : { kind: "absent" as const },
+        historicalAuthorization: { kind: "unknown" as const }, priorCredentialPresence: { kind: "unknown" as const } }
+    },
     async readSnapshot() {
       const records = area.read()
       const values: LegacyEvidence["values"] = {}

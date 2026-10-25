@@ -34,6 +34,8 @@ import type { LocalSettingsWriteResult } from "./shared-setting-execution"
 
 import type { AccountRemovalHost, RemovalConfirmation, RemovalPreparation, RemovalResult } from "./account-removal-execution"
 
+import type { InterimNoteRead } from "./interim-persistence"
+
 type ExpectedFactory = (deps: {
   readonly removal?: AccountRemovalHost
   readonly local: LocalWriteStorage
@@ -43,7 +45,7 @@ type ExpectedFactory = (deps: {
   readonly generation: () => string
   readonly syncClock: SyncClock
   readonly onSyncResult: (result: SyncAutomaticResult) => void
-}) => { prepareAccountRemoval(origin: UiOrigin, acct: AccountKey): Promise<RemovalPreparation>; removeAccountSetup(origin: UiOrigin, confirmation: RemovalConfirmation): Promise<RemovalResult>; readClaimNotice(): Promise<ClaimNoticeRead>; acknowledgeClaimNotice(origin: NormalUiOrigin, expected: Snapshot<ClaimNotice>): Promise<ClaimNoticeAcknowledgement>; read(view: "settings"): Promise<SettingsRead>; subscribe(fn: (event: SettingsEvent) => void): () => void; changeSharedSetting(origin: UiOrigin, change: SharedSettingChange): Promise<LocalSettingsWriteResult>; claim(): Promise<ClaimTransactionResult>; change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>; receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>; flushSync(): Promise<SyncFlushResult>; startSync(): Promise<void>; dispose(): Promise<void> }
+}) => { readInterimNote(): Promise<InterimNoteRead>; prepareAccountRemoval(origin: UiOrigin, acct: AccountKey): Promise<RemovalPreparation>; removeAccountSetup(origin: UiOrigin, confirmation: RemovalConfirmation): Promise<RemovalResult>; readClaimNotice(): Promise<ClaimNoticeRead>; acknowledgeClaimNotice(origin: NormalUiOrigin, expected: Snapshot<ClaimNotice>): Promise<ClaimNoticeAcknowledgement>; read(view: "settings"): Promise<SettingsRead>; subscribe(fn: (event: SettingsEvent) => void): () => void; changeSharedSetting(origin: UiOrigin, change: SharedSettingChange): Promise<LocalSettingsWriteResult>; claim(): Promise<ClaimTransactionResult>; change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>; receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>; flushSync(): Promise<SyncFlushResult>; startSync(): Promise<void>; dispose(): Promise<void> }
 type NativeBrowser = Parameters<typeof createBrowserLocalFilterWriter>[0]
 type NativeSender = Parameters<Parameters<NativeBrowser["runtime"]["onMessage"]["addListener"]>[0]>[1]
 type ExpectedAdapter = (nativeBrowser: NativeBrowser, options: { onSyncResult: (result: SyncAutomaticResult) => void }) => {

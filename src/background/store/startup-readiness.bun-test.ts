@@ -2,7 +2,7 @@ import { expect, test } from "bun:test"
 import { createStartingLocalFilterWriter, createLocalFilterWriter, StartupReadinessError } from "./local-filter-writer"
 import { isAccountKey, isPlaylistId, type AccountKey, type PlaylistId } from "../../shared/model"
 import type { JsonValue } from "../../shared/contracts/json"
-import type { StartupHost } from "./legacy-execution"
+import { isInterimSourceKey, isInterimCanonicalKey, type StoreStartupHost } from "./interim-persistence"
 
 export async function readinessAcceptance(api: {
   create: typeof createStartingLocalFilterWriter; preinitialized: typeof createLocalFilterWriter; Error: typeof StartupReadinessError
@@ -33,8 +33,16 @@ export async function readinessAcceptance(api: {
     let syncSets = 0
     let remote: Record<string, unknown> = { "s:meta": { v: 1, id: "history", created: 0 } }
     const authority = { acct, lease: "lease", browserSession: "session", consentGeneration: "consent", signedIn: true, incognito: false } as const
-    const startup: StartupHost = {
+    const startup: StoreStartupHost = {
       context: { deviceId: "fixture", settingsGen: "migration", at: 1, shortcutId: "orig01", platform: { browser: "chrome", os: "linux" }, commands: [] },
+      async readInterimSnapshot() {
+        effects.push("interim-snapshot"); if (read) await read(); if (failure) throw failure
+        const saved = copy(records)
+        return { source: Object.fromEntries(Object.entries(saved).filter(([key]) => isInterimSourceKey(key))),
+          canonical: Object.fromEntries(Object.entries(saved).filter(([key]) => isInterimCanonicalKey(key))),
+          checkpoint: Object.hasOwn(saved, "interimConversion") ? { kind: "present" as const, value: saved.interimConversion } : { kind: "absent" as const },
+          historicalAuthorization: { kind: "unknown" as const }, priorCredentialPresence: { kind: "unknown" as const } }
+      },
       async readSnapshot() {
         effects.push("snapshot"); if (read) await read(); if (failure) throw failure
         const saved = copy(records)
@@ -84,7 +92,7 @@ export async function readinessAcceptance(api: {
     const writer = api.create(h.deps)
     check(writer.ready() === writer.ready(), "stable ready promise")
     await turns(); await closed(writer, h)
-    equal(h.effects, ["snapshot"], "startup first lane only")
+    equal(h.effects, ["interim-snapshot"], "startup first lane only")
     gate.resolve(); equal(await writer.ready(), "ok", "current release")
     const before = h.records(); equal(await writer.claim(), { kind: "consumed" }, "null is consumed")
     equal(h.records(), before, "consumed notice raw state unchanged")
@@ -133,7 +141,7 @@ export async function readinessAcceptance(api: {
   {
     const h = harness({ schema: 2 }), writer = api.create(h.deps)
     equal(await writer.ready(), "newer-layout", "newer readiness"); await closed(writer, h, true)
-    equal(h.effects, ["snapshot"], "newer performs no clock or effects"); await writer.dispose()
+    equal(h.effects, ["interim-snapshot"], "newer performs no clock or effects"); await writer.dispose()
   }
   for (const first of ["database", "session"]) {
     const h = harness({ playlists: [] }), db = deferred(), session = deferred()

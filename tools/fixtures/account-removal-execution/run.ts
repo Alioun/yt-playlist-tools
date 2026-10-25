@@ -1,3 +1,4 @@
+import { isInterimSourceKey, isInterimCanonicalKey } from "../../../src/background/store/interim-persistence"
 import { createLocalFilterWriter, createStartingLocalFilterWriter, StartupReadinessError } from "../../../src/background/store/local-filter-writer"
 import { accountRemovalLocalName, parsePendingAccountRemoval, pendingAccountRemovalKey,
   type AccountRemovalHost, type RemovalLocalKey } from "../../../src/background/store/account-removal-execution"
@@ -99,6 +100,13 @@ export function createRemovalHarness(initial: RemovalFixtureState = removalFixtu
   }
   const startup = {
     context: { deviceId: "fixture", settingsGen: "startup-only", at: 1, shortcutId: "orig01", platform: { browser: "chrome" as const, os: "linux" as const }, commands: [] },
+    async readInterimSnapshot() {
+      const saved = copy(state.local)
+      return { source: Object.fromEntries(Object.entries(saved).filter(([key]) => isInterimSourceKey(key))),
+        canonical: Object.fromEntries(Object.entries(saved).filter(([key]) => isInterimCanonicalKey(key))),
+        checkpoint: Object.hasOwn(saved, "interimConversion") ? { kind: "present" as const, value: saved.interimConversion } : { kind: "absent" as const },
+        historicalAuthorization: { kind: "unknown" as const }, priorCredentialPresence: { kind: "unknown" as const } }
+    },
     async readSnapshot() { return { schema: state.local.schema, device: copy(state.local.device), settingsDocument: copy(state.local["doc:settings"]), unclaimed: state.local.unclaimed,
       legacy: { presentKeys: [], values: {}, refreshTokenWasNonempty: false }, interimKeysPresent: [] } },
     async removeLocal() { throw Error("Legacy remove forbidden") }, async deleteDatabase() { throw Error("Database delete forbidden") }, async removeSession() { throw Error("Legacy session remove forbidden") }

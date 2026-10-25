@@ -12,7 +12,7 @@ import { readSyncInventory } from "./sync-inventory"
 import { prepareDocumentBody } from "./write-preparation"
 import { executeLocalClaim, type ClaimHost, type ClaimTransactionResult } from "./local-claim-writer"
 
-import { executeLegacyStartup, type StartupHost, type StartupExecutionResult } from "./legacy-execution"
+import { executeLegacyStartup, type StartupExecutionResult } from "./legacy-execution"
 
 import { readSettingsView, type SettingsView } from "../../shared/model/settings-view"
 import { executeSharedSetting, type LocalSettingsWriteResult } from "./shared-setting-execution"
@@ -23,6 +23,9 @@ import { projectClaimNotice, executeClaimNoticeAcknowledgement, type ClaimNotice
 
 import { prepareAccountRemovalCapture, executeAccountRemoval, resumePendingAccountRemoval, pendingAccountRemovalKey,
   type AccountRemovalHost, type AccountRemovalDependencies, type RemovalCapture, type RemovalConfirmation, type RemovalPreparation, type RemovalResult } from "./account-removal-execution"
+
+import { executeInterimRetention, projectInterimNote, interimConversionKey,
+  type StoreStartupHost, type InterimRetentionResult, type InterimNoteRead } from "./interim-persistence"
 
 export type SettingsRead = SettingsView | { readonly kind: "unavailable"; readonly reason: "startup" | "newer-layout" | "disposed" | "stale" }
 export type SettingsEvent = { readonly kind: "settings-changed"; readonly source: "local" | "sync" }
@@ -99,7 +102,7 @@ function isJsonObject(value: unknown): value is JsonObject {
 
 function hasInterimMarkers(records: Readonly<Record<string, unknown>>): boolean {
   return Object.keys(records).some(name => name.startsWith("account:") ||
-    ["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"].includes(name))
+    ["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed", interimConversionKey].includes(name))
 }
 
 function authority(records: Readonly<Record<string, unknown>>) {
@@ -207,6 +210,7 @@ type LocalFilterWriterDependencies = {
 }
 
 type LocalFilterWriter = {
+  readInterimNote(): Promise<InterimNoteRead>
   prepareAccountRemoval(origin: UiOrigin, acct: AccountKey): Promise<RemovalPreparation>
   removeAccountSetup(origin: UiOrigin, confirmation: RemovalConfirmation): Promise<RemovalResult>
   readClaimNotice(): Promise<ClaimNoticeRead>
@@ -223,7 +227,7 @@ type LocalFilterWriter = {
 }
 
 export class StartupReadinessError extends Error {
-  constructor(readonly result: Exclude<StartupExecutionResult, { kind: "ok" | "newer-layout" }> | { readonly kind: "disposed" } | { readonly kind: "pending-removal"; readonly result: Exclude<RemovalResult, { kind: "committed" | "unchanged" }> }) {
+  constructor(readonly result: { readonly kind: "interim-held"; readonly result: Exclude<InterimRetentionResult, { kind: "not-interim" | "newer-layout" }> } | Exclude<StartupExecutionResult, { kind: "ok" | "newer-layout" }> | { readonly kind: "disposed" } | { readonly kind: "pending-removal"; readonly result: Exclude<RemovalResult, { kind: "committed" | "unchanged" }> }) {
     super("Local startup did not release this owner")
     this.name = "StartupReadinessError"
   }
@@ -233,17 +237,31 @@ export function createLocalFilterWriter(deps: LocalFilterWriterDependencies): Lo
   return createOwner(deps).writer
 }
 
-export function createStartingLocalFilterWriter(deps: LocalFilterWriterDependencies & { readonly startup: StartupHost }):
+export function createStartingLocalFilterWriter(deps: LocalFilterWriterDependencies & { readonly startup: StoreStartupHost }):
   LocalFilterWriter & { ready(): Promise<"ok" | "newer-layout"> } {
   const owner = createOwner(deps, deps.startup)
   return { ...owner.writer, ready: () => owner.readiness }
 }
 
-function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost) {
-  let initialization: "pending" | "ok" | "newer-layout" | "failed" = startup ? "pending" : "ok"
+function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartupHost) {
+  let initialization: "pending" | "ok" | "newer-layout" | "failed" | "interim-held" = startup ? "pending" : "ok"
+  let interimResult: Exclude<InterimRetentionResult, { kind: "not-interim" | "newer-layout" }> | undefined
   let claimConfirmation: "ready" | "unconfirmed" = "ready"
   const removal = deps.removal ?? { kind: "unavailable" }
-  const removalLocal = deps.local
+  const removalLocal: LocalWriteStorage = {
+    set: items => deps.local.set(items),
+    async get(keys) {
+      const records = await deps.local.get(keys)
+      if (hasInterimMarkers(records)) {
+        interimResult ??= { kind: "stale", reason: "checkpoint" }
+        initialization = "interim-held"
+        deactivate("stopped")
+        listeners.clear()
+        return {}
+      }
+      return records
+    }
+  }
   let removalChecked = false
   const confirmations = new WeakMap<RemovalConfirmation, { readonly origin: JsonObject; readonly capture: RemovalCapture }>()
   const listeners = new Set<(event: SettingsEvent) => void>()
@@ -291,11 +309,40 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
 
   const readiness: Promise<"ok" | "newer-layout"> = startup ? enqueue(async () => {
     try {
+      const retained = await executeInterimRetention({ local: deps.local, snapshot: () => startup.readInterimSnapshot(), isStopped: disposed,
+        context: initial => {
+          const context = startup.context
+          const paths = new Set(["doc:settings"])
+          for (const [key, body] of Object.entries(initial.source)) {
+            if (!key.startsWith("account:")) continue
+            const acct = key.slice(8), setup = `doc:setup:${acct}`
+            if (parseDocumentKey(setup)?.kind !== "setup") continue
+            paths.add(setup)
+            if (!isJsonObject(body) || !isJsonObject(body.filters)) continue
+            for (const playlist of Object.keys(body.filters)) {
+              const path = `doc:filter:${acct}:${playlist}`
+              if (parseDocumentKey(path)?.kind === "filter") paths.add(path)
+            }
+          }
+          return { deviceId: context.deviceId, at: context.at, platform: context.platform, commands: context.commands,
+            interimShortcutId: context.shortcutId, documentGenerations: Object.fromEntries([...paths].map(path => [path, `${context.settingsGen}:${path}`])) }
+        } })
+      if (disposed()) throw new StartupReadinessError({ kind: "disposed" })
+      if (retained.kind === "failed" && retained.stage === "snapshot") throw retained.error
+      if (retained.kind === "newer-layout") { initialization = "newer-layout"; return "newer-layout" }
+      if (retained.kind !== "not-interim") {
+        interimResult = retained
+        initialization = "interim-held"
+        deactivate("stopped")
+        listeners.clear()
+        throw new StartupReadinessError({ kind: "interim-held", result: retained })
+      }
       const result = await executeLegacyStartup({ local: deps.local, host: startup })
       if (disposed()) throw new StartupReadinessError({ kind: "disposed" })
       if (result.kind !== "ok" && result.kind !== "newer-layout") throw new StartupReadinessError(result)
       if (result.kind === "ok") {
         const completion = await completePendingRemoval()
+        if (interimResult) throw new StartupReadinessError({ kind: "interim-held", result: interimResult })
         if ("stage" in completion || completion.kind === "result" || completion.kind === "unavailable") throw new StartupReadinessError({ kind: "pending-removal", result: completion })
         lastMonotonic = deps.syncClock.now()
         nextInvocation = lastMonotonic + 5000
@@ -304,7 +351,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
       initialization = result.kind
       return result.kind
     } catch (error) {
-      initialization = "failed"
+      if (initialization !== "interim-held") initialization = "failed"
       throw error
     }
   }) : Promise.resolve("ok")
@@ -847,6 +894,31 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
   }
 
   const writer: LocalFilterWriter = {
+    readInterimNote() {
+      const unavailable = (): InterimNoteRead | undefined => disposed() ? { kind: "unavailable", reason: "disposed" }
+        : initialization !== "interim-held" ? { kind: "unavailable", reason: initialization === "pending" ? "startup" : "stale" }
+        : !startup || !interimResult || interimResult.kind === "failed" || interimResult.kind === "unconfirmed" || interimResult.kind === "unrepresentable" ? { kind: "unavailable", reason: "stale" } : undefined
+      const blocked = unavailable()
+      if (blocked) return Promise.resolve(blocked)
+      return enqueue(async () => {
+        const blocked = unavailable()
+        if (blocked) return blocked
+        if (!startup || !interimResult) return { kind: "unavailable", reason: "stale" }
+        if (interimResult.kind === "invalid") return Object.freeze({ kind: "held", reason: "invalid" })
+        if (interimResult.kind === "newer-checkpoint") return Object.freeze({ kind: "held", reason: "newer-version" })
+        if (interimResult.kind === "stale") return interimResult.reason === "stopped" ? { kind: "unavailable", reason: "stale" } : Object.freeze({ kind: "held", reason: interimResult.reason })
+        if (interimResult.kind !== "retained-but-held") return { kind: "unavailable", reason: "stale" }
+        const checkpoint = interimResult.checkpoint
+        try {
+          const first = projectInterimNote({ checkpoint, current: await startup.readInterimSnapshot() })
+          const stopped = unavailable()
+          if (stopped) return stopped
+          if (first.kind === "held") return first
+          const current = await startup.readInterimSnapshot()
+          return unavailable() ?? projectInterimNote({ checkpoint, current })
+        } catch { return { kind: "unavailable", reason: "stale" } }
+      })
+    },
     prepareAccountRemoval(origin, acct) {
       const blocked = removalUnavailable() ?? removalOrigin(origin)
       if (blocked) return Promise.resolve(blocked)
@@ -943,7 +1015,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
       })
     },
     subscribe(fn) {
-      if (disposed()) return () => {}
+      if (disposed() || initialization === "interim-held" || initialization === "failed" || initialization === "newer-layout") return () => {}
       // Each registration has an independent, idempotent lifetime.
       const listener = (event: SettingsEvent) => fn(event)
       listeners.add(listener)

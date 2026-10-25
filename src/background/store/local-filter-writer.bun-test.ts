@@ -1,3 +1,4 @@
+import { isInterimSourceKey, isInterimCanonicalKey } from "./interim-persistence"
 import { expect, test } from "bun:test"
 import { execFileSync, spawnSync } from "node:child_process"
 import { readFile } from "node:fs/promises"
@@ -423,7 +424,7 @@ test("actual browser artifact executes the acceptance matrix with injected effec
     expect(file.startsWith(resolve(import.meta.dir, "../../shared/model") + "/") ||
       file === resolve(import.meta.dir, "../../shared/contracts/json.ts") ||
       file.startsWith(resolve(import.meta.dir, "../../shared/keys") + "/") ||
-      [entry, ...["account-removal-execution.ts", "account-removal-session.ts", "claim-notice.ts", "shared-setting-execution.ts", "settings-edit.ts", "local-claim-writer.ts", "accounts.ts", "legacy.ts", "legacy-execution.ts", "legacy-startup.ts", "legacy-shortcut.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file)).toBe(true)
+      [entry, ...["interim-persistence.ts", "interim-conversion.ts", "interim-profile.ts", "account-removal-execution.ts", "account-removal-session.ts", "claim-notice.ts", "shared-setting-execution.ts", "settings-edit.ts", "local-claim-writer.ts", "accounts.ts", "legacy.ts", "legacy-execution.ts", "legacy-startup.ts", "legacy-shortcut.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file)).toBe(true)
     for (const imported of new Bun.Transpiler({ loader: "ts" }).scanImports(await readFile(file, "utf8"))) {
       expect(imported.path.startsWith(".")).toBe(true)
       const base = resolve(dirname(file), imported.path)
@@ -3919,7 +3920,13 @@ export async function noticeOwnerAcceptance(api: { create: typeof createLocalFil
   }
   for (const [operation, expected] of [["read", { kind: "unavailable", reason: "startup" }], ["ack", { kind: "unavailable", reason: "startup" }]] as const) {
     const h = harness(), startupGate = gate()
-    const startup = { context: { deviceId: "fixture", settingsGen: "migration", at: 1, shortcutId: "orig01", platform: { browser: "chrome" as const, os: "linux" as const }, commands: [] }, async readSnapshot() { startupGate.enter(); await startupGate.held; return { schema: 1, device: h.records.device, settingsDocument: h.records["doc:settings"], unclaimed: null, legacy: { presentKeys: [], values: {}, refreshTokenWasNonempty: false }, interimKeysPresent: [] } }, async removeLocal() { throw Error("remove") }, async deleteDatabase() { throw Error("db") }, async removeSession() { throw Error("session") } }
+    const startup = { context: { deviceId: "fixture", settingsGen: "migration", at: 1, shortcutId: "orig01", platform: { browser: "chrome" as const, os: "linux" as const }, commands: [] }, async readInterimSnapshot() {
+      const records = h.records
+      return { source: Object.fromEntries(Object.entries(records).filter(([key]) => isInterimSourceKey(key))),
+        canonical: Object.fromEntries(Object.entries(records).filter(([key]) => isInterimCanonicalKey(key))),
+        checkpoint: Object.hasOwn(records, "interimConversion") ? { kind: "present" as const, value: records.interimConversion } : { kind: "absent" as const },
+        historicalAuthorization: { kind: "unknown" as const }, priorCredentialPresence: { kind: "unknown" as const } }
+    }, async readSnapshot() { startupGate.enter(); await startupGate.held; return { schema: 1, device: h.records.device, settingsDocument: h.records["doc:settings"], unclaimed: null, legacy: { presentKeys: [], values: {}, refreshTokenWasNonempty: false }, interimKeysPresent: [] } }, async removeLocal() { throw Error("remove") }, async deleteDatabase() { throw Error("db") }, async removeSession() { throw Error("session") } }
     const writer = api.starting({ ...h.deps, startup }); await startupGate.entered
     equal(await (operation === "read" ? writer.readClaimNotice() : writer.acknowledgeClaimNotice(origin, notice)), expected, "pending startup notice closed")
     equal(h.reads, 0, "pending startup operation no IO"); startupGate.release(); equal(await writer.ready(), "ok", "real startup releases")
@@ -3953,7 +3960,13 @@ export async function noticeOwnerAcceptance(api: { create: typeof createLocalFil
   }
   for (const initial of ["newer", "failed"] as const) {
     const h = harness(), marker = new Error("synthetic startup failure")
-    const startup = { context: { deviceId: "fixture", settingsGen: "migration", at: 1, shortcutId: "orig01", platform: { browser: "chrome" as const, os: "linux" as const }, commands: [] }, async readSnapshot() {
+    const startup = { context: { deviceId: "fixture", settingsGen: "migration", at: 1, shortcutId: "orig01", platform: { browser: "chrome" as const, os: "linux" as const }, commands: [] }, async readInterimSnapshot() {
+      const records = h.records
+      return { source: Object.fromEntries(Object.entries(records).filter(([key]) => isInterimSourceKey(key))),
+        canonical: Object.fromEntries(Object.entries(records).filter(([key]) => isInterimCanonicalKey(key))),
+        checkpoint: Object.hasOwn(records, "interimConversion") ? { kind: "present" as const, value: records.interimConversion } : { kind: "absent" as const },
+        historicalAuthorization: { kind: "unknown" as const }, priorCredentialPresence: { kind: "unknown" as const } }
+    }, async readSnapshot() {
       if (initial === "failed") throw marker
       return { schema: 2, device: undefined, settingsDocument: undefined, unclaimed: undefined, legacy: { presentKeys: [], values: {}, refreshTokenWasNonempty: false }, interimKeysPresent: [] }
     }, async removeLocal() { throw Error("remove") }, async deleteDatabase() { throw Error("db") }, async removeSession() { throw Error("session") } }

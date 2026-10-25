@@ -1,10 +1,10 @@
 import { createLocalFilterWriter, createStartingLocalFilterWriter, StartupReadinessError } from "./local-filter-writer"
-import type { StartupHost } from "./legacy-execution"
+import type { StoreStartupHost } from "./interim-persistence"
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
 type Check<T extends true> = T
 export type ReadinessProofs = [
-  Check<Equal<Parameters<typeof createStartingLocalFilterWriter>[0], Parameters<typeof createLocalFilterWriter>[0] & { readonly startup: StartupHost }>>,
+  Check<Equal<Parameters<typeof createStartingLocalFilterWriter>[0], Parameters<typeof createLocalFilterWriter>[0] & { readonly startup: StoreStartupHost }>>,
   Check<Equal<ReturnType<typeof createStartingLocalFilterWriter>, ReturnType<typeof createLocalFilterWriter> & { ready(): Promise<"ok" | "newer-layout"> }>>,
   Check<Equal<"ready" extends keyof ReturnType<typeof createLocalFilterWriter> ? true : false, false>>
 ]
