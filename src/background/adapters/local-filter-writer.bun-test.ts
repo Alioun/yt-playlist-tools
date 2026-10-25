@@ -63,13 +63,17 @@ test("synthetic normal native metadata admits only settings and never touches sy
   expect(await h.adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
   expect(h.set).toHaveBeenCalledTimes(1)
   const call = h.set.mock.calls[0]?.[0]
-  expect(Object.keys(call ?? {})).toEqual([key])
+  expect(Object.keys(call ?? {})).toEqual([key, "sync"])
+  const history = { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true }
+  if (!call || !("sync" in call)) throw Error("Missing history batch")
+  expect(call.sync).toEqual(history)
   expect(call).toMatchObject({ [key]: { v: 1, by: "synthetic", data: { mode: "deny", on: false, channels: [] } } })
   const saved: unknown = (await fakeBrowser.storage.local.get<Record<string, unknown>>(key))[key]
   if (!isJsonValue(saved) || !saved || typeof saved !== "object" || Array.isArray(saved)) throw Error("Missing saved envelope")
   expect(typeof saved.gen).toBe("string")
   expect(saved.gen).not.toBe("old")
   expect(Number.isSafeInteger(saved.at)).toBe(true)
+  expect((await fakeBrowser.storage.local.get("sync")).sync).toEqual(history)
   expect(h.syncGet).not.toHaveBeenCalled()
   expect(h.syncSet).not.toHaveBeenCalled()
 })
@@ -136,11 +140,26 @@ test("synthetic confirmed request has strict narrow union", async () => {
 })
 
 test("synthetic adapter propagates native local IO rejection without retry", async () => {
+  const before = await fakeBrowser.storage.local.get(null)
   const h = instrument(), marker = new Error("native write failure")
   h.set.mockImplementationOnce(async () => { throw marker })
   await expect(h.adapter.changeFromSettings(request, sender)).rejects.toBe(marker)
-  expect(await h.adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
+  expect(h.set).toHaveBeenCalledTimes(1)
+  const reads = h.get.mock.calls.length
+  expect(await h.adapter.changeFromSettings(request, sender)).toEqual({ kind: "unavailable", reason: "stale" })
+  expect(await h.adapter.flushSync()).toEqual({ kind: "unavailable" })
+  expect(h.get).toHaveBeenCalledTimes(reads)
+  expect(h.set).toHaveBeenCalledTimes(1)
+  expect(await fakeBrowser.storage.local.get(null)).toEqual(before)
+  expect(() => createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })).toThrow("Local storage already owned")
+  await h.adapter.dispose()
+  const replacement = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
+  expect(h.set).toHaveBeenCalledTimes(1)
+  expect(await replacement.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
   expect(h.set).toHaveBeenCalledTimes(2)
+  expect((await fakeBrowser.storage.local.get("sync")).sync).toEqual({ joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true })
+  expect(h.syncGet).not.toHaveBeenCalled()
+  expect(h.syncSet).not.toHaveBeenCalled()
 })
 
 test("synthetic sync history stays unavailable with zero sync calls", async () => {
@@ -152,16 +171,19 @@ test("synthetic sync history stays unavailable with zero sync calls", async () =
   expect(h.syncSet).not.toHaveBeenCalled()
 })
 
-test("synthetic supported off history batches with unchanged native provenance", async () => {
+test("synthetic supported off history batches true provenance and preserves extensions", async () => {
   const sync = { joined: null, pushed: { opaque: "old-push" }, status: "off", editedSinceOff: false, future: { keep: true } }
   await fakeBrowser.storage.local.set({ sync })
   const h = instrument()
   expect(await h.adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
   expect(h.set).toHaveBeenCalledTimes(1)
   expect(Object.keys(h.set.mock.calls[0]?.[0] ?? {})).toEqual([key, "sync"])
-  expect(h.set.mock.calls[0]?.[0]).toMatchObject({ sync: { ...sync, editedSinceOff: true } })
+  const batch = h.set.mock.calls[0]?.[0]
+  if (!batch || !("sync" in batch)) throw Error("Missing history batch")
+  expect(batch.sync).toEqual({ ...sync, editedSinceOff: true, everEdited: true })
   expect(await h.adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
   expect(h.set).toHaveBeenCalledTimes(1)
+  expect((await fakeBrowser.storage.local.get("sync")).sync).toEqual({ ...sync, editedSinceOff: true, everEdited: true })
   expect(h.syncGet).not.toHaveBeenCalled()
   expect(h.syncSet).not.toHaveBeenCalled()
 })
@@ -178,14 +200,25 @@ test("synthetic false history remains inert for private provenance and failed ba
   await expect(h.adapter.changeFromSettings(request, sender)).rejects.toBe(marker)
   expect(h.set).toHaveBeenCalledTimes(1)
   expect((await fakeBrowser.storage.local.get("sync")).sync).toEqual(sync)
-  expect(await h.adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
+  const reads = h.get.mock.calls.length
+  expect(await h.adapter.changeFromSettings(request, sender)).toEqual({ kind: "unavailable", reason: "stale" })
+  expect(h.get).toHaveBeenCalledTimes(reads)
+  expect(h.set).toHaveBeenCalledTimes(1)
+  await h.adapter.dispose()
+  const replacement = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
+  expect(h.set).toHaveBeenCalledTimes(1)
+  expect(await replacement.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
   expect(h.set).toHaveBeenCalledTimes(2)
   expect(Object.keys(h.set.mock.calls[1]?.[0] ?? {})).toEqual([key, "sync"])
+  const batch = h.set.mock.calls[1]?.[0]
+  if (!batch || !("sync" in batch)) throw Error("Missing history batch")
+  expect(batch.sync).toEqual({ ...sync, editedSinceOff: true, everEdited: true })
+  expect((await fakeBrowser.storage.local.get("sync")).sync).toEqual({ ...sync, editedSinceOff: true, everEdited: true })
   expect(h.syncGet).not.toHaveBeenCalled()
   expect(h.syncSet).not.toHaveBeenCalled()
 })
 
-test("synthetic joined adapter reads native null snapshots lazily and writes only Filter", async () => {
+test("synthetic joined adapter lazily confirms Filter and true provenance without a sync write", async () => {
   const rawSync = { joined: "history", pushed: { [key]: "old" }, status: "ok", editedSinceOff: true, future: true }
   const before = await fakeBrowser.storage.local.get(null)
   await fakeBrowser.storage.local.set({ device: { id: "synthetic", consent: { v: 1, at: 1 }, syncOn: true }, sync: rawSync })
@@ -196,12 +229,15 @@ test("synthetic joined adapter reads native null snapshots lazily and writes onl
   expect(syncGet).not.toHaveBeenCalled()
   expect(get).not.toHaveBeenCalled()
   expect(await adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
-  expect<unknown>(get.mock.calls).toEqual([[["schema", "device", "sync", "doc:setup:AAAAAAAAAAAAAAAA", key]], [null]])
+  expect<unknown>(get.mock.calls).toEqual([[["schema", "device", "sync", "doc:setup:AAAAAAAAAAAAAAAA", key]], [null], [null], [null]])
   expect<unknown>(syncGet.mock.calls).toEqual([[null]])
   expect(set).toHaveBeenCalledTimes(1)
-  expect(Object.keys(set.mock.calls[0]?.[0] ?? {})).toEqual([key])
+  expect(Object.keys(set.mock.calls[0]?.[0] ?? {})).toEqual([key, "sync"])
+  const batch = set.mock.calls[0]?.[0]
+  if (!batch || !("sync" in batch)) throw Error("Missing history batch")
+  expect(batch.sync).toEqual({ ...rawSync, everEdited: true })
   expect(syncSet).not.toHaveBeenCalled()
-  expect((await fakeBrowser.storage.local.get("sync")).sync).toEqual(rawSync)
+  expect((await fakeBrowser.storage.local.get("sync")).sync).toEqual({ ...rawSync, everEdited: true })
 })
 
 test("synthetic joined sync-read rejection propagates and recovers without writes", async () => {
@@ -337,7 +373,7 @@ test("manual receive forwards raw native storage on the existing adapter owner",
   expect(syncSet).not.toHaveBeenCalled()
   expect(subscribe).toHaveBeenCalledTimes(1)
   expect(await adapter.changeFromSettings({ ...request, desired: { mode: "allow", on: true } }, sender)).toEqual({ kind: "result", result: { ok: true } })
-  expect((await fakeBrowser.storage.local.get("sync")).sync).toEqual({ ...history, pushed: { [key]: "incoming", [setup]: "setup" } })
+  expect((await fakeBrowser.storage.local.get("sync")).sync).toEqual({ ...history, pushed: { [key]: "incoming", [setup]: "setup" }, everEdited: true })
   await adapter.dispose()
   await expect(adapter.receiveSyncDocument(addressed)).rejects.toThrow("Writer disposed")
 })
@@ -507,16 +543,22 @@ test("adapter excludes duplicate actual local areas while active and draining", 
   const original = fakeBrowser.storage.local.set.bind(fakeBrowser.storage.local)
   let release = () => {}, enter = () => {}
   const held = new Promise<void>(done => { release = done }), entered = new Promise<void>(done => { enter = done })
-  spyOn(fakeBrowser.storage.local, "set").mockImplementationOnce(async items => { enter(); await held; await original(items) })
+  const set = spyOn(fakeBrowser.storage.local, "set").mockImplementationOnce(async items => { enter(); await held; await original(items) })
   const snapshot = await fakeBrowser.storage.local.get(null)
   const editing = first.changeFromSettings(request, sender); await entered
   const drain = first.dispose()
   expect(first.dispose()).toBe(drain)
   expect(() => createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })).toThrow("Local storage already owned")
-  release(); expect(await editing).toEqual({ kind: "result", result: { ok: true } }); await drain
+  release(); expect(await editing).toEqual({ kind: "unconfirmed", cause: { kind: "authority" } }); await drain
+  expect(set).toHaveBeenCalledTimes(1)
+  await expect(first.changeFromSettings(request, sender)).rejects.toThrow("Writer disposed")
+  const saved = await fakeBrowser.storage.local.get(null)
+  expect(saved.sync).toEqual({ joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true })
   const replacement = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
   expect(await replacement.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
-  expect((await fakeBrowser.storage.local.get(null)).device).toEqual(snapshot.device)
+  expect(set).toHaveBeenCalledTimes(1)
+  expect(await fakeBrowser.storage.local.get(null)).toEqual(saved)
+  expect(saved.device).toEqual(snapshot.device)
   expect("claim" in replacement).toBe(false)
   await replacement.dispose()
 })

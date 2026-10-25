@@ -332,6 +332,7 @@ export async function followAcceptance(follow: typeof import("../../../tools/fix
   await entered.promise
   const result = await owner.changeSharedSetting({ kind: "ui", windowId: 1, incognito: true }, { kind: "theme", value: "dark" })
   check(result.kind === "committed", "real follow edit committed")
+  expect(records.sync).toEqual({ joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true })
   await consumer.settled()
   check(published.length === 1 && (published[0] as { settings: { theme: string } }).settings.theme === "dark", "live invalidation publishes fresh read before held initial")
   old.resolve(); await consumer.initial
@@ -343,7 +344,8 @@ export async function followAcceptance(follow: typeof import("../../../tools/fix
   const unmount = follow({ subscribe: owner.subscribe, async read(view) { const value = await owner.read(view); read.resolve(); await pending.promise; return value } }, view => after.push(view))
   await read.promise; unmount.dispose(); pending.resolve(); await unmount.initial
   check(after.length === 0, "unmounted consumer discards pending completion")
-  check(!Object.hasOwn(records, "sync"), "absent history remains absent after Settings edits")
+  check(Object.hasOwn(records, "sync"), "real Settings edits persist history")
+  expect(records.sync).toEqual({ joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true })
   await owner.dispose()
   return { checks, published, records }
 }
