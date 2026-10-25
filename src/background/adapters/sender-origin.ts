@@ -2,7 +2,7 @@ import type { Origin } from "../../shared/contracts/results"
 
 type NativeBrowser = typeof import("wxt/browser").browser
 type NativeSender = Parameters<Parameters<NativeBrowser["runtime"]["onMessage"]["addListener"]>[0]>[1]
-type NativeWindow = Awaited<ReturnType<NativeBrowser["windows"]["get"]>>
+type NativeWindow = import("wxt/browser").Browser.windows.Window
 
 export type SenderOriginPorts = {
   readonly runtime: Pick<NativeBrowser["runtime"], "id" | "getURL">

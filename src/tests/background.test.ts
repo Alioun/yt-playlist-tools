@@ -156,7 +156,7 @@ describe("trusted message boundary", () => {
     for (const patch of [{ id: undefined }, { id: windowId + 1 }, { incognito: undefined }]) {
       const missing = { ...window }
       Object.assign(missing, patch)
-      get.mockResolvedValue(missing)
+      get.mockImplementation(async () => missing)
       for (const sender of [ui, settings, origin]) {
         await expect(send({ action: "clearAllData", incognito: false }, sender)).resolves.toMatchObject({ kind: "unavailable" })
       }

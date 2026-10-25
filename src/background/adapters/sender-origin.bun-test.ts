@@ -44,7 +44,7 @@ test("exact tabless popup accepts only its supplied native window", async () => 
 })
 
 test("settings and top-frame www content derive their real tab and window", async () => {
-  if (!content.tab) throw Error("Synthetic tab missing")
+  if (!content.tab || content.tab.id === undefined) throw Error("Synthetic tab missing ID")
   const get = spyOn(fakeBrowser.windows, "get")
   for (const supplied of [undefined, null, -1, windowId + 100]) {
     expect(await resolveSenderOrigin(nativePorts, { sender: settings, popupWindowId: supplied })).toEqual({
@@ -111,7 +111,8 @@ test("actual private windows remain private for every admitted caller", async ()
   const window = await fakeBrowser.windows.create({ incognito: true })
   if (window?.id === undefined) throw Error("Synthetic private window missing ID")
   const created = await fakeBrowser.tabs.create({ windowId: window.id, url: fakeBrowser.runtime.getURL("/options.html") })
-  const tab = { ...created, incognito: true }
+  if (created.id === undefined) throw Error("Synthetic private tab missing ID")
+  const tab = { ...created, id: created.id, incognito: true }
   expect(await resolve(popup, window.id)).toEqual({
     kind: "ui", page: "popup", origin: { kind: "ui", windowId: window.id, incognito: true }
   })
