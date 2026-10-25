@@ -13,6 +13,7 @@ type Sender = Parameters<Listener>[1]
 let listener: Listener | undefined
 let origin: Sender
 let ui: Sender
+let settings: Sender
 let windowId: number
 const snapshot = { tabId: 42, accountKey: "account0000000001", incognito: false, consentGeneration: "generation-1" }
 const videoId = "abcdefghijk"
@@ -34,6 +35,8 @@ beforeEach(async () => {
   const tab = await fakeBrowser.tabs.create({ url: "https://www.youtube.com/watch?v=abcdefghijk", windowId })
   origin = { id: fakeBrowser.runtime.id, url: tab.url, frameId: 0, tab: { ...tab, id: 42, incognito: false } }
   ui = { id: fakeBrowser.runtime.id, url: fakeBrowser.runtime.getURL("/popup.html") }
+  const settingsTab = await fakeBrowser.tabs.create({ url: fakeBrowser.runtime.getURL("/options.html"), windowId })
+  settings = { id: fakeBrowser.runtime.id, frameId: 0, url: settingsTab.url, tab: settingsTab }
   vi.spyOn(fakeBrowser.runtime.onMessage, "addListener").mockImplementation(fn => { listener = fn })
   vi.spyOn(sessionService, "reconcileScripts")
   vi.spyOn(fakeBrowser.scripting, "getRegisteredContentScripts").mockImplementation(async () => [])
@@ -68,6 +71,118 @@ describe("trusted message boundary", () => {
   it("uses trusted window privacy instead of a payload incognito flag", async () => {
     await send({ action: "fetchPlaylists", incognito: true }, ui)
     expect(sessionService.findSession).toHaveBeenCalledWith({ windowId, incognito: false })
+  })
+  it("uses the Settings tab's window instead of a payload window or Origin", async () => {
+    await send({ action: "fetchPlaylists", windowId: windowId + 100, incognito: true, origin: { kind: "background" } }, settings)
+    expect(sessionService.findSession).toHaveBeenCalledWith({ windowId, incognito: false })
+    await send({ action: "fetchPlaylists", windowId: undefined }, settings)
+    expect(sessionService.findSession).toHaveBeenCalledTimes(2)
+  })
+  it("uses the content tab's identity and privacy instead of payload authority", async () => {
+    const window = await fakeBrowser.windows.create({ incognito: true })
+    if (window?.id === undefined || !origin.tab) throw Error("Synthetic private sender missing")
+    const sender = { ...origin, tab: { ...origin.tab, windowId: window.id, incognito: true } }
+    vi.mocked(sessionService.findSession).mockResolvedValue({ kind: "noTab" })
+    await expect(send({
+      action: "sessionForTab", windowId, tabId: 999, incognito: false,
+      accountKey: "BBBBBBBBBBBBBBBB", origin: { kind: "ui", windowId, incognito: false }
+    }, sender)).resolves.toEqual({ kind: "noTab" })
+    expect(sessionService.findSession).toHaveBeenCalledWith({ tabId: snapshot.tabId, windowId: window.id, incognito: true })
+    expect(youtube.fetchUserPlaylists).not.toHaveBeenCalled()
+  })
+  it("rejects a normal snapshot supplied by an actual private Settings tab", async () => {
+    const window = await fakeBrowser.windows.create({ incognito: true })
+    if (window?.id === undefined || !settings.tab) throw Error("Synthetic private Settings tab missing")
+    const sender = { ...settings, tab: { ...settings.tab, windowId: window.id, incognito: true } }
+    const save = vi.spyOn(store, "saveAccountSetup")
+    await expect(send({
+      action: "changeSetup", windowId, incognito: false, origin: { kind: "ui", windowId, incognito: false },
+      session: snapshot, change: { kind: "auto", playlistId: "PL2", checked: true }
+    }, sender)).resolves.toMatchObject({ kind: "accountChanged" })
+    expect(save).not.toHaveBeenCalled()
+    expect(sessionService.checkSession).not.toHaveBeenCalled()
+    expect(youtube.fetchUserPlaylists).not.toHaveBeenCalled()
+  })
+  it("rejects unauthenticated state-changing messages before side effects", async () => {
+    const set = vi.spyOn(fakeBrowser.storage.local, "set")
+    const clear = vi.spyOn(fakeBrowser.storage.local, "clear")
+    const syncSet = vi.spyOn(fakeBrowser.storage.sync, "set")
+    const syncClear = vi.spyOn(fakeBrowser.storage.sync, "clear")
+    const execute = vi.spyOn(fakeBrowser.scripting, "executeScript")
+    const clearAll = vi.spyOn(store, "clearAll")
+    const save = vi.spyOn(store, "saveAccountSetup")
+    const generation = vi.spyOn(store.sessionGeneration, "setValue")
+    const consent = vi.spyOn(store.sessionConsent, "setValue")
+    const forged: Sender[] = [
+      { ...ui, id: "foreign" }, { ...ui, frameId: 1 }, { ...ui, tab: origin.tab },
+      { ...ui, url: ui.url + "?forged=1" }, { ...ui, url: ui.url + "/suffix" },
+      { ...ui, url: ui.url + "#forged" }, { ...ui, url: fakeBrowser.runtime.getURL("/other.html") },
+      { ...settings, tab: undefined }, { ...settings, frameId: undefined },
+      { ...settings, frameId: 2 }, { ...settings, url: settings.url + "?forged=1" },
+      { ...origin, id: "foreign" }, { ...origin, frameId: 2 },
+      { ...origin, url: "https://www.youtube.com.evil.invalid/" },
+      { ...origin, url: "https://music.youtube.com/" }
+    ]
+    if (!origin.tab) throw Error("Synthetic sender missing tab")
+    for (const sender of [settings, origin]) {
+      forged.push({ ...sender, tab: { ...origin.tab, id: undefined } })
+      forged.push({ ...sender, tab: { ...origin.tab, windowId: -1 } })
+      const tab = { ...origin.tab }
+      Object.assign(tab, { incognito: undefined })
+      forged.push({ ...sender, tab })
+    }
+    for (const sender of forged) {
+      for (const action of ["grantSession", "revokeSession", "clearAllData", "changeSetup", "queueVideo", "addVideoToPlaylists"]) {
+        await expect(send({
+          action, session: snapshot, videoId, accountKey: snapshot.accountKey, consentGeneration: snapshot.consentGeneration,
+          change: { kind: "auto", playlistId: "PL2", checked: true }, incognito: false,
+          origin: { kind: "ui", windowId, incognito: false }
+        }, sender)).resolves.toMatchObject({ kind: "unavailable" })
+      }
+    }
+    for (const effect of [set, clear, syncSet, syncClear, execute, clearAll, save, generation, consent,
+      youtube.fetchUserPlaylists, youtube.fetchVideoChannel, youtube.addVideoToPlaylist, sessionService.findSession,
+      sessionService.checkSession, fakeBrowser.tabs.sendMessage]) expect(effect).not.toHaveBeenCalled()
+  })
+  it("refuses missing popup windows and failed native privacy lookup before transitions", async () => {
+    const generation = vi.spyOn(store.sessionGeneration, "setValue")
+    const consent = vi.spyOn(store.sessionConsent, "setValue")
+    const clear = vi.spyOn(store, "clearAll")
+    for (const supplied of [undefined, null, -1, 0.5, windowId + 100]) {
+      await expect(send({ action: "clearAllData", windowId: supplied }, ui)).resolves.toMatchObject({ kind: "unavailable" })
+    }
+    const window = await fakeBrowser.windows.get(windowId)
+    const get = vi.spyOn(fakeBrowser.windows, "get")
+    for (const patch of [{ id: undefined }, { id: windowId + 1 }, { incognito: undefined }]) {
+      const missing = { ...window }
+      Object.assign(missing, patch)
+      get.mockResolvedValue(missing)
+      for (const sender of [ui, settings, origin]) {
+        await expect(send({ action: "clearAllData", incognito: false }, sender)).resolves.toMatchObject({ kind: "unavailable" })
+      }
+    }
+    get.mockRejectedValue(new Error("Synthetic closed window"))
+    for (const sender of [ui, settings, origin]) {
+      await expect(send({ action: "clearAllData" }, sender)).resolves.toMatchObject({ kind: "unavailable" })
+    }
+    expect(generation).not.toHaveBeenCalled()
+    expect(consent).not.toHaveBeenCalled()
+    expect(clear).not.toHaveBeenCalled()
+    expect(youtube.fetchUserPlaylists).not.toHaveBeenCalled()
+    expect(fakeBrowser.tabs.sendMessage).not.toHaveBeenCalled()
+  })
+  it("checks the real account before a forged account can mutate or look up playlists", async () => {
+    vi.mocked(sessionService.checkSession).mockRejectedValue(new sessionService.SessionFailure("accountChanged"))
+    const save = vi.spyOn(store, "saveAccountSetup")
+    const forged = { ...snapshot, accountKey: "BBBBBBBBBBBBBBBB" }
+    await expect(send({ action: "changeSetup", session: forged, change: { kind: "auto", playlistId: "PL2", checked: true } }, settings))
+      .resolves.toMatchObject({ kind: "accountChanged" })
+    await expect(send({ action: "addVideoToPlaylists", accountKey: forged.accountKey, videoId, consentGeneration: snapshot.consentGeneration }))
+      .resolves.toMatchObject({ kind: "accountChanged" })
+    expect(sessionService.checkSession).toHaveBeenCalledWith(forged)
+    expect(save).not.toHaveBeenCalled()
+    expect(youtube.fetchUserPlaylists).not.toHaveBeenCalled()
+    expect(youtube.addVideoToPlaylist).not.toHaveBeenCalled()
   })
   it("does no page operation before consent", async () => {
     await store.sessionConsent.setValue(0)
@@ -353,7 +468,7 @@ describe("background-owned data clearing", () => {
     await store.sessionConsent.setValue(0)
     await store.theme.setValue("dark")
     await store.watchLaterShortcut.setValue("Control+S")
-    await expect(send({ action: "clearAllData" }, { ...ui, url: fakeBrowser.runtime.getURL(page) })).resolves.toEqual({ ok: true })
+    await expect(send({ action: "clearAllData" }, page === "/popup.html" ? ui : settings)).resolves.toEqual({ ok: true })
     expect(await fakeBrowser.storage.local.get([`account:${snapshot.accountKey}`, "savedAccountKeys", "watchLaterShortcut"])).toEqual({})
     expect(await store.theme.getValue()).toBe("system")
     expect(sessionService.findSession).not.toHaveBeenCalled()

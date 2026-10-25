@@ -5,6 +5,7 @@ import { parseChannelInput, type ChannelQuery } from "@/lib/channel-input"
 import * as store from "@/lib/storage"
 import { addVideoToPlaylist, fetchChannel, fetchUserPlaylists, fetchVideoChannel } from "@/lib/youtube"
 import { checkSession, findSession, isAccountKey, isConsentGeneration, isRecord, isSnapshot, PAGE_JOB_LIFETIME_MS, queueInPage, reconcileScripts, requireConsent, SessionFailure, sessionMessage, type Caller, type SessionSnapshot } from "@/lib/session"
+import { resolveSenderOrigin } from "@/background/adapters/sender-origin"
 
 type Sender = Parameters<Parameters<typeof browser.runtime.onMessage.addListener>[0]>[1]
 
@@ -28,18 +29,10 @@ export default defineBackground(() => {
   }
 
   async function callerFor(sender: Sender, message: Record<string, unknown>): Promise<Caller> {
-    if (sender.id !== browser.runtime.id || (sender.frameId !== undefined && sender.frameId !== 0)) throw new SessionFailure("unavailable")
-    const validPage = sender.url === browser.runtime.getURL("/popup.html") || sender.url === browser.runtime.getURL("/options.html")
-    if (validPage) {
-      if (typeof message.windowId !== "number" || !Number.isInteger(message.windowId) ||
-        (sender.tab && sender.tab.windowId !== message.windowId)) throw new SessionFailure("unavailable")
-      const window = await browser.windows.get(message.windowId)
-      return { incognito: window.incognito, windowId: message.windowId }
-    }
-    if (sender.tab && sender.frameId === 0 && sender.tab.id !== undefined && sender.url?.startsWith("https://www.youtube.com/")) {
-      return { tabId: sender.tab.id, incognito: sender.tab.incognito, windowId: sender.tab.windowId }
-    }
-    throw new SessionFailure("unavailable")
+    const resolved = await resolveSenderOrigin(browser, { sender, popupWindowId: message.windowId })
+    if (resolved.kind === "unavailable") throw new SessionFailure("unavailable")
+    if (resolved.kind === "ui") return { incognito: resolved.origin.incognito, windowId: resolved.origin.windowId }
+    return { tabId: resolved.origin.tabId, incognito: resolved.origin.incognito, windowId: resolved.windowId }
   }
 
   async function snapshotFor(caller: Caller, value: unknown): Promise<SessionSnapshot> {
@@ -160,8 +153,7 @@ export default defineBackground(() => {
     return { setup }
   }
 
-  async function handle(message: Record<string, unknown>, sender: Sender) {
-    const caller = await callerFor(sender, message)
+  async function handle(message: Record<string, unknown>, caller: Caller) {
     const fromPage = caller.tabId !== undefined
     if (message.action === "grantSession" || message.action === "revokeSession" || message.action === "clearAllData") {
       if (fromPage) throw new SessionFailure("unavailable")
@@ -206,10 +198,15 @@ export default defineBackground(() => {
 
   browser.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
     if (!isRecord(message) || typeof message.action !== "string") return false
-    void handle(message, sender).then(sendResponse).catch(error => {
+    void callerFor(sender, message).then(caller => handle(message, caller).catch(error => {
+      if (sender.tab?.id !== undefined) {
+        const code = error instanceof SessionFailure ? error.code : "unavailable"
+        void notify(sender.tab.id, sessionMessage(code))
+      }
+      throw error
+    })).then(sendResponse).catch(error => {
       const code = error instanceof SessionFailure ? error.code : "unavailable"
       sendResponse({ kind: code, error: sessionMessage(code) })
-      if (sender.tab?.id !== undefined) void notify(sender.tab.id, sessionMessage(code))
     })
     return true
   })

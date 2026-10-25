@@ -114,6 +114,26 @@ test("synthetic private or unknown sender/window facts fail closed", async () =>
   expect(h.set).not.toHaveBeenCalled()
 })
 
+test("shared sender resolution keeps missing Settings identity invalid and actual private windows refused", async () => {
+  const h = instrument()
+  if (!sender.tab) throw Error("Missing synthetic tab")
+  for (const id of [undefined, -1, 0.5]) {
+    expect(await h.adapter.changeFromSettings(request, { ...sender, tab: { ...sender.tab, id } }))
+      .toEqual({ kind: "result", result: { refused: "invalid" } })
+  }
+  const window = await fakeBrowser.windows.create({ incognito: true })
+  if (window?.id === undefined) throw Error("Missing synthetic private window")
+  const tab = await fakeBrowser.tabs.create({ windowId: window.id, url: sender.url })
+  expect(await h.adapter.changeFromSettings(request, { ...sender, tab: { ...tab, incognito: true } }))
+    .toEqual({ kind: "result", result: { refused: "private" } })
+  expect(await h.adapter.changeFromSettings({ ...request, incognito: false }, { ...sender, tab: { ...tab, incognito: true } }))
+    .toEqual({ kind: "result", result: { refused: "invalid" } })
+  expect(await h.adapter.changeFromSettings(request, { ...sender, url: fakeBrowser.runtime.getURL("/popup.html"), tab: undefined }))
+    .toEqual({ kind: "result", result: { refused: "invalid" } })
+  expect(h.get).not.toHaveBeenCalled()
+  expect(h.set).not.toHaveBeenCalled()
+})
+
 test("synthetic payload cannot forge origin, source, background or native privacy", async () => {
   const h = instrument()
   let getterCalls = 0

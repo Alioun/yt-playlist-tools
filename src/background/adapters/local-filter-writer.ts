@@ -1,5 +1,6 @@
 import { isJsonValue } from "../../shared/contracts/json"
 import { isAccountKey, isPlaylistId } from "../../shared/model"
+import { resolveSenderOrigin } from "./sender-origin"
 import {
   createLocalFilterWriter, type LocalFilterChange, type LocalFilterWriteResult, type SyncAutomaticResult, type SyncFlushResult, type SyncReceiveKey, type SyncReceiveResult
 } from "../store/local-filter-writer"
@@ -79,23 +80,16 @@ export function createBrowserLocalFilterWriter(nativeBrowser: NativeBrowser, opt
         return disposal
       },
       async changeFromSettings(raw, sender) {
-        if (sender.id !== nativeBrowser.runtime.id || sender.frameId !== 0 ||
-          sender.url !== nativeBrowser.runtime.getURL("/options.html") || !sender.tab) {
-          return { kind: "result", result: { refused: "invalid" } }
-        }
         const change = parseChange(raw)
         if (!change) return { kind: "result", result: { refused: "invalid" } }
-        const { windowId, incognito } = sender.tab
-        if (!Number.isInteger(windowId) || windowId < 0 || incognito !== false) {
-          return { kind: "result", result: { refused: "private" } }
+        const resolved = await resolveSenderOrigin(nativeBrowser, { sender, popupWindowId: undefined })
+        if (resolved.kind === "unavailable") {
+          const refused = resolved.reason === "privacy" && resolved.page === "settings" ? "private" : "invalid"
+          return { kind: "result", result: { refused } }
         }
-        try {
-          const window = await nativeBrowser.windows.get(windowId)
-          if (window.id !== windowId || window.incognito !== false) return { kind: "result", result: { refused: "private" } }
-        } catch {
-          return { kind: "result", result: { refused: "private" } }
-        }
-        return writer.change({ kind: "ui", windowId, incognito: false }, change)
+        if (resolved.kind !== "ui" || resolved.page !== "settings") return { kind: "result", result: { refused: "invalid" } }
+        if (resolved.origin.incognito) return { kind: "result", result: { refused: "private" } }
+        return writer.change(resolved.origin, change)
       }
     }
   } catch (error) {
