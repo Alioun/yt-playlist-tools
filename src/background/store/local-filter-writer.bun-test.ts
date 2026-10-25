@@ -422,7 +422,8 @@ test("actual browser artifact executes the acceptance matrix with injected effec
     visited.add(file)
     expect(file.startsWith(resolve(import.meta.dir, "../../shared/model") + "/") ||
       file === resolve(import.meta.dir, "../../shared/contracts/json.ts") ||
-      [entry, ...["local-claim-writer.ts", "accounts.ts", "legacy.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file)).toBe(true)
+      file.startsWith(resolve(import.meta.dir, "../../shared/keys") + "/") ||
+      [entry, ...["local-claim-writer.ts", "accounts.ts", "legacy.ts", "legacy-execution.ts", "legacy-startup.ts", "legacy-shortcut.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file)).toBe(true)
     for (const imported of new Bun.Transpiler({ loader: "ts" }).scanImports(await readFile(file, "utf8"))) {
       expect(imported.path.startsWith(".")).toBe(true)
       const base = resolve(dirname(file), imported.path)
@@ -453,7 +454,7 @@ test("actual browser artifact executes the acceptance matrix with injected effec
     return {exports:Object.keys(module.exports),...result,beforeControls,positiveControls,positiveReads:ambientReads};
   })()`
   const result = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
-  expect(result.exports).toEqual(["createLocalFilterWriter"])
+  expect(result.exports).toEqual(["StartupReadinessError", "createLocalFilterWriter", "createStartingLocalFilterWriter"])
   expect(result.assertions).toBeGreaterThan(450)
   expect(result.caughtAlternatives).toBe(4)
   expect(result.beforeControls).toBe(0)
@@ -2150,7 +2151,7 @@ test("automatic composition wrong alternatives fail at intended observations", a
     { name: "pending-overwrite", assertion: "excluded target exact pendingdoc:filter:AAAAAAAAAAAAAAAA:PL_A", source: original.replace('if (!Object.hasOwn(history.pushed, name) || history.pushed[name] !== initial.stamp.gen)', 'if (false)') },
     { name: "premature-Q-ack", assertion: "automatic exact raw adoption before outbound", source: original.replace('const next = repairedHistory(latest.history, [received])', 'const next = repairedHistory(latest.history, [received]); if(next && typeof next.pushed === "object" && next.pushed) Object.assign(next.pushed, {"doc:filter:AAAAAAAAAAAAAAAA:PL_Q":"q1"})') },
     { name: "incoming-quiet", assertion: "receiver changes no scheduling clocks", source: original.replace('const next = repairedHistory(latest.history, [received])', 'quietUntil = deps.syncClock.now() + 2000; const next = repairedHistory(latest.history, [received])') },
-    { name: "bypassed-pacing", assertion: "no sync invocation before five-second barrier", source: original.replace('let nextInvocation = deps.syncClock.now() + 5000', 'let nextInvocation = deps.syncClock.now()').replace('let lastMonotonic = nextInvocation - 5000', 'let lastMonotonic = nextInvocation') },
+    { name: "bypassed-pacing", assertion: "no sync invocation before five-second barrier", source: original.replace('let nextInvocation = (startup ? 0 : deps.syncClock.now()) + 5000', 'let nextInvocation = (startup ? 0 : deps.syncClock.now())').replace('let lastMonotonic = nextInvocation - 5000', 'let lastMonotonic = nextInvocation') },
     { name: "timer-receives", assertion: "timer remains outbound-only", source: original.replace('await automatic(current.event, false)', 'await automatic(current.event, true)') },
     { name: "stopped-restart", assertion: "successful manual retry never restarts stopped lifetime enumeration", source: original.replace('if (claimConfirmation === "unconfirmed" || lifetime.kind === "stopped" || lifetime.kind === "disposed") return', 'if (claimConfirmation === "unconfirmed" || lifetime.kind === "disposed") return; if (lifetime.kind === "stopped") lifetime = {kind:"inactive"}') },
     { name: "second-owner", assertion: "receiver changes no scheduling clocks", source: original.replace('const result = await receiveAttempt(key)', 'const result = await createLocalFilterWriter(deps).receiveSyncDocument(key)') },

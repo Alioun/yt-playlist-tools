@@ -1,7 +1,32 @@
 import { defaultDevice, defaultSettings, defaultSetup, isAccountKey, isPlaylistId, type Unclaimed } from "../../../src/shared/model"
 import type { JsonValue } from "../../../src/shared/contracts/json"
 import type { ClaimAuthority, ClaimAuthorityState } from "../../../src/background/store/local-claim-writer"
-import { createLocalFilterWriter } from "../../../src/background/store/local-filter-writer"
+import { createStartingLocalFilterWriter } from "../../../src/background/store/local-filter-writer"
+
+import { LEGACY_DELETE_KEYS, type LegacyEvidence } from "../../../src/background/store/legacy"
+import type { StartupHost } from "../../../src/background/store/legacy-execution"
+
+const context: StartupHost["context"] = { deviceId: "fixture-device", settingsGen: "migration", at: 1,
+  shortcutId: "orig01", platform: { browser: "chrome", os: "linux" }, commands: [] }
+
+function startupHost(area: { read(): Record<string, unknown>; remove(keys: readonly string[]): void }, effects: unknown[]): StartupHost {
+  return {
+    context,
+    async readSnapshot() {
+      const records = area.read()
+      const values: LegacyEvidence["values"] = {}
+      for (const key of ["playlists", "addToPlaylistID", "watchLaterShortcut", "requiredWatchPercentage", "toastEnabled", "channelFilters", "channelLabels"] as const) {
+        if (Object.hasOwn(records, key)) values[key] = records[key]
+      }
+      return { schema: records.schema, device: records.device, settingsDocument: records["doc:settings"], unclaimed: records.unclaimed,
+        legacy: { presentKeys: LEGACY_DELETE_KEYS.filter(key => Object.hasOwn(records, key)), values, refreshTokenWasNonempty: false },
+        interimKeysPresent: Object.keys(records).filter(key => key.startsWith("account:") || ["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"].includes(key)) }
+    },
+    async removeLocal(keys) { effects.push({ removeLocal: keys }); area.remove(keys) },
+    async deleteDatabase(name) { effects.push({ deleteDatabase: name }) },
+    async removeSession(keys) { effects.push({ removeSession: keys }) }
+  }
+}
 
 export async function runClaimFixture() {
   const acct = "synthetic_acct01", playlist = "PLowned"
@@ -62,7 +87,10 @@ export async function runClaimFixture() {
       onSyncResult() {},
       now: () => 100, generation: () => `fixture-${++generations}`
     }
-    const writer = createLocalFilterWriter(deps)
+    const startupEffects: unknown[] = []
+    const startup = startupHost({ read: () => JSON.parse(JSON.stringify(records)), remove(keys) { for (const key of keys) delete records[key] } }, startupEffects)
+    const writer = createStartingLocalFilterWriter({ ...deps, startup })
+    if (await writer.ready() !== "ok") throw Error("Canonical startup was not ready")
     const claiming = writer.claim()
     let joint
     if (name === "joint") {
@@ -85,12 +113,49 @@ export async function runClaimFixture() {
     await writer.dispose()
     const serialized = JSON.stringify(records)
     records = JSON.parse(serialized)
-    const restarted = createLocalFilterWriter(deps)
+    const restarted = createStartingLocalFilterWriter({ ...deps, startup })
+    if (await restarted.ready() !== "ok") throw Error("Consumed restart was not ready")
     const restart = await restarted.claim()
     await restarted.dispose()
-    outcomes.push({ name, result, restart, ...(joint ? { joint } : {}), saved: records, batches, lookups, generations })
+    outcomes.push({ name, initialization: "separately-preinitialized-consented-fixture", startupEffects, result, restart, ...(joint ? { joint } : {}), saved: records, batches, lookups, generations })
   }
-  return { fixture: "exclusive-synthetic-atomic-local-only", outcomes }
+  const startupOutcomes = []
+  for (const name of ["fresh", "released-legacy", "cleanup-resume"] as const) {
+    let records: Record<string, unknown> = name === "fresh" ? {} : { playlists: ["PLabcdefghijklmnop"], watchLaterShortcut: "k" }
+    const effects: unknown[] = []
+    const batches: Readonly<Record<string, JsonValue>>[] = []
+    const startup = startupHost({ read: () => JSON.parse(JSON.stringify(records)), remove(keys) { for (const key of keys) delete records[key] } }, effects)
+    const deps = {
+      startup,
+      local: { async get() { return JSON.parse(JSON.stringify(records)) }, async set(items: Readonly<Record<string, JsonValue>>) {
+        batches.push(JSON.parse(JSON.stringify(items))); records = { ...records, ...items }
+      } },
+      claim: { kind: "fixture" as const,
+        authority: { async read(): Promise<ClaimAuthorityState> { return { kind: "ready", authority } } },
+        session: { async takeLookup() { throw Error("Startup claim reached lookup budget") } },
+        ownership: { async lookup() { throw Error("Startup claim reached ownership") } }
+      },
+      sync: { async get() { throw Error("Unexpected startup sync read") }, async set() { throw Error("Unexpected startup sync write") }, subscribe() { throw Error("Unexpected startup subscription") } },
+      syncClock: { now: () => 0, wallNow: () => 1000000, after() { throw Error("Unexpected startup timer") } },
+      onSyncResult() {}, now: () => 100, generation() { throw Error("Unexpected startup generation") }
+    }
+    if (name === "cleanup-resume") {
+      const first = createStartingLocalFilterWriter({ ...deps, startup: { ...startup, async deleteDatabase() { throw Error("Synthetic interrupted cleanup") } } })
+      try { await first.ready(); throw Error("Interrupted cleanup released") } catch (error) {
+        if (!(error instanceof Error) || error.message !== "Synthetic interrupted cleanup") throw error
+      }
+      await first.dispose()
+      records = JSON.parse(JSON.stringify(records))
+    }
+    const writer = createStartingLocalFilterWriter(deps)
+    const ready = await writer.ready()
+    const claim = await writer.claim()
+    await writer.dispose()
+    if (ready !== "ok" || records.schema !== 1 || LEGACY_DELETE_KEYS.some(key => Object.hasOwn(records, key))) throw Error("Startup fixture failed")
+    if (claim.kind !== "unavailable" || claim.reason !== "startup") throw Error("Startup consent/note guard bypassed")
+    startupOutcomes.push({ name, ready, claim, saved: records, batches, effects })
+  }
+  return { fixture: "exclusive-synthetic-atomic-local-only", outcomes, startupOutcomes }
 }
 
 export const fixtureRun = runClaimFixture()

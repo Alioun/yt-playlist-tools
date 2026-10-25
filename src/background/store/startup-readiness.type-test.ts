@@ -1,0 +1,21 @@
+import { createLocalFilterWriter, createStartingLocalFilterWriter, StartupReadinessError } from "./local-filter-writer"
+import type { StartupHost } from "./legacy-execution"
+
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Check<T extends true> = T
+export type ReadinessProofs = [
+  Check<Equal<Parameters<typeof createStartingLocalFilterWriter>[0], Parameters<typeof createLocalFilterWriter>[0] & { readonly startup: StartupHost }>>,
+  Check<Equal<ReturnType<typeof createStartingLocalFilterWriter>, ReturnType<typeof createLocalFilterWriter> & { ready(): Promise<"ok" | "newer-layout"> }>>,
+  Check<Equal<"ready" extends keyof ReturnType<typeof createLocalFilterWriter> ? true : false, false>>
+]
+function negative(deps: Parameters<typeof createLocalFilterWriter>[0], starting: ReturnType<typeof createStartingLocalFilterWriter>) {
+  // @ts-expect-error Preinitialized owners cannot claim verified readiness.
+  void createLocalFilterWriter(deps).ready()
+  // @ts-expect-error Verified startup requires the sanitized execution ports.
+  createStartingLocalFilterWriter(deps)
+  // @ts-expect-error Readiness accepts no override or schema assertion.
+  void starting.ready("ok")
+  // @ts-expect-error Failure results cannot contain success.
+  new StartupReadinessError({ kind: "ok" })
+}
+void negative

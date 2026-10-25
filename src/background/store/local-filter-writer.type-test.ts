@@ -67,7 +67,7 @@ export type LocalWriterProofs = [
   Check<Equal<SyncAutomaticResult, SyncFlushResult | { kind: "rejected"; error: unknown }>>,
   Check<Equal<typeof createLocalFilterWriter, ExpectedFactory>>,
   Check<Equal<typeof createBrowserLocalFilterWriter, ExpectedAdapter>>,
-  Check<Equal<keyof typeof import("./local-filter-writer"), "createLocalFilterWriter">>,
+  Check<Equal<keyof typeof import("./local-filter-writer"), "createLocalFilterWriter" | "createStartingLocalFilterWriter" | "StartupReadinessError">>,
   Check<Equal<keyof typeof import("../adapters/local-filter-writer"), "createBrowserLocalFilterWriter">>,
   Check<Equal<string extends LocalFilterChange["acct"] ? true : false, false>>,
   Check<Equal<string extends LocalFilterChange["playlist"] ? true : false, false>>,

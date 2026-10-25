@@ -40,13 +40,13 @@ The carried shortcut has no Watch Later default. The picker and Undo presets use
 
 ## Cleanup and restart boundary
 
-The future executor must complete these operations in order:
+`legacy-execution.ts` exports the non-owning `executeLegacyStartup` executor and its sanitized `StartupHost`. It completes these operations in order:
 
 1. Persist the upgrade's three canonical records in one local set.
 2. Execute `local-remove` as one batch for all 17 named legacy keys.
 3. Execute `await-cleanup`, deleting IndexedDB `yt-playlist-tools` and session `channelCache`. Await both successes. A blocked or rejected deletion keeps startup blocked.
 4. Execute `schema-last` after cleanup. Write 1 only when `required` is true.
-5. Release startup and note-opening work only after cleanup succeeds.
+5. Return `ok` only after confirmed cleanup and schema. Note opening remains a separate consumer.
 
 A schema already equal to 1 does not prove cleanup succeeded. A valid pending note with all three canonical records resumes cleanup even when no old local keys remain. Resume does not use newly supplied IDs or time to restamp anything. Missing batch members, mismatched provenance, inconsistent kept counts, duplicate auto-add IDs, or a shortcut-target presence mismatch refuse cleanup. These checks use captured migration facts. Later settings edits keep their own values and stamps. The planner never repairs a torn canonical batch by rebuilding it from legacy values.
 
@@ -440,7 +440,7 @@ Native browser behavior and durability remain unproven.
 
 `createLocalFilterWriter` requires an explicit `ClaimHost` and supplies zero-argument `claim()` on its existing lane. The fixture host supplies trusted authority, browser-session lookup budget, and ownership ports. The browser adapter supplies `{kind:"unavailable"}`, refuses claim before dependency calls, and exposes no claim method or RPC. `local-claim-writer.ts` exports the non-owning internal `executeLocalClaim` transaction. It has no lane, lifetime, disposal, or persistent uncertainty state. Only the combined owner invokes it in runtime source.
 
-[The claim fixture](../../../tools/fixtures/claim-transaction/README.md) initializes its exclusive synthetic canonical records before constructing this owner. Its joint case holds claim lookup and queues a selected Filter edit. The edit waits, then reads the committed Setup and preserves the exact saved Device notice and null. Disposal completes before serialization and owner recreation. This is preinitialized fixture composition, not a production readiness executor.
+[The claim fixture](../../../tools/fixtures/claim-transaction/README.md) initializes its exclusive synthetic canonical records before constructing this owner. Its joint case holds claim lookup and queues a selected Filter edit. The edit waits, then reads the committed Setup and preserves the exact saved Device notice and null. Disposal completes before serialization and owner recreation. All cases use `createStartingLocalFilterWriter` and await its actual first-lane readiness before claim. The consented cases are separately initialized before construction and do not simulate Agree.
 
 `mergeUnclaimedChoices` appends missing owned choices, preserves current Filters and explicit targets, and fills only the saved original row's empty target. It resolves surviving Watch Later defaults after the proposed target map and normalizes only a real Setup save. `materializeDocumentBody` copies its JSON representation without another normalization. Existing `prepareDocumentBody` retains its normalization behavior.
 
@@ -452,7 +452,22 @@ Consumed null prevents another claim after restart and preserves the saved notic
 
 Claim calls and completion do not create an R155 event, grant, epoch, or timer. Existing hold, clocks, pacing, and diagnostics remain on the same owner. Off-history claim repairs only the required edit bit while preserving all raw recovery extensions.
 
-Production installation still requires the real ready/migration executor, explicit interim-profile conversion and lost authorization handling authority, complete sync and removal admission, verified sender/session ownership, current-row identity paths, and exact notice delivery and acknowledgement.
+Production installation still requires native startup integration, explicit interim-profile conversion and lost authorization handling authority, complete sync and removal admission, verified sender/session ownership, current-row identity paths, and exact notice delivery and acknowledgement.
+
+
+## Synthetic startup readiness
+
+`createStartingLocalFilterWriter` accepts the existing writer dependencies plus `startup: StartupHost`. Its stable `ready(): Promise<"ok" | "newer-layout">` runs the executor as the first job on the same lane. `createLocalFilterWriter` keeps its preinitialized API and exposes no readiness claim. Both constructors use the same internal owner, claim uncertainty, R155 recovery, subscriptions, and disposal lifetime.
+
+The executor reads complete sanitized migration evidence and uses `planLegacyStartup` unchanged. It writes only schema on fresh startup. A current snapshot requires an observed schema of 1. A partial current state without schema returns `unconfirmed/schema` and receives no repair. Upgrade confirms the exact three-record batch and unchanged schema, legacy evidence, and interim names before cleanup. Resume preserves raw canonical omissions, extensions, original ID, and stamps. One local removal contains all 17 named keys and requires absent-key readback. Database and session cleanup run together, and both settle before any schema publication or rejection. Schema is last, with final raw canonical confirmation even when the marker was already 1.
+
+Plan refusal and unconfirmed execution reject readiness with `StartupReadinessError.result`. The error message contains no snapshot values. Port rejection retains the original error. Initialization failure stays latched independently of the recovering lane. A fresh explicit owner can resume persisted complete migration state after awaited disposal. There is no automatic initialization replay.
+
+Before successful readiness, claim returns `unavailable/startup`, Filter changes return `unavailable/startup`, incoming operations return `unavailable/authority`, flush returns `unavailable`, and start does nothing. Newer-layout Filter changes retain their explicit reason. These calls perform no operation dependency effects and capture no R155 arrival grant. A newer layout admits no work. Disposal closes calls immediately, drains accepted startup IO, and prevents readiness from releasing the consumer.
+
+Readiness proves only this synthetic initialization contract. It supplies no consent, note completion, ownership, sync opportunity, or R155 grant. The actual command also executes fresh, released-legacy, and interrupted-cleanup resume cases. Released migration remains unavailable to claim while consent is null and the note pending.
+
+Production still uses the interim runtime. Native sanitization and effects, interim conversion and erased authorization policy, installed consumer cutover, read/view propagation, note acknowledgement, and final privacy approval remain separate. These fake ports and emitted-library checks do not establish installation, native multi-key atomicity, crash durability, foreign-writer exclusion, blocked native handles, or late native effects after a rejected promise. Native checks are waived and unproven.
 
 
 ## Opaque native write recovery

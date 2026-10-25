@@ -12,6 +12,8 @@ import { readSyncInventory } from "./sync-inventory"
 import { prepareDocumentBody } from "./write-preparation"
 import { executeLocalClaim, type ClaimHost, type ClaimTransactionResult } from "./local-claim-writer"
 
+import { executeLegacyStartup, type StartupHost, type StartupExecutionResult } from "./legacy-execution"
+
 type UiOrigin = Extract<Origin, { kind: "ui" }>
 
 export type LocalFilterChange = {
@@ -180,7 +182,7 @@ function recoveryHistory(raw: JsonObject, gate: SyncOpaqueWrite["gate"], error?:
 
 type SyncEvent = { readonly kind: "edit" | "start" | "sync" | "manual"; readonly mono: number; readonly wall: number; readonly epoch: number }
 
-export function createLocalFilterWriter(deps: {
+type LocalFilterWriterDependencies = {
   readonly local: LocalWriteStorage
   readonly claim: ClaimHost
   readonly sync: SyncStorage
@@ -188,25 +190,67 @@ export function createLocalFilterWriter(deps: {
   readonly generation: () => string
   readonly syncClock: SyncClock
   readonly onSyncResult: (result: SyncAutomaticResult) => void
-}): {
+}
+
+type LocalFilterWriter = {
   claim(): Promise<ClaimTransactionResult>
   change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>
   receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>
   flushSync(): Promise<SyncFlushResult>
   startSync(): Promise<void>
   dispose(): Promise<void>
-} {
+}
+
+export class StartupReadinessError extends Error {
+  constructor(readonly result: Exclude<StartupExecutionResult, { kind: "ok" | "newer-layout" }> | { readonly kind: "disposed" }) {
+    super("Local startup did not release this owner")
+    this.name = "StartupReadinessError"
+  }
+}
+
+export function createLocalFilterWriter(deps: LocalFilterWriterDependencies): LocalFilterWriter {
+  return createOwner(deps).writer
+}
+
+export function createStartingLocalFilterWriter(deps: LocalFilterWriterDependencies & { readonly startup: StartupHost }):
+  LocalFilterWriter & { ready(): Promise<"ok" | "newer-layout"> } {
+  const owner = createOwner(deps, deps.startup)
+  return { ...owner.writer, ready: () => owner.readiness }
+}
+
+function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost) {
+  let initialization: "pending" | "ok" | "newer-layout" | "failed" = startup ? "pending" : "ok"
   let claimConfirmation: "ready" | "unconfirmed" = "ready"
   let lane: Promise<void> = Promise.resolve()
   let lifetime: { kind: "inactive" | "stopped" | "disposed" } | { kind: "active"; unsubscribe: () => void } = { kind: "inactive" }
   let ticket: { event: SyncEvent; cancel: () => void } | undefined
   let quietUntil = 0
-  let nextInvocation = deps.syncClock.now() + 5000
+  let nextInvocation = (startup ? 0 : deps.syncClock.now()) + 5000
   let lastMonotonic = nextInvocation - 5000
   let clockInvalid = !Number.isFinite(lastMonotonic) || lastMonotonic < 0 || nextInvocation > Number.MAX_SAFE_INTEGER
   let epoch = 0
   let hold: { mono: number; wall: number } | undefined
   let observedGate: JsonValue | undefined
+
+  const readiness: Promise<"ok" | "newer-layout"> = startup ? enqueue(async () => {
+    try {
+      const result = await executeLegacyStartup({ local: deps.local, host: startup })
+      if (disposed()) throw new StartupReadinessError({ kind: "disposed" })
+      if (result.kind !== "ok" && result.kind !== "newer-layout") throw new StartupReadinessError(result)
+      if (result.kind === "ok") {
+        lastMonotonic = deps.syncClock.now()
+        nextInvocation = lastMonotonic + 5000
+        clockInvalid = !Number.isFinite(lastMonotonic) || lastMonotonic < 0 || nextInvocation > Number.MAX_SAFE_INTEGER
+      }
+      initialization = result.kind
+      return result.kind
+    } catch (error) {
+      initialization = "failed"
+      throw error
+    }
+  }) : Promise.resolve("ok")
+  // Construction may precede the consumer attaching its ready rejection handler.
+  void readiness.catch(() => {})
 
   function clock() {
     const mono = deps.syncClock.now(), wall = deps.syncClock.wallNow()
@@ -719,9 +763,10 @@ export function createLocalFilterWriter(deps: {
       : next ? { kind: "reconciled", repaired: plan.repairs } : { kind: "idle" }
   }
 
-  return {
+  const writer: LocalFilterWriter = {
     claim() {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
+      if (initialization !== "ok") return Promise.resolve({ kind: "unavailable", reason: "startup" })
       if (claimConfirmation === "unconfirmed") return Promise.resolve({ kind: "unavailable", reason: "stale" })
       return enqueue(async () => {
         if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
@@ -736,17 +781,20 @@ export function createLocalFilterWriter(deps: {
     },
     receiveSyncDocument(key) {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
+      if (initialization !== "ok") return Promise.resolve({ kind: "unavailable", reason: "authority" })
       if (claimConfirmation === "unconfirmed") return Promise.resolve({ kind: "unavailable", reason: "authority" })
       return enqueue(() => receiveAttempt(key))
     },
     flushSync() {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
+      if (initialization !== "ok") return Promise.resolve({ kind: "unavailable" })
       if (claimConfirmation === "unconfirmed") return Promise.resolve({ kind: "unavailable" })
       const event = ingress("manual")
       return enqueue(() => attempt(event))
     },
     startSync() {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
+      if (initialization !== "ok") return Promise.resolve()
       if (claimConfirmation === "unconfirmed") return Promise.resolve()
       const event = ingress("start")
       return enqueue(async () => {
@@ -786,6 +834,7 @@ export function createLocalFilterWriter(deps: {
     },
     async change(origin, change) {
       if (lifetime.kind === "disposed") throw new Error("Writer disposed")
+      if (initialization !== "ok") return { kind: "unavailable", reason: initialization === "newer-layout" ? "newer-layout" : "startup" }
       if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
       if (origin.kind !== "ui" || origin.incognito !== false || !Number.isInteger(origin.windowId) || origin.windowId < 0) {
         return { kind: "result", result: { refused: "private" } }
@@ -795,4 +844,5 @@ export function createLocalFilterWriter(deps: {
       return enqueue(() => execute(change, at, event))
     }
   }
+  return { writer, readiness }
 }
