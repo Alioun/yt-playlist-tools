@@ -270,13 +270,13 @@ The internal outcomes describe distinct stages.
 - `acknowledgement-failed` preserves the original local error. Its `source.kind` distinguishes a resolved set from readback-only repair.
 - `unconfirmed` preserves the captured sends after a resolved native set. Its cause identifies authority loss, failed exact readback, or a post-set read error.
 
-No result rolls back storage. A failed or uncertain pass stops automatic attempts for this component instance. A later explicit action reads fresh state. Exact remote/current-local g1 with pushed g0 permits readback-only repair or a combined changed-edit batch. A clean restart after a lost set reply repairs without resending. A lost acknowledgement reply with already-persisted history produces no further writes.
+No result rolls back storage. A failed or uncertain non-native stage stops automatic attempts for this component instance. Opaque native set rejection uses the R155 hold below. A later explicit action reads fresh state. Exact remote/current-local g1 with pushed g0 permits readback-only repair or a combined changed-edit batch. After its conservative R155 floor, a clean restart repairs a lost set reply without resending. A lost acknowledgement reply with already-persisted history produces no further writes.
 
 Native set resolution proves acceptance by this browser's sync area. It does not prove browser-account transport or a storage transaction. Metadata can change between preflight and set. Postflight declines stale acknowledgement but cannot undo that native write. Clean restart and genuine quota rejection do not establish atomicity during unresolved IO, process kill, or power loss. Interrupted multi-key local writes retain the existing limitation.
 
-The native verifier exercises the actual adapter, sender, and same core instance. It compares a literal six-item batch, exact events and full raw readbacks, duplicate suppression, restoration, readback-only repair, retained replacement chunks, protected newer and incomplete records, authority loss, genuine local quota acknowledgement failure, repair without resend, queued-edit combined repair, and clean full-browser restart.
+The native verifier exercises the actual adapter, sender, and same core instance. It compares a literal six-item batch, exact events and full raw readbacks, duplicate suppression, restoration, readback-only repair, retained replacement chunks, protected newer and incomplete records, authority loss, genuine local quota prearm refusal and synthetic acknowledgement failure, repair without resend, queued-edit combined repair, and clean full-browser restart.
 
-This fixture-only component leaves structured native error classification, 60-second rate deferral and its restart retention, production recovery, incoming conflict policy, cleanup, migration readiness, and production startup to later units. It infers no error kind from message text. Granted-incognito admission, Firefox, minimum browser versions, and live browser-account transport remain unproven.
+This fixture-only component leaves structured native error classification, known-kind retry and production activation, incoming conflict policy, cleanup, migration readiness, and production startup to later units. It infers no error kind from message text. Granted-incognito admission, Firefox, minimum browser versions, and live browser-account transport remain unproven.
 
 
 ## Event driver and shared pacing
@@ -289,9 +289,9 @@ Only a successful changed local commit moves the quiet deadline to commit time p
 
 Start and sync events inspect fresh whole snapshots. Each external event may own one cancellable short follow-up. A timer consumes its ticket and queues one pass. Its callback never arms another timer, holds a plan, polls, or invokes the public enqueue path. Queued edits and area events wait behind the active native operation and acknowledgement, then inspect current state or schedule their own follow-up. Manual native attempts invalidate obsolete tickets. Own-write area events reread after acknowledgement and end idle without a duplicate set or timer.
 
-`onSyncResult` receives automatic flush results or `{ kind: "rejected", error }` for a rejected preflight. Native set failures, acknowledgement failures, unconfirmed sets, and rejected passes retain their original errors and stage information. They cancel automatic work for the instance. Later starts, events, and edits cannot clear that stop. Explicit manual calls remain paced and observable and never clear the stop. Deterministic `blocked` and `unavailable` plans can be checked by another independent event.
+`onSyncResult` receives automatic flush results or `{ kind: "rejected", error }` for a rejected preflight. Native set failures, acknowledgement failures, unconfirmed sets, and rejected passes retain their original errors and stage information. Acknowledgement, unconfirmed and rejected non-native stages stop the instance. Opaque native set rejection instead retains the area listener and the persisted R155 hold. Later starts, events, and edits cannot clear a generic stop. Explicit manual calls remain paced and observable and never clear the stop. Deterministic `blocked` and `unavailable` plans can be checked by another independent event.
 
-This is an incomplete internal component. Native Error text supplies no approved rate discriminator. It adds no error parser, fallback retry, persisted rate journal, user-intent replay, status rewrite, join or reset choice, chunk cleanup, or production recovery. The initial five-second barrier does not preserve the specified sixty-second hold after a genuinely classified rate failure. Native success proves this browser's sync-area acceptance only.
+This is an incomplete internal component. Native Error text supplies no approved rate discriminator. Opaque recovery follows R155 without an error parser or persisted rate journal. It adds no user-intent replay, status rewrite, join or reset choice, chunk cleanup, or production recovery. The initial five-second barrier does not preserve the specified sixty-second hold after a genuinely classified rate failure. Native success proves this browser's sync-area acceptance only.
 
 ## Pure sync inventory
 
@@ -405,7 +405,7 @@ consume one ticket, perform no incoming scan, and never rearm themselves.
 
 The captured address count bounds each pass. An adopted target uses four local
 reads, three sync reads, and one local set. Enumeration adds one local read.
-The ordinary outbound attempt adds at most four reads and two sets. This is a
+The outbound attempt also confirms durable admission and complete raw state before invoking sync. This is a
 finite IO bound, not a native performance measurement or production approval.
 The receiver's last-read foreign-writer limit and all manual exclusions remain.
 There is no all-pass transaction, rollback, automatic retry, new conflict policy,
@@ -447,3 +447,26 @@ The writer refuses sync-on, incomplete or unsupported inventory, uncertain linea
 Both resolved and rejected sets require complete readback. Only the exact candidate plus unchanged nonwritten baseline confirms commitment. An exact old baseline after rejection reports `failed/set-not-observed` with the original error. Mixed, newer, unreadable, or authority-lost outcomes are unconfirmed. This stops queued and new calls with `unavailable/stale` and no IO until disposal. Disposal rejects new calls and drains accepted lane work.
 
 Consumed null prevents another claim after restart and preserves the saved notice. No remove port, compaction callback, content journal, or digest exists. Native crash atomicity, the last-observation race, and live ownership remain unproven. Native checks are waived. Installation still requires one Store owner, complete sync and removal admission, verified sender/session ownership, current-row identity paths, and exact notice delivery and acknowledgement.
+
+
+## Opaque native write recovery
+
+The existing filter writer owns R155 recovery on its serialized lane. Its actual fixture worker uses the same browser adapter instance for edits, area events, start and manual flush. Production startup does not install it, and the separate claim fixture cannot share its storage.
+
+Before a fitting nonempty native set, the writer saves `sync.opaqueWrite.gate` as pending and confirms the complete expected raw local snapshot. It then rereads remote inventory, reruns the complete quota projection and checks full local authority again. Changed unknown fields count as stale. Pending evidence stays when authority changes, without a cleanup write over newer data.
+
+A rejected native set returns the identical original error and captured sent records. It starts a monotonic minimum of 60 seconds at rejection observation and saves a held Unix deadline with the safe own-data name and message. `recoveryPersistence.error` reports failed held persistence separately. The confirmed pending marker protects restart admission when the diagnostic could not be saved. Unsaved diagnostic text has no crash-retention guarantee.
+
+A fresh owner imports no old monotonic timestamp. It reconstructs a new minimum 60-second floor, respects a longer remaining wall deadline, and confirms pending-to-held normalization. Forward wall jumps cannot shorten the monotonic hold. Backward jumps prolong it. Invalid clock values and regressing monotonic time prevent admission.
+
+Each external request captures its arrival clocks and recovery epoch before enqueueing. An event that arrived early stays early after queue delay. Renewed rejection invalidates queued grants. Only a later eligible start, sync-area notification, manual flush or changed edit can admit another current-state pass. A qualifying event may own one ordinary quiet or pacing ticket. The callback consumes it once, remains outbound-only and cannot rearm. Silence and completions grant nothing. Holds have no timer, alarm, polling or local-area listener.
+
+Opaque holds retain the sync-area subscription. Startup, incoming, preflight, postflight and acknowledgement errors retain the existing generic stops and original stage results. A resolved native call with failed acknowledgement is distinct from an opaque native rejection. Exact readback repairs accepted generations without resending them. Success clears pending in the same confirmed raw-history acknowledgement, including restoration without a new generation. Queued new generations are never acknowledged by an older set.
+
+`SyncClock.wallNow` supplies only durable recovery time. `SyncClock.now` supplies monotonic pacing and quiet time. The original `deps.now` remains the user-edit stamp. Synthetic fixture wall-clock counters now include bookkeeping; complete document envelopes and generation counters establish absence of restamping.
+
+`opaqueWrite` is optional local bookkeeping with strict known-field validation. Absent old fields need no migration write or schema change. Unknown compatible root and nested extensions, own `__proto__`, inert `toJSON`, raw omissions and unrelated pushed entries survive. The last diagnostic shares the existing local sync lifetime. Switching sync off clears nothing and accesses no native sync storage. Clear all data owns removal.
+
+Native strings remain local diagnostic data. Descriptor-only projection evaluates no getters, coercion, stack, cause, prototype or serializer. The writer logs no diagnostic values and exports none to sync documents, Settings files or the shareable Diagnostics report. No error text becomes a quota, rate or transport category.
+
+Browser-free source, saved emitted-byte and synthetic restart checks do not prove native durability, atomicity, power loss, unresolved native IO across process death, browser-account transport, live identities, granted-incognito behavior, Firefox, minimum-version binaries or production cutover. Native checks are waived and unproven.

@@ -34,7 +34,6 @@ const nativeSyncRemove = syncArea.remove.bind(syncArea)
 const nativeSyncClear = syncArea.clear.bind(syncArea)
 const nativeLocalClear = chrome.storage.local.clear.bind(chrome.storage.local)
 const nativeLocalRemove = chrome.storage.local.remove.bind(chrome.storage.local)
-let releasePaddingOnAckFailure = false
 let fillSyncBeforeSet = false
 let flushing = 0
 let started = false
@@ -42,6 +41,8 @@ const automaticResults: unknown[] = [], nativeInvocations: number[] = []
 let holdNextSet = false
 let releaseSet: (() => void) | undefined
 let heldSet = false
+let rejectAcknowledgement = false
+let opaqueFault: "before" | "after" | undefined
 let changeAuthority: "off" | "metadata" | undefined
 Object.defineProperty(syncArea, "set", { value: new Proxy(syncArea.set, {
   async apply(target, receiver, args) {
@@ -53,7 +54,11 @@ Object.defineProperty(syncArea, "set", { value: new Proxy(syncArea.set, {
     }
     lastInvocation = performance.now()
     nativeInvocations.push(lastInvocation)
+    const fault = opaqueFault
+    opaqueFault = undefined
+    if (fault === "before") throw new Error("synthetic opaque native failure")
     await Reflect.apply(target, receiver, args)
+    if (fault === "after") throw new Error("synthetic opaque native failure")
     if (changeAuthority === "off") {
       changeAuthority = undefined
       const records = await nativeGet(["device", "sync"])
@@ -88,17 +93,14 @@ chrome.storage.local.get = new Proxy(chrome.storage.local.get, {
 chrome.storage.local.set = new Proxy(chrome.storage.local.set, {
   async apply(target, receiver, args) {
     sets.push(args[0])
-    try {
-      const result = await Reflect.apply(target, receiver, args)
-      if (Object.keys(args[0]).some(key => key.startsWith("doc:"))) lastEditCommit = performance.now()
-      return result
-    } catch (error) {
-      if (releasePaddingOnAckFailure && (flushing > 0 || started) && Object.keys(args[0]).join() === "sync") {
-        releasePaddingOnAckFailure = false
-        await nativeLocalRemove("fixture-quota-padding")
-      }
-      throw error
+    const history = args[0].sync
+    if (rejectAcknowledgement && Object.keys(args[0]).join() === "sync" && history?.opaqueWrite?.gate?.kind !== "pending") {
+      rejectAcknowledgement = false
+      throw new Error("synthetic acknowledgement failure")
     }
+    const result = await Reflect.apply(target, receiver, args)
+    if (Object.keys(args[0]).some(key => key.startsWith("doc:"))) lastEditCommit = performance.now()
+    return result
   }
 })
 Object.defineProperty(chrome.storage, "sync", { get() { syncAccesses++; return syncArea } })
@@ -167,8 +169,9 @@ Object.assign(globalThis, {
       } finally { flushing-- }
     },
     fillSyncBeforeNextSet() { fillSyncBeforeSet = true },
-    releaseQuotaPaddingAfterAckFailure() { releasePaddingOnAckFailure = true },
     holdNextSyncSet() { holdNextSet = true },
+    rejectNextAcknowledgement() { rejectAcknowledgement = true },
+    rejectNextSyncSet(afterEffects = false) { opaqueFault = afterEffects ? "after" : "before" },
     isSetHeld: () => heldSet,
     releaseSyncSet() { releaseSet?.(); releaseSet = undefined },
     switchOffAfterNextSet() { changeAuthority = "off" },

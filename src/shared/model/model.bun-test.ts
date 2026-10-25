@@ -5,7 +5,7 @@ import {
   isKey, isPercent, isPlaylistId, isSetupEmpty, isShortcutId, isVideoId,
   normalizeFilterForWrite, normalizeSettingsForWrite, normalizeSetupForWrite, parseDocumentKey
 } from "./index"
-import type { SyncMeta, SyncState } from "./index"
+import type { SyncMeta, SyncOpaqueWrite, SyncState } from "./index"
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
 type Check<T extends true> = T
@@ -15,6 +15,7 @@ export type SyncStateProofs = [
     pushed: Record<string, string>
     status: "off" | "joining" | "ok" | "full" | "update-needed" | "waiting"
     editedSinceOff: boolean
+    opaqueWrite?: SyncOpaqueWrite
   }>>,
   Check<Equal<typeof decodeSyncState, (raw: unknown) => SyncState>>
 ]
@@ -505,4 +506,23 @@ describe("stored claim compatibility", () => {
       expect(() => decodeDevice({ id: "fixture", claimNotice: { ...old, claim: { autoAddAdded, filtersAdded: 0, shortcut: { kind: "not-carried" } } } })).toThrow(DecodeError)
     }
   })
+})
+
+
+test("opaque write bookkeeping validates present fields and preserves old raw extensions", () => {
+  const raw: SyncState = { joined: "H", pushed: { other: "g0" }, status: "ok", editedSinceOff: false }
+  expect(decodeSyncState(raw)).toEqual(raw)
+  expect(Object.hasOwn(decodeSyncState(raw), "opaqueWrite")).toBe(false)
+  const own = JSON.parse('{"__proto__":{"inert":true},"toJSON":"inert","future":{"keep":[1,null]}}')
+  for (const gate of [null, { kind: "pending", notBefore: 0, ...own }, { kind: "held", notBefore: Number.MAX_SAFE_INTEGER, ...own }]) {
+    const extended = { ...raw, ...own, opaqueWrite: { gate, diagnostic: { name: null, message: "synthetic", ...own }, ...own } }
+    expect(decodeSyncState(extended)).toEqual(extended)
+    expect(Object.hasOwn(decodeSyncState(extended).opaqueWrite!, "__proto__")).toBe(true)
+  }
+  for (const opaqueWrite of [null, {}, { gate: null }, { diagnostic: null },
+    { gate: {}, diagnostic: null }, { gate: { kind: "held" }, diagnostic: null },
+    { gate: { kind: "other", notBefore: 0 }, diagnostic: null },
+    ...[-1, .5, Infinity, NaN, Number.MAX_SAFE_INTEGER + 1, "0", null].map(notBefore => ({ gate: { kind: "held", notBefore }, diagnostic: null })),
+    ...[{}, { name: null }, { message: null }, { name: 1, message: null }, { name: null, message: {} }].map(diagnostic => ({ gate: null, diagnostic }))
+  ]) expect(() => decodeSyncState({ ...raw, opaqueWrite })).toThrow(DecodeError)
 })

@@ -1,4 +1,4 @@
-import type { AccountKey, PlaylistId, DocumentKey } from "../../shared/model"
+import type { AccountKey, PlaylistId, DocumentKey, SyncOpaqueWrite } from "../../shared/model"
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
 import type { JsonObject, JsonValue } from "../../shared/contracts/json"
 import type { FilterSettingInput } from "./channel-filter-edit"
@@ -53,13 +53,15 @@ type ExpectedReceive =
   }
 
 export type LocalWriterProofs = [
+  Check<Equal<SyncOpaqueWrite, { gate: null | { kind: "pending" | "held"; notBefore: number }; diagnostic: null | { name: string | null; message: string | null } }>>,
+  Check<Equal<Extract<SyncFlushResult, { kind: "sync-set-failed" }>, { kind: "sync-set-failed"; error: unknown; sent: readonly SyncDocumentRecord[]; recoveryPersistence?: { error: unknown } }>>,
   Check<Equal<SyncReceiveKey, Extract<DocumentKey, { kind: "settings" | "filter" | "setup" }>>>,
   Check<Equal<SyncReceiveResult, ExpectedReceive>>,
   Check<Equal<LocalFilterChange, ExpectedChange>>,
   Check<Equal<LocalFilterWriteResult, ExpectedResult>>,
   Check<Equal<LocalWriteStorage, ExpectedStorage>>,
   Check<Equal<SyncStorage, { get(): Promise<Readonly<Record<string, unknown>>>; set(items: Readonly<Record<string, JsonValue>>): Promise<void>; subscribe(changed: () => void): () => void }>>,
-  Check<Equal<SyncClock, { now(): number; after(milliseconds: number, run: () => void): () => void }>>,
+  Check<Equal<SyncClock, { now(): number; wallNow(): number; after(milliseconds: number, run: () => void): () => void }>>,
   Check<Equal<SyncAutomaticResult, SyncFlushResult | { kind: "rejected"; error: unknown }>>,
   Check<Equal<typeof createLocalFilterWriter, ExpectedFactory>>,
   Check<Equal<typeof createBrowserLocalFilterWriter, ExpectedAdapter>>,
@@ -98,3 +100,15 @@ function receiveTypeBoundaries(writer: ReturnType<typeof createLocalFilterWriter
   key.playlist = playlist
 }
 void receiveTypeBoundaries
+
+
+function recoveryTypeBoundaries(clock: SyncClock) {
+  void clock.wallNow()
+  // @ts-expect-error Wall time is required independently of monotonic time.
+  const incomplete: SyncClock = { now: () => 0, after: () => () => {} }
+  // @ts-expect-error Durable deadlines are numeric Unix milliseconds.
+  const invalid: SyncOpaqueWrite = { gate: { kind: "held", notBefore: "60000" }, diagnostic: null }
+  void incomplete
+  void invalid
+}
+void recoveryTypeBoundaries

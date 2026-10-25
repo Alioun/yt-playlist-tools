@@ -49,6 +49,7 @@ export function createBrowserLocalFilterWriter(nativeBrowser: NativeBrowser, opt
     },
     syncClock: {
       now: () => performance.now(),
+      wallNow: () => Date.now(),
       after(milliseconds, run) {
         const timer = setTimeout(run, milliseconds)
         return () => clearTimeout(timer)

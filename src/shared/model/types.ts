@@ -9,7 +9,13 @@ export type SyncMeta = {
   reset?: boolean
 }
 
+export type SyncOpaqueWrite = {
+  gate: null | { kind: "pending" | "held"; notBefore: number }
+  diagnostic: null | { name: string | null; message: string | null }
+}
+
 export type SyncState = {
+  opaqueWrite?: SyncOpaqueWrite
   joined: string | null
   pushed: Record<string, string>
   status: "off" | "joining" | "ok" | "full" | "update-needed" | "waiting"

@@ -1,7 +1,7 @@
 import {
   CONSENT_VERSION, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError,
   decodeDevice, decodeDocument, decodeFilter, decodeSettings, decodeSetup, decodeSyncState, decodeSyncMeta, documentKey, parseDocumentKey,
-  type AccountKey, type PlaylistId, type DocumentKey
+  type AccountKey, type PlaylistId, type DocumentKey, type SyncOpaqueWrite
 } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
@@ -36,6 +36,7 @@ export type LocalWriteStorage = {
 
 export type SyncClock = {
   now(): number
+  wallNow(): number
   after(milliseconds: number, run: () => void): () => void
 }
 
@@ -55,7 +56,7 @@ export type SyncFlushResult =
   | { kind: "pushed"; sent: readonly SyncDocumentRecord[]; repaired: readonly SyncDocumentRecord[] }
   | { kind: "unavailable" }
   | { kind: "blocked" }
-  | { kind: "sync-set-failed"; error: unknown; sent: readonly SyncDocumentRecord[] }
+  | { kind: "sync-set-failed"; error: unknown; sent: readonly SyncDocumentRecord[]; recoveryPersistence?: { error: unknown } }
   | { kind: "acknowledgement-failed"; error: unknown; source: FlushSource }
   | { kind: "unconfirmed"; sent: readonly SyncDocumentRecord[]; cause:
     | { kind: "authority" | "readback" }
@@ -133,6 +134,51 @@ function repairedHistory(raw: JsonObject, repairs: readonly SyncDocumentRecord[]
   return next
 }
 
+function snapshot(raw: JsonObject): JsonObject {
+  const copy: JsonObject = {}
+  const pending: { source: JsonObject | JsonValue[]; target: JsonObject | JsonValue[] }[] = [{ source: raw, target: copy }]
+  while (pending.length > 0) {
+    const entry = pending.pop()
+    if (!entry) break
+    for (const [name, value] of Object.entries(entry.source)) {
+      const child: JsonValue = value !== null && typeof value === "object" ? Array.isArray(value) ? [] : {} : value
+      Object.defineProperty(entry.target, name, { value: child, enumerable: true, writable: true, configurable: true })
+      if (value !== null && typeof value === "object" && child !== null && typeof child === "object") {
+        pending.push({ source: value, target: child })
+      }
+    }
+  }
+  return copy
+}
+
+function diagnostic(error: unknown): NonNullable<SyncOpaqueWrite["diagnostic"]> {
+  if (typeof error === "string") return { name: null, message: error }
+  if (error === null || (typeof error !== "object" && typeof error !== "function")) return { name: null, message: null }
+  try {
+    const name = Object.getOwnPropertyDescriptor(error, "name")
+    const message = Object.getOwnPropertyDescriptor(error, "message")
+    return {
+      name: name && "value" in name && typeof name.value === "string" ? name.value : null,
+      message: message && "value" in message && typeof message.value === "string" ? message.value : null
+    }
+  } catch { return { name: null, message: null } }
+}
+
+function recoveryHistory(raw: JsonObject, gate: SyncOpaqueWrite["gate"], error?: { value: unknown }): JsonObject {
+  const previous = isJsonObject(raw.opaqueWrite) ? raw.opaqueWrite : undefined
+  const savedDiagnostic = error ? { ...(isJsonObject(previous?.diagnostic) ? previous.diagnostic : {}), ...diagnostic(error.value) }
+    : previous?.diagnostic ?? null
+  const next = { ...raw }
+  if (gate === null && savedDiagnostic === null) delete next.opaqueWrite
+  else next.opaqueWrite = { ...previous, gate: gate === null ? null : {
+    ...(isJsonObject(previous?.gate) ? previous.gate : {}), ...gate
+  }, diagnostic: savedDiagnostic }
+  decodeSyncState(next)
+  return next
+}
+
+type SyncEvent = { readonly kind: "edit" | "start" | "sync" | "manual"; readonly mono: number; readonly wall: number; readonly epoch: number }
+
 export function createLocalFilterWriter(deps: {
   readonly local: LocalWriteStorage
   readonly sync: SyncStorage
@@ -149,9 +195,65 @@ export function createLocalFilterWriter(deps: {
 } {
   let lane: Promise<void> = Promise.resolve()
   let lifetime: { kind: "inactive" | "stopped" | "disposed" } | { kind: "active"; unsubscribe: () => void } = { kind: "inactive" }
-  let ticket: { event: "edit" | "start" | "sync"; cancel: () => void } | undefined
+  let ticket: { event: SyncEvent; cancel: () => void } | undefined
   let quietUntil = 0
   let nextInvocation = deps.syncClock.now() + 5000
+  let lastMonotonic = nextInvocation - 5000
+  let clockInvalid = !Number.isFinite(lastMonotonic) || lastMonotonic < 0 || nextInvocation > Number.MAX_SAFE_INTEGER
+  let epoch = 0
+  let hold: { mono: number; wall: number } | undefined
+  let observedGate: JsonValue | undefined
+
+  function clock() {
+    const mono = deps.syncClock.now(), wall = deps.syncClock.wallNow()
+    if (!Number.isFinite(mono) || mono < lastMonotonic || mono < 0 || mono + 60000 > Number.MAX_SAFE_INTEGER) clockInvalid = true
+    if (clockInvalid || !Number.isSafeInteger(wall) || wall < 0 || !Number.isSafeInteger(wall + 60000)) return
+    lastMonotonic = mono
+    return { mono, wall }
+  }
+
+  function ingress(kind: SyncEvent["kind"]): SyncEvent | undefined {
+    const time = clock()
+    return time ? { kind, ...time, epoch } : undefined
+  }
+
+  function admitted(event: SyncEvent | undefined, time: { mono: number; wall: number }) {
+    return event !== undefined && event.epoch === epoch && (!hold ||
+      event.mono >= hold.mono && event.wall >= hold.wall && time.mono >= hold.mono && time.wall >= hold.wall)
+  }
+
+  function recoveryDeferral(time: { mono: number; wall: number }): SyncFlushResult {
+    const notBefore = Math.max(nextInvocation, quietUntil, hold?.mono ?? 0,
+      time.mono + Math.max(0, (hold?.wall ?? 0) - time.wall))
+    return Number.isFinite(notBefore) && notBefore <= Number.MAX_SAFE_INTEGER
+      ? { kind: "deferred", notBefore } : { kind: "unavailable" }
+  }
+
+  async function loadRecovery(records: JsonObject): Promise<JsonObject | undefined> {
+    const raw = records.sync
+    if (!isJsonObject(raw)) return
+    const gate = decodeSyncState(raw).opaqueWrite?.gate
+    if (!gate || observedGate !== undefined && sameSyncJson(gate, observedGate)) return records
+    const time = clock()
+    if (!time) return
+    epoch++
+    cancelTicket()
+    const floor = Math.max(time.mono + 60000, time.mono + Math.max(0, gate.notBefore - time.wall))
+    if (!Number.isFinite(floor) || floor > Number.MAX_SAFE_INTEGER) { clockInvalid = true; return }
+    hold = { mono: floor, wall: gate.notBefore }
+    if (gate.kind === "pending") {
+      const next = recoveryHistory(raw, { kind: "held", notBefore: Math.max(gate.notBefore, time.wall + 60000) })
+      const expected = { ...snapshot(records), sync: next }
+      await deps.local.set({ sync: next })
+      const confirmed = await deps.local.get(null)
+      if (disposed() || !isJsonObject(confirmed) || !sameSyncJson(expected, confirmed)) return
+      hold.wall = Math.max(hold.wall, time.wall + 60000)
+      observedGate = isJsonObject(next.opaqueWrite) ? next.opaqueWrite.gate : undefined
+      return expected
+    }
+    observedGate = { ...gate }
+    return records
+  }
 
   function enqueue<T>(run: () => Promise<T>): Promise<T> {
     const work = lane.then(run)
@@ -170,35 +272,38 @@ export function createLocalFilterWriter(deps: {
     if (lifetime.kind !== "disposed" && (lifetime.kind !== "stopped" || kind === "disposed")) lifetime = { kind }
   }
 
-  function arm(notBefore: number, event: "edit" | "start" | "sync") {
+  function arm(notBefore: number, event: SyncEvent | undefined) {
     if (lifetime.kind !== "active") return
     cancelTicket()
-    const milliseconds = Math.max(0, notBefore - deps.syncClock.now())
+    const time = clock()
+    if (!time || !admitted(event, time)) return
+    const milliseconds = Math.max(0, notBefore - time.mono)
     if (milliseconds > 25000) return
+    if (!event) return
     const current = { event, cancel: () => {} }
     ticket = current
     current.cancel = deps.syncClock.after(milliseconds, () => {
       void enqueue(async () => {
         if (ticket !== current || lifetime.kind !== "active") return
         ticket = undefined
-        await automatic()
+        await automatic(current.event, false)
       })
     })
   }
 
-  async function automatic(event?: "start" | "sync") {
+  async function automatic(event: SyncEvent | undefined, followup = true) {
     if (lifetime.kind !== "active") return
     let result: SyncAutomaticResult
     try {
-      const incoming = event ? await receiveIncomingDocuments() : undefined
+      const incoming = followup && (event?.kind === "start" || event?.kind === "sync") ? await receiveIncomingDocuments() : undefined
       if (incoming) result = incoming
       else {
         if (lifetime.kind !== "active") return
-        result = await attempt()
+        result = await attempt(event)
       }
     } catch (error) { result = { kind: "rejected", error } }
     if (result.kind === "rejected") deactivate("stopped")
-    else if (event && result.kind === "deferred") arm(result.notBefore, event)
+    else if (followup && result.kind === "deferred") arm(result.notBefore, event)
     if (result.kind !== "deferred") cancelTicket()
     deps.onSyncResult(result)
   }
@@ -242,10 +347,10 @@ export function createLocalFilterWriter(deps: {
     }
   }
 
-  async function attempt(): Promise<SyncFlushResult> {
+  async function attempt(event: SyncEvent | undefined): Promise<SyncFlushResult> {
     let result: SyncFlushResult
-    try { result = await flush() } catch (error) { deactivate("stopped"); throw error }
-    if (result.kind === "sync-set-failed" || result.kind === "acknowledgement-failed" || result.kind === "unconfirmed") deactivate("stopped")
+    try { result = await flush(event) } catch (error) { deactivate("stopped"); throw error }
+    if (result.kind === "acknowledgement-failed" || result.kind === "unconfirmed") deactivate("stopped")
     if (result.kind !== "deferred") cancelTicket()
     return result
   }
@@ -256,7 +361,7 @@ export function createLocalFilterWriter(deps: {
 
   function disposed() { return lifetime.kind === "disposed" }
 
-  async function execute(change: LocalFilterChange, at: number): Promise<LocalFilterWriteResult> {
+  async function execute(change: LocalFilterChange, at: number, event: SyncEvent | undefined): Promise<LocalFilterWriteResult> {
     const invalid = { kind: "result", result: { refused: "invalid" } } as const
     const ok = { kind: "result", result: { ok: true } } as const
     const setupKey = documentKey({ kind: "setup", acct: change.acct })
@@ -340,7 +445,8 @@ export function createLocalFilterWriter(deps: {
       await deps.local.set(items)
       if (device.syncOn) {
         quietUntil = deps.syncClock.now() + 2000
-        arm(Math.max(quietUntil, nextInvocation), "edit")
+        const gate = history && decodeSyncState(history.raw).opaqueWrite?.gate
+        if (!gate || observedGate !== undefined) arm(Math.max(quietUntil, nextInvocation), event)
       }
       return ok
     }
@@ -407,23 +513,6 @@ export function createLocalFilterWriter(deps: {
     }
     const initial = context(await deps.local.get(null))
     if (initial.kind !== "ready") return initial
-    // Native reads are snapshots. Capture the raw baseline independently of later IO.
-    function snapshot(raw: JsonObject): JsonObject {
-      const copy: JsonObject = {}
-      const pending: { source: JsonObject | JsonValue[]; target: JsonObject | JsonValue[] }[] = [{ source: raw, target: copy }]
-      while (pending.length > 0) {
-        const entry = pending.pop()
-        if (!entry) break
-        for (const [name, value] of Object.entries(entry.source)) {
-          const child: JsonValue = value !== null && typeof value === "object" ? Array.isArray(value) ? [] : {} : value
-          Object.defineProperty(entry.target, name, { value: child, enumerable: true, writable: true, configurable: true })
-          if (value !== null && typeof value === "object" && child !== null && typeof child === "object") {
-            pending.push({ source: value, target: child })
-          }
-        }
-      }
-      return copy
-    }
     const baseline = { device: snapshot(initial.device), history: snapshot(initial.history), raw: snapshot(initial.raw),
       selection: initial.selection.kind === "filter" ? { kind: "filter", setup: snapshot(initial.selection.setup) } as const : initial.selection }
     const sameSelection = (current: typeof initial.selection) => current.kind !== "filter"
@@ -482,30 +571,95 @@ export function createLocalFilterWriter(deps: {
     }
   }
 
-  async function flush(): Promise<SyncFlushResult> {
-    const records = await deps.local.get(null)
-    const ready = authority(records)
-    if (ready.kind !== "ready") return { kind: "unavailable" }
+  async function flush(event: SyncEvent | undefined): Promise<SyncFlushResult> {
+    let records = await deps.local.get(null)
+    let ready = authority(records)
+    if (disposed() || ready.kind !== "ready") return { kind: "unavailable" }
     observeOff(ready.device.syncOn)
     if (!ready.device.syncOn) return { kind: "idle" }
-    const plan = planSyncWrite({ local: records, sync: await deps.sync.get(), intent: { kind: "flush" } })
+    if (!isJsonObject(records)) return { kind: "unavailable" }
+    const loaded = await loadRecovery(snapshot(records))
+    if (!loaded || disposed()) return { kind: "unavailable" }
+    records = loaded
+    ready = authority(records)
+    if (ready.kind !== "ready") return { kind: "unavailable" }
+    const time = clock()
+    if (!time) { cancelTicket(); return { kind: "unavailable" } }
+    if (hold && !admitted(event, time)) { cancelTicket(); return recoveryDeferral(time) }
+    let plan = planSyncWrite({ local: records, sync: await deps.sync.get(), intent: { kind: "flush" } })
     if (plan.kind === "refused") return plan.reason === "sync-full" ? { kind: "blocked" } : { kind: "unavailable" }
     if (plan.kind !== "planned") return { kind: "unavailable" }
     if (plan.sent.length === 0 && plan.repairs.length === 0) return { kind: "idle" }
+    let prearmed: JsonObject | undefined
+    if (plan.sent.length > 0) {
+      const before = clock()
+      if (!before || !admitted(event, before)) return { kind: "unavailable" }
+      const notBefore = Math.max(quietUntil, nextInvocation)
+      if (before.mono < notBefore) return { kind: "deferred", notBefore }
+      if (!isJsonObject(records) || !isJsonObject(records.sync)) return { kind: "unavailable" }
+      const baseline = snapshot(records)
+      const current = await deps.local.get(null)
+      if (disposed() || !isJsonObject(current) || !sameSyncJson(baseline, current)) return { kind: "unavailable" }
+      const pending = recoveryHistory(records.sync, { kind: "pending", notBefore: before.wall + 60000 })
+      prearmed = { ...baseline, sync: pending }
+      await deps.local.set({ sync: pending })
+      const confirmed = await deps.local.get(null)
+      if (disposed() || !isJsonObject(confirmed) || !sameSyncJson(prearmed, confirmed)) return { kind: "unavailable" }
+      observedGate = isJsonObject(pending.opaqueWrite) ? pending.opaqueWrite.gate : undefined
+      const remote = await deps.sync.get()
+      const latest = await deps.local.get(null)
+      if (disposed() || !isJsonObject(latest) || !sameSyncJson(prearmed, latest)) return { kind: "unavailable" }
+      const currentReady = authority(latest)
+      if (currentReady.kind !== "ready" || !currentReady.device.syncOn) return { kind: "unavailable" }
+      const replanned = planSyncWrite({ local: latest, sync: remote, intent: { kind: "flush" } })
+      if (replanned.kind === "refused") return replanned.reason === "sync-full" ? { kind: "blocked" } : { kind: "unavailable" }
+      if (replanned.kind !== "planned" || !sameSyncJson(plan.metadata, replanned.metadata)) return { kind: "unavailable" }
+      if (replanned.sent.length === 0 && replanned.repairs.length === 0) return { kind: "unavailable" }
+      plan = replanned
+    }
     const source: FlushSource = plan.sent.length > 0
       ? { kind: "set", sent: plan.sent, repairs: plan.repairs }
       : { kind: "readback", repairs: plan.repairs }
     if (source.kind === "set") {
-      const invokedAt = deps.syncClock.now()
+      const invoked = clock()
+      if (!invoked || !admitted(event, invoked)) return { kind: "unavailable" }
+      const invokedAt = invoked.mono
       const notBefore = Math.max(quietUntil, nextInvocation)
       if (invokedAt < notBefore) return { kind: "deferred", notBefore }
       cancelTicket()
       nextInvocation = invokedAt + 5000
       try { await deps.sync.set(Object.fromEntries(plan.items.map(item => [item.key, item.value]))) } catch (error) {
+        let rejected: ReturnType<typeof clock>
+        let clockError: { error: unknown } | undefined
+        try { rejected = clock() } catch (error) { clockError = { error } }
+        epoch++
+        cancelTicket()
+        hold = rejected ? { mono: rejected.mono + 60000, wall: rejected.wall + 60000 }
+          : { mono: Infinity, wall: Number.MAX_SAFE_INTEGER }
+        try {
+          if (clockError) throw clockError.error
+          if (!rejected || !prearmed) throw new TypeError("Recovery clock unavailable")
+          const current = await deps.local.get(null)
+          if (disposed() || !isJsonObject(current) || !sameSyncJson(prearmed, current) || !isJsonObject(current.sync)) {
+            throw new TypeError("Recovery authority changed")
+          }
+          const finalizing = clock()
+          if (!finalizing) throw new TypeError("Recovery clock unavailable")
+          hold.wall = Math.max(hold.wall, finalizing.wall + 60000)
+          const held = recoveryHistory(current.sync, { kind: "held", notBefore: hold.wall }, { value: error })
+          const expected = { ...snapshot(current), sync: held }
+          await deps.local.set({ sync: held })
+          const confirmed = await deps.local.get(null)
+          if (!isJsonObject(confirmed) || !sameSyncJson(expected, confirmed)) throw new TypeError("Recovery persistence unconfirmed")
+          observedGate = isJsonObject(held.opaqueWrite) ? held.opaqueWrite.gate : undefined
+        } catch (persistenceError) {
+          return { kind: "sync-set-failed", error, sent: plan.sent, recoveryPersistence: { error: persistenceError } }
+        }
         return { kind: "sync-set-failed", error, sent: plan.sent }
       }
+      hold = undefined
     }
-    let latest, postflight, snapshot
+    let latest, postflight, remoteSnapshot
     try {
       latest = await deps.local.get(null)
       const current = authority(latest)
@@ -513,14 +667,14 @@ export function createLocalFilterWriter(deps: {
         current.history.joined !== ready.history?.joined || !sameSyncJson(current.rawDevice, ready.rawDevice)) {
         return source.kind === "set" ? { kind: "unconfirmed", sent: plan.sent, cause: { kind: "authority" } } : { kind: "unavailable" }
       }
-      snapshot = await deps.sync.get()
-      postflight = planSyncWrite({ local: latest, sync: snapshot, intent: { kind: "flush" } })
+      remoteSnapshot = await deps.sync.get()
+      postflight = planSyncWrite({ local: latest, sync: remoteSnapshot, intent: { kind: "flush" } })
     } catch (error) {
       if (source.kind === "set") return { kind: "unconfirmed", sent: plan.sent, cause: { kind: "read-failed", error } }
       throw error
     }
     const captured = [...plan.sent, ...plan.repairs]
-    const remoteItems = Object.entries(snapshot).map(([key, value]) => ({ key, value }))
+    const remoteItems = Object.entries(remoteSnapshot).map(([key, value]) => ({ key, value }))
     if (postflight.kind !== "planned" || !sameSyncJson(plan.metadata, postflight.metadata) ||
       captured.some(record => {
         const raw = latest[record.name]
@@ -532,9 +686,25 @@ export function createLocalFilterWriter(deps: {
     }
     const rawHistory = latest.sync
     if (!isJsonObject(rawHistory)) throw new TypeError("Missing current history")
-    const next = repairedHistory(rawHistory, captured)
+    let next = repairedHistory(rawHistory, captured)
+    if (prearmed || observedGate !== undefined) {
+      const cleared = recoveryHistory(next ?? rawHistory, null)
+      if (!sameSyncJson(cleared, rawHistory)) next = cleared
+    }
     if (next) {
-      try { await deps.local.set({ sync: next }) } catch (error) {
+      try {
+        const baseline = await deps.local.get(null)
+        if (disposed() || !isJsonObject(baseline) || !isJsonObject(latest) || !sameSyncJson(latest, baseline)) {
+          return source.kind === "set" ? { kind: "unconfirmed", sent: plan.sent, cause: { kind: "authority" } } : { kind: "unavailable" }
+        }
+        await deps.local.set({ sync: next })
+        const confirmed = await deps.local.get(null)
+        if (disposed() || !isJsonObject(confirmed) || !sameSyncJson({ ...baseline, sync: next }, confirmed)) {
+          return source.kind === "set" ? { kind: "unconfirmed", sent: plan.sent, cause: { kind: "readback" } } : { kind: "unavailable" }
+        }
+        observedGate = undefined
+        hold = undefined
+      } catch (error) {
         return { kind: "acknowledgement-failed", error, source }
       }
     }
@@ -549,10 +719,12 @@ export function createLocalFilterWriter(deps: {
     },
     flushSync() {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
-      return enqueue(attempt)
+      const event = ingress("manual")
+      return enqueue(() => attempt(event))
     },
     startSync() {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
+      const event = ingress("start")
       return enqueue(async () => {
         if (lifetime.kind === "stopped" || lifetime.kind === "disposed") return
         let ready
@@ -568,7 +740,8 @@ export function createLocalFilterWriter(deps: {
             }
             if (ready.device.syncOn && lifetime.kind === "inactive") {
               const unsubscribe = deps.sync.subscribe(() => {
-                void enqueue(() => automatic("sync"))
+                const incoming = ingress("sync")
+                void enqueue(() => automatic(incoming))
               })
               lifetime = { kind: "active", unsubscribe }
             }
@@ -579,7 +752,7 @@ export function createLocalFilterWriter(deps: {
           return
         }
         if (ready.kind !== "ready") { deps.onSyncResult({ kind: "unavailable" }); return }
-        if (ready.device.syncOn) await automatic("start")
+        if (ready.device.syncOn) await automatic(event)
       })
     },
     dispose() {
@@ -592,7 +765,8 @@ export function createLocalFilterWriter(deps: {
         return { kind: "result", result: { refused: "private" } }
       }
       const at = deps.now()
-      return enqueue(() => execute(change, at))
+      const event = ingress("edit")
+      return enqueue(() => execute(change, at, event))
     }
   }
 }

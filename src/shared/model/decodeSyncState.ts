@@ -1,9 +1,19 @@
-import { boolean, dictionary, nonempty, nullable, object, oneOf } from "./codec"
-import type { SyncState } from "./types"
+import { boolean, dictionary, natural, nonempty, nullable, object, oneOf, optional, text } from "./codec"
+import type { SyncOpaqueWrite, SyncState } from "./types"
+
+const opaqueWrite = object<SyncOpaqueWrite>({
+  gate: nullable(object<NonNullable<SyncOpaqueWrite["gate"]>>({
+    kind: oneOf("pending", "held"), notBefore: natural
+  })),
+  diagnostic: nullable(object<NonNullable<SyncOpaqueWrite["diagnostic"]>>({
+    name: nullable(text), message: nullable(text)
+  }))
+})
 
 export const decodeSyncState: (raw: unknown) => SyncState = object<SyncState>({
   joined: nullable(nonempty),
   pushed: dictionary(() => true, nonempty),
   status: oneOf("off", "joining", "ok", "full", "update-needed", "waiting"),
-  editedSinceOff: boolean
+  editedSinceOff: boolean,
+  opaqueWrite: optional(opaqueWrite)
 })

@@ -757,15 +757,21 @@ type AccountCache = {
 // len and parts in seconds at 0.1 s precision; parts merged; at: when it last played
 type Progress = Record<string /* video ID */, { len: number; parts: [number, number][]; at: number }>
 
+type SyncOpaqueWrite = {
+  gate: null | { kind: "pending" | "held"; notBefore: number } // nonnegative safe-integer Unix milliseconds
+  diagnostic: null | { name: string | null; message: string | null } // local-only original own data strings
+}
+
 type SyncState = {
   joined: string | null // the s:meta id this browser last synced with
   pushed: Record<string /* document */, string /* gen */>
   status: "off" | "joining" | "ok" | "full" | "update-needed" | "waiting" // SYNC-24 (R13)
   editedSinceOff: boolean
+  opaqueWrite?: SyncOpaqueWrite // absent in older records; no migration or schema-version change
 }
 ```
 
-**Local bookkeeping amendments to DATA-12.** The declarations above do not specify the new bookkeeping fields (R150, R151, R152, R155). The unclaimed record must retain the minimum validated original-shortcut-ID association, local only, until claim, discard, or Clear all data. Older records without it remain readable and take ACC-31's no-guess path. Claim results distinguish a skipped shortcut from the ownership-drop count. The sync bookkeeping must retain the minimum recovery deadline across worker and browser restarts. Any cleanup evidence representation must be bounded, local only, and respect existing removal and clearing lifetimes. These requirements add no synced wire fields, raw account identities, retained deleted content, or recovery journal schema. Exact representations and compatibility are engineering obligations.
+**Local bookkeeping amendments to DATA-12.** The declarations above include R155's optional sync bookkeeping. Other local bookkeeping requirements follow R150, R151 and R152. The unclaimed record must retain the minimum validated original-shortcut-ID association, local only, until claim, discard, or Clear all data. Older records without it remain readable and take ACC-31's no-guess path. Claim results distinguish a skipped shortcut from the ownership-drop count. The optional local `SyncState.opaqueWrite` implements R155's recovery deadline. `pending` is confirmed locally before a native write; `held` records an observed opaque rejection. A fresh owner waits a new minimum 60 seconds and normalizes pending to held. Both the wall deadline and the new monotonic minimum apply. Successful confirmation clears the gate and keeps only the latest diagnostic; a record with no diagnostic removes the owned field. Old records remain unchanged until actual work, malformed present fields refuse, and compatible unrelated extensions survive. This field shares the local `sync` lifetime and Clear all data behavior. Switching sync off clears nothing. Diagnostic strings enter neither synced documents, Settings files nor the shareable Diagnostics report. Any cleanup evidence representation must be bounded, local only, and respect existing removal and clearing lifetimes. These requirements add no synced wire fields, raw account identities, retained deleted content, or recovery journal schema. Exact representations and compatibility are engineering obligations.
 
 - **DATA-13** **Limits stored with the data:** at most 20 playlist shortcuts; a shortcut label up to 40 characters; a channel title up to 100 and a handle up to 30; an account name up to 100. Longer values are cut when saved. Shortcut IDs are random, 6 characters long.
 - **DATA-14** **Unknown fields are kept.** A browser that reads a document with fields it doesn't know writes them back unchanged.

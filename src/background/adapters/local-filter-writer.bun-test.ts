@@ -217,19 +217,22 @@ test("synthetic manual flush forwards native object and string items on the same
   await fakeBrowser.storage.local.set({ device: { id: "synthetic", consent: { v: 1, at: 1 }, syncOn: true }, sync: history, [key]: g1, "doc:settings": settings })
   await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "H", created: 0 }, [base]: before[key], [setup.replace("doc:", "s:")]: before[setup] })
   const get = spyOn(fakeBrowser.storage.sync, "get"), set = spyOn(fakeBrowser.storage.sync, "set"), localSet = spyOn(fakeBrowser.storage.local, "set")
+  let monotonic = 0
+  spyOn(performance, "now").mockImplementation(() => monotonic)
+  spyOn(Date, "now").mockReturnValue(1000000)
   const adapter = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
   expect(get).not.toHaveBeenCalled()
   expect(set).not.toHaveBeenCalled()
   expect((await adapter.flushSync()).kind).toBe("deferred")
   expect<unknown>(get.mock.calls).toEqual([[null]])
   get.mockClear()
-  await new Promise(resolve => setTimeout(resolve, 5000))
+  monotonic = 5000
   expect((await adapter.flushSync()).kind).toBe("pushed")
   const prefix = '{"v":1,"gen":"settings-pending","at":1,"by":"old","data":{"future":"'
   expect<unknown>(set.mock.calls).toEqual([[{ [base]: g1, "s:settings": { v: 1, gen: "settings-pending", at: 1, by: "old", n: 2 },
     "s:settings@settings-pending.0": prefix + "x".repeat(8072), "s:settings@settings-pending.1": "x".repeat(928) + '"}}' }]])
-  expect<unknown>(get.mock.calls).toEqual([[null], [null]])
-  expect<unknown>(localSet.mock.calls).toEqual([[{ sync: { ...history, pushed: { ...history.pushed, [key]: "g1", "doc:settings": "settings-pending" } } }]])
+  expect<unknown>(get.mock.calls).toEqual([[null], [null], [null]])
+  expect<unknown>(localSet.mock.calls).toEqual([[{ sync: { ...history, opaqueWrite: { gate: { kind: "pending", notBefore: 1060000 }, diagnostic: null } } }], [{ sync: { ...history, pushed: { ...history.pushed, [key]: "g1", "doc:settings": "settings-pending" } } }]])
   expect(await adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
   expect(set).toHaveBeenCalledTimes(1)
   expect(await adapter.flushSync()).toEqual({ kind: "idle" })
@@ -452,4 +455,35 @@ test("intrinsic Setup forwarding shares the native owner without UI authority ca
   expect(await adapter.changeFromSettings(request, { ...sender, frameId: 1 })).toEqual({ kind: "result", result: { refused: "invalid" } })
   expect(set).toHaveBeenCalledTimes(2)
   await adapter.dispose()
+})
+
+
+test("synthetic adapter forwards independent wall clock and retains original recoverable native result", async () => {
+  const initial = await fakeBrowser.storage.local.get(null)
+  const setup = "doc:setup:AAAAAAAAAAAAAAAA", base = key.replace("doc:", "s:")
+  const history = { joined: "H", pushed: { [key]: "old", [setup]: "setup" }, status: "ok", editedSinceOff: false }
+  const pending = { v: 1, gen: "g1", at: 10, by: "synthetic", data: { mode: "deny", on: false, channels: [] } }
+  await fakeBrowser.storage.local.set({ device: { id: "synthetic", consent: { v: 1, at: 0 }, syncOn: true }, sync: history, [key]: pending })
+  await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "H", created: 0 }, [base]: initial[key], [setup.replace("doc:", "s:")]: initial[setup] })
+  let mono = 0, wall = 1000000
+  spyOn(performance, "now").mockImplementation(() => mono)
+  spyOn(Date, "now").mockImplementation(() => wall)
+  const marker = { name: "synthetic", message: "synthetic native failure" }
+  const nativeSet = spyOn(fakeBrowser.storage.sync, "set").mockImplementation(async () => { throw marker })
+  const results: SyncAutomaticResult[] = []
+  const subscribe = spyOn(fakeBrowser.storage.sync.onChanged, "addListener"), unsubscribe = spyOn(fakeBrowser.storage.sync.onChanged, "removeListener")
+  const adapter = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult: result => { results.push(result) } })
+  mono = 5000; wall = 2000000
+  const result = await adapter.flushSync()
+  expect(result.kind === "sync-set-failed" && result.error === marker).toBe(true)
+  expect((await fakeBrowser.storage.local.get("sync")).sync).toEqual({ ...history, opaqueWrite: { gate: { kind: "held", notBefore: 2060000 }, diagnostic: marker } })
+  await adapter.startSync()
+  expect(subscribe).toHaveBeenCalledTimes(1)
+  expect(unsubscribe).not.toHaveBeenCalled()
+  expect(results.at(-1)).toEqual({ kind: "deferred", notBefore: 65000 })
+  mono = 64999; wall = 3000000
+  expect((await adapter.flushSync()).kind).toBe("deferred")
+  expect(nativeSet).toHaveBeenCalledTimes(1)
+  await adapter.dispose()
+  expect(unsubscribe).toHaveBeenCalledTimes(1)
 })
