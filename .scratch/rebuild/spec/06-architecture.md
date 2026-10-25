@@ -1428,7 +1428,7 @@ type Origin =
 - **ARC-MOD-33. `update-needed`** refuses only an edit to a synced document that a newer version wrote and this browser can't read. Every other edit goes through ([SYNC-23](04-features-accounts-data.md#37-different-2x-versions-update-needed)). The sync status reads `waiting` while the join question hasn't been answered. (R13)
 - **ARC-MOD-21. What the store hides:**
   - the storage layout and its prefixes, codecs and stamps;
-  - migrations from 1.4.5 and 1.5.0;
+  - migrations from 1.4.5 and 1.5.0, and the separately recognized interim conversion obligations in [08 §2.12](08-release.md#212-interim-session-access-storage) (R156–R160);
   - the private-write table;
   - the budget counter, the chunker and tombstones;
   - the replicator: join, conflicts, push scheduling, shared mutation admission, safe cleanup, and write-failure recovery (R151, R155);
@@ -1448,7 +1448,9 @@ type Origin =
   2. every other module awaits `ready()`;
   3. on `"newer-layout"`, nothing registers and nothing is written. (R20, R21)
 
-  **Upgrade or fresh install** is decided in the same start-up step, on every background start ([REL-MIG-02](08-release.md#21-when-it-runs), [DATA-49](04-features-accounts-data.md#410-schema-versions-and-migrations)). (R64)
+  The interim path in [08 §2.12](08-release.md#212-interim-session-access-storage) precedes the original legacy classification below, even with `schema:1`. Inventory account bodies and index entries completely. Preserve canonical documents and tombstones, including Settings, and retain conflicting source inactive. Keep the deliberately shared account-target row separate from original legacy shortcut provenance. Require fresh canonical agreement and retire old in-flight work before activation. Unknown erased authorization must remain distinct from both known branches. Retained globals despite `legacyClaimed:true` require explicit recovery after review, restore and ownership proof. The marker proves no ownership or provenance. Compatible local representations, refusal/readiness outcomes, ordered execution and recovery interactions remain engineering work. No wire shape or reset rules are selected. Do not remove the current runtime refusal or treat these docs as verified production conversion. Existing session and privacy guards remain until equivalent target contracts are verified (R156–R160).
+
+  **Upgrade or fresh install** on the original legacy path is decided in the same start-up step, on every background start ([REL-MIG-02](08-release.md#21-when-it-runs), [DATA-49](04-features-accounts-data.md#410-schema-versions-and-migrations)). (R64)
   - If there's no consent record and no upgrade-note record (`device.consent` and `device.upgradeNote` are null or absent), and any 1.x key is in `storage.local`, it's an upgrade from 1.x: the upgrade-note path. With neither record and no 1.x key, it's a fresh install: the first-run path. That includes a 1.4.5 user with no 1.x key left, for whom no tab opens on the update (ARC-MOD-34; R76).
   - The 1.x keys are `playlists`, `addToPlaylistID`, `watchLaterShortcut`, `requiredWatchPercentage`, `toastEnabled`, `clientID`, `clientSecret`, `accessToken` and `refreshToken`.
   - It never relies on `runtime.onInstalled`, which Firefox can skip (ticket 06), or on the `schema` marker, which the first start may already have written. The event's one listener only opens first run on "install" (ARC-MOD-34).

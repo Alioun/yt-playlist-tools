@@ -74,6 +74,8 @@ These facts come from inventory.md, ticket 06 and 1.4.5's code at `e96dbf7`.
 
 ## 2. The 1.4.5 migration
 
+The original legacy rules in §2.1 to §2.11 apply after ruling out the recognized interim session-access path in [§2.12](#212-interim-session-access-storage). That path has separate confirmed defaults, collision, consent, historical-authorization and recovery obligations (R156–R160).
+
 ### 2.1 When it runs
 
 - **REL-MIG-01** The migration runs at the top of every background start, before the reconciler, the replicator and any message handler. Every other background module awaits the store's `ready()`; the popup, settings and the first-run page only read `storage.local`, and follow its changes ([ARC-MOD-24, ARC-MOD-25](06-architecture.md#69-the-store-module-interface)).
@@ -226,7 +228,7 @@ From ticket 08.
 
 ### 2.9 What the note is built from
 
-- **REL-MIG-33** The migration writes `device.upgradeNote` as `{state: "pending", details: UpgradeDetails, opened: false}`:
+- **REL-MIG-33** For the original legacy path, the migration writes `device.upgradeNote` as `{state: "pending", details: UpgradeDetails, opened: false}`:
 
 ```ts
 type UpgradeDetails = {
@@ -258,6 +260,8 @@ type UpgradeDetails = {
 
   The record and association stay in this browser, never sync, and end together on claim, discard, or Clear all data.
 
+The `UpgradeDetails` declaration above describes the original legacy path only. The recognized interim path must represent unknown historical authorization and unknown prior credential presence truthfully under REL-MIG-46. It must not coerce either into a known boolean. A compatible local extension and note model remain engineering work, with no wire schema selected here.
+
 ### 2.10 Claiming the unclaimed setup
 
 The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming) (ACC-28 to ACC-35, from ticket 11). Summary:
@@ -284,6 +288,20 @@ The full rules are in [04 §2.6](04-features-accounts-data.md#26-the-unclaimed-s
 | The user never agrees | Everything stays inert, with the badge. 1.4.5's carried choices are kept indefinitely. |
 | AMO rolls back 2.0.0 | It lands on 1.4.5's code, which is **inert** because its credentials were deleted, and it leaves 2.0's data alone. Hence fix forward for 2.0.0 (REL-CHK-08). |
 | A later downgrade below a `schema` bump | Inert. The popup says "This version of Perchling is older than your settings. Update it to continue." ([DATA-48](04-features-accounts-data.md#410-schema-versions-and-migrations)) |
+
+### 2.12 Interim session-access storage
+
+R156–R160 record the user's answers to Q7–Q10 and Q11a on 2026-10-25. This section owns the behavioral obligations for conversion from interim session-access storage. It does not select a wire schema, detailed collision or recovery UI, reset rules, or an ownership mechanism.
+
+- **REL-MIG-41. Recognition and complete inventory.** Recognize the interim families `account:<digest>`, `savedAccountKeys`, `sessionConsent`, `sessionGeneration` and `legacyClaimed` before the original legacy path, even when a stored marker is empty or false or `schema:1` exists. Account bodies and the account index must both be inventoried. An unindexed valid body is still saved data. An index entry with no body must not invent a setup, account label or cache-only account. Validate against canonical boundaries without silently rekeying, truncating or dropping choices. Unrepresentable or malformed source remains intact and conversion refuses. Newer layouts remain inert under DATA-48.
+- **REL-MIG-42. Account mapping.** Preserve valid interim saved playlists, their order, filters and shortcut targets under the same canonical account key. Carried auto-add playlists take Videos without a percentage override. Preserve filter mode, on/off state and channel labels, including kept and orphaned filters. Playlist caches remain separate from setups and never sync. Do not derive an account label or ownership proof from cached titles. Preserve the effective interim required percentage and Show feedback, including the interim fallbacks of 50 % and feedback on, rather than applying released-1.4.5 defaults to this path. R157's collision rule and R159's unknown-history rule still apply. Old global playlist and filter choices remain separately unclaimed. Conversion of account choices neither claims globals nor proves their ownership (R156).
+- **REL-MIG-43. Deliberately shared shortcut row.** In nonconflicting state, create one shared row with a deliberately assigned identity and place each account's saved shortcut target under that same row ID in its own setup. Equal keys, labels or row order never identify an existing canonical row. This row and its account mapping are separate from the original legacy unclaimed shortcut association in REL-MIG-34. Do not infer that association from an interim target or marker. R150 and R152 still forbid automatic recreation or rebinding of a deleted migrated shortcut. Canonical Settings collisions follow REL-MIG-44 (R156).
+- **REL-MIG-44. Canonical precedence.** Existing canonical 2.0 documents and tombstones win over overlapping interim choices. This includes canonical shared Settings. Do not insert the conversion-created row into conflicting canonical Settings, or write dependent targets as though a row had been restored. Retain conflicting interim source saved but inactive until explicit restore or discard. Do not union missing fields or use `cachedAt`, index order, session generation or conversion time to guess the user's later edit. Nonconflicting valid choices may map only under the other obligations in this section. Unresolved source must not be destructively removed. Detailed conflict presentation and explicit restore mechanics remain engineering work (R157).
+- **REL-MIG-45. Fresh disclosure before activation.** Require the user to agree again to the canonical 2.0 disclosure before any converted choice activates. Retain saved choices inactive meanwhile. `sessionConsent` and `sessionGeneration` establish neither the canonical disclosure version nor its agreement time, so they never manufacture `device.consent`. Agree records the current canonical version and actual agreement time under REL-CON-16 and REL-CON-17. Old in-flight work must be retired before canonical release. Existing consent, site-access, private-window and session-generation safeguards stay enforced until equivalent target contracts are verified (R158).
+- **REL-MIG-46. Unknown erased authorization.** On this recognized interim path, when historical authorization evidence has already been erased, retain an explicit local unknown state, distinct from known granted and known denied. Preserve a saved required percentage. With no saved percentage, use 50 % watched unless the user explicitly chooses immediate adding. If canonical Settings wins a collision, retain the interim percentage inactive under REL-MIG-44. Do not infer historical authorization from current credential absence, interim agreement, account choices, a session add or cached data. Do not infer prior credential presence from successful removal by name. The note must truthfully say that earlier access cannot be determined and must not use either known-history claim that 1.4.5 was adding immediately or never got access. A saved percentage is stated, not replaced by an unknown-history default. The original legacy known-authorization branches in REL-MIG-40 and R96 remain unchanged. Compatible local representation, truthful deletion evidence and note conditions remain engineering obligations (R159; ADR-0009 amendment of 2026-10-25).
+- **REL-MIG-47. Explicit recovery of retained globals.** Retain globals left behind despite `legacyClaimed:true` inactive and show an explicit recovery section. Nothing activates until review and explicit restore. Agreement or seeing an account alone never authorizes restore or automatic claiming of these retained globals. Existing canonical choices and deletions remain protected, and account ownership must still be established under ACC-30 and ACC-35. `legacyClaimed` proves neither ownership nor original shortcut provenance. Recovery must never automatically recreate or rebind a deleted migrated shortcut. Unresolved source must not be destructively removed. The earlier recommendation to treat these globals as permanently consumed without recovery is superseded. Detailed placement, interactions, compatible storage representation and ownership mechanisms remain engineering work or future genuine decisions, not selections made here (R160).
+
+The current interim runtime refusal is not removed by these documentation amendments. A complete planner, compatible local unknown/conflict/recovery representation, ordered and restart-safe execution, truthful note, and verified production ownership/session contracts are still required before conversion can run. A pending legacy note alone does not authorize cleanup of interim families under REL-MIG-09. Preserve unresolved source, and do not enable only a subset of this conversion by deleting the refusal.
 
 ## 3. The upgrade note
 
@@ -318,7 +336,7 @@ The copy rules:
 - one sentence per line;
 - the glossary's words.
 
-**REL-CON-04** The note renders this copy, with its conditions. Its layout is [05's upgrade note](05-ui.md#the-upgrade-note) (UI-ONB-06, UI-ONB-07).
+**REL-CON-04** The original legacy note renders this copy, with its conditions. Its layout is [05's upgrade note](05-ui.md#the-upgrade-note) (UI-ONB-06, UI-ONB-07).
 
 **Tab title:** YouTube Playlist Tools is now Perchling (ticket 30's S3; R98, R142). The old name in the tab tells someone who forgot 1.4.5 what this is.
 
@@ -384,7 +402,9 @@ Then the disclosure ([4.1](#41-the-disclosure)), followed by **[Agree and turn o
 
 ### 3.3 The one question the note asks
 
-- **REL-CON-05** The question shows only when `details.pct.wasUnset` is true. That's the one case where 1.4.5 showed one thing and did another.
+For the recognized interim path, REL-MIG-46 governs unknown-history copy and defaults. The known-history questions below must not be shown as claims about unknown history.
+
+- **REL-CON-05** The original legacy question shows only when `details.pct.wasUnset` is true. That's the one case where 1.4.5 showed one thing and did another.
 
 > 1.4.5 showed 50 % here, but it was actually adding videos as soon as they started playing. Which do you want?
 > (•) As soon as a video starts playing, like 1.4.5 did
@@ -468,6 +488,7 @@ First run's three steps (pick features › Before you start › Finish setting u
 ### 4.3 Consent rules
 
 - **REL-CON-16** One consent of our own gates every feature, on both browsers ([ADR-0010](../../../docs/adr/0010-one-consent-gates-every-feature.md)). It's stored as `device.consent = {v, at}`, per browser, and never synced.
+  - Interim session consent does not carry into canonical agreement. REL-MIG-45 requires fresh agreement before converted choices activate, with the actual version and time (R158).
   - It applies on Firefox too, even when Firefox shows its own data-collection prompt. Firefox's prompt covers data types; ours covers what each feature does, and it's the moment upgraders' choices take effect.
   - *Runner-up:* let Firefox's built-in consent stand in on Firefox. It lost for three reasons: it exists only when a data type is required, and 2.0 declares `none` (R83); it covers neither the feature choice nor claiming; and two consent flows mean two code paths.
   - In "Before this feature can run", an explicit Agree stays saved if the subsequent site-access request is denied. The affected feature stays off and the popup or Settings explains the missing access. This settles FT-32 with FT-52; first-run saved-on/held behavior and Playlist shortcuts' YouTube-only exception remain unchanged (R154).
@@ -1514,4 +1535,4 @@ The wordmark and store images, made once the name was decided ([R145–R147](res
 
 ### Not pinned down
 
-None remain; see [Resolved during assembly](#resolved-during-assembly). What still waits on the user or ticket 25's live checks is marked PROVISIONAL inline and listed in [§0](#0-provisional-inputs). Ticket 23 no longer waits: R83 settled it.
+Q7–Q10 and Q11a are settled by R156–R160 in §2.12. Detailed collision and recovery UI, compatible local representation, ordered execution and production ownership/session evidence remain outstanding as stated there. These amendments do not establish a working converter. Other inputs still waiting on the user or ticket 25's live checks are marked PROVISIONAL inline and listed in [§0](#0-provisional-inputs). Ticket 23 no longer waits. R83 settled it.
