@@ -177,3 +177,41 @@ test("readiness belongs to the shared first-lane owner", async () => {
   const result = await readinessAcceptance({ create: createStartingLocalFilterWriter, preinitialized: createLocalFilterWriter, Error: StartupReadinessError }, acct, playlist)
   expect(result.checks).toBeGreaterThan(100)
 })
+
+test("accepted account removal drains before readiness and closes every early owner operation", async () => {
+  const { createRemovalHarness, removalFixture } = await import("../../../tools/fixtures/account-removal-execution/run")
+  const h = createRemovalHarness(removalFixture(), { details: true }), origin = { kind: "ui", windowId: 1, incognito: false } as const
+  const acct = "AAAAAAAAAAAAAAAA"
+  if (!isAccountKey(acct)) throw Error("Invalid synthetic account")
+  const original = createLocalFilterWriter(h.deps), prepared = await original.prepareAccountRemoval(origin, acct)
+  if (prepared.kind !== "confirmation-required") throw Error("Missing explicit confirmation")
+  expect(await original.removeAccountSetup(origin, prepared.confirmation)).toEqual({ kind: "committed" })
+  const accepted = h.mutations[0]?.after
+  if (!accepted) throw Error("Missing actual accepted state")
+  await original.dispose()
+  const resumed = createRemovalHarness(JSON.parse(JSON.stringify(accepted))), host = resumed.deps.removal
+  if (host.kind !== "fixture") throw Error("Missing removal fixture")
+  let enter = () => {}, release = () => {}
+  const entered = new Promise<void>(resolve => { enter = resolve }), gate = new Promise<void>(resolve => { release = resolve })
+  const owner = createStartingLocalFilterWriter({ ...resumed.deps, startup: resumed.startup, removal: { ...host, async removeLocal(keys) {
+    if (keys.some(key => key.kind === "cache")) { enter(); await gate }
+    await host.removeLocal(keys)
+  } } })
+  await entered
+  expect(owner.ready()).toBe(owner.ready())
+  const before = resumed.state(), mutations = [...resumed.mutations]
+  expect(await owner.read("settings")).toEqual({ kind: "unavailable", reason: "startup" })
+  expect(await owner.readClaimNotice()).toEqual({ kind: "unavailable", reason: "startup" })
+  expect(await owner.prepareAccountRemoval(origin, acct)).toEqual({ kind: "unavailable", reason: "startup" })
+  expect(await owner.claim()).toEqual({ kind: "unavailable", reason: "startup" })
+  expect(await owner.receiveSyncDocument({ kind: "settings" })).toEqual({ kind: "unavailable", reason: "authority" })
+  expect(await owner.flushSync()).toEqual({ kind: "unavailable" })
+  await owner.startSync()
+  expect(resumed.state()).toEqual(before)
+  expect(resumed.mutations).toEqual(mutations)
+  release()
+  expect(await owner.ready()).toBe("ok")
+  expect(resumed.state()).toEqual(h.state())
+  expect(resumed.counts().generations).toBe(0)
+  await owner.dispose()
+})

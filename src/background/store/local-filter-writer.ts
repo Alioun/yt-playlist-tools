@@ -21,6 +21,9 @@ import type { ClaimNotice } from "../../shared/model"
 import type { Snapshot } from "../../shared/model/settings-view"
 import { projectClaimNotice, executeClaimNoticeAcknowledgement, type ClaimNoticeRead, type ClaimNoticeAcknowledgement, type NormalUiOrigin } from "./claim-notice"
 
+import { prepareAccountRemovalCapture, executeAccountRemoval, resumePendingAccountRemoval, pendingAccountRemovalKey,
+  type AccountRemovalHost, type AccountRemovalDependencies, type RemovalCapture, type RemovalConfirmation, type RemovalPreparation, type RemovalResult } from "./account-removal-execution"
+
 export type SettingsRead = SettingsView | { readonly kind: "unavailable"; readonly reason: "startup" | "newer-layout" | "disposed" | "stale" }
 export type SettingsEvent = { readonly kind: "settings-changed"; readonly source: "local" | "sync" }
 
@@ -193,6 +196,7 @@ function recoveryHistory(raw: JsonObject, gate: SyncOpaqueWrite["gate"], error?:
 type SyncEvent = { readonly kind: "edit" | "start" | "sync" | "manual"; readonly mono: number; readonly wall: number; readonly epoch: number }
 
 type LocalFilterWriterDependencies = {
+  readonly removal?: AccountRemovalHost
   readonly local: LocalWriteStorage
   readonly claim: ClaimHost
   readonly sync: SyncStorage
@@ -203,6 +207,8 @@ type LocalFilterWriterDependencies = {
 }
 
 type LocalFilterWriter = {
+  prepareAccountRemoval(origin: UiOrigin, acct: AccountKey): Promise<RemovalPreparation>
+  removeAccountSetup(origin: UiOrigin, confirmation: RemovalConfirmation): Promise<RemovalResult>
   readClaimNotice(): Promise<ClaimNoticeRead>
   acknowledgeClaimNotice(origin: NormalUiOrigin, expected: Snapshot<ClaimNotice>): Promise<ClaimNoticeAcknowledgement>
   read(view: "settings"): Promise<SettingsRead>
@@ -217,7 +223,7 @@ type LocalFilterWriter = {
 }
 
 export class StartupReadinessError extends Error {
-  constructor(readonly result: Exclude<StartupExecutionResult, { kind: "ok" | "newer-layout" }> | { readonly kind: "disposed" }) {
+  constructor(readonly result: Exclude<StartupExecutionResult, { kind: "ok" | "newer-layout" }> | { readonly kind: "disposed" } | { readonly kind: "pending-removal"; readonly result: Exclude<RemovalResult, { kind: "committed" | "unchanged" }> }) {
     super("Local startup did not release this owner")
     this.name = "StartupReadinessError"
   }
@@ -236,6 +242,10 @@ export function createStartingLocalFilterWriter(deps: LocalFilterWriterDependenc
 function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost) {
   let initialization: "pending" | "ok" | "newer-layout" | "failed" = startup ? "pending" : "ok"
   let claimConfirmation: "ready" | "unconfirmed" = "ready"
+  const removal = deps.removal ?? { kind: "unavailable" }
+  const removalLocal = deps.local
+  let removalChecked = false
+  const confirmations = new WeakMap<RemovalConfirmation, { readonly origin: JsonObject; readonly capture: RemovalCapture }>()
   const listeners = new Set<(event: SettingsEvent) => void>()
   let lane: Promise<void> = Promise.resolve()
   let lifetime: { kind: "inactive" | "stopped" | "disposed" } | { kind: "active"; unsubscribe: () => void } = { kind: "inactive" }
@@ -248,12 +258,45 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
   let hold: { mono: number; wall: number } | undefined
   let observedGate: JsonValue | undefined
 
+  const removalDependencies: AccountRemovalDependencies = {
+    local: removalLocal, sync: deps.sync, host: removal,
+    authority: records => hasInterimMarkers(records) ? { kind: "unavailable", reason: "startup" } : authority(records),
+    repairHistory: repairedHistory,
+    isStopped: disposed, now: () => deps.now(), generation: () => deps.generation()
+  }
+  async function completePendingRemoval(): Promise<RemovalResult> {
+    const result = await resumePendingAccountRemoval(removalDependencies)
+    if (result.kind === "committed" || result.kind === "unchanged") removalChecked = true
+    else {
+      claimConfirmation = "unconfirmed"
+      deactivate("stopped")
+    }
+    return result
+  }
+  const guardedLocal: LocalWriteStorage = {
+    set: items => removalLocal.set(items),
+    async get(keys) {
+      let records = await removalLocal.get(keys)
+      if (removalChecked) return records
+      if (keys !== null) {
+        // Joined Filter edits already require a complete read before any successful outcome.
+        if (isJsonObject(records.device) && records.device.syncOn === true) return records
+        records = await removalLocal.get(null)
+      }
+      if (!Object.hasOwn(records, pendingAccountRemovalKey)) { removalChecked = true; return records }
+      const result = await completePendingRemoval()
+      return result.kind === "committed" ? removalLocal.get(keys) : {}
+    }
+  }
+
   const readiness: Promise<"ok" | "newer-layout"> = startup ? enqueue(async () => {
     try {
       const result = await executeLegacyStartup({ local: deps.local, host: startup })
       if (disposed()) throw new StartupReadinessError({ kind: "disposed" })
       if (result.kind !== "ok" && result.kind !== "newer-layout") throw new StartupReadinessError(result)
       if (result.kind === "ok") {
+        const completion = await completePendingRemoval()
+        if ("stage" in completion || completion.kind === "result" || completion.kind === "unavailable") throw new StartupReadinessError({ kind: "pending-removal", result: completion })
         lastMonotonic = deps.syncClock.now()
         nextInvocation = lastMonotonic + 5000
         clockInvalid = !Number.isFinite(lastMonotonic) || lastMonotonic < 0 || nextInvocation > Number.MAX_SAFE_INTEGER
@@ -308,8 +351,8 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
     if (gate.kind === "pending") {
       const next = recoveryHistory(raw, { kind: "held", notBefore: Math.max(gate.notBefore, time.wall + 60000) })
       const expected = { ...snapshot(records), sync: next }
-      await deps.local.set({ sync: next })
-      const confirmed = await deps.local.get(null)
+      await guardedLocal.set({ sync: next })
+      const confirmed = await guardedLocal.get(null)
       if (disposed() || !isJsonObject(confirmed) || !sameSyncJson(expected, confirmed)) return
       hold.wall = Math.max(hold.wall, time.wall + 60000)
       observedGate = isJsonObject(next.opaqueWrite) ? next.opaqueWrite.gate : undefined
@@ -392,7 +435,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
 
   async function receiveIncomingDocuments(): Promise<SyncAutomaticResult | undefined> {
     if (lifetime.kind !== "active") return
-    const records = await deps.local.get(null)
+    const records = await guardedLocal.get(null)
     if (lifetime.kind !== "active") return
     const ready = authority(records)
     if (ready.kind !== "ready") return { kind: "unavailable" }
@@ -413,7 +456,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
       if (lifetime.kind !== "active") return
       if (result.kind === "unavailable" && (result.reason === "authority" || result.reason === "history")) {
         if (result.reason === "authority") {
-          const current = authority(await deps.local.get(null))
+          const current = authority(await guardedLocal.get(null))
           if (current.kind === "ready") observeOff(current.device.syncOn)
         }
         return { kind: "unavailable" }
@@ -442,7 +485,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
     const ok = { kind: "result", result: { ok: true } } as const
     const setupKey = documentKey({ kind: "setup", acct: change.acct })
     const filterKey = documentKey({ kind: "filter", acct: change.acct, playlist: change.playlist })
-    let records = await deps.local.get(["schema", "device", "sync", setupKey, filterKey])
+    let records = await guardedLocal.get(["schema", "device", "sync", setupKey, filterKey])
     let exhaustive = false
     for (;;) {
       const ready = authority(records)
@@ -473,7 +516,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
       if (filter.kind === "newer-version") return { kind: "result", result: { refused: "update-needed" } }
       if (device.syncOn) {
         if (!exhaustive) {
-          records = await deps.local.get(null)
+          records = await guardedLocal.get(null)
           exhaustive = true
           continue
         }
@@ -518,7 +561,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
         decodeSyncState(sync)
         items.sync = sync
       }
-      await deps.local.set(items)
+      await guardedLocal.set(items)
       if (device.syncOn) {
         quietUntil = deps.syncClock.now() + 2000
         const gate = history && decodeSyncState(history.raw).opaqueWrite?.gate
@@ -587,7 +630,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
       }
       return { kind: "ready", metadata, candidate } as const
     }
-    const initial = context(await deps.local.get(null))
+    const initial = context(await guardedLocal.get(null))
     if (initial.kind !== "ready") return initial
     const baseline = { device: snapshot(initial.device), history: snapshot(initial.history), raw: snapshot(initial.raw),
       selection: initial.selection.kind === "filter" ? { kind: "filter", setup: snapshot(initial.selection.setup) } as const : initial.selection }
@@ -608,22 +651,22 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
     const metadata = snapshot(remote.metadata)
     const document = snapshot(remote.candidate.json)
     const received: SyncDocumentRecord = { key, name, gen: incoming.gen, document }
-    const current = context(await deps.local.get(null))
+    const current = context(await guardedLocal.get(null))
     if (!unchanged(current)) return unavailable("authority")
     const preflight = observation(await deps.sync.get(), initial.joined)
     if (disposed()) return unavailable("authority")
     if (preflight.kind !== "ready") return preflight
     if (!sameSyncJson(metadata, preflight.metadata)) return unavailable("history")
     if (!sameSyncJson(document, preflight.candidate.json)) return unavailable("document")
-    const latest = context(await deps.local.get(null))
+    const latest = context(await guardedLocal.get(null))
     if (latest.kind !== "ready" || !unchanged(latest)) return unavailable("authority")
     const next = repairedHistory(latest.history, [received])
     if (!next) throw new TypeError("Missing incoming acknowledgement")
-    try { await deps.local.set({ [name]: document, sync: next }) } catch (error) {
+    try { await guardedLocal.set({ [name]: document, sync: next }) } catch (error) {
       return { kind: "local-set-failed", received, error }
     }
     try {
-      const records = await deps.local.get(null), post = context(records)
+      const records = await guardedLocal.get(null), post = context(records)
       if (post.kind === "unavailable" && post.reason === "authority" || disposed()) {
         return { kind: "unconfirmed", received, cause: { kind: "authority" } }
       }
@@ -648,7 +691,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
   }
 
   async function flush(event: SyncEvent | undefined): Promise<SyncFlushResult> {
-    let records = await deps.local.get(null)
+    let records = await guardedLocal.get(null)
     let ready = authority(records)
     if (disposed() || ready.kind !== "ready") return { kind: "unavailable" }
     observeOff(ready.device.syncOn)
@@ -674,16 +717,16 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
       if (before.mono < notBefore) return { kind: "deferred", notBefore }
       if (!isJsonObject(records) || !isJsonObject(records.sync)) return { kind: "unavailable" }
       const baseline = snapshot(records)
-      const current = await deps.local.get(null)
+      const current = await guardedLocal.get(null)
       if (disposed() || !isJsonObject(current) || !sameSyncJson(baseline, current)) return { kind: "unavailable" }
       const pending = recoveryHistory(records.sync, { kind: "pending", notBefore: before.wall + 60000 })
       prearmed = { ...baseline, sync: pending }
-      await deps.local.set({ sync: pending })
-      const confirmed = await deps.local.get(null)
+      await guardedLocal.set({ sync: pending })
+      const confirmed = await guardedLocal.get(null)
       if (disposed() || !isJsonObject(confirmed) || !sameSyncJson(prearmed, confirmed)) return { kind: "unavailable" }
       observedGate = isJsonObject(pending.opaqueWrite) ? pending.opaqueWrite.gate : undefined
       const remote = await deps.sync.get()
-      const latest = await deps.local.get(null)
+      const latest = await guardedLocal.get(null)
       if (disposed() || !isJsonObject(latest) || !sameSyncJson(prearmed, latest)) return { kind: "unavailable" }
       const currentReady = authority(latest)
       if (currentReady.kind !== "ready" || !currentReady.device.syncOn) return { kind: "unavailable" }
@@ -715,7 +758,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
         try {
           if (clockError) throw clockError.error
           if (!rejected || !prearmed) throw new TypeError("Recovery clock unavailable")
-          const current = await deps.local.get(null)
+          const current = await guardedLocal.get(null)
           if (disposed() || !isJsonObject(current) || !sameSyncJson(prearmed, current) || !isJsonObject(current.sync)) {
             throw new TypeError("Recovery authority changed")
           }
@@ -724,8 +767,8 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
           hold.wall = Math.max(hold.wall, finalizing.wall + 60000)
           const held = recoveryHistory(current.sync, { kind: "held", notBefore: hold.wall }, { value: error })
           const expected = { ...snapshot(current), sync: held }
-          await deps.local.set({ sync: held })
-          const confirmed = await deps.local.get(null)
+          await guardedLocal.set({ sync: held })
+          const confirmed = await guardedLocal.get(null)
           if (!isJsonObject(confirmed) || !sameSyncJson(expected, confirmed)) throw new TypeError("Recovery persistence unconfirmed")
           observedGate = isJsonObject(held.opaqueWrite) ? held.opaqueWrite.gate : undefined
         } catch (persistenceError) {
@@ -737,7 +780,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
     }
     let latest, postflight, remoteSnapshot
     try {
-      latest = await deps.local.get(null)
+      latest = await guardedLocal.get(null)
       const current = authority(latest)
       if (current.kind !== "ready" || !current.device.syncOn || !current.history ||
         current.history.joined !== ready.history?.joined || !sameSyncJson(current.rawDevice, ready.rawDevice)) {
@@ -769,12 +812,12 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
     }
     if (next) {
       try {
-        const baseline = await deps.local.get(null)
+        const baseline = await guardedLocal.get(null)
         if (disposed() || !isJsonObject(baseline) || !isJsonObject(latest) || !sameSyncJson(latest, baseline)) {
           return source.kind === "set" ? { kind: "unconfirmed", sent: plan.sent, cause: { kind: "authority" } } : { kind: "unavailable" }
         }
-        await deps.local.set({ sync: next })
-        const confirmed = await deps.local.get(null)
+        await guardedLocal.set({ sync: next })
+        const confirmed = await guardedLocal.get(null)
         if (disposed() || !isJsonObject(confirmed) || !sameSyncJson({ ...baseline, sync: next }, confirmed)) {
           return source.kind === "set" ? { kind: "unconfirmed", sent: plan.sent, cause: { kind: "readback" } } : { kind: "unavailable" }
         }
@@ -793,7 +836,63 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
     if (disposed() || claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
   }
 
+  function removalUnavailable(): Extract<RemovalResult, { kind: "unavailable" }> | undefined {
+    if (disposed()) return { kind: "unavailable", reason: "disposed" }
+    if (initialization !== "ok") return { kind: "unavailable", reason: initialization === "newer-layout" ? "newer-layout" : "startup" }
+    if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
+  }
+  function removalOrigin(origin: UiOrigin): Extract<RemovalResult, { kind: "result" }> | undefined {
+    if (!isJsonObject(origin) || origin.kind !== "ui" || !Number.isSafeInteger(origin.windowId) || origin.windowId < 0) return { kind: "result", result: { refused: "invalid" } }
+    if (origin.incognito !== false) return { kind: "result", result: { refused: "private" } }
+  }
+
   const writer: LocalFilterWriter = {
+    prepareAccountRemoval(origin, acct) {
+      const blocked = removalUnavailable() ?? removalOrigin(origin)
+      if (blocked) return Promise.resolve(blocked)
+      const caller = snapshot(origin)
+      return enqueue(async () => {
+        const blocked = removalUnavailable()
+        if (blocked) return blocked
+        const pending = await completePendingRemoval()
+        if (pending.kind !== "committed" && pending.kind !== "unchanged") return pending.kind === "failed"
+          ? { kind: "failed", stage: "prepare", error: pending.error } : { kind: "unavailable", reason: "pending-removal" }
+        const prepared = await prepareAccountRemovalCapture(removalDependencies, acct)
+        if (prepared.kind !== "captured") return prepared
+        const confirmation: RemovalConfirmation = Object.freeze({ kind: "account-removal-confirmation" })
+        confirmations.set(confirmation, { origin: caller, capture: prepared.capture })
+        return { kind: "confirmation-required", confirmation, acct, label: prepared.capture.label, scope: Object.freeze({ ...prepared.capture.scope }) }
+      })
+    },
+    removeAccountSetup(origin, confirmation) {
+      const blocked = removalUnavailable() ?? removalOrigin(origin)
+      if (blocked) return Promise.resolve(blocked)
+      const saved = confirmations.get(confirmation)
+      if (!saved || !sameSyncJson(saved.origin, origin)) return Promise.resolve({ kind: "unavailable", reason: "stale" })
+      confirmations.delete(confirmation)
+      const arrivalEpoch = epoch
+      const arrival = lifetime.kind === "active" ? clock() : undefined
+      return enqueue(async () => {
+        const blocked = removalUnavailable()
+        if (blocked) return blocked
+        cancelTicket()
+        const result = await executeAccountRemoval(removalDependencies, saved.capture)
+        let hasPending = false
+        if (result.kind !== "committed" && result.kind !== "unchanged") {
+          try { hasPending = Object.hasOwn(await removalLocal.get([pendingAccountRemovalKey]), pendingAccountRemovalKey) }
+          catch { hasPending = true }
+        }
+        if (hasPending || result.kind === "unconfirmed" || result.kind === "failed" && result.stage !== "prepare") {
+          claimConfirmation = "unconfirmed"
+          deactivate("stopped")
+        }
+        if (result.kind === "committed" && !disposed()) {
+          quietUntil = deps.syncClock.now() + 2000
+          if (lifetime.kind === "active") arm(Math.max(quietUntil, nextInvocation), arrival ? { kind: "edit", ...arrival, epoch: arrivalEpoch } : undefined)
+        }
+        return result
+      })
+    },
     readClaimNotice() {
       if (disposed()) return Promise.reject(new Error("Writer disposed"))
       const blocked = noticeUnavailable()
@@ -801,7 +900,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
       return enqueue(async () => {
         const blocked = noticeUnavailable()
         if (blocked) return blocked
-        const records = await deps.local.get(null)
+        const records = await guardedLocal.get(null)
         const stopped = noticeUnavailable()
         return stopped ?? projectClaimNotice({ records })
       })
@@ -818,7 +917,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
       return enqueue(async () => {
         const blocked = noticeUnavailable()
         if (blocked) return blocked
-        const result = await executeClaimNoticeAcknowledgement({ local: deps.local, expected: compare.notice, isStopped: () => noticeUnavailable() !== undefined })
+        const result = await executeClaimNoticeAcknowledgement({ local: guardedLocal, expected: compare.notice, isStopped: () => noticeUnavailable() !== undefined })
         if (result.kind === "unconfirmed") {
           claimConfirmation = "unconfirmed"
           deactivate("stopped")
@@ -835,7 +934,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
       return enqueue(async () => {
         const blocked = unavailable()
         if (blocked) return blocked
-        const records = await deps.local.get(["schema", "doc:settings"])
+        const records = await guardedLocal.get(["schema", "doc:settings"])
         const stale = unavailable()
         if (stale) return stale
         if (typeof records.schema === "number" && Number.isSafeInteger(records.schema) && records.schema > STORAGE_SCHEMA_VERSION) return { kind: "unavailable", reason: "newer-layout" }
@@ -859,7 +958,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
       const arrival = lifetime.kind === "active" ? clock() : undefined
       return enqueue(async () => {
         if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
-        const result = await executeSharedSetting({ local: deps.local, sync: deps.sync, authority: records => hasInterimMarkers(records) ? { kind: "unavailable", reason: "startup" } : authority(records), repairHistory: repairedHistory, disposed, now: deps.now, generation: deps.generation }, change)
+        const result = await executeSharedSetting({ local: guardedLocal, sync: deps.sync, authority: records => hasInterimMarkers(records) ? { kind: "unavailable", reason: "startup" } : authority(records), repairHistory: repairedHistory, disposed, now: deps.now, generation: deps.generation }, change)
         if (result.kind === "unconfirmed" || result.kind === "failed" && result.stage === "set") {
           claimConfirmation = "unconfirmed"
           deactivate("stopped")
@@ -882,7 +981,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
       return enqueue(async () => {
         if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
         if (deps.claim.kind === "unavailable") return { kind: "unavailable", reason: "authority" }
-        const result = await executeLocalClaim({ local: deps.local, host: deps.claim, now: deps.now, generation: deps.generation })
+        const result = await executeLocalClaim({ local: guardedLocal, host: deps.claim, now: deps.now, generation: deps.generation })
         if (result.kind === "unconfirmed") {
           claimConfirmation = "unconfirmed"
           deactivate("stopped")
@@ -912,7 +1011,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
         if (claimConfirmation === "unconfirmed" || lifetime.kind === "stopped" || lifetime.kind === "disposed") return
         let ready
         try {
-          const records = await deps.local.get(null)
+          const records = await guardedLocal.get(null)
           if (disposed()) return
           ready = authority(records)
           if (ready.kind === "ready") {

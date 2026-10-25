@@ -44,11 +44,11 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     }
   }
   function harness(records = seed()) {
-    const reads: string[][] = [], sets: Readonly<Record<string, unknown>>[] = []
+    const reads: (readonly string[] | null)[] = [], sets: Readonly<Record<string, unknown>>[] = []
     let times = 0, generations = 0
     const local: LocalWriteStorage = {
       async get(keys) {
-        reads.push([...(keys ?? Object.keys(records))])
+        reads.push(keys)
         return Object.fromEntries((keys ?? Object.keys(records)).filter(key => Object.hasOwn(records, key)).map(key => [key, records[key]]))
       },
       async set(items) { sets.push(items); Object.assign(records, items) }
@@ -68,7 +68,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     mode: "deny", on: false, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "Title", null, { future: true }]], future: { body: true }
   } }
   equal(h.sets, [{ [filterKey]: off }], "exact off write")
-  equal(h.reads, [["schema", "device", "sync", setupKey, filterKey]], "one exact-key read")
+  equal(h.reads, [["schema", "device", "sync", setupKey, filterKey], null], "initial targeted read and pending inventory check")
   equal(Object.fromEntries(Object.entries(h.records).filter(([key]) => key !== filterKey)), untouched, "unrelated data untouched")
   equal(await h.change({ mode: "allow", on: true }), invalid, "off list still needs confirmation")
   equal(await h.change({ mode: "deny", on: true }), ok, "on succeeds")
@@ -137,7 +137,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     equal(await x.change({ mode: "deny", on: false }), ok, "supported off history admits")
     equal(x.sets, [{ [filterKey]: off, sync: next }], "one complete two-key batch changes only the bit")
     equal(x.records, { ...seed(), [filterKey]: off, sync: next }, "full local state retains every unrelated record")
-    equal(x.reads, [["schema", "device", "sync", setupKey, filterKey]], "history uses same exact-key read")
+    equal(x.reads, [["schema", "device", "sync", setupKey, filterKey], null], "history retains targeted read and pending inventory check")
     equal(await x.change({ mode: "deny", on: true }), ok, "editing back remains an edit")
     equal(x.sets[1], { [filterKey]: { ...off, gen: "g2", at: 101, data: { ...off.data, on: true } } }, "already-true history is not rewritten")
     equal(x.records.sync, next, "bit stays true and pushed generations remain unacknowledged")
@@ -257,7 +257,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     const first = x.change({ mode: "deny", on: false })
     await entered.promise
     const second = x.change({ mode: "deny", on: true })
-    equal(x.reads.length, 1, "queued operation has no early read")
+    equal(x.reads.length, 2, "queued operation has no early read")
     equal(x.sets.length, 0, "pending set not acknowledged")
     release.resolve()
     equal(await first, ok, "first acknowledged after set")
@@ -273,7 +273,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     const first = x.change({ mode: "deny", on: false })
     await entered.promise
     const second = x.change({ mode: "deny", on: false })
-    equal(x.reads.length, 1, "queued repeat waits before reading")
+    equal(x.reads.length, 2, "queued repeat waits before reading")
     release.resolve()
     equal(await first, ok, "first batch acknowledged")
     equal(await second, ok, "queued repeat observes achieved state")
@@ -294,7 +294,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     equal(await x.change({ mode: "deny", on: false }), ok, "lane recovers")
     equal(x.sets.length, 1, "no automatic retry")
     equal(x.sets[0]?.sync, { ...history(), editedSinceOff: true }, "explicit recovery commits complete history")
-    equal(x.reads.length, failure === "get" ? 1 : 2, "explicit recovery rereads")
+    equal(x.reads.length, failure === "get" ? 2 : 3, "explicit recovery rereads")
   }
   {
     const x = harness({ ...seed(), sync: history() }), original = x.local.set, marker = new Error("reply lost after persistence")
@@ -411,7 +411,7 @@ test("preparation refusal leaves false history untouched before generation in th
   })()`
   const result = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
   expect(result).toEqual({ result: { kind: "result", result: { refused: "invalid" } }, preparations: 1,
-    generations: 0, sets: 0, reads: 1, unchanged: true })
+    generations: 0, sets: 0, reads: 2, unchanged: true })
 })
 
 test("actual browser artifact executes the acceptance matrix with injected effects only", async () => {
@@ -423,7 +423,7 @@ test("actual browser artifact executes the acceptance matrix with injected effec
     expect(file.startsWith(resolve(import.meta.dir, "../../shared/model") + "/") ||
       file === resolve(import.meta.dir, "../../shared/contracts/json.ts") ||
       file.startsWith(resolve(import.meta.dir, "../../shared/keys") + "/") ||
-      [entry, ...["claim-notice.ts", "shared-setting-execution.ts", "settings-edit.ts", "local-claim-writer.ts", "accounts.ts", "legacy.ts", "legacy-execution.ts", "legacy-startup.ts", "legacy-shortcut.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file)).toBe(true)
+      [entry, ...["account-removal-execution.ts", "account-removal-session.ts", "claim-notice.ts", "shared-setting-execution.ts", "settings-edit.ts", "local-claim-writer.ts", "accounts.ts", "legacy.ts", "legacy-execution.ts", "legacy-startup.ts", "legacy-shortcut.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file)).toBe(true)
     for (const imported of new Bun.Transpiler({ loader: "ts" }).scanImports(await readFile(file, "utf8"))) {
       expect(imported.path.startsWith(".")).toBe(true)
       const base = resolve(dirname(file), imported.path)
@@ -705,7 +705,7 @@ test("actual browser artifact rejects six observable admission defects", async (
       source: planner.replace('if (remote.kind === "newer-version") continue',
         'if (remote.kind === "newer-version") { documents.set(name, {key, name, gen: raw.gen, document:raw}); continue }') },
     { name: "stale-full-read", assertion: "fresh achieved state overrides stale preliminary changed value", path: writerPath,
-      source: writer.replace('          records = await deps.local.get(null)', 'const stale = records[filterKey]; records = { ...await deps.local.get(null), [filterKey]: stale }') },
+      source: writer.replace('          records = await guardedLocal.get(null)', 'const stale = records[filterKey]; records = { ...await guardedLocal.get(null), [filterKey]: stale }') },
     { name: "noop-newer-bypass", assertion: "achieved intent checks addressed newer remote", path: writerPath,
       source: writer.replace('if (!device.syncOn) return ok', 'return ok') },
     { name: "superseded-chunks", assertion: "superseded pending chunks never enter projection", path: plannerPath,
@@ -1036,7 +1036,7 @@ test("actual browser artifact rejects five observable outbound defects", async (
     { name: "stale-postflight", assertion: "stale postflight authority declines device", path: writerPath,
       source: writer.replace(' || !sameSyncJson(current.rawDevice, ready.rawDevice)', '') },
     { name: "split-replacement-repair", assertion: "changed replacement and exact old repair share one batch", path: writerPath,
-      source: writer.replace('await deps.local.set(items)', 'if (items.sync) { const { sync, ...documents } = items; await deps.local.set(documents); await deps.local.set({ sync }) } else await deps.local.set(items)') }
+      source: writer.replace('await guardedLocal.set(items)', 'if (items.sync) { const { sync, ...documents } = items; await guardedLocal.set(documents); await guardedLocal.set({ sync }) } else await guardedLocal.set(items)') }
   ]
   for (const fault of cases) {
     expect(fault.source).not.toBe(fault.path === plannerPath ? planner : writer)
@@ -1713,7 +1713,7 @@ test("receiver wrong alternatives fail at their intended observable assertions",
   const path = resolve(import.meta.dir, "local-filter-writer.ts"), original = await readFile(path, "utf8")
   const cases = [
     { name: "decoded-adoption", assertion: "raw omissions labels and tuple suffixes retained", source: original.replace('const document = snapshot(remote.candidate.json)', 'const document = snapshot(JSON.parse(JSON.stringify(remote.candidate.value.document)))') },
-    { name: "split-sets", assertion: "one exact two-key set", source: original.replace('await deps.local.set({ [name]: document, sync: next })', 'await deps.local.set({ [name]: document }); await deps.local.set({ sync: next })') },
+    { name: "split-sets", assertion: "one exact two-key set", source: original.replace('await guardedLocal.set({ [name]: document, sync: next })', 'await guardedLocal.set({ [name]: document }); await guardedLocal.set({ sync: next })') },
     { name: "pending-Q-acknowledgement", assertion: "one exact two-key set", source: original.replace('const next = repairedHistory(latest.history, [received])', 'const next = repairedHistory(latest.history, [received]); if (next && typeof next.pushed === "object" && next.pushed) Object.assign(next.pushed, { [`doc:filter:${key.acct}:PL_Q`]: "q1" })') },
     { name: "target-pending-overwrite", assertion: "target pending remains unavailable", source: original.replace('if (!Object.hasOwn(history.pushed, name) || history.pushed[name] !== initial.stamp.gen)', 'if (false)') },
     { name: "equal-stamp-tie", assertion: "equal lower same-generation conflict", source: original.replace('incoming.at <= initial.stamp.at', 'incoming.at < initial.stamp.at') },
@@ -2870,7 +2870,7 @@ function keptIncomingFaults(original: string) {
     { name: "outside-kept-lane", assertion: "kept same lane held IO L0", source: original.replace('return enqueue(() => receiveAttempt(key))', 'return receiveAttempt(key)') },
     { name: "decoded-kept", assertion: "kept raw omitted defaults", source: original.replace('const document = snapshot(remote.candidate.json)', 'const document = snapshot(JSON.parse(JSON.stringify(remote.candidate.value.document)))') },
     { name: "prepared-kept", assertion: "kept raw omitted defaults", source: original.replace('const document = snapshot(remote.candidate.json)', 'const document = snapshot(remote.candidate.json); const prepared = prepareDocumentBody({ kind: "filter", data: document.data }); if (prepared.kind === "prepared") document.data = prepared.data') },
-    { name: "split-kept-history", assertion: "kept one exact Filter-history batch", source: original.replace('await deps.local.set({ [name]: document, sync: next })', 'await deps.local.set({ [name]: document }); await deps.local.set({ sync: next })') },
+    { name: "split-kept-history", assertion: "kept one exact Filter-history batch", source: original.replace('await guardedLocal.set({ [name]: document, sync: next })', 'await guardedLocal.set({ [name]: document }); await guardedLocal.set({ sync: next })') },
     { name: "ack-pending-Q", assertion: "kept one exact Filter-history batch", source: original.replace('const next = repairedHistory(latest.history, [received])', 'const next = repairedHistory(latest.history, [received]); if (next && typeof next.pushed === "object" && next.pushed) Object.assign(next.pushed, {"doc:filter:AAAAAAAAAAAAAAAA:PL_Q":"q1"})') },
     { name: "early-mixed-history", assertion: "kept selected Settings cumulative lexical batches", source: original.replace('let lane: Promise<void>', 'let incomingHistory: JsonObject | undefined; let lane: Promise<void>').replace('const targets: SyncReceiveKey[] = []', 'incomingHistory = records.sync as JsonObject; const targets: SyncReceiveKey[] = []').replace('repairedHistory(latest.history, [received])', 'repairedHistory(incomingHistory ?? latest.history, [received])') },
     { name: "kept-timer-incoming", assertion: "kept timer remains outbound-only", source: original.replace('await automatic(current.event, false)', 'await automatic(current.event, true)') },
@@ -3344,7 +3344,7 @@ function setupIncomingFaults(original: string) {
     { name: "merged-Setup", assertion: "Setup raw special keys omissions and dangling references", source: original.replace('const document = snapshot(remote.candidate.json)', 'const document = { ...snapshot(initial.raw), ...snapshot(remote.candidate.json) }') },
     { name: "Setup-as-supporting-baseline", assertion: "Setup ordinary replacement adopted at L3", source: original.replace('!sameSelection(post.selection)', '(!sameSelection(post.selection) || key.kind === "setup" && !sameSyncJson(post.raw, baseline.raw))') },
     { name: "no-target-precommit-equality", assertion: "Setup target authority stale R0doc:setup:AAAAAAAAAAAAAAAA", source: original.replace('sameSelection(current.selection) && sameSyncJson(current.raw, baseline.raw)', 'sameSelection(current.selection)') },
-    { name: "split-Setup-history", assertion: "Setup one exact target-history batch", source: original.replace('await deps.local.set({ [name]: document, sync: next })', 'await deps.local.set({ [name]: document }); await deps.local.set({ sync: next })') },
+    { name: "split-Setup-history", assertion: "Setup one exact target-history batch", source: original.replace('await guardedLocal.set({ [name]: document, sync: next })', 'await guardedLocal.set({ [name]: document }); await guardedLocal.set({ sync: next })') },
     { name: "Setup-ack-Q", assertion: "Setup one exact target-history batch", source: original.replace('const next = repairedHistory(latest.history, [received])', 'const next = repairedHistory(latest.history, [received]); if (next && typeof next.pushed === "object" && next.pushed) Object.assign(next.pushed, {"doc:filter:AAAAAAAAAAAAAAAA:PL_Q":"q1"})') },
     { name: "Setup-early-history", assertion: "Setup K P T S cumulative lexical batches", source: original.replace('let lane: Promise<void>', 'let incomingHistory: JsonObject | undefined; let lane: Promise<void>').replace('const targets: SyncReceiveKey[] = []', 'incomingHistory = records.sync as JsonObject; const targets: SyncReceiveKey[] = []').replace('repairedHistory(latest.history, [received])', 'repairedHistory(incomingHistory ?? latest.history, [received])') },
     { name: "skip-Setup-enumeration", assertion: "actual automatic Setup start adoption", fixture: true, source: original.replace(' || key?.kind === "setup"', '') },
@@ -3740,7 +3740,7 @@ test("opaque recovery durably gates real owner events and uncertain storage", as
 
 function recoveryFaults(original: string) {
   return [
-    { name: "absent-prearm", assertion: "native invocation observes confirmed durable prearm", source: original.replace('await deps.local.set({ sync: pending })', '').replace('!sameSyncJson(prearmed, confirmed)', 'false').replace('!sameSyncJson(prearmed, latest)', 'false') },
+    { name: "absent-prearm", assertion: "native invocation observes confirmed durable prearm", source: original.replace('await guardedLocal.set({ sync: pending })', '').replace('!sameSyncJson(prearmed, confirmed)', 'false').replace('!sameSyncJson(prearmed, latest)', 'false') },
     { name: "restart-without-floor", assertion: "fresh owner has minimum sixty-second monotonic floor normal", source: original.replace('Math.max(time.mono + 60000, time.mono + Math.max(0, gate.notBefore - time.wall))', 'time.mono + Math.max(0, gate.notBefore - time.wall)') },
     { name: "forward-clock-admission", assertion: "unsafe clock does not admit forward", source: original.replace('event.mono >= hold.mono && ', '').replace('time.mono >= hold.mono && ', '') },
     { name: "backward-clock-admission", assertion: "unsafe clock does not admit backward", source: original.replace('event.wall >= hold.wall && ', '').replace(' && time.wall >= hold.wall', '') },

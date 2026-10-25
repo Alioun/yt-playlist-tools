@@ -15,6 +15,8 @@ function negative(deps: Parameters<typeof createLocalFilterWriter>[0], starting:
   createStartingLocalFilterWriter(deps)
   // @ts-expect-error Readiness accepts no override or schema assertion.
   void starting.ready("ok")
+  // @ts-expect-error A successful removal cannot be reported as a readiness failure.
+  new StartupReadinessError({ kind: "pending-removal", result: { kind: "committed" } })
   // @ts-expect-error Failure results cannot contain success.
   new StartupReadinessError({ kind: "ok" })
 }
