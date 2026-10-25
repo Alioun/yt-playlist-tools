@@ -16,6 +16,7 @@ export type SyncOpaqueWrite = {
 
 export type SyncState = {
   opaqueWrite?: SyncOpaqueWrite
+  everEdited?: boolean
   joined: string | null
   pushed: Record<string, string>
   status: "off" | "joining" | "ok" | "full" | "update-needed" | "waiting"

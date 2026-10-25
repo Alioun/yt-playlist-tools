@@ -15,5 +15,6 @@ export const decodeSyncState: (raw: unknown) => SyncState = object<SyncState>({
   pushed: dictionary(() => true, nonempty),
   status: oneOf("off", "joining", "ok", "full", "update-needed", "waiting"),
   editedSinceOff: boolean,
+  everEdited: optional(boolean),
   opaqueWrite: optional(opaqueWrite)
 })

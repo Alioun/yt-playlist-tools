@@ -16,6 +16,7 @@ export type SyncStateProofs = [
     status: "off" | "joining" | "ok" | "full" | "update-needed" | "waiting"
     editedSinceOff: boolean
     opaqueWrite?: SyncOpaqueWrite
+    everEdited?: boolean
   }>>,
   Check<Equal<typeof decodeSyncState, (raw: unknown) => SyncState>>
 ]
@@ -36,6 +37,37 @@ function roundtrip(value: unknown): unknown {
 }
 
 describe("canonical sync history", () => {
+  test("first-edit provenance is optional and validates both boolean values without backfill", () => {
+    const old = { joined: null, pushed: {}, status: "off", editedSinceOff: false } satisfies SyncState
+    const before = structuredClone(old)
+    expect(decodeSyncState(old)).toEqual(old)
+    expect(Object.hasOwn(decodeSyncState(old), "everEdited")).toBe(false)
+    expect(Object.hasOwn(decodeSyncState({ ...old, everEdited: undefined }), "everEdited")).toBe(false)
+    for (const everEdited of [false, true]) {
+      const raw = { ...old, everEdited, future: { items: [null, 1] },
+        opaqueWrite: { gate: { kind: "held" as const, notBefore: 60_000, future: [false] },
+          diagnostic: { name: null, message: "synthetic opaque failure", future: { keep: true } } } }
+      const saved = structuredClone(raw)
+      expect(decodeSyncState(raw)).toEqual(saved)
+      expect(raw).toEqual(saved)
+    }
+    expect(old).toEqual(before)
+  })
+
+  test.each([null, 0, 1, "false", "true", [], {}].map(everEdited => ({ everEdited })))("rejects malformed owned first-edit provenance %p", ({ everEdited }) => {
+    const raw = { joined: null, pushed: {}, status: "off", editedSinceOff: false, everEdited }
+    const before = structuredClone(raw)
+    try {
+      decodeSyncState(raw)
+      throw new Error("Expected invalid first-edit provenance")
+    } catch (error) {
+      expect(error).toBeInstanceOf(DecodeError)
+      if (!(error instanceof DecodeError)) throw error
+      expect(error.path).toBe("value.everEdited")
+    }
+    expect(raw).toEqual(before)
+  })
+
   test("requires the exact owned shape and retains opaque pushed keys and every extension", () => {
     const raw = JSON.parse('{"joined":"history-id","pushed":{"doc:settings":"g1","unrecognized:key":"g2","":"g3","__proto__":"g4"},"status":"off","editedSinceOff":false,"future":{"nested":[1,null]},"__proto__":{"keep":true},"toJSON":"inert","v":99}')
     expect(decodeSyncState(raw)).toEqual(raw)
