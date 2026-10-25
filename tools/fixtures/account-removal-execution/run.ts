@@ -132,7 +132,8 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
     }
     delete state.local[`cache:${acct}`]
     for (let shard = 0; shard < 16; shard++) delete state.local[`progress:${acct}:${shard}`]
-    if (object(state.local.sync) && !synced && state.local.sync.editedSinceOff === false) state.local.sync.editedSinceOff = true
+    if (!object(state.local.sync)) state.local.sync = { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true }
+    else { state.local.sync.everEdited = true; if (!synced) state.local.sync.editedSinceOff = true }
     if (json(state.local.device).lastAccount === acct) json(state.local.device).lastAccount = null
     delete state.session[`skips:${acct}`]; delete state.session[`cooldown:${acct}`]
     for (const key of ["recent", "recentAdds"]) if (Array.isArray(state.session[key])) state.session[key] = state.session[key].filter(row => object(row) && row.acct !== acct)
@@ -310,7 +311,7 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
     json(seed.local.sync).opaqueWrite = { gate: { kind: gate, notBefore: 1060000, extension: true }, diagnostic: { name: "Original", message: "opaque", extension: true }, extension: true }
     const h = createRemovalHarness(seed), operation = await action(h)
     equal(operation.result, { kind: "committed" }, "removal preserves opaque recovery while committing local facts")
-    equal(h.state().local.sync, seed.local.sync, "prepare and removal preserve exact R155 pending/held diagnostics and deadline")
+    equal(h.state().local.sync, { ...json(seed.local.sync), everEdited: true }, "removal preserves exact R155 pending/held diagnostics and deadline with true provenance")
     equal(h.schedules, [], "removal creates no opaque-recovery retry timer")
     h.time(5000)
     equal((await operation.writer.flushSync()).kind, "deferred", "current external flush imports the minimum restart hold")

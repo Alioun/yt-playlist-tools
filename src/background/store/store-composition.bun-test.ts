@@ -93,7 +93,7 @@ async function compositionAcceptance(create: typeof createLocalFilterWriter, acc
     equal(h.batches, [{ device: { ...(typeof rawDevice === "object" ? rawDevice : {}), claimNotice: notice }, unclaimed: null,
       [S]: { ...stamp, gen: "G1", at: 100, data: { label: null, autoAdd: [{ pl: "PL_Q", takes: "shorts", pct: 0 }, { pl: playlist, takes: "videos" }], targets: {}, quickSave: null, musicSave: null, gather: null, marks: {}, extension: "setup" } },
       [F]: { v: 1, gen: "G2", at: 100, by: "fixture", data: { mode: "allow", on: false, channels: [] } },
-      sync: { ...(typeof old.sync === "object" ? old.sync : {}), editedSinceOff: true }
+      sync: { ...(typeof old.sync === "object" ? old.sync : {}), editedSinceOff: true, everEdited: true }
     }, { [F]: { v: 1, gen: "G3", at: 100, by: "fixture", data: { mode: "allow", on: true, channels: [] } } }], "claim exact notice/null batch then Filter-only edit")
     equal(h.stats.maximumNative, 1, "joint native invocations do not overlap")
     await w.dispose(); h.records = copy(h.records); const saved = copy(h.records), stats = copy(h.stats), restart = h.make()
@@ -214,4 +214,14 @@ test("shared claim, Filter and sync owner preserves serialization, uncertainty a
   const acct = "AAAAAAAAAAAAAAAA", playlist = "PL_P"
   if (!isAccountKey(acct) || !isPlaylistId(playlist)) throw Error("Invalid fixture IDs")
   expect((await compositionAcceptance(createLocalFilterWriter, acct, playlist)).assertions).toBeGreaterThan(90)
+})
+
+
+test("real first-edit transactions, global Filter uncertainty and fixed removal restarts", async () => {
+  const { runFirstEditOwnerFixture } = await import("../../../tools/fixtures/first-edit-owner/run")
+  const result = await runFirstEditOwnerFixture()
+  expect(result.cases).toBeGreaterThan(100)
+  expect(result.assertions).toBeGreaterThan(500)
+  expect(result.production).toBe("not-connected")
+  expect(result.positiveInitialization).toBe("pending")
 })

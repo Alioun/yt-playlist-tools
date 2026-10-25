@@ -1,3 +1,4 @@
+import { prepareFirstEditHistory, readFirstEditProvenance } from "./first-edit-provenance"
 import {
   CONSENT_VERSION, DOCUMENT_VERSION, DecodeError, decodeDevice, decodeDocument, decodeFilter, decodeSetup,
   documentKey, parseDocumentKey, isAccountKey, isPlaylistId, type AccountKey, type Device, type DocumentKey, type Filter, type Tombstone
@@ -166,6 +167,7 @@ function unsupportedAccountKeys(local: JsonObject, acct: AccountKey): boolean {
 export function captureAccountRemoval(records: unknown, acct: AccountKey, ready: Authority):
   { readonly kind: "captured"; readonly capture: RemovalCapture } | { readonly kind: "unchanged" } | RemovalUnavailable | RemovalRefusal {
   if (!object(records) || !isAccountKey(acct) || !object(ready.rawDevice.consent)) return unavailable("inventory")
+  if (readFirstEditProvenance(Object.hasOwn(records, "sync") ? { kind: "present", raw: records.sync } : { kind: "absent" }).kind === "invalid") return unavailable("sync-writer-required")
   if (Object.hasOwn(records, pendingAccountRemovalKey)) return unavailable("pending-removal")
   const name = documentKey({ kind: "setup", acct }), rawSetup = records[name]
   if (unsupportedAccountKeys(records, acct)) return unavailable("inventory")
@@ -222,7 +224,8 @@ export async function prepareAccountRemovalCapture(deps: AccountRemovalDependenc
 
 function matchesAuthority(deps: AccountRemovalDependencies, local: JsonObject, record: PendingAccountRemoval, raw: JsonObject): boolean {
   const ready = deps.authority(local)
-  return ready.kind === "ready" && ready.device.id === record.deviceId && object(ready.rawDevice.consent) &&
+  return readFirstEditProvenance(Object.hasOwn(local, "sync") ? { kind: "present", raw: local.sync } : { kind: "absent" }).kind !== "invalid" &&
+    ready.kind === "ready" && ready.device.id === record.deviceId && object(ready.rawDevice.consent) &&
     object(raw.consent) && sameSyncJson(ready.rawDevice.consent, raw.consent) &&
     (record.mode === "local" ? !ready.device.syncOn : ready.device.syncOn && ready.history?.joined === record.joined)
 }
@@ -365,8 +368,7 @@ async function complete(deps: AccountRemovalDependencies, parsed: NonNullable<Re
     }
     stage = "documents"
     if (record.mode === "synced") {
-      const unfinished = record.documents.some(member => !object(local[documentKey(member.key)]) || !sameSyncJson(member.after, local[documentKey(member.key)] ?? null))
-      if (unfinished) {
+      {
         const remote = await deps.sync.get()
         const [first, ...rest] = record.documents
         const plan = planSyncWrite({ local, sync: remote, intent: { kind: "changed-batch", documents: [
@@ -380,17 +382,24 @@ async function complete(deps: AccountRemovalDependencies, parsed: NonNullable<Re
         const ready = deps.authority(local)
         if (ready.kind !== "ready" || !ready.history) return unavailable("sync-writer-required")
         const history = deps.repairHistory(ready.history.raw, plan.repairs)
-        if (history) items.sync = history
-        const changed = await effect({ ...local, ...items }, session, { kind: "local-set", items }); if (changed) return changed
+        const patch = prepareFirstEditHistory({ history: { kind: "present", raw: history ?? ready.history.raw }, syncOn: true })
+        if (patch.kind === "unavailable") return unavailable("sync-writer-required")
+        if (patch.kind === "set") items.sync = patch.sync
+        else if (history) items.sync = history
+        if (Object.keys(items).length > 0) {
+          const changed = await effect({ ...local, ...items }, session, { kind: "local-set", items }); if (changed) return changed
+        }
       }
     } else {
+      for (const member of record.documents) { const issue = await removeLocal({ kind: "document", key: member.key }); if (issue) return issue }
       const ready = deps.authority(local)
       if (ready.kind !== "ready") return unavailable("pending-removal")
-      if (ready.history && !ready.history.editedSinceOff) {
-        const sync = { ...ready.history.raw, editedSinceOff: true }
+      const patch = prepareFirstEditHistory({ history: Object.hasOwn(local, "sync") ? { kind: "present", raw: local.sync } : { kind: "absent" }, syncOn: false })
+      if (patch.kind === "unavailable") return unavailable("sync-writer-required")
+      if (patch.kind === "set") {
+        const sync = patch.sync
         const issue = await effect({ ...local, sync }, session, { kind: "local-set", items: { sync } }); if (issue) return issue
       }
-      for (const member of record.documents) { const issue = await removeLocal({ kind: "document", key: member.key }); if (issue) return issue }
     }
     stage = "local-cleanup"
     const cache = await removeLocal({ kind: "cache", acct: record.acct }); if (cache) return cache

@@ -25,3 +25,6 @@ A separate `claim-notice` case extends the ten preceding cases. It starts the re
 A confirmed OK writes exactly `{device: nextRawDevice}` with only `claimNotice` changed to null. Reread, duplicate OK, and fresh restart remain empty. Claimed documents and consumed Unclaimed stay exact. Complete inputs, batches, saved state, presentation, action, counters, and results appear in `noticeOutcomes`. Notice operations access no ownership, permission, sync, clock, generation, event, or timer port.
 
 This is a normal-window synthetic caller. It installs no popup, DOM, sender route, production consumer, or Device subscription. It establishes no policy for dismissing a saved normal-window claim notice from a future private popup. Native checks remain waived and unproven.
+
+
+The command also checks real edit provenance. Claims that save documents persist `everEdited:true` and the off bit in their existing batch. Existing and skipped-empty claims consume Unclaimed and save their notice without changing history. Notice acknowledgement preserves that history. Literal preinitialized consent is synthetic input, and this command implements no Agree or positive unedited initializer.

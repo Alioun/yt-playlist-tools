@@ -136,6 +136,12 @@ export async function runClaimFixture() {
       joint = { held: before, edit, filter: records[`doc:filter:${acct}:${playlist}`], preservedNoticeAndNull: true }
     }
     const result = await claiming
+    if (result.kind === "committed") {
+      const sync = records.sync
+      if (!sync || typeof sync !== "object" || !("editedSinceOff" in sync)) throw Error("Missing saved history")
+      const changed = generations > 0
+      if (changed ? !("everEdited" in sync) || sync.everEdited !== true || sync.editedSinceOff !== true : "everEdited" in sync || sync.editedSinceOff !== false) throw Error("Claim provenance follows actual documents only")
+    }
     await writer.dispose()
     const serialized = JSON.stringify(records)
     records = JSON.parse(serialized)

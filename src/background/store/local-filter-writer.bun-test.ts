@@ -68,9 +68,9 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
   const off = { v: 1, gen: "g1", at: 100, by: "device-fixture", envelope: { keep: true }, data: {
     mode: "deny", on: false, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "Title", null, { future: true }]], future: { body: true }
   } }
-  equal(h.sets, [{ [filterKey]: off }], "exact off write")
-  equal(h.reads, [["schema", "device", "sync", setupKey, filterKey], null], "initial targeted read and pending inventory check")
-  equal(Object.fromEntries(Object.entries(h.records).filter(([key]) => key !== filterKey)), untouched, "unrelated data untouched")
+  equal(h.sets, [{ [filterKey]: off, sync: { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true } }], "exact off write")
+  equal(h.reads, [["schema", "device", "sync", setupKey, filterKey], null, null, null, null], "initial targeted read, pending inventory, detached inventory, preflight and readback")
+  equal(Object.fromEntries(Object.entries(h.records).filter(([key]) => key !== filterKey && key !== "sync")), untouched, "unrelated data untouched")
   equal(await h.change({ mode: "allow", on: true }), invalid, "off list still needs confirmation")
   equal(await h.change({ mode: "deny", on: true }), ok, "on succeeds")
   equal(h.records[filterKey], { ...off, gen: "g2", at: 102, data: { ...off.data, on: true } }, "on retains list")
@@ -133,18 +133,18 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     check(Object.hasOwn(x.records, "sync") && x.records.sync === raw, "present history is never initialized")
   }
   for (const joined of ["history-id", null]) {
-    const raw = { ...history(), joined }, next = { ...raw, editedSinceOff: true }
+    const raw = { ...history(), joined }, next = { ...raw, editedSinceOff: true, everEdited: true }
     const x = harness({ ...seed(), sync: raw })
     equal(await x.change({ mode: "deny", on: false }), ok, "supported off history admits")
     equal(x.sets, [{ [filterKey]: off, sync: next }], "one complete two-key batch changes only the bit")
     equal(x.records, { ...seed(), [filterKey]: off, sync: next }, "full local state retains every unrelated record")
-    equal(x.reads, [["schema", "device", "sync", setupKey, filterKey], null], "history retains targeted read and pending inventory check")
+    equal(x.reads, [["schema", "device", "sync", setupKey, filterKey], null, null, null, null], "history retains complete baseline, preflight and readback")
     equal(await x.change({ mode: "deny", on: true }), ok, "editing back remains an edit")
     equal(x.sets[1], { [filterKey]: { ...off, gen: "g2", at: 101, data: { ...off.data, on: true } } }, "already-true history is not rewritten")
     equal(x.records.sync, next, "bit stays true and pushed generations remain unacknowledged")
   }
   {
-    const raw = { ...history(), editedSinceOff: true }, x = harness({ ...seed(), sync: raw })
+    const raw = { ...history(), editedSinceOff: true, everEdited: true }, x = harness({ ...seed(), sync: raw })
     equal(await x.change({ mode: "deny", on: false }), ok, "already true admits")
     equal(x.sets, [{ [filterKey]: off }], "already true writes only Filter")
     check(x.records.sync === raw, "already true retains history object")
@@ -169,7 +169,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     equal(x.counts().generations, 0, "refused clearing never generates")
     equal(await x.change({ mode: "allow", on: false }, "g1"), ok, "fresh clearing with false flag admits")
     equal(x.sets, [{ [filterKey]: { ...off, gen: "g1", at: 102, data: { ...off.data, mode: "allow", channels: [] } },
-      sync: { ...history(), editedSinceOff: true } }], "confirmed clearing and bit share one set")
+      sync: { ...history(), editedSinceOff: true, everEdited: true } }], "confirmed clearing and bit share one set")
   }
   {
     const x = harness(); const device = x.records.device
@@ -258,13 +258,13 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     const first = x.change({ mode: "deny", on: false })
     await entered.promise
     const second = x.change({ mode: "deny", on: true })
-    equal(x.reads.length, 2, "queued operation has no early read")
+    equal(x.reads.length, 4, "queued operation has no early read")
     equal(x.sets.length, 0, "pending set not acknowledged")
     release.resolve()
     equal(await first, ok, "first acknowledged after set")
     equal(await second, ok, "second observes committed first")
     equal(x.sets.length, 2, "second is actual mutation")
-    equal(x.sets[0], { [filterKey]: off, sync: { ...history(), editedSinceOff: true } }, "queued first writes the full batch")
+    equal(x.sets[0], { [filterKey]: off, sync: { ...history(), editedSinceOff: true, everEdited: true } }, "queued first writes the full batch")
     equal(Object.keys(x.sets[1] ?? {}), [filterKey], "queued second reads accepted true bit")
     equal(x.records[filterKey], { ...off, gen: "g2", at: 101, data: { ...off.data, on: true } }, "admission time preserved behind lane")
   }
@@ -274,7 +274,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     const first = x.change({ mode: "deny", on: false })
     await entered.promise
     const second = x.change({ mode: "deny", on: false })
-    equal(x.reads.length, 2, "queued repeat waits before reading")
+    equal(x.reads.length, 4, "queued repeat waits before reading")
     release.resolve()
     equal(await first, ok, "first batch acknowledged")
     equal(await second, ok, "queued repeat observes achieved state")
@@ -292,10 +292,12 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     equal(stable(x.records), before, "rejected batch leaves Filter and false flag intact")
     x.local.get = originalGet
     x.local.set = originalSet
-    equal(await x.change({ mode: "deny", on: false }), ok, "lane recovers")
-    equal(x.sets.length, 1, "no automatic retry")
-    equal(x.sets[0]?.sync, { ...history(), editedSinceOff: true }, "explicit recovery commits complete history")
-    equal(x.reads.length, failure === "get" ? 2 : 3, "explicit recovery rereads")
+    const recovered = failure === "set" ? harness(x.records) : x
+    if (failure === "set") equal(await x.change({ mode: "deny", on: false }), { kind: "unavailable", reason: "stale" }, "attempted set closes old owner")
+    equal(await recovered.change({ mode: "deny", on: false }), ok, "fresh validated lane recovers")
+    equal(recovered.sets.length, 1, "no automatic retry")
+    equal(recovered.sets[0]?.sync, { ...history(), editedSinceOff: true, everEdited: true }, "explicit recovery commits complete history")
+    equal(recovered.reads.length, 5, "explicit recovery rereads and confirms")
   }
   {
     const x = harness({ ...seed(), sync: history() }), original = x.local.set, marker = new Error("reply lost after persistence")
@@ -303,7 +305,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     let rejected: unknown
     try { await x.change({ mode: "deny", on: false }) } catch (error) { rejected = error }
     check(rejected === marker, "acknowledgement loss rejects separately from no-write failure")
-    equal(x.sets, [{ [filterKey]: off, sync: { ...history(), editedSinceOff: true } }], "lost reply follows accepted full batch")
+    equal(x.sets, [{ [filterKey]: off, sync: { ...history(), editedSinceOff: true, everEdited: true } }], "lost reply follows accepted full batch")
     const fresh = harness(x.records)
     equal(await fresh.change({ mode: "deny", on: false }), ok, "fresh writer rereads achieved state after lost reply")
     equal(fresh.sets, [], "fresh writer does not replay accepted batch")
@@ -365,7 +367,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
           return result
         } }
       }
-      const assertion = wrong === "noop" ? "no-op never writes the bit" : "one complete two-key batch changes only the bit"
+      const assertion = wrong === "noop" ? "no-op no set" : wrong === "split" ? "exact off write" : "off succeeds"
       let caught = false
       try { await acceptance(broken, acct, playlist, FixtureDate, false) } catch (error) {
         caught = error instanceof Error && error.message.startsWith(assertion + ":")
@@ -412,7 +414,7 @@ test("preparation refusal leaves false history untouched before generation in th
   })()`
   const result = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
   expect(result).toEqual({ result: { kind: "result", result: { refused: "invalid" } }, preparations: 1,
-    generations: 0, sets: 0, reads: 2, unchanged: true })
+    generations: 0, sets: 0, reads: 3, unchanged: true })
 })
 
 test("actual browser artifact executes the acceptance matrix with injected effects only", async () => {
@@ -424,7 +426,7 @@ test("actual browser artifact executes the acceptance matrix with injected effec
     expect(file.startsWith(resolve(import.meta.dir, "../../shared/model") + "/") ||
       file === resolve(import.meta.dir, "../../shared/contracts/json.ts") ||
       file.startsWith(resolve(import.meta.dir, "../../shared/keys") + "/") ||
-      [entry, ...["interim-persistence.ts", "interim-conversion.ts", "interim-profile.ts", "account-removal-execution.ts", "account-removal-session.ts", "claim-notice.ts", "shared-setting-execution.ts", "settings-edit.ts", "local-claim-writer.ts", "accounts.ts", "legacy.ts", "legacy-execution.ts", "legacy-startup.ts", "legacy-shortcut.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file)).toBe(true)
+      [entry, ...["interim-persistence.ts", "first-edit-provenance.ts", "interim-conversion.ts", "interim-profile.ts", "account-removal-execution.ts", "account-removal-session.ts", "claim-notice.ts", "shared-setting-execution.ts", "settings-edit.ts", "local-claim-writer.ts", "accounts.ts", "legacy.ts", "legacy-execution.ts", "legacy-startup.ts", "legacy-shortcut.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file)).toBe(true)
     for (const imported of new Bun.Transpiler({ loader: "ts" }).scanImports(await readFile(file, "utf8"))) {
       expect(imported.path.startsWith(".")).toBe(true)
       const base = resolve(dirname(file), imported.path)
@@ -512,9 +514,9 @@ async function syncAcceptance(create: typeof createLocalFilterWriter, acct: Acco
     const h = harness(records), before = { ...records }, syncBefore = stable(h.syncRecords)
     equal(await h.change(), ok, "fitting complete edit admitted regardless global status/flag")
     const expected = { ...original, gen: "g1", at: 100, by: "device-fixture", data: { ...original.data, on: false } }
-    equal(h.sets, [{ [key]: expected }], "literal one Filter local set")
-    equal(h.records, { ...before, [key]: expected }, "all raw records and history retained")
-    equal(h.reads, [["schema", "device", "sync", setup, key], null], "full authoritative local read")
+    equal(h.sets, [{ [key]: expected, sync: { ...Object(records.sync), everEdited: true } }], "literal one Filter and provenance local set")
+    equal(h.records, { ...before, [key]: expected, sync: { ...Object(before.sync), everEdited: true } }, "all raw records retained with true provenance")
+    equal(h.reads, [["schema", "device", "sync", setup, key], null, null, null], "full authoritative local read, preflight and readback")
     equal(h.counts(), { generations: 1, syncReads: 1 }, "one candidate one full sync read")
     equal(stable(h.syncRecords), syncBefore, "no native sync mutation")
     equal(await h.change(), ok, "accepted pending generation achieved no-op")
@@ -601,7 +603,7 @@ async function syncAcceptance(create: typeof createLocalFilterWriter, acct: Acco
   }
   {
     const h = harness(), get = h.local.get
-    h.local.get = async keys => keys === null ? { ...h.records, [key]: { ...original, gen: "fresh-local" } } : get(keys)
+    h.local.get = async keys => { if (keys === null && Object.getOwnPropertyDescriptor(h.records[key], "gen")?.value === "old") h.records[key] = { ...original, gen: "fresh-local" }; return get(keys) }
     equal(await h.change(false, "allow", "old"), refused("invalid"), "full snapshot invalidates stale destructive confirmation")
     equal(h.sets.length, 0, "stale full confirmation no set")
     equal(h.counts().generations, 0, "stale full confirmation no generation")
@@ -650,8 +652,15 @@ async function syncAcceptance(create: typeof createLocalFilterWriter, acct: Acco
     equal(caught === marker, true, "native error identity propagates " + failure)
     equal(h.sets.length, 0, "no false success or automatic retry")
     h.local.get = get; h.local.set = set; h.sync.get = syncGet
-    equal(await h.change(), ok, "lane recovers on explicit request " + failure)
-    equal(h.sets.length, 1, "one explicit recovered write")
+    if (failure === "set") {
+      equal(await h.change(), { kind: "unavailable", reason: "stale" }, "set uncertainty closes old owner")
+      const recovered = harness(h.records, h.syncRecords)
+      equal(await recovered.change(), ok, "fresh owner validates explicit recovery")
+      equal(recovered.sets.length, 1, "one fresh recovered write")
+    } else {
+      equal(await h.change(), ok, "lane recovers on explicit request " + failure)
+      equal(h.sets.length, 1, "one explicit recovered write")
+    }
   }
   {
     const h = harness(), set = h.local.set, marker = Error("lost response")
@@ -668,10 +677,10 @@ async function syncAcceptance(create: typeof createLocalFilterWriter, acct: Acco
     h.local.set = async items => { enter(); await blocked; await set(items) }
     const first = h.change(); await entered
     const second = h.change(true)
-    equal(h.reads.length, 2, "second intent waits inside existing lane")
+    equal(h.reads.length, 3, "second intent waits inside existing lane")
     release(); equal(await first, ok, "queued first commits"); equal(await second, ok, "queued next sees pending gen")
     equal(h.sets.length, 2, "two opposite explicit intents persist")
-    equal(h.reads.length, 4, "queued next rereads complete local")
+    equal(h.reads.length, 8, "queued next rereads and confirms complete local")
     equal(await h.change(true), ok, "queued achieved repeat no-op")
     equal(h.sets.length, 2, "achieved repeat no third set")
   }
@@ -706,7 +715,7 @@ test("actual browser artifact rejects six observable admission defects", async (
       source: planner.replace('if (remote.kind === "newer-version") continue',
         'if (remote.kind === "newer-version") { documents.set(name, {key, name, gen: raw.gen, document:raw}); continue }') },
     { name: "stale-full-read", assertion: "fresh achieved state overrides stale preliminary changed value", path: writerPath,
-      source: writer.replace('          records = await guardedLocal.get(null)', 'const stale = records[filterKey]; records = { ...await guardedLocal.get(null), [filterKey]: stale }') },
+      source: writer.replace('          records = snapshot(complete)', 'records = snapshot({ ...complete, [filterKey]: records[filterKey] })') },
     { name: "noop-newer-bypass", assertion: "achieved intent checks addressed newer remote", path: writerPath,
       source: writer.replace('if (!device.syncOn) return ok', 'return ok') },
     { name: "superseded-chunks", assertion: "superseded pending chunks never enter projection", path: plannerPath,
@@ -853,7 +862,7 @@ async function flushAcceptance(create: typeof createLocalFilterWriter, acct: Acc
     equal(h.sets, [], "no-op never repairs")
     equal(await h.change(), ok, "changed intent preserves represented evidence")
     const g2 = { ...g1, gen: "g2", at: 100, by: "device", data: { ...g1.data, on: true } }
-    equal(h.sets, [{ [key]: g2, sync: ack }], "changed replacement and exact old repair share one batch")
+    equal(h.sets, [{ [key]: g2, sync: { ...ack, everEdited: true } }], "changed replacement and exact old repair share one batch")
     equal(h.syncWrites, [], "changed intent never pushes")
     equal(await h.writer.flushSync(), { kind: "pushed", sent: [{ ...captured, gen: "g2", document: g2 }], repaired: [] }, "repaired replacement remains classifiable")
   }
@@ -970,8 +979,8 @@ async function flushAcceptance(create: typeof createLocalFilterWriter, acct: Acc
     releaseAck(); equal((await flush).kind, "pushed", "held flush confirms")
     equal(await edit, ok, "queued edit sees confirmed baseline")
     equal(h.sets.length, 3, "prearm ack and new edit each write once")
-    equal(h.sets[2] && Object.keys(h.sets[2]), [key], "acknowledged queued edit needs only Filter write")
-    equal(h.records.sync, ack, "queued generation remains pending")
+    equal(h.sets[2] && Object.keys(h.sets[2]), [key, "sync"], "queued first local edit also persists true provenance")
+    equal(h.records.sync, { ...ack, everEdited: true }, "queued generation remains pending")
   }
   {
     const h = harness(), set = h.local.set, marker = Error("ack failed")
@@ -979,7 +988,7 @@ async function flushAcceptance(create: typeof createLocalFilterWriter, acct: Acc
     const flush = h.writer.flushSync(), edit = h.change()
     equal((await flush).kind, "acknowledgement-failed", "queued edit follows truthful acknowledgement failure")
     equal(await edit, ok, "queued edit repairs acknowledgement debt")
-    equal(h.sets, [pending(1065000), { [key]: { ...g1, gen: "g2", at: 100, by: "device", data: { ...g1.data, on: true } }, sync: { ...ack, opaqueWrite: { gate: { kind: "pending", notBefore: 1065000 }, diagnostic: null } } }], "failed ack then replacement is one exact batch")
+    equal(h.sets, [pending(1065000), { [key]: { ...g1, gen: "g2", at: 100, by: "device", data: { ...g1.data, on: true } }, sync: { ...ack, opaqueWrite: { gate: { kind: "pending", notBefore: 1065000 }, diagnostic: null }, everEdited: true } }], "failed ack then replacement is one exact batch")
     const fresh = harness(clone(h.records), clone(h.syncRecords))
     equal(await fresh.change(false), ok, "restart after combined repair remains classifiable")
   }
@@ -1122,7 +1131,7 @@ async function driverAcceptance(create: typeof createLocalFilterWriter, acct: Ac
     await h.fire(5000); equal(h.invocations, [5000], "first batch invokes at barrier")
     const g2 = { ...g0, gen: "g2", at: 702000 }
     equal(h.writes, [{ [base]: g2 }], "exact complete latest generation and original wall stamp")
-    equal(h.records.sync, { joined: "H", pushed: { [key]: "g2", [setup]: "S" }, status: "ok", editedSinceOff: false, future: { keep: true } }, "exact raw history acknowledgement")
+    equal(h.records.sync, { joined: "H", pushed: { [key]: "g2", [setup]: "S" }, status: "ok", editedSinceOff: false, future: { keep: true }, everEdited: true }, "exact raw history acknowledgement")
     equal(h.timers.size, 0, "own event terminal idle without timer")
     h.move(6000, "edit g3"); await h.change(false)
     h.move(6500, "no-op"); await h.change(false)
@@ -1216,7 +1225,7 @@ async function driverAcceptance(create: typeof createLocalFilterWriter, acct: Ac
   }
   {
     const h = harness(); await h.writer.startSync(); h.move(1000); await h.change(false)
-    const scheduled = h.scheduled.length, deadline = [...h.timers.values()].map(timer => timer.due)
+    const scheduled = h.scheduled.length
     h.move(2000)
     equal(await h.writer.change({ kind: "ui", windowId: 1, incognito: true }, { acct, playlist, desired: { mode: "deny", on: true }, clearListedChannels: "not-confirmed" }),
       { kind: "result", result: { refused: "private" } }, "refused edit remains public refusal")
@@ -1227,11 +1236,11 @@ async function driverAcceptance(create: typeof createLocalFilterWriter, acct: Ac
     h.local.set = set
     const setupDoc = h.records[setup]; h.records[setup] = null
     h.move(3000)
-    equal(await h.change(true), { kind: "unavailable", reason: "account-context" }, "unavailable edit remains unavailable")
+    equal(await h.change(true), { kind: "unavailable", reason: "stale" }, "attempted set uncertainty closes the owner")
     h.records[setup] = setupDoc
     equal(h.scheduled.length, scheduled, "refused unavailable failed commits create no ticket")
-    equal([...h.timers.values()].map(timer => timer.due), deadline, "refused unavailable failed commits never postpone deadline")
-    await h.fire(5000); equal(h.invocations, [5000], "accepted pending generation retains original due pass")
+    equal([...h.timers.values()].map(timer => timer.due), [], "uncertain attempted set cancels deadline")
+    await h.fire(5000); equal(h.invocations, [], "uncertain attempted set closes the stale due pass")
     await h.writer.dispose()
   }
   for (const fault of ["metadata", "incomplete", "incoming", "newer", "full"] as const) {
@@ -1269,7 +1278,7 @@ async function driverAcceptance(create: typeof createLocalFilterWriter, acct: Ac
     void h.event()
     await settle(); equal(h.reads.length, reads, "queued edit and event cannot read across " + boundary)
     h.move(7000, "release " + boundary); release(); await edit; await settle()
-    equal(h.records.sync, { joined: "H", pushed: { [key]: "g1", [setup]: "S" }, status: "ok", editedSinceOff: false, future: { keep: true } }, "acknowledge captured generation at " + boundary)
+    equal(h.records.sync, { joined: "H", pushed: { [key]: "g1", [setup]: "S" }, status: "ok", editedSinceOff: false, future: { keep: true }, everEdited: true }, "acknowledge captured generation at " + boundary)
     equal(h.records[key], { ...g0, gen: "g2", at: 706000 }, "queued real edit keeps request wall stamp at " + boundary)
     h.local.get = getLocal; h.sync.get = getSync; h.sync.set = setSync; h.local.set = setLocal
     await h.fire(12000)
@@ -1655,7 +1664,7 @@ async function receiveAcceptance(create: typeof createLocalFilterWriter, acct: A
     equal(await edit, { kind: "result", result: { refused: "invalid" } }, "queued stale destructive confirmation rejected")
     await flush
     equal(await toggle, { kind: "result", result: { ok: true } }, "queued nondestructive toggle accepted")
-    equal(h.records.sync, expectedSet.sync, "later edit not acknowledged by receive")
+    equal(h.records.sync, { ...expectedSet.sync, everEdited: true }, "later edit not acknowledged by receive")
     equal(h.counts().generation, 1, "toggle has own generation")
   }
   for (const stage of ["L0", "R0", "L1", "R1", "L2", "set", "L3", "R2"]) for (const action of ["dispose", "off"]) {

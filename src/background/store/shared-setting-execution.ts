@@ -1,3 +1,4 @@
+import { prepareFirstEditHistory } from "./first-edit-provenance"
 import { DOCUMENT_VERSION, decodeDocument, decodeSettings, type Device } from "../../shared/model"
 import { readSettingsView } from "../../shared/model/settings-view"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
@@ -83,10 +84,11 @@ export async function executeSharedSetting(deps: {
         const repaired = deps.repairHistory(baseline.sync, admission.repairs)
         if (repaired) items.sync = repaired
       }
-    } else if (ready.history && !ready.history.editedSinceOff) {
-      if (!jsonObject(baseline.sync)) return unavailable
-      items.sync = { ...baseline.sync, editedSinceOff: true }
     }
+    const effective = items.sync ?? baseline.sync
+    const patch = prepareFirstEditHistory({ history: Object.hasOwn(baseline, "sync") ? { kind: "present", raw: effective } : { kind: "absent" }, syncOn: ready.device.syncOn })
+    if (patch.kind === "unavailable") return unavailable
+    if (patch.kind === "set") items.sync = patch.sync
     if (deps.disposed()) return { kind: "unavailable", reason: "disposed" }
     const before = await deps.local.get(["schema", "device", "sync", "doc:settings"])
     if (!jsonObject(before) || !sameSyncJson(readSettingsSnapshot(before), baseline)) return { kind: "unavailable", reason: "stale" }

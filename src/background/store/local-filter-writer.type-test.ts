@@ -19,6 +19,10 @@ type ExpectedChange = {
   | { readonly clearListedChannels: "confirmed"; readonly expectedGeneration: string | null }
 )
 type ExpectedResult =
+  | { readonly kind: "unconfirmed"; readonly cause:
+    | { readonly kind: "authority" | "readback" }
+    | { readonly kind: "read-failed"; readonly error: unknown }
+  }
   | { readonly kind: "result"; readonly result: ChangeResult }
   | { readonly kind: "unavailable"; readonly reason: "startup" | "newer-layout" | "sync-writer-required" | "account-context" | "stale" }
 type ExpectedStorage = {
@@ -134,3 +138,17 @@ function claimCapability(deps: Parameters<typeof createLocalFilterWriter>[0]) {
   void claim
 }
 void claimCapability
+
+function filterConfirmation(result: LocalFilterWriteResult) {
+  if (result.kind === "unconfirmed") {
+    if (result.cause.kind === "read-failed") void result.cause.error
+    // @ts-expect-error Unconfirmed persistence cannot claim success.
+    void result.result.ok
+    // @ts-expect-error Readback cause is immutable.
+    result.cause.kind = "authority"
+  }
+  // @ts-expect-error Read failure must retain its original error.
+  const missing: LocalFilterWriteResult = { kind: "unconfirmed", cause: { kind: "read-failed" } }
+  void missing
+}
+void filterConfirmation

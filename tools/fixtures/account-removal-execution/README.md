@@ -9,3 +9,6 @@ The interruption matrix serializes actual interrupted storage and creates a new 
 Confirmation checks reject private or unknown windows, forged, cloned and other-owner tokens, changed inventory, label, scope and history. Pending checks protect recreated accounts, same-generation divergence, changed records and unrelated state. Preparation refuses known unsupported session encodings and orphaned inventory. Disposal drains accepted work. R155 checks retain original diagnostics and pending/held deadlines and require a later external flush event.
 
 These are executable library fixtures. No browser, native storage, live account, sender validation or production confirmation UI is installed or proved.
+
+
+Real removal now persists true edit provenance. Local deletion is confirmed before its history set. Synced fixed tombstones and repaired provenance share their intended batch. The accepted continuation stays until history and cleanup are confirmed. Restart completion also promotes provenance when documents are already absent or fixed, and unresolved torn repair debt stays held. No new stamp or sync access is added to local removal.

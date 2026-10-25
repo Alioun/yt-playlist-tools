@@ -58,7 +58,7 @@ export async function executionAcceptance(execute: typeof executeSharedSetting, 
     check(!("deleted" in saved), "replacement removes only deleted marker")
     equal(saved.gen, "new", "real edit stamped once")
     if (raw) equal(Object.getOwnPropertyDescriptor(saved, "extension")?.value, stamp.extension, "tombstone envelope extensions survive")
-    equal(h.raw().sync, { joined: null, pushed: {}, status: "off", editedSinceOff: true, extension: { keep: [1] } }, "off history changes only edit bit")
+    equal(h.raw().sync, { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true, extension: { keep: [1] } }, "off history changes only edit bit")
     observations.push(h.report())
   }
   for (const value of [-1, 101, 0.5, NaN, Infinity]) {
@@ -83,7 +83,7 @@ export async function executionAcceptance(execute: typeof executeSharedSetting, 
     equal(await execute(h.deps, { kind: "theme", value: "dark" }), { kind: "committed" }, "on edit admitted")
     equal(h.report().syncReads, 1, "on edit reads inventory")
     check(h.report().reads.some(keys => keys === null), "on edit reads complete local inventory")
-    equal(Object.keys(h.report().batches[0] as object), ["doc:settings"], "local edit does not acknowledge repairs")
+    equal(Object.keys(h.report().batches[0] as object), ["doc:settings", "sync"], "local edit persists provenance without acknowledging new generation")
     observations.push(h.report())
   }
   for (const kind of ["full", "reset", "mismatch", "newer", "waiting", "combined"] as const) {

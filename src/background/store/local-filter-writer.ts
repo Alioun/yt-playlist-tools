@@ -1,3 +1,4 @@
+import { prepareFirstEditHistory, readFirstEditProvenance } from "./first-edit-provenance"
 import {
   CONSENT_VERSION, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError,
   decodeDevice, decodeDocument, decodeFilter, decodeSettings, decodeSetup, decodeSyncState, decodeSyncMeta, documentKey, parseDocumentKey,
@@ -42,6 +43,10 @@ export type LocalFilterChange = {
 )
 
 export type LocalFilterWriteResult =
+  | { readonly kind: "unconfirmed"; readonly cause:
+    | { readonly kind: "authority" | "readback" }
+    | { readonly kind: "read-failed"; readonly error: unknown }
+  }
   | { readonly kind: "result"; readonly result: ChangeResult }
   | {
     readonly kind: "unavailable"
@@ -123,7 +128,7 @@ function authority(records: Readonly<Record<string, unknown>>) {
     if (device.consent?.v !== CONSENT_VERSION || device.upgradeNote?.state === "pending") return unavailable("startup")
     let history: { raw: JsonObject; editedSinceOff: boolean; joined: string | null } | undefined
     if (Object.hasOwn(records, "sync")) {
-      if (!isJsonObject(records.sync)) return unavailable("sync-writer-required")
+      if (!isJsonObject(records.sync) || readFirstEditProvenance({ kind: "present", raw: records.sync }).kind === "invalid") return unavailable("sync-writer-required")
       let decoded
       try { decoded = decodeSyncState(records.sync) } catch (error) {
         if (error instanceof DecodeError) return unavailable("sync-writer-required")
@@ -532,14 +537,20 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     const ok = { kind: "result", result: { ok: true } } as const
     const setupKey = documentKey({ kind: "setup", acct: change.acct })
     const filterKey = documentKey({ kind: "filter", acct: change.acct, playlist: change.playlist })
-    let records = await guardedLocal.get(["schema", "device", "sync", setupKey, filterKey])
+    const initial = await guardedLocal.get(["schema", "device", "sync", setupKey, filterKey])
+    if (disposed()) return { kind: "unavailable", reason: "stale" }
+    const initialAuthority = authority(initial)
+    if (initialAuthority.kind !== "ready") return initialAuthority
+    if (!isJsonObject(initial[setupKey])) return { kind: "unavailable", reason: "account-context" }
+    if (Object.hasOwn(initial, filterKey) && !isJsonValue(initial[filterKey])) return invalid
+    if (!isJsonObject(initial)) return initialAuthority.device.syncOn ? { kind: "unavailable", reason: "sync-writer-required" } : invalid
+    let records = snapshot(initial)
     let exhaustive = false
     for (;;) {
       const ready = authority(records)
       if (ready.kind === "unavailable") return ready
       const { device, history } = ready
       observeOff(device.syncOn)
-      if (!device.syncOn && exhaustive) return { kind: "unavailable", reason: "sync-writer-required" }
 
       const rawSetup = records[setupKey]
       if (!isJsonObject(rawSetup)) return { kind: "unavailable", reason: "account-context" }
@@ -563,7 +574,11 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       if (filter.kind === "newer-version") return { kind: "result", result: { refused: "update-needed" } }
       if (device.syncOn) {
         if (!exhaustive) {
-          records = await guardedLocal.get(null)
+          const complete = await guardedLocal.get(null)
+          if (disposed()) return { kind: "unavailable", reason: "stale" }
+          if (Object.hasOwn(complete, filterKey) && !isJsonValue(complete[filterKey])) return invalid
+          if (!isJsonObject(complete)) return device.syncOn ? { kind: "unavailable", reason: "sync-writer-required" } : invalid
+          records = snapshot(complete)
           exhaustive = true
           continue
         }
@@ -582,6 +597,14 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       if (filter.kind === "value" && current && current.mode !== change.desired.mode && current.channels.length > 0 &&
         (change.clearListedChannels !== "confirmed" || change.expectedGeneration !== filter.document.gen)) return invalid
 
+      if (!exhaustive) {
+        const complete = await guardedLocal.get(null)
+        if (disposed()) return { kind: "unavailable", reason: "stale" }
+        if (!isJsonObject(complete)) return device.syncOn ? { kind: "unavailable", reason: "sync-writer-required" } : invalid
+        records = snapshot(complete)
+        exhaustive = true
+        continue
+      }
       const prepared = prepareDocumentBody({ kind: "filter", data: result.filter })
       if (prepared.kind !== "prepared") return invalid
       const envelope = {
@@ -602,13 +625,30 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
           const repaired = repairedHistory(history.raw, admission.repairs)
           if (repaired) items.sync = repaired
         }
-      } else if (history && !history.editedSinceOff) {
-        const sync = { ...history.raw, editedSinceOff: true }
-        if (!isJsonObject(sync)) throw new TypeError("Writer produced a non-JSON history")
-        decodeSyncState(sync)
-        items.sync = sync
       }
-      await guardedLocal.set(items)
+      const effective = items.sync ?? history?.raw
+      const patch = prepareFirstEditHistory({ history: effective === undefined ? { kind: "absent" } : { kind: "present", raw: effective }, syncOn: device.syncOn })
+      if (patch.kind === "unavailable") return { kind: "unavailable", reason: "sync-writer-required" }
+      if (patch.kind === "set") items.sync = patch.sync
+      if (disposed()) return { kind: "unavailable", reason: "stale" }
+      const before = await guardedLocal.get(null)
+      if (disposed()) return { kind: "unavailable", reason: "stale" }
+      if (!isJsonObject(before) || !sameSyncJson(records, before)) return { kind: "unavailable", reason: "stale" }
+      const expected = snapshot({ ...records, ...items })
+      function uncertain(cause: Extract<LocalFilterWriteResult, { kind: "unconfirmed" }>["cause"]): LocalFilterWriteResult {
+        claimConfirmation = "unconfirmed"
+        deactivate("stopped")
+        return { kind: "unconfirmed", cause }
+      }
+      try { await guardedLocal.set(items) } catch (error) {
+        uncertain({ kind: "readback" })
+        throw error
+      }
+      try {
+        const confirmed = await guardedLocal.get(null)
+        if (disposed()) return uncertain({ kind: "authority" })
+        if (!isJsonObject(confirmed) || !sameSyncJson(expected, confirmed)) return uncertain({ kind: "readback" })
+      } catch (error) { return uncertain({ kind: "read-failed", error }) }
       if (device.syncOn) {
         quietUntil = deps.syncClock.now() + 2000
         const gate = history && decodeSyncState(history.raw).opaqueWrite?.gate
@@ -1015,7 +1055,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       })
     },
     subscribe(fn) {
-      if (disposed() || initialization === "interim-held" || initialization === "failed" || initialization === "newer-layout") return () => {}
+      if (claimConfirmation === "unconfirmed" || disposed() || initialization === "interim-held" || initialization === "failed" || initialization === "newer-layout") return () => {}
       // Each registration has an independent, idempotent lifetime.
       const listener = (event: SettingsEvent) => fn(event)
       listeners.add(listener)
@@ -1026,11 +1066,12 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       if (initialization !== "ok") return { kind: "unavailable", reason: initialization === "newer-layout" ? "newer-layout" : "startup" }
       if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
       if (origin.kind !== "ui" || !Number.isInteger(origin.windowId) || origin.windowId < 0 || typeof origin.incognito !== "boolean") return { kind: "result", result: { refused: "invalid" } }
+      const requested = { ...change }
       const arrivalEpoch = epoch
       const arrival = lifetime.kind === "active" ? clock() : undefined
       return enqueue(async () => {
         if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
-        const result = await executeSharedSetting({ local: guardedLocal, sync: deps.sync, authority: records => hasInterimMarkers(records) ? { kind: "unavailable", reason: "startup" } : authority(records), repairHistory: repairedHistory, disposed, now: deps.now, generation: deps.generation }, change)
+        const result = await executeSharedSetting({ local: guardedLocal, sync: deps.sync, authority: records => hasInterimMarkers(records) ? { kind: "unavailable", reason: "startup" } : authority(records), repairHistory: repairedHistory, disposed, now: deps.now, generation: deps.generation }, requested)
         if (result.kind === "unconfirmed" || result.kind === "failed" && result.stage === "set") {
           claimConfirmation = "unconfirmed"
           deactivate("stopped")
@@ -1124,7 +1165,8 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       }
       const at = deps.now()
       const event = ingress("edit")
-      return enqueue(() => execute(change, at, event))
+      const requested: LocalFilterChange = { ...change, desired: { ...change.desired } }
+      return enqueue(() => execute(requested, at, event))
     }
   }
   return { writer, readiness }

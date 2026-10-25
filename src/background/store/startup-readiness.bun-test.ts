@@ -103,7 +103,7 @@ export async function readinessAcceptance(api: {
     check(saved.unclaimed === null, "edit preserves consumed null")
     const sync = saved.sync
     check(sync && typeof sync === "object" && "editedSinceOff" in sync, "saved history")
-    equal(sync, { ...seed().sync, editedSinceOff: true }, "only existing history edit bit changes")
+    equal(sync, { ...seed().sync, editedSinceOff: true, everEdited: true }, "only existing history edit bit changes")
     equal(h.syncSets(), 0, "startup and claims create no sync write")
     await writer.dispose(); observations.push({ label: "current-consumed-edit", effects: h.effects, records: h.records() })
     const replacement = harness(JSON.parse(JSON.stringify(h.records()))), next = api.create(replacement.deps)

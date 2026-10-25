@@ -64,7 +64,7 @@ describe("exclusive fixture claim transaction", () => {
         label: null, autoAdd: [{ pl: owned, takes: "videos" }], targets: { orig01: owned },
         quickSave: null, musicSave: null, gather: null, marks: {} } },
       [`doc:filter:${acct}:${owned}`]: { v: 1, gen: "new-2", at: 100, by: "fixture", data: { mode: "allow", on: false, channels: [] } },
-      sync: { joined: "history", pushed: {}, status: "off", editedSinceOff: true, extension: "keep" }
+      sync: { joined: "history", pushed: {}, status: "off", editedSinceOff: true, everEdited: true, extension: "keep" }
     }])
     await writer.dispose()
     h.records = JSON.parse(JSON.stringify(h.records))

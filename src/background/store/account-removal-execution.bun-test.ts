@@ -66,3 +66,22 @@ test("uncertain acceptance blocks already queued reads, writes, claims, receives
   expect(h.schedules).toEqual([])
   await writer.dispose()
 })
+
+
+test("removal does not mark provenance before its first confirmed document deletion", async () => {
+  const h = createRemovalHarness(), remove = h.deps.removal
+  if (remove.kind !== "fixture") throw Error("Missing synthetic removal host")
+  const marker = { synthetic: "first-delete" }
+  const writer = createLocalFilterWriter({ ...h.deps, removal: { ...remove, async removeLocal(keys) {
+    if (keys.some(key => key.kind === "document")) throw marker
+    await remove.removeLocal(keys)
+  } } })
+  const origin = { kind: "ui", windowId: 1, incognito: false } as const
+  const initial = h.state(), preparation = await writer.prepareAccountRemoval(origin, acct)
+  if (preparation.kind !== "confirmation-required") throw Error("Missing actual confirmation")
+  expect(await writer.removeAccountSetup(origin, preparation.confirmation)).toEqual({ kind: "failed", stage: "documents", error: marker })
+  expect(h.state().local.sync).toEqual(initial.local.sync)
+  expect(h.state().local[`doc:setup:${acct}`]).toEqual(initial.local[`doc:setup:${acct}`])
+  expect(Object.hasOwn(h.state().local, pendingAccountRemovalKey)).toBe(true)
+  await writer.dispose()
+})

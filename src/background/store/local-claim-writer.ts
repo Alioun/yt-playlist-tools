@@ -1,3 +1,4 @@
+import { prepareFirstEditHistory, readFirstEditProvenance } from "./first-edit-provenance"
 import {
   CONSENT_VERSION, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError,
   decodeDevice, decodeDocument, decodeFilter, decodeSettings, decodeSetup, decodeSyncState,
@@ -103,7 +104,7 @@ function readContext(records: JsonObject, acct: AccountKey) {
     field = "sync"
     let history: { raw: JsonObject; editedSinceOff: boolean } | undefined
     if (Object.hasOwn(records, "sync")) {
-      if (!isJsonObject(records.sync)) return { kind: "invalid", field } satisfies Refusal
+      if (!isJsonObject(records.sync) || readFirstEditProvenance({ kind: "present", raw: records.sync }).kind === "invalid") return { kind: "invalid", field } satisfies Refusal
       const sync = decodeSyncState(records.sync)
       if (sync.status !== "off") return unavailable("inventory")
       history = { raw: records.sync, editedSinceOff: sync.editedSinceOff }
@@ -195,9 +196,10 @@ export async function executeLocalClaim(deps: {
         if (decoded.kind !== "value") return { kind: "invalid", field: "envelope" }
         items[change.name] = envelope
       }
-      if (changes.length > 0 && context.history && !context.history.editedSinceOff) {
-        items.sync = { ...context.history.raw, editedSinceOff: true }
-        decodeSyncState(items.sync)
+      if (changes.length > 0) {
+        const patch = prepareFirstEditHistory({ history: context.history ? { kind: "present", raw: context.history.raw } : { kind: "absent" }, syncOn: false })
+        if (patch.kind === "unavailable") return { kind: "invalid", field: "sync" }
+        if (patch.kind === "set") items.sync = patch.sync
       }
     }
     const expected = snapshot({ ...baseline, ...items })
