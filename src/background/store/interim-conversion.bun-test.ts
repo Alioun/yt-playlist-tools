@@ -89,7 +89,21 @@ export function exerciseInterimConversion(plan: typeof planInterimConversion, de
   equal(result.caches, [{ path: `cache:${A}`, data: { listAt: 7, playlists: [{ id: "PL_ONE", title: "Synthetic cached title" }], order: {}, created: [], labelAt: null } }], "complete cache candidates exclude cache-only and index-only accounts")
   equal(result.note, { historicalAuthorization: { kind: "unknown" }, priorCredentialPresence: { kind: "unknown" }, cleanup: { kind: "not-attempted" }, percentage: { kind: "saved", value: 82 }, feedback: { kind: "saved", value: false }, freshAgreementRequired: true, globals: { kind: "unclaimed-source", source: source.globals } }, "complete truthful local note retains inactive global controls")
   check(result.retention.source === input.source, "retention is the exact original source")
-  equal(Object.keys(result).sort(), ["activation", "caches", "documents", "kind", "note", "retention"], "proposal exposes no activation, cleanup or writer authority")
+  equal(Object.keys(result).sort(), ["activation", "caches", "documents", "kind", "note", "retention", "reviewFacts"], "proposal exposes no activation, cleanup or writer authority")
+  check(result.reviewFacts.accounts.kind === "inspected" && result.reviewFacts.globals.kind === "inspected", "actual inspections are available for read-only review")
+  equal(result.reviewFacts.conversionShortcut, { kind: "validated-context", id: "conv01" }, "validated allocation is explicit without original provenance")
+  equal(result.reviewFacts.accounts.value.accounts[0]?.body, { kind: "inspection", facts: {
+    playlists: bodyA.playlists, shortcut: { playlist: "WL", provenance: "not-supplied" },
+    filters: [
+      { playlist: "PL_ONE", mode: "allow", on: true, channels: [channel], kept: false },
+      { playlist: "PL_KEPT", mode: "deny", on: false, channels: [channel, unlabeled], kept: true },
+      { playlist: "PL_ORPHAN", mode: "allow", on: false, channels: [], kept: true }
+    ], labels: [{ channel, title: "Synthetic channel", handle: "@synthetic", referenced: true }, { channel: spare, title: "Unreferenced retained label", referenced: false }],
+    cache: { playlists: bodyA.cachedPlaylists, at: 7 }, choices: "present"
+  } }, "complete account inspection facts survive the proposal")
+  equal(result.reviewFacts.globals.value.accounts[0]?.body, { kind: "inspection", facts: {
+    playlists: ["PL_GLOBAL"], shortcut: { playlist: "PL_GLOBAL_TARGET", provenance: "not-supplied" }, filters: [], labels: [], cache: { playlists: [], at: null }, choices: "present"
+  } }, "global adapter retains facts without assigning ownership")
   equal(result.activation, "requires-fresh-agreement-and-future-executor", "activation requires a later executor and agreement")
   const decoded = result.documents.map(candidate => {
     const value = candidate.kind === "settings" ? dependencies.decodeDocument(candidate.document, dependencies.decodeSettings) : candidate.kind === "setup" ? dependencies.decodeDocument(candidate.document, dependencies.decodeSetup) : dependencies.decodeDocument(candidate.document, dependencies.decodeFilter)
@@ -115,7 +129,7 @@ export function exerciseInterimConversion(plan: typeof planInterimConversion, de
     const planned = observe(label, snapshot, ctx)
     check(planned.kind === "blocked", `${label} is blocked`)
     check(planned.retention.source === snapshot.source, `${label} retains original evidence`)
-    equal(Object.keys(planned).sort(), ["blockers", "kind", "retention"], `${label} returns no partial candidate batch`)
+    equal(Object.keys(planned).sort(), ["blockers", "kind", "retention", "reviewFacts"], `${label} returns no partial candidate batch`)
     if (path) check(planned.blockers.some(blocker => blocker.path === path && (reason === undefined || blocker.reason === reason)), `${label} reports exact conflict path and reason`)
     return planned
   }
@@ -170,7 +184,9 @@ export function exerciseInterimConversion(plan: typeof planInterimConversion, de
     }
   }
   const unrelated = observe("unrelated canonical account", { ...input, canonical: { ...input.canonical, documents: { [`doc:setup:${C}`]: { v: 1, gen: "existing", at: 0, by: "other", data: dependencies.defaultSetup() } } } })
-  equal(unrelated, result, "unrelated canonical setup need not block")
+  equal({ ...unrelated, reviewFacts: result.reviewFacts }, result, "unrelated canonical setup need not block or change substantive conversion output")
+  check(unrelated.kind === "inactive-proposal" && unrelated.reviewFacts.accounts.kind === "inspected", "unrelated setup preserves inspection facts")
+  equal(unrelated.reviewFacts.accounts.value.accounts.find(account => account.identity.kind === "representable" && account.identity.key === C)?.overlaps, [{ position: 0, kind: "live", document: "setup" }], "additive review honestly exposes index-only canonical overlap")
   refused("existing affected cache", { ...input, canonical: { ...input.canonical, caches: { [`cache:${A}`]: { untouched: true } } } }, `cache:${A}`, "existing-cache")
   refused("17 character account", { ...input, source: { ...source, accountBodies: { "account:AAAAAAAAAAAAAAAAA": bodyA } } })
   refused("101 character playlist", { ...input, source: { ...source, accountBodies: { [`account:${A}`]: { ...bodyA, playlists: ["P".repeat(101)] } } } })
@@ -185,6 +201,15 @@ export function exerciseInterimConversion(plan: typeof planInterimConversion, de
     refused("writer would truncate label", { ...input, source: { ...source, accountBodies: { [`account:${A}`]: { ...bodyA, labels: { [channel]: label } } } } })
   }
   for (const ctx of [{ ...context, interimShortcutId: "short" }, { ...context, at: -1 }, { ...context, documentGenerations: {} }, { ...context, documentGenerations: { ...context.documentGenerations, "doc:settings": "" } }]) refused("invalid supplied stamp or identity", input, undefined, undefined, ctx)
+  const invalidContext = plan(input, { ...context, interimShortcutId: "short" })
+  check(invalidContext.kind === "blocked", "invalid allocation blocks")
+  equal(invalidContext.reviewFacts, { accounts: { kind: "not-inspected" }, globals: { kind: "not-inspected" }, conversionShortcut: { kind: "not-validated" } }, "early validation failure does not invent inspections")
+  const invalidBody = plan({ ...input, source: { ...source, accountBodies: { [`account:${A}`]: {} } } }, context)
+  check(invalidBody.kind === "blocked" && invalidBody.reviewFacts.accounts.kind === "inspected", "invalid body still records returned inspection")
+  equal(invalidBody.reviewFacts.accounts.value.accounts[0]?.body, { kind: "invalid" }, "invalid facts are not normalized")
+  const unsupportedGlobal = plan(globalsCase({ channelFilters: { PL_X: { mode: "allow", enabled: false, channels: [], future: 1 } } }), context)
+  check(unsupportedGlobal.kind === "blocked" && unsupportedGlobal.reviewFacts.globals.kind === "inspected", "unsupported global body still records returned inspection")
+  equal(unsupportedGlobal.reviewFacts.globals.value.accounts[0]?.body, { kind: "unsupported" }, "unsupported global facts are not normalized")
   const crossedHistory = observe("independent unknown authorization and known credential presence", { ...input, priorCredentialPresence: { kind: "known", value: true } })
   check(crossedHistory.kind === "inactive-proposal", "independent history facts are accepted")
   equal(crossedHistory.note.historicalAuthorization, { kind: "unknown" }, "known credential presence does not establish authorization")
