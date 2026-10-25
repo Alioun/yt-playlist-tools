@@ -1,7 +1,7 @@
 import { defaultDevice, defaultSettings, defaultSetup, isAccountKey, isPlaylistId, type Unclaimed } from "../../../src/shared/model"
 import type { JsonValue } from "../../../src/shared/contracts/json"
 import type { ClaimAuthority, ClaimAuthorityState } from "../../../src/background/store/local-claim-writer"
-import { createStartingLocalFilterWriter } from "../../../src/background/store/local-filter-writer"
+import { createStartingLocalFilterWriter, type SettingsRead } from "../../../src/background/store/local-filter-writer"
 
 import { LEGACY_DELETE_KEYS, type LegacyEvidence } from "../../../src/background/store/legacy"
 import type { StartupHost } from "../../../src/background/store/legacy-execution"
@@ -25,6 +25,25 @@ function startupHost(area: { read(): Record<string, unknown>; remove(keys: reado
     async removeLocal(keys) { effects.push({ removeLocal: keys }); area.remove(keys) },
     async deleteDatabase(name) { effects.push({ deleteDatabase: name }) },
     async removeSession(keys) { effects.push({ removeSession: keys }) }
+  }
+}
+
+export function followSettings(owner: Pick<ReturnType<typeof createStartingLocalFilterWriter>, "read" | "subscribe">, publish: (view: SettingsRead) => void) {
+  let active = true, revision = 0
+  let pending: Promise<void> = Promise.resolve()
+  function refresh() {
+    const reading = ++revision
+    pending = owner.read("settings").then(view => {
+      if (active && reading === revision) publish(view)
+    })
+    return pending
+  }
+  const unsubscribe = owner.subscribe(() => { void refresh().catch(() => {}) })
+  const initial = refresh()
+  return {
+    initial,
+    async settled() { for (;;) { const current = pending; await current; if (current === pending) return } },
+    dispose() { active = false; revision++; unsubscribe() }
   }
 }
 
@@ -155,7 +174,48 @@ export async function runClaimFixture() {
     if (claim.kind !== "unavailable" || claim.reason !== "startup") throw Error("Startup consent/note guard bypassed")
     startupOutcomes.push({ name, ready, claim, saved: records, batches, effects })
   }
-  return { fixture: "exclusive-synthetic-atomic-local-only", outcomes, startupOutcomes }
+  const settingsOutcomes = []
+  for (const name of ["canonical-settings-load-edit-follow", "preconsent-settings-read"] as const) {
+    const consented = name === "canonical-settings-load-edit-follow"
+    const savedClaim = JSON.parse(JSON.stringify(outcomes[0]?.saved))
+    let records: Record<string, unknown> = consented ? savedClaim : { schema: 1 }
+    const preservedDevice = JSON.stringify(records.device), preservedUnclaimed = JSON.stringify(records.unclaimed)
+    const batches: Readonly<Record<string, JsonValue>>[] = [], effects: unknown[] = []
+    let generations = 0
+    const deps = {
+      startup: startupHost({ read: () => JSON.parse(JSON.stringify(records)), remove(keys) { for (const key of keys) delete records[key] } }, effects),
+      local: { async get(keys: readonly string[] | null) { return JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(records).filter(([key]) => keys === null || keys.includes(key))))) },
+        async set(items: Readonly<Record<string, JsonValue>>) { batches.push(JSON.parse(JSON.stringify(items))); records = { ...records, ...items } } },
+      claim: { kind: "unavailable" as const },
+      sync: { async get() { throw Error("Settings read/edit while off reached sync") }, async set() { throw Error("Settings read/edit while off pushed") }, subscribe() { throw Error("Settings follow created native subscription") } },
+      syncClock: { now: () => 0, wallNow: () => 1000000, after() { throw Error("Settings follow scheduled work") } },
+      onSyncResult() { throw Error("Settings follow attempted sync") }, now: () => 100, generation: () => `settings-${++generations}`
+    }
+    const writer = createStartingLocalFilterWriter(deps)
+    if (await writer.ready() !== "ok") throw Error("Settings owner not ready")
+    const followed: SettingsRead[] = []
+    const follower = followSettings(writer, view => { followed.push(view) })
+    await follower.initial
+    const theme = await writer.changeSharedSetting({ kind: "ui", windowId: 1, incognito: true }, { kind: "theme", value: "dark" })
+    await follower.settled()
+    const percentage = await writer.changeSharedSetting({ kind: "ui", windowId: 1, incognito: false }, { kind: "default-percentage", value: 0 })
+    await follower.settled()
+    const final = await writer.read("settings")
+    if (final.kind !== "value") throw Error("Settings view not readable")
+    if (consented) {
+      if (theme.kind !== "committed" || percentage.kind !== "committed" || final.settings.theme !== "dark" || final.settings.autoAdd.pct !== 0 || followed.length !== 3 ||
+        followed[1]?.kind !== "value" || followed[1].settings.theme !== "dark" || followed[2]?.kind !== "value" || followed[2].settings.autoAdd.pct !== 0) throw Error("Settings follow did not observe both confirmed values")
+    } else if (theme.kind !== "unavailable" || theme.reason !== "startup" || percentage.kind !== "unavailable" || final.settings.theme !== "system" || final.settings.autoAdd.pct !== 50 || batches.length || generations) throw Error("Preconsent Settings read/write boundary failed")
+    follower.dispose(); await writer.dispose()
+    records = JSON.parse(JSON.stringify(records))
+    const restarted = createStartingLocalFilterWriter(deps)
+    if (await restarted.ready() !== "ok") throw Error("Settings restart not ready")
+    const restart = await restarted.read("settings")
+    await restarted.dispose()
+    if (JSON.stringify(restart) !== JSON.stringify(final) || JSON.stringify(records.device) !== preservedDevice || JSON.stringify(records.unclaimed) !== preservedUnclaimed) throw Error("Settings restart changed view or saved claim notice/null")
+    settingsOutcomes.push({ name, origin: "trusted-synthetic-injection-no-production-sender-validation", followed, theme, percentage, final, restart, batches, effects, generations, saved: records })
+  }
+  return { fixture: "exclusive-synthetic-atomic-local-only", outcomes, startupOutcomes, settingsOutcomes }
 }
 
 export const fixtureRun = runClaimFixture()

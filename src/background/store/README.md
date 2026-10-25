@@ -491,3 +491,35 @@ Opaque holds retain the sync-area subscription. Startup, incoming, preflight, po
 Native strings remain local diagnostic data. Descriptor-only projection evaluates no getters, coercion, stack, cause, prototype or serializer. The writer logs no diagnostic values and exports none to sync documents, Settings files or the shareable Diagnostics report. No error text becomes a quota, rate or transport category.
 
 Browser-free source, saved emitted-byte and synthetic restart checks do not prove native durability, atomicity, power loss, unresolved native IO across process death, browser-account transport, live identities, granted-incognito behavior, Firefox, minimum-version binaries or production cutover. Native checks are waived and unproven.
+
+## Pure shared Settings edits
+
+`changeSharedSetting` in `./settings-edit` computes a theme or default required percentage edit from a recursively readonly, already decoded Settings body. It returns `unchanged`, `invalid` with `invalid-percentage`, or `changed` with the complete Settings body. Equal valid values return before normalization. Invalid percentages are refused without coercion. Real edits use the existing Settings normalizer, preserving compatible unknown fields and shortcut identity while applying saved-label limits.
+
+The helper performs no storage, Origin authorization, stamping, encoding, or notification. Its changed body goes through `prepareDocumentBody` for JSON validation and materialization. Shared theme and percentage edits are allowed from private windows under ACC-38 and DATA-32. The helper has no Origin parameter. The serial owner supplies the separate readiness, consent, version, budget, persistence, and confirmation checks below.
+
+## Narrow synthetic Settings read, edit, and follow
+
+Both existing owner constructors expose these additional methods:
+
+```ts
+read(view: "settings"): Promise<SettingsRead>
+subscribe(fn: (event: SettingsEvent) => void): () => void
+changeSharedSetting(origin: Extract<Origin, { kind: "ui" }>, change: SharedSettingChange): Promise<LocalSettingsWriteResult>
+```
+
+`readSettingsView` is imported directly from `src/shared/model/settings-view.ts`. It returns a detached recursively readonly Settings value, `newer-version` with the observed version, or `invalid`. Undefined, null, and supported tombstones read as fresh defaults. Partial supported bodies acquire defaults only in memory. Unknown nested fields are detached. Reading never normalizes labels, creates a Device ID, materializes an envelope, or persists anything.
+
+The owner's `SettingsRead` adds `unavailable` with `startup`, `newer-layout`, `disposed`, or `stale`. The startup-enabled constructor must finish its real `ready()` first. Failed startup remains latched. After readiness, reads need no consent or completed upgrade note. They use exactly `schema` and `doc:settings` on the existing lane. They neither enumerate inventory nor touch sync, claim authority, stamps, clocks, or retry admission. The preinitialized fixture constructor still has no `ready()` method.
+
+The new write method admits only the delivered theme and default-percentage union. Its UI Origin is trusted synthetic injection. Private shared configuration is allowed. Native sender validation and routing remain unimplemented. Consent, pending-note, history, layout, and document-version guards still apply. Edits inspect the complete local inventory and refuse interim markers. Sync-off edits never access sync. A real edit batches only Settings and any required existing off-history edit bit. Absent history stays absent. Sync-on edits use the full pending and restoration inventory, actual unknown occupancy, and retained chunks before any local commit. Exact old-generation pushed repairs may share that batch. The new generation remains pending. Sync-on no-ops still check addressed version and readiness, including future-version refusal, while avoiding preparation, stamps, quota projection, repairs, persistence, and wakes.
+
+`LocalSettingsWriteResult` distinguishes `committed`, `unchanged`, existing `ChangeResult` refusals under `result`, and `unavailable` with the four read reasons or `sync-writer-required`. A pre-set port error returns `failed/before-set`. A rejected set returns `failed/set` with the original error and receives no speculative readback repair or replay. A resolved set needs exact affected raw values and unchanged schema, Device, and history before `committed`. Missing or divergent readback returns `unconfirmed/readback`. Disposal returns `unconfirmed/authority`. Rejected readback returns `unconfirmed/read-failed` with the original error. Failed sets and unconfirmed local edits latch the existing global uncertainty boundary. Reads, claim, Filter and Settings edits, receives, and sync admission remain closed until a fresh owner is constructed after disposal. Automatic-stop behavior for the previously delivered incoming receiver remains unchanged, including its explicit manual-adoption recovery oracle.
+
+`SettingsEvent` is exactly `{kind:"settings-changed",source:"local"|"sync"}`. A confirmed real local edit emits once before its promise completes. Incoming Settings emits once only after every existing local and remote adoption check passes. No-op, refusal, failed or unconfirmed outcomes, idle/conflicting/incomplete incoming documents, Filter or claim work, and sync bookkeeping emit nothing. This is a Settings-only invalidation subset. It is not general `StoreEvent` or full Store conformance.
+
+Observer callbacks run without awaiting their promises. Throws and rejected observer promises cannot reject a committed edit or stop other active observers. Registrations have independent, idempotent unsubscribe functions. Disposal clears them immediately, invalidates pending read completions, and drains accepted work. Reads and observer lifetime changes create no R155 retry grant. Changed edits preserve arrival time and epoch across queue delays. The existing sync driver owns quiet periods, pacing, holds, prearm, and acknowledgement.
+
+The actual [claim command](../../../tools/fixtures/claim-transaction/README.md) now consumes these APIs for Settings load, private theme edit, percentage edit, following changes, and serialized restart. Its real `followSettings` consumer subscribes before its initial read and discards obsolete asynchronous results after a live invalidation or disposal. A separate schema-only case reads defaults while writes remain refused before consent. All eight preceding claim and startup cases remain.
+
+Production entrypoints, adapters, components, and installed session/privacy safeguards remain unchanged. No installed production gap is closed. General Change, StoreEvent, TabView, other View mappings, consent or note mutations, clearAll, native sanitized startup, sender admission, interim conversion Q7-Q11, and final privacy approval remain outside this unit. These synthetic reads and exact fake-port confirmations establish no native crash atomicity, foreign-writer exclusion, or last-observation guarantee. Native checks are waived and unproven.

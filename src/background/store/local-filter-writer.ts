@@ -14,6 +14,13 @@ import { executeLocalClaim, type ClaimHost, type ClaimTransactionResult } from "
 
 import { executeLegacyStartup, type StartupHost, type StartupExecutionResult } from "./legacy-execution"
 
+import { readSettingsView, type SettingsView } from "../../shared/model/settings-view"
+import { executeSharedSetting, type LocalSettingsWriteResult } from "./shared-setting-execution"
+import type { SharedSettingChange } from "./settings-edit"
+
+export type SettingsRead = SettingsView | { readonly kind: "unavailable"; readonly reason: "startup" | "newer-layout" | "disposed" | "stale" }
+export type SettingsEvent = { readonly kind: "settings-changed"; readonly source: "local" | "sync" }
+
 type UiOrigin = Extract<Origin, { kind: "ui" }>
 
 export type LocalFilterChange = {
@@ -193,6 +200,9 @@ type LocalFilterWriterDependencies = {
 }
 
 type LocalFilterWriter = {
+  read(view: "settings"): Promise<SettingsRead>
+  subscribe(fn: (event: SettingsEvent) => void): () => void
+  changeSharedSetting(origin: UiOrigin, change: SharedSettingChange): Promise<LocalSettingsWriteResult>
   claim(): Promise<ClaimTransactionResult>
   change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>
   receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>
@@ -221,6 +231,7 @@ export function createStartingLocalFilterWriter(deps: LocalFilterWriterDependenc
 function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost) {
   let initialization: "pending" | "ok" | "newer-layout" | "failed" = startup ? "pending" : "ok"
   let claimConfirmation: "ready" | "unconfirmed" = "ready"
+  const listeners = new Set<(event: SettingsEvent) => void>()
   let lane: Promise<void> = Promise.resolve()
   let lifetime: { kind: "inactive" | "stopped" | "disposed" } | { kind: "active"; unsubscribe: () => void } = { kind: "inactive" }
   let ticket: { event: SyncEvent; cancel: () => void } | undefined
@@ -309,6 +320,14 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
     return work
   }
 
+  function emitSettings(source: SettingsEvent["source"]) {
+    for (const listener of [...listeners]) {
+      if (disposed()) break
+      if (!listeners.has(listener)) continue
+      try { void Promise.resolve(listener({ kind: "settings-changed", source })).catch(() => {}) } catch {}
+    }
+  }
+
   function cancelTicket() {
     ticket?.cancel()
     ticket = undefined
@@ -361,6 +380,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
     try {
       const result = await receive(key)
       if (result.kind === "local-set-failed" || result.kind === "unconfirmed") deactivate("stopped")
+      if (key.kind === "settings" && result.kind === "adopted") emitSettings("sync")
       return result
     } catch (error) { deactivate("stopped"); throw error }
   }
@@ -764,6 +784,55 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
   }
 
   const writer: LocalFilterWriter = {
+    read(_view) {
+      const unavailable = (): SettingsRead | undefined => disposed() ? { kind: "unavailable", reason: "disposed" }
+        : initialization !== "ok" ? { kind: "unavailable", reason: initialization === "newer-layout" ? "newer-layout" : "startup" }
+        : claimConfirmation === "unconfirmed" ? { kind: "unavailable", reason: "stale" } : undefined
+      const blocked = unavailable()
+      if (blocked) return Promise.resolve(blocked)
+      return enqueue(async () => {
+        const blocked = unavailable()
+        if (blocked) return blocked
+        const records = await deps.local.get(["schema", "doc:settings"])
+        const stale = unavailable()
+        if (stale) return stale
+        if (typeof records.schema === "number" && Number.isSafeInteger(records.schema) && records.schema > STORAGE_SCHEMA_VERSION) return { kind: "unavailable", reason: "newer-layout" }
+        if (records.schema !== STORAGE_SCHEMA_VERSION) return { kind: "unavailable", reason: "startup" }
+        return readSettingsView(records["doc:settings"])
+      })
+    },
+    subscribe(fn) {
+      if (disposed()) return () => {}
+      // Each registration has an independent, idempotent lifetime.
+      const listener = (event: SettingsEvent) => fn(event)
+      listeners.add(listener)
+      return () => { listeners.delete(listener) }
+    },
+    async changeSharedSetting(origin, change) {
+      if (disposed()) return { kind: "unavailable", reason: "disposed" }
+      if (initialization !== "ok") return { kind: "unavailable", reason: initialization === "newer-layout" ? "newer-layout" : "startup" }
+      if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
+      if (origin.kind !== "ui" || !Number.isInteger(origin.windowId) || origin.windowId < 0 || typeof origin.incognito !== "boolean") return { kind: "result", result: { refused: "invalid" } }
+      const arrivalEpoch = epoch
+      const arrival = lifetime.kind === "active" ? clock() : undefined
+      return enqueue(async () => {
+        if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
+        const result = await executeSharedSetting({ local: deps.local, sync: deps.sync, authority: records => hasInterimMarkers(records) ? { kind: "unavailable", reason: "startup" } : authority(records), repairHistory: repairedHistory, disposed, now: deps.now, generation: deps.generation }, change)
+        if (result.kind === "unconfirmed" || result.kind === "failed" && result.stage === "set") {
+          claimConfirmation = "unconfirmed"
+          deactivate("stopped")
+        }
+        if (result.kind === "committed") {
+          emitSettings("local")
+          quietUntil = deps.syncClock.now() + 2000
+          if (lifetime.kind === "active") {
+            const event: SyncEvent | undefined = arrival ? { kind: "edit", ...arrival, epoch: arrivalEpoch } : undefined
+            arm(Math.max(quietUntil, nextInvocation), event)
+          }
+        }
+        return result
+      })
+    },
     claim() {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
       if (initialization !== "ok") return Promise.resolve({ kind: "unavailable", reason: "startup" })
@@ -829,6 +898,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
       })
     },
     dispose() {
+      listeners.clear()
       deactivate("disposed")
       return lane
     },
