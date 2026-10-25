@@ -423,7 +423,7 @@ test("actual browser artifact executes the acceptance matrix with injected effec
     expect(file.startsWith(resolve(import.meta.dir, "../../shared/model") + "/") ||
       file === resolve(import.meta.dir, "../../shared/contracts/json.ts") ||
       file.startsWith(resolve(import.meta.dir, "../../shared/keys") + "/") ||
-      [entry, ...["shared-setting-execution.ts", "settings-edit.ts", "local-claim-writer.ts", "accounts.ts", "legacy.ts", "legacy-execution.ts", "legacy-startup.ts", "legacy-shortcut.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file)).toBe(true)
+      [entry, ...["claim-notice.ts", "shared-setting-execution.ts", "settings-edit.ts", "local-claim-writer.ts", "accounts.ts", "legacy.ts", "legacy-execution.ts", "legacy-startup.ts", "legacy-shortcut.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file)).toBe(true)
     for (const imported of new Bun.Transpiler({ loader: "ts" }).scanImports(await readFile(file, "utf8"))) {
       expect(imported.path.startsWith(".")).toBe(true)
       const base = resolve(dirname(file), imported.path)
@@ -3851,4 +3851,195 @@ test("actual fixture worker consumes restart-safe opaque recovery on its existin
     const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
     expect(observed.assertions).toBeGreaterThan(20)
   }
+})
+
+export async function noticeOwnerAcceptance(api: { create: typeof createLocalFilterWriter; starting: typeof import("./local-filter-writer").createStartingLocalFilterWriter }, acct: AccountKey, playlist: PlaylistId) {
+  let checks = 0
+  const observations: unknown[] = []
+  const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value))
+  function equal(actual: unknown, expected: unknown, label: string) { checks++; if (JSON.stringify(actual) !== JSON.stringify(expected)) throw Error(label + ": " + JSON.stringify({ actual, expected })) }
+  function check(value: unknown, label: string) { checks++; if (!value) throw Error(label) }
+  const origin = { kind: "ui", windowId: 1, incognito: false } as const
+  const notice = { acct, dropped: 1, extension: { nested: [true] } }
+  const seed = () => ({ schema: 1, device: { id: "fixture", consent: { v: 1, at: 1 }, syncOn: false, claimNotice: notice }, unclaimed: null,
+    "doc:settings": { v: 1, gen: "old", at: 1, by: "fixture", data: {} },
+    [`doc:setup:${acct}`]: { v: 1, gen: "old", at: 1, by: "fixture", data: { autoAdd: [{ pl: playlist }] } } })
+  function gate() { let release = () => {}, enter = () => {}; const held = new Promise<void>(resolve => { release = resolve }), entered = new Promise<void>(resolve => { enter = resolve }); return { release, enter, held, entered } }
+  async function turns() { for (let i = 0; i < 30; i++) await Promise.resolve() }
+  function harness(initial: Record<string, unknown> = seed()) {
+    let records = clone(initial), reads = 0, generation = 0, monotonic = 0, wall = 0, stamps = 0, remote = 0, timers = 0, mode = "normal", heldAt = ""
+    const held = gate(), batches: unknown[] = [], events: unknown[] = [], trace: unknown[] = []
+    const local = {
+      async get(keys: readonly string[] | null) {
+        reads++; trace.push({ get: keys })
+        const selected = clone(Object.fromEntries(Object.entries(records).filter(([key]) => keys === null || keys.includes(key))))
+        if (heldAt === "get" + reads) { held.enter(); await held.held }
+        if (mode === "read-failed" && reads === 3) throw Error("read-failed")
+        return selected
+      },
+      async set(items: Readonly<Record<string, unknown>>) {
+        trace.push({ set: clone(items) }); batches.push(clone(items))
+        if (heldAt === "set") { held.enter(); await held.held }
+        if (mode !== "no-apply") records = { ...records, ...clone(items) }
+      }
+    }
+    const deps = { local, claim: { kind: "unavailable" as const }, sync: { async get() { remote++; throw Error("unexpected remote") }, async set() { remote++; throw Error("unexpected remote") }, subscribe() { remote++; throw Error("unexpected remote") } },
+      syncClock: { now() { monotonic++; return 0 }, wallNow() { wall++; return 1000000 }, after() { timers++; throw Error("unexpected timer") } }, now() { stamps++; return 100 }, generation() { return "g" + ++generation }, onSyncResult() {} }
+    const writer = api.create(deps); writer.subscribe(event => events.push(event))
+    const counts = () => ({ generation, monotonic, wall, stamps, remote, timers })
+    return { writer, deps, held, hold: (value: string) => { heldAt = value }, mode: (value: string) => { mode = value }, counts, events, trace, batches, get reads() { return reads }, get records() { return records } }
+  }
+  {
+    const h = harness(), before = h.counts(), saved = clone(h.records)
+    const read = await h.writer.readClaimNotice()
+    equal(read, { kind: "pending", notice }, "owner pending notice")
+    equal(h.records, saved, "read cannot clear")
+    equal(h.batches, [], "read zero writes")
+    equal(h.counts(), before, "read zero effect clocks")
+    check(read.kind === "pending" && Object.isFrozen(read.notice), "owner notice frozen")
+    equal(await h.writer.acknowledgeClaimNotice(origin, notice), { kind: "committed", write: { kind: "resolved" } }, "owner confirmed notice")
+    equal(await h.writer.readClaimNotice(), { kind: "empty" }, "owner reread empty")
+    equal(h.counts(), before, "notice no recovery ingress or stamp")
+    equal(h.events, [], "Device no Settings event")
+    equal(h.batches, [{ device: { ...seed().device, claimNotice: null } }], "owner exact Device-only batch")
+    await h.writer.dispose()
+    const restarted = api.create(h.deps)
+    equal(await restarted.readClaimNotice(), { kind: "empty" }, "fresh owner empty")
+    await restarted.dispose()
+    for (const call of [() => h.writer.readClaimNotice(), () => h.writer.acknowledgeClaimNotice(origin, notice)]) {
+      let message = ""; try { await call() } catch (error) { if (error instanceof Error) message = error.message }
+      equal(message, "Writer disposed", "disposed public notice rejection")
+    }
+    observations.push({ name: "normal", records: h.records, batches: h.batches, counts: h.counts(), trace: h.trace })
+  }
+  for (const raw of [null, {}, { kind: "sync" }, { kind: "ui", windowId: -1, incognito: false }, { kind: "ui", windowId: 1.5, incognito: false }, { kind: "ui", windowId: 1, incognito: "false" }]) {
+    const h = harness(), before = h.counts()
+    equal(await Reflect.apply(h.writer.acknowledgeClaimNotice, h.writer, [raw, notice]), { kind: "refused", reason: "invalid" }, "invalid origin")
+    equal(h.batches, [], "invalid origin zero writes"); equal(h.reads, 0, "invalid origin zero IO"); equal(h.counts(), before, "invalid origin zero ingress"); await h.writer.dispose()
+  }
+  for (const [operation, expected] of [["read", { kind: "unavailable", reason: "startup" }], ["ack", { kind: "unavailable", reason: "startup" }]] as const) {
+    const h = harness(), startupGate = gate()
+    const startup = { context: { deviceId: "fixture", settingsGen: "migration", at: 1, shortcutId: "orig01", platform: { browser: "chrome" as const, os: "linux" as const }, commands: [] }, async readSnapshot() { startupGate.enter(); await startupGate.held; return { schema: 1, device: h.records.device, settingsDocument: h.records["doc:settings"], unclaimed: null, legacy: { presentKeys: [], values: {}, refreshTokenWasNonempty: false }, interimKeysPresent: [] } }, async removeLocal() { throw Error("remove") }, async deleteDatabase() { throw Error("db") }, async removeSession() { throw Error("session") } }
+    const writer = api.starting({ ...h.deps, startup }); await startupGate.entered
+    equal(await (operation === "read" ? writer.readClaimNotice() : writer.acknowledgeClaimNotice(origin, notice)), expected, "pending startup notice closed")
+    equal(h.reads, 0, "pending startup operation no IO"); startupGate.release(); equal(await writer.ready(), "ok", "real startup releases")
+    equal(await writer.readClaimNotice(), { kind: "pending", notice }, "read after readiness"); await writer.dispose(); await h.writer.dispose()
+  }
+  {
+    const h = harness(); h.hold("get1")
+    const reading = h.writer.readClaimNotice(); await h.held.entered
+    const disposing = h.writer.dispose(); h.held.release()
+    equal(await reading, { kind: "unavailable", reason: "stale" }, "disposed pending notice read withheld")
+    await disposing; equal(h.batches, [], "disposed read zero writes")
+  }
+  {
+    const h = harness(); h.hold("get1")
+    const reading = h.writer.readClaimNotice(); await h.held.entered
+    const expected = clone(notice), acknowledging = h.writer.acknowledgeClaimNotice(origin, expected)
+    expected.dropped = 9; expected.extension.nested[0] = false
+    h.held.release(); await reading
+    equal(await acknowledging, { kind: "committed", write: { kind: "resolved" } }, "queued expected snapshot captured at invocation")
+    await h.writer.dispose()
+  }
+  {
+    const h = harness(); h.mode("no-apply"); h.hold("get3")
+    const pending = h.writer.acknowledgeClaimNotice(origin, notice); await h.held.entered
+    const reading = h.writer.readClaimNotice(), ack = h.writer.acknowledgeClaimNotice(origin, notice)
+    h.held.release(); equal((await pending).kind, "unconfirmed", "held uncertain acknowledgement")
+    const reads = h.reads
+    equal(await reading, { kind: "unavailable", reason: "stale" }, "queued read honors uncertainty")
+    equal(await ack, { kind: "unavailable", reason: "stale" }, "queued OK honors uncertainty")
+    equal(h.reads, reads, "queued uncertain work zero IO"); await h.writer.dispose()
+  }
+  for (const initial of ["newer", "failed"] as const) {
+    const h = harness(), marker = new Error("synthetic startup failure")
+    const startup = { context: { deviceId: "fixture", settingsGen: "migration", at: 1, shortcutId: "orig01", platform: { browser: "chrome" as const, os: "linux" as const }, commands: [] }, async readSnapshot() {
+      if (initial === "failed") throw marker
+      return { schema: 2, device: undefined, settingsDocument: undefined, unclaimed: undefined, legacy: { presentKeys: [], values: {}, refreshTokenWasNonempty: false }, interimKeysPresent: [] }
+    }, async removeLocal() { throw Error("remove") }, async deleteDatabase() { throw Error("db") }, async removeSession() { throw Error("session") } }
+    const writer = api.starting({ ...h.deps, startup })
+    let observed: unknown; try { observed = await writer.ready() } catch (error) { observed = error }
+    check(initial === "failed" ? observed === marker : observed === "newer-layout", "failed/newer real readiness")
+    const before = h.counts(), reason = initial === "failed" ? "startup" : "newer-layout"
+    equal(await writer.readClaimNotice(), { kind: "unavailable", reason }, "failed/newer notice read closed")
+    equal(await writer.acknowledgeClaimNotice(origin, notice), { kind: "unavailable", reason }, "failed/newer notice OK closed")
+    equal(h.reads, 0, "failed/newer notice no operation IO"); equal(h.counts(), before, "failed/newer notice no ingress")
+    await writer.dispose(); await h.writer.dispose()
+  }
+  {
+    const h = harness(), before = h.counts()
+    equal(await Reflect.apply(h.writer.acknowledgeClaimNotice, h.writer, [origin, { acct, dropped: 1, extension: Infinity }]), { kind: "refused", reason: "invalid" }, "owner invalid expected")
+    equal(h.batches, [], "owner invalid expected zero writes"); equal(h.reads, 0, "owner invalid expected zero IO"); equal(h.counts(), before, "owner invalid expected zero ingress"); await h.writer.dispose()
+  }
+  for (const stage of ["get1", "get2", "set", "get3"]) {
+    const h = harness(); h.hold(stage)
+    const pending = h.writer.acknowledgeClaimNotice(origin, notice); await h.held.entered
+    let drained = false; const disposing = h.writer.dispose().then(() => { drained = true })
+    await turns(); equal(drained, false, "dispose drains notice IO " + stage)
+    h.held.release(); const result = await pending; await disposing
+    equal(result, stage === "get1" || stage === "get2" ? { kind: "unavailable", reason: "stale" } : { kind: "unconfirmed", write: { kind: "resolved" }, cause: { kind: "stopped" } }, "notice disposal result " + stage)
+    equal(h.batches.length, stage === "get1" || stage === "get2" ? 0 : 1, "no set after before-set disposal " + stage)
+    observations.push({ name: "dispose-" + stage, result, batches: h.batches, records: h.records })
+  }
+  for (const stage of ["set", "get3"]) {
+    const h = harness(); h.hold(stage)
+    const pending = h.writer.acknowledgeClaimNotice(origin, notice); await h.held.entered
+    const beforeReads = h.reads, beforeBatches = h.batches.length
+    const settings = h.writer.changeSharedSetting(origin, { kind: "theme", value: "dark" })
+    const filter = h.writer.change(origin, { acct, playlist, desired: { mode: "deny", on: true }, clearListedChannels: "not-confirmed" })
+    const incoming = h.writer.receiveSyncDocument({ kind: "settings" }), flush = h.writer.flushSync(), read = h.writer.readClaimNotice()
+    await turns()
+    equal(h.reads, beforeReads, "shared lane held reads " + stage); equal(h.batches.length, beforeBatches, "shared lane held writes " + stage)
+    h.held.release(); equal((await pending).kind, "committed", "notice releases after confirmation")
+    equal((await settings).kind, "committed", "queued Settings commits")
+    equal((await filter).kind, "result", "queued Filter executes")
+    equal((await incoming).kind, "unavailable", "queued incoming executes")
+    equal((await flush).kind, "idle", "queued flush executes")
+    equal(await read, { kind: "empty" }, "queued read sees cleared notice")
+    await h.writer.dispose()
+  }
+  {
+    const h = harness(); h.mode("no-apply")
+    equal((await h.writer.changeSharedSetting(origin, { kind: "theme", value: "dark" })).kind, "unconfirmed", "Settings establishes existing uncertainty")
+    const reads = h.reads, before = h.counts()
+    equal(await h.writer.readClaimNotice(), { kind: "unavailable", reason: "stale" }, "notice read honors Settings uncertainty")
+    equal(await h.writer.acknowledgeClaimNotice(origin, notice), { kind: "unavailable", reason: "stale" }, "notice OK honors Settings uncertainty")
+    equal(h.reads, reads, "Settings uncertainty notice zero IO"); equal(h.counts(), before, "Settings uncertainty notice zero ingress"); await h.writer.dispose()
+  }
+  for (const mode of ["no-apply", "read-failed"]) {
+    const h = harness(); h.mode(mode)
+    equal((await h.writer.acknowledgeClaimNotice(origin, notice)).kind, "unconfirmed", "uncertain notice")
+    const before = h.counts(), reads = h.reads, batches = h.batches.length
+    equal(await h.writer.readClaimNotice(), { kind: "unavailable", reason: "stale" }, "uncertain notice read blocked")
+    equal(await h.writer.acknowledgeClaimNotice(origin, notice), { kind: "unavailable", reason: "stale" }, "uncertain repeated OK blocked")
+    equal(await h.writer.claim(), { kind: "unavailable", reason: "stale" }, "uncertain claim blocked")
+    equal(await h.writer.changeSharedSetting(origin, { kind: "theme", value: "dark" }), { kind: "unavailable", reason: "stale" }, "uncertain Settings blocked")
+    equal(await h.writer.change(origin, { acct, playlist, desired: { mode: "deny", on: true }, clearListedChannels: "not-confirmed" }), { kind: "unavailable", reason: "stale" }, "uncertain Filter blocked")
+    equal(await h.writer.receiveSyncDocument({ kind: "settings" }), { kind: "unavailable", reason: "authority" }, "uncertain incoming blocked")
+    equal(await h.writer.flushSync(), { kind: "unavailable" }, "uncertain flush blocked"); await h.writer.startSync()
+    equal(h.reads, reads, "uncertainty no more IO"); equal(h.batches.length, batches, "uncertainty no more sets"); equal(h.counts(), before, "uncertainty no ingress"); await h.writer.dispose()
+  }
+  {
+    const h = harness({ ...seed(), device: { ...seed().device, claimNotice: null, upgradeNote: null, lastAccount: null, newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: true }, unclaimed: { from: "1.5.0", autoAdd: [playlist], shortcutPlaylist: null, filters: {}, at: 1 } })
+    const lookup = gate()
+    const authority = { acct, lease: "lease", browserSession: "session", consentGeneration: "consent", signedIn: true as const, incognito: false as const }
+    const writer = api.create({ ...h.deps, claim: { kind: "fixture", authority: { async read() { return { kind: "ready", authority } } }, session: { async takeLookup() { return true } }, ownership: { async lookup() { lookup.enter(); await lookup.held; return { kind: "fixture-owned", authority, lineage: "local-migration-only", ownedPlaylistIds: new Set([playlist]) } } } } })
+    const claiming = writer.claim(); await lookup.entered
+    const reads = h.reads, batches = h.batches.length
+    const reading = writer.readClaimNotice(), acknowledging = writer.acknowledgeClaimNotice(origin, notice)
+    await turns(); equal(h.reads, reads, "read/OK cannot enter held claim"); equal(h.batches.length, batches, "OK no early set")
+    lookup.release(); equal((await claiming).kind, "committed", "held real claim commits")
+    const saved = await reading; check(saved.kind === "pending", "queued read sees actual saved claim notice")
+    equal(await acknowledging, { kind: "unchanged", reason: "different-notice" }, "stale OK cannot clear new claim")
+    await writer.dispose(); await h.writer.dispose()
+    observations.push({ name: "held-claim", saved, records: h.records, batches: h.batches, counts: h.counts() })
+  }
+  return { checks, observations }
+}
+
+test("claim notice joins the actual owner's lane, readiness, disposal and global uncertainty", async () => {
+  const { createStartingLocalFilterWriter } = await import("./local-filter-writer")
+  const acct = "AAAAAAAAAAAAAAAA", playlist = "PL_P"
+  if (!isAccountKey(acct) || !isPlaylistId(playlist)) throw Error("fixture identifiers")
+  expect((await noticeOwnerAcceptance({ create: createLocalFilterWriter, starting: createStartingLocalFilterWriter }, acct, playlist)).checks).toBeGreaterThan(100)
 })

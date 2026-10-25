@@ -215,7 +215,64 @@ export async function runClaimFixture() {
     if (JSON.stringify(restart) !== JSON.stringify(final) || JSON.stringify(records.device) !== preservedDevice || JSON.stringify(records.unclaimed) !== preservedUnclaimed) throw Error("Settings restart changed view or saved claim notice/null")
     settingsOutcomes.push({ name, origin: "trusted-synthetic-injection-no-production-sender-validation", followed, theme, percentage, final, restart, batches, effects, generations, saved: records })
   }
-  return { fixture: "exclusive-synthetic-atomic-local-only", outcomes, startupOutcomes, settingsOutcomes }
+  const noticeOutcomes = []
+  {
+    let records: Record<string, unknown> = { schema: 1, device: JSON.parse(JSON.stringify(device)),
+      "doc:settings": envelope(settings), unclaimed: JSON.parse(JSON.stringify(carried)),
+      sync: { joined: "old-history", pushed: {}, status: "off", editedSinceOff: false, extension: "keep" } }
+    const input = JSON.parse(JSON.stringify(records))
+    const batches: Readonly<Record<string, JsonValue>>[] = [], effects: unknown[] = [], events: unknown[] = []
+    const counters = { reads: 0, generations: 0, stamps: 0, monotonic: 0, wall: 0, lookups: 0, authority: 0, sync: 0, timers: 0 }
+    const deps = {
+      startup: startupHost({ read: () => JSON.parse(JSON.stringify(records)), remove(keys) { for (const key of keys) delete records[key] } }, effects),
+      local: { async get() { counters.reads++; return JSON.parse(JSON.stringify(records)) }, async set(items: Readonly<Record<string, JsonValue>>) {
+        const saved = JSON.parse(JSON.stringify(items)); batches.push(saved); records = { ...records, ...saved }
+      } },
+      claim: { kind: "fixture" as const,
+        authority: { async read(): Promise<ClaimAuthorityState> { counters.authority++; return { kind: "ready", authority } } },
+        session: { async takeLookup() { return true } },
+        ownership: { async lookup(active: ClaimAuthority) { counters.lookups++; return { kind: "fixture-owned" as const, authority: active, lineage: "local-migration-only" as const, ownedPlaylistIds: new Set([playlist]) } } }
+      },
+      sync: { async get() { counters.sync++; throw Error("Notice accessed sync") }, async set() { counters.sync++; throw Error("Notice wrote sync") }, subscribe() { counters.sync++; throw Error("Notice subscribed") } },
+      syncClock: { now() { counters.monotonic++; return 0 }, wallNow() { counters.wall++; return 1000000 }, after() { counters.timers++; throw Error("Notice scheduled timer") } },
+      now() { counters.stamps++; return 100 }, generation() { return `notice-${++counters.generations}` }, onSyncResult() { throw Error("Notice emitted sync result") }
+    }
+    let writer = createStartingLocalFilterWriter(deps)
+    if (await writer.ready() !== "ok") throw Error("Notice startup not ready")
+    const claim = await writer.claim()
+    if (claim.kind !== "committed") throw Error("Notice claim did not commit")
+    const savedBeforeOK = JSON.parse(JSON.stringify(records)), claimBatches = batches.length
+    const first = await writer.readClaimNotice(), second = await writer.readClaimNotice()
+    if (first.kind !== "pending" || JSON.stringify(first) !== JSON.stringify(second)) throw Error("Saved notice not pending")
+    await writer.dispose()
+    records = JSON.parse(JSON.stringify(records))
+    writer = createStartingLocalFilterWriter(deps)
+    if (await writer.ready() !== "ok") throw Error("Notice pending restart not ready")
+    const pendingAfterRestart = await writer.readClaimNotice()
+    if (JSON.stringify(pendingAfterRestart) !== JSON.stringify(first) || JSON.stringify(records) !== JSON.stringify(savedBeforeOK) || batches.length !== claimBatches) throw Error("Read/restart acknowledged notice")
+    const displayed = pendingAfterRestart
+    if (displayed.kind !== "pending") throw Error("No notice for popup")
+    const presentation = { kind: "synthetic-popup-presentation", visible: true, selected: "claim-notice", notice: displayed.notice }
+    const action = { kind: "explicit-popup-OK", origin: { kind: "ui", windowId: 1, incognito: false } as const }
+    writer.subscribe(event => events.push(event))
+    const before = { ...counters }
+    const acknowledgement = await writer.acknowledgeClaimNotice(action.origin, presentation.notice)
+    const reread = await writer.readClaimNotice(), duplicateOK = await writer.acknowledgeClaimNotice(action.origin, presentation.notice)
+    const after = { ...counters }
+    if (acknowledgement.kind !== "committed" || reread.kind !== "empty" || duplicateOK.kind !== "unchanged" || duplicateOK.reason !== "empty" || batches.length !== claimBatches + 1 || events.length ||
+      ["generations", "stamps", "monotonic", "wall", "authority", "lookups", "sync", "timers"].some(key => before[key as keyof typeof before] !== after[key as keyof typeof after])) throw Error("Notice OK effects mismatch")
+    const noticeBatch = batches[claimBatches]
+    const expectedSaved = JSON.parse(JSON.stringify(savedBeforeOK)); expectedSaved.device.claimNotice = null
+    if (JSON.stringify(records) !== JSON.stringify(expectedSaved) || JSON.stringify(noticeBatch) !== JSON.stringify({ device: expectedSaved.device })) throw Error("Notice changed other saved fields")
+    await writer.dispose(); records = JSON.parse(JSON.stringify(records))
+    const restarted = createStartingLocalFilterWriter(deps)
+    if (await restarted.ready() !== "ok") throw Error("Notice final restart not ready")
+    const restart = await restarted.readClaimNotice(), consumed = await restarted.claim()
+    await restarted.dispose()
+    if (restart.kind !== "empty" || consumed.kind !== "consumed" || JSON.stringify(records) !== JSON.stringify(expectedSaved)) throw Error("Notice removal did not survive restart")
+    noticeOutcomes.push({ name: "claim-notice", input, claim, first, second, pendingAfterRestart, savedBeforeOK, presentation, action, acknowledgement, reread, duplicateOK, restart, consumed, before, after, counters, saved: records, batches, effects, events })
+  }
+  return { fixture: "exclusive-synthetic-atomic-local-only", outcomes, startupOutcomes, settingsOutcomes, noticeOutcomes }
 }
 
 export const fixtureRun = runClaimFixture()

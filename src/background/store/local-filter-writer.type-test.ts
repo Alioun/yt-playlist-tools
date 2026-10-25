@@ -25,6 +25,9 @@ type ExpectedStorage = {
   get(keys: readonly string[] | null): Promise<Readonly<Record<string, unknown>>>
   set(items: Readonly<Record<string, JsonValue>>): Promise<void>
 }
+import type { ClaimNotice } from "../../shared/model"
+import type { Snapshot } from "../../shared/model/settings-view"
+import type { ClaimNoticeRead, ClaimNoticeAcknowledgement, NormalUiOrigin } from "./claim-notice"
 import type { SettingsRead, SettingsEvent } from "./local-filter-writer"
 import type { SharedSettingChange } from "./settings-edit"
 import type { LocalSettingsWriteResult } from "./shared-setting-execution"
@@ -37,7 +40,7 @@ type ExpectedFactory = (deps: {
   readonly generation: () => string
   readonly syncClock: SyncClock
   readonly onSyncResult: (result: SyncAutomaticResult) => void
-}) => { read(view: "settings"): Promise<SettingsRead>; subscribe(fn: (event: SettingsEvent) => void): () => void; changeSharedSetting(origin: UiOrigin, change: SharedSettingChange): Promise<LocalSettingsWriteResult>; claim(): Promise<ClaimTransactionResult>; change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>; receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>; flushSync(): Promise<SyncFlushResult>; startSync(): Promise<void>; dispose(): Promise<void> }
+}) => { readClaimNotice(): Promise<ClaimNoticeRead>; acknowledgeClaimNotice(origin: NormalUiOrigin, expected: Snapshot<ClaimNotice>): Promise<ClaimNoticeAcknowledgement>; read(view: "settings"): Promise<SettingsRead>; subscribe(fn: (event: SettingsEvent) => void): () => void; changeSharedSetting(origin: UiOrigin, change: SharedSettingChange): Promise<LocalSettingsWriteResult>; claim(): Promise<ClaimTransactionResult>; change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>; receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>; flushSync(): Promise<SyncFlushResult>; startSync(): Promise<void>; dispose(): Promise<void> }
 type NativeBrowser = Parameters<typeof createBrowserLocalFilterWriter>[0]
 type NativeSender = Parameters<Parameters<NativeBrowser["runtime"]["onMessage"]["addListener"]>[0]>[1]
 type ExpectedAdapter = (nativeBrowser: NativeBrowser, options: { onSyncResult: (result: SyncAutomaticResult) => void }) => {

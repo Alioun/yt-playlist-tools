@@ -17,6 +17,9 @@ import { executeLegacyStartup, type StartupHost, type StartupExecutionResult } f
 import { readSettingsView, type SettingsView } from "../../shared/model/settings-view"
 import { executeSharedSetting, type LocalSettingsWriteResult } from "./shared-setting-execution"
 import type { SharedSettingChange } from "./settings-edit"
+import type { ClaimNotice } from "../../shared/model"
+import type { Snapshot } from "../../shared/model/settings-view"
+import { projectClaimNotice, executeClaimNoticeAcknowledgement, type ClaimNoticeRead, type ClaimNoticeAcknowledgement, type NormalUiOrigin } from "./claim-notice"
 
 export type SettingsRead = SettingsView | { readonly kind: "unavailable"; readonly reason: "startup" | "newer-layout" | "disposed" | "stale" }
 export type SettingsEvent = { readonly kind: "settings-changed"; readonly source: "local" | "sync" }
@@ -200,6 +203,8 @@ type LocalFilterWriterDependencies = {
 }
 
 type LocalFilterWriter = {
+  readClaimNotice(): Promise<ClaimNoticeRead>
+  acknowledgeClaimNotice(origin: NormalUiOrigin, expected: Snapshot<ClaimNotice>): Promise<ClaimNoticeAcknowledgement>
   read(view: "settings"): Promise<SettingsRead>
   subscribe(fn: (event: SettingsEvent) => void): () => void
   changeSharedSetting(origin: UiOrigin, change: SharedSettingChange): Promise<LocalSettingsWriteResult>
@@ -783,7 +788,44 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StartupHost)
       : next ? { kind: "reconciled", repaired: plan.repairs } : { kind: "idle" }
   }
 
+  function noticeUnavailable(): Extract<ClaimNoticeRead, { kind: "unavailable" }> | undefined {
+    if (initialization !== "ok") return { kind: "unavailable", reason: initialization === "newer-layout" ? "newer-layout" : "startup" }
+    if (disposed() || claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
+  }
+
   const writer: LocalFilterWriter = {
+    readClaimNotice() {
+      if (disposed()) return Promise.reject(new Error("Writer disposed"))
+      const blocked = noticeUnavailable()
+      if (blocked) return Promise.resolve(blocked)
+      return enqueue(async () => {
+        const blocked = noticeUnavailable()
+        if (blocked) return blocked
+        const records = await deps.local.get(null)
+        const stopped = noticeUnavailable()
+        return stopped ?? projectClaimNotice({ records })
+      })
+    },
+    acknowledgeClaimNotice(origin, expected) {
+      if (disposed()) return Promise.reject(new Error("Writer disposed"))
+      const blocked = noticeUnavailable()
+      if (blocked) return Promise.resolve(blocked)
+      if (!isJsonObject(origin) || origin.kind !== "ui" || origin.incognito !== false || !Number.isSafeInteger(origin.windowId) || typeof origin.windowId !== "number" || origin.windowId < 0) return Promise.resolve({ kind: "refused", reason: "invalid" })
+      const compare = projectClaimNotice({ records: { schema: STORAGE_SCHEMA_VERSION, device: {
+        id: "notice-comparison", consent: { v: CONSENT_VERSION, at: 0 }, claimNotice: expected
+      } } })
+      if (compare.kind !== "pending") return Promise.resolve({ kind: "refused", reason: "invalid" })
+      return enqueue(async () => {
+        const blocked = noticeUnavailable()
+        if (blocked) return blocked
+        const result = await executeClaimNoticeAcknowledgement({ local: deps.local, expected: compare.notice, isStopped: () => noticeUnavailable() !== undefined })
+        if (result.kind === "unconfirmed") {
+          claimConfirmation = "unconfirmed"
+          deactivate("stopped")
+        }
+        return result
+      })
+    },
     read(_view) {
       const unavailable = (): SettingsRead | undefined => disposed() ? { kind: "unavailable", reason: "disposed" }
         : initialization !== "ok" ? { kind: "unavailable", reason: initialization === "newer-layout" ? "newer-layout" : "startup" }
