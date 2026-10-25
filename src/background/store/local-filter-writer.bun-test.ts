@@ -53,7 +53,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
       },
       async set(items) { sets.push(items); Object.assign(records, items) }
     }
-    const writer = create({ syncClock: { now: () => 0, wallNow: () => 1000000, after() { throw Error("Inactive writer scheduled timer") } }, onSyncResult() {}, local, sync: { subscribe() { throw Error("Inactive writer subscribed") }, async get() { throw Error("Off writer accessed sync") }, async set() { throw Error("Off writer wrote sync") } }, now: () => 100 + times++, generation: () => `g${++generations}` })
+    const writer = create({ claim: { kind: "unavailable" }, syncClock: { now: () => 0, wallNow: () => 1000000, after() { throw Error("Inactive writer scheduled timer") } }, onSyncResult() {}, local, sync: { subscribe() { throw Error("Inactive writer subscribed") }, async get() { throw Error("Off writer accessed sync") }, async set() { throw Error("Off writer wrote sync") } }, now: () => 100 + times++, generation: () => `g${++generations}` })
     const change = (desired: LocalFilterChange["desired"], expectedGeneration?: string | null) => writer.change(
       { kind: "ui", windowId: 1, incognito: false },
       expectedGeneration === undefined ? { acct, playlist, desired, clearListedChannels: "not-confirmed" }
@@ -310,7 +310,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
   }
   {
     const x = harness({ ...seed(), sync: history() }), marker = new Error("programmer error")
-    const writer = create({ syncClock: { now: () => 0, wallNow: () => 1000000, after() { throw Error("Inactive writer scheduled timer") } }, onSyncResult() {}, local: x.local, sync: { subscribe() { throw Error("Inactive writer subscribed") }, async get() { throw Error("Off writer accessed sync") }, async set() { throw Error("Off writer wrote sync") } }, now: () => 1, generation: () => { throw marker } })
+    const writer = create({ claim: { kind: "unavailable" }, syncClock: { now: () => 0, wallNow: () => 1000000, after() { throw Error("Inactive writer scheduled timer") } }, onSyncResult() {}, local: x.local, sync: { subscribe() { throw Error("Inactive writer subscribed") }, async get() { throw Error("Off writer accessed sync") }, async set() { throw Error("Off writer wrote sync") } }, now: () => 1, generation: () => { throw marker } })
     let rejected: unknown
     try { await writer.change({ kind: "ui", windowId: 1, incognito: false }, { acct, playlist, desired: { mode: "deny", on: false }, clearListedChannels: "not-confirmed" }) } catch (error) { rejected = error }
     check(rejected === marker, "programmer exception propagates")
@@ -319,7 +319,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
   }
   {
     const x = harness(), marker = new Error("clock failure")
-    const writer = create({ syncClock: { now: () => 0, wallNow: () => 1000000, after() { throw Error("Inactive writer scheduled timer") } }, onSyncResult() {}, local: x.local, sync: { subscribe() { throw Error("Inactive writer subscribed") }, async get() { throw Error("Off writer accessed sync") }, async set() { throw Error("Off writer wrote sync") } }, now: () => { throw marker }, generation: () => "unused" })
+    const writer = create({ claim: { kind: "unavailable" }, syncClock: { now: () => 0, wallNow: () => 1000000, after() { throw Error("Inactive writer scheduled timer") } }, onSyncResult() {}, local: x.local, sync: { subscribe() { throw Error("Inactive writer subscribed") }, async get() { throw Error("Off writer accessed sync") }, async set() { throw Error("Off writer wrote sync") } }, now: () => { throw marker }, generation: () => "unused" })
     let rejected: unknown
     try { await writer.change({ kind: "ui", windowId: 1, incognito: false }, { acct, playlist, desired: { mode: "deny", on: false }, clearListedChannels: "not-confirmed" }) } catch (error) { rejected = error }
     check(rejected === marker, "admission programmer exception rejects")
@@ -346,7 +346,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
           wrote = true
           if (!Object.hasOwn(items, "sync")) return deps.local.set(items)
           const sync = items.sync
-          if (!sync) throw Error("Missing control history")
+          if (!sync || typeof sync !== "object" || Array.isArray(sync)) throw Error("Missing control history")
           if (wrong === "split") { await deps.local.set({ [filterKey]: items[filterKey]! }); return deps.local.set({ sync }) }
           if (wrong === "metadata") return deps.local.set({ ...items, sync: { joined: sync.joined!, pushed: sync.pushed!, status: sync.status!, editedSinceOff: true } })
           if (wrong === "pushed") return deps.local.set({ ...items, sync: { ...sync, pushed: { [filterKey]: "g1" } } })
@@ -391,7 +391,7 @@ test("preparation refusal leaves false history untouched before generation in th
     entrypoints: [resolve(import.meta.dir, "local-filter-writer.ts")], target: "browser", format: "cjs", minify: true,
     plugins: [{ name: "preparation-refusal", setup(builder) {
       builder.onLoad({ filter: /\/write-preparation\.ts$/ }, () => ({ loader: "ts", contents:
-        'export function prepareDocumentBody() { globalThis.preparations++; return {kind:"invalid",reason:"json"} }' }))
+        'export function prepareDocumentBody() { globalThis.preparations++; return {kind:"invalid",reason:"json"} } export function materializeDocumentBody(){throw Error("Unexpected claim preparation")}' }))
     } }]
   })
   expect(build.success).toBe(true)
@@ -405,7 +405,7 @@ test("preparation refusal leaves false history untouched before generation in th
       "doc:filter:AAAAAAAAAAAAAAAA:PL_P":{v:1,gen:"old",at:1,by:"device",data:{mode:"deny",on:true,channels:[]}}};
     const before=JSON.stringify(records);
     let generations=0,sets=0,reads=0;
-    const writer=module.exports.createLocalFilterWriter({syncClock:{now:()=>0, wallNow: () => 1000000,after(){throw Error("timer")}},onSyncResult(){},sync:{subscribe(){throw Error("subscribe")},async get(){throw Error("Forbidden sync")}},local:{async get(){reads++;return records},async set(){sets++;throw Error("Unexpected set")}},now:()=>1,generation:()=>{generations++;return "unexpected"}});
+    const writer=module.exports.createLocalFilterWriter({claim:{kind:"unavailable"},syncClock:{now:()=>0, wallNow: () => 1000000,after(){throw Error("timer")}},onSyncResult(){},sync:{subscribe(){throw Error("subscribe")},async get(){throw Error("Forbidden sync")}},local:{async get(){reads++;return records},async set(){sets++;throw Error("Unexpected set")}},now:()=>1,generation:()=>{generations++;return "unexpected"}});
     const result=await writer.change({kind:"ui",windowId:1,incognito:false},{acct:"AAAAAAAAAAAAAAAA",playlist:"PL_P",desired:{mode:"deny",on:false},clearListedChannels:"not-confirmed"});
     return {result,preparations,generations,sets,reads,unchanged:before===JSON.stringify(records)};
   })()`
@@ -422,7 +422,7 @@ test("actual browser artifact executes the acceptance matrix with injected effec
     visited.add(file)
     expect(file.startsWith(resolve(import.meta.dir, "../../shared/model") + "/") ||
       file === resolve(import.meta.dir, "../../shared/contracts/json.ts") ||
-      [entry, resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file)).toBe(true)
+      [entry, ...["local-claim-writer.ts", "accounts.ts", "legacy.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file)).toBe(true)
     for (const imported of new Bun.Transpiler({ loader: "ts" }).scanImports(await readFile(file, "utf8"))) {
       expect(imported.path.startsWith(".")).toBe(true)
       const base = resolve(dirname(file), imported.path)
@@ -491,7 +491,7 @@ async function syncAcceptance(create: typeof createLocalFilterWriter, acct: Acco
       async set(items) { sets.push(items); Object.assign(records, items) }
     }
     const sync = { subscribe() { throw Error("Inactive writer subscribed") }, async get() { syncReads++; return syncRecords }, async set() { throw Error("Change wrote sync") } }
-    const writer = create({ syncClock: { now: () => 0, wallNow: () => 1000000, after() { throw Error("Inactive writer scheduled timer") } }, onSyncResult() {}, local, sync, now: () => 100, generation: () => `g${++generations}` })
+    const writer = create({ claim: { kind: "unavailable" }, syncClock: { now: () => 0, wallNow: () => 1000000, after() { throw Error("Inactive writer scheduled timer") } }, onSyncResult() {}, local, sync, now: () => 100, generation: () => `g${++generations}` })
     const change = (on = false, mode: "deny" | "allow" = "deny", expectedGeneration?: string) => writer.change({ kind: "ui", windowId: 1, incognito: false },
       expectedGeneration === undefined ? { acct, playlist, desired: { mode, on }, clearListedChannels: "not-confirmed" }
         : { acct, playlist, desired: { mode, on }, clearListedChannels: "confirmed", expectedGeneration })
@@ -751,7 +751,7 @@ test("actual browser artifact projects literal complete raw inventory exactly on
       "doc:setup:AAAAAAAAAAAAAAAA":{v:1,gen:"s",at:1,by:"d",data:{autoAdd:[{pl:"PL_P"}]}},
       "doc:filter:AAAAAAAAAAAAAAAA:PL_P":{v:1,gen:"f",at:1,by:"d",data:{mode:"deny",on:true,channels:[]}}};
     let gens=0;globalThis.projections=0;globalThis.encodedInputs=[];
-    const writer=module.exports.createLocalFilterWriter({syncClock:{now:()=>0, wallNow: () => 1000000,after(){throw Error("timer")}},onSyncResult(){},local:{async get(){return records},async set(items){Object.assign(records,items)}},sync:{subscribe(){throw Error("subscribe")},async get(){return {"s:meta":{v:1,id:"history",created:0}}}},now:()=>100,generation:()=>"g"+(++gens)});
+    const writer=module.exports.createLocalFilterWriter({claim:{kind:"unavailable"},syncClock:{now:()=>0, wallNow: () => 1000000,after(){throw Error("timer")}},onSyncResult(){},local:{async get(){return records},async set(items){Object.assign(records,items)}},sync:{subscribe(){throw Error("subscribe")},async get(){return {"s:meta":{v:1,id:"history",created:0}}}},now:()=>100,generation:()=>"g"+(++gens)});
     const change={acct:"AAAAAAAAAAAAAAAA",playlist:"PL_P",desired:{mode:"deny",on:false},clearListedChannels:"not-confirmed"};
     await writer.change({kind:"ui",windowId:1,incognito:false},change);
     const changedCount=globalThis.projections,changedEncodes=globalThis.encodedInputs.length;
@@ -813,7 +813,7 @@ async function flushAcceptance(create: typeof createLocalFilterWriter, acct: Acc
     let monotonic = 0
     const deps = { local, sync, syncClock: { now: () => monotonic, wallNow: () => 1000000 + monotonic, after() { throw Error("Inactive writer scheduled timer") } },
       onSyncResult() {}, now: () => 100, generation: () => `g${++generations}` }
-    const core = create(deps)
+    const core = create({ ...deps, claim: { kind: "unavailable" } })
     const writer = { ...core, flushSync() { monotonic += 5000; return core.flushSync() } }
     const change = (on = true) => writer.change({ kind: "ui", windowId: 1, incognito: false }, { acct, playlist, desired: { mode: "deny", on }, clearListedChannels: "not-confirmed" })
     return { advance: (ms: number) => { monotonic += ms }, records, syncRecords, reads, sets, syncWrites, local, sync, deps, writer, change, counts: () => ({ syncReads, generations }) }
@@ -1084,7 +1084,7 @@ async function driverAcceptance(create: typeof createLocalFilterWriter, acct: Ac
       async set(items) { accesses++; invocations.push(time); writes.push(clone(items)); Object.assign(remote, clone(items)); for (const changed of listener) changed() },
       subscribe(changed) { accesses++; subscriptions++; listener.add(changed); return () => { subscriptions--; listener.delete(changed) } }
     }
-    const writer = create({ local, sync, now: () => wall, generation: () => `g${++generation}`,
+    const writer = create({ claim: { kind: "unavailable" }, local, sync, now: () => wall, generation: () => `g${++generation}`,
       syncClock: { now: () => time, wallNow: () => wall, after(milliseconds, run) {
         equal(milliseconds <= 25000, true, "bounded event timer")
         const id = ++serial, entry = { due: time + milliseconds, run, event: origin }
@@ -1358,7 +1358,7 @@ test("actual browser artifact rejects six observable event driver defects", asyn
     { name: "timer-instead-of-invocation", assertion: "spacing uses actual invocation rather than due time", source: original.replace('nextInvocation = invokedAt + 5000', 'nextInvocation += 5000') },
     { name: "self-rearming-callback", assertion: "timer callback cannot rearm", source: original.replace('await automatic(current.event, false)', 'await automatic(current.event, true)') },
     { name: "duplicate-own-event-set", assertion: "first batch invokes at barrier", source: original.replace('let quietUntil = 0', 'let duplicated = false; let quietUntil = 0').replace('if (plan.sent.length === 0 && plan.repairs.length === 0) return { kind: "idle" }', 'if (plan.sent.length === 0 && plan.repairs.length === 0) { if (nextInvocation > 5000 && !duplicated) { duplicated = true; await deps.sync.set(Object.fromEntries(Object.entries(records).filter(([key]) => key.startsWith("doc:")).map(([key,value]) => [key.replace(/^doc:/,"s:"),value]))) }; return { kind: "idle" } }') },
-    { name: "automatic-restart-after-error", assertion: "startup error cannot automatically restart startup-read", source: original.replace('if (lifetime.kind === "stopped" || lifetime.kind === "disposed") return', 'if (lifetime.kind === "disposed") return; if (lifetime.kind === "stopped") lifetime = { kind: "inactive" }') }
+    { name: "automatic-restart-after-error", assertion: "startup error cannot automatically restart startup-read", source: original.replace('if (claimConfirmation === "unconfirmed" || lifetime.kind === "stopped" || lifetime.kind === "disposed") return', 'if (claimConfirmation === "unconfirmed" || lifetime.kind === "disposed") return; if (lifetime.kind === "stopped") lifetime = { kind: "inactive" }') }
   ]
   for (const fault of cases) {
     expect(fault.source).not.toBe(original)
@@ -1412,7 +1412,7 @@ async function receiveAcceptance(create: typeof createLocalFilterWriter, acct: A
       async set(items: Readonly<Record<string, unknown>>) { writes.push(clone(items)); Object.assign(snapshot, clone(items)); listener?.() },
       subscribe(run: () => void) { subscriptions++; listener = run; return () => { subscriptions--; listener = undefined } }
     }
-    const writer = create({ local: io, sync, now: () => { wall++; return 100 }, generation: () => `g${++generation}`,
+    const writer = create({ claim: { kind: "unavailable" }, local: io, sync, now: () => { wall++; return 100 }, generation: () => `g${++generation}`,
       syncClock: { now: () => { clock++; return time }, wallNow: () => 1000000, after(ms, run) { const id = ++scheduled; timers.set(id, { due: time + ms, run }); return () => { cancelled++; timers.delete(id) } } },
       onSyncResult(result) { results.push(result) } })
     return { writer, records, remote: snapshot, reads, sets, writes, results, io, sync, timers,
@@ -1759,7 +1759,7 @@ async function automaticIncomingAcceptance(create: typeof createLocalFilterWrite
     const results: Parameters<Parameters<typeof create>[0]["onSyncResult"]>[0][] = []
     const listeners = new Set<() => void>(), timers = new Map<number, { due: number; run: () => void }>()
     const hooks = { local: async (_n: number) => {}, remote: async (_n: number) => {}, set: async (_n: number, _items: unknown) => {}, afterSet: async (_n: number) => {}, snapshot: (value: typeof remote) => value }
-    const writer = create({ local: {
+    const writer = create({ claim: { kind: "unavailable" }, local: {
       async get() { reads.push("L" + ++lr); await hooks.local(lr); return clone(records) },
       async set(items) { const n = ++ls; sets.push(clone(items)); await hooks.set(n, items); Object.assign(records, clone(items)); await hooks.afterSet(n) }
     }, sync: {
@@ -2152,7 +2152,7 @@ test("automatic composition wrong alternatives fail at intended observations", a
     { name: "incoming-quiet", assertion: "receiver changes no scheduling clocks", source: original.replace('const next = repairedHistory(latest.history, [received])', 'quietUntil = deps.syncClock.now() + 2000; const next = repairedHistory(latest.history, [received])') },
     { name: "bypassed-pacing", assertion: "no sync invocation before five-second barrier", source: original.replace('let nextInvocation = deps.syncClock.now() + 5000', 'let nextInvocation = deps.syncClock.now()').replace('let lastMonotonic = nextInvocation - 5000', 'let lastMonotonic = nextInvocation') },
     { name: "timer-receives", assertion: "timer remains outbound-only", source: original.replace('await automatic(current.event, false)', 'await automatic(current.event, true)') },
-    { name: "stopped-restart", assertion: "successful manual retry never restarts stopped lifetime enumeration", source: original.replace('if (lifetime.kind === "stopped" || lifetime.kind === "disposed") return', 'if (lifetime.kind === "disposed") return; if (lifetime.kind === "stopped") lifetime = {kind:"inactive"}') },
+    { name: "stopped-restart", assertion: "successful manual retry never restarts stopped lifetime enumeration", source: original.replace('if (claimConfirmation === "unconfirmed" || lifetime.kind === "stopped" || lifetime.kind === "disposed") return', 'if (claimConfirmation === "unconfirmed" || lifetime.kind === "disposed") return; if (lifetime.kind === "stopped") lifetime = {kind:"inactive"}') },
     { name: "second-owner", assertion: "receiver changes no scheduling clocks", source: original.replace('const result = await receiveAttempt(key)', 'const result = await createLocalFilterWriter(deps).receiveSyncDocument(key)') },
     { name: "F-echo", assertion: "Q-only send without F echo", source: original.replace('    let plan = planSyncWrite({ local: records, sync: await deps.sync.get(), intent: { kind: "flush" } })', '    const echo = await deps.sync.get(); let plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(echo).filter(([name]) => name !== "s:filter:AAAAAAAAAAAAAAAA:PL_P")), intent: { kind: "flush" } })').replace('sync: remote, intent: { kind: "flush" }', 'sync: Object.fromEntries(Object.entries(remote).filter(([name]) => name !== "s:filter:AAAAAAAAAAAAAAAA:PL_P")), intent: { kind: "flush" }').replace('const replanned = planSyncWrite({ local: latest, sync: remote, intent: { kind: "flush" } })', 'const replanned = plan') },
     { name: "outside-lane", assertion: "automatic held lane excludes all queued IO enumeration", source: original.replace('return enqueue(() => receiveAttempt(key))', 'return receiveAttempt(key)') }
@@ -2212,7 +2212,7 @@ async function settingsIncomingAcceptance(create: typeof createLocalFilterWriter
     const reads: string[] = [], sets: unknown[] = [], writes: unknown[] = [], results: Parameters<Parameters<typeof create>[0]["onSyncResult"]>[0][] = []
     const timers = new Map<number, { at: number; run: () => void }>(), listeners = new Set<() => void>()
     const hooks = { local: async (_n: number) => {}, remote: async (_n: number) => {}, set: async (_items: unknown) => {}, afterSet: async () => {} }
-    const writer = create({ local: {
+    const writer = create({ claim: { kind: "unavailable" }, local: {
       async get() { reads.push("L" + lr); await hooks.local(lr++); return { ...records } },
       async set(items) { reads.push("set"); sets.push(clone(items)); await hooks.set(items); Object.assign(records, clone(items)); await hooks.afterSet() }
     }, sync: {
@@ -2554,7 +2554,7 @@ async function keptIncomingAcceptance(create: typeof createLocalFilterWriter, ac
     const reads: string[] = [], sets: unknown[] = [], writes: unknown[] = [], invocations: number[] = [], results: unknown[] = []
     const listeners = new Set<() => void>(), timers = new Map<number, { due: number; run: () => void }>()
     const hooks = { io: async (_stage: string) => {}, afterSet: async () => {} }
-    const writer = create({ local: {
+    const writer = create({ claim: { kind: "unavailable" }, local: {
       async get() { const stage = "L" + lr++; reads.push(stage); await hooks.io(stage); return clone(records) },
       async set(items) { reads.push("set"); await hooks.io("set"); sets.push(clone(items)); Object.assign(records, clone(items)); await hooks.afterSet() }
     }, sync: {
@@ -2933,7 +2933,7 @@ async function setupIncomingAcceptance(create: typeof createLocalFilterWriter, a
     const reads: string[] = [], sets: unknown[] = [], writes: unknown[] = [], results: unknown[] = []
     const listeners = new Set<() => void>(), timers = new Map<number, { due: number; run: () => void }>()
     const hooks = { io: async (_stage: string) => {}, afterSet: async () => {}, snapshot: (raw: Record<string, unknown>) => clone(raw) }
-    const writer = create({ local: {
+    const writer = create({ claim: { kind: "unavailable" }, local: {
       async get() { const stage = "L" + lr++; reads.push(stage); await hooks.io(stage); return hooks.snapshot(records) },
       async set(items) { reads.push("set"); await hooks.io("set"); sets.push(clone(items)); Object.assign(records, clone(items)); await hooks.afterSet() }
     }, sync: {
@@ -3411,7 +3411,7 @@ async function recoveryAcceptance(create: typeof createLocalFilterWriter, acct: 
       equal(ms >= 0 && ms <= 25000, true, "recovery has only bounded ordinary event tickets")
       const timer = { due: mono + ms, run }; timers.add(timer); scheduled.push(ms); return () => { timers.delete(timer) }
     } }
-    const make = () => create({ local, sync, now: () => { stamps++; return wall }, generation: () => `g${++generation}`,
+    const make = () => create({ claim: { kind: "unavailable" }, local, sync, now: () => { stamps++; return wall }, generation: () => `g${++generation}`,
       syncClock, onSyncResult: r => { results.push(r) } })
     let writer = make()
     const move = (at: number, unix = 1000000 + at) => { mono = at; wall = unix }
@@ -3525,7 +3525,7 @@ async function recoveryAcceptance(create: typeof createLocalFilterWriter, acct: 
   for (const mode of ["before", "after", "contradictory", "held-fails", "held-applied-rejects"] as const) {
     const h = harness(), marker = { local: "synthetic persistence" }, native = nativeError(), set = h.local.set
     h.local.set = async items => {
-      const raw = items.sync, gate = raw && raw.opaqueWrite
+      const raw = items.sync, gate = raw && typeof raw === "object" && !Array.isArray(raw) && raw.opaqueWrite
       const pending = gate && typeof gate === "object" && !Array.isArray(gate) && gate.gate
       const kind = pending && typeof pending === "object" && !Array.isArray(pending) ? pending.kind : undefined
       if (kind === "pending" && mode === "before") throw marker
@@ -3535,7 +3535,7 @@ async function recoveryAcceptance(create: typeof createLocalFilterWriter, acct: 
       if (kind === "held" && mode === "held-applied-rejects") throw marker
     }
     if (mode === "held-fails") h.local.set = async items => {
-      const raw = items.sync, field = raw?.opaqueWrite
+      const raw = items.sync, field = raw && typeof raw === "object" && !Array.isArray(raw) && raw.opaqueWrite
       if (field && typeof field === "object" && !Array.isArray(field) && field.gate && typeof field.gate === "object" && !Array.isArray(field.gate) && field.gate.kind === "held") throw marker
       await set(items)
     }

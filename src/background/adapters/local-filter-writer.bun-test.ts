@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, expect, mock, spyOn, test } from "bun:test"
 import { fakeBrowser } from "wxt/testing/fake-browser"
 import { isJsonValue } from "../../shared/contracts/json"
-import { createBrowserLocalFilterWriter } from "./local-filter-writer"
+import { createBrowserLocalFilterWriter as constructBrowserLocalFilterWriter } from "./local-filter-writer"
 import type { LocalFilterWriteResult, SyncAutomaticResult, SyncFlushResult, SyncReceiveKey, SyncReceiveResult } from "../store/local-filter-writer"
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
@@ -32,7 +32,16 @@ beforeEach(async () => {
     [key]: { v: 1, gen: "old", at: 1, by: "old", data: { mode: "deny", on: true, channels: [] } }
   })
 })
-afterEach(() => mock.restore())
+const adapters: ReturnType<typeof constructBrowserLocalFilterWriter>[] = []
+function createBrowserLocalFilterWriter(...args: Parameters<typeof constructBrowserLocalFilterWriter>) {
+  const adapter = constructBrowserLocalFilterWriter(...args)
+  adapters.push(adapter)
+  return adapter
+}
+afterEach(async () => {
+  try { for (const adapter of adapters.splice(0)) await adapter.dispose() }
+  finally { mock.restore() }
+})
 
 function instrument() {
   const set = spyOn(fakeBrowser.storage.local, "set")
@@ -486,4 +495,82 @@ test("synthetic adapter forwards independent wall clock and retains original rec
   expect(nativeSet).toHaveBeenCalledTimes(1)
   await adapter.dispose()
   expect(unsubscribe).toHaveBeenCalledTimes(1)
+})
+
+test("adapter excludes duplicate actual local areas while active and draining", async () => {
+  const originalGet = fakeBrowser.storage.local.get
+  spyOn(fakeBrowser.storage.local, "get").mockImplementation(new Proxy(originalGet, {
+    apply(target, receiver, args) { return Reflect.apply(target, receiver, args).then((items: Record<string, unknown>) => Object.fromEntries(Object.entries(items).filter(([, value]) => value !== undefined))) }
+  }))
+  const first = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
+  expect(() => createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })).toThrow("Local storage already owned")
+  const original = fakeBrowser.storage.local.set.bind(fakeBrowser.storage.local)
+  let release = () => {}, enter = () => {}
+  const held = new Promise<void>(done => { release = done }), entered = new Promise<void>(done => { enter = done })
+  spyOn(fakeBrowser.storage.local, "set").mockImplementationOnce(async items => { enter(); await held; await original(items) })
+  const snapshot = await fakeBrowser.storage.local.get(null)
+  const editing = first.changeFromSettings(request, sender); await entered
+  const drain = first.dispose()
+  expect(first.dispose()).toBe(drain)
+  expect(() => createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })).toThrow("Local storage already owned")
+  release(); expect(await editing).toEqual({ kind: "result", result: { ok: true } }); await drain
+  const replacement = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
+  expect(await replacement.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
+  expect((await fakeBrowser.storage.local.get(null)).device).toEqual(snapshot.device)
+  expect("claim" in replacement).toBe(false)
+  await replacement.dispose()
+})
+
+test("construction failure releases local admission before an owner escapes", async () => {
+  const now = spyOn(performance, "now").mockImplementationOnce(() => { throw Error("synthetic construction failure") })
+  expect(() => createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })).toThrow("synthetic construction failure")
+  now.mockRestore()
+  const replacement = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
+  await replacement.dispose()
+})
+
+test("failed disposal retains duplicate admission and its rejection", async () => {
+  const area = new Proxy(fakeBrowser.storage.local, {})
+  const storage = new Proxy(fakeBrowser.storage, { get(target, key, receiver) { return key === "local" ? area : Reflect.get(target, key, receiver) } })
+  const native = new Proxy(fakeBrowser, { get(target, key, receiver) { return key === "storage" ? storage : Reflect.get(target, key, receiver) } })
+  const snapshot = await fakeBrowser.storage.local.get(null)
+  await fakeBrowser.storage.local.set({ device: { id: "synthetic", consent: { v: 1, at: 1 }, syncOn: true }, sync: { joined: "H", pushed: { [key]: "old", "doc:setup:AAAAAAAAAAAAAAAA": "setup" }, status: "ok", editedSinceOff: false } })
+  await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "H", created: 1 }, [key.replace("doc:", "s:")]: snapshot[key], "s:setup:AAAAAAAAAAAAAAAA": snapshot["doc:setup:AAAAAAAAAAAAAAAA"] })
+  const add = spyOn(fakeBrowser.storage.sync.onChanged, "addListener")
+  const nativeRemove = fakeBrowser.storage.sync.onChanged.removeListener.bind(fakeBrowser.storage.sync.onChanged)
+  const adapter = constructBrowserLocalFilterWriter(native, { onSyncResult() {} })
+  await adapter.startSync()
+  const marker = new Error("synthetic unsubscribe failure")
+  const remove = spyOn(fakeBrowser.storage.sync.onChanged, "removeListener").mockImplementationOnce(() => { throw marker })
+  const drain = adapter.dispose()
+  await expect(drain).rejects.toBe(marker)
+  expect(adapter.dispose()).toBe(drain)
+  expect(() => constructBrowserLocalFilterWriter(native, { onSyncResult() {} })).toThrow("Local storage already owned")
+  remove.mockRestore()
+  for (const [listener] of add.mock.calls) nativeRemove(listener)
+})
+
+test("adapter ownership remains held through unresolved incoming readback and drain", async () => {
+  const { isAccountKey, isPlaylistId } = await import("../../shared/model")
+  const acct = "AAAAAAAAAAAAAAAA", playlist = "PL_P", setup = `doc:setup:${acct}`
+  if (!isAccountKey(acct) || !isPlaylistId(playlist)) throw Error("Invalid synthetic address")
+  const initial = await fakeBrowser.storage.local.get(null)
+  await fakeBrowser.storage.local.set({ device: { id: "synthetic", consent: { v: 1, at: 1 }, syncOn: true }, sync: { joined: "H", pushed: { [key]: "old", [setup]: "setup" }, status: "ok", editedSinceOff: false } })
+  await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "H", created: 0 }, [setup.replace("doc:", "s:")]: initial[setup], [key.replace("doc:", "s:")]: { v: 1, gen: "incoming", at: 2, by: "other", data: { mode: "deny", on: false, channels: [] } } })
+  const original = fakeBrowser.storage.local.get
+  let release = () => {}, enter = () => {}, reads = 0
+  const held = new Promise<void>(done => { release = done }), entered = new Promise<void>(done => { enter = done })
+  spyOn(fakeBrowser.storage.local, "get").mockImplementation(new Proxy(original, {
+    async apply(target, receiver, args) {
+      if (++reads === 4) { enter(); await held }
+      return Reflect.apply(target, receiver, args)
+    }
+  }))
+  const adapter = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
+  const receiving = adapter.receiveSyncDocument({ kind: "filter", acct, playlist }); await entered
+  const draining = adapter.dispose()
+  expect(() => createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })).toThrow("Local storage already owned")
+  release(); expect((await receiving).kind).toBe("unconfirmed"); await draining
+  const replacement = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
+  await replacement.dispose()
 })

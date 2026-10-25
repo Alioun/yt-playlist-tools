@@ -3,9 +3,8 @@ import {
   defaultDevice, defaultSettings, defaultSetup, isAccountKey, isPlaylistId, type Unclaimed
 } from "../../shared/model"
 import type { JsonValue } from "../../shared/contracts/json"
-import {
-  createLocalClaimWriter, type ClaimAuthority, type ClaimAuthorityState, type ClaimOwnership
-} from "./local-claim-writer"
+import type { ClaimAuthority, ClaimAuthorityState, ClaimOwnership } from "./local-claim-writer"
+import { createLocalFilterWriter } from "./local-filter-writer"
 
 const acct = "synthetic_acct01"
 const owned = (() => { const value = "PLowned"; if (!isPlaylistId(value)) throw new Error("Invalid synthetic playlist"); return value })()
@@ -34,16 +33,21 @@ function host() {
   const deps = {
     local: { async get() { await hooks.read(++reads); return structuredClone(records) },
       async set(items: Readonly<Record<string, JsonValue>>) { batches.push(structuredClone(items)); await hooks.set(items) } },
-    authority: { async read() { await hooks.authority(++authorityReads); return authority } },
-    session: { async takeLookup(a: ClaimAuthority) {
-      const key = `${a.acct}:${a.browserSession}`
-      if (ledger.has(key)) return false
-      ledger.add(key); await hooks.take(); return true
-    } },
-    ownership: { async lookup() { lookups++; await hooks.lookup(); return ownership } },
+    claim: { kind: "fixture" as const,
+      authority: { async read() { await hooks.authority(++authorityReads); return authority } },
+      session: { async takeLookup(a: ClaimAuthority) {
+        const key = `${a.acct}:${a.browserSession}`
+        if (ledger.has(key)) return false
+        ledger.add(key); await hooks.take(); return true
+      } },
+      ownership: { async lookup() { lookups++; await hooks.lookup(); return ownership } }
+    },
+    sync: { async get() { throw Error("Forbidden claim sync") }, async set() { throw Error("Forbidden claim sync") }, subscribe() { throw Error("Forbidden claim subscribe") } },
+    syncClock: { now: () => 0, wallNow: () => 1000000, after() { throw Error("Forbidden claim timer") } },
+    onSyncResult() {},
     now: () => 100, generation: () => `new-${++generations}`
   }
-  return { deps, hooks, batches, writer: () => createLocalClaimWriter(deps),
+  return { deps, hooks, batches, writer: () => createLocalFilterWriter(deps),
     get records() { return records }, set records(value) { records = value },
     set authority(value: ClaimAuthorityState) { authority = value },
     set ownership(value: ClaimOwnership) { ownership = value },
@@ -148,9 +152,9 @@ describe("exclusive fixture claim transaction", () => {
     const h = host(); let release = () => {}; const paused = new Promise<void>(resolve => { release = resolve })
     h.hooks.lookup = () => paused
     const writer = h.writer(), accepted = writer.claim(), disposed = writer.dispose()
-    await expect(writer.claim()).rejects.toThrow("Claim writer disposed")
+    await expect(writer.claim()).rejects.toThrow("Writer disposed")
     release(); expect((await accepted).kind).toBe("committed"); await disposed
-    await expect(writer.claim()).rejects.toThrow("Claim writer disposed")
+    await expect(writer.claim()).rejects.toThrow("Writer disposed")
   })
   test("semantic removal is refused without partial effects", async () => {
     const h = host(); h.records.unclaimed = { ...source, autoAdd: [], filters: {}, originalShortcutId: "gone01" }
@@ -179,7 +183,7 @@ describe("claim boundaries during awaited work", () => {
     const h = host(); let calls = 0
     const raw = { ...h.records }
     Object.defineProperty(raw, "device", { enumerable: true, get() { calls++; throw new Error("getter invoked") } })
-    const writer = createLocalClaimWriter({ ...h.deps, local: { get: async () => raw, set: h.deps.local.set } })
+    const writer = createLocalFilterWriter({ ...h.deps, local: { get: async () => raw, set: h.deps.local.set } })
     expect(await writer.claim()).toEqual({ kind: "invalid", field: "snapshot" }); expect(calls).toBe(0); expect(h.batches).toEqual([])
     await writer.dispose()
   })

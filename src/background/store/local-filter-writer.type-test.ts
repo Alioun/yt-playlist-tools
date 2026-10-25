@@ -1,8 +1,9 @@
+import type { ClaimHost, ClaimTransactionResult } from "./local-claim-writer"
 import type { AccountKey, PlaylistId, DocumentKey, SyncOpaqueWrite } from "../../shared/model"
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
-import type { JsonObject, JsonValue } from "../../shared/contracts/json"
+import type { JsonValue } from "../../shared/contracts/json"
 import type { FilterSettingInput } from "./channel-filter-edit"
-import type { createLocalFilterWriter, LocalFilterChange, LocalFilterWriteResult, LocalWriteStorage, SyncStorage, SyncClock, SyncAutomaticResult, SyncFlushResult, SyncReceiveKey, SyncReceiveResult } from "./local-filter-writer"
+import { createLocalFilterWriter, type LocalFilterChange, type LocalFilterWriteResult, type LocalWriteStorage, type SyncStorage, type SyncClock, type SyncAutomaticResult, type SyncFlushResult, type SyncReceiveKey, type SyncReceiveResult } from "./local-filter-writer"
 import type { SyncDocumentRecord } from "./sync-write-admission"
 import type { createBrowserLocalFilterWriter } from "../adapters/local-filter-writer"
 
@@ -19,19 +20,20 @@ type ExpectedChange = {
 )
 type ExpectedResult =
   | { readonly kind: "result"; readonly result: ChangeResult }
-  | { readonly kind: "unavailable"; readonly reason: "startup" | "newer-layout" | "sync-writer-required" | "account-context" }
+  | { readonly kind: "unavailable"; readonly reason: "startup" | "newer-layout" | "sync-writer-required" | "account-context" | "stale" }
 type ExpectedStorage = {
   get(keys: readonly string[] | null): Promise<Readonly<Record<string, unknown>>>
-  set(items: Readonly<Record<string, JsonObject>>): Promise<void>
+  set(items: Readonly<Record<string, JsonValue>>): Promise<void>
 }
 type ExpectedFactory = (deps: {
   readonly local: LocalWriteStorage
+  readonly claim: ClaimHost
   readonly sync: SyncStorage
   readonly now: () => number
   readonly generation: () => string
   readonly syncClock: SyncClock
   readonly onSyncResult: (result: SyncAutomaticResult) => void
-}) => { change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>; receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>; flushSync(): Promise<SyncFlushResult>; startSync(): Promise<void>; dispose(): Promise<void> }
+}) => { claim(): Promise<ClaimTransactionResult>; change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>; receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>; flushSync(): Promise<SyncFlushResult>; startSync(): Promise<void>; dispose(): Promise<void> }
 type NativeBrowser = Parameters<typeof createBrowserLocalFilterWriter>[0]
 type NativeSender = Parameters<Parameters<NativeBrowser["runtime"]["onMessage"]["addListener"]>[0]>[1]
 type ExpectedAdapter = (nativeBrowser: NativeBrowser, options: { onSyncResult: (result: SyncAutomaticResult) => void }) => {
@@ -112,3 +114,11 @@ function recoveryTypeBoundaries(clock: SyncClock) {
   void invalid
 }
 void recoveryTypeBoundaries
+
+function claimCapability(deps: Parameters<typeof createLocalFilterWriter>[0]) {
+  const { claim, ...withoutClaim } = deps
+  // @ts-expect-error Every core host must choose its claim capability.
+  createLocalFilterWriter(withoutClaim)
+  void claim
+}
+void claimCapability

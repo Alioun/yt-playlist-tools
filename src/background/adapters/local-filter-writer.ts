@@ -7,6 +7,8 @@ import {
 type NativeBrowser = typeof import("wxt/browser").browser
 type NativeSender = Parameters<Parameters<NativeBrowser["runtime"]["onMessage"]["addListener"]>[0]>[1]
 
+const localOwners = new WeakSet<NativeBrowser["storage"]["local"]>()
+
 function parseChange(raw: unknown): LocalFilterChange | undefined {
   if (!isJsonValue(raw) || raw === null || typeof raw !== "object" || Array.isArray(raw)) return
   const keys = Object.keys(raw)
@@ -33,55 +35,71 @@ export function createBrowserLocalFilterWriter(nativeBrowser: NativeBrowser, opt
   startSync(): Promise<void>
   dispose(): Promise<void>
 } {
-  const writer = createLocalFilterWriter({
-    local: {
-      get: keys => nativeBrowser.storage.local.get(keys === null ? null : [...keys]),
-      set: items => nativeBrowser.storage.local.set(items)
-    },
-    sync: {
-      get: () => nativeBrowser.storage.sync.get(null),
-      set: items => nativeBrowser.storage.sync.set(items),
-      subscribe(changed) {
-        const event = nativeBrowser.storage.sync.onChanged
-        event.addListener(changed)
-        return () => event.removeListener(changed)
+  const area = nativeBrowser.storage.local
+  if (localOwners.has(area)) throw new Error("Local storage already owned")
+  localOwners.add(area)
+  try {
+    const writer = createLocalFilterWriter({
+      claim: { kind: "unavailable" },
+      local: {
+        get: keys => area.get(keys === null ? null : [...keys]),
+        set: items => area.set(items)
+      },
+      sync: {
+        get: () => nativeBrowser.storage.sync.get(null),
+        set: items => nativeBrowser.storage.sync.set(items),
+        subscribe(changed) {
+          const event = nativeBrowser.storage.sync.onChanged
+          event.addListener(changed)
+          return () => event.removeListener(changed)
+        }
+      },
+      syncClock: {
+        now: () => performance.now(),
+        wallNow: () => Date.now(),
+        after(milliseconds, run) {
+          const timer = setTimeout(run, milliseconds)
+          return () => clearTimeout(timer)
+        }
+      },
+      onSyncResult: options.onSyncResult,
+      now: () => Date.now(),
+      generation: () => crypto.randomUUID()
+    })
+    let disposal: Promise<void> | undefined
+    return {
+      receiveSyncDocument: key => writer.receiveSyncDocument(key),
+      flushSync: () => writer.flushSync(),
+      startSync: () => writer.startSync(),
+      dispose() {
+        if (!disposal) {
+          try { disposal = writer.dispose().then(() => { localOwners.delete(area) }) }
+          catch (error) { disposal = Promise.reject(error) }
+        }
+        return disposal
+      },
+      async changeFromSettings(raw, sender) {
+        if (sender.id !== nativeBrowser.runtime.id || sender.frameId !== 0 ||
+          sender.url !== nativeBrowser.runtime.getURL("/options.html") || !sender.tab) {
+          return { kind: "result", result: { refused: "invalid" } }
+        }
+        const change = parseChange(raw)
+        if (!change) return { kind: "result", result: { refused: "invalid" } }
+        const { windowId, incognito } = sender.tab
+        if (!Number.isInteger(windowId) || windowId < 0 || incognito !== false) {
+          return { kind: "result", result: { refused: "private" } }
+        }
+        try {
+          const window = await nativeBrowser.windows.get(windowId)
+          if (window.id !== windowId || window.incognito !== false) return { kind: "result", result: { refused: "private" } }
+        } catch {
+          return { kind: "result", result: { refused: "private" } }
+        }
+        return writer.change({ kind: "ui", windowId, incognito: false }, change)
       }
-    },
-    syncClock: {
-      now: () => performance.now(),
-      wallNow: () => Date.now(),
-      after(milliseconds, run) {
-        const timer = setTimeout(run, milliseconds)
-        return () => clearTimeout(timer)
-      }
-    },
-    onSyncResult: options.onSyncResult,
-    now: () => Date.now(),
-    generation: () => crypto.randomUUID()
-  })
-  return {
-    receiveSyncDocument: key => writer.receiveSyncDocument(key),
-    flushSync: () => writer.flushSync(),
-    startSync: () => writer.startSync(),
-    dispose: () => writer.dispose(),
-    async changeFromSettings(raw, sender) {
-      if (sender.id !== nativeBrowser.runtime.id || sender.frameId !== 0 ||
-        sender.url !== nativeBrowser.runtime.getURL("/options.html") || !sender.tab) {
-        return { kind: "result", result: { refused: "invalid" } }
-      }
-      const change = parseChange(raw)
-      if (!change) return { kind: "result", result: { refused: "invalid" } }
-      const { windowId, incognito } = sender.tab
-      if (!Number.isInteger(windowId) || windowId < 0 || incognito !== false) {
-        return { kind: "result", result: { refused: "private" } }
-      }
-      try {
-        const window = await nativeBrowser.windows.get(windowId)
-        if (window.id !== windowId || window.incognito !== false) return { kind: "result", result: { refused: "private" } }
-      } catch {
-        return { kind: "result", result: { refused: "private" } }
-      }
-      return writer.change({ kind: "ui", windowId, incognito: false }, change)
     }
+  } catch (error) {
+    localOwners.delete(area)
+    throw error
   }
 }

@@ -10,6 +10,7 @@ import { planSyncWrite, sameSyncJson, type SyncDocumentRecord } from "./sync-wri
 import { readSyncDocument } from "./sync-codec"
 import { readSyncInventory } from "./sync-inventory"
 import { prepareDocumentBody } from "./write-preparation"
+import { executeLocalClaim, type ClaimHost, type ClaimTransactionResult } from "./local-claim-writer"
 
 type UiOrigin = Extract<Origin, { kind: "ui" }>
 
@@ -26,12 +27,12 @@ export type LocalFilterWriteResult =
   | { readonly kind: "result"; readonly result: ChangeResult }
   | {
     readonly kind: "unavailable"
-    readonly reason: "startup" | "newer-layout" | "sync-writer-required" | "account-context"
+    readonly reason: "startup" | "newer-layout" | "sync-writer-required" | "account-context" | "stale"
   }
 
 export type LocalWriteStorage = {
   get(keys: readonly string[] | null): Promise<Readonly<Record<string, unknown>>>
-  set(items: Readonly<Record<string, JsonObject>>): Promise<void>
+  set(items: Readonly<Record<string, JsonValue>>): Promise<void>
 }
 
 export type SyncClock = {
@@ -181,18 +182,21 @@ type SyncEvent = { readonly kind: "edit" | "start" | "sync" | "manual"; readonly
 
 export function createLocalFilterWriter(deps: {
   readonly local: LocalWriteStorage
+  readonly claim: ClaimHost
   readonly sync: SyncStorage
   readonly now: () => number
   readonly generation: () => string
   readonly syncClock: SyncClock
   readonly onSyncResult: (result: SyncAutomaticResult) => void
 }): {
+  claim(): Promise<ClaimTransactionResult>
   change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>
   receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>
   flushSync(): Promise<SyncFlushResult>
   startSync(): Promise<void>
   dispose(): Promise<void>
 } {
+  let claimConfirmation: "ready" | "unconfirmed" = "ready"
   let lane: Promise<void> = Promise.resolve()
   let lifetime: { kind: "inactive" | "stopped" | "disposed" } | { kind: "active"; unsubscribe: () => void } = { kind: "inactive" }
   let ticket: { event: SyncEvent; cancel: () => void } | undefined
@@ -309,6 +313,7 @@ export function createLocalFilterWriter(deps: {
   }
 
   async function receiveAttempt(key: SyncReceiveKey): Promise<SyncReceiveResult> {
+    if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "authority" }
     try {
       const result = await receive(key)
       if (result.kind === "local-set-failed" || result.kind === "unconfirmed") deactivate("stopped")
@@ -348,6 +353,7 @@ export function createLocalFilterWriter(deps: {
   }
 
   async function attempt(event: SyncEvent | undefined): Promise<SyncFlushResult> {
+    if (claimConfirmation === "unconfirmed") return { kind: "unavailable" }
     let result: SyncFlushResult
     try { result = await flush(event) } catch (error) { deactivate("stopped"); throw error }
     if (result.kind === "acknowledgement-failed" || result.kind === "unconfirmed") deactivate("stopped")
@@ -362,6 +368,7 @@ export function createLocalFilterWriter(deps: {
   function disposed() { return lifetime.kind === "disposed" }
 
   async function execute(change: LocalFilterChange, at: number, event: SyncEvent | undefined): Promise<LocalFilterWriteResult> {
+    if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
     const invalid = { kind: "result", result: { refused: "invalid" } } as const
     const ok = { kind: "result", result: { ok: true } } as const
     const setupKey = documentKey({ kind: "setup", acct: change.acct })
@@ -713,20 +720,37 @@ export function createLocalFilterWriter(deps: {
   }
 
   return {
+    claim() {
+      if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
+      if (claimConfirmation === "unconfirmed") return Promise.resolve({ kind: "unavailable", reason: "stale" })
+      return enqueue(async () => {
+        if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
+        if (deps.claim.kind === "unavailable") return { kind: "unavailable", reason: "authority" }
+        const result = await executeLocalClaim({ local: deps.local, host: deps.claim, now: deps.now, generation: deps.generation })
+        if (result.kind === "unconfirmed") {
+          claimConfirmation = "unconfirmed"
+          deactivate("stopped")
+        }
+        return result
+      })
+    },
     receiveSyncDocument(key) {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
+      if (claimConfirmation === "unconfirmed") return Promise.resolve({ kind: "unavailable", reason: "authority" })
       return enqueue(() => receiveAttempt(key))
     },
     flushSync() {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
+      if (claimConfirmation === "unconfirmed") return Promise.resolve({ kind: "unavailable" })
       const event = ingress("manual")
       return enqueue(() => attempt(event))
     },
     startSync() {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
+      if (claimConfirmation === "unconfirmed") return Promise.resolve()
       const event = ingress("start")
       return enqueue(async () => {
-        if (lifetime.kind === "stopped" || lifetime.kind === "disposed") return
+        if (claimConfirmation === "unconfirmed" || lifetime.kind === "stopped" || lifetime.kind === "disposed") return
         let ready
         try {
           const records = await deps.local.get(null)
@@ -740,6 +764,7 @@ export function createLocalFilterWriter(deps: {
             }
             if (ready.device.syncOn && lifetime.kind === "inactive") {
               const unsubscribe = deps.sync.subscribe(() => {
+                if (claimConfirmation === "unconfirmed" || lifetime.kind !== "active") return
                 const incoming = ingress("sync")
                 void enqueue(() => automatic(incoming))
               })
@@ -761,6 +786,7 @@ export function createLocalFilterWriter(deps: {
     },
     async change(origin, change) {
       if (lifetime.kind === "disposed") throw new Error("Writer disposed")
+      if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
       if (origin.kind !== "ui" || origin.incognito !== false || !Number.isInteger(origin.windowId) || origin.windowId < 0) {
         return { kind: "result", result: { refused: "private" } }
       }
