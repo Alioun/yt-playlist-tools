@@ -37,3 +37,21 @@ function negative(deps: Parameters<typeof createLocalFilterWriter>[0], old: Star
   void incomplete; void completed
 }
 void negative
+
+import { readRetainedCheckpoint, type RetainedAgreementV2, type RetainedAgreementEffect, type RetainedCheckpointRead, type RetainedInterim } from "./interim-persistence"
+export type SuccessorProofs = [
+  Check<Equal<typeof readRetainedCheckpoint, (raw: unknown) => RetainedCheckpointRead>>,
+  Check<Equal<RetainedAgreementV2["v"], 2>>,
+  Check<Equal<Extract<InterimRetentionResult, { kind: "pending-agreement" | "retained-agreement" }>["checkpoint"], import("../../shared/model/settings-view").Snapshot<RetainedAgreementV2>>>,
+  Check<Equal<RetainedAgreementV2["agreement"]["effect"], RetainedAgreementEffect>>
+]
+function successorNegative(successor: RetainedAgreementV2, original: RetainedInterim) {
+  // @ts-expect-error The v1 checkpoint arm cannot contain its successor.
+  const wrong: Extract<RetainedInterimRead, { kind: "valid" }> = { kind: "valid", checkpoint: successor }
+  // @ts-expect-error Agreement is an explicit named receipt with a fixed effect.
+  const missing: RetainedAgreementV2 = { v: 2, kind: "retained-interim", retained: original, agreement: { kind: "confirmed" } }
+  // @ts-expect-error No conversion installation is authorized by v2.
+  successor.agreement = { kind: "installed", effect: successor.agreement.effect }
+  void wrong; void missing
+}
+void successorNegative

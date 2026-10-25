@@ -21,3 +21,9 @@ function negative(deps: Parameters<typeof createLocalFilterWriter>[0], starting:
   new StartupReadinessError({ kind: "ok" })
 }
 void negative
+
+import type { AgreementResult } from "./consent-agreement"
+export type AgreementReadinessProofs = [
+  Check<Equal<Awaited<ReturnType<ReturnType<typeof createStartingLocalFilterWriter>["ready"]>>, "ok" | "newer-layout">>,
+  Check<Equal<Extract<AgreementResult, { kind: "committed" }>["activation"], "ordinary-gates" | "held">>
+]

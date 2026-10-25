@@ -1,7 +1,9 @@
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import { isRecord } from "../../shared/model/codec"
 import { isKey } from "../../shared/model/keys"
-import { STORAGE_SCHEMA_VERSION } from "../../shared/model/documents"
+import { CONSENT_VERSION, STORAGE_SCHEMA_VERSION } from "../../shared/model/documents"
+import { decodeDevice } from "../../shared/model/decodeDevice"
+import type { Device } from "../../shared/model/types"
 import { isShortcutId, parseDocumentKey } from "../../shared/model/validation"
 import type { Snapshot } from "../../shared/model/settings-view"
 import type { StartupHost } from "./legacy-execution"
@@ -44,11 +46,27 @@ export type RetainedInterimRead =
   | { readonly kind: "invalid" }
   | { readonly kind: "newer-version"; readonly version: number }
 
+export type RetainedAgreementEffect = {
+  readonly consent: NonNullable<Device["consent"]>
+  readonly device: JsonObject
+}
+export type RetainedAgreementV2 = {
+  readonly v: 2
+  readonly kind: "retained-interim"
+  readonly retained: RetainedInterim
+  readonly agreement:
+    | { readonly kind: "accepted"; readonly effect: RetainedAgreementEffect }
+    | { readonly kind: "confirmed"; readonly effect: RetainedAgreementEffect }
+}
+export type RetainedCheckpointRead = RetainedInterimRead
+  | { readonly kind: "agreement"; readonly checkpoint: Snapshot<RetainedAgreementV2> }
+
 type WriteObservation = { readonly kind: "resolved" } | { readonly kind: "rejected"; readonly error: unknown }
 export type InterimRetentionResult =
   | { readonly kind: "not-interim" }
   | { readonly kind: "newer-layout"; readonly version: number }
   | { readonly kind: "retained-but-held"; readonly checkpoint: Snapshot<RetainedInterim>; readonly observation: WriteObservation | { readonly kind: "existing" } }
+  | { readonly kind: "retained-agreement" | "pending-agreement"; readonly checkpoint: Snapshot<RetainedAgreementV2> }
   | { readonly kind: "invalid"; readonly reason: "snapshot" | "checkpoint" | "context" }
   | { readonly kind: "newer-checkpoint"; readonly version: number }
   | { readonly kind: "unrepresentable"; readonly reason: "source" | "canonical" }
@@ -57,8 +75,9 @@ export type InterimRetentionResult =
   | { readonly kind: "failed"; readonly stage: "set"; readonly observation: Extract<WriteObservation, { kind: "rejected" }> }
   | { readonly kind: "unconfirmed"; readonly observation: WriteObservation; readonly cause: { readonly kind: "readback" | "stopped" } | { readonly kind: "read-failed"; readonly error: unknown } }
 export type InterimNoteRead =
-  | { readonly kind: "inactive-proposal"; readonly checkpoint: Snapshot<RetainedInterim>; readonly note: Snapshot<Extract<RetainedOutcome, { kind: "inactive-proposal" }>["note"]> }
-  | { readonly kind: "blocked-source"; readonly checkpoint: Snapshot<RetainedInterim> }
+  | { readonly kind: "inactive-proposal"; readonly checkpoint: Snapshot<RetainedInterim>; readonly note: Snapshot<Extract<RetainedOutcome, { kind: "inactive-proposal" }>["note"]>; readonly agreement?: "confirmed" }
+  | { readonly kind: "blocked-source"; readonly checkpoint: Snapshot<RetainedInterim>; readonly agreement?: "confirmed" }
+  | { readonly kind: "pending-agreement"; readonly checkpoint: Snapshot<RetainedAgreementV2>; readonly activation: "held" }
   | { readonly kind: "held"; readonly reason: "absent" | "invalid" | "newer-version" | "newer-layout" | "source" | "canonical" | "history" | "checkpoint" }
   | { readonly kind: "unavailable"; readonly reason: "startup" | "stale" | "disposed" }
 
@@ -132,6 +151,35 @@ export function readRetainedInterim(raw: unknown): RetainedInterimRead {
   const checkpoint: RetainedInterim = { ...raw, ...base, v: 1, kind: "retained-interim", context, outcome, recovery }
   return { kind: "valid", checkpoint: frozen(checkpoint) }
 }
+export function retainedAgreementDevice(retained: Snapshot<RetainedInterim>, consent: NonNullable<Device["consent"]>): JsonObject | undefined {
+  if (Object.hasOwn(retained.canonical, "schema") && Object.getOwnPropertyDescriptor(retained.canonical, "schema")?.value !== STORAGE_SCHEMA_VERSION) return
+  if (consent.v !== CONSENT_VERSION || !Number.isSafeInteger(consent.at) || consent.at < 0) return
+  if (!Object.hasOwn(retained.canonical, "device")) return { id: retained.context.deviceId, consent: { ...consent }, syncOn: false }
+  const raw: unknown = Object.getOwnPropertyDescriptor(retained.canonical, "device")?.value
+  if (!jsonObject(raw) || !["id", "consent", "syncOn"].every(key => Object.hasOwn(raw, key))) return
+  try {
+    const device = decodeDevice(raw)
+    if (device.consent && device.consent.v > CONSENT_VERSION) return
+    return { ...copy(raw), consent: { ...consent } }
+  } catch { return }
+}
+export function readRetainedCheckpoint(raw: unknown): RetainedCheckpointRead {
+  if (!isRecord(raw)) return readRetainedInterim(raw)
+  const version = Object.getOwnPropertyDescriptor(raw, "v")?.value
+  if (typeof version === "number" && Number.isSafeInteger(version) && version > 2) return { kind: "newer-version", version }
+  if (version !== 2) return readRetainedInterim(raw)
+  if (!jsonObject(raw) || raw.kind !== "retained-interim" || !dataRecord(raw.agreement) || !["accepted", "confirmed"].includes(String(raw.agreement.kind)) ||
+    Object.keys(raw.agreement).some(key => !["kind", "effect"].includes(key)) || !dataRecord(raw.agreement.effect) || Object.keys(raw.agreement.effect).some(key => !["consent", "device"].includes(key))) return { kind: "invalid" }
+  const original = readRetainedInterim(raw.retained), effect = raw.agreement.effect
+  if (original.kind !== "valid" || !jsonObject(effect.consent) || Object.keys(effect.consent).length !== 2 || effect.consent.v !== CONSENT_VERSION ||
+    typeof effect.consent.at !== "number" || !Number.isSafeInteger(effect.consent.at) || effect.consent.at < 0 || !jsonObject(effect.device)) return { kind: "invalid" }
+  const consent = { v: CONSENT_VERSION, at: effect.consent.at }
+  const device = retainedAgreementDevice(original.checkpoint, consent)
+  if (!device || !same(device, effect.device)) return { kind: "invalid" }
+  const checkpoint: RetainedAgreementV2 = { ...raw, v: 2, kind: "retained-interim", retained: copy(raw.retained as unknown as RetainedInterim),
+    agreement: { kind: raw.agreement.kind === "accepted" ? "accepted" : "confirmed", effect: { consent, device } } }
+  return { kind: "agreement", checkpoint: frozen(checkpoint) }
+}
 function newer(current: unknown): number | undefined {
   if (!dataRecord(current) || !dataRecord(current.canonical)) return
   const schema = Object.getOwnPropertyDescriptor(current.canonical, "schema")?.value
@@ -148,20 +196,34 @@ function difference(saved: { readonly source: unknown; readonly canonical: unkno
   if (!same(saved.canonical, current.canonical)) return "canonical"
   if (!same(saved.historicalAuthorization, current.historicalAuthorization) || !same(saved.priorCredentialPresence, current.priorCredentialPresence)) return "history"
 }
+export function retainedCheckpointDifference(checkpoint: Snapshot<RetainedInterim | RetainedAgreementV2>, current: InterimPersistenceSnapshot): "source" | "canonical" | "history" | "checkpoint" | undefined {
+  if (snapshotIssue(current)) return "source"
+  if (current.checkpoint.kind !== "present" || !same(checkpoint, current.checkpoint.value)) return "checkpoint"
+  if (checkpoint.v === 1) return difference(checkpoint, current)
+  const original = checkpoint.retained
+  const canonical: unknown = original.canonical
+  if (!jsonObject(canonical)) return "canonical"
+  const after = { ...canonical, device: Object.getOwnPropertyDescriptor(checkpoint.agreement.effect, "device")?.value }
+  if (checkpoint.agreement.kind === "accepted" && same(original.canonical, current.canonical)) return difference(original, current)
+  return difference({ ...original, canonical: after }, current)
+}
 export function projectInterimNote(input: { readonly checkpoint: unknown; readonly current: InterimPersistenceSnapshot }): InterimNoteRead {
   if (newer(input.current) !== undefined) return { kind: "held", reason: "newer-layout" }
   if (snapshotIssue(input.current)) return { kind: "held", reason: "invalid" }
-  const read = readRetainedInterim(input.checkpoint)
-  if (read.kind !== "valid") return { kind: "held", reason: read.kind }
+  const read = readRetainedCheckpoint(input.checkpoint)
+  if (read.kind !== "valid" && read.kind !== "agreement") return { kind: "held", reason: read.kind }
   if (input.current.checkpoint.kind !== "present") return { kind: "held", reason: "checkpoint" }
-  const present = readRetainedInterim(input.current.checkpoint.value)
-  if (present.kind !== "valid") return { kind: "held", reason: present.kind }
+  const present = readRetainedCheckpoint(input.current.checkpoint.value)
+  if (present.kind !== "valid" && present.kind !== "agreement") return { kind: "held", reason: present.kind }
   if (!same(input.checkpoint, input.current.checkpoint.value)) return { kind: "held", reason: "checkpoint" }
-  const changed = difference(read.checkpoint, input.current)
+  const changed = retainedCheckpointDifference(read.checkpoint, input.current)
   if (changed) return { kind: "held", reason: changed }
-  return read.checkpoint.outcome.kind === "inactive-proposal"
-    ? Object.freeze({ kind: "inactive-proposal", checkpoint: read.checkpoint, note: read.checkpoint.outcome.note })
-    : Object.freeze({ kind: "blocked-source", checkpoint: read.checkpoint })
+  if (read.kind === "agreement" && read.checkpoint.agreement.kind === "accepted") return Object.freeze({ kind: "pending-agreement", checkpoint: read.checkpoint, activation: "held" })
+  const checkpoint = read.kind === "agreement" ? read.checkpoint.retained : read.checkpoint
+  const status = read.kind === "agreement" ? { agreement: "confirmed" as const } : {}
+  return checkpoint.outcome.kind === "inactive-proposal"
+    ? Object.freeze({ kind: "inactive-proposal", checkpoint, note: checkpoint.outcome.note, ...status })
+    : Object.freeze({ kind: "blocked-source", checkpoint, ...status })
 }
 export async function executeInterimRetention(deps: {
   readonly local: Pick<LocalWriteStorage, "get" | "set">
@@ -177,11 +239,13 @@ export async function executeInterimRetention(deps: {
   const issue = snapshotIssue(initial)
   if (issue) return issue
   if (initial.checkpoint.kind === "present") {
-    const read = readRetainedInterim(initial.checkpoint.value)
+    const read = readRetainedCheckpoint(initial.checkpoint.value)
     if (read.kind === "newer-version") return { kind: "newer-checkpoint", version: read.version }
-    if (read.kind !== "valid") return { kind: "invalid", reason: "checkpoint" }
-    const changed = difference(read.checkpoint, initial)
-    return changed ? { kind: "stale", reason: changed } : { kind: "retained-but-held", checkpoint: read.checkpoint, observation: { kind: "existing" } }
+    if (read.kind !== "valid" && read.kind !== "agreement") return { kind: "invalid", reason: "checkpoint" }
+    const changed = retainedCheckpointDifference(read.checkpoint, initial)
+    if (changed) return { kind: "stale", reason: changed }
+    return read.kind === "agreement" ? { kind: read.checkpoint.agreement.kind === "accepted" ? "pending-agreement" : "retained-agreement", checkpoint: read.checkpoint }
+      : { kind: "retained-but-held", checkpoint: read.checkpoint, observation: { kind: "existing" } }
   }
   if (!hasInterimEvidence(initial.source)) return { kind: "not-interim" }
   initial = copy(initial)

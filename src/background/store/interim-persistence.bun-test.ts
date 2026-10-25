@@ -167,3 +167,39 @@ test("a checkpoint observed during legacy startup cannot be overwritten by the f
   expect(h.records().interimConversion).toEqual({ v: 9, keep: [null] })
   await owner.dispose()
 })
+
+test("owned v2 accepts only the exact consent overlay and preserves both root extension levels", async () => {
+  const h = createInterimHarness({ schema: 1, sessionConsent: 1 })
+  const owner = createStartingLocalFilterWriter(h.deps)
+  await expect(owner.ready()).rejects.toBeInstanceOf(StartupReadinessError)
+  h.foreign(raw => { const checkpoint = raw.interimConversion; if (checkpoint && typeof checkpoint === "object" && !Array.isArray(checkpoint)) checkpoint.extension = { keep: [null, true] } })
+  await owner.dispose()
+  const starting = createStartingLocalFilterWriter(h.deps)
+  await expect(starting.ready()).rejects.toBeInstanceOf(StartupReadinessError)
+  const origin = { kind: "ui", windowId: 1, incognito: true } as const
+  const read = await starting.readAgreement(origin)
+  if (read.kind !== "review") throw Error("No retained review")
+  const accepted = await starting.agree(origin, { review: read.review, displayedVersion: read.version, choice: { kind: "retained-disclosure" }, access: Promise.resolve({ www: false, music: false, browserMenu: false }) })
+  expect(accepted.kind).toBe("committed")
+  await starting.dispose()
+  const saved = h.records()
+  const { readRetainedCheckpoint } = await import("./interim-persistence")
+  const receipt = readRetainedCheckpoint(saved.interimConversion)
+  if (receipt.kind !== "agreement") throw Error("Invalid actual receipt")
+  expect(receipt.checkpoint.retained.v).toBe(1)
+  const root = saved.interimConversion
+  if (!root || typeof root !== "object" || Array.isArray(root)) throw Error("No receipt")
+  root.extension = { root: [false] }
+  expect(readRetainedCheckpoint(root).kind).toBe("agreement")
+  expect(readRetainedInterim(root)).toEqual({ kind: "newer-version", version: 2 })
+  expect(readRetainedCheckpoint({ v: 3, payload: { opaque: true } })).toEqual({ kind: "newer-version", version: 3 })
+  for (const change of ["foreign-device", "unclaimed", "source", "canonical-install"] as const) {
+    const current = JSON.parse(JSON.stringify(saved))
+    if (change === "foreign-device") current.device.foreign = true
+    if (change === "unclaimed") current.unclaimed = null
+    if (change === "source") delete current.sessionConsent
+    if (change === "canonical-install") current["doc:settings"] = { v: 1, gen: "candidate", at: 123, by: "synthetic-device", data: {} }
+    const view = projectInterimNote({ checkpoint: root, current: interimSnapshot(current) })
+    expect(view.kind).toBe("held")
+  }
+})

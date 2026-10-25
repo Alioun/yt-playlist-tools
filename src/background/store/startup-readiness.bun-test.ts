@@ -223,3 +223,19 @@ test("accepted account removal drains before readiness and closes every early ow
   expect(resumed.counts().generations).toBe(0)
   await owner.dispose()
 })
+
+test("retained canonical agreement never changes the stable rejected readiness promise", async () => {
+  const { createInterimHarness } = await import("../../../tools/fixtures/interim-conversion/run")
+  const h = createInterimHarness({ schema: 1, sessionConsent: 1 })
+  const owner = createStartingLocalFilterWriter(h.deps), readiness = owner.ready()
+  await expect(readiness).rejects.toBeInstanceOf(StartupReadinessError)
+  const origin = { kind: "ui", windowId: 1, incognito: false } as const
+  const read = await owner.readAgreement(origin)
+  if (read.kind !== "review") throw Error("No review")
+  const result = await owner.agree(origin, { review: read.review, displayedVersion: read.version, choice: { kind: "retained-disclosure" }, access: Promise.resolve({ www: true, music: true, browserMenu: true }) })
+  expect(result.kind).toBe("committed")
+  expect(owner.ready()).toBe(readiness)
+  await expect(readiness).rejects.toBeInstanceOf(StartupReadinessError)
+  expect(await owner.read("settings")).toEqual({ kind: "unavailable", reason: "startup" })
+  await owner.dispose()
+})

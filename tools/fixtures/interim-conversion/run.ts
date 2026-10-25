@@ -1,5 +1,5 @@
 import { createLocalFilterWriter, createStartingLocalFilterWriter, StartupReadinessError } from "../../../src/background/store/local-filter-writer"
-import { executeInterimRetention, readRetainedInterim, projectInterimNote, isInterimSourceKey, isInterimCanonicalKey, type InterimPersistenceSnapshot, type StoreStartupHost } from "../../../src/background/store/interim-persistence"
+import { executeInterimRetention, readRetainedInterim, readRetainedCheckpoint, projectInterimNote, isInterimSourceKey, isInterimCanonicalKey, type InterimPersistenceSnapshot, type StoreStartupHost } from "../../../src/background/store/interim-persistence"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../../src/shared/contracts/json"
 import { isAccountKey, isPlaylistId } from "../../../src/shared/model/validation"
 import { decodeDocument, decodeFilter, decodeSettings, decodeSetup } from "../../../src/shared/model"
@@ -60,7 +60,7 @@ export function createInterimHarness(initial: JsonObject = interimFixture(), mod
     syncClock: { now() { effects.push("mono"); return 0 }, wallNow() { effects.push("wall"); return 1000000 }, after() { effects.push("timer"); throw Error("Held timer") } },
     now() { effects.push("stamp"); return 100 }, generation() { effects.push("generation"); return "never" }, onSyncResult(result: unknown) { effects.push({ automatic: result }) }
   }
-  return { deps, effects, writes, error, readError, records: () => copy(records), foreign(fn: (records: JsonObject) => void) { fn(records) }, snapshot(fn: typeof beforeSnapshot) { beforeSnapshot = fn }, set(fn: typeof beforeSet) { beforeSet = fn } }
+  return { deps, effects, writes, error, readError, records: () => copy(records), mode(value: SetMode) { mode = value }, foreign(fn: (records: JsonObject) => void) { fn(records) }, snapshot(fn: typeof beforeSnapshot) { beforeSnapshot = fn }, set(fn: typeof beforeSet) { beforeSet = fn } }
 }
 
 export async function runInterimConversion(api = { create: createStartingLocalFilterWriter, preinitialized: createLocalFilterWriter, Error: StartupReadinessError, execute: executeInterimRetention, read: readRetainedInterim, project: projectInterimNote }) {
@@ -132,7 +132,7 @@ export async function runInterimConversion(api = { create: createStartingLocalFi
     equal(Object.fromEntries(Object.entries(saved).filter(([key]) => key !== "interimConversion")), fixture.records, "all original bytes remain")
     const note = await owner.readInterimNote()
     equal(note.kind, fixture.expected, "actual owner note matches conversion outcome")
-    check(Object.isFrozen(note) && "checkpoint" in note && Object.isFrozen(note.checkpoint.source), "detached deeply frozen held read")
+    check(Object.isFrozen(note) && (note.kind === "inactive-proposal" || note.kind === "blocked-source") && Object.isFrozen(note.checkpoint.source), "detached deeply frozen held read")
     check(api.read(checkpoint).kind === "valid", "actual checkpoint decoder validates complete outcome")
     if (fixture.name === "ordered-unindexed-index-only-cache-only-empty") {
       check(note.kind === "inactive-proposal", "valid account proposal")
@@ -256,7 +256,150 @@ export async function runInterimConversion(api = { create: createStartingLocalFi
     equal(await owner.ready(), "newer-layout", "global newer schema takes priority"); equal(h.writes, [], "newer schema stays inert"); await owner.dispose()
     observations.push({ name: "global-newer", records: h.records(), effects: h.effects })
   }
-  return { mode: "actual-owner-durable-synthetic-restart", assertions, observations, production: "not-connected", native: "waived-and-unproven" }
+  const agreementObservations: unknown[] = []
+  let interruptedBeforeDevice: JsonObject | undefined
+  const ui = { kind: "ui", windowId: 1, incognito: false } as const
+  const privateUi = { ...ui, incognito: true }, access = { www: false, music: false, browserMenu: false }
+  const agreementFixtures: { name: string; records: JsonObject }[] = [
+    { name: "empty-marker", records: { schema: 1, sessionConsent: 1 } },
+    { name: "proposal-with-existing-current-consent", records: base },
+    { name: "supported-collision", records: { ...base, "doc:settings": { ...stamp, data: {} } } },
+    { name: "lossless-malformed-source", records: { schema: 1, sessionConsent: 1, "account:malformed": { preserved: [null, false] } } }
+  ]
+  for (const fixture of agreementFixtures) {
+    const h = createInterimHarness(fixture.records), owner = api.create({ ...h.deps, now() { h.effects.push({ stamp: 200 }); return 200 } })
+    await held(owner)
+    const v1 = h.records(), capture = v1.interimConversion
+    check(object(capture) && capture.v === 1, "agreement starts from actual v1 retention")
+    const review = await owner.readAgreement(privateUi)
+    check(review.kind === "review" && review.presentation.kind === "retained" && review.presentation.agreement === "required", "actual held disclosure requires fresh agreement")
+    const writes = h.writes.length, effects = h.effects.length
+    h.effects.push("initiating-explicit-retained-Agree")
+    const observation = Promise.resolve(access)
+    const input = { review: review.review, displayedVersion: review.version, choice: { kind: "retained-disclosure" } as const, access: observation }
+    const result = await owner.agree(privateUi, input)
+    check(result.kind === "committed" && result.consent.at === 200 && result.activation === "held" && result.settingsChanged === false && result.applications.length === 0, "retained consent-only agreement confirmed")
+    equal(h.writes.slice(writes).map(batch => Object.keys(batch)), [["interimConversion"], ["device"], ["interimConversion"]], "retained exact accepted Device confirmed order")
+    const saved = h.records(), receipt = readRetainedCheckpoint(saved.interimConversion)
+    check(receipt.kind === "agreement" && receipt.checkpoint.agreement.kind === "confirmed", "actual receipt validates")
+    equal(receipt.checkpoint.retained, capture, "agreement preserves immutable original v1")
+    equal(Object.fromEntries(Object.entries(saved).filter(([key]) => !["device", "interimConversion"].includes(key))), Object.fromEntries(Object.entries(v1).filter(([key]) => !["device", "interimConversion"].includes(key))), "agreement preserves all other source canonical history progress")
+    const duplicate = await owner.agree(privateUi, input)
+    check(duplicate.kind === "unchanged" && duplicate.consent.at === 200, "retained duplicate original time")
+    await closed(owner, h)
+    const readiness = await held(owner)
+    await owner.dispose()
+    const serialized = JSON.stringify(saved)
+    const fresh = createInterimHarness(JSON.parse(serialized)), restarted = api.create({ ...fresh.deps, now() { throw Error("Retained restart cannot allocate time") }, generation() { throw Error("Retained restart cannot allocate generation") }, startup: { ...fresh.deps.startup, context: { ...fresh.deps.startup.context, deviceId: "different-restart-context", at: 999, shortcutId: "fresh1" } } })
+    await held(restarted)
+    const restartedReview = await restarted.readAgreement(ui), note = await restarted.readInterimNote()
+    check(restartedReview.kind === "review" && restartedReview.presentation.kind === "retained" && restartedReview.presentation.agreement === "confirmed", "fresh owner reads confirmed agreement")
+    check((note.kind === "inactive-proposal" || note.kind === "blocked-source") && note.agreement === "confirmed", "conversion note distinguishes current agreement")
+    const resumed = await restarted.resumeRetainedAgreement(ui)
+    check(resumed.kind === "unchanged" && resumed.consent.at === 200, "confirmed explicit resume has no restamp")
+    equal(fresh.writes, [], "confirmed restart performs no writes")
+    await closed(restarted, fresh); await restarted.dispose()
+    check(!h.effects.slice(effects).some(effect => typeof effect === "string" && ["sync-get", "sync-set", "sync-subscribe", "timer", "generation"].includes(effect)), "retained disclosure has no sync allocation or activation")
+    agreementObservations.push({ name: fixture.name, input: fixture.records, v1, disclosure: review.presentation, result, duplicate, readiness, saved, serialized, writes: h.writes, effects: h.effects, restartedReview, note, resumed, restartWrites: fresh.writes, restartEffects: fresh.effects })
+  }
+  for (const stage of ["accept", "device", "record"] as const) for (const mode of ["rejected-unchanged", "rejected-applied", "resolved-missing", "rejected-divergent", "resolved-partial", "read-failed", "rejected-read-failed", "disposed"] as const) {
+    const h = createInterimHarness({ schema: 1, sessionConsent: 1 }), owner = api.create(h.deps); await held(owner)
+    const review = await owner.readAgreement(ui); check(review.kind === "review", "interrupted agreement review")
+    const target = { accept: 2, device: 3, record: 4 }[stage]
+    h.set(async () => {
+      if (h.writes.length !== target) { h.mode("normal"); return }
+      if (mode === "disposed") { void owner.dispose(); return }
+      h.mode(mode === "read-failed" ? "normal" : mode === "rejected-read-failed" ? "rejected-applied" : mode)
+    })
+    if (mode === "read-failed" || mode === "rejected-read-failed") h.snapshot(async () => { if (h.writes.length === target) throw h.readError })
+    const result = await owner.agree(ui, { review: review.review, displayedVersion: review.version, choice: { kind: "retained-disclosure" }, access: Promise.resolve(access) })
+    const expected = mode === "rejected-applied" ? "committed" : mode === "rejected-unchanged" ? "failed" : "unconfirmed"
+    check(result.kind === expected, "retained exact stage classification " + stage + mode)
+    if (mode === "rejected-unchanged") check(result.kind === "failed" && result.stage === stage && result.write.error === h.error, "retained stage rejected error identity")
+    if (mode === "rejected-applied") check(result.kind === "committed" && result.mutations.some(mutation => mutation.stage === stage && mutation.write.kind === "rejected" && mutation.write.error === h.error), "retained applied error identity")
+    if (mode === "read-failed" || mode === "rejected-read-failed") check(result.kind === "unconfirmed" && result.cause.kind === "read-failed" && result.cause.error === h.readError, "retained readback error identity")
+    if (mode === "rejected-read-failed") check(result.kind === "unconfirmed" && result.write.kind === "rejected" && result.write.error === h.error, "retained independent write and read errors")
+    const writes = h.writes.length, saved = h.records()
+    if (stage === "device" && mode === "rejected-unchanged") interruptedBeforeDevice = copy(saved)
+    if (expected === "unconfirmed" && mode !== "disposed") {
+      const barrier = await owner.readAgreement(ui)
+      check(barrier.kind === "unavailable" && barrier.reason === "stale", "retained uncertainty closes held reads")
+      check((await owner.readInterimNote()).kind === "unavailable", "retained uncertainty closes held note")
+      await closed(owner, h)
+    }
+    await owner.dispose(); equal(h.writes.length, writes, "no automatic retained retry")
+    const serialized = JSON.stringify(saved), fresh = createInterimHarness(JSON.parse(serialized)), restarted = api.create({ ...fresh.deps, now() { throw Error("Resume cannot restamp") }, generation() { throw Error("Resume cannot allocate") } })
+    await held(restarted)
+    const pending = await restarted.readAgreement(ui)
+    let resume: unknown
+    if (pending.kind === "pending") {
+      resume = await restarted.resumeRetainedAgreement(privateUi)
+      check(object(resume) && resume.kind === "committed" && object(resume.consent) && resume.consent.at === 100 && resume.activation === "held", "fresh explicit resume uses original fixed time")
+      check(readRetainedCheckpoint(fresh.records().interimConversion).kind === "agreement", "resumed receipt remains valid")
+      await held(restarted)
+    } else {
+      resume = await restarted.resumeRetainedAgreement(ui)
+      if (mode === "rejected-applied") check(object(resume) && resume.kind === "unchanged", "confirmed restart duplicate")
+      else if (stage === "accept" && mode === "rejected-unchanged") check(object(resume) && resume.kind === "unavailable", "unaccepted choice cannot resume")
+      else check(fresh.writes.length === 0, "invalid or divergent restart stays held")
+    }
+    await restarted.dispose()
+    agreementObservations.push({ name: `${stage}-${mode}`, result, saved, serialized, writes: h.writes, effects: h.effects, pending, resume, restartWrites: fresh.writes, restartRecords: fresh.records(), restartEffects: fresh.effects })
+  }
+  check(interruptedBeforeDevice, "actual accepted interruption captured")
+  for (const fault of ["third-device", "source-loss", "tombstone", "foreign-cache", "v2-root-extension"] as const) {
+    const initial = copy(interruptedBeforeDevice)
+    if (fault === "third-device") initial.device = { id: "synthetic-device", consent: { v: 1, at: 100 }, syncOn: false, foreign: true }
+    if (fault === "source-loss") delete initial.sessionConsent
+    if (fault === "tombstone") initial["doc:settings"] = { v: 1, gen: "foreign", at: 1, by: "foreign", deleted: true }
+    if (fault === "foreign-cache") initial["cache:AAAAAAAAAAAAAAAA"] = { foreign: [null] }
+    if (fault === "v2-root-extension" && object(initial.interimConversion)) initial.interimConversion.extension = { keep: [null, false] }
+    const h = createInterimHarness(initial), owner = api.create(h.deps); await held(owner)
+    equal(h.writes, [], "accepted restart does not write")
+    const read = await owner.readAgreement(ui), resumed = await owner.resumeRetainedAgreement(ui)
+    if (fault === "v2-root-extension") {
+      check(read.kind === "pending" && resumed.kind === "committed", "extended accepted state explicitly resumes")
+      const current = h.records().interimConversion
+      check(object(current) && object(current.extension) && Array.isArray(current.extension.keep), "v2 compatible root extension survives confirmation")
+    } else { check(read.kind !== "review" && read.kind !== "pending" && resumed.kind !== "committed", "third accepted state stays held"); equal(h.writes, [], "third accepted state no resume effect") }
+    await owner.dispose(); agreementObservations.push({ name: `accepted-restart-${fault}`, initial, read, resumed, records: h.records(), writes: h.writes, effects: h.effects })
+  }
+  for (const fault of ["third-device", "source-loss", "tombstone-added", "nested-rebase", "newer-checkpoint", "copied-review", "old-current-consent", "pending-removal"] as const) {
+    const h = createInterimHarness({ schema: 1, sessionConsent: 1 }), owner = api.create(h.deps); await held(owner)
+    const review = await owner.readAgreement(ui); check(review.kind === "review", "retained drift review")
+    if (fault === "third-device") h.foreign(raw => { raw.device = { id: "foreign", consent: null, syncOn: false } })
+    if (fault === "source-loss") h.foreign(raw => { delete raw.sessionConsent })
+    if (fault === "tombstone-added") h.foreign(raw => { raw["doc:settings"] = { v: 1, gen: "foreign", at: 1, by: "foreign", deleted: true } })
+    if (fault === "nested-rebase") h.foreign(raw => { if (object(raw.interimConversion) && object(raw.interimConversion.canonical)) raw.interimConversion.canonical.device = { id: "foreign", consent: null, syncOn: false } })
+    if (fault === "newer-checkpoint") h.foreign(raw => { raw.interimConversion = { v: 3, opaque: true } })
+    if (fault === "old-current-consent") h.foreign(raw => { raw.device = { id: "synthetic-device", consent: { v: 1, at: 1 }, syncOn: false } })
+    if (fault === "pending-removal") h.foreign(raw => { raw["pending:account-removal"] = { v: 99 } })
+    const before = h.records(), writes = h.writes.length
+    const result = await owner.agree(ui, { review: fault === "copied-review" ? { ...review.review } : review.review, displayedVersion: review.version, choice: { kind: "retained-disclosure" }, access: Promise.resolve(access) })
+    check(result.kind !== "committed", "retained drift refuses")
+    equal(h.records(), before, "retained drift preserves full raw inventory"); equal(h.writes.length, writes, "retained drift zero new writes")
+    await owner.dispose(); agreementObservations.push({ name: fault, result, saved: h.records(), writes: h.writes, effects: h.effects })
+  }
+
+  {
+    const h = createInterimHarness({ schema: 1, sessionConsent: 1 })
+    let known = false
+    const owner = api.create({ ...h.deps, startup: { ...h.deps.startup,
+      async readInterimSnapshot() {
+        const current = await h.deps.startup.readInterimSnapshot()
+        return { ...current, historicalAuthorization: known ? { kind: "known", value: false } as const : { kind: "unknown" } as const }
+      }
+    } })
+    await held(owner)
+    const shown = await owner.readAgreement(ui); check(shown.kind === "review", "history observation review")
+    const writes = h.writes.length
+    known = true; check((await owner.readInterimNote()).kind === "held", "changed history observation held")
+    known = false; check((await owner.readInterimNote()).kind === "inactive-proposal", "restored history remains immutable original")
+    const result = await owner.agree(ui, { review: shown.review, displayedVersion: shown.version, choice: { kind: "retained-disclosure" }, access: Promise.resolve(access) })
+    check(result.kind === "unavailable" && result.reason === "stale" && h.writes.length === writes, "observed historical A-B-A invalidates retained review")
+    await owner.dispose(); agreementObservations.push({ name: "historical-observed-A-B-A", result, writes: h.writes, effects: h.effects, records: h.records() })
+  }
+  return { mode: "actual-owner-durable-synthetic-restart", assertions, observations, agreementObservations, production: "not-connected", native: "waived-and-unproven" }
 }
 
 if (import.meta.main) process.stdout.write(JSON.stringify(await runInterimConversion(), (_, value: unknown) => value instanceof Error ? { name: value.name, message: value.message } : value, 2) + "\n")

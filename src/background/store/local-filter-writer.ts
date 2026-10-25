@@ -1,3 +1,6 @@
+import { agreementOrigin, agreementAccess, detachAgreement, freezeAgreement, parseAgreementChoice, readCanonicalAgreement, prepareCanonicalAgreement,
+  type AgreementRead, type AgreementInput, type AgreementResult, type AgreementReview, type AgreementUnavailable, type AgreementStage, type AgreementWrite } from "./consent-agreement"
+import { planLegacyStartup } from "./legacy-startup"
 import { prepareFirstEditHistory, readFirstEditProvenance } from "./first-edit-provenance"
 import {
   CONSENT_VERSION, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError,
@@ -26,6 +29,8 @@ import { prepareAccountRemovalCapture, executeAccountRemoval, resumePendingAccou
   type AccountRemovalHost, type AccountRemovalDependencies, type RemovalCapture, type RemovalConfirmation, type RemovalPreparation, type RemovalResult } from "./account-removal-execution"
 
 import { executeInterimRetention, projectInterimNote, interimConversionKey,
+  readRetainedCheckpoint, retainedAgreementDevice, retainedCheckpointDifference, isInterimCanonicalKey, isInterimSourceKey,
+  type RetainedAgreementV2, type InterimPersistenceSnapshot,
   type StoreStartupHost, type InterimRetentionResult, type InterimNoteRead } from "./interim-persistence"
 
 export type SettingsRead = SettingsView | { readonly kind: "unavailable"; readonly reason: "startup" | "newer-layout" | "disposed" | "stale" }
@@ -215,6 +220,9 @@ type LocalFilterWriterDependencies = {
 }
 
 type LocalFilterWriter = {
+  readAgreement(origin: UiOrigin): Promise<AgreementRead>
+  agree(origin: UiOrigin, input: AgreementInput): Promise<AgreementResult>
+  resumeRetainedAgreement(origin: UiOrigin): Promise<AgreementResult>
   readInterimNote(): Promise<InterimNoteRead>
   prepareAccountRemoval(origin: UiOrigin, acct: AccountKey): Promise<RemovalPreparation>
   removeAccountSetup(origin: UiOrigin, confirmation: RemovalConfirmation): Promise<RemovalResult>
@@ -249,14 +257,57 @@ export function createStartingLocalFilterWriter(deps: LocalFilterWriterDependenc
 }
 
 function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartupHost) {
+  let agreementRevision = 0
+  const rawStartup = startup
+  let observedInterimSnapshot: InterimPersistenceSnapshot | undefined
+  if (rawStartup) startup = { ...rawStartup, context: detachAgreement(rawStartup.context),
+    async readInterimSnapshot() {
+      const raw = await rawStartup.readInterimSnapshot()
+      if (!isJsonValue(raw)) { agreementRevision++; return raw }
+      const current = detachAgreement(raw)
+      if (observedInterimSnapshot && !agreementSame(observedInterimSnapshot, current)) agreementRevision++
+      observedInterimSnapshot = detachAgreement(current)
+      return current
+    }
+  }
+  const observedAgreementValues = new Map<string, JsonValue>()
+  let observedComplete = false
+  const rawLocal = deps.local
+  const local: LocalWriteStorage = {
+    async get(keys) {
+      const raw = await rawLocal.get(keys)
+      if (!isJsonObject(raw)) { agreementRevision++; return raw }
+      const records = snapshot(raw)
+      const names = keys === null ? new Set([...observedAgreementValues.keys(), ...Object.keys(records)]) : new Set(keys)
+      for (const name of names) {
+        const before = observedAgreementValues.get(name), present = Object.hasOwn(records, name)
+        if (observedAgreementValues.has(name) ? !present || !sameSyncJson(before!, records[name]!) : observedComplete && present) agreementRevision++
+        if (present) observedAgreementValues.set(name, snapshot({ value: records[name]! }).value!)
+        else observedAgreementValues.delete(name)
+      }
+      if (keys === null) observedComplete = true
+      return records
+    },
+    set: items => rawLocal.set(items)
+  }
+  let agreementContext: "first-run" | "upgrade-note" | "existing" = "existing"
+  const agreementCreation = startup ? detachAgreement(startup.context) : undefined
+  type ReviewCapture = {
+    readonly origin: JsonObject; readonly records: JsonObject; readonly revision: number
+    readonly retained: InterimPersistenceSnapshot | undefined
+    readonly context: "first-run" | "upgrade-note" | "existing"
+    terminal?: { readonly revision: number; readonly action: JsonObject; readonly after: JsonObject; readonly result: Extract<AgreementResult, { kind: "committed" | "unchanged" }> }
+    consumed: boolean
+  }
+  const agreementReviews = new WeakMap<AgreementReview, ReviewCapture>()
   let initialization: "pending" | "ok" | "newer-layout" | "failed" | "interim-held" = startup ? "pending" : "ok"
   let interimResult: Exclude<InterimRetentionResult, { kind: "not-interim" | "newer-layout" }> | undefined
   let claimConfirmation: "ready" | "unconfirmed" = "ready"
   const removal = deps.removal ?? { kind: "unavailable" }
   const removalLocal: LocalWriteStorage = {
-    set: items => deps.local.set(items),
+    set: items => local.set(items),
     async get(keys) {
-      const records = await deps.local.get(keys)
+      const records = await local.get(keys)
       if (hasInterimMarkers(records)) {
         interimResult ??= { kind: "stale", reason: "checkpoint" }
         initialization = "interim-held"
@@ -314,7 +365,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
 
   const readiness: Promise<"ok" | "newer-layout"> = startup ? enqueue(async () => {
     try {
-      const retained = await executeInterimRetention({ local: deps.local, snapshot: () => startup.readInterimSnapshot(), isStopped: disposed,
+      const retained = await executeInterimRetention({ local: local, snapshot: () => startup.readInterimSnapshot(), isStopped: disposed,
         context: initial => {
           const context = startup.context
           const paths = new Set(["doc:settings"])
@@ -342,7 +393,19 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
         listeners.clear()
         throw new StartupReadinessError({ kind: "interim-held", result: retained })
       }
-      const result = await executeLegacyStartup({ local: deps.local, host: startup })
+      let classified = false
+      const result = await executeLegacyStartup({ local: local, host: { ...startup,
+        async readSnapshot() {
+          const current = await startup.readSnapshot()
+          if (!classified) {
+            classified = true
+            const plan = planLegacyStartup(current, startup.context)
+            agreementContext = plan.kind === "upgrade" || plan.kind === "resume" ? "upgrade-note"
+              : plan.kind === "fresh" || plan.kind === "current" && current.device === undefined && current.settingsDocument === undefined && current.unclaimed === undefined && current.legacy.presentKeys.length === 0 ? "first-run" : "existing"
+          }
+          return current
+        }
+      } })
       if (disposed()) throw new StartupReadinessError({ kind: "disposed" })
       if (result.kind !== "ok" && result.kind !== "newer-layout") throw new StartupReadinessError(result)
       if (result.kind === "ok") {
@@ -933,11 +996,283 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     if (origin.incognito !== false) return { kind: "result", result: { refused: "private" } }
   }
 
+  function agreementJson(raw: unknown): JsonObject { if (!isJsonObject(raw)) throw new TypeError("Invalid agreement JSON"); return snapshot(raw) }
+  function agreementSame(left: unknown, right: unknown): boolean { return isJsonValue(left) && isJsonValue(right) && sameSyncJson(left, right) }
+  function agreementUnavailable(): AgreementUnavailable | undefined {
+    if (disposed()) return { kind: "unavailable", reason: "disposed" }
+    if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
+    if (initialization === "newer-layout") return { kind: "unavailable", reason: "newer-layout" }
+    if (initialization === "interim-held") {
+      if (!startup || !interimResult || !["retained-but-held", "retained-agreement", "pending-agreement"].includes(interimResult.kind)) return { kind: "unavailable", reason: "retention" }
+    } else if (initialization !== "ok") return { kind: "unavailable", reason: "startup" }
+  }
+  function agreementBarrier() {
+    claimConfirmation = "unconfirmed"
+    agreementRevision++
+    deactivate("stopped")
+    listeners.clear()
+  }
+  type AgreementObservation = { readonly kind: "observation"; readonly records: JsonObject; readonly retained: InterimPersistenceSnapshot | undefined }
+  async function observeAgreement(): Promise<AgreementObservation | Extract<AgreementRead, { kind: "invalid" }> | AgreementUnavailable> {
+    const records = await local.get(null)
+    const stopped = agreementUnavailable()
+    if (stopped) return stopped
+    if (!isJsonObject(records)) return { kind: "invalid", field: "records" }
+    if (Object.hasOwn(records, pendingAccountRemovalKey)) return { kind: "unavailable", reason: "pending-removal" }
+    let retained: InterimPersistenceSnapshot | undefined
+    if (startup) {
+      const raw = await startup.readInterimSnapshot()
+      if (!isJsonValue(raw)) { agreementRevision++; return { kind: "invalid", field: "records" } }
+      retained = detachAgreement(raw)
+      const selected = (keep: (name: string) => boolean) => Object.fromEntries(Object.entries(records).filter(([name]) => keep(name)))
+      const checkpoint = Object.hasOwn(records, interimConversionKey) ? { kind: "present", value: records[interimConversionKey] } : { kind: "absent" }
+      if (!sameSyncJson(selected(isInterimSourceKey), retained.source as JsonObject) || !sameSyncJson(selected(isInterimCanonicalKey), retained.canonical as JsonObject) || !sameSyncJson(checkpoint as JsonObject, retained.checkpoint as JsonObject)) {
+        agreementRevision++
+        return { kind: "unavailable", reason: "stale" }
+      }
+    }
+    if (initialization === "interim-held") {
+      if (!retained || !interimResult || !("checkpoint" in interimResult)) return { kind: "unavailable", reason: "retention" }
+      const current = readRetainedCheckpoint(records[interimConversionKey])
+      if (current.kind !== "valid" && current.kind !== "agreement" || retainedCheckpointDifference(current.checkpoint, retained)) { agreementRevision++; return { kind: "unavailable", reason: "retention" } }
+      if (!agreementSame(interimResult.checkpoint, current.checkpoint)) { agreementRevision++; return { kind: "unavailable", reason: "stale" } }
+    } else if (hasInterimMarkers(records)) return { kind: "unavailable", reason: "retention" }
+    return agreementUnavailable() ?? { kind: "observation", records, retained }
+  }
+  async function agreementSet(stage: AgreementStage, baseline: JsonObject, items: JsonObject): Promise<AgreementWrite | Exclude<AgreementResult, { kind: "committed" | "unchanged" }>> {
+    const preflight = await observeAgreement()
+    if (preflight.kind !== "observation" || !sameSyncJson(baseline, preflight.records)) return { kind: "unavailable", reason: "stale" }
+    const stopped = agreementUnavailable()
+    if (stopped) return stopped
+    let write: AgreementWrite = { kind: "resolved" }
+    try { await local.set(snapshot(items)) } catch (error) { write = { kind: "rejected", error } }
+    let observed: Readonly<Record<string, unknown>>
+    try {
+      observed = await local.get(null)
+      if (startup) {
+        const host = await startup.readInterimSnapshot()
+        if (!isJsonValue(host) || !isJsonObject(observed) ||
+          !sameSyncJson(Object.fromEntries(Object.entries(observed).filter(([key]) => isInterimSourceKey(key))), host.source as JsonObject) ||
+          !sameSyncJson(Object.fromEntries(Object.entries(observed).filter(([key]) => isInterimCanonicalKey(key))), host.canonical as JsonObject) ||
+          !sameSyncJson((Object.hasOwn(observed, interimConversionKey) ? { kind: "present", value: observed[interimConversionKey] } : { kind: "absent" }) as JsonObject, host.checkpoint as JsonObject) ||
+          initialization === "interim-held" && interimResult && "checkpoint" in interimResult &&
+            (!sameSyncJson((interimResult.checkpoint.v === 1 ? interimResult.checkpoint : interimResult.checkpoint.retained).historicalAuthorization, host.historicalAuthorization) ||
+             !sameSyncJson((interimResult.checkpoint.v === 1 ? interimResult.checkpoint : interimResult.checkpoint.retained).priorCredentialPresence, host.priorCredentialPresence))) {
+          agreementBarrier(); return { kind: "unconfirmed", stage, write, cause: { kind: "readback" } }
+        }
+      }
+    } catch (error) {
+      agreementBarrier(); return { kind: "unconfirmed", stage, write, cause: { kind: "read-failed", error } }
+    }
+    if (disposed()) { agreementBarrier(); return { kind: "unconfirmed", stage, write, cause: { kind: "stopped" } } }
+    if (isJsonObject(observed) && sameSyncJson({ ...baseline, ...items }, observed)) return write
+    if (write.kind === "rejected" && isJsonObject(observed) && sameSyncJson(baseline, observed)) return { kind: "failed", stage, write }
+    agreementBarrier(); return { kind: "unconfirmed", stage, write, cause: { kind: "readback" } }
+  }
+  function savedRetained(checkpoint: Snapshot<RetainedAgreementV2>) {
+    interimResult = { kind: checkpoint.agreement.kind === "accepted" ? "pending-agreement" : "retained-agreement", checkpoint }
+  }
+  async function finishRetainedAgreement(baseline: JsonObject, checkpoint: Snapshot<RetainedAgreementV2>, mutations: { stage: AgreementStage; write: AgreementWrite }[]): Promise<AgreementResult> {
+    const consent = checkpoint.agreement.effect.consent
+    const device = agreementJson(Object.getOwnPropertyDescriptor(checkpoint.agreement.effect, "device")?.value)
+    if (checkpoint.agreement.kind === "confirmed") return { kind: "unchanged", reason: "already-agreed", consent: { ...consent }, activation: "held" }
+
+    if (!Object.hasOwn(baseline, "device") || !agreementSame(baseline.device, device)) {
+      const write = await agreementSet("device", baseline, { device: snapshot(device) })
+      if (write.kind !== "resolved" && write.kind !== "rejected") return write
+      mutations.push({ stage: "device", write })
+      baseline = { ...baseline, device: snapshot(device) }
+    }
+    const confirmed = { ...agreementJson(checkpoint), agreement: { kind: "confirmed", effect: { consent: { ...consent }, device } } }
+    if (!isJsonObject(confirmed)) return { kind: "refused", reason: "invalid" }
+    const write = await agreementSet("record", baseline, { [interimConversionKey]: confirmed })
+    if (write.kind !== "resolved" && write.kind !== "rejected") return write
+    mutations.push({ stage: "record", write })
+    const read = readRetainedCheckpoint(confirmed)
+    if (read.kind !== "agreement") throw new TypeError("Invalid confirmed agreement")
+    savedRetained(read.checkpoint)
+    return { kind: "committed", consent: { ...consent }, settingsChanged: false, blocked: [], applications: [], mutations, activation: "held" }
+  }
+  async function readAgreement(origin: UiOrigin): Promise<AgreementRead> {
+    const stopped = agreementUnavailable()
+    if (stopped) return stopped
+    if (!agreementOrigin(origin)) return { kind: "invalid", field: "records" }
+    const caller = snapshot(origin)
+    return enqueue(async () => {
+      const stopped = agreementUnavailable()
+      if (stopped) return stopped
+      try {
+        const current = await observeAgreement()
+        if (current.kind !== "observation") return current
+        const { records, retained } = current
+        let presentation: Extract<AgreementRead, { kind: "review" }>["presentation"]
+        if (initialization === "interim-held") {
+          const read = readRetainedCheckpoint(records[interimConversionKey])
+          if (read.kind !== "valid" && read.kind !== "agreement") return { kind: "unavailable", reason: "retention" }
+          if (read.kind === "agreement" && read.checkpoint.agreement.kind === "accepted") return { kind: "pending", consent: freezeAgreement(read.checkpoint.agreement.effect.consent), action: "resume-retained-agreement", activation: "held" }
+          const original = read.kind === "valid" ? read.checkpoint : read.checkpoint.retained
+          const device = Object.hasOwn(records, "device") ? records.device : undefined
+          if (device !== undefined && (!isJsonObject(device) || !["id", "consent", "syncOn"].every(key => Object.hasOwn(device, key)))) return { kind: "invalid", field: "device" }
+          let consent = null
+          if (device !== undefined) {
+            const decoded = decodeDevice(device)
+            if (decoded.consent && decoded.consent.v > CONSENT_VERSION) return { kind: "unavailable", reason: "newer-consent" }
+            consent = decoded.consent
+          }
+          const outcome = original.outcome
+          presentation = { kind: "retained", consent, historicalAuthorization: original.historicalAuthorization, priorCredentialPresence: original.priorCredentialPresence,
+            recovery: original.recovery, agreement: read.kind === "agreement" ? "confirmed" : "required", activation: "held",
+            details: outcome.kind === "blocked" ? { kind: "blocked" } : { kind: "available", percentage: outcome.note.percentage, feedback: outcome.note.feedback, globals: outcome.note.globals.kind } }
+        } else {
+          const state = readCanonicalAgreement(records)
+          if (state.kind !== "canonical-state") return state
+          presentation = { kind: "canonical", consent: state.device?.consent ?? null, note: state.device?.upgradeNote ?? null, settings: state.settings, syncOn: state.device?.syncOn ?? false }
+        }
+        const review: AgreementReview = Object.freeze({ kind: "agreement-review" })
+        agreementReviews.set(review, { origin: caller, records: snapshot(records), revision: agreementRevision, retained, context: agreementContext, consumed: false })
+        return { kind: "review", version: CONSENT_VERSION, review, presentation: freezeAgreement(presentation) }
+      } catch { return { kind: "unavailable", reason: "stale" } }
+    })
+  }
+  function agree(origin: UiOrigin, input: AgreementInput): Promise<AgreementResult> {
+    const accessDescriptor = input && typeof input === "object" ? Object.getOwnPropertyDescriptor(input, "access") : undefined
+    const access = Promise.resolve(accessDescriptor && "value" in accessDescriptor ? accessDescriptor.value : undefined).then(
+      value => ({ kind: "observed", value: agreementAccess(value) ? detachAgreement(value) : undefined } as const), error => ({ kind: "rejected", error } as const))
+    let at: number
+    try { at = deps.now() } catch (error) { return Promise.resolve({ kind: "failed", stage: "before-set", error }) }
+    const version = CONSENT_VERSION
+    const stopped = agreementUnavailable()
+    if (stopped) return Promise.resolve(stopped)
+    if (!agreementOrigin(origin) || !Number.isSafeInteger(at) || at < 0 || !input || typeof input !== "object" || Array.isArray(input) ||
+      Reflect.ownKeys(input).length !== 4 || Reflect.ownKeys(input).some(key => typeof key !== "string" || !["review", "displayedVersion", "choice", "access"].includes(key) || !("value" in (Object.getOwnPropertyDescriptor(input, key) ?? {})))) return Promise.resolve({ kind: "refused", reason: "invalid" })
+    const choice = parseAgreementChoice(input.choice), displayedVersion = input.displayedVersion
+    if (choice.kind === "unavailable" || choice.kind === "refused") return Promise.resolve(choice)
+    const caller = snapshot(origin), captured = agreementReviews.get(input.review)
+    if (!captured || !sameSyncJson(caller, captured.origin)) return Promise.resolve({ kind: "unavailable", reason: "stale" })
+    return enqueue(async () => {
+      const stopped = agreementUnavailable()
+      if (stopped) return stopped
+      const permission = await access
+      if (permission.kind === "rejected") return { kind: "failed", stage: "before-set", error: permission.error }
+      if (!agreementAccess(permission.value)) return { kind: "refused", reason: "invalid" }
+      const observedAccess = detachAgreement(permission.value)
+      const action = { choice, access: observedAccess, displayedVersion }
+      if (!isJsonObject(action)) return { kind: "refused", reason: "invalid" }
+      try {
+        const current = await observeAgreement()
+        if (current.kind !== "observation") return current.kind === "invalid" ? { kind: "refused", reason: "invalid" } : current
+        if (captured.terminal) {
+          if (captured.terminal.revision === agreementRevision && sameSyncJson(action, captured.terminal.action) && sameSyncJson(current.records, captured.terminal.after)) return { kind: "unchanged", reason: "already-agreed", consent: captured.terminal.result.consent, activation: captured.terminal.result.activation }
+          return { kind: "unavailable", reason: "stale" }
+        }
+        if (captured.consumed || captured.revision !== agreementRevision || !sameSyncJson(captured.records, current.records) ||
+          (captured.retained && (!current.retained || !isJsonValue(current.retained) || !sameSyncJson(captured.retained as JsonObject, current.retained)))) return { kind: "unavailable", reason: "stale" }
+        if (displayedVersion !== version) return { kind: "unavailable", reason: "newer-consent" }
+        captured.consumed = true
+        const consent = { v: version, at }
+        let result: AgreementResult
+        let terminalAfter: JsonObject | undefined
+        if (initialization === "interim-held") {
+          if (choice.kind !== "retained-disclosure") return { kind: "unavailable", reason: "retention" }
+          const read = readRetainedCheckpoint(current.records[interimConversionKey])
+          if (read.kind === "agreement") {
+            if (read.checkpoint.agreement.kind !== "confirmed") return { kind: "unavailable", reason: "pending-agreement" }
+            const result = { kind: "unchanged", reason: "already-agreed", consent: { ...read.checkpoint.agreement.effect.consent }, activation: "held" } as const
+            captured.terminal = { revision: agreementRevision, action: snapshot(action), after: snapshot(current.records), result: freezeAgreement(result) }
+            return result
+          }
+          if (read.kind !== "valid") return { kind: "unavailable", reason: "retention" }
+          const device = retainedAgreementDevice(read.checkpoint, consent)
+          if (!device) return { kind: "refused", reason: "invalid" }
+          const accepted: JsonObject = { v: 2, kind: "retained-interim", retained: agreementJson(read.checkpoint), agreement: { kind: "accepted", effect: { consent, device } } }
+          if (!isJsonObject(accepted)) return { kind: "refused", reason: "invalid" }
+          const validated = readRetainedCheckpoint(accepted)
+          if (validated.kind !== "agreement") return { kind: "refused", reason: "invalid" }
+          const write = await agreementSet("accept", current.records, { [interimConversionKey]: accepted })
+          if (write.kind !== "resolved" && write.kind !== "rejected") return write
+          savedRetained(validated.checkpoint)
+          result = await finishRetainedAgreement({ ...current.records, [interimConversionKey]: accepted }, validated.checkpoint, [{ stage: "accept", write }])
+          if (result.kind === "committed") terminalAfter = { ...current.records, device, [interimConversionKey]: { ...accepted, agreement: { kind: "confirmed", effect: { consent, device } } } }
+        } else {
+          if (choice.kind === "retained-disclosure") return { kind: "unavailable", reason: "retention" }
+          if (choice.kind === "first-run" && captured.context !== "first-run" || choice.kind === "upgrade-note" && captured.context !== "upgrade-note") return { kind: "unavailable", reason: "startup" }
+          const state = readCanonicalAgreement(current.records)
+          if (state.kind !== "canonical-state") return state.kind === "invalid" ? { kind: "refused", reason: "invalid" } : state
+          if (state.device?.upgradeNote?.state === "pending" && choice.kind !== "upgrade-note") return { kind: "unavailable", reason: "upgrade-note" }
+          const plan = prepareCanonicalAgreement({ records: current.records, state, choice, access: observedAccess, consent, context: agreementCreation })
+          if (plan.kind !== "prepared") return plan
+          const items: JsonObject = { device: plan.device }
+          if (plan.settings) {
+            const raw = current.records["doc:settings"]
+            const envelope: JsonObject = { ...(isJsonObject(raw) ? raw : {}), v: DOCUMENT_VERSION, gen: deps.generation(), at, by: plan.device.id!, data: plan.settings }
+            delete envelope.deleted
+            if (decodeDocument(envelope, decodeSettings).kind !== "value") return { kind: "refused", reason: "invalid" }
+            items["doc:settings"] = envelope
+            if (state.device?.syncOn) {
+              const admission = planSyncWrite({ local: current.records, sync: await deps.sync.get(), intent: { kind: "changed-batch", documents: [{ key: { kind: "settings" }, document: envelope }] } })
+              if (admission.kind === "refused") return admission
+              if (admission.kind !== "planned" || !isJsonObject(current.records.sync)) return { kind: "unavailable", reason: "sync-writer-required" }
+              const repaired = repairedHistory(current.records.sync, admission.repairs)
+              if (repaired) items.sync = repaired
+            }
+            const history = prepareFirstEditHistory({ history: Object.hasOwn(current.records, "sync") ? { kind: "present", raw: items.sync ?? current.records.sync } : { kind: "absent" }, syncOn: state.device?.syncOn ?? false })
+            if (history.kind === "unavailable") return { kind: "unavailable", reason: "sync-writer-required" }
+            if (history.kind === "set") items.sync = history.sync
+          } else if (choice.kind !== "disclosure" && state.device?.syncOn) {
+            const admission = planSyncWrite({ local: current.records, sync: await deps.sync.get(), intent: { kind: "unchanged", key: { kind: "settings" } } })
+            if (admission.kind === "refused") return admission
+            if (admission.kind === "unavailable") return { kind: "unavailable", reason: "sync-writer-required" }
+          }
+          if (!plan.settings && state.device?.consent?.v === version && state.device.upgradeNote?.state !== "pending") {
+            const result = { kind: "unchanged", reason: "already-agreed", consent: { ...state.device.consent }, activation: "ordinary-gates" } as const
+            captured.terminal = { revision: agreementRevision, action: snapshot(action), after: snapshot(current.records), result: freezeAgreement(result) }
+            return result
+          }
+          if (plan.clearProgress) for (const [key, value] of Object.entries(current.records)) {
+            if (!key.startsWith("progress:")) continue
+            if (!/^progress:[A-Za-z0-9_-]{16}:(?:[0-9]|1[0-5])$/.test(key) || !isJsonObject(value)) return { kind: "refused", reason: "invalid" }
+            items[key] = {}
+          }
+          const write = await agreementSet("canonical", current.records, items)
+          if (write.kind !== "resolved" && write.kind !== "rejected") return write
+          result = { kind: "committed", consent, settingsChanged: plan.settings !== undefined, blocked: plan.blocked, applications: plan.applications,
+            mutations: [{ stage: "canonical", write }], activation: "ordinary-gates" }
+          terminalAfter = { ...current.records, ...items }
+          if (plan.settings) emitSettings("local")
+        }
+        if (result.kind === "committed") {
+          const after = terminalAfter
+          if (!after || disposed()) { agreementBarrier(); return { kind: "unconfirmed", stage: initialization === "interim-held" ? "record" : "canonical", write: result.mutations.at(-1)?.write ?? { kind: "resolved" }, cause: { kind: "stopped" } } }
+          captured.terminal = { revision: agreementRevision, action: snapshot(action), after: snapshot(after), result: freezeAgreement(result) }
+        }
+        return result
+      } catch (error) { return { kind: "failed", stage: "before-set", error } }
+    })
+  }
+  function resumeRetainedAgreement(origin: UiOrigin): Promise<AgreementResult> {
+    const blocked = agreementUnavailable()
+    if (blocked) return Promise.resolve(blocked)
+    if (!agreementOrigin(origin)) return Promise.resolve({ kind: "refused", reason: "invalid" })
+    if (!startup || initialization !== "interim-held") return Promise.resolve({ kind: "unavailable", reason: "retention" })
+    return enqueue(async () => {
+      const blocked = agreementUnavailable()
+      if (blocked) return blocked
+      try {
+        const current = await observeAgreement()
+        if (current.kind !== "observation") return current.kind === "invalid" ? { kind: "refused", reason: "invalid" } : current
+        const read = readRetainedCheckpoint(current.records[interimConversionKey])
+        if (read.kind !== "agreement") return { kind: "unavailable", reason: "pending-agreement" }
+        return await finishRetainedAgreement(current.records, read.checkpoint, [])
+      } catch (error) { return { kind: "failed", stage: "before-set", error } }
+    })
+  }
+
   const writer: LocalFilterWriter = {
+    readAgreement, agree, resumeRetainedAgreement,
     readInterimNote() {
       const unavailable = (): InterimNoteRead | undefined => disposed() ? { kind: "unavailable", reason: "disposed" }
         : initialization !== "interim-held" ? { kind: "unavailable", reason: initialization === "pending" ? "startup" : "stale" }
-        : !startup || !interimResult || interimResult.kind === "failed" || interimResult.kind === "unconfirmed" || interimResult.kind === "unrepresentable" ? { kind: "unavailable", reason: "stale" } : undefined
+        : claimConfirmation === "unconfirmed" || !startup || !interimResult || interimResult.kind === "failed" || interimResult.kind === "unconfirmed" || interimResult.kind === "unrepresentable" ? { kind: "unavailable", reason: "stale" } : undefined
       const blocked = unavailable()
       if (blocked) return Promise.resolve(blocked)
       return enqueue(async () => {
@@ -947,7 +1282,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
         if (interimResult.kind === "invalid") return Object.freeze({ kind: "held", reason: "invalid" })
         if (interimResult.kind === "newer-checkpoint") return Object.freeze({ kind: "held", reason: "newer-version" })
         if (interimResult.kind === "stale") return interimResult.reason === "stopped" ? { kind: "unavailable", reason: "stale" } : Object.freeze({ kind: "held", reason: interimResult.reason })
-        if (interimResult.kind !== "retained-but-held") return { kind: "unavailable", reason: "stale" }
+        if (interimResult.kind !== "retained-but-held" && interimResult.kind !== "retained-agreement" && interimResult.kind !== "pending-agreement") return { kind: "unavailable", reason: "stale" }
         const checkpoint = interimResult.checkpoint
         try {
           const first = projectInterimNote({ checkpoint, current: await startup.readInterimSnapshot() })
@@ -1152,6 +1487,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       })
     },
     dispose() {
+      agreementRevision++
       listeners.clear()
       deactivate("disposed")
       return lane
