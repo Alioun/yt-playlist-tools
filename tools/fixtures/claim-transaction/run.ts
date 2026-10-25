@@ -1,4 +1,5 @@
-import type { AgreementChoice, AgreementInput, AgreementResult } from "../../../src/background/store/consent-agreement"
+import { syncJoinHarness } from "../account-removal-admission/run"
+import type { AgreementChoice, AgreementInput, AgreementResult, PageFeatureId } from "../../../src/background/store/consent-agreement"
 import { decodeDocument, decodeSettings, defaultDevice, defaultSettings, defaultSetup, isAccountKey, isPlaylistId, type Unclaimed } from "../../../src/shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../../src/shared/contracts/json"
 import type { ClaimAuthority, ClaimAuthorityState } from "../../../src/background/store/local-claim-writer"
@@ -292,6 +293,86 @@ export async function runCanonicalAgreements(api = { create: createStartingLocal
   return { assertions, outcomes }
 }
 
+export async function runJoinedAgreements(api = { create: createStartingLocalFilterWriter, preinitialized: createLocalFilterWriter }) {
+  const outcomes: unknown[] = [], assertions: string[] = []
+  function check(value: unknown, label: string): asserts value { assertions.push(label); if (!value) throw Error(label) }
+  const ui = { kind: "ui", windowId: 1, incognito: false } as const
+  const remote = (): JsonObject => ({ "s:meta": { v: 1, id: "H", created: 0 }, "s:settings": { v: 1, gen: "remote-settings", at: 10, by: "remote", data: { autoAdd: { on: true }, theme: "dark" }, extension: { keep: true }, ...JSON.parse('{"__proto__":{"inert":true},"toJSON":"inert"}') } })
+  for (const name of ["unknown-choice", "use-this-browser", "upgrade-note", "proven-automatic", "empty-create", "zero-features", "zero-empty-create", "no-op-overlay", "deleted-original", "denied-site-access", "auto-add-off-progress", "full", "newer", "stale-lookup", "accepted-restart", "disposed-materialize"] as const) {
+    const initial: JsonObject = {}, sync = remote()
+    if (name === "upgrade-note") { initial.playlists = ["PLabcdefghijklmnop"]; initial.watchLaterShortcut = "k" }
+    if (name === "proven-automatic") initial.sync = { joined: null, pushed: {}, status: "off", editedSinceOff: false, everEdited: false }
+    if (name === "empty-create" || name === "zero-empty-create") for (const key of Object.keys(sync)) delete sync[key]
+    if (name === "no-op-overlay") jsonAgreement(sync["s:settings"]).data = { autoAdd: { on: false }, queueButton: { on: true }, theme: "dark" }
+    if (name === "deleted-original") jsonAgreement(sync["s:settings"]).data = { autoAdd: { on: false }, shortcuts: { on: false, preset: true, list: [] } }
+    if (name === "auto-add-off-progress") { initial["progress:AAAAAAAAAAAAAAAA:0"] = { remembered: 1 }; initial["progress:BBBBBBBBBBBBBBBB:15"] = { remembered: 2 } }
+    if (name === "full") for (let i = 0; i < 481; i++) sync[`occupied-${i}`] = "retained"
+    if (name === "newer") sync["s:settings"] = { v: 2, gen: "future", at: 10, by: "remote", data: {} }
+    const h = syncJoinHarness({ local: initial, sync }, "agreement-candidate", api)
+    if (name === "upgrade-note") h.deps.startup.readSnapshot = startupHost({ read: () => h.state().local, remove(keys) { h.foreign(raw => { keys.forEach(key => { delete raw[key] }) }) } }, h.effects).readSnapshot
+    const owner = h.owner(); check(await owner.ready() === "ok", "true-ticked agreement uses actual starting owner")
+    const review = await owner.readAgreement(ui); check(review.kind === "review", "canonical true-ticked review")
+    const before = h.state(), beforeSets = h.localSets.length
+    const selected: readonly PageFeatureId[] = name === "denied-site-access" ? ["music-keys", "shortcuts", "browser-menu"] : name === "deleted-original" ? ["shortcuts"] : name === "zero-features" || name === "zero-empty-create" || name === "auto-add-off-progress" ? [] : ["queue-button"]
+    const access = { www: true, music: name !== "denied-site-access", browserMenu: name !== "denied-site-access" }
+    const ordering: string[] = []
+    function requestAccess() { ordering.push("request-before-await"); return Promise.resolve(access) }
+    const kind = name === "upgrade-note" ? "upgrade-note" : "first-run"
+    const pending = owner.agree(ui, { review: review.review, displayedVersion: review.version, choice: kind === "upgrade-note" ? { kind, selected, percentage: "half", syncOn: true, join: { kind: "prepare" } } : { kind, selected, syncOn: true, join: { kind: "prepare" } }, access: requestAccess() })
+    ordering.push("owner-invoked"); await h.drain()
+    if (name === "empty-create" || name === "zero-empty-create") await h.tick(10000)
+    const first = await pending
+    let result = first
+    if (first.kind === "choice-required") {
+      check(h.localSets.length === beforeSets && stableAgreement(h.state()) === stableAgreement(before), "choice-required saves no consent or draft switch")
+      if (name === "stale-lookup") { h.remote(raw => { (raw["s:settings"] as JsonObject).gen = "changed-after-choice" }); await h.event() }
+      h.time(300)
+      if (name === "accepted-restart") h.fault("materialize", "rejected-unchanged")
+      if (name === "disposed-materialize") h.fault("materialize", "disposed-after")
+      const side = name === "use-this-browser" ? "use-this-browser" : "use-synced"
+      result = await owner.agree(ui, { review: review.review, displayedVersion: review.version, choice: kind === "upgrade-note" ? { kind, selected, percentage: "half", syncOn: true, join: { kind: "answer", review: first.review, choice: side } } : { kind, selected, syncOn: true, join: { kind: "answer", review: first.review, choice: side } }, access: requestAccess() })
+    }
+    let serialized: string | undefined, restart: unknown, resumed: unknown
+    if (name === "full" || name === "newer" || name === "stale-lookup") {
+      check(result.kind !== "joined" && h.localSets.length === beforeSets && stableAgreement(h.state().local) === stableAgreement(before.local), "Q12 and stale join save neither consent nor switch " + name + " " + stableAgreement(result))
+      if (name !== "stale-lookup") check(result.kind === "refused" && result.reason === (name === "full" ? "sync-full" : "update-needed"), "true tick retains explicit admission refusal")
+    } else if (name === "accepted-restart" || name === "disposed-materialize") {
+      check(result.kind === (name === "accepted-restart" ? "failed" : "unconfirmed"), "interrupted true tick never becomes consent-only success")
+      serialized = JSON.stringify(h.state()); await owner.dispose()
+      const fresh = syncJoinHarness(JSON.parse(serialized), "changed-restart-candidates", api), restarted = fresh.owner()
+      restart = await restarted.ready().then(value => ({ value }), error => ({ pending: error.result }))
+      check(fresh.localSets.length === 0 && fresh.counters().gen === 0 && fresh.counters().nowCalls === 0, "ticked accepted restart does not replay Agree or allocate time")
+      resumed = await restarted.resumeSyncJoin(ui)
+      check((resumed as { kind?: string }).kind === "committed", "fresh owner explicitly resumes fixed true-ticked agreement")
+      check(fresh.counters().gen === 0 && jsonAgreement(fresh.state().local.device).consent !== null, "fixed consent and presets survive changed candidates")
+      await restarted.dispose(); restart = { ready: restart, result: resumed, state: fresh.state(), effects: fresh.effects, counters: fresh.counters() }
+    } else {
+      check(result.kind === "joined" && result.join.kind === "committed", "actual true-ticked combined Agree joins " + name + " " + stableAgreement(result))
+      const saved = h.state().local, device = jsonAgreement(saved.device)
+      check(device.syncOn === true && jsonAgreement(device.consent).at === (first.kind === "choice-required" ? 300 : 100), "applying click supplies exact consent time and true switch")
+      const materialization = h.localSets.slice(beforeSets).find(batch => Object.hasOwn(batch,"device"))
+      check(materialization && Object.hasOwn(materialization,"sync") && (name === "zero-empty-create" || Object.hasOwn(materialization,"doc:settings")), "ticked consent switch Settings and history share fixed local batch")
+      if (name === "no-op-overlay") check(!result.settingsChanged && h.counters().gen === 0 && jsonAgreement(saved["doc:settings"]).gen === "remote-settings", "matching reviewed switches preserve the selected raw envelope without restamping")
+      if (name === "deleted-original") {
+        const settings = jsonAgreement(jsonAgreement(saved["doc:settings"]).data)
+        check(stableAgreement(jsonAgreement(settings.shortcuts).list) === "[]", "true-ticked Agree never recreates a deleted original shortcut")
+      }
+      if (name === "zero-empty-create") check(!Object.hasOwn(saved, "doc:settings") && !Object.hasOwn(jsonAgreement(saved.sync), "everEdited") && result.join.replication === "pending", "zero-feature empty join creates metadata debt without Settings or false provenance")
+      if (name === "upgrade-note") check(jsonAgreement(device.upgradeNote).state === "done", "true-ticked original upgrade note finishes with combined join")
+      if (name === "auto-add-off-progress") check(stableAgreement(saved["progress:AAAAAAAAAAAAAAAA:0"]) === "{}" && stableAgreement(saved["progress:BBBBBBBBBBBBBBBB:15"]) === "{}", "auto-add off empties recognized progress across accounts")
+      if (name === "denied-site-access") check(result.applications.some(x => x.state.kind === "held") && jsonAgreement(saved.sync).everEdited === true, "denied access preserves explicit consent with held features and real edit provenance")
+      if (name === "zero-features") check(device.syncOn && result.join.replication === "pending", "zero selected features still joins requested sync")
+      await owner.startSync(); await h.tick(10000)
+      check((await owner.readSyncJoin(ui)).kind === "joined", "ticked transaction reaches real native confirmation through existing scheduler")
+      serialized = JSON.stringify(h.state())
+    }
+    await owner.dispose()
+    outcomes.push({ name, before, review, selected, access, ordering, first, result, serialized, restart, resumed, saved: h.state(), localSets: h.localSets, nativeSets: h.nativeSets, removals: h.removals, effects: h.effects, counters: h.counters() })
+  }
+  return { productionConnected: false, native: "waived-unproven", assertions, outcomes }
+}
+function jsonAgreement(raw: unknown): JsonObject { if (!isAgreementObject(raw)) throw Error("Invalid joined agreement JSON"); return raw }
+
 export async function runClaimFixture(api = { create: createStartingLocalFilterWriter, preinitialized: createLocalFilterWriter }) {
   const acct = "synthetic_acct01", playlist = "PLowned"
   if (!isAccountKey(acct) || !isPlaylistId(playlist)) throw new Error("Invalid synthetic fixture identifiers")
@@ -523,7 +604,7 @@ export async function runClaimFixture(api = { create: createStartingLocalFilterW
     if (restart.kind !== "empty" || consumed.kind !== "consumed" || JSON.stringify(records) !== JSON.stringify(expectedSaved)) throw Error("Notice removal did not survive restart")
     noticeOutcomes.push({ name: "claim-notice", input, claim, first, second, pendingAfterRestart, savedBeforeOK, presentation, action, acknowledgement, reread, duplicateOK, restart, consumed, before, after, counters, saved: records, batches, effects, events })
   }
-  return { fixture: "exclusive-synthetic-atomic-local-only", outcomes, startupOutcomes, settingsOutcomes, noticeOutcomes, agreementOutcomes: await runCanonicalAgreements(api) }
+  return { fixture: "exclusive-synthetic-atomic-local-only", outcomes, startupOutcomes, settingsOutcomes, noticeOutcomes, agreementOutcomes: await runCanonicalAgreements(api), joinAgreementOutcomes: await runJoinedAgreements(api) }
 }
 
 export const fixtureRun = runClaimFixture()

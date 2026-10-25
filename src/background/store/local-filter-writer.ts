@@ -1,3 +1,8 @@
+import { pendingSyncJoinKey, readSyncJoinCheckpoint, transitionSyncJoin, joinJson, joinStored, sameJoinStored,
+  type SyncJoinCheckpointV1, type JoinOutboundDebt, type JoinAgreementFacts } from "./sync-join-persistence"
+import { readJoinLocal, readJoinRemote, classifySyncJoin, prepareJoinEffect, projectJoinDebt, joinUnavailable,
+  finishJoinEffect, setJoinStage, retireJoin, type SyncJoinHost, type SyncJoinReview, type SyncJoinOperation, type SyncJoinPreparation,
+  type SyncJoinResult, type SyncJoinStatus, type SyncJoinSide, type JoinRemote } from "./sync-join-execution"
 import { agreementOrigin, agreementAccess, detachAgreement, freezeAgreement, parseAgreementChoice, readCanonicalAgreement, prepareCanonicalAgreement,
   type AgreementRead, type AgreementInput, type AgreementResult, type AgreementReview, type AgreementUnavailable, type AgreementStage, type AgreementWrite } from "./consent-agreement"
 import { planLegacyStartup } from "./legacy-startup"
@@ -83,7 +88,7 @@ export type SyncFlushResult =
   | { kind: "idle" }
   | { kind: "reconciled"; repaired: readonly SyncDocumentRecord[] }
   | { kind: "pushed"; sent: readonly SyncDocumentRecord[]; repaired: readonly SyncDocumentRecord[] }
-  | { kind: "unavailable" }
+  | { kind: "unavailable"; reason?: "changed-generation" }
   | { kind: "blocked" }
   | { kind: "sync-set-failed"; error: unknown; sent: readonly SyncDocumentRecord[]; recoveryPersistence?: { error: unknown } }
   | { kind: "acknowledgement-failed"; error: unknown; source: FlushSource }
@@ -209,6 +214,7 @@ function recoveryHistory(raw: JsonObject, gate: SyncOpaqueWrite["gate"], error?:
 type SyncEvent = { readonly kind: "edit" | "start" | "sync" | "manual"; readonly mono: number; readonly wall: number; readonly epoch: number }
 
 type LocalFilterWriterDependencies = {
+  readonly join?: SyncJoinHost
   readonly removal?: AccountRemovalHost
   readonly local: LocalWriteStorage
   readonly claim: ClaimHost
@@ -220,6 +226,11 @@ type LocalFilterWriterDependencies = {
 }
 
 type LocalFilterWriter = {
+  beginSyncJoin(origin: UiOrigin): SyncJoinOperation
+  applySyncJoin(origin: UiOrigin, input: { readonly kind: "automatic"; readonly review: SyncJoinReview } | { readonly kind: "choice"; readonly review: SyncJoinReview; readonly choice: SyncJoinSide }): Promise<SyncJoinResult>
+  cancelSyncJoin(origin: UiOrigin): Promise<SyncJoinResult>
+  readSyncJoin(origin: UiOrigin): Promise<SyncJoinStatus>
+  resumeSyncJoin(origin: UiOrigin): Promise<SyncJoinResult>
   readAgreement(origin: UiOrigin): Promise<AgreementRead>
   agree(origin: UiOrigin, input: AgreementInput): Promise<AgreementResult>
   resumeRetainedAgreement(origin: UiOrigin): Promise<AgreementResult>
@@ -240,7 +251,7 @@ type LocalFilterWriter = {
 }
 
 export class StartupReadinessError extends Error {
-  constructor(readonly result: { readonly kind: "interim-held"; readonly result: Exclude<InterimRetentionResult, { kind: "not-interim" | "newer-layout" }> } | Exclude<StartupExecutionResult, { kind: "ok" | "newer-layout" }> | { readonly kind: "disposed" } | { readonly kind: "pending-removal"; readonly result: Exclude<RemovalResult, { kind: "committed" | "unchanged" }> }) {
+  constructor(readonly result: { readonly kind: "pending-join"; readonly observation: "accepted" | "outbound" | "choice" | "invalid" | "newer-version" } | { readonly kind: "interim-held"; readonly result: Exclude<InterimRetentionResult, { kind: "not-interim" | "newer-layout" }> } | Exclude<StartupExecutionResult, { kind: "ok" | "newer-layout" }> | { readonly kind: "disposed" } | { readonly kind: "pending-removal"; readonly result: Exclude<RemovalResult, { kind: "committed" | "unchanged" }> }) {
     super("Local startup did not release this owner")
     this.name = "StartupReadinessError"
   }
@@ -258,6 +269,9 @@ export function createStartingLocalFilterWriter(deps: LocalFilterWriterDependenc
 
 function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartupHost) {
   let agreementRevision = 0
+  let joinHeld = false
+  let joinRemoteRevision = 0
+  let observedJoinRemote: JsonObject | undefined
   const rawStartup = startup
   let observedInterimSnapshot: InterimPersistenceSnapshot | undefined
   if (rawStartup) startup = { ...rawStartup, context: detachAgreement(rawStartup.context),
@@ -278,6 +292,10 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       const raw = await rawLocal.get(keys)
       if (!isJsonObject(raw)) { agreementRevision++; return raw }
       const records = snapshot(raw)
+      if (keys === null || keys.includes(pendingSyncJoinKey)) {
+        const checkpoint = readSyncJoinCheckpoint(records[pendingSyncJoinKey])
+        joinHeld = checkpoint.kind !== "absent" && !(checkpoint.kind === "valid" && checkpoint.checkpoint.phase === "off")
+      }
       const names = keys === null ? new Set([...observedAgreementValues.keys(), ...Object.keys(records)]) : new Set(keys)
       for (const name of names) {
         const before = observedAgreementValues.get(name), present = Object.hasOwn(records, name)
@@ -300,10 +318,12 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     consumed: boolean
   }
   const agreementReviews = new WeakMap<AgreementReview, ReviewCapture>()
-  let initialization: "pending" | "ok" | "newer-layout" | "failed" | "interim-held" = startup ? "pending" : "ok"
+  let initialization: "pending" | "ok" | "newer-layout" | "failed" | "interim-held" | "pending-join" = startup ? "pending" : "ok"
   let interimResult: Exclude<InterimRetentionResult, { kind: "not-interim" | "newer-layout" }> | undefined
   let claimConfirmation: "ready" | "unconfirmed" = "ready"
   const removal = deps.removal ?? { kind: "unavailable" }
+  const join = deps.join ?? { kind: "unavailable" }
+  const joinDeps = { local, host: join, stopped: () => disposed() || claimConfirmation === "unconfirmed" }
   const removalLocal: LocalWriteStorage = {
     set: items => local.set(items),
     async get(keys) {
@@ -351,6 +371,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     set: items => removalLocal.set(items),
     async get(keys) {
       let records = await removalLocal.get(keys)
+      if (joinHeld) return {}
       if (removalChecked) return records
       if (keys !== null) {
         // Joined Filter edits already require a complete read before any successful outcome.
@@ -365,6 +386,19 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
 
   const readiness: Promise<"ok" | "newer-layout"> = startup ? enqueue(async () => {
     try {
+      const full = await local.get(null)
+      if (Object.hasOwn(full, pendingSyncJoinKey)) {
+        const check = readSyncJoinCheckpoint(full[pendingSyncJoinKey])
+        if (!(check.kind === "valid" && check.checkpoint.phase === "off")) {
+          const header = await startup.readInterimSnapshot()
+          if (hasInterimMarkers(full) || header.checkpoint.kind !== "absent" || Object.keys(header.source).some(name => name.startsWith("account:") || ["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"].includes(name)) || typeof full.schema === "number" && full.schema > STORAGE_SCHEMA_VERSION) {
+            initialization = "pending-join"
+            throw new StartupReadinessError({ kind: "pending-join", observation: "invalid" })
+          }
+          initialization = "pending-join"
+          throw new StartupReadinessError({ kind: "pending-join", observation: check.kind === "valid" ? check.checkpoint.phase === "off" ? "invalid" : check.checkpoint.phase : check.kind === "newer-version" ? "newer-version" : "invalid" })
+        }
+      }
       const retained = await executeInterimRetention({ local: local, snapshot: () => startup.readInterimSnapshot(), isStopped: disposed,
         context: initial => {
           const context = startup.context
@@ -419,7 +453,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       initialization = result.kind
       return result.kind
     } catch (error) {
-      if (initialization !== "interim-held") initialization = "failed"
+      if (initialization !== "interim-held" && initialization !== "pending-join") initialization = "failed"
       throw error
     }
   }) : Promise.resolve("ok")
@@ -466,8 +500,8 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     if (gate.kind === "pending") {
       const next = recoveryHistory(raw, { kind: "held", notBefore: Math.max(gate.notBefore, time.wall + 60000) })
       const expected = { ...snapshot(records), sync: next }
-      await guardedLocal.set({ sync: next })
-      const confirmed = await guardedLocal.get(null)
+      await local.set({ sync: next })
+      const confirmed = await local.get(null)
       if (disposed() || !isJsonObject(confirmed) || !sameSyncJson(expected, confirmed)) return
       hold.wall = Math.max(hold.wall, time.wall + 60000)
       observedGate = isJsonObject(next.opaqueWrite) ? next.opaqueWrite.gate : undefined
@@ -550,7 +584,14 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
 
   async function receiveIncomingDocuments(): Promise<SyncAutomaticResult | undefined> {
     if (lifetime.kind !== "active") return
-    const records = await guardedLocal.get(null)
+    const records = await (joinHeld ? local : guardedLocal).get(null)
+    const checkpoint = readSyncJoinCheckpoint(records[pendingSyncJoinKey])
+    if (checkpoint.kind === "valid" && (checkpoint.checkpoint.phase === "outbound" || checkpoint.checkpoint.phase === "choice")) {
+      const remote = await readJoinSync()
+      if (isJsonObject(records) && isJsonObject(remote) && await signalJoinHistory(records, remote)) return { kind: "unavailable" }
+      return checkpoint.checkpoint.phase === "choice" ? { kind: "unavailable" } : undefined
+    }
+    if (checkpoint.kind !== "absent" && !(checkpoint.kind === "valid" && checkpoint.checkpoint.phase === "off")) return { kind: "unavailable" }
     if (lifetime.kind !== "active") return
     const ready = authority(records)
     if (ready.kind !== "ready") return { kind: "unavailable" }
@@ -561,6 +602,10 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     for (const name of Object.keys(records).sort()) {
       const key = parseDocumentKey(name)
       if ((key?.kind === "settings" || key?.kind === "filter" || key?.kind === "setup") && documentKey(key) === name) targets.push(key)
+    }
+    if (targets.length === 0 && isJsonObject(records)) {
+      const remote = await readJoinSync()
+      if (isJsonObject(remote) && await signalJoinHistory(records, remote)) return { kind: "unavailable" }
     }
     for (const key of targets) {
       if (lifetime.kind !== "active") return
@@ -790,7 +835,12 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     const unchanged = (current: ReturnType<typeof context>) => current.kind === "ready" &&
       sameSyncJson(current.device, baseline.device) && sameSyncJson(current.history, baseline.history) &&
       sameSelection(current.selection) && sameSyncJson(current.raw, baseline.raw)
-    const remote = observation(await deps.sync.get(), initial.joined)
+    const observedRemote = await readJoinSync()
+    const remote = observation(observedRemote, initial.joined)
+    if (remote.kind === "unavailable" && remote.reason === "history" && isJsonObject(observedRemote)) {
+      const records = await local.get(null)
+      if (isJsonObject(records)) await signalJoinHistory(records, observedRemote)
+    }
     if (disposed()) return unavailable("authority")
     if (remote.kind !== "ready") return remote
     if (sameSyncJson(initial.raw, remote.candidate.json)) return { kind: "idle" }
@@ -840,8 +890,21 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     }
   }
 
+
   async function flush(event: SyncEvent | undefined): Promise<SyncFlushResult> {
-    let records = await guardedLocal.get(null)
+    let records = await (joinHeld ? local : guardedLocal).get(null)
+    const checkpoint = readSyncJoinCheckpoint(records[pendingSyncJoinKey])
+    if (checkpoint.kind === "valid" && checkpoint.checkpoint.phase === "choice" && isJsonObject(records)) {
+      const remote = await readJoinSync()
+      if (isJsonObject(remote)) await signalJoinHistory(records, remote)
+      return { kind: "unavailable" }
+    }
+    if (checkpoint.kind === "valid" && checkpoint.checkpoint.phase === "outbound" && isJsonObject(records)) {
+      const result = await flushJoin(event, records, checkpoint.checkpoint.debt)
+      if (result.kind === "unconfirmed" || result.kind === "acknowledgement-failed") agreementBarrier()
+      return result
+    }
+    if (checkpoint.kind !== "absent" && !(checkpoint.kind === "valid" && checkpoint.checkpoint.phase === "off")) return { kind: "unavailable" }
     let ready = authority(records)
     if (disposed() || ready.kind !== "ready") return { kind: "unavailable" }
     observeOff(ready.device.syncOn)
@@ -855,7 +918,9 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     const time = clock()
     if (!time) { cancelTicket(); return { kind: "unavailable" } }
     if (hold && !admitted(event, time)) { cancelTicket(); return recoveryDeferral(time) }
-    let plan = planSyncWrite({ local: records, sync: await deps.sync.get(), intent: { kind: "flush" } })
+    const observedRemote = await readJoinSync()
+    if (isJsonObject(records) && isJsonObject(observedRemote) && await signalJoinHistory(records, observedRemote)) return { kind: "unavailable" }
+    let plan = planSyncWrite({ local: records, sync: observedRemote, intent: { kind: "flush" } })
     if (plan.kind === "refused") return plan.reason === "sync-full" ? { kind: "blocked" } : { kind: "unavailable" }
     if (plan.kind !== "planned") return { kind: "unavailable" }
     if (plan.sent.length === 0 && plan.repairs.length === 0) return { kind: "idle" }
@@ -981,6 +1046,119 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       : next ? { kind: "reconciled", repaired: plan.repairs } : { kind: "idle" }
   }
 
+  async function signalJoinHistory(records: JsonObject, remote: JsonObject): Promise<boolean> {
+    const metadata = remote["s:meta"]
+    if (!isJsonObject(metadata) || !isJsonObject(records.device) || !isJsonObject(records.sync)) return false
+    try { const supported = decodeSyncMeta(metadata); if (supported.v !== 1 || supported.reset === true) return false } catch { return false }
+    const device = decodeDevice(records.device), history = decodeSyncState(records.sync)
+    if (!device.syncOn || device.consent?.v !== CONSENT_VERSION || history.joined === null) return false
+    const read = readSyncJoinCheckpoint(records[pendingSyncJoinKey])
+    const existing = read.kind === "valid" ? read.checkpoint : undefined
+    if (read.kind !== "absent" && !existing) return true
+    const expected = existing?.phase === "outbound" ? decodeSyncMeta(existing.debt.target.metadata).id : history.joined
+    if (metadata.id === expected && existing?.phase !== "choice") return false
+    if (existing?.phase === "accepted" || existing?.phase === "off") return true
+    if (existing?.phase === "choice" && sameSyncJson(existing.observedMetadata, metadata)) return true
+    const suspended = existing?.phase === "outbound" ? { kind: "outbound", debt: existing.debt } as const : existing?.phase === "choice" ? existing.suspended : { kind: "none" } as const
+    const checkpoint: SyncJoinCheckpointV1 = { v: 1, kind: "sync-join", phase: "choice", lastJoined: history.joined, observedMetadata: metadata, suspended }
+    const record = transitionSyncJoin(read.kind === "valid" ? read.raw : undefined, checkpoint)
+    cancelTicket()
+    const write = await setJoinStage(joinDeps, "debt", records, { [pendingSyncJoinKey]: record })
+    if (write.kind !== "resolved" && write.kind !== "rejected") joinOutcome(write)
+    return true
+  }
+  async function flushJoin(event: SyncEvent | undefined, initial: JsonObject, debt: JoinOutboundDebt): Promise<SyncFlushResult> {
+    const valid = (records: JsonObject) => {
+      const state = readJoinLocal(records)
+      if (state.kind !== "local" || !isJsonObject(records.device) || !isJsonObject(records.sync)) return false
+      const device = decodeDevice(records.device), history = decodeSyncState(records.sync)
+      return device.syncOn && device.id === debt.deviceId && agreementSame(device.consent, debt.consent) && history.joined === decodeSyncMeta(debt.target.metadata).id && debt.selectedDocuments.length === state.documents.length && debt.selectedDocuments.every(x => sameJoinStored(records, documentKey(x.key), { kind: "present", value: x.document }))
+    }
+    if (!valid(initial)) return { kind: "unavailable" }
+    let loaded: JsonObject | undefined
+    try { loaded = await loadRecovery(snapshot(initial)) } catch (error) { agreementBarrier(); throw error }
+    if (!loaded) agreementBarrier()
+    if (!loaded || disposed()) return { kind: "unavailable" }
+    let baseline = loaded
+    const time = clock()
+    if (!time) return { kind: "unavailable" }
+    if (hold && !admitted(event, time)) return recoveryDeferral(time)
+    let remote = await readJoinSync()
+    if (!isJsonObject(remote)) return { kind: "unavailable" }
+    if (await signalJoinHistory(baseline, remote)) return { kind: "unavailable" }
+    let plan = projectJoinDebt(debt, remote)
+    if (plan.kind !== "planned") return plan.kind === "refused" && plan.reason === "sync-full" ? { kind: "blocked" } : plan.kind === "unavailable" && plan.reason === "changed-generation" ? { kind: "unavailable", reason: "changed-generation" } : { kind: "unavailable" }
+    if (plan.items.length) {
+      const before = clock()
+      if (!before || !admitted(event, before)) return recoveryDeferral(time)
+      const notBefore = Math.max(nextInvocation, quietUntil)
+      if (before.mono < notBefore) return { kind: "deferred", notBefore }
+      if (!isJsonObject(baseline.sync)) return { kind: "unavailable" }
+      const pending = recoveryHistory(baseline.sync, { kind: "pending", notBefore: before.wall + 60000 })
+      const write = await setJoinStage(joinDeps, "debt", baseline, { sync: pending })
+      if (write.kind !== "resolved" && write.kind !== "rejected") { joinOutcome(write); return { kind: "unavailable" } }
+      baseline = { ...baseline, sync: pending }
+      observedGate = isJsonObject(pending.opaqueWrite) ? pending.opaqueWrite.gate : undefined
+      remote = await readJoinSync()
+      const current = await local.get(null)
+      if (disposed() || !isJsonObject(current) || !sameSyncJson(current, baseline) || !valid(current) || !isJsonObject(remote)) { agreementBarrier(); return { kind: "unavailable" } }
+      if (await signalJoinHistory(baseline, remote)) return { kind: "unavailable" }
+      plan = projectJoinDebt(debt, remote)
+      if (plan.kind !== "planned") return plan.kind === "refused" && plan.reason === "sync-full" ? { kind: "blocked" } : plan.kind === "unavailable" && plan.reason === "changed-generation" ? { kind: "unavailable", reason: "changed-generation" } : { kind: "unavailable" }
+    }
+    const sent = plan.sent
+    const expectedRemote = { ...remote, ...Object.fromEntries(plan.items.map(x => [x.key, x.value])) }
+    if (plan.items.length) {
+      const invoked = clock()
+      if (!invoked || !admitted(event, invoked)) return { kind: "unavailable" }
+      const notBefore = Math.max(nextInvocation, quietUntil)
+      if (invoked.mono < notBefore) return { kind: "deferred", notBefore }
+      nextInvocation = invoked.mono + 5000; cancelTicket()
+      try { await deps.sync.set(Object.fromEntries(plan.items.map(x => [x.key, x.value]))) }
+      catch (error) {
+        let rejected: ReturnType<typeof clock>
+        let clockError: { error: unknown } | undefined
+        try { rejected = clock() } catch (error) { clockError = { error } }
+        epoch++; cancelTicket()
+        hold = rejected ? { mono: rejected.mono + 60000, wall: rejected.wall + 60000 } : { mono: Infinity, wall: Number.MAX_SAFE_INTEGER }
+        try {
+          if (clockError) throw clockError.error
+          if (!rejected || !isJsonObject(baseline.sync)) throw new TypeError("Join recovery clock unavailable")
+          const finalizing = clock()
+          if (!finalizing) throw new TypeError("Join recovery clock unavailable")
+          hold.wall = Math.max(hold.wall, finalizing.wall + 60000)
+          const held = recoveryHistory(baseline.sync, { kind: "held", notBefore: hold.wall }, { value: error })
+          const write = await setJoinStage(joinDeps, "debt", baseline, { sync: held })
+          if (write.kind !== "resolved" && write.kind !== "rejected") { joinOutcome(write); throw new TypeError("Join recovery persistence unconfirmed") }
+          observedGate = isJsonObject(held.opaqueWrite) ? held.opaqueWrite.gate : undefined
+        } catch (persistenceError) { return { kind: "sync-set-failed", error, sent, recoveryPersistence: { error: persistenceError } } }
+        return { kind: "sync-set-failed", error, sent }
+      }
+    }
+    let confirmed: JsonObject, observed: JsonObject
+    try {
+      const current = await local.get(null), raw = await readJoinSync()
+      if (!isJsonObject(current) || !sameSyncJson(baseline, current) || !valid(current) || disposed()) return { kind: "unconfirmed", sent, cause: { kind: "authority" } }
+      if (!isJsonObject(raw)) return { kind: "unconfirmed", sent, cause: { kind: "readback" } }
+      confirmed = current; observed = raw
+    } catch (error) { agreementBarrier(); return { kind: "unconfirmed", sent, cause: { kind: "read-failed", error } } }
+    const post = projectJoinDebt(debt, observed)
+    if (post.kind !== "planned" || post.items.length || !sameSyncJson(expectedRemote, observed)) { agreementBarrier(); return { kind: "unconfirmed", sent, cause: { kind: "readback" } } }
+    if (!isJsonObject(confirmed.sync)) return { kind: "unavailable" }
+    const all = debt.selectedDocuments.map(x => ({ key: x.key, name: documentKey(x.key), gen: String(x.document.gen), document: x.document }))
+    const acknowledged = repairedHistory(confirmed.sync, all) ?? confirmed.sync
+    const next = { ...recoveryHistory(acknowledged, null), status: "ok" }
+    const write = await setJoinStage(joinDeps, "acknowledge", confirmed, { sync: next })
+    if (write.kind !== "resolved" && write.kind !== "rejected") {
+      joinOutcome(write)
+      return write.kind === "failed" ? { kind: "acknowledgement-failed", error: "write" in write ? write.write.error : write.error, source: { kind: "set", sent, repairs: [] } } : { kind: "unconfirmed", sent, cause: { kind: "readback" } }
+    }
+    const retired = await retireJoin(joinDeps, { ...confirmed, sync: next })
+    if (retired.kind !== "resolved" && retired.kind !== "rejected") { joinOutcome(retired); return { kind: "unconfirmed", sent, cause: { kind: "readback" } } }
+    observedGate = undefined; hold = undefined; initialization = "ok"
+    return sent.length ? { kind: "pushed", sent, repaired: [] } : { kind: "reconciled", repaired: all }
+  }
+
   function noticeUnavailable(): Extract<ClaimNoticeRead, { kind: "unavailable" }> | undefined {
     if (initialization !== "ok") return { kind: "unavailable", reason: initialization === "newer-layout" ? "newer-layout" : "startup" }
     if (disposed() || claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
@@ -989,7 +1167,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
   function removalUnavailable(): Extract<RemovalResult, { kind: "unavailable" }> | undefined {
     if (disposed()) return { kind: "unavailable", reason: "disposed" }
     if (initialization !== "ok") return { kind: "unavailable", reason: initialization === "newer-layout" ? "newer-layout" : "startup" }
-    if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
+    if (claimConfirmation === "unconfirmed" || joinHeld) return { kind: "unavailable", reason: "stale" }
   }
   function removalOrigin(origin: UiOrigin): Extract<RemovalResult, { kind: "result" }> | undefined {
     if (!isJsonObject(origin) || origin.kind !== "ui" || !Number.isSafeInteger(origin.windowId) || origin.windowId < 0) return { kind: "result", result: { refused: "invalid" } }
@@ -1007,6 +1185,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     } else if (initialization !== "ok") return { kind: "unavailable", reason: "startup" }
   }
   function agreementBarrier() {
+    cancelJoinPreparations()
     claimConfirmation = "unconfirmed"
     agreementRevision++
     deactivate("stopped")
@@ -1019,6 +1198,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     if (stopped) return stopped
     if (!isJsonObject(records)) return { kind: "invalid", field: "records" }
     if (Object.hasOwn(records, pendingAccountRemovalKey)) return { kind: "unavailable", reason: "pending-removal" }
+    if (joinHeld) return { kind: "unavailable", reason: "pending-join" }
     let retained: InterimPersistenceSnapshot | undefined
     if (startup) {
       const raw = await startup.readInterimSnapshot()
@@ -1149,7 +1329,8 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     if (choice.kind === "unavailable" || choice.kind === "refused") return Promise.resolve(choice)
     const caller = snapshot(origin), captured = agreementReviews.get(input.review)
     if (!captured || !sameSyncJson(caller, captured.origin)) return Promise.resolve({ kind: "unavailable", reason: "stale" })
-    return enqueue(async () => {
+    const joining = (choice.kind === "first-run" || choice.kind === "upgrade-note") && choice.syncOn && choice.join.kind === "prepare" ? beginJoin(origin, true) : undefined
+    return (joining ? joining.result : Promise.resolve(undefined)).then(joinPreparation => enqueue(async () => {
       const stopped = agreementUnavailable()
       if (stopped) return stopped
       const permission = await access
@@ -1168,7 +1349,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
         if (captured.consumed || captured.revision !== agreementRevision || !sameSyncJson(captured.records, current.records) ||
           (captured.retained && (!current.retained || !isJsonValue(current.retained) || !sameSyncJson(captured.retained as JsonObject, current.retained)))) return { kind: "unavailable", reason: "stale" }
         if (displayedVersion !== version) return { kind: "unavailable", reason: "newer-consent" }
-        captured.consumed = true
+        if (!((choice.kind === "first-run" || choice.kind === "upgrade-note") && choice.syncOn)) captured.consumed = true
         const consent = { v: version, at }
         let result: AgreementResult
         let terminalAfter: JsonObject | undefined
@@ -1199,6 +1380,29 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
           const state = readCanonicalAgreement(current.records)
           if (state.kind !== "canonical-state") return state.kind === "invalid" ? { kind: "refused", reason: "invalid" } : state
           if (state.device?.upgradeNote?.state === "pending" && choice.kind !== "upgrade-note") return { kind: "unavailable", reason: "upgrade-note" }
+          if ((choice.kind === "first-run" || choice.kind === "upgrade-note") && choice.syncOn) {
+            if (joinPreparation && joinPreparation.kind !== "automatic") return joinPreparation.kind === "cancelled" ? { kind: "unavailable", reason: "stale" } : joinPreparation
+            const review = choice.join.kind === "answer" ? choice.join.review : joinPreparation?.kind === "automatic" ? joinPreparation.review : undefined
+            if (!review || !agreementCreation) return { kind: "unavailable", reason: "creation-context" }
+            const joinCapture = await validateJoinCapture(caller, review, true)
+            if (!joinCapture || choice.join.kind === "answer" && joinCapture.classification !== "choice-required") return { kind: "unavailable", reason: "stale" }
+            const side = choice.join.kind === "answer" ? choice.join.choice : undefined
+            const localSettings = joinCapture.local["doc:settings"], remoteSettings = joinCapture.remote.documents.find(x => x.key.kind === "settings")?.document
+            const selected = side === "use-this-browser" || joinCapture.remote.target.kind === "empty" ? localSettings ?? remoteSettings : remoteSettings ?? localSettings
+            const reviewed = { ...current.records }
+            if (selected !== undefined) reviewed["doc:settings"] = selected
+            const selectedState = readCanonicalAgreement(reviewed)
+            if (selectedState.kind !== "canonical-state") return { kind: "refused", reason: "invalid" }
+            const plan = prepareCanonicalAgreement({ records: reviewed, state: selectedState, choice, access: observedAccess, consent, context: agreementCreation })
+            if (plan.kind !== "prepared") return plan
+            const facts: JoinAgreementFacts = choice.kind === "first-run" ? { kind: choice.kind, selected: choice.selected, access: observedAccess, consent, context: agreementCreation, reservedUnclaimed: joinStored(current.records, "unclaimed") }
+              : { kind: choice.kind, selected: choice.selected, percentage: choice.percentage, access: observedAccess, consent, context: agreementCreation, reservedUnclaimed: joinStored(current.records, "unclaimed") }
+            const joined = await acceptJoin(joinCapture, side, facts, at)
+            if (joined.kind === "cancelled") return { kind: "unavailable", reason: "stale" }
+            if (joined.kind !== "committed") return joined
+            captured.consumed = true
+            return { kind: "joined", consent, join: joined, activation: "ordinary-gates", settingsChanged: plan.settings !== undefined, applications: plan.applications, blocked: plan.blocked }
+          }
           const plan = prepareCanonicalAgreement({ records: current.records, state, choice, access: observedAccess, consent, context: agreementCreation })
           if (plan.kind !== "prepared") return plan
           const items: JsonObject = { device: plan.device }
@@ -1247,7 +1451,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
         }
         return result
       } catch (error) { return { kind: "failed", stage: "before-set", error } }
-    })
+    }))
   }
   function resumeRetainedAgreement(origin: UiOrigin): Promise<AgreementResult> {
     const blocked = agreementUnavailable()
@@ -1267,7 +1471,230 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     })
   }
 
+  type JoinCapture = { readonly origin: JsonObject; readonly local: JsonObject; readonly remote: JoinRemote; readonly revision: number; readonly remoteRevision: number; readonly classification: Extract<SyncJoinPreparation, { kind: "automatic" | "choice-required" }>["kind"]; readonly agreementOnly: boolean; consumed: boolean; cancelled(): boolean; cancel(): void }
+  const joinReviews = new WeakMap<SyncJoinReview, JoinCapture>()
+  const joinPreparations = new Set<{ origin: JsonObject; cancel(): void }>()
+  function cancelJoinPreparations() { for (const operation of [...joinPreparations]) operation.cancel() }
+  async function readJoinSync() {
+    const raw = await deps.sync.get()
+    if (!isJsonObject(raw)) { joinRemoteRevision++; return raw }
+    const records = snapshot(raw)
+    if (observedJoinRemote && !sameSyncJson(observedJoinRemote, records)) joinRemoteRevision++
+    observedJoinRemote = snapshot(records)
+    return records
+  }
+  function joinBlocked(allowPending = true) {
+    if (disposed()) return joinUnavailable("disposed")
+    if (claimConfirmation === "unconfirmed") return joinUnavailable("stale")
+    if (initialization === "interim-held") return joinUnavailable("retention")
+    if (initialization === "newer-layout") return joinUnavailable("newer-layout")
+    if (initialization !== "ok" && !(allowPending && initialization === "pending-join")) return joinUnavailable("startup")
+  }
+  function joinOutcome(result: SyncJoinResult) {
+    if (result.kind === "unconfirmed") agreementBarrier()
+    return result
+  }
+  function beginJoin(origin: UiOrigin, agreementOnly: boolean): SyncJoinOperation {
+    if (!agreementOrigin(origin)) return { result: Promise.resolve({ kind: "refused", reason: "invalid" }), cancel() {} }
+    const caller = snapshot(origin), blocked = joinBlocked()
+    if (blocked) return { result: Promise.resolve(blocked), cancel() {} }
+    if (join.kind !== "fixture") return { result: Promise.resolve(joinUnavailable("join-host")), cancel() {} }
+    let resolve!: (value: SyncJoinPreparation) => void
+    const result = new Promise<SyncJoinPreparation>(done => { resolve = done })
+    let done = false, cancelled = false, reading = false, again = false, deadline = false
+    let empty: JoinRemote | undefined, cancelDeadline = () => {}, unsubscribe = () => {}
+    const operation = { origin: caller, cancel() {
+      if (cancelled) return
+      cancelled = true; cancelDeadline(); unsubscribe(); joinPreparations.delete(operation)
+      if (!done) { done = true; resolve({ kind: "cancelled" }) }
+    } }
+    joinPreparations.add(operation)
+    function finish(value: SyncJoinPreparation) {
+      if (done || cancelled) return
+      done = true; cancelDeadline()
+      if (value.kind !== "automatic" && value.kind !== "choice-required") { unsubscribe(); joinPreparations.delete(operation) }
+      resolve(value)
+    }
+    async function publish(remote: JoinRemote) {
+      if (cancelled || done) return
+      const blocked = joinBlocked(); if (blocked) { finish(blocked); return }
+      const localRead = readJoinLocal(await local.get(null), agreementOnly)
+      if (cancelled || done) return
+      if (localRead.kind !== "local") { finish(localRead); return }
+      const checkpoint = readSyncJoinCheckpoint(localRead.records[pendingSyncJoinKey])
+      if (checkpoint.kind !== "absent" && !(checkpoint.kind === "valid" && (checkpoint.checkpoint.phase === "choice" || checkpoint.checkpoint.phase === "off"))) { finish(joinUnavailable("pending-join")); return }
+      if (checkpoint.kind === "valid" && checkpoint.checkpoint.phase === "choice" && checkpoint.checkpoint.suspended.kind === "accepted") { finish(joinUnavailable("pending-join")); return }
+      const classification = classifySyncJoin(localRead.records, remote)
+      if (classification.kind === "unavailable") { finish(classification); return }
+      const review: SyncJoinReview = Object.freeze({ kind: "sync-join-review" })
+      joinReviews.set(review, { origin: caller, local: snapshot(localRead.records), remote: detachAgreement(remote), revision: agreementRevision, remoteRevision: joinRemoteRevision, classification: classification.kind, agreementOnly, consumed: false, cancelled: () => cancelled, cancel: operation.cancel })
+      finish(classification.kind === "automatic" ? { ...classification, review } : { ...classification, review, defaultChoice: "use-synced" })
+    }
+    async function observe() {
+      if (cancelled || done) return
+      if (reading) { again = true; return }
+      reading = true
+      try {
+        const revision = joinRemoteRevision, raw = await readJoinSync()
+        if (cancelled || done) return
+        const remote = readJoinRemote(raw)
+        if (remote.kind !== "remote") {
+          empty = undefined
+          if (remote.kind !== "unavailable" || remote.reason !== "incomplete" || deadline) finish(remote)
+          return
+        }
+        if (remote.target.kind !== "empty") empty = undefined
+        if (remote.target.kind === "empty" && !deadline) empty = remote
+        else if (revision === joinRemoteRevision || !again) await enqueue(() => publish(remote))
+      } catch (error) { finish({ kind: "failed", stage: "prepare", error }) }
+      finally { reading = false; if (again && !cancelled && !done) { again = false; void observe() } }
+    }
+    try {
+      unsubscribe = deps.sync.subscribe(() => { joinRemoteRevision++; if (!done) void observe() })
+      cancelDeadline = deps.syncClock.after(10000, () => {
+        if (cancelled || done) return
+        deadline = true
+        if (reading || !empty) finish(joinUnavailable("incomplete"))
+        else void enqueue(() => publish(empty!))
+      })
+      void observe()
+    } catch (error) { finish({ kind: "failed", stage: "prepare", error }) }
+    return { result, cancel: operation.cancel }
+  }
+  async function validateJoinCapture(origin: JsonObject, review: SyncJoinReview, agreementOnly: boolean) {
+    const capture = joinReviews.get(review)
+    if (!capture || capture.consumed || capture.cancelled() || capture.agreementOnly !== agreementOnly || !agreementSame(origin, capture.origin)) return
+    const current = await local.get(null), remote = await readJoinSync()
+    if (joinBlocked() || !isJsonObject(current) || !isJsonObject(remote) || capture.revision !== agreementRevision || capture.remoteRevision !== joinRemoteRevision || !sameSyncJson(capture.local, current) || !sameSyncJson(capture.remote.records, remote)) return
+    return capture
+  }
+  async function acceptJoin(capture: JoinCapture, side: SyncJoinSide | undefined, facts: JoinAgreementFacts, at: number): Promise<SyncJoinResult> {
+    if (join.kind !== "fixture") return joinUnavailable("join-host")
+    const classification = classifySyncJoin(capture.local, capture.remote)
+    if (classification.kind === "unavailable") return classification
+    const decision = classification.kind === "automatic" ? classification.reason === "empty-copy" ? { kind: "create-copy" } as const : { kind: "proven-never-edited" } as const : side ? { kind: "explicit", side } as const : undefined
+    if (!decision || capture.classification !== classification.kind) return joinUnavailable("stale")
+    const prepared = prepareJoinEffect({ local: capture.local, remote: capture.remote, decision, agreement: facts, at, generation: deps.generation })
+    if (prepared.kind !== "prepared") return prepared
+    const current = await local.get(null), remote = await readJoinSync()
+    if (!isJsonObject(current) || !isJsonObject(remote) || capture.revision !== agreementRevision || capture.remoteRevision !== joinRemoteRevision || !sameSyncJson(capture.local, current) || !sameSyncJson(capture.remote.records, remote) || joinBlocked()) return joinUnavailable("stale")
+    capture.consumed = true; capture.cancel(); cancelTicket()
+    const accepted: SyncJoinCheckpointV1 & { phase: "accepted" } = { v: 1, kind: "sync-join", phase: "accepted", effect: prepared.effect }
+    const old = Object.hasOwn(current, pendingSyncJoinKey) ? joinJson(current[pendingSyncJoinKey]) : undefined
+    const record = transitionSyncJoin(old, accepted)
+    const write = await setJoinStage(joinDeps, "accept", current, { [pendingSyncJoinKey]: record })
+    if (write.kind !== "resolved" && write.kind !== "rejected") return joinOutcome(write)
+    const result = await finishJoinEffect(joinDeps, { ...current, [pendingSyncJoinKey]: record }, accepted, [{ stage: "accept", write }])
+    if (result.kind === "committed") {
+      initialization = "ok"
+      if (prepared.effect.documents.some(x => x.key.kind === "settings" && (x.before.kind === "absent" || !sameSyncJson(x.before.value, x.after)))) emitSettings("sync")
+    }
+    return joinOutcome(result)
+  }
+  function applySyncJoin(origin: UiOrigin, input: { readonly kind: "automatic"; readonly review: SyncJoinReview } | { readonly kind: "choice"; readonly review: SyncJoinReview; readonly choice: SyncJoinSide }): Promise<SyncJoinResult> {
+    if (!agreementOrigin(origin) || !input || input.kind !== "automatic" && input.kind !== "choice" || input.kind === "choice" && input.choice !== "use-synced" && input.choice !== "use-this-browser") return Promise.resolve({ kind: "refused", reason: "invalid" })
+    const caller = snapshot(origin), review = input.review, side = input.kind === "choice" ? input.choice : undefined
+    let at: number
+    try { at = deps.now() } catch (error) { return Promise.resolve({ kind: "failed", stage: "prepare", error }) }
+    return enqueue(async () => {
+      const blocked = joinBlocked(); if (blocked) return blocked
+      try {
+        const capture = await validateJoinCapture(caller, review, false)
+        if (!capture || (side ? capture.classification !== "choice-required" : capture.classification !== "automatic")) return joinUnavailable("stale")
+        return await acceptJoin(capture, side, { kind: "none" }, at)
+      } catch (error) { return { kind: "failed", stage: "prepare", error } }
+    })
+  }
+  function readSyncJoin(origin: UiOrigin): Promise<SyncJoinStatus> {
+    if (!agreementOrigin(origin)) return Promise.resolve(joinUnavailable("stale"))
+    return enqueue(async () => {
+      const blocked = joinBlocked(); if (blocked) return blocked
+      try {
+        const raw = await local.get(null)
+        if (disposed()) return joinUnavailable("disposed")
+        if (!isJsonObject(raw)) return joinUnavailable("inventory")
+        if (typeof raw.schema === "number" && raw.schema > STORAGE_SCHEMA_VERSION) return joinUnavailable("newer-layout")
+        if (raw.schema !== STORAGE_SCHEMA_VERSION) return joinUnavailable("startup")
+        if (hasInterimMarkers(raw)) return joinUnavailable("retention")
+        if (Object.hasOwn(raw, pendingAccountRemovalKey)) return joinUnavailable("pending-removal")
+        const read = readSyncJoinCheckpoint(raw[pendingSyncJoinKey])
+        if (read.kind === "invalid" || read.kind === "newer-version") return joinUnavailable("pending-join")
+        if (read.kind === "valid") {
+          if (read.checkpoint.phase === "choice") return { kind: "waiting", action: "review-join" }
+          if (read.checkpoint.phase === "accepted") return { kind: "pending", action: "resume-join" }
+          if (read.checkpoint.phase === "outbound") return { kind: "joining" }
+          return { kind: "off" }
+        }
+        const state = readJoinLocal(raw)
+        if (state.kind !== "local") return state.kind === "refused" ? joinUnavailable("inventory") : state
+        const device = decodeDevice(raw.device)
+        if (!device.syncOn) return { kind: "off" }
+        const history = decodeSyncState(raw.sync)
+        return history.status === "ok" || history.status === "full" || history.status === "update-needed" ? { kind: "joined", status: history.status } : joinUnavailable("history")
+      } catch { return joinUnavailable("inventory") }
+    })
+  }
+  function resumeSyncJoin(origin: UiOrigin): Promise<SyncJoinResult> {
+    if (!agreementOrigin(origin)) return Promise.resolve({ kind: "refused", reason: "invalid" })
+    return enqueue(async () => {
+      const blocked = joinBlocked(); if (blocked) return blocked
+      try {
+        const raw = await local.get(null)
+        if (!isJsonObject(raw) || raw.schema !== STORAGE_SCHEMA_VERSION || hasInterimMarkers(raw) || Object.hasOwn(raw, pendingAccountRemovalKey)) return joinUnavailable("inventory")
+        const read = readSyncJoinCheckpoint(raw[pendingSyncJoinKey])
+        if (read.kind !== "valid") return joinUnavailable("pending-join")
+        const waiting = read.checkpoint.phase === "choice" && read.checkpoint.suspended.kind === "accepted" ? read.checkpoint : undefined
+        const accepted = read.checkpoint.phase === "accepted" ? read.checkpoint : read.checkpoint.phase === "choice" && read.checkpoint.suspended.kind === "accepted" ? { v: 1, kind: "sync-join", phase: "accepted", effect: read.checkpoint.suspended.effect } as const : undefined
+        if (!accepted) return joinUnavailable("pending-join")
+        const effect = accepted.effect
+        if (effect.kind === "join" && effect.agreement.kind !== "none" && (!agreementCreation || (!agreementSame(effect.agreement.context.platform, agreementCreation.platform) || !agreementSame(effect.agreement.context.commands, agreementCreation.commands)))) return joinUnavailable("stale")
+        const result = await finishJoinEffect(joinDeps, raw, accepted, [], waiting)
+        if (result.kind === "committed" || result.kind === "cancelled") initialization = "ok"
+        if (result.kind === "committed" && effect.kind === "join" && effect.documents.some(x => x.key.kind === "settings" && (x.before.kind === "absent" || !sameSyncJson(x.before.value, x.after)))) emitSettings("sync")
+        return joinOutcome(result)
+      } catch (error) { return { kind: "failed", stage: "prepare", error } }
+    })
+  }
+  function cancelSyncJoin(origin: UiOrigin): Promise<SyncJoinResult> {
+    if (!agreementOrigin(origin)) return Promise.resolve({ kind: "refused", reason: "invalid" })
+    const caller = snapshot(origin)
+    for (const operation of [...joinPreparations]) if (sameSyncJson(operation.origin, caller)) operation.cancel()
+    return enqueue(async () => {
+      const blocked = joinBlocked(); if (blocked) return blocked
+      try {
+        let records = joinJson(await local.get(null)), read = readSyncJoinCheckpoint(records[pendingSyncJoinKey])
+        if (read.kind === "absent" || read.kind === "valid" && read.checkpoint.phase === "off") return { kind: "cancelled" }
+        if (read.kind !== "valid") return joinUnavailable("pending-join")
+        if (join.kind !== "fixture") return joinUnavailable("join-host")
+        let unfinished: string | undefined
+        const fixed = read.checkpoint.phase === "accepted" ? read.checkpoint : read.checkpoint.phase === "choice" && read.checkpoint.suspended.kind === "accepted" ? { v: 1, kind: "sync-join", phase: "accepted", effect: read.checkpoint.suspended.effect } as const : undefined
+        if (fixed) {
+          const result = await finishJoinEffect(joinDeps, records, fixed)
+          if (result.kind !== "committed") {
+            if (result.kind === "cancelled") initialization = "ok"
+            return joinOutcome(result)
+          }
+          if (result.replication === "pending") unfinished = result.historyId
+          records = joinJson(await local.get(null)); read = readSyncJoinCheckpoint(records[pendingSyncJoinKey])
+        }
+        if (read.kind === "valid" && read.checkpoint.phase === "outbound") unfinished = decodeSyncMeta(read.checkpoint.debt.target.metadata).id
+        if (read.kind === "valid" && read.checkpoint.phase === "choice" && read.checkpoint.suspended.kind === "outbound") unfinished = decodeSyncMeta(read.checkpoint.suspended.debt.target.metadata).id
+        if (!isJsonObject(records.device) || !isJsonObject(records.sync)) return joinUnavailable("history")
+        const effect = { kind: "cancel", unfinishedTarget: unfinished ? { kind: "present", id: unfinished } as const : { kind: "none" } as const, device: { before: joinStored(records, "device"), after: { ...records.device, syncOn: false } }, history: { before: joinStored(records, "sync"), after: { ...records.sync, status: "off", editedSinceOff: false } } } as const
+        const checkpoint = { v: 1, kind: "sync-join", phase: "accepted", effect } as const
+        const record = transitionSyncJoin(Object.hasOwn(records, pendingSyncJoinKey) ? joinJson(records[pendingSyncJoinKey]) : undefined, checkpoint)
+        const write = await setJoinStage(joinDeps, "accept", records, { [pendingSyncJoinKey]: record })
+        if (write.kind !== "resolved" && write.kind !== "rejected") return joinOutcome(write)
+        deactivate("inactive")
+        const result = await finishJoinEffect(joinDeps, { ...records, [pendingSyncJoinKey]: record }, checkpoint, [{ stage: "accept", write }])
+        if (result.kind === "cancelled") initialization = "ok"
+        return joinOutcome(result)
+      } catch (error) { return { kind: "failed", stage: "prepare", error } }
+    })
+  }
+
   const writer: LocalFilterWriter = {
+    beginSyncJoin: origin => beginJoin(origin, false), applySyncJoin, cancelSyncJoin, readSyncJoin, resumeSyncJoin,
     readAgreement, agree, resumeRetainedAgreement,
     readInterimNote() {
       const unavailable = (): InterimNoteRead | undefined => disposed() ? { kind: "unavailable", reason: "disposed" }
@@ -1445,23 +1872,26 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     },
     flushSync() {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
-      if (initialization !== "ok") return Promise.resolve({ kind: "unavailable" })
+      if (initialization !== "ok" && initialization !== "pending-join") return Promise.resolve({ kind: "unavailable" })
       if (claimConfirmation === "unconfirmed") return Promise.resolve({ kind: "unavailable" })
       const event = ingress("manual")
       return enqueue(() => attempt(event))
     },
     startSync() {
       if (lifetime.kind === "disposed") return Promise.reject(new Error("Writer disposed"))
-      if (initialization !== "ok") return Promise.resolve()
+      if (initialization !== "ok" && initialization !== "pending-join") return Promise.resolve()
       if (claimConfirmation === "unconfirmed") return Promise.resolve()
       const event = ingress("start")
       return enqueue(async () => {
         if (claimConfirmation === "unconfirmed" || lifetime.kind === "stopped" || lifetime.kind === "disposed") return
         let ready
         try {
-          const records = await guardedLocal.get(null)
+          const records = await (joinHeld ? local : guardedLocal).get(null)
           if (disposed()) return
+          const checkpoint = readSyncJoinCheckpoint(records[pendingSyncJoinKey])
+          const observingJoin = checkpoint.kind === "valid" && (checkpoint.checkpoint.phase === "outbound" || checkpoint.checkpoint.phase === "choice")
           ready = authority(records)
+          if (observingJoin && isJsonObject(records.device) && decodeDevice(records.device).syncOn && decodeDevice(records.device).consent?.v === CONSENT_VERSION) ready = { kind: "ready", device: decodeDevice(records.device), rawDevice: records.device, history: undefined }
           if (ready.kind === "ready") {
             observeOff(ready.device.syncOn)
             if (hasInterimMarkers(records)) {
@@ -1487,6 +1917,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       })
     },
     dispose() {
+      cancelJoinPreparations()
       agreementRevision++
       listeners.clear()
       deactivate("disposed")

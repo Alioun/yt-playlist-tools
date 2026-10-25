@@ -1,3 +1,4 @@
+import type { SyncJoinReview, SyncJoinPreparation, SyncJoinResult } from "./sync-join-execution"
 import type { Origin } from "../../shared/contracts/results"
 import type { FeatureId } from "../../shared/contracts/vocabulary"
 import { isJsonValue, type JsonObject } from "../../shared/contracts/json"
@@ -23,7 +24,10 @@ export type AgreementApplication = {
 export type AgreementAccess = {
   readonly www: boolean; readonly music: boolean; readonly browserMenu: boolean
 }
+export type AgreementJoin = { readonly kind: "prepare" } | { readonly kind: "answer"; readonly review: SyncJoinReview; readonly choice: "use-synced" | "use-this-browser" }
 export type AgreementChoice =
+  | { readonly kind: "first-run"; readonly selected: readonly PageFeatureId[]; readonly syncOn: true; readonly join: AgreementJoin }
+  | { readonly kind: "upgrade-note"; readonly selected: readonly PageFeatureId[]; readonly syncOn: true; readonly join: AgreementJoin; readonly percentage: "keep" | "immediate" | "half" }
   | { readonly kind: "first-run"; readonly selected: readonly PageFeatureId[];
       readonly syncOn: false }
   | { readonly kind: "upgrade-note"; readonly selected: readonly PageFeatureId[];
@@ -61,7 +65,7 @@ export type AgreementRead =
 export type AgreementUnavailableReason =
   | "startup" | "newer-layout" | "disposed" | "stale" | "creation-context"
   | "upgrade-note" | "newer-consent" | "sync-writer-required" | "join-required"
-  | "retention" | "pending-removal" | "pending-agreement"
+  | "retention" | "pending-removal" | "pending-agreement" | "pending-join"
 export type AgreementUnavailable = {
   readonly kind: "unavailable"; readonly reason: AgreementUnavailableReason
 }
@@ -70,6 +74,9 @@ export type AgreementWrite =
   | { readonly kind: "rejected"; readonly error: unknown }
 export type AgreementStage = "canonical" | "accept" | "device" | "record"
 export type AgreementResult =
+  | Extract<SyncJoinPreparation, { kind: "choice-required" }>
+  | { readonly kind: "joined"; readonly consent: NonNullable<Device["consent"]>; readonly join: Extract<SyncJoinResult, { kind: "committed" }>; readonly activation: "ordinary-gates"; readonly settingsChanged: boolean; readonly applications: readonly AgreementApplication[]; readonly blocked: readonly PresetConflict[] }
+  | Exclude<SyncJoinResult, { kind: "committed" | "cancelled" }>
   | { readonly kind: "committed"; readonly consent: NonNullable<Device["consent"]>;
       readonly settingsChanged: boolean; readonly blocked: readonly PresetConflict[];
       readonly applications: readonly AgreementApplication[];
@@ -120,7 +127,15 @@ function isPageFeature(raw: unknown): raw is PageFeatureId { return typeof raw =
 export function parseAgreementChoice(raw: unknown): AgreementChoice | AgreementUnavailable | { readonly kind: "refused"; readonly reason: "invalid" } {
   const invalid = { kind: "refused", reason: "invalid" } as const
   if (!agreementObject(raw)) return invalid
-  if (raw.syncOn === true) return { kind: "unavailable", reason: "join-required" }
+  if (raw.syncOn === true) {
+    if ((raw.kind !== "first-run" && raw.kind !== "upgrade-note") || !agreementObject(raw.join)) return { kind: "unavailable", reason: "join-required" }
+    const base = parseAgreementChoice(Object.fromEntries(Object.entries(raw).filter(([key]) => key !== "join").map(([key, value]) => [key, key === "syncOn" ? false : value])))
+    if (base.kind !== "first-run" && base.kind !== "upgrade-note") return invalid
+    const join = raw.join
+    if (join.kind === "prepare" && Object.keys(join).length === 1) return { ...base, syncOn: true, join: { kind: "prepare" } }
+    if (join.kind === "answer" && Object.keys(join).length === 3 && agreementObject(join.review) && join.review.kind === "sync-join-review" && (join.choice === "use-synced" || join.choice === "use-this-browser")) return { ...base, syncOn: true, join: { kind: "answer", review: join.review as SyncJoinReview, choice: join.choice } }
+    return invalid
+  }
   switch (raw.kind) {
     case "first-run":
     case "upgrade-note": {

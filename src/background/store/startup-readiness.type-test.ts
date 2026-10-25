@@ -19,6 +19,8 @@ function negative(deps: Parameters<typeof createLocalFilterWriter>[0], starting:
   new StartupReadinessError({ kind: "pending-removal", result: { kind: "committed" } })
   // @ts-expect-error Failure results cannot contain success.
   new StartupReadinessError({ kind: "ok" })
+  // @ts-expect-error Pending join readiness describes only supported checkpoint observations.
+  new StartupReadinessError({ kind: "pending-join", observation: "confirmed" })
 }
 void negative
 

@@ -15,7 +15,7 @@ export type AgreementProofs = [
   Check<Equal<Extract<AgreementResult, { kind: "committed" }>["activation"], "held" | "ordinary-gates">>
 ]
 function negative(owner: ReturnType<typeof createStartingLocalFilterWriter>, origin: UiOrigin, review: AgreementReview, read: AgreementRead, result: AgreementResult) {
-  // @ts-expect-error Joining is a separate transaction.
+  // @ts-expect-error A true tick requires explicit join preparation or an answer.
   const join: AgreementChoice = { kind: "first-run", selected: [], syncOn: true }
   // @ts-expect-error Page features cannot smuggle the sync switch into selection.
   const sync: AgreementChoice = { kind: "first-run", selected: ["sync"], syncOn: false }
@@ -40,3 +40,15 @@ function negative(owner: ReturnType<typeof createStartingLocalFilterWriter>, ori
   void join; void sync; void retained; void application
 }
 void negative
+
+import type { AgreementJoin } from "./consent-agreement"
+import type { SyncJoinReview, SyncJoinResult } from "./sync-join-execution"
+export type JoinedAgreementProof = Check<Equal<Extract<AgreementResult, { kind: "joined" }>["join"], Extract<SyncJoinResult, { kind: "committed" }>>>
+function joined(review: SyncJoinReview) {
+  const prepare: AgreementJoin = { kind: "prepare" }
+  const answer: AgreementChoice = { kind: "upgrade-note", selected: [], syncOn: true, percentage: "keep", join: { kind: "answer", review, choice: "use-synced" } }
+  // @ts-expect-error An answer requires a side selected by the user.
+  const missing: AgreementJoin = { kind: "answer", review }
+  void prepare; void answer; void missing
+}
+void joined

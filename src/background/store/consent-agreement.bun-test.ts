@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { agreementHarness, runCanonicalAgreements, fixtureRun } from "../../../tools/fixtures/claim-transaction/run"
+import { agreementHarness, runCanonicalAgreements, runJoinedAgreements, fixtureRun } from "../../../tools/fixtures/claim-transaction/run"
 import { createInterimHarness } from "../../../tools/fixtures/interim-conversion/run"
 import { createLocalFilterWriter, createStartingLocalFilterWriter, StartupReadinessError } from "./local-filter-writer"
 import { defaultSettings, decodeDocument, decodeSettings } from "../../shared/model"
@@ -20,6 +20,13 @@ test("actual canonical command preserves eleven original cases and executes comp
   const result = await runCanonicalAgreements()
   expect(result.assertions).toBeGreaterThan(190)
   expect(result.outcomes.length).toBeGreaterThan(30)
+})
+
+test("actual true-ticked Agree executes all sixteen joined transaction cases", async () => {
+  const result = await runJoinedAgreements()
+  expect(result.outcomes).toHaveLength(16)
+  expect(result.assertions.length).toBeGreaterThan(100)
+  expect(result.productionConnected).toBe(false)
 })
 
 test("review captures are detached, owner-bound, origin-bound and permanently stale after observed A-B-A", async () => {

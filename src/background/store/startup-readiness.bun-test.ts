@@ -92,7 +92,7 @@ export async function readinessAcceptance(api: {
     const writer = api.create(h.deps)
     check(writer.ready() === writer.ready(), "stable ready promise")
     await turns(); await closed(writer, h)
-    equal(h.effects, ["interim-snapshot"], "startup first lane only")
+    equal(h.effects, ["local-get", "interim-snapshot"], "startup first lane checks join before retained transition")
     gate.resolve(); equal(await writer.ready(), "ok", "current release")
     const before = h.records(); equal(await writer.claim(), { kind: "consumed" }, "null is consumed")
     equal(h.records(), before, "consumed notice raw state unchanged")
@@ -141,7 +141,7 @@ export async function readinessAcceptance(api: {
   {
     const h = harness({ schema: 2 }), writer = api.create(h.deps)
     equal(await writer.ready(), "newer-layout", "newer readiness"); await closed(writer, h, true)
-    equal(h.effects, ["interim-snapshot"], "newer performs no clock or effects"); await writer.dispose()
+    equal(h.effects, ["local-get", "interim-snapshot"], "newer performs only read-only classification"); await writer.dispose()
   }
   for (const first of ["database", "session"]) {
     const h = harness({ playlists: [] }), db = deferred(), session = deferred()

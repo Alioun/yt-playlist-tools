@@ -426,7 +426,7 @@ test("actual browser artifact executes the acceptance matrix with injected effec
     expect(file.startsWith(resolve(import.meta.dir, "../../shared/model") + "/") ||
       file === resolve(import.meta.dir, "../../shared/contracts/json.ts") ||
       file.startsWith(resolve(import.meta.dir, "../../shared/keys") + "/") ||
-      [entry, ...["consent-agreement.ts", "interim-persistence.ts", "first-edit-provenance.ts", "interim-conversion.ts", "interim-profile.ts", "account-removal-execution.ts", "account-removal-session.ts", "claim-notice.ts", "shared-setting-execution.ts", "settings-edit.ts", "local-claim-writer.ts", "accounts.ts", "legacy.ts", "legacy-execution.ts", "legacy-startup.ts", "legacy-shortcut.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file)).toBe(true)
+      [entry, ...["sync-join-execution.ts", "sync-join-persistence.ts", "consent-agreement.ts", "interim-persistence.ts", "first-edit-provenance.ts", "interim-conversion.ts", "interim-profile.ts", "account-removal-execution.ts", "account-removal-session.ts", "claim-notice.ts", "shared-setting-execution.ts", "settings-edit.ts", "local-claim-writer.ts", "accounts.ts", "legacy.ts", "legacy-execution.ts", "legacy-startup.ts", "legacy-shortcut.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file)).toBe(true)
     for (const imported of new Bun.Transpiler({ loader: "ts" }).scanImports(await readFile(file, "utf8"))) {
       expect(imported.path.startsWith(".")).toBe(true)
       const base = resolve(dirname(file), imported.path)
@@ -1258,7 +1258,7 @@ async function driverAcceptance(create: typeof createLocalFilterWriter, acct: Ac
     equal(h.timers.size, 0, "unavailable or blocked waits for independent event " + fault)
     h.remote["s:meta"] = { v: 1, id: "H", created: 0 }; h.remote[base] = clone(g0); delete h.remote.occupied
     h.move(6000); await h.event()
-    equal(h.invocations, [6000], "later changed inventory can recheck " + fault)
+    equal(h.invocations, fault === "metadata" ? [] : [6000], "later history remains waiting and ordinary changed inventory can recheck " + fault)
     equal(h.timers.size, 0, "rechecked classification ends idle " + fault)
     await h.writer.dispose()
   }
@@ -1555,7 +1555,7 @@ async function receiveAcceptance(create: typeof createLocalFilterWriter, acct: A
   for (const value of [undefined, null, NaN, {}, { v: 1, id: "h", created: undefined }, { v: 2, id: "h", created: 1 }, { v: 1, id: "other", created: 1 }, { v: 1, id: "h", created: 1, reset: true }]) {
     const h = harness(); if (value === undefined) delete h.remote["s:meta"]; else h.remote["s:meta"] = value
     equal(await h.writer.receiveSyncDocument(key), unavailable("history"), "history choice unavailable")
-    equal(h.sets, [], "no history writes")
+    equal(h.sets, value && typeof value === "object" && "id" in value && value.id === "other" ? [{ "pending:sync-join": { v: 1, kind: "sync-join", phase: "choice", lastJoined: "h", observedMetadata: value, suspended: { kind: "none" } } }] : [], "supported later history persists only its waiting indication")
   }
   {
     const h = harness(); for (let i = Object.keys(h.remote).length; i < 481; i++) h.remote[`unknown:${i}`] = null
@@ -1997,7 +1997,7 @@ async function automaticIncomingAcceptance(create: typeof createLocalFilterWrite
       if (field === "chunks") h.synced[B] = { v: 1, gen: "f1", at: 20, by: "device-b", n: 2 }
     } }
     await h.writer.startSync()
-    equal(h.sets.length, n === 3 || n === 1 && !["id", "chunks"].includes(field) ? 1 : 0, "remote mutation commit boundary " + field + n)
+    equal(h.sets.length, n === 3 || n === 1 && field !== "chunks" ? 1 : 0, "remote mutation commit boundary " + field + n)
     if (n === 3) { equal(h.listeners.size, 0, "remote readback uncertainty stops"); equal(h.results.at(-1), { kind: "unavailable" }, "remote readback diagnostic") }
     if (n > 1 || field === "id" || field === "chunks") equal(h.writes, [], "stale remote never partially sends")
     await h.writer.dispose(); cases.push("remote-mutation-" + field + n)
@@ -2165,7 +2165,7 @@ test("automatic composition wrong alternatives fail at intended observations", a
     { name: "timer-receives", assertion: "timer remains outbound-only", source: original.replace('await automatic(current.event, false)', 'await automatic(current.event, true)') },
     { name: "stopped-restart", assertion: "successful manual retry never restarts stopped lifetime enumeration", source: original.replace('if (claimConfirmation === "unconfirmed" || lifetime.kind === "stopped" || lifetime.kind === "disposed") return', 'if (claimConfirmation === "unconfirmed" || lifetime.kind === "disposed") return; if (lifetime.kind === "stopped") lifetime = {kind:"inactive"}') },
     { name: "second-owner", assertion: "receiver changes no scheduling clocks", source: original.replace('const result = await receiveAttempt(key)', 'const result = await createLocalFilterWriter(deps).receiveSyncDocument(key)') },
-    { name: "F-echo", assertion: "Q-only send without F echo", source: original.replace('    let plan = planSyncWrite({ local: records, sync: await deps.sync.get(), intent: { kind: "flush" } })', '    const echo = await deps.sync.get(); let plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(echo).filter(([name]) => name !== "s:filter:AAAAAAAAAAAAAAAA:PL_P")), intent: { kind: "flush" } })').replace('sync: remote, intent: { kind: "flush" }', 'sync: Object.fromEntries(Object.entries(remote).filter(([name]) => name !== "s:filter:AAAAAAAAAAAAAAAA:PL_P")), intent: { kind: "flush" }').replace('const replanned = planSyncWrite({ local: latest, sync: remote, intent: { kind: "flush" } })', 'const replanned = plan') },
+    { name: "F-echo", assertion: "Q-only send without F echo", source: original.replace('    let plan = planSyncWrite({ local: records, sync: await deps.sync.get(), intent: { kind: "flush" } })', '    const echo = observedRemote; let plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(echo).filter(([name]) => name !== "s:filter:AAAAAAAAAAAAAAAA:PL_P")), intent: { kind: "flush" } })').replace('sync: remote, intent: { kind: "flush" }', 'sync: Object.fromEntries(Object.entries(remote).filter(([name]) => name !== "s:filter:AAAAAAAAAAAAAAAA:PL_P")), intent: { kind: "flush" }').replace('const replanned = planSyncWrite({ local: latest, sync: remote, intent: { kind: "flush" } })', 'const replanned = plan') },
     { name: "outside-lane", assertion: "automatic held lane excludes all queued IO enumeration", source: original.replace('return enqueue(() => receiveAttempt(key))', 'return receiveAttempt(key)') }
   ]
   for (const fault of cases) {
@@ -2328,7 +2328,7 @@ async function settingsIncomingAcceptance(create: typeof createLocalFilterWriter
   for (const value of [undefined, null, {}, { v: 2, id: "h", created: 1 }, { v: 1, id: "changed", created: 1 }, { v: 1, id: "h", created: 1, reset: true }]) {
     const h = harness(); if (value === undefined) delete h.remote["s:meta"]; else h.remote["s:meta"] = value
     equal(await h.writer.receiveSyncDocument(key), unavailable("history"), "Settings unsupported metadata")
-    equal(h.sets, [], "Settings metadata no set"); await h.writer.dispose()
+    equal(h.sets, value && typeof value === "object" && "id" in value && value.id === "changed" ? [{ "pending:sync-join": { v: 1, kind: "sync-join", phase: "choice", lastJoined: "h", observedMetadata: value, suspended: { kind: "none" } } }] : [], "Settings later history persists waiting"); await h.writer.dispose()
   }
   for (const n of [1, 2, 3]) for (const field of ["device", "schema", "sync", D]) {
     const h = harness(); h.hooks.local = async index => { if (index === n) {
@@ -2884,8 +2884,8 @@ function keptIncomingFaults(original: string) {
     { name: "ack-pending-Q", assertion: "kept one exact Filter-history batch", source: original.replace('const next = repairedHistory(latest.history, [received])', 'const next = repairedHistory(latest.history, [received]); if (next && typeof next.pushed === "object" && next.pushed) Object.assign(next.pushed, {"doc:filter:AAAAAAAAAAAAAAAA:PL_Q":"q1"})') },
     { name: "early-mixed-history", assertion: "kept selected Settings cumulative lexical batches", source: original.replace('let lane: Promise<void>', 'let incomingHistory: JsonObject | undefined; let lane: Promise<void>').replace('const targets: SyncReceiveKey[] = []', 'incomingHistory = records.sync as JsonObject; const targets: SyncReceiveKey[] = []').replace('repairedHistory(latest.history, [received])', 'repairedHistory(incomingHistory ?? latest.history, [received])') },
     { name: "kept-timer-incoming", assertion: "kept timer remains outbound-only", source: original.replace('await automatic(current.event, false)', 'await automatic(current.event, true)') },
-    { name: "kept-echo", assertion: "kept Q-only send at 5000", source: original.replace('let plan = planSyncWrite({ local: records, sync: await deps.sync.get(), intent: { kind: "flush" } })', 'const echo = await deps.sync.get(); let plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(echo).filter(([name]) => name !== "s:filter:AAAAAAAAAAAAAAAA:PL_K")), intent: { kind: "flush" } })').replace('const replanned = planSyncWrite({ local: latest, sync: remote, intent: { kind: "flush" } })', 'const replanned = plan') },
-    { name: "bypass-blocking-Setup", assertion: "kept global attempt cannot bypass blocking document", source: original.replace('let plan = planSyncWrite({ local: records, sync: await deps.sync.get(), intent: { kind: "flush" } })', 'const bypass = await deps.sync.get(); let plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(bypass).filter(([name, raw]) => !(name === "s:setup:AAAAAAAAAAAAAAAA" && raw && typeof raw === "object" && "gen" in raw && raw.gen === "a1"))), intent: { kind: "flush" } })').replace('const replanned = planSyncWrite({ local: latest, sync: remote, intent: { kind: "flush" } })', 'const replanned = plan') }
+    { name: "kept-echo", assertion: "kept Q-only send at 5000", source: original.replace('let plan = planSyncWrite({ local: records, sync: observedRemote, intent: { kind: "flush" } })', 'const echo = observedRemote; let plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(echo).filter(([name]) => name !== "s:filter:AAAAAAAAAAAAAAAA:PL_K")), intent: { kind: "flush" } })').replace('const replanned = planSyncWrite({ local: latest, sync: remote, intent: { kind: "flush" } })', 'const replanned = plan') },
+    { name: "bypass-blocking-Setup", assertion: "kept global attempt cannot bypass blocking document", source: original.replace('let plan = planSyncWrite({ local: records, sync: observedRemote, intent: { kind: "flush" } })', 'const bypass = observedRemote; let plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(bypass).filter(([name, raw]) => !(name === "s:setup:AAAAAAAAAAAAAAAA" && raw && typeof raw === "object" && "gen" in raw && raw.gen === "a1"))), intent: { kind: "flush" } })').replace('const replanned = planSyncWrite({ local: latest, sync: remote, intent: { kind: "flush" } })', 'const replanned = plan') }
   ]
 }
 
@@ -3037,7 +3037,7 @@ async function setupIncomingAcceptance(create: typeof createLocalFilterWriter, a
     if (fault === "overbudget") h.synced.occupancy = "x".repeat(99000)
     const result = await h.writer.receiveSyncDocument(key)
     equal(result.kind, fault === "overbudget" ? "adopted" : "unavailable", "Setup conflict and inventory " + fault)
-    if (fault !== "overbudget") equal(h.sets, [], "Setup conflict no set " + fault)
+    if (fault !== "overbudget") equal(h.sets, fault === "history" ? [{ "pending:sync-join": { v: 1, kind: "sync-join", phase: "choice", lastJoined: "synthetic-history", observedMetadata: h.synced["s:meta"], suspended: { kind: "none" } } }] : [], "Setup conflict preserves documents and later history indication " + fault)
     if (fault === "pending") equal(result, unavailable("pending"), "Setup own pending reason")
     if (["same-gen", "equal", "older"].includes(fault)) equal(result, unavailable("conflict"), "Setup strict conflict reason")
     await h.writer.dispose()
@@ -3337,7 +3337,7 @@ test("actual fixture receiveSetup start events and encoded chunks consume the sa
 
 function setupIncomingFaults(original: string) {
   const predicate = 'setup.autoAdd.length > 0 || setup.quickSave !== null || setup.musicSave !== null || setup.gather !== null'
-  const flush = 'let plan = planSyncWrite({ local: records, sync: await deps.sync.get(), intent: { kind: "flush" } })'
+  const flush = 'let plan = planSyncWrite({ local: records, sync: observedRemote, intent: { kind: "flush" } })'
   return [
     { name: "admit-all", assertion: "Setup deferred incoming 0kept", source: original.replace(predicate, 'true') },
     { name: "label-retains", assertion: "Setup deferred incoming 2kept", source: original.replace(predicate, predicate + ' || setup.label !== null') },
@@ -3360,8 +3360,8 @@ function setupIncomingFaults(original: string) {
     { name: "skip-Setup-enumeration", assertion: "actual automatic Setup start adoption", fixture: true, source: original.replace(' || key?.kind === "setup"', '') },
     { name: "outside-Setup-lane", assertion: "Setup same lane held IO L0", source: original.replace('return enqueue(() => receiveAttempt(key))', 'return receiveAttempt(key)') },
     { name: "Setup-timer-incoming", assertion: "Setup timer remains outbound-only", source: original.replace('await automatic(current.event, false)', 'await automatic(current.event, true)') },
-    { name: "Setup-echo", assertion: "Setup Q-only send no echo", source: original.replace(flush, 'const echo = await deps.sync.get(); let plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(echo).filter(([name]) => name !== "s:setup:AAAAAAAAAAAAAAAA")), intent: { kind: "flush" } })').replace('const replanned = planSyncWrite({ local: latest, sync: remote, intent: { kind: "flush" } })', 'const replanned = plan') },
-    { name: "Setup-bypass-debt", assertion: "Setup global unresolved debt blocks Q", source: original.replace(flush, 'const bypass = await deps.sync.get(); let plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(bypass).filter(([name, raw]) => !(name === "s:setup:AAAAAAAAAAAAAAAA" && raw && typeof raw === "object" && "gen" in raw && raw.gen === "a1" && "data" in raw && Object.keys(raw.data as object).length === 0))), intent: { kind: "flush" } })').replace('const replanned = planSyncWrite({ local: latest, sync: remote, intent: { kind: "flush" } })', 'const replanned = plan') }
+    { name: "Setup-echo", assertion: "Setup Q-only send no echo", source: original.replace(flush, 'const echo = observedRemote; let plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(echo).filter(([name]) => name !== "s:setup:AAAAAAAAAAAAAAAA")), intent: { kind: "flush" } })').replace('const replanned = planSyncWrite({ local: latest, sync: remote, intent: { kind: "flush" } })', 'const replanned = plan') },
+    { name: "Setup-bypass-debt", assertion: "Setup global unresolved debt blocks Q", source: original.replace(flush, 'const bypass = observedRemote; let plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(bypass).filter(([name, raw]) => !(name === "s:setup:AAAAAAAAAAAAAAAA" && raw && typeof raw === "object" && "gen" in raw && raw.gen === "a1" && "data" in raw && Object.keys(raw.data as object).length === 0))), intent: { kind: "flush" } })').replace('const replanned = planSyncWrite({ local: latest, sync: remote, intent: { kind: "flush" } })', 'const replanned = plan') }
   ]
 }
 
@@ -3761,7 +3761,7 @@ function recoveryFaults(original: string) {
     { name: "native-error-substitution", assertion: "native rejection preserves original identity", source: original.replaceAll('return { kind: "sync-set-failed", error,', 'return { kind: "sync-set-failed", error: new Error("synthetic substitute"),') },
     { name: "masked-raw-fields", assertion: "prearm failure has exact local stage contradictory", source: original.replace('!sameSyncJson(prearmed, confirmed)', 'false').replace('!sameSyncJson(prearmed, latest)', 'false') },
     { name: "current-generation-recovery-ack", assertion: "changed edit repairs accepted g1 without acknowledging current g2", source: original.replace('repairedHistory(history.raw, admission.repairs)', 'repairedHistory(history.raw, admission.repairs.map(record => record.name === filterKey ? { ...record, gen: envelope.gen } : record))') },
-    { name: "resend-rejected-applied", assertion: "uncertain effects use current exact readback true", source: original.replace('sync: await deps.sync.get(), intent: { kind: "flush" }', 'sync: Object.fromEntries(Object.entries(await deps.sync.get()).filter(([name]) => !hold || name !== "s:filter:AAAAAAAAAAAAAAAA:PL_P")), intent: { kind: "flush" }').replace('sync: remote, intent: { kind: "flush" }', 'sync: Object.fromEntries(Object.entries(remote).filter(([name]) => !hold || name !== "s:filter:AAAAAAAAAAAAAAAA:PL_P")), intent: { kind: "flush" }') }
+    { name: "resend-rejected-applied", assertion: "uncertain effects use current exact readback true", source: original.replace('sync: observedRemote, intent: { kind: "flush" }', 'sync: Object.fromEntries(Object.entries(observedRemote).filter(([name]) => !hold || name !== "s:filter:AAAAAAAAAAAAAAAA:PL_P")), intent: { kind: "flush" }').replace('sync: remote, intent: { kind: "flush" }', 'sync: Object.fromEntries(Object.entries(remote).filter(([name]) => !hold || name !== "s:filter:AAAAAAAAAAAAAAAA:PL_P")), intent: { kind: "flush" }') }
   ]
 }
 
@@ -3938,7 +3938,7 @@ export async function noticeOwnerAcceptance(api: { create: typeof createLocalFil
     }, async readSnapshot() { startupGate.enter(); await startupGate.held; return { schema: 1, device: h.records.device, settingsDocument: h.records["doc:settings"], unclaimed: null, legacy: { presentKeys: [], values: {}, refreshTokenWasNonempty: false }, interimKeysPresent: [] } }, async removeLocal() { throw Error("remove") }, async deleteDatabase() { throw Error("db") }, async removeSession() { throw Error("session") } }
     const writer = api.starting({ ...h.deps, startup }); await startupGate.entered
     equal(await (operation === "read" ? writer.readClaimNotice() : writer.acknowledgeClaimNotice(origin, notice)), expected, "pending startup notice closed")
-    equal(h.reads, 0, "pending startup operation no IO"); startupGate.release(); equal(await writer.ready(), "ok", "real startup releases")
+    equal(h.reads, 1, "pending startup performs only read-only checkpoint inspection"); startupGate.release(); equal(await writer.ready(), "ok", "real startup releases")
     equal(await writer.readClaimNotice(), { kind: "pending", notice }, "read after readiness"); await writer.dispose(); await h.writer.dispose()
   }
   {
@@ -3985,7 +3985,7 @@ export async function noticeOwnerAcceptance(api: { create: typeof createLocalFil
     const before = h.counts(), reason = initial === "failed" ? "startup" : "newer-layout"
     equal(await writer.readClaimNotice(), { kind: "unavailable", reason }, "failed/newer notice read closed")
     equal(await writer.acknowledgeClaimNotice(origin, notice), { kind: "unavailable", reason }, "failed/newer notice OK closed")
-    equal(h.reads, 0, "failed/newer notice no operation IO"); equal(h.counts(), before, "failed/newer notice no ingress")
+    equal(h.reads, 1, "failed/newer startup only inspected the join checkpoint"); equal(h.counts(), before, "failed/newer notice no ingress")
     await writer.dispose(); await h.writer.dispose()
   }
   {

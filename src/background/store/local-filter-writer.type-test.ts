@@ -1,3 +1,4 @@
+import type { SyncJoinHost, SyncJoinOperation, SyncJoinReview, SyncJoinSide, SyncJoinResult, SyncJoinStatus } from "./sync-join-execution"
 import type { ClaimHost, ClaimTransactionResult } from "./local-claim-writer"
 import type { AccountKey, PlaylistId, DocumentKey, SyncOpaqueWrite } from "../../shared/model"
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
@@ -43,6 +44,7 @@ import type { InterimNoteRead } from "./interim-persistence"
 import type { AgreementRead, AgreementInput, AgreementResult } from "./consent-agreement"
 
 type ExpectedFactory = (deps: {
+  readonly join?: SyncJoinHost
   readonly removal?: AccountRemovalHost
   readonly local: LocalWriteStorage
   readonly claim: ClaimHost
@@ -51,7 +53,7 @@ type ExpectedFactory = (deps: {
   readonly generation: () => string
   readonly syncClock: SyncClock
   readonly onSyncResult: (result: SyncAutomaticResult) => void
-}) => { readAgreement(origin: UiOrigin): Promise<AgreementRead>; agree(origin: UiOrigin, input: AgreementInput): Promise<AgreementResult>; resumeRetainedAgreement(origin: UiOrigin): Promise<AgreementResult>; readInterimNote(): Promise<InterimNoteRead>; prepareAccountRemoval(origin: UiOrigin, acct: AccountKey): Promise<RemovalPreparation>; removeAccountSetup(origin: UiOrigin, confirmation: RemovalConfirmation): Promise<RemovalResult>; readClaimNotice(): Promise<ClaimNoticeRead>; acknowledgeClaimNotice(origin: NormalUiOrigin, expected: Snapshot<ClaimNotice>): Promise<ClaimNoticeAcknowledgement>; read(view: "settings"): Promise<SettingsRead>; subscribe(fn: (event: SettingsEvent) => void): () => void; changeSharedSetting(origin: UiOrigin, change: SharedSettingChange): Promise<LocalSettingsWriteResult>; claim(): Promise<ClaimTransactionResult>; change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>; receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>; flushSync(): Promise<SyncFlushResult>; startSync(): Promise<void>; dispose(): Promise<void> }
+}) => { beginSyncJoin(origin: UiOrigin): SyncJoinOperation; applySyncJoin(origin: UiOrigin, input: { readonly kind: "automatic"; readonly review: SyncJoinReview } | { readonly kind: "choice"; readonly review: SyncJoinReview; readonly choice: SyncJoinSide }): Promise<SyncJoinResult>; cancelSyncJoin(origin: UiOrigin): Promise<SyncJoinResult>; readSyncJoin(origin: UiOrigin): Promise<SyncJoinStatus>; resumeSyncJoin(origin: UiOrigin): Promise<SyncJoinResult>; readAgreement(origin: UiOrigin): Promise<AgreementRead>; agree(origin: UiOrigin, input: AgreementInput): Promise<AgreementResult>; resumeRetainedAgreement(origin: UiOrigin): Promise<AgreementResult>; readInterimNote(): Promise<InterimNoteRead>; prepareAccountRemoval(origin: UiOrigin, acct: AccountKey): Promise<RemovalPreparation>; removeAccountSetup(origin: UiOrigin, confirmation: RemovalConfirmation): Promise<RemovalResult>; readClaimNotice(): Promise<ClaimNoticeRead>; acknowledgeClaimNotice(origin: NormalUiOrigin, expected: Snapshot<ClaimNotice>): Promise<ClaimNoticeAcknowledgement>; read(view: "settings"): Promise<SettingsRead>; subscribe(fn: (event: SettingsEvent) => void): () => void; changeSharedSetting(origin: UiOrigin, change: SharedSettingChange): Promise<LocalSettingsWriteResult>; claim(): Promise<ClaimTransactionResult>; change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>; receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>; flushSync(): Promise<SyncFlushResult>; startSync(): Promise<void>; dispose(): Promise<void> }
 type NativeBrowser = Parameters<typeof createBrowserLocalFilterWriter>[0]
 type NativeSender = Parameters<Parameters<NativeBrowser["runtime"]["onMessage"]["addListener"]>[0]>[1]
 type ExpectedAdapter = (nativeBrowser: NativeBrowser, options: { onSyncResult: (result: SyncAutomaticResult) => void }) => {
