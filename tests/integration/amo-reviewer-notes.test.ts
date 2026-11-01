@@ -31,10 +31,24 @@ const jwtIssuer = "dummy-jwt-issuer-0000"
 const jwtSecret = "dummy-jwt-secret-0000"
 const sensitive = { ...login, rawLogin: rawLogin.trim(), jwtSecret }
 
-/** The names of the sensitive values in `text`, raw or JSON-escaped. Never the values. */
+/** A value as a log could carry it: raw, JSON-escaped once or twice, URL-encoded, or inside base64 at any byte offset, each also without its spaces. */
+function forms(value: string): string[] {
+  return [value, value.replaceAll(" ", "")].flatMap(plain => {
+    const json = JSON.stringify(plain).slice(1, -1)
+    const url = encodeURIComponent(plain)
+    const bytes = Buffer.from(plain)
+    const base64 = [0, 1, 2].flatMap(offset => {
+      const whole = bytes.subarray(offset, offset + Math.floor((bytes.length - offset) / 3) * 3)
+      return [whole.toString("base64"), whole.toString("base64url")]
+    })
+    return [plain, json, JSON.stringify(json).slice(1, -1), url, url.replaceAll("%20", "+"), ...base64]
+  }).filter(form => form.length >= 8)
+}
+
+/** The names of the sensitive values in `text`, in any of their forms. Never the values. */
 function leaks(text: string): string[] {
   return Object.entries(sensitive)
-    .filter(([, value]) => text.includes(value) || text.includes(JSON.stringify(value).slice(1, -1)))
+    .filter(([, value]) => forms(value).some(form => text.includes(form)))
     .map(([name]) => name)
 }
 
@@ -106,6 +120,25 @@ function files(dir: string): string[] {
     .sort()
 }
 
+describe("the leak check", () => {
+  test("finds each value in every form a log could carry it", () => {
+    for (const [name, value] of Object.entries(sensitive)) {
+      const carried = [
+        value,
+        JSON.stringify({ notes: value }),
+        JSON.stringify(JSON.stringify({ notes: value })),
+        `curl --data-raw '${JSON.stringify(JSON.stringify(value))}'`,
+        new URLSearchParams({ notes: value }).toString(),
+        `https://example.invalid/?notes=${encodeURIComponent(value)}`,
+        ...["", "a", "ab"].map(prefix => Buffer.from(`${prefix}${value} and more`).toString("base64")),
+        ...["", "a", "ab"].map(prefix => Buffer.from(`${prefix}${value} and more`).toString("base64url")),
+        `logged as ${value.replaceAll(" ", "")}`
+      ]
+      for (const text of carried) expect({ name, found: leaks(text).includes(name) }).toEqual({ name, found: true })
+    }
+  })
+})
+
 describe("the release workflow", () => {
   test("only submit-amo's two reviewer-notes steps receive AMO_REVIEWER_LOGIN, each through its own env", () => {
     expect(workflowText.split("secrets.AMO_REVIEWER_LOGIN").length - 1).toBe(2)
@@ -151,8 +184,9 @@ describe("the release workflow", () => {
 
   test("the script imports only Node built-ins and has no way to spawn a process", () => {
     const source = readFileSync(script, "utf8")
-    expect([...source.matchAll(/^import .* from "([^"]+)"/gm)].map(match => match[1])).toEqual(["node:crypto", "node:fs"])
-    expect(source).not.toMatch(/\bBun\.|child_process|\brequire\(|\bimport\(/)
+    const imports = new Bun.Transpiler({ loader: "ts" }).scanImports(source).map(found => found.path)
+    expect(imports).toEqual(["node:crypto", "node:fs"])
+    expect(source).not.toMatch(/\bBun\.|child_process|process\.(binding|dlopen)/)
   })
 })
 
