@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { createLocalFilterWriter, type ConfirmedViewChange } from "./local-filter-writer"
+import { createLocalFilterWriter, createStartingLocalFilterWriter, type ConfirmedViewChange } from "./local-filter-writer"
 import { createRemovalHarness } from "../../../tools/fixtures/account-removal-execution/run"
 import { syncJoinHarness } from "../../../tools/fixtures/account-removal-admission/run"
 import { publicationSeed } from "../../../tools/fixtures/view-publication/harness"
@@ -26,6 +26,17 @@ test("confirmed view subscriptions survive sync-off edits and unsubscribe indepe
     expect(second).toHaveLength(2)
     await owner.change({ ...origin, incognito: true }, filter)
     expect(second).toHaveLength(2)
+  } finally { await owner.dispose() }
+})
+
+test("a confirmed view subscription made before startup readiness receives events once ready", async () => {
+  const h = createRemovalHarness(publicationSeed()), owner = createStartingLocalFilterWriter({ ...h.deps, startup: h.startup })
+  const events: ConfirmedViewChange[] = []
+  owner.subscribeView(event => events.push(event))
+  try {
+    expect(await owner.ready()).toBe("ok")
+    expect(await owner.change(origin, filter)).toEqual({ kind: "result", result: { ok: true } })
+    expect(events).toEqual([{ kind: "filter-changed", acct: a, playlist: alpha, source: "local" }])
   } finally { await owner.dispose() }
 })
 
