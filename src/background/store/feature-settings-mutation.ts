@@ -66,7 +66,7 @@ export async function executeSettingsMutation(deps: SettingsMutationDependencies
       if (deps.disposed()) return { kind: "unavailable", reason: "disposed" }
       if (!jsonObject(records) || !sameSyncJson(readSettingsSnapshot(records), baseline)) return { kind: "unavailable", reason: "stale" }
     }
-    records = copyObject(records)
+    const snapshot = copyObject(records)
     const raw = baseline["doc:settings"]
     const envelope = { ...(jsonObject(raw) ? raw : {}), v: DOCUMENT_VERSION,
       gen: deps.generation(), at: deps.now(), by: ready.device.id, data: prepared.data }
@@ -74,7 +74,7 @@ export async function executeSettingsMutation(deps: SettingsMutationDependencies
     if (!jsonObject(envelope) || decodeDocument(envelope, decodeSettings).kind !== "value") return invalid
     const items: JsonObject = { "doc:settings": envelope }
     if (ready.device.syncOn) {
-      const admission = planSyncWrite({ local: records, sync: await deps.sync.get(), intent: { kind: "changed", key: { kind: "settings" }, document: envelope } })
+      const admission = planSyncWrite({ local: snapshot, sync: await deps.sync.get(), intent: { kind: "changed", key: { kind: "settings" }, document: envelope } })
       if (admission.kind === "unavailable") return unavailable
       if (admission.kind === "refused") return { kind: "result", result: { refused: admission.reason } }
       if (admission.kind === "planned" && ready.history) {
@@ -91,7 +91,7 @@ export async function executeSettingsMutation(deps: SettingsMutationDependencies
     const before = await deps.local.get(["schema", "device", "sync", "doc:settings"])
     if (!jsonObject(before) || !sameSyncJson(readSettingsSnapshot(before), baseline)) return { kind: "unavailable", reason: "stale" }
     if (deps.disposed()) return { kind: "unavailable", reason: "disposed" }
-    if (commit) return await commit(copyObject(records), items)
+    if (commit) return await commit(copyObject(snapshot), items)
     try { await deps.local.set(items) } catch (error) { return { kind: "failed", stage: "set", error } }
     try {
       const confirmed = await deps.local.get(["schema", "device", "sync", "doc:settings"])
