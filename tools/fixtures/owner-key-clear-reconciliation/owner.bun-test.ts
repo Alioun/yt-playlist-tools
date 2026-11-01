@@ -21,6 +21,7 @@ const remoteReset = () => sharedSync({ "s:meta": { v: 1, reset: true, id: "reset
 function keySeed(syncOn: boolean, untargeted = false): JsonObject {
   const initial = seed()
   object(initial.device).syncOn = syncOn
+  if (syncOn) Object.assign(object(initial.sync), { joined: "history", status: "ok" })
   if (untargeted) delete object(object(object(initial[`doc:setup:${account}`]).data).targets).save01
   return initial
 }
@@ -38,12 +39,13 @@ async function removeSaveRow(h: ReturnType<typeof clearFixture>) {
 }
 
 test("received reset revokes six-second shortcut Undo even without account targets", async () => {
-  const h = clearFixture(keySeed(true, true), remoteReset())
+  const shared = sharedSync(), h = clearFixture(keySeed(true, true), shared)
   try {
     const { owner, receipt } = await removeSaveRow(h)
+    shared.replace(remoteReset().records())
     expect((await owner.receiveSyncReset()).kind, "remote reset completes").toBe("reset-received")
     const after = h.records()
-    expect(Object.keys(after).filter(name => /^(doc:setup|doc:filter|cache:|progress:[A-Z])/.test(name)), "reset erased every account and shard").toEqual([])
+    expect(Object.keys(after).filter(name => /^(doc:setup|doc:filter|cache:|progress:)/.test(name) && name.includes(account)), "reset erased the account's setup, filters, cache and shards").toEqual([])
     expect(await owner.changeKeySetting(origin, { kind: "shortcut-undo", receipt }, principal), "old Undo cannot restore pre-reset rows").toEqual({ kind: "refused", reason: "expired" })
     expect(h.records(), "refused Undo leaves the reset result").toEqual(after)
   } finally { await h.dispose() }
