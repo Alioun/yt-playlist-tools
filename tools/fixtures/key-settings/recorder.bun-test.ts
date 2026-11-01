@@ -9,6 +9,9 @@ import { world, chord } from "./harness"
 if (typeof document === "undefined") GlobalRegistrator.register({ url: "chrome-extension://key-fixture/popup.html" })
 function key(element: HTMLElement, code: string, name: string, modifiers: KeyboardEventInit = {}) {
   const event = new KeyboardEvent("keydown", { bubbles: true, cancelable: true, code, key: name, ...modifiers })
+  const modifier = event.getModifierState.bind(event)
+  // happy-dom reports AltGraph whenever Alt is held; a browser's Alt+Z does not.
+  Object.defineProperty(event, "getModifierState", { value: (state: string) => state !== "AltGraph" && modifier(state) })
   element.dispatchEvent(event)
   return event
 }
