@@ -227,7 +227,7 @@ The canonical model decoder requires all four history fields without defaults. P
 
 `sync-write-admission.ts` exports `planSyncWrite`, the shared classifier for changed, unchanged, and flush intents. It also exports `sameSyncJson`, consumed by postflight checks for complete raw equality independent of key order. A planned result carries exact `SyncItem` values, sent document records, exact-readback repair records, and the full ordinary metadata authority. An unchanged result carries no plan. Ordinary `SyncMeta` is `{v,id,created,reset?}`, decoded without defaults and with unknown own fields retained. Admission requires supported layout 1, matching history ID, and absent or false reset. An own true reset, including a versionless marker, stays unavailable. Missing, malformed, newer, or changed-history metadata also stays unavailable. No reset or join choice is inferred.
 
-A changed intent enumerates every physical canonical local `doc:*` record across all accounts, including kept Filters and tombstones. Pushed keys must round-trip through the canonical local document parser and have complete local records. Opaque pushed entries remain valid for sync-off history. Full raw envelopes supply outbound encoding, so omitted defaults and tuple extensions remain untouched. Unknown local document names, invalid JSON, unsupported unrepresented local generations, incomplete known sync documents, and supported incoming adoption debt stay unavailable.
+A changed intent enumerates every physical canonical local `doc:*` record across all accounts, including kept Filters and tombstones. Pushed keys must round-trip through the canonical local document parser and have complete local records. Opaque pushed entries remain valid for sync-off history. Full raw envelopes supply outbound encoding, so omitted defaults and tuple extensions remain untouched. Unknown local document names, invalid JSON, unsupported unrepresented local generations, incomplete known sync documents, and supported incoming adoption debt stay unavailable. A complete synced tombstone with no local record is not debt, because it agrees with this browser's absence, so it blocks no plan (R178). A synced live document with no local record still blocks every plan.
 
 The planner distinguishes represented current generations, acknowledged older baselines, and physically missing remote bases. A missing base adds the full local document to restoration even when its generation equals pushed. Present null and incomplete delivery cannot take that path. Same-generation divergent JSON is unavailable. An addressed newer remote version refuses `update-needed`, including on no-op. An unrelated newer document remains protected occupancy and excludes an older local overwrite. Unsupported local data can remain protected only when its complete newer remote envelope matches it.
 
@@ -429,8 +429,44 @@ unacknowledged local tombstone is pending. The removed account's cache, progress
 `lastAccount` stay gone until ordinary use writes them again. A Filter with no local
 tombstone is remote-only creation and stays excluded.
 
-Tombstone expiry after 30 days and chunk cleanup remain separate work. The spec gives
-the 30 days but not when expiry runs or which browser runs it.
+## Tombstone expiry
+
+`tombstone-expiry.ts` plans G18's expiry (SYNC-12, R178) from stored state alone. It writes
+no record of its own, so every pass derives what is left from what it reads. A Setup
+tombstone expires once `wallNow()` is at least 30 days past its `at`. Its account's Filter
+tombstones expire with it, whatever their own `at`, and a Filter tombstone under a live
+Setup never expires. The owner runs expiry in two turns.
+
+The local turn runs at the end of an automatic incoming pass, after every captured address
+was received, so a newer live Setup or Filter replaces its tombstone before expiry looks at
+it. It needs the account-removal host and sync on. It takes an account only when its local
+Setup tombstone is acknowledged and expired, every local Filter of that account is an
+acknowledged tombstone, and sync holds for each of them the same deletion, another
+tombstone or nothing. A synced live record keeps the account. After fresh local and sync
+preflights match, it removes those documents through the removal host, reads back, then
+writes the history without their `pushed` entries and reads back again. A restart between
+the two writes leaves `pushed` entries with no documents. The next pass drops each such
+entry whose synced copy is a tombstone or absent. A rejected write returns `rejected` and a
+mismatched readback `unavailable`. Both stop automatic work like a failed receive.
+
+The cleanup turn is one paced opportunity of the outbound attempt, so it uses the existing
+ticket and adds no timer. It runs only for start and sync events, only when the plan has
+nothing to send or repair, and only with the optional `SyncStorage.remove` port, which the
+starting owner supplies and the synthetic browser adapter doesn't. It removes an expired
+synced Setup tombstone with its account's synced Filter tombstones, each with the chunks of
+its own generation. It skips an account if this browser still holds any of those documents
+or their `pushed` entries, or if any synced document of the account is live. Other chunks
+stay. It waits for the shared five-second spacing and the quiet period, rechecks complete
+local and sync snapshots, invokes one `remove`, reads sync back and returns `cleaned`. A
+rejected `remove` stops automatic work, and the next start plans the cleanup again. A
+browser whose clock runs behind can push back a tombstone another browser removed, and the
+cleanup repeats until both clocks are past the 30 days. A browser that was offline for over
+30 days can push a live copy back once the tombstone is gone (SYNC-07). Other browsers then
+see a remote-only live document, which still blocks their plans.
+
+A local edit that recreates the account between the two turns is refused until the cleanup
+removes the synced tombstone, because a different synced generation without a matching
+`pushed` entry stays unavailable to the planner.
 
 ## Automatic incoming documents on the fixture owner
 
@@ -469,7 +505,10 @@ reads, three sync reads, and one local set. Enumeration adds one local read.
 An adopted Setup that removes or restores its account adds one more receive of each
 of that account's captured Filters, because Filters sort before their Setup. A Setup
 tombstone also adds its account cleanup. A local Setup or Filter tombstone that stays
-unavailable adds one sync read.
+unavailable adds one sync read. Expiry reads storage only when the pass's first snapshot
+holds an acknowledged expired Setup tombstone or a `pushed` entry without its document. It
+then adds one local and one sync read, and an expiring pass adds a preflight of each, the
+removal, the history set and its readbacks.
 The outbound attempt also confirms durable admission and complete raw state before invoking sync. This is a
 finite IO bound, not a native performance measurement or production approval.
 The receiver's last-read foreign-writer limit and all manual exclusions remain.
@@ -495,7 +534,7 @@ progress purge, or any production effect.
 
 This incoming Setup capability remains uninstalled and partial. Full Setup lifecycle
 reconciliation, Filter-dependent empty and shortcut-target witnesses, empty removal
-and cascades, remote-only creation, tombstone expiry, joins, reset, conflict policies,
+and cascades, remote-only creation, joins, reset, conflict policies,
 Store notifications, and production account behavior remain separate work. Timers
 remain outbound-only. Global unresolved debt can still block every outbound send.
 Native browser behavior and durability remain unproven.

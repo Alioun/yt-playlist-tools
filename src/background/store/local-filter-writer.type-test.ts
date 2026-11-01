@@ -102,7 +102,7 @@ export type LocalWriterProofs = [
   Check<Equal<LocalFilterChange, ExpectedChange>>,
   Check<Equal<LocalFilterWriteResult, ExpectedResult>>,
   Check<Equal<LocalWriteStorage, ExpectedStorage>>,
-  Check<Equal<SyncStorage, { get(): Promise<Readonly<Record<string, unknown>>>; set(items: Readonly<Record<string, JsonValue>>): Promise<void>; subscribe(changed: () => void): () => void }>>,
+  Check<Equal<SyncStorage, { get(): Promise<Readonly<Record<string, unknown>>>; set(items: Readonly<Record<string, JsonValue>>): Promise<void>; remove?(keys: readonly string[]): Promise<void>; subscribe(changed: () => void): () => void }>>,
   Check<Equal<SyncClock, { now(): number; wallNow(): number; after(milliseconds: number, run: () => void): () => void }>>,
   Check<Equal<SyncAutomaticResult, SyncFlushResult | import("./local-filter-writer").SyncReconciliationNotice | import("./sync-reset-receive").ReceivedResetResult | { kind: "rejected"; error: unknown }>>,
   Check<Equal<Omit<ReturnType<typeof createLocalFilterWriter>, "readWithdrawnWork" | "recoverWithdrawnWork" | "readTabProjection" | "readLastAccount" | "readAutoAddChoice" | "changeAutoAddChoice">, ReturnType<ExpectedFactory>>>,

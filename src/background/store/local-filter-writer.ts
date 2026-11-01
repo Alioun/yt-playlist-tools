@@ -73,6 +73,7 @@ import { classifyRetainedAuthority, coversArchivedSource, archiveRetained, archi
 import { LEGACY_DELETE_KEYS } from "./legacy"
 import type { SyncMutationPace } from "./sync-mutation-pacing"
 import { cleanReceivedSetupRemoval } from "./received-setup-removal"
+import { hasExpiryCandidate, planLocalTombstoneExpiry, planSyncTombstoneCleanup, withoutPushed } from "./tombstone-expiry"
 import { receiveDeliberateReset, authorizeReceivedResetRecovery, receivedResetKey, type SyncResetReceiveHost, type ReceivedResetResult } from "./sync-reset-receive"
 import { executeInterimRetention, projectInterimNote, projectInterimInstallationNote, interimConversionKey,
   readRetainedCheckpoint, retainedAgreementDevice, retainedCheckpointDifference, isInterimCanonicalKey, isInterimSourceKey,
@@ -124,6 +125,7 @@ export type SyncClock = {
 export type SyncStorage = {
   get(): Promise<Readonly<Record<string, unknown>>>
   set(items: Readonly<Record<string, JsonValue>>): Promise<void>
+  remove?(keys: readonly string[]): Promise<void>
   subscribe(changed: () => void): () => void
 }
 
@@ -138,6 +140,7 @@ export type SyncFlushResult =
   | { kind: "pushed"; sent: readonly SyncDocumentRecord[]; repaired: readonly SyncDocumentRecord[]; mutations?: Extract<SyncJoinResult, { kind: "committed" }>["mutations"] }
   | { kind: "unavailable"; reason?: "changed-generation" }
   | { kind: "blocked" }
+  | { kind: "cleaned"; removed: readonly string[] }
   | { kind: "sync-set-failed"; error: unknown; sent: readonly SyncDocumentRecord[]; recoveryPersistence?: { error: unknown } }
   | { kind: "acknowledgement-failed"; error: unknown; source: FlushSource }
   | { kind: "unconfirmed"; sent: readonly SyncDocumentRecord[]; cause:
@@ -1263,6 +1266,64 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
         return { kind: "unavailable" }
       }
     }
+    return await expireTombstones(records)
+  }
+
+  // The local turn of G18's expiry. The synced copies go later, in a cleanup opportunity of the outbound attempt.
+  async function expireTombstones(pass: Readonly<Record<string, unknown>>): Promise<SyncAutomaticResult | undefined> {
+    if (removal.kind === "unavailable" || lifetime.kind !== "active") return
+    const time = clock()
+    if (!time || !hasExpiryCandidate({ local: pass, wall: time.wall })) return
+    const records = await guardedLocal.get(null), ready = authority(records)
+    if (disposed() || ready.kind !== "ready" || !ready.device.syncOn || !ready.history || retainedHold(records) || !isJsonObject(records)) return
+    const remote = await readJoinSync()
+    if (disposed() || !isJsonObject(remote)) return
+    const plan = planLocalTombstoneExpiry({ local: records, sync: remote, wall: time.wall })
+    if (plan.pushed.length === 0) return
+    const baseline = snapshot(records), remaining = snapshot(records)
+    for (const key of plan.documents) delete remaining[documentKey(key)]
+    const history = withoutPushed(snapshot(ready.history.raw), plan.pushed)
+    try {
+      const current = await guardedLocal.get(null), latest = await sync.get()
+      if (disposed() || !isJsonObject(current) || !sameSyncJson(baseline, current) || !isJsonObject(latest) || !sameSyncJson(remote, latest)) return { kind: "unavailable" }
+      // Documents go before their pushed entries, so a restart in between leaves entries the next pass recognizes and drops.
+      if (plan.documents.length > 0) {
+        await removal.removeLocal(plan.documents.map(key => ({ kind: "document", key })))
+        const removed = await guardedLocal.get(null)
+        if (disposed() || !isJsonObject(removed) || !sameSyncJson(remaining, removed)) { deactivate("stopped"); return { kind: "unavailable" } }
+      }
+      await guardedLocal.set({ sync: history })
+      const confirmed = await guardedLocal.get(null)
+      if (disposed() || !isJsonObject(confirmed) || !sameSyncJson({ ...remaining, sync: history }, confirmed)) { deactivate("stopped"); return { kind: "unavailable" } }
+    } catch (error) {
+      deactivate("stopped")
+      return { kind: "rejected", error }
+    }
+  }
+
+  // G18's cleanup turn: one paced remove of expired synced tombstones this browser no longer holds, never in a push's opportunity.
+  async function cleanExpiredTombstones(event: SyncEvent | undefined, records: JsonObject, remote: JsonObject): Promise<SyncFlushResult> {
+    const port = deps.sync
+    if (!port.remove || event?.kind !== "start" && event?.kind !== "sync") return { kind: "idle" }
+    const time = clock()
+    if (!time) return { kind: "unavailable" }
+    const keys = planSyncTombstoneCleanup({ local: records, sync: remote, wall: time.wall })
+    if (keys.length === 0) return { kind: "idle" }
+    if (!admitted(event, time)) return { kind: "unavailable" }
+    const notBefore = Math.max(quietUntil, mutationPace.nextInvocation)
+    if (time.mono < notBefore) return { kind: "deferred", notBefore }
+    const current = await guardedLocal.get(null), latest = await sync.get()
+    if (disposed() || !isJsonObject(current) || !sameSyncJson(records, current) || !isJsonObject(latest) || !sameSyncJson(remote, latest)) return { kind: "unavailable" }
+    const invoked = clock()
+    if (!invoked || !admitted(event, invoked)) return { kind: "unavailable" }
+    if (invoked.mono < notBefore) return { kind: "deferred", notBefore }
+    cancelTicket()
+    mutationPace.nextInvocation = invoked.mono + 5000
+    await assertExternalAuthority()
+    await port.remove(keys)
+    const after = await sync.get()
+    if (disposed() || !isJsonObject(after) || keys.some(key => Object.hasOwn(after, key))) return { kind: "unavailable" }
+    return { kind: "cleaned", removed: keys }
   }
 
   async function attempt(event: SyncEvent | undefined): Promise<SyncFlushResult> {
@@ -1641,6 +1702,10 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     let plan = planSyncWrite({ local: records, sync: observedRemote, intent: { kind: "flush" } })
     if (plan.kind === "refused") return plan.reason === "sync-full" ? { kind: "blocked" } : { kind: "unavailable" }
     if (plan.kind !== "planned") return { kind: "unavailable" }
+    if (plan.sent.length + plan.repairs.length === 0 && isJsonObject(records) && isJsonObject(observedRemote)) {
+      const cleanup = await cleanExpiredTombstones(event, records, observedRemote)
+      if (cleanup.kind !== "idle") return cleanup
+    }
     if (plan.sent.length === 0 && plan.repairs.length === 0) return { kind: "idle" }
     let prearmed: JsonObject | undefined
     if (plan.sent.length > 0) {

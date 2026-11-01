@@ -66,6 +66,7 @@ export function createBrowserStartingLocalFilterWriter(
       sync: {
         get() { assertOpen(); return native.storage.sync.get(null) },
         set(items) { assertOpen(); return native.storage.sync.set(items) },
+        remove(keys) { assertOpen(); return native.storage.sync.remove([...keys]) },
         subscribe(changed) {
           assertOpen()
           const event = native.storage.sync.onChanged
