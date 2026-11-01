@@ -574,9 +574,10 @@ Gather tabs ([02 §2.16](02-youtube.md#216-gather-tabs); R120–R135) reads a wi
   - The new tab is ours, not a gathered tab, so injecting into it keeps ARC-ACC-72's rule; it's the one core this job injects (ARC-ACC-70). (R123)
 - **ARC-ACC-76. Closing and reopening tabs.**
   - A gather closes its tabs in one `tabs.remove([...ids])` call, once its destination has confirmed their videos (ARC-ACC-74, ARC-ACC-75, the batch's report).
-  - For a gather into the gather playlist, each closed tab's `url`, `title`, `index` and `windowId` go into the gather's Undo record first ([DATA-58](04-features-accounts-data.md#413-gather-tabs-memory)).
+  - For a gather into the gather playlist, the gather's Undo record first saves the close plan: each tab's ID, `url`, `title`, `index` and `windowId` ([DATA-58](04-features-accounts-data.md#413-gather-tabs-memory)). After the `tabs.remove` call, `tabs.get` reads each planned tab back, and the record's second write keeps only the tabs read back as gone. Only the browser's own "no tab with that ID" error means gone. Any other failure leaves the tab unconfirmed, and no removal is retried.
   - **Undo:** one `membership` read for the account guard, then `removeBatch` with the entries the gather added, from a serving tab of that account (ARC-ACC-73's order for automatic gathers, `Tabs.serve` from the popup). Then one `tabs.create({ windowId, index, url, active: false })` per closed tab, in their old order; Firefox adds `discarded: true` and `title`, so they open unloaded. If the window has closed, one `windows.create({ url: [...], focused: false })` holds them. PROVISIONAL (G7).
-  - The reopened tabs' IDs go to the session's `kept` list (DATA-58), which automatic gathering skips until a tab's `lastAccessed` moves.
+  - If the record still holds its plan, because the background stopped before the second write, Undo reads each planned tab ID before reopening. A tab whose ID no longer exists counts as closed and reopens from the plan. A tab still open is left alone, so nothing opens twice.
+  - The reopened tabs' IDs go to the session's `kept` list (DATA-58) in Undo's second write. Automatic gathering skips them until a tab's `lastAccessed` moves.
   - If `removeBatch` fails, no tab reopens, and Undo reports "Couldn't undo.". (R124, R127)
 
 ## 6.3 Manifest, permissions and registration
@@ -964,7 +965,7 @@ interface Gather {
   - the destinations: YouTube's player (ARC-ACC-74), YouTube's queue (ARC-ACC-75) and the gather playlist (`AddFlow.batch`);
   - closing in one call, the Undo records and reopening (ARC-ACC-76);
   - where a result goes: the popup row through `ui.gathers` and `ui.gatherProgress`, the add flow's toast in the serving tab, the Badge's 3 s ✓ or ✕ when the gathering window is focused, and one Recent entry per gather into a playlist ([YT-GT-31](02-youtube.md#2166-feedback-keys-and-copy)).
-- **Its state** is the store's `gather` session record ([DATA-58](04-features-accounts-data.md#413-gather-tabs-memory)), written once per gather or Undo and never on a check that gathers nothing. A private window's gathers stay in its memory only.
+- **Its state** is the store's `gather` session record ([DATA-58](04-features-accounts-data.md#413-gather-tabs-memory)). A gather or an Undo makes at most two writes to it, and a check that gathers nothing makes none. A gather saves its close plan before closing, then what closed once it has read the tabs back, because only that read shows which tabs closed. An Undo ends the record, then saves the tab IDs it reopened. A private window's gathers stay in its memory only.
 - **Dependencies:** `TabsPort`, `AddFlow.batch`, `Registrar.ensure`, the Store, the Badge, Recent and the Monitor. Off, or on with no automatic option, its wake handlers return after the settings read the wake already made.
 - **Tests:** layer 1 for its rules (ARC-MOD-41), and layer 3 over the fake `TabsPort` with a fake clock ([Q-TEST-49](07-quality.md#724-layer-3-fake-browser-and-dom)).
 

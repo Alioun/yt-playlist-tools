@@ -773,7 +773,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 | Area | Allowed |
 |---|---|
 | `storage.local` | Idle: no write. Playback with auto-add on: at most 1 write a minute per playing tab, and none when nothing new was played ([DATA-27](04-features-accounts-data.md#46-watch-progress)). A progress save rewrites one shard ([DATA-56](04-features-accounts-data.md#46-watch-progress)): writing a 57 KB record blocked the caller for about 4 ms and took 12 ms to land, against 0.1 ms and 1 ms for a 147-byte key. Every other write follows a user action or an outcome, and only when the value changed ([DATA-57](04-features-accounts-data.md#45-caches-and-expiry)) |
-| `storage.session` | At most 1 write per page load (the tab registry), and at most 1 every 10 s for signals ([HEALTH-28](04-features-accounts-data.md#51-what-counts-as-breakage)). Gather tabs' record: one write per gather or Undo, none for a check that gathers nothing (Q-PERF-66; R135) |
+| `storage.session` | At most 1 write per page load (the tab registry), and at most 1 every 10 s for signals ([HEALTH-28](04-features-accounts-data.md#51-what-counts-as-breakage)). Gather tabs' record: at most two writes per gather or Undo, none for a check that gathers nothing ([DATA-58](04-features-accounts-data.md#413-gather-tabs-memory); Q-PERF-66; R135) |
 | `storage.sync` | All mutation attempts share at least 5 s spacing, at most 12 a minute. One combined `set()` per push; safe cleanup uses a separate `remove` opportunity with pushes taking priority. Reset/clear shares admission. No set-plus-remove opportunity, polling, or new cleanup or retry timer ([SYNC-06, SYNC-27](04-features-accounts-data.md#32-the-local-copy-comes-first); R151, R155) |
 
   - No page script registers `storage.onChanged`, for any area: every listening context gets its own copy of every change, content scripts in every tab included. In a burst of 20 writes of a 57 KB record, each of three listening tabs spent 144–223 ms of main-thread time, against under 3 ms for a 147-byte key.
@@ -809,7 +809,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 | Off, or on with no automatic option | Nothing registered, and no listener, check, timer or write of its own. Its code runs only on a click in the popup |
 | Trigger 1 (unvisited for a while) | No wake of its own. At most one `tabs.query` a minute, on wakes that happen anyway. No write when nothing is gathered |
 | Trigger 2 or 3 (opened in the background, N video tabs) | The page half and core on watch and live pages. No wake beyond `tab.hello`. Per burst: one `tabs.query` and one-shot timers of at most 10 s |
-| A gather | At most 20 ms of background time with 50 tabs at 1×, not counting requests or the wait for the language detector. One `tabs.remove`. One `storage.session` `set()` |
+| A gather | At most 20 ms of background time with 50 tabs at 1×, not counting requests or the wait for the language detector. One `tabs.remove`. At most two `storage.session` `set()` calls, the close plan and then what closed ([DATA-58](04-features-accounts-data.md#413-gather-tabs-memory)) |
 | An automatic round's requests | At most 50 membership reads and two batched adds, one at a time, from one serving tab. None through a gathered tab |
 
 - **Q-PERF-67. Gather tabs changes no budget number** (R139):

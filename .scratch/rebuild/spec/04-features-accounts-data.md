@@ -1015,11 +1015,14 @@ type GatherRecord = {
   to: "player" | "queue" | "playlist"; count: number
   acct?: string; playlist?: string                       // into a playlist only
   added?: { video: string; setVideoId: string }[]        // what Undo removes
-  closed?: { url: string; index: number; title: string }[] // what Undo reopens
+  closing?: { tabId: number; video: string; tab: { url: string; index: number; title: string } }[] // the close plan, until the second write
+  closed?: { url: string; index: number; title: string }[] // what Undo reopens: the planned tabs read back as gone
 }
 ```
 
-  - It's written once per gather or Undo, in the same `set()` as its Recent adds entry, and never on a check that gathers nothing.
+  - A gather makes at most two writes to it, and a check that gathers nothing makes none. The first write saves the record with its close plan (`closing`) before any tab closes, in the same `set()` as the gather's Recent adds entry. The second write saves what closed (`closed`) once the gather has read each planned tab back after the one `tabs.remove` call. It takes two because Undo needs a saved record before any tab closes, and only the read after closing shows which tabs closed.
+  - An Undo also makes at most two writes: it ends the record, then saves the tab IDs it reopened to `kept`.
+  - If the background stops between a gather's two writes, the record keeps its plan. Undo then reads each planned tab ID. A tab whose ID no longer exists counts as closed and reopens from its saved URL, title, index and window. A tab still open is left alone, so nothing opens twice. A tab Undo can't read isn't reopened, and Undo counts it as not reopened.
   - Nothing from a private window is kept: a private window's gathers stay in the background's memory (ACC-47, DATA-33).
   - It never syncs and is never sent anywhere. Clear all data removes it (DATA-39), and removing a setup removes that account's records (DATA-44).
   - Nothing about gathers is kept in `storage.local`: no video IDs and no tab addresses. (R127, R132, R135)
