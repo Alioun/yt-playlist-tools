@@ -220,7 +220,7 @@ describe("Firefox reopening at the browser boundary", () => {
         create: async props => {
           created.push({ ...props })
           if (refuse && props.discarded) throw new Error("discarded refused")
-          return { id: 77 + created.length, windowId: props.windowId, index: props.index ?? 0, url: props.url, incognito: false, active: props.active,
+          return { id: 77 + created.length, windowId: props.windowId, index: props.index ?? 0, url: props.url, incognito: false, active: props.active, lastAccessed: 0,
             pinned: false, highlighted: false, selected: false, discarded: props.discarded ?? false, autoDiscardable: true, groupId: -1, frozen: false }
         }
       },

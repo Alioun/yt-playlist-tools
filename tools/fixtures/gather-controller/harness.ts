@@ -19,7 +19,7 @@ export type BrowserCall =
   | { kind: "create"; windowId: number; url: string; active: boolean; index?: number }
   | { kind: "create-window"; urls: readonly string[] }
   | { kind: "remove"; tabIds: readonly number[] }
-type Row = GatherTab & { status: "loading" | "complete" }
+type Row = { -readonly [K in keyof GatherTab]: GatherTab[K] } & { status: "loading" | "complete" }
 
 // The lowest browser boundary: one fake tab strip per window. Everything above it is the real constructor chain.
 export function browser(fixture: ReturnType<typeof tabsFixture>) {

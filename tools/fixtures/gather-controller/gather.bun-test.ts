@@ -91,7 +91,7 @@ describe("gather into the gather playlist", () => {
     f.yt.open()
     const result = await f.drive(pending)
     expect(result).toMatchObject({ kind: "playlist", saved: 2, already: 1, closed: 2, navigated: 1, kept: true, retry: true })
-    expect(result.kind === "playlist" && result.failed.map(({ video }) => video)).toEqual([v[2]])
+    expect(result.kind === "playlist" && result.failed.map(({ video }) => video)).toEqual([v[2]!])
     expect(f.window.removed().sort()).toEqual([10, 11])
     const stored = f.tabs.stored()
     expect(JSON.stringify(stored.gather)).toContain(`"closed":[{"url":"${watch(v[0]!)}","index":0,"title":"Added - YouTube"},{"url":"${watch(v[1]!)}","index":1,"title":"Already - YouTube"}]`)
