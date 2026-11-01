@@ -60,8 +60,8 @@
     "patch": "tools/fixtures/site-toaster/negatives/missing-keys-collaborator.patch",
     "target": "tools/fixtures/site-toaster/isolated-negative.ts",
     "line": 2,
-    "code": "TS2345",
-    "source": "createFeedback({})",
+    "code": "TS2741",
+    "source": "declare const options: Parameters<typeof createFeedback>[0]; const { keys, ...withoutKeys } = options; createFeedback(withoutKeys)",
     "status": "UNEXECUTED",
     "require": "positive native gate, exactly one intended diagnostic, no unrelated diagnostic, exact restoration"
   },
