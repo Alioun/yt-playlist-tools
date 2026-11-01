@@ -66,6 +66,30 @@ Once, in the repository settings:
   - `CWS_PUBLISH_TYPE`, `DEFAULT_PUBLISH` or `STAGED_PUBLISH`.
   - `SIGN_DEV_BUILDS`, `true` to sign the Firefox dev build on every push to `dev`.
 - **A ruleset on `main`:** pull requests required, the CI `build` check required, no force pushes.
+
+### The reviewer test account (proposed, off until approved)
+
+AMO's full and hotfix reviewer notes carry `{email}`, `{password}`, `{code1}` and `{code2}` (REL-STORE-21, REL-STORE-25). Under decision G28, `submit-amo` fills them from the `amo` environment secret `AMO_REVIEWER_LOGIN`. Both steps that read it are `if: false` until the owner approves [the design](../../.audit/2.0-build/ci-reviewer-credentials-design.md), its tests, and a separate review of the secret flow. The design also asks for `amo`'s **Deployment branches** to allow only `main`.
+
+`AMO_REVIEWER_LOGIN` is four lines, in this order, with nothing else:
+
+1. the reviewer account's e-mail address;
+2. its password, with no leading or trailing space;
+3. one unused backup code, 8 digits, as `12345678` or `1234 5678`;
+4. a second, different unused backup code.
+
+The owner stores it without echoing any of it. One way is to paste the four lines into **Settings › Environments › amo › Add environment secret**. The other is from 1Password:
+
+```sh
+(set -o pipefail
+ { op read "op://<vault>/<item>/username"
+   op read "op://<vault>/<item>/password"
+   op read "op://<vault>/<item>/<backup code field 1>"
+   op read "op://<vault>/<item>/<backup code field 2>"
+ } | gh secret set AMO_REVIEWER_LOGIN --env amo --repo Alioun/yt-playlist-tools) >/dev/null 2>&1 && echo set || echo failed
+```
+
+`op read` ends each value with a newline, so the pipe carries four lines. After a submission whose codes were used, the same command stores two fresh codes (REL-CHK-24). `gh secret list --env amo` shows only names and dates. The release's "Check the reviewer test account" step checks the format before anything is submitted, and prints only a fixed line.
 - Before setting `PUBLISH_AMO`, check that the API key works: run `bun scripts/amo-version.ts status 1.4.5` with `FIREFOX_EXTENSION_ID` set to the GUID (with braces) and the JWT pair. It should print `present` or `no-source`; an error means the key is wrong.
 
 ## Publishing by hand
