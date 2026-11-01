@@ -104,7 +104,7 @@ test("real core Undo key and button share one in-flight action", async () => {
     f.update({ undoKey, features: [shortcut] }); expect(press().defaultPrevented).toBe(true)
     expect(f.toaster.read()?.content.text).toBe("Nothing to undo.")
     await settle(); f.update({ undoKey: null, features: [shortcut] }); expect(press().defaultPrevented).toBe(false)
-    f.update({ undoKey: { ...undoKey, code: "KeyP" }, features: [shortcut] })
+    f.update({ undoKey: { ...undoKey, code: "KeyP", char: "p" }, features: [shortcut] })
     expect(press().defaultPrevented).toBe(false)
     expect(press({ code: "KeyP", key: "p" }).defaultPrevented).toBe(true)
   } finally { f.dispose() }

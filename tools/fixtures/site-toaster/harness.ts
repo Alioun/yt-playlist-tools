@@ -2,7 +2,7 @@ import { Scope } from "../../../src/site/core/scope"
 import { Keys } from "../../../src/site/core/keys"
 import { createFeedback, type FeedbackLabels } from "../../../src/site/kit/feedback"
 import { englishI18n } from "../localization/scripted"
-import type { TabView } from "../../../src/shared/contracts/tab-view"
+import type { TabFeature, TabView } from "../../../src/shared/contracts/tab-view"
 import { isPlaylistId } from "../../../src/shared/model"
 
 export const labels: FeedbackLabels = {
@@ -10,7 +10,7 @@ export const labels: FeedbackLabels = {
   nothingToUndo: "Nothing to undo."
 }
 export const undoKey: NonNullable<TabView["undoKey"]> = { code: "KeyU", char: "u", ctrl: false, alt: true, shift: false, meta: false }
-export const shortcut: TabView["features"][number] = {
+export const shortcut: TabFeature<"shortcuts"> = {
   id: "shortcuts", options: { on: true, feedback: true, music: true, preset: true, picker: null, list: [] }
 }
 export function raw(target: object, name: string, value: unknown) {
