@@ -204,6 +204,14 @@ describe("environment and page logging", () => {
       .toEqual([["imports", 3, "@/background/boot"], ["page-console", 6, "console.log"]])
   })
 
+  test("resolves Svelte script declarations before reporting an implicit WXT name", () => {
+    const declared = '<script lang="ts">\nlet { browser }: { browser: string } = $props()\nconst label = `${browser}`\n</script>\n<p>{label}</p>'
+    expect(findings("src/ui/Recorder.svelte", declared)).toEqual([])
+    const implicit = '<script lang="ts">\nconst label = `${browser}`\n</script>\n<p>{label}</p>'
+    expect(findings("src/ui/Recorder.svelte", implicit).map(finding => [finding.reason, finding.line, finding.evidence]))
+      .toEqual([["implicit-wxt", 2, "browser"]])
+  })
+
   test("reports a Svelte parse error on its original source line", () => {
     const actual = findings("src/page/Gateway.svelte", '<p>synthetic</p>\n<script lang="ts">\nconst broken = ;\n</script>')
     expect(actual.map(finding => [finding.reason, finding.line])).toEqual([["syntax-error", 3]])

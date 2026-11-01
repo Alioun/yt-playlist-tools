@@ -89,16 +89,17 @@ export function inspect(sources: Source[], aliases: Aliases = { "@/*": ["src/*"]
         rule: "imports", reason: "syntax-error", evidence: error.message.replace(/\s+/g, " ").trim() })
       continue
     }
-    const file = ts.createSourceFile(source.file, text, ts.ScriptTarget.Latest, true,
+    const programFile = source.file.endsWith(".svelte") ? `${source.file}.ts` : source.file
+    const file = ts.createSourceFile(programFile, text, ts.ScriptTarget.Latest, true,
       source.file.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS)
     const host: ts.CompilerHost = {
-      getSourceFile: name => name === source.file ? file : undefined,
+      getSourceFile: name => name === programFile ? file : undefined,
       getDefaultLibFileName: () => "", writeFile: () => {}, getCurrentDirectory: () => "/",
-      getDirectories: () => [], fileExists: name => name === source.file,
-      readFile: name => name === source.file ? file.text : undefined,
+      getDirectories: () => [], fileExists: name => name === programFile,
+      readFile: name => name === programFile ? file.text : undefined,
       getCanonicalFileName: name => name, useCaseSensitiveFileNames: () => true, getNewLine: () => "\n",
     }
-    const program = ts.createProgram([source.file], { noLib: true, noResolve: true }, host)
+    const program = ts.createProgram([programFile], { noLib: true, noResolve: true }, host)
     const checker = program.getTypeChecker()
     const seen = new Set<string>()
     function report(rule: Rule, node: ts.Node, reason: string, evidence = node.getText(file), position = node.getStart(file)) {
