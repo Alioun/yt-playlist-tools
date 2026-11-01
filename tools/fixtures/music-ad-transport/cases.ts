@@ -24,8 +24,8 @@ const rawJobs = {
   queueInsert: { kind: "queueInsert", position: "end", endpoint: { queueAddEndpoint: { queueTarget: { videoId: "synthetic01" }, queueInsertPosition: "INSERT_AT_END" } } },
   queueRemove: { kind: "queueRemove", id: 7 }, queueRemoveIds: { kind: "queueRemoveIds", ids: [7] },
   queueMove: { kind: "queueMove", id: 7, to: "end" }, queueReinsert: { kind: "queueReinsert", videoId: "synthetic01", index: 0 },
-  like: { kind: "like", endpoint: { likeEndpoint: {} } },
-  library: { kind: "library", endpoint: { feedbackEndpoint: {} } },
+  like: { kind: "like", endpoint: { likeEndpoint: { nativeAction: "synthetic" } } },
+  library: { kind: "library", endpoint: { feedbackEndpoint: { nativeAction: "synthetic" } } },
   navigate: { kind: "navigate", endpoint: { browseEndpoint: { browseId: "MPREsynthetic" } } },
   nowPlaying: { kind: "nowPlaying" }, castState: { kind: "castState" }
 } satisfies Record<JobId, unknown>
