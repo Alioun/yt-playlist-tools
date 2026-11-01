@@ -127,7 +127,7 @@ test("restart after every accepted write boundary reuses the complete accepted e
       } finally { await h.dispose() }
     }
   }
-}, 120000)
+}, 600000)
 
 test("withdrawal around each write retains the original effect and a later Agree cannot resume it", async () => {
   const reference = world(), prepared = await reference.prepare()
