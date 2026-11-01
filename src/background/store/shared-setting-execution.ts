@@ -8,7 +8,8 @@ import { changeSharedSetting, type SharedSettingChange } from "./settings-edit"
 import { planSyncWrite, sameSyncJson, type SyncDocumentRecord } from "./sync-write-admission"
 
 export type LocalSettingsWriteResult =
-  | { readonly kind: "committed" | "unchanged" }
+  | { readonly kind: "committed" }
+  | { readonly kind: "unchanged" }
   | { readonly kind: "result"; readonly result: Extract<ChangeResult, { refused: string }> }
   | { readonly kind: "unavailable"; readonly reason: "startup" | "newer-layout" | "sync-writer-required" | "stale" | "disposed" }
   | { readonly kind: "failed"; readonly stage: "before-set" | "set"; readonly error: unknown }
