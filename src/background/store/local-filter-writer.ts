@@ -638,6 +638,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     try { return await run() } finally { inImportExecution = false }
   }
   async function resumeImportInLane(): Promise<SettingsImportResult | { readonly kind: "idle" }> {
+    if (disposed()) return { kind: "unavailable", reason: "disposed" }
     const records = await storage.get(null); recognizeImport(records)
     if (!importPending) return { kind: "idle" }
     if (!importExecution) return { kind: "unavailable", reason: "cleanup-host" }
