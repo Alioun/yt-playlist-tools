@@ -19,7 +19,7 @@ A merge that doesn't bump the version releases nothing. A version below the last
 3. `release.yml`:
    1. builds and checks both packages (typecheck, tests, manifests, and the sources zip rebuilding);
    2. tags `v{version}` and creates the GitHub release with the zips, the manifests and the release notes as its text. Betas get a pre-release;
-   3. waits for your approval in the `amo` and `cws` environments, then submits exactly the files it checked.
+   3. waits for your approval in the `amo` and `cws` environments, then submits exactly the files it checked. Once G28 is on, a stable release also waits for `amo-reviewer` twice: before `submit-amo` and after it.
 4. Approve each store in the run, or reject one to hold it.
 5. The run's last job starts [`pages.yml`](../../.github/workflows/pages.yml), which rebuilds the site and its `beta/updates.json`.
 
@@ -45,6 +45,7 @@ To check a release without publishing, run the workflow by hand (**Actions › R
 - **Resume:** use **Re-run failed jobs**. It keeps `meta`'s and `build`'s outputs and the checked artifact, and every job picks up where it stopped:
   - `github-release` finishes a release that's already there, if its tag is this commit;
   - `submit-amo` uploads only a version AMO doesn't have, attaches the sources if they're missing, and for a beta fetches the signed file;
+  - `fill-reviewer-notes`, once G28 is on, sets the reviewer notes again;
   - `submit-cws` skips a version that's already submitted or published.
 - **Re-run all jobs** isn't a recovery path: `meta` would see the tag and skip everything.
 
@@ -65,11 +66,36 @@ Once, in the repository settings:
   - `PUBLISH_CWS`, `true` to submit to the Chrome Web Store. It stays `false` until the item exists: the API can't create one, so `v1.99.1`'s Chrome zip is uploaded by hand, as Unlisted, from the run's artifacts.
   - `CWS_PUBLISH_TYPE`, `DEFAULT_PUBLISH` or `STAGED_PUBLISH`.
   - `SIGN_DEV_BUILDS`, `true` to sign the Firefox dev build on every push to `dev`.
-- **A ruleset on `main`:** pull requests required, the CI `build` check required, no force pushes.
+- **A ruleset on `main`:** pull requests required with review from Code Owners ([`.github/CODEOWNERS`](../../.github/CODEOWNERS)), the CI `build` check required, no force pushes. GitHub doesn't let a pull request's author approve it.
+- Before setting `PUBLISH_AMO`, check that the API key works: run `bun scripts/amo-version.ts status 1.4.5` with `FIREFOX_EXTENSION_ID` set to the GUID (with braces) and the JWT pair. It should print `present` or `no-source`; an error means the key is wrong.
 
 ### The reviewer test account (proposed, off until approved)
 
-AMO's full and hotfix reviewer notes carry `{email}`, `{password}`, `{code1}` and `{code2}` (REL-STORE-21, REL-STORE-25). Under decision G28, `submit-amo` fills them from the `amo` environment secret `AMO_REVIEWER_LOGIN`. Both steps that read it are `if: false` until the owner approves [the design](../../.audit/2.0-build/ci-reviewer-credentials-design.md), its tests, and a separate review of the secret flow. The design also asks for `amo`'s **Deployment branches** to allow only `main`.
+AMO's full and hotfix reviewer notes carry `{email}`, `{password}`, `{code1}` and `{code2}` (REL-STORE-21, REL-STORE-25). Under decision G28, two jobs in `release.yml` fill them from the secret `AMO_REVIEWER_LOGIN`. `check-reviewer-login` checks it before `submit-amo` sends anything, and `fill-reviewer-notes` puts it into the version's notes once AMO has the version. Both run only for stable releases, in the `amo-reviewer` environment, which no other job uses. Both stay `if: false && …` until the owner approves [the design](../../.audit/2.0-build/ci-reviewer-credentials-design.md), its tests, and a separate review of the secret flow.
+
+Set it up in this order. Store nothing until step 2 prints `true` twice.
+
+1. Under **Settings › Environments**, create `amo-reviewer`:
+   - you as required reviewer, self-review allowed;
+   - under **Deployment branches and tags**, **Selected branches and tags** with the one rule `main`, a branch;
+   - **Allow administrators to bypass configured protection rules** turned off.
+2. Check that only `main` can deploy to `amo-reviewer` and that you review it. Each command prints `true` or `false`:
+
+   ```sh
+   gh api repos/Alioun/yt-playlist-tools/environments/amo-reviewer --jq '.deployment_branch_policy == {"protected_branches": false, "custom_branch_policies": true} and [.protection_rules[] | select(.type == "required_reviewers") | .reviewers[].reviewer.login] == ["Alioun"]'
+   gh api repos/Alioun/yt-playlist-tools/environments/amo-reviewer/deployment-branch-policies --jq '[.branch_policies[] | {name, type}] == [{"name": "main", "type": "branch"}]'
+   ```
+
+3. Check that the `main` ruleset requires review from Code Owners, so a change to the workflows, the script or its tests needs your review.
+4. Store the variable `REVIEWER_NOTES_SHA256`, the SHA-256 of `scripts/amo-reviewer-notes.ts` at the commit you approved. The jobs run the script only at this digest, so a changed script waits for your approval again. The digest isn't secret:
+
+   ```sh
+   gh variable set REVIEWER_NOTES_SHA256 --env amo-reviewer --repo Alioun/yt-playlist-tools \
+     --body "$(git show <approved commit>:scripts/amo-reviewer-notes.ts | shasum -a 256 | cut -d ' ' -f 1)"
+   ```
+
+5. Store the secrets `FIREFOX_JWT_ISSUER` and `FIREFOX_JWT_SECRET`, the same values as in `amo`.
+6. Store `AMO_REVIEWER_LOGIN`, as below.
 
 `AMO_REVIEWER_LOGIN` is four lines, in this order, with nothing else:
 
@@ -78,19 +104,20 @@ AMO's full and hotfix reviewer notes carry `{email}`, `{password}`, `{code1}` an
 3. one unused backup code, 8 digits, as `12345678` or `1234 5678`;
 4. a second, different unused backup code.
 
-The owner stores it without echoing any of it. One way is to paste the four lines into **Settings › Environments › amo › Add environment secret**. The other is from 1Password:
+Store it without echoing any of it. One way is to paste the four lines into **Settings › Environments › amo-reviewer › Add environment secret**. The other is from 1Password:
 
 ```sh
-(set -o pipefail
- { op read "op://<vault>/<item>/username"
-   op read "op://<vault>/<item>/password"
-   op read "op://<vault>/<item>/<backup code field 1>"
-   op read "op://<vault>/<item>/<backup code field 2>"
- } | gh secret set AMO_REVIEWER_LOGIN --env amo --repo Alioun/yt-playlist-tools) >/dev/null 2>&1 && echo set || echo failed
+(set -euo pipefail
+ login=$(op read "op://<vault>/<item>/username" &&
+   op read "op://<vault>/<item>/password" &&
+   op read "op://<vault>/<item>/<backup code field 1>" &&
+   op read "op://<vault>/<item>/<backup code field 2>")
+ printf '%s\n' "$login" | gh secret set AMO_REVIEWER_LOGIN --env amo-reviewer --repo Alioun/yt-playlist-tools) >/dev/null 2>&1 && echo set || echo failed
 ```
 
-`op read` ends each value with a newline, so the pipe carries four lines. After a submission whose codes were used, the same command stores two fresh codes (REL-CHK-24). `gh secret list --env amo` shows only names and dates. The release's "Check the reviewer test account" step checks the format before anything is submitted, and prints only a fixed line.
-- Before setting `PUBLISH_AMO`, check that the API key works: run `bun scripts/amo-version.ts status 1.4.5` with `FIREFOX_EXTENSION_ID` set to the GUID (with braces) and the JWT pair. It should print `present` or `no-source`; an error means the key is wrong.
+`op read` ends each value with a newline, so `login` holds four lines. All four reads finish before `gh` starts, so a failed read stores nothing and the command prints `failed`. A pipe straight from the reads into `gh secret set` would store whatever lines arrived before the failure. After a submission whose codes were used, the same command stores two fresh codes (REL-CHK-24). `gh secret list --env amo-reviewer` shows only names and dates. `check-reviewer-login` checks the format before anything is submitted, and prints only a fixed line.
+
+Each stable release then asks you to approve `amo-reviewer` twice: for the check before `submit-amo`, and for the fill after it. Betas ask for neither.
 
 ## Publishing by hand
 
