@@ -14,7 +14,7 @@ export type LayerOptions = {
 export async function createNoticeLayer(options: LayerOptions) {
   const { document, owner, site } = options
   if (owner.disposed || document.hidden) return null
-  const { isolatedElement: host, shadow, parentElement } = await createIsolatedElement({
+  const { parentElement: host, shadow, isolatedElement } = await createIsolatedElement({
     name: "pp-toast-layer", mode: "open", isolateEvents: true
   })
   if (owner.disposed || document.hidden) { host.remove(); return null }
@@ -23,7 +23,7 @@ export async function createNoticeLayer(options: LayerOptions) {
   host.style.cssText = "all: initial; position: fixed; inset: 0; z-index: 2300; pointer-events: none;"
   host.dataset.site = site
   const style = document.createElement("style"); style.textContent = toastSkin; shadow.prepend(style)
-  const root = document.createElement("div"); parentElement.append(root)
+  const root = document.createElement("div"); isolatedElement.append(root)
   scope.add(() => host.remove())
   for (const type of ["click", "dblclick", "pointerdown", "pointerup", "mousedown", "mouseup", "contextmenu", "keydown", "keyup"]) {
     scope.on<EventTarget, string>(host, type, event => event.stopPropagation())

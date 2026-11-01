@@ -68,7 +68,7 @@ test("actual DOM key/button race, focus pause and propagation keep one Undo", as
     const release = f.scope.on(document, "click", () => { escaped++ })
     button.click(); expect(press().defaultPrevented).toBe(false); expect(calls).toBe(1); expect(escaped).toBe(0)
     answer.resolve(null); await draw(); expect(f.toaster.hasUndo()).toBe(false)
-    release(); r.dispose(); await draw()
+    release(); r.dispose(); await draw(); f.timers.advance(0)
     expect(f.toaster.hasUndo()).toBe(false); expect(document.querySelectorAll("pp-toast-layer").length).toBe(0)
     f.scope.dispose(); expect(f.scope.resourceCount).toBe(0); expect(f.timers.count).toBe(0)
   } finally { f.dispose() }
@@ -139,7 +139,7 @@ test("Music reads bounded surfaces at show 0.4s 1.2s, none while hidden, then re
 test("plain notice transfers current due data to kit without duplicate visuals or stale generation effects", async () => {
   const f = fixture(); let shown = 0, dismissals = 0, details = 0
   const plain = plainNoticePresenter({ owner: f.scope, document, site: "www", onError: error => { f.errors.push(error) }, onCosmetic: variable => { f.cosmetics.push(variable) } })
-  const owner = createNoticeOwner({ scope: f.scope, initial: plain, onError: error => { f.errors.push(error) }, onCosmetic: variable => { f.cosmetics.push(variable) } })
+  const owner = createNoticeOwner({ scope: f.scope, initial: plain, onError: error => { f.errors.push(error) } })
   const due = { kind: "not-working", features: ["card-menu"] } satisfies NoticePresentation["due"]
   const generation = {}
   try {
