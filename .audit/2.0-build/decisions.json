@@ -1,0 +1,35 @@
+{
+  "recordedAt": "2026-11-01",
+  "source": "Rebuilt from the coordinator thread after the untracked ledger was deleted on 2026-11-01. The owner settled each decision in that thread.",
+  "decisions": [
+    {"id": "G1", "topic": "DATA-58 gather record writes", "answer": "A gather and an Undo may each write the session record at most twice: the close plan, then the confirmed result.", "landed": "2.0/gather-decisions, DATA-58 and ARC text"},
+    {"id": "G2", "topic": "Untitled queue toast copy", "answer": "Use shorter wording.", "landed": "superseded by G6"},
+    {"id": "G3", "topic": "Card-menu proposals P1 and P2", "answer": "Share the menu-button table and Items' linkedVideo.", "landed": "2.0/card-menu-proposals"},
+    {"id": "G4", "topic": "Card-menu proposal P3", "answer": "openCardMenu carries the video ID and the gateway refuses a recycled card.", "landed": "2.0/card-menu-proposals"},
+    {"id": "G5", "topic": "Interrupted close", "answer": "At Undo, planned tabs whose IDs no longer exist count as closed and reopen from the saved plan.", "landed": "2.0/gather-decisions"},
+    {"id": "G6", "topic": "Queue toast strings", "answer": "Added “$TITLE$” to queue; Added to queue; Couldn't add “$TITLE$”; Couldn't add to queue; Couldn't confirm “$TITLE$”; Couldn't confirm the add.", "landed": "2.0/queue-copy"},
+    {"id": "G7", "topic": "Card menu after a failed page click", "answer": "Do nothing and stay kit-free.", "landed": "2.0/card-menu-proposals"},
+    {"id": "G8", "topic": "One video on two cards", "answer": "Every card for that video shows Added within one page view.", "landed": "2.0/queue-copy"},
+    {"id": "G9", "topic": "Private-window first pick", "answer": "Confirm with \"Saved. Private windows don't keep your playlist choice.\"", "landed": "2.0/picker-reset-privacy, R171"},
+    {"id": "G10", "topic": "Refused playlist choice after a save", "answer": "Stay open, show the save and the refusal, keep Undo, retry only the choice.", "landed": "R172"},
+    {"id": "G11", "topic": "Closing during a first pick", "answer": "Finish both steps for the original account while consent and account authority stay valid.", "landed": "R173"},
+    {"id": "G12", "topic": "Ticked Clear all under a newer layout", "answer": "Clear this browser only and leave synced settings for the newer version.", "landed": "R174"},
+    {"id": "G13", "topic": "Newer-layout Clear all copy", "answer": "Cleared on this browser. Synced settings were left for the newer version of Perchling that saved them. Update Perchling here to clear them too.", "landed": "R175"},
+    {"id": "G14", "topic": "Privacy policy, REL-STORE-17", "answer": "Approved as drafted in 08-release.md section 10.2. The cookie bullet goes if ticket 25 finds no shipped route reads the session cookie.", "landed": "2.0/picker-reset-privacy"},
+    {"id": "G15", "topic": "Card-menu bundle budget", "answer": "Raise feature-card-menu.js from 0.5 KB to 1.25 KB gzip.", "landed": "db45fa2b6"},
+    {"id": "G16", "topic": "Import rewrote consent through Device", "answer": "Move lastAccount out of the Device record.", "landed": "2.0/device-last-account, R176"},
+    {"id": "G17", "topic": "Native account removal and synced Setup tombstones", "answer": "Build both in 2.0 now.", "landed": "2.0/account-removal-tombstones"}
+  ],
+  "coordinatorCalls": [
+    "subscribeView registers subscriptions made before readiness.",
+    "Gather does not reopen a planned tab it cannot read.",
+    "R174: under a newer layout the synced checkbox shows when device.syncOn is true or sync.joined is set.",
+    "The 18 original feature-switches negatives were deleted; key-settings' relocated copies are the single source.",
+    "G17 receive-side cleanup clears cache, progress and session memory; a Filter tombstone under a live Setup is refused; no removal journal."
+  ],
+  "standing": {
+    "models": "Opus 5.5 only; Sol 6.1 is out of usage.",
+    "held": "production, rendering and axe, native behavior",
+    "requested": "no review, no PR"
+  }
+}
