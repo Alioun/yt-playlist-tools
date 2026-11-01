@@ -13,6 +13,7 @@ import { createFirstRunOwner, type FirstRunServices } from "../../../src/ui/back
 import { createBrowserI18n } from "../../../src/ui/backend/browser"
 import catalogue from "../../../src/public/_locales/en/messages.json"
 import { startingBridge } from "./starting-bridge"
+import "./synthetic-layout"
 import { scriptedMessages } from "../localization/scripted"
 import { pendingLists, bridgeHarness, popup, a, alpha, beta, check, success, settle, deferred } from "../ui-playlist-progressive/harness"
 import { settings, created, consumerSeed } from "../ui-read-playlist-bridge/harness"
