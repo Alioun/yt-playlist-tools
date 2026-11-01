@@ -1,23 +1,33 @@
-import { afterEach, describe, expect, test } from "bun:test"
+import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test"
 import { spawnSync } from "node:child_process"
 import { createHash, createHmac } from "node:crypto"
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
+import { type Certificate, type FakeAmo, type Mode, startFakeAmo, untrustedCertificate } from "./fixtures/fake-amo"
 
 // Credential-free (G28): every value below is a fake, and each child process
 // gets an environment built from scratch, so no real secret can reach it.
 
 const root = resolve(import.meta.dir, "../..")
 const script = join(root, "scripts/amo-reviewer-notes.ts")
+const scriptSource = readFileSync(script, "utf8")
+const bash = Bun.which("bash")!
 
-type Step = { name?: string; if?: unknown; env?: Record<string, string>; run?: string }
-type Job = { env?: Record<string, string>; steps: Step[] }
-const workflowText = readFileSync(join(root, ".github/workflows/release.yml"), "utf8")
-const workflow = Bun.YAML.parse(workflowText) as { env: Record<string, string>; jobs: Record<string, Job> }
-const submitAmo = workflow.jobs["submit-amo"]!
-const loginSteps = submitAmo.steps.filter(step => step.env && "AMO_REVIEWER_LOGIN" in step.env)
-const [checkStep, fillStep] = loginSteps as [Step, Step]
+type Step = { name?: string; uses?: string; with?: Record<string, unknown>; env?: Record<string, string>; run?: string }
+type Job = { needs?: string[]; if?: unknown; environment?: string | { name: string }; env?: Record<string, string>; steps?: Step[] }
+type Workflow = { env?: Record<string, string>; jobs: Record<string, Job> }
+
+const workflowDir = join(root, ".github/workflows")
+const workflowTexts = Object.fromEntries(
+  readdirSync(workflowDir).filter(file => /\.ya?ml$/.test(file)).sort().map(file => [file, readFileSync(join(workflowDir, file), "utf8")])
+)
+const workflows = Object.fromEntries(Object.entries(workflowTexts).map(([file, text]) => [file, Bun.YAML.parse(text) as Workflow]))
+const release = workflows["release.yml"]!
+const reviewerJobs = ["check-reviewer-login", "fill-reviewer-notes"]
+const loginStep = (job: string) => release.jobs[job]!.steps!.find(step => step.env && "AMO_REVIEWER_LOGIN" in step.env)!
+const checkStep = loginStep("check-reviewer-login")
+const fillStep = loginStep("fill-reviewer-notes")
 
 // The password carries JSON escapes, a `$&` replacement pattern and a placeholder.
 const login = {
@@ -64,53 +74,92 @@ const filledNotes = [
 ].join("\n")
 const betaNotes = "Pre-release 1.99.2 of 2.0.0, self-distributed to testers. Same build instructions."
 
+const API = "https://addons.mozilla.org/api/v5"
+const TIMEOUT = "AbortSignal.timeout(30_000)"
+
+/** The script with AMO at `origin` and, for the hang test, a shorter timeout. Nothing else differs. */
+function scriptFor(origin: string, timeout?: string): string {
+  expect(scriptSource.split(API)).toHaveLength(2)
+  const source = scriptSource.replace(API, `${origin}/api/v5`)
+  if (timeout === undefined) return source
+  expect(source.split(TIMEOUT)).toHaveLength(2)
+  return source.replace(TIMEOUT, `AbortSignal.timeout(${timeout})`)
+}
+
+const sha256 = (data: string | Buffer) => createHash("sha256").update(data).digest("hex")
+
 const directories: string[] = []
-afterEach(() => {
+const servers: FakeAmo[] = []
+afterEach(async () => {
   for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true })
+  await Promise.all(servers.splice(0).map(server => server.close()))
 })
 
-/** A runner workspace: the checkout's script, the artifact's metadata, and a `bun` that preloads the fake AMO. */
-function workspace(notes?: string): string {
+async function fakeAmo(mode: Mode = "store", tls?: Certificate): Promise<FakeAmo> {
+  const server = await startFakeAmo(mode, tls)
+  servers.push(server)
+  return server
+}
+
+function writeMetadata(dir: string, notes: string) {
+  const metadata = { version: { release_notes: { "en-US": "Release notes." }, approval_notes: notes } }
+  writeFileSync(join(dir, "dist/amo-metadata.json"), JSON.stringify(metadata, null, 2) + "\n")
+}
+
+/** A reviewer job's runner: the sparse checkout, the artifact, RUNNER_TEMP, HOME, and Bun on PATH. */
+function workspace(source: string, notes?: string): string {
   const dir = mkdtempSync(join(tmpdir(), "reviewer-notes-"))
   directories.push(dir)
-  for (const sub of ["scripts", "dist", "_temp", "_shims"]) mkdirSync(join(dir, sub))
-  copyFileSync(script, join(dir, "scripts/amo-reviewer-notes.ts"))
-  copyFileSync(join(import.meta.dir, "fixtures/fake-amo.ts"), join(dir, "_shims/fake-amo.ts"))
-  writeFileSync(
-    join(dir, "_shims/bun"),
-    `#!/bin/sh\nexec "${process.execPath}" --preload "${join(dir, "_shims/fake-amo.ts")}" "$@"\n`,
-    { mode: 0o755 }
-  )
-  if (notes !== undefined) {
-    const metadata = { version: { release_notes: { "en-US": "Release notes." }, approval_notes: notes } }
-    writeFileSync(join(dir, "dist/amo-metadata.json"), JSON.stringify(metadata, null, 2) + "\n")
-  }
+  for (const sub of ["scripts", "dist", "_temp", "_home", "_bin"]) mkdirSync(join(dir, sub))
+  writeFileSync(join(dir, "scripts/amo-reviewer-notes.ts"), source)
+  symlinkSync(process.execPath, join(dir, "_bin/bun"))
+  if (notes !== undefined) writeMetadata(dir, notes)
   return dir
 }
 
-type Options = { login?: string | null; mode?: string; digest?: string; amoKeys?: boolean }
+type Options = { login?: string; digest?: string; amoKeys?: boolean; env?: Record<string, string> }
 
-/** Runs a step's real `run:` block under `bash -e -x`, so stderr traces every command line it spawns. */
-function runStep(step: Step, dir: string, { login = rawLogin, mode = "store", digest, amoKeys = true }: Options = {}) {
+/**
+ * Runs a step's real `run:` block as GitHub does, plus `-x`, so stderr traces
+ * every command line it spawns. The step's own `env:` decides which dummy
+ * reaches which name; a missing secret is empty, as on GitHub.
+ */
+async function runStep(step: Step, dir: string, { login = rawLogin, digest, amoKeys = true, env: extra = {} }: Options = {}) {
+  const dummies: Record<string, string> = {
+    "${{ secrets.AMO_REVIEWER_LOGIN }}": login,
+    "${{ vars.REVIEWER_NOTES_SHA256 }}": digest ?? sha256(readFileSync(join(dir, "scripts/amo-reviewer-notes.ts"))),
+    "${{ env.AMO_GUID }}": release.env!.AMO_GUID!,
+    "${{ secrets.FIREFOX_JWT_ISSUER }}": amoKeys ? jwtIssuer : "",
+    "${{ secrets.FIREFOX_JWT_SECRET }}": amoKeys ? jwtSecret : "",
+    "${{ needs.meta.outputs.version }}": "2.0.0"
+  }
   const env: Record<string, string> = {
-    PATH: `${join(dir, "_shims")}:/usr/bin:/bin`,
-    HOME: dir,
+    PATH: `${join(dir, "_bin")}:/usr/bin:/bin`,
+    HOME: join(dir, "_home"),
     GITHUB_WORKSPACE: dir,
     RUNNER_TEMP: join(dir, "_temp"),
-    VERSION: "2.0.0",
-    REVIEWER_NOTES_SHA256: digest ?? submitAmo.env!.REVIEWER_NOTES_SHA256!,
-    FAKE_AMO_LOG: join(dir, "amo-requests.jsonl"),
-    FAKE_AMO_MODE: mode
+    ...extra
   }
-  if (login !== null) env.AMO_REVIEWER_LOGIN = login
-  if (amoKeys) Object.assign(env, { FIREFOX_JWT_ISSUER: jwtIssuer, FIREFOX_JWT_SECRET: jwtSecret })
-  if (amoKeys && step.env?.FIREFOX_EXTENSION_ID === "${{ env.AMO_GUID }}") env.FIREFOX_EXTENSION_ID = workflow.env.AMO_GUID!
-  const result = spawnSync("bash", ["-e", "-x", "-c", step.run!], { cwd: dir, env, encoding: "utf8", timeout: 20000 })
-  const log = join(dir, "amo-requests.jsonl")
-  const requests = existsSync(log)
-    ? readFileSync(log, "utf8").trim().split("\n").map(line => JSON.parse(line) as Record<string, string>)
-    : []
-  return { exit: result.status, stdout: result.stdout, trace: result.stderr, requests }
+  for (const [name, expression] of Object.entries(step.env!)) {
+    if (!(expression in dummies)) throw new Error(`the test has no dummy for ${name}: ${expression}`)
+    env[name] = dummies[expression]!
+  }
+  const child = Bun.spawn([bash, "--noprofile", "--norc", "-eo", "pipefail", "-x", "-c", step.run!], {
+    cwd: dir, env, stdout: "pipe", stderr: "pipe"
+  })
+  const timer = setTimeout(() => child.kill(), 20_000)
+  const [stdout, trace, exit] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited])
+  clearTimeout(timer)
+  return { exit, stdout, trace }
+}
+
+/** Runs the script by itself, as `bun` would without the step around it. */
+async function runScript(dir: string, args: string[], env: Record<string, string>) {
+  const child = Bun.spawn([process.execPath, "--no-env-file", "scripts/amo-reviewer-notes.ts", ...args], {
+    cwd: dir, env: { PATH: "/usr/bin:/bin", HOME: join(dir, "_home"), ...env }, stdout: "pipe", stderr: "pipe"
+  })
+  const [stdout, stderr, exit] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited])
+  return { exit, stdout, stderr }
 }
 
 function files(dir: string): string[] {
@@ -118,6 +167,33 @@ function files(dir: string): string[] {
     .filter(entry => entry.isFile())
     .map(entry => join(entry.parentPath, entry.name).slice(dir.length + 1))
     .sort()
+}
+
+type Reference = { at: string; expression: string }
+
+/** Every use of the secrets context in every workflow, and where it sits. Steps are named by their name or action. */
+function secretReferences(): Reference[] {
+  const found: Reference[] = []
+  const visit = (value: unknown, at: string[], isExpression: boolean) => {
+    if (typeof value === "string") {
+      const expressions = isExpression ? [value] : [...value.matchAll(/\$\{\{([\s\S]*?)\}\}/g)].map(match => match[1]!)
+      for (const expression of expressions) {
+        for (const match of expression.matchAll(/\bsecrets\b(?:\.[A-Za-z_][\w-]*)?/g)) found.push({ at: at.join(" > "), expression: match[0] })
+      }
+    } else if (Array.isArray(value)) {
+      value.forEach((item: unknown, index) => {
+        const step = typeof item === "object" && item !== null ? (item as Step) : {}
+        visit(item, [...at, step.name ?? step.uses ?? String(index)], false)
+      })
+    } else if (typeof value === "object" && value !== null) {
+      for (const [key, item] of Object.entries(value)) {
+        if (key === "secrets") found.push({ at: [...at, key].join(" > "), expression: "secrets:" })
+        visit(item, [...at, key], key === "if")
+      }
+    }
+  }
+  for (const [file, workflow] of Object.entries(workflows)) visit(workflow, [file], false)
+  return found
 }
 
 describe("the leak check", () => {
@@ -139,72 +215,141 @@ describe("the leak check", () => {
   })
 })
 
-describe("the release workflow", () => {
-  test("only submit-amo's two reviewer-notes steps receive AMO_REVIEWER_LOGIN, each through its own env", () => {
-    expect(workflowText.split("secrets.AMO_REVIEWER_LOGIN").length - 1).toBe(2)
-    expect(loginSteps.map(step => [step.name, step.env!.AMO_REVIEWER_LOGIN])).toEqual([
-      ["Check the reviewer test account", "${{ secrets.AMO_REVIEWER_LOGIN }}"],
-      ["Put the reviewer test account into the reviewer notes", "${{ secrets.AMO_REVIEWER_LOGIN }}"]
-    ])
+describe("the workflows", () => {
+  test("read secrets only by name, never in bulk or by a computed name", () => {
+    const bulk = secretReferences().filter(reference => !/^secrets\.[A-Za-z_][\w-]*$/.test(reference.expression))
+    expect(bulk).toEqual([])
   })
 
-  test("no workflow- or job-level env holds a secret, where every step would see it", () => {
-    const dir = join(root, ".github/workflows")
-    const wide = readdirSync(dir).flatMap(file => {
-      const parsed = Bun.YAML.parse(readFileSync(join(dir, file), "utf8")) as { env?: Record<string, string>; jobs: Record<string, Job> }
-      return [[file, parsed.env] as const, ...Object.entries(parsed.jobs).map(([id, job]) => [`${file} > ${id}`, job.env] as const)]
-        .flatMap(([at, env]) => Object.entries(env ?? {}).filter(([, value]) => String(value).includes("secrets")).map(([name]) => `${at} > ${name}`))
-    })
+  test("hold no secret in a workflow- or job-level env, where every step would see it", () => {
+    const wide = secretReferences().filter(({ at }) => at.includes(" > env > ") && !at.includes(" > steps > "))
     expect(wide).toEqual([])
   })
 
-  test("the steps never put the login on a command line", () => {
-    for (const step of loginSteps) {
-      expect(step.run).not.toContain("AMO_REVIEWER_LOGIN")
-      expect(step.run).not.toContain("secrets.")
+  test("give AMO_REVIEWER_LOGIN only to the two reviewer steps, each through its own env", () => {
+    expect(secretReferences().filter(reference => reference.expression === "secrets.AMO_REVIEWER_LOGIN").map(reference => reference.at)).toEqual([
+      "release.yml > jobs > check-reviewer-login > steps > Check the reviewer test account > env > AMO_REVIEWER_LOGIN",
+      "release.yml > jobs > fill-reviewer-notes > steps > Put the reviewer test account into the reviewer notes > env > AMO_REVIEWER_LOGIN"
+    ])
+  })
+
+  test("let only the two reviewer jobs into the amo-reviewer environment", () => {
+    const users = Object.entries(workflows).flatMap(([file, workflow]) =>
+      Object.entries(workflow.jobs)
+        .filter(([, job]) => (typeof job.environment === "string" ? job.environment : job.environment?.name)?.toLowerCase() === "amo-reviewer")
+        .map(([id]) => `${file} > ${id}`)
+    )
+    expect(users).toEqual(reviewerJobs.map(id => `release.yml > ${id}`))
+  })
+
+  test("hold no digest of the script; the owner sets it in vars.REVIEWER_NOTES_SHA256", () => {
+    for (const text of Object.values(workflowTexts)) expect(text).not.toMatch(/\b[0-9a-f]{64}\b/)
+    for (const step of [checkStep, fillStep]) expect(step.env!.REVIEWER_NOTES_SHA256).toBe("${{ vars.REVIEWER_NOTES_SHA256 }}")
+  })
+})
+
+describe("the reviewer jobs", () => {
+  test("stay off until the owner approves G28", () => {
+    for (const id of reviewerJobs) expect(String(release.jobs[id]!.if)).toStartWith("false && ")
+  })
+
+  test("can't be turned on while an action in them is unpinned", () => {
+    for (const id of reviewerJobs) {
+      const job = release.jobs[id]!
+      const unpinned = job.steps!.filter(step => step.uses && !/@[0-9a-f]{40}$/.test(step.uses))
+      if (unpinned.length > 0) expect(String(job.if)).toStartWith("false && ")
     }
   })
 
-  test("both steps stay off until the owner approves G28", () => {
-    expect(loginSteps.map(step => step.if)).toEqual([false, false])
+  test("check out only the script, keep no credentials, and run nothing else", () => {
+    for (const id of reviewerJobs) {
+      const steps = release.jobs[id]!.steps!
+      expect(steps.map(step => step.uses?.replace(/@.*/, "") ?? step.name)).toEqual([
+        "actions/checkout",
+        "oven-sh/setup-bun",
+        "actions/download-artifact",
+        loginStep(id).name
+      ])
+      expect(steps[0]!.with).toEqual({ "sparse-checkout": "/scripts/amo-reviewer-notes.ts", "sparse-checkout-cone-mode": false, "persist-credentials": false })
+    }
   })
 
-  test("the login is checked before anything is submitted, and filled in once AMO has the version", () => {
-    const at = (name: string) => submitAmo.steps.findIndex(step => step.name === name)
-    expect(at("Check the reviewer test account")).toBeLessThan(at("Is this version already on AMO?"))
-    expect(at("Check the reviewer test account")).toBeLessThan(at("Submit to AMO (listed)"))
-    expect(at("Put the reviewer test account into the reviewer notes")).toBeGreaterThan(at("Check AMO has the version with its sources"))
+  test("install the Bun that package.json declares, without a cache", () => {
+    const declared = (JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as { packageManager: string }).packageManager
+    for (const id of reviewerJobs) {
+      expect(release.jobs[id]!.steps![1]!.with).toEqual({ "bun-version": declared.replace(/^bun@/, ""), "no-cache": true })
+    }
   })
 
-  // A change to the script is a change to approved secret-handling code: it
-  // needs the owner's approval again before this pin moves.
-  test("REVIEWER_NOTES_SHA256 pins the script as it is", () => {
-    expect(createHash("sha256").update(readFileSync(script)).digest("hex")).toBe(submitAmo.env!.REVIEWER_NOTES_SHA256!)
+  test("check before submit-amo, which a failed check stops, and fill once AMO has the version", () => {
+    const submit = release.jobs["submit-amo"]!
+    expect(submit.needs).toContain("check-reviewer-login")
+    expect(String(submit.if)).toContain("(needs.check-reviewer-login.result == 'success' || needs.check-reviewer-login.result == 'skipped')")
+    expect(release.jobs["fill-reviewer-notes"]!.needs).toEqual(expect.arrayContaining(["check-reviewer-login", "submit-amo"]))
   })
 
-  test("the script imports only Node built-ins and has no way to spawn a process", () => {
-    const source = readFileSync(script, "utf8")
-    const imports = new Bun.Transpiler({ loader: "ts" }).scanImports(source).map(found => found.path)
+  test("never expand the login on a command line", () => {
+    for (const step of [checkStep, fillStep]) {
+      expect(step.run).not.toMatch(/\$\{?AMO_REVIEWER_LOGIN/)
+      expect(step.run).not.toContain("secrets.")
+    }
+  })
+})
+
+describe("the script", () => {
+  test("imports only Node built-ins and has no way to spawn a process", () => {
+    const imports = new Bun.Transpiler({ loader: "ts" }).scanImports(scriptSource).map(found => found.path)
     expect(imports).toEqual(["node:crypto", "node:fs"])
-    expect(source).not.toMatch(/\bBun\.|child_process|process\.(binding|dlopen)/)
+    expect(scriptSource).not.toMatch(/\bBun\.|child_process|process\.(binding|dlopen)/)
+  })
+
+  const unsafe: [string, string][] = [
+    ["BUN_CONFIG_VERBOSE_FETCH", "curl"],
+    ["BUN_OPTIONS", "--smol"],
+    ["NODE_TLS_REJECT_UNAUTHORIZED", "0"],
+    ["NODE_EXTRA_CA_CERTS", "/dev/null"],
+    ["SSL_CERT_FILE", "/dev/null"],
+    ["HTTPS_PROXY", "http://127.0.0.1:9"],
+    ["http_proxy", "http://127.0.0.1:9"]
+  ]
+  test.each(unsafe)("refuses to run with %s set, before AMO hears anything", async (name, value) => {
+    const amo = await fakeAmo()
+    const dir = workspace(scriptFor(amo.origin), fullNotes)
+    const run = await runScript(dir, ["fill", "2.0.0", "dist/amo-metadata.json"], {
+      AMO_REVIEWER_LOGIN: rawLogin,
+      FIREFOX_EXTENSION_ID: release.env!.AMO_GUID!,
+      FIREFOX_JWT_ISSUER: jwtIssuer,
+      FIREFOX_JWT_SECRET: jwtSecret,
+      [name]: value
+    })
+    expect(run).toMatchObject({ exit: 1, stdout: "::error::reviewer-notes: environment-unsafe (a BUN_, NODE_, SSL_CERT_ or proxy variable is set)\n" })
+    expect(amo.requests).toEqual([])
+    expect(leaks(run.stdout + run.stderr)).toEqual([])
+  })
+
+  test("a version that isn't a release number is a usage error, before anything is read", async () => {
+    const run = await runScript(workspace(scriptSource, fullNotes), ["fill", "2.0", "dist/amo-metadata.json"], { AMO_REVIEWER_LOGIN: rawLogin })
+    expect(run).toEqual({ exit: 2, stdout: "", stderr: "usage: amo-reviewer-notes.ts check <metadata file> | fill <version> <metadata file>\n" })
   })
 })
 
 describe("the check step", () => {
-  test("passes a well-formed login without touching AMO, and prints nothing of it", () => {
-    const run = runStep(checkStep, workspace(fullNotes))
-    expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: ready\n", requests: [] })
-    expect(run.trace).toContain("+ bun --no-env-file amo-reviewer-notes.ts check")
+  test("passes a well-formed login without touching AMO, and prints nothing of it", async () => {
+    const amo = await fakeAmo()
+    const run = await runStep(checkStep, workspace(scriptFor(amo.origin), fullNotes))
+    expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: ready\n" })
+    expect(run.trace).toContain("+ exec bun --no-env-file --config=empty.toml amo-reviewer-notes.ts check ")
+    expect(amo.requests).toEqual([])
     expect(leaks(run.stdout + run.trace)).toEqual([])
   })
 
-  test("skips the beta template, which asks for no account, even with no login set", () => {
-    const run = runStep(checkStep, workspace(betaNotes), { login: null })
+  test("skips the beta template, which asks for no account, even with no login set", async () => {
+    const run = await runStep(checkStep, workspace(scriptSource, betaNotes), { login: "" })
     expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: skipped (the notes have no test-account placeholders)\n" })
   })
 
-  test("accepts a login stored with Windows line endings", () => {
-    const run = runStep(checkStep, workspace(fullNotes), { login: rawLogin.replaceAll("\n", "\r\n") })
+  test("accepts a login stored with Windows line endings", async () => {
+    const run = await runStep(checkStep, workspace(scriptSource, fullNotes), { login: rawLogin.replaceAll("\n", "\r\n") })
     expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: ready\n" })
   })
 
@@ -219,46 +364,53 @@ describe("the check step", () => {
     ["a lettered second code", `${login.email}\n${login.password}\n${login.code1}\ndummy-code\n`, "login-malformed (line 4 is not an 8-digit backup code)"],
     ["one code twice", `${login.email}\n${login.password}\n${login.code1}\n00001111\n`, "login-malformed (lines 3 and 4 are the same code)"]
   ]
-  test.each(malformed)("fails %s with a fixed line that quotes none of it", (_, value, code) => {
-    const run = runStep(checkStep, workspace(fullNotes), { login: value })
-    expect(run).toMatchObject({ exit: 1, stdout: `::error::reviewer-notes: ${code}\n`, requests: [] })
+  test.each(malformed)("fails %s with a fixed line that quotes none of it", async (_, value, code) => {
+    const run = await runStep(checkStep, workspace(scriptSource, fullNotes), { login: value })
+    expect(run).toMatchObject({ exit: 1, stdout: `::error::reviewer-notes: ${code}\n` })
     expect(leaks(run.stdout + run.trace)).toEqual([])
   })
 
-  test("fails a template that asks for only part of the account", () => {
-    const run = runStep(checkStep, workspace("- {email} / {password}"))
+  test("fails a template that asks for only part of the account", async () => {
+    const run = await runStep(checkStep, workspace(scriptSource, "- {email} / {password}"))
     expect(run).toMatchObject({ exit: 1, stdout: "::error::reviewer-notes: template-incomplete (the notes lack {code1}, {code2})\n" })
   })
 
-  test("fails when the artifact has no readable metadata", () => {
-    const run = runStep(checkStep, workspace())
+  test("fails when the artifact has no readable metadata", async () => {
+    const run = await runStep(checkStep, workspace(scriptSource))
     expect(run).toMatchObject({
       exit: 1,
       stdout: "::error::reviewer-notes: notes-unreadable (the metadata file is missing, not JSON, or its approval_notes is not text)\n"
     })
   })
 
-  test("refuses to run a script that isn't the pinned one", () => {
-    const run = runStep(checkStep, workspace(fullNotes), { digest: "f".repeat(64) })
-    expect(run).toMatchObject({ exit: 1, stdout: "::error::amo-reviewer-notes.ts is not the approved version (G28)\n", requests: [] })
-    expect(run.trace).not.toContain("+ bun ")
+  test("refuses to run a script that isn't at the owner's digest", async () => {
+    const run = await runStep(checkStep, workspace(scriptSource, fullNotes), { digest: "f".repeat(64) })
+    expect(run).toMatchObject({ exit: 1, stdout: "::error::amo-reviewer-notes.ts is not the approved version (G28)\n" })
+    expect(run.trace).not.toContain("+ exec bun")
+  })
+
+  test.each([["unset", ""], ["not a digest", "dummy-digest-0000"]])("refuses to run while vars.REVIEWER_NOTES_SHA256 is %s", async (_, digest) => {
+    const run = await runStep(checkStep, workspace(scriptSource, fullNotes), { digest })
+    expect(run).toMatchObject({ exit: 1, stdout: "::error::vars.REVIEWER_NOTES_SHA256 is not a SHA-256 digest (G28)\n" })
+    expect(run.trace).not.toContain("+ exec bun")
   })
 })
 
 describe("the fill step", () => {
-  test("sends AMO the filled notes once, as a signed PATCH of that version", () => {
-    const run = runStep(fillStep, workspace(fullNotes))
+  test("sends AMO the filled notes once, as a signed PATCH of that version", async () => {
+    const amo = await fakeAmo()
+    const run = await runStep(fillStep, workspace(scriptFor(amo.origin), fullNotes))
     expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: filled (AMO version 2.0.0, confirmed)\n" })
-    expect(run.trace).toContain("+ bun --no-env-file amo-reviewer-notes.ts fill 2.0.0")
+    expect(run.trace).toContain("+ exec bun --no-env-file --config=empty.toml amo-reviewer-notes.ts fill 2.0.0 ")
     expect(leaks(run.stdout + run.trace)).toEqual([])
 
-    expect(run.requests).toHaveLength(1)
-    const [request] = run.requests as [Record<string, string>]
+    expect(amo.requests).toHaveLength(1)
+    const [request] = amo.requests as [(typeof amo.requests)[number]]
     expect(request.method).toBe("PATCH")
-    expect(request.url).toBe("https://addons.mozilla.org/api/v5/addons/addon/%7Bcc70cd21-2cc6-444b-bd89-496909346091%7D/versions/v2.0.0/")
+    expect(request.path).toBe("/api/v5/addons/addon/%7Bcc70cd21-2cc6-444b-bd89-496909346091%7D/versions/v2.0.0/")
     expect(request.contentType).toBe("application/json")
-    expect(JSON.parse(request.body!)).toEqual({ approval_notes: filledNotes })
-    expect(leaks(request.body!)).toEqual(["email", "password", "code1", "code2"])
+    expect(JSON.parse(request.body)).toEqual({ approval_notes: filledNotes })
+    expect(leaks(request.body)).toEqual(["email", "password", "code1", "code2"])
 
     const [scheme, token = ""] = request.authorization!.split(" ")
     const [header = "", payload = "", signature] = token.split(".")
@@ -267,8 +419,9 @@ describe("the fill step", () => {
     expect(JSON.parse(Buffer.from(payload, "base64url").toString())).toMatchObject({ iss: jwtIssuer })
   })
 
-  test("the build's metadata never holds the login, and filling leaves it in no file", () => {
-    const dir = workspace()
+  test("the build's metadata never holds the login, and filling leaves it in no file", async () => {
+    const amo = await fakeAmo()
+    const dir = workspace(scriptFor(amo.origin))
     mkdirSync(join(dir, "store/notes"), { recursive: true })
     mkdirSync(join(dir, "store/release-notes"))
     writeFileSync(join(dir, "store/notes/reviewer-full.md"), fullNotes + "\n")
@@ -277,68 +430,129 @@ describe("the fill step", () => {
     const build = spawnSync(
       process.execPath,
       ["--no-env-file", join(root, "scripts/amo-metadata.ts"), "--version", "2.0.0", "--kind", "major", "--channel", "stable", "--out", "dist/amo-metadata.json"],
-      { cwd: dir, env: { PATH: "/usr/bin:/bin", HOME: dir, AMO_REVIEWER_LOGIN: rawLogin }, encoding: "utf8" }
+      { cwd: dir, env: { PATH: "/usr/bin:/bin", HOME: join(dir, "_home"), AMO_REVIEWER_LOGIN: rawLogin }, encoding: "utf8" }
     )
     expect(build.status).toBe(0)
     const archived = readFileSync(join(dir, "dist/amo-metadata.json"), "utf8")
     expect(JSON.parse(archived).version.approval_notes).toBe(fullNotes)
     expect(leaks(archived + build.stdout + build.stderr)).toEqual([])
 
-    const run = runStep(fillStep, dir)
+    const run = await runStep(fillStep, dir)
     expect(run.exit).toBe(0)
-    expect(JSON.parse(run.requests[0]!.body!)).toEqual({ approval_notes: filledNotes })
+    expect(JSON.parse(amo.requests[0]!.body)).toEqual({ approval_notes: filledNotes })
     expect(readFileSync(join(dir, "dist/amo-metadata.json"), "utf8")).toBe(archived)
-    // HOME is the workspace too, so this covers Bun's caches. Only the fake AMO's own log may hold the login.
-    const leaked = files(dir)
-      .filter(file => file !== "amo-requests.jsonl")
-      .flatMap(file => leaks(readFileSync(join(dir, file), "latin1")).map(name => `${file}: ${name}`))
+    // HOME and the script's working directory are inside the workspace too, so this covers Bun's caches.
+    const leaked = files(dir).flatMap(file => leaks(readFileSync(join(dir, file), "latin1")).map(name => `${file}: ${name}`))
     expect(leaked).toEqual([])
-    expect(leaks(readFileSync(join(dir, "amo-requests.jsonl"), "latin1"))).toContain("email")
   })
 
-  const answers: [string, string, 0 | 1, string][] = [
+  const answers: [string, Mode, 0 | 1, string][] = [
     ["stores the notes without echoing them", "store-silently", 0, "reviewer-notes: filled (AMO version 2.0.0; its answer does not show the notes)"],
     ["answers 200 with a cut-off body that quotes the notes", "garble", 0, "reviewer-notes: filled (AMO version 2.0.0; its answer does not show the notes)"],
     ["keeps other notes", "keep-other", 1, "::error::reviewer-notes: upload-unconfirmed (AMO kept different notes)"],
     ["rejects the notes, quoting them", "reject", 1, "::error::reviewer-notes: upload-failed (AMO answered 400)"],
-    ["drops the connection with an error that quotes the request", "unreachable", 1, "::error::reviewer-notes: upload-failed (no answer from AMO)"],
-    ["gives an answer that throws, quoting the request", "explode", 1, "::error::reviewer-notes: internal-error"]
+    ["drops the connection once it has the request", "reset", 1, "::error::reviewer-notes: upload-failed (no answer from AMO within 30 seconds, or a redirect)"]
   ]
-  test.each(answers)("when AMO %s, prints only a fixed line", (_, mode, exit, line) => {
-    const run = runStep(fillStep, workspace(fullNotes), { mode })
+  test.each(answers)("when AMO %s, prints only a fixed line", async (_, mode, exit, line) => {
+    const amo = await fakeAmo(mode)
+    const run = await runStep(fillStep, workspace(scriptFor(amo.origin), fullNotes))
     expect(run).toMatchObject({ exit, stdout: `${line}\n` })
-    expect(run.requests).toHaveLength(1)
+    expect(amo.requests).toHaveLength(1)
     expect(leaks(run.stdout + run.trace)).toEqual([])
   })
 
-  test("a missing login fails before any request", () => {
-    const run = runStep(fillStep, workspace(fullNotes), { login: null })
-    expect(run).toMatchObject({ exit: 1, stdout: "::error::reviewer-notes: login-missing (AMO_REVIEWER_LOGIN is not set)\n", requests: [] })
+  test("never follows a redirect, which would carry the notes to another host", async () => {
+    const amo = await fakeAmo("redirect")
+    const run = await runStep(fillStep, workspace(scriptFor(amo.origin), fullNotes))
+    expect(run).toMatchObject({ exit: 1, stdout: "::error::reviewer-notes: upload-failed (no answer from AMO within 30 seconds, or a redirect)\n" })
+    expect(amo.requests).toHaveLength(1)
+    expect(amo.redirected).toEqual([])
+    expect(leaks(run.stdout + run.trace)).toEqual([])
   })
 
-  test("missing AMO keys fail before any request, naming only the variables", () => {
-    const run = runStep(fillStep, workspace(fullNotes), { amoKeys: false })
+  test("gives up on an AMO that never answers", async () => {
+    const amo = await fakeAmo("hang")
+    const run = await runStep(fillStep, workspace(scriptFor(amo.origin, "1_000"), fullNotes))
+    expect(run).toMatchObject({ exit: 1, stdout: "::error::reviewer-notes: upload-failed (no answer from AMO within 30 seconds, or a redirect)\n" })
+    expect(amo.requests).toHaveLength(1)
+  })
+
+  test("a missing login fails before any request", async () => {
+    const amo = await fakeAmo()
+    const run = await runStep(fillStep, workspace(scriptFor(amo.origin), fullNotes), { login: "" })
+    expect(run).toMatchObject({ exit: 1, stdout: "::error::reviewer-notes: login-missing (AMO_REVIEWER_LOGIN is not set)\n" })
+    expect(amo.requests).toEqual([])
+  })
+
+  test("missing AMO keys fail before any request, naming only the variables", async () => {
+    const amo = await fakeAmo()
+    const run = await runStep(fillStep, workspace(scriptFor(amo.origin), fullNotes), { amoKeys: false })
     expect(run).toMatchObject({
       exit: 1,
-      stdout: "::error::reviewer-notes: amo-keys-missing (FIREFOX_EXTENSION_ID, FIREFOX_JWT_ISSUER and FIREFOX_JWT_SECRET must be set)\n",
-      requests: []
+      stdout: "::error::reviewer-notes: amo-keys-missing (FIREFOX_EXTENSION_ID, FIREFOX_JWT_ISSUER and FIREFOX_JWT_SECRET must be set)\n"
     })
+    expect(amo.requests).toEqual([])
     expect(leaks(run.stdout + run.trace)).toEqual([])
   })
 
-  test("leaves the beta's notes alone", () => {
-    const run = runStep(fillStep, workspace(betaNotes), { login: null })
-    expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: skipped (the notes have no test-account placeholders)\n", requests: [] })
+  test("leaves the beta's notes alone", async () => {
+    const amo = await fakeAmo()
+    const run = await runStep(fillStep, workspace(scriptFor(amo.origin), betaNotes), { login: "" })
+    expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: skipped (the notes have no test-account placeholders)\n" })
+    expect(amo.requests).toEqual([])
+  })
+})
+
+// What an earlier step, or a tampered runner, could leave behind for the
+// reviewer steps: variables in GITHUB_ENV and files where Bun looks for config.
+describe("the fill step on a tampered runner", () => {
+  let certificate: Certificate
+  beforeAll(() => {
+    certificate = untrustedCertificate()
+  })
+  afterAll(() => certificate.remove())
+
+  /** A preload that leaves a marker if Bun ever runs it beside the login. */
+  function plantPreload(dir: string): { planted: string; ran: () => boolean } {
+    const planted = join(dir, "_planted.ts")
+    const marker = join(dir, "_preloaded")
+    writeFileSync(planted, `require("node:fs").writeFileSync(${JSON.stringify(marker)}, "")\n`)
+    return { planted, ran: () => existsSync(marker) }
+  }
+
+  test("strips BUN_CONFIG_VERBOSE_FETCH, with which Bun prints each request and its body", async () => {
+    const amo = await fakeAmo()
+    const run = await runStep(fillStep, workspace(scriptFor(amo.origin), fullNotes), { env: { BUN_CONFIG_VERBOSE_FETCH: "curl" } })
+    expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: filled (AMO version 2.0.0, confirmed)\n" })
+    expect(leaks(run.stdout + run.trace)).toEqual([])
   })
 
-  test("a version that isn't a release number is a usage error, before anything is read", () => {
-    const run = spawnSync(process.execPath, ["--no-env-file", script, "fill", "2.0", "dist/amo-metadata.json"], {
-      cwd: workspace(fullNotes),
-      env: { PATH: "/usr/bin:/bin", AMO_REVIEWER_LOGIN: rawLogin },
-      encoding: "utf8"
-    })
-    expect(run.status).toBe(2)
-    expect(run.stdout).toBe("")
-    expect(run.stderr).toBe("usage: amo-reviewer-notes.ts check <metadata file> | fill <version> <metadata file>\n")
+  test("strips BUN_OPTIONS, which could preload code beside the login", async () => {
+    const amo = await fakeAmo()
+    const dir = workspace(scriptFor(amo.origin), fullNotes)
+    const preload = plantPreload(dir)
+    const run = await runStep(fillStep, dir, { env: { BUN_OPTIONS: `--preload ${preload.planted}` } })
+    expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: filled (AMO version 2.0.0, confirmed)\n" })
+    expect(preload.ran()).toBe(false)
+  })
+
+  test("loads no bunfig.toml planted in the workspace, RUNNER_TEMP or HOME", async () => {
+    const amo = await fakeAmo()
+    const dir = workspace(scriptFor(amo.origin), fullNotes)
+    const preload = plantPreload(dir)
+    for (const config of ["bunfig.toml", "scripts/bunfig.toml", "_temp/bunfig.toml", "_home/bunfig.toml", "_home/.bunfig.toml"]) {
+      writeFileSync(join(dir, config), `preload = [${JSON.stringify(preload.planted)}]\n`)
+    }
+    const run = await runStep(fillStep, dir)
+    expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: filled (AMO version 2.0.0, confirmed)\n" })
+    expect(preload.ran()).toBe(false)
+  })
+
+  test.each(["NODE_TLS_REJECT_UNAUTHORIZED", "NODE_EXTRA_CA_CERTS"])("strips %s, so a certificate nothing trusts stays untrusted", async name => {
+    const amo = await fakeAmo("store", certificate)
+    const value = name === "NODE_EXTRA_CA_CERTS" ? certificate.certPath : "0"
+    const run = await runStep(fillStep, workspace(scriptFor(amo.origin), fullNotes), { env: { [name]: value } })
+    expect(run).toMatchObject({ exit: 1, stdout: "::error::reviewer-notes: upload-failed (no answer from AMO within 30 seconds, or a redirect)\n" })
+    expect(amo.requests).toEqual([])
   })
 })

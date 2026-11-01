@@ -16,8 +16,11 @@
  * fill also reads FIREFOX_EXTENSION_ID, FIREFOX_JWT_ISSUER and FIREFOX_JWT_SECRET.
  *
  * It prints one fixed line, never any part of the login, the notes or AMO's
- * answer. It writes no file and spawns nothing. The owner's approval (G28)
- * covers this exact file: .audit/2.0-build/ci-reviewer-credentials-design.md.
+ * answer. It writes no file and spawns nothing, and it refuses to run where
+ * Bun or its TLS could be told to log, proxy or trust more than it should.
+ * The owner's approval (G28) covers this exact file, and the release runs it
+ * only at the digest in vars.REVIEWER_NOTES_SHA256:
+ * .audit/2.0-build/ci-reviewer-credentials-design.md.
  */
 import { createHmac, randomUUID } from "node:crypto"
 import { readFileSync } from "node:fs"
@@ -25,6 +28,9 @@ import { readFileSync } from "node:fs"
 const API = "https://addons.mozilla.org/api/v5"
 const USAGE = "usage: amo-reviewer-notes.ts check <metadata file> | fill <version> <metadata file>"
 const FIELDS = ["email", "password", "code1", "code2"] as const
+// Bun's own switches (BUN_CONFIG_VERBOSE_FETCH prints each request, body included),
+// Node's TLS switches, proxies and certificate stores.
+const UNSAFE = /^(BUN_|NODE_|SSL_CERT_)|^(https?|all)_proxy$/i
 
 type Login = Record<(typeof FIELDS)[number], string>
 type Outcome = { line: string; exit: 0 | 1 | 2 }
@@ -79,13 +85,16 @@ async function upload(version: string, notes: string, env: NodeJS.ProcessEnv): P
   let response: Response
   try {
     // The "v" prefix looks the version up by number; AMO finds the GUID only with its braces.
+    // A redirect would send the notes on to another host, so it fails instead.
     response = await fetch(`${API}/addons/addon/${encodeURIComponent(addon)}/versions/v${version}/`, {
       method: "PATCH",
       headers: { Authorization: `JWT ${jwt(issuer, secret)}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ approval_notes: notes })
+      body: JSON.stringify({ approval_notes: notes }),
+      redirect: "error",
+      signal: AbortSignal.timeout(30_000)
     })
   } catch {
-    return failed("upload-failed (no answer from AMO)")
+    return failed("upload-failed (no answer from AMO within 30 seconds, or a redirect)")
   }
   if (!response.ok) return failed(`upload-failed (AMO answered ${response.status})`)
   const stored: unknown = await response.json().then(
@@ -108,6 +117,9 @@ async function run(args: string[], env: NodeJS.ProcessEnv): Promise<Outcome> {
   const parsed = parseArgs(args)
   if (!parsed) return { line: USAGE, exit: 2 }
   const { version, path } = parsed
+  if (Object.keys(env).some(name => UNSAFE.test(name))) {
+    return failed("environment-unsafe (a BUN_, NODE_, SSL_CERT_ or proxy variable is set)")
+  }
 
   const notes = readNotes(path)
   if (notes === undefined) return failed("notes-unreadable (the metadata file is missing, not JSON, or its approval_notes is not text)")
