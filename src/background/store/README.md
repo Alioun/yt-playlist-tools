@@ -315,8 +315,10 @@ and an existing supported live local target. Filter additionally requires a supp
 existing live Setup for the same account, including an empty Setup retained by
 that kept Filter. The one exception is a Filter whose local Setup is a tombstone,
 which accepts only an incoming Filter tombstone. Reception does not require playlist selection. Local UI edits
-still require selection. Missing, null, malformed, future, or deleted Setup
-remains unavailable before sync access. Settings needs no Setup, account, window lookup,
+still require selection. Missing, null, malformed, or future Setup remains
+unavailable before sync access. A deleted Setup reads sync once, because an
+incoming Filter tombstone may still apply under it, and otherwise stays
+`unavailable/account-context`. Settings needs no Setup, account, window lookup,
 or permission query. Its per-device-looking extensions remain inert data.
 Interim legacy markers make it unavailable before sync access. A complete
 same-history incoming Settings, Filter, or intrinsically retaining Setup
