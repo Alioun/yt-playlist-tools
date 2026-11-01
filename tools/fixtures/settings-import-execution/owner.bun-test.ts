@@ -164,6 +164,18 @@ test("withdrawal around each write retains the original effect and a later Agree
   }
 }, 120000)
 
+test("an import that empties the last account clears it without rewriting the Device record", async () => {
+  const h = world()
+  try {
+    const p = await h.prepare()
+    expect((await h.owner.importSettings(ui, { confirmation: p.confirmation, replace: "confirmed" })).kind).toBe("committed")
+    const local = h.h.state().local
+    expect(local.device).toEqual(initial().local.device)
+    expect(local.lastAccount ?? null).toBeNull()
+    expect(h.calls.filter(call => call.kind.startsWith("local.set:") && call.kind.slice("local.set:".length).split(",").includes("device"))).toEqual([])
+  } finally { await h.dispose() }
+}, 60000)
+
 test("invalid and newer continuations remain inspectable and blocked without mutation", async () => {
   const markers: readonly JsonObject[] = [{ v: 2, kind: "settings-import-continuation", future: true }, { v: 1, kind: "settings-import-continuation", next: 999 }]
   for (const marker of markers) {
