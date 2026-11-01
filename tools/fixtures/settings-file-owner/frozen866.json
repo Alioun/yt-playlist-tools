@@ -4188,9 +4188,9 @@
     },
     "tools/fixtures/first-run-backend/qualification.tsconfig.json": {
       "mode": "100644",
-      "gitBlob": "8b4b2f7178cdff903643c4dca2cc6abb91d84e12",
-      "sha256": "2cc390638aab45990b5d017fb80500f74651a1e18537a20dfb4ac9c054250c3b",
-      "bytes": 102
+      "gitBlob": "618c6c3e97b576917591c79e6446be9ab7698631",
+      "sha256": "df11da49be57a5b36f7667637c0025a35bfc1893df6f3966631c670d485ed4e3",
+      "bytes": 42
     },
     "tools/fixtures/first-run-backend/run.ts": {
       "mode": "100644",
@@ -5303,9 +5303,9 @@
       "mode": "100644"
     },
     "tools/fixtures/gateway-playlists/bunfig.toml": {
-      "sha256": "8ca8f0ce1b6530bf6289d3addffe1e0a15203a7032b95c243b82c49a519fa98b",
-      "gitBlob": "82d70e0d0863e7bad4d5e7cdf8d0e9326bce6073",
-      "bytes": 36,
+      "sha256": "1e7dd43f86972a76844fd8f31266590b848c3c32fa9ae3a21195b23f58ce8555",
+      "gitBlob": "4d5fcc7f097150f78f0a6e9e2012fad5d6496de1",
+      "bytes": 129,
       "mode": "100644"
     },
     "tools/fixtures/gateway-playlists/consumer.bun-test.ts": {
@@ -5718,8 +5718,8 @@
     },
     "tools/fixtures/settings-file/settings-file-authoring-input-manifest.json": {
       "mode": "100644",
-      "gitBlob": "039259d903972239e5b201e7f5f706ac4ddca867",
-      "sha256": "dd2f0b97c3eda254814ec352ab5ae99e06034e1c8ef46055d7e1a157c1c8e24c",
+      "gitBlob": "2c90c458e713d187101343e552330d1c6d9fc35c",
+      "sha256": "d426329cfd497e44bfc41c07bac0b5c6b0b475e44db71bbf45438b0991685f02",
       "bytes": 228451
     },
     "tools/fixtures/settings-file/specimens.ts": {

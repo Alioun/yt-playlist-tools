@@ -1,0 +1,2 @@
+# Paths resolve from the repository root, where scripts/run-fixture-gates.ts runs this folder with --config.
+preload = ["./tools/fixtures/site-card-menu/preload.ts"]

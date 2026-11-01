@@ -339,9 +339,9 @@
     },
     "tools/fixtures/first-run-backend/qualification.tsconfig.json": {
       "mode": "100644",
-      "gitBlob": "8b4b2f7178cdff903643c4dca2cc6abb91d84e12",
-      "sha256": "2cc390638aab45990b5d017fb80500f74651a1e18537a20dfb4ac9c054250c3b",
-      "bytes": 102
+      "gitBlob": "618c6c3e97b576917591c79e6446be9ab7698631",
+      "sha256": "df11da49be57a5b36f7667637c0025a35bfc1893df6f3966631c670d485ed4e3",
+      "bytes": 42
     },
     "tools/fixtures/first-run-backend/run.ts": {
       "mode": "100644",
@@ -357,9 +357,9 @@
     },
     "tools/fixtures/gateway-playlists/bunfig.toml": {
       "mode": "100644",
-      "gitBlob": "82d70e0d0863e7bad4d5e7cdf8d0e9326bce6073",
-      "sha256": "8ca8f0ce1b6530bf6289d3addffe1e0a15203a7032b95c243b82c49a519fa98b",
-      "bytes": 36
+      "gitBlob": "4d5fcc7f097150f78f0a6e9e2012fad5d6496de1",
+      "sha256": "1e7dd43f86972a76844fd8f31266590b848c3c32fa9ae3a21195b23f58ce8555",
+      "bytes": 129
     },
     "tools/fixtures/gateway-playlists/consumer.bun-test.ts": {
       "mode": "100644",
@@ -1209,8 +1209,8 @@
     },
     "tools/fixtures/settings-file-owner/frozen866.json": {
       "mode": "100644",
-      "gitBlob": "80facf46302ff4452bb6c593899cb5f6a8d503f6",
-      "sha256": "3c4fc7479df251e013253f8c1e2b79a59972b5c978a5474b43629d4e04f75a61",
+      "gitBlob": "436b9107006c192adbacc6ea988ba2e64bbcd8af",
+      "sha256": "5364a13c0cab407583011119c56c4128bb298279f89548776ea3c78759ea95c7",
       "bytes": 236590
     },
     "tools/fixtures/settings-file-owner/future-commands.json": {
@@ -1371,8 +1371,8 @@
     },
     "tools/fixtures/settings-file/settings-file-authoring-input-manifest.json": {
       "mode": "100644",
-      "gitBlob": "039259d903972239e5b201e7f5f706ac4ddca867",
-      "sha256": "dd2f0b97c3eda254814ec352ab5ae99e06034e1c8ef46055d7e1a157c1c8e24c",
+      "gitBlob": "2c90c458e713d187101343e552330d1c6d9fc35c",
+      "sha256": "d426329cfd497e44bfc41c07bac0b5c6b0b475e44db71bbf45438b0991685f02",
       "bytes": 228451
     },
     "tools/fixtures/settings-file/specimens.ts": {
@@ -1509,8 +1509,8 @@
     },
     "tools/fixtures/settings-import-execution/preserved-inventories.json": {
       "mode": "100644",
-      "gitBlob": "1da2b77fcbe134e601f41bf77fdd5aad859b3c3b",
-      "sha256": "d5153f53aa66fc85d570bd755576231ed88082f80b27508d0e6bb806e3e08d5b",
+      "gitBlob": "726f281fd2f7d68b0b224c2c2d6f678a2aa6c007",
+      "sha256": "2aaedf477a26e1ec8f81a5c2e346776622dc6c0361bd7877906bc3885d036c6f",
       "bytes": 17206
     },
     "tools/fixtures/settings-import-execution/publication.bun-test.ts": {
@@ -2661,9 +2661,9 @@
     },
     "tools/fixtures/ui-playlist-progressive/bunfig.toml": {
       "mode": "100644",
-      "gitBlob": "1244d83e64c9a69ee91fd497161cea58e060ca92",
-      "sha256": "56d1a09c38b2dd0e097179137e702d6ea7c0cd8dd4db7c5d7c47d0abfcd1efdd",
-      "bytes": 143
+      "gitBlob": "ff2cebed958725621a1b60587cac5957a6c43d99",
+      "sha256": "332266854d05e0aff90031a818fa2ada4d6ffdaa7692b201e5d043247e332523",
+      "bytes": 291
     },
     "tools/fixtures/ui-playlist-progressive/consumer.bun-test.ts": {
       "mode": "100644",
@@ -3394,8 +3394,8 @@
     "tools/fixtures/feature-switches/inherited-relocation.json": {
       "mode": "100644",
       "bytes": 645052,
-      "sha256": "d77895c7fdafe83ddfa084d0dd0d57fbb7de3c547e81519eced4c4762e67e478",
-      "gitBlob": "404d24b5779db904dfe75f98b520009e5514c7f8"
+      "sha256": "7a47b47f9ac0ece2971a99e0abba6d3406b46fb75e72f0a4939e65e1c2020c56",
+      "gitBlob": "a018a191c05ba93ede573b22b85d1276a11fa141"
     },
     "tools/fixtures/feature-switches/isolated-negative.ts": {
       "mode": "100644",

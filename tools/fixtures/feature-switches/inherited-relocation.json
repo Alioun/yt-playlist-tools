@@ -39,7 +39,7 @@
     {
       "path": "tools/fixtures/settings-import-execution/preserved-inventories.json",
       "copy": ".audit/feature-switches-authoring/inherited-inventories/tools/fixtures/settings-import-execution/preserved-inventories.json",
-      "sha256": "d5153f53aa66fc85d570bd755576231ed88082f80b27508d0e6bb806e3e08d5b",
+      "sha256": "2aaedf477a26e1ec8f81a5c2e346776622dc6c0361bd7877906bc3885d036c6f",
       "mode": "0o644",
       "state": "unexecuted"
     },

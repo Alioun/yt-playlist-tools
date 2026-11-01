@@ -750,8 +750,8 @@
   "tools/fixtures/key-settings/inherited-conservation.json": {
    "identity": {
     "bytes": 157974,
-    "sha256": "0b0253cbd67ac1d5d506e2eb20fb6f880675fcbccb1212b2128489fbe24f5e99",
-    "gitBlob": "b599f476f7cb3a817ac6d1c5f02318c204c7eb46",
+    "sha256": "f7751de72bf9ebdc730debfb19fa1e45ea622fb0f094acd750842a5cad208663",
+    "gitBlob": "9a591fb22a8975f0f597dda505312f7749dfa75a",
     "mode": "100644"
    },
    "entries": null
