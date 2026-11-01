@@ -143,7 +143,8 @@ export async function recoverFeatureProgress(deps: { readonly local: LocalWriteS
   if (Object.hasOwn(expected, "consent:state")) before["consent:state"] = expected["consent:state"]!
   if (Object.hasOwn(expected, "consent:jobs")) before["consent:jobs"] = expected["consent:jobs"]!
   for (const [name, value] of Object.entries(basis)) {
-    if (!Object.hasOwn(before, name) || !sameSyncJson(value, before[name] ?? null) && !sameSyncJson(value, record.effect[name] ?? null)) return { kind: "unavailable", reason: "stale" }
+    if (Object.hasOwn(record.effect, name) && sameSyncJson(value, record.effect[name]!)) continue
+    if (!Object.hasOwn(before, name) || !sameSyncJson(value, before[name]!)) return { kind: "unavailable", reason: "stale" }
   }
   if (Object.keys(before).some(name => !Object.hasOwn(basis, name))) return { kind: "unavailable", reason: "stale" }
   if (Object.hasOwn(before, "device") && consentObject(before.device) && consentObject(record.before.device)) {
