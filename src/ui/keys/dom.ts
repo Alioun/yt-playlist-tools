@@ -1,8 +1,13 @@
 import type { KeyRecorderController } from "./controller"
 
-export function recorderEvents(element: HTMLElement, controller: KeyRecorderController) {
+function pageWindow(element: HTMLElement): NonNullable<Document["defaultView"]> {
   const window = element.ownerDocument.defaultView
   if (!window) throw Error("The recorder needs its extension page window")
+  return window
+}
+
+export function recorderEvents(element: HTMLElement, controller: KeyRecorderController) {
+  const window = pageWindow(element)
   function key(event: KeyboardEvent) {
     const dispatched = controller.dispatch({ kind: event.type === "keyup" ? "keyup" : "keydown", facts: {
       key: event.key, code: event.code, ctrlKey: event.ctrlKey, altKey: event.altKey, shiftKey: event.shiftKey, metaKey: event.metaKey,
