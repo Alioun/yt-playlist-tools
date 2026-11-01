@@ -163,19 +163,26 @@ test("a detached renderer and a page link that is not ready fail closed", async 
   expect(f.menuCalls().map(call => call.context?.target)).toEqual([card])
 })
 
-test("a delayed job failure cannot recreate the browser menu and dispatches no synthetic event", async () => {
-  const answer = deferred<unknown>()
-  const f = await fixture({ run: job => job.kind === "openCardMenu" ? answer.promise : Promise.resolve({ ok: false, reason: "unavailable" }) })
-  f.start()
-  const event = f.click(f.byId("empty"))
-  expect(event.defaultPrevented).toBe(true)
-  answer.resolve({ ok: false, reason: "unconfirmed" })
-  await f.settle()
-  await f.settle()
-  expect(f.seen).toEqual([{ prevented: true }])
-  expect(f.requests).toEqual([])
-  expect(f.menuCalls()).toHaveLength(1)
-})
+const failures = [["refuses", { ok: false, reason: "unavailable" }], ["cannot confirm", { ok: false, reason: "unconfirmed" }],
+  ["throws", undefined]] as const
+for (const [outcome, result] of failures) {
+  test(`when the page-side click ${outcome} after the browser menu was cancelled, the card menu does nothing more`, async () => {
+    const answer = deferred<unknown>()
+    const f = await fixture({ run: job => job.kind === "openCardMenu" ? answer.promise : Promise.resolve({ ok: false, reason: "unavailable" }) })
+    f.start()
+    const page = document.body.innerHTML
+    expect(f.click(f.byId("empty")).defaultPrevented).toBe(true)
+    if (result) answer.resolve(result)
+    else answer.reject(Error("synthetic page failure"))
+    await f.settle()
+    await f.settle()
+    expect(f.seen).toEqual([{ prevented: true }])
+    expect(f.menuCalls()).toHaveLength(1)
+    expect(f.requests).toEqual([])
+    expect(f.errors).toEqual([])
+    expect(document.body.innerHTML).toBe(page)
+  })
+}
 
 test("a card recycled before the page-side click asks the page for the video that was right-clicked", async () => {
   const answer = deferred<unknown>()
