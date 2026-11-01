@@ -183,8 +183,6 @@ jobs:
     env:
       VERSION: ${{ needs.meta.outputs.version }}
       CHANNEL: ${{ needs.meta.outputs.channel }}
-      FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
-      FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
       GH_TOKEN: ${{ github.token }}
       # The owner-approved scripts/amo-reviewer-notes.ts (G28). The two steps
       # that read AMO_REVIEWER_LOGIN run a copy outside the checkout, so Bun
@@ -226,6 +224,8 @@ jobs:
         id: amo
         env:
           FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           set -euo pipefail
           status=$(bun scripts/amo-version.ts status "$VERSION")
@@ -242,6 +242,8 @@ jobs:
           FIREFOX_EXTENSION_ID: ${{ env.AMO_SLUG }}
           FIREFOX_CHANNEL: listed
           FIREFOX_AMO_METADATA_FILE: dist/amo-metadata.json
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           set -euo pipefail
           bunx wxt submit \
@@ -269,6 +271,8 @@ jobs:
         if: steps.amo.outputs.status == 'no-source'
         env:
           FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           suffix=""
           [ "$CHANNEL" = beta ] && suffix=-beta
@@ -278,6 +282,8 @@ jobs:
       - name: Check AMO has the version with its sources
         env:
           FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           status=$(bun scripts/amo-version.ts status "$VERSION")
           [ "$status" = present ] || { echo "::error::AMO's version $VERSION is '$status', not present with sources"; exit 1; }
@@ -301,6 +307,8 @@ jobs:
         if: env.CHANNEL == 'beta' && steps.amo.outputs.status != 'missing'
         env:
           FIREFOX_EXTENSION_ID: ${{ env.AMO_GUID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: bun scripts/amo-version.ts download "$VERSION" signed 30
 
       # web-ext repackages the directory; the signed files must be the checked ones.

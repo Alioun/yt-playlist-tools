@@ -187,8 +187,6 @@ jobs:
       SHORT_SHA: ${{ needs.build.outputs.short-sha }}
       # Public, and asserted in check-manifest.ts. AMO finds it only with braces.
       FIREFOX_EXTENSION_ID: "{cc70cd21-2cc6-444b-bd89-496909346091}"
-      FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
-      FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
     steps:
       - uses: actions/checkout@v7
 
@@ -227,6 +225,8 @@ jobs:
         id: amo
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           set -euo pipefail
           status=$(bun scripts/amo-version.ts status "$VERSION")
@@ -254,12 +254,16 @@ jobs:
         if: steps.amo.outputs.status == 'no-source'
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: bun scripts/amo-version.ts attach-source "$VERSION" "$(ls sources/*-sources.zip)"
 
       # Whichever way the version got there, it must now have its sources.
       - name: Check AMO has the version with its sources
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           status=$(bun scripts/amo-version.ts status "$VERSION")
           [ "$status" = present ] || { echo "::error::AMO's version $VERSION is '$status', not present with sources"; exit 1; }
@@ -268,6 +272,8 @@ jobs:
         if: steps.amo.outputs.status != 'missing'
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: bun scripts/amo-version.ts download "$VERSION" signed 30
 
       # web-ext repackages the directory; the signed files must be the built ones.

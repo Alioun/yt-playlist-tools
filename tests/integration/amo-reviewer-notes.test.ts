@@ -115,6 +115,16 @@ describe("the release workflow", () => {
     ])
   })
 
+  test("no workflow- or job-level env holds a secret, where every step would see it", () => {
+    const dir = join(root, ".github/workflows")
+    const wide = readdirSync(dir).flatMap(file => {
+      const parsed = Bun.YAML.parse(readFileSync(join(dir, file), "utf8")) as { env?: Record<string, string>; jobs: Record<string, Job> }
+      return [[file, parsed.env] as const, ...Object.entries(parsed.jobs).map(([id, job]) => [`${file} > ${id}`, job.env] as const)]
+        .flatMap(([at, env]) => Object.entries(env ?? {}).filter(([, value]) => String(value).includes("secrets")).map(([name]) => `${at} > ${name}`))
+    })
+    expect(wide).toEqual([])
+  })
+
   test("the steps never put the login on a command line", () => {
     for (const step of loginSteps) {
       expect(step.run).not.toContain("AMO_REVIEWER_LOGIN")
