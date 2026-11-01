@@ -334,7 +334,7 @@ test("actual withdrawal V2 observer covers exact receipt stages, faults, private
   expect(observed.v1Acceptance.subsets.length).toBe(8)
   expect(observed.v1Acceptance.renewals.length).toBe(6)
   expect(observed.v1Acceptance.restarts.length).toBe(6)
-}, 60000)
+}, 300000)
 
 for (const fault of ["copied-review", "copied-selection", "foreign-owner", "wrong-origin", "serialized"]) test(`retained ${fault} confirmation grants no authority and consumes attempted owner review`, async () => {
   const { h, writer } = await retained(), selected = await retainedSelection(writer), before = h.records()

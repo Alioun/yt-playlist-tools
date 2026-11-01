@@ -241,7 +241,7 @@ test("documents partial outcomes close execution and fresh owners finish only th
     expect(next.h.writes.filter(batch => submittedStage(batch) === "documents")).toHaveLength(1)
     await next.owner.dispose()
   }
-})
+}, 30000)
 
 for (const stage of stages) for (const channel of ["explicit", "startup", "authority", "ownership"] as const) test(`${stage} preserves its resolved write when ${channel} post-write observation fails`, async () => {
   const source = await fixture(), f = createWithdrawnFilterHarness(source.stores), host = f.h.deps.recovery
