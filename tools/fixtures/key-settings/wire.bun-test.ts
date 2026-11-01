@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test"
 import { CONTRACT_VERSION } from "../../../src/shared/contracts/protocol"
 import { uiContract } from "../../../src/shared/contracts/ui"
+import { keyForWire } from "../../../src/shared/contracts/key-settings-fields"
 import { build } from "../tabs/harness"
 import { world, chord, object, seed } from "./harness"
 
@@ -33,10 +34,10 @@ test("forged key targets, raw Origin, snapshots and fake Undo authority are reje
       { kind: "settings", value: w.settings() }
     ]
     const before = w.h.records()
-    for (const [index, change] of changes.entries()) expect(await w.network.connect(w.sender).send({ v: CONTRACT_VERSION, build, id: `forged-${index}`,
-      kind: "ui.change", payload: { windowId: 1, change } })).toBeUndefined()
-    expect(await w.network.connect(w.sender).send({ v: CONTRACT_VERSION, build, id: "raw-origin", kind: "ui.change", payload: {
-      windowId: 1, origin: { kind: "ui", windowId: 1, incognito: false }, change: { kind: "shortcut-add" } } })).toBeUndefined()
+    for (const [index, change] of changes.entries()) await expect(w.network.connect(w.sender).send({ v: CONTRACT_VERSION, build, id: `forged-${index}`,
+      kind: "ui.change", payload: { windowId: 1, change } })).rejects.toThrow("Memory send failed")
+    await expect(w.network.connect(w.sender).send({ v: CONTRACT_VERSION, build, id: "raw-origin", kind: "ui.change", payload: {
+      windowId: 1, origin: { kind: "ui", windowId: 1, incognito: false }, change: { kind: "shortcut-add" } } })).rejects.toThrow("Memory send failed")
     expect(await w.network.connect({ ...w.sender, url: "https://www.youtube.com/watch?v=forged" }).send({ v: CONTRACT_VERSION, build, id: "wrong-native", kind: "ui.change",
       payload: { windowId: 1, change: { kind: "shortcut-add" } } })).toBeUndefined()
     expect(w.h.records()).toEqual(before); expect(w.batches).toEqual([]); expect(w.events).toEqual([])
@@ -61,13 +62,13 @@ test("native document identity is required for removal and obsolete feature wire
   const w = world("wire")
   try {
     await w.owner.ready(); const before = w.h.records()
-    expect(await w.network.connect(w.sender).send({ v: CONTRACT_VERSION, build, id: "obsolete-feature", kind: "ui.featureSetting", payload: { windowId: 1,
-      change: { kind: "music-section", value: true } } })).toBeUndefined()
+    await expect(w.network.connect(w.sender).send({ v: CONTRACT_VERSION, build, id: "obsolete-feature", kind: "ui.featureSetting", payload: { windowId: 1,
+      change: { kind: "music-section", value: true } } })).rejects.toThrow("Memory send failed")
     const row = w.settings().shortcuts.list[0]
     if (!row) throw Error("Expected row")
     const sender = { id: w.sender.id, url: w.sender.url }
     const answer = await w.network.connect(sender).send({ v: CONTRACT_VERSION, build, id: "missing-document", kind: "ui.change", payload: {
-      windowId: 1, change: { kind: "shortcut-remove", id: row.id, expected: row } } })
+      windowId: 1, change: { kind: "shortcut-remove", id: row.id, expected: { id: row.id, key: keyForWire(row.key), label: row.label, watchLaterOnEveryAccount: row.watchLaterOnEveryAccount } } } })
     expect(object(answer).result).toEqual({ kind: "key-setting", outcome: { kind: "refused", reason: "unavailable" } })
     expect(w.h.records()).toEqual(before)
   } finally { await w.dispose() }

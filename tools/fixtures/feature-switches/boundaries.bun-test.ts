@@ -131,9 +131,9 @@ test("the real RPC route rejects body permission truth and forged native identit
     const payloads = [{ change: { ...musicOn, access: { music: true } }, windowId: 1 },
       { change: musicOn, windowId: 1, permissions: { music: true } },
       { change: musicOn, windowId: 1, origin: { kind: "ui", windowId: 1, incognito: false } }]
-    for (const [index, payload] of payloads.entries()) expect(await w.network.connect({ id: "feature-fixture", url: "chrome-extension://feature-fixture/popup.html" }).send({
+    for (const [index, payload] of payloads.entries()) await expect(w.network.connect({ id: "feature-fixture", url: "chrome-extension://feature-fixture/popup.html" }).send({
       v: CONTRACT_VERSION, build, id: `body-truth-${index}`, kind: "ui.change", payload
-    })).toBeUndefined()
+    })).rejects.toThrow("Memory send failed")
     expect(await w.network.connect({ id: "forged-extension", url: "chrome-extension://feature-fixture/popup.html" }).send({
       v: CONTRACT_VERSION, build, id: "forged-native", kind: "ui.change", payload: { change: musicOn, windowId: 1 }
     })).toBeUndefined()
