@@ -98,6 +98,7 @@ selected: SettingsImportView): Promise<ImportRecoveryOutcome | { readonly kind: 
   const job: SettingsImportIdentity = { deviceId: accepted.control.deviceId, occurrence: accepted.occurrence,
     operation: { kind: "settings-import", record: importJson(accepted) }, original: accepted.original }
   const after = await deps.observe()
+  if (result.kind === "unavailable" && importObject(after) && sameSyncJson(after, records)) return { kind: "unavailable", reason: deps.stopped() ? "disposed" : "stale" }
   const terminal = importObject(after) && readSettingsImport(after[settingsImportKey])
   const ledger = importObject(after) && parseConsentJobs(after["consent:jobs"])
   const completed = ledger && importJob(ledger, accepted.occurrence)
