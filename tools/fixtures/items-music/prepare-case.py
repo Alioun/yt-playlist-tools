@@ -13,7 +13,7 @@ parser.add_argument('--receipt', required=True)
 parser.add_argument('--inventory')
 args = parser.parse_args()
 root = Path(args.candidate).resolve()
-sealed_source = Path('/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-0755f498')
+sealed_source = Path(__file__).resolve().parents[3]
 if root == sealed_source or root.name != 'runtime':
     raise SystemExit('A separate disposable runtime candidate is required')
 inventory = Path(__file__).parent / ('controls.json' if args.kind == 'controls' else 'type-probes.json')

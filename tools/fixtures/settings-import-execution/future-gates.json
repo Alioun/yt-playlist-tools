@@ -39,7 +39,7 @@
   "gates": [
     {
       "id": "scoped-native",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -50,7 +50,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -61,7 +61,7 @@
     },
     {
       "id": "whole-native",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -72,7 +72,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tsconfig.json",
         "--noEmit",
@@ -84,7 +84,7 @@
     },
     {
       "id": "complete-source-inclusion",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -95,7 +95,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tsconfig.json",
         "--listFilesOnly",
@@ -108,7 +108,7 @@
     },
     {
       "id": "test-1",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -130,7 +130,7 @@
     },
     {
       "id": "test-2",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -152,7 +152,7 @@
     },
     {
       "id": "test-3",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -174,7 +174,7 @@
     },
     {
       "id": "test-4",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -196,7 +196,7 @@
     },
     {
       "id": "test-5",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -218,7 +218,7 @@
     },
     {
       "id": "test-6",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -240,7 +240,7 @@
     },
     {
       "id": "test-7",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -262,7 +262,7 @@
     },
     {
       "id": "test-8",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -284,7 +284,7 @@
     },
     {
       "id": "test-9",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -306,7 +306,7 @@
     },
     {
       "id": "test-10",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -328,7 +328,7 @@
     },
     {
       "id": "test-11",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -350,7 +350,7 @@
     },
     {
       "id": "test-12",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -372,7 +372,7 @@
     },
     {
       "id": "test-13",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -394,7 +394,7 @@
     },
     {
       "id": "test-14",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -416,7 +416,7 @@
     },
     {
       "id": "test-15",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -438,7 +438,7 @@
     },
     {
       "id": "test-16",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -460,7 +460,7 @@
     },
     {
       "id": "test-17",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -482,7 +482,7 @@
     },
     {
       "id": "test-18",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -504,7 +504,7 @@
     },
     {
       "id": "test-19",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -526,7 +526,7 @@
     },
     {
       "id": "test-20",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -548,7 +548,7 @@
     },
     {
       "id": "test-21",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -570,7 +570,7 @@
     },
     {
       "id": "test-22",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -592,7 +592,7 @@
     },
     {
       "id": "test-23",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -614,7 +614,7 @@
     },
     {
       "id": "test-24",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -636,7 +636,7 @@
     },
     {
       "id": "test-25",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -658,7 +658,7 @@
     },
     {
       "id": "test-26",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -680,7 +680,7 @@
     },
     {
       "id": "test-27",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -702,7 +702,7 @@
     },
     {
       "id": "test-28",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -724,7 +724,7 @@
     },
     {
       "id": "test-29",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -746,7 +746,7 @@
     },
     {
       "id": "test-30",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -768,7 +768,7 @@
     },
     {
       "id": "test-31",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -790,7 +790,7 @@
     },
     {
       "id": "test-32",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -812,7 +812,7 @@
     },
     {
       "id": "test-33",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -834,7 +834,7 @@
     },
     {
       "id": "test-34",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -856,7 +856,7 @@
     },
     {
       "id": "test-35",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -878,7 +878,7 @@
     },
     {
       "id": "test-36",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -900,7 +900,7 @@
     },
     {
       "id": "test-37",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -922,7 +922,7 @@
     },
     {
       "id": "test-38",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -944,7 +944,7 @@
     },
     {
       "id": "test-39",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -966,7 +966,7 @@
     },
     {
       "id": "test-40",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -988,7 +988,7 @@
     },
     {
       "id": "test-41",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1010,7 +1010,7 @@
     },
     {
       "id": "test-42",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1032,7 +1032,7 @@
     },
     {
       "id": "test-43",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1054,7 +1054,7 @@
     },
     {
       "id": "test-44",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1076,7 +1076,7 @@
     },
     {
       "id": "test-45",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1098,7 +1098,7 @@
     },
     {
       "id": "test-46",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1120,7 +1120,7 @@
     },
     {
       "id": "test-47",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1142,7 +1142,7 @@
     },
     {
       "id": "test-48",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1164,7 +1164,7 @@
     },
     {
       "id": "test-49",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1186,7 +1186,7 @@
     },
     {
       "id": "test-50",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1208,7 +1208,7 @@
     },
     {
       "id": "test-51",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1230,7 +1230,7 @@
     },
     {
       "id": "test-52",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1252,7 +1252,7 @@
     },
     {
       "id": "test-53",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1274,7 +1274,7 @@
     },
     {
       "id": "test-54",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1296,7 +1296,7 @@
     },
     {
       "id": "test-55",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1318,7 +1318,7 @@
     },
     {
       "id": "test-56",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1340,7 +1340,7 @@
     },
     {
       "id": "test-57",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1362,7 +1362,7 @@
     },
     {
       "id": "test-58",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1384,7 +1384,7 @@
     },
     {
       "id": "test-59",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1406,7 +1406,7 @@
     },
     {
       "id": "test-60",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1428,7 +1428,7 @@
     },
     {
       "id": "test-61",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1450,7 +1450,7 @@
     },
     {
       "id": "test-62",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1472,7 +1472,7 @@
     },
     {
       "id": "test-63",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1494,7 +1494,7 @@
     },
     {
       "id": "test-64",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1516,7 +1516,7 @@
     },
     {
       "id": "test-65",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1538,7 +1538,7 @@
     },
     {
       "id": "test-66",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1560,7 +1560,7 @@
     },
     {
       "id": "test-67",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1582,7 +1582,7 @@
     },
     {
       "id": "test-68",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1604,7 +1604,7 @@
     },
     {
       "id": "test-69",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1626,7 +1626,7 @@
     },
     {
       "id": "test-70",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1648,7 +1648,7 @@
     },
     {
       "id": "test-71",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1670,7 +1670,7 @@
     },
     {
       "id": "test-72",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1692,7 +1692,7 @@
     },
     {
       "id": "test-73",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1714,7 +1714,7 @@
     },
     {
       "id": "test-74",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1736,7 +1736,7 @@
     },
     {
       "id": "test-75",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1758,7 +1758,7 @@
     },
     {
       "id": "test-76",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1780,7 +1780,7 @@
     },
     {
       "id": "consumer-1",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1803,7 +1803,7 @@
     },
     {
       "id": "consumer-1-through-eof",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1823,7 +1823,7 @@
     },
     {
       "id": "consumer-2",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1846,7 +1846,7 @@
     },
     {
       "id": "consumer-2-through-eof",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1866,7 +1866,7 @@
     },
     {
       "id": "consumer-repeat-through-eof",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1886,7 +1886,7 @@
     },
     {
       "id": "import-negative-1-isolated-negative",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1897,7 +1897,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -1918,7 +1918,7 @@
     },
     {
       "id": "import-negative-2-isolated-negative",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1929,7 +1929,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -1950,7 +1950,7 @@
     },
     {
       "id": "import-negative-3-isolated-negative",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1961,7 +1961,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -1982,7 +1982,7 @@
     },
     {
       "id": "import-negative-4-isolated-negative",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -1993,7 +1993,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2014,7 +2014,7 @@
     },
     {
       "id": "import-negative-5-isolated-negative",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2025,7 +2025,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2046,7 +2046,7 @@
     },
     {
       "id": "import-negative-6-isolated-negative",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2057,7 +2057,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2078,7 +2078,7 @@
     },
     {
       "id": "import-negative-7-isolated-negative",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2089,7 +2089,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2110,7 +2110,7 @@
     },
     {
       "id": "import-negative-8-isolated-negative",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2121,7 +2121,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2142,7 +2142,7 @@
     },
     {
       "id": "import-negative-9-isolated-negative",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2153,7 +2153,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2174,7 +2174,7 @@
     },
     {
       "id": "import-negative-10-isolated-negative",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2185,7 +2185,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2206,7 +2206,7 @@
     },
     {
       "id": "import-negative-11-isolated-negative",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2217,7 +2217,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2238,7 +2238,7 @@
     },
     {
       "id": "import-negative-12-isolated-negative",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2249,7 +2249,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2270,7 +2270,7 @@
     },
     {
       "id": "partitioned-admission-compile",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2281,7 +2281,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2293,7 +2293,7 @@
     },
     {
       "id": "partitioned-admission-red",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2318,7 +2318,7 @@
     },
     {
       "id": "omitted-local-cleanup-compile",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2329,7 +2329,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2341,7 +2341,7 @@
     },
     {
       "id": "omitted-local-cleanup-red",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2366,7 +2366,7 @@
     },
     {
       "id": "unstamped-documents-compile",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2377,7 +2377,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2389,7 +2389,7 @@
     },
     {
       "id": "unstamped-documents-red",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2414,7 +2414,7 @@
     },
     {
       "id": "repeated-document-write-compile",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2425,7 +2425,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2437,7 +2437,7 @@
     },
     {
       "id": "repeated-document-write-red",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2462,7 +2462,7 @@
     },
     {
       "id": "ignored-startup-marker-compile",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2473,7 +2473,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2485,7 +2485,7 @@
     },
     {
       "id": "ignored-startup-marker-red",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2510,7 +2510,7 @@
     },
     {
       "id": "automatic-after-agree-compile",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2521,7 +2521,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2533,7 +2533,7 @@
     },
     {
       "id": "automatic-after-agree-red",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2558,7 +2558,7 @@
     },
     {
       "id": "early-receipt-compile",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2569,7 +2569,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2581,7 +2581,7 @@
     },
     {
       "id": "early-receipt-red",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2606,7 +2606,7 @@
     },
     {
       "id": "missing-native-forwarding-compile",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2617,7 +2617,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2629,7 +2629,7 @@
     },
     {
       "id": "missing-native-forwarding-red",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2654,7 +2654,7 @@
     },
     {
       "id": "omitted-session-cleanup-compile",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",
@@ -2665,7 +2665,7 @@
         "-k",
         "10",
         "540",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--project",
         "tools/fixtures/settings-import-execution/tsconfig.json",
         "--pretty",
@@ -2677,7 +2677,7 @@
     },
     {
       "id": "omitted-session-cleanup-red",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-68a5552d",
+      "cwd": ".",
       "argv": [
         "/usr/bin/env",
         "-i",

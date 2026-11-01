@@ -8,7 +8,7 @@
     "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
     "-I",
     "-B",
-    "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+    ".audit/pointer-keys-qualification/launch.py",
     "node",
     "node_modules/@typescript/native/bin/tsc",
     "--noEmit",

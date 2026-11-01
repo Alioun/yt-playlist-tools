@@ -12,7 +12,7 @@
     "mode": "100755"
   },
   "nativeTypeScript": {
-    "path": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+    "path": "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
     "sha256": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
     "bytes": 23653616,
     "mode": "100755"
@@ -36,10 +36,10 @@
     "mode": "100755"
   },
   "preparedNodeModules": {
-    "path": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules"
+    "path": "node_modules"
   },
   "preparedWxt": {
-    "path": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-35a215a0/.wxt"
+    "path": ".wxt"
   },
   "timeout": {
     "path": "/usr/bin/timeout",

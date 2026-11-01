@@ -2,7 +2,7 @@
   "inheritedPins": {
     "state": "static-identities-only-no-execution",
     "dependencies": {
-      "root": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules",
+      "root": "node_modules",
       "identity": {
         "algorithm": "sha256 of sorted mode-NUL-path-NUL-bytes-NUL-sha256-LF records",
         "sha256": "de76ea5f616724774b17d7cb70bb380b17bd328fa1f904a9d6bc2108a2a45dd4",
@@ -12,7 +12,7 @@
       }
     },
     "generatedTypes": {
-      "root": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/baseline-build/source/.wxt",
+      "root": ".audit/2.0-build-20261029/baseline-build/source/.wxt",
       "identity": {
         "algorithm": "sha256 of sorted mode-NUL-path-NUL-bytes-NUL-sha256-LF records",
         "sha256": "4ea95466c05ef838d191ab538e9d55efd3d64f77fd4066d0fcf4acfc38ba1975",
@@ -37,7 +37,7 @@
         "bytes": 132848
       },
       "nativeTypeScript": {
-        "path": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "path": "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "mode": "100755",
         "gitBlob": "ff759f060f6736e5276373ea16d4add65547d253",
         "sha256": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",

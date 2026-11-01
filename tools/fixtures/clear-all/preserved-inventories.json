@@ -6,9 +6,9 @@
       "path": "tools/fixtures/owner-services-reconciliation/gate-census.json",
       "identity": {
         "mode": "100644",
-        "bytes": 72410,
-        "sha256": "a6f5ddd639fcd3974bd7d03865dc6fe243013de38095d5db3ad3ef2152c049d9",
-        "gitBlob": "4f571cbcc8c120038663e0fbef63be928e80e011"
+        "bytes": 72178,
+        "sha256": "3ee45f439fe12826c056aef2d1473ceebad3f900ba1a277e57fc87cc385f2641",
+        "gitBlob": "13c56a2dc98e3bf73acba341fdb7388153a6150a"
       },
       "count": 170,
       "entries": [
@@ -869,9 +869,9 @@
       "path": "tools/fixtures/settings-import-execution/future-gates.json",
       "identity": {
         "mode": "100644",
-        "bytes": 90262,
-        "sha256": "dc2a2cebf45449d4c4db269052d5452b4ed2ec7547dbd5a9a33aa603311be5e6",
-        "gitBlob": "d5cfb31deddb0deefe37f9405b91bb9d5c0908e6"
+        "bytes": 82486,
+        "sha256": "b452c1bdc7535f40a8b6a89b2dc3fb92ec902e5a7273568db392fc320195f12c",
+        "gitBlob": "6ed94a544fab3413065b7dc120f9acca5d417447"
       },
       "count": 114,
       "entries": [
@@ -1452,9 +1452,9 @@
       "path": "tools/fixtures/shared-options/future-gates.json",
       "identity": {
         "mode": "100644",
-        "bytes": 161533,
-        "sha256": "e46664d0e9d40a029be42c6cb4219319b5074f7e47989a88b776561326b3d901",
-        "gitBlob": "2291e1835954481f886c1ae005c0f34ae58f26aa"
+        "bytes": 133867,
+        "sha256": "f6980694ffc5f3a4591d4181f106b617814d911f13ea62e6f788636c9cdad65e",
+        "gitBlob": "1597f9888ebb5f89660a8efe6de6b16d890b6f3c"
       },
       "count": 85,
       "entries": [

@@ -22,7 +22,7 @@
      "0",
      "-t",
      "-i",
-     "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-cd0ba1f1/tools/fixtures/feature-switches/controls/private-blanket-rejection.patch"
+     "tools/fixtures/feature-switches/controls/private-blanket-rejection.patch"
     ],
     "returncode": 1,
     "stdout": "patching file 'src/background/router/ui-playlists/index.ts'\n1 out of 1 hunks failed--saving rejects to 'src/background/router/ui-playlists/index.ts.rej'",
@@ -65,7 +65,7 @@
      "0",
      "-t",
      "-i",
-     "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-cd0ba1f1/tools/fixtures/key-settings/relocated/feature-controls/private-blanket-rejection.patch"
+     "tools/fixtures/key-settings/relocated/feature-controls/private-blanket-rejection.patch"
     ],
     "returncode": 0,
     "stdout": "patching file 'src/background/router/ui-playlists/index.ts'",
@@ -90,7 +90,7 @@
      "0",
      "-t",
      "-i",
-     "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-cd0ba1f1/tools/fixtures/owner-key-clear-reconciliation/relocated-controls/tools__fixtures__key-settings__relocated__feature-controls__private-blanket-rejection.patch"
+     "tools/fixtures/owner-key-clear-reconciliation/relocated-controls/tools__fixtures__key-settings__relocated__feature-controls__private-blanket-rejection.patch"
     ],
     "returncode": 0,
     "stdout": "patching file 'src/background/router/ui-playlists/index.ts'",
@@ -119,7 +119,7 @@
      "0",
      "-t",
      "-i",
-     "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-cd0ba1f1/tools/fixtures/settings-import-execution/controls/missing-native-forwarding.patch"
+     "tools/fixtures/settings-import-execution/controls/missing-native-forwarding.patch"
     ],
     "returncode": 1,
     "stdout": "patching file 'src/background/adapters/starting-owner.ts'\n1 out of 1 hunks failed--saving rejects to 'src/background/adapters/starting-owner.ts.rej'",
@@ -160,7 +160,7 @@
      "0",
      "-t",
      "-i",
-     "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-cd0ba1f1/tools/fixtures/ui-owner-reconciliation/protected-repairs.patch"
+     "tools/fixtures/ui-owner-reconciliation/protected-repairs.patch"
     ],
     "returncode": 1,
     "stdout": "patching file 'src/background/router/ui-playlists/index.ts'\n1 out of 1 hunks failed--saving rejects to 'src/background/router/ui-playlists/index.ts.rej'\npatching file 'tools/fixtures/starting-owner/run.ts'\npatching file 'src/background/router/first-run.bun-test.ts'\n1 out of 2 hunks failed--saving rejects to 'src/background/router/first-run.bun-test.ts.rej'",

@@ -18,17 +18,17 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "typeRoots": [
-      "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@types"
+      "../../../node_modules/@types"
     ],
     "paths": {
       "wxt/browser": [
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/wxt/dist/browser.d.mts"
+        "../../../node_modules/wxt/dist/browser.d.mts"
       ],
       "wxt/testing/fake-browser": [
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/wxt/dist/testing/fake-browser.d.mts"
+        "../../../node_modules/wxt/dist/testing/fake-browser.d.mts"
       ],
       "@happy-dom/global-registrator": [
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@happy-dom/global-registrator/lib/index.d.ts"
+        "../../../node_modules/@happy-dom/global-registrator/lib/index.d.ts"
       ]
     },
     "resolveJsonModule": true

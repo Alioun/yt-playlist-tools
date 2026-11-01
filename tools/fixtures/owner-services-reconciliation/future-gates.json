@@ -5,12 +5,12 @@
     {
       "id": "scoped-native",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -27,17 +27,17 @@
         "-k",
         "10",
         "180",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--noEmit",
         "--pretty",
         "false",
         "-p",
         "tools/fixtures/owner-services-reconciliation/tsconfig.json"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc --noEmit --pretty false -p tools/fixtures/owner-services-reconciliation/tsconfig.json < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 node_modules/@typescript/typescript-darwin-arm64/lib/tsc --noEmit --pretty false -p tools/fixtures/owner-services-reconciliation/tsconfig.json < /dev/null",
       "seconds": 180,
       "programIdentity": {
-        "path": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "path": "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "sha256": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
         "gitBlob": "ff759f060f6736e5276373ea16d4add65547d253",
         "bytes": 23653616,
@@ -50,12 +50,12 @@
     {
       "id": "scoped-native-inclusion",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -72,7 +72,7 @@
         "-k",
         "10",
         "120",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--noEmit",
         "--pretty",
         "false",
@@ -80,10 +80,10 @@
         "tools/fixtures/owner-services-reconciliation/tsconfig.json",
         "--listFilesOnly"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 120 /Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc --noEmit --pretty false -p tools/fixtures/owner-services-reconciliation/tsconfig.json --listFilesOnly < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 120 node_modules/@typescript/typescript-darwin-arm64/lib/tsc --noEmit --pretty false -p tools/fixtures/owner-services-reconciliation/tsconfig.json --listFilesOnly < /dev/null",
       "seconds": 120,
       "programIdentity": {
-        "path": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "path": "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "sha256": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
         "gitBlob": "ff759f060f6736e5276373ea16d4add65547d253",
         "bytes": 23653616,
@@ -98,12 +98,12 @@
     {
       "id": "whole-native",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -120,17 +120,17 @@
         "-k",
         "10",
         "180",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--noEmit",
         "--pretty",
         "false",
         "-p",
         "tsconfig.json"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc --noEmit --pretty false -p tsconfig.json < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 node_modules/@typescript/typescript-darwin-arm64/lib/tsc --noEmit --pretty false -p tsconfig.json < /dev/null",
       "seconds": 180,
       "programIdentity": {
-        "path": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "path": "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "sha256": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
         "gitBlob": "ff759f060f6736e5276373ea16d4add65547d253",
         "bytes": 23653616,
@@ -143,12 +143,12 @@
     {
       "id": "whole-native-inclusion",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -165,7 +165,7 @@
         "-k",
         "10",
         "120",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "--noEmit",
         "--pretty",
         "false",
@@ -173,10 +173,10 @@
         "tsconfig.json",
         "--listFilesOnly"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 120 /Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc --noEmit --pretty false -p tsconfig.json --listFilesOnly < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 120 node_modules/@typescript/typescript-darwin-arm64/lib/tsc --noEmit --pretty false -p tsconfig.json --listFilesOnly < /dev/null",
       "seconds": 120,
       "programIdentity": {
-        "path": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "path": "node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
         "sha256": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
         "gitBlob": "ff759f060f6736e5276373ea16d4add65547d253",
         "bytes": 23653616,
@@ -191,12 +191,12 @@
     {
       "id": "inclusion-proof",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -221,7 +221,7 @@
         "/private/tmp/owner-services-reconciliation-future/scoped-native-inclusion.txt",
         "/private/tmp/owner-services-reconciliation-future/whole-native-inclusion.txt"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 120 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -I -S -B tools/fixtures/owner-services-reconciliation/verify-inclusion.py /private/tmp/owner-services-reconciliation-future/scoped-native-inclusion.txt /private/tmp/owner-services-reconciliation-future/whole-native-inclusion.txt < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 120 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -I -S -B tools/fixtures/owner-services-reconciliation/verify-inclusion.py /private/tmp/owner-services-reconciliation-future/scoped-native-inclusion.txt /private/tmp/owner-services-reconciliation-future/whole-native-inclusion.txt < /dev/null",
       "seconds": 120,
       "programIdentity": {
         "path": "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
@@ -237,12 +237,12 @@
     {
       "id": "real-svelte-compilation",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -262,7 +262,7 @@
         "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
         "tools/fixtures/owner-services-reconciliation/compile-svelte.mjs"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/Cellar/node/26.12.1_1/bin/node tools/fixtures/owner-services-reconciliation/compile-svelte.mjs < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/Cellar/node/26.12.1_1/bin/node tools/fixtures/owner-services-reconciliation/compile-svelte.mjs < /dev/null",
       "seconds": 180,
       "programIdentity": {
         "path": "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
@@ -278,12 +278,12 @@
     {
       "id": "new-composed-behavior",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -311,7 +311,7 @@
         "./tools/fixtures/owner-services-reconciliation/owner.bun-test.ts",
         "./tools/fixtures/owner-services-reconciliation/consumer.bun-test.ts"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./tools/fixtures/owner-services-reconciliation/owner.bun-test.ts ./tools/fixtures/owner-services-reconciliation/consumer.bun-test.ts < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./tools/fixtures/owner-services-reconciliation/owner.bun-test.ts ./tools/fixtures/owner-services-reconciliation/consumer.bun-test.ts < /dev/null",
       "seconds": 180,
       "programIdentity": {
         "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
@@ -328,12 +328,12 @@
     {
       "id": "existing-format",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -360,7 +360,7 @@
         "10000",
         "./src/shared/settings-file/settings-file.bun-test.ts"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/shared/settings-file/settings-file.bun-test.ts < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/shared/settings-file/settings-file.bun-test.ts < /dev/null",
       "seconds": 180,
       "programIdentity": {
         "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
@@ -377,12 +377,12 @@
     {
       "id": "existing-file-owner",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -411,7 +411,7 @@
         "./src/background/store/settings-file-owner.bun-test.ts",
         "./tools/fixtures/settings-file-owner/consumer.bun-test.ts"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/background/store/settings-file-read.bun-test.ts ./src/background/store/settings-file-owner.bun-test.ts ./tools/fixtures/settings-file-owner/consumer.bun-test.ts < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/background/store/settings-file-read.bun-test.ts ./src/background/store/settings-file-owner.bun-test.ts ./tools/fixtures/settings-file-owner/consumer.bun-test.ts < /dev/null",
       "seconds": 180,
       "programIdentity": {
         "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
@@ -428,12 +428,12 @@
     {
       "id": "existing-accounts",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -462,7 +462,7 @@
         "./src/background/accounts/account-label-owner.bun-test.ts",
         "./tools/fixtures/accounts-label/consumer.bun-test.ts"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/background/accounts/accounts.bun-test.ts ./src/background/accounts/account-label-owner.bun-test.ts ./tools/fixtures/accounts-label/consumer.bun-test.ts < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/background/accounts/accounts.bun-test.ts ./src/background/accounts/account-label-owner.bun-test.ts ./tools/fixtures/accounts-label/consumer.bun-test.ts < /dev/null",
       "seconds": 180,
       "programIdentity": {
         "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
@@ -479,12 +479,12 @@
     {
       "id": "owner-setup",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -514,7 +514,7 @@
         "./src/background/store/setup-edit-execution.bun-test.ts",
         "./src/background/store/store-composition.bun-test.ts"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/background/store/local-filter-writer.bun-test.ts ./src/background/store/setup-edit.bun-test.ts ./src/background/store/setup-edit-execution.bun-test.ts ./src/background/store/store-composition.bun-test.ts < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/background/store/local-filter-writer.bun-test.ts ./src/background/store/setup-edit.bun-test.ts ./src/background/store/setup-edit-execution.bun-test.ts ./src/background/store/store-composition.bun-test.ts < /dev/null",
       "seconds": 180,
       "programIdentity": {
         "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
@@ -531,12 +531,12 @@
     {
       "id": "cache-auto-add",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -566,7 +566,7 @@
         "./src/background/playlists/playlists.bun-test.ts",
         "./src/background/store/auto-add-choice.bun-test.ts"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/shared/model/account-cache.bun-test.ts ./src/background/store/playlist-cache.bun-test.ts ./src/background/playlists/playlists.bun-test.ts ./src/background/store/auto-add-choice.bun-test.ts < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/shared/model/account-cache.bun-test.ts ./src/background/store/playlist-cache.bun-test.ts ./src/background/playlists/playlists.bun-test.ts ./src/background/store/auto-add-choice.bun-test.ts < /dev/null",
       "seconds": 180,
       "programIdentity": {
         "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
@@ -583,12 +583,12 @@
     {
       "id": "session",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -617,7 +617,7 @@
         "./src/background/store/account-removal-session.bun-test.ts",
         "./src/background/tabs/tabs.bun-test.ts"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/background/store/session-memory.bun-test.ts ./src/background/store/account-removal-session.bun-test.ts ./src/background/tabs/tabs.bun-test.ts < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/background/store/session-memory.bun-test.ts ./src/background/store/account-removal-session.bun-test.ts ./src/background/tabs/tabs.bun-test.ts < /dev/null",
       "seconds": 180,
       "programIdentity": {
         "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
@@ -634,12 +634,12 @@
     {
       "id": "monitor",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -667,7 +667,7 @@
         "./src/background/monitor/monitor.bun-test.ts",
         "./src/background/store/monitor-session.bun-test.ts"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/background/monitor/monitor.bun-test.ts ./src/background/store/monitor-session.bun-test.ts < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/background/monitor/monitor.bun-test.ts ./src/background/store/monitor-session.bun-test.ts < /dev/null",
       "seconds": 180,
       "programIdentity": {
         "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
@@ -684,12 +684,12 @@
     {
       "id": "native-facade",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -717,7 +717,7 @@
         "./src/background/adapters/starting-owner.bun-test.ts",
         "./src/background/adapters/local-filter-writer.bun-test.ts"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/background/adapters/starting-owner.bun-test.ts ./src/background/adapters/local-filter-writer.bun-test.ts < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/background/adapters/starting-owner.bun-test.ts ./src/background/adapters/local-filter-writer.bun-test.ts < /dev/null",
       "seconds": 180,
       "programIdentity": {
         "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
@@ -734,12 +734,12 @@
     {
       "id": "publication",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -768,7 +768,7 @@
         "./src/background/tab-view/publication.bun-test.ts",
         "./src/background/add-flow/private-skip.bun-test.ts"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/background/store/view-events.bun-test.ts ./src/background/tab-view/publication.bun-test.ts ./src/background/add-flow/private-skip.bun-test.ts < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./src/background/store/view-events.bun-test.ts ./src/background/tab-view/publication.bun-test.ts ./src/background/add-flow/private-skip.bun-test.ts < /dev/null",
       "seconds": 180,
       "programIdentity": {
         "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
@@ -785,12 +785,12 @@
     {
       "id": "architecture",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -817,7 +817,7 @@
         "10000",
         "./tests/guards/architecture.test.ts"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./tests/guards/architecture.test.ts < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 180 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install --conditions=browser test --isolate --timeout 10000 ./tests/guards/architecture.test.ts < /dev/null",
       "seconds": 180,
       "programIdentity": {
         "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
@@ -834,12 +834,12 @@
     {
       "id": "complete-consumer-1",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -861,7 +861,7 @@
         "--no-install",
         "tools/fixtures/owner-services-reconciliation/run.ts"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 120 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install tools/fixtures/owner-services-reconciliation/run.ts < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 120 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install tools/fixtures/owner-services-reconciliation/run.ts < /dev/null",
       "seconds": 120,
       "programIdentity": {
         "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
@@ -878,12 +878,12 @@
     {
       "id": "complete-consumer-2",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -905,7 +905,7 @@
         "--no-install",
         "tools/fixtures/owner-services-reconciliation/run.ts"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 120 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install tools/fixtures/owner-services-reconciliation/run.ts < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 120 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install tools/fixtures/owner-services-reconciliation/run.ts < /dev/null",
       "seconds": 120,
       "programIdentity": {
         "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
@@ -922,12 +922,12 @@
     {
       "id": "complete-consumer-eof-comparison",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -952,7 +952,7 @@
         "/private/tmp/owner-services-reconciliation-future/consumer-1.jsonl",
         "/private/tmp/owner-services-reconciliation-future/consumer-2.jsonl"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 120 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -I -S -B tools/fixtures/owner-services-reconciliation/compare-eof.py /private/tmp/owner-services-reconciliation-future/consumer-1.jsonl /private/tmp/owner-services-reconciliation-future/consumer-2.jsonl < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 120 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -I -S -B tools/fixtures/owner-services-reconciliation/compare-eof.py /private/tmp/owner-services-reconciliation-future/consumer-1.jsonl /private/tmp/owner-services-reconciliation-future/consumer-2.jsonl < /dev/null",
       "seconds": 120,
       "programIdentity": {
         "path": "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
@@ -968,12 +968,12 @@
     {
       "id": "build-chrome",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -998,7 +998,7 @@
         "-b",
         "chrome"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install ./node_modules/wxt/bin/wxt.mjs build -b chrome < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install ./node_modules/wxt/bin/wxt.mjs build -b chrome < /dev/null",
       "seconds": 540,
       "programIdentity": {
         "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
@@ -1014,12 +1014,12 @@
     {
       "id": "build-firefox",
       "state": "unexecuted-no-runtime-lease",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6",
+      "cwd": ".",
       "stdin": "/dev/null",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+        "PATH=tools/fixtures/owner-services-reconciliation/future-bin",
         "HOME=/private/tmp/owner-services-reconciliation-future/home",
         "TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp",
         "LANG=C",
@@ -1044,7 +1044,7 @@
         "-b",
         "firefox"
       ],
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install ./node_modules/wxt/bin/wxt.mjs build -b firefox < /dev/null",
+      "shellCommand": "/usr/bin/env -i PATH=tools/fixtures/owner-services-reconciliation/future-bin HOME=/private/tmp/owner-services-reconciliation-future/home TMPDIR=/private/tmp/owner-services-reconciliation-future/tmp LANG=C LC_ALL=C TZ=UTC CI=1 NO_COLOR=1 DO_NOT_TRACK=1 WXT_TELEMETRY_DISABLED=1 BUN_CONFIG_NO_INSTALL=1 NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install ./node_modules/wxt/bin/wxt.mjs build -b firefox < /dev/null",
       "seconds": 540,
       "programIdentity": {
         "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",

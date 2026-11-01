@@ -3,11 +3,11 @@
   "pinnedInventories": [
     {
       "group": "format",
-      "source": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/settings-file-authored-returned/source/tools/fixtures/settings-file/future-commands.json",
+      "source": ".audit/2.0-build-20261029/settings-file-authored-returned/source/tools/fixtures/settings-file/future-commands.json",
       "copy": ".audit/owner-services-reconciliation/inherited-inventories/format.json",
-      "sha256": "4e4a2fb323f66419c2959b51a6e709a068ec78eecccf778a4823e20651fb5768",
-      "gitBlob": "fba0d98ff9dcac788b165ac05011d374019502b4",
-      "bytes": 6664,
+      "sha256": "e600f0dd08c1374530dd44640044ae874115a30a85a942452995e584efdd2e7b",
+      "gitBlob": "7cd92c9bf4c38422f9468d6b1bd93baadf2f9761",
+      "bytes": 6202,
       "mode": "100644",
       "gateCount": 7,
       "originalIds": [
@@ -22,11 +22,11 @@
     },
     {
       "group": "file-owner",
-      "source": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/settings-file-owner-read-authored-returned/source/tools/fixtures/settings-file-owner/future-commands.json",
+      "source": ".audit/2.0-build-20261029/settings-file-owner-read-authored-returned/source/tools/fixtures/settings-file-owner/future-commands.json",
       "copy": ".audit/owner-services-reconciliation/inherited-inventories/file-owner.json",
-      "sha256": "36faa081d52805a237645d18f601fa9b041d89a77d5d7f33db4d38279bd253c9",
-      "gitBlob": "e6c86eec4c252a9cae46aaaf0e46887f3efa1612",
-      "bytes": 16525,
+      "sha256": "a2f7bebbcc4ea3d04e9d7b3e8675d7ff98992e372b8be895214fd238cc7b6b64",
+      "gitBlob": "814149e03e76ffd63cc7767ff5b0df7ab32c7035",
+      "bytes": 15657,
       "mode": "100644",
       "gateCount": 14,
       "originalIds": [
@@ -48,7 +48,7 @@
     },
     {
       "group": "accounts",
-      "source": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/accounts-label-authored-returned/gates.json",
+      "source": ".audit/2.0-build-20261029/accounts-label-authored-returned/gates.json",
       "copy": ".audit/owner-services-reconciliation/inherited-inventories/accounts.json",
       "sha256": "2f3990de0433d5448ed77c0b391d721ec0af68f42000060c3e9121b2d9c28ba5",
       "gitBlob": "7d0acb08c22b88f2bc37954376515e674327060a",
@@ -93,11 +93,11 @@
     },
     {
       "group": "publication",
-      "source": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/private-skip-publication-authored-returned/source/tools/fixtures/view-publication/future-gates.json",
+      "source": ".audit/2.0-build-20261029/private-skip-publication-authored-returned/source/tools/fixtures/view-publication/future-gates.json",
       "copy": ".audit/owner-services-reconciliation/inherited-inventories/publication.json",
-      "sha256": "78c078ef2c91bde67cbd632b7f105649e94dba597a53d604c9d6e2fff150a10a",
-      "gitBlob": "6ecb492bae395fd565d6188696c67ff3dc8b9996",
-      "bytes": 152319,
+      "sha256": "86af233d2dab1efb3b9e66b235094dd48d5784bd8fdb6c2e8860a0ec784cf9e6",
+      "gitBlob": "d009b34c5e2f3b526ce8a4a01ac3255fba0fcff5",
+      "bytes": 121787,
       "mode": "100644",
       "gateCount": 75,
       "originalIds": [
@@ -181,9 +181,9 @@
   ],
   "requiredInheritedCount": 129,
   "plannerInventory": {
-    "sha256": "e859a5c1f416e0492d2f22b15d4f31a999c3dc494345a13b97a382ce49078657",
-    "gitBlob": "3543499649db6bea8845d9bd92b5861bf08405d4",
-    "bytes": 7502,
+    "sha256": "4bd0db359819a66e7dc42b65946e0fe0497a51f24038e3482658d99fbd3ac0fd",
+    "gitBlob": "38d69f3315366d24ea66217d0279e9256de8f5ac",
+    "bytes": 6476,
     "mode": "100644"
   },
   "plannerGateCount": 9,

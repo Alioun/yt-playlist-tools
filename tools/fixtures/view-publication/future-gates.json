@@ -14,9 +14,9 @@
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -26,7 +26,7 @@
         "10",
         "90",
         "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/typescript/bin/tsc",
+        "node_modules/typescript/bin/tsc",
         "--project",
         "tools/fixtures/view-publication/tsconfig.json",
         "--pretty",
@@ -46,17 +46,17 @@
         "false"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 90 /opt/homebrew/Cellar/node/26.12.1_1/bin/node /Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/typescript/bin/tsc --project tools/fixtures/view-publication/tsconfig.json --pretty false < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 90 /opt/homebrew/Cellar/node/26.12.1_1/bin/node node_modules/typescript/bin/tsc --project tools/fixtures/view-publication/tsconfig.json --pretty false < /dev/null"
     },
     {
       "id": "extlink-compile",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -66,7 +66,7 @@
         "10",
         "90",
         "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/typescript/bin/tsc",
+        "node_modules/typescript/bin/tsc",
         "--project",
         "tools/fixtures/extlink/tsconfig.json",
         "--pretty",
@@ -86,17 +86,17 @@
         "false"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 90 /opt/homebrew/Cellar/node/26.12.1_1/bin/node /Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/typescript/bin/tsc --project tools/fixtures/extlink/tsconfig.json --pretty false < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 90 /opt/homebrew/Cellar/node/26.12.1_1/bin/node node_modules/typescript/bin/tsc --project tools/fixtures/extlink/tsconfig.json --pretty false < /dev/null"
     },
     {
       "id": "focused-1",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -128,17 +128,17 @@
         "src/background/tab-view/publication.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/tab-view/publication.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/tab-view/publication.bun-test.ts < /dev/null"
     },
     {
       "id": "focused-2",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -170,17 +170,17 @@
         "src/background/store/view-events.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/view-events.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/view-events.bun-test.ts < /dev/null"
     },
     {
       "id": "focused-3",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -212,17 +212,17 @@
         "src/background/tabs/tabs.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/tabs/tabs.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/tabs/tabs.bun-test.ts < /dev/null"
     },
     {
       "id": "focused-4",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -254,17 +254,17 @@
         "src/background/monitor/monitor.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/monitor/monitor.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/monitor/monitor.bun-test.ts < /dev/null"
     },
     {
       "id": "focused-5",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -296,17 +296,17 @@
         "tools/fixtures/view-publication/consumer.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 tools/fixtures/view-publication/consumer.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 tools/fixtures/view-publication/consumer.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-1",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -338,17 +338,17 @@
         "src/background/tabs/deadline.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/tabs/deadline.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/tabs/deadline.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-2",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -380,17 +380,17 @@
         "src/background/tabs/owner.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/tabs/owner.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/tabs/owner.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-3",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -422,17 +422,17 @@
         "src/background/adapters/tabs.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/adapters/tabs.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/adapters/tabs.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-4",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -464,17 +464,17 @@
         "src/shared/contracts/tabs.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/contracts/tabs.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/contracts/tabs.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-5",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -506,17 +506,17 @@
         "src/background/tab-view/producer.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/tab-view/producer.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/tab-view/producer.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-6",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -548,17 +548,17 @@
         "src/background/tab-view/consumer.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/tab-view/consumer.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/tab-view/consumer.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-7",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -590,17 +590,17 @@
         "src/shared/contracts/tab-view.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/contracts/tab-view.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/contracts/tab-view.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-8",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -632,17 +632,17 @@
         "tools/fixtures/tab-view/consumer.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 tools/fixtures/tab-view/consumer.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 tools/fixtures/tab-view/consumer.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-9",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -674,17 +674,17 @@
         "src/background/store/local-filter-writer.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/local-filter-writer.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/local-filter-writer.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-10",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -716,17 +716,17 @@
         "src/background/store/settings-read-events.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/settings-read-events.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/settings-read-events.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-11",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -758,17 +758,17 @@
         "src/background/store/setup-edit.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/setup-edit.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/setup-edit.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-12",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -800,17 +800,17 @@
         "src/background/store/account-removal-execution.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/account-removal-execution.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/account-removal-execution.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-13",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -842,17 +842,17 @@
         "src/background/store/account-removal-session.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/account-removal-session.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/account-removal-session.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-14",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -884,17 +884,17 @@
         "src/background/store/sync-join-execution.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/sync-join-execution.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/sync-join-execution.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-15",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -926,17 +926,17 @@
         "src/background/store/session-memory.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/session-memory.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/session-memory.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-16",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -968,17 +968,17 @@
         "src/background/store/monitor-session.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/monitor-session.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/monitor-session.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-17",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1010,17 +1010,17 @@
         "src/background/add-flow/add-flow.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/add-flow/add-flow.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/add-flow/add-flow.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-18",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1052,17 +1052,17 @@
         "src/background/add-flow/add-flow-session.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/add-flow/add-flow-session.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/add-flow/add-flow-session.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-19",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1094,17 +1094,17 @@
         "src/site/core/extlink.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/site/core/extlink.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/site/core/extlink.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-20",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1136,17 +1136,17 @@
         "src/site/core/extlink-consumer.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/site/core/extlink-consumer.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/site/core/extlink-consumer.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-21",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1178,17 +1178,17 @@
         "src/site/core/adapters/extlink-runtime.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/site/core/adapters/extlink-runtime.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/site/core/adapters/extlink-runtime.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-22",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1220,17 +1220,17 @@
         "src/background/playlists/playlists.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/playlists/playlists.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/playlists/playlists.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-23",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1262,17 +1262,17 @@
         "src/background/store/playlist-cache.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/playlist-cache.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/playlist-cache.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-24",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1304,17 +1304,17 @@
         "src/shared/model/account-cache.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/model/account-cache.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/model/account-cache.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-25",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1346,17 +1346,17 @@
         "tools/fixtures/playlists-cache/consumer.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 tools/fixtures/playlists-cache/consumer.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 tools/fixtures/playlists-cache/consumer.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-26",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1388,17 +1388,17 @@
         "tools/fixtures/monitor/consumer.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 tools/fixtures/monitor/consumer.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 tools/fixtures/monitor/consumer.bun-test.ts < /dev/null"
     },
     {
       "id": "regression-27",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1430,17 +1430,17 @@
         "tools/fixtures/auto-add-choice/consumer.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 tools/fixtures/auto-add-choice/consumer.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 tools/fixtures/auto-add-choice/consumer.bun-test.ts < /dev/null"
     },
     {
       "id": "unknown-collection-proof",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1476,17 +1476,17 @@
         "Monitor edits merge a fresh session and preserve unknown keys and other owners"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/monitor-session.bun-test.ts -t 'Monitor edits merge a fresh session and preserve unknown keys and other owners' < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/monitor-session.bun-test.ts -t 'Monitor edits merge a fresh session and preserve unknown keys and other owners' < /dev/null"
     },
     {
       "id": "complete-eof-consumer",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1528,17 +1528,17 @@
         "coordinator-granted"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 75 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/consumer.py --lease coordinator-granted < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 75 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/consumer.py --lease coordinator-granted < /dev/null"
     },
     {
       "id": "type-publication-missing-producer",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1569,17 +1569,17 @@
         "publication-missing-producer"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-missing-producer < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-missing-producer < /dev/null"
     },
     {
       "id": "type-publication-partial-producer",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1610,17 +1610,17 @@
         "publication-partial-producer"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-partial-producer < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-partial-producer < /dev/null"
     },
     {
       "id": "type-publication-missing-validator",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1651,17 +1651,17 @@
         "publication-missing-validator"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-missing-validator < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-missing-validator < /dev/null"
     },
     {
       "id": "type-publication-invented-target",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1692,17 +1692,17 @@
         "publication-invented-target"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-invented-target < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-invented-target < /dev/null"
     },
     {
       "id": "type-publication-fake-account",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1733,17 +1733,17 @@
         "publication-fake-account"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-fake-account < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-fake-account < /dev/null"
     },
     {
       "id": "type-publication-privacy-mixing",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1774,17 +1774,17 @@
         "publication-privacy-mixing"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-privacy-mixing < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-privacy-mixing < /dev/null"
     },
     {
       "id": "type-publication-fabricated-handle",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1815,17 +1815,17 @@
         "publication-fabricated-handle"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-fabricated-handle < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-fabricated-handle < /dev/null"
     },
     {
       "id": "type-publication-disposed-handle",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1856,17 +1856,17 @@
         "publication-disposed-handle"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-disposed-handle < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-disposed-handle < /dev/null"
     },
     {
       "id": "type-publication-monitor-required",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1897,17 +1897,17 @@
         "publication-monitor-required"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-monitor-required < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-monitor-required < /dev/null"
     },
     {
       "id": "type-publication-private-storage-event",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1938,17 +1938,17 @@
         "publication-private-storage-event"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-private-storage-event < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-private-storage-event < /dev/null"
     },
     {
       "id": "type-tabs-target-account-required",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -1979,17 +1979,17 @@
         "tabs-target-account-required"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id tabs-target-account-required < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id tabs-target-account-required < /dev/null"
     },
     {
       "id": "type-tabs-target-not-requester",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2020,17 +2020,17 @@
         "tabs-target-not-requester"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id tabs-target-not-requester < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id tabs-target-not-requester < /dev/null"
     },
     {
       "id": "type-tabs-target-opaque",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2061,17 +2061,17 @@
         "tabs-target-opaque"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id tabs-target-opaque < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id tabs-target-opaque < /dev/null"
     },
     {
       "id": "type-tabs-publish-cancellation",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2102,17 +2102,17 @@
         "tabs-publish-cancellation"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id tabs-publish-cancellation < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id tabs-publish-cancellation < /dev/null"
     },
     {
       "id": "type-monitor-view-not-generic",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2143,17 +2143,17 @@
         "monitor-view-not-generic"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id monitor-view-not-generic < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id monitor-view-not-generic < /dev/null"
     },
     {
       "id": "type-owner-view-no-fake-account",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2184,17 +2184,17 @@
         "owner-view-no-fake-account"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id owner-view-no-fake-account < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id owner-view-no-fake-account < /dev/null"
     },
     {
       "id": "type-owner-view-no-cache-event",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2225,17 +2225,17 @@
         "owner-view-no-cache-event"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id owner-view-no-cache-event < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 330 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id owner-view-no-cache-event < /dev/null"
     },
     {
       "id": "control-privacy-broadcast",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2266,17 +2266,17 @@
         "privacy-broadcast"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id privacy-broadcast < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id privacy-broadcast < /dev/null"
     },
     {
       "id": "control-omitted-coalescing",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2307,17 +2307,17 @@
         "omitted-coalescing"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id omitted-coalescing < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id omitted-coalescing < /dev/null"
     },
     {
       "id": "control-stale-projection-reuse",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2348,17 +2348,17 @@
         "stale-projection-reuse"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id stale-projection-reuse < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id stale-projection-reuse < /dev/null"
     },
     {
       "id": "control-missing-sync-filter-event",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2389,17 +2389,17 @@
         "missing-sync-filter-event"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id missing-sync-filter-event < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id missing-sync-filter-event < /dev/null"
     },
     {
       "id": "control-optimistic-before-readback",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2430,17 +2430,17 @@
         "optimistic-before-readback"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id optimistic-before-readback < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id optimistic-before-readback < /dev/null"
     },
     {
       "id": "control-lost-removed-account",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2471,17 +2471,17 @@
         "lost-removed-account"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id lost-removed-account < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id lost-removed-account < /dev/null"
     },
     {
       "id": "control-all-monitor-notifications",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2512,17 +2512,17 @@
         "all-monitor-notifications"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id all-monitor-notifications < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id all-monitor-notifications < /dev/null"
     },
     {
       "id": "control-timer-after-disposal",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2553,17 +2553,17 @@
         "timer-after-disposal"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id timer-after-disposal < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id timer-after-disposal < /dev/null"
     },
     {
       "id": "preserved-monitor-61",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2595,17 +2595,17 @@
         "src/background/store/tab-projection.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/tab-projection.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/store/tab-projection.bun-test.ts < /dev/null"
     },
     {
       "id": "preserved-monitor-62",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2637,17 +2637,17 @@
         "src/site/core/page-link.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/site/core/page-link.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/site/core/page-link.bun-test.ts < /dev/null"
     },
     {
       "id": "preserved-monitor-63",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2679,17 +2679,17 @@
         "src/shared/features/registry.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/features/registry.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/features/registry.bun-test.ts < /dev/null"
     },
     {
       "id": "preserved-monitor-64",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2721,17 +2721,17 @@
         "src/shared/contracts/diagnostics.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/contracts/diagnostics.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/contracts/diagnostics.bun-test.ts < /dev/null"
     },
     {
       "id": "private-skip-behavior",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2763,17 +2763,17 @@
         "src/background/add-flow/private-skip.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 60 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/add-flow/private-skip.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 60 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/background/add-flow/private-skip.bun-test.ts < /dev/null"
     },
     {
       "id": "type-publication-private-source-required",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2804,17 +2804,17 @@
         "publication-private-source-required"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 400 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-private-source-required < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 400 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id publication-private-source-required < /dev/null"
     },
     {
       "id": "type-add-flow-private-scope",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2845,17 +2845,17 @@
         "add-flow-private-scope"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 400 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id add-flow-private-scope < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 400 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/type-probes.py --lease coordinator-granted --id add-flow-private-scope < /dev/null"
     },
     {
       "id": "control-private-normal-tab-broadcast",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2886,17 +2886,17 @@
         "private-normal-tab-broadcast"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id private-normal-tab-broadcast < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id private-normal-tab-broadcast < /dev/null"
     },
     {
       "id": "control-omitted-internal-private-event",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2927,17 +2927,17 @@
         "omitted-internal-private-event"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id omitted-internal-private-event < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id omitted-internal-private-event < /dev/null"
     },
     {
       "id": "control-private-notification-before-load",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -2968,17 +2968,17 @@
         "private-notification-before-load"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id private-notification-before-load < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id private-notification-before-load < /dev/null"
     },
     {
       "id": "control-private-deadline-after-disposal",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -3009,17 +3009,17 @@
         "private-deadline-after-disposal"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id private-deadline-after-disposal < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 540 /opt/homebrew/Caskroom/miniconda/base/bin/python3.13 -S tools/fixtures/view-publication/controls.py --lease coordinator-granted --id private-deadline-after-disposal < /dev/null"
     },
     {
       "id": "job-stream-guards",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -3051,17 +3051,17 @@
         "src/shared/contracts/jobs-streams.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/contracts/jobs-streams.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/contracts/jobs-streams.bun-test.ts < /dev/null"
     },
     {
       "id": "page-message-guards",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -3093,17 +3093,17 @@
         "src/shared/contracts/page-messages.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/contracts/page-messages.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/contracts/page-messages.bun-test.ts < /dev/null"
     },
     {
       "id": "complete-view-guards",
       "argv": [
         "/usr/bin/env",
         "-i",
-        "PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin",
-        "HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home",
-        "TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp",
+        "PATH=.audit/private-skip-publication-authoring/future-runtime/bin",
+        "HOME=.audit/private-skip-publication-authoring/future-runtime/home",
+        "TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp",
         "LC_ALL=C",
         "TZ=UTC",
         "NODE_DISABLE_COMPILE_CACHE=1",
@@ -3135,8 +3135,8 @@
         "src/shared/contracts/tab-view.bun-test.ts"
       ],
       "stdin": "/dev/null",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6",
-      "shellCommand": "/usr/bin/env -i PATH=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/bin HOME=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-ede64ec6/.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/contracts/tab-view.bun-test.ts < /dev/null"
+      "cwd": ".",
+      "shellCommand": "/usr/bin/env -i PATH=.audit/private-skip-publication-authoring/future-runtime/bin HOME=.audit/private-skip-publication-authoring/future-runtime/home TMPDIR=.audit/private-skip-publication-authoring/future-runtime/tmp LC_ALL=C TZ=UTC NODE_DISABLE_COMPILE_CACHE=1 PYTHONDONTWRITEBYTECODE=1 /usr/bin/timeout -k 10 45 /opt/homebrew/lib/node_modules/bun/bin/bun.exe --no-env-file --no-install test --timeout 10000 src/shared/contracts/tab-view.bun-test.ts < /dev/null"
     }
   ],
   "originalGateCount": 65,

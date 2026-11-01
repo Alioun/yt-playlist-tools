@@ -18,11 +18,11 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
     "typeRoots": [
-      "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@types"
+      "../../../node_modules/@types"
     ],
     "paths": {
       "wxt/browser": [
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/wxt/dist/browser.d.mts"
+        "../../../node_modules/wxt/dist/browser.d.mts"
       ]
     },
     "resolveJsonModule": true

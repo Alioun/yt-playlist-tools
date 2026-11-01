@@ -3,10 +3,10 @@
   "baseTree": "7b1bdd5b806a6073da57a320c09ab9d183e82d03",
   "unitBaseTree": "7b1bdd5b806a6073da57a320c09ab9d183e82d03",
   "state": "frozen-settings-file-authoring-input",
-  "baseSourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/baseline-build/source",
+  "baseSourceRoot": ".audit/2.0-build-20261029/baseline-build/source",
   "overlays": [
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f71dcfb5/.audit/add-feedback-correction-20261029/source",
+      "sourceRoot": ".audit/add-feedback-correction-20261029/source",
       "paths": [
         "src/shared/copy/README.md",
         "src/shared/copy/index.ts",
@@ -19,7 +19,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/v3-playlist-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/v3-playlist-returned/source",
       "paths": [
         "src/background/store/README.md",
         "src/background/store/withdrawn-document-recovery.bun-test.ts",
@@ -29,7 +29,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/page-link-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/page-link-returned/source",
       "paths": [
         "src/page/channel.bun-test.ts",
         "src/page/channel.ts",
@@ -51,7 +51,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/add-flow-runtime-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/add-flow-runtime-returned/source",
       "paths": [
         "src/background/add-flow/README.md",
         "src/background/add-flow/add-flow.bun-test.ts",
@@ -77,7 +77,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/runtime-rpc-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/runtime-rpc-returned/source",
       "paths": [
         "src/shared/rpc/memory.bun-test.ts",
         "src/shared/rpc/memory.ts",
@@ -91,7 +91,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/native-runtime-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/native-runtime-qualified-returned/source",
       "paths": [
         "src/background/adapters/README.md",
         "src/background/adapters/runtime.bun-test.ts",
@@ -105,7 +105,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/ui-picker-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/ui-picker-qualified-returned/source",
       "paths": [
         "src/shared/picker/README.md",
         "src/shared/picker/consumer.bun-test.ts",
@@ -158,7 +158,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/setup-session-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/setup-session-qualified-returned/source",
       "paths": [
         "src/background/adapters/local-filter-writer.bun-test.ts",
         "src/background/adapters/local-filter-writer.ts",
@@ -195,7 +195,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/gateway-read-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/gateway-read-qualified-returned/source",
       "paths": [
         "src/page/gateway-consumer.bun-test.ts",
         "src/page/gateway.README.md",
@@ -217,7 +217,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/registrar-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/registrar-qualified-returned/source",
       "paths": [
         "src/background/adapters/registrar.bun-test.ts",
         "src/background/adapters/registrar.ts",
@@ -235,13 +235,13 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/source-archive-repair/source",
+      "sourceRoot": ".audit/2.0-build-20261029/source-archive-repair/source",
       "paths": [
         "wxt.config.ts"
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/backend-localization-completed-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/backend-localization-completed-returned/source",
       "paths": [
         "src/background/adapters/first-run.ts",
         "src/background/router/first-run-results.ts",
@@ -315,7 +315,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/extlink-tabs-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/extlink-tabs-qualified-returned/source",
       "paths": [
         "src/background/adapters/runtime.ts",
         "src/background/adapters/tabs.bun-test.ts",
@@ -381,7 +381,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/gateway-registry-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/gateway-registry-qualified-returned/source",
       "paths": [
         "src/page/adapters/live-gateway.ts",
         "src/page/adapters/live-music.ts",
@@ -429,7 +429,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/full-tab-view-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/full-tab-view-qualified-returned/source",
       "paths": [
         "src/background/add-flow/add-flow.bun-test.ts",
         "src/background/add-flow/add-flow.ts",
@@ -457,7 +457,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/playlists-cache-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/playlists-cache-qualified-returned/source",
       "paths": [
         "src/background/playlists/README.md",
         "src/background/playlists/playlists.bun-test.ts",

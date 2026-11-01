@@ -2,7 +2,7 @@ import hashlib, json, os, shutil, stat, sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 HERE = Path(__file__).resolve().parent
-AUDIT = Path('/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029')
+AUDIT = ROOT / '.audit/2.0-build-20261029'
 EVIDENCE = HERE / 'evidence'
 MANIFEST = AUDIT / 'ui-qualified891-reconciliation-input-manifest.json'
 def identity(data, mode):

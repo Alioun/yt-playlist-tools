@@ -16,8 +16,8 @@ PYTHON = '/opt/homebrew/Caskroom/miniconda/base/bin/python3'
 NODE = '/usr/local/bin/node'
 BUN = '/opt/homebrew/lib/node_modules/bun/bin/bun.exe'
 TIMEOUT = '/usr/bin/timeout'
-PREPARED = Path('/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules')
-GENERATED = Path('/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-9252eb81/.wxt')
+PREPARED = ROOT / 'node_modules'
+GENERATED = ROOT / '.wxt'
 COMPILER = [NODE, 'node_modules/@typescript/native/bin/tsc', '--project', 'tools/fixtures/starting-owner/qualification.tsconfig.json', '--noEmit', '--pretty', 'false', '--incremental', 'false']
 TEST = 'src/background/adapters/starting-owner.bun-test.ts'
 

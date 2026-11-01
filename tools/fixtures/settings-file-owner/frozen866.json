@@ -3,10 +3,10 @@
   "baseTree": "a2add5de6833696e0d725771304f7779aef744ce",
   "unitBaseTree": "7b1bdd5b806a6073da57a320c09ab9d183e82d03",
   "state": "prepared-unqualified-settings-file-on-qualified-cache841",
-  "baseSourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/baseline-build/source",
+  "baseSourceRoot": ".audit/2.0-build-20261029/baseline-build/source",
   "overlays": [
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f71dcfb5/.audit/add-feedback-correction-20261029/source",
+      "sourceRoot": ".audit/add-feedback-correction-20261029/source",
       "paths": [
         "src/shared/copy/README.md",
         "src/shared/copy/index.ts",
@@ -19,7 +19,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/v3-playlist-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/v3-playlist-returned/source",
       "paths": [
         "src/background/store/README.md",
         "src/background/store/withdrawn-document-recovery.bun-test.ts",
@@ -29,7 +29,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/page-link-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/page-link-returned/source",
       "paths": [
         "src/page/channel.bun-test.ts",
         "src/page/channel.ts",
@@ -51,7 +51,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/add-flow-runtime-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/add-flow-runtime-returned/source",
       "paths": [
         "src/background/add-flow/README.md",
         "src/background/add-flow/add-flow.bun-test.ts",
@@ -77,7 +77,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/runtime-rpc-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/runtime-rpc-returned/source",
       "paths": [
         "src/shared/rpc/memory.bun-test.ts",
         "src/shared/rpc/memory.ts",
@@ -91,7 +91,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/native-runtime-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/native-runtime-qualified-returned/source",
       "paths": [
         "src/background/adapters/README.md",
         "src/background/adapters/runtime.bun-test.ts",
@@ -105,7 +105,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/ui-picker-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/ui-picker-qualified-returned/source",
       "paths": [
         "src/shared/picker/README.md",
         "src/shared/picker/consumer.bun-test.ts",
@@ -158,7 +158,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/setup-session-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/setup-session-qualified-returned/source",
       "paths": [
         "src/background/adapters/local-filter-writer.bun-test.ts",
         "src/background/adapters/local-filter-writer.ts",
@@ -195,7 +195,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/gateway-read-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/gateway-read-qualified-returned/source",
       "paths": [
         "src/page/gateway-consumer.bun-test.ts",
         "src/page/gateway.README.md",
@@ -217,7 +217,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/registrar-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/registrar-qualified-returned/source",
       "paths": [
         "src/background/adapters/registrar.bun-test.ts",
         "src/background/adapters/registrar.ts",
@@ -235,13 +235,13 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/source-archive-repair/source",
+      "sourceRoot": ".audit/2.0-build-20261029/source-archive-repair/source",
       "paths": [
         "wxt.config.ts"
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/backend-localization-completed-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/backend-localization-completed-returned/source",
       "paths": [
         "src/background/adapters/first-run.ts",
         "src/background/router/first-run-results.ts",
@@ -315,7 +315,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/extlink-tabs-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/extlink-tabs-qualified-returned/source",
       "paths": [
         "src/background/adapters/runtime.ts",
         "src/background/adapters/tabs.bun-test.ts",
@@ -381,7 +381,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/gateway-registry-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/gateway-registry-qualified-returned/source",
       "paths": [
         "src/page/adapters/live-gateway.ts",
         "src/page/adapters/live-music.ts",
@@ -429,7 +429,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/full-tab-view-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/full-tab-view-qualified-returned/source",
       "paths": [
         "src/background/add-flow/add-flow.bun-test.ts",
         "src/background/add-flow/add-flow.ts",
@@ -457,7 +457,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/playlists-cache-qualified-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/playlists-cache-qualified-returned/source",
       "paths": [
         "src/background/playlists/README.md",
         "src/background/playlists/playlists.bun-test.ts",
@@ -481,7 +481,7 @@
       ]
     },
     {
-      "sourceRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/settings-file-authored-returned/source",
+      "sourceRoot": ".audit/2.0-build-20261029/settings-file-authored-returned/source",
       "paths": [
         "src/shared/settings-file/README.md",
         "src/shared/settings-file/data.ts",
@@ -5646,9 +5646,9 @@
     },
     "tools/fixtures/settings-file/dependency-identities.json": {
       "mode": "100644",
-      "gitBlob": "75da098b533bf05244daf1fc5267055fb50623f1",
-      "sha256": "c2d4105a587eeb254965e2e13c3a33067aece5dd50de490c033a4eca2b0fe283",
-      "bytes": 4885
+      "gitBlob": "4a6448f019d14033430a7a8207c2e99923f233a8",
+      "sha256": "24bd15b7c5302168d63759edf9add61d02c61864c2ce7d74d811f3d26b39569c",
+      "bytes": 4711
     },
     "tools/fixtures/settings-file/expected-file.json": {
       "mode": "100644",
@@ -5670,9 +5670,9 @@
     },
     "tools/fixtures/settings-file/future-commands.json": {
       "mode": "100644",
-      "gitBlob": "fba0d98ff9dcac788b165ac05011d374019502b4",
-      "sha256": "4e4a2fb323f66419c2959b51a6e709a068ec78eecccf778a4823e20651fb5768",
-      "bytes": 6664
+      "gitBlob": "7cd92c9bf4c38422f9468d6b1bd93baadf2f9761",
+      "sha256": "e600f0dd08c1374530dd44640044ae874115a30a85a942452995e584efdd2e7b",
+      "bytes": 6202
     },
     "tools/fixtures/settings-file/independent_rehash.py": {
       "mode": "100644",
@@ -5718,9 +5718,9 @@
     },
     "tools/fixtures/settings-file/settings-file-authoring-input-manifest.json": {
       "mode": "100644",
-      "gitBlob": "ae4db620d51bf66403d00a9b9c77063145895199",
-      "sha256": "100254737384149fc285d2d4c4b911c6f23466f3ff14a6b45a4284cee0dbd0d5",
-      "bytes": 229437
+      "gitBlob": "039259d903972239e5b201e7f5f706ac4ddca867",
+      "sha256": "dd2f0b97c3eda254814ec352ab5ae99e06034e1c8ef46055d7e1a157c1c8e24c",
+      "bytes": 228451
     },
     "tools/fixtures/settings-file/specimens.ts": {
       "mode": "100644",

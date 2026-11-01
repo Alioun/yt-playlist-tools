@@ -1,7 +1,7 @@
 {
   "status": "all unexecuted; no runtime lease",
   "runtimeLeaseHolder": "UI qualifier",
-  "futureLauncher": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+  "futureLauncher": ".audit/items-www-authoring/qualification/approved/launch.py",
   "launcherCreatedOrApproved": false,
   "runtimeRootCreated": false,
   "prerequisites": [
@@ -30,7 +30,7 @@
     {
       "name": "scoped-native-types",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+      "cwd": ".audit/items-www-authoring/qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -39,21 +39,21 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
         "-p",
         "tools/fixtures/items-www/tsconfig.json"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/scoped-native-types.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/scoped-native-types.stderr",
+      "stdoutReceipt": ".audit/items-www-authoring/qualification/receipts/scoped-native-types.stdout",
+      "stderrReceipt": ".audit/items-www-authoring/qualification/receipts/scoped-native-types.stderr",
       "purpose": "Strict native TypeScript with the authored type negatives retained."
     },
     {
       "name": "whole-native-types",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+      "cwd": ".audit/items-www-authoring/qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -62,19 +62,19 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/whole-native-types.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/whole-native-types.stderr",
+      "stdoutReceipt": ".audit/items-www-authoring/qualification/receipts/whole-native-types.stdout",
+      "stderrReceipt": ".audit/items-www-authoring/qualification/receipts/whole-native-types.stderr",
       "purpose": "Whole source diagnostics with qualified WXT/Svelte generated inputs; no weaker exclusions."
     },
     {
       "name": "actual-inclusion",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+      "cwd": ".audit/items-www-authoring/qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -83,7 +83,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -91,14 +91,14 @@
         "tools/fixtures/items-www/tsconfig.json",
         "--listFilesOnly"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/actual-inclusion.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/actual-inclusion.stderr",
+      "stdoutReceipt": ".audit/items-www-authoring/qualification/receipts/actual-inclusion.stdout",
+      "stderrReceipt": ".audit/items-www-authoring/qualification/receipts/actual-inclusion.stderr",
       "purpose": "Require every authored TS test, consumer and production file plus the three changed page files in the actual compiler output."
     },
     {
       "name": "check-actual-inclusion",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+      "cwd": ".audit/items-www-authoring/qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -107,19 +107,19 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/check-inclusion.py",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/actual-inclusion.stdout"
+        ".audit/items-www-authoring/qualification/receipts/actual-inclusion.stdout"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/check-actual-inclusion.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/check-actual-inclusion.stderr",
+      "stdoutReceipt": ".audit/items-www-authoring/qualification/receipts/check-actual-inclusion.stdout",
+      "stderrReceipt": ".audit/items-www-authoring/qualification/receipts/check-actual-inclusion.stderr",
       "purpose": "Compare the actual compiler listing with all twelve explicit qualification files."
     },
     {
       "name": "focused-items",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+      "cwd": ".audit/items-www-authoring/qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -128,7 +128,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "bun",
         "test",
         "--no-env-file",
@@ -139,14 +139,14 @@
         "./tools/fixtures/items-www/preload.ts",
         "./src/site/core/items-www.bun-test.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/focused-items.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/focused-items.stderr",
+      "stdoutReceipt": ".audit/items-www-authoring/qualification/receipts/focused-items.stdout",
+      "stderrReceipt": ".audit/items-www-authoring/qualification/receipts/focused-items.stderr",
       "purpose": "Real Scope/Pointer, actual PageLink and gateway over serialized channels."
     },
     {
       "name": "modern-page-reads",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+      "cwd": ".audit/items-www-authoring/qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -155,7 +155,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "bun",
         "test",
         "--no-env-file",
@@ -166,14 +166,14 @@
         "./tools/fixtures/items-www/preload.ts",
         "./tools/fixtures/items-www/page-reads.bun-test.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/modern-page-reads.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/modern-page-reads.stderr",
+      "stdoutReceipt": ".audit/items-www-authoring/qualification/receipts/modern-page-reads.stdout",
+      "stderrReceipt": ".audit/items-www-authoring/qualification/receipts/modern-page-reads.stderr",
       "purpose": "Synthetic modern and legacy shapes, invalid variants, ambiguous IDs and unchanged Music itemInfo."
     },
     {
       "name": "current-authority-gaps",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+      "cwd": ".audit/items-www-authoring/qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -182,7 +182,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "bun",
         "test",
         "--no-env-file",
@@ -193,14 +193,14 @@
         "./tools/fixtures/items-www/preload.ts",
         "./tools/fixtures/items-www/current-authority.bun-test.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/current-authority-gaps.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/current-authority-gaps.stderr",
+      "stdoutReceipt": ".audit/items-www-authoring/qualification/receipts/current-authority-gaps.stdout",
+      "stderrReceipt": ".audit/items-www-authoring/qualification/receipts/current-authority-gaps.stderr",
       "purpose": "Three authored specifications for protected gateway gaps. Static analysis predicts failures until the exact unapplied gateway proposal is authorized and qualified. No execution or reproduction claimed."
     },
     {
       "name": "pointer-keys-scope-feature-host",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+      "cwd": ".audit/items-www-authoring/qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -209,7 +209,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "bun",
         "test",
         "--no-env-file",
@@ -223,14 +223,14 @@
         "./src/site/core/scope.bun-test.ts",
         "./src/site/core/feature-host.bun-test.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/pointer-keys-scope-feature-host.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/pointer-keys-scope-feature-host.stderr",
+      "stdoutReceipt": ".audit/items-www-authoring/qualification/receipts/pointer-keys-scope-feature-host.stdout",
+      "stderrReceipt": ".audit/items-www-authoring/qualification/receipts/pointer-keys-scope-feature-host.stderr",
       "purpose": "Protected demand, lifecycle, key dispatch and host behavior."
     },
     {
       "name": "page-gateway-regressions",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+      "cwd": ".audit/items-www-authoring/qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -239,7 +239,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "bun",
         "test",
         "--no-env-file",
@@ -255,14 +255,14 @@
         "./src/site/core/page-link.bun-test.ts",
         "./src/shared/rpc/page-channel.bun-test.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/page-gateway-regressions.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/page-gateway-regressions.stderr",
+      "stdoutReceipt": ".audit/items-www-authoring/qualification/receipts/page-gateway-regressions.stdout",
+      "stderrReceipt": ".audit/items-www-authoring/qualification/receipts/page-gateway-regressions.stderr",
       "purpose": "Real gateway/PageLink boundaries and preserved Music paths."
     },
     {
       "name": "architecture",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+      "cwd": ".audit/items-www-authoring/qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -271,7 +271,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "bun",
         "test",
         "--no-env-file",
@@ -282,14 +282,14 @@
         "./tools/fixtures/items-www/preload.ts",
         "./tests/guards/architecture.test.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/architecture.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/architecture.stderr",
+      "stdoutReceipt": ".audit/items-www-authoring/qualification/receipts/architecture.stdout",
+      "stderrReceipt": ".audit/items-www-authoring/qualification/receipts/architecture.stderr",
       "purpose": "Import boundaries, scoped resources, no polling and observer roots."
     },
     {
       "name": "consumer-direct",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+      "cwd": ".audit/items-www-authoring/qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -298,21 +298,21 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "bun",
         "--no-env-file",
         "--no-install",
         "tools/fixtures/items-www/run.ts",
         "direct"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/consumer-direct.jsonl",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/consumer-direct.stderr",
+      "stdoutReceipt": ".audit/items-www-authoring/qualification/receipts/consumer-direct.jsonl",
+      "stderrReceipt": ".audit/items-www-authoring/qualification/receipts/consumer-direct.stderr",
       "purpose": "First complete independent JSONL comparison input."
     },
     {
       "name": "consumer-dom",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+      "cwd": ".audit/items-www-authoring/qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -321,21 +321,21 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "bun",
         "--no-env-file",
         "--no-install",
         "tools/fixtures/items-www/run.ts",
         "dom"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/consumer-dom.jsonl",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/consumer-dom.stderr",
+      "stdoutReceipt": ".audit/items-www-authoring/qualification/receipts/consumer-dom.jsonl",
+      "stderrReceipt": ".audit/items-www-authoring/qualification/receipts/consumer-dom.stderr",
       "purpose": "Second complete independent JSONL comparison input."
     },
     {
       "name": "consumer-eof",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+      "cwd": ".audit/items-www-authoring/qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -344,20 +344,20 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/check-consumer.py",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/consumer-direct.jsonl",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/consumer-dom.jsonl"
+        ".audit/items-www-authoring/qualification/receipts/consumer-direct.jsonl",
+        ".audit/items-www-authoring/qualification/receipts/consumer-dom.jsonl"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/consumer-eof.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/consumer-eof.stderr",
+      "stdoutReceipt": ".audit/items-www-authoring/qualification/receipts/consumer-eof.stdout",
+      "stderrReceipt": ".audit/items-www-authoring/qualification/receipts/consumer-eof.stderr",
       "purpose": "Compare every byte through EOF against the authored expectation, twice."
     },
     {
       "name": "gateway-source-guards",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+      "cwd": ".audit/items-www-authoring/qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -366,12 +366,12 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/gateway-reads/check-source.py"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/gateway-source-guards.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/gateway-source-guards.stderr",
+      "stdoutReceipt": ".audit/items-www-authoring/qualification/receipts/gateway-source-guards.stdout",
+      "stderrReceipt": ".audit/items-www-authoring/qualification/receipts/gateway-source-guards.stderr",
       "purpose": "Existing page-read text invariants; unexecuted here with all repository gates."
     }
   ],

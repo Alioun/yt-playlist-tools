@@ -2,22 +2,22 @@
   "status": "preserved exactly, still unexecuted",
   "identities": {
     "tools/fixtures/pointer-keys/unexecuted-gates.json": {
-      "bytes": 17625,
-      "sha256": "b8bbc61e3efd53bcb308808903bf339266a76e5ce04f1a25f0989eecda7c870c",
+      "bytes": 14145,
+      "sha256": "bf0904f445c8f907959858243908a5181a082c6713654120541879a908ec902b",
       "mode": "100644",
-      "gitBlob": "45068c77bbc8f7867953b663b063eb3878e2ee8d"
+      "gitBlob": "6bba4140bc16d64078ab9740c799d5a2b6af51ab"
     },
     "tools/fixtures/pointer-keys/type-probes.json": {
-      "bytes": 5213,
-      "sha256": "2e646a86e304a400e22be0e8b24470cee0a32bacdf80538df3bba588259251a9",
+      "bytes": 5155,
+      "sha256": "07752b8c040cb62cfe2b0adc3ed113d452f5188a740f128dd445e2323945f7ca",
       "mode": "100644",
-      "gitBlob": "bc0f0959e2e3db6d04d9a9cd570b187708d3816f"
+      "gitBlob": "f429033a912475c48680ebf554f1f92caef510c6"
     },
     "tools/fixtures/pointer-keys/controls.json": {
-      "bytes": 16861,
-      "sha256": "d4437af5cd7c9a2208eac304fc22d5feb44db5a3b55b9944b1a8727b0702a6e4",
+      "bytes": 15817,
+      "sha256": "b9a904bcc83949a7c27df599f64cbaacaaba28f62987e42558efdc71b5537ca5",
       "mode": "100644",
-      "gitBlob": "8a489dcb939c03049d4d67bd52e9abeb184fd275"
+      "gitBlob": "cbbe6bbc1468b9b4fa5ddf09e0ad5e4c7da7be3c"
     },
     "tools/fixtures/pointer-keys/qualify.py": {
       "bytes": 6170,

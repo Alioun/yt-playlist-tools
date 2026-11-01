@@ -6,7 +6,7 @@
     "10",
     "90",
     "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
-    "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/typescript/bin/tsc",
+    "node_modules/typescript/bin/tsc",
     "--project",
     "tools/fixtures/view-publication/tsconfig.json",
     "--pretty",

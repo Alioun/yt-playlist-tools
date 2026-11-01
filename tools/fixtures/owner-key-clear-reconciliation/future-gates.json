@@ -650,9 +650,9 @@
  "inheritedInventories": {
   "tools/fixtures/clear-all/future-gates.json": {
    "identity": {
-    "bytes": 267131,
-    "sha256": "4c1f426cf26484de42863088c23849a3b2ea8568b96360fa3ea1bd7e4630aa08",
-    "gitBlob": "00b366b0b9f61f6baae8feb30c332d4b07ba16ac",
+    "bytes": 232389,
+    "sha256": "91d7c3c597cb1127dfbd32f9a01a13270fe95d4cfdedbbd539d56e8ccc63b514",
+    "gitBlob": "8e90781384d5090de5272be1ae971cbaf498afe9",
     "mode": "100644"
    },
    "entries": 126
@@ -660,8 +660,8 @@
   "tools/fixtures/clear-all/preserved-inventories.json": {
    "identity": {
     "bytes": 45816,
-    "sha256": "88f6e57eeb587d3d36de01e3fde930b9745fb30daea9d8120fc5fd82522d33a6",
-    "gitBlob": "22f613f07e32755c3d27e4e08f4176407f9a287b",
+    "sha256": "2455628f06da4cb788fb9d27efc1eaa8119b8b349abeef7fc124092fd12f301d",
+    "gitBlob": "f2f57ea6ee454b87ac1c990e4105333c6cd92b99",
     "mode": "100644"
    },
    "entries": null
@@ -686,18 +686,18 @@
   },
   "tools/fixtures/key-settings/future-gates.json": {
    "identity": {
-    "bytes": 193266,
-    "sha256": "cb75fc8cf5821a1dd54317c3906ca0c128e4757b2a8189771ac331737cadeae5",
-    "gitBlob": "462430d23303462d2621306ba4a658987e24451f",
+    "bytes": 175808,
+    "sha256": "ab9a1030b69df503351e65c0851b5f110d72728a8247c86036808d9f470b1c43",
+    "gitBlob": "ad75d8a61b6ba57744e1a84d4eeea0721d0f2abd",
     "mode": "100644"
    },
    "entries": 64
   },
   "tools/fixtures/key-settings/inherited-feature-gates.json": {
    "identity": {
-    "bytes": 341438,
-    "sha256": "14459b26941ec7eb021f0b57728850341e20c3e6331455e1dc394bee09913b18",
-    "gitBlob": "a4f51bdf261fc8c0eb58b4edca35a03514e8392f",
+    "bytes": 292312,
+    "sha256": "dc3d8e6765743d5d15c71a1f0d9f8e116dce0fc844df6fafae677157bc035c5c",
+    "gitBlob": "92ccf29182ca31fa8046cfab5a611ef876591d43",
     "mode": "100644"
    },
    "entries": 175
@@ -749,9 +749,9 @@
   },
   "tools/fixtures/key-settings/inherited-conservation.json": {
    "identity": {
-    "bytes": 157976,
-    "sha256": "920102c1cb8a253e0f27c369b21905dfdae36310e9bf53f3a980581bf8cc448a",
-    "gitBlob": "1442a4e3a9c4f3d9339638d15767f56903189bbf",
+    "bytes": 157974,
+    "sha256": "0b0253cbd67ac1d5d506e2eb20fb6f880675fcbccb1212b2128489fbe24f5e99",
+    "gitBlob": "b599f476f7cb3a817ac6d1c5f02318c204c7eb46",
     "mode": "100644"
    },
    "entries": null

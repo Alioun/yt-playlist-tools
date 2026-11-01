@@ -1,6 +1,6 @@
 {
   "status": "all unexecuted; no runtime lease",
-  "futureLauncher": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+  "futureLauncher": ".audit/site-card-menu/qualification/approved/launch.py",
   "launcherCreatedOrApproved": false,
   "runtimeRootCreated": false,
   "prerequisites": [
@@ -66,15 +66,15 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        ".audit/site-card-menu/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
         "-p",
         "tools/fixtures/site-card-menu/tsconfig.json"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/types.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/types.stderr",
+      "stdoutReceipt": ".audit/site-card-menu/qualification/receipts/types.stdout",
+      "stderrReceipt": ".audit/site-card-menu/qualification/receipts/types.stderr",
       "purpose": "Strict native TypeScript over the feature, tests, type negatives and fixtures; exactly the seven intended diagnostics are suppressed by their directives."
     },
     {
@@ -88,15 +88,15 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        ".audit/site-card-menu/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
         "-p",
         "tsconfig.json"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/whole-types.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/whole-types.stderr",
+      "stdoutReceipt": ".audit/site-card-menu/qualification/receipts/whole-types.stdout",
+      "stderrReceipt": ".audit/site-card-menu/qualification/receipts/whole-types.stderr",
       "purpose": "Repository compiler including the new files; requires a prepared .wxt/tsconfig.json from the approved dependency restore."
     },
     {
@@ -110,7 +110,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        ".audit/site-card-menu/qualification/approved/launch.py",
         "bun",
         "test",
         "--no-env-file",
@@ -121,8 +121,8 @@
         "./tools/fixtures/site-card-menu/preload.ts",
         "./src/site/features/card-menu/card-menu.bun-test.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/focused.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/focused.stderr",
+      "stdoutReceipt": ".audit/site-card-menu/qualification/receipts/focused.stdout",
+      "stderrReceipt": ".audit/site-card-menu/qualification/receipts/focused.stderr",
       "purpose": "Real FeatureHost, Scope, Items recognition, NoticeOwner and PageLink over the direct page channel with a synthetic gateway."
     },
     {
@@ -136,7 +136,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        ".audit/site-card-menu/qualification/approved/launch.py",
         "bun",
         "--no-env-file",
         "--no-install",
@@ -145,8 +145,8 @@
         "./tools/fixtures/site-card-menu/preload.ts",
         "./tools/fixtures/site-card-menu/run.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/consumer.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/consumer.stderr",
+      "stdoutReceipt": ".audit/site-card-menu/qualification/receipts/consumer.stdout",
+      "stderrReceipt": ".audit/site-card-menu/qualification/receipts/consumer.stderr",
       "check": [
         "/usr/bin/timeout",
         "-k",
@@ -155,12 +155,12 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        ".audit/site-card-menu/qualification/approved/launch.py",
         "python3",
         "-I",
         "-B",
         "tools/fixtures/site-card-menu/check-consumer.py",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/consumer.stdout"
+        ".audit/site-card-menu/qualification/receipts/consumer.stdout"
       ],
       "purpose": "Complete byte comparison with expected.jsonl through EOF."
     },
@@ -175,15 +175,15 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        ".audit/site-card-menu/qualification/approved/launch.py",
         "bun",
         "test",
         "--no-env-file",
         "--no-install",
         "./tests/guards"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/guards.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/guards.stderr",
+      "stdoutReceipt": ".audit/site-card-menu/qualification/receipts/guards.stdout",
+      "stderrReceipt": ".audit/site-card-menu/qualification/receipts/guards.stderr",
       "purpose": "Layer, running-cost and frozen-inventory guards must report no new finding for the new feature files."
     },
     {
@@ -197,7 +197,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        ".audit/site-card-menu/qualification/approved/launch.py",
         "bun",
         "test",
         "--no-env-file",
@@ -210,8 +210,8 @@
         "./src/site/core/scope.bun-test.ts",
         "./src/page/gateway.bun-test.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/regressions.stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/regressions.stderr",
+      "stdoutReceipt": ".audit/site-card-menu/qualification/receipts/regressions.stdout",
+      "stderrReceipt": ".audit/site-card-menu/qualification/receipts/regressions.stderr",
       "purpose": "Reused modules stay byte-identical; their suites must still pass."
     },
     {
@@ -225,7 +225,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        ".audit/site-card-menu/qualification/approved/launch.py",
         "bun",
         "build",
         "--no-env-file",
@@ -237,7 +237,7 @@
         "--external",
         "*/core/items-www",
         "--outfile",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/size/feature-card-menu.js"
+        ".audit/site-card-menu/qualification/size/feature-card-menu.js"
       ],
       "measure": [
         "/usr/bin/timeout",
@@ -247,13 +247,13 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        ".audit/site-card-menu/qualification/approved/launch.py",
         "python3",
         "-I",
         "-B",
         "-c",
         "import gzip,sys;b=open(sys.argv[1],'rb').read();print(len(b),len(gzip.compress(b,9)))",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/size/feature-card-menu.js"
+        ".audit/site-card-menu/qualification/size/feature-card-menu.js"
       ],
       "budget": "feature-card-menu.js 0.5 KB (07-quality.md lines 573 and 609); core-www.js 5 KB including the notice",
       "purpose": "Feature file alone with core modules external. The production split of core and feature belongs to SiteCore assembly; this command is an approximation, and the externals glob is unproved."

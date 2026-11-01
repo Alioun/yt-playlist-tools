@@ -2,34 +2,34 @@
   "status": "preserved by identity; no passing credit assigned",
   "inventories": [
     {
-      "bytes": 19145,
-      "sha256": "228a7809f0d86e7e75cbffb009c52ad8ce2c17404e9b366abc18de3725e11bb6",
+      "bytes": 15665,
+      "sha256": "3facf361f3f0466b334b8cc01679da972ef903a2e102a2c7b3c30de4230b1f22",
       "mode": "100644",
-      "gitBlob": "21121eaaa52851468799237c5b1c1267aefb62c2",
+      "gitBlob": "96fbe933450b3ac745b1ec7c4bac548a53af0c56",
       "path": "tools/fixtures/items-www/unexecuted-gates.json",
       "credit": "none"
     },
     {
-      "bytes": 45963,
-      "sha256": "4372e0634567efc88568c01e165bb858b15cb605686c9b08fd7110aec74d01e9",
+      "bytes": 40859,
+      "sha256": "e4ac94f7fe78e5daadc484a6303324c680934d0026f84853f7ade3570361f7a6",
       "mode": "100644",
-      "gitBlob": "e3f528ae3837592ebdc962360388c1bee836a223",
+      "gitBlob": "230b567c61d2cc07b70e678394d72a4cec5c3a47",
       "path": "tools/fixtures/items-www/controls.json",
       "credit": "none"
     },
     {
-      "bytes": 52011,
-      "sha256": "ea39a69206cf76c58629c61bb8d3a66103c4cddadfc06e9efabebe9f0bf43bbe",
+      "bytes": 43485,
+      "sha256": "d46b8711ee6f854519114918cb88a38151bf2d2ba1ff5e208e4858356fb0d71c",
       "mode": "100644",
-      "gitBlob": "badd4f223221b925847d98274997ee08321c6f92",
+      "gitBlob": "8943fbd09bf930a84176a7bc9d6c1bcfabbe5b11",
       "path": "tools/fixtures/items-www/type-probes.json",
       "credit": "none"
     },
     {
       "bytes": 2375,
-      "sha256": "0338b4bddf76b5827c63159dc5b68ba8ba866687cd6ad6f69c766a8d382e531f",
+      "sha256": "61e676bf30dca606f1acb802655aaf4b3e421eecabec7837fa7d2e7871022651",
       "mode": "100644",
-      "gitBlob": "7619544b2015629d00e6d0734b493bf7ef1a3fdc",
+      "gitBlob": "0ffda9934731ec232da5e3720946bc955aa9d9eb",
       "path": "tools/fixtures/items-www/inherited-pointer.json",
       "credit": "none"
     },

@@ -1,8 +1,8 @@
 {
   "status": "all unexecuted; no runtime lease",
   "runtimeLeaseHolder": "Backend/progressive UI worker",
-  "futureRuntimeRoot": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/runtime",
-  "futureLauncher": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+  "futureRuntimeRoot": ".audit/pointer-keys-qualification/runtime",
+  "futureLauncher": ".audit/pointer-keys-qualification/launch.py",
   "futureLauncherExpectedScriptSha256": "e05790da53d5598b1445a188cc16053c2699f4743a2c9bd940b6da96b058e5dc",
   "futureLauncherTemplate": "The unchanged preserved launch.py script, with separately approved frozen helper and configuration closure",
   "launcherExistsOrApprovedByThisUnit": false,
@@ -19,7 +19,7 @@
     {
       "name": "compiler",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/runtime",
+      "cwd": ".audit/pointer-keys-qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -28,20 +28,20 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
         "-p",
         "tools/fixtures/pointer-keys/tsconfig.json"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/compiler/stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/compiler/stderr"
+      "stdoutReceipt": ".audit/pointer-keys-qualification/receipts/compiler/stdout",
+      "stderrReceipt": ".audit/pointer-keys-qualification/receipts/compiler/stderr"
     },
     {
       "name": "compiler-whole-source",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/runtime",
+      "cwd": ".audit/pointer-keys-qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -50,18 +50,18 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/compiler-whole-source/stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/compiler-whole-source/stderr"
+      "stdoutReceipt": ".audit/pointer-keys-qualification/receipts/compiler-whole-source/stdout",
+      "stderrReceipt": ".audit/pointer-keys-qualification/receipts/compiler-whole-source/stderr"
     },
     {
       "name": "pointer-behavior",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/runtime",
+      "cwd": ".audit/pointer-keys-qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -70,7 +70,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "bun",
         "test",
         "--no-env-file",
@@ -81,13 +81,13 @@
         "./tools/fixtures/pointer-keys/preload.ts",
         "./src/site/core/pointer.bun-test.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/pointer-behavior/stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/pointer-behavior/stderr"
+      "stdoutReceipt": ".audit/pointer-keys-qualification/receipts/pointer-behavior/stdout",
+      "stderrReceipt": ".audit/pointer-keys-qualification/receipts/pointer-behavior/stderr"
     },
     {
       "name": "keys-behavior",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/runtime",
+      "cwd": ".audit/pointer-keys-qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -96,7 +96,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "bun",
         "test",
         "--no-env-file",
@@ -107,13 +107,13 @@
         "./tools/fixtures/pointer-keys/preload.ts",
         "./src/site/core/keys.bun-test.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/keys-behavior/stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/keys-behavior/stderr"
+      "stdoutReceipt": ".audit/pointer-keys-qualification/receipts/keys-behavior/stdout",
+      "stderrReceipt": ".audit/pointer-keys-qualification/receipts/keys-behavior/stderr"
     },
     {
       "name": "matcher-regressions",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/runtime",
+      "cwd": ".audit/pointer-keys-qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -122,7 +122,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "bun",
         "test",
         "--no-env-file",
@@ -134,13 +134,13 @@
         "./src/shared/keys/engine.bun-test.ts",
         "./src/shared/keys/review-regressions.bun-test.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/matcher-regressions/stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/matcher-regressions/stderr"
+      "stdoutReceipt": ".audit/pointer-keys-qualification/receipts/matcher-regressions/stdout",
+      "stderrReceipt": ".audit/pointer-keys-qualification/receipts/matcher-regressions/stderr"
     },
     {
       "name": "scope-regressions",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/runtime",
+      "cwd": ".audit/pointer-keys-qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -149,7 +149,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "bun",
         "test",
         "--no-env-file",
@@ -160,13 +160,13 @@
         "./tools/fixtures/pointer-keys/preload.ts",
         "./src/site/core/scope.bun-test.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/scope-regressions/stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/scope-regressions/stderr"
+      "stdoutReceipt": ".audit/pointer-keys-qualification/receipts/scope-regressions/stdout",
+      "stderrReceipt": ".audit/pointer-keys-qualification/receipts/scope-regressions/stderr"
     },
     {
       "name": "feature-host-regressions",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/runtime",
+      "cwd": ".audit/pointer-keys-qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -175,7 +175,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "bun",
         "test",
         "--no-env-file",
@@ -186,13 +186,13 @@
         "./tools/fixtures/pointer-keys/preload.ts",
         "./src/site/core/feature-host.bun-test.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/feature-host-regressions/stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/feature-host-regressions/stderr"
+      "stdoutReceipt": ".audit/pointer-keys-qualification/receipts/feature-host-regressions/stdout",
+      "stderrReceipt": ".audit/pointer-keys-qualification/receipts/feature-host-regressions/stderr"
     },
     {
       "name": "protected-contracts",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/runtime",
+      "cwd": ".audit/pointer-keys-qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -201,7 +201,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "bun",
         "test",
         "--no-env-file",
@@ -215,13 +215,13 @@
         "./src/site/core/page-link.bun-test.ts",
         "./src/shared/contracts/tab-view.bun-test.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/protected-contracts/stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/protected-contracts/stderr"
+      "stdoutReceipt": ".audit/pointer-keys-qualification/receipts/protected-contracts/stdout",
+      "stderrReceipt": ".audit/pointer-keys-qualification/receipts/protected-contracts/stderr"
     },
     {
       "name": "architecture-guard",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/runtime",
+      "cwd": ".audit/pointer-keys-qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -230,7 +230,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "bun",
         "test",
         "--no-env-file",
@@ -241,13 +241,13 @@
         "./tools/fixtures/pointer-keys/preload.ts",
         "./tests/guards/architecture.test.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/architecture-guard/stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/architecture-guard/stderr"
+      "stdoutReceipt": ".audit/pointer-keys-qualification/receipts/architecture-guard/stdout",
+      "stderrReceipt": ".audit/pointer-keys-qualification/receipts/architecture-guard/stderr"
     },
     {
       "name": "consumer-run-1",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/runtime",
+      "cwd": ".audit/pointer-keys-qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -256,7 +256,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "bun",
         "run",
         "--no-env-file",
@@ -265,13 +265,13 @@
         "./tools/fixtures/pointer-keys/preload.ts",
         "./tools/fixtures/pointer-keys/run.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/consumer-run-1/stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/consumer-run-1/stderr"
+      "stdoutReceipt": ".audit/pointer-keys-qualification/receipts/consumer-run-1/stdout",
+      "stderrReceipt": ".audit/pointer-keys-qualification/receipts/consumer-run-1/stderr"
     },
     {
       "name": "consumer-run-2",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/runtime",
+      "cwd": ".audit/pointer-keys-qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -280,7 +280,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "bun",
         "run",
         "--no-env-file",
@@ -289,13 +289,13 @@
         "./tools/fixtures/pointer-keys/preload.ts",
         "./tools/fixtures/pointer-keys/run.ts"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/consumer-run-2/stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/consumer-run-2/stderr"
+      "stdoutReceipt": ".audit/pointer-keys-qualification/receipts/consumer-run-2/stdout",
+      "stderrReceipt": ".audit/pointer-keys-qualification/receipts/consumer-run-2/stderr"
     },
     {
       "name": "intended-line-types",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/runtime",
+      "cwd": ".audit/pointer-keys-qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -304,26 +304,26 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "python3",
         "tools/fixtures/pointer-keys/qualify.py",
         "types",
         "--runtime-lease",
         "pointer-keys",
         "--launcher",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "--launcher-sha256",
         "e05790da53d5598b1445a188cc16053c2699f4743a2c9bd940b6da96b058e5dc",
         "--output",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/types"
+        ".audit/pointer-keys-qualification/receipts/types"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/intended-line-types/stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/intended-line-types/stderr"
+      "stdoutReceipt": ".audit/pointer-keys-qualification/receipts/intended-line-types/stdout",
+      "stderrReceipt": ".audit/pointer-keys-qualification/receipts/intended-line-types/stderr"
     },
     {
       "name": "compiling-controls",
       "status": "unexecuted",
-      "cwd": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/runtime",
+      "cwd": ".audit/pointer-keys-qualification/runtime",
       "command": [
         "timeout",
         "-k",
@@ -332,21 +332,21 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "python3",
         "tools/fixtures/pointer-keys/qualify.py",
         "controls",
         "--runtime-lease",
         "pointer-keys",
         "--launcher",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "--launcher-sha256",
         "e05790da53d5598b1445a188cc16053c2699f4743a2c9bd940b6da96b058e5dc",
         "--output",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/controls"
+        ".audit/pointer-keys-qualification/receipts/controls"
       ],
-      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/compiling-controls/stdout",
-      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/receipts/compiling-controls/stderr"
+      "stdoutReceipt": ".audit/pointer-keys-qualification/receipts/compiling-controls/stdout",
+      "stderrReceipt": ".audit/pointer-keys-qualification/receipts/compiling-controls/stderr"
     }
   ],
   "consumerComparisons": [
@@ -360,7 +360,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "python3",
         "tools/fixtures/pointer-keys/check-consumer.py",
         "--stdout",
@@ -382,7 +382,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-5fbfbd6a/.audit/pointer-keys-qualification/launch.py",
+        ".audit/pointer-keys-qualification/launch.py",
         "python3",
         "tools/fixtures/pointer-keys/check-consumer.py",
         "--stdout",

@@ -16,7 +16,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -31,16 +31,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "target-identity-required",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/target-identity-required"
+        ".audit/items-www-authoring/qualification/receipts/types/target-identity-required"
       ],
       "restoreCommand": [
         "timeout",
@@ -50,16 +50,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "target-identity-required",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/target-identity-required"
+        ".audit/items-www-authoring/qualification/receipts/types/target-identity-required"
       ]
     },
     {
@@ -77,7 +77,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -92,16 +92,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "target-element-required",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/target-element-required"
+        ".audit/items-www-authoring/qualification/receipts/types/target-element-required"
       ],
       "restoreCommand": [
         "timeout",
@@ -111,16 +111,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "target-element-required",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/target-element-required"
+        ".audit/items-www-authoring/qualification/receipts/types/target-element-required"
       ]
     },
     {
@@ -138,7 +138,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -153,16 +153,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "target-family-closed",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/target-family-closed"
+        ".audit/items-www-authoring/qualification/receipts/types/target-family-closed"
       ],
       "restoreCommand": [
         "timeout",
@@ -172,16 +172,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "target-family-closed",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/target-family-closed"
+        ".audit/items-www-authoring/qualification/receipts/types/target-family-closed"
       ]
     },
     {
@@ -199,7 +199,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -214,16 +214,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "pointed-target-required",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/pointed-target-required"
+        ".audit/items-www-authoring/qualification/receipts/types/pointed-target-required"
       ],
       "restoreCommand": [
         "timeout",
@@ -233,16 +233,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "pointed-target-required",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/pointed-target-required"
+        ".audit/items-www-authoring/qualification/receipts/types/pointed-target-required"
       ]
     },
     {
@@ -260,7 +260,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -275,16 +275,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "unsupported-kind-closed",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/unsupported-kind-closed"
+        ".audit/items-www-authoring/qualification/receipts/types/unsupported-kind-closed"
       ],
       "restoreCommand": [
         "timeout",
@@ -294,16 +294,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "unsupported-kind-closed",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/unsupported-kind-closed"
+        ".audit/items-www-authoring/qualification/receipts/types/unsupported-kind-closed"
       ]
     },
     {
@@ -321,7 +321,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -336,16 +336,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "unsupported-video-forbidden",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/unsupported-video-forbidden"
+        ".audit/items-www-authoring/qualification/receipts/types/unsupported-video-forbidden"
       ],
       "restoreCommand": [
         "timeout",
@@ -355,16 +355,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "unsupported-video-forbidden",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/unsupported-video-forbidden"
+        ".audit/items-www-authoring/qualification/receipts/types/unsupported-video-forbidden"
       ]
     },
     {
@@ -382,7 +382,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -397,16 +397,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "none-has-no-target",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/none-has-no-target"
+        ".audit/items-www-authoring/qualification/receipts/types/none-has-no-target"
       ],
       "restoreCommand": [
         "timeout",
@@ -416,16 +416,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "none-has-no-target",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/none-has-no-target"
+        ".audit/items-www-authoring/qualification/receipts/types/none-has-no-target"
       ]
     },
     {
@@ -443,7 +443,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -458,16 +458,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "resolution-details-required",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/resolution-details-required"
+        ".audit/items-www-authoring/qualification/receipts/types/resolution-details-required"
       ],
       "restoreCommand": [
         "timeout",
@@ -477,16 +477,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "resolution-details-required",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/resolution-details-required"
+        ".audit/items-www-authoring/qualification/receipts/types/resolution-details-required"
       ]
     },
     {
@@ -504,7 +504,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -519,16 +519,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "current-video-required",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/current-video-required"
+        ".audit/items-www-authoring/qualification/receipts/types/current-video-required"
       ],
       "restoreCommand": [
         "timeout",
@@ -538,16 +538,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "current-video-required",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/current-video-required"
+        ".audit/items-www-authoring/qualification/receipts/types/current-video-required"
       ]
     },
     {
@@ -565,7 +565,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -580,16 +580,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "failure-is-not-no-item",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/failure-is-not-no-item"
+        ".audit/items-www-authoring/qualification/receipts/types/failure-is-not-no-item"
       ],
       "restoreCommand": [
         "timeout",
@@ -599,16 +599,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "failure-is-not-no-item",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/failure-is-not-no-item"
+        ".audit/items-www-authoring/qualification/receipts/types/failure-is-not-no-item"
       ]
     },
     {
@@ -626,7 +626,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -641,16 +641,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "stale-reason-closed",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/stale-reason-closed"
+        ".audit/items-www-authoring/qualification/receipts/types/stale-reason-closed"
       ],
       "restoreCommand": [
         "timeout",
@@ -660,16 +660,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "stale-reason-closed",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/stale-reason-closed"
+        ".audit/items-www-authoring/qualification/receipts/types/stale-reason-closed"
       ]
     },
     {
@@ -687,7 +687,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -702,16 +702,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "reporter-required",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/reporter-required"
+        ".audit/items-www-authoring/qualification/receipts/types/reporter-required"
       ],
       "restoreCommand": [
         "timeout",
@@ -721,16 +721,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "reporter-required",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/reporter-required"
+        ".audit/items-www-authoring/qualification/receipts/types/reporter-required"
       ]
     },
     {
@@ -748,7 +748,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -763,16 +763,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "settle-reporter-required",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/settle-reporter-required"
+        ".audit/items-www-authoring/qualification/receipts/types/settle-reporter-required"
       ],
       "restoreCommand": [
         "timeout",
@@ -782,16 +782,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "settle-reporter-required",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/settle-reporter-required"
+        ".audit/items-www-authoring/qualification/receipts/types/settle-reporter-required"
       ]
     },
     {
@@ -809,7 +809,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -824,16 +824,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "recognition-reporter-required",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/recognition-reporter-required"
+        ".audit/items-www-authoring/qualification/receipts/types/recognition-reporter-required"
       ],
       "restoreCommand": [
         "timeout",
@@ -843,16 +843,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "recognition-reporter-required",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/recognition-reporter-required"
+        ".audit/items-www-authoring/qualification/receipts/types/recognition-reporter-required"
       ]
     },
     {
@@ -870,7 +870,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -885,16 +885,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "real-page-collaborators-required",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/real-page-collaborators-required"
+        ".audit/items-www-authoring/qualification/receipts/types/real-page-collaborators-required"
       ],
       "restoreCommand": [
         "timeout",
@@ -904,16 +904,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "real-page-collaborators-required",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/real-page-collaborators-required"
+        ".audit/items-www-authoring/qualification/receipts/types/real-page-collaborators-required"
       ]
     },
     {
@@ -931,7 +931,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -946,16 +946,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "pointer-read-required",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/pointer-read-required"
+        ".audit/items-www-authoring/qualification/receipts/types/pointer-read-required"
       ],
       "restoreCommand": [
         "timeout",
@@ -965,16 +965,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "pointer-read-required",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/pointer-read-required"
+        ".audit/items-www-authoring/qualification/receipts/types/pointer-read-required"
       ]
     },
     {
@@ -992,7 +992,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -1007,16 +1007,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "page-invocation-envelope-required",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/page-invocation-envelope-required"
+        ".audit/items-www-authoring/qualification/receipts/types/page-invocation-envelope-required"
       ],
       "restoreCommand": [
         "timeout",
@@ -1026,16 +1026,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "page-invocation-envelope-required",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/page-invocation-envelope-required"
+        ".audit/items-www-authoring/qualification/receipts/types/page-invocation-envelope-required"
       ]
     },
     {
@@ -1053,7 +1053,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -1068,16 +1068,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "read-has-no-account",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/read-has-no-account"
+        ".audit/items-www-authoring/qualification/receipts/types/read-has-no-account"
       ],
       "restoreCommand": [
         "timeout",
@@ -1087,16 +1087,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "read-has-no-account",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/read-has-no-account"
+        ".audit/items-www-authoring/qualification/receipts/types/read-has-no-account"
       ]
     },
     {
@@ -1114,7 +1114,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -1129,16 +1129,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "video-read-has-no-input",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/video-read-has-no-input"
+        ".audit/items-www-authoring/qualification/receipts/types/video-read-has-no-input"
       ],
       "restoreCommand": [
         "timeout",
@@ -1148,16 +1148,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "video-read-has-no-input",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/video-read-has-no-input"
+        ".audit/items-www-authoring/qualification/receipts/types/video-read-has-no-input"
       ]
     },
     {
@@ -1175,7 +1175,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -1190,16 +1190,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "target-is-an-element",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/target-is-an-element"
+        ".audit/items-www-authoring/qualification/receipts/types/target-is-an-element"
       ],
       "restoreCommand": [
         "timeout",
@@ -1209,16 +1209,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "target-is-an-element",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/target-is-an-element"
+        ".audit/items-www-authoring/qualification/receipts/types/target-is-an-element"
       ]
     },
     {
@@ -1236,7 +1236,7 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "node",
         "node_modules/@typescript/native/bin/tsc",
         "--noEmit",
@@ -1251,16 +1251,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "site-core-does-not-provide-monitor-timestamps",
         "apply",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/site-core-does-not-provide-monitor-timestamps"
+        ".audit/items-www-authoring/qualification/receipts/types/site-core-does-not-provide-monitor-timestamps"
       ],
       "restoreCommand": [
         "timeout",
@@ -1270,16 +1270,16 @@
         "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
         "-I",
         "-B",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/approved/launch.py",
+        ".audit/items-www-authoring/qualification/approved/launch.py",
         "python3",
         "tools/fixtures/items-www/prepare-case.py",
         "types",
         "site-core-does-not-provide-monitor-timestamps",
         "restore",
         "--candidate",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/runtime",
+        ".audit/items-www-authoring/qualification/runtime",
         "--receipt",
-        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-b23099f6/.audit/items-www-authoring/qualification/receipts/types/site-core-does-not-provide-monitor-timestamps"
+        ".audit/items-www-authoring/qualification/receipts/types/site-core-does-not-provide-monitor-timestamps"
       ]
     }
   ],

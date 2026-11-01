@@ -11,7 +11,7 @@
     "Capture compiler and consumer stdout in declared files; compare complete bytes through EOF twice.",
     "Require a passing baseline, intended diagnostic or assertion, and exact byte/mode restoration for every negative and control."
   ],
-  "PATH": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+  "PATH": "tools/fixtures/owner-services-reconciliation/future-bin",
   "PATHIdentity": "7975e3a35140c2790d1182efab5a817aa4735af0b300b1b54d69afc59e4dc474",
   "PATHManifest": "PATH-identities.json",
   "enforcementProven": false,
