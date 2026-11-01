@@ -22,7 +22,8 @@ export type PageServeOptions = {
   site: Site
   build: BuildId
   vocabulary: DiagnosticVocabulary
-  snapshot: () => PageHelloSnapshot
+  /** Undefined leaves `hello` unanswered, so PageLink times out instead of reading a wrong account. */
+  snapshot: () => PageHelloSnapshot | undefined
   signals: (onSignal: (signal: BreakageSignal) => void) => () => void
 }
 export type PageEndpoint = { readonly disposed: boolean; dispose(): void }
@@ -80,7 +81,9 @@ export function servePage(gateway: PageGatewayOperations, options: PageServeOpti
   function receive(message: PageRequestMessage, target: Element | null): void {
     switch (message.kind) {
       case "hello": {
-        const answer: PageHelloAnswer = { ...header, kind: "hello", site, snapshot: options.snapshot() }
+        const snapshot = options.snapshot()
+        if (!snapshot) return
+        const answer: PageHelloAnswer = { ...header, kind: "hello", site, snapshot }
         if (isPageHelloAnswer(answer, { build, site })) send(answer)
         return
       }

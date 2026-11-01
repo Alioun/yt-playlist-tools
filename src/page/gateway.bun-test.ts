@@ -31,6 +31,7 @@ test("raw identity is pinned whole only in PageJobResult, and is never a shared 
   p.config.LOGGED_IN = false
   expect(await g.run({ kind: "account" })).toEqual(answer)
   expect(p.configReads).toEqual(["LOGGED_IN", "DATASYNC_ID"])
+  expect(g.account).toEqual({ signedIn: true, datasyncId: syntheticIdentity })
   expect(signals).toEqual([])
   expect(p.active()).toBe(0)
   g.dispose()
@@ -44,6 +45,7 @@ test("signed-out visitor IDs stay signed out and missing or throwing config is u
     if (mode === "throws") p.faults.add("config")
     const g = createGateway({ site: "music", page: p.port, signals: value => signals.push(value), now: () => 10 })
     expect(await g.run({ kind: "account" })).toEqual<unknown>(mode === "signed-out" ? success({ signedIn: false, datasyncId: null }, readRoutes.account) : unavailable)
+    expect(g.account).toEqual(mode === "signed-out" ? { signedIn: false, datasyncId: null } : null)
     expect(signals.every(value => isBreakageSignal(value, readVocabulary))).toBe(true)
     expect(JSON.stringify(signals)).not.toContain(syntheticIdentity)
     g.dispose()

@@ -7,6 +7,11 @@ export interface PageChannel {
 }
 
 export const pageEventTypes = { req: "ppt:req", res: "ppt:res", retire: "ppt:retire" } as const satisfies Record<PageWire, string>
+/**
+ * The background's presence check for the page half. It dispatches a cancelable event whose detail is a
+ * build ID, and the page half of that build cancels it. Nothing is written into the page.
+ */
+export const pagePresenceEvent = "ppt:here"
 
 export function createDomPageChannel(doc: Document): PageChannel {
   return {

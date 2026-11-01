@@ -52,6 +52,8 @@ const musicJobs: readonly MusicJobId[] = ["queueInsert", "queueRemove", "queueRe
 export interface ReadGateway extends PageGatewayOperations {
   readonly disposed: boolean
   readonly vocabulary: DiagnosticVocabulary
+  /** The identity pinned at creation, or null when the page config didn't name one. */
+  readonly account: PageAccountData | null
   onSignal(listener: (signal: BreakageSignal) => void): () => void
   dispose(): void
 }
@@ -446,6 +448,7 @@ export function createGateway(options: {
   return {
     get disposed() { return disposed },
     vocabulary,
+    account: account.kind === "known" ? Object.freeze({ ...account.data }) : null,
     async run<J extends Job>(job: J, ctx?: { target?: Element }): Promise<PageJobResult<J>> {
       try {
         if (disposed || !isJob(job) || !supportsJob(site, job.kind)) return { ok: false, reason: "unavailable" }

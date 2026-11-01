@@ -14,7 +14,7 @@ export type PageServeRelationships = [
   Assert<Equal<ReturnType<typeof servePage>, PageEndpoint>>,
   Assert<Equal<Extract<PageJobResult<JobOf<"account">>, { ok: true }>["data"], PageAccountData>>,
   Assert<Equal<AccountRun, PageJobResult>>,
-  Assert<Equal<ReturnType<PageServeOptions["snapshot"]>, PageHelloSnapshot>>,
+  Assert<Equal<ReturnType<PageServeOptions["snapshot"]>, PageHelloSnapshot | undefined>>,
   Assert<Equal<Parameters<Parameters<PageServeOptions["signals"]>[0]>, [signal: BreakageSignal]>>
 ]
 

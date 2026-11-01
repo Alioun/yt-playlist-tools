@@ -68,7 +68,7 @@ function fakeGateway(initial?: (watcher: Watcher, onData: (value: unknown) => vo
 }
 
 function harness(options: {
-  site?: Site; channel?: PageChannel; gateway?: ReturnType<typeof fakeGateway>; snapshot?: () => PageHelloSnapshot
+  site?: Site; channel?: PageChannel; gateway?: ReturnType<typeof fakeGateway>; snapshot?: () => PageHelloSnapshot | undefined
 } = {}) {
   const site = options.site ?? "www"
   const channel = options.channel ?? createDirectPageChannel()
@@ -127,6 +127,16 @@ for (const site of sites) {
     }
   })
 }
+
+test("hello stays unanswered while the page can't name its account yet, then answers once it can", () => {
+  let known = false
+  const page = harness({ snapshot: () => known ? snapshot : undefined })
+  page.request({ kind: "hello" })
+  expect(page.answers).toEqual([])
+  known = true
+  page.request({ kind: "hello" })
+  expect(page.answers).toEqual([{ ...header, kind: "hello", site: "www", snapshot }])
+})
 
 test("an invalid snapshot never reaches the core", () => {
   const page = harness({ snapshot: () => ({ ...snapshot, datasyncId: "" }) })
