@@ -12,23 +12,9 @@ The tests cover `imports`, `env`, `page-console`, `entrypoints`, `storage-writes
 
 ## Read the frozen inventory
 
-[`legacy-inventory.ts`](legacy-inventory.ts) lists each admitted finding from base `ebd10bfd72a0de2ea047acf4632bd5a3ebf6ae02`. Each entry records its file, original line, rule, reason, and exact expression or import specifier. There are 15 findings.
+[`legacy-inventory.ts`](legacy-inventory.ts) listed each admitted finding from base `ebd10bfd72a0de2ea047acf4632bd5a3ebf6ae02`: 15 findings in the 1.x React app, `src/lib/` and the 1.x page session. The 2.0 cutover (G19) deleted those files, so the inventory is empty and every rule now applies to the whole tree.
 
-| File | Rule | Original lines | Findings |
-| --- | --- | --- | --- |
-| `src/components/SessionAccess.tsx` | imports | 1 | 1 |
-| `src/entrypoints/background.ts` | entrypoints | 1 | 1 |
-| `src/entrypoints/options/App.tsx` | entrypoints | 1 | 1 |
-| `src/entrypoints/popup/App.tsx` | entrypoints | 1 | 1 |
-| `src/entrypoints/youtube.content.tsx` | entrypoints, running-cost | 1, 94 | 2 |
-| `src/lib/queue-button.ts` | running-cost | 291 | 1 |
-| `src/lib/session.ts` | imports | 1 | 1 |
-| `src/lib/storage.ts` | imports, storage-writes | 1, 2, 191, 209, 210, 210 | 6 |
-| `src/page/youtube-session.ts` | imports | 1 | 1 |
-
-These are five import violations, four oversized entrypoint scripts, four direct storage writes, and two broad subtree observers. No current environment or page-console findings are admitted. Existing WXT storage-item `setValue()` calls are outside the direct storage API check.
-
-Delete an inventory entry when its violation is resolved. Stale entries fail the current-tree comparison. New files, rules, expressions, and extra occurrences fail. Moving an unchanged finding to another line does not grant a new exception. Entrypoint line counts may fall below their original ceilings of 216, 34, 272, and 165, but may not exceed them. Once a script has at most 15 lines, delete its entry.
+Delete an inventory entry when its violation is resolved. Stale entries fail the current-tree comparison. New files, rules, expressions, and extra occurrences fail. Moving an unchanged finding to another line does not grant a new exception.
 
 The test freezes admission hashes of each file, rule, reason, and evidence tuple. These hashes let entries disappear while rejecting additions, replacement expressions, duplicate entries, or raised ceilings. Do not regenerate the inventory or admission hashes to accept a failure. The guards and their frozen admission list remain reviewable code, so a deliberate edit of the enforcement code still needs review.
 

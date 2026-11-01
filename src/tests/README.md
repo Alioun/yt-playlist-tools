@@ -1,1 +1,0 @@
-Tests for flat entrypoint files go here. WXT treats every flat file in `src/entrypoints/` as an entrypoint, so a test beside one breaks the build. Tests for directory entrypoints (`popup/`, `options/`) stay co-located.

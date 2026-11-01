@@ -1,29 +1,28 @@
-import { defineConfig } from "wxt"
+import type {} from "@wxt-dev/module-svelte"
 import tailwindcss from "@tailwindcss/vite"
+import { defineConfig } from "wxt"
 
-// See https://wxt.dev/api/config.html
 export default defineConfig({
   srcDir: "src",
+  publicDir: "src/public",
   imports: false,
   zip: {
     excludeSources: ["store/**", "site/**", "tools/**"]
   },
   // REQUIRED: WXT defaults Firefox to MV2. We ship MV3 on both browsers.
   manifestVersion: 3,
-  modules: ["@wxt-dev/module-react", "@wxt-dev/auto-icons"],
-  vite: () => ({
-    // NOTE: swapping React for preact/compat was tried and does not work here.
-    // Base UI's useRender passes element types as React element descriptors,
-    // which Preact renders literally as <[object Object]>, so every primitive
-    // (Button, Checkbox, Switch, Slider) fails to render. See the README.
-    plugins: [tailwindcss()],
-    css: {
-      // Tailwind v4 runs as a Vite plugin, not through PostCSS. Pin an inline
-      // (empty) PostCSS config so Vite does NOT walk up the directory tree
-      // looking for one -- the parent git worktree still has a Tailwind v3
-      // postcss.config.js that would otherwise be picked up and break the build.
-      postcss: {}
+  modules: ["@wxt-dev/module-svelte"],
+  svelte: {
+    vite: {
+      dynamicCompileOptions({ filename }) {
+        return filename.includes("/node_modules/") ? {} : { runes: true }
+      }
     }
+  },
+  vite: () => ({
+    plugins: [tailwindcss()],
+    // An inline PostCSS config stops Vite from walking up into a parent checkout's config.
+    css: { postcss: {} }
   }),
   manifest: ({ browser, mode }) => ({
     name: "YouTube Playlist Tools",
