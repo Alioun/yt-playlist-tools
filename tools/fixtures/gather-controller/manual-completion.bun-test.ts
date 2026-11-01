@@ -37,6 +37,21 @@ describe("normal manual history in the canonical session record", () => {
     expect(f.tabs.sessionWrites().length).toBe(before)
   })
 
+  test("a gather saves its record twice, the close plan and then what closed, and its Undo twice, the ended record and then the reopened tabs", async () => {
+    const f = gatherFixture({ settings: { to: "playlist" } })
+    f.window.open(10, watch(v[0]!), "One")
+    f.window.open(11, watch(v[1]!), "Two")
+    const gatherSaves = (from: number) => f.tabs.sessionWrites().slice(from).filter(write => /^session\.set:(.*,)?gather(,|$)/.test(write)).length
+    let before = f.tabs.sessionWrites().length
+    const gathered = await f.drive(f.gather.now(normalWindow))
+    expect(gathered).toMatchObject({ kind: "playlist", saved: 2, closed: 2 })
+    expect(gatherSaves(before)).toBe(2)
+    if (gathered.kind !== "playlist" || !gathered.undo) throw new Error("expected an undoable gather")
+    before = f.tabs.sessionWrites().length
+    expect(await f.drive(f.gather.undo(gathered.undo, normalWindow))).toEqual({ kind: "undone", reopened: 2 })
+    expect(gatherSaves(before)).toBe(2)
+  })
+
   test("every video already in still closes, and Undo reopens those tabs without removing any playlist entry", async () => {
     const f = gatherFixture({ settings: { to: "playlist" } })
     f.yt.put(a, later, v[0]!)

@@ -128,6 +128,13 @@
    "break": "map every tabs.get or windows.get rejection to gone or window-gone (the previous behaviour)",
    "mustFail": "the busy-tab-strip and lost-connection reads answer gone and window-gone",
    "ran": "fails as stated"
+  },
+  {
+   "case": "two-saves-per-gather-and-undo",
+   "anchor": "manual-completion.bun-test.ts: a gather saves its record twice",
+   "break": "save the gather record once more between the close and the readback save",
+   "mustFail": "the gather would save 3 times",
+   "ran": "fails as stated"
   }
  ],
  "preserved": "controls.json, expected-output.jsonl and gather.bun-test.ts keep their 5 behaviour controls, 17 expectation lines and 14 tests unchanged"
