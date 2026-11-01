@@ -78,9 +78,7 @@
       const outcome = await answer
       if (!mounted) return
       release(row.id)
-      if (outcome.kind === "picked") {
-        if ("refused" in outcome.choice) results = new Map(results).set(row.id, text.refusal[outcome.choice.refused])
-      }
+      if (outcome.kind === "picked" && "skipped" in outcome.choice && outcome.choice.skipped === "private") results = new Map(results).set(row.id, text.label("pickedPrivate"))
       if (outcome.kind === "unavailable" && outcome.reason !== "mode") results = new Map(results).set(row.id, text.unavailable[outcome.reason])
       emit({ kind: "tick", id: row.id, outcome })
     }
@@ -95,6 +93,13 @@
     release(row.id)
     if (outcome.kind === "unavailable" && outcome.reason !== "mode") results = new Map(results).set(row.id, text.unavailable[outcome.reason])
     emit({ kind: "untick", id: row.id, outcome })
+  }
+  async function undo(row: PickerRow) {
+    if (row.busy || picker.closed) return
+    const answer = picker.undo(row.id)
+    observe(answer.then(outcome => ({ kind: "undo", id: row.id, outcome })))
+    const outcome = await answer
+    emit({ kind: "undo", id: row.id, outcome })
   }
   async function pin(row: PickerRow) {
     if (row.busy || picker.closed) return
@@ -197,7 +202,7 @@
     {/if}
     <ul aria-label={text.label("listLabel")}>
       {#each picker.rows as row (row.id)}
-        <PlaylistRow {picker} {row} {text} {platform} everyAccount={watchLaterEveryAccount} check={heldChecks.get(row.id) ?? row.check} result={results.get(row.id) ?? null} onactivate={() => activate(row)} onpin={() => pin(row)} onremove={() => removeChoice(row)} />
+        <PlaylistRow {picker} {row} {text} {platform} everyAccount={watchLaterEveryAccount} check={heldChecks.get(row.id) ?? row.check} result={results.get(row.id) ?? null} onactivate={() => activate(row)} onpin={() => pin(row)} onremove={() => removeChoice(row)} onundo={() => undo(row)} />
       {/each}
     </ul>
   </div>

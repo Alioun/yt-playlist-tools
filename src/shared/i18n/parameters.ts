@@ -424,6 +424,7 @@ export const messageParameters = {
   "picker_create_notAllowed": [],
   "picker_create_failed": [],
   "picker_createChoiceRefused": [],
+  "picker_pickedPrivate": [],
   "picker_sortPending": [],
   "picker_sortRefused": [],
   "picker_noneChosen": [],

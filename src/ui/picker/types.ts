@@ -2,7 +2,7 @@ import type { Site } from "../../shared/contracts"
 import type { Platform } from "../../shared/keys"
 import type { AccountKey, PlaylistId } from "../../shared/model"
 import type {
-  CreateOutcome, PickerModel, PinOutcome, RefreshOutcome, SettingOutcome, TickOutcome, UntickOutcome
+  CreateOutcome, PickerModel, PinOutcome, RefreshOutcome, SettingOutcome, TickOutcome, UndoOutcome, UntickOutcome
 } from "../../shared/picker/model.svelte"
 import type { PickerSource } from "../../shared/picker/source"
 import type { PickerText } from "./text"
@@ -15,6 +15,7 @@ export type PickerPurpose =
 export type PickerEvent =
   | { readonly kind: "tick"; readonly id: PlaylistId; readonly outcome: TickOutcome }
   | { readonly kind: "untick"; readonly id: PlaylistId; readonly outcome: UntickOutcome }
+  | { readonly kind: "undo"; readonly id: PlaylistId; readonly outcome: UndoOutcome }
   | { readonly kind: "pin"; readonly id: PlaylistId; readonly outcome: PinOutcome }
   | { readonly kind: "refresh"; readonly outcome: RefreshOutcome }
   | { readonly kind: "sort"; readonly outcome: SettingOutcome }

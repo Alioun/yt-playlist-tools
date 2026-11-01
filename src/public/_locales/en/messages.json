@@ -2803,6 +2803,9 @@
   "picker_createChoiceRefused": {
     "message": "The playlist was created, but this choice wasn't saved."
   },
+  "picker_pickedPrivate": {
+    "message": "Saved. Private windows don't keep your playlist choice."
+  },
   "picker_sortPending": {
     "message": "Saving sort order…"
   },

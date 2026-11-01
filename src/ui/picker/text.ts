@@ -1,6 +1,6 @@
 import type { Privacy, Site } from "../../shared/contracts"
 import type { I18n, SimpleMessageKey } from "../../shared/i18n"
-import type { PickerRow, Refusal, TitleProblem } from "../../shared/picker/model.svelte"
+import type { PickerRow, Refusal, Saved, TitleProblem } from "../../shared/picker/model.svelte"
 import type { CreateFailure } from "../../shared/picker/source"
 import type { PickerPurpose } from "./types"
 
@@ -15,7 +15,8 @@ const labels = {
   refreshFailed: "picker_refreshFailed", privatePin: "picker_privatePin", privateGather: "picker_privateGather",
   titleUnavailable: "picker_titleUnavailable", missing: "picker_missing", full: "picker_full",
   newRow: "picker_newRow", goneRow: "picker_goneRow", pin: "picker_pin", pinned: "picker_pinned",
-  createChoiceRefused: "picker_createChoiceRefused",
+  createChoiceRefused: "picker_createChoiceRefused", pickedPrivate: "picker_pickedPrivate",
+  undo: "toast_action_undo", tryAgain: "toast_action_try_again", undoFailed: "feedback_www_manual_untitled_undo_failed",
   openYouTube: "picker_openYouTube", createChannel: "picker_createChannel",
   sortPending: "picker_sortPending", sortRefused: "picker_sortRefused", noneChosen: "picker_noneChosen"
 } satisfies Record<string, SimpleMessageKey>
@@ -88,6 +89,10 @@ export function createPickerText(i18n: I18n) {
     known(count: number) { return i18n.message(i18n.plural(count) === "one" ? "picker_known_one" : "picker_known_other", { count: i18n.number(count) }) },
     savedList(at: number) { return i18n.message("picker_savedList", { time: i18n.date(at, { dateStyle: "medium", timeStyle: "short" }) }) },
     duplicate: (playlist: string) => i18n.message("picker_duplicate", { playlist }),
+    pickSaved(save: Saved, site: Site, playlist: string): string {
+      if (save === "already-in") return i18n.message(site === "music" ? "feedback_music_manual_untitled_already_in" : "feedback_www_manual_untitled_already_in", { targets: playlist })
+      return i18n.message(site === "music" ? "feedback_music_manual_untitled_saved" : "feedback_www_manual_untitled_saved", { targets: playlist })
+    },
     chooserName: (label: string, playlist: string) => i18n.message("picker_chooserName", { label, playlist }),
     pinName: (playlist: string, pinned: boolean) => i18n.message(pinned ? "picker_pinnedFor" : "picker_pinFor", { playlist }),
     removeName: (playlist: string) => i18n.message("picker_removeChoice", { playlist }),

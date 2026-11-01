@@ -8,7 +8,7 @@
   import PickerIcon from "./PickerIcon.svelte"
 
   let {
-    picker, row, check, text, platform, everyAccount, result, onactivate, onpin, onremove
+    picker, row, check, text, platform, everyAccount, result, onactivate, onpin, onremove, onundo
   }: {
     picker: PickerModel
     row: PickerRow
@@ -20,15 +20,18 @@
     onactivate: () => void
     onpin: () => void
     onremove: () => void
+    onundo: () => void
   } = $props()
 
   const uid = $props.id()
   const title = $derived(text.rowTitle(row, everyAccount))
   const key = $derived(row.key === null ? null : display(row.key, platform))
+  const saved = $derived(!row.busy && !result && row.status.kind === "unchosen" ? text.pickSaved(row.status.save, picker.site, title) : null)
   const status = $derived.by(() => {
     if (row.busy) return text.label("busy")
     if (result) return result
     switch (row.status.kind) {
+      case "unchosen": return row.status.undo === "failed" ? text.label("undoFailed") : text.refusal[row.status.reason]
       case "already-in": return text.label("alreadyIn")
       case "save-failed": return text.label("couldNotSave")
       case "remove-failed": return text.label("couldNotRemove")
@@ -77,7 +80,7 @@
         {/if}
         <span>{text.rowDetails(row, picker.site)}</span>
       </span>
-      <span id="{uid}-status" class="row-status" class:empty={status === null} aria-live="polite">{status ?? ""}</span>
+      <span id="{uid}-status" class="row-status" class:empty={status === null} aria-live="polite">{#if saved}<span class="row-saved">{saved}</span>{/if}<span>{status ?? ""}</span></span>
     </span>
     {#if key}<kbd aria-label={text.shortcutLabel(key)}>{key}</kbd>{/if}
     <span aria-hidden="true" class="check" class:checking={check === "loading"}>
@@ -85,6 +88,10 @@
     </span>
   </Checkbox.Root>
   <span class="row-actions">
+    {#if row.status.kind === "unchosen" && !row.busy && !picker.closed}
+      {#if row.status.undo === "offered"}<button type="button" class="row-action" onclick={onundo}>{text.label("undo")}</button>{/if}
+      <button type="button" class="row-action" onclick={onactivate}>{text.label("tryAgain")}</button>
+    {/if}
     {#if row.mark !== null && picker.mode !== "save"}
       <span class="mark">{row.mark === "missing" ? text.label("missing") : text.label("full")}</span>
       <button type="button" class="remove-choice" aria-label={text.removeName(title)} aria-disabled={row.busy || undefined} onclick={() => { if (!row.busy) onremove() }}>{text.label("remove")}</button>
@@ -118,6 +125,7 @@
   .row-details :global(svg) { width: .8rem; height: .8rem; flex-shrink: 0; }
   .row-status { display: block; color: var(--destructive); font-size: .75rem; line-height: 1.4; }
   .row-status.empty { display: none; }
+  .row-saved { display: block; color: var(--muted-foreground); }
   [data-busy="true"] .row-status { color: var(--muted-foreground); }
   kbd { color: var(--muted-foreground); background: var(--card); border: 1px solid var(--border); border-radius: .3rem; padding: .15rem .3rem; font: inherit; font-size: .68rem; white-space: nowrap; }
   .check { display: grid; place-items: center; width: 1.15rem; height: 1.15rem; flex-shrink: 0; border: 1.5px solid var(--input); border-radius: .3rem; }
@@ -133,6 +141,8 @@
   .pin:disabled { cursor: not-allowed; opacity: .45; }
   .pin:hover:not(:disabled), .remove-choice:hover { background: var(--accent); }
   .mark { color: var(--warning); font-size: .72rem; font-weight: 600; }
+  .row-action { background: transparent; border: 0; padding: .25rem; color: var(--primary); border-radius: .25rem; font-size: .72rem; font-weight: 600; cursor: pointer; }
+  .row-action:hover { background: var(--accent); }
   .remove-choice { background: transparent; border: 0; padding: .25rem; color: var(--primary); border-radius: .25rem; font-size: .72rem; cursor: pointer; }
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   @keyframes checking { 50% { opacity: .4; } }
