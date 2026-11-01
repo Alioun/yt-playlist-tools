@@ -478,8 +478,9 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 
 - **SYNC-10** The unit of conflict is the document. Two browsers editing different documents never conflict.
 - **SYNC-11** For the same document, **the newest edit wins**, by the time of the user's edit, with the device ID breaking ties. The losing edit shows as reverted. It takes edits to one document in two browsers within one sync interval.
-- **SYNC-12** **Deletions are tombstones,** kept for 30 days, so an older edit can't bring back a removed setup or filter.
+- **SYNC-12** **Deletions are tombstones,** kept for 30 days after their edit time (`at`), so an older edit can't bring back a removed setup or filter.
   - A filter's tombstone that arrives while its setup is still live here isn't applied, so auto-add never runs a playlist without its filter. It applies once the setup's tombstone is here, whichever arrives first. A setup's tombstone that arrives also removes this browser's data for the account (DATA-44; R177).
+  - Any browser with sync on expires a setup's tombstone once 30 days have passed since its `at`. It does so during an automatic receive pass, with no timer of its own. It drops its local copy and its `pushed` entry, then removes the synced copy in a separate cleanup opportunity. The account's filter tombstones expire with their setup's, whatever their own `at`. A filter tombstone under a live setup doesn't expire. After expiry, a browser that was offline for over 30 days can push its live copy back (SYNC-07; R178).
 - **SYNC-13** A document too large for one sync item is applied only once every part of the same write has arrived. Until then, the last good local copy stays.
 
 ### 3.5 Budget and "full"
@@ -650,7 +651,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 | `s:filter:<acct>:<playlistId>` | One channel filter document |
 | `s:<document>@<gen>.<i>` | Chunk `i` of a document too large for one item |
 
-- **DATA-10** A document of up to 7,600 bytes is one item, `{v, gen, at, by, data}`. A larger one is a pointer `{v, gen, at, by, n}` plus `n` chunks named after its `gen`. A removed document is a tombstone, `{v, gen, at, by, deleted: true}`, for 30 days; while sync is on, the local copy keeps the tombstone too, and readers treat it as absent.
+- **DATA-10** A document of up to 7,600 bytes is one item, `{v, gen, at, by, data}`. A larger one is a pointer `{v, gen, at, by, n}` plus `n` chunks named after its `gen`. A removed document is a tombstone, `{v, gen, at, by, deleted: true}`, for 30 days after its `at`; while sync is on, the local copy keeps the tombstone too, and readers treat it as absent. SYNC-12 says which browser expires it and when (R178).
 
 #### `storage.session`
 
