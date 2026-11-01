@@ -2,8 +2,8 @@ import { fileURLToPath } from "node:url"
 import { defineConfig } from "vite"
 import { svelte } from "@sveltejs/vite-plugin-svelte"
 
-export default defineConfig(({ mode }) => {
-  if (!["kit-www", "kit-music", "core-www"].includes(mode)) throw Error("Choose an explicit dormant site bundle")
+export default defineConfig(({ command, mode }) => {
+  if (command === "build" && !["kit-www", "kit-music", "core-www"].includes(mode)) throw Error("Choose an explicit dormant site bundle")
   const file = (name: string) => fileURLToPath(new URL(name, import.meta.url))
   return {
     plugins: [svelte({ compilerOptions: { css: "injected" }, dynamicCompileOptions({ filename }) {
