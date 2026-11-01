@@ -541,18 +541,18 @@
     {
       "id": "view-publication-missing-sync-filter-event",
       "original": "tools/fixtures/view-publication/controls/missing-sync-filter-event.patch",
-      "originalPatchSha256": "61d85a95dce6310b4ca45c07fcd96bcd9003e9f40eb59e9d9bf36bd5e63f8232",
+      "originalPatchSha256": "14f31669b370b5adba2e037e441761edf5b5745931577afadb3d3e45b3ccb024",
       "target": "src/background/store/local-filter-writer.ts",
       "patch": "relocated/inherited-controls/view-publication-missing-sync-filter-event.patch",
-      "baseSha256": "1d0b1e3903328437f16e41f1f29e78cf592f6a2e8138571eccf88876e7ba3402",
-      "mutatedSha256": "c20c0b987cfc83811fbfa0849d9411b626b49b329b623fedf191bd298209b0c1",
+      "baseSha256": "f269818d0bdabbbd1020b751ed3c01cd9b76e5a1f02cc5779739de90a2dfce31",
+      "mutatedSha256": "c9ffe944957a502b8f56cb6bbd447573b6d6775ead0534e03a64e9e4d7b2526a",
       "mode": "100644",
       "anchors": [
         {
           "before": "else emitView({ kind: \"filter-changed\", source: \"sync\", acct: key.acct, playlist: key.playlist })",
           "after": "else void key",
           "occurrence": 1,
-          "line": 1498
+          "line": 1602
         }
       ],
       "namedAssertion": "confirmed adopted sync Filter changes target the account and equal data generations send nothing",

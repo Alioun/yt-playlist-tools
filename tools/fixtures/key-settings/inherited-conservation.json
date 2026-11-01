@@ -2829,9 +2829,9 @@
     },
     "tools/fixtures/view-publication/controls/missing-sync-filter-event.patch": {
       "mode": "100644",
-      "gitBlob": "6d3abce6b3f4d0d19e7873a52fa7c53f12de171b",
-      "sha256": "61d85a95dce6310b4ca45c07fcd96bcd9003e9f40eb59e9d9bf36bd5e63f8232",
-      "bytes": 551
+      "gitBlob": "795627b5d4b9168539f94691c836737cfca08199",
+      "sha256": "14f31669b370b5adba2e037e441761edf5b5745931577afadb3d3e45b3ccb024",
+      "bytes": 625
     },
     "tools/fixtures/view-publication/controls/omitted-coalescing.patch": {
       "mode": "100644",

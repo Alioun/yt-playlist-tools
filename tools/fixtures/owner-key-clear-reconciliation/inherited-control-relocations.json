@@ -309,9 +309,9 @@
    "patch": "tools/fixtures/key-settings/relocated/inherited-controls/view-publication-missing-sync-filter-event.patch",
    "patchIdentity": {
     "mode": "100644",
-    "bytes": 551,
-    "sha256": "afa27f5c0f2763bee2db0af77f822ed8d32d1bc4832553f731c3f55afc7af514",
-    "gitBlob": "4ea5e01b6a53f36cfeefb4f9f3ecdfa3f0e951fa"
+    "bytes": 625,
+    "sha256": "14f31669b370b5adba2e037e441761edf5b5745931577afadb3d3e45b3ccb024",
+    "gitBlob": "795627b5d4b9168539f94691c836737cfca08199"
    },
    "targets": [
     "src/background/store/local-filter-writer.ts"
@@ -319,9 +319,9 @@
    "finalTargetIdentities": {
     "src/background/store/local-filter-writer.ts": {
      "mode": "100644",
-     "bytes": 269817,
-     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
-     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+     "bytes": 272995,
+     "sha256": "f269818d0bdabbbd1020b751ed3c01cd9b76e5a1f02cc5779739de90a2dfce31",
+     "gitBlob": "2735f804e941dc02e8066ae5d02d03711af1d2f7"
     }
    },
    "dryRunReturncode": 0,
@@ -549,9 +549,9 @@
    "patch": "tools/fixtures/view-publication/controls/missing-sync-filter-event.patch",
    "patchIdentity": {
     "mode": "100644",
-    "bytes": 551,
-    "sha256": "61d85a95dce6310b4ca45c07fcd96bcd9003e9f40eb59e9d9bf36bd5e63f8232",
-    "gitBlob": "6d3abce6b3f4d0d19e7873a52fa7c53f12de171b"
+    "bytes": 625,
+    "sha256": "14f31669b370b5adba2e037e441761edf5b5745931577afadb3d3e45b3ccb024",
+    "gitBlob": "795627b5d4b9168539f94691c836737cfca08199"
    },
    "targets": [
     "src/background/store/local-filter-writer.ts"
@@ -559,9 +559,9 @@
    "finalTargetIdentities": {
     "src/background/store/local-filter-writer.ts": {
      "mode": "100644",
-     "bytes": 269817,
-     "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
-     "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+     "bytes": 272995,
+     "sha256": "f269818d0bdabbbd1020b751ed3c01cd9b76e5a1f02cc5779739de90a2dfce31",
+     "gitBlob": "2735f804e941dc02e8066ae5d02d03711af1d2f7"
     }
    },
    "dryRunReturncode": 0,
