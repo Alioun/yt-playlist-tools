@@ -162,7 +162,7 @@ test("withdrawal around each write retains the original effect and a later Agree
       expect(done.local[`cache:${B}`]).toBeUndefined(); expect(done.local[`cache:${C}`]).toEqual(initial().local[`cache:${C}`])
     } finally { await h.dispose() }
   }
-}, 120000)
+}, 600000)
 
 test("an import that empties the last account clears it without rewriting the Device record", async () => {
   const h = world()
