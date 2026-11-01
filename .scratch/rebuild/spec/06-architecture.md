@@ -415,7 +415,7 @@ flowchart TD
 - **ARC-ACC-52. Account in view,** in [ACC-13](04-features-accounts-data.md#23-which-account-is-shown)'s order:
   1. the active tab's account, or its signed-out state, when the popup sits over a YouTube or YouTube Music tab;
   2. else the account of the most recently active YouTube or YouTube Music tab, in a window of the same kind;
-  3. else, in a normal window, the last account **with a setup** that was current in a normal window (`Device.lastAccount`), from cache. A private window has no such fallback.
+  3. else, in a normal window, the last account **with a setup** that was current in a normal window (`storage.local`'s `lastAccount`, [DATA-07](04-features-accounts-data.md#43-storage-layout)), from cache. A private window has no such fallback.
 
   Settings uses the account picked in it ([ACC-14](04-features-accounts-data.md#23-which-account-is-shown)). (R54)
 - **ARC-ACC-53. Candidates** come from `tabs.query({ url: [...the job's site pattern], discarded: false })`. Host access is enough for the `url` filter and for the `url`, `incognito` and `lastAccessed` fields, so no `tabs` permission is needed.

@@ -315,7 +315,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 - **ACC-13** **The account in view** in the popup is the first of these that applies:
   1. the active tab's account, or its signed-out state, when that tab is YouTube or YouTube Music;
   2. else the account of the most recently active YouTube or YouTube Music tab, among windows of the same kind (normal or private);
-  3. else, in a normal window with no YouTube tab open, the last account with a setup that was current in a normal window (`Device.lastAccount`), shown from cache (FT-54). An account without a setup has no cache (DATA-19), so it's never this fallback. A private window has none.
+  3. else, in a normal window with no YouTube tab open, the last account with a setup that was current in a normal window (`storage.local`'s `lastAccount`, DATA-07), shown from cache (FT-54). An account without a setup has no cache (DATA-19), so it's never this fallback. A private window has none.
 
   This order is the one every chapter follows (R54).
 - **ACC-14** Settings shows the account the user picks in it, from its "Showing setup for {Account}" menu.
@@ -622,6 +622,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 |---|---|---|---|
 | `schema` | This browser's storage layout version | number (2.0 writes `1`) | Always. A fresh install writes it at the first background start, before consent; each migration writes it last (DATA-46; R21) |
 | `device` | This browser's own state | `Device` | Until Clear all data |
+| `lastAccount` | The last account with a setup that was current, normal windows only (ACC-13) | account key or `null`; absent reads as `null` | Until that account's setup is removed (DATA-44), or Clear all data |
 | `doc:settings` | The shared settings | `Stamped<Settings>` | Until Clear all data |
 | `doc:setup:<acct>` | One account setup | `Stamped<Setup>` | Until the setup is empty or removed |
 | `doc:filter:<acct>:<playlistId>` | One channel filter of that account, kept filters included | `Stamped<Filter>` | Until removed with its setup, or by Clear all data |
@@ -631,6 +632,8 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 | `sync` | The replicator's bookkeeping | `SyncState` | Once sync has been on |
 
   (R21, R23, R43)
+
+  `lastAccount` is its own key, not a `Device` field, so the writers that clear it (a settings import, removing a setup, a sync join that receives a setup's tombstone) never write `device` and can't put back a consent that was withdrawn while they ran (R176).
 
 - **DATA-08** `<acct>` is the account key (ACC-03). An absent `doc:settings` reads as the defaults: every feature off, the YouTube Music section switch on (R1), and the undo key Alt+U (R44). An absent setup reads as "no choices". Every key has a prefix, so none reuses a 1.x name for a new shape.
 
@@ -736,7 +739,6 @@ type Device = {
   upgradeNote: { state: "pending" | "done"; details: UpgradeDetails; opened: boolean
                  seen: boolean; reopened: boolean } | null // UpgradeDetails: 08-release; seen and reopened: REL-CON-25 (R97)
   claimNotice: { acct: string; dropped: number } | null // minimum fields; distinguish skipped shortcut too (ACC-32; R150, R152)
-  lastAccount: string | null // the last account with a setup that was current, normal windows only
   newPlaylistVisibility: "PRIVATE" | "UNLISTED" | "PUBLIC" | null // the last pick here
   pickerSortAZ: boolean // the picker's Sort A–Z, default false; this browser only (R39)
   detailedLog: boolean
