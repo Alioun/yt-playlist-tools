@@ -20,9 +20,10 @@ for (const route of ["owner", "native", "wire"] satisfies readonly Route[]) {
     const w = world(route, joined())
     try {
       await w.owner.ready(); await w.owner.startSync()
+      w.advance(5000)
       expect(await w.assign({ kind: "undo" }, chord("z"))).toMatchObject({ kind: "confirmed" })
       const writes = w.h.counts.syncSet
-      expect(await w.owner.flushSync()).toMatchObject({ kind: "deferred", notBefore: 2000 })
+      expect(await w.owner.flushSync()).toMatchObject({ kind: "deferred", notBefore: 7000 })
       expect(w.h.counts.syncSet).toBe(writes)
       w.advance(1999); expect(await w.owner.flushSync()).toMatchObject({ kind: "deferred" }); expect(w.h.counts.syncSet).toBe(writes)
       w.advance(1); expect((await w.owner.flushSync()).kind).not.toBe("deferred")
