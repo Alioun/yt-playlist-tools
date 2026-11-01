@@ -93,7 +93,7 @@ export function monitorSignalKey(row: Pick<MonitorRecord, "tabId" | "signal" | "
 export function applyMonitorOperation(journal: MonitorJournal, operation: MonitorOperation): MonitorJournal {
   if ((journal.seen[operation.instance] ?? 0) >= operation.sequence) return structuredClone(journal)
   if (!Object.hasOwn(journal.seen, operation.instance) && Object.keys(journal.seen).length >= MONITOR_SIGNALS) throw Error("Monitor instance admission exhausted")
-  let signals = structuredClone([...journal.signals]), counters = structuredClone([...journal.counters]), passed = structuredClone([...journal.passed])
+  let signals = [...journal.signals], counters = [...journal.counters], passed = [...journal.passed]
   const inTab = (row: { tabId: number; site: Site }) => row.tabId === operation.tabId && row.site === operation.site
   if (operation.kind !== "signal") {
     if (operation.kind === "success" || operation.kind === "reload-passed") {
@@ -129,7 +129,7 @@ export function applyMonitorOperation(journal: MonitorJournal, operation: Monito
       (signal.kind !== "no-effect" || next.noEffects >= MONITOR_NO_EFFECTS)
     const row: MonitorRecord = { tabId: operation.tabId, signal: structuredClone(signal), evidence: structuredClone(evidence), active }
     const key = monitorSignalKey(row), old = signals.find(item => monitorSignalKey(item) === key)
-    signals = signals.filter(item => monitorSignalKey(item) !== key)
+    if (old) signals = signals.filter(item => monitorSignalKey(item) !== key)
     signals.push(old ? { ...row, active: row.active || old.active, signal: { ...signal, count: old.signal.count + signal.count, firstSeen: Math.min(old.signal.firstSeen, signal.firstSeen), lastSeen: Math.max(old.signal.lastSeen, signal.lastSeen) } } : row)
   }
   const seen = { ...journal.seen, [operation.instance]: operation.sequence }
