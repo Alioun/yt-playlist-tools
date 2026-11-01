@@ -353,7 +353,7 @@
     "-p",
     "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
    ],
-   "expect": "TS2322 at tools/fixtures/owner-key-clear-reconciliation/negatives/07-localization-key-loss.ts:3 only"
+   "expect": "TS2820 at tools/fixtures/owner-key-clear-reconciliation/negatives/07-localization-key-loss.ts:3 only"
   },
   {
    "id": "negative-08-notice-without-collaborator",
@@ -372,7 +372,7 @@
     "-p",
     "tools/fixtures/owner-key-clear-reconciliation/negative-tsconfig.json"
    ],
-   "expect": "TS2345 at tools/fixtures/owner-key-clear-reconciliation/negatives/08-notice-without-collaborator.ts:3 only"
+   "expect": "TS2741 at tools/fixtures/owner-key-clear-reconciliation/negatives/08-notice-without-collaborator.ts:3 only"
   },
   {
    "id": "negative-09-backend-without-clear",

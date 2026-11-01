@@ -2300,7 +2300,7 @@
       "expected": "nonzero diagnostic only at intended source line and code",
       "intendedLine": 4,
       "intendedCodes": [
-        2339
+        2551
       ],
       "diagnosticFile": "tools/fixtures/shared-options/isolated-negative.ts",
       "materialization": {

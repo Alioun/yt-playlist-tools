@@ -197,7 +197,7 @@
   "materialize": "tools/fixtures/owner-key-clear-reconciliation/negatives/07-localization-key-loss.ts",
   "intendedLine": 3,
   "intendedText": "export const intendedNegative: SimpleMessageKey = \"toast_dismis\"",
-  "expectedDiagnostic": "TS2322",
+  "expectedDiagnostic": "TS2820",
   "obligation": "localization loss",
   "credit": "none; unexecuted",
   "command": [
@@ -228,7 +228,7 @@
   "materialize": "tools/fixtures/owner-key-clear-reconciliation/negatives/08-notice-without-collaborator.ts",
   "intendedLine": 3,
   "intendedText": "export const intendedNegative = noticeText({ due: { kind: \"not-working\", features: [\"gather\"] }, site: \"www\" }, i18n)",
-  "expectedDiagnostic": "TS2345",
+  "expectedDiagnostic": "TS2741",
   "obligation": "localization loss",
   "credit": "none; unexecuted",
   "command": [

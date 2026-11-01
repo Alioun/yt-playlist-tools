@@ -1771,7 +1771,7 @@
         "file": "tools/fixtures/clear-all/isolated-negative.ts",
         "line": 3,
         "codes": [
-          2345
+          2741
         ]
       },
       "restore": "remove only materialized negative, verify exact baseline bytes and modes, rerun scoped-native and whole-native"

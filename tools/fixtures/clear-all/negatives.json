@@ -248,7 +248,7 @@
       "materializeAs": "tools/fixtures/clear-all/isolated-negative.ts",
       "intendedLine": 3,
       "expectedCodes": [
-        2345
+        2741
       ],
       "identity": {
         "mode": "100644",

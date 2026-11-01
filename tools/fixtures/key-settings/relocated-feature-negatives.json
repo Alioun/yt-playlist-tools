@@ -29,7 +29,7 @@
       "mode": "100644",
       "intendedLine": 3,
       "diagnosticCodes": [
-        2322
+        2820
       ],
       "anchor": "export const intendedNegative: Extract<FeatureSettingChange, {kind: \"feature\"}>[\"feature\"] = \"autoAdd\"",
       "state": "unexecuted",

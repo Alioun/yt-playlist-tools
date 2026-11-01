@@ -206,7 +206,7 @@
       "materializeAs": "tools/fixtures/shared-options/isolated-negative.ts",
       "line": 4,
       "expectedCodes": [
-        2339
+        2551
       ],
       "state": "unexecuted",
       "require": "The positive native forwarding proof must first compile, then this deliberate omitted method must fail at line 4."

@@ -5,7 +5,7 @@
     "patch": "tools/fixtures/site-toaster/negatives/action-multiplicity.patch",
     "target": "tools/fixtures/site-toaster/isolated-negative.ts",
     "line": 2,
-    "code": "TS2322",
+    "code": "TS2739",
     "source": "const invalid: ToastContent = { text: \"x\", tone: \"confirmation\", auto: false, action: [] }",
     "status": "UNEXECUTED",
     "require": "positive native gate, exactly one intended diagnostic, no unrelated diagnostic, exact restoration"
