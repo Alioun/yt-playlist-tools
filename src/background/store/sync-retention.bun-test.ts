@@ -1,5 +1,4 @@
 import { expect, test } from "bun:test"
-import { execFileSync } from "node:child_process"
 import { resolve } from "node:path"
 import type { JsonObject } from "../../shared/contracts/json"
 import type { DocumentKey } from "../../shared/model"
@@ -7,6 +6,7 @@ import * as codec from "./sync-codec"
 import { readSyncInventory } from "./sync-inventory"
 import { planSyncWrite } from "./sync-write-admission"
 import { createLocalFilterWriter } from "./local-filter-writer"
+import { executeSyntheticNodeRealm } from "../../../tools/fixtures/owner-services-reconciliation/node-realm-transport"
 
 type RetentionApi = Pick<typeof codec, "encodeSyncDocument" | "readSyncDocument"> & {
   readSyncInventory: typeof readSyncInventory
@@ -150,9 +150,7 @@ function runGuarded(bytes: readonly string[]) {
     try{return {result:await (${retentionAcceptance.toString()})(api),accesses,controls}}
     catch(error){return {failure:error.message,accesses,controls}}
   })()`
-  return JSON.parse(execFileSync("node", ["--input-type=module", "-e",
-    'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{TextEncoder},{timeout:30000})))'],
-  { input: script, encoding: "utf8", timeout: 35000 }))
+  return JSON.parse(executeSyntheticNodeRealm('import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{TextEncoder},{timeout:30000})))', script, 35000))
 }
 
 test("replacement retention preserves delayed old pointers and charges their restoration against physical occupancy", async () => {

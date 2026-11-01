@@ -2,6 +2,7 @@ import { test, expect } from "bun:test"
 import type { ClaimNotice } from "../../shared/model"
 import type { Snapshot } from "../../shared/model/settings-view"
 import { projectClaimNotice, executeClaimNoticeAcknowledgement } from "./claim-notice"
+import { executeSyntheticNodeRealm } from "../../../tools/fixtures/owner-services-reconciliation/node-realm-transport"
 
 export async function noticeAcceptance(api: { project: typeof projectClaimNotice; execute: typeof executeClaimNoticeAcknowledgement }) {
   let checks = 0
@@ -127,14 +128,13 @@ test("claim notice projector and non-owning executor preserve exact saved facts"
 })
 
 test("saved browser notice bytes agree in two guarded realms and reject exact-match and write defects", async () => {
-  const { execFileSync } = await import("node:child_process")
   const { readFile } = await import("node:fs/promises")
   const { resolve } = await import("node:path")
   const entry = resolve(import.meta.dir, "claim-notice.ts"), original = await readFile(entry, "utf8")
   const source = await noticeAcceptance({ project: projectClaimNotice, execute: executeClaimNoticeAcknowledgement })
   function run(bytes: string) {
     const script = `(async()=>{let accesses=0;const names=["browser","chrome","fetch","process","Bun","Date","performance","crypto","setTimeout","setInterval","localStorage","indexedDB","navigator","window","document"];for(const name of names)Object.defineProperty(globalThis,name,{get(){accesses++;throw Error("guard "+name)}});Object.defineProperty(Math,"random",{get(){accesses++;throw Error("guard random")}});const module={exports:{}};${bytes};let result,caught;try{result=await (${noticeAcceptance.toString()})({project:module.exports.projectClaimNotice,execute:module.exports.executeClaimNoticeAcknowledgement})}catch(error){caught=error.message}if(accesses)throw Error("forbidden access");let controls=0;for(const name of [...names,"random"]){let message;try{name==="random"?Math.random:globalThis[name]}catch(error){message=error.message}if(message!=="guard "+name)throw Error("inactive guard");controls++}return {result,caught,controls,accessesBeforeControls:0}})()`
-    return JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
+    return JSON.parse(executeSyntheticNodeRealm('import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))', script, 35000))
   }
   const built = await Bun.build({ entrypoints: [entry], target: "browser", format: "cjs", minify: true })
   expect(built.success).toBe(true)

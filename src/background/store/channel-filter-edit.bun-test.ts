@@ -1,5 +1,4 @@
 import { describe, expect, test } from "bun:test"
-import { execFileSync } from "node:child_process"
 import { readFile } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
 import { decodeFilter, isAccountKey, isChannelId, isPlaylistId } from "../../shared/model"
@@ -7,6 +6,7 @@ import { decide } from "../../shared/rules/channel-filter"
 import { changeFilterSetting, type FilterSettingInput, type FilterSettingResult } from "./channel-filter-edit"
 import { prepareDocumentBody } from "./write-preparation"
 import { encodeSyncDocument, readSyncDocument } from "./sync-codec"
+import { executeSyntheticNodeRealm } from "../../../tools/fixtures/owner-services-reconciliation/node-realm-transport"
 
 function fixtureSuite(change: typeof changeFilterSetting, decode: typeof decodeFilter) {
   let assertions = 0
@@ -246,7 +246,7 @@ describe("actual browser artifact", () => {
       try { Math.random; } catch (error) { if (error !== violation) throw error; controls++; }
       JSON.stringify({exports:Object.keys(operation),fixtures,beforeControls,controls,protectedReads});
     `
-    const result = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; console.log(runInNewContext(readFileSync(0,"utf8"), {}, {timeout:30000}));'], { input: script, encoding: "utf8", timeout: 35000 }))
+    const result = JSON.parse(executeSyntheticNodeRealm('import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; console.log(runInNewContext(readFileSync(0,"utf8"), {}, {timeout:30000}));', script, 35000))
     expect(result.exports).toEqual(["changeFilterSetting"])
     expect(result.fixtures.cases).toBe(88)
     expect(result.fixtures.repeats).toBe(54)

@@ -1,11 +1,11 @@
 import { expect, test } from "bun:test"
-import { execFileSync } from "node:child_process"
 import { decodeSettings, documentKey } from "../../shared/model"
 import { isJsonValue } from "../../shared/contracts/json"
 import { prepareDocumentBody } from "./write-preparation"
 import { encodeSyncDocument, readSyncDocument } from "./sync-codec"
 import { changeSharedSetting, type SharedSettingChange } from "./settings-edit"
 import { cases as optionCases, initial as optionInitial } from "../../../tools/fixtures/shared-options/specimens"
+import { executeSyntheticNodeRealm } from "../../../tools/fixtures/owner-services-reconciliation/node-realm-transport"
 
 type Dependencies = {
   decodeSettings: typeof decodeSettings
@@ -245,7 +245,7 @@ test("minified browser module has the same complete observations in a guarded No
     try {Math.random} catch(error){if(error!==violation)throw error;positiveControls++}
     JSON.stringify({exports:Object.keys(operation),observation,beforeControls,protectedReads,positiveControls});
   `
-  const result = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; process.stdout.write(runInNewContext(readFileSync(0,"utf8"), {}, {timeout:30000}));'], { input: script, encoding: "utf8", timeout: 35000 }))
+  const result = JSON.parse(executeSyntheticNodeRealm('import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; process.stdout.write(runInNewContext(readFileSync(0,"utf8"), {}, {timeout:30000}));', script, 35000))
   expect(result.exports).toEqual(["changeSharedSetting"])
   expect(result.observation).toEqual(JSON.parse(JSON.stringify(fixtureSuite(changeSharedSetting, dependencies))))
   expect(result.positiveControls).toBe(30)
