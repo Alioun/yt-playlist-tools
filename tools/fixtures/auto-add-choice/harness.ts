@@ -11,7 +11,7 @@ export const stamp = { v: 1, gen: "original", at: 1, by: "fixture" }
 export function seed(setup?: JsonObject): JsonObject {
   return {
     schema: 1,
-    device: { id: "fixture", consent: { v: 1, at: 1 }, syncOn: false, legacyCleared: true, lastAccount: acct },
+    device: { id: "fixture", consent: { v: 1, at: 1 }, syncOn: false, legacyCleared: true }, lastAccount: acct,
     sync: { joined: null, pushed: {}, status: "off", editedSinceOff: false, everEdited: false },
     "doc:settings": { ...stamp, data: {} }, unclaimed: null,
     ...(setup ? { [setupKey]: { ...stamp, data: setup } } : {}),

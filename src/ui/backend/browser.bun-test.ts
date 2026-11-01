@@ -114,12 +114,12 @@ test("an unavailable chooser is explicit and cannot report a saved destination",
     expect(h.store.batches.length).toBe(before)
   } finally { await h.dispose() }
 })
-test("Setup reads use the serving account and never Device.lastAccount", async () => {
+test("Setup reads use the serving account and never the stored last account", async () => {
   const h = await createFirstRunHarness()
   try {
     const view = h.openView()
     await view.firstRun.agree({ displayed: view.text.disclosure, attempt: 1, selected: ["quick-save"], syncOn: false, permissions: Promise.resolve({ music: true, browserMenu: true }) })
-    h.store.foreign(records => { const device = records.device; if (device && typeof device === "object" && !Array.isArray(device)) device.lastAccount = "BBBBBBBBBBBBBBBB" })
+    h.store.foreign(records => { records.lastAccount = "BBBBBBBBBBBBBBBB" })
     const read = await view.firstRun.readSetup()
     expect(read.kind === "ready" && read.youtube).toEqual({ kind: "account", account: { name: "Fixture account" } })
     expect(h.uiReads.at(-1)).toEqual(["schema", "device", "doc:settings", "doc:setup:AAAAAAAAAAAAAAAA"])

@@ -27,7 +27,7 @@ test("one local batch replaces shared settings and all included account document
   expect(result.documents.changes.filter(change => change.kind === "remove").map(change => documentKey(change.key)).sort()).toEqual([...removedNames].sort())
   expect(changedNames(result)).toEqual([...Object.keys(expectedPuts()), ...removedNames].sort())
   expect(result.expected.session).toEqual(expectedSession())
-  const expectedLocal = { ...input.local, ...expectedPuts(), device: { ...object(input.local.device), lastAccount: null },
+  const expectedLocal = { ...input.local, ...expectedPuts(), lastAccount: null,
     sync: { ...object(input.local.sync), everEdited: true, editedSinceOff: true } }
   for (const key of [...removedNames, `cache:${B}`, `progress:${B}:0`, `progress:${B}:15`]) Reflect.deleteProperty(expectedLocal, key)
   expect(result.expected.local).toEqual(expectedLocal)
@@ -209,7 +209,7 @@ test("capture detaches exact local session consent and join identities", () => {
   expect(Object.hasOwn(result.capture.local, `doc:filter:${A}:PL_added_after_capture`)).toBe(false)
   expect(result.capture.session.outside).toEqual({ keep: true })
   expect(Object.hasOwn(result.capture.sync.records, "lateOccupancy")).toBe(false)
-  const off = scenario(); object(off.local.device).lastAccount = C
+  const off = scenario(); off.local.lastAccount = C
   expect(planned(planSettingsImport(off)).cleanup.lastAccount).toEqual({ kind: "unchanged" })
 })
 

@@ -13,13 +13,13 @@ export async function runSession() {
     h.advance(ACCOUNT_LABEL_MS)
     h.script(async (_tab, invocation) => success({ name: invocation.acct === a ? "Updated" : "New account" }))
     transcript.push({ step: "changed", result: await h.accounts.onSeen(context),
-      label: h.label(), lastAccount: object(h.stored().device).lastAccount })
+      label: h.label(), lastAccount: h.stored().lastAccount ?? null })
     const reads = h.reads, writes = h.writes
     transcript.push({ step: "private", result: await h.accounts.onSeen(h.context(a, 9, true)), ownerReads: h.reads - reads, ownerWrites: h.writes - writes })
     h.removal.foreign(state => { delete state.local[`doc:setup:${b}`] })
     const newContext = h.context(b, 2)
     transcript.push({ step: "no-setup", result: await h.accounts.onSeen(newContext),
-      hasCache: Object.hasOwn(h.stored(), `cache:${b}`), lastAccount: object(h.stored().device).lastAccount })
+      hasCache: Object.hasOwn(h.stored(), `cache:${b}`), lastAccount: h.stored().lastAccount ?? null })
     transcript.push({ step: "live-header", result: await h.accounts.readLiveLabel(newContext), hasCache: Object.hasOwn(h.stored(), `cache:${b}`) })
     transcript.push({ step: "eof", runs: h.runs().length, generations: h.removal.counts().generations,
       clockPending: h.clock.pending, stamp: object(h.stored()[`cache:${a}`]).labelAt === epoch + ACCOUNT_LABEL_MS })

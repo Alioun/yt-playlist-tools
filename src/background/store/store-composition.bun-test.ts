@@ -34,7 +34,7 @@ async function compositionAcceptance(create: typeof createLocalFilterWriter, acc
     return {
       schema: 1,
       device: { id: "fixture", consent: { v: 1, at: 1 }, syncOn: false, upgradeNote: null, claimNotice: null,
-        lastAccount: null, newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: true, extension: [1, null] },
+        newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: true, extension: [1, null] },
       "doc:settings": { ...stamp, data: {} },
       [S]: { ...stamp, data: { autoAdd: [{ pl: "PL_Q", takes: "shorts", pct: 0 }], extension: "setup" } },
       [Q]: { ...stamp, data: { mode: "deny", on: true, channels: [], extension: "filter" } },

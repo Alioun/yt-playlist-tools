@@ -59,7 +59,7 @@ export async function readinessAcceptance(api: {
   function deferred() { let resolve = () => {}; const promise = new Promise<void>(done => { resolve = done }); return { promise, resolve } }
   async function turns() { for (let i = 0; i < 40; i++) await Promise.resolve() }
   const device = { id: "fixture", consent: { v: 1, at: 1 }, syncOn: false, upgradeNote: null, claimNotice: null,
-    lastAccount: null, newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: true, extension: [null] }
+    newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: true, extension: [null] }
   const seed = () => ({ schema: 1, device, unclaimed: null, "doc:settings": { v: 1, gen: "settings", at: 1, by: "old", data: {} },
     [`doc:setup:${acct}`]: { v: 1, gen: "setup", at: 1, by: "old", data: { autoAdd: [{ pl: playlist, takes: "videos" }] } },
     [`doc:filter:${acct}:${playlist}`]: { v: 1, gen: "filter", at: 1, by: "old", data: { mode: "deny", on: true, channels: [] } },

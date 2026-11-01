@@ -393,9 +393,7 @@ export function permitsExactRemoval(permit: ExactRemovalPermit | undefined, reco
   const ledger = jobsFor(records, read.device.id), entry = ledger?.jobs.find(job => job.identity.occurrence === binding.job.identity.occurrence)
   if (!entry || entry.identity.operation.kind !== "account-removal" || entry.permission.kind !== "armed" && entry.permission.kind !== "retiring" && entry.permission.kind !== "done" || (entry.permission.kind !== "done" && (entry.permission.generation !== binding.generation || !sameSyncJson(entry.permission.current, binding.current))) ||
     !sameSyncJson(entry.identity, binding.job.identity) || !sameSyncJson(raw, entry.identity.operation.record)) return false
-  const expected = { ...binding.device }
-  if (read.device.lastAccount === null) expected.lastAccount = null
-  return sameSyncJson(expected, read.raw)
+  return sameSyncJson(binding.device, read.raw)
 }
 export function removalRetirementLedger(records: JsonObject, raw: JsonObject, stage: "retiring" | "done", permit?: ExactRemovalPermit): JsonObject | undefined {
   if (!Object.hasOwn(records, "consent:state")) return {}

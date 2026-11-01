@@ -1,5 +1,5 @@
 import {
-  CONSENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError, decodeDevice, decodeDocument, decodeFilter,
+  CONSENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError, decodeDevice, decodeDocument, decodeFilter, decodeLastAccount,
   defaultFilter, isAccountKey, parseDocumentKey, type AccountKey, type Filter, type Key, type Settings, type Setup, type PlaylistId, type VideoId
 } from "../../shared/model"
 import { isJsonValue } from "../../shared/contracts/json"
@@ -68,8 +68,7 @@ export function readProjectionDevice(records: Readonly<Record<string, unknown>>)
     const device = decodeDevice(raw)
     if (device.consent?.v !== CONSENT_VERSION) return { kind: "unavailable", reason: "consent-held" }
     if (device.upgradeNote?.state === "pending") return { kind: "unavailable", reason: "startup" }
-    const acct = device.lastAccount
-    return { kind: "ready", pickerSortAZ: device.pickerSortAZ, lastAccount: acct !== null && isAccountKey(acct) ? acct : null }
+    return { kind: "ready", pickerSortAZ: device.pickerSortAZ, lastAccount: decodeLastAccount(records) }
   } catch (error) {
     if (error instanceof DecodeError) return { kind: "invalid", part: "device" }
     throw error

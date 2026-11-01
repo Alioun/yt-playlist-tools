@@ -23,7 +23,7 @@ export type RemovalFixtureState = { local: JsonObject; session: JsonObject; sync
 export function removalFixture(synced = false): RemovalFixtureState {
   const stamp = (data: JsonObject, gen: string): JsonObject => ({ v: 1, gen, at: 1, by: "old", envelope: { keep: [null, 1] }, data })
   const local: JsonObject = {
-    schema: 1, device: { id: "fixture", consent: { v: 1, at: 1, extension: true }, syncOn: synced, lastAccount: acct, extension: { keep: 1 } },
+    schema: 1, device: { id: "fixture", consent: { v: 1, at: 1, extension: true }, syncOn: synced, extension: { keep: 1 } }, lastAccount: acct,
     sync: { joined: "history", pushed: {}, status: synced ? "ok" : "off", editedSinceOff: false, extension: "history",
       opaqueWrite: { gate: null, diagnostic: { name: "Original", message: "opaque", extension: true } } },
     [setupName]: stamp({ label: { name: "Synthetic account", extension: 1 }, autoAdd: [{ pl: "PL_selected", takes: "both" }, { pl: "PL_off", takes: "videos" }],
@@ -160,7 +160,7 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
     for (let shard = 0; shard < 16; shard++) delete state.local[`progress:${acct}:${shard}`]
     if (!object(state.local.sync)) state.local.sync = { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true }
     else { state.local.sync.everEdited = true; if (!synced) state.local.sync.editedSinceOff = true }
-    if (json(state.local.device).lastAccount === acct) json(state.local.device).lastAccount = null
+    if (state.local.lastAccount === acct) state.local.lastAccount = null
     delete state.session[`skips:${acct}`]; delete state.session[`cooldown:${acct}`]
     for (const key of ["recent", "recentAdds"]) if (Array.isArray(state.session[key])) state.session[key] = state.session[key].filter(row => object(row) && row.acct !== acct)
     for (const key of ["shown", "breakage", "gather"]) if (object(state.session[key])) delete json(state.session[key].accounts)[acct]
@@ -224,7 +224,7 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
   for (const history of ["absent", "false", "true"] as const) {
     const seed = removalFixture(); if (history === "absent") delete seed.local.sync; else json(seed.local.sync).editedSinceOff = history === "true"
     for (const last of [acct, other, null]) {
-      json(seed.local.device).lastAccount = last
+      seed.local.lastAccount = last
       if (!nextCase()) continue
       const h = createRemovalHarness(seed), operation = await action(h)
       equal(operation.result.kind, "committed", "off-history variant commits")
@@ -288,7 +288,7 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
     if (invalid === "absent") {
       for (const name of documents) delete seed.local[name]
       delete seed.local[`cache:${acct}`]; for (let i = 0; i < 16; i++) delete seed.local[`progress:${acct}:${i}`]
-      json(seed.local.device).lastAccount = null
+      seed.local.lastAccount = null
       seed.session = { paused: true, tabs: {} }
     }
     const h = createRemovalHarness(seed), writer = api.create(h.deps), result = await writer.prepareAccountRemoval(ui, acct)

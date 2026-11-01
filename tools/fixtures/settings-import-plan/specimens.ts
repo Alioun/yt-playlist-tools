@@ -67,7 +67,7 @@ export function currentLocal(syncOn = false): JsonObject {
   settings.musicKeys = { ...object(settings.musicKeys), preset: true }
   settings.future = { keep: [1, 2] }
   return {
-    schema: 1, device: object({ ...defaultDevice(deviceId), consent: { v: 1, at: 7 }, syncOn, lastAccount: B, deviceFuture: "keep" }),
+    schema: 1, device: object({ ...defaultDevice(deviceId), consent: { v: 1, at: 7 }, syncOn, deviceFuture: "keep" }), lastAccount: B,
     sync: { joined: syncOn ? "joined-copy" : null, pushed: {}, status: syncOn ? "ok" : "off", editedSinceOff: false, everEdited: false, historyFuture: "keep" },
     "doc:settings": old("settings-old", settings, { envelope: "settings-extension" }),
     [`doc:setup:${A}`]: old("A-old", { ...defaultSetup(), autoAdd: [{ pl: "PL_before", takes: "videos" }], future: "setup-extension" }, { envelope: "A-extension" }),

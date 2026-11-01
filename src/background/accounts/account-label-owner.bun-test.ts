@@ -40,7 +40,7 @@ test("independent queued account labels retain both complete records", async () 
     expect(results.map(result => result.kind)).toEqual(["committed", "committed"])
     expect(h.label()).toEqual({ name: "First" })
     expect(h.label(b)).toEqual({ name: "Second" })
-    expect(object(h.stored().device).lastAccount).toBe(b)
+    expect(h.stored().lastAccount).toBe(b)
   } finally { await h.dispose() }
 })
 test("a newer label or newer reserved check refuses an old completion without mutation", async () => {

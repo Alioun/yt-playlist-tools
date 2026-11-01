@@ -20,7 +20,7 @@ export function projectionSeed(): RemovalFixtureState {
   const inherited = removalFixture()
   const local: JsonObject = {
     schema: 1,
-    device: { id: "never-send-device", consent: { v: 1, at: 1 }, syncOn: false, lastAccount: b, pickerSortAZ: true, neverSend: "device-extension" },
+    device: { id: "never-send-device", consent: { v: 1, at: 1 }, syncOn: false, pickerSortAZ: true, neverSend: "device-extension" }, lastAccount: b,
     sync: inherited.local.sync!,
     "doc:settings": document({ autoAdd: { on: true, pct: 73, neverSend: b },
       shortcuts: { on: true, list: [{ id: "orig01", label: "Alpha shortcut", key: null, watchLaterOnEveryAccount: false, neverSend: b }] }, neverSend: b }),

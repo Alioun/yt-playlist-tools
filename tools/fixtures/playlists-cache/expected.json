@@ -439,9 +439,9 @@
             "v": 1,
             "at": 1
           },
-          "syncOn": false,
-          "lastAccount": null
+          "syncOn": false
         },
+        "lastAccount": null,
         "sync": {
           "joined": null,
           "pushed": {},

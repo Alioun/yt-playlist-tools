@@ -29,7 +29,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
       schema: 1,
       device: {
         id: "device-fixture", consent: { v: 1, at: 1 }, syncOn: false, upgradeNote: null,
-        claimNotice: null, lastAccount: null, newPlaylistVisibility: null,
+        claimNotice: null, newPlaylistVisibility: null,
         pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: true, future: [1]
       },
       [setupKey]: { v: 1, gen: "setup", at: 1, by: "old", extra: "setup-envelope", data: {
@@ -1401,7 +1401,7 @@ async function receiveAcceptance(create: typeof createLocalFilterWriter, acct: A
   const setup = { v: 1, gen: "s0", at: 1, by: "device-a", data: { autoAdd: [{ pl: "PL_P", takes: "both" }, { pl: "PL_Q", takes: "videos" }] } }
   const pendingQ = { v: 1, gen: "q1", at: 15, by: "device-a", data: { on: true }, pending: { keep: true } }
   const history = { joined: "h", pushed: { [F]: "f0", [S]: "s0", [Q]: "q0" }, status: "ok", editedSinceOff: false, extra: { keep: true } }
-  const device = { id: "device-a", consent: { v: 1, at: 1 }, syncOn: true, upgradeNote: null, claimNotice: null, lastAccount: null,
+  const device = { id: "device-a", consent: { v: 1, at: 1 }, syncOn: true, upgradeNote: null, claimNotice: null,
     newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: true }
   const local = { schema: 1, device, sync: history, [S]: setup, [F]: old, [Q]: pendingQ }
   const remote = { "s:meta": { v: 1, id: "h", created: 1, extension: { keep: true } }, [`s:setup:${acct}`]: setup,
@@ -2459,7 +2459,7 @@ async function settingsIncomingAcceptance(create: typeof createLocalFilterWriter
   }
   {
     const h = harness()
-    Object.assign(h.records.device, { upgradeNote: null, claimNotice: null, lastAccount: acct, legacyCleared: true, futureDevice: { keep: true } })
+    Object.assign(h.records.device, { upgradeNote: null, claimNotice: null, legacyCleared: true, futureDevice: { keep: true } })
     h.records.sync = { ...h.records.sync, ...JSON.parse('{"__proto__":{"keep":true},"toJSON":"inert","v":99}') }
     Object.defineProperty(h.records.sync.pushed, "__proto__", { value: "opaque-generation", enumerable: true })
     h.remote["s:meta"] = { ...h.remote["s:meta"], ...JSON.parse('{"__proto__":{"keep":true},"toJSON":"inert"}') }
@@ -2673,7 +2673,7 @@ async function keptIncomingAcceptance(create: typeof createLocalFilterWriter, ac
   }
   {
     const h = harness(), retained = Object.fromEntries([`cache:${acct}`, ...Array.from({ length: 16 }, (_, shard) => `progress:${acct}:${shard}`)].map(name => [name, { keep: true }]))
-    Object.assign(h.records, clone(retained)); h.records.device.lastAccount = acct
+    Object.assign(h.records, clone(retained)); h.records.lastAccount = acct
     const device = clone(h.records.device)
     h.records[P] = { v: 1, gen: "p0", at: 10, by: "synthetic-local", data: {} }
     h.records[T] = { v: 1, gen: "t0", at: 10, by: "synthetic-local", data: {} }
@@ -2694,9 +2694,9 @@ async function keptIncomingAcceptance(create: typeof createLocalFilterWriter, ac
     equal((await h.writer.receiveSyncDocument(key)).kind, "adopted", "kept now selected receives")
     equal((await h.writer.receiveSyncDocument(pKey)).kind, "adopted", "selected now kept receives")
     equal(h.records[S].data.autoAdd, [{ pl: "PL_K", takes: "both" }], "selection externally seeded only")
-    equal(Object.keys(h.records).sort(), ["schema", "device", "sync", S, K, P, Q, T, ...Object.keys(retained)].sort(), "selection authorizes no removal")
+    equal(Object.keys(h.records).sort(), ["schema", "device", "lastAccount", "sync", S, K, P, Q, T, ...Object.keys(retained)].sort(), "selection authorizes no removal")
     for (const [name, value] of Object.entries(retained)) equal(h.records[name], value, "selection keeps cache and progress " + name)
-    equal(h.records.device, device, "selection changes no Device ownership or lastAccount"); await h.writer.dispose()
+    equal(h.records.device, device, "selection changes no Device ownership"); equal(h.records.lastAccount, acct, "selection keeps lastAccount"); await h.writer.dispose()
   }
   {
     const h = harness(); h.synced[S.replace("doc:", "s:")] = { ...clone(local[S]), gen: "a1", at: 30, data: {} }
@@ -3018,7 +3018,7 @@ async function setupIncomingAcceptance(create: typeof createLocalFilterWriter, a
     equal(h.records[S], h.synced[B], "Setup no local retention prerequisite"); await h.writer.dispose()
   }
   {
-    const h = harness(); delete h.records.device.lastAccount; inventory(h, "none"); h.synced[B] = { ...clone(incoming), data: { gather: "PL_G" } }
+    const h = harness(); delete h.records.lastAccount; inventory(h, "none"); h.synced[B] = { ...clone(incoming), data: { gather: "PL_G" } }
     equal((await h.writer.receiveSyncDocument(key)).kind, "adopted", "Setup no live account requirement"); await h.writer.dispose()
   }
   for (const value of [undefined, null, { ...local[S], v: 2 }, { v: 1, gen: "dead", at: 1, by: "b", deleted: true }, { ...local[S], data: { autoAdd: 2 } }]) {
@@ -3315,7 +3315,7 @@ async function setupFixtureAcceptance(input: Awaited<ReturnType<typeof setupInco
     await fire(4999); equal(writes, [], "actual Setup Q pacing 4999")
     await fire(5000); equal(writes, mode === "deferred" ? [] : [{ [Q.replace("doc:", "s:")]: before[Q] }], "actual Setup Q-only send without echo or debt bypass")
   }
-  equal(local.device, before.device, "actual Setup Device and lastAccount exact")
+  equal(local.device, before.device, "actual Setup Device exact"); equal(local.lastAccount, before.lastAccount, "actual Setup lastAccount exact")
   equal(session, beforeSession, "actual Setup synthetic session sentinels exact"); equal(sessionAccesses, 0, "actual Setup no session storage access")
   for (const [name, value] of Object.entries(retained)) equal(local[name], value, "actual Setup sixteen progress shards exact " + name)
   equal(local["cache:AAAAAAAAAAAAAAAA"], before["cache:AAAAAAAAAAAAAAAA"], "actual Setup cache exact")
@@ -4048,7 +4048,7 @@ export async function noticeOwnerAcceptance(api: { create: typeof createLocalFil
     equal(h.reads, reads, "uncertainty no more IO"); equal(h.batches.length, batches, "uncertainty no more sets"); equal(h.counts(), before, "uncertainty no ingress"); await h.writer.dispose()
   }
   {
-    const h = harness({ ...seed(), device: { ...seed().device, claimNotice: null, upgradeNote: null, lastAccount: null, newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: true }, unclaimed: { from: "1.5.0", autoAdd: [playlist], shortcutPlaylist: null, filters: {}, at: 1 } })
+    const h = harness({ ...seed(), device: { ...seed().device, claimNotice: null, upgradeNote: null, newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: true }, unclaimed: { from: "1.5.0", autoAdd: [playlist], shortcutPlaylist: null, filters: {}, at: 1 } })
     const lookup = gate()
     const authority = { acct, lease: "lease", browserSession: "session", consentGeneration: "consent", signedIn: true as const, incognito: false as const }
     const writer = api.create({ ...h.deps, claim: { kind: "fixture", authority: { async read() { return { kind: "ready", authority } } }, session: { async takeLookup() { return true } }, ownership: { async lookup() { lookup.enter(); await lookup.held; return { kind: "fixture-owned", authority, lineage: "local-migration-only", ownedPlaylistIds: new Set([playlist]) } } } } })

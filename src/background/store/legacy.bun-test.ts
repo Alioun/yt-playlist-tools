@@ -164,7 +164,7 @@ describe("canonical conversion", () => {
         upgradeNote: { state: "pending", opened: false, seen: false, reopened: false, details: {
           from: "1.4.5", autoAdd: { kept: 1, dropped: 1 }, pct: { value: 50, wasUnset: true, authorised: false }, feedback: false,
           shortcut: { raw: "Shift+S", key: key("s", { shift: true }), playlist: true, note: "ok" }, credentialsDeleted: false
-        } }, claimNotice: null, lastAccount: null, newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: false },
+        } }, claimNotice: null, newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: false },
       unclaimed: { from: "1.4.5", autoAdd: [playlist], shortcutPlaylist: playlist, originalShortcutId: "save01", filters: {}, at: 1234 }
     })
     expect(decodeDocument(plan.write["doc:settings"], decodeSettings)).toEqual({ kind: "value", document: plan.write["doc:settings"] })

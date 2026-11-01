@@ -131,7 +131,6 @@ export type Device = {
     reopened: boolean
   } | null
   claimNotice: ClaimNotice | null
-  lastAccount: string | null
   newPlaylistVisibility: "PRIVATE" | "UNLISTED" | "PUBLIC" | null
   pickerSortAZ: boolean
   detailedLog: boolean

@@ -91,7 +91,7 @@ function readContext(records: JsonObject, acct: AccountKey) {
   if (records.schema !== STORAGE_SCHEMA_VERSION || retained.kind === "held" ||
     LEGACY_DELETE_KEYS.some(key => Object.hasOwn(records, key) && !exempt.has(key))) return unavailable("startup")
   const rawDevice = records.device
-  if (!isJsonObject(rawDevice) || !["id", "consent", "syncOn", "upgradeNote", "claimNotice", "lastAccount",
+  if (!isJsonObject(rawDevice) || !["id", "consent", "syncOn", "upgradeNote", "claimNotice",
     "newPlaylistVisibility", "pickerSortAZ", "detailedLog", "recentAdds", "legacyCleared"].every(key => Object.hasOwn(rawDevice, key))) {
     return unavailable("startup")
   }

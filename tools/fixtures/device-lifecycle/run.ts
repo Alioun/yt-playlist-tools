@@ -36,7 +36,7 @@ function pick(records: JsonObject, keys: readonly string[]): JsonObject {
   return Object.fromEntries(keys.filter(key => Object.hasOwn(records, key)).map(key => [key, copy(records[key]!)]))
 }
 
-const device = { id: "fixture", consent: { v: 1, at: 1000 }, syncOn: false, upgradeNote: null, claimNotice: null, lastAccount: null,
+const device = { id: "fixture", consent: { v: 1, at: 1000 }, syncOn: false, upgradeNote: null, claimNotice: null,
   newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: true, x: "keep" }
 const settingsDocument = { v: 1, gen: "settings", at: 1, by: "old", data: {} }
 const heldSync = { joined: "history", pushed: {}, status: "off", editedSinceOff: false,

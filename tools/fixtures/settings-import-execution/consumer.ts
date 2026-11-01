@@ -22,7 +22,7 @@ export async function consume(syncOn: boolean) {
       delete expectedLocal[`cache:${account}`]
       for (let shard = 0; shard < 16; shard++) delete expectedLocal[`progress:${account}:${shard}`]
     }
-    expectedLocal.device = { ...object(expectedLocal.device), lastAccount: null }
+    expectedLocal.lastAccount = null
     expectedLocal.sync = { ...object(expectedLocal.sync), everEdited: true, ...(!syncOn ? { editedSinceOff: true } : {}) }
     deepStrictEqual(payload(h.h.state()), { local: expectedLocal, session: expectedSession(), sync: seed.sync }, "entire actual local, sync and session records")
     deepStrictEqual(Object.fromEntries(Object.entries(h.h.state().local).filter(([key]) => key.includes(C))), omitted, "omitted account is byte equivalent")

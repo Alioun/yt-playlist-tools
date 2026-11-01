@@ -1,7 +1,7 @@
 import {
   DOCUMENT_VERSION, DecodeError, decodeDocument, decodeFilter, decodeSettings, decodeSetup,
-  decodeSyncState, defaultSettings, documentKey, isAccountKey, isPlaylistId, isSetupEmpty,
-  parseDocumentKey, type AccountKey, type Device, type DocumentKey, type Filter, type Settings, type Setup
+  decodeLastAccount, decodeSyncState, defaultSettings, documentKey, isAccountKey, isPlaylistId, isSetupEmpty,
+  parseDocumentKey, type AccountKey, type Device, type DocumentKey, type Filter, type Settings, type Setup, LAST_ACCOUNT_KEY
 } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import type { ImportPlan } from "../../shared/settings-file"
@@ -295,9 +295,10 @@ export function planSettingsImport(input: SettingsImportPlanInput): SettingsImpo
     if (history.kind === "set") expectedLocal.sync = history.sync
     else if (sync.kind === "on" && effectiveHistory !== undefined) expectedLocal.sync = effectiveHistory
     for (const cleanup of cleanups) for (const name of [cleanup.cacheKey, ...cleanup.progressKeys]) delete expectedLocal[name]
-    const last = cleanups.find(cleanup => cleanup.acct === ready.device.lastAccount)
+    const storedLast = decodeLastAccount(local)
+    const last = cleanups.find(cleanup => cleanup.acct === storedLast)
     const lastAccount: SettingsImportPlan["cleanup"]["lastAccount"] = last ? { kind: "clear", acct: last.acct } : { kind: "unchanged" }
-    if (last && object(expectedLocal.device)) expectedLocal.device = { ...expectedLocal.device, lastAccount: null }
+    if (last) expectedLocal[LAST_ACCOUNT_KEY] = null
     return { kind: "planned", execution: "requires-owner-continuation", documents: { changes, history, sync: syncPlan },
       cleanup: { accounts: cleanups, sessionEffects, lastAccount },
       capture: { local, session, sync, binding: { deviceId: ready.device.id, consent: ready.device.consent, consentControl: ready.control, joined } },

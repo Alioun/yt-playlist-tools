@@ -26,8 +26,9 @@ test("export excludes every device field and every non-settings storage area bef
   const input = exportInput()
   const forbidden = {
     device: { id: "device-marker", consent: { v: 1, at: 17 }, syncOn: true, upgradeNote: "upgrade-marker",
-      claimNotice: "claim-marker", lastAccount: accountA, newPlaylistVisibility: "PUBLIC", pickerSortAZ: true,
+      claimNotice: "claim-marker", newPlaylistVisibility: "PUBLIC", pickerSortAZ: true,
       detailedLog: true, recentAdds: true, legacyCleared: true },
+    lastAccount: accountA,
     consent: null, sync: "sync-marker", cache: "cache-marker", progress: "progress-marker", session: "session-marker",
     unclaimed: "unclaimed-marker", arbitrary: "arbitrary-marker"
   }

@@ -5,7 +5,7 @@ import { world, a, alpha, beta, created, video, oldCache, normalRequest, origin,
 
 function consumerSeed() {
   const local: JsonObject = {
-    schema: 1, device: { id: "fixture", consent: { v: 1, at: 1 }, syncOn: false, lastAccount: a },
+    schema: 1, device: { id: "fixture", consent: { v: 1, at: 1 }, syncOn: false }, lastAccount: a,
     sync: { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true },
     "doc:settings": { v: 1, gen: "settings", at: 1, by: "fixture", data: {} },
     [`doc:setup:${a}`]: { v: 1, gen: "setup", at: 1, by: "fixture", data: { quickSave: alpha, marks: { [alpha]: "missing" } } },

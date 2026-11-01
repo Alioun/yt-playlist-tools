@@ -16,7 +16,7 @@ export async function runSession() {
 
     const reserved = reservation(await h.owner.seeAccountLabel({ acct: a, private: false, at: epoch }))
     rows.push({ step: "reservation", stamp: object(h.stored()[`cache:${a}`]).labelAt === epoch,
-      lastAccount: object(h.stored().device).lastAccount === a, generations: h.removal.counts().generations, events: events.length })
+      lastAccount: h.stored().lastAccount === a, generations: h.removal.counts().generations, events: events.length })
     const unchanged = await h.owner.completeAccountLabel(reserved.capture, { acct: a, label: { name: "Original" } })
     rows.push({ step: "unchanged", result: unchanged.kind, generations: h.removal.counts().generations, events: events.length })
 
@@ -42,7 +42,7 @@ export async function runSession() {
     const secondResult = await late.h.owner.completeAccountLabel(second.capture, { acct: b, label: { name: "Second" } })
     const firstResult = await late.h.owner.completeAccountLabel(first.capture, { acct: a, label: { name: "Late first" } })
     rows.push({ step: "late-last-account", results: [secondResult.kind, firstResult.kind],
-      lastAccountIsSecond: object(late.h.stored().device).lastAccount === b, events: late.events.length })
+      lastAccountIsSecond: late.h.stored().lastAccount === b, events: late.events.length })
   } finally { await late.dispose() }
 
   const independent = compose()

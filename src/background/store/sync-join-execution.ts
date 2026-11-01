@@ -1,6 +1,6 @@
 import { classifyRetainedAuthority } from "./interim-canonical-authority"
-import { CONSENT_VERSION, STORAGE_SCHEMA_VERSION, decodeDevice, decodeDocument, decodeSettings, decodeSyncState, decodeSyncMeta, decodeStamp, documentKey, isAccountKey,
-  type AccountKey, type Device, type SyncMeta, type DocumentKey } from "../../shared/model"
+import { CONSENT_VERSION, STORAGE_SCHEMA_VERSION, decodeDevice, decodeDocument, decodeLastAccount, decodeSettings, decodeSyncState, decodeSyncMeta, decodeStamp, documentKey, isAccountKey,
+  LAST_ACCOUNT_KEY, type AccountKey, type Device, type SyncMeta, type DocumentKey } from "../../shared/model"
 import type { Origin } from "../../shared/contracts/results"
 import type { JsonObject } from "../../shared/contracts/json"
 import { agreementObject, detachAgreement } from "./consent-agreement"
@@ -147,7 +147,6 @@ export function prepareJoinEffect(input: { readonly local: JsonObject; readonly 
     const debt: JoinOutboundDebt = { target, deviceId, consent, selectedDocuments: selected, outgoing }
     const removedAccounts = selected.filter(x => x.key.kind === "setup" && x.document.deleted === true).flatMap(x => x.key.kind === "setup" ? [x.key.acct] : [])
     const device = joinJson(overlay.device)
-    if (removedAccounts.some(x => x === decodeDevice(device).lastAccount)) device.lastAccount = null
     const clearProgress: { acct: AccountKey; shard: ProgressShard }[] = []
     const localSettings = selection.localDocuments.find(x => x.key.kind === "settings")?.document
     const finalSettings = selected.find(x => x.key.kind === "settings")?.document
@@ -267,6 +266,7 @@ export async function finishJoinEffect(deps: JoinExecutionDependencies, initial:
     if (effect.kind !== "cancel") {
       for (const x of effect.documents) items[documentKey(x.key)] = x.after
       for (const x of effect.clearProgress) items[`progress:${x.acct}:${x.shard}`] = {}
+      if (effect.removedAccounts.some(acct => acct === decodeLastAccount(baseline))) items[LAST_ACCOUNT_KEY] = null
     }
     if (Object.entries(items).some(([k,v]) => !Object.hasOwn(baseline,k) || !sameSyncJson(baseline[k]!,v))) {
       const write = await setJoinStage(deps, "materialize", baseline, items)

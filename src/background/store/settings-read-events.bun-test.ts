@@ -21,7 +21,7 @@ export async function settingsAcceptance(api: { create: typeof createLocalFilter
   const origin = { kind: "ui", windowId: 1, incognito: false } as const
   const stamp = { v: 1, gen: "g0", at: 1, by: "fixture", envelopeFuture: { keep: [1] } }
   const device = { id: "fixture", consent: { v: 1, at: 1 }, syncOn: false, upgradeNote: null,
-    claimNotice: { acct, dropped: 0, extension: "saved-notice" }, lastAccount: null, newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: true, future: [0] }
+    claimNotice: { acct, dropped: 0, extension: "saved-notice" }, newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: true, future: [0] }
   const seed = (on = false) => ({ schema: 1, device: { ...device, syncOn: on }, unclaimed: null,
     "doc:settings": { ...stamp, data: { future: { nested: [0, { keep: true }] }, shortcuts: { list: [{ id: "orig01", key: null, label: "  Renamed  ", watchLaterOnEveryAccount: true }] } } },
     [`doc:setup:${acct}`]: { ...stamp, data: { autoAdd: [{ pl: playlist }] } },

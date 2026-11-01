@@ -23,7 +23,7 @@ export async function runSetupDestinationFixture(api = { create: createLocalFilt
   const SA = `doc:setup:${A}`, SB = `doc:setup:${B}`
   const origin = { kind: "ui", windowId: 1, incognito: false } as const
   const stamp = { v: 1, gen: "g0", at: 1, by: "fixture", envelopeFuture: { keep: [1] } }
-  const device = { id: "fixture", consent: { v: 1, at: 1 }, syncOn: false, upgradeNote: null, claimNotice: null, lastAccount: null,
+  const device = { id: "fixture", consent: { v: 1, at: 1 }, syncOn: false, upgradeNote: null, claimNotice: null,
     newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: true, future: [0] }
   const seed = (on = false): Record<string, JsonValue> => ({ schema: 1, device: { ...device, syncOn: on }, unclaimed: null,
     "doc:settings": { ...stamp, data: { shortcuts: { list: [
@@ -100,7 +100,7 @@ export async function runSetupDestinationFixture(api = { create: createLocalFilt
   const quick = (expected: SetupDestinationChange["expected"], playlist: PlaylistId | null, acct = A): SetupDestinationChange => ({ acct, destination: { kind: "quick-save" }, expected, playlist })
   function removable(on: boolean, destination: SetupDestinationChange["destination"] = { kind: "quick-save" }): JsonObject {
     const records = seed(on)
-    records.device = { ...device, syncOn: on, lastAccount: A }
+    records.device = { ...device, syncOn: on }; records.lastAccount = A
     records[SA] = { ...stamp, data: { label: { name: "Remove this label", handle: "@removed" }, marks: { [one]: "full" },
       ...(destination.kind === "shortcut" ? { targets: { [destination.shortcut]: one } }
         : { [destination.kind === "quick-save" ? "quickSave" : destination.kind === "music-save" ? "musicSave" : "gather"]: one }) } }
@@ -248,9 +248,9 @@ export async function runSetupDestinationFixture(api = { create: createLocalFilt
       check(on ? object(filter) && filter.deleted === true : filter === undefined, "existing deleted filter follows the removal scope")
       check(!Object.hasOwn(after, `cache:${A}`), "last-choice clear removes the account cache")
       for (let shard = 0; shard < 16; shard++) check(!Object.hasOwn(after, `progress:${A}:${shard}`), "last-choice clear removes every account progress shard")
-      check(object(after.device) && after.device.lastAccount === null, "last-choice clear clears only the matching last account")
+      check(after.lastAccount === null, "last-choice clear clears only the matching last account")
       for (const [name, value] of Object.entries(initial)) {
-        if ([SA, `doc:filter:${A}:PL_deleted`, `cache:${A}`, "sync", "device"].includes(name) || name.startsWith(`progress:${A}:`)) continue
+        if ([SA, `doc:filter:${A}:PL_deleted`, `cache:${A}`, "sync", "device", "lastAccount"].includes(name) || name.startsWith(`progress:${A}:`)) continue
         equal(JSON.stringify(after[name]), JSON.stringify(value), `last-choice clear keeps unrelated bytes ${name}`)
       }
       const expectedSession = copy(initialSession)

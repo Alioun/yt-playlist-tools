@@ -18,7 +18,7 @@ export function object(value: unknown): JsonObject {
 export function seed(): RemovalFixtureState {
   const stamp = (data: JsonObject) => ({ v: 1, gen: "original", at: 1, by: "fixture", data })
   return { local: {
-    schema: 1, device: { id: "fixture", consent: { v: 1, at: 1 }, syncOn: false, lastAccount: null, extension: { keep: true } },
+    schema: 1, device: { id: "fixture", consent: { v: 1, at: 1 }, syncOn: false, extension: { keep: true } },
     sync: { joined: null, pushed: {}, status: "off", editedSinceOff: false, everEdited: false },
     "doc:settings": stamp({}),
     [`doc:setup:${a}`]: stamp({ label: { name: "Original" }, quickSave: alpha, marks: { [alpha]: "missing" }, extension: { keep: true } }),

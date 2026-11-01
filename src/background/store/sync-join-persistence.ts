@@ -215,7 +215,6 @@ export function deriveReconcileEffect(input: {
   const nextDebt: JoinOutboundDebt = { target: destination, deviceId: prior.deviceId, consent: prior.consent, selectedDocuments: selected, outgoing }
   const removedAccounts = selected.flatMap(x => x.key.kind === "setup" && x.document.deleted === true ? [x.key.acct] : [])
   const nextDevice = joinJson(device.value)
-  if (removedAccounts.some(x => x === currentDevice.lastAccount)) nextDevice.lastAccount = null
   const clearProgress = input.clearProgress
   if (clearProgress.length && !joinClearsProgress(basis.localDocuments, selected) || clearProgress.some(x => removedAccounts.includes(x.acct))) throw new TypeError("Invalid reconciliation progress plan")
   return { kind: "reconcile", basis, device: { before: device, after: nextDevice }, history: { before: history, after: deriveJoinHistory(history, nextDebt, false) },
@@ -420,7 +419,6 @@ function effect(raw: unknown, version: 1 | 2): AcceptedJoinEffect | undefined {
   const clearsProgress = (localSettings && decodeDocument(localSettings, decodeSettings).kind === "value" && decodeSettings(localSettings.data).autoAdd.on === true && finalSettings && decodeDocument(finalSettings, decodeSettings).kind === "value" && decodeSettings(finalSettings.data).autoAdd.on === false) || overlay.clearProgress
   const removed = selected.filter(x => x.key.kind === "setup" && x.document.deleted === true).flatMap(x => x.key.kind === "setup" ? [x.key.acct] : [])
   const expectedDevice = joinJson(overlay.device)
-  if (removed.some(x => x === decodeDevice(expectedDevice).lastAccount)) expectedDevice.lastAccount = null
   if (!sameSyncJson(expectedDevice, deviceAfter) || decodeDevice(deviceAfter).id !== outgoing.deviceId || !sameSyncJson(deviceAfter.consent!, outgoing.consent)) return
   if (selected.length !== effects.length || !selected.every(x => effects.some(y => documentKey(y.key) === documentKey(x.key) && sameSyncJson(x.document, y.after)))) return
   if (!sameSyncJson(joinJson({ list: selected }), joinJson({ list: outgoing.selectedDocuments }))) return

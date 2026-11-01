@@ -1,4 +1,4 @@
-import { documentKey, type AccountKey } from "../../shared/model"
+import { documentKey, LAST_ACCOUNT_KEY, type AccountKey } from "../../shared/model"
 import type { Origin } from "../../shared/contracts/results"
 import { isJsonValue, type JsonObject } from "../../shared/contracts/json"
 import { createImportPlanner, type ImportPlan } from "../../shared/settings-file"
@@ -20,7 +20,7 @@ export type SettingsImportConfirmation = { readonly [confirmationBrand]: true }
 export type SettingsImportScope = ImportPlan["replacement"] & { readonly accounts: readonly AccountKey[] }
 export type SettingsImportUnavailable = { readonly kind: "unavailable"; readonly reason: "stale" | "disposed" | "startup" | "authority" | "cleanup-host" | "pending-import" | "inventory" }
 export type SettingsImportRefusal = { readonly kind: "refused"; readonly reason: "private" | "origin" | "not-agreed" | "invalid" | "update-needed" | "sync-full" }
-export type SettingsImportStage = "accept" | "documents" | "local-cleanup" | "session-cleanup" | "device" | "advance" | "retire" | "receipt" | "authorize"
+export type SettingsImportStage = "accept" | "documents" | "local-cleanup" | "session-cleanup" | "advance" | "retire" | "receipt" | "authorize"
 export type SettingsImportResult = SettingsImportUnavailable | SettingsImportRefusal
   | { readonly kind: "held"; readonly occurrence: number; readonly stage: SettingsImportStage }
   | { readonly kind: "failed"; readonly stage: SettingsImportStage; readonly applied: boolean; readonly error: unknown }
@@ -55,7 +55,6 @@ type Effect =
   | { readonly kind: "local-set"; readonly stage: "documents"; readonly items: JsonObject }
   | { readonly kind: "local-remove"; readonly stage: "local-cleanup"; readonly keys: readonly SettingsImportLocalRemoval[]; readonly names: readonly string[] }
   | { readonly kind: "session"; readonly stage: "session-cleanup"; readonly effect: RemovalSessionEffect }
-  | { readonly kind: "device"; readonly stage: "device"; readonly acct: AccountKey }
 type Inventory = { readonly local: JsonObject; readonly session: JsonObject }
 type Observed = Inventory & { readonly ledger: ConsentJobs }
 type Capture = { readonly origin: UiOrigin; readonly source: string; readonly plan: SettingsImportPlan; readonly scope: SettingsImportScope; consumed: boolean }
@@ -67,6 +66,7 @@ function effects(plan: SettingsImportPlan): Effect[] {
     else { keys.push({ kind: "document", key: change.key }); names.push(documentKey(change.key)) }
   }
   if (plan.documents.history.kind === "set") items.sync = plan.documents.history.sync
+  if (plan.cleanup.lastAccount.kind === "clear") items[LAST_ACCOUNT_KEY] = null
   for (const account of plan.cleanup.accounts) {
     keys.push({ kind: "cache", acct: account.acct }); names.push(account.cacheKey)
     for (const shard of removalProgressShards) { keys.push({ kind: "progress", acct: account.acct, shard }); names.push(`progress:${account.acct}:${shard}`) }
@@ -74,7 +74,6 @@ function effects(plan: SettingsImportPlan): Effect[] {
   const result: Effect[] = [{ kind: "local-set", stage: "documents", items }]
   if (keys.length) result.push({ kind: "local-remove", stage: "local-cleanup", keys, names })
   for (const effect of plan.cleanup.sessionEffects) result.push({ kind: "session", stage: "session-cleanup", effect })
-  if (plan.cleanup.lastAccount.kind === "clear") result.push({ kind: "device", stage: "device", acct: plan.cleanup.lastAccount.acct })
   return result
 }
 function afterEffect(before: Inventory, effect: Effect): Inventory {
@@ -85,10 +84,6 @@ function afterEffect(before: Inventory, effect: Effect): Inventory {
     case "session":
       if (effect.effect.kind === "set") session[effect.effect.key] = structuredClone(effect.effect.value)
       else delete session[`${effect.effect.key.kind}:${effect.effect.key.acct}`]
-      break
-    case "device":
-      if (!importObject(local.device)) throw Error("Missing accepted import device")
-      if (local.device.lastAccount === effect.acct) local.device = { ...local.device, lastAccount: null }
       break
   }
   return { local, session }
@@ -189,11 +184,6 @@ export function createSettingsImportExecution(deps: SettingsImportDependencies) 
             if (operation.kind === "set") { session[operation.key] = operation.value; apply = () => deps.cleanup.session.set({ [operation.key]: operation.value }) }
             else { delete session[`${operation.key.kind}:${operation.key.acct}`]; apply = () => deps.cleanup.session.remove([operation.key]) }
             break
-          }
-          case "device": {
-            if (!importObject(local.device)) return { kind: "unavailable", reason: "inventory" }
-            const device = local.device.lastAccount === effect.acct ? { ...local.device, lastAccount: null } : local.device
-            local.device = device; apply = () => deps.local.set({ device }); break
           }
         }
         const result = await writeExact(effect.stage, current, { local, session }, apply, record)

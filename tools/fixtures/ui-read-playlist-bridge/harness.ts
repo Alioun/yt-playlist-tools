@@ -18,7 +18,7 @@ export function check(value: unknown, label: string): asserts value { if (!value
 export function build() { const value = "ui-bridge-fixture"; check(isBuildId(value), "fixture build"); return value }
 export function consumerSeed(): RemovalFixtureState {
   return { local: {
-    schema: 1, device: { id: "fixture", consent: { v: 1, at: 1 }, syncOn: false, lastAccount: a },
+    schema: 1, device: { id: "fixture", consent: { v: 1, at: 1 }, syncOn: false }, lastAccount: a,
     sync: { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true },
     "doc:settings": { v: 1, gen: "settings", at: 1, by: "fixture", data: {} },
     [`doc:setup:${a}`]: { v: 1, gen: "setup", at: 1, by: "fixture", data: { quickSave: alpha } },

@@ -71,7 +71,7 @@ test("snapshots omit device identity, account memory, unknown bodies and retaine
   const acct = "AAAAAAAAAAAAAAAA"
   if (!isAccountKey(acct)) throw Error("fixture account")
   const records = {
-    ...seed, device: { ...seed.device, lastAccount: acct }, legacyRetained: "SENTINEL_RETAINED",
+    ...seed, lastAccount: acct, legacyRetained: "SENTINEL_RETAINED",
     "doc:settings": { v: 1, gen: "g", at: 1, by: "SENTINEL_AUTHOR", data: { quickSave: { on: true }, unknown: "SENTINEL_SETTINGS" } },
     [`doc:setup:${acct}`]: { v: 1, gen: "g", at: 1, by: "SENTINEL_AUTHOR", data: { quickSave: "PL_chosen", unknown: "SENTINEL_SETUP" } }
   }

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import {
-  DecodeError, readStoredUnclaimed, decodeUnclaimed, decodeSyncMeta, decodeDevice, decodeDocument, decodeFilter, decodeKey, decodeSettings, decodeSetup, decodeSyncState,
+  DecodeError, readStoredUnclaimed, decodeUnclaimed, decodeSyncMeta, decodeDevice, decodeDocument, decodeLastAccount, decodeFilter, decodeKey, decodeSettings, decodeSetup, decodeSyncState,
   defaultDevice, defaultFilter, defaultSettings, defaultSetup, documentKey, isAccountKey, isChannelId,
   isKey, isPercent, isPlaylistId, isSetupEmpty, isShortcutId, isVideoId,
   normalizeFilterForWrite, normalizeSettingsForWrite, normalizeSetupForWrite, parseDocumentKey
@@ -120,7 +120,7 @@ describe("fresh documents", () => {
     expect(decodeFilter()).toEqual({ on: false, mode: "deny", channels: [] })
     expect(decodeDevice(undefined, "synthetic-device")).toEqual({
       id: "synthetic-device", consent: null, syncOn: false, upgradeNote: null, claimNotice: null,
-      lastAccount: null, newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: false
+      newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: false
     })
     expect(() => decodeDevice()).toThrow(DecodeError)
     expect(() => defaultDevice("")).toThrow(TypeError)
@@ -180,7 +180,9 @@ describe("known data validation", () => {
     expect(() => decodeFilter({ channels: [["not-a-channel", "Name"]] })).toThrow(DecodeError)
     expect(() => decodeFilter({ channels: [[channel, "Name", 5]] })).toThrow(DecodeError)
     expect(() => decodeDevice({ id: "synthetic-device", consent: { v: 1, at: -1 } })).toThrow(DecodeError)
-    expect(() => decodeDevice({ id: "synthetic-device", lastAccount: "raw||identity" })).toThrow(DecodeError)
+    expect(() => decodeLastAccount({ lastAccount: "raw||identity" })).toThrow(DecodeError)
+    expect(decodeLastAccount({})).toBeNull()
+    expect(decodeLastAccount({ lastAccount: null })).toBeNull()
   })
   test("all document bodies reject malformed root and nested required values", () => {
     for (const raw of [null, false, 1, "document", []]) {

@@ -107,10 +107,10 @@ test("late label completion preserves a newer last account sighting", async () =
   try {
     const first = reservation(await h.owner.seeAccountLabel({ acct: a, private: false, at: epoch }))
     const second = reservation(await h.owner.seeAccountLabel({ acct: b, private: false, at: epoch }))
-    expect(object(h.stored().device).lastAccount).toBe(b)
+    expect(h.stored().lastAccount).toBe(b)
     expect((await h.owner.completeAccountLabel(first.capture, { acct: a, label: { name: "Late first" } })).kind).toBe("committed")
     expect((await h.owner.completeAccountLabel(second.capture, { acct: b, label: { name: "Second" } })).kind).toBe("committed")
-    expect(object(h.stored().device).lastAccount).toBe(b)
+    expect(h.stored().lastAccount).toBe(b)
     expect(c.events).toEqual([{ kind: "setup-changed", source: "local", acct: a }, { kind: "setup-changed", source: "local", acct: b }])
   } finally { await c.dispose() }
 })

@@ -10,7 +10,7 @@ import { readSettingsImport, settingsImportKey } from "./settings-import-persist
 import { parseConsentJobs } from "./consent-recovery"
 import { readSettingsFile, checkSettingsFile, settingsFileWindow, type SettingsFileOwner, type SettingsFileUnavailable } from "./settings-file-read"
 import { accountLabelState, checkedAccountLabel, labelCheckDue, planAccountLabel, sameAccountLabel, type AccountLabelsOwner, type AccountLabelSeen, type AccountLabelWrite } from "./account-label"
-import { decodeAccountCache, emptyAccountCache, type AccountLabel } from "../../shared/model"
+import { decodeAccountCache, emptyAccountCache, LAST_ACCOUNT_KEY, type AccountLabel } from "../../shared/model"
 import { PlaylistCacheCapture, cacheDeviceAuthority, cacheSetupState, readCacheRecord, planCacheAbsorption, cacheJson, validCacheInput, type PlaylistCacheOwner, type PlaylistCacheRead, type PlaylistCacheWrite, type CacheAbsorption } from "./playlist-cache"
 import { executeExactRetainedPlaylist, readExactPlaylistSync } from "./withdrawn-document-recovery"
 import { readConsentDevice, agreementItems } from "./consent-withdrawal"
@@ -1982,8 +1982,8 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       const state = accountLabelState(current.records, request.acct)
       if (state.kind !== "label") return state.kind === "no-setup" ? { kind: "no-setup" } : { kind: "unavailable", reason: "stale" }
       const due = labelCheckDue(state.checkedAt, request.at), items: JsonObject = {}
-      const deviceChanged = current.records.device.lastAccount !== request.acct
-      if (deviceChanged) items.device = { ...current.records.device, lastAccount: request.acct }
+      const lastChanged = current.device.lastAccount !== request.acct
+      if (lastChanged) items[LAST_ACCOUNT_KEY] = request.acct
       const key = `cache:${request.acct}`
       if (due) {
         const raw = current.records[key] ?? emptyAccountCache()
@@ -2010,7 +2010,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       const checkedAt = due ? request.at : state.checkedAt
       if (checkedAt === null) return { kind: "refused", reason: "invalid" }
       if (due) labelLookups.set(capture, { label: structuredClone(state.label), checkedAt, completed: false })
-      return { kind: due ? "lookup" : "current", capture, label: structuredClone(state.label), checkedAt, lastAccount: deviceChanged ? "committed" : "unchanged" }
+      return { kind: due ? "lookup" : "current", capture, label: structuredClone(state.label), checkedAt, lastAccount: lastChanged ? "committed" : "unchanged" }
     } catch { return { kind: "failed", stage: "read" } }
   }
   async function completeAccountLabelInLane(capture: PlaylistCacheCapture, input: Parameters<AccountLabelsOwner["completeAccountLabel"]>[1]): Promise<AccountLabelWrite> {

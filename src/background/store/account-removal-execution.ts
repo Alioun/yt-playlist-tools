@@ -1,6 +1,6 @@
 import { prepareFirstEditHistory, readFirstEditProvenance } from "./first-edit-provenance"
 import {
-  CONSENT_VERSION, DOCUMENT_VERSION, DecodeError, decodeDevice, decodeDocument, decodeFilter, decodeSetup,
+  CONSENT_VERSION, DOCUMENT_VERSION, DecodeError, decodeDevice, decodeDocument, decodeFilter, decodeLastAccount, decodeSetup, LAST_ACCOUNT_KEY,
   documentKey, parseDocumentKey, isAccountKey, isPlaylistId, type AccountKey, type Device, type DocumentKey, type Filter, type Tombstone
 } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
@@ -16,7 +16,7 @@ import { readConsentDevice } from "./consent-withdrawal"
 export type UiOrigin = Extract<Origin, { kind: "ui" }>
 export type RemovalConfirmation = { readonly kind: "account-removal-confirmation" }
 export type RemovalScope = { readonly kind: "this-browser" } | { readonly kind: "syncing-browsers"; readonly joined: string }
-export type RemovalStage = "prepare" | "accept" | "documents" | "local-cleanup" | "session-cleanup" | "device" | "retire"
+export type RemovalStage = "prepare" | "accept" | "documents" | "local-cleanup" | "session-cleanup" | "last-account" | "retire"
 export type RemovalUnavailableReason = "consent-held" | "startup" | "newer-layout" | "sync-writer-required" | "stale" | "disposed" |
   "removal-host" | "inventory" | "session-layout" | "pending-removal"
 export type RemovalRefusal = { readonly kind: "result"; readonly result: Extract<ChangeResult, { refused: string }> }
@@ -179,7 +179,7 @@ export function captureAccountRemoval(records: unknown, acct: AccountKey, ready:
   const physicalFilters = filterNames(records, acct)
   if (!Object.hasOwn(records, name)) {
     const dependencies = Object.keys(records).some(key => key === `cache:${acct}` || key.startsWith(`progress:${acct}:`))
-    return physicalFilters.length || dependencies || ready.device.lastAccount === acct ? unavailable("inventory") : { kind: "unchanged" }
+    return physicalFilters.length || dependencies || decodeLastAccount(records) === acct ? unavailable("inventory") : { kind: "unchanged" }
   }
   if (!object(rawSetup)) return unavailable("inventory")
   try {
@@ -392,7 +392,7 @@ async function complete(deps: AccountRemovalDependencies, parsed: NonNullable<Re
     if (preflight) return preflight
     if (terminal) {
       const cleanSession = planAccountSessionRemoval(record.acct, session)
-      if (cleanSession.kind !== "supported" || cleanSession.effects.length || !object(local.device) || decodeDevice(local.device).lastAccount === record.acct ||
+      if (cleanSession.kind !== "supported" || cleanSession.effects.length || decodeLastAccount(local) === record.acct ||
         Object.keys(local).some(name => name === `cache:${record.acct}` || name.startsWith(`progress:${record.acct}:`)) ||
         !record.documents.every(member => record.mode === "local" ? !Object.hasOwn(local, documentKey(member.key)) : "after" in member && object(member.after) && sameSyncJson(local[documentKey(member.key)] ?? null, member.after))) return unavailable("stale")
       return await retire()
@@ -453,11 +453,10 @@ async function complete(deps: AccountRemovalDependencies, parsed: NonNullable<Re
       else delete next[`${change.key.kind}:${change.key.acct}`]
       const issue = await effect(local, next, change.kind === "set" ? { kind: "session-set", key: change.key, value: change.value } : { kind: "session-remove", key: change.key }); if (issue) return issue
     }
-    stage = "device"
-    if (!object(local.device)) return unavailable("pending-removal")
-    if (decodeDevice(local.device).lastAccount === record.acct) {
-      const device = { ...local.device, lastAccount: null }
-      const issue = await effect({ ...local, device }, session, { kind: "local-set", items: { device } }); if (issue) return issue
+    stage = "last-account"
+    if (decodeLastAccount(local) === record.acct) {
+      const items = { [LAST_ACCOUNT_KEY]: null }
+      const issue = await effect({ ...local, ...items }, session, { kind: "local-set", items }); if (issue) return issue
     }
     const confirmed = await inspect(local, session, { kind: "resolved" }); if (confirmed) return confirmed
     return await retire()

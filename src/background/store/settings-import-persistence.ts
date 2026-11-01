@@ -89,7 +89,7 @@ export function readSettingsImport(raw: unknown): SettingsImportRead {
     const accepted = parseAcceptedSettingsImport(raw.accepted)
     if (accepted) {
       const count = 1 + (accepted.plan.documents.changes.some(change => change.kind === "remove") || accepted.plan.cleanup.accounts.length > 0 ? 1 : 0) +
-        accepted.plan.cleanup.sessionEffects.length + (accepted.plan.cleanup.lastAccount.kind === "clear" ? 1 : 0)
+        accepted.plan.cleanup.sessionEffects.length
       if (raw.next <= count) return { kind: "valid", continuation: { v: 1, kind: "settings-import-continuation", accepted, next: raw.next } }
     }
   }

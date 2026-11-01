@@ -41,7 +41,7 @@ export function defaultFilter(): Filter {
 export function defaultDevice(id: string): Device {
   if (typeof id !== "string" || id.length === 0) throw new TypeError("A device ID is required")
   return {
-    id, consent: null, syncOn: false, upgradeNote: null, claimNotice: null, lastAccount: null,
+    id, consent: null, syncOn: false, upgradeNote: null, claimNotice: null,
     newPlaylistVisibility: null, pickerSortAZ: false, detailedLog: false, recentAdds: true, legacyCleared: false
   }
 }

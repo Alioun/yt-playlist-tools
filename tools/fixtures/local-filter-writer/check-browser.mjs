@@ -39,7 +39,7 @@ const offHistory = { joined: "history-id", pushed: { [key]: "pushed-old", "unrec
 const initial = {
   schema: 1,
   device: { id: "synthetic-durable-device", consent: { v: 1, at: 1 }, syncOn: false, upgradeNote: null,
-    claimNotice: null, lastAccount: null, newPlaylistVisibility: null, pickerSortAZ: false,
+    claimNotice: null, newPlaylistVisibility: null, pickerSortAZ: false,
     detailedLog: false, recentAdds: true, legacyCleared: true, extra: "device" },
   [setupKey]: { v: 1, gen: "setup", at: 1, by: "old", extra: "setup-envelope", data: {
     label: { name: "Synthetic account", extra: true }, autoAdd: [{ pl: "PL_P", takes: "videos", future: 1 }, { pl: "PL_Q", takes: "both" }],

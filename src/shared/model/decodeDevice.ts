@@ -45,7 +45,6 @@ export function decodeDevice(raw?: unknown, fallbackId?: string): Device {
       acct: checked(isAccountKey, "a 16-character account key"), dropped: natural,
       claim: optional(object({ autoAddAdded: natural, filtersAdded: natural, shortcut: decodeClaimShortcut }))
     })),
-    lastAccount: nullable(checked(isAccountKey, "a 16-character account key")),
     newPlaylistVisibility: nullable(oneOf("PRIVATE", "UNLISTED", "PUBLIC")),
     pickerSortAZ: boolean, detailedLog: boolean, recentAdds: boolean, legacyCleared: boolean
   }, () => fallback)(raw, "device")

@@ -106,7 +106,7 @@ test("last-choice removal clears real account state and revokes captures across 
     expect(Object.hasOwn(h.store.records(), `cache:${acct}`)).toBe(false)
     expect(Object.hasOwn(h.store.records(), `progress:${acct}:0`)).toBe(false)
     expect(Object.hasOwn(h.removal.session(), `skips:${acct}`)).toBe(false)
-    expect(h.store.records().device).toMatchObject({ lastAccount: null })
+    expect(h.store.records().lastAccount ?? null).toBeNull()
     const fresh = captured(await h.owner.readAutoAddChoice(ui, { kind: "auto-add-read", acct, playlist: one }))
     expect((await h.owner.changeAutoAddChoice(ui, change(fresh, { kind: "auto-add", expected: false, chosen: true }))).kind).toBe("committed")
     const before = h.store.records()

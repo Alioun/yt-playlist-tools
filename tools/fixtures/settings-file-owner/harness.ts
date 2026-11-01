@@ -19,7 +19,7 @@ export const stamp = { v: 1, gen: "source-generation", at: 1, by: "synthetic-dev
 export function document<T>(data: T) { return { ...stamp, data } }
 export function seed(): Record<string, unknown> {
   return {
-    schema: 1, device: { ...defaultDevice("synthetic-device"), lastAccount: accountB, marker: "DEVICE-PRIVATE" },
+    schema: 1, device: { ...defaultDevice("synthetic-device"), marker: "DEVICE-PRIVATE" }, lastAccount: accountB,
     "doc:settings": document({ ...defaultSettings(), unknown: "SETTINGS-PRIVATE",
       autoAdd: { ...defaultSettings().autoAdd, unknown: "NESTED-PRIVATE" } }),
     [`doc:setup:${accountA}`]: document({ ...defaultSetup(), autoAdd: [{ pl: selected, takes: "videos" }], unknown: "SETUP-PRIVATE" }),

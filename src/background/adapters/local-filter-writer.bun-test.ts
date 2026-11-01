@@ -577,10 +577,10 @@ test("intrinsic Setup forwarding shares the native owner without UI authority ca
   const addressed = { kind: "setup", acct } as const
   const old = { v: 1, gen: "a0", at: 10, by: "synthetic", data: {} }
   const incoming = JSON.parse('{"v":1,"gen":"a1","at":20,"by":"other","__proto__":{"keep":true},"data":{"gather":"PL_G","targets":{"gone99":"PL_T"},"marks":{"PL_UNUSED":"full"}}}')
-  const device = { id: "synthetic", consent: { v: 1, at: 1 }, syncOn: true, lastAccount: acct }
+  const device = { id: "synthetic", consent: { v: 1, at: 1 }, syncOn: true }
   const history = { joined: "h", pushed: { [S]: "a0", [key]: "old" }, status: "ok", editedSinceOff: false, extension: { keep: true } }
   const before = await fakeBrowser.storage.local.get(null)
-  await fakeBrowser.storage.local.set({ device, sync: history, [S]: old })
+  await fakeBrowser.storage.local.set({ device, lastAccount: acct, sync: history, [S]: old })
   await fakeBrowser.storage.sync.set({ "s:meta": { v: 1, id: "h", created: 0 }, [B]: incoming, [key.replace("doc:", "s:")]: before[key] })
   const original = fakeBrowser.storage.local.set.bind(fakeBrowser.storage.local)
   const set = spyOn(fakeBrowser.storage.local, "set"), get = spyOn(fakeBrowser.storage.local, "get")
