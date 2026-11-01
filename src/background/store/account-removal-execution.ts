@@ -43,15 +43,22 @@ export type RemovalLocalKey =
   | { readonly kind: "cache"; readonly acct: AccountKey }
   | { readonly kind: "progress"; readonly acct: AccountKey; readonly shard: ProgressShard }
   | { readonly kind: "continuation" }
+type RemovalPorts = {
+  removeLocal(keys: readonly RemovalLocalKey[]): Promise<void>
+  readonly session: {
+    get(): Promise<Readonly<Record<string, unknown>>>
+    set(items: Readonly<Partial<Record<RemovalSessionCollection, JsonValue>>>): Promise<void>
+    remove(keys: readonly RemovalSessionKey[]): Promise<void>
+  }
+}
+// Only nativeAccountRemovalHost builds "native"; native configuration refuses caller-supplied fixtures.
 export type AccountRemovalHost =
   | { readonly kind: "unavailable" }
-  | { readonly kind: "fixture";
-    removeLocal(keys: readonly RemovalLocalKey[]): Promise<void>;
-    readonly session: {
-      get(): Promise<Readonly<Record<string, unknown>>>
-      set(items: Readonly<Partial<Record<RemovalSessionCollection, JsonValue>>>): Promise<void>
-      remove(keys: readonly RemovalSessionKey[]): Promise<void>
-    } }
+  | { readonly kind: "fixture" } & RemovalPorts
+  | { readonly kind: "native" } & RemovalPorts
+export function nativeAccountRemovalHost(ports: { removeLocal(names: readonly string[]): Promise<void>; readonly session: RemovalPorts["session"] }): AccountRemovalHost {
+  return { kind: "native", removeLocal: keys => ports.removeLocal(keys.map(removalLocalName)), session: ports.session }
+}
 
 type Before<K extends AccountDocumentKey> = { readonly key: K; readonly before: JsonObject }
 type After<K extends AccountDocumentKey> = Before<K> & { readonly after: JsonObject & Tombstone }
@@ -119,6 +126,11 @@ export function accountRemovalLocalName(key: RemovalLocalKey, acct: AccountKey):
     default: break
   }
   throw new TypeError("Removal key escaped its accepted account")
+}
+function removalLocalName(key: RemovalLocalKey): string {
+  if (key.kind !== "continuation") return accountRemovalLocalName(key, key.kind === "document" ? key.key.acct : key.acct)
+  if (!object(key) || Object.keys(key).length !== 1) throw new TypeError("Invalid account removal key")
+  return pendingAccountRemovalKey
 }
 
 export function parsePendingAccountRemoval(raw: unknown): { readonly record: PendingAccountRemoval; readonly raw: JsonObject } | undefined {
@@ -215,7 +227,7 @@ export async function prepareAccountRemovalCapture(deps: AccountRemovalDependenc
     if (!object(input)) return unavailable("inventory")
     const records = copy(input), ready = deps.authority(records)
     if (ready.kind !== "ready") return unavailable(ready.reason === "account-context" ? "inventory" : ready.reason)
-    if (deps.host.kind !== "fixture") return unavailable("removal-host")
+    if (deps.host.kind === "unavailable") return unavailable("removal-host")
     const inventory = captureAccountRemoval(records, acct, ready)
     if (inventory.kind !== "captured" && inventory.kind !== "unchanged") return inventory
     const session = await deps.host.session.get(), plan = planAccountSessionRemoval(acct, session)
@@ -249,7 +261,7 @@ function matchesDocuments(local: JsonObject, record: PendingAccountRemoval): boo
 export async function executeAccountRemoval(deps: AccountRemovalDependencies, capture: RemovalCapture, expectedRecords?: JsonObject): Promise<RemovalResult> {
   let stage: RemovalStage = "prepare"
   try {
-    if (deps.host.kind !== "fixture") return unavailable("removal-host")
+    if (deps.host.kind === "unavailable") return unavailable("removal-host")
     const input = await deps.local.get(null)
     if (!object(input)) return unavailable("inventory")
     const records = copy(input), ready = deps.authority(records)
@@ -297,7 +309,7 @@ export async function resumePendingAccountRemoval(deps: AccountRemovalDependenci
     const local = copy(localInput)
     const terminal = selectedRetiringRemoval(deps.recoveryPermit, local)
     if (!Object.hasOwn(local, pendingAccountRemovalKey) && !terminal) return { kind: "unchanged" }
-    if (deps.host.kind !== "fixture") return unavailable("removal-host")
+    if (deps.host.kind === "unavailable") return unavailable("removal-host")
     const parsed = parsePendingAccountRemoval(local[pendingAccountRemovalKey] ?? terminal)
     if (!parsed || !matchesAuthority(deps, local, parsed.record, parsed.raw) || !matchesDocuments(local, parsed.record)) return unavailable("pending-removal")
     const session = await deps.host.session.get()
@@ -308,7 +320,7 @@ export async function resumePendingAccountRemoval(deps: AccountRemovalDependenci
 
 async function complete(deps: AccountRemovalDependencies, parsed: NonNullable<ReturnType<typeof parsePendingAccountRemoval>>,
   initial: JsonObject, initialSession: JsonObject, accepting: boolean): Promise<RemovalResult> {
-  if (deps.host.kind !== "fixture") return unavailable("removal-host")
+  if (deps.host.kind === "unavailable") return unavailable("removal-host")
   const host = deps.host, { record, raw } = parsed
   const initialControl = accepting ? readConsentDevice(initial) : undefined
   const ordinaryGeneration = initialControl?.kind === "supported" && initialControl.control?.state.kind === "agreed" ? initialControl.control.generation : undefined

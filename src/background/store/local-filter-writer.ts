@@ -543,10 +543,10 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     }
   }
   const removalPort = deps.removal ?? { kind: "unavailable" }
-  const removal: AccountRemovalHost = removalPort.kind !== "fixture" ? removalPort : { ...removalPort,
+  const removal: AccountRemovalHost = removalPort.kind === "unavailable" ? removalPort : { ...removalPort,
     session: fencedSession(removalPort.session), async removeLocal(keys) { await assertExternalAuthority(); if (disposed() || protocolHeld) throw new Error("Owner execution is stopped"); return removalPort.removeLocal(keys) }
   }
-  const session = removal.kind === "fixture" ? removal.session : deps.session && fencedSession(deps.session)
+  const session = removal.kind !== "unavailable" ? removal.session : deps.session && fencedSession(deps.session)
   const joinPort = deps.join ?? { kind: "unavailable" }
   const join: SyncJoinHost = joinPort.kind !== "fixture" ? joinPort : { ...joinPort,
     session: fencedSession(joinPort.session), async removeLocal(keys) { await assertExternalAuthority(); if (disposed() || protocolHeld) throw new Error("Owner execution is stopped"); return joinPort.removeLocal(keys) }
@@ -1017,7 +1017,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
         get: keys => local.get(keys),
         async set(items) { if (disposed()) throw new Error("Writer disposed"); await storage.set(items) }
       }
-      const exactRemoval: AccountRemovalHost = removalPort.kind !== "fixture" ? removalPort : { ...removalPort,
+      const exactRemoval: AccountRemovalHost = removalPort.kind === "unavailable" ? removalPort : { ...removalPort,
         async removeLocal(keys) { if (disposed()) throw new Error("Writer disposed"); await removalPort.removeLocal(keys) },
         session: { get: () => removalPort.session.get(), async set(items) { if (disposed()) throw new Error("Writer disposed"); await removalPort.session.set(items) },
           async remove(keys) { if (disposed()) throw new Error("Writer disposed"); await removalPort.session.remove(keys) } }

@@ -3,6 +3,7 @@ import { createBrowserLocalFilterWriter } from "./local-filter-writer"
 import { createBrowserStartingLocalFilterWriter } from "./starting-owner"
 import { StartupReadinessError } from "../store/local-filter-writer"
 import { isAccountKey, isVideoId } from "../../shared/model"
+import type { JsonObject } from "../../shared/contracts/json"
 import { agreedSeed, check, gate, startingOwnerFixture } from "../../../tools/fixtures/starting-owner/support"
 import { acct, one, ui, seed, captured, change } from "../../../tools/fixtures/auto-add-choice/harness"
 import { runStartingOwnerConsumer } from "../../../tools/fixtures/starting-owner/run"
@@ -329,4 +330,72 @@ test("supplied local collaborators do not prove native-area correspondence", asy
     expect(first.counts.localRead).toBe(0)
     expect(() => createBrowserStartingLocalFilterWriter(first.native, first.options)).toThrow("Local storage already owned")
   } finally { await owner.dispose() }
+})
+
+function removalSeed() {
+  const removed = "AAAAAAAAAAAAAAAA", kept = "BBBBBBBBBBBBBBBB"
+  check(isAccountKey(removed) && isAccountKey(kept), "validated removal accounts")
+  const stamp = { v: 1, at: 1, by: "starting-fixture" }
+  const records: JsonObject = {
+    ...agreedSeed(),
+    [`doc:setup:${removed}`]: { ...stamp, gen: "setup-removed", data: { label: { name: "Removed account" }, quickSave: "PL_quick" } },
+    [`doc:filter:${removed}:PL_quick`]: { ...stamp, gen: "filter-removed", data: { mode: "allow", on: true, channels: [] } },
+    [`doc:setup:${kept}`]: { ...stamp, gen: "setup-kept", data: { quickSave: "PL_other" } },
+    [`cache:${removed}`]: { playlists: [] }, [`cache:${kept}`]: { playlists: [] },
+    [`progress:${removed}:0`]: { aaaaaaaaaaa: { len: 60, parts: [[1, 2]], at: 1 } },
+    [`progress:${removed}:3`]: { aaaaaaaaaaa: { len: 60, parts: [[1, 2]], at: 1 } },
+    [`progress:${kept}:0`]: { kept: true }, unrelated: { kept: true }
+  }
+  const session = { paused: true, [`skips:${removed}`]: { aaaaaaaaaaa: "all" }, [`cooldown:${removed}`]: 10, [`skips:${kept}`]: { bbbbbbbbbbb: "all" },
+    tabs: { "1": { site: "www", signedIn: true, acct: removed }, "2": { site: "www", signedIn: true, acct: kept } } }
+  const expected: JsonObject = { ...records }
+  for (const name of [`doc:setup:${removed}`, `doc:filter:${removed}:PL_quick`, `cache:${removed}`, `progress:${removed}:0`, `progress:${removed}:3`]) delete expected[name]
+  return { removed, records, session, expected: { local: expected,
+    session: { paused: true, [`skips:${kept}`]: { bbbbbbbbbbb: "all" }, tabs: { "2": { site: "www", signedIn: true, acct: kept } } } } }
+}
+
+test("native owner removes an account through native local removal and the canonical session", async () => {
+  const seeded = removalSeed(), h = startingOwnerFixture(seeded.records)
+  h.seedSession(seeded.session)
+  const owner = createBrowserStartingLocalFilterWriter(h.native, h.options)
+  try {
+    expect(await owner.ready()).toBe("ok")
+    const preparation = await owner.prepareAccountRemoval(ui, seeded.removed)
+    if (preparation.kind !== "confirmation-required") throw Error(`Expected native removal confirmation, got ${JSON.stringify(preparation)}`)
+    expect(preparation.scope).toEqual({ kind: "this-browser" })
+    expect(await owner.removeAccountSetup(ui, preparation.confirmation)).toEqual({ kind: "committed" })
+    const { sync: _sync, ...local } = h.records()
+    const { sync: _expectedSync, ...expectedLocal } = seeded.expected.local
+    expect(local).toEqual(expectedLocal)
+    expect(h.session()).toEqual(seeded.expected.session)
+    expect(h.localRemovals.flat().sort()).toEqual([`cache:${seeded.removed}`, `doc:filter:${seeded.removed}:PL_quick`, `doc:setup:${seeded.removed}`,
+      "pending:account-removal", `progress:${seeded.removed}:0`, `progress:${seeded.removed}:3`])
+    expect(h.counts.rawLocal).toBe(0)
+  } finally { await owner.dispose() }
+})
+
+test("a fresh native owner finishes an interrupted native account removal before readiness", async () => {
+  const seeded = removalSeed(), h = startingOwnerFixture(seeded.records)
+  h.seedSession(seeded.session)
+  const interruption = Error("Synthetic native removal interruption")
+  h.hooks.localRemove = async names => { if (names.includes(`progress:${seeded.removed}:3`)) throw interruption }
+  const owner = createBrowserStartingLocalFilterWriter(h.native, h.options)
+  try {
+    await owner.ready()
+    const preparation = await owner.prepareAccountRemoval(ui, seeded.removed)
+    if (preparation.kind !== "confirmation-required") throw Error("Expected native removal confirmation")
+    expect(await owner.removeAccountSetup(ui, preparation.confirmation)).toEqual({ kind: "failed", stage: "local-cleanup", error: interruption })
+    expect(Object.hasOwn(h.records(), "pending:account-removal")).toBe(true)
+    expect(h.records()[`progress:${seeded.removed}:3`]).toEqual(seeded.records[`progress:${seeded.removed}:3`])
+  } finally { await owner.dispose() }
+  h.hooks.localRemove = async () => {}
+  const restarted = createBrowserStartingLocalFilterWriter(h.native, h.options)
+  try {
+    expect(await restarted.ready()).toBe("ok")
+    const { sync: _sync, ...local } = h.records()
+    const { sync: _expectedSync, ...expectedLocal } = seeded.expected.local
+    expect(local).toEqual(expectedLocal)
+    expect(h.session()).toEqual(seeded.expected.session)
+    expect(await restarted.readSetup(seeded.removed)).toEqual({ kind: "value", view: { kind: "none", acct: seeded.removed } })
+  } finally { await restarted.dispose() }
 })

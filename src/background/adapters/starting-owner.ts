@@ -1,11 +1,12 @@
 import { nativeSharedSettingsAccess } from "./shared-settings"
 import { createStartingLocalFilterWriter } from "../store/local-filter-writer"
+import { nativeAccountRemovalHost } from "../store/account-removal-execution"
 import { acquireLocalFilterWriterArea } from "./starting-owner-area"
 
 type NativeBrowser = typeof import("wxt/browser").browser
 type StartingDependencies = Parameters<typeof createStartingLocalFilterWriter>[0]
 type StartingOwner = ReturnType<typeof createStartingLocalFilterWriter>
-type HostName = "claim" | "removal" | "join" | "recovery" | "canonicalAuthority" | "settingsImport"
+type HostName = "claim" | "join" | "recovery" | "canonicalAuthority" | "settingsImport"
 type NativeHosts = {
   readonly [Name in HostName]?: Exclude<NonNullable<StartingDependencies[Name]>, { readonly kind: "fixture" }>
 }
@@ -23,7 +24,7 @@ export function createBrowserStartingLocalFilterWriter(
   options: BrowserStartingOwnerOptions
 ): BrowserStartingOwner {
   if (!options.local || !options.startup) throw new TypeError("Starting owner requires supplied local and startup collaborators")
-  for (const host of [options.claim, options.removal, options.join, options.recovery, options.canonicalAuthority, options.settingsImport]) {
+  for (const host of [options.claim, options.join, options.recovery, options.canonicalAuthority, options.settingsImport]) {
     if (host && host.kind !== "unavailable") throw new TypeError("Native starting owner host is unavailable")
   }
   const release = acquireLocalFilterWriterArea(native.storage.local)
@@ -40,6 +41,11 @@ export function createBrowserStartingLocalFilterWriter(
         return () => clearTimeout(timer)
       }
     }
+    const session: StartingDependencies["session"] = {
+      get() { assertOpen(); return native.storage.session.get(null) },
+      set(items) { assertOpen(); return native.storage.session.set(items) },
+      remove(keys) { assertOpen(); return native.storage.session.remove(keys.map(key => `${key.kind}:${key.acct}`)) }
+    }
     const owner = createStartingLocalFilterWriter({
       syncMutationPace: options.syncMutationPace,
       resetReceive: options.resetReceive,
@@ -51,16 +57,12 @@ export function createBrowserStartingLocalFilterWriter(
         set(items) { assertOpen(); return options.local.set(items) }
       },
       claim: options.claim ?? { kind: "unavailable" },
-      removal: options.removal ?? { kind: "unavailable" },
+      removal: nativeAccountRemovalHost({ session, removeLocal(names) { assertOpen(); return native.storage.local.remove([...names]) } }),
       join: options.join ?? { kind: "unavailable" },
       recovery: options.recovery ?? { kind: "unavailable" },
       canonicalAuthority: options.canonicalAuthority ?? { kind: "unavailable" },
       settingsImport: options.settingsImport ?? { kind: "unavailable" },
-      session: {
-        get() { assertOpen(); return native.storage.session.get(null) },
-        set(items) { assertOpen(); return native.storage.session.set(items) },
-        remove(keys) { assertOpen(); return native.storage.session.remove(keys.map(key => `${key.kind}:${key.acct}`)) }
-      },
+      session,
       sync: {
         get() { assertOpen(); return native.storage.sync.get(null) },
         set(items) { assertOpen(); return native.storage.sync.set(items) },

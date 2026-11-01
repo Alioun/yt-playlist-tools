@@ -28,16 +28,22 @@ export function startingOwnerFixture(initial: JsonObject = {}) {
   let records = copy(initial), sessionRecords: JsonObject = {}, generation = 0
   let remote: JsonObject = { "s:meta": { v: 1, id: "history", created: 0 } }
   for (const [name, value] of Object.entries(records)) if (name.startsWith("doc:")) remote[`s:${name.slice(4)}`] = copy(value)
-  const counts = { rawLocal: 0, localRead: 0, localSet: 0, sessionGet: 0, sessionSet: 0, sessionRemove: 0, syncGet: 0, syncSet: 0, adds: 0, removes: 0 }
-  const localBatches: JsonObject[] = [], sessionBatches: unknown[] = [], sessionRemovals: unknown[] = []
+  const counts = { rawLocal: 0, localRead: 0, localSet: 0, localRemove: 0, sessionGet: 0, sessionSet: 0, sessionRemove: 0, syncGet: 0, syncSet: 0, adds: 0, removes: 0 }
+  const localBatches: JsonObject[] = [], localRemovals: string[][] = [], sessionBatches: unknown[] = [], sessionRemovals: unknown[] = []
   const listeners = new Set<SyncListener>(), allListeners: SyncListener[] = []
   const timers: { readonly run: () => void; cancelled: boolean }[] = []
   const results: Parameters<BrowserStartingOwnerOptions["onSyncResult"]>[0][] = []
-  const hooks = { localRead: async () => {}, sessionRead: async () => {}, syncRead: async () => {} }
+  const hooks = { localRead: async () => {}, localRemove: async (_names: readonly string[]) => {}, sessionRead: async () => {}, syncRead: async () => {} }
   const faults: { removeListener?: Error; addListener?: Error; cancelTimer?: Error } = {}
   const rawLocal = new Proxy(fakeBrowser.storage.local, {
     get(target, key, receiver) {
-      if (["get", "set", "remove", "clear", "getKeys", "getBytesInUse"].includes(String(key))) {
+      if (key === "remove") return new Proxy(target.remove, { async apply(_fn, _this, args: [unknown]) {
+        const names = args[0]
+        check(Array.isArray(names) && names.every((name): name is string => typeof name === "string"), "native local removal names exact keys")
+        counts.localRemove++; localRemovals.push([...names]); await hooks.localRemove(names)
+        for (const name of names) delete records[name]
+      } })
+      if (["get", "set", "clear", "getKeys", "getBytesInUse"].includes(String(key))) {
         return () => { counts.rawLocal++; throw Error("Raw native local is forbidden") }
       }
       return Reflect.get(target, key, receiver)
@@ -115,7 +121,7 @@ export function startingOwnerFixture(initial: JsonObject = {}) {
     onSyncResult: result => { results.push(result) }
   }
   const native = { ...fakeBrowser, storage: { ...fakeBrowser.storage, local: rawLocal, session: nativeSession, sync: nativeSync } }
-  return { native, options, counts, localBatches, sessionBatches, sessionRemovals, listeners, allListeners, timers, results, hooks, faults,
+  return { native, options, counts, localBatches, localRemovals, sessionBatches, sessionRemovals, listeners, allListeners, timers, results, hooks, faults,
     records: () => copy(records), session: () => copy(sessionRecords),
     mutate(change: (current: JsonObject) => void) { change(records) },
     seedSession(value: JsonObject) { sessionRecords = copy(value) },
