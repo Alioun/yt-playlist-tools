@@ -39,14 +39,27 @@ export function richParts(text: string): readonly RichPart[] {
 export type MessageCatalogue = Readonly<Record<MessageKey, Entry>>
 
 export function createI18n(native: NativeMessagePort, catalogue: MessageCatalogue, locale = "en") {
+  return localized(native, key => Object.entries(catalogue[key].placeholders ?? {})
+    .sort(([, a], [, b]) => Number(a.content.slice(1)) - Number(b.content.slice(1))).map(([name]) => name),
+  key => catalogue[key].message, locale)
+}
+
+/**
+ * For page scripts, which can't carry the whole catalogue. Placeholder names come from `messageParameters`,
+ * whose order is each message's placeholder order. Canonical English text isn't available here.
+ */
+export function createSiteI18n(native: NativeMessagePort, locale = "en"): I18n {
+  return localized(native, key => messageParameters[key], () => { throw new Error("Canonical text is for extension pages") }, locale)
+}
+
+function localized(native: NativeMessagePort, placeholderNames: (key: MessageKey) => readonly string[], canonicalText: (key: SimpleMessageKey) => string, locale: string) {
   const plurals = new Intl.PluralRules(locale)
   const numbers = new Intl.NumberFormat(locale, { useGrouping: false, maximumFractionDigits: 20 })
   function message<K extends MessageKey, const P extends MessageValues<K>>(key: K, ...args: Arguments<K, P>): string {
-    const entry: Entry = catalogue[key]
     const values: object = args[0] ?? {}
-    const placeholders = Object.entries(entry.placeholders ?? {}).sort(([, a], [, b]) => Number(a.content.slice(1)) - Number(b.content.slice(1)))
+    const placeholders = placeholderNames(key)
     if (Object.keys(values).length !== placeholders.length) throw new Error(`Invalid localization values ${key}`)
-    const substitutions = placeholders.map(([name]) => {
+    const substitutions = placeholders.map(name => {
       const value: unknown = Reflect.get(values, name)
       if (typeof value !== "string" || !Object.hasOwn(values, name)) throw new Error(`Invalid localization value ${key}.${name}`)
       return value
@@ -62,7 +75,7 @@ export function createI18n(native: NativeMessagePort, catalogue: MessageCatalogu
   }
   return {
     message,
-    canonical(key: SimpleMessageKey): string { return catalogue[key].message },
+    canonical: canonicalText,
     rich(key: SimpleMessageKey): readonly RichPart[] { return richParts(nativeText(key)) },
     plural(count: number): "one" | "other" { return plurals.select(count) === "one" ? "one" : "other" },
     number(value: number): string { return numbers.format(value) },
@@ -71,4 +84,4 @@ export function createI18n(native: NativeMessagePort, catalogue: MessageCatalogu
   }
 }
 
-export type I18n = ReturnType<typeof createI18n>
+export type I18n = ReturnType<typeof localized>

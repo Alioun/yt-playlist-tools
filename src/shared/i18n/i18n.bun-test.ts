@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test"
 import catalogue from "../../public/_locales/en/messages.json"
-import { createI18n, richParts } from "./index"
+import { createI18n, createSiteI18n, richParts, type MessageKey } from "./index"
+import { messageParameters } from "./parameters"
 import { sha256 } from "./identity"
 import { scriptedMessages, stretch } from "../../../tools/fixtures/localization/scripted"
 
@@ -51,4 +52,20 @@ test("disclosure hashing follows SHA-256 known answers", () => {
   expect(sha256("")).toBe("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
   expect(sha256("abc")).toBe("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
   expect(sha256("a".repeat(1000000))).toBe("cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0")
+})
+
+test("page scripts substitute every message exactly as the catalogue does, without carrying it", () => {
+  const scripted = scriptedMessages()
+  const calls: unknown[] = []
+  const native = { getMessage(name: string, values?: string | string[]) { calls.push({ name, values }); return scripted.getMessage(name, values) } }
+  const full = createI18n(native, catalogue), site = createSiteI18n(native)
+  for (const key of Object.keys(messageParameters) as MessageKey[]) {
+    const values = Object.fromEntries(messageParameters[key].map((name, index) => [name, `value-${index}`]))
+    const send = (i18n: typeof full) => Reflect.apply(i18n.message, i18n, [key, ...(messageParameters[key].length ? [values] : [])])
+    calls.length = 0
+    const fromSite = send(site)
+    const siteCall = calls.splice(0)
+    expect([fromSite, siteCall]).toEqual([send(full), calls])
+  }
+  expect(() => site.canonical("firstRun_welcome")).toThrow("Canonical text is for extension pages")
 })

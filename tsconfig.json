@@ -7,7 +7,7 @@
       "@/*": ["./src/*"],
       "~": ["./src"],
       "~/*": ["./src/*"],
-      "$kit": ["./tools/fixtures/svelte-pilot/page-link/src/site/kit/index.ts"]
+      "$kit": ["./src/site/kit/index.ts"]
     }
   },
   "exclude": [
