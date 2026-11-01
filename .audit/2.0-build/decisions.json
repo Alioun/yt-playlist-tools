@@ -181,6 +181,42 @@
       "topic": "Copy rule",
       "answer": "Every piece of user-facing copy goes through pstack unslop.",
       "landed": "pending"
+    },
+    {
+      "id": "G31",
+      "topic": "Unslop scope",
+      "answer": "Unslop everything, including strings the spec pins word for word; amend the spec where wording changes.",
+      "landed": "pending"
+    },
+    {
+      "id": "G32",
+      "topic": "Choose-mode subtitle",
+      "answer": "No subtitle under \"Pick the shortcut's playlist\".",
+      "landed": "pending"
+    },
+    {
+      "id": "G33",
+      "topic": "When 2.0 is usable",
+      "answer": "Activate the 1.99.1 beta only once every 2.0 feature is built (plan wave 8) and the full suite plus browser builds pass.",
+      "landed": "pending"
+    },
+    {
+      "id": "G34",
+      "topic": "Ticket 25 timing",
+      "answer": "Run ticket 25's live checks after the first beta; ship with the provisional cookie line and re-pin if it changes.",
+      "landed": "pending"
+    },
+    {
+      "id": "G35",
+      "topic": "Music picker marks",
+      "answer": "Show no check marks on YouTube Music until ticket 25's M2 check.",
+      "landed": "pending"
+    },
+    {
+      "id": "G36",
+      "topic": "Collaborative playlists",
+      "answer": "Treat collaborative playlists the user doesn't own as not owned until the ACC-35 check.",
+      "landed": "pending"
     }
   ],
   "coordinatorCalls": [
