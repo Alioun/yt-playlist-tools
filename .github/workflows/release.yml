@@ -232,13 +232,16 @@ jobs:
       # web-ext signs a directory, so the checked zip is unpacked as it is.
       - name: Sign the beta on AMO (unlisted)
         if: env.CHANNEL == 'beta' && steps.amo.outputs.status == 'missing'
+        # web-ext reads WEB_EXT_* options from the environment, which keeps the key off the command line.
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           set -euo pipefail
           mkdir -p unpacked signed
           unzip -q "$(ls dist/*-firefox-beta.zip)" -d unpacked
           bunx web-ext sign --source-dir unpacked --artifacts-dir signed \
             --channel unlisted \
-            --api-key "$FIREFOX_JWT_ISSUER" --api-secret "$FIREFOX_JWT_SECRET" \
             --upload-source-code "$(ls dist/*-sources-beta.zip)" \
             --amo-metadata dist/amo-metadata.json \
             --approval-timeout 1800000

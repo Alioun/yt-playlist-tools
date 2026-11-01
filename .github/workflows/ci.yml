@@ -210,11 +210,14 @@ jobs:
 
       - name: Sign on AMO (unlisted)
         if: steps.amo.outputs.status == 'missing'
+        # web-ext reads WEB_EXT_* options from the environment, which keeps the key off the command line.
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
         run: |
           set -euo pipefail
           bunx web-ext sign --source-dir unpacked --artifacts-dir signed \
             --channel unlisted \
-            --api-key "$FIREFOX_JWT_ISSUER" --api-secret "$FIREFOX_JWT_SECRET" \
             --upload-source-code "$(ls sources/*-sources.zip)" \
             --approval-timeout 1800000
 
