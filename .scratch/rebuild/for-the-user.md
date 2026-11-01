@@ -33,7 +33,7 @@ None open. The last one, the 2.0 name, is settled: you chose **Perchling for You
   - create `amo` and `cws` environments with you as approver, and move the store secrets into them;
   - set the per-store variables, and optionally a ruleset for `v*` tags;
   - delete the old Chrome v1.1 secrets.
-- **Privacy page:** read and approve the drafted privacy policy (it's published under your name). It names GitHub issues as the only contact, with no support e-mail, as you decided.
+- **Privacy page:** approved as drafted on 2026-11-01. It names GitHub issues as the only contact, with no support e-mail, as you decided. The cookie bullet stays provisional on ticket 25 and is removed if no shipped route reads the session cookie. It goes live with the first beta (R18).
 - **Cleanup:** shut down any deployed token broker and delete its Google OAuth client.
 - **Before each release:** the signed-in live check and the timing test; screenshot videos you own or that are Creative Commons; optionally, beta testers.
 

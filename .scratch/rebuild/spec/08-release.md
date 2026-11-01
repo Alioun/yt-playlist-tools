@@ -809,7 +809,7 @@ Gather tabs is a port of [GatherTube](https://github.com/karimelgazar/gathertube
 
 ### 10.2 Text
 
-- **REL-STORE-17** `/privacy/` publishes this text. It's published under the user's name, so the user reads and approves it before it goes live (§19). It takes effect from the first beta, 1.99.1, because Chrome's Privacy tab needs it for the first Unlisted upload and beta testers run 1.99.N (R18). Its "What's kept" lines match [DATA-03](04-features-accounts-data.md#41-where-data-lives) (R10, R43, R57). The cookie bullet is PROVISIONAL (ticket 25): it's removed if no shipped route reads the session cookie (R48). The Contact line has no e-mail, as the user decided (R89). It also covers recent adds, keys from any tab, the problem report and the settings file (R86, R88, R89, R90), and gathering tabs, with what a gather reads and what leaves (R138). (R10, R18, R43, R48, R57)
+- **REL-STORE-17** `/privacy/` publishes this text. It's published under the user's name, so the user reads and approves it before it goes live (§19). The user approved the drafted text on 2026-11-01. Its cookie bullet stays PROVISIONAL on ticket 25 (R48). It takes effect from the first beta, 1.99.1, because Chrome's Privacy tab needs it for the first Unlisted upload and beta testers run 1.99.N (R18). Its "What's kept" lines match [DATA-03](04-features-accounts-data.md#41-where-data-lives) (R10, R43, R57). The cookie bullet is PROVISIONAL (ticket 25): it's removed if no shipped route reads the session cookie (R48). The Contact line has no e-mail, as the user decided (R89). It also covers recent adds, keys from any tab, the problem report and the settings file (R86, R88, R89, R90), and gathering tabs, with what a gather reads and what leaves (R138). (R10, R18, R43, R48, R57)
 
 > # Privacy policy: Perchling for YouTube™
 >
@@ -1398,7 +1398,7 @@ The IDs these items rest on:
 **REL-CHK-25** These are the tasks only the user can do. They're tracked in [for-the-user.md](../for-the-user.md) until done.
 
 **Decisions:**
-- Read and approve the privacy policy (§10.2), which is published under the user's name.
+- Read and approve the privacy policy (§10.2), which is published under the user's name. Done on 2026-11-01, as drafted. The cookie bullet stays PROVISIONAL on ticket 25 and goes if no shipped route reads the session cookie (R48).
 - Optionally, choose a custom domain (§10.1).
 
 The name is settled: Perchling for YouTube™, chosen on 2026-10-20 (R141). A support e-mail isn't wanted: the user decided on GitHub issues alone on 2026-10-20 (§16; R89).
