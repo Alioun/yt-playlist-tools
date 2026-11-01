@@ -2,12 +2,23 @@ import { createGateway } from "../../../src/page/gateway"
 import { scriptedPage, syntheticIdentity } from "../../../src/page/gateway.specimens"
 import type { WwwQueuePort } from "../../../src/page/gateway/www-queue"
 import type { AttemptContext, Dispatch, GatewayRequestPort, HttpAnswer } from "../../../src/page/gateway/port"
-import type { BreakageSignal } from "../../../src/shared/contracts"
-import { Clock, check, deferred, drain, same } from "../gateway-playlists/specimens"
+import { isQueueListId, isRouteId, isSetVideoId } from "../../../src/shared/contracts"
+import type { BreakageSignal, JobOf } from "../../../src/shared/contracts"
+import type { PageJobData, PageJobResult } from "../../../src/shared/contracts/page"
+import { isVideoId } from "../../../src/shared/model/validation"
+import { Clock, check, checked, deferred, drain, same } from "../gateway-playlists/specimens"
 
-export { Clock, check, deferred, drain, same, syntheticIdentity }
-export const videoA = "queueVideoA", videoB = "queueVideoB"
-export const listA = "TLPQsyntheticA", listB = "TLPQsyntheticB"
+export { Clock, check, checked, deferred, drain, same, syntheticIdentity }
+export const videoA = checked(isVideoId, "queueVideoA"), videoB = checked(isVideoId, "queueVideoB")
+export const listA = checked(isQueueListId, "TLPQsyntheticA"), listB = checked(isQueueListId, "TLPQsyntheticB")
+export const entry = (setVideoId: string) => checked(isSetVideoId, setVideoId)
+export const undoOf = (setVideoId: string) => ({ listId: listA, setVideoId: entry(setVideoId) })
+const routeIds = {
+  queueAdd: "command.queueAdd", queueUndo: "command.queueUndo", queueAddList: "command.queueAddList", openCardMenu: "page-ui.openCardMenu"
+} as const
+export function success<K extends keyof typeof routeIds>(kind: K, data: PageJobData<JobOf<K>>): PageJobResult<JobOf<K>> {
+  return { ok: true, data, route: checked(isRouteId, routeIds[kind]) }
+}
 export type Entry = { videoId: string; setVideoId: string }
 export type Call = { endpoint: Record<string, unknown>; context: AttemptContext }
 export type QueueState = {

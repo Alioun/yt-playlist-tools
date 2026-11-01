@@ -1,9 +1,11 @@
 import { expect, test } from "bun:test"
 import { GlobalRegistrator } from "@happy-dom/global-registrator"
 import { parseQueueCard, parseQueuePanel } from "../../../src/page/parsers/www-queue"
+import type { JobOf } from "../../../src/shared/contracts"
+import { isPlaylistId } from "../../../src/shared/model/validation"
 import {
-  added, answer, card, cardCommand, deferred, listA, listB, menuAction, noisyToast, panelData, pending, queueWorld, scrubbed, settle,
-  toastAction, videoA, videoB
+  added, answer, card, cardCommand, checked, deferred, entry, listA, listB, menuAction, noisyToast, panelData, pending, queueWorld, scrubbed, settle,
+  success, toastAction, undoOf, videoA, videoB
 } from "./specimens"
 import type { QueueWorld } from "./specimens"
 
@@ -20,14 +22,14 @@ function released(world: QueueWorld) {
   expect(world.listeners).toBe(0)
   expect(world.timers).toBe(0)
 }
-const cardMenu = (videoId = videoA) => ({ kind: "openCardMenu", videoId }) as never
+const cardMenu = (videoId = videoA): JobOf<"openCardMenu"> => ({ kind: "openCardMenu", videoId })
 function queueAdd(world: QueueWorld, element: Element = target()) { return world.gateway.run({ kind: "queueAdd" }, { target: element }) }
 
 test("signed-out first add resolves the card's own queue command and confirms a new panel entry", async () => {
   const w = queueWorld({ signedIn: false })
   w.scripts.push(pending(world => { world.add(videoA, listA) }))
   const result = await queueAdd(w)
-  expect(result).toEqual({ ok: true, data: { confirmed: true, quiet: true, undo: { listId: listA, setVideoId: "entry-1" } }, route: "command.queueAdd" })
+  expect(result).toEqual(success("queueAdd", { confirmed: true, quiet: true, undo: undoOf("entry-1") }))
   expect(w.calls.map(call => call.endpoint)).toEqual([cardCommand(videoA)])
   expect(kinds(w)).toEqual([])
   released(w)
@@ -38,7 +40,7 @@ test("missing account keys still add through the quiet TLPQ edit with IAE%3D", a
   w.replace(listA, [{ videoId: videoB, setVideoId: "entry-old" }])
   w.scripts.push(pending(world => answer(added(world.add(videoA)))))
   const result = await queueAdd(w)
-  expect(result).toEqual({ ok: true, data: { confirmed: true, quiet: true, undo: { listId: listA, setVideoId: "entry-1" } }, route: "command.queueAdd" })
+  expect(result).toEqual(success("queueAdd", { confirmed: true, quiet: true, undo: undoOf("entry-1") }))
   expect(w.calls.map(call => call.endpoint)).toEqual([editEndpoint(listA, { action: "ACTION_ADD_VIDEO", addedVideoId: videoA })])
   expect(JSON.stringify(w.calls[0]?.endpoint)).not.toContain("clientActions")
   released(w)
@@ -49,7 +51,7 @@ test("duplicate video IDs confirm only the distinct new entry", async () => {
   w.replace(listA, [{ videoId: videoA, setVideoId: "entry-old" }])
   w.scripts.push(pending(world => answer(added(world.add(videoA)))))
   const result = await queueAdd(w)
-  expect(result).toEqual({ ok: true, data: { confirmed: true, quiet: true, undo: { listId: listA, setVideoId: "entry-1" } }, route: "command.queueAdd" })
+  expect(result).toEqual(success("queueAdd", { confirmed: true, quiet: true, undo: undoOf("entry-1") }))
   released(w)
 })
 
@@ -61,9 +63,9 @@ test("two adds run one at a time in the app-state lane", async () => {
   await settle(w, 0)
   expect(w.calls.length).toBe(1)
   await settle(w, 2_000)
-  expect(await first).toEqual({ ok: true, data: { confirmed: false, quiet: true }, route: "command.queueAdd" })
+  expect(await first).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
   expect(w.calls.length).toBe(2)
-  expect(await second).toEqual({ ok: true, data: { confirmed: true, quiet: true, undo: { listId: listA, setVideoId: "entry-1" } }, route: "command.queueAdd" })
+  expect(await second).toEqual(success("queueAdd", { confirmed: true, quiet: true, undo: undoOf("entry-1") }))
   released(w)
 })
 
@@ -73,7 +75,7 @@ test("callback success without a panel effect is confirmed false with no Undo", 
   w.scripts.push(pending(() => answer(added("entry-claimed"))))
   const result = queueAdd(w)
   await settle(w, 2_000)
-  expect(await result).toEqual({ ok: true, data: { confirmed: false, quiet: true }, route: "command.queueAdd" })
+  expect(await result).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
   expect(w.calls.length).toBe(1)
   released(w)
 })
@@ -84,7 +86,7 @@ test("an entry in a replaced queue list never confirms the add", async () => {
   w.scripts.push(pending(world => { world.replace(listB, [{ videoId: videoA, setVideoId: "entry-new" }]) }))
   const result = queueAdd(w)
   await settle(w, 2_000)
-  expect(await result).toEqual({ ok: true, data: { confirmed: false, quiet: true }, route: "command.queueAdd" })
+  expect(await result).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
   released(w)
 })
 
@@ -93,7 +95,7 @@ test("a noisy quiet route counts its real edit, records quiet-route-noisy once a
   w.replace(listA, [])
   w.scripts.push(pending(world => answer(added(world.add(videoA), { actions: [noisyToast] }))))
   const result = await queueAdd(w)
-  expect(result).toEqual({ ok: true, data: { confirmed: true, quiet: false, undo: { listId: listA, setVideoId: "entry-1" } }, route: "command.queueAdd" })
+  expect(result).toEqual(success("queueAdd", { confirmed: true, quiet: false, undo: undoOf("entry-1") }))
   expect(kinds(w)).toEqual(["quiet-route-noisy"])
   expect(w.calls.length).toBe(1)
   released(w)
@@ -104,7 +106,7 @@ test("YouTube's own toast seen during a quiet add marks it noisy", async () => {
   w.replace(listA, [])
   w.scripts.push(pending(world => { world.add(videoA); world.emit(toastAction) }))
   const result = await queueAdd(w)
-  expect(result).toEqual({ ok: true, data: { confirmed: true, quiet: false, undo: { listId: listA, setVideoId: "entry-1" } }, route: "command.queueAdd" })
+  expect(result).toEqual(success("queueAdd", { confirmed: true, quiet: false, undo: undoOf("entry-1") }))
   expect(kinds(w)).toEqual(["quiet-route-noisy"])
   released(w)
 })
@@ -115,7 +117,7 @@ test("a late callback after confirmation is cancelled and changes nothing", asyn
   const late = deferred<ReturnType<typeof answer>>()
   w.scripts.push(pending(world => { world.add(videoA) }, late))
   const result = await queueAdd(w)
-  expect(result).toEqual({ ok: true, data: { confirmed: true, quiet: true, undo: { listId: listA, setVideoId: "entry-1" } }, route: "command.queueAdd" })
+  expect(result).toEqual(success("queueAdd", { confirmed: true, quiet: true, undo: undoOf("entry-1") }))
   expect(w.state.cancels).toBe(1)
   late.resolve(answer({ status: "STATUS_FAILED" }, 409))
   await settle(w, 100)
@@ -140,7 +142,7 @@ test("the miniplayer fallback confirms only a first add whose miniplayer turns a
   const first = queueWorld()
   first.state.readable = false
   first.scripts.push(pending(world => { world.state.miniplayer = true }))
-  expect(await queueAdd(first)).toEqual({ ok: true, data: { confirmed: true, quiet: true }, route: "command.queueAdd" })
+  expect(await queueAdd(first)).toEqual(success("queueAdd", { confirmed: true, quiet: true }))
   released(first)
   const already = queueWorld()
   already.state.readable = false
@@ -148,14 +150,14 @@ test("the miniplayer fallback confirms only a first add whose miniplayer turns a
   already.scripts.push(pending(() => undefined))
   const open = queueAdd(already)
   await settle(already, 2_000)
-  expect(await open).toEqual({ ok: true, data: { confirmed: false, quiet: true }, route: "command.queueAdd" })
+  expect(await open).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
   released(already)
   const later = queueWorld()
   later.replace(listA, [])
   later.scripts.push(pending(world => { world.state.readable = false; world.state.miniplayer = true }))
   const result = queueAdd(later)
   await settle(later, 2_000)
-  expect(await result).toEqual({ ok: true, data: { confirmed: false, quiet: true }, route: "command.queueAdd" })
+  expect(await result).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
   released(later)
 })
 
@@ -170,7 +172,7 @@ test("a missing resolver is unavailable and a thrown hook is never resent", asyn
   thrown.state.faults.add("resolve")
   const result = queueAdd(thrown)
   await settle(thrown, 2_000)
-  expect(await result).toEqual({ ok: true, data: { confirmed: false, quiet: true }, route: "command.queueAdd" })
+  expect(await result).toEqual(success("queueAdd", { confirmed: false, quiet: true }))
   expect(kinds(thrown)).toEqual(["threw"])
   expect(scrubbed(thrown.signals)).toBe(true)
   released(thrown)
@@ -178,7 +180,7 @@ test("a missing resolver is unavailable and a thrown hook is never resent", asyn
   actions.replace(listA, [])
   actions.state.faults.add("action")
   actions.scripts.push(pending(world => { world.add(videoA) }))
-  expect(await queueAdd(actions)).toEqual({ ok: true, data: { confirmed: true, quiet: true, undo: { listId: listA, setVideoId: "entry-1" } }, route: "command.queueAdd" })
+  expect(await queueAdd(actions)).toEqual(success("queueAdd", { confirmed: true, quiet: true, undo: undoOf("entry-1") }))
   released(actions)
 })
 
@@ -186,9 +188,9 @@ test("Undo removes exactly its entry quietly, refreshes that list and confirms a
   const w = queueWorld()
   w.replace(listA, [{ videoId: videoA, setVideoId: "entry-1" }, { videoId: videoA, setVideoId: "entry-2" }])
   w.scripts.push(pending(world => { world.remove("entry-2"); return answer({ status: "STATUS_SUCCEEDED" }) }), pending(() => answer({})))
-  const result = w.gateway.run({ kind: "queueUndo", listId: listA, setVideoId: "entry-2" } as never)
+  const result = w.gateway.run({ kind: "queueUndo", listId: listA, setVideoId: entry("entry-2") })
   await settle(w, 100)
-  expect(await result).toEqual({ ok: true, data: null, route: "command.queueUndo" })
+  expect(await result).toEqual(success("queueUndo", null))
   expect(w.calls.map(call => call.endpoint)).toEqual([
     editEndpoint(listA, { action: "ACTION_REMOVE_VIDEO", setVideoId: "entry-2" }), { refreshPlaylistCommand: { listId: listA } }
   ])
@@ -203,9 +205,9 @@ test("Undo retries the exact entry once after it stays present, then succeeds", 
   w.replace(listA, [{ videoId: videoA, setVideoId: "entry-1" }, { videoId: videoA, setVideoId: "entry-2" }])
   w.scripts.push(pending(() => answer({ status: "STATUS_FAILED" }, 409)), pending(() => answer({})),
     pending(world => { world.remove("entry-2"); return answer({ status: "STATUS_SUCCEEDED" }) }), pending(() => answer({})))
-  const result = w.gateway.run({ kind: "queueUndo", listId: listA, setVideoId: "entry-2" } as never)
+  const result = w.gateway.run({ kind: "queueUndo", listId: listA, setVideoId: entry("entry-2") })
   await settle(w, 2_600)
-  expect(await result).toEqual({ ok: true, data: null, route: "command.queueUndo" })
+  expect(await result).toEqual(success("queueUndo", null))
   expect(w.calls.length).toBe(4)
   expect(w.calls.map(call => JSON.stringify(call.endpoint)).every(text => !text.includes("removedVideoId"))).toBe(true)
   expect(w.state.entries).toEqual([{ videoId: videoA, setVideoId: "entry-1" }])
@@ -216,7 +218,7 @@ test("Undo that never takes effect fails after exactly one retry", async () => {
   const w = queueWorld()
   w.replace(listA, [{ videoId: videoA, setVideoId: "entry-2" }])
   for (let i = 0; i < 4; i++) w.scripts.push(pending(() => answer({})))
-  const result = w.gateway.run({ kind: "queueUndo", listId: listA, setVideoId: "entry-2" } as never)
+  const result = w.gateway.run({ kind: "queueUndo", listId: listA, setVideoId: entry("entry-2") })
   await settle(w, 5_000)
   expect(await result).toEqual({ ok: false, reason: "failed" })
   expect(w.calls.length).toBe(4)
@@ -226,14 +228,14 @@ test("Undo that never takes effect fails after exactly one retry", async () => {
 test("Undo sends nothing for an unreadable panel or the same entry ID under another list", async () => {
   const unreadable = queueWorld()
   unreadable.state.readable = false
-  const first = unreadable.gateway.run({ kind: "queueUndo", listId: listA, setVideoId: "entry-1" } as never)
+  const first = unreadable.gateway.run({ kind: "queueUndo", listId: listA, setVideoId: entry("entry-1") })
   await settle(unreadable, 2_000)
   expect(await first).toEqual({ ok: false, reason: "unavailable" })
   expect(unreadable.calls.length).toBe(0)
   released(unreadable)
   const other = queueWorld()
   other.replace(listB, [{ videoId: videoA, setVideoId: "entry-1" }])
-  const second = other.gateway.run({ kind: "queueUndo", listId: listA, setVideoId: "entry-1" } as never)
+  const second = other.gateway.run({ kind: "queueUndo", listId: listA, setVideoId: entry("entry-1") })
   await settle(other, 2_000)
   expect(await second).toEqual({ ok: false, reason: "failed" })
   expect(other.calls.length).toBe(0)
@@ -244,9 +246,9 @@ test("queueAddList sends every ID in order and confirms every occurrence", async
   const w = queueWorld({ signedIn: false })
   const ids = [videoA, videoB, videoA]
   w.scripts.push(pending(world => { for (const id of ids) world.add(id, listA) }))
-  const result = w.gateway.run({ kind: "queueAddList", videoIds: ids } as never)
+  const result = w.gateway.run({ kind: "queueAddList", videoIds: ids })
   await settle(w, 0)
-  expect(await result).toEqual({ ok: true, data: { confirmed: true, count: 3 }, route: "command.queueAddList" })
+  expect(await result).toEqual(success("queueAddList", { confirmed: true, count: 3 }))
   expect(w.calls.map(call => call.endpoint)).toEqual([{ signalServiceEndpoint: { signal: "CLIENT_SIGNAL", actions: [{ addToPlaylistCommand: {
     videoIds: ids, listType: "PLAYLIST_EDIT_LIST_TYPE_QUEUE", openMiniplayer: true,
     onCreateListCommand: { createPlaylistServiceEndpoint: { videoIds: ids, params: "CAQ%3D" } }
@@ -258,9 +260,9 @@ test("queueAddList reports a truthful partial count and never counts pre-existin
   const w = queueWorld()
   w.replace(listA, [{ videoId: videoA, setVideoId: "entry-old" }])
   w.scripts.push(pending(world => { world.add(videoA); world.add(videoB) }))
-  const result = w.gateway.run({ kind: "queueAddList", videoIds: [videoA, videoB, videoA] } as never)
+  const result = w.gateway.run({ kind: "queueAddList", videoIds: [videoA, videoB, videoA] })
   await settle(w, 10_000)
-  expect(await result).toEqual({ ok: true, data: { confirmed: false, count: 2 }, route: "command.queueAddList" })
+  expect(await result).toEqual(success("queueAddList", { confirmed: false, count: 2 }))
   expect(w.calls.length).toBe(1)
   released(w)
 })
@@ -275,7 +277,7 @@ test("openCardMenu clicks the targeted card's own menu outside the lane", async 
   const menu = w.gateway.run(cardMenu(), { target: element })
   await settle(w, 0)
   w.emit(menuAction)
-  expect(await menu).toEqual({ ok: true, data: null, route: "page-ui.openCardMenu" })
+  expect(await menu).toEqual(success("openCardMenu", null))
   expect(w.menuTargets).toEqual([element])
   await settle(w, 2_000)
   await held
@@ -306,7 +308,7 @@ test("openCardMenu refuses to click a recycled renderer that now shows another v
   const menu = w.gateway.run(cardMenu(videoA), { target: element })
   await settle(w, 0)
   w.emit(menuAction)
-  expect<unknown>(await menu).toEqual({ ok: true, data: null, route: "page-ui.openCardMenu" })
+  expect(await menu).toEqual(success("openCardMenu", null))
   expect(w.menuTargets).toEqual([element])
   released(w)
 })
@@ -342,14 +344,14 @@ test("queue jobs stay exempt after an account change while account jobs still tr
   w.replace(listA, [])
   w.page.config.DATASYNC_ID = "different-account"
   w.scripts.push(pending(world => { world.add(videoA) }))
-  expect(await queueAdd(w)).toEqual({ ok: true, data: { confirmed: true, quiet: true, undo: { listId: listA, setVideoId: "entry-1" } }, route: "command.queueAdd" })
-  expect(await w.gateway.run({ kind: "add", playlistId: "PLsynthetic", videoId: videoA } as never)).toEqual({ ok: false, reason: "accountChanged" })
+  expect(await queueAdd(w)).toEqual(success("queueAdd", { confirmed: true, quiet: true, undo: undoOf("entry-1") }))
+  expect(await w.gateway.run({ kind: "add", playlistId: checked(isPlaylistId, "PLsynthetic"), videoId: videoA })).toEqual({ ok: false, reason: "accountChanged" })
   released(w)
 })
 
 test("panel and card parsers keep list identity, distinct entries and the card's own command", () => {
   expect(parseQueuePanel([{ playlistId: "PLnormal", contents: [] }, panelData(listA, [{ videoId: videoA, setVideoId: "entry-1" }])]))
-    .toEqual({ listId: listA, entries: [{ videoId: videoA, setVideoId: "entry-1" }] })
+    .toEqual({ listId: listA, entries: [{ videoId: videoA, setVideoId: entry("entry-1") }] })
   expect(parseQueuePanel([panelData(listA, [{ videoId: videoA, setVideoId: "entry-1" }, { videoId: videoB, setVideoId: "entry-1" }])])).toBeUndefined()
   expect(parseQueueCard(card(videoA))).toEqual({ videoId: videoA, command: cardCommand(videoA) })
   expect(parseQueueCard({ ...card(videoA), videoId: videoB })).toBeUndefined()
