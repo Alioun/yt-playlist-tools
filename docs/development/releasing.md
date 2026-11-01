@@ -10,15 +10,18 @@
 
 A merge that doesn't bump the version releases nothing. A version below the last release, or a malformed one, fails the run.
 
+[RELEASING.md](../../RELEASING.md) is the checklist to tick off around each release.
+
 ## Releasing a version
 
-1. On `dev`, bump `version` in `package.json` and write `store/release-notes/{version}.md`. For AMO, also make sure the reviewer notes exist: `store/notes/reviewer-full.md`, `reviewer-hotfix.md` (patches) or `reviewer-beta.md` (betas). A release build fails without them.
+1. On `dev`, bump `version` in `package.json` and write `store/release-notes/{version}.md`. A patch also needs `store/notes/hotfix/{version}.md`, the one sentence that opens its reviewer notes. [`amo-metadata.ts`](../../scripts/amo-metadata.ts) builds AMO's metadata from these and from the reviewer templates in `store/notes/`: `reviewer-full.md` for major and minor releases, `reviewer-hotfix.md` for patches and `reviewer-beta.md` for betas. It drops their `<!-- -->` comments, fills `{version}`, `{next release}`, `{previous version}` and `{fix}`, and fails a release build if a file is missing or a placeholder is left. The full and hotfix templates still have the reviewer test account's placeholders, so only betas pass until CI fills those (G28).
 2. Open a PR from `dev` to `main`, and merge it with a **merge commit**, not a squash, so the two branches don't diverge.
 3. `release.yml`:
    1. builds and checks both packages (typecheck, tests, manifests, and the sources zip rebuilding);
-   2. tags `v{version}` and creates the GitHub release with the zips and manifests. Betas get a pre-release;
+   2. tags `v{version}` and creates the GitHub release with the zips, the manifests and the release notes as its text. Betas get a pre-release;
    3. waits for your approval in the `amo` and `cws` environments, then submits exactly the files it checked.
 4. Approve each store in the run, or reject one to hold it.
+5. The run's last job starts [`pages.yml`](../../.github/workflows/pages.yml), which rebuilds the site and its `beta/updates.json`.
 
 The channel comes from the version:
 
@@ -28,7 +31,11 @@ The channel comes from the version:
 | `X.Y.9NN` (later betas) | beta | signed unlisted | not submitted |
 | anything else | stable | **listed** | submitted; `CWS_PUBLISH_TYPE`, or always `DEFAULT_PUBLISH` for a patch |
 
-Until `pages.yml` serves `beta/updates.json`, beta testers get no automatic updates: they install each beta by hand from its pre-release.
+## The site and beta updates
+
+[`pages.yml`](../../.github/workflows/pages.yml) deploys `site/` to https://alioun.github.io/yt-playlist-tools/. It runs on pushes to `main` that touch the site, on a published release, on dispatch, and when a release run asks for it. [`build-site.ts`](../../scripts/build-site.ts) builds the folder it deploys. It reads the GitHub releases and writes `beta/updates.json` with every pre-release's signed `.xpi` and its `sha256`, then the newest release's AMO-signed `.xpi` as the hand-off. It also fills the `/beta/` page's download link, keeps the home page's beta notice only while a beta is the newest release, and dates the privacy policy from v1.99.1. `updates.json` is never committed.
+
+To preview the site, run `bun scripts/build-site.ts --out _site --offline` and open `_site/index.html`.
 
 To check a release without publishing, run the workflow by hand (**Actions › Release › Run workflow**). A dispatch is a dry run: it decides and builds, and never tags or submits. Missing notes are only a warning there.
 
@@ -67,7 +74,7 @@ Fill in `.env.submit` (or run `bunx wxt submit init`), then build the zips and t
 
 ```bash
 bun run zip && bun run zip:firefox
-bun scripts/amo-metadata.ts --version <version> --kind <major|minor|patch> --channel stable --out .output/amo-metadata.json --strict
+bun scripts/amo-metadata.ts --version <version> --kind <major|minor|patch> --channel stable --previous <last release> --out .output/amo-metadata.json --strict
 bunx wxt submit --firefox-zip .output/*-firefox.zip --firefox-sources-zip .output/*-sources.zip
 ```
 

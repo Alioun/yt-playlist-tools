@@ -43,6 +43,10 @@ jobs:
         id: meta
         run: scripts/release-meta.sh
 
+      - name: Link the release checklist
+        run: |
+          echo "Checklist: [RELEASING.md]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_SHA/RELEASING.md)" >> "$GITHUB_STEP_SUMMARY"
+
   build:
     needs: meta
     if: needs.meta.outputs.release == 'true' || github.event_name == 'workflow_dispatch'
