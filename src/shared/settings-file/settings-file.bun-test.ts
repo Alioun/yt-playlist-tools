@@ -211,6 +211,18 @@ test("tombstones read as absent and live filter-only accounts remain exportable"
   expect(fixture(absentSettings.file.text).settings).toEqual(defaultSettings())
 })
 
+test("export keeps a stored channel's known slots and leaves a newer version's extra columns out of the file", () => {
+  const stamp = { v: 1, gen: "old", at: 0, by: "source" }
+  const channels = [["UCAAAAAAAAAAAAAAAAAAAAAA", "with handle", "@handle", "future-column"], ["UCBBBBBBBBBBBBBBBBBBBBBB", "no handle", null, "future-column"]]
+  const result = exportFile({ source: { ...canonicalSource(), accounts: [{ account: accountA, setup: decodeDocument(undefined, decodeSetup), filters: [
+    { playlist: playlist("PL_FUTURE"), document: decodeDocument({ ...stamp, data: { mode: "deny", on: true, channels } }, decodeFilter) }
+  ] }] }, version: "2.0.0", date: "2024-02-29" })
+  if (result.kind !== "exported") throw new Error("export-refused")
+  expect(record(record(fixture(result.file.text).accounts)[accountA]).filters).toEqual({ PL_FUTURE: { mode: "deny", on: true, channels: [
+    ["UCAAAAAAAAAAAAAAAAAAAAAA", "with handle", "@handle"], ["UCBBBBBBBBBBBBBBBBBBBBBB", "no handle"]
+  ] } })
+})
+
 test("canonical defaulting stays available internally while an incomplete external file refuses", () => {
   expect(decodeSettings({})).toEqual(defaultSettings())
   expect(decodeSetup({})).toEqual(defaultSetup())
