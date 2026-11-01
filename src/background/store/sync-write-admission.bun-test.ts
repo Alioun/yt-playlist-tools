@@ -219,3 +219,17 @@ test("batch preserves own extension-bearing tombstones and nonenumerable rejecti
   const hidden = Object.defineProperty({ ...document }, "hidden", { value: 1 })
   expect(planSyncWrite({ ...input, intent: { kind: "changed-batch", documents: [{ key, document: hidden }] } })).toEqual({ kind: "refused", reason: "invalid" })
 })
+
+test("a tombstone only sync holds lets edits and flushes through while a live document only sync holds still blocks them", () => {
+  const f = fixture(), gone = "s:filter:AAAAAAAAAAAAAAAA:PL_gone", dead = { v: 1, gen: "dead", at: 2, by: "elsewhere", deleted: true }
+  const chunked = encoded({ kind: "filter", acct, playlist: "PL_gone" as typeof playlist }, { ...dead, extension: "x".repeat(9000) })
+  expect(chunked.length).toBeGreaterThan(1)
+  for (const remote of [{ [gone]: dead }, Object.fromEntries(chunked.map(item => [item.key, item.value]))]) {
+    const sync = { ...f.sync, ...remote }
+    expect(planSyncWrite({ ...f, sync })).toMatchObject({ kind: "planned", sent: [{ name: localKey, gen: "g1" }] })
+    expect(planSyncWrite({ ...f, sync, intent: { kind: "flush" } })).toMatchObject({ kind: "planned", sent: [], repairs: [] })
+  }
+  const live = { ...f.sync, [gone]: { v: 1, gen: "alive", at: 2, by: "elsewhere", data: { mode: "deny", on: true, channels: [] } } }
+  expect(planSyncWrite({ ...f, sync: live })).toEqual(unavailable)
+  expect(planSyncWrite({ ...f, sync: live, intent: { kind: "flush" } })).toEqual(unavailable)
+})

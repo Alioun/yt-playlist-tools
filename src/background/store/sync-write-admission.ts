@@ -150,7 +150,8 @@ export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
     const key = parseDocumentKey(`doc:${base.slice(2)}`)
     if (!key || `s:${documentKey(key).slice(4)}` !== base || Object.hasOwn(local, documentKey(key))) continue
     const remote = readSyncDocument({ key, items: current })
-    if (remote.kind !== "newer-version") return unavailable
+    // A synced tombstone agrees with this browser's absence, as between the two turns of an expiry (R178).
+    if (remote.kind !== "newer-version" && remote.kind !== "deleted") return unavailable
   }
   let candidates: readonly Candidate[] = intent.kind === "changed-batch" ? intent.documents : []
   if (intent.kind === "changed") {
