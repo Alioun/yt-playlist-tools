@@ -225,7 +225,7 @@ export const fixtureGates: readonly FixtureGate[] = [
   tsc("view-publication"),
 
   consumer("withdrawn-document-recovery", { timeoutMs: heavy }),
-  consumer("withdrawn-document-recovery", { variants: [["--playlist-v2-only"]], timeoutMs: heavy })
+  consumer("withdrawn-document-recovery", { variants: [["--playlist-v2-only"]], timeoutMs: 900_000 })
 ]
 
 export function gateId(gate: FixtureGate): string {
