@@ -4,6 +4,9 @@
 stats.html
 stats-*.json
 
+# The built Pages site (scripts/build-site.ts)
+_site/
+
 # Logs
 logs
 *.log

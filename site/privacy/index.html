@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy policy: Perchling for YouTube™</title>
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <!--
+    The text the owner approved on 2026-11-01 (G14), as drafted in spec 08-release §10.2 (REL-STORE-17).
+    Change it only with the owner's approval, in a minor release, together with
+    the consent version and store/cws-dashboard.md (REL-STORE-19). Date each change on this page.
+  -->
+  <header>
+    <a href="../"><picture>
+      <source srcset="../assets/lockup-on-dark.svg" media="(prefers-color-scheme: dark)">
+      <img src="../assets/lockup-on-light.svg" alt="Perchling" width="177" height="48">
+    </picture></a>
+    <nav>
+      <a href="../">Home</a>
+      <a href="https://github.com/Alioun/yt-playlist-tools">Source</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Privacy policy: Perchling for YouTube™</h1>
+    <p class="meta"><em>Effective {{effective}}. Covers version 1.99 (beta) and later of the Perchling for YouTube™ browser extension (formerly YouTube Playlist Tools) for Firefox and Chrome. Developer: Alioun (<a href="https://github.com/Alioun">github.com/Alioun</a>).</em></p>
+
+    <p><strong>In short:</strong> Perchling has no server. It works inside your YouTube and YouTube Music tabs, as the account you're signed in to there, and keeps its settings in your browser. Nothing is sent to the developer or to anyone else. No analytics, no ads, no tracking.</p>
+
+    <h2>What it handles, and why</h2>
+    <p>Only for features you switch on, and only after you agree to the notice the extension shows first:</p>
+    <ul>
+      <li><strong>What you watch and listen to on YouTube and YouTube Music:</strong> the video or song you're on, its channel, and how much of it you've actually played. Used by auto-add, channel filters, shortcuts and the watch-page button.</li>
+      <li><strong>Your playlists:</strong> their names, privacy setting, number of items and thumbnail links, and which of them hold a given video. Used to let you choose playlists, to show where a video already is, and to never add it twice.</li>
+      <li><strong>Your YouTube account's name, @handle and picture link,</strong> and a code derived from YouTube's internal account ID (the ID itself is never stored). Used to keep a separate setup per account and to show which one is in use.</li>
+      <li><strong>Keys you press on YouTube and YouTube Music pages:</strong> only to recognise the shortcut keys you set. Other keys are ignored and never recorded. Keys you set in your browser for Keys from any tab are caught by the browser, which tells the extension only which of its actions you asked for.</li>
+      <!-- PROVISIONAL on ticket 25 (R48): this bullet goes if no shipped route reads the session cookie. -->
+      <li><strong>YouTube's sign-in cookie, inside your YouTube tab:</strong> to sign the extension's requests to YouTube the same way YouTube's own page does, where YouTube's code can't send a request itself. It's used on the spot and never stored, logged or sent anywhere but YouTube.</li>
+      <li><strong>Channels you add to channel filters:</strong> their IDs, names and @handles.</li>
+      <li><strong>The YouTube tabs open in a window, when you gather them</strong> (Gather tabs, or its automatic options if you switch them on): their addresses, titles, place in the window and when you last switched to them. Used to collect their videos in the order you chose, and to close those tabs if you asked. Only the videos' IDs leave your browser, sent to YouTube to build the list or add them to your playlist.</li>
+    </ul>
+
+    <h2>What leaves your browser</h2>
+    <ul>
+      <li><strong>Requests to YouTube (youtube.com and music.youtube.com), as you.</strong> They're the requests YouTube's own buttons send: listing your playlists, checking which playlists hold a video, adding or removing a video, creating a playlist, the queue, likes, and your YouTube Music library. When you gather tabs, they also build YouTube's queue from a list, or open YouTube's own list of the videos you gathered. They're sent from your YouTube tab with your YouTube session, when you act, when auto-add adds a video you watched, or when automatic gathering saves your tabs. YouTube's own privacy policy applies to them: <a href="https://policies.google.com/privacy">https://policies.google.com/privacy</a>.</li>
+      <li><strong>Settings sync, only if you switch it on,</strong> through your browser's own sync (Chrome Sync or Firefox Sync, under your browser account). It carries which features are on and their options, your shortcut keys and labels, and for each account: its code, name, @handle and picture link, the playlists you chose, and your channel filters. Watch progress, cached lists and your consent never sync. The developer can't see synced data.</li>
+      <li><strong>A problem report, only if you start one.</strong> Report a problem opens GitHub's new-issue page with the extension's version, your browser and its version, the feature you picked and its status already filled in, and shows you those values first. They reach GitHub when its page opens, and the developer only if you submit the issue, which needs a GitHub account and is public. The diagnostics report goes in only if you paste it. GitHub's own privacy statement applies there.</li>
+      <li><strong>A settings file, only if you export one.</strong> It goes where you save it, and holds your settings, your accounts' names and the IDs of the playlists and channels you chose.</li>
+      <li><strong>Nothing else.</strong> No error or crash reports, no analytics, no remote configuration. The extension downloads no code.</li>
+    </ul>
+
+    <h2>What's kept in your browser</h2>
+    <ul>
+      <li>Your settings and each account's setup, and your consent.</li>
+      <li>A list of each account's playlists (names, counts, thumbnail links), refreshed when it's shown and more than 5 minutes old; playlists you created in the last 24 hours.</li>
+      <li>Watch progress per video (which stretches you played, the length, when it last played). It's deleted once auto-add has added the video or found it already there, if the video's length changes, 30 days after it last played, or when you switch auto-add off.</li>
+      <li>Settings from 1.x that are waiting for their account.</li>
+      <li>Until the browser closes, or the extension updates: pause, videos you chose not to auto-add, the list of your recent adds (you can switch it off in Settings › Privacy &amp; data), the last gathers, with the addresses of the tabs they closed, so you can undo them, and notes about YouTube changes that stop a feature. Skipped videos and recent adds name videos and playlists, but they stay in this browser's memory until it closes, and are never synced or sent anywhere. The notes about YouTube changes name no video, playlist, channel or account.</li>
+    </ul>
+
+    <h2>Private windows</h2>
+    <p>The extension runs there only if you allow it in your browser. Nothing from a private session is stored: no setups, lists, watch progress or account details.</p>
+
+    <h2>Diagnostics report</h2>
+    <p>Settings › Diagnostics can show a report about the extension's state. It names no video, playlist, channel or account. It's shown only to you, and leaves your browser only if you copy and share it yourself, for example by pasting it into a problem report.</p>
+
+    <h2>Your choices</h2>
+    <ul>
+      <li>Switch any feature off in the popup or Settings.</li>
+      <li>Withdraw your consent in Settings › Privacy &amp; data: everything stops.</li>
+      <li>Remove one account's setup in Settings › Accounts.</li>
+      <li><strong>Clear all data</strong> in Settings › Privacy &amp; data deletes everything the extension keeps in this browser. Tick the box to also delete the synced copy.</li>
+      <li>Export your settings to a file, or import them, in Settings › Privacy &amp; data.</li>
+      <li>Switch off the list of recent adds there too.</li>
+      <li>Uninstalling deletes all of it.</li>
+      <li>Your playlists on YouTube are yours, on YouTube; the extension never deletes them.</li>
+      <li>Upgraded from 1.x? 2.0 deleted 1.x's Google credentials from your browser. You can remove 1.x's access at <a href="https://myaccount.google.com/permissions">https://myaccount.google.com/permissions</a>.</li>
+    </ul>
+
+    <h2>Chrome Web Store: Limited Use</h2>
+    <p>The use of information received from Google APIs will adhere to the Chrome Web Store User Data Policy, including the Limited Use requirements. That covers everything the extension handles: it's used only for the features described here. It's never sold, never used for advertising or to determine creditworthiness, and never transferred to anyone.</p>
+
+    <h2>Changes</h2>
+    <p>Changes are dated on this page; earlier versions are in the project's <a href="https://github.com/Alioun/yt-playlist-tools/commits/main/site/privacy/index.html">history on GitHub</a>. If a new version handles your data in a new way, the extension asks for your agreement again before it does.</p>
+
+    <h2>Contact</h2>
+    <p>Questions and problems: <a href="https://github.com/Alioun/yt-playlist-tools/issues/new/choose">https://github.com/Alioun/yt-playlist-tools/issues/new/choose</a> (a GitHub account is needed). There's no support e-mail. Without a GitHub account, you can leave a review on the extension's store page, which the developer reads.</p>
+  </main>
+
+  <footer>
+    <p>Not affiliated with or endorsed by YouTube or Google. YouTube and YouTube Music are trademarks of Google LLC. Use of these trademarks is subject to Google Permissions.</p>
+  </footer>
+</body>
+</html>

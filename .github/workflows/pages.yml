@@ -1,0 +1,61 @@
+name: Pages
+
+# Deploys site/ to GitHub Pages, with beta/updates.json generated from the
+# releases at deploy time and never committed (REL-CI-43 to REL-CI-45).
+# release.yml dispatches it after a release, because a release made with
+# GITHUB_TOKEN starts no workflow by itself. After attaching AMO's signed
+# .xpi to a release by hand, run it again (Actions › Pages › Run workflow).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "scripts/build-site.ts"
+      - ".github/workflows/pages.yml"
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deployment at a time, and a running one is never cut off.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - uses: actions/configure-pages@v6
+
+      # Uses only Node built-ins, so no install. Reads the releases with the
+      # job's token and hashes each served .xpi.
+      - name: Build the site
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bun scripts/build-site.ts --out _site
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
