@@ -909,11 +909,11 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
         })
         if (result.kind === "committed") {
           keyPending = false
-          const events: ConfirmedViewChange[] = [{ kind: "settings-changed", source: "local" },
-            ...keySettingsAccounts(original.record).map(acct => ({ kind: "setup-changed", source: "local", acct } satisfies ConfirmedViewChange))]
+          const events: (SettingsEvent | SetupEvent)[] = [{ kind: "settings-changed", source: "local" },
+            ...keySettingsAccounts(original.record).map(acct => ({ kind: "setup-changed", source: "local", acct } satisfies SetupEvent))]
           for (const event of events) {
             for (const listener of [...viewListeners]) { try { listener(event) } catch {} }
-            if (event.kind !== "account-removed") for (const listener of [...listeners]) { try { listener(event) } catch {} }
+            for (const listener of [...listeners]) { try { listener(event) } catch {} }
           }
         }
         return result
