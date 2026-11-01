@@ -240,3 +240,40 @@ describe("Firefox reopening at the browser boundary", () => {
     expect(created).toEqual([{ windowId: 1, url: watch(v[2]!), active: false, index: 0 }])
   })
 })
+
+describe("absence at the browser boundary", () => {
+  const failing = () => {
+    const failure = { tab: new Error(), window: new Error() }
+    const created: unknown[] = []
+    const fake: GatherBrowser = {
+      tabs: {
+        query: async () => [], get: async () => { throw failure.tab }, remove: async () => {},
+        create: async props => { created.push(props); throw new Error("unexpected create") }
+      },
+      windows: { get: async () => { throw failure.window }, create: async () => ({ tabs: [] }) }
+    }
+    return { failure, created, port: createGatherBrowser(fake, { unloadedReopen: false }) }
+  }
+
+  test("only the browser's no-such-tab error reads a tab as gone; any other failure leaves it unreadable", async () => {
+    const { failure, port } = failing()
+    failure.tab = new Error("No tab with id: 5.")
+    expect(await port.read(5)).toEqual({ kind: "gone" })
+    failure.tab = new Error("Invalid tab ID: 5")
+    expect(await port.read(5)).toEqual({ kind: "gone" })
+    failure.tab = new Error("Tabs cannot be edited right now (user may be dragging a tab).")
+    expect(await port.read(5)).toEqual({ kind: "unavailable" })
+  })
+
+  test("only the browser's no-such-window error sends a reopen to a new window", async () => {
+    const { failure, created, port } = failing()
+    const reopen = () => port.create({ windowId: 1, url: watch(v[0]!), active: false, index: 0 }, { title: "One" })
+    failure.window = new Error("No window with id: 1.")
+    expect(await reopen()).toEqual({ kind: "window-gone" })
+    failure.window = new Error("Invalid window ID: 1")
+    expect(await reopen()).toEqual({ kind: "window-gone" })
+    failure.window = new Error("Could not establish connection. Receiving end does not exist.")
+    expect(await reopen()).toEqual({ kind: "unavailable" })
+    expect(created).toEqual([])
+  })
+})

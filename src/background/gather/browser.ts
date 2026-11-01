@@ -16,6 +16,11 @@ export type GatherBrowser = {
   }
 }
 
+// Absence is only the browser's own "no such ID" answer: Chrome's "No tab with id: 5." and Firefox's "Invalid tab ID: 5".
+// Any other failure says nothing about whether the tab or window still exists.
+const missing = (error: unknown, what: "tab" | "window") =>
+  error instanceof Error && new RegExp(`^(No ${what} with id|Invalid ${what} ID):`, "i").test(error.message)
+
 function parse(tab: BrowserTab): GatherTab | undefined {
   if (!isTabId(tab.id) || !isTabId(tab.windowId) || typeof tab.url !== "string" || typeof tab.index !== "number" || tab.index < 0 ||
     typeof tab.incognito !== "boolean") return
@@ -34,12 +39,12 @@ export function createGatherBrowser(browser: GatherBrowser, options: { readonly 
     },
     async read(tabId) {
       let tab: BrowserTab
-      try { tab = await browser.tabs.get(tabId) } catch { return { kind: "gone" } }
+      try { tab = await browser.tabs.get(tabId) } catch (error) { return { kind: missing(error, "tab") ? "gone" : "unavailable" } }
       const parsed = parse(tab)
       return parsed ? { kind: "tab", tab: parsed, status: tab.status === "complete" ? "complete" : "loading" } : { kind: "unavailable" }
     },
     async create(props, reopened) {
-      try { await browser.windows.get(props.windowId) } catch { return { kind: "window-gone" } }
+      try { await browser.windows.get(props.windowId) } catch (error) { return { kind: missing(error, "window") ? "window-gone" : "unavailable" } }
       const base = { windowId: props.windowId, url: props.url, active: props.active, ...props.index === undefined ? {} : { index: props.index } }
       const made = (tab: BrowserTab) => isTabId(tab.id) ? { kind: "created" as const, tabId: tab.id } : { kind: "unavailable" as const }
       // Firefox takes both `discarded` and `title`. If it refuses the unloaded tab, the same tab opens loaded instead.
