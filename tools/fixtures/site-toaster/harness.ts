@@ -1,5 +1,6 @@
 import { Scope } from "../../../src/site/core/scope"
 import { Keys } from "../../../src/site/core/keys"
+import { press as pressKey } from "../pointer-keys/harness"
 import { createFeedback, type FeedbackLabels } from "../../../src/site/kit/feedback"
 import { englishI18n } from "../localization/scripted"
 import type { TabFeature, TabView } from "../../../src/shared/contracts/tab-view"
@@ -62,14 +63,7 @@ export function fixture(site: "www" | "music" = "www") {
 }
 export function playlist() { const id = "PLmusic"; if (!isPlaylistId(id)) throw Error("Invalid synthetic playlist"); return id }
 export const titles = () => ({ video: "Song", playlists: { [playlist()]: "Music" } })
-export function press(init: KeyboardEventInit = {}) {
-  const event = new KeyboardEvent("keydown", { key: "u", code: "KeyU", altKey: true, bubbles: true, cancelable: true, composed: true, ...init })
-  const modifier = event.getModifierState.bind(event)
-  // happy-dom reports AltGraph whenever Alt is held; a browser's Alt+U does not.
-  Object.defineProperty(event, "getModifierState", { value: (name: string) => name !== "AltGraph" && modifier(name) })
-  document.body.dispatchEvent(event)
-  return event
-}
+export const press = (init: KeyboardEventInit = {}) => pressKey(document.body, init)
 export function deferred<T>() {
   let resolve: (value: T) => void = () => {}
   let reject: (error: unknown) => void = () => {}

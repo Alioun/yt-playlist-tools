@@ -24,6 +24,9 @@ export function press(target: EventTarget = document.body, init: KeyboardEventIn
   const event = new KeyboardEvent("keydown", {
     key: "u", code: "KeyU", altKey: true, bubbles: true, cancelable: true, composed: true, ...init
   })
+  const modifier = event.getModifierState.bind(event)
+  // happy-dom reports AltGraph whenever Alt is held; a browser's Alt+U does not.
+  Object.defineProperty(event, "getModifierState", { value: (name: string) => name !== "AltGraph" && modifier(name) })
   target.dispatchEvent(event)
   return event
 }
