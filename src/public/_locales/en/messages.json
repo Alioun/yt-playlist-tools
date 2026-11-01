@@ -290,11 +290,11 @@
     "message": "Perchling works inside your YouTube and YouTube Music tabs, as the account you're signed in to there. For the features you switch on, it:"
   },
   "disclosure_bullet_1": {
-    "message": "[[strong]]reads what you watch and listen to there:[[/strong]] the video or song, its channel, and how much of it you've played;",
+    "message": "[[strong]]reads what you watch and listen to there,[[/strong]] meaning the video or song, its channel, and how much of it you've played;",
     "description": "A complete message. The [[strong]] and [[/strong]] markers select emphasis and render as escaped text."
   },
   "disclosure_bullet_2": {
-    "message": "[[strong]]reads and changes your playlists, as you:[[/strong]] it lists them, checks which ones already hold a video, and adds or removes videos when you ask, or when auto-add or automatic gathering does, using YouTube's own requests;"
+    "message": "[[strong]]reads and changes your playlists as you,[[/strong]] using YouTube's own requests. It lists them, checks which ones already hold a video, and adds or removes videos when you ask, or when auto-add or automatic gathering does;"
   },
   "disclosure_bullet_3": {
     "message": "[[strong]]reads the YouTube tabs open in a window when you gather them,[[/strong]] or when automatic gathering does: their addresses and titles, to collect their videos. It closes those tabs only if you've asked it to;"

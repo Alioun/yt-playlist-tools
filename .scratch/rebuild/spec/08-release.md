@@ -461,8 +461,8 @@ Then **[Open YouTube]** **[Open Settings]**.
   - Settings' dialog, or the popup's sheet, when a feature is switched on without consent: "Before this feature can run" ([FT-32](04-features-accounts-data.md#15-the-consent-gate), [UI-ONB-09](05-ui.md#the-disclosure)).
 
 > Perchling works inside your YouTube and YouTube Music tabs, as the account you're signed in to there. For the features you switch on, it:
-> - **reads what you watch and listen to there:** the video or song, its channel, and how much of it you've played;
-> - **reads and changes your playlists, as you:** it lists them, checks which ones already hold a video, and adds or removes videos when you ask, or when auto-add or automatic gathering does, using YouTube's own requests;
+> - **reads what you watch and listen to there,** meaning the video or song, its channel, and how much of it you've played;
+> - **reads and changes your playlists as you,** using YouTube's own requests. It lists them, checks which ones already hold a video, and adds or removes videos when you ask, or when auto-add or automatic gathering does;
 > - **reads the YouTube tabs open in a window when you gather them,** or when automatic gathering does: their addresses and titles, to collect their videos. It closes those tabs only if you've asked it to; *(R138)*
 > - **signs those requests the way YouTube's page does,** with YouTube's sign-in cookie, inside the YouTube tab. It never stores that cookie or sends it anywhere else; *(PROVISIONAL, ticket 25: removed if no shipped route reads the session cookie, R48)*
 > - **watches for the shortcut keys you set** on YouTube and YouTube Music pages, and ignores every other key. Keys you set in your browser for Keys from any tab are caught by the browser itself; *(R88)*

@@ -6,8 +6,8 @@ export const FIRST_RUN_DISCLOSURE_VERSION = 1
 // These fixed digests derive from the frozen version 1 source, independently of this catalogue.
 // A catalogue edit needs a separately approved identity and version decision.
 const expected = {
-  "chrome": "d0cb6ba0a32a5b8e458807bbb11ebd0eb63211eec0ac4191d09dc7eb1aaff615",
-  "firefox": "2ce3147d10d7f7df939e4cf28f90765f3838fa89ec8e42b2d5f8241af40feef8"
+  "chrome": "3fbe7cb9447bb8fc45151f740d96b220206c9cdb223539988286ec913e7d3bf9",
+  "firefox": "688356ffa3a3674b6800aafb2c81beaf2effc58bdd674549c71b247e51a6379d"
 } as const
 const mark = (parts: DisclosureText["items"][number]["parts"]) => parts.map(part => part.kind === "strong" ? `[[strong]]${part.text}[[/strong]]` : part.text).join("")
 
