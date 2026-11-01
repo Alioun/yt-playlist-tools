@@ -156,7 +156,7 @@ export const fixtureGates: readonly FixtureGate[] = [
   consumer("settings-file-owner", { expected: "expected-stdout.jsonl" }),
   tsc("settings-file-owner"),
 
-  suite("settings-import-execution", ["canonical.bun-test.ts", "consumer.bun-test.ts", "owner.bun-test.ts", "publication.bun-test.ts"], { testTimeoutMs: 10_000, timeoutMs: heavy }),
+  suite("settings-import-execution", ["canonical.bun-test.ts", "consumer.bun-test.ts", "owner.bun-test.ts", "publication.bun-test.ts"], { testTimeoutMs: 10_000, timeoutMs: 1_200_000 }),
   consumer("settings-import-execution", { expected: "expected.jsonl" }),
   tsc("settings-import-execution"),
 
