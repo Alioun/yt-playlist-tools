@@ -51,7 +51,7 @@ function project(browser: TargetBrowser): ViteUserConfig {
     plugins: [
       wxtTestGlobals(browser, MANIFEST_VERSION),
       react(),
-      WxtVitest({ browser, manifestVersion: MANIFEST_VERSION })
+      WxtVitest({ browser, manifestVersion: MANIFEST_VERSION, dev: { server: { port: 3000, strictPort: true } } })
     ],
     test: {
       name: browser,

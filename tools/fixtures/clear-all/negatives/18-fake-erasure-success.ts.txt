@@ -1,0 +1,4 @@
+import type { ClearAllAnswer } from "../../../src/shared/contracts/clear-all"
+
+const negative: ClearAllAnswer = { kind: "cleared", ok: true }
+export {}

@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, expect, mock, spyOn, test } from "bun:test"
 import { fakeBrowser } from "wxt/testing/fake-browser"
+import type { SessionPort } from "../store/session-memory"
+import { isAccountKey, isPlaylistId, isVideoId } from "../../shared/model"
+import { brand, harness, no, shortcut, tabOrigin } from "../../../tools/fixtures/add-flow/harness"
 import { isJsonValue } from "../../shared/contracts/json"
 import { createBrowserLocalFilterWriter as constructBrowserLocalFilterWriter } from "./local-filter-writer"
+import { createBrowserStartingLocalFilterWriter } from "./starting-owner"
+import { startingOwnerFixture } from "../../../tools/fixtures/starting-owner/support"
 import type { LocalFilterWriteResult, SyncAutomaticResult, SyncFlushResult, SyncReceiveKey, SyncReceiveResult } from "../store/local-filter-writer"
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
@@ -9,6 +14,7 @@ type Check<T extends true> = T
 type NativeBrowser = typeof import("wxt/browser").browser
 type ExpectedSender = Parameters<Parameters<NativeBrowser["runtime"]["onMessage"]["addListener"]>[0]>[1]
 export type BrowserAdapterProof = Check<Equal<typeof createBrowserLocalFilterWriter, (native: NativeBrowser, options: { onSyncResult: (result: SyncAutomaticResult) => void }) => {
+  session: SessionPort
   changeFromSettings(raw: unknown, sender: ExpectedSender): Promise<LocalFilterWriteResult>
   receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>
   flushSync(): Promise<SyncFlushResult>
@@ -57,6 +63,96 @@ function instrument() {
   const adapter = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
   return { adapter, set, get, syncGet, syncSet }
 }
+
+test("native session port uses the canonical writer's fresh reads, exact set and account-key removal", async () => {
+  const h = instrument(), acct = brand(isAccountKey, "AAAAAAAAAAAAAAAA")
+  await fakeBrowser.storage.session.set({ unknown: { kept: true } })
+  const get = spyOn(fakeBrowser.storage.session, "get"), set = spyOn(fakeBrowser.storage.session, "set"), remove = spyOn(fakeBrowser.storage.session, "remove")
+  const first = await h.adapter.session.read()
+  if (first.kind !== "memory") throw Error("Expected canonical session authority")
+  const video = brand(isVideoId, "vid00000001")
+  const skip = await h.adapter.session.change({ revision: first.revision, now: 1_700_000_000_000, edits: [{ kind: "skip", acct, video, playlists: "all" }] })
+  expect(skip.kind).toBe("committed")
+  if (skip.kind !== "committed") throw Error("Expected confirmed skip")
+  const cleared = await h.adapter.session.change({ revision: skip.revision, now: 1_700_000_000_001, edits: [{ kind: "unskip", acct, video }] })
+  expect(cleared.kind).toBe("committed")
+  expect<unknown>(get.mock.calls).toEqual([[null], [null], [null], [null], [null]])
+  expect<unknown>(set.mock.calls).toEqual([[{ [`skips:${acct}`]: { [video]: "all" } }]])
+  expect<unknown>(remove.mock.calls).toEqual([[`skips:${acct}`].map(key => [key])])
+  expect(await fakeBrowser.storage.session.get(null)).toEqual({ unknown: { kept: true } })
+  expect(h.syncGet).not.toHaveBeenCalled()
+  expect(h.syncSet).not.toHaveBeenCalled()
+})
+
+test.each(["rejected", "applied-rejection", "ignored", "readback-failed"] as const)("native session readback distinguishes %s without retry", async mode => {
+  const h = instrument(), read = await h.adapter.session.read()
+  if (read.kind !== "memory") throw Error("Expected canonical session authority")
+  const error = Error("Synthetic native session failure")
+  const originalSet = fakeBrowser.storage.session.set.bind(fakeBrowser.storage.session)
+  const originalGet = fakeBrowser.storage.session.get.bind(fakeBrowser.storage.session)
+  let wrote = false
+  const set = spyOn(fakeBrowser.storage.session, "set").mockImplementation(async items => {
+    wrote = true
+    if (mode === "rejected") throw error
+    if (mode !== "ignored") await originalSet(items)
+    if (mode === "applied-rejection") throw error
+  })
+  const get = spyOn(fakeBrowser.storage.session, "get").mockImplementation(new Proxy(originalGet, {
+    apply(target, receiver, args) {
+      if (mode === "readback-failed" && wrote) return Promise.reject(error)
+      return Reflect.apply(target, receiver, args)
+    }
+  }))
+  const result = await h.adapter.session.change({ revision: read.revision, now: 1_700_000_000_000, edits: [{ kind: "pause", paused: true }] })
+  expect(result).toEqual(mode === "rejected" ? { kind: "failed", applied: false, error }
+    : mode === "applied-rejection" ? { kind: "failed", applied: true, error }
+      : mode === "ignored" ? { kind: "unconfirmed", cause: { kind: "readback" } }
+        : { kind: "unconfirmed", cause: { kind: "read-failed", error } })
+  expect<unknown>(set.mock.calls).toEqual([[{ paused: true }]])
+  expect<unknown>(get.mock.calls).toEqual([[null], [null]])
+  const after = await h.adapter.session.read()
+  expect(after.kind).toBe(mode === "rejected" ? "memory" : "unavailable")
+  expect(set).toHaveBeenCalledTimes(1)
+})
+
+test("real engine keeps private account facts outside native session while sharing Pause", async () => {
+  const h = instrument(), acct = brand(isAccountKey, "AAAAAAAAAAAAAAAA"), playlist = brand(isPlaylistId, "PL_P")
+  const video = brand(isVideoId, "vid00000001"), privateVideo = brand(isVideoId, "vid00000002")
+  const yt = harness({ session: h.adapter.session, clock: 1_700_000_000_000 })
+  yt.tab(1, acct); yt.tab(2, acct)
+  yt.setup(acct, { kind: "shortcut", shortcut }, [{ playlist }])
+  yt.setup(acct, { kind: "auto-add" }, [{ playlist }])
+  const set = spyOn(fakeBrowser.storage.session, "set"), remove = spyOn(fakeBrowser.storage.session, "remove")
+  const normal = tabOrigin(1), privateTab = tabOrigin(2, true)
+  const added = await yt.flow.add({ via: "shortcut", site: "www", video, shortcut }, normal)
+  expect(added.kind === "report" && added.outcomes).toEqual({ [playlist]: { kind: "added" } })
+  expect<unknown>(set.mock.calls).toEqual([[{ recent: [{ acct, playlist, video, at: 1_700_000_000_000 }] }]])
+  const nativeBefore = await fakeBrowser.storage.session.get(null)
+  const privateAdd = await yt.flow.add({ via: "shortcut", site: "www", video: privateVideo, shortcut }, privateTab)
+  expect(privateAdd.kind === "report" && privateAdd.outcomes).toEqual({ [playlist]: { kind: "added" } })
+  expect(await yt.flow.skip({ kind: "skip", acct, video, playlists: "all" }, privateTab)).toEqual({ kind: "remembered", scope: "private" })
+  const gather = await yt.flow.batch({ playlist: brand(isPlaylistId, "WL"), videos: [privateVideo], auto: false }, privateTab)
+  if (gather.kind !== "report" || !gather.undo || privateAdd.kind !== "report" || !privateAdd.undo) throw Error("Expected private Undo handles")
+  expect(await yt.flow.undo(privateAdd.undo, privateTab)).toEqual({ kind: "undone" })
+  expect(await yt.flow.undo(gather.undo, privateTab)).toEqual({ kind: "undone" })
+  yt.script.add.push(() => no<"add">("failed", 429))
+  const limited = await yt.flow.add({ via: "shortcut", site: "www", video: privateVideo, shortcut }, privateTab)
+  expect(limited.kind === "report" && limited.outcomes).toEqual({ [playlist]: { kind: "failed", failure: "rate-limited" } })
+  const callsBeforeHold = yt.calls.length
+  const held = await yt.flow.add({ via: "shortcut", site: "www", video: privateVideo, shortcut }, privateTab)
+  expect(held.kind === "report" && held.outcomes).toEqual({ [playlist]: { kind: "failed", failure: "paused" } })
+  expect(yt.calls.length).toBe(callsBeforeHold)
+  expect(await fakeBrowser.storage.session.get(null)).toEqual(nativeBefore)
+  expect(set).toHaveBeenCalledTimes(1)
+  expect(remove).not.toHaveBeenCalled()
+  expect(await yt.flow.pause(true)).toEqual({ kind: "remembered", scope: "normal" })
+  expect<unknown>(set.mock.calls).toEqual([[{ recent: [{ acct, playlist, video, at: 1_700_000_000_000 }] }], [{ paused: true }]])
+  const sent = yt.calls.length
+  const paused = await yt.flow.add({ via: "auto-add", site: "www", video: privateVideo, playlists: [playlist], channel: null }, privateTab)
+  expect(paused.kind === "report" && paused.outcomes).toEqual({})
+  expect(yt.calls.length).toBe(sent)
+  await yt.flow.quiesce()
+})
 
 test("synthetic normal native metadata admits only settings and never touches sync", async () => {
   const h = instrument()
@@ -249,7 +345,7 @@ test("synthetic joined adapter lazily confirms Filter and true provenance withou
   expect(syncGet).not.toHaveBeenCalled()
   expect(get).not.toHaveBeenCalled()
   expect(await adapter.changeFromSettings(request, sender)).toEqual({ kind: "result", result: { ok: true } })
-  expect<unknown>(get.mock.calls).toEqual([[["schema", "device", "sync", "doc:setup:AAAAAAAAAAAAAAAA", key]], [null], [null], [null]])
+  expect<unknown>(get.mock.calls).toEqual([[null], [null], [null], [null]])
   expect<unknown>(syncGet.mock.calls).toEqual([[null]])
   expect(set).toHaveBeenCalledTimes(1)
   expect(Object.keys(set.mock.calls[0]?.[0] ?? {})).toEqual([key, "sync"])
@@ -589,6 +685,20 @@ test("construction failure releases local admission before an owner escapes", as
   now.mockRestore()
   const replacement = createBrowserLocalFilterWriter(fakeBrowser, { onSyncResult() {} })
   await replacement.dispose()
+})
+
+test("legacy disposal hands its local area to the real starting facade through the same guard", async () => {
+  const h = startingOwnerFixture()
+  const legacy = constructBrowserLocalFilterWriter(h.native, { onSyncResult() {} })
+  expect(() => createBrowserStartingLocalFilterWriter(h.native, h.options)).toThrow("Local storage already owned")
+  await legacy.dispose()
+  const starting = createBrowserStartingLocalFilterWriter(h.native, h.options)
+  try {
+    expect(() => constructBrowserLocalFilterWriter(h.native, { onSyncResult() {} })).toThrow("Local storage already owned")
+    expect(await starting.ready()).toBe("ok")
+    expect(h.records()).toEqual({ schema: 1 })
+    expect(h.counts.rawLocal).toBe(0)
+  } finally { await starting.dispose() }
 })
 
 test("failed disposal retains duplicate admission and its rejection", async () => {

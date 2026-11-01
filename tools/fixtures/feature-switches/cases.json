@@ -1,0 +1,117 @@
+[
+  {
+    "name": "auto-add",
+    "field": "autoAdd",
+    "change": {
+      "kind": "feature",
+      "feature": "auto-add",
+      "value": true
+    }
+  },
+  {
+    "name": "shortcuts",
+    "field": "shortcuts",
+    "change": {
+      "kind": "feature",
+      "feature": "shortcuts",
+      "value": true
+    }
+  },
+  {
+    "name": "quick-save",
+    "field": "quickSave",
+    "change": {
+      "kind": "feature",
+      "feature": "quick-save",
+      "value": true
+    }
+  },
+  {
+    "name": "queue-button",
+    "field": "queueButton",
+    "change": {
+      "kind": "feature",
+      "feature": "queue-button",
+      "value": true
+    }
+  },
+  {
+    "name": "watch-button",
+    "field": "watchButton",
+    "change": {
+      "kind": "feature",
+      "feature": "watch-button",
+      "value": true
+    }
+  },
+  {
+    "name": "card-menu",
+    "field": "cardMenu",
+    "change": {
+      "kind": "feature",
+      "feature": "card-menu",
+      "value": true
+    }
+  },
+  {
+    "name": "browser-menu",
+    "field": "browserMenu",
+    "change": {
+      "kind": "feature",
+      "feature": "browser-menu",
+      "value": true
+    }
+  },
+  {
+    "name": "music-actions",
+    "field": "musicActions",
+    "change": {
+      "kind": "feature",
+      "feature": "music-actions",
+      "value": true
+    }
+  },
+  {
+    "name": "music-keys",
+    "field": "musicKeys",
+    "change": {
+      "kind": "feature",
+      "feature": "music-keys",
+      "value": true
+    }
+  },
+  {
+    "name": "any-tab-keys",
+    "field": "anyTabKeys",
+    "change": {
+      "kind": "feature",
+      "feature": "any-tab-keys",
+      "value": true
+    }
+  },
+  {
+    "name": "gather",
+    "field": "gather",
+    "change": {
+      "kind": "feature",
+      "feature": "gather",
+      "value": true
+    }
+  },
+  {
+    "name": "music-section",
+    "field": "musicSection",
+    "change": {
+      "kind": "music-section",
+      "value": true
+    }
+  },
+  {
+    "name": "shortcuts-music",
+    "field": "shortcuts.music",
+    "change": {
+      "kind": "shortcuts-music",
+      "value": true
+    }
+  }
+]

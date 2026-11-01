@@ -1,0 +1,403 @@
+{
+  "status": "static anchors checked; no compilation credit",
+  "relocations": [
+    {
+      "name": "ad-collapsed-into-nothing",
+      "originInventory": "tools/fixtures/items-music/controls.json",
+      "originalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 18237,
+        "sha256": "096acc61a2d3d5b2125e28574083bdbc902dd0dd461b7ed0cc5401ebd1b5c0b5",
+        "gitBlob": "b27ab8dc3a35ad00686831165a61c9a08bd778b5"
+      },
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 19728,
+        "sha256": "df964c655c475620edada472d52316dbbb9166465d6c8334efdd130e835f9f80",
+        "gitBlob": "9c79384f3345119d482e87da28bd94ec61a38043"
+      },
+      "reason": "The old ad-rejection line became an explicit ad producer. Mutate that producer to null.",
+      "originalEdits": [
+        {
+          "before": "  if (field(player, \"adShowing\") === true || field(player, \"adActive\") === true || field(player, \"presentingPlayerType\") === 2) return undefined",
+          "after": "  if (field(player, \"adShowing\") === true || field(player, \"adActive\") === true || field(player, \"presentingPlayerType\") === 2) return null"
+        }
+      ],
+      "finalEdits": [
+        {
+          "before": "    return { ok: false, reason: \"unavailable\", detail: { kind: \"music-ad\", evidence } }",
+          "after": "    return null"
+        }
+      ],
+      "compilation": "unexecuted"
+    },
+    {
+      "name": "unavailable-misclassified-as-ad",
+      "originInventory": "tools/fixtures/items-music/controls.json",
+      "originalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 19825,
+        "sha256": "1a880cc4e97b4f96c9031c7121b8c17164f845f59f379662e172559e3daee1fe",
+        "gitBlob": "ebb2b63900e6078b1e5feb42dbb68653325ec5d8"
+      },
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 20991,
+        "sha256": "8d266e0b9e65c3db41896f1f4ccc658b37ed5e8a81ca4d27b2726dfa2427beed",
+        "gitBlob": "55cc3707d3878f35eabebe1464e87cb877f3b713"
+      },
+      "reason": "The ordinary-failure branch now excludes validated ad detail. The mutation still invents an ad from an ordinary failure.",
+      "originalEdits": [
+        {
+          "before": "    if (!answer.ok) return { kind: \"unavailable\", failure: answer }",
+          "after": "    if (!answer.ok) return { kind: \"ad-playing\", evidence: \"adShowing\" }"
+        }
+      ],
+      "finalEdits": [
+        {
+          "before": "    if (!answer.ok && !isMusicAdFailure(answer)) return { kind: \"unavailable\", failure: answer }",
+          "after": "    if (!answer.ok && !isMusicAdFailure(answer)) return { kind: \"ad-playing\", evidence: \"adShowing\" }"
+        }
+      ],
+      "compilation": "unexecuted"
+    },
+    {
+      "name": "failed-recognition-fallback",
+      "originInventory": "tools/fixtures/items-music/controls.json",
+      "originalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 19825,
+        "sha256": "1a880cc4e97b4f96c9031c7121b8c17164f845f59f379662e172559e3daee1fe",
+        "gitBlob": "ebb2b63900e6078b1e5feb42dbb68653325ec5d8"
+      },
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 20991,
+        "sha256": "8d266e0b9e65c3db41896f1f4ccc658b37ed5e8a81ca4d27b2726dfa2427beed",
+        "gitBlob": "55cc3707d3878f35eabebe1464e87cb877f3b713"
+      },
+      "reason": "Final source identity changed; the original anchor and observable obligation remain.",
+      "originalEdits": [
+        {
+          "before": "    if (pointed.kind === \"unrecognised-item\") {\n      this.options.report.itemUnrecognised({ kind: \"item-unrecognised\", site: \"music\", source: facts.kind, element: pointed.element })\n      return pointed\n    }",
+          "after": ""
+        }
+      ],
+      "finalEdits": [
+        {
+          "before": "    if (pointed.kind === \"unrecognised-item\") {\n      this.options.report.itemUnrecognised({ kind: \"item-unrecognised\", site: \"music\", source: facts.kind, element: pointed.element })\n      return pointed\n    }",
+          "after": ""
+        }
+      ],
+      "compilation": "unexecuted"
+    },
+    {
+      "name": "unsupported-fallback",
+      "originInventory": "tools/fixtures/items-music/controls.json",
+      "originalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 19825,
+        "sha256": "1a880cc4e97b4f96c9031c7121b8c17164f845f59f379662e172559e3daee1fe",
+        "gitBlob": "ebb2b63900e6078b1e5feb42dbb68653325ec5d8"
+      },
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 20991,
+        "sha256": "8d266e0b9e65c3db41896f1f4ccc658b37ed5e8a81ca4d27b2726dfa2427beed",
+        "gitBlob": "55cc3707d3878f35eabebe1464e87cb877f3b713"
+      },
+      "reason": "The original fallback proposal cannot assign a playback-only detail to JobFailure. Handle that variant explicitly so the same unwanted fallback remains a compiling proposal.",
+      "originalEdits": [
+        {
+          "before": "          return { kind: \"unsupported-item\", target, item, action, message }",
+          "after": "          const alternative = await this.options.page.run({ job: { kind: \"nowPlaying\" } })\n          return alternative.ok && alternative.data !== null ? { kind: \"current-song\", song: alternative.data, queueDisposition: \"insert-copy\" }\n            : { kind: \"unavailable\", failure: alternative.ok ? unavailable : alternative }"
+        }
+      ],
+      "finalEdits": [
+        {
+          "before": "          return { kind: \"unsupported-item\", target, item, action, message }",
+          "after": "          const alternative = await this.options.page.run({ job: { kind: \"nowPlaying\" } })\n          return alternative.ok && alternative.data !== null ? { kind: \"current-song\", song: alternative.data, queueDisposition: \"insert-copy\" }\n            : isMusicAdFailure(alternative) ? { kind: \"ad-playing\", evidence: alternative.detail.evidence }\n            : { kind: \"unavailable\", failure: alternative.ok ? unavailable : alternative }"
+        }
+      ],
+      "compilation": "unexecuted"
+    },
+    {
+      "name": "stale-async-identity",
+      "originInventory": "tools/fixtures/items-music/controls.json",
+      "originalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 19825,
+        "sha256": "1a880cc4e97b4f96c9031c7121b8c17164f845f59f379662e172559e3daee1fe",
+        "gitBlob": "ebb2b63900e6078b1e5feb42dbb68653325ec5d8"
+      },
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 20991,
+        "sha256": "8d266e0b9e65c3db41896f1f4ccc658b37ed5e8a81ca4d27b2726dfa2427beed",
+        "gitBlob": "55cc3707d3878f35eabebe1464e87cb877f3b713"
+      },
+      "reason": "Final source identity changed; the original anchor and observable obligation remain.",
+      "originalEdits": [
+        {
+          "before": "      if (!sameItem(first.data, fresh.data) || !itemAgrees(target, fresh.data)) return { kind: \"stale-target\", reason: \"identity\" }",
+          "after": "      if (false) return { kind: \"stale-target\", reason: \"identity\" }"
+        }
+      ],
+      "finalEdits": [
+        {
+          "before": "      if (!sameItem(first.data, fresh.data) || !itemAgrees(target, fresh.data)) return { kind: \"stale-target\", reason: \"identity\" }",
+          "after": "      if (false) return { kind: \"stale-target\", reason: \"identity\" }"
+        }
+      ],
+      "compilation": "unexecuted"
+    },
+    {
+      "name": "queue-facts-not-refreshed",
+      "originInventory": "tools/fixtures/items-music/controls.json",
+      "originalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 19825,
+        "sha256": "1a880cc4e97b4f96c9031c7121b8c17164f845f59f379662e172559e3daee1fe",
+        "gitBlob": "ebb2b63900e6078b1e5feb42dbb68653325ec5d8"
+      },
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 20991,
+        "sha256": "8d266e0b9e65c3db41896f1f4ccc658b37ed5e8a81ca4d27b2726dfa2427beed",
+        "gitBlob": "55cc3707d3878f35eabebe1464e87cb877f3b713"
+      },
+      "reason": "Final source identity changed; the original anchor and observable obligation remain.",
+      "originalEdits": [
+        {
+          "before": "    const fresh = await this.details(tracking, tracking.revision, target, action)",
+          "after": "    const fresh: MusicResolution = { kind: \"pointed-item\", target, item: authority.item, queueDisposition: \"move-existing\" }"
+        }
+      ],
+      "finalEdits": [
+        {
+          "before": "    const fresh = await this.details(tracking, tracking.revision, target, action)",
+          "after": "    const fresh: MusicResolution = { kind: \"pointed-item\", target, item: authority.item, queueDisposition: \"move-existing\" }"
+        }
+      ],
+      "compilation": "unexecuted"
+    },
+    {
+      "name": "current-song-moved-instead-of-copied",
+      "originInventory": "tools/fixtures/items-music/controls.json",
+      "originalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 19825,
+        "sha256": "1a880cc4e97b4f96c9031c7121b8c17164f845f59f379662e172559e3daee1fe",
+        "gitBlob": "ebb2b63900e6078b1e5feb42dbb68653325ec5d8"
+      },
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 20991,
+        "sha256": "8d266e0b9e65c3db41896f1f4ccc658b37ed5e8a81ca4d27b2726dfa2427beed",
+        "gitBlob": "55cc3707d3878f35eabebe1464e87cb877f3b713"
+      },
+      "reason": "Final source identity changed; the original anchor and observable obligation remain.",
+      "originalEdits": [
+        {
+          "before": "queueDisposition: target.family === \"queue-item\" && !item.selected ? \"move-existing\" : \"insert-copy\"",
+          "after": "queueDisposition: target.family === \"queue-item\" ? \"move-existing\" : \"insert-copy\""
+        }
+      ],
+      "finalEdits": [
+        {
+          "before": "queueDisposition: target.family === \"queue-item\" && !item.selected ? \"move-existing\" : \"insert-copy\"",
+          "after": "queueDisposition: target.family === \"queue-item\" ? \"move-existing\" : \"insert-copy\""
+        }
+      ],
+      "compilation": "unexecuted"
+    },
+    {
+      "name": "leaked-listener-subscription-ownership",
+      "originInventory": "tools/fixtures/items-music/controls.json",
+      "originalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 19825,
+        "sha256": "1a880cc4e97b4f96c9031c7121b8c17164f845f59f379662e172559e3daee1fe",
+        "gitBlob": "ebb2b63900e6078b1e5feb42dbb68653325ec5d8"
+      },
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 20991,
+        "sha256": "8d266e0b9e65c3db41896f1f4ccc658b37ed5e8a81ca4d27b2726dfa2427beed",
+        "gitBlob": "55cc3707d3878f35eabebe1464e87cb877f3b713"
+      },
+      "reason": "Final source identity changed; the original anchor and observable obligation remain.",
+      "originalEdits": [
+        {
+          "before": "    tracking?.scope.dispose()",
+          "after": "    void tracking"
+        }
+      ],
+      "finalEdits": [
+        {
+          "before": "    tracking?.scope.dispose()",
+          "after": "    void tracking"
+        }
+      ],
+      "compilation": "unexecuted"
+    },
+    {
+      "name": "www-watch-ad-identity",
+      "originInventory": "tools/fixtures/items-music/controls.json",
+      "originalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 22036,
+        "sha256": "e259e07d134c46cbbf52f13ad56b3ffe2b02bcb8a18f3033a24665a4d9251d59",
+        "gitBlob": "9a563f659e5a30bb53069a314c39e47118d7d295"
+      },
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 22136,
+        "sha256": "8a5f892f6dffc4833a17f0e8fb0a7f5ce3ab25db3f69c454e9043a5bc9f648ef",
+        "gitBlob": "84730501b1e485136a10a819183b937ad0a2b384"
+      },
+      "reason": "Final source identity changed; the original anchor and observable obligation remain.",
+      "originalEdits": [
+        {
+          "before": "    if (ad) {\n      if (player !== \"watch\"",
+          "after": "    if (ad && field(raw, \"syntheticDisableAd\") === true) {\n      if (player !== \"watch\""
+        }
+      ],
+      "finalEdits": [
+        {
+          "before": "    if (ad) {\n      if (player !== \"watch\"",
+          "after": "    if (ad && field(raw, \"syntheticDisableAd\") === true) {\n      if (player !== \"watch\""
+        }
+      ],
+      "compilation": "unexecuted"
+    },
+    {
+      "name": "www-unconfirmed-miniplayer",
+      "originInventory": "tools/fixtures/items-music/controls.json",
+      "originalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 22036,
+        "sha256": "e259e07d134c46cbbf52f13ad56b3ffe2b02bcb8a18f3033a24665a4d9251d59",
+        "gitBlob": "9a563f659e5a30bb53069a314c39e47118d7d295"
+      },
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 22136,
+        "sha256": "8a5f892f6dffc4833a17f0e8fb0a7f5ce3ab25db3f69c454e9043a5bc9f648ef",
+        "gitBlob": "84730501b1e485136a10a819183b937ad0a2b384"
+      },
+      "reason": "Final source identity changed; the original anchor and observable obligation remain.",
+      "originalEdits": [
+        {
+          "before": "    if (nav?.navigation.kind === \"other\" && (confirmedMiniplayerVideo === undefined || confirmedMiniplayerVideo !== playerId)) return undefined",
+          "after": "    if (false) return undefined"
+        }
+      ],
+      "finalEdits": [
+        {
+          "before": "    if (nav?.navigation.kind === \"other\" && (confirmedMiniplayerVideo === undefined || confirmedMiniplayerVideo !== playerId)) return undefined",
+          "after": "    if (false) return undefined"
+        }
+      ],
+      "compilation": "unexecuted"
+    },
+    {
+      "name": "www-shorts-ad",
+      "originInventory": "tools/fixtures/items-music/controls.json",
+      "originalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 22036,
+        "sha256": "e259e07d134c46cbbf52f13ad56b3ffe2b02bcb8a18f3033a24665a4d9251d59",
+        "gitBlob": "9a563f659e5a30bb53069a314c39e47118d7d295"
+      },
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 22136,
+        "sha256": "8a5f892f6dffc4833a17f0e8fb0a7f5ce3ab25db3f69c454e9043a5bc9f648ef",
+        "gitBlob": "84730501b1e485136a10a819183b937ad0a2b384"
+      },
+      "reason": "Final source identity changed; the original anchor and observable obligation remain.",
+      "originalEdits": [
+        {
+          "before": "      field(raw, \"presentingPlayerType\") === 2 || player === \"shorts\" && nav?.ad === true\n    if (ad) {",
+          "after": "      field(raw, \"presentingPlayerType\") === 2\n    if (ad) {"
+        }
+      ],
+      "finalEdits": [
+        {
+          "before": "      field(raw, \"presentingPlayerType\") === 2 || player === \"shorts\" && nav?.ad === true\n    if (ad) {",
+          "after": "      field(raw, \"presentingPlayerType\") === 2\n    if (ad) {"
+        }
+      ],
+      "compilation": "unexecuted"
+    },
+    {
+      "name": "items-www--modern-content-validation",
+      "originInventory": "tools/fixtures/items-music/inherited-controls.json",
+      "originalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 18237,
+        "sha256": "096acc61a2d3d5b2125e28574083bdbc902dd0dd461b7ed0cc5401ebd1b5c0b5",
+        "gitBlob": "b27ab8dc3a35ad00686831165a61c9a08bd778b5"
+      },
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 19728,
+        "sha256": "df964c655c475620edada472d52316dbbb9166465d6c8334efdd130e835f9f80",
+        "gitBlob": "9c79384f3345119d482e87da28bd94ec61a38043"
+      },
+      "reason": "Final source identity changed; the original anchor and observable obligation remain.",
+      "originalEdits": [
+        {
+          "before": "    if (contentType !== undefined && contentType !== \"LOCKUP_CONTENT_TYPE_VIDEO\") return undefined",
+          "after": "    if (false) return undefined"
+        },
+        {
+          "before": "    if (lockup !== undefined && contentType === \"LOCKUP_CONTENT_TYPE_VIDEO\") {",
+          "after": "    if (lockup !== undefined) {"
+        }
+      ],
+      "finalEdits": [
+        {
+          "before": "    if (contentType !== undefined && contentType !== \"LOCKUP_CONTENT_TYPE_VIDEO\") return undefined",
+          "after": "    if (false) return undefined"
+        },
+        {
+          "before": "    if (lockup !== undefined && contentType === \"LOCKUP_CONTENT_TYPE_VIDEO\") {",
+          "after": "    if (lockup !== undefined) {"
+        }
+      ],
+      "compilation": "unexecuted"
+    },
+    {
+      "name": "items-www--short-kind",
+      "originInventory": "tools/fixtures/items-music/inherited-controls.json",
+      "originalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 18237,
+        "sha256": "096acc61a2d3d5b2125e28574083bdbc902dd0dd461b7ed0cc5401ebd1b5c0b5",
+        "gitBlob": "b27ab8dc3a35ad00686831165a61c9a08bd778b5"
+      },
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 19728,
+        "sha256": "df964c655c475620edada472d52316dbbb9166465d6c8334efdd130e835f9f80",
+        "gitBlob": "9c79384f3345119d482e87da28bd94ec61a38043"
+      },
+      "reason": "Final source identity changed; the original anchor and observable obligation remain.",
+      "originalEdits": [
+        {
+          "before": "    const value = { ...identity, title, length: rawLength === undefined ? null : seconds(rawLength) }",
+          "after": "    const value = { ...identity, kind: \"video\", title, length: rawLength === undefined ? null : seconds(rawLength) }"
+        }
+      ],
+      "finalEdits": [
+        {
+          "before": "    const value = { ...identity, title, length: rawLength === undefined ? null : seconds(rawLength) }",
+          "after": "    const value = { ...identity, kind: \"video\", title, length: rawLength === undefined ? null : seconds(rawLength) }"
+        }
+      ],
+      "compilation": "unexecuted"
+    }
+  ]
+}

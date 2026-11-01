@@ -1,0 +1,8 @@
+{
+  "state": "authored-expectation-unexecuted",
+  "bytes": 3469,
+  "sha256": "85b9a65cfc19e1191b92407631d38def6cafeb89d874e9a3884d42d3ff790b20",
+  "lastByteHex": "0a",
+  "eof": "One compact JSON record followed by exactly one LF and then EOF. No other stdout or stderr is expected.",
+  "origin": "Authored from the protocol and fixture inputs. Not captured from execution."
+}

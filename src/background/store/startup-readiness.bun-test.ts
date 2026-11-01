@@ -3,6 +3,50 @@ import { createStartingLocalFilterWriter, createLocalFilterWriter, StartupReadin
 import { isAccountKey, isPlaylistId, type AccountKey, type PlaylistId } from "../../shared/model"
 import type { JsonValue } from "../../shared/contracts/json"
 import { isInterimSourceKey, isInterimCanonicalKey, type StoreStartupHost } from "./interim-persistence"
+import { createRecoveryHarness, recoveryHeld, recoveryAgree, recoveryPrepare, recoveryUi } from "../../../tools/fixtures/interim-recovery-review/run"
+import { withdrawalRetainedV1Fixture } from "../../../tools/fixtures/interim-conversion/run"
+
+test("explicit withdrawn V1 acceptance leaves readiness rejected and restart read-only", async () => {
+  const fixture = await withdrawalRetainedV1Fixture(), h = createInterimHarness(fixture.stores.local), owner = createStartingLocalFilterWriter(h.deps), ready = owner.ready()
+  await expect(ready).rejects.toBeInstanceOf(StartupReadinessError)
+  expect(h.writes).toEqual([])
+  const ui = { kind: "ui", windowId: 1, incognito: false } as const, read = await owner.readWithdrawnWork(ui)
+  if (read.kind !== "held") throw Error("V1 startup review absent")
+  const selected = read.work.find(view => view.kind === "retained-v1-acceptance")
+  if (!selected || selected.kind !== "retained-v1-acceptance") throw Error("V1 startup selection absent")
+  const result = await owner.recoverWithdrawnWork(ui, { review: read.review, job: selected.selection })
+  expect(result.kind).toBe("recovered")
+  expect(owner.ready()).toBe(ready); await expect(owner.ready()).rejects.toBeInstanceOf(StartupReadinessError)
+  expect(await owner.read("settings")).toEqual({ kind: "unavailable", reason: "consent-held" })
+  expect(await owner.resumeInterimInstallation(ui)).toEqual({ kind: "unavailable", reason: "consent-held" })
+  await owner.dispose()
+  const saved = JSON.parse(JSON.stringify(h.records())), restart = createInterimHarness(saved), fresh = createStartingLocalFilterWriter(restart.deps)
+  await expect(fresh.ready()).rejects.toBeInstanceOf(StartupReadinessError)
+  expect(restart.writes).toEqual([]); expect(restart.records()).toEqual(saved)
+  const inspected = await fresh.readWithdrawnWork(ui)
+  expect(inspected.kind === "held" && inspected.work.some(view => view.kind === "retained-v1-acceptance" || view.kind === "retained-agreement")).toBe(false)
+  await fresh.dispose()
+})
+
+test("completed recovery remains held on restart and keeps the stable readiness promise rejected", async () => {
+  const h = createRecoveryHarness(), owner = createStartingLocalFilterWriter(h.deps)
+  const ready = owner.ready(); await recoveryAgree(owner, h)
+  const prepared = await recoveryPrepare(owner)
+  if (prepared.prepared.kind !== "confirmation-required") throw Error("No explicit recovery confirmation")
+  expect((await owner.replaceInterimFilter(recoveryUi, prepared.prepared.confirmation)).kind).toBe("committed")
+  expect(owner.ready()).toBe(ready)
+  await expect(owner.ready()).rejects.toBeInstanceOf(StartupReadinessError)
+  expect(await owner.read("settings")).toEqual({ kind: "unavailable", reason: "startup" })
+  const seed = JSON.parse(JSON.stringify(h.records())); await owner.dispose()
+  const restarted = createRecoveryHarness(seed); restarted.forbidAllocation()
+  const next = createStartingLocalFilterWriter(restarted.deps), result = await recoveryHeld(next)
+  expect(result.kind).toBe("confirmed-recovery"); expect(restarted.writes).toEqual([])
+  expect(await next.flushSync()).toEqual({ kind: "unavailable" })
+  expect(await next.read("settings")).toEqual({ kind: "unavailable", reason: "startup" })
+  await next.startSync()
+  expect(restarted.effects.filter(x => x === "timer" || x === "sync-subscribe" || x === "sync-get" || x === "sync-set")).toEqual([])
+  await next.dispose()
+})
 
 export async function readinessAcceptance(api: {
   create: typeof createStartingLocalFilterWriter; preinitialized: typeof createLocalFilterWriter; Error: typeof StartupReadinessError
@@ -156,7 +200,7 @@ export async function readinessAcceptance(api: {
     let error: unknown; try { await ready } catch (caught) { error = caught }
     check(error instanceof api.Error && error.result.kind === "disposed", "disposed startup rejects release")
     await drain; equal(released, false, "disposed never ready ok")
-    equal(h.records().schema, 1, "accepted startup IO drains honestly")
+    equal(h.records().schema, undefined, "stopped startup drains invoked cleanup without invoking schema-last")
     observations.push({ label: `dispose-${first}`, effects: h.effects, records: h.records() })
   }
   {
@@ -238,4 +282,80 @@ test("retained canonical agreement never changes the stable rejected readiness p
   await expect(readiness).rejects.toBeInstanceOf(StartupReadinessError)
   expect(await owner.read("settings")).toEqual({ kind: "unavailable", reason: "startup" })
   await owner.dispose()
+})
+
+import { createInterimHarness, withdrawalRetainedAgreementFixture } from "../../../tools/fixtures/interim-conversion/run"
+import { classifyConsentWork } from "./consent-recovery"
+import { createAuthorityHarness, installAuthorityFixture, releaseAuthorityFixture } from "../../../tools/fixtures/interim-recovery-review/run"
+
+test("operation-produced confirmed V2 is historical and its held owner cannot install or activate", async () => {
+  const fixture = await withdrawalRetainedAgreementFixture(), h = createInterimHarness(fixture.stores.local), owner = createStartingLocalFilterWriter(h.deps)
+  const ready = owner.ready(); await expect(ready).rejects.toBeInstanceOf(StartupReadinessError)
+  const read = await owner.readWithdrawnWork({ kind: "ui", windowId: 1, incognito: false })
+  if (read.kind !== "held") throw Error("Missing actual retained review")
+  const selected = read.work.find(view => view.kind === "retained-agreement")
+  if (selected?.kind !== "retained-agreement") throw Error("Missing retained selection")
+  expect((await owner.recoverWithdrawnWork({ kind: "ui", windowId: 1, incognito: false }, { review: read.review, job: selected.selection })).kind).toBe("recovered")
+  expect(classifyConsentWork(h.records()).some(view => view.kind === "retained-agreement")).toBe(false)
+  expect(owner.ready()).toBe(ready)
+  expect(await owner.resumeInterimInstallation({ kind: "ui", windowId: 1, incognito: false })).toEqual({ kind: "unavailable", reason: "consent-held" })
+  await owner.dispose()
+  const restart = createInterimHarness(JSON.parse(JSON.stringify(h.records()))), fresh = createStartingLocalFilterWriter(restart.deps)
+  await expect(fresh.ready()).rejects.toBeInstanceOf(StartupReadinessError)
+  expect(restart.writes).toEqual([]); await fresh.dispose()
+})
+
+test("actual released V5 completed history still requires a fresh canonical capability", async () => {
+  const h = createAuthorityHarness(), installed = await installAuthorityFixture(h)
+  expect((await releaseAuthorityFixture(h, installed.owner)).kind).toBe("restart-required")
+  await installed.owner.dispose()
+  const stores = h.records(), start = h.writes.length, fresh = createStartingLocalFilterWriter(h.actor("fresh-v5"))
+  expect(await fresh.ready()).toBe("ok")
+  expect(h.trace.some(value => value !== null && typeof value === "object" && "kind" in value && value.kind === "exclusive-acquired" && "actor" in value && value.actor === "fresh-v5")).toBe(true)
+  expect(h.writes.slice(start).some(batch => Object.hasOwn(batch, "interimConversion"))).toBe(false)
+  expect(h.records().interimConversion).toEqual(stores.interimConversion)
+  await fresh.dispose()
+}, 60000)
+
+
+import { withdrawalRetainedInstallationFixture } from "../../../tools/fixtures/interim-conversion/run"
+import { withdrawalConfirmedInstallationFixture } from "../../../tools/fixtures/interim-conversion/run"
+test("new installation acceptance finishes held and a serialized done witness never activates startup", async () => {
+  const fixture = await withdrawalConfirmedInstallationFixture(), ui = { kind:"ui",windowId:1,incognito:false } as const
+  const h=createInterimHarness(fixture.stores.local),owner=createStartingLocalFilterWriter(h.deps),ready=owner.ready()
+  await expect(ready).rejects.toBeInstanceOf(StartupReadinessError)
+  expect(h.writes).toEqual([])
+  const read=await owner.readWithdrawnWork(ui)
+  if(read.kind!=="held")throw Error("Missing new installation read")
+  const view=read.work.find(view=>view.kind==="retained-installation-acceptance")
+  if(view?.kind!=="retained-installation-acceptance")throw Error("Missing new installation selection")
+  expect((await owner.recoverWithdrawnWork(ui,{ review:read.review,job:view.selection })).kind).toBe("recovered")
+  expect(owner.ready()).toBe(ready)
+  for(const result of await Promise.all([owner.resumeInterimInstallation(ui),owner.resumeRetainedAgreement(ui),owner.resumeRetainedAuthority(ui),owner.resumeSyncJoin(ui)]))expect(result).toEqual({ kind:"unavailable",reason:"consent-held" })
+  await owner.dispose()
+  const restarted=createInterimHarness(JSON.parse(JSON.stringify(h.records()))),fresh=createStartingLocalFilterWriter(restarted.deps)
+  await expect(fresh.ready()).rejects.toBeInstanceOf(StartupReadinessError)
+  const inspected=await fresh.readWithdrawnWork(ui)
+  expect(inspected.kind==="held" && inspected.work.some(view=>view.kind==="retained-installation-acceptance" || view.kind==="retained-installation")).toBe(false)
+  expect(restarted.writes).toEqual([]);expect(restarted.records()).toEqual(h.records());await fresh.dispose()
+})
+test("explicit old V3 installation completes installed and done while startup and canonical access stay held", async () => {
+  const fixture = await withdrawalRetainedInstallationFixture()
+  if (fixture.kind !== "ready") throw Error("Unreachable original V3")
+  const ui = { kind: "ui", windowId: 1, incognito: false } as const, h = createInterimHarness(fixture.stores.local), owner = createStartingLocalFilterWriter(h.deps), ready = owner.ready()
+  await expect(ready).rejects.toBeInstanceOf(StartupReadinessError)
+  expect(h.writes).toEqual([])
+  const read = await owner.readWithdrawnWork(ui)
+  if (read.kind !== "held") throw Error("Missing installation review")
+  const view = read.work.find(view => view.kind === "retained-installation")
+  if (view?.kind !== "retained-installation") throw Error("Missing installation selection")
+  expect((await owner.recoverWithdrawnWork(ui, { review: read.review, job: view.selection })).kind).toBe("recovered")
+  expect(owner.ready()).toBe(ready)
+  for (const result of await Promise.all([owner.resumeInterimInstallation(ui), owner.resumeRetainedAgreement(ui), owner.resumeRetainedAuthority(ui), owner.resumeSyncJoin(ui)])) expect(result).toEqual({ kind: "unavailable", reason: "consent-held" })
+  await owner.dispose()
+  const restart = createInterimHarness(JSON.parse(JSON.stringify(h.records()))), fresh = createStartingLocalFilterWriter(restart.deps)
+  await expect(fresh.ready()).rejects.toBeInstanceOf(StartupReadinessError)
+  const inspected = await fresh.readWithdrawnWork(ui)
+  expect(inspected.kind === "held" && inspected.work.some(view => view.kind === "retained-installation")).toBe(false)
+  expect(restart.writes).toEqual([]); expect(restart.records()).toEqual(h.records()); await fresh.dispose()
 })

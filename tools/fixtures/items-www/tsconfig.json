@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["bun", "svelte"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "files": [
+    "../../../src/site/core/items-www.ts",
+    "../../../src/site/core/items-www.bun-test.ts",
+    "../../../src/site/core/items-www.type-test.ts",
+    "../../../src/page/live-reads.ts",
+    "../../../src/page/read-parsers.ts",
+    "../../../src/page/read-port.ts",
+    "specimens.ts",
+    "harness.ts",
+    "preload.ts",
+    "page-reads.bun-test.ts",
+    "current-authority.bun-test.ts",
+    "run.ts"
+  ]
+}

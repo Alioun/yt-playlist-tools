@@ -1,0 +1,2 @@
+import type { ToastContent } from "../../../src/site/kit/toaster/types"
+const invalid: ToastContent = { text: "x", tone: "confirmation", auto: false, action: [] }

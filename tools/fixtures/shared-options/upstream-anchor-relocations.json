@@ -1,0 +1,323 @@
+{
+  "state": "static-only-original-inventories-unchanged",
+  "files": [
+    {
+      "path": "src/background/store/settings-edit.bun-test.ts",
+      "oldSha256": "457c5ceeeffd4d5bb160ae564f88074991c23563322f64c4e60f2126513364d4",
+      "newSha256": "94c5ecf7e1cf27d22a96063332a9e695d55d7d5a8d413bd930b0114f3a691ae2",
+      "unchangedLineBlocks": [
+        {
+          "oldStart": 1,
+          "newStart": 1,
+          "lineCount": 7
+        },
+        {
+          "oldStart": 8,
+          "newStart": 9,
+          "lineCount": 9
+        },
+        {
+          "oldStart": 17,
+          "newStart": 29,
+          "lineCount": 226
+        }
+      ],
+      "typeAnchors": []
+    },
+    {
+      "path": "src/background/store/settings-edit.ts",
+      "oldSha256": "3a9469c2c19305cf436d5db43a0c8e7a4dadb6ff520eaafd431fb341f34fb1f6",
+      "newSha256": "5e3b04106770deb45e1d8972af7022b6b625226f1ea657533a35f549dd3c2176",
+      "unchangedLineBlocks": [
+        {
+          "oldStart": 1,
+          "newStart": 1,
+          "lineCount": 7
+        },
+        {
+          "oldStart": 8,
+          "newStart": 49,
+          "lineCount": 2
+        },
+        {
+          "oldStart": 11,
+          "newStart": 53,
+          "lineCount": 3
+        },
+        {
+          "oldStart": 15,
+          "newStart": 57,
+          "lineCount": 7
+        },
+        {
+          "oldStart": 22,
+          "newStart": 65,
+          "lineCount": 3
+        },
+        {
+          "oldStart": 25,
+          "newStart": 69,
+          "lineCount": 10
+        },
+        {
+          "oldStart": 35,
+          "newStart": 85,
+          "lineCount": 3
+        }
+      ],
+      "typeAnchors": []
+    },
+    {
+      "path": "src/background/store/settings-edit.type-test.ts",
+      "oldSha256": "2152ae814175674955b8d91f13bc7a6dd8edc525f47b94aebaf093183c88cc00",
+      "newSha256": "b445220907b492eaf51f33c877f93dd771e34bfb1e8187b250bfa85df181c470",
+      "unchangedLineBlocks": [
+        {
+          "oldStart": 1,
+          "newStart": 1,
+          "lineCount": 1
+        },
+        {
+          "oldStart": 3,
+          "newStart": 3,
+          "lineCount": 9
+        },
+        {
+          "oldStart": 13,
+          "newStart": 14,
+          "lineCount": 2
+        },
+        {
+          "oldStart": 16,
+          "newStart": 17,
+          "lineCount": 52
+        }
+      ],
+      "typeAnchors": [
+        {
+          "oldDirectiveLine": 23,
+          "oldTargetLine": 24,
+          "newTargetLines": [
+            25
+          ],
+          "target": "  change({ current: input.current, change: { kind: \"theme\", value: \"sepia\" } })",
+          "directive": "  // @ts-expect-error Theme is a model literal."
+        },
+        {
+          "oldDirectiveLine": 25,
+          "oldTargetLine": 26,
+          "newTargetLines": [
+            27
+          ],
+          "target": "  change({ current: input.current, change: { kind: \"consent\", value: true } })",
+          "directive": "  // @ts-expect-error Only named shared edits enter this operation."
+        },
+        {
+          "oldDirectiveLine": 27,
+          "oldTargetLine": 28,
+          "newTargetLines": [
+            29
+          ],
+          "target": "  change({ current: input.current, change: { kind: \"default-percentage\", value: \"50\" } })",
+          "directive": "  // @ts-expect-error A percentage remains numeric at the boundary."
+        },
+        {
+          "oldDirectiveLine": 29,
+          "oldTargetLine": 30,
+          "newTargetLines": [
+            31
+          ],
+          "target": "  input.current = input.current",
+          "directive": "  // @ts-expect-error The input object is readonly."
+        },
+        {
+          "oldDirectiveLine": 31,
+          "oldTargetLine": 32,
+          "newTargetLines": [
+            33
+          ],
+          "target": "  input.current.autoAdd.pct = 50",
+          "directive": "  // @ts-expect-error Known sections are recursively readonly."
+        },
+        {
+          "oldDirectiveLine": 33,
+          "oldTargetLine": 34,
+          "newTargetLines": [
+            35
+          ],
+          "target": "  input.current.shortcuts.list.push({ id: \"save01\", key: null, label: \"Save\", watchLaterOnEveryAccount: false })",
+          "directive": "  // @ts-expect-error Shortcut arrays are readonly."
+        },
+        {
+          "oldDirectiveLine": 37,
+          "oldTargetLine": 38,
+          "newTargetLines": [
+            39
+          ],
+          "target": "    row.id = \"save02\"",
+          "directive": "    // @ts-expect-error Shortcut rows are recursively readonly."
+        },
+        {
+          "oldDirectiveLine": 40,
+          "oldTargetLine": 41,
+          "newTargetLines": [
+            42
+          ],
+          "target": "      row.key.ctrl = true",
+          "directive": "      // @ts-expect-error Keys nested inside shortcut rows are readonly."
+        },
+        {
+          "oldDirectiveLine": 44,
+          "oldTargetLine": 45,
+          "newTargetLines": [
+            46
+          ],
+          "target": "  input.change = { kind: \"theme\", value: \"light\" }",
+          "directive": "  // @ts-expect-error The caller cannot replace the change."
+        },
+        {
+          "oldDirectiveLine": 46,
+          "oldTargetLine": 47,
+          "newTargetLines": [
+            48
+          ],
+          "target": "  input.change.value = 50",
+          "directive": "  // @ts-expect-error The selected value is readonly."
+        },
+        {
+          "oldDirectiveLine": 49,
+          "oldTargetLine": 50,
+          "newTargetLines": [
+            51
+          ],
+          "target": "    result.settings",
+          "directive": "    // @ts-expect-error No candidate exists for unchanged or invalid results."
+        },
+        {
+          "oldDirectiveLine": 53,
+          "oldTargetLine": 54,
+          "newTargetLines": [
+            55
+          ],
+          "target": "    result.reason",
+          "directive": "    // @ts-expect-error Invalid-only fields do not exist on changed results."
+        }
+      ]
+    },
+    {
+      "path": "src/background/store/shared-setting-execution.bun-test.ts",
+      "oldSha256": "402105e2e3332607ad0e1082767855653dd1bc3a9a54027cf7e93fdca9fc472c",
+      "newSha256": "b0b322b31d161937d6a1ff0532abace77e6f9998c9d5c6d1740d3583df1914f1",
+      "unchangedLineBlocks": [
+        {
+          "oldStart": 1,
+          "newStart": 1,
+          "lineCount": 3
+        },
+        {
+          "oldStart": 5,
+          "newStart": 35,
+          "lineCount": 131
+        }
+      ],
+      "typeAnchors": []
+    },
+    {
+      "path": "src/background/store/shared-setting-execution.ts",
+      "oldSha256": "a5ff589de91827fa2c5aa941ce40410e919d4a58cffedb14645610c71ac961b3",
+      "newSha256": "a5ff589de91827fa2c5aa941ce40410e919d4a58cffedb14645610c71ac961b3",
+      "unchangedLineBlocks": [
+        {
+          "oldStart": 1,
+          "newStart": 1,
+          "lineCount": 117
+        }
+      ],
+      "typeAnchors": []
+    },
+    {
+      "path": "src/background/store/shared-setting-execution.type-test.ts",
+      "oldSha256": "1afe759bef2d4bd267c8841fd444ca6f287310a83dcec49a08b18b96bc4214f4",
+      "newSha256": "790268b04f33cb4ee6af7d6b4d841ceea824cafdb758aa1fd7b658bc0961bf3d",
+      "unchangedLineBlocks": [
+        {
+          "oldStart": 1,
+          "newStart": 1,
+          "lineCount": 2
+        },
+        {
+          "oldStart": 3,
+          "newStart": 5,
+          "lineCount": 5
+        },
+        {
+          "oldStart": 8,
+          "newStart": 12,
+          "lineCount": 3
+        },
+        {
+          "oldStart": 12,
+          "newStart": 16,
+          "lineCount": 15
+        }
+      ],
+      "typeAnchors": [
+        {
+          "oldDirectiveLine": 11,
+          "oldTargetLine": 12,
+          "newTargetLines": [
+            16
+          ],
+          "target": "  void executeSharedSetting(ports, { kind: \"device\", value: {} })",
+          "directive": "  // @ts-expect-error Only theme and percentage edits exist."
+        },
+        {
+          "oldDirectiveLine": 13,
+          "oldTargetLine": 14,
+          "newTargetLines": [
+            18
+          ],
+          "target": "  void executeSharedSetting(ports, { kind: \"theme\", value: \"blue\" })",
+          "directive": "  // @ts-expect-error Theme values use the Settings union."
+        },
+        {
+          "oldDirectiveLine": 15,
+          "oldTargetLine": 16,
+          "newTargetLines": [
+            20
+          ],
+          "target": "  const failure: LocalSettingsWriteResult = { kind: \"failed\", stage: \"set\" }",
+          "directive": "  // @ts-expect-error A failed result requires the original error."
+        },
+        {
+          "oldDirectiveLine": 17,
+          "oldTargetLine": 18,
+          "newTargetLines": [
+            22
+          ],
+          "target": "  const falseSuccess: LocalSettingsWriteResult = { kind: \"result\", result: { ok: true } }",
+          "directive": "  // @ts-expect-error Success requires an explicit committed or unchanged outcome."
+        },
+        {
+          "oldDirectiveLine": 20,
+          "oldTargetLine": 21,
+          "newTargetLines": [
+            25
+          ],
+          "target": "  void result.error",
+          "directive": "  // @ts-expect-error Result discrimination precedes failure access."
+        },
+        {
+          "oldDirectiveLine": 22,
+          "oldTargetLine": 23,
+          "newTargetLines": [
+            27
+          ],
+          "target": "  result.kind = \"committed\"",
+          "directive": "  // @ts-expect-error Result variants cannot be reassigned."
+        }
+      ]
+    }
+  ],
+  "historicalCommands": "Do not run old drivers. Rebind old source roots to the sealed candidate and preserve old diagnostic anchors through this sidecar. All acceptance remains unexecuted."
+}

@@ -1,0 +1,10 @@
+--- a/src/background/store/feature-settings.ts
++++ b/src/background/store/feature-settings.ts
+@@ -24,6 +24,7 @@
+   let limitedMusic = false
+   if (change.kind === "music-section") {
+     settings.musicSection = change.value
++    settings.musicActions.on = change.value
+   } else if (change.kind === "shortcuts-music") {
+     if (change.value && settings.shortcuts.on && !access?.music) return { kind: "refused", reason: access ? "site-access" : "unavailable" }
+     settings.shortcuts.music = change.value

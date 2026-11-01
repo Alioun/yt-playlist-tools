@@ -1,0 +1,15 @@
+# Music Items authoring partial
+
+`MusicItems` resolves an invocation through the actual Pointer, Scope and PageLink APIs. Construction acquires nothing. Feature scopes share Pointer tracking, native playback notifications and a navigation subscription. Last release disposes these resources. A new acquisition has new authority.
+
+`resolve(action)` obtains a fresh hit stack. Recognition covers responsive rows, two-row cards, queue items and responsive headers. The player bar and fullscreen use `nowPlaying`. The independent self-check examines the hit and at most six ancestors for one distinct supported link, or queue-panel membership. It stops before page and list containers. Failed recognition reports the typed `item-unrecognised` fact and blocks playback fallback.
+
+Native `itemInfo` supplies the kind, capabilities, endpoint objects, queue ID, selected flag and autoplay flag. Unsupported-action results retain that information and the specified feedback. The native current queue item inserts a copy. A different queue entry remains a different entry even when it has the same video ID. `queueDisposition` is an instruction for later feature code, not a mutation receipt.
+
+Each targeted request owns temporary observers on the target and its parent. It checks navigation, page readiness, connectivity and DOM identity after each await. A second native `itemInfo` read rejects page-data recycling without a DOM change. `refresh(target, action)` repeats these reads after a later queue job. It admits new queue facts while rejecting changed song identity and previous acquisition authority. Features must call it after queue jobs. That feature wiring is unimplemented.
+
+`MusicPlayback` distinguishes song, nothing playing, ad playing and unavailable. A fixed `music-ad` detail on an unavailable `nowPlaying` result carries one of `adShowing`, `adActive` or `presentingPlayerType`. The gateway parser, job-aware page guard, actual channel and PageLink validate and retain that detail. Items checks the detail and freshness before returning `ad-playing`. Ordinary unavailable results remain unavailable. The successful job and stream schemas remain song or null. All compiler and runtime assertions remain unexecuted.
+
+The three authorized www gateway repairs are installed. Music ad flag admission rejects malformed boolean and presenting-player flags. The native reader reconciles player replacement before reading event-owned ad state. These are static changes with authored tests. No compiler, test, consumer, build, live markup, native listener qualification or review ran.
+
+Monitor binding, feature IDs, client versions, timestamps, persistence receipts, feature actions and queue mutation execution remain outside this module. No background implementation is imported. The inherited census remains in `tools/fixtures/items-music/`. Final-source qualification proposals and anchor sidecars are in `tools/fixtures/music-ad-transport/`. This run's static return is in `.audit/music-ad-transport-authoring/`.

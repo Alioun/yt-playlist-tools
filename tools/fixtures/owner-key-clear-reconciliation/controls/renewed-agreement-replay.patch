@@ -1,0 +1,11 @@
+--- a/src/background/store/sync-reset-receive.ts
++++ b/src/background/store/sync-reset-receive.ts
+@@ -113,7 +113,7 @@
+     if (!current) return Object.hasOwn(records, receivedResetKey) ? held("authority") : { kind: "ordinary" }
+     let marker = readReceivedReset(records[receivedResetKey])
+     if (Object.hasOwn(records, receivedResetKey) && !marker) return held("marker")
+-    if (marker && (marker.recovery.kind === "prepared" || !sameSyncJson(marker.authority, current))) return held("authority")
++    if (marker && marker.recovery.kind === "prepared") return held("authority")
+     if (!marker) {
+       const remote = await deps.remote()
+       if (deps.stopped()) return held("disposed")

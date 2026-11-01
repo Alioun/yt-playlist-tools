@@ -1,0 +1,150 @@
+{
+  "inputTree": "75c34067136cbc1b88ca663ef05566ee2ce0ae88",
+  "directDependencies": {
+    "bun.lock": {
+      "mode": "100644",
+      "gitBlob": "7bdbeddbd315dc1c9ec3f771f18ba4097fa37924",
+      "sha256": "2d6baabd859bb90a4d37a975531f6372811942f67bad4643aa6bd7c03fec8ae6",
+      "bytes": 202712
+    },
+    "package.json": {
+      "mode": "100644",
+      "gitBlob": "24b11b36232127b2dc610aa6ed25cd85223351b6",
+      "sha256": "22d2c28d45843d7aad15809a91b14597729e9696ee0ebf9a29d6f250bace85ca",
+      "bytes": 2547
+    },
+    "src/site/core/scope.ts": {
+      "mode": "100644",
+      "gitBlob": "15897dc53f994044c500dff7804e53163d425864",
+      "sha256": "4d00d2687eac766a4d0dae85643e2cc24820f035a870dab95cf52f674fc53a04",
+      "bytes": 4995
+    },
+    "src/site/core/keys.ts": {
+      "mode": "100644",
+      "bytes": 9165,
+      "sha256": "2a8f0a88ef236118d359c8309590ae7b778126b188a398159fafbcbb967d9f06",
+      "gitBlob": "b4b92af75b227c089d5a291899ca6d63ca9929ac"
+    },
+    "src/site/kit/scope-mount.ts": {
+      "mode": "100644",
+      "gitBlob": "417f37682203f4bb7a71d5bbad5c7ae2dce88765",
+      "sha256": "e6b6b3cc9939b23137809a3d5d3eeaea2e55eef1b3c06d16b4d82c5d9e7bbabd",
+      "bytes": 495
+    },
+    "src/site/core/feature-host.ts": {
+      "mode": "100644",
+      "gitBlob": "bf8666e2ef55203316e57d1b5e12ae41b1e9e27e",
+      "sha256": "9208585220a02491bea72e6d91e1596c4af4edd1d4954ab89477cb1b37e6dd2b",
+      "bytes": 7400
+    },
+    "src/shared/rules/outcomes.ts": {
+      "mode": "100644",
+      "gitBlob": "d251e6f07832381aeaa99bfa8fb4c862560a9a8b",
+      "sha256": "abe8ec27b1c242ace04beb0f2a7ac76a29934594ef603e2cc613f774da5420c0",
+      "bytes": 9611
+    },
+    "src/shared/copy/index.ts": {
+      "mode": "100644",
+      "gitBlob": "e04ca94cfc6eb9e09e76b823758b589ee603b941",
+      "sha256": "b5fe4bec58ec3c9501c64abfeb32466bb16f7e869d45e3020490543af2393751",
+      "bytes": 3237
+    },
+    "src/shared/copy/messages.ts": {
+      "mode": "100644",
+      "gitBlob": "c22fce4443314a09dbabbcbd37bf939890862415",
+      "sha256": "ce6c14a20ebbb7c02eeaaaa235450e668338de916c31a59936725c5afccae26c",
+      "bytes": 83293
+    },
+    "src/shared/i18n/index.ts": {
+      "mode": "100644",
+      "gitBlob": "7670482a4ee9266138fdf9722e0c062481644bd4",
+      "sha256": "6b8067eb95c59b3263591db06c593d2a5c6e40b95f85240c9ab2be87c30c4bc1",
+      "bytes": 3984
+    },
+    "src/shared/i18n/parameters.ts": {
+      "mode": "100644",
+      "gitBlob": "20dc5e986970f8b3fcc73fb8a2213418b700f44c",
+      "sha256": "4ae636b2d6201b3760e3e860148c44d074bdc26c78c1a0bc5faff933dbbd3830",
+      "bytes": 22535
+    },
+    "src/public/_locales/en/messages.json": {
+      "mode": "100644",
+      "gitBlob": "e480b5730872559f9c2f7b3d83f53cb581e85da8",
+      "sha256": "024a0f44de1803fc3d67095bc991760c2ced68a5a39b708c25f14a03ea9f09df",
+      "bytes": 79056
+    },
+    "tests/setup/svelte.ts": {
+      "mode": "100644",
+      "gitBlob": "52407cb7bcb773050f8296a1815b408fadf9c2d1",
+      "sha256": "c2bfa9d6b9eeb350d68c127006b052e1cc51f3103893f81aa58ec096e98025dc",
+      "bytes": 833
+    },
+    "src/background/add-flow/add-flow.ts": {
+      "mode": "100644",
+      "gitBlob": "237aeccc2bae50ce53cb9fcf3065a158919ea5a9",
+      "sha256": "7aff23e8f1861685e9a645740b2e23e2d2f7eda64d1dd526149789f6a1436699",
+      "bytes": 50177
+    }
+  },
+  "inheritedExecutablePins": {
+    "bun": {
+      "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+      "mode": "100755",
+      "gitBlob": "5757683e74a38e391389fe53fd9b222db699a276",
+      "sha256": "28c7dd0a06916aba284d570ef44a2d70e9c538eaf2ba58dfe0910525563b3f79",
+      "bytes": 70469776
+    },
+    "node": {
+      "path": "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
+      "mode": "100755",
+      "gitBlob": "95e55bf45ffdaa90f282ea6d24baf47d4f9a3ff5",
+      "sha256": "7296c3dda88793e08d1089d839a782178c4bba6bb22f5c40ab2a75263fb071bd",
+      "bytes": 132848
+    },
+    "nativeTypeScript": {
+      "path": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+      "mode": "100755",
+      "gitBlob": "ff759f060f6736e5276373ea16d4add65547d253",
+      "sha256": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
+      "bytes": 23653616
+    },
+    "timeout": {
+      "path": "/usr/bin/timeout",
+      "mode": "100755",
+      "gitBlob": "507b52329aa9fccaad2ede80ae4383a0b7a98982",
+      "sha256": "9369876b0b70afdb01ebbe54a83c787d9be1575bd6df806ea61febaf3f801c8d",
+      "bytes": 217104
+    },
+    "python": {
+      "path": "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+      "mode": "100755",
+      "gitBlob": "8c2ff8fe77e79e97a6f9b6e54ef01f234d55e58d",
+      "sha256": "8df4462b22d4cee3da65589d34e15ae625fe9bae73d1b38c83472f5ea6b0315a",
+      "bytes": 6079344
+    },
+    "patch": {
+      "path": "/usr/bin/patch",
+      "mode": "100755",
+      "gitBlob": "f284a1134f891799cb3bae46c52adc4d091b1b50",
+      "sha256": "f76fb9a2175f06a9e939de0ffb444e413d0c492d7275cb9d1a28cfbb3857e57d",
+      "bytes": 351072
+    }
+  },
+  "inheritedDependencyTree": {
+    "root": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules",
+    "identity": {
+      "algorithm": "sha256 of sorted mode-NUL-path-NUL-bytes-NUL-sha256-LF records",
+      "sha256": "de76ea5f616724774b17d7cb70bb380b17bd328fa1f904a9d6bc2108a2a45dd4",
+      "entries": 35744,
+      "bytes": 364569828,
+      "environmentPathsSkippedUnopened": []
+    }
+  },
+  "preparedDependencyReads": "not performed; do not inspect an active sibling",
+  "isolatedElement": {
+    "lockVersion": "3.0.0",
+    "lockIntegrity": "sha512-PmSIBMSe+rFw6eXzpJoV+glc1HPO40clcT9FJ7rSfCQzNewK8/nQZoBYWen2cMqdXdBNM9to/IbNNu5mdQLaPg==",
+    "state": "transitively frozen in bun.lock, local package absent, actual API qualification pending"
+  },
+  "runtimeQualificationDependency": "final owner-services completion and active key-author reconciliation, neither sibling inspected"
+}

@@ -1,0 +1,8 @@
+{
+  "synthetic": true,
+  "scenarios": ["save", "choose", "many", "empty-search", "empty-list", "failed-list", "create-validation", "marks", "no-tab", "long-title", "signed-out", "no-channel", "create-failure", "membership-pending", "choice-refusal", "private", "sort-refusal", "keyboard", "chooser"],
+  "widths": [360, 700, 1280],
+  "height": 900,
+  "themes": ["light", "dark"],
+  "reducedMotion": "reduce"
+}

@@ -1,0 +1,137 @@
+{
+  "status": "unexecuted proposals, no behavioral credit",
+  "compiler": [
+    "node",
+    "node_modules/@typescript/native/bin/tsc",
+    "--noEmit",
+    "-p",
+    "tools/fixtures/site-core-lifecycle/tsconfig.json"
+  ],
+  "controls": [
+    {
+      "name": "leaked listener after switch-off",
+      "path": "src/site/core/feature-host.ts",
+      "edits": [
+        {
+          "before": "        if (enabled(entry.definition.id)) continue\n        const state = entry.state\n        entry.state = { kind: \"idle\" }\n        if (state.kind === \"running\") state.run.scope.dispose()",
+          "after": "        if (enabled(entry.definition.id)) continue\n        const state = entry.state\n        entry.state = { kind: \"idle\" }\n        if (state.kind === \"running\") void state.run"
+        }
+      ],
+      "compilerGate": "compiler",
+      "behavior": [
+        "bun",
+        "test",
+        "--no-env-file",
+        "--no-install",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/core/feature-host.bun-test.ts",
+        "-t",
+        "switch-off releases the real listener and switch-on owns a fresh scope"
+      ],
+      "test": "switch-off releases the real listener and switch-on owns a fresh scope",
+      "redAssertion": "expect(calls).toBe(1)",
+      "status": "unexecuted proposal"
+    },
+    {
+      "name": "duplicate definition starts again",
+      "path": "src/site/core/feature-host.ts",
+      "edits": [
+        {
+          "before": "if (stopped || entries.has(definition.id)) return",
+          "after": "if (stopped) return"
+        }
+      ],
+      "compilerGate": "compiler",
+      "behavior": [
+        "bun",
+        "test",
+        "--no-env-file",
+        "--no-install",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/core/feature-host.bun-test.ts",
+        "-t",
+        "definition first starts exactly once and duplicate definitions preserve behavior"
+      ],
+      "test": "definition first starts exactly once and duplicate definitions preserve behavior",
+      "redAssertion": "expect(first).toBe(1)",
+      "status": "unexecuted proposal"
+    },
+    {
+      "name": "resource acquired after disposal stays live",
+      "path": "src/site/core/scope.ts",
+      "edits": [
+        {
+          "before": "if (this.ended) { this.clean(dispose); return nothing }",
+          "after": "if (this.ended) { return nothing }"
+        }
+      ],
+      "compilerGate": "compiler",
+      "behavior": [
+        "bun",
+        "test",
+        "--no-env-file",
+        "--no-install",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/core/scope.bun-test.ts",
+        "-t",
+        "a resource acquired outside the scope after disposal is released by add immediately"
+      ],
+      "test": "a resource acquired outside the scope after disposal is released by add immediately",
+      "redAssertion": "expect(target.childElementCount).toBe(0)",
+      "status": "unexecuted proposal"
+    },
+    {
+      "name": "stale first view reused",
+      "path": "src/site/core/feature-host.ts",
+      "edits": [
+        {
+          "before": "read: () => live(entry, run) ? current : null,",
+          "after": "read: (() => { const initial = current; return () => live(entry, run) ? initial : null })(),"
+        }
+      ],
+      "compilerGate": "compiler",
+      "behavior": [
+        "bun",
+        "test",
+        "--no-env-file",
+        "--no-install",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/core/feature-host.bun-test.ts",
+        "-t",
+        "current options and setup are readable and subscribed without a restart"
+      ],
+      "test": "current options and setup are readable and subscribed without a restart",
+      "redAssertion": "expect(saved?.view.read()).toBe(latest)",
+      "status": "unexecuted proposal"
+    },
+    {
+      "name": "null view fails to revoke",
+      "path": "src/site/core/feature-host.ts",
+      "edits": [
+        {
+          "before": "  function receive(view: TabView | null) {\n    if (stopped) return",
+          "after": "  function receive(view: TabView | null) {\n    if (stopped || view === null) return"
+        }
+      ],
+      "compilerGate": "compiler",
+      "behavior": [
+        "bun",
+        "test",
+        "--no-env-file",
+        "--no-install",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/core/feature-host.bun-test.ts",
+        "-t",
+        "null-view revokes every feature, ignores a failing teardown and blocks delayed callbacks after stop"
+      ],
+      "test": "null-view revokes every feature, ignores a failing teardown and blocks delayed callbacks after stop",
+      "redAssertion": "expect(seen).toEqual([\"menu\", \"queue\"])",
+      "status": "unexecuted proposal"
+    }
+  ]
+}

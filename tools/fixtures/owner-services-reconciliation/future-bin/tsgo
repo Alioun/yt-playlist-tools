@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc "$@"

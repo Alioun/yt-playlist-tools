@@ -1,0 +1,109 @@
+{
+  "state": "authored-unexecuted",
+  "probes": [
+    {
+      "path": "src/background/adapters/starting-owner.type-test.ts",
+      "directiveLine": 33,
+      "diagnosticLine": 34,
+      "directive": "// @ts-expect-error Missing safe local is not a native raw-storage fallback.",
+      "statement": "void createBrowserStartingLocalFilterWriter(native, withoutLocal)",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/adapters/starting-owner.type-test.ts",
+      "directiveLine": 35,
+      "diagnosticLine": 36,
+      "directive": "// @ts-expect-error Missing startup cannot construct a preinitialized owner.",
+      "statement": "void createBrowserStartingLocalFilterWriter(native, withoutStartup)",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/adapters/starting-owner.type-test.ts",
+      "directiveLine": 37,
+      "diagnosticLine": 38,
+      "directive": "// @ts-expect-error Session accepts canonical edits rather than arbitrary storage keys.",
+      "statement": "void owner.session.change({ ...change, edits: [{ kind: \"invented-session-key\", value: true }] })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/adapters/starting-owner.type-test.ts",
+      "directiveLine": 39,
+      "diagnosticLine": 40,
+      "directive": "// @ts-expect-error The session facade exposes no raw storage writer.",
+      "statement": "void owner.session.set({ paused: true })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/adapters/starting-owner.type-test.ts",
+      "directiveLine": 41,
+      "diagnosticLine": 42,
+      "directive": "// @ts-expect-error Invented methods cannot appear on the complete derived owner.",
+      "statement": "void owner.activateNativeAuthority()",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/adapters/starting-owner.type-test.ts",
+      "directiveLine": 43,
+      "diagnosticLine": 44,
+      "directive": "// @ts-expect-error Fixture claim authority cannot enter native configuration.",
+      "statement": "void createBrowserStartingLocalFilterWriter(native, { ...options, claim })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/adapters/starting-owner.type-test.ts",
+      "directiveLine": 45,
+      "diagnosticLine": 46,
+      "directive": "// @ts-expect-error Fixture removal authority cannot enter native configuration.",
+      "statement": "void createBrowserStartingLocalFilterWriter(native, { ...options, removal })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/adapters/starting-owner.type-test.ts",
+      "directiveLine": 47,
+      "diagnosticLine": 48,
+      "directive": "// @ts-expect-error Fixture join authority cannot enter native configuration.",
+      "statement": "void createBrowserStartingLocalFilterWriter(native, { ...options, join })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/adapters/starting-owner.type-test.ts",
+      "directiveLine": 49,
+      "diagnosticLine": 50,
+      "directive": "// @ts-expect-error Fixture recovery authority cannot enter native configuration.",
+      "statement": "void createBrowserStartingLocalFilterWriter(native, { ...options, recovery })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/adapters/starting-owner.type-test.ts",
+      "directiveLine": 51,
+      "diagnosticLine": 52,
+      "directive": "// @ts-expect-error Fixture canonical authority cannot enter native configuration.",
+      "statement": "void createBrowserStartingLocalFilterWriter(native, { ...options, canonicalAuthority })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "tools/fixtures/starting-owner/consumer.type-test.ts",
+      "directiveLine": 6,
+      "diagnosticLine": 7,
+      "directive": "// @ts-expect-error The canonical background facade is not the UI's local-storage collaborator.",
+      "statement": "const uiLocal: BackendPorts[\"local\"] = owner",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "tools/fixtures/starting-owner/consumer.type-test.ts",
+      "directiveLine": 8,
+      "diagnosticLine": 9,
+      "directive": "// @ts-expect-error The facade cannot become the browser UI's raw local writer.",
+      "statement": "const browserLocal: BrowserBackendPort[\"storage\"][\"local\"] = owner",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "tools/fixtures/starting-owner/consumer.type-test.ts",
+      "directiveLine": 10,
+      "diagnosticLine": 11,
+      "directive": "// @ts-expect-error UI local storage remains read-only.",
+      "statement": "void local.set({ paused: true })",
+      "state": "authored-unexecuted"
+    }
+  ]
+}

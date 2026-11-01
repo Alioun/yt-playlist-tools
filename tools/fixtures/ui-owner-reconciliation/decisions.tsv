@@ -1,0 +1,12 @@
+decision	choice	reason	evidence	result
+catalogue	Keep FirstRunMessages and composed UiMessages	The full catalogue must carry auto-add and playlist operations	src/shared/contracts/first-run.ts; src/shared/contracts/ui.ts	Authored, unexecuted
+receiver	Preserve canonical auto-add handlers exactly apart from catalogue type name	Native sender facts and canonical result projection own authority	src/background/router/first-run.ts	Authored, unexecuted
+backend	Keep progressive caller, list/create implementations and accepted auto-add overloads	One caller and disposal path retain both operations	src/ui/backend/core.ts; src/ui/backend/backend.ts	Authored, unexecuted
+fixture	Use complete canonical owner, actual Tabs and Playlists and composed router	A subcatalogue listener cannot represent the full Backend	tools/fixtures/first-run-backend/harness.ts	Authored, unexecuted
+session	Reuse a supplied fixture removal session or explicit synthetic storage	Owner and removal must share their session authority	tools/fixtures/first-run-backend/harness.ts	Authored, unexecuted
+request-identity	Preserve authored per-caller wire namespace	Router duplicate suppression otherwise collides across Backend views	src/ui/backend/core.ts; src/background/router/ui-playlists/index.ts	Protected exact-wire assertion repair proposed
+protected-owner	Leave router Owner unchanged and propose canonical intersection	Only seven code paths may change	protected-repairs.patch	Known source-level compiler blocker remains
+native-consumer	Leave native891 consumer unchanged and propose FirstRunMessages migration	All fifteen qualified native paths remain protected	protected-repairs.patch	Known source-level compiler blocker remains
+original-gates	Preserve all 79 progressive gates and ten controls	The merge cannot weaken existing qualification	Original gates and controls; evidence/static-check.json	Static preservation only
+proof	Use complete byte/mode replay and separate-process rehash	Runtime lease is held by another worker	evidence/replay.json; evidence/independent-rehash.json	Filesystem proof only
+policies	Keep all three picker policies open	The brief does not settle product decisions	Consolidated brief	Unchanged

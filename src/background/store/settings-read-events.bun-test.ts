@@ -93,7 +93,7 @@ export async function settingsAcceptance(api: { create: typeof createLocalFilter
     const raw = h.records(), beforeRead = h.stats(), first = await owner.read("settings")
     equal(viewValues(first), ["system", 50], "partial settings read defaults in memory")
     equal(h.stats(), { ...beforeRead, reads: beforeRead.reads + 1 }, "read is exactly one local load")
-    equal(h.effects.at(-1), { get: ["schema", "doc:settings"] }, "read loads no device or inventory")
+    equal(h.effects.at(-1), { get: null }, "read validates the complete retained authority inventory")
     equal(h.records(), raw, "read does not materialize omissions")
     if (first.kind !== "value") throw Error("value")
     Object.getOwnPropertyDescriptor(first.settings, "future")?.value.nested.push("changed")

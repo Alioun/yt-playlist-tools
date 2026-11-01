@@ -1,0 +1,8 @@
+diff --git a/src/site/core/notice/plain.ts b/src/site/core/notice/plain.ts
+--- a/src/site/core/notice/plain.ts
++++ b/src/site/core/notice/plain.ts
+@@ -1,3 +1,4 @@
++export { flushSync } from "svelte"
+ import type { Site } from "../../../shared/contracts"
+ import { Scope, type Dispose } from "../scope"
+ import { createNoticeLayer, type NoticeLayer } from "./host"

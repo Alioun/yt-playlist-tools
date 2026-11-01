@@ -1,0 +1,138 @@
+{
+  "state": "seven-compiling-control-proposals-unexecuted",
+  "controls": [
+    {
+      "id": "wrong-gate-scope",
+      "target": "src/background/store/feature-settings.ts",
+      "patch": "controls/wrong-gate-scope.patch",
+      "baseSha256": "0b7e817acec48345ecb87e1d266e29167f8b63d48d7f87e027113925f4b01851",
+      "mutatedSha256": "e8b9ff800c115bc6202290f0f6d93a9a69a08618e25974aee1cc6ecbb2471e49",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "    settings.musicSection = change.value",
+          "after": "    settings.musicSection = change.value\n    settings.musicActions.on = change.value",
+          "occurrence": 1,
+          "line": 26
+        }
+      ],
+      "testFile": "tools/fixtures/feature-switches/owner.bun-test.ts",
+      "namedAssertion": "owner false Music section preserves hidden feature choices and requests no permission",
+      "state": "compiling-control-proposal-unexecuted"
+    },
+    {
+      "id": "permission-observation-trust",
+      "target": "src/background/store/feature-settings-execution.ts",
+      "patch": "controls/permission-observation-trust.patch",
+      "baseSha256": "e61aff4b1c08d79016ed25f15b45b05135c6f884c380210296323fdefd9c3d2e",
+      "mutatedSha256": "bde152caec1fe9e5d6719c13464ee2914d5aa04bcbefc6ca6d6296196a9e8e75",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "observation = await deps.access?.read()",
+          "after": "observation = { www: true, music: true, browserMenu: true }",
+          "occurrence": 1,
+          "line": 23
+        }
+      ],
+      "testFile": "tools/fixtures/feature-switches/owner.bun-test.ts",
+      "namedAssertion": "owner false denial keeps Music features and Also on Music off while retaining consent",
+      "state": "compiling-control-proposal-unexecuted"
+    },
+    {
+      "id": "private-blanket-rejection",
+      "target": "src/background/router/ui-playlists/index.ts",
+      "patch": "controls/private-blanket-rejection.patch",
+      "baseSha256": "c83c2d46563197f88cac4d86be1f2bfc51b3c9771545cf63032a46262a0c242d",
+      "mutatedSha256": "493c7111d7294c7873f332f08caa760800b39bdee100acb25e85dc92dc38b2a0",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "if (!active || resolved.kind !== \"ui\" || resolved.page === \"onboarding\"",
+          "after": "if (!active || resolved.kind !== \"ui\" || resolved.origin.incognito || resolved.page === \"onboarding\"",
+          "occurrence": 1,
+          "line": 244
+        }
+      ],
+      "testFile": "tools/fixtures/feature-switches/boundaries.bun-test.ts",
+      "namedAssertion": "private shared configuration is accepted while private setup and first-run selection remain refused",
+      "state": "compiling-control-proposal-unexecuted"
+    },
+    {
+      "id": "repeated-presets",
+      "target": "src/background/store/feature-settings.ts",
+      "patch": "controls/repeated-presets.patch",
+      "baseSha256": "0b7e817acec48345ecb87e1d266e29167f8b63d48d7f87e027113925f4b01851",
+      "mutatedSha256": "7d63eb6ec83dff31bf439067f45085771cbd39ee74dcbe93cc7d7b64eb31bbd8",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "    const path = featureSettings[change.feature]",
+          "after": "    const path = featureSettings[change.feature]\n    if (change.value && change.feature === \"shortcuts\") settings.shortcuts.preset = false",
+          "occurrence": 1,
+          "line": 31
+        }
+      ],
+      "testFile": "tools/fixtures/feature-switches/owner.bun-test.ts",
+      "namedAssertion": "owner presets run once, preserve edits/deletions and avoid migration and occupied key identities",
+      "state": "compiling-control-proposal-unexecuted"
+    },
+    {
+      "id": "omitted-account-and-shard",
+      "target": "src/background/store/feature-settings-progress.ts",
+      "patch": "controls/omitted-account-and-shard.patch",
+      "baseSha256": "8d49ae2bdcf00898ac483d8a59f022ef2d13cf4937debed07f63dca653ac990e",
+      "mutatedSha256": "3d8ccdb4ab8f63ecce201c305c94e3801dcbebe5a9b24f48af266ce4f1864f56",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "return joinProgressPlan(records, []).map(({ acct, shard })",
+          "after": "return joinProgressPlan(records, []).filter(({ acct, shard }) => acct !== \"BBBBBBBBBBBBBBBB\" && shard !== 15).map(({ acct, shard })",
+          "occurrence": 1,
+          "line": 27
+        }
+      ],
+      "testFile": "tools/fixtures/feature-switches/owner.bun-test.ts",
+      "namedAssertion": "owner off/on cannot revive progress and keeps playlists, percentages, filters, Undo and history",
+      "state": "compiling-control-proposal-unexecuted"
+    },
+    {
+      "id": "premature-success",
+      "target": "src/background/store/feature-settings-mutation.ts",
+      "patch": "controls/premature-success.patch",
+      "baseSha256": "5e639151f517c31017b67eaebca884db8e8a6e3f4e69ec2fb3108795ef4728f8",
+      "mutatedSha256": "b21f4862b01c9acd364f175bd2444b14725c9380997cec075fde2eca7b4c80bd",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "const confirmed = await deps.local.get([\"schema\", \"device\", \"sync\", \"doc:settings\"])",
+          "after": "const confirmed = { ...baseline, ...items }",
+          "occurrence": 1,
+          "line": 97
+        }
+      ],
+      "testFile": "tools/fixtures/feature-switches/boundaries.bun-test.ts",
+      "namedAssertion": "owner ordinary ignore requires exact readback and no publication",
+      "state": "compiling-control-proposal-unexecuted"
+    },
+    {
+      "id": "lost-options",
+      "target": "src/background/store/feature-settings.ts",
+      "patch": "controls/lost-options.patch",
+      "baseSha256": "0b7e817acec48345ecb87e1d266e29167f8b63d48d7f87e027113925f4b01851",
+      "mutatedSha256": "0308211c596f3968a2a0d0b23c777a06dd373063145d1e58c165d290c5bf3108",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "  let settings = decodeSettings(input.current)",
+          "after": "  let settings = decodeSettings({})",
+          "occurrence": 1,
+          "line": 22
+        }
+      ],
+      "testFile": "tools/fixtures/feature-switches/owner.bun-test.ts",
+      "namedAssertion": "owner false roundtrips gather without losing the complete settings inventory",
+      "state": "compiling-control-proposal-unexecuted"
+    }
+  ]
+}

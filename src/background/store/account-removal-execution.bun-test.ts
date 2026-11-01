@@ -1,17 +1,70 @@
 import { expect, test } from "bun:test"
-import { accountRemovalLocalName, parsePendingAccountRemoval, pendingAccountRemovalKey } from "./account-removal-execution"
+import { accountRemovalLocalName, planAccountDocumentWrite, parsePendingAccountRemoval, pendingAccountRemovalKey } from "./account-removal-execution"
+import type { JsonObject } from "../../shared/contracts/json"
 import { isAccountKey } from "../../shared/model"
-import { runAccountRemovalExecution, createRemovalHarness, removalFixture } from "../../../tools/fixtures/account-removal-execution/run"
+import { runAccountRemovalExecution, accountRemovalExecutionPartitionCount, createRemovalHarness, removalFixture } from "../../../tools/fixtures/account-removal-execution/run"
 import { createLocalFilterWriter } from "./local-filter-writer"
 
 const acct = "AAAAAAAAAAAAAAAA"
 if (!isAccountKey(acct)) throw Error("Invalid synthetic account")
 
-test("actual prepare/remove, exact cleanup, interruption and restart, failed IO and flush", async () => {
-  const result = await runAccountRemovalExecution()
-  expect(result.cases).toBeGreaterThan(400)
-  expect(result.assertions).toBeGreaterThan(2500)
-}, 300000)
+test("account admission preserves unreadable unrelated documents, remote quotas and addressed version refusal", () => {
+  const other = "BBBBBBBBBBBBBBBB"
+  if (!isAccountKey(other)) throw Error("Invalid synthetic account")
+  const name = `doc:setup:${acct}`, sibling = `doc:setup:${other}`, stamp = { v: 1, gen: "g0", at: 1, by: "fixture" }
+  const candidate = { ...stamp, gen: "g1", at: 2, data: { quickSave: "PL_new" } }
+  for (const opaqueName of ["doc:settings", sibling]) {
+    for (const counterpart of ["absent", "supported", "newer"] as const) {
+      const local: JsonObject = {
+        [name]: { ...stamp, data: { quickSave: "PL_old" } }, "doc:settings": { ...stamp, data: {} }, [sibling]: { ...stamp, data: { quickSave: "PL_other" } },
+        sync: { joined: "H", status: "ok", pushed: { [name]: "g0", "doc:settings": "g0", [sibling]: "g0" }, editedSinceOff: false }
+      }
+      const remote: JsonObject = { "s:meta": { v: 1, id: "H", created: 0 }, [`s:setup:${acct}`]: local[name]!, "s:settings": local["doc:settings"]!, [`s:setup:${other}`]: local[sibling]! }
+      const remoteName = `s:${opaqueName.slice(4)}`
+      local[opaqueName] = { v: 2, gen: "future-local", at: 3, by: "future", data: { unknown: ["keep"] } }
+      if (counterpart === "absent") delete remote[remoteName]
+      if (counterpart === "newer") remote[remoteName] = { v: 4, gen: "future-remote", at: 4, by: "future", data: { unknown: [0] } }
+      const before = JSON.stringify({ local, remote })
+      const plan = planAccountDocumentWrite({ local, sync: remote, intent: { kind: "changed", key: { kind: "setup", acct }, document: candidate } })
+      expect(plan.kind).toBe("planned")
+      if (plan.kind !== "planned") throw Error("Supported Setup edit was blocked by an unrelated newer document")
+      expect(plan.sent.map(item => item.name)).toEqual([name])
+      expect(plan.repairs.some(item => item.name === opaqueName)).toBe(false)
+      expect(JSON.stringify({ local, remote })).toBe(before)
+      remote[`s:setup:${acct}`] = { v: 2, gen: "future-target", at: 3, by: "future", data: {} }
+      expect(planAccountDocumentWrite({ local, sync: remote, intent: { kind: "changed", key: { kind: "setup", acct }, document: candidate } })).toEqual({ kind: "refused", reason: "update-needed" })
+      remote[`s:setup:${acct}`] = local[name]!
+      for (let item = 0; item < 480; item++) remote[`retained:${item}`] = "kept"
+      expect(planAccountDocumentWrite({ local, sync: remote, intent: { kind: "changed", key: { kind: "setup", acct }, document: candidate } })).toEqual({ kind: "refused", reason: "sync-full" })
+    }
+  }
+})
+
+const removalGroups: { ids: number[]; planned: number; cases: number; assertions: number }[] = []
+for (let index = 0; index < accountRemovalExecutionPartitionCount; index++) {
+  test(`actual prepare/remove, exact cleanup, interruption and restart, failed IO and flush, partition ${index + 1}/${accountRemovalExecutionPartitionCount}`, async () => {
+    const ids: number[] = []
+    let planned = -1
+    const result = await runAccountRemovalExecution(undefined, {
+      partition: { index, count: accountRemovalExecutionPartitionCount },
+      onObservation(caseIndex) { ids.push(caseIndex) },
+      onComplete(cases) { planned = cases }
+    })
+    expect(ids.length).toBe(result.cases)
+    expect(ids.every(caseIndex => caseIndex % accountRemovalExecutionPartitionCount === index)).toBe(true)
+    removalGroups.push({ ids, planned, cases: result.cases, assertions: result.assertions })
+  }, 180000)
+}
+
+test("removal partitions cover every original case exactly once", () => {
+  expect(removalGroups.length).toBe(accountRemovalExecutionPartitionCount)
+  const planned = removalGroups[0]!.planned
+  expect(removalGroups.every(group => group.planned === planned)).toBe(true)
+  const ids = removalGroups.flatMap(group => group.ids).sort((a, b) => a - b)
+  expect(ids).toEqual(Array.from({ length: planned }, (_, index) => index))
+  expect(removalGroups.reduce((sum, group) => sum + group.cases, 0)).toBeGreaterThan(400)
+  expect(removalGroups.reduce((sum, group) => sum + group.assertions, 0)).toBeGreaterThan(2500)
+})
 
 test("pending records reject forged manifests, future values and accessors without executing them", async () => {
   const h = createRemovalHarness(removalFixture(), { details: true }), writer = createLocalFilterWriter(h.deps)

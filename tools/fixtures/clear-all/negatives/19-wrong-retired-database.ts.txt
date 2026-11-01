@@ -1,0 +1,4 @@
+import type { StoreLifecycleDependencies } from "../../../src/background/store/store-lifecycle"
+
+declare const deps: StoreLifecycleDependencies; deps.deleteDatabase("foreign")
+export {}

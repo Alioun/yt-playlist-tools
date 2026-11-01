@@ -1,0 +1,91 @@
+{
+  "state": "authored-unexecuted",
+  "requiredOrder": [
+    "named baseline pass",
+    "mutant compiler pass",
+    "named behavior assertion failure",
+    "exact bytes and modes restored",
+    "restored compiler pass",
+    "restored named baseline pass"
+  ],
+  "controls": [
+    {
+      "id": "uncertain-write-retry",
+      "file": "gateway.bun-test.ts",
+      "test": "uncertain writes never fall back after throws rejections or lost answers",
+      "assertion": "Uncertain write was confirmed or retried",
+      "edits": [
+        {
+          "path": "src/page/gateway.ts",
+          "old": "if (isWrite(job)) return fail({ ok: false, reason: \"unconfirmed\" })",
+          "new": "if (false && isWrite(job)) return fail({ ok: false, reason: \"unconfirmed\" })"
+        }
+      ]
+    },
+    {
+      "id": "account-after-signing",
+      "file": "signer.bun-test.ts",
+      "test": "wrong-account write after signing is prevented by a fresh configuration check",
+      "assertion": "Wrong-account write was sent after signing",
+      "edits": [
+        {
+          "path": "src/page/gateway/www-request.ts",
+          "old": "const { port, spec, signed, context } = options",
+          "new": "const { port, spec, signed } = options\n  const context = { ...options.context, check: () => null }"
+        }
+      ]
+    },
+    {
+      "id": "cross-site-signing",
+      "file": "signer.bun-test.ts",
+      "test": "Music can never enter the www signer even with a misleading origin",
+      "assertion": "Cross-site signing occurred",
+      "edits": [
+        {
+          "path": "src/page/gateway/www-request.ts",
+          "old": "if (port.site !== \"www\") return { kind: \"not-sent\", cause: \"missing\" }",
+          "new": "if (false && port.site !== \"www\") return { kind: \"not-sent\", cause: \"missing\" }"
+        }
+      ]
+    },
+    {
+      "id": "aggregate-batch-success",
+      "file": "gateway.bun-test.ts",
+      "test": "aggregate batch success never confirms individual additions",
+      "assertion": "Aggregate batch success manufactured confirmed entries",
+      "edits": [
+        {
+          "path": "src/page/parsers/playlists.ts",
+          "old": "if (!Array.isArray(entries) || entries.length > job.videoIds.length) return undefined",
+          "new": "if (!Array.isArray(entries)) return { results: job.videoIds.map(videoId => ({ videoId, setVideoId: null })) }\n  if (entries.length > job.videoIds.length) return undefined"
+        }
+      ]
+    },
+    {
+      "id": "direct-read-lane",
+      "file": "gateway.bun-test.ts",
+      "test": "direct reads bypass the request lane and reusable app-state lane is independent",
+      "assertion": "Request lane blocked a direct read",
+      "edits": [
+        {
+          "path": "src/page/gateway.ts",
+          "old": "if (isReadJob(job.kind)) {\n          const route = routes[job.kind]",
+          "new": "if (options.requests && isReadJob(job.kind)) await lanes.run(\"playlist\", async () => null)\n        if (isReadJob(job.kind)) {\n          const route = routes[job.kind]"
+        }
+      ]
+    },
+    {
+      "id": "raw-secret-signal",
+      "file": "gateway.bun-test.ts",
+      "test": "signals exclude raw secret-like values identities and response text",
+      "assertion": "Raw secret reached a signal",
+      "edits": [
+        {
+          "path": "src/page/gateway.ts",
+          "old": "shape: kind === \"unrecognised\" ? makeShapeOutline(isJsonValue(raw) ? raw : null, vocabulary.schemaKeys) : null,\n      clientVersion: null,",
+          "new": "shape: kind === \"unrecognised\" ? makeShapeOutline(isJsonValue(raw) ? raw : null, vocabulary.schemaKeys) : null,\n      clientVersion: typeof field(raw, \"debug\") === \"string\" ? String(field(raw, \"debug\")) : null,"
+        }
+      ]
+    }
+  ]
+}

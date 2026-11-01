@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "files": [
+    "../../../.wxt/wxt.d.ts",
+    "../../../tools/fixtures/clear-all/harness.ts",
+    "../../../tools/fixtures/clear-all/owner.bun-test.ts",
+    "../../../tools/fixtures/clear-all/rpc.bun-test.ts",
+    "../../../tools/fixtures/clear-all/run.ts",
+    "../../../tools/fixtures/clear-all/teardown.bun-test.ts",
+    "../../../src/background/adapters/starting-owner.type-test.ts",
+    "../../../src/background/router/ui-playlists/router.type-test.ts",
+    "../../../src/background/store/consent-recovery.type-test.ts",
+    "../../../src/background/store/local-filter-writer.type-test.ts",
+    "../../../src/background/store/store-lifecycle.type-test.ts",
+    "../../../src/shared/contracts/ui.type-test.ts",
+    "../../../src/ui/backend/backend.type-test.ts",
+    "../../../tools/fixtures/clear-all/isolated-negative.ts"
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "extends": "../ui-foundation/tsconfig.json",
+  "include": ["RecorderChecks.svelte", "../../../src/ui/keys/**/*.ts", "../../../src/ui/keys/**/*.svelte", "../../../src/ui/backend/**/*.ts"],
+  "exclude": ["../../../src/ui/**/*.bun-test.ts"]
+}

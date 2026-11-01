@@ -1,0 +1,438 @@
+{
+  "boundary": {
+    "cwd": "{qualificationSource}",
+    "environment": "cleared with env -i; only named HOME TMPDIR PATH fields",
+    "HOME": "{qualificationScratch}/home",
+    "TMPDIR": "{qualificationScratch}/tmp",
+    "PATH": "{pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+    "stdin": "/dev/null",
+    "timeout": "/usr/bin/timeout -k 10; each gate no more than 540s",
+    "executablePins": "dependency-identities.json inheritedExecutablePins; rebind only after independent full byte/mode verification in an approved prepared dependency root",
+    "source": "complete source seal; no environment-file names at any depth; reject names without opening bytes",
+    "Bun": "every invocation and descendant requires --no-env-file --no-install; no existing driver receives grandfathered trust",
+    "enforcement": "BLOCKED until separately proved dummy-fixture enforcement covers environment-file refusal, inherited environment clearing, executable and PATH pinning, closed stdin, process descendants, timeouts and failure paths under a later sole lease",
+    "network": "none; no install or browser download",
+    "launcher": "not supplied; this is a non-executing command inventory"
+  },
+  "gates": [
+    {
+      "id": "native-positive",
+      "status": "UNEXECUTED",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "HOME={qualificationScratch}/home",
+        "TMPDIR={qualificationScratch}/tmp",
+        "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "120",
+        "{qualifiedDependencies}/@typescript/typescript-darwin-arm64/lib/tsc",
+        "--noEmit",
+        "-p",
+        "tools/fixtures/site-toaster/tsconfig.json",
+        "--listFiles"
+      ],
+      "requires": [
+        "later sole lease",
+        "dummy enforcement",
+        "frozen1372 plus final owner/key reconciliation"
+      ],
+      "captureStdout": "{qualificationEvidence}/native-files.txt"
+    },
+    {
+      "id": "native-inclusion",
+      "status": "UNEXECUTED",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "HOME={qualificationScratch}/home",
+        "TMPDIR={qualificationScratch}/tmp",
+        "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "120",
+        "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+        "tools/fixtures/site-toaster/verify-inclusion.py",
+        "{qualificationEvidence}/native-files.txt"
+      ],
+      "requires": [
+        "native-positive"
+      ]
+    },
+    {
+      "id": "svelte-positive",
+      "status": "UNEXECUTED",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "HOME={qualificationScratch}/home",
+        "TMPDIR={qualificationScratch}/tmp",
+        "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
+        "{qualifiedDependencies}/svelte-check/bin/svelte-check",
+        "--tsgo",
+        "--workspace",
+        "{qualificationSource}",
+        "--tsconfig",
+        "tools/fixtures/site-toaster/tsconfig.json",
+        "--fail-on-warnings",
+        "--output",
+        "machine"
+      ],
+      "requires": [
+        "native-positive",
+        "fresh isolated Svelte-check cache",
+        "actual Toast.svelte and ApiChecks.svelte included"
+      ]
+    },
+    {
+      "id": "focused-model",
+      "status": "UNEXECUTED",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "HOME={qualificationScratch}/home",
+        "TMPDIR={qualificationScratch}/tmp",
+        "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "120",
+        "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+        "--no-env-file",
+        "--no-install",
+        "--conditions=browser",
+        "--config",
+        "{qualificationSource}/tools/fixtures/site-toaster/bunfig.toml",
+        "--preload",
+        "{qualificationSource}/tests/setup/svelte.ts",
+        "--preload",
+        "{qualificationSource}/tools/fixtures/site-toaster/preload.ts",
+        "test",
+        "--isolate",
+        "./tools/fixtures/site-toaster/model.bun-test.ts"
+      ],
+      "requires": [
+        "native-positive",
+        "browser-condition preloads identities"
+      ]
+    },
+    {
+      "id": "focused-dom",
+      "status": "UNEXECUTED",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "HOME={qualificationScratch}/home",
+        "TMPDIR={qualificationScratch}/tmp",
+        "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+        "--no-env-file",
+        "--no-install",
+        "--conditions=browser",
+        "--config",
+        "{qualificationSource}/tools/fixtures/site-toaster/bunfig.toml",
+        "--preload",
+        "{qualificationSource}/tests/setup/svelte.ts",
+        "--preload",
+        "{qualificationSource}/tools/fixtures/site-toaster/preload.ts",
+        "test",
+        "--isolate",
+        "./tools/fixtures/site-toaster/dom.bun-test.ts",
+        "./tools/fixtures/site-toaster/consumer.bun-test.ts"
+      ],
+      "requires": [
+        "svelte-positive",
+        "Svelte compiler preload and happy-dom prepared dependency qualification"
+      ]
+    },
+    {
+      "id": "scope-keys-featurehost-regressions",
+      "status": "UNEXECUTED",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "HOME={qualificationScratch}/home",
+        "TMPDIR={qualificationScratch}/tmp",
+        "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+        "--no-env-file",
+        "--no-install",
+        "--conditions=browser",
+        "--config",
+        "{qualificationSource}/tools/fixtures/site-toaster/bunfig.toml",
+        "--preload",
+        "{qualificationSource}/tests/setup/svelte.ts",
+        "--preload",
+        "{qualificationSource}/tools/fixtures/site-toaster/preload.ts",
+        "test",
+        "--isolate",
+        "./src/site/core/scope.bun-test.ts",
+        "./src/site/core/keys.bun-test.ts",
+        "./src/site/core/feature-host.bun-test.ts",
+        "./src/site/kit/scope-mount.bun-test.ts"
+      ],
+      "requires": [
+        "native-positive",
+        "final key reconciliation"
+      ]
+    },
+    {
+      "id": "architecture",
+      "status": "UNEXECUTED",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "HOME={qualificationScratch}/home",
+        "TMPDIR={qualificationScratch}/tmp",
+        "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+        "--no-env-file",
+        "--no-install",
+        "--conditions=browser",
+        "--config",
+        "{qualificationSource}/tools/fixtures/site-toaster/bunfig.toml",
+        "--preload",
+        "{qualificationSource}/tests/setup/svelte.ts",
+        "--preload",
+        "{qualificationSource}/tools/fixtures/site-toaster/preload.ts",
+        "test",
+        "--isolate",
+        "./tests/guards/architecture.test.ts",
+        "./tools/fixtures/site-toaster/architecture.bun-test.ts"
+      ],
+      "requires": [
+        "native-positive",
+        "frozen guard inventory retained"
+      ]
+    },
+    {
+      "id": "consumer-1",
+      "status": "UNEXECUTED",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "HOME={qualificationScratch}/home",
+        "TMPDIR={qualificationScratch}/tmp",
+        "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "120",
+        "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+        "--no-env-file",
+        "--no-install",
+        "--conditions=browser",
+        "--config",
+        "{qualificationSource}/tools/fixtures/site-toaster/bunfig.toml",
+        "--preload",
+        "{qualificationSource}/tests/setup/svelte.ts",
+        "--preload",
+        "{qualificationSource}/tools/fixtures/site-toaster/preload.ts",
+        "tools/fixtures/site-toaster/run.ts"
+      ],
+      "requires": [
+        "focused-dom"
+      ],
+      "captureStdout": "{qualificationEvidence}/consumer-1.jsonl",
+      "captureStderr": "{qualificationEvidence}/consumer-1.stderr"
+    },
+    {
+      "id": "consumer-2",
+      "status": "UNEXECUTED",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "HOME={qualificationScratch}/home",
+        "TMPDIR={qualificationScratch}/tmp",
+        "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "120",
+        "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+        "--no-env-file",
+        "--no-install",
+        "--conditions=browser",
+        "--config",
+        "{qualificationSource}/tools/fixtures/site-toaster/bunfig.toml",
+        "--preload",
+        "{qualificationSource}/tests/setup/svelte.ts",
+        "--preload",
+        "{qualificationSource}/tools/fixtures/site-toaster/preload.ts",
+        "tools/fixtures/site-toaster/run.ts"
+      ],
+      "requires": [
+        "focused-dom"
+      ],
+      "captureStdout": "{qualificationEvidence}/consumer-2.jsonl",
+      "captureStderr": "{qualificationEvidence}/consumer-2.stderr"
+    },
+    {
+      "id": "consumer-eof",
+      "status": "UNEXECUTED",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "HOME={qualificationScratch}/home",
+        "TMPDIR={qualificationScratch}/tmp",
+        "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "120",
+        "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+        "tools/fixtures/site-toaster/compare-eof.py",
+        "{qualificationEvidence}/consumer-1.jsonl",
+        "{qualificationEvidence}/consumer-2.jsonl"
+      ],
+      "requires": [
+        "consumer-1",
+        "consumer-2"
+      ]
+    },
+    {
+      "id": "build-kit-www",
+      "status": "UNEXECUTED",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "HOME={qualificationScratch}/home",
+        "TMPDIR={qualificationScratch}/tmp",
+        "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
+        "{qualifiedDependencies}/vite/bin/vite.js",
+        "build",
+        "--config",
+        "tools/fixtures/site-toaster/vite.config.ts",
+        "--mode",
+        "kit-www"
+      ],
+      "requires": [
+        "svelte-positive",
+        "no environment-file names, no install",
+        "dormant export-only library build"
+      ]
+    },
+    {
+      "id": "build-kit-music",
+      "status": "UNEXECUTED",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "HOME={qualificationScratch}/home",
+        "TMPDIR={qualificationScratch}/tmp",
+        "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
+        "{qualifiedDependencies}/vite/bin/vite.js",
+        "build",
+        "--config",
+        "tools/fixtures/site-toaster/vite.config.ts",
+        "--mode",
+        "kit-music"
+      ],
+      "requires": [
+        "svelte-positive",
+        "no environment-file names, no install",
+        "dormant export-only library build"
+      ]
+    },
+    {
+      "id": "build-core-www",
+      "status": "UNEXECUTED",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "HOME={qualificationScratch}/home",
+        "TMPDIR={qualificationScratch}/tmp",
+        "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
+        "{qualifiedDependencies}/vite/bin/vite.js",
+        "build",
+        "--config",
+        "tools/fixtures/site-toaster/vite.config.ts",
+        "--mode",
+        "core-www"
+      ],
+      "requires": [
+        "svelte-positive",
+        "no environment-file names, no install",
+        "dormant export-only library build"
+      ]
+    },
+    {
+      "id": "dormant-bundle-guards",
+      "status": "UNEXECUTED",
+      "argv": [
+        "/usr/bin/env",
+        "-i",
+        "HOME={qualificationScratch}/home",
+        "TMPDIR={qualificationScratch}/tmp",
+        "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "120",
+        "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+        "tools/fixtures/site-toaster/check-bundles.py"
+      ],
+      "requires": [
+        "build-kit-www",
+        "build-kit-music",
+        "build-core-www"
+      ],
+      "limitation": "subset evidence only; full core/kit and 49KB/43KB site totals remain mandatory production-composition work"
+    }
+  ],
+  "nativeNegatives": {
+    "inventory": "negatives.json",
+    "protocol": "each isolated clone of sealed non-environment source runs positive compiler first; apply one zero-fuzz/offset patch, require only intended diagnostic line and code, restore byte/mode identity, rerun positive; no expectation credit here"
+  },
+  "behavioralControls": {
+    "inventory": "controls.json",
+    "protocol": "positive native and actual Svelte gates, apply one control in an independent non-environment source copy, require both compilers succeed and named assertion fails, restore and rehash before next control"
+  },
+  "heldExternalGates": [
+    "actual Chromium and Firefox rendering, both sites/themes, narrow/wide, native focus and fullscreen restore",
+    "axe for in-page hosts in both engines; approved prepared axe dependency not currently qualified",
+    "screen reader release check and reduced-motion visual checks",
+    "full production linking and actual site bundles, all Q-PERF rows and idle/hidden soaks",
+    "native durability, ownership and exclusion remain waived/unproven",
+    "privacy wording approval",
+    "all three picker policies remain unresolved/held",
+    "owner-services final repair and active key-author reconciliation",
+    "production activation remains held; no scoped return completes 2.0"
+  ],
+  "inheritedInventories": "upstream-gate-inventory.json; all original bytes retained; no inherited gate receives current acceptance credit"
+}

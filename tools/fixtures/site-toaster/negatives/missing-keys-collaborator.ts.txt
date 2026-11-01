@@ -1,0 +1,2 @@
+import { createFeedback } from "../../../src/site/kit/feedback"
+createFeedback({})

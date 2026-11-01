@@ -167,10 +167,18 @@ async function compositionAcceptance(create: typeof createLocalFilterWriter, acc
   }
   {
     const h = harness(), pause = gate(), w = h.make(); h.hooks.lookup = pause.wait
-    const first = w.claim(); await settle(); check(pause.reached, "draining claim reaches held lookup"); await pause.entered; const second = w.claim(); let drained = false; const disposal = w.dispose().then(() => { drained = true })
+    const first = w.claim(); await settle(); check(pause.reached, "draining claim reaches held lookup"); await pause.entered
+    const preserved = copy(h.records), batches = copy(h.batches), lookups = h.stats.lookups
+    const second = w.claim(); let drained = false; const disposal = w.dispose().then(() => { drained = true })
     await settle(); equal(drained, false, "disposal waits for held claim")
     let rejected = false; try { await w.claim() } catch (error) { rejected = error instanceof Error && error.message === "Writer disposed" }
-    check(rejected, "disposal closes new claim immediately"); pause.release(); equal((await first).kind, "committed", "accepted claim drains honestly"); equal(await second, { kind: "consumed" }, "accepted queued claim drains honestly"); await disposal
+    check(rejected, "disposal closes new claim immediately"); pause.release()
+    equal(await first, { kind: "unavailable", reason: "stale" }, "stopped accepted claim cannot commit")
+    equal(await second, { kind: "unavailable", reason: "startup" }, "stopped queued claim cannot consume work")
+    await disposal; equal(drained, true, "disposal fulfills after held lookup drains")
+    equal(h.records, preserved, "stopping preserves the complete store")
+    equal(h.batches, batches, "stopping invokes no claim write after lookup")
+    equal(h.stats.lookups, lookups, "queued claim invokes no successor lookup")
   }
   {
     const h = harness(), base = seed(), marker = { name: "opaque", message: "original" }
@@ -225,3 +233,11 @@ test("real first-edit transactions, global Filter uncertainty and fixed removal 
   expect(result.production).toBe("not-connected")
   expect(result.positiveInitialization).toBe("pending")
 })
+
+test("same-owner Setup destination reads and edits hold authority, refuse private and stale choices, and confirm before events", async () => {
+  const { runSetupDestinationFixture } = await import("../../../tools/fixtures/setup-destination/run")
+  const result = await runSetupDestinationFixture()
+  expect(result.cases).toBe(49)
+  expect(result.assertions).toBeGreaterThan(300)
+  expect(result.production).toBe("not-connected")
+}, 180000)

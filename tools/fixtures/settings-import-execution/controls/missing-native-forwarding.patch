@@ -1,0 +1,11 @@
+--- a/src/background/adapters/starting-owner.ts
++++ b/src/background/adapters/starting-owner.ts
+@@ -101,7 +101,7 @@
+     })
+     return {
+       ...owner,
+-      prepareSettingsImport: (origin, text) => owner.prepareSettingsImport(origin, text),
++      prepareSettingsImport: async () => ({ kind: "unavailable", reason: "stale" }),
+       importSettings: (origin, input) => owner.importSettings(origin, input),
+       resumeSettingsImport: origin => owner.resumeSettingsImport(origin),
+       session: { read: owner.readSession, change: owner.changeSession },

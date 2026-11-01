@@ -1,0 +1,204 @@
+{
+  "state": "authored-unexecuted",
+  "procedure": "Under a later runtime lease, require a passing focused compiler and named baseline test. Apply exactly one replacement, require compilation, require the named behavior test to fail, restore exact bytes and mode, and require the baseline compiler and test to pass again. No control has compiled or run here.",
+  "controls": [
+    {
+      "name": "skip-native-authentication",
+      "path": "src/site/core/extlink.ts",
+      "before": "live() && runtime.senderId(sender) === extensionId",
+      "after": "live()",
+      "test": "native authentication rejects foreign and missing sender IDs and body-supplied authority",
+      "assertion": "Foreign bg.ping, bg.job and bg.view return undefined, leave the page untouched and retain view revision zero.",
+      "compilerArgv": [
+        "timeout",
+        "-k",
+        "10",
+        "540",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--project",
+        "tools/fixtures/extlink/tsconfig.json",
+        "--noEmit"
+      ],
+      "baselineAndMutantTestArgv": [
+        "timeout",
+        "-k",
+        "10",
+        "540",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/core/extlink.bun-test.ts",
+        "--test-name-pattern",
+        "native authentication rejects foreign and missing sender IDs and body-supplied authority"
+      ]
+    },
+    {
+      "name": "accept-another-account-view",
+      "path": "src/site/core/extlink.ts",
+      "before": " || !sameTabAccount(view, trusted.snapshot)",
+      "after": "",
+      "test": "views must match build and both account discriminants before publication",
+      "assertion": "A complete other-account view leaves the current view and publication history unchanged.",
+      "compilerArgv": [
+        "timeout",
+        "-k",
+        "10",
+        "540",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--project",
+        "tools/fixtures/extlink/tsconfig.json",
+        "--noEmit"
+      ],
+      "baselineAndMutantTestArgv": [
+        "timeout",
+        "-k",
+        "10",
+        "540",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/core/extlink.bun-test.ts",
+        "--test-name-pattern",
+        "views must match build and both account discriminants before publication"
+      ]
+    },
+    {
+      "name": "repeat-hello-on-navigation",
+      "path": "src/site/core/extlink.ts",
+      "before": "    const ticket = epoch",
+      "after": "    page.watch(\"nav\", () => { void hello.call(\"tab.hello\", { ...account(), site, build, hidden: false, fresh: false }) })\n    const ticket = epoch",
+      "test": "one page hello waits for trusted PageLink and ignores navigation and visibility changes",
+      "assertion": "Two real PageLink navigation events still leave exactly one tab.hello.",
+      "compilerArgv": [
+        "timeout",
+        "-k",
+        "10",
+        "540",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--project",
+        "tools/fixtures/extlink/tsconfig.json",
+        "--noEmit"
+      ],
+      "baselineAndMutantTestArgv": [
+        "timeout",
+        "-k",
+        "10",
+        "540",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/core/extlink.bun-test.ts",
+        "--test-name-pattern",
+        "one page hello waits for trusted PageLink and ignores navigation and visibility changes"
+      ]
+    },
+    {
+      "name": "late-hello-overwrites-push",
+      "path": "src/site/core/extlink.ts",
+      "before": " || pushed !== 0",
+      "after": "",
+      "test": "a valid pushed view wins over an older pending hello answer",
+      "assertion": "The received push revision two remains after the delayed hello revision one resolves.",
+      "compilerArgv": [
+        "timeout",
+        "-k",
+        "10",
+        "540",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--project",
+        "tools/fixtures/extlink/tsconfig.json",
+        "--noEmit"
+      ],
+      "baselineAndMutantTestArgv": [
+        "timeout",
+        "-k",
+        "10",
+        "540",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/core/extlink.bun-test.ts",
+        "--test-name-pattern",
+        "a valid pushed view wins over an older pending hello answer"
+      ]
+    },
+    {
+      "name": "retry-uncertain-mutation",
+      "path": "src/site/core/extlink.ts",
+      "before": "        const answer = await page.run(invocation)",
+      "after": "        const answer = await page.run(invocation)\n        if (!answer.ok && answer.reason === \"unconfirmed\") void page.run(invocation)",
+      "test": "a timed-out page mutation remains unconfirmed and is never retried",
+      "assertion": "The page observes one mutation after its timeout and a late success.",
+      "compilerArgv": [
+        "timeout",
+        "-k",
+        "10",
+        "540",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--project",
+        "tools/fixtures/extlink/tsconfig.json",
+        "--noEmit"
+      ],
+      "baselineAndMutantTestArgv": [
+        "timeout",
+        "-k",
+        "10",
+        "540",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/core/extlink.bun-test.ts",
+        "--test-name-pattern",
+        "a timed-out page mutation remains unconfirmed and is never retried"
+      ]
+    },
+    {
+      "name": "leak-runtime-listener",
+      "path": "src/site/core/extlink.ts",
+      "before": "[hello.dispose, incoming.dispose, stopPage, page.dispose]",
+      "after": "[hello.dispose, stopPage, page.dispose]",
+      "test": "PageLink retirement disposes ExtLink without another retirement announcement",
+      "assertion": "After PageLink retirement only the fixture background hello listener remains.",
+      "compilerArgv": [
+        "timeout",
+        "-k",
+        "10",
+        "540",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--project",
+        "tools/fixtures/extlink/tsconfig.json",
+        "--noEmit"
+      ],
+      "baselineAndMutantTestArgv": [
+        "timeout",
+        "-k",
+        "10",
+        "540",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/core/extlink.bun-test.ts",
+        "--test-name-pattern",
+        "PageLink retirement disposes ExtLink without another retirement announcement"
+      ]
+    }
+  ]
+}

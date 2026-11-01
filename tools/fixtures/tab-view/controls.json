@@ -1,0 +1,107 @@
+{
+  "runtimeLease": "required; not granted in this unit",
+  "state": "authored-unexecuted",
+  "controls": [
+    {
+      "id": "normal-skips-in-private",
+      "edits": [
+        {
+          "path": "src/background/add-flow/add-flow.ts",
+          "before": "const entries = [...privateMemory.skips.get(acct) ?? []]",
+          "after": "const entries = [...normal.memory.skips.get(acct) ?? []]"
+        }
+      ],
+      "testFile": "src/background/tab-view/producer.bun-test.ts",
+      "test": "private view reads actual AddFlow memory and never borrows normal skips",
+      "assertion": "The private view skips equal only the actual AddFlow private entry for bbbbbbbbbbb and PL_beta.",
+      "state": "authored-unexecuted",
+      "compilation": "proposed; not executed",
+      "expectedExit": "mutant compiles; named behavior test fails; exact restoration and restored gates pass"
+    },
+    {
+      "id": "omitted-music-section-gate",
+      "edits": [
+        {
+          "path": "src/background/tab-view/producer.ts",
+          "before": "if (feature.setting === \"device.syncOn\" || !settings[feature.setting].on || facts.site === \"music\" && !settings.musicSection) continue",
+          "after": "if (feature.setting === \"device.syncOn\" || !settings[feature.setting].on) continue"
+        }
+      ],
+      "testFile": "src/background/tab-view/producer.bun-test.ts",
+      "test": "registry gates include file-free Gather and exclude non-page features",
+      "assertion": "The Music view features equal an empty array while musicSection is false.",
+      "state": "authored-unexecuted",
+      "compilation": "proposed; not executed",
+      "expectedExit": "mutant compiles; named behavior test fails; exact restoration and restored gates pass"
+    },
+    {
+      "id": "partial-scope-as-full-view",
+      "edits": [
+        {
+          "path": "src/shared/contracts/tab-view.ts",
+          "before": "export function isTabView(value: unknown): value is TabView {\n  try {",
+          "after": "export function isTabView(value: unknown): value is TabView {\n  try {\n    if (objectShape(value, { signedIn: v => v === true, acct: isAccountKey, private: v => typeof v === \"boolean\", build: isBuildId })) return true"
+        }
+      ],
+      "testFile": "src/shared/contracts/tab-view.bun-test.ts",
+      "test": "signed-out views carry no account-dependent data and facts reject mismatches",
+      "assertion": "A generic TabViewScope without full fields is rejected.",
+      "state": "authored-unexecuted",
+      "compilation": "proposed; not executed",
+      "expectedExit": "mutant compiles; named behavior test fails; exact restoration and restored gates pass"
+    },
+    {
+      "id": "stale-account-publication",
+      "edits": [
+        {
+          "path": "src/background/tab-view/producer.ts",
+          "before": "if (disposed || current.kind !== \"projection\" || JSON.stringify(current.projection) !== JSON.stringify(projection)) return unavailable",
+          "after": "if (disposed || current.kind !== \"projection\") return unavailable"
+        },
+        {
+          "path": "src/background/tab-view/producer.ts",
+          "before": "if (disposed || after.kind !== \"memory\" || !sessionAccountCurrent(before.revision, after.revision, facts.acct)) return unavailable",
+          "after": "if (disposed || after.kind !== \"memory\") return unavailable"
+        }
+      ],
+      "testFile": "src/background/tab-view/producer.bun-test.ts",
+      "test": "late health cannot revive removed accounts or a disposed producer",
+      "assertion": "Removing the actual account while health is pending returns unavailable.",
+      "state": "authored-unexecuted",
+      "compilation": "proposed; not executed",
+      "expectedExit": "mutant compiles; named behavior test fails; exact restoration and restored gates pass"
+    },
+    {
+      "id": "foreign-extension-acceptance",
+      "edits": [
+        {
+          "path": "src/shared/contracts/tab-view.ts",
+          "before": "export function isTabView(value: unknown): value is TabView {\n  try {",
+          "after": "export function isTabView(value: unknown): value is TabView {\n  try {\n    const strip = (input: unknown): unknown => Array.isArray(input) ? input.map(strip) : input !== null && typeof input === \"object\" ? Object.fromEntries(Object.entries(input).filter(([key]) => key !== \"foreignExtension\").map(([key, child]) => [key, strip(child)])) : input\n    value = strip(value)"
+        }
+      ],
+      "testFile": "src/shared/contracts/tab-view.bun-test.ts",
+      "test": "rejects unknown fields at every serialized object",
+      "assertion": "Every original object with a foreignExtension property is rejected instead of being certified through a sanitized copy.",
+      "state": "authored-unexecuted",
+      "compilation": "proposed; not executed",
+      "expectedExit": "mutant compiles; named behavior test fails; exact restoration and restored gates pass"
+    },
+    {
+      "id": "unavailable-monitoring-defaults-working",
+      "edits": [
+        {
+          "path": "src/background/tab-view/producer.ts",
+          "before": "const health = await ports.statuses.read(structuredClone(context), structuredClone(enabled))",
+          "after": "const statusAnswer = await ports.statuses.read(structuredClone(context), structuredClone(enabled))\n      const health: StatusRead = statusAnswer.kind === \"unavailable\" ? { kind: \"statuses\", facts, current: () => true, statuses: enabled.map(feature => ({ feature: feature.id, state: \"working\", jobs: [], anchors: [], actions: [], kinds: [] })) } : statusAnswer"
+        }
+      ],
+      "testFile": "src/background/tab-view/producer.bun-test.ts",
+      "test": "unavailable monitoring or notices cannot be defaulted to working",
+      "assertion": "An unavailable required monitoring producer returns unavailable, even when notice production is available.",
+      "state": "authored-unexecuted",
+      "compilation": "proposed; not executed",
+      "expectedExit": "mutant compiles; named behavior test fails; exact restoration and restored gates pass"
+    }
+  ]
+}

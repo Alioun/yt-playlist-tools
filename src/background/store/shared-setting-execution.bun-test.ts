@@ -1,7 +1,37 @@
 import { expect, test } from "bun:test"
 import { executeSharedSetting } from "./shared-setting-execution"
 import { decodeDevice, decodeSyncState } from "../../shared/model"
-import type { JsonValue } from "../../shared/contracts/json"
+import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
+import { cases as optionCases, initial as optionInitial } from "../../../tools/fixtures/shared-options/specimens"
+
+test.each(optionCases)("single-document executor confirms ordinary option $name with sync off", async specimen => {
+  let records = structuredClone(optionInitial), sets = 0, remote = 0
+  const batches: Readonly<JsonObject>[] = []
+  function object(value: unknown): JsonObject {
+    if (value === null || typeof value !== "object" || Array.isArray(value) || !isJsonValue(value)) throw Error("Expected finite fixture object")
+    return value
+  }
+  const answer = await executeSharedSetting({
+    local: {
+      async get(keys) { return structuredClone(Object.fromEntries(Object.entries(records).filter(([key]) => keys === null || keys.includes(key)))) },
+      async set(items) { sets++; batches.push(structuredClone(items)); records = { ...records, ...structuredClone(items) } }
+    },
+    sync: { async get() { remote++; throw Error("Sync-off must not call remote storage") } },
+    authority: () => ({ kind: "ready", device: decodeDevice(records.device), rawDevice: object(records.device), history: {
+      raw: object(records.sync), editedSinceOff: false, joined: null
+    } }),
+    repairHistory() { throw Error("Sync-off must not repair remote history") },
+    disposed: () => false, now: () => 200, generation: () => "executor-1"
+  }, specimen.change)
+  const expected = structuredClone(optionInitial)
+  expected["doc:settings"] = { ...object(expected["doc:settings"]), gen: "executor-1", at: 200, by: "starting-fixture", data: specimen.expectedSettings }
+  expected.sync = { ...object(expected.sync), editedSinceOff: true, everEdited: true }
+  expect(answer).toEqual({ kind: "committed" })
+  expect(records).toEqual(expected)
+  expect(batches).toEqual([{ "doc:settings": expected["doc:settings"], sync: expected.sync }])
+  expect(sets).toBe(1)
+  expect(remote).toBe(0)
+})
 
 export async function executionAcceptance(execute: typeof executeSharedSetting, decode: { device: typeof decodeDevice; sync: typeof decodeSyncState }) {
   let checks = 0

@@ -1,3 +1,4 @@
+import { classifyRetainedAuthority, archivedKeys } from "./interim-canonical-authority"
 import { prepareFirstEditHistory, readFirstEditProvenance } from "./first-edit-provenance"
 import {
   CONSENT_VERSION, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError,
@@ -85,9 +86,10 @@ function sameAuthority(a: ClaimAuthority, state: ClaimAuthorityState): boolean {
 }
 
 function readContext(records: JsonObject, acct: AccountKey) {
-  if (records.schema !== STORAGE_SCHEMA_VERSION || LEGACY_DELETE_KEYS.some(key => Object.hasOwn(records, key)) ||
-    Object.keys(records).some(key => key.startsWith("account:") ||
-      ["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"].includes(key))) return unavailable("startup")
+  const retained = classifyRetainedAuthority(records)
+  const exempt = retained.kind === "canonical-archive" ? archivedKeys(retained.checkpoint) : new Set<string>()
+  if (records.schema !== STORAGE_SCHEMA_VERSION || retained.kind === "held" ||
+    LEGACY_DELETE_KEYS.some(key => Object.hasOwn(records, key) && !exempt.has(key))) return unavailable("startup")
   const rawDevice = records.device
   if (!isJsonObject(rawDevice) || !["id", "consent", "syncOn", "upgradeNote", "claimNotice", "lastAccount",
     "newPlaylistVisibility", "pickerSortAZ", "detailedLog", "recentAdds", "legacyCleared"].every(key => Object.hasOwn(rawDevice, key))) {

@@ -1,0 +1,11 @@
+--- a/src/background/store/key-settings-progress.ts
++++ b/src/background/store/key-settings-progress.ts
+@@ -134,7 +134,7 @@
+     const observed = await deps.local.get(null)
+     if (deps.stopped()) return { kind: "unconfirmed", cause: { kind: "authority" } }
+     if (rejected) return consentObject(observed) && sameSyncJson(observed, before) ? { kind: "failed", stage: "set", error: rejected.error } : { kind: "unconfirmed", cause: { kind: "readback" } }
+-    return consentObject(observed) && sameSyncJson(observed, { ...before, ...items }) ? { kind: "committed" } : { kind: "unconfirmed", cause: { kind: "readback" } }
++    return { kind: "committed" }
+   } catch (error) { return { kind: "unconfirmed", cause: { kind: "read-failed", error } } }
+ }
+ async function finish(deps: CommitDependencies, records: JsonObject, record: AcceptedKeySettings, effect: JsonObject): Promise<LocalSettingsWriteResult> {

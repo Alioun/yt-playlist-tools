@@ -6,7 +6,7 @@ export default defineConfig({
   srcDir: "src",
   imports: false,
   zip: {
-    excludeSources: ["tools/fixtures/svelte-pilot/**"]
+    excludeSources: ["store/**", "site/**", "tools/**"]
   },
   // REQUIRED: WXT defaults Firefox to MV2. We ship MV3 on both browsers.
   manifestVersion: 3,

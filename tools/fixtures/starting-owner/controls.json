@@ -1,0 +1,71 @@
+{
+  "state": "authored-unexecuted",
+  "requirement": "Each mutant must compile before its named observable assertion fails. Restore exact bytes and modes and rerun compiler and behavior.",
+  "controls": [
+    {
+      "name": "bypass-shared-guard",
+      "edits": [
+        {
+          "path": "src/background/adapters/starting-owner-area.ts",
+          "before": "if (localOwners.has(area))",
+          "after": "if (false && localOwners.has(area))"
+        }
+      ],
+      "test": "legacy and starting facades exclude each other and separate local areas remain independent",
+      "expectedAssertion": "The starting constructor throws Local storage already owned while the legacy facade owns the same area."
+    },
+    {
+      "name": "substitute-non-starting-owner",
+      "edits": [
+        {
+          "path": "src/background/adapters/starting-owner.ts",
+          "before": "import { createStartingLocalFilterWriter }",
+          "after": "import { createStartingLocalFilterWriter, createLocalFilterWriter }"
+        },
+        {
+          "path": "src/background/adapters/starting-owner.ts",
+          "before": "const owner = createStartingLocalFilterWriter({",
+          "after": "const owner = ((deps: StartingDependencies) => ({ ...createLocalFilterWriter(deps), ready: async (): Promise<\"ok\" | \"newer-layout\"> => \"ok\" }))({"
+        }
+      ],
+      "test": "starting construction confirms schema through the supplied local source",
+      "expectedAssertion": "After ready resolves, the supplied local source is exactly { schema: 1 }."
+    },
+    {
+      "name": "read-native-raw-local",
+      "edits": [
+        {
+          "path": "src/background/adapters/starting-owner.ts",
+          "before": "return options.local.get(keys)",
+          "after": "return native.storage.local.get(keys === null ? null : [...keys])"
+        }
+      ],
+      "test": "starting construction confirms schema through the supplied local source",
+      "expectedAssertion": "Readiness resolves to ok while the dummy raw native local port throws on every call."
+    },
+    {
+      "name": "swallow-readiness-failure",
+      "edits": [
+        {
+          "path": "src/background/adapters/starting-owner.ts",
+          "before": "      ...owner,",
+          "after": "      ...owner,\n      ready: () => owner.ready().catch(() => \"ok\" as const),"
+        }
+      ],
+      "test": "startup failure stays observable and never opens canonical operations",
+      "expectedAssertion": "The observed readiness rejection is a StartupReadinessError with the invalid startup result."
+    },
+    {
+      "name": "leak-sync-listener",
+      "edits": [
+        {
+          "path": "src/background/adapters/starting-owner.ts",
+          "before": "try { event.removeListener(listener) }",
+          "after": "try { void listener }"
+        }
+      ],
+      "test": "native sync listener and timers leave through canonical idempotent disposal",
+      "expectedAssertion": "After disposal, the dummy native sync listener set has size zero and one remove call."
+    }
+  ]
+}

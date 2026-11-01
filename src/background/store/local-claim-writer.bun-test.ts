@@ -149,11 +149,22 @@ describe("exclusive fixture claim transaction", () => {
     await next; expect(h.batches).toHaveLength(1); await writer.dispose()
   })
   test("disposal closes admission immediately and drains accepted work", async () => {
-    const h = host(); let release = () => {}; const paused = new Promise<void>(resolve => { release = resolve })
-    h.hooks.lookup = () => paused
-    const writer = h.writer(), accepted = writer.claim(), disposed = writer.dispose()
+    const h = host(); let release = () => {}, enter = () => {}
+    const paused = new Promise<void>(resolve => { release = resolve }), entered = new Promise<void>(resolve => { enter = resolve })
+    h.hooks.lookup = async () => { enter(); await paused }
+    const writer = h.writer(), accepted = writer.claim()
+    await entered
+    const preserved = structuredClone(h.records), batches = structuredClone(h.batches)
+    let drained = false
+    const disposed = writer.dispose().then(() => { drained = true })
     await expect(writer.claim()).rejects.toThrow("Writer disposed")
-    release(); expect((await accepted).kind).toBe("committed"); await disposed
+    expect(drained).toBe(false)
+    expect(h.stats.lookups).toBe(1)
+    release(); expect(await accepted).toEqual({ kind: "unavailable", reason: "stale" }); await disposed
+    expect(drained).toBe(true)
+    expect(h.records).toEqual(preserved)
+    expect(h.batches).toEqual(batches)
+    expect(h.stats.lookups).toBe(1)
     await expect(writer.claim()).rejects.toThrow("Writer disposed")
   })
   test("semantic removal is refused without partial effects", async () => {

@@ -1,0 +1,148 @@
+{
+  "status": "unexecuted",
+  "restoration": "Exact original bytes and mode in finally, then restored native compilation and the same behavior test. A compiling mutant must fail the named assertion. A timeout grants no credit.",
+  "controls": [
+    {
+      "id": "omitted-authentication",
+      "path": "src/background/adapters/ui-requester.ts",
+      "testName": "native authentication refuses forged senders without service work",
+      "failureNeedle": ".toBeUndefined()",
+      "replacements": [
+        {
+          "before": "{ sender: input.sender, popupWindowId: input.windowId }",
+          "after": "{ sender: { ...input.sender, id: ports.runtime.id, url: ports.runtime.getURL(\"/popup.html\"), frameId: 0, tab: undefined }, popupWindowId: input.windowId }"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "native authentication refuses forged senders without service work",
+        "src/background/router/ui-playlists/router.bun-test.ts"
+      ]
+    },
+    {
+      "id": "private-normal-substitution",
+      "path": "src/background/router/ui-playlists/index.ts",
+      "testName": "private requester never becomes a normal cache writer",
+      "failureNeedle": "reason: \"private\"",
+      "replacements": [
+        {
+          "before": "{ site: operation.site, req: ui.requester, refresh: payload.refresh }",
+          "after": "{ site: operation.site, req: { ...ui.requester, incognito: false }, refresh: payload.refresh }"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "private requester never becomes a normal cache writer",
+        "src/background/router/ui-playlists/router.bun-test.ts"
+      ]
+    },
+    {
+      "id": "optimistic-cache-persistence",
+      "path": "src/background/router/ui-playlists/wire.ts",
+      "testName": "confirmed creation reports uncertain cache persistence",
+      "failureNeedle": "expect(result.result.cache.kind).toBe(\"unconfirmed\")",
+      "replacements": [
+        {
+          "before": "case \"unconfirmed\": return { kind: \"unconfirmed\", write: value.write, cause: value.cause }",
+          "after": "case \"unconfirmed\": return { kind: \"committed\" }"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "confirmed creation reports uncertain cache persistence",
+        "src/background/router/ui-playlists/router.bun-test.ts"
+      ]
+    },
+    {
+      "id": "uncertain-creation-retry",
+      "path": "src/background/router/ui-playlists/index.ts",
+      "testName": "uncertain operation never creates a second service handle",
+      "failureNeedle": "expect(h.h.runs(\"create\")).toHaveLength(1)",
+      "replacements": [
+        {
+          "before": "payload.action === \"status\" || payload.action === \"submit\" && existing?.answer",
+          "after": "payload.action === \"status\""
+        },
+        {
+          "before": "if (payload.action === \"submit\" && !operation.answer) {",
+          "after": "if (payload.action === \"submit\") {"
+        },
+        {
+          "before": "const playlist = { title: payload.title, privacy: payload.privacy,",
+          "after": "const retryHandle = ports.services.playlists.create(operation.acct, { site: operation.site, req: ui.requester })\n      const playlist = { title: payload.title, privacy: payload.privacy,"
+        },
+        {
+          "before": "operation.creation.submit(playlist)",
+          "after": "retryHandle.submit(playlist)"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "uncertain operation never creates a second service handle",
+        "src/background/router/ui-playlists/router.bun-test.ts"
+      ]
+    },
+    {
+      "id": "duplicate-request-handling",
+      "path": "src/background/router/ui-playlists/index.ts",
+      "testName": "duplicate request invokes its handler at most once",
+      "failureNeedle": "expect(h.counts().syncReads).toBe(1)",
+      "replacements": [
+        {
+          "before": "if (previous) return previous.kind === \"pending\" && previous.text === text ? previous.answer : Promise.resolve(undefined)",
+          "after": "if (previous && !active) return Promise.resolve(undefined)"
+        }
+      ],
+      "category": "compiling-behavioral-control",
+      "status": "unexecuted",
+      "seconds": 180,
+      "testCommand": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "--test-name-pattern",
+        "duplicate request invokes its handler at most once",
+        "src/background/router/ui-playlists/router.bun-test.ts"
+      ]
+    }
+  ]
+}

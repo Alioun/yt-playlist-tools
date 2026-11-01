@@ -1,0 +1,12 @@
+diff --git a/src/site/core/notice/index.ts b/src/site/core/notice/index.ts
+--- a/src/site/core/notice/index.ts
++++ b/src/site/core/notice/index.ts
+@@ -50,7 +50,7 @@
+     },
+     transfer(next: NoticePresenter) {
+       if (options.scope.disposed || presenter === next) return
+-      detach(); presenter = next; attach()
++      presenter = next; attach()
+     },
+     read: () => current
+   }

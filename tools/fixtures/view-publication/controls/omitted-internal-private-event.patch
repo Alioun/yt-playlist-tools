@@ -1,0 +1,16 @@
+--- a/src/background/add-flow/add-flow.ts
++++ b/src/background/add-flow/add-flow.ts
+@@ -672,7 +672,12 @@
+           : () => undos.get(handle.id) === record
+         if (work.auto) for (const { playlist, video } of work.entries) {
+           const edits = [{ kind: "skip", acct: work.acct, video, playlists: [playlist] }] as const
+-          if (scope === "private") await remember(scope, edits, authorities.get(exec))
++          if (scope === "private") {
++            const listeners = [...privateSkipListeners]
++            privateSkipListeners.clear()
++            try { await remember(scope, edits, authorities.get(exec)) }
++            finally { for (const listener of listeners) privateSkipListeners.add(listener) }
++          }
+           else note(scope, edits, authorities.get(exec))
+         }
+         const failure = work.kind === "remove"

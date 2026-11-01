@@ -1,0 +1,19 @@
+# Ordinary shared options
+
+This candidate authors thirty ordinary Settings leaves over frozen input `4f26cbe17804d17373a664b479eab6570dfa50eb`. It retains the theme and default-percentage operations. It does not activate a feature or complete shared Settings, the UI or 2.0.
+
+`SharedOptionChange` associates each allowed field with its value type from `Settings`. The pure reducer validates the runtime value before normalization. The existing executor prepares and admits one canonical Settings document, then requires exact readback. The existing owner serializes the operation and stops after an uncertain write. The native starting facade derives the same method by spreading the owner. No owner or facade implementation changes are proposed in this unit.
+
+`specimens.ts` contains thirty explicit edits and complete independently authored expected Settings bodies. The fixtures retain hidden choices, feature switches, preset flags, Music keys, shortcut rows, unknown supported fields, account destinations, filters, progress, skips, Undo, Gather history and all three automatic Gather trigger flags. The Music section and features remain off while choices change.
+
+`owner.bun-test.ts` calls the real starting owner and derived native facade with finite storage and sync collaborators. It authors origin, consent, readiness, pending join, stale authority, newer document, sync-full, sync-off, private UI, absent settings, no-op, write rejection, mismatched readback, read failure, publication timing and disposal assertions. The existing reducer and executor suites also receive all thirty cases.
+
+`run.ts` streams sixty JSONL rows through both actual owner routes. `expected.jsonl` was written without importing or executing product code. `compare-eof.py` requires both complete future captures to match every byte through EOF. This comparison has not run against product output.
+
+`negatives.json` names nineteen isolated intended-line compiler negatives. Their templates end in `.ts.txt` so whole-source compilation does not compile deliberate errors. `type-proofs.ts` authors the positive owner, executor and native forwarding proof. `controls.json` gives five exact mutation proposals, their base and mutated identities, anchors and named behavioral assertions. A mutant must compile before a red assertion can count. Static patch applicability does not establish either result.
+
+All commands in `future-gates.json` are unexecuted. They require the later sole runtime lease, pinned dependencies, generated declarations and a separately proved descendant launcher boundary. No launcher was authored or run here. Every Bun command and descendant requires `--no-env-file` and `--no-install`, a cleared environment, pinned executable and PATH, scratch HOME and TMPDIR, and closed stdin. Historical inherited drivers are not authorized by this inventory.
+
+The inherited owner-services census has 170 entries and the import inventory has 114 future gates. Those counts are not new shared-options gates. Their original files remain unchanged. `upstream-anchor-relocations.json` preserves line mappings for the changed tests. The audit's separate preservation record identifies copied historical inventories and dependency pins.
+
+Feature switches, preset application, key conflicts, shortcut lifecycle, automatic Gather trigger activation, account playlist authority, full Backend routes and editors, and production assembly remain mandatory later work. Reconcile later owner-services qualification repairs before acceptance. Native guarantees, privacy wording, rendering and axe, three picker policy decisions and activation remain held. No compiler, runtime, test, fixture, build, browser, server or native code ran in this authoring unit. Review was not requested.

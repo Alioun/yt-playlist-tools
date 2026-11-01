@@ -5,6 +5,7 @@ import { isJsonValue } from "../../shared/contracts/json"
 import { prepareDocumentBody } from "./write-preparation"
 import { encodeSyncDocument, readSyncDocument } from "./sync-codec"
 import { changeSharedSetting, type SharedSettingChange } from "./settings-edit"
+import { cases as optionCases, initial as optionInitial } from "../../../tools/fixtures/shared-options/specimens"
 
 type Dependencies = {
   decodeSettings: typeof decodeSettings
@@ -14,6 +15,17 @@ type Dependencies = {
   encodeSyncDocument: typeof encodeSyncDocument
   readSyncDocument: typeof readSyncDocument
 }
+
+test.each(optionCases)("ordinary option $name changes exactly its independent Settings body", specimen => {
+  const raw = optionInitial["doc:settings"]
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) throw Error("Missing finite settings specimen")
+  const current = decodeSettings(raw.data), before = structuredClone(current)
+  const result = changeSharedSetting({ current, change: specimen.change })
+  expect(result).toEqual({ kind: "changed", settings: specimen.expectedSettings })
+  expect(current).toEqual(before)
+  if (result.kind !== "changed") throw Error("Expected an ordinary option candidate")
+  expect(changeSharedSetting({ current: result.settings, change: specimen.change })).toEqual({ kind: "unchanged" })
+})
 
 function fixtureSuite(change: typeof changeSharedSetting, dependencies: Dependencies) {
   function check(value: unknown, label: string): asserts value {

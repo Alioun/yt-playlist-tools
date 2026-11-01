@@ -1,0 +1,24 @@
+{
+  "extends": "../../../tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true
+  },
+  "exclude": ["../../../node_modules", "../../../.output"],
+  "include": [
+    "../../../.wxt/wxt.d.ts",
+    "../../../.wxt/types/**/*.d.ts",
+    "../../../src/shared/contracts/auto-add-choice*.ts",
+    "../../../src/shared/contracts/first-run*.ts",
+    "../../../src/background/store/auto-add-choice*.ts",
+    "../../../src/background/store/local-filter-writer.type-test.ts",
+    "../../../src/background/store/setup-edit*.ts",
+    "../../../src/background/router/first-run*.ts",
+    "../../../src/ui/backend/**/*.ts",
+    "../first-run-backend/harness.ts",
+    "../first-run-backend/native.type-test.ts",
+    "./*.ts"
+  ]
+}

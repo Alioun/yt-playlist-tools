@@ -1,0 +1,12 @@
+diff --git a/src/site/core/notice/host.ts b/src/site/core/notice/host.ts
+--- a/src/site/core/notice/host.ts
++++ b/src/site/core/notice/host.ts
+@@ -73,7 +73,7 @@
+   }
+   function resume() {
+     stop()
+-    if (!active || document.hidden || scope.disposed) return
++    if (!active || scope.disposed) return
+     place()
+     observer = scope.observe(document.documentElement, { attributes: true, attributeFilter: ["dark"] }, schedule)
+     if (site === "music") followups = [400, 1200].map(ms => scope.timeout(place, ms))

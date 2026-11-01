@@ -1,0 +1,312 @@
+{
+  "state": "all-unexecuted",
+  "negativeCount": 18,
+  "gates": [
+    {
+      "id": "sync-is-device",
+      "template": "relocated/feature-negatives/01-sync-is-device.ts.txt",
+      "patch": "relocated/feature-negatives/01-sync-is-device.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "0d47ed5d03d263ad7486019cd42ef277b832fe5ebbc5490933065f99fbcc5e33",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: Extract<FeatureSettingChange, {kind: \"feature\"}>[\"feature\"] = \"sync\"",
+      "state": "unexecuted",
+      "templateSha256": "0d47ed5d03d263ad7486019cd42ef277b832fe5ebbc5490933065f99fbcc5e33",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "registry-id-required",
+      "template": "relocated/feature-negatives/02-registry-id-required.ts.txt",
+      "patch": "relocated/feature-negatives/02-registry-id-required.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "8acbadf0d3862d44774630dae7bab919db3db990a0e47c24568b8f2061b4988e",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: Extract<FeatureSettingChange, {kind: \"feature\"}>[\"feature\"] = \"autoAdd\"",
+      "state": "unexecuted",
+      "templateSha256": "8acbadf0d3862d44774630dae7bab919db3db990a0e47c24568b8f2061b4988e",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "raw-path-forbidden",
+      "template": "relocated/feature-negatives/03-raw-path-forbidden.ts.txt",
+      "patch": "relocated/feature-negatives/03-raw-path-forbidden.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "c62ffaebbe9fbabb81a3c0875a1ff1f7e184ae1dc9708eae6d7766bf03839313",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: FeatureSettingChange[\"kind\"] = \"path\"",
+      "state": "unexecuted",
+      "templateSha256": "c62ffaebbe9fbabb81a3c0875a1ff1f7e184ae1dc9708eae6d7766bf03839313",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "whole-selection-forbidden",
+      "template": "relocated/feature-negatives/04-whole-selection-forbidden.ts.txt",
+      "patch": "relocated/feature-negatives/04-whole-selection-forbidden.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "06fa2bbb2d9bd3a1b87d457742943ec7e5fd7b32aac5cdfa7069b62c866fbf53",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: FeatureSettingChange[\"kind\"] = \"first-run\"",
+      "state": "unexecuted",
+      "templateSha256": "06fa2bbb2d9bd3a1b87d457742943ec7e5fd7b32aac5cdfa7069b62c866fbf53",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "feature-value-boolean",
+      "template": "relocated/feature-negatives/05-feature-value-boolean.ts.txt",
+      "patch": "relocated/feature-negatives/05-feature-value-boolean.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "37e9b3171ec7e6cd63a1b912348b451dc74cae0a4b0d333c0a138817d73f23d2",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: Extract<FeatureSettingChange, {kind: \"feature\"}>[\"value\"] = 1",
+      "state": "unexecuted",
+      "templateSha256": "37e9b3171ec7e6cd63a1b912348b451dc74cae0a4b0d333c0a138817d73f23d2",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "section-value-boolean",
+      "template": "relocated/feature-negatives/06-section-value-boolean.ts.txt",
+      "patch": "relocated/feature-negatives/06-section-value-boolean.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "baf0b8405515d901de34451b5fd11ab076db535ca46c370f99a6630137593e55",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: Extract<FeatureSettingChange, {kind: \"music-section\"}>[\"value\"] = \"on\"",
+      "state": "unexecuted",
+      "templateSha256": "baf0b8405515d901de34451b5fd11ab076db535ca46c370f99a6630137593e55",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "music-value-boolean",
+      "template": "relocated/feature-negatives/07-music-value-boolean.ts.txt",
+      "patch": "relocated/feature-negatives/07-music-value-boolean.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "145dbe512cefbfcbaa09238ed17521945d7c3dac3a53750b5c178cf8f68123c0",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: Extract<FeatureSettingChange, {kind: \"shortcuts-music\"}>[\"value\"] = null",
+      "state": "unexecuted",
+      "templateSha256": "145dbe512cefbfcbaa09238ed17521945d7c3dac3a53750b5c178cf8f68123c0",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "body-origin-forbidden",
+      "template": "relocated/feature-negatives/08-body-origin-forbidden.ts.txt",
+      "patch": "relocated/feature-negatives/08-body-origin-forbidden.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "3ff36f0b8eef9527c8b182b27e4679857e1d57cffc9f895fa8bfd8dc58dcce99",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: keyof UiMessages[\"ui.change\"][\"payload\"] = \"origin\"",
+      "state": "unexecuted",
+      "templateSha256": "3ff36f0b8eef9527c8b182b27e4679857e1d57cffc9f895fa8bfd8dc58dcce99",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "body-access-forbidden",
+      "template": "relocated/feature-negatives/09-body-access-forbidden.ts.txt",
+      "patch": "relocated/feature-negatives/09-body-access-forbidden.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "362776894a11ba19010f23e213753e9088762da3d306753e1696c8c4a71ca2ee",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: keyof UiMessages[\"ui.change\"][\"payload\"] = \"access\"",
+      "state": "unexecuted",
+      "templateSha256": "362776894a11ba19010f23e213753e9088762da3d306753e1696c8c4a71ca2ee",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "body-permissions-forbidden",
+      "template": "relocated/feature-negatives/10-body-permissions-forbidden.ts.txt",
+      "patch": "relocated/feature-negatives/10-body-permissions-forbidden.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "a48ddaf172bf429906275465f161d0c9583bc66560dc9840fee14a346463dc69",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: keyof UiMessages[\"ui.change\"][\"payload\"] = \"permissions\"",
+      "state": "unexecuted",
+      "templateSha256": "a48ddaf172bf429906275465f161d0c9583bc66560dc9840fee14a346463dc69",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "body-settings-forbidden",
+      "template": "relocated/feature-negatives/11-body-settings-forbidden.ts.txt",
+      "patch": "relocated/feature-negatives/11-body-settings-forbidden.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "7c83c1d00b935a8d07fdd55bb3c20d1f0b47fe64285eb22bb789949d1cd47030",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: keyof UiMessages[\"ui.change\"][\"payload\"] = \"settings\"",
+      "state": "unexecuted",
+      "templateSha256": "7c83c1d00b935a8d07fdd55bb3c20d1f0b47fe64285eb22bb789949d1cd47030",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "window-number",
+      "template": "relocated/feature-negatives/12-window-number.ts.txt",
+      "patch": "relocated/feature-negatives/12-window-number.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "32972de8d774bf2158611c13d250e38b656f8ff5057c42e00a30d9bcec71a60c",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: UiMessages[\"ui.change\"][\"payload\"][\"windowId\"] = \"private\"",
+      "state": "unexecuted",
+      "templateSha256": "32972de8d774bf2158611c13d250e38b656f8ff5057c42e00a30d9bcec71a60c",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "finite-confirmation-status",
+      "template": "relocated/feature-negatives/13-finite-confirmation-status.ts.txt",
+      "patch": "relocated/feature-negatives/13-finite-confirmation-status.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "afcfc005e32ca17759261e62545d289f358179db287658699d6d6a5f5c81c1e2",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: Extract<FeatureSettingAnswer, {kind: \"confirmed\"}>[\"status\"] = \"optimistic\"",
+      "state": "unexecuted",
+      "templateSha256": "afcfc005e32ca17759261e62545d289f358179db287658699d6d6a5f5c81c1e2",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "finite-menu-receipt",
+      "template": "relocated/feature-negatives/14-finite-menu-receipt.ts.txt",
+      "patch": "relocated/feature-negatives/14-finite-menu-receipt.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "3ee627d330efcf90299709936d98f4f5ee70cdfa30c231e9dbd5ba7733382db7",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: Extract<FeatureSettingAnswer, {kind: \"confirmed\"}>[\"menuPermission\"] = true",
+      "state": "unexecuted",
+      "templateSha256": "3ee627d330efcf90299709936d98f4f5ee70cdfa30c231e9dbd5ba7733382db7",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "release-observation-required",
+      "template": "relocated/feature-negatives/15-release-observation-required.ts.txt",
+      "patch": "relocated/feature-negatives/15-release-observation-required.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "dbfa959d8a8401f0b2290ae9acd0061de195b0ed903af2553c61e2b964398fc8",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: Awaited<ReturnType<FeatureAccess[\"releaseBrowserMenu\"]>>[\"kind\"] = \"removed-without-observation\"",
+      "state": "unexecuted",
+      "templateSha256": "dbfa959d8a8401f0b2290ae9acd0061de195b0ed903af2553c61e2b964398fc8",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "legacy-catalogue-preserved",
+      "template": "relocated/feature-negatives/16-legacy-catalogue-preserved.ts.txt",
+      "patch": "relocated/feature-negatives/16-legacy-catalogue-preserved.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "fd57fcad4724b629d7e75b29f6e8c844da4727cd9bdbd40bc81667be046ef5bd",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: keyof UiMessages = \"ui.featureSetting\"",
+      "state": "unexecuted",
+      "templateSha256": "fd57fcad4724b629d7e75b29f6e8c844da4727cd9bdbd40bc81667be046ef5bd",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "finite-refusal",
+      "template": "relocated/feature-negatives/17-finite-refusal.ts.txt",
+      "patch": "relocated/feature-negatives/17-finite-refusal.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "cc7d204083b53e39191a9e1e076a4ea136b1c936d46308076c2944bc1d47effa",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: Extract<FeatureSettingAnswer, {kind: \"refused\"}>[\"reason\"] = \"saved\"",
+      "state": "unexecuted",
+      "templateSha256": "cc7d204083b53e39191a9e1e076a4ea136b1c936d46308076c2944bc1d47effa",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    },
+    {
+      "id": "permission-observation-not-promise-boolean",
+      "template": "relocated/feature-negatives/18-permission-observation-not-promise-boolean.ts.txt",
+      "patch": "relocated/feature-negatives/18-permission-observation-not-promise-boolean.ts.patch",
+      "target": "tools/fixtures/feature-switches/isolated-negative.ts",
+      "baseSha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "mutatedSha256": "c29811782e78b87d83ea786d0f070aac5ffa27cecf939f566083e5e8ab95674f",
+      "mode": "100644",
+      "intendedLine": 3,
+      "diagnosticCodes": [
+        2322
+      ],
+      "anchor": "export const intendedNegative: FeatureAccess[\"read\"] = () => Promise.resolve(true)",
+      "state": "unexecuted",
+      "templateSha256": "c29811782e78b87d83ea786d0f070aac5ffa27cecf939f566083e5e8ab95674f",
+      "reason": "Remove deleted auxiliary catalogue import; ui.change owns the same payload fields. Negative16 proves the obsolete wire name is rejected."
+    }
+  ]
+}

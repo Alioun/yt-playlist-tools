@@ -1,0 +1,125 @@
+{
+  "state": "all-unexecuted",
+  "controls": [
+    {
+      "id": "omitted-read-freshness",
+      "state": "unexecuted-proposed-compiling-control",
+      "patch": "tools/fixtures/owner-services-reconciliation/controls/omitted-read-freshness.patch",
+      "identity": {
+        "sha256": "0f413be7cc8e419ce2e7ed4575ab6ca32076371fbefce8dec2fbc66c9fd60755",
+        "gitBlob": "f6a4ca6907b44be84d211a2c4f0d1c46868e808c",
+        "bytes": 637,
+        "mode": "100644"
+      },
+      "source": "src/background/store/local-filter-writer.ts",
+      "test": "checking uses fresh owner facts and never writes or publishes",
+      "testFile": "tools/fixtures/owner-services-reconciliation/owner.bun-test.ts",
+      "compilation": "unexecuted",
+      "behavior": "unexecuted",
+      "protocol": [
+        "Passing exact baseline required",
+        "Apply patch with zero fuzz and offset and preserve modes",
+        "Compile the complete scoped project successfully",
+        "Run the named test and require its intended assertion to fail",
+        "Restore exact bytes and modes",
+        "Rerun passing baseline; unrelated failure or timeout earns no credit"
+      ]
+    },
+    {
+      "id": "checking-writes",
+      "state": "unexecuted-proposed-compiling-control",
+      "patch": "tools/fixtures/owner-services-reconciliation/controls/checking-writes.patch",
+      "identity": {
+        "sha256": "9a1979731229a815ebd75767f7ee9712e3635268aec6cc9817303a23c2895a71",
+        "gitBlob": "80bc0e06fd99bddd8944b01ea046bb6ced076020",
+        "bytes": 484,
+        "mode": "100644"
+      },
+      "source": "src/background/store/local-filter-writer.ts",
+      "test": "checking uses fresh owner facts and never writes or publishes",
+      "testFile": "tools/fixtures/owner-services-reconciliation/owner.bun-test.ts",
+      "compilation": "unexecuted",
+      "behavior": "unexecuted",
+      "protocol": [
+        "Passing exact baseline required",
+        "Apply patch with zero fuzz and offset and preserve modes",
+        "Compile the complete scoped project successfully",
+        "Run the named test and require its intended assertion to fail",
+        "Restore exact bytes and modes",
+        "Rerun passing baseline; unrelated failure or timeout earns no credit"
+      ]
+    },
+    {
+      "id": "lost-label-event",
+      "state": "unexecuted-proposed-compiling-control",
+      "patch": "tools/fixtures/owner-services-reconciliation/controls/lost-label-event.patch",
+      "identity": {
+        "sha256": "dcc347d3397f2ea14ae3733f8dedc68a3badff2a00f280af3580e6c10576251a",
+        "gitBlob": "2ecb59c557d3bcbdccfd6de62ce176fbe78bb033",
+        "bytes": 417,
+        "mode": "100644"
+      },
+      "source": "src/background/store/local-filter-writer.ts",
+      "test": "confirmed changed labels publish exactly one current Setup event",
+      "testFile": "tools/fixtures/owner-services-reconciliation/owner.bun-test.ts",
+      "compilation": "unexecuted",
+      "behavior": "unexecuted",
+      "protocol": [
+        "Passing exact baseline required",
+        "Apply patch with zero fuzz and offset and preserve modes",
+        "Compile the complete scoped project successfully",
+        "Run the named test and require its intended assertion to fail",
+        "Restore exact bytes and modes",
+        "Rerun passing baseline; unrelated failure or timeout earns no credit"
+      ]
+    },
+    {
+      "id": "bookkeeping-event-noise",
+      "state": "unexecuted-proposed-compiling-control",
+      "patch": "tools/fixtures/owner-services-reconciliation/controls/bookkeeping-event-noise.patch",
+      "identity": {
+        "sha256": "5f9698e7ad99fe653c2929b64a034d263546cb3a38666e5c25b71394eecf67d3",
+        "gitBlob": "2e6dab71f67aa533e171c4e0aa4e70bac9c6dc68",
+        "bytes": 433,
+        "mode": "100644"
+      },
+      "source": "src/background/store/local-filter-writer.ts",
+      "test": "reservation and unchanged labels publish no document events and preserve raw cache",
+      "testFile": "tools/fixtures/owner-services-reconciliation/owner.bun-test.ts",
+      "compilation": "unexecuted",
+      "behavior": "unexecuted",
+      "protocol": [
+        "Passing exact baseline required",
+        "Apply patch with zero fuzz and offset and preserve modes",
+        "Compile the complete scoped project successfully",
+        "Run the named test and require its intended assertion to fail",
+        "Restore exact bytes and modes",
+        "Rerun passing baseline; unrelated failure or timeout earns no credit"
+      ]
+    },
+    {
+      "id": "stale-label-resurrection",
+      "state": "unexecuted-proposed-compiling-control",
+      "patch": "tools/fixtures/owner-services-reconciliation/controls/stale-label-resurrection.patch",
+      "identity": {
+        "sha256": "d39f4ea8e92122535c3d262b4342c301b9aa7f9dd78c30244048165d0e564068",
+        "gitBlob": "65c66d73749545a4c69bde007c4bb45fcb38a6b4",
+        "bytes": 1037,
+        "mode": "100644"
+      },
+      "source": "src/background/store/local-filter-writer.ts",
+      "test": "the composed owner, Accounts and actual Tabs consumer matches complete independent expectations",
+      "testFile": "tools/fixtures/owner-services-reconciliation/consumer.bun-test.ts",
+      "compilation": "unexecuted",
+      "behavior": "unexecuted",
+      "protocol": [
+        "Passing exact baseline required",
+        "Apply patch with zero fuzz and offset and preserve modes",
+        "Compile the complete scoped project successfully",
+        "Run the named test and require its intended assertion to fail",
+        "Restore exact bytes and modes",
+        "Rerun passing baseline; unrelated failure or timeout earns no credit"
+      ]
+    }
+  ]
+}

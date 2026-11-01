@@ -1,0 +1,3 @@
+import type { SimpleMessageKey } from "../../../../src/shared/i18n"
+export {}
+export const intendedNegative: SimpleMessageKey = "toast_dismis"

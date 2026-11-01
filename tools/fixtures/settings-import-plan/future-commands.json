@@ -1,0 +1,208 @@
+{
+  "state": "all-unexecuted",
+  "prerequisiteArgv": [
+    "/bin/mkdir",
+    "-p",
+    "/private/tmp/settings-import-plan-gates-e84ab52c"
+  ],
+  "commands": [
+    {
+      "mode": "compiler",
+      "status": "unexecuted-no-runtime-lease",
+      "argv": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+        "-I",
+        "-S",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c/.audit/settings-import-plan-authoring/future_gates.py",
+        "compiler",
+        "--runtime-lease",
+        "coordinator-granted",
+        "--output",
+        "/private/tmp/settings-import-plan-gates-e84ab52c"
+      ],
+      "workingDirectory": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c",
+      "requires": "A real coordinator grant of the sole runtime lease. The flag alone grants nothing. Output parent must exist and output mode must be new."
+    },
+    {
+      "mode": "whole-compiler",
+      "status": "unexecuted-no-runtime-lease",
+      "argv": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+        "-I",
+        "-S",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c/.audit/settings-import-plan-authoring/future_gates.py",
+        "whole-compiler",
+        "--runtime-lease",
+        "coordinator-granted",
+        "--output",
+        "/private/tmp/settings-import-plan-gates-e84ab52c"
+      ],
+      "workingDirectory": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c",
+      "requires": "A real coordinator grant of the sole runtime lease. The flag alone grants nothing. Output parent must exist and output mode must be new."
+    },
+    {
+      "mode": "tests",
+      "status": "unexecuted-no-runtime-lease",
+      "argv": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+        "-I",
+        "-S",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c/.audit/settings-import-plan-authoring/future_gates.py",
+        "tests",
+        "--runtime-lease",
+        "coordinator-granted",
+        "--output",
+        "/private/tmp/settings-import-plan-gates-e84ab52c"
+      ],
+      "workingDirectory": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c",
+      "requires": "A real coordinator grant of the sole runtime lease. The flag alone grants nothing. Output parent must exist and output mode must be new."
+    },
+    {
+      "mode": "consumer",
+      "status": "unexecuted-no-runtime-lease",
+      "argv": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+        "-I",
+        "-S",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c/.audit/settings-import-plan-authoring/future_gates.py",
+        "consumer",
+        "--runtime-lease",
+        "coordinator-granted",
+        "--output",
+        "/private/tmp/settings-import-plan-gates-e84ab52c"
+      ],
+      "workingDirectory": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c",
+      "requires": "A real coordinator grant of the sole runtime lease. The flag alone grants nothing. Output parent must exist and output mode must be new."
+    },
+    {
+      "mode": "guards",
+      "status": "unexecuted-no-runtime-lease",
+      "argv": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+        "-I",
+        "-S",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c/.audit/settings-import-plan-authoring/future_gates.py",
+        "guards",
+        "--runtime-lease",
+        "coordinator-granted",
+        "--output",
+        "/private/tmp/settings-import-plan-gates-e84ab52c"
+      ],
+      "workingDirectory": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c",
+      "requires": "A real coordinator grant of the sole runtime lease. The flag alone grants nothing. Output parent must exist and output mode must be new."
+    },
+    {
+      "mode": "format-compiler",
+      "status": "unexecuted-no-runtime-lease",
+      "argv": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+        "-I",
+        "-S",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c/.audit/settings-import-plan-authoring/future_gates.py",
+        "format-compiler",
+        "--runtime-lease",
+        "coordinator-granted",
+        "--output",
+        "/private/tmp/settings-import-plan-gates-e84ab52c"
+      ],
+      "workingDirectory": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c",
+      "requires": "A real coordinator grant of the sole runtime lease. The flag alone grants nothing. Output parent must exist and output mode must be new."
+    },
+    {
+      "mode": "format-regression",
+      "status": "unexecuted-no-runtime-lease",
+      "argv": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+        "-I",
+        "-S",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c/.audit/settings-import-plan-authoring/future_gates.py",
+        "format-regression",
+        "--runtime-lease",
+        "coordinator-granted",
+        "--output",
+        "/private/tmp/settings-import-plan-gates-e84ab52c"
+      ],
+      "workingDirectory": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c",
+      "requires": "A real coordinator grant of the sole runtime lease. The flag alone grants nothing. Output parent must exist and output mode must be new."
+    },
+    {
+      "mode": "probes",
+      "status": "unexecuted-no-runtime-lease",
+      "argv": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+        "-I",
+        "-S",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c/.audit/settings-import-plan-authoring/future_gates.py",
+        "probes",
+        "--runtime-lease",
+        "coordinator-granted",
+        "--output",
+        "/private/tmp/settings-import-plan-gates-e84ab52c"
+      ],
+      "workingDirectory": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c",
+      "requires": "A real coordinator grant of the sole runtime lease. The flag alone grants nothing. Output parent must exist and output mode must be new."
+    },
+    {
+      "mode": "controls",
+      "status": "unexecuted-no-runtime-lease",
+      "argv": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "540",
+        "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+        "-I",
+        "-S",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c/.audit/settings-import-plan-authoring/future_gates.py",
+        "controls",
+        "--runtime-lease",
+        "coordinator-granted",
+        "--output",
+        "/private/tmp/settings-import-plan-gates-e84ab52c"
+      ],
+      "workingDirectory": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-e84ab52c",
+      "requires": "A real coordinator grant of the sole runtime lease. The flag alone grants nothing. Output parent must exist and output mode must be new."
+    }
+  ]
+}

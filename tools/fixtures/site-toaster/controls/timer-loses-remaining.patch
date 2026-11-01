@@ -1,0 +1,12 @@
+diff --git a/src/site/kit/toaster/model.ts b/src/site/kit/toaster/model.ts
+--- a/src/site/kit/toaster/model.ts
++++ b/src/site/kit/toaster/model.ts
+@@ -49,7 +49,7 @@
+   const visible = () => live() && current !== null && eligible(current)
+   function stopClock() {
+     timer(); timer = () => {}
+-    if (since !== null && current) current.remaining = Math.max(0, current.remaining - Math.max(0, options.now() - since))
++    if (since !== null && current) current.remaining = Math.max(0, current.remaining)
+     since = null
+   }
+   function queue(entry: Entry) {

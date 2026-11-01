@@ -1,0 +1,2 @@
+import type { ToastHandle } from "../../../src/site/kit/toaster/types"
+const invalid: ToastHandle = { replace: () => true }

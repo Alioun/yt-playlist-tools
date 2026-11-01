@@ -40,6 +40,7 @@ export type AgreementInput = {
   readonly choice: AgreementChoice; readonly access: Promise<AgreementAccess>
 }
 export type AgreementPresentation =
+  | { readonly kind: "held"; readonly consent: Snapshot<Device["consent"]>; readonly work: readonly import("./consent-recovery").HeldWorkView[]; readonly allowedChoice: "disclosure"; readonly activation: "held" }
   | { readonly kind: "canonical"; readonly consent: Snapshot<Device["consent"]>;
       readonly note: Snapshot<Device["upgradeNote"]>;
       readonly settings: Snapshot<Settings>; readonly syncOn: boolean }
@@ -63,7 +64,7 @@ export type AgreementRead =
   | { readonly kind: "invalid"; readonly field: "records" | "schema" | "device" | "settings" | "sync" }
   | AgreementUnavailable
 export type AgreementUnavailableReason =
-  | "startup" | "newer-layout" | "disposed" | "stale" | "creation-context"
+  | "consent-held" | "startup" | "newer-layout" | "disposed" | "stale" | "creation-context"
   | "upgrade-note" | "newer-consent" | "sync-writer-required" | "join-required"
   | "retention" | "pending-removal" | "pending-agreement" | "pending-join"
 export type AgreementUnavailable = {
@@ -72,7 +73,7 @@ export type AgreementUnavailable = {
 export type AgreementWrite =
   | { readonly kind: "resolved" }
   | { readonly kind: "rejected"; readonly error: unknown }
-export type AgreementStage = "canonical" | "accept" | "device" | "record"
+export type AgreementStage = "consent-only" | "canonical" | "accept" | "device" | "record"
 export type AgreementResult =
   | Extract<SyncJoinPreparation, { kind: "choice-required" }>
   | { readonly kind: "joined"; readonly consent: NonNullable<Device["consent"]>; readonly join: Extract<SyncJoinResult, { kind: "committed" }>; readonly activation: "ordinary-gates"; readonly settingsChanged: boolean; readonly applications: readonly AgreementApplication[]; readonly blocked: readonly PresetConflict[] }

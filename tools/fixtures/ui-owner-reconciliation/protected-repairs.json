@@ -1,0 +1,42 @@
+{
+  "state": "unapplied-proposals-only",
+  "repairs": [
+    {
+      "path": "src/background/router/ui-playlists/index.ts",
+      "reason": "The full router passes its owner to the actual first-run receiver. The protected local Owner type omits readAutoAddChoice and changeAutoAddChoice.",
+      "applied": false,
+      "beforeSha256": "20c3fcb9c66a3e6598617b1f1158ed358e1722aee2259e34555a3f87179afd3e",
+      "afterSha256": "bff82ac2474abb5d5eeaff88997d82ff56943b1aa5eba0966f1cd22ec55c1295",
+      "mode": "100644",
+      "proposedSource": "tools/fixtures/ui-owner-reconciliation/proposals/src/background/router/ui-playlists/index.ts.source"
+    },
+    {
+      "path": "tools/fixtures/starting-owner/run.ts",
+      "reason": "The native891 consumer still imports the former subcatalogue name. This proposal migrates its two actual RPC callers without changing the qualified native facade.",
+      "applied": false,
+      "beforeSha256": "0a57d2babcdf02062a3d6cf2ebb6865dd6439e3f632082dab32c9b973cbb4424",
+      "afterSha256": "0a4a450c4f5bf386f2605ccd14d96933bf5ebcd78161d3636772046ffd8adf9c",
+      "mode": "100644",
+      "proposedSource": "tools/fixtures/ui-owner-reconciliation/proposals/tools/fixtures/starting-owner/run.ts.source"
+    },
+    {
+      "path": "src/background/router/first-run.bun-test.ts",
+      "reason": "The authored Backend namespaces request IDs per caller to preserve router duplicate suppression across views. The protected exact-wire assertion still hardcodes id 1. The proposal retains exact request and answer assertions and verifies the UUID namespace and first sequence.",
+      "applied": false,
+      "beforeSha256": "42fa5ed3dfd83fd0a8f8e2636575b7d212c3f6a026c92f3a228c3d8f782f2877",
+      "afterSha256": "aa3d696f937c552d1e1c71f714cd8897c834b1d6cd1877e2da4dee4c1da7b1f5",
+      "mode": "100644",
+      "proposedSource": "tools/fixtures/ui-owner-reconciliation/proposals/src/background/router/first-run.bun-test.ts.source"
+    }
+  ],
+  "inheritedHolds": [
+    {
+      "path": "scripts/run-bun-tests.ts",
+      "reason": "Missing --no-install on Bun child. Existing launcher remains held."
+    },
+    {
+      "path": "scripts/check-source-rebuild.mjs",
+      "reason": "Existing source-archive launcher installs dependencies and does not pass both Bun flags. Preserve original archive exclusions. Remains held."
+    }
+  ]
+}

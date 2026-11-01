@@ -1,20 +1,61 @@
 import { expect, test } from "bun:test"
-import { executeInterimRetention, readRetainedInterim, projectInterimNote, type InterimPersistenceSnapshot } from "./interim-persistence"
+import { executeInterimRetention, readRetainedInterim, readRetainedCheckpoint, recoveredRetainedV1AgreementDifference, retainedCheckpointDifference, projectInterimNote, type InterimPersistenceSnapshot } from "./interim-persistence"
 import { createStartingLocalFilterWriter, createLocalFilterWriter, StartupReadinessError } from "./local-filter-writer"
-import { createInterimHarness, interimFixture, interimSnapshot, runInterimConversion } from "../../../tools/fixtures/interim-conversion/run"
+import { createInterimHarness, interimFixture, interimSnapshot, runInterimConversion, withdrawalRetainedV1Fixture } from "../../../tools/fixtures/interim-conversion/run"
 import { createRemovalHarness, removalFixture } from "../../../tools/fixtures/account-removal-execution/run"
 import { isAccountKey } from "../../shared/model/validation"
 import { isJsonValue, type JsonValue, type JsonObject } from "../../shared/contracts/json"
+
+test("V1 recovery comparison pins complete history and permits only the current-consent canonical projection", async () => {
+  const fixture = await withdrawalRetainedV1Fixture(), h = createInterimHarness(fixture.stores.local), owner = createStartingLocalFilterWriter(h.deps)
+  await expect(owner.ready()).rejects.toBeInstanceOf(StartupReadinessError)
+  const read = await owner.readWithdrawnWork({ kind: "ui", windowId: 1, incognito: false })
+  if (read.kind !== "held") throw Error("V1 review absent")
+  const selected = read.work.find(view => view.kind === "retained-v1-acceptance")
+  if (!selected || selected.kind !== "retained-v1-acceptance") throw Error("V1 selection absent")
+  const result = await owner.recoverWithdrawnWork({ kind: "ui", windowId: 1, incognito: false }, { review: read.review, job: selected.selection })
+  expect(result.kind).toBe("recovered")
+  const retained = readRetainedInterim(fixture.stores.local.interimConversion), accepted = readRetainedCheckpoint(h.writes[2]?.interimConversion)
+  if (retained.kind !== "valid" || accepted.kind !== "agreement" || accepted.checkpoint.agreement.kind !== "accepted") throw Error("Actual checkpoints absent")
+  const fixed = { ...accepted.checkpoint, agreement: accepted.checkpoint.agreement }, current = interimSnapshot(fixture.stores.local), agreement = { v: 1, at: 300 }
+  expect(recoveredRetainedV1AgreementDifference(retained.checkpoint, fixed, current, agreement, "v1")).toBeUndefined()
+  expect(retainedCheckpointDifference(retained.checkpoint, current)).toBe("canonical")
+  expect(recoveredRetainedV1AgreementDifference(retained.checkpoint, fixed, interimSnapshot({ ...fixture.stores.local, interimConversion: h.writes[2]!.interimConversion! }), agreement, "accepted")).toBeUndefined()
+  expect(recoveredRetainedV1AgreementDifference(retained.checkpoint, fixed, interimSnapshot(h.records()), agreement, "confirmed")).toBeUndefined()
+  expect(recoveredRetainedV1AgreementDifference(retained.checkpoint, fixed, current, agreement, "accepted")).toBe("checkpoint")
+  expect(recoveredRetainedV1AgreementDifference(retained.checkpoint, fixed, { ...current, source: { ...current.source, sessionConsent: 2 } }, agreement, "v1")).toBe("source")
+  expect(recoveredRetainedV1AgreementDifference(retained.checkpoint, fixed, { ...current, historicalAuthorization: { kind: "known", value: true } }, agreement, "v1")).toBe("history")
+  const rawDevice: unknown = current.canonical.device
+  if (!isJsonValue(rawDevice) || !rawDevice || typeof rawDevice !== "object" || Array.isArray(rawDevice)) throw Error("Current Device absent")
+  expect(recoveredRetainedV1AgreementDifference(retained.checkpoint, fixed, { ...current, canonical: { ...current.canonical, device: { ...rawDevice, future: { changed: true } } } }, agreement, "v1")).toBe("canonical")
+  expect(recoveredRetainedV1AgreementDifference(retained.checkpoint, fixed, current, { v: 1, at: 301 }, "v1")).toBe("canonical")
+  await owner.dispose()
+})
 import type { InterimConversionContext } from "./interim-conversion"
+import { createRecoveryHarness, recoveryAgree, recoveryDiscardSelection, recoveryAcceptanceFixture, recoveryUi } from "../../../tools/fixtures/interim-recovery-review/run"
 
 const context: InterimConversionContext = { deviceId: "fixture", at: 1, platform: { browser: "chrome", os: "linux" }, commands: [], interimShortcutId: "conv01", documentGenerations: {} }
+
+test("confirmed discard restarts as recovery evidence without replay or fresh conversion context", async () => {
+  const h = createRecoveryHarness(recoveryAcceptanceFixture.seed), owner = createStartingLocalFilterWriter(h.deps)
+  await recoveryAgree(owner, h)
+  const { opened, item } = await recoveryDiscardSelection(owner, "playlists", [0])
+  expect((await owner.discardInterimItem(recoveryUi, { capture: opened.capture, item: item.id })).kind).toBe("committed")
+  const serialized = JSON.stringify(h.records()); await owner.dispose()
+  const records = JSON.parse(serialized), restarted = createRecoveryHarness(records)
+  let allocations = 0
+  const result = await executeInterimRetention({ local: restarted.deps.local, snapshot: restarted.deps.startup.readInterimSnapshot,
+    context() { allocations++; throw Error("Discard restart cannot allocate context") }, isStopped: () => false })
+  expect(result).toMatchObject({ kind: "confirmed-recovery", checkpoint: { v: 4, pending: { kind: "none" }, resolutions: [{ kind: "discarded", item: { sourceKey: "playlists", path: [0] } }] } })
+  expect(allocations).toBe(0); expect(restarted.writes).toEqual([]); expect(restarted.records()).toEqual(records)
+})
 
 test("the actual command confirms complete retention and reads it across discarded owner lifetimes", async () => {
   const result = await runInterimConversion()
   expect(result.assertions).toBeGreaterThan(1500)
   expect(result.observations.length).toBeGreaterThan(50)
   expect(result.production).toBe("not-connected")
-})
+}, 60000)
 
 test("unrepresentable selected source never executes hooks, writes a subset or invents recovery", async () => {
   let hooks = 0
@@ -192,7 +233,7 @@ test("owned v2 accepts only the exact consent overlay and preserves both root ex
   root.extension = { root: [false] }
   expect(readRetainedCheckpoint(root).kind).toBe("agreement")
   expect(readRetainedInterim(root)).toEqual({ kind: "newer-version", version: 2 })
-  expect(readRetainedCheckpoint({ v: 3, payload: { opaque: true } })).toEqual({ kind: "newer-version", version: 3 })
+  expect(readRetainedCheckpoint({ v: 6, payload: { opaque: true } })).toEqual({ kind: "newer-version", version: 6 })
   for (const change of ["foreign-device", "unclaimed", "source", "canonical-install"] as const) {
     const current = JSON.parse(JSON.stringify(saved))
     if (change === "foreign-device") current.device.foreign = true

@@ -1,0 +1,64 @@
+[
+  {
+    "kind": "key",
+    "target": {
+      "kind": "undo"
+    },
+    "expected": null,
+    "key": {
+      "code": "KeyZ",
+      "char": "z",
+      "ctrl": false,
+      "alt": true,
+      "shift": false,
+      "meta": false
+    },
+    "confirmation": {
+      "kind": "none"
+    }
+  },
+  {
+    "kind": "key",
+    "target": {
+      "kind": "undo"
+    },
+    "expected": {
+      "code": "KeyZ",
+      "char": "z",
+      "ctrl": false,
+      "alt": true,
+      "shift": false,
+      "meta": false
+    },
+    "key": null,
+    "confirmation": {
+      "kind": "none"
+    }
+  },
+  {
+    "kind": "shortcut-label",
+    "id": "save01",
+    "expected": "Kept shortcut",
+    "value": "  Named  "
+  },
+  {
+    "kind": "shortcut-watch-later",
+    "id": "save01",
+    "expected": false,
+    "value": true
+  },
+  {
+    "kind": "shortcut-add"
+  },
+  {
+    "kind": "key",
+    "target": {
+      "kind": "undo"
+    },
+    "expected": null,
+    "key": null,
+    "confirmation": {
+      "kind": "none"
+    }
+  }
+]

@@ -1,0 +1,113 @@
+{
+ "state": "authored-unexecuted",
+ "typeNegatives": {
+  "file": "src/background/gather/completion.type-test.ts",
+  "anchors": [
+   "gather-closing-not-evidence",
+   "gather-reopen-window",
+   "gather-sent-no-account",
+   "gather-sent-destination",
+   "gather-kept-not-account",
+   "gather-closing-video-branded",
+   "gather-reopen-title-string",
+   "gather-execution-no-push"
+  ],
+  "positiveControls": {
+   "gather-closing-not-evidence": "evidence",
+   "gather-reopen-window": "reopenOnly",
+   "gather-sent-no-account": "sent",
+   "gather-sent-destination": "sent",
+   "gather-kept-not-account": "keptEdit",
+   "gather-closing-video-branded": "closing",
+   "gather-reopen-title-string": "reopened",
+   "gather-execution-no-push": "served"
+  }
+ },
+ "behaviourControls": [
+  {
+   "case": "partial-native-removal",
+   "anchor": "manual-completion.bun-test.ts: a partial native removal records only the tab that disappeared",
+   "break": "count every id passed to tabs.remove as closed (gather.ts close(): push planned.tab without the after-close read)",
+   "mustFail": "closed would be 2 and Undo would reopen 2"
+  },
+  {
+   "case": "remove-rejected-no-retry",
+   "anchor": "manual-completion.bun-test.ts: a rejected remove call is never retried",
+   "break": "call ports.native.remove again when it answers unavailable",
+   "mustFail": "removeCalls().length would be 2"
+  },
+  {
+   "case": "unreadable-not-closed",
+   "anchor": "manual-completion.bun-test.ts: an unreadable tab after the remove call",
+   "break": "treat an unavailable read after removal as gone",
+   "mustFail": "closed would be 1 and reopened would be 1"
+  },
+  {
+   "case": "navigated-before-remove",
+   "anchor": "manual-completion.bun-test.ts: a tab navigated after the record was planned",
+   "break": "remove closing.plan ids without the pre-remove read",
+   "mustFail": "removeCalls() would be [[10, 11]]"
+  },
+  {
+   "case": "all-already-in-reopen",
+   "anchor": "manual-completion.bun-test.ts: every video already in still closes",
+   "break": "keepGather returns null when no entry was added (the previous behaviour)",
+   "mustFail": "gathered.undo would be null and the test throws"
+  },
+  {
+   "case": "all-already-in-reopen",
+   "anchor": "same",
+   "break": "route a reopen-only Undo through undoGather",
+   "mustFail": "removal job count would rise or Undo would answer no-tab/expired"
+  },
+  {
+   "case": "kept-restart-activation",
+   "anchor": "manual-completion.bun-test.ts: reopened tab IDs persist",
+   "break": "keep reopened IDs only in Gather memory (drop the gather-kept write)",
+   "mustFail": "kept after restart would be []"
+  },
+  {
+   "case": "private-kept-memory",
+   "anchor": "manual-completion.bun-test.ts: a private gather's history",
+   "break": "write the gather-kept edit for the private scope",
+   "mustFail": "storage would mention the reopened tab or normal kept would be non-empty"
+  },
+  {
+   "case": "sent-history-restart",
+   "anchor": "manual-completion.bun-test.ts: a player gather keeps its last result",
+   "break": "skip the gather-sent write",
+   "mustFail": "history after restart would be []"
+  },
+  {
+   "case": "nothing-gathered-no-write",
+   "anchor": "manual-completion.bun-test.ts: a check that gathers nothing writes nothing",
+   "break": "write a gather-sent record with count 0 or on no-videos",
+   "mustFail": "newSessionWrites would be 1"
+  },
+  {
+   "case": "adapter-serve-serving-last",
+   "anchor": "manual-completion.bun-test.ts: a popup gather serves from the account in view",
+   "break": "order the remove ids by index without moving the served tab last",
+   "mustFail": "removeCalls() would be [[10, 11]]"
+  },
+  {
+   "case": "firefox-discarded-fallback",
+   "anchor": "manual-completion.bun-test.ts: passes discarded and title together",
+   "break": "pass discarded without title, or give up when discarded is refused",
+   "mustFail": "created[0] lacks title, or the second create answers unavailable"
+  },
+  {
+   "case": "account-removal-during-batch",
+   "anchor": "manual-completion.bun-test.ts: account removal while the batch waits",
+   "break": "write the gather record under the current revision instead of the batch's captured one",
+   "mustFail": "a record for the removed account would reappear and its tabs would close"
+  },
+  {
+   "case": "withdrawal-during-batch",
+   "anchor": "manual-completion.bun-test.ts: withdrawal while the batch waits",
+   "break": "close the planned tabs when the batch reports stopped",
+   "mustFail": "removeCalls() would be [[10]]"
+  }
+ ],
+ "preserved": "controls.json, expected-output.jsonl and gather.bun-test.ts keep their 5 behaviour controls, 17 expectation lines and 14 tests unchanged"
+}

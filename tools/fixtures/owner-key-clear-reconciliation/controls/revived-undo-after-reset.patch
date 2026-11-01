@@ -1,0 +1,10 @@
+--- a/src/background/store/local-filter-writer.ts
++++ b/src/background/store/local-filter-writer.ts
+@@ -1286,7 +1286,6 @@
+           resetPending = true
+           cancelTicket()
+           agreementRevision++
+-          keyExecution?.revoke()
+           for (const acct of accounts) invalidateAccountSession(acct)
+           autoAddCaptures.clear()
+         }

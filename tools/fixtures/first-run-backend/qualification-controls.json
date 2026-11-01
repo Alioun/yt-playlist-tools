@@ -1,0 +1,55 @@
+{
+  "state": "unexecuted",
+  "controls": [
+    {
+      "name": "bypassed-authentication",
+      "path": "src/background/router/first-run.ts",
+      "before": "const accepted = await nativeAuthenticate(input)",
+      "after": "const accepted = await Promise.resolve<Awaited<ReturnType<typeof nativeAuthenticate>>>({ kind: \"accepted\", context: { kind: \"ui\", page: \"onboarding\", origin: { kind: \"ui\", windowId: 1, incognito: false } } })",
+      "test": "native sender restrictions run before every owner handler",
+      "replaceCount": 1,
+      "state": "authored-unexecuted",
+      "gate": "Compiler must pass first, then the named assertion must fail. Restore exact final source after the control."
+    },
+    {
+      "name": "copied-review",
+      "path": "src/background/router/first-run.ts",
+      "before": "review: read.review,",
+      "after": "review: { ...read.review },",
+      "test": "the handler passes the captured object without exporting or reconstructing it",
+      "replaceCount": 1,
+      "state": "authored-unexecuted",
+      "gate": "Compiler must pass first, then the named assertion must fail. Restore exact final source after the control."
+    },
+    {
+      "name": "optimistic-confirmation",
+      "path": "src/background/router/first-run-results.ts",
+      "before": "    case \"unconfirmed\":\n    case \"unchanged\": return refused(\"unconfirmed\")",
+      "after": "    case \"unconfirmed\": {\n      const applications: FeatureApplication[] = change.selected.map(feature => feature === \"shortcuts\"\n        ? { feature, state: \"enabled\", alsoOnMusic: \"enabled\" } : { feature, state: \"enabled\" })\n      return { kind: \"agreed\", attempt: change.attempt, applications }\n    }\n    case \"unchanged\": return refused(\"unconfirmed\")",
+      "test": "semantic confirmation through native RPC ignored",
+      "replaceCount": 1,
+      "state": "authored-unexecuted",
+      "gate": "Compiler must pass first, then the named assertion must fail. Restore exact final source after the control."
+    },
+    {
+      "name": "missing-application",
+      "path": "src/background/router/first-run-results.ts",
+      "before": "const expected = change.selected.flatMap(feature => agreementScopes(feature).map(scope => ({ feature, scope })))",
+      "after": "const expected = result.applications.map(({ feature, scope }) => ({ feature, scope }))",
+      "test": "any-tab-keys refuses missing application proof",
+      "replaceCount": 1,
+      "state": "authored-unexecuted",
+      "gate": "Compiler must pass first, then the named assertion must fail. Restore exact final source after the control."
+    },
+    {
+      "name": "raw-result-serialization",
+      "path": "src/background/router/first-run.ts",
+      "before": "return active ? { kind: \"agreement\", outcome: projectAgreement(change, result, access) } : refusal(\"unavailable\")",
+      "after": "return active ? Object.assign({ kind: \"agreement\" as const, outcome: projectAgreement(change, result, access) }, { raw: result }) : refusal(\"unavailable\")",
+      "test": "semantic confirmation through native RPC rejected-applied",
+      "replaceCount": 1,
+      "state": "authored-unexecuted",
+      "gate": "Compiler must pass first, then the named assertion must fail. Restore exact final source after the control."
+    }
+  ]
+}

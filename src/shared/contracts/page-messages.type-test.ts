@@ -48,6 +48,21 @@ declare const dependency: WatchId
 declare const route: RouteId
 declare const acct: AccountKey
 declare const video: VideoId
+declare const playlist: PlaylistId
+
+export function removalPageRelationships() {
+  const request: PageCoreMessage = { v: 1, build, kind: "run", id, job: { kind: "remove", playlistId: playlist, videoId: video } }
+  const music: PageCoreMessage = { v: 1, build, kind: "run", id, job: { kind: "unsave", playlistId: playlist, videoId: video } }
+  const missing: PageRunAnswer<JobOf<"add">> = { v: 1, build, kind: "run", id, result: { ok: true, route, data: { setVideoId: null } } }
+  const removed: PageRunAnswer<JobOf<"remove">> = { v: 1, build, kind: "run", id, result: { ok: true, route, data: null } }
+  // @ts-expect-error Removal data is not a confirmed add identity.
+  const wrong: PageRunAnswer<JobOf<"remove">> = missing
+  // @ts-expect-error An unknown success cannot omit the normalized identity.
+  const unknown: PageRunAnswer<JobOf<"add">> = { v: 1, build, kind: "run", id, result: { ok: true, route, data: {} } }
+  // @ts-expect-error A page removal still requires one removal identity.
+  const neither: PageCoreMessage = { v: 1, build, kind: "run", id, job: { kind: "remove", playlistId: playlist } }
+  void [request, music, missing, removed, wrong, unknown, neither]
+}
 
 export function pageIdentifierRelationships() {
   // @ts-expect-error A subscription cannot correlate a request.

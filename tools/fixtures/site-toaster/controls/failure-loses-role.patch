@@ -1,0 +1,12 @@
+diff --git a/src/site/kit/toaster/Toast.svelte b/src/site/kit/toaster/Toast.svelte
+--- a/src/site/kit/toaster/Toast.svelte
++++ b/src/site/kit/toaster/Toast.svelte
+@@ -23,7 +23,7 @@
+ </script>
+ 
+ {#if view}
+-  <div bind:this={container} class="toast" role={view.content.tone === "failure" ? "alert" : "status"} aria-atomic="true"
++  <div bind:this={container} class="toast" role={view.content.tone === "failure" ? "status" : "status"} aria-atomic="true"
+     onpointerenter={() => source.pause("hover", true)} onpointerleave={() => source.pause("hover", false)}
+     onfocusin={() => source.pause("focus", true)} onfocusout={focusOut}>
+     {#if view.content.tone === "failure"}

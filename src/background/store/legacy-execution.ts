@@ -14,6 +14,7 @@ export type StartupHost = {
 
 export type StartupExecutionResult =
   | { readonly kind: "ok" }
+  | { readonly kind: "stopped" }
   | Extract<StartupPlan, { kind: "newer-layout" | "invalid" | "unsupported-state" }>
   | { readonly kind: "unconfirmed"; readonly stage: "canonical-batch" | "local-remove" | "schema" }
 
@@ -31,9 +32,13 @@ function sameCanonical(left: StartupSnapshot, right: StartupSnapshot): boolean {
 export async function executeLegacyStartup(deps: {
   readonly local: Pick<LocalWriteStorage, "set">
   readonly host: StartupHost
+  readonly isStopped?: () => boolean
 }): Promise<StartupExecutionResult> {
   const { local, host } = deps
+  const stopped = () => deps.isStopped?.() === true
+  if (stopped()) return { kind: "stopped" }
   const initial = await host.readSnapshot()
+  if (stopped()) return { kind: "stopped" }
   const plan = planLegacyStartup(initial, host.context)
   switch (plan.kind) {
     case "newer-layout":
@@ -41,6 +46,7 @@ export async function executeLegacyStartup(deps: {
     case "unsupported-state": return plan
     case "current": return initial.schema === 1 ? { kind: "ok" } : { kind: "unconfirmed", stage: "schema" }
     case "fresh": {
+      if (stopped()) return { kind: "stopped" }
       await local.set({ schema: plan.schema })
       return sameCanonical(await host.readSnapshot(), { ...initial, schema: plan.schema })
         ? { kind: "ok" } : { kind: "unconfirmed", stage: "schema" }
@@ -55,6 +61,7 @@ export async function executeLegacyStartup(deps: {
     if (!isJsonValue(batch) || batch === null || typeof batch !== "object" || Array.isArray(batch)) {
       throw new TypeError("Migration produced a non-JSON canonical batch")
     }
+    if (stopped()) return { kind: "stopped" }
     await local.set(batch)
     expected = { ...initial, device: plan.write.device, settingsDocument: plan.write["doc:settings"], unclaimed: plan.write.unclaimed }
     const observed = await host.readSnapshot()
@@ -63,15 +70,18 @@ export async function executeLegacyStartup(deps: {
     }
   }
   const [remove, cleanup, schema] = plan.cleanup.steps
+  if (stopped()) return { kind: "stopped" }
   await host.removeLocal(remove.keys)
   const removed = await host.readSnapshot()
   if (removed.legacy.presentKeys.length !== 0 || !sameCanonical(removed, expected)) {
     return { kind: "unconfirmed", stage: "local-remove" }
   }
+  if (stopped()) return { kind: "stopped" }
   const settled = await Promise.allSettled([
-    Promise.resolve().then(() => host.deleteDatabase(cleanup.database)),
-    Promise.resolve().then(() => host.removeSession(cleanup.sessionKeys))
+    Promise.resolve().then(() => stopped() ? undefined : host.deleteDatabase(cleanup.database)),
+    Promise.resolve().then(() => stopped() ? undefined : host.removeSession(cleanup.sessionKeys))
   ])
+  if (stopped()) return { kind: "stopped" }
   for (const result of settled) if (result.status === "rejected") throw result.reason
   if (schema.required) await local.set({ schema: schema.value })
   expected = { ...expected, schema: schema.value }

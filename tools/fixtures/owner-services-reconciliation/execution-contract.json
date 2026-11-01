@@ -1,0 +1,19 @@
+{
+  "state": "unexecuted-design-requires-separate-launcher-proof",
+  "runtimeLease": "Only the coordinator can transfer the sole runtime lease. No flag grants it.",
+  "launchRequirements": [
+    "Prove a credential-free launcher using only dummy fixtures before any product execution.",
+    "Clear inherited environment, use exact pinned executables, scratch HOME and TMPDIR, and closed stdin.",
+    "Populate approved-bin only with sealed, identity-pinned wrappers. Every Bun invocation and descendant must include --no-env-file --no-install.",
+    "Reject absolute child Bun launches that omit required flags; PATH wrappers alone do not enforce this.",
+    "Reject historical qualification and archive drivers until every descendant command and child wait is reconciled.",
+    "Own process groups, bound every command with timeout -k 10 at no more than 540 seconds, wait all owned children, and record bounded census limits.",
+    "Capture compiler and consumer stdout in declared files; compare complete bytes through EOF twice.",
+    "Require a passing baseline, intended diagnostic or assertion, and exact byte/mode restoration for every negative and control."
+  ],
+  "PATH": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-c9d737e6/tools/fixtures/owner-services-reconciliation/future-bin",
+  "PATHIdentity": "7975e3a35140c2790d1182efab5a817aa4735af0b300b1b54d69afc59e4dc474",
+  "PATHManifest": "PATH-identities.json",
+  "enforcementProven": false,
+  "currentGateExecutionPermitted": false
+}

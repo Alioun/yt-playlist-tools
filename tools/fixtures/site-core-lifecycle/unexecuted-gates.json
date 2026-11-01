@@ -1,0 +1,187 @@
+{
+  "status": "all unexecuted; no product runtime lease",
+  "requiredBeforeExecution": [
+    "Coordinator grants the sole runtime lease to this candidate",
+    "Static prepare-runtime.py reconstructs a disposable copy and attaches the recorded prepared dependencies",
+    "Dependency identities are rechecked",
+    "No runtime gate runs in the immutable sealed source or replay tree"
+  ],
+  "gates": [
+    {
+      "name": "compiler",
+      "status": "unexecuted",
+      "cwd": ".audit/site-core-lifecycle-authoring/runtime-candidate",
+      "command": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tools/fixtures/site-core-lifecycle/tsconfig.json"
+      ],
+      "purpose": "Core, host, adapter, fixture and declared-component type checks"
+    },
+    {
+      "name": "svelte-types",
+      "status": "unexecuted",
+      "cwd": ".audit/site-core-lifecycle-authoring/runtime-candidate",
+      "command": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "node",
+        "node_modules/svelte-check/bin/svelte-check",
+        "--tsgo",
+        "--workspace",
+        "tools/fixtures/site-core-lifecycle",
+        "--tsconfig",
+        "./tsconfig.svelte.json",
+        "--fail-on-warnings"
+      ],
+      "purpose": "Real fixture component props and Svelte adapter test types, using the prepared svelte-check pipeline"
+    },
+    {
+      "name": "scope-focus",
+      "status": "unexecuted",
+      "cwd": ".audit/site-core-lifecycle-authoring/runtime-candidate",
+      "command": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/core/scope.bun-test.ts"
+      ],
+      "purpose": "Real events, MutationObserver delivery, deadlines, capture, abort, release, reentry and late ownership"
+    },
+    {
+      "name": "host-focus",
+      "status": "unexecuted",
+      "cwd": ".audit/site-core-lifecycle-authoring/runtime-candidate",
+      "command": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/core/feature-host.bun-test.ts"
+      ],
+      "purpose": "Lifecycle transitions, actual ExtLink revocation, complete views and deterministic consumer"
+    },
+    {
+      "name": "svelte-runtime",
+      "status": "unexecuted",
+      "cwd": ".audit/site-core-lifecycle-authoring/runtime-candidate",
+      "command": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/kit/scope-mount.bun-test.ts"
+      ],
+      "purpose": "Real Svelte mount, immediate teardown, reentrant acquisition and rejected teardown isolation"
+    },
+    {
+      "name": "preserved-contracts",
+      "status": "unexecuted",
+      "cwd": ".audit/site-core-lifecycle-authoring/runtime-candidate",
+      "command": [
+        "timeout",
+        "-k",
+        "10",
+        "240",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/core/extlink.bun-test.ts",
+        "./src/site/core/extlink-consumer.bun-test.ts",
+        "./src/site/core/page-link.bun-test.ts",
+        "./src/shared/contracts/tab-view.bun-test.ts"
+      ],
+      "purpose": "Protected lifecycle contracts remain intact"
+    },
+    {
+      "name": "architecture-guard",
+      "status": "unexecuted",
+      "cwd": ".audit/site-core-lifecycle-authoring/runtime-candidate",
+      "command": [
+        "timeout",
+        "-k",
+        "10",
+        "120",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--isolate",
+        "--conditions=browser",
+        "./tests/guards/architecture.test.ts"
+      ],
+      "purpose": "Import boundaries, scoped site resources and observer roots"
+    },
+    {
+      "name": "consumer",
+      "status": "unexecuted",
+      "cwd": ".audit/site-core-lifecycle-authoring/runtime-candidate",
+      "command": [
+        "timeout",
+        "-k",
+        "10",
+        "150",
+        "python3",
+        "tools/fixtures/site-core-lifecycle/check-consumer.py"
+      ],
+      "purpose": "Exact authored consumer EOF bytes"
+    },
+    {
+      "name": "behavioral-controls",
+      "status": "unexecuted",
+      "cwd": ".audit/site-core-lifecycle-authoring/runtime-candidate",
+      "command": [
+        "timeout",
+        "-k",
+        "10",
+        "540",
+        "python3",
+        "tools/fixtures/site-core-lifecycle/qualify-controls.py",
+        "--runtime-lease",
+        "site-core-lifecycle"
+      ],
+      "purpose": "Five compiler-gated observable controls with exact restoration and restored baselines"
+    },
+    {
+      "name": "intended-line-types",
+      "status": "unexecuted",
+      "cwd": ".audit/site-core-lifecycle-authoring/runtime-candidate",
+      "command": [
+        "timeout",
+        "-k",
+        "10",
+        "540",
+        "python3",
+        "tools/fixtures/site-core-lifecycle/qualify-types.py",
+        "--runtime-lease",
+        "site-core-lifecycle"
+      ],
+      "purpose": "Every intended-line type negative with exact restoration and restored compiler"
+    }
+  ]
+}

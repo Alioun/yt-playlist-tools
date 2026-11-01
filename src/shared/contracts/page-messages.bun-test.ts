@@ -29,6 +29,34 @@ const signal = {
 const video = { videoId, title: "Synthetic title", length: null, kind: "video" }
 const snapshot = { signedIn: true, datasyncId: "synthetic-identity", pageType: "WATCH", startedHidden: true, navType: "navigate", video }
 const pending = { id, job: { kind: "account" } } satisfies { id: typeof id; job: Job }
+
+test("page run guards exercise both removal identities and confirmed missing add IDs", () => {
+  for (const kind of ["remove", "unsave"] as const) {
+    for (const identity of [{ setVideoId: "synthetic-entry" }, { videoId }]) {
+      const job = { kind, playlistId, ...identity }
+      expect(isPageRequestMessage({ ...header, kind: "run", id, job }, build)).toBe(true)
+      if (!safe.isJob(job)) throw new Error("Invalid removal fixture")
+      expect(isPageRunAnswerFor({ id, job }, { ...header, kind: "run", id, result: { ok: true, data: null, route } }, build)).toBe(true)
+    }
+    for (const identity of [{}, { videoId, setVideoId: "synthetic-entry" }, { videoId: null }, { setVideoId: "" }]) {
+      const job = { kind, playlistId, ...identity }
+      expect(isPageRequestMessage({ ...header, kind: "run", id, job }, build)).toBe(false)
+    }
+  }
+  for (const kind of ["add", "save"] as const) {
+    const pending = { id, job: { kind, playlistId, videoId } }
+    const answer = { ...header, kind: "run", id, result: { ok: true, route, data: { setVideoId: null } } }
+    expect(isPageRunAnswerFor(pending, answer, build)).toBe(true)
+    expect(isPageRunAnswerFor(pending, { ...answer, id: "other" }, build)).toBe(false)
+    expect(isPageRunAnswerFor(pending, { ...answer, result: { ok: true, route, data: {} } }, build)).toBe(false)
+    expect(isPageRunAnswerFor(pending, { ...answer, result: { ok: false, reason: "unconfirmed", data: { setVideoId: null } } }, build)).toBe(false)
+  }
+  const batch = { id, job: { kind: "addBatch", playlistId, videoIds: [videoId, video2] } } satisfies { id: typeof id; job: Job }
+  const results = [{ videoId, setVideoId: null }, { videoId: video2, setVideoId: "synthetic-entry" }]
+  const answer = { ...header, kind: "run", id, result: { ok: true, route, data: { results } } }
+  expect(isPageRunAnswerFor(batch, answer, build)).toBe(true)
+  expect(isPageRunAnswerFor(batch, { ...answer, result: { ...answer.result, data: { results: results.toReversed() } } }, build)).toBe(false)
+})
 const probePending = { id, site: "www", watchIds: [dependency] } as const
 const run = { ...header, kind: "run", id, result: { ok: true, data: { signedIn: true, datasyncId: "synthetic-identity" }, route } }
 const fixtures: { name: string; value: Record<string, unknown>; guard: (value: unknown) => boolean }[] = [

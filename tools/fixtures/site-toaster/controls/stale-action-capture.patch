@@ -1,0 +1,12 @@
+diff --git a/src/site/kit/toaster/model.ts b/src/site/kit/toaster/model.ts
+--- a/src/site/kit/toaster/model.ts
++++ b/src/site/kit/toaster/model.ts
+@@ -123,7 +123,7 @@
+   function contains(next: Entry) { return current === next || queued === next }
+   async function act(target: Entry, version: number): Promise<void> {
+     const action = target.content.action
+-    if (!live() || revision !== version || current !== target || !visible() || target.busy || target.spent || !action) return
++    if (!live() || !visible() || target.busy || target.spent || !action) return
+     if (action.kind === "undo" && consumedUndo.has(action)) return
+     if (action.kind === "undo") consumedUndo.add(action)
+     target.busy = true; target.spent = true

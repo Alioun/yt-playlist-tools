@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "verbatimModuleSyntax": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "types": ["svelte"]
+  },
+  "include": ["*.ts", "*.svelte", "entrypoints/**/*", "../../../src/ui/**/*", "wxt.config.ts"],
+  "exclude": ["../../../src/ui/**/*.bun-test.ts"]
+}

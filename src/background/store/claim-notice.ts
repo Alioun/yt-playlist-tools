@@ -1,3 +1,4 @@
+import { classifyRetainedAuthority, archivedKeys } from "./interim-canonical-authority"
 import { CONSENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError, decodeDevice, type ClaimNotice } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import type { Origin } from "../../shared/contracts/results"
@@ -59,8 +60,10 @@ export function projectClaimNotice(input: { readonly records: Readonly<Record<st
     if (!Object.hasOwn(records, "schema")) return { kind: "unavailable", reason: "startup" }
     if (typeof records.schema !== "number" || !Number.isSafeInteger(records.schema) || records.schema < 1) return { kind: "invalid", field: "schema" }
     if (records.schema > STORAGE_SCHEMA_VERSION) return { kind: "unavailable", reason: "newer-layout" }
-    if (records.schema !== STORAGE_SCHEMA_VERSION || LEGACY_DELETE_KEYS.some(key => Object.hasOwn(records, key)) ||
-      Object.keys(records).some(key => key.startsWith("account:") || ["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"].includes(key))) return { kind: "unavailable", reason: "startup" }
+    const retained = classifyRetainedAuthority(records)
+    const exempt = retained.kind === "canonical-archive" ? archivedKeys(retained.checkpoint) : new Set<string>()
+    if (records.schema !== STORAGE_SCHEMA_VERSION || retained.kind === "held" ||
+      LEGACY_DELETE_KEYS.some(key => Object.hasOwn(records, key) && !exempt.has(key))) return { kind: "unavailable", reason: "startup" }
     if (!Object.hasOwn(records, "device")) return { kind: "held", reason: "consent" }
     if (!jsonObject(records.device)) return { kind: "invalid", field: "device" }
     let device

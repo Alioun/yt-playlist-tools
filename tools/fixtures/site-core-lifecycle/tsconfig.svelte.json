@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "files": [],
+  "include": [
+    "../../../src/site/core/scope.ts", "../../../src/site/core/scope.type-test.ts",
+    "../../../src/site/kit/scope-mount.ts", "../../../src/site/kit/scope-mount.bun-test.ts", "../../../src/site/kit/scope-mount.type-test.ts",
+    "svelte-props.ts", "Owned.svelte"
+  ]
+}

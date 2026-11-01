@@ -30,7 +30,7 @@ export default defineBackground(() => {
 
   async function callerFor(sender: Sender, message: Record<string, unknown>): Promise<Caller> {
     const resolved = await resolveSenderOrigin(browser, { sender, popupWindowId: message.windowId })
-    if (resolved.kind === "unavailable") throw new SessionFailure("unavailable")
+    if (resolved.kind === "unavailable" || (resolved.kind === "tab" ? resolved.site !== "www" : resolved.page === "onboarding")) throw new SessionFailure("unavailable")
     if (resolved.kind === "ui") return { incognito: resolved.origin.incognito, windowId: resolved.origin.windowId }
     return { tabId: resolved.origin.tabId, incognito: resolved.origin.incognito, windowId: resolved.windowId }
   }

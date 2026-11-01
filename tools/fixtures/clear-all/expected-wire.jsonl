@@ -1,0 +1,2 @@
+{"case":"unticked","local":{"schema":1},"session":{},"remote":{"s:meta":{"v":1,"id":"history","created":0},"old":{"obsolete":true}},"firstRun":1,"database":1,"syncMutations":[]}
+{"case":"synced","local":{"schema":1},"session":{},"remote":{"s:meta":{"v":1,"reset":true,"id":"clear-generation-1","created":1000000}},"firstRun":1,"database":1,"syncMutations":[{"operation":"sync.set","at":5000,"names":["s:meta"]},{"operation":"sync.remove","at":10000,"names":["old"]}]}

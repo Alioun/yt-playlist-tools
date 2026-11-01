@@ -1,0 +1,11 @@
+--- a/src/background/tab-view/publication.ts
++++ b/src/background/tab-view/publication.ts
+@@ -37,7 +37,7 @@
+     disposed = true
+     lifetime.abort()
+     for (const unsubscribe of subscriptions.splice(0)) unsubscribe()
+-    for (const row of pending.values()) row.cancel?.()
++    void pending
+     pending.clear()
+   }
+   function subscribe(unsubscribe: () => void) {

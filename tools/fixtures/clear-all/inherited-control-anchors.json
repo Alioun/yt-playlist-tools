@@ -1,0 +1,482 @@
+{
+  "originalPatchesChanged": false,
+  "controls": [
+    {
+      "patch": "tools/fixtures/owner-services-reconciliation/controls/bookkeeping-event-noise.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 433,
+        "sha256": "5f9698e7ad99fe653c2929b64a034d263546cb3a38666e5c25b71394eecf67d3",
+        "gitBlob": "2e6dab71f67aa533e171c4e0aa4e70bac9c6dc68"
+      },
+      "source": "src/background/store/local-filter-writer.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 256160,
+        "sha256": "b3b960ae890de10dd71dd73f16efc31a10dfb02d378a4d23c122454aaa253867",
+        "gitBlob": "656e32dbabf3f88165cbd2eb0530c08e5e9a0a43"
+      },
+      "anchors": [],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/owner-services-reconciliation/controls/checking-writes.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 484,
+        "sha256": "9a1979731229a815ebd75767f7ee9712e3635268aec6cc9817303a23c2895a71",
+        "gitBlob": "80bc0e06fd99bddd8944b01ea046bb6ced076020"
+      },
+      "source": "src/background/store/local-filter-writer.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 256160,
+        "sha256": "b3b960ae890de10dd71dd73f16efc31a10dfb02d378a4d23c122454aaa253867",
+        "gitBlob": "656e32dbabf3f88165cbd2eb0530c08e5e9a0a43"
+      },
+      "anchors": [],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/owner-services-reconciliation/controls/lost-label-event.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 417,
+        "sha256": "dcc347d3397f2ea14ae3733f8dedc68a3badff2a00f280af3580e6c10576251a",
+        "gitBlob": "2ecb59c557d3bcbdccfd6de62ce176fbe78bb033"
+      },
+      "source": "src/background/store/local-filter-writer.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 256160,
+        "sha256": "b3b960ae890de10dd71dd73f16efc31a10dfb02d378a4d23c122454aaa253867",
+        "gitBlob": "656e32dbabf3f88165cbd2eb0530c08e5e9a0a43"
+      },
+      "anchors": [
+        {
+          "originalRemovedLine": "      emit({ kind: \"setup-changed\", source: \"local\", acct: input.acct })",
+          "finalLines": [
+            1906
+          ]
+        }
+      ],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/owner-services-reconciliation/controls/omitted-read-freshness.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 637,
+        "sha256": "0f413be7cc8e419ce2e7ed4575ab6ca32076371fbefce8dec2fbc66c9fd60755",
+        "gitBlob": "f6a4ca6907b44be84d211a2c4f0d1c46868e808c"
+      },
+      "source": "src/background/store/local-filter-writer.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 256160,
+        "sha256": "b3b960ae890de10dd71dd73f16efc31a10dfb02d378a4d23c122454aaa253867",
+        "gitBlob": "656e32dbabf3f88165cbd2eb0530c08e5e9a0a43"
+      },
+      "anchors": [
+        {
+          "originalRemovedLine": "        const current = await readSettingsFileInLane()",
+          "finalLines": [
+            3199
+          ]
+        }
+      ],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/owner-services-reconciliation/controls/stale-label-resurrection.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 1037,
+        "sha256": "d39f4ea8e92122535c3d262b4342c301b9aa7f9dd78c30244048165d0e564068",
+        "gitBlob": "65c66d73749545a4c69bde007c4bb45fcb38a6b4"
+      },
+      "source": "src/background/store/local-filter-writer.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 256160,
+        "sha256": "b3b960ae890de10dd71dd73f16efc31a10dfb02d378a4d23c122454aaa253867",
+        "gitBlob": "656e32dbabf3f88165cbd2eb0530c08e5e9a0a43"
+      },
+      "anchors": [
+        {
+          "originalRemovedLine": "        return labelCaptureCurrent(capture, records) && state.kind === \"label\" && state.checkedAt === lookup.checkedAt",
+          "finalLines": [
+            1898
+          ]
+        },
+        {
+          "originalRemovedLine": "          ? planAccountLabel(records, input.acct, lookup.label, label) : { kind: \"stale\", reason: \"setup\" }",
+          "finalLines": [
+            1899
+          ]
+        }
+      ],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/settings-import-execution/controls/automatic-after-agree.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 840,
+        "sha256": "99df7c9ed1f4f8681d0c980085be0c46632c9d572babdcab7620226881e8e2f9",
+        "gitBlob": "260191e6bc9d8bb071cc3ab5828912c9759baca7"
+      },
+      "source": "src/background/store/settings-import-recovery.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 9683,
+        "sha256": "bb32c1a5788a63c9f4eafa032b8f49ea39c3fc96f9c283097c67d7e006214aeb",
+        "gitBlob": "15df66607fdbbde668fd7c10630341f5b7496413"
+      },
+      "anchors": [
+        {
+          "originalRemovedLine": "    read.control.generation === permission.generation && sameSyncJson(read.control.state.current, permission.current)",
+          "finalLines": [
+            45
+          ]
+        }
+      ],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/settings-import-execution/controls/early-receipt.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 711,
+        "sha256": "24df04312716ab67ecc8b080865cae0e6bb8670225534536d1c55eb5e141b8da",
+        "gitBlob": "803f906e3417d3b1c5f6c28f970874b5eaac2229"
+      },
+      "source": "src/background/store/settings-import-execution.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 25954,
+        "sha256": "4d526b2a8bf3322e297e5b9dcc5a94be8429e79c68395f5791db06d2261047bb",
+        "gitBlob": "461cbda0286386c1b9e781cc9621c6ea5c12a73d"
+      },
+      "anchors": [],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/settings-import-execution/controls/ignored-startup-marker.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 499,
+        "sha256": "af6ab5044f12f4aea5db656c31a1d98b44e286f322edfcb46e0944789fde8306",
+        "gitBlob": "4d6645ba3b811786843c12f5fed356ad039eddd7"
+      },
+      "source": "src/background/store/local-filter-writer.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 256160,
+        "sha256": "b3b960ae890de10dd71dd73f16efc31a10dfb02d378a4d23c122454aaa253867",
+        "gitBlob": "656e32dbabf3f88165cbd2eb0530c08e5e9a0a43"
+      },
+      "anchors": [
+        {
+          "originalRemovedLine": "      if (importPending) {",
+          "finalLines": [
+            649
+          ]
+        }
+      ],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/settings-import-execution/controls/missing-native-forwarding.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 560,
+        "sha256": "6bfc7eef1d717fe4db76d13299c1f673e2713d66929c55021e8424841b312314",
+        "gitBlob": "9cb65c840963493f8f768e1f68760fbbcae08a16"
+      },
+      "source": "src/background/adapters/starting-owner.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 6019,
+        "sha256": "19319eec4d72aa8c244c67a9f73428254c4cf4de56d3004d3dba8690c981232e",
+        "gitBlob": "97cf5254e00ec1ed920778330331111bb27b0086"
+      },
+      "anchors": [
+        {
+          "originalRemovedLine": "      prepareSettingsImport: (origin, text) => owner.prepareSettingsImport(origin, text),",
+          "finalLines": [
+            107
+          ]
+        }
+      ],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/settings-import-execution/controls/omitted-local-cleanup.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 830,
+        "sha256": "4de873178e14084d9af58c1646630608c97ae538a52cdb9bedec958ce206b4db",
+        "gitBlob": "472c9ea00254c69f8d1d5d369766315d7d5cc8dc"
+      },
+      "source": "src/background/store/settings-import-execution.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 25954,
+        "sha256": "4d526b2a8bf3322e297e5b9dcc5a94be8429e79c68395f5791db06d2261047bb",
+        "gitBlob": "461cbda0286386c1b9e781cc9621c6ea5c12a73d"
+      },
+      "anchors": [
+        {
+          "originalRemovedLine": "          case \"local-remove\": for (const name of effect.names) delete local[name]; apply = () => deps.cleanup.removeLocal(effect.keys); break",
+          "finalLines": [
+            186
+          ]
+        }
+      ],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/settings-import-execution/controls/omitted-session-cleanup.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 717,
+        "sha256": "63385d5b1b0948b6fab93b0070ee9a0a64eed1619a12ea96a92b83cfa2f46afa",
+        "gitBlob": "de28b9deaed3fad360b0cb74149ea5a141d02c39"
+      },
+      "source": "src/background/store/settings-import-execution.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 25954,
+        "sha256": "4d526b2a8bf3322e297e5b9dcc5a94be8429e79c68395f5791db06d2261047bb",
+        "gitBlob": "461cbda0286386c1b9e781cc9621c6ea5c12a73d"
+      },
+      "anchors": [
+        {
+          "originalRemovedLine": "  for (const effect of plan.cleanup.sessionEffects) result.push({ kind: \"session\", stage: \"session-cleanup\", effect })",
+          "finalLines": [
+            76
+          ]
+        }
+      ],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/settings-import-execution/controls/partitioned-admission.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 1023,
+        "sha256": "8716e608ca6131799fa27538ca928a7a66cb6ce07e31979b6d9a38f27a848fc6",
+        "gitBlob": "4a1139707634a62379152ed7fbac95c04325bed0"
+      },
+      "source": "src/background/store/settings-import-execution.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 25954,
+        "sha256": "4d526b2a8bf3322e297e5b9dcc5a94be8429e79c68395f5791db06d2261047bb",
+        "gitBlob": "461cbda0286386c1b9e781cc9621c6ea5c12a73d"
+      },
+      "anchors": [
+        {
+          "originalRemovedLine": "      const plan = planSettingsImport({ parsed, local: current.local, session: current.session, sync, at: deps.now(), generation: () => deps.generation() })",
+          "finalLines": [
+            280
+          ]
+        }
+      ],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/settings-import-execution/controls/repeated-document-write.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 796,
+        "sha256": "d831f798d379ce01b6c01e69d30f74b3ad6a567a447fe899f07cf6b82f00923a",
+        "gitBlob": "4728f1ca9a3fb23b97039132e2c4062991b31f97"
+      },
+      "source": "src/background/store/settings-import-execution.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 25954,
+        "sha256": "4d526b2a8bf3322e297e5b9dcc5a94be8429e79c68395f5791db06d2261047bb",
+        "gitBlob": "461cbda0286386c1b9e781cc9621c6ea5c12a73d"
+      },
+      "anchors": [
+        {
+          "originalRemovedLine": "          case \"local-set\": local = { ...local, ...effect.items }; apply = () => deps.local.set(effect.items); break",
+          "finalLines": [
+            185
+          ]
+        }
+      ],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/settings-import-execution/controls/unstamped-documents.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 717,
+        "sha256": "2e676090e6514a91229f15edb914150a69e908680e9f7fbec41561d8b98609cf",
+        "gitBlob": "33dd9099d537d0c77e3b4eb0159a257bd7b4001e"
+      },
+      "source": "src/background/store/settings-import-execution.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 25954,
+        "sha256": "4d526b2a8bf3322e297e5b9dcc5a94be8429e79c68395f5791db06d2261047bb",
+        "gitBlob": "461cbda0286386c1b9e781cc9621c6ea5c12a73d"
+      },
+      "anchors": [
+        {
+          "originalRemovedLine": "    if (change.kind === \"put\") items[documentKey(change.key)] = change.document",
+          "finalLines": [
+            66
+          ]
+        }
+      ],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/shared-options/controls/implicit-enablement.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 295,
+        "sha256": "b41a3e21af8077177bb85b6b17888dc1ff16c1bda1a4865318f97f72c383dcf9",
+        "gitBlob": "a804fcc4dbb54836daa85fd5ae6e110932ca41f3"
+      },
+      "source": "src/background/store/settings-edit.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 14739,
+        "sha256": "5e3b04106770deb45e1d8972af7022b6b625226f1ea657533a35f549dd3c2176",
+        "gitBlob": "33f26ff2e92c0cdb1d084130e884b5c1ac653368"
+      },
+      "anchors": [],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/shared-options/controls/invalid-coercion.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 663,
+        "sha256": "7d4c4406d788066a1ccc9effb5985cefb58e0ff0a168cb71ca3b8cc9ba3238f5",
+        "gitBlob": "56cf1bf773605315945914bbc920c70dc75d4cab"
+      },
+      "source": "src/background/store/settings-edit.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 14739,
+        "sha256": "5e3b04106770deb45e1d8972af7022b6b625226f1ea657533a35f549dd3c2176",
+        "gitBlob": "33f26ff2e92c0cdb1d084130e884b5c1ac653368"
+      },
+      "anchors": [
+        {
+          "originalRemovedLine": "      if (typeof change.value !== \"boolean\") return { kind: \"invalid\", reason: \"invalid-option\" }",
+          "finalLines": [
+            93,
+            99,
+            105,
+            111,
+            117,
+            123,
+            129,
+            135,
+            141,
+            147,
+            153,
+            159,
+            165,
+            171,
+            177,
+            183,
+            189,
+            195,
+            201,
+            207,
+            213,
+            219,
+            225,
+            231,
+            237,
+            255
+          ]
+        },
+        {
+          "originalRemovedLine": "      settings.autoAdd.feedback = change.value",
+          "finalLines": [
+            96
+          ]
+        }
+      ],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/shared-options/controls/lost-unrelated-fields.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 310,
+        "sha256": "9cae6e33c57a3055061a1c6c25999d0d3fb4f6f411c74d55409dbb7e89ef656d",
+        "gitBlob": "13c7934a99247fd4e0dfc74f34e0cff107bc6347"
+      },
+      "source": "src/background/store/settings-edit.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 14739,
+        "sha256": "5e3b04106770deb45e1d8972af7022b6b625226f1ea657533a35f549dd3c2176",
+        "gitBlob": "33f26ff2e92c0cdb1d084130e884b5c1ac653368"
+      },
+      "anchors": [],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/shared-options/controls/premature-success.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 795,
+        "sha256": "a98d5be9a6128943d1d3a1a61af5daba81ce76c94e5be229673a64f8a4164b2c",
+        "gitBlob": "fad54d6ceb0e4d9649e82c5ad9006028d9d94d77"
+      },
+      "source": "src/background/store/shared-setting-execution.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 7451,
+        "sha256": "a5ff589de91827fa2c5aa941ce40410e919d4a58cffedb14645610c71ac961b3",
+        "gitBlob": "62009eb0715af1769596c6a4d9705477dd12bac1"
+      },
+      "anchors": [
+        {
+          "originalRemovedLine": "      if (!jsonObject(confirmed) || !sameSyncJson(readSettingsSnapshot(confirmed), { ...baseline, ...items })) return { kind: \"unconfirmed\", cause: { kind: \"readback\" } }",
+          "finalLines": [
+            100
+          ]
+        }
+      ],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    },
+    {
+      "patch": "tools/fixtures/shared-options/controls/wrong-field.patch",
+      "originalIdentity": {
+        "mode": "100644",
+        "bytes": 608,
+        "sha256": "83edfa582e82d4597651f3916660766274ec1464a692f1a1435af7b9395813d0",
+        "gitBlob": "a4ff720b493faca75648be1f296686d222547314"
+      },
+      "source": "src/background/store/settings-edit.ts",
+      "finalSourceIdentity": {
+        "mode": "100644",
+        "bytes": 14739,
+        "sha256": "5e3b04106770deb45e1d8972af7022b6b625226f1ea657533a35f549dd3c2176",
+        "gitBlob": "33f26ff2e92c0cdb1d084130e884b5c1ac653368"
+      },
+      "anchors": [
+        {
+          "originalRemovedLine": "      settings.musicActions.buttons.next = change.value",
+          "finalLines": [
+            186
+          ]
+        }
+      ],
+      "state": "unexecuted-reanchor-context-without-changing-mutation-before-qualification"
+    }
+  ]
+}

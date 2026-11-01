@@ -1,0 +1,10 @@
+diff --git a/tools/fixtures/site-toaster/ApiChecks.svelte b/tools/fixtures/site-toaster/ApiChecks.svelte
+--- a/tools/fixtures/site-toaster/ApiChecks.svelte
++++ b/tools/fixtures/site-toaster/ApiChecks.svelte
+@@ -3,5 +3,5 @@
+   import type { Toaster } from "../../../src/site/kit/toaster/model"
+   let { source, document }: { source: Toaster; document: Document } = $props()
+ </script>
+-<Toast {source} {document} site="www" />
++<Toast {document} site="www" />
+ <Toast {source} {document} site="music" />

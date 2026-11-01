@@ -1,0 +1,140 @@
+[
+  {
+    "case": "fresh-selection",
+    "result": {
+      "kind": "auto-add-confirmed",
+      "acct": "AAAAAAAAAAAAAAAA",
+      "playlist": "PL_one",
+      "fact": {
+        "kind": "selected",
+        "takes": "videos",
+        "pct": null
+      }
+    }
+  },
+  {
+    "case": "independent-selection",
+    "result": {
+      "kind": "auto-add-confirmed",
+      "acct": "AAAAAAAAAAAAAAAA",
+      "playlist": "PL_two",
+      "fact": {
+        "kind": "selected",
+        "takes": "videos",
+        "pct": null
+      }
+    }
+  },
+  {
+    "case": "takes",
+    "result": {
+      "kind": "auto-add-confirmed",
+      "acct": "AAAAAAAAAAAAAAAA",
+      "playlist": "PL_one",
+      "fact": {
+        "kind": "selected",
+        "takes": "both",
+        "pct": null
+      }
+    }
+  },
+  {
+    "case": "percentage",
+    "result": {
+      "kind": "auto-add-confirmed",
+      "acct": "AAAAAAAAAAAAAAAA",
+      "playlist": "PL_one",
+      "fact": {
+        "kind": "selected",
+        "takes": "both",
+        "pct": 35
+      }
+    }
+  },
+  {
+    "case": "stale-field",
+    "result": {
+      "kind": "refused",
+      "reason": "stale"
+    }
+  },
+  {
+    "case": "untick-kept-filter",
+    "result": {
+      "kind": "auto-add-confirmed",
+      "acct": "AAAAAAAAAAAAAAAA",
+      "playlist": "PL_one",
+      "fact": {
+        "kind": "absent"
+      }
+    }
+  },
+  {
+    "case": "retick-kept-filter",
+    "result": {
+      "kind": "auto-add-confirmed",
+      "acct": "AAAAAAAAAAAAAAAA",
+      "playlist": "PL_one",
+      "fact": {
+        "kind": "selected",
+        "takes": "videos",
+        "pct": null
+      }
+    }
+  },
+  {
+    "case": "untick-first",
+    "result": {
+      "kind": "auto-add-confirmed",
+      "acct": "AAAAAAAAAAAAAAAA",
+      "playlist": "PL_one",
+      "fact": {
+        "kind": "absent"
+      }
+    }
+  },
+  {
+    "case": "last-choice-removal",
+    "result": {
+      "kind": "auto-add-confirmed",
+      "acct": "AAAAAAAAAAAAAAAA",
+      "playlist": "PL_two",
+      "fact": {
+        "kind": "absent"
+      }
+    }
+  },
+  {
+    "case": "private-refusal",
+    "result": {
+      "kind": "refused",
+      "reason": "unavailable"
+    }
+  },
+  {
+    "case": "recreate",
+    "result": {
+      "kind": "auto-add-confirmed",
+      "acct": "AAAAAAAAAAAAAAAA",
+      "playlist": "PL_two",
+      "fact": {
+        "kind": "selected",
+        "takes": "videos",
+        "pct": null
+      }
+    }
+  },
+  {
+    "case": "stale-account",
+    "result": {
+      "kind": "refused",
+      "reason": "stale"
+    }
+  },
+  {
+    "case": "closed",
+    "nativeListeners": 0,
+    "localListeners": 0,
+    "deadlines": 0
+  }
+]

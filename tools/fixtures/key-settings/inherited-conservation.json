@@ -1,0 +1,3683 @@
+{
+  "state": "unexecuted",
+  "entries": {
+    "tools/fixtures/account-removal-admission/README.md": {
+      "mode": "100644",
+      "gitBlob": "cb935e6f2b8d9f2ba6cfad2ded573d4985fa0c7d",
+      "sha256": "098904977ef206cce3b3e1f882d9b6f2ad2397f2704bb459cf6a1f3e725f0787",
+      "bytes": 4381
+    },
+    "tools/fixtures/account-removal-admission/run.ts": {
+      "mode": "100644",
+      "gitBlob": "ebb7ede710864da7a88b6605ac4f5927a5436b17",
+      "sha256": "4b1cae82e749a5a7e201b691a8674cd5d636d472e3ea59980c359945df2e8f42",
+      "bytes": 293266
+    },
+    "tools/fixtures/account-removal-execution/README.md": {
+      "mode": "100644",
+      "gitBlob": "fdd9461310be7b2a8dd8ad3907bfd51738f42771",
+      "sha256": "59346c7a117f19b6ee4a4eef2b949c9fdd1f3239601fc085633252ee4ab5972e",
+      "bytes": 2152
+    },
+    "tools/fixtures/account-removal-execution/run.ts": {
+      "mode": "100644",
+      "gitBlob": "0e4dea86e66bd4b7c9c3ef51fa2b9978a2f36d6a",
+      "sha256": "10a20b8fa91c252b739a4c985a344e39d9a5ac0997f6e53e2a9d8a89a52a0989",
+      "bytes": 55024
+    },
+    "tools/fixtures/accounts-label/README.md": {
+      "mode": "100644",
+      "gitBlob": "273c1035b63c83475c543458cb5bb107007bcaaa",
+      "sha256": "9afa9c968c8f002872ca325ca72b13d8d4ae876e017e585fc73f36e09aeaa23e",
+      "bytes": 1884
+    },
+    "tools/fixtures/accounts-label/consumer.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "d7e2f97d79c9f05bf468eddafee29d9b73fdd02a",
+      "sha256": "74efeae801396dbb374d4048c2e9fe38dd04a8b0a2d15a49093e9acaccfa369d",
+      "bytes": 266
+    },
+    "tools/fixtures/accounts-label/expected.json": {
+      "mode": "100644",
+      "gitBlob": "ab054054e2ac0a5581f47a71168350471b957d06",
+      "sha256": "269758b253a5ba7a9237a4090cc46dc85672f30d1094f5f2ac41ce5ac0d1cbb4",
+      "bytes": 2209
+    },
+    "tools/fixtures/accounts-label/expected.jsonl": {
+      "mode": "100644",
+      "gitBlob": "953f987d00ad6a9e5b9dfcd834c17f7f89294712",
+      "sha256": "4a700d2c8fc17294a0f6024bb82da53864c1d34a466c3cddf363532a4a8b71f1",
+      "bytes": 1369
+    },
+    "tools/fixtures/accounts-label/harness.ts": {
+      "mode": "100644",
+      "sha256": "b5dbf7e2476bdb77053504a775cea93485df6652c91e3816723a39a8d5fd6cc7",
+      "bytes": 6958,
+      "gitBlob": "e0eb61ce9b1f3b2c65ffc5caadfdd266f49bdc2b"
+    },
+    "tools/fixtures/accounts-label/run.ts": {
+      "mode": "100644",
+      "gitBlob": "8abc1fce47b2a70a669fabacc39d520b6518e631",
+      "sha256": "2716667502d8b89693038ea78e5a7fe8565c2ba3c759551c7eff01d74db6bfcd",
+      "bytes": 2131
+    },
+    "tools/fixtures/accounts-label/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "9215d65519398fec6e2ca76a23bd9a5478a9f98f",
+      "sha256": "a8e5b93385c8122e465d37db2fbb62d62e183e835146006c5496da142481ed82",
+      "bytes": 760
+    },
+    "tools/fixtures/add-feedback/README.md": {
+      "mode": "100644",
+      "gitBlob": "70937355efbed70e6a2c9c999f7e89e09fe879aa",
+      "sha256": "0ad323f3f3e2d1ac47c4477a503f9906c93486a488031f4146a3bfaa7c5110c0",
+      "bytes": 1207
+    },
+    "tools/fixtures/add-feedback/run.ts": {
+      "mode": "100644",
+      "gitBlob": "6d9b83d54721a616d3d23f3d983c6c2466c2ff51",
+      "sha256": "47bd25a60a5d715706a4e36f1feadfdd918e1d63c21d6ad59aad1a17b0822386",
+      "bytes": 7087
+    },
+    "tools/fixtures/add-flow-session/README.md": {
+      "mode": "100644",
+      "gitBlob": "0022f412ac10c968072d8217eb08795a4b02df5b",
+      "sha256": "f57bbf6f91aa7d3d1016f85e297ec17ea95fad2d06664271649ce4cf1f58b5f6",
+      "bytes": 1060
+    },
+    "tools/fixtures/add-flow-session/run.ts": {
+      "mode": "100644",
+      "gitBlob": "2b60e22f57a9ac61f2424c31af4f8f03de7ac452",
+      "sha256": "4b91a60c67168107f2feb3ab63b0c2be7ec05988c00587cf738aa38cd9abfa17",
+      "bytes": 3392
+    },
+    "tools/fixtures/add-flow/README.md": {
+      "mode": "100644",
+      "gitBlob": "6ea0fb60d137ea32cfb285e3f1ffb2aa208eeebb",
+      "sha256": "a0d3a9b4c63ce629d32b66504343ebbcc9a8d00957b6647186e738cee8be76fb",
+      "bytes": 894
+    },
+    "tools/fixtures/add-flow/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "c2066a2041638ea19f079d3f7364041a38006acd",
+      "sha256": "880f35d01c98c9edb9d6a7b0e9a6bdff1dfc410f63c7b95befb86d5b9ed971f9",
+      "bytes": 10319
+    },
+    "tools/fixtures/add-flow/run.ts": {
+      "mode": "100644",
+      "gitBlob": "06721334feba5f86c8ccb893cd684125f075e11d",
+      "sha256": "6d0adcf5e78b5d9a9262d578f7c0a67ce7a807cd07a466e8959ccc970fdef091",
+      "bytes": 5209
+    },
+    "tools/fixtures/auto-add-choice/README.md": {
+      "mode": "100644",
+      "gitBlob": "ddf52899286cab94eb51adbacd79325825509ea0",
+      "sha256": "08d59af5ab62330d3754ae5e92278f5c98a78e9ab5258e229951c12c1ea92d80",
+      "bytes": 2017
+    },
+    "tools/fixtures/auto-add-choice/consumer.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "b57836ffd130d5d34c07a11854008c37bc552d87",
+      "sha256": "0a4c0e72e01c56465e82c3629edc9adc69ecd81bdc9a8de08b71d165426e3aff",
+      "bytes": 424
+    },
+    "tools/fixtures/auto-add-choice/expected.json": {
+      "mode": "100644",
+      "gitBlob": "5e51ccea5d0696b7175207c39015c4b1e6d7d7aa",
+      "sha256": "85c0e0fa36b4fc6900e3eedfdec07c02bdbb26a58a29ed0c58ce84fb93c5375c",
+      "bytes": 2603
+    },
+    "tools/fixtures/auto-add-choice/expected.jsonl": {
+      "mode": "100644",
+      "gitBlob": "ab14ffd13a2ffb8cd0311ab832c4e888a058b538",
+      "sha256": "bd725e5e800bac9a676849c558d3bbb6e8d36f02d592dfa398078ac135fbffba",
+      "bytes": 1685
+    },
+    "tools/fixtures/auto-add-choice/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "d634a97bf370db09396e4e171d4f7211e1e14e28",
+      "sha256": "eb729ac257528a74d703b1e6e2edd4578ff3b32e6efde122ecbc7fe1e2a9cc15",
+      "bytes": 3231
+    },
+    "tools/fixtures/auto-add-choice/run.ts": {
+      "mode": "100644",
+      "gitBlob": "c2b81525198f9cf434e60eaec00ac477e54a1335",
+      "sha256": "630388a7994e847d07e8c6eca897467f44eaa2a9d3f7299b8f316d6eb452a142",
+      "bytes": 3745
+    },
+    "tools/fixtures/auto-add-choice/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "6c2a41f1bfd8479cf5bd022396d76485740d2e90",
+      "sha256": "78338d1e0f7360c928f6a75a9503972c21a3022510ee137ac526ce9d4d96cecd",
+      "bytes": 803
+    },
+    "tools/fixtures/claim-transaction/README.md": {
+      "mode": "100644",
+      "gitBlob": "51a32634ff3417271e20b55b52c104ffbffe93a1",
+      "sha256": "ca1a475f0ab83612b4fa1f413bc73b21a7a9ea6713eef77e837aaf48a4fb7592",
+      "bytes": 8546
+    },
+    "tools/fixtures/claim-transaction/run.ts": {
+      "mode": "100644",
+      "gitBlob": "d0dcfa8404e73012b15c1df0fdc6dd2560cdac4d",
+      "sha256": "8db56bf048ffd37cac5c34eb762751b6af3e5829acbe416b2f85f1c9dfd8e54f",
+      "bytes": 63154
+    },
+    "tools/fixtures/device-lifecycle/README.md": {
+      "mode": "100644",
+      "gitBlob": "5cb14b8921d4e8d40860827c4e889f4b76c8832a",
+      "sha256": "72bc2ef50d1b731a775ec705012c17c360d0209994410c0db76d750a35120e77",
+      "bytes": 6198
+    },
+    "tools/fixtures/device-lifecycle/run.ts": {
+      "mode": "100644",
+      "gitBlob": "8e79685fad9acc2c7063461870394e94316eef7e",
+      "sha256": "17c1afa75d099d9b15b6e42b3da2e07b49a093e94ed95e835eff1197af3b54f9",
+      "bytes": 58088
+    },
+    "tools/fixtures/extlink/README.md": {
+      "mode": "100644",
+      "gitBlob": "a71c98d723c60d2b5e8bedf914a5a7fe72bb6d41",
+      "sha256": "8297af6d13cfdb0a1db24d69fe7d75b4d290622d7f56e16828bad42a60946f0b",
+      "bytes": 4603
+    },
+    "tools/fixtures/extlink/controls.json": {
+      "mode": "100644",
+      "gitBlob": "23fb7f05a19b9391ef321535225faf0853a13db3",
+      "sha256": "f8aa904bff4091126cb001fe5f383e393ac79ce28e507e26abc6791304019526",
+      "bytes": 6745
+    },
+    "tools/fixtures/extlink/expected-bytes.json": {
+      "mode": "100644",
+      "gitBlob": "122e781e3fdf791f3ffcd75e02b183f50addbec2",
+      "sha256": "f2bca95293e669593b1d2e5a1ace85ee2aa28f249a4a9cc183031d0d347b5ed0",
+      "bytes": 376
+    },
+    "tools/fixtures/extlink/expected.jsonl": {
+      "mode": "100644",
+      "gitBlob": "a111046124115001c23a91653522bcaed0a04c20",
+      "sha256": "85b9a65cfc19e1191b92407631d38def6cafeb89d874e9a3884d42d3ff790b20",
+      "bytes": 3469
+    },
+    "tools/fixtures/extlink/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "4c08dce08ae77bc860005eaae0ea696a0db267b0",
+      "sha256": "1762cb099b035e9a3516850beb6f3bef1cd8ed6dec7dd7fddf5db12c2947567a",
+      "bytes": 5378
+    },
+    "tools/fixtures/extlink/native.ts": {
+      "mode": "100644",
+      "gitBlob": "99af9c1d016c0b977b652b6d686ba22c44c00acf",
+      "sha256": "e032582531fe67c5d7aff6dafa59b379ab14330607a4c51d2a01a8f0d1efc267",
+      "bytes": 1518
+    },
+    "tools/fixtures/extlink/run.ts": {
+      "mode": "100644",
+      "gitBlob": "25b909081cd31c98affc8389c087ad2b5f0691b8",
+      "sha256": "f37e848a38d98287b940f7ae1842e85a503831c5de3b8815f4bf635495cf3bc6",
+      "bytes": 5796
+    },
+    "tools/fixtures/extlink/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "56b4b5960a5d2c4765cb2916abd2ef97805dea44",
+      "sha256": "728397d5d404c297576b6378ff7536155f5b84cae3affd1a9cf3e78d9a68d7e2",
+      "bytes": 900
+    },
+    "tools/fixtures/feature-registry/README.md": {
+      "mode": "100644",
+      "gitBlob": "d76a83f27e999d5e4e86e41eda493105516ccd23",
+      "sha256": "262f4bd48d53ac2262e7795899b595b84e182d7b204898df6cb29d164969b24b",
+      "bytes": 5482
+    },
+    "tools/fixtures/feature-registry/cases.ts": {
+      "mode": "100644",
+      "gitBlob": "86294c8dadee7b6572931d5aa76c6b15e7d13a4a",
+      "sha256": "5f8a9c2448a3757929f7b6dd588dcd72e839008030de827bc441f72dff9c672c",
+      "bytes": 3484
+    },
+    "tools/fixtures/feature-registry/consumer.ts": {
+      "mode": "100644",
+      "gitBlob": "78234058714838264a672269495043bbf2b2840a",
+      "sha256": "86e1800e5f096656b7d603e851afd5eeb506979830f656c56085b5f7a39db82b",
+      "bytes": 883
+    },
+    "tools/fixtures/feature-registry/controls.json": {
+      "mode": "100644",
+      "gitBlob": "d0dfd28eb3f6b382bb822e54233419fd8c03c8a8",
+      "sha256": "3ba16ce55e57282c76ec0b0cc4b0cbc87cddb7fef23c30b960a329d5b7fe60b4",
+      "bytes": 2281
+    },
+    "tools/fixtures/feature-registry/expected.json": {
+      "mode": "100644",
+      "gitBlob": "41621928f8c2f2eda445ae576f734e712c6a91b8",
+      "sha256": "bc42dfd837b92658cab11a2aef2a2f8c8cd6144ee3cb792fd25f06a0b3393c11",
+      "bytes": 36967
+    },
+    "tools/fixtures/feature-registry/expected.stdout.json": {
+      "mode": "100644",
+      "gitBlob": "972432bfa2cafb2aae5d43b7891a5f264dfd4059",
+      "sha256": "af631066a6489a47982c50c563670a771ddd410ffd76a204a0564370ef148f46",
+      "bytes": 20023
+    },
+    "tools/fixtures/feature-registry/qualify.py": {
+      "mode": "100644",
+      "gitBlob": "306a25aec34dd687004842fcfb8710c66f005b76",
+      "sha256": "d749d2a5c69209a0f63ad038cad50fa791438a4b963b068d19ce72422f7964b2",
+      "bytes": 415
+    },
+    "tools/fixtures/feature-registry/run.ts": {
+      "mode": "100644",
+      "gitBlob": "bcc84489db537e6fcc9cf3b7deaf3d2b1ed3b70c",
+      "sha256": "749f1d8857ab8df67fc9576cb8869aaecb0ea12ec2e3cf03c2f48ba2dbd4a427",
+      "bytes": 243
+    },
+    "tools/fixtures/feature-registry/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "840564e9e71d4b37e87c7a8ea2b68520f160ccb7",
+      "sha256": "99dde5778e813d485f0d4de6441368f5d4de2d7ee3cfdaf1fd9c9cbca83e5d25",
+      "bytes": 474
+    },
+    "tools/fixtures/first-edit-owner/README.md": {
+      "mode": "100644",
+      "gitBlob": "7ac87f5695b56be9dd2adf8eec704d2edc059387",
+      "sha256": "fe6d122eb522da17a5ea582ae25f4ae4a92b3db20271bb8da179d718045c6cd2",
+      "bytes": 1428
+    },
+    "tools/fixtures/first-edit-owner/run.ts": {
+      "mode": "100644",
+      "gitBlob": "94a96b6336ad0ea8e08563cc810e8ee4b5df492b",
+      "sha256": "f19dd7914540369ccfafc0140c712979d85b2550c1ff9f9c9287034e01fec41f",
+      "bytes": 34258
+    },
+    "tools/fixtures/first-edit-provenance/README.md": {
+      "mode": "100644",
+      "gitBlob": "cf7c288b62802dc44560af65554e18a761193628",
+      "sha256": "b520fc9bf088fdbeb73c5fcc6289a0720f854ddbe78ae21550377d75ff53f4fc",
+      "bytes": 1164
+    },
+    "tools/fixtures/first-edit-provenance/run.ts": {
+      "mode": "100644",
+      "gitBlob": "1f2871a843e4b664ad6b41a911010c289c16a021",
+      "sha256": "4bede20f4a690f995979ce13fda55fcb826b2b1ad59f862bf3bbfb99f824d4cd",
+      "bytes": 6406
+    },
+    "tools/fixtures/first-run-backend/README.md": {
+      "mode": "100644",
+      "gitBlob": "dfb54acb826ba1934f1fd7d391cf65b43aa95047",
+      "sha256": "e7533e94bf20928da962fb8edfbead08e6d3d16a599ee40c43b9a1b6c5a86663",
+      "bytes": 1557
+    },
+    "tools/fixtures/first-run-backend/check-built-fixtures.mjs": {
+      "mode": "100644",
+      "gitBlob": "34bf209a2a38f0e7ff9a5c7889f19ebca2824fe1",
+      "sha256": "11bbcb5ce82a47c82881dcc69536655a6e2e2d0a9515b3b1f85ddc7161d7baae",
+      "bytes": 2080
+    },
+    "tools/fixtures/first-run-backend/check-qualification.py": {
+      "mode": "100644",
+      "gitBlob": "c96cb8637d819b59a88ca5b3cc6671a0b3dc5f2b",
+      "sha256": "322b101e6de4e706335f9c4b116050bf1eba9a36e222b6587e653b3caaa10415",
+      "bytes": 5178
+    },
+    "tools/fixtures/first-run-backend/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "eaf0e51d5e6f81989825c95fe1519b7708bcafbc",
+      "sha256": "e8dc62801247daa039deb5d41140e757a2638a03442bcc390c302c85169b49cd",
+      "bytes": 14464
+    },
+    "tools/fixtures/first-run-backend/native.type-test.ts": {
+      "mode": "100644",
+      "gitBlob": "d5679bc104c3dae6b73550c116f3fec3e5fdf1a1",
+      "sha256": "d90e9fdda63bca42b0b483606ebaab8a08f55c12a65e6bc8b10d199f427f3f51",
+      "bytes": 1090
+    },
+    "tools/fixtures/first-run-backend/qualification-controls.json": {
+      "mode": "100644",
+      "gitBlob": "1205ee321e3ae2e0c2b05c94bba15d1f013e5ab1",
+      "sha256": "3718e9a23f00dd9fcf12258d59cefd048547aa0b21b0adc79351f50ba106059f",
+      "bytes": 3328
+    },
+    "tools/fixtures/first-run-backend/qualification.tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "8b4b2f7178cdff903643c4dca2cc6abb91d84e12",
+      "sha256": "2cc390638aab45990b5d017fb80500f74651a1e18537a20dfb4ac9c054250c3b",
+      "bytes": 102
+    },
+    "tools/fixtures/first-run-backend/run.ts": {
+      "mode": "100644",
+      "gitBlob": "993ce277cb22be06b8aa4e379125582495981fc2",
+      "sha256": "3971e2da7ca7f5c377cbba8dc347da3d402818f96721084c5b3ffee2488863e2",
+      "bytes": 6637
+    },
+    "tools/fixtures/gateway-playlists/README.md": {
+      "mode": "100644",
+      "gitBlob": "61b7cd357d9d31b8e64cfe1c57589836cdac26c5",
+      "sha256": "161b6edef34d24cdd4fc1a37afeead71cc549a7305e6decc9b2449cf07378b40",
+      "bytes": 4322
+    },
+    "tools/fixtures/gateway-playlists/bunfig.toml": {
+      "mode": "100644",
+      "gitBlob": "82d70e0d0863e7bad4d5e7cdf8d0e9326bce6073",
+      "sha256": "8ca8f0ce1b6530bf6289d3addffe1e0a15203a7032b95c243b82c49a519fa98b",
+      "bytes": 36
+    },
+    "tools/fixtures/gateway-playlists/consumer.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "ac2845676703d203f30bcb2219fbacb52706b5a4",
+      "sha256": "4f41d7fa8d771bf974229ac8f588c90f180735f0dded70c37a0298652eeed724",
+      "bytes": 792
+    },
+    "tools/fixtures/gateway-playlists/controls.json": {
+      "mode": "100644",
+      "gitBlob": "17d8d6a8852e4f768b2d8a511db6f39b4b645d75",
+      "sha256": "2676180fa7e4a7f3a18ce13bc7f3b6ea758e40a8b63949516b4a141798e7b649",
+      "bytes": 3785
+    },
+    "tools/fixtures/gateway-playlists/expected-output.jsonl": {
+      "mode": "100644",
+      "gitBlob": "6bc033b70b22e54a9f3a911afd56aa4decf8a253",
+      "sha256": "58d658e5436886a51253c68283f3ad0512761864c88f5d0a8ec089edefe763a0",
+      "bytes": 2081
+    },
+    "tools/fixtures/gateway-playlists/gateway.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "dc7a42c40b63e2e705c3e8bf8e8b17b5626299bd",
+      "sha256": "15f4c255e2b4fbb6e140e3f081fd6d327400e96b5ea8d7da2ef4bb4f821c0878",
+      "bytes": 23764
+    },
+    "tools/fixtures/gateway-playlists/live.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "dbe9fc36dfe60cb23468806d94306aa068b77521",
+      "sha256": "da531c956c05accc5188c36b552d19585f74940c4c1f7ad844d968c40b5e535b",
+      "bytes": 9209
+    },
+    "tools/fixtures/gateway-playlists/preload.ts": {
+      "mode": "100644",
+      "gitBlob": "017a02b574ac8c63cc67189435eebed3ee6b5118",
+      "sha256": "208fdce6ab0ee9d7a64232609c3af50db7af5d952f6186285fdb42ce3769e0a1",
+      "bytes": 167
+    },
+    "tools/fixtures/gateway-playlists/qualify.py": {
+      "mode": "100644",
+      "gitBlob": "306a25aec34dd687004842fcfb8710c66f005b76",
+      "sha256": "d749d2a5c69209a0f63ad038cad50fa791438a4b963b068d19ce72422f7964b2",
+      "bytes": 415
+    },
+    "tools/fixtures/gateway-playlists/run.ts": {
+      "mode": "100644",
+      "gitBlob": "5d17e3bb1bdcec76b0c58352d63eced803ab954d",
+      "sha256": "759773250a9f25ac0bcd0991024386cdbd1c45d3df792429a03c1048c8ed6af6",
+      "bytes": 6242
+    },
+    "tools/fixtures/gateway-playlists/signer.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "fa3f1a1348121fe37768be55887b1a21a0ebb2e5",
+      "sha256": "00f2d0061d8c6e3643a9ff9270794a08063ea081a31ca29d6e073d3c9862a33d",
+      "bytes": 12070
+    },
+    "tools/fixtures/gateway-playlists/specimens.ts": {
+      "mode": "100644",
+      "gitBlob": "04ad89ace9940351b9d2f2ee063cffd9e3e37f9e",
+      "sha256": "fb88ffadeb0844bed7348ee32da97bda7a181deb2cdcf34b17385a5f85fd2459",
+      "bytes": 4975
+    },
+    "tools/fixtures/gateway-playlists/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "91607446b2533fcc5ddc88a5f54752bf864bb7ba",
+      "sha256": "d3ea92d8c1513b164d73d28d179e92faa81e73c7848f543bd9fbbe296d2a02cf",
+      "bytes": 648
+    },
+    "tools/fixtures/gateway-playlists/type-test.ts": {
+      "mode": "100644",
+      "gitBlob": "abf9430feea9875e73ac534415716034c7da2975",
+      "sha256": "89ccd7d68dca7ae969807760f44e52142acbf6fdddf6098ed903a145c935ddbe",
+      "bytes": 2226
+    },
+    "tools/fixtures/gateway-reads/README.md": {
+      "mode": "100644",
+      "gitBlob": "f9160b86a72ffe3691d7c961556497c84af7b7d4",
+      "sha256": "734d5875ec7999405a224c50023e05802424e777e1fb0153949ba9fd60a893da",
+      "bytes": 7557
+    },
+    "tools/fixtures/gateway-reads/check-source.py": {
+      "mode": "100644",
+      "gitBlob": "b71d0055e365ec6427fefc3ced3eea04ce54bf1b",
+      "sha256": "d949c1e6dd5dc6edd09bb51390c410a0908e92d8a6719914d8eb8b17c9dc9d3d",
+      "bytes": 1521
+    },
+    "tools/fixtures/gateway-reads/provenance.md": {
+      "mode": "100644",
+      "gitBlob": "e2e193a2b7bddfeb0ad37a8782836e3a48311732",
+      "sha256": "9d2398eb9aeaa8fb3df8879860c0fdbcb785000429f1eda164729a55b1f9d4a5",
+      "bytes": 3333
+    },
+    "tools/fixtures/gateway-reads/qualify.py": {
+      "mode": "100644",
+      "gitBlob": "caf729a0bbb0be48b578f787497dbd30aae956ed",
+      "sha256": "3a4cf2c1464cfad6bf91b62b2ce7e34c602cec264667cd1b848fbe272ee0bb17",
+      "bytes": 8297
+    },
+    "tools/fixtures/gateway-reads/run.ts": {
+      "mode": "100644",
+      "gitBlob": "fa14056f8e9c9c23d79aac11eae1a529acd4d4bc",
+      "sha256": "ec2f7a653aed6aba3f3f9fb38eded616e4901cb1f1743de7a9a2daa8b5f9b0af",
+      "bytes": 8187
+    },
+    "tools/fixtures/gateway-reads/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "8a8b9dca6ccfc8476ac9e4284db941d1b3336c21",
+      "sha256": "ff3611c9ae758262d73e1b2c836490e26c5a7636d9136f5d9675d7156aaac695",
+      "bytes": 511
+    },
+    "tools/fixtures/interim-conversion/run.ts": {
+      "mode": "100644",
+      "gitBlob": "feb129226fac713d0bf63459aacbf0cfdaf9ba3c",
+      "sha256": "08af090f790729447efee90fefe0e6b5ed8474b09970517ff1009a3dc634fc16",
+      "bytes": 138375
+    },
+    "tools/fixtures/interim-recovery-review/run.ts": {
+      "mode": "100644",
+      "gitBlob": "fd919e05e694477ce0194613df4462c72b6b0957",
+      "sha256": "b98ed7f043874c5dc82352d26daeb8073d9ac627c8e98efc49c59d2e45bc5c23",
+      "bytes": 89189
+    },
+    "tools/fixtures/local-filter-writer/background.ts": {
+      "mode": "100644",
+      "gitBlob": "38d578d7e5e83674d85bccfbcb71ddb6a83ffd39",
+      "sha256": "f4bb8fa0b71325b1def6328b9aa99d058694a7f2607fb9e17ad1b90d7455efe1",
+      "bytes": 10521
+    },
+    "tools/fixtures/local-filter-writer/check-browser.mjs": {
+      "mode": "100644",
+      "gitBlob": "6f9b6d5fbaa0389ff4ad06c4dceb108fbc15d36b",
+      "sha256": "cb7c5da11f8ebd86ad59aa74fe145ffb3014d452e3a7020255113cce23021044",
+      "bytes": 64997
+    },
+    "tools/fixtures/local-filter-writer/manifest.json": {
+      "mode": "100644",
+      "gitBlob": "f7b7564a51936e75a28c1d0c2607289199ce6584",
+      "sha256": "261eee212ed43ab61c9d42ad19ae430ea82c469eaf4b5b98d17c47353ab9884f",
+      "bytes": 243
+    },
+    "tools/fixtures/local-filter-writer/options.html": {
+      "mode": "100644",
+      "gitBlob": "c9eed663d9faec406f54abb6a12f19116e799258",
+      "sha256": "811a49f0871e591295da4cb62e71472000f17ba70a7dc5bbba89fc9f73aaf9b0",
+      "bytes": 326
+    },
+    "tools/fixtures/local-filter-writer/options.ts": {
+      "mode": "100644",
+      "gitBlob": "9d9feb43e285c570622314b25315666e5f82d102",
+      "sha256": "c750a7f770cba05df94c40ff00abb1bcaa33ca2902f453e44fe21f1fb85d94d5",
+      "bytes": 177
+    },
+    "tools/fixtures/localization/README.md": {
+      "mode": "100644",
+      "gitBlob": "1ad5229e4a30d9f68f3493348c659acbc3a2af2a",
+      "sha256": "b27e8cfa4cfce53283c600722acb46a7b95cf1af32d2184a2b6ccf1228eb5917",
+      "bytes": 2469
+    },
+    "tools/fixtures/localization/check-catalogue.ts": {
+      "mode": "100644",
+      "gitBlob": "9fd0cdf0740a3786b2011a004023f2849fb2b0de",
+      "sha256": "d28d91e44fdd9ec69b6c7faeae2bf67ba87bceeb1cad44756cd5c3bc59dc86ea",
+      "bytes": 2258
+    },
+    "tools/fixtures/localization/check-defects.mjs": {
+      "mode": "100644",
+      "gitBlob": "493979891602a5f095dfc2804e39175089919cdd",
+      "sha256": "e08a6e74b8dd39f1c31c3ed914abde819cfed44fa578e5a7bb8b90ad3a9c79ee",
+      "bytes": 6543
+    },
+    "tools/fixtures/localization/check-types.mjs": {
+      "mode": "100644",
+      "gitBlob": "1f4e0d0cebd0c0b60a093ef57db21a1607b624f7",
+      "sha256": "34b01380c5fdc7af8675f0d0cd319ea2cf3b055f1648e90bc1daffc39d2f5b54",
+      "bytes": 4123
+    },
+    "tools/fixtures/localization/qualification.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "72b9b9258722959becf339ecfbd82b40bf033ad8",
+      "sha256": "d8de989dd75d76ab1e404ac7cb4baa33c9abfdb56298931dff6b511e019bc9b4",
+      "bytes": 2325
+    },
+    "tools/fixtures/localization/run.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "9ce1690d33c1e6095e6ab33f83e3b49c481c8f23",
+      "sha256": "9abac03c6ff3f3bb071956cf37c0d87d557ef01fffd38b5873be5a548fcf9f23",
+      "bytes": 1032
+    },
+    "tools/fixtures/localization/run.ts": {
+      "mode": "100644",
+      "gitBlob": "148bfa03bacafb4d2cdc761d487b8c717a4e7fc1",
+      "sha256": "a6eb8a9d03bb4cab73fbdaf5c2f2e00a69a718a80d8587846ef41a268b6d1330",
+      "bytes": 1989
+    },
+    "tools/fixtures/localization/scripted.ts": {
+      "mode": "100644",
+      "gitBlob": "386c4e5dbe17abaa74c922533dbe09cfb337e333",
+      "sha256": "112529b9fa1ff28c6a5f93ce4e707ef8e62880f33edc86a54fa5154582f4f35f",
+      "bytes": 2115
+    },
+    "tools/fixtures/monitor/README.md": {
+      "mode": "100644",
+      "gitBlob": "d27cdb85777474973081604dd0ea49863fec35bd",
+      "sha256": "0b04dbce9925d03d7efb285a4c2aef3f235ca092909da038736ba89fff668bd8",
+      "bytes": 2155
+    },
+    "tools/fixtures/monitor/consumer.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "d0f8b6813b235c27756f4c15b1a8d8e5cd055cf4",
+      "sha256": "2bf2b0521247549da298b99bb3c26963d665313c79fc17d7babbf86231ef5a4c",
+      "bytes": 462
+    },
+    "tools/fixtures/monitor/controls.json": {
+      "mode": "100644",
+      "gitBlob": "6798c54957988a046c3f0723e810a452637ba686",
+      "sha256": "8563483228d0b5c7869f55ecff9420dbb2d2e76c8cf7eef1933cca563e64c576",
+      "bytes": 5982
+    },
+    "tools/fixtures/monitor/executable-pins.json": {
+      "mode": "100644",
+      "gitBlob": "0827798a4edf250e9c71473c922765dd18f8fa97",
+      "sha256": "5d1320ca1e5c745dc3e2df3a7ccd8de2f89e3e360ff02a432fbe93d57f8b865c",
+      "bytes": 1801
+    },
+    "tools/fixtures/monitor/expected-bytes.json": {
+      "mode": "100644",
+      "gitBlob": "b98f72a580968cad99f925192a0a23fa381c62a8",
+      "sha256": "67fd9de4a02097f04e2fe741c9ba1af86d1b4be3097260bb61e136c6baec4543",
+      "bytes": 253
+    },
+    "tools/fixtures/monitor/expected.jsonl": {
+      "mode": "100644",
+      "gitBlob": "6f7db705c65c892faeb23e82b8c752ace892fe06",
+      "sha256": "82b461e945bef5a87f41dd1299b7b44455f191e597bd1a1c70921fe58ad3234d",
+      "bytes": 3675
+    },
+    "tools/fixtures/monitor/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "50a8ed6ccb278af80dcf0d51203ceefb1f6a1a06",
+      "sha256": "f626225a88605e101142232fc286b6f2d9c06a03894e32108e1fec3780ca98b4",
+      "bytes": 9530
+    },
+    "tools/fixtures/monitor/qualify.py": {
+      "mode": "100644",
+      "gitBlob": "df95059b9e75ba0af50e234dfff70503aa028a48",
+      "sha256": "44116791504cf2f2697fbc28ed532751c1a9ba03ff5438a6e7dd778a5c792017",
+      "bytes": 371
+    },
+    "tools/fixtures/monitor/regressions.json": {
+      "mode": "100644",
+      "gitBlob": "f7616c7a8c4511234404341c37af33b54afca5a8",
+      "sha256": "be0507d4ed505bc75eeae12771d9861ef5bc39a0c5013e20d5cb86574ea3095e",
+      "bytes": 761
+    },
+    "tools/fixtures/monitor/run.ts": {
+      "mode": "100644",
+      "gitBlob": "43ac2f2acee49b290e468dec08f9a0408b32f556",
+      "sha256": "468e8240348a5a68e60c5b941f07f807fe51b7838e7bf33d9404133332bc58be",
+      "bytes": 4035
+    },
+    "tools/fixtures/monitor/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "ffe9298a6b248f27dc8a36d93ccb470487f17c5a",
+      "sha256": "d3aeb30339568c6659e9b1aaa8b3b58553af7d33645f96eb6a90aaf27d8e97f1",
+      "bytes": 2701
+    },
+    "tools/fixtures/monitor/type-probes.json": {
+      "mode": "100644",
+      "gitBlob": "12ed73675d8f0e53678f9fd2aa8319ff66b22973",
+      "sha256": "4a6c8a3cb66cd26b2971a9292224ef4cec29ba697d0a9238c0c9e7e34c148df5",
+      "bytes": 4784
+    },
+    "tools/fixtures/native-runtime/README.md": {
+      "mode": "100644",
+      "gitBlob": "101f04700e94ad3d58d76b364b276429b9582730",
+      "sha256": "2072a9078e4667582a06f31c3eff616627283b369451e48931586ea5fa6cb6e3",
+      "bytes": 4334
+    },
+    "tools/fixtures/native-runtime/run.ts": {
+      "mode": "100644",
+      "gitBlob": "277a479e9b4259050302d7963b937cd8297461e3",
+      "sha256": "808ae6a19dcb0486ac7c7766862b47de56b395a39583f4c8434a7c6f73f3ef9e",
+      "bytes": 10571
+    },
+    "tools/fixtures/owner-services-reconciliation/PATH-identities.json": {
+      "mode": "100644",
+      "gitBlob": "a9c3fa7e7edc7fc24203a51d85ef99986801b065",
+      "sha256": "483b9433c15fa27b84cdd952f9163d5b7a9d171e5372033b32a5c88d4eff8568",
+      "bytes": 1728
+    },
+    "tools/fixtures/owner-services-reconciliation/README.md": {
+      "mode": "100644",
+      "gitBlob": "fd95d6874f72e3b257c8214dcdb98e43f37e31ad",
+      "sha256": "88c6eb7801ae857b03806efe64cd0e93507cbe96dadc4502e41ce9ebce3321e9",
+      "bytes": 3914
+    },
+    "tools/fixtures/owner-services-reconciliation/compare-eof.py": {
+      "mode": "100644",
+      "gitBlob": "df8a9ea9053a61033727f50d537053c834055e6e",
+      "sha256": "350578222d5490838af05a14f9de2cd1ea3d3883a78629d310526b53734ad532",
+      "bytes": 535
+    },
+    "tools/fixtures/owner-services-reconciliation/compile-svelte.mjs": {
+      "mode": "100644",
+      "gitBlob": "189e1f54e6e8f2265c0ca94eb490eb1a860be020",
+      "sha256": "952e37f5509b0636c0b14d2ba9c412db8fc8eb48c9ed32807221f1d89b57e7db",
+      "bytes": 1353
+    },
+    "tools/fixtures/owner-services-reconciliation/consumer.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "1dac2ec3f9c5157a52f22bb120f5378418e232fe",
+      "sha256": "7e0607b7f75b19179056e98dbde89b56a709ba9619292448e0ef5c353e3b7f0d",
+      "bytes": 283
+    },
+    "tools/fixtures/owner-services-reconciliation/controls.json": {
+      "mode": "100644",
+      "gitBlob": "5319b464bb9f98f375d522f3a308ef755101588f",
+      "sha256": "0c4913b4b0bab79f2a65ae5f4e6992429ddf691eaab76ac2fb3c794fe3e229eb",
+      "bytes": 5684
+    },
+    "tools/fixtures/owner-services-reconciliation/controls/bookkeeping-event-noise.patch": {
+      "mode": "100644",
+      "gitBlob": "2e6dab71f67aa533e171c4e0aa4e70bac9c6dc68",
+      "sha256": "5f9698e7ad99fe653c2929b64a034d263546cb3a38666e5c25b71394eecf67d3",
+      "bytes": 433
+    },
+    "tools/fixtures/owner-services-reconciliation/controls/checking-writes.patch": {
+      "mode": "100644",
+      "gitBlob": "80bc0e06fd99bddd8944b01ea046bb6ced076020",
+      "sha256": "9a1979731229a815ebd75767f7ee9712e3635268aec6cc9817303a23c2895a71",
+      "bytes": 484
+    },
+    "tools/fixtures/owner-services-reconciliation/controls/lost-label-event.patch": {
+      "mode": "100644",
+      "gitBlob": "2ecb59c557d3bcbdccfd6de62ce176fbe78bb033",
+      "sha256": "dcc347d3397f2ea14ae3733f8dedc68a3badff2a00f280af3580e6c10576251a",
+      "bytes": 417
+    },
+    "tools/fixtures/owner-services-reconciliation/controls/omitted-read-freshness.patch": {
+      "mode": "100644",
+      "gitBlob": "f6a4ca6907b44be84d211a2c4f0d1c46868e808c",
+      "sha256": "0f413be7cc8e419ce2e7ed4575ab6ca32076371fbefce8dec2fbc66c9fd60755",
+      "bytes": 637
+    },
+    "tools/fixtures/owner-services-reconciliation/controls/stale-label-resurrection.patch": {
+      "mode": "100644",
+      "gitBlob": "65c66d73749545a4c69bde007c4bb45fcb38a6b4",
+      "sha256": "d39f4ea8e92122535c3d262b4342c301b9aa7f9dd78c30244048165d0e564068",
+      "bytes": 1037
+    },
+    "tools/fixtures/owner-services-reconciliation/execution-contract.json": {
+      "mode": "100644",
+      "gitBlob": "fa5cbe1560082566ba2637487a2146156a9249eb",
+      "sha256": "72fc67804fba47934603572c7209575d04551467c0d7a9cf228f822e9c25cdde",
+      "bytes": 1499
+    },
+    "tools/fixtures/owner-services-reconciliation/expected.json": {
+      "mode": "100644",
+      "gitBlob": "0125a8e61337cc2800af34b789113d6670ebd07e",
+      "sha256": "7d602b9892e66c91f7743450ad9d2dbd6b8ef6ccf6fc86cf7be29f4af6d49c78",
+      "bytes": 1536
+    },
+    "tools/fixtures/owner-services-reconciliation/expected.jsonl": {
+      "mode": "100644",
+      "gitBlob": "da1039f105d326ae6606664cd4587f3fc706e8c0",
+      "sha256": "d4363f00ff62c1ab9d67f631fccf1580878d90ce3b5078d1e58420d82bd80522",
+      "bytes": 1050
+    },
+    "tools/fixtures/owner-services-reconciliation/future-bin/bun": {
+      "mode": "100755",
+      "gitBlob": "7b8ace2512654801416a08100d75ba8863d1741d",
+      "sha256": "a45ef1d305e14022e4ae64cbc9763bf5411e2e2eaa200b532eb95ba278f64d8a",
+      "bytes": 94
+    },
+    "tools/fixtures/owner-services-reconciliation/future-bin/node": {
+      "mode": "100755",
+      "gitBlob": "7acc28e3dfd7b771522475ff155540885b53898d",
+      "sha256": "7491547a9745e66aa7d84df1f010e8473693af6f5d4129962408cd931edb4340",
+      "bytes": 65
+    },
+    "tools/fixtures/owner-services-reconciliation/future-bin/python3": {
+      "mode": "100755",
+      "gitBlob": "d2dcea578e03c22e79e82fa840fef31e07aced03",
+      "sha256": "c810b1a9498fd4ca7c78a8879fc0480b14d8e5b168fda2880606fb51c5d2b55b",
+      "bytes": 73
+    },
+    "tools/fixtures/owner-services-reconciliation/future-bin/sh": {
+      "mode": "100755",
+      "gitBlob": "d32c6d89945ba7addaf5bba66916e39e6af3b348",
+      "sha256": "4ea5a04b46fd91acb841fe346b72726d2e81a2fd8bf4daeacb1f40c9fb30388e",
+      "bytes": 28
+    },
+    "tools/fixtures/owner-services-reconciliation/future-bin/timeout": {
+      "mode": "100755",
+      "gitBlob": "0cf69efebef30fc509ef0bd9b8e8c73db742cd59",
+      "sha256": "55749b354d199bf2616e4fac2d35d11e23f5286fbc748f6bac1f1a4b4a0c4ef7",
+      "bytes": 37
+    },
+    "tools/fixtures/owner-services-reconciliation/future-bin/tsc": {
+      "mode": "100755",
+      "gitBlob": "64f7f6f5b7ea4ab17d836882e77d57bbf544cb29",
+      "sha256": "78e31108ddb1656607941f553f055bb7068ce24601f7dc78746844451fd5123b",
+      "bytes": 135
+    },
+    "tools/fixtures/owner-services-reconciliation/future-bin/tsgo": {
+      "mode": "100755",
+      "gitBlob": "64f7f6f5b7ea4ab17d836882e77d57bbf544cb29",
+      "sha256": "78e31108ddb1656607941f553f055bb7068ce24601f7dc78746844451fd5123b",
+      "bytes": 135
+    },
+    "tools/fixtures/owner-services-reconciliation/future-gates.json": {
+      "mode": "100644",
+      "gitBlob": "3abc1df899873a249c5b4e163e2152b715daabf6",
+      "sha256": "2ba52fc9fce2d80446f734660dcf67d969c5956f1c94b93634b87de4b19ee1df",
+      "bytes": 53374
+    },
+    "tools/fixtures/owner-services-reconciliation/gate-census.json": {
+      "mode": "100644",
+      "gitBlob": "4f571cbcc8c120038663e0fbef63be928e80e011",
+      "sha256": "a6f5ddd639fcd3974bd7d03865dc6fe243013de38095d5db3ad3ef2152c049d9",
+      "bytes": 72410
+    },
+    "tools/fixtures/owner-services-reconciliation/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "af9901f6dd365bba5859cfa14adaeb7669230964",
+      "sha256": "0af382498acc09a78b0bbe94d356d9aeceb1cb66a51835b0d1a0a0c13c49575e",
+      "bytes": 1387
+    },
+    "tools/fixtures/owner-services-reconciliation/negatives.json": {
+      "mode": "100644",
+      "gitBlob": "71e99ae8916d3c570402284062be42d5f0760158",
+      "sha256": "68f3b284babcd60ca5f05979f587f010013105d63e27de30913856f18cea37aa",
+      "bytes": 2936
+    },
+    "tools/fixtures/owner-services-reconciliation/owner.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "5b5cff98af83ce5ee6ba35f2052d5c3392486e17",
+      "sha256": "b241f841ca925590f75ca5b2d580b5f3703c8b00296e417bacd2309c06c2aa04",
+      "bytes": 8053
+    },
+    "tools/fixtures/owner-services-reconciliation/run.ts": {
+      "mode": "100644",
+      "gitBlob": "2cf1f0bbc3000962b7056695986b3813fb005657",
+      "sha256": "730b95debc1c01ff9fbd2ae9a660b8f00bb250c45e399b7afab2d88f687d6f68",
+      "bytes": 7709
+    },
+    "tools/fixtures/owner-services-reconciliation/svelte-inputs.json": {
+      "mode": "100644",
+      "sha256": "591d6bbf0bf55cc3ab5da25d45e32adaafbabb34c31d3fc8b3bea2e2960821bc",
+      "bytes": 5463,
+      "gitBlob": "af4abe1484ba69acfdb0ed3a61bb0bef464f89e5"
+    },
+    "tools/fixtures/owner-services-reconciliation/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "50cf8b7998ccaff53fa5b7a7d44a6abf039602f6",
+      "sha256": "08f7fd7c4afd14a26662bc6e7299b615e9611ceb3bae4766c0a605b4b392b312",
+      "bytes": 5778
+    },
+    "tools/fixtures/owner-services-reconciliation/unapplied-proposals.json": {
+      "mode": "100644",
+      "gitBlob": "50261b38654456b03900a32a027a1c878b1ae241",
+      "sha256": "f9db89a9ee1b7a1e827625f539634c2c6a89b6cab9c375434d9bdfc3cd5bc671",
+      "bytes": 4240
+    },
+    "tools/fixtures/owner-services-reconciliation/verify-inclusion.py": {
+      "mode": "100644",
+      "gitBlob": "9710afd7a0053582a47a3d2fcc5d5534d424925d",
+      "sha256": "34c3f8cd150668cd6a912698c4a8c1c5554e6654a46db9872de2d2446f81c350",
+      "bytes": 972
+    },
+    "tools/fixtures/page-channel/README.md": {
+      "mode": "100644",
+      "gitBlob": "91b80df4c58b49ff7bfda750dbe8b831b7859b5d",
+      "sha256": "5cb9ff90a75e727778ce923e550500fa4a1700edce4791542c979ad286cb45b1",
+      "bytes": 765
+    },
+    "tools/fixtures/page-channel/run.ts": {
+      "mode": "100644",
+      "gitBlob": "8ce6df595649ca694786ae495522b9ffcb6af3d6",
+      "sha256": "4703355dcd082df94e68b668419cc06ef81e88d779b568d23802ee989be322f1",
+      "bytes": 4446
+    },
+    "tools/fixtures/page-link/README.md": {
+      "mode": "100644",
+      "gitBlob": "16a579ce9b4a0a8d95f8d04027769bb05eb5b7af",
+      "sha256": "328de54bfd4130d7c062329d5a3858505c323f872f812d1770b990601c9cc71c",
+      "bytes": 1210
+    },
+    "tools/fixtures/page-link/deadlines.ts": {
+      "mode": "100644",
+      "gitBlob": "4c0a8469e586e4f5efed23f54f243b54479ea9d0",
+      "sha256": "111e3e7954b9a9e64237eb378c47d7f67625c91d3a579914e4a9a8bc30251311",
+      "bytes": 1179
+    },
+    "tools/fixtures/page-link/run.ts": {
+      "mode": "100644",
+      "gitBlob": "6e7a1830e59ad8c1a4190b817ea66b17cc2459fd",
+      "sha256": "75f3237e17248b91f16a12861722b4c2dc8f819312ec6a102c922f938a05ca7a",
+      "bytes": 2953
+    },
+    "tools/fixtures/page-link/support.ts": {
+      "mode": "100644",
+      "gitBlob": "a70c528d73bc11cffd02804c403a106aa158a5f9",
+      "sha256": "509cc93eba993c1d30d305ab663d436e958f4234a9a4de6b90292ecd80595843",
+      "bytes": 6901
+    },
+    "tools/fixtures/picker-model/Consumer.svelte": {
+      "mode": "100644",
+      "gitBlob": "d0adfd29fd8c0aeebac0a2243659cedc3d4647e5",
+      "sha256": "f2fa30905d5238be9fa1fa746a7bd913f82c884e5147b07546135155871fbf41",
+      "bytes": 914
+    },
+    "tools/fixtures/picker-model/README.md": {
+      "mode": "100644",
+      "gitBlob": "2081bf00488cb38d9d403da8628ed309fc50135b",
+      "sha256": "55a535808e6873142cdd1e2e81e4466d3b4dd05448045ef8fa1ab8bd79051152",
+      "bytes": 977
+    },
+    "tools/fixtures/picker-model/fake-source.ts": {
+      "mode": "100644",
+      "gitBlob": "df311d9312444e267d025f58c7f4374f1beae345",
+      "sha256": "5470440e96fbfb553d219d2baa0060256051a754e7c8e1b669f46bd625e7b1b5",
+      "bytes": 4431
+    },
+    "tools/fixtures/picker-model/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "c733797d2e04a116b2f2961cc31919177bb61823",
+      "sha256": "fdc6be477264ba612aa8893dada47fc01a8f8c440afab6b4864880ea3cdb84d4",
+      "bytes": 311
+    },
+    "tools/fixtures/picker-ui/ApiChecks.svelte": {
+      "mode": "100644",
+      "gitBlob": "3bf9daeda066a8e697c414216fde2e32563b8715",
+      "sha256": "60466a45c9003824ab90322b1aea481930bc4243e3f523607578cd43de11a84a",
+      "bytes": 2117
+    },
+    "tools/fixtures/picker-ui/Fixture.svelte": {
+      "mode": "100644",
+      "gitBlob": "c210255587935643a928eaf35c561aa413635e24",
+      "sha256": "8da24246e43954f7274c5874330107f8a31e99d52c17632d17e6459db6c1d8c7",
+      "bytes": 3550
+    },
+    "tools/fixtures/picker-ui/README.md": {
+      "mode": "100644",
+      "gitBlob": "407ba3c87757f05b92f0a46e8064cfd64704729c",
+      "sha256": "52e11d78effe6a2bf65f96dc959de6416ce33ebb86a25fa561391fb62222e523",
+      "bytes": 8786
+    },
+    "tools/fixtures/picker-ui/assets.d.ts": {
+      "mode": "100644",
+      "gitBlob": "f021e9d2bef5d09a0ef9559f164a1064e080f74f",
+      "sha256": "34b1b8d17c82cda5f8c1c4296e359bf813e9b176e04e7b2800c24c91ceb70f1e",
+      "bytes": 95
+    },
+    "tools/fixtures/picker-ui/check-browser.mjs": {
+      "mode": "100644",
+      "gitBlob": "a7dc203723c965d5c3eed494f906df8006f6ebb8",
+      "sha256": "a31a301d3f3af84b7a8d2d987c8ad0661b38b83c2cb01e7ec4ce0f61195607bb",
+      "bytes": 8436
+    },
+    "tools/fixtures/picker-ui/check-build.mjs": {
+      "mode": "100644",
+      "gitBlob": "2bea7ca62b4163330bff2de384d235dd9fe2bd1d",
+      "sha256": "b0cc3887e3f00a91e3c3075f5e291b940de20e1b6ec495e8bee2ed275c8bc9e4",
+      "bytes": 1527
+    },
+    "tools/fixtures/picker-ui/copy-drafts.md": {
+      "mode": "100644",
+      "gitBlob": "ee08333899da365191bc416a9d01fe8192365696",
+      "sha256": "36de69405939af3478091ab0ccb7cbc7b79cbbffbfe9e468abc2ae2d81cdfedb",
+      "bytes": 1760
+    },
+    "tools/fixtures/picker-ui/defect-controls.json": {
+      "mode": "100644",
+      "gitBlob": "697717010faa0847dec4eff876c69b668ea0787c",
+      "sha256": "c8de5a4031ef6218ae1e6a69f5c23ede05ba49c9d5d033e7b90fab4f7edd2e2f",
+      "bytes": 2970
+    },
+    "tools/fixtures/picker-ui/dependency-pins.json": {
+      "mode": "100644",
+      "gitBlob": "64ba5786b999ba34449ace3e5ed267f5493e37bb",
+      "sha256": "8a416cf1ca82e65c3611947514ad1381a4e5bb1b16a42c3943b37499084bf15f",
+      "bytes": 6252
+    },
+    "tools/fixtures/picker-ui/dom-diagnostic.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "c5ab084ba38c11c0a56327ee78d81a83d972317b",
+      "sha256": "667414118a2b326f02b700d1baf77c38caace68715e458db7e3fcada8bca2160",
+      "bytes": 1631
+    },
+    "tools/fixtures/picker-ui/entrypoints/picker/index.html": {
+      "mode": "100644",
+      "gitBlob": "c94070672de12efa9d4839486fd60912c1948354",
+      "sha256": "f50b3a25655895d5a7bfd489600824cfdaa29e894c9e67d955ca070b98e63504",
+      "bytes": 277
+    },
+    "tools/fixtures/picker-ui/entrypoints/picker/main.ts": {
+      "mode": "100644",
+      "gitBlob": "f465852d69ad22a0f3c95fb7960170f1a17e79d6",
+      "sha256": "d46ca2a97817f9fa230766128b9a9ee46aea9907f861042931e730daa65fae8e",
+      "bytes": 736
+    },
+    "tools/fixtures/picker-ui/expected-consumer.jsonl": {
+      "mode": "100644",
+      "gitBlob": "6ffc401792fdece26c18d803ea13033c8a14e43b",
+      "sha256": "a43b2b5a81c6479869e1b5df2c7261fa3e2a3af1dde9a609339159139d799335",
+      "bytes": 472
+    },
+    "tools/fixtures/picker-ui/fixture.css": {
+      "mode": "100644",
+      "gitBlob": "1921e2e8732ae105b80279f070f47d431d109637",
+      "sha256": "a06ee87f7e9617be3ddeee8633e5d23cb7cc855a298dc3b89ab84495ec79437a",
+      "bytes": 157
+    },
+    "tools/fixtures/picker-ui/integrated.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "a63135036ebdb375d8c3ddba37b048b4306869bb",
+      "sha256": "73756cf367dc5d0a5f5302e40743353d2938231c68cf5e549707a4acea42aa34",
+      "bytes": 15420
+    },
+    "tools/fixtures/picker-ui/negatives/FakeModel.svelte": {
+      "mode": "100644",
+      "gitBlob": "38f4bcdf11d949efe1443bb26df3263322a0edd8",
+      "sha256": "02ee3f406de173785089a085c76988d2794bd1dfe648e931397e020cced3eaf8",
+      "bytes": 281
+    },
+    "tools/fixtures/picker-ui/negatives/ManyWithItem.svelte": {
+      "mode": "100644",
+      "gitBlob": "0bccc6539c473b62618c8071b8dbce21bd906bcc",
+      "sha256": "ce241a89ec85fbe9231f2da45afc1c8b4b56aa4f87f514b75864639829b7c74a",
+      "bytes": 288
+    },
+    "tools/fixtures/picker-ui/negatives/MissingRelease.svelte": {
+      "mode": "100644",
+      "gitBlob": "eb18a9302909c80d2a18303abee3e2bb76c80565",
+      "sha256": "e171d7b401b9cbe1253d518940faa4fe6600b9af81aa4104e5ad74727b3e072d",
+      "bytes": 298
+    },
+    "tools/fixtures/picker-ui/negatives/OutcomeReceipt.svelte": {
+      "mode": "100644",
+      "gitBlob": "b80701757620a06c3aa17c66452f5c18363d3aa4",
+      "sha256": "49316a1efb282a9241f74a1167524fe341f56de8a87bdff118942b6e2088962a",
+      "bytes": 315
+    },
+    "tools/fixtures/picker-ui/negatives/RawAccount.svelte": {
+      "mode": "100644",
+      "gitBlob": "0c81507fb04ad82d923a251be02875801bfcbd84",
+      "sha256": "4287f5525608447a6673c9b95f1f72598dc7228a8ae438bc7769b4ba664d2a7b",
+      "bytes": 334
+    },
+    "tools/fixtures/picker-ui/negatives/SharedModel.svelte": {
+      "mode": "100644",
+      "gitBlob": "091091e23f0064bf379f6c92f756680c8c1e1b91",
+      "sha256": "3db36031a6f9cfb35485a100f1690da3429222d4fd8d21225de1c5becc0a8703",
+      "bytes": 397
+    },
+    "tools/fixtures/picker-ui/negatives/Uncontrolled.svelte": {
+      "mode": "100644",
+      "gitBlob": "612cc44d863b2b5c784ce7a305b5053ce93affd1",
+      "sha256": "0456f17a28e378d9cc3202acd5ca2f996665ecb7f84db94c6f7456b931b4a7b1",
+      "bytes": 293
+    },
+    "tools/fixtures/picker-ui/qualify.py": {
+      "mode": "100644",
+      "gitBlob": "e73d6fb47bc4d5739c63a9b3101a85443ecf3e36",
+      "sha256": "0dfeb204011887048e0802bd77f992f4a1bce11d787c16cac33c18a8f1d71c79",
+      "bytes": 9648
+    },
+    "tools/fixtures/picker-ui/render-matrix.json": {
+      "mode": "100644",
+      "gitBlob": "3df852af93779103ec7b4b96a8dcb8c20306a6c1",
+      "sha256": "eacfad9dd86f2f98b63122fd6319c5ccd7ebe9f76ef628de3141690a187d83e7",
+      "bytes": 409
+    },
+    "tools/fixtures/picker-ui/run.ts": {
+      "mode": "100644",
+      "gitBlob": "c619251d2bee2261358bb02b0b901ed376d37a65",
+      "sha256": "a5a54e722983f880688f9647582596140df38a0b39b484eac294d068fda83d5f",
+      "bytes": 2263
+    },
+    "tools/fixtures/picker-ui/scenarios.ts": {
+      "mode": "100644",
+      "gitBlob": "41d1966a3d17db04c9731b5f9789d8479e9e74d5",
+      "sha256": "bb4ef37bcd88dfd09442fd6a4b4bc91d1f0ab261a4975aec9a08e632d1701987",
+      "bytes": 5591
+    },
+    "tools/fixtures/picker-ui/starting-bridge.ts": {
+      "mode": "100644",
+      "gitBlob": "765174c2f1c410510c6c4f1e3b75a7c0e6901577",
+      "sha256": "9631246fc8e96cd4f9ec67974df1493cc2bafec0581cbbaae885c6589a78ccc1",
+      "bytes": 4008
+    },
+    "tools/fixtures/picker-ui/synthetic-layout.ts": {
+      "mode": "100644",
+      "gitBlob": "744ce4c7e9543195623958cf137ee54988a6f2e3",
+      "sha256": "70f5453ed8f899113e58d0e0a62c57b4081584cb598faf3034d23cf2cb159ce7",
+      "bytes": 646
+    },
+    "tools/fixtures/picker-ui/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "1515c85b0d70bb085022dd90b79494568621b43f",
+      "sha256": "7be00e59194f2a1a2ef1374d9652e49068550322c811954f9f89893bc1394023",
+      "bytes": 1009
+    },
+    "tools/fixtures/picker-ui/unapplied-proposals.md": {
+      "mode": "100644",
+      "gitBlob": "7b3d02174056e905f048c722782b0996d14bd250",
+      "sha256": "6eae02101d7bb8ff26064dd8658340771cf5eb639141ed856e559c20d2f3f33d",
+      "bytes": 1619
+    },
+    "tools/fixtures/picker-ui/wxt.config.ts": {
+      "mode": "100644",
+      "gitBlob": "50b784dfb6b2825cc0da19bf841603ff6caea1c9",
+      "sha256": "343535efce79e740fec945cc27c40f2f156c1f0ee7bbd0251a2c6c228b5fac3f",
+      "bytes": 993
+    },
+    "tools/fixtures/playlists-cache/consumer.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "150f2f380e56a39e11322ea4e586f444e9f467fd",
+      "sha256": "846368540ee5d28e115e281d68b9e887a583d89d82d871cc29e96881772fb895",
+      "bytes": 274
+    },
+    "tools/fixtures/playlists-cache/controls.json": {
+      "mode": "100644",
+      "gitBlob": "ce8802ad928d1e22c74b5b7e391cd72eb5c366e7",
+      "sha256": "8155cbfbe4d46b1d7fa9fe6c482473756788c5eae7cadca2c59fcf8c4701c373",
+      "bytes": 4873
+    },
+    "tools/fixtures/playlists-cache/controls.py": {
+      "mode": "100644",
+      "gitBlob": "28fcbe1163be7cee83526f2aee65d4e0b7d2a59d",
+      "sha256": "4994f8d907d1f248260d8588c2e9d17db2bae6d9b3eb15885ac198030bf61e58",
+      "bytes": 559
+    },
+    "tools/fixtures/playlists-cache/expected.json": {
+      "mode": "100644",
+      "gitBlob": "18de91ae58dcb76b01bd1b5d8431a51606ca2326",
+      "sha256": "685facffa9751fb0c69110ca103d9507f6591e7a78c8bde0813bc0b20f4f77db",
+      "bytes": 9829
+    },
+    "tools/fixtures/playlists-cache/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "9b787043c219d1afb60b227a55e57bdea09cf166",
+      "sha256": "62763d3ce89d1d5b3cbebfc65fa4e671d13e79566b23c33ace48b27457baba95",
+      "bytes": 6920
+    },
+    "tools/fixtures/playlists-cache/run.ts": {
+      "mode": "100644",
+      "gitBlob": "096eb8e3800012bc86cdfb52b3610d6455db100d",
+      "sha256": "855579ba12366c0f064b4ad8f987c112b02ba849fbe9eaff60a05974d33ffe5d",
+      "bytes": 5004
+    },
+    "tools/fixtures/playlists-cache/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "cddb9036511f7d8c67a67cf706b329b39fadaf6e",
+      "sha256": "2c92c050a194b0f26a8e0b45f03b25f6ceb4b04f3ccfe383228b50afb7b6bdd9",
+      "bytes": 928
+    },
+    "tools/fixtures/registrar/README.md": {
+      "mode": "100644",
+      "gitBlob": "5ba1eac8bdb20e5ef8f441f9374fc705fc3d3f51",
+      "sha256": "7fd9d7fda702629b35fd409857f9ef22c89c704ef63952367fdda8db3d340e47",
+      "bytes": 7591
+    },
+    "tools/fixtures/registrar/defect-controls.py": {
+      "mode": "100644",
+      "gitBlob": "fc679640ad17a67717b485e708aa914024369bf8",
+      "sha256": "2152fe0fe9984a26b2b8ba82399c568874cb057ed546d41a1fdd43b14d94a072",
+      "bytes": 2736
+    },
+    "tools/fixtures/registrar/run.ts": {
+      "mode": "100644",
+      "gitBlob": "a266d1edd92d648e93331f6c77f9815b1564b284",
+      "sha256": "7745c50e95f21b9b32edf5463c2a156210ea3d899a4a99c05e90f6ccf2d92eba",
+      "bytes": 2008
+    },
+    "tools/fixtures/registrar/scripted.ts": {
+      "mode": "100644",
+      "gitBlob": "470b65d332da4689cbc11ecd968a991df41dd670",
+      "sha256": "a568ceec6eeadf57d851c1ab134253c16c978429aff71b9fa23da93674d62e2a",
+      "bytes": 10520
+    },
+    "tools/fixtures/registrar/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "a9780793483f138824916c3c6ca1d7238c810e05",
+      "sha256": "6246f448d73a25c8876f575f2da48052e49e9b44688e4c0e5ddf6c3c7fcc1f2e",
+      "bytes": 383
+    },
+    "tools/fixtures/runtime-rpc/README.md": {
+      "mode": "100644",
+      "gitBlob": "5b48d5e59f13dcb2bae14b1710a399a89d9932c7",
+      "sha256": "1f3ab3b3668982b0fe5d3608dcaa868fb3fe465f731a2df38368aa1cb3db28d1",
+      "bytes": 1363
+    },
+    "tools/fixtures/runtime-rpc/run.ts": {
+      "mode": "100644",
+      "gitBlob": "fa68c85ff12331aa442791a3f4c7b58d39f0f3f1",
+      "sha256": "b0c0d936f09d51c40b79bc4d8f370a4c066bb04f5cf0a8afe82ee2a0e8a95da7",
+      "bytes": 4208
+    },
+    "tools/fixtures/settings-file-owner/README.md": {
+      "mode": "100644",
+      "gitBlob": "20c718ace6f655cb8d1fcc3be63a6582016b338a",
+      "sha256": "8a6590dc924f59ee1f9686c7b9e09521e03726d3412ef8ca3c4d3f661adc6749",
+      "bytes": 6873
+    },
+    "tools/fixtures/settings-file-owner/consumer.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "1c33f5c492de77c284da1cc025e3ba8bde352494",
+      "sha256": "6385a490e290e4184fb80791b6543406f386fdace06815c3478d482d787c70b1",
+      "bytes": 2855
+    },
+    "tools/fixtures/settings-file-owner/consumer.ts": {
+      "mode": "100644",
+      "gitBlob": "80ec648e83d13487272d8ac38621743a5710774f",
+      "sha256": "1a2744b98aeb26daa50520d3b1365be88e4377d22be20cefbacbc29686a1fcaa",
+      "bytes": 993
+    },
+    "tools/fixtures/settings-file-owner/controls.json": {
+      "mode": "100644",
+      "gitBlob": "726df4291fe20e1dbfd4379efde8843fe68438fc",
+      "sha256": "eac3594ac33e207c3885db9717532a43bd6bf3f88404fa8386156fef021321df",
+      "bytes": 3616
+    },
+    "tools/fixtures/settings-file-owner/decision-trail.tsv": {
+      "mode": "100644",
+      "gitBlob": "45e85b97c0e5cbd7fd9928dab9cce398c132fa29",
+      "sha256": "3ae1cf6c811155d98b197fc989b31ff96ed5669319de6d17b0baafb8ba728562",
+      "bytes": 1434
+    },
+    "tools/fixtures/settings-file-owner/dependency-identities.json": {
+      "mode": "100644",
+      "gitBlob": "75da098b533bf05244daf1fc5267055fb50623f1",
+      "sha256": "c2d4105a587eeb254965e2e13c3a33067aece5dd50de490c033a4eca2b0fe283",
+      "bytes": 4885
+    },
+    "tools/fixtures/settings-file-owner/dependency-verification.json": {
+      "mode": "100644",
+      "gitBlob": "1efe070cc40b760e680ef3d7e194d40f6333bf19",
+      "sha256": "2ef574d8435653f051f0dac3f5bf37b7b4b0d4b41ed33ee3e20626544aa9e2b2",
+      "bytes": 790
+    },
+    "tools/fixtures/settings-file-owner/expected-stdout.jsonl": {
+      "mode": "100644",
+      "gitBlob": "1583661e2a0c47c583804e594313952dad9c39a3",
+      "sha256": "36f405562c52779926d50d0ea81bc9065b77478bb4ce9d5614251fd64978bd7b",
+      "bytes": 101
+    },
+    "tools/fixtures/settings-file-owner/frozen866.json": {
+      "mode": "100644",
+      "gitBlob": "e0ec79f56de810c4c0975191298f694067de7019",
+      "sha256": "1c98854e8ecff8c90d640f3f90b03da6d396fd6b5f7c52c4b93f421aec4d2606",
+      "bytes": 237634
+    },
+    "tools/fixtures/settings-file-owner/future-commands.json": {
+      "mode": "100644",
+      "gitBlob": "e6c86eec4c252a9cae46aaaf0e46887f3efa1612",
+      "sha256": "36faa081d52805a237645d18f601fa9b041d89a77d5d7f33db4d38279bd253c9",
+      "bytes": 16525
+    },
+    "tools/fixtures/settings-file-owner/harness.ts": {
+      "mode": "100644",
+      "sha256": "af18ec2449aaa6426f6410a86ec2081686ccf3cc6d028087b9e1581bfd517ed6",
+      "bytes": 5945,
+      "gitBlob": "ea9db07f969afec04487684ae4eb66684ef50588"
+    },
+    "tools/fixtures/settings-file-owner/independent_rehash.py": {
+      "mode": "100644",
+      "gitBlob": "9b7f150a3224862350c727228ffa20fda35431a0",
+      "sha256": "4b3e676b8ff10575370933787e89de53f84b135e75a232c9e93efe72ef810941",
+      "bytes": 3732
+    },
+    "tools/fixtures/settings-file-owner/installation.json": {
+      "mode": "100644",
+      "gitBlob": "b5dcb802ada5e9f2cf43171a381ce954aea8feac",
+      "sha256": "3dbed44807c525ca60dbea3632c064bd2a93ab62c50856157432a182f343e4f0",
+      "bytes": 175453
+    },
+    "tools/fixtures/settings-file-owner/qualify.py": {
+      "mode": "100644",
+      "gitBlob": "5f68aa1f2e88f66a988eca4009f6b6641f4c8ff9",
+      "sha256": "19ec8a79ecdf1fee6116f869dd627d25f291a7366be25a5ae71ca4243f0c4120",
+      "bytes": 9997
+    },
+    "tools/fixtures/settings-file-owner/reconciliation.required.json": {
+      "mode": "100644",
+      "gitBlob": "877e30e2a1e83072bbf7be6e512ca63abd9121a6",
+      "sha256": "c6ae5dd4bf5d3d85767673541971856104a98f6b72ed54529f5b0044cd00b11f",
+      "bytes": 488
+    },
+    "tools/fixtures/settings-file-owner/run.ts": {
+      "mode": "100644",
+      "gitBlob": "423d096147f187557e1f0ffee09c49ed396d8107",
+      "sha256": "0f557181d7abf77440ac71ce58d09990885940f71539445c028884a842a76185",
+      "bytes": 1116
+    },
+    "tools/fixtures/settings-file-owner/seal.py": {
+      "mode": "100644",
+      "gitBlob": "e3622c6c3defa42f91c738a548ab000a32c792b1",
+      "sha256": "158655e16ea035c79a8c4edcc033aed01b8338830571ec7ff3374f4ac43358e9",
+      "bytes": 14831
+    },
+    "tools/fixtures/settings-file-owner/static_support.py": {
+      "mode": "100644",
+      "gitBlob": "76290c519b8ecff07f44c8ab1adedbbcb1d343c6",
+      "sha256": "44ef716733c3b63009b8bfe149014dd938416efbdfa3f95c07525ce6fd04e2e8",
+      "bytes": 3371
+    },
+    "tools/fixtures/settings-file-owner/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "4eac13192d803dcdda96b6f5ae0fa788d54b556f",
+      "sha256": "e6b07c32a3db1392fe768f79461d7c0cababda855c3347bbb96734f713757c81",
+      "bytes": 780
+    },
+    "tools/fixtures/settings-file-owner/type-probes.json": {
+      "mode": "100644",
+      "gitBlob": "aa72190a37b57528a585b31a391511d147449b41",
+      "sha256": "809e3ee0db40da1f22ffca83456f0c77bcc645c0a82d0d0cb5e6e47a63384042",
+      "bytes": 5082
+    },
+    "tools/fixtures/settings-file/README.md": {
+      "mode": "100644",
+      "gitBlob": "7e82445839fe1ca46a7c46d7ed11c3c740e95032",
+      "sha256": "ae8abbd8d5956d3a4c1f4feb38f94075eaa02f31bc4b2a126184d139d1a53fb3",
+      "bytes": 9526
+    },
+    "tools/fixtures/settings-file/controls.json": {
+      "mode": "100644",
+      "gitBlob": "301779a6d40970b2d02b5b54ecffa5644a435db4",
+      "sha256": "ebf3ca56d8bfe4b257f89eeb3dd75fc1438d08f74efc8d3cc7d69c049fd28ad0",
+      "bytes": 2669
+    },
+    "tools/fixtures/settings-file/copy-references.json": {
+      "mode": "100644",
+      "gitBlob": "40e452dd78605db3649ef4ecef4560913984883f",
+      "sha256": "4f70799ae85737c1a651da29346e72de6fecd73b79795b20e1d98ebcd2837b55",
+      "bytes": 973
+    },
+    "tools/fixtures/settings-file/dependency-identities.json": {
+      "mode": "100644",
+      "gitBlob": "75da098b533bf05244daf1fc5267055fb50623f1",
+      "sha256": "c2d4105a587eeb254965e2e13c3a33067aece5dd50de490c033a4eca2b0fe283",
+      "bytes": 4885
+    },
+    "tools/fixtures/settings-file/expected-file.json": {
+      "mode": "100644",
+      "gitBlob": "02b5066a887b061f4c347a858f11a5aef7bc214e",
+      "sha256": "edcd32cb28c596ad7b86a87fb3d03bde3d117c6c367c8e5614b1455d4d8918d3",
+      "bytes": 5982
+    },
+    "tools/fixtures/settings-file/expected-plan.json": {
+      "mode": "100644",
+      "gitBlob": "27e03d74684b712c3ad0e71ed992142942ee6c65",
+      "sha256": "ae0a42022558feb9e82fcfc717256f117e9cb9d4f8fcacf9bdf50f88cf01252b",
+      "bytes": 6488
+    },
+    "tools/fixtures/settings-file/expected-stdout.jsonl": {
+      "mode": "100644",
+      "gitBlob": "1e31c5f69b46cb50e3d38cb2e13526cf30a274e7",
+      "sha256": "30621477913ea513499560721fe1eb76be332f73227403be7b7dc95d133bc77c",
+      "bytes": 391
+    },
+    "tools/fixtures/settings-file/future-commands.json": {
+      "mode": "100644",
+      "gitBlob": "fba0d98ff9dcac788b165ac05011d374019502b4",
+      "sha256": "4e4a2fb323f66419c2959b51a6e709a068ec78eecccf778a4823e20651fb5768",
+      "bytes": 6664
+    },
+    "tools/fixtures/settings-file/independent_rehash.py": {
+      "mode": "100644",
+      "gitBlob": "0252bc694c93b9fe15f42322754deec0edbdf14f",
+      "sha256": "85a622b4eb7165878027c2855da2589bb36e93b1e2deac9113009bf8abee06d2",
+      "bytes": 3387
+    },
+    "tools/fixtures/settings-file/installation.json": {
+      "mode": "100644",
+      "gitBlob": "a56e30b2de12f1302d2127d94549497df11b241f",
+      "sha256": "2e8f212100260a2f53824cd0ab056463526a881a8f22116f769b07361d50ba01",
+      "bytes": 551
+    },
+    "tools/fixtures/settings-file/native.type-test.ts": {
+      "mode": "100644",
+      "gitBlob": "1103d4e6824897b8e83242558f71bcea97814807",
+      "sha256": "f4bc4dd8da30489cffff821c064776dda297d129ff9ebe26bc4d9bdc1b09430e",
+      "bytes": 1702
+    },
+    "tools/fixtures/settings-file/owner-api.proposal.ts": {
+      "mode": "100644",
+      "gitBlob": "e3150a91090947b2216f3f3262de0137557d1004",
+      "sha256": "4e2c850e37fe57a725c958348c854dcff0ce6a44e0d6b2f753d4807b09382ad1",
+      "bytes": 1458
+    },
+    "tools/fixtures/settings-file/qualify.py": {
+      "mode": "100644",
+      "gitBlob": "cd351918d493631b0024bc77d4b7bf27462df828",
+      "sha256": "10577963f1811f8eeb89f696bb5144b648b21ca0b32ba27ae9aae97c06a4c5b2",
+      "bytes": 8821
+    },
+    "tools/fixtures/settings-file/run.ts": {
+      "mode": "100644",
+      "gitBlob": "f9839b0c63e6a948065492fb448c7aa5a8193117",
+      "sha256": "e4ed06a026c4ed04e1b5402f4ec5233f944ae74ccca74b7639bab18364a39ac2",
+      "bytes": 1737
+    },
+    "tools/fixtures/settings-file/seal.py": {
+      "mode": "100644",
+      "gitBlob": "a93150ef303a051284b2d89ffe3a3d99b9a46289",
+      "sha256": "167500a1607ecec03ed34c04e1e980485a71f6e5d1b9d2a420ca7ba6802af324",
+      "bytes": 6045
+    },
+    "tools/fixtures/settings-file/settings-file-authoring-input-manifest.json": {
+      "mode": "100644",
+      "gitBlob": "ae4db620d51bf66403d00a9b9c77063145895199",
+      "sha256": "100254737384149fc285d2d4c4b911c6f23466f3ff14a6b45a4284cee0dbd0d5",
+      "bytes": 229437
+    },
+    "tools/fixtures/settings-file/specimens.ts": {
+      "mode": "100644",
+      "gitBlob": "0e7be76e2647c9cab3dfb1733ce8f41bca401530",
+      "sha256": "4b5d90390b4c6f4bbb0156740344bfccff15583d7ef9525271ba91861433e09a",
+      "bytes": 2338
+    },
+    "tools/fixtures/settings-file/static_support.py": {
+      "mode": "100644",
+      "gitBlob": "76290c519b8ecff07f44c8ab1adedbbcb1d343c6",
+      "sha256": "44ef716733c3b63009b8bfe149014dd938416efbdfa3f95c07525ce6fd04e2e8",
+      "bytes": 3371
+    },
+    "tools/fixtures/settings-file/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "483059cec0aa0fea71120ab3359f06b790292161",
+      "sha256": "9e25c4086dbfa90d1368efd3dc6f1a22f7348f6bc495685329b25246e8337604",
+      "bytes": 573
+    },
+    "tools/fixtures/settings-import-execution/README.md": {
+      "mode": "100644",
+      "gitBlob": "4fc29e39d69101c094706c42bb6d6269f2902d9a",
+      "sha256": "72b624ae36f0872b5f65f3a547355ffff8b6dec1b6a22dd38146f9b193a8c2d5",
+      "bytes": 2536
+    },
+    "tools/fixtures/settings-import-execution/canonical.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "e7f8c827a4d12581c6e06c4a14a1b53fb5580a46",
+      "sha256": "285d9917baeeedd8d112468061d34073fb32f9a35744ab0bac5e61826252aaa4",
+      "bytes": 4601
+    },
+    "tools/fixtures/settings-import-execution/consumer.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "ef49858edcd020380a9482154222bbe82be87f86",
+      "sha256": "50391cbeeeaa7856c5458e00810499f25491890f757becc5335b3b9023e8df4f",
+      "bytes": 383
+    },
+    "tools/fixtures/settings-import-execution/consumer.ts": {
+      "mode": "100644",
+      "gitBlob": "b64b58af1bbf12d8776234a2b1940ff59f1c4226",
+      "sha256": "714d8731c3a6dd564f59eee5839a822c753d17eee31f4b32ab335e0d4f9fb59b",
+      "bytes": 4483
+    },
+    "tools/fixtures/settings-import-execution/controls.json": {
+      "mode": "100644",
+      "gitBlob": "2fd5ffd00223a4d73fa1664630c608b214db9161",
+      "sha256": "32b48d4fc7f21e430ab7e160efd1933a7cda679b61c9b067f8e6ef7abfe5233e",
+      "bytes": 10402
+    },
+    "tools/fixtures/settings-import-execution/controls/automatic-after-agree.patch": {
+      "mode": "100644",
+      "gitBlob": "260191e6bc9d8bb071cc3ab5828912c9759baca7",
+      "sha256": "99df7c9ed1f4f8681d0c980085be0c46632c9d572babdcab7620226881e8e2f9",
+      "bytes": 840
+    },
+    "tools/fixtures/settings-import-execution/controls/early-receipt.patch": {
+      "mode": "100644",
+      "gitBlob": "803f906e3417d3b1c5f6c28f970874b5eaac2229",
+      "sha256": "24df04312716ab67ecc8b080865cae0e6bb8670225534536d1c55eb5e141b8da",
+      "bytes": 711
+    },
+    "tools/fixtures/settings-import-execution/controls/ignored-startup-marker.patch": {
+      "mode": "100644",
+      "gitBlob": "4d6645ba3b811786843c12f5fed356ad039eddd7",
+      "sha256": "af6ab5044f12f4aea5db656c31a1d98b44e286f322edfcb46e0944789fde8306",
+      "bytes": 499
+    },
+    "tools/fixtures/settings-import-execution/controls/missing-native-forwarding.patch": {
+      "mode": "100644",
+      "gitBlob": "9cb65c840963493f8f768e1f68760fbbcae08a16",
+      "sha256": "6bfc7eef1d717fe4db76d13299c1f673e2713d66929c55021e8424841b312314",
+      "bytes": 560
+    },
+    "tools/fixtures/settings-import-execution/controls/omitted-local-cleanup.patch": {
+      "mode": "100644",
+      "gitBlob": "472c9ea00254c69f8d1d5d369766315d7d5cc8dc",
+      "sha256": "4de873178e14084d9af58c1646630608c97ae538a52cdb9bedec958ce206b4db",
+      "bytes": 830
+    },
+    "tools/fixtures/settings-import-execution/controls/omitted-session-cleanup.patch": {
+      "mode": "100644",
+      "gitBlob": "de28b9deaed3fad360b0cb74149ea5a141d02c39",
+      "sha256": "63385d5b1b0948b6fab93b0070ee9a0a64eed1619a12ea96a92b83cfa2f46afa",
+      "bytes": 717
+    },
+    "tools/fixtures/settings-import-execution/controls/partitioned-admission.patch": {
+      "mode": "100644",
+      "gitBlob": "4a1139707634a62379152ed7fbac95c04325bed0",
+      "sha256": "8716e608ca6131799fa27538ca928a7a66cb6ce07e31979b6d9a38f27a848fc6",
+      "bytes": 1023
+    },
+    "tools/fixtures/settings-import-execution/controls/repeated-document-write.patch": {
+      "mode": "100644",
+      "gitBlob": "4728f1ca9a3fb23b97039132e2c4062991b31f97",
+      "sha256": "d831f798d379ce01b6c01e69d30f74b3ad6a567a447fe899f07cf6b82f00923a",
+      "bytes": 796
+    },
+    "tools/fixtures/settings-import-execution/controls/unstamped-documents.patch": {
+      "mode": "100644",
+      "gitBlob": "33dd9099d537d0c77e3b4eb0159a257bd7b4001e",
+      "sha256": "2e676090e6514a91229f15edb914150a69e908680e9f7fbec41561d8b98609cf",
+      "bytes": 717
+    },
+    "tools/fixtures/settings-import-execution/dependency-identities.json": {
+      "mode": "100644",
+      "gitBlob": "37f2e4a02b44e39353bf191e1745af09893d3a4e",
+      "sha256": "54a0b5362b8d3b1e554d578d7910f82c820a80362e0219f89fbe1ce959b959fb",
+      "bytes": 5099
+    },
+    "tools/fixtures/settings-import-execution/expected.jsonl": {
+      "mode": "100644",
+      "gitBlob": "a193713fbfa1c577d90fb64ee56810bae06a5885",
+      "sha256": "a3eae0897a9657a0b5f610d96365c4ea637f86b446fa2abeaf9f8dc95e194d92",
+      "bytes": 279
+    },
+    "tools/fixtures/settings-import-execution/future-gates.json": {
+      "mode": "100644",
+      "gitBlob": "d5cfb31deddb0deefe37f9405b91bb9d5c0908e6",
+      "sha256": "dc2a2cebf45449d4c4db269052d5452b4ed2ec7547dbd5a9a33aa603311be5e6",
+      "bytes": 90262
+    },
+    "tools/fixtures/settings-import-execution/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "65fa7096fe24b1fb5bdc30e2a442511bb10504b1",
+      "sha256": "df64cf817bffd05197d3b6211245bb20368c5a7ccd98461cc83e092f846166ed",
+      "bytes": 7126
+    },
+    "tools/fixtures/settings-import-execution/owner.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "48eff2762a84ff1649e212f972fa2e6987bf32bf",
+      "sha256": "9713049466f8a5af9813d59363c9a7b93b3526c9ccff32a17d8e58f92eabf4ba",
+      "bytes": 15712
+    },
+    "tools/fixtures/settings-import-execution/preserved-inventories.json": {
+      "mode": "100644",
+      "gitBlob": "bb5707b7f5fff6f22b2aaa8440b43b8621c6ea0e",
+      "sha256": "9f490c9e8d9513e2b7c24f017cf86d5a7dc4730660bd2832a02360dd32d3e18e",
+      "bytes": 17206
+    },
+    "tools/fixtures/settings-import-execution/publication.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "063f0330564afa92b81be4e1d11cd45769b494e8",
+      "sha256": "81fec4e0bdc9a5dce526338bcce6efb0538239bae9aceb977456b8efaea6be8b",
+      "bytes": 3179
+    },
+    "tools/fixtures/settings-import-execution/run.ts": {
+      "mode": "100644",
+      "gitBlob": "db42d740892397d7ac809b32c99eb24066624eaf",
+      "sha256": "1a66374e98e60ea5c05b9399bc9718f2053d51089442308e117c328e7b1a53f6",
+      "bytes": 140
+    },
+    "tools/fixtures/settings-import-execution/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "02e9aaaf77f5e5f2f4236aaa4e1bc8ed27ced106",
+      "sha256": "e0ad2e5a4ca330986a744fd7e9501145f7e8d3c98d412b400329603833fa313d",
+      "bytes": 2043
+    },
+    "tools/fixtures/settings-import-execution/type-probes.json": {
+      "mode": "100644",
+      "gitBlob": "63139f748936fdbd5ed0dc516334391a05b286ef",
+      "sha256": "0226387b7d1344adde0b1dde83a0ba6ba925a78692bc7f30f16bd576c724ec56",
+      "bytes": 5239
+    },
+    "tools/fixtures/settings-import-execution/upstream-type-line-relocations.json": {
+      "mode": "100644",
+      "gitBlob": "7a9ca33a35dbf86520b00c8cbe7ed4e8f4036a33",
+      "sha256": "e49e07a6a4fec5c3b623e2efa30034b299e5e041cb194de630b340f8f5b7f18d",
+      "bytes": 18747
+    },
+    "tools/fixtures/settings-import-plan/README.md": {
+      "mode": "100644",
+      "gitBlob": "cf7f7c2d33adf75cc4712afcc5a3ccd2e129aec4",
+      "sha256": "783e93ee2cebc3493091bdf64fcc0aec76fde6a93af956ecee40f9b97751d676",
+      "bytes": 1694
+    },
+    "tools/fixtures/settings-import-plan/consumer.ts": {
+      "mode": "100644",
+      "gitBlob": "b079c4b5b6d582689181e6b88d04b020ab42a0c9",
+      "sha256": "00ad0791b6befdbe709e09d9c6b13c0c29bbf9686acb714bbc17517be1bf20e8",
+      "bytes": 2568
+    },
+    "tools/fixtures/settings-import-plan/controls.json": {
+      "mode": "100644",
+      "gitBlob": "eaba41cc15f395f9f021acbab7895bfe0f3a9b95",
+      "sha256": "28d75e0f208dff303a6b0d189d48dda34786603235b361d79658eed143429d12",
+      "bytes": 8817
+    },
+    "tools/fixtures/settings-import-plan/expected-stdout.jsonl": {
+      "mode": "100644",
+      "gitBlob": "57b8fe3240766566b76259fdf292aee6114e4e1b",
+      "sha256": "e7f2eca2ec2bf35dd561bc24b5abf86e55c355f4d81d806cdd1bbec075bf47e8",
+      "bytes": 165
+    },
+    "tools/fixtures/settings-import-plan/future-commands.json": {
+      "mode": "100644",
+      "gitBlob": "3543499649db6bea8845d9bd92b5861bf08405d4",
+      "sha256": "e859a5c1f416e0492d2f22b15d4f31a999c3dc494345a13b97a382ce49078657",
+      "bytes": 7502
+    },
+    "tools/fixtures/settings-import-plan/guard.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "764e18b1ba8b2705e091c560ae7a6e99404ba42e",
+      "sha256": "8b4d7a785284d1ce9df6138d096dca35ff0a5d50df644154b9403d903c6bc8b2",
+      "bytes": 1288
+    },
+    "tools/fixtures/settings-import-plan/run.ts": {
+      "mode": "100644",
+      "gitBlob": "b5199609e46efedfc88fa8296d5bcf561edd9ce3",
+      "sha256": "defc5dc1a32b1a5d7756bfe25a564784b9cef5a4d774f32c3047a121fb444262",
+      "bytes": 135
+    },
+    "tools/fixtures/settings-import-plan/specimens.ts": {
+      "mode": "100644",
+      "sha256": "fb7fd86852ccc1ef28acfd1d9d1f1eb075022f4a165eafa2527d12e3ea2835e0",
+      "bytes": 12342,
+      "gitBlob": "3324b606c6b71a5b37cbebb5220511df659f1d1b"
+    },
+    "tools/fixtures/settings-import-plan/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "67ae06f3c19d351fb89ea889a9d997a98e0f8211",
+      "sha256": "9a2d83d3b13df5d7c21d9bb6309a9966df6c38b82ee76b859909c96529cf81ee",
+      "bytes": 857
+    },
+    "tools/fixtures/settings-import-plan/type-probes.json": {
+      "mode": "100644",
+      "gitBlob": "d4d2aee6e3cff8dcc489194c2bf8ce99ddb6dd9a",
+      "sha256": "1c4c091441a36c798af57e9a79b42776eec427e99c227f0a141dcba46003b82b",
+      "bytes": 1120
+    },
+    "tools/fixtures/setup-destination/README.md": {
+      "mode": "100644",
+      "gitBlob": "85faa32085306f418b4298a517ebaf3a0f6c5b45",
+      "sha256": "cce6292f20b00f2065bfbad4bbcfbd7b8a6bb2c64550426480697698bf332def",
+      "bytes": 1803
+    },
+    "tools/fixtures/setup-destination/run.ts": {
+      "mode": "100644",
+      "gitBlob": "55f9581a4035f7ef6b5b77abd1630cf9f5445edb",
+      "sha256": "c4a09db72658099f5acbb799c38772d34792a3a823df9636aa6dbe0495050ecd",
+      "bytes": 39756
+    },
+    "tools/fixtures/shared-options/README.md": {
+      "mode": "100644",
+      "gitBlob": "9ff9988f59cc6c76fa85232c437e04ceaf60c664",
+      "sha256": "a9405976aa704091ec3bdaeb7b59d7bdf747823ef084a3951c0b6f75ca04b0dd",
+      "bytes": 3768
+    },
+    "tools/fixtures/shared-options/compare-eof.py": {
+      "mode": "100644",
+      "gitBlob": "33ca9203746e5a4bb8acd78c5312789559e514d8",
+      "sha256": "075d03c8da3d7b6dd3cd6bbb21688654bb3527912b2c8c5ab3991e5adb30036f",
+      "bytes": 755
+    },
+    "tools/fixtures/shared-options/consumer.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "da8f1ad29d289b2eab88f19a21412c0540c57f96",
+      "sha256": "17ac27066fae37975a8c8660ba274a2c4da1c1fdfe9558aac77fbc908263f059",
+      "bytes": 563
+    },
+    "tools/fixtures/shared-options/consumer.ts": {
+      "mode": "100644",
+      "gitBlob": "4b0a80e80b7f917eef2b3d6d123ddfd6b7980a27",
+      "sha256": "b5d397b38b456be85c443fd93adab4aae25b5193ec85fa90af125edb97699335",
+      "bytes": 765
+    },
+    "tools/fixtures/shared-options/controls.json": {
+      "mode": "100644",
+      "gitBlob": "430c32d910015b1b8020b345d8659bdaed58aaaf",
+      "sha256": "9fe3d011af04a8a3cb3708c282c20ef72f2dc3b0eadf1e311af26b2a4eb3a840",
+      "bytes": 6263
+    },
+    "tools/fixtures/shared-options/controls/implicit-enablement.patch": {
+      "mode": "100644",
+      "gitBlob": "a804fcc4dbb54836daa85fd5ae6e110932ca41f3",
+      "sha256": "b41a3e21af8077177bb85b6b17888dc1ff16c1bda1a4865318f97f72c383dcf9",
+      "bytes": 295
+    },
+    "tools/fixtures/shared-options/controls/invalid-coercion.patch": {
+      "mode": "100644",
+      "gitBlob": "56cf1bf773605315945914bbc920c70dc75d4cab",
+      "sha256": "7d4c4406d788066a1ccc9effb5985cefb58e0ff0a168cb71ca3b8cc9ba3238f5",
+      "bytes": 663
+    },
+    "tools/fixtures/shared-options/controls/lost-unrelated-fields.patch": {
+      "mode": "100644",
+      "gitBlob": "13c7934a99247fd4e0dfc74f34e0cff107bc6347",
+      "sha256": "9cae6e33c57a3055061a1c6c25999d0d3fb4f6f411c74d55409dbb7e89ef656d",
+      "bytes": 310
+    },
+    "tools/fixtures/shared-options/controls/premature-success.patch": {
+      "mode": "100644",
+      "gitBlob": "fad54d6ceb0e4d9649e82c5ad9006028d9d94d77",
+      "sha256": "a98d5be9a6128943d1d3a1a61af5daba81ce76c94e5be229673a64f8a4164b2c",
+      "bytes": 795
+    },
+    "tools/fixtures/shared-options/controls/wrong-field.patch": {
+      "mode": "100644",
+      "gitBlob": "a4ff720b493faca75648be1f296686d222547314",
+      "sha256": "83edfa582e82d4597651f3916660766274ec1464a692f1a1435af7b9395813d0",
+      "bytes": 608
+    },
+    "tools/fixtures/shared-options/dependency-identities.json": {
+      "mode": "100644",
+      "gitBlob": "0cd8015b7592f6cc71a52ef667074937277c7915",
+      "sha256": "baf7cb905287f5f88ad429e6c807e967979857aff48f3d3f9365f54080908d14",
+      "bytes": 5767
+    },
+    "tools/fixtures/shared-options/expected.jsonl": {
+      "mode": "100644",
+      "gitBlob": "12fee62728616a3c6ce304cffc8d421ca110b500",
+      "sha256": "d42b319c1fedf9e8c3b392c408eee86f5d86039fee77e6c2e653227991cdd8e6",
+      "bytes": 394448
+    },
+    "tools/fixtures/shared-options/future-gates.json": {
+      "mode": "100644",
+      "gitBlob": "2291e1835954481f886c1ae005c0f34ae58f26aa",
+      "sha256": "e46664d0e9d40a029be42c6cb4219319b5074f7e47989a88b776561326b3d901",
+      "bytes": 161533
+    },
+    "tools/fixtures/shared-options/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "24cae7474aeef6316e9ac461c9f3d7f962eee01c",
+      "sha256": "0cdd6365dbbeda205d640a6f8da1e926b343be6a52bd0746179bfefaf7e503bb",
+      "bytes": 3354
+    },
+    "tools/fixtures/shared-options/negatives.json": {
+      "mode": "100644",
+      "gitBlob": "c14d92d9bcb47b263faa28d9db7183a02756bd99",
+      "sha256": "46de5e6f9b5675656a3a83ca45ce0d7d64131668f62904c3e7560604280ccccc",
+      "bytes": 7846
+    },
+    "tools/fixtures/shared-options/negatives/01-music-gather-order.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "69da54100e9f61ab028a9f118870163051c44e3f",
+      "sha256": "42c520016e39af919c8a63bc86f9094cfd3b7bc9e34bf80ef0bdc395768c4b17",
+      "bytes": 205
+    },
+    "tools/fixtures/shared-options/negatives/02-order-music-boolean.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "11774bbd3227d0a6ff5acf7686e1fa6de611b7ab",
+      "sha256": "d420bf4306e815b538869fc39acb58a892120e347abd0434b1c30614871ade4f",
+      "bytes": 188
+    },
+    "tools/fixtures/shared-options/negatives/03-destination-order.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "75c9f6bed6f52070b0119693a035c624cf713871",
+      "sha256": "49298ad9fb5054c551fc65459e574ca7446b932471f65ed8adb3f828e3db7143",
+      "bytes": 191
+    },
+    "tools/fixtures/shared-options/negatives/04-time-count.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "7ffbd73d64154f25d270e00a4e34593a67454307",
+      "sha256": "10784c74fef778c8d22cf60024b58bbfb9908ec50c9cc9184474429f53764dfb",
+      "bytes": 191
+    },
+    "tools/fixtures/shared-options/negatives/05-count-time.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "54e653c449823bf430c8518944f91ba257884325",
+      "sha256": "f1f30402c195aae31d44c0537754e05ecd66aab54e9c2774490d6056a853a098",
+      "bytes": 189
+    },
+    "tools/fixtures/shared-options/negatives/06-count-outside-choices.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "e6b7f3889a4ba055e2bf4144912836d28b6e7dac",
+      "sha256": "fb66ec6fc927d0d715510d6d2e80f67feb515f2993d2b6f3a9bbc778a6506c12",
+      "bytes": 187
+    },
+    "tools/fixtures/shared-options/negatives/07-feedback-number.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "30b5f8ebd44c98f21a4d373eefd2323be4b9d391",
+      "sha256": "b876d286c4272d5725f6b998699414f67ab2721b8b6570009551965eec94f747",
+      "bytes": 189
+    },
+    "tools/fixtures/shared-options/negatives/08-feature-switch.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "7a09f5277ad180e97f997af69927711002cbe6d3",
+      "sha256": "048cc7bdc14e6c14b124130d7cf714bf892f7ad9eb7a97e75cb79d098ddf72c0",
+      "bytes": 191
+    },
+    "tools/fixtures/shared-options/negatives/09-section-switch.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "13a1bc3c8a8ba7ab0e59c66182f1c4cf8111b996",
+      "sha256": "6d4e82bfb3411985fe8fa11d91ace6278279d7c2a5c61d55acb163b2b10cdcd1",
+      "bytes": 188
+    },
+    "tools/fixtures/shared-options/negatives/10-preset.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "4e7fc5f5734e986da04c491056b370b6259249fd",
+      "sha256": "961ea5892dbd04b77a2ad505d19a3c397a6f9955ac76f66b8a63f057fa7da3d2",
+      "bytes": 195
+    },
+    "tools/fixtures/shared-options/negatives/11-trigger-unvisited.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "2345cc7fa474a2a561d99163a80a8bf5980ae506",
+      "sha256": "81493dad0bfd9b1e3a9eefd8f0c8f6eee5f822dff1f8a16043b70cc86e40bc83",
+      "bytes": 197
+    },
+    "tools/fixtures/shared-options/negatives/12-trigger-background.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "670ce01e61b30008fc2ddd4529885b4cadcef058",
+      "sha256": "526211a46c2b9ba495e844c515acdf13afbb157585db53873899c05f197e14b7",
+      "bytes": 198
+    },
+    "tools/fixtures/shared-options/negatives/13-trigger-count.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "77383773ca973f72e85bce0194d21d507aa63004",
+      "sha256": "b148ac6e03e809ffbceacb1728a9c4640345cd496cefa2a58c99c27440584527",
+      "bytes": 193
+    },
+    "tools/fixtures/shared-options/negatives/14-raw-path.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "af82bc57e124f36a06ddbdf4040d26b5fcef3436",
+      "sha256": "e08ba20fd0143ffec2dfd40f7e8dd319f4247d4df609f701c643cfeed4a8fc11",
+      "bytes": 188
+    },
+    "tools/fixtures/shared-options/negatives/15-raw-settings.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "9e4ef1bbef53298ecabfb68a033a9b54fd797dd6",
+      "sha256": "d3f1ff0a7f89fadd4c0a823899388cd46ed21c40d5a81f385173fdb34cbefc9f",
+      "bytes": 165
+    },
+    "tools/fixtures/shared-options/negatives/16-key-lifecycle.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "2213c8e45087d9c2bb473f4ae0b20cd466a0a8e9",
+      "sha256": "f17cc6a57f802b53546018c0322369ebf495191c43ae1736933b456242ff0cc8",
+      "bytes": 195
+    },
+    "tools/fixtures/shared-options/negatives/17-shortcut-lifecycle.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "a17409343e968b8f53a2492dac4741ec05fd15fb",
+      "sha256": "b4cb7ca20bf9911ac24c964ecc77e362ec4e1aeb2f26f3e28ddd03fb65935651",
+      "bytes": 188
+    },
+    "tools/fixtures/shared-options/negatives/18-destination-account.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "0fbb7938769dbbc2ed4bbc10800032a951cb7c01",
+      "sha256": "dbcfc5c5e5868573fbbaabc0d5e5fd76472aa18003f1f97ecf17bacfc6496127",
+      "bytes": 194
+    },
+    "tools/fixtures/shared-options/negatives/19-missing-forwarding.ts.txt": {
+      "mode": "100644",
+      "gitBlob": "a9cc217bbebda29740048271aa488813c89f2fa0",
+      "sha256": "2a7a6f8b6abc062fa3cf67845f3cc93139ac8f0d6ad2761baeea6bf9e395cb2a",
+      "bytes": 296
+    },
+    "tools/fixtures/shared-options/owner.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "c48a01794b7ebfce0a03ee6b7b36575651406ae9",
+      "sha256": "735e02b9e3c4fb159de6f584634534379962d2f396928ef46121e4b4a29feafb",
+      "bytes": 14505
+    },
+    "tools/fixtures/shared-options/run.ts": {
+      "mode": "100644",
+      "gitBlob": "4128b1b87137fdea352762209fd31ec1212ec895",
+      "sha256": "5d27aa9847c93e4de5c78c55b07ab190f7031187b50beba5b76bdbdd4a7c8d92",
+      "bytes": 114
+    },
+    "tools/fixtures/shared-options/specimens.ts": {
+      "mode": "100644",
+      "gitBlob": "c9742e767322e7ddf80ff9fa24e6885dfd42454c",
+      "sha256": "0364f3e19085dc76b14311fdea59af900fb309d3a97b2af2496a1dce466eb297",
+      "bytes": 86838
+    },
+    "tools/fixtures/shared-options/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "524705bc03da70bfd7d0cc8841e2dcbcb46b3cac",
+      "sha256": "5bf839e2b84cb6cbbea2eccec66189be40dca11e8cb6f6c59446a26d4ea26d95",
+      "bytes": 1836
+    },
+    "tools/fixtures/shared-options/type-proofs.ts": {
+      "mode": "100644",
+      "gitBlob": "1973371bb3a219dec7fe00287714f83dab15e535",
+      "sha256": "5c5223125768384871843429db22087619e7353eb34c80e95750282245dda5b1",
+      "bytes": 1399
+    },
+    "tools/fixtures/shared-options/upstream-anchor-relocations.json": {
+      "mode": "100644",
+      "gitBlob": "165d4e43aea80af045b337c8abb1286e22eaac91",
+      "sha256": "60ce91674f9c7f86429b82bc8964dc932ea8c28a94fa7ad008cdfc9b98e41c52",
+      "bytes": 9814
+    },
+    "tools/fixtures/shared-options/verify-inclusion.py": {
+      "mode": "100644",
+      "gitBlob": "cac69740e4392bf65794c0ac636984322613c145",
+      "sha256": "9eb45b37f278979a27f524d605cdff48a208a4cb722140e91f74d54e083cf693",
+      "bytes": 717
+    },
+    "tools/fixtures/site-core-lifecycle/Owned.svelte": {
+      "mode": "100644",
+      "gitBlob": "bce6f4d8b948b8ac45d8cc9ead8f38fc52cd2412",
+      "sha256": "7fbc924d37565ea027c7350aeb173b974a4e4055743832db8f4033d21f37ce62",
+      "bytes": 274
+    },
+    "tools/fixtures/site-core-lifecycle/README.md": {
+      "mode": "100644",
+      "gitBlob": "91cd75caafe03479346a571ebb89017804637851",
+      "sha256": "6554a76366a1a073c6b2e399d29dd66b19902a080a067d21f949d63c55240334",
+      "bytes": 3329
+    },
+    "tools/fixtures/site-core-lifecycle/check-consumer.py": {
+      "mode": "100644",
+      "gitBlob": "35b596e400896e57a53ab519246b9c8a072b0384",
+      "sha256": "1e34e0ef8827e3a927e3fcae4a58f050f227d2ee325a6ddd85db0228c654cbcb",
+      "bytes": 895
+    },
+    "tools/fixtures/site-core-lifecycle/controls.json": {
+      "mode": "100644",
+      "gitBlob": "d373b302ec7109b965531928a5781d4b4619a600",
+      "sha256": "eac0649e74265321883428af56be3dab4a60f7de55fad47e8fbb9e5b14ca5f89",
+      "bytes": 4802
+    },
+    "tools/fixtures/site-core-lifecycle/expected.jsonl": {
+      "mode": "100644",
+      "gitBlob": "f3a5fb76917dfaff118abc870335e36d9a925f45",
+      "sha256": "7dc978c5cce3b8db95caf412605e1a201d827ac9847f55c904b5b7709c98f1a4",
+      "bytes": 469
+    },
+    "tools/fixtures/site-core-lifecycle/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "c06f386a1b1383d3956335aa832f52b1af8e27c9",
+      "sha256": "30b49e65cf4d084b66453df4b392ada8ae89ef94155b12aa72116e32c8703e97",
+      "bytes": 2020
+    },
+    "tools/fixtures/site-core-lifecycle/preload.ts": {
+      "mode": "100644",
+      "gitBlob": "7274101e08c4a464ae153188c52a3db8b6a5b9fa",
+      "sha256": "611d8f55ff671cd57f77fecea630a91efa6417a19ac73ce86f380ef6f6172e64",
+      "bytes": 166
+    },
+    "tools/fixtures/site-core-lifecycle/qualify-controls.py": {
+      "mode": "100644",
+      "gitBlob": "6336f3b987a180ba840b0e92ba5680373cc5f6fc",
+      "sha256": "6c204a1a1b0262888adb01e9bf7077f3bd83d643dc2b88210a0f771fdc4e0db9",
+      "bytes": 2811
+    },
+    "tools/fixtures/site-core-lifecycle/qualify-types.py": {
+      "mode": "100644",
+      "gitBlob": "5be07e6738ea860a03708e1a868bd99ecddd61fd",
+      "sha256": "c01535905708e3f94ddeafba2b4198584894a77fcccb85273c27c43532f13f2e",
+      "bytes": 2549
+    },
+    "tools/fixtures/site-core-lifecycle/run.ts": {
+      "mode": "100644",
+      "gitBlob": "8c13ef2280bf52dc0a129b8784a1ce9ba10b0596",
+      "sha256": "f0d5b2e09b7490ab83c14be90457b5c69a350f47ed39a645ef1a1e60db947066",
+      "bytes": 2604
+    },
+    "tools/fixtures/site-core-lifecycle/svelte-props.ts": {
+      "mode": "100644",
+      "gitBlob": "c32892e6f248c60fb73a17f57d354600676d261c",
+      "sha256": "5dab095c8dc4937e6eff6628e94a29f0362e86e0d9dbd16c225cf120eb52da94",
+      "bytes": 538
+    },
+    "tools/fixtures/site-core-lifecycle/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "70d3d635069bafafafd0975fe8134dd7866bfaa2",
+      "sha256": "05c99ec3b0970d9348191422c453d222dd982b8562c892a163086faba0fa2a34",
+      "bytes": 715
+    },
+    "tools/fixtures/site-core-lifecycle/tsconfig.svelte.json": {
+      "mode": "100644",
+      "gitBlob": "630594c29b1fe6edc53a47d72b2d787754f943ba",
+      "sha256": "7cb547dc05c93ffbe3caedc9cc7ed303f7fc9eef53804d8fdc9d88323f808fef",
+      "bytes": 335
+    },
+    "tools/fixtures/site-core-lifecycle/type-probes.json": {
+      "mode": "100644",
+      "gitBlob": "1c0158756461b8ca63578d3567ec6e2368381600",
+      "sha256": "9976163968f3619877625fd19d8e5d58adaa3f9ac3fbe26d28740404bc410d09",
+      "bytes": 6218
+    },
+    "tools/fixtures/site-core-lifecycle/unexecuted-gates.json": {
+      "mode": "100644",
+      "gitBlob": "7cccf2bd28443f1b6417e49a94b8034424514c19",
+      "sha256": "479bafee5e76757c4e308d192ef34e9a2f08f53b534cb58f6b4f972ea4b416b5",
+      "bytes": 5417
+    },
+    "tools/fixtures/site-core-lifecycle/views.ts": {
+      "mode": "100644",
+      "gitBlob": "f566738d246abef4f8aca3851c52ddabacd0b68d",
+      "sha256": "01398a0e7ca4b1c95927f81de445fccf50c2263a539a74e1b73365a4f4a602c7",
+      "bytes": 1960
+    },
+    "tools/fixtures/starting-owner/README.md": {
+      "mode": "100644",
+      "gitBlob": "e36ec1de20d810a1218ae88fff7adc49ae390468",
+      "sha256": "646a343df6d74a46c265fbbe19310e096db4ad2b5c6365fa6816b5ef3317e9fc",
+      "bytes": 3718
+    },
+    "tools/fixtures/starting-owner/consumer.type-test.ts": {
+      "mode": "100644",
+      "gitBlob": "45020a7b36619817bff64ad47d4f5f6bba584b94",
+      "sha256": "1820cb884b193df38c3591a6dc7a397004977591168d13596d65ce4677619318",
+      "bytes": 761
+    },
+    "tools/fixtures/starting-owner/controls.json": {
+      "mode": "100644",
+      "gitBlob": "5db625864f0a9bf59b31ea0992697c364caa75f9",
+      "sha256": "b3de0706461aaa0a266b7046737d68cf0548264a30377f93a4b2fc09069b8d93",
+      "bytes": 3056
+    },
+    "tools/fixtures/starting-owner/qualification.tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "c46d7f79c44f991d8eb5c3bf50c0587471a7a392",
+      "sha256": "b37addb2480f91a39291cc92af28df099e49d45dc500680fdc0c441d47bcb054",
+      "bytes": 247
+    },
+    "tools/fixtures/starting-owner/qualify.py": {
+      "mode": "100644",
+      "gitBlob": "ac47a4d2ff3b1949e19ccb3138eddaaa02de66ea",
+      "sha256": "02a918d6d1f1f5289adeddd8863b6795d79510845b4b382c791903d1e4fb865a",
+      "bytes": 13194
+    },
+    "tools/fixtures/starting-owner/run.ts": {
+      "mode": "100644",
+      "gitBlob": "7b6ba887ba9535f72eda6eaaecc424f46a8eb5de",
+      "sha256": "0a4a450c4f5bf386f2605ccd14d96933bf5ebcd78161d3636772046ffd8adf9c",
+      "bytes": 5409
+    },
+    "tools/fixtures/starting-owner/support.ts": {
+      "mode": "100644",
+      "gitBlob": "b7055830bd6490dd8f5386f661e853c903abd35e",
+      "sha256": "f98493f46582d82b606dd473f4c1e88965eeec8b50e2d7219e9bc6dda279cd10",
+      "bytes": 7363
+    },
+    "tools/fixtures/starting-owner/type-probes.json": {
+      "mode": "100644",
+      "gitBlob": "8a158369160ea4ac41248c4d3457c4489d6cdb87",
+      "sha256": "0e3030caea1851832a88e84f5edfd398bd0f4745277bad626384b66c1eac2382",
+      "bytes": 4768
+    },
+    "tools/fixtures/svelte-pilot/README.md": {
+      "mode": "100644",
+      "gitBlob": "123fbe1f2353f67a6386d55b65c026dbf1190102",
+      "sha256": "63477fdd91873dc3482797dde5f7589ae47458c32713ad60400ad6f23cd006b6",
+      "bytes": 4554
+    },
+    "tools/fixtures/svelte-pilot/VALIDATION.md": {
+      "mode": "100644",
+      "gitBlob": "71e2318da1161b35369e0897a40afc8ac28cf78d",
+      "sha256": "f754467e077d843a71d38759d00319291978962eff42c87244a90a4555ad0a89",
+      "bytes": 11149
+    },
+    "tools/fixtures/svelte-pilot/check-archives.mjs": {
+      "mode": "100644",
+      "gitBlob": "0b78910285aeac5637cee4f6a9598e6bd1c2ca18",
+      "sha256": "d6676d5ec65e0572ace3aba1398bd8eb3947af5eeeb38a5ce993104847c4a2fd",
+      "bytes": 1385
+    },
+    "tools/fixtures/svelte-pilot/check-browser.mjs": {
+      "mode": "100644",
+      "gitBlob": "a7916c347bfa633491e09de61aaf6cf6c187ea3d",
+      "sha256": "3c07970e64cd7beef122e3490aec1a412afdefa8c5a23f3ec3f3d55a4ab24742",
+      "bytes": 4430
+    },
+    "tools/fixtures/svelte-pilot/check-build.mjs": {
+      "mode": "100644",
+      "gitBlob": "fd658c90d2720e377fdbe314556a705257648760",
+      "sha256": "e9e782984e32a672d30d89a68f608e4f14d0f799d9e647f4d4ebfb54afca4b2c",
+      "bytes": 1870
+    },
+    "tools/fixtures/svelte-pilot/components/Pilot.svelte": {
+      "mode": "100644",
+      "gitBlob": "34f8bfd538ee6a2bae45307b846dcad121f3324e",
+      "sha256": "8cb3972723e7949a73297923b3aab67e53f6afc78fc8453f69422dfccc185de0",
+      "bytes": 992
+    },
+    "tools/fixtures/svelte-pilot/components/counter.svelte.ts": {
+      "mode": "100644",
+      "gitBlob": "1d32b30a3789caed4133c9aa33f3b4d77faf5e98",
+      "sha256": "8bde34804a23417574ad86f5cda49294faf728a87983b8f69e47c629f85ab758",
+      "bytes": 140
+    },
+    "tools/fixtures/svelte-pilot/entrypoints/pilot/index.html": {
+      "mode": "100644",
+      "gitBlob": "f49fa1f4e6d63e1735fc33379618203b258ea335",
+      "sha256": "f9dc6e37811e4234911b7df70c81e31d6d564c2c4acf7bfcb2f5e82def48faaf",
+      "bytes": 426
+    },
+    "tools/fixtures/svelte-pilot/entrypoints/pilot/main.ts": {
+      "mode": "100644",
+      "gitBlob": "f6e9d171fe5decfbb951f3399437c0f5c065bf7e",
+      "sha256": "c8cd346880ccfa92acf5c004f4e850f55f171e57370ec87456ee77918cfc31da",
+      "bytes": 354
+    },
+    "tools/fixtures/svelte-pilot/page-link/README.md": {
+      "mode": "100644",
+      "gitBlob": "710054693db293590ea17bfbe5c924e4161012dd",
+      "sha256": "9deb1ae36fea72392aeec68a47745a0d0ac12ea032f14401799ce8ba13acc08a",
+      "bytes": 9965
+    },
+    "tools/fixtures/svelte-pilot/page-link/check-browser.mjs": {
+      "mode": "100644",
+      "gitBlob": "cad7656903319208729bdad967ed6d4c88f26545",
+      "sha256": "793193560980bd04f8c3a40c1a27821d82ece4e40dd97cb67a417b50b0524421",
+      "bytes": 14119
+    },
+    "tools/fixtures/svelte-pilot/page-link/check-build.mjs": {
+      "mode": "100644",
+      "gitBlob": "7e70a2febfffa30c285cc0b7139d76f7328bef49",
+      "sha256": "32c58a1546ace359edcd978dcc4e4bafd8aee32f0f1479cb670604af3a7e185f",
+      "bytes": 3614
+    },
+    "tools/fixtures/svelte-pilot/page-link/check-development.mjs": {
+      "mode": "100644",
+      "gitBlob": "0c20eb07bf74d081a024eac802ea8aa497d8e584",
+      "sha256": "9620077d6e404afb6ba8c3431f3aab85be6c759b1d24348f657369a26db4675f",
+      "bytes": 6492
+    },
+    "tools/fixtures/svelte-pilot/page-link/check-negative.mjs": {
+      "mode": "100644",
+      "gitBlob": "f7ceff26fd41240005e80f68bd2642812c3e827c",
+      "sha256": "9948c8e52ae9a572c6550c4b33dd9bbdd34d92201fa19797beda0ef33aa76858",
+      "bytes": 12028
+    },
+    "tools/fixtures/svelte-pilot/page-link/check-regressions.mjs": {
+      "mode": "100644",
+      "gitBlob": "10e61d0d27d9e7b532e7651183be0702b9ff5035",
+      "sha256": "d0e46f0011b0f1a37eecdeed941b7613305e0a2c8af0aafb898a28e7aa211983",
+      "bytes": 21715
+    },
+    "tools/fixtures/svelte-pilot/page-link/check-source.mjs": {
+      "mode": "100644",
+      "gitBlob": "2d1421f38871d186546dec471d85a36ca2e7910e",
+      "sha256": "715eba0a9b1a940e6e7f2663e36a24ed210cdef997859707562a92a7c50a9ee9",
+      "bytes": 3190
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/entrypoints/background.ts": {
+      "mode": "100644",
+      "gitBlob": "1173a66482f488bb304f1664138adbf83d7dfba5",
+      "sha256": "44a0ec8d03005ba65d45a9f7256b94233aff23a14ebdaf5a4a883c7e7e21e023",
+      "bytes": 105
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/entrypoints/consumer-music.ts": {
+      "mode": "100644",
+      "gitBlob": "766809cdc55a1b1f26dd5533485cc46cb3e0e7ca",
+      "sha256": "0a5433180080967628daa4714bdd4d2a2ad5451ab487d7cd7073a1bb92c27a4f",
+      "bytes": 184
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/entrypoints/consumer-www.ts": {
+      "mode": "100644",
+      "gitBlob": "766809cdc55a1b1f26dd5533485cc46cb3e0e7ca",
+      "sha256": "0a5433180080967628daa4714bdd4d2a2ad5451ab487d7cd7073a1bb92c27a4f",
+      "bytes": 184
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/entrypoints/control/index.html": {
+      "mode": "100644",
+      "gitBlob": "520f9d473e8e36ea9629892f29bb116d1240edec",
+      "sha256": "849b7898be33fee8948bf99251ed9d85aead4747d247e137aa5467872f6bda76",
+      "bytes": 225
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/entrypoints/control/main.ts": {
+      "mode": "100644",
+      "gitBlob": "4d813c7e4079fd5478b24e183a8b87cf1192e5ed",
+      "sha256": "1bf757506b86968903d5d1f6025c88a72c85022ee58549a991a0f46b640bf4cd",
+      "bytes": 2801
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/entrypoints/core-music.ts": {
+      "mode": "100644",
+      "gitBlob": "d262c85463eb8413fdd7dd967054a0e216dd8eac",
+      "sha256": "91b263046f1f45528b4c8bbcba8b8d432e215d14997906b0d9c3b86b0142a5a2",
+      "bytes": 308
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/entrypoints/core-www.ts": {
+      "mode": "100644",
+      "gitBlob": "d262c85463eb8413fdd7dd967054a0e216dd8eac",
+      "sha256": "91b263046f1f45528b4c8bbcba8b8d432e215d14997906b0d9c3b86b0142a5a2",
+      "bytes": 308
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/entrypoints/feature-auto-add.ts": {
+      "mode": "100644",
+      "gitBlob": "9c8abb06b126c26c66594e983a06ee5148ec3e3a",
+      "sha256": "9bf0f93b543b1b5eee303157704261db9d79e5002335ec470ed8e356ad77ecc1",
+      "bytes": 319
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/entrypoints/kit-music.ts": {
+      "mode": "100644",
+      "gitBlob": "e188a8a63354157d34e9b7214e91e6d8a667fbe9",
+      "sha256": "c6070346537def6f7c532615e5f3e685b21c80bd8f2b033e4dfc2a13780c7c63",
+      "bytes": 608
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/entrypoints/kit-www.ts": {
+      "mode": "100644",
+      "gitBlob": "e188a8a63354157d34e9b7214e91e6d8a667fbe9",
+      "sha256": "c6070346537def6f7c532615e5f3e685b21c80bd8f2b033e4dfc2a13780c7c63",
+      "bytes": 608
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/entrypoints/late-music.ts": {
+      "mode": "100644",
+      "gitBlob": "52c89c006e8d1cce3a2c6794a13045d8b1ee57bd",
+      "sha256": "4bcbd7c3a1ee1ff4ac8df8a90a7fd73a12e0ddc82bccad53f59708ad1c2fceb0",
+      "bytes": 180
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/entrypoints/late-www.ts": {
+      "mode": "100644",
+      "gitBlob": "52c89c006e8d1cce3a2c6794a13045d8b1ee57bd",
+      "sha256": "4bcbd7c3a1ee1ff4ac8df8a90a7fd73a12e0ddc82bccad53f59708ad1c2fceb0",
+      "bytes": 180
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/entrypoints/page-music.ts": {
+      "mode": "100644",
+      "gitBlob": "8410030081019979fbab455949c795586f313619",
+      "sha256": "6409aa82e04c94cad4b3234055a5653d6ad00c916568becfd2311500f4900f99",
+      "bytes": 342
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/entrypoints/page-www.ts": {
+      "mode": "100644",
+      "gitBlob": "8410030081019979fbab455949c795586f313619",
+      "sha256": "6409aa82e04c94cad4b3234055a5653d6ad00c916568becfd2311500f4900f99",
+      "bytes": 342
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/entrypoints/popovers.ts": {
+      "mode": "100644",
+      "gitBlob": "d1a24ea04f569a1cfc492d526401301ad07a705e",
+      "sha256": "6d334a5dfd75a1cf3decb5262167513f93b0558573d2e1fdb26fe3d99da66222",
+      "bytes": 473
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/global.d.ts": {
+      "mode": "100644",
+      "gitBlob": "b1b37dd851b2eede014f4cf5840fffde3a8e33cf",
+      "sha256": "995dc60a05d4feb6002f05427beb6ca2993fa907c145b38ff5a79a907d45347f",
+      "bytes": 511
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/registration.ts": {
+      "mode": "100644",
+      "gitBlob": "fdf8a85a5b33e784c746d03e9faf618b049c0754",
+      "sha256": "935f70235319d6647765333c20dd81e5b27f9a1e26290c197b09516180e1ca72",
+      "bytes": 1635
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/site/consumer/Consumer.svelte": {
+      "mode": "100644",
+      "gitBlob": "9a8a4eb8920c54a42299b05d707c8249113638c9",
+      "sha256": "b76ef756355f4b8bda1f2a4e840c4c360c54cefb72574857ff2d8562bcb599ea",
+      "bytes": 662
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/site/consumer/counter.svelte.ts": {
+      "mode": "100644",
+      "gitBlob": "b05ab4db1aec7714230d9a1ca6bcbc4f7f560b36",
+      "sha256": "47f011d810cd8a915dad968f5730e1d3308c532c8fe2507856848aae06d1a225",
+      "bytes": 121
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/site/consumer/mount.ts": {
+      "mode": "100644",
+      "gitBlob": "b8c5eac5109e53d4b003ed6648abd91a67261fe7",
+      "sha256": "54887301cc1a25ca02e49691cc57bb76faebdec129b610bc97ea225d045fc493",
+      "bytes": 315
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/site/kit/Badge.svelte": {
+      "mode": "100644",
+      "gitBlob": "02232b15c74ab8cecb8e3eee44690dc33248f5d9",
+      "sha256": "a0bd71d29879995dd7660e2e52a7af52c28afd08ccdf72cbf073d99bf74daedd",
+      "bytes": 303
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/site/kit/index.ts": {
+      "mode": "100644",
+      "gitBlob": "1ea99b30dc3e4d391b7d97eb1f48aaaafb442e48",
+      "sha256": "e634eb6c23e167bf675f2a8b66a7edd337a22a00475d74775e8bb14376ed539c",
+      "bytes": 50
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/site/popovers/Popover.svelte": {
+      "mode": "100644",
+      "gitBlob": "45bdb6e99d9da8a88956278f976d4ef80349b08e",
+      "sha256": "f6a29c9391e9f9a8ac3a7c34031edc89dd16efd07ef1d8d7be4eaf28fdff60e5",
+      "bytes": 602
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/site/unsuffixed/Unsuffixed.svelte": {
+      "mode": "100644",
+      "gitBlob": "a3bcdc1e66a24cc25a6e3b108cb0f3123eaca686",
+      "sha256": "ed240329d8481200531d3fe535bea4c7e800c35bd49194485bd3b0657afce163",
+      "bytes": 266
+    },
+    "tools/fixtures/svelte-pilot/page-link/src/virtual.d.ts": {
+      "mode": "100644",
+      "gitBlob": "d9c19dd8ad193fe8b91fc8bc80cfd4ea42473eb9",
+      "sha256": "91b569326e705a815ea364207d763dcba7d929bb5bad80ed440eef36c90560c7",
+      "bytes": 177
+    },
+    "tools/fixtures/svelte-pilot/page-link/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "ce887d7b411ff39eb96f10658f2e2e4b5fb8cce7",
+      "sha256": "24d9e68fe889b130ff50eda97922203f387eec108a7a83258720d9eb4594536a",
+      "bytes": 494
+    },
+    "tools/fixtures/svelte-pilot/page-link/typecheck.mjs": {
+      "mode": "100644",
+      "gitBlob": "36da53ad737e1a038055209fa1e33d613f064d1d",
+      "sha256": "1df2ad68aa27a1b04b589aa26debc143dda0f6eda6ae7b94bdf8403759fabd36",
+      "bytes": 988
+    },
+    "tools/fixtures/svelte-pilot/page-link/wxt.config.ts": {
+      "mode": "100644",
+      "gitBlob": "2f07a966ccbacc0640c717aeb72710003f04000f",
+      "sha256": "8c7011012c6e7376d2a70587977ec2bbb53e613d28f6d4036dff7cb13ef37508",
+      "bytes": 1289
+    },
+    "tools/fixtures/svelte-pilot/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "45aea3aae884fb013c05d4e2a08c74564050df5a",
+      "sha256": "97fce8804db71410d61dc32cc2f89dc784bb485e7fed9750854049102032d608",
+      "bytes": 275
+    },
+    "tools/fixtures/svelte-pilot/typecheck.mjs": {
+      "mode": "100644",
+      "gitBlob": "5b9e76ba184d53227dddebd14ead40fb72532cd5",
+      "sha256": "9c7d698d71617763f988dd005d2977cca46187632b2f0444a0db081f540118b1",
+      "bytes": 651
+    },
+    "tools/fixtures/svelte-pilot/wxt.config.ts": {
+      "mode": "100644",
+      "gitBlob": "e8771c15b49501dff2cc6fc53f54bb06e5b77c98",
+      "sha256": "a6a1b6f68d8cce242bbb8f7d695670e9044046aa27b7d4147cd7c44efd21781b",
+      "bytes": 874
+    },
+    "tools/fixtures/sync-join-lookup/README.md": {
+      "mode": "100644",
+      "gitBlob": "288138c10644c0b7f28c013117481a9827b00358",
+      "sha256": "720cd04c42460f1087055e9229fee61dc0339a3f4ff346f017f174a08d1637fb",
+      "bytes": 3195
+    },
+    "tools/fixtures/sync-join-lookup/run.ts": {
+      "mode": "100644",
+      "gitBlob": "126672ed26462fe4fefc8d4b996dba2b983bf167",
+      "sha256": "b1c331f8124ad1473fdcc2417a3c1ef50d18d84910cb9a67401bbab119e2d62f",
+      "bytes": 14185
+    },
+    "tools/fixtures/tab-projection/consumer.ts": {
+      "mode": "100644",
+      "gitBlob": "517088973d1d4cf584247fa8da9b49d243a27534",
+      "sha256": "fb0fd1c699366188a640615cf5673e36c67f3105d05dfe758b52879be6b66078",
+      "bytes": 2215
+    },
+    "tools/fixtures/tab-projection/controls.json": {
+      "mode": "100644",
+      "gitBlob": "55284c7181db0e64de247adccff54db0eeeac6eb",
+      "sha256": "3813c5caf9f055ddb6904a3d9379dfdb52a29995d1de07400e84d9159a138254",
+      "bytes": 2187
+    },
+    "tools/fixtures/tab-projection/expected.json": {
+      "mode": "100644",
+      "gitBlob": "54f2defb26b6208c9501a2e9ab33e6e5efc9f4aa",
+      "sha256": "b7df43e6472489017a9089eae1df6c09b9ff2a07ee7f4b493dd7fbc0feba645d",
+      "bytes": 15471
+    },
+    "tools/fixtures/tab-projection/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "78388692cae6461a02d97aa1269b3ec0a1cbd2e3",
+      "sha256": "3942fb6d90adda7fa2ed981ffab95bfc9489d8d1487117fc8cf18144e2d43066",
+      "bytes": 5335
+    },
+    "tools/fixtures/tab-projection/integration.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "31e0f35538a44695de6f2349b23ee2fda955675b",
+      "sha256": "12e94623163a564021a6e08bd17099dbf205c2216be8d6fb04363b4b93b9cf97",
+      "bytes": 4469
+    },
+    "tools/fixtures/tab-projection/native.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "a35d32531363eaa8d3844905db07965d46fa5e66",
+      "sha256": "ff9f067794db19172942ddbeb8186ea55428eedd7ecbff756f3d49bf6db79fa5",
+      "bytes": 4654
+    },
+    "tools/fixtures/tab-projection/native.type-test.ts": {
+      "mode": "100644",
+      "gitBlob": "85321fc4fdfb1ac18dc3400c6c580f1beeb288bb",
+      "sha256": "c05d3a183ccde9571e25dd9baeaea279e2ada4928354111d859d3df91e6547b1",
+      "bytes": 694
+    },
+    "tools/fixtures/tab-projection/qualify.py": {
+      "mode": "100644",
+      "gitBlob": "f0340b09691d06b8af8f65486cfd7a4b7cf1e904",
+      "sha256": "3d100473e86705d1790c5b84a489fb6d5a008162ab2e1c4fe4d5be33e1018aad",
+      "bytes": 5834
+    },
+    "tools/fixtures/tab-projection/run.ts": {
+      "mode": "100644",
+      "gitBlob": "5da8e33c5229232d937b69561a987f563ec74452",
+      "sha256": "ac2f868696d7bc110a68757fcc742d26331b665ad148b4e7bd7a9cd8741aa6ff",
+      "bytes": 1767
+    },
+    "tools/fixtures/tab-projection/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "487dc9b7fce76b2e3428fa640faba91d84f1acf2",
+      "sha256": "f91320de782295ce98b02470271db912f93be0e06cb3ed8132388afe88322d6d",
+      "bytes": 706
+    },
+    "tools/fixtures/tab-view/README.md": {
+      "mode": "100644",
+      "gitBlob": "51563c10c50a30b7da278e86bd99dc663e256fb4",
+      "sha256": "a15eb81047e14ffaa61bf4b49619edefed363a20af3ed93f689f0159c5bef0a2",
+      "bytes": 2135
+    },
+    "tools/fixtures/tab-view/cases.ts": {
+      "mode": "100644",
+      "gitBlob": "93eb8d61e373130fdf10b910c1fc5c8e83b3b7fa",
+      "sha256": "10b5d5aa08b73d8ab567910d17362ca1f43ad2842d4ae89c2b32fbd616565125",
+      "bytes": 3015
+    },
+    "tools/fixtures/tab-view/consumer.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "e9a09b225d97d0b755d00072265f9f56f61d0533",
+      "sha256": "5d48380248e81fade9049355d7fca3efa14676d82a8d22bd77b1d5fa05bec9b1",
+      "bytes": 414
+    },
+    "tools/fixtures/tab-view/controls.json": {
+      "mode": "100644",
+      "gitBlob": "0285aa8be2ccf444965542ab9401574fb8953b02",
+      "sha256": "862003bb337f4a10e549949e21bff43b610d20810e5f6de82a466de825433d20",
+      "bytes": 6109
+    },
+    "tools/fixtures/tab-view/expected-bytes.json": {
+      "mode": "100644",
+      "gitBlob": "219d247cda6ad4c5d7b6ac2a2b79c5c758878230",
+      "sha256": "95551c03bc20bf0358c2e973f8f0ad5cb888dc2e9ba26ca2c25f30f00c72bd9a",
+      "bytes": 294
+    },
+    "tools/fixtures/tab-view/expected.jsonl": {
+      "mode": "100644",
+      "gitBlob": "9f5878a1c7159cab921585301ad72fd6100d53b5",
+      "sha256": "b3976a0e46a588f6ff977de558263695b413c3c0a5ef6b3f1e2cfa20a07c5b28",
+      "bytes": 11339
+    },
+    "tools/fixtures/tab-view/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "eec87f0da42a833d2797d443f37c3b39012c1c6f",
+      "sha256": "247a241fcfa69c377659134fae0fff86a41b724378875bc2a5b6f612a658ceac",
+      "bytes": 2571
+    },
+    "tools/fixtures/tab-view/native.type-test.ts": {
+      "mode": "100644",
+      "gitBlob": "7a5149a2d75dd1cf3ee14fd54e788f0d47a8ccdb",
+      "sha256": "cb51bb6917fb15221efed3df2018cec08e90308d85ca662af04e0a4c873dcfd3",
+      "bytes": 1486
+    },
+    "tools/fixtures/tab-view/qualify.py": {
+      "mode": "100644",
+      "gitBlob": "57d84e5deb6aa75fda03f43ec322a2aa59b800c2",
+      "sha256": "49f47227174ebb2b0dbf527aac393af0fbad4ec504532474d16ad42f09afa75a",
+      "bytes": 365
+    },
+    "tools/fixtures/tab-view/run.ts": {
+      "mode": "100644",
+      "gitBlob": "f16681a24b00d3543491d3b21817c8f717579212",
+      "sha256": "00f694bd6db7d59b6ad9bead0270aed2adc04373261d255b6cb4fbe416b3799a",
+      "bytes": 6979
+    },
+    "tools/fixtures/tab-view/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "e0a23f7cf52108d0eb6e1f60ab32e08f1b18371a",
+      "sha256": "0fd97a81c1442ce0d40c7c160ae944ce89131df05f198a3348283f1fd8bc688b",
+      "bytes": 933
+    },
+    "tools/fixtures/tab-view/type-probes.json": {
+      "mode": "100644",
+      "gitBlob": "e83919a42d8b6aa9f5097bd33f41793bea077303",
+      "sha256": "2fced50da9a3353843e670d7af4b1047a7a72f944ee3874e130bd5644b0ee5f8",
+      "bytes": 7909
+    },
+    "tools/fixtures/tabs/README.md": {
+      "mode": "100644",
+      "gitBlob": "8ba205d0f046380bf40ce87cb515cb5910dd50aa",
+      "sha256": "9f77c8171f4a8f99db07a125903f53615c91e1fa3c36fe2364e745e694805c82",
+      "bytes": 2777
+    },
+    "tools/fixtures/tabs/controls.json": {
+      "mode": "100644",
+      "gitBlob": "6bcb8c6526158639064b5d61673e88c1cba21764",
+      "sha256": "729ccc0e632a25e03d8d1658dcf10029b7ac28ffc726143d6df6f18d43a778ff",
+      "bytes": 4169
+    },
+    "tools/fixtures/tabs/controls.py": {
+      "mode": "100644",
+      "gitBlob": "42238cffef56fd80970b9084c4618ce2d26820f0",
+      "sha256": "3cb4780e342748822990d0882f2ff44c57714b2b4bbe190db1dd6e1709b1c402",
+      "bytes": 3887
+    },
+    "tools/fixtures/tabs/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "56d52d79132a7b086d37a4a130a9696a4fdd3042",
+      "sha256": "4513393fa30d9e5d94d349890ee59c1d1676862e1cfba8eb3640a59f9b01d2ee",
+      "bytes": 7848
+    },
+    "tools/fixtures/tabs/run.ts": {
+      "mode": "100644",
+      "gitBlob": "47bad507ff412f50ca6c4dc0474d20b0234b0aee",
+      "sha256": "dec29e5359200f8bd647748e7bd749643d6964319b1606b9a5b9d43ad40d11dc",
+      "bytes": 1059
+    },
+    "tools/fixtures/tabs/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "0ccd342d108a07f570e31cdc34a4cfc86937f19e",
+      "sha256": "165949dbd206e091172e1f19e174de0a1e6d69cef0dc88ae95f972009c5db0eb",
+      "bytes": 837
+    },
+    "tools/fixtures/ui-foundation/ApiChecks.svelte": {
+      "mode": "100644",
+      "gitBlob": "61f58278f3355e4f013b9457e8e90d2b859f79f3",
+      "sha256": "e852ebb3102f0368c71b66dc618ba3d7c193ce922b700428abec09c93ae4fed9",
+      "bytes": 2559
+    },
+    "tools/fixtures/ui-foundation/README.md": {
+      "mode": "100644",
+      "gitBlob": "1bffe9a8e5ee0ec547cd1d1a736616b599f2af80",
+      "sha256": "cb4b3262d25ac0cdb5c6fb44ba9a41e2881e153d394c2e59e3bcd5a1f5da1f87",
+      "bytes": 3822
+    },
+    "tools/fixtures/ui-foundation/assets.d.ts": {
+      "mode": "100644",
+      "gitBlob": "326f33409847554e7529b2000303c1095f67a819",
+      "sha256": "c0820234911499d11f810ad5aadb8f010575ab2072eab070ebbc6d2c1317d7ce",
+      "bytes": 95
+    },
+    "tools/fixtures/ui-foundation/check-browser.mjs": {
+      "mode": "100644",
+      "gitBlob": "6ba95b2ae0c00a04d1148d41fb26bdba6505c3f1",
+      "sha256": "c08841f87712d9ebb637a967b623c63d5794e71a968206044a9dd8300575ae18",
+      "bytes": 4223
+    },
+    "tools/fixtures/ui-foundation/check-build.mjs": {
+      "mode": "100644",
+      "gitBlob": "11287f9d1e07be847e0a7f1272230df69ccf0b40",
+      "sha256": "f70fcb0dacdef85baa2a3061b6991b00af16e1406233587c49b047878c6006f2",
+      "bytes": 2633
+    },
+    "tools/fixtures/ui-foundation/entrypoints/onboarding/index.html": {
+      "mode": "100644",
+      "gitBlob": "f88e18b092e9d597129516a6df8c4b1014648d93",
+      "sha256": "de504f4fbb1c470d2c9edfac1d50720b2391505fb45b520df1797bececb0b9bd",
+      "bytes": 297
+    },
+    "tools/fixtures/ui-foundation/entrypoints/onboarding/main.ts": {
+      "mode": "100644",
+      "gitBlob": "c0f1da30057c99333c3089f5873afd3cb0f760e4",
+      "sha256": "4040eba5b80823bf5b653e8a9a62d28300834b17a6da3c452c4887883b6432cf",
+      "bytes": 1097
+    },
+    "tools/fixtures/ui-foundation/synthetic-owner.ts": {
+      "mode": "100644",
+      "gitBlob": "5e1d89e03e2c5df752bd88dcc493d606e6903e83",
+      "sha256": "6e6c452dc389e41891abeaebb4c43f4bbb86d5116fb301d47ae567eeeb17b432",
+      "bytes": 3714
+    },
+    "tools/fixtures/ui-foundation/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "01639c159a7815f5d4d3863d0b978e125342c041",
+      "sha256": "8b16be0dc468e728752820a42661c1dfac684c61a48ca8bf1199cedc6d00abdc",
+      "bytes": 500
+    },
+    "tools/fixtures/ui-foundation/typecheck.mjs": {
+      "mode": "100644",
+      "gitBlob": "f43eba6b78b9de11acd979a26c94136b7cb96080",
+      "sha256": "83f279df94d8fa16449a9fea42afb18a567170a0d93e90d3c93b34ba1441f9d6",
+      "bytes": 694
+    },
+    "tools/fixtures/ui-foundation/wxt.config.ts": {
+      "mode": "100644",
+      "gitBlob": "ab081d42b0af0a95ab3ef0ed00ca7b39863b9ed4",
+      "sha256": "363951771b352bb752cfb6a01e12ef24a546ecd8aeef86be431bb8de975f8a4e",
+      "bytes": 1070
+    },
+    "tools/fixtures/ui-owner-reconciliation/README.md": {
+      "mode": "100644",
+      "gitBlob": "0697ea3ff9846c8a7e0a4ba90e1c75ec8a51cc1e",
+      "sha256": "7db387fb88d3f796586edf6e72c59f13cdf1aa1324447a07c1e5b6bc5cf155c4",
+      "bytes": 4882
+    },
+    "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts": {
+      "mode": "100644",
+      "gitBlob": "88606da3f8ad32827000b2d1841ac700b3db9c0a",
+      "sha256": "25a0f99cb0074f0955ec4dd2d76c28300c2ca15e96a25655e58c77f2af3ab22e",
+      "bytes": 3397
+    },
+    "tools/fixtures/ui-owner-reconciliation/consumer-evidence.ts": {
+      "mode": "100644",
+      "gitBlob": "0fdd341a6e1de393fd0a079ca2f7bd6a15e45a6a",
+      "sha256": "fabef3373d0ad302bfdfcb071200fe2cb5c80a14fdf8567bd389169e8558dd1c",
+      "bytes": 3225
+    },
+    "tools/fixtures/ui-owner-reconciliation/consumer.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "8ce09107397f0b70674be642c8c62e4d13afd0c5",
+      "sha256": "f8fb211a79f359e78ee962fd273129fda6c06d60a9dbc95197c09ad6ca9df047",
+      "bytes": 3256
+    },
+    "tools/fixtures/ui-owner-reconciliation/decisions.tsv": {
+      "mode": "100644",
+      "gitBlob": "467ab75df44d385dfe56f623e04212a7291b712e",
+      "sha256": "6668f55fab3c5982a1547f6ce6ec66a7186e5dbbf91e1ef6d4ff31f506964e61",
+      "bytes": 2197
+    },
+    "tools/fixtures/ui-owner-reconciliation/expected-calls.json": {
+      "mode": "100644",
+      "gitBlob": "89e818ff5dd3fd2e24ed1ee1317437629165d5e7",
+      "sha256": "dcf136adeb5fd4dd4f39475b6d35f52921dd7da6036395f29d3d467c419e012d",
+      "bytes": 4874
+    },
+    "tools/fixtures/ui-owner-reconciliation/expected.json": {
+      "mode": "100644",
+      "gitBlob": "c8d4b0d63b63509ddc6aa22dcba09c6d999f5f19",
+      "sha256": "ccb1cfa4245d7250401108e9f99f6e3b4ed0bfdc356b1d494a4e5f05e7178873",
+      "bytes": 2081
+    },
+    "tools/fixtures/ui-owner-reconciliation/gate-commands.json": {
+      "mode": "100644",
+      "gitBlob": "e919759ed0f7c07b2573a7cd4c1f9d27487bc542",
+      "sha256": "f376da8ef7938fd49df2eae4353060e74eba24db58e7dd492518f5b64378e304",
+      "bytes": 106256
+    },
+    "tools/fixtures/ui-owner-reconciliation/gates.json": {
+      "mode": "100644",
+      "gitBlob": "2e4021f1f3875cee88ffeec07369653aaf40cfd5",
+      "sha256": "b0d17bf7cf87d3f0ee9edc0b6520b098b6c56de2077411047b64ba03b2077c39",
+      "bytes": 11691
+    },
+    "tools/fixtures/ui-owner-reconciliation/independent-rehash.py": {
+      "mode": "100644",
+      "gitBlob": "1b6fb9e93b30c7d639c9f020601350bff8ed1e86",
+      "sha256": "c1bc2a0c869e943a5b0d7fe66b04ab915e714fb2e9ae66e0a0f58a43143bf3d1",
+      "bytes": 5650
+    },
+    "tools/fixtures/ui-owner-reconciliation/proposals/src/background/router/first-run.bun-test.ts.source": {
+      "mode": "100644",
+      "gitBlob": "1a5cd2c484ac4dc5b4ebe063d757377ac8cbfd22",
+      "sha256": "aa3d696f937c552d1e1c71f714cd8897c834b1d6cd1877e2da4dee4c1da7b1f5",
+      "bytes": 19123
+    },
+    "tools/fixtures/ui-owner-reconciliation/proposals/src/background/router/ui-playlists/index.ts.source": {
+      "mode": "100644",
+      "gitBlob": "f2bcc099ca58990864264d32973a96f33f01fc36",
+      "sha256": "bff82ac2474abb5d5eeaff88997d82ff56943b1aa5eba0966f1cd22ec55c1295",
+      "bytes": 20332
+    },
+    "tools/fixtures/ui-owner-reconciliation/proposals/tools/fixtures/starting-owner/run.ts.source": {
+      "mode": "100644",
+      "gitBlob": "7b6ba887ba9535f72eda6eaaecc424f46a8eb5de",
+      "sha256": "0a4a450c4f5bf386f2605ccd14d96933bf5ebcd78161d3636772046ffd8adf9c",
+      "bytes": 5409
+    },
+    "tools/fixtures/ui-owner-reconciliation/protected-repairs.json": {
+      "mode": "100644",
+      "gitBlob": "a805366b2b0a3f237be35fe719e6ab0cf1f53cad",
+      "sha256": "c49cc6dc3942c321a623e1cf5627b2d661940e266f46092c4cb482266cac64a8",
+      "bytes": 2359
+    },
+    "tools/fixtures/ui-owner-reconciliation/protected-repairs.patch": {
+      "mode": "100644",
+      "gitBlob": "bc647b0611fa26903148509fd0651ba6f0db39cc",
+      "sha256": "790e08c3a3b246b886dc320c4fff910cc10d146c0ad767de05b9c34dc6c96766",
+      "bytes": 4309
+    },
+    "tools/fixtures/ui-owner-reconciliation/qualification.tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "7f393508fe4ebbb6422ba56961e9a0c13feba60c",
+      "sha256": "839ca2f9f1e08e626d8ac4e6fc9a8ee25dedac3accb16e8daacaca0523266aea",
+      "bytes": 2557
+    },
+    "tools/fixtures/ui-owner-reconciliation/run.ts": {
+      "mode": "100644",
+      "gitBlob": "999c1fecde91c26043f0a41e87db7cbe0d17ff3c",
+      "sha256": "f97ffdbf855361f460f3f60f3cc2714c0489cc5c1330e169f3da53f8a84d8ae9",
+      "bytes": 9608
+    },
+    "tools/fixtures/ui-owner-reconciliation/seal.py": {
+      "mode": "100644",
+      "gitBlob": "a2afaf53c36a28425c8f0f8f361daba5abb87067",
+      "sha256": "5256795000b48ec2eeb593b8611101d442c42f396efdee36ad44ad960e475997",
+      "bytes": 15014
+    },
+    "tools/fixtures/ui-owner-reconciliation/static-source.py": {
+      "mode": "100644",
+      "gitBlob": "2d90e38359c5b5a9170af7f09a08856f34615985",
+      "sha256": "a4d0a47e0a6413e542a1738fdab17fd9de7d9a35f9f8a695263842b7cbeb02bb",
+      "bytes": 3505
+    },
+    "tools/fixtures/ui-owner-reconciliation/wire-calls.ts": {
+      "mode": "100644",
+      "gitBlob": "1d495e3d92218cb0ccdf17533d0aad969efbe8be",
+      "sha256": "4ec5b18c8205ef453d3a247b16c9d7d9f68d96486c2817c3393b38ba71897947",
+      "bytes": 2724
+    },
+    "tools/fixtures/ui-playlist-progressive/README.md": {
+      "mode": "100644",
+      "gitBlob": "c76e1396076386d4f2ef14a4e0620cf3aeb00c83",
+      "sha256": "1471b8828853f2de89cb69d32a489868e246487bf24e412b8497e3b0da06ded5",
+      "bytes": 8484
+    },
+    "tools/fixtures/ui-playlist-progressive/bunfig.toml": {
+      "mode": "100644",
+      "gitBlob": "1244d83e64c9a69ee91fd497161cea58e060ca92",
+      "sha256": "56d1a09c38b2dd0e097179137e702d6ea7c0cd8dd4db7c5d7c47d0abfcd1efdd",
+      "bytes": 143
+    },
+    "tools/fixtures/ui-playlist-progressive/consumer.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "24b3f7f5361ead53a7844b22b93c0c2fbe77d923",
+      "sha256": "ccf06c955017dd1d14974811491012fcde57ba1798361d0e8c38bafc4377199b",
+      "bytes": 654
+    },
+    "tools/fixtures/ui-playlist-progressive/controls.json": {
+      "mode": "100644",
+      "gitBlob": "78c648af7c8b8c940b6117aa549839ac55a244ef",
+      "sha256": "795b389146d650295598d8a5e8ab975d7a8b16df5b5f937811d6d110563b62d6",
+      "bytes": 5619
+    },
+    "tools/fixtures/ui-playlist-progressive/gates.json": {
+      "mode": "100644",
+      "gitBlob": "3d0116309f3fb17f0c25f9f0b2bea68ee0885c1e",
+      "sha256": "2b40445f9dfb1162974b4e926c43b6663d6a8ac4a271d0f7e2048bd4a6cbd6ea",
+      "bytes": 51221
+    },
+    "tools/fixtures/ui-playlist-progressive/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "cfbb4e6333cd30942b5360e5580d96dd6dfa5bd9",
+      "sha256": "025f77058578bed457e68520b62bf87529c3458e5a045221f48fd84459b26dad",
+      "bytes": 2222
+    },
+    "tools/fixtures/ui-playlist-progressive/owner-capture.type-test.ts": {
+      "mode": "100644",
+      "gitBlob": "0095e2eae01909bd2dc16521f640e45e5db05744",
+      "sha256": "981ea755d66afabae87e155a34d6849251454585e0e21e8ba79ac8471b241e24",
+      "bytes": 512
+    },
+    "tools/fixtures/ui-playlist-progressive/progressive.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "69c17d08f886c382fa74f32a87ca07d75a93d035",
+      "sha256": "c97daf315fc7108b76444ec8abd5eccdf4e6bde9a53d6c1ab9b886c540f6ea25",
+      "bytes": 17402
+    },
+    "tools/fixtures/ui-playlist-progressive/qualification.tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "c70236157d5994ab947f6af2e682821a0de97767",
+      "sha256": "26a25b150f50fc9275e469368b8957a9fde27d906850021f0a2c8605197c4896",
+      "bytes": 2222
+    },
+    "tools/fixtures/ui-playlist-progressive/run.ts": {
+      "mode": "100644",
+      "gitBlob": "71a66cc5664b41f7d3a79e868b44472e18285f97",
+      "sha256": "83a6a67bf436d1e0306b1a42cebdfb39f7b61fb32157cd706f5090759950bd92",
+      "bytes": 2074
+    },
+    "tools/fixtures/ui-playlist-progressive/wire.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "d8994cc7a39781ba6a47ddada43037fc8c5cb0d4",
+      "sha256": "dc30b32484bde04a3a0fe01bb30c72d245e0852cb4827b03a87616db4a7b6811",
+      "bytes": 3146
+    },
+    "tools/fixtures/ui-read-playlist-bridge/README.md": {
+      "mode": "100644",
+      "gitBlob": "e6e1e68d3937cb87f906f78e313c5ef3c511e5c7",
+      "sha256": "bbda0018879df69a75dd3d93e601c38ee78d433bde1cd22bb83f39f02e9055bf",
+      "bytes": 7149
+    },
+    "tools/fixtures/ui-read-playlist-bridge/consumer.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "4c378e0e71283b2b27b0ebdb35559d285f79e202",
+      "sha256": "2999825d2794077f18de838835f264b68a6a319204aac71e1518d758f38c2e9b",
+      "bytes": 537
+    },
+    "tools/fixtures/ui-read-playlist-bridge/controls.json": {
+      "mode": "100644",
+      "gitBlob": "20f38745df30b5cc382ccf95e45a165c0c30e7b9",
+      "sha256": "75e257805e961b8386a5dc8ba34756d23bf9286ce276023f70d0a3f92a3e2ef2",
+      "bytes": 5585
+    },
+    "tools/fixtures/ui-read-playlist-bridge/gates.json": {
+      "mode": "100644",
+      "gitBlob": "45c10bdf96b907325766390d0acfcdadfe1bacbf",
+      "sha256": "9e0ebb44f851e8e34a3c1db10e925f191e9b679ccc7758f888d0e972fadfae9e",
+      "bytes": 34569
+    },
+    "tools/fixtures/ui-read-playlist-bridge/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "40a14cf78f6f93a8effa88948de55cb2301fd650",
+      "sha256": "e92ff9e5ba0619acb5f86335dbb33f9f5bcb33c08effe21278dc8127c950dfc2",
+      "bytes": 8078
+    },
+    "tools/fixtures/ui-read-playlist-bridge/qualification.tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "56a8d93d10733320c0b13360c7bf466afbbc0c22",
+      "sha256": "983d5987b080f81c524db48ca75e010b220af8cc58910ce6540e9bdcd1201d44",
+      "bytes": 1845
+    },
+    "tools/fixtures/ui-read-playlist-bridge/qualify.py": {
+      "mode": "100644",
+      "gitBlob": "e9add2e5dbda752115e85231ea2bde7cde35ae0c",
+      "sha256": "881a9545fefa24c7ed593972dac4ae9b1c5596fc42f096de296660cfbaec0e1e",
+      "bytes": 10563
+    },
+    "tools/fixtures/ui-read-playlist-bridge/replay.py": {
+      "mode": "100644",
+      "gitBlob": "abeca8a0e01536ab2a996ef39ef855a040ddf456",
+      "sha256": "10af8c189af97b8a822c4c6302a7f6747f6b9f1fc0e337db55e2b22bf6eeee26",
+      "bytes": 3510
+    },
+    "tools/fixtures/ui-read-playlist-bridge/run.ts": {
+      "mode": "100644",
+      "gitBlob": "81256d1c5b8e8c53ce52b6b17ba66beff4c9b6fd",
+      "sha256": "94b44f5dc1128ea0363a3a04153663d7e619c9aa6890fb309bc86b64d8e0f51f",
+      "bytes": 11398
+    },
+    "tools/fixtures/ui-read-playlist-bridge/wire-observer.ts": {
+      "mode": "100644",
+      "gitBlob": "9f531794c8d5e52b6a8ee3e743fd5849e023208c",
+      "sha256": "ca9470033eccfc325c73f40afc98126921500a3b11c9e5e5526ee07190852948",
+      "bytes": 415
+    },
+    "tools/fixtures/ui-read-playlist-bridge/wxt-i18n-native.d.ts": {
+      "mode": "100644",
+      "gitBlob": "86a1bdc74b504125aaf37386432f5933e82d8c77",
+      "sha256": "2545a6a2a09bd76c32eb0caa4700b810bf796aff984ccfd02fd141887b19c3bb",
+      "bytes": 149
+    },
+    "tools/fixtures/view-publication/README.md": {
+      "mode": "100644",
+      "gitBlob": "232cce1ec51497293c6476aa7329078fa129b11a",
+      "sha256": "db2d1f291a8a5a9f44646b12004f50299380c37a59570a85114825989890909e",
+      "bytes": 4644
+    },
+    "tools/fixtures/view-publication/consumer.bun-test.ts": {
+      "mode": "100644",
+      "gitBlob": "3ca93b6555b8717a817595078b35d640329b12dd",
+      "sha256": "fdd404294f9c131dac743c34042fb4f7b7b5857f714bd4292254be7a7f95a94c",
+      "bytes": 426
+    },
+    "tools/fixtures/view-publication/consumer.py": {
+      "mode": "100644",
+      "gitBlob": "68e6139ab12193036e503a30b31705b7a3952320",
+      "sha256": "d877c63d7bad30b06f245f964bfba6c02ec6d1afa4cd9848197e0752cb9d72fe",
+      "bytes": 1267
+    },
+    "tools/fixtures/view-publication/controls.json": {
+      "mode": "100644",
+      "gitBlob": "5f10daab5b3636cc7cac197c4db2086e6ed9a4e2",
+      "sha256": "feb4066f002d089132dafe0d73465d7454c42aa43376feb49e3a15146a8bc26a",
+      "bytes": 11396
+    },
+    "tools/fixtures/view-publication/controls.py": {
+      "mode": "100644",
+      "gitBlob": "e334a0a0a5b1d95abe1f43639ae564d6686bbe1c",
+      "sha256": "97273cd30de68ee488c239b02dee8deb8e3a6a0b08f88383a8bf6be90f7c0247",
+      "bytes": 3349
+    },
+    "tools/fixtures/view-publication/controls/all-monitor-notifications.patch": {
+      "mode": "100644",
+      "gitBlob": "d66234bb7652120d8f725c155c27ec76cd72ebd7",
+      "sha256": "c2f1ccd407449839705924d7cf90039ee11996e01b2537bd96beec3f7b0ddb8e",
+      "bytes": 652
+    },
+    "tools/fixtures/view-publication/controls/lost-removed-account.patch": {
+      "mode": "100644",
+      "gitBlob": "0778fa4817d7809b9c4bbdc5b5e145a771c6d8f3",
+      "sha256": "4ae73716ea7103a87c256f68fc6e352f590a0fb92461cf2cdf30f0e00541f99d",
+      "bytes": 793
+    },
+    "tools/fixtures/view-publication/controls/missing-sync-filter-event.patch": {
+      "mode": "100644",
+      "gitBlob": "6d3abce6b3f4d0d19e7873a52fa7c53f12de171b",
+      "sha256": "61d85a95dce6310b4ca45c07fcd96bcd9003e9f40eb59e9d9bf36bd5e63f8232",
+      "bytes": 551
+    },
+    "tools/fixtures/view-publication/controls/omitted-coalescing.patch": {
+      "mode": "100644",
+      "gitBlob": "13d3cb69bef3f4630a8b6a80784b161715ff5122",
+      "sha256": "29d8b626583070ffa4220eb1b59afdee3a99c41ccce462f1c6a14ccd3332c326",
+      "bytes": 514
+    },
+    "tools/fixtures/view-publication/controls/omitted-internal-private-event.patch": {
+      "mode": "100644",
+      "gitBlob": "2f8b3f1e072cd97893077b8573b9c8b52db50c9e",
+      "sha256": "d43b18471f1bfa6157009c4cfa4c2d0a5e0db90c0177c255191d22c640861fda",
+      "bytes": 852
+    },
+    "tools/fixtures/view-publication/controls/optimistic-before-readback.patch": {
+      "mode": "100644",
+      "gitBlob": "0c3f94fba6c8439a9102055c5b4b0bf3c85a624e",
+      "sha256": "c40bed7a82b4e9fde59eba0e047991bc4be464c54fcd3e9dfa0f59fe2b4c2dbd",
+      "bytes": 983
+    },
+    "tools/fixtures/view-publication/controls/privacy-broadcast.patch": {
+      "mode": "100644",
+      "gitBlob": "f54afcf1ed63e5cb70daaaf47d757c8562e49050",
+      "sha256": "207af8393d060c9c629480caf9b1122ee50b0c7e66c070835ed076e07c077b3d",
+      "bytes": 436
+    },
+    "tools/fixtures/view-publication/controls/private-deadline-after-disposal.patch": {
+      "mode": "100644",
+      "gitBlob": "3e8ac1354c983cc2559c943f82a44d9d905b97cd",
+      "sha256": "a522c386cee201e75bfe9bb9b2b0fa058cb4b7ef720199760452165b59883435",
+      "bytes": 370
+    },
+    "tools/fixtures/view-publication/controls/private-normal-tab-broadcast.patch": {
+      "mode": "100644",
+      "gitBlob": "b631d754530489f7edac856c643c060dc989c059",
+      "sha256": "5e7b6f4d69ec93e0aa6acedb447871f1da2121069da7bd54fbd095daff6fcd2c",
+      "bytes": 729
+    },
+    "tools/fixtures/view-publication/controls/private-notification-before-load.patch": {
+      "mode": "100644",
+      "gitBlob": "26f8388d89ab9c377ca3c87bccc2b760d289e6dc",
+      "sha256": "c2226639146b95638566baf1185af07776450fb0743fd7a659aa0d8fdb61c66d",
+      "bytes": 739
+    },
+    "tools/fixtures/view-publication/controls/stale-projection-reuse.patch": {
+      "mode": "100644",
+      "gitBlob": "0597df44a4daaa85c353b8b4cabdc5d4956b5e4e",
+      "sha256": "73a4492b29f7f1c9e41337b6ebadff4d6dad7dea8878b7903c1df81727ad0521",
+      "bytes": 1134
+    },
+    "tools/fixtures/view-publication/controls/timer-after-disposal.patch": {
+      "mode": "100644",
+      "gitBlob": "3e8ac1354c983cc2559c943f82a44d9d905b97cd",
+      "sha256": "a522c386cee201e75bfe9bb9b2b0fa058cb4b7ef720199760452165b59883435",
+      "bytes": 370
+    },
+    "tools/fixtures/view-publication/execution-pins.json": {
+      "mode": "100644",
+      "gitBlob": "efc1e5a6b72845b08d6ba755ffd1cc19d9239524",
+      "sha256": "9fa5f1485a892d47a8978b983d00cea7e97c50a91849ffa9ede841972998a4eb",
+      "bytes": 3755
+    },
+    "tools/fixtures/view-publication/expected-bytes.json": {
+      "mode": "100644",
+      "gitBlob": "bb86d3963a8c7114c303c3ac81c435cc307d95e2",
+      "sha256": "e5bb98d4a682eb9fc9837fb7f516bfcb6475cd686d7cd0a81b15cce389f477e7",
+      "bytes": 382
+    },
+    "tools/fixtures/view-publication/expected.jsonl": {
+      "mode": "100644",
+      "gitBlob": "39d5c881a30a64c1018a6516b4cfb359c1d1fafa",
+      "sha256": "1dad7b34e309cf03df5b8e0c998e92b29dc18c4acb44b3ed3975835dcf34989f",
+      "bytes": 10217
+    },
+    "tools/fixtures/view-publication/future-gates.json": {
+      "mode": "100644",
+      "gitBlob": "6ecb492bae395fd565d6188696c67ff3dc8b9996",
+      "sha256": "78c078ef2c91bde67cbd632b7f105649e94dba597a53d604c9d6e2fff150a10a",
+      "bytes": 152319
+    },
+    "tools/fixtures/view-publication/harness.ts": {
+      "mode": "100644",
+      "gitBlob": "cc64c647f19f08f2d7453dc87342bd0663394c11",
+      "sha256": "fba1eb16717d01cc025742f18ef9590f9fa49541f515295131280b2be753abc5",
+      "bytes": 5250
+    },
+    "tools/fixtures/view-publication/qualification.py": {
+      "mode": "100644",
+      "gitBlob": "bbdef612aa407d19b47d32a6829162b9c66443ab",
+      "sha256": "f910e9fd043c46b111dcbae8def2c86d926571a6bcc642625d7911ce607a51b2",
+      "bytes": 2976
+    },
+    "tools/fixtures/view-publication/run.ts": {
+      "mode": "100644",
+      "gitBlob": "00d3bc176dd8a1c09c7535d35c26cd5f171748e5",
+      "sha256": "2ba7dd30ecc774c0310493b7e11bf3b05e062359eb98b5971a2ff927dfdb9540",
+      "bytes": 3486
+    },
+    "tools/fixtures/view-publication/tsconfig.json": {
+      "mode": "100644",
+      "gitBlob": "917b4cf13ff40c87bdda9b90103ecf08cdb919a5",
+      "sha256": "0fccf778b6a8888108c8990e9463fa24535b6614f25c1e56e111f874c805d7e2",
+      "bytes": 5112
+    },
+    "tools/fixtures/view-publication/type-probes.json": {
+      "mode": "100644",
+      "gitBlob": "711e22c889e5ef7ed57b597e7d1dcd10db086e74",
+      "sha256": "8b6cd4de0432aeb379da554f0a535f51d5468575a7144f8af72f2f3bde022182",
+      "bytes": 8959
+    },
+    "tools/fixtures/view-publication/type-probes.py": {
+      "mode": "100644",
+      "gitBlob": "e7bb38026b1933c389e443265e01d072b61b197d",
+      "sha256": "87b8fde4bc025fb87a7b2a9285ed395b089e41ea1348f35aa1fced1f1827d8ee",
+      "bytes": 2197
+    },
+    "tools/fixtures/withdrawn-document-recovery/run.ts": {
+      "mode": "100644",
+      "gitBlob": "8b74a8d97e21bcb6091180cd5e83a14f1092bdc7",
+      "sha256": "780eada0429ed2f8cdcca1b44dfa72dee5eca7928713cb127061fe55ac2399fe",
+      "bytes": 65968
+    },
+    "tools/fixtures/withdrawn-document-recovery/v3-playlist.ts": {
+      "mode": "100644",
+      "gitBlob": "f882d912e632a5828f8073e3e1e60b5c9cc9027c",
+      "sha256": "1e537976fb4a44ddcb045a7a34f2eac3867f3f873975c68ffb282941f4dd8d02",
+      "bytes": 13500
+    },
+    "tools/fixtures/items-music/README.md": {
+      "mode": "100644",
+      "bytes": 2441,
+      "sha256": "1f3c61d138e0dc548243126c9583e88ecc0d1edc9a6cac7d0d4a708da059c780",
+      "gitBlob": "cfe2d2d6345c976084f815abbd62b4443e4bced1"
+    },
+    "tools/fixtures/items-music/check-consumer.py": {
+      "mode": "100644",
+      "bytes": 579,
+      "sha256": "1c1fdee4fbf9f630633c5a1a88d44aac29ee9dc943efb830c9dd6b4c533a99ac",
+      "gitBlob": "c354e2c54c8a82fd4e9b5a6b0e6f4dc81b556114"
+    },
+    "tools/fixtures/items-music/check-inclusion.py": {
+      "mode": "100644",
+      "bytes": 632,
+      "sha256": "bff36fb53bde7dd867be5ffeb03d9d112e1215f7d207221ec5554f0558b92ba4",
+      "gitBlob": "aa118c424114bf764827ff4be6b42da03fdb20a1"
+    },
+    "tools/fixtures/items-music/controls.json": {
+      "mode": "100644",
+      "bytes": 64599,
+      "sha256": "c51ba8eff200ac94cfe886042d9474035f21fdec94ee1a3cacd2c3d459a80344",
+      "gitBlob": "fd179f3c59a39e883d5792707b21b3fd8f80cc5c"
+    },
+    "tools/fixtures/items-music/expected.jsonl": {
+      "mode": "100644",
+      "bytes": 1162,
+      "sha256": "3aea445e6818b9fc3d38fa2dd9b96632d47d02e9a720b16c0930d401de77a1ed",
+      "gitBlob": "92020d109c4243b66b597b16e19a504ccceda95f"
+    },
+    "tools/fixtures/items-music/harness.ts": {
+      "mode": "100644",
+      "bytes": 7960,
+      "sha256": "885ee548ae2367f930da27df9975d55b152a17abe6626afd8ee3118c00655bb8",
+      "gitBlob": "ebc76ecfcf05a4d278cace102c47a6474c0c42e6"
+    },
+    "tools/fixtures/items-music/inherited-controls.json": {
+      "mode": "100644",
+      "bytes": 88330,
+      "sha256": "ce4eb6441ea6a986702c686b5f38ab54a34f9b40e0bb180960c0456b32c370e0",
+      "gitBlob": "182f434940b61e9c42dbb9b8fc2c7e133f903731"
+    },
+    "tools/fixtures/items-music/inherited-types.json": {
+      "mode": "100644",
+      "bytes": 194620,
+      "sha256": "57a245c777dbb2e67aac5239d8690eb42ce5037b65d9341f16c66675c7a30dc7",
+      "gitBlob": "d6fabfacbf9b76509d88b4d231a6b3bce026c900"
+    },
+    "tools/fixtures/items-music/inherited.json": {
+      "mode": "100644",
+      "bytes": 2539,
+      "sha256": "98e78aa78503c0ff9df94131f42d49b41befeeceffb40ee2ef5e392f5b1b208b",
+      "gitBlob": "22fce65fba6fae4ec54756d06f0b6ab294c2fe0a"
+    },
+    "tools/fixtures/items-music/page-consumer.bun-test.ts": {
+      "mode": "100644",
+      "bytes": 10054,
+      "sha256": "fbacfa98019582cef4f965fd6705bedcb3379a9a206bc1cd8d8c84a78cd3fd2b",
+      "gitBlob": "9a07bb2b8357f2146cb45cda684fb95cdb5f93d5"
+    },
+    "tools/fixtures/items-music/preload.ts": {
+      "mode": "100644",
+      "bytes": 169,
+      "sha256": "6ef9bb5c15523295eb2a72fbf07807e5dfdf96b2cf589493c80d336e09bd82e0",
+      "gitBlob": "4452c4de2df302eb15e279ee89d13bf4de402619"
+    },
+    "tools/fixtures/items-music/prepare-case.py": {
+      "mode": "100644",
+      "bytes": 3031,
+      "sha256": "2c7d1309b3cd93729588ba8c55792d7f1b86054ffaeac021cdd35e8aab371506",
+      "gitBlob": "c231e48c69fa3d4d43bd2c670b7be45648ad8a75"
+    },
+    "tools/fixtures/items-music/run.ts": {
+      "mode": "100644",
+      "bytes": 5926,
+      "sha256": "608ba99bb57db204909cfea4a3bfc2ded2035e5899e0eda0d80bd86c9c319581",
+      "gitBlob": "779012aacb3004c670ae5e1f77243c7910169384"
+    },
+    "tools/fixtures/items-music/specimens.ts": {
+      "mode": "100644",
+      "bytes": 2718,
+      "sha256": "76bf7d14506b7684e8037871211cb7032b11f7c6c019f305fd23fc5b5ed71a66",
+      "gitBlob": "4d2e6af76e779941b86fdc7a87f2216e793e0209"
+    },
+    "tools/fixtures/items-music/tsconfig.json": {
+      "mode": "100644",
+      "bytes": 729,
+      "sha256": "c2d1dec9018fe56cd7e92069883c484943d0e219b814c0502e0c738a3b81c15b",
+      "gitBlob": "26449af19ef6a3192a89dc054019e7e115c6a21a"
+    },
+    "tools/fixtures/items-music/type-probes.json": {
+      "mode": "100644",
+      "bytes": 115866,
+      "sha256": "85555c424cac92fc6cd63e4a9cd33a7fac298dacf9186c3edb2218869c29c993",
+      "gitBlob": "cf3ee871de0bffb11fcdc75281b8423ae4440ced"
+    },
+    "tools/fixtures/items-music/unexecuted-gates.json": {
+      "mode": "100644",
+      "bytes": 70686,
+      "sha256": "1ea591cd2843b972a6850ec0ff016dca38a707d3791b358bb64bf9a69b98ae9b",
+      "gitBlob": "f2f4e14aa8630f38b9dc3adb81fc414646747ca1"
+    },
+    "tools/fixtures/items-www/README.md": {
+      "mode": "100644",
+      "bytes": 3699,
+      "sha256": "9693f1ba82d14c877ad98c49d542011ab7adfc6582d52dc5ce1afea31371c960",
+      "gitBlob": "8f8c287085f7fdf0907b32dce33bbae964026eb2"
+    },
+    "tools/fixtures/items-www/check-consumer.py": {
+      "mode": "100644",
+      "bytes": 514,
+      "sha256": "f05cb2f25b8abf558acb19a6998e9cbcf8c3de29a0dc8bdbc002061654ed13bc",
+      "gitBlob": "8f7dfb3d3217ca97753d53a6f169a7e9ed835d7b"
+    },
+    "tools/fixtures/items-www/check-inclusion.py": {
+      "mode": "100644",
+      "bytes": 662,
+      "sha256": "9190ce7d5eb9aeee301cee5a85577a35942832fe36be7a20b6488a325bac1f42",
+      "gitBlob": "715e9524842d6b6b44991af2887961a53d476071"
+    },
+    "tools/fixtures/items-www/controls.json": {
+      "mode": "100644",
+      "bytes": 45963,
+      "sha256": "4372e0634567efc88568c01e165bb858b15cb605686c9b08fd7110aec74d01e9",
+      "gitBlob": "e3f528ae3837592ebdc962360388c1bee836a223"
+    },
+    "tools/fixtures/items-www/current-authority.bun-test.ts": {
+      "mode": "100644",
+      "bytes": 1906,
+      "sha256": "71a0108b7f774d318ba7978aecad8ae8f94abcf682c089ec3293f998a6860618",
+      "gitBlob": "ee7ca29dcba22d6dfbc06c66de94ff3b1e3a6878"
+    },
+    "tools/fixtures/items-www/expected.jsonl": {
+      "mode": "100644",
+      "bytes": 977,
+      "sha256": "141a6fef1f68a32786278cad66fb3f39643a8af1aaf35451c150ff0f39892e58",
+      "gitBlob": "55f8c9f8bee37d3b5872e76eb363c2ac9947e5bb"
+    },
+    "tools/fixtures/items-www/harness.ts": {
+      "mode": "100644",
+      "bytes": 5999,
+      "sha256": "27516a2fa721c73a417602d626d50fba9199002838631811d3315ceffbd81d4a",
+      "gitBlob": "68ef5e9cb6d08c48d0f00aeb44766e9f841c9142"
+    },
+    "tools/fixtures/items-www/inherited-pointer.json": {
+      "mode": "100644",
+      "bytes": 2375,
+      "sha256": "0338b4bddf76b5827c63159dc5b68ba8ba866687cd6ad6f69c766a8d382e531f",
+      "gitBlob": "7619544b2015629d00e6d0734b493bf7ef1a3fdc"
+    },
+    "tools/fixtures/items-www/page-reads.bun-test.ts": {
+      "mode": "100644",
+      "bytes": 9151,
+      "sha256": "ebe1851cabb2254fde00655dca663b4fa48ac4d0775ecfb28714ed0c5a91952e",
+      "gitBlob": "bfae17fe44cd74b75b020ef006de4d7776883529"
+    },
+    "tools/fixtures/items-www/preload.ts": {
+      "mode": "100644",
+      "bytes": 167,
+      "sha256": "97cff0bcadb56ab7597232272160e75db8f737f509a5a08a8634bc441cb85eab",
+      "gitBlob": "a2d87f14d8e4a170be23520064dd132ba4b47d1e"
+    },
+    "tools/fixtures/items-www/prepare-case.py": {
+      "mode": "100644",
+      "bytes": 3349,
+      "sha256": "d84d662d6ced979d6fe929c41b221ef44db6f51115c2151f6104f172bb3c536b",
+      "gitBlob": "cccac32d70570004b24709401c6e5c87cd61b3cf"
+    },
+    "tools/fixtures/items-www/run.ts": {
+      "mode": "100644",
+      "bytes": 5207,
+      "sha256": "d6aab49bc03db7da239c66f42e539ee406d4ee5d916675c5e57c04abd0358ad2",
+      "gitBlob": "a61becf0932e2fd968ab464e963844be62adceee"
+    },
+    "tools/fixtures/items-www/specimens.ts": {
+      "mode": "100644",
+      "bytes": 2636,
+      "sha256": "0ac1a388b2d12f9198fd7c3cf8571e25960f51e67d39066cc98334c833b4094e",
+      "gitBlob": "eb64d1bd1bdc2a57594f42d954e2c1ad75f7f655"
+    },
+    "tools/fixtures/items-www/tsconfig.json": {
+      "mode": "100644",
+      "bytes": 717,
+      "sha256": "0f9dc863391ded4d1da996812101ea2728c737773d84790d6bd857804eabd9d6",
+      "gitBlob": "caff5196bc2eafa3c366f1954f6ed894fdcb70a1"
+    },
+    "tools/fixtures/items-www/type-probes.json": {
+      "mode": "100644",
+      "bytes": 52011,
+      "sha256": "ea39a69206cf76c58629c61bb8d3a66103c4cddadfc06e9efabebe9f0bf43bbe",
+      "gitBlob": "badd4f223221b925847d98274997ee08321c6f92"
+    },
+    "tools/fixtures/items-www/unexecuted-gates.json": {
+      "mode": "100644",
+      "bytes": 19145,
+      "sha256": "228a7809f0d86e7e75cbffb009c52ad8ce2c17404e9b366abc18de3725e11bb6",
+      "gitBlob": "21121eaaa52851468799237c5b1c1267aefb62c2"
+    },
+    "tools/fixtures/music-ad-transport/README.md": {
+      "mode": "100644",
+      "bytes": 3239,
+      "sha256": "2ef2fcbd4b1b4031d017cee9ce023eb268801d43ea4122b429d8b53edb8ca161",
+      "gitBlob": "2d57205267107340555be7bc41a506825040cd56"
+    },
+    "tools/fixtures/music-ad-transport/anchor-relocations.json": {
+      "mode": "100644",
+      "bytes": 17916,
+      "sha256": "c48c044af5101b712a563d01a1445d3d814cec7ddf2b7ffeb6d6e624e170dac4",
+      "gitBlob": "56d97eb5ccaaa21a1ac51b7baecb9264602d0ed2"
+    },
+    "tools/fixtures/music-ad-transport/cases.ts": {
+      "mode": "100644",
+      "bytes": 2403,
+      "sha256": "5539c27ff9cd00d4d8209b9b2b2423473d1c05d7d187dc1d7e36ab8b609ba6ba",
+      "gitBlob": "8ce6d3719e33e57d3c09108a52094beb27595f9b"
+    },
+    "tools/fixtures/music-ad-transport/check-inclusion.py": {
+      "mode": "100644",
+      "bytes": 913,
+      "sha256": "e92cb2843c908e15e117a9effd7cfd966b24fd2004d203de9775a98310230ba3",
+      "gitBlob": "3b14ec8913566f58c68944d30096bf975b773739"
+    },
+    "tools/fixtures/music-ad-transport/final-controls.json": {
+      "mode": "100644",
+      "bytes": 406284,
+      "sha256": "6ca7bf37efceceee64eb6d118acfe75d3f22d6182c94161451cb31f142c240e7",
+      "gitBlob": "c1feab604ad9d306dc54e03c9aae6e050309454f"
+    },
+    "tools/fixtures/music-ad-transport/final-type-probes.json": {
+      "mode": "100644",
+      "bytes": 589426,
+      "sha256": "8e623e1aa1bb9982db4192376ea772aa810c68cf6687ee93e0984d3f794aa0b9",
+      "gitBlob": "ad226696edb66adfcd318c706e20b3b3edee5fd9"
+    },
+    "tools/fixtures/music-ad-transport/tsconfig.json": {
+      "mode": "100644",
+      "bytes": 1584,
+      "sha256": "2f576f39c80c219f259028215d6b6cb19ed55f23d8f59a7f9e52f1fdac60c31e",
+      "gitBlob": "34cc0fa468ade38e3a551931278b15aafa808fa3"
+    },
+    "tools/fixtures/music-ad-transport/type-probes.json": {
+      "mode": "100644",
+      "bytes": 97932,
+      "sha256": "802e660a5aa85687b61b3a348e466bfd07cf41b08b74b0b761235a164ab41b6a",
+      "gitBlob": "2cb333990e98400f7f00b17c7e3283c572077c68"
+    },
+    "tools/fixtures/music-ad-transport/unexecuted-gates.json": {
+      "mode": "100644",
+      "bytes": 105008,
+      "sha256": "367855e9141f7696bed15225e6dbca2076a3be001e7af367c1f1a0062a8e5e56",
+      "gitBlob": "6be17f3d244073978b44c7d6ffc716a4cf145f6a"
+    },
+    "tools/fixtures/music-ad-transport/wire.bun-test.ts": {
+      "mode": "100644",
+      "bytes": 12917,
+      "sha256": "7da66b22f8a93537269e294fbb4dea8bbd581a8d03721c471d2d1d31cbe63d7e",
+      "gitBlob": "75dcaa57f19530db7d5aa1fbe834f6c639d69fb2"
+    },
+    "tools/fixtures/pointer-keys/README.md": {
+      "mode": "100644",
+      "bytes": 3002,
+      "sha256": "52597a5270ba576d9b097c30050fcc984318122ca0836058d0642852b5c528e1",
+      "gitBlob": "d1eb5f2704ba40fdb2533b89866122091cb7c8de"
+    },
+    "tools/fixtures/pointer-keys/check-consumer.py": {
+      "mode": "100644",
+      "bytes": 763,
+      "sha256": "d8d80d43d0d1018d75878e7d29ce1a6436db4f43f5cccafdc3065c2ca058bc2a",
+      "gitBlob": "4ff25dad6335296fce8b37d02fd2879f4ba97249"
+    },
+    "tools/fixtures/pointer-keys/controls.json": {
+      "mode": "100644",
+      "bytes": 16861,
+      "sha256": "d4437af5cd7c9a2208eac304fc22d5feb44db5a3b55b9944b1a8727b0702a6e4",
+      "gitBlob": "8a489dcb939c03049d4d67bd52e9abeb184fd275"
+    },
+    "tools/fixtures/pointer-keys/expected.jsonl": {
+      "mode": "100644",
+      "bytes": 1015,
+      "sha256": "7d464be0b66e5cd24bbb281daa637c52680c8960633a392b7caeabd7deaba849",
+      "gitBlob": "b60cb27f2808c7a2354099143bfdad4954147c44"
+    },
+    "tools/fixtures/pointer-keys/harness.ts": {
+      "mode": "100644",
+      "bytes": 3180,
+      "sha256": "66cfd3b1d8bee9ec351ffe34ea15a310937fb7eacf6dbf9806413b3785e46f23",
+      "gitBlob": "2d567cf6160c497d26a6648b14a5568c696c4f1b"
+    },
+    "tools/fixtures/pointer-keys/preload.ts": {
+      "mode": "100644",
+      "bytes": 166,
+      "sha256": "611d8f55ff671cd57f77fecea630a91efa6417a19ac73ce86f380ef6f6172e64",
+      "gitBlob": "7274101e08c4a464ae153188c52a3db8b6a5b9fa"
+    },
+    "tools/fixtures/pointer-keys/qualify.py": {
+      "mode": "100644",
+      "bytes": 6170,
+      "sha256": "2507db9d1842e05e631dd8272c003d8ebb446c259887ec0faa6a4f894de405c5",
+      "gitBlob": "144f9fb594dff7208d1b87f4a50f526287e814d6"
+    },
+    "tools/fixtures/pointer-keys/run.ts": {
+      "mode": "100644",
+      "bytes": 4654,
+      "sha256": "c5f3f1f0a40d8fb1cc951924b4380d746f8f0bea524482c1ee5a840913cd04c0",
+      "gitBlob": "834078e00707e33fc0bbb0e634bddffaa06c5a6a"
+    },
+    "tools/fixtures/pointer-keys/tsconfig.json": {
+      "mode": "100644",
+      "bytes": 639,
+      "sha256": "95f8c9e32522b0340fd480ba6a2b7eb490ef758bf5995c6fbb51850359a0d0dd",
+      "gitBlob": "7ecf389e7fc2b88c71bcc4595ac602fcde4b4829"
+    },
+    "tools/fixtures/pointer-keys/type-probes.json": {
+      "mode": "100644",
+      "bytes": 5213,
+      "sha256": "2e646a86e304a400e22be0e8b24470cee0a32bacdf80538df3bba588259251a9",
+      "gitBlob": "bc0f0959e2e3db6d04d9a9cd570b187708d3816f"
+    },
+    "tools/fixtures/pointer-keys/unexecuted-gates.json": {
+      "mode": "100644",
+      "bytes": 17625,
+      "sha256": "b8bbc61e3efd53bcb308808903bf339266a76e5ce04f1a25f0989eecda7c870c",
+      "gitBlob": "45068c77bbc8f7867953b663b063eb3878e2ee8d"
+    },
+    "tools/fixtures/feature-switches/README.md": {
+      "mode": "100644",
+      "bytes": 2446,
+      "sha256": "e488e5f62b0db57f8536066cdf4af980e497ba310bbc764b10fe0357106f3877",
+      "gitBlob": "c13e5fb9f8f32c202d4731df4dcfee62fa3e5dee"
+    },
+    "tools/fixtures/feature-switches/boundaries.bun-test.ts": {
+      "mode": "100644",
+      "bytes": 12121,
+      "sha256": "be0a98f4553dba6b01a3b154e8d8eb92804dab993fdb1da70a4718b64f0b72fa",
+      "gitBlob": "a4d99144084f4349809fdf7ca1a00b033d72e068"
+    },
+    "tools/fixtures/feature-switches/cases.json": {
+      "mode": "100644",
+      "bytes": 2049,
+      "sha256": "cb47c4d126ac3033d0565c36549f8b4926814f80e41ae0c161fc0b196941b6bd",
+      "gitBlob": "4c75151ec3997cc8fd327e380e02296b71a40b70"
+    },
+    "tools/fixtures/feature-switches/compare-eof.py": {
+      "mode": "100644",
+      "bytes": 350,
+      "sha256": "2bbdf521b58d510da6a79c72a03e4e880a4d9c28d2cf7fc3b36b910d38d52eeb",
+      "gitBlob": "fcf79d805828ffd8d0884527441f6279772e04b9"
+    },
+    "tools/fixtures/feature-switches/consumer.bun-test.ts": {
+      "mode": "100644",
+      "bytes": 434,
+      "sha256": "c4a156b107ef2558826d9328847ba7f6da58167640aba9be40b42c36eacadee8",
+      "gitBlob": "ce8877e2ed4dc639c3ae5d71b17f849f437e8973"
+    },
+    "tools/fixtures/feature-switches/consumer.ts": {
+      "mode": "100644",
+      "bytes": 1160,
+      "sha256": "885f3374382378066bea1fac2b7f293d4d36b0132bc43aee5af597a997a614ce",
+      "gitBlob": "8b3de942318018f4c159cee4d2b2affebfbbb678"
+    },
+    "tools/fixtures/feature-switches/controls.json": {
+      "mode": "100644",
+      "bytes": 6361,
+      "sha256": "d005f3615813e554cee9dc7f39c88f193aeb27c6cc482a6cf4e5ba72c36fcddb",
+      "gitBlob": "053e6dbaab42eb4419ec2e48df8ca05b357b6989"
+    },
+    "tools/fixtures/feature-switches/controls/lost-options.patch": {
+      "mode": "100644",
+      "bytes": 460,
+      "sha256": "6ee1892bbac355a61aa998ac33787230430153053d2dbac3daa16baa2395f5e8",
+      "gitBlob": "f6ccb031e843b7c97d23fe59ba085ba1d419100d"
+    },
+    "tools/fixtures/feature-switches/controls/omitted-account-and-shard.patch": {
+      "mode": "100644",
+      "bytes": 547,
+      "sha256": "9d701cb6865a42b99a721f8bf0713bd55949f6b695ad4034a88df245560ad0c1",
+      "gitBlob": "4c3997d8072b61e5d9296b6c8a99fcfa3c715c0f"
+    },
+    "tools/fixtures/feature-switches/controls/permission-observation-trust.patch": {
+      "mode": "100644",
+      "bytes": 716,
+      "sha256": "80c9112209be1c97ced08a7fd6fc3be324df31d5447f992d610535bc47923c89",
+      "gitBlob": "1f7bab9c607b58d2186f96915d881a23bc2e8e25"
+    },
+    "tools/fixtures/feature-switches/controls/premature-success.patch": {
+      "mode": "100644",
+      "bytes": 752,
+      "sha256": "2468dc9d3cd13901aab1e8d1ba213f345672375da1dd03d61499b135a9f18d07",
+      "gitBlob": "beef8117b222f837d72c958d3d226ba93f4ae339"
+    },
+    "tools/fixtures/feature-switches/controls/private-blanket-rejection.patch": {
+      "mode": "100644",
+      "bytes": 1112,
+      "sha256": "ecfb206a6e49042aa11927ac6ff4e6c36d9d25d82b012a77060712835973de0a",
+      "gitBlob": "3e57850b010d168a65ba3a612f43c1579f5fcc2e"
+    },
+    "tools/fixtures/feature-switches/controls/repeated-presets.patch": {
+      "mode": "100644",
+      "bytes": 556,
+      "sha256": "bfa51cb895f8fd48ecaddc0e958ed1abc67f5a3de5f52d40c14c0573e73ea8c1",
+      "gitBlob": "3553c20b5a8d7b06fa70f34795ddceb3c26a4664"
+    },
+    "tools/fixtures/feature-switches/controls/wrong-gate-scope.patch": {
+      "mode": "100644",
+      "bytes": 506,
+      "sha256": "093d3e169cc308ba894fbc647df161a6a32ce6248fabe54c03c7062686c88d8c",
+      "gitBlob": "69bdc97f94fb3dbd0292add893d5f2510917d78f"
+    },
+    "tools/fixtures/feature-switches/dependency-identities.json": {
+      "mode": "100644",
+      "bytes": 5767,
+      "sha256": "baf7cb905287f5f88ad429e6c807e967979857aff48f3d3f9365f54080908d14",
+      "gitBlob": "0cd8015b7592f6cc71a52ef667074937277c7915"
+    },
+    "tools/fixtures/feature-switches/expected.jsonl": {
+      "mode": "100644",
+      "bytes": 162587,
+      "sha256": "862d9ccaed31f9c967a18761015c4a0db4d263f36164ed8efe7f036d178f2ac2",
+      "gitBlob": "13dfa33d6884ca848ece2eab277baa9b4f5c3bf8"
+    },
+    "tools/fixtures/feature-switches/future-gates.json": {
+      "mode": "100644",
+      "bytes": 310788,
+      "sha256": "4b07ae969d16a8f101740d4daf24e0bb0495152a36cec2b3c7f0dc02c32123b3",
+      "gitBlob": "63b75652cff1cf22d21ba8aa692e0f9faebd0122"
+    },
+    "tools/fixtures/feature-switches/harness.ts": {
+      "mode": "100644",
+      "bytes": 8920,
+      "sha256": "405b10e9fa92789aa293016a9aae6875c145a4d87972a749b7af58615cb7dcee",
+      "gitBlob": "156f522721ce7e1d3e24ee5ccaee252e89a67572"
+    },
+    "tools/fixtures/feature-switches/inherited-relocation.json": {
+      "mode": "100644",
+      "bytes": 748002,
+      "sha256": "ae3743e714d35c6243baa0bdfd6aa0f13b26bb7e544361fafc5c52b08f123c8a",
+      "gitBlob": "fd21fe8ec91918d02f7692ab4ed68f84d7084c96"
+    },
+    "tools/fixtures/feature-switches/isolated-negative.ts": {
+      "mode": "100644",
+      "bytes": 10,
+      "sha256": "7992a39d6cde5e050eb78461a8bf9ad986175a94826e835c110b3967290bd249",
+      "gitBlob": "336ce12bb9106afdf843063ee67c0c1970f70d37"
+    },
+    "tools/fixtures/feature-switches/negatives.json": {
+      "mode": "100644",
+      "bytes": 12214,
+      "sha256": "2282df503a219c23faf28a17755708072c1c594782ee1a69e95d06b14ef0f0e0",
+      "gitBlob": "6202c730a0027f45b3f5a2e99cac8c8ec1a97273"
+    },
+    "tools/fixtures/feature-switches/negatives/01-sync-is-device.patch": {
+      "mode": "100644",
+      "bytes": 536,
+      "sha256": "faf4d4e52614aac1e423227292bdbfc6d2695af5163b875bc70934aa016f05aa",
+      "gitBlob": "bb88d44d141a831dbcbe1b69a809b81721c1f6e2"
+    },
+    "tools/fixtures/feature-switches/negatives/01-sync-is-device.ts.txt": {
+      "mode": "100644",
+      "bytes": 390,
+      "sha256": "ceca5ccc7f7cee91b35e51f0a7d58173fb1dab8596791f593e7651442b0296bf",
+      "gitBlob": "c111f8446aa14cb0e6b025eba75ed9eccab614ae"
+    },
+    "tools/fixtures/feature-switches/negatives/02-registry-id-required.patch": {
+      "mode": "100644",
+      "bytes": 539,
+      "sha256": "f549cd82371dae223c25346247af371cfd89d50f7a8b01c7b6daaf9615dd5eef",
+      "gitBlob": "cf3131c493c12fe8319de9685d6ef2d82a93f561"
+    },
+    "tools/fixtures/feature-switches/negatives/02-registry-id-required.ts.txt": {
+      "mode": "100644",
+      "bytes": 393,
+      "sha256": "3806ddcd4640bda72f215dd1f7f0c7a5545199a0dc00ae070fbc015e1b1be6c4",
+      "gitBlob": "aa72c72ecf1ac7df64f73457c59f869538386f1e"
+    },
+    "tools/fixtures/feature-switches/negatives/03-raw-path-forbidden.patch": {
+      "mode": "100644",
+      "bytes": 505,
+      "sha256": "5fa0791e2a48c71e496e9a027cd8a7792baeb3124d595ab5987d0d7ea660cb89",
+      "gitBlob": "39a9a221ef18ada0bfba857a501bf9bdb2f5597c"
+    },
+    "tools/fixtures/feature-switches/negatives/03-raw-path-forbidden.ts.txt": {
+      "mode": "100644",
+      "bytes": 359,
+      "sha256": "373aff365080c774e5e8d143ffa675cf058ff073c0f4de820a9e1de1f7ce4d58",
+      "gitBlob": "e95e5d3467a6574f9b31bb1ae13e3cc97884b589"
+    },
+    "tools/fixtures/feature-switches/negatives/04-whole-selection-forbidden.patch": {
+      "mode": "100644",
+      "bytes": 510,
+      "sha256": "8d637ece58dfc577ab22ca18693db9bcd84e7662c37c9be99a570f01c47eff02",
+      "gitBlob": "0209f1b80bded4b17c912e7d17419e56e62b1733"
+    },
+    "tools/fixtures/feature-switches/negatives/04-whole-selection-forbidden.ts.txt": {
+      "mode": "100644",
+      "bytes": 364,
+      "sha256": "6a740e442dfba10a0d670c0ff49452ea76beb9522288eee3a6500aa3c6bc5fc4",
+      "gitBlob": "114a73abe98b4a76ee065a24489522c1196de8fa"
+    },
+    "tools/fixtures/feature-switches/negatives/05-feature-value-boolean.patch": {
+      "mode": "100644",
+      "bytes": 529,
+      "sha256": "faace0ea21724b471ba035788fde28f7a79e9e366bb1a6eeb57110d9090f4a52",
+      "gitBlob": "80fa3aa3754aaa5672bbab47494147e9c5672ec2"
+    },
+    "tools/fixtures/feature-switches/negatives/05-feature-value-boolean.ts.txt": {
+      "mode": "100644",
+      "bytes": 383,
+      "sha256": "6d8928b88e0955ca4f594ba060f06f7dd6c42c6fa7fe3653662a5a24e41106eb",
+      "gitBlob": "b55a497ac3a586a5e77d6599c7fb4fa0d6edea1b"
+    },
+    "tools/fixtures/feature-switches/negatives/06-section-value-boolean.patch": {
+      "mode": "100644",
+      "bytes": 538,
+      "sha256": "82ad2c37159467edc2a8b94ca1e1c463d5ef28bddb72eb575461c1d0a718f679",
+      "gitBlob": "17e68f7be86f7382294a09b69a46e85ad725797b"
+    },
+    "tools/fixtures/feature-switches/negatives/06-section-value-boolean.ts.txt": {
+      "mode": "100644",
+      "bytes": 392,
+      "sha256": "cd8cc720f8e1bf2d2d0bb589e7e06859351eba51bb821a930a8c802edb5f510c",
+      "gitBlob": "14b1de964eaeb5c25107dea6c0754fa7b32648e1"
+    },
+    "tools/fixtures/feature-switches/negatives/07-music-value-boolean.patch": {
+      "mode": "100644",
+      "bytes": 540,
+      "sha256": "110581a271b93f2b63019b8e03bd4cbcc77593571c49bdd1bb9d27d5b0c1f915",
+      "gitBlob": "1e8d92b9aea2a36dd5b967be331d34ee180f6004"
+    },
+    "tools/fixtures/feature-switches/negatives/07-music-value-boolean.ts.txt": {
+      "mode": "100644",
+      "bytes": 394,
+      "sha256": "2fedf23988e4b8d1e57c04ad9adff6e777df1e5cd3dd8c9ac9f20cdee606b3a5",
+      "gitBlob": "9508416cd02de861e9c9cf382d7919a7a075ff24"
+    },
+    "tools/fixtures/feature-switches/negatives/08-body-origin-forbidden.patch": {
+      "mode": "100644",
+      "bytes": 539,
+      "sha256": "39c30b43e40de92bbdd0afb71fabc186c449c9f30426d2f18feaf569e51e4019",
+      "gitBlob": "64f242db5e222c9ee59c46ad4a26d46236786691"
+    },
+    "tools/fixtures/feature-switches/negatives/08-body-origin-forbidden.ts.txt": {
+      "mode": "100644",
+      "bytes": 393,
+      "sha256": "d83de591b2b96f43f5739abe53d5ee3aadfe60fc479f9391a8a9317b14d970ed",
+      "gitBlob": "dc29fa5f9972d8b6e4f77a639fc9dc53006338d1"
+    },
+    "tools/fixtures/feature-switches/negatives/09-body-access-forbidden.patch": {
+      "mode": "100644",
+      "bytes": 539,
+      "sha256": "411bdfb99c7e6edac3666aeda4be501a6dd7b955de7d4da6f54fdd361aabda28",
+      "gitBlob": "af9e26e74454c58d0b888cdd0cf73d670ce6922e"
+    },
+    "tools/fixtures/feature-switches/negatives/09-body-access-forbidden.ts.txt": {
+      "mode": "100644",
+      "bytes": 393,
+      "sha256": "7a9f3b3919c18953a7846e667753b1fc0ce8b0208b22d5a2b440a4f9305e89e8",
+      "gitBlob": "e97e187b1b8e4f83fb48f17fd13d429a1fb7c2f9"
+    },
+    "tools/fixtures/feature-switches/negatives/10-body-permissions-forbidden.patch": {
+      "mode": "100644",
+      "bytes": 544,
+      "sha256": "116dee968b048d2886e41e4d623478f145754803381881359eeaa8a80c3f6f59",
+      "gitBlob": "0d40279ba1bd98895d618e491895e5ac14ae0bff"
+    },
+    "tools/fixtures/feature-switches/negatives/10-body-permissions-forbidden.ts.txt": {
+      "mode": "100644",
+      "bytes": 398,
+      "sha256": "dd1b26070bd2842ba179a06ea8b71ff96569148d26c972d07d649cb7960d120f",
+      "gitBlob": "b034724f67723b1202f4cc34decd2570bcdeee41"
+    },
+    "tools/fixtures/feature-switches/negatives/11-body-settings-forbidden.patch": {
+      "mode": "100644",
+      "bytes": 541,
+      "sha256": "33c80eb3733f581c46999883b36b4b4ec6a5e1dcbfed0b03635cc84b5ca8d563",
+      "gitBlob": "d3bff3f70b79f54b71ce8dae8491903f1ce27483"
+    },
+    "tools/fixtures/feature-switches/negatives/11-body-settings-forbidden.ts.txt": {
+      "mode": "100644",
+      "bytes": 395,
+      "sha256": "38ba6e181ead71dd9daea08b5c8de9814ce084b5a2010e80dd86f71c81ccf3d5",
+      "gitBlob": "2f73f8652e05dad178d208ac02689c4615eaca2c"
+    },
+    "tools/fixtures/feature-switches/negatives/12-window-number.patch": {
+      "mode": "100644",
+      "bytes": 546,
+      "sha256": "3e9c863f2b3d49e49de5fa99226d755d26aa7802576b5b0b85059548af68ca9c",
+      "gitBlob": "e92ff914a6c6ab9406fc710986f824a9926c0f74"
+    },
+    "tools/fixtures/feature-switches/negatives/12-window-number.ts.txt": {
+      "mode": "100644",
+      "bytes": 400,
+      "sha256": "b794da77b245d7e874108423dd58b1bab5c3bac5f0f56384923ddcc827812741",
+      "gitBlob": "4cb079745ed015028b4e8f21c58d0a31f3bf8bb6"
+    },
+    "tools/fixtures/feature-switches/negatives/13-finite-confirmation-status.patch": {
+      "mode": "100644",
+      "bytes": 543,
+      "sha256": "07fcefca0dc29016824a9cd776644bfd8f847e7940b5341666b730071ec5b11b",
+      "gitBlob": "5dc6f9fcba5bd31f2043417c83bcb69d4db30e1f"
+    },
+    "tools/fixtures/feature-switches/negatives/13-finite-confirmation-status.ts.txt": {
+      "mode": "100644",
+      "bytes": 397,
+      "sha256": "9a3dc7f3ae076a153cf6f7704d14d25813ec0b12a7f07be783de74ed064ddc54",
+      "gitBlob": "9489e034bbb75b12939698a55b776503f270c6ec"
+    },
+    "tools/fixtures/feature-switches/negatives/14-finite-menu-receipt.patch": {
+      "mode": "100644",
+      "bytes": 543,
+      "sha256": "07e376b60d1a7df300e7b992f84c2163cf26da28fdb4047bd4a243349dd42342",
+      "gitBlob": "cfa4db6f057e41d748f906a41515847b1a7b2882"
+    },
+    "tools/fixtures/feature-switches/negatives/14-finite-menu-receipt.ts.txt": {
+      "mode": "100644",
+      "bytes": 397,
+      "sha256": "ecbf0be443044b22e9242f3119b2eabeb18f42d544aad0d67e08a5b444c49a44",
+      "gitBlob": "30980a4408723b4ff976b4094913adc18392da9e"
+    },
+    "tools/fixtures/feature-switches/negatives/15-release-observation-required.patch": {
+      "mode": "100644",
+      "bytes": 564,
+      "sha256": "f50f17d823a4046829aa084749f725d57355f358dff6b70345e6c140d5e6779d",
+      "gitBlob": "4e2f4f3bcf8470e736aa2405ad5f07835c0009f9"
+    },
+    "tools/fixtures/feature-switches/negatives/15-release-observation-required.ts.txt": {
+      "mode": "100644",
+      "bytes": 418,
+      "sha256": "7396fac8cce9cbb27431cad5bf3da9448cfd3d6bdabdaba606724e86cc9ca16e",
+      "gitBlob": "bf2eae67cd6a69cd286fc2e710d91610e6111d5d"
+    },
+    "tools/fixtures/feature-switches/negatives/16-legacy-catalogue-preserved.patch": {
+      "mode": "100644",
+      "bytes": 506,
+      "sha256": "1d00779170621a224fd41c7c587af3f47899657d1cee53f4165c5eced0d64089",
+      "gitBlob": "c09520fc948b3e58424460e46d2a333fc1331905"
+    },
+    "tools/fixtures/feature-switches/negatives/16-legacy-catalogue-preserved.ts.txt": {
+      "mode": "100644",
+      "bytes": 360,
+      "sha256": "83433cfbbf1a69f165235a68b700e57c2f4593e5b207df430c261bb81706aaf2",
+      "gitBlob": "5fbe01c9bd1ba54775710db35486a1c72f60bf8d"
+    },
+    "tools/fixtures/feature-switches/negatives/17-finite-refusal.patch": {
+      "mode": "100644",
+      "bytes": 536,
+      "sha256": "e9f85691dd960ded51fd21b46a674f871c4b0ec10379f3026db4eccc04c7db4c",
+      "gitBlob": "995de417e78ddb1f27696500a8d0f5544c4f7f39"
+    },
+    "tools/fixtures/feature-switches/negatives/17-finite-refusal.ts.txt": {
+      "mode": "100644",
+      "bytes": 390,
+      "sha256": "6e0e47bdab62e9d282ec4c0f229fdf73d31ab90a0816801f0b318186b6cb821e",
+      "gitBlob": "3a6c4b24b05a27751e34247222b54728f6930577"
+    },
+    "tools/fixtures/feature-switches/negatives/18-permission-observation-not-promise-boolean.patch": {
+      "mode": "100644",
+      "bytes": 519,
+      "sha256": "3bd72bd2110e0c0a6091d867f0b0bb5dca345257a3d41092f34b5f54e7440716",
+      "gitBlob": "98368067b4e07cd22282d9f34462f3037396dc75"
+    },
+    "tools/fixtures/feature-switches/negatives/18-permission-observation-not-promise-boolean.ts.txt": {
+      "mode": "100644",
+      "bytes": 373,
+      "sha256": "d930496fa1f03ce1b26f646cc9360168631aab1178c50434fb7b2093a8258aa6",
+      "gitBlob": "c3720963e6333845f28adebf47833dfbcca2a2e9"
+    },
+    "tools/fixtures/feature-switches/owner.bun-test.ts": {
+      "mode": "100644",
+      "bytes": 16958,
+      "sha256": "1cc8afdac396743320d16a106d2f78136d9b8769eb985c6852b433cf64e08726",
+      "gitBlob": "9db648be70defca575396eb5c227c8a277f24599"
+    },
+    "tools/fixtures/feature-switches/run.ts": {
+      "mode": "100644",
+      "bytes": 394,
+      "sha256": "ee97b9850f7938cdda7d6191b1583ad8c4181bb8dec2622a1d0b04298776b61f",
+      "gitBlob": "c3071105b5dd2b0549410825af46da9767cd0be6"
+    },
+    "tools/fixtures/feature-switches/seed.json": {
+      "mode": "100644",
+      "bytes": 10815,
+      "sha256": "762ec8dc5ff1e7d9c733e95e48111b1b5de5da354136eb97c76c0ece6b8d3282",
+      "gitBlob": "2e3f9e708b87ee859f4451b8b3a8b5b4b1e81ecc"
+    },
+    "tools/fixtures/feature-switches/specimens.ts": {
+      "mode": "100644",
+      "bytes": 449,
+      "sha256": "9c32fdd72dfd9c98d02fa1a5105538a0d3f0e886c8baf550ba15959a678d55ab",
+      "gitBlob": "29d93af10b25dead8ebc83d9328ae92ecd7c319f"
+    },
+    "tools/fixtures/feature-switches/tsconfig.json": {
+      "mode": "100644",
+      "bytes": 2303,
+      "sha256": "3df68447e031eda0077e339908b030719498e944f02634e14bb1aed745fb0bba",
+      "gitBlob": "35f762da81624d5c93e9de9abfc4f9c6310b5ad9"
+    },
+    "tools/fixtures/feature-switches/type-proofs.ts": {
+      "mode": "100644",
+      "bytes": 1580,
+      "sha256": "d589a2b926f0d2e0ad513985db1ee1738eb57310f805e2ef7e373973adcbb10c",
+      "gitBlob": "cc8ba75a07a21b154585786be70e747cadf2a660"
+    },
+    "tools/fixtures/feature-switches/verify-inclusion.py": {
+      "mode": "100644",
+      "bytes": 688,
+      "sha256": "190a8152d5d20c9f491dc1efa551b9d17d28b1d340db58d7fd6cb5203717b2cf",
+      "gitBlob": "7f6f1537ca1a7ab5ed539716458ffbdac0868af3"
+    }
+  },
+  "authorizedCallerExceptions": [
+    "tools/fixtures/feature-switches/boundaries.bun-test.ts",
+    "tools/fixtures/feature-switches/type-proofs.ts"
+  ],
+  "obligations": {
+    "feature": "18 negatives / 7 controls / 175 gates",
+    "owner": "170 gates",
+    "import": "114 gates",
+    "options": "85 gates / 19 negatives / 5 controls",
+    "other": "Pointer, Items, Music, Scope, Keys, architecture, deterministic consumers twice through EOF, both browser builds, offline checks"
+  },
+  "staleReferences": "Historical source/qualification roots and old catalogue imports in protected fixtures are historical identities. Relocated feature cases are explicit replacements; All 13 additional discovered inherited controls targeting changed source are reanchored in relocated-inherited-controls.json. The carried positive protected-repairs patch is already applied and must not be reapplied as a control. Every proposed mutation still requires positive compilation and actual named failure before credit."
+}

@@ -1,0 +1,225 @@
+{
+ "boundary": {
+  "cwd": "{qualificationSource}",
+  "environment": "cleared with env -i; only HOME TMPDIR PATH",
+  "stdin": "/dev/null",
+  "Bun": "every invocation requires --no-env-file --no-install; no bunx or install-capable helper",
+  "network": "none",
+  "enforcement": "BLOCKED until a later sole lease proves environment-file refusal, PATH pinning, closed stdin, descendants and deadlines"
+ },
+ "gates": [
+  {
+   "id": "native-positive",
+   "status": "UNEXECUTED",
+   "argv": [
+    "/usr/bin/env",
+    "-i",
+    "HOME={qualificationScratch}/home",
+    "TMPDIR={qualificationScratch}/tmp",
+    "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+    "/usr/bin/timeout",
+    "-k",
+    "10",
+    "120",
+    "{qualifiedDependencies}/@typescript/typescript-darwin-arm64/lib/tsc",
+    "--noEmit",
+    "-p",
+    "tools/fixtures/site-queue-button/tsconfig.json",
+    "--listFiles"
+   ],
+   "stdin": "/dev/null",
+   "output": "bounded: stdout and stderr captured to {qualificationEvidence}/native-positive.log, first 256 KiB retained",
+   "requires": [
+    "later sole lease",
+    "dummy enforcement",
+    "pinned dependency root verified against dependency-identities.json"
+   ],
+   "captureStdout": "{qualificationEvidence}/native-files.txt"
+  },
+  {
+   "id": "negatives-consumed",
+   "status": "UNEXECUTED",
+   "argv": [
+    "/usr/bin/env",
+    "-i",
+    "HOME={qualificationScratch}/home",
+    "TMPDIR={qualificationScratch}/tmp",
+    "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+    "/usr/bin/timeout",
+    "-k",
+    "10",
+    "120",
+    "{qualifiedDependencies}/@typescript/typescript-darwin-arm64/lib/tsc",
+    "--noEmit",
+    "-p",
+    "tools/fixtures/site-queue-button/tsconfig.json"
+   ],
+   "stdin": "/dev/null",
+   "output": "bounded: stdout and stderr captured to {qualificationEvidence}/negatives-consumed.log, first 256 KiB retained",
+   "requires": [
+    "native-positive",
+    "zero unused @ts-expect-error diagnostics and zero diagnostics on control lines"
+   ]
+  },
+  {
+   "id": "catalogue",
+   "status": "UNEXECUTED",
+   "argv": [
+    "/usr/bin/env",
+    "-i",
+    "HOME={qualificationScratch}/home",
+    "TMPDIR={qualificationScratch}/tmp",
+    "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+    "/usr/bin/timeout",
+    "-k",
+    "10",
+    "120",
+    "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/localization/check-catalogue.ts"
+   ],
+   "stdin": "/dev/null",
+   "output": "bounded: stdout and stderr captured to {qualificationEvidence}/catalogue.log, first 256 KiB retained",
+   "requires": [
+    "pinned dependency root"
+   ]
+  },
+  {
+   "id": "focused-feature",
+   "status": "UNEXECUTED",
+   "argv": [
+    "/usr/bin/env",
+    "-i",
+    "HOME={qualificationScratch}/home",
+    "TMPDIR={qualificationScratch}/tmp",
+    "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+    "/usr/bin/timeout",
+    "-k",
+    "10",
+    "540",
+    "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+    "--no-env-file",
+    "--no-install",
+    "--conditions=browser",
+    "test",
+    "--isolate",
+    "--timeout",
+    "20000",
+    "./src/site/features/queue-button/queue-button.bun-test.ts",
+    "./src/site/kit/overlay/overlay.bun-test.ts"
+   ],
+   "stdin": "/dev/null",
+   "output": "bounded: stdout and stderr captured to {qualificationEvidence}/focused-feature.log, first 256 KiB retained",
+   "requires": [
+    "native-positive",
+    "root bunfig preloads (svelte, happy-dom, fake-browser, testing-library) from the pinned root"
+   ],
+   "captureStdout": "{qualificationEvidence}/focused-feature.txt"
+  },
+  {
+   "id": "protected-regressions",
+   "status": "UNEXECUTED",
+   "argv": [
+    "/usr/bin/env",
+    "-i",
+    "HOME={qualificationScratch}/home",
+    "TMPDIR={qualificationScratch}/tmp",
+    "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+    "/usr/bin/timeout",
+    "-k",
+    "10",
+    "540",
+    "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+    "--no-env-file",
+    "--no-install",
+    "--conditions=browser",
+    "test",
+    "--isolate",
+    "./src/site/core/feature-host.bun-test.ts",
+    "./src/site/core/pointer.bun-test.ts",
+    "./src/site/core/items-www.bun-test.ts",
+    "./src/site/core/page-link.bun-test.ts",
+    "./src/site/core/scope.bun-test.ts",
+    "./src/shared/i18n/i18n.bun-test.ts",
+    "./tools/fixtures/site-toaster/model.bun-test.ts",
+    "./tools/fixtures/localization/qualification.bun-test.ts"
+   ],
+   "stdin": "/dev/null",
+   "output": "bounded: stdout and stderr captured to {qualificationEvidence}/protected-regressions.log, first 256 KiB retained",
+   "requires": [
+    "focused-feature"
+   ]
+  },
+  {
+   "id": "consumer-eof",
+   "status": "UNEXECUTED",
+   "argv": [
+    "/usr/bin/env",
+    "-i",
+    "HOME={qualificationScratch}/home",
+    "TMPDIR={qualificationScratch}/tmp",
+    "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+    "/usr/bin/timeout",
+    "-k",
+    "10",
+    "120",
+    "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+    "-I",
+    "tools/fixtures/site-queue-button/compare-expected.py",
+    "{qualificationEvidence}/focused-feature.txt"
+   ],
+   "stdin": "/dev/null",
+   "output": "bounded: stdout and stderr captured to {qualificationEvidence}/consumer-eof.log, first 256 KiB retained",
+   "requires": [
+    "focused-feature",
+    "a JUnit or line reporter mapping each test name to pass or fail"
+   ]
+  },
+  {
+   "id": "mutation-anchors",
+   "status": "UNEXECUTED",
+   "argv": [
+    "/usr/bin/env",
+    "-i",
+    "HOME={qualificationScratch}/home",
+    "TMPDIR={qualificationScratch}/tmp",
+    "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+    "/usr/bin/timeout",
+    "-k",
+    "10",
+    "60",
+    "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+    "-I",
+    "tools/fixtures/site-queue-button/check-mutations.py",
+    "{qualificationSource}"
+   ],
+   "stdin": "/dev/null",
+   "output": "bounded: stdout and stderr captured to {qualificationEvidence}/mutation-anchors.log, first 256 KiB retained",
+   "requires": []
+  },
+  {
+   "id": "mutations-red",
+   "status": "UNEXECUTED",
+   "argv": [
+    "/usr/bin/env",
+    "-i",
+    "HOME={qualificationScratch}/home",
+    "TMPDIR={qualificationScratch}/tmp",
+    "PATH={pinnedExecutableBin}:{qualifiedDependencies}/.bin:/usr/bin:/bin",
+    "/usr/bin/timeout",
+    "-k",
+    "10",
+    "540",
+    "{driver: apply each mutations.json entry to a fresh complete copy, then run focused-feature there}"
+   ],
+   "stdin": "/dev/null",
+   "output": "bounded: stdout and stderr captured to {qualificationEvidence}/mutations-red.log, first 256 KiB retained",
+   "requires": [
+    "mutation-anchors",
+    "focused-feature green first",
+    "an approved non-agent driver"
+   ]
+  }
+ ]
+}

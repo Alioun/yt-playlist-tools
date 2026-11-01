@@ -1,0 +1,2 @@
+import type { ToastAction } from "../../../src/site/kit/toaster/types"
+const invalid: ToastAction = { kind: "many", label: "x", run: () => null }

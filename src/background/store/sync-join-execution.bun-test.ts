@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import { createLocalFilterWriter, createStartingLocalFilterWriter } from "./local-filter-writer"
-import { runSyncJoinObservations, syncJoinHarness } from "../../../tools/fixtures/account-removal-admission/run"
+import { runSyncJoinObservations, runSyncReconciliationFaults, runSyncReconciliationObservations, runSyncReconciliationBoundaries, runSyncReconciliationRaces, syncReconciliationFixtures, syncJoinHarness } from "../../../tools/fixtures/account-removal-admission/run"
 import { encodeSyncDocument } from "./sync-codec"
 import type { UiOrigin } from "./sync-join-execution"
 import { pendingSyncJoinKey, joinJson } from "./sync-join-persistence"
@@ -10,11 +10,30 @@ const ui = { kind: "ui", windowId: 1, incognito: false } as const
 const local = (): JsonObject => ({ schema: 1, device: { id: "L", consent: { v: 1, at: 1 }, syncOn: false }, "doc:settings": { v: 1, gen: "L", at: 1, by: "L", data: { theme: "light", autoAdd: { on: true } } } })
 const remote = (): JsonObject => ({ "s:meta": { v: 1, id: "H", created: 0 }, "s:settings": { v: 1, gen: "R", at: 2, by: "R", data: { theme: "dark", autoAdd: { on: false } } } })
 
-test("actual admission command executes both literal sides, every accepted stage and discarded-state restarts", async () => {
-  const result = await runSyncJoinObservations()
-  expect(result.observations.length).toBeGreaterThan(70)
-  expect(result.assertions.length).toBeGreaterThan(450)
+test("actual admission command executes both literal sides and all nonfault join branches", async () => {
+  const result = await runSyncJoinObservations(undefined, { faults: false, legacyStage: "none", legacyOnly: true })
+  expect(result.observations.length).toBe(16)
   expect(result.productionConnected).toBe(false)
+}, 30000)
+
+for (const stage of ["accept", "materialize", "local-cleanup", "session-cleanup", "debt", "native", "acknowledge", "retire"]) test("actual first-join command retains each " + stage + " fault and restart", async () => {
+  const result = await runSyncJoinObservations(undefined, { faults: false, legacyStage: stage, basics: false, legacyOnly: true })
+  expect(result.observations).toHaveLength(9)
+}, 30000)
+
+for (const fixture of syncReconciliationFixtures()) test("actual complete reconciliation transaction " + fixture.id, async () => {
+  const result = await runSyncReconciliationObservations(undefined, { faults: false, case: String(fixture.id), boundaries: false, races: false })
+  expect(result.observations).toHaveLength(1)
+}, 30000)
+
+for (const name of ["same-history-proof-True", "same-history-proof-False", "same-history-proof-absent", "R164-unknown-is-not-proof", "same-history-with-real-off-edit-still-needs-choice", "explicit-null", "incomplete", "reset", "future", "ambiguous-metadata-loss", "same-at-by-different-generations-do-not-invent-a-third-tie-break", "third-local-value-is-not-a-replayed-user-edit", "R153-still-waits-on-different-history", "R153-choice-precedes-never-edited-automatic-adoption", "R155-reconciliation-retains-exact-hold-without-retry-authority"]) test("actual reconciliation boundary " + name, async () => {
+  const result = await runSyncReconciliationBoundaries(undefined, name)
+  expect(result.observations).toHaveLength(1)
+}, 30000)
+
+for (const name of ["returning-reviewed-generation", "repeated-churn", "post-native-race", "consent-withdrawal", "quota-after-local-completion", "missing-progress-plan", "additional-progress-shard", "equal-stamp-divergence", "orphan-chunks", "later-history-before-chunks", "R155-event-and-restart", "device-code-unit-order", "whole-filter-not-list-union"]) test("actual reconciliation race " + name, async () => {
+  const result = await runSyncReconciliationRaces(undefined, name)
+  expect(result.observations).toHaveLength(1)
 }, 30000)
 
 test("boundary inventories distinguish reset, future, null, fragments, orphans and all quota bounds before effects", async () => {
@@ -266,3 +285,11 @@ test("known unchanged materialization rejection can resume on the same owner wit
   expect(h.nativeSets).toEqual([])
   await owner.dispose()
 })
+
+for (const family of ["same-history", "outbound-drift"] as const) for (const stage of ["accept", "materialize", "local-cleanup", "session-cleanup", "debt", "native", "acknowledge", "retire"]) {
+  test(`real ${family} reconciliation confirms or retains each ${stage} fault and fresh restart`, async () => {
+    const result = await runSyncReconciliationFaults(undefined, { family, stage })
+    expect(result.observations).toHaveLength(9)
+    expect(result.assertions.length).toBeGreaterThan(30)
+  }, 30000)
+}

@@ -1,0 +1,639 @@
+{
+  "state": "all-unexecuted",
+  "controls": [
+    {
+      "id": "owner-services-reconciliation-bookkeeping-event-noise",
+      "original": "tools/fixtures/owner-services-reconciliation/controls/bookkeeping-event-noise.patch",
+      "originalPatchSha256": "5f9698e7ad99fe653c2929b64a034d263546cb3a38666e5c25b71394eecf67d3",
+      "target": "src/background/store/local-filter-writer.ts",
+      "patch": "relocated/inherited-controls/owner-services-reconciliation-bookkeeping-event-noise.patch",
+      "baseSha256": "1d0b1e3903328437f16e41f1f29e78cf592f6a2e8138571eccf88876e7ba3402",
+      "mutatedSha256": "28de348aaa5f2c2e1b06d34fc66438c22b0a0561246246b13bf76c10b8353900",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "          return { kind: \"unconfirmed\", write }\n        }\n      }\n      saved.consumed = true\n      const checkedAt = due ? request.at : state.checkedAt\n      if (checkedAt === null) return { kind: \"refused\", reason: \"invalid\" }\n",
+          "after": "          return { kind: \"unconfirmed\", write }\n        }\n      }\n      emit({ kind: \"setup-changed\", source: \"local\", acct: request.acct })\n      saved.consumed = true\n      const checkedAt = due ? request.at : state.checkedAt\n      if (checkedAt === null) return { kind: \"refused\", reason: \"invalid\" }\n",
+          "occurrence": 1,
+          "line": 1931
+        }
+      ],
+      "namedAssertion": "reservation and unchanged labels publish no document events and preserve raw cache",
+      "testFile": "tools/fixtures/owner-services-reconciliation/owner.bun-test.ts",
+      "inheritedMetadata": {
+        "id": "bookkeeping-event-noise",
+        "state": "unexecuted-proposed-compiling-control",
+        "patch": "tools/fixtures/owner-services-reconciliation/controls/bookkeeping-event-noise.patch",
+        "identity": {
+          "sha256": "5f9698e7ad99fe653c2929b64a034d263546cb3a38666e5c25b71394eecf67d3",
+          "gitBlob": "2e6dab71f67aa533e171c4e0aa4e70bac9c6dc68",
+          "bytes": 433,
+          "mode": "100644"
+        },
+        "source": "src/background/store/local-filter-writer.ts",
+        "test": "reservation and unchanged labels publish no document events and preserve raw cache",
+        "testFile": "tools/fixtures/owner-services-reconciliation/owner.bun-test.ts",
+        "compilation": "unexecuted",
+        "behavior": "unexecuted",
+        "protocol": [
+          "Passing exact baseline required",
+          "Apply patch with zero fuzz and offset and preserve modes",
+          "Compile the complete scoped project successfully",
+          "Run the named test and require its intended assertion to fail",
+          "Restore exact bytes and modes",
+          "Rerun passing baseline; unrelated failure or timeout earns no credit"
+        ]
+      },
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false,
+      "reason": "Preserve the original fault and named behavior; reanchor exact replacement on final source. No source target was mutated."
+    },
+    {
+      "id": "owner-services-reconciliation-checking-writes",
+      "original": "tools/fixtures/owner-services-reconciliation/controls/checking-writes.patch",
+      "originalPatchSha256": "9a1979731229a815ebd75767f7ee9712e3635268aec6cc9817303a23c2895a71",
+      "target": "src/background/store/local-filter-writer.ts",
+      "patch": "relocated/inherited-controls/owner-services-reconciliation-checking-writes.patch",
+      "baseSha256": "1d0b1e3903328437f16e41f1f29e78cf592f6a2e8138571eccf88876e7ba3402",
+      "mutatedSha256": "409928c4b653beaafb5be2ac90cb4791a2a6d086d1a7897eb9b1fed9105bfc07",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "      return enqueue(async () => {\n        const plan = checkSettingsFile(window, text, settingsFileUnavailable())\n        if (plan.kind !== \"import-plan\") return plan\n        const current = await readSettingsFileInLane()\n        return current.kind === \"source\" ? plan : current\n      })\n",
+          "after": "      return enqueue(async () => {\n        const plan = checkSettingsFile(window, text, settingsFileUnavailable())\n        if (plan.kind !== \"import-plan\") return plan\n        await removalLocal.set({ \"reconciliation-check\": true })\n        const current = await readSettingsFileInLane()\n        return current.kind === \"source\" ? plan : current\n      })\n",
+          "occurrence": 1,
+          "line": 3239
+        }
+      ],
+      "namedAssertion": "checking uses fresh owner facts and never writes or publishes",
+      "testFile": "tools/fixtures/owner-services-reconciliation/owner.bun-test.ts",
+      "inheritedMetadata": {
+        "id": "checking-writes",
+        "state": "unexecuted-proposed-compiling-control",
+        "patch": "tools/fixtures/owner-services-reconciliation/controls/checking-writes.patch",
+        "identity": {
+          "sha256": "9a1979731229a815ebd75767f7ee9712e3635268aec6cc9817303a23c2895a71",
+          "gitBlob": "80bc0e06fd99bddd8944b01ea046bb6ced076020",
+          "bytes": 484,
+          "mode": "100644"
+        },
+        "source": "src/background/store/local-filter-writer.ts",
+        "test": "checking uses fresh owner facts and never writes or publishes",
+        "testFile": "tools/fixtures/owner-services-reconciliation/owner.bun-test.ts",
+        "compilation": "unexecuted",
+        "behavior": "unexecuted",
+        "protocol": [
+          "Passing exact baseline required",
+          "Apply patch with zero fuzz and offset and preserve modes",
+          "Compile the complete scoped project successfully",
+          "Run the named test and require its intended assertion to fail",
+          "Restore exact bytes and modes",
+          "Rerun passing baseline; unrelated failure or timeout earns no credit"
+        ]
+      },
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false,
+      "reason": "Preserve the original fault and named behavior; reanchor exact replacement on final source. No source target was mutated."
+    },
+    {
+      "id": "owner-services-reconciliation-lost-label-event",
+      "original": "tools/fixtures/owner-services-reconciliation/controls/lost-label-event.patch",
+      "originalPatchSha256": "dcc347d3397f2ea14ae3733f8dedc68a3badff2a00f280af3580e6c10576251a",
+      "target": "src/background/store/local-filter-writer.ts",
+      "patch": "relocated/inherited-controls/owner-services-reconciliation-lost-label-event.patch",
+      "baseSha256": "1d0b1e3903328437f16e41f1f29e78cf592f6a2e8138571eccf88876e7ba3402",
+      "mutatedSha256": "660a68c5cc2481dc718c3cf476b4d4b834b5f94365b13b8368265c1f452eb4df",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "      deactivate(\"stopped\")\n    }\n    if (result.kind === \"committed\") {\n      emit({ kind: \"setup-changed\", source: \"local\", acct: input.acct })\n      quietUntil = deps.syncClock.now() + 2000\n      if (lifetime.kind === \"active\") {\n        const arrival = clock()\n",
+          "after": "      deactivate(\"stopped\")\n    }\n    if (result.kind === \"committed\") {\n      void input.acct\n      quietUntil = deps.syncClock.now() + 2000\n      if (lifetime.kind === \"active\") {\n        const arrival = clock()\n",
+          "occurrence": 1,
+          "line": 1955
+        }
+      ],
+      "namedAssertion": "confirmed changed labels publish exactly one current Setup event",
+      "testFile": "tools/fixtures/owner-services-reconciliation/owner.bun-test.ts",
+      "inheritedMetadata": {
+        "id": "lost-label-event",
+        "state": "unexecuted-proposed-compiling-control",
+        "patch": "tools/fixtures/owner-services-reconciliation/controls/lost-label-event.patch",
+        "identity": {
+          "sha256": "dcc347d3397f2ea14ae3733f8dedc68a3badff2a00f280af3580e6c10576251a",
+          "gitBlob": "2ecb59c557d3bcbdccfd6de62ce176fbe78bb033",
+          "bytes": 417,
+          "mode": "100644"
+        },
+        "source": "src/background/store/local-filter-writer.ts",
+        "test": "confirmed changed labels publish exactly one current Setup event",
+        "testFile": "tools/fixtures/owner-services-reconciliation/owner.bun-test.ts",
+        "compilation": "unexecuted",
+        "behavior": "unexecuted",
+        "protocol": [
+          "Passing exact baseline required",
+          "Apply patch with zero fuzz and offset and preserve modes",
+          "Compile the complete scoped project successfully",
+          "Run the named test and require its intended assertion to fail",
+          "Restore exact bytes and modes",
+          "Rerun passing baseline; unrelated failure or timeout earns no credit"
+        ]
+      },
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false,
+      "reason": "Preserve the original fault and named behavior; reanchor exact replacement on final source. No source target was mutated."
+    },
+    {
+      "id": "owner-services-reconciliation-omitted-read-freshness",
+      "original": "tools/fixtures/owner-services-reconciliation/controls/omitted-read-freshness.patch",
+      "originalPatchSha256": "0f413be7cc8e419ce2e7ed4575ab6ca32076371fbefce8dec2fbc66c9fd60755",
+      "target": "src/background/store/local-filter-writer.ts",
+      "patch": "relocated/inherited-controls/owner-services-reconciliation-omitted-read-freshness.patch",
+      "baseSha256": "1d0b1e3903328437f16e41f1f29e78cf592f6a2e8138571eccf88876e7ba3402",
+      "mutatedSha256": "cfcd5af567dd178e38d6a283168c72eb9f1de2f4003b03d244317e22f8b21cbd",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "      return enqueue(async () => {\n        const plan = checkSettingsFile(window, text, settingsFileUnavailable())\n        if (plan.kind !== \"import-plan\") return plan\n        const current = await readSettingsFileInLane()\n        return current.kind === \"source\" ? plan : current\n      })\n    },\n",
+          "after": "      return enqueue(async () => {\n        const plan = checkSettingsFile(window, text, settingsFileUnavailable())\n        if (plan.kind !== \"import-plan\") return plan\n        const current = await Promise.resolve<Awaited<ReturnType<SettingsFileOwner[\"exportSettings\"]>>>({ kind: \"source\", source: { kind: \"settings-file-source\", settings: { kind: \"absent\" }, accounts: [] } })\n        return current.kind === \"source\" ? plan : current\n      })\n    },\n",
+          "occurrence": 1,
+          "line": 3239
+        }
+      ],
+      "namedAssertion": "checking uses fresh owner facts and never writes or publishes",
+      "testFile": "tools/fixtures/owner-services-reconciliation/owner.bun-test.ts",
+      "inheritedMetadata": {
+        "id": "omitted-read-freshness",
+        "state": "unexecuted-proposed-compiling-control",
+        "patch": "tools/fixtures/owner-services-reconciliation/controls/omitted-read-freshness.patch",
+        "identity": {
+          "sha256": "0f413be7cc8e419ce2e7ed4575ab6ca32076371fbefce8dec2fbc66c9fd60755",
+          "gitBlob": "f6a4ca6907b44be84d211a2c4f0d1c46868e808c",
+          "bytes": 637,
+          "mode": "100644"
+        },
+        "source": "src/background/store/local-filter-writer.ts",
+        "test": "checking uses fresh owner facts and never writes or publishes",
+        "testFile": "tools/fixtures/owner-services-reconciliation/owner.bun-test.ts",
+        "compilation": "unexecuted",
+        "behavior": "unexecuted",
+        "protocol": [
+          "Passing exact baseline required",
+          "Apply patch with zero fuzz and offset and preserve modes",
+          "Compile the complete scoped project successfully",
+          "Run the named test and require its intended assertion to fail",
+          "Restore exact bytes and modes",
+          "Rerun passing baseline; unrelated failure or timeout earns no credit"
+        ]
+      },
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false,
+      "reason": "Preserve the original fault and named behavior; reanchor exact replacement on final source. No source target was mutated."
+    },
+    {
+      "id": "owner-services-reconciliation-stale-label-resurrection",
+      "original": "tools/fixtures/owner-services-reconciliation/controls/stale-label-resurrection.patch",
+      "originalPatchSha256": "d39f4ea8e92122535c3d262b4342c301b9aa7f9dd78c30244048165d0e564068",
+      "target": "src/background/store/local-filter-writer.ts",
+      "patch": "relocated/inherited-controls/owner-services-reconciliation-stale-label-resurrection.patch",
+      "baseSha256": "1d0b1e3903328437f16e41f1f29e78cf592f6a2e8138571eccf88876e7ba3402",
+      "mutatedSha256": "663346af8e4ecfdb748e33c71902b430147069e8497c0ffcee6e5145d5811aa8",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "    const result = await executeSetupEdit({ local: guardedLocal, sync, authority: records => retainedHold(records) ? { kind: \"unavailable\", reason: \"startup\" } : authority(records), repairHistory: repairedHistory, disposed, now: deps.now, generation: deps.generation, remove: runAccountRemoval }, input.acct,\n      records => {\n        const state = accountLabelState(records, input.acct)\n        return labelCaptureCurrent(capture, records) && state.kind === \"label\" && state.checkedAt === lookup.checkedAt\n          ? planAccountLabel(records, input.acct, lookup.label, label) : { kind: \"stale\", reason: \"setup\" }\n      })\n    if (result.kind === \"unconfirmed\" || result.kind === \"failed\" && result.stage === \"set\") {\n      claimConfirmation = \"unconfirmed\"\n",
+          "after": "    const result = await executeSetupEdit({ local: guardedLocal, sync, authority: records => retainedHold(records) ? { kind: \"unavailable\", reason: \"startup\" } : authority(records), repairHistory: repairedHistory, disposed, now: deps.now, generation: deps.generation, remove: runAccountRemoval }, input.acct,\n      records => {\n        const state = accountLabelState(records, input.acct)\n        return state.kind === \"label\"\n          ? planAccountLabel(records, input.acct, state.label, label) : { kind: \"stale\", reason: \"setup\" }\n      })\n    if (result.kind === \"unconfirmed\" || result.kind === \"failed\" && result.stage === \"set\") {\n      claimConfirmation = \"unconfirmed\"\n",
+          "occurrence": 1,
+          "line": 1947
+        }
+      ],
+      "namedAssertion": "the composed owner, Accounts and actual Tabs consumer matches complete independent expectations",
+      "testFile": "tools/fixtures/owner-services-reconciliation/consumer.bun-test.ts",
+      "inheritedMetadata": {
+        "id": "stale-label-resurrection",
+        "state": "unexecuted-proposed-compiling-control",
+        "patch": "tools/fixtures/owner-services-reconciliation/controls/stale-label-resurrection.patch",
+        "identity": {
+          "sha256": "d39f4ea8e92122535c3d262b4342c301b9aa7f9dd78c30244048165d0e564068",
+          "gitBlob": "65c66d73749545a4c69bde007c4bb45fcb38a6b4",
+          "bytes": 1037,
+          "mode": "100644"
+        },
+        "source": "src/background/store/local-filter-writer.ts",
+        "test": "the composed owner, Accounts and actual Tabs consumer matches complete independent expectations",
+        "testFile": "tools/fixtures/owner-services-reconciliation/consumer.bun-test.ts",
+        "compilation": "unexecuted",
+        "behavior": "unexecuted",
+        "protocol": [
+          "Passing exact baseline required",
+          "Apply patch with zero fuzz and offset and preserve modes",
+          "Compile the complete scoped project successfully",
+          "Run the named test and require its intended assertion to fail",
+          "Restore exact bytes and modes",
+          "Rerun passing baseline; unrelated failure or timeout earns no credit"
+        ]
+      },
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false,
+      "reason": "Preserve the original fault and named behavior; reanchor exact replacement on final source. No source target was mutated."
+    },
+    {
+      "id": "settings-import-execution-ignored-startup-marker",
+      "original": "tools/fixtures/settings-import-execution/controls/ignored-startup-marker.patch",
+      "originalPatchSha256": "af6ab5044f12f4aea5db656c31a1d98b44e286f322edfcb46e0944789fde8306",
+      "target": "src/background/store/local-filter-writer.ts",
+      "patch": "relocated/inherited-controls/settings-import-execution-ignored-startup-marker.patch",
+      "baseSha256": "1d0b1e3903328437f16e41f1f29e78cf592f6a2e8138571eccf88876e7ba3402",
+      "mutatedSha256": "b0174777e21f779393dd1ebb20224be03e458bd134f59c4c20f0a932e47f6e38",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "    let result: RemovalResult, removed: AccountKey | undefined\n    try {\n      const records = await removalLocal.get([pendingAccountRemovalKey])\n      if (importPending) {\n        const imported = await resumeImportInLane()\n        if (imported.kind !== \"idle\" && imported.kind !== \"committed\") return { kind: \"unavailable\", reason: \"stale\" }\n      }\n",
+          "after": "    let result: RemovalResult, removed: AccountKey | undefined\n    try {\n      const records = await removalLocal.get([pendingAccountRemovalKey])\n      if (false) {\n        const imported = await resumeImportInLane()\n        if (imported.kind !== \"idle\" && imported.kind !== \"committed\") return { kind: \"unavailable\", reason: \"stale\" }\n      }\n",
+          "occurrence": 1,
+          "line": 656
+        }
+      ],
+      "namedAssertion": "retained-canonical startup resumes the same accepted import and preserves the archive",
+      "testFile": "tools/fixtures/settings-import-execution/canonical.bun-test.ts",
+      "inheritedMetadata": {
+        "id": "ignored-startup-marker",
+        "path": "src/background/store/local-filter-writer.ts",
+        "patch": "tools/fixtures/settings-import-execution/controls/ignored-startup-marker.patch",
+        "anchor": "      if (importPending) {\n        const imported = await resumeImportInLane()",
+        "anchorOccurrences": 1,
+        "observableAssertion": "retained-canonical startup resumes the same accepted import and preserves the archive",
+        "test": "tools/fixtures/settings-import-execution/canonical.bun-test.ts",
+        "baselineSha256": "ee27d6264348e6893b2ec8aecd10df2693c150ca8baae14261147cc2bc7c4d5a",
+        "mutatedSha256": "5865e0c29952d5d0b44c3c1e122def28bf0f8c7dbd12090edc3aad00003ff68e",
+        "patchSha256": "af6ab5044f12f4aea5db656c31a1d98b44e286f322edfcb46e0944789fde8306",
+        "staticReplay": {
+          "state": "passed",
+          "zeroFuzz": true,
+          "zeroOffset": true,
+          "stdout": "patching file 'src/background/store/local-filter-writer.ts'\n"
+        },
+        "compilation": "intended-compiling-unexecuted",
+        "baseline": "unexecuted",
+        "namedRed": "unexecuted",
+        "restoredPass": "unexecuted"
+      },
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false,
+      "reason": "Preserve the original fault and named behavior; reanchor exact replacement on final source. No source target was mutated."
+    },
+    {
+      "id": "shared-options-implicit-enablement",
+      "original": "tools/fixtures/shared-options/controls/implicit-enablement.patch",
+      "originalPatchSha256": "b41a3e21af8077177bb85b6b17888dc1ff16c1bda1a4865318f97f72c383dcf9",
+      "target": "src/background/store/settings-edit.ts",
+      "patch": "relocated/inherited-controls/shared-options-implicit-enablement.patch",
+      "baseSha256": "549a10b5093d5bdfa2b44489d156059dcd7ba36d439d4196cb1dfeca057370ed",
+      "mutatedSha256": "6b77866a3440e19720465a3681a5f969eadf8be30e062305771895bc883c9269",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "  return { kind: \"changed\", settings: normalizeSettingsForWrite(settings) }\n}\n",
+          "after": "  settings.musicActions.on = true\n  return { kind: \"changed\", settings: normalizeSettingsForWrite(settings) }\n}\n",
+          "occurrence": 2,
+          "line": 235
+        }
+      ],
+      "namedAssertion": "native stores hidden choices with the Music section and features off",
+      "testFile": "tools/fixtures/shared-options/owner.bun-test.ts",
+      "inheritedMetadata": {
+        "id": "implicit-enablement",
+        "patch": "controls/implicit-enablement.patch",
+        "target": "src/background/store/settings-edit.ts",
+        "baseSha256": "5e3b04106770deb45e1d8972af7022b6b625226f1ea657533a35f549dd3c2176",
+        "mutatedSha256": "7e28f4451f45e81bcb710c153abb66bb3bc2960a5662a3fe57bd4803ae79af84",
+        "anchors": [
+          {
+            "before": "  return { kind: \"changed\", settings: normalizeSettingsForWrite(settings) }\n}\n",
+            "after": "  settings.musicActions.on = true\n  return { kind: \"changed\", settings: normalizeSettingsForWrite(settings) }\n}\n",
+            "occurrence": 2,
+            "line": 278
+          }
+        ],
+        "namedAssertion": "native stores hidden choices with the Music section and features off",
+        "testFile": "tools/fixtures/shared-options/owner.bun-test.ts",
+        "state": "unexecuted",
+        "requiredOrder": [
+          "baseline native compile and named pass",
+          "apply exact patch in a disposable full candidate",
+          "mutant native compile must pass",
+          "named behavioral assertion must fail, not an unrelated error or timeout",
+          "restore and prove byte/mode equality",
+          "native compile and named pass"
+        ]
+      },
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false,
+      "reason": "Preserve the original fault and named behavior; reanchor exact replacement on final source. No source target was mutated."
+    },
+    {
+      "id": "shared-options-invalid-coercion",
+      "original": "tools/fixtures/shared-options/controls/invalid-coercion.patch",
+      "originalPatchSha256": "7d4c4406d788066a1ccc9effb5985cefb58e0ff0a168cb71ca3b8cc9ba3238f5",
+      "target": "src/background/store/settings-edit.ts",
+      "patch": "relocated/inherited-controls/shared-options-invalid-coercion.patch",
+      "baseSha256": "549a10b5093d5bdfa2b44489d156059dcd7ba36d439d4196cb1dfeca057370ed",
+      "mutatedSha256": "4c97fd808559fc62b8b6bdd77a59d1eec8341cf52fc3d796343cecbc79f288a9",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "    case \"autoAdd.feedback\":\n      if (typeof change.value !== \"boolean\") return { kind: \"invalid\", reason: \"invalid-option\" }",
+          "after": "    case \"autoAdd.feedback\":",
+          "occurrence": 1,
+          "line": 49
+        },
+        {
+          "before": "settings.autoAdd.feedback = change.value",
+          "after": "settings.autoAdd.feedback = Boolean(change.value)",
+          "occurrence": 1,
+          "line": 52
+        }
+      ],
+      "namedAssertion": "owner invalid runtime field/value inputs never coerce or stamp",
+      "testFile": "tools/fixtures/shared-options/owner.bun-test.ts",
+      "inheritedMetadata": {
+        "id": "invalid-coercion",
+        "patch": "controls/invalid-coercion.patch",
+        "target": "src/background/store/settings-edit.ts",
+        "baseSha256": "5e3b04106770deb45e1d8972af7022b6b625226f1ea657533a35f549dd3c2176",
+        "mutatedSha256": "55248ee5953a6660f0107695a94205cb6b39873ad76b88f6a74ea168279b9b22",
+        "anchors": [
+          {
+            "before": "    case \"autoAdd.feedback\":\n      if (typeof change.value !== \"boolean\") return { kind: \"invalid\", reason: \"invalid-option\" }",
+            "after": "    case \"autoAdd.feedback\":",
+            "occurrence": 1,
+            "line": 92
+          },
+          {
+            "before": "settings.autoAdd.feedback = change.value",
+            "after": "settings.autoAdd.feedback = Boolean(change.value)",
+            "occurrence": 1,
+            "line": 95
+          }
+        ],
+        "namedAssertion": "owner invalid runtime field/value inputs never coerce or stamp",
+        "testFile": "tools/fixtures/shared-options/owner.bun-test.ts",
+        "state": "unexecuted",
+        "requiredOrder": [
+          "baseline native compile and named pass",
+          "apply exact patch in a disposable full candidate",
+          "mutant native compile must pass",
+          "named behavioral assertion must fail, not an unrelated error or timeout",
+          "restore and prove byte/mode equality",
+          "native compile and named pass"
+        ]
+      },
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false,
+      "reason": "Preserve the original fault and named behavior; reanchor exact replacement on final source. No source target was mutated."
+    },
+    {
+      "id": "shared-options-lost-unrelated-fields",
+      "original": "tools/fixtures/shared-options/controls/lost-unrelated-fields.patch",
+      "originalPatchSha256": "9cae6e33c57a3055061a1c6c25999d0d3fb4f6f411c74d55409dbb7e89ef656d",
+      "target": "src/background/store/settings-edit.ts",
+      "patch": "relocated/inherited-controls/shared-options-lost-unrelated-fields.patch",
+      "baseSha256": "549a10b5093d5bdfa2b44489d156059dcd7ba36d439d4196cb1dfeca057370ed",
+      "mutatedSha256": "f39587f60a752ccb7e5660105e04f868bc985643bd7d6bb5cde0d43f9e7d6bf1",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "  return { kind: \"changed\", settings: normalizeSettingsForWrite(settings) }\n}\n",
+          "after": "  Reflect.deleteProperty(settings, \"futureRoot\")\n  return { kind: \"changed\", settings: normalizeSettingsForWrite(settings) }\n}\n",
+          "occurrence": 2,
+          "line": 235
+        }
+      ],
+      "namedAssertion": "owner confirms autoAdd.feedback and preserves the complete independent inventory",
+      "testFile": "tools/fixtures/shared-options/owner.bun-test.ts",
+      "inheritedMetadata": {
+        "id": "lost-unrelated-fields",
+        "patch": "controls/lost-unrelated-fields.patch",
+        "target": "src/background/store/settings-edit.ts",
+        "baseSha256": "5e3b04106770deb45e1d8972af7022b6b625226f1ea657533a35f549dd3c2176",
+        "mutatedSha256": "93ca0ae8fe8597d454657f6908038da8799bbfb1aa8f8767a7a1d67fed8a22a2",
+        "anchors": [
+          {
+            "before": "  return { kind: \"changed\", settings: normalizeSettingsForWrite(settings) }\n}\n",
+            "after": "  Reflect.deleteProperty(settings, \"futureRoot\")\n  return { kind: \"changed\", settings: normalizeSettingsForWrite(settings) }\n}\n",
+            "occurrence": 2,
+            "line": 278
+          }
+        ],
+        "namedAssertion": "owner confirms autoAdd.feedback and preserves the complete independent inventory",
+        "testFile": "tools/fixtures/shared-options/owner.bun-test.ts",
+        "state": "unexecuted",
+        "requiredOrder": [
+          "baseline native compile and named pass",
+          "apply exact patch in a disposable full candidate",
+          "mutant native compile must pass",
+          "named behavioral assertion must fail, not an unrelated error or timeout",
+          "restore and prove byte/mode equality",
+          "native compile and named pass"
+        ]
+      },
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false,
+      "reason": "Preserve the original fault and named behavior; reanchor exact replacement on final source. No source target was mutated."
+    },
+    {
+      "id": "shared-options-premature-success",
+      "original": "tools/fixtures/shared-options/controls/premature-success.patch",
+      "originalPatchSha256": "a98d5be9a6128943d1d3a1a61af5daba81ce76c94e5be229673a64f8a4164b2c",
+      "target": "src/background/store/shared-setting-execution.ts",
+      "patch": "relocated/inherited-controls/shared-options-premature-success.patch",
+      "baseSha256": "5aeb0d880ed6bc634093be3b63976f51acd2a0103708e71dde3fddefe6102515",
+      "mutatedSha256": "f80dbccb853ebccd39429ae71ade9883293198d8af01df361d819f7a730d12d4",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "if (!jsonObject(confirmed) || !sameSyncJson(readSettingsSnapshot(confirmed), { ...baseline, ...items }))",
+          "after": "if (!jsonObject(confirmed))",
+          "occurrence": 1,
+          "line": 99
+        }
+      ],
+      "namedAssertion": "native ignore never substitutes a write promise for a confirmed receipt",
+      "testFile": "tools/fixtures/shared-options/owner.bun-test.ts",
+      "inheritedMetadata": {
+        "id": "premature-success",
+        "patch": "controls/premature-success.patch",
+        "target": "src/background/store/shared-setting-execution.ts",
+        "baseSha256": "a5ff589de91827fa2c5aa941ce40410e919d4a58cffedb14645610c71ac961b3",
+        "mutatedSha256": "6b84749f44b0cdb01deedccbfff735b4205e13d4ec5bd99fa6833616f8214719",
+        "anchors": [
+          {
+            "before": "if (!jsonObject(confirmed) || !sameSyncJson(readSettingsSnapshot(confirmed), { ...baseline, ...items }))",
+            "after": "if (!jsonObject(confirmed))",
+            "occurrence": 1,
+            "line": 100
+          }
+        ],
+        "namedAssertion": "native ignore never substitutes a write promise for a confirmed receipt",
+        "testFile": "tools/fixtures/shared-options/owner.bun-test.ts",
+        "state": "unexecuted",
+        "requiredOrder": [
+          "baseline native compile and named pass",
+          "apply exact patch in a disposable full candidate",
+          "mutant native compile must pass",
+          "named behavioral assertion must fail, not an unrelated error or timeout",
+          "restore and prove byte/mode equality",
+          "native compile and named pass"
+        ]
+      },
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false,
+      "reason": "Preserve the original fault and named behavior; reanchor exact replacement on final source. No source target was mutated."
+    },
+    {
+      "id": "shared-options-wrong-field",
+      "original": "tools/fixtures/shared-options/controls/wrong-field.patch",
+      "originalPatchSha256": "83edfa582e82d4597651f3916660766274ec1464a692f1a1435af7b9395813d0",
+      "target": "src/background/store/settings-edit.ts",
+      "patch": "relocated/inherited-controls/shared-options-wrong-field.patch",
+      "baseSha256": "549a10b5093d5bdfa2b44489d156059dcd7ba36d439d4196cb1dfeca057370ed",
+      "mutatedSha256": "809da3667abbf79ae8eee58cb2b86d63aa0c0bdd6b5da6f85dafe9cfa0af599e",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "settings.musicActions.buttons.next = change.value",
+          "after": "settings.musicActions.buttons.queue = change.value",
+          "occurrence": 1,
+          "line": 143
+        }
+      ],
+      "namedAssertion": "native confirms musicActions.buttons.next and preserves the complete independent inventory",
+      "testFile": "tools/fixtures/shared-options/owner.bun-test.ts",
+      "inheritedMetadata": {
+        "id": "wrong-field",
+        "patch": "controls/wrong-field.patch",
+        "target": "src/background/store/settings-edit.ts",
+        "baseSha256": "5e3b04106770deb45e1d8972af7022b6b625226f1ea657533a35f549dd3c2176",
+        "mutatedSha256": "47f8dafb24553b682093692be826f47a8b51977bf6ae71af93dff646a1eb12eb",
+        "anchors": [
+          {
+            "before": "settings.musicActions.buttons.next = change.value",
+            "after": "settings.musicActions.buttons.queue = change.value",
+            "occurrence": 1,
+            "line": 186
+          }
+        ],
+        "namedAssertion": "native confirms musicActions.buttons.next and preserves the complete independent inventory",
+        "testFile": "tools/fixtures/shared-options/owner.bun-test.ts",
+        "state": "unexecuted",
+        "requiredOrder": [
+          "baseline native compile and named pass",
+          "apply exact patch in a disposable full candidate",
+          "mutant native compile must pass",
+          "named behavioral assertion must fail, not an unrelated error or timeout",
+          "restore and prove byte/mode equality",
+          "native compile and named pass"
+        ]
+      },
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false,
+      "reason": "Preserve the original fault and named behavior; reanchor exact replacement on final source. No source target was mutated."
+    },
+    {
+      "id": "view-publication-missing-sync-filter-event",
+      "original": "tools/fixtures/view-publication/controls/missing-sync-filter-event.patch",
+      "originalPatchSha256": "61d85a95dce6310b4ca45c07fcd96bcd9003e9f40eb59e9d9bf36bd5e63f8232",
+      "target": "src/background/store/local-filter-writer.ts",
+      "patch": "relocated/inherited-controls/view-publication-missing-sync-filter-event.patch",
+      "baseSha256": "1d0b1e3903328437f16e41f1f29e78cf592f6a2e8138571eccf88876e7ba3402",
+      "mutatedSha256": "c20c0b987cfc83811fbfa0849d9411b626b49b329b623fedf191bd298209b0c1",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "else emitView({ kind: \"filter-changed\", source: \"sync\", acct: key.acct, playlist: key.playlist })",
+          "after": "else void key",
+          "occurrence": 1,
+          "line": 1498
+        }
+      ],
+      "namedAssertion": "confirmed adopted sync Filter changes target the account and equal data generations send nothing",
+      "testFile": "src/background/tab-view/publication.bun-test.ts",
+      "inheritedMetadata": {
+        "id": "missing-sync-filter-event",
+        "state": "authored-unexecuted",
+        "testFile": "src/background/tab-view/publication.bun-test.ts",
+        "testName": "confirmed adopted sync Filter changes target the account and equal data generations send nothing",
+        "observableAssertion": "expect(targetIds(h)).toEqual([1, 2, 9])",
+        "edits": [
+          {
+            "path": "src/background/store/local-filter-writer.ts",
+            "old": "else emitView({ kind: \"filter-changed\", source: \"sync\", acct: key.acct, playlist: key.playlist })",
+            "new": "else void key"
+          }
+        ],
+        "compilerCredit": false,
+        "behaviorCredit": false
+      },
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false,
+      "reason": "Preserve the original fault and named behavior; reanchor exact replacement on final source. No source target was mutated."
+    },
+    {
+      "id": "view-publication-optimistic-before-readback",
+      "original": "tools/fixtures/view-publication/controls/optimistic-before-readback.patch",
+      "originalPatchSha256": "c40bed7a82b4e9fde59eba0e047991bc4be464c54fcd3e9dfa0f59fe2b4c2dbd",
+      "target": "src/background/store/local-filter-writer.ts",
+      "patch": "relocated/inherited-controls/view-publication-optimistic-before-readback.patch",
+      "baseSha256": "1d0b1e3903328437f16e41f1f29e78cf592f6a2e8138571eccf88876e7ba3402",
+      "mutatedSha256": "8e959083d7199b8b97d14d67ad9fcc661c22b5ae2dbb8a8f62cd1e69ea690f45",
+      "mode": "100644",
+      "anchors": [
+        {
+          "before": "      emitView({ kind: \"filter-changed\", source: \"local\", acct: change.acct, playlist: change.playlist })\n",
+          "after": "",
+          "occurrence": 1,
+          "line": 1353
+        },
+        {
+          "before": "      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })",
+          "after": "      emitView({ kind: \"filter-changed\", source: \"local\", acct: change.acct, playlist: change.playlist })\n      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })",
+          "occurrence": 1,
+          "line": 1344
+        }
+      ],
+      "namedAssertion": "Filter storage must confirm before an event and queued session work keeps its own account",
+      "testFile": "src/background/store/view-events.bun-test.ts",
+      "inheritedMetadata": {
+        "id": "optimistic-before-readback",
+        "state": "authored-unexecuted",
+        "testFile": "src/background/store/view-events.bun-test.ts",
+        "testName": "Filter storage must confirm before an event and queued session work keeps its own account",
+        "observableAssertion": "expect(events).toEqual([])",
+        "edits": [
+          {
+            "path": "src/background/store/local-filter-writer.ts",
+            "old": "      emitView({ kind: \"filter-changed\", source: \"local\", acct: change.acct, playlist: change.playlist })\n",
+            "new": ""
+          },
+          {
+            "path": "src/background/store/local-filter-writer.ts",
+            "old": "      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })",
+            "new": "      emitView({ kind: \"filter-changed\", source: \"local\", acct: change.acct, playlist: change.playlist })\n      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })"
+          }
+        ],
+        "compilerCredit": false,
+        "behaviorCredit": false
+      },
+      "state": "compiling-mutation-proposal-unexecuted",
+      "compilerCredit": false,
+      "reason": "Preserve the original fault and named behavior; reanchor exact replacement on final source. No source target was mutated."
+    }
+  ],
+  "blocked": [],
+  "alreadyAppliedPositiveRepairs": [
+    {
+      "original": "tools/fixtures/ui-owner-reconciliation/protected-repairs.patch",
+      "state": "already-applied-positive-repairs-preserved-in-frozen-input",
+      "action": "Do not reapply an already carried positive repair as a negative control."
+    }
+  ]
+}

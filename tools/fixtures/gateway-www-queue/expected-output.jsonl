@@ -1,0 +1,11 @@
+{"step":"hello","answer":{"ok":true,"snapshot":{"signedIn":false,"acct":null,"pageType":"WATCH","startedHidden":false,"navType":"navigate"}}}
+{"step":"account","answer":{"ok":true,"data":{"signedIn":false,"acct":null},"route":"page-read.account"}}
+{"step":"first-add","answer":{"ok":true,"data":{"confirmed":true,"quiet":true,"undo":{"listId":"TLPQsyntheticA","setVideoId":"entry-1"}},"route":"command.queueAdd"}}
+{"step":"duplicate-add","answer":{"ok":true,"data":{"confirmed":true,"quiet":true,"undo":{"listId":"TLPQsyntheticA","setVideoId":"entry-2"}},"route":"command.queueAdd"}}
+{"step":"undo","answer":{"ok":true,"data":null,"route":"command.queueUndo"}}
+{"step":"add-list","answer":{"ok":true,"data":{"confirmed":false,"count":2},"route":"command.queueAddList"}}
+{"step":"card-menu","answer":{"result":{"ok":true,"data":null,"route":"page-ui.openCardMenu"},"actualTarget":true}}
+{"step":"sends","answer":[{"commandMetadata":{"webCommandMetadata":{"sendPost":true}},"signalServiceEndpoint":{"signal":"CLIENT_SIGNAL","actions":[{"addToPlaylistCommand":{"openMiniplayer":true,"videoId":"queueVideoA","listType":"PLAYLIST_EDIT_LIST_TYPE_QUEUE","onCreateListCommand":{"createPlaylistServiceEndpoint":{"videoIds":["queueVideoA"],"params":"CAQ%3D"}},"videoIds":["queueVideoA"]}}]}},{"commandMetadata":{"webCommandMetadata":{"apiUrl":"/youtubei/v1/browse/edit_playlist","sendPost":true}},"playlistEditEndpoint":{"playlistId":"TLPQsyntheticA","actions":[{"action":"ACTION_ADD_VIDEO","addedVideoId":"queueVideoA"}],"params":"IAE%3D"}},{"commandMetadata":{"webCommandMetadata":{"apiUrl":"/youtubei/v1/browse/edit_playlist","sendPost":true}},"playlistEditEndpoint":{"playlistId":"TLPQsyntheticA","actions":[{"action":"ACTION_REMOVE_VIDEO","setVideoId":"entry-2"}],"params":"IAE%3D"}},{"refreshPlaylistCommand":{"listId":"TLPQsyntheticA"}},{"signalServiceEndpoint":{"signal":"CLIENT_SIGNAL","actions":[{"addToPlaylistCommand":{"videoIds":["queueVideoB","queueVideoA","queueVideoB"],"listType":"PLAYLIST_EDIT_LIST_TYPE_QUEUE"}}]}}]}
+{"step":"queue","answer":[{"videoId":"queueVideoA","setVideoId":"entry-1"},{"videoId":"queueVideoB","setVideoId":"entry-3"},{"videoId":"queueVideoA","setVideoId":"entry-4"}]}
+{"step":"signals","answer":["timeout"]}
+{"step":"disposed","answer":{"pageListeners":0,"channelListeners":0,"actionListeners":0,"deadlines":0}}

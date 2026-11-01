@@ -1,0 +1,204 @@
+{
+  "state": "authored-runtime-unexecuted",
+  "protocol": "Each isolated control requires baseline pass, intended compiling mutant, named observable red, exact byte/mode restore, restored pass. Static replay is identity evidence only.",
+  "controls": [
+    {
+      "id": "partitioned-admission",
+      "path": "src/background/store/settings-import-execution.ts",
+      "patch": "tools/fixtures/settings-import-execution/controls/partitioned-admission.patch",
+      "anchor": "planSettingsImport({ parsed, local: current.local,",
+      "anchorOccurrences": 1,
+      "observableAssertion": "whole-batch quota refusal precedes acceptance",
+      "test": "tools/fixtures/settings-import-execution/owner.bun-test.ts",
+      "baselineSha256": "4d526b2a8bf3322e297e5b9dcc5a94be8429e79c68395f5791db06d2261047bb",
+      "mutatedSha256": "5fe31e16fba623c24ac658463fe8ce2400555d6315b2d49dc14a352b0719a0c1",
+      "patchSha256": "8716e608ca6131799fa27538ca928a7a66cb6ce07e31979b6d9a38f27a848fc6",
+      "staticReplay": {
+        "state": "passed",
+        "zeroFuzz": true,
+        "zeroOffset": true,
+        "stdout": "patching file 'src/background/store/settings-import-execution.ts'\n"
+      },
+      "compilation": "intended-compiling-unexecuted",
+      "baseline": "unexecuted",
+      "namedRed": "unexecuted",
+      "restoredPass": "unexecuted"
+    },
+    {
+      "id": "omitted-local-cleanup",
+      "path": "src/background/store/settings-import-execution.ts",
+      "patch": "tools/fixtures/settings-import-execution/controls/omitted-local-cleanup.patch",
+      "anchor": "apply = () => deps.cleanup.removeLocal(effect.keys); break",
+      "anchorOccurrences": 1,
+      "observableAssertion": "receipt follows terminal readback",
+      "test": "tools/fixtures/settings-import-execution/consumer.bun-test.ts",
+      "baselineSha256": "4d526b2a8bf3322e297e5b9dcc5a94be8429e79c68395f5791db06d2261047bb",
+      "mutatedSha256": "2e6410d93a30e68a9d32b4fc5419b117d6e7c999735e144375c0af09a6b43dd6",
+      "patchSha256": "4de873178e14084d9af58c1646630608c97ae538a52cdb9bedec958ce206b4db",
+      "staticReplay": {
+        "state": "passed",
+        "zeroFuzz": true,
+        "zeroOffset": true,
+        "stdout": "patching file 'src/background/store/settings-import-execution.ts'\n"
+      },
+      "compilation": "intended-compiling-unexecuted",
+      "baseline": "unexecuted",
+      "namedRed": "unexecuted",
+      "restoredPass": "unexecuted"
+    },
+    {
+      "id": "unstamped-documents",
+      "path": "src/background/store/settings-import-execution.ts",
+      "patch": "tools/fixtures/settings-import-execution/controls/unstamped-documents.patch",
+      "anchor": "items[documentKey(change.key)] = change.document",
+      "anchorOccurrences": 1,
+      "observableAssertion": "receipt follows terminal readback",
+      "test": "tools/fixtures/settings-import-execution/consumer.bun-test.ts",
+      "baselineSha256": "4d526b2a8bf3322e297e5b9dcc5a94be8429e79c68395f5791db06d2261047bb",
+      "mutatedSha256": "e4b2a618276ea9d13665d6c96846b3751fa4b1a64216ec8a15b02fbf593cfabf",
+      "patchSha256": "2e676090e6514a91229f15edb914150a69e908680e9f7fbec41561d8b98609cf",
+      "staticReplay": {
+        "state": "passed",
+        "zeroFuzz": true,
+        "zeroOffset": true,
+        "stdout": "patching file 'src/background/store/settings-import-execution.ts'\n"
+      },
+      "compilation": "intended-compiling-unexecuted",
+      "baseline": "unexecuted",
+      "namedRed": "unexecuted",
+      "restoredPass": "unexecuted"
+    },
+    {
+      "id": "repeated-document-write",
+      "path": "src/background/store/settings-import-execution.ts",
+      "patch": "tools/fixtures/settings-import-execution/controls/repeated-document-write.patch",
+      "anchor": "apply = () => deps.local.set(effect.items); break",
+      "anchorOccurrences": 1,
+      "observableAssertion": "all document puts materialize once in one local batch",
+      "test": "tools/fixtures/settings-import-execution/consumer.bun-test.ts",
+      "baselineSha256": "4d526b2a8bf3322e297e5b9dcc5a94be8429e79c68395f5791db06d2261047bb",
+      "mutatedSha256": "331d2a707ecdaea10fc17e8da128cb0ad14349249e879d86ad0401601760fd9d",
+      "patchSha256": "d831f798d379ce01b6c01e69d30f74b3ad6a567a447fe899f07cf6b82f00923a",
+      "staticReplay": {
+        "state": "passed",
+        "zeroFuzz": true,
+        "zeroOffset": true,
+        "stdout": "patching file 'src/background/store/settings-import-execution.ts'\n"
+      },
+      "compilation": "intended-compiling-unexecuted",
+      "baseline": "unexecuted",
+      "namedRed": "unexecuted",
+      "restoredPass": "unexecuted"
+    },
+    {
+      "id": "ignored-startup-marker",
+      "path": "src/background/store/local-filter-writer.ts",
+      "patch": "tools/fixtures/settings-import-execution/controls/ignored-startup-marker.patch",
+      "anchor": "      if (importPending) {\n        const imported = await resumeImportInLane()",
+      "anchorOccurrences": 1,
+      "observableAssertion": "retained-canonical startup resumes the same accepted import and preserves the archive",
+      "test": "tools/fixtures/settings-import-execution/canonical.bun-test.ts",
+      "baselineSha256": "ee27d6264348e6893b2ec8aecd10df2693c150ca8baae14261147cc2bc7c4d5a",
+      "mutatedSha256": "5865e0c29952d5d0b44c3c1e122def28bf0f8c7dbd12090edc3aad00003ff68e",
+      "patchSha256": "af6ab5044f12f4aea5db656c31a1d98b44e286f322edfcb46e0944789fde8306",
+      "staticReplay": {
+        "state": "passed",
+        "zeroFuzz": true,
+        "zeroOffset": true,
+        "stdout": "patching file 'src/background/store/local-filter-writer.ts'\n"
+      },
+      "compilation": "intended-compiling-unexecuted",
+      "baseline": "unexecuted",
+      "namedRed": "unexecuted",
+      "restoredPass": "unexecuted"
+    },
+    {
+      "id": "automatic-after-agree",
+      "path": "src/background/store/settings-import-recovery.ts",
+      "patch": "tools/fixtures/settings-import-execution/controls/automatic-after-agree.patch",
+      "anchor": "read.control.generation === permission.generation && sameSyncJson(read.control.state.current, permission.current)",
+      "anchorOccurrences": 1,
+      "observableAssertion": "withdrawal around each write retains the original effect and a later Agree cannot resume it",
+      "test": "tools/fixtures/settings-import-execution/owner.bun-test.ts",
+      "baselineSha256": "bb32c1a5788a63c9f4eafa032b8f49ea39c3fc96f9c283097c67d7e006214aeb",
+      "mutatedSha256": "434cb74ea5670d5edf37e66c84b21ecbc08b2770aa7c3b9ad95b6aa30d391637",
+      "patchSha256": "99df7c9ed1f4f8681d0c980085be0c46632c9d572babdcab7620226881e8e2f9",
+      "staticReplay": {
+        "state": "passed",
+        "zeroFuzz": true,
+        "zeroOffset": true,
+        "stdout": "patching file 'src/background/store/settings-import-recovery.ts'\n"
+      },
+      "compilation": "intended-compiling-unexecuted",
+      "baseline": "unexecuted",
+      "namedRed": "unexecuted",
+      "restoredPass": "unexecuted"
+    },
+    {
+      "id": "early-receipt",
+      "path": "src/background/store/settings-import-execution.ts",
+      "patch": "tools/fixtures/settings-import-execution/controls/early-receipt.patch",
+      "anchor": "    const steps = effects(record.plan)\n    if (start > steps.length)",
+      "anchorOccurrences": 1,
+      "observableAssertion": "entire actual local, sync and session records",
+      "test": "tools/fixtures/settings-import-execution/consumer.bun-test.ts",
+      "baselineSha256": "4d526b2a8bf3322e297e5b9dcc5a94be8429e79c68395f5791db06d2261047bb",
+      "mutatedSha256": "e1b84412366129e3315ed9200bd848874e10d91f63b9d230c568f0e5b051bb3b",
+      "patchSha256": "24df04312716ab67ecc8b080865cae0e6bb8670225534536d1c55eb5e141b8da",
+      "staticReplay": {
+        "state": "passed",
+        "zeroFuzz": true,
+        "zeroOffset": true,
+        "stdout": "patching file 'src/background/store/settings-import-execution.ts'\n"
+      },
+      "compilation": "intended-compiling-unexecuted",
+      "baseline": "unexecuted",
+      "namedRed": "unexecuted",
+      "restoredPass": "unexecuted"
+    },
+    {
+      "id": "missing-native-forwarding",
+      "path": "src/background/adapters/starting-owner.ts",
+      "patch": "tools/fixtures/settings-import-execution/controls/missing-native-forwarding.patch",
+      "anchor": "prepareSettingsImport: (origin, text) => owner.prepareSettingsImport(origin, text),",
+      "anchorOccurrences": 1,
+      "observableAssertion": "native complete owner forwards import refusal without assembling a fixture cleanup host",
+      "test": "src/background/adapters/starting-owner.bun-test.ts",
+      "baselineSha256": "fdf7213ddfd37103f258bd5bc2feb7202a28704513c769150c561eb07bb43a48",
+      "mutatedSha256": "6b2e870a1a8d3fc34bf6720630e3bf4fca8bb27c5daabd54febeb4c65ce821ed",
+      "patchSha256": "6bfc7eef1d717fe4db76d13299c1f673e2713d66929c55021e8424841b312314",
+      "staticReplay": {
+        "state": "passed",
+        "zeroFuzz": true,
+        "zeroOffset": true,
+        "stdout": "patching file 'src/background/adapters/starting-owner.ts'\n"
+      },
+      "compilation": "intended-compiling-unexecuted",
+      "baseline": "unexecuted",
+      "namedRed": "unexecuted",
+      "restoredPass": "unexecuted"
+    },
+    {
+      "id": "omitted-session-cleanup",
+      "path": "src/background/store/settings-import-execution.ts",
+      "patch": "tools/fixtures/settings-import-execution/controls/omitted-session-cleanup.patch",
+      "anchor": "for (const effect of plan.cleanup.sessionEffects) result.push({ kind: \"session\", stage: \"session-cleanup\", effect })",
+      "anchorOccurrences": 1,
+      "observableAssertion": "receipt follows terminal readback",
+      "test": "tools/fixtures/settings-import-execution/consumer.bun-test.ts",
+      "baselineSha256": "4d526b2a8bf3322e297e5b9dcc5a94be8429e79c68395f5791db06d2261047bb",
+      "mutatedSha256": "2cbc300e10828968a18c3c121cbbe51ca984906a865449eb33e845cdd1d048a0",
+      "patchSha256": "63385d5b1b0948b6fab93b0070ee9a0a64eed1619a12ea96a92b83cfa2f46afa",
+      "staticReplay": {
+        "state": "passed",
+        "zeroFuzz": true,
+        "zeroOffset": true,
+        "stdout": "patching file 'src/background/store/settings-import-execution.ts'\n"
+      },
+      "compilation": "intended-compiling-unexecuted",
+      "baseline": "unexecuted",
+      "namedRed": "unexecuted",
+      "restoredPass": "unexecuted"
+    }
+  ]
+}

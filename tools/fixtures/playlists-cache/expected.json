@@ -1,0 +1,482 @@
+[
+  {
+    "step": "cached-first",
+    "cached": {
+      "rows": [
+        {
+          "id": "WL",
+          "title": "Watch later"
+        },
+        {
+          "id": "PL_beta",
+          "title": "Beta",
+          "privacy": "UNLISTED",
+          "count": 8
+        },
+        {
+          "id": "PL_alpha",
+          "title": "Alpha",
+          "privacy": "PRIVATE",
+          "count": 4,
+          "thumb": "https://img.test/alpha.jpg"
+        }
+      ],
+      "at": 1699999699999
+    },
+    "freshness": "stale",
+    "pending": true
+  },
+  {
+    "step": "coalesced",
+    "cached": {
+      "rows": [
+        {
+          "id": "WL",
+          "title": "Watch later"
+        },
+        {
+          "id": "PL_beta",
+          "title": "Beta",
+          "privacy": "UNLISTED",
+          "count": 8
+        },
+        {
+          "id": "PL_alpha",
+          "title": "Alpha",
+          "privacy": "PRIVATE",
+          "count": 4,
+          "thumb": "https://img.test/alpha.jpg"
+        }
+      ],
+      "at": 1699999699999
+    },
+    "requests": 1
+  },
+  {
+    "step": "refreshed",
+    "first": {
+      "kind": "listed",
+      "listing": {
+        "rows": [
+          {
+            "id": "WL",
+            "title": "Watch later"
+          },
+          {
+            "id": "PL_alpha",
+            "title": "Refreshed alpha",
+            "count": 2
+          }
+        ],
+        "at": 1700000000000
+      },
+      "outcome": {
+        "kind": "result",
+        "tabId": 1,
+        "result": {
+          "ok": true,
+          "route": "playlists-cache-fixture",
+          "data": [
+            {
+              "id": "PL_alpha",
+              "title": "Refreshed alpha",
+              "count": 2
+            }
+          ]
+        }
+      },
+      "cache": {
+        "kind": "committed",
+        "cache": {
+          "listAt": 1700000000000,
+          "playlists": [
+            {
+              "id": "PL_alpha",
+              "title": "Refreshed alpha",
+              "count": 2
+            }
+          ],
+          "order": {
+            "www": [
+              "PL_beta",
+              "PL_alpha"
+            ],
+            "music": [
+              "PL_alpha",
+              "PL_beta"
+            ]
+          },
+          "created": [],
+          "labelAt": 42
+        }
+      },
+      "present": {
+        "kind": "list-present",
+        "acct": "AAAAAAAAAAAAAAAA",
+        "site": "www",
+        "private": false,
+        "at": 1700000000000,
+        "ids": [
+          "PL_alpha"
+        ]
+      }
+    },
+    "second": {
+      "kind": "listed",
+      "listing": {
+        "rows": [
+          {
+            "id": "WL",
+            "title": "Watch later"
+          },
+          {
+            "id": "PL_alpha",
+            "title": "Refreshed alpha",
+            "count": 2
+          }
+        ],
+        "at": 1700000000000
+      },
+      "outcome": {
+        "kind": "result",
+        "tabId": 1,
+        "result": {
+          "ok": true,
+          "route": "playlists-cache-fixture",
+          "data": [
+            {
+              "id": "PL_alpha",
+              "title": "Refreshed alpha",
+              "count": 2
+            }
+          ]
+        }
+      },
+      "cache": {
+        "kind": "committed",
+        "cache": {
+          "listAt": 1700000000000,
+          "playlists": [
+            {
+              "id": "PL_alpha",
+              "title": "Refreshed alpha",
+              "count": 2
+            }
+          ],
+          "order": {
+            "www": [
+              "PL_beta",
+              "PL_alpha"
+            ],
+            "music": [
+              "PL_alpha",
+              "PL_beta"
+            ]
+          },
+          "created": [],
+          "labelAt": 42
+        }
+      },
+      "present": {
+        "kind": "list-present",
+        "acct": "AAAAAAAAAAAAAAAA",
+        "site": "www",
+        "private": false,
+        "at": 1700000000000,
+        "ids": [
+          "PL_alpha"
+        ]
+      }
+    }
+  },
+  {
+    "step": "membership",
+    "outcome": {
+      "kind": "result",
+      "tabId": 1,
+      "result": {
+        "ok": true,
+        "route": "playlists-cache-fixture",
+        "data": [
+          {
+            "id": "PL_alpha",
+            "title": "Member alpha",
+            "privacy": "PRIVATE",
+            "count": 777,
+            "contains": true
+          },
+          {
+            "id": "PL_beta",
+            "title": "Member beta",
+            "contains": false
+          }
+        ]
+      }
+    },
+    "receipt": {
+      "kind": "membership",
+      "cache": {
+        "kind": "committed",
+        "cache": {
+          "listAt": 1700000000000,
+          "playlists": [
+            {
+              "id": "PL_alpha",
+              "title": "Member alpha",
+              "privacy": "PRIVATE",
+              "count": 2
+            },
+            {
+              "id": "PL_beta",
+              "title": "Member beta"
+            }
+          ],
+          "order": {
+            "www": [
+              "PL_alpha",
+              "PL_beta"
+            ],
+            "music": [
+              "PL_alpha",
+              "PL_beta"
+            ]
+          },
+          "created": [],
+          "labelAt": 42
+        }
+      }
+    },
+    "stored": {
+      "listAt": 1700000000000,
+      "playlists": [
+        {
+          "id": "PL_alpha",
+          "title": "Member alpha",
+          "privacy": "PRIVATE",
+          "count": 2
+        },
+        {
+          "id": "PL_beta",
+          "title": "Member beta"
+        }
+      ],
+      "order": {
+        "www": [
+          "PL_alpha",
+          "PL_beta"
+        ],
+        "music": [
+          "PL_alpha",
+          "PL_beta"
+        ]
+      },
+      "created": [],
+      "labelAt": 42
+    },
+    "setup": {
+      "v": 1,
+      "gen": "setup",
+      "at": 1,
+      "by": "fixture",
+      "data": {
+        "quickSave": "PL_alpha",
+        "marks": {
+          "PL_alpha": "missing"
+        }
+      }
+    }
+  },
+  {
+    "step": "created",
+    "answer": {
+      "kind": "created",
+      "id": "PL_created",
+      "outcome": {
+        "kind": "result",
+        "tabId": 1,
+        "result": {
+          "ok": true,
+          "route": "playlists-cache-fixture",
+          "data": {
+            "playlistId": "PL_created"
+          }
+        }
+      },
+      "cache": {
+        "kind": "committed",
+        "cache": {
+          "listAt": 1700000000000,
+          "playlists": [
+            {
+              "id": "PL_alpha",
+              "title": "Member alpha",
+              "privacy": "PRIVATE",
+              "count": 2
+            },
+            {
+              "id": "PL_beta",
+              "title": "Member beta"
+            }
+          ],
+          "order": {
+            "www": [
+              "PL_alpha",
+              "PL_beta"
+            ],
+            "music": [
+              "PL_alpha",
+              "PL_beta"
+            ]
+          },
+          "created": [
+            {
+              "id": "PL_created",
+              "title": "Created",
+              "privacy": "PRIVATE",
+              "at": 1700000000000
+            }
+          ],
+          "labelAt": 42
+        }
+      }
+    },
+    "requests": 1
+  },
+  {
+    "step": "no-tab",
+    "answer": {
+      "kind": "not-listed",
+      "outcome": {
+        "kind": "no-tab",
+        "attempted": []
+      },
+      "cached": {
+        "rows": [
+          {
+            "id": "WL",
+            "title": "Watch later"
+          },
+          {
+            "id": "PL_alpha",
+            "title": "Member alpha",
+            "privacy": "PRIVATE",
+            "count": 2
+          },
+          {
+            "id": "PL_beta",
+            "title": "Member beta"
+          },
+          {
+            "id": "PL_created",
+            "title": "Created",
+            "privacy": "PRIVATE"
+          }
+        ],
+        "at": 1700000000000
+      }
+    }
+  },
+  {
+    "step": "removed-during-read",
+    "removal": {
+      "kind": "committed"
+    },
+    "late": {
+      "kind": "listed",
+      "listing": {
+        "rows": [
+          {
+            "id": "WL",
+            "title": "Watch later"
+          },
+          {
+            "id": "PL_alpha",
+            "title": "Late alpha"
+          },
+          {
+            "id": "PL_created",
+            "title": "Created",
+            "privacy": "PRIVATE"
+          }
+        ],
+        "at": 1700000000000
+      },
+      "outcome": {
+        "kind": "result",
+        "tabId": 1,
+        "result": {
+          "ok": true,
+          "route": "playlists-cache-fixture",
+          "data": [
+            {
+              "id": "PL_alpha",
+              "title": "Late alpha"
+            }
+          ]
+        }
+      },
+      "cache": {
+        "kind": "refused",
+        "reason": "revoked"
+      },
+      "present": {
+        "kind": "list-present",
+        "acct": "AAAAAAAAAAAAAAAA",
+        "site": "www",
+        "private": false,
+        "at": 1700000000000,
+        "ids": [
+          "PL_alpha"
+        ]
+      }
+    },
+    "finalState": {
+      "local": {
+        "schema": 1,
+        "device": {
+          "id": "fixture",
+          "consent": {
+            "v": 1,
+            "at": 1
+          },
+          "syncOn": false,
+          "lastAccount": null
+        },
+        "sync": {
+          "joined": null,
+          "pushed": {},
+          "status": "off",
+          "editedSinceOff": true,
+          "everEdited": true
+        },
+        "doc:settings": {
+          "v": 1,
+          "gen": "settings",
+          "at": 1,
+          "by": "fixture",
+          "data": {}
+        },
+        "preserved": {
+          "keep": true
+        }
+      },
+      "session": {
+        "unknown": {
+          "keep": true
+        },
+        "tabs": {}
+      },
+      "sync": {}
+    }
+  },
+  {
+    "step": "eof",
+    "runs": {
+      "playlists": 2,
+      "membership": 1,
+      "create": 1
+    },
+    "cacheWrites": 3,
+    "clockPending": 0
+  }
+]

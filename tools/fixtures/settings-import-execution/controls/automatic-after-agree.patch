@@ -1,0 +1,11 @@
+--- a/src/background/store/settings-import-recovery.ts
++++ b/src/background/store/settings-import-recovery.ts
+@@ -42,7 +42,7 @@
+   const read = readConsentDevice(records), permission = job.permission
+   return read.kind === "supported" && read.control !== null && read.control.state.kind === "agreed" &&
+     read.device.id === job.identity.deviceId && (permission.kind === "armed" || permission.kind === "retiring") &&
+-    read.control.generation === permission.generation && sameSyncJson(read.control.state.current, permission.current)
++    Number.isSafeInteger(read.control.generation) && isJsonValue(permission.current)
+ }
+ export function settingsImportWork(records: JsonObject, ledger: ConsentJobs | undefined): SettingsImportView[] {
+   const marker = readSettingsImport(records[settingsImportKey]), work: SettingsImportView[] = []

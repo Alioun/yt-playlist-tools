@@ -1,0 +1,3 @@
+import type { KeySettingAnswer } from "../../../../src/shared/contracts/key-settings"
+declare const id: Extract<KeySettingAnswer, { kind: "removed" }>["id"]
+export const intendedNegative: KeySettingAnswer = { kind: "removed", id, receipt: "undo:00000000-0000-0000-0000-000000000000", undoForMs: 60000 }

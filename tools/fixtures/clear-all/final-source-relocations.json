@@ -1,0 +1,1076 @@
+{
+  "state": "static-only-no-diagnostic-credit",
+  "files": [
+    {
+      "path": "src/background/adapters/starting-owner.ts",
+      "inputIdentity": {
+        "mode": "100644",
+        "gitBlob": "4f50b862fd5c15bb64cd39e7716c43df45f7228a",
+        "sha256": "fdf7213ddfd37103f258bd5bc2feb7202a28704513c769150c561eb07bb43a48",
+        "bytes": 5859
+      },
+      "finalIdentity": {
+        "mode": "100644",
+        "bytes": 6019,
+        "sha256": "19319eec4d72aa8c244c67a9f73428254c4cf4de56d3004d3dba8690c981232e",
+        "gitBlob": "97cf5254e00ec1ed920778330331111bb27b0086"
+      },
+      "unchangedBlocks": [
+        {
+          "inputStart": 1,
+          "finalStart": 1,
+          "lines": 12
+        },
+        {
+          "inputStart": 14,
+          "finalStart": 15,
+          "lines": 28
+        },
+        {
+          "inputStart": 42,
+          "finalStart": 45,
+          "lines": 89
+        }
+      ],
+      "typeNegatives": []
+    },
+    {
+      "path": "src/background/router/ui-playlists/index.ts",
+      "inputIdentity": {
+        "mode": "100644",
+        "gitBlob": "a4626f76c3c90299bf63a408dfd85351a0939302",
+        "sha256": "5dcd4fa81945a72c46756e99578f0aa1d5d85e7c1d6189de2b6e9cb10a241e03",
+        "bytes": 20220
+      },
+      "finalIdentity": {
+        "mode": "100644",
+        "bytes": 21189,
+        "sha256": "be87b0578ef709ab2bcc7b5cd9167497e882404c96e411373c65b807b798a53c",
+        "gitBlob": "7f7151383661af5d1c7756295bf092b0a9daa1a6"
+      },
+      "unchangedBlocks": [
+        {
+          "inputStart": 1,
+          "finalStart": 1,
+          "lines": 17
+        },
+        {
+          "inputStart": 18,
+          "finalStart": 20,
+          "lines": 4
+        },
+        {
+          "inputStart": 22,
+          "finalStart": 25,
+          "lines": 7
+        },
+        {
+          "inputStart": 30,
+          "finalStart": 34,
+          "lines": 30
+        },
+        {
+          "inputStart": 60,
+          "finalStart": 65,
+          "lines": 179
+        },
+        {
+          "inputStart": 239,
+          "finalStart": 248,
+          "lines": 12
+        },
+        {
+          "inputStart": 251,
+          "finalStart": 264,
+          "lines": 63
+        },
+        {
+          "inputStart": 315,
+          "finalStart": 328,
+          "lines": 3
+        }
+      ],
+      "typeNegatives": []
+    },
+    {
+      "path": "src/background/store/consent-recovery.ts",
+      "inputIdentity": {
+        "mode": "100644",
+        "gitBlob": "35aa0925956166159610a6f9f46682f1eacb9a7d",
+        "sha256": "8b5460d1d0b4bc128725ea988f2882e9209184b60f8772e75663406a6309cc56",
+        "bytes": 141210
+      },
+      "finalIdentity": {
+        "mode": "100644",
+        "bytes": 143482,
+        "sha256": "f96a29294a6c3f686071b0a5e1c838905ee02ac28c13d1981d24e67763b6e74d",
+        "gitBlob": "1164bb89ee4e456b3d26ca6753db8bef24fd4aad"
+      },
+      "unchangedBlocks": [
+        {
+          "inputStart": 1,
+          "finalStart": 1,
+          "lines": 8
+        },
+        {
+          "inputStart": 9,
+          "finalStart": 10,
+          "lines": 68
+        },
+        {
+          "inputStart": 77,
+          "finalStart": 79,
+          "lines": 97
+        },
+        {
+          "inputStart": 174,
+          "finalStart": 178,
+          "lines": 228
+        },
+        {
+          "inputStart": 403,
+          "finalStart": 413,
+          "lines": 45
+        },
+        {
+          "inputStart": 448,
+          "finalStart": 459,
+          "lines": 40
+        },
+        {
+          "inputStart": 489,
+          "finalStart": 500,
+          "lines": 38
+        },
+        {
+          "inputStart": 528,
+          "finalStart": 550,
+          "lines": 889
+        }
+      ],
+      "typeNegatives": []
+    },
+    {
+      "path": "src/background/store/local-filter-writer.ts",
+      "inputIdentity": {
+        "mode": "100644",
+        "gitBlob": "cdb69fd372ffbf375fe92d278dfbe2b30b44f4d5",
+        "sha256": "ee27d6264348e6893b2ec8aecd10df2693c150ca8baae14261147cc2bc7c4d5a",
+        "bytes": 251217
+      },
+      "finalIdentity": {
+        "mode": "100644",
+        "bytes": 256160,
+        "sha256": "b3b960ae890de10dd71dd73f16efc31a10dfb02d378a4d23c122454aaa253867",
+        "gitBlob": "656e32dbabf3f88165cbd2eb0530c08e5e9a0a43"
+      },
+      "unchangedBlocks": [
+        {
+          "inputStart": 1,
+          "finalStart": 1,
+          "lines": 66
+        },
+        {
+          "inputStart": 67,
+          "finalStart": 69,
+          "lines": 88
+        },
+        {
+          "inputStart": 156,
+          "finalStart": 158,
+          "lines": 103
+        },
+        {
+          "inputStart": 259,
+          "finalStart": 263,
+          "lines": 16
+        },
+        {
+          "inputStart": 275,
+          "finalStart": 280,
+          "lines": 53
+        },
+        {
+          "inputStart": 329,
+          "finalStart": 334,
+          "lines": 17
+        },
+        {
+          "inputStart": 346,
+          "finalStart": 353,
+          "lines": 2
+        },
+        {
+          "inputStart": 348,
+          "finalStart": 356,
+          "lines": 59
+        },
+        {
+          "inputStart": 407,
+          "finalStart": 416,
+          "lines": 22
+        },
+        {
+          "inputStart": 430,
+          "finalStart": 439,
+          "lines": 15
+        },
+        {
+          "inputStart": 445,
+          "finalStart": 455,
+          "lines": 113
+        },
+        {
+          "inputStart": 561,
+          "finalStart": 573,
+          "lines": 97
+        },
+        {
+          "inputStart": 659,
+          "finalStart": 671,
+          "lines": 16
+        },
+        {
+          "inputStart": 675,
+          "finalStart": 689,
+          "lines": 3
+        },
+        {
+          "inputStart": 678,
+          "finalStart": 696,
+          "lines": 59
+        },
+        {
+          "inputStart": 740,
+          "finalStart": 760,
+          "lines": 70
+        },
+        {
+          "inputStart": 810,
+          "finalStart": 840,
+          "lines": 72
+        },
+        {
+          "inputStart": 885,
+          "finalStart": 915,
+          "lines": 14
+        },
+        {
+          "inputStart": 900,
+          "finalStart": 930,
+          "lines": 15
+        },
+        {
+          "inputStart": 916,
+          "finalStart": 946,
+          "lines": 115
+        },
+        {
+          "inputStart": 1031,
+          "finalStart": 1069,
+          "lines": 81
+        },
+        {
+          "inputStart": 1112,
+          "finalStart": 1182,
+          "lines": 123
+        },
+        {
+          "inputStart": 1236,
+          "finalStart": 1306,
+          "lines": 187
+        },
+        {
+          "inputStart": 1424,
+          "finalStart": 1494,
+          "lines": 29
+        },
+        {
+          "inputStart": 1454,
+          "finalStart": 1524,
+          "lines": 2
+        },
+        {
+          "inputStart": 1457,
+          "finalStart": 1527,
+          "lines": 158
+        },
+        {
+          "inputStart": 1616,
+          "finalStart": 1686,
+          "lines": 20
+        },
+        {
+          "inputStart": 1637,
+          "finalStart": 1707,
+          "lines": 1
+        },
+        {
+          "inputStart": 1639,
+          "finalStart": 1709,
+          "lines": 202
+        },
+        {
+          "inputStart": 1842,
+          "finalStart": 1912,
+          "lines": 929
+        },
+        {
+          "inputStart": 2772,
+          "finalStart": 2842,
+          "lines": 17
+        },
+        {
+          "inputStart": 2789,
+          "finalStart": 2863,
+          "lines": 6
+        },
+        {
+          "inputStart": 2795,
+          "finalStart": 2873,
+          "lines": 3
+        },
+        {
+          "inputStart": 2801,
+          "finalStart": 2881,
+          "lines": 452
+        },
+        {
+          "inputStart": 3254,
+          "finalStart": 3334,
+          "lines": 167
+        },
+        {
+          "inputStart": 3422,
+          "finalStart": 3502,
+          "lines": 34
+        },
+        {
+          "inputStart": 3457,
+          "finalStart": 3537,
+          "lines": 25
+        },
+        {
+          "inputStart": 3483,
+          "finalStart": 3563,
+          "lines": 19
+        },
+        {
+          "inputStart": 3502,
+          "finalStart": 3586,
+          "lines": 78
+        }
+      ],
+      "typeNegatives": []
+    },
+    {
+      "path": "src/background/store/local-filter-writer.type-test.ts",
+      "inputIdentity": {
+        "mode": "100644",
+        "gitBlob": "4ba6b15a2245f339d97bc667c3b7d88c1b76c684",
+        "sha256": "dee24724804dff9ba6ed99890bcf5cae1fb0feed0f905dca333a95d9497a38d9",
+        "bytes": 20925
+      },
+      "finalIdentity": {
+        "mode": "100644",
+        "bytes": 21217,
+        "sha256": "8e5ccaab636ced37d6a7235c05dc1bc63be724b1f78ad3e1b539dd5d57433650",
+        "gitBlob": "0a396e550ddc7499484b89d5254ec533fae394f0"
+      },
+      "unchangedBlocks": [
+        {
+          "inputStart": 1,
+          "finalStart": 1,
+          "lines": 55
+        },
+        {
+          "inputStart": 56,
+          "finalStart": 58,
+          "lines": 13
+        },
+        {
+          "inputStart": 70,
+          "finalStart": 72,
+          "lines": 31
+        },
+        {
+          "inputStart": 102,
+          "finalStart": 104,
+          "lines": 151
+        }
+      ],
+      "typeNegatives": [
+        {
+          "originalDirectiveLine": 121,
+          "originalIntendedLine": 122,
+          "directive": "  // @ts-expect-error Setup requires its account address.",
+          "finalDirectiveLines": [
+            123
+          ],
+          "finalIntendedLines": [
+            124
+          ],
+          "statement": "  void writer.receiveSyncDocument({ kind: \"setup\" })"
+        },
+        {
+          "originalDirectiveLine": 123,
+          "originalIntendedLine": 124,
+          "directive": "  // @ts-expect-error Setup accounts require the validated brand.",
+          "finalDirectiveLines": [
+            125
+          ],
+          "finalIntendedLines": [
+            126
+          ],
+          "statement": "  void adapter.receiveSyncDocument({ kind: \"setup\", acct: \"AAAAAAAAAAAAAAAA\" })"
+        },
+        {
+          "originalDirectiveLine": 125,
+          "originalIntendedLine": 126,
+          "directive": "  // @ts-expect-error Other document kinds are outside the receiver.",
+          "finalDirectiveLines": [
+            127
+          ],
+          "finalIntendedLines": [
+            128
+          ],
+          "statement": "  void writer.receiveSyncDocument({ kind: \"device\", acct })"
+        },
+        {
+          "originalDirectiveLine": 127,
+          "originalIntendedLine": 128,
+          "directive": "  // @ts-expect-error Filter addresses require a branded account value.",
+          "finalDirectiveLines": [
+            129
+          ],
+          "finalIntendedLines": [
+            130
+          ],
+          "statement": "  void writer.receiveSyncDocument({ kind: \"filter\", acct: \"AAAAAAAAAAAAAAAA\", playlist })"
+        },
+        {
+          "originalDirectiveLine": 129,
+          "originalIntendedLine": 130,
+          "directive": "  // @ts-expect-error Filter addresses require a branded playlist value.",
+          "finalDirectiveLines": [
+            131
+          ],
+          "finalIntendedLines": [
+            132
+          ],
+          "statement": "  void writer.receiveSyncDocument({ kind: \"filter\", acct, playlist: \"PL_P\" })"
+        },
+        {
+          "originalDirectiveLine": 132,
+          "originalIntendedLine": 133,
+          "directive": "    // @ts-expect-error The adopted record cannot be replaced.",
+          "finalDirectiveLines": [
+            134
+          ],
+          "finalIntendedLines": [
+            135
+          ],
+          "statement": "    result.received = result.received"
+        },
+        {
+          "originalDirectiveLine": 135,
+          "originalIntendedLine": 136,
+          "directive": "  // @ts-expect-error Receive outcomes are immutable.",
+          "finalDirectiveLines": [
+            137
+          ],
+          "finalIntendedLines": [
+            138
+          ],
+          "statement": "  result.kind = \"idle\""
+        },
+        {
+          "originalDirectiveLine": 139,
+          "originalIntendedLine": 140,
+          "directive": "  // @ts-expect-error Immutable caller keys stay immutable.",
+          "finalDirectiveLines": [
+            141
+          ],
+          "finalIntendedLines": [
+            142
+          ],
+          "statement": "  key.playlist = playlist"
+        },
+        {
+          "originalDirectiveLine": 147,
+          "originalIntendedLine": 148,
+          "directive": "  // @ts-expect-error Wall time is required independently of monotonic time.",
+          "finalDirectiveLines": [
+            149
+          ],
+          "finalIntendedLines": [
+            150
+          ],
+          "statement": "  const incomplete: SyncClock = { now: () => 0, after: () => () => {} }"
+        },
+        {
+          "originalDirectiveLine": 149,
+          "originalIntendedLine": 150,
+          "directive": "  // @ts-expect-error Durable deadlines are numeric Unix milliseconds.",
+          "finalDirectiveLines": [
+            151
+          ],
+          "finalIntendedLines": [
+            152
+          ],
+          "statement": "  const invalid: SyncOpaqueWrite = { gate: { kind: \"held\", notBefore: \"60000\" }, diagnostic: null }"
+        },
+        {
+          "originalDirectiveLine": 158,
+          "originalIntendedLine": 159,
+          "directive": "  // @ts-expect-error Every core host must choose its claim capability.",
+          "finalDirectiveLines": [
+            160
+          ],
+          "finalIntendedLines": [
+            161
+          ],
+          "statement": "  createLocalFilterWriter(withoutClaim)"
+        },
+        {
+          "originalDirectiveLine": 167,
+          "originalIntendedLine": 168,
+          "directive": "    // @ts-expect-error Unconfirmed persistence cannot claim success.",
+          "finalDirectiveLines": [
+            169
+          ],
+          "finalIntendedLines": [
+            170
+          ],
+          "statement": "    void result.result.ok"
+        },
+        {
+          "originalDirectiveLine": 169,
+          "originalIntendedLine": 170,
+          "directive": "    // @ts-expect-error Readback cause is immutable.",
+          "finalDirectiveLines": [
+            171
+          ],
+          "finalIntendedLines": [
+            172
+          ],
+          "statement": "    result.cause.kind = \"authority\""
+        },
+        {
+          "originalDirectiveLine": 172,
+          "originalIntendedLine": 173,
+          "directive": "  // @ts-expect-error Read failure must retain its original error.",
+          "finalDirectiveLines": [
+            174
+          ],
+          "finalIntendedLines": [
+            175
+          ],
+          "statement": "  const missing: LocalFilterWriteResult = { kind: \"unconfirmed\", cause: { kind: \"read-failed\" } }"
+        },
+        {
+          "originalDirectiveLine": 183,
+          "originalIntendedLine": 184,
+          "directive": "    // @ts-expect-error Confirmed deletion has no live Setup body.",
+          "finalDirectiveLines": [
+            185
+          ],
+          "finalIntendedLines": [
+            186
+          ],
+          "statement": "    void result.view.setup"
+        },
+        {
+          "originalDirectiveLine": 187,
+          "originalIntendedLine": 188,
+          "directive": "    // @ts-expect-error A partial cleanup result never carries a committed view.",
+          "finalDirectiveLines": [
+            189
+          ],
+          "finalIntendedLines": [
+            190
+          ],
+          "statement": "    void result.view"
+        },
+        {
+          "originalDirectiveLine": 190,
+          "originalIntendedLine": 191,
+          "directive": "  // @ts-expect-error Account-specific events require the validated account key.",
+          "finalDirectiveLines": [
+            192
+          ],
+          "finalIntendedLines": [
+            193
+          ],
+          "statement": "  const unaddressed: SetupEvent = { kind: \"setup-changed\", source: \"sync\" }"
+        },
+        {
+          "originalDirectiveLine": 203,
+          "originalIntendedLine": 204,
+          "directive": "    // @ts-expect-error Caller-owned reads cannot authorize persistence.",
+          "finalDirectiveLines": [
+            205
+          ],
+          "finalIntendedLines": [
+            206
+          ],
+          "statement": "    void writer.absorbPlaylistCache(read.authority.capture, { kind: \"list\", acct, site: \"www\", at: 1, rows: [] })"
+        },
+        {
+          "originalDirectiveLine": 206,
+          "originalIntendedLine": 207,
+          "directive": "  // @ts-expect-error Cache reads require the authenticated privacy fact.",
+          "finalDirectiveLines": [
+            208
+          ],
+          "finalIntendedLines": [
+            209
+          ],
+          "statement": "  void writer.readPlaylistCache({ acct })"
+        },
+        {
+          "originalDirectiveLine": 208,
+          "originalIntendedLine": 209,
+          "directive": "  // @ts-expect-error Cache writes require an owner-minted capture, never an account string.",
+          "finalDirectiveLines": [
+            210
+          ],
+          "finalIntendedLines": [
+            211
+          ],
+          "statement": "  void writer.absorbPlaylistCache(acct, { kind: \"list\", acct, site: \"www\", at: 1, rows: [] })"
+        },
+        {
+          "originalDirectiveLine": 221,
+          "originalIntendedLine": 222,
+          "directive": "  // @ts-expect-error negative: owner-view-no-fake-account. Confirmed view events retain branded account identities.",
+          "finalDirectiveLines": [
+            223
+          ],
+          "finalIntendedLines": [
+            224
+          ],
+          "statement": "  const fake: import(\"./local-filter-writer\").ConfirmedViewChange = { kind: \"account-removed\", acct: \"raw\", source: \"local\" }"
+        },
+        {
+          "originalDirectiveLine": 223,
+          "originalIntendedLine": 224,
+          "directive": "  // @ts-expect-error negative: owner-view-no-cache-event. Cache bookkeeping cannot become a confirmed view change.",
+          "finalDirectiveLines": [
+            225
+          ],
+          "finalIntendedLines": [
+            226
+          ],
+          "statement": "  const cache: import(\"./local-filter-writer\").ConfirmedViewChange = { kind: \"cache-changed\", acct }"
+        },
+        {
+          "originalDirectiveLine": 242,
+          "originalIntendedLine": 243,
+          "directive": "  // @ts-expect-error negative: reconciliation-private-sighting",
+          "finalDirectiveLines": [
+            244
+          ],
+          "finalIntendedLines": [
+            245
+          ],
+          "statement": "  void owner.seeAccountLabel({ acct, private: true, at: 1 })"
+        },
+        {
+          "originalDirectiveLine": 244,
+          "originalIntendedLine": 245,
+          "directive": "  // @ts-expect-error negative: reconciliation-forged-capture",
+          "finalDirectiveLines": [
+            246
+          ],
+          "finalIntendedLines": [
+            247
+          ],
+          "statement": "  void owner.completeAccountLabel({ kind: \"playlist-cache-capture\", acct }, { acct, label: { name: \"Label\" } })"
+        },
+        {
+          "originalDirectiveLine": 246,
+          "originalIntendedLine": 247,
+          "directive": "  // @ts-expect-error negative: reconciliation-label-shape",
+          "finalDirectiveLines": [
+            248
+          ],
+          "finalIntendedLines": [
+            249
+          ],
+          "statement": "  void owner.completeAccountLabel(capture, { acct, label: { name: 3 } })"
+        },
+        {
+          "originalDirectiveLine": 248,
+          "originalIntendedLine": 249,
+          "directive": "  // @ts-expect-error negative: reconciliation-native-origin",
+          "finalDirectiveLines": [
+            250
+          ],
+          "finalIntendedLines": [
+            251
+          ],
+          "statement": "  void owner.importCheck({ privacy: \"normal\" }, \"{}\")"
+        },
+        {
+          "originalDirectiveLine": 250,
+          "originalIntendedLine": 251,
+          "directive": "  // @ts-expect-error negative: reconciliation-plan-no-write",
+          "finalDirectiveLines": [
+            252
+          ],
+          "finalIntendedLines": [
+            253
+          ],
+          "statement": "  void owner.executeImport(normal, {})"
+        }
+      ]
+    },
+    {
+      "path": "src/background/store/store-lifecycle.ts",
+      "inputIdentity": {
+        "mode": "100644",
+        "gitBlob": "32aace28d7a1a68fbc4d665afec5cffca1279297",
+        "sha256": "4bc49bdd801a149a36956c10a12265f4ae528389496a9f2a8b8c0e52302cd36b",
+        "bytes": 32233
+      },
+      "finalIdentity": {
+        "mode": "100644",
+        "bytes": 34410,
+        "sha256": "f407fd549e6c23858e4b0c0c8c11569c0ba4b384185c4518cd7128bda44954f4",
+        "gitBlob": "4363e526fbae29a8914d159299e17531ea703002"
+      },
+      "unchangedBlocks": [
+        {
+          "inputStart": 1,
+          "finalStart": 1,
+          "lines": 6
+        },
+        {
+          "inputStart": 7,
+          "finalStart": 8,
+          "lines": 6
+        },
+        {
+          "inputStart": 14,
+          "finalStart": 15,
+          "lines": 18
+        },
+        {
+          "inputStart": 32,
+          "finalStart": 34,
+          "lines": 11
+        },
+        {
+          "inputStart": 43,
+          "finalStart": 46,
+          "lines": 7
+        },
+        {
+          "inputStart": 52,
+          "finalStart": 55,
+          "lines": 1
+        },
+        {
+          "inputStart": 53,
+          "finalStart": 57,
+          "lines": 42
+        },
+        {
+          "inputStart": 95,
+          "finalStart": 101,
+          "lines": 28
+        },
+        {
+          "inputStart": 124,
+          "finalStart": 130,
+          "lines": 47
+        },
+        {
+          "inputStart": 172,
+          "finalStart": 178,
+          "lines": 1
+        },
+        {
+          "inputStart": 173,
+          "finalStart": 180,
+          "lines": 244
+        },
+        {
+          "inputStart": 418,
+          "finalStart": 433,
+          "lines": 4
+        },
+        {
+          "inputStart": 423,
+          "finalStart": 438,
+          "lines": 5
+        },
+        {
+          "inputStart": 428,
+          "finalStart": 449,
+          "lines": 34
+        },
+        {
+          "inputStart": 462,
+          "finalStart": 487,
+          "lines": 1
+        },
+        {
+          "inputStart": 464,
+          "finalStart": 489,
+          "lines": 14
+        },
+        {
+          "inputStart": 479,
+          "finalStart": 509,
+          "lines": 31
+        },
+        {
+          "inputStart": 512,
+          "finalStart": 542,
+          "lines": 3
+        },
+        {
+          "inputStart": 516,
+          "finalStart": 546,
+          "lines": 36
+        }
+      ],
+      "typeNegatives": []
+    },
+    {
+      "path": "src/shared/contracts/ui.bun-test.ts",
+      "inputIdentity": {
+        "mode": "100644",
+        "gitBlob": "a40c2e1dd65a3374052df3276ea60e2cbc0a0bc9",
+        "sha256": "7facb9c7a0f408aa43af79e7a450f933852a9291af009d7c6d327ddea477a006",
+        "bytes": 761
+      },
+      "finalIdentity": {
+        "mode": "100644",
+        "bytes": 776,
+        "sha256": "049162b5ad6e3f0a4cb801fb2ec7c0431fbc78bc35975f57e6264f31faa9ffa6",
+        "gitBlob": "aeb8374082c3bce6526afc774e407e4346c141fa"
+      },
+      "unchangedBlocks": [
+        {
+          "inputStart": 1,
+          "finalStart": 1,
+          "lines": 6
+        },
+        {
+          "inputStart": 8,
+          "finalStart": 8,
+          "lines": 5
+        }
+      ],
+      "typeNegatives": []
+    },
+    {
+      "path": "src/shared/contracts/ui.ts",
+      "inputIdentity": {
+        "mode": "100644",
+        "gitBlob": "8d8c1b9d16aee0b3456de7f06e48a482f950bbf2",
+        "sha256": "9b098c03f6af069bcf9037ea495cad0ef00af87fc7a7278ba6381ae9c492cdc9",
+        "bytes": 355
+      },
+      "finalIdentity": {
+        "mode": "100644",
+        "bytes": 465,
+        "sha256": "9cbe8c772af8134d9502eb20876d5a138a82fb61935a3db7aa2f0ccf083d0009",
+        "gitBlob": "71db816f01a9cc48d12e852677632faba2cf8dc6"
+      },
+      "unchangedBlocks": [
+        {
+          "inputStart": 1,
+          "finalStart": 1,
+          "lines": 3
+        },
+        {
+          "inputStart": 4,
+          "finalStart": 5,
+          "lines": 1
+        }
+      ],
+      "typeNegatives": []
+    },
+    {
+      "path": "src/shared/contracts/ui.type-test.ts",
+      "inputIdentity": {
+        "mode": "100644",
+        "gitBlob": "1807f74a71d99490e389b89fff966569a9023895",
+        "sha256": "3478484f72bebea656932b458afe6fdadc6a8f62adf6f40980f70c6d6b4c829a",
+        "bytes": 1297
+      },
+      "finalIdentity": {
+        "mode": "100644",
+        "bytes": 1313,
+        "sha256": "d311793877532e44f1f0f11b9999189ff1c0407a07811e46d9011892ff645a46",
+        "gitBlob": "4c40e7f0c74bd9c85a10c6e5f07fe9d39c43e9a1"
+      },
+      "unchangedBlocks": [
+        {
+          "inputStart": 1,
+          "finalStart": 1,
+          "lines": 9
+        },
+        {
+          "inputStart": 11,
+          "finalStart": 11,
+          "lines": 11
+        }
+      ],
+      "typeNegatives": [
+        {
+          "originalDirectiveLine": 13,
+          "originalIntendedLine": 14,
+          "directive": "  // @ts-expect-error negative: invented-message. Every UI call is in the composed catalogue.",
+          "finalDirectiveLines": [
+            13
+          ],
+          "finalIntendedLines": [
+            14
+          ],
+          "statement": "  const invented: RpcRequest<UiMessages> = { kind: \"ui.invented\", payload: {} }"
+        },
+        {
+          "originalDirectiveLine": 15,
+          "originalIntendedLine": 16,
+          "directive": "  // @ts-expect-error negative: cross-kind-answer. Account answers cannot be playlist creation answers.",
+          "finalDirectiveLines": [
+            15
+          ],
+          "finalIntendedLines": [
+            16
+          ],
+          "statement": "  const wrong: UiMessages[\"ui.accountInView\"][\"result\"] = { kind: \"created\", id: \"PL_alpha\" }"
+        },
+        {
+          "originalDirectiveLine": 17,
+          "originalIntendedLine": 18,
+          "directive": "  // @ts-expect-error negative: narrow-first-run. New catalogue members do not widen the first-run handler.",
+          "finalDirectiveLines": [
+            17
+          ],
+          "finalIntendedLines": [
+            18
+          ],
+          "statement": "  handlers[\"ui.change\"]({ change: { kind: \"create\", title: \"Wrong domain\" } }, undefined)"
+        }
+      ]
+    },
+    {
+      "path": "src/ui/backend/backend.ts",
+      "inputIdentity": {
+        "mode": "100644",
+        "gitBlob": "c3af83f82c89ac02a6df52fd21b8aaaf64e5e57b",
+        "sha256": "447539ccae37ff86d99eb4034ccc03b586c9a17cf0e6139bd61b65427ce5a184",
+        "bytes": 3208
+      },
+      "finalIdentity": {
+        "mode": "100644",
+        "bytes": 3370,
+        "sha256": "f7846896ce867830e5062b25d7cc6f4498006da4357ea6a2154fedff41d22ce7",
+        "gitBlob": "518be40f8f11b3f8b8b16cfd6452d6799a0a1eb1"
+      },
+      "unchangedBlocks": [
+        {
+          "inputStart": 1,
+          "finalStart": 1,
+          "lines": 8
+        },
+        {
+          "inputStart": 9,
+          "finalStart": 10,
+          "lines": 28
+        },
+        {
+          "inputStart": 37,
+          "finalStart": 39,
+          "lines": 22
+        }
+      ],
+      "typeNegatives": []
+    },
+    {
+      "path": "src/ui/backend/core.ts",
+      "inputIdentity": {
+        "mode": "100644",
+        "gitBlob": "fcb337c62a1ee4996ead99aec9b3322f6ca060cf",
+        "sha256": "b5f7a10143edbfe7c4fc1d831261ae554020d7d60d7d9cb1ecf42cfa1b8a258e",
+        "bytes": 10994
+      },
+      "finalIdentity": {
+        "mode": "100644",
+        "bytes": 11123,
+        "sha256": "c23a0350d86633a2c0f9d3a855881e1a0e655aca5d15c4270ef4ec3a8de08af7",
+        "gitBlob": "7a05364e354136a40f504bae67aaad1092bee88c"
+      },
+      "unchangedBlocks": [
+        {
+          "inputStart": 1,
+          "finalStart": 1,
+          "lines": 210
+        },
+        {
+          "inputStart": 212,
+          "finalStart": 213,
+          "lines": 1
+        }
+      ],
+      "typeNegatives": []
+    },
+    {
+      "path": "src/ui/backend/index.ts",
+      "inputIdentity": {
+        "mode": "100644",
+        "gitBlob": "6799f79b09807136b79576ce0231dcb90f7734d1",
+        "sha256": "4386b35d0b3ea11e2a0e89003930876da5f7a81ab83c45761b3b34f665f0ce64",
+        "bytes": 829
+      },
+      "finalIdentity": {
+        "mode": "100644",
+        "bytes": 996,
+        "sha256": "c81988def37402bdc78a0bf57ea8781e29c0ddda44937fc301a662fbbd61f66b",
+        "gitBlob": "186be057f916836a9d3a299f1523d7edb20d38d7"
+      },
+      "unchangedBlocks": [
+        {
+          "inputStart": 1,
+          "finalStart": 1,
+          "lines": 11
+        }
+      ],
+      "typeNegatives": []
+    },
+    {
+      "path": "src/ui/backend/scripted.ts",
+      "inputIdentity": {
+        "mode": "100644",
+        "gitBlob": "ed2f028c1c6efa3d7f1fe295b279278183f1332d",
+        "sha256": "73448e1a99dc83be742d3889a2261085fa824643a88560bc2650b7156c48ba53",
+        "bytes": 3557
+      },
+      "finalIdentity": {
+        "mode": "100644",
+        "bytes": 3605,
+        "sha256": "165da9327cb42f0aabe4e6f67c6f472a83cf64c28b30f767bc79e0aa281a62c3",
+        "gitBlob": "45fe6fd74e173ea199be57034bbfd916acb951c6"
+      },
+      "unchangedBlocks": [
+        {
+          "inputStart": 1,
+          "finalStart": 1,
+          "lines": 29
+        },
+        {
+          "inputStart": 30,
+          "finalStart": 31,
+          "lines": 43
+        }
+      ],
+      "typeNegatives": []
+    }
+  ]
+}

@@ -1,0 +1,308 @@
+{
+  "kind": "import-plan",
+  "header": {
+    "format": 1,
+    "product": "Perchling",
+    "version": "2.0.0-rc.1+fixture",
+    "date": "2026-10-29"
+  },
+  "settings": {
+    "theme": "dark",
+    "undoKey": {
+      "char": "z",
+      "code": "KeyZ",
+      "ctrl": true,
+      "alt": false,
+      "shift": false,
+      "meta": true
+    },
+    "autoAdd": {
+      "on": true,
+      "feedback": false,
+      "pct": 73,
+      "toolbarTick": false,
+      "toolbarPaused": false
+    },
+    "shortcuts": {
+      "on": true,
+      "feedback": false,
+      "music": false,
+      "preset": true,
+      "picker": {
+        "char": "s",
+        "code": "KeyS",
+        "ctrl": true,
+        "alt": false,
+        "shift": true,
+        "meta": false
+      },
+      "list": [
+        {
+          "id": "abc123",
+          "key": {
+            "char": "s",
+            "code": "KeyS",
+            "ctrl": true,
+            "alt": false,
+            "shift": true,
+            "meta": false
+          },
+          "label": "Focus",
+          "watchLaterOnEveryAccount": false
+        },
+        {
+          "id": "wl0001",
+          "key": null,
+          "label": "Watch later",
+          "watchLaterOnEveryAccount": true
+        }
+      ]
+    },
+    "quickSave": {
+      "on": true,
+      "feedback": false,
+      "shortsShelves": true
+    },
+    "queueButton": {
+      "on": true,
+      "feedback": false
+    },
+    "watchButton": {
+      "on": true,
+      "feedback": false,
+      "shorts": true
+    },
+    "cardMenu": {
+      "on": true,
+      "keepLinkMenu": true
+    },
+    "browserMenu": {
+      "on": true,
+      "feedback": false
+    },
+    "musicSection": false,
+    "musicActions": {
+      "on": true,
+      "feedback": false,
+      "preset": true,
+      "buttons": {
+        "next": false,
+        "queue": false,
+        "save": true,
+        "like": true,
+        "remove": true,
+        "bar": true,
+        "library": true,
+        "mix": true,
+        "album": true,
+        "artist": true
+      }
+    },
+    "musicKeys": {
+      "on": true,
+      "feedback": false,
+      "preset": true,
+      "keys": {
+        "next": {
+          "code": "ArrowRight",
+          "ctrl": false,
+          "alt": true,
+          "shift": false,
+          "meta": false
+        },
+        "queue": {
+          "char": "s",
+          "code": "KeyS",
+          "ctrl": true,
+          "alt": false,
+          "shift": true,
+          "meta": false
+        },
+        "save": {
+          "char": "s",
+          "code": "KeyS",
+          "ctrl": true,
+          "alt": false,
+          "shift": true,
+          "meta": false
+        },
+        "picker": {
+          "char": "s",
+          "code": "KeyS",
+          "ctrl": true,
+          "alt": false,
+          "shift": true,
+          "meta": false
+        },
+        "like": {
+          "char": "s",
+          "code": "KeyS",
+          "ctrl": true,
+          "alt": false,
+          "shift": true,
+          "meta": false
+        },
+        "remove": {
+          "char": "s",
+          "code": "KeyS",
+          "ctrl": true,
+          "alt": false,
+          "shift": true,
+          "meta": false
+        },
+        "library": {
+          "char": "s",
+          "code": "KeyS",
+          "ctrl": true,
+          "alt": false,
+          "shift": true,
+          "meta": false
+        },
+        "mix": {
+          "char": "s",
+          "code": "KeyS",
+          "ctrl": true,
+          "alt": false,
+          "shift": true,
+          "meta": false
+        },
+        "album": {
+          "char": "s",
+          "code": "KeyS",
+          "ctrl": true,
+          "alt": false,
+          "shift": true,
+          "meta": false
+        },
+        "artist": {
+          "char": "s",
+          "code": "KeyS",
+          "ctrl": true,
+          "alt": false,
+          "shift": true,
+          "meta": false
+        }
+      }
+    },
+    "anyTabKeys": {
+      "on": true,
+      "feedback": false
+    },
+    "gather": {
+      "on": true,
+      "feedback": false,
+      "to": "playlist",
+      "order": "right-to-left",
+      "close": true,
+      "auto": {
+        "unvisited": true,
+        "after": "1w",
+        "background": true,
+        "count": true,
+        "n": 30
+      }
+    }
+  },
+  "accounts": [
+    {
+      "account": "AAAAAAAAAAAAAAAA",
+      "setup": {
+        "label": {
+          "name": "Alpha",
+          "handle": "@alpha",
+          "avatar": "https://example.invalid/avatar.png"
+        },
+        "autoAdd": [
+          {
+            "pl": "PL_AUTO",
+            "takes": "both",
+            "pct": 81
+          },
+          {
+            "pl": "PL_SHORTS",
+            "takes": "shorts"
+          },
+          {
+            "pl": "PL_VIDEOS",
+            "takes": "videos",
+            "pct": 0
+          }
+        ],
+        "targets": {
+          "abc123": "PL_TARGET"
+        },
+        "quickSave": "PL_QUICK",
+        "musicSave": "PL_MUSIC",
+        "gather": "PL_GATHER",
+        "marks": {
+          "PL_AUTO": "missing",
+          "PL_TARGET": "full",
+          "WL": "missing"
+        }
+      },
+      "filters": [
+        {
+          "playlist": "PL_AUTO",
+          "filter": {
+            "mode": "allow",
+            "on": true,
+            "channels": [
+              [
+                "UCAAAAAAAAAAAAAAAAAAAAAA",
+                "Alpha channel",
+                "@alpha-channel"
+              ],
+              [
+                "UCBBBBBBBBBBBBBBBBBBBBBB",
+                "Second channel"
+              ]
+            ]
+          }
+        },
+        {
+          "playlist": "PL_KEPT",
+          "filter": {
+            "mode": "deny",
+            "on": false,
+            "channels": [
+              [
+                "UCCCCCCCCCCCCCCCCCCCCCCC",
+                "Kept channel",
+                "@kept"
+              ]
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "account": "BBBBBBBBBBBBBBBB",
+      "setup": {
+        "label": null,
+        "autoAdd": [],
+        "targets": {},
+        "quickSave": null,
+        "musicSave": null,
+        "gather": null,
+        "marks": {}
+      },
+      "filters": [
+        {
+          "playlist": "PL_ONLY_KEPT",
+          "filter": {
+            "mode": "allow",
+            "on": false,
+            "channels": []
+          }
+        }
+      ]
+    }
+  ],
+  "accountCount": 2,
+  "replacement": {
+    "sharedSettings": "replace",
+    "includedAccounts": "replace-setup-and-all-filters",
+    "absentAccounts": "keep"
+  },
+  "provenance": "fresh-edit-required"
+}

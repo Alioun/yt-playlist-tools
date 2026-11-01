@@ -1,0 +1,4 @@
+import type { SyncedClearMarker } from "../../../src/background/store/sync-reset"
+
+const negative: SyncedClearMarker["phase"] = "ready"
+export {}

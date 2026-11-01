@@ -1,0 +1,4 @@
+import type { ClearAllTeardownReceipt } from "../../../src/background/adapters/store-lifecycle"
+
+const negative: ClearAllTeardownReceipt = { kind: "confirmed", scripts: "absent" }
+export {}

@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "module": "Preserve", "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": ["bun"], "strict": true,
+    "noEmit": true, "skipLibCheck": true, "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true, "noImplicitOverride": true
+  },
+  "files": [
+    "../../../.wxt/wxt.d.ts",
+    "../../../src/background/store/settings-file-read.ts",
+    "../../../src/background/store/settings-file-read.bun-test.ts",
+    "../../../src/background/store/settings-file-read.type-test.ts",
+    "../../../src/background/store/settings-file-owner.bun-test.ts",
+    "../../../src/background/store/settings-file-owner.type-test.ts",
+    "harness.ts", "consumer.ts", "consumer.bun-test.ts", "run.ts"
+  ]
+}

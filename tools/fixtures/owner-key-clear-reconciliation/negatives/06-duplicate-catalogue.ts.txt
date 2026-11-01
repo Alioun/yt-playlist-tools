@@ -1,0 +1,3 @@
+import { uiContract, type UiMessages } from "../../../../src/shared/contracts/ui"
+import type { RpcContract } from "../../../../src/shared/rpc/rpc"
+export const intendedNegative: RpcContract<UiMessages> = { ...uiContract, "ui.featureSetting": uiContract["ui.change"] }

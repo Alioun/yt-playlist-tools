@@ -1,0 +1,19 @@
+{"step":"inactive","kind":"inactive"}
+{"step":"row","kind":"pointed-item","videoId":"synthetic01","target":true}
+{"step":"card","kind":"pointed-item","videoId":"synthetic02"}
+{"step":"album","kind":"unsupported-item","message":"Only songs can be saved to playlists."}
+{"step":"queue-current","kind":"pointed-item","id":7,"disposition":"insert-copy"}
+{"step":"queue-other-copy-of-song","kind":"pointed-item","id":8,"disposition":"move-existing"}
+{"step":"refresh","kind":"pointed-item","id":12,"selected":false}
+{"step":"stationary","kind":"pointed-item","videoId":"synthetic02"}
+{"step":"unrecognised","kind":"unrecognised-item","reports":1,"reads":0}
+{"step":"player-bar","kind":"current-song","videoId":"synthetic01","disposition":"insert-copy"}
+{"step":"fullscreen","kind":"current-song"}
+{"step":"nothing","kind":"nothing-playing"}
+{"step":"unavailable","kind":"unavailable"}
+{"step":"adShowing","kind":"ad-playing"}
+{"step":"adActive","kind":"ad-playing"}
+{"step":"presentingPlayerType","kind":"ad-playing"}
+{"step":"last-release","kind":"inactive"}
+{"step":"reacquired","kind":"pointed-item"}
+{"step":"disposed","kind":"inactive","owners":0,"deadlines":0}

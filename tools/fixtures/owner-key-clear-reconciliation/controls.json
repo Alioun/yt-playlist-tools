@@ -1,0 +1,356 @@
+[
+ {
+  "id": "drop-key-progress-reset-hold",
+  "target": "src/background/store/sync-reset-receive.ts",
+  "targetIdentity": {
+   "mode": "100644",
+   "bytes": 14553,
+   "sha256": "607b8eabe6a5ccacc6bbabf301291521dea40d897a891d5f1875d435f35e95f8",
+   "gitBlob": "94455adbdaf078a301975a7b1df1871fbed7b8a9"
+  },
+  "anchorLine": 129,
+  "anchorText": "        keySettingsPending(records) || featureProgressPending(records)) return held(\"authority\")\n",
+  "patch": "tools/fixtures/owner-key-clear-reconciliation/controls/drop-key-progress-reset-hold.patch",
+  "patchIdentity": {
+   "mode": "100644",
+   "bytes": 810,
+   "sha256": "2eea57ff74fc3a03049a5a53b2aabb2cc271ebc0c74eceb1eae773887db7206b",
+   "gitBlob": "f0e4410d0d37bfefe5c6388a1ecd40b35ca52501"
+  },
+  "namedTestFile": "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts",
+  "namedTest": "pending key progress holds remote reset before any marker or erasure",
+  "obligation": "lost operation recognition",
+  "staticDryRun": {
+   "returncode": 0,
+   "stdout": "patching file 'src/background/store/sync-reset-receive.ts'",
+   "stderr": ""
+  },
+  "credit": "static dry-run only; no baseline, mutant compilation or named red executed",
+  "commands": {
+   "mutantCompile": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tsconfig.json"
+   ],
+   "namedRed": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts",
+    "-t",
+    "pending key progress holds remote reset before any marker or erasure"
+   ]
+  }
+ },
+ {
+  "id": "revived-undo-after-reset",
+  "target": "src/background/store/local-filter-writer.ts",
+  "targetIdentity": {
+   "mode": "100644",
+   "bytes": 269817,
+   "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+   "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e"
+  },
+  "anchorLine": 1288,
+  "anchorText": "          agreementRevision++\n          keyExecution?.revoke()\n",
+  "patch": "tools/fixtures/owner-key-clear-reconciliation/controls/revived-undo-after-reset.patch",
+  "patchIdentity": {
+   "mode": "100644",
+   "bytes": 361,
+   "sha256": "cfbb61da37cdbd2792394571868710b29815ab0922591563f6ddfdd2d6c78c40",
+   "gitBlob": "86d5405475e3a43c9d5f86384db22dd38c5ce790"
+  },
+  "namedTestFile": "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts",
+  "namedTest": "received reset revokes six-second shortcut Undo even without account targets",
+  "obligation": "revived Undo authority",
+  "staticDryRun": {
+   "returncode": 0,
+   "stdout": "patching file 'src/background/store/local-filter-writer.ts'",
+   "stderr": ""
+  },
+  "credit": "static dry-run only; no baseline, mutant compilation or named red executed",
+  "commands": {
+   "mutantCompile": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tsconfig.json"
+   ],
+   "namedRed": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts",
+    "-t",
+    "received reset revokes six-second shortcut Undo even without account targets"
+   ]
+  }
+ },
+ {
+  "id": "lost-reset-recognition",
+  "target": "src/background/store/consent-recovery.ts",
+  "targetIdentity": {
+   "mode": "100644",
+   "bytes": 147860,
+   "sha256": "267abd6400ae17de57e0c03c77fc31d5c339bde485a2e3caea908410c1a9f5c6",
+   "gitBlob": "264801b3d8850efeb1ff798b631a9e0ac91d261d"
+  },
+  "anchorLine": 415,
+  "anchorText": "  if (Object.hasOwn(records, receivedResetKey)) {\n    const marker = readReceivedReset(",
+  "patch": "tools/fixtures/owner-key-clear-reconciliation/controls/lost-reset-recognition.patch",
+  "patchIdentity": {
+   "mode": "100644",
+   "bytes": 796,
+   "sha256": "8ce103d47019534d3b7bfb65773fb1c2f3d79a5f540fd9cff194f893c20f239d",
+   "gitBlob": "3372c80a9fca77e76bac8e63955d63ddca54db1c"
+  },
+  "namedTestFile": "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts",
+  "namedTest": "an unreadable reset marker remains recognized held work",
+  "obligation": "lost operation recognition",
+  "staticDryRun": {
+   "returncode": 0,
+   "stdout": "patching file 'src/background/store/consent-recovery.ts'",
+   "stderr": ""
+  },
+  "credit": "static dry-run only; no baseline, mutant compilation or named red executed",
+  "commands": {
+   "mutantCompile": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tsconfig.json"
+   ],
+   "namedRed": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts",
+    "-t",
+    "an unreadable reset marker remains recognized held work"
+   ]
+  }
+ },
+ {
+  "id": "early-reset-success",
+  "target": "src/background/store/sync-reset-receive.ts",
+  "targetIdentity": {
+   "mode": "100644",
+   "bytes": 14553,
+   "sha256": "607b8eabe6a5ccacc6bbabf301291521dea40d897a891d5f1875d435f35e95f8",
+   "gitBlob": "94455adbdaf078a301975a7b1df1871fbed7b8a9"
+  },
+  "anchorLine": 189,
+  "anchorText": "      if (!read || names.some(name => Object.hasOwn(read, name))) return held(\"local\", error)\n",
+  "patch": "tools/fixtures/owner-key-clear-reconciliation/controls/early-reset-success.patch",
+  "patchIdentity": {
+   "mode": "100644",
+   "bytes": 547,
+   "sha256": "81e9a14a8ad5fe020b612993e056cee69087da7404c0a72e8a403c12234c6cc6",
+   "gitBlob": "264f2d39a51879e2f4fad9aec446ea77ec42f1a5"
+  },
+  "namedTestFile": "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts",
+  "namedTest": "renewed agreement with later key progress cannot continue the old reset",
+  "obligation": "early reset success",
+  "staticDryRun": {
+   "returncode": 0,
+   "stdout": "patching file 'src/background/store/sync-reset-receive.ts'",
+   "stderr": ""
+  },
+  "credit": "static dry-run only; no baseline, mutant compilation or named red executed",
+  "commands": {
+   "mutantCompile": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tsconfig.json"
+   ],
+   "namedRed": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts",
+    "-t",
+    "renewed agreement with later key progress cannot continue the old reset"
+   ]
+  }
+ },
+ {
+  "id": "renewed-agreement-replay",
+  "target": "src/background/store/sync-reset-receive.ts",
+  "targetIdentity": {
+   "mode": "100644",
+   "bytes": 14553,
+   "sha256": "607b8eabe6a5ccacc6bbabf301291521dea40d897a891d5f1875d435f35e95f8",
+   "gitBlob": "94455adbdaf078a301975a7b1df1871fbed7b8a9"
+  },
+  "anchorLine": 116,
+  "anchorText": "    if (marker && (marker.recovery.kind === \"prepared\" || !sameSyncJson(marker.authority, current))) return held(\"authority\")\n",
+  "patch": "tools/fixtures/owner-key-clear-reconciliation/controls/renewed-agreement-replay.patch",
+  "patchIdentity": {
+   "mode": "100644",
+   "bytes": 696,
+   "sha256": "a4f6d4f7eba4db3dc89a948c288af7d79f7efc64bcc5b1105b4abe9b519cea17",
+   "gitBlob": "590e42a09b95685d1576a20392d8bd6920244cd2"
+  },
+  "namedTestFile": "tools/fixtures/clear-all/owner.bun-test.ts",
+  "namedTest": "fresh agreement cannot silently authorize admitted old reset cleanup",
+  "obligation": "renewed-agreement replay",
+  "staticDryRun": {
+   "returncode": 0,
+   "stdout": "patching file 'src/background/store/sync-reset-receive.ts'",
+   "stderr": ""
+  },
+  "credit": "static dry-run only; no baseline, mutant compilation or named red executed",
+  "commands": {
+   "mutantCompile": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tsconfig.json"
+   ],
+   "namedRed": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/clear-all/owner.bun-test.ts",
+    "-t",
+    "fresh agreement cannot silently authorize admitted old reset cleanup"
+   ]
+  }
+ },
+ {
+  "id": "localization-parameter-loss",
+  "target": "src/public/_locales/en/messages.json",
+  "targetIdentity": {
+   "mode": "100644",
+   "bytes": 81345,
+   "sha256": "ec9457c45db4f6e118a045e574cd6a41fe4dc46908bf29577f012af1314a34b8",
+   "gitBlob": "6f1bad5d133b8a1889815811028b86cf0334849c"
+  },
+  "anchorLine": 2861,
+  "anchorText": "  \"notice_www_one\": {\n    \"message\": \"$FEATURES$ isn't working right now because YouTube changed something. Use YouTube's own buttons for now.\",\n    \"placeholders\": {\n      \"features\": {",
+  "patch": "tools/fixtures/owner-key-clear-reconciliation/controls/localization-parameter-loss.patch",
+  "patchIdentity": {
+   "mode": "100644",
+   "bytes": 360,
+   "sha256": "fd5ec4f6e731b0f23dbf698a8a087d5df7315ff4bd9e4039f2cac0ee0122da80",
+   "gitBlob": "92825870fb8d8240ef1a0a015477bd679faa654f"
+  },
+  "namedTestFile": "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts",
+  "namedTest": "toaster and notice copy is localized with exact parameters",
+  "obligation": "localization loss",
+  "staticDryRun": {
+   "returncode": 0,
+   "stdout": "patching file 'src/public/_locales/en/messages.json'",
+   "stderr": ""
+  },
+  "credit": "static dry-run only; no baseline, mutant compilation or named red executed",
+  "commands": {
+   "mutantCompile": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "x",
+    "--no-env-file",
+    "--no-install",
+    "tsc",
+    "--noEmit",
+    "-p",
+    "tsconfig.json"
+   ],
+   "namedRed": [
+    "/usr/bin/env",
+    "-i",
+    "PATH=<pinned-proved-bin>",
+    "HOME=<scratch-home>",
+    "TMPDIR=<scratch-tmp>",
+    "<pinned-bun>",
+    "test",
+    "--no-env-file",
+    "--no-install",
+    "tools/fixtures/owner-key-clear-reconciliation/owner.bun-test.ts",
+    "-t",
+    "toaster and notice copy is localized with exact parameters"
+   ]
+  }
+ }
+]

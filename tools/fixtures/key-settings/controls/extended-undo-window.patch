@@ -1,0 +1,11 @@
+--- a/src/background/store/key-settings-execution.ts
++++ b/src/background/store/key-settings-execution.ts
+@@ -178,7 +178,7 @@
+         const receipt = `undo:${crypto.randomUUID()}`
+         const original = decodeSettings(view.settings)
+         undos.set(receipt, { principal, row: structuredClone(row), index, previous: original.shortcuts.list[index - 1]?.id,
+-          next: original.shortcuts.list[index + 1]?.id, targets, expires: issued + 6000, reset: deps.resetRevision(), authority: currentAuthority, consumed: false })
++          next: original.shortcuts.list[index + 1]?.id, targets, expires: issued + 60000, reset: deps.resetRevision(), authority: currentAuthority, consumed: false })
+         return { answer: { kind: "removed", id: shortcut, receipt, undoForMs: 6000 }, settingsChanged: true, accounts, uncertain: false }
+       }
+       return { answer: { kind: "confirmed", change, status: "changed" }, settingsChanged: true, accounts, uncertain: false }

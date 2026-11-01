@@ -1,0 +1,3 @@
+import type { HeldWorkView, HeldJobSelection } from "../../../../src/background/store/consent-recovery"
+declare const selection: HeldJobSelection
+export const intendedNegative: HeldWorkView = { kind: "sync-reset", selection, record: {}, resume: "renewed-agreement" }

@@ -9,9 +9,9 @@ export type ExecutionProofs = [
   Check<Equal<StartupHost, { readonly context: MigrationContext; readSnapshot(): Promise<StartupSnapshot>;
     removeLocal(keys: readonly LegacyKey[]): Promise<void>; deleteDatabase(name: "yt-playlist-tools"): Promise<void>;
     removeSession(keys: readonly ["channelCache"]): Promise<void> }>>,
-  Check<Equal<StartupExecutionResult, { readonly kind: "ok" } | Extract<StartupPlan, { kind: "newer-layout" | "invalid" | "unsupported-state" }> |
+  Check<Equal<StartupExecutionResult, { readonly kind: "ok" } | { readonly kind: "stopped" } | Extract<StartupPlan, { kind: "newer-layout" | "invalid" | "unsupported-state" }> |
     { readonly kind: "unconfirmed"; readonly stage: "canonical-batch" | "local-remove" | "schema" }>>,
-  Check<Equal<typeof executeLegacyStartup, (deps: { readonly local: Pick<LocalWriteStorage, "set">; readonly host: StartupHost }) => Promise<StartupExecutionResult>>>
+  Check<Equal<typeof executeLegacyStartup, (deps: { readonly local: Pick<LocalWriteStorage, "set">; readonly host: StartupHost; readonly isStopped?: () => boolean }) => Promise<StartupExecutionResult>>>
 ]
 function negative(host: StartupHost) {
   // @ts-expect-error Startup cleanup cannot delete an arbitrary database.

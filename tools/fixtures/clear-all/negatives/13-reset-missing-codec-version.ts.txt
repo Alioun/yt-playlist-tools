@@ -1,0 +1,4 @@
+import type { ResetMetadata } from "../../../src/background/store/sync-reset"
+
+const negative: ResetMetadata = { reset: true, id: "id", created: 0 }
+export {}

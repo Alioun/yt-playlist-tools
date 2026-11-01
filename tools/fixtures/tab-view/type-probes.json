@@ -1,0 +1,174 @@
+{
+  "state": "authored-unexecuted",
+  "procedure": "Remove one directive without shifting lines. Require diagnostics only on the recorded next line. Restore exact bytes and mode. Require clean restored compilation.",
+  "probes": [
+    {
+      "path": "src/background/add-flow/add-flow.type-test.ts",
+      "directiveLine": 31,
+      "diagnosticLine": 32,
+      "directive": "// @ts-expect-error A private read requires the current owner revision.",
+      "statement": "void flow.readPrivateSkips({ context: privateContext.context })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/add-flow/add-flow.type-test.ts",
+      "directiveLine": 33,
+      "diagnosticLine": 34,
+      "directive": "// @ts-expect-error A normal context cannot read private skips.",
+      "statement": "void flow.readPrivateSkips({ ...privateContext, context: { ...privateContext.context, tab: { ...privateContext.context.tab, incognito: false } } })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/add-flow/add-flow.type-test.ts",
+      "directiveLine": 35,
+      "diagnosticLine": 36,
+      "directive": "// @ts-expect-error An unauthenticated account cannot select private memory.",
+      "statement": "void flow.readPrivateSkips({ ...privateContext, context: { ...privateContext.context, info: { ...privateContext.context.info, signedIn: false, acct: null } } })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/add-flow/add-flow.type-test.ts",
+      "directiveLine": 37,
+      "diagnosticLine": 38,
+      "directive": "// @ts-expect-error The read exposes no whole private session.",
+      "statement": "void privateSkips.then(read => read.memory)",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/tab-view/producer.bun-test.ts",
+      "directiveLine": 84,
+      "diagnosticLine": 85,
+      "directive": "// @ts-expect-error Unknown identity is not a Tabs-authenticated account.",
+      "statement": "    expect(await h.producer.produce(unknown)).toEqual({ kind: \"unavailable\" })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/tab-view/producer.type-test.ts",
+      "directiveLine": 9,
+      "diagnosticLine": 10,
+      "directive": "// @ts-expect-error Missing monitoring cannot become a default healthy implementation.",
+      "statement": "void createTabViewProducer(noHealth)",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/tab-view/producer.type-test.ts",
+      "directiveLine": 11,
+      "diagnosticLine": 12,
+      "directive": "// @ts-expect-error Missing due-notice production cannot become an empty default.",
+      "statement": "void createTabViewProducer(noNotices)",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/tab-view/producer.type-test.ts",
+      "directiveLine": 13,
+      "diagnosticLine": 14,
+      "directive": "// @ts-expect-error Status facts require the actual tab/account/site/build/privacy context.",
+      "statement": "export const unboundStatus: StatusProducer = { async read() { return { kind: \"statuses\", statuses: [] } } }",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/background/tab-view/producer.type-test.ts",
+      "directiveLine": 15,
+      "diagnosticLine": 16,
+      "directive": "// @ts-expect-error Notice facts require the actual context.",
+      "statement": "export const unboundNotice: NoticeProducer = { async read() { return { kind: \"notices\", notices: [] } } }",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/shared/contracts/tab-view.type-test.ts",
+      "directiveLine": 13,
+      "diagnosticLine": 14,
+      "directive": "// @ts-expect-error Music options cannot enter a YouTube view.",
+      "statement": "export const wrongSite: TabView = { ...www, features: privateFeatures }",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/shared/contracts/tab-view.type-test.ts",
+      "directiveLine": 15,
+      "diagnosticLine": 16,
+      "directive": "// @ts-expect-error A complete view always carries the device picker sort.",
+      "statement": "export const missingField: TabView = (({ pickerSortAZ: _sort, ...rest }) => rest)(www)",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/shared/contracts/tab-view.type-test.ts",
+      "directiveLine": 17,
+      "diagnosticLine": 18,
+      "directive": "// @ts-expect-error A whole owner session is outside the wire contract.",
+      "statement": "export const wholeSession: TabView = { ...www, session }",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/shared/contracts/tab-view.type-test.ts",
+      "directiveLine": 19,
+      "diagnosticLine": 20,
+      "directive": "// @ts-expect-error Another account's collection is outside the wire contract.",
+      "statement": "export const otherAccount: TabView = { ...music, accounts: {} }",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/shared/contracts/tab-view.type-test.ts",
+      "directiveLine": 21,
+      "diagnosticLine": 22,
+      "directive": "// @ts-expect-error Normal skips cannot enter a private view.",
+      "statement": "export const normalAsPrivate: TabView = { ...normal, private: true }",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/shared/contracts/tab-view.type-test.ts",
+      "directiveLine": 23,
+      "diagnosticLine": 24,
+      "directive": "// @ts-expect-error A generic scope is missing the complete view fields.",
+      "statement": "export const partialView: TabView = scope",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/shared/contracts/tab-view.type-test.ts",
+      "directiveLine": 25,
+      "diagnosticLine": 26,
+      "directive": "// @ts-expect-error Raw identities cannot be account keys.",
+      "statement": "export const rawFacts: TabViewFacts = { site: \"www\", build: www.build, private: false, signedIn: true, acct: \"raw identity\", tabId: 1, windowId: 2 }",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "src/shared/contracts/tab-view.type-test.ts",
+      "directiveLine": 27,
+      "diagnosticLine": 28,
+      "directive": "// @ts-expect-error Site-specific options retain their literal feature identity.",
+      "statement": "export const wrongFeature: WwwFeature = { id: \"music-keys\", options: {} }",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "tools/fixtures/tab-view/native.type-test.ts",
+      "directiveLine": 17,
+      "diagnosticLine": 18,
+      "directive": "// @ts-expect-error The complete validator is required by ExtLink.",
+      "statement": "export const missingValidator: ExtLinkOptions<TabView, unknown> = options",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "tools/fixtures/tab-view/native.type-test.ts",
+      "directiveLine": 19,
+      "diagnosticLine": 20,
+      "directive": "// @ts-expect-error A Tabs producer must supply its complete validator.",
+      "statement": "export const blindProducer: TabViewProducer<TabView> = { produce: producer.produce }",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "tools/fixtures/tab-view/native.type-test.ts",
+      "directiveLine": 21,
+      "diagnosticLine": 22,
+      "directive": "// @ts-expect-error A scope guard cannot establish a complete TabView.",
+      "statement": "export const permissiveValidator: ExtLinkOptions<TabView, unknown> = { ...options, isView: scopeGuard }",
+      "state": "authored-unexecuted"
+    },
+    {
+      "path": "tools/fixtures/tab-view/native.type-test.ts",
+      "directiveLine": 23,
+      "diagnosticLine": 24,
+      "directive": "// @ts-expect-error The actual owner session cannot enter the wire contract.",
+      "statement": "export const wholeSession: TabView = { ...view, session }",
+      "state": "authored-unexecuted"
+    }
+  ]
+}

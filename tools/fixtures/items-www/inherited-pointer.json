@@ -1,0 +1,55 @@
+{
+  "status": "preserved exactly, still unexecuted",
+  "identities": {
+    "tools/fixtures/pointer-keys/unexecuted-gates.json": {
+      "bytes": 17625,
+      "sha256": "b8bbc61e3efd53bcb308808903bf339266a76e5ce04f1a25f0989eecda7c870c",
+      "mode": "100644",
+      "gitBlob": "45068c77bbc8f7867953b663b063eb3878e2ee8d"
+    },
+    "tools/fixtures/pointer-keys/type-probes.json": {
+      "bytes": 5213,
+      "sha256": "2e646a86e304a400e22be0e8b24470cee0a32bacdf80538df3bba588259251a9",
+      "mode": "100644",
+      "gitBlob": "bc0f0959e2e3db6d04d9a9cd570b187708d3816f"
+    },
+    "tools/fixtures/pointer-keys/controls.json": {
+      "bytes": 16861,
+      "sha256": "d4437af5cd7c9a2208eac304fc22d5feb44db5a3b55b9944b1a8727b0702a6e4",
+      "mode": "100644",
+      "gitBlob": "8a489dcb939c03049d4d67bd52e9abeb184fd275"
+    },
+    "tools/fixtures/pointer-keys/qualify.py": {
+      "bytes": 6170,
+      "sha256": "2507db9d1842e05e631dd8272c003d8ebb446c259887ec0faa6a4f894de405c5",
+      "mode": "100644",
+      "gitBlob": "144f9fb594dff7208d1b87f4a50f526287e814d6"
+    },
+    "tools/fixtures/pointer-keys/expected.jsonl": {
+      "bytes": 1015,
+      "sha256": "7d464be0b66e5cd24bbb281daa637c52680c8960633a392b7caeabd7deaba849",
+      "mode": "100644",
+      "gitBlob": "b60cb27f2808c7a2354099143bfdad4954147c44"
+    },
+    "tools/fixtures/pointer-keys/check-consumer.py": {
+      "bytes": 763,
+      "sha256": "d8d80d43d0d1018d75878e7d29ce1a6436db4f43f5cccafdc3065c2ca058bc2a",
+      "mode": "100644",
+      "gitBlob": "4ff25dad6335296fce8b37d02fd2879f4ba97249"
+    }
+  },
+  "gates": 13,
+  "typeNegatives": 21,
+  "controls": 6,
+  "execution": "Later qualification must execute every referenced gate, negative and compiling control against the composed candidate. Original command paths name the previous authoring checkout and must be explicitly rebound to the new disposable runtime and approved launcher. Keep each original command identity and the resolved command in receipts. Neither command inventory grants authority.",
+  "authoringRecheck": {
+    "path": ".audit/items-www-authoring/pointer-keys-authoring-recheck.json",
+    "identity": {
+      "bytes": 1698,
+      "sha256": "e5db98905ab72abd85f8746c1b1b5bd41e49fe8b5baedefac17e10709d92392b",
+      "mode": "100644",
+      "gitBlob": "f5b5ea5ee3133e644d27867369784062bb9a9ab2"
+    }
+  },
+  "pointerQualified": false
+}

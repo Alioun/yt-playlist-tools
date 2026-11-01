@@ -1,0 +1,11 @@
+--- a/src/background/store/feature-settings-mutation.ts
++++ b/src/background/store/feature-settings-mutation.ts
+@@ -94,7 +94,7 @@
+     if (commit) return await commit(copyObject(records), items)
+     try { await deps.local.set(items) } catch (error) { return { kind: "failed", stage: "set", error } }
+     try {
+-      const confirmed = await deps.local.get(["schema", "device", "sync", "doc:settings"])
++      const confirmed = { ...baseline, ...items }
+       if (deps.disposed()) return { kind: "unconfirmed", cause: { kind: "authority" } }
+       if (!jsonObject(confirmed) || !sameSyncJson(readSettingsSnapshot(confirmed), { ...baseline, ...items })) return { kind: "unconfirmed", cause: { kind: "readback" } }
+       return { kind: "committed" }

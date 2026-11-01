@@ -1,0 +1,55 @@
+{
+  "state": "all-unexecuted",
+  "probes": [
+    {
+      "id": "reconciliation-private-sighting",
+      "file": "src/background/store/local-filter-writer.type-test.ts",
+      "directiveLine": 241,
+      "intendedDiagnosticLine": 242,
+      "directive": "  // @ts-expect-error negative: reconciliation-private-sighting",
+      "statement": "  void owner.seeAccountLabel({ acct, private: true, at: 1 })",
+      "state": "unexecuted",
+      "protocol": "After passing baseline, blank only this directive, require a diagnostic at the intended line, restore exact bytes and mode, and require restored baseline pass."
+    },
+    {
+      "id": "reconciliation-forged-capture",
+      "file": "src/background/store/local-filter-writer.type-test.ts",
+      "directiveLine": 243,
+      "intendedDiagnosticLine": 244,
+      "directive": "  // @ts-expect-error negative: reconciliation-forged-capture",
+      "statement": "  void owner.completeAccountLabel({ kind: \"playlist-cache-capture\", acct }, { acct, label: { name: \"Label\" } })",
+      "state": "unexecuted",
+      "protocol": "After passing baseline, blank only this directive, require a diagnostic at the intended line, restore exact bytes and mode, and require restored baseline pass."
+    },
+    {
+      "id": "reconciliation-label-shape",
+      "file": "src/background/store/local-filter-writer.type-test.ts",
+      "directiveLine": 245,
+      "intendedDiagnosticLine": 246,
+      "directive": "  // @ts-expect-error negative: reconciliation-label-shape",
+      "statement": "  void owner.completeAccountLabel(capture, { acct, label: { name: 3 } })",
+      "state": "unexecuted",
+      "protocol": "After passing baseline, blank only this directive, require a diagnostic at the intended line, restore exact bytes and mode, and require restored baseline pass."
+    },
+    {
+      "id": "reconciliation-native-origin",
+      "file": "src/background/store/local-filter-writer.type-test.ts",
+      "directiveLine": 247,
+      "intendedDiagnosticLine": 248,
+      "directive": "  // @ts-expect-error negative: reconciliation-native-origin",
+      "statement": "  void owner.importCheck({ privacy: \"normal\" }, \"{}\")",
+      "state": "unexecuted",
+      "protocol": "After passing baseline, blank only this directive, require a diagnostic at the intended line, restore exact bytes and mode, and require restored baseline pass."
+    },
+    {
+      "id": "reconciliation-plan-no-write",
+      "file": "src/background/store/local-filter-writer.type-test.ts",
+      "directiveLine": 249,
+      "intendedDiagnosticLine": 250,
+      "directive": "  // @ts-expect-error negative: reconciliation-plan-no-write",
+      "statement": "  void owner.executeImport(normal, {})",
+      "state": "unexecuted",
+      "protocol": "After passing baseline, blank only this directive, require a diagnostic at the intended line, restore exact bytes and mode, and require restored baseline pass."
+    }
+  ]
+}

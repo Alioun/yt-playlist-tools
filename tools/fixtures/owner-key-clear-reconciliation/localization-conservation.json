@@ -1,0 +1,102 @@
+{
+ "proposal": {
+  "path": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-8e91ff1c/.audit/2.0-build-20261029/site-toaster-authored-returned/outside-fence-localization.patch",
+  "bytes": 5855,
+  "sha256": "77e47fd98e9688d578960cae8233da840902b23cbb69bb31ad5fe779f15ed3f8",
+  "gitBlob": "3d2f11b4d262972c9e9d7de030213e6a08abb44f"
+ },
+ "originalDependencies": {
+  "src/public/_locales/en/messages.json": {
+   "mode": "100644",
+   "gitBlob": "e480b5730872559f9c2f7b3d83f53cb581e85da8",
+   "sha256": "024a0f44de1803fc3d67095bc991760c2ced68a5a39b708c25f14a03ea9f09df",
+   "bytes": 79056
+  },
+  "src/shared/i18n/parameters.ts": {
+   "mode": "100644",
+   "gitBlob": "20dc5e986970f8b3fcc73fb8a2213418b700f44c",
+   "sha256": "4ae636b2d6201b3760e3e860148c44d074bdc26c78c1a0bc5faff933dbbd3830",
+   "bytes": 22535
+  },
+  "src/shared/copy/index.ts": {
+   "mode": "100644",
+   "gitBlob": "e04ca94cfc6eb9e09e76b823758b589ee603b941",
+   "sha256": "b5fe4bec58ec3c9501c64abfeb32466bb16f7e869d45e3020490543af2393751",
+   "bytes": 3237
+  },
+  "src/shared/contracts/tab-view.ts": {
+   "mode": "100644",
+   "gitBlob": "9798733811839437fb96961e82890f2fdd34efd8",
+   "sha256": "80ea63fd245a24281a1ffff6322b1c33d2ab0d4931155b545b663b275d2a3d90",
+   "bytes": 13449
+  }
+ },
+ "dependencyMatchesFrozenInput": {
+  "src/public/_locales/en/messages.json": true,
+  "src/shared/i18n/parameters.ts": true,
+  "src/shared/copy/index.ts": true,
+  "src/shared/contracts/tab-view.ts": true
+ },
+ "applied": {
+  "src/public/_locales/en/messages.json": "proposal hunk applied with patch -p1 -F 0, no offset",
+  "src/shared/i18n/parameters.ts": "proposal hunk applied with patch -p1 -F 0, no offset"
+ },
+ "relocated": {
+  "from": "src/shared/copy/site-feedback.ts",
+  "to": "src/shared/copy/index.ts",
+  "importsMerged": [
+   "DueNotice, PageFeatureId from ../contracts/tab-view",
+   "SimpleMessageKey from ../i18n"
+  ],
+  "selfImportDropped": "import { list } from \"./index\""
+ },
+ "addedMessageKeys": [
+  "toast_action_undo",
+  "toast_action_try_again",
+  "toast_action_settings",
+  "toast_action_choose",
+  "toast_action_sign_in",
+  "toast_action_reload",
+  "toast_nothingToUndo",
+  "toast_details",
+  "toast_dismiss",
+  "notice_www_one",
+  "notice_www_other",
+  "notice_watch",
+  "notice_music_one",
+  "notice_music_other",
+  "notice_feature_auto_add",
+  "notice_feature_shortcuts",
+  "notice_feature_quick_save",
+  "notice_feature_queue_button",
+  "notice_feature_watch_button",
+  "notice_feature_card_menu",
+  "notice_feature_gather",
+  "notice_feature_music_actions",
+  "notice_feature_music_keys"
+ ],
+ "addedMessageKeysPresent": true,
+ "existingMessagesPreserved": "all prior message and parameter lines are context-only in the applied hunks",
+ "runtimeEnglishFallback": "none; every string is i18n.message",
+ "privacyWording": "untouched",
+ "finalIdentities": {
+  "src/public/_locales/en/messages.json": {
+   "bytes": 81345,
+   "sha256": "ec9457c45db4f6e118a045e574cd6a41fe4dc46908bf29577f012af1314a34b8",
+   "gitBlob": "6f1bad5d133b8a1889815811028b86cf0334849c",
+   "mode": "100644"
+  },
+  "src/shared/i18n/parameters.ts": {
+   "bytes": 23268,
+   "sha256": "2200e6d5aa79656189a9b574ff57ab9d5b79ee36e232d831e2ffd37b15ceb5cb",
+   "gitBlob": "fdbbc76ad15e03acbeb4f5eb70b150160a22f9b7",
+   "mode": "100644"
+  },
+  "src/shared/copy/index.ts": {
+   "bytes": 5106,
+   "sha256": "7a2460043843ac82b9a64448de4dbb00a5a4d685642fe28311f01ca6150c9644",
+   "gitBlob": "dc03b6e8c1ef5cd80524371d8a73e8049045bc3f",
+   "mode": "100644"
+  }
+ }
+}

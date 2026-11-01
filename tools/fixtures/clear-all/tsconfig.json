@@ -1,0 +1,48 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "bun"
+    ],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "typeRoots": [
+      "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@types"
+    ],
+    "paths": {
+      "wxt/browser": [
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/wxt/dist/browser.d.mts"
+      ],
+      "wxt/testing/fake-browser": [
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/wxt/dist/testing/fake-browser.d.mts"
+      ]
+    },
+    "resolveJsonModule": true
+  },
+  "files": [
+    "../../../.wxt/wxt.d.ts",
+    "../../../tools/fixtures/clear-all/harness.ts",
+    "../../../tools/fixtures/clear-all/owner.bun-test.ts",
+    "../../../tools/fixtures/clear-all/rpc.bun-test.ts",
+    "../../../tools/fixtures/clear-all/run.ts",
+    "../../../tools/fixtures/clear-all/teardown.bun-test.ts",
+    "../../../src/background/adapters/starting-owner.type-test.ts",
+    "../../../src/background/router/ui-playlists/router.type-test.ts",
+    "../../../src/background/store/consent-recovery.type-test.ts",
+    "../../../src/background/store/local-filter-writer.type-test.ts",
+    "../../../src/background/store/store-lifecycle.type-test.ts",
+    "../../../src/shared/contracts/ui.type-test.ts",
+    "../../../src/ui/backend/backend.type-test.ts"
+  ]
+}

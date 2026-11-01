@@ -1,0 +1,114 @@
+[
+  {
+    "step": "first-seen",
+    "result": {
+      "label": {
+        "kind": "completed",
+        "acct": "AAAAAAAAAAAAAAAA",
+        "result": {
+          "kind": "current",
+          "label": {
+            "name": "Original"
+          },
+          "checkedAt": 1700000000000
+        }
+      },
+      "claim": {
+        "kind": "unavailable",
+        "reason": "production-ownership-required"
+      }
+    },
+    "checkedAt": 1700000000000,
+    "generations": 0
+  },
+  {
+    "step": "current",
+    "result": {
+      "label": {
+        "kind": "stored",
+        "acct": "AAAAAAAAAAAAAAAA",
+        "label": {
+          "name": "Original"
+        },
+        "checkedAt": 1700000000000,
+        "lastAccount": "unchanged"
+      },
+      "claim": {
+        "kind": "unavailable",
+        "reason": "production-ownership-required"
+      }
+    },
+    "runs": 1
+  },
+  {
+    "step": "changed",
+    "result": {
+      "label": {
+        "kind": "completed",
+        "acct": "AAAAAAAAAAAAAAAA",
+        "result": {
+          "kind": "committed",
+          "label": {
+            "name": "Updated"
+          },
+          "checkedAt": 1700086400000
+        }
+      },
+      "claim": {
+        "kind": "unavailable",
+        "reason": "production-ownership-required"
+      }
+    },
+    "label": {
+      "name": "Updated"
+    },
+    "lastAccount": "AAAAAAAAAAAAAAAA"
+  },
+  {
+    "step": "private",
+    "result": {
+      "label": {
+        "kind": "private"
+      },
+      "claim": {
+        "kind": "not-eligible",
+        "reason": "private"
+      }
+    },
+    "ownerReads": 0,
+    "ownerWrites": 0
+  },
+  {
+    "step": "no-setup",
+    "result": {
+      "label": {
+        "kind": "no-setup"
+      },
+      "claim": {
+        "kind": "unavailable",
+        "reason": "production-ownership-required"
+      }
+    },
+    "hasCache": false,
+    "lastAccount": "AAAAAAAAAAAAAAAA"
+  },
+  {
+    "step": "live-header",
+    "result": {
+      "kind": "label",
+      "acct": "BBBBBBBBBBBBBBBB",
+      "label": {
+        "name": "New account"
+      },
+      "persistence": "caller-owned"
+    },
+    "hasCache": false
+  },
+  {
+    "step": "eof",
+    "runs": 3,
+    "generations": 1,
+    "clockPending": 0,
+    "stamp": true
+  }
+]

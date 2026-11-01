@@ -1,0 +1,11 @@
+--- a/src/background/store/feature-settings.ts
++++ b/src/background/store/feature-settings.ts
+@@ -19,7 +19,7 @@
+   readonly access: AgreementAccess | undefined; readonly allocateShortcut: () => string
+ }): FeaturePlan {
+   const { change, records, access } = input
+-  let settings = decodeSettings(input.current)
++  let settings = decodeSettings({})
+   const blocked: PresetConflict[] = []
+   let limitedMusic = false
+   if (change.kind === "music-section") {

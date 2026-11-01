@@ -1,0 +1,11 @@
+--- a/src/background/store/sync-reset-receive.ts
++++ b/src/background/store/sync-reset-receive.ts
+@@ -126,7 +126,7 @@
+       if (!metadata) return held("metadata")
+       if (object(records.sync) && sameSyncJson(records.sync.resetReceived ?? null, metadata)) return { kind: "already-received" }
+       if (Object.keys(records).some(name => ["pending:account-removal", "pending:sync-join", "pending:settings-import"].includes(name)) ||
+-        keySettingsPending(records) || featureProgressPending(records)) return held("authority")
++        false && keySettingsPending(records) || featureProgressPending(records)) return held("authority")
+       const accounts = new Set<AccountKey>(), documents: string[] = []
+       for (const name of Object.keys(records)) {
+         if (!name.startsWith("doc:")) continue

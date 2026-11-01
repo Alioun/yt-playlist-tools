@@ -1,11 +1,11 @@
 import { isInterimSourceKey, isInterimCanonicalKey } from "./interim-persistence"
 import { expect, test } from "bun:test"
-import { execFileSync, spawnSync } from "node:child_process"
+import { executeSyntheticNodeRealm, spawnSyntheticNodeRealm } from "../../../tools/fixtures/owner-services-reconciliation/node-realm-transport"
 import { readFile } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
 import { isAccountKey, isPlaylistId, type AccountKey, type PlaylistId } from "../../shared/model"
 import type { JsonObject } from "../../shared/contracts/json"
-import { createLocalFilterWriter, type SyncAutomaticResult, type LocalFilterChange, type LocalWriteStorage } from "./local-filter-writer"
+import { createLocalFilterWriter, createStartingLocalFilterWriter, type SyncAutomaticResult, type LocalFilterChange, type LocalWriteStorage } from "./local-filter-writer"
 
 async function acceptance(create: typeof createLocalFilterWriter, acct: AccountKey, playlist: PlaylistId, FixtureDate = Date, controls = true) {
   let assertions = 0
@@ -69,7 +69,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     mode: "deny", on: false, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "Title", null, { future: true }]], future: { body: true }
   } }
   equal(h.sets, [{ [filterKey]: off, sync: { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true } }], "exact off write")
-  equal(h.reads, [["schema", "device", "sync", setupKey, filterKey], null, null, null, null], "initial targeted read, pending inventory, detached inventory, preflight and readback")
+  equal(h.reads, [null, null, null, null, null], "full authority inventory, pending inventory, detached inventory, preflight and readback")
   equal(Object.fromEntries(Object.entries(h.records).filter(([key]) => key !== filterKey && key !== "sync")), untouched, "unrelated data untouched")
   equal(await h.change({ mode: "allow", on: true }), invalid, "off list still needs confirmation")
   equal(await h.change({ mode: "deny", on: true }), ok, "on succeeds")
@@ -138,7 +138,7 @@ async function acceptance(create: typeof createLocalFilterWriter, acct: AccountK
     equal(await x.change({ mode: "deny", on: false }), ok, "supported off history admits")
     equal(x.sets, [{ [filterKey]: off, sync: next }], "one complete two-key batch changes only the bit")
     equal(x.records, { ...seed(), [filterKey]: off, sync: next }, "full local state retains every unrelated record")
-    equal(x.reads, [["schema", "device", "sync", setupKey, filterKey], null, null, null, null], "history retains complete baseline, preflight and readback")
+    equal(x.reads, [null, null, null, null, null], "history retains complete baseline, preflight and readback")
     equal(await x.change({ mode: "deny", on: true }), ok, "editing back remains an edit")
     equal(x.sets[1], { [filterKey]: { ...off, gen: "g2", at: 101, data: { ...off.data, on: true } } }, "already-true history is not rewritten")
     equal(x.records.sync, next, "bit stays true and pushed generations remain unacknowledged")
@@ -412,7 +412,7 @@ test("preparation refusal leaves false history untouched before generation in th
     const result=await writer.change({kind:"ui",windowId:1,incognito:false},{acct:"AAAAAAAAAAAAAAAA",playlist:"PL_P",desired:{mode:"deny",on:false},clearListedChannels:"not-confirmed"});
     return {result,preparations,generations,sets,reads,unchanged:before===JSON.stringify(records)};
   })()`
-  const result = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
+  const result = JSON.parse(executeSyntheticNodeRealm('import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));', script, 35000))
   expect(result).toEqual({ result: { kind: "result", result: { refused: "invalid" } }, preparations: 1,
     generations: 0, sets: 0, reads: 3, unchanged: true })
 })
@@ -426,7 +426,7 @@ test("actual browser artifact executes the acceptance matrix with injected effec
     expect(file.startsWith(resolve(import.meta.dir, "../../shared/model") + "/") ||
       file === resolve(import.meta.dir, "../../shared/contracts/json.ts") ||
       file.startsWith(resolve(import.meta.dir, "../../shared/keys") + "/") ||
-      [entry, ...["sync-join-execution.ts", "sync-join-persistence.ts", "consent-agreement.ts", "interim-persistence.ts", "first-edit-provenance.ts", "interim-conversion.ts", "interim-profile.ts", "account-removal-execution.ts", "account-removal-session.ts", "claim-notice.ts", "shared-setting-execution.ts", "settings-edit.ts", "local-claim-writer.ts", "accounts.ts", "legacy.ts", "legacy-execution.ts", "legacy-startup.ts", "legacy-shortcut.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file)).toBe(true)
+      [entry, ...["consent-withdrawal.ts", "consent-recovery.ts", "withdrawn-document-recovery.ts", "sync-join-execution.ts", "sync-join-persistence.ts", "consent-agreement.ts", "interim-persistence.ts", "interim-installation.ts", "first-edit-provenance.ts", "interim-conversion.ts", "interim-profile.ts", "account-removal-execution.ts", "account-removal-session.ts", "claim-notice.ts", "shared-setting-execution.ts", "settings-edit.ts", "local-claim-writer.ts", "accounts.ts", "legacy.ts", "legacy-execution.ts", "legacy-startup.ts", "legacy-shortcut.ts", "interim-recovery-execution.ts", "interim-recovery-review.ts", "interim-canonical-authority.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file) || ["src/background/store/account-label.ts", "src/background/store/settings-file-read.ts", "src/shared/contracts/tabs.ts", "src/shared/settings-file/data.ts", "src/shared/settings-file/index.ts", "src/shared/settings-file/json.ts", "src/shared/settings-file/shape.ts", "src/background/monitor/thresholds.ts", "src/background/store/auto-add-choice.ts", "src/background/store/monitor-notice.ts", "src/background/store/monitor-session.ts", "src/background/store/playlist-cache.ts", "src/background/store/session-memory.ts", "src/background/store/setup-edit-execution.ts", "src/background/store/setup-edit.ts", "src/background/store/tab-projection.ts", "src/background/tabs/records.ts", "src/shared/contracts/auto-add-choice.ts", "src/shared/contracts/diagnostics.ts", "src/shared/contracts/endpoints.ts", "src/shared/contracts/identifiers.ts", "src/shared/contracts/index.ts", "src/shared/contracts/jobs.ts", "src/shared/contracts/media.ts", "src/shared/contracts/object-shape.ts", "src/shared/contracts/page-ids.ts", "src/shared/contracts/protocol.ts", "src/shared/contracts/results.ts", "src/shared/contracts/shape-outline.ts", "src/shared/contracts/streams.ts", "src/shared/contracts/tab-view.ts", "src/shared/contracts/vocabulary.ts", "src/shared/features/registration.ts", "src/shared/features/registry.ts"].map(name => resolve(import.meta.dir, "../../..", name)).includes(file)).toBe(true)
     for (const imported of new Bun.Transpiler({ loader: "ts" }).scanImports(await readFile(file, "utf8"))) {
       expect(imported.path.startsWith(".")).toBe(true)
       const base = resolve(dirname(file), imported.path)
@@ -456,7 +456,7 @@ test("actual browser artifact executes the acceptance matrix with injected effec
     try {Math.random} catch {positiveControls++}
     return {exports:Object.keys(module.exports),...result,beforeControls,positiveControls,positiveReads:ambientReads};
   })()`
-  const result = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
+  const result = JSON.parse(executeSyntheticNodeRealm('import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));', script, 35000))
   expect(result.exports).toEqual(["StartupReadinessError", "createLocalFilterWriter", "createStartingLocalFilterWriter"])
   expect(result.assertions).toBeGreaterThan(450)
   expect(result.caughtAlternatives).toBe(4)
@@ -516,7 +516,7 @@ async function syncAcceptance(create: typeof createLocalFilterWriter, acct: Acco
     const expected = { ...original, gen: "g1", at: 100, by: "device-fixture", data: { ...original.data, on: false } }
     equal(h.sets, [{ [key]: expected, sync: { ...Object(records.sync), everEdited: true } }], "literal one Filter and provenance local set")
     equal(h.records, { ...before, [key]: expected, sync: { ...Object(before.sync), everEdited: true } }, "all raw records retained with true provenance")
-    equal(h.reads, [["schema", "device", "sync", setup, key], null, null, null], "full authoritative local read, preflight and readback")
+    equal(h.reads, [null, null, null, null], "full authoritative local read, preflight and readback")
     equal(h.counts(), { generations: 1, syncReads: 1 }, "one candidate one full sync read")
     equal(stable(h.syncRecords), syncBefore, "no native sync mutation")
     equal(await h.change(), ok, "accepted pending generation achieved no-op")
@@ -581,8 +581,8 @@ async function syncAcceptance(create: typeof createLocalFilterWriter, acct: Acco
   {
     const h = harness(); h.records[key] = { ...original, gen: "never-pushed", extra: "x".repeat(110000), data: { mode: "deny", on: true, channels: [] } }
     delete h.syncRecords[base]
-    h.local.get = async keys => { h.reads.push(keys); return keys === null ? { ...h.records, [key]: { ...original, gen: "fresh", data: {} } }
-      : Object.fromEntries((keys ?? []).filter(k => Object.hasOwn(h.records, k)).map(k => [k, h.records[k]])) }
+    h.local.get = async keys => { h.reads.push(keys); return h.reads.length > 1 ? { ...h.records, [key]: { ...original, gen: "fresh", data: {} } }
+      : { ...h.records } }
     equal(await h.change(), ok, "fresh achieved state overrides stale preliminary changed value")
     equal(h.counts().generations, 0, "authoritative no-op never prepares")
     equal(h.sets.length, 0, "authoritative no-op no set")
@@ -642,9 +642,10 @@ async function syncAcceptance(create: typeof createLocalFilterWriter, acct: Acco
     equal(await h.change(false, "allow", "old"), ok, "fresh destructive clearing")
     equal(h.sets.length, 1, "only confirmed clearing persists")
   }
-  for (const failure of ["exact", "full", "sync", "set"]) {
+  for (const failure of ["initial", "full", "sync", "set"]) {
     const h = harness(), marker = Error("native " + failure), get = h.local.get, set = h.local.set, syncGet = h.sync.get
-    h.local.get = async keys => { if ((failure === "full" && keys === null) || (failure === "exact" && keys !== null)) throw marker; return get(keys) }
+    let reads = 0
+    h.local.get = async keys => { reads++; if ((failure === "full" && reads > 1) || (failure === "initial" && reads === 1)) throw marker; return get(keys) }
     h.sync.get = async () => { if (failure === "sync") throw marker; return syncGet() }
     h.local.set = async items => { if (failure === "set") throw marker; return set(items) }
     let caught: unknown
@@ -732,7 +733,7 @@ test("actual browser artifact rejects six observable admission defects", async (
     expect(build.success).toBe(true)
     const bytes = await build.outputs[0]!.text()
     const script = `(async()=>{const module={exports:{}};${bytes};try {await (${syncAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");return {caught:false}} catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0]}}})()`
-    const result = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
+    const result = JSON.parse(executeSyntheticNodeRealm('import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));', script, 35000))
     expect(result).toEqual({ caught: true, assertion: fault.assertion })
   }
 })
@@ -768,7 +769,7 @@ test("actual browser artifact projects literal complete raw inventory exactly on
     const changedCount=globalThis.projections,changedEncodes=globalThis.encodedInputs.length;
     await writer.change({kind:"ui",windowId:1,incognito:false},change);
     return {matrix,first,firstEncoded,projections,changedCount,noopCount:globalThis.projections,changedEncodes,noopEncodes:globalThis.encodedInputs.length,gens};})()`
-  const result = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
+  const result = JSON.parse(executeSyntheticNodeRealm('import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));', script, 35000))
   const own = JSON.parse('{"__proto__":{"keep":true},"toJSON":"inert"}')
   const original = { v: 1, gen: "old", at: 1, by: "old", extra: { keep: true }, ...own,
     data: { mode: "deny", on: true, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "Title", null, { future: true }]], future: { body: true }, ...own } }
@@ -1057,7 +1058,7 @@ test("actual browser artifact rejects five observable outbound defects", async (
     expect(build.success).toBe(true)
     const bytes = await build.outputs[0]!.text()
     const script = `(async()=>{const module={exports:{}};${bytes};try {await (${flushAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");return {caught:false}} catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0]}}})()`
-    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
+    const observed = JSON.parse(executeSyntheticNodeRealm('import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));', script, 35000))
     expect({ name: fault.name, ...observed }).toEqual({ name: fault.name, caught: true, assertion: fault.assertion })
   }
 })
@@ -1354,7 +1355,7 @@ test("actual browser artifact executes event timing with guarded ambient globals
   expect(build.success).toBe(true)
   const bytes = await build.outputs[0]!.text()
   const script = `(async()=>{let reads=0;const names=["Date","performance","setTimeout","clearTimeout","setInterval","browser","chrome","fetch","crypto","Bun","process","localStorage","indexedDB"];for(const name of names)Object.defineProperty(globalThis,name,{get(){reads++;throw Error(name)}});Object.defineProperty(Math,"random",{get(){reads++;throw Error("random")}});const module={exports:{}};${bytes};const acct="AAAAAAAAAAAAAAAA",playlist="PL_P";const result=await (${driverAcceptance.toString()})(module.exports.createLocalFilterWriter,acct,playlist);if(reads)throw Error("ambient read");let controls=0;for(const name of names){try{globalThis[name]}catch{controls++}}try{Math.random}catch{controls++}return {...result,reads,controls};})()`
-  const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
+  const observed = JSON.parse(executeSyntheticNodeRealm('import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));', script, 35000))
   expect(observed.assertions).toBeGreaterThan(180)
   expect(observed.controls).toBe(14)
   expect(observed.reads).toBeGreaterThanOrEqual(14)
@@ -1368,7 +1369,7 @@ test("actual browser artifact rejects six observable event driver defects", asyn
     { name: "manual-bypass", assertion: "manual cannot bypass initial pacing", source: original.replace('return enqueue(() => attempt(event))', 'return enqueue(async () => { quietUntil = nextInvocation = 0; return attempt(event) })') },
     { name: "timer-instead-of-invocation", assertion: "spacing uses actual invocation rather than due time", source: original.replace('nextInvocation = invokedAt + 5000', 'nextInvocation += 5000') },
     { name: "self-rearming-callback", assertion: "timer callback cannot rearm", source: original.replace('await automatic(current.event, false)', 'await automatic(current.event, true)') },
-    { name: "duplicate-own-event-set", assertion: "first batch invokes at barrier", source: original.replace('let quietUntil = 0', 'let duplicated = false; let quietUntil = 0').replace('if (plan.sent.length === 0 && plan.repairs.length === 0) return { kind: "idle" }', 'if (plan.sent.length === 0 && plan.repairs.length === 0) { if (nextInvocation > 5000 && !duplicated) { duplicated = true; await deps.sync.set(Object.fromEntries(Object.entries(records).filter(([key]) => key.startsWith("doc:")).map(([key,value]) => [key.replace(/^doc:/,"s:"),value]))) }; return { kind: "idle" } }') },
+    { name: "duplicate-own-event-set", assertion: "first batch invokes at barrier", source: original.replace('let quietUntil = 0', 'let duplicated = false; let quietUntil = 0').replace('if (plan.sent.length === 0 && plan.repairs.length === 0) return { kind: "idle" }', 'if (plan.sent.length === 0 && plan.repairs.length === 0) { if (nextInvocation > 5000 && !duplicated) { duplicated = true; await sync.set(Object.fromEntries(Object.entries(records).filter(([key]) => key.startsWith("doc:")).map(([key,value]) => [key.replace(/^doc:/,"s:"),value]))) }; return { kind: "idle" } }') },
     { name: "automatic-restart-after-error", assertion: "startup error cannot automatically restart startup-read", source: original.replace('if (claimConfirmation === "unconfirmed" || lifetime.kind === "stopped" || lifetime.kind === "disposed") return', 'if (claimConfirmation === "unconfirmed" || lifetime.kind === "disposed") return; if (lifetime.kind === "stopped") lifetime = { kind: "inactive" }') }
   ]
   for (const fault of cases) {
@@ -1378,7 +1379,7 @@ test("actual browser artifact rejects six observable event driver defects", asyn
     expect(build.success).toBe(true)
     const bytes = await build.outputs[0]!.text()
     const script = `(async()=>{const module={exports:{}};${bytes};try {await (${driverAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");return {caught:false}}catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0]}}})()`
-    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
+    const observed = JSON.parse(executeSyntheticNodeRealm('import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));', script, 35000))
     expect({ name: fault.name, ...observed }).toEqual({ name: fault.name, caught: true, assertion: fault.assertion })
   }
 })
@@ -1713,7 +1714,7 @@ test("saved minified receiver bytes execute in a fresh guarded realm", async () 
   expect(build.success).toBe(true)
   const bytes = await build.outputs[0]!.text()
   const script = `(async()=>{let reads=0;const names=["Date","performance","setTimeout","clearTimeout","setInterval","clearInterval","browser","chrome","fetch","crypto","Bun","process","localStorage","indexedDB","navigator","WebSocket"];for(const name of names)Object.defineProperty(globalThis,name,{get(){reads++;throw Error(name)}});Object.defineProperty(Math,"random",{get(){reads++;throw Error("random")}});const module={exports:{}};${bytes};const result=await (${receiveAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");if(reads)throw Error("ambient read");let controls=0;for(const name of names){try{globalThis[name]}catch{controls++}}try{Math.random}catch{controls++}return {assertions:result.assertions,reads,controls};})()`
-  const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
+  const observed = JSON.parse(executeSyntheticNodeRealm('import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));', script, 35000))
   expect(observed.assertions).toBeGreaterThan(300)
   expect(observed.controls).toBe(17)
   expect(observed.reads).toBeGreaterThanOrEqual(17)
@@ -1741,7 +1742,7 @@ test("receiver wrong alternatives fail at their intended observable assertions",
     expect(build.success).toBe(true)
     const bytes = await build.outputs[0]!.text()
     const script = `(async()=>{const module={exports:{}};${bytes};try{await (${receiveAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");return {caught:false}}catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0]}}})()`
-    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'], { input: script, encoding: "utf8", timeout: 35000 }))
+    const observed = JSON.parse(executeSyntheticNodeRealm('import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));', script, 35000))
     expect({ name: fault.name, ...observed }).toEqual({ name: fault.name, caught: true, assertion: fault.assertion })
   }
 })
@@ -2141,20 +2142,19 @@ test("automatic incoming composition literal event lifetime and held IO matrix",
   expect((await automaticIncomingAcceptance(createLocalFilterWriter, acct, playlist)).assertions).toBeGreaterThan(400)
 })
 
-test("saved browser composition executes in two fresh guarded realms", async () => {
+const savedRealmTestTimeout = 35000 + 5000
+
+for (const realm of [1, 2]) test(`saved browser composition executes in two fresh guarded realms: realm ${realm}`, async () => {
   const built = await Bun.build({ entrypoints: [resolve(import.meta.dir, "local-filter-writer.ts")], target: "browser", format: "cjs", minify: true })
   expect(built.success).toBe(true)
   const bytes = await built.outputs[0]!.text()
-  for (let realm = 0; realm < 2; realm++) {
-    const script = `(async()=>{let accesses=0;const names=["Date","performance","setTimeout","clearTimeout","setInterval","clearInterval","browser","chrome","fetch","crypto","Bun","process","localStorage","indexedDB","navigator","WebSocket"];for(const name of names)Object.defineProperty(globalThis,name,{get(){accesses++;throw Error("guard "+name)}});Object.defineProperty(Math,"random",{get(){accesses++;throw Error("guard random")}});const module={exports:{}};${bytes};const result=await (${automaticIncomingAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");if(accesses)throw Error("ambient access");let controls=0;for(const name of [...names,"random"]){let caught;try{name==="random"?Math.random:globalThis[name]}catch(error){caught=error.message}if(caught!=="guard "+name)throw Error("inactive guard "+name);controls++}return {assertions:result.assertions,controls}})()`
-    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
-    expect(observed.assertions).toBeGreaterThan(400); expect(observed.controls).toBe(17)
-  }
-})
+  const script = `(async()=>{let accesses=0;const names=["Date","performance","setTimeout","clearTimeout","setInterval","clearInterval","browser","chrome","fetch","crypto","Bun","process","localStorage","indexedDB","navigator","WebSocket"];for(const name of names)Object.defineProperty(globalThis,name,{get(){accesses++;throw Error("guard "+name)}});Object.defineProperty(Math,"random",{get(){accesses++;throw Error("guard random")}});const module={exports:{}};${bytes};const result=await (${automaticIncomingAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");if(accesses)throw Error("ambient access");let controls=0;for(const name of [...names,"random"]){let caught;try{name==="random"?Math.random:globalThis[name]}catch(error){caught=error.message}if(caught!=="guard "+name)throw Error("inactive guard "+name);controls++}return {assertions:result.assertions,controls}})()`
+  const observed = JSON.parse(executeSyntheticNodeRealm('import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))', script, 35000))
+  expect(observed.assertions).toBeGreaterThan(400); expect(observed.controls).toBe(17)
+}, savedRealmTestTimeout)
 
-test("automatic composition wrong alternatives fail at intended observations", async () => {
-  const path = resolve(import.meta.dir, "local-filter-writer.ts"), original = await readFile(path, "utf8")
-  const cases = [
+function automaticCompositionFaults(original: string) {
+  return [
     { name: "flush-before-receive", assertion: "incoming precedes outbound observations", source: original.replace('followup && (event?.kind === "start" || event?.kind === "sync") ? await receiveIncomingDocuments() : undefined', 'followup && (event?.kind === "start" || event?.kind === "sync") ? (await attempt(event), await receiveIncomingDocuments()) : undefined') },
     { name: "decoded-adoption", assertion: "automatic raw omissions preserved", source: original.replace('const document = snapshot(remote.candidate.json)', 'const document = snapshot(JSON.parse(JSON.stringify(remote.candidate.value.document)))') },
     { name: "stale-history", assertion: "serial targets retain current history across accounts", source: original.replace('let lane: Promise<void>', 'let incomingHistory: JsonObject; let lane: Promise<void>').replace('const targets: SyncReceiveKey[] = []', 'incomingHistory = records.sync as JsonObject; const targets: SyncReceiveKey[] = []').replace('repairedHistory(latest.history, [received])', 'repairedHistory(incomingHistory, [received])') },
@@ -2165,42 +2165,46 @@ test("automatic composition wrong alternatives fail at intended observations", a
     { name: "timer-receives", assertion: "timer remains outbound-only", source: original.replace('await automatic(current.event, false)', 'await automatic(current.event, true)') },
     { name: "stopped-restart", assertion: "successful manual retry never restarts stopped lifetime enumeration", source: original.replace('if (claimConfirmation === "unconfirmed" || lifetime.kind === "stopped" || lifetime.kind === "disposed") return', 'if (claimConfirmation === "unconfirmed" || lifetime.kind === "disposed") return; if (lifetime.kind === "stopped") lifetime = {kind:"inactive"}') },
     { name: "second-owner", assertion: "receiver changes no scheduling clocks", source: original.replace('const result = await receiveAttempt(key)', 'const result = await createLocalFilterWriter(deps).receiveSyncDocument(key)') },
-    { name: "F-echo", assertion: "Q-only send without F echo", source: original.replace('    let plan = planSyncWrite({ local: records, sync: await deps.sync.get(), intent: { kind: "flush" } })', '    const echo = observedRemote; let plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(echo).filter(([name]) => name !== "s:filter:AAAAAAAAAAAAAAAA:PL_P")), intent: { kind: "flush" } })').replace('sync: remote, intent: { kind: "flush" }', 'sync: Object.fromEntries(Object.entries(remote).filter(([name]) => name !== "s:filter:AAAAAAAAAAAAAAAA:PL_P")), intent: { kind: "flush" }').replace('const replanned = planSyncWrite({ local: latest, sync: remote, intent: { kind: "flush" } })', 'const replanned = plan') },
+    { name: "F-echo", assertion: "Q-only send without F echo", source: original.replace('    let plan = planSyncWrite({ local: records, sync: await sync.get(), intent: { kind: "flush" } })', '    const echo = observedRemote; let plan = planSyncWrite({ local: records, sync: Object.fromEntries(Object.entries(echo).filter(([name]) => name !== "s:filter:AAAAAAAAAAAAAAAA:PL_P")), intent: { kind: "flush" } })').replace('sync: remote, intent: { kind: "flush" }', 'sync: Object.fromEntries(Object.entries(remote).filter(([name]) => name !== "s:filter:AAAAAAAAAAAAAAAA:PL_P")), intent: { kind: "flush" }').replace('const replanned = planSyncWrite({ local: latest, sync: remote, intent: { kind: "flush" } })', 'const replanned = plan') },
     { name: "outside-lane", assertion: "automatic held lane excludes all queued IO enumeration", source: original.replace('return enqueue(() => receiveAttempt(key))', 'return receiveAttempt(key)') }
   ]
-  for (const fault of cases) {
-    expect(fault.source).not.toBe(original)
-    const built = await Bun.build({ entrypoints: [path], target: "browser", format: "cjs", minify: true, plugins: [{ name: fault.name, setup(builder) {
-      builder.onLoad({ filter: /\/local-filter-writer\.ts$/ }, () => ({ loader: "ts", contents: fault.source }))
-    } }] })
-    expect(built.success).toBe(true)
-    const bytes = await built.outputs[0]!.text()
-    const script = `(async()=>{const module={exports:{}};${bytes};try{await (${automaticIncomingAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");return {caught:false}}catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0]}}})()`
-    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
-    expect({ name: fault.name, ...observed }).toEqual({ name: fault.name, caught: true, assertion: fault.assertion })
-  }
-})
+}
+
+const automaticWriterPath = resolve(import.meta.dir, "local-filter-writer.ts")
+const automaticWriterSource = await readFile(automaticWriterPath, "utf8")
+for (const fault of automaticCompositionFaults(automaticWriterSource)) test(`automatic composition wrong alternatives fail at intended observations: ${fault.name}`, async () => {
+  const path = automaticWriterPath, original = automaticWriterSource
+  expect(fault.source).not.toBe(original)
+  const built = await Bun.build({ entrypoints: [path], target: "browser", format: "cjs", minify: true, plugins: [{ name: fault.name, setup(builder) {
+    builder.onLoad({ filter: /\/local-filter-writer\.ts$/ }, () => ({ loader: "ts", contents: fault.source }))
+  } }] })
+  expect(built.success).toBe(true)
+  const bytes = await built.outputs[0]!.text()
+  const script = `(async()=>{const module={exports:{}};${bytes};try{await (${automaticIncomingAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");return {caught:false}}catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0]}}})()`
+  const observed = JSON.parse(executeSyntheticNodeRealm('import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))', script, 35000))
+  expect({ name: fault.name, ...observed }).toEqual({ name: fault.name, caught: true, assertion: fault.assertion })
+}, savedRealmTestTimeout)
 
 
-test("public re-enqueue deadlock is detected by an entered-lane external watchdog", async () => {
+for (const deadlock of [false, true]) test(deadlock
+  ? "public re-enqueue deadlock is detected by an entered-lane external watchdog"
+  : "entered-lane external watchdog allows actual positive completion", async () => {
   const path = resolve(import.meta.dir, "local-filter-writer.ts"), original = await readFile(path, "utf8")
-  for (const deadlock of [false, true]) {
-    const source = deadlock ? original.replace("const result = await receiveAttempt(key)", "const result = await enqueue(() => receiveAttempt(key))") : original
-    if (deadlock) expect(source).not.toBe(original)
-    const built = await Bun.build({ entrypoints: [path], target: "browser", format: "cjs", minify: true, plugins: [{ name: "re-enqueue", setup(builder) {
-      builder.onLoad({ filter: /\/local-filter-writer\.ts$/ }, () => ({ loader: "ts", contents: source }))
-    } }] })
-    expect(built.success).toBe(true)
-    const bytes = await built.outputs[0]!.text()
-    const script = `(async()=>{const module={exports:{}};${bytes};let signalled=false;const create=deps=>{let reads=0;const get=deps.local.get;deps.local.get=async keys=>{const result=await get(keys);if(++reads===2&&!signalled){signalled=true;entered()}return result};return module.exports.createLocalFilterWriter(deps)};return (${automaticIncomingAcceptance.toString()})(create,"AAAAAAAAAAAAAAAA","PL_P")})()`
-    const runner = 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";const watchdog=setTimeout(()=>{console.error("entered-lane-watchdog");process.exit(124)},2000);try{await runInNewContext(readFileSync(0,"utf8"),{entered(){console.log("entered-lane")}},{timeout:30000});clearTimeout(watchdog);console.log("completed")}catch(error){clearTimeout(watchdog);console.error(error);process.exit(1)}'
-    const observed = spawnSync("node", ["--input-type=module", "-e", runner], { input: script, encoding: "utf8", timeout: 5000 })
-    expect(observed.error).toBeUndefined()
-    expect(observed.status).toBe(deadlock ? 124 : 0)
-    expect(observed.stdout).toBe(deadlock ? "entered-lane\n" : "entered-lane\ncompleted\n")
-    expect(observed.stderr).toBe(deadlock ? "entered-lane-watchdog\n" : "")
-  }
-})
+  const source = deadlock ? original.replace("const result = await receiveAttempt(key)", "const result = await enqueue(() => receiveAttempt(key))") : original
+  if (deadlock) expect(source).not.toBe(original)
+  const built = await Bun.build({ entrypoints: [path], target: "browser", format: "cjs", minify: true, plugins: [{ name: "re-enqueue", setup(builder) {
+    builder.onLoad({ filter: /\/local-filter-writer\.ts$/ }, () => ({ loader: "ts", contents: source }))
+  } }] })
+  expect(built.success).toBe(true)
+  const bytes = await built.outputs[0]!.text()
+  const script = `(async()=>{const module={exports:{}};${bytes};let signalled=false;const create=deps=>{let reads=0;const get=deps.local.get;deps.local.get=async keys=>{const result=await get(keys);if(++reads===2&&!signalled){signalled=true;entered()}return result};return module.exports.createLocalFilterWriter(deps)};return (${automaticIncomingAcceptance.toString()})(create,"AAAAAAAAAAAAAAAA","PL_P")})()`
+  const runner = 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";const watchdog=setTimeout(()=>{console.error("entered-lane-watchdog");process.exit(124)},2000);try{await runInNewContext(readFileSync(0,"utf8"),{entered(){console.log("entered-lane")}},{timeout:30000});clearTimeout(watchdog);console.log("completed")}catch(error){clearTimeout(watchdog);console.error(error);process.exit(1)}'
+  const observed = spawnSyntheticNodeRealm(runner, script, deadlock ? 5000 : 17000)
+  expect(observed.error).toBeUndefined()
+  expect(observed.status).toBe(deadlock ? 124 : 0)
+  expect(observed.stdout).toBe(deadlock ? "entered-lane\n" : "entered-lane\ncompleted\n")
+  expect(observed.stderr).toBe(deadlock ? "entered-lane-watchdog\n" : "")
+}, deadlock ? 6000 : 18000)
 
 async function settingsIncomingAcceptance(create: typeof createLocalFilterWriter, acct: AccountKey, playlist: PlaylistId) {
   let assertions = 0
@@ -2866,7 +2870,7 @@ test("actual unchanged fixture worker receives kept Filters manually on start an
   const bytes = await built.outputs[0]!.text()
   for (const mode of ["manual", "start", "event", "chunks", "selected", "empty", "empty-only-kept", "pending-setup", "mixed", "missing", "future", "deleted", "malformed", "null"]) {
     const script = `(async()=>{return (${keptFixtureAcceptance.toString()})(JSON.parse(${JSON.stringify(JSON.stringify(literals))}),${JSON.stringify(mode)},()=>{const module={exports:{}};${bytes}})})()`
-    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
+    const observed = JSON.parse(executeSyntheticNodeRealm('import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))', script, 35000))
     expect(observed.assertions).toBeGreaterThan(10)
   }
 })
@@ -2899,19 +2903,19 @@ test("kept receiver wrong alternatives fail at intended observations without che
     expect(built.success).toBe(true)
     const bytes = await built.outputs[0]!.text()
     const script = `(async()=>{const isPlaylistId=${isPlaylistId.toString()};const module={exports:{}};${bytes};try{await (${keptIncomingAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA");return {caught:false}}catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0],message:error.message}}})()`
-    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
+    const observed = JSON.parse(executeSyntheticNodeRealm('import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))', script, 35000))
     expect({ name: fault.name, caught: observed.caught, assertion: observed.assertion }).toEqual({ name: fault.name, caught: true, assertion: fault.assertion })
   }
 })
 
-test("kept matrix executes saved minified core bytes in two fresh guarded Node realms", async () => {
+for (const realm of [0, 1]) test("kept matrix executes saved minified core bytes in guarded Node realm " + realm, async () => {
   const source = await keptIncomingAcceptance(createLocalFilterWriter, acct)
   const built = await Bun.build({ entrypoints: [resolve(import.meta.dir, "local-filter-writer.ts")], target: "browser", format: "cjs", minify: true })
   expect(built.success).toBe(true)
   const bytes = await built.outputs[0]!.text()
-  for (let realm = 0; realm < 2; realm++) {
+  {
     const script = `(async()=>{let accesses=0;const names=["Date","performance","setTimeout","clearTimeout","setInterval","clearInterval","browser","chrome","fetch","crypto","Bun","process","localStorage","indexedDB","navigator","WebSocket"];for(const name of names)Object.defineProperty(globalThis,name,{get(){accesses++;throw Error("guard "+name)}});Object.defineProperty(Math,"random",{get(){accesses++;throw Error("guard random")}});const isPlaylistId=${isPlaylistId.toString()};const module={exports:{}};${bytes};const result=await (${keptIncomingAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA");if(accesses)throw Error("ambient access");let controls=0;for(const name of [...names,"random"]){let caught;try{name==="random"?Math.random:globalThis[name]}catch(error){caught=error.message}if(caught!=="guard "+name)throw Error("inactive guard "+name);controls++}return {result,controls,accessesBeforeControls:0}})()`
-    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
+    const observed = JSON.parse(executeSyntheticNodeRealm('import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))', script, 35000))
     expect(observed.result).toEqual(source); expect(observed.controls).toBe(17); expect(observed.accessesBeforeControls).toBe(0)
   }
 })
@@ -3330,7 +3334,7 @@ test("actual fixture receiveSetup start events and encoded chunks consume the sa
   const bytes = await built.outputs[0]!.text()
   for (const mode of ["manual", "start", "event", "chunks", "mixed", "deferred", "timer", "sparse-local"]) {
     const script = `(async()=>{return (${setupFixtureAcceptance.toString()})(JSON.parse(${JSON.stringify(JSON.stringify(literals))}),${JSON.stringify(mode)},()=>{const module={exports:{}};${bytes}})})()`
-    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
+    const observed = JSON.parse(executeSyntheticNodeRealm('import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))', script, 35000))
     expect(observed.assertions).toBeGreaterThan(35)
   }
 })
@@ -3365,24 +3369,24 @@ function setupIncomingFaults(original: string) {
   ]
 }
 
-test("Setup wrong alternatives fail at intended observations in fresh saved-byte realms", async () => {
-  const path = resolve(import.meta.dir, "local-filter-writer.ts"), original = await readFile(path, "utf8")
+const setupWriterPath = resolve(import.meta.dir, "local-filter-writer.ts")
+const setupWriterSource = await readFile(setupWriterPath, "utf8")
+for (const fault of setupIncomingFaults(setupWriterSource)) test(`Setup wrong alternatives fail at intended observations in fresh saved-byte realms: ${fault.name}`, async () => {
+  const path = setupWriterPath, original = setupWriterSource
   const literals = (await setupIncomingAcceptance(createLocalFilterWriter, acct)).literals
-  for (const fault of setupIncomingFaults(original)) {
-    expect(fault.source).not.toBe(original)
-    const built = await Bun.build({ entrypoints: [fault.fixture ? resolve(import.meta.dir, "../../../tools/fixtures/local-filter-writer/background.ts") : path], target: "browser", format: "cjs", minify: true, plugins: [{ name: fault.name, setup(builder) {
-      builder.onLoad({ filter: /\/local-filter-writer\.ts$/ }, ({ path: loaded }) => loaded === path ? { loader: "ts", contents: fault.source } : undefined)
-    } }] })
-    expect(built.success).toBe(true)
-    const bytes = await built.outputs[0]!.text()
-    const execute = fault.fixture
-      ? `await (${setupFixtureAcceptance.toString()})(JSON.parse(${JSON.stringify(JSON.stringify(literals))}),"start",()=>{const module={exports:{}};${bytes}})`
-      : `const isPlaylistId=${isPlaylistId.toString()};const module={exports:{}};${bytes};await (${setupIncomingAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA")`
-    const script = `(async()=>{try{${execute};return {caught:false}}catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0]}}})()`
-    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
-    expect({ name: fault.name, ...observed }).toEqual({ name: fault.name, caught: true, assertion: fault.assertion.split(": ")[0] })
-  }
-})
+  expect(fault.source).not.toBe(original)
+  const built = await Bun.build({ entrypoints: [fault.fixture ? resolve(import.meta.dir, "../../../tools/fixtures/local-filter-writer/background.ts") : path], target: "browser", format: "cjs", minify: true, plugins: [{ name: fault.name, setup(builder) {
+    builder.onLoad({ filter: /\/local-filter-writer\.ts$/ }, ({ path: loaded }) => loaded === path ? { loader: "ts", contents: fault.source } : undefined)
+  } }] })
+  expect(built.success).toBe(true)
+  const bytes = await built.outputs[0]!.text()
+  const execute = fault.fixture
+    ? `await (${setupFixtureAcceptance.toString()})(JSON.parse(${JSON.stringify(JSON.stringify(literals))}),"start",()=>{const module={exports:{}};${bytes}})`
+    : `const isPlaylistId=${isPlaylistId.toString()};const module={exports:{}};${bytes};await (${setupIncomingAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA")`
+  const script = `(async()=>{try{${execute};return {caught:false}}catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0]}}})()`
+  const observed = JSON.parse(executeSyntheticNodeRealm('import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))', script, 35000))
+  expect({ name: fault.name, ...observed }).toEqual({ name: fault.name, caught: true, assertion: fault.assertion.split(": ")[0] })
+}, savedRealmTestTimeout)
 
 async function recoveryAcceptance(create: typeof createLocalFilterWriter, acct: AccountKey, playlist: PlaylistId) {
   const checks: string[] = []
@@ -3765,9 +3769,11 @@ function recoveryFaults(original: string) {
   ]
 }
 
-test("actual browser artifact rejects twelve opaque recovery defects at literal observations", async () => {
+for (const variant of recoveryFaults("")) test("actual browser artifact rejects opaque recovery defect " + variant.name, async () => {
   const path = resolve(import.meta.dir, "local-filter-writer.ts"), original = await readFile(path, "utf8")
-  for (const fault of recoveryFaults(original)) {
+  const fault = recoveryFaults(original).find(candidate => candidate.name === variant.name)
+  if (!fault) throw Error("Missing recovery variant")
+  {
     expect(fault.source).not.toBe(original)
     const built = await Bun.build({ entrypoints: [path], target: "browser", format: "cjs", minify: true, plugins: [{ name: fault.name, setup(builder) {
       builder.onLoad({ filter: /\/local-filter-writer\.ts$/ }, () => ({ loader: "ts", contents: fault.source }))
@@ -3775,7 +3781,7 @@ test("actual browser artifact rejects twelve opaque recovery defects at literal 
     expect(built.success).toBe(true)
     const bytes = await built.outputs[0]!.text()
     const script = `(async()=>{const module={exports:{}};${bytes};try{await (${recoveryAcceptance.toString()})(module.exports.createLocalFilterWriter,"AAAAAAAAAAAAAAAA","PL_P");return {caught:false}}catch(error){return {caught:error.message.startsWith(${JSON.stringify(fault.assertion + ":")}),assertion:error.message.split(": ")[0]}}})()`
-    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
+    const observed = JSON.parse(executeSyntheticNodeRealm('import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))', script, 35000))
     expect({ name: fault.name, ...observed }).toEqual({ name: fault.name, caught: true, assertion: fault.assertion })
   }
 })
@@ -3858,7 +3864,7 @@ test("actual fixture worker consumes restart-safe opaque recovery on its existin
   const bytes = await built.outputs[0]!.text()
   for (const applied of [false, true]) {
     const script = `(async()=>{return (${recoveryFixtureAcceptance.toString()})(${applied},()=>{const module={exports:{}};${bytes}})})()`
-    const observed = JSON.parse(execFileSync("node", ["--input-type=module", "-e", 'import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))'], { input: script, encoding: "utf8", timeout: 35000 }))
+    const observed = JSON.parse(executeSyntheticNodeRealm('import{readFileSync}from"node:fs";import{runInNewContext}from"node:vm";console.log(JSON.stringify(await runInNewContext(readFileSync(0,"utf8"),{},{timeout:30000})))', script, 35000))
     expect(observed.assertions).toBeGreaterThan(20)
   }
 })
@@ -4064,4 +4070,22 @@ test("claim notice joins the actual owner's lane, readiness, disposal and global
   const acct = "AAAAAAAAAAAAAAAA", playlist = "PL_P"
   if (!isAccountKey(acct) || !isPlaylistId(playlist)) throw Error("fixture identifiers")
   expect((await noticeOwnerAcceptance({ create: createLocalFilterWriter, starting: createStartingLocalFilterWriter }, acct, playlist)).checks).toBeGreaterThan(100)
+})
+import { createRecoveryHarness, recoveryAgree, recoveryPrepare, recoveryUi } from "../../../tools/fixtures/interim-recovery-review/run"
+
+test("V4 recovery never downgrades to agreement or installation and emits no Settings event", async () => {
+  const h = createRecoveryHarness(), owner = createStartingLocalFilterWriter(h.deps)
+  await recoveryAgree(owner, h)
+  const selection = await recoveryPrepare(owner)
+  if (selection.prepared.kind !== "confirmation-required") throw Error("Missing recovery confirmation")
+  const events: unknown[] = [], stop = owner.subscribe(event => { events.push(event) })
+  expect((await owner.replaceInterimFilter(recoveryUi, selection.prepared.confirmation)).kind).toBe("committed")
+  const before = h.records(), writes = h.writes.length
+  expect(await owner.readAgreement(recoveryUi)).toEqual({ kind: "unavailable", reason: "retention" })
+  expect((await owner.resumeRetainedAgreement(recoveryUi)).kind).toBe("unavailable")
+  expect((await owner.readInterimInstallation(recoveryUi)).kind).toBe("unavailable")
+  expect((await owner.resumeInterimInstallation(recoveryUi)).kind).toBe("unavailable")
+  expect((await owner.installInterimConversion(recoveryUi, { kind: "interim-installation-review" })).kind).toBe("unavailable")
+  expect(h.records()).toEqual(before); expect(h.writes.length).toBe(writes); expect(events).toEqual([])
+  stop(); await owner.dispose()
 })

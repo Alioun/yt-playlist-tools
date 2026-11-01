@@ -1,0 +1,11 @@
+--- a/src/background/store/settings-edit.ts
++++ b/src/background/store/settings-edit.ts
+@@ -183,7 +183,7 @@
+       if (typeof change.value !== "boolean") return { kind: "invalid", reason: "invalid-option" }
+       if (current.musicActions.buttons.next === change.value) return { kind: "unchanged" }
+       settings = decodeSettings(current)
+-      settings.musicActions.buttons.next = change.value
++      settings.musicActions.buttons.queue = change.value
+       break
+     case "musicActions.buttons.queue":
+       if (typeof change.value !== "boolean") return { kind: "invalid", reason: "invalid-option" }

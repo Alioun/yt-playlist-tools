@@ -1,0 +1,12 @@
+diff --git a/src/site/kit/toaster/model.ts b/src/site/kit/toaster/model.ts
+--- a/src/site/kit/toaster/model.ts
++++ b/src/site/kit/toaster/model.ts
+@@ -53,7 +53,7 @@
+     since = null
+   }
+   function queue(entry: Entry) {
+-    if (!queued || entry.content.tone === "failure" || queued.content.tone !== "failure") queued = entry
++    if (!queued || entry.content.tone !== "failure" || queued.content.tone === "failure") queued = entry
+   }
+   function select() {
+     if (current && !eligible(current)) {

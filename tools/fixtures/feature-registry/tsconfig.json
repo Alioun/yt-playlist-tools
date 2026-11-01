@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": ["bun"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"]
+  },
+  "include": [
+    "../../../src/shared/features/registry.ts",
+    "../../../src/shared/features/registry.type-test.ts",
+    "../../../src/shared/features/registry.bun-test.ts",
+    "./*.ts"
+  ]
+}

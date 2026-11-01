@@ -1,0 +1,10 @@
+--- a/src/background/store/key-settings-mutation.ts
++++ b/src/background/store/key-settings-mutation.ts
+@@ -40,6 +40,7 @@
+       return { kind: "unchanged" }
+     }
+     if (edit.kind === "invalid") return invalid
++    edit.settings.shortcuts.list.forEach(row => { row.label = row.label.trim() })
+     if (!jsonObject(edit.settings)) return invalid
+     if (ready.device.syncOn) {
+       records = await deps.local.get(null)

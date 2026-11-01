@@ -1,0 +1,188 @@
+{
+  "state": "authored-unexecuted",
+  "compilerGate": [
+    "/usr/bin/timeout",
+    "-k",
+    "10",
+    "90",
+    "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
+    "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/typescript/bin/tsc",
+    "--project",
+    "tools/fixtures/view-publication/tsconfig.json",
+    "--pretty",
+    "false"
+  ],
+  "probes": [
+    {
+      "id": "publication-missing-producer",
+      "path": "src/background/tab-view/publication.type-test.ts",
+      "directiveLine": 16,
+      "diagnosticLine": 17,
+      "directive": "// @ts-expect-error negative: publication-missing-producer. Every publication requires the complete producer.",
+      "statement": "createViewPublication({ owner: ports.owner, tabs: ports.tabs, monitor: ports.monitor, privateSkips: ports.privateSkips, clock: ports.clock })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "publication-partial-producer",
+      "path": "src/background/tab-view/publication.type-test.ts",
+      "directiveLine": 18,
+      "diagnosticLine": 19,
+      "directive": "// @ts-expect-error negative: publication-partial-producer. A scope does not supply a complete TabView.",
+      "statement": "createViewPublication({ ...ports, producer: partial })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "publication-missing-validator",
+      "path": "src/background/tab-view/publication.type-test.ts",
+      "directiveLine": 20,
+      "diagnosticLine": 21,
+      "directive": "// @ts-expect-error negative: publication-missing-validator. Delivery requires the concrete validator.",
+      "statement": "createViewPublication({ ...ports, producer: { produce: ports.producer.produce } })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "publication-invented-target",
+      "path": "src/background/tab-view/publication.type-test.ts",
+      "directiveLine": 22,
+      "diagnosticLine": 23,
+      "directive": "// @ts-expect-error negative: publication-invented-target. Window broadcasts are outside the target vocabulary.",
+      "statement": "ports.tabs.known({ kind: \"window\", windowId: 1, incognito: false })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "publication-fake-account",
+      "path": "src/background/tab-view/publication.type-test.ts",
+      "directiveLine": 24,
+      "diagnosticLine": 25,
+      "directive": "// @ts-expect-error negative: publication-fake-account. Raw identities require account validation.",
+      "statement": "ports.tabs.known({ kind: \"account\", acct: \"AAAAAAAAAAAAAAAA\", scope: \"all\" })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "publication-privacy-mixing",
+      "path": "src/background/tab-view/publication.type-test.ts",
+      "directiveLine": 26,
+      "diagnosticLine": 27,
+      "directive": "// @ts-expect-error negative: publication-privacy-mixing. A scope is one explicit target variant.",
+      "statement": "ports.tabs.known({ kind: \"account\", acct, scope: [\"normal\", \"private\"] })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "publication-fabricated-handle",
+      "path": "src/background/tab-view/publication.type-test.ts",
+      "directiveLine": 28,
+      "diagnosticLine": 29,
+      "directive": "// @ts-expect-error negative: publication-fabricated-handle. Tabs alone creates the nominal live-core identity.",
+      "statement": "ports.tabs.publish({ tabId: 1, acct, privateTab: false }, ports.producer, new AbortController().signal, () => true)",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "publication-disposed-handle",
+      "path": "src/background/tab-view/publication.type-test.ts",
+      "directiveLine": 30,
+      "diagnosticLine": 31,
+      "directive": "// @ts-expect-error negative: publication-disposed-handle. Disposal returns no live target handle.",
+      "statement": "ports.tabs.publish(publisher.dispose(), ports.producer, new AbortController().signal, () => true)",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "publication-monitor-required",
+      "path": "src/background/tab-view/publication.type-test.ts",
+      "directiveLine": 32,
+      "diagnosticLine": 33,
+      "directive": "// @ts-expect-error negative: publication-monitor-required. No healthy or empty-notice fallback exists.",
+      "statement": "createViewPublication({ owner: ports.owner, tabs: ports.tabs, privateSkips: ports.privateSkips, producer: ports.producer, clock: ports.clock })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "publication-private-storage-event",
+      "path": "src/background/tab-view/publication.type-test.ts",
+      "directiveLine": 34,
+      "diagnosticLine": 35,
+      "directive": "// @ts-expect-error negative: publication-private-storage-event. The canonical session owner cannot confirm private memory.",
+      "statement": "const privateStorage: ConfirmedViewChange = { kind: \"skips-changed\", acct, scope: \"private\" }",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "tabs-target-account-required",
+      "path": "src/background/tabs/tabs.type-test.ts",
+      "directiveLine": 42,
+      "diagnosticLine": 43,
+      "directive": "// @ts-expect-error negative: tabs-target-account-required. Account targets carry a validated account.",
+      "statement": "tabs.known({ kind: \"account\", scope: \"all\" })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "tabs-target-not-requester",
+      "path": "src/background/tabs/tabs.type-test.ts",
+      "directiveLine": 44,
+      "diagnosticLine": 45,
+      "directive": "// @ts-expect-error negative: tabs-target-not-requester. A UI requester cannot select publication targets.",
+      "statement": "tabs.known(need.req)",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "tabs-target-opaque",
+      "path": "src/background/tabs/tabs.type-test.ts",
+      "directiveLine": 46,
+      "diagnosticLine": 47,
+      "directive": "// @ts-expect-error negative: tabs-target-opaque. A numeric tab ID cannot replace a live handle.",
+      "statement": "tabs.publish(1, producer, new AbortController().signal, () => true)",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "tabs-publish-cancellation",
+      "path": "src/background/tabs/tabs.type-test.ts",
+      "directiveLine": 48,
+      "diagnosticLine": 49,
+      "directive": "// @ts-expect-error negative: tabs-publish-cancellation. A target delivery needs its lifetime signal.",
+      "statement": "tabs.publish({ tabId: 1 }, producer)",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "monitor-view-not-generic",
+      "path": "src/background/monitor/monitor.type-test.ts",
+      "directiveLine": 53,
+      "diagnosticLine": 54,
+      "directive": "// @ts-expect-error negative: monitor-view-not-generic. Projected changes identify the affected tab.",
+      "statement": "monitor.subscribeView((event: { kind: \"all\" }) => { void event })",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "owner-view-no-fake-account",
+      "path": "src/background/store/local-filter-writer.type-test.ts",
+      "directiveLine": 220,
+      "diagnosticLine": 221,
+      "directive": "  // @ts-expect-error negative: owner-view-no-fake-account. Confirmed view events retain branded account identities.",
+      "statement": "  const fake: import(\"./local-filter-writer\").ConfirmedViewChange = { kind: \"account-removed\", acct: \"raw\", source: \"local\" }",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "owner-view-no-cache-event",
+      "path": "src/background/store/local-filter-writer.type-test.ts",
+      "directiveLine": 222,
+      "diagnosticLine": 223,
+      "directive": "  // @ts-expect-error negative: owner-view-no-cache-event. Cache bookkeeping cannot become a confirmed view change.",
+      "statement": "  const cache: import(\"./local-filter-writer\").ConfirmedViewChange = { kind: \"cache-changed\", acct }",
+      "state": "authored-unexecuted"
+    },
+    {
+      "id": "publication-private-source-required",
+      "path": "src/background/tab-view/publication.type-test.ts",
+      "state": "authored-unexecuted",
+      "directiveLine": 37,
+      "diagnosticLine": 38,
+      "directive": "// @ts-expect-error negative: publication-private-source-required. Private changes require the actual AddFlow subscription.",
+      "statement": "createViewPublication({ owner: ports.owner, tabs: ports.tabs, monitor: ports.monitor, producer: ports.producer, clock: ports.clock })"
+    },
+    {
+      "id": "add-flow-private-scope",
+      "path": "src/background/add-flow/add-flow.type-test.ts",
+      "state": "authored-unexecuted",
+      "directiveLine": 103,
+      "diagnosticLine": 104,
+      "directive": "// @ts-expect-error negative: add-flow-private-scope. Private memory never emits normal session events.",
+      "statement": "flow.subscribePrivateSkips((event: { acct: AccountKey; scope: \"normal\" }) => { void event })"
+    }
+  ]
+}

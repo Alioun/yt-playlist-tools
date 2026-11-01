@@ -1,14 +1,14 @@
 import { isJsonValue } from "../../shared/contracts/json"
 import { isAccountKey, isPlaylistId } from "../../shared/model"
 import { resolveSenderOrigin } from "./sender-origin"
+import { acquireLocalFilterWriterArea } from "./starting-owner-area"
+import type { SessionPort } from "../store/session-memory"
 import {
   createLocalFilterWriter, type LocalFilterChange, type LocalFilterWriteResult, type SyncAutomaticResult, type SyncFlushResult, type SyncReceiveKey, type SyncReceiveResult
 } from "../store/local-filter-writer"
 
 type NativeBrowser = typeof import("wxt/browser").browser
 type NativeSender = Parameters<Parameters<NativeBrowser["runtime"]["onMessage"]["addListener"]>[0]>[1]
-
-const localOwners = new WeakSet<NativeBrowser["storage"]["local"]>()
 
 function parseChange(raw: unknown): LocalFilterChange | undefined {
   if (!isJsonValue(raw) || raw === null || typeof raw !== "object" || Array.isArray(raw)) return
@@ -30,6 +30,7 @@ function parseChange(raw: unknown): LocalFilterChange | undefined {
 }
 
 export function createBrowserLocalFilterWriter(nativeBrowser: NativeBrowser, options: { onSyncResult: (result: SyncAutomaticResult) => void }): {
+  session: SessionPort
   changeFromSettings(raw: unknown, sender: NativeSender): Promise<LocalFilterWriteResult>
   receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>
   flushSync(): Promise<SyncFlushResult>
@@ -37,11 +38,15 @@ export function createBrowserLocalFilterWriter(nativeBrowser: NativeBrowser, opt
   dispose(): Promise<void>
 } {
   const area = nativeBrowser.storage.local
-  if (localOwners.has(area)) throw new Error("Local storage already owned")
-  localOwners.add(area)
+  const release = acquireLocalFilterWriterArea(area)
   try {
     const writer = createLocalFilterWriter({
       claim: { kind: "unavailable" },
+      session: {
+        get: () => nativeBrowser.storage.session.get(null),
+        set: items => nativeBrowser.storage.session.set(items),
+        remove: keys => nativeBrowser.storage.session.remove(keys.map(key => `${key.kind}:${key.acct}`))
+      },
       local: {
         get: keys => area.get(keys === null ? null : [...keys]),
         set: items => area.set(items)
@@ -69,12 +74,13 @@ export function createBrowserLocalFilterWriter(nativeBrowser: NativeBrowser, opt
     })
     let disposal: Promise<void> | undefined
     return {
+      session: { read: () => writer.readSession(), change: change => writer.changeSession(change) },
       receiveSyncDocument: key => writer.receiveSyncDocument(key),
       flushSync: () => writer.flushSync(),
       startSync: () => writer.startSync(),
       dispose() {
         if (!disposal) {
-          try { disposal = writer.dispose().then(() => { localOwners.delete(area) }) }
+          try { disposal = writer.dispose().then(release) }
           catch (error) { disposal = Promise.reject(error) }
         }
         return disposal
@@ -93,7 +99,7 @@ export function createBrowserLocalFilterWriter(nativeBrowser: NativeBrowser, opt
       }
     }
   } catch (error) {
-    localOwners.delete(area)
+    release()
     throw error
   }
 }

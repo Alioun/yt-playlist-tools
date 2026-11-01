@@ -1,0 +1,248 @@
+[
+  {
+    "id": "omitted-filter-survival",
+    "path": "src/background/store/settings-import-plan.ts",
+    "mutation": {
+      "before": "if (filter === undefined) data = null",
+      "after": "if (filter === undefined) continue",
+      "requiredOccurrences": 1
+    },
+    "compilerGate": {
+      "argv": [
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "-p",
+        "tools/fixtures/settings-import-plan/tsconfig.json"
+      ],
+      "expectedExit": 0,
+      "status": "unexecuted"
+    },
+    "redGate": {
+      "argv": [
+        "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "./src/background/store/settings-import-plan.bun-test.ts",
+        "-t",
+        "omitted kept and orphan filters cannot survive replacement"
+      ],
+      "expectedExit": 1,
+      "namedAssertion": "omitted kept and orphan filters cannot survive replacement",
+      "observable": "Omitted kept and orphan addresses remain in expected.local.",
+      "status": "unexecuted"
+    },
+    "compiling": "intended-unverified",
+    "baselineRequired": true,
+    "status": "proposal-unexecuted"
+  },
+  {
+    "id": "per-account-quota",
+    "path": "src/background/store/settings-import-plan.ts",
+    "mutation": {
+      "before": "...allWrites.slice(1).map(({ key, document }) => ({ key, document }))",
+      "after": "...allWrites.slice(1).filter(({ key }) => key.kind === \"settings\" || key.acct === input.parsed.accounts[0]?.account).map(({ key, document }) => ({ key, document }))",
+      "requiredOccurrences": 1
+    },
+    "compilerGate": {
+      "argv": [
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "-p",
+        "tools/fixtures/settings-import-plan/tsconfig.json"
+      ],
+      "expectedExit": 0,
+      "status": "unexecuted"
+    },
+    "redGate": {
+      "argv": [
+        "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "./src/background/store/settings-import-plan.bun-test.ts",
+        "-t",
+        "per-account partitions each fit but whole import refuses with no document batch"
+      ],
+      "expectedExit": 1,
+      "namedAssertion": "per-account partitions each fit but whole import refuses with no document batch",
+      "observable": "The whole result becomes planned although only a partition was admitted.",
+      "status": "unexecuted"
+    },
+    "compiling": "intended-unverified",
+    "baselineRequired": true,
+    "status": "proposal-unexecuted"
+  },
+  {
+    "id": "missing-empty-account-cleanup",
+    "path": "src/background/store/settings-import-plan.ts",
+    "mutation": {
+      "before": "if (removed) {",
+      "after": "if (removed && setupBefore.before.kind === \"present\") {",
+      "requiredOccurrences": 1
+    },
+    "compilerGate": {
+      "argv": [
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "-p",
+        "tools/fixtures/settings-import-plan/tsconfig.json"
+      ],
+      "expectedExit": 0,
+      "status": "unexecuted"
+    },
+    "redGate": {
+      "argv": [
+        "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "./src/background/store/settings-import-plan.bun-test.ts",
+        "-t",
+        "empty accounts have exact cleanup even without a prior Setup"
+      ],
+      "expectedExit": 1,
+      "namedAssertion": "empty accounts have exact cleanup even without a prior Setup",
+      "observable": "The cleanup list omits the new empty account.",
+      "status": "unexecuted"
+    },
+    "compiling": "intended-unverified",
+    "baselineRequired": true,
+    "status": "proposal-unexecuted"
+  },
+  {
+    "id": "cleared-preset-history",
+    "path": "src/background/store/settings-import-plan.ts",
+    "mutation": {
+      "before": "preset: incoming.shortcuts.preset || current.shortcuts.preset",
+      "after": "preset: incoming.shortcuts.preset",
+      "requiredOccurrences": 1
+    },
+    "compilerGate": {
+      "argv": [
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "-p",
+        "tools/fixtures/settings-import-plan/tsconfig.json"
+      ],
+      "expectedExit": 0,
+      "status": "unexecuted"
+    },
+    "redGate": {
+      "argv": [
+        "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "./src/background/store/settings-import-plan.bun-test.ts",
+        "-t",
+        "already applied presets and imported keys survive without preset application"
+      ],
+      "expectedExit": 1,
+      "namedAssertion": "already applied presets and imported keys survive without preset application",
+      "observable": "The current true shortcut applied flag becomes false.",
+      "status": "unexecuted"
+    },
+    "compiling": "intended-unverified",
+    "baselineRequired": true,
+    "status": "proposal-unexecuted"
+  },
+  {
+    "id": "reused-old-generations",
+    "path": "src/background/store/settings-import-plan.ts",
+    "mutation": {
+      "before": "try { gen = input.generation(key) } catch { return }\n    if (typeof gen !== \"string\" || gen.length === 0 || generations.has(gen)) return",
+      "after": "try { gen = before.kind === \"present\" && typeof before.document.gen === \"string\" ? before.document.gen : input.generation(key) } catch { return }\n    if (typeof gen !== \"string\" || gen.length === 0) return",
+      "requiredOccurrences": 1
+    },
+    "compilerGate": {
+      "argv": [
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "-p",
+        "tools/fixtures/settings-import-plan/tsconfig.json"
+      ],
+      "expectedExit": 0,
+      "status": "unexecuted"
+    },
+    "redGate": {
+      "argv": [
+        "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "./src/background/store/settings-import-plan.bun-test.ts",
+        "-t",
+        "matching imported values still produce fresh generations"
+      ],
+      "expectedExit": 1,
+      "namedAssertion": "matching imported values still produce fresh generations",
+      "observable": "The equal-value Settings envelope keeps equal-old-generation.",
+      "status": "unexecuted"
+    },
+    "compiling": "intended-unverified",
+    "baselineRequired": true,
+    "status": "proposal-unexecuted"
+  },
+  {
+    "id": "changed-absent-account",
+    "path": "src/background/store/settings-import-plan.ts",
+    "mutation": {
+      "before": "const expectedLocal = copyObject(local)",
+      "after": "const expectedLocal = copyObject(local)\n    for (const [name, value] of Object.entries(expectedLocal)) {\n      const key = parseDocumentKey(name)\n      if (key && key.kind !== \"settings\" && !accountKeys.has(key.acct) && object(value)) expectedLocal[name] = { ...value, at: input.at }\n    }",
+      "requiredOccurrences": 1
+    },
+    "compilerGate": {
+      "argv": [
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "-p",
+        "tools/fixtures/settings-import-plan/tsconfig.json"
+      ],
+      "expectedExit": 0,
+      "status": "unexecuted"
+    },
+    "redGate": {
+      "argv": [
+        "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "./src/background/store/settings-import-plan.bun-test.ts",
+        "-t",
+        "absent account data stays byte identical"
+      ],
+      "expectedExit": 1,
+      "namedAssertion": "absent account data stays byte identical",
+      "observable": "An account absent from the file receives a different timestamp.",
+      "status": "unexecuted"
+    },
+    "compiling": "intended-unverified",
+    "baselineRequired": true,
+    "status": "proposal-unexecuted"
+  }
+]

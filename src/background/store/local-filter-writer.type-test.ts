@@ -1,3 +1,9 @@
+import type { SessionPort, SessionStorage, SessionRead, SessionWrite, SessionChange } from "./session-memory"
+import type { TabProjectionRequest, TabProjectionRead, NormalWindowRouting, LastAccountRead } from "./tab-projection"
+import type { RecoveryHost, RecoveryCapture, FilterReplacementConfirmation, RecoveryRead, RecoveryPreparation, RecoveryTransactionResult, PlaylistDestinationChoice, PlaylistRestorePreparation } from "./interim-recovery-execution"
+import type { RecoveryItemId } from "./interim-recovery-review"
+import type { CanonicalAuthorityHost, CanonicalAuthorityRead, CanonicalAuthorityReview, CanonicalAuthorityResult } from "./interim-canonical-authority"
+import type { InterimInstallationReview, InterimInstallationStatus, InterimInstallationResult } from "./interim-installation"
 import type { SyncJoinHost, SyncJoinOperation, SyncJoinReview, SyncJoinSide, SyncJoinResult, SyncJoinStatus } from "./sync-join-execution"
 import type { ClaimHost, ClaimTransactionResult } from "./local-claim-writer"
 import type { AccountKey, PlaylistId, DocumentKey, SyncOpaqueWrite } from "../../shared/model"
@@ -35,7 +41,13 @@ import type { Snapshot } from "../../shared/model/settings-view"
 import type { ClaimNoticeRead, ClaimNoticeAcknowledgement, NormalUiOrigin } from "./claim-notice"
 import type { SettingsRead, SettingsEvent } from "./local-filter-writer"
 import type { SharedSettingChange } from "./settings-edit"
+import type { FeatureSettingChange } from "../../shared/contracts/shared-settings"
+import type { FeatureSettingWriteResult } from "./feature-settings-execution"
+import type { KeySettingChange, KeySettingAnswer } from "../../shared/contracts/key-settings"
 import type { LocalSettingsWriteResult } from "./shared-setting-execution"
+import type { SetupRead } from "./local-filter-writer"
+import type { SetupDestinationChange, SetupEvent } from "./setup-edit"
+import type { SetupDestinationResult } from "./setup-edit-execution"
 
 import type { AccountRemovalHost, RemovalConfirmation, RemovalPreparation, RemovalResult } from "./account-removal-execution"
 
@@ -44,8 +56,14 @@ import type { InterimNoteRead } from "./interim-persistence"
 import type { AgreementRead, AgreementInput, AgreementResult } from "./consent-agreement"
 
 type ExpectedFactory = (deps: {
+  readonly syncMutationPace?: import("./sync-mutation-pacing").SyncMutationPace
+  readonly resetReceive?: import("./sync-reset-receive").SyncResetReceiveHost
+  readonly settingsImport?: import("./settings-import-execution").SettingsImportHost
+  readonly canonicalAuthority?: CanonicalAuthorityHost
+  readonly recovery?: RecoveryHost
   readonly join?: SyncJoinHost
   readonly removal?: AccountRemovalHost
+  readonly session?: SessionStorage
   readonly local: LocalWriteStorage
   readonly claim: ClaimHost
   readonly sync: SyncStorage
@@ -53,10 +71,11 @@ type ExpectedFactory = (deps: {
   readonly generation: () => string
   readonly syncClock: SyncClock
   readonly onSyncResult: (result: SyncAutomaticResult) => void
-}) => { beginSyncJoin(origin: UiOrigin): SyncJoinOperation; applySyncJoin(origin: UiOrigin, input: { readonly kind: "automatic"; readonly review: SyncJoinReview } | { readonly kind: "choice"; readonly review: SyncJoinReview; readonly choice: SyncJoinSide }): Promise<SyncJoinResult>; cancelSyncJoin(origin: UiOrigin): Promise<SyncJoinResult>; readSyncJoin(origin: UiOrigin): Promise<SyncJoinStatus>; resumeSyncJoin(origin: UiOrigin): Promise<SyncJoinResult>; readAgreement(origin: UiOrigin): Promise<AgreementRead>; agree(origin: UiOrigin, input: AgreementInput): Promise<AgreementResult>; resumeRetainedAgreement(origin: UiOrigin): Promise<AgreementResult>; readInterimNote(): Promise<InterimNoteRead>; prepareAccountRemoval(origin: UiOrigin, acct: AccountKey): Promise<RemovalPreparation>; removeAccountSetup(origin: UiOrigin, confirmation: RemovalConfirmation): Promise<RemovalResult>; readClaimNotice(): Promise<ClaimNoticeRead>; acknowledgeClaimNotice(origin: NormalUiOrigin, expected: Snapshot<ClaimNotice>): Promise<ClaimNoticeAcknowledgement>; read(view: "settings"): Promise<SettingsRead>; subscribe(fn: (event: SettingsEvent) => void): () => void; changeSharedSetting(origin: UiOrigin, change: SharedSettingChange): Promise<LocalSettingsWriteResult>; claim(): Promise<ClaimTransactionResult>; change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>; receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>; flushSync(): Promise<SyncFlushResult>; startSync(): Promise<void>; dispose(): Promise<void> }
+}) => { receiveSyncReset(): Promise<import("./sync-reset-receive").ReceivedResetResult>; changeKeySetting(origin: UiOrigin, change: KeySettingChange, principal: string | undefined): Promise<KeySettingAnswer>; changeFeatureSetting(origin: UiOrigin, change: FeatureSettingChange): Promise<FeatureSettingWriteResult>; readSession(): Promise<SessionRead>; changeSession(change: SessionChange): Promise<SessionWrite>; prepareInterimPlaylistRestore(origin: UiOrigin, input: { readonly capture: RecoveryCapture; readonly item: RecoveryItemId }): Promise<PlaylistRestorePreparation>; restoreInterimPlaylist(origin: UiOrigin, input: { readonly choice: PlaylistDestinationChoice; readonly acct: AccountKey }): Promise<RecoveryTransactionResult>; cancelInterimPlaylistRestore(origin: UiOrigin, choice: PlaylistDestinationChoice): void; resumeInterimPlaylistRestore(origin: UiOrigin): Promise<RecoveryTransactionResult>; readCanonicalAuthority(origin: UiOrigin): Promise<CanonicalAuthorityRead>; releaseRetainedAuthority(origin: UiOrigin, review: CanonicalAuthorityReview): Promise<CanonicalAuthorityResult>; resumeRetainedAuthority(origin: UiOrigin): Promise<CanonicalAuthorityResult>; readInterimRecovery(): Promise<RecoveryRead>; discardInterimItem(origin: UiOrigin, input: { readonly capture: RecoveryCapture; readonly item: RecoveryItemId }): Promise<RecoveryTransactionResult>; prepareInterimFilterReplacement(origin: UiOrigin, input: { readonly capture: RecoveryCapture; readonly item: RecoveryItemId }): Promise<RecoveryPreparation>; replaceInterimFilter(origin: UiOrigin, confirmation: FilterReplacementConfirmation): Promise<RecoveryTransactionResult>; cancelInterimFilterReplacement(origin: UiOrigin, confirmation: FilterReplacementConfirmation): void; resumeInterimFilterReplacement(origin: UiOrigin): Promise<RecoveryTransactionResult>; readInterimInstallation(origin: UiOrigin): Promise<InterimInstallationStatus>; installInterimConversion(origin: UiOrigin, review: InterimInstallationReview): Promise<InterimInstallationResult>; resumeInterimInstallation(origin: UiOrigin): Promise<InterimInstallationResult>; beginSyncJoin(origin: UiOrigin): SyncJoinOperation; applySyncJoin(origin: UiOrigin, input: { readonly kind: "automatic"; readonly review: SyncJoinReview } | { readonly kind: "choice"; readonly review: SyncJoinReview; readonly choice: SyncJoinSide }): Promise<SyncJoinResult>; cancelSyncJoin(origin: UiOrigin): Promise<SyncJoinResult>; readSyncJoin(origin: UiOrigin): Promise<SyncJoinStatus>; resumeSyncJoin(origin: UiOrigin): Promise<SyncJoinResult>; readAgreement(origin: UiOrigin): Promise<AgreementRead>; agree(origin: UiOrigin, input: AgreementInput): Promise<AgreementResult>; resumeRetainedAgreement(origin: UiOrigin): Promise<AgreementResult>; readInterimNote(): Promise<InterimNoteRead>; prepareAccountRemoval(origin: UiOrigin, acct: AccountKey): Promise<RemovalPreparation>; removeAccountSetup(origin: UiOrigin, confirmation: RemovalConfirmation): Promise<RemovalResult>; readClaimNotice(): Promise<ClaimNoticeRead>; acknowledgeClaimNotice(origin: NormalUiOrigin, expected: Snapshot<ClaimNotice>): Promise<ClaimNoticeAcknowledgement>; read(view: "settings"): Promise<SettingsRead>; subscribe(fn: (event: SettingsEvent) => void): () => void; changeSharedSetting(origin: UiOrigin, change: SharedSettingChange): Promise<LocalSettingsWriteResult>; readSetup(acct: AccountKey): Promise<SetupRead>; subscribeSetup(fn: (event: SetupEvent) => void): () => void; subscribeView(fn: (event: import("./local-filter-writer").ConfirmedViewChange) => void, revoked?: () => void): () => void; changeSetupDestination(origin: UiOrigin, change: SetupDestinationChange): Promise<SetupDestinationResult>; claim(): Promise<ClaimTransactionResult>; change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>; receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>; flushSync(): Promise<SyncFlushResult>; startSync(): Promise<void>; dispose(): Promise<void>; readPlaylistCache: import("./playlist-cache").PlaylistCacheOwner["readPlaylistCache"]; absorbPlaylistCache: import("./playlist-cache").PlaylistCacheOwner["absorbPlaylistCache"]; exportSettings: import("./settings-file-read").SettingsFileOwner["exportSettings"]; importCheck: import("./settings-file-read").SettingsFileOwner["importCheck"]; prepareSettingsImport: import("./settings-import-execution").SettingsImportOwner["prepareSettingsImport"]; importSettings: import("./settings-import-execution").SettingsImportOwner["importSettings"]; resumeSettingsImport: import("./settings-import-execution").SettingsImportOwner["resumeSettingsImport"]; seeAccountLabel: import("./account-label").AccountLabelsOwner["seeAccountLabel"]; completeAccountLabel: import("./account-label").AccountLabelsOwner["completeAccountLabel"] }
 type NativeBrowser = Parameters<typeof createBrowserLocalFilterWriter>[0]
 type NativeSender = Parameters<Parameters<NativeBrowser["runtime"]["onMessage"]["addListener"]>[0]>[1]
 type ExpectedAdapter = (nativeBrowser: NativeBrowser, options: { onSyncResult: (result: SyncAutomaticResult) => void }) => {
+  session: SessionPort
   changeFromSettings(raw: unknown, sender: NativeSender): Promise<LocalFilterWriteResult>
   receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>
   flushSync(): Promise<SyncFlushResult>
@@ -84,8 +103,10 @@ export type LocalWriterProofs = [
   Check<Equal<LocalWriteStorage, ExpectedStorage>>,
   Check<Equal<SyncStorage, { get(): Promise<Readonly<Record<string, unknown>>>; set(items: Readonly<Record<string, JsonValue>>): Promise<void>; subscribe(changed: () => void): () => void }>>,
   Check<Equal<SyncClock, { now(): number; wallNow(): number; after(milliseconds: number, run: () => void): () => void }>>,
-  Check<Equal<SyncAutomaticResult, SyncFlushResult | { kind: "rejected"; error: unknown }>>,
-  Check<Equal<typeof createLocalFilterWriter, ExpectedFactory>>,
+  Check<Equal<SyncAutomaticResult, SyncFlushResult | import("./local-filter-writer").SyncReconciliationNotice | import("./sync-reset-receive").ReceivedResetResult | { kind: "rejected"; error: unknown }>>,
+  Check<Equal<Omit<ReturnType<typeof createLocalFilterWriter>, "readWithdrawnWork" | "recoverWithdrawnWork" | "readTabProjection" | "readLastAccount" | "readAutoAddChoice" | "changeAutoAddChoice">, ReturnType<ExpectedFactory>>>,
+  Check<Equal<ReturnType<typeof createLocalFilterWriter>["readTabProjection"], (request: TabProjectionRequest) => Promise<TabProjectionRead>>>,
+  Check<Equal<ReturnType<typeof createLocalFilterWriter>["readLastAccount"], (scope: NormalWindowRouting) => Promise<LastAccountRead>>>,
   Check<Equal<typeof createBrowserLocalFilterWriter, ExpectedAdapter>>,
   Check<Equal<keyof typeof import("./local-filter-writer"), "createLocalFilterWriter" | "createStartingLocalFilterWriter" | "StartupReadinessError">>,
   Check<Equal<keyof typeof import("../adapters/local-filter-writer"), "createBrowserLocalFilterWriter">>,
@@ -108,8 +129,10 @@ function receiveTypeBoundaries(writer: ReturnType<typeof createLocalFilterWriter
   void adapter.receiveSyncDocument({ kind: "setup", acct: "AAAAAAAAAAAAAAAA" })
   // @ts-expect-error Other document kinds are outside the receiver.
   void writer.receiveSyncDocument({ kind: "device", acct })
-  // @ts-expect-error Filter addresses require branded account and playlist values.
-  void writer.receiveSyncDocument({ kind: "filter", acct: "AAAAAAAAAAAAAAAA", playlist: "PL_P" })
+  // @ts-expect-error Filter addresses require a branded account value.
+  void writer.receiveSyncDocument({ kind: "filter", acct: "AAAAAAAAAAAAAAAA", playlist })
+  // @ts-expect-error Filter addresses require a branded playlist value.
+  void writer.receiveSyncDocument({ kind: "filter", acct, playlist: "PL_P" })
   if (result.kind === "adopted") {
     // @ts-expect-error The adopted record cannot be replaced.
     result.received = result.received
@@ -156,3 +179,79 @@ function filterConfirmation(result: LocalFilterWriteResult) {
   void missing
 }
 void filterConfirmation
+
+function setupConfirmation(result: SetupDestinationResult, acct: AccountKey) {
+  const absent: SetupDestinationResult = { kind: "committed", view: { kind: "none", acct } }
+  const fromSync: SetupEvent = { kind: "setup-changed", source: "sync", acct }
+  if (result.kind === "committed" && result.view.kind === "live") void result.view.setup.quickSave
+  if (result.kind === "committed" && result.view.kind === "none") {
+    // @ts-expect-error Confirmed deletion has no live Setup body.
+    void result.view.setup
+  }
+  if (result.kind === "removal") {
+    // @ts-expect-error A partial cleanup result never carries a committed view.
+    void result.view
+  }
+  // @ts-expect-error Account-specific events require the validated account key.
+  const unaddressed: SetupEvent = { kind: "setup-changed", source: "sync" }
+  void [absent, fromSync, unaddressed]
+}
+void setupConfirmation
+
+export type PlaylistCacheOwnerProofs = [
+  Check<Equal<ReturnType<typeof createLocalFilterWriter>["readPlaylistCache"], import("./playlist-cache").PlaylistCacheOwner["readPlaylistCache"]>>,
+  Check<Equal<ReturnType<typeof createLocalFilterWriter>["absorbPlaylistCache"], import("./playlist-cache").PlaylistCacheOwner["absorbPlaylistCache"]>>
+]
+async function cachePrivateBoundaries(writer: ReturnType<typeof createLocalFilterWriter>, acct: AccountKey) {
+  const read = await writer.readPlaylistCache({ acct, private: true })
+  if (read.kind === "cache" && read.authority.kind === "caller-owned") {
+    // @ts-expect-error Caller-owned reads cannot authorize persistence.
+    void writer.absorbPlaylistCache(read.authority.capture, { kind: "list", acct, site: "www", at: 1, rows: [] })
+  }
+  // @ts-expect-error Cache reads require the authenticated privacy fact.
+  void writer.readPlaylistCache({ acct })
+  // @ts-expect-error Cache writes require an owner-minted capture, never an account string.
+  void writer.absorbPlaylistCache(acct, { kind: "list", acct, site: "www", at: 1, rows: [] })
+}
+void cachePrivateBoundaries
+
+export type AutoAddOwnerProofs = [
+  Check<Equal<ReturnType<typeof createLocalFilterWriter>["readAutoAddChoice"], (origin: UiOrigin, request: import("../../shared/contracts/auto-add-choice").AutoAddReadChange) => Promise<import("../../shared/contracts/auto-add-choice").AutoAddReadAnswer>>>,
+  Check<Equal<ReturnType<typeof createLocalFilterWriter>["changeAutoAddChoice"], (origin: UiOrigin, change: import("../../shared/contracts/auto-add-choice").AutoAddChoiceChange) => Promise<import("./auto-add-choice").AutoAddChoiceResult>>>
+]
+
+function viewEventBoundaries(owner: ReturnType<typeof createLocalFilterWriter>, acct: AccountKey) {
+  const stop: () => void = owner.subscribeView(event => { void event.kind }, () => {})
+  const confirmed: import("./local-filter-writer").ConfirmedViewChange = { kind: "skips-changed", acct, scope: "normal" }
+  // @ts-expect-error negative: owner-view-no-fake-account. Confirmed view events retain branded account identities.
+  const fake: import("./local-filter-writer").ConfirmedViewChange = { kind: "account-removed", acct: "raw", source: "local" }
+  // @ts-expect-error negative: owner-view-no-cache-event. Cache bookkeeping cannot become a confirmed view change.
+  const cache: import("./local-filter-writer").ConfirmedViewChange = { kind: "cache-changed", acct }
+  void [stop, confirmed, fake, cache]
+}
+void viewEventBoundaries
+
+export type ReconciledOwnerProofs = [
+  Check<Equal<ReturnType<typeof createLocalFilterWriter>["exportSettings"], import("./settings-file-read").SettingsFileOwner["exportSettings"]>>,
+  Check<Equal<ReturnType<typeof createLocalFilterWriter>["importCheck"], import("./settings-file-read").SettingsFileOwner["importCheck"]>>,
+  Check<Equal<ReturnType<typeof createLocalFilterWriter>["seeAccountLabel"], import("./account-label").AccountLabelsOwner["seeAccountLabel"]>>,
+  Check<Equal<ReturnType<typeof createLocalFilterWriter>["completeAccountLabel"], import("./account-label").AccountLabelsOwner["completeAccountLabel"]>>,
+  Check<Equal<import("../adapters/starting-owner").BrowserStartingOwner["exportSettings"], import("./settings-file-read").SettingsFileOwner["exportSettings"]>>,
+  Check<Equal<import("../adapters/starting-owner").BrowserStartingOwner["importCheck"], import("./settings-file-read").SettingsFileOwner["importCheck"]>>,
+  Check<Equal<import("../adapters/starting-owner").BrowserStartingOwner["seeAccountLabel"], import("./account-label").AccountLabelsOwner["seeAccountLabel"]>>,
+  Check<Equal<import("../adapters/starting-owner").BrowserStartingOwner["completeAccountLabel"], import("./account-label").AccountLabelsOwner["completeAccountLabel"]>>
+]
+
+function reconciledOwnerBoundaries(owner: ReturnType<typeof createLocalFilterWriter>, acct: AccountKey, capture: import("./playlist-cache").PlaylistCacheCapture) {
+  const normal = { kind: "ui", windowId: 1, incognito: false } as const
+  // @ts-expect-error negative: reconciliation-private-sighting
+  void owner.seeAccountLabel({ acct, private: true, at: 1 })
+  // @ts-expect-error negative: reconciliation-forged-capture
+  void owner.completeAccountLabel({ kind: "playlist-cache-capture", acct }, { acct, label: { name: "Label" } })
+  // @ts-expect-error negative: reconciliation-label-shape
+  void owner.completeAccountLabel(capture, { acct, label: { name: 3 } })
+  // @ts-expect-error negative: reconciliation-native-origin
+  void owner.importCheck({ privacy: "normal" }, "{}")
+  // @ts-expect-error negative: reconciliation-plan-no-write
+  void owner.executeImport(normal, {})
+}

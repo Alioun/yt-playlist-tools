@@ -1,0 +1,98 @@
+[
+  {
+    "id": "action-multiplicity",
+    "kind": "native",
+    "patch": "tools/fixtures/site-toaster/negatives/action-multiplicity.patch",
+    "target": "tools/fixtures/site-toaster/isolated-negative.ts",
+    "line": 2,
+    "code": "TS2322",
+    "source": "const invalid: ToastContent = { text: \"x\", tone: \"confirmation\", auto: false, action: [] }",
+    "status": "UNEXECUTED",
+    "require": "positive native gate, exactly one intended diagnostic, no unrelated diagnostic, exact restoration"
+  },
+  {
+    "id": "missing-disposal",
+    "kind": "native",
+    "patch": "tools/fixtures/site-toaster/negatives/missing-disposal.patch",
+    "target": "tools/fixtures/site-toaster/isolated-negative.ts",
+    "line": 2,
+    "code": "TS2741",
+    "source": "const invalid: ToastHandle = { replace: () => true }",
+    "status": "UNEXECUTED",
+    "require": "positive native gate, exactly one intended diagnostic, no unrelated diagnostic, exact restoration"
+  },
+  {
+    "id": "wrong-action-kind",
+    "kind": "native",
+    "patch": "tools/fixtures/site-toaster/negatives/wrong-action-kind.patch",
+    "target": "tools/fixtures/site-toaster/isolated-negative.ts",
+    "line": 2,
+    "code": "TS2322",
+    "source": "const invalid: ToastAction = { kind: \"many\", label: \"x\", run: () => null }",
+    "status": "UNEXECUTED",
+    "require": "positive native gate, exactly one intended diagnostic, no unrelated diagnostic, exact restoration"
+  },
+  {
+    "id": "opaque-handle-not-numeric",
+    "kind": "native",
+    "patch": "tools/fixtures/site-toaster/negatives/opaque-handle-not-numeric.patch",
+    "target": "tools/fixtures/site-toaster/isolated-negative.ts",
+    "line": 2,
+    "code": "TS2322",
+    "source": "const invalid: UndoHandle = { kind: \"add\", id: 1 }",
+    "status": "UNEXECUTED",
+    "require": "positive native gate, exactly one intended diagnostic, no unrelated diagnostic, exact restoration"
+  },
+  {
+    "id": "missing-localized-label",
+    "kind": "native",
+    "patch": "tools/fixtures/site-toaster/negatives/missing-localized-label.patch",
+    "target": "tools/fixtures/site-toaster/isolated-negative.ts",
+    "line": 2,
+    "code": "TS2740",
+    "source": "const invalid: FeedbackLabels = { nothingToUndo: \"x\", actions: {} }",
+    "status": "UNEXECUTED",
+    "require": "positive native gate, exactly one intended diagnostic, no unrelated diagnostic, exact restoration"
+  },
+  {
+    "id": "missing-keys-collaborator",
+    "kind": "native",
+    "patch": "tools/fixtures/site-toaster/negatives/missing-keys-collaborator.patch",
+    "target": "tools/fixtures/site-toaster/isolated-negative.ts",
+    "line": 2,
+    "code": "TS2345",
+    "source": "createFeedback({})",
+    "status": "UNEXECUTED",
+    "require": "positive native gate, exactly one intended diagnostic, no unrelated diagnostic, exact restoration"
+  },
+  {
+    "id": "invalid-site",
+    "kind": "svelte",
+    "patch": "tools/fixtures/site-toaster/negatives/invalid-site.patch",
+    "target": "tools/fixtures/site-toaster/ApiChecks.svelte",
+    "line": 6,
+    "source": "<Toast {source} {document} site=\"other\" />",
+    "status": "UNEXECUTED",
+    "require": "positive real Svelte check, exactly one error on intended component line, no wildcard-module-only acceptance"
+  },
+  {
+    "id": "missing-source",
+    "kind": "svelte",
+    "patch": "tools/fixtures/site-toaster/negatives/missing-source.patch",
+    "target": "tools/fixtures/site-toaster/ApiChecks.svelte",
+    "line": 6,
+    "source": "<Toast {document} site=\"www\" />",
+    "status": "UNEXECUTED",
+    "require": "positive real Svelte check, exactly one error on intended component line, no wildcard-module-only acceptance"
+  },
+  {
+    "id": "actual-component-inclusion",
+    "kind": "svelte inclusion sentinel",
+    "patch": "tools/fixtures/site-toaster/negatives/actual-component-inclusion.patch",
+    "target": "src/site/kit/toaster/Toast.svelte",
+    "line": 9,
+    "source": "  const inclusionProbe: never = site",
+    "status": "UNEXECUTED",
+    "require": "positive actual Svelte check, exactly one TS2322 on the actual component sentinel line, restore exact component hash"
+  }
+]

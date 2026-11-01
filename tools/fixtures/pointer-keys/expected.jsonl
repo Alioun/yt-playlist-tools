@@ -1,0 +1,16 @@
+{"case":"idle","pointer":{"kind":"none","reason":"inactive"},"consumed":false}
+{"case":"shared","kind":"pointer","stack":["preview","nested","card"]}
+{"case":"one-release","kind":"pointer","calls":1,"later":0,"consumed":true}
+{"case":"stationary-scroll","stack":["replacement"]}
+{"case":"recycled-node","stack":["recycled"]}
+{"case":"focus-last","kind":"focus","element":"keyboard"}
+{"case":"pointer-last","kind":"pointer"}
+{"case":"leave","pointer":{"kind":"none","reason":"outside"}}
+{"case":"pending-duplicate-release","calls":2,"consumed":false,"later":1}
+{"case":"settled","calls":3,"consumed":true,"later":1}
+{"case":"blocked","consumed":[false,false,false],"calls":3}
+{"case":"undo-inactive","consumed":false,"undos":0}
+{"case":"undo-empty-enabled","consumed":true,"undos":1}
+{"case":"undo-current-key","old":false,"current":true,"undos":2}
+{"case":"released","pointer":{"kind":"none","reason":"inactive"},"consumed":false}
+{"case":"reacquired","before":{"kind":"none","reason":"unmoved"},"after":"pointer"}

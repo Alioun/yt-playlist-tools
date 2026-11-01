@@ -6,7 +6,6 @@ import type { ChangeResult } from "../../shared/contracts/results"
 import type { LocalWriteStorage, SyncStorage } from "./local-filter-writer"
 import { changeSharedSetting, type SharedSettingChange } from "./settings-edit"
 import { planSyncWrite, sameSyncJson, type SyncDocumentRecord } from "./sync-write-admission"
-import { prepareDocumentBody } from "./write-preparation"
 
 export type LocalSettingsWriteResult =
   | { readonly kind: "committed" | "unchanged" }
@@ -61,8 +60,8 @@ export async function executeSharedSetting(deps: {
       return { kind: "unchanged" }
     }
     if (edit.kind === "invalid") return invalid
-    const prepared = prepareDocumentBody({ kind: "settings", data: edit.settings })
-    if (prepared.kind !== "prepared") return invalid
+    const settings = { ...edit.settings, shortcuts: { ...edit.settings.shortcuts, list: view.settings.shortcuts.list } }
+    if (!jsonObject(settings)) return invalid
     if (ready.device.syncOn) {
       records = await deps.local.get(null)
       if (deps.disposed()) return { kind: "unavailable", reason: "disposed" }
@@ -71,7 +70,7 @@ export async function executeSharedSetting(deps: {
     records = copyObject(records)
     const raw = baseline["doc:settings"]
     const envelope = { ...(jsonObject(raw) ? raw : {}), v: DOCUMENT_VERSION,
-      gen: deps.generation(), at: deps.now(), by: ready.device.id, data: prepared.data }
+      gen: deps.generation(), at: deps.now(), by: ready.device.id, data: settings }
     if ("deleted" in envelope) delete envelope.deleted
     if (!jsonObject(envelope) || decodeDocument(envelope, decodeSettings).kind !== "value") return invalid
     const items: JsonObject = { "doc:settings": envelope }

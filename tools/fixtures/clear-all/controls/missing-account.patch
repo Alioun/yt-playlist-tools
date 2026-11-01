@@ -1,0 +1,11 @@
+--- a/src/background/store/sync-reset-receive.ts
++++ b/src/background/store/sync-reset-receive.ts
+@@ -136,7 +136,7 @@
+       const targets = [...new Set([...documents, "doc:settings", ...[...accounts].flatMap(acct =>
+         [`cache:${acct}`, ...removalProgressShards.map(shard => `progress:${acct}:${shard}`)])])].sort()
+       marker = { v: 1, kind: "received-reset", metadata, authority: snapshot(current), originalAuthority: snapshot(current),
+-        recovery: { kind: "none" }, accounts: [...accounts].sort(), targets, phase: "session" }
++        recovery: { kind: "none" }, accounts: [...accounts].sort().slice(0, 1), targets, phase: "session" }
+     }
+     if (deps.host.kind !== "available") return held("host")
+     const host = deps.host

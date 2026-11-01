@@ -25,12 +25,12 @@ function negative(deps: Parameters<typeof createLocalFilterWriter>[0], old: Star
   // @ts-expect-error A completed conversion is not an inactive retention result.
   const completed: InterimRetentionResult = { kind: "ok" }
   // @ts-expect-error Readiness error cannot present a non-interim route as held.
-  new StartupReadinessError({ kind: "interim-held", result: { kind: "not-interim" } })
+  const heldKind: Extract<ConstructorParameters<typeof StartupReadinessError>[0], { kind: "interim-held" }>["result"]["kind"] = "not-interim"
   if (note.kind === "inactive-proposal") {
     // @ts-expect-error Reads cannot grant agreement.
     note.note.freshAgreementRequired = false
-    // @ts-expect-error Original checkpoint source is deeply readonly.
-    note.checkpoint.source.savedAccountKeys = []
+    // @ts-expect-error Reads cannot replace the original checkpoint source.
+    note.checkpoint.source = {}
     // @ts-expect-error Reads cannot allocate another conversion row.
     note.checkpoint.context.interimShortcutId = "other1"
   }
@@ -47,7 +47,7 @@ export type SuccessorProofs = [
 ]
 function successorNegative(successor: RetainedAgreementV2, original: RetainedInterim) {
   // @ts-expect-error The v1 checkpoint arm cannot contain its successor.
-  const wrong: Extract<RetainedInterimRead, { kind: "valid" }> = { kind: "valid", checkpoint: successor }
+  const wrong: Extract<RetainedInterimRead, { kind: "valid" }>["checkpoint"]["v"] = successor.v
   // @ts-expect-error Agreement is an explicit named receipt with a fixed effect.
   const missing: RetainedAgreementV2 = { v: 2, kind: "retained-interim", retained: original, agreement: { kind: "confirmed" } }
   // @ts-expect-error No conversion installation is authorized by v2.
@@ -55,3 +55,44 @@ function successorNegative(successor: RetainedAgreementV2, original: RetainedInt
   void wrong; void missing
 }
 void successorNegative
+
+import { recoveredRetainedV1AgreementDifference, type AcceptedRetainedAgreementV2 } from "./interim-persistence"
+import type { Snapshot } from "../../shared/model/settings-view"
+function v1ComparisonProof(retained: Snapshot<RetainedInterim>, accepted: Snapshot<AcceptedRetainedAgreementV2>, current: InterimPersistenceSnapshot, successor: RetainedAgreementV2) {
+  const difference: "source" | "canonical" | "history" | "checkpoint" | undefined = recoveredRetainedV1AgreementDifference(retained, accepted, current, { v: 1, at: 300 }, "v1")
+  // @ts-expect-error V1 comparison cannot authorize installation stages.
+  recoveredRetainedV1AgreementDifference(retained, accepted, current, { v: 1, at: 300 }, "installed")
+  // @ts-expect-error An arbitrary V2 may be confirmed and is not a fixed accepted V2.
+  const fixed: AcceptedRetainedAgreementV2 = successor
+  void [difference, fixed]
+}
+void v1ComparisonProof
+
+import type { RetainedInstallationV3 } from "./interim-installation"
+import { projectInterimInstallationNote } from "./interim-persistence"
+export type InstallationPersistenceProofs = [
+  Check<Equal<Extract<RetainedCheckpointRead, { kind: "installation" }>["checkpoint"], import("../../shared/model/settings-view").Snapshot<RetainedInstallationV3>>>,
+  Check<Equal<Extract<InterimRetentionResult, { kind: "pending-installation" | "installed-interim" }>["checkpoint"], import("../../shared/model/settings-view").Snapshot<RetainedInstallationV3>>>,
+  Check<Equal<ReturnType<typeof projectInterimInstallationNote>, InterimNoteRead>>
+]
+function installationNegative(current: InterimPersistenceSnapshot, checkpoint: unknown) {
+  // @ts-expect-error An installation note needs an actual raw-history observation.
+  projectInterimInstallationNote({ checkpoint, current })
+  // @ts-expect-error The old held note cannot claim installation from an optional overlay.
+  projectInterimNote({ checkpoint, current, installation: "installed" })
+}
+void installationNegative
+
+import type { RetainedRecoveryV4 } from "./interim-recovery-execution"
+export type RecoveryPersistenceProofs = [
+  Check<Equal<Extract<RetainedCheckpointRead, { kind: "recovery" }>["checkpoint"], import("../../shared/model/settings-view").Snapshot<RetainedRecoveryV4>>>,
+  Check<Equal<Extract<InterimRetentionResult, { kind: "confirmed-recovery" | "pending-recovery" }>["checkpoint"], import("../../shared/model/settings-view").Snapshot<RetainedRecoveryV4>>>
+]
+
+import { recoveredRetainedAgreementDifference } from "./interim-persistence"
+function recoveredComparisonPositive(checkpoint: import("../../shared/model/settings-view").Snapshot<RetainedAgreementV2>, current: InterimPersistenceSnapshot, agreement: RetainedAgreementEffect["consent"]) {
+  void recoveredRetainedAgreementDifference(checkpoint, current, agreement, "terminal")
+  // @ts-expect-error Comparison accepts only the selected accepted or terminal progression.
+  recoveredRetainedAgreementDifference(checkpoint, current, agreement, "installed")
+}
+void recoveredComparisonPositive

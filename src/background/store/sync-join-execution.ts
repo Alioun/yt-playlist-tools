@@ -1,3 +1,4 @@
+import { classifyRetainedAuthority } from "./interim-canonical-authority"
 import { CONSENT_VERSION, STORAGE_SCHEMA_VERSION, decodeDevice, decodeDocument, decodeSettings, decodeSyncState, decodeSyncMeta, decodeStamp, documentKey, isAccountKey,
   type AccountKey, type Device, type SyncMeta, type DocumentKey } from "../../shared/model"
 import type { Origin } from "../../shared/contracts/results"
@@ -11,18 +12,19 @@ import { planAccountSessionRemoval } from "./account-removal-session"
 import { removalProgressShards, type ProgressShard, type AccountRemovalHost } from "./account-removal-execution"
 import type { LocalWriteStorage } from "./local-filter-writer"
 import { pendingSyncJoinKey, readSyncJoinCheckpoint, transitionSyncJoin, joinJson, joinStored, sameJoinStored, joinDocuments,
-  selectJoinDocuments, deriveJoinAgreement, deriveJoinHistory, type JoinAgreementFacts, type JoinSelectionFacts, type JoinTarget,
-  type JoinMaterialization, type JoinOutboundDebt, type JoinDocument, type SyncJoinCheckpointV1, type AcceptedJoinEffect } from "./sync-join-persistence"
+  selectJoinDocuments, deriveJoinAgreement, deriveJoinHistory, deriveReconcileEffect, joinClearsProgress, joinProgressPlan,
+  type JoinAgreementFacts, type JoinSelectionFacts, type JoinTarget, type ReconcileEffect,
+  type JoinMaterialization, type JoinOutboundDebt, type JoinDocument, type SyncJoinCheckpoint, type AcceptedJoinEffect } from "./sync-join-persistence"
 export type UiOrigin = Extract<Origin, { kind: "ui" }>
 export type { SyncJoinSide } from "./sync-join-persistence"
 export type SyncJoinReview = { readonly kind: "sync-join-review" }
-export type SyncJoinUnavailable = { readonly kind: "unavailable"; readonly reason:
+export type SyncJoinUnavailable = { readonly kind: "unavailable"; readonly reason: "consent-held" |
   "startup" | "newer-layout" | "disposed" | "consent" | "stale" | "inventory" | "history" | "reset" | "incomplete" | "ambiguous-history" |
   "retention" | "pending-removal" | "pending-agreement" | "pending-join" | "join-host" | "same-history-rejoin-required" | "changed-generation" }
 export type SyncJoinRefusal = { readonly kind: "refused"; readonly reason: "invalid" | "update-needed" | "sync-full"; readonly quota?: { readonly exceeded: readonly ("bytes" | "items" | "item-bytes")[]; readonly bytes: number; readonly items: number; readonly largest: { readonly kind: "settings" | "setup" | "filter" | "metadata" | "other"; readonly bytes: number; readonly items: number } } }
 export type SyncJoinPreparation =
   | { readonly kind: "choice-required"; readonly review: SyncJoinReview; readonly reason: "independent-settings" | "unknown-provenance" | "different-history"; readonly defaultChoice: "use-synced" }
-  | { readonly kind: "automatic"; readonly review: SyncJoinReview; readonly reason: "empty-copy" | "proven-never-edited" }
+  | { readonly kind: "automatic"; readonly review: SyncJoinReview; readonly reason: "empty-copy" | "proven-never-edited" | "proven-same-history-no-edit" }
   | SyncJoinUnavailable | SyncJoinRefusal | { readonly kind: "cancelled" } | { readonly kind: "failed"; readonly stage: "prepare"; readonly error: unknown }
 export type SyncJoinOperation = { readonly result: Promise<SyncJoinPreparation>; cancel(): void }
 export type SyncJoinWrite = { readonly kind: "resolved" } | { readonly kind: "rejected"; readonly error: unknown }
@@ -53,7 +55,7 @@ export function readJoinLocal(raw: unknown, agreement = false): { readonly kind:
   if (!agreementObject(raw)) return joinUnavailable("inventory")
   if (typeof raw.schema === "number" && raw.schema > STORAGE_SCHEMA_VERSION) return joinUnavailable("newer-layout")
   if (raw.schema !== STORAGE_SCHEMA_VERSION) return joinUnavailable("startup")
-  if (Object.keys(raw).some(n => n.startsWith("account:") || ["interimConversion", "savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"].includes(n))) return joinUnavailable("retention")
+  if (classifyRetainedAuthority(raw).kind === "held") return joinUnavailable("retention")
   if (Object.hasOwn(raw, "pending:account-removal")) return joinUnavailable("pending-removal")
   try {
     if (Object.hasOwn(raw, "device")) {
@@ -101,15 +103,22 @@ export function readJoinRemote(raw: unknown): JoinRemote | SyncJoinUnavailable |
     return { kind: "remote", records: joinJson(raw), target, documents: documents.sort((a,b) => documentKey(a.key).localeCompare(documentKey(b.key))) }
   } catch { return { kind: "refused", reason: "invalid" } }
 }
-export function classifySyncJoin(local: JsonObject, remote: JoinRemote): { readonly kind: "automatic"; readonly reason: "empty-copy" | "proven-never-edited" } |
+export function classifySyncJoin(local: JsonObject, remote: JoinRemote): { readonly kind: "automatic"; readonly reason: "empty-copy" | "proven-never-edited" | "proven-same-history-no-edit" } |
   { readonly kind: "choice-required"; readonly reason: "independent-settings" | "unknown-provenance" | "different-history" } | SyncJoinUnavailable {
+  const checkpoint = readSyncJoinCheckpoint(local[pendingSyncJoinKey])
+  if (checkpoint.kind === "valid" && checkpoint.checkpoint.phase === "choice") return { kind: "choice-required", reason: "different-history" }
   if (remote.target.kind === "empty") return { kind: "automatic", reason: "empty-copy" }
   const history = Object.hasOwn(local, "sync") ? decodeSyncState(local.sync) : undefined
-  const checkpoint = readSyncJoinCheckpoint(local[pendingSyncJoinKey])
   const unfinished = checkpoint.kind === "valid" && checkpoint.checkpoint.phase === "off"
-  if (!unfinished && history?.joined === decodeSyncMeta(remote.target.metadata).id && history.editedSinceOff === false) return joinUnavailable("same-history-rejoin-required")
+  if (!unfinished && agreementObject(local.device) && !decodeDevice(local.device).syncOn && history?.joined === decodeSyncMeta(remote.target.metadata).id &&
+    agreementObject(local.sync) && local.sync.editedSinceOff === false) return { kind: "automatic", reason: "proven-same-history-no-edit" }
   if (history?.everEdited === false) return { kind: "automatic", reason: "proven-never-edited" }
   return { kind: "choice-required", reason: history?.joined ? "different-history" : history?.everEdited === true ? "independent-settings" : "unknown-provenance" }
+}
+export function syncJoinDecision(classification: ReturnType<typeof classifySyncJoin>, side?: "use-synced" | "use-this-browser"): JoinSelectionFacts["decision"] | undefined {
+  if (classification.kind === "unavailable") return
+  if (classification.kind === "choice-required") return side ? { kind: "explicit", side } : undefined
+  return classification.reason === "empty-copy" ? { kind: "create-copy" } : classification.reason === "proven-same-history-no-edit" ? { kind: "same-history-no-edit" } : { kind: "proven-never-edited" }
 }
 export function prepareJoinEffect(input: { readonly local: JsonObject; readonly remote: JoinRemote; readonly decision: JoinSelectionFacts["decision"];
   readonly agreement: JoinAgreementFacts; readonly at: number; readonly generation: () => string }): { readonly kind: "prepared"; readonly effect: JoinMaterialization } | SyncJoinRefusal | SyncJoinUnavailable {
@@ -151,14 +160,37 @@ export function prepareJoinEffect(input: { readonly local: JsonObject; readonly 
     const effect: JoinMaterialization = { kind: "join", selection, agreement: input.agreement, device: { before: deviceBefore, after: device }, history: { before: historyBefore, after: deriveJoinHistory(historyBefore, debt, overlay.settings !== undefined) }, documents: selected.map(x => ({ key: x.key, before: joinStored(local, documentKey(x.key)), after: x.document })), clearProgress, removedAccounts, debt }
     const admission = projectJoinDebt(debt, remote.records)
     if (admission.kind !== "planned") return admission
-    const validation = readSyncJoinCheckpoint({ v: 1, kind: "sync-join", phase: "accepted", effect })
+    const validation = readSyncJoinCheckpoint({ v: input.decision.kind === "same-history-no-edit" ? 2 : 1, kind: "sync-join", phase: "accepted", effect })
     return validation.kind === "valid" ? { kind: "prepared", effect } : { kind: "refused", reason: "invalid" }
+  } catch { return { kind: "refused", reason: "invalid" } }
+}
+export function prepareReconcileEffect(input: { readonly local: JsonObject; readonly remote: JoinRemote; readonly debt: JoinOutboundDebt;
+  readonly at: number; readonly generation: () => string }): { readonly kind: "prepared"; readonly effect: ReconcileEffect } | SyncJoinRefusal | SyncJoinUnavailable {
+  try {
+    if (!Number.isSafeInteger(input.at) || input.at < 0) return { kind: "refused", reason: "invalid" }
+    const { local, remote, debt, at } = input, localRead = readJoinLocal(local)
+    if (localRead.kind !== "local") return localRead
+    const used = new Set([...localRead.documents, ...remote.documents].map(x => decodeStamp(x.document).gen))
+    used.add(decodeSyncMeta(debt.target.metadata).id)
+    for (const member of debt.outgoing) if (member.remoteBefore.kind === "present") used.add(decodeStamp(member.remoteBefore.value).gen)
+    const basis = { kind: "outbound-drift", priorDebt: debt, localDocuments: localRead.documents, remoteDocuments: remote.documents, metadataBefore: joinStored(remote.records, "s:meta") } as const
+    const effect = deriveReconcileEffect({ basis, device: joinStored(local, "device"), history: joinStored(local, "sync"), clearProgress: [],
+      suppress(_key, original) {
+        const gen = input.generation()
+        if (typeof gen !== "string" || !gen.trim() || used.has(gen)) throw new TypeError("Colliding reconciliation generation")
+        used.add(gen)
+        const document: JsonObject = { ...original, v: 1, gen, at, by: debt.deviceId, deleted: true }; delete document.data; return document
+      } })
+    const fixed = { ...effect, clearProgress: joinClearsProgress(basis.localDocuments, effect.debt.selectedDocuments) ? joinProgressPlan(local, effect.removedAccounts) : [] }
+    const admission = projectJoinDebt(fixed.debt, remote.records)
+    if (admission.kind !== "planned") return admission
+    return readSyncJoinCheckpoint({ v: 2, kind: "sync-join", phase: "accepted", effect: fixed }).kind === "valid" ? { kind: "prepared", effect: fixed } : { kind: "refused", reason: "invalid" }
   } catch { return { kind: "refused", reason: "invalid" } }
 }
 export function projectJoinDebt(debt: JoinOutboundDebt, remote: JsonObject): { readonly kind: "planned"; readonly items: readonly SyncItem[]; readonly sent: readonly SyncDocumentRecord[] } | SyncJoinUnavailable | SyncJoinRefusal {
   const current = readJoinRemote(remote)
   if (current.kind !== "remote") return current
-  if (current.target.kind === "empty" ? debt.target.kind !== "create" : !sameSyncJson(current.target.metadata, debt.target.metadata)) return joinUnavailable("history")
+  if (current.target.kind === "empty" ? debt.target.kind !== "create" && debt.target.kind !== "restore" : !sameSyncJson(current.target.metadata, debt.target.metadata)) return joinUnavailable("history")
   const items: SyncItem[] = [], sent: SyncDocumentRecord[] = []
   if (current.target.kind === "empty") items.push({ key: "s:meta", value: debt.target.metadata })
   for (const selected of debt.selectedDocuments) {
@@ -208,7 +240,11 @@ export function joinEffectCompatible(effect: AcceptedJoinEffect, records: JsonOb
   if (effect.documents.some(x => !sameJoinStored(records, documentKey(x.key), x.before) && !sameJoinStored(records, documentKey(x.key), { kind: "present", value: x.after }))) return false
   const named = new Set(effect.documents.map(x => documentKey(x.key)))
   if (Object.keys(records).some(n => n.startsWith("doc:") && !named.has(n))) return false
-  if (effect.agreement.kind !== "none" && !sameJoinStored(records, "unclaimed", effect.agreement.reservedUnclaimed)) return false
+  if (effect.kind === "join" && effect.agreement.kind !== "none" && !sameJoinStored(records, "unclaimed", effect.agreement.reservedUnclaimed)) return false
+  if ((effect.kind === "reconcile" || effect.selection.decision.kind === "same-history-no-edit") &&
+    (joinClearsProgress(effect.kind === "reconcile" ? effect.basis.localDocuments : effect.selection.localDocuments, effect.debt.selectedDocuments) || effect.kind === "join" && effect.clearProgress.length > 0)) {
+    if (!sameSyncJson(joinJson({ list: joinProgressPlan(records, effect.removedAccounts) }), joinJson({ list: effect.clearProgress }))) return false
+  }
   return true
 }
 export async function setJoinStage(deps: JoinExecutionDependencies, stage: SyncJoinStage, baseline: JsonObject, items: JsonObject) {
@@ -220,7 +256,7 @@ export async function retireJoin(deps: JoinExecutionDependencies, baseline: Json
   const host = deps.host
   return confirmJoinMutation({ stage: "retire", baseline, expected, read: () => deps.local.get(null), write: () => host.removeLocal([{ kind: "continuation" }]), stopped: deps.stopped })
 }
-export async function finishJoinEffect(deps: JoinExecutionDependencies, initial: JsonObject, checkpoint: SyncJoinCheckpointV1 & { phase: "accepted" }, mutations: JoinMutation[] = [], waiting?: Extract<SyncJoinCheckpointV1, { phase: "choice" }>): Promise<SyncJoinResult> {
+export async function finishJoinEffect(deps: JoinExecutionDependencies, initial: JsonObject, checkpoint: SyncJoinCheckpoint & { phase: "accepted" }, mutations: JoinMutation[] = [], waiting?: Extract<SyncJoinCheckpoint, { phase: "choice" }>): Promise<SyncJoinResult> {
   if (deps.host.kind !== "fixture") return joinUnavailable("join-host")
   let stage: SyncJoinStage = "materialize"
   try {
@@ -228,7 +264,7 @@ export async function finishJoinEffect(deps: JoinExecutionDependencies, initial:
     let baseline = joinJson(initial)
     if (!joinEffectCompatible(effect, baseline)) return joinUnavailable("stale")
     const items: JsonObject = { device: effect.device.after, sync: effect.history.after }
-    if (effect.kind === "join") {
+    if (effect.kind !== "cancel") {
       for (const x of effect.documents) items[documentKey(x.key)] = x.after
       for (const x of effect.clearProgress) items[`progress:${x.acct}:${x.shard}`] = {}
     }
@@ -239,7 +275,7 @@ export async function finishJoinEffect(deps: JoinExecutionDependencies, initial:
     }
     if (effect.kind === "cancel") {
       stage = "retire"
-      const next = effect.unfinishedTarget.kind === "present" ? transitionSyncJoin(joinJson(baseline[pendingSyncJoinKey]), { v: 1, kind: "sync-join", phase: "off", unfinishedTarget: effect.unfinishedTarget.id }) : undefined
+      const next = effect.unfinishedTarget.kind === "present" ? transitionSyncJoin(joinJson(baseline[pendingSyncJoinKey]), { v: checkpoint.v, kind: "sync-join", phase: "off", unfinishedTarget: effect.unfinishedTarget.id }) : undefined
       const write = next ? await setJoinStage(deps, "retire", baseline, { [pendingSyncJoinKey]: next }) : await retireJoin(deps, baseline)
       return write.kind === "resolved" || write.kind === "rejected" ? { kind: "cancelled" } : write
     }
@@ -270,10 +306,10 @@ export async function finishJoinEffect(deps: JoinExecutionDependencies, initial:
       }
     }
     const debt = effect.debt
-    const outbound = debt.outgoing.length > 0 || debt.target.kind === "create"
+    const outbound = debt.outgoing.length > 0 || debt.target.kind !== "existing"
     if (outbound || waiting) {
       stage = "debt"
-      const next: SyncJoinCheckpointV1 = waiting ? { ...waiting, suspended: outbound ? { kind: "outbound", debt } : { kind: "none" } } : { v: 1, kind: "sync-join", phase: "outbound", debt }
+      const next: SyncJoinCheckpoint = waiting ? { ...waiting, suspended: outbound ? { kind: "outbound", debt } : { kind: "none" } } : { v: checkpoint.v, kind: "sync-join", phase: "outbound", debt }
       const record = transitionSyncJoin(joinJson(baseline[pendingSyncJoinKey]), next)
       const write = await setJoinStage(deps, "debt", baseline, { [pendingSyncJoinKey]: record })
       if (write.kind !== "resolved" && write.kind !== "rejected") return write

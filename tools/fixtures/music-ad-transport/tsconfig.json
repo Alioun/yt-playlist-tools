@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "Preserve",
+    "moduleResolution": "Bundler",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "bun",
+      "svelte"
+    ],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "files": [
+    "../../../src/site/core/items-music.ts",
+    "../../../src/site/core/items-music.bun-test.ts",
+    "../../../src/site/core/items-music.type-test.ts",
+    "../../../src/page/gateway.ts",
+    "../../../src/page/read-parsers.ts",
+    "../../../src/page/live-reads.ts",
+    "../items-music/specimens.ts",
+    "../items-music/harness.ts",
+    "../items-music/preload.ts",
+    "../items-music/page-consumer.bun-test.ts",
+    "../items-music/run.ts",
+    "../../../src/shared/contracts/music-playback.ts",
+    "../../../src/shared/contracts/music-playback.type-test.ts",
+    "cases.ts",
+    "wire.bun-test.ts",
+    "../../../src/site/core/pointer.type-test.ts",
+    "../../../src/site/core/keys.type-test.ts",
+    "../../../src/site/core/items-www.type-test.ts",
+    "../items-www/current-authority.bun-test.ts",
+    "../../../src/site/core/pointer.bun-test.ts",
+    "../../../src/site/core/keys.bun-test.ts",
+    "../../../src/site/core/items-www.bun-test.ts",
+    "../items-www/page-reads.bun-test.ts",
+    "../../../src/shared/contracts/jobs-streams.type-test.ts",
+    "../../../src/shared/contracts/page-messages.type-test.ts",
+    "../../../src/site/core/page-link.type-test.ts",
+    "../../../src/page/gateway.type-test.ts"
+  ]
+}

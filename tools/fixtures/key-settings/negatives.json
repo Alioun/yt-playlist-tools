@@ -1,0 +1,156 @@
+{
+  "state": "all-unexecuted",
+  "negativeCount": 10,
+  "gates": [
+    {
+      "id": "incomplete-music-target",
+      "template": "negatives/incomplete-music-target.ts.txt",
+      "patch": "negatives/incomplete-music-target.ts.patch",
+      "target": "tools/fixtures/key-settings/isolated-negative.ts",
+      "baseSha256": "e839370c8fc34cfb3c3e09da3c222a7d621c5dcd92cb83d9c87006d41862c222",
+      "mutatedSha256": "0b3c9f7f602834aab6955d4525804ac92c593f34999dde85c1fb53adecd9029d",
+      "mode": "100644",
+      "intendedLine": 3,
+      "anchor": "export const intendedNegative: KeyAssignmentChange[\"target\"] = { kind: \"music\" }",
+      "diagnosticCodes": [
+        2322
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "id": "forged-music-action",
+      "template": "negatives/forged-music-action.ts.txt",
+      "patch": "negatives/forged-music-action.ts.patch",
+      "target": "tools/fixtures/key-settings/isolated-negative.ts",
+      "baseSha256": "e839370c8fc34cfb3c3e09da3c222a7d621c5dcd92cb83d9c87006d41862c222",
+      "mutatedSha256": "2e1e28b4343fc3f1cd21982a6aed2476453412fd0d5d9beda2f100c012ec1395",
+      "mode": "100644",
+      "intendedLine": 3,
+      "anchor": "export const intendedNegative: KeyAssignmentChange[\"target\"] = { kind: \"music\", action: \"bar\" }",
+      "diagnosticCodes": [
+        2322
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "id": "forged-playlist-id",
+      "template": "negatives/forged-playlist-id.ts.txt",
+      "patch": "negatives/forged-playlist-id.ts.patch",
+      "target": "tools/fixtures/key-settings/isolated-negative.ts",
+      "baseSha256": "e839370c8fc34cfb3c3e09da3c222a7d621c5dcd92cb83d9c87006d41862c222",
+      "mutatedSha256": "3478db23007cd2eee32c163c44fda62a15f0e0576f365eb71a846bdf34d8a1a6",
+      "mode": "100644",
+      "intendedLine": 3,
+      "anchor": "export const intendedNegative: KeyAssignmentChange[\"target\"] = { kind: \"playlist\", id: 42 }",
+      "diagnosticCodes": [
+        2322
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "id": "raw-origin",
+      "template": "negatives/raw-origin.ts.txt",
+      "patch": "negatives/raw-origin.ts.patch",
+      "target": "tools/fixtures/key-settings/isolated-negative.ts",
+      "baseSha256": "e839370c8fc34cfb3c3e09da3c222a7d621c5dcd92cb83d9c87006d41862c222",
+      "mutatedSha256": "e11a6fc5755f9ff58259c8073ee2bb218aee361def945884e6125c56df255042",
+      "mode": "100644",
+      "intendedLine": 3,
+      "anchor": "export const intendedNegative: keyof UiMessages[\"ui.change\"][\"payload\"] = \"origin\"",
+      "diagnosticCodes": [
+        2322
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "id": "fake-undo-authority",
+      "template": "negatives/fake-undo-authority.ts.txt",
+      "patch": "negatives/fake-undo-authority.ts.patch",
+      "target": "tools/fixtures/key-settings/isolated-negative.ts",
+      "baseSha256": "e839370c8fc34cfb3c3e09da3c222a7d621c5dcd92cb83d9c87006d41862c222",
+      "mutatedSha256": "45d370c53b0bccd9e5bcaef8d324c9513361ec252c8f08c4d2b44a1748edd8d9",
+      "mode": "100644",
+      "intendedLine": 3,
+      "anchor": "export const intendedNegative: KeySettingChange = { kind: \"shortcut-undo\", receipt: \"opaque\", targets: { save01: \"PL_fake\" } }",
+      "diagnosticCodes": [
+        2353
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "id": "invalid-batch",
+      "template": "negatives/invalid-batch.ts.txt",
+      "patch": "negatives/invalid-batch.ts.patch",
+      "target": "tools/fixtures/key-settings/isolated-negative.ts",
+      "baseSha256": "e839370c8fc34cfb3c3e09da3c222a7d621c5dcd92cb83d9c87006d41862c222",
+      "mutatedSha256": "be884b5d1251e40a7e6e52b29c6ff6b4869364ded1ff44399235161c55ca07b5",
+      "mode": "100644",
+      "intendedLine": 3,
+      "anchor": "export const intendedNegative: Extract<UiMessages[\"ui.change\"][\"payload\"][\"change\"], { kind: \"batch\" }> = {}",
+      "diagnosticCodes": [
+        2322
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "id": "old-wire-name",
+      "template": "negatives/old-wire-name.ts.txt",
+      "patch": "negatives/old-wire-name.ts.patch",
+      "target": "tools/fixtures/key-settings/isolated-negative.ts",
+      "baseSha256": "e839370c8fc34cfb3c3e09da3c222a7d621c5dcd92cb83d9c87006d41862c222",
+      "mutatedSha256": "d00b94a190fde419de0f345ed8262d8dd0f522803af92b959e10739457548e4a",
+      "mode": "100644",
+      "intendedLine": 3,
+      "anchor": "export const intendedNegative: keyof UiMessages = \"ui.featureSetting\"",
+      "diagnosticCodes": [
+        2322
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "id": "key-extension",
+      "template": "negatives/key-extension.ts.txt",
+      "patch": "negatives/key-extension.ts.patch",
+      "target": "tools/fixtures/key-settings/isolated-negative.ts",
+      "baseSha256": "e839370c8fc34cfb3c3e09da3c222a7d621c5dcd92cb83d9c87006d41862c222",
+      "mutatedSha256": "268f5def7e421b64348bb2dd2239beecda0048390358c67a8318c6ee3d281d8c",
+      "mode": "100644",
+      "intendedLine": 3,
+      "anchor": "export const intendedNegative: KeyAssignmentChange[\"key\"] = { code: \"KeyZ\", char: \"z\", ctrl: false, alt: true, shift: false, meta: false, account: \"AAAAAAAAAAAAAAAA\" }",
+      "diagnosticCodes": [
+        2353
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "id": "old-reduced-owner",
+      "template": "negatives/old-reduced-owner.ts.txt",
+      "patch": "negatives/old-reduced-owner.ts.patch",
+      "target": "tools/fixtures/key-settings/isolated-negative.ts",
+      "baseSha256": "e839370c8fc34cfb3c3e09da3c222a7d621c5dcd92cb83d9c87006d41862c222",
+      "mutatedSha256": "50394faac56e8f03e438320fbb66e601dcb1ee078814dc494c85878b27eb7915",
+      "mode": "100644",
+      "intendedLine": 3,
+      "anchor": "export const intendedNegative: SharedSettingsOwner = legacy",
+      "diagnosticCodes": [
+        2741
+      ],
+      "state": "unexecuted"
+    },
+    {
+      "id": "snapshot-edit",
+      "template": "negatives/snapshot-edit.ts.txt",
+      "patch": "negatives/snapshot-edit.ts.patch",
+      "target": "tools/fixtures/key-settings/isolated-negative.ts",
+      "baseSha256": "e839370c8fc34cfb3c3e09da3c222a7d621c5dcd92cb83d9c87006d41862c222",
+      "mutatedSha256": "a291ae4eed94c2f946f04ea9d59abc6b772cf66ebc8141434ede484aba0c6729",
+      "mode": "100644",
+      "intendedLine": 3,
+      "anchor": "export const intendedNegative: KeySettingChange = { kind: \"settings\", value: {} }",
+      "diagnosticCodes": [
+        2322
+      ],
+      "state": "unexecuted"
+    }
+  ]
+}

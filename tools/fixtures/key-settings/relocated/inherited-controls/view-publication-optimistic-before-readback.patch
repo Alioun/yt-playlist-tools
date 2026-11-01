@@ -1,0 +1,18 @@
+--- a/src/background/store/local-filter-writer.ts
++++ b/src/background/store/local-filter-writer.ts
+@@ -1341,6 +1341,7 @@
+         deactivate("stopped")
+         return { kind: "unconfirmed", cause }
+       }
++      emitView({ kind: "filter-changed", source: "local", acct: change.acct, playlist: change.playlist })
+       try { await guardedLocal.set(items) } catch (error) {
+         uncertain({ kind: "readback" })
+         throw error
+@@ -1350,7 +1351,6 @@
+         if (disposed()) return uncertain({ kind: "authority" })
+         if (!isJsonObject(confirmed) || !sameSyncJson(expected, confirmed)) return uncertain({ kind: "readback" })
+       } catch (error) { return uncertain({ kind: "read-failed", error }) }
+-      emitView({ kind: "filter-changed", source: "local", acct: change.acct, playlist: change.playlist })
+       if (device.syncOn) {
+         quietUntil = deps.syncClock.now() + 2000
+         const gate = history && decodeSyncState(history.raw).opaqueWrite?.gate

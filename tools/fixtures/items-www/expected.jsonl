@@ -1,0 +1,15 @@
+{"step":"inactive","kind":"inactive"}
+{"step":"legacy","kind":"pointed-item","videoId":"synthetic01","target":true}
+{"step":"modern","kind":"pointed-item","videoId":"synthetic02","target":true}
+{"step":"shorts","kind":"pointed-item","videoId":"synthetic03","mediaKind":"short"}
+{"step":"playlist","kind":"unsupported-item","reason":"playlist","reads":0}
+{"step":"unrecognised","kind":"unrecognised-item","reports":1,"reads":0}
+{"step":"stationary","kind":"pointed-item","videoId":"synthetic02"}
+{"step":"preview","kind":"pointed-item","videoId":"synthetic01"}
+{"step":"player","kind":"current-video","videoId":"synthetic01"}
+{"step":"recycled","kind":"stale-target","reason":"identity"}
+{"step":"settle-2999","observations":0}
+{"step":"settle-3000","links":6,"recognised":2,"anchorMissing":true}
+{"step":"last-release","kind":"inactive","timers":0}
+{"step":"reacquired","kind":"pointed-item","videoId":"synthetic02"}
+{"step":"disposed","owners":0,"timers":0,"linkDeadlines":0}

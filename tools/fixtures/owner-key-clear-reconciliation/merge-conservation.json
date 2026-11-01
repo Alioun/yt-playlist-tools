@@ -1,0 +1,239 @@
+{
+ "method": "diff3 -m (newer target, Clear-all ancestor, Clear-all donor) resolved by .audit tools/reconcile_*.py; no wholesale donor replacement",
+ "conflicts": [
+  {
+   "path": "src/background/adapters/starting-owner.ts",
+   "ancestor": {
+    "mode": "100644",
+    "gitBlob": "4f50b862fd5c15bb64cd39e7716c43df45f7228a",
+    "sha256": "fdf7213ddfd37103f258bd5bc2feb7202a28704513c769150c561eb07bb43a48",
+    "bytes": 5859
+   },
+   "clearDonor": {
+    "mode": "100644",
+    "gitBlob": "97cf5254e00ec1ed920778330331111bb27b0086",
+    "sha256": "19319eec4d72aa8c244c67a9f73428254c4cf4de56d3004d3dba8690c981232e",
+    "bytes": 6019
+   },
+   "newerTarget": {
+    "mode": "100644",
+    "bytes": 6263,
+    "sha256": "0df59a524b053b046133f2b9cac01a9988c0f0cf3afbe7c0209e9f744915c6b9",
+    "gitBlob": "1d6695eba633ce0146e830d78feaeecc56484b8c"
+   },
+   "final": {
+    "bytes": 6423,
+    "sha256": "e28f3c3736d7be17fcf1b5b03824f2dd8aef38d2050f94c5ae17d5acb30eebe4",
+    "gitBlob": "59fd49ebe50b73d87e1151d39ed6a7774b05e8cb",
+    "mode": "100644"
+   },
+   "resolution": "Kept newer featureAccess/allocateShortcut; added Clear-all resetReceive (required Pick) and syncMutationPace forwarding."
+  },
+  {
+   "path": "src/background/router/ui-playlists/index.ts",
+   "ancestor": {
+    "mode": "100644",
+    "gitBlob": "a4626f76c3c90299bf63a408dfd85351a0939302",
+    "sha256": "5dcd4fa81945a72c46756e99578f0aa1d5d85e7c1d6189de2b6e9cb10a241e03",
+    "bytes": 20220
+   },
+   "clearDonor": {
+    "mode": "100644",
+    "gitBlob": "7f7151383661af5d1c7756295bf092b0a9daa1a6",
+    "sha256": "be87b0578ef709ab2bcc7b5cd9167497e882404c96e411373c65b807b798a53c",
+    "bytes": 21189
+   },
+   "newerTarget": {
+    "mode": "100644",
+    "bytes": 23341,
+    "sha256": "5dfa0cc28f1760d7f8d21e3b6bfcc93bb7d6ebc6194b9a019b2a54f64724c051",
+    "gitBlob": "994c7b50aa4e69584b5aa58a0ec0aa1e27e4418d"
+   },
+   "final": {
+    "bytes": 24310,
+    "sha256": "ed488fb73afa370511fb477f2e7170a678e9c3739e9d6d8b1c0c94e1a50994f9",
+    "gitBlob": "d100c08068a6a80f76497f6f25dd824607851325",
+    "mode": "100644"
+   },
+   "resolution": "Kept shared-settings ui.change authentication; added authenticated ui.clearAll branch, clear-all context, handler and disposal."
+  },
+  {
+   "path": "src/background/store/consent-recovery.ts",
+   "ancestor": {
+    "mode": "100644",
+    "gitBlob": "35aa0925956166159610a6f9f46682f1eacb9a7d",
+    "sha256": "8b5460d1d0b4bc128725ea988f2882e9209184b60f8772e75663406a6309cc56",
+    "bytes": 141210
+   },
+   "clearDonor": {
+    "mode": "100644",
+    "gitBlob": "1164bb89ee4e456b3d26ca6753db8bef24fd4aad",
+    "sha256": "f96a29294a6c3f686071b0a5e1c838905ee02ac28c13d1981d24e67763b6e74d",
+    "bytes": 143482
+   },
+   "newerTarget": {
+    "mode": "100644",
+    "bytes": 145589,
+    "sha256": "8bb6bc27dbc7e9b1d251ccb4b21c3fe8f12f81ce9727957138f73c8d169717e5",
+    "gitBlob": "a1b9eae14353f965fa9fd796e2d5c428c910f76a"
+   },
+   "final": {
+    "bytes": 147860,
+    "sha256": "267abd6400ae17de57e0c03c77fc31d5c339bde485a2e3caea908410c1a9f5c6",
+    "gitBlob": "264801b3d8850efeb1ff798b631a9e0ac91d261d",
+    "mode": "100644"
+   },
+   "resolution": "Kept key/feature progress work and recovery; added sync-reset held work, explicit exact recovery branch and none-check."
+  },
+  {
+   "path": "src/background/store/local-filter-writer.ts",
+   "ancestor": {
+    "mode": "100644",
+    "gitBlob": "cdb69fd372ffbf375fe92d278dfbe2b30b44f4d5",
+    "sha256": "ee27d6264348e6893b2ec8aecd10df2693c150ca8baae14261147cc2bc7c4d5a",
+    "bytes": 251217
+   },
+   "clearDonor": {
+    "mode": "100644",
+    "gitBlob": "656e32dbabf3f88165cbd2eb0530c08e5e9a0a43",
+    "sha256": "b3b960ae890de10dd71dd73f16efc31a10dfb02d378a4d23c122454aaa253867",
+    "bytes": 256160
+   },
+   "newerTarget": {
+    "mode": "100644",
+    "sha256": "e6d928585b5f479b46e9f9103a970bdc408b0f081ee9bf2ab1da790e28de1609",
+    "bytes": 264794,
+    "gitBlob": "ee73d2c16a6d4f322ca27ba43d0650c19f6d5206"
+   },
+   "final": {
+    "bytes": 269817,
+    "sha256": "fb24342a7a63341b01d1d8eeb32a6b32e52ba8ce7b95d9a56b49448b016781c4",
+    "gitBlob": "0eaf32cf5d01278ac38eb92eff9181ecd929143e",
+    "mode": "100644"
+   },
+   "resolution": "Kept key/feature pending fences, Monitor/publication repairs and removal-publication hunks; added reset fences, lane, revocation, startup recognition and shared pacing; reset revokes all key Undo; key/feature execution and settings files refuse while reset is pending; reset recovery refuses while key/feature progress is pending."
+  },
+  {
+   "path": "src/background/store/local-filter-writer.type-test.ts",
+   "ancestor": {
+    "mode": "100644",
+    "gitBlob": "4ba6b15a2245f339d97bc667c3b7d88c1b76c684",
+    "sha256": "dee24724804dff9ba6ed99890bcf5cae1fb0feed0f905dca333a95d9497a38d9",
+    "bytes": 20925
+   },
+   "clearDonor": {
+    "mode": "100644",
+    "gitBlob": "0a396e550ddc7499484b89d5254ec533fae394f0",
+    "sha256": "8e5ccaab636ced37d6a7235c05dc1bc63be724b1f78ad3e1b539dd5d57433650",
+    "bytes": 21217
+   },
+   "newerTarget": {
+    "mode": "100644",
+    "bytes": 21406,
+    "sha256": "d1ce72c7c65abb8a55a6de0205097194d9a340896488183ac7521cb2b7db71f6",
+    "gitBlob": "d01144d6f2a9d17a65d97a1c8595f479d2530834"
+   },
+   "final": {
+    "bytes": 21698,
+    "sha256": "a011b9260aa72b8c2b8a131ee4e1a0e9b82d8a6f82066fa95da74761c57ae196",
+    "gitBlob": "ad69f8e9eacadd1c2642bb15a710e98b7fee2bcf",
+    "mode": "100644"
+   },
+   "resolution": "Kept changeKeySetting/changeFeatureSetting factory members; added receiveSyncReset, reset deps and SyncAutomaticResult reset member."
+  },
+  {
+   "path": "src/shared/contracts/ui.ts",
+   "ancestor": {
+    "mode": "100644",
+    "gitBlob": "8d8c1b9d16aee0b3456de7f06e48a482f950bbf2",
+    "sha256": "9b098c03f6af069bcf9037ea495cad0ef00af87fc7a7278ba6381ae9c492cdc9",
+    "bytes": 355
+   },
+   "clearDonor": {
+    "mode": "100644",
+    "gitBlob": "71db816f01a9cc48d12e852677632faba2cf8dc6",
+    "sha256": "9cbe8c772af8134d9502eb20876d5a138a82fb61935a3db7aa2f0ccf083d0009",
+    "bytes": 465
+   },
+   "newerTarget": {
+    "mode": "100644",
+    "bytes": 356,
+    "sha256": "b4e41790a6e3cb2a74e89d9d83654e42251b456f4c1827b626ef3c2f9ad74a61",
+    "gitBlob": "c14a222a563882d17f40d96221aa2ad2b61aedc2"
+   },
+   "final": {
+    "bytes": 466,
+    "sha256": "11e5cdc3a968fd25139ddd52aaef1146b2f6673ed6cf213847011a686e51165d",
+    "gitBlob": "23fa3dd167664d69d68436bb112e9d32e9e02b9d",
+    "mode": "100644"
+   },
+   "resolution": "Single UiMessages/uiContract gains ClearAllMessages/clearAllContract; no parallel catalogue."
+  },
+  {
+   "path": "src/ui/backend/backend.ts",
+   "ancestor": {
+    "mode": "100644",
+    "gitBlob": "c3af83f82c89ac02a6df52fd21b8aaaf64e5e57b",
+    "sha256": "447539ccae37ff86d99eb4034ccc03b586c9a17cf0e6139bd61b65427ce5a184",
+    "bytes": 3208
+   },
+   "clearDonor": {
+    "mode": "100644",
+    "gitBlob": "518be40f8f11b3f8b8b16cfd6452d6799a0a1eb1",
+    "sha256": "f7846896ce867830e5062b25d7cc6f4498006da4357ea6a2154fedff41d22ce7",
+    "bytes": 3370
+   },
+   "newerTarget": {
+    "mode": "100644",
+    "bytes": 3939,
+    "sha256": "e0f77d73a875085ab2c198a90b985c7c5353ff6ea955f72a0de44f5180422d0d",
+    "gitBlob": "6d6cc010aa823e9f526ed6631d2d380ffe5e8322"
+   },
+   "final": {
+    "bytes": 4101,
+    "sha256": "ee25e68b48d80a395913036635eecd56f3102d93e8cbdaa35ae9fe4bd9a1158d",
+    "gitBlob": "d79f4d64d21eb0f05a3ca65ae9ee2092db6f8938",
+    "mode": "100644"
+   },
+   "resolution": "Kept keys and changeFeatureSetting; added clearAll."
+  },
+  {
+   "path": "src/ui/backend/core.ts",
+   "ancestor": {
+    "mode": "100644",
+    "gitBlob": "fcb337c62a1ee4996ead99aec9b3322f6ca060cf",
+    "sha256": "b5f7a10143edbfe7c4fc1d831261ae554020d7d60d7d9cb1ecf42cfa1b8a258e",
+    "bytes": 10994
+   },
+   "clearDonor": {
+    "mode": "100644",
+    "gitBlob": "7a05364e354136a40f504bae67aaad1092bee88c",
+    "sha256": "c23a0350d86633a2c0f9d3a855881e1a0e655aca5d15c4270ef4ec3a8de08af7",
+    "bytes": 11123
+   },
+   "newerTarget": {
+    "mode": "100644",
+    "bytes": 13356,
+    "sha256": "a4d6f30501b369acf1e9dba39d026ba6de5b1b8b4bffdc9295f931cafbbe62a9",
+    "gitBlob": "c744fcec7ea87b376d852ad44faf71917814c476"
+   },
+   "final": {
+    "bytes": 13485,
+    "sha256": "a36396fa7cc420482f1ef8c71ec29e11792d690e55e32430b746006707218a4d",
+    "gitBlob": "45bc174ea0707368cdc2309b8b42d06b526409f8",
+    "mode": "100644"
+   },
+   "resolution": "Kept keys and changeFeatureSetting; added clearAll through rpc.call(\"ui.clearAll\")."
+  }
+ ],
+ "additionalRecognizerEdit": {
+  "path": "src/background/store/sync-reset-receive.ts",
+  "final": {
+   "bytes": 14553,
+   "sha256": "607b8eabe6a5ccacc6bbabf301291521dea40d897a891d5f1875d435f35e95f8",
+   "gitBlob": "94455adbdaf078a301975a7b1df1871fbed7b8a9",
+   "mode": "100644"
+  },
+  "resolution": "A remote reset holds before any marker or erasure while key or feature progress is non-terminal, beside the existing removal, join and import holds."
+ }
+}

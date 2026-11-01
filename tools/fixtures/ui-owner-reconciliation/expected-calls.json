@@ -1,0 +1,243 @@
+{
+  "firstRun": [
+    {
+      "kind": "ui.accountInView",
+      "payload": {
+        "windowId": 1
+      }
+    },
+    {
+      "kind": "ui.change",
+      "payload": {
+        "windowId": 1,
+        "change": {
+          "kind": "first-run-agree",
+          "displayedVersion": 1,
+          "attempt": 1,
+          "selected": [
+            "quick-save"
+          ],
+          "syncOn": false
+        }
+      }
+    }
+  ],
+  "main": [
+    {
+      "kind": "ui.change",
+      "payload": {
+        "windowId": 1,
+        "change": {
+          "kind": "setup-destination",
+          "acct": "AAAAAAAAAAAAAAAA",
+          "destination": {
+            "kind": "quick-save"
+          },
+          "expected": {
+            "setup": "live",
+            "playlist": "PL_alpha"
+          },
+          "playlist": "PL_beta"
+        }
+      }
+    },
+    {
+      "kind": "ui.accountInView",
+      "payload": {
+        "windowId": 1
+      }
+    },
+    {
+      "kind": "ui.change",
+      "payload": {
+        "windowId": 1,
+        "change": {
+          "kind": "auto-add-read",
+          "acct": "AAAAAAAAAAAAAAAA",
+          "playlist": "PL_alpha"
+        }
+      }
+    },
+    {
+      "kind": "ui.change",
+      "payload": {
+        "windowId": 1,
+        "change": {
+          "kind": "auto-add-choice",
+          "acct": "AAAAAAAAAAAAAAAA",
+          "playlist": "PL_alpha",
+          "lifetime": "canonical-capture",
+          "edit": {
+            "kind": "auto-add",
+            "expected": false,
+            "chosen": true
+          }
+        }
+      }
+    },
+    {
+      "kind": "ui.change",
+      "payload": {
+        "windowId": 1,
+        "change": {
+          "kind": "auto-add-choice",
+          "acct": "AAAAAAAAAAAAAAAA",
+          "playlist": "PL_alpha",
+          "lifetime": "canonical-capture",
+          "edit": {
+            "kind": "auto-add",
+            "expected": false,
+            "chosen": true
+          }
+        }
+      }
+    },
+    {
+      "kind": "ui.playlists",
+      "payload": {
+        "windowId": 1,
+        "action": "open",
+        "operation": "list-1",
+        "acct": "AAAAAAAAAAAAAAAA",
+        "site": "www",
+        "refresh": false
+      }
+    },
+    {
+      "kind": "ui.playlists",
+      "payload": {
+        "windowId": 1,
+        "action": "await",
+        "operation": "list-1",
+        "generation": 0
+      }
+    },
+    {
+      "kind": "ui.playlists",
+      "payload": {
+        "windowId": 1,
+        "action": "release",
+        "operation": "list-1"
+      }
+    },
+    {
+      "kind": "ui.create",
+      "payload": {
+        "windowId": 1,
+        "action": "open",
+        "operation": "create-1",
+        "acct": "AAAAAAAAAAAAAAAA",
+        "site": "www"
+      }
+    },
+    {
+      "kind": "ui.create",
+      "payload": {
+        "windowId": 1,
+        "action": "submit",
+        "operation": "create-1",
+        "title": "One attempt",
+        "privacy": "PRIVATE"
+      }
+    },
+    {
+      "kind": "ui.create",
+      "payload": {
+        "windowId": 1,
+        "action": "status",
+        "operation": "create-1"
+      }
+    },
+    {
+      "kind": "ui.create",
+      "payload": {
+        "windowId": 1,
+        "action": "release",
+        "operation": "create-1"
+      }
+    },
+    {
+      "kind": "ui.playlists",
+      "payload": {
+        "windowId": 1,
+        "action": "open",
+        "operation": "list-2",
+        "acct": "AAAAAAAAAAAAAAAA",
+        "site": "www",
+        "refresh": true
+      }
+    },
+    {
+      "kind": "ui.create",
+      "payload": {
+        "windowId": 1,
+        "action": "open",
+        "operation": "create-2",
+        "acct": "AAAAAAAAAAAAAAAA",
+        "site": "www"
+      }
+    },
+    {
+      "kind": "ui.create",
+      "payload": {
+        "windowId": 1,
+        "action": "status",
+        "operation": "create-2"
+      }
+    },
+    {
+      "kind": "ui.playlists",
+      "payload": {
+        "windowId": 1,
+        "action": "release",
+        "operation": "list-2"
+      }
+    },
+    {
+      "kind": "ui.create",
+      "payload": {
+        "windowId": 1,
+        "action": "release",
+        "operation": "create-2"
+      }
+    }
+  ],
+  "lostAnswer": [
+    {
+      "kind": "ui.create",
+      "payload": {
+        "windowId": 1,
+        "action": "open",
+        "operation": "create-1",
+        "acct": "AAAAAAAAAAAAAAAA",
+        "site": "www"
+      }
+    },
+    {
+      "kind": "ui.create",
+      "payload": {
+        "windowId": 1,
+        "action": "submit",
+        "operation": "create-1",
+        "title": "One delivered write",
+        "privacy": "PRIVATE"
+      }
+    },
+    {
+      "kind": "ui.create",
+      "payload": {
+        "windowId": 1,
+        "action": "status",
+        "operation": "create-1"
+      }
+    },
+    {
+      "kind": "ui.create",
+      "payload": {
+        "windowId": 1,
+        "action": "release",
+        "operation": "create-1"
+      }
+    }
+  ]
+}

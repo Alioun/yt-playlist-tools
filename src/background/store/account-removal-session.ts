@@ -1,10 +1,13 @@
 import { isAccountKey, isPlaylistId, isVideoId, type AccountKey } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
+import { parseTabRecords, tabRecordsJson } from "../tabs/records"
 
-export type RemovalSessionCollection = "recent" | "recentAdds" | "shown" | "breakage" | "gather"
 export type RemovalSessionKey = { readonly kind: "skips" | "cooldown"; readonly acct: AccountKey }
+// Every name the session port may set. The removal executor's host port carries this name; removal itself sets only CleanedCollection.
+export type RemovalSessionCollection = CleanedCollection | "paused" | `${RemovalSessionKey["kind"]}:${string}`
+type CleanedCollection = "recent" | "recentAdds" | "shown" | "breakage" | "gather" | "tabs"
 export type RemovalSessionEffect =
-  | { readonly kind: "set"; readonly key: RemovalSessionCollection; readonly value: JsonValue }
+  | { readonly kind: "set"; readonly key: CleanedCollection; readonly value: JsonValue }
   | { readonly kind: "remove"; readonly key: RemovalSessionKey }
 export type RemovalSessionPlan =
   | { readonly kind: "unsupported" }
@@ -38,6 +41,8 @@ function recentAdd(value: JsonValue): boolean {
 export function planAccountSessionRemoval(acct: AccountKey, raw: unknown): RemovalSessionPlan {
   if (!isAccountKey(acct) || !object(raw)) return { kind: "unsupported" }
   const expected = { ...raw }, effects: RemovalSessionEffect[] = []
+  const tabs = parseTabRecords(raw.tabs)
+  if (!tabs) return { kind: "unsupported" }
   for (const kind of ["skips", "cooldown"] as const) {
     const name = `${kind}:${acct}`
     if (!Object.hasOwn(raw, name)) continue
@@ -67,6 +72,11 @@ export function planAccountSessionRemoval(acct: AccountKey, raw: unknown): Remov
     const next = { ...value, accounts }
     expected[key] = next
     effects.push({ kind: "set", key, value: next })
+  }
+  if ([...tabs.values()].some(row => row.acct === acct)) {
+    const value = tabRecordsJson(new Map([...tabs].filter(([, row]) => row.acct !== acct)))
+    expected.tabs = value
+    effects.push({ kind: "set", key: "tabs", value })
   }
   return { kind: "supported", effects, expected }
 }

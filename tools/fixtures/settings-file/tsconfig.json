@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "module": "Preserve", "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": ["bun"], "strict": true,
+    "noEmit": true, "skipLibCheck": true, "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true, "noImplicitOverride": true
+  },
+  "files": [
+    "../../../.wxt/wxt.d.ts",
+    "../../../src/shared/settings-file/index.ts",
+    "../../../src/shared/settings-file/settings-file.bun-test.ts",
+    "specimens.ts", "run.ts", "native.type-test.ts", "owner-api.proposal.ts"
+  ]
+}

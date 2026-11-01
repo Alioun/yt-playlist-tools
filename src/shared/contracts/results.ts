@@ -7,6 +7,7 @@ export type JobFailure = {
   reason: JobFailureReason
   http?: number
   status?: string
+  detail?: never
 }
 export type ChangeResult =
   | { ok: true }

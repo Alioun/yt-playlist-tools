@@ -1,0 +1,3 @@
+import type { SharedSettingChange } from "../../../src/background/store/settings-edit"
+
+export const rejected: SharedSettingChange = { kind: "option", field: "gather.auto.n", value: "1h" }

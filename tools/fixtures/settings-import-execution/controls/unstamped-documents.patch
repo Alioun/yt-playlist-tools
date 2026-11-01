@@ -1,0 +1,11 @@
+--- a/src/background/store/settings-import-execution.ts
++++ b/src/background/store/settings-import-execution.ts
+@@ -63,7 +63,7 @@
+ function effects(plan: SettingsImportPlan): Effect[] {
+   const items: JsonObject = {}, keys: SettingsImportLocalRemoval[] = [], names: string[] = []
+   for (const change of plan.documents.changes) {
+-    if (change.kind === "put") items[documentKey(change.key)] = change.document
++    if (change.kind === "put") items[documentKey(change.key)] = { ...change.document, gen: "unstamped-mutant" }
+     else { keys.push({ kind: "document", key: change.key }); names.push(documentKey(change.key)) }
+   }
+   if (plan.documents.history.kind === "set") items.sync = plan.documents.history.sync

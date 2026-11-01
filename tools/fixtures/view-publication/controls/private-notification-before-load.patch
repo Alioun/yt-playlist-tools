@@ -1,0 +1,12 @@
+--- a/src/background/add-flow/add-flow.ts
++++ b/src/background/add-flow/add-flow.ts
+@@ -239,6 +239,9 @@
+       const changesSkips = edits.some(edit => edit.kind === "skip" || edit.kind === "unskip")
+       // Confirmed request facts must be visible to queued work before the fresh read finishes.
+       if (!changesSkips) privateMemory = applySessionEdits(privateMemory, edits, now)
++      if (changesSkips) for (const acct of new Set(edits.flatMap(edit => edit.kind === "skip" || edit.kind === "unskip" ? [edit.acct] : []))) {
++        for (const listener of privateSkipListeners) { try { listener({ acct, scope: "private" }) } catch {} }
++      }
+       const unloaded = await load()
+       if (unloaded) return unloaded
+       active()

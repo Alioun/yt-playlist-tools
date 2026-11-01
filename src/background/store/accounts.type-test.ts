@@ -4,10 +4,12 @@ import type { AccountChoice, AccountSnapshot, changeAccountChoice, removeSharedS
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
 type Check<T extends true> = T
 type Present = Extract<AccountSnapshot, { kind: "present" }>["bodies"]
-type Input = Parameters<typeof changeAccountChoice>[0]
+type Input = Extract<Parameters<typeof changeAccountChoice>[0], { readonly settings: unknown }>
+type IndependentInput = Extract<Parameters<typeof changeAccountChoice>[0], { readonly context: unknown }>
 type SharedInput = Parameters<typeof removeSharedShortcut>[0]
 
 export type SnapshotProofs = [
+  Check<Equal<IndependentInput["context"], Readonly<Required<import("../../shared/model").SetupContext>>>>,
   Check<Equal<Present["setup"]["autoAdd"], readonly { readonly pl: string; readonly takes: "videos" | "shorts" | "both"; readonly pct?: number }[]>>,
   Check<Equal<Present["setup"]["targets"], { readonly [id: string]: string }>>,
   Check<Equal<Present["filters"][string]["channels"][number], readonly [id: string, title: string, handle?: string]>>,

@@ -1,0 +1,7 @@
+{
+  "state": "authored-unexecuted",
+  "bytes": 11339,
+  "sha256": "b3976a0e46a588f6ff977de558263695b413c3c0a5ef6b3f1e2cfa20a07c5b28",
+  "ending": "one LF, then EOF",
+  "basis": "Manually authored ARC-MSG-05 observations. Static Python serialization only. No fixture or product was executed."
+}

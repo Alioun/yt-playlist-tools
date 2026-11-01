@@ -1,0 +1,11 @@
+--- a/src/background/store/local-filter-writer.ts
++++ b/src/background/store/local-filter-writer.ts
+@@ -1763,7 +1763,7 @@
+       deactivate("stopped")
+     }
+     if (result.kind === "committed") {
+-      emit({ kind: "setup-changed", source: "local", acct: input.acct })
++      void input.acct
+       quietUntil = deps.syncClock.now() + 2000
+       if (lifetime.kind === "active") {
+         const arrival = clock()

@@ -1,0 +1,10 @@
+--- a/src/background/store/local-filter-writer.ts
++++ b/src/background/store/local-filter-writer.ts
+@@ -1739,6 +1739,7 @@
+           return { kind: "unconfirmed", write }
+         }
+       }
++      emit({ kind: "setup-changed", source: "local", acct: request.acct })
+       saved.consumed = true
+       const checkedAt = due ? request.at : state.checkedAt
+       if (checkedAt === null) return { kind: "refused", reason: "invalid" }

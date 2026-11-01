@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "module": "Preserve", "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": ["bun"], "strict": true,
+    "noEmit": true, "skipLibCheck": true, "noUncheckedIndexedAccess": true, "resolveJsonModule": true
+  },
+  "files": [
+    "../../../.wxt/wxt.d.ts",
+    "../../../src/background/store/tab-projection.ts",
+    "../../../src/background/store/tab-projection.type-test.ts",
+    "../../../src/background/store/tab-projection.bun-test.ts",
+    "../../../src/background/store/local-filter-writer.type-test.ts",
+    "consumer.ts", "harness.ts", "run.ts", "native.bun-test.ts", "native.type-test.ts", "integration.bun-test.ts"
+  ]
+}

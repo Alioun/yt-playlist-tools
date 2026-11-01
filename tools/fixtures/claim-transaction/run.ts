@@ -5,36 +5,24 @@ import { isJsonValue, type JsonObject, type JsonValue } from "../../../src/share
 import type { ClaimAuthority, ClaimAuthorityState } from "../../../src/background/store/local-claim-writer"
 import { createLocalFilterWriter, createStartingLocalFilterWriter, type SettingsRead } from "../../../src/background/store/local-filter-writer"
 
-import { LEGACY_DELETE_KEYS, type LegacyEvidence } from "../../../src/background/store/legacy"
-import { isInterimSourceKey, isInterimCanonicalKey, type StoreStartupHost } from "../../../src/background/store/interim-persistence"
+import { LEGACY_DELETE_KEYS } from "../../../src/background/store/legacy"
+import type { StoreStartupHost } from "../../../src/background/store/interim-persistence"
+import { createStoreStartupHost } from "../../../src/background/adapters/startup-source"
+import { syntheticStartupInventory } from "../interim-conversion/run"
 
 const context: StoreStartupHost["context"] = { deviceId: "fixture-device", settingsGen: "migration", at: 1,
   shortcutId: "orig01", platform: { browser: "chrome", os: "linux" }, commands: [] }
 
+const originalPathFacts = { legacyAuthorization: { kind: "observed", refreshTokenWasNonempty: false },
+  historicalAuthorization: { kind: "unknown" }, priorCredentialPresence: { kind: "unknown" } } as const
+
 function startupHost(area: { read(): Record<string, unknown>; remove(keys: readonly string[]): void }, effects: unknown[]): StoreStartupHost {
-  return {
-    context,
-    async readInterimSnapshot() {
-      const saved = area.read()
-      return { source: Object.fromEntries(Object.entries(saved).filter(([key]) => isInterimSourceKey(key))),
-        canonical: Object.fromEntries(Object.entries(saved).filter(([key]) => isInterimCanonicalKey(key))),
-        checkpoint: Object.hasOwn(saved, "interimConversion") ? { kind: "present" as const, value: saved.interimConversion } : { kind: "absent" as const },
-        historicalAuthorization: { kind: "unknown" as const }, priorCredentialPresence: { kind: "unknown" as const } }
-    },
-    async readSnapshot() {
-      const records = area.read()
-      const values: LegacyEvidence["values"] = {}
-      for (const key of ["playlists", "addToPlaylistID", "watchLaterShortcut", "requiredWatchPercentage", "toastEnabled", "channelFilters", "channelLabels"] as const) {
-        if (Object.hasOwn(records, key)) values[key] = records[key]
-      }
-      return { schema: records.schema, device: records.device, settingsDocument: records["doc:settings"], unclaimed: records.unclaimed,
-        legacy: { presentKeys: LEGACY_DELETE_KEYS.filter(key => Object.hasOwn(records, key)), values, refreshTokenWasNonempty: false },
-        interimKeysPresent: Object.keys(records).filter(key => key.startsWith("account:") || ["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"].includes(key)) }
-    },
-    async removeLocal(keys) { effects.push({ removeLocal: keys }); area.remove(keys) },
-    async deleteDatabase(name) { effects.push({ deleteDatabase: name }) },
-    async removeSession(keys) { effects.push({ removeSession: keys }) }
-  }
+  return createStoreStartupHost({ context, source: { async readInventory() { return syntheticStartupInventory(area.read(), originalPathFacts) } },
+    cleanup: {
+      async removeLocal(keys) { effects.push({ removeLocal: keys }); area.remove(keys) },
+      async deleteDatabase(name) { effects.push({ deleteDatabase: name }) },
+      async removeSession(keys) { effects.push({ removeSession: keys }) }
+    } })
 }
 
 export function followSettings(owner: Pick<ReturnType<typeof createStartingLocalFilterWriter>, "read" | "subscribe">, publish: (view: SettingsRead) => void) {
@@ -293,12 +281,15 @@ export async function runCanonicalAgreements(api = { create: createStartingLocal
   return { assertions, outcomes }
 }
 
-export async function runJoinedAgreements(api = { create: createStartingLocalFilterWriter, preinitialized: createLocalFilterWriter }) {
+export const joinedAgreementNames = ["unknown-choice", "use-this-browser", "upgrade-note", "proven-automatic", "empty-create", "zero-features", "zero-empty-create", "no-op-overlay", "deleted-original", "denied-site-access", "auto-add-off-progress", "full", "newer", "stale-lookup", "accepted-restart", "disposed-materialize"] as const
+export const sameHistoryAgreementNames = ["automatic-noop", "automatic-edit-progress", "full", "newer", "reset", "accepted-restart", "disposed", "denied-access", "private"] as const
+export async function runJoinedAgreements(api = { create: createStartingLocalFilterWriter, preinitialized: createLocalFilterWriter }, options: { case?: string; sameHistory?: boolean } = {}) {
   const outcomes: unknown[] = [], assertions: string[] = []
   function check(value: unknown, label: string): asserts value { assertions.push(label); if (!value) throw Error(label) }
   const ui = { kind: "ui", windowId: 1, incognito: false } as const
   const remote = (): JsonObject => ({ "s:meta": { v: 1, id: "H", created: 0 }, "s:settings": { v: 1, gen: "remote-settings", at: 10, by: "remote", data: { autoAdd: { on: true }, theme: "dark" }, extension: { keep: true }, ...JSON.parse('{"__proto__":{"inert":true},"toJSON":"inert"}') } })
-  for (const name of ["unknown-choice", "use-this-browser", "upgrade-note", "proven-automatic", "empty-create", "zero-features", "zero-empty-create", "no-op-overlay", "deleted-original", "denied-site-access", "auto-add-off-progress", "full", "newer", "stale-lookup", "accepted-restart", "disposed-materialize"] as const) {
+  for (const name of joinedAgreementNames) {
+    if (options.case && options.case !== name) continue
     const initial: JsonObject = {}, sync = remote()
     if (name === "upgrade-note") { initial.playlists = ["PLabcdefghijklmnop"]; initial.watchLaterShortcut = "k" }
     if (name === "proven-automatic") initial.sync = { joined: null, pushed: {}, status: "off", editedSinceOff: false, everEdited: false }
@@ -369,11 +360,67 @@ export async function runJoinedAgreements(api = { create: createStartingLocalFil
     await owner.dispose()
     outcomes.push({ name, before, review, selected, access, ordering, first, result, serialized, restart, resumed, saved: h.state(), localSets: h.localSets, nativeSets: h.nativeSets, removals: h.removals, effects: h.effects, counters: h.counters() })
   }
-  return { productionConnected: false, native: "waived-unproven", assertions, outcomes }
+  return { productionConnected: false, native: "waived-unproven", assertions, outcomes, sameHistory: options.sameHistory === false ? undefined : await runSameHistoryAgreements(api) }
 }
 function jsonAgreement(raw: unknown): JsonObject { if (!isAgreementObject(raw)) throw Error("Invalid joined agreement JSON"); return raw }
 
-export async function runClaimFixture(api = { create: createStartingLocalFilterWriter, preinitialized: createLocalFilterWriter }) {
+export async function runSameHistoryAgreements(api = { create: createStartingLocalFilterWriter, preinitialized: createLocalFilterWriter }, selectedCase?: string) {
+  const outcomes: unknown[] = [], assertions: string[] = []
+  function check(value: unknown, label: string): asserts value { assertions.push(label); if (!value) throw Error(label) }
+  const ui = { kind: "ui", windowId: 1, incognito: false } as const
+  for (const name of sameHistoryAgreementNames) {
+    if (selectedCase && selectedCase !== name) continue
+    const localSettings: JsonObject = { v: 1, gen: "local-newest-settings", at: 20, by: "stored-L", data: { theme: "light", queueButton: { on: true }, autoAdd: { on: name === "automatic-edit-progress" }, shortcuts: { on: false, preset: true, list: [] } }, ...JSON.parse('{"__proto__":{"preserve":true},"toJSON":"inert"}') }
+    const initial: JsonObject = { schema: 1, device: { id: "stored-L", consent: null, syncOn: false }, sync: { joined: "H", pushed: {}, status: "off", editedSinceOff: false, everEdited: true, extension: { preserve: true } }, "doc:settings": localSettings,
+      "progress:AAAAAAAAAAAAAAAA:0": { remembered: true }, "progress:BBBBBBBBBBBBBBBB:15": { remembered: true } }
+    const remote: JsonObject = { "s:meta": { v: 1, id: "H", created: 0 }, "s:settings": { v: 1, gen: "remote-older-settings", at: 10, by: "R", data: { theme: "dark", queueButton: { on: false }, autoAdd: { on: true } } } }
+    if (name === "full") for (let i = 0; i < 481; i++) remote[`occupied-${i}`] = true
+    if (name === "newer") remote["s:settings"] = { ...jsonAgreement(remote["s:settings"]), v: 2 }
+    if (name === "reset") remote["s:meta"] = { ...jsonAgreement(remote["s:meta"]), reset: true }
+    jsonAgreement(initial.device).upgradeNote = { state: "pending", opened: true, seen: true, reopened: false, details: { from: "1.4.5", autoAdd: { kept: 0, dropped: 0 }, pct: { value: 50, wasUnset: true, authorised: false }, feedback: false, shortcut: { raw: "", key: null, playlist: false, note: "none" }, credentialsDeleted: false } }
+    initial.unclaimed = { from: "1.4.5", autoAdd: [], shortcutPlaylist: null, filters: {}, at: 1 }
+    const h = syncJoinHarness({ local: initial, sync: remote }, "creation-must-not-replace-L", api), owner = h.owner()
+    check(await owner.ready() === "ok", "same-history combined Agree uses the real starting owner")
+    const origin = name === "private" ? { ...ui, incognito: true } : ui
+    const shown = await owner.readAgreement(origin); check(shown.kind === "review", "same-history combined Agree has a real canonical review")
+    const before = h.state(), beforeSets = h.localSets.length
+    if (name === "accepted-restart") h.fault("materialize", "rejected-unchanged")
+    if (name === "disposed") h.fault("materialize", "disposed-after")
+    let accessCalls = 0
+    const access = { www: true, music: name !== "denied-access", browserMenu: true }
+    function requestAccess() { accessCalls++; return Promise.resolve(access) }
+    const selected: readonly PageFeatureId[] = name === "denied-access" ? ["music-keys"] : ["queue-button"]
+    const result = await owner.agree(origin, { review: shown.review, displayedVersion: shown.version, choice: { kind: "upgrade-note", percentage: "keep", selected, syncOn: true, join: { kind: "prepare" } }, access: requestAccess() })
+    check(result.kind !== "choice-required", "same-history automatic selection never asks a side question during Agree")
+    let restart: unknown
+    if (name === "full" || name === "newer" || name === "reset") {
+      check(result.kind !== "joined" && h.localSets.length === beforeSets && stableAgreement(h.state()) === stableAgreement(before), "whole combined refusal saves no consent, switch or draft " + name)
+    } else if (name === "accepted-restart" || name === "disposed") {
+      check(result.kind === (name === "accepted-restart" ? "failed" : "unconfirmed"), "interrupted automatic Agree publishes no combined success")
+      const serialized = JSON.stringify(h.state()); await owner.dispose()
+      const fresh = syncJoinHarness(JSON.parse(serialized), "new-candidates-must-not-run", api), restarted = fresh.owner()
+      const ready = await restarted.ready().then(value => ({ value }), error => ({ pending: error.result }))
+      check(fresh.localSets.length === 0 && fresh.counters().nowCalls === 0 && fresh.counters().gen === 0, "accepted automatic Agree restart is read-only")
+      const resumed = await restarted.resumeSyncJoin(ui)
+      check(resumed.kind === "committed" && fresh.counters().nowCalls === 0 && fresh.counters().gen === 0 && accessCalls === 1, "fixed automatic Agree resumes without another access request, consent time or preset")
+      await restarted.dispose(); restart = { serialized, ready, resumed, state: fresh.state(), effects: fresh.effects, counters: fresh.counters() }
+    } else {
+      check(result.kind === "joined" && result.join.kind === "committed", "automatic combined Agree actually completes " + name + " " + stableAgreement(result))
+      const saved = h.state().local, settings = jsonAgreement(saved["doc:settings"]), history = jsonAgreement(saved.sync)
+      check(jsonAgreement(jsonAgreement(saved.device).consent).at === 100 && jsonAgreement(saved.device).syncOn === true && history.everEdited === true, "automatic Agree persists the fixed click and preserves historical provenance")
+      check(jsonAgreement(settings.data).theme === "light", "Agree presentation and materialization both select the newer local Settings")
+      check(stableAgreement(jsonAgreement(jsonAgreement(settings.data).shortcuts).list) === "[]", "automatic Agree preserves the deleted original shortcut row")
+      if (name === "automatic-noop" || name === "private") check(!result.settingsChanged && settings.gen === "local-newest-settings" && h.counters().gen === 0, "selected matching applications agree with materialization without restamping")
+      if (name === "automatic-edit-progress") check(result.settingsChanged && stableAgreement(saved["progress:AAAAAAAAAAAAAAAA:0"]) === "{}" && stableAgreement(saved["progress:BBBBBBBBBBBBBBBB:15"]) === "{}", "automatic Agree clears every recognized progress shard after its actual on-to-off edit")
+      if (name === "denied-access") check(result.applications.some(x => x.state.kind === "held"), "automatic Agree retains denied-access application reporting")
+    }
+    await owner.dispose()
+    outcomes.push({ name, before, shown, access, accessCalls, result, restart, state: h.state(), localSets: h.localSets, nativeSets: h.nativeSets, mutations: h.mutationSnapshots, effects: h.effects, counters: h.counters() })
+  }
+  return { outcomes, assertions }
+}
+
+export async function runClaimFixture(api = { create: createStartingLocalFilterWriter, preinitialized: createLocalFilterWriter }, includeAgreements = true) {
   const acct = "synthetic_acct01", playlist = "PLowned"
   if (!isAccountKey(acct) || !isPlaylistId(playlist)) throw new Error("Invalid synthetic fixture identifiers")
   const authority: ClaimAuthority = { acct, lease: "fixture-lease", browserSession: "fixture-session",
@@ -604,8 +651,8 @@ export async function runClaimFixture(api = { create: createStartingLocalFilterW
     if (restart.kind !== "empty" || consumed.kind !== "consumed" || JSON.stringify(records) !== JSON.stringify(expectedSaved)) throw Error("Notice removal did not survive restart")
     noticeOutcomes.push({ name: "claim-notice", input, claim, first, second, pendingAfterRestart, savedBeforeOK, presentation, action, acknowledgement, reread, duplicateOK, restart, consumed, before, after, counters, saved: records, batches, effects, events })
   }
-  return { fixture: "exclusive-synthetic-atomic-local-only", outcomes, startupOutcomes, settingsOutcomes, noticeOutcomes, agreementOutcomes: await runCanonicalAgreements(api), joinAgreementOutcomes: await runJoinedAgreements(api) }
+  return { fixture: "exclusive-synthetic-atomic-local-only", outcomes, startupOutcomes, settingsOutcomes, noticeOutcomes, agreementOutcomes: includeAgreements ? await runCanonicalAgreements(api) : undefined, joinAgreementOutcomes: includeAgreements ? await runJoinedAgreements(api) : undefined }
 }
 
-export const fixtureRun = runClaimFixture()
+export const fixtureRun = import.meta.main ? runClaimFixture() : Promise.resolve(undefined)
 if (import.meta.main) fixtureRun.then(result => console.log(JSON.stringify(result, (_, value: unknown) => value instanceof Error ? { name: value.name, message: value.message } : value)))

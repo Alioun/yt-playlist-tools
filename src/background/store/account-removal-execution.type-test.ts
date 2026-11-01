@@ -1,7 +1,7 @@
 import type { AccountKey, Device, DocumentKey } from "../../shared/model"
 import type { Origin } from "../../shared/contracts/results"
 import { createLocalFilterWriter } from "./local-filter-writer"
-import { executeAccountRemoval, type AccountRemovalDependencies, type AccountRemovalHost, type AccountDocumentKey,
+import { executeAccountRemoval, planAccountDocumentWrite, type AccountRemovalDependencies, type AccountRemovalHost, type AccountDocumentKey,
   type PendingAccountRemoval, type RemovalConfirmation, type RemovalPreparation, type RemovalResult, type UiOrigin } from "./account-removal-execution"
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
@@ -30,8 +30,8 @@ function negative(host: Extract<AccountRemovalHost, { kind: "fixture" }>, deps: 
   void deps.sync.remove(["s:settings"])
   // @ts-expect-error Session removal is constrained to owned account keys.
   void host.session.remove([{ kind: "paused", acct }])
-  // @ts-expect-error Mixed session writes accept exactly the five named collections.
-  void host.session.set({ tabs: {} })
+  // @ts-expect-error Mixed session writes accept only the named collections.
+  void host.session.set({ unknownCollection: {} })
   // @ts-expect-error Local-mode manifest members cannot carry after tombstones.
   const local: PendingAccountRemoval = { v: 1, kind: "account-remove", acct, deviceId: "fixture", consent: { v: 1, at: 1 }, mode: "local", documents: [{ ...before, after: {} }] }
   // @ts-expect-error An accepted removal must start with a Setup member.
@@ -42,6 +42,10 @@ function negative(host: Extract<AccountRemovalHost, { kind: "fixture" }>, deps: 
   void writer.removeAccountSetup(origin, { kind: "remove-account", acct })
   // @ts-expect-error A background origin cannot prepare a user confirmation.
   void writer.prepareAccountRemoval({ kind: "background" }, acct)
+  // @ts-expect-error Document-scoped admission cannot flush or change global ownership.
+  void planAccountDocumentWrite({ local: {}, sync: {}, intent: { kind: "flush" } })
+  // @ts-expect-error The account boundary cannot admit a shared Settings edit.
+  void planAccountDocumentWrite({ local: {}, sync: {}, intent: { kind: "unchanged", key: { kind: "settings" } } })
   void local; void empty
 }
 void negative

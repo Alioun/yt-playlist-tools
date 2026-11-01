@@ -1,0 +1,17 @@
+{"case":"player-confirmed","obligations":["YT-GT-02","YT-GT-03","YT-GT-04","YT-GT-05","YT-GT-06","YT-GT-07","YT-GT-12","YT-GT-17"],"expect":{"result":{"kind":"player","count":3,"confirmed":true,"closed":4,"navigated":0},"created":[{"windowId":1,"url":"https://www.youtube.com/watch_videos?video_ids=gat00000001,gat00000002,gat00000003","active":true}],"removed":[10,11,12,13],"open":[14,15],"tabsSeamCallsToGatheredTabs":0}}
+{"case":"player-callback-only","obligations":["YT-GT-17","YT-GT-36"],"expect":{"result":{"kind":"player","confirmed":false,"closed":0},"removed":[],"events":[{"kind":"signal","destination":"player","signal":"no-effect"}]}}
+{"case":"player-over-50","obligations":["YT-GT-13","YT-GT-14"],"expect":{"result":{"kind":"queue","why":"player-takes-50","count":51,"outcome":"confirmed","closed":51}}}
+{"case":"health-refusal","obligations":["YT-GT-36"],"expect":{"result":{"kind":"unhealthy","to":"player"},"created":[],"removed":[]}}
+{"case":"queue-200","obligations":["YT-GT-14","YT-GT-17"],"expect":{"result":{"kind":"queue","why":"chosen","count":200,"left":3,"outcome":"confirmed","closed":200},"queueAddListSizes":[199],"stillOpen":[500,501,502]}}
+{"case":"queue-partial","obligations":["YT-GT-14","YT-GT-17"],"expect":{"result":{"kind":"queue","outcome":"not-confirmed","closed":0},"removed":[]}}
+{"case":"queue-not-loaded","obligations":["YT-GT-14"],"expect":{"result":{"kind":"queue","outcome":"not-loaded","closed":0},"runCalls":0}}
+{"case":"playlist-partial-batch","obligations":["YT-GT-15","YT-GT-17","YT-GT-18","YT-GT-19","YT-GT-20"],"expect":{"result":{"kind":"playlist","saved":2,"already":1,"failed":["gat00000003"],"closed":2,"navigated":1,"kept":true,"retry":true},"removed":[10,11],"recordClosed":[{"url":"https://www.youtube.com/watch?v=gat00000001","index":0,"title":"Added - YouTube"},{"url":"https://www.youtube.com/watch?v=gat00000002","index":1,"title":"Already - YouTube"}],"recentAdds":1}}
+{"case":"undo-exact-reopen","obligations":["YT-GT-21"],"expect":{"undo":{"kind":"undone","reopened":2},"untouched":["gat00000005"],"created":[{"windowId":1,"url":"https://www.youtube.com/watch?v=gat00000001","active":false,"index":0},{"windowId":1,"url":"https://www.youtube.com/watch?v=gat00000002","active":false,"index":1}],"kept":2}}
+{"case":"undo-window-gone","obligations":["YT-GT-21"],"expect":{"undo":{"kind":"undone","reopened":1},"createWindow":[["https://www.youtube.com/watch?v=gat00000001"]]}}
+{"case":"undo-failure-before-reopen","obligations":["YT-GT-21"],"expect":{"undo":{"kind":"undo-failed"},"createdAfterUndo":0}}
+{"case":"explicit-retry","obligations":["YT-GT-20"],"expect":{"first":{"kind":"playlist","saved":0,"retry":true,"closed":0},"spontaneousReads":0,"retry":{"kind":"playlist","saved":1,"closed":1},"retryReads":1}}
+{"case":"private-isolation","obligations":["YT-GT-30"],"expect":{"result":{"kind":"playlist","scope":"private","saved":1},"removed":[20],"storedMentionsVideo":false,"normalLast":0,"privateLast":1}}
+{"case":"dispose-during-confirmation","obligations":["YT-GT-17"],"expect":{"result":{"kind":"stopped"},"removed":[],"retryAfterDispose":{"kind":"stopped"}}}
+{"case":"quiesce-during-batch","obligations":["YT-GT-18"],"expect":{"result":{"kind":"stopped"},"removed":[]}}
+{"case":"restart-recognition","obligations":["YT-GT-21"],"expect":{"undoable":"the gather's own record ID","undo":{"kind":"undone","reopened":1}}}
+{"case":"language-order","obligations":["YT-GT-08","YT-GT-09"],"expect":{"url":"https://www.youtube.com/watch_videos?video_ids=gat00000003,gat00000002,gat00000001"}}

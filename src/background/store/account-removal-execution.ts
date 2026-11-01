@@ -7,14 +7,17 @@ import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contr
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
 import type { LocalWriteStorage, SyncStorage } from "./local-filter-writer"
 import { planSetupRemoval } from "./accounts"
-import { planSyncWrite, sameSyncJson, type SyncDocumentRecord } from "./sync-write-admission"
+import { planSyncWrite, sameSyncJson, type SyncDocumentRecord, type SyncWritePlan } from "./sync-write-admission"
+import { readSyncDocument } from "./sync-codec"
 import { planAccountSessionRemoval, type RemovalSessionCollection, type RemovalSessionKey } from "./account-removal-session"
+import { acceptedRemovalLedger, permitsExactRemoval, removalRetirementLedger, selectedRetiringRemoval, type ExactRemovalPermit } from "./consent-recovery"
+import { readConsentDevice } from "./consent-withdrawal"
 
 export type UiOrigin = Extract<Origin, { kind: "ui" }>
 export type RemovalConfirmation = { readonly kind: "account-removal-confirmation" }
 export type RemovalScope = { readonly kind: "this-browser" } | { readonly kind: "syncing-browsers"; readonly joined: string }
 export type RemovalStage = "prepare" | "accept" | "documents" | "local-cleanup" | "session-cleanup" | "device" | "retire"
-export type RemovalUnavailableReason = "startup" | "newer-layout" | "sync-writer-required" | "stale" | "disposed" |
+export type RemovalUnavailableReason = "consent-held" | "startup" | "newer-layout" | "sync-writer-required" | "stale" | "disposed" |
   "removal-host" | "inventory" | "session-layout" | "pending-removal"
 export type RemovalRefusal = { readonly kind: "result"; readonly result: Extract<ChangeResult, { refused: string }> }
 export type RemovalUnavailable = { readonly kind: "unavailable"; readonly reason: RemovalUnavailableReason }
@@ -23,7 +26,8 @@ export type RemovalPreparation =
   | { readonly kind: "confirmation-required"; readonly confirmation: RemovalConfirmation; readonly acct: AccountKey; readonly label: string; readonly scope: RemovalScope }
   | RemovalRefusal | RemovalUnavailable | { readonly kind: "failed"; readonly stage: "prepare"; readonly error: unknown }
 export type RemovalResult =
-  | { readonly kind: "committed" | "unchanged" }
+  | { readonly kind: "committed" }
+  | { readonly kind: "unchanged" }
   | RemovalRefusal | RemovalUnavailable
   | { readonly kind: "failed"; readonly stage: RemovalStage; readonly error: unknown }
   | { readonly kind: "unconfirmed"; readonly stage: RemovalStage;
@@ -70,6 +74,7 @@ type Authority = {
   readonly history?: { readonly raw: JsonObject; readonly editedSinceOff: boolean; readonly joined: string | null }
 }
 export type AccountRemovalDependencies = {
+  readonly recoveryPermit?: ExactRemovalPermit
   readonly local: LocalWriteStorage; readonly sync: Pick<SyncStorage, "get">; readonly host: AccountRemovalHost;
   readonly authority: (records: Readonly<Record<string, unknown>>) => Authority | { readonly kind: "unavailable"; readonly reason: RemovalUnavailableReason | "account-context" };
   readonly repairHistory: (raw: JsonObject, repairs: readonly SyncDocumentRecord[]) => JsonObject | undefined;
@@ -222,11 +227,13 @@ export async function prepareAccountRemovalCapture(deps: AccountRemovalDependenc
   } catch (error) { return { kind: "failed", stage: "prepare", error } }
 }
 
-function matchesAuthority(deps: AccountRemovalDependencies, local: JsonObject, record: PendingAccountRemoval, raw: JsonObject): boolean {
+function matchesAuthority(deps: AccountRemovalDependencies, local: JsonObject, record: PendingAccountRemoval, raw: JsonObject, ordinaryGeneration?: number): boolean {
   const ready = deps.authority(local)
+  const control = ordinaryGeneration === undefined ? undefined : readConsentDevice(local)
+  const ordinary = !Object.hasOwn(local, "consent:state") || control?.kind === "supported" && control.control?.state.kind === "agreed" && control.control.generation === ordinaryGeneration
   return readFirstEditProvenance(Object.hasOwn(local, "sync") ? { kind: "present", raw: local.sync } : { kind: "absent" }).kind !== "invalid" &&
     ready.kind === "ready" && ready.device.id === record.deviceId && object(ready.rawDevice.consent) &&
-    object(raw.consent) && sameSyncJson(ready.rawDevice.consent, raw.consent) &&
+    object(raw.consent) && (sameSyncJson(ready.rawDevice.consent, raw.consent) && ordinary || permitsExactRemoval(deps.recoveryPermit, local, raw)) &&
     (record.mode === "local" ? !ready.device.syncOn : ready.device.syncOn && ready.history?.joined === record.joined)
 }
 function matchesDocuments(local: JsonObject, record: PendingAccountRemoval): boolean {
@@ -239,13 +246,14 @@ function matchesDocuments(local: JsonObject, record: PendingAccountRemoval): boo
   })
 }
 
-export async function executeAccountRemoval(deps: AccountRemovalDependencies, capture: RemovalCapture): Promise<RemovalResult> {
+export async function executeAccountRemoval(deps: AccountRemovalDependencies, capture: RemovalCapture, expectedRecords?: JsonObject): Promise<RemovalResult> {
   let stage: RemovalStage = "prepare"
   try {
     if (deps.host.kind !== "fixture") return unavailable("removal-host")
     const input = await deps.local.get(null)
     if (!object(input)) return unavailable("inventory")
     const records = copy(input), ready = deps.authority(records)
+    if (expectedRecords && !sameSyncJson(records, expectedRecords)) return unavailable("stale")
     if (ready.kind !== "ready") return unavailable(ready.reason === "account-context" ? "inventory" : ready.reason)
     const current = captureAccountRemoval(records, capture.acct, ready)
     if (current.kind !== "captured" || !sameSyncJson(captureJson(capture), captureJson(current.capture)) || deps.isStopped()) return unavailable("stale")
@@ -267,7 +275,7 @@ export async function executeAccountRemoval(deps: AccountRemovalDependencies, ca
       const [first, ...rest] = documents
       if (!first) return unavailable("inventory")
       const remote = await deps.sync.get()
-      const admission = planSyncWrite({ local: records, sync: remote, intent: { kind: "changed-batch", documents: [
+      const admission = planAccountDocumentWrite({ local: records, sync: remote, intent: { kind: "changed-batch", documents: [
         { key: first.key, document: first.after }, ...rest.map(member => ({ key: member.key, document: member.after }))
       ] } })
       if (admission.kind === "refused") return { kind: "result", result: { refused: admission.reason } }
@@ -283,12 +291,14 @@ export async function executeAccountRemoval(deps: AccountRemovalDependencies, ca
 
 export async function resumePendingAccountRemoval(deps: AccountRemovalDependencies): Promise<RemovalResult> {
   try {
+    if (deps.isStopped()) return unavailable("disposed")
     const localInput = await deps.local.get(null)
     if (!object(localInput)) return unavailable("inventory")
     const local = copy(localInput)
-    if (!Object.hasOwn(local, pendingAccountRemovalKey)) return { kind: "unchanged" }
+    const terminal = selectedRetiringRemoval(deps.recoveryPermit, local)
+    if (!Object.hasOwn(local, pendingAccountRemovalKey) && !terminal) return { kind: "unchanged" }
     if (deps.host.kind !== "fixture") return unavailable("removal-host")
-    const parsed = parsePendingAccountRemoval(local[pendingAccountRemovalKey])
+    const parsed = parsePendingAccountRemoval(local[pendingAccountRemovalKey] ?? terminal)
     if (!parsed || !matchesAuthority(deps, local, parsed.record, parsed.raw) || !matchesDocuments(local, parsed.record)) return unavailable("pending-removal")
     const session = await deps.host.session.get()
     if (!object(session) || planAccountSessionRemoval(parsed.record.acct, session).kind !== "supported") return unavailable("session-layout")
@@ -300,7 +310,10 @@ async function complete(deps: AccountRemovalDependencies, parsed: NonNullable<Re
   initial: JsonObject, initialSession: JsonObject, accepting: boolean): Promise<RemovalResult> {
   if (deps.host.kind !== "fixture") return unavailable("removal-host")
   const host = deps.host, { record, raw } = parsed
-  let local = initial, session = initialSession, stage: RemovalStage = accepting ? "accept" : "documents"
+  const initialControl = accepting ? readConsentDevice(initial) : undefined
+  const ordinaryGeneration = initialControl?.kind === "supported" && initialControl.control?.state.kind === "agreed" ? initialControl.control.generation : undefined
+  const terminal = selectedRetiringRemoval(deps.recoveryPermit, initial)
+  let local = initial, session = initialSession, stage: RemovalStage = terminal ? "retire" : accepting ? "accept" : "documents"
   let accepted = !accepting
   type Problem = Exclude<RemovalResult, { kind: "committed" | "unchanged" }>
   async function inspect(expectedLocal: JsonObject, expectedSession: JsonObject, mutation: Extract<RemovalResult, { kind: "unconfirmed" }>["mutation"]): Promise<Problem | undefined> {
@@ -309,7 +322,7 @@ async function complete(deps: AccountRemovalDependencies, parsed: NonNullable<Re
       const localInput = await deps.local.get(null)
       observedLocal = object(localInput) ? copy(localInput) : localInput
       if (!object(observedLocal)) return { kind: "unconfirmed", stage, mutation, cause: { kind: "readback" } }
-      if (!matchesAuthority(deps, observedLocal, record, raw) || !matchesDocuments(observedLocal, record) ||
+      if (!matchesAuthority(deps, observedLocal, record, raw, ordinaryGeneration) || !matchesDocuments(observedLocal, record) ||
         accepted && stage !== "retire" && (!object(observedLocal[pendingAccountRemovalKey]) || !sameSyncJson(raw, observedLocal[pendingAccountRemovalKey]))) {
         return { kind: "unconfirmed", stage, mutation, cause: { kind: "authority" } }
       }
@@ -322,7 +335,7 @@ async function complete(deps: AccountRemovalDependencies, parsed: NonNullable<Re
       return { kind: "unconfirmed", stage, mutation, cause: { kind: "read-failed", error } }
     }
     if (!object(observedLocal) || !object(observedSession)) return { kind: "unconfirmed", stage, mutation, cause: { kind: "readback" } }
-    if (!matchesAuthority(deps, observedLocal, record, raw) || !matchesDocuments(observedLocal, record) ||
+    if (!matchesAuthority(deps, observedLocal, record, raw, ordinaryGeneration) || !matchesDocuments(observedLocal, record) ||
       accepted && stage !== "retire" && (!object(observedLocal[pendingAccountRemovalKey]) || !sameSyncJson(raw, observedLocal[pendingAccountRemovalKey]))) {
       return { kind: "unconfirmed", stage, mutation, cause: { kind: "authority" } }
     }
@@ -335,7 +348,7 @@ async function complete(deps: AccountRemovalDependencies, parsed: NonNullable<Re
       { kind: "session-set"; key: RemovalSessionCollection; value: JsonValue } | { kind: "session-remove"; key: RemovalSessionKey }): Promise<Problem | undefined> {
     const before = await inspect(local, session, { kind: "resolved" })
     if (before) return before
-    if (!accepted && deps.isStopped()) return unavailable("disposed")
+    if (deps.isStopped()) return unavailable("disposed")
     let mutation: Extract<RemovalResult, { kind: "unconfirmed" }>["mutation"] = { kind: "resolved" }
     try {
       switch (operation.kind) {
@@ -358,20 +371,47 @@ async function complete(deps: AccountRemovalDependencies, parsed: NonNullable<Re
     const next = { ...local }; delete next[name]
     return effect(next, session, { kind: "local-remove", key })
   }
+  async function retire(): Promise<RemovalResult> {
+    stage = "retire"
+    const retiring = removalRetirementLedger(local, raw, "retiring", deps.recoveryPermit)
+    if (!retiring) return unavailable("consent-held")
+    if (Object.keys(retiring).length && !sameSyncJson({ ...local, ...retiring }, local)) {
+      const issue = await effect({ ...local, ...retiring }, session, { kind: "local-set", items: retiring }); if (issue) return issue
+    }
+    const retired = await removeLocal({ kind: "continuation" }); if (retired) return retired
+    const final = await inspect(local, session, { kind: "resolved" }); if (final) return final
+    const done = removalRetirementLedger(local, raw, "done", deps.recoveryPermit)
+    if (!done) return unavailable("consent-held")
+    if (Object.keys(done).length) {
+      const issue = await effect({ ...local, ...done }, session, { kind: "local-set", items: done }); if (issue) return issue
+    }
+    return { kind: "committed" }
+  }
   try {
     const preflight = await inspect(local, session, { kind: "resolved" })
     if (preflight) return preflight
+    if (terminal) {
+      const cleanSession = planAccountSessionRemoval(record.acct, session)
+      if (cleanSession.kind !== "supported" || cleanSession.effects.length || !object(local.device) || decodeDevice(local.device).lastAccount === record.acct ||
+        Object.keys(local).some(name => name === `cache:${record.acct}` || name.startsWith(`progress:${record.acct}:`)) ||
+        !record.documents.every(member => record.mode === "local" ? !Object.hasOwn(local, documentKey(member.key)) : "after" in member && object(member.after) && sameSyncJson(local[documentKey(member.key)] ?? null, member.after))) return unavailable("stale")
+      return await retire()
+    }
     if (accepting) {
-      const issue = await effect({ ...local, [pendingAccountRemovalKey]: raw }, session, { kind: "local-set", items: { [pendingAccountRemovalKey]: raw } })
+      const registration = acceptedRemovalLedger(local, raw)
+      if (!registration) return unavailable("consent-held")
+      const items = { [pendingAccountRemovalKey]: raw, ...registration }
+      const issue = await effect({ ...local, ...items }, session, { kind: "local-set", items })
       if (issue) return issue
       accepted = true
     }
     stage = "documents"
     if (record.mode === "synced") {
       {
+        if (deps.isStopped()) return unavailable("disposed")
         const remote = await deps.sync.get()
         const [first, ...rest] = record.documents
-        const plan = planSyncWrite({ local, sync: remote, intent: { kind: "changed-batch", documents: [
+        const plan = planAccountDocumentWrite({ local, sync: remote, intent: { kind: "changed-batch", documents: [
           { key: first.key, document: first.after }, ...rest.map(member => ({ key: member.key, document: member.after }))
         ] } })
         const issue = await inspect(local, session, { kind: "resolved" }); if (issue) return issue
@@ -420,9 +460,38 @@ async function complete(deps: AccountRemovalDependencies, parsed: NonNullable<Re
       const issue = await effect({ ...local, device }, session, { kind: "local-set", items: { device } }); if (issue) return issue
     }
     const confirmed = await inspect(local, session, { kind: "resolved" }); if (confirmed) return confirmed
-    stage = "retire"
-    const retired = await removeLocal({ kind: "continuation" }); if (retired) return retired
-    const final = await inspect(local, session, { kind: "resolved" }); if (final) return final
-    return { kind: "committed" }
+    return await retire()
   } catch (error) { return { kind: "failed", stage, error } }
+}
+
+// Admission projects unrelated unreadable documents only. Persistence always uses the original inventory.
+type AccountWrite = { readonly key: AccountDocumentKey; readonly document: JsonObject }
+export function planAccountDocumentWrite(input: {
+  readonly local: Readonly<Record<string, unknown>>
+  readonly sync: Readonly<Record<string, unknown>>
+  readonly intent:
+    | { readonly kind: "unchanged"; readonly key: AccountDocumentKey }
+    | ({ readonly kind: "changed" } & AccountWrite)
+    | { readonly kind: "changed-batch"; readonly documents: readonly [AccountWrite, ...AccountWrite[]] }
+}): SyncWritePlan {
+  if (!object(input.local) || !object(input.sync) || !object(input.local.sync) || !object(input.local.sync.pushed)) return { kind: "unavailable" }
+  const addressed = new Set(input.intent.kind === "changed-batch"
+    ? input.intent.documents.map(item => documentKey(item.key)) : [documentKey(input.intent.key)])
+  const local = { ...input.local }, pushed = { ...input.local.sync.pushed }
+  const items = Object.entries(input.sync).map(([key, value]) => ({ key, value }))
+  for (const [name, raw] of Object.entries(input.local)) {
+    const key = parseDocumentKey(name)
+    if (!key || documentKey(key) !== name || addressed.has(name)) continue
+    if (readSyncDocument({ key, items: [{ key: `s:${name.slice(4)}`, value: raw }] }).kind !== "newer-version") continue
+    const remote = readSyncDocument({ key, items })
+    if (remote.kind === "value" || remote.kind === "deleted") {
+      local[name] = remote.json
+      pushed[name] = remote.kind === "value" ? remote.value.document.gen : remote.document.gen
+    } else if (remote.kind === "absent" || remote.kind === "newer-version") {
+      delete local[name]
+      delete pushed[name]
+    } else return { kind: "unavailable" }
+  }
+  local.sync = { ...input.local.sync, pushed }
+  return planSyncWrite({ ...input, local })
 }

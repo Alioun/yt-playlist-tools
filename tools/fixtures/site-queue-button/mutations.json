@@ -1,0 +1,228 @@
+{
+ "state": "UNEXECUTED",
+ "rule": "apply one mutation to a fresh complete copy; every expectedRed test must fail and every other expected test must keep its result",
+ "mutations": [
+  {
+   "id": "M01-noisy-toast",
+   "file": "src/site/features/queue-button/model.ts",
+   "anchor": "case \"confirmed\": return feedback && outcome.quiet ? \"added\" : null",
+   "replacement": "case \"confirmed\": return feedback ? \"added\" : null",
+   "expectedRed": [
+    "a noisy confirmed add stands without our toast and is not resent"
+   ],
+   "requirement": "YT-Q-05"
+  },
+  {
+   "id": "M02-deadline-is-failure",
+   "file": "src/site/features/queue-button/model.ts",
+   "anchor": "if (answer.reason === \"unconfirmed\") return { kind: \"unconfirmed\", quiet: true, cause: \"deadline\" }",
+   "replacement": "if (answer.reason === \"unconfirmed\") return { kind: \"failed\", reason: \"failed\" }",
+   "expectedRed": [
+    "a PageLink deadline is unconfirmed, not failure or success"
+   ],
+   "requirement": "YT-Q-06"
+  },
+  {
+   "id": "M03-busy-sends",
+   "file": "src/site/features/queue-button/model.ts",
+   "anchor": "busy: { glyph: \"spinner\", label: \"busy\", sends: false }",
+   "replacement": "busy: { glyph: \"spinner\", label: \"busy\", sends: true }",
+   "expectedRed": [
+    "busy ignores repeated clicks and key repeat, and Added ignores another click"
+   ],
+   "requirement": "YT-Q-07"
+  },
+  {
+   "id": "M04-added-sends",
+   "file": "src/site/features/queue-button/model.ts",
+   "anchor": "added: { glyph: \"check\", label: \"added\", sends: false }",
+   "replacement": "added: { glyph: \"check\", label: \"added\", sends: true }",
+   "expectedRed": [
+    "busy ignores repeated clicks and key repeat, and Added ignores another click"
+   ],
+   "requirement": "YT-Q-07"
+  },
+  {
+   "id": "M05-unconfirmed-hidden-by-feedback",
+   "file": "src/site/features/queue-button/model.ts",
+   "anchor": "case \"unconfirmed\": return \"unconfirmed\"",
+   "replacement": "case \"unconfirmed\": return feedback ? \"unconfirmed\" : null",
+   "expectedRed": [
+    "only a confirmed answer renders Added; a page answer without confirmation is sent-unconfirmed and resends only on click"
+   ],
+   "requirement": "YT-Q-08"
+  },
+  {
+   "id": "M06-failure-hidden-by-feedback",
+   "file": "src/site/features/queue-button/model.ts",
+   "anchor": "case \"failed\": return \"failed\"",
+   "replacement": "case \"failed\": return feedback ? \"failed\" : null",
+   "expectedRed": [
+    "failure shows with feedback off for 1.5 s, then idle, and never resends"
+   ],
+   "requirement": "YT-Q-08"
+  },
+  {
+   "id": "M07-failed-duration",
+   "file": "src/site/features/queue-button/model.ts",
+   "anchor": "export const failedForMs = 1500",
+   "replacement": "export const failedForMs = 2000",
+   "expectedRed": [
+    "failure shows with feedback off for 1.5 s, then idle, and never resends"
+   ],
+   "requirement": "YT-Q-07"
+  },
+  {
+   "id": "M08-no-native-check",
+   "file": "src/site/features/queue-button/feature.ts",
+   "anchor": "if (current.target.element.querySelector(nativeQueue)) return null",
+   "replacement": "if (current.target.element.querySelector(\"[data-never-native]\")) return null",
+   "expectedRed": [
+    "YouTube's own hover Add to queue suppresses our slot at the 150 ms recheck",
+    "YouTube's own hover Add to queue suppresses our slot at the 900 ms recheck"
+   ],
+   "requirement": "YT-Q-04"
+  },
+  {
+   "id": "M09-one-recheck",
+   "file": "src/site/features/queue-button/feature.ts",
+   "anchor": "export const recheckAfterMs = [150, 900] as const",
+   "replacement": "export const recheckAfterMs = [150] as const",
+   "expectedRed": [
+    "YouTube's own hover Add to queue suppresses our slot at the 900 ms recheck"
+   ],
+   "requirement": "UI-YT-12"
+  },
+  {
+   "id": "M10-undo-keeps-toast",
+   "file": "src/site/features/queue-button/feature.ts",
+   "anchor": "    handle()?.release()\n",
+   "replacement": "",
+   "expectedRed": [
+    "confirmed quiet success offers Undo for exactly the captured entry; success closes and returns the item to idle"
+   ],
+   "requirement": "YT-Q-09"
+  },
+  {
+   "id": "M11-navigation-keeps-state",
+   "file": "src/site/features/queue-button/feature.ts",
+   "anchor": "page.watch(\"nav\", () => { outcomes.reset(); render() })",
+   "replacement": "page.watch(\"nav\", () => { render() })",
+   "expectedRed": [
+    "navigation during the awaited add resets the page view without reviving the old state"
+   ],
+   "requirement": "YT-Q-07"
+  },
+  {
+   "id": "M12-recycled-renderer",
+   "file": "src/site/features/queue-button/feature.ts",
+   "anchor": "if (!fresh || !sameItem(fresh, value.target) || !value.link.isConnected)",
+   "replacement": "if (!value.link.isConnected)",
+   "expectedRed": [
+    "state belongs to the video: duplicates share Added and a recycled renderer shows its new item"
+   ],
+   "requirement": "YT-Q-07"
+  },
+  {
+   "id": "M13-notice-every-hover",
+   "file": "src/site/features/queue-button/feature.ts",
+   "anchor": "if (!noticed) { noticed = true; notices.wouldAct(\"queue-button\") }",
+   "replacement": "notices.wouldAct(\"queue-button\")",
+   "expectedRed": [
+    "not working draws nothing and asks for the notice once at the first card hover"
+   ],
+   "requirement": "YT-Q-10"
+  },
+  {
+   "id": "M14-shorts-supported",
+   "file": "src/site/features/queue-button/feature.ts",
+   "anchor": "return target.family !== \"shorts\" && target.identity.kind === \"video\" ? target : null",
+   "replacement": "return target",
+   "expectedRed": [
+    "ytm-shorts-lockup-view-model gets no queue button"
+   ],
+   "requirement": "UI-YT-14"
+  },
+  {
+   "id": "M15-no-preview",
+   "file": "src/site/features/queue-button/feature.ts",
+   "anchor": "const preview = covering(document, current.link)",
+   "replacement": "const preview = null",
+   "expectedRed": [
+    "search's inline preview takes the host while it covers the card"
+   ],
+   "requirement": "UI-YT-11"
+  },
+  {
+   "id": "M16-focus-ignored",
+   "file": "src/site/features/queue-button/feature.ts",
+   "anchor": "scope.on(document, \"focusin\", refresh, true)",
+   "replacement": "scope.on(document, \"focusout\", refresh, true)",
+   "expectedRed": [
+    "keyboard-visible thumbnail focus shows the overlay without moving focus"
+   ],
+   "requirement": "UI-YT-10"
+  },
+  {
+   "id": "M17-inset",
+   "file": "src/site/kit/overlay/index.ts",
+   "anchor": "const inset = 4",
+   "replacement": "const inset = 8",
+   "expectedRed": [
+    "placement sits 4 px into the thumbnail and stacks in a row under 100 px"
+   ],
+   "requirement": "UI-YT-07"
+  },
+  {
+   "id": "M18-row-threshold",
+   "file": "src/site/kit/overlay/index.ts",
+   "anchor": "const rowBelow = 100",
+   "replacement": "const rowBelow = 50",
+   "expectedRed": [
+    "placement sits 4 px into the thumbnail and stacks in a row under 100 px"
+   ],
+   "requirement": "UI-YT-07"
+  },
+  {
+   "id": "M19-tooltip-delay",
+   "file": "src/site/kit/overlay/index.ts",
+   "anchor": "const tooltipDelay = 500",
+   "replacement": "const tooltipDelay = 0",
+   "expectedRed": [
+    "the tooltip appears after 0.5 s to the right and the host stops page clicks only on itself"
+   ],
+   "requirement": "UI-YT-09"
+  },
+  {
+   "id": "M20-click-leaks",
+   "file": "src/site/kit/overlay/index.ts",
+   "anchor": "const isolated = [\"click\", \"dblclick\"",
+   "replacement": "const isolated = [\"dblclick\"",
+   "expectedRed": [
+    "the tooltip appears after 0.5 s to the right and the host stops page clicks only on itself",
+    "the host mirrors YouTube's dark attribute and isolates its own clicks"
+   ],
+   "requirement": "UI-YT-10"
+  },
+  {
+   "id": "M21-per-use-host",
+   "file": "src/site/kit/overlay/index.ts",
+   "anchor": "const current = live ?? (live = start())",
+   "replacement": "const current = (live = start())",
+   "expectedRed": [
+    "construction is inert and two slots share one movable host"
+   ],
+   "requirement": "UI-YT-05"
+  },
+  {
+   "id": "M22-no-dark-mirror",
+   "file": "src/site/kit/overlay/index.ts",
+   "anchor": "scope.observe(document.documentElement, { attributes: true, attributeFilter: [\"dark\"] }, mirror)",
+   "replacement": "",
+   "expectedRed": [
+    "the host mirrors YouTube's dark attribute and isolates its own clicks"
+   ],
+   "requirement": "UI-YT-02"
+  }
+ ]
+}

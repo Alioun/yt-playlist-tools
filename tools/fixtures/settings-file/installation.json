@@ -1,0 +1,34 @@
+{
+  "sourceTree": "a2add5de6833696e0d725771304f7779aef744ce",
+  "nonEnvironmentFiles": 841,
+  "identityOnlyUnopened": [
+    ".env.submit.example"
+  ],
+  "overlayRule": "ordered, last matching path wins",
+  "verified": [
+    "sha256",
+    "gitBlob",
+    "bytes",
+    "mode",
+    "complete tree"
+  ],
+  "selectedOverlays": {
+    "-1": 503,
+    "0": 0,
+    "1": 5,
+    "2": 17,
+    "3": 9,
+    "4": 9,
+    "5": 8,
+    "6": 29,
+    "7": 20,
+    "8": 14,
+    "9": 13,
+    "10": 1,
+    "11": 69,
+    "12": 59,
+    "13": 43,
+    "14": 23,
+    "15": 19
+  }
+}

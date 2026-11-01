@@ -1,0 +1,232 @@
+{
+  "state": "authored-unexecuted",
+  "compilerGate": [
+    "/usr/bin/timeout",
+    "-k",
+    "10",
+    "90",
+    "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
+    "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/typescript/bin/tsc",
+    "--project",
+    "tools/fixtures/view-publication/tsconfig.json",
+    "--pretty",
+    "false"
+  ],
+  "testPrefix": [
+    "/usr/bin/timeout",
+    "-k",
+    "10",
+    "45",
+    "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+    "--no-env-file",
+    "--no-install",
+    "test",
+    "--timeout",
+    "10000"
+  ],
+  "procedure": "Each control requires a passing baseline compiler and named test, passing mutant compiler, failing named behavior assertion, exact byte/mode restoration and passing restored compiler and behavior. Compiler failure or a deadline supplies no behavior credit. Run one ID per bounded invocation after reconciliation and lease grant.",
+  "controls": [
+    {
+      "id": "privacy-broadcast",
+      "state": "authored-unexecuted",
+      "testFile": "src/background/tab-view/publication.bun-test.ts",
+      "testName": "confirmed Filter changes target exactly the account with full normal and private views",
+      "observableAssertion": "expect(targetIds(h)).toEqual([1, 2, 9])",
+      "edits": [
+        {
+          "path": "src/background/tabs/tabs.ts",
+          "old": "return tab.acct === target.acct && (target.scope === \"all\" || tab.privateTab === (target.scope === \"private\"))",
+          "new": "return target.scope === \"all\" || tab.privateTab === (target.scope === \"private\")"
+        }
+      ],
+      "compilerCredit": false,
+      "behaviorCredit": false
+    },
+    {
+      "id": "omitted-coalescing",
+      "state": "authored-unexecuted",
+      "testFile": "src/background/tab-view/publication.bun-test.ts",
+      "testName": "249 and 250 ms events coalesce with all-tab overlap and preserve the latest state",
+      "observableAssertion": "expect(h.sent).toEqual([])",
+      "edits": [
+        {
+          "path": "src/background/tab-view/publication.ts",
+          "old": "export const VIEW_PUBLICATION_MS = 250",
+          "new": "export const VIEW_PUBLICATION_MS = 0"
+        }
+      ],
+      "compilerCredit": false,
+      "behaviorCredit": false
+    },
+    {
+      "id": "stale-projection-reuse",
+      "state": "authored-unexecuted",
+      "testFile": "src/background/tab-view/publication.bun-test.ts",
+      "testName": "249 and 250 ms events coalesce with all-tab overlap and preserve the latest state",
+      "observableAssertion": "expect(h.sent.at(-1)?.view.filters.find(row => row.playlist === alpha)?.state.filter.on).toBe(true)",
+      "edits": [
+        {
+          "path": "src/background/tab-view/publication.ts",
+          "old": "await ports.tabs.publish(tab, ports.producer, lifetime.signal, () => {",
+          "new": "await ports.tabs.publish(tab, {\n        isView: ports.producer.isView,\n        async produce(context) {\n          const old = stale.get(tab.tabId)\n          if (old) return old\n          const current = await ports.producer.produce(context)\n          stale.set(tab.tabId, current)\n          return current\n        }\n      }, lifetime.signal, () => {"
+        },
+        {
+          "path": "src/background/tab-view/publication.ts",
+          "old": "  const lifetime = new AbortController()",
+          "new": "  const stale = new Map<number, Awaited<ReturnType<PublicationPorts[\"producer\"][\"produce\"]>>>()\n  const lifetime = new AbortController()"
+        }
+      ],
+      "compilerCredit": false,
+      "behaviorCredit": false
+    },
+    {
+      "id": "missing-sync-filter-event",
+      "state": "authored-unexecuted",
+      "testFile": "src/background/tab-view/publication.bun-test.ts",
+      "testName": "confirmed adopted sync Filter changes target the account and equal data generations send nothing",
+      "observableAssertion": "expect(targetIds(h)).toEqual([1, 2, 9])",
+      "edits": [
+        {
+          "path": "src/background/store/local-filter-writer.ts",
+          "old": "else emitView({ kind: \"filter-changed\", source: \"sync\", acct: key.acct, playlist: key.playlist })",
+          "new": "else void key"
+        }
+      ],
+      "compilerCredit": false,
+      "behaviorCredit": false
+    },
+    {
+      "id": "optimistic-before-readback",
+      "state": "authored-unexecuted",
+      "testFile": "src/background/store/view-events.bun-test.ts",
+      "testName": "Filter storage must confirm before an event and queued session work keeps its own account",
+      "observableAssertion": "expect(events).toEqual([])",
+      "edits": [
+        {
+          "path": "src/background/store/local-filter-writer.ts",
+          "old": "      emitView({ kind: \"filter-changed\", source: \"local\", acct: change.acct, playlist: change.playlist })\n",
+          "new": ""
+        },
+        {
+          "path": "src/background/store/local-filter-writer.ts",
+          "old": "      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })",
+          "new": "      emitView({ kind: \"filter-changed\", source: \"local\", acct: change.acct, playlist: change.playlist })\n      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })"
+        }
+      ],
+      "compilerCredit": false,
+      "behaviorCredit": false
+    },
+    {
+      "id": "lost-removed-account",
+      "state": "authored-unexecuted",
+      "testFile": "src/background/tab-view/publication.bun-test.ts",
+      "testName": "account removal updates retained live cores without resurrecting registry records",
+      "observableAssertion": "expect(targetIds(h)).toEqual([1, 2, 9])",
+      "edits": [
+        {
+          "path": "src/background/tabs/tabs.ts",
+          "old": "return [...live.values()].map(row => row.handle).filter(tab => matchesViewTarget(tab, target))",
+          "new": "return [...live.values()].filter(row => row.handle.privateTab ? privateRows.has(row.handle.tabId) : read.memory.tabs.has(row.handle.tabId)).map(row => row.handle).filter(tab => matchesViewTarget(tab, target))"
+        }
+      ],
+      "compilerCredit": false,
+      "behaviorCredit": false
+    },
+    {
+      "id": "all-monitor-notifications",
+      "state": "authored-unexecuted",
+      "testFile": "src/background/tab-view/publication.bun-test.ts",
+      "testName": "progress cache registry cooldown and unchanged Monitor bookkeeping produce no publication",
+      "observableAssertion": "expect(h.sent).toEqual([])",
+      "edits": [
+        {
+          "path": "src/background/monitor/monitor.ts",
+          "old": "    for (const row of observedViews.values()) { row.dirty = true; void refreshView(row) }",
+          "new": "    for (const row of observedViews.values()) { for (const listener of viewListeners) listener({ kind: \"tab\", tabId: row.context.tab.tabId }); row.dirty = true; void refreshView(row) }"
+        }
+      ],
+      "compilerCredit": false,
+      "behaviorCredit": false
+    },
+    {
+      "id": "timer-after-disposal",
+      "state": "authored-unexecuted",
+      "testFile": "src/background/tab-view/publication.bun-test.ts",
+      "testName": "disposal before a publication deadline cancels every queued one-shot timer",
+      "observableAssertion": "expect(h.clock.pending).toBe(0)",
+      "edits": [
+        {
+          "path": "src/background/tab-view/publication.ts",
+          "old": "    for (const row of pending.values()) row.cancel?.()",
+          "new": "    void pending"
+        }
+      ],
+      "compilerCredit": false,
+      "behaviorCredit": false
+    },
+    {
+      "id": "private-normal-tab-broadcast",
+      "state": "authored-unexecuted",
+      "testFile": "src/background/tab-view/publication.bun-test.ts",
+      "testName": "actual private skips publish only to the account's private core after the memory commit",
+      "observableAssertion": "expect(targetIds(h)).toEqual([9])",
+      "edits": [
+        {
+          "path": "src/background/tab-view/publication.ts",
+          "old": "request({ kind: \"account\", acct: event.acct, scope: event.scope })",
+          "new": "request({ kind: \"account\", acct: event.acct, scope: \"all\" })"
+        }
+      ],
+      "compilerCredit": false,
+      "behaviorCredit": false
+    },
+    {
+      "id": "omitted-internal-private-event",
+      "state": "authored-unexecuted",
+      "testFile": "src/background/tab-view/publication.bun-test.ts",
+      "testName": "internal automatic Undo publishes the actual private skip through the real owner consumer",
+      "observableAssertion": "expect(targetIds(h)).toEqual([9])",
+      "edits": [
+        {
+          "path": "src/background/add-flow/add-flow.ts",
+          "old": "        if (work.auto) for (const { playlist, video } of work.entries) {\n          const edits = [{ kind: \"skip\", acct: work.acct, video, playlists: [playlist] }] as const\n          if (scope === \"private\") await remember(scope, edits, authorities.get(exec))\n          else note(scope, edits, authorities.get(exec))\n        }\n",
+          "new": "        if (work.auto) for (const { playlist, video } of work.entries) {\n          const edits = [{ kind: \"skip\", acct: work.acct, video, playlists: [playlist] }] as const\n          if (scope === \"private\") {\n            const listeners = [...privateSkipListeners]\n            privateSkipListeners.clear()\n            try { await remember(scope, edits, authorities.get(exec)) }\n            finally { for (const listener of listeners) privateSkipListeners.add(listener) }\n          }\n          else note(scope, edits, authorities.get(exec))\n        }\n"
+        }
+      ],
+      "compilerCredit": false,
+      "behaviorCredit": false
+    },
+    {
+      "id": "private-notification-before-load",
+      "state": "authored-unexecuted",
+      "testFile": "src/background/tab-view/publication.bun-test.ts",
+      "testName": "private skip load failure and withholding create no publication deadline",
+      "observableAssertion": "expect(h.clock.pending).toBe(0)",
+      "edits": [
+        {
+          "path": "src/background/add-flow/add-flow.ts",
+          "old": "      if (!changesSkips) privateMemory = applySessionEdits(privateMemory, edits, now)\n      const unloaded = await load()",
+          "new": "      if (!changesSkips) privateMemory = applySessionEdits(privateMemory, edits, now)\n      if (changesSkips) for (const acct of new Set(edits.flatMap(edit => edit.kind === \"skip\" || edit.kind === \"unskip\" ? [edit.acct] : []))) {\n        for (const listener of privateSkipListeners) { try { listener({ acct, scope: \"private\" }) } catch {} }\n      }\n      const unloaded = await load()"
+        }
+      ],
+      "compilerCredit": false,
+      "behaviorCredit": false
+    },
+    {
+      "id": "private-deadline-after-disposal",
+      "state": "authored-unexecuted",
+      "testFile": "src/background/tab-view/publication.bun-test.ts",
+      "testName": "private source revocation and repeated disposal clear every deadline and subscription",
+      "observableAssertion": "expect(h.clock.pending).toBe(0)",
+      "edits": [
+        {
+          "path": "src/background/tab-view/publication.ts",
+          "old": "    for (const row of pending.values()) row.cancel?.()",
+          "new": "    void pending"
+        }
+      ],
+      "compilerCredit": false,
+      "behaviorCredit": false
+    }
+  ]
+}

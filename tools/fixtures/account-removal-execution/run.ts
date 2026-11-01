@@ -1,3 +1,7 @@
+import { readConsentDevice } from "../../../src/background/store/consent-withdrawal"
+import { createStoreLifecycle } from "../../../src/background/store/store-lifecycle"
+import { createLifecycleHarness, settingsOrigin, type LifecycleStores } from "../device-lifecycle/run"
+import { parseConsentJobs } from "../../../src/background/store/consent-recovery"
 import { isInterimSourceKey, isInterimCanonicalKey } from "../../../src/background/store/interim-persistence"
 import { createLocalFilterWriter, createStartingLocalFilterWriter, StartupReadinessError } from "../../../src/background/store/local-filter-writer"
 import { accountRemovalLocalName, parsePendingAccountRemoval, pendingAccountRemovalKey,
@@ -44,7 +48,7 @@ export function removalFixture(synced = false): RemovalFixtureState {
     ...(kind === "single" ? { video: { id: owner === acct ? video : otherVideo, title: "Video" } } : { videos: [{ id: otherVideo, title: "Gathered" }] }), extension: { keep: [null] } })
   const partition = (): JsonObject => ({ v: 1, global: { keep: true, accountLookingExtension: { acct, keep: true }, paced: { "1": 10 } },
     accounts: { [acct]: { owned: true }, [other]: { extension: { keep: true } } }, extension: [null, 1] })
-  return { local, sync, session: { paused: true, tabs: { "1": { acct, site: "www" } }, unknown: { acct, keep: true },
+  return { local, sync, session: { paused: true, tabs: { "1": { acct, site: "www", signedIn: true } }, unknown: { acct, keep: true },
     [`skips:${acct}`]: { [video]: "all" }, [`skips:${other}`]: { [otherVideo]: ["PL_other"] }, [`cooldown:${acct}`]: 100,
     [`cooldown:${other}`]: 200, recent: [row(other, otherVideo), row(acct, video), row(other, otherVideo)],
     recentAdds: [add(acct, "single"), add(other, "single"), add(acct, "gather"), add(other, "gather")],
@@ -116,12 +120,34 @@ export function createRemovalHarness(initial: RemovalFixtureState = removalFixtu
     foreign(change: (state: RemovalFixtureState) => void) { change(state) } }
 }
 
-export async function runAccountRemovalExecution(api = { create: createLocalFilterWriter, starting: createStartingLocalFilterWriter }) {
+export const accountRemovalExecutionPartitionCount = 16
+export type RemovalExecutionOptions = {
+  partition?: { index: number; count: number }
+  onObservation?: (index: number, observation: unknown) => void
+  onComplete?: (cases: number) => void
+}
+
+export async function runAccountRemovalExecution(api = { create: createLocalFilterWriter, starting: createStartingLocalFilterWriter }, options: RemovalExecutionOptions = {}) {
+  const partition = options.partition
+  if (partition && (!Number.isSafeInteger(partition.count) || partition.count < 1 || !Number.isSafeInteger(partition.index) || partition.index < 0 || partition.index >= partition.count)) throw Error("Invalid removal campaign partition")
+  let caseIndex = -1, selected = true
+  function nextCase() {
+    caseIndex++
+    selected = !partition || caseIndex % partition.count === partition.index
+    return selected
+  }
+  function observe(observation: unknown) {
+    if (selected) {
+      observations.push(observation)
+      options.onObservation?.(caseIndex, observation)
+    }
+  }
+
   let assertions = 0
   const observations: unknown[] = []
   const stable = (value: unknown): string => JSON.stringify(value, (_, item: unknown) => item instanceof Error ? { name: item.name, message: item.message }
     : item && typeof item === "object" && !Array.isArray(item) ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a.localeCompare(b))) : item)
-  function check(value: unknown, label: string): asserts value { assertions++; if (!value) throw Error(label) }
+  function check(value: unknown, label: string): asserts value { if (selected) assertions++; if (!value) throw Error(label) }
   function equal(actual: unknown, expected: unknown, label: string) { check(stable(actual) === stable(expected), label) }
   const isMutation = (kind: string) => /^(local|session)\.(set|remove):/.test(kind)
   function expected(seed: RemovalFixtureState, synced: boolean): RemovalFixtureState {
@@ -138,6 +164,7 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
     delete state.session[`skips:${acct}`]; delete state.session[`cooldown:${acct}`]
     for (const key of ["recent", "recentAdds"]) if (Array.isArray(state.session[key])) state.session[key] = state.session[key].filter(row => object(row) && row.acct !== acct)
     for (const key of ["shown", "breakage", "gather"]) if (object(state.session[key])) delete json(state.session[key].accounts)[acct]
+    if (object(state.session.tabs)) state.session.tabs = Object.fromEntries(Object.entries(state.session.tabs).filter(([, row]) => object(row) && row.acct !== acct))
     return state
   }
   async function action(h: ReturnType<typeof createRemovalHarness>) {
@@ -149,6 +176,7 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
   }
   const baselines: { synced: boolean; seed: RemovalFixtureState; trace: Io[]; result: RemovalFixtureState; accepted: RemovalFixtureState }[] = []
   for (const synced of [false, true]) {
+    nextCase()
     const seed = removalFixture(synced), h = createRemovalHarness(seed, { details: true }), { writer, preparation, result } = await action(h)
     equal(h.mutations[0]?.kind, `local.set:${pendingAccountRemovalKey}`, "durable intent precedes every destructive effect")
     check(!Object.keys(h.state().local).some(key => key.startsWith(`progress:${acct}:`)), "all sixteen progress shards are removed")
@@ -173,8 +201,9 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
     check(!JSON.stringify(record).includes('"cache:') && !JSON.stringify(record).includes('"progress:') && !JSON.stringify(record).includes('"recent"'), "durable record contains no local dependency or session payload")
     equal(h.mutations.at(-1)?.kind, `local.remove:${pendingAccountRemovalKey}`, "pending intent retires last")
     baselines.push({ synced, seed, trace: copy(h.io), result: h.state(), accepted: accepted.after })
-    observations.push({ case: synced ? "synced" : "local", before: seed, preparation, result, intermediate: accepted.after, after: h.state(), io: h.io, mutations: h.mutations, counts: h.counts() })
+    observe({ case: synced ? "synced" : "local", before: seed, preparation, result, intermediate: accepted.after, after: h.state(), io: h.io, mutations: h.mutations, counts: h.counts() })
     if (synced) {
+      nextCase()
       equal((await writer.flushSync()).kind, "deferred", "actual flush waits for current shared opportunity")
       h.time(5000)
       const flushed = await writer.flushSync()
@@ -183,7 +212,7 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
       equal(flushed.sent.length, documents.length + 2, "one combined push includes all pending and restoration documents")
       equal(h.state().sync["s:filter:AAAAAAAAAAAAAAAA:PL_selected@old.0"], seed.sync["s:filter:AAAAAAAAAAAAAAAA:PL_selected@old.0"], "unproven physical chunks retained")
       for (const name of documents) equal(json(json(h.state().local.sync).pushed)[name], json(h.state().local[name]).gen, "actual acknowledgement records exact fixed generation")
-      observations.push({ case: "combined-flush", result: flushed, after: h.state(), io: h.io.slice(baselines.at(-1)!.trace.length) })
+      observe({ case: "combined-flush", result: flushed, after: h.state(), io: h.io.slice(baselines.at(-1)!.trace.length) })
       const restarted = createRemovalHarness(JSON.parse(JSON.stringify(h.state()))), next = api.starting({ ...restarted.deps, startup: restarted.startup })
       equal(await next.ready(), "ok", "acknowledged restart releases readiness")
       equal(await next.flushSync(), { kind: "idle" }, "acknowledged restart is idle")
@@ -196,16 +225,18 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
     const seed = removalFixture(); if (history === "absent") delete seed.local.sync; else json(seed.local.sync).editedSinceOff = history === "true"
     for (const last of [acct, other, null]) {
       json(seed.local.device).lastAccount = last
+      if (!nextCase()) continue
       const h = createRemovalHarness(seed), operation = await action(h)
       equal(operation.result.kind, "committed", "off-history variant commits")
       equal(h.state(), expected(seed, false), "history and Device omissions and unrelated values preserved")
       equal(h.counts().generations, 0, "off-history variants never generate")
       equal(h.io.filter(item => item.kind === "sync.get").length, 0, "off-history variants never read sync")
-      observations.push({ case: `off-history-${history}-${last === acct ? "matching" : last === other ? "other" : "null"}`, before: seed, after: h.state(), result: operation.result, mutations: h.mutations })
+      observe({ case: `off-history-${history}-${last === acct ? "matching" : last === other ? "other" : "null"}`, before: seed, after: h.state(), result: operation.result, mutations: h.mutations })
       await operation.writer.dispose()
     }
   }
   for (const invalid of ["private", "unknown-window", "forged", "cloned", "other-owner", "other-window", "mode", "history", "label", "setup", "filter", "filter-keyset"] as const) {
+    if (!nextCase()) continue
     const h = createRemovalHarness(), writer = api.create(h.deps)
     const prepared = await writer.prepareAccountRemoval(ui, acct)
     check(prepared.kind === "confirmation-required", "stale-control preparation succeeds")
@@ -235,10 +266,11 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
     equal(h.mutations, [], "private and stale capabilities write no intent")
     equal(h.counts().generations, 0, "private and stale capabilities create no stamp")
     equal(h.events, [], "private and stale capabilities emit no Settings event")
-    observations.push({ case: `confirmation-${invalid}`, before, result, after: h.state(), io: h.io })
+    observe({ case: `confirmation-${invalid}`, before, result, after: h.state(), io: h.io })
     await writer.dispose()
   }
   for (const invalid of ["preconsent", "note", "interim", "future-schema", "malformed-history", "future-history", "future-filter", "null-filter", "unsupported-session", "noncanonical-filter", "noncanonical-setup", "future-progress", "orphaned", "absent"] as const) {
+    if (!nextCase()) continue
     const seed = removalFixture()
     if (invalid === "preconsent") json(seed.local.device).consent = null
     if (invalid === "note") json(seed.local.device).upgradeNote = { state: "pending" }
@@ -266,10 +298,11 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
     equal(h.state(), seed, "refusal preserves full state")
     equal(h.mutations, [], "refusal writes no pending record")
     equal(h.counts().generations, 0, "refusal allocates no stamp")
-    observations.push({ case: `prepare-${invalid}`, before: seed, result, after: h.state(), io: h.io })
+    observe({ case: `prepare-${invalid}`, before: seed, result, after: h.state(), io: h.io })
     await writer.dispose()
   }
   for (const invalid of ["future", "null", "incomplete", "conflict", "full"] as const) {
+    if (!nextCase()) continue
     const seed = removalFixture(true), name = `s:${documents[1]!.slice(4)}`
     if (invalid === "future") seed.sync[name] = { v: 2, gen: "future", at: 1, by: "other", data: {} }
     if (invalid === "null") seed.sync[name] = null
@@ -280,10 +313,10 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
     check(operation.result.kind !== "committed", "whole synced removal refuses remote debt or quota")
     equal(h.state(), seed, "failed admission stages no record and preserves full state")
     equal(h.mutations, [], "failed admission mutates nothing")
-    observations.push({ case: `admission-${invalid}`, before: seed, result: operation.result, after: h.state(), io: h.io })
+    observe({ case: `admission-${invalid}`, before: seed, result: operation.result, after: h.state(), io: h.io })
     await operation.writer.dispose()
   }
-  {
+  if (nextCase()) {
     const h = createRemovalHarness(), host = h.deps.removal
     check(host.kind === "fixture", "disposal fixture owns canonical removal")
     let release = () => {}, entered = () => {}
@@ -298,15 +331,20 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
     await started
     const queued = writer.read("settings"), draining = writer.dispose()
     check(Object.hasOwn(h.state().local, pendingAccountRemovalKey), "accepted operation keeps its intent while disposal drains")
+    const beforeInvokedEffect = h.state()
+    const expectedStopped = copy(beforeInvokedEffect)
+    delete expectedStopped.local[`cache:${acct}`]
     release()
-    equal(await work, { kind: "committed" }, "disposal drains an accepted operation to exact completion")
+    const result = await work
+    check(result.kind === "unconfirmed" && result.stage === "local-cleanup" && result.mutation.kind === "resolved" && result.cause.kind === "read-failed", "disposal reports the invoked effect without claiming removal completion")
     await draining
     equal(await queued, { kind: "unavailable", reason: "disposed" }, "queued read cannot expose disposed owner")
-    equal(h.state(), baselines[0]!.result, "drained removal completes all dependencies")
+    equal(h.state(), expectedStopped, "disposal permits only the already invoked cache removal and preserves the exact pending operation")
     equal((await writer.prepareAccountRemoval(ui, acct)).kind, "unavailable", "disposed owner accepts no new action")
-    observations.push({ case: "disposal-drain", preparation, after: h.state(), io: h.io, schedules: h.schedules })
+    observe({ case: "disposal-drain", preparation, result, beforeInvokedEffect, after: h.state(), io: h.io, schedules: h.schedules })
   }
   for (const gate of ["pending", "held"] as const) {
+    if (!nextCase()) continue
     const seed = removalFixture(true)
     json(seed.local.sync).opaqueWrite = { gate: { kind: gate, notBefore: 1060000, extension: true }, diagnostic: { name: "Original", message: "opaque", extension: true }, extension: true }
     const h = createRemovalHarness(seed), operation = await action(h)
@@ -321,10 +359,11 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
     const opaque = json(json(h.state().local.sync).opaqueWrite)
     equal(opaque.gate, null, "successful normal flush retires hold")
     equal(opaque.diagnostic, json(json(seed.local.sync).opaqueWrite).diagnostic, "original opaque diagnostic survives successful acknowledgement")
-    observations.push({ case: `opaque-${gate}`, before: seed, result: operation.result, after: h.state(), io: h.io, schedules: h.schedules })
+    observe({ case: `opaque-${gate}`, before: seed, result: operation.result, after: h.state(), io: h.io, schedules: h.schedules })
     await operation.writer.dispose()
   }
   for (const repairedName of [setupName, "doc:settings"]) {
+    nextCase()
     const seed = removalFixture(true), pushed = json(json(seed.local.sync).pushed)
     delete pushed[repairedName]
     if (repairedName === "doc:settings") seed.sync["s:settings"] = copy(seed.local[repairedName]!)
@@ -339,9 +378,10 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
     const flushed = await operation.writer.flushSync()
     check(flushed.kind === "pushed", "repaired removal remains admissible to ordinary combined flush")
     equal(flushed.sent.length, documents.length + (repairedName === "doc:settings" ? 1 : 2), "flush sends pending and restoration without resending repaired unchanged Settings")
-    observations.push({ case: "acknowledged-repair", repairedName, before: seed, result: operation.result, afterRemoval: completed, flushed, after: h.state(), io: h.io, mutations: h.mutations })
+    observe({ case: "acknowledged-repair", repairedName, before: seed, result: operation.result, afterRemoval: completed, flushed, after: h.state(), io: h.io, mutations: h.mutations })
     await operation.writer.dispose()
     if (repairedName === setupName) {
+      nextCase()
       check(materialization, "repair materialization boundary retained")
       const torn = createRemovalHarness(seed, { fault: { at: materialization.n, when: "after", kind: "partial", members: 1 } }), work = await action(torn)
       check(work.result.kind === "unconfirmed", "torn repair materialization cannot commit")
@@ -352,13 +392,14 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
       check(failure instanceof Error && failure.name === "StartupReadinessError", "unresolved torn repair debt blocks readiness without choosing a winner")
       equal(resumed.state(), interrupted, "torn repair debt preserves fixed record and every remaining dependency")
       equal(resumed.counts().generations, 0, "torn repair recovery never restamps")
-      observations.push({ case: "torn-repair", before: seed, result: work.result, interrupted, after: resumed.state(), error: failure, io: torn.io, restartIo: resumed.io })
+      observe({ case: "torn-repair", before: seed, result: work.result, interrupted, after: resumed.state(), error: failure, io: torn.io, restartIo: resumed.io })
       await next.dispose()
     }
   }
   for (const synced of [false, true]) {
     const baseline = baselines.find(item => item.synced === synced)!
     for (const first of ["read", "notice", "acknowledge", "settings", "claim", "filter", "receive", "flush", "start"] as const) {
+      if (!nextCase()) continue
       const seed = copy(baseline.accepted), h = createRemovalHarness(seed, { host: false })
       const writer = api.create({ ...h.deps, claim: { kind: "fixture",
         authority: { async read() { return { kind: "ready", authority: { acct, lease: "fixture", browserSession: "fixture", consentGeneration: "fixture", signedIn: true, incognito: false } } } },
@@ -385,11 +426,12 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
       equal(h.state(), seed, "first owner operation preserves blocked pending state")
       equal(h.mutations, [], "first owner operation cannot write through pending removal")
       equal(h.counts().subscriptions, 0, "first owner operation cannot subscribe through pending removal")
-      observations.push({ case: `pending-first-${first}`, synced, before: seed, result: result ?? null, after: h.state(), io: h.io })
+      observe({ case: `pending-first-${first}`, synced, before: seed, result: result ?? null, after: h.state(), io: h.io })
       await writer.dispose()
     }
     for (const invalid of ["new-lifetime", "same-gen-divergence", "different-account", "unexpected-filter", "mode", "revoked-consent", "history", "future-record", "future-session", "missing-host"] as const) {
       if (!synced && invalid === "history") continue
+      if (!nextCase()) continue
       const seed = copy(baseline.accepted)
       if (invalid === "new-lifetime") { json(seed.local[setupName]).gen = "recreated"; seed.local[`cache:${acct}`] = { newLifetime: true } }
       if (invalid === "same-gen-divergence") { json(seed.local[setupName]).newLifetime = true; seed.local[`progress:${acct}:15`] = { newLifetime: true } }
@@ -411,10 +453,11 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
       const rawOwner = api.create(h.deps)
       equal((await rawOwner.read("settings")).kind, "unavailable", "preinitialized constructor cannot bypass pending detection")
       equal((await rawOwner.changeSharedSetting(ui, { kind: "theme", value: "dark" })).kind, "unavailable", "pending record blocks new shared writes")
-      observations.push({ case: `pending-${invalid}`, synced, before: seed, after: h.state(), error: failure, readinessResult: failure instanceof Error && "result" in failure ? failure.result : null, io: h.io })
+      observe({ case: `pending-${invalid}`, synced, before: seed, after: h.state(), error: failure, readinessResult: failure instanceof Error && "result" in failure ? failure.result : null, io: h.io })
       await rawOwner.dispose(); await writer.dispose()
     }
     for (const change of ["recreated", "record-replaced", "record-transient", "record-replaced-in-session", "recreated-in-session", "device-extension", "session-extension", "other-account"] as const) {
+      if (!nextCase()) continue
       const h = createRemovalHarness(baseline.seed)
       let inserted = false
       h.hook(kind => {
@@ -435,13 +478,14 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
       check(Object.hasOwn(h.state().local, `cache:${acct}`), "new lifetime and account dependencies survive stale cleanup")
       if (change === "device-extension") equal(json(h.state().local.device).newUnrelatedField, true, "stale whole Device write cannot erase unrelated changes")
       if (change === "session-extension") equal(json(h.state().session.gather).newUnrelatedField, true, "stale whole session write cannot erase unrelated changes")
-      observations.push({ case: `between-awaits-${change}`, synced, before: baseline.seed, result: operation.result, after: h.state(), io: h.io })
+      observe({ case: `between-awaits-${change}`, synced, before: baseline.seed, result: operation.result, after: h.state(), io: h.io })
       await operation.writer.dispose()
     }
   }
   {
     const baseline = baselines.find(item => item.synced)!, batch = baseline.trace.find(entry => entry.phase === "invoked" && entry.kind.startsWith(`local.set:${setupName}`))!
     for (let members = 1; members < documents.length; members++) {
+      if (!nextCase()) continue
       const h = createRemovalHarness(baseline.seed, { fault: { at: batch.n, when: "after", kind: "partial", members } }), operation = await action(h)
       check(operation.result.kind === "unconfirmed", "torn document batch is never committed")
       const torn = h.state(); check(Object.hasOwn(torn.local, pendingAccountRemovalKey), "torn batch retains fixed intent")
@@ -450,7 +494,7 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
       equal(await next.ready(), "ok", "fresh admission completes every torn document boundary before readiness")
       equal(h2.state(), baseline.result, "torn batch resume retains exact fixed tombstones")
       equal(h2.counts().generations, 0, "partial resume never restamps")
-      observations.push({ case: "torn-documents", members, before: baseline.seed, result: operation.result, torn, after: h2.state(), io: h.io, restartIo: h2.io })
+      observe({ case: "torn-documents", members, before: baseline.seed, result: operation.result, torn, after: h2.state(), io: h.io, restartIo: h2.io })
       await next.dispose()
     }
   }
@@ -459,6 +503,7 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
     const invoked = baseline.trace.filter(entry => entry.phase === "invoked")
     const boundaries = invoked.filter((entry, index) => isMutation(entry.kind) || index > 0 && isMutation(invoked[index - 1]!.kind) || index >= invoked.length - 13)
     for (const boundary of boundaries) for (const when of ["before", "after"] as const) for (const browserRestart of [false, true]) {
+      if (!nextCase()) continue
       const h = createRemovalHarness(baseline.seed, { fault: { at: boundary.n, when, kind: "interrupt" } }), operation = await action(h)
       const interrupted = h.state(), accepted = Object.hasOwn(interrupted.local, pendingAccountRemovalKey)
       if (!accepted && Object.hasOwn(interrupted.local, setupName) && json(interrupted.local[setupName]).deleted !== true) equal(interrupted, baseline.seed, "no destructive effect before accepted pending record")
@@ -477,11 +522,12 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
       const idle = createRemovalHarness(restarted.state()), idleOwner = api.starting({ ...idle.deps, startup: idle.startup })
       equal(await idleOwner.ready(), "ok", "completed second restart releases")
       equal(idle.mutations, [], "completed second restart is idempotent")
-      observations.push({ case: "interrupt", synced, at: boundary.n, operation: boundary.kind, when, browserRestart, preparation: operation.preparation, result: operation.result,
+      observe({ case: "interrupt", synced, at: boundary.n, operation: boundary.kind, when, browserRestart, preparation: operation.preparation, result: operation.result,
         interrupted, serialized, after: restarted.state(), io: h.io, restartIo: restarted.io, restartMutations: restarted.mutations })
       await idleOwner.dispose(); await next.dispose()
     }
     for (const boundary of invoked.filter(entry => isMutation(entry.kind))) for (const mode of ["reject-before", "reject-after", "ignored", "readback-failed"] as const) {
+      if (!nextCase()) continue
       const fault: Fault = mode === "readback-failed" ? { at: boundary.n + 1, when: "before", kind: "reject" } :
         { at: boundary.n, when: mode === "reject-before" ? "before" : "after", kind: mode === "ignored" ? "ignore" : "reject" }
       const h = createRemovalHarness(baseline.seed, { fault }), operation = await action(h)
@@ -498,11 +544,107 @@ export async function runAccountRemovalExecution(api = { create: createLocalFilt
       const restarted = createRemovalHarness(interrupted), next = api.starting({ ...restarted.deps, startup: restarted.startup })
       equal(await next.ready(), "ok", "known fixed continuation recovers rejected and ignored effects")
       if (Object.hasOwn(interrupted.local, pendingAccountRemovalKey)) equal(restarted.state(), baseline.result, "recovery after failed mutation completes exact account lifetime")
-      observations.push({ case: "io-failure", synced, operation: boundary.kind, at: boundary.n, mode, result: operation.result, before: baseline.seed, interrupted, after: restarted.state(), io: h.io, restartIo: restarted.io })
+      observe({ case: "io-failure", synced, operation: boundary.kind, at: boundary.n, mode, result: operation.result, before: baseline.seed, interrupted, after: restarted.state(), io: h.io, restartIo: restarted.io })
       await next.dispose()
     }
   }
+  options.onComplete?.(caseIndex + 1)
   return { assertions, cases: observations.length, observations }
 }
 
-if (import.meta.main) process.stdout.write(JSON.stringify(await runAccountRemovalExecution(), (_, value: unknown) => value instanceof Error ? { name: value.name, message: value.message } : value) + "\n")
+if (import.meta.main) process.stdout.write(JSON.stringify(process.argv.includes("--withdrawal-only") ? await runWithdrawalRemoval() : await runAccountRemovalExecution(), (_, value: unknown) => value instanceof Error ? { name: value.name, message: value.message } : value) + "\n")
+
+export async function runWithdrawalRemoval() {
+  const observations: unknown[] = []
+  const check = (value: unknown, message: string) => { if (!value) throw Error(message) }
+  for (const synced of [false, true]) {
+    const baseline = createRemovalHarness(removalFixture(synced), { details: true }), ordinary = createLocalFilterWriter(baseline.deps)
+    const preparation = await ordinary.prepareAccountRemoval(ui, acct)
+    if (preparation.kind !== "confirmation-required") throw Error("Missing actual accepted operation")
+    await ordinary.removeAccountSetup(ui, preparation.confirmation); await ordinary.dispose()
+    const accepted = baseline.mutations[0]?.after
+    if (!accepted) throw Error("Missing accepted full-store observation")
+    const withdrawal = await withdrawRemovalFixture(accepted), withdrawn = withdrawal.state
+    const withdrawalRestarts: unknown[] = []
+    for (const boundary of withdrawal.writes) {
+      const serialized = { local: boundary.after.local, session: boundary.after.session, sync: accepted.sync }, restart = createRemovalHarness(serialized, { details: true })
+      const next = createStartingLocalFilterWriter({ ...restart.deps, startup: restart.startup })
+      try { await next.ready(); throw Error("Withdrawal boundary unexpectedly activated") } catch (error) { if (!(error instanceof StartupReadinessError && error.result.kind === "consent-held")) throw error }
+      const work = await next.readWithdrawnWork(ui), agreement = await next.readAgreement(ui), parsed = readConsentDevice(serialized.local)
+      check(parsed.kind === "supported", "Actual withdrawal boundary must parse")
+      if (parsed.kind === "supported" && parsed.control?.state.kind === "withdrawing") check(agreement.kind === "unavailable", "Intent cannot grant fresh agreement")
+      let recovery: unknown
+      if (work.kind === "held") {
+        const job = work.work.find(view => view.kind === "account-removal")
+        if (job?.kind === "account-removal") {
+          const result = await next.recoverWithdrawnWork(ui, { review: work.review, job: job.selection })
+          check(result.kind === "refused" && result.reason === "not-agreed", "Neither intent nor withdrawal authorizes removal")
+          recovery = result
+        }
+      }
+      check(restart.mutations.length === 0 && sameStore(restart.state(), serialized), "Withdrawal restart preserves the complete pending store")
+      await next.dispose()
+      withdrawalRestarts.push({ serialized, parsed, work, agreement, recovery, after: restart.state(), io: restart.io, mutations: restart.mutations, counts: restart.counts() })
+    }
+    const h = createRemovalHarness(withdrawn, { details: true }), owner = createStartingLocalFilterWriter({ ...h.deps, startup: h.startup })
+    try { await owner.ready(); throw Error("Held readiness unexpectedly succeeded") } catch (error) { if (!(error instanceof StartupReadinessError && error.result.kind === "consent-held")) throw error }
+    check(h.mutations.length === 0, "Held startup writes nothing")
+    const review = await owner.readAgreement(ui)
+    if (review.kind !== "review") throw Error("Missing disclosure")
+    const agreement = await owner.agree(ui, { review: review.review, displayedVersion: 1, choice: { kind: "disclosure" }, access: new Promise(() => {}) })
+    check(agreement.kind === "committed", "Disclosure must not wait for feature access")
+    const agreed = h.state(), work = await owner.readWithdrawnWork(ui)
+    if (work.kind !== "held") throw Error("Missing recovery review")
+    const selected = work.work.find(view => view.kind === "account-removal")
+    if (selected?.kind !== "account-removal") throw Error("Missing removal selection")
+    const result = await owner.recoverWithdrawnWork(ui, { review: work.review, job: selected.selection })
+    check(result.kind === "recovered", "Selected exact removal must recover")
+    const after = h.state()
+    check(sameStore(after.sync, accepted.sync), "Recovery must preserve remote bytes")
+    check(sameStore(json(after.local.device).consent, json(agreed.local.device).consent), "Recovery must preserve current consent")
+    const restarts: unknown[] = []
+    for (const mutation of h.mutations.filter(entry => entry.after && Object.hasOwn(entry.after.local, "consent:jobs"))) {
+      const serialized = copy(mutation.after!)
+      const restart = createRemovalHarness(serialized, { details: true }), next = createStartingLocalFilterWriter({ ...restart.deps, startup: restart.startup })
+      try { await next.ready() } catch (error) { if (!(error instanceof StartupReadinessError && error.result.kind === "consent-held")) throw error }
+      check(restart.mutations.length === 0, "Serialized restart must inspect without replay")
+      const pending = await next.readWithdrawnWork(ui)
+      let completion: unknown
+      if (pending.kind === "held") {
+        const job = pending.work.find(view => view.kind === "account-removal")
+        if (job?.kind === "account-removal") {
+          completion = await next.recoverWithdrawnWork(ui, { review: pending.review, job: job.selection })
+          check(json(completion).kind === "recovered", "Explicit crash recovery must complete the selected occurrence")
+        }
+      }
+      check(sameStore(restart.state(), after), "Every confirmed crash stage must converge to the same complete store")
+      check(parseConsentJobs(restart.state().local["consent:jobs"])?.jobs[0]?.permission.kind === "done", "Terminal occurrence must remain recorded")
+      await next.dispose()
+      restarts.push({ boundary: mutation.kind, serialized, completion, after: restart.state(), io: restart.io, mutations: restart.mutations })
+    }
+    await owner.dispose()
+    observations.push({ synced, accepted, withdrawal, withdrawalRestarts, withdrawn, agreement, agreed, result, after, io: h.io, mutations: h.mutations, restarts, counts: h.counts() })
+  }
+  return { cases: observations.length, observations }
+}
+export async function withdrawRemovalFixture(seed: RemovalFixtureState) {
+  const h = createLifecycleHarness({ local: seed.local, session: seed.session, database: "present" }), deps = h.deps(), port = deps.consentDevice
+  if (!port) throw Error("Missing named consent port")
+  const writes: { before: LifecycleStores; after: LifecycleStores }[] = []
+  const supervisor = createStoreLifecycle({ ...deps, consentDevice: {
+    get: keys => port.get(keys),
+    async set(items) { const before = h.stores(); await port.set(items); writes.push({ before, after: h.stores() }) }
+  } })
+  const read = readConsentDevice(seed.local)
+  if (read.kind !== "supported") throw Error("Invalid actual Device")
+  const result = await supervisor.withdrawConsent(settingsOrigin, read.device.consent)
+  if (result.kind !== "withdrawn") throw Error("Actual removal fixture withdrawal did not confirm")
+  const after = h.stores()
+  await supervisor.dispose()
+  if (h.ledger.hostCalls !== 0 || h.ledger.syncCalls !== 0 || h.ledger.exclusionViolations !== 0) throw Error("Withdrawal invoked another operation")
+  return { state: { local: after.local, session: after.session, sync: copy(seed.sync) }, result, writes, calls: h.calls, ledger: h.ledger }
+}
+function sameStore(left: unknown, right: unknown): boolean {
+  const stable = (value: unknown): string => JSON.stringify(value, (_, member: unknown) => member && typeof member === "object" && !Array.isArray(member) ? Object.fromEntries(Object.entries(member).sort(([a], [b]) => a.localeCompare(b))) : member)
+  return stable(left) === stable(right)
+}

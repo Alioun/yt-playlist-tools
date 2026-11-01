@@ -1,0 +1,11 @@
+--- a/src/background/tabs/tabs.ts
++++ b/src/background/tabs/tabs.ts
+@@ -361,7 +361,7 @@
+     if (guard() || signal?.aborted) return []
+     const read = await snapshot(signal)
+     if (guard() || signal?.aborted || read.kind !== "memory") return []
+-    return [...live.values()].map(row => row.handle).filter(tab => matchesViewTarget(tab, target))
++    return [...live.values()].filter(row => row.handle.privateTab ? privateRows.has(row.handle.tabId) : read.memory.tabs.has(row.handle.tabId)).map(row => row.handle).filter(tab => matchesViewTarget(tab, target))
+   }
+   async function publish<View extends TabViewScope>(handle: KnownTab, producer: TabViewProducer<View>, signal: AbortSignal, beforeSend: () => boolean): Promise<PublicationResult> {
+     const record = live.get(handle.tabId)

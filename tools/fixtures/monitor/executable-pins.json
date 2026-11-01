@@ -1,0 +1,56 @@
+{
+  "bun": {
+    "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+    "sha256": "28c7dd0a06916aba284d570ef44a2d70e9c538eaf2ba58dfe0910525563b3f79",
+    "bytes": 70469776,
+    "mode": "100755"
+  },
+  "node": {
+    "path": "/opt/homebrew/Cellar/node/26.12.1_1/bin/node",
+    "sha256": "7296c3dda88793e08d1089d839a782178c4bba6bb22f5c40ab2a75263fb071bd",
+    "bytes": 132848,
+    "mode": "100755"
+  },
+  "nativeTypeScript": {
+    "path": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+    "sha256": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
+    "bytes": 23653616,
+    "mode": "100755"
+  },
+  "python": {
+    "path": "/opt/homebrew/Caskroom/miniconda/base/bin/python3.13",
+    "sha256": "8df4462b22d4cee3da65589d34e15ae625fe9bae73d1b38c83472f5ea6b0315a",
+    "bytes": 6079344,
+    "mode": "100755"
+  },
+  "ps": {
+    "path": "/bin/ps",
+    "sha256": "d0e7b30250a9b1bd2afd1d6462a10d8a2d10ca448d9ce76be067db8a9bf459e0",
+    "bytes": 268736,
+    "mode": "100755"
+  },
+  "patch": {
+    "path": "/usr/bin/patch",
+    "sha256": "f76fb9a2175f06a9e939de0ffb444e413d0c492d7275cb9d1a28cfbb3857e57d",
+    "bytes": 351072,
+    "mode": "100755"
+  },
+  "preparedNodeModules": {
+    "path": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-2e5c244a/node_modules"
+  },
+  "preparedWxt": {
+    "path": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-35a215a0/.wxt"
+  },
+  "timeout": {
+    "path": "/usr/bin/timeout",
+    "sha256": "9369876b0b70afdb01ebbe54a83c787d9be1575bd6df806ea61febaf3f801c8d",
+    "bytes": 217104,
+    "mode": "100755"
+  },
+  "env": {
+    "path": "/usr/bin/env",
+    "sha256": "dd48d2912b68c69daf057c1ab13fec6001a072d58bad7d1f91e0687025b2b16a",
+    "bytes": 167712,
+    "mode": "100755"
+  }
+}

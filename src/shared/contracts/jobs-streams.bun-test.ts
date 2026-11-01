@@ -22,6 +22,42 @@ const channel = checked(isChannelId, `UC${"a".repeat(22)}`)
 const acct = checked(isAccountKey, "synthetic_acct01")
 const route = checked(isRouteId, "synthetic-test-route-unregistered")
 const setId = checked(isSetVideoId, "synthetic-entry")
+
+test("remove and unsave preserve exact entry form and exclusively accept a video fallback", () => {
+  for (const kind of ["remove", "unsave"] as const) {
+    for (const identity of [{ setVideoId: setId }, { videoId: video }]) {
+      const job = { kind, playlistId: playlist, ...identity }
+      expect(isJob(job)).toBe(true)
+      expect(isJob(roundTrip(job))).toBe(true)
+      expect(isJobInvocation({ job, acct })).toBe(true)
+      expect(isJobInvocation({ job })).toBe(false)
+      expect(isJobInvocation({ job, acct: "invalid" })).toBe(false)
+      if (!isJob(job)) throw new Error("Invalid removal fixture")
+      expect(isJobDataFor(job, null)).toBe(true)
+    }
+    for (const identity of [{}, { setVideoId: setId, videoId: video }, { setVideoId: null }, { videoId: setId }, { videoId: video, setVideoId: undefined }]) {
+      expect(isJob({ kind, playlistId: playlist, ...identity })).toBe(false)
+    }
+  }
+})
+
+test("only positively confirmed additions can carry a normalized missing entry ID", () => {
+  for (const kind of ["add", "save"] as const) {
+    const job = { kind, playlistId: playlist, videoId: video }
+    expect(isJobResultFor(job, { ok: true, route, data: { setVideoId: null } })).toBe(true)
+    expect(isPageJobResultFor(job, { ok: true, route, data: { setVideoId: null } })).toBe(true)
+    for (const value of [
+      { ok: true, route, data: {} }, { ok: true, route, data: { setVideoId: undefined } },
+      { ok: false, reason: "unconfirmed", data: { setVideoId: null } },
+      { ok: true, route, data: { setVideoId: null, failure: { ok: false, reason: "failed" } } }
+    ]) expect(isJobResultFor(job, value)).toBe(false)
+  }
+  const job = { kind: "addBatch", playlistId: playlist, videoIds: [video, video2] } satisfies JobOf<"addBatch">
+  const results = [{ videoId: video, setVideoId: null }, { videoId: video2, failure: { ok: false, reason: "failed" } }]
+  expect(isJobResultFor(job, { ok: true, route, data: { results } })).toBe(true)
+  expect(isJobDataFor(job, { results: results.toReversed() })).toBe(false)
+  expect(isJobDataFor(job, { results: [{ videoId: video, setVideoId: null, failure: { ok: false, reason: "failed" } }, results[1]] })).toBe(false)
+})
 const listId = checked(isQueueListId, "synthetic-list")
 const queueId = checked(isQueueItemId, "synthetic-queue-entry")
 const numericId = checked(isQueueItemId, 7)

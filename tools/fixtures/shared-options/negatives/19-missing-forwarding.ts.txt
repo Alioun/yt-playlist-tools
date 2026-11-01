@@ -1,0 +1,4 @@
+import type { BrowserStartingOwner } from "../../../src/background/adapters/starting-owner"
+declare const omitted: Omit<BrowserStartingOwner, "changeSharedSetting">
+
+omitted.changeSharedSetting({ kind: "ui", windowId: 1, incognito: false }, { kind: "option", field: "gather.auto.n", value: 20 })

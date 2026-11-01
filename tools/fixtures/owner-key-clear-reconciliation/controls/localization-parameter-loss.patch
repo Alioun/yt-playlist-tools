@@ -1,0 +1,11 @@
+--- a/src/public/_locales/en/messages.json
++++ b/src/public/_locales/en/messages.json
+@@ -2861,7 +2861,7 @@
+   "notice_www_one": {
+     "message": "$FEATURES$ isn't working right now because YouTube changed something. Use YouTube's own buttons for now.",
+     "placeholders": {
+-      "features": {
++      "feature": {
+         "content": "$1"
+       }
+     }

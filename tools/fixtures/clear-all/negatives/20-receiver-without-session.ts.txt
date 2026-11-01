@@ -1,0 +1,4 @@
+import type { SyncResetReceiveHost } from "../../../src/background/store/sync-reset-receive"
+
+const negative: SyncResetReceiveHost = { kind: "available", removeLocal: async () => {}, publishNotice: async () => "published" }
+export {}

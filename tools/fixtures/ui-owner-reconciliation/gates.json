@@ -1,0 +1,319 @@
+{
+  "state": "authoring-only-unexecuted",
+  "inputTree": "8ecd30d88a56b8945b0b360d4c900e5aae8e1af7",
+  "runtimeLease": "none",
+  "originalInventories": [
+    "tools/fixtures/ui-playlist-progressive/gates.json",
+    "tools/fixtures/ui-read-playlist-bridge/gates.json"
+  ],
+  "commands": {
+    "focused-types": [
+      "{node}",
+      "{nativeTsc}",
+      "--noEmit",
+      "--pretty",
+      "false",
+      "--project",
+      "tools/fixtures/ui-owner-reconciliation/qualification.tsconfig.json"
+    ]
+  },
+  "gates": [
+    {
+      "id": "reconciliation-focused-types",
+      "category": "compiler",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-owner-reconciliation/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "blockers": [
+        "protected router Owner is incomplete",
+        "protected native consumer imports old UiMessages"
+      ]
+    },
+    {
+      "id": "reconciliation-inclusion",
+      "category": "file-inclusion",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-owner-reconciliation/qualification.tsconfig.json",
+        "--listFilesOnly"
+      ],
+      "seconds": 180
+    },
+    {
+      "id": "reconciliation-behavior",
+      "category": "behavior",
+      "status": "unexecuted",
+      "command": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "test",
+        "--isolate",
+        "--conditions=browser",
+        "tools/fixtures/ui-owner-reconciliation/consumer.bun-test.ts"
+      ],
+      "seconds": 180
+    },
+    {
+      "id": "reconciliation-consumer-eof",
+      "category": "twice-through-eof-consumer",
+      "status": "unexecuted",
+      "command": [
+        "{bun}",
+        "--no-env-file",
+        "--no-install",
+        "run",
+        "--conditions=browser",
+        "tools/fixtures/ui-owner-reconciliation/run.ts"
+      ],
+      "seconds": 180,
+      "expected": "tools/fixtures/ui-owner-reconciliation/expected.json",
+      "comparison": "Two fresh processes. Compare complete bytes through EOF and exactly one LF. Parse and compare expected.json. No timeout credit."
+    },
+    {
+      "id": "reconciliation-negative-missing-auto-add-read",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-owner-reconciliation/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
+      "annotationLine": 25,
+      "intendedLine": 26,
+      "annotation": "// @ts-expect-error negative: missing-auto-add-read. The receiver needs the canonical read method.",
+      "meaning": "missing-auto-add-read",
+      "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation."
+    },
+    {
+      "id": "reconciliation-negative-missing-auto-add-edit",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-owner-reconciliation/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
+      "annotationLine": 27,
+      "intendedLine": 28,
+      "annotation": "// @ts-expect-error negative: missing-auto-add-edit. The receiver needs the canonical edit method.",
+      "meaning": "missing-auto-add-edit",
+      "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation."
+    },
+    {
+      "id": "reconciliation-negative-create-as-list",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-owner-reconciliation/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
+      "annotationLine": 31,
+      "intendedLine": 32,
+      "annotation": "// @ts-expect-error negative: create-as-list. List release needs a list operation identity.",
+      "meaning": "create-as-list",
+      "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation."
+    },
+    {
+      "id": "reconciliation-negative-list-as-create",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-owner-reconciliation/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
+      "annotationLine": 33,
+      "intendedLine": 34,
+      "annotation": "// @ts-expect-error negative: list-as-create. Creation status needs a creation identity.",
+      "meaning": "list-as-create",
+      "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation."
+    },
+    {
+      "id": "reconciliation-negative-auto-add-origin",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-owner-reconciliation/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
+      "annotationLine": 35,
+      "intendedLine": 36,
+      "annotation": "// @ts-expect-error negative: auto-add-origin. Native authentication owns origin.",
+      "meaning": "auto-add-origin",
+      "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation."
+    },
+    {
+      "id": "reconciliation-negative-auto-add-sender",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-owner-reconciliation/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
+      "annotationLine": 37,
+      "intendedLine": 38,
+      "annotation": "// @ts-expect-error negative: auto-add-sender. A body cannot provide the native sender.",
+      "meaning": "auto-add-sender",
+      "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation."
+    },
+    {
+      "id": "reconciliation-negative-auto-add-privacy",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-owner-reconciliation/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
+      "annotationLine": 39,
+      "intendedLine": 40,
+      "annotation": "// @ts-expect-error negative: auto-add-privacy. A message cannot claim its privacy.",
+      "meaning": "auto-add-privacy",
+      "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation."
+    },
+    {
+      "id": "reconciliation-negative-auto-add-account-body",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-owner-reconciliation/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
+      "annotationLine": 41,
+      "intendedLine": 42,
+      "annotation": "// @ts-expect-error negative: auto-add-account-body. A message cannot supply a native account fact.",
+      "meaning": "auto-add-account-body",
+      "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation."
+    },
+    {
+      "id": "reconciliation-negative-auto-add-not-agreement",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-owner-reconciliation/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 66,
+      "intendedLine": 67,
+      "annotation": "// @ts-expect-error negative: auto-add-not-agreement. Agreement cannot satisfy a choice.",
+      "meaning": "auto-add-not-agreement",
+      "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation."
+    },
+    {
+      "id": "reconciliation-negative-auto-add-not-destination",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-owner-reconciliation/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 68,
+      "intendedLine": 69,
+      "annotation": "// @ts-expect-error negative: auto-add-not-destination. Scalar destination calls require their own result.",
+      "meaning": "auto-add-not-destination",
+      "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation."
+    },
+    {
+      "id": "reconciliation-negative-destination-not-auto-add",
+      "category": "intended-line-negative",
+      "status": "unexecuted",
+      "command": [
+        "{node}",
+        "{nativeTsc}",
+        "--noEmit",
+        "--pretty",
+        "false",
+        "--project",
+        "tools/fixtures/ui-owner-reconciliation/qualification.tsconfig.json"
+      ],
+      "seconds": 180,
+      "path": "src/ui/backend/backend.type-test.ts",
+      "annotationLine": 70,
+      "intendedLine": 71,
+      "annotation": "// @ts-expect-error negative: destination-not-auto-add. A destination answer cannot prove an auto-add fact.",
+      "meaning": "destination-not-auto-add",
+      "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation."
+    }
+  ]
+}

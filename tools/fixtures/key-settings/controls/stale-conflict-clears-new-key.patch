@@ -1,0 +1,11 @@
+--- a/src/background/store/key-settings.ts
++++ b/src/background/store/key-settings.ts
+@@ -40,7 +40,7 @@
+     if (!sameKey(current, change.expected)) return refused("stale")
+     const conflicts = change.key === null ? [] : conflictObservations(settings, change.target, change.key)
+     if (change.confirmation.kind === "none" && conflicts.length) return { kind: "answer", answer: { kind: "conflict", conflicts } }
+-    if (change.confirmation.kind === "use-here" && !sameConflicts(conflicts, change.confirmation.conflicts)) return refused("stale")
++    if (false) return refused("stale")
+     if (conflicts.length === 0 && sameKey(current, change.key)) return { kind: "answer", answer: { kind: "confirmed", change, status: "unchanged" } }
+     const assigned = assignKey(settings, change.target, change.key, change.confirmation.kind === "use-here")
+     if (assigned.kind === "missing-target") return refused("missing-target")

@@ -58,6 +58,41 @@ declare const acct: AccountKey
 declare const like: LikeEndpoint
 declare const insert: QueueInsertEndpoint
 
+export function removalAndConfirmationRelationships() {
+  const exact = { kind: "remove", playlistId: playlist, setVideoId: occurrence } satisfies JobOf<"remove">
+  const fallback = { kind: "remove", playlistId: playlist, videoId: video } satisfies JobOf<"remove">
+  const musicExact = { kind: "unsave", playlistId: playlist, setVideoId: occurrence } satisfies JobOf<"unsave">
+  const musicFallback = { kind: "unsave", playlistId: playlist, videoId: video } satisfies JobOf<"unsave">
+  const pin = { job: fallback, acct } satisfies JobInvocation<JobOf<"remove">>
+  const musicPin = { job: musicFallback, acct } satisfies JobInvocation<JobOf<"unsave">>
+  const added = { ok: true, route, data: { setVideoId: occurrence } } satisfies JobResult<JobOf<"add">>
+  const missingId = { ok: true, route, data: { setVideoId: null } } satisfies JobResult<JobOf<"add">>
+  const musicMissingId = { ok: true, route, data: { setVideoId: null } } satisfies JobResult<JobOf<"save">>
+  const batchMissingId = { videoId: video, setVideoId: null } satisfies BatchAddResult
+  // @ts-expect-error Exact-entry removal and video removal are mutually exclusive.
+  const both: JobOf<"remove"> = { kind: "remove", playlistId: playlist, setVideoId: occurrence, videoId: video }
+  // @ts-expect-error Removal must carry one identity.
+  const neither: JobOf<"remove"> = { kind: "remove", playlistId: playlist }
+  // @ts-expect-error Music uses the same exclusive identities.
+  const musicBoth: JobOf<"unsave"> = { kind: "unsave", playlistId: playlist, videoId: video, setVideoId: occurrence }
+  // @ts-expect-error Music also requires an identity.
+  const musicNeither: JobOf<"unsave"> = { kind: "unsave", playlistId: playlist }
+  // @ts-expect-error A fallback video is not an occurrence.
+  const wrongIdentity: JobOf<"remove"> = { kind: "remove", playlistId: playlist, videoId: occurrence }
+  // @ts-expect-error A missing entry ID is normalized null, not an omitted result.
+  const unknown: JobResult<JobOf<"add">> = { ok: true, route, data: {} }
+  // @ts-expect-error Unconfirmed writes cannot expose a successful missing identity.
+  const uncertain: JobResult<JobOf<"add">> = { ok: false, reason: "unconfirmed", data: { setVideoId: null } }
+  // @ts-expect-error A failed batch item cannot also be a confirmed addition.
+  const failedSuccess: BatchAddResult = { videoId: video, setVideoId: null, failure: { ok: false, reason: "failed" } }
+  // @ts-expect-error Video-based removal retains the account pin.
+  const noPin: JobInvocation<JobOf<"remove">> = { job: fallback }
+  // @ts-expect-error Video-based unsave retains the account pin.
+  const noMusicPin: JobInvocation<JobOf<"unsave">> = { job: musicFallback }
+  void [exact, fallback, musicExact, musicFallback, pin, musicPin, added, missingId, musicMissingId, batchMissingId,
+    both, neither, musicBoth, musicNeither, wrongIdentity, unknown, uncertain, failedSuccess, noPin, noMusicPin]
+}
+
 export function identifierRelationships() {
   const validItem: QueueItemId = item
   if (typeof item === "number") {

@@ -1,0 +1,16 @@
+{"site":"www","step":"hello","answer":{"ok":true,"snapshot":{"signedIn":true,"acct":"TfkIStY8bVGtNWk5","pageType":"WATCH","startedHidden":false,"navType":"navigate"}}}
+{"site":"www","step":"account","answer":{"ok":true,"data":{"signedIn":true,"acct":"TfkIStY8bVGtNWk5"},"route":"page-read.account"}}
+{"site":"www","step":"membership","answer":{"ok":true,"data":[{"id":"PLsynthetic","title":"Synthetic list","privacy":"PRIVATE","count":3,"contains":false}],"route":"service.membership"}}
+{"site":"www","step":"write","answer":{"ok":true,"data":{"setVideoId":"synthetic-entry-1"},"route":"command.add"}}
+{"site":"www","step":"remove","answer":{"ok":true,"data":null,"route":"command.remove"}}
+{"site":"www","step":"create","answer":{"ok":true,"data":{"playlistId":"PLsynthetic"},"route":"service.create"}}
+{"site":"www","step":"label","answer":{"ok":true,"data":{"name":"Fixture account","handle":"@fixture"},"route":"service.accountLabel"}}
+{"site":"www","step":"disposed","answer":{"pageListeners":0,"channelListeners":0,"deadlines":0}}
+{"site":"music","step":"hello","answer":{"ok":true,"snapshot":{"signedIn":true,"acct":"TfkIStY8bVGtNWk5","pageType":"WATCH","startedHidden":false,"navType":"navigate"}}}
+{"site":"music","step":"account","answer":{"ok":true,"data":{"signedIn":true,"acct":"TfkIStY8bVGtNWk5"},"route":"page-read.account"}}
+{"site":"music","step":"membership","answer":{"ok":true,"data":[{"id":"PLsynthetic","title":"Synthetic list","privacy":"PRIVATE","count":3,"contains":false}],"route":"music.membership"}}
+{"site":"music","step":"write","answer":{"ok":true,"data":{"setVideoId":"synthetic-entry-1"},"route":"music.save"}}
+{"site":"music","step":"remove","answer":{"ok":true,"data":null,"route":"music.unsave"}}
+{"site":"music","step":"create","answer":{"ok":true,"data":{"playlistId":"PLsynthetic"},"route":"music.create"}}
+{"site":"music","step":"label","answer":{"ok":true,"data":{"name":"Fixture account","handle":"@fixture"},"route":"music.accountLabel"}}
+{"site":"music","step":"disposed","answer":{"pageListeners":0,"channelListeners":0,"deadlines":0}}

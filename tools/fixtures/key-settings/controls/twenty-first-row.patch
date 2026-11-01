@@ -1,0 +1,11 @@
+--- a/src/background/store/key-settings.ts
++++ b/src/background/store/key-settings.ts
+@@ -47,7 +47,7 @@
+     if (assigned.kind === "conflict") return { kind: "answer", answer: { kind: "conflict", conflicts } }
+     settings = assigned.settings
+   } else if (change.kind === "shortcut-add") {
+-    if (settings.shortcuts.list.length >= 20) return refused("limit")
++    if (settings.shortcuts.list.length >= 21) return refused("limit")
+     const reserved = reservedShortcutIds(settings, input.records, input.retired)
+     let id: ShortcutId | undefined
+     for (let attempt = 0; attempt < 32; attempt++) {

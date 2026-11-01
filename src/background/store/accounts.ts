@@ -3,7 +3,7 @@ import {
   isSetupEmpty, isShortcutId, normalizeSettingsForWrite, normalizeSetupForWrite
 } from "../../shared/model"
 import type {
-  AccountKey, AutoAddPlaylist, ClaimNoticeDetails, ClaimShortcutOutcome, DocumentKey, Filter, PlaylistId, Settings, Setup, ShortcutId, Unclaimed
+  AccountKey, AutoAddPlaylist, ClaimNoticeDetails, ClaimShortcutOutcome, DocumentKey, Filter, PlaylistId, Settings, Setup, SetupContext, ShortcutId, Unclaimed
 } from "../../shared/model"
 
 type Snapshot<T> = T extends object
@@ -56,13 +56,9 @@ function finishChoice(input: {
   acct: AccountKey
   setup: Setup
   filters: Snapshot<AccountBodies["filters"]>
-  settings: Snapshot<Settings>
-  additionalChosenPlaylists: ReadonlySet<PlaylistId>
+  context: Readonly<Required<SetupContext>>
 }): Extract<AccountChoiceResult, { kind: "save" | "remove" }> {
-  const setup = normalizeSetupForWrite(input.setup, {
-    shortcutIds: new Set(input.settings.shortcuts.list.map(shortcut => shortcut.id)),
-    additionalChosenPlaylists: input.additionalChosenPlaylists
-  })
+  const setup = normalizeSetupForWrite(input.setup, input.context)
   const selected = new Set(setup.autoAdd.map(entry => entry.pl))
   const hasKeptFilters = Object.keys(input.filters).some(playlist => !selected.has(playlist))
   if (isSetupEmpty(setup, hasKeptFilters)) return { kind: "remove", removal: removalFor(input.acct, input.filters) }
@@ -75,11 +71,15 @@ function finishChoice(input: {
 export function changeAccountChoice(input: {
   readonly acct: AccountKey
   readonly current: AccountSnapshot
-  readonly settings: Snapshot<Settings>
-  readonly additionalChosenPlaylists: ReadonlySet<PlaylistId>
   readonly choice: AccountChoice
-}): AccountChoiceResult {
+} & (
+  | { readonly settings: Snapshot<Settings>; readonly additionalChosenPlaylists: ReadonlySet<PlaylistId> }
+  | { readonly context: Readonly<Required<SetupContext>> }
+)): AccountChoiceResult {
   const { choice } = input
+  const context = "context" in input ? input.context : {
+    shortcutIds: new Set(input.settings.shortcuts.list.map(row => row.id)), additionalChosenPlaylists: input.additionalChosenPlaylists
+  }
   const current = input.current.kind === "present" ? input.current.bodies.setup : undefined
   let setup: Setup
   switch (choice.kind) {
@@ -114,7 +114,7 @@ export function changeAccountChoice(input: {
       break
     }
     case "shortcut-target": {
-      if (!input.settings.shortcuts.list.some(shortcut => shortcut.id === choice.shortcut)) {
+      if (!context.shortcutIds.has(choice.shortcut)) {
         return { kind: "invalid", reason: "missing-shortcut" }
       }
       if ((current?.targets[choice.shortcut] ?? null) === choice.playlist) return { kind: "unchanged" }
@@ -135,7 +135,7 @@ export function changeAccountChoice(input: {
     }
   }
   return finishChoice({
-    ...input, setup,
+    acct: input.acct, setup, context,
     filters: input.current.kind === "present" ? input.current.bodies.filters : {}
   })
 }
@@ -174,7 +174,8 @@ export function removeSharedShortcut(input: {
     if (account.current.kind === "absent" || !Object.hasOwn(account.current.bodies.setup.targets, input.shortcut)) continue
     const setup = decodeSetup(account.current.bodies.setup)
     delete setup.targets[input.shortcut]
-    accounts.push(finishChoice({ ...account, setup, filters: account.current.bodies.filters, settings }))
+    accounts.push(finishChoice({ ...account, setup, filters: account.current.bodies.filters,
+      context: { shortcutIds: new Set(settings.shortcuts.list.map(row => row.id)), additionalChosenPlaylists: account.additionalChosenPlaylists } }))
   }
   return { kind: "removed", settings, accounts }
 }

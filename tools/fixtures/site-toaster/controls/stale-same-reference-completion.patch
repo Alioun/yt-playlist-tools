@@ -1,0 +1,12 @@
+diff --git a/src/site/kit/toaster/model.ts b/src/site/kit/toaster/model.ts
+--- a/src/site/kit/toaster/model.ts
++++ b/src/site/kit/toaster/model.ts
+@@ -131,7 +131,7 @@
+     const actionGeneration = target.generation
+     try {
+       const result = await action.run()
+-      if (!live() || !contains(target) || target.generation !== actionGeneration) return
++      if (!live() || !contains(target)) return
+       target.busy = false
+       if (result) { target.content = available(result); target.spent = false; target.remaining = 6000 }
+       else if (target.kind === "notice") target.spent = false

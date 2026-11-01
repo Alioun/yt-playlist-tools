@@ -1,0 +1,29 @@
+{
+ "compilerOptions": {
+  "target": "ESNext",
+  "module": "ESNext",
+  "moduleResolution": "Bundler",
+  "lib": [
+   "ESNext",
+   "DOM",
+   "DOM.Iterable"
+  ],
+  "types": [
+   "svelte",
+   "bun"
+  ],
+  "strict": true,
+  "noEmit": true,
+  "skipLibCheck": true,
+  "resolveJsonModule": true,
+  "noUncheckedIndexedAccess": true,
+  "verbatimModuleSyntax": true
+ },
+ "include": [
+  "*.ts",
+  "../../../src/site/features/queue-button/**/*",
+  "../../../src/site/kit/overlay/**/*",
+  "../../../src/shared/copy/index.ts",
+  "../../../src/shared/i18n/**/*"
+ ]
+}

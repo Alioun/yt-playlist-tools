@@ -1,0 +1,20 @@
+{
+  "state": "authored-unexecuted",
+  "typeNegatives": {
+    "file": "src/background/gather/gather.type-test.ts",
+    "anchors": ["gather-no-session-free", "gather-native-no-message", "gather-close-nonempty", "gather-closed-no-tab-id", "gather-recent-nonempty", "gather-reopen-window", "gather-player-confirmation-stated", "gather-scope-closed", "gather-batch-account-branded"],
+    "positiveControls": ["gather", "result", "closed", "planned", "request", "reopened", "recorded", "playerResult"]
+  },
+  "sessionNegatives": {
+    "file": "src/background/store/session-memory.type-test.ts",
+    "anchors": ["session-gather-recent-one-write"],
+    "positiveControls": ["gatherWithClosed"]
+  },
+  "behaviourControls": [
+    {"case": "player-callback-only", "break": "treat tabs.create's callback as confirmation", "mustFail": "removed would be [10]"},
+    {"case": "queue-partial", "break": "accept data.confirmed without the exact count", "mustFail": "closed would be 3"},
+    {"case": "playlist-partial-batch", "break": "close every source tab after the batch", "mustFail": "removed would include 12 and 13"},
+    {"case": "undo-failure-before-reopen", "break": "reopen before removal succeeds", "mustFail": "createdAfterUndo would be 2"},
+    {"case": "private-isolation", "break": "pass the Recent entry for a private gather", "mustFail": "storedMentionsVideo would be true"}
+  ]
+}

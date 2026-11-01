@@ -29,3 +29,23 @@ export type AgreementReadinessProofs = [
   Check<Equal<Awaited<ReturnType<ReturnType<typeof createStartingLocalFilterWriter>["ready"]>>, "ok" | "newer-layout">>,
   Check<Equal<Extract<AgreementResult, { kind: "committed" }>["activation"], "ordinary-gates" | "held">>
 ]
+
+import type { InterimInstallationResult } from "./interim-installation"
+export type InstallationReadinessProofs = [
+  Check<Equal<Awaited<ReturnType<ReturnType<typeof createStartingLocalFilterWriter>["ready"]>>, "ok" | "newer-layout">>,
+  Check<Equal<Extract<InterimInstallationResult, { kind: "committed" }>["activation"], "held">>
+]
+
+import type { RecoveryTransactionResult } from "./interim-recovery-execution"
+import type { InterimRetentionResult } from "./interim-persistence"
+export type RecoveryReadinessProofs = [
+  Check<Equal<Extract<RecoveryTransactionResult, { kind: "committed" }>["activation"], "held" | "canonical">>,
+  Check<Equal<Extract<InterimRetentionResult, { kind: "confirmed-recovery" | "pending-recovery" }>["checkpoint"]["v"], 4>>,
+  Check<Equal<Awaited<ReturnType<ReturnType<typeof createStartingLocalFilterWriter>["ready"]>>, "ok" | "newer-layout">>
+]
+
+import type { RetainedAgreementRecoveryExecution } from "./consent-recovery"
+export type RetainedReceiptReadinessProofs = [
+  Check<Equal<Extract<RetainedAgreementRecoveryExecution, { kind: "confirmed" }>["activation"], "held">>,
+  Check<Equal<Awaited<ReturnType<ReturnType<typeof createStartingLocalFilterWriter>["ready"]>>, "ok" | "newer-layout">>
+]

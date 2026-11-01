@@ -1,0 +1,11 @@
+{
+  "state": "unperformed-required-before-qualification-or-integration",
+  "sourceTree": null,
+  "candidateOwner": null,
+  "acceptedUnits": {
+    "auto-add": { "acceptanceRecord": null, "sourceTree": null },
+    "Monitor": { "acceptanceRecord": null, "sourceTree": null },
+    "Accounts": { "acceptanceRecord": null, "sourceTree": null }
+  },
+  "obligation": "Reconcile methods and safety guards onto the future accepted owner. Never replace that owner with this historical full file."
+}

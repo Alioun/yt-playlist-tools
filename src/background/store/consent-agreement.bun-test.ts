@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { agreementHarness, runCanonicalAgreements, runJoinedAgreements, fixtureRun } from "../../../tools/fixtures/claim-transaction/run"
+import { agreementHarness, runCanonicalAgreements, runJoinedAgreements, runClaimFixture, runSameHistoryAgreements, joinedAgreementNames, sameHistoryAgreementNames } from "../../../tools/fixtures/claim-transaction/run"
 import { createInterimHarness } from "../../../tools/fixtures/interim-conversion/run"
 import { createLocalFilterWriter, createStartingLocalFilterWriter, StartupReadinessError } from "./local-filter-writer"
 import { defaultSettings, decodeDocument, decodeSettings } from "../../shared/model"
@@ -14,19 +14,26 @@ function review(read: AgreementRead) { expect(read.kind).toBe("review"); if (rea
 function input(read: ReturnType<typeof review>): AgreementInput { return { review: read.review, displayedVersion: read.version, choice: { kind: "feature", feature: "music-keys" }, access: Promise.resolve(access) } }
 function gate() { let release = () => {}; const waiting = new Promise<void>(resolve => { release = resolve }); return { waiting, release } }
 
-test("actual canonical command preserves eleven original cases and executes complete Agree outcomes", async () => {
-  const complete = await fixtureRun
+test("actual canonical command preserves eleven original cases", async () => {
+  const complete = await runClaimFixture(undefined, false)
   expect(complete.outcomes.length + complete.startupOutcomes.length + complete.settingsOutcomes.length + complete.noticeOutcomes.length).toBe(11)
+})
+
+test("actual canonical command executes complete Agree outcomes", async () => {
   const result = await runCanonicalAgreements()
   expect(result.assertions).toBeGreaterThan(190)
   expect(result.outcomes.length).toBeGreaterThan(30)
 })
 
-test("actual true-ticked Agree executes all sixteen joined transaction cases", async () => {
-  const result = await runJoinedAgreements()
-  expect(result.outcomes).toHaveLength(16)
-  expect(result.assertions.length).toBeGreaterThan(100)
+for (const name of joinedAgreementNames) test("actual true-ticked Agree " + name, async () => {
+  const result = await runJoinedAgreements(undefined, { case: name, sameHistory: false })
+  expect(result.outcomes).toHaveLength(1)
   expect(result.productionConnected).toBe(false)
+})
+
+for (const name of sameHistoryAgreementNames) test("actual same-history Agree " + name, async () => {
+  const result = await runSameHistoryAgreements(undefined, name)
+  expect(result.outcomes).toHaveLength(1)
 })
 
 test("review captures are detached, owner-bound, origin-bound and permanently stale after observed A-B-A", async () => {

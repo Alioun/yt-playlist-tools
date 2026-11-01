@@ -1,0 +1,274 @@
+{
+  "status": "all unexecuted; no runtime lease",
+  "futureLauncher": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+  "launcherCreatedOrApproved": false,
+  "runtimeRootCreated": false,
+  "prerequisites": [
+    "Explicit transfer of the sole runtime lease by the coordinator.",
+    "A separately approved frozen launcher that verifies pinned executables by sha256 before use, runs with env -i, empty HOME and TMPDIR, closed stdin, bounded streaming stdout/stderr receipts and the stated deadline, and records each child's saved wait.",
+    "A freshly proved credential-free dummy boundary: a live dummy-fixture run showing no environment-file bytes, owner credential, network or install reaches the child, and that Bun honours --no-env-file --no-install directly and in descendants.",
+    "Disposable complete reconstruction of this sealed tree with dependencies restored only under separate approval from the pinned bun.lock. Never bunx, never an installing helper.",
+    "Exit 124 ends that case and requires investigation, never an unchanged retry."
+  ],
+  "pinnedExecutables": {
+    "timeout": {
+      "path": "/usr/bin/timeout",
+      "sha256": "9369876b0b70afdb01ebbe54a83c787d9be1575bd6df806ea61febaf3f801c8d"
+    },
+    "bun": {
+      "path": "/opt/homebrew/lib/node_modules/bun/bin/bun.exe",
+      "sha256": "28c7dd0a06916aba284d570ef44a2d70e9c538eaf2ba58dfe0910525563b3f79",
+      "required": "bun@1.4.3 per package.json packageManager; the observed binary's version is unverified"
+    },
+    "node": {
+      "path": "/opt/homebrew/Cellar/node/26.13.0_2/bin/node",
+      "sha256": "64e4f47aef084a288c443ebe9a0091a34acba03ad176fb612b6e7d90784ff93d"
+    },
+    "python": {
+      "path": "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+      "sha256": "unrecorded; the launcher must pin it"
+    }
+  },
+  "pinnedDependencies": {
+    "lockfile": {
+      "bytes": 202712,
+      "sha256": "2d6baabd859bb90a4d37a975531f6372811942f67bad4643aa6bd7c03fec8ae6",
+      "mode": "100644",
+      "gitBlob": "7bdbeddbd315dc1c9ec3f771f18ba4097fa37924",
+      "path": "bun.lock"
+    },
+    "packages": [
+      "@typescript/native npm:typescript@7.0.2",
+      "@happy-dom/global-registrator 21.0.3",
+      "happy-dom ^21.0.3 as locked",
+      "@types/bun ^1.4.3 as locked",
+      "svelte as locked (type-only through scope.ts)"
+    ]
+  },
+  "actualInclusionRequired": [
+    "../../../src/site/features/card-menu/card-menu.ts",
+    "../../../src/site/features/card-menu/card-menu.bun-test.ts",
+    "../../../src/site/features/card-menu/card-menu.type-test.ts",
+    "harness.ts",
+    "source-graph.ts",
+    "preload.ts",
+    "run.ts"
+  ],
+  "gates": [
+    {
+      "name": "scoped-native-types",
+      "status": "unexecuted",
+      "command": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "180",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tools/fixtures/site-card-menu/tsconfig.json"
+      ],
+      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/types.stdout",
+      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/types.stderr",
+      "purpose": "Strict native TypeScript over the feature, tests, type negatives and fixtures; exactly the seven intended diagnostics are suppressed by their directives."
+    },
+    {
+      "name": "whole-native-types",
+      "status": "unexecuted",
+      "command": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "420",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        "node",
+        "node_modules/@typescript/native/bin/tsc",
+        "--noEmit",
+        "-p",
+        "tsconfig.json"
+      ],
+      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/whole-types.stdout",
+      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/whole-types.stderr",
+      "purpose": "Repository compiler including the new files; requires a prepared .wxt/tsconfig.json from the approved dependency restore."
+    },
+    {
+      "name": "focused-behavior",
+      "status": "unexecuted",
+      "command": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "240",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--no-install",
+        "--isolate",
+        "--conditions=browser",
+        "--preload",
+        "./tools/fixtures/site-card-menu/preload.ts",
+        "./src/site/features/card-menu/card-menu.bun-test.ts"
+      ],
+      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/focused.stdout",
+      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/focused.stderr",
+      "purpose": "Real FeatureHost, Scope, Items recognition, NoticeOwner and PageLink over the direct page channel with a synthetic gateway."
+    },
+    {
+      "name": "consumer",
+      "status": "unexecuted",
+      "command": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        "bun",
+        "--no-env-file",
+        "--no-install",
+        "--conditions=browser",
+        "--preload",
+        "./tools/fixtures/site-card-menu/preload.ts",
+        "./tools/fixtures/site-card-menu/run.ts"
+      ],
+      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/consumer.stdout",
+      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/consumer.stderr",
+      "check": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "30",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        "python3",
+        "-I",
+        "-B",
+        "tools/fixtures/site-card-menu/check-consumer.py",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/consumer.stdout"
+      ],
+      "purpose": "Complete byte comparison with expected.jsonl through EOF."
+    },
+    {
+      "name": "architecture-guards",
+      "status": "unexecuted",
+      "command": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "300",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--no-install",
+        "./tests/guards"
+      ],
+      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/guards.stdout",
+      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/guards.stderr",
+      "purpose": "Layer, running-cost and frozen-inventory guards must report no new finding for the new feature files."
+    },
+    {
+      "name": "preserved-regressions",
+      "status": "unexecuted",
+      "command": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "420",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        "bun",
+        "test",
+        "--no-env-file",
+        "--no-install",
+        "--isolate",
+        "--conditions=browser",
+        "./src/site/core/feature-host.bun-test.ts",
+        "./src/site/core/items-www.bun-test.ts",
+        "./src/site/core/page-link.bun-test.ts",
+        "./src/site/core/scope.bun-test.ts",
+        "./src/page/gateway.bun-test.ts"
+      ],
+      "stdoutReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/regressions.stdout",
+      "stderrReceipt": "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/receipts/regressions.stderr",
+      "purpose": "Reused modules stay byte-identical; their suites must still pass."
+    },
+    {
+      "name": "bundle-size",
+      "status": "unexecuted",
+      "command": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "120",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        "bun",
+        "build",
+        "--no-env-file",
+        "--no-install",
+        "./src/site/features/card-menu/card-menu.ts",
+        "--target=browser",
+        "--format=esm",
+        "--minify",
+        "--external",
+        "*/core/items-www",
+        "--outfile",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/size/feature-card-menu.js"
+      ],
+      "measure": [
+        "/usr/bin/timeout",
+        "-k",
+        "10",
+        "30",
+        "/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3.9",
+        "-I",
+        "-B",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/approved/launch.py",
+        "python3",
+        "-I",
+        "-B",
+        "-c",
+        "import gzip,sys;b=open(sys.argv[1],'rb').read();print(len(b),len(gzip.compress(b,9)))",
+        "/Users/alioun/.t3/worktrees/yt-playlist-tools/t3-f44e8980/.audit/site-card-menu/qualification/size/feature-card-menu.js"
+      ],
+      "budget": "feature-card-menu.js 0.5 KB (07-quality.md lines 573 and 609); core-www.js 5 KB including the notice",
+      "purpose": "Feature file alone with core modules external. The production split of core and feature belongs to SiteCore assembly; this command is an approximation, and the externals glob is unproved."
+    },
+    {
+      "name": "mutation-controls",
+      "status": "unexecuted",
+      "inventory": "tools/fixtures/site-card-menu/controls.json",
+      "purpose": "Baseline, apply, mutant compiler, named red test, exact restore and restored gates for each of nine controls."
+    },
+    {
+      "name": "type-negatives",
+      "status": "unexecuted",
+      "inventory": "tools/fixtures/site-card-menu/type-probes.json",
+      "purpose": "Disable one directive, require a diagnostic on its next line, restore exact bytes and mode, rerun the compiler."
+    }
+  ]
+}

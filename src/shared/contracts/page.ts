@@ -1,7 +1,5 @@
-import type { Job, JobDataById } from "./jobs"
-import { isJob, isJobDataFor } from "./jobs"
-import type { JobFailure } from "./results"
-import { isJobFailure } from "./results"
+import type { Job, JobDataById, JobFailureFor } from "./jobs"
+import { isJob, isJobDataFor, isJobFailureFor } from "./jobs"
 import type { RouteId } from "./identifiers"
 import { isRouteId } from "./identifiers"
 import { isJsonValue } from "./json"
@@ -14,7 +12,7 @@ type PageJobDataById = Omit<JobDataById, "account"> & { account: PageAccountData
 export type PageJobData<J extends Job> = PageJobDataById[J["kind"]]
 export type PageJobResult<J extends Job = Job> =
   | { ok: true; data: PageJobData<J>; route: RouteId }
-  | JobFailure
+  | JobFailureFor<J>
 
 function exact(value: unknown, keys: readonly string[]): value is JsonObject {
   return value !== null && typeof value === "object" && !Array.isArray(value) && isJsonValue(value) &&
@@ -31,7 +29,7 @@ export function isPageJobDataFor<J extends Job>(job: J, value: unknown): value i
 }
 export function isPageJobResultFor<J extends Job>(job: J, value: unknown): value is PageJobResult<J> {
   try {
-    return isJob(job) && (isJobFailure(value) || exact(value, ["ok", "data", "route"]) &&
+    return isJob(job) && (isJobFailureFor(job, value) || exact(value, ["ok", "data", "route"]) &&
       value.ok === true && isRouteId(value.route) && isPageJobDataFor(job, value.data))
   } catch { return false }
 }

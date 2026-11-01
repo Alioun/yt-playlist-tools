@@ -1,0 +1,352 @@
+{
+  "state": "all-unexecuted",
+  "controls": [
+    {
+      "id": "unticked-sync-access",
+      "source": "src/background/adapters/store-lifecycle.ts",
+      "baselineSourceIdentity": {
+        "mode": "100644",
+        "bytes": 5803,
+        "sha256": "f3b3540ebb09bffb5cbb068d991c60373ce064bef153233c5696995dd112d83c",
+        "gitBlob": "749081f0578cd19783582ddc05773177f2f34529"
+      },
+      "anchors": [
+        {
+          "text": "session: { clear: () => native.storage.session.clear(), async names()",
+          "occurrences": 1,
+          "firstLine": 86
+        }
+      ],
+      "patch": "tools/fixtures/clear-all/controls/unticked-sync-access.patch",
+      "patchIdentity": {
+        "mode": "100644",
+        "bytes": 622,
+        "sha256": "155be189707819d6e7b4f82eff916e0806e0a1337f08b429a24897b9fa063588",
+        "gitBlob": "1ede93f27b740504fff8d67d4311b24ed7bdcf88"
+      },
+      "testFile": "tools/fixtures/clear-all/owner.bun-test.ts",
+      "test": "unticked zero sync layout 1 consent false private false",
+      "intendedAssertion": "unticked zero sync access",
+      "state": "unexecuted-proposed-compiling-control",
+      "sequence": [
+        "baseline scoped and whole compile",
+        "baseline named assertion passes",
+        "zero-fuzz zero-offset patch",
+        "mutant scoped and whole compile succeed",
+        "named intended assertion fails",
+        "restore exact bytes and mode",
+        "restored scoped and whole compile",
+        "restored named assertion passes"
+      ]
+    },
+    {
+      "id": "missing-confirmation",
+      "source": "src/background/router/clear-all.ts",
+      "baselineSourceIdentity": {
+        "mode": "100644",
+        "bytes": 4974,
+        "sha256": "b0f3b539c9b44d7abf07fa0a576fba42300372ac64dc409d679b367ac606a5fb",
+        "gitBlob": "2199abc790089497b3477f73fdff17b87e131ffa"
+      },
+      "anchors": [
+        {
+          "text": "const review = reviews.get(payload.review)",
+          "occurrences": 1,
+          "firstLine": 59
+        }
+      ],
+      "patch": "tools/fixtures/clear-all/controls/missing-confirmation.patch",
+      "patchIdentity": {
+        "mode": "100644",
+        "bytes": 705,
+        "sha256": "e11e5e59881e1640073869c0c3b1a3340d0015050309eea35c6d17eae0cfa22c",
+        "gitBlob": "3cb5ad6209e94a65e7c3a5ff2815b80dc36badb4"
+      },
+      "testFile": "tools/fixtures/clear-all/rpc.bun-test.ts",
+      "test": "missing confirmation cannot invoke the real supervisor",
+      "intendedAssertion": "missing confirmation refuses clear",
+      "state": "unexecuted-proposed-compiling-control",
+      "sequence": [
+        "baseline scoped and whole compile",
+        "baseline named assertion passes",
+        "zero-fuzz zero-offset patch",
+        "mutant scoped and whole compile succeed",
+        "named intended assertion fails",
+        "restore exact bytes and mode",
+        "restored scoped and whole compile",
+        "restored named assertion passes"
+      ]
+    },
+    {
+      "id": "erased-receiver-consent",
+      "source": "src/background/store/sync-reset-receive.ts",
+      "baselineSourceIdentity": {
+        "mode": "100644",
+        "bytes": 14349,
+        "sha256": "6028883a59d4af2108ab4c86fe32c6715c109d1b18549b05cb0432ed71b4cc1d",
+        "gitBlob": "5d9fdf248e12bdce7233a0b4de8e2431a5dbfd7b"
+      },
+      "anchors": [
+        {
+          "text": "const committed = await observe(marker)",
+          "occurrences": 1,
+          "firstLine": 197
+        }
+      ],
+      "patch": "tools/fixtures/clear-all/controls/erased-receiver-consent.patch",
+      "patchIdentity": {
+        "mode": "100644",
+        "bytes": 623,
+        "sha256": "e838c493834ea6383dc2145e2ead2d37bb299aede52a822e7f88bfae6e2b7c72",
+        "gitBlob": "5c2834cc540b7129c494d3908e814f978bf9c156"
+      },
+      "testFile": "tools/fixtures/clear-all/owner.bun-test.ts",
+      "test": "two real browser owners receive reset and preserve local authority",
+      "intendedAssertion": "receiving browser keeps consent and sync switch",
+      "state": "unexecuted-proposed-compiling-control",
+      "sequence": [
+        "baseline scoped and whole compile",
+        "baseline named assertion passes",
+        "zero-fuzz zero-offset patch",
+        "mutant scoped and whole compile succeed",
+        "named intended assertion fails",
+        "restore exact bytes and mode",
+        "restored scoped and whole compile",
+        "restored named assertion passes"
+      ]
+    },
+    {
+      "id": "erased-unclaimed",
+      "source": "src/background/store/sync-reset-receive.ts",
+      "baselineSourceIdentity": {
+        "mode": "100644",
+        "bytes": 14349,
+        "sha256": "6028883a59d4af2108ab4c86fe32c6715c109d1b18549b05cb0432ed71b4cc1d",
+        "gitBlob": "5d9fdf248e12bdce7233a0b4de8e2431a5dbfd7b"
+      },
+      "anchors": [
+        {
+          "text": "stage = \"marker\"\n    try { await host.removeLocal([receivedResetKey]) }",
+          "occurrences": 1,
+          "firstLine": 205
+        }
+      ],
+      "patch": "tools/fixtures/clear-all/controls/erased-unclaimed.patch",
+      "patchIdentity": {
+        "mode": "100644",
+        "bytes": 581,
+        "sha256": "f61e03cb383321fa35ad1c0ebd17d39a39e93d51129a85516b726b1b11c2f181",
+        "gitBlob": "c7055085a894038223bfd83b828eddc46d5ac9d1"
+      },
+      "testFile": "tools/fixtures/clear-all/owner.bun-test.ts",
+      "test": "two real browser owners receive reset and preserve local authority",
+      "intendedAssertion": "receiving browser keeps unclaimed setup",
+      "state": "unexecuted-proposed-compiling-control",
+      "sequence": [
+        "baseline scoped and whole compile",
+        "baseline named assertion passes",
+        "zero-fuzz zero-offset patch",
+        "mutant scoped and whole compile succeed",
+        "named intended assertion fails",
+        "restore exact bytes and mode",
+        "restored scoped and whole compile",
+        "restored named assertion passes"
+      ]
+    },
+    {
+      "id": "forgotten-pacing",
+      "source": "src/background/store/sync-reset.ts",
+      "baselineSourceIdentity": {
+        "mode": "100644",
+        "bytes": 12118,
+        "sha256": "d178c03686042846ff3e03747913f701cb0f9582057c58af9f9fbce8bc19a40d",
+        "gitBlob": "b3a9fc4819c8f139e8ffeaa85286a4255c69fdd9"
+      },
+      "anchors": [
+        {
+          "text": "ports.pace.nextInvocation = invoked.mono + 5000",
+          "occurrences": 1,
+          "firstLine": 150
+        },
+        {
+          "text": "Math.max(invoked.wall + 5000, outcome.kind",
+          "occurrences": 1,
+          "firstLine": 166
+        }
+      ],
+      "patch": "tools/fixtures/clear-all/controls/forgotten-pacing.patch",
+      "patchIdentity": {
+        "mode": "100644",
+        "bytes": 1448,
+        "sha256": "7606f5cc79b0d88f66499973c6c1c09c8f21aa00e734efebbd090f101122b2d3",
+        "gitBlob": "35c5b80283f929f6f7b2f5ae8a1cee87df0ee467"
+      },
+      "testFile": "tools/fixtures/clear-all/owner.bun-test.ts",
+      "test": "supported pre-consent sync-off reset leaves exactly codec metadata",
+      "intendedAssertion": "shared pacing across reset mutations",
+      "state": "unexecuted-proposed-compiling-control",
+      "sequence": [
+        "baseline scoped and whole compile",
+        "baseline named assertion passes",
+        "zero-fuzz zero-offset patch",
+        "mutant scoped and whole compile succeed",
+        "named intended assertion fails",
+        "restore exact bytes and mode",
+        "restored scoped and whole compile",
+        "restored named assertion passes"
+      ]
+    },
+    {
+      "id": "missing-shard",
+      "source": "src/background/store/sync-reset-receive.ts",
+      "baselineSourceIdentity": {
+        "mode": "100644",
+        "bytes": 14349,
+        "sha256": "6028883a59d4af2108ab4c86fe32c6715c109d1b18549b05cb0432ed71b4cc1d",
+        "gitBlob": "5d9fdf248e12bdce7233a0b4de8e2431a5dbfd7b"
+      },
+      "anchors": [
+        {
+          "text": "...removalProgressShards.map(shard => `progress:${acct}:${shard}`)",
+          "occurrences": 2,
+          "firstLine": 56
+        }
+      ],
+      "patch": "tools/fixtures/clear-all/controls/missing-shard.patch",
+      "patchIdentity": {
+        "mode": "100644",
+        "bytes": 1657,
+        "sha256": "d0d328987a38cc6f7558a805ff097269b3baa59cdae55fdc4842f792d908eaa8",
+        "gitBlob": "f31978cb60fc376b576bc84b03c21b2335b0a682"
+      },
+      "testFile": "tools/fixtures/clear-all/owner.bun-test.ts",
+      "test": "two real browser owners receive reset and preserve local authority",
+      "intendedAssertion": "all accounts and sixteen shards erased",
+      "state": "unexecuted-proposed-compiling-control",
+      "sequence": [
+        "baseline scoped and whole compile",
+        "baseline named assertion passes",
+        "zero-fuzz zero-offset patch",
+        "mutant scoped and whole compile succeed",
+        "named intended assertion fails",
+        "restore exact bytes and mode",
+        "restored scoped and whole compile",
+        "restored named assertion passes"
+      ]
+    },
+    {
+      "id": "lost-marker",
+      "source": "src/background/store/store-lifecycle.ts",
+      "baselineSourceIdentity": {
+        "mode": "100644",
+        "bytes": 34410,
+        "sha256": "f407fd549e6c23858e4b0c0c8c11569c0ba4b384185c4518cd7128bda44954f4",
+        "gitBlob": "4363e526fbae29a8914d159299e17531ea703002"
+      },
+      "anchors": [
+        {
+          "text": "confirmation = markerPresence(records) === \"present\" && isClearMarker(records, marker) ? { kind: \"confirmed\" } : { kind: \"different\" }",
+          "occurrences": 1,
+          "firstLine": 437
+        }
+      ],
+      "patch": "tools/fixtures/clear-all/controls/lost-marker.patch",
+      "patchIdentity": {
+        "mode": "100644",
+        "bytes": 489,
+        "sha256": "b581e84fde7e747ad14cb29393f51ceba0381dc34d136fc3a5135a91dedf76e4",
+        "gitBlob": "6c48b50dc77b4311c1532d02863f463193846bec"
+      },
+      "testFile": "tools/fixtures/clear-all/owner.bun-test.ts",
+      "test": "missing marker confirmation prevents destructive local work",
+      "intendedAssertion": "marker loss cannot acknowledge clear",
+      "state": "unexecuted-proposed-compiling-control",
+      "sequence": [
+        "baseline scoped and whole compile",
+        "baseline named assertion passes",
+        "zero-fuzz zero-offset patch",
+        "mutant scoped and whole compile succeed",
+        "named intended assertion fails",
+        "restore exact bytes and mode",
+        "restored scoped and whole compile",
+        "restored named assertion passes"
+      ]
+    },
+    {
+      "id": "late-resurrection",
+      "source": "src/background/adapters/store-lifecycle.ts",
+      "baselineSourceIdentity": {
+        "mode": "100644",
+        "bytes": 5803,
+        "sha256": "f3b3540ebb09bffb5cbb068d991c60373ce064bef153233c5696995dd112d83c",
+        "gitBlob": "749081f0578cd19783582ddc05773177f2f34529"
+      },
+      "anchors": [
+        {
+          "text": "openFirstRun: () => options.firstRun.open()",
+          "occurrences": 1,
+          "firstLine": 99
+        }
+      ],
+      "patch": "tools/fixtures/clear-all/controls/late-resurrection.patch",
+      "patchIdentity": {
+        "mode": "100644",
+        "bytes": 453,
+        "sha256": "df456d3a5f3d74c60706c9470cc6c5afdd97ddfe396030e020c7b769d6b3144e",
+        "gitBlob": "9c53a3e55e13d9e7c2c927273425506a1e20bf4d"
+      },
+      "testFile": "tools/fixtures/clear-all/owner.bun-test.ts",
+      "test": "late old session mutation cannot resurrect cleared memory",
+      "intendedAssertion": "late callbacks cannot resurrect cleared session",
+      "state": "unexecuted-proposed-compiling-control",
+      "sequence": [
+        "baseline scoped and whole compile",
+        "baseline named assertion passes",
+        "zero-fuzz zero-offset patch",
+        "mutant scoped and whole compile succeed",
+        "named intended assertion fails",
+        "restore exact bytes and mode",
+        "restored scoped and whole compile",
+        "restored named assertion passes"
+      ]
+    },
+    {
+      "id": "missing-account",
+      "source": "src/background/store/sync-reset-receive.ts",
+      "baselineSourceIdentity": {
+        "mode": "100644",
+        "bytes": 14349,
+        "sha256": "6028883a59d4af2108ab4c86fe32c6715c109d1b18549b05cb0432ed71b4cc1d",
+        "gitBlob": "5d9fdf248e12bdce7233a0b4de8e2431a5dbfd7b"
+      },
+      "anchors": [
+        {
+          "text": "accounts: [...accounts].sort(), targets, phase: \"session\"",
+          "occurrences": 1,
+          "firstLine": 139
+        }
+      ],
+      "patch": "tools/fixtures/clear-all/controls/missing-account.patch",
+      "patchIdentity": {
+        "mode": "100644",
+        "bytes": 751,
+        "sha256": "b97ffe7f0fd0484175be9614514084f7336f6adfc9969888f6f8c830689abbff",
+        "gitBlob": "e03f93a719dda31fe899916d54c61307cef3af1f"
+      },
+      "testFile": "tools/fixtures/clear-all/owner.bun-test.ts",
+      "test": "two real browser owners receive reset and preserve local authority",
+      "intendedAssertion": "all accounts and sixteen shards erased",
+      "state": "unexecuted-proposed-compiling-control",
+      "sequence": [
+        "baseline scoped and whole compile",
+        "baseline named assertion passes",
+        "zero-fuzz zero-offset patch",
+        "mutant scoped and whole compile succeed",
+        "named intended assertion fails",
+        "restore exact bytes and mode",
+        "restored scoped and whole compile",
+        "restored named assertion passes"
+      ]
+    }
+  ]
+}

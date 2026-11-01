@@ -1,0 +1,12 @@
+diff --git a/src/site/kit/toaster/model.ts b/src/site/kit/toaster/model.ts
+--- a/src/site/kit/toaster/model.ts
++++ b/src/site/kit/toaster/model.ts
+@@ -214,7 +214,7 @@
+     pause(reason: "hover" | "focus", on: boolean) {
+       if (!live()) return
+       if (pauses.has(reason) === on) return
+-      stopClock(); if (on) pauses.add(reason); else pauses.delete(reason)
++      stopClock(); if (on) pauses.add(reason); else pauses.clear()
+       changed(false)
+     },
+     read: view,
