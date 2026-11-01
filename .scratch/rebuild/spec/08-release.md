@@ -695,33 +695,35 @@ The name is Perchling for YouTube™ ([R141](resolutions.md#the-name-perchling-r
 
 > *(AMO only)* Formerly YouTube Playlist Tools.
 >
-> Save the video or song you're looking at to Watch Later or any of your playlists, in one click or with one key, right where you are on YouTube and YouTube Music. Every feature starts off: switch on only what you want, and YouTube looks exactly as before until you do.
+> Save the video or song you're on to Watch Later or any of your playlists, with one click or one key, right where you are on YouTube and YouTube Music. Every feature starts off. Switch on only the ones you want, and YouTube looks the same as before until you do.
 >
-> **On YouTube**
-> • Quick-save on thumbnails: one click saves a video to the playlist you pick; the arrow opens a picker that shows where it already is, and unticking takes it out.
-> • Playlist shortcuts: up to 20 keys, each saving to its own playlist, with your own labels. Alt+W saves to Watch Later.
-> • Auto-add: saves the videos you actually watch to playlists you pick, once you've watched enough of each. You choose how much, per playlist, and can filter by channel. Shorts too, if you want.
-> • Watch-page button: shows auto-add's status under the video, with Save to any playlist.
-> • Queue button on thumbnails: adds a video to the end of the queue, with Undo.
-> • Right-click a video for YouTube's own ⋮ menu, or add Save to ▸ to your browser's own right-click menu instead.
+> On YouTube
+> • Quick-save on thumbnails. One click saves a video to the playlist you pick. The arrow opens a picker that shows where the video already is, and unticking a playlist takes the video out.
+> • Playlist shortcuts. Up to 20 keys, each saving to its own playlist, with your own labels. Alt+W saves to Watch Later.
+> • Auto-add. Saves the videos you actually watch to playlists you pick, once you've watched enough of each. You set how much for each playlist, and can filter by channel. Shorts too, if you want.
+> • Watch-page button. Shows auto-add's status under the video, with Save to any playlist.
+> • Queue button on thumbnails. Adds a video to the end of the queue, with Undo.
+> • Right-click a video for YouTube's own ⋮ menu, or add Save to ▸ to your browser's right-click menu instead.
 > • Create playlists from any chooser.
-> • Gather tabs: gathers the YouTube videos open in a window into one list, YouTube's queue or a playlist, and can close their tabs, by itself too if you want. A port of GatherTube by Karim Elgazar.
+> • Gather tabs. Collects the YouTube videos open in a window into one list, YouTube's queue or a playlist, and can close their tabs, automatically too if you want. A port of GatherTube by Karim Elgazar.
 >
-> **On YouTube Music**
-> • Quick actions: Play next and Add to queue right on songs, albums and playlists; Save to playlist and Like for songs; Remove from queue for queued songs. If you want them: Save to library, Start mix, Go to album and Go to artist. Each is one click away, and you pick which buttons show.
-> • Quick-action shortcuts: a key for each, for the song you point at.
+> On YouTube Music
+> • Quick actions. Play next and Add to queue right on songs, albums and playlists, Save to playlist and Like for songs, and Remove from queue for queued songs. Save to library, Start mix, Go to album and Go to artist are there if you want them. Each is one click away, and you pick which buttons show.
+> • Quick-action shortcuts. A key for each action, for the song under your pointer.
 >
-> **Everywhere**
-> • Keys from any tab: save or like the song that's playing, or save the current video to Watch Later, while YouTube is in another tab. You set the keys in your browser.
+> Everywhere
+> • Keys from any tab. Save or like the song that's playing, or save the current video to Watch Later, while YouTube is in another tab. You set these keys in your browser.
 > • Undo on every save, and a list of what you saved since the browser started.
 > • A separate setup for each of your YouTube accounts.
-> • Settings sync across your browsers, through your browser's own sync, off until you turn it on, or save your settings to a file.
+> • Settings sync across your browsers through your browser's own sync, off until you turn it on. You can also save your settings to a file.
 >
-> **How it works**
-> It works inside your YouTube and YouTube Music tabs, as the account you're signed in to there, using the same requests YouTube's own buttons send. It needs no Google sign-in, API key or password. Nothing is sent to the developer or to anyone other than YouTube, and there are no analytics or ads. Your settings stay in your browser, and in your browser's own sync if you turn it on.
-> It relies on how YouTube's website works today, so a YouTube change can stop a feature until an update ships. Perchling tells you when that happens.
+> How it works
+> Perchling works inside your YouTube and YouTube Music tabs, as the account you're signed in to there, and sends the same requests YouTube's own buttons send. It needs no Google sign-in, API key or password. Nothing goes to the developer or to anyone other than YouTube, and there are no analytics or ads. Your settings stay in your browser, and in your browser's own sync if you turn it on.
+> Perchling depends on how YouTube's website works today, so a change at YouTube can stop a feature until an update ships. Perchling tells you when that happens.
 >
-> Privacy policy: https://alioun.github.io/yt-playlist-tools/privacy/ · Source code: https://github.com/Alioun/yt-playlist-tools · Problems and ideas (a GitHub account is needed): https://github.com/Alioun/yt-playlist-tools/issues/new/choose
+> Privacy policy: https://alioun.github.io/yt-playlist-tools/privacy/
+> Source code: https://github.com/Alioun/yt-playlist-tools
+> Problems and ideas (needs a GitHub account): https://github.com/Alioun/yt-playlist-tools/issues/new/choose
 >
 > Not affiliated with or endorsed by YouTube or Google. YouTube and YouTube Music are trademarks of Google LLC. Use of these trademarks is subject to Google Permissions.
 
@@ -734,14 +736,14 @@ The name is Perchling for YouTube™ ([R141](resolutions.md#the-name-perchling-r
 - **REL-STORE-06** These notes go to AMO's release notes (sent as `{"en-US": …}`, REL-CI-31), the GitHub release and the site. They live in `store/release-notes/2.0.0.md`.
 
 > 2.0 is a rebuild, and YouTube Playlist Tools is now Perchling for YouTube™.
-> • No Google Cloud credentials anymore: it works through the YouTube account you're signed in to. Your old client ID, secret and tokens are deleted from your browser.
-> • Your auto-add playlists, shortcut, watch percentage and toast setting carry over. Nothing runs until you've reviewed them on the page that opens after the update.
-> • Auto-add counts only what you actually watch, never adds a video twice, and no longer says "Added" when an add failed.
-> • Shortcuts no longer fire while you type, can be cleared, and Ctrl shortcuts work.
-> • New, and off until you switch them on: Watch Later, several named shortcuts, quick-save and queue buttons on thumbnails, a watch-page button, Save to ▸ in the browser's right-click menu, creating playlists, Shorts, YouTube Music quick actions, keys from any tab, Gather tabs, a setup per account, and settings sync.
-> • Gather tabs is a port of GatherTube by Karim Elgazar: it gathers the YouTube videos open in a window into one list, YouTube's queue or a playlist, and can close their tabs.
-> • Also new: unticking a playlist in the picker takes the video out, with Undo; the popup lists what you saved since the browser started; and you can save your settings to a file.
-> • Needs Firefox 140 or later.
+> - No more Google Cloud credentials. Perchling works through the YouTube account you're signed in to, and deletes your old client ID, secret and tokens from your browser.
+> - Your auto-add playlists, shortcut, watch percentage and toast setting carry over. Nothing runs until you've reviewed them on the page that opens after the update.
+> - Auto-add counts only what you actually watch, never adds a video twice, and no longer says "Added" when an add failed.
+> - Shortcuts no longer fire while you type, can be cleared, and Ctrl shortcuts work.
+> - New, and off until you switch them on: Watch Later, several named shortcuts, quick-save and queue buttons on thumbnails, a watch-page button, Save to ▸ in the browser's right-click menu, creating playlists, Shorts, YouTube Music quick actions, keys from any tab, Gather tabs, a setup per account, and settings sync.
+> - Gather tabs is a port of GatherTube by Karim Elgazar. It collects the YouTube videos open in a window into one list, YouTube's queue or a playlist, and can close their tabs.
+> - Unticking a playlist in the picker now takes the video out, with Undo. The popup lists what you saved since the browser started, and you can save your settings to a file.
+> - Needs Firefox 140 or later.
 
 - *Only under §13's fallback, not at launch (R83):* add "Firefox will ask you to approve sharing website activity: that's the videos you save, sent to YouTube through your own account."
 - The Gather tabs line and its credit are R138's (REL-STORE-38).
@@ -886,42 +888,73 @@ Gather tabs is a port of [GatherTube](https://github.com/karimelgazar/gathertube
 
 - **REL-STORE-20** These answers are kept in `store/cws-dashboard.md`, which the hotfix check freezes (REL-CI-38). They're pasted into the dashboard's Privacy tab.
 
-**Single purpose:**
-> Perchling organises what the user watches and listens to on YouTube and YouTube Music into their own playlists, queue and likes: automatically after a video is watched (optionally filtered by channel), with keyboard shortcuts, with one-click buttons for YouTube's and YouTube Music's own save, queue and like actions, or by gathering the YouTube videos open in a window into one list or playlist.
+#### Single purpose
+
+> Perchling files what the user watches and listens to on YouTube and YouTube Music into their own playlists, queue and likes. It does this automatically after a video is watched (optionally filtered by channel), with keyboard shortcuts, with one-click buttons for YouTube's and YouTube Music's own save, queue and like actions, or by gathering the YouTube videos open in a window into one list or playlist.
 
 The purpose still holds with Gather tabs: gathering files the user's own YouTube videos into their playlists and queue. Its clause is named so a reviewer finds it there (R138).
 
-**Permission justifications:**
-- **`storage`:** "Keeps the user's settings in the browser: which features are on, the playlists each feature uses per YouTube account, shortcut keys and labels, channel filters, a cached list of the user's playlists, and auto-add's watch progress (deleted after 30 days)."
-- **`scripting`:** "Adds each feature's script to YouTube pages only while that feature is switched on, and reads data from an open YouTube tab when the popup or settings need it."
-- **`https://www.youtube.com/*`:** "The extension's features run on YouTube: they read which video is playing and how much has been played (auto-add), catch the user's shortcut keys, draw the buttons the user switched on, and send YouTube's own playlist requests from the user's YouTube tab, as the signed-in user, and, for Gather tabs, read the addresses and titles of the YouTube tabs open in a window, to collect their videos and close those tabs when the user asks." (R138)
-- **`https://music.youtube.com/*` (optional):** "Requested only when the user switches on a YouTube Music feature, lets their playlist shortcuts work on YouTube Music too, or switches on keys from any tab: it adds the quick-action buttons and keys to YouTube Music, catches the shortcut keys there, and runs YouTube Music's own queue, save and like actions in that tab." (R53, R88)
-- **`contextMenus` (optional):** "Requested only when the user switches on Save from the browser's menu: it adds a Save to ▸ entry to the browser's right-click menu on YouTube video links and watch pages. It's given back when the user switches that off." (R91)
+#### Permission justifications
 
-**Remote code:** "No, I am not using remote code." Everything ships in the package. The extension sends YouTube's own requests and hands YouTube's command objects back to YouTube's page code; it fetches and evaluates nothing.
+`storage`
 
-**Data usage.** These follow the policy text rather than the lightest precedent (ticket 03):
+> Keeps the user's settings in the browser: which features are on, the playlists each feature uses for each YouTube account, shortcut keys and labels, channel filters, a cached list of the user's playlists, and auto-add's watch progress, which is deleted after 30 days.
+
+`scripting`
+
+> Adds each feature's script to YouTube pages only while that feature is switched on, and reads data from an open YouTube tab when the popup or settings need it.
+
+`https://www.youtube.com/*`
+
+> The extension's features run on YouTube. They read which video is playing and how much of it has been played (auto-add), catch the user's shortcut keys, draw the buttons the user switched on, and send YouTube's own playlist requests from the user's YouTube tab, as the signed-in user. For Gather tabs, they read the addresses and titles of the YouTube tabs open in a window, to collect their videos and close those tabs when the user asks.
+
+`https://music.youtube.com/*` (optional)
+
+> Requested only when the user switches on a YouTube Music feature, extends their playlist shortcuts to YouTube Music, or switches on keys from any tab. It adds the quick-action buttons and keys to YouTube Music, catches the shortcut keys there, and runs YouTube Music's own queue, save and like actions in that tab.
+
+`contextMenus` (optional)
+
+> Requested only when the user switches on Save from the browser's menu. It adds a Save to ▸ entry to the browser's right-click menu on YouTube video links and watch pages, and is given back when the user switches that off.
+
+#### Remote code
+
+Choose "No, I am not using remote code." Everything ships in the package. The extension sends YouTube's own requests and hands YouTube's command objects back to YouTube's page code. It fetches and evaluates nothing.
+
+#### Data usage
+
+These follow the privacy policy rather than the lightest precedent.
 
 | Category | Tick | Because |
 |---|---|---|
-| Personally identifiable information | ✔ | The account's display name and @handle are stored, and synced if sync is on (ticket 11) |
-| Health, Financial and payment, Personal communications, Location | — | Not handled |
-| Authentication information | ✔ **PROVISIONAL (ticket 25)**: unticked if no shipped route reads the session cookie (R48) | The page reads YouTube's sign-in cookie to sign requests (ticket 10 §3) |
-| Web history | ✔ | Which videos were watched, kept as watch progress for up to 30 days, and the YouTube videos open in a window, read when the user gathers them (R138) |
-| User activity | ✔ | Playback progress, the shortcut keys pressed, clicks on our controls |
-| Website content | ✔ | Playlist names and thumbnails, video and channel titles |
+| Personally identifiable information | Yes | The account's display name and @handle are stored, and synced if sync is on |
+| Health information | No | Not handled |
+| Financial and payment information | No | Not handled |
+| Authentication information | Yes | The page reads YouTube's sign-in cookie to sign requests |
+| Personal communications | No | Not handled |
+| Location | No | Not handled |
+| Web history | Yes | Which videos were watched, kept as watch progress for up to 30 days, and the YouTube videos open in a window, read when the user gathers them |
+| User activity | Yes | Playback progress, the shortcut keys pressed, and clicks on the extension's controls |
+| Website content | Yes | Playlist names and thumbnails, and video and channel titles |
 
-**Certifications:** all three:
-- "I do not sell user data to third parties";
-- "…unrelated to my item's single purpose";
-- "…creditworthiness or for lending purposes".
+*(PROVISIONAL on ticket 25 (R48): untick Authentication information if no shipped route reads the session cookie.)*
 
-**Privacy policy URL:** `https://alioun.github.io/yt-playlist-tools/privacy/`.
+Tick all three certifications: the item doesn't sell user data to third parties, doesn't use it for purposes unrelated to its single purpose, and doesn't use it to determine creditworthiness or for lending.
 
-**Test instructions** (optional on Chrome, so given briefly):
-> Sign in to youtube.com with any Google account that has a YouTube channel. On the first-run page, tick Auto-add and Playlist shortcuts, then Agree. Pick a playlist, play any video for a few seconds with the required percentage at 0 % (Settings › YouTube › Auto-add), and press Alt+W to save to Watch later. Add to queue on thumbnails and the YouTube Music queue actions work without signing in.
+#### Privacy policy URL
 
-**Distribution:** all regions. Visibility is Unlisted during the beta and Public at launch (§8.1).
+https://alioun.github.io/yt-playlist-tools/privacy/
+
+#### Test instructions
+
+Optional on Chrome, so they're short.
+
+> Sign in to youtube.com with any Google account that has a YouTube channel. On the first-run page, tick Auto-add and Playlist shortcuts, then click Agree. Pick a playlist, set the required percentage to 0 % (Settings › YouTube › Auto-add), play any video for a few seconds, and press Alt+W to save it to Watch later. Add to queue on thumbnails and the YouTube Music queue actions work without signing in.
+
+#### Distribution
+
+All regions. Visibility is Unlisted during the beta and Public at launch (§8.1).
+
+The answers draw on ticket 03 (the data-usage ticks), ticket 10 §3 (the sign-in cookie), ticket 11 (the stored account name), R53 and R88 (YouTube Music access), R91 (`contextMenus`) and R138 (Gather tabs).
 
 ## 12. AMO
 
@@ -946,59 +979,72 @@ The purpose still holds with Gather tabs: gathering files the user's own YouTube
 
   (R17, R34, R48, R49, R66, R83)
 
-> **What this is.** 2.0 is a ground-up rewrite of YouTube Playlist Tools, renamed Perchling for YouTube™ (same ID and slug). 1.x used the YouTube Data API with users' own OAuth credentials; 2.0 drops that entirely: no `identity` permission, no Google hosts, no server.
->
-> **How it works.**
-> - Every request goes from an open youtube.com or music.youtube.com tab, through the user's own signed-in session, to youtube.com itself.
-> - Per site, two registrations, both made at runtime with `scripting.registerContentScripts` and only while a feature for that site is on:
->   - a `world: "MAIN"` gateway that calls YouTube's own client code;
->   - an isolated-world list: the site core, the UI kit (only if a switched-on feature draws), then one file per switched-on feature.
-> - When a feature is switched on, `scripting.executeScript` injects the same files into already-open tabs of that site, so no reload is needed. It also loads the playlist picker (`popovers.js`) on first use, and, only when the popup or settings needs an account or fresh data (playlists, or the song playing) from a tab that has none of our code, the gateway and site core alone into that one tab; that core draws nothing. After an extension update, the start-up run registers the scripts again and injects the current files into open tabs, and the older copies there retire themselves. Nothing is injected before the user's Agree.
-> - There are no static content scripts and no web-accessible resources.
-> - Two opt-in features register nothing at all. "Keys from any tab" declares three `commands` with no suggested key, which the user binds in Firefox's shortcut settings; "Save from the browser's menu" adds a Save to ▸ menu entry through the optional `contextMenus` permission, requested when the user switches it on and removed when they switch it off. When either is used, the gateway, core and UI kit are injected into that one YouTube tab with `scripting.executeScript`, to run the save there and show its message.
-> - Gather tabs reads the YouTube tabs of one window with `tabs.query({ windowId, url })`, which host access allows without the `tabs` permission. It opens YouTube's own `watch_videos` list in a tab, or adds the videos to YouTube's queue or a playlist through the routes below, then closes those tabs with `tabs.remove` if asked. Its optional automatic triggers use no alarm and no tab or window listener: on watch pages only, while a trigger that needs it is on, the site core tells the background whether the page loaded in the background.
->
-> **Routes, in order of preference:**
-> 1. YouTube's own command resolver (found by shape on first use and cached for the page: the first `default_kevlar_base.<key>` whose `instance.resolveCommand` is a function);
-> 2. YouTube's `yt-service-request` action;
-> 3. YouTube Music's own `ytmusic-app` handlers (`networkManager.fetch`, `app.queue`);
-> 4. only where none of these can do a job quietly, a same-origin `fetch` to `/youtubei/v1/…` signed in the page from YouTube's session cookie exactly as YouTube's code does (`SAPISIDHASH`). *(PROVISIONAL, ticket 25: without signing if no shipped route reads the session cookie, R48)*
->
-> Public data that needs no account (looking up a typed channel, or a video's channel when the page doesn't show it) uses the same same-origin `fetch` without signing.
->
-> No `cookies` permission, no Origin rewriting, no remote code, config or selectors.
->
-> **Endpoints:** `playlist/get_add_to_playlist`, `browse` (`FEplaylist_aggregation`; channel pages), `browse/edit_playlist` (with several actions per request when gathering), `watch_videos` (opened as a page, never fetched), `playlist/create`, `account/account_menu`, `navigation/resolve_url`, `next`, `reel/reel_item_watch`, `music/get_queue`, YouTube's queue commands through its resolver (`addToPlaylistCommand` for the queue, `playlistEditEndpoint` on the queue list, `refreshPlaylistCommand`), and like / queue commands through YouTube Music's handlers. *(PROVISIONAL: the final list is ticket 25's route table, [06 §6.2.6](06-architecture.md#626-route-table-youtubecom) and [§6.2.7](06-architecture.md#627-route-table-youtube-music).)*
->
-> **Permissions:**
-> - `storage`: settings;
-> - `scripting`: per-feature registration and reading from an open tab for the popup;
-> - `https://www.youtube.com/*`: the only required site. Narrowing from 1.x's `*://*.youtube.com/*` asks nothing on update.
-> - `https://music.youtube.com/*` (optional): asked for only when the user switches on something that runs on YouTube Music.
-> - `contextMenus` (optional): only while "Save from the browser's menu" is on.
->
-> **Data collection: `none`.** Nothing is sent to the developer or any third party. The only requests are YouTube's own, from the user's YouTube tab, for actions the user takes or for auto-add, which the user switches on. Route 4 reads YouTube's session cookie in that tab only to sign requests that go to YouTube itself; the cookie is never stored, logged or sent anywhere else. *(PROVISIONAL, ticket 25: this sentence goes if no shipped route reads the session cookie, R48)* Settings sync, off by default, uses the browser's own `storage.sync`, which the developer never sees. A first-run screen discloses this and requires an explicit Agree before any feature runs. "Report a problem" only opens GitHub's new-issue page in a tab, with the version, browser, feature and status filled in for the user to see; nothing reaches the developer unless the user submits the issue on GitHub.
->
-> **Private windows:** nothing from a private session is written to any storage area (one guarded write path in the background).
->
-> **Source:** see `SOURCE_CODE_REVIEW.md` in the sources zip. Bun 1.4.3 installs the dependencies (`npx --yes bun@1.4.3 install --frozen-lockfile`); the build itself is `npm run build:firefox` on Node. CI rebuilds the sources zip this way on ARM64 and x86-64 and checks that the output is identical.
->
-> **Test account:**
-> - {email} / {password}, with backup codes {code1}, {code2} for Google's sign-in check. It's a throwaway account with a YouTube channel and three playlists.
-> - Any Google account with a YouTube channel also works.
->
-> **Try it (5 minutes):**
-> 1. On the first-run page, tick Auto-add, Playlist shortcuts and Queue button on thumbnails, then Agree.
-> 2. Sign in to youtube.com. In "Finish setting up", tick the playlist "Reviewer A".
-> 3. Set Settings › YouTube › Auto-add › required percentage to 0 %, then open any video: "Auto-added “…” to Reviewer A" appears.
-> 4. Press Alt+W: "Saved “…” to Watch later", with Undo; Alt+U undoes it while that message is on screen.
-> 5. On the home page, hover a thumbnail: the queue button adds it to the queue.
-> 6. On music.youtube.com, switch on Quick actions (Settings › YouTube Music) and hover a song: Play next.
->
-> Without signing in, the queue button and YouTube Music's queue actions still work.
+The template is plain text, and AMO shows it as written. The `*(PROVISIONAL …)*` lines are HTML comments in the file, which `scripts/amo-metadata.ts` strips.
 
-- **REL-STORE-22** Patch releases send the **hotfix template**, with the test-account lines appended: "Fixes {feature} after a YouTube change to {internal}. No permission, data or listing changes. Same build instructions as {previous version}." For a bug of our own (REL-CI-39), the first sentence is "Fixes {what went wrong} in {feature}." (R62)
-- **REL-STORE-23** Unlisted betas send the **beta template**: "Pre-release {version} of {next release}, self-distributed to testers. Same build instructions."
+```text
+What this is
+2.0 is a ground-up rewrite of YouTube Playlist Tools, renamed Perchling for YouTube™, with the same add-on ID and slug. 1.x used the YouTube Data API with each user's own OAuth credentials. 2.0 drops that entirely. It has no identity permission, no Google hosts and no server.
+
+How it works
+- Every request goes from an open youtube.com or music.youtube.com tab, through the user's own signed-in session, to youtube.com itself.
+- Each site gets two registrations, both made at runtime with scripting.registerContentScripts and only while a feature for that site is on:
+  - a world: "MAIN" gateway that calls YouTube's own client code;
+  - an isolated-world list with the site core, the UI kit (only if a switched-on feature draws), then one file per switched-on feature.
+- When the user switches a feature on, scripting.executeScript injects the same files into tabs of that site that are already open, so no reload is needed. It also loads the playlist picker (popovers.js) on first use. When the popup or settings needs an account or fresh data (playlists, or the song playing) from a tab that has none of our code, it injects the gateway and site core alone into that one tab, and that core draws nothing. After an extension update, the start-up run registers the scripts again and injects the current files into open tabs, and the older copies there retire themselves. Nothing is injected before the user clicks Agree.
+- There are no static content scripts and no web-accessible resources.
+- Two opt-in features register nothing at all. "Keys from any tab" declares three commands with no suggested key, which the user binds in Firefox's shortcut settings. "Save from the browser's menu" adds a Save to ▸ menu entry through the optional contextMenus permission, which it requests when the user switches it on and removes when they switch it off. When either is used, the gateway, core and UI kit are injected into that one YouTube tab with scripting.executeScript, to run the save there and show its message.
+- Gather tabs reads the YouTube tabs of one window with tabs.query({ windowId, url }), which host access allows without the tabs permission. It opens YouTube's own watch_videos list in a tab, or adds the videos to YouTube's queue or a playlist through the routes below, then closes those tabs with tabs.remove if the user asked. Its optional automatic triggers use no alarm and no tab or window listener. On watch pages only, while a trigger that needs it is on, the site core tells the background whether the page loaded in the background.
+
+Routes, in order of preference
+1. YouTube's own command resolver, found by shape on first use and cached for the page. It is the first default_kevlar_base.<key> whose instance.resolveCommand is a function.
+2. YouTube's yt-service-request action.
+3. YouTube Music's own ytmusic-app handlers (networkManager.fetch, app.queue).
+4. Only where none of these can do a job quietly, a same-origin fetch to /youtubei/v1/… that the page signs from YouTube's session cookie the same way YouTube's code does (SAPISIDHASH).
+*(PROVISIONAL on ticket 25 (R48): if no shipped route reads the session cookie, route 4 becomes the same request without signing, and SAPISIDHASH goes.)*
+
+Public data that needs no account, such as looking up a typed channel or a video's channel when the page doesn't show it, uses the same same-origin fetch without signing.
+
+There is no cookies permission, no Origin rewriting, and no remote code, config or selectors.
+
+Endpoints
+playlist/get_add_to_playlist, browse (FEplaylist_aggregation and channel pages), browse/edit_playlist (with several actions per request when gathering), watch_videos (opened as a page, never fetched), playlist/create, account/account_menu, navigation/resolve_url, next, reel/reel_item_watch, music/get_queue, YouTube's queue commands through its resolver (addToPlaylistCommand for the queue, playlistEditEndpoint on the queue list, refreshPlaylistCommand), and like and queue commands through YouTube Music's handlers.
+*(PROVISIONAL: the final list is ticket 25's route table (06 §6.2.6 and §6.2.7).)*
+
+Permissions
+- storage holds the settings.
+- scripting registers each feature's scripts, and reads from an open tab for the popup.
+- https://www.youtube.com/* is the only site requested at install.
+- https://music.youtube.com/* is optional. Perchling requests it only when the user switches on a YouTube Music feature, extends playlist shortcuts to YouTube Music, or switches on keys from any tab.
+- contextMenus is optional, and held only while "Save from the browser's menu" is on.
+
+Data collection: none
+Nothing is sent to the developer or any third party. The only requests are YouTube's own, from the user's YouTube tab, for actions the user takes or for auto-add, which the user switches on. Route 4 reads YouTube's session cookie in that tab only to sign requests that go to YouTube itself. The cookie is never stored, logged or sent anywhere else.
+*(PROVISIONAL on ticket 25 (R48): the two cookie sentences above go if no shipped route reads the session cookie.)*
+Settings sync is off by default and uses the browser's own storage.sync, which the developer never sees. A first-run screen discloses all of this and requires an explicit Agree before any feature runs. "Report a problem" only opens GitHub's new-issue page in a tab, with the version, browser, feature and status filled in for the user to see. Nothing reaches the developer unless the user submits the issue on GitHub.
+
+Private windows
+Nothing from a private session is written to any storage area. One guarded write path in the background enforces this.
+
+Source
+See SOURCE_CODE_REVIEW.md in the sources zip. Bun 1.4.3 installs the dependencies (npx --yes bun@1.4.3 install --frozen-lockfile), and the build itself is npm run build:firefox on Node. CI rebuilds the sources zip this way on ARM64 and x86-64 and checks that the output is identical.
+
+Test account
+- {email} / {password}, with the backup codes {code1} and {code2} for Google's sign-in check. It's a throwaway account with a YouTube channel and three playlists.
+- Any Google account with a YouTube channel also works.
+
+Try it (5 minutes)
+1. On the first-run page, tick Auto-add, Playlist shortcuts and Queue button on thumbnails, then click Agree.
+2. Sign in to youtube.com. In "Finish setting up", tick the playlist "Reviewer A".
+3. In Settings › YouTube › Auto-add, set the required percentage to 0 %, then open any video. The message Auto-added “…” to Reviewer A appears.
+4. Press Alt+W. The message Saved “…” to Watch later appears, with Undo. Alt+U undoes the save while that message is on screen.
+5. On the home page, hover a thumbnail. The queue button adds the video to the queue.
+6. On music.youtube.com, switch on Quick actions (Settings › YouTube Music) and hover a song to see Play next.
+
+Without signing in, the queue button and YouTube Music's queue actions still work.
+```
+
+- **REL-STORE-22** Patch releases send the **hotfix template**, `store/notes/reviewer-hotfix.md`, with the test-account lines appended: "{fix} No permission, data or listing changes. Same build instructions as {previous version}, in SOURCE_CODE_REVIEW.md in the sources zip." `{fix}` is the first line of `store/notes/hotfix/{version}.md`, which each hotfix writes. After a YouTube change it reads "Fixes {feature} after a YouTube change to {internal}.", for example "Fixes auto-add after a YouTube change to the watch page's player data." For a bug of our own (REL-CI-39), it reads "Fixes {what went wrong} in {feature}.", for example "Fixes the shortcut recorder in Playlist shortcuts." (R62)
+- **REL-STORE-23** Unlisted betas send the **beta template**, `store/notes/reviewer-beta.md`: "Pre-release {version} of {next release}, self-distributed to beta testers. Same build instructions, in SOURCE_CODE_REVIEW.md in the sources zip."
 - **REL-STORE-24** The reviewer credentials reach CI only through the `amo` environment secret `AMO_REVIEWER_LOGIN`, and never appear in the repo.
   - CI fills them only through a design with credential-free tests that the owner approved, run from a frozen copy agents can't change. A change to that design or its helpers needs the tests and the owner's approval again (R186).
   - This isn't ADR-0005's "no Google account in CI": CI never signs in to anything. It only pastes text that AMO shows to reviewers.
@@ -1021,31 +1067,50 @@ The purpose still holds with Gather tabs: gathering files the user's own YouTube
 
 > # Building Perchling for YouTube™ from source
 >
-> Built and checked on Ubuntu 24.04 **ARM64** and x86-64 with Node 24 (the AMO reviewer environment). No secrets, environment variables or network access are needed beyond the npm registry.
+> Built and checked on Ubuntu 24.04 on ARM64 and x86-64 with Node 24, the AMO reviewer environment. The build needs no secrets, environment variables or network access beyond the npm registry.
 >
-> **Bun is used only to install the dependencies, because the lockfile is Bun's. The build itself runs on Node, with your own npm.**
+> Bun only installs the dependencies, because the lockfile is Bun's. The build itself runs on Node, with your own npm.
 >
-> 1. Install the exact dependencies pinned in `bun.lock`, from the npm registry, with Bun 1.4.3 fetched through npm (nothing is installed globally):
->    `npx --yes bun@1.4.3 install --frozen-lockfile`
->    (Alternatives: `npm install --global bun@1.4.3`, or `curl -fsSL https://bun.com/install | bash -s "bun-v1.4.3"`.)
-> 2. Build the Firefox package on Node:
->    `npm run build:firefox`
->    This runs `wxt build -b firefox`; `wxt.config.ts` and `build/` use only Node APIs.
-> 3. The output is in `.output/firefox-mv3/`. Compare it with the submitted package: `diff -r .output/firefox-mv3 <unzipped submission>`.
+> 1. Install the exact dependencies pinned in `bun.lock` from the npm registry, with Bun 1.4.3 fetched through npm. Nothing is installed globally.
 >
-> `npm run build-for-amo` runs steps 1–2 for AMO's automatic builder.
+>    ```sh
+>    npx --yes bun@1.4.3 install --frozen-lockfile
+>    ```
 >
-> **What the build does:** WXT (Vite) compiles the TypeScript and Svelte sources in `src/` and bundles each entrypoint. Every third-party package comes unmodified from npm and is listed in `package.json` and `bun.lock`. The output contains no native code, so it's the same on ARM64 and x86-64; CI checks this on both for every release.
+>    Two other ways to get the same Bun are `npm install --global bun@1.4.3` and `curl -fsSL https://bun.com/install | bash -s "bun-v1.4.3"`.
 >
-> **Layout:**
-> - `src/entrypoints/`: thin WXT entrypoints.
-> - `src/background/`: storage, script registration, adds.
-> - `src/page/`: the page-world gateway that calls YouTube's own client.
-> - `src/site/`: the isolated-world core, the UI kit and the features.
-> - `src/ui/`: the popup, settings and the first-run page.
-> - `src/shared/`: shared code.
-> - `build/`: build helpers.
-> - `src/livecheck/`: a developer-only page. `build/livecheck.ts` drops it from every store build, and CI's `check:zip` verifies that.
+> 2. Build the Firefox package on Node.
+>
+>    ```sh
+>    npm run build:firefox
+>    ```
+>
+>    This runs `wxt build -b firefox`. `wxt.config.ts` and `build/` use only Node APIs.
+>
+> 3. The output is in `.output/firefox-mv3/`. Compare it with the submitted package.
+>
+>    ```sh
+>    diff -r .output/firefox-mv3 <unzipped submission>
+>    ```
+>
+> `npm run build-for-amo` runs steps 1 and 2 for AMO's automatic builder.
+>
+> ## What the build does
+>
+> WXT, on Vite, compiles the TypeScript and Svelte sources in `src/` and bundles each entrypoint. Every third-party package comes unmodified from npm and is listed in `package.json` and `bun.lock`. The output contains no native code, so it's the same on ARM64 and x86-64. CI checks this on both for every release.
+>
+> ## Layout
+>
+> | Folder | What it holds |
+> |---|---|
+> | `src/entrypoints/` | Thin WXT entrypoints |
+> | `src/background/` | Storage, script registration and adds |
+> | `src/page/` | The page-world gateway that calls YouTube's own client |
+> | `src/site/` | The isolated-world core, the UI kit and the features |
+> | `src/ui/` | The popup, settings and the first-run page |
+> | `src/shared/` | Code the other folders share |
+> | `build/` | Build helpers |
+> | `src/livecheck/` | A page for the developer only. `build/livecheck.ts` drops it from every store build, and CI's `check:zip` verifies that. |
 >
 > License: MPL-2.0.
 
