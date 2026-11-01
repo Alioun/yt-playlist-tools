@@ -2,7 +2,7 @@ import type { Origin } from "../../shared/contracts/results"
 import { isJsonValue, type JsonObject } from "../../shared/contracts/json"
 import { agreementOrigin } from "./consent-agreement"
 import { readConsentDevice, type Agreement } from "./consent-withdrawal"
-import { classifyConsentWork, parseConsentJobs, type ConsentJobs, type HeldJobSelection } from "./consent-recovery"
+import { classifyConsentWork, parseConsentJobs, type ConsentJobs, type HeldJobSelection, type Permission } from "./consent-recovery"
 import { sameSyncJson } from "./sync-write-admission"
 import { importCounter, importJson, importObject, parseAcceptedSettingsImport, readSettingsImport, settingsImportKey, type AcceptedSettingsImport } from "./settings-import-persistence"
 import type { SettingsImportResult } from "./settings-import-execution"
@@ -15,8 +15,7 @@ export type SettingsImportIdentity = {
 export type ConsentSettingsImportJob = {
   readonly identity: SettingsImportIdentity
   readonly progress: { readonly kind: "accepted" | "terminal" }
-  readonly permission: { readonly kind: "held" | "done" } |
-    { readonly kind: "prepared" | "armed" | "retiring"; readonly generation: number; readonly current: Agreement }
+  readonly permission: Permission
 }
 export type SettingsImportView = {
   readonly kind: "settings-import"; readonly selection: HeldJobSelection

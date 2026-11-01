@@ -32,7 +32,7 @@ export type RemovalJobIdentity = {
   readonly operation: { readonly kind: "account-removal"; readonly record: JsonObject }
   readonly original: Agreement
 }
-type Permission = { readonly kind: "held" } | { readonly kind: "done" } |
+export type Permission = { readonly kind: "held" } | { readonly kind: "done" } |
   { readonly kind: "prepared"; readonly generation: number; readonly current: Agreement } |
   { readonly kind: "armed"; readonly generation: number; readonly current: Agreement } |
   { readonly kind: "retiring"; readonly generation: number; readonly current: Agreement }
