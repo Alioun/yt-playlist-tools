@@ -53,7 +53,9 @@ export function createFirstRunCopy(i18n: I18n) {
       lookupFailed: i18n.message("firstRun_pick_lookupFailed"),
       fromSync: i18n.message("firstRun_pick_fromSync"),
       pageHint: i18n.message("firstRun_pick_pageHint"),
-      musicAccess: i18n.message("firstRun_pick_musicAccess"),
+      musicAccess: {
+        chrome: i18n.message("firstRun_pick_musicAccess"), firefox: i18n.message("firstRun_pick_musicAccess_firefox")
+      } satisfies Record<BrowserKind, string>,
       footer: i18n.message("firstRun_pick_footer"),
       continue: (n: number) => n ? i18n.message(i18n.plural(n) === "one" ? "firstRun_continue_one" : "firstRun_continue_other", { count: i18n.number(n) }) : i18n.message("firstRun_continue_none")
     },

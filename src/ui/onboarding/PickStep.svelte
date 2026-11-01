@@ -88,7 +88,7 @@
 
   <div aria-live="polite">
     {#if flow.asksMusicAccess}
-      <p class="text-muted-foreground mt-3 flex items-center gap-2 text-[13px]"><Glyph name="info" class="size-4 shrink-0" />{copy.musicAccess}</p>
+      <p class="text-muted-foreground mt-3 flex items-center gap-2 text-[13px]"><Glyph name="info" class="size-4 shrink-0" />{copy.musicAccess[browser]}</p>
     {/if}
   </div>
 

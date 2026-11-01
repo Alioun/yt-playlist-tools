@@ -4249,5 +4249,451 @@
   },
   "gather_broken_playlist": {
     "message": "Gathering into a playlist isn't working right now because YouTube changed something."
+  },
+  "firstRun_pick_musicAccess_firefox": {
+    "message": "Firefox will ask for access to music.youtube.com when you agree."
+  },
+  "note_title": {
+    "message": "YouTube Playlist Tools is now Perchling"
+  },
+  "note_credentials": {
+    "message": "[[strong]]2.0 needs no Google credentials anymore.[[/strong]] It works through the YouTube account you're signed in to in this browser, the way YouTube's own buttons do. Perchling deleted the client ID, client secret and sign-in tokens you set up for 1.x from this browser."
+  },
+  "note_credentials_unknown": {
+    "message": "[[strong]]2.0 needs no Google credentials anymore.[[/strong]] It works through the YouTube account you're signed in to in this browser, the way YouTube's own buttons do. This browser holds no Google sign-in for Perchling."
+  },
+  "note_pin": {
+    "message": "[[strong]]Pin Perchling to your toolbar[[/strong]] to see when it needs you. Click the Extensions button (the puzzle piece), then ⚙ › Pin to Toolbar."
+  },
+  "note_whyName": {
+    "message": "[[strong]]Why the new name?[[/strong]] Google's rules don't allow extensions to be named after YouTube, so YouTube Playlist Tools is now Perchling for YouTube™. It's the same add-on, and your settings came along."
+  },
+  "note_noAccess": {
+    "message": "Perchling doesn't have access to YouTube in this browser, so nothing can run there yet."
+  },
+  "note_kept_heading": {
+    "message": "Kept from 1.4.5"
+  },
+  "note_kept_paused": {
+    "message": "Paused until you agree below"
+  },
+  "note_autoAdd_playlists_one": {
+    "message": "Adds to the $COUNT$ playlist you chose in 1.x.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_autoAdd_playlists_other": {
+    "message": "Adds to the $COUNT$ playlists you chose in 1.x.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_autoAdd_neverAuthorised_one": {
+    "message": "You chose $COUNT$ playlist in 1.x, but 1.x never got access to your account, so it hasn't added anything to it yet.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_autoAdd_neverAuthorised_other": {
+    "message": "You chose $COUNT$ playlists in 1.x, but 1.x never got access to your account, so it hasn't added anything to them yet.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_autoAdd_unknownHistory_one": {
+    "message": "You chose $COUNT$ playlist in an earlier version of Perchling. Perchling can't tell whether that version had access to your account.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_autoAdd_unknownHistory_other": {
+    "message": "You chose $COUNT$ playlists in an earlier version of Perchling. Perchling can't tell whether that version had access to your account.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_autoAdd_dropped_one": {
+    "message": "Perchling left out $COUNT$ entry that wasn't a playlist ID.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_autoAdd_dropped_other": {
+    "message": "Perchling left out $COUNT$ entries that weren't playlist IDs.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_autoAdd_percent": {
+    "message": "Adds a video once you've watched $PERCENT$ % of it.",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_autoAdd_counts": {
+    "message": "Auto-add now counts only what you watch. Skipped parts and ads don't count."
+  },
+  "note_autoAdd_once": {
+    "message": "It never adds a video twice, and it tells you when an add fails."
+  },
+  "note_autoAdd_feedbackOff": {
+    "message": "Confirmations stay off, as in 1.x. Failures now always show."
+  },
+  "note_autoAdd_feedbackOn": {
+    "message": "Confirmations stay on, as in 1.x."
+  },
+  "note_autoAdd_shorts": {
+    "message": "Your playlists take videos, not Shorts. You can add Shorts per playlist in Settings."
+  },
+  "note_shortcuts_saves": {
+    "message": "$KEY$ saves the video you're watching, or pointing at, to the playlist you chose in 1.x.",
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_shortcuts_ctrlFixed": {
+    "message": "$KEY$ never worked in 1.4.5 because of a bug. It works now.",
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_shortcuts_bareKey": {
+    "message": "It no longer fires while you type in a search box or a comment."
+  },
+  "note_shortcuts_alsoNew": {
+    "message": "Alt+Shift+P now opens a playlist picker, and Alt+U undoes a save while its message is on screen."
+  },
+  "note_shortcuts_unconvertible": {
+    "message": "Your 1.x key ($RAW$) can't be used in 2.0. Set a new one in Settings.",
+    "placeholders": {
+      "raw": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_shortcuts_noPlaylist": {
+    "message": "Your 1.x key $KEY$ had no playlist. Choose one after you agree.",
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_shortcuts_noKey": {
+    "message": "Your 1.x shortcut had no key. Perchling kept its playlist. Set a key in Settings."
+  },
+  "note_new_heading": {
+    "message": "New in 2.0"
+  },
+  "note_new_lead": {
+    "message": "They're all off. Tick any you want, or switch them on later in Settings."
+  },
+  "note_question_unset": {
+    "message": "1.4.5 showed 50 % here, but it added videos as soon as they started playing. Which do you want?"
+  },
+  "note_question_unset_start": {
+    "message": "As soon as a video starts playing, like 1.4.5 did"
+  },
+  "note_question_unset_half": {
+    "message": "Once half of it is watched, as 1.4.5 showed"
+  },
+  "note_question_neverAuthorised": {
+    "message": "1.4.5 showed 50 % here, but it never got access to your account, so it never added anything. Which do you want?"
+  },
+  "note_question_neverAuthorised_half": {
+    "message": "Once half of it is watched, as 1.4.5 showed"
+  },
+  "note_question_start": {
+    "message": "As soon as a video starts playing"
+  },
+  "note_question_unknown": {
+    "message": "Perchling can't tell how an earlier version added your videos. Which do you want?"
+  },
+  "note_question_half": {
+    "message": "Once half of it is watched"
+  },
+  "note_done": {
+    "message": "You're all set."
+  },
+  "note_outcome_claimed": {
+    "message": "Your auto-add playlists and shortcut from 1.x are now set up for $ACCOUNT$: $TITLES$.",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      },
+      "titles": {
+        "content": "$2"
+      }
+    }
+  },
+  "note_outcome_checked": {
+    "message": "Perchling checked your choices from 1.x for $ACCOUNT$.",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_outcome_shortcutDeleted": {
+    "message": "Your 1.x shortcut was deleted, so Perchling left it out."
+  },
+  "note_outcome_shortcutUnknown": {
+    "message": "Perchling couldn't identify your original 1.x shortcut, so it left it out."
+  },
+  "note_outcome_dropped_one": {
+    "message": "Perchling left out $COUNT$ of them, because it wasn't on this account.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_outcome_dropped_other": {
+    "message": "Perchling left out $COUNT$ of them, because they weren't on this account.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "note_outcome_signedOut": {
+    "message": "Sign in to YouTube, and Perchling picks up your 1.x playlists."
+  },
+  "note_outcome_noTab": {
+    "message": "Open YouTube, and Perchling picks up your 1.x playlists."
+  },
+  "note_outcome_otherAccount": {
+    "message": "Your playlists from 1.x belong to another YouTube account. Switch to it on YouTube to use them."
+  },
+  "note_switchAccount": {
+    "message": "Switch account"
+  },
+  "note_outcome_nothing": {
+    "message": "Your features are on."
+  },
+  "note_notNow": {
+    "message": "Everything stays paused. The toolbar icon keeps a ! until you decide."
+  },
+  "note_recoveryWaiting": {
+    "message": "Some choices from an earlier version wait for your review."
+  },
+  "note_reviewInSettings": {
+    "message": "Review in Settings"
+  },
+  "consent_agreedOn": {
+    "message": "You agreed on $DATE$.",
+    "placeholders": {
+      "date": {
+        "content": "$1"
+      }
+    }
+  },
+  "consent_readAgain": {
+    "message": "Read it again"
+  },
+  "consent_withdraw": {
+    "message": "Withdraw and pause everything"
+  },
+  "consent_withdrawConfirm": {
+    "message": "[[strong]]Withdraw your consent?[[/strong]] Every feature stops in this browser, and Perchling reads nothing from YouTube until you agree again. It keeps your settings."
+  },
+  "consent_withdrawButton": {
+    "message": "Withdraw"
+  },
+  "consent_cancel": {
+    "message": "Cancel"
+  },
+  "consent_withdrawn": {
+    "message": "Withdrawn. Every feature has stopped in this browser."
+  },
+  "consent_withdrawFailed": {
+    "message": "Couldn't withdraw. Nothing changed. Try again."
+  },
+  "consent_withdrawUnconfirmed": {
+    "message": "Couldn't confirm the withdrawal. Reload this page to check."
+  },
+  "recovery_heading": {
+    "message": "Waiting for your review"
+  },
+  "recovery_pausedLead": {
+    "message": "These changes stopped when you withdrew your consent. They stay paused until you continue them."
+  },
+  "recovery_job_migration": {
+    "message": "Bringing over your 1.x settings"
+  },
+  "recovery_job_removal": {
+    "message": "Removing $ACCOUNT$'s setup",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "recovery_job_syncJoin": {
+    "message": "Joining Settings sync"
+  },
+  "recovery_continue": {
+    "message": "Continue"
+  },
+  "recovery_leftLead": {
+    "message": "These choices came from an earlier version of Perchling. None of them is used until you restore it."
+  },
+  "recovery_item_autoAdd": {
+    "message": "Auto-add playlist: $PLAYLIST$",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      }
+    }
+  },
+  "recovery_item_filter": {
+    "message": "Channel filter for $PLAYLIST$",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      }
+    }
+  },
+  "recovery_item_shortcut": {
+    "message": "Shortcut $SHORTCUT$: $PLAYLIST$",
+    "placeholders": {
+      "shortcut": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "recovery_goesTo": {
+    "message": "Goes to $ACCOUNT$",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "recovery_restore": {
+    "message": "Restore"
+  },
+  "recovery_discard": {
+    "message": "Discard"
+  },
+  "recovery_whichAccount": {
+    "message": "Restore to which account?"
+  },
+  "recovery_noSetupHere": {
+    "message": "No setup in this browser yet"
+  },
+  "recovery_setUpFirst": {
+    "message": "Set up $ACCOUNT$ first, then restore this.",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "recovery_filterClash": {
+    "message": "$ACCOUNT$ already has a different filter for $PLAYLIST$.",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "recovery_replaceFilter": {
+    "message": "Replace this filter"
+  },
+  "recovery_replaceConfirm_title": {
+    "message": "Replace this filter?"
+  },
+  "recovery_replaceConfirm_body": {
+    "message": "The saved filter replaces the one $ACCOUNT$ uses now. Their channels aren't combined.",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "recovery_replace": {
+    "message": "Replace"
+  },
+  "recovery_discardConfirm_title": {
+    "message": "Discard this choice?"
+  },
+  "recovery_discardConfirm_body": {
+    "message": "Perchling won't offer it again."
+  },
+  "recovery_cancel": {
+    "message": "Cancel"
+  },
+  "recovery_restored": {
+    "message": "Restored to $ACCOUNT$.",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "recovery_discarded": {
+    "message": "Discarded."
+  },
+  "recovery_continued": {
+    "message": "Continued."
+  },
+  "recovery_failed": {
+    "message": "Couldn't do that. Nothing changed."
+  },
+  "recovery_unconfirmed": {
+    "message": "Couldn't confirm that. Reload this page to check."
+  },
+  "sync_full": {
+    "message": "Synced settings are full."
+  },
+  "sync_fullLargest": {
+    "message": "$LARGEST$ takes the most room.",
+    "placeholders": {
+      "largest": {
+        "content": "$1"
+      }
+    }
+  },
+  "sync_removeKeptFilters": {
+    "message": "Remove kept filters"
+  },
+  "sync_updateNeeded": {
+    "message": "Update Perchling in this browser to keep syncing."
+  },
+  "googleAccess_link": {
+    "message": "Remove 1.x's access from your Google account ↗"
+  },
+  "googleAccess_cloudProject": {
+    "message": "If you made a Google Cloud project just for 1.x, you can delete that too."
   }
 }

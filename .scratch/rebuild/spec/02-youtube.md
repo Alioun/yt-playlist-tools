@@ -1106,7 +1106,7 @@ The browser shortcut list ships in the package, per browser and OS.
   - any Ctrl+Alt combination.
 
   Shortcut 1 is then created with no key. The note's row is unticked and says "Your 1.x key ({raw}) can't be used in 2.0. Set a new one in Settings.", where {raw} is 1.4.5's stored value.
-- **A playlist with no key:** if 1.4.5 had a shortcut playlist but no key, shortcut 1 is created with no key, its playlist goes into the unclaimed setup, and the upgrade note says "Your 1.x shortcut had no key. Its playlist is kept; set a key in Settings." (R21)
+- **A playlist with no key:** if 1.4.5 had a shortcut playlist but no key, shortcut 1 is created with no key, its playlist goes into the unclaimed setup, and the upgrade note says "Your 1.x shortcut had no key. Perchling kept its playlist. Set a key in Settings." (R21)
 - **A key with no playlist:** the key carries over, and the note's row is unticked and says "Your 1.x key {Key} had no playlist. Choose one after you agree."
 - **Bare keys and Ctrl keys carry over as they are,** because they were the user's choice. Bare keys no longer fire while typing. Ctrl keys never fired in 1.4.5, so when their playlist came over too, the note says "{Key} never worked in 1.4.5 because of a bug. It works now."
 - **When the feature turns on:** only if both a converted key and a playlist carried over, once the user agrees on the upgrade note with its row still ticked (REL-MIG-23, REL-CON-07). Otherwise it stays off, and what carried over is kept.
