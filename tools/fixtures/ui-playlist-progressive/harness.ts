@@ -30,7 +30,7 @@ export function pickerFixture(operation: UiPlaylistOperation, now: () => number)
   }
   const source: PickerSource<ItemPort> = {
     item, private: false, tab: true, creation: "available", sortAZ: false, privacy: null,
-    quickSave: null, chosen: [], keys: new Map(), marks: new Map(), now,
+    quickSave: null, chosen: [], keys: new Map(), marks: new Map(), now, authorized: () => true,
     cachedList: operation.cachedList, freshList: operation.freshList,
     async create() { return { kind: "failed", reason: "failed" } },
     async pin() { return { refused: "private" } },

@@ -30,7 +30,7 @@ function session(backend: Backend, expected: DestinationExpectation, now: () => 
   item: null, private: false, tab: true, creation: "available", sortAZ: false,
   privacy: null, quickSave: expected.setup === "live" ? expected.playlist : null,
   chosen: expected.setup === "live" && expected.playlist ? [expected.playlist] : [],
-  keys: new Map(), marks: new Map(), now,
+  keys: new Map(), marks: new Map(), now, authorized: () => true,
   cachedList: operation.cachedList, freshList: operation.freshList,
   async create(input) {
    const answer = await creation.submit(input)

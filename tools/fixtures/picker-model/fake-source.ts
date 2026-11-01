@@ -31,6 +31,8 @@ export type Facts = {
   keys: ReadonlyMap<PlaylistId, Key>
   marks: ReadonlyMap<PlaylistId, Mark>
   now: number
+  /** Consent and the account's authority. Tests flip it to model a lapse while a pick runs. */
+  authorized: boolean
 }
 type Call = { readonly port: Port; readonly args: readonly unknown[]; readonly resolve: (value: unknown) => void; settled: boolean }
 
@@ -83,15 +85,19 @@ export class Ledger {
   }
 }
 
-function sourceFields(ledger: Ledger, overrides: Partial<Facts>) {
-  const facts: Facts = {
+function facts(overrides: Partial<Facts>): Facts {
+  return {
     private: false, tab: true, creation: "available", sortAZ: false, privacy: null,
-    quickSave: null, chosen: [], keys: new Map(), marks: new Map(), now: NOW, ...overrides
+    quickSave: null, chosen: [], keys: new Map(), marks: new Map(), now: NOW, authorized: true, ...overrides
   }
+}
+
+function sourceFields(ledger: Ledger, facts: Facts) {
   return {
     private: facts.private, tab: facts.tab, creation: facts.creation, sortAZ: facts.sortAZ,
     privacy: facts.privacy, quickSave: facts.quickSave, chosen: facts.chosen, keys: facts.keys, marks: facts.marks,
     now: () => facts.now,
+    authorized: () => facts.authorized,
     cachedList: ledger.port("cachedList"),
     freshList: ledger.port("freshList"),
     create: ledger.port("create"),
@@ -103,19 +109,21 @@ function sourceFields(ledger: Ledger, overrides: Partial<Facts>) {
 }
 
 /** A source for a picker opened for an item: the in-page popovers and the popup's sheet. */
-export function itemSource(overrides: Partial<Facts> = {}): { source: PickerSource<ItemPort>; ledger: Ledger } {
+export function itemSource(overrides: Partial<Facts> = {}): { source: PickerSource<ItemPort>; ledger: Ledger; facts: Facts } {
   const ledger = new Ledger()
+  const known = facts(overrides)
   const item: ItemPort = {
     membership: ledger.port("membership"),
     add: ledger.port("add"),
     remove: ledger.port("remove"),
     create: ledger.port("createWithItem")
   }
-  return { source: { ...sourceFields(ledger, overrides), item }, ledger }
+  return { source: { ...sourceFields(ledger, known), item }, ledger, facts: known }
 }
 
 /** A source for settings' and the first-run page's choosers, which have no item. */
-export function chooserSource(overrides: Partial<Facts> = {}): { source: PickerSource<null>; ledger: Ledger } {
+export function chooserSource(overrides: Partial<Facts> = {}): { source: PickerSource<null>; ledger: Ledger; facts: Facts } {
   const ledger = new Ledger()
-  return { source: { ...sourceFields(ledger, overrides), item: null }, ledger }
+  const known = facts(overrides)
+  return { source: { ...sourceFields(ledger, known), item: null }, ledger, facts: known }
 }

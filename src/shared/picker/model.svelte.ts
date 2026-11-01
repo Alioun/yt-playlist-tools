@@ -10,9 +10,12 @@ export type PickerOptions =
 
 export type Refusal = Extract<ChangeResult, { refused: string }>["refused"]
 export type TitleProblem = "required" | "too-long" | "angle-brackets"
+export type Saved = "added" | "already-in" | "created"
 export type RowStatus =
   | { readonly kind: "idle" | "added" | "already-in" | "save-failed" | "removed" | "remove-failed" }
   | { readonly kind: "refused"; readonly reason: Refusal }
+  /** A first pick whose save is confirmed and whose choice was refused. Ticking the row again retries only the choice. */
+  | { readonly kind: "unchosen"; readonly save: Saved; readonly reason: Refusal; readonly undo: "offered" | "failed" | "none" }
 export type PickerRow = {
   readonly id: PlaylistId
   /** Null only for a chosen playlist the list no longer has. */
@@ -43,13 +46,16 @@ export type Ignored = { readonly kind: "ignored"; readonly reason: "absent" | "b
 export type Unavailable = { readonly kind: "unavailable"; readonly reason: Exclude<Creation, "available"> | "mode" }
 export type Refused = { readonly kind: "refused"; readonly reason: Refusal }
 export type Changed = { readonly kind: "changed" }
-/** A choose-mode pick, reported only after the item's save, if any, and the choice have both answered. */
+/**
+ * A choose-mode pick, reported only after the item's save, if any, and the choice have both answered.
+ * A choice skipped as "unauthorized" never started, because consent or the account's authority lapsed after the save.
+ */
 export type Picked = {
   readonly kind: "picked"
   readonly id: PlaylistId
-  readonly save: "added" | "already-in" | "created" | null
+  readonly save: Saved | null
   readonly undo: Undo | null
-  readonly choice: ChangeResult | { readonly skipped: "private" }
+  readonly choice: ChangeResult | { readonly skipped: "private" | "unauthorized" }
 }
 type Skip = Closed | Ignored
 export type TickOutcome = { readonly kind: "added" | "already-in" | "failed" } | Picked | Changed | Refused | Unavailable | Skip
@@ -57,6 +63,7 @@ export type UntickOutcome = { readonly kind: "removed"; readonly undo: Undo } | 
 export type PinOutcome = { readonly kind: "pinned" } | Refused | Unavailable | Skip
 export type RefreshOutcome = { readonly kind: "refreshed" | "failed" } | Unavailable | Closed
 export type SettingOutcome = { readonly kind: "saved" } | Refused | Skip
+export type UndoOutcome = { readonly kind: "undone" | "failed" } | Skip
 export type CreateOutcome =
   | { readonly kind: "created"; readonly id: PlaylistId; readonly choice: ChangeResult | null }
   | { readonly kind: "invalid"; readonly problem: TitleProblem }
@@ -87,6 +94,7 @@ const PRIVATE: Unavailable = { kind: "unavailable", reason: "private" }
 const NO_TAB: Unavailable = { kind: "unavailable", reason: "noTab" }
 const FAILED = { kind: "failed" } as const
 const SKIPPED = { skipped: "private" } as const
+const UNAUTHORIZED = { skipped: "unauthorized" } as const
 
 /** YT-NEW-02 and YM-PICK-10: required, trimmed, at most 150 characters (code points), no < or >. */
 export function titleProblem(title: string): TitleProblem | null {
@@ -104,6 +112,7 @@ export class PickerModel {
   readonly form = $state<{ title: string; privacy: Privacy }>({ title: "", privacy: "PRIVATE" })
   readonly #options: PickerOptions
   readonly #entries = new Map<PlaylistId, SetVideoId>()
+  readonly #unchosen = new Map<PlaylistId, { readonly save: Saved; readonly undo: Undo | null }>()
   #seq = 0
   #listingSeq = 0
   #membersSeq = 0
@@ -250,7 +259,8 @@ export class PickerModel {
     this.#picking = options.mode === "choose"
     try {
       const answer = await (item ? item.create(playlist) : options.source.create(playlist))
-      if (this.#closed) return CLOSED
+      const firstPick = options.mode === "choose" && item !== null
+      if (this.#closed && !firstPick) return CLOSED
       if (answer.kind === "failed") {
         this.#creating = answer
         return answer
@@ -258,7 +268,7 @@ export class PickerModel {
       this.#creating = { kind: "idle" }
       this.form.title = ""
       this.#created = [...this.#created, { id: answer.id, title: playlist.title, privacy }]
-      if (!options.source.private) void options.source.savePrivacy(privacy)
+      if (!options.source.private && !this.#closed) void options.source.savePrivacy(privacy)
       switch (options.mode) {
         case "save":
           this.#mark(answer.id, { status: ADDED, check: true })
@@ -296,7 +306,30 @@ export class PickerModel {
     return { kind: "refused", reason: answer.refused }
   }
 
-  /** Answers that arrive later change nothing, and no method starts another effect. */
+  /** Runs the Undo of a first pick whose save is confirmed and whose choice was refused. */
+  async undo(id: PlaylistId): Promise<UndoOutcome> {
+    const skip = this.#skip(id)
+    if (skip) return skip
+    const saved = this.#unchosen.get(id)
+    const status = this.#find(id)?.status
+    if (!saved?.undo || status?.kind !== "unchosen" || status.undo !== "offered") return UNCHANGED
+    this.#mark(id, { busy: true })
+    const answer = await saved.undo()
+    if (this.#closed) return CLOSED
+    if (answer.kind === "failed") {
+      this.#mark(id, { busy: false, status: { ...status, undo: "failed" } })
+      return FAILED
+    }
+    this.#unchosen.delete(id)
+    this.#entries.delete(id)
+    this.#mark(id, { busy: false, status: { kind: "removed" } })
+    return { kind: "undone" }
+  }
+
+  /**
+   * Answers that arrive later change nothing, and no method starts another effect. The one exception is a first pick
+   * already under way: it still finishes its save and its choice for this source's account while `authorized()` holds.
+   */
   close(): void {
     this.#closed = true
   }
@@ -366,12 +399,13 @@ export class PickerModel {
     if (this.#picking) return BUSY
     if (item === null && this.#options.source.private) return PRIVATE
     if (item === null && this.#chosen.has(id)) return UNCHANGED
+    const saved = this.#unchosen.get(id)
     this.#picking = true
     this.#mark(id, { busy: true, status: IDLE })
     try {
       if (item === null) return await this.#choose(id, null, null)
+      if (saved) return await this.#choose(id, saved.save, saved.undo)
       const answer = await item.add(id)
-      if (this.#closed) return CLOSED
       if (answer.kind === "failed") {
         this.#mark(id, { busy: false, status: { kind: "save-failed" } })
         return FAILED
@@ -386,9 +420,15 @@ export class PickerModel {
 
   async #choose(id: PlaylistId, save: Picked["save"], undo: Undo | null): Promise<Picked | Refused | Closed> {
     const { source } = this.#options
-    const choice = source.private ? SKIPPED : await source.choose(id, true)
-    if (this.#closed) return CLOSED
-    if ("refused" in choice && save === null) return this.#refuse(id, choice.refused)
+    const choice = source.private ? SKIPPED : save !== null && !source.authorized() ? UNAUTHORIZED : await source.choose(id, true)
+    if (this.#closed && save === null) return CLOSED
+    if ("refused" in choice) {
+      if (save === null) return this.#refuse(id, choice.refused)
+      this.#unchosen.set(id, { save, undo })
+      this.#mark(id, { busy: false, status: { kind: "unchosen", save, reason: choice.refused, undo: undo ? "offered" : "none" } })
+      return { kind: "picked", id, save, undo, choice }
+    }
+    this.#unchosen.delete(id)
     if ("ok" in choice) this.#chosen = new Set([id])
     this.#mark(id, { busy: false, status: save === null ? IDLE : save === "already-in" ? { kind: "already-in" } : ADDED })
     return { kind: "picked", id, save, undo, choice }

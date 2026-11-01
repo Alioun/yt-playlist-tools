@@ -45,6 +45,7 @@ function common(name: Scenario, thumb: string) {
     sortAZ: false, privacy: null, quickSave: alpha, chosen: name === "marks" ? [alpha, beta] : [beta],
     keys: new Map([[watchLater, key]]), marks: name === "marks" ? new Map([[alpha, "missing"], [beta, "full"]]) : new Map(),
     now: () => stamp,
+    authorized: () => true,
     cachedList: async () => name === "failed-list" ? null : { rows, at: stamp },
     freshList: async () => {
       calls.push({ operation: "freshList" })

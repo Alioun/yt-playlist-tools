@@ -49,6 +49,8 @@ export interface PickerSource<Item extends ItemPort | null = ItemPort | null> {
   /** Keys of playlist shortcuts that are live on the site now. */
   readonly keys: ReadonlyMap<PlaylistId, Key>
   readonly marks: ReadonlyMap<PlaylistId, Mark>
+  /** Consent stands and this source's account still holds authority. A first pick checks it before it starts its choice. */
+  authorized(): boolean
   now(): number
   cachedList(): Promise<Listing | null>
   freshList(): Promise<ListAnswer>
