@@ -99,6 +99,7 @@
    "tests": [
     "busy ignores repeated clicks and key repeat, and Added ignores another click",
     "failure shows with feedback off for 1.5 s, then idle, and never resends",
+    "every card for the same video shows Added once one of them is added",
     "state belongs to the video: duplicates share Added and a recycled renderer shows its new item",
     "navigation during the awaited add resets the page view without reviving the old state"
    ],

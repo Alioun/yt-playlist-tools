@@ -14,6 +14,7 @@
 {"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "a card without a readable title gets the untitled added toast", "expected": "pass"}
 {"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "a card without a readable title gets the untitled unconfirmed toast", "expected": "pass"}
 {"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "a card without a readable title gets the untitled failed toast", "expected": "pass"}
+{"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "every card for the same video shows Added once one of them is added", "expected": "pass"}
 {"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "state belongs to the video: duplicates share Added and a recycled renderer shows its new item", "expected": "pass"}
 {"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "navigation during the awaited add resets the page view without reviving the old state", "expected": "pass"}
 {"kind": "test", "file": "src/site/features/queue-button/queue-button.bun-test.ts", "name": "turning the feature off during an awaited add leaves no host, toast or revived state", "expected": "pass"}
@@ -33,4 +34,4 @@
 {"kind": "test", "file": "src/site/kit/overlay/overlay.bun-test.ts", "name": "construction is inert and two slots share one movable host", "expected": "pass"}
 {"kind": "test", "file": "src/site/kit/overlay/overlay.bun-test.ts", "name": "releasing every lease leaves zero hosts and a later lease starts fresh", "expected": "pass"}
 {"kind": "test", "file": "src/site/kit/overlay/overlay.bun-test.ts", "name": "the host mirrors YouTube's dark attribute and isolates its own clicks", "expected": "pass"}
-{"kind": "eof", "tests": 35, "files": ["src/site/features/queue-button/queue-button.bun-test.ts", "src/site/kit/overlay/overlay.bun-test.ts"]}
+{"kind": "eof", "tests": 36, "files": ["src/site/features/queue-button/queue-button.bun-test.ts", "src/site/kit/overlay/overlay.bun-test.ts"]}

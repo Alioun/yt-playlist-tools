@@ -229,6 +229,24 @@ for (const [outcome, answer, expected] of [
   })
 }
 
+test("every card for the same video shows Added once one of them is added", async () => {
+  const f = await setup()
+  f.respond(confirmed())
+  const first = card()
+  const duplicate = card(videoA, "First video")
+  const other = card(videoB, "Second video")
+  f.hover(first.thumbnail, [first.element])
+  await click(f)
+  f.hover(duplicate.thumbnail, [duplicate.element])
+  expect(label(f)).toBe("Added to queue")
+  await click(f)
+  expect(f.runs("queueAdd")).toHaveLength(1)
+  f.hover(other.thumbnail, [other.element])
+  expect(label(f)).toBe("Add to queue")
+  f.hover(first.thumbnail, [first.element])
+  expect(label(f)).toBe("Added to queue")
+})
+
 test("state belongs to the video: duplicates share Added and a recycled renderer shows its new item", async () => {
   const f = await setup()
   const answer = f.deferred<unknown>()
