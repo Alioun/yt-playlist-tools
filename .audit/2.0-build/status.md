@@ -35,12 +35,11 @@ Decisions G1 to G17 and the coordinator's own calls are in `decisions.json`.
 
 - `bun run compile` reports 0 errors at `c27a93881` (re-run after the package reinstall).
 - The last per-folder fixture runs passed in every folder except the settings-import suite (deadline since raised) and the 3 key-settings account-lifetime tests (fixed by G17, not yet rerun in the gate).
-- No full `bun run test` has completed. The first attempt was lost in the deletion described in `losses.md`.
+- The first green full run is recorded in `full-run-b7fce832.md`: compile 0 errors, Vitest 322, Bun 3,774, fixture gates 143 of 143.
 
 ## Open work
 
-- Run `bun run test` end to end on `2.0/compose-units`, serially, with nothing else running.
-- G17 follow-ups: clear `lastAccount` when a synced Setup tombstone arrives; a recreated account from another browser can't replace a local tombstone; tombstones never expire after 30 days; record the receive-side choices in the spec; relocate `tools/fixtures/view-publication/controls/missing-sync-filter-event.patch`.
+- Sync gaps: equal-timestamp edits are a conflict where SYNC-11 breaks ties by device ID; a browser that expired an account doesn't adopt a newer live record that arrives later, because the store doesn't create documents that exist only in sync.
 - Not wired in: the Gather execution adapter, SiteCore services for the queue button and card menu, the picker's page-side popovers.
 - Not started: Gather automatic triggers (YT-GT-22 to 29), the `ui.gather*` routes, Gather feedback, UI and copy (YT-GT-31 to 35), quick-save.
 - Unknown: how much of the spec is unbuilt. A requirement-by-requirement pass is recommended next.
