@@ -131,11 +131,10 @@ export function isUiJobOutcome<J extends Job>(job: J, value: unknown): value is 
 }
 export function isUiListRefresh(value: unknown): value is UiListRefresh {
   const outcome = (v: unknown): v is UiJobOutcome<JobOf<"playlists">> => isUiJobOutcome({ kind: "playlists" }, v)
-  return objectShape(value, { kind: v => v === "not-listed", outcome, cached: v => v === null || isUiListing(v) })
-      && outcome(value.outcome) && (value.outcome.kind !== "result" || !value.outcome.result.ok)
-    || objectShape(value, { kind: v => v === "listed", outcome, listing: v => isUiListing(v) && v.at !== null, cache: isUiCacheStatus,
+  return objectShape(value, { kind: v => v === "not-listed", outcome: v => outcome(v) && (v.kind !== "result" || !v.result.ok), cached: v => v === null || isUiListing(v) })
+    || objectShape(value, { kind: v => v === "listed", outcome: v => outcome(v) && v.kind === "result" && v.result.ok,
+      listing: v => isUiListing(v) && v.at !== null, cache: isUiCacheStatus,
       present: v => objectShape(v, { kind: x => x === "list-present", acct: isAccountKey, site: isSite, private: bool, at: natural, ids: x => Array.isArray(x) && x.every(isPlaylistId) }) })
-      && outcome(value.outcome) && value.outcome.kind === "result" && value.outcome.result.ok
 }
 export function isUiPlaylistList(value: unknown): value is UiPlaylistList {
   return isUiUnavailable(value) || objectShape(value, { kind: v => v === "unavailable", read: isUiCacheReadFailure })
@@ -167,13 +166,13 @@ export function isUiCreationPayload(value: unknown): value is UiCreationPayload 
 export function isUiCreationAnswer(value: unknown): value is UiCreationAnswer {
   const job: JobOf<"create"> = { kind: "create", title: "", privacy: "PRIVATE" }
   const outcome = (v: unknown): v is UiJobOutcome<JobOf<"create">> => isUiJobOutcome(job, v)
+  const created = (v: unknown, id: unknown) => outcome(v) && v.kind === "result" && v.result.ok && v.result.data.playlistId === id
   return isUiUnavailable(value)
     || objectShape(value, { kind: oneOf("opened", "idle", "released"), operation: isCreationId })
     || objectShape(value, { kind: v => v === "invalid", problem: oneOf("required", "angle-brackets", "too-long") })
     || objectShape(value, { kind: v => v === "created", id: isPlaylistId, outcome, cache: isUiCacheStatus })
-      && outcome(value.outcome) && value.outcome.kind === "result" && value.outcome.result.ok && value.outcome.result.data.playlistId === value.id
-    || objectShape(value, { kind: v => v === "not-created", outcome })
-      && outcome(value.outcome) && (value.outcome.kind !== "result" || !value.outcome.result.ok)
+      && created(value.outcome, value.id)
+    || objectShape(value, { kind: v => v === "not-created", outcome: v => outcome(v) && (v.kind !== "result" || !v.result.ok) })
     || objectShape(value, { kind: v => v === "unavailable", read: isUiCacheReadFailure })
 }
 export const playlistUiContract: RpcContract<PlaylistUiMessages> = {

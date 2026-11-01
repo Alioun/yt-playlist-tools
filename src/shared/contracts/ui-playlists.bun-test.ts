@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import { uiContract } from "./ui"
-import { isUiCreationAnswer, isUiPlaylistList, isUiListing, isUiCacheStatus, isUiCreationPayload } from "./ui-playlists"
+import { isUiCreationAnswer, isUiListRefresh, isUiPlaylistList, isUiListing, isUiCacheStatus, isUiCreationPayload } from "./ui-playlists"
 
 const operation = "00000000-0000-4000-8000-000000000001"
 test("wire data has nullable cache stamps and no promises or authority", () => {
@@ -28,4 +28,18 @@ test("creation answers cannot invent confirmation or disagree about the created 
   expect(isUiCreationAnswer(result)).toBe(true)
   expect(isUiCreationAnswer({ ...result, id: "PL_other" })).toBe(false)
   expect(isUiCreationAnswer({ ...result, outcome: { kind: "transport", tabId: 1, failure: "timeout", delivery: "unknown" } })).toBe(false)
+})
+test("refresh and creation answers agree with the outcome they carry", () => {
+  const listed = { ok: true, route: "fixture", data: [{ id: "PL_alpha", title: "Alpha" }] }
+  const success = { kind: "result", tabId: 1, result: listed }
+  const failure = { kind: "result", tabId: 1, result: { ok: false, reason: "failed" } }
+  const present = { kind: "list-present", acct: "AAAAAAAAAAAAAAAA", site: "www", private: false, at: 1, ids: ["PL_alpha"] }
+  const refresh = { kind: "listed", listing: { rows: listed.data, at: 1 }, outcome: success, cache: { kind: "committed" }, present }
+  expect(isUiListRefresh(refresh)).toBe(true)
+  expect(isUiListRefresh({ ...refresh, outcome: failure })).toBe(false)
+  expect(isUiListRefresh({ kind: "not-listed", outcome: failure, cached: null })).toBe(true)
+  expect(isUiListRefresh({ kind: "not-listed", outcome: success, cached: null })).toBe(false)
+  const created = { kind: "result", tabId: 1, result: { ok: true, route: "fixture", data: { playlistId: "PL_alpha" } } }
+  expect(isUiCreationAnswer({ kind: "not-created", outcome: { kind: "session", status: "memory" } })).toBe(true)
+  expect(isUiCreationAnswer({ kind: "not-created", outcome: created })).toBe(false)
 })
