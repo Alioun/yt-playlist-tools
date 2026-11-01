@@ -33,7 +33,7 @@
     "message": "No synced settings yet. What you pick here becomes the synced copy for your other browsers."
   },
   "firstRun_pick_updateNeeded": {
-    "message": "Couldn't use your synced settings: they come from a newer version of Perchling. Update Perchling in this browser to use them."
+    "message": "Couldn't use your synced settings, because they come from a newer version of Perchling. Update Perchling in this browser to use them."
   },
   "firstRun_pick_lookupFailed": {
     "message": "Couldn't read your synced settings. You can still pick features here."
@@ -63,13 +63,13 @@
     "message": "Change features"
   },
   "firstRun_consent_refused_sync_full": {
-    "message": "Couldn't agree: your synced settings are full. Nothing was saved. Turn off Settings sync, or make room in Settings on another browser, then try again."
+    "message": "Couldn't agree, because your synced settings are full. Nothing was saved. Turn off Settings sync, or make room in Settings on another browser, then try again."
   },
   "firstRun_consent_refused_update_needed": {
-    "message": "Couldn't agree: another browser saved your synced settings with a newer version of Perchling. Nothing was saved. Update Perchling here, then try again."
+    "message": "Couldn't agree, because another browser saved your synced settings with a newer version of Perchling. Nothing was saved. Update Perchling here, then try again."
   },
   "firstRun_consent_refused_invalid": {
-    "message": "Couldn't agree: Perchling couldn't read its saved settings. Nothing was turned on."
+    "message": "Couldn't agree, because Perchling couldn't read its saved settings. Nothing was turned on."
   },
   "firstRun_consent_refused_rejected": {
     "message": "Couldn't save your agreement. Nothing is running yet. Try again."
@@ -81,7 +81,7 @@
     "message": "Couldn't agree right now. Nothing is running yet. Try again in a moment."
   },
   "firstRun_consent_refused_join_required": {
-    "message": "Couldn't turn on Settings sync here yet: this browser already has settings of its own. Nothing was saved."
+    "message": "Couldn't turn on Settings sync here yet, because this browser already has settings of its own. Nothing was saved."
   },
   "firstRun_notNow_strong": {
     "message": "Nothing is running."
@@ -159,7 +159,7 @@
     "message": "Needs your OK"
   },
   "firstRun_finish_alsoOnMusicHeld": {
-    "message": "Also on YouTube Music: needs site access. It works on YouTube now."
+    "message": "Also on YouTube Music needs site access. Shortcuts work on YouTube now."
   },
   "firstRun_finish_needsAccount": {
     "message": "Needs your YouTube account"
@@ -275,8 +275,7 @@
     }
   },
   "firstRun_pick_found": {
-    "message": "[[strong]]Found your synced settings.[[/strong]] What they turn on is ticked below and marked From sync. Review it before you continue; you agree here for this browser.",
-    "description": "A complete message. The [[strong]] and [[/strong]] markers select emphasis and render as escaped text."
+    "message": "[[strong]]Found your synced settings.[[/strong]] What they turn on is ticked below and marked From sync. Review it before you continue. You agree here for this browser."
   },
   "disclosure_heading_first_run": {
     "message": "Before you start"
@@ -295,12 +294,10 @@
     "description": "A complete message. The [[strong]] and [[/strong]] markers select emphasis and render as escaped text."
   },
   "disclosure_bullet_2": {
-    "message": "[[strong]]reads and changes your playlists, as you:[[/strong]] it lists them, checks which ones already hold a video, and adds or removes videos when you ask, or when auto-add or automatic gathering does, using YouTube's own requests;",
-    "description": "A complete message. The [[strong]] and [[/strong]] markers select emphasis and render as escaped text."
+    "message": "[[strong]]reads and changes your playlists, as you:[[/strong]] it lists them, checks which ones already hold a video, and adds or removes videos when you ask, or when auto-add or automatic gathering does, using YouTube's own requests;"
   },
   "disclosure_bullet_3": {
-    "message": "[[strong]]reads the YouTube tabs open in a window when you gather them,[[/strong]] or when automatic gathering does: their addresses and titles, to collect their videos. It closes those tabs only if you've asked it to;",
-    "description": "A complete message. The [[strong]] and [[/strong]] markers select emphasis and render as escaped text."
+    "message": "[[strong]]reads the YouTube tabs open in a window when you gather them,[[/strong]] or when automatic gathering does: their addresses and titles, to collect their videos. It closes those tabs only if you've asked it to;"
   },
   "disclosure_bullet_4": {
     "message": "[[strong]]signs those requests the way YouTube's page does,[[/strong]] with YouTube's sign-in cookie, inside the YouTube tab. It never stores that cookie or sends it anywhere else;",
@@ -384,7 +381,7 @@
     "message": "A button on thumbnails that adds the video to the end of the queue."
   },
   "feature_description_3": {
-    "message": "A save button on thumbnails: one click saves to your quick-save playlist, and ▾ picks another."
+    "message": "A save button on thumbnails. One click saves to your quick-save playlist, and ▾ picks another."
   },
   "feature_description_2": {
     "message": "Keys that save the video you're pointing at or watching. Alt+W saves to Watch later."
@@ -536,7 +533,7 @@
     }
   },
   "feedback_www_manual_untitled_filtered": {
-    "message": "Didn't auto-add this video: $CHANNEL$ is filtered out of $TARGETS$",
+    "message": "Didn't auto-add this video, because $CHANNEL$ is filtered out of $TARGETS$",
     "placeholders": {
       "channel": {
         "content": "$1"
@@ -547,7 +544,7 @@
     }
   },
   "feedback_www_manual_untitled_unknown_channel": {
-    "message": "Didn't auto-add this video to $TARGETS$: couldn't tell which channel it's from.",
+    "message": "Didn't auto-add this video to $TARGETS$, because Perchling couldn't tell which channel it's from.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -648,7 +645,7 @@
     }
   },
   "feedback_www_manual_untitled_failed_missing_one": {
-    "message": "Couldn't save this video: $TARGETS$ doesn't exist anymore.",
+    "message": "Couldn't save this video, because $TARGETS$ doesn't exist anymore.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -656,7 +653,7 @@
     }
   },
   "feedback_www_manual_untitled_saved_failed_missing_one": {
-    "message": "Saved this video to $SUCCESS$. Couldn't add it to $TARGETS$: it doesn't exist anymore.",
+    "message": "Saved this video to $SUCCESS$. Couldn't add it to $TARGETS$, because it doesn't exist anymore.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -667,7 +664,7 @@
     }
   },
   "feedback_www_manual_untitled_failed_full_one": {
-    "message": "Couldn't save this video: $TARGETS$ is full.",
+    "message": "Couldn't save this video, because $TARGETS$ is full.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -675,7 +672,7 @@
     }
   },
   "feedback_www_manual_untitled_saved_failed_full_one": {
-    "message": "Saved this video to $SUCCESS$. Couldn't add it to $TARGETS$: it's full.",
+    "message": "Saved this video to $SUCCESS$. Couldn't add it to $TARGETS$, because it's full.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -689,7 +686,7 @@
     "message": "YouTube doesn't allow saving this video to playlists."
   },
   "feedback_www_manual_untitled_saved_failed_refused_one": {
-    "message": "Saved this video to $SUCCESS$. Couldn't add it to $TARGETS$: YouTube doesn't allow it.",
+    "message": "Saved this video to $SUCCESS$. Couldn't add it to $TARGETS$, because YouTube doesn't allow it.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -766,7 +763,7 @@
     }
   },
   "feedback_www_manual_untitled_failed_missing_other": {
-    "message": "Couldn't save this video: $TARGETS$ don't exist anymore.",
+    "message": "Couldn't save this video, because $TARGETS$ don't exist anymore.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -774,7 +771,7 @@
     }
   },
   "feedback_www_manual_untitled_saved_failed_missing_other": {
-    "message": "Saved this video to $SUCCESS$. Couldn't add it to $TARGETS$: they don't exist anymore.",
+    "message": "Saved this video to $SUCCESS$. Couldn't add it to $TARGETS$, because they don't exist anymore.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -785,7 +782,7 @@
     }
   },
   "feedback_www_manual_untitled_failed_full_other": {
-    "message": "Couldn't save this video: $TARGETS$ are full.",
+    "message": "Couldn't save this video, because $TARGETS$ are full.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -793,7 +790,7 @@
     }
   },
   "feedback_www_manual_untitled_saved_failed_full_other": {
-    "message": "Saved this video to $SUCCESS$. Couldn't add it to $TARGETS$: they're full.",
+    "message": "Saved this video to $SUCCESS$. Couldn't add it to $TARGETS$, because they're full.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -859,7 +856,7 @@
     }
   },
   "feedback_www_manual_named_filtered": {
-    "message": "Didn't auto-add “$VIDEO$”: $CHANNEL$ is filtered out of $TARGETS$",
+    "message": "Didn't auto-add “$VIDEO$”, because $CHANNEL$ is filtered out of $TARGETS$",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -873,7 +870,7 @@
     }
   },
   "feedback_www_manual_named_unknown_channel": {
-    "message": "Didn't auto-add “$VIDEO$” to $TARGETS$: couldn't tell which channel it's from.",
+    "message": "Didn't auto-add “$VIDEO$” to $TARGETS$, because Perchling couldn't tell which channel it's from.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1001,7 +998,7 @@
     }
   },
   "feedback_www_manual_named_failed_missing_one": {
-    "message": "Couldn't save “$VIDEO$”: $TARGETS$ doesn't exist anymore.",
+    "message": "Couldn't save “$VIDEO$”, because $TARGETS$ doesn't exist anymore.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1012,7 +1009,7 @@
     }
   },
   "feedback_www_manual_named_saved_failed_missing_one": {
-    "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$: it doesn't exist anymore.",
+    "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because it doesn't exist anymore.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1026,7 +1023,7 @@
     }
   },
   "feedback_www_manual_named_failed_full_one": {
-    "message": "Couldn't save “$VIDEO$”: $TARGETS$ is full.",
+    "message": "Couldn't save “$VIDEO$”, because $TARGETS$ is full.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1037,7 +1034,7 @@
     }
   },
   "feedback_www_manual_named_saved_failed_full_one": {
-    "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$: it's full.",
+    "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because it's full.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1059,7 +1056,7 @@
     }
   },
   "feedback_www_manual_named_saved_failed_refused_one": {
-    "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$: YouTube doesn't allow it.",
+    "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because YouTube doesn't allow it.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1161,7 +1158,7 @@
     }
   },
   "feedback_www_manual_named_failed_missing_other": {
-    "message": "Couldn't save “$VIDEO$”: $TARGETS$ don't exist anymore.",
+    "message": "Couldn't save “$VIDEO$”, because $TARGETS$ don't exist anymore.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1172,7 +1169,7 @@
     }
   },
   "feedback_www_manual_named_saved_failed_missing_other": {
-    "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$: they don't exist anymore.",
+    "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because they don't exist anymore.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1186,7 +1183,7 @@
     }
   },
   "feedback_www_manual_named_failed_full_other": {
-    "message": "Couldn't save “$VIDEO$”: $TARGETS$ are full.",
+    "message": "Couldn't save “$VIDEO$”, because $TARGETS$ are full.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1197,7 +1194,7 @@
     }
   },
   "feedback_www_manual_named_saved_failed_full_other": {
-    "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$: they're full.",
+    "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because they're full.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1265,7 +1262,7 @@
     }
   },
   "feedback_www_auto_untitled_failed_missing_one": {
-    "message": "Couldn't auto-add this video: $TARGETS$ doesn't exist anymore.",
+    "message": "Couldn't auto-add this video, because $TARGETS$ doesn't exist anymore.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -1273,7 +1270,7 @@
     }
   },
   "feedback_www_auto_untitled_saved_failed_missing_one": {
-    "message": "Auto-added this video to $SUCCESS$. Couldn't add it to $TARGETS$: it doesn't exist anymore.",
+    "message": "Auto-added this video to $SUCCESS$. Couldn't add it to $TARGETS$, because it doesn't exist anymore.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -1284,7 +1281,7 @@
     }
   },
   "feedback_www_auto_untitled_failed_full_one": {
-    "message": "Couldn't auto-add this video: $TARGETS$ is full.",
+    "message": "Couldn't auto-add this video, because $TARGETS$ is full.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -1292,7 +1289,7 @@
     }
   },
   "feedback_www_auto_untitled_saved_failed_full_one": {
-    "message": "Auto-added this video to $SUCCESS$. Couldn't add it to $TARGETS$: it's full.",
+    "message": "Auto-added this video to $SUCCESS$. Couldn't add it to $TARGETS$, because it's full.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -1306,7 +1303,7 @@
     "message": "YouTube doesn't allow auto-adding this video to playlists."
   },
   "feedback_www_auto_untitled_saved_failed_refused_one": {
-    "message": "Auto-added this video to $SUCCESS$. Couldn't add it to $TARGETS$: YouTube doesn't allow it.",
+    "message": "Auto-added this video to $SUCCESS$. Couldn't add it to $TARGETS$, because YouTube doesn't allow it.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -1374,7 +1371,7 @@
     }
   },
   "feedback_www_auto_untitled_failed_missing_other": {
-    "message": "Couldn't auto-add this video: $TARGETS$ don't exist anymore.",
+    "message": "Couldn't auto-add this video, because $TARGETS$ don't exist anymore.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -1382,7 +1379,7 @@
     }
   },
   "feedback_www_auto_untitled_saved_failed_missing_other": {
-    "message": "Auto-added this video to $SUCCESS$. Couldn't add it to $TARGETS$: they don't exist anymore.",
+    "message": "Auto-added this video to $SUCCESS$. Couldn't add it to $TARGETS$, because they don't exist anymore.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -1393,7 +1390,7 @@
     }
   },
   "feedback_www_auto_untitled_failed_full_other": {
-    "message": "Couldn't auto-add this video: $TARGETS$ are full.",
+    "message": "Couldn't auto-add this video, because $TARGETS$ are full.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -1401,7 +1398,7 @@
     }
   },
   "feedback_www_auto_untitled_saved_failed_full_other": {
-    "message": "Auto-added this video to $SUCCESS$. Couldn't add it to $TARGETS$: they're full.",
+    "message": "Auto-added this video to $SUCCESS$. Couldn't add it to $TARGETS$, because they're full.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -1484,7 +1481,7 @@
     }
   },
   "feedback_www_auto_named_failed_missing_one": {
-    "message": "Couldn't auto-add “$VIDEO$”: $TARGETS$ doesn't exist anymore.",
+    "message": "Couldn't auto-add “$VIDEO$”, because $TARGETS$ doesn't exist anymore.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1495,7 +1492,7 @@
     }
   },
   "feedback_www_auto_named_saved_failed_missing_one": {
-    "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$: it doesn't exist anymore.",
+    "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because it doesn't exist anymore.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1509,7 +1506,7 @@
     }
   },
   "feedback_www_auto_named_failed_full_one": {
-    "message": "Couldn't auto-add “$VIDEO$”: $TARGETS$ is full.",
+    "message": "Couldn't auto-add “$VIDEO$”, because $TARGETS$ is full.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1520,7 +1517,7 @@
     }
   },
   "feedback_www_auto_named_saved_failed_full_one": {
-    "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$: it's full.",
+    "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because it's full.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1542,7 +1539,7 @@
     }
   },
   "feedback_www_auto_named_saved_failed_refused_one": {
-    "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$: YouTube doesn't allow it.",
+    "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because YouTube doesn't allow it.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1636,7 +1633,7 @@
     }
   },
   "feedback_www_auto_named_failed_missing_other": {
-    "message": "Couldn't auto-add “$VIDEO$”: $TARGETS$ don't exist anymore.",
+    "message": "Couldn't auto-add “$VIDEO$”, because $TARGETS$ don't exist anymore.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1647,7 +1644,7 @@
     }
   },
   "feedback_www_auto_named_saved_failed_missing_other": {
-    "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$: they don't exist anymore.",
+    "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because they don't exist anymore.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1661,7 +1658,7 @@
     }
   },
   "feedback_www_auto_named_failed_full_other": {
-    "message": "Couldn't auto-add “$VIDEO$”: $TARGETS$ are full.",
+    "message": "Couldn't auto-add “$VIDEO$”, because $TARGETS$ are full.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1672,7 +1669,7 @@
     }
   },
   "feedback_www_auto_named_saved_failed_full_other": {
-    "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$: they're full.",
+    "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because they're full.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -1726,7 +1723,7 @@
     }
   },
   "feedback_music_manual_untitled_filtered": {
-    "message": "Didn't auto-add this song: $CHANNEL$ is filtered out of $TARGETS$",
+    "message": "Didn't auto-add this song, because $CHANNEL$ is filtered out of $TARGETS$",
     "placeholders": {
       "channel": {
         "content": "$1"
@@ -1737,7 +1734,7 @@
     }
   },
   "feedback_music_manual_untitled_unknown_channel": {
-    "message": "Didn't auto-add this song to $TARGETS$: couldn't tell which channel it's from.",
+    "message": "Didn't auto-add this song to $TARGETS$, because Perchling couldn't tell which channel it's from.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -1838,7 +1835,7 @@
     }
   },
   "feedback_music_manual_untitled_failed_missing_one": {
-    "message": "Couldn't save this song: $TARGETS$ doesn't exist anymore.",
+    "message": "Couldn't save this song, because $TARGETS$ doesn't exist anymore.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -1846,7 +1843,7 @@
     }
   },
   "feedback_music_manual_untitled_saved_failed_missing_one": {
-    "message": "Saved this song to $SUCCESS$. Couldn't add it to $TARGETS$: it doesn't exist anymore.",
+    "message": "Saved this song to $SUCCESS$. Couldn't add it to $TARGETS$, because it doesn't exist anymore.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -1857,7 +1854,7 @@
     }
   },
   "feedback_music_manual_untitled_failed_full_one": {
-    "message": "Couldn't save this song: $TARGETS$ is full.",
+    "message": "Couldn't save this song, because $TARGETS$ is full.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -1865,7 +1862,7 @@
     }
   },
   "feedback_music_manual_untitled_saved_failed_full_one": {
-    "message": "Saved this song to $SUCCESS$. Couldn't add it to $TARGETS$: it's full.",
+    "message": "Saved this song to $SUCCESS$. Couldn't add it to $TARGETS$, because it's full.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -1879,7 +1876,7 @@
     "message": "YouTube Music doesn't allow saving this song to playlists."
   },
   "feedback_music_manual_untitled_saved_failed_refused_one": {
-    "message": "Saved this song to $SUCCESS$. Couldn't add it to $TARGETS$: YouTube Music doesn't allow it.",
+    "message": "Saved this song to $SUCCESS$. Couldn't add it to $TARGETS$, because YouTube Music doesn't allow it.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -1950,7 +1947,7 @@
     }
   },
   "feedback_music_manual_untitled_failed_missing_other": {
-    "message": "Couldn't save this song: $TARGETS$ don't exist anymore.",
+    "message": "Couldn't save this song, because $TARGETS$ don't exist anymore.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -1958,7 +1955,7 @@
     }
   },
   "feedback_music_manual_untitled_saved_failed_missing_other": {
-    "message": "Saved this song to $SUCCESS$. Couldn't add it to $TARGETS$: they don't exist anymore.",
+    "message": "Saved this song to $SUCCESS$. Couldn't add it to $TARGETS$, because they don't exist anymore.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -1969,7 +1966,7 @@
     }
   },
   "feedback_music_manual_untitled_failed_full_other": {
-    "message": "Couldn't save this song: $TARGETS$ are full.",
+    "message": "Couldn't save this song, because $TARGETS$ are full.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -1977,7 +1974,7 @@
     }
   },
   "feedback_music_manual_untitled_saved_failed_full_other": {
-    "message": "Saved this song to $SUCCESS$. Couldn't add it to $TARGETS$: they're full.",
+    "message": "Saved this song to $SUCCESS$. Couldn't add it to $TARGETS$, because they're full.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -2032,7 +2029,7 @@
     }
   },
   "feedback_music_manual_named_saved_failed_refused_one": {
-    "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$: YouTube Music doesn't allow it.",
+    "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because YouTube Music doesn't allow it.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -2147,7 +2144,7 @@
     }
   },
   "feedback_music_auto_untitled_failed_missing_one": {
-    "message": "Couldn't auto-add this song: $TARGETS$ doesn't exist anymore.",
+    "message": "Couldn't auto-add this song, because $TARGETS$ doesn't exist anymore.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -2155,7 +2152,7 @@
     }
   },
   "feedback_music_auto_untitled_saved_failed_missing_one": {
-    "message": "Auto-added this song to $SUCCESS$. Couldn't add it to $TARGETS$: it doesn't exist anymore.",
+    "message": "Auto-added this song to $SUCCESS$. Couldn't add it to $TARGETS$, because it doesn't exist anymore.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -2166,7 +2163,7 @@
     }
   },
   "feedback_music_auto_untitled_failed_full_one": {
-    "message": "Couldn't auto-add this song: $TARGETS$ is full.",
+    "message": "Couldn't auto-add this song, because $TARGETS$ is full.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -2174,7 +2171,7 @@
     }
   },
   "feedback_music_auto_untitled_saved_failed_full_one": {
-    "message": "Auto-added this song to $SUCCESS$. Couldn't add it to $TARGETS$: it's full.",
+    "message": "Auto-added this song to $SUCCESS$. Couldn't add it to $TARGETS$, because it's full.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -2188,7 +2185,7 @@
     "message": "YouTube Music doesn't allow auto-adding this song to playlists."
   },
   "feedback_music_auto_untitled_saved_failed_refused_one": {
-    "message": "Auto-added this song to $SUCCESS$. Couldn't add it to $TARGETS$: YouTube Music doesn't allow it.",
+    "message": "Auto-added this song to $SUCCESS$. Couldn't add it to $TARGETS$, because YouTube Music doesn't allow it.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -2256,7 +2253,7 @@
     }
   },
   "feedback_music_auto_untitled_failed_missing_other": {
-    "message": "Couldn't auto-add this song: $TARGETS$ don't exist anymore.",
+    "message": "Couldn't auto-add this song, because $TARGETS$ don't exist anymore.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -2264,7 +2261,7 @@
     }
   },
   "feedback_music_auto_untitled_saved_failed_missing_other": {
-    "message": "Auto-added this song to $SUCCESS$. Couldn't add it to $TARGETS$: they don't exist anymore.",
+    "message": "Auto-added this song to $SUCCESS$. Couldn't add it to $TARGETS$, because they don't exist anymore.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -2275,7 +2272,7 @@
     }
   },
   "feedback_music_auto_untitled_failed_full_other": {
-    "message": "Couldn't auto-add this song: $TARGETS$ are full.",
+    "message": "Couldn't auto-add this song, because $TARGETS$ are full.",
     "placeholders": {
       "targets": {
         "content": "$1"
@@ -2283,7 +2280,7 @@
     }
   },
   "feedback_music_auto_untitled_saved_failed_full_other": {
-    "message": "Auto-added this song to $SUCCESS$. Couldn't add it to $TARGETS$: they're full.",
+    "message": "Auto-added this song to $SUCCESS$. Couldn't add it to $TARGETS$, because they're full.",
     "placeholders": {
       "success": {
         "content": "$1"
@@ -2338,7 +2335,7 @@
     }
   },
   "feedback_music_auto_named_saved_failed_refused_one": {
-    "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$: YouTube Music doesn't allow it.",
+    "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because YouTube Music doesn't allow it.",
     "placeholders": {
       "video": {
         "content": "$1"
@@ -2798,7 +2795,7 @@
     "message": "The playlist was created, but this choice wasn't saved."
   },
   "clearAll_syncedKeptNewer": {
-    "message": "Cleared on this browser. Synced settings were left for the newer version of Perchling that saved them. Update Perchling here to clear them too."
+    "message": "Cleared on this browser. Your synced settings stay as the newer version of Perchling saved them. Update Perchling here to clear them too."
   },
   "picker_pickedPrivate": {
     "message": "Saved. Private windows don't keep your playlist choice."

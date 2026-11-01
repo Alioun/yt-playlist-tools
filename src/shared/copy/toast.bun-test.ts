@@ -90,7 +90,7 @@ describe("toast copy rules", () => {
     expect(text(failed("refused"), titles, "music")).toBe("YouTube Music doesn't allow saving “Get Lucky” to playlists.")
     expect(text(failed("rate-limited"), titles, "music")).toBe("Couldn't save “Get Lucky”. YouTube Music is limiting requests, so try again in a minute.")
     expect(text(failed("unrecognised"), titles, "music")).toBe("Couldn't save “Get Lucky” to Favourites. Try YouTube Music's ⋮ menu.")
-    expect(text(failed("missing"), titles, "music")).toBe("Couldn't save “Get Lucky”: Favourites doesn't exist anymore.")
+    expect(text(failed("missing"), titles, "music")).toBe("Couldn't save “Get Lucky”, because Favourites doesn't exist anymore.")
   })
 
   for (const site of ["www", "music"] as const) {

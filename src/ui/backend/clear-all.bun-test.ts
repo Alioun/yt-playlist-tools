@@ -3,7 +3,7 @@ import { clearFixture } from "../../../tools/fixtures/clear-all/harness"
 import { englishI18n } from "../../../tools/fixtures/localization/scripted"
 import { clearAllAvailability, clearAllNotice, createClearAllConfirmation } from "./clear-all"
 
-const keptText = "Cleared on this browser. Synced settings were left for the newer version of Perchling that saved them. Update Perchling here to clear them too."
+const keptText = "Cleared on this browser. Your synced settings stay as the newer version of Perchling saved them. Update Perchling here to clear them too."
 
 test("a newer layout that has synced offers the checkbox, and a ticked clear says synced settings were left", async () => {
   const records = { schema: 2, device: { syncOn: true }, future: { keep: true } }

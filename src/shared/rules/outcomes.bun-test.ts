@@ -59,15 +59,15 @@ const settledCases: Row[] = [
   ["explicit no answer", { kind: "shortcut", outcomes: { [music]: failed("unconfirmed") } },
     { text: `Couldn't confirm ${T} was saved to Music. YouTube didn't answer.`, tone: "failure", action: null }, "same"],
   ["shortcut missing playlist", { kind: "shortcut", outcomes: { [old]: failed("missing") } },
-    { text: `Couldn't save ${T}: Old stuff doesn't exist anymore.`, tone: "failure", action: { kind: "settings", feature: "shortcuts", playlist: old } }, "same"],
+    { text: `Couldn't save ${T}, because Old stuff doesn't exist anymore.`, tone: "failure", action: { kind: "settings", feature: "shortcuts", playlist: old } }, "same"],
   ["shortcut full playlist", { kind: "shortcut", outcomes: { [old]: failed("full") } },
-    { text: `Couldn't save ${T}: Old stuff is full.`, tone: "failure", action: { kind: "settings", feature: "shortcuts", playlist: old } }, "same"],
+    { text: `Couldn't save ${T}, because Old stuff is full.`, tone: "failure", action: { kind: "settings", feature: "shortcuts", playlist: old } }, "same"],
   ["quick-save missing playlist", { kind: "quick-save", outcomes: { [old]: failed("missing") } },
-    { text: `Couldn't save ${T}: Old stuff doesn't exist anymore.`, tone: "failure", action: { kind: "choose" } }, "same"],
+    { text: `Couldn't save ${T}, because Old stuff doesn't exist anymore.`, tone: "failure", action: { kind: "choose" } }, "same"],
   ["quick-save full playlist", { kind: "quick-save", outcomes: { [old]: failed("full") } },
-    { text: `Couldn't save ${T}: Old stuff is full.`, tone: "failure", action: { kind: "choose" } }, "same"],
+    { text: `Couldn't save ${T}, because Old stuff is full.`, tone: "failure", action: { kind: "choose" } }, "same"],
   ["first pick missing playlist has no fix", { kind: "choose-quick-save", outcomes: { [old]: failed("missing") } },
-    { text: `Couldn't save ${T}: Old stuff doesn't exist anymore.`, tone: "failure", action: null }, "same"],
+    { text: `Couldn't save ${T}, because Old stuff doesn't exist anymore.`, tone: "failure", action: null }, "same"],
   ["picker tick answers on its row", { kind: "picker", outcomes: { [old]: failed("missing") } }, null, null],
   ["YouTube refuses the video", { kind: "quick-save", outcomes: { [music]: failed("refused") } },
     { text: `YouTube doesn't allow saving ${T} to playlists.`, tone: "failure", action: null }, "same"],
@@ -82,19 +82,19 @@ const settledCases: Row[] = [
   ["explicit unrecognised answer", { kind: "shortcut", outcomes: { [music]: failed("unrecognised") } },
     { text: `Couldn't save ${T} to Music. Use YouTube's own Save for now.`, tone: "failure", action: null }, "same"],
   ["explicit saved and failed", { kind: "shortcut", outcomes: { [music]: added, [old]: failed("missing") } },
-    { text: `Saved ${T} to Music. Couldn't add it to Old stuff: it doesn't exist anymore.`, tone: "failure", action: { kind: "settings", feature: "shortcuts", playlist: old } }, "same"],
+    { text: `Saved ${T} to Music. Couldn't add it to Old stuff, because it doesn't exist anymore.`, tone: "failure", action: { kind: "settings", feature: "shortcuts", playlist: old } }, "same"],
   ["auto-add saved it", auto({ [music]: added, [learning]: added, [later]: alreadyIn }),
     { text: `Auto-added ${T} to Music and Learning`, tone: "confirmation", action: { kind: "undo" } }, null],
   ["auto-add found it already in everywhere", auto({ [music]: alreadyIn, [learning]: alreadyIn }), null, null],
   ["auto-add skipped by the session skip", auto({ [music]: { kind: "skipped" } }), null, null],
   ["auto-add every remaining playlist filtered out", auto({ [music]: { kind: "filtered", decision: "filtered" }, [learning]: { kind: "skipped" } }),
-    { text: `Didn't auto-add ${T}: Rick Astley is filtered out of Music`, tone: "confirmation", action: null }, null],
+    { text: `Didn't auto-add ${T}, because Rick Astley is filtered out of Music`, tone: "confirmation", action: null }, null],
   ["auto-add unknown channel", auto({ [music]: { kind: "filtered", decision: "filtered-unknown-channel" } }),
-    { text: `Didn't auto-add ${T} to Music: couldn't tell which channel it's from.`, tone: "hint", action: null }, "same"],
+    { text: `Didn't auto-add ${T} to Music, because Perchling couldn't tell which channel it's from.`, tone: "hint", action: null }, "same"],
   ["auto-add some saved, the rest filtered out", auto({ [music]: added, [learning]: { kind: "filtered", decision: "filtered" }, [later]: { kind: "filtered", decision: "filtered-unknown-channel" } }),
     { text: `Auto-added ${T} to 1 playlist · filtered out of 2 playlists`, tone: "confirmation", action: { kind: "undo" } }, null],
   ["auto-add partial example", auto({ [music]: added, [old]: failed("missing") }),
-    { text: `Auto-added ${T} to Music. Couldn't add it to Old stuff: it doesn't exist anymore.`, tone: "failure", action: { kind: "settings", feature: "auto-add", playlist: old } }, "same"],
+    { text: `Auto-added ${T} to Music. Couldn't add it to Old stuff, because it doesn't exist anymore.`, tone: "failure", action: { kind: "settings", feature: "auto-add", playlist: old } }, "same"],
   ["auto-add signed out stays silent", auto({ [music]: failed("signed-out") }), null, null],
   ["auto-add during a rate-limit pause stays silent", auto({ [music]: failed("paused") }), null, null],
   ["auto-add offline", auto({ [music]: failed("not-sent"), [learning]: alreadyIn }),
@@ -102,9 +102,9 @@ const settledCases: Row[] = [
   ["auto-add no answer", auto({ [music]: failed("unconfirmed") }),
     { text: `Couldn't confirm ${T} was auto-added to Music. YouTube didn't answer.`, tone: "failure", action: { kind: "try-again", playlists: [music] } }, "same"],
   ["auto-add missing playlist", auto({ [old]: failed("missing") }),
-    { text: `Couldn't auto-add ${T}: Old stuff doesn't exist anymore.`, tone: "failure", action: { kind: "settings", feature: "auto-add", playlist: old } }, "same"],
+    { text: `Couldn't auto-add ${T}, because Old stuff doesn't exist anymore.`, tone: "failure", action: { kind: "settings", feature: "auto-add", playlist: old } }, "same"],
   ["auto-add full playlist", auto({ [old]: failed("full") }),
-    { text: `Couldn't auto-add ${T}: Old stuff is full.`, tone: "failure", action: { kind: "settings", feature: "auto-add", playlist: old } }, "same"],
+    { text: `Couldn't auto-add ${T}, because Old stuff is full.`, tone: "failure", action: { kind: "settings", feature: "auto-add", playlist: old } }, "same"],
   ["auto-add refused video", auto({ [music]: failed("refused") }),
     { text: `YouTube doesn't allow auto-adding ${T} to playlists.`, tone: "failure", action: null }, "same"],
   ["auto-add rate-limited", auto({ [music]: failed("rate-limited") }),
@@ -177,8 +177,8 @@ describe("auto-add suppression is explicit data", () => {
       { tab: "a", report: missing(old) }, { tab: "b", report: missing(old) },
       { tab: "a", report: missing(music) }, { tab: "a", report: shown => auto({ [old]: failed("full") }, shown) }
     ])).toEqual([
-      `Couldn't auto-add ${T}: Old stuff doesn't exist anymore.`, null,
-      `Couldn't auto-add ${T}: Music doesn't exist anymore.`, `Couldn't auto-add ${T}: Old stuff is full.`
+      `Couldn't auto-add ${T}, because Old stuff doesn't exist anymore.`, null,
+      `Couldn't auto-add ${T}, because Music doesn't exist anymore.`, `Couldn't auto-add ${T}, because Old stuff is full.`
     ])
   })
 
@@ -186,7 +186,7 @@ describe("auto-add suppression is explicit data", () => {
     const refused = (shown: Shown) => auto({ [music]: failed("refused") }, shown)
     const unknown = (shown: Shown) => auto({ [music]: { kind: "filtered", decision: "filtered-unknown-channel" } }, shown)
     expect(run([{ tab: "a", report: refused }, { tab: "b", report: refused }, { tab: "a", report: unknown }, { tab: "b", report: unknown }]))
-      .toEqual([`YouTube doesn't allow auto-adding ${T} to playlists.`, null, `Didn't auto-add ${T} to Music: couldn't tell which channel it's from.`, null])
+      .toEqual([`YouTube doesn't allow auto-adding ${T} to playlists.`, null, `Didn't auto-add ${T} to Music, because Perchling couldn't tell which channel it's from.`, null])
   })
 
   test("account changed and account refused show once per tab", () => {
@@ -231,7 +231,7 @@ describe("mixed outcomes and precedence", () => {
     const plan = toastPlan(auto({ [music]: failed("missing"), [old]: failed("missing"), [learning]: failed("unrecognised") }), true)
     expect(plan?.action).toEqual({ kind: "settings", feature: "auto-add", playlist: music })
     expect(plan?.remember.session).toEqual([`missing:${music}`, `missing:${old}`])
-    expect(plan && toastText(plan, titles, "www", i18n)).toBe(`Couldn't auto-add ${T}: Music and Old stuff don't exist anymore.`)
+    expect(plan && toastText(plan, titles, "www", i18n)).toBe(`Couldn't auto-add ${T}, because Music and Old stuff don't exist anymore.`)
   })
 
   test("explicit precedence follows the failure table's order", () => {

@@ -280,11 +280,11 @@ Save to playlist is an **add** through the shared add flow ([ticket 12](../issue
   - If the membership read fails outright (network, signed out, account mismatch), nothing is written.
   - **PROVISIONAL** (ticket 25): if the account part checks out but membership is unreadable, the explicit save still goes ahead. YouTube Music's own duplicate rejection still catches a second copy.
 - **YM-SAVE-8** **Missing quick-save playlist:**
-  - The save fails with `Couldn't save “Get Lucky”: Favourites doesn't exist anymore.` and a **Choose** action, which opens the picker in choose mode.
+  - The save fails with `Couldn't save “Get Lucky”, because Favourites doesn't exist anymore.` and a **Choose** action, which opens the picker in choose mode.
   - The setting is kept, not cleared, and Settings marks it *Missing*. The mark also sets the violet "needs you" "!" on the toolbar, for every tab ([UI-IA-08](05-ui.md#51-information-architecture); R12).
   - Each later save tries it again.
   - The mark clears when the playlist appears in a listing again.
-- **YM-SAVE-9** **Full quick-save playlist:** `Couldn't save “Get Lucky”: Favourites is full.` with **Choose**. It's marked *Full* the same way.
+- **YM-SAVE-9** **Full quick-save playlist:** `Couldn't save “Get Lucky”, because Favourites is full.` with **Choose**. It's marked *Full* the same way.
 - **YM-SAVE-10** **Undo** removes exactly the entry this save created (by its `setVideoId`), and nothing else. The quick-save playlist setting stays as it is, including after a choose-mode first pick.
 - **YM-SAVE-11** **Repeated presses:**
   - While a save is pending, the same button or key is ignored.
@@ -553,9 +553,9 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
 | Like failed | Couldn't like “Get Lucky”. Try YouTube Music's ⋮ menu. | — | Failure |
 | Save, offline | Couldn't save “Get Lucky” to Favourites. Check your connection. | — | Failure |
 | Save, no answer in 10 s | Couldn't confirm “Get Lucky” was saved to Favourites. YouTube Music didn't answer. † | — | Failure |
-| Quick-save playlist deleted | Couldn't save “Get Lucky”: Favourites doesn't exist anymore. | Choose | Failure |
-| Quick-save playlist full | Couldn't save “Get Lucky”: Favourites is full. | Choose | Failure |
-| A playlist shortcut's playlist deleted or full | Couldn't save “Get Lucky”: Favourites doesn't exist anymore. / Couldn't save “Get Lucky”: Favourites is full. | Settings | Failure (R38) |
+| Quick-save playlist deleted | Couldn't save “Get Lucky”, because Favourites doesn't exist anymore. | Choose | Failure |
+| Quick-save playlist full | Couldn't save “Get Lucky”, because Favourites is full. | Choose | Failure |
+| A playlist shortcut's playlist deleted or full | Couldn't save “Get Lucky”, because Favourites doesn't exist anymore. / Couldn't save “Get Lucky”, because Favourites is full. | Settings | Failure (R38) |
 | YouTube Music refuses the song | YouTube Music doesn't allow saving “Get Lucky” to playlists. † | — | Failure |
 | Rate-limited | Couldn't save “Get Lucky”. YouTube Music is limiting requests, so try again in a minute. † | — | Failure |
 | Account can't use playlists | YouTube doesn't let this account save to playlists. | — | Failure |
@@ -680,7 +680,7 @@ Its look is [UI-POP-17](05-ui.md#youtube-music-tab).
   - a split **Save** / **▾** button.
 - **YM-POP-2** **Account:** Playing now acts as its tab's own account. It never acts as the account in view.
 - **YM-POP-3** **The split Save button:**
-  - **States:** idle, busy, saved with Undo ("Saved to {Playlist}. Undo"), already in ("Already in {Playlist}."), or "Couldn't save: …".
+  - **States:** idle, busy, saved with Undo ("Saved to {Playlist}. Undo"), already in ("Already in {Playlist}."), or "Couldn't save, because …".
   - **Under it:** "One click saves to {Playlist}" or, with no quick-save playlist, "Your first pick becomes the quick-save playlist." (R37)
   - It follows YM-SAVE's rules, choose mode included.
 - **YM-POP-4** **The ▾** opens the playlist picker as the popup's sheet, loaded on demand. It behaves as in §10.
@@ -901,7 +901,7 @@ None remain after all three rounds of resolutions; see [Resolved during assembly
 - **Unarmed keys:** ticket 26's "no armed key" for missing internals. Ticket 18 superseded it (the key stays caught and answers). R50 restored it for an action that's unavailable while its feature is partly working, and R68 withdrew that again: the action's buttons hide, but its key stays caught and answers. Every key stays caught, whatever the feature's status (YM-KEY-12).
 - **Casting:** ticket 10 softened it to "available if no cast signal". Superseded by ticket 25, which found `state.castStatus`, and then by R5, which makes every queue edit unavailable while casting, with no exception for inserts M1 might show forwarded (YM-CAST-3).
 - **Row placement:** ticket 26 said buttons cover the trailing columns without reflow, and ticket 09 reserved a slot. Superseded by ticket 27's variant A, which ticket 26 allowed it to adjust, and settled by R35.
-- **Deleted quick-save playlist copy:** ticket 26 had "Favourites doesn't exist anymore". Superseded by ticket 12's `Couldn't save “{title}”: {Playlist} doesn't exist anymore.`; ticket 12 folds in ticket 26 and keeps its Choose action.
+- **Deleted quick-save playlist copy:** ticket 26 had "Favourites doesn't exist anymore". Superseded by ticket 12's `Couldn't save “{title}”, because {Playlist} doesn't exist anymore.`; ticket 12 folds in ticket 26 and keeps its Choose action.
 
 ## Not pinned down
 

@@ -520,8 +520,8 @@ The editor sits in each auto-add playlist's options, in the popup and in Setting
 ### 2.4.5 Feedback
 
 **YT-CF-18:**
-- **All remaining playlists filtered out:** "Didn't auto-add “{title}”: {Channel} is filtered out of {list}". It's a confirmation, so Show feedback hides it.
-- **Unknown channel with an allowlist-mode filter:** the outcome is *filtered out*, with the reason "unknown channel", never *failed* (R26). It keeps its own toast, "Didn't auto-add “{title}” to {list}: couldn't tell which channel it's from." The toast is neutral, not a failure. It shows even with Show feedback off, once per browser session (YT-ADD-25).
+- **All remaining playlists filtered out:** "Didn't auto-add “{title}”, because {Channel} is filtered out of {list}". It's a confirmation, so Show feedback hides it.
+- **Unknown channel with an allowlist-mode filter:** the outcome is *filtered out*, with the reason "unknown channel", never *failed* (R26). It keeps its own toast, "Didn't auto-add “{title}” to {list}, because {Product} couldn't tell which channel it's from." The toast is neutral, not a failure. It shows even with Show feedback off, once per browser session (YT-ADD-25).
 - **Unknown channel with a denylist-mode filter:** the video is added as normal.
 - **Console:** each filter decision is logged to the tab's console.
 - **Mixed outcomes:** when some playlists were added and the rest filtered out, for whatever reason, one toast reads "Auto-added “{title}” to {n} playlists · filtered out of {m}", with Undo for the adds (YT-ADD-15; R27).
@@ -681,10 +681,10 @@ The card menu raises no toasts of its own, apart from YT-BRK notices, which Show
 | An explicit add found it already in | “{title}” is already in {list} | — | Yes |
 | A playlist shortcut with no playlist on this account (a neutral hint) | {Shortcut} has no playlist on {Account} yet. | Choose (YT-KEY-13) | Yes (R24, R56) |
 | Auto-add found it already in everywhere | *(no toast)* | | |
-| Auto-add: every remaining playlist filtered out | Didn't auto-add “{title}”: {Channel} is filtered out of {list} | — | No |
-| Auto-add: unknown channel, allowlist-mode filter (*filtered out*, YT-CF-18) | Didn't auto-add “{title}” to {list}: couldn't tell which channel it's from. | — | Yes, once per browser session (R26) |
+| Auto-add: every remaining playlist filtered out | Didn't auto-add “{title}”, because {Channel} is filtered out of {list} | — | No |
+| Auto-add: unknown channel, allowlist-mode filter (*filtered out*, YT-CF-18) | Didn't auto-add “{title}” to {list}, because {Product} couldn't tell which channel it's from. | — | Yes, once per browser session (R26) |
 | Auto-add: some saved, the rest filtered out | Auto-added “{title}” to {n} playlists · filtered out of {m} | Undo | No (R27) |
-| Partial: some saved, some failed | e.g. Auto-added “{title}” to Music. Couldn't add it to Old stuff: it doesn't exist anymore. | The failure's action | Yes |
+| Partial: some saved, some failed | e.g. Auto-added “{title}” to Music. Couldn't add it to Old stuff, because it doesn't exist anymore. | The failure's action | Yes |
 | Pending key-triggered add (YT-ADD-22) | Saving “{title}” to {list}… | — | No (R7) |
 
 **YT-ADD-28: failures.** These all show with Show feedback off.
@@ -694,8 +694,8 @@ The card menu raises no toasts of its own, apart from YT-BRK notices, which Show
 | Signed out (every explicit add: shortcuts, quick-save, the picker, the watch-page menu's Save rows; auto-add stays silent) | Sign in to YouTube to save videos. | Sign in (R3, R41) |
 | Offline, so nothing was sent | Couldn't save “{title}” to {list}. Check your connection. | Try again (auto-add only) |
 | Sent, but no answer within 10 s | Couldn't confirm “{title}” was saved to {list}. YouTube didn't answer. | Try again (auto-add only) |
-| Missing playlist | Couldn't save “{title}”: {Playlist} doesn't exist anymore. | Settings (auto-add, shortcuts); Choose (quick-save) |
-| Full playlist | Couldn't save “{title}”: {Playlist} is full. | Settings; Choose (quick-save) |
+| Missing playlist | Couldn't save “{title}”, because {Playlist} doesn't exist anymore. | Settings (auto-add, shortcuts); Choose (quick-save) |
+| Full playlist | Couldn't save “{title}”, because {Playlist} is full. | Settings; Choose (quick-save) |
 | YouTube refuses the video (made for kids, private, removed, region-blocked) | YouTube doesn't allow saving “{title}” to playlists. | — |
 | Rate-limited (HTTP 429) | Couldn't save “{title}”. YouTube is limiting requests, so try again in a minute. | — |
 | Account changed in another tab (every explicit add; once per tab for auto-add) | Your YouTube account changed in another tab. Reload this page to keep saving here. | Reload (R55) |

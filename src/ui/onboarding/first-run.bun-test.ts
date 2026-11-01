@@ -354,7 +354,7 @@ describe("Agree", () => {
   test.each([
     ["unconfirmed", "Couldn't confirm your agreement was saved. Nothing is running yet. Try again."],
     ["rejected", "Couldn't save your agreement. Nothing is running yet. Try again."],
-    ["sync-full", "Couldn't agree: your synced settings are full. Nothing was saved. Turn off Settings sync, or make room in Settings on another browser, then try again."]
+    ["sync-full", "Couldn't agree, because your synced settings are full. Nothing was saved. Turn off Settings sync, or make room in Settings on another browser, then try again."]
   ] as const)("a %s agreement is reported and never shown as agreed", async (reason, message) => {
     const script = scriptedOwner()
     show(script.owner)
@@ -433,7 +433,7 @@ describe("step 3, Finish setting up", () => {
     const shortcuts = screen.getByText("Playlist shortcuts").closest("li")!
     expect(within(shortcuts).getByText("Alt+W saves to")).toBeVisible()
     expect(within(shortcuts).getByText("Watch later")).toBeVisible()
-    expect(within(shortcuts).getByText("Also on YouTube Music: needs site access. It works on YouTube now.")).toBeVisible()
+    expect(within(shortcuts).getByText("Also on YouTube Music needs site access. Shortcuts work on YouTube now.")).toBeVisible()
     expect(screen.queryByText(/\boff\b|stays off/i)).toBeNull()
     expect(screen.getByText("Your features are on. Some of them need a playlist for your YouTube account.")).toBeVisible()
     button("Give access to YouTube Music").click()
