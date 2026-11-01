@@ -3,6 +3,7 @@ import type { PageJobResult } from "../../shared/contracts/page"
 import type { VideoId } from "../../shared/model/validation"
 import { hasQueueList, isMenuPopup, isQueueToast, parseMiniplayer, parseQueueAnswer, parseQueueCard, parseQueuePanel } from "../parsers/www-queue"
 import type { QueueAnswer, QueuePanel } from "../parsers/www-queue"
+import { parseTargetVideo } from "../read-parsers"
 import type { GatewayClock, JobScope } from "./lanes"
 import type { AttemptContext, Dispatch, HttpAnswer, PageUiRoute, RequestRoute } from "./port"
 import { queueAddEdit, queueList, queueRefresh, queueRemoveEdit } from "./requests"
@@ -294,9 +295,14 @@ export function createWwwQueue(options: {
     } finally { if (sent.kind === "sent") sent.stop() }
   }
 
-  function menu(target: Element | undefined): Promise<PageJobResult<JobOf<"openCardMenu">>> {
+  function menu(job: JobOf<"openCardMenu">, target: Element | undefined): Promise<PageJobResult<JobOf<"openCardMenu">>> {
     const route = routes.menu
     if (disposed || !target || !connected(target)) return Promise.resolve(unavailable)
+    let raw: unknown
+    try { raw = options.card(target) } catch { notice("threw", route); return Promise.resolve(unavailable) }
+    const shown = parseTargetVideo(raw)
+    if (!shown && raw !== undefined) notice("unrecognised", route, raw)
+    if (shown?.videoId !== job.videoId) return Promise.resolve(unavailable)
     return new Promise(resolve => {
       let active = true
       let stopTimer = () => {}

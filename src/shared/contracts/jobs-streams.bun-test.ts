@@ -104,7 +104,7 @@ const fixtures = {
   queueAdd: { job: { kind: "queueAdd" }, data: { confirmed: false, quiet: true } },
   queueUndo: { job: { kind: "queueUndo", listId, setVideoId: setId }, data: null },
   queueAddList: { job: { kind: "queueAddList", videoIds: [video, video2] }, data: { confirmed: false, count: 1 } },
-  openCardMenu: { job: { kind: "openCardMenu" }, data: null },
+  openCardMenu: { job: { kind: "openCardMenu", videoId: video }, data: null },
   itemInfo: { job: { kind: "itemInfo" }, data: item },
   queueInsert: { job: { kind: "queueInsert", endpoint: next, position: "next" }, data: { ids: [queueId, numericId] } },
   queueRemove: { job: { kind: "queueRemove", id: queueId }, data: { index: 0 } },

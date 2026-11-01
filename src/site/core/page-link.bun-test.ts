@@ -23,7 +23,7 @@ function object(value: unknown): JsonObject {
 }
 const safeKey = expectedKey(rawIdentity)
 const pinned = () => invocation({ job: { kind: "playlists" }, acct: safeKey })
-const openMenu = () => invocation({ job: { kind: "openCardMenu" } })
+const openMenu = () => invocation({ job: { kind: "openCardMenu", videoId: "abcdefghijk" } })
 const emit = (h: ReturnType<typeof harness>, value: unknown) => h.tracked.channel.send("res", JSON.stringify(value))
 
 for (const dom of [false, true]) {

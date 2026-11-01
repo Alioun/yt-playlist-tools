@@ -1,5 +1,6 @@
 import { isTabView, type DueNotice, type FeatureStatus, type TabView } from "../../../src/shared/contracts/tab-view"
 import type { Job } from "../../../src/shared/contracts"
+import { isVideoId } from "../../../src/shared/model/validation"
 import { createFeatureHost, type SiteView } from "../../../src/site/core/feature-host"
 import { Scope } from "../../../src/site/core/scope"
 import { cardMenuFeature, type CardMenuServices } from "../../../src/site/features/card-menu/card-menu"
@@ -7,8 +8,8 @@ import { checked, flush, harness, snapshot } from "../page-link/support"
 import { syntheticViewSource } from "../site-core-lifecycle/views"
 import { wireView } from "../tab-view/cases"
 
-export const videoA = "AAAAAAAAAAA"
-export const videoB = "BBBBBBBBBBB"
+export const videoA = checked(isVideoId, "AAAAAAAAAAA")
+export const videoB = checked(isVideoId, "BBBBBBBBBBB")
 const menu = `<ytd-menu-renderer><yt-icon-button id="button"><button aria-haspopup="true" aria-label="Action menu"></button></yt-icon-button></ytd-menu-renderer>`
 export const markup = `
 <ytd-rich-grid-media id="card-a">

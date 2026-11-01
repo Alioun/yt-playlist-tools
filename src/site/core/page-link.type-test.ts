@@ -1,10 +1,11 @@
-import type { AccountKey } from "../../shared/model"
+import type { AccountKey, VideoId } from "../../shared/model"
 import type { AccountData, JobOf, JobResult, PageRequestId, PageWatchId, StreamData } from "../../shared/contracts"
 import type { PageAccountData } from "../../shared/contracts/page"
 import type { PageLink, PageLinkState, PageSnapshot } from "./page-link"
 
 declare const link: PageLink
 declare const acct: AccountKey
+declare const videoId: VideoId
 declare const request: PageRequestId
 declare const watch: PageWatchId
 declare const raw: PageAccountData
@@ -20,7 +21,7 @@ export type SafeRelationships = [
 export async function positives() {
   const playlists: JobResult<JobOf<"playlists">> = await link.run({ job: { kind: "playlists" }, acct })
   const account: JobResult<JobOf<"account">> = await link.run({ job: { kind: "account" } })
-  const menu: JobResult<JobOf<"openCardMenu">> = await link.run({ job: { kind: "openCardMenu" } }, { target: document.body })
+  const menu: JobResult<JobOf<"openCardMenu">> = await link.run({ job: { kind: "openCardMenu", videoId } }, { target: document.body })
   if (account.ok) {
     const safe: AccountData = account.data
     void safe

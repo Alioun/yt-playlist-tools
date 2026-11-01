@@ -37,7 +37,7 @@ export type JobInputById = {
   queueAdd: EmptyInput
   queueUndo: { listId: QueueListId; setVideoId: SetVideoId }
   queueAddList: { videoIds: VideoId[] }
-  openCardMenu: EmptyInput
+  openCardMenu: { videoId: VideoId }
   itemInfo: EmptyInput
   queueInsert: { endpoint: QueueInsertEndpoint; position: "next" | "end" }
   queueRemove: { id: QueueItemId }
@@ -142,7 +142,7 @@ const inputFields = {
   create: { title: text, privacy: isPrivacy }, channelOf: { videoId: isVideoId },
   resolveChannel: { input: text }, videoInfo: {}, queueAdd: {},
   queueUndo: { listId: isQueueListId, setVideoId: isSetVideoId },
-  queueAddList: { videoIds: v => list(v, isVideoId, 1, 199) }, openCardMenu: {}, itemInfo: {},
+  queueAddList: { videoIds: v => list(v, isVideoId, 1, 199) }, openCardMenu: { videoId: isVideoId }, itemInfo: {},
   queueInsert: { endpoint: isQueueInsertEndpoint, position: v => v === "next" || v === "end" },
   queueRemove: { id: isQueueItemId }, queueRemoveIds: { ids: v => list(v, isQueueItemId) },
   queueMove: { id: isQueueItemId, to: v => v === "next" || v === "end" || integer(v) },

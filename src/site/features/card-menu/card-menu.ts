@@ -99,7 +99,7 @@ export const cardMenuFeature: FeatureDefinition<"www", CardMenuServices> = {
         return
       }
       event.preventDefault()
-      void page.run({ job: { kind: "openCardMenu" } }, { target: decision.target.element }).catch(() => undefined)
+      void page.run({ job: { kind: "openCardMenu", videoId: decision.target.identity.videoId } }, { target: decision.target.element }).catch(() => undefined)
     }, { capture: true })
   }
 }

@@ -5,6 +5,7 @@ import {
 import type { BreakageSignal, Job, ProbeReport, Site, Stream, StreamData } from "../shared/contracts"
 import { isPageHelloAnswer, isPageProbeAnswerFor, isPageRunAnswerFor, isPageSignalEvent, isPageStreamEventFor } from "../shared/contracts/page"
 import type { PageHelloSnapshot, PageJobResult } from "../shared/contracts/page"
+import { isVideoId } from "../shared/model/validation"
 import { createDirectPageChannel, createDomPageChannel, type PageChannel } from "../shared/rpc/page-channel"
 import { servePage, type PageGatewayOperations } from "./channel"
 
@@ -16,6 +17,7 @@ const build = checked(isBuildId, "build-current")
 const otherBuild = checked(isBuildId, "build-other")
 const route = checked(isRouteId, "route-1")
 const dependency = checked(isWatchId, "dependency-1")
+const cardMenu = { kind: "openCardMenu", videoId: checked(isVideoId, "abcdefghijk") } as const
 const requestId = checked(isPageRequestId, "request-1")
 const watchId = checked(isPageWatchId, "subscription-1")
 const vocabulary = { routes: [route], watchIds: [dependency], schemaKeys: ["data"] }
@@ -136,9 +138,9 @@ test("DOM item jobs run with their actual element and document jobs run without 
   const page = harness({ channel: createDomPageChannel(document) })
   const item = card()
   const itemId = checked(isPageRequestId, "request-item")
-  page.request({ kind: "run", id: itemId, job: { kind: "openCardMenu" } }, item)
+  page.request({ kind: "run", id: itemId, job: cardMenu }, item)
   page.request({ kind: "run", id: requestId, job: { kind: "account" } })
-  expect(page.gateway.runs.map(run => [run.job, run.target])).toEqual([[{ kind: "openCardMenu" }, item], [{ kind: "account" }, undefined]])
+  expect(page.gateway.runs.map(run => [run.job, run.target])).toEqual([[cardMenu, item], [{ kind: "account" }, undefined]])
   expect(item.attributes).toHaveLength(0)
   page.gateway.runs[1]?.resolve(account)
   page.gateway.runs[0]?.resolve({ ok: true, data: null, route })

@@ -5,6 +5,7 @@ import type { PageHelloSnapshot } from "../../../src/shared/contracts/page"
 import { createDirectPageChannel, createDomPageChannel } from "../../../src/shared/rpc/page-channel"
 import type { PageChannel } from "../../../src/shared/rpc/page-channel"
 import { createPageLink } from "../../../src/site/core/page-link"
+import { isVideoId } from "../../../src/shared/model/validation"
 import { checked } from "../gateway-playlists/specimens"
 import { added, answer, Clock, check, listA, menuAction, pending, queueWorld, same, settle, syntheticIdentity, videoA, videoB } from "./specimens"
 
@@ -74,7 +75,7 @@ export async function runGatewayQueueConsumer(dom: boolean): Promise<string> {
     await step("duplicate-add", link.run({ job: { kind: "queueAdd" } }, { target: element }), 0)
     await step("undo", link.run({ job: { kind: "queueUndo", listId: listA, setVideoId: "entry-2" } } as never, undefined), 100)
     await step("add-list", link.run({ job: { kind: "queueAddList", videoIds: [videoB, videoA, videoB] } } as never, undefined), 10_000)
-    const menu = link.run({ job: { kind: "openCardMenu" } }, { target: element })
+    const menu = link.run({ job: { kind: "openCardMenu", videoId: checked(isVideoId, videoA) } }, { target: element })
     await settle(w, 0)
     w.emit(menuAction)
     records.push({ step: "card-menu", answer: { result: await menu, actualTarget: w.menuTargets.length === 1 && w.menuTargets[0] === element } })

@@ -12,7 +12,7 @@ export async function runPageLinkFixture(dom: boolean) {
     const target = document.createElement("article")
     document.body.append(target)
     try {
-      const answer = await h.link.run({ job: { kind: "openCardMenu" } }, { target })
+      const answer = await h.link.run({ job: { kind: "openCardMenu", videoId: video.videoId } }, { target })
       records.push({ step: "target", answer: { result: answer, actualTarget: h.calls.at(-1)?.context?.target === target } })
     } finally { target.remove() }
     records.push({ step: "probe", answer: await h.link.probe() })

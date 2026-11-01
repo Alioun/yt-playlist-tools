@@ -19,7 +19,7 @@ const rawJobs = {
   channelOf: { kind: "channelOf", videoId: "synthetic01" }, resolveChannel: { kind: "resolveChannel", input: "Synthetic" },
   videoInfo: { kind: "videoInfo" }, queueAdd: { kind: "queueAdd" },
   queueUndo: { kind: "queueUndo", listId: "list", setVideoId: "entry" },
-  queueAddList: { kind: "queueAddList", videoIds: ["synthetic01"] }, openCardMenu: { kind: "openCardMenu" },
+  queueAddList: { kind: "queueAddList", videoIds: ["synthetic01"] }, openCardMenu: { kind: "openCardMenu", videoId: "synthetic01" },
   itemInfo: { kind: "itemInfo" },
   queueInsert: { kind: "queueInsert", position: "end", endpoint: { queueAddEndpoint: { queueTarget: { videoId: "synthetic01" }, queueInsertPosition: "INSERT_AT_END" } } },
   queueRemove: { kind: "queueRemove", id: 7 }, queueRemoveIds: { kind: "queueRemoveIds", ids: [7] },

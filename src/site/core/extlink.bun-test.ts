@@ -7,6 +7,8 @@ import { build, checked, extlinkHarness, fixtureView, isFixtureView, otherAccoun
 import { deferred, expectedKey, nextBuild, rawIdentity, route, snapshot } from "../../../tools/fixtures/page-link/support"
 import { inspect } from "../../../tests/guards/checker"
 
+const cardMenu: JobOf<"openCardMenu"> = { kind: "openCardMenu", videoId: checked(isVideoId, "abcdefghijk") }
+
 test("one page hello waits for trusted PageLink and ignores navigation and visibility changes", async () => {
   const digest = deferred<ArrayBuffer>()
   const h = extlinkHarness({ page: { link: { digest: () => digest.promise } } })
@@ -143,7 +145,7 @@ test("native authentication rejects foreign and missing sender IDs and body-supp
     await settle()
     for (const sender of [{ id: "foreign" }, {}]) {
       expect(await h.raw("bg.ping", {}, sender)).toBeUndefined()
-      expect(await h.raw("bg.job", { job: { kind: "openCardMenu" } }, sender)).toBeUndefined()
+      expect(await h.raw("bg.job", { job: cardMenu }, sender)).toBeUndefined()
       expect(await h.raw("bg.view", fixtureView({ signedIn: true, acct: expectedKey(rawIdentity) }, 9), sender)).toBeUndefined()
     }
     await expect(h.raw("bg.ping", { sender: { id: "synthetic-extlink-extension" }, origin: { kind: "background" } }, { id: "foreign" })).rejects.toThrow("Memory send failed")
@@ -161,10 +163,10 @@ test("jobs keep their account pin and exact result while a mismatched pin never 
     await settle()
     const acct = expectedKey(rawIdentity)
     expect(await h.run({ job: { kind: "playlists" }, acct })).toEqual({ kind: "answered", result: { ok: true, data: [], route } })
-    expect(await h.run({ job: { kind: "openCardMenu" } })).toEqual({ kind: "answered", result: { ok: true, data: null, route } })
+    expect(await h.run({ job: cardMenu })).toEqual({ kind: "answered", result: { ok: true, data: null, route } })
     expect(await h.run({ job: { kind: "playlists" }, acct: otherAccount })).toEqual({ kind: "answered", result: { ok: false, reason: "accountChanged" } })
     await expect(h.raw("bg.job", { job: { kind: "playlists" } })).rejects.toThrow("Memory send failed")
-    expect(h.page.calls.map(call => call.job)).toEqual([{ kind: "playlists" }, { kind: "openCardMenu" }])
+    expect(h.page.calls.map(call => call.job)).toEqual([{ kind: "playlists" }, cardMenu])
   } finally { h.dispose() }
 })
 
@@ -189,9 +191,9 @@ test("concurrent background jobs keep separate page invocations when answers com
     await h.page.link.hello
     await settle()
     const first = h.run({ job: { kind: "playlists" }, acct: expectedKey(rawIdentity) })
-    const second = h.run({ job: { kind: "openCardMenu" } })
+    const second = h.run({ job: cardMenu })
     await settle()
-    expect(h.page.calls.map(call => call.job)).toEqual([{ kind: "playlists" }, { kind: "openCardMenu" }])
+    expect(h.page.calls.map(call => call.job)).toEqual([{ kind: "playlists" }, cardMenu])
     menu.resolve({ ok: true, data: null, route })
     expect(await second).toEqual({ kind: "answered", result: { ok: true, data: null, route } })
     playlists.resolve({ ok: true, data: [], route })
@@ -276,7 +278,7 @@ test("disposal finishes pending work, releases listeners and timers, and suppres
   await settle()
   const views: (FixtureView | null)[] = []
   h.ext.onView(view => { views.push(view) })
-  const pending = h.run({ job: { kind: "openCardMenu" } })
+  const pending = h.run({ job: cardMenu })
   await settle()
   h.ext.dispose()
   h.ext.dispose()

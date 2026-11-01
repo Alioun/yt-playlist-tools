@@ -4,7 +4,7 @@ import type { DueNotice } from "../../../shared/contracts/tab-view"
 import { createNoticeOwner, type NoticePresentation } from "../../core/notice"
 import { Scope } from "../../core/scope"
 import { deferred } from "../../../../tools/fixtures/page-link/support"
-import { cardMenuHarness, view } from "../../../../tools/fixtures/site-card-menu/harness"
+import { cardMenuHarness, videoA, videoB, view } from "../../../../tools/fixtures/site-card-menu/harness"
 import { reachableModules } from "../../../../tools/fixtures/site-card-menu/source-graph"
 
 const cleanup: (() => void)[] = []
@@ -53,7 +53,7 @@ for (const [part, id] of [["thumbnail", "thumb-img"], ["title", "video-title"], 
     expect(f.seen).toEqual([{ prevented: true }])
     await f.settle()
     expect(f.menuCalls()).toHaveLength(1)
-    expect(f.menuCalls()[0]?.job).toEqual({ kind: "openCardMenu" })
+    expect(f.menuCalls()[0]?.job).toEqual({ kind: "openCardMenu", videoId: videoA })
     expect(f.menuCalls()[0]?.context?.target).toBe(f.byId("card-a"))
     expect(f.page.messages("run")).toHaveLength(1)
     expect(JSON.stringify(f.page.messages("run")[0])).not.toContain("acct")
@@ -175,6 +175,21 @@ test("a delayed job failure cannot recreate the browser menu and dispatches no s
   expect(f.seen).toEqual([{ prevented: true }])
   expect(f.requests).toEqual([])
   expect(f.menuCalls()).toHaveLength(1)
+})
+
+test("a card recycled before the page-side click asks the page for the video that was right-clicked", async () => {
+  const answer = deferred<unknown>()
+  const f = await fixture({ run: job => job.kind === "openCardMenu" ? answer.promise : Promise.resolve({ ok: false, reason: "unavailable" }) })
+  f.start()
+  expect(f.click(f.byId("thumb-img")).defaultPrevented).toBe(true)
+  for (const link of f.byId("card-a").querySelectorAll(`a[href="/watch?v=${videoA}"]`)) link.setAttribute("href", `/watch?v=${videoB}`)
+  answer.resolve({ ok: false, reason: "unavailable" })
+  await f.settle()
+  expect(f.menuCalls().map(call => [call.job, call.context?.target])).toEqual([[{ kind: "openCardMenu", videoId: videoA }, f.byId("card-a")]])
+  expect(f.click(f.byId("thumb-img")).defaultPrevented).toBe(true)
+  await f.settle()
+  expect(f.menuCalls().map(call => call.job)).toEqual([{ kind: "openCardMenu", videoId: videoA }, { kind: "openCardMenu", videoId: videoB }])
+  expect(f.requests).toEqual([])
 })
 
 test("revocation during a pending job leaves no listener and no later page work", async () => {

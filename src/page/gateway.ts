@@ -151,7 +151,7 @@ export function createGateway(options: {
     const blocked = guard.check(needsAccount(job))
     if (blocked) return blocked
     switch (job.kind) {
-      case "openCardMenu": return queue.menu(target)
+      case "openCardMenu": return queue.menu(job, target)
       case "queueAdd": return lanes.run("app-state", scope => queue.add(target, scope))
       case "queueUndo": return lanes.run("app-state", scope => queue.undo(job, scope))
       case "queueAddList": return lanes.run("app-state", scope => queue.addList(job, scope))

@@ -20,6 +20,7 @@ function released(world: QueueWorld) {
   expect(world.listeners).toBe(0)
   expect(world.timers).toBe(0)
 }
+const cardMenu = (videoId = videoA) => ({ kind: "openCardMenu", videoId }) as never
 function queueAdd(world: QueueWorld, element: Element = target()) { return world.gateway.run({ kind: "queueAdd" }, { target: element }) }
 
 test("signed-out first add resolves the card's own queue command and confirms a new panel entry", async () => {
@@ -271,7 +272,7 @@ test("openCardMenu clicks the targeted card's own menu outside the lane", async 
   const held = queueAdd(w)
   await settle(w, 0)
   const element = target()
-  const menu = w.gateway.run({ kind: "openCardMenu" }, { target: element })
+  const menu = w.gateway.run(cardMenu(), { target: element })
   await settle(w, 0)
   w.emit(menuAction)
   expect(await menu).toEqual({ ok: true, data: null, route: "page-ui.openCardMenu" })
@@ -279,14 +280,34 @@ test("openCardMenu clicks the targeted card's own menu outside the lane", async 
   await settle(w, 2_000)
   await held
   w.state.menu = "missing"
-  expect(await w.gateway.run({ kind: "openCardMenu" }, { target: element })).toEqual({ ok: false, reason: "unavailable" })
+  expect(await w.gateway.run(cardMenu(), { target: element })).toEqual({ ok: false, reason: "unavailable" })
   w.state.menu = "clicked"
-  const quiet = w.gateway.run({ kind: "openCardMenu" }, { target: element })
+  const quiet = w.gateway.run(cardMenu(), { target: element })
   await settle(w, 1_000)
   expect(await quiet).toEqual({ ok: false, reason: "unconfirmed" })
   w.state.connected = false
-  expect(await w.gateway.run({ kind: "openCardMenu" }, { target: element })).toEqual({ ok: false, reason: "unavailable" })
+  expect(await w.gateway.run(cardMenu(), { target: element })).toEqual({ ok: false, reason: "unavailable" })
   expect(w.menuTargets.length).toBe(3)
+  released(w)
+})
+
+test("openCardMenu refuses to click a recycled renderer that now shows another video", async () => {
+  const w = queueWorld()
+  const element = target()
+  w.page.values.targetData = card(videoB)
+  expect(await w.gateway.run(cardMenu(videoA), { target: element })).toEqual({ ok: false, reason: "unavailable" })
+  expect(w.signals).toEqual([])
+  w.page.values.targetData = { unrelated: true }
+  expect(await w.gateway.run(cardMenu(videoA), { target: element })).toEqual({ ok: false, reason: "unavailable" })
+  expect(w.signals.map(signal => signal.kind)).toEqual(["unrecognised"])
+  expect(w.menuTargets).toEqual([])
+  expect(w.listeners).toBe(0)
+  w.page.values.targetData = card(videoA)
+  const menu = w.gateway.run(cardMenu(videoA), { target: element })
+  await settle(w, 0)
+  w.emit(menuAction)
+  expect<unknown>(await menu).toEqual({ ok: true, data: null, route: "page-ui.openCardMenu" })
+  expect(w.menuTargets).toEqual([element])
   released(w)
 })
 
