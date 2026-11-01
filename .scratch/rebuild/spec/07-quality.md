@@ -570,8 +570,8 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 | `feature-quick-save.js` | split button | on | 2 | 1.44 |
 | `feature-queue-button.js` | queue button | on | 1 | 0.82 |
 | `feature-watch-button.js` | the watch-page pill | on | 3.5 | 3.31 |
-| `feature-card-menu.js` | `contextmenu` handler, no kit | on | 0.5 | 0.39 |
-| **Everything on** | | | **49** (rows sum to 49) | **39.6**, without auto-add and the real gateway |
+| `feature-card-menu.js` | `contextmenu` handler, no kit | on | 1.25 | 1.18 (built 2026-11-01, Items external; the owner raised the budget from 0.5) |
+| **Everything on** | | | **49.75** (rows sum to 49.75) | **39.6**, without auto-add and the real gateway |
 
 - **Q-PERF-13.** YouTube Music (`music.youtube.com`), rows set from the measured build (Q-PERF-15). (R1, R30)
 
@@ -606,7 +606,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
   | `feature-auto-add.js` | 4 | 3 |
   | `feature-quick-save.js`, `feature-queue-button.js` | 3, 3 | 2, 1 |
   | `feature-watch-button.js` | 5 | 3.5 |
-  | `feature-card-menu.js` | 2 | 0.5 |
+  | `feature-card-menu.js` | 2 | 1.25 |
   | `feature-music-actions.js` | 6 | 5 |
   | `page-www.js`, both shortcut files, `feature-music-keys.js` | 5, 1, 1, 1 | unchanged |
 
