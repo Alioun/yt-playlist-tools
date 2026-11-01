@@ -9,4 +9,4 @@ import { startExtensionPage } from "../../ui/shell/start"
 
 const target = document.querySelector("#first-run")
 if (!target) throw new Error("Missing first-run host")
-mount(FirstRun, { target, props: { ...startFirstRun(startExtensionPage(browser, catalogue, navigator.platform)), markSrc } })
+mount(FirstRun, { target, props: { ...startFirstRun(startExtensionPage(browser, navigator.platform, catalogue)), markSrc } })
