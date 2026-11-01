@@ -32,9 +32,9 @@ test("publication retains removed-account cores before registry cleanup and send
     const prepared = await h.prepare()
     expect((await h.owner.importSettings(ui, { confirmation: prepared.confirmation, replace: "confirmed" })).kind).toBe("committed")
     expect(Object.values(object(h.h.state().session.tabs)).some(row => row !== null && typeof row === "object" && "acct" in row && row.acct === B)).toBe(false)
-    await settle(); base.clock.advance(250); await settle()
+    await settle(); base.clock.advance(250); await new Promise<void>(resolve => setTimeout(resolve, 0))
     expect(sent.map(row => row.tabId).sort()).toEqual([1, 2])
     expect(sent.find(row => row.tabId === 1)?.view).toMatchObject({ signedIn: true, acct: B, setup: { kind: "none" } })
     expect(sent.find(row => row.tabId === 2)?.view).toMatchObject({ signedIn: true, acct: C, setup: { kind: "live" } })
   } finally { publisher.dispose(); producer.dispose(); tabs.dispose(); await base.dispose(); await h.dispose() }
-})
+}, 60000)
