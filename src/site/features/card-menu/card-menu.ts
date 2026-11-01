@@ -1,7 +1,7 @@
 import type { DueNotice, WwwFeature } from "../../../shared/contracts/tab-view"
-import { isVideoId, type VideoId } from "../../../shared/model/validation"
+import { cardMenuButtons } from "../../../shared/youtube/card-menu-buttons"
 import type { FeatureContext, FeatureDefinition, SiteView } from "../../core/feature-host"
-import { recogniseWwwItem, type WwwItemTarget, type WwwPointed } from "../../core/items-www"
+import { linkedVideo, recogniseWwwItem, type WwwItemTarget, type WwwPointed } from "../../core/items-www"
 import type { PageLink } from "../../core/page-link"
 
 export interface CardMenuNotice {
@@ -20,27 +20,11 @@ export type CardMenuDecision =
   | { readonly kind: "open"; readonly target: WwwItemTarget }
   | { readonly kind: "keep"; readonly reason: CardMenuKeep }
 
-// Same order as the page adapter's menuButtons in src/page/adapters/live-www-queue.ts. The gateway clicks the first
-// connected match, so this proof must select the identical element. Sharing one table is a protected proposal.
-const menuButtons = [
-  "ytd-menu-renderer yt-icon-button#button button", "ytd-menu-renderer yt-icon-button#button",
-  "ytd-menu-renderer button[aria-haspopup]", ".yt-lockup-metadata-view-model__menu-button button[aria-haspopup]",
-  "yt-lockup-metadata-view-model button-view-model button[aria-haspopup]"
-]
 const channelParts = "ytd-channel-name, #channel-name, #channel-info, #avatar, #avatar-link, #avatar-container, " +
   "yt-decorated-avatar-view-model, yt-avatar-shape, .yt-lockup-metadata-view-model__avatar"
 const links = "a[href], area[href]"
 const keep = (reason: CardMenuKeep): CardMenuDecision => ({ kind: "keep", reason })
 
-function linkedVideoId(link: Element): VideoId | undefined {
-  const href = link.getAttribute("href")
-  if (href === null) return undefined
-  let url: URL
-  try { url = new URL(href, "https://www.youtube.com/") } catch { return undefined }
-  if (url.protocol !== "https:" || url.hostname !== "www.youtube.com" && url.hostname !== "youtube.com") return undefined
-  const id = url.pathname === "/watch" ? url.searchParams.get("v") : /^\/shorts\/([^/]+)\/?$/.exec(url.pathname)?.[1]
-  return isVideoId(id) ? id : undefined
-}
 function cardPart(path: readonly Element[]): WwwPointed {
   for (const element of path) {
     const result = recogniseWwwItem(element)
@@ -55,7 +39,7 @@ function hiddenWithin(element: Element, card: Element): boolean {
   return false
 }
 function ownMenuButton(target: WwwItemTarget): HTMLElement | "foreign" | undefined {
-  for (const selector of menuButtons) {
+  for (const selector of cardMenuButtons) {
     const button = target.element.querySelector(selector)
     if (!(button instanceof HTMLElement) || !button.isConnected) continue
     const owner = recogniseWwwItem(button)
@@ -84,7 +68,7 @@ export function decideCardMenu(event: MouseEvent, view: SiteView<"www"> | null, 
   for (const [index, element] of path.entries()) {
     if (index < card && element.matches(channelParts)) return keep("channel")
     if (!element.matches(links)) continue
-    if (linkedVideoId(element) !== target.identity.videoId) return keep("link")
+    if (linkedVideo(element)?.videoId !== target.identity.videoId) return keep("link")
     if (feature.options.keepLinkMenu) return keep("own-link")
   }
   const button = ownMenuButton(target)

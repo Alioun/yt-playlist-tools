@@ -239,7 +239,7 @@ test("the notice request reaches the actual NoticeOwner with existing localized 
 
 test("importing the feature reaches no UI kit, toaster, Svelte runtime, picker or notice presenter", async () => {
   expect(await reachableModules("src/site/features/card-menu/card-menu.ts")).toEqual({
-    files: ["src/shared/model/validation.ts", "src/site/core/items-www.ts", "src/site/core/scope.ts", "src/site/features/card-menu/card-menu.ts"],
+    files: ["src/shared/model/validation.ts", "src/shared/youtube/card-menu-buttons.ts", "src/site/core/items-www.ts", "src/site/core/scope.ts", "src/site/features/card-menu/card-menu.ts"],
     packages: []
   })
 })

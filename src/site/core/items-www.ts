@@ -83,7 +83,7 @@ function linkUrl(element: Element): URL | undefined {
     return url.protocol === "https:" && (url.hostname === "www.youtube.com" || url.hostname === "youtube.com") ? url : undefined
   } catch { return undefined }
 }
-function linkedVideo(element: Element): Pick<VideoInfo, "videoId" | "kind"> | undefined {
+export function linkedVideo(element: Element): Pick<VideoInfo, "videoId" | "kind"> | undefined {
   const url = linkUrl(element)
   if (!url) return undefined
   const short = /^\/shorts\/([^/]+)\/?$/.exec(url.pathname)
