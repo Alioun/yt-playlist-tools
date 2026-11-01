@@ -53,7 +53,7 @@ Requirements are numbered `FT-`, `ACC-`, `SYNC-`, `DATA-` and `HEALTH-`. Each is
 - **FT-04** Presets apply once, the first time a feature is switched on. The "preset applied" flag is a shared setting, so it syncs.
   - Switching a feature off and on again keeps what the user had.
   - Removing every playlist shortcut never brings the preset back.
-  - A preset never takes a key already used on the same site. It's left without a key, and its row says "No key: {Key} is used by {Other}".
+  - A preset never takes a key already used on the same site. It's left without a key, and its row says "No key, because {Other} uses {Key}".
   - Upgraders get no Watch later preset. The migration sets the flag, and presets the picker key unless the carried 1.x key uses it. The undo key is Alt+U for them as for everyone, unless the carried key uses it (FT-05; R44).
 - **FT-05** Two shared settings belong to no feature:
   - the **theme** (System, Light or Dark; **System** by default), which covers only the popup, settings and the first-run page; in-page UI follows YouTube. It's set in Settings › Appearance ([UI-SET-15](05-ui.md#sections));
@@ -1108,7 +1108,7 @@ type GatherRecord = {
 
 | Situation | Notice or status |
 |---|---|
-| Auto-add | Auto-add isn't working right now because YouTube changed something. Videos you watch aren't being added for now. |
+| Auto-add | Auto-add isn't working right now because YouTube changed something. It won't add the videos you watch until it works again. |
 | Playlist shortcuts, quick-save | {Feature} isn't working right now because YouTube changed something. Use YouTube's own Save for now. |
 | Queue button | The Add to queue button isn't working right now because YouTube changed something. Use YouTube's ⋮ menu for now. |
 | Watch-page button | The watch-page button isn't working right now because YouTube changed something. This video's status is still in the toolbar popup. |
@@ -1118,7 +1118,7 @@ type GatherRecord = {
 | A key while its feature isn't working | Play next (Alt+N) isn't working right now because YouTube Music changed something. Use its ⋮ menu for now. |
 | A key for a YouTube Music action unavailable in this tab (its feature partly working, R68) | {Action} isn't working right now. The popup shows why. |
 | A key pointing at an unrecognised item | Couldn't tell which item you meant. Point at it again, or use the player. The same action-neutral wording on both sites (R4). |
-| Account keys missing | Saving isn't working right now because YouTube changed how it shows which account you're using. Nothing is saved, so nothing lands in the wrong account. |
+| Account keys missing | Saving isn't working right now because YouTube changed how it shows which account you're using. {Product} saves nothing, so nothing lands in the wrong account. |
 | The whole site | {Product} isn't working on YouTube right now because YouTube changed something. An update should fix it. |
 | Popup strip | {Feature} isn't working in this tab because YouTube changed something. / {N} features aren't working in this tab. / {Feature} is partly working in this tab. |
 | Settings, not working | Not working right now: YouTube changed something it relies on. |

@@ -2398,12 +2398,6 @@
       }
     }
   },
-  "manifest_name": {
-    "message": "YouTube Playlist Tools"
-  },
-  "manifest_description": {
-    "message": "Add current YouTube video to specified playlists."
-  },
   "picker_saveTitle": {
     "message": "Save to…"
   },
@@ -2973,5 +2967,1287 @@
         "content": "$1"
       }
     }
+  },
+  "extName": {
+    "message": "Perchling for YouTube™"
+  },
+  "extShortName": {
+    "message": "Perchling"
+  },
+  "extDescription": {
+    "message": "Save to Watch Later or any playlist in one click or a shortcut, auto-add what you actually watch, and Add to queue on YouTube Music."
+  },
+  "actionTitle": {
+    "message": "Perchling"
+  },
+  "command_savePlayingSong": {
+    "message": "Save the playing song to your quick-save playlist (YouTube Music)"
+  },
+  "command_likePlayingSong": {
+    "message": "Like or unlike the playing song (YouTube Music)"
+  },
+  "command_watchLaterCurrentVideo": {
+    "message": "Save the current video to Watch later (YouTube)"
+  },
+  "site_www": {
+    "message": "YouTube"
+  },
+  "site_music": {
+    "message": "YouTube Music"
+  },
+  "picker_shortcutTitle": {
+    "message": "Pick the shortcut's playlist"
+  },
+  "picker_loadFailed": {
+    "message": "Couldn't open the playlist list. Try again."
+  },
+  "autoAdd_goal_start": {
+    "message": "As soon as it starts playing"
+  },
+  "autoAdd_goal_full": {
+    "message": "Only when watched in full"
+  },
+  "autoAdd_cantMeasure_named": {
+    "message": "Auto-add can't follow this video's progress, so it won't add “$TITLE$”.",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "autoAdd_cantMeasure_untitled": {
+    "message": "Auto-add can't follow this video's progress, so it won't add this video."
+  },
+  "watchState_counting_label": {
+    "message": "Auto-adds at $PERCENT$ %",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      }
+    }
+  },
+  "watchState_counting_status": {
+    "message": "Auto-adds at $PERCENT$ % · $WATCHED$ % watched",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "watched": {
+        "content": "$2"
+      }
+    }
+  },
+  "watchState_partly_label": {
+    "message": "Auto-added · next at $PERCENT$ %",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      }
+    }
+  },
+  "watchState_partly_status": {
+    "message": "Added to $ADDED$ · $PENDING$ at $PERCENT$ %",
+    "placeholders": {
+      "added": {
+        "content": "$1"
+      },
+      "pending": {
+        "content": "$2"
+      },
+      "percent": {
+        "content": "$3"
+      }
+    }
+  },
+  "watchState_added_label": {
+    "message": "Auto-added"
+  },
+  "watchState_added_status": {
+    "message": "Auto-added to $TARGETS$",
+    "placeholders": {
+      "targets": {
+        "content": "$1"
+      }
+    }
+  },
+  "watchState_alreadyIn": {
+    "message": "Already in $TARGETS$",
+    "placeholders": {
+      "targets": {
+        "content": "$1"
+      }
+    }
+  },
+  "watchState_failed_label": {
+    "message": "Couldn't auto-add"
+  },
+  "watchState_failed_offline": {
+    "message": "Couldn't auto-add to $TARGETS$. Check your connection.",
+    "placeholders": {
+      "targets": {
+        "content": "$1"
+      }
+    }
+  },
+  "watchState_failed_named": {
+    "message": "Couldn't save “$TITLE$”. Try again.",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "watchState_failed_untitled": {
+    "message": "Couldn't save this video. Try again."
+  },
+  "watchState_skipped_label": {
+    "message": "Not auto-adding"
+  },
+  "watchState_skipped_status": {
+    "message": "Not auto-adding this video"
+  },
+  "watchState_paused_label": {
+    "message": "Auto-add paused"
+  },
+  "watchState_paused_status": {
+    "message": "Auto-add paused until you resume it or restart the browser"
+  },
+  "watchState_live_label": {
+    "message": "Not auto-added"
+  },
+  "watchState_live_status": {
+    "message": "Auto-add skips live streams"
+  },
+  "watchState_cantMeasure_label": {
+    "message": "Can't follow progress"
+  },
+  "watchState_cantMeasure_status": {
+    "message": "Auto-add can't follow this video's progress, so it won't add it"
+  },
+  "watchState_untracked": {
+    "message": "Save this video with Perchling"
+  },
+  "channelFilter_allowOnly": {
+    "message": "Allow only"
+  },
+  "channelFilter_deny": {
+    "message": "Deny"
+  },
+  "channelFilter_hint_allow": {
+    "message": "Auto-add takes only videos from these channels."
+  },
+  "channelFilter_hint_deny": {
+    "message": "Auto-add never takes videos from these channels."
+  },
+  "channelFilter_toDeny_one": {
+    "message": "Switch to Deny? This clears its $COUNT$ allowed channel.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "channelFilter_toDeny_other": {
+    "message": "Switch to Deny? This clears its $COUNT$ allowed channels.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "channelFilter_toAllow_one": {
+    "message": "Switch to Allow only? This clears its $COUNT$ denied channel.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "channelFilter_toAllow_other": {
+    "message": "Switch to Allow only? This clears its $COUNT$ denied channels.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "channelFilter_offKeptDenied_one": {
+    "message": "Off, so every channel gets in. It keeps its $COUNT$ denied channel for when you turn it back on.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "channelFilter_offKeptDenied_other": {
+    "message": "Off, so every channel gets in. It keeps its $COUNT$ denied channels for when you turn it back on.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "channelFilter_offKeptAllowed_one": {
+    "message": "Off, so every channel gets in. It keeps its $COUNT$ allowed channel for when you turn it back on.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "channelFilter_offKeptAllowed_other": {
+    "message": "Off, so every channel gets in. It keeps its $COUNT$ allowed channels for when you turn it back on.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "channelFilter_emptyAllow": {
+    "message": "With no channels listed, nothing goes into $PLAYLIST$.",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      }
+    }
+  },
+  "channelFilter_chip": {
+    "message": "$TITLE$ · $HANDLE$",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      },
+      "handle": {
+        "content": "$2"
+      }
+    }
+  },
+  "channelFilter_listCurrent_allow": {
+    "message": "Allow $CHANNEL$ (this video)",
+    "placeholders": {
+      "channel": {
+        "content": "$1"
+      }
+    }
+  },
+  "channelFilter_listCurrent_deny": {
+    "message": "Deny $CHANNEL$ (this video)",
+    "placeholders": {
+      "channel": {
+        "content": "$1"
+      }
+    }
+  },
+  "channelFilter_turnOnAllow_one": {
+    "message": "Turn on Allow only for $PLAYLIST$? This clears its $COUNT$ denied channel.",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      },
+      "count": {
+        "content": "$2"
+      }
+    }
+  },
+  "channelFilter_turnOnAllow_other": {
+    "message": "Turn on Allow only for $PLAYLIST$? This clears its $COUNT$ denied channels.",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      },
+      "count": {
+        "content": "$2"
+      }
+    }
+  },
+  "channelFilter_turnOnDeny_one": {
+    "message": "Turn on Deny for $PLAYLIST$? This clears its $COUNT$ allowed channel.",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      },
+      "count": {
+        "content": "$2"
+      }
+    }
+  },
+  "channelFilter_turnOnDeny_other": {
+    "message": "Turn on Deny for $PLAYLIST$? This clears its $COUNT$ allowed channels.",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      },
+      "count": {
+        "content": "$2"
+      }
+    }
+  },
+  "channelFilter_allowed": {
+    "message": "Allowed"
+  },
+  "channelFilter_denied": {
+    "message": "Denied"
+  },
+  "channelFilter_usesAllow": {
+    "message": "$PLAYLIST$ uses Allow only.",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      }
+    }
+  },
+  "channelFilter_usesDeny": {
+    "message": "$PLAYLIST$ uses Deny.",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      }
+    }
+  },
+  "channelFilter_lookingUp": {
+    "message": "Looking up channel…"
+  },
+  "channelFilter_unknown": {
+    "message": "Channel unknown"
+  },
+  "channelFilter_needsTab": {
+    "message": "Open YouTube to look up this channel"
+  },
+  "channelFilter_notFound": {
+    "message": "Couldn't find that channel on YouTube."
+  },
+  "channelFilter_notChannel": {
+    "message": "That doesn't look like a channel. Paste an @handle or a channel URL."
+  },
+  "shortcuts_presetNoKey": {
+    "message": "No key, because $OTHER$ uses $KEY$",
+    "placeholders": {
+      "other": {
+        "content": "$1"
+      },
+      "key": {
+        "content": "$2"
+      }
+    }
+  },
+  "shortcuts_whereKeysWork": {
+    "message": "Shortcuts work while a YouTube or YouTube Music page is in focus. If one does nothing, the browser or another extension may be using that key."
+  },
+  "shortcuts_add": {
+    "message": "Add shortcut"
+  },
+  "shortcuts_limit": {
+    "message": "You can have up to 20 playlist shortcuts."
+  },
+  "shortcuts_removed": {
+    "message": "Shortcut removed"
+  },
+  "recorder_noKey": {
+    "message": "No key"
+  },
+  "recorder_pressKeys": {
+    "message": "Press keys…"
+  },
+  "recorder_escToCancel": {
+    "message": "Esc to cancel"
+  },
+  "recorder_saving": {
+    "message": "Saving…"
+  },
+  "recorder_record": {
+    "message": "Record $TITLE$",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "recorder_clear": {
+    "message": "Clear $TITLE$",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "recorder_refused_enterSpace": {
+    "message": "Enter and Space can't be used alone, because they press buttons."
+  },
+  "recorder_refused_ctrlAlt": {
+    "message": "Ctrl+Alt can't be used, because many keyboards type characters with it."
+  },
+  "recorder_refused_reserved": {
+    "message": "That key belongs to the browser and never reaches the page."
+  },
+  "recorder_refused_other": {
+    "message": "This key can't be recorded."
+  },
+  "recorder_conflict_one": {
+    "message": "$OTHERS$ already uses $KEY$.",
+    "placeholders": {
+      "others": {
+        "content": "$1"
+      },
+      "key": {
+        "content": "$2"
+      }
+    }
+  },
+  "recorder_conflict_other": {
+    "message": "$OTHERS$ already use $KEY$.",
+    "placeholders": {
+      "others": {
+        "content": "$1"
+      },
+      "key": {
+        "content": "$2"
+      }
+    }
+  },
+  "recorder_conflictLabel": {
+    "message": "Key already in use"
+  },
+  "recorder_useHere": {
+    "message": "Use it here"
+  },
+  "recorder_cancel": {
+    "message": "Cancel"
+  },
+  "recorder_clash_site": {
+    "message": "$SITE$ uses $KEY$ for $ACTION$. This shortcut replaces it on $SITE$.",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      },
+      "key": {
+        "content": "$2"
+      },
+      "action": {
+        "content": "$3"
+      }
+    }
+  },
+  "recorder_clash_browser": {
+    "message": "$BROWSER$ uses $KEY$ to $ACTION$. This shortcut replaces it on YouTube pages.",
+    "placeholders": {
+      "browser": {
+        "content": "$1"
+      },
+      "key": {
+        "content": "$2"
+      },
+      "action": {
+        "content": "$3"
+      }
+    }
+  },
+  "recorder_clash_command": {
+    "message": "Your browser uses $KEY$ for $COMMAND$ (Keys from any tab), so this shortcut never reaches the page.",
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      },
+      "command": {
+        "content": "$2"
+      }
+    }
+  },
+  "recorder_commandsUnavailable": {
+    "message": "Couldn't read the keys set in your browser, so Perchling couldn't check for clashes with them."
+  },
+  "recorder_answer_stale": {
+    "message": "This shortcut changed elsewhere. Record it again."
+  },
+  "recorder_answer_missingTarget": {
+    "message": "This shortcut no longer exists."
+  },
+  "recorder_answer_expired": {
+    "message": "Undo has expired."
+  },
+  "recorder_answer_syncFull": {
+    "message": "Settings sync is full. Free some space, then try again."
+  },
+  "recorder_answer_updateNeeded": {
+    "message": "Update Perchling before you change this key."
+  },
+  "recorder_answer_unconfirmed": {
+    "message": "Couldn't confirm the key was saved. Reload the page before you change it again."
+  },
+  "recorder_answer_rejected": {
+    "message": "Couldn't save the key."
+  },
+  "recorder_answer_invalid": {
+    "message": "This key can't be saved."
+  },
+  "recorder_answer_unavailable": {
+    "message": "Couldn't change keys right now. Reload the page and try again."
+  },
+  "hint_unrecognisedItem": {
+    "message": "Couldn't tell which item you meant. Point at it again, or use the player."
+  },
+  "wwwHint_pointAtVideo": {
+    "message": "Point at a video to save it."
+  },
+  "wwwHint_videosOnly": {
+    "message": "Only videos can be saved to playlists."
+  },
+  "wwwHint_ads": {
+    "message": "Ads can't be saved."
+  },
+  "musicHint_nothingPlaying": {
+    "message": "Nothing is playing"
+  },
+  "musicHint_adPlaying": {
+    "message": "An ad is playing"
+  },
+  "musicHint_queueOnly": {
+    "message": "Point at a song in the queue to remove it."
+  },
+  "musicHint_songsOnly": {
+    "message": "Only songs can be saved to playlists."
+  },
+  "musicHint_autoplay": {
+    "message": "Autoplay suggestions can't be moved. Use YouTube Music's ⋮ menu to add a copy."
+  },
+  "musicHint_casting": {
+    "message": "Not available while casting"
+  },
+  "musicHint_unavailable": {
+    "message": "$ACTION$ isn't available for $KIND$.",
+    "placeholders": {
+      "action": {
+        "content": "$1"
+      },
+      "kind": {
+        "content": "$2"
+      }
+    }
+  },
+  "musicHint_anyTabNoQuickSave": {
+    "message": "$ACCOUNT$ has no quick-save playlist on YouTube Music yet. Choose one in the popup.",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicAction_save": {
+    "message": "Save"
+  },
+  "musicAction_next": {
+    "message": "Play next"
+  },
+  "musicAction_end": {
+    "message": "Add to queue"
+  },
+  "musicAction_remove": {
+    "message": "Remove"
+  },
+  "musicAction_move": {
+    "message": "Move"
+  },
+  "musicAction_like": {
+    "message": "Like"
+  },
+  "musicAction_library": {
+    "message": "Save to library"
+  },
+  "musicAction_mix": {
+    "message": "Start mix"
+  },
+  "musicAction_album": {
+    "message": "Go to album"
+  },
+  "musicAction_artist": {
+    "message": "Go to artist"
+  },
+  "musicKind_song": {
+    "message": "songs"
+  },
+  "musicKind_video": {
+    "message": "videos"
+  },
+  "musicKind_episode": {
+    "message": "episodes"
+  },
+  "musicKind_upload": {
+    "message": "uploads"
+  },
+  "musicKind_album": {
+    "message": "albums"
+  },
+  "musicKind_playlist": {
+    "message": "playlists"
+  },
+  "musicKind_artist": {
+    "message": "artists"
+  },
+  "musicKind_other": {
+    "message": "this item"
+  },
+  "musicToast_playNext": {
+    "message": "“$TITLE$” will play next",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicToast_playNextMany_one": {
+    "message": "$COUNT$ song from “$TITLE$” will play next",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "title": {
+        "content": "$2"
+      }
+    }
+  },
+  "musicToast_playNextMany_other": {
+    "message": "$COUNT$ songs from “$TITLE$” will play next",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "title": {
+        "content": "$2"
+      }
+    }
+  },
+  "musicToast_queued": {
+    "message": "Added “$TITLE$” to the queue",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicToast_queuedMany_one": {
+    "message": "Added $COUNT$ song from “$TITLE$” to the queue",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "title": {
+        "content": "$2"
+      }
+    }
+  },
+  "musicToast_queuedMany_other": {
+    "message": "Added $COUNT$ songs from “$TITLE$” to the queue",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "title": {
+        "content": "$2"
+      }
+    }
+  },
+  "musicToast_playing": {
+    "message": "Playing “$TITLE$”",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicToast_movedNext": {
+    "message": "Moved “$TITLE$” to play next",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicToast_movedEnd": {
+    "message": "Moved “$TITLE$” to the end of the queue",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicToast_removedQueue": {
+    "message": "Removed “$TITLE$” from the queue",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicToast_liked": {
+    "message": "Liked “$TITLE$”",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicToast_unliked": {
+    "message": "Unliked “$TITLE$”",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicToast_librarySaved": {
+    "message": "Saved “$TITLE$” to your library",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicToast_libraryRemoved": {
+    "message": "Removed “$TITLE$” from your library",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicToast_alreadyNext": {
+    "message": "“$TITLE$” already plays next",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicToast_alreadyEnd": {
+    "message": "“$TITLE$” is already at the end of the queue",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicFail_signedOutLike": {
+    "message": "Sign in to YouTube Music to like songs."
+  },
+  "musicFail_signedOutLibrary": {
+    "message": "Sign in to YouTube Music to save to your library."
+  },
+  "musicFail_library": {
+    "message": "Couldn't save “$TITLE$” to your library. Try YouTube Music's ⋮ menu.",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicFail_mix": {
+    "message": "Couldn't start a mix from “$TITLE$”. Try YouTube Music's ⋮ menu.",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicFail_album": {
+    "message": "Couldn't open the album page for “$TITLE$”. Try YouTube Music's ⋮ menu.",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicFail_artist": {
+    "message": "Couldn't open the artist page for “$TITLE$”. Try YouTube Music's ⋮ menu.",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicFail_queue": {
+    "message": "Couldn't add “$TITLE$” to the queue. Try YouTube Music's ⋮ menu.",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicFail_move": {
+    "message": "Couldn't move “$TITLE$”. Try YouTube Music's ⋮ menu.",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicFail_remove": {
+    "message": "Couldn't remove “$TITLE$” from the queue. Try YouTube Music's ⋮ menu.",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicFail_like": {
+    "message": "Couldn't like “$TITLE$”. Try YouTube Music's ⋮ menu.",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      }
+    }
+  },
+  "musicFail_keyBroken": {
+    "message": "$ACTION$ ($KEY$) isn't working right now because YouTube Music changed something. Use its ⋮ menu for now.",
+    "placeholders": {
+      "action": {
+        "content": "$1"
+      },
+      "key": {
+        "content": "$2"
+      }
+    }
+  },
+  "musicFail_keyUnavailable": {
+    "message": "$ACTION$ isn't working right now. The popup shows why.",
+    "placeholders": {
+      "action": {
+        "content": "$1"
+      }
+    }
+  },
+  "access_musicShortcutsDenied": {
+    "message": "No access to YouTube Music, so shortcuts work on YouTube only."
+  },
+  "access_musicKeysMissing": {
+    "message": "No access to YouTube Music, so its YouTube Music keys do nothing."
+  },
+  "anyTab_noVideoTab": {
+    "message": "No YouTube tab is playing a video."
+  },
+  "anyTab_noMusicTab": {
+    "message": "No YouTube Music tab is open."
+  },
+  "anyTab_noMusicAccess": {
+    "message": "No access to YouTube Music."
+  },
+  "breakage_autoAdd": {
+    "message": "Auto-add isn't working right now because YouTube changed something. It won't add the videos you watch until it works again."
+  },
+  "breakage_queueButton": {
+    "message": "The Add to queue button isn't working right now because YouTube changed something. Use YouTube's ⋮ menu for now."
+  },
+  "breakage_cardMenu": {
+    "message": "The right-click menu isn't working right now because YouTube changed something. You'll get the browser's menu for now."
+  },
+  "breakage_accountKeys_www": {
+    "message": "Saving isn't working right now because YouTube changed how it shows which account you're using. Perchling saves nothing, so nothing lands in the wrong account."
+  },
+  "breakage_accountKeys_music": {
+    "message": "Saving isn't working right now because YouTube Music changed how it shows which account you're using. Perchling saves nothing, so nothing lands in the wrong account."
+  },
+  "breakage_site_www": {
+    "message": "Perchling isn't working on YouTube right now because YouTube changed something. An update should fix it."
+  },
+  "breakage_site_music": {
+    "message": "Perchling isn't working on YouTube Music right now because YouTube Music changed something. An update should fix it."
+  },
+  "gather_player_one": {
+    "message": "Gathered $COUNT$ video into YouTube's player.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_player_other": {
+    "message": "Gathered $COUNT$ videos into YouTube's player.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_playerOverflow": {
+    "message": "Gathered $COUNT$ videos into YouTube's queue, because YouTube's player takes 50.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_queue_one": {
+    "message": "Gathered $COUNT$ video into YouTube's queue.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_queue_other": {
+    "message": "Gathered $COUNT$ videos into YouTube's queue.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_queueOverflow_one": {
+    "message": "Gathered 200 videos into YouTube's queue. $COUNT$ tab stays open, because the queue takes 200 at a time.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_queueOverflow_other": {
+    "message": "Gathered 200 videos into YouTube's queue. $COUNT$ tabs stay open, because the queue takes 200 at a time.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_saved_one": {
+    "message": "Saved $COUNT$ video to $PLAYLIST$.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "gather_saved_other": {
+    "message": "Saved $COUNT$ videos to $PLAYLIST$.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "gather_alreadyIn_one": {
+    "message": "$COUNT$ was already in it.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_alreadyIn_other": {
+    "message": "$COUNT$ were already in it.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_savedClosed_one": {
+    "message": "Saved $COUNT$ video to $PLAYLIST$ and closed its tab.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "gather_savedClosed_other": {
+    "message": "Saved $COUNT$ videos to $PLAYLIST$ and closed their tabs.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "gather_autoRow_one": {
+    "message": "Gathered $COUNT$ video into $PLAYLIST$ by itself, $WHEN$.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      },
+      "when": {
+        "content": "$3"
+      }
+    }
+  },
+  "gather_autoRow_other": {
+    "message": "Gathered $COUNT$ videos into $PLAYLIST$ by itself, $WHEN$.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      },
+      "when": {
+        "content": "$3"
+      }
+    }
+  },
+  "gather_toast_one": {
+    "message": "Gathered $COUNT$ video into $PLAYLIST$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "gather_toast_other": {
+    "message": "Gathered $COUNT$ videos into $PLAYLIST$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "gather_toastClosed_one": {
+    "message": "Gathered $COUNT$ video into $PLAYLIST$ and closed its tab",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "gather_toastClosed_other": {
+    "message": "Gathered $COUNT$ videos into $PLAYLIST$ and closed their tabs",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "gather_toastAuto_one": {
+    "message": "Gathered $COUNT$ video into $PLAYLIST$ by itself and closed its tab",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "gather_toastAuto_other": {
+    "message": "Gathered $COUNT$ videos into $PLAYLIST$ by itself and closed their tabs",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "gather_checking": {
+    "message": "Checking $INDEX$ of $COUNT$…",
+    "placeholders": {
+      "index": {
+        "content": "$1"
+      },
+      "count": {
+        "content": "$2"
+      }
+    }
+  },
+  "gather_saving_one": {
+    "message": "Saving $COUNT$ video…",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_saving_other": {
+    "message": "Saving $COUNT$ videos…",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_noTabs": {
+    "message": "No YouTube videos are open in this window."
+  },
+  "gather_noPlaylist": {
+    "message": "Choose a gather playlist for $ACCOUNT$ first.",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_waiting": {
+    "message": "Waiting for a signed-in YouTube tab to save from."
+  },
+  "gather_undone_one": {
+    "message": "Removed $COUNT$ video from $PLAYLIST$ and reopened its tab.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "gather_undone_other": {
+    "message": "Removed $COUNT$ videos from $PLAYLIST$ and reopened their tabs.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "gather_last_one": {
+    "message": "Last gather: $COUNT$ video into $DESTINATION$, $WHEN$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "destination": {
+        "content": "$2"
+      },
+      "when": {
+        "content": "$3"
+      }
+    }
+  },
+  "gather_last_other": {
+    "message": "Last gather: $COUNT$ videos into $DESTINATION$, $WHEN$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "destination": {
+        "content": "$2"
+      },
+      "when": {
+        "content": "$3"
+      }
+    }
+  },
+  "gather_destination_player": {
+    "message": "YouTube's player"
+  },
+  "gather_destination_queue": {
+    "message": "YouTube's queue"
+  },
+  "gather_unsaved_one": {
+    "message": "Couldn't save $COUNT$ video. Its tab stays open.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_unsaved_other": {
+    "message": "Couldn't save $COUNT$ videos. Their tabs stay open.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_unsavedRefused_one": {
+    "message": "Couldn't save $COUNT$ video, because YouTube doesn't allow saving it. Its tab stays open.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_unsavedRefused_other": {
+    "message": "Couldn't save $COUNT$ videos, because YouTube doesn't allow saving them. Their tabs stay open.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_unsavedRateLimited_one": {
+    "message": "Couldn't save $COUNT$ video, because YouTube is limiting requests. Try again in a minute. Its tab stays open.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_unsavedRateLimited_other": {
+    "message": "Couldn't save $COUNT$ videos, because YouTube is limiting requests. Try again in a minute. Their tabs stay open.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_missing": {
+    "message": "Couldn't gather into $PLAYLIST$, because it doesn't exist anymore. All tabs stay open.",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_full": {
+    "message": "Couldn't gather into $PLAYLIST$, because it's full. All tabs stay open.",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_signedOut": {
+    "message": "Sign in to YouTube to gather into a playlist."
+  },
+  "gather_noYouTubeTab": {
+    "message": "Open YouTube to gather into a playlist. All tabs stay open."
+  },
+  "gather_playerUnconfirmed": {
+    "message": "Couldn't confirm YouTube made the list, so all tabs stay open."
+  },
+  "gather_queueUnconfirmed": {
+    "message": "Couldn't confirm all $COUNT$ videos reached YouTube's queue, so all tabs stay open.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_queueTabTimeout": {
+    "message": "Couldn't build YouTube's queue, because its tab didn't load in time. All tabs stay open."
+  },
+  "gather_broken_player": {
+    "message": "Gathering into YouTube's player isn't working right now because YouTube changed something."
+  },
+  "gather_broken_queue": {
+    "message": "Gathering into YouTube's queue isn't working right now because YouTube changed something."
+  },
+  "gather_broken_playlist": {
+    "message": "Gathering into a playlist isn't working right now because YouTube changed something."
   }
 }

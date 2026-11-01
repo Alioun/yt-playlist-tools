@@ -29,7 +29,7 @@ export async function runMusicConsumer(dom: boolean): Promise<string> {
     const album = collection("album"); h.point(album.button)
     const unsupported = await h.items.resolve("save")
     check(unsupported.kind === "unsupported-item", "Album must retain unsupported-action feedback")
-    records.push({ step: "album", kind: unsupported.kind, message: unsupported.message })
+    records.push({ step: "album", kind: unsupported.kind, reason: unsupported.reason })
     const player = h.player()
     h.setMetadata({ title: "Song", artist: "Artist", artwork: [] })
     const selected = row("ytmusic-player-queue-item", firstVideo, { selected: true, id: 7 })

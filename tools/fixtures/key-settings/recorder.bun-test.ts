@@ -5,6 +5,10 @@ import { recorderEvents } from "../../../src/ui/keys/dom"
 import type { KeyRecorderController } from "../../../src/ui/keys/controller"
 import type { KeySettingAnswer } from "../../../src/shared/contracts/key-settings"
 import { world, chord } from "./harness"
+import { keyRecorderText } from "../../../src/ui/keys/text"
+import { englishI18n } from "../localization/scripted"
+
+const text = keyRecorderText(englishI18n())
 
 if (typeof document === "undefined") GlobalRegistrator.register({ url: "chrome-extension://key-fixture/popup.html" })
 function key(element: HTMLElement, code: string, name: string, modifiers: KeyboardEventInit = {}) {
@@ -26,7 +30,7 @@ function nextAnswer(controller: KeyRecorderController): Promise<KeySettingAnswer
 async function mounted() {
   const w = world("wire"); await w.owner.ready()
   const choices: string[] = []
-  const client = createKeySettingsClient({ backend: w.backend, platform: { browser: "chrome", os: "linux" },
+  const client = createKeySettingsClient({ backend: w.backend, platform: { browser: "chrome", os: "linux" }, text,
     commands: { async read() { return { kind: "available", keys: [{ key: chord("z"), command: "Run Gather" }] } } },
     chooser: { async open({ shortcut }) { choices.push(shortcut) } } })
   await client.ready
@@ -97,7 +101,7 @@ test("Add immediately records and opens the supplied current-account chooser onl
 
 test("unavailable native command keys remain visibly incomplete and never masquerade as a successful empty read", async () => {
   const h = await mounted()
-  const client = createKeySettingsClient({ backend: h.w.backend, platform: { browser: "chrome", os: "linux" },
+  const client = createKeySettingsClient({ backend: h.w.backend, platform: { browser: "chrome", os: "linux" }, text,
     commands: { async read() { return { kind: "unavailable" } } }, chooser: { async open() {} } })
   try { await client.ready; const controller = client.recorder({ kind: "undo" }); await controller.commandRead; expect(controller.view().commands).toBe("unavailable") }
   finally { client.dispose(); await h.dispose() }

@@ -3,6 +3,7 @@ import { recorder, display, displayModifiers, shortcutWarnings, type RecorderSta
   type Platform, type BrowserCommand, type ShortcutWarning } from "../../shared/keys"
 import { keyAt, keyForWire, conflictObservations } from "../../shared/contracts/key-settings-fields"
 import type { ConflictObservation, KeyAssignmentChange, KeySettingChange, KeySettingAnswer } from "../../shared/contracts/key-settings"
+import type { KeyRecorderText } from "./text"
 
 export type CommandKeys = { read(): Promise<{ readonly kind: "available"; readonly keys: readonly BrowserCommand[] } | { readonly kind: "unavailable" }> }
 export type RecorderView = {
@@ -13,7 +14,7 @@ export type RecorderView = {
 }
 export type KeyRecorderController = ReturnType<typeof createKeyRecorderController>
 export function createKeyRecorderController(input: {
-  readonly target: ShortcutTarget; readonly platform: Platform; readonly commands: CommandKeys
+  readonly target: ShortcutTarget; readonly platform: Platform; readonly commands: CommandKeys; readonly text: KeyRecorderText
   readonly settings: () => Readonly<Settings>
   readonly send: (change: KeySettingChange) => Promise<KeySettingAnswer>
   readonly committed?: () => Promise<void>
@@ -27,15 +28,9 @@ export function createKeyRecorderController(input: {
   const listeners = new Set<(view: RecorderView) => void>()
   function view(): RecorderView {
     const held = state.kind === "recording" ? displayModifiers(state.modifiers, input.platform.os) : ""
-    const label = state.kind === "recording" ? held ? `${held}${input.platform.os === "macos" ? "" : "+"}…` : "Press keys…"
-      : state.key ? display(state.key, input.platform.os) : "No key"
-    let hint = state.kind === "recording" ? "Esc to cancel" : ""
-    if (state.kind === "recording" && state.refusal) {
-      if (state.refusal === "plain-enter-space") hint = "Enter and Space can't be used alone: they press buttons."
-      else if (state.refusal === "ctrl-alt") hint = "Ctrl+Alt can't be used: many keyboards type characters with it."
-      else if (state.refusal === "reserved") hint = "This is the browser's own key and never reaches the page."
-      else hint = "This key can't be recorded."
-    }
+    const label = state.kind === "recording" ? held ? `${held}${input.platform.os === "macos" ? "" : "+"}…` : input.text.pressKeys
+      : state.key ? display(state.key, input.platform.os) : input.text.noKey
+    const hint = state.kind !== "recording" ? "" : state.refusal ? input.text.refusal(state.refusal) : input.text.escToCancel
     const sites = input.target.kind === "picker" ? ["www"] satisfies readonly ("www" | "music")[]
       : input.target.kind === "music" ? ["music"] satisfies readonly ("www" | "music")[] : ["www", "music"] satisfies readonly ("www" | "music")[]
     return { recorder: state, busy, label, hint, conflict, answer, commands: commandStatus,

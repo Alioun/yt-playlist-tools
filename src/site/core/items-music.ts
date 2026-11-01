@@ -30,14 +30,15 @@ export type MusicPlayback =
   | { readonly kind: "unavailable"; readonly failure: JobFailure }
 export type MusicAction = "save" | "playlist-shortcut" | "next" | "end" | "remove" | "move" | "like" | "library" | "mix" | "album" | "artist"
 export type MusicQueueDisposition = "insert-copy" | "move-existing"
+export type MusicUnsupported = "queue-only" | "autoplay" | "songs-only" | "action-unavailable"
 export type MusicResolution =
   | { readonly kind: "pointed-item"; readonly target: MusicItemTarget; readonly item: ItemInfo; readonly queueDisposition: MusicQueueDisposition }
-  | { readonly kind: "unsupported-item"; readonly target: MusicItemTarget; readonly item: ItemInfo; readonly action: MusicAction; readonly message: string }
+  | { readonly kind: "unsupported-item"; readonly target: MusicItemTarget; readonly item: ItemInfo; readonly action: MusicAction; readonly reason: MusicUnsupported }
   | { readonly kind: "unrecognised-item"; readonly element: Element }
   | { readonly kind: "current-song"; readonly song: NowPlaying; readonly queueDisposition: "insert-copy" }
   | Exclude<MusicPlayback, { kind: "song" }>
   | { readonly kind: "detail-failed"; readonly target: MusicItemTarget; readonly failure: JobFailure }
-  | { readonly kind: "no-queue-target"; readonly message: "Point at a song in the queue to remove it." }
+  | { readonly kind: "no-queue-target" }
   | { readonly kind: "stale-target"; readonly reason: "lifetime" | "navigation" | "identity" | "page-state" }
   | { readonly kind: "inactive" }
 export type MusicItemFailure = {
@@ -155,26 +156,16 @@ function itemAgrees(target: MusicItemTarget, item: ItemInfo): boolean {
 function sameItem(left: ItemInfo, right: ItemInfo): boolean {
   return JSON.stringify(left) === JSON.stringify(right)
 }
-const actionLabels: Record<MusicAction, string> = {
-  save: "Save", "playlist-shortcut": "Save", next: "Play next", end: "Add to queue", remove: "Remove",
-  move: "Move", like: "Like", library: "Library", mix: "Start mix", album: "Go to album", artist: "Go to artist"
-}
-export function musicActionFeedback(item: ItemInfo, family: MusicFamily, action: MusicAction): string | undefined {
-  if (action === "remove" && (family !== "queue-item" || !item.endpoints.remove)) return "Point at a song in the queue to remove it."
-  if ((action === "next" || action === "end" || action === "move") && item.autoplay) {
-    return "Autoplay suggestions can't be moved. Use YouTube Music's ⋮ menu to add a copy."
-  }
+export function musicUnsupported(item: ItemInfo, family: MusicFamily, action: MusicAction): MusicUnsupported | undefined {
+  if (action === "remove" && (family !== "queue-item" || !item.endpoints.remove)) return "queue-only"
+  if ((action === "next" || action === "end" || action === "move") && item.autoplay) return "autoplay"
   if ((action === "save" || action === "playlist-shortcut") && (item.kind === "album" || item.kind === "playlist" || item.kind === "artist")) {
-    return "Only songs can be saved to playlists."
+    return "songs-only"
   }
   const available = action === "playlist-shortcut" ? item.endpoints.save !== undefined
     : action === "move" ? family === "queue-item" && !item.selected && !item.autoplay
     : item.endpoints[action] !== undefined
-  if (available) return undefined
-  const kinds: Record<ItemInfo["kind"], string> = {
-    song: "songs", video: "videos", episode: "episodes", upload: "uploads", album: "albums", playlist: "playlists", artist: "artists", other: "this item"
-  }
-  return `${actionLabels[action]} isn't available for ${kinds[item.kind]}.`
+  return available ? undefined : "action-unavailable"
 }
 
 type Tracking = { readonly scope: Scope; revision: number; playbackRevision: number; navigation: Dispose | undefined }
@@ -286,10 +277,10 @@ export class MusicItems {
       if (!sameItem(first.data, fresh.data) || !itemAgrees(target, fresh.data)) return { kind: "stale-target", reason: "identity" }
       const item = fresh.data
       if (action) {
-        const message = musicActionFeedback(item, target.family, action)
-        if (message) {
+        const reason = musicUnsupported(item, target.family, action)
+        if (reason) {
           this.authorities.set(target, { tracking, revision, item })
-          return { kind: "unsupported-item", target, item, action, message }
+          return { kind: "unsupported-item", target, item, action, reason }
         }
       }
       if (target.family === "queue-item" && item.selected) {
@@ -331,7 +322,7 @@ export class MusicItems {
       return pointed
     }
     if (pointed.kind === "pointed-item") return this.details(tracking, revision, pointed.target, action)
-    if (action === "remove") return { kind: "no-queue-target", message: "Point at a song in the queue to remove it." }
+    if (action === "remove") return { kind: "no-queue-target" }
     const answer = await this.options.page.run({ job: { kind: "nowPlaying" } })
     const stale = this.stale(tracking, revision)
     if (stale) return stale

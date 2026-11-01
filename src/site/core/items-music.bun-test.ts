@@ -51,10 +51,9 @@ test("unsupported albums playlists and artists retain ItemInfo and never fall ba
     const item = collection(kind)
     h.point(item.button)
     const before = h.reads.length
-    expect(await h.items.resolve("save")).toMatchObject({ kind: "unsupported-item", item: { kind },
-      message: "Only songs can be saved to playlists." })
+    expect(await h.items.resolve("save")).toMatchObject({ kind: "unsupported-item", item: { kind }, reason: "songs-only" })
     expect(h.reads.slice(before).every(read => read.job === "itemInfo")).toBe(true)
-    expect(await h.items.resolve("like")).toMatchObject({ kind: "unsupported-item", message: `Like isn't available for ${kind}s.` })
+    expect(await h.items.resolve("like")).toMatchObject({ kind: "unsupported-item", action: "like", item: { kind }, reason: "action-unavailable" })
     item.element.remove()
   }
 })
@@ -65,7 +64,7 @@ test("autoplay suggestions retain exact queue identity and the specific unsuppor
   h.point(item.button)
   for (const action of ["next", "end", "move"] satisfies ("next" | "end" | "move")[]) {
     expect(await h.items.resolve(action)).toMatchObject({ kind: "unsupported-item", item: { queueItemId: 19, autoplay: true },
-      message: "Autoplay suggestions can't be moved. Use YouTube Music's ⋮ menu to add a copy." })
+      reason: "autoplay" })
   }
   expect(h.reads.every(read => read.job === "itemInfo")).toBe(true)
 })
@@ -289,7 +288,7 @@ test("queue refresh survives a native queue notification and old acquisition aut
 test("removing without a pointed queue item gives the specific hint without current fallback", async () => {
   const h = await fixture(); h.items.track(h.owner())
   const before = h.reads.length
-  expect(await h.items.resolve("remove")).toEqual({ kind: "no-queue-target", message: "Point at a song in the queue to remove it." })
+  expect(await h.items.resolve("remove")).toEqual({ kind: "no-queue-target" })
   expect(h.reads.length).toBe(before)
 })
 

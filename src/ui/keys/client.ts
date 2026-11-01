@@ -4,11 +4,13 @@ import type { Backend } from "../backend/backend"
 import type { KeySettingChange, KeySettingAnswer } from "../../shared/contracts/key-settings"
 import { createKeyRecorderController, type CommandKeys, type KeyRecorderController } from "./controller"
 import { keyForWire } from "../../shared/contracts/key-settings-fields"
+import type { KeyRecorderText } from "./text"
 
 export type ShortcutChooser = { open(input: { readonly shortcut: ShortcutId }): Promise<void> }
 export type ShortcutTitles = { readonly account: AccountKey; readonly titles: ReadonlyMap<ShortcutId, string> }
 export function createKeySettingsClient(input: {
   readonly backend: Backend; readonly platform: Platform; readonly commands: CommandKeys; readonly chooser: ShortcutChooser
+  readonly text: KeyRecorderText
 }) {
   let active = true
   const controllers = new Set<KeyRecorderController>()
@@ -32,7 +34,7 @@ export function createKeySettingsClient(input: {
   }
   function recorder(target: ShortcutTarget, chooseAfterCommit = false): KeyRecorderController {
     let choose = chooseAfterCommit
-    const controller = createKeyRecorderController({ target, platform: input.platform, commands: input.commands, settings, send,
+    const controller = createKeyRecorderController({ target, platform: input.platform, commands: input.commands, text: input.text, settings, send,
       async committed() {
         if (!choose || !active || target.kind !== "playlist" || !isShortcutId(target.id)) return
         choose = false
@@ -66,7 +68,7 @@ export function createKeySettingsClient(input: {
     undo(receipt: string) { return send({ kind: "shortcut-undo", receipt }) },
     name(id: ShortcutId, account: AccountKey, context: ShortcutTitles): string {
       const row = settings().shortcuts.list.find(row => row.id === id)
-      return row?.label || (context.account === account ? context.titles.get(id) : undefined) || (row?.key ? display(row.key, input.platform.os) : "No key")
+      return row?.label || (context.account === account ? context.titles.get(id) : undefined) || (row?.key ? display(row.key, input.platform.os) : input.text.noKey)
     },
     dispose() {
       if (!active) return

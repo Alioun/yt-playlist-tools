@@ -75,6 +75,7 @@ export function createPickerText(i18n: I18n) {
           title: i18n.message(site === "music" ? "picker_quickMusicTitle" : "picker_quickTitle"),
           subtitle: i18n.message(site === "music" ? "picker_quickMusicSubtitle" : "picker_quickSubtitle")
         }
+        case "shortcut": return { title: i18n.message("picker_shortcutTitle"), subtitle: null }
         case "gather": return { title: i18n.message("picker_gatherTitle"), subtitle: i18n.message("picker_gatherSubtitle", { account: purpose.accountName }) }
         case "many": return { title: i18n.message("picker_manyTitle"), subtitle: null }
         case "named": return { title: purpose.title, subtitle: purpose.subtitle }

@@ -576,3 +576,10 @@ test("two chooser containers release and mutate only their own model", async () 
   expect(secondDialog.getByRole("checkbox", { name: "Synthetic Alpha" }).getAttribute("aria-checked")).toBe("false")
   secondView.unmount()
 })
+
+test("choose mode opened from a shortcut has its own title and no line under it, on both sites", () => {
+  const headings = createPickerText(englishI18n())
+  for (const site of ["www", "music"] as const)
+    expect(headings.heading({ kind: "shortcut" }, site)).toEqual({ title: "Pick the shortcut's playlist", subtitle: null })
+  expect(headings.heading({ kind: "quickSave" }, "www")).toEqual({ title: "Save videos to…", subtitle: "One click will save here from now on." })
+})

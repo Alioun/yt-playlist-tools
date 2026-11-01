@@ -8,7 +8,7 @@ import type { PickerSource } from "../../shared/picker/source"
 import type { PickerText } from "./text"
 
 export type PickerPurpose =
-  | { readonly kind: "save" | "quickSave" | "many" }
+  | { readonly kind: "save" | "quickSave" | "shortcut" | "many" }
   | { readonly kind: "gather"; readonly accountName: string }
   | { readonly kind: "named"; readonly title: string; readonly subtitle: string | null }
 

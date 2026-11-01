@@ -1,7 +1,7 @@
 {"step":"inactive","kind":"inactive"}
 {"step":"row","kind":"pointed-item","videoId":"synthetic01","target":true}
 {"step":"card","kind":"pointed-item","videoId":"synthetic02"}
-{"step":"album","kind":"unsupported-item","message":"Only songs can be saved to playlists."}
+{"step":"album","kind":"unsupported-item","reason":"songs-only"}
 {"step":"queue-current","kind":"pointed-item","id":7,"disposition":"insert-copy"}
 {"step":"queue-other-copy-of-song","kind":"pointed-item","id":8,"disposition":"move-existing"}
 {"step":"refresh","kind":"pointed-item","id":12,"selected":false}

@@ -120,3 +120,4 @@ export function queueButtonText(i18n: I18n) {
   }
 }
 export type QueueButtonText = ReturnType<typeof queueButtonText>
+export { musicHintText, wwwHintText, type MusicHint, type WwwHint } from "./hints"

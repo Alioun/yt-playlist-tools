@@ -440,7 +440,7 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
 - **YM-KEY-9** **One key, one shortcut, per site.**
   - Quick-action keys, playlist shortcut keys and the undo key share YouTube Music's key space. A shortcut counts there whether its feature is on or off.
   - YouTube's own picker key doesn't count on YouTube Music.
-  - Recording a key already used there shows "{Key} is already used by {Other}.", e.g. "Alt+P is already used by Save to playlist (YouTube Music)", with **Use it here** and **Cancel**.
+  - Recording a key already used there shows "{Other} already uses {Key}.", e.g. "Alt+P is already used by Save to playlist (YouTube Music)", with **Use it here** and **Cancel**.
 - **YM-KEY-10** **What each key does** to the pointed-at item, else the playing song (§5):
 
   | Key | Song row or card | Album or playlist | Queue item | Nothing pointed at |
@@ -566,7 +566,7 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
 | A key while its feature isn't working (YM-KEY-12) | Play next (Alt+N) isn't working right now because YouTube Music changed something. Use its ⋮ menu for now. | — | Failure (R50) |
 | A key whose action is unavailable in this tab, its feature partly working (YM-KEY-12) | {Action} isn't working right now. The popup shows why. (e.g. Play next isn't working right now. The popup shows why.) | — | Failure: always shown, whatever Show feedback says (R68) |
 | Notice for actions that aren't working or are unavailable (sticky, once per session; YM-FAIL-5) | Play next and Add to queue aren't working right now because YouTube Music changed something. Use its ⋮ menu for now. | Details, ✕ | Failure (R50) |
-| Account keys unreadable | Saving isn't working right now because YouTube Music changed how it shows which account you're using. Nothing is saved, so nothing lands in the wrong account. † | Details | Failure |
+| Account keys unreadable | Saving isn't working right now because YouTube Music changed how it shows which account you're using. {Product} saves nothing, so nothing lands in the wrong account. † | Details | Failure |
 | The whole site | {Product} isn't working on YouTube Music right now because YouTube Music changed something. An update should fix it. | Details | Failure |
 
 - **Kinds:**
