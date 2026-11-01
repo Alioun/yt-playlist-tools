@@ -14,6 +14,16 @@ import { createPickerText } from "./text"
 import PickerPanel from "./PickerPanel.svelte"
 import PlaylistChooser from "./PlaylistChooser.svelte"
 
+// happy-dom has no layout. A zero-size viewport or trigger counts as detached, so hideWhenDetached would hide every chooser popover.
+for (const [side, size] of [["clientWidth", 1024], ["clientHeight", 768]] as const) {
+  Object.defineProperty(document.documentElement, side, { configurable: true, get: () => size })
+}
+const layoutBox = HTMLElement.prototype.getBoundingClientRect
+HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
+  if (!this.matches("[data-popover-trigger]")) return layoutBox.call(this)
+  return DOMRect.fromRect({ x: 24, y: 24, width: 240, height: 32 })
+}
+
 function visible(element: HTMLElement) { expect({ visible: toBeVisible(element).pass, text: element.textContent }).toEqual({ visible: true, text: element.textContent }) }
 
 const alpha = playlist("PLalpha")
