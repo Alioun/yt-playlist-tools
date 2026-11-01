@@ -1,16 +1,18 @@
 <script lang="ts">
-  import { onDestroy } from "svelte"
+  import { onDestroy, untrack } from "svelte"
   import { display, type ShortcutTarget, type ShortcutWarning } from "../../shared/keys"
   import type { KeyRecorderController } from "./controller"
   import type { KeySettingRefusal } from "../../shared/contracts/key-settings"
   import { recorderEvents } from "./dom"
-  let { controller, title, targetName, os, browser }: {
+  let { controller: owned, title, targetName, os, browser }: {
     controller: KeyRecorderController
     title: string
     targetName: (target: ShortcutTarget) => string
     os: "macos" | "windows" | "linux"
     browser: "Chrome" | "Firefox"
   } = $props()
+  // The recorder owns its controller and disposes it on destroy, so a different controller needs a new mount.
+  const controller = untrack(() => owned)
   let view = $state(controller.view())
   const unsubscribe = controller.subscribe(value => { view = value })
   onDestroy(() => { unsubscribe(); controller.dispose() })
