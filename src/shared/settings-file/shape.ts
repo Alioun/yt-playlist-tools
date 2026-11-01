@@ -65,8 +65,9 @@ export function project(shape: Shape, raw: unknown, strict: boolean): unknown {
     case "nullable": return raw === null ? null : project(shape.item, raw, strict)
     case "optional": return raw === undefined ? undefined : project(shape.item, raw, strict)
     case "channel": {
-      if (!Array.isArray(raw) || raw.length < 2 || raw.length > 3) return malformed()
-      return raw.length === 2 ? [raw[0], raw[1]] : [raw[0], raw[1], raw[2]]
+      if (!Array.isArray(raw) || raw.length < 2 || strict && raw.length > 3) return malformed()
+      // Stored columns past the handle come from a newer version and stay out of format 1, with an empty handle slot before them.
+      return raw.length === 2 || raw.length > 3 && raw[2] == null ? [raw[0], raw[1]] : [raw[0], raw[1], raw[2]]
     }
     case "list": {
       if (!Array.isArray(raw)) return malformed()
