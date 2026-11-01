@@ -1520,10 +1520,24 @@ async function receiveAcceptance(create: typeof createLocalFilterWriter, acct: A
     equal(await h.writer.receiveSyncDocument(key), unavailable("document"), "unsupported incoming " + variant)
     equal(h.records, local, "unsupported incoming leaves local exact " + variant)
   }
-  for (const value of [undefined, null, { ...old, v: 2 }, { v: 1, gen: "dead", at: 1, by: "b", deleted: true }, { ...old, data: { on: 2 } }]) {
+  for (const value of [undefined, null, { ...old, v: 2 }, { ...old, data: { on: 2 } }]) {
     const h = harness(); if (value === undefined) delete h.records[F]; else h.records[F] = value
     equal(await h.writer.receiveSyncDocument(key), unavailable("document"), "unsupported local target")
     equal(h.writes, [], "unsupported local no outbound write")
+  }
+  for (const [tomb, result] of [
+    [{ v: 1, gen: "f0", at: 10, by: "device-a", deleted: true }, adopted],
+    [{ v: 1, gen: "dead", at: 10, by: "device-a", deleted: true }, unavailable("pending")],
+    [{ v: 1, gen: "f0", at: 20, by: "device-a", deleted: true }, unavailable("conflict")]
+  ] as const) {
+    const h = harness(); h.records[F] = tomb
+    equal(await h.writer.receiveSyncDocument(key), result, "local Filter tombstone yields only to a newer live Filter " + tomb.gen + tomb.at)
+    equal(h.sets, result === adopted ? [expectedSet] : [], "local Filter tombstone replacement set")
+  }
+  {
+    const h = harness(); h.records[F] = { v: 1, gen: "f0", at: 10, by: "device-a", deleted: true }; h.remote[B] = { v: 1, gen: "f1", at: 20, by: "device-b", deleted: true }
+    equal(await h.writer.receiveSyncDocument(key), unavailable("document"), "tombstone over local tombstone")
+    equal(h.sets, [], "tombstone over local tombstone no set")
   }
   for (const value of [undefined, null, { ...setup, v: 2 }, { ...setup, deleted: true }, { ...setup, data: { autoAdd: 2 } }]) {
     const h = harness(); if (value === undefined) delete h.records[S]; else h.records[S] = value
@@ -1893,7 +1907,7 @@ async function automaticIncomingAcceptance(create: typeof createLocalFilterWrite
       if (fault === "same-generation") h.synced[base].gen = old.gen
       if (fault === "future") h.synced[base].v = 2
       if (fault === "local-future") h.records[name].v = 2
-      if (fault === "local-tombstone") h.records[name] = { v: 1, gen: old.gen, at: 10, by: "device-a", deleted: true }
+      if (fault === "local-tombstone") h.records[name] = { v: 1, gen: old.gen, at: 30, by: "device-a", deleted: true }
       if (fault === "local-null") h.records[name] = null
       if (fault === "local-malformed") h.records[name] = { v: 1, data: {} }
       if (fault === "tombstone") h.synced[base] = { v: 1, gen: pl + "1", at: 20, by: "device-b", deleted: true }
@@ -2626,10 +2640,15 @@ async function keptIncomingAcceptance(create: typeof createLocalFilterWriter, ac
     const removed = value !== undefined && value !== null && "deleted" in value
     equal(h.reads, removed ? ["L0", "R0"] : ["L0"], "kept unsupported Setup before sync IO"); equal(h.sets, [], "kept unsupported Setup no set"); await h.writer.dispose()
   }
-  for (const value of [undefined, null, { ...local[K], v: 2 }, { v: 1, gen: "dead", at: 1, by: "synthetic-local", deleted: true }, { ...local[K], data: { on: 2 } }]) {
+  for (const value of [undefined, null, { ...local[K], v: 2 }, { ...local[K], data: { on: 2 } }]) {
     const h = harness(); if (value === undefined) delete h.records[K]; else h.records[K] = value
     equal(await h.writer.receiveSyncDocument(key), { kind: "unavailable", reason: "document" }, "kept unsupported local Filter")
     equal(h.reads, ["L0"], "kept unsupported Filter before sync IO"); equal(h.sets, [], "kept unavailable target never created"); await h.writer.dispose()
+  }
+  {
+    const h = harness(); h.records[K] = { v: 1, gen: "dead", at: 1, by: "synthetic-local", deleted: true }
+    equal(await h.writer.receiveSyncDocument(key), { kind: "unavailable", reason: "pending" }, "kept unacknowledged local Filter tombstone")
+    equal(h.reads, ["L0", "R0"], "kept local Filter tombstone reads sync once"); equal(h.sets, [], "kept pending tombstone no set"); await h.writer.dispose()
   }
   {
     const h = harness(); h.records[S].gen = "a-pending"; h.records[S].extension.pending = true
@@ -3023,10 +3042,19 @@ async function setupIncomingAcceptance(create: typeof createLocalFilterWriter, a
     const h = harness(); delete h.records.lastAccount; inventory(h, "none"); h.synced[B] = { ...clone(incoming), data: { gather: "PL_G" } }
     equal((await h.writer.receiveSyncDocument(key)).kind, "adopted", "Setup no live account requirement"); await h.writer.dispose()
   }
-  for (const value of [undefined, null, { ...local[S], v: 2 }, { v: 1, gen: "dead", at: 1, by: "b", deleted: true }, { ...local[S], data: { autoAdd: 2 } }]) {
+  for (const value of [undefined, null, { ...local[S], v: 2 }, { ...local[S], data: { autoAdd: 2 } }]) {
     const h = harness(); if (value === undefined) delete h.records[S]; else h.records[S] = value
     equal(await h.writer.receiveSyncDocument(key), unavailable("document"), "Setup unsupported local before sync")
     equal(h.reads, ["L0"], "Setup unsupported local no remote IO"); equal(h.sets, [], "Setup absent target never created"); await h.writer.dispose()
+  }
+  for (const [tomb, result] of [
+    [{ v: 1, gen: "a0", at: 10, by: "b", deleted: true }, adopted],
+    [{ v: 1, gen: "dead", at: 10, by: "b", deleted: true }, unavailable("pending")],
+    [{ v: 1, gen: "a0", at: 30, by: "b", deleted: true }, unavailable("conflict")]
+  ] as const) {
+    const h = harness(); h.records[S] = tomb
+    equal(await h.writer.receiveSyncDocument(key), result, "local Setup tombstone yields only to a newer live Setup " + tomb.gen + tomb.at)
+    equal(h.sets, result === adopted ? [expectedSet] : [], "local Setup tombstone replacement set"); await h.writer.dispose()
   }
   for (const fault of ["pending", "same-gen", "equal", "older", "future", "deleted", "malformed", "incomplete", "non-json", "reset", "history", "overbudget"]) {
     const h = harness()

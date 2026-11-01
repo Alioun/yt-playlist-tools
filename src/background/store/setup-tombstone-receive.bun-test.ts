@@ -174,3 +174,92 @@ test("a live Filter arriving under a removed Setup stays unavailable", async () 
     expect(h.state().local).toEqual(seed.local)
   } finally { await owner.dispose() }
 })
+
+const selectedFilter = `doc:filter:${acct}:PL_selected`
+const recreatedSetup: JsonObject = { v: 1, gen: "recreated-setup", at: 70, by: "remote-device", data: { autoAdd: [{ pl: "PL_selected", takes: "both" }] } }
+const recreatedFilter: JsonObject = { v: 1, gen: "recreated-filter", at: 70, by: "remote-device", data: { mode: "deny", on: true, channels: [] } }
+const recreated = { [setupName]: recreatedSetup, [selectedFilter]: recreatedFilter }
+function removedSeed(): RemovalFixtureState { return removedHere(syncedSeed(), [setupName, ...liveFilters]) }
+function recreate(h: ReturnType<typeof createRemovalHarness>, documents: Readonly<Record<string, JsonObject>>) {
+  h.foreign(state => { for (const [name, document] of Object.entries(documents)) state.sync[`s:${name.slice(4)}`] = structuredClone(document) })
+}
+function recreatedHere(seed: RemovalFixtureState, documents: Readonly<Record<string, JsonObject>>): RemovalFixtureState {
+  const state = structuredClone(seed), pushed = json(json(state.local.sync).pushed)
+  for (const [name, document] of Object.entries(documents)) {
+    state.local[name] = structuredClone(document); pushed[name] = document.gen!; state.sync[`s:${name.slice(4)}`] = structuredClone(document)
+  }
+  return state
+}
+
+test("a newer live Setup and Filter from another browser replace the local tombstones in one receive pass", async () => {
+  const seed = removedSeed(), h = createRemovalHarness(seed), owner = createLocalFilterWriter(h.deps), events: ConfirmedViewChange[] = []
+  owner.subscribeView(event => events.push(event))
+  try {
+    recreate(h, recreated)
+    await owner.startSync()
+    const state = h.state(), expected = recreatedHere(seed, recreated)
+    expect(state.local).toEqual(expected.local)
+    expect(state.session).toEqual(seed.session)
+    expect(h.io.some(entry => entry.kind.startsWith("sync.set"))).toBe(false)
+    expect(events.filter(event => "acct" in event && event.acct === acct)).toEqual([
+      { kind: "setup-changed", source: "sync", acct }, { kind: "filter-changed", source: "sync", acct, playlist: selected }])
+    expect(await owner.readSetup(acct)).toMatchObject({ kind: "value", view: { kind: "live", acct } })
+  } finally { await owner.dispose() }
+})
+
+test.each(["setup-first", "filter-first"] as const)("a recreated account converges when its documents arrive %s", async order => {
+  const seed = removedSeed(), h = createRemovalHarness(seed), owner = createLocalFilterWriter(h.deps)
+  const [first, second] = order === "setup-first"
+    ? [{ [setupName]: recreatedSetup }, { [selectedFilter]: recreatedFilter }]
+    : [{ [selectedFilter]: recreatedFilter }, { [setupName]: recreatedSetup }]
+  try {
+    recreate(h, first)
+    await owner.startSync()
+    expect(h.state().local).toEqual(order === "setup-first" ? recreatedHere(seed, first).local : seed.local)
+    recreate(h, second)
+    h.fireSync(); await settle(owner)
+    expect(h.state().local).toEqual(recreatedHere(seed, recreated).local)
+  } finally { await owner.dispose() }
+})
+
+test("a restart at any point while a recreated account arrives converges on a fresh owner", async () => {
+  const seed = removedSeed(), expected = recreatedHere(seed, recreated)
+  const control = createRemovalHarness(seed), probe = createLocalFilterWriter(control.deps)
+  recreate(control, recreated)
+  await probe.startSync(); await probe.dispose()
+  const total = control.io.filter(entry => entry.phase === "invoked").length
+  expect(control.state().local).toEqual(expected.local)
+  for (let at = 1; at <= total; at++) for (const when of ["before", "after"] as const) {
+    const h = createRemovalHarness(seed)
+    recreate(h, recreated)
+    h.fault({ at, when, kind: "interrupt" })
+    const interrupted = createLocalFilterWriter(h.deps)
+    await interrupted.startSync().catch(() => {})
+    await interrupted.dispose().catch(() => {})
+    h.fault(undefined)
+    const restarted = createLocalFilterWriter(h.deps)
+    try {
+      await restarted.startSync()
+      expect({ at, when, local: h.state().local }).toEqual({ at, when, local: expected.local })
+    } finally { await restarted.dispose() }
+  }
+}, 120_000)
+
+test.each([["older", 40], ["equal", 50]] as const)("an %s live Setup can't bring back a removed Setup", async (_, at) => {
+  const seed = removedSeed(), h = createRemovalHarness(seed), owner = createLocalFilterWriter(h.deps)
+  try {
+    recreate(h, { [setupName]: { ...recreatedSetup, at } })
+    expect(await owner.receiveSyncDocument({ kind: "setup", acct })).toEqual({ kind: "unavailable", reason: "conflict" })
+    expect(h.state().local).toEqual(seed.local)
+  } finally { await owner.dispose() }
+})
+
+test("a live Setup waits while the local Setup tombstone is unacknowledged", async () => {
+  const seed = removedSeed(); json(json(seed.local.sync).pushed)[setupName] = "unsent-removal"
+  const h = createRemovalHarness(seed), owner = createLocalFilterWriter(h.deps)
+  try {
+    recreate(h, recreated)
+    expect(await owner.receiveSyncDocument({ kind: "setup", acct })).toEqual({ kind: "unavailable", reason: "pending" })
+    expect(h.state().local).toEqual(seed.local)
+  } finally { await owner.dispose() }
+})

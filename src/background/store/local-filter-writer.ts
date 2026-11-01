@@ -1241,13 +1241,14 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       const remote = await readJoinSync()
       if (isJsonObject(remote) && await signalJoinHistory(records, remote)) return { kind: "unavailable" }
     }
-    // Filters sort before their Setup, so an adopted Setup tombstone revisits its account's Filters once.
+    // Filters sort before their Setup, so a Setup that removes or restores its account revisits that account's Filters once.
+    const removed = (raw: unknown) => isJsonObject(raw) && raw.deleted === true
     const queue = [...targets]
     for (let index = 0; index < queue.length; index++) {
       const key = queue[index]!
       if (lifetime.kind !== "active") return
       const result = await receiveAttempt(key)
-      if (key.kind === "setup" && result.kind === "adopted" && result.received.document.deleted === true) {
+      if (key.kind === "setup" && result.kind === "adopted" && removed(result.received.document) !== removed(records[documentKey(key)])) {
         queue.push(...targets.filter(target => target.kind === "filter" && target.acct === key.acct))
       }
       if (result.kind === "local-set-failed" || result.kind === "cleanup-failed") return { kind: "rejected", error: result.error }
@@ -1517,7 +1518,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     }
     const initial = context(await guardedLocal.get(null))
     if (initial.kind !== "ready") return initial
-    if (initial.deleted) return unavailable("document")
+    if (initial.deleted && key.kind === "settings") return unavailable("document")
     const removedAccount = initial.selection.kind === "filter" && initial.selection.removed
     const baseline = { device: snapshot(initial.device), history: snapshot(initial.history), raw: snapshot(initial.raw),
       selection: initial.selection.kind === "filter" ? { kind: "filter", setup: snapshot(initial.selection.setup), removed: removedAccount } as const : initial.selection }
@@ -1536,9 +1537,10 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     if (disposed()) return unavailable("authority")
     if (remote.kind !== "ready") return remote
     // A removed Setup accepts only its Filters' tombstones. A live Setup takes a tombstone only through account cleanup.
+    // A newer live Setup or Filter replaces a local tombstone, so an older edit is all a tombstone keeps out.
     const tombstone = remote.candidate.kind === "deleted"
     if (removedAccount && !tombstone) return unavailable("account-context")
-    if (tombstone && !removedAccount && (key.kind !== "setup" || removal.kind === "unavailable")) return unavailable("document")
+    if (tombstone && (initial.deleted || !removedAccount && (key.kind !== "setup" || removal.kind === "unavailable"))) return unavailable("document")
     if (sameSyncJson(initial.raw, remote.candidate.json)) return { kind: "idle" }
     const history = decodeSyncState(initial.history)
     if (!Object.hasOwn(history.pushed, name) || history.pushed[name] !== initial.stamp.gen) return unavailable("pending")

@@ -311,7 +311,8 @@ The worker also exposes `receiveSetup(name)`, which requires an exact canonical 
 The derived key union includes only Settings, Filter, and Setup.
 
 The operation requires initialized consent, sync on, a steady joined history,
-and an existing supported live local target. Filter additionally requires a supported
+and an existing supported local target, live or a tombstone. A local Settings
+tombstone stays unavailable before sync access. Filter additionally requires a supported
 existing live Setup for the same account, including an empty Setup retained by
 that kept Filter. The one exception is a Filter whose local Setup is a tombstone,
 which accepts only an incoming Filter tombstone. Reception does not require playlist selection. Local UI edits
@@ -324,9 +325,11 @@ Interim legacy markers make it unavailable before sync access. A complete
 same-history incoming Settings, Filter, or intrinsically retaining Setup
 can replace an existing acknowledged target only when its generation differs and
 its edit time is strictly later. An incoming Setup tombstone follows the same rule
-and is described under "Incoming Setup tombstones" below. Equal times, pending targets,
-future versions, Settings tombstones, Filter tombstones under a live Setup, absent or
-incomplete documents, joins, and resets stay unavailable.
+and is described under "Incoming Setup tombstones" below. The rule also lets a newer
+live Setup or Filter replace an acknowledged local tombstone, because a tombstone
+keeps out only older edits (SYNC-11, SYNC-12). Equal times, pending targets,
+future versions, Settings tombstones, Filter tombstones under a live Setup, tombstones
+over local tombstones, absent or incomplete documents, joins, and resets stay unavailable.
 An exact raw match is idle and does not repair acknowledgement debt.
 
 Adoption replaces the whole raw envelope. It preserves unknown fields and omitted
@@ -415,11 +418,19 @@ runs without its Filter. In an automatic pass, an adopted Setup tombstone revisi
 its account's Filters, so Setup and Filter tombstones that arrive together converge
 in one pass. Arrival in either order converges on the same records. Filter tombstones
 under a removed Setup publish no view event. A live incoming Filter under a removed
-Setup stays `unavailable/account-context`. A local Setup tombstone stays unavailable
-before sync access, as before.
+Setup stays `unavailable/account-context`.
 
-A live Setup that replaces a local tombstone, tombstone expiry after 30 days, and
-chunk cleanup remain separate work.
+A recreated account arrives as ordinary adoptions. A newer live Setup replaces the
+local Setup tombstone and publishes `setup-changed`. A newer live Filter then replaces
+its local Filter tombstone and publishes `filter-changed`. A Setup that restores its
+account revisits that account's Filters in the same pass, as a removing one does,
+so either arrival order converges. An older or equal live edit is a conflict, and an
+unacknowledged local tombstone is pending. The removed account's cache, progress and
+`lastAccount` stay gone until ordinary use writes them again. A Filter with no local
+tombstone is remote-only creation and stays excluded.
+
+Tombstone expiry after 30 days and chunk cleanup remain separate work. The spec gives
+the 30 days but not when expiry runs or which browser runs it.
 
 ## Automatic incoming documents on the fixture owner
 
@@ -455,8 +466,10 @@ consume one ticket, perform no incoming scan, and never rearm themselves.
 
 The captured address count bounds each pass. An adopted target uses four local
 reads, three sync reads, and one local set. Enumeration adds one local read.
-An adopted Setup tombstone adds its account cleanup and one more receive of each
-of that account's captured Filters, because Filters sort before their Setup.
+An adopted Setup that removes or restores its account adds one more receive of each
+of that account's captured Filters, because Filters sort before their Setup. A Setup
+tombstone also adds its account cleanup. A local Setup or Filter tombstone that stays
+unavailable adds one sync read.
 The outbound attempt also confirms durable admission and complete raw state before invoking sync. This is a
 finite IO bound, not a native performance measurement or production approval.
 The receiver's last-read foreign-writer limit and all manual exclusions remain.
@@ -482,8 +495,7 @@ progress purge, or any production effect.
 
 This incoming Setup capability remains uninstalled and partial. Full Setup lifecycle
 reconciliation, Filter-dependent empty and shortcut-target witnesses, empty removal
-and cascades, remote-only creation, a live Setup replacing a local tombstone,
-tombstone expiry, joins, reset, conflict policies,
+and cascades, remote-only creation, tombstone expiry, joins, reset, conflict policies,
 Store notifications, and production account behavior remain separate work. Timers
 remain outbound-only. Global unresolved debt can still block every outbound send.
 Native browser behavior and durability remain unproven.
