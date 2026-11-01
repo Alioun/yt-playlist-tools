@@ -1894,8 +1894,11 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     if (initialization !== "ok") return { kind: "unavailable", reason: initialization === "newer-layout" ? "newer-layout" : "startup" }
     if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
   }
+  function subscriptionsClosed() {
+    return protocolHeld || claimConfirmation === "unconfirmed" || disposed() || initialization === "interim-held" || initialization === "failed" || initialization === "newer-layout"
+  }
   function listen(listener: (event: SettingsEvent | SetupEvent) => void): () => void {
-    if (protocolHeld || claimConfirmation === "unconfirmed" || disposed() || initialization === "interim-held" || initialization === "failed" || initialization === "newer-layout") return () => {}
+    if (subscriptionsClosed()) return () => {}
     // Each registration has an independent, idempotent lifetime.
     const registered = (event: SettingsEvent | SetupEvent) => listener(event)
     listeners.add(registered)
@@ -3547,7 +3550,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       return listen(event => event.kind === "setup-changed" ? fn(event) : undefined)
     },
     subscribeView(fn, revoked = () => {}) {
-      if (protocolHeld || claimConfirmation === "unconfirmed" || disposed() || initialization !== "ok") return () => {}
+      if (subscriptionsClosed()) return () => {}
       const registered = (event: ConfirmedViewChange) => fn(event)
       viewListeners.add(registered)
       const stop = () => revoked()
