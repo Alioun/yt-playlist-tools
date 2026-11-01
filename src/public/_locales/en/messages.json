@@ -2803,6 +2803,9 @@
   "picker_createChoiceRefused": {
     "message": "The playlist was created, but this choice wasn't saved."
   },
+  "clearAll_syncedKeptNewer": {
+    "message": "Cleared on this browser. Synced settings were left for the newer version of Perchling that saved them. Update Perchling here to clear them too."
+  },
   "picker_pickedPrivate": {
     "message": "Saved. Private windows don't keep your playlist choice."
   },

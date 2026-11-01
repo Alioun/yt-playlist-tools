@@ -20,7 +20,7 @@ export type ResetEffect = { readonly operation: "set" | "remove" | "marker-set";
 export type SyncedResetResult =
   | { readonly kind: "confirmed"; readonly marker: SyncedClearMarker; readonly effects: readonly ResetEffect[] }
   | { readonly kind: "deferred"; readonly notBefore: number; readonly marker: SyncedClearMarker; readonly effects: readonly ResetEffect[] }
-  | { readonly kind: "unavailable"; readonly reason: "layout" | "newer-layout-policy-open" | "marker" | "clock" | "disposed" }
+  | { readonly kind: "unavailable"; readonly reason: "layout" | "newer-layout" | "marker" | "clock" | "disposed" }
   | { readonly kind: "unconfirmed"; readonly stage: "marker" | "sync"; readonly effects: readonly ResetEffect[]; readonly error?: unknown }
 export type SyncResetPorts = {
   readonly local: {
@@ -88,7 +88,7 @@ export function createSyncReset(ports: SyncResetPorts) {
         }
         return { kind: "unavailable", reason: "marker" }
       }
-      if (typeof local.schema === "number" && local.schema > STORAGE_SCHEMA_VERSION) return { kind: "unavailable", reason: "newer-layout-policy-open" }
+      if (typeof local.schema === "number" && local.schema > STORAGE_SCHEMA_VERSION) return { kind: "unavailable", reason: "newer-layout" }
       if (local.schema !== STORAGE_SCHEMA_VERSION && local.schema !== undefined) return { kind: "unavailable", reason: "layout" }
       const time = syncMutationTime(ports.pace, ports.clock)
       if (!time) return { kind: "unavailable", reason: "clock" }

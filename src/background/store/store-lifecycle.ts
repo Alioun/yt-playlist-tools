@@ -49,8 +49,10 @@ export type IncompleteClear =
   | { readonly kind: "partial"; readonly stage: "database"; readonly effects: readonly ClearEffect[] }
   | { readonly kind: "partial"; readonly stage: InventoryStage; readonly effects: readonly ClearEffect[]; readonly names: readonly string[] }
   | { readonly kind: "unconfirmed"; readonly stage: InventoryStage; readonly effects: readonly ClearEffect[]; readonly inventory: UnlistedInventory }
+/** "kept-newer-layout": the box was ticked, but a layout newer than this build knows leaves synced settings to the version that wrote them (R168, R175). */
+export type SyncedClear = "untouched" | "reset" | "kept-newer-layout"
 export type ClearAllResult =
-  | { readonly kind: "cleared"; readonly next: "first-run"; readonly effects: readonly ClearEffect[]; readonly readiness: FreshReadiness; readonly opening?: FirstRunOpening }
+  | { readonly kind: "cleared"; readonly next: "first-run"; readonly effects: readonly ClearEffect[]; readonly readiness: FreshReadiness; readonly synced: SyncedClear; readonly opening?: FirstRunOpening }
   | { readonly kind: "unavailable"; readonly reason: "invalid-origin" | "invalid-options" | "synced-reset-unsupported" | "scope-in-progress" | "disposed" }
   | IncompleteClear
 export type FirstRunOpening = { readonly kind: "opened" } | { readonly kind: "unconfirmed"; readonly reason: "rejected" | "not-opened" }
@@ -422,12 +424,14 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
 
     const effects: ClearEffect[] = []
     let marker: ClearMarker = { v: 1, kind: "clear-all" }
+    let synced: SyncedClear = "untouched"
     if (clearing.scope.alsoSynced) {
       if (!deps.syncedReset) return block({ kind: "reset-held", result: { kind: "unavailable", reason: "marker" } })
       const prepared = await deps.syncedReset.prepare()
       if (!live()) return interrupted
-      if (prepared.kind !== "prepared") return block({ kind: "reset-held", result: prepared })
-      marker = prepared.marker
+      if (prepared.kind === "prepared") marker = prepared.marker
+      else if (prepared.reason === "newer-layout") synced = "kept-newer-layout"
+      else return block({ kind: "reset-held", result: prepared })
     }
     effects.push({ effect: "marker-set", outcome: await attempt(() => deps.local.set({ [clearMarkerKey]: marker })) })
     if (!live()) return interrupted
@@ -445,6 +449,7 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
       effects.push({ effect: "sync-reset", result: reset })
       if (!live()) return interrupted
       if (reset.kind !== "confirmed") return block({ kind: "reset-held", result: reset })
+      synced = "reset"
     }
 
     effects.push({ effect: "session-clear", outcome: await attempt(() => deps.session.clear()) })
@@ -476,7 +481,7 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
     const final = inventoryShortfall("marker", effects, await inventory(deps.local), [])
     if (final) return block(final)
 
-    const disposed = (readiness: FreshReadiness): ClearCompletion => ({ result: { kind: "cleared", next: "first-run", effects, readiness }, phase: { kind: "disposed" } })
+    const disposed = (readiness: FreshReadiness): ClearCompletion => ({ result: { kind: "cleared", next: "first-run", effects, readiness, synced }, phase: { kind: "disposed" } })
     if (!live()) return disposed({ kind: "not-started", reason: "disposed" })
     const fresh = start()
     if (fresh.kind === "rejected") {
@@ -485,7 +490,7 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
         try { opening = await deps.openFirstRun() } catch { opening = { kind: "unconfirmed", reason: "rejected" } }
       }
       emit({ kind: "cleared", next: "first-run" })
-      return { result: { kind: "cleared", next: "first-run", effects, readiness: fresh, ...(opening ? { opening } : {}) },
+      return { result: { kind: "cleared", next: "first-run", effects, readiness: fresh, synced, ...(opening ? { opening } : {}) },
         phase: { kind: "blocked", state: { kind: "blocked", reason: "owner-start-failed", error: fresh.error }, retiring: null } }
     }
     clearing.owner = fresh.owner
@@ -505,7 +510,7 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
       try { opening = await deps.openFirstRun() } catch { opening = { kind: "unconfirmed", reason: "rejected" } }
     }
     if (!live()) return disposed({ kind: "disposed" })
-    return { result: { kind: "cleared", next: "first-run", effects, readiness, ...(opening ? { opening } : {}) }, phase: next }
+    return { result: { kind: "cleared", next: "first-run", effects, readiness, synced, ...(opening ? { opening } : {}) }, phase: next }
   }
 
   return {

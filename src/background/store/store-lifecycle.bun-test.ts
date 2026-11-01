@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test"
 import { createStoreLifecycle, clearMarkerKey } from "./store-lifecycle"
+import { clearFixture } from "../../../tools/fixtures/clear-all/harness"
 import { createLifecycleHarness, lifecycleSeeds, openLifecycle, reopen, runDeviceLifecycle, settingsOrigin, summarize, unknownWindowOrigin, unticked } from "../../../tools/fixtures/device-lifecycle/run"
 
 function deferred() {
@@ -273,4 +274,31 @@ test("an unconfirmed final inventory emits no cleared event and acquires no fres
   expect(ownersAtResult).toBe(0)
   expect(retry.kind).toBe("cleared")
   expect(events).toEqual([{ kind: "cleared", next: "first-run" }])
+})
+
+test("under a newer layout a ticked Clear all clears local data only and never touches synced settings", async () => {
+  const h = clearFixture({ schema: 2, future: { keep: true } })
+  try {
+    const synced = h.shared.records()
+    const result = await h.clear({ alsoSynced: true })
+    expect(result).toMatchObject({ kind: "cleared", synced: "kept-newer-layout" })
+    expect(h.records()).toEqual({ schema: 1 })
+    expect(h.session()).toEqual({})
+    expect(h.shared.records()).toEqual(synced)
+    expect(h.calls.filter(call => call.operation.startsWith("sync."))).toEqual([])
+  } finally { await h.dispose() }
+})
+
+test("under a supported layout a ticked Clear all still resets synced settings", async () => {
+  const h = clearFixture({ schema: 1, device: { id: "starting-fixture", consent: null, syncOn: false } })
+  try {
+    let result = await h.clear({ alsoSynced: true })
+    for (let event = 0; event < 20 && result.kind === "reset-held" && result.result.kind === "deferred"; event++) {
+      h.advance(Math.max(5000, result.result.notBefore - h.time()))
+      result = await h.clear({ alsoSynced: true })
+    }
+    expect(result.kind).toBe("cleared")
+    expect(result.kind === "cleared" && result.synced).toBe("reset")
+    expect(Object.keys(h.shared.records())).toEqual(["s:meta"])
+  } finally { await h.dispose() }
 })

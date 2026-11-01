@@ -7,9 +7,10 @@ type ClearContext = { readonly origin: SettingsPageOrigin; readonly principal: s
 const unavailable = (reason: Extract<ClearAllAnswer, { kind: "unavailable" }>["reason"]): ClearAllAnswer => ({ kind: "unavailable", reason })
 export function clearAllWireResult(result: ClearAllResult, alsoSynced: boolean): ClearAllAnswer {
   const scope = alsoSynced ? "synced" : "local"
-  if (result.kind === "cleared") return { kind: "clear-result", scope, erasure: "confirmed", outcome: "cleared", stage: "complete",
+  if (result.kind === "cleared") return { kind: "clear-result", scope: result.synced === "kept-newer-layout" ? "local" : scope, erasure: "confirmed", outcome: "cleared", stage: "complete",
     readiness: result.readiness.kind === "ready" ? "ready" : result.readiness.kind === "not-started" ? "not-started" : "held",
-    firstRun: result.opening?.kind ?? "not-bound", progress: { effects: result.effects.map(effect => effect.effect) } }
+    firstRun: result.opening?.kind ?? "not-bound", progress: { effects: result.effects.map(effect => effect.effect) },
+    ...(result.synced === "kept-newer-layout" ? { synced: result.synced } : {}) }
   if (result.kind === "reset-held") {
     const reset = result.result
     return { kind: "clear-result", scope, erasure: "held", outcome: reset.kind,

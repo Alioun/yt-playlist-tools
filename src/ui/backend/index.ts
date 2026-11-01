@@ -9,5 +9,5 @@ export type { UiAccountInView, UiPlaylistList, UiCreationAnswer, UiNewPlaylist }
 
 export type { UiPlaylistOperation } from "./playlist-list/operation"
 export type { AutoAddReadChange, AutoAddReadAnswer, AutoAddChoiceChange, AutoAddChoiceAnswer, AutoAddEdit, AutoAddFact } from "./backend"
-export { createClearAllConfirmation, clearAllAvailability } from "./clear-all"
+export { createClearAllConfirmation, clearAllAvailability, clearAllNotice } from "./clear-all"
 export type { ClearAllPayload, ClearAllAnswer } from "../../shared/contracts/clear-all"

@@ -1,14 +1,21 @@
 import { clearAllText, clearAllCheckboxText, type ClearAllAnswer } from "../../shared/contracts/clear-all"
 import { STORAGE_SCHEMA_VERSION, decodeDevice, decodeSyncState } from "../../shared/model"
+import type { I18n } from "../../shared/i18n"
 import type { Backend } from "./backend"
 
 export type ClearAllAvailability =
   | { readonly kind: "supported"; readonly checkbox: boolean }
-  | { readonly kind: "newer-layout"; readonly localClear: true; readonly tickedPolicy: "open-R168" }
+  /** Ticked, the clear still erases this browser only (R175). */
+  | { readonly kind: "newer-layout"; readonly localClear: true; readonly checkbox: boolean; readonly tickedPolicy: "local-only" }
   | { readonly kind: "unknown"; readonly localClear: true }
+const record = (raw: unknown): raw is Readonly<Record<string, unknown>> => raw !== null && typeof raw === "object" && !Array.isArray(raw)
+// A newer layout can't be decoded, so DATA-38's visibility reads only the two raw facts it names, without normalizing anything.
+function syncedBefore(records: Readonly<Record<string, unknown>>): boolean {
+  return record(records.device) && records.device.syncOn === true || record(records.sync) && typeof records.sync.joined === "string"
+}
 export function clearAllAvailability(records: Readonly<Record<string, unknown>>): ClearAllAvailability {
   if (typeof records.schema === "number" && records.schema > STORAGE_SCHEMA_VERSION)
-    return { kind: "newer-layout", localClear: true, tickedPolicy: "open-R168" }
+    return { kind: "newer-layout", localClear: true, checkbox: syncedBefore(records), tickedPolicy: "local-only" }
   if (records.schema !== STORAGE_SCHEMA_VERSION && records.schema !== undefined) return { kind: "unknown", localClear: true }
   try {
     const on = records.device === undefined ? false : decodeDevice(records.device).syncOn
@@ -16,6 +23,10 @@ export function clearAllAvailability(records: Readonly<Record<string, unknown>>)
     return { kind: "supported", checkbox: on || before }
   } catch { return { kind: "unknown", localClear: true } }
 }
+export function clearAllNotice(answer: ClearAllAnswer, i18n: I18n): string | null {
+  return answer.kind === "clear-result" && answer.synced === "kept-newer-layout" ? i18n.message("clearAll_syncedKeptNewer") : null
+}
+
 export type ClearAllConfirmationState =
   | { readonly kind: "closed" }
   | { readonly kind: "editing"; readonly alsoSynced: boolean }
@@ -38,7 +49,7 @@ export function createClearAllConfirmation(backend: Pick<Backend, "clearAll">, a
     open() { if (state.kind === "submitting") return; epoch++; state = { kind: "editing", alsoSynced: false }; submission = undefined },
     async select(alsoSynced: boolean) {
       if (state.kind !== "editing" && state.kind !== "reviewed") return
-      if (alsoSynced && (availability.kind !== "supported" || !availability.checkbox)) return
+      if (alsoSynced && (availability.kind === "unknown" || !availability.checkbox)) return
       const previous = state
       epoch++
       state = { kind: "editing", alsoSynced }

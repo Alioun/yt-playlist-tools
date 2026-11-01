@@ -51,14 +51,15 @@ test("supported pre-consent sync-off reset leaves exactly codec metadata", async
   } finally { await h.dispose() }
 })
 
-test("R168 remains an explicit open policy with no sync access", async () => {
+test("a ticked clear under a newer layout clears this browser and leaves synced settings for the newer version", async () => {
   const h = clearFixture({ schema: 2, future: { keep: true } })
   try {
+    const before = h.shared.records()
     const result = await h.clear({ alsoSynced: true })
-    expect(result).toEqual({ kind: "reset-held", result: { kind: "unavailable", reason: "newer-layout-policy-open" } })
+    expect(result).toMatchObject({ kind: "cleared", next: "first-run", synced: "kept-newer-layout" })
     expect(h.calls.filter(call => call.operation.startsWith("sync."))).toEqual([])
-    expect(h.records()).toEqual({ schema: 2, future: { keep: true } })
-    expect((await h.clear({ alsoSynced: false })).kind).toBe("cleared")
+    expect(h.shared.records()).toEqual(before)
+    expect(h.records()).toEqual({ schema: 1 })
   } finally { await h.dispose() }
 })
 

@@ -71,6 +71,6 @@ test("confirmation copy, local visibility, default scope and duplicate submit", 
 })
 
 test("newer-layout confirmation retains the open ticked policy", async () => {
-  expect(clearAllAvailability({ schema: 9 })).toEqual({ kind: "newer-layout", localClear: true, tickedPolicy: "open-R168" })
+  expect(clearAllAvailability({ schema: 9 })).toEqual({ kind: "newer-layout", localClear: true, checkbox: false, tickedPolicy: "local-only" })
   expect(clearAllAvailability({ schema: 1 })).toEqual({ kind: "supported", checkbox: false })
 })
