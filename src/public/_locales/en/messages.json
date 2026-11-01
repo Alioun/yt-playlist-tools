@@ -2936,16 +2936,16 @@
     "message": "Couldn't add"
   },
   "queueButton_toast_added_untitled": {
-    "message": "Added to the queue"
+    "message": "Added to queue"
   },
   "queueButton_toast_unconfirmed_untitled": {
-    "message": "Couldn't confirm the video was added to the queue. Check the miniplayer."
+    "message": "Couldn't confirm the add"
   },
   "queueButton_toast_failed_untitled": {
-    "message": "Couldn't add the video to the queue. Try YouTube's ⋮ menu."
+    "message": "Couldn't add to queue"
   },
   "queueButton_toast_added_named": {
-    "message": "Added “$TITLE$” to the queue",
+    "message": "Added “$TITLE$” to queue",
     "placeholders": {
       "title": {
         "content": "$1"
@@ -2953,7 +2953,7 @@
     }
   },
   "queueButton_toast_unconfirmed_named": {
-    "message": "Couldn't confirm “$TITLE$” was added to the queue. Check the miniplayer.",
+    "message": "Couldn't confirm “$TITLE$”",
     "placeholders": {
       "title": {
         "content": "$1"
@@ -2961,7 +2961,7 @@
     }
   },
   "queueButton_toast_failed_named": {
-    "message": "Couldn't add “$TITLE$” to the queue. Try YouTube's ⋮ menu.",
+    "message": "Couldn't add “$TITLE$”",
     "placeholders": {
       "title": {
         "content": "$1"

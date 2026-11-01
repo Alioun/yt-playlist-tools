@@ -110,7 +110,7 @@ test("only a confirmed answer renders Added; a page answer without confirmation 
   f.hover(target.thumbnail, [target.element])
   await click(f)
   expect(label(f)).toBe("Sent, not confirmed. Click to send again")
-  expect(f.toast()?.content.text).toBe("Couldn't confirm “First video” was added to the queue. Check the miniplayer.")
+  expect(f.toast()?.content.text).toBe("Couldn't confirm “First video”")
   f.timers.advance(10_000)
   expect(f.runs("queueAdd")).toHaveLength(1)
   f.respond(confirmed())
@@ -138,7 +138,7 @@ test("failure shows with feedback off for 1.5 s, then idle, and never resends", 
   f.hover(target.thumbnail, [target.element])
   await click(f)
   expect(label(f)).toBe("Couldn't add")
-  expect(f.toast()?.content.text).toBe("Couldn't add “First video” to the queue. Try YouTube's ⋮ menu.")
+  expect(f.toast()?.content.text).toBe("Couldn't add “First video”")
   expect(f.toast()?.content.tone).toBe("failure")
   await click(f)
   f.timers.advance(1_499)
@@ -168,7 +168,7 @@ test("confirmed quiet success offers Undo for exactly the captured entry; succes
   f.hover(target.thumbnail, [target.element])
   await click(f)
   const toast = f.toast()
-  expect(toast?.content.text).toBe("Added “First video” to the queue")
+  expect(toast?.content.text).toBe("Added “First video” to queue")
   expect(toast?.content.action?.label).toBe("Undo")
   f.respond(async job => job.kind === "queueUndo" ? { ok: true, data: null, route: f.route } : { ok: false, reason: "failed" })
   await toast?.act()
@@ -210,9 +210,24 @@ test("confirmation without an entry identity offers no Undo", async () => {
   const target = card()
   f.hover(target.thumbnail, [target.element])
   await click(f)
-  expect(f.toast()?.content.text).toBe("Added “First video” to the queue")
+  expect(f.toast()?.content.text).toBe("Added “First video” to queue")
   expect(f.toast()?.content.action).toBeNull()
 })
+
+for (const [outcome, answer, expected] of [
+  ["added", confirmed(), "Added to queue"],
+  ["unconfirmed", async () => ({ ok: true, data: { confirmed: false, quiet: true }, route: "fixture-route" }), "Couldn't confirm the add"],
+  ["failed", async () => ({ ok: false, reason: "failed" }), "Couldn't add to queue"]
+] as const) {
+  test(`a card without a readable title gets the untitled ${outcome} toast`, async () => {
+    const f = await setup()
+    f.respond(answer)
+    const target = card(videoA, "")
+    f.hover(target.thumbnail, [target.element])
+    await click(f)
+    expect(f.toast()?.content.text).toBe(expected)
+  })
+}
 
 test("state belongs to the video: duplicates share Added and a recycled renderer shows its new item", async () => {
   const f = await setup()
@@ -229,7 +244,7 @@ test("state belongs to the video: duplicates share Added and a recycled renderer
   expect(label(f)).toBe("Add to queue")
   f.hover(duplicate.thumbnail, [duplicate.element])
   expect(label(f)).toBe("Added to queue")
-  expect(f.toast()?.content.text).toBe("Added “First video” to the queue")
+  expect(f.toast()?.content.text).toBe("Added “First video” to queue")
 })
 
 test("navigation during the awaited add resets the page view without reviving the old state", async () => {
@@ -273,7 +288,7 @@ test("fullscreen conceals the overlay and a hidden tab defers the failure toast"
   await click(f)
   expect(f.toast()).toBeNull()
   f.hidden(false)
-  expect(f.toast()?.content.text).toBe("Couldn't add “First video” to the queue. Try YouTube's ⋮ menu.")
+  expect(f.toast()?.content.text).toBe("Couldn't add “First video”")
 })
 
 test("keyboard-visible thumbnail focus shows the overlay without moving focus", async () => {

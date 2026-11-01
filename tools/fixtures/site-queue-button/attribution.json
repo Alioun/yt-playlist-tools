@@ -119,9 +119,12 @@
    "tests": [
     "confirmed quiet success offers Undo for exactly the captured entry; success closes and returns the item to idle",
     "only a confirmed answer renders Added; a page answer without confirmation is sent-unconfirmed and resends only on click",
-    "failure shows with feedback off for 1.5 s, then idle, and never resends"
+    "failure shows with feedback off for 1.5 s, then idle, and never resends",
+    "a card without a readable title gets the untitled added toast",
+    "a card without a readable title gets the untitled unconfirmed toast",
+    "a card without a readable title gets the untitled failed toast"
    ],
-   "remaining": "Untitled toast variants are authored copy pending owner review.",
+   "remaining": "Toast copy settled by the owner (G6).",
    "credit": "none"
   },
   {
