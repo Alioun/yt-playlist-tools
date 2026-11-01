@@ -223,6 +223,12 @@
       "topic": "Formatter",
       "answer": "One oxfmt reformat commit after all area branches merge, listed in .git-blame-ignore-revs.",
       "landed": "pending"
+    },
+    {
+      "id": "G38",
+      "topic": "Consent disclosure wording",
+      "answer": "Reword the two colon-joined bullets through unslop and re-pin the new text as version 1 with its new digest; 2.0 hasn't shipped, so nobody agreed to the old text.",
+      "landed": "pending"
     }
   ],
   "coordinatorCalls": [
