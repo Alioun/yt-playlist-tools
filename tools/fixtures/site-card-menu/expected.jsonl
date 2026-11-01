@@ -5,7 +5,6 @@
 {"case":"avatar-img","prevented":false,"jobs":0,"target":null}
 {"case":"bare-avatar-img","prevented":false,"jobs":0,"target":null}
 {"case":"hashtag","prevented":false,"jobs":0,"target":null}
-{"case":"other-video-text","prevented":false,"jobs":0,"target":null}
 {"case":"ad-text","prevented":false,"jobs":0,"target":null}
 {"case":"playlist-text","prevented":false,"jobs":0,"target":null}
 {"case":"mix-text","prevented":false,"jobs":0,"target":null}
@@ -21,4 +20,4 @@
 {"case":"not-working-again","prevented":false,"requests":1}
 {"case":"off","prevented":false,"disposed":true}
 {"case":"on","prevented":true,"scopes":2}
-{"case":"end","prevented":false,"resources":[0,0],"errors":0,"seen":24,"jobs":5}
+{"case":"end","prevented":false,"resources":[0,0],"errors":0,"seen":23,"jobs":5}

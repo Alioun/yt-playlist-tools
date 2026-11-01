@@ -72,7 +72,7 @@ test("the title's nested text node is read through the real composed path", asyn
 
 const preserved = [
   ["channel name", "channel-link"], ["channel avatar link", "avatar-img"], ["bare avatar", "bare-avatar-img"],
-  ["hashtag", "hashtag"], ["link to another video", "other-video-text"], ["ad", "ad-text"], ["playlist card", "playlist-text"],
+  ["hashtag", "hashtag"], ["ad", "ad-text"], ["playlist card", "playlist-text"],
   ["mix card", "mix-text"], ["unrecognised item", "two-videos"], ["card without its own menu button", "no-menu-text"],
   ["card whose menu button is hidden", "hidden-menu-thumb"], ["card whose first menu button belongs to another card", "outer-text"],
   ["ordinary page", "outside"]

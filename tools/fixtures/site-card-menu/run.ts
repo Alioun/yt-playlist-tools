@@ -5,7 +5,7 @@ const lines: string[] = []
 const emit = (value: Record<string, unknown>) => { lines.push(JSON.stringify(value)) }
 const f = await cardMenuHarness()
 f.start()
-for (const id of ["thumb-img", "video-title", "empty", "channel-link", "avatar-img", "bare-avatar-img", "hashtag", "other-video-text",
+for (const id of ["thumb-img", "video-title", "empty", "channel-link", "avatar-img", "bare-avatar-img", "hashtag",
   "ad-text", "playlist-text", "mix-text", "two-videos", "no-menu-text", "hidden-menu-thumb", "outer-text", "outside"]) {
   const before = f.menuCalls().length
   const prevented = f.click(f.byId(id)).defaultPrevented

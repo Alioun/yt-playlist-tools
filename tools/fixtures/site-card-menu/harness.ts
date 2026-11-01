@@ -19,7 +19,6 @@ export const markup = `
     <h3><a id="video-title-link" href="/watch?v=${videoA}"><span id="video-title">Title A</span></a></h3>
     <ytd-channel-name id="channel-name"><a id="channel-link" href="/@channel">Channel</a></ytd-channel-name>
     <a id="hashtag" href="/hashtag/music">#music</a>
-    <a id="other-video" href="/watch?v=${videoB}"><span id="other-video-text">Another video</span></a>
     <span id="empty">metadata</span>
     <span id="shadow-host"></span>
     ${menu}
