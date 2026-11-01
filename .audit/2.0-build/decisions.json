@@ -109,6 +109,78 @@
       "topic": "Synced tombstone expiry",
       "answer": "Any browser expires a tombstone 30 days after its edit time, during an automatic receive pass with sync on, dropping its local copy and removing the synced copy in a separate cleanup turn. Filter tombstones go with their Setup's. ARC-MOD-21 gains an exception.",
       "landed": "2.0/tombstone-expiry, R178"
+    },
+    {
+      "id": "G19",
+      "topic": "Cutover from 1.x",
+      "answer": "Replace 1.x now: the first cutover change deletes the 1.x React app and src/lib, and main ships nothing until 2.0 is usable. Activation of a release stays held.",
+      "landed": "pending"
+    },
+    {
+      "id": "G20",
+      "topic": "Interim 1.5.0 build",
+      "answer": "Never ship 1.5.0. 2.0 replaces 1.4.5 directly; the interim build matters only as an upgrade source path.",
+      "landed": "pending"
+    },
+    {
+      "id": "G21",
+      "topic": "Firefox host permission",
+      "answer": "Narrow to https://www.youtube.com/* on both browsers, accepting that some upgraders may need to grant access again. Amend the spec.",
+      "landed": "pending"
+    },
+    {
+      "id": "G22",
+      "topic": "Store interface",
+      "answer": "Change the spec to describe the per-operation owners as built, not a single Store.change() with one Change union.",
+      "landed": "pending"
+    },
+    {
+      "id": "G23",
+      "topic": "Vitest and test tooling",
+      "answer": "Pending: research what Vite+ (Vite, Rolldown, Oxc, Vitest, task runner) can give developer tooling, speed and bundle size before deciding the test runner.",
+      "landed": "pending"
+    },
+    {
+      "id": "G24",
+      "topic": "Recovery controls (R167, UI-SET-16, UI-ONB-11, ACC-48)",
+      "answer": "Put them in Settings > Privacy & data. The agent writes the copy with pstack unslop; no separate review round.",
+      "landed": "pending"
+    },
+    {
+      "id": "G25",
+      "topic": "Choose-mode title (N13, UI-PICK-18)",
+      "answer": "Pick the shortcut's playlist",
+      "landed": "pending"
+    },
+    {
+      "id": "G26",
+      "topic": "YouTube Music icons (UI-YM-04)",
+      "answer": "Use Material Symbols, not YouTube Music's own icon paths.",
+      "landed": "pending"
+    },
+    {
+      "id": "G27",
+      "topic": "Parity counting",
+      "answer": "Count only 2.0 code; behavior the interim build delivers stays open until 2.0 code does it.",
+      "landed": "pending"
+    },
+    {
+      "id": "G28",
+      "topic": "Store reviewer credentials in CI (REL-STORE-21, 24, REL-CI-46)",
+      "answer": "Design it now: the agent writes the design and credential-free tests, then brings them to the owner for approval before anything runs.",
+      "landed": "pending"
+    },
+    {
+      "id": "G29",
+      "topic": "Interim conversion (REL-MIG-46, 47)",
+      "answer": "Stays off until ticket 25's live checks verify production ownership and session contracts on a real signed-in account.",
+      "landed": "pending"
+    },
+    {
+      "id": "G30",
+      "topic": "Copy rule",
+      "answer": "Every piece of user-facing copy goes through pstack unslop.",
+      "landed": "pending"
     }
   ],
   "coordinatorCalls": [
