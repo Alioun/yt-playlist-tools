@@ -121,9 +121,9 @@ export type BatchReport = MemoryStatus & (
   | { kind: "signed-out" }
   | Ended)
 // `reopen` is present only for a gather whose record names the tabs it closed, once every entry is confirmed removed.
-// `closed` is evidence only. `unresolved` counts planned tabs no after-close check confirmed; they never reopen.
+// `closed` is the after-close evidence. `closing` is a saved plan whose evidence was never saved; Gather reconciles it with the tabs that still exist.
 export type UndoReport = MemoryStatus & (
-  | { kind: "undone"; reopen?: { readonly windowId: number; readonly closed: readonly GatherClosedTab[]; readonly unresolved?: number } }
+  | { kind: "undone"; reopen?: { readonly windowId: number; readonly closed: readonly GatherClosedTab[]; readonly closing?: readonly GatherClosing[] } }
   | { kind: "failed"; completed: number; of: number; failure: ExplicitFailure; toast: ToastPlan | null }
   | { kind: "stopped"; completed: number; of: number }
   | { kind: "signed-out" }
@@ -537,7 +537,7 @@ export function createAddFlow(ports: Ports): AddFlow {
     const left = await remember(scope, [{ kind: "gather-left", id: record.id, acct: record.acct, added: [] }], normal?.revision)
     active()
     if (left.kind !== "remembered") return { kind: "failed", completed: 0, of: 0, failure: "not-sent", toast: toastPlan({ kind: "undo-failed" }, true) }
-    return { kind: "undone", reopen: { windowId: record.windowId, closed: record.closed ?? [], unresolved: record.closing?.length ?? 0 } }
+    return { kind: "undone", reopen: { windowId: record.windowId, closed: record.closed ?? [], ...record.closing?.length ? { closing: record.closing } : {} } }
   }
 
   function settle(handle: UndoHandle, closed: readonly GatherClosedTab[], origin: Origin) {
@@ -730,7 +730,7 @@ export function createAddFlow(ports: Ports): AddFlow {
         const current = handle.kind === "gather" ? gatherUndo(scope, handle.id) : undos.get(handle.id)
         if (!current || handle.kind !== "gather" && current !== record) return { kind: "expired" }
         const work = handle.kind === "gather" ? current : record
-        const closed = "record" in current ? current.record : undefined
+        const saved = "record" in current ? current.record : undefined
         progress.of = work.entries.length
         const authorized = handle.kind === "gather"
           ? () => memory(scope).gathers.some(gather => gather.id === handle.id)
@@ -752,9 +752,9 @@ export function createAddFlow(ports: Ports): AddFlow {
         active()
         if (failure) return failed(failure)
         undos.delete(handle.id)
-        const unresolved = closed?.closing?.length ?? 0
-        return (closed?.closed?.length || unresolved) && closed?.windowId !== undefined
-          ? { kind: "undone", reopen: { windowId: closed.windowId, closed: closed.closed ?? [], ...unresolved ? { unresolved } : {} } }
+        const closing = saved?.closing ?? []
+        return (saved?.closed?.length || closing.length) && saved?.windowId !== undefined
+          ? { kind: "undone", reopen: { windowId: saved.windowId, closed: saved.closed ?? [], ...closing.length ? { closing } : {} } }
           : { kind: "undone" }
       })
     }, () => ({ kind: "stopped", ...progress }), () => ({ scope, acct: reportingAccount }))

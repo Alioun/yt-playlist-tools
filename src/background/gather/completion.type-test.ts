@@ -14,7 +14,7 @@ declare const gather: Gather
 
 const tab: GatherClosedTab = { url: "https://www.youtube.com/watch?v=gat00000001", index: 0, title: "One" }
 export const closing: GatherClosing = { tabId: 10, video, tab }
-export const evidence: UndoReport = { kind: "undone", reopen: { windowId: 1, closed: [tab], unresolved: 1 } }
+export const evidence: UndoReport = { kind: "undone", reopen: { windowId: 1, closed: [tab], closing: [closing] } }
 export const reopenOnly: GatherReopen = { id: "g", seq: 1, at: 1, auto: false, acct, playlist, windowId: 1, closing: [closing] }
 export const sent: GatherSent = { id: "g", seq: 1, at: 1, auto: false, to: "queue", windowId: 1, count: 3 }
 export const keptEdit: SessionEdit = { kind: "gather-kept", add: [101], remove: [] }
@@ -25,8 +25,8 @@ export const served = tabs.serve
 export const activation: Promise<void> = gather.activated(101, "normal")
 export const state = (value: GatherState) => value.history
 
-// @ts-expect-error negative: gather-closing-not-evidence. Undo is handed evidence only; a closing plan never reaches reopening.
-export const planReopens: UndoReport = { kind: "undone", reopen: { windowId: 1, closed: [tab], closing: [closing] } }
+// @ts-expect-error negative: gather-plan-tab-id. Undo reconciles a saved plan by each planned tab's ID, so a plan entry without one is refused.
+export const idlessPlan: UndoReport = { kind: "undone", reopen: { windowId: 1, closed: [], closing: [tab] } }
 // @ts-expect-error negative: gather-reopen-window. A reopen-only record names the window its tabs came from.
 export const windowless: GatherReopen = { id: "g", seq: 1, at: 1, auto: false, acct, playlist, closing: [closing] }
 // @ts-expect-error negative: gather-sent-no-account. A player or queue record is no account data and names no playlist account.

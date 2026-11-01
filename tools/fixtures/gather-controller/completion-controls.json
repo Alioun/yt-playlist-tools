@@ -3,7 +3,7 @@
  "typeNegatives": {
   "file": "src/background/gather/completion.type-test.ts",
   "anchors": [
-   "gather-closing-not-evidence",
+   "gather-plan-tab-id",
    "gather-reopen-window",
    "gather-sent-no-account",
    "gather-sent-destination",
@@ -13,7 +13,7 @@
    "gather-execution-no-push"
   ],
   "positiveControls": {
-   "gather-closing-not-evidence": "evidence",
+   "gather-plan-tab-id": "evidence",
    "gather-reopen-window": "reopenOnly",
    "gather-sent-no-account": "sent",
    "gather-sent-destination": "sent",
@@ -107,6 +107,27 @@
    "anchor": "manual-completion.bun-test.ts: withdrawal while the batch waits",
    "break": "close the planned tabs when the batch reports stopped",
    "mustFail": "removeCalls() would be [[10]]"
+  },
+  {
+   "case": "stopped-before-readback-reconciles",
+   "anchor": "manual-completion.bun-test.ts: Undo after a restart reopens each planned tab that is gone",
+   "break": "reconcile counts a planned tab that is still open as closed",
+   "mustFail": "Undo would reopen 3 and duplicate tab 11",
+   "ran": "fails as stated"
+  },
+  {
+   "case": "stopped-before-readback-unreadable",
+   "anchor": "manual-completion.bun-test.ts: an all-already-in gather reconciles the same way",
+   "break": "reconcile counts an unreadable planned tab as closed",
+   "mustFail": "Undo would reopen 2 with no unopened",
+   "ran": "fails as stated"
+  },
+  {
+   "case": "browser-absence-only-on-no-such-id",
+   "anchor": "manual-completion.bun-test.ts: only the browser's no-such-tab error reads a tab as gone",
+   "break": "map every tabs.get or windows.get rejection to gone or window-gone (the previous behaviour)",
+   "mustFail": "the busy-tab-strip and lost-connection reads answer gone and window-gone",
+   "ran": "fails as stated"
   }
  ],
  "preserved": "controls.json, expected-output.jsonl and gather.bun-test.ts keep their 5 behaviour controls, 17 expectation lines and 14 tests unchanged"

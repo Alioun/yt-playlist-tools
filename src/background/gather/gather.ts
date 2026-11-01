@@ -374,6 +374,19 @@ export function createGather(ports: GatherPorts): Gather {
     })
   }
 
+  // A plan whose after-close readback was never saved, because the worker stopped or the save failed: each planned tab whose ID
+  // no longer exists was closed. A tab still open is left as it is, so nothing is reopened twice. An unreadable one is not reopened.
+  async function reconcile(plan: readonly GatherClosing[]): Promise<{ readonly gone: readonly GatherClosedTab[]; readonly unreadable: number }> {
+    const gone: GatherClosedTab[] = []
+    let unreadable = 0
+    for (const { tabId, tab } of plan) {
+      const now = await ports.native.read(tabId)
+      if (now.kind === "gone") gone.push(tab)
+      else if (now.kind === "unavailable") unreadable++
+    }
+    return { gone, unreadable }
+  }
+
   // One background tab per closed tab, in their old order and places; if the window has closed, one new unfocused window holds the rest.
   async function reopen(windowId: number, closed: readonly GatherClosedTab[]): Promise<{ readonly tabIds: readonly number[]; readonly unopened: number }> {
     const ordered = [...closed].sort((a, b) => a.index - b.index)
@@ -407,12 +420,13 @@ export function createGather(ports: GatherPorts): Gather {
       if (report.kind !== "undone") return { kind: "undo-failed" }
       retries.delete(id)
       if (!report.reopen) return { kind: "undone", reopened: 0 }
-      const opened = await reopen(report.reopen.windowId, report.reopen.closed)
+      const planned = await reconcile(report.reopen.closing ?? [])
+      const opened = await reopen(report.reopen.windowId, [...report.reopen.closed, ...planned.gone])
       for (const tabId of opened.tabIds) kept[scope].add(tabId)
       // Reopened tabs stay out of automatic gathering until switched to, across a worker restart too.
       const [first] = opened.tabIds
       if (first !== undefined) await write(scope, revision, { kind: "gather-kept", add: opened.tabIds, remove: [] })
-      const unopened = opened.unopened + (report.reopen.unresolved ?? 0)
+      const unopened = opened.unopened + planned.unreadable
       return { kind: "undone", reopened: opened.tabIds.length, ...unopened ? { unopened } : {} }
     }
     const result = await answer()

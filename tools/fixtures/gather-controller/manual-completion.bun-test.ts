@@ -150,6 +150,60 @@ describe("Undo reopening and kept tabs", () => {
   })
 })
 
+describe("a worker that stops between closing tabs and the second save", () => {
+  // The worker dies right after the one remove call, before the after-close readback is saved.
+  const stopAfterRemove = (f: ReturnType<typeof gatherFixture>) => {
+    const remove = f.window.native.remove
+    f.window.native.remove = async ids => { const answer = await remove(ids); f.gather.dispose(); return answer }
+  }
+  const restartedUndoId = async (f: ReturnType<typeof gatherFixture>) => {
+    const gather = JSON.stringify(f.tabs.stored().gather)
+    expect(gather).toContain(`"closing"`)
+    expect(gather).not.toContain(`"closed"`)
+    await f.yt.flow.quiesce()
+    const next = f.restart()
+    const [id] = (await next.last("normal")).undoable
+    if (!id) throw new Error("expected the saved plan to stay undoable")
+    return { next, id }
+  }
+
+  test("Undo after a restart reopens each planned tab that is gone from its saved place, and leaves a tab still open alone", async () => {
+    const f = gatherFixture({ settings: { to: "playlist" } })
+    f.window.open(10, watch(v[0]!), "One")
+    f.window.open(11, watch(v[1]!), "Two")
+    f.window.open(12, watch(v[2]!), "Three")
+    f.window.behaviour.survives.add(11)
+    stopAfterRemove(f)
+    await f.drive(f.gather.now(normalWindow))
+    expect(f.window.removeCalls()).toEqual([[10, 11, 12]])
+    const { next, id } = await restartedUndoId(f)
+    const before = f.window.created().length
+    expect(await f.drive(next.undo(id, normalWindow))).toEqual({ kind: "undone", reopened: 2 })
+    expect(f.yt.has(a, later, v[0]!) || f.yt.has(a, later, v[1]!) || f.yt.has(a, later, v[2]!)).toBe(false)
+    expect(f.window.created().slice(before)).toEqual([
+      { kind: "create", windowId: 1, url: watch(v[0]!), active: false, index: 0 },
+      { kind: "create", windowId: 1, url: watch(v[2]!), active: false, index: 2 }])
+    expect(f.window.reopenTitles).toEqual([{ url: watch(v[0]!), title: "One" }, { url: watch(v[2]!), title: "Three" }])
+    expect([...f.window.rows.values()].filter(row => row.url === watch(v[1]!)).map(row => row.tabId)).toEqual([11])
+  })
+
+  test("an all-already-in gather reconciles the same way, and a planned tab Undo cannot read is not reopened", async () => {
+    const f = gatherFixture({ settings: { to: "playlist" } })
+    f.yt.put(a, later, v[0]!)
+    f.yt.put(a, later, v[1]!)
+    f.window.open(10, watch(v[0]!), "One")
+    f.window.open(11, watch(v[1]!), "Two")
+    stopAfterRemove(f)
+    await f.drive(f.gather.now(normalWindow))
+    const { next, id } = await restartedUndoId(f)
+    f.window.behaviour.unreadable.add(11)
+    const before = f.window.created().length
+    expect(await f.drive(next.undo(id, normalWindow))).toEqual({ kind: "undone", reopened: 1, unopened: 1 })
+    expect(f.window.created().slice(before)).toEqual([{ kind: "create", windowId: 1, url: watch(v[0]!), active: false, index: 0 }])
+    expect(f.yt.has(a, later, v[0]!) && f.yt.has(a, later, v[1]!)).toBe(true)
+  })
+})
+
 describe("revocation during an awaited boundary", () => {
   test("account removal while the batch waits leaves no record for that account and closes nothing", async () => {
     const f = gatherFixture({ settings: { to: "playlist" } })
