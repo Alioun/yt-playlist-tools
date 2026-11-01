@@ -53,21 +53,21 @@ export function readReceivedReset(raw: unknown): ReceivedResetMarker | undefined
   if (!metadata || !object(raw.authority) || !object(raw.originalAuthority) || !object(raw.recovery) || !Array.isArray(raw.accounts) || !raw.accounts.every(isAccountKey) ||
     !Array.isArray(raw.targets) || !raw.targets.every((name): name is string => typeof name === "string") ||
     raw.phase !== "session" && raw.phase !== "local" && raw.phase !== "commit" && raw.phase !== "notice") return
-  const accounts = [...new Set(raw.accounts)]
-  if (accounts.length !== raw.accounts.length || new Set(raw.targets).size !== raw.targets.length) return
+  const accounts = [...new Set(raw.accounts)], targets: readonly string[] = raw.targets
+  if (accounts.length !== raw.accounts.length || new Set(targets).size !== targets.length) return
   const expected = new Set(["doc:settings", ...accounts.flatMap(acct => [`cache:${acct}`, ...removalProgressShards.map(shard => `progress:${acct}:${shard}`)])])
-  for (const name of raw.targets) {
+  for (const name of targets) {
     const key = parseDocumentKey(name)
     if (!expected.has(name) && !(key && (key.kind === "setup" || key.kind === "filter") && accounts.includes(key.acct) && documentKey(key) === name)) return
   }
-  if ([...expected].some(name => !raw.targets.includes(name))) return
+  if ([...expected].some(name => !targets.includes(name))) return
   let recovery: ReceivedResetMarker["recovery"]
   if (raw.recovery.kind === "none") recovery = { kind: "none" }
   else if ((raw.recovery.kind === "prepared" || raw.recovery.kind === "authorized") && object(raw.recovery.authority))
     recovery = { kind: raw.recovery.kind, authority: snapshot(raw.recovery.authority) }
   else return
   return { v: 1, kind: "received-reset", metadata, authority: snapshot(raw.authority), accounts,
-    originalAuthority: snapshot(raw.originalAuthority), recovery, targets: [...raw.targets], phase: raw.phase }
+    originalAuthority: snapshot(raw.originalAuthority), recovery, targets: [...targets], phase: raw.phase }
 }
 export function receivedResetResumable(records: JsonObject): boolean {
   const marker = readReceivedReset(records[receivedResetKey]), current = authority(records)
