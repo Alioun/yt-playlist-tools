@@ -15,6 +15,7 @@
     switch (event.kind) {
       case "tick": if (event.outcome.kind === "picked") void event.outcome.choice; break
       case "untick": if (event.outcome.kind === "removed") void event.outcome.undo; break
+      case "undo": if (event.outcome.kind === "failed") void event.id; break
       case "pin": case "refresh": case "sort": case "create": void event.outcome; break
       default: { const exhaustive: never = event; return exhaustive }
     }
