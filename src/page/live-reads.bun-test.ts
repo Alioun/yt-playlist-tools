@@ -2,7 +2,7 @@ import { afterEach, expect, test } from "bun:test"
 import { createGateway } from "./gateway"
 import { createLiveReadPort } from "./live-reads"
 import { defineRaw, installRawPlayer, trackNativeEvents } from "./live-read.specimens"
-import { rawNavigation, rawPlayer, rawSong, syntheticIdentity, syntheticNextVideo, syntheticVideo } from "./gateway.specimens"
+import { rawNavigation, rawPlayer, rawQueueItem, rawSong, syntheticIdentity, syntheticNextVideo, syntheticVideo } from "./gateway.specimens"
 import { readRoutes, readWatches } from "./read-port"
 
 const cleanups: (() => void)[] = []
@@ -142,7 +142,7 @@ test("Music live metadata and explicit raw state bindings work without a player 
 
 test("Music notifications have one owned binding, with exact release and no stale delivery", () => {
   const doc = document.implementation.createHTMLDocument("Synthetic Music queue"), app = doc.createElement("ytmusic-app")
-  defineRaw(app, "queue", { getItems: () => [rawSong()] }); doc.body.append(app)
+  defineRaw(app, "queue", { getItems: () => [rawQueueItem()] }); doc.body.append(app)
   let rawChanged: (() => void) | undefined, starts = 0, stops = 0
   const page = createLiveReadPort({ site: "music", window, document: doc, bindings: { queueChanges: {
     onChange(changed) { starts++; rawChanged = changed; return () => { stops++ } }

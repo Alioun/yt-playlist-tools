@@ -5,7 +5,7 @@ import { isVideoId } from "../shared/model/validation"
 import { createGateway } from "./gateway"
 import { readRoutes, readVocabulary, readWatches } from "./read-port"
 import {
-  rawMusicPlayer, rawNavigation, rawPlayer, rawResponse, rawSong, scriptedPage, specimenProvenance,
+  rawMusicPlayer, rawNavigation, rawPlayer, rawQueueItem, rawResponse, rawSong, scriptedPage, specimenProvenance,
   syntheticChannel, syntheticIdentity, syntheticNextVideo, syntheticVideo
 } from "./gateway.specimens"
 
@@ -195,9 +195,9 @@ test("Music reads metadata and largest artwork without a player bar, with select
   const g = createGateway({ site: "music", page: p.port })
   expect(await g.run({ kind: "nowPlaying" })).toEqual<unknown>(success({ videoId: syntheticVideo, title: "Synthetic song", artist: "Synthetic artist", album: "Synthetic album", artwork: "https://synthetic.invalid/large", pos: 12, len: 180 }, readRoutes.nowPlaying))
   p.values.mediaMetadata = null
-  p.values.musicQueue = [{ ...rawSong(), selected: true, longBylineText: { runs: [{ text: "Fallback artist" }] } }]
+  p.values.musicQueue = [rawQueueItem(syntheticVideo, 7, { selected: true, longBylineText: { runs: [{ text: "Fallback artist" }] } })]
   expect(await g.run({ kind: "nowPlaying" })).toEqual<unknown>(success({ videoId: syntheticVideo, title: "Synthetic song", artist: "Fallback artist", pos: 12, len: 180 }, readRoutes.nowPlaying))
-  p.values.musicQueue = [{ ...rawSong(syntheticNextVideo), selected: true, longBylineText: "Fallback artist" }]
+  p.values.musicQueue = [rawQueueItem(syntheticNextVideo, 7, { selected: true, longBylineText: "Fallback artist" })]
   expect(await g.run({ kind: "nowPlaying" })).toEqual<unknown>(unavailable)
   p.values.musicQueue = []; p.values.watchPlayer = undefined
   expect(await g.run({ kind: "nowPlaying" })).toEqual<unknown>(success(null, readRoutes.nowPlaying))
@@ -276,13 +276,13 @@ test("unsupported streams attach nothing and gateway instances own independent w
 })
 
 test("Music queue and nowPlaying push only on owned events and refuse absent notification binding", () => {
-  const p = scriptedPage({ musicQueue: [rawSong()], watchPlayer: rawMusicPlayer(), mediaMetadata: { title: "Song", artist: "Artist", artwork: [] } })
+  const p = scriptedPage({ musicQueue: [rawQueueItem()], watchPlayer: rawMusicPlayer(), mediaMetadata: { title: "Song", artist: "Artist", artwork: [] } })
   const g = createGateway({ site: "music", page: p.port }), queues: unknown[] = [], playing: unknown[] = []
   const stopQueue = g.watch("queue", value => queues.push(value)), stopNow = g.watch("nowPlaying", value => playing.push(value))
   p.emit("queue")
   expect(queues).toEqual([{ ids: [7] }])
   expect(playing).toEqual([{ videoId: syntheticVideo, title: "Song", artist: "Artist", pos: 12, len: 180 }])
-  p.values.musicQueue = [rawSong(syntheticVideo, 7), rawSong(syntheticNextVideo, 7)]
+  p.values.musicQueue = [rawQueueItem(syntheticVideo, 7), rawQueueItem(syntheticNextVideo, 7)]
   p.emit("queue"); expect(queues).toEqual([{ ids: [7] }])
   stopQueue(); stopNow(); expect(p.active()).toBe(0)
   p.setQueueChanges(false); g.watch("queue", value => queues.push(value))

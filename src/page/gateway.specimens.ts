@@ -21,6 +21,7 @@ export const specimenProvenance = {
     "Navigation envelopes, renderer nesting and kind enums require actual captured variants.",
     "Boolean cast-status and bound cast-player values are test-only supported conditions. Live encodings remain pending.",
     "The selected-queue title and byline envelope, header count, and library toggle fields need capture confirmation.",
+    "Queue entries use the playlistPanelVideoRenderer wrapper that app.queue.getItems() returns per tickets 21 and 28, not a capture.",
     "A fake change binding does not prove Music store subscription or mediaSession metadata notification compatibility."
   ]
 }
@@ -56,6 +57,9 @@ export function rawSong(videoId = syntheticVideo, index = 7) {
       { menuServiceItemRenderer: { serviceEndpoint: { queueAddEndpoint: { queueTarget: { videoId }, queueInsertPosition: "INSERT_AFTER_CURRENT_VIDEO" } } } }
     ] } }
   }
+}
+export function rawQueueItem(videoId = syntheticVideo, index = 7, extra: Record<string, unknown> = {}) {
+  return { playlistPanelVideoRenderer: { ...rawSong(videoId, index), videoId, ...extra } }
 }
 
 export function scriptedPage(initial: Partial<Record<PageRead, unknown>> = {}) {

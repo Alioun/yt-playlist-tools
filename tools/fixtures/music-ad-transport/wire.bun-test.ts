@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from "bun:test"
-import { rawMusicPlayer, rawSong } from "../../../src/page/gateway.specimens"
+import { rawMusicPlayer, rawQueueItem, rawSong } from "../../../src/page/gateway.specimens"
 import { installRawPlayer, trackNativeEvents } from "../../../src/page/live-read.specimens"
 import { readRoutes } from "../../../src/page/read-port"
 import type { PageRead } from "../../../src/page/read-port"
@@ -194,9 +194,9 @@ test("malformed and conflicting raw playback remains unavailable with route evid
   }
   for (const overrides of [
     { mediaMetadata: undefined }, { musicQueue: undefined }, { mediaMetadata: { title: 3 } },
-    { musicQueue: [{ ...rawSong(secondVideo), selected: true }] },
-    { musicQueue: [{ ...rawSong(), selected: true }, { ...rawSong(secondVideo, 8), selected: true }] },
-    { musicQueue: [{ ...rawSong(), selected: "true" }] }
+    { musicQueue: [rawQueueItem(secondVideo, 7, { selected: true })] },
+    { musicQueue: [rawQueueItem(undefined, 7, { selected: true }), rawQueueItem(secondVideo, 8, { selected: true })] },
+    { musicQueue: [rawQueueItem(undefined, 7, { selected: "true" })] }
   ]) {
     const h = await fixture(true, { watchPlayer: { ...rawMusicPlayer(), adShowing: true }, mediaMetadata: null, musicQueue: [], ...overrides })
     expect(await h.items.resolve()).toEqual({ kind: "unavailable", failure: { ok: false, reason: "unavailable" } })

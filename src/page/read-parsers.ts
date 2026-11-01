@@ -190,8 +190,12 @@ export function parsePlayer(args: {
   return isStreamData("player", value) ? value : undefined
 }
 
+export function queueRenderer(item: unknown): unknown {
+  return field(item, "playlistPanelVideoRenderer") ??
+    field(item, "playlistPanelVideoWrapperRenderer", "primaryRenderer", "playlistPanelVideoRenderer")
+}
 export function parseQueue(raw: unknown): QueueData | undefined {
-  const items = list(raw)
+  const items = list(raw)?.map(queueRenderer)
   if (!items) return undefined
   const ids = items.map(item => field(item, "navigationEndpoint", "watchEndpoint", "index"))
   const value = { ids }
@@ -210,7 +214,7 @@ export function parseMusicPlayback(args: { metadata: unknown; player: unknown; q
   if (presenting !== undefined && presenting !== 0 && presenting !== 1 && presenting !== 2) return undefined
   const evidence: MusicAdEvidence | undefined = field(player, "adShowing") === true ? "adShowing" :
     field(player, "adActive") === true ? "adActive" : presenting === 2 ? "presentingPlayerType" : undefined
-  const items = list(queue)
+  const items = list(queue)?.map(queueRenderer)
   const selected = items?.filter(item => field(item, "selected") === true)
   if (!evidence && metadata === null && items?.length === 0 && field(player, "videoData") === undefined) return null
   const fallback = selected?.length === 1 ? selected[0] : undefined
@@ -223,7 +227,7 @@ export function parseMusicPlayback(args: { metadata: unknown; player: unknown; q
   const len = rawLen === null ? null : duration(rawLen)
   if (evidence) {
     const responseId = field(player, "response", "videoDetails", "videoId")
-    if (!items || !parseQueue(items) || items.some(item => item === null || typeof item !== "object" || Array.isArray(item) ||
+    if (!items || !parseQueue(queue) || items.some(item => item === null || typeof item !== "object" || Array.isArray(item) ||
         field(item, "selected") !== undefined && typeof field(item, "selected") !== "boolean") ||
         selected && selected.length > 1 || metadata === undefined ||
         metadata !== null && (typeof metadata !== "object" || Array.isArray(metadata) || typeof field(metadata, "title") !== "string" || typeof field(metadata, "artist") !== "string") ||

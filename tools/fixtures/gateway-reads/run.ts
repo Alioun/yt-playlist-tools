@@ -1,7 +1,7 @@
 import { GlobalRegistrator } from "@happy-dom/global-registrator"
 import { createGateway } from "../../../src/page/gateway"
 import { readRoutes, readVocabulary, readWatches } from "../../../src/page/read-port"
-import { rawMusicPlayer, rawSong, scriptedPage, syntheticIdentity, syntheticVideo } from "../../../src/page/gateway.specimens"
+import { rawMusicPlayer, rawQueueItem, rawSong, scriptedPage, syntheticIdentity, syntheticVideo } from "../../../src/page/gateway.specimens"
 import { servePage } from "../../../src/page/channel"
 import { isBuildId, isPageType } from "../../../src/shared/contracts"
 import type { Site, Stream, StreamData } from "../../../src/shared/contracts"
@@ -38,7 +38,7 @@ export async function runGatewayReadConsumer(dom: boolean): Promise<string> {
   for (const site of ["www", "music"] as const) {
     const rawTarget = site === "www" ? { videoId: syntheticVideo, title: { simpleText: "Target" } } : rawSong()
     const p = scriptedPage({ targetData: rawTarget, targetContext: site === "music" ? { inAutomix: false } : undefined, ...(site === "music" ? {
-      watchPlayer: rawMusicPlayer(), mediaMetadata: { title: "Song", artist: "Artist", artwork: [] }, musicQueue: [rawSong()], musicState: { castStatus: false }, castPlayer: false
+      watchPlayer: rawMusicPlayer(), mediaMetadata: { title: "Song", artist: "Artist", artwork: [] }, musicQueue: [rawQueueItem()], musicState: { castStatus: false }, castPlayer: false
     } : {}) })
     p.setQueueChanges(site === "music")
     const gateway = createGateway({ site, page: p.port, now: () => 10 })

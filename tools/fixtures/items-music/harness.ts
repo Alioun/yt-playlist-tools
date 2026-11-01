@@ -119,7 +119,7 @@ export async function musicFixture(dom = false, overrides: Partial<Record<PageRe
       window.history.replaceState(null, "", `https://music.youtube.com${path}`)
       document.dispatchEvent(new CustomEvent("yt-navigate-finish", { detail: raw, bubbles: true }))
     },
-    setQueue(items: unknown[]) { queue = items; queueChanged() },
+    setQueue(items: unknown[]) { queue = items.map(playlistPanelVideoRenderer => ({ playlistPanelVideoRenderer })); queueChanged() },
     setMetadata(metadata: unknown) { mediaSession.metadata = metadata },
     player: () => {
       const player = installRawPlayer(document, "movie_player", rawMusicPlayer())
