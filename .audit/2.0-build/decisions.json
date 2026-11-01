@@ -137,7 +137,7 @@
     {
       "id": "G23",
       "topic": "Vitest and test tooling",
-      "answer": "Pending: research what Vite+ (Vite, Rolldown, Oxc, Vitest, task runner) can give developer tooling, speed and bundle size before deciding the test runner.",
+      "answer": "No Vite+ toolchain. Stay on bun test; delete the 322 Vitest tests with 1.x. Take the measured wins: oxlint (default plus a few type-aware rules), upstream Vite 8.3.5, AGENT=0 and explicit --timeout in both Bun runners, split the heaviest store test files and shard CI. See vite-plus-research.md.",
       "landed": "pending"
     },
     {
@@ -216,6 +216,12 @@
       "id": "G36",
       "topic": "Collaborative playlists",
       "answer": "Treat collaborative playlists the user doesn't own as not owned until the ACC-35 check.",
+      "landed": "pending"
+    },
+    {
+      "id": "G37",
+      "topic": "Formatter",
+      "answer": "One oxfmt reformat commit after all area branches merge, listed in .git-blame-ignore-revs.",
       "landed": "pending"
     }
   ],
