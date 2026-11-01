@@ -470,4 +470,10 @@ export const messageParameters = {
   "command_savePlayingSong": [],
   "command_likePlayingSong": [],
   "command_watchLaterCurrentVideo": [],
+  "shell_settingsHeading": [],
+  "shell_settings": [],
+  "shell_waiting": [],
+  "shell_review": [],
+  "shell_noFeatures": [],
+  "shell_unavailable": [],
 } as const

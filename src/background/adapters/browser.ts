@@ -13,7 +13,7 @@ export function keyPlatform(platform: Platform, navigatorPlatform: string): KeyP
 /** First run opens in a new tab (FT-40, ARC-MOD-34). */
 export async function openFirstRun(native: Pick<NativeBrowser, "tabs" | "runtime">): Promise<"opened" | "not-opened"> {
   try {
-    const tab = await native.tabs.create({ url: native.runtime.getURL("/onboarding.html" as never) })
+    const tab = await native.tabs.create({ url: native.runtime.getURL("/onboarding.html") })
     return tab.id === undefined ? "not-opened" : "opened"
   } catch { return "not-opened" }
 }

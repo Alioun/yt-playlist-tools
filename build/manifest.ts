@@ -1,4 +1,4 @@
-import type { UserManifest } from "wxt"
+import type { UserManifest, WxtHooks } from "wxt"
 
 export type ManifestTarget = { readonly browser: string; readonly mode: string }
 
@@ -45,4 +45,9 @@ export function perchlingManifest({ browser, mode }: ManifestTarget): UserManife
       } } }
       : { minimum_chrome_version: "121" })
   }
+}
+
+/** WXT copies the popup's `<title>` into `action.default_title`; the manifest keeps its localized title instead. */
+export const keepActionTitle: WxtHooks["build:manifestGenerated"] = (_wxt, manifest) => {
+  if ("action" in manifest && manifest.action) manifest.action.default_title = "__MSG_actionTitle__"
 }

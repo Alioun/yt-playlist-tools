@@ -2985,5 +2985,23 @@
   },
   "command_watchLaterCurrentVideo": {
     "message": "On YouTube, save the current video to Watch later"
+  },
+  "shell_settingsHeading": {
+    "message": "Perchling settings"
+  },
+  "shell_settings": {
+    "message": "Settings"
+  },
+  "shell_waiting": {
+    "message": "Waiting for your OK"
+  },
+  "shell_review": {
+    "message": "Review"
+  },
+  "shell_noFeatures": {
+    "message": "No features are on."
+  },
+  "shell_unavailable": {
+    "message": "Perchling can't read its settings right now."
   }
 }
