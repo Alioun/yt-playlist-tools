@@ -16,8 +16,8 @@ import {
 import type { Navigation } from "./read-parsers"
 import { wwwRoutes } from "./routes/www"
 import { musicRoutes } from "./routes/music"
-import { requestWatches, vocabularyFor } from "./gateway/port"
-import type { GatewayRequestPort, PageUiRoute, RequestRoute, RequestSpec, RouteTable } from "./gateway/port"
+import { handlerWatches, musicHandlers, requestWatches, vocabularyFor } from "./gateway/port"
+import type { GatewayRequestPort, HandlerRoute, PageUiRoute, RequestRoute, RequestSpec, RouteTable } from "./gateway/port"
 import { createLanes, systemClock } from "./gateway/lanes"
 import type { GatewayClock, JobScope } from "./gateway/lanes"
 import { createAccountGuard } from "./gateway/account"
@@ -28,6 +28,10 @@ import type { AnswerStep, ParsedJob } from "./gateway/answers"
 import { answerFailure } from "./parsers/playlists"
 import { createWwwQueue } from "./gateway/www-queue"
 import type { WwwQueuePort } from "./gateway/www-queue"
+import { createMusicContext, createMusicQueue } from "./gateway/music-queue"
+import type { MusicPagePort } from "./gateway/music-queue"
+import { createMusicQueueEdits } from "./gateway/music-queue-edit"
+import { createMusicLibrary } from "./gateway/music-library"
 
 type ReadJobId = keyof typeof readRoutes
 type ReadContext = { job: Job; target?: Element }
@@ -42,6 +46,8 @@ type StreamSlot = {
 type PageLoadAccount = { kind: "known"; data: PageAccountData } | { kind: "unavailable" }
 type QueueJobId = "queueAdd" | "queueUndo" | "queueAddList" | "openCardMenu"
 const queueJobs: readonly QueueJobId[] = ["queueAdd", "queueUndo", "queueAddList", "openCardMenu"]
+type MusicJobId = "queueInsert" | "queueRemove" | "queueRemoveIds" | "queueMove" | "queueReinsert" | "like" | "library" | "navigate"
+const musicJobs: readonly MusicJobId[] = ["queueInsert", "queueRemove", "queueRemoveIds", "queueMove", "queueReinsert", "like", "library", "navigate"]
 
 export interface ReadGateway extends PageGatewayOperations {
   readonly disposed: boolean
@@ -51,7 +57,7 @@ export interface ReadGateway extends PageGatewayOperations {
 }
 
 export function createGateway(options: {
-  site: Site; page: PageReadPort; requests?: GatewayRequestPort; queue?: WwwQueuePort; clock?: GatewayClock;
+  site: Site; page: PageReadPort; requests?: GatewayRequestPort; queue?: WwwQueuePort; music?: MusicPagePort; clock?: GatewayClock;
   signals?: (signal: BreakageSignal) => void; now?: () => number
 }): ReadGateway {
   const { site, page } = options
@@ -59,7 +65,7 @@ export function createGateway(options: {
   const clock = options.clock ?? { ...systemClock, now }
   const lanes = createLanes(clock)
   const table: RouteTable = site === "www" ? wwwRoutes : musicRoutes
-  const vocabulary = options.requests || options.queue ? vocabularyFor(table) : readVocabulary
+  const vocabulary = options.requests || options.queue || options.music ? vocabularyFor(table) : readVocabulary
   const lastPrivacy = new Map<string, "PRIVATE" | "UNLISTED" | "PUBLIC" | undefined>()
   const signalSinks = new Set<(signal: BreakageSignal) => void>()
   if (options.signals) signalSinks.add(options.signals)
@@ -116,7 +122,7 @@ export function createGateway(options: {
   const account = pinAccount()
   const guard = createAccountGuard(page, account.kind === "known" ? account.data : undefined)
 
-  function requestSignal(kind: BreakageSignal["kind"], route: RequestRoute | PageUiRoute, job: JobId, raw?: unknown): void {
+  function requestSignal(kind: BreakageSignal["kind"], route: RequestRoute | PageUiRoute | HandlerRoute, job: JobId, raw?: unknown): void {
     if (disposed) return
     const at = stamp()
     const event: BreakageSignal = {
@@ -155,6 +161,41 @@ export function createGateway(options: {
       case "queueAdd": return lanes.run("app-state", scope => queue.add(target, scope))
       case "queueUndo": return lanes.run("app-state", scope => queue.undo(job, scope))
       case "queueAddList": return lanes.run("app-state", scope => queue.addList(job, scope))
+    }
+  }
+  const musicContext = site === "music" && options.music ? createMusicContext({
+    port: options.music, page, clock, table,
+    casting: () => routes.castState.read()?.casting === true,
+    notice(kind, route, raw) {
+      requestSignal(kind, route, musicJobs.find(id => table[id].some(entry => entry.id === route.id)) ?? "queueInsert", raw)
+    }
+  }) : undefined
+  const music = musicContext ? {
+    ...createMusicQueue(musicContext), ...createMusicQueueEdits(musicContext),
+    ...createMusicLibrary(musicContext, {
+      item: target => routes.itemInfo.read({ job: { kind: "itemInfo" }, target }),
+      location: () => read("location")
+    })
+  } : undefined
+  async function musicJob(job: JobOf<MusicJobId>, target: Element | undefined): Promise<PageJobResult> {
+    if (!music) return { ok: false, reason: "unavailable" }
+    const blocked = guard.check(needsAccount(job))
+    if (blocked) return blocked
+    return lanes.run("app-state", async (scope): Promise<PageJobResult> => {
+      const result = await musicStep(music, job, target, scope)
+      return guard.check(needsAccount(job)) ?? result
+    })
+  }
+  function musicStep(jobs: NonNullable<typeof music>, job: JobOf<MusicJobId>, target: Element | undefined, scope: JobScope): Promise<PageJobResult> {
+    switch (job.kind) {
+      case "queueInsert": return jobs.insert(job, scope)
+      case "queueRemove": return jobs.remove(job, scope)
+      case "queueRemoveIds": return jobs.removeIds(job, scope)
+      case "queueMove": return jobs.move(job, scope)
+      case "queueReinsert": return jobs.reinsert(job, scope)
+      case "like": return jobs.like(job, scope)
+      case "library": return jobs.library(job, target)
+      case "navigate": return jobs.navigate(job, scope)
     }
   }
   async function send(job: Job, spec: RequestSpec, scope: JobScope): Promise<AnswerStep> {
@@ -418,6 +459,10 @@ export function createGateway(options: {
           const result = await queueJob(job, ctx?.target)
           return isPageJobResultFor<J>(job, result) ? result : { ok: false, reason: "unavailable" }
         }
+        if (isMusicJob(job)) {
+          const result = await musicJob(job, ctx?.target)
+          return isPageJobResultFor<J>(job, result) ? result : { ok: false, reason: "unavailable" }
+        }
         if (!table[job.kind].some(route => route.kind === "request")) return { ok: false, reason: "unavailable" }
         const blocked = guard.check(needsAccount(job))
         if (blocked) return blocked
@@ -446,8 +491,11 @@ export function createGateway(options: {
     async probe(): Promise<ProbeReport> {
       return { site, entries: vocabulary.watchIds.map(id => {
         const transport = Object.entries(requestWatches).find(([, watch]) => watch === id)
+        const handler = musicHandlers.find(name => handlerWatches[name] === id)
         let found = false
-        if (transport) {
+        if (handler) {
+          try { found = !disposed && options.music?.has(handler) === true } catch {}
+        } else if (transport) {
           const via = transport[0]
           if (via === "command" || via === "service" || via === "signed" || via === "plain" || via === "music") {
             try { found = !disposed && options.requests?.has(via) === true } catch {}
@@ -468,3 +516,4 @@ export function createGateway(options: {
 
 function isReadJob(job: JobId): job is ReadJobId { return Object.hasOwn(readRoutes, job) }
 function isQueueJob(job: Job): job is JobOf<QueueJobId> { return (queueJobs as readonly string[]).includes(job.kind) }
+function isMusicJob(job: Job): job is JobOf<MusicJobId> { return (musicJobs as readonly string[]).includes(job.kind) }

@@ -66,5 +66,6 @@ export function isWrite(job: Job): boolean {
   return ["add", "remove", "addBatch", "removeBatch", "save", "unsave", "create"].includes(job.kind)
 }
 export function needsAccount(job: Job): boolean {
-  return !["channelOf", "resolveChannel", "queueAdd", "queueUndo", "queueAddList", "openCardMenu"].includes(job.kind)
+  return !["channelOf", "resolveChannel", "queueAdd", "queueUndo", "queueAddList", "openCardMenu", "queueInsert", "queueRemove",
+    "queueRemoveIds", "queueMove", "queueReinsert", "navigate"].includes(job.kind)
 }

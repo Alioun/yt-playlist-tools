@@ -1,5 +1,5 @@
 import { readRoutes } from "../read-port"
-import { labelDefaultRoute, requestRoute } from "../gateway/port"
+import { handlerRoute, labelDefaultRoute, requestRoute } from "../gateway/port"
 import type { RouteTable } from "../gateway/port"
 
 const read = (id: typeof readRoutes[keyof typeof readRoutes]) => ({ kind: "read" as const, id })
@@ -9,6 +9,10 @@ export const musicRoutes = {
   save: [requestRoute("music", "save")], unsave: [requestRoute("music", "unsave")], create: [requestRoute("music", "create")],
   channelOf: [], resolveChannel: [], videoInfo: [], itemInfo: [read(readRoutes.itemInfo)],
   nowPlaying: [read(readRoutes.nowPlaying)], castState: [read(readRoutes.castState)],
-  queueAdd: [], queueUndo: [], queueAddList: [], openCardMenu: [], queueInsert: [], queueRemove: [], queueRemoveIds: [],
-  queueMove: [], queueReinsert: [], like: [], library: [], navigate: []
+  queueAdd: [], queueUndo: [], queueAddList: [], openCardMenu: [],
+  queueInsert: [handlerRoute("menu-item", "queueInsert"), handlerRoute("replay", "queueInsert")],
+  queueRemove: [handlerRoute("queue", "queueRemove")], queueRemoveIds: [handlerRoute("queue", "queueRemoveIds")],
+  queueMove: [handlerRoute("reorder", "queueMove")], queueReinsert: [handlerRoute("replay", "queueReinsert")],
+  like: [handlerRoute("service", "like")], library: [handlerRoute("service", "library")],
+  navigate: [handlerRoute("navigation", "navigate")]
 } satisfies RouteTable

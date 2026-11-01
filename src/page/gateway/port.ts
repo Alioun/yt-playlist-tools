@@ -23,7 +23,9 @@ export interface GatewayRequestPort {
 export type RequestRoute = { kind: "request"; via: Transport; id: RouteId; watchId: WatchId }
 export type PageRoute = { kind: "read"; id: RouteId }
 export type PageUiRoute = { kind: "page-ui"; id: RouteId; watchId: WatchId }
-export type Route = RequestRoute | PageRoute | PageUiRoute | { kind: "label-default"; id: RouteId }
+export type MusicHandler = "menu-item" | "replay" | "queue" | "reorder" | "service" | "navigation"
+export type HandlerRoute = { kind: "handler"; handler: MusicHandler; id: RouteId; watchId: WatchId }
+export type Route = RequestRoute | PageRoute | PageUiRoute | HandlerRoute | { kind: "label-default"; id: RouteId }
 export type RouteTable = { readonly [K in Job["kind"]]: readonly Route[] }
 export type GatewayNotice = (kind: BreakageKind, route: RequestRoute, job: Job["kind"], raw?: unknown) => void
 
@@ -44,17 +46,28 @@ export const requestWatches = {
 export function requestRoute(via: Transport, job: Job["kind"]): RequestRoute {
   return { kind: "request", via, id: routeId(`${via}.${job}`), watchId: requestWatches[via] }
 }
+export const musicHandlers: readonly MusicHandler[] = ["menu-item", "replay", "queue", "reorder", "service", "navigation"]
+export const handlerWatches = {
+  "menu-item": watchId("gateway.music.menu-item"), replay: watchId("gateway.music.queue-replay"),
+  queue: watchId("gateway.music.queue"), reorder: watchId("gateway.music.reorder"),
+  service: watchId("gateway.music.service-endpoint"), navigation: watchId("gateway.music.navigation-endpoint")
+} satisfies Record<MusicHandler, WatchId>
+export function handlerRoute(handler: MusicHandler, job: Job["kind"]): HandlerRoute {
+  return { kind: "handler", handler, id: routeId(`music-${handler}.${job}`), watchId: handlerWatches[handler] }
+}
 export const cardMenuRoute: PageUiRoute = { kind: "page-ui", id: routeId("page-ui.openCardMenu"), watchId: readWatches.targetData }
 export function vocabularyFor(table: RouteTable): DiagnosticVocabulary {
   return {
     routes: [...new Set([...readVocabulary.routes, ...Object.values(table).flatMap(row => row.map(route => route.id))])],
-    watchIds: [...readVocabulary.watchIds, ...Object.values(requestWatches)],
+    watchIds: [...new Set([...readVocabulary.watchIds, ...Object.values(requestWatches),
+      ...Object.values(table).flatMap(row => row.flatMap(route => route.kind === "handler" ? [route.watchId] : []))])],
     schemaKeys: [...readVocabulary.schemaKeys, "status", "error", "code", "playlistId", "setVideoId", "playlistEditResults",
       "playlistEditVideoAddedResultData", "playlistEditVideoRemovedResultData", "playlistAddToOptionRenderer",
       "playlistAddToOptionViewModel", "playlistAddToPlaylistRenderer", "playlistId", "containsSelectedVideos",
       "playlistSelectionState", "privacy", "videoCount", "continuationContents", "continuationItems", "contents",
       "continuationItemRenderer", "continuationEndpoint", "continuationCommand", "token", "frameworkUpdates",
       "entityBatchUpdate", "mutations", "entityKey", "payload", "playlistEntity", "playlistViewModel",
-      "lockupViewModel", "metadata", "text", "runs", "simpleText", "accountHeaderRenderer"]
+      "lockupViewModel", "metadata", "text", "runs", "simpleText", "accountHeaderRenderer", "queueDatas",
+      "queueContextParams", "playlistPanelVideoRenderer", "playlistPanelVideoWrapperRenderer", "primaryRenderer"]
   }
 }
