@@ -416,13 +416,13 @@ export function createGateway(options: {
         }
         if (isQueueJob(job)) {
           const result = await queueJob(job, ctx?.target)
-          return isPageJobResultFor(job, result) ? result : { ok: false, reason: "unavailable" }
+          return isPageJobResultFor<J>(job, result) ? result : { ok: false, reason: "unavailable" }
         }
         if (!table[job.kind].some(route => route.kind === "request")) return { ok: false, reason: "unavailable" }
         const blocked = guard.check(needsAccount(job))
         if (blocked) return blocked
         const result: unknown = await lanes.run("playlist", scope => requestJob(job, scope))
-        return isPageJobResultFor(job, result) ? result : { ok: false, reason: "unavailable" }
+        return isPageJobResultFor<J>(job, result) ? result : { ok: false, reason: "unavailable" }
       } catch { return { ok: false, reason: "unavailable" } }
     },
     watch<S extends Stream>(stream: S, onData: (data: StreamData<S>) => void): () => void {
