@@ -479,6 +479,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 - **SYNC-10** The unit of conflict is the document. Two browsers editing different documents never conflict.
 - **SYNC-11** For the same document, **the newest edit wins**, by the time of the user's edit, with the device ID breaking ties. The losing edit shows as reverted. It takes edits to one document in two browsers within one sync interval.
 - **SYNC-12** **Deletions are tombstones,** kept for 30 days, so an older edit can't bring back a removed setup or filter.
+  - A filter's tombstone that arrives while its setup is still live here isn't applied, so auto-add never runs a playlist without its filter. It applies once the setup's tombstone is here, whichever arrives first. A setup's tombstone that arrives also removes this browser's data for the account (DATA-44; R177).
 - **SYNC-13** A document too large for one sync item is applied only once every part of the same write has arrived. Until then, the last good local copy stays.
 
 ### 3.5 Budget and "full"
@@ -633,7 +634,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
 
   (R21, R23, R43)
 
-  `lastAccount` is its own key, not a `Device` field, so the writers that clear it (a settings import, removing a setup, a sync join that receives a setup's tombstone) never write `device` and can't put back a consent that was withdrawn while they ran (R176).
+  `lastAccount` is its own key, not a `Device` field, so the writers that clear it (a settings import, removing a setup, a sync join that receives a setup's tombstone, and a setup's tombstone that arrives by sync) never write `device` and can't put back a consent that was withdrawn while they ran (R176, R177).
 
 - **DATA-08** `<acct>` is the account key (ACC-03). An absent `doc:settings` reads as the defaults: every feature off, the YouTube Music section switch on (R1), and the undo key Alt+U (R44). An absent setup reads as "no choices". Every key has a prefix, so none reuses a 1.x name for a new shape.
 
@@ -919,6 +920,8 @@ Under a layout newer than this build knows (DATA-48), DATA-39's unticked column 
 | The last account, if it was this account | Here |
 
   Shared settings stay: the shortcuts keep their keys and labels, and only this account's targets go. Other setups and YouTube are untouched.
+
+  When the setup's tombstone arrives by sync, every receiving browser also removes the rows marked "Here" for that account: its playlist cache, its watch progress, its session memory, and the last account if it was this account. It removes the cache, the progress and the session memory first and writes the tombstone last, with no removal journal (SYNC-12; R177).
 - **DATA-45** **Smaller removals:**
   - switching auto-add off deletes all watch progress and keeps its playlists, filters and percentages;
   - removing a playlist shortcut deletes its entry in the shared settings and its target in every setup; its 6 s Undo is held in memory;
