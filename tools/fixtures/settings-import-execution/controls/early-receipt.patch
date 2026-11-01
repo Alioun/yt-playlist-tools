@@ -1,6 +1,6 @@
 --- a/src/background/store/settings-import-execution.ts
 +++ b/src/background/store/settings-import-execution.ts
-@@ -169,6 +169,7 @@
+@@ -164,6 +164,7 @@
      return writeExact("advance", before, { local: { ...before.local, ...items }, session: before.session }, () => deps.local.set(items), record)
    }
    async function run(record: AcceptedSettingsImport, initial: Observed, start: number): Promise<SettingsImportResult> {

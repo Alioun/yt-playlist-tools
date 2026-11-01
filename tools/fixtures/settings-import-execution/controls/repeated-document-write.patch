@@ -1,6 +1,6 @@
 --- a/src/background/store/settings-import-execution.ts
 +++ b/src/background/store/settings-import-execution.ts
-@@ -182,7 +182,7 @@
+@@ -177,7 +177,7 @@
          let local = importJson(current.local), session = importJson(current.session)
          let apply: () => Promise<void>
          switch (effect.kind) {

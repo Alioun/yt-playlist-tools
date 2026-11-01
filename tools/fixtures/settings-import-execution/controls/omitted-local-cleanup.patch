@@ -1,6 +1,6 @@
 --- a/src/background/store/settings-import-execution.ts
 +++ b/src/background/store/settings-import-execution.ts
-@@ -183,7 +183,7 @@
+@@ -178,7 +178,7 @@
          let apply: () => Promise<void>
          switch (effect.kind) {
            case "local-set": local = { ...local, ...effect.items }; apply = () => deps.local.set(effect.items); break

@@ -1,6 +1,6 @@
 --- a/src/background/store/settings-import-execution.ts
 +++ b/src/background/store/settings-import-execution.ts
-@@ -277,7 +277,7 @@
+@@ -267,7 +267,7 @@
          if (!importObject(remote)) return { kind: "unavailable", reason: "inventory" }
          sync = { kind: "on", records: remote }
        }

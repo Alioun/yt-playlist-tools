@@ -6,6 +6,6 @@
    if (keys.length) result.push({ kind: "local-remove", stage: "local-cleanup", keys, names })
 -  for (const effect of plan.cleanup.sessionEffects) result.push({ kind: "session", stage: "session-cleanup", effect })
 +  for (const effect of plan.cleanup.sessionEffects.slice(0, 0)) result.push({ kind: "session", stage: "session-cleanup", effect })
-   if (plan.cleanup.lastAccount.kind === "clear") result.push({ kind: "device", stage: "device", acct: plan.cleanup.lastAccount.acct })
    return result
  }
+ function afterEffect(before: Inventory, effect: Effect): Inventory {
