@@ -9,6 +9,7 @@ import type { NativeSender } from "../../../src/background/adapters/sender-origi
 import type { ClearAllOptions, SettingsPageOrigin } from "../../../src/background/store/store-lifecycle"
 import type { ClearAllAnswer } from "../../../src/shared/contracts/clear-all"
 import type { ResetNotice } from "../../../src/background/store/sync-reset-receive"
+import type { Unclaimed } from "../../../src/shared/model"
 
 export { check, agreedSeed, copy }
 export const settingsOrigin = { kind: "ui", page: "settings", origin: { kind: "ui", windowId: 1, incognito: false } } as const satisfies SettingsPageOrigin
@@ -24,7 +25,7 @@ export function sharedSync(initial: JsonObject = { "s:meta": { v: 1, id: "histor
 }
 export function accountSeed(syncOn = true): JsonObject {
   const initial = agreedSeed(syncOn)
-  initial.unclaimed = { from: "1.5.0", autoAdd: [], shortcutPlaylist: null, filters: {}, retained: "keep" }
+  initial.unclaimed = { from: "1.5.0", autoAdd: [], shortcutPlaylist: null, filters: {}, at: 1 } satisfies Unclaimed
   for (const acct of [account, otherAccount]) {
     initial[`doc:setup:${acct}`] = { v: 1, gen: `setup-${acct}`, at: 1, by: "starting-fixture", data: {} }
     initial[`doc:filter:${acct}:PL_alpha`] = { v: 1, gen: `filter-${acct}`, at: 1, by: "starting-fixture", data: {} }
