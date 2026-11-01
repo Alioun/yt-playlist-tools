@@ -19,6 +19,8 @@ nested.append(preview)
 document.body.append(card, keyboard)
 const hits = hitStack([preview, nested, card])
 const visibility = focusVisibility(keyboard)
+// happy-dom matches :focus-visible on the activeElement fallback, so an unfocused body would read as keyboard focus.
+const idle = focusVisibility(document.body, false)
 const write = (value: unknown) => { console.log(JSON.stringify(value)) }
 const stack = () => {
   const facts = pointer.read()
@@ -112,6 +114,7 @@ try {
   keys.dispose()
   pointer.dispose()
   visibility.restore()
+  idle.restore()
   hits.restore()
   document.body.replaceChildren()
 }

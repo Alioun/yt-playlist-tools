@@ -9,7 +9,9 @@ function fixture() {
   const first = owner()
   const second = owner()
   const hits = hitStack()
-  cleanups.push(() => { first.dispose(); second.dispose(); pointer.dispose(); hits.restore() })
+  // happy-dom matches :focus-visible on the activeElement fallback, so an unfocused body would read as keyboard focus.
+  const idle = focusVisibility(document.body, false)
+  cleanups.push(() => { first.dispose(); second.dispose(); pointer.dispose(); hits.restore(); idle.restore() })
   const card = document.createElement("article")
   const child = document.createElement("button")
   card.id = "card"
