@@ -1,0 +1,12 @@
+# A change to any of these needs the owner's review before it reaches main,
+# once the main ruleset requires review from Code Owners (G28). The workflows
+# decide which job gets which secret; the rest is what the reviewer-login jobs
+# run, what installs code beside the AMO keys, or what proves the secret flow.
+/.github/CODEOWNERS @Alioun
+/.github/workflows/** @Alioun
+/scripts/amo-reviewer-notes.ts @Alioun
+/scripts/run-bun-tests.ts @Alioun
+/tests/integration/amo-reviewer-notes.test.ts @Alioun
+/tests/integration/fixtures/fake-amo.ts @Alioun
+/package.json @Alioun
+/bun.lock @Alioun
