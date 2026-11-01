@@ -311,17 +311,20 @@ The worker also exposes `receiveSetup(name)`, which requires an exact canonical 
 The derived key union includes only Settings, Filter, and Setup.
 
 The operation requires initialized consent, sync on, a steady joined history,
-and an existing supported local target. Filter additionally requires a supported
+and an existing supported live local target. Filter additionally requires a supported
 existing live Setup for the same account, including an empty Setup retained by
-that kept Filter. Reception does not require playlist selection. Local UI edits
+that kept Filter. The one exception is a Filter whose local Setup is a tombstone,
+which accepts only an incoming Filter tombstone. Reception does not require playlist selection. Local UI edits
 still require selection. Missing, null, malformed, future, or deleted Setup
 remains unavailable before sync access. Settings needs no Setup, account, window lookup,
 or permission query. Its per-device-looking extensions remain inert data.
 Interim legacy markers make it unavailable before sync access. A complete
 same-history incoming Settings, Filter, or intrinsically retaining Setup
 can replace an existing acknowledged target only when its generation differs and
-its edit time is strictly later. Equal times, pending targets, future versions,
-tombstones, absent or incomplete documents, joins, and resets stay unavailable.
+its edit time is strictly later. An incoming Setup tombstone follows the same rule
+and is described under "Incoming Setup tombstones" below. Equal times, pending targets,
+future versions, Settings tombstones, Filter tombstones under a live Setup, absent or
+incomplete documents, joins, and resets stay unavailable.
 An exact raw match is idle and does not repair acknowledgement debt.
 
 Adoption replaces the whole raw envelope. It preserves unknown fields and omitted
@@ -371,6 +374,47 @@ production startup remain outside this fixture.
 Static worker builds and synthetic VM tests do not establish native execution.
 
 
+## Incoming Setup tombstones
+
+An incoming Setup tombstone removes the account on this browser. It needs the
+owner's account-removal host. Without one it stays `unavailable/document`. It
+passes the ordinary checks first: an acknowledged live local Setup, a different
+generation, a strictly later edit time, and unchanged local and sync preflights.
+A conflict or a pending local edit refuses it before any cleanup.
+
+`received-setup-removal.ts` then cleans this browser's account data through the
+removal host. It plans the session reduction with `planAccountSessionRemoval`.
+An unsupported session layout returns `unavailable/account-context` before any
+effect. The plan revokes the account's in-memory receipts, including shortcut Undo,
+then removes `cache:<acct>` and every recognized progress shard in one local removal
+and applies the session effects. Unrecognized `progress:<acct>:*` keys stay. A
+readback must show the removed keys absent, the session equal to the plan, and the
+Setup, Device and history unchanged. Only then does the one local set write the
+tombstone and its acknowledgement. Confirmation publishes `account-removed` with
+source `sync`.
+
+The cleanup runs before the tombstone lands, so no journal is written. A restart
+before the set finds the same live Setup and incoming tombstone, and repeats only
+the cleanup that is left. A restart after the set finds the tombstone already local.
+A rejected cleanup effect returns `cleanup-failed` with the original error. A
+mismatched readback returns `unconfirmed`. Both stop automatic work like a failed
+local set. Once the tombstone is local, a later cache for that account is ordinary
+data, and receipts revoked for the old Setup stay revoked when the same account ID
+gets a new Setup.
+
+Filter tombstones apply only under a local Setup tombstone. A Filter tombstone that
+arrives while the Setup is live stays unavailable, so the account's auto-add never
+runs without its Filter. In an automatic pass, an adopted Setup tombstone revisits
+its account's Filters, so Setup and Filter tombstones that arrive together converge
+in one pass. Arrival in either order converges on the same records. Filter tombstones
+under a removed Setup publish no view event. A live incoming Filter under a removed
+Setup stays `unavailable/account-context`. A local Setup tombstone stays unavailable
+before sync access, as before.
+
+This browser's `lastAccount` is not cleared here. That field is moving out of Device
+in separate work. A live Setup that replaces a local tombstone, tombstone expiry
+after 30 days, and chunk cleanup remain separate work.
+
 ## Automatic incoming documents on the fixture owner
 
 `startSync()` and the existing sync-area listener receive supported incoming
@@ -405,11 +449,13 @@ consume one ticket, perform no incoming scan, and never rearm themselves.
 
 The captured address count bounds each pass. An adopted target uses four local
 reads, three sync reads, and one local set. Enumeration adds one local read.
+An adopted Setup tombstone adds its account cleanup and one more receive of each
+of that account's captured Filters, because Filters sort before their Setup.
 The outbound attempt also confirms durable admission and complete raw state before invoking sync. This is a
 finite IO bound, not a native performance measurement or production approval.
 The receiver's last-read foreign-writer limit and all manual exclusions remain.
 There is no all-pass transaction, rollback, automatic retry, new conflict policy,
-account claim, join, reset, tombstone execution, cleanup, or production activation.
+account claim, join, reset, chunk cleanup, or production activation.
 
 Source tests, saved minified browser-target core execution in fresh Node VMs,
 and the saved fixture worker exercise this composition with synthetic
@@ -430,7 +476,8 @@ progress purge, or any production effect.
 
 This incoming Setup capability remains uninstalled and partial. Full Setup lifecycle
 reconciliation, Filter-dependent empty and shortcut-target witnesses, empty removal
-and cascades, remote-only creation, tombstones, joins, reset, conflict policies,
+and cascades, remote-only creation, a live Setup replacing a local tombstone,
+tombstone expiry, joins, reset, conflict policies,
 Store notifications, and production account behavior remain separate work. Timers
 remain outbound-only. Global unresolved debt can still block every outbound send.
 Native browser behavior and durability remain unproven.
@@ -560,7 +607,7 @@ Results distinguish commitment, unchanged state, refusal, unavailability, failur
 - `shown`, `breakage` and `gather` use `{v:1, global:JsonObject, accounts:Record<AccountKey,JsonObject>}`. Remove only the selected account bucket. Preserve root extensions, global memory and all other buckets. Accountless player/queue, pacing and routing belong in `global`. Account-specific playlist Undo, reopened-tab ownership and failures belong in that account's bucket. Existing ambiguous collections are refused.
 - `paused`, `tabs` and unknown unrelated keys remain exact. No recursive ownership inference or whole-session clear exists. Missing collections are unchanged. Session data never enters the durable record.
 
-The actual browser-free consumer is `tools/fixtures/account-removal-execution/run.ts`. Incoming deletion, shared-shortcut cascade and Undo, auto-emptying, claim coupling, Clear all, production adapters, sender validation, view events, tab reconciliation, native atomicity and exclusion of foreign writers remain separate work. Native verification is waived and unproven.
+The actual browser-free consumer is `tools/fixtures/account-removal-execution/run.ts`. The native starting owner supplies the real host, and incoming Setup tombstones are described above under "Incoming Setup tombstones". Shared-shortcut cascade and Undo, auto-emptying, claim coupling, Clear all, sender validation, view events, tab reconciliation, native atomicity and exclusion of foreign writers remain separate work. Native verification is waived and unproven.
 
 ## Inactive interim retention
 

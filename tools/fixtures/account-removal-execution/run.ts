@@ -59,6 +59,7 @@ type Fault = { readonly at: number; readonly when: "before" | "after"; readonly 
 type Io = { n: number; kind: string; phase: string; value?: unknown }
 export function createRemovalHarness(initial: RemovalFixtureState = removalFixture(), options: { fault?: Fault; details?: boolean; host?: boolean } = {}) {
   let state = copy(initial), ordinal = 0, dead = false, mono = 0, gen = 0, stamps = 0, subscriptions = 0
+  const syncListeners = new Set<() => void>()
   let fault = options.fault, hook: ((kind: string) => void) | undefined
   const error = new Error("Synthetic IO rejection"), io: Io[] = [], mutations: { n: number; kind: string; before?: RemovalFixtureState; after?: RemovalFixtureState }[] = []
   const schedules: number[] = [], events: unknown[] = [], automatic: unknown[] = []
@@ -98,7 +99,7 @@ export function createRemovalHarness(initial: RemovalFixtureState = removalFixtu
       async remove(keys: readonly RemovalSessionKey[]) { return port(`session.remove:${keys.map(key => `${key.kind}:${key.acct}`).join(",")}`, () => {}, () => { for (const key of keys) delete state.session[`${key.kind}:${key.acct}`] }) }
     } }
   const deps = { local, removal, claim: { kind: "unavailable" as const },
-    sync: { async get() { return port("sync.get", () => copy(state.sync)) }, async set(items: Readonly<Record<string, JsonValue>>) { return port("sync.set", () => {}, () => { state.sync = { ...state.sync, ...copy(items) } }) }, subscribe() { subscriptions++; return () => { subscriptions-- } } },
+    sync: { async get() { return port("sync.get", () => copy(state.sync)) }, async set(items: Readonly<Record<string, JsonValue>>) { return port("sync.set", () => {}, () => { state.sync = { ...state.sync, ...copy(items) } }) }, subscribe(changed: () => void) { subscriptions++; syncListeners.add(changed); return () => { subscriptions--; syncListeners.delete(changed) } } },
     syncClock: { now: () => mono, wallNow: () => 1000000 + mono, after(ms: number) { schedules.push(ms); return () => { schedules.push(-ms) } } },
     now() { stamps++; return 100 }, generation() { return `removed-${++gen}` }, onSyncResult(result: unknown) { automatic.push(result) }
   }
@@ -117,7 +118,7 @@ export function createRemovalHarness(initial: RemovalFixtureState = removalFixtu
   }
   return { deps, startup, io, mutations, events, automatic, schedules, error, state: () => copy(state), counts: () => ({ generations: gen, stamps, subscriptions }),
     time(value: number) { mono = value }, fault(value?: Fault) { fault = value; dead = false }, hook(value?: typeof hook) { hook = value },
-    foreign(change: (state: RemovalFixtureState) => void) { change(state) } }
+    foreign(change: (state: RemovalFixtureState) => void) { change(state) }, fireSync() { for (const changed of [...syncListeners]) changed() } }
 }
 
 export const accountRemovalExecutionPartitionCount = 16

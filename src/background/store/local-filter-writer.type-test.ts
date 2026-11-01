@@ -88,6 +88,7 @@ type ExpectedReceive =
   | { readonly kind: "adopted"; readonly received: SyncDocumentRecord }
   | { readonly kind: "unavailable"; readonly reason: "authority" | "history" | "account-context" | "document" | "pending" | "conflict" }
   | { readonly kind: "local-set-failed"; readonly error: unknown; readonly received: SyncDocumentRecord }
+  | { readonly kind: "cleanup-failed"; readonly error: unknown; readonly received: SyncDocumentRecord }
   | { readonly kind: "unconfirmed"; readonly received: SyncDocumentRecord; readonly cause:
     | { readonly kind: "authority" | "readback" }
     | { readonly kind: "read-failed"; readonly error: unknown }

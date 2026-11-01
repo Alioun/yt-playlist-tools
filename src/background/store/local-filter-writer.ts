@@ -72,6 +72,7 @@ import { classifyRetainedAuthority, coversArchivedSource, archiveRetained, archi
   type CanonicalAuthorityWrite } from "./interim-canonical-authority"
 import { LEGACY_DELETE_KEYS } from "./legacy"
 import type { SyncMutationPace } from "./sync-mutation-pacing"
+import { cleanReceivedSetupRemoval } from "./received-setup-removal"
 import { receiveDeliberateReset, authorizeReceivedResetRecovery, receivedResetKey, type SyncResetReceiveHost, type ReceivedResetResult } from "./sync-reset-receive"
 import { executeInterimRetention, projectInterimNote, projectInterimInstallationNote, interimConversionKey,
   readRetainedCheckpoint, retainedAgreementDevice, retainedCheckpointDifference, isInterimCanonicalKey, isInterimSourceKey,
@@ -151,6 +152,7 @@ export type SyncReceiveResult =
   | { readonly kind: "adopted"; readonly received: SyncDocumentRecord }
   | { readonly kind: "unavailable"; readonly reason: "authority" | "history" | "account-context" | "document" | "pending" | "conflict" }
   | { readonly kind: "local-set-failed"; readonly error: unknown; readonly received: SyncDocumentRecord }
+  | { readonly kind: "cleanup-failed"; readonly error: unknown; readonly received: SyncDocumentRecord }
   | { readonly kind: "unconfirmed"; readonly received: SyncDocumentRecord; readonly cause:
     | { readonly kind: "authority" | "readback" }
     | { readonly kind: "read-failed"; readonly error: unknown }
@@ -1206,7 +1208,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "authority" }
     try {
       const result = await receive(key)
-      if (result.kind === "local-set-failed" || result.kind === "unconfirmed") deactivate("stopped")
+      if (result.kind === "local-set-failed" || result.kind === "cleanup-failed" || result.kind === "unconfirmed") deactivate("stopped")
       if (key.kind === "settings" && result.kind === "adopted") emit({ kind: "settings-changed", source: "sync" }, false)
       if (key.kind === "setup" && result.kind === "adopted") { invalidateAccountSession(key.acct); emit({ kind: "setup-changed", source: "sync", acct: key.acct }, false) }
       return result
@@ -1239,10 +1241,16 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       const remote = await readJoinSync()
       if (isJsonObject(remote) && await signalJoinHistory(records, remote)) return { kind: "unavailable" }
     }
-    for (const key of targets) {
+    // Filters sort before their Setup, so an adopted Setup tombstone revisits its account's Filters once.
+    const queue = [...targets]
+    for (let index = 0; index < queue.length; index++) {
+      const key = queue[index]!
       if (lifetime.kind !== "active") return
       const result = await receiveAttempt(key)
-      if (result.kind === "local-set-failed") return { kind: "rejected", error: result.error }
+      if (key.kind === "setup" && result.kind === "adopted" && result.received.document.deleted === true) {
+        queue.push(...targets.filter(target => target.kind === "filter" && target.acct === key.acct))
+      }
+      if (result.kind === "local-set-failed" || result.kind === "cleanup-failed") return { kind: "rejected", error: result.error }
       if (result.kind === "unconfirmed") return result.cause.kind === "read-failed"
         ? { kind: "rejected", error: result.cause.error } : { kind: "unavailable" }
       if (lifetime.kind !== "active") return
@@ -1460,21 +1468,23 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
         if (error instanceof DecodeError) return unavailable("document")
         throw error
       }
-      if (document.kind !== "value") return unavailable("document")
+      if (document.kind !== "value" && document.kind !== "deleted") return unavailable("document")
       const shared = { kind: "ready", device: ready.rawDevice, history: ready.history.raw, joined: ready.history.joined,
-        raw, stamp: document.document } as const
+        raw, stamp: document.document, deleted: document.kind === "deleted" } as const
       if (key.kind === "settings") return { ...shared, selection: { kind: "settings" } } as const
       if (key.kind === "setup") return { ...shared, selection: { kind: "setup" } } as const
       const setupName = documentKey({ kind: "setup", acct: key.acct }), setup = records[setupName]
       if (!Object.hasOwn(records, setupName) || !isJsonObject(setup)) return unavailable("account-context")
+      let removed
       try {
         const supported = decodeDocument(setup, decodeSetup)
-        if (supported.kind !== "value") return unavailable("account-context")
+        if (supported.kind !== "value" && supported.kind !== "deleted") return unavailable("account-context")
+        removed = supported.kind === "deleted"
       } catch (error) {
         if (error instanceof DecodeError) return unavailable("account-context")
         throw error
       }
-      return { ...shared, selection: { kind: "filter", setup } } as const
+      return { ...shared, selection: { kind: "filter", setup, removed } } as const
     }
     function observation(records: Readonly<Record<string, unknown>>, joined: string | null) {
       if (records === null || typeof records !== "object" || Array.isArray(records) ||
@@ -1495,6 +1505,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       const inventory = readSyncInventory({ items })
       if (inventory.kind !== "read") return unavailable("document")
       const candidate = inventory.documents.find(entry => entry.baseKey === `s:${name.slice(4)}`)?.result
+      if (candidate?.kind === "deleted") return { kind: "ready", metadata, candidate } as const
       if (candidate?.kind !== "value" || candidate.value.kind !== key.kind) return unavailable("document")
       if (candidate.value.kind === "setup") {
         const setup = candidate.value.document.data
@@ -1506,8 +1517,10 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     }
     const initial = context(await guardedLocal.get(null))
     if (initial.kind !== "ready") return initial
+    if (initial.deleted) return unavailable("document")
+    const removedAccount = initial.selection.kind === "filter" && initial.selection.removed
     const baseline = { device: snapshot(initial.device), history: snapshot(initial.history), raw: snapshot(initial.raw),
-      selection: initial.selection.kind === "filter" ? { kind: "filter", setup: snapshot(initial.selection.setup) } as const : initial.selection }
+      selection: initial.selection.kind === "filter" ? { kind: "filter", setup: snapshot(initial.selection.setup), removed: removedAccount } as const : initial.selection }
     const sameSelection = (current: typeof initial.selection) => current.kind !== "filter"
       ? baseline.selection.kind === current.kind
       : baseline.selection.kind === "filter" && sameSyncJson(current.setup, baseline.selection.setup)
@@ -1522,10 +1535,14 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     }
     if (disposed()) return unavailable("authority")
     if (remote.kind !== "ready") return remote
+    // A removed Setup accepts only its Filters' tombstones. A live Setup takes a tombstone only through account cleanup.
+    const tombstone = remote.candidate.kind === "deleted"
+    if (removedAccount && !tombstone) return unavailable("account-context")
+    if (tombstone && !removedAccount && (key.kind !== "setup" || removal.kind === "unavailable")) return unavailable("document")
     if (sameSyncJson(initial.raw, remote.candidate.json)) return { kind: "idle" }
     const history = decodeSyncState(initial.history)
     if (!Object.hasOwn(history.pushed, name) || history.pushed[name] !== initial.stamp.gen) return unavailable("pending")
-    const incoming = remote.candidate.value.document
+    const incoming = remote.candidate.kind === "value" ? remote.candidate.value.document : remote.candidate.document
     if (incoming.gen === initial.stamp.gen || incoming.at <= initial.stamp.at) return unavailable("conflict")
     const metadata = snapshot(remote.metadata)
     const document = snapshot(remote.candidate.json)
@@ -1539,6 +1556,13 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     if (!sameSyncJson(document, preflight.candidate.json)) return unavailable("document")
     const latest = context(await guardedLocal.get(null))
     if (latest.kind !== "ready" || !unchanged(latest)) return unavailable("authority")
+    if (tombstone && key.kind === "setup" && removal.kind !== "unavailable") {
+      const cleanup = await cleanReceivedSetupRemoval(key.acct, { host: removal, accepted: () => invalidateAccountSession(key.acct),
+        async current() { const records = await guardedLocal.get(null); return unchanged(context(records)) ? records : undefined } })
+      if (cleanup.kind === "session-layout") return unavailable("account-context")
+      if (cleanup.kind === "rejected") return { kind: "cleanup-failed", received, error: cleanup.error }
+      if (cleanup.kind === "unconfirmed") return { kind: "unconfirmed", received, cause: { kind: cleanup.cause } }
+    }
     const next = repairedHistory(latest.history, [received])
     if (!next) throw new TypeError("Missing incoming acknowledgement")
     try { await guardedLocal.set({ [name]: document, sync: next }) } catch (error) {
@@ -1563,10 +1587,10 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       if (confirmed.kind !== "ready" || !sameSyncJson(document, confirmed.candidate.json)) {
         return { kind: "unconfirmed", received, cause: { kind: "readback" } }
       }
-      const changed = !sameDocumentValue(key, baseline.raw, document)
+      const changed = !removedAccount && !sameDocumentValue(key, baseline.raw, document)
       if (changed) {
         if (key.kind === "settings") emitView({ kind: "settings-changed", source: "sync" })
-        else if (key.kind === "setup") emitView({ kind: "setup-changed", source: "sync", acct: key.acct })
+        else if (key.kind === "setup") emitView(tombstone ? { kind: "account-removed", source: "sync", acct: key.acct } : { kind: "setup-changed", source: "sync", acct: key.acct })
         else emitView({ kind: "filter-changed", source: "sync", acct: key.acct, playlist: key.playlist })
       }
       return { kind: "adopted", received }
