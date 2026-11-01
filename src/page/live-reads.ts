@@ -79,7 +79,7 @@ export function createLiveReadPort(options: {
       if (old?.node === node && old?.video === video && old?.media === needsMedia()) continue
       if (old) { clear(old.stops); roots.delete(id) }
       if (!node) continue
-      const root: Root = { node, video, ad: old !== undefined && old.node === node && old.video === video && old.media === needsMedia() && old.ad, media: needsMedia(), stops: [] }
+      const root: Root = { node, video, ad: old?.node === node && old.video === video && old.ad, media: needsMedia(), stops: [] }
       roots.set(id, root)
       const current = () => !disposed && roots.get(id) === root && doc.getElementById(id) === node
       const changed = () => {

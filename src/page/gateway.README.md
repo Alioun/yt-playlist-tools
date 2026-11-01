@@ -41,7 +41,7 @@ Each gateway shares one subscription group per supported stream.
 The live port shares native listener groups across those subscriptions and follows replacement counting players.
 Navigation-only watchers own no media progress listeners. Unsupported streams attach nothing.
 Releases reject stale callbacks, and subscriber exceptions do not stop other subscribers.
-Ad event state survives listener changes while its counting root remains owned. An ad end missed while media is unwatched can conservatively suppress readings until a later ad-end event or root replacement.
+Ad event state survives listener changes while its counting root remains owned. An ad end missed while media is unwatched can conservatively suppress readings until a later ad-end event or a replacement of the root or its video.
 Streams use no timer or global subtree observer.
 Request jobs own deadlines separately from stream ownership.
 Page code uses no console, storage, or browser API.
