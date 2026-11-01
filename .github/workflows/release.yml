@@ -35,6 +35,7 @@ jobs:
       channel: ${{ steps.meta.outputs.channel }}
       kind: ${{ steps.meta.outputs.kind }}
       cws: ${{ steps.meta.outputs.cws }}
+      previous: ${{ steps.meta.outputs.previous }}
     steps:
       - uses: actions/checkout@v7
 
@@ -100,10 +101,12 @@ jobs:
       - name: AMO metadata
         env:
           KIND: ${{ needs.meta.outputs.kind }}
+          PREVIOUS: ${{ needs.meta.outputs.previous }}
           STRICT: ${{ needs.meta.outputs.release == 'true' && '--strict' || '' }}
         run: |
           bun scripts/amo-metadata.ts --version "$VERSION" --kind "$KIND" \
-            --channel "$CHANNEL" --out .output/amo-metadata.json $STRICT
+            --channel "$CHANNEL" --previous "$PREVIOUS" \
+            --out .output/amo-metadata.json $STRICT
 
       # The manifests too: later patch releases compare against them (REL-CI-36).
       # Collected outside .output/, which upload-artifact skips as hidden.
@@ -116,6 +119,9 @@ jobs:
           cp .output/*.zip .output/amo-metadata.json dist/
           cp .output/chrome-mv3/manifest.json dist/manifest.chrome.json
           cp "$firefox/manifest.json" dist/manifest.firefox.json
+          # The GitHub release's text. A release build has checked it exists.
+          notes="store/release-notes/$VERSION.md"
+          if [ -f "$notes" ]; then cp "$notes" dist/release-notes.md; fi
           ls -l dist
 
       # What's gated is what ships: every later job uses these exact files.
@@ -154,12 +160,12 @@ jobs:
             [ "$sha" = "$GITHUB_SHA" ] \
               || { echo "::error::$tag already exists at $sha, not $GITHUB_SHA"; exit 1; }
             echo "$tag already exists at this commit; finishing it."
-            gh release upload "$tag" --repo "$GITHUB_REPOSITORY" --clobber dist/*.zip dist/manifest.*.json
-            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --draft=false
+            gh release upload "$tag" --repo "$GITHUB_REPOSITORY" --clobber dist/*.zip dist/manifest.*.json dist/release-notes.md
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" --notes-file dist/release-notes.md --draft=false
           else
             gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
-              --target "$GITHUB_SHA" --title "$tag" --generate-notes $PRERELEASE \
-              dist/*.zip dist/manifest.*.json
+              --target "$GITHUB_SHA" --title "$tag" --notes-file dist/release-notes.md $PRERELEASE \
+              dist/*.zip dist/manifest.*.json dist/release-notes.md
           fi
 
   submit-amo:
@@ -305,3 +311,18 @@ jobs:
           # Patches always publish on approval; others follow CWS_PUBLISH_TYPE.
           CHROME_PUBLISH_TYPE: ${{ needs.meta.outputs.kind == 'patch' && 'DEFAULT_PUBLISH' || vars.CWS_PUBLISH_TYPE || 'DEFAULT_PUBLISH' }}
         run: bun scripts/cws-submit.ts "$(ls dist/*-chrome.zip)" "$VERSION"
+
+  # A release made with GITHUB_TOKEN starts no workflow by itself, so this asks
+  # pages.yml to rebuild the site: beta/updates.json and the /beta/ page list
+  # the new pre-release's signed .xpi once submit-amo has attached it.
+  pages:
+    needs: [github-release, submit-amo]
+    if: always() && needs.github-release.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Rebuild the site
+        run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main

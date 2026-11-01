@@ -50,6 +50,23 @@ expect "true beta patch true"    1.99.2  "v1.99.1 v18446744073709551617.0.0" pus
 # Tags that aren't vMAJOR.MINOR.PATCH are ignored.
 expect "true beta patch true"    1.99.2  "v1.99.1 v2.0.0-rc1"   push $main
 
+# expect_previous <want> <version> <tags>: the release the notes say this one follows.
+expect_previous() {
+  local want="$1" version="$2" tags="$3" got
+  got=$(GITHUB_OUTPUT= GITHUB_STEP_SUMMARY= scripts/release-meta.sh \
+      --version "$version" --tags "$tags" --event push --ref $main 2>/dev/null | awk -F= '$1=="previous"{print $2}')
+  if [ "$got" = "$want" ]; then
+    echo "ok   $version [$tags] previous -> $got"
+  else
+    echo "FAIL $version [$tags] previous -> $got, want $want"
+    failures=$((failures + 1))
+  fi
+}
+
+expect_previous 1.4.5  1.99.1 ""
+expect_previous 2.0.0  2.0.1  "v1.99.3 v2.0.0"
+expect_previous 1.99.9 1.99.10 "v1.99.1 v1.99.9"
+
 if [ "$failures" -gt 0 ]; then
   echo "$failures case(s) failed"
   exit 1
