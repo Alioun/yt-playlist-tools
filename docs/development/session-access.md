@@ -1,6 +1,6 @@
 # YouTube session access in dev builds
 
-Dev builds use an open, signed-in YouTube tab. Released versions still use the [legacy setup](../legacy/README.md). This access migration retains the React interface and existing features. The full [2.0 rebuild](../rebuild/README.md) is separate work.
+Dev builds use an open, signed-in YouTube tab. Firefox Add-ons still serves 1.4.5, which needs the [1.4.5 setup](../legacy/1.4.5-setup.md). This access migration retains the React interface and existing features. The full [2.0 rebuild](../rebuild/README.md) is separate work.
 
 The popup asks for agreement before the extension registers or injects its YouTube scripts. Revoking access unregisters those scripts and removes the extension's controls from open pages. Feature switches, shortcut keys, the watch threshold, and the theme are shared settings.
 
