@@ -2073,10 +2073,10 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     if (!saved || saved.consumed || saved.acct !== input.acct) return { kind: "refused", reason: "capture" }
     saved.consumed = true
     if (!validCacheInput(input)) return { kind: "refused", reason: "invalid" }
+    if (!sessionAccountCurrent(saved.revision, sessionRevisionView(), saved.acct)) return { kind: "refused", reason: "revoked" }
     const current = await readProjectionRecordsInLane()
     if (current.kind !== "records") return current
-    if (!sessionAccountCurrent(saved.revision, sessionRevisionView(), saved.acct) ||
-      !sameSyncJson(saved.device, cacheDeviceAuthority(current.records.device))) return { kind: "refused", reason: "revoked" }
+    if (!sameSyncJson(saved.device, cacheDeviceAuthority(current.records.device))) return { kind: "refused", reason: "revoked" }
     const setup = cacheSetupState(current.records, saved.acct)
     if (setup !== "live") return setup === "invalid" ? { kind: "invalid", part: "setup" } : { kind: "refused", reason: "no-setup" }
     let planned
