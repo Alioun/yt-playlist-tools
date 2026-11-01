@@ -9,4 +9,4 @@ The accepted picker model and source remain unchanged. These proposals carry no 
 
 The real `PickerSource` bridge and first-run owner must establish one destination commit owner. A source that commits a choice cannot also return a proposal that the existing first-run owner commits again. This is separate integration work.
 
-The three picker policies remain untouched. The renderer does not prescribe private confirmation text, partial-save closure or retry, or cancellation of a pending first pick.
+The three first-pick policies were settled on 2026-11-01 (R171 to R173) and are applied in `PickerModel` and the renderer.

@@ -10,7 +10,7 @@
 
 `onrelease` is required. It receives the model, context, reason, and outstanding `Promise<PickerEvent>` values. The caller owns disposal timing and calls `picker.close()` under its eventual policy. The renderer detaches the prior panel and suppresses stale UI callbacks. It never reuses a released model.
 
-The three pending picker policies remain pending. A picked outcome never closes this container. The renderer provides no first-pick toast, private confirmation wording, choice-only retry, or default cancellation policy. Confirmed item saves and refused or skipped choices remain separate fields in the actual outcome. The required release callback keeps close-during-pick policy outside the renderer.
+The three first-pick policies were settled on 2026-11-01 (R171 to R173). A picked outcome never closes this container. The caller closes it when the choice is `ok` or skipped. A private first pick's row shows "Saved. Private windows don't keep your playlist choice." (R171). A refused choice after a confirmed save shows the save, the refusal, **Undo** and **Try again** on the row, and Try again retries only the choice (R172). A first pick under way finishes after release, in the model, so the release callback may close the model at once (R173). The renderer still provides no first-pick toast.
 
 The synthetic fixture closes models immediately in its own release handler. That handler is fixture behavior, not a production policy.
 

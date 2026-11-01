@@ -73,7 +73,7 @@ Ordinary add handles expire through `release`. Gather handles survive release fo
 
 ## Reports and stopping
 
-Ordinary picker adds stay inline-only. Choose-mode picks leave destinations and first-pick feedback to the later picker caller. The three pending product questions are untouched. Missing and Full marks come from write answers. Unavailable feedback remains unrecognised. A 429 pauses that account for 60 seconds.
+Ordinary picker adds stay inline-only. Choose-mode picks leave destinations and first-pick feedback to the later picker caller. The first-pick policies (R171 to R173) live in `PickerModel`, not here. Missing and Full marks come from write answers. Unavailable feedback remains unrecognised. A 429 pauses that account for 60 seconds.
 
 Signed-out explicit add, remove, batch and Undo calls return `signed-out`. A later caller presents the typed `{ kind: "sign-in" }` action using the request's site, without inventing a playlist target or a toast report. Auto-add stays silent before target lookup. Sign-in UI wiring is not built.
 

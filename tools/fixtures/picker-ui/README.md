@@ -69,6 +69,6 @@ The seven public API negatives separately reject a fake model, an assumed succes
 
 ## Limits
 
-The private first-pick wording, partial-save closure and retry policy, and close-during-pick policy remain pending. The renderer emits actual typed results and requires the caller to own release. No callback is a persisted default.
+The private first-pick wording, partial-save closure and retry, and close-during-pick policies were settled on 2026-11-01 (R171 to R173). The renderer emits actual typed results and requires the caller to own release. No callback is a persisted default.
 
 The real Backend bridge, first-run single-commit integration, nullable cache stamp adaptation, popup sheets, site popovers, and full AutoAddList remain adjoining work. Native durability, ownership, and exclusion remain waived and unproven. Privacy approval is pending. Production activation is held. This candidate does not qualify or complete 2.0.

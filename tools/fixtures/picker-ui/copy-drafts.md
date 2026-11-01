@@ -2,7 +2,7 @@
 
 The catalogue preserves every existing message and placeholder. It adds settled picker copy and draft helper copy. Draft status does not establish privacy wording approval.
 
-The following additions need later copy approval. They do not decide any pending first-pick policy.
+The following additions need later copy approval. They decide no first-pick policy. R171 to R173 settled those on 2026-11-01.
 
 | Keys | Draft scope |
 |---|---|
@@ -14,4 +14,4 @@ The following additions need later copy approval. They do not decide any pending
 
 The specification's exact gather, quick-save, creation failure, duplicate-title, angle-bracket, visibility, refresh, sort, mark, and Watch later wording stays as specified. Singular and plural count variants use the shared `Intl.PluralRules` wrapper.
 
-The three pending policies retain their original register. This candidate supplies no default private first-pick confirmation. It displays actual choice refusals without deciding the partial-save toast or close policy. The caller receives every typed outcome and owns release timing.
+The owner approved `picker_pickedPrivate` ("Saved. Private windows don't keep your playlist choice.") with R171. A refused choice after a confirmed save reuses the approved `feedback_*_saved` and `feedback_*_already_in` lines, the `picker_refused_*` lines, `toast_action_undo`, `toast_action_try_again` and "Couldn't undo." (R172). The caller receives every typed outcome and owns release timing.

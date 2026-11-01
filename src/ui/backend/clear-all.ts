@@ -5,7 +5,7 @@ import type { Backend } from "./backend"
 
 export type ClearAllAvailability =
   | { readonly kind: "supported"; readonly checkbox: boolean }
-  /** Ticked, the clear still erases this browser only (R175). */
+  /** Ticked, the clear still erases this browser only (R174). */
   | { readonly kind: "newer-layout"; readonly localClear: true; readonly checkbox: boolean; readonly tickedPolicy: "local-only" }
   | { readonly kind: "unknown"; readonly localClear: true }
 const record = (raw: unknown): raw is Readonly<Record<string, unknown>> => raw !== null && typeof raw === "object" && !Array.isArray(raw)

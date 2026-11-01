@@ -48,7 +48,7 @@ The FirstRun adapter reads Setup and invokes those services only after its own r
 
 Quick-save, Music save and an explicitly selected existing shortcut destination call the real canonical destination operation. The adapter rechecks the account after the chooser, supplies the captured destination expectation, and accepts only the exact confirmed playlist. Unrelated destination changes remain the canonical owner's responsibility. Cancelled or unavailable choosers report that disposition and write nothing.
 
-Auto-add destination editing is outside this subset and returns `picker-unavailable`. Multiple shortcut rows receive no guessed picker target. The three pending picker policies remain open. The adapter neither activates features nor relaxes retained authority.
+Auto-add destination editing is outside this subset and returns `picker-unavailable`. Multiple shortcut rows receive no guessed picker target. The first-pick picker policies are settled in `PickerModel` (R171 to R173). The adapter neither activates features nor relaxes retained authority.
 
 ## Unexecuted checks
 

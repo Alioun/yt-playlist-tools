@@ -16,7 +16,7 @@ export type ClearAllAnswer =
     readonly outcome: "cleared" | "failed" | "partial" | "unconfirmed" | "deferred" | "unavailable";
     readonly stage: string; readonly readiness: "ready" | "held" | "not-started";
     readonly firstRun: "opened" | "unconfirmed" | "not-bound"; readonly progress: JsonValue
-    /** A ticked clear under a newer layout cleared this browser only (R175). */
+    /** A ticked clear under a newer layout cleared this browser only (R174). */
     readonly synced?: "kept-newer-layout" }
 export type ClearAllMessages = { readonly "ui.clearAll": { readonly payload: ClearAllPayload; readonly result: ClearAllAnswer } }
 const boolean = (raw: unknown) => typeof raw === "boolean"

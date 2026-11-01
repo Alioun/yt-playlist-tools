@@ -49,7 +49,7 @@ export type IncompleteClear =
   | { readonly kind: "partial"; readonly stage: "database"; readonly effects: readonly ClearEffect[] }
   | { readonly kind: "partial"; readonly stage: InventoryStage; readonly effects: readonly ClearEffect[]; readonly names: readonly string[] }
   | { readonly kind: "unconfirmed"; readonly stage: InventoryStage; readonly effects: readonly ClearEffect[]; readonly inventory: UnlistedInventory }
-/** "kept-newer-layout": the box was ticked, but a layout newer than this build knows leaves synced settings to the version that wrote them (R168, R175). */
+/** "kept-newer-layout": the box was ticked, but a layout newer than this build knows leaves synced settings to the version that wrote them (R168, R174). */
 export type SyncedClear = "untouched" | "reset" | "kept-newer-layout"
 export type ClearAllResult =
   | { readonly kind: "cleared"; readonly next: "first-run"; readonly effects: readonly ClearEffect[]; readonly readiness: FreshReadiness; readonly synced: SyncedClear; readonly opening?: FirstRunOpening }
