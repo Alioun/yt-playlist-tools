@@ -108,7 +108,7 @@
       "id": "G18",
       "topic": "Synced tombstone expiry",
       "answer": "Any browser expires a tombstone 30 days after its edit time, during an automatic receive pass with sync on, dropping its local copy and removing the synced copy in a separate cleanup turn. Filter tombstones go with their Setup's. ARC-MOD-21 gains an exception.",
-      "landed": "pending, 2.0/tombstone-expiry"
+      "landed": "2.0/tombstone-expiry, R178"
     }
   ],
   "coordinatorCalls": [
