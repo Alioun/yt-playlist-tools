@@ -878,7 +878,7 @@ export async function runWithdrawalRetainedAgreement() {
       else check(result.kind === "authorized-pending" && "completionCheck" in result && (result.observation.kind === "failed" || result.observation.kind === "unconfirmed") && result.observation.stage === stage, "Executor stage preserved")
       if (mode === "rejected-read-failed") {
         const observation = result.kind === "authorized-pending" ? result.observation : result
-        check(observation.kind === "unconfirmed" && "write" in observation && observation.write.kind === "rejected" && observation.write.error === h.error && "error" in observation && observation.error === h.readError, "Independent write and read errors retained")
+        check(observation.kind === "unconfirmed" && "write" in observation && typeof observation.write === "object" && observation.write.kind === "rejected" && observation.write.error === h.error && "error" in observation && observation.error === h.readError, "Independent write and read errors retained")
       }
     }
     check(h.writes.every(batch => !Object.hasOwn(batch, "device")), "Fault path has zero Device writes")
@@ -998,7 +998,7 @@ export async function runWithdrawalRetainedV1Acceptance() {
       else check(result.kind === "authorized-pending" && "completionCheck" in result && (result.observation.kind === "failed" || result.observation.kind === "unconfirmed") && result.observation.stage === stage, "Executor stage preserved")
       if (mode === "rejected-read-failed") {
         const observation = result.kind === "authorized-pending" ? result.observation : result
-        check(observation.kind === "unconfirmed" && "write" in observation && observation.write.kind === "rejected" && observation.write.error === h.error && "error" in observation && observation.error === h.readError, "Independent write and read errors retained")
+        check(observation.kind === "unconfirmed" && "write" in observation && typeof observation.write === "object" && observation.write.kind === "rejected" && observation.write.error === h.error && "error" in observation && observation.error === h.readError, "Independent write and read errors retained")
       }
     }
     check(h.writes.every(batch => !Object.hasOwn(batch, "device")), "Fault path has zero Device writes")

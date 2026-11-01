@@ -326,7 +326,7 @@ export async function runDeviceLifecycle() {
     if (outcome?.kind === "cleared") {
       if (outcome.readiness.kind === "ready") erased(h, id)
       else equal(h.stores(), { local: {}, session: {}, database: "absent" }, `${id}: erasure stays confirmed when fresh readiness fails`)
-      if (options.faults?.some(fault => fault.mode === "applied-reject")) check(outcome.effects.some(effect => effect.outcome.kind === "rejected"), `${id}: a rejected but applied effect keeps its original observation`)
+      if (options.faults?.some(fault => fault.mode === "applied-reject")) check(outcome.effects.some(effect => effect.effect !== "sync-reset" && effect.outcome.kind === "rejected"), `${id}: a rejected but applied effect keeps its original observation`)
     } else {
       check(opened.supervisor.owner() === undefined, `${id}: an incomplete clear exposes no owner`)
       if (outcome) equal(h.ledger.liveOwners, outcome.kind === "failed" && outcome.stage === "stop" && outcome.owner.kind === "rejected" ? 1 : 0, `${id}: no fresh owner after an incomplete clear`)
