@@ -893,7 +893,7 @@ The recognized interim path additionally requires lossless inactive retention of
 | Registered page scripts | Unregistered; open tabs tear down | Same |
 | Untouched | YouTube's playlists, site access, Firefox data-collection grants | Same |
 
-Under a layout newer than this build knows (DATA-48), DATA-39's unticked column still applies, after this browser's writers stop. `storage.sync` stays untouched. The clear erases the newer-layout data and never downgrades or normalizes it first. Whether the ticked column runs under a newer layout is not settled (R168).
+Under a layout newer than this build knows (DATA-48), DATA-39's unticked column still applies, after this browser's writers stop. `storage.sync` stays untouched. The clear erases the newer-layout data and never downgrades or normalizes it first. Ticked, it still runs only the unticked column. It clears this browser, leaves `storage.sync` to the newer version that wrote it and confirms "Cleared on this browser. Synced settings were left for the newer version of Perchling that saved them. Update Perchling here to clear them too." (R168, R174, R175).
 
 - **DATA-40** **After a ticked clear,** every other syncing browser:
   - drops its shared settings, account setups and filters, and those setups' caches and progress;

@@ -100,7 +100,7 @@ Later amendments, the main session's decisions and its resolutions supersede ear
 - **YM-ACC-7** **Account keys unreadable** (`DATASYNC_ID` or `LOGGED_IN` missing): Save, Like and Save to library are unavailable in that tab, so nothing is written to an unknown account. Their buttons hide, Quick actions and Quick-action shortcuts are partly working, and the notice is §13's "Account keys unreadable" row ([HEALTH-09](04-features-accounts-data.md#52-status); R50). Their keys stay caught and answer each press (YM-KEY-12; R68). Queue actions carry on. Playlist shortcuts, which only save, stop there too, and their keys answer the same way.
 - **YM-ACC-8** **Private windows,** only where the user allows the extension:
   - An account with a quick-save playlist uses it for one-click saves.
-  - Choose mode still saves the song, but the pick isn't stored as the quick-save playlist.
+  - Choose mode still saves the song, but the pick isn't stored as the quick-save playlist. Its confirmation reads "Saved. Private windows don't keep your playlist choice." (R171)
   - Pins are disabled, because the quick-save playlist belongs to the account setup. Their tooltip says why: "Quick-save playlists can't be changed in a private window." (R69)
   - Changes to shared settings made in a private window are still saved ([ACC-38](04-features-accounts-data.md#27-private-windows-and-containers); R58). This is settled, not provisional (R83).
   - Nothing from the session is stored: no Missing or Full marks, no remembered visibility, and new playlists stay in the tab's memory only.

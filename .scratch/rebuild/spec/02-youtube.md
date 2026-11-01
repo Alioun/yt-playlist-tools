@@ -828,7 +828,9 @@ The **playlist picker** is the extension's list of the user's playlists, with a 
 - It's titled "Save videos to…", with "One click will save here from now on."
 - A pick saves the video, becomes the quick-save playlist, closes the picker, and shows "Saved “{title}” to {list}. One click now saves there." with Undo.
 - Opened by a shortcut's **Choose**, the pick saves the video and becomes that shortcut's playlist instead, and its toast carries Undo for the save (YT-KEY-13; R24, R45).
-- In a private window, the pick saves the video but isn't stored as the quick-save playlist.
+- In a private window, the pick saves the video but isn't stored as the quick-save playlist. Its confirmation reads "Saved. Private windows don't keep your playlist choice." (R171)
+- If the save is confirmed but the quick-save playlist can't be stored, the picker stays open. The row shows the save and why the choice failed, and keeps Undo. **Try again** retries only the playlist choice, never the save (R172).
+- Closing the picker while a pick is saving doesn't cancel it. The save and the choice finish for the account the pick started on, without reopening the picker, while consent and that account's authority hold. A step that hasn't started never starts once either lapses (R173).
 - **Which Show feedback governs the first-pick toast:** that of the feature that opened the picker (R24, R27, R42):
   - quick-save's button, ▾ or **Choose**: Quick-save on thumbnails;
   - the watch-page menu: the watch-page button;
