@@ -207,6 +207,7 @@ test("service disposal is idempotent and prevents new tracking", () => {
 
 test("a detached document cannot supply a live point", () => {
   const frame = document.createElement("iframe")
+  frame.srcdoc = "<!doctype html><body></body>"
   document.body.append(frame)
   const doc = frame.contentDocument
   const realm = doc?.defaultView
