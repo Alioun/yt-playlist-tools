@@ -1,6 +1,6 @@
 # Background adapters
 
-These files connect the background Store core to its callers. `sender-origin.ts` resolves an authenticated message sender. `runtime.ts` is the background's native transport for the typed RPC. `local-filter-writer.ts` is the dormant browser Filter adapter. `startup-source.ts` builds the Store startup host from a sanitized source observation.
+These files connect the background Store core to its callers. `sender-origin.ts` resolves an authenticated message sender. `runtime.ts` is the background's native transport for the typed RPC. `local-filter-writer.ts` is the dormant browser Filter adapter. `startup-source.ts` builds the Store startup host from a sanitized source observation. `gather-browser.ts` is Gather's `GatherNativePort` over the browser's tabs and windows. It reads a tab as gone only on the browser's own no-such-ID error.
 
 ## Sender origin
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { createAddFlow, type Owner } from "../../../src/background/add-flow/add-flow"
-import { createGatherBrowser, type GatherBrowser } from "../../../src/background/gather/browser"
+import { createGatherBrowser, type GatherBrowser } from "../../../src/background/adapters/gather-browser"
 import { createTabsExecution } from "../../../src/background/gather/execution"
 import { createGather } from "../../../src/background/gather/gather"
 import { a, nativeTab, signedIn } from "../tabs/harness"
