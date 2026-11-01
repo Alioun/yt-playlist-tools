@@ -392,12 +392,17 @@ then removes `cache:<acct>` and every recognized progress shard in one local rem
 and applies the session effects. Unrecognized `progress:<acct>:*` keys stay. A
 readback must show the removed keys absent, the session equal to the plan, and the
 Setup, Device and history unchanged. Only then does the one local set write the
-tombstone and its acknowledgement. Confirmation publishes `account-removed` with
-source `sync`.
+tombstone and its acknowledgement. When `lastAccount` names the account, that set
+also writes `lastAccount: null`, and the readback must show `null`. A malformed
+`lastAccount` returns `unavailable/account-context` before any cleanup. Confirmation
+publishes `account-removed` with source `sync`.
 
 The cleanup runs before the tombstone lands, so no journal is written. A restart
-before the set finds the same live Setup and incoming tombstone, and repeats only
-the cleanup that is left. A restart after the set finds the tombstone already local.
+before the set finds the same live Setup, incoming tombstone and `lastAccount`, and
+repeats only the cleanup that is left. A restart after the set finds the tombstone
+and the cleared `lastAccount` already local. A crash at that point followed by a
+local Setup edit keeps the Setup without its cache, progress and session memory
+(R177).
 A rejected cleanup effect returns `cleanup-failed` with the original error. A
 mismatched readback returns `unconfirmed`. Both stop automatic work like a failed
 local set. Once the tombstone is local, a later cache for that account is ordinary
@@ -413,9 +418,8 @@ under a removed Setup publish no view event. A live incoming Filter under a remo
 Setup stays `unavailable/account-context`. A local Setup tombstone stays unavailable
 before sync access, as before.
 
-This browser's `lastAccount` is not cleared here. That field is moving out of Device
-in separate work. A live Setup that replaces a local tombstone, tombstone expiry
-after 30 days, and chunk cleanup remain separate work.
+A live Setup that replaces a local tombstone, tombstone expiry after 30 days, and
+chunk cleanup remain separate work.
 
 ## Automatic incoming documents on the fixture owner
 
@@ -872,4 +876,4 @@ New ordinary acceptance registration or repair, V5, authority release after with
 
 ## The last account
 
-`lastAccount` is its own `storage.local` key, an account key or `null`, and absent reads as `null`. `decodeLastAccount` in `src/shared/model/lastAccount.ts` reads it and throws `DecodeError` for any other value. It is not a `Device` field (DATA-07, R176). `seeAccountLabel` sets it when a live Setup's account becomes current. A settings import, account removal and a sync join set it to `null` when it names an account they remove. None of them writes `device`, so none can restore a consent that a withdrawal changed while it ran. `readLastAccount` returns the account only while its Setup is live.
+`lastAccount` is its own `storage.local` key, an account key or `null`, and absent reads as `null`. `decodeLastAccount` in `src/shared/model/lastAccount.ts` reads it and throws `DecodeError` for any other value. It is not a `Device` field (DATA-07, R176). `seeAccountLabel` sets it when a live Setup's account becomes current. A settings import, account removal, a sync join and an incoming Setup tombstone set it to `null` when it names an account they remove. None of them writes `device`, so none can restore a consent that a withdrawal changed while it ran. `readLastAccount` returns the account only while its Setup is live.

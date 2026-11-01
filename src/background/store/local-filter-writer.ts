@@ -10,7 +10,7 @@ import { readSettingsImport, settingsImportKey } from "./settings-import-persist
 import { parseConsentJobs } from "./consent-recovery"
 import { readSettingsFile, checkSettingsFile, settingsFileWindow, type SettingsFileOwner, type SettingsFileUnavailable } from "./settings-file-read"
 import { accountLabelState, checkedAccountLabel, labelCheckDue, planAccountLabel, sameAccountLabel, type AccountLabelsOwner, type AccountLabelSeen, type AccountLabelWrite } from "./account-label"
-import { decodeAccountCache, emptyAccountCache, LAST_ACCOUNT_KEY, type AccountLabel } from "../../shared/model"
+import { decodeAccountCache, decodeLastAccount, emptyAccountCache, LAST_ACCOUNT_KEY, type AccountLabel } from "../../shared/model"
 import { PlaylistCacheCapture, cacheDeviceAuthority, cacheSetupState, readCacheRecord, planCacheAbsorption, cacheJson, validCacheInput, type PlaylistCacheOwner, type PlaylistCacheRead, type PlaylistCacheWrite, type CacheAbsorption } from "./playlist-cache"
 import { executeExactRetainedPlaylist, readExactPlaylistSync } from "./withdrawn-document-recovery"
 import { readConsentDevice, agreementItems } from "./consent-withdrawal"
@@ -1554,9 +1554,14 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     if (preflight.kind !== "ready") return preflight
     if (!sameSyncJson(metadata, preflight.metadata)) return unavailable("history")
     if (!sameSyncJson(document, preflight.candidate.json)) return unavailable("document")
-    const latest = context(await guardedLocal.get(null))
+    const latestRecords = await guardedLocal.get(null), latest = context(latestRecords)
     if (latest.kind !== "ready" || !unchanged(latest)) return unavailable("authority")
+    let clearsLastAccount = false
     if (tombstone && key.kind === "setup" && removal.kind !== "unavailable") {
+      try { clearsLastAccount = decodeLastAccount(latestRecords) === key.acct } catch (error) {
+        if (error instanceof DecodeError) return unavailable("account-context")
+        throw error
+      }
       const cleanup = await cleanReceivedSetupRemoval(key.acct, { host: removal, accepted: () => invalidateAccountSession(key.acct),
         async current() { const records = await guardedLocal.get(null); return unchanged(context(records)) ? records : undefined } })
       if (cleanup.kind === "session-layout") return unavailable("account-context")
@@ -1565,7 +1570,8 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     }
     const next = repairedHistory(latest.history, [received])
     if (!next) throw new TypeError("Missing incoming acknowledgement")
-    try { await guardedLocal.set({ [name]: document, sync: next }) } catch (error) {
+    // The tombstone is the commit point, so the last account clears in the same set and a restart before it repeats both.
+    try { await guardedLocal.set({ ...clearsLastAccount ? { [LAST_ACCOUNT_KEY]: null } : {}, [name]: document, sync: next }) } catch (error) {
       return { kind: "local-set-failed", received, error }
     }
     try {
@@ -1576,7 +1582,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       if (post.kind !== "ready" || post.joined !== initial.joined || !sameSyncJson(post.device, baseline.device) || !sameSelection(post.selection)) {
         return { kind: "unconfirmed", received, cause: { kind: post.kind === "ready" || post.reason === "account-context" ? "authority" : "readback" } }
       }
-      if (!sameSyncJson(post.raw, document) || !sameSyncJson(post.history, next)) {
+      if (!sameSyncJson(post.raw, document) || !sameSyncJson(post.history, next) || clearsLastAccount && records[LAST_ACCOUNT_KEY] !== null) {
         return { kind: "unconfirmed", received, cause: { kind: "readback" } }
       }
       const confirmed = observation(await sync.get(), initial.joined)

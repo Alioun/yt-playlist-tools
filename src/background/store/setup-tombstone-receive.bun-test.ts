@@ -28,6 +28,7 @@ function arrive(h: ReturnType<typeof createRemovalHarness>, names: readonly stri
 function removedHere(seed: RemovalFixtureState, adopted: readonly string[]): RemovalFixtureState {
   const state = structuredClone(seed), pushed = json(json(state.local.sync).pushed)
   for (const name of adopted) { state.local[name] = tombstone(name); pushed[name] = tombstone(name).gen!; state.sync[`s:${name.slice(4)}`] = tombstone(name) }
+  if (state.local.lastAccount === acct) state.local.lastAccount = null
   delete state.local[`cache:${acct}`]
   for (let shard = 0; shard < 16; shard++) delete state.local[`progress:${acct}:${shard}`]
   delete state.session[`skips:${acct}`]; delete state.session[`cooldown:${acct}`]
@@ -129,6 +130,28 @@ test.each([
   try {
     arrive(h, [setupName])
     expect(await owner.receiveSyncDocument({ kind: "setup", acct })).toEqual({ kind: "unavailable", reason })
+    expect(h.state().local).toEqual(seed.local)
+    expect(h.state().session).toEqual(seed.session)
+  } finally { await owner.dispose() }
+})
+
+test("a Setup tombstone for another account leaves this browser's last account", async () => {
+  const seed = syncedSeed(); seed.local.lastAccount = other
+  const h = createRemovalHarness(seed), owner = createLocalFilterWriter(h.deps)
+  try {
+    arrive(h, [setupName, ...liveFilters])
+    await owner.startSync()
+    expect(h.state().local).toEqual(removedHere(seed, [setupName, ...liveFilters]).local)
+    expect(h.state().local.lastAccount).toBe(other)
+  } finally { await owner.dispose() }
+})
+
+test("a malformed last account refuses an incoming Setup tombstone before any account cleanup", async () => {
+  const seed = syncedSeed(); seed.local.lastAccount = "not an account"
+  const h = createRemovalHarness(seed), owner = createLocalFilterWriter(h.deps)
+  try {
+    arrive(h, [setupName])
+    expect(await owner.receiveSyncDocument({ kind: "setup", acct })).toEqual({ kind: "unavailable", reason: "account-context" })
     expect(h.state().local).toEqual(seed.local)
     expect(h.state().session).toEqual(seed.session)
   } finally { await owner.dispose() }
