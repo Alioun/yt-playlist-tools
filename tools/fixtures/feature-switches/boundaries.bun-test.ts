@@ -2,6 +2,7 @@ import { expect, test } from "bun:test"
 import { createStartingLocalFilterWriter } from "../../../src/background/store/local-filter-writer"
 import { nativeSharedSettingsAccess } from "../../../src/background/adapters/shared-settings"
 import { CONTRACT_VERSION } from "../../../src/shared/contracts/protocol"
+import type { JsonValue } from "../../../src/shared/contracts/json"
 import { build } from "../tabs/harness"
 import { createAuthorityHarness, installAuthorityFixture, releaseAuthorityFixture } from "../interim-recovery-review/run"
 import { withdrawRemovalFixture } from "../account-removal-execution/run"
@@ -165,7 +166,7 @@ test("retained-canonical startup holds incomplete cleanup and exact recovery pre
   const permissions = world("owner")
   const access = nativeSharedSettingsAccess(permissions.permissions)
   const owner = createStartingLocalFilterWriter({ ...h.actor("canonical-feature"), featureAccess: access, generation: () => "feature-stamp" })
-  let archived: unknown
+  let archived: JsonValue | undefined
   try {
     expect(await owner.ready()).toBe("ok"); archived = h.records().interimConversion
     h.write(async (items, apply) => { apply(items); if (Object.hasOwn(items, "doc:settings")) throw h.error })

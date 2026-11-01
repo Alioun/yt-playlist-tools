@@ -12,6 +12,7 @@ import { decodeSettings } from "../../../src/shared/model"
 import { messageParameters } from "../../../src/shared/i18n/parameters"
 import type { JsonObject } from "../../../src/shared/contracts/json"
 
+if (settingsOrigin.kind !== "ui") throw Error("Expected the settings page UI origin")
 const origin = settingsOrigin.origin
 const principal = "reconciliation-settings-document"
 const account = "AAAAAAAAAAAAAAAA"

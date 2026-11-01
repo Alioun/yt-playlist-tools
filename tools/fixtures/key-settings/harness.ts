@@ -8,7 +8,7 @@ import type { NativeSender } from "../../../src/background/adapters/sender-origi
 import type { KeySettingChange, KeySettingAnswer } from "../../../src/shared/contracts/key-settings"
 import { keyForWire, keyAt } from "../../../src/shared/contracts/key-settings-fields"
 import type { ShortcutTarget } from "../../../src/shared/keys"
-import { decodeSettings, isShortcutId, type Key } from "../../../src/shared/model"
+import { decodeSettings, isAccountKey, isShortcutId, type Key } from "../../../src/shared/model"
 import type { JsonObject } from "../../../src/shared/contracts/json"
 import { startingOwnerFixture } from "../starting-owner/support"
 import seedData from "./seed.json"
@@ -23,6 +23,7 @@ export type Route = "owner" | "native" | "wire"
 export type Fault = "none" | "reject-before" | "reject-after" | "partial" | "ignore" | "readback-fail" | "mismatch"
 export function chord(letter: string): Key { return { code: `Key${letter.toUpperCase()}`, char: letter, ctrl: false, alt: true, shift: false, meta: false } }
 export function shortcut(value: string) { if (!isShortcutId(value)) throw Error("Expected canonical shortcut ID"); return value }
+export function account(value: string) { if (!isAccountKey(value)) throw Error("Expected canonical account key"); return value }
 
 export function world(route: Route, initial: JsonObject = seed(), privateWindow = false) {
   const h = startingOwnerFixture(initial)
@@ -74,7 +75,10 @@ export function world(route: Route, initial: JsonObject = seed(), privateWindow 
   const router = createUiRouter({ native: senderPorts, owner, sharedSettings: owner, services: { kind: "unavailable" },
     firstRun: { readAccess: () => featureAccess.read(), lookup: { sync: { get: () => h.native.storage.sync.get(null), subscribe: () => () => {} }, clock, isCurrent: () => true } },
     transport: network.connect({ id: "key-fixture" }), rpc: { build, deadline: clock.after } })
-  const backend = createBrowserBackend({ permissions: h.native.permissions, storage: { local: { get: keys => local.get(Array.isArray(keys) ? keys : []) },
+  const backend = createBrowserBackend({ permissions: h.native.permissions, storage: { local: { get: keys => {
+    if (!Array.isArray(keys) || !keys.every(key => typeof key === "string")) throw Error("Synthetic named local keys")
+    return local.get(keys)
+  } },
     onChanged: { addListener() {}, removeListener() {} } }, runtime: { sendMessage(message) { trace.push("rpc"); return network.connect(sender).send(message) },
       getManifest: () => ({ manifest_version: 3, name: "Key fixture", version: "1.0.0", optional_host_permissions: ["https://music.youtube.com/*"], optional_permissions: ["contextMenus"] }) }
   }, { build, deadline: clock.after, windowId: origin.windowId, browser: "chrome" })

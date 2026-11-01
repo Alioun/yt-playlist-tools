@@ -21,7 +21,7 @@ test.each(optionCases)("ordinary option $name changes exactly its independent Se
   if (raw === null || typeof raw !== "object" || Array.isArray(raw)) throw Error("Missing finite settings specimen")
   const current = decodeSettings(raw.data), before = structuredClone(current)
   const result = changeSharedSetting({ current, change: specimen.change })
-  expect(result).toEqual({ kind: "changed", settings: specimen.expectedSettings })
+  expect(result).toEqual<unknown>({ kind: "changed", settings: specimen.expectedSettings })
   expect(current).toEqual(before)
   if (result.kind !== "changed") throw Error("Expected an ordinary option candidate")
   expect(changeSharedSetting({ current: result.settings, change: specimen.change })).toEqual({ kind: "unchanged" })

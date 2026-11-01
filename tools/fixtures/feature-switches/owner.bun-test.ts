@@ -159,7 +159,7 @@ for (const route of routes) {
       expect(await w.change(autoOn)).toMatchObject({ kind: "confirmed" })
       for (const name of Object.keys(before).filter(name => /^progress:[AB]{16}:/.test(name))) expect(w.h.records()[name]).toEqual({})
       for (const name of Object.keys(before).filter(name => name.startsWith("doc:setup:") || name.startsWith("doc:filter:"))) expect(w.h.records()[name]).toEqual(before[name])
-      expect(w.settings().autoAdd.pct).toBe(object(object(object(before["doc:settings"]).data).autoAdd).pct)
+      expect(w.settings().autoAdd.pct).toBe<unknown>(object(object(object(before["doc:settings"]).data).autoAdd).pct)
       expect(w.h.session()).toEqual(session)
     } finally { await w.dispose() }
   })
@@ -235,7 +235,7 @@ for (const route of routes) {
       if (answer.kind !== "confirmed") throw Error("Expected confirmed shortcut preset")
       expect(answer.conflicts).toBeGreaterThan(0)
       expect(w.settings().shortcuts.list.map(value => value.id)).toEqual(["new001", "new004"])
-      expect(w.settings().shortcuts.list[0]?.key).toEqual(key)
+      expect(w.settings().shortcuts.list[0]?.key).toEqual<unknown>(key)
       expect(w.settings().shortcuts.list[1]?.key).toBeNull()
       expect(w.h.records().unclaimed).toEqual(before.unclaimed)
       expect(w.h.records()["doc:setup:AAAAAAAAAAAAAAAA"]).toEqual(before["doc:setup:AAAAAAAAAAAAAAAA"])

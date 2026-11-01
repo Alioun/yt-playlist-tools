@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { world, seed, object, type Route } from "./harness"
+import { world, seed, object, account, type Route } from "./harness"
 import { withdrawRemovalFixture } from "../account-removal-execution/run"
 import { gate } from "../starting-owner/support"
 import { keySettingsProgressKey, readKeySettingsProgress } from "../../../src/background/store/key-settings-progress"
@@ -36,7 +36,7 @@ for (const route of ["owner", "native", "wire"] satisfies readonly Route[]) {
       expect(restored.settings().shortcuts.list).toEqual([])
       expect(object(object(restored.h.records()["doc:setup:AAAAAAAAAAAAAAAA"]).data).targets).toEqual({})
       expect(await restored.owner.recoverWithdrawnWork(restored.origin, { review: held.review, job: selected.selection })).toMatchObject({ kind: "unavailable" })
-      expect(restored.events).toEqual([{ kind: "settings-changed", source: "local" }, { kind: "setup-changed", source: "local", acct: "AAAAAAAAAAAAAAAA" }])
+      expect(restored.events).toEqual([{ kind: "settings-changed", source: "local" }, { kind: "setup-changed", source: "local", acct: account("AAAAAAAAAAAAAAAA") }])
     } finally { await restored.dispose() }
   })
 

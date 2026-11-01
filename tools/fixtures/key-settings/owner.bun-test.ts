@@ -2,7 +2,7 @@ import { expect, test } from "bun:test"
 import { keyAt, keyForWire } from "../../../src/shared/contracts/key-settings-fields"
 import { keySettingsProgressKey, readKeySettingsProgress } from "../../../src/background/store/key-settings-progress"
 import type { ShortcutTarget } from "../../../src/shared/keys"
-import { world, seed, object, chord, shortcut, type Route, type Fault } from "./harness"
+import { world, seed, object, chord, shortcut, account, type Route, type Fault } from "./harness"
 
 const routes: readonly Route[] = ["owner", "native", "wire"]
 const actions = ["next", "queue", "save", "picker", "like", "remove", "library", "mix", "album", "artist"] as const
@@ -91,7 +91,7 @@ for (const route of routes) {
     const w = world(route)
     try {
       await w.owner.ready()
-      for (let n = 1; n < 20; n++) expect(await w.change({ kind: "shortcut-add" })).toEqual({ kind: "added", id: `new${String(n).padStart(3, "0")}` })
+      for (let n = 1; n < 20; n++) expect(await w.change({ kind: "shortcut-add" })).toEqual({ kind: "added", id: shortcut(`new${String(n).padStart(3, "0")}`) })
       expect(w.settings().shortcuts.list.map(row => row.id)).toEqual(["save01", ...Array.from({ length: 19 }, (_, n) => `new${String(n + 1).padStart(3, "0")}`)])
       const before = w.h.records()
       expect(await w.change({ kind: "shortcut-add" })).toEqual({ kind: "refused", reason: "limit" })
@@ -107,7 +107,7 @@ for (const route of routes) {
     const w = world(route, initial)
     try {
       await w.owner.ready(); const setup = w.h.records()["doc:setup:AAAAAAAAAAAAAAAA"]
-      expect(await w.change({ kind: "shortcut-add" })).toEqual({ kind: "added", id: "new004" })
+      expect(await w.change({ kind: "shortcut-add" })).toEqual({ kind: "added", id: shortcut("new004") })
       expect(w.settings().shortcuts.list.map(row => row.id)).toEqual(["save01", "new004"])
       expect(w.h.records()["doc:setup:AAAAAAAAAAAAAAAA"]).toEqual(setup)
     } finally { await w.dispose() }
@@ -130,6 +130,7 @@ for (const route of routes) {
     const w = world(route, initial, privateWindow)
     try {
       await w.owner.ready(); const original = w.h.records(), row = w.settings().shortcuts.list[0]
+      if (!row) throw Error("Expected the seeded shortcut row")
       const removed = await w.remove()
       expect(removed).toMatchObject({ kind: "removed", id: "save01", undoForMs: 6000 })
       expect(w.settings().shortcuts.list).toEqual([])
@@ -140,7 +141,7 @@ for (const route of routes) {
         expect(data).toEqual(expected)
       }
       expect(w.events).toEqual([{ kind: "settings-changed", source: "local" },
-        { kind: "setup-changed", source: "local", acct: "AAAAAAAAAAAAAAAA" }, { kind: "setup-changed", source: "local", acct: "BBBBBBBBBBBBBBBB" }])
+        { kind: "setup-changed", source: "local", acct: account("AAAAAAAAAAAAAAAA") }, { kind: "setup-changed", source: "local", acct: account("BBBBBBBBBBBBBBBB") }])
       w.h.mutate(records => { object(object(records["doc:settings"]).data).theme = "dark" })
       if (removed.kind !== "removed") throw Error("Expected internal removal receipt")
       w.advance(5999)
@@ -207,7 +208,7 @@ for (const route of routes) {
     const w = world(route, initial)
     try {
       await w.owner.ready(); await w.assign({ kind: "undo" }, chord("z"))
-      expect(w.settings().shortcuts.list[0]).toEqual(row)
+      expect(w.settings().shortcuts.list[0]).toEqual<unknown>(row)
       const stale = { kind: "key", target: { kind: "undo" }, expected: null, key: chord("x"), confirmation: { kind: "none" } } as const
       const before = w.h.records()
       expect(await w.change(stale)).toEqual({ kind: "refused", reason: "stale" }); expect(w.h.records()).toEqual(before)

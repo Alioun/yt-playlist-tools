@@ -8,7 +8,7 @@ test.each(optionCases)("single-document executor confirms ordinary option $name 
   let records = structuredClone(optionInitial), sets = 0, remote = 0
   const batches: Readonly<JsonObject>[] = []
   function object(value: unknown): JsonObject {
-    if (value === null || typeof value !== "object" || Array.isArray(value) || !isJsonValue(value)) throw Error("Expected finite fixture object")
+    if (!isJsonValue(value) || value === null || typeof value !== "object" || Array.isArray(value)) throw Error("Expected finite fixture object")
     return value
   }
   const answer = await executeSharedSetting({

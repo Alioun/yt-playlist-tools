@@ -3,6 +3,7 @@ import { parseConsentJobs } from "../../../src/background/store/consent-recovery
 import { readSettingsImport } from "../../../src/background/store/settings-import-persistence"
 import { defaultSettings, defaultSetup } from "../../../src/shared/model"
 import { SYNC_BUDGET_ITEMS } from "../../../src/background/store/sync-codec"
+import type { JsonObject } from "../../../src/shared/contracts/json"
 import { old, syncInventory } from "../settings-import-plan/specimens"
 import { world, ui, initial, payload, fileText, object, A, B, C, settingsImportKey, type Fault } from "./harness"
 
@@ -164,7 +165,8 @@ test("withdrawal around each write retains the original effect and a later Agree
 }, 120000)
 
 test("invalid and newer continuations remain inspectable and blocked without mutation", async () => {
-  for (const marker of [{ v: 2, kind: "settings-import-continuation", future: true }, { v: 1, kind: "settings-import-continuation", next: 999 }]) {
+  const markers: readonly JsonObject[] = [{ v: 2, kind: "settings-import-continuation", future: true }, { v: 1, kind: "settings-import-continuation", next: 999 }]
+  for (const marker of markers) {
     const h = world()
     try {
       h.h.foreign(state => { state.local[settingsImportKey] = marker })

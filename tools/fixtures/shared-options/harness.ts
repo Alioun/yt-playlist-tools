@@ -8,7 +8,7 @@ export type Route = "owner" | "native"
 export type Fault = "none" | "reject-before" | "reject-after" | "ignore" | "mismatch" | "readback-fail"
 
 export function object(value: unknown): JsonObject {
-  if (value === null || typeof value !== "object" || Array.isArray(value) || !isJsonValue(value)) throw Error("Expected finite JSON object")
+  if (!isJsonValue(value) || value === null || typeof value !== "object" || Array.isArray(value)) throw Error("Expected finite JSON object")
   return value
 }
 

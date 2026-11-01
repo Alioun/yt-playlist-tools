@@ -99,7 +99,10 @@ export function world(route: Route, initial: JsonObject = seed(), privateWindow 
   const router = createUiRouter({ native: senderPorts, owner, sharedSettings: owner, services: { kind: "ready", tabs, playlists },
     firstRun: { readAccess: () => options.featureAccess.read(), lookup: { sync: { get: () => native.storage.sync.get(null), subscribe: () => () => {} }, clock, isCurrent: () => true } },
     transport: network.connect({ id: "feature-fixture" }), rpc: { build, deadline: clock.after } })
-  const backend = createBrowserBackend({ permissions, storage: { local: { get: keys => local.get(Array.isArray(keys) ? keys : []) },
+  const backend = createBrowserBackend({ permissions, storage: { local: { get: keys => {
+    if (!Array.isArray(keys) || !keys.every(key => typeof key === "string")) throw Error("Synthetic named local keys")
+    return local.get(keys)
+  } },
     onChanged: { addListener() {}, removeListener() {} } }, runtime: {
     sendMessage: network.connect(sender).send,
     getManifest: () => ({ manifest_version: 3, name: "Feature fixture", version: "1.0.0", optional_host_permissions: ["https://music.youtube.com/*"], optional_permissions: ["contextMenus"] })
