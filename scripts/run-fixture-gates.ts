@@ -129,6 +129,13 @@ function withoutDirective(file: string, directiveLine: number): Buffer {
   return Buffer.from(lines.join("\n"))
 }
 
+function anchoredLine(file: string, directive: string, statement: unknown): number {
+  const lines = readFileSync(file, "utf8").split("\n")
+  const found = lines.flatMap((line, index) => line === directive && (typeof statement !== "string" || lines[index + 1] === statement) ? [index + 1] : [])
+  if (found.length !== 1) throw Error(`${file} holds ${found.length} copies of the directive "${directive.trim()}"`)
+  return found[0]!
+}
+
 function negativeCases(gate: Extract<FixtureGate, { kind: "negatives" }>): NegativeCase[] {
   const source: NegativeSource = gate.source
   if ("svelteFiles" in source) return Object.entries(source.svelteFiles).map(([file, line]) => ({ id: file, checker: "svelte-check", file: fixturePath(gate, file), line, codes: [] }))
@@ -144,7 +151,9 @@ function negativeCases(gate: Extract<FixtureGate, { kind: "negatives" }>): Negat
     const id = String(record.id ?? `${record.file}:${record.directiveLine}`)
     if (typeof record.directiveLine === "number") {
       const file = String(record.file)
-      return { id, checker: "tsc", file, line: Number(record.intendedLine ?? record.intendedDiagnosticLine), codes: [], content: withoutDirective(file, record.directiveLine) }
+      const offset = Number(record.intendedLine ?? record.intendedDiagnosticLine) - record.directiveLine
+      const directiveLine = typeof record.directive === "string" ? anchoredLine(file, record.directive, record.statement) : record.directiveLine
+      return { id, checker: "tsc", file, line: directiveLine + offset, codes: [], content: withoutDirective(file, directiveLine) }
     }
     if (typeof record.patch === "string" && typeof record.template !== "string") {
       const file = String(record.target)
