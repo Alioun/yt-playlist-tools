@@ -10,5 +10,10 @@
       "~/*": ["./src/*"],
       "$kit": ["./tools/fixtures/svelte-pilot/page-link/src/site/kit/index.ts"]
     }
-  }
+  },
+  "exclude": [
+    "**/node_modules",
+    ".output",
+    "tools/fixtures/site-core-lifecycle/svelte-props.ts"
+  ]
 }
