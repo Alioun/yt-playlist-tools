@@ -629,6 +629,7 @@ The card menu raises no toasts of its own, apart from YT-BRK notices, which Show
 **YT-ADD-17: the extension's mark.** A small mark starts only the toasts the user didn't ask for that aren't failures: auto-add's confirmations and notes. Failures, auto-add's and the not-working notices included, show the error icon in its place. Answers to the user's own click or key carry no mark. The look is [05](05-ui.md)'s (UI-TOAST-07).
 
 **YT-ADD-18: copy rules.**
+- All user-facing copy goes through pstack's unslop rules, strings this spec pins word for word included. Where unslop changes a pinned string, the spec carries the new wording (R188). Typographic quotes around titles and the "…" cut stay, because they are this product's format, not prose style (R45).
 - Each toast is one sentence.
 - The video title is in typographic double quotes, “{title}”, cut at 40 characters with "…". If no title is known, it reads "this video". Every quote in copy is typographic (R45).
 - Playlist titles are unquoted, each also cut at 40. The one exception is "{Shortcut} now saves to “{Playlist}”.", where the quotes keep a shortcut's name and its playlist's title apart (R24, R77).
@@ -827,7 +828,7 @@ The **playlist picker** is the extension's list of the user's playlists, with a 
 **YT-PK-09: choose mode.**
 - It's titled "Save videos to…", with "One click will save here from now on."
 - A pick saves the video, becomes the quick-save playlist, closes the picker, and shows "Saved “{title}” to {list}. One click now saves there." with Undo.
-- Opened by a shortcut's **Choose**, the pick saves the video and becomes that shortcut's playlist instead, and its toast carries Undo for the save (YT-KEY-13; R24, R45).
+- Opened by a shortcut's **Choose**, it's titled "Pick the shortcut's playlist", with no line under it (R182). The pick saves the video and becomes that shortcut's playlist instead, and its toast carries Undo for the save (YT-KEY-13; R24, R45).
 - In a private window, the pick saves the video but isn't stored as the quick-save playlist. Its confirmation reads "Saved. Private windows don't keep your playlist choice." (R171)
 - If the save is confirmed but the quick-save playlist can't be stored, the picker stays open. The row shows the save and why the choice failed, and keeps Undo. **Try again** retries only the playlist choice, never the save (R172).
 - Closing the picker while a pick is saving doesn't cancel it. The save and the choice finish for the account the pick started on, without reopening the picker, while consent and that account's authority hold. A step that hasn't started never starts once either lapses (R173).
@@ -957,7 +958,7 @@ The rules for presets ([04](04-features-accounts-data.md) FT-04):
 - Choosers show it as "Watch later (every account)".
 - Choosing Watch later is allowed in a private window, because it's a shared choice ([04](04-features-accounts-data.md) DATA-32; R58, R83).
 
-**YT-KEY-13: a shortcut with no playlist on this account** answers "{Shortcut} has no playlist on {Account} yet.", with a **Choose** action. It's a neutral hint, not a failure, and it always shows, even with Show feedback off. (R24, R56)
+**YT-KEY-13: a shortcut with no playlist on this account** answers "{Shortcut} has no playlist on {Account} yet.", with a **Choose** action. It's a neutral hint, not a failure, and it always shows, even with Show feedback off. **Choose** opens the picker titled "Pick the shortcut's playlist" (YT-PK-09). (R24, R56, R182)
 - **Choose** opens the in-page picker in choose mode for that shortcut. The pick saves the video, as any choose-mode pick does ([ticket 14](../issues/14-in-page-controls.md)), and becomes the shortcut's playlist on this account.
 - The toast then reads "{Shortcut} now saves to “{Playlist}”.", with Undo for the saved video. The shortcut keeps its new playlist. It's a confirmation under Playlist shortcuts' Show feedback. The same holds on YouTube Music (R45).
 
@@ -972,7 +973,7 @@ The rules for presets ([04](04-features-accounts-data.md) FT-04):
 **YT-KEY-15: Also on YouTube Music** (on by default) makes playlist shortcuts work on music.youtube.com too, acting on songs ([03-youtube-music.md](03-youtube-music.md) YM-PS-1).
 - **The section switch:** it takes effect only while the YouTube Music section is on. With the section off, nothing of ours runs there, and the option is kept for when it's back on (R1).
 - **The undo key** doesn't depend on it: it works on any page while a toast with Undo is on screen (YT-KEY-05). While this option is on, Playlist shortcuts counts as a shortcut feature on YouTube Music, so a press there with nothing to undo answers "Nothing to undo." (R44).
-- **Access on Chrome:** it needs YouTube Music access. That's asked from the click that switches it on while Playlist shortcuts is on, or that first switches Playlist shortcuts on, since the preset turns this option on. The section switch itself never asks ([04](04-features-accounts-data.md) FT-44; R53).
+- **Access:** it needs YouTube Music access, on both browsers (R179). That's asked from the click that switches it on while Playlist shortcuts is on, or that first switches Playlist shortcuts on, since the preset turns this option on. The section switch itself never asks ([04](04-features-accounts-data.md) FT-44; R53).
 - **Without access,** the row reads "Needs site access" with **Give access**. The violet "!" shows on every tab while Playlist shortcuts and this option are both on and the section is on (04 FT-13, FT-46, FT-47; R53).
 - **Access denied:**
   - from the click that switches Playlist shortcuts on, in the popup or Settings: Playlist shortcuts goes on, this option turns off, and "No access to YouTube Music, so shortcuts work on YouTube only." shows in place, under Playlist shortcuts' row (04 FT-52; R71);
@@ -1696,7 +1697,7 @@ Later amendments and main-session decisions take precedence. These were applied 
 
 ## Resolved during assembly
 
-Every conflict and gap this chapter raised in its earlier drafts, apart from N13, was settled while the spec was assembled ([resolutions.md](resolutions.md)). The requirements above state the resolved behaviour.
+Every conflict and gap this chapter raised in its earlier drafts was settled while the spec was assembled, N13 last ([R182](resolutions.md#plan-decisions-of-2026-11-01-r179r192)) ([resolutions.md](resolutions.md)). The requirements above state the resolved behaviour.
 
 - **C1. Rate limits against "explicit actions always answer":** the once-per-session limits apply to auto-add only (R22; YT-ADD-25, YT-ADD-37, YT-QS-08).
 - **C2. A skipped outcome against undoing the skip:** a session skip doesn't count as auto-add having run, and undoing it checks the goal at once (R23; YT-AA-04, YT-AA-36).
@@ -1749,6 +1750,7 @@ Third round:
 - **C13. This chapter's copy quoted elsewhere** (was Conflict): 06's AddFlow now cites YT-ADD-15's copy instead of quoting it, and 08 REL-STORE-21's reviewer step 3 reads "Auto-added “…” to Reviewer A" (YT-ADD-15, YT-ADD-27). Fixed in 06 and 08.
 - **C14. The undo key in the upgrade note** (was Conflict): [08](08-release.md) REL-CON-04 now reads "Alt+U undoes a save while its message is on screen." (YT-KEY-25). Fixed in 08.
 - **N14. The disabled pin's tooltip in a private window** (was Not pinned down): the tooltip says why the pin is off, "Quick-save playlists can't be changed in a private window." (R69; YT-PK-08).
+- **N13. Choose mode's title for a shortcut** (was Not pinned down): "Pick the shortcut's playlist", with no line under it, on both sites (YT-PK-09, YT-KEY-13; R182).
 
 Also applied, third round:
 - R69 (YT-PK-08);
@@ -1787,4 +1789,4 @@ None remain; see [Resolved during assembly](#resolved-during-assembly). Under th
 
 ## Not pinned down
 
-- **N13. Choose mode's title for a shortcut.** The picker's choose-mode title and subtitle, "Save videos to…" and "One click will save here from now on.", fit only the quick-save playlist. No ticket or resolution gives wording for a shortcut's **Choose** (YT-PK-09). [03](03-youtube-music.md#not-pinned-down) and [05](05-ui.md#not-pinned-down) note the same gap.
+None remain. N13 was settled on 2026-11-01; see [Resolved during assembly](#resolved-during-assembly).

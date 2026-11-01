@@ -470,7 +470,7 @@ flowchart TD
   - jobs that need an account aren't sent; the gateway answers `signedOut`;
   - Add to queue, the card menu and YouTube Music's queue actions keep working;
   - what users see: auto-add stays silent, with no toast, and every explicit action that needs a signed-in account shows a failure toast with a **Sign in** action ([YT-GEN-08](02-youtube.md#21-rules-shared-by-every-youtube-feature), [YM-ACC-5](03-youtube-music.md#2-accounts-and-private-windows)). (R3, R41)
-- **ARC-ACC-61. No site access** (revoked on Firefox, Firefox 125–126 installs, Chrome's "on click" or a withheld site):
+- **ARC-ACC-61. No site access** (revoked on Firefox, Firefox 125–126 installs, a Firefox upgrader whose music.youtube.com grant didn't carry over (R179), Chrome's "on click" or a withheld site):
   - **Check:** the background calls `permissions.contains` per site on every start, and on `permissions.onAdded` and `onRemoved`.
   - **Missing:** a toolbar "!" on every tab, plus a button in the popup and settings that asks for access ([FT-13](04-features-accounts-data.md#12-switching-features), [§1.7](04-features-accounts-data.md#17-site-access-and-youtube-tabs) for the copy). The click handler calls `permissions.request` first and synchronously, before anything else. (R53)
     - **Every tab,** because without host access the extension can't tell which tabs are that site's.
@@ -600,8 +600,8 @@ Gather tabs ([02 §2.16](02-youtube.md#216-gather-tabs); R120–R135) reads a wi
 | `browser_specific_settings.gecko.data_collection_permissions` | — | `{ "required": ["none"] }`. Settings sync declares no data type (R83). [08 §13](08-release.md#13-if-an-amo-reviewer-objects) keeps a fallback ready if an AMO reviewer objects. |
 | `browser_specific_settings.gecko.update_url` | — | Only in `--mode beta` builds: `https://alioun.github.io/yt-playlist-tools/beta/updates.json` (ADR-0011) |
 | `permissions` | `["storage", "scripting"]` | `["storage", "scripting"]` |
-| `host_permissions` | `["https://www.youtube.com/*"]` | `["*://*.youtube.com/*"]` |
-| `optional_host_permissions` | `["https://music.youtube.com/*"]` | — (covered by the host permission) |
+| `host_permissions` | `["https://www.youtube.com/*"]` | same (R179) |
+| `optional_host_permissions` | `["https://music.youtube.com/*"]` | same (R179) |
 | `optional_permissions` | `["contextMenus"]`, for Save from the browser's menu only (ARC-MAN-20; R91) | `["contextMenus"]` |
 | `background` | `service_worker` | `scripts` (event page) |
 | `action` | `default_popup`: the popup; `default_title`: `__MSG_actionTitle__`; `default_icon`: `brand/icon-16.png`, `brand/icon-24.png`, `brand/icon-32.png` (R140) | same; no `theme_icons` (R140) |
@@ -613,7 +613,7 @@ Gather tabs ([02 §2.16](02-youtube.md#216-gather-tabs); R120–R135) reads a wi
 
 - **ARC-MAN-01.** The built manifests match this table exactly. `check:manifest` asserts it on both builds ([Q-CI-3](07-quality.md#771-ciyml), [REL-CI-20](08-release.md#141-ciyml)).
 - **ARC-MAN-02.** These are never requested: `tabs`, `activeTab`, `cookies`, `identity`, `offscreen`, `declarativeNetRequest*`, `webRequest*`, `unlimitedStorage`, `menus`, `notifications`, `downloads`, and any Google host other than YouTube's. `contextMenus` is requested only as an optional permission, when Save from the browser's menu is switched on (ARC-MAN-20; R91).
-- **ARC-MAN-03.** On Chrome, YouTube Music access is requested with `permissions.request({ origins: ["https://music.youtube.com/*"] })`, called first and synchronously in the click handler of Give access, or of the control that switches on the first thing that needs it: a YouTube Music feature, or "Also on YouTube Music" while playlist shortcuts is on. The shortcuts preset turns that option on, so the click that first switches on playlist shortcuts asks too ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). The YouTube Music section switch itself never asks. A refused prompt is handled as [ARC-ACC-61](#6212-no-tab-not-signed-in-no-site-access) says: from a switch, that switch stays off, except that Playlist shortcuts' own first switch-on goes on with "Also on YouTube Music" written off (R71); at first run's Agree, what needs the access is saved on but held (R14). Keys from any tab asks too when it's switched on; refused, it still goes on, and its YouTube Music keys answer "No access to YouTube Music." (R88). (R53, R71)
+- **ARC-MAN-03.** On both browsers, YouTube Music access is requested with `permissions.request({ origins: ["https://music.youtube.com/*"] })`, called first and synchronously in the click handler of Give access, or of the control that switches on the first thing that needs it: a YouTube Music feature, or "Also on YouTube Music" while playlist shortcuts is on. The shortcuts preset turns that option on, so the click that first switches on playlist shortcuts asks too ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). The YouTube Music section switch itself never asks. A refused prompt is handled as [ARC-ACC-61](#6212-no-tab-not-signed-in-no-site-access) says: from a switch, that switch stays off, except that Playlist shortcuts' own first switch-on goes on with "Also on YouTube Music" written off (R71); at first run's Agree, what needs the access is saved on but held (R14). Keys from any tab asks too when it's switched on; refused, it still goes on, and its YouTube Music keys answer "No access to YouTube Music." (R88). (R53, R71, R179)
 - **ARC-MAN-04.** Dynamic script matches stay narrow on both browsers: `https://www.youtube.com/*` and `https://music.youtube.com/*`, top frame only. A page entry may narrow its paths within those hosts: Gather tabs' covers only watch and live pages (ARC-MAN-24). (R133)
 - **ARC-MAN-05.** The keyboard commands are the unbound `_execute_action` and keys from any tab's three unbound commands (ARC-MAN-19). Every shortcut the user records is caught in the page (ADR-0004, amended 2026-10-20; R88).
 - **ARC-MAN-19. Keys from any tab's commands** (R88):
@@ -628,22 +628,21 @@ Gather tabs ([02 §2.16](02-youtube.md#216-gather-tabs); R120–R135) reads a wi
   - Switching the feature off calls `permissions.remove({ permissions: ["contextMenus"] })`. `permissions.onRemoved` holds the feature with "Needs your OK" ([FT-60](04-features-accounts-data.md#13-off-costs-nothing)).
 - **ARC-MAN-21. Strings come from `_locales`** (R93). The manifest sets `default_locale: "en"`, and its name, short name, description, action title and command descriptions are `__MSG_…__` entries of `_locales/en/messages.json`, the same catalogue the UI reads ([ARC-MOD-35](#644-popup-settings-and-the-first-run-page-srcui)). Only `en` ships.
 
-**Why the hosts differ per browser:**
-- **Firefox keeps `*://*.youtube.com/*`,** the exact pattern 1.4.5's content script was granted.
-  - Firefox MV3 never grants new origins on update.
-  - Firefox's code marks "revoke origins no longer declared" as planned for every extension (Bug 2022704). Narrowing could then strip every upgrader's access.
-- **Chrome is narrow,** because it's a fresh listing and Chrome Web Store policy asks for the narrowest set.
+**Why both browsers ask for the same hosts** (R179, which replaces the per-browser split):
+- **Both are narrow.** Chrome Web Store policy asks for the narrowest set, and the owner chose the same set for Firefox (G21).
   - Making YouTube Music optional keeps the install prompt to www.youtube.com alone.
   - Optional permissions never disable the extension on update.
+- **Firefox narrows from 1.4.5's `*://*.youtube.com/*`.** Narrowing asks nothing on update, so the 1.4.5 → 2.0 update still shows no prompt.
+  - Firefox's code marks "revoke origins no longer declared" as planned for every extension (Bug 2022704). Once that ships, an upgrader who used YouTube Music under 1.4.5 may have to give access to music.youtube.com again. The owner accepted that cost.
 
 **What users see** (settled from Firefox's and Chromium's sources, [R83](resolutions.md#after-the-spec-firefox-prompts-and-data-collection-r83); P1 only glances at the real dialogs. The exact strings and the full list by audience are [08 §5](08-release.md#5-permission-prompts-by-audience)):
 
 | Situation | Prompt |
 |---|---|
 | Chrome install | "Read and change your data on www.youtube.com" only |
-| Chrome, the first thing that needs YouTube Music (ARC-MAN-03) | A site-access prompt for music.youtube.com |
-| Firefox install | "Add Perchling for YouTube™", with no question mark; one required line, "Access your data for sites in youtube.com domains" (no line for `storage` or `scripting`); and "Data collection: The developer says this extension doesn't require data collection." ([08 §5](08-release.md#5-permission-prompts-by-audience); R83) |
-| Firefox 1.4.5 → 2.0 update | None: `scripting` and `storage` were already held and neither has a message, dropping `identity` and `activeTab` is silent, the origin is unchanged, and on update Firefox shows only added required data types, never `none` (R83). The new `commands` and the optional `contextMenus` add nothing (R88, R91). |
+| Either browser, the first thing that needs YouTube Music (ARC-MAN-03) | A site-access prompt for music.youtube.com |
+| Firefox install | "Add Perchling for YouTube™", with no question mark; one required line, "Access your data for www.youtube.com" (R179; no line for `storage` or `scripting`); and "Data collection: The developer says this extension doesn't require data collection." ([08 §5](08-release.md#5-permission-prompts-by-audience); R83) |
+| Firefox 1.4.5 → 2.0 update | None: `scripting` and `storage` were already held and neither has a message, dropping `identity` and `activeTab` is silent, narrowing the origin asks nothing (R179), and on update Firefox shows only added required data types, never `none` (R83). The new `commands` and the optional `contextMenus` add nothing (R88, R91). |
 | Either browser, Save from the browser's menu switched on | None: `contextMenus` has no warning on Chrome and no message on Firefox (ARC-MAN-20; R91) |
 
 **Chrome Web Store justification for `scripting`:** "Adds each feature's script to YouTube pages only while that feature is switched on, and reads data from an open YouTube tab when the popup or settings need it."
@@ -1405,16 +1404,30 @@ sequenceDiagram
 
 The store is one deep module in the background, and the only writer of every storage area (ADR-0006). The layout, shapes, sync, budget, migrations and private-write table are in [04-features-accounts-data.md](04-features-accounts-data.md): [§4.3](04-features-accounts-data.md#43-storage-layout), [§4.7](04-features-accounts-data.md#47-the-private-window-write-guard), [§4.10](04-features-accounts-data.md#410-schema-versions-and-migrations) and [§3](04-features-accounts-data.md#3-settings-sync).
 
+The store is not one `change(origin, Change)` call over a single `Change` union. Each write is its own owner operation, as built (R180). The background composes them in `background/store/` behind one object, and the router is their only caller:
+
 ```ts
-interface Store {
-  ready(): Promise<"ok" | "newer-layout">       // migrations run once per start, first
-  read<V extends View>(view: V, args?: ViewArgs<V>): Promise<ViewData<V>>
-  change(origin: Origin, change: Change): Promise<ChangeResult>
-  subscribe(fn: (e: StoreEvent) => void): () => void   // which documents changed, edited here or synced in
-  clearAll(origin: Origin, opts: { alsoSynced: boolean }): Promise<void>
+interface StoreOwners {
+  ready(): Promise<"ok" | "newer-layout">                        // migrations run once per start, first
+  // reads: settings, setups, session memory, the tab projection, the playlist cache, sync status
+  read(view: "settings"): Promise<SettingsRead>
+  readSetup(acct: AccountKey): Promise<SetupRead>
+  readTabProjection(request: TabProjectionRequest): Promise<TabProjectionRead>
+  subscribeView(fn: (e: ConfirmedViewChange) => void): () => void   // which documents changed, edited here or synced in
+  // one operation per write
+  change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>       // channel filters
+  changeSharedSetting(origin, change): Promise<LocalSettingsWriteResult>                    // also feature, key and setup-destination edits
+  claim(): Promise<ClaimTransactionResult>                       // ACC-30 to ACC-33
+  discard(origin, expected): Promise<DiscardResult>              // DATA-42; not built yet
+  agree(origin, input): Promise<AgreementResult>
+  withdrawConsent(origin, expected): Promise<WithdrawalResult>   // R167
+  importSettings(origin, input): Promise<SettingsImportResult>   // R90
+  applySyncJoin(origin, input): Promise<SyncJoinResult>
+  removeAccountSetup(origin, confirmation): Promise<RemovalResult>
+  clearAll(origin, opts: { alsoSynced: boolean }): Promise<ClearAllResult>
+  changeSession(change: SessionChange): Promise<SessionWrite>   // background only
 }
 
-type View = "settings" | "device" | "setup" | "unclaimed" | "filters" | "cache" | "progress" | "session" | "syncStatus" | "tabView"   // "unclaimed": the 1.x setup waiting for its account (ACC-28)
 type ChangeResult = { ok: true } | { refused: "private" | "sync-full" | "update-needed" | "invalid" }
 type Origin =
   | { kind: "tab"; tabId: number; incognito: boolean }
@@ -1423,12 +1436,14 @@ type Origin =
   | { kind: "sync" }
 ```
 
-- **ARC-MOD-19.** `Change` is one discriminated union for every write: settings edits, setup edits (removing a setup included), the unclaimed setup (`claim`, which merges it into an account's setup and deletes it, and `discard`, which deletes it; [ACC-30 to ACC-33](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming), [DATA-42](04-features-accounts-data.md#49-removing-a-setup-and-smaller-removals)), filters, cache absorbs, marks, progress, session memory (pause, skips, recent adds, cooldowns, shown-once memory, breakage, the tab registry, Gather tabs' record; R135), device fields (the sync switch, `Device.syncOn`, included; R54), the sync join choice, and `import`, which replaces the shared settings and the setups and filters of the accounts in a settings file in one write (R90). A `claim` from a private window is refused, as every account-setup write there is ([DATA-33](04-features-accounts-data.md#47-the-private-window-write-guard)).
+- **ARC-MOD-19. Per-operation owners** (R180). Every write has its own operation, named for what it does: settings edits (shared, feature and key settings, and setup destinations), channel filters, the unclaimed setup (`claim`, which merges it into an account's setup and deletes it, and `discard`, which deletes it; [ACC-30 to ACC-33](04-features-accounts-data.md#26-the-unclaimed-setup-and-claiming), [DATA-42](04-features-accounts-data.md#49-removing-a-setup-and-smaller-removals)), Agree and withdrawal, `importSettings`, which replaces the shared settings and the setups and filters of the accounts in a settings file in one write (R90), the sync join choice, account removal, Clear all, and session memory (pause, skips, recent adds, cooldowns, shown-once memory, breakage, the tab registry, Gather tabs' record; R135). Cache absorbs, marks, progress and device fields (the sync switch, `Device.syncOn`, included; R54) are writes inside these owners. A `claim` from a private window is refused, as every account-setup write there is ([DATA-33](04-features-accounts-data.md#47-the-private-window-write-guard)).
+  - **Two result shapes.** A small edit (filters, shared settings) answers `{ kind: "result", result: ChangeResult }` for an applied or refused change. A transaction (claim, Agree, withdrawal, import, sync join, account removal, Clear all) answers a `kind`-tagged union: `committed` (or its named success, such as `withdrawn` or `cleared`), `unchanged`, `refused`, `unavailable` with a reason, `failed` with the stage, or `unconfirmed` when the write's read-back didn't match. Small edits can also answer `unavailable`, `failed` or `unconfirmed`, as transactions do.
+  - **The router normalizes them.** Each route maps its owner's answer to the one reply shape its caller reads, so a page never branches on which owner answered. The owners keep their own shapes, because each carries evidence (stages, receipts, notices) the next step of its own flow needs.
   - In the claim operation, recheck the current shared row by exact original shortcut ID and the empty account target. Never recreate a deleted row or guess missing provenance (R150, R152).
   - Consent withdrawal sets `device.consent` to `null` and stops features even when unfinished migration, account-removal or sync records bind the old agreement. Keep those records intact and inactive, with their original evidence, accepted effects and tombstones. A new Agree never resumes them by itself. Only explicit recovery does. Never report immediate shutdown that rests on an unconfirmed write. The recovery representation and its operations remain engineering work, and no schema is selected (R167; [FT-35](04-features-accounts-data.md#15-the-consent-gate)).
 - **ARC-MOD-20.** `Origin` is computed by the router from `sender`. The popup's window ID is the one value a message supplies, and it's checked against the sender first (ARC-ACC-65).
 - **ARC-MOD-33. `update-needed`** refuses only an edit to a synced document that a newer version wrote and this browser can't read. Every other edit goes through ([SYNC-23](04-features-accounts-data.md#37-different-2x-versions-update-needed)). The sync status reads `waiting` while the join question hasn't been answered. (R13)
-- **ARC-MOD-21. What the store hides:**
+- **ARC-MOD-21. What the store's owners hide** (R180)**:**
   - the storage layout and its prefixes, codecs and stamps;
   - migrations from 1.4.5 and 1.5.0, and the separately recognized interim conversion obligations in [08 §2.12](08-release.md#212-interim-session-access-storage) (R156–R160);
   - the private-write table;
@@ -1441,12 +1456,12 @@ type Origin =
   - Opaque native write failures preserve the original error without assigning an unsupported category. Before further admission, retain a local deadline enforcing at least 60 s across worker and browser restarts. One later external event after that deadline may admit one attempt using current documents and all current guards. Failure renews the hold. No edit replay, polling, or retry timer is allowed. This extends older kind-only retry text only for opaque failures; known-kind handling, quotas, full, sync-off, reset, version, consent, and diagnostics-privacy guards, and existing local data lifetimes remain in force. No new journal or wire fields are specified (R155).
   - A setup's tombstone that arrives by sync passes the ordinary receive checks first. The receiver then removes the account's cache, its recognized progress shards and its session memory, and reads them back. One local write then stores the tombstone and its acknowledgement and, when `lastAccount` names the account, sets it to `null`. No removal journal is kept. A restart before that write finds the setup still live and repeats only what's left. A filter's tombstone applies only under a setup tombstone already in `storage.local` (R177; [DATA-44](04-features-accounts-data.md#49-removing-a-setup-and-smaller-removals), [SYNC-12](04-features-accounts-data.md#34-conflicts)).
   - The one exception to the ownership rule is an expired tombstone ([SYNC-12](04-features-accounts-data.md#34-conflicts); R178). Any browser removes a setup's synced tombstone once 30 days have passed since its `at`, whoever wrote it. The same `remove` takes the account's filter tombstones and the chunks of each tombstone's own `gen`. It runs only when this browser holds no local copy and no `pushed` entry for any of them, every synced document of the account is a tombstone, and fresh reads of both areas still match what it planned from. It is one paced opportunity of its own that waits behind any push. Chunks of older generations stay under the rule above. The local turn comes first. During an automatic receive pass, after the received documents, the browser removes its acknowledged expired tombstones and then writes the history without their `pushed` entries. A restart between those two writes leaves `pushed` entries with no documents, and the next pass drops them. A synced tombstone that this browser doesn't hold doesn't block its pushes or edits.
-- **ARC-MOD-22. Seam: `StorageAreas` `{ local, session, sync }`,** each with `{ get, set, remove, clear, onChanged }`.
+- **ARC-MOD-22. Seam: one port per area** (R180). `local` has `{ get, set }`, `sync` has `{ get, set, remove, subscribe }`, and `session` has the session-memory port. Clear all takes its own `{ get, set, remove, clear }` per area. The owners share these ports, so every owner writes through the same three areas.
   - Adapters: browser (`browser.storage.*`); fake (WXT's fake browser for `local` and `session`, plus a sync area with the real quotas, Chrome's write rates, and delayed, reordered or dropped delivery); and a fake server that joins two or more fake sync areas to stand in for browsers.
 - **ARC-MOD-23. One write path:** a guard test fails if any code outside `background/store/` and its adapter calls `storage.*.set`, `remove` or `clear`.
 - **ARC-MOD-24. Who reads:**
-  - content scripts never read storage; they get the `TabView` from the background;
-  - the popup, settings and the first-run page read `storage.local` directly, read-only, for a fast first paint, and follow `storage.onChanged`.
+  - content scripts never read storage; they get the `TabView` from the background's `readTabProjection` (R180);
+  - the popup, settings and the first-run page read `storage.local` directly, read-only, for a fast first paint, and follow `storage.onChanged`. Anything they can't read there, such as a setup's resolved view or the sync join status, comes from the owners' read operations through the router (R180).
 - **ARC-MOD-25. Start-up order** ([DATA-47](04-features-accounts-data.md#410-schema-versions-and-migrations)):
   1. the migration runs at the top of every background start, before the reconciler, the replicator or any message handler. On a fresh install it writes `schema: 1` at the first start, before consent: a schema marker isn't user data. While settings sync is off it never touches `storage.sync`, so 1.5.0's stray `theme` key there stays (only developer profiles wrote it);
   2. every other module awaits `ready()`;

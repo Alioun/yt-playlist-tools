@@ -71,13 +71,13 @@ Later amendments, the main session's decisions and its resolutions supersede ear
 - **YM-FEAT-7** Each feature's page code loads only while that feature is on. Quick-action shortcuts alone adds no element to the page until a key shows a toast or opens the picker. The picker's code loads in either of two cases: the first time the pointer reaches a Save control (hover intent), or when the picker first opens.
 - **YM-FEAT-8** Changes reach open YouTube Music tabs without a reload. That covers buttons, keys, Show feedback, the quick-save playlist and the switches. Switching a feature off removes its elements, styles and listeners from open tabs.
 - **YM-FEAT-9** **Presets apply once,** the first time each feature is turned on: Quick actions' default buttons and Quick-action shortcuts' default keys ([FT-04](04-features-accounts-data.md#11-the-features)). Turning a feature off and on again keeps what the user had, and clearing a key never brings its preset back. Presets never switch on or give a key to the four actions in §21 (R85).
-- **YM-FEAT-10** **Site access on Chrome:** YouTube Music access is optional ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs)).
+- **YM-FEAT-10** **Site access:** YouTube Music access is optional on both browsers ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R179).
   - It's requested from the click that switches on the first thing that needs it, first run's Agree included: a YouTube Music feature, or Playlist shortcuts' "Also on YouTube Music" while Playlist shortcuts is on (YM-PS-2). The section switch itself never asks. (R53)
   - **Denied from a switch** in the popup or Settings: the switch stays off ([FT-52](04-features-accounts-data.md#17-site-access-and-youtube-tabs)). The one exception is the click that switches Playlist shortcuts on: Playlist shortcuts goes on, "Also on YouTube Music" turns off, and "No access to YouTube Music, so shortcuts work on YouTube only." shows in place, under Playlist shortcuts' row (YM-PS-2; R71).
   - **Denied at first run's Agree:** consent and the other ticks still apply. The ticked YouTube Music features are saved on but held with "Needs site access", with **Give access** in the popup and Settings. Nothing is registered or injected for them until access is granted. (R14)
   - **Switched on in another browser** and synced here: the same held state until access is granted here.
   - Missing YouTube Music access raises the violet "needs you" "!" only while something that needs it is on, with the section switch on. It shows on every tab, not only YouTube Music's, because without host access the extension can't tell which tabs those are. Only a pending consent or upgrade note comes before it ([UI-IA-08](05-ui.md#51-information-architecture), [FT-47](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R12, R53).
-  - On Firefox, the youtube.com access already covers YouTube Music.
+  - Firefox asks the same way. 1.4.5's broader grant may not carry over, so a Firefox upgrader may have to give access again (R179).
 - **YM-FEAT-11** Before consent ([ADR-0010](../../../docs/adr/0010-one-consent-gates-every-feature.md), [FT-30](04-features-accounts-data.md#15-the-consent-gate)), no YouTube Music feature runs and nothing is read from YouTube Music, Playing now included.
 
 ## 2. Accounts and private windows
@@ -316,7 +316,7 @@ The picker is shared with YouTube ([ticket 12](../issues/12-adding.md); [02-yout
   - Opened from a control, it's anchored to that control.
   - Opened by key, it's anchored to the target's Save button when one is shown. Otherwise it's centred above the player.
 - **YM-PICK-3** **Contents, top to bottom:** (R39)
-  1. The title "Save to playlist", with a ↻ "Refresh playlists" button, a "Sort A–Z" toggle and ✕. In choose mode, the title is "Save songs to…", with "The playlist you pick here becomes your one-click Save."
+  1. The title "Save to playlist", with a ↻ "Refresh playlists" button, a "Sort A–Z" toggle and ✕. In choose mode, the title is "Save songs to…", with "The playlist you pick here becomes your one-click Save." Opened by a shortcut's **Choose**, the title is "Pick the shortcut's playlist", with no line under it, on both sites (R182).
   2. The song: art, title, and artist · album, so a picker opened by key shows what it will save.
   3. A search field, focused on open, which narrows the list by title.
   4. The account's playlists, in the order YouTube Music's own Save dialog lists them, or A–Z while the toggle is on. The toggle is stored per device. Watch Later appears only if YouTube Music's list includes it.
@@ -332,7 +332,7 @@ The picker is shared with YouTube ([ticket 12](../issues/12-adding.md); [02-yout
   - If that cache is older than 5 minutes, the list refreshes by itself on open. ↻ always refreshes it. (R39)
   - Membership is fetched fresh on every open. The check marks show a loading state until it arrives.
   - Rows work before membership is known. An add then reports already in on the row if it was.
-- **YM-PICK-6** **Check marks:** every playlist that already holds the song gets one.
+- **YM-PICK-6** **Check marks:** none until ticket 25's M2 check passes. Until then the picker shows no check marks and no "Couldn't check" line (R191). Once M2 passes, every playlist that already holds the song gets one:
   - Membership comes from YouTube Music's own answer if it carries membership.
   - Otherwise it comes from a youtube.com serving tab on the same account, in a window of the same kind.
   - If neither can be read:
@@ -500,6 +500,7 @@ Keys use the one shortcut engine shared with YouTube ([ADR-0004](../../../docs/a
 
 - **YM-FB-9** **After Undo:** the toast closes once Undo succeeds. If Undo fails, the toast reads "Couldn't undo." While casting, the Undo of a queue edit answers "Not available while casting" instead (YM-CAST-2).
 - **YM-FB-10** **Copy rules:**
+  - All user-facing copy goes through pstack's unslop rules, strings this spec pins word for word included. Where unslop changes a pinned string, the spec carries the new wording (R188). Typographic quotes around titles and the "…" cut stay, because they are this product's format, not prose style (R45).
   - Song and album titles are in typographic double quotes (“ ”), cut at 40 characters with "…" (R45).
   - Playlist names are unquoted, also cut at 40, whether the playlist is being queued or saved to, e.g. `Added 13 songs from Chill Mix to the queue`. The one exception is `{Shortcut} now saves to “{Playlist}”.`, where the quotes keep the two names apart (R24, R45, R77, as YT-ADD-18).
   - Failures start with "Couldn't …", and toasts say "song", not "video".
@@ -702,7 +703,7 @@ Playlist shortcuts are a YouTube feature ([ticket 08](../issues/08-shortcuts.md)
   - The undo key doesn't depend on it (YM-KEY-4). While it's on, though, Playlist shortcuts counts as a shortcut feature on YouTube Music, so a press there with nothing to undo answers "Nothing to undo." (R44)
   - The section switch holds it: with the section off, playlist shortcuts don't run on music.youtube.com, and the option is kept (YM-FEAT-5; R1).
   - *Runner-up:* off by default. It lost because a key that works on one site but not the other is surprising.
-- **YM-PS-2** **Site access on Chrome:** "Also on YouTube Music" needs YouTube Music access.
+- **YM-PS-2** **Site access:** "Also on YouTube Music" needs YouTube Music access, on both browsers (R179).
   - It's asked from the click that makes the option apply: switching it on while Playlist shortcuts is on, or the click that first switches Playlist shortcuts on, since the preset turns the option on. The section switch never asks ([FT-44](04-features-accounts-data.md#17-site-access-and-youtube-tabs); R53).
   - A denial from the option's own switch leaves it off ([FT-52](04-features-accounts-data.md#17-site-access-and-youtube-tabs)).
   - A denial from the click that switches Playlist shortcuts on, in the popup or Settings: Playlist shortcuts goes on, "Also on YouTube Music" turns off, and "No access to YouTube Music, so shortcuts work on YouTube only." shows in place, under Playlist shortcuts' row. (R71)
@@ -829,7 +830,7 @@ Keys from any tab is one feature for both sites, specified in [02 §2.14](02-you
 | Playlist titles are limited to 150 characters | YM-PICK-10 | Ticket 25 |
 | Toasts name "this tab's queue" if the cast state can't be read | YM-CAST-2 | Ticket 25, M5 |
 
-Visual PROVISIONAL items (the toast action's blue, bundling YouTube Music's own icons) are in [05-ui.md](05-ui.md#provisional). The picker's 54.5 KB against its 50 KB budget, and R29's fix order, are in [07-quality.md](07-quality.md) (Q-PERF-14) and [UI-RULE-39](05-ui.md#budgets).
+Visual PROVISIONAL items (the toast action's blue) are in [05-ui.md](05-ui.md#provisional). The picker's 54.5 KB against its 50 KB budget, and R29's fix order, are in [07-quality.md](07-quality.md) (Q-PERF-14) and [UI-RULE-39](05-ui.md#budgets).
 
 ## Resolved during assembly
 
@@ -904,6 +905,4 @@ None remain after all three rounds of resolutions; see [Resolved during assembly
 
 ## Not pinned down
 
-1. **Choose mode's title for a shortcut.** YM-PICK-3's choose-mode title and line, "Save songs to…" and "The playlist you pick here becomes your one-click Save.", fit only the quick-save playlist. No wording is given for a playlist shortcut's **Choose** (YM-PS-4), on either site ([02's Not pinned down](02-youtube.md#not-pinned-down)).
-
-Items 2 to 4 of this list were settled in the third round; see [Resolved during assembly](#resolved-during-assembly).
+Item 1, choose mode's title for a shortcut, was settled on 2026-11-01: "Pick the shortcut's playlist", with no line under it (YM-PICK-3, YM-PS-4; R182). Items 2 to 4 of this list were settled in the third round; see [Resolved during assembly](#resolved-during-assembly).
