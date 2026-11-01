@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "module": "Preserve", "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"], "types": ["bun"], "strict": true,
+    "noEmit": true, "skipLibCheck": true, "noUncheckedIndexedAccess": true
+  },
+  "files": [
+    "run.ts", "../../../src/page/music-gateway.specimens.ts", "../../../src/page/adapters/live-music.ts",
+    "../../../src/page/gateway/music-queue.ts", "../../../src/page/gateway/music-queue-edit.ts",
+    "../../../src/page/gateway/music-library.ts", "../../../src/page/parsers/music-queue.ts"
+  ]
+}

@@ -79,6 +79,9 @@ export const fixtureGates: readonly FixtureGate[] = [
   tsc("gateway-reads"),
   { kind: "script", fixture: "gateway-reads", file: "check-source.py" },
 
+  consumer("gateway-music", { variants: adapters, expected: "expected-output.jsonl" }),
+  tsc("gateway-music"),
+
   suite("gateway-www-queue", ["consumer.bun-test.ts", "gateway.bun-test.ts"], { testTimeoutMs: 15_000 }),
   consumer("gateway-www-queue", { variants: adapters, expected: "expected-output.jsonl" }),
   tsc("gateway-www-queue"),

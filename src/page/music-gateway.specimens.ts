@@ -47,6 +47,7 @@ export class ManualClock implements GatewayClock {
     }
     this.at = end
   }
+  get count() { return this.timers.size }
 }
 export async function settle(): Promise<void> { for (let i = 0; i < 40; i++) await Promise.resolve() }
 
