@@ -1,7 +1,7 @@
 diff --git a/src/site/kit/toaster/Toast.svelte b/src/site/kit/toaster/Toast.svelte
 --- a/src/site/kit/toaster/Toast.svelte
 +++ b/src/site/kit/toaster/Toast.svelte
-@@ -23,7 +23,7 @@
+@@ -24,7 +24,7 @@
  </script>
  
  {#if view}

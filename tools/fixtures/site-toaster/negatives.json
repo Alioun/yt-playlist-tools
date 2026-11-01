@@ -90,7 +90,7 @@
     "kind": "svelte inclusion sentinel",
     "patch": "tools/fixtures/site-toaster/negatives/actual-component-inclusion.patch",
     "target": "src/site/kit/toaster/Toast.svelte",
-    "line": 9,
+    "line": 10,
     "source": "  const inclusionProbe: never = site",
     "status": "UNEXECUTED",
     "require": "positive actual Svelte check, exactly one TS2322 on the actual component sentinel line, restore exact component hash"

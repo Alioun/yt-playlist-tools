@@ -1,11 +1,12 @@
 <script lang="ts">
+  import { untrack } from "svelte"
   import type { Site } from "../../../shared/contracts"
   import { errorPath, outlineErrorPath } from "../../core/notice/skin"
   import type { Toaster } from "./model"
   import type { ToastView } from "./types"
 
   let { source, site, document }: { source: Toaster; site: Site; document: Document } = $props()
-  let view = $state.raw<ToastView | null>(source.read())
+  let view = $state.raw<ToastView | null>(untrack(() => source.read()))
   let container = $state<HTMLDivElement | undefined>()
   $effect(() => source.subscribe(next => { if (!document.hidden) view = next }))
   $effect(() => { if (view) source.presented(view) })
