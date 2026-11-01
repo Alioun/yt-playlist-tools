@@ -64,7 +64,6 @@ export const fixtureGates: readonly FixtureGate[] = [
   suite("feature-switches", ["boundaries.bun-test.ts", "consumer.bun-test.ts", "owner.bun-test.ts"], { testTimeoutMs: 60_000, timeoutMs: heavy }),
   consumer("feature-switches", { variants: routes, expected: "expected.jsonl" }),
   tsc("feature-switches"),
-  { kind: "negatives", fixture: "feature-switches", project: "tsconfig.json", source: { cases: "negatives.json" } },
 
   consumer("first-edit-owner"),
   consumer("first-edit-provenance"),

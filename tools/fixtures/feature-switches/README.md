@@ -6,7 +6,7 @@ Auto-add off uses an accepted cleanup record, exact settings and all-account pro
 
 The authored tests compose the starting owner, native facade, Backend, RPC router, Tabs and Playlists with finite storage and permission IO. `expected.jsonl` is an independently authored complete 26-row oracle. Qualification must capture two complete outputs for each owner, native and wire route and compare both through EOF.
 
-`negatives.json` names 18 intended-line type negatives. `controls.json` names seven compiling-control proposals, their exact patches, source identities and named assertions. Static patch application proves only the patch bytes and restoration. Compilation and intended failures remain unexecuted.
+The 18 intended-line type negatives for this fixture live in `../key-settings/relocated-feature-negatives.json`, which compiles them against this folder's `tsconfig.json` after the shared-settings messages moved to `UiMessages["ui.change"]`. `controls.json` names seven compiling-control proposals, their exact patches, source identities and named assertions. Static patch application proves only the patch bytes and restoration. Compilation and intended failures remain unexecuted.
 
 `future-gates.json` contains the exact future command arrays. Every command requires a separate runtime lease, pinned dependencies, scratch HOME and TMPDIR, closed stdin, and separately proved descendant enforcement. Every Bun process needs `--no-env-file` and `--no-install`. No product launcher is supplied. Historical drivers are not authorized by this file.
 

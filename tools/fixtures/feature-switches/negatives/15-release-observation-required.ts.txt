@@ -1,3 +1,0 @@
-import type { FeatureSettingChange, FeatureSettingAnswer, SharedSettingsMessages } from "../../../src/shared/contracts/shared-settings"; import type { FeatureAccess } from "../../../src/background/store/feature-settings"; import type { UiMessages } from "../../../src/shared/contracts/ui"
-
-export const intendedNegative: Awaited<ReturnType<FeatureAccess["releaseBrowserMenu"]>>["kind"] = "removed-without-observation"
