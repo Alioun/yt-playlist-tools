@@ -4,6 +4,7 @@ import { clearMarkerKey } from "../../../src/background/store/store-lifecycle"
 import { readSyncedClearMarker } from "../../../src/background/store/sync-reset"
 import { receivedResetKey, resetNoticeText } from "../../../src/background/store/sync-reset-receive"
 import { gate } from "../starting-owner/support"
+import type { JsonObject } from "../../../src/shared/contracts/json"
 
 async function finishSynced(h: ReturnType<typeof clearFixture>) {
   for (let event = 0; event < 20; event++) {
@@ -218,7 +219,8 @@ test("sync off ignores remote reset without reading payload or storage", async (
   } finally { await h.dispose() }
 })
 
-for (const remote of [{}, { "s:meta": { v: 2, id: "newer", created: 1, reset: true } }, { "s:meta": { v: 1, reset: true } }]) {
+const unsupportedRemotes: readonly JsonObject[] = [{}, { "s:meta": { v: 2, id: "newer", created: 1, reset: true } }, { "s:meta": { v: 1, reset: true } }]
+for (const remote of unsupportedRemotes) {
   test(`vanishing copy or unsupported reset ${JSON.stringify(remote)}`, async () => {
     const h = clearFixture(accountSeed(true), sharedSync(remote))
     try {
@@ -252,7 +254,6 @@ export { finishSynced }
 test("explicit fresh recovery preserves original reset authority and consumes the review", async () => {
   const h = clearFixture(accountSeed(true), sharedSync({ "s:meta": { v: 1, reset: true, id: "reset", created: 1 } }))
   try {
-    check(settingsOrigin.kind === "ui", "known Settings recovery origin")
     await h.lifecycle().ready(); const owner = h.lifecycle().owner(); check(owner, "receiving owner"); await owner.ready()
     h.fault.set("local.remove", "before")
     expect((await owner.receiveSyncReset()).kind).toBe("reset-held")

@@ -11,7 +11,7 @@ import type { ClearAllAnswer } from "../../../src/shared/contracts/clear-all"
 import type { ResetNotice } from "../../../src/background/store/sync-reset-receive"
 
 export { check, agreedSeed, copy }
-export const settingsOrigin: SettingsPageOrigin = { kind: "ui", page: "settings", origin: { kind: "ui", windowId: 1, incognito: false } }
+export const settingsOrigin = { kind: "ui", page: "settings", origin: { kind: "ui", windowId: 1, incognito: false } } as const satisfies SettingsPageOrigin
 export const account = "AAAAAAAAAAAAAAAA"
 export const otherAccount = "BBBBBBBBBBBBBBBB"
 export type Fault = "before" | "after" | "ignore"
@@ -63,7 +63,7 @@ export function clearFixture(initial: JsonObject = agreedSeed(), shared = shared
     } })
     if (key === "set") return new Proxy(target.set, { async apply(_fn, _this, args: [unknown]) {
       const items = args[0]
-      check(items !== null && typeof items === "object" && !Array.isArray(items) && isJsonValue(items), "local set JSON")
+      check(isJsonValue(items) && items !== null && typeof items === "object" && !Array.isArray(items), "local set JSON")
       const mode = await enter("local.set", Object.keys(items))
       if (mode !== "ignore") await h.options.local.set(items)
       finish("local.set", mode)
@@ -84,7 +84,7 @@ export function clearFixture(initial: JsonObject = agreedSeed(), shared = shared
     if (key === "getKeys") return async () => { await enter("session.names"); return Object.keys(h.session()) }
     if (key === "set") return new Proxy(target.set, { async apply(_fn, _this, args: [unknown]) {
       const items = args[0]
-      check(items !== null && typeof items === "object" && !Array.isArray(items) && isJsonValue(items), "session set JSON")
+      check(isJsonValue(items) && items !== null && typeof items === "object" && !Array.isArray(items), "session set JSON")
       const mode = await enter("session.set", Object.keys(items))
       if (mode !== "ignore") h.seedSession({ ...h.session(), ...copy(items) })
       finish("session.set", mode)
@@ -109,7 +109,7 @@ export function clearFixture(initial: JsonObject = agreedSeed(), shared = shared
     if (key === "get") return async () => { await enter("sync.get"); return shared.records() }
     if (key === "set") return new Proxy(target.set, { async apply(_fn, _this, args: [unknown]) {
       const items = args[0]
-      check(items !== null && typeof items === "object" && !Array.isArray(items) && isJsonValue(items), "sync set JSON")
+      check(isJsonValue(items) && items !== null && typeof items === "object" && !Array.isArray(items), "sync set JSON")
       const mode = await enter("sync.set", Object.keys(items))
       if (mode !== "ignore") shared.set(items)
       finish("sync.set", mode)
