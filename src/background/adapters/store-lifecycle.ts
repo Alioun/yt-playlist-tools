@@ -7,8 +7,6 @@ import type { ResetNotice } from "../store/sync-reset-receive"
 import type { Registrar, ScriptingPort } from "../registrar/ports"
 import { ownedRegistrationIds } from "../registrar/registrar"
 import type { Tabs } from "../tabs/ports"
-import type { ExtLink } from "../../site/core/extlink"
-import type { TabViewScope } from "../../shared/contracts/tabs"
 
 type NativeBrowser = typeof import("wxt/browser").browser
 type NamedLocal = NativeBrowser["storage"]["local"] & { getKeys?(): Promise<string[]> }
@@ -23,7 +21,7 @@ export type ClearAllTeardown = { quiesce(): Promise<ClearAllTeardownReceipt> }
 export function createClearAllTeardown(ports: {
   readonly registrar: Registrar
   readonly tabs: Tabs
-  readonly extLinks: readonly ExtLink<TabViewScope>[]
+  readonly extLinks: readonly { dispose(): void }[]
   readonly scripting: Pick<ScriptingPort, "list" | "unregister">
   drainInvokedWork(): Promise<"drained" | "unconfirmed">
   tearDownAllOpenTabs(): Promise<"torn-down" | "unconfirmed">
