@@ -27,6 +27,7 @@ export const listId = checked(isQueueListId, "synthetic-queue-list")
 export const entryA = checked(isSetVideoId, "synthetic-entry-a")
 export const entryB = checked(isSetVideoId, "synthetic-entry-b")
 
+const brokenJobs = { working: [], "partly-working": ["queueUndo"], "not-working": ["queueAdd"] } as const satisfies Record<FeatureStatus["state"], FeatureStatus["jobs"]>
 export type QueueViewOptions = { readonly signedIn?: boolean; readonly feedback?: boolean; readonly state?: FeatureStatus["state"]; readonly on?: boolean }
 export function queueView(options: QueueViewOptions = {}): SiteView<"www"> {
   const { signedIn = true, feedback = true, state = "working", on = true } = options
@@ -35,7 +36,7 @@ export function queueView(options: QueueViewOptions = {}): SiteView<"www"> {
   const features = on ? base.features.flatMap(feature => feature.id === "queue-button" ? [{ ...feature, options: { ...feature.options, feedback } }] : []) : []
   const value = checked(isTabView, {
     ...base, ...(signedIn ? { acct: expectedKey(rawIdentity) } : {}), features,
-    statuses: on ? base.statuses.flatMap(status => status.feature === "queue-button" ? [{ ...status, state }] : []) : [],
+    statuses: on ? base.statuses.flatMap(status => status.feature === "queue-button" ? [{ ...status, state, jobs: brokenJobs[state] }] : []) : [],
     notices: on && state === "not-working" ? [{ kind: "not-working", features: ["queue-button"] }] : []
   })
   if (value.site !== "www") throw Error("Expected a validated www view")
@@ -111,6 +112,7 @@ export async function queueFixture(options: { readonly view?: SiteView<"www">; r
   const stack = hitStack()
   host.define(queueButton)
   host.connect(ext)
+  await page.link.hello
   await settle()
   return {
     page, ext, host, items, pointer, overlay, feedback, timers, errors, failures, notices, scopes, stack,
