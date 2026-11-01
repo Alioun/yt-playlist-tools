@@ -19,7 +19,7 @@ function fixture() {
 const hosts = () => document.querySelectorAll("pp-overlay").length
 
 test("construction is inert and two slots share one movable host", () => {
-  const observer = spyOn(window, "MutationObserver")
+  const observer = spyOn(window.MutationObserver.prototype, "observe")
   try {
     const f = fixture()
     expect(observer).not.toHaveBeenCalled()
