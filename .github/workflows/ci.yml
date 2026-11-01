@@ -54,7 +54,7 @@ jobs:
         run: node tools/fixtures/svelte-pilot/check-archives.mjs
 
       - name: Assert manifests are correct
-        run: scripts/check-manifests.sh .output/chrome-mv3 .output/firefox-mv3
+        run: bun run check:manifest
 
       - name: Short SHA
         id: sha
@@ -156,7 +156,7 @@ jobs:
     environment: amo-dev
     env:
       SHORT_SHA: ${{ needs.build.outputs.short-sha }}
-      # Public, and asserted in check-manifests.sh. AMO finds it only with braces.
+      # Public, and asserted in check-manifest.ts. AMO finds it only with braces.
       FIREFOX_EXTENSION_ID: "{cc70cd21-2cc6-444b-bd89-496909346091}"
       FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
       FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}

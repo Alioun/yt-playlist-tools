@@ -20,7 +20,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # Public, and asserted in check-manifests.sh. AMO finds it only with braces.
+  # Public, and asserted in check-manifest.ts. AMO finds it only with braces.
   AMO_GUID: "{cc70cd21-2cc6-444b-bd89-496909346091}"
   # publish-browser-extension strips the GUID's braces, which AMO then can't
   # find, so `wxt submit` gets the slug. It doesn't change (ADR-0013).
@@ -87,7 +87,7 @@ jobs:
         run: |
           firefox=.output/firefox-mv3
           [ "$CHANNEL" = beta ] && firefox=.output/firefox-mv3-beta
-          scripts/check-manifests.sh .output/chrome-mv3 "$firefox"
+          bun scripts/check-manifest.ts .output/chrome-mv3 "$firefox"
 
       - name: Verify the AMO sources zip actually rebuilds
         run: |
