@@ -21,13 +21,8 @@ export function cut(title: string): string {
   return parts.length > limit ? `${parts.slice(0, limit).map(part => part.segment).join("")}…` : title
 }
 
-export function list(names: readonly string[], i18n: I18n): string {
-  const first = names[0] ?? "", second = names[1] ?? "", third = names[2] ?? ""
-  if (names.length <= 1) return first
-  if (names.length === 2) return i18n.message("copy_list_two", { first, second })
-  if (names.length === 3) return i18n.message("copy_list_three", { first, second, third })
-  return i18n.message("copy_list_more", { first, second, count: i18n.number(names.length - 2) })
-}
+export { list } from "./list"
+import { list } from "./list"
 
 export function toastText(plan: ToastPlan, titles: Titles, site: Site, i18n: I18n): string {
   const known = (text: string | undefined) => text !== undefined && text.trim() !== "" ? text : undefined

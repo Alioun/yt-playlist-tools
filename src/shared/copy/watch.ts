@@ -1,6 +1,6 @@
 import type { AutoAddState } from "../contracts/this-video"
 import type { I18n } from "../i18n"
-import { list } from "./index"
+import { list } from "./list"
 
 /**
  * UI-YT-18's pill label and status line for auto-add's state. The status line is the button's tooltip, its menu's

@@ -30,15 +30,15 @@ const shortsSound = "pivot-button-view-model, #pivot-button"
 /** Bounded re-placement after a navigation, while YouTube draws the action row (YT-WB-02). */
 export const retryMs = [0, 250, 1_000, 2_500] as const
 const mark = "M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2zm-4 11h-2v-2H9v-2h2V8h2v2h2v2h-2v2z"
-// Material Symbols paths for UI-YT-18's state glyphs.
+// UI-YT-18's state glyphs, drawn in the 24-unit box like the mark.
+const check = "M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"
 const glyphs: Readonly<Partial<Record<AutoAddState["kind"], string>>> = {
-  added: "M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
-  "already-in": "M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
-  failed: "M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.47 2 2 6.5 2 12a10 10 0 1 0 10-10zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z",
-  skipped: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9A7.902 7.902 0 0 1 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1A7.902 7.902 0 0 1 20 12c0 4.42-3.58 8-8 8z",
-  paused: "M6 19h4V5H6v14zm8-14v14h4V5h-4z",
-  live: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-8 4a8 8 0 0 1 2.34-5.66L4.93 4.93A10 10 0 0 0 2 12c0 2.76 1.12 5.26 2.93 7.07l1.41-1.41A7.97 7.97 0 0 1 4 12zm16 0a7.97 7.97 0 0 1-2.34 5.66l1.41 1.41A10 10 0 0 0 22 12c0-2.76-1.12-5.26-2.93-7.07l-1.41 1.41A7.97 7.97 0 0 1 20 12z",
-  "cant-measure": "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
+  added: check, "already-in": check,
+  failed: "M11 7h2v6h-2zm0 8h2v2h-2zM12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z",
+  skipped: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM5.7 16.9A8 8 0 0 1 16.9 5.7zM7.1 18.3 18.3 7.1A8 8 0 0 1 7.1 18.3z",
+  paused: "M6 5h4v14H6zm8 0h4v14h-4z",
+  live: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
+  "cant-measure": "M1 21h22L12 2zm12-3h-2v-2h2zm0-4h-2v-4h2z"
 }
 /** How far toward its next goal the counting pie is (UI-YT-19): a pie inside a full outline, never a partial ring. */
 export function pieShare(view: ThisVideo | null): number | null {
