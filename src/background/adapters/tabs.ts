@@ -5,7 +5,7 @@ import { createRpc, createRpcCaller, type Deadline, type RpcOutcome } from "../.
 import { authenticateTab, runtimeTransport, tabTarget, type RuntimePort, type TabsPort } from "./runtime"
 import { resolveSenderOrigin, type NativeSender, type SenderOriginPorts } from "./sender-origin"
 import { isTabId } from "../tabs/records"
-import type { NativeTab, Requester, TabLookup, TabNativePort, TabReply, Tabs, TabViewProducer } from "../tabs/ports"
+import type { NativeTab, Requester, TabContext as TabSeen, TabLookup, TabNativePort, TabReply, Tabs, TabViewProducer } from "../tabs/ports"
 
 type NativeBrowser = typeof import("wxt/browser").browser
 type BrowserTab = import("wxt/browser").Browser.tabs.Tab
@@ -141,7 +141,8 @@ export function createBrowserTabs(browser: TabsBrowser, options: { readonly buil
       return { kind: "requester", req: { windowId, incognito, activeTabId: tab.tabId } }
     } catch { return { kind: "unavailable" } }
   }
-  function bindHello<View extends TabViewScope>(tabs: Tabs, producer: TabViewProducer<View>): () => void {
+  // `onSeen` hears each tab the registry admitted, so Accounts can check its label and claim the unclaimed 1.x setup (ACC-30).
+  function bindHello<View extends TabViewScope>(tabs: Tabs, producer: TabViewProducer<View>, onSeen?: (context: TabSeen) => void): () => void {
     if (disposed) return () => {}
     const rpc = createRpc<TabHelloMessages<View>, NativeSender>(runtimeTransport(browser.runtime), { build, deadline, contract: tabHelloMessages(producer.isView) })
     let bound = true
@@ -151,7 +152,9 @@ export function createBrowserTabs(browser: TabsBrowser, options: { readonly buil
         const current = await get(context.origin.tabId)
         if (disposed || !bound || current.kind !== "tab" || current.tab.site !== context.site || current.tab.windowId !== context.windowId || current.tab.incognito !== context.origin.incognito) return null
         const result = await tabs.seen(context.origin.tabId, hello, producer)
-        return result.kind === "seen" ? result.view : null
+        if (result.kind !== "seen") return null
+        try { onSeen?.({ tab: { ...current.tab, site: context.site }, info: { site: hello.site, build: hello.build, ...hello.signedIn ? { signedIn: true, acct: hello.acct } : { signedIn: false, acct: null } } }) } catch {}
+        return result.view
       }
     } })
     const stop = () => { if (!bound) return; bound = false; receivers.delete(stop); unbind(); rpc.dispose() }

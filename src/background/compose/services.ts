@@ -67,7 +67,8 @@ export function composeServices(deps: {
     subscribePrivateSkips: () => () => {}
   }
   const producer = createTabViewProducer({ owner, addFlow: privateSkips, statuses: workingStatuses, notices: noNotices, build })
-  const unbindHello = browserTabs.bindHello(tabs, producer)
+  let seen: (context: Parameters<typeof accounts.onSeen>[0]) => void = () => {}
+  const unbindHello = browserTabs.bindHello(tabs, producer, context => seen(context))
   const publication = createViewPublication({ owner, tabs, producer, privateSkips, clock,
     monitor: { subscribeView: () => () => {} } })
   const autoAddRoutes = createAutoAddTabRouter({ transport: runtimeTransport(deps.runtime), senders: { ...native, runtime }, build,
@@ -90,6 +91,7 @@ export function composeServices(deps: {
   const publication = createViewPublication({ owner, tabs, producer, privateSkips: actions.flow, clock,
     monitor: { subscribeView: () => () => {} } })
   const accounts = createAccounts({ owner, tabs, claim: { kind: "unavailable", reason: "production-ownership-required" }, now: () => Date.now() })
+  seen = context => { void accounts.onSeen(context).catch(() => {}) }
   const router = createUiRouter({
     lifecycle: deps.lifecycle, sharedSettings: owner, owner,
     native: { runtime, windows: native.windows, tabs: native.tabs },

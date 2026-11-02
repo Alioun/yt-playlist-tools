@@ -135,3 +135,21 @@ test("hello binds authenticated frame-zero sender facts to the actual engine and
     expect(await fakeBrowser.runtime.onMessage.trigger({ v: CONTRACT_VERSION, build, id: "hello-3", kind: "tab.hello", payload }, sender, value => invalid.push(value))).toEqual([])
   } finally { unbind(); adapter.dispose(); await h.dispose() }
 })
+
+test("a hello the registry admits is reported as seen with its native tab and account, and a refused one is not", async () => {
+  const made = await tab(), clock = manualClock(), adapter = createBrowserTabs(fakeBrowser, { build, deadline: clock.after })
+  const h = tabsFixture()
+  h.seedTab(nativeTab(made.id, { windowId: made.windowId }), signedIn())
+  const seen: unknown[] = []
+  const unbind = adapter.bindHello(h.engine, fixtureView, context => seen.push(context))
+  const sender = { id: fakeBrowser.runtime.id, frameId: 0, url: made.raw.url, tab: made.raw }
+  try {
+    const payload = { ...signedIn(), hidden: false, fresh: true }
+    await fakeBrowser.runtime.onMessage.trigger({ v: CONTRACT_VERSION, build, id: "hello-1", kind: "tab.hello", payload }, sender, () => {})
+    await settle()
+    expect(seen).toEqual([{ tab: expect.objectContaining({ tabId: made.id, windowId: made.windowId, incognito: false, site: "www" }), info: { site: "www", build, signedIn: true, acct: a } }])
+    await fakeBrowser.runtime.onMessage.trigger({ v: CONTRACT_VERSION, build, id: "hello-2", kind: "tab.hello", payload: { ...payload, build: "other" } }, sender, () => {})
+    await settle()
+    expect(seen).toHaveLength(1)
+  } finally { unbind(); adapter.dispose(); await h.dispose() }
+})
