@@ -1,6 +1,7 @@
 import { authenticateTab, type TabContext as SenderContext } from "../adapters/runtime"
 import type { NativeSender, SenderOriginPorts } from "../adapters/sender-origin"
 import type { Monitor } from "../monitor/monitor"
+import { anchors } from "../../shared/features/registry"
 import type { TabContext } from "../tabs/ports"
 import type { BuildId } from "../../shared/contracts"
 import { tabHealthContract, type TabHealthMessages, type TabHealthReport } from "../../shared/contracts/tab-health"
@@ -29,6 +30,7 @@ export function createTabHealthRouter(deps: {
           ? { kind: "job", online: report.online, otherRequestsAnswer: report.answered } : { kind: report.evidence })
         return
       case "anchor": {
+        if (!Object.hasOwn(anchors, report.anchor)) return
         const { relevant, visible, settledMs, distinctMainLinks, recognised } = report.observation
         await deps.monitor.observeAnchor(context, { anchor: report.anchor, signal: report.signal,
           observation: { kind: "content", relevant, visible, navigationAt: 0, observedAt: settledMs, distinctMainLinks, recognised } })

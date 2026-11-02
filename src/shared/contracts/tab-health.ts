@@ -2,7 +2,7 @@ import type { BreakageSignal } from "./diagnostics"
 import { objectShape } from "./object-shape"
 import { isJobId, type JobId } from "./vocabulary"
 import { isAccountKey, type AccountKey } from "../model/validation"
-import { anchors, type AnchorId } from "../features/registry"
+import type { AnchorId } from "../features/registry"
 import type { RpcContract } from "../rpc/rpc"
 
 /** An anchor check once the page settled (HEALTH-02): how many distinct video links the main content has, and how many were recognised. */
@@ -31,7 +31,8 @@ const signal = (value: unknown) => value !== null && typeof value === "object" &
 export function isTabHealthReport(value: unknown): value is TabHealthReport {
   return objectShape(value, { kind: v => v === "signal", signal, evidence: v => v === "job", online: bool, answered: bool })
     || objectShape(value, { kind: v => v === "signal", signal, evidence: v => v === "playback" || v === "diagnostic" })
-    || objectShape(value, { kind: v => v === "anchor", anchor: v => typeof v === "string" && Object.hasOwn(anchors, v), signal, observation: v => objectShape(v, {
+    // The background checks the anchor against the registry; the wire keeps the tab's bundle free of it.
+    || objectShape(value, { kind: v => v === "anchor", anchor: v => typeof v === "string" && v.length <= 40, signal, observation: v => objectShape(v, {
       relevant: bool, visible: bool, settledMs: count, distinctMainLinks: count, recognised: count }) })
     || objectShape(value, { kind: v => v === "success", job: isJobId })
     || objectShape(value, { kind: v => v === "measured" })
