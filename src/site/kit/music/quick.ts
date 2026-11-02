@@ -2,20 +2,21 @@ import type { FeatureId, ItemInfo, Job, JobFailure, JobInvocation, JobOf, JobRes
 import { isMusicAdFailure } from "../../../shared/contracts"
 import type { TabView } from "../../../shared/contracts/tab-view"
 import { cut, musicHintText, toastText, type MusicHint } from "../../../shared/copy"
-import type { I18n, SimpleMessageKey } from "../../../shared/i18n"
-import type { AccountKey, MusicAction, PlaylistId, ShortcutId, VideoId } from "../../../shared/model"
+import type { I18n } from "../../../shared/i18n"
+import type { AccountKey, PlaylistId, ShortcutId, VideoId } from "../../../shared/model"
 import { signInUrl } from "../../../shared/youtube/sign-in"
 import type { TabActions, Unanswered } from "../../core/actions"
-import type { MusicAction as ItemAction, MusicItems, MusicResolution } from "../../core/items-music"
+import type { MusicItems, MusicResolution } from "../../core/items-music"
 import type { Scope } from "../../core/scope"
 import { explicitAdd } from "../../explicit"
 import { musicPickerAnchor, type Popovers } from "../../popovers/types"
 import type { Feedback } from "../feedback"
 import type { ToastContent } from "../toaster/types"
 import type { TabAddReport } from "../../../shared/contracts/tab-actions"
+import { quickActions, type QuickAction } from "./actions"
 
-/** A quick action by its settings name (YM-FEAT-2, YM-FEAT-3). `picker` is Save to playlist…, the picker. */
-export type QuickAction = MusicAction | "picker"
+export type { QuickAction } from "./actions"
+
 /** What a quick action acts on: a pointed or clicked item, or the playing song (YM-TGT-1, YM-TGT-2). */
 export type QuickTarget = {
   readonly title: string
@@ -39,6 +40,8 @@ export type QuickInput = {
 /** For a button's state and the any-tab ✓ or ✕ (YM-FB-7, YM-ANY-4). `idle` answered without doing anything: a hint, or a picker. */
 export type QuickAnswer = { readonly kind: "done" | "idle" | "failed"; readonly text: string | null }
 type Targeted = { readonly kind: "target"; readonly target: QuickTarget }
+/** A key's progress on an item, so a button showing that item goes through the same states (YM-KEY-11). */
+export type QuickProgress = { readonly element: Element; readonly action: QuickAction; readonly state: "busy" | QuickAnswer["kind"] }
 
 export type MusicQuickDeps = {
   readonly owner: Scope
@@ -54,20 +57,6 @@ export type MusicQuickDeps = {
   readonly log?: (line: string) => void
 }
 
-type Spec = { readonly item: ItemAction; readonly name: SimpleMessageKey; readonly queueEdit: boolean; readonly account: boolean }
-/** Each action's item check, name, and whether casting stops it or it needs a signed-in account (YM-CAST-2, YM-ACC-5). */
-export const quickActions: Readonly<Record<QuickAction, Spec>> = {
-  next: { item: "next", name: "musicAction_next", queueEdit: true, account: false },
-  queue: { item: "end", name: "musicAction_end", queueEdit: true, account: false },
-  save: { item: "save", name: "picker_saveMusicTitle", queueEdit: false, account: true },
-  picker: { item: "save", name: "musicAction_savePicker", queueEdit: false, account: true },
-  like: { item: "like", name: "musicAction_like", queueEdit: false, account: true },
-  remove: { item: "remove", name: "musicAction_removeQueue", queueEdit: true, account: false },
-  library: { item: "library", name: "musicAction_library", queueEdit: false, account: true },
-  mix: { item: "mix", name: "musicAction_mix", queueEdit: true, account: false },
-  album: { item: "album", name: "musicAction_album", queueEdit: false, account: false },
-  artist: { item: "artist", name: "musicAction_artist", queueEdit: false, account: false }
-}
 const queueItems = "ytmusic-player-queue ytmusic-player-queue-item, ytmusic-player-queue-item"
 const playingReads = 25
 const likeStatus = { liked: "LIKE", "not-liked": "INDIFFERENT", disliked: "DISLIKE" } as const
@@ -89,6 +78,8 @@ function withStatus(endpoint: LikeEndpoint, status: string): LikeEndpoint {
 export function createMusicQuick(deps: MusicQuickDeps) {
   const { document, page, items, actions, i18n } = deps
   const log = deps.log ?? (line => console.info(`[Perchling] ${line}`))
+  const watchers = new Set<(progress: QuickProgress) => void>()
+  function report(progress: QuickProgress) { for (const watcher of [...watchers]) { try { watcher(progress) } catch {} } }
 
   function session(): Feedback | null { return deps.feedback() }
   function name(action: QuickAction): string { return i18n.message(quickActions[action].name) }
@@ -351,7 +342,16 @@ export function createMusicQuick(deps: MusicQuickDeps) {
     async press(action: QuickAction, input: QuickInput): Promise<QuickAnswer> {
       const found = await target(action)
       if (deps.owner.disposed) return { kind: "idle", text: null }
-      return found.kind === "target" ? act(action, found.target, input) : found
+      if (found.kind !== "target") return found
+      const element = found.target.element
+      if (element) report({ element, action, state: "busy" })
+      const answer = await act(action, found.target, input)
+      if (element) report({ element, action, state: answer.kind })
+      return answer
+    },
+    watch(watcher: (progress: QuickProgress) => void): () => void {
+      watchers.add(watcher)
+      return () => { watchers.delete(watcher) }
     }
   }
 }
