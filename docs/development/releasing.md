@@ -107,7 +107,7 @@ Set it up in this order. Store nothing until every check in steps 2 and 3 prints
    ```
 
    A failed `git show` stops it before `gh` starts. Without `pipefail`, `shasum` would hash the empty output, and the variable would hold the digest of nothing.
-5. Optionally, store the variable `BUN_SHA256`, the SHA-256 of the `bun` binary that `oven-sh/setup-bun` installs for Bun 1.4.3 on `ubuntu-latest`. The jobs then run only that binary, and refuse to start if it differs. Take it from the release's `bun-linux-x64.zip`, after checking the zip against the release's signed `SHASUMS256.txt.asc`: `unzip -p bun-linux-x64.zip bun-linux-x64/bun | shasum -a 256`. Without it, the jobs skip that check.
+5. Optionally, store the variable `BUN_SHA256`, the SHA-256 of the `bun` binary that `oven-sh/setup-bun` installs for Bun 1.4.3 on `ubuntu-24.04`, the reviewer jobs' image. The jobs then run only that binary, and refuse to start if it differs. Take it from the release's `bun-linux-x64.zip`, after checking the zip against the release's signed `SHASUMS256.txt.asc`: `unzip -p bun-linux-x64.zip bun-linux-x64/bun | shasum -a 256`. Without it, the jobs skip that check.
 6. Store the secrets `FIREFOX_JWT_ISSUER` and `FIREFOX_JWT_SECRET`, the same values as in `amo`.
 7. Store `AMO_REVIEWER_LOGIN`, as below.
 
