@@ -28,8 +28,8 @@ async function fixture() {
   return directory
 }
 
-function cli(cwd: string, args: string[] = []) {
-  return spawnSync(process.execPath, ["--no-env-file", runner, ...args], { cwd, encoding: "utf8", timeout: 20000 })
+function cli(cwd: string, args: string[] = [], env: Record<string, string | undefined> = process.env) {
+  return spawnSync(process.execPath, ["--no-env-file", runner, ...args], { cwd, env, encoding: "utf8", timeout: 20000 })
 }
 
 test("discovery keeps the tests root and sorted adjacent Bun files, excluding legacy files", async () => {
@@ -50,11 +50,25 @@ test("all shards form the complete disjoint discovery and own the tests root onc
   }
 })
 
-test("the default command passes every discovered entry and preserves child conditions", async () => {
+test("the default command passes every discovered entry, an explicit timeout and child conditions", async () => {
   const cwd = await fixture(), commands: string[][] = []
   expect(await runBunTests([], { cwd, spawn: async command => { commands.push(command); return 0 } })).toBe(0)
-  expect(commands).toEqual([[process.execPath, "test", "--no-env-file", "--isolate", "--conditions=browser", "./tests", "./src/nested/a.bun-test.ts", "./src/z.bun-test.ts"]])
+  expect(commands).toEqual([[process.execPath, "test", "--no-env-file", "--isolate", "--conditions=browser", "--timeout", "10000", "./tests", "./src/nested/a.bun-test.ts", "./src/z.bun-test.ts"]])
 })
+
+test("a test slower than Bun's 5 s default passes under the runner's timeout", async () => {
+  const cwd = await fixture()
+  await writeFile(join(cwd, "src/nested/a.bun-test.ts"), 'import {test} from "bun:test";test("fixture slow",()=>Bun.sleep(5500))')
+  const result = cli(cwd, ["--shard", "2/3"])
+  expect(result.stderr).toContain("1 pass")
+  expect(result.status).toBe(0)
+}, 25000)
+
+test("passing tests stay in the log when the parent shell is an agent", async () => {
+  const result = cli(await fixture(), ["--shard", "1/3"], { ...process.env, CLAUDECODE: "1", AI_AGENT: "1", AGENT: "1", REPL_ID: "1" })
+  expect(result.status).toBe(0)
+  expect(result.stderr).toContain("(pass) fixture-root")
+}, 25000)
 
 test("invalid shard usage fails before discovery or spawning", async () => {
   let spawned = false

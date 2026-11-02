@@ -4,7 +4,7 @@
 import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { parseShard } from "./run-bun-tests"
+import { bunChildEnvironment, parseShard, testTimeoutMs } from "./run-bun-tests"
 import { fixtureGates, gateId, type Checker, type FixtureGate, type NegativeSource } from "../tools/fixtures/gates"
 
 type Status = "pass" | "fail" | "timeout"
@@ -12,21 +12,14 @@ type Outcome = { status: Status; counts: string; detail: string[] }
 type Ran = { code: number | null; stdout: Buffer; stderr: string; timedOut: boolean }
 
 const defaultTimeoutMs: Record<FixtureGate["kind"], number> = { suite: 300_000, consumer: 300_000, library: 0, types: 180_000, negatives: 900_000, script: 180_000 }
-const agentVariables = ["CLAUDECODE", "AI_AGENT", "CLAUDE_CODE_ENTRYPOINT"]
 const fixturePath = (gate: { fixture: string }, path: string) => join("tools/fixtures", gate.fixture, path)
 
 class GateTimeout extends Error {}
 
-function childEnvironment() {
-  const env = { ...process.env }
-  for (const name of agentVariables) delete env[name]
-  return env
-}
-
 async function run(argv: readonly string[], deadline: number): Promise<Ran> {
   const seconds = Math.ceil((deadline - Date.now()) / 1000)
   if (seconds <= 0) throw new GateTimeout()
-  const child = Bun.spawn(["timeout", "-k", "5", String(seconds), ...argv], { env: childEnvironment(), stdin: "ignore", stdout: "pipe", stderr: "pipe" })
+  const child = Bun.spawn(["timeout", "-k", "5", String(seconds), ...argv], { env: bunChildEnvironment(), stdin: "ignore", stdout: "pipe", stderr: "pipe" })
   const [stdout, stderr, code] = await Promise.all([new Response(child.stdout).arrayBuffer(), new Response(child.stderr).text(), child.exited])
   return { code, stdout: Buffer.from(stdout), stderr, timedOut: code === 124 || code === 137 }
 }
@@ -38,7 +31,7 @@ function bunConfig(gate: { fixture: string }) {
 
 async function suite(gate: Extract<FixtureGate, { kind: "suite" }>, deadline: number, log: string[]): Promise<Outcome> {
   const result = await run([process.execPath, ...bunConfig(gate), "test", "--no-env-file", "--isolate", "--conditions=browser",
-    ...gate.testTimeoutMs ? ["--timeout", String(gate.testTimeoutMs)] : [], ...gate.files.map(file => `./${fixturePath(gate, file)}`)], deadline)
+    "--timeout", String(gate.testTimeoutMs ?? testTimeoutMs), ...gate.files.map(file => `./${fixturePath(gate, file)}`)], deadline)
   const text = result.stdout.toString() + result.stderr
   log.push(text)
   const passed = Number(/^\s*(\d+) pass$/m.exec(text)?.[1] ?? 0)

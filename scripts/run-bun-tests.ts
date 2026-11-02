@@ -3,6 +3,17 @@ import { join, relative, resolve } from "node:path"
 
 type Shard = { index: number; count: number }
 
+// Bun ignores [test] timeout in bunfig.toml, so every runner passes --timeout itself.
+export const testTimeoutMs = 10_000
+const agentVariables = ["CLAUDECODE", "AI_AGENT", "CLAUDE_CODE_ENTRYPOINT", "REPL_ID"]
+
+// Bun hides passing tests when it detects an agent. AGENT=0 turns that detection off, so logs and parsed counts stay complete.
+export function bunChildEnvironment(env: Record<string, string | undefined> = process.env): Record<string, string | undefined> {
+  const child: Record<string, string | undefined> = { ...env, AGENT: "0" }
+  for (const name of agentVariables) delete child[name]
+  return child
+}
+
 export function parseShard(args: readonly string[]): Shard | undefined {
   if (args.length === 0) return undefined
   const usage = "Usage: bun run scripts/run-bun-tests.ts [--shard index/count] (1-based, 1 <= index <= count)"
@@ -27,12 +38,12 @@ export function selectTestEntries(entries: readonly string[], shard?: Shard): st
 
 export async function runBunTests(args: readonly string[], {
   cwd = process.cwd(),
-  spawn = (command: string[]) => Bun.spawn(command, { cwd, stdin: "inherit", stdout: "inherit", stderr: "inherit" }).exited
+  spawn = (command: string[], env: Record<string, string | undefined>) => Bun.spawn(command, { cwd, env, stdin: "inherit", stdout: "inherit", stderr: "inherit" }).exited
 } = {}): Promise<number> {
   const shard = parseShard(args)
   const entries = selectTestEntries(await discoverTestEntries(cwd), shard)
   if (entries.length === 0) return 0
-  return spawn([process.execPath, "test", "--no-env-file", "--isolate", "--conditions=browser", ...entries])
+  return spawn([process.execPath, "test", "--no-env-file", "--isolate", "--conditions=browser", "--timeout", String(testTimeoutMs), ...entries], bunChildEnvironment())
 }
 
 if (import.meta.main) {
