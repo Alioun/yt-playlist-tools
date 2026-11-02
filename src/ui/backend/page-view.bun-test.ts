@@ -5,7 +5,7 @@ import type { PageView } from "./backend"
 
 const build = (() => { const value = "page-view-test"; if (!isBuildId(value)) throw Error("build"); return value })()
 const acct = "AAAAAAAAAAAAAAAA", other = "BBBBBBBBBBBBBBBB"
-const stamped = (data: unknown) => ({ v: 1, gen: "g", at: 1, by: "device", data })
+const stamped = (data: object) => ({ v: 1, gen: "g", at: 1, by: "device", data }) as never
 
 function backend(records: Record<string, unknown>) {
   return createScriptedBackend({ build, deadline: () => () => {}, answers: [], records: records as never })
