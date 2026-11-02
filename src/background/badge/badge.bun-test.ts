@@ -25,7 +25,7 @@ test("a per-tab reason never reaches every tab", () => {
 import { createToolbarBadge } from "../compose/badge"
 import { scriptedMessages } from "../../../tools/fixtures/localization/scripted"
 
-function driver(records: Record<string, unknown>, options: { www?: boolean; broken?: number[] } = {}) {
+function driver(records: Record<string, unknown>, options: { www?: boolean; broken?: number[]; paused?: boolean } = {}) {
   const calls: string[] = []
   let fire: (() => void) | undefined
   const statuses = { async read(context: { tab: { tabId: number } }, enabled: readonly { id: string }[]) {
@@ -40,7 +40,7 @@ function driver(records: Record<string, unknown>, options: { www?: boolean; brok
     },
     local: { get: async () => records },
     owner: { readSession: async () => ({ kind: "memory", revision: { reset: 0, accounts: new Map() }, sequence: 1,
-      memory: { paused: false, tabs: new Map([[7, { site: "www", signedIn: false, acct: null }], [8, { site: "www", signedIn: false, acct: null }]]) } }) as never },
+      memory: { paused: options.paused ?? false, tabs: new Map([[7, { site: "www", signedIn: false, acct: null }], [8, { site: "www", signedIn: false, acct: null }]]) } }) as never },
     access: async site => site === "www" ? options.www ?? true : false,
     statuses: statuses as never, tab: async tabId => ({ kind: "tab", tab: { tabId, windowId: 1, incognito: false, site: "www", lastAccessed: 0, active: true, discarded: false, frozen: false } }) as never,
     build: "test" as never, i18n: scriptedMessages(),
@@ -79,4 +79,35 @@ test("a key's answer shows for 3 s over everything, then the tab returns to its 
   fire()
   await Bun.sleep(0)
   expect(calls.slice(0, 2)).toEqual(["text 7 null", "title 7 null"])
+})
+
+const autoAdd = (toolbarTick: boolean) => ({ ...agreedRecords, "doc:settings": { v: 1, gen: "g", at: 1, by: "d",
+  data: { autoAdd: { on: true, feedback: true, pct: 73, toolbarTick, toolbarPaused: true } } } })
+
+test("auto-add's tick shows on its tab until the video changes, and not while the tick option is off or auto-add is paused", async () => {
+  const { badge, calls } = driver(autoAdd(true))
+  await badge.refresh()
+  badge.tick(7)
+  await badge.refresh()
+  expect(calls).toEqual(["text 7 ✓", "color 7 #14a39a", "title 7 Auto-added this tab's video"])
+  calls.length = 0
+  badge.untick(7)
+  await Bun.sleep(0)
+  await badge.refresh()
+  expect(calls).toEqual(["text 7 null", "title 7 null"])
+  for (const quiet of [driver(autoAdd(false)), driver(autoAdd(true), { paused: true })]) {
+    await quiet.badge.refresh()
+    quiet.calls.length = 0
+    quiet.badge.tick(7)
+    await quiet.badge.refresh()
+    expect(quiet.calls).toEqual([])
+  }
+})
+
+test("a stopped worker forgets its ticks, so the tab's video changing still clears the tab's own badge", async () => {
+  const { badge, calls } = driver(autoAdd(true))
+  await badge.refresh()
+  badge.untick(8)
+  await Bun.sleep(0)
+  expect(calls).toEqual(["text 8 null", "title 8 null"])
 })

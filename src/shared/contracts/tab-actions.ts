@@ -60,6 +60,16 @@ export type TabActionMessages = {
   "tab.create": { payload: Pinned<{ readonly title: string; readonly privacy: Privacy; readonly video: VideoId | null }>; result: TabCreated }
   "tab.destination": { payload: Pinned<TabDestinationChange>; result: DestinationAnswer }
 }
+/**
+ * Auto-add's routes besides `tab.add`. YT-AA-41: only the first playback per browser session that can't be measured gets a toast.
+ * `tab.videoChanged` clears this tab's toolbar tick, sent once when the video it ticked for changes in-app (ARC-MOD-38).
+ */
+export type TabProgressMessages = {
+  "tab.progress.load": { payload: Pinned<{ readonly video: VideoId }>; result: TabProgress | null }
+  "tab.progress.save": { payload: Pinned<{ readonly video: VideoId; readonly progress: TabProgress }>; result: null }
+  "tab.cantMeasure": { payload: Pinned<null>; result: { readonly show: boolean } }
+  "tab.videoChanged": { payload: Pinned<null>; result: null }
+}
 
 type Check = (value: unknown) => boolean
 const bool: Check = value => typeof value === "boolean"
@@ -137,6 +147,22 @@ export const tabActionContract: RpcContract<TabActionMessages> = {
     result: isTabCreated, timeoutMs: 45_000 },
   "tab.destination": { payload: (v): v is TabActionMessages["tab.destination"]["payload"] => pinned(r => objectShape(r, {
     destination: isSetupDestination, expected: isDestinationExpectation, playlist: nullable(isPlaylistId) }))(v), result: isDestinationAnswer, timeoutMs: 15_000 }
+}
+
+const position = (value: unknown) => typeof value === "number" && Number.isFinite(value) && value >= 0
+const part: Check = value => Array.isArray(value) && value.length === 2 && position(value[0]) && position(value[1]) && value[1] > value[0]
+export function isTabProgress(value: unknown): value is TabProgress {
+  return objectShape(value, { len: v => typeof v === "number" && Number.isFinite(v) && v > 0, parts: v => Array.isArray(v) && v.length <= 1_000 && v.every(part) })
+}
+export const tabProgressContract: RpcContract<TabProgressMessages> = {
+  "tab.progress.load": { payload: (v): v is TabProgressMessages["tab.progress.load"]["payload"] => pinned(r => objectShape(r, { video: isVideoId }))(v),
+    result: (v): v is TabProgress | null => v === null || isTabProgress(v), timeoutMs: 5_000 },
+  "tab.progress.save": { payload: (v): v is TabProgressMessages["tab.progress.save"]["payload"] => pinned(r => objectShape(r, { video: isVideoId, progress: isTabProgress }))(v),
+    result: (v): v is null => v === null, timeoutMs: 5_000 },
+  "tab.cantMeasure": { payload: (v): v is TabProgressMessages["tab.cantMeasure"]["payload"] => pinned(r => r === null)(v),
+    result: (v): v is { readonly show: boolean } => objectShape(v, { show: bool }), timeoutMs: 5_000 },
+  "tab.videoChanged": { payload: (v): v is TabProgressMessages["tab.videoChanged"]["payload"] => pinned(r => r === null)(v),
+    result: (v): v is null => v === null, timeoutMs: 5_000 }
 }
 
 /**

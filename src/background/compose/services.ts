@@ -49,24 +49,29 @@ export function composeServices(deps: {
     },
     clock, enabled: deps.consented
   })
-  const privateSkips = {
-    readPrivateSkips: async () => ({ kind: "unavailable", reason: "context" }) as const,
-    subscribePrivateSkips: () => () => {}
-  }
   const monitor = composeMonitor({ owner: { readSession: () => owner.readSession(), changeSession: change => owner.changeSession(change),
     subscribeView: fn => owner.subscribeView(fn) }, clock: { now: () => performance.now(), after: timerDeadline } })
-  const producer = createTabViewProducer({ owner, addFlow: privateSkips, statuses: monitor.statusProducer, notices: monitor.noticeProducer, build })
-  const unbindHello = browserTabs.bindHello(tabs, producer)
-  const publication = createViewPublication({ owner, tabs, producer, privateSkips, clock,
-    monitor })
+  const badge = createToolbarBadge({
+    action: {
+      setBadgeText: details => native.action.setBadgeText(details as never),
+      setBadgeBackgroundColor: details => native.action.setBadgeBackgroundColor(details),
+      setTitle: details => native.action.setTitle(details as never)
+    },
+    local: { get: () => native.storage.local.get(null) }, owner, statuses: monitor.statusProducer,
+    access: site => native.permissions.contains({ origins: [siteBundles[site].match] }), tab: tabId => browserTabs.port.get(tabId), build,
+    i18n: { getMessage: (name, substitutions) => native.i18n.getMessage(name as never, substitutions) },
+    clock: { after: (milliseconds, run) => { const timer = setTimeout(run, milliseconds); return () => clearTimeout(timer) } }
+  })
   const playlists = createPlaylists({ owner, tabs, now: () => Date.now() })
   const actions = composeActions({ native: { ...native, runtime }, build, owner, tabs, playlists, registrar, writable: deps.consented,
+    ticked: tabId => badge.tick(tabId),
     async requester(origin) {
       const [active] = await native.tabs.query({ active: true, windowId: origin.windowId }).catch(() => [])
       return { windowId: origin.windowId, incognito: origin.incognito, activeTabId: typeof active?.id === "number" ? active.id : null }
     } })
   const siteI18n = createSiteI18n({ getMessage: (name, substitutions) => native.i18n.getMessage(name as never, substitutions) })
-  const anyTab = composeAnyTab({ native, build, actions, tabs, registrar, consented: deps.consented, menuClicksHeard: deps.menuClicksHeard, i18n: siteI18n })
+  const anyTab = composeAnyTab({ native, build, actions, tabs, registrar, consented: deps.consented, menuClicksHeard: deps.menuClicksHeard, i18n: siteI18n,
+    flash: (tabId, ok, title) => badge.flash(tabId, ok, title) })
   const reconcileMenu = () => { void anyTab.reconcileMenu() }
   const stopMenuSettings = owner.subscribe(reconcileMenu)
   native.permissions.onAdded.addListener(reconcileMenu)
@@ -77,6 +82,14 @@ export function composeServices(deps: {
   const publication = createViewPublication({ owner, tabs, producer, privateSkips: actions.flow, clock,
     monitor: { subscribeView: () => () => {} } })
   const accounts = createAccounts({ owner, tabs, claim: { kind: "unavailable", reason: "production-ownership-required" }, now: () => Date.now() })
+  const producer = createTabViewProducer({ owner, addFlow: actions.flow, statuses: monitor.statusProducer, notices: monitor.noticeProducer, build })
+  const unbindHello = browserTabs.bindHello(tabs, producer, context => {
+    badge.loaded(context.tab.tabId)
+    void accounts.onSeen(context).catch(() => {})
+  })
+  const publication = createViewPublication({ owner, tabs, producer, privateSkips: actions.flow, clock, monitor })
+  const autoAddRoutes = createAutoAddTabRouter({ transport: runtimeTransport(deps.runtime), senders: { ...native, runtime }, build,
+    deadline: timerDeadline, tabs, owner, untick: tabId => badge.untick(tabId), now: () => Date.now() })
   async function readAccess() {
     const has = (origins: string[]) => native.permissions.contains({ origins })
     return { www: await has([siteBundles.www.match]), music: await has([siteBundles.music.match]),
@@ -110,17 +123,6 @@ export function composeServices(deps: {
       version: () => native.runtime.getManifest().version,
       now: () => Date.now()
     }
-  })
-  const badge = createToolbarBadge({
-    action: {
-      setBadgeText: details => native.action.setBadgeText(details as never),
-      setBadgeBackgroundColor: details => native.action.setBadgeBackgroundColor(details),
-      setTitle: details => native.action.setTitle(details as never)
-    },
-    local: { get: () => native.storage.local.get(null) }, owner, statuses: monitor.statusProducer,
-    access: site => native.permissions.contains({ origins: [siteBundles[site].match] }), tab: tabId => browserTabs.port.get(tabId), build,
-    i18n: { getMessage: (name, substitutions) => native.i18n.getMessage(name as never, substitutions) },
-    clock: { after: (milliseconds, run) => { const timer = setTimeout(run, milliseconds); return () => clearTimeout(timer) } }
   })
   const repaint = () => { void badge.refresh() }
   const changed = (_changes: unknown, area: string) => { if (area === "local" || area === "session") repaint() }

@@ -33,6 +33,12 @@ export type ToolbarBadge = {
   refresh(): Promise<void>
   /** A key from any tab's or a gather's 3 s answer over everything, with its tooltip (YT-ANY-06, YT-GT-31). */
   flash(tabId: number, ok: boolean, title: string): void
+  /** Auto-add added this tab's current video: its tick shows while the tick option is on and auto-add isn't paused (YT-AA-42). */
+  tick(tabId: number): void
+  /** The tab's video changed in-app, so its tick goes, even one a stopped worker forgot (ARC-MOD-38). */
+  untick(tabId: number): void
+  /** The tab loaded a new page, which drops the tab's own badge in the browser; the next refresh paints what it should show. */
+  loaded(tabId: number): void
   dispose(): void
 }
 
@@ -42,6 +48,7 @@ export function createToolbarBadge(ports: BadgePorts): ToolbarBadge {
   let shown: Badge = { text: "", color: null, reason: "none" }
   const perTab = new Map<number, Badge>()
   const flashes = new Map<number, () => void>()
+  const ticks = new Set<number>()
   let running: Promise<void> | undefined, again = false, disposed = false
 
   function title(badge: Badge): string | null {
@@ -89,13 +96,16 @@ export function createToolbarBadge(ports: BadgePorts): ToolbarBadge {
     const accessMissing = !www && needsAccess("www", settings) || !music && needsAccess("music", settings)
     const marks = view.setups.some(entry => Object.keys(entry.setup.marks).length > 0)
     const memory = session.kind === "memory" ? session.memory : null
+    // Pausing auto-add clears the ticks, so "paused" shows on every tab (ARC-MOD-38).
+    if (memory?.paused) ticks.clear()
+    const ticked = settings.autoAdd.on && settings.autoAdd.toolbarTick ? new Set([...ticks].filter(tabId => memory?.tabs.has(tabId))) : new Set<number>()
     const notWorking = new Map<number, FeatureId[]>()
     if (memory) await Promise.all([...memory.tabs].slice(0, 50).map(async ([tabId, record]) => {
       const broken = (await readTabStatuses(ports, settings, tabId, record, null)).filter(row => row.state === "not-working").map(row => row.feature)
       if (broken.length) notWorking.set(tabId, broken)
     }))
     return {
-      facts: { consentPending, accessMissing, marks, notWorking, ticked: new Set(),
+      facts: { consentPending, accessMissing, marks, notWorking, ticked,
         paused: settings.autoAdd.on && settings.autoAdd.toolbarPaused && memory?.paused === true },
       tabs: memory ? [...memory.tabs.keys()] : []
     }
@@ -134,6 +144,22 @@ export function createToolbarBadge(ports: BadgePorts): ToolbarBadge {
         void reset(tabId).catch(() => {}).then(() => refresh())
       })
       flashes.set(tabId, stop)
+    },
+    tick(tabId) {
+      if (disposed) return
+      ticks.add(tabId)
+      void refresh()
+    },
+    untick(tabId) {
+      if (disposed) return
+      ticks.delete(tabId)
+      if (flashes.has(tabId)) return
+      perTab.delete(tabId)
+      void reset(tabId).catch(() => {}).then(() => refresh())
+    },
+    loaded(tabId) {
+      ticks.delete(tabId)
+      perTab.delete(tabId)
     },
     dispose() {
       disposed = true

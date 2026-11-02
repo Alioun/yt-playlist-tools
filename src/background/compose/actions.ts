@@ -125,6 +125,8 @@ export function composeActions(deps: {
   readonly registrar: Pick<Registrar, "ensure">
   readonly writable: () => boolean
   readonly requester: (origin: Extract<Origin, { kind: "ui" }>) => Promise<Requester | null>
+  /** A tab whose current video auto-add just added to a playlist, for the toolbar's tick (YT-AA-42). */
+  readonly ticked?: (tabId: number) => void
   readonly log?: (line: string) => void
 }): Actions {
   const { native, owner, tabs, playlists, registrar } = deps
@@ -166,7 +168,11 @@ export function composeActions(deps: {
   const unbind = rpc.handle({ authenticate: authenticateTab(native), handlers: {
     async "tab.add"({ acct, request }, context): Promise<TabAddReport> {
       if (request.site !== context.site || !await pinned(context, acct)) return { kind: "no-tab" }
-      return addIn({ tabId: context.origin.tabId, incognito: context.origin.incognito, site: context.site }, acct, request)
+      const report = await addIn({ tabId: context.origin.tabId, incognito: context.origin.incognito, site: context.site }, acct, request)
+      if (request.via === "auto-add" && report.kind === "report" && Object.values(report.outcomes).some(outcome => outcome.kind === "added")) {
+        deps.ticked?.(context.origin.tabId)
+      }
+      return report
     },
     async "tab.remove"({ acct, request }, context) {
       if (request.site !== context.site || !await pinned(context, acct)) return { kind: "no-tab" }

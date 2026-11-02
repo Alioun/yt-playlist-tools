@@ -69,7 +69,7 @@ function world(options: { settings?: (settings: Settings) => void; video?: boole
   } as unknown as Tabs
   const ensured: number[] = []
   const anyTab = composeAnyTab({ native, build, actions, tabs, consented: () => true, i18n: englishI18n(), menuClicksHeard: true,
-    registrar: { async ensure(tabId) { ensured.push(tabId) } } })
+    registrar: { async ensure(tabId) { ensured.push(tabId) } }, flash: (tabId, ok, title) => { log.push(`badge ${tabId} ${ok ? "✓" : "✕"}`, `title ${tabId} ${title}`) } })
   return { anyTab, log, asks, adds, created, ensured }
 }
 
@@ -153,7 +153,7 @@ function musicWorld(options: { settings?: (settings: Settings) => void; granted?
   } as unknown as NativeBrowser
   const actions = { async settings() { return settings } } as unknown as Actions
   const anyTab = composeAnyTab({ native, build, actions, tabs: {} as Tabs, consented: () => true, i18n: englishI18n(), menuClicksHeard: true,
-    registrar: { async ensure(tabId) { ensured.push(tabId) } } })
+    registrar: { async ensure(tabId) { ensured.push(tabId) } }, flash: (tabId, ok, title) => { log.push(`badge ${tabId} ${ok ? "✓" : "✕"}`, `title ${tabId} ${title}`) } })
   return { anyTab, log, asks, ensured }
 }
 

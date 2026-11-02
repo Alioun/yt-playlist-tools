@@ -24,6 +24,8 @@ export function createAutoAddTabRouter(deps: {
   readonly deadline: Deadline
   readonly tabs: { known(target: ViewTarget): Promise<readonly Pick<KnownTab, "acct" | "privateTab">[]> }
   readonly owner: ProgressOwner & { readSession(): Promise<SessionRead>; changeSession(change: SessionChange): Promise<SessionWrite> }
+  /** Clears the tab's toolbar tick (ARC-MOD-38). */
+  readonly untick?: (tabId: number) => void
   now(): number
 }): { dispose(): void } {
   const all = tabAddMessages()
@@ -53,6 +55,10 @@ export function createAutoAddTabRouter(deps: {
       await deps.owner.changeSession({ revision: read.revision, now: deps.now(),
         edits: [{ kind: "shown-global", acct: request.acct, scope: "normal", keys: [CANT_MEASURE_SHOWN] }] })
       return { show: true }
+    },
+    async "tab.videoChanged"({ acct }, context) {
+      if (acct !== null && await registered(context, acct)) deps.untick?.(context.origin.tabId)
+      return null
     }
   } })
   return { dispose() { unbind(); rpc.dispose() } }

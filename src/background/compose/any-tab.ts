@@ -24,7 +24,6 @@ type MenuInfo = { readonly menuItemId: string | number; readonly linkUrl?: strin
 const watchLater = "WL" as PlaylistId
 const musicCommands: Readonly<Record<string, "save" | "like">> = { "save-playing-song": "save", "like-playing-song": "like" }
 export const menuIds = { parent: "pp-save", quickSave: "pp-save-quick", watchLater: "pp-save-later", choose: "pp-save-choose" } as const
-export const flashMs = 3_000
 
 /**
  * YT-ANY-04's tab order, in the focused window's kind with discarded tabs skipped: the focused window's active
@@ -70,6 +69,8 @@ export function composeAnyTab(deps: {
   readonly i18n: I18n
   /** Whether the composition root already listens for menu clicks, which it does from the worker's first turn when it can. */
   readonly menuClicksHeard: boolean
+  /** The toolbar badge's 3 s ✓ or ✕ on one tab, over anything else there, with the answer as its tooltip (YT-ANY-06). */
+  readonly flash: (tabId: number, ok: boolean, title: string) => void
 }) {
   const { native, actions, i18n } = deps
   let listening = deps.menuClicksHeard
@@ -87,19 +88,8 @@ export function composeAnyTab(deps: {
     const caller = createRpcCaller<TabAskMessages>(tabTarget(native.tabs, tabId), { build: deps.build, deadline: timerDeadline, contract: tabAskContract })
     try { return await caller.call(kind, payload) } finally { caller.dispose() }
   }
-  // The ✓ or ✕ on the focused tab's toolbar icon for 3 s, over anything else there, with the answer as its tooltip (YT-ANY-06).
-  async function flash(tabId: number | undefined, ok: boolean, text: string) {
-    if (tabId === undefined) return
-    try {
-      const before = await native.action.getTitle({ tabId })
-      await native.action.setBadgeBackgroundColor({ tabId, color: ok ? "#14a39a" : "#c62828" })
-      await native.action.setBadgeText({ tabId, text: ok ? "✓" : "✕" })
-      await native.action.setTitle({ tabId, title: text })
-      setTimeout(() => {
-        void native.action.setBadgeText({ tabId, text: "" }).catch(() => {})
-        void native.action.setTitle({ tabId, title: before }).catch(() => {})
-      }, flashMs)
-    } catch {}
+  function flash(tabId: number | undefined, ok: boolean, text: string) {
+    if (tabId !== undefined) deps.flash(tabId, ok, text)
   }
   function answerText(answer: TabAddReport, title: string | null): string {
     if (answer.kind === "report" && answer.toast) {
@@ -125,9 +115,9 @@ export function composeAnyTab(deps: {
     const settings = await actions.settings(focused.incognito)
     if (!settings?.anyTabKeys.on) return
     const [shown] = await native.tabs.query({ active: true, windowId: focused.id }).catch(() => [] as NativeTab[])
-    if (!settings.musicSection) { await flash(shown?.id, false, i18n.message("anyTab_musicOff")); return }
+    if (!settings.musicSection) { flash(shown?.id, false, i18n.message("anyTab_musicOff")); return }
     if (!await native.permissions.contains({ origins: [siteBundles.music.match] }).catch(() => false)) {
-      await flash(shown?.id, false, i18n.message("anyTab_noMusicAccess"))
+      flash(shown?.id, false, i18n.message("anyTab_noMusicAccess"))
       return
     }
     const raw = await native.tabs.query({ url: siteBundles.music.match }).catch(() => [] as NativeTab[])
@@ -136,10 +126,10 @@ export function composeAnyTab(deps: {
       if (!await inject(tabId)) continue
       const answer = await ask(tabId, "bg.music", { action, feedback: settings.anyTabKeys.feedback })
       const result = answer.kind === "answered" ? answer.result : { kind: "failed", text: null }
-      await flash(shown?.id, result.kind === "done", result.text ?? i18n.message("anyTab_musicUnanswered"))
+      flash(shown?.id, result.kind === "done", result.text ?? i18n.message("anyTab_musicUnanswered"))
       return
     }
-    await flash(shown?.id, false, i18n.message("anyTab_noMusicTab"))
+    flash(shown?.id, false, i18n.message("anyTab_noMusicTab"))
   }
 
   async function watchLaterKey(): Promise<void> {
@@ -158,10 +148,10 @@ export function composeAnyTab(deps: {
       const answer = await actions.addInTab({ tabId, incognito: tab.incognito, site: "www" },
         { site: "www", video: info.videoId, via: "picker", opener: "any-tab-keys", playlist: watchLater, ...(info.title ? { title: info.title } : {}) })
       void ask(tabId, "bg.toast", { answer, video: info.videoId, title: info.title || null, opener: "any-tab-keys" })
-      await flash(shown?.id, confirmed(answer), answerText(answer, info.title || null))
+      flash(shown?.id, confirmed(answer), answerText(answer, info.title || null))
       return
     }
-    await flash(shown?.id, false, i18n.message("anyTab_noVideoTab"))
+    flash(shown?.id, false, i18n.message("anyTab_noVideoTab"))
   }
 
   async function clicked(info: MenuInfo, tab: NativeTab | undefined): Promise<void> {

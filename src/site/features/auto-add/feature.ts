@@ -19,7 +19,7 @@ import {
 export type AutoAddServices = {
   readonly document: Document
   readonly page: Pick<PageLink, "watch" | "onState" | "run">
-  readonly background: Pick<BackgroundLink, "add" | "undo" | "progress" | "cantMeasure">
+  readonly actions: Pick<TabActions, "add" | "undo" | "progress" | "cantMeasure" | "videoChanged">
   readonly feedback: { use(owner: Scope): Feedback | null }
   readonly text: AutoAddText
   /** Monotonic milliseconds. */
@@ -92,6 +92,8 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
   let prompting = false
   let privateCantMeasureShown = false
   let ready = false
+  /** The video the background ticked this tab's toolbar icon for (YT-AA-42), until another video plays here. */
+  let ticked: VideoId | null = null
 
   function current(): SiteView<"www"> | null { return view.read() }
   function kindsWanted(settings: TrackerSettings): boolean {
@@ -153,7 +155,14 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
     if (left) save(left, "leave")
   }
 
+  // One message clears the tick when this tab's video changes in-app; a new page load clears it in the browser (ARC-MOD-38).
+  function playing(video: VideoId) {
+    if (ticked === null || video === ticked) return
+    ticked = null
+    actions.videoChanged()
+  }
   function begin(data: Extract<PlayerData, { ad: false }>) {
+    playing(data.videoId)
     leave()
     const settings = settingsFor(current(), data.videoId, new Set())
     if (!settings) return
@@ -228,6 +237,7 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
       if (outcome?.kind === "skipped") target.skippedHere.add(playlist)
       target.tracker = recordOutcome(target.tracker, { playlist, outcome: destination(outcome) })
     }
+    if (Object.values(outcomes).some(outcome => outcome?.kind === "added") && feature(current())?.options.toolbarTick) ticked = video
     if (target.skippedHere.size) target.tracker = updateTracker(target.tracker, { settings: settingsFor(current(), video, target.skippedHere) ?? {} })
     if (progress(target.tracker).hasRun) save(target, "run")
     if (report?.kind === "report") announce(target, report)
@@ -267,6 +277,7 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
     nav = data
     if (stopPlayer !== nothing) watchPrompt()
     const navigation = data.navigation
+    if (navigation.kind !== "other") playing(navigation.videoId)
     if (playback && navigation.kind !== "other" && navigation.videoId !== playback.tracker.video) leave()
     if (playback && data.video?.videoId === playback.tracker.video) playback.title = data.video.title
     sync()

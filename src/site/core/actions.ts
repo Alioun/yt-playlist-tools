@@ -20,6 +20,15 @@ export type TabActions = {
   playlists(refresh: boolean): Promise<TabPlaylists>
   create(playlist: { readonly title: string; readonly privacy: Privacy; readonly video: VideoId | null }): Promise<TabCreated>
   destination(change: TabDestinationChange): Promise<DestinationAnswer>
+  /** Auto-add's watch progress at DATA-27's checkpoints, kept per account by the background. */
+  readonly progress: {
+    load(video: VideoId): Promise<TabProgress | null>
+    save(video: VideoId, progress: TabProgress): Promise<void>
+  }
+  /** Whether this playback that can't be measured is the browser session's first, which alone gets a toast (YT-AA-41). */
+  cantMeasure(): Promise<boolean>
+  /** The video auto-add ticked the toolbar icon for has changed in-app, so the background clears the tick (ARC-MOD-38). */
+  videoChanged(): void
   dispose(): void
 }
 
@@ -55,6 +64,15 @@ export function createTabActions(options: {
     playlists: refresh => call("tab.playlists", { refresh }, { kind: "failed" } as const),
     create: playlist => call("tab.create", playlist, { kind: "failed", reason: "failed" } as const),
     destination: change => call("tab.destination", change, { kind: "refused", reason: "unavailable" } as const),
+    progress: {
+      load: video => call("tab.progress.load", { video }, null),
+      async save(video, progress) { await call("tab.progress.save", { video, progress }, null) }
+    },
+    async cantMeasure() {
+      const answer = await call("tab.cantMeasure", null, null)
+      return answer?.show === true
+    },
+    videoChanged() { void call("tab.videoChanged", null, null) },
     dispose: () => rpc.dispose()
   }
 }

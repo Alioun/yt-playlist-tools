@@ -65,7 +65,7 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
   const store = projectionWorld(initial)
   const site = youtube()
   const listeners = new Set<Listener>()
-  const ensured: unknown[] = []
+  const ensured: unknown[] = [], ticks: string[] = []
   const known = { tabId: 9, acct: options.tabAccount === undefined ? a : options.tabAccount, privateTab: false } as unknown as KnownTab
   const tabs = {
     async known() { return [known] },
@@ -85,7 +85,8 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
     windows: { async get(id: number) { return { id, incognito: false } } }
   }
   const actions = composeActions({ native: native as never, build, owner: store.owner, tabs, playlists, writable: () => true,
-    registrar: { async ensure(tabId, what) { ensured.push({ tabId, what }) } }, requester: async () => null, log: () => {} })
+    registrar: { async ensure(tabId, what) { ensured.push({ tabId, what }) } }, requester: async () => null, log: () => {},
+    ticked: tabId => { ticks.push(`tick ${tabId}`) } })
   const sender = { id: "perchling", frameId: 0, url: "https://www.youtube.com/watch?v=aaaaaaaaaaa",
     tab: { id: 9, windowId: 3, incognito: false } } as NativeSender
   const transport = { send: (message: unknown) => new Promise<unknown>(resolve => {
@@ -95,7 +96,7 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
   }) }
   const deadline = (ms: number, expire: () => void) => { const t = setTimeout(expire, ms); return () => clearTimeout(t) }
   const progress = createAutoAddTabRouter({ transport: runtimeTransport(native.runtime as never), senders: native as never, build, deadline,
-    tabs, owner: store.owner, now: () => Date.now() })
+    tabs, owner: store.owner, untick: tabId => { ticks.push(`untick ${tabId}`) }, now: () => Date.now() })
   const page = createTabActions({ transport, build, deadline, account: () => options.pageAccount !== undefined ? options.pageAccount : known.acct })
   const health = syntheticHealth()
   const producer = createTabViewProducer({ owner: store.owner, addFlow: actions.flow, statuses: health.statuses, notices: health.notices, build })
@@ -109,7 +110,7 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
     const rows = store.removal.state().session.recentAdds
     return Array.isArray(rows) ? rows : []
   }
-  return { store, site, page, actions, ensured, view, recentAdds }
+  return { store, site, page, actions, ensured, ticks, view, recentAdds }
 }
 
 test("a playlist shortcut saves the pointed video to this account's shortcut playlist, with Undo", async () => {
@@ -225,6 +226,7 @@ async function watchPage(w: ReturnType<typeof world>, channel: string) {
     navigation: { kind: "watch", videoId: video } })
   return {
     scope, toasts, states, answers,
+    navigate(to: VideoId) { streams.nav?.({ pageType: "watch" as NavData["pageType"], video: { videoId: to, title: "Next video", length: 100, kind: "video" }, navigation: { kind: "watch", videoId: to } }) },
     async play(from: number, to: number) {
       for (let pos = from; pos <= to; pos++) {
         streams.player?.({ ad: false, at: now, player: "watch", videoId: video, pos, len: 100, listedLength: 100, rate: 1, playing: true, seeking: false,
@@ -265,6 +267,20 @@ test("auto-add: a video played to its playlist's goal is added by the background
   await tab.toasts[0]?.action?.run()
   await until(() => w.recentAdds().length === 0, "Undo to drop the Recent adds entry")
   expect(w.site.jobs.filter(job => job === "add" || job === "remove")).toEqual(["add", "remove"])
+})
+
+test("auto-add: an add ticks that tab's toolbar icon, and the tab clears the tick when its video changes in-app", async () => {
+  const w = autoAddWorld()
+  const tab = await watchPage(w, allowed)
+  await tab.play(0, 30)
+  await until(() => w.ticks.length > 0, "the tick")
+  expect(w.ticks).toEqual(["tick 9"])
+  tab.navigate("bbbbbbbbbbb" as VideoId)
+  await until(() => w.ticks.length > 1, "the untick")
+  expect(w.ticks).toEqual(["tick 9", "untick 9"])
+  const shortcut = world({ prepare: autoAddSeed })
+  expect((await shortcut.page.add({ site: "www", video, via: "shortcut", shortcut: "orig01" as never })).kind).toBe("report")
+  expect(shortcut.ticks).toEqual([])
 })
 
 test("auto-add: the background applies the playlist's channel filter, so another channel's video is filtered, toasted as such and never written", async () => {
