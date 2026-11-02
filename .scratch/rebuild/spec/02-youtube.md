@@ -694,6 +694,7 @@ The card menu raises no toasts of its own, apart from YT-BRK notices, which Show
 | Signed out (every explicit add: shortcuts, quick-save, the picker, the watch-page menu's Save rows; auto-add stays silent) | Sign in to YouTube to save videos. | Sign in (R3, R41) |
 | Offline, so nothing was sent | Couldn't save “{title}” to {list}. Check your connection. | Try again (auto-add only) |
 | Sent, but no answer within 10 s | Couldn't confirm “{title}” was saved to {list}. YouTube didn't answer. | Try again (auto-add only) |
+| No report of the add came back, because the background stopped or no tab answered (explicit adds, keys from any tab, YouTube Music's quick actions; R197) | Couldn't confirm the save. Check the playlist on YouTube before you try again. | — |
 | Missing playlist | Couldn't save “{title}”, because {Playlist} doesn't exist anymore. | Settings (auto-add, shortcuts); Choose (quick-save) |
 | Full playlist | Couldn't save “{title}”, because {Playlist} is full. | Settings; Choose (quick-save) |
 | YouTube refuses the video (made for kids, private, removed, region-blocked) | YouTube doesn't allow saving “{title}” to playlists. | — |
@@ -1619,15 +1620,18 @@ Automatic gathering is the second way videos are added without an explicit actio
 | No gather playlist yet | Choose a gather playlist for {Account} first. | — | The chooser opens |
 | Automatic, waiting | Waiting for a signed-in YouTube tab to save from. | — | — |
 | Undone | Removed {n} videos from {Playlist} and reopened their tabs. | (the toast closes) | — |
+| Undone, when the gather saved nothing | Reopened {n} tabs. | (the toast closes) | — |
 | "Last gather" line | Last gather: {n} videos into {destination}, {5 min ago} | — | Undo, while it's offered |
 
-Counts read "1 video", "2 videos"; `{Playlist}` follows YT-ADD-18. Into the gather playlist, "{m} were already in it." shows only when some were. (R137)
+Counts read "1 video", "2 videos", and with one video "their tabs" reads "its tab" (R197); `{Playlist}` follows YT-ADD-18. Into the gather playlist, "{m} were already in it." shows only when some were. (R137)
 
 **YT-GT-33: failures.** These always show.
 
 | Situation | Popup row, or toast | Action |
 |---|---|---|
 | Some videos failed | Saved {n} videos to {Playlist}. Couldn't save {m}, because {reason}. Their tabs stay open. | Try again (popup row) |
+| Some videos failed, with no one reason for all of them | …Couldn't save {m} videos. Their tabs stay open. | Try again (popup row) |
+| The window's tabs can't be read | Couldn't read this window's tabs, so nothing was gathered. | — |
 | YouTube refuses a video | …Couldn't save 1 video, because YouTube doesn't allow saving it. Its tab stays open. | — |
 | Rate-limited | Couldn't save {m} videos, because YouTube is limiting requests. Try again in a minute. Their tabs stay open. | — |
 | Missing gather playlist | Couldn't gather into {Playlist}, because it doesn't exist anymore. All tabs stay open. | Choose (popup); Settings (toast) |
