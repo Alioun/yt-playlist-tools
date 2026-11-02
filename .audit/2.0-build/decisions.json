@@ -229,6 +229,18 @@
       "topic": "Consent disclosure wording",
       "answer": "Reword the two colon-joined bullets through unslop and re-pin the new text as version 1 with its new digest; 2.0 hasn't shipped, so nobody agreed to the old text.",
       "landed": "pending"
+    },
+    {
+      "id": "G39",
+      "topic": "Filter tombstone under a live Setup",
+      "answer": "Accept a synced Filter tombstone while the Setup is live when that Setup no longer auto-adds the playlist; refuse it otherwise. Amends G17's receive-side rule so Remove kept filters can't stall other browsers' sync.",
+      "landed": "2.0/store-signals"
+    },
+    {
+      "id": "G40",
+      "topic": "Marks and labels past the sync limit",
+      "answer": "For now a Missing/Full mark or label refresh past the browsers' own sync limit is not saved. SYNC-16's stay-local-until-room behavior is a queued follow-up.",
+      "landed": "pending follow-up"
     }
   ],
   "coordinatorCalls": [
