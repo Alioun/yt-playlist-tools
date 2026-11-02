@@ -87,7 +87,7 @@ function start(context: FeatureContext<"www", ShortcutServices>): void {
         choose: () => { void openPicker(feedback, found.video, found.title, found.element, id) },
         retry: () => { void save(id) }
       }
-    }, () => actions.add({ site: "www", video: found.video, via: "shortcut", shortcut: id }))
+    }, () => actions.add({ site: "www", video: found.video, via: "shortcut", shortcut: id, ...(found.title ? { title: found.title } : {}) }))
   }
 
   async function pick() {

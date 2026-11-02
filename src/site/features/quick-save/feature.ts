@@ -218,7 +218,7 @@ function start(context: FeatureContext<"www", QuickSaveServices>): void {
       feedback: options.feedback, keyWithoutButton: false, pending: options.playlist ? [options.playlist] : [],
       titles: value.title ? { video: value.title } : {},
       handlers: { choose: () => { void openPicker(value, true) }, retry: () => { void save() } }
-    }, () => actions.add({ site: "www", video, via: "quick-save", opener: "quick-save" }))
+    }, () => actions.add({ site: "www", video, via: "quick-save", opener: "quick-save", ...(value.title ? { title: value.title } : {}) }))
     if (!scope.disposed) settle(video, answer, options.playlist, at)
   }
   function pick() {

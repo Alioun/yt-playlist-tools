@@ -119,7 +119,7 @@ test("the menu's Save row saves to the quick-save playlist in place and raises n
   expect(m.rows().map(button => button.textContent)).toEqual(["Save to Mixes", "Save to… (Alt+Shift+P)"])
   m.rows()[0]?.click()
   await settle()
-  expect(m.adds).toEqual([{ site: "www", video, via: "quick-save", opener: "watch-button" }])
+  expect(m.adds).toEqual([{ site: "www", video, via: "quick-save", opener: "watch-button", title: "First video" }])
   expect(m.rows()[0]?.textContent).toBe("Saved to Mixes")
   expect(m.toast()).toBeNull()
 })

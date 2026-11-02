@@ -77,7 +77,7 @@ test("Watch later from any tab saves the tab's current video, shows its toast th
   const w = world()
   await w.anyTab.command("watch-later-current-video")
   expect(w.ensured).toEqual([7])
-  expect(w.adds).toEqual([{ tabId: 7, request: { site: "www", video: "aaaaaaaaaaa" as never, via: "picker", opener: "any-tab-keys", playlist: WL } }])
+  expect(w.adds).toEqual([{ tabId: 7, request: { site: "www", video: "aaaaaaaaaaa" as never, via: "picker", opener: "any-tab-keys", playlist: WL, title: "First video" } }])
   expect(w.asks.map(({ tabId, kind }) => ({ tabId, kind }))).toEqual([{ tabId: 7, kind: "bg.toast" }])
   expect(w.log).toContain("badge 2 ✓")
   expect(w.log).toContain("title 2 Saved “First video” to Watch later")

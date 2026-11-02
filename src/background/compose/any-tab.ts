@@ -122,7 +122,7 @@ export function composeAnyTab(deps: {
       const info = await currentVideo(tab)
       if (!info) continue
       const answer = await actions.addInTab({ tabId, incognito: tab.incognito, site: "www" },
-        { site: "www", video: info.videoId, via: "picker", opener: "any-tab-keys", playlist: watchLater })
+        { site: "www", video: info.videoId, via: "picker", opener: "any-tab-keys", playlist: watchLater, ...(info.title ? { title: info.title } : {}) })
       void ask(tabId, "bg.toast", { answer, video: info.videoId, title: info.title || null, opener: "any-tab-keys" })
       await flash(shown?.id, confirmed(answer), answerText(answer, info.title || null))
       return
@@ -149,9 +149,10 @@ export function composeAnyTab(deps: {
       await ask(target.id, "bg.picker", { video, title, choose: false, opener: "browser-menu" })
       return
     }
+    const named = title ? { title } : {}
     const answer = await actions.addInTab({ tabId: target.id, incognito: target.incognito, site: "www" }, info.menuItemId === menuIds.quickSave
-      ? { site: "www", video, via: "quick-save", opener: "browser-menu" }
-      : { site: "www", video, via: "picker", opener: "browser-menu", playlist: watchLater })
+      ? { site: "www", video, via: "quick-save", opener: "browser-menu", ...named }
+      : { site: "www", video, via: "picker", opener: "browser-menu", playlist: watchLater, ...named })
     // With no quick-save playlist the item opens choose mode (YT-BM-03).
     if (answer.kind === "choose") await ask(target.id, "bg.picker", { video, title, choose: true, opener: "browser-menu" })
     else await ask(target.id, "bg.toast", { answer, video, title, opener: "browser-menu" })

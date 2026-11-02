@@ -59,7 +59,7 @@ export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> {
       return answer.ok ? { kind: "read", rows: answer.data } : { kind: "unreadable" }
     },
     async add(id): Promise<AddAnswer> {
-      const report = await actions.add({ site: "www", video: request.video, via, opener: request.opener, playlist: id })
+      const report = await actions.add({ site: "www", video: request.video, via, opener: request.opener, playlist: id, ...(request.title ? { title: request.title } : {}) })
       if (report.kind !== "report") return { kind: "failed" }
       const outcome = report.outcomes[id]
       if (outcome?.kind === "already-in") return { kind: "already-in" }

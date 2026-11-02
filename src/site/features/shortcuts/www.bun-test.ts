@@ -76,7 +76,7 @@ test("a shortcut key saves the pointed video, shows the pending toast after 1 s,
   const f = setup({ answer: () => new Promise(resolve => { answer = resolve }) })
   press(document.body, { key: "w", code: "KeyW", altKey: true })
   await settle()
-  expect(f.adds).toEqual([{ site: "www", video, via: "shortcut", shortcut: "orig01" as never }])
+  expect(f.adds).toEqual([{ site: "www", video, via: "shortcut", shortcut: "orig01" as never, title: "First video" }])
   expect(f.toast()).toBeNull()
   f.timers.advance(1000)
   expect(f.toast()?.content.text).toContain("Saving")

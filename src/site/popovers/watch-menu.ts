@@ -74,7 +74,7 @@ export function createWatchMenu(options: {
     else row(listed ? i18n.message("quickSave_idle", { list: listed }) : i18n.message("quickSave_more"), async button => {
       if (button.getAttribute("aria-busy") === "true") return
       button.setAttribute("aria-busy", "true"); button.textContent = i18n.message("quickSave_busy")
-      const answer = await core.actions.add({ site: "www", video: request.video, via: "quick-save", opener: "watch-button" })
+      const answer = await core.actions.add({ site: "www", video: request.video, via: "quick-save", opener: "watch-button", ...(request.title ? { title: request.title } : {}) })
       button.removeAttribute("aria-busy")
       if (answer.kind === "choose") { picker(true); return }
       const outcome = answer.kind === "report" ? answer.outcomes[quick.playlist] : undefined

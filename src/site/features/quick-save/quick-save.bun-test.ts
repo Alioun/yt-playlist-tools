@@ -83,7 +83,7 @@ test("a click saves the hovered card to the quick-save playlist, shows ✓ for 1
   expect(f.main()?.getAttribute("aria-label")).toBe("Save to Mixes")
   f.main()?.click()
   await settle()
-  expect(f.adds).toEqual([{ site: "www", video: videoA as never, via: "quick-save", opener: "quick-save" }])
+  expect(f.adds).toEqual([{ site: "www", video: videoA as never, via: "quick-save", opener: "quick-save", title: "First video" }])
   expect(f.main()?.dataset.state).toBe("done")
   expect(f.toast()?.content.text).toBe("Saved “First video” to Mixes")
   f.timers.advance(settleMs)
