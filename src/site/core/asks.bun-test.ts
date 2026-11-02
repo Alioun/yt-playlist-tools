@@ -15,14 +15,15 @@ const WL = "WL" as PlaylistId
 const running: (() => void)[] = []
 afterEach(() => { for (const stop of running.splice(0)) stop(); delete pageGlobal().popovers })
 
-function world(need: () => Promise<boolean>) {
+function world(need: () => Promise<boolean>, gatherUndo: TabActions["gatherUndo"] = async () => null) {
   const timers = clock()
   const root = new Scope({ document, onError: () => {} })
   const keys = new Keys({ document, blockers: { menuOpen: () => false, dialogOpen: () => false, extensionPopoverOpen: () => false }, onError: () => {} })
   const i18n = englishI18n()
   const feedback = createFeedbackSession({ owner: root, document, keys, site: "www", i18n, labels, initial: { undoKey, features: [] }, now: timers.now, onError: () => {}, onCosmetic: () => {} })
   const undone: unknown[] = []
-  const actions = { need, undo: async (handle: unknown) => { undone.push(handle); return { kind: "undone" } } } as unknown as TabActions
+  const actions = { need, undo: async (handle: unknown) => { undone.push(handle); return { kind: "undone" } },
+    gatherUndo: async (id: string) => { undone.push(id); return gatherUndo(id) } } as unknown as TabActions
   const asks = tabAsks({ site: "www", document, actions, i18n, feedback: () => feedback.use(root) })
   running.push(() => { root.dispose(); keys.dispose(); timers.restore() })
   return { asks, timers, undone, toast: () => feedback.read()?.feedback.toaster.read() ?? null }
@@ -49,4 +50,21 @@ test("the browser menu's Choose a playlist opens the picker here, or says the li
   expect(await failing.asks.picker({ video: "aaaaaaaaaaa" as never, title: null, choose: true, opener: "browser-menu" })).toBe("failed")
   await settle()
   expect(failing.toast()?.content.text).toBe("Couldn't open the playlist list. Try again.")
+})
+
+test("a gather's toast carries Undo, which spends it once it worked and says so when it didn't", async () => {
+  // happy-dom leaves fullscreenElement undefined, which reads as fullscreen, where an unasked toast waits; a browser says null.
+  Object.defineProperty(document, "fullscreenElement", { value: null, configurable: true })
+  running.push(() => { Reflect.deleteProperty(document, "fullscreenElement") })
+  const w = world(async () => true)
+  w.asks.gatherToast({ text: "Gathered 3 videos into Later by itself and closed their tabs", tone: "confirmation", auto: true, undo: "g:1" })
+  expect(w.toast()?.content).toMatchObject({ text: "Gathered 3 videos into Later by itself and closed their tabs", tone: "confirmation", auto: true, action: { kind: "undo" } })
+  await w.toast()?.act()
+  expect(w.undone).toEqual(["g:1"])
+  expect(w.toast()?.content.action ?? null).toBeNull()
+  const failing = world(async () => true, async () => ({ kind: "unanswered" }))
+  failing.asks.gatherToast({ text: "Gathered 1 video into Later", tone: "confirmation", auto: false, undo: "g:2" })
+  await failing.toast()?.act()
+  await settle()
+  expect(failing.toast()?.content).toMatchObject({ text: "Couldn't undo.", tone: "failure", action: null })
 })
