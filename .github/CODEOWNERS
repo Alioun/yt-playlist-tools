@@ -1,12 +1,16 @@
 # A change to any of these needs the owner's review before it reaches main,
 # once the main ruleset requires review from Code Owners (G28). The workflows
-# decide which job gets which secret; the rest is what the reviewer-login jobs
-# run, what installs code beside the AMO keys, or what proves the secret flow.
+# decide which job gets which secret, and ci.yml runs the G28 tests before the
+# install, with the Bun package.json declares. The rest is what the
+# reviewer-login jobs run, what proves and documents the secret flow, or what
+# installs code beside the AMO keys. A test holds this list to the approval.
 /.github/CODEOWNERS @Alioun
 /.github/workflows/** @Alioun
 /scripts/amo-reviewer-notes.ts @Alioun
-/scripts/run-bun-tests.ts @Alioun
 /tests/integration/amo-reviewer-notes.test.ts @Alioun
 /tests/integration/fixtures/fake-amo.ts @Alioun
+/.audit/2.0-build/ci-reviewer-credentials-mutations.sh @Alioun
+/.audit/2.0-build/ci-reviewer-credentials-design.md @Alioun
+/docs/development/releasing.md @Alioun
 /package.json @Alioun
 /bun.lock @Alioun

@@ -325,6 +325,37 @@ describe("the reviewer jobs", () => {
   })
 })
 
+describe("CODEOWNERS", () => {
+  // Every file the owner's approval covers (the design's "What the owner approves").
+  const approved = [
+    ".github/CODEOWNERS",
+    ".github/workflows/release.yml",
+    ".github/workflows/ci.yml",
+    "scripts/amo-reviewer-notes.ts",
+    "tests/integration/amo-reviewer-notes.test.ts",
+    "tests/integration/fixtures/fake-amo.ts",
+    ".audit/2.0-build/ci-reviewer-credentials-mutations.sh",
+    ".audit/2.0-build/ci-reviewer-credentials-design.md",
+    "docs/development/releasing.md",
+    "package.json"
+  ]
+
+  test("sends every file the approval covers to the owner, as GitHub reads it", () => {
+    const rules = readFileSync(join(root, ".github/CODEOWNERS"), "utf8")
+      .split("\n")
+      .map(line => line.replace(/#.*/, "").trim())
+      .filter(Boolean)
+      .map(line => {
+        const [pattern = "", ...owners] = line.split(/\s+/)
+        return { glob: new Bun.Glob(pattern.replace(/^\//, "")), owners }
+      })
+    // The last matching line wins, and a line with no owner leaves the file unowned.
+    const owners = (path: string) => rules.findLast(rule => rule.glob.match(path))?.owners ?? []
+    expect(approved.filter(path => !existsSync(join(root, path)))).toEqual([])
+    expect(approved.map(path => ({ path, owners: owners(path) }))).toEqual(approved.map(path => ({ path, owners: ["@Alioun"] })))
+  })
+})
+
 describe("the CI step that runs these tests", () => {
   const steps = workflows["ci.yml"]!.jobs.build!.steps!
   const proof = steps.find(step => step.run?.includes("./tests/integration/amo-reviewer-notes.test.ts"))!

@@ -61,6 +61,7 @@ script=scripts/amo-reviewer-notes.ts
 release=.github/workflows/release.yml
 ci=.github/workflows/ci.yml
 tests=tests/integration/amo-reviewer-notes.test.ts
+owners=.github/CODEOWNERS
 
 plant old-script "$script" base -- "refuses to run with BUN_CONFIG_VERBOSE_FETCH set"
 plant follows-redirects "$script" 's/\n *redirect: "error",//' -- "never follows a redirect"
@@ -105,6 +106,8 @@ plant job-level-token "$release" 's/(      CHANNEL: \$\{\{ needs\.meta\.outputs\
 plant ci-reads-bunfig "$ci" 's/bun --config="\$RUNNER_TEMP\/empty\.toml" test/bun test/' -- "loads no bunfig.toml preload and no tsconfig.json from the checkout"
 plant ci-reads-tsconfig "$ci" 's/ --tsconfig-override="\$RUNNER_TEMP\/empty\.json"//' -- "loads no bunfig.toml preload and no tsconfig.json from the checkout"
 plant ci-after-install "$ci" 's/(      # G28\x27s secret-flow tests.*?\n\n)(      - name: Install dependencies\n.*?\n\n)/$2$1/s' -- "runs before bun install"
+plant runner-unowned "$owners" 's/^\/\.audit\/2\.0-build\/ci-reviewer-credentials-mutations\.sh \@Alioun\n//m' -- "sends every file the approval covers to the owner"
+plant docs-unowned-later "$owners" 's/\z/\/docs\/development\/releasing.md\n/' -- "sends every file the approval covers to the owner"
 plant old-runner \
   "$script" base \
   "$release" 's/          digest=\$REVIEWER_NOTES_SHA256\n          script=[^\n]*\n          metadata=[^\n]*\n          version=\$VERSION\n(?:.*\n)*?          exec "\$bun" [^\n]*\n/          cp scripts\/amo-reviewer-notes.ts "\$RUNNER_TEMP\/"\n          cd "\$RUNNER_TEMP"\n          echo "\$REVIEWER_NOTES_SHA256  amo-reviewer-notes.ts" | shasum -a 256 --check --status \\\n            || { echo "::error::amo-reviewer-notes.ts is not the approved version (G28)"; exit 1; }\n          bun --no-env-file amo-reviewer-notes.ts fill "\$VERSION" "\$GITHUB_WORKSPACE\/dist\/amo-metadata.json"\n/' -- \
