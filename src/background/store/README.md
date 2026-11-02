@@ -705,7 +705,7 @@ An ignored, mixed, divergent, unreadable, or disposed attempted write closes the
 
 ## Bounded first sync join
 
-The existing owner exposes `beginSyncJoin`, `applySyncJoin`, `cancelSyncJoin`, `readSyncJoin`, and `resumeSyncJoin`. They share its serial lane. The optional `join` dependency defaults to unavailable. Its fixture host removes only the pending continuation, an account cache, or a recognized progress shard, and supplies the existing account-session cleanup ports.
+The existing owner exposes `beginSyncJoin`, `applySyncJoin`, `cancelSyncJoin`, `readSyncJoin`, and `resumeSyncJoin`. They share its serial lane. The optional `join` dependency defaults to unavailable. Its fixture or native host removes only the pending continuation, an account cache, or a recognized progress shard, and supplies the existing account-session cleanup ports. The browser owner builds the native host with `nativeSyncJoinHost`.
 
 Preparation subscribes before its full sync read and keeps one original ten-second deadline. Empty copies and incomplete chunk delivery can wait without holding the lane. A review capability binds the detached full inventories, observation revisions, Origin, and automatic or explicit branch. Observed A-B-A changes revoke it. Initial cancellation writes nothing. `readSyncJoin` reads local status without allocating stamps, reading sync, or acquiring retry authority.
 

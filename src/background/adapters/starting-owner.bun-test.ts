@@ -9,6 +9,11 @@ import { acct, one, ui, seed, captured, change } from "../../../tools/fixtures/a
 import { runStartingOwnerConsumer } from "../../../tools/fixtures/starting-owner/run"
 import { fileText as settingsImportFile, initial as importSeed } from "../../../tools/fixtures/settings-import-execution/harness"
 
+function object(value: unknown): JsonObject {
+  check(value !== null && typeof value === "object" && !Array.isArray(value), "a stored record")
+  return value as JsonObject
+}
+
 test("the native owner imports a settings file through the browser's own cleanup host (UI-SET-22, DATA-55)", async () => {
   const h = startingOwnerFixture(importSeed().local as JsonObject), owner = createBrowserStartingLocalFilterWriter(h.native, h.options)
   try {
@@ -19,6 +24,30 @@ test("the native owner imports a settings file through the browser's own cleanup
     expect((await owner.importSettings(ui, { confirmation: prepared.confirmation, replace: "confirmed" })).kind).toBe("committed")
     expect(h.counts.localSet).toBeGreaterThan(writes)
     expect(await owner.resumeSettingsImport(ui)).toEqual({ kind: "idle" })
+  } finally { await owner.dispose() }
+})
+
+test("the native owner joins another browser's synced settings and retires the join through the browser's own removal (SYNC-08)", async () => {
+  const seed = agreedSeed()
+  Object.assign(object(seed.sync), { everEdited: true })
+  object(seed["doc:settings"]).data = { theme: "light" }
+  const h = startingOwnerFixture(seed), owner = createBrowserStartingLocalFilterWriter(h.native, h.options)
+  const synced = { v: 1, gen: "elsewhere", at: 5, by: "other-browser", data: { theme: "dark" } }
+  h.replaceRemote({ "s:meta": { v: 1, id: "other-history", created: 2 }, "s:settings": synced })
+  try {
+    expect(await owner.ready()).toBe("ok")
+    const preparation = await owner.beginSyncJoin(ui).result
+    if (preparation.kind !== "choice-required") throw Error(`Expected the join question, got ${JSON.stringify(preparation)}`)
+    expect(preparation.reason).toBe("independent-settings")
+    const result = await owner.applySyncJoin(ui, { kind: "choice", review: preparation.review, choice: "use-synced" })
+    expect(result).toMatchObject({ kind: "committed", historyId: "other-history", replication: "confirmed" })
+    const records = h.records()
+    expect(records["doc:settings"]).toEqual(synced)
+    expect(object(records.device).syncOn).toBe(true)
+    expect(object(records.sync)).toMatchObject({ joined: "other-history", status: "ok" })
+    expect(Object.hasOwn(records, "pending:sync-join")).toBe(false)
+    expect(h.localRemovals).toEqual([["pending:sync-join"]])
+    expect(h.counts.rawLocal).toBe(0)
   } finally { await owner.dispose() }
 })
 

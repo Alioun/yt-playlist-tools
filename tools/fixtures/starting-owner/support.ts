@@ -124,6 +124,9 @@ export function startingOwnerFixture(initial: JsonObject = {}) {
   return { native, options, counts, localBatches, localRemovals, sessionBatches, sessionRemovals, listeners, allListeners, timers, results, hooks, faults,
     records: () => copy(records), session: () => copy(sessionRecords),
     mutate(change: (current: JsonObject) => void) { change(records) },
+    /** Another browser's synced copy, as the browser's own sync delivered it. */
+    replaceRemote(value: JsonObject) { remote = copy(value) },
+    remote: () => copy(remote),
     seedSession(value: JsonObject) { sessionRecords = copy(value) },
     fire() { for (const listener of [...listeners]) listener({}) },
     fireLate() { for (const listener of allListeners) listener({}); for (const timer of timers) timer.run() }

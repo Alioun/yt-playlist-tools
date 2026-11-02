@@ -41,8 +41,12 @@ export type SyncJoinStatus = { readonly kind: "off" | "joining" } | { readonly k
   { readonly kind: "pending"; readonly action: "resume-join" } | { readonly kind: "joined"; readonly status: "ok" | "full" | "update-needed" } | SyncJoinUnavailable
 export type SyncJoinLocalRemoval = { readonly kind: "continuation" } | { readonly kind: "cache"; readonly acct: AccountKey } |
   { readonly kind: "progress"; readonly acct: AccountKey; readonly shard: ProgressShard }
-export type SyncJoinHost = { readonly kind: "unavailable" } | { readonly kind: "fixture";
-  removeLocal(keys: readonly SyncJoinLocalRemoval[]): Promise<void>; readonly session: Extract<AccountRemovalHost, { kind: "fixture" }>["session"] }
+type JoinCleanupPorts = { removeLocal(keys: readonly SyncJoinLocalRemoval[]): Promise<void>; readonly session: Extract<AccountRemovalHost, { kind: "fixture" }>["session"] }
+export type SyncJoinHost = { readonly kind: "unavailable" } | ({ readonly kind: "fixture" } & JoinCleanupPorts) | ({ readonly kind: "native" } & JoinCleanupPorts)
+/** The browser's own cleanup for a join: the pending record, and a removed account's cache, progress and session state (SYNC-08). */
+export function nativeSyncJoinHost(ports: { removeLocal(names: readonly string[]): Promise<void>; readonly session: JoinCleanupPorts["session"] }): SyncJoinHost {
+  return { kind: "native", removeLocal: keys => ports.removeLocal(keys.map(syncJoinLocalName)), session: ports.session }
+}
 export function syncJoinLocalName(key: SyncJoinLocalRemoval): string {
   if (!agreementObject(key)) throw new TypeError("Invalid join removal")
   if (key.kind === "continuation" && Object.keys(key).length === 1) return pendingSyncJoinKey
@@ -250,13 +254,13 @@ export async function setJoinStage(deps: JoinExecutionDependencies, stage: SyncJ
   return confirmJoinMutation({ stage, baseline, expected: { ...baseline, ...items }, read: () => deps.local.get(null), write: () => deps.local.set(joinJson(items)), stopped: deps.stopped })
 }
 export async function retireJoin(deps: JoinExecutionDependencies, baseline: JsonObject) {
-  if (deps.host.kind !== "fixture") return joinUnavailable("join-host")
+  if (deps.host.kind === "unavailable") return joinUnavailable("join-host")
   const expected = joinJson(baseline); delete expected[pendingSyncJoinKey]
   const host = deps.host
   return confirmJoinMutation({ stage: "retire", baseline, expected, read: () => deps.local.get(null), write: () => host.removeLocal([{ kind: "continuation" }]), stopped: deps.stopped })
 }
 export async function finishJoinEffect(deps: JoinExecutionDependencies, initial: JsonObject, checkpoint: SyncJoinCheckpoint & { phase: "accepted" }, mutations: JoinMutation[] = [], waiting?: Extract<SyncJoinCheckpoint, { phase: "choice" }>): Promise<SyncJoinResult> {
-  if (deps.host.kind !== "fixture") return joinUnavailable("join-host")
+  if (deps.host.kind === "unavailable") return joinUnavailable("join-host")
   let stage: SyncJoinStage = "materialize"
   try {
     const host = deps.host, effect = checkpoint.effect

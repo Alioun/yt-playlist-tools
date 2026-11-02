@@ -2,6 +2,7 @@ import { nativeSharedSettingsAccess } from "./shared-settings"
 import { createStartingLocalFilterWriter } from "../store/local-filter-writer"
 import { nativeAccountRemovalHost } from "../store/account-removal-execution"
 import { nativeSettingsImportHost } from "../store/settings-import-execution"
+import { nativeSyncJoinHost } from "../store/sync-join-execution"
 import { acquireLocalFilterWriterArea } from "./starting-owner-area"
 
 type NativeBrowser = typeof import("wxt/browser").browser
@@ -59,7 +60,7 @@ export function createBrowserStartingLocalFilterWriter(
       },
       claim: options.claim ?? { kind: "unavailable" },
       removal: nativeAccountRemovalHost({ session, removeLocal(names) { assertOpen(); return native.storage.local.remove([...names]) } }),
-      join: options.join ?? { kind: "unavailable" },
+      join: options.join ?? nativeSyncJoinHost({ session, removeLocal(names) { assertOpen(); return native.storage.local.remove([...names]) } }),
       recovery: options.recovery ?? { kind: "unavailable" },
       canonicalAuthority: options.canonicalAuthority ?? { kind: "unavailable" },
       settingsImport: options.settingsImport ?? nativeSettingsImportHost({ session, removeLocal(names) { assertOpen(); return native.storage.local.remove([...names]) } }),

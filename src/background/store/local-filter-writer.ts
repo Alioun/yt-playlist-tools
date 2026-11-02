@@ -632,7 +632,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
   }
   const session = removal.kind !== "unavailable" ? removal.session : deps.session && fencedSession(deps.session)
   const joinPort = deps.join ?? { kind: "unavailable" }
-  const join: SyncJoinHost = joinPort.kind !== "fixture" ? joinPort : { ...joinPort,
+  const join: SyncJoinHost = joinPort.kind === "unavailable" ? joinPort : { ...joinPort,
     session: fencedSession(joinPort.session), async removeLocal(keys) { await assertExternalAuthority(); if (disposed() || protocolHeld) throw new Error("Owner execution is stopped"); return joinPort.removeLocal(keys) }
   }
   const joinDeps = { local, host: join, stopped: () => disposed() || protocolHeld || claimConfirmation === "unconfirmed" }
@@ -3173,7 +3173,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     if (!agreementOrigin(origin)) return { result: Promise.resolve({ kind: "refused", reason: "invalid" }), cancel() {} }
     const caller = snapshot(origin), blocked = joinBlocked()
     if (blocked) return { result: Promise.resolve(blocked), cancel() {} }
-    if (join.kind !== "fixture") return { result: Promise.resolve(joinUnavailable("join-host")), cancel() {} }
+    if (join.kind === "unavailable") return { result: Promise.resolve(joinUnavailable("join-host")), cancel() {} }
     let resolve!: (value: SyncJoinPreparation) => void
     const result = new Promise<SyncJoinPreparation>(done => { resolve = done })
     let done = false, cancelled = false, reading = false, again = false, deadline = false
@@ -3247,7 +3247,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     return capture
   }
   async function acceptJoin(capture: JoinCapture, side: SyncJoinSide | undefined, facts: JoinAgreementFacts, at: number): Promise<SyncJoinResult> {
-    if (join.kind !== "fixture") return joinUnavailable("join-host")
+    if (join.kind === "unavailable") return joinUnavailable("join-host")
     const classification = classifySyncJoin(capture.local, capture.remote)
     if (classification.kind === "unavailable") return classification
     const decision = syncJoinDecision(classification, side)
@@ -3341,7 +3341,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
         if (read.kind === "absent" || read.kind === "valid" && read.checkpoint.phase === "off") return { kind: "cancelled" }
         if (retainedHold(records)) return joinUnavailable("retention")
         if (read.kind !== "valid") return joinUnavailable("pending-join")
-        if (join.kind !== "fixture") return joinUnavailable("join-host")
+        if (join.kind === "unavailable") return joinUnavailable("join-host")
         let unfinished: string | undefined
         const fixed = read.checkpoint.phase === "accepted" ? read.checkpoint : read.checkpoint.phase === "choice" && read.checkpoint.suspended.kind === "accepted" ? { v: read.checkpoint.v, kind: "sync-join", phase: "accepted", effect: read.checkpoint.suspended.effect } as const : undefined
         if (fixed) {
