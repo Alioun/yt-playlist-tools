@@ -119,6 +119,7 @@ test("fixture chooser callback drives actual confirmed first-run destination rou
   const outcome=await committed;return outcome.kind==="confirmed"?{ok:true}:{refused:"invalid"}
  });sessions.push(s);return s.source},r=>{r.picker.close();sessions[0]?.dispose()},e=>events.push(e))})
  try {
+  await within(document.body).findByRole("dialog")
   const opened=await sessions[0]!.operation.opened;expect(opened).toMatchObject({kind:"answered",result:{kind:"open"}})
   const fresh=await sessions[0]!.operation.refresh();process.stdout.write(JSON.stringify({case:"first-run-list-diagnostic",opened,fresh})+"\n");await stable()
   const row=within(document.body).getByRole("checkbox",{name:"Beta"})

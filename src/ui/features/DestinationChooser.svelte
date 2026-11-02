@@ -1,7 +1,9 @@
 <script lang="ts">
   import { untrack } from "svelte"
   import { pickerSource } from "./source"
-  import { PlaylistChooser, createPickerText, pickerHelpUrl, type ChooserContext, type PickerEvent } from "../picker"
+  import PlaylistChooser from "../picker/PlaylistChooser.svelte"
+  import { createPickerText } from "../picker/text"
+  import { pickerHelpUrl, type ChooserContext, type PickerEvent } from "../picker/types"
   import type { SetupDestination } from "../../shared/contracts/first-run"
   import type { Site } from "../../shared/contracts/vocabulary"
   import { destinationValue } from "../backend/page-source"

@@ -6,7 +6,7 @@
 
 `PickerPanel` receives a model, `PickerText`, a header purpose, and the platform for live shortcut labels. The caller owns the injected model. `onoutcome` receives the exact model answer. `onpending` exposes the corresponding outcome promise before it settles. Neither callback is a storage receipt.
 
-`PlaylistChooser` receives `open`, an account-scoped `ChooserContext`, the actual current title, a source factory, and an availability fact. A user gesture calls `onrequest`. The caller changes `open`. Each open creates a new choose-mode `PickerModel`. An account, purpose, privacy, or source-factory change releases the prior session and creates another one.
+`PlaylistChooser` receives `open`, an account-scoped `ChooserContext`, the actual current title, a source factory, and an availability fact. A user gesture calls `onrequest`. The caller changes `open`. The chooser renders only its button until it first opens. Then it imports `ChooserPopover`, which holds the popover, the sessions and the panel, so the picker and Bits UI load on first open (G43). Each open creates a new choose-mode `PickerModel`. An account, purpose, privacy, or source-factory change releases the prior session and creates another one.
 
 `onrelease` is required. It receives the model, context, reason, and outstanding `Promise<PickerEvent>` values. The caller owns disposal timing and calls `picker.close()` under its eventual policy. The renderer detaches the prior panel and suppresses stale UI callbacks. It never reuses a released model.
 

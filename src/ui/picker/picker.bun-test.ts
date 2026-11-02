@@ -10,7 +10,7 @@ import { chooserSource, itemSource, NOW, playlist, entry, settle, undoing } from
 import type { Ledger } from "../../../tools/fixtures/picker-model/fake-source"
 import { englishI18n } from "../../../tools/fixtures/localization/scripted"
 import "../../../tools/fixtures/picker-ui/synthetic-layout"
-import type { ChooserContext, ChooserRelease, PickerEvent } from "./types"
+import type { ChooserContext, ChooserRelease, ChooserRequest, PickerEvent } from "./types"
 import { createPickerText } from "./text"
 import PickerPanel from "./PickerPanel.svelte"
 import PlaylistChooser from "./PlaylistChooser.svelte"
@@ -279,6 +279,7 @@ test("chooser is controlled, shows the supplied title, and uses independent mode
   expect(onrequest).toHaveBeenCalledWith({ kind: "open" })
   expect(createSource).not.toHaveBeenCalled()
   await view.rerender({ ...props, open: true })
+  await screen.findByRole("dialog")
   await list(ledgers[0]!)
   expect(screen.getByRole("searchbox")).toHaveFocus()
   await userEvent.setup().keyboard("{Escape}")
@@ -292,6 +293,30 @@ test("chooser is controlled, shows the supplied title, and uses independent mode
   await userEvent.setup().click(screen.getByRole("checkbox", { name: "Synthetic Alpha" }))
   expect(second.ledger.calls("choose")).toEqual([[alpha, true]])
   expect(first.ledger.calls("choose")).toEqual([])
+})
+
+test("the trigger asks to open on Enter or Space, names its dialog while open, and a press on it dismisses an open chooser", async () => {
+  const { source, ledger } = chooserSource()
+  const onrequest = mock((_: ChooserRequest) => {})
+  const props = {
+    open: false, context: context(), current: { kind: "none" }, label: "Synthetic destination",
+    availability: { kind: "available" }, createSource: () => source, text, platform: "linux",
+    onrequest, onoutcome: () => {}, onrelease: (event: ChooserRelease) => event.picker.close()
+  } satisfies import("./types").PlaylistChooserProps
+  const view = render(PlaylistChooser, { props })
+  const trigger = screen.getByRole("button", { name: "Synthetic destination: No playlist chosen" })
+  expect([trigger.getAttribute("aria-haspopup"), trigger.getAttribute("aria-expanded"), trigger.getAttribute("aria-controls")]).toEqual(["dialog", "false", null])
+  trigger.focus()
+  await userEvent.setup().keyboard("{Enter}")
+  await userEvent.setup().keyboard(" ")
+  expect(onrequest.mock.calls).toEqual([[{ kind: "open" }], [{ kind: "open" }]])
+  onrequest.mockClear()
+  await view.rerender({ ...props, open: true })
+  const dialog = await screen.findByRole("dialog")
+  await list(ledger)
+  expect([trigger.getAttribute("aria-expanded"), trigger.getAttribute("aria-controls")]).toEqual(["true", dialog.id])
+  await userEvent.setup().click(trigger)
+  expect(onrequest.mock.calls).toEqual([[{ kind: "close", reason: "dismiss" }]])
 })
 
 test("private gather chooser is disabled with the exact explanation and performs no read", () => {
@@ -525,6 +550,7 @@ test("session release gives the caller the real pending outcome without choosing
     onrequest: () => {}, onoutcome: mock(() => {}), onrelease: (event: ChooserRelease) => { released = event }
   } satisfies import("./types").PlaylistChooserProps
   const view = render(PlaylistChooser, { props })
+  await screen.findByRole("dialog")
   await list(ledger)
   await userEvent.setup().click(screen.getByRole("checkbox", { name: "Synthetic Alpha" }))
   await view.rerender({ ...props, open: false })
@@ -561,6 +587,7 @@ test("two chooser containers release and mutate only their own model", async () 
     ...base, context: { ...base.context, purpose: { kind: "named", title: "Synthetic second chooser", subtitle: null } },
     createSource: () => second.source, onrelease: releaseSecond
   } })
+  await screen.findByRole("dialog", { name: "Synthetic second chooser" })
   await list(first.ledger)
   expect(second.ledger.calls("cachedList")).toEqual([[]])
   await list(second.ledger)
