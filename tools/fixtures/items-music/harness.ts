@@ -12,7 +12,7 @@ import { createPageLink } from "../../../src/site/core/page-link"
 import { Pointer } from "../../../src/site/core/pointer"
 import { Scope } from "../../../src/site/core/scope"
 import { MusicItems } from "../../../src/site/core/items-music"
-import type { MusicItemFailure } from "../../../src/site/core/items-music"
+import type { MusicItemFailure, MusicSettleObservation } from "../../../src/site/core/items-music"
 import { ManualClock } from "../page-link/support"
 import { hitStack, move } from "../pointer-keys/harness"
 
@@ -99,15 +99,15 @@ export async function musicFixture(dom = false, overrides: Partial<Record<PageRe
   const link = createPageLink({ site: "music", build, vocabulary: gateway.vocabulary, clock }, channel)
   const hello = await link.hello
   if (!hello.ok) throw Error("Synthetic PageLink hello failed")
-  const errors: unknown[] = [], failures: MusicItemFailure[] = []
+  const errors: unknown[] = [], failures: MusicItemFailure[] = [], observations: MusicSettleObservation[] = []
   const scopeOptions = { document, onError: (error: unknown) => { errors.push(error) } }
   const pointer = new Pointer(scopeOptions)
   const items = new MusicItems({ ...scopeOptions, pointer, page: link, report: {
-    itemUnrecognised: facts => { failures.push(facts) }
+    itemUnrecognised: facts => { failures.push(facts) }, pageSettled: facts => { observations.push(facts) }
   } })
   const stack = hitStack(), timers = manualTimers(), owners: Scope[] = []
   return {
-    items, pointer, page, gateway, link, clock, errors, failures, stack, timers, reads, owners, signals, answers,
+    items, pointer, page, gateway, link, clock, errors, failures, observations, stack, timers, reads, owners, signals, answers, app,
     transformResult(rewrite?: (result: JsonValue) => JsonValue) { rewriteResult = rewrite },
     get navStarts() { return navStarts }, get navStops() { return navStops }, get heldAnswers() { return held.length },
     owner() { const scope = new Scope(scopeOptions); owners.push(scope); return scope },

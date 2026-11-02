@@ -19,6 +19,39 @@ function requireButton(parent: Element): HTMLElement {
   return button
 }
 
+test("3 s after a navigation, 6 item links with fewer than half recognised report the items anchor missing (YM-FAIL-8)", async () => {
+  const h = await fixture()
+  h.items.track(h.owner())
+  const id = (n: number) => `syn${String(n).padStart(8, "0")}`
+  for (const [total, known, missing] of [[5, 0, false], [6, 2, true], [6, 3, false]] satisfies [number, number, boolean][]) {
+    const content = document.createElement("div")
+    h.app.append(content)
+    for (let n = 0; n < total; n++) {
+      if (n < known) row("ytmusic-responsive-list-item-renderer", id(n), { parent: content })
+      else unknownItem(id(n), content)
+    }
+    h.navigate()
+    const before = h.observations.length
+    h.timers.advance(2999)
+    expect(h.observations).toHaveLength(before)
+    h.timers.advance(1)
+    expect(h.observations.at(-1)).toMatchObject({ site: "music", anchor: "music-items", distinctMainLinks: total, recognised: known, anchorMissing: missing })
+    content.remove()
+  }
+})
+
+test("the Music anchor check leaves out the player bar, the queue and the guide", async () => {
+  const h = await fixture()
+  h.items.track(h.owner())
+  for (const tag of ["ytmusic-player-bar", "ytmusic-player-queue", "ytmusic-guide-renderer"]) {
+    const outside = document.createElement(tag)
+    h.app.append(outside)
+    for (let n = 0; n < 6; n++) unknownItem(`out${String(n).padStart(8, "0")}`, outside)
+  }
+  h.navigate(); h.timers.advance(3000)
+  expect(h.observations.at(-1)).toMatchObject({ distinctMainLinks: 0, anchorMissing: false })
+})
+
 test("construction is inert and disposed owners cannot acquire", async () => {
   const h = await fixture(), owner = h.owner()
   expect(h.navStarts).toBe(0)

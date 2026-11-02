@@ -2,6 +2,7 @@ import { isDiagnosticPageType, type BreakageSignal, type DiagnosticPageType } fr
 import { HEALTH_REPORTS, type TabHealthReport } from "../../shared/contracts/tab-health"
 import type { FeatureId, JobId, Site } from "../../shared/contracts/vocabulary"
 import type { WwwSettleObservation } from "./items-www"
+import type { MusicSettleObservation } from "./items-music"
 import type { PageLink } from "./page-link"
 
 export const HEALTH_SEND_MS = 5_000
@@ -29,7 +30,7 @@ export function createSiteHealth(options: {
   now(): number
   online(): boolean
   later(run: () => void, milliseconds: number): () => void
-}): SiteHealth & { succeeded(job: JobId): void; settled(observation: WwwSettleObservation): void; dispose(): void } {
+}): SiteHealth & { succeeded(job: JobId): void; settled(observation: WwwSettleObservation | MusicSettleObservation): void; dispose(): void } {
   let queue: TabHealthReport[] = [], lastSent = -Infinity, cancel: (() => void) | null = null, answeredAt = -Infinity, disposed = false, unmeasured = false
   const sent = new Set<string>(), batched = new Map<string, number>(), signalled = new Set<JobId>()
   function flush() {

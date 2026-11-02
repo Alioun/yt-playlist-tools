@@ -1,4 +1,4 @@
-import type { ItemInfo, JobFailure, MusicAdEvidence, NowPlaying } from "../../shared/contracts"
+import type { ItemInfo, JobFailure, MusicAdEvidence, NavData, NowPlaying } from "../../shared/contracts"
 import { isMusicAdFailure } from "../../shared/contracts"
 import { isChannelId, isPlaylistId, isVideoId } from "../../shared/model/validation"
 import type { VideoId, PlaylistId } from "../../shared/model"
@@ -47,7 +47,23 @@ export type MusicItemFailure = {
   readonly source: PointerFacts["kind"]
   readonly element: Element
 }
-export interface MusicItemReporter { itemUnrecognised(facts: MusicItemFailure): void }
+/** YM-FAIL-8's anchor check, 3 s after a navigation: the page's distinct item links, and how many were recognised as items. */
+export type MusicSettleObservation = {
+  readonly kind: "page-settle"
+  readonly site: "music"
+  readonly anchor: "music-items"
+  readonly navigation: Pick<NavData, "pageType" | "navigation">
+  readonly delayMs: 3000
+  readonly relevant: boolean
+  readonly visible: boolean
+  readonly distinctMainLinks: number
+  readonly recognised: number
+  readonly anchorMissing: boolean
+}
+export interface MusicItemReporter {
+  itemUnrecognised(facts: MusicItemFailure): void
+  pageSettled?(facts: MusicSettleObservation): void
+}
 export type MusicItemsOptions = ScopeOptions & {
   readonly pointer: Pick<Pointer, "track" | "read">
   readonly page: Pick<PageLink, "run" | "watch" | "onState" | "state">
@@ -63,6 +79,8 @@ const families: readonly { selector: string; family: MusicFamily }[] = [
 const boundaries = "html, body, main, [role='main'], ytmusic-app, ytmusic-browse-response, ytmusic-search-page, ytmusic-section-list-renderer, ytmusic-shelf-renderer, ytmusic-playlist-shelf-renderer, #contents, #content, #items"
 const queuePanel = "ytmusic-player-queue"
 const playerBar = "ytmusic-player-bar"
+/** Links outside the page's content: the bars, the guide, the player page and its queue. PROVISIONAL until a live check. */
+const outsideContent = "ytmusic-player-bar, ytmusic-player-page, ytmusic-player-queue, ytmusic-nav-bar, ytmusic-guide-renderer, tp-yt-app-drawer, [hidden], [aria-hidden='true']"
 const nothing: Dispose = () => {}
 const unavailable: JobFailure = { ok: false, reason: "unavailable" }
 
@@ -168,7 +186,7 @@ export function musicUnsupported(item: ItemInfo, family: MusicFamily, action: Mu
   return available ? undefined : "action-unavailable"
 }
 
-type Tracking = { readonly scope: Scope; revision: number; playbackRevision: number; navigation: Dispose | undefined }
+type Tracking = { readonly scope: Scope; revision: number; playbackRevision: number; navigation: Dispose | undefined; cancelSettle: Dispose }
 type Lease = { release: Dispose }
 type Authority = { readonly tracking: Tracking; readonly revision: number; readonly item: ItemInfo }
 
@@ -197,7 +215,7 @@ export class MusicItems {
     return !this.ended && this.tracking === tracking && !tracking.scope.disposed
   }
   private start(): void {
-    const tracking: Tracking = { scope: new Scope(this.options), revision: 0, playbackRevision: 0, navigation: undefined }
+    const tracking: Tracking = { scope: new Scope(this.options), revision: 0, playbackRevision: 0, navigation: undefined, cancelSettle: nothing }
     this.tracking = tracking
     try {
       this.options.pointer.track(tracking.scope)
@@ -208,12 +226,20 @@ export class MusicItems {
         if (!this.live(tracking)) return
         tracking.revision++
         if (state.kind !== "ready") {
+          tracking.cancelSettle()
           const stop = tracking.navigation
           tracking.navigation = undefined
           stop?.()
         } else if (!tracking.navigation) {
-          tracking.navigation = tracking.scope.add(this.options.page.watch("nav", () => {
-            if (this.live(tracking)) tracking.revision++
+          tracking.navigation = tracking.scope.add(this.options.page.watch("nav", data => {
+            if (!this.live(tracking)) return
+            tracking.revision++
+            tracking.cancelSettle()
+            const revision = tracking.revision
+            const navigation = { pageType: data.pageType, navigation: data.navigation }
+            tracking.cancelSettle = tracking.scope.timeout(() => {
+              if (this.live(tracking) && tracking.revision === revision) this.settled(navigation)
+            }, 3000)
           }))
         }
       }))
@@ -221,6 +247,25 @@ export class MusicItems {
       this.stop()
       throw error
     }
+  }
+  /** YM-FAIL-8: at least 6 distinct item links in the page's content, with fewer than half recognised as items, is breakage. */
+  private settled(navigation: MusicSettleObservation["navigation"]): void {
+    const report = this.options.report.pageSettled
+    if (!report) return
+    const recognised = new Map<string, boolean>()
+    for (const link of this.options.document.querySelectorAll("ytmusic-app a[href]")) {
+      if (link.closest(outsideContent)) continue
+      const identity = linkIdentity(link, false)
+      if (!identity) continue
+      const key = identityKey(identity)
+      const item = recogniseMusicItem(link)
+      recognised.set(key, recognised.get(key) === true || item.kind === "pointed-item")
+    }
+    const distinctMainLinks = recognised.size
+    const count = [...recognised.values()].filter(Boolean).length
+    report({ kind: "page-settle", site: "music", anchor: "music-items", navigation, delayMs: 3000,
+      visible: this.options.document.visibilityState !== "hidden", relevant: distinctMainLinks > 0,
+      distinctMainLinks, recognised: count, anchorMissing: distinctMainLinks >= 6 && count < distinctMainLinks / 2 })
   }
   private stop(): void {
     const tracking = this.tracking
