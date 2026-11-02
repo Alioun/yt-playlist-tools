@@ -43,7 +43,7 @@ import type { ChangeResult, Origin } from "../../shared/contracts/results"
 import { changeFilterSetting, type FilterSettingInput } from "./channel-filter-edit"
 import { executeDeviceSetting } from "./device-setting"
 import { executeUpgradeNoteFlag, type UpgradeNoteFlag, type UpgradeNoteFlagResult } from "./upgrade-note-flag"
-import { isDeviceSettingChange, type DeviceSettingAnswer, type DeviceSettingChange } from "../../shared/contracts/ui-pages"
+import type { DeviceSettingAnswer, DeviceSettingChange } from "../../shared/contracts/ui-pages"
 import { planSyncWrite, sameSyncJson, type SyncDocumentRecord } from "./sync-write-admission"
 import { readSyncDocument } from "./sync-codec"
 import { readSyncInventory } from "./sync-inventory"
@@ -104,6 +104,12 @@ export type LocalFilterChange = {
   | { readonly clearListedChannels: "confirmed"; readonly expectedGeneration: string | null }
 )
 
+// The page contract validates this too; the owner checks it again without importing the page contract's closure.
+function deviceSettingChange(raw: unknown): raw is DeviceSettingChange {
+  if (!isJsonObject(raw) || Object.keys(raw).length !== 2) return false
+  return raw.field === "newPlaylistVisibility" ? raw.value === "PRIVATE" || raw.value === "UNLISTED" || raw.value === "PUBLIC"
+    : (raw.field === "recentAdds" || raw.field === "detailedLog" || raw.field === "pickerSortAZ") && typeof raw.value === "boolean"
+}
 export type LocalFilterWriteResult =
   | { readonly kind: "unconfirmed"; readonly cause:
     | { readonly kind: "authority" | "readback" }
@@ -3688,7 +3694,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
         : executeUpgradeNoteFlag({ local: guardedLocal, flag, isStopped: disposed }))
     },
     changeDeviceSetting(origin, change) {
-      if (!isJsonObject(origin) || origin.kind !== "ui" || typeof origin.incognito !== "boolean" || !isDeviceSettingChange(change)) return Promise.resolve({ kind: "refused", reason: "invalid" })
+      if (!isJsonObject(origin) || origin.kind !== "ui" || typeof origin.incognito !== "boolean" || !deviceSettingChange(change)) return Promise.resolve({ kind: "refused", reason: "invalid" })
       // The last visibility belongs to a normal window, as the picker's private rule says (UI-PICK-10).
       if (origin.incognito && change.field === "newPlaylistVisibility") return Promise.resolve({ kind: "refused", reason: "private" })
       const requested = structuredClone(change)
