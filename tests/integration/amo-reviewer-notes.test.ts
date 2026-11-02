@@ -370,10 +370,12 @@ describe("the reviewer jobs", () => {
     for (const id of reviewerJobs) expect({ id, if: release.jobs[id]!.if }).toEqual({ id, if: `false && ${gates[id]}` })
   })
 
-  test("can't be turned on while an action in them is unpinned", () => {
+  // A moved tag in g28-proof could fake the proof the approval rests on.
+  test("can't be turned on while an action in them or in g28-proof is unpinned", () => {
+    const proofSteps = workflows["ci.yml"]!.jobs["g28-proof"]!.steps!
     for (const id of reviewerJobs) {
       const job = release.jobs[id]!
-      const unpinned = job.steps!.some(step => step.uses && !/@[0-9a-f]{40}$/.test(step.uses))
+      const unpinned = [...job.steps!, ...proofSteps].some(step => step.uses && !/@[0-9a-f]{40}$/.test(step.uses))
       const allowed = unpinned ? [`false && ${gates[id]}`] : [`false && ${gates[id]}`, gates[id]]
       expect({ id, allowed: allowed.includes(String(job.if)) }).toEqual({ id, allowed: true })
     }

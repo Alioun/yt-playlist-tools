@@ -23,9 +23,9 @@ jobs:
   g28-proof:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7 # TODO(owner, G28): pin to the commit upstream's v7 tag peels to (design, "Turning it on")
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@v2 # TODO(owner, G28): pin to the commit upstream's v2 tag peels to (design, "Turning it on")
         with:
           bun-version-file: package.json
           # No cache entry another job saved may replace the Bun that runs the proof.

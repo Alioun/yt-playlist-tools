@@ -119,11 +119,12 @@ plant unchecked-bun "$release" 's/ *if \[\[ -n \$bun_digest \]\]; then\n.*?\n *f
   "check-reviewer-login refuses a Bun that isn't at vars.BUN_SHA256" "fill-reviewer-notes refuses a Bun that isn't at vars.BUN_SHA256"
 plant bun-digest-unchecked-format "$release" 's/\[\[ -z \$bun_digest \|\| \$bun_digest =~ \^\[0-9a-f\]\{64\}\$ \]\]/true/g' -- "refuses a vars.BUN_SHA256 that isn't a digest"
 plant bun-digest-wrong-file "$release" 's/echo "\$bun_digest  \$bun"/echo "\$bun_digest  amo-reviewer-notes.ts"/g' -- "runs the script once Bun matches vars.BUN_SHA256"
-plant gate-open "$release" 's/if: false && github\.event_name/if: github.event_name/' -- "can't be turned on while an action in them is unpinned"
+pin_test="can't be turned on while an action in them or in g28-proof is unpinned"
+plant gate-open "$release" 's/if: false && github\.event_name/if: github.event_name/' -- "$pin_test"
 plant check-gate-widened "$release" 's/(if: false && github\.event_name == \x27push\x27[^\n]*)/$1 || vars.G28_ON == \x27true\x27/' -- \
-  "stay off until the owner approves G28" "can't be turned on while an action in them is unpinned"
+  "stay off until the owner approves G28" "$pin_test"
 plant fill-gate-widened "$release" 's/(if: false && needs\.check-reviewer-login[^\n]*)/$1 || always()/' -- \
-  "stay off until the owner approves G28" "can't be turned on while an action in them is unpinned"
+  "stay off until the owner approves G28" "$pin_test"
 plant digest-in-repo "$release" 's/\$\{\{ vars\.REVIEWER_NOTES_SHA256 \}\}/46372e7ff86b8b5eb647c8fc616ec32167ac341848aae2d5fa4416eaa525ee06/' -- "hold no digest of the script"
 plant no-digest-check "$release" 's/\[\[ \$digest =~ \^\[0-9a-f\]\{64\}\$ \]\]/true/g' -- "refuses to run while vars.REVIEWER_NOTES_SHA256 is unset"
 plant shared-environment "$release" 's/(  submit-amo:\n(?:.*\n)*?    environment: )amo\n/$1amo-reviewer\n/' -- "let only the two reviewer jobs into the amo-reviewer environment"
@@ -186,6 +187,7 @@ plant ci-workflow-env "$ci" 's/^jobs:\n/env:\n  BUN_OPTIONS: --preload=.\/tests\
 plant proof-job-env "$ci" 's/(  g28-proof:\n    runs-on: ubuntu-latest\n)/$1    env:\n      BUN_OPTIONS: --preload=.\/tests\/setup\/x.ts\n/' -- "$proof_job"
 plant proof-step-writes-env "$ci" 's/(          no-cache: true\n\n)/$1      - run: echo "BUN_OPTIONS=--preload=.\/tests\/setup\/x.ts" >> "\$GITHUB_ENV"\n\n/' -- "$proof_job"
 plant proof-keeps-bun-options "$ci" 's/env -u BUN_OPTIONS -u NODE_OPTIONS //' -- "loads no preload that BUN_OPTIONS or NODE_OPTIONS names"
+plant g28-proof-unpinned-gate-open "$release" 's/if: false && github\.event_name/if: github.event_name/; s/(  check-reviewer-login:\n(?:.*\n)*?      - uses: actions\/checkout\@)v7[^\n]*/${1}0000000000000000000000000000000000000000/; s/(  check-reviewer-login:\n(?:.*\n)*?      - uses: oven-sh\/setup-bun\@)v2[^\n]*/${1}0000000000000000000000000000000000000000/; s/(  check-reviewer-login:\n(?:.*\n)*?      - uses: actions\/download-artifact\@)v8[^\n]*/${1}0000000000000000000000000000000000000000/' -- "$pin_test"
 # The ruleset requires the check by name, so no other job may carry it.
 plant proof-name-reused "$pages" 's/^  build:\n/  build:\n    name: g28-proof\n/m' -- "is the only job in any workflow whose check is named g28-proof"
 plant proof-name-computed "$release" 's/^  meta:\n/  meta:\n    name: \$\{\{ format(\x27g28-{0}\x27, \x27proof\x27) \}\}\n/m' -- "is the only job in any workflow whose check is named g28-proof"
