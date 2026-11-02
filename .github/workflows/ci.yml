@@ -34,20 +34,21 @@ jobs:
       # Without the install and without the repo's bunfig.toml or
       # tsconfig.json, so only code-owned files decide whether they pass. A
       # tsconfig paths entry can make bun test register no test and still exit
-      # 0, bunfig.toml preloads tests/setup, and BUN_OPTIONS preloads even with
-      # --config. Bun's report must also count every test passed, so a file
-      # that exits early fails.
+      # 0, and bunfig.toml preloads tests/setup. Bun starts from an empty
+      # environment, because BUN_OPTIONS and BUN_INSPECT_PRELOAD preload even
+      # with --config. Bun's report must also count every test passed, so a
+      # file that exits early fails.
       - name: Test the reviewer-login secret flow (G28)
         run: |
           : > "$RUNNER_TEMP/empty.toml"
           echo '{}' > "$RUNNER_TEMP/empty.json"
           report=$RUNNER_TEMP/reviewer-login-proof.xml
           rm -f "$report"
-          env -u BUN_OPTIONS -u NODE_OPTIONS bun --config="$RUNNER_TEMP/empty.toml" test --no-env-file \
+          env -i PATH="$PATH" HOME="$HOME" RUNNER_TEMP="$RUNNER_TEMP" bun --config="$RUNNER_TEMP/empty.toml" test --no-env-file \
             --tsconfig-override="$RUNNER_TEMP/empty.json" --reporter=junit --reporter-outfile="$report" \
             ./tests/integration/amo-reviewer-notes.test.ts
-          grep -Eq '^<testsuites name="bun test" tests="107" assertions="[0-9]+" failures="0" skipped="0" ' "$report" \
-            || { echo "::error::the G28 proof did not pass all 107 of its tests"; exit 1; }
+          grep -Eq '^<testsuites name="bun test" tests="108" assertions="[0-9]+" failures="0" skipped="0" ' "$report" \
+            || { echo "::error::the G28 proof did not pass all 108 of its tests"; exit 1; }
 
   build:
     runs-on: ubuntu-latest

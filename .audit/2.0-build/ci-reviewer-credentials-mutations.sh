@@ -182,11 +182,19 @@ plant proof-if "$ci" 's/(      - name: Test the reviewer-login secret flow \(G28
 plant proof-job-continue-on-error "$ci" 's/(  g28-proof:\n    runs-on: ubuntu-latest\n)/$1    continue-on-error: true\n/' -- "$proof_job"
 plant proof-cached-bun "$ci" 's/\n *# No cache entry another job saved[^\n]*\n *no-cache: true//' -- "$proof_job"
 # A workflow-level env, a job-level env, or a step that writes $GITHUB_ENV
-# could hand the proof BUN_OPTIONS, which Bun reads even with --config.
+# could hand the proof BUN_OPTIONS or BUN_INSPECT_PRELOAD, which Bun reads even
+# with --config, or any other BUN_ name.
 plant ci-workflow-env "$ci" 's/^jobs:\n/env:\n  BUN_OPTIONS: --preload=.\/tests\/setup\/x.ts\n\njobs:\n/m' -- "ci.yml holds only the top-level keys the approval covers"
 plant proof-job-env "$ci" 's/(  g28-proof:\n    runs-on: ubuntu-latest\n)/$1    env:\n      BUN_OPTIONS: --preload=.\/tests\/setup\/x.ts\n/' -- "$proof_job"
 plant proof-step-writes-env "$ci" 's/(          no-cache: true\n\n)/$1      - run: echo "BUN_OPTIONS=--preload=.\/tests\/setup\/x.ts" >> "\$GITHUB_ENV"\n\n/' -- "$proof_job"
-plant proof-keeps-bun-options "$ci" 's/env -u BUN_OPTIONS -u NODE_OPTIONS //' -- "loads no preload that BUN_OPTIONS or NODE_OPTIONS names"
+preload_test="loads no preload that BUN_OPTIONS, BUN_INSPECT_PRELOAD or NODE_OPTIONS names"
+env_test="hands Bun only PATH, HOME and RUNNER_TEMP"
+plant proof-keeps-environment "$ci" 's/env -i PATH="\$PATH" HOME="\$HOME" RUNNER_TEMP="\$RUNNER_TEMP" //' -- "$preload_test" "$env_test"
+# The fourth round's deny-list, which BUN_INSPECT_PRELOAD gets past.
+plant proof-deny-list "$ci" 's/env -i PATH="\$PATH" HOME="\$HOME" RUNNER_TEMP="\$RUNNER_TEMP" /env -u BUN_OPTIONS -u NODE_OPTIONS /' -- "$preload_test" "$env_test"
+plant proof-passes-inspect-preload "$ci" 's/(env -i PATH="\$PATH" HOME="\$HOME" RUNNER_TEMP="\$RUNNER_TEMP" )/$1BUN_INSPECT_PRELOAD="\$BUN_INSPECT_PRELOAD" /' -- "$preload_test"
+# A deny-list that knows every preload still lets an arbitrary BUN_ name through.
+plant proof-deny-list-any-bun "$ci" 's/env -i PATH="\$PATH" HOME="\$HOME" RUNNER_TEMP="\$RUNNER_TEMP" /env -u BUN_OPTIONS -u BUN_INSPECT_PRELOAD -u NODE_OPTIONS /' -- "$env_test"
 plant g28-proof-unpinned-gate-open "$release" 's/if: false && github\.event_name/if: github.event_name/; s/(  check-reviewer-login:\n(?:.*\n)*?      - uses: actions\/checkout\@)v7[^\n]*/${1}0000000000000000000000000000000000000000/; s/(  check-reviewer-login:\n(?:.*\n)*?      - uses: oven-sh\/setup-bun\@)v2[^\n]*/${1}0000000000000000000000000000000000000000/; s/(  check-reviewer-login:\n(?:.*\n)*?      - uses: actions\/download-artifact\@)v8[^\n]*/${1}0000000000000000000000000000000000000000/' -- "$pin_test"
 # The ruleset requires the check by name, so no other job may carry it.
 plant proof-name-reused "$pages" 's/^  build:\n/  build:\n    name: g28-proof\n/m' -- "is the only job in any workflow whose check is named g28-proof"

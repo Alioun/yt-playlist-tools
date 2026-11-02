@@ -708,6 +708,7 @@ describe("the CI job that runs these tests", () => {
       { name: "Test the reviewer-login secret flow (G28)", run: "string" }
     ])
     expect(proof.run).toContain("./tests/integration/amo-reviewer-notes.test.ts")
+    expect(proof.run).toContain('env -i PATH="$PATH" HOME="$HOME" RUNNER_TEMP="$RUNNER_TEMP" bun --config=')
   })
 
   // The main ruleset requires the check by its name, and release.yml and
@@ -765,19 +766,31 @@ describe("the CI job that runs these tests", () => {
   })
 
   // As a workflow-level env, or a step that writes $GITHUB_ENV, would set them.
-  // Bun reads BUN_OPTIONS even with --config.
-  test("loads no preload that BUN_OPTIONS or NODE_OPTIONS names", async () => {
+  // Bun reads BUN_OPTIONS and BUN_INSPECT_PRELOAD even with --config.
+  test("loads no preload that BUN_OPTIONS, BUN_INSPECT_PRELOAD or NODE_OPTIONS names", async () => {
+    const names = ["_bun-options", "_bun-inspect-preload", "_node-options"]
     const planted = await runProof(tests(expected), dir => {
-      for (const name of ["_bun-options", "_node-options"]) {
-        writeFileSync(join(dir, `${name}.ts`), `require("node:fs").writeFileSync(${JSON.stringify(join(dir, `${name}-ran`))}, "")\n`)
-      }
-    }, { BUN_OPTIONS: "--preload=./_bun-options.ts", NODE_OPTIONS: "--require=./_node-options.ts" })
+      for (const name of names) writeFileSync(join(dir, `${name}.ts`), `require("node:fs").writeFileSync(${JSON.stringify(join(dir, `${name}-ran`))}, "")\n`)
+    }, { BUN_OPTIONS: "--preload=./_bun-options.ts", BUN_INSPECT_PRELOAD: "./_bun-inspect-preload.ts", NODE_OPTIONS: "--require=./_node-options.ts" })
     expect({
       exit: planted.exit,
       ran: new RegExp(`\\b${expected} pass\\b`).test(planted.output),
-      bunOptions: existsSync(join(planted.dir, "_bun-options-ran")),
-      nodeOptions: existsSync(join(planted.dir, "_node-options-ran"))
-    }).toEqual({ exit: 0, ran: true, bunOptions: false, nodeOptions: false })
+      preloaded: names.filter(name => existsSync(join(planted.dir, `${name}-ran`)))
+    }).toEqual({ exit: 0, ran: true, preloaded: [] })
+  })
+
+  // Bun reads more BUN_ names than anyone lists, so the step passes on only
+  // the names it sets, and Bun adds NODE_ENV itself.
+  test("hands Bun only PATH, HOME and RUNNER_TEMP, so no BUN_ name a step writes to $GITHUB_ENV reaches it", async () => {
+    const run = await runProof(`${tests(expected - 1)}
+test("records the environment", () => require("node:fs").writeFileSync("_seen", Object.keys(process.env).sort().join("\\n")))`, () => {}, {
+      BUN_G28_PLANTED: "dummy",
+      BUN_CONFIG_VERBOSE_FETCH: "curl"
+    })
+    expect({ exit: run.exit, seen: readFileSync(join(run.dir, "_seen"), "utf8").split("\n") }).toEqual({
+      exit: 0,
+      seen: ["HOME", "NODE_ENV", "PATH", "RUNNER_TEMP"]
+    })
   })
 
   const short: [string, string, boolean][] = [
