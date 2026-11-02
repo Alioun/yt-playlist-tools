@@ -13,6 +13,7 @@ import { Keys, type KeyBlockers } from "./keys"
 import { createNoticeOwner, type NoticePresenter } from "./notice"
 import { plainNoticePresenter } from "./notice/plain"
 import { createPageLink, type PageLink } from "./page-link"
+import { createSiteHealth, type SiteHealth } from "./health"
 import { Pointer } from "./pointer"
 import { Scope, type ScopeMountPort } from "./scope"
 
@@ -30,7 +31,8 @@ export type CoreServices<S extends Site> = {
   readonly actions: TabActions
   readonly notice: { request(due: DueNotice): void }
   readonly notices: { wouldAct(feature: SiteFeatureId<S>): void }
-  readonly background: BackgroundLink
+  /** Breakage a feature sees itself, for the Monitor (HEALTH-01). */
+  readonly health: SiteHealth
 }
 export type SiteCore<S extends Site> = CoreServices<S> & {
   readonly site: S
@@ -78,14 +80,23 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
   const { site, build, document, i18n } = options
   const onError = ignore
   const root = new Scope({ document, onError })
-  const page = createPageLink({ site, build, vocabulary: options.vocabulary }, options.channel)
+  const link_ = createPageLink({ site, build, vocabulary: options.vocabulary }, options.channel)
+  // The batch goes out on a later turn, by which time the background client below exists.
+  const health = createSiteHealth({ site, page: link_, send: reports => actions.health(reports), now: () => Date.now(),
+    online: () => typeof navigator === "undefined" || navigator.onLine !== false, later: (run, ms) => root.timeout(run, ms) })
+  // Every job answered here, the background's included, can clear its earlier signals in this tab (HEALTH-12).
+  const page: PageLink = Object.create(link_, { run: { value: async (...args: Parameters<PageLink["run"]>) => {
+    const answer = await link_.run(...args)
+    if (answer.ok) health.succeeded(args[0].job.kind)
+    return answer
+  } } })
   const link = createExtLink<TabView, Sender>({
     build, site, page, runtime: options.runtime, deadline: options.deadline ?? timerDeadline,
     hiddenAtStart: document.visibilityState === "hidden", isView: isTabView
   })
   const background = createBackgroundLink({ build, deadline: options.deadline ?? timerDeadline, transport: options.runtime.transport, link })
   const pointer = new Pointer({ document, onError })
-  const report = { itemUnrecognised: ignore, pageSettled: ignore }
+  const report = { itemUnrecognised: ignore, pageSettled: health.settled }
   const items = options.items({ document, onError, pointer, page, report })
   const keys = new Keys({ document, blockers: blockers(document), onError })
   const labels = siteFeedbackText(i18n)
@@ -102,7 +113,7 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
       detailsLabel: labels.details, dismissLabel: labels.dismiss, details: () => notices.update(null), dismiss: ignore, presented: ignore })
   }
   const services: CoreServices<S> = {
-    document, page, items, keys, i18n, background,
+    document, page, items, keys, i18n, actions, health,
     notice: { request },
     notices: { wouldAct(feature) {
       const due = link.view?.notices.find(notice => notice.features.some(id => id === feature))
@@ -136,7 +147,7 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
   function dispose() {
     if (disposed) return
     disposed = true
-    for (const stop of [() => host.dispose(), () => items.dispose(), () => pointer.dispose(), () => keys.dispose(), () => background.dispose(), () => link.dispose(), () => root.dispose()]) {
+    for (const stop of [() => host.dispose(), () => health.dispose(), () => items.dispose(), () => pointer.dispose(), () => keys.dispose(), stopAsks, () => askRpc.dispose(), () => actions.dispose(), () => link.dispose(), () => root.dispose()]) {
       try { stop() } catch {}
     }
   }

@@ -7,6 +7,7 @@ import { composeServices, type Services } from "./compose/services"
 import { composeStore } from "./compose/store"
 import type { StoreLifecycle } from "./store/store-lifecycle"
 import type { Platform } from "../shared/platform"
+import type { SiteDiagnostics } from "./monitor/ports"
 
 /**
  * The composition root (06 §6.4.3, ARC-MOD-39). Every listener the background needs is added in this first
@@ -15,7 +16,7 @@ import type { Platform } from "../shared/platform"
  */
 export type Background = { readonly lifecycle: StoreLifecycle; readonly ready: Promise<void>; dispose(): Promise<void> }
 
-export function boot(native: NativeBrowser, platform: Platform): Background {
+export function boot(native: NativeBrowser, platform: Platform, sites?: SiteDiagnostics): Background {
   const gate = createRuntimeGate(native.runtime)
   native.runtime.onInstalled.addListener(details => { if (details.reason === "install") void openFirstRun(native) })
   // The upgrade note reopens only at a browser start, which this first-turn listener is the one witness of (REL-CON-25).
@@ -53,7 +54,7 @@ export function boot(native: NativeBrowser, platform: Platform): Background {
     const stops = [state.owner.subscribeView(refresh), state.owner.subscribe(refresh)]
     stopOwner = () => { for (const stop of stops.splice(0)) stop() }
     services = composeServices({
-      native, runtime: gate.runtime, build: platform.build, browser: platform.browser, owner: state.owner, registrar: current.registrar, consented, menuClicksHeard,
+      native, runtime: gate.runtime, build: platform.build, owner: state.owner, registrar: current.registrar, consented, menuClicksHeard, sites,
       lifecycle: { ...lifecycle, async clearAll(origin, options) {
         const result = await lifecycle.clearAll(origin, options)
         if (lifecycle.state().kind === "active" && services === undefined) restart()

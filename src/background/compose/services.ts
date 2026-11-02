@@ -12,7 +12,10 @@ import { createUiRouter } from "../router/ui-playlists"
 import { createPageStatus } from "./page-status"
 import { createToolbarBadge, type ToolbarBadge } from "./badge"
 import { composeMonitor } from "./monitor"
-import { composeGather } from "./gather"
+import { createDiagnostics } from "./diagnostics"
+import { createTabHealthRouter } from "../router/tab-health"
+import type { SiteDiagnostics } from "../monitor/ports"
+import type { TabContext } from "../tabs/ports"
 import type { StartingOwner, StoreLifecycle } from "../store/store-lifecycle"
 import { createTabViewProducer } from "../tab-view/producer"
 import { createViewPublication } from "../tab-view/publication"
@@ -40,6 +43,8 @@ export function composeServices(deps: {
   readonly registrar: Registrar
   readonly consented: () => boolean
   readonly menuClicksHeard: boolean
+  /** Each site's shipped routes and diagnostics vocabulary, from the page halves (HEALTH-01). */
+  readonly sites?: SiteDiagnostics
 }): Services {
   const { native, build, owner, registrar } = deps
   const runtime = { ...deps.runtime, id: native.runtime.id, getURL: (path: string) => native.runtime.getURL(path as never) }
@@ -58,7 +63,7 @@ export function composeServices(deps: {
     clock, enabled: deps.consented
   })
   const monitor = composeMonitor({ owner: { readSession: () => owner.readSession(), changeSession: change => owner.changeSession(change),
-    subscribeView: fn => owner.subscribeView(fn) }, clock: { now: () => performance.now(), after: timerDeadline } })
+    subscribeView: fn => owner.subscribeView(fn) }, clock: { now: () => performance.now(), after: timerDeadline }, sites: deps.sites })
   const badge = createToolbarBadge({
     action: {
       setBadgeText: details => native.action.setBadgeText(details as never),
@@ -99,13 +104,30 @@ export function composeServices(deps: {
     statuses: monitor.statusProducer, i18n: siteI18n, flash: (tabId, ok, title) => badge.flash(tabId, ok, title) })
   const producer = createTabViewProducer({ owner, addFlow: actions.flow, statuses: monitor.statusProducer, notices: monitor.noticeProducer, build })
   // A hello starts a page load, since each site core says hello once.
+  // A new page load whose probe passed clears its tab's earlier breakage, but only a tab with evidence costs a write (HEALTH-12).
+  async function pageLoaded(context: TabContext) {
+    const journal = await monitor.diagnostics(context)
+    const id = context.tab.tabId
+    if (journal && (journal.signals.some(row => row.tabId === id) || journal.counters.some(row => row.tabId === id))) await monitor.reloadPassed(context)
+  }
   const unbindHello = browserTabs.bindHello(tabs, producer, context => {
     actions.pageStarted(context.tab.tabId)
+    void pageLoaded(context).catch(() => {})
     badge.loaded(context.tab.tabId)
     void accounts.onSeen(context).catch(() => {})
     gather.hello(context, hello)
   })
   const publication = createViewPublication({ owner, tabs, producer, privateSkips: actions.flow, clock, monitor })
+  const healthRoutes = createTabHealthRouter({ transport: runtimeTransport(deps.runtime), senders: { ...native, runtime }, build, deadline: timerDeadline, monitor,
+    async context(sender, acct) {
+      const [known] = await tabs.known({ kind: "tab", tabId: sender.origin.tabId })
+      if (!known || known.acct !== acct || known.privateTab !== sender.origin.incognito) return null
+      const lookup = await browserTabs.port.get(sender.origin.tabId)
+      if (lookup.kind !== "tab" || lookup.tab.site !== sender.site) return null
+      return { tab: { ...lookup.tab, site: sender.site },
+        info: acct === null ? { site: sender.site, build, signedIn: false, acct: null } : { site: sender.site, build, signedIn: true, acct } }
+    } })
+  const diagnostics = createDiagnostics({ tabs, tab: tabId => browserTabs.port.get(tabId), monitor, build, consented: deps.consented, now: () => Date.now() })
   const autoAddRoutes = createAutoAddTabRouter({ transport: runtimeTransport(deps.runtime), senders: { ...native, runtime }, build,
     deadline: timerDeadline, tabs, owner, untick: tabId => badge.untick(tabId), now: () => Date.now() })
   async function readAccess() {
@@ -138,6 +160,7 @@ export function composeServices(deps: {
       owner,
       session: { get: async key => (await native.storage.session.get(key))[key] },
       status: createPageStatus({ owner, statuses: monitor.statusProducer, tab: tabId => browserTabs.port.get(tabId), build }),
+      diagnostics: (_ui, check) => diagnostics.read(check),
       withdraw: (origin, expected) => deps.lifecycle.withdrawConsent(origin, expected),
       readAccess: () => readAccess(),
       version: () => native.runtime.getManifest().version,
@@ -154,8 +177,8 @@ export function composeServices(deps: {
     tabs, actions, anyTab, badge, gather,
     dispose() {
       for (const stop of [() => native.storage.onChanged.removeListener(changed), () => native.permissions.onAdded.removeListener(repaint),
-        () => native.permissions.onRemoved.removeListener(repaint), () => badge.dispose(), () => router.dispose(), () => autoAddRoutes.dispose(),
-        () => accounts.dispose(), () => gather.dispose(), stopMenuSettings, () => native.permissions.onAdded.removeListener(reconcileMenu),
+        () => native.permissions.onRemoved.removeListener(repaint), () => badge.dispose(), () => router.dispose(), () => autoAddRoutes.dispose(), () => healthRoutes.dispose(),
+        () => accounts.dispose(), stopMenuSettings, () => native.permissions.onAdded.removeListener(reconcileMenu),
         () => native.permissions.onRemoved.removeListener(reconcileMenu), () => anyTab.dispose(), () => actions.dispose(), () => playlists.dispose(),
         () => publication.dispose(), () => monitor.dispose(),
         unbindHello, () => producer.dispose(), () => tabs.dispose(), () => browserTabs.dispose()]) {

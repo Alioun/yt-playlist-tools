@@ -3,7 +3,7 @@ import type { FeatureStatus, TabFeature } from "../../shared/contracts/tab-view"
 import type { BreakageKind, JobId } from "../../shared/contracts/vocabulary"
 import type { MusicAction, Settings } from "../../shared/model/types"
 import type { MonitorJournal, MonitorRecord } from "../store/monitor-session"
-import type { AnchorObservation, EnabledMonitorFeature, HealthFacts, MonitorStatus } from "./ports"
+import type { AnchorObservation, EnabledMonitorFeature, HealthFacts, JobRoutes, MonitorStatus, RouteFact } from "./ports"
 import { MONITOR_CANNOT_MEASURE, MONITOR_MIN_LINKS, MONITOR_RECOGNISED_RATIO, MONITOR_SETTLE_MS } from "./thresholds"
 
 export function anchorMissing(observation: AnchorObservation): boolean {
@@ -25,6 +25,16 @@ function dependencies(feature: EnabledMonitorFeature, facts: HealthFacts): Healt
   return { ...health, required: [...new Set([...health.required, ...required])] }
 }
 const unique = <T>(rows: readonly T[]): T[] => [...new Set(rows)]
+const routeFailures = new Set<string>(["missing", "threw", "timeout", "rejected", "unrecognised"])
+/** A route's own active signal says how it last failed in this tab; a route with none keeps the authority's fact. */
+function withEvidence(routes: JobRoutes | undefined, records: readonly MonitorRecord[]): JobRoutes | undefined {
+  if (!routes) return
+  const [first, ...rest] = routes.routes.map(route => {
+    const latest = records.filter(row => row.signal.route === route.route && routeFailures.has(row.signal.kind)).sort((a, b) => b.signal.lastSeen - a.signal.lastSeen)[0]
+    return latest ? { route: route.route, state: latest.signal.kind as RouteFact["state"] } : route
+  })
+  return first ? { routes: [first, ...rest] } : routes
+}
 export function deriveStatus(input: { readonly enabled: readonly EnabledMonitorFeature[]; readonly facts: HealthFacts; readonly journal: MonitorJournal; readonly tabId: number }):
   { readonly kind: "statuses"; readonly statuses: readonly MonitorStatus[] } | { readonly kind: "unavailable" } {
   const { facts, enabled, tabId } = input
@@ -50,16 +60,18 @@ export function deriveStatus(input: { readonly enabled: readonly EnabledMonitorF
     const failed = (job: JobId): boolean => {
       if (job === "account" && facts.accountKeys === "missing") return true
       if (input.journal.passed.some(row => row.tabId === tabId && row.site === facts.site && (row.job === null || row.job === job))) return false
-      const routes = facts.jobs.get(job)
       const failure = records.filter(row => row.signal.job === job && relevant(row))
+      const routes = withEvidence(facts.jobs.get(job), records.filter(row => row.signal.job === job))
       if (failure.some(row => row.signal.kind === "no-effect")) return true
       if (!routes || routes.routes.some(route => route.state === "usable")) return false
       return routes.routes.every(route => route.state !== "timeout" || failure.some(row => row.signal.kind === "timeout"))
     }
     const jobs = jobsNeeded.filter(failed)
+    // A tab's anchor check arrives as a recorded signal, so it outlives the worker that heard it.
     const missingAnchors = anchorIds.filter(anchor => {
       const observation = facts.anchors.get(anchor)
-      return observation !== undefined && anchorMissing(observation)
+      return observation !== undefined && anchorMissing(observation) ||
+        records.some(row => row.signal.kind === "anchor-missing" && row.evidence.kind === "anchor" && row.evidence.anchor === anchor)
     })
     const actions = actionEntries.filter(([, jobs]) => jobs.some(failed)).map(([action]) => action)
     let whole = facts.core === "missing" || health.required.some(failed) || health.anchors.some(anchor => missingAnchors.includes(anchor))

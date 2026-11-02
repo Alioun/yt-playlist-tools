@@ -111,3 +111,34 @@ test("with synced settings full and a kept filter, Everywhere offers Remove kept
   for (let turn = 0; turn < 100 && !removed.length; turn++) await new Promise(resolve => setTimeout(resolve, 10))
   expect(removed).toEqual([{}])
 }, 20_000)
+
+test("Diagnostics runs Check now only when clicked, shows what answered, and puts the session's signals in the report (HEALTH-22 to HEALTH-24)", async () => {
+  const checks: boolean[] = []
+  const signal = { site: "www", feature: "quick-save", job: "add", route: "service.add", kind: "missing", pageType: "watch", clientVersion: "2.2", shape: null, count: 2, firstSeen: 1, lastSeen: 2 } as const
+  settings({ ...agreed, "doc:settings": stamped({ quickSave: { on: true, feedback: true, shortsShelves: false } }) }, {
+    "ui.diagnostics": ({ check }) => {
+      checks.push(check)
+      return { kind: "diagnostics", tabs: { www: true, music: false }, signals: [signal],
+        checks: check ? [{ site: "www", at: 5, jobs: [{ job: "account", ok: true }, { job: "playlists", ok: false }] }] : [] }
+    }
+  }, "#diagnostics")
+  const button = await screen.findByRole("button", { name: "Check now" }, { timeout: 5000 })
+  for (let turn = 0; turn < 100 && !checks.length; turn++) await new Promise(resolve => setTimeout(resolve, 10))
+  expect(checks).toEqual([false])
+  await userEvent.click(button)
+  expect(await screen.findByText("1 of 2 reads answered on YouTube.", {}, { timeout: 5000 })).toBeTruthy()
+  expect(checks).toEqual([false, true])
+  const report = document.querySelector("[data-report]")?.textContent ?? ""
+  expect(report).toContain("YouTube: account ok, playlists failed")
+  expect(report).toContain("YouTube missing feature=quick-save job=add route=service.add page=watch client=2.2 ×2")
+}, 20_000)
+
+test("with no YouTube tab open, Check now gives way to Open YouTube (HEALTH-23)", async () => {
+  const { opened } = settings({ ...agreed, "doc:settings": stamped({}) }, {
+    "ui.diagnostics": () => ({ kind: "diagnostics", tabs: { www: false, music: false }, signals: [], checks: [] })
+  }, "#diagnostics")
+  expect(await screen.findByText("Open YouTube to check", {}, { timeout: 5000 })).toBeTruthy()
+  expect(screen.queryByRole("button", { name: "Check now" })).toBeNull()
+  await userEvent.click(screen.getByRole("button", { name: "Open YouTube" }))
+  expect(opened).toEqual(["https://www.youtube.com/"])
+}, 20_000)

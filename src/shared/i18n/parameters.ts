@@ -1109,6 +1109,12 @@ export type MessageParameters = {
   "diag_version": readonly ["version"]
   "diag_beta": readonly []
   "diag_updates": readonly []
+  "diag_checkNow": readonly []
+  "diag_checkLine": readonly []
+  "diag_checkNoTab": readonly []
+  "diag_openYouTube": readonly []
+  "diag_checked": readonly ["site", "done", "total"]
+  "diag_checkFailed": readonly []
   "about_name": readonly []
   "about_formerly": readonly []
   "about_attribution": readonly []
@@ -1577,6 +1583,7 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "set_accounts_unclaimedLine_other": ["count"],
   "set_importConfirm": ["file", "count"],
   "diag_version": ["version"],
+  "diag_checked": ["site", "done", "total"],
   "about_credit": ["link"],
   "report_opensWith": ["values"],
   "badge_notWorking_one": ["feature"],

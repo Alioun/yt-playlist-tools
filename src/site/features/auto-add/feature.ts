@@ -9,6 +9,7 @@ import type { TabActions } from "../../core/actions"
 import type { FeatureContext, FeatureDefinition, SiteView } from "../../core/feature-host"
 import type { PageLink } from "../../core/page-link"
 import type { Dispose, Scope } from "../../core/scope"
+import type { SiteHealth } from "../../core/health"
 import type { Feedback } from "../../kit/feedback"
 import type { ToastAction } from "../../kit/toaster/types"
 import { autoAddState, type AutoAddState } from "./state"
@@ -28,6 +29,8 @@ export type AutoAddServices = {
   /** The watch-page button and the popup read this playback's state (YT-AA-38). */
   readonly status?: (state: AutoAddState) => void
   readonly log?: (message: string) => void
+  /** Hears each playback auto-add can't measure, and the next one it can (HEALTH-11). */
+  readonly health?: Pick<SiteHealth, "cantMeasure" | "measured">
 }
 
 /** DATA-27: a pause, an end or a hidden tab saves only if the last save is a minute old; plain playback saves every 5 minutes. */
@@ -214,8 +217,9 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
     if (due.length) void send(target, due)
     if (tracker.measurement === "cant-measure" && !target.cantMeasureNoted) {
       target.cantMeasureNoted = true
+      context.health?.cantMeasure()
       void cantMeasure(target)
-    }
+    } else if (tracker.measurement === "measurable" && tracker.parts.length > 0) context.health?.measured()
     if (target === playback) { publish(); sync() }
   }
 

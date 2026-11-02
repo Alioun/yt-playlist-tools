@@ -10,6 +10,7 @@
   import { featureName } from "../../lib/health"
   import { browserLabel, knownProblems, type ReportFeature } from "../report"
   import { diagnosticsReport } from "../diagnostics"
+  import type { UiDiagnostics } from "../../../shared/contracts/ui-pages"
 
   // Settings › Diagnostics (UI-SET-17, HEALTH-22): each feature's status per site, the report with Copy, Known
   // problems, Report a problem, the detailed console log and the version.
@@ -30,7 +31,21 @@
   }) : [])
   const report = $derived(pageState.ready ? diagnosticsReport({ view: pageState.ready, version: pageState.page.version, beta: pageState.page.beta,
     browser: browserLabel(navigator.userAgent, platform.browser), os: platform.os, access: pageState.access, health,
-    signedIn: pageState.status?.kind === "status" && pageState.status.tab.kind === "site" ? pageState.status.tab.signedIn : null }) : "")
+    signedIn: pageState.status?.kind === "status" && pageState.status.tab.kind === "site" ? pageState.status.tab.signedIn : null, evidence }) : "")
+  // HEALTH-22, HEALTH-23: the session's signals feed the report, and Check now runs only when clicked.
+  let evidence = $state<Extract<UiDiagnostics, { kind: "diagnostics" }> | null>(null)
+  let checking = $state(false), checkFailed = $state(false)
+  async function diagnostics(check: boolean) {
+    const answer = await backend.call("ui.diagnostics", { check })
+    if (answer.kind === "answered" && answer.result.kind === "diagnostics") { evidence = answer.result; return true }
+    return false
+  }
+  void untrack(() => diagnostics(false))
+  async function checkNow() {
+    checking = true; checkFailed = false
+    try { checkFailed = !await diagnostics(true) } finally { checking = false }
+  }
+  const noTab = $derived(evidence !== null && !evidence.tabs.www && !evidence.tabs.music)
   async function copy() { await navigator.clipboard.writeText(report); copied = true }
   async function log(value: boolean) {
     logFailed = false
@@ -52,6 +67,20 @@
         </li>
       {/each}
     </ul>
+    <div class="mt-3 flex flex-col items-start gap-1.5 border-t pt-3 text-[13.5px]">
+      {#if noTab}
+        <p class="text-muted-foreground">{i18n.message("diag_checkNoTab")}</p>
+        <Button size="sm" variant="outline" onclick={() => pageState.page.open("https://www.youtube.com/")}>{i18n.message("diag_openYouTube")}</Button>
+      {:else}
+        <Button size="sm" variant="outline" pending={checking} disabled={!pageState.agreed || evidence === null} onclick={checkNow}>{i18n.message("diag_checkNow")}</Button>
+        <p class="text-muted-foreground text-[12.5px]">{i18n.message("diag_checkLine")}</p>
+      {/if}
+      {#each evidence?.checks ?? [] as check (check.site)}
+        <p data-check={check.site}>{i18n.message("diag_checked", { site: i18n.message(check.site === "www" ? "site_www" : "site_music"),
+          done: i18n.number(check.jobs.filter(job => job.ok).length), total: i18n.number(check.jobs.length) })}</p>
+      {/each}
+      {#if checkFailed}<p role="status" class="text-destructive text-[12.5px]">{i18n.message("diag_checkFailed")}</p>{/if}
+    </div>
   </section>
   <section class="bg-card rounded-2xl border p-5">
     <div class="mb-2 flex items-center justify-between gap-3">

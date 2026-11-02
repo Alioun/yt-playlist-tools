@@ -6,6 +6,7 @@ import type { FeatureContext, FeatureDefinition, SiteView } from "../../core/fea
 import type { WwwItems } from "../../core/items-www"
 import type { Keys } from "../../core/keys"
 import { Scope } from "../../core/scope"
+import type { SiteHealth } from "../../core/health"
 import type { Feedback } from "../../kit/feedback"
 import { pickerAnchor, type Popovers } from "../../popovers/types"
 import { explicitAdd, explicitContent, type ExplicitContext } from "../../explicit"
@@ -18,6 +19,8 @@ export type ShortcutServices = {
   readonly feedback: { use(owner: Scope): Feedback | null }
   readonly i18n: I18n
   readonly notices: { wouldAct(feature: "shortcuts"): void }
+  /** Hears a key pointed at a card it can't recognise (HEALTH-01). */
+  readonly health?: Pick<SiteHealth, "itemUnrecognised">
   /** Loads `popovers.js`, null when it didn't load within 5 s (YT-PK-11). */
   readonly popovers: () => Promise<Popovers | null>
   readonly location: Pick<Location, "href" | "assign">
@@ -49,7 +52,7 @@ function start(context: FeatureContext<"www", ShortcutServices>): void {
       case "pointed-item": return { video: resolved.video.videoId, title: resolved.video.title || undefined, element: resolved.target.element }
       case "current-video": return { video: resolved.video.videoId, title: resolved.video.title || undefined, element: null }
       case "unsupported-item": hint(feedback, { kind: "unsupported-item", reason: resolved.reason }); return null
-      case "unrecognised-item": hint(feedback, { kind: "unrecognised-item" }); return null
+      case "unrecognised-item": context.health?.itemUnrecognised("shortcuts"); hint(feedback, { kind: "unrecognised-item" }); return null
       case "inactive": return null
       default: hint(feedback, { kind: "no-pointed-item" }); return null
     }

@@ -50,7 +50,7 @@ export function installKit(core: AnySiteCore, lib: object, quick?: typeof create
   root.add(() => own.dispose())
   const toaster = feedback.use(own)?.toaster
   const timer = (ms: number, done: () => void) => own.timeout(done, ms)
-  const music = quick && core.site === "music" ? quick({ owner: root, document, page: core.page, items: core.items as MusicItems, actions: core.actions,
+  const music = quick && core.site === "music" ? quick({ owner: root, document, page: core.page, items: core.items as MusicItems, actions: core.actions, health: core.health,
     i18n, view: () => link.view, feedback: () => feedback.use(root), popovers: () => loadPopovers(core.actions.need, timer), location: window.location,
     notices: core.notices as { wouldAct(feature: "music-keys" | "shortcuts"): void }, os: osOf(navigator.platform) }) : null
   const asks = tabAsks({ site, document, actions: core.actions, i18n, feedback: () => feedback.use(root) })

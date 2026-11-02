@@ -46,3 +46,5 @@ export type MonitorPorts = {
 export type MonitorActions = Readonly<Partial<Record<MusicAction, readonly JobId[]>>>
 
 export type MonitorViewChange = { readonly kind: "tab"; readonly tabId: number }
+/** Each site's shipped routes per job and the diagnostics vocabulary its page half checks signals against. */
+export type SiteDiagnostics = Readonly<Record<Site, { readonly vocabulary: DiagnosticVocabulary; readonly routes: Readonly<Partial<Record<JobId, readonly RouteId[]>>> }>>

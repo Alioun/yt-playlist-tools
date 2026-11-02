@@ -6,6 +6,7 @@ import {
 } from "../../shared/contracts/tab-actions"
 import type { AccountKey, VideoId } from "../../shared/model"
 import { createRpcCaller, type Deadline } from "../../shared/rpc/rpc"
+import { tabHealthContract, type TabHealthMessages, type TabHealthReport } from "../../shared/contracts/tab-health"
 import type { Transport } from "../../shared/rpc/transport"
 
 /** No answer came back, so the background may or may not have acted. A write is never retried (ARC-MSG-08). */
@@ -22,6 +23,8 @@ export type TabActions = {
   playlists(refresh: boolean): Promise<TabPlaylists>
   create(playlist: { readonly title: string; readonly privacy: Privacy; readonly video: VideoId | null }): Promise<TabCreated>
   destination(change: TabDestinationChange): Promise<DestinationAnswer>
+  /** Breakage evidence for the Monitor, batched by the site's health reporter (HEALTH-28). */
+  health(reports: readonly TabHealthReport[]): void
   /** Tells the background a listed channel's title or @handle changed (YT-CF-10). */
   channelLabel(channel: TabChannelLabel): void
   /** Saves this browser's Sort A–Z or last visibility from the page picker. */
@@ -37,7 +40,7 @@ export type TabActions = {
   videoChanged(): void
   dispose(): void
 }
-type Messages = TabActionMessages & TabProgressMessages & TabGatherMessages
+type Messages = TabActionMessages & TabProgressMessages & TabHealthMessages
 
 /**
  * The tab's side of a user action (06 §6.8.2). Every request carries the account PageLink trusts, which the
@@ -49,7 +52,7 @@ export function createTabActions(options: {
   readonly deadline: Deadline
   account(): AccountKey | null | undefined
 }): TabActions {
-  const rpc = createRpcCaller<Messages>(options.transport, { build: options.build, deadline: options.deadline, contract: { ...tabActionContract, ...tabProgressContract, ...tabGatherContract } })
+  const rpc = createRpcCaller<Messages>(options.transport, { build: options.build, deadline: options.deadline, contract: { ...tabActionContract, ...tabProgressContract, ...tabHealthContract } })
   const unanswered: Unanswered = { kind: "unanswered" }
   async function call<K extends keyof TabActionMessages, F>(kind: K, request: TabActionMessages[K]["payload"] extends { request: infer R } ? R : never, fallback: F):
     Promise<TabActionMessages[K]["result"] | F> {
@@ -73,6 +76,7 @@ export function createTabActions(options: {
     create: playlist => call("tab.create", playlist, { kind: "failed", reason: "failed" } as const),
     destination: change => call("tab.destination", change, { kind: "refused", reason: "unavailable" } as const),
     channelLabel(channel) { void call("tab.channelLabel", { channel }, null) },
+    health(reports) { void call("tab.health", { reports }, null) },
     async device(change) {
       const answer = await rpc.call("tab.device", { change })
       return answer.kind === "answered" ? answer.result : { kind: "refused", reason: "unavailable" }

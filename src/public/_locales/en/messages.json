@@ -6028,6 +6028,35 @@
   "diag_updates": {
     "message": "Updates install by themselves."
   },
+  "diag_checkNow": {
+    "message": "Check now"
+  },
+  "diag_checkLine": {
+    "message": "Check now reads from an open YouTube tab. It changes nothing."
+  },
+  "diag_checkNoTab": {
+    "message": "Open YouTube to check"
+  },
+  "diag_openYouTube": {
+    "message": "Open YouTube"
+  },
+  "diag_checked": {
+    "message": "$DONE$ of $TOTAL$ reads answered on $SITE$.",
+    "placeholders": {
+      "site": {
+        "content": "$1"
+      },
+      "done": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "diag_checkFailed": {
+    "message": "Couldn't run the check. Try again."
+  },
   "about_name": {
     "message": "Perchling for YouTube™"
   },

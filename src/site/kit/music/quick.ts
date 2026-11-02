@@ -49,12 +49,16 @@ type ShortcutEntry = { readonly id: ShortcutId; readonly label: string; readonly
 /** A key's progress on an item, so a button showing that item goes through the same states (YM-KEY-11). */
 export type QuickProgress = { readonly element: Element; readonly action: QuickAction; readonly state: "busy" | QuickAnswer["kind"] }
 
+import type { SiteHealth } from "../../core/health"
+
 export type MusicQuickDeps = {
   readonly owner: Scope
   readonly document: Document
   readonly page: { run<J extends Job>(invocation: JobInvocation<J>, context?: { target?: Element }): Promise<JobResult<J>> }
   readonly items: Pick<MusicItems, "resolve">
   readonly actions: TabActions
+  /** Hears a key pointed at an item it can't recognise (HEALTH-01). */
+  readonly health?: Pick<SiteHealth, "itemUnrecognised">
   readonly i18n: I18n
   readonly view: () => TabView | null
   readonly feedback: () => Feedback | null
@@ -172,6 +176,8 @@ export function createMusicQuick(deps: MusicQuickDeps) {
       }
       case "unsupported-item": return musicHint({ kind: "unsupported-item", reason: resolved.reason, action: resolved.action, item: { kind: resolved.item.kind } })
       case "unrecognised-item":
+        deps.health?.itemUnrecognised(action === "playlist-shortcut" ? "shortcuts" : "music-keys")
+        return musicHint({ kind: "unrecognised-item" })
       case "stale-target": return musicHint({ kind: "unrecognised-item" })
       case "no-queue-target":
       case "nothing-playing": return musicHint({ kind: resolved.kind })
