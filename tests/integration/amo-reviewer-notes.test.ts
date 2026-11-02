@@ -519,7 +519,7 @@ describe("the owner's setup commands in releasing.md", () => {
     expect(jq(check, { message: "Not Found" })).not.toBe("true")
   })
 
-  test("the ruleset check prints true only when main needs the owner's review of its last push", () => {
+  test("the ruleset check prints true only when main needs the owner's review of its last push and the g28-proof check", () => {
     const check = filter("rules/branches/main", "pull_request")
     const parameters = {
       required_approving_review_count: 1,
@@ -533,11 +533,11 @@ describe("the owner's setup commands in releasing.md", () => {
       ruleset_id: 42,
       parameters: { strict_required_status_checks_policy: false, required_status_checks: [{ context: "lint" }, { context }] }
     })
-    const rules = [{ type: "pull_request", ruleset_id: 42, parameters }, status("build"), { type: "non_fast_forward", ruleset_id: 42 }, { type: "deletion", ruleset_id: 7 }]
+    const rules = [{ type: "pull_request", ruleset_id: 42, parameters }, status("g28-proof"), { type: "non_fast_forward", ruleset_id: 42 }, { type: "deletion", ruleset_id: 7 }]
     expect(jq(check, rules)).toBe("true")
     expect(jq(check, [])).toBe("false")
     expect(jq(check, [rules[0]])).toBe("false")
-    expect(jq(check, [rules[0], status("test")])).toBe("false")
+    expect(jq(check, [rules[0], status("build")])).toBe("false")
     const weakened: [keyof typeof parameters, number | boolean][] = [
       ["required_approving_review_count", 0],
       ["dismiss_stale_reviews_on_push", false],
@@ -545,8 +545,8 @@ describe("the owner's setup commands in releasing.md", () => {
       ["require_last_push_approval", false]
     ]
     for (const [name, value] of weakened) {
-      expect({ name, prints: jq(check, [{ type: "pull_request", parameters: { ...parameters, [name]: value } }, status("build")]) }).toEqual({ name, prints: "false" })
-      expect({ name, missing: jq(check, [{ type: "pull_request", parameters: without(parameters, name) }, status("build")]) }).toEqual({ name, missing: "false" })
+      expect({ name, prints: jq(check, [{ type: "pull_request", parameters: { ...parameters, [name]: value } }, status("g28-proof")]) }).toEqual({ name, prints: "false" })
+      expect({ name, missing: jq(check, [{ type: "pull_request", parameters: without(parameters, name) }, status("g28-proof")]) }).toEqual({ name, missing: "false" })
     }
     expect(jq(filter("rules/branches/main", "ruleset_id"), rules).split("\n")).toEqual(["7", "42"])
   })
@@ -572,7 +572,7 @@ describe("the owner's setup commands in releasing.md", () => {
     const parameters = { required_approving_review_count: 1, dismiss_stale_reviews_on_push: true, require_code_owner_review: true, require_last_push_approval: true }
     const rules = [
       { type: "pull_request", ruleset_id: 42, parameters },
-      { type: "required_status_checks", ruleset_id: 42, parameters: { required_status_checks: [{ context: "build" }] } }
+      { type: "required_status_checks", ruleset_id: 42, parameters: { required_status_checks: [{ context: "g28-proof" }] } }
     ]
     const ruleset = { id: 42, enforcement: "active", bypass_actors: [] }
     expect(run(rules, { 42: ruleset })).toEqual(["true", "true"])
@@ -628,28 +628,40 @@ describe("the owner's setup commands in releasing.md", () => {
   })
 })
 
-describe("the CI step that runs these tests", () => {
+describe("the CI job that runs these tests", () => {
   const ci = workflows["ci.yml"]!
-  const steps = ci.jobs.build!.steps!
-  const proof = steps.find(step => step.run?.includes("./tests/integration/amo-reviewer-notes.test.ts"))!
+  const job = ci.jobs["g28-proof"]!
+  const proof = job.steps![2]!
   const expected = Number(/ tests="(\d+)" /.exec(proof.run!)?.[1])
 
-  test("runs before bun install, so nothing installed can reach it", () => {
-    const install = steps.findIndex(step => /\bbun install\b/.test(step.run ?? ""))
-    expect(steps.indexOf(proof)).toBeGreaterThan(-1)
-    expect(steps.indexOf(proof)).toBeLessThan(install)
+  // Whole, so no defaults, container, if or continue-on-error reaches the
+  // job, and nothing installed runs before the proof. GitHub would still pass
+  // the check with continue-on-error or an if that skips the step, and a
+  // shell entry could drop -e.
+  test("runs checkout, setup-bun with the declared Bun and no cache, then the proof as a plain step, and nothing else", () => {
+    expect(Object.keys(job).sort()).toEqual(["runs-on", "steps"])
+    expect(job["runs-on" as keyof Job]).toBe("ubuntu-latest")
+    expect(job.steps!.map(({ run, ...step }) => ({ ...step, run: typeof run }))).toEqual([
+      { uses: "actions/checkout@v7", run: "undefined" },
+      { uses: "oven-sh/setup-bun@v2", with: { "bun-version-file": "package.json", "no-cache": true }, run: "undefined" },
+      { name: "Test the reviewer-login secret flow (G28)", run: "string" }
+    ])
+    expect(proof.run).toContain("./tests/integration/amo-reviewer-notes.test.ts")
   })
 
-  test("runs on the Bun package.json declares, without a cache", () => {
-    expect(steps[steps.indexOf(proof) - 1]).toEqual({ uses: "oven-sh/setup-bun@v2", with: { "bun-version-file": "package.json", "no-cache": true } })
-  })
-
-  // GitHub would still pass the build check with continue-on-error or an if
-  // that skips the step, and a shell or defaults entry could drop -e.
-  test("is a plain step whose failure fails the build job", () => {
-    expect(Object.keys(proof).sort()).toEqual(["name", "run"])
-    const { steps: _, ...job } = ci.jobs.build! as Job & Record<string, unknown>
-    expect(Object.keys(job).sort()).toEqual(["outputs", "runs-on"])
+  // The main ruleset requires the check by its name, and release.yml and
+  // pages.yml each have a build job, so a check named build could come from
+  // either. A computed job name could take this one.
+  test("is the only job in any workflow whose check is named g28-proof", () => {
+    const named = Object.entries(workflows).flatMap(([file, workflow]) =>
+      Object.entries(workflow.jobs).flatMap(([id, other]) => {
+        const name = (other as Job & { name?: unknown }).name
+        return [id, ...(name === undefined ? [] : [String(name)])]
+          .filter(check => check.toLowerCase().includes("g28-proof") || check.includes("${{"))
+          .map(check => `${file} > ${id} > ${check}`)
+      })
+    )
+    expect(named).toEqual(["ci.yml > g28-proof > g28-proof"])
   })
 
   /** Runs the step's real run: block in a scratch checkout whose test file is a stand-in with `body`. */

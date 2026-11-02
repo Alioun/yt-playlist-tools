@@ -19,8 +19,7 @@ trap 'rm -rf "$scratch"' EXIT
 : > "$scratch/empty.toml"
 copied=(.github/workflows .github/CODEOWNERS scripts/amo-reviewer-notes.ts tests/integration/amo-reviewer-notes.test.ts tests/integration/fixtures package.json docs/development/releasing.md .audit/2.0-build/ci-reviewer-credentials-design.md .audit/2.0-build/ci-reviewer-credentials-mutations.sh)
 proof=$(cd "$repo" && bun --config="$scratch/empty.toml" -e '
-  const steps = Bun.YAML.parse(await Bun.file(".github/workflows/ci.yml").text()).jobs.build.steps
-  console.log(steps.find(step => step.run?.includes("./tests/integration/amo-reviewer-notes.test.ts")).run)')
+  console.log(Bun.YAML.parse(await Bun.file(".github/workflows/ci.yml").text()).jobs["g28-proof"].steps[2].run)')
 missed=0
 planted=0
 
@@ -87,6 +86,7 @@ plant() {
 script=scripts/amo-reviewer-notes.ts
 release=.github/workflows/release.yml
 ci=.github/workflows/ci.yml
+pages=.github/workflows/pages.yml
 tests=tests/integration/amo-reviewer-notes.test.ts
 owners=.github/CODEOWNERS
 docs=docs/development/releasing.md
@@ -137,7 +137,7 @@ plant bulk-github "$ci" 's/(VERSION: \$\{\{ steps\.version\.outputs\.version \}\
 plant job-level-token "$release" 's/(      CHANNEL: \$\{\{ needs\.meta\.outputs\.channel \}\}\n)/$1      GH_TOKEN: \$\{\{ github.token \}\}\n/' -- "hold no secret or job token in a workflow- or job-level env"
 plant ci-reads-bunfig "$ci" 's/bun --config="\$RUNNER_TEMP\/empty\.toml" test/bun test/' -- "loads no bunfig.toml preload and no tsconfig.json from the checkout"
 plant ci-reads-tsconfig "$ci" 's/ --tsconfig-override="\$RUNNER_TEMP\/empty\.json"//' -- "loads no bunfig.toml preload and no tsconfig.json from the checkout"
-plant ci-after-install "$ci" 's/(      # G28\x27s secret-flow tests.*?\n\n)(      - name: Install dependencies\n.*?\n\n)/$2$1/s' -- "runs before bun install"
+plant ci-after-install "$ci" 's/(          no-cache: true\n\n)/$1      - run: bun install --frozen-lockfile\n\n/' -- "runs checkout, setup-bun with the declared Bun and no cache"
 plant runner-unowned "$owners" 's/^\/\.audit\/2\.0-build\/ci-reviewer-credentials-mutations\.sh \@Alioun\n//m' -- "sends every file the approval covers to the owner"
 plant docs-unowned-later "$owners" 's/\z/\/docs\/development\/releasing.md\n/' -- "sends every file the approval covers to the owner"
 plant env-admin-bypass "$docs" 's/\.can_admins_bypass == false and //' -- "the environment checks print true only for amo-reviewer as set up"
@@ -166,12 +166,16 @@ plant fixture-file-owned "$owners" 's/^\/tests\/integration\/fixtures\/\*\* \@Al
 # The CI proof step and its count.
 plant proof-counts-fewer "$ci" 's/tests="(\d+)"/"tests=\"" . ($1 - 1) . "\""/e' -- "step:::error::the G28 proof did not pass all"
 plant proof-ignores-count "$ci" 's/(the G28 proof did not pass all \d+ of its tests"; )exit 1/${1}exit 0/' -- "fails when one test fewer runs"
-plant proof-or-true "$ci" 's/(--reporter-outfile="\$report" \.\/tests\/integration\/amo-reviewer-notes\.test\.ts)\n.*?\n.*?\n/$1 || true\n/s' -- \
+plant proof-or-true "$ci" 's/( \.\/tests\/integration\/amo-reviewer-notes\.test\.ts)\n.*?\n.*?\n/$1 || true\n/s' -- \
   "fails when one test fails"
-plant proof-continue-on-error "$ci" 's/(      - name: Test the reviewer-login secret flow \(G28\)\n)/$1        continue-on-error: true\n/' -- "is a plain step whose failure fails the build job"
-plant proof-if "$ci" 's/(      - name: Test the reviewer-login secret flow \(G28\)\n)/$1        if: github.event_name == \x27push\x27\n/' -- "is a plain step whose failure fails the build job"
-plant proof-job-continue-on-error "$ci" 's/(  build:\n    runs-on: ubuntu-latest\n)/$1    continue-on-error: true\n/' -- "is a plain step whose failure fails the build job"
-plant proof-cached-bun "$ci" 's/\n *# The G28 proof below runs on this Bun.*?\n.*?\n *no-cache: true//s' -- "runs on the Bun package.json declares, without a cache"
+proof_job="runs checkout, setup-bun with the declared Bun and no cache, then the proof as a plain step, and nothing else"
+plant proof-continue-on-error "$ci" 's/(      - name: Test the reviewer-login secret flow \(G28\)\n)/$1        continue-on-error: true\n/' -- "$proof_job"
+plant proof-if "$ci" 's/(      - name: Test the reviewer-login secret flow \(G28\)\n)/$1        if: github.event_name == \x27push\x27\n/' -- "$proof_job"
+plant proof-job-continue-on-error "$ci" 's/(  g28-proof:\n    runs-on: ubuntu-latest\n)/$1    continue-on-error: true\n/' -- "$proof_job"
+plant proof-cached-bun "$ci" 's/\n *# No cache entry another job saved[^\n]*\n *no-cache: true//' -- "$proof_job"
+# The ruleset requires the check by name, so no other job may carry it.
+plant proof-name-reused "$pages" 's/^  build:\n/  build:\n    name: g28-proof\n/m' -- "is the only job in any workflow whose check is named g28-proof"
+plant proof-name-computed "$release" 's/^  meta:\n/  meta:\n    name: \$\{\{ format(\x27g28-{0}\x27, \x27proof\x27) \}\}\n/m' -- "is the only job in any workflow whose check is named g28-proof"
 
 # The reviewer jobs' shape.
 plant reviewer-latest-image "$release" 's/(  check-reviewer-login:\n(?:.*\n)*?    runs-on: )ubuntu-24\.04/${1}ubuntu-latest/' -- "hold exactly the keys and values the approval covers"
@@ -194,7 +198,9 @@ plant old-owners-matcher "$tests" 's/codeOwnerRules\.findLast\(rule => codeOwner
   "reads releasing.md against docs/development/releasing.md as GitHub does" "reads apps/ against deep/apps/main.ts as GitHub does"
 
 # The owner's setup commands.
-plant ruleset-no-build-check "$docs" 's/ and any\(\.\[\]; \.type == "required_status_checks" and any\(\.parameters\.required_status_checks\[\]; \.context == "build"\)\)//' -- \
+plant ruleset-no-proof-check "$docs" 's/ and any\(\.\[\]; \.type == "required_status_checks" and any\(\.parameters\.required_status_checks\[\]; \.context == "g28-proof"\)\)//' -- \
+  "the ruleset check prints true only when main needs the owner's review of its last push"
+plant ruleset-build-check "$docs" 's/\.context == "g28-proof"/.context == "build"/' -- \
   "the ruleset check prints true only when main needs the owner's review of its last push"
 plant repo-digest-any-case "$docs" 's/\(\.name \| ascii_upcase\) as \$name \| \$name != "REVIEWER_NOTES_SHA256" and \$name != "BUN_SHA256"/.name != "REVIEWER_NOTES_SHA256" and .name != "BUN_SHA256"/' -- \
   "the repository-variable check prints true only when no repository variable can stand in for a digest"
