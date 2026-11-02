@@ -56,6 +56,10 @@ jobs:
       - name: Assert manifests are correct
         run: bun run check:manifest
 
+      # Chrome won't load a content script that isn't valid UTF-8.
+      - name: Assert built text files are valid UTF-8
+        run: bun run check:utf8
+
       - name: Short SHA
         id: sha
         run: echo "short=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
