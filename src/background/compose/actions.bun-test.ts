@@ -1,6 +1,16 @@
 import { afterEach, expect, test } from "bun:test"
 import { composeActions } from "./actions"
+import { runtimeTransport } from "../adapters/runtime"
+import { createAutoAddTabRouter } from "../router/tab-auto-add"
+import { createTabViewProducer } from "../tab-view/producer"
 import { createTabActions } from "../../site/core/actions"
+import type { SiteView } from "../../site/core/feature-host"
+import { Scope } from "../../site/core/scope"
+import { autoAdd } from "../../site/features/auto-add"
+import type { Feedback } from "../../site/kit/feedback"
+import type { ToastContent } from "../../site/kit/toaster/types"
+import type { NavData, PlayerData } from "../../shared/contracts/streams"
+import type { ToastPlan } from "../../shared/rules/outcomes"
 import type { Playlists } from "../playlists/playlists"
 import type { Tabs, TabJobOutcome } from "../tabs/ports"
 import type { KnownTab } from "../tabs/tabs"
@@ -9,6 +19,7 @@ import type { Job, JobInvocation, JobResult, RouteId, SetVideoId } from "../../s
 import type { AccountKey, PlaylistId, VideoId } from "../../shared/model"
 import { projectionSeed, projectionWorld, document as doc, a, b, alpha, beta, video } from "../../../tools/fixtures/tab-projection/harness"
 import { build } from "../../../tools/fixtures/page-link/support"
+import { syntheticHealth, tabContext } from "../../../tools/fixtures/tab-view/harness"
 
 type Listener = (message: unknown, sender: NativeSender, respond: (answer?: unknown) => void) => boolean
 const route = "fixture-route" as RouteId
@@ -44,8 +55,11 @@ function youtube() {
   return { lists, jobs, answer }
 }
 
-function world(options: { settings?: Record<string, unknown>; tabAccount?: AccountKey | null; pageAccount?: AccountKey | null } = {}) {
-  const store = projectionWorld(seed(options.settings))
+type Seed = ReturnType<typeof seed>
+function world(options: { settings?: Record<string, unknown>; tabAccount?: AccountKey | null; pageAccount?: AccountKey | null; prepare?: (initial: Seed) => void } = {}) {
+  const initial = seed(options.settings)
+  options.prepare?.(initial)
+  const store = projectionWorld(initial)
   const site = youtube()
   const listeners = new Set<Listener>()
   const ensured: unknown[] = []
@@ -76,10 +90,23 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
     for (const listener of [...listeners]) claimed = listener(message, sender, resolve) || claimed
     if (!claimed) resolve(undefined)
   }) }
-  const page = createTabActions({ transport, build, deadline: (ms, expire) => { const t = setTimeout(expire, ms); return () => clearTimeout(t) },
-    account: () => options.pageAccount !== undefined ? options.pageAccount : known.acct })
-  disposers.push(() => page.dispose(), () => actions.dispose(), () => store.owner.dispose())
-  return { store, site, page, actions, ensured }
+  const deadline = (ms: number, expire: () => void) => { const t = setTimeout(expire, ms); return () => clearTimeout(t) }
+  const progress = createAutoAddTabRouter({ transport: runtimeTransport(native.runtime as never), senders: native as never, build, deadline,
+    tabs, owner: store.owner, now: () => Date.now() })
+  const page = createTabActions({ transport, build, deadline, account: () => options.pageAccount !== undefined ? options.pageAccount : known.acct })
+  const health = syntheticHealth()
+  const producer = createTabViewProducer({ owner: store.owner, addFlow: actions.flow, statuses: health.statuses, notices: health.notices, build })
+  async function view(): Promise<SiteView<"www">> {
+    const produced = await producer.produce(tabContext())
+    if (produced.kind !== "view" || produced.view.site !== "www") throw Error("Expected the store's www tab view")
+    return produced.view
+  }
+  disposers.push(() => page.dispose(), () => progress.dispose(), () => producer.dispose(), () => actions.dispose(), () => store.owner.dispose())
+  function recentAdds(): readonly unknown[] {
+    const rows = store.removal.state().session.recentAdds
+    return Array.isArray(rows) ? rows : []
+  }
+  return { store, site, page, actions, ensured, view, recentAdds }
 }
 
 test("a playlist shortcut saves the pointed video to this account's shortcut playlist, with Undo", async () => {
@@ -148,4 +175,117 @@ test("the picker's cached list never reaches YouTube, a refresh does, and popove
   expect(site.jobs).toEqual([])
   expect(await page.need()).toBe(true)
   expect(ensured).toEqual([{ tabId: 9, what: { popovers: true } }])
+})
+
+const allowed = "UCAAAAAAAAAAAAAAAAAAAAAA", elsewhere = `UC${"B".repeat(22)}`
+// Playback isn't paused, the video has no session skip, Recent adds starts empty, and the account's playlist cache names both playlists.
+function autoAddSeed(initial: Seed) {
+  initial.session.paused = false
+  delete initial.session[`skips:${a}`]
+  delete initial.session.recentAdds
+  initial.local[`cache:${a}`] = { listAt: 5, playlists: [{ id: alpha, title: "Alpha mix" }, { id: beta, title: "Beta talks" }], order: {}, created: [], labelAt: null }
+}
+const autoAddWorld = (prepare: (initial: Seed) => void = autoAddSeed) => world({ settings: { autoAdd: { on: true, feedback: true, pct: 73 } }, prepare })
+async function drain(rounds = 40) { for (let n = 0; n < rounds; n++) await new Promise(resolve => setTimeout(resolve, 0)) }
+async function until(check: () => boolean, what: string) {
+  for (let n = 0; n < 400 && !check(); n++) await new Promise(resolve => setTimeout(resolve, 0))
+  if (!check()) throw Error(`Timed out waiting for ${what}`)
+}
+
+/** One visit to the watch page: the player's readings drive the real auto-add feature, which reaches the background through the tab client. */
+async function watchPage(w: ReturnType<typeof world>, channel: string) {
+  const scope = new Scope({ document, onError: error => { throw error } })
+  const view = await w.view()
+  const streams: { player?: (data: PlayerData) => void; nav?: (data: NavData) => void } = {}
+  const toasts: ToastContent[] = [], states: unknown[] = [], answers: unknown[] = []
+  let now = 0
+  const feedback = {
+    toaster: { show(content: ToastContent) { toasts.push(content); return { replace: () => true, release() {} } } },
+    format: (plan: ToastPlan, titles: { video?: string; playlists?: Record<string, string> }, action: unknown) =>
+      ({ text: `${plan.message.kind}:${titles.video ?? ""}:${Object.values(titles.playlists ?? {}).join(",")}`, tone: plan.tone, auto: plan.auto, action }),
+    action: (kind: string, run: () => unknown) => ({ kind, label: kind, run })
+  } as unknown as Feedback
+  const actions = { ...w.page, async add(request: Parameters<typeof w.page.add>[0]) { const answer = await w.page.add(request); answers.push(answer); return answer } }
+  void autoAdd.start({ site: "www", scope, document, actions, feedback: { use: () => feedback },
+    view: { read: () => view, subscribe: () => () => {} },
+    page: {
+      watch(stream: "player" | "nav", callback: (data: never) => void) { streams[stream] = callback as never; return () => { delete streams[stream] } },
+      onState(listener: (state: unknown) => void) {
+        listener({ kind: "ready", snapshot: { signedIn: true, acct: a, pageType: "watch", startedHidden: false, navType: "navigate" } })
+        return () => {}
+      },
+      run: async () => ({ ok: true, data: { channelId: channel } })
+    } as never,
+    text: { cantMeasure: title => `cant-measure:${title ?? ""}` }, clock: { now: () => now }, status: state => { states.push(state) } })
+  disposers.push(() => scope.dispose())
+  streams.nav?.({ pageType: "watch" as NavData["pageType"], video: { videoId: video, title: "First video", length: 100, kind: "video" },
+    navigation: { kind: "watch", videoId: video } })
+  return {
+    scope, toasts, states, answers,
+    async play(from: number, to: number) {
+      for (let pos = from; pos <= to; pos++) {
+        streams.player?.({ ad: false, at: now, player: "watch", videoId: video, pos, len: 100, listedLength: 100, rate: 1, playing: true, seeking: false,
+          content: "video", isPostLiveDvr: false, isLive: false, isUpcoming: false, isLiveContent: false })
+        now += 1000
+        await drain(2)
+      }
+    }
+  }
+}
+
+test("every add is listed in Recent adds with its video and playlist titles, and none is while Keep a list of recent adds is off", async () => {
+  const on = world({ prepare: autoAddSeed })
+  const report = await on.page.add({ site: "www", video, via: "shortcut", shortcut: "orig01" as never, title: "First video" })
+  expect(report.kind === "report" && report.titles).toEqual({ [beta]: "Beta talks" })
+  await until(() => on.recentAdds().length === 1, "the Recent adds entry")
+  expect(on.recentAdds()).toEqual([{ kind: "single", acct: a, at: expect.any(Number), source: { kind: "feature", feature: "shortcuts" },
+    video: { id: video, title: "First video" }, playlists: [{ id: beta, title: "Beta talks" }], undo: expect.any(String) }])
+  const off = world({ prepare: initial => { autoAddSeed(initial); Object.assign(initial.local.device as object, { recentAdds: false }) } })
+  expect((await off.page.add({ site: "www", video, via: "shortcut", shortcut: "orig01" as never, title: "First video" })).kind).toBe("report")
+  await drain()
+  expect(off.site.lists.get(beta)?.has(video)).toBe(true)
+  expect(off.recentAdds()).toEqual([])
+})
+
+test("auto-add: a video played to its playlist's goal is added by the background, named in its toast and Recent adds, and Undo takes it back", async () => {
+  const w = autoAddWorld()
+  const tab = await watchPage(w, allowed)
+  await tab.play(0, 20)
+  expect(w.site.jobs).not.toContain("add")
+  await tab.play(21, 30)
+  await until(() => tab.toasts.length > 0, "the auto-add toast")
+  expect(w.site.lists.get(alpha)?.has(video)).toBe(true)
+  expect(tab.toasts.map(toast => [toast.text, toast.action?.kind ?? null])).toEqual([["saved:First video:Alpha mix", "undo"]])
+  expect(tab.states.at(-1)).toEqual({ kind: "added", playlists: [alpha] })
+  expect(w.recentAdds()).toEqual([{ kind: "single", acct: a, at: expect.any(Number), source: { kind: "feature", feature: "auto-add" },
+    video: { id: video, title: "First video" }, playlists: [{ id: alpha, title: "Alpha mix" }], undo: expect.any(String) }])
+  await tab.toasts[0]?.action?.run()
+  await until(() => w.recentAdds().length === 0, "Undo to drop the Recent adds entry")
+  expect(w.site.jobs.filter(job => job === "add" || job === "remove")).toEqual(["add", "remove"])
+})
+
+test("auto-add: the background applies the playlist's channel filter, so another channel's video is filtered, toasted as such and never written", async () => {
+  const w = autoAddWorld()
+  const tab = await watchPage(w, elsewhere)
+  await tab.play(0, 30)
+  await until(() => tab.answers.length > 0, "the background's answer")
+  expect(tab.answers).toEqual([expect.objectContaining({ kind: "report", outcomes: { [alpha]: { kind: "filtered", decision: "filtered" } }, undo: null,
+    titles: { [alpha]: "Alpha mix" } })])
+  await drain()
+  expect(w.site.jobs).not.toContain("add")
+  expect(w.recentAdds()).toEqual([])
+  expect(tab.toasts.map(toast => [toast.text, toast.action?.kind ?? null])).toEqual([["filtered:First video:Alpha mix", null]])
+})
+
+test("auto-add: progress saved when the page is left counts on the next visit, through the store", async () => {
+  const w = autoAddWorld()
+  const first = await watchPage(w, allowed)
+  await first.play(0, 12)
+  first.scope.dispose()
+  await until(() => w.store.writes().some(row => row.kind.startsWith("local.set")), "the progress checkpoint")
+  const saved = await w.store.owner.loadProgress({ acct: a, video, private: false })
+  expect(saved.kind === "progress" && saved.progress !== null).toBe(true)
+  const second = await watchPage(w, allowed)
+  await second.play(13, 26)
+  await until(() => w.site.lists.get(alpha)?.has(video) === true, "the add from both visits' progress")
 })
