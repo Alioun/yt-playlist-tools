@@ -3338,12 +3338,14 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       const blocked = joinBlocked(); if (blocked) return blocked
       try {
         let records = joinJson(await local.get(null)), read = readSyncJoinCheckpoint(records[pendingSyncJoinKey])
-        if (read.kind === "absent" || read.kind === "valid" && read.checkpoint.phase === "off") return { kind: "cancelled" }
+        // With no join under way, cancelling is SYNC-19's switch-off: a syncing browser stops and deletes nothing.
+        const idle = read.kind === "absent" || read.kind === "valid" && read.checkpoint.phase === "off"
+        if (idle && !(isJsonObject(records.device) && decodeDevice(records.device).syncOn)) return { kind: "cancelled" }
         if (retainedHold(records)) return joinUnavailable("retention")
-        if (read.kind !== "valid") return joinUnavailable("pending-join")
+        if (!idle && read.kind !== "valid") return joinUnavailable("pending-join")
         if (join.kind === "unavailable") return joinUnavailable("join-host")
         let unfinished: string | undefined
-        const fixed = read.checkpoint.phase === "accepted" ? read.checkpoint : read.checkpoint.phase === "choice" && read.checkpoint.suspended.kind === "accepted" ? { v: read.checkpoint.v, kind: "sync-join", phase: "accepted", effect: read.checkpoint.suspended.effect } as const : undefined
+        const fixed = read.kind !== "valid" ? undefined : read.checkpoint.phase === "accepted" ? read.checkpoint : read.checkpoint.phase === "choice" && read.checkpoint.suspended.kind === "accepted" ? { v: read.checkpoint.v, kind: "sync-join", phase: "accepted", effect: read.checkpoint.suspended.effect } as const : undefined
         if (fixed) {
           const result = await finishJoinEffect(joinDeps, records, fixed)
           if (result.kind !== "committed") {

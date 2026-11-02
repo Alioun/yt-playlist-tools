@@ -51,6 +51,31 @@ test("the native owner joins another browser's synced settings and retires the j
   } finally { await owner.dispose() }
 })
 
+test("switching sync off deletes nothing, and switching it on again with no edits adopts the same history silently (SYNC-19, SYNC-20)", async () => {
+  const h = startingOwnerFixture(agreedSeed(true)), owner = createBrowserStartingLocalFilterWriter(h.native, h.options)
+  try {
+    expect(await owner.ready()).toBe("ok")
+    await owner.startSync()
+    expect(h.listeners.size, "a syncing browser listens to the sync area").toBe(1)
+    const before = h.records(), remote = h.remote(), sets = h.counts.syncSet
+    expect(await owner.cancelSyncJoin(ui)).toEqual({ kind: "cancelled" })
+    expect(h.listeners.size, "switched off, it stops listening").toBe(0)
+    const off = h.records()
+    expect(object(off.device).syncOn).toBe(false)
+    expect(object(off.sync)).toEqual({ ...object(before.sync), status: "off", editedSinceOff: false })
+    expect(off["doc:settings"]).toEqual(before["doc:settings"])
+    expect(Object.hasOwn(off, "pending:sync-join")).toBe(false)
+    expect(h.remote()).toEqual(remote)
+    expect(h.counts.syncSet).toBe(sets)
+    expect(await owner.cancelSyncJoin(ui), "a second switch-off has nothing to do").toEqual({ kind: "cancelled" })
+    const preparation = await owner.beginSyncJoin(ui).result
+    expect(preparation).toMatchObject({ kind: "automatic", reason: "proven-same-history-no-edit" })
+    if (preparation.kind !== "automatic") return
+    expect(await owner.applySyncJoin(ui, { kind: "automatic", review: preparation.review })).toMatchObject({ kind: "committed", historyId: "history" })
+    expect(object(h.records().device).syncOn).toBe(true)
+  } finally { await owner.dispose() }
+})
+
 test("starting construction confirms schema through the supplied local source", async () => {
   const h = startingOwnerFixture(), owner = createBrowserStartingLocalFilterWriter(h.native, h.options)
   try {
