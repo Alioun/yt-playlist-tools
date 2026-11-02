@@ -15,7 +15,7 @@ export type CandidateTab = {
   readonly id: number; readonly windowId: number; readonly incognito: boolean; readonly active: boolean
   readonly audible: boolean; readonly discarded: boolean; readonly lastAccessed: number
 }
-type NativeTab = {
+export type NativeTab = {
   readonly id?: number; readonly windowId?: number; readonly incognito?: boolean; readonly active?: boolean
   readonly audible?: boolean; readonly discarded?: boolean; readonly lastAccessed?: number
 }
@@ -46,7 +46,7 @@ export function videoOfUrl(url: string | undefined): VideoId | null {
     return isVideoId(id) ? id : null
   } catch { return null }
 }
-function candidate(tab: NativeTab): CandidateTab | null {
+export function candidate(tab: NativeTab): CandidateTab | null {
   if (typeof tab.id !== "number" || typeof tab.windowId !== "number") return null
   return { id: tab.id, windowId: tab.windowId, incognito: tab.incognito === true, active: tab.active === true, audible: tab.audible === true,
     discarded: tab.discarded === true, lastAccessed: typeof tab.lastAccessed === "number" ? tab.lastAccessed : 0 }

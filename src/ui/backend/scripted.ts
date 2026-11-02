@@ -30,26 +30,14 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
   const unhandle = rpc.handle({
     authenticate: () => ({ kind: "accepted", context: undefined }),
     handlers: {
-      "ui.clearAll": payload => take("ui.clearAll", payload),
-      "ui.change": payload => take("ui.change", payload),
-      "ui.syncedChoices": payload => take("ui.syncedChoices", payload),
-      "ui.accountInView": payload => take("ui.accountInView", payload),
-      "ui.playlists": payload => take("ui.playlists", payload),
-      "ui.create": payload => take("ui.create", payload),
-      "ui.resolveChannel": payload => take("ui.resolveChannel", payload),
-      "ui.status": payload => take("ui.status", payload),
-      "ui.pause": payload => take("ui.pause", payload),
-      "ui.recentAdds": payload => take("ui.recentAdds", payload),
-      "ui.device": payload => take("ui.device", payload),
-      "ui.filter": payload => take("ui.filter", payload),
-      "ui.withdraw": payload => take("ui.withdraw", payload),
-      "ui.removeSetup": payload => take("ui.removeSetup", payload),
-      "ui.exportSettings": payload => take("ui.exportSettings", payload),
-      "ui.importSettings": payload => take("ui.importSettings", payload),
-      "ui.noteSeen": payload => take("ui.noteSeen", payload),
-      "ui.noteAgree": payload => take("ui.noteAgree", payload),
-      "ui.playingNow": payload => take("ui.playingNow", payload),
-      "ui.playingSave": payload => take("ui.playingSave", payload)
+      "ui.clearAll": () => take("ui.clearAll"),
+      "ui.change": () => take("ui.change"),
+      "ui.syncedChoices": () => take("ui.syncedChoices"),
+      "ui.accountInView": () => take("ui.accountInView"),
+      "ui.playlists": () => take("ui.playlists"),
+      "ui.create": () => take("ui.create"),
+      "ui.resolveChannel": () => take("ui.resolveChannel"),
+      "ui.playingNow": () => take("ui.playingNow")
     }
   })
   function take<K extends keyof UiMessages>(kind: K, payload: UiMessages[K]["payload"]): UiMessages[K]["result"] {

@@ -1,51 +1,43 @@
-import type { PlayingSave, UiPlayingNow, UiPlayingSave } from "../../shared/contracts/ui-pages"
-import type { UiRequester } from "../adapters/ui-requester"
-import type { SessionRead } from "../store/session-memory"
-import type { TabNativePort, Tabs } from "../tabs/ports"
+import type { NativeBrowser } from "../adapters/browser"
+import type { Registrar } from "../registrar/ports"
+import type { Requester, Tabs } from "../tabs/ports"
+import type { Actions } from "./actions"
+import { candidate, tabOrder, type NativeTab } from "./any-tab"
+import { isMusicAdFailure, type JobOf } from "../../shared/contracts"
+import type { PlayingNow } from "../../shared/contracts/playing-now"
+import { siteBundles } from "../../shared/features/registration"
 
 /**
- * Playing now (UI-POP-17, YM-POP-1 to YM-POP-13, ARC-ACC-68): the focused window's active YouTube Music tab, else
- * the most recently used one, read with `nowPlaying`; its Save runs in that same tab, as that tab's account,
- * only while the tab still shows the account it was read with.
+ * The popup's Playing now (03 §17), read once when the popup opens and never polled (YM-POP-14). It reads the
+ * focused window's active YouTube Music tab, else the one playing audio, else the most recently used (YM-POP-11).
+ * A tab with no feature on gets only the site core, which draws nothing and stays inert (YM-FEAT-6, FT-16).
  */
-export function createPlayingNow(deps: {
-  readonly tabs: Pick<Tabs, "runIn">
-  readonly native: Pick<TabNativePort, "get">
-  readonly session: () => Promise<SessionRead>
+export function composePlayingNow(deps: {
+  readonly native: Pick<NativeBrowser, "tabs" | "permissions">
+  readonly tabs: Pick<Tabs, "runIn" | "known">
+  readonly registrar: Pick<Registrar, "ensure">
+  readonly actions: Pick<Actions, "settings">
   readonly consented: () => boolean
 }) {
-  async function pick(ui: UiRequester) {
-    const read = await deps.session()
-    if (read.kind !== "memory") return
-    const rows = await Promise.all([...read.memory.tabs].filter(([, record]) => record.site === "music").map(async ([tabId, record]) => {
-      const lookup = await deps.native.get(tabId)
-      return lookup.kind === "tab" && lookup.tab.incognito === ui.requester.incognito ? { tabId, record, tab: lookup.tab } : undefined
-    }))
-    const live = rows.filter(row => row !== undefined)
-    return live.find(row => row.tab.active && row.tab.windowId === ui.requester.windowId) ?? live.sort((a, b) => b.tab.lastAccessed - a.tab.lastAccessed)[0]
-  }
-  return {
-    async now(ui: UiRequester): Promise<UiPlayingNow> {
-      if (!deps.consented()) return { kind: "held" }
-      const chosen = await pick(ui)
-      if (!chosen) return { kind: "no-tab" }
-      if (!chosen.record.signedIn) return { kind: "signed-out" }
-      const acct = chosen.record.acct
-      const outcome = await deps.tabs.runIn(chosen.tabId, { job: { kind: "nowPlaying" } }, { site: "music", req: ui.requester, account: { kind: "any" } })
-      if (outcome.kind !== "result" || !outcome.result.ok) return { kind: "nothing" }
-      return outcome.result.data ? { kind: "playing", tabId: chosen.tabId, acct, song: outcome.result.data } : { kind: "nothing" }
-    },
-    async save(ui: UiRequester, save: PlayingSave): Promise<UiPlayingSave> {
-      if (!deps.consented()) return { kind: "failed" }
-      const read = await deps.session()
-      const record = read.kind === "memory" ? read.memory.tabs.get(save.tabId) : undefined
-      if (!record) return { kind: "no-tab" }
-      if (record.site !== "music" || !record.signedIn || record.acct !== save.acct) return { kind: "account-changed" }
-      const outcome = await deps.tabs.runIn(save.tabId, { job: { kind: "save", playlistId: save.playlistId, videoId: save.videoId }, acct: save.acct },
-        { site: "music", req: ui.requester, account: { kind: "account", acct: save.acct, signedIn: true } })
-      if (outcome.kind === "no-tab") return { kind: "no-tab" }
-      if (outcome.kind === "guard" && outcome.reason === "accountChanged") return { kind: "account-changed" }
-      return outcome.kind === "result" && outcome.result.ok ? { kind: "saved", setVideoId: outcome.result.data.setVideoId } : { kind: "failed" }
+  const { native } = deps
+  return async function playingNow(req: Requester): Promise<PlayingNow> {
+    if (!deps.consented()) return { kind: "unavailable" }
+    const settings = await deps.actions.settings(req.incognito)
+    if (!settings) return { kind: "unavailable" }
+    if (!settings.musicSection) return { kind: "off" }
+    if (!await native.permissions.contains({ origins: [siteBundles.music.match] }).catch(() => false)) return { kind: "no-access" }
+    const raw: NativeTab[] = await native.tabs.query({ url: siteBundles.music.match }).catch(() => [])
+    const tabs = raw.flatMap(tab => { const value = candidate(tab); return value ? [value] : [] })
+    for (const tabId of tabOrder(tabs, { windowId: req.windowId, incognito: req.incognito })) {
+      try { await deps.registrar.ensure(tabId, { core: true }) } catch { continue }
+      const [known] = await deps.tabs.known({ kind: "tab", tabId })
+      if (known && known.acct === null) return { kind: "signed-out", tabId }
+      const outcome = await deps.tabs.runIn<JobOf<"nowPlaying">>(tabId, { job: { kind: "nowPlaying" } }, { site: "music", req, account: { kind: "any" } })
+      if (outcome.kind !== "result") continue
+      const { result } = outcome
+      if (result.ok) return result.data === null ? { kind: "nothing-playing", tabId } : { kind: "song", tabId, song: result.data }
+      if (isMusicAdFailure(result)) return { kind: "ad-playing", tabId }
     }
+    return { kind: "no-tab" }
   }
 }

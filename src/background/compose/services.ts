@@ -1,6 +1,7 @@
 import { createAccounts } from "../accounts/accounts"
 import { composeActions, type Actions } from "./actions"
 import { composeAnyTab } from "./any-tab"
+import { composePlayingNow } from "./playing-now"
 import { createSiteI18n } from "../../shared/i18n"
 import type { NativeBrowser } from "../adapters/browser"
 import { runtimeTransport, timerDeadline, type RuntimePort } from "../adapters/runtime"
@@ -98,16 +99,7 @@ export function composeServices(deps: {
     },
     transport: runtimeTransport(deps.runtime),
     rpc: { build, deadline: timerDeadline },
-    pages: {
-      owner,
-      session: { get: async key => (await native.storage.session.get(key))[key] },
-      status: createPageStatus({ owner, statuses: monitor.statusProducer, tab: tabId => browserTabs.port.get(tabId), build }),
-      withdraw: (origin, expected) => deps.lifecycle.withdrawConsent(origin, expected),
-      readAccess: () => readAccess(),
-      playing: createPlayingNow({ tabs, native: browserTabs.port, session: () => owner.readSession(), consented: deps.consented }),
-      version: () => native.runtime.getManifest().version,
-      now: () => Date.now()
-    }
+    playingNow: composePlayingNow({ native, tabs, registrar, actions, consented: deps.consented })
   })
   const badge = createToolbarBadge({
     action: {
