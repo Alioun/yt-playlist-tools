@@ -92,7 +92,7 @@ export function composeServices(deps: {
   const accounts = createAccounts({ owner, tabs, claim: { kind: "unavailable", reason: "production-ownership-required" }, now: () => Date.now() })
   const gather = composeGather({ native: { ...native, runtime }, senders: { ...native, runtime },
     browser: deps.browser, build, owner, tabs, nativeTabs: browserTabs.port, addFlow: actions.flow, settings: incognito => actions.settings(incognito), registrar,
-    statuses: monitor.statusProducer, consented: deps.consented, i18n: siteI18n, flash: (tabId, ok, title) => badge.flash(tabId, ok, title) })
+    statuses: monitor.statusProducer, i18n: siteI18n, flash: (tabId, ok, title) => badge.flash(tabId, ok, title) })
   const producer = createTabViewProducer({ owner, addFlow: actions.flow, statuses: monitor.statusProducer, notices: monitor.noticeProducer, build })
   const unbindHello = browserTabs.bindHello(tabs, producer, (context, hello) => {
     badge.loaded(context.tab.tabId)

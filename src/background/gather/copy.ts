@@ -88,10 +88,10 @@ export function undoLine(result: GatherUndoResult, undone: { readonly count: num
   return line(i18n.message(i18n.plural(undone.count) === "one" ? "gather_undone_one" : "gather_undone_other", { count: n(i18n, undone.count), playlist: undone.title }), "confirmation")
 }
 
-/** The row's progress: membership reads one video at a time, then the adds (YT-GT-19). */
+/** The row's progress (YT-GT-19): `done` of `total` videos' membership read so far, then the adds. */
 export function progressLine(done: number, total: number, i18n: I18n): GatherLine {
   return done < total
-    ? line(i18n.message("gather_checking", { index: n(i18n, done + 1), count: n(i18n, total) }), "muted")
+    ? line(i18n.message("gather_checking", { index: n(i18n, Math.max(1, done)), count: n(i18n, total) }), "muted")
     : line(i18n.message(i18n.plural(total) === "one" ? "gather_saving_one" : "gather_saving_other", { count: n(i18n, total) }), "muted")
 }
 

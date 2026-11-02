@@ -24,7 +24,7 @@ import { videoOf, type GatherAccess, type GatherLanguage } from "../../shared/ru
 import { createRpc, createRpcCaller } from "../../shared/rpc/rpc"
 import { siteBundles } from "../../shared/features/registration"
 
-type Owner = Pick<StartingOwner, "readSession" | "changeSession" | "readSetup" | "readPlaylistCache">
+type Owner = Pick<StartingOwner, "ready" | "readSession" | "changeSession" | "readSetup" | "readPlaylistCache">
 type Health = Record<Destination, "working" | "not-working">
 const working: Health = { player: "working", queue: "working", playlist: "working" }
 
@@ -46,7 +46,6 @@ export function composeGather(deps: {
   readonly settings: (incognito: boolean) => Promise<Settings | null>
   readonly registrar: Pick<Registrar, "ensure">
   readonly statuses: StatusProducer
-  readonly consented: () => boolean
   readonly i18n: I18n
   readonly flash: (tabId: number, ok: boolean, title: string) => void
   readonly log?: (line: string) => void
@@ -59,6 +58,8 @@ export function composeGather(deps: {
   let health: Health = working
   let disposed = false
   const running = new Set<number>()
+  // A private window's gathers live in memory only, so their Undo is spent here once it worked.
+  const undoneIds = new Set<string>()
   // Automatic failure toasts are limited as auto-add's are (YT-GT-29): each kind once per browser session.
   const shownOnce = new Set<string>()
 
@@ -79,6 +80,8 @@ export function composeGather(deps: {
       playlist: status.jobs.some(job => job === "addBatch" || job === "removeBatch" || job === "membership") ? "not-working" : "working" }
   }
   async function prepare(incognito: boolean): Promise<Settings | null> {
+    // A message can wake the worker before its store has started; the settings read waits for it.
+    await deps.owner.ready().catch(() => {})
     const all = await deps.settings(incognito)
     if (!all) return null
     settings = all.gather
@@ -229,7 +232,6 @@ export function composeGather(deps: {
 
   const triggers = createGatherTriggers({
     async settings() {
-      if (!deps.consented()) return null
       const all = await prepare(false)
       return all?.gather ?? null
     },
@@ -252,7 +254,8 @@ export function composeGather(deps: {
   // The newest gather, from the canonical record in a normal window and from memory in a private one (DATA-58).
   async function summary(state: GatherState, scope: Scope): Promise<GatherSummary | null> {
     const [record] = state.history
-    if (scope === "normal" && record) {
+    if (scope === "normal") {
+      if (!record) return null
       if (record.kind === "sent") return { id: record.record.id, at: record.record.at, auto: record.record.auto, count: record.record.count, destination: { kind: record.to }, undo: false }
       const own = state.last.find(result => result.kind === "playlist" && result.undo === record.record.id)
       const count = own?.kind === "playlist" ? own.saved : record.kind === "undo" ? record.record.added.length : 0
@@ -261,13 +264,15 @@ export function composeGather(deps: {
     }
     const result = state.last.find(entry => entry.kind === "playlist" || entry.kind === "player" && entry.confirmed || entry.kind === "queue" && entry.outcome === "confirmed")
     if (!result) return null
-    if (result.kind === "playlist") return { id: result.undo ?? result.id, at: result.at, auto: result.auto === true, count: result.saved, undo: result.undo !== null, destination: { kind: "playlist", title: result.title } }
+    if (result.kind === "playlist") return { id: result.undo ?? result.id, at: result.at, auto: result.auto === true, count: result.saved,
+      undo: result.undo !== null && !undoneIds.has(result.undo), destination: { kind: "playlist", title: result.title } }
     if (result.kind === "player" || result.kind === "queue") return { id: result.id, at: result.at, auto: false, count: result.count, undo: false, destination: { kind: result.kind } }
     return null
   }
 
   async function ready(req: Requester): Promise<"ready" | "off" | "unavailable"> {
-    if (disposed || !deps.consented()) return "unavailable"
+    if (disposed) return "unavailable"
+    // The shared settings read only after consent, so a settings answer is the consent check (ARC-MSG-16).
     const all = await prepare(req.incognito)
     if (!all) return "unavailable"
     return all.gather.on ? "ready" : "off"
@@ -291,7 +296,9 @@ export function composeGather(deps: {
       const state = await ready(req)
       if (state !== "ready") return { kind: state }
       const before = await undone(await gather.last(req.incognito ? "private" : "normal"), payload.id, req.incognito)
-      return { kind: "line", line: undoLine(await gather.undo(payload.id, req), before, i18n) }
+      const result = await gather.undo(payload.id, req)
+      if (result.kind === "undone") undoneIds.add(payload.id)
+      return { kind: "line", line: undoLine(result, before, i18n) }
     },
     async gathers(req): Promise<UiGathers> {
       const state = await ready(req)
@@ -314,7 +321,7 @@ export function composeGather(deps: {
       const req: Requester = { windowId: tab.windowId, incognito: tab.origin.incognito, activeTabId: tab.origin.tabId }
       const before = await undone(await gather.last(req.incognito ? "private" : "normal"), request.id, req.incognito)
       const result = await gather.undo(request.id, req)
-      if (result.kind === "undone") { void push({ windowId: null, running: false, line: null }); return null }
+      if (result.kind === "undone") { undoneIds.add(request.id); void push({ windowId: null, running: false, line: null }); return null }
       return { text: undoLine(result, before, i18n).text, tone: "failure" }
     }
   } })
@@ -323,7 +330,7 @@ export function composeGather(deps: {
     routes,
     // Every tab.hello wakes trigger 1's check; a video tab's starts or joins its window's burst while trigger 2 or 3 is on.
     hello(context: TabContext, hello: TabHello): void {
-      if (disposed || !deps.consented()) return
+      if (disposed) return
       void (async () => {
         const all = await prepare(false)
         const auto = all?.gather.auto
