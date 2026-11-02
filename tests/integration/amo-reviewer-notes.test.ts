@@ -15,8 +15,9 @@ const scriptSource = readFileSync(script, "utf8")
 const bash = Bun.which("bash")!
 
 type Step = { name?: string; uses?: string; with?: Record<string, unknown>; env?: Record<string, string>; run?: string }
-type Job = { needs?: string[]; if?: unknown; environment?: string | { name: string }; uses?: string; env?: Record<string, string>; steps?: Step[] }
-type Workflow = { env?: Record<string, string>; defaults?: unknown; jobs: Record<string, Job> }
+type Permissions = string | Record<string, string>
+type Job = { needs?: string[]; if?: unknown; environment?: string | { name: string }; uses?: string; permissions?: Permissions; env?: Record<string, string>; steps?: Step[] }
+type Workflow = { env?: Record<string, string>; defaults?: unknown; permissions?: Permissions; jobs: Record<string, Job> }
 
 const workflowDir = join(root, ".github/workflows")
 const workflowTexts = Object.fromEntries(
@@ -311,6 +312,20 @@ describe("the workflows", () => {
         .map(([id]) => `${file} > ${id}`)
     )
     expect(users).toEqual(reviewerJobs.map(id => `release.yml > ${id}`))
+  })
+
+  // Checkout writes its token into .git/config unless told not to, where every later step can read it.
+  test("check out without keeping the token in every job that can write", () => {
+    const writes = (permissions: Permissions | undefined) =>
+      typeof permissions === "string" ? permissions === "write-all" : Object.values(permissions ?? {}).includes("write")
+    const kept = Object.entries(workflows).flatMap(([file, workflow]) =>
+      Object.entries(workflow.jobs)
+        .filter(([, job]) => writes(job.permissions ?? workflow.permissions))
+        .flatMap(([id, job]) =>
+          (job.steps ?? []).filter(step => step.uses?.startsWith("actions/checkout@") && step.with?.["persist-credentials"] !== false).map(() => `${file} > ${id}`)
+        )
+    )
+    expect(kept).toEqual([])
   })
 
   test("set no workflow-level defaults, which would change every run step's shell or directory", () => {

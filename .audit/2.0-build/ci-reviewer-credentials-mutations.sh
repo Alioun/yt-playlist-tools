@@ -200,5 +200,10 @@ plant repo-digest-any-case "$docs" 's/\(\.name \| ascii_upcase\) as \$name \| \$
   "the repository-variable check prints true only when no repository variable can stand in for a digest"
 plant ruleset-loop-silent "$docs" 's/^ *\[ -n "\$ids" \] \|\| echo false\n//m' -- "the ruleset commands print false when no ruleset applies to main"
 
+# Outside G28: submit-amo can write releases.
+plant submit-amo-keeps-token "$release" 's/(  submit-amo:\n(?:.*\n)*?      - uses: actions\/checkout\@v7\n)        with:\n          persist-credentials: false\n/$1/' -- \
+  "check out without keeping the token in every job that can write"
+plant write-all-keeps-token "$ci" 's/(  build:\n    runs-on: ubuntu-latest\n)/$1    permissions: write-all\n/' -- "check out without keeping the token in every job that can write"
+
 echo "$planted rows, $missed missed"
 exit $((missed > 0))

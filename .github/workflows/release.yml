@@ -258,7 +258,11 @@ jobs:
       VERSION: ${{ needs.meta.outputs.version }}
       CHANNEL: ${{ needs.meta.outputs.channel }}
     steps:
+      # The job's token can write releases, and checkout would otherwise leave
+      # it in .git/config for bun install, wxt and web-ext to read.
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -362,8 +366,9 @@ jobs:
           scripts/check-signed-build.sh checked from-amo
           echo "The signed beta holds exactly the checked files."
 
-      # The only step with the token, which can write releases: bun install,
-      # wxt and web-ext run earlier in this job.
+      # The only run step with the token, which can write releases. bun
+      # install, wxt and web-ext run earlier in this job, and the checkout
+      # kept no copy of it for them.
       - name: Attach the signed beta to the pre-release
         if: env.CHANNEL == 'beta'
         env:
