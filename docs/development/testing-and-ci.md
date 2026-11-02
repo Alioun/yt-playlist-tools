@@ -7,14 +7,20 @@
 Every test runs under `bun test`; the repo has no other runner. Unit and component tests sit beside their code as `*.bun-test.ts`, and the cross-cutting ones live under `tests/` as `*.test.ts`. [`bunfig.toml`](../../bunfig.toml) preloads Svelte compilation, happy-dom and the fake browser.
 
 ```bash
-bun run test           # test:bun, then test:fixtures
-bun run test:bun       # every Bun test
-bun run test:fixtures  # the gates in tools/fixtures/gates.ts
+bun run test                    # test:bun, then test:fixtures
+bun run test:bun                # every Bun test
+bun run test:bun --shard 2/8    # the second of eight slices, as one CI job runs it
+bun run test:fixtures           # the gates in tools/fixtures/gates.ts
+bun run lint                    # oxlint, with the type-aware promise rules
 ```
+
+Bun ignores `[test] timeout` in `bunfig.toml`, so both runners pass `--timeout` themselves. A test gets 30 s unless the test or its gate sets its own. Bun also hides passing tests when it detects an agent, so both runners set `AGENT=0` for the child. One Bun process uses one core, so the whole suite takes about 20 minutes serially. Keep a test file to about a minute, and split a file that grows past that, as the store's recovery tests are split.
+
+[`.oxlintrc.json`](../../.oxlintrc.json) makes floating promises and awaits of non-promises errors. Its other rules only warn for now.
 
 ## CI
 
-[`ci.yml`](../../.github/workflows/ci.yml) runs on pushes to `dev` and `main` and on every PR. It typechecks, tests, builds both targets, checks the manifests with [`check-manifest.ts`](../../scripts/check-manifest.ts) (each built manifest must equal the 2.0 table exactly, with the beta `update_url` only in the Firefox beta build), uploads both builds as artifacts, runs the [release decision](releasing.md) cases in [`release-meta.test.sh`](../../scripts/release-meta.test.sh), and smoke-tests the broker image. [Dependabot](../../.github/dependabot.yml) groups packages that must update together.
+[`ci.yml`](../../.github/workflows/ci.yml) runs on pushes to `dev` and `main` and on every PR. It lints, typechecks, runs the fixture gates, runs `test:bun` as eight parallel jobs, builds both targets, checks that every built text file is valid UTF-8, checks the manifests with [`check-manifest.ts`](../../scripts/check-manifest.ts) (each built manifest must equal the 2.0 table exactly, with the beta `update_url` only in the Firefox beta build), uploads both builds as artifacts and runs the [release decision](releasing.md) cases in [`release-meta.test.sh`](../../scripts/release-meta.test.sh). The tests under `tests/release/` cover the AMO metadata and the Pages site builds. [Dependabot](../../.github/dependabot.yml) groups packages that must update together.
 
 ## Installing a dev build
 
