@@ -4,7 +4,6 @@ import type { PickerPurpose } from "../picker"
 import { createFirstRunOwner, type FirstRunServices, type ServingAccount } from "../backend/first-run-owner"
 import { PageState } from "../lib/page-state.svelte"
 import type { ExtensionPage } from "../shell/start"
-import PickerHost from "./PickerHost.svelte"
 import type { HostRequest } from "./picker-host"
 import { createFirstRunText } from "./text"
 
@@ -14,7 +13,9 @@ import { createFirstRunText } from "./text"
  */
 export function startFirstRun(page: ExtensionPage) {
   const pageState = new PageState(page)
-  function host(request: HostRequest): Promise<boolean> {
+  // The picker is step 3's lazy part, so first run's first view carries none of it (UI-ONB-05).
+  async function host(request: HostRequest): Promise<boolean> {
+    const { default: PickerHost } = await import("./PickerHost.svelte")
     return new Promise(resolve => {
       const view = mount(PickerHost, { target: document.body, props: { pageState, request, onclose(saved: boolean) { void unmount(view); resolve(saved) } } })
     })
