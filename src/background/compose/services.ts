@@ -172,7 +172,9 @@ export function composeServices(deps: {
     pages: {
       owner,
       session: { get: async key => (await native.storage.session.get(key))[key] },
-      status: createPageStatus({ owner, statuses: monitor.statusProducer, tab: tabId => browserTabs.port.get(tabId), build }),
+      status: createPageStatus({ owner, statuses: monitor.statusProducer, tab: tabId => browserTabs.port.get(tabId), build,
+        monitor: (context, enabled) => monitor.statuses(context, enabled),
+        syncOn: async () => { const { device } = await native.storage.local.get("device"); return device !== null && typeof device === "object" && (device as { syncOn?: unknown }).syncOn === true } }),
       diagnostics: (_ui, check) => diagnostics.read(check),
       withdraw: (origin, expected) => deps.lifecycle.withdrawConsent(origin, expected),
       readAccess: () => readAccess(),
