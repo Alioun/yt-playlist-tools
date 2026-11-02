@@ -212,3 +212,30 @@ test("the unclaimed 1.x setup offers Switch account and Discard, which deletes i
   await userEvent.click(screen.getByRole("button", { name: "Discard" }))
   expect(discarded).toBe(1)
 })
+
+test("with two setups the header's account is a menu of which setup to show, which changes only what the popup shows (UI-POP-07)", async () => {
+  const bea = "BBBBBBBBBBBBBBBB"
+  const { opened } = popup({ ...agreed, "doc:settings": stamped({ autoAdd: { on: true, feedback: true, pct: 50 } }),
+    [`doc:setup:${acct}`]: stamped({ label: { name: "Ann", handle: "@ann" }, autoAdd: [{ pl: "PLa", takes: "videos" }] }),
+    [`doc:setup:${bea}`]: stamped({ label: { name: "Bea" }, autoAdd: [{ pl: "PLb", takes: "videos" }, { pl: "PLc", takes: "videos" }] }) })
+  const button = await screen.findByRole("button", { name: "Show the setup for" }, { timeout: 5000 })
+  expect(await screen.findByText("1 playlist · adds at 50 %")).toBeTruthy()
+  await userEvent.click(button)
+  const menu = await screen.findByRole("menu", { name: "Show the setup for" }, { timeout: 5000 })
+  expect(within(menu).getAllByRole("menuitemradio").map(item => [item.textContent?.trim(), item.getAttribute("aria-checked")])).toEqual([["Ann@ann", "true"], ["Bea", "false"]])
+  expect(within(menu).getByText("This only changes what you see here. YouTube stays on the account you're signed in as.")).toBeTruthy()
+  expect(within(menu).queryByRole("menuitem", { name: "Sign in" })).toBeNull()
+  await userEvent.click(within(menu).getByRole("menuitemradio", { name: /Bea/ }))
+  expect(screen.queryByRole("menu")).toBeNull()
+  expect(await screen.findByText("2 playlists · adds at 50 %")).toBeTruthy()
+  expect(within(screen.getByRole("button", { name: "Show the setup for" })).getByText("Bea")).toBeTruthy()
+  await userEvent.click(screen.getByRole("button", { name: "Show the setup for" }))
+  await userEvent.click(within(await screen.findByRole("menu")).getByRole("menuitem", { name: "Manage account setups" }))
+  expect(opened).toEqual(["settings#accounts"])
+})
+
+test("with one setup the header's account is a label, not a menu", async () => {
+  popup({ ...agreed, [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" } }) })
+  expect(await screen.findByText("Ann", {}, { timeout: 5000 })).toBeTruthy()
+  expect(screen.queryByRole("button", { name: "Show the setup for" })).toBeNull()
+})

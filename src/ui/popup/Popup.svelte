@@ -31,6 +31,10 @@
   let lines = $state<Partial<Record<PageFeatureId, { text: string; tone: "muted" | "warning" | "destructive" }>>>({})
   let sheet = $state<{ readonly kind: "consent"; readonly feature: PageFeatureId } | { readonly kind: "recent" } | null>(null)
   let pausing = $state(false)
+  // With two or more setups, in a normal window, the header's account is a menu of which setup to show (UI-POP-07).
+  let menuOpen = $state(false)
+  let menuButton: HTMLButtonElement | undefined = $state()
+  const menuable = $derived(pageState.agreed && !pageState.private && (pageState.ready?.setups.length ?? 0) >= 2)
 
   const view = $derived(pageState.ready)
   const settings = $derived(pageState.settings)
@@ -155,11 +159,18 @@
         {#if pageState.account === null}
           <span aria-label={i18n.message("pop_readingAccount")} class="bg-muted block h-4 w-24 rounded motion-safe:animate-pulse"></span>
         {:else if pageState.acct}
-          <span class="flex min-w-0 items-center gap-1.5 text-[12.5px]">
+          {#snippet who()}
             {#if pageState.setup?.setup.label?.avatar}<img src={pageState.setup.setup.label.avatar} alt="" class="size-5 rounded-full" />{:else}<Glyph name="user" class="text-muted-foreground size-4" />{/if}
             <span class="truncate font-medium">{pageState.accountName()}</span>
             {#if pageState.setup?.setup.label?.handle}<span class="text-muted-foreground truncate">{pageState.setup.setup.label.handle}</span>{/if}
-          </span>
+          {/snippet}
+          {#if menuable}
+            <button bind:this={menuButton} type="button" aria-haspopup="menu" aria-expanded={menuOpen} aria-label={i18n.message("pop_showSetupFor")}
+              class="hover:bg-muted focus-visible:ring-ring/40 -ml-1 flex max-w-full min-w-0 items-center gap-1.5 rounded-md px-1 py-0.5 text-[12.5px] outline-none focus-visible:ring-3"
+              onclick={() => { menuOpen = !menuOpen }}>{@render who()}<Glyph name="chevron-down" class="text-muted-foreground size-3.5 shrink-0" /></button>
+          {:else}
+            <span class="flex min-w-0 items-center gap-1.5 text-[12.5px]">{@render who()}</span>
+          {/if}
         {/if}
       {/if}
     </span>
@@ -232,6 +243,13 @@
       {/if}
     {/if}
   </div>
+
+  {#if menuOpen && menuable}
+    {#await import("./AccountMenu.svelte") then { default: Menu }}
+      <Menu {pageState} onmanage={() => page.openSettings("accounts")} onopen={url => page.open(url)}
+        onclose={restore => { menuOpen = false; if (restore) menuButton?.focus() }} />
+    {/await}
+  {/if}
 
   {#if sheet?.kind === "consent"}
     {#await import("./ConsentSheet.svelte") then { default: Consent }}
