@@ -193,7 +193,8 @@ test("progress cache registry cooldown and unchanged Monitor bookkeeping produce
     await h.sessionChange([{ kind: "tab-seen", tabId: 1, info: { ...row, at: 200 } }])
     const cache = await h.owner.readPlaylistCache({ acct: a, private: false })
     if (cache.kind !== "cache" || cache.authority.kind !== "eligible") throw Error("Missing cache authority")
-    expect((await h.owner.absorbPlaylistCache(cache.authority.capture, { kind: "list", acct: a, site: "www", at: 50, rows: [{ id: alpha, title: "New cache title" }] })).kind).toBe("committed")
+    // A list without the Missing-marked playlist changes only the cache; listing it would clear its mark, a real setup change.
+    expect((await h.owner.absorbPlaylistCache(cache.authority.capture, { kind: "list", acct: a, site: "www", at: 50, rows: [{ id: beta, title: "New cache title" }] })).kind).toBe("committed")
     await h.removal.deps.local.set({ [`progress:${a}:0`]: { syntheticProgress: 20 } })
     await h.monitor.signal(own(), signalValue("no-effect"), { kind: "job", online: true, otherRequestsAnswer: true })
     await h.monitor.flush()

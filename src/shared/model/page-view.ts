@@ -41,7 +41,11 @@ export type PageView =
   }
   | { readonly kind: "unavailable"; readonly reason: "read" | "disposed" }
 
-const pageKeys = new Set(["schema", "device", "lastAccount", "unclaimed", "sync"])
+const pageKeys = new Set(["schema", "device", "lastAccount", "unclaimed", "sync", "pending:sync-join"])
+/** SYNC-08 steps 3 and 5: while the join question waits for an answer, the browser pushes nothing and its status reads `waiting`. */
+function joinWaiting(raw: unknown): boolean {
+  return isRecord(raw) && raw.kind === "sync-join" && raw.phase === "choice"
+}
 /**
  * The records a page view keeps from its one whole read (DATA-07). Watch progress and anything else, such as a
  * 1.x record the migration hasn't removed yet, are dropped at once and never redraw a page.
@@ -102,7 +106,10 @@ export function readPageView(records: Readonly<Record<string, unknown>>): PageVi
         cache: Object.hasOwn(records, cacheKey) ? attempt(() => decodeAccountCache(records[cacheKey])) : null }
     }).sort((a, b) => (a.setup.label?.name ?? "").localeCompare(b.setup.label?.name ?? "") || a.acct.localeCompare(b.acct)),
     unclaimed: stored?.kind === "pending" ? stored.data : null,
-    sync: records.sync === undefined ? null : attempt(() => decodeSyncState(records.sync)),
+    sync: records.sync === undefined ? null : attempt(() => {
+      const state = decodeSyncState(records.sync)
+      return joinWaiting(records["pending:sync-join"]) ? { ...state, status: "waiting" } : state
+    }),
     lastAccount: attempt(() => decodeLastAccount(records))
   }
 }

@@ -1313,14 +1313,18 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     if (!ready.device.syncOn) return
     if (retainedHold(records)) return { kind: "unavailable" }
     const targets: SyncReceiveKey[] = []
-    for (const name of Object.keys(records).sort()) {
+    // Documents only the synced copy holds are received too, so another browser's new setup or filter arrives here (SYNC-06).
+    const remoteNames: string[] = []
+    const observed = await readJoinSync()
+    if (isJsonObject(observed)) {
+      const inventory = readSyncInventory({ items: Object.entries(observed).map(([key, value]) => ({ key, value })) })
+      if (inventory.kind === "read") for (const entry of inventory.documents) if (entry.result.kind === "value") remoteNames.push(documentKey(entry.key))
+    }
+    for (const name of [...new Set([...Object.keys(records), ...remoteNames])].sort()) {
       const key = parseDocumentKey(name)
       if ((key?.kind === "settings" || key?.kind === "filter" || key?.kind === "setup") && documentKey(key) === name) targets.push(key)
     }
-    if (targets.length === 0 && isJsonObject(records)) {
-      const remote = await readJoinSync()
-      if (isJsonObject(remote) && await signalJoinHistory(records, remote)) return { kind: "unavailable" }
-    }
+    if (targets.length === 0 && isJsonObject(records) && isJsonObject(observed) && await signalJoinHistory(records, observed)) return { kind: "unavailable" }
     // Filters sort before their Setup, so a Setup that removes or restores its account revisits that account's Filters once.
     const removed = (raw: unknown) => isJsonObject(raw) && raw.deleted === true
     const queue = [...targets]
@@ -1328,7 +1332,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       const key = queue[index]!
       if (lifetime.kind !== "active") return
       const result = await receiveAttempt(key)
-      if (key.kind === "setup" && result.kind === "adopted" && removed(result.received.document) !== removed(records[documentKey(key)])) {
+      if (key.kind === "setup" && result.kind === "adopted" && (!Object.hasOwn(records, documentKey(key)) || removed(result.received.document) !== removed(records[documentKey(key)]))) {
         queue.push(...targets.filter(target => target.kind === "filter" && target.acct === key.acct))
       }
       if (result.kind === "local-set-failed" || result.kind === "cleanup-failed") return { kind: "rejected", error: result.error }
@@ -1409,7 +1413,31 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     try { result = await flush(event) } catch (error) { deactivate("stopped"); throw error }
     if (result.kind === "acknowledgement-failed" || result.kind === "unconfirmed") deactivate("stopped")
     if (result.kind !== "deferred") cancelTicket()
+    try { await settleStatus(result) } catch {}
     return result
+  }
+
+  // SYNC-17 and SYNC-23: the status says when the synced copy went over the browsers' quota, which stops this browser
+  // pushing until room frees up, and when another browser wrote a document version this one can't read.
+  async function settleStatus(result: SyncFlushResult) {
+    if (result.kind !== "blocked" && result.kind !== "pushed" && result.kind !== "idle" && result.kind !== "cleaned" && result.kind !== "reconciled") return
+    const records = await guardedLocal.get(null)
+    const ready = authority(records)
+    if (disposed() || ready.kind !== "ready" || !ready.device.syncOn || !ready.history || !isJsonObject(records)) return
+    let status: "ok" | "full" | "update-needed" = result.kind === "blocked" ? "full" : "ok"
+    if (status === "ok") {
+      const remote = await sync.get()
+      const inventory = isJsonObject(remote) ? readSyncInventory({ items: Object.entries(remote).map(([key, value]) => ({ key, value })) }) : undefined
+      if (inventory?.kind === "read" && inventory.documents.some(entry => entry.result.kind === "newer-version")) status = "update-needed"
+    }
+    if (decodeSyncState(ready.history.raw).status === status || disposed()) return
+    const before = snapshot(records), next = { ...ready.history.raw, status }
+    await guardedLocal.set({ sync: next })
+    const confirmed = await guardedLocal.get(null)
+    if (disposed() || !isJsonObject(confirmed) || !sameSyncJson(snapshot({ ...before, sync: next }), confirmed)) {
+      claimConfirmation = "unconfirmed"
+      deactivate("stopped")
+    }
   }
 
   function observeOff(syncOn: boolean) {
@@ -1750,7 +1778,49 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       }
       return { kind: "ready", metadata, candidate } as const
     }
-    const initial = context(await guardedLocal.get(null))
+    // SYNC-06: a document another browser created has no local copy yet; nor does one whose tombstone expired here (SYNC-12).
+    async function receiveNew(records: Readonly<Record<string, unknown>>): Promise<SyncReceiveResult> {
+      const ready = authority(records)
+      if (lifetime.kind === "disposed" || ready.kind !== "ready" || !ready.device.syncOn || !ready.history || retainedHold(records) || !isJsonObject(records)) return unavailable("authority")
+      if (key.kind === "settings") return unavailable("document")
+      if (key.kind === "filter") {
+        // A filter waits for its live setup, which the receive pass takes after it and then revisits the account's filters.
+        try { if (decodeDocument(records[documentKey({ kind: "setup", acct: key.acct })], decodeSetup).kind !== "value") return unavailable("account-context") }
+        catch (error) { if (error instanceof DecodeError) return unavailable("account-context"); throw error }
+      }
+      const joined = ready.history.joined, before = snapshot(records)
+      const observedRemote = await readJoinSync()
+      const remote = observation(observedRemote, joined)
+      if (disposed()) return unavailable("authority")
+      if (remote.kind === "unavailable" && remote.reason === "history" && isJsonObject(observedRemote)) await signalJoinHistory(records, observedRemote)
+      if (remote.kind !== "ready") return remote
+      // A synced tombstone agrees with this browser's absence.
+      if (remote.candidate.kind !== "value") return { kind: "idle" }
+      if (Object.hasOwn(decodeSyncState(ready.history.raw).pushed, name)) return unavailable("pending")
+      const document = snapshot(remote.candidate.json), metadata = snapshot(remote.metadata)
+      const received: SyncDocumentRecord = { key, name, gen: remote.candidate.value.document.gen, document }
+      const preflight = observation(await sync.get(), joined)
+      if (disposed()) return unavailable("authority")
+      if (preflight.kind !== "ready") return preflight
+      if (!sameSyncJson(metadata, preflight.metadata)) return unavailable("history")
+      if (!sameSyncJson(document, preflight.candidate.json)) return unavailable("document")
+      const latest = await guardedLocal.get(null)
+      if (disposed() || !isJsonObject(latest) || !sameSyncJson(before, latest)) return unavailable("authority")
+      const history = repairedHistory(ready.history.raw, [received])
+      if (!history) throw new TypeError("Missing incoming acknowledgement")
+      try { await guardedLocal.set({ [name]: document, sync: history }) } catch (error) { return { kind: "local-set-failed", received, error } }
+      try {
+        const after = await guardedLocal.get(null)
+        if (disposed()) return { kind: "unconfirmed", received, cause: { kind: "authority" } }
+        if (!isJsonObject(after) || !sameSyncJson(snapshot({ ...before, [name]: document, sync: history }), after)) return { kind: "unconfirmed", received, cause: { kind: "readback" } }
+      } catch (error) { return { kind: "unconfirmed", received, cause: { kind: "read-failed", error } } }
+      if (key.kind === "filter") emitView({ kind: "filter-changed", source: "sync", acct: key.acct, playlist: key.playlist })
+      else emitView({ kind: "setup-changed", source: "sync", acct: key.acct })
+      return { kind: "adopted", received }
+    }
+    const first = await guardedLocal.get(null)
+    if (!Object.hasOwn(first, name)) return receiveNew(first)
+    const initial = context(first)
     if (initial.kind !== "ready") return initial
     if (initial.deleted && key.kind === "settings") return unavailable("document")
     const removedAccount = initial.selection.kind === "filter" && initial.selection.removed
