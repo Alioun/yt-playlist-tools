@@ -3003,5 +3003,41 @@
   },
   "shell_unavailable": {
     "message": "Perchling can't read its settings right now."
+  },
+  "site_addUnanswered": {
+    "message": "Couldn't confirm the save. Check the playlist on YouTube before you try again."
+  },
+  "quickSave_idle": {
+    "message": "Save to $LIST$",
+    "placeholders": {
+      "list": {
+        "content": "$1"
+      }
+    }
+  },
+  "quickSave_busy": {
+    "message": "Saving…"
+  },
+  "quickSave_saved": {
+    "message": "Saved to $LIST$",
+    "placeholders": {
+      "list": {
+        "content": "$1"
+      }
+    }
+  },
+  "quickSave_failed": {
+    "message": "Couldn't save"
+  },
+  "quickSave_more": {
+    "message": "Save to…"
+  },
+  "quickSave_moreKey": {
+    "message": "Save to… ($KEY$)",
+    "placeholders": {
+      "key": {
+        "content": "$1"
+      }
+    }
   }
 }

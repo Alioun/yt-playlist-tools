@@ -476,4 +476,11 @@ export const messageParameters = {
   "shell_review": [],
   "shell_noFeatures": [],
   "shell_unavailable": [],
+  "site_addUnanswered": [],
+  "quickSave_idle": ["list"],
+  "quickSave_busy": [],
+  "quickSave_saved": ["list"],
+  "quickSave_failed": [],
+  "quickSave_more": [],
+  "quickSave_moreKey": ["key"],
 } as const
