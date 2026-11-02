@@ -46,8 +46,8 @@ jobs:
           env -u BUN_OPTIONS -u NODE_OPTIONS bun --config="$RUNNER_TEMP/empty.toml" test --no-env-file \
             --tsconfig-override="$RUNNER_TEMP/empty.json" --reporter=junit --reporter-outfile="$report" \
             ./tests/integration/amo-reviewer-notes.test.ts
-          grep -Eq '^<testsuites name="bun test" tests="103" assertions="[0-9]+" failures="0" skipped="0" ' "$report" \
-            || { echo "::error::the G28 proof did not pass all 103 of its tests"; exit 1; }
+          grep -Eq '^<testsuites name="bun test" tests="107" assertions="[0-9]+" failures="0" skipped="0" ' "$report" \
+            || { echo "::error::the G28 proof did not pass all 107 of its tests"; exit 1; }
 
   build:
     runs-on: ubuntu-latest

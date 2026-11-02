@@ -4,7 +4,9 @@
 # install, with the Bun package.json declares. The rest is what the
 # reviewer-login jobs run, what proves and documents the secret flow (with
 # every file the proof loads, so its fixtures directory whole), or what
-# installs code beside the AMO keys. A test holds this list to the approval.
+# installs code beside the AMO keys. A test holds this list to the approval,
+# and fails any line but a path from the top, with no wildcard but a final
+# /**, then owners.
 /.github/CODEOWNERS @Alioun
 /.github/workflows/** @Alioun
 /scripts/amo-reviewer-notes.ts @Alioun

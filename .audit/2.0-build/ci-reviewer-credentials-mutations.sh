@@ -197,11 +197,21 @@ plant upper-bulk-secrets "$ci" 's/(VERSION: \$\{\{ steps\.version\.outputs\.vers
 plant upper-job-token "$release" 's/(      CHANNEL: \$\{\{ needs\.meta\.outputs\.channel \}\}\n)/$1      GH_TOKEN: \$\{\{ GITHUB.TOKEN \}\}\n/' -- "hold no secret or job token in a workflow- or job-level env"
 plant lower-login-name "$ci" 's/(VERSION: \$\{\{ steps\.version\.outputs\.version \}\}\n)/$1          LOGIN: \$\{\{ secrets.amo_reviewer_login \}\}\n/' -- "give AMO_REVIEWER_LOGIN only to the two reviewer steps"
 
-# A CODEOWNERS pattern without a slash matches at any depth, and the last match wins.
-plant owners-basename-later "$owners" 's/\z/releasing.md \@dummy-other\n/' -- "sends every file the approval covers to the owner"
-plant owners-directory-later "$owners" 's/\z/fixtures\/\n/' -- "sends every file the approval covers to the owner"
-plant old-owners-matcher "$tests" 's/codeOwnerRules\.findLast\(rule => codeOwnersMatch\(rule\.pattern, path\)\)/codeOwnerRules.findLast(rule => new Bun.Glob(rule.pattern.replace(\/^\\\/\/, "")).match(path))/; s/expect\(codeOwnersMatch\(pattern, path\)\)/expect(new Bun.Glob(pattern.replace(\/^\\\/\/, "")).match(path))/' -- \
-  "reads releasing.md against docs/development/releasing.md as GitHub does" "reads apps/ against deep/apps/main.ts as GitHub does"
+# CODEOWNERS holds only lines both GitHub and the test read alike, and the last match wins.
+owners_form="holds only lines in the forms both GitHub and this test read alike"
+plant owners-basename-later "$owners" 's/\z/releasing.md \@dummy-other\n/' -- "$owners_form"
+plant owners-directory-later "$owners" 's/\z/fixtures\/\n/' -- "$owners_form"
+plant owners-brace "$owners" 's/\z/\/scripts\/{amo-reviewer-notes,amo-metadata}.ts \@Alioun\n/' -- "$owners_form"
+plant owners-bracket "$owners" 's/\z/\/scripts\/amo-reviewer-notes.[t]s \@dummy-other\n/' -- "$owners_form"
+plant owners-negation "$owners" 's/\z/!\/docs\/development\/releasing.md\n/' -- "$owners_form"
+plant owners-wildcard-directory "$owners" 's/\z/\/tests\/*\/fixtures\/** \@dummy-other\n/' -- "$owners_form"
+plant owners-inner-later "$owners" 's/\z/\/tests\/integration\/fixtures\/fake-amo.ts \@dummy-other\n/' -- "sends every file the approval covers to the owner"
+plant owners-directory-reowned "$owners" 's/\z/\/tests\/integration\/fixtures \@dummy-other\n\/tests\/integration\/fixtures\/planted-later.tsx \@Alioun\n/' -- \
+  "sends every file the approval covers to the owner"
+plant owners-prefix-match "$tests" 's/path\.startsWith\(`\$\{rule\.path\}\/`\)/path.startsWith(rule.path)/' -- \
+  "reads /scripts/amo-reviewer-notes.ts against scripts/amo-reviewer-notes.tsx as GitHub does" "reads /apps/github against apps/githubx/x.ts as GitHub does"
+plant owners-directory-self "$tests" 's/ \|\| \(!rule\.inside && path === rule\.path\)/ || path === rule.path/' -- \
+  "reads /.github/workflows/** against .github/workflows as GitHub does"
 
 # The owner's setup commands.
 plant ruleset-no-proof-check "$docs" 's/ and any\(\.\[\]; \.type == "required_status_checks" and any\(\.parameters\.required_status_checks\[\]; \.context == "g28-proof"\)\)//' -- \
