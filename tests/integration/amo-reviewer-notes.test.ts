@@ -247,16 +247,18 @@ function credentialReferences(): Reference[] {
   return found
 }
 
-// Code no one code-owns could fake the proof from inside this process, so the
-// proof loads and runs only what the approval covers. Bun tries .tsx before
-// .ts for a name without an extension. Every repository path is a join of
-// the repository's top and one literal path, so the test can read each one.
-// Any other use of the top, such as a join of two parts, resolve() or a
-// template string, fails.
+// Code no one code-owns could fake the proof from inside this process. This
+// test catches only the literal forms it knows. Bun tries .tsx before .ts for
+// an import without an extension, so the fake AMO is imported by its full
+// name. A line that names the repository's top must be its declaration, a
+// stat-only helper, or a join of the top and one literal path, and each such
+// path must resolve to the owner. Text added after the join, a nested join, a
+// path built from import.meta.dir or the working directory, and other forms
+// get past it. The owner's review of this code-owned file is the boundary.
 describe("this file", () => {
   const source = readFileSync(import.meta.path, "utf8")
 
-  test("imports the fake AMO by its full name, and reads or runs only files the approval covers", () => {
+  test("imports the fake AMO by its full name, and names the repository's top only to stat a path or to join one literal, code-owned path", () => {
     const relative = new Bun.Transpiler({ loader: "ts" }).scanImports(source).map(found => found.path).filter(path => path.startsWith("."))
     expect(relative).toEqual(["./fixtures/fake-amo.ts"])
     // The [o] keeps each pattern from matching its own text.

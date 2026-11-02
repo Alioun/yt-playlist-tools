@@ -160,14 +160,16 @@ plant extensionless-import "$tests" 's/"\.\/fixtures\/fake-amo\.ts"/".\/fixtures
 plant planted-tsx "$tests" 's/"\.\/fixtures\/fake-amo\.ts"/".\/fixtures\/fake-amo"/' tests/integration/fixtures/fake-amo.tsx 'write:export const startFakeAmo = 0, untrustedCertificate = 0; process.exit(0)' -- \
   "step:::error::the G28 proof did not pass all"
 plant planted-tsx-beside-full-name tests/integration/fixtures/fake-amo.tsx 'write:export const startFakeAmo = 0, untrustedCertificate = 0; process.exit(0)' --
-plant metadata-in-proof "$tests" 's/\z/const metadataScript = join(root, "scripts\/amo-metadata.ts")\n/' -- "reads or runs only files the approval covers"
-# Each other way to build a path from root, which the test can't read.
-plant root-two-parts "$tests" 's/\z/const metadataScript = join(root, "scripts", "amo-metadata.ts")\n/' -- "reads or runs only files the approval covers"
-plant root-resolve "$tests" 's/\z/const metadataScript = resolve(root, "scripts\/amo-metadata.ts")\n/' -- "reads or runs only files the approval covers"
-plant root-template "$tests" 's/\z/const metadataScript = `\$\{root\}\/scripts\/amo-metadata.ts`\n/' -- "reads or runs only files the approval covers"
-plant root-dot-dot "$tests" 's/\z/const metadataScript = join(root, ".github\/workflows\/..\/..\/scripts\/amo-metadata.ts")\n/' -- "reads or runs only files the approval covers"
-plant root-alias "$tests" 's/\z/const top = root\n/' -- "reads or runs only files the approval covers"
-plant root-helper-reads "$tests" 's/statSync\(join\(root, path\), \{ throwIfNoEntry: false \}\)\?\.isDirectory\(\)/readFileSync(join(root, path), "utf8")/' -- "reads or runs only files the approval covers"
+paths_test="names the repository's top only to stat a path or to join one literal, code-owned path"
+plant metadata-in-proof "$tests" 's/\z/const metadataScript = join(root, "scripts\/amo-metadata.ts")\n/' -- "$paths_test"
+# Other literal forms of a path from root that the test knows. It doesn't
+# claim to catch every form.
+plant root-two-parts "$tests" 's/\z/const metadataScript = join(root, "scripts", "amo-metadata.ts")\n/' -- "$paths_test"
+plant root-resolve "$tests" 's/\z/const metadataScript = resolve(root, "scripts\/amo-metadata.ts")\n/' -- "$paths_test"
+plant root-template "$tests" 's/\z/const metadataScript = `\$\{root\}\/scripts\/amo-metadata.ts`\n/' -- "$paths_test"
+plant root-dot-dot "$tests" 's/\z/const metadataScript = join(root, ".github\/workflows\/..\/..\/scripts\/amo-metadata.ts")\n/' -- "$paths_test"
+plant root-alias "$tests" 's/\z/const top = root\n/' -- "$paths_test"
+plant root-helper-reads "$tests" 's/statSync\(join\(root, path\), \{ throwIfNoEntry: false \}\)\?\.isDirectory\(\)/readFileSync(join(root, path), "utf8")/' -- "$paths_test"
 plant fixtures-unowned "$owners" 's/^\/tests\/integration\/fixtures\/\*\* \@Alioun\n//m' -- "sends every file the approval covers to the owner"
 plant fixture-file-owned "$owners" 's/^\/tests\/integration\/fixtures\/\*\* \@Alioun$/\/tests\/integration\/fixtures\/fake-amo.ts \@Alioun/m' -- \
   "sends every file the approval covers to the owner"
