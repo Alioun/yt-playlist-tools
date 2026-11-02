@@ -6,12 +6,13 @@ import type { UiRequester } from "../adapters/ui-requester"
 
 const acct = "AAAAAAAAAAAAAAAA" as never, other = "BBBBBBBBBBBBBBBB"
 const memory = (paused: boolean) => ({ kind: "memory", revision: { reset: 0, accounts: new Map() }, sequence: 1, memory: { paused } }) as unknown as SessionRead
-const ui = (incognito = false) => ({ ui: { kind: "ui", page: "popup", origin: { kind: "ui", windowId: 3, incognito } },
-  requester: { windowId: 3, incognito, activeTabId: 9 }, principal: "p" }) as unknown as UiRequester
+const ui = (incognito = false, page = "popup", principal = "p") => ({ ui: { kind: "ui", page, origin: { kind: "ui", windowId: 3, incognito } },
+  requester: { windowId: 3, incognito, activeTabId: 9 }, principal }) as unknown as UiRequester
 
 function receiver(overrides: Partial<PageReceiverPorts> = {}) {
   const changes: SessionChange[] = []
   const filters: unknown[] = []
+  const removed: unknown[] = []
   let paused = false
   const ports: PageReceiverPorts = {
     owner: {
@@ -23,15 +24,22 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
         return { kind: "committed", revision: { reset: 0, accounts: new Map() }, sequence: 2, memory: { paused } } as never
       },
       changeDeviceSetting: async (_origin, change) => ({ kind: "confirmed", change }),
-      async change(_origin, change) { filters.push(change); return change.desired.on ? { kind: "result", result: { ok: true } } : { kind: "result", result: { refused: "sync-full" } } }
+      async change(_origin, change) { filters.push(change); return change.desired.on ? { kind: "result", result: { ok: true } } : { kind: "result", result: { refused: "sync-full" } } },
+      prepareAccountRemoval: async (_origin, removing) => ({ kind: "confirmation-required", confirmation: { removing } as never, acct: removing, label: "Ann", scope: { kind: "this-browser" } }),
+      async removeAccountSetup(_origin, confirmation) { removed.push(confirmation); return { kind: "committed" } },
+      exportSettings: async () => ({ kind: "unavailable", reason: "origin" }) as never,
+      prepareSettingsImport: async () => ({ kind: "refused", reason: "invalid" }),
+      importSettings: async () => ({ kind: "committed" }) as never
     },
+    withdraw: async () => ({ kind: "withdrawn" }) as never,
+    version: "2.0.0",
     session: { get: async () => [] },
     status: async () => ({ tab: { kind: "site", site: "www", tabId: 9, signedIn: true, acct }, health: [{ feature: "auto-add", site: "www", state: "not-working", gaps: [] }] }),
     now: () => 1000,
     ...overrides
   }
-  const context = (incognito = false) => ({ ui: ui(incognito), current: async () => ui(incognito) })
-  return { handlers: createPageReceiver(ports), changes, filters, context }
+  const context = (incognito = false, page = "popup", principal = "p") => ({ ui: ui(incognito, page, principal), current: async () => ui(incognito, page, principal) })
+  return { handlers: createPageReceiver(ports), changes, filters, removed, context }
 }
 
 test("status answers Pause, the popup's tab and its feature health", async () => {
@@ -105,4 +113,25 @@ test("a filter setting reaches the store with its confirmation, and the store's 
   expect(filters).toEqual([{ acct, playlist: "PLa", desired: { mode: "deny", on: true }, clearListedChannels: "confirmed", expectedGeneration: "gen-1" }])
   expect(await handlers["ui.filter"]({ change: { ...change, desired: { mode: "deny", on: false }, clearListed: false } }, context())).toEqual({ kind: "refused", reason: "sync-full" })
   expect(await handlers["ui.filter"]({ change }, context(true))).toEqual({ kind: "refused", reason: "private" })
+})
+
+test("removing a setup confirms with the token the same page got, and only Settings can ask", async () => {
+  const { handlers, removed, context } = receiver()
+  expect(await handlers["ui.removeSetup"]({ action: "prepare", acct }, context())).toEqual({ kind: "unavailable", reason: "operation" })
+  const prepared = await handlers["ui.removeSetup"]({ action: "prepare", acct }, context(false, "settings"))
+  if (prepared.kind !== "confirm") throw Error("no confirmation")
+  expect(prepared.scope).toBe("this-browser")
+  expect(await handlers["ui.removeSetup"]({ action: "confirm", token: prepared.token }, context(false, "settings", "other"))).toEqual({ kind: "unavailable", reason: "operation" })
+  const again = await handlers["ui.removeSetup"]({ action: "prepare", acct }, context(false, "settings"))
+  if (again.kind !== "confirm") throw Error("no confirmation")
+  expect(await handlers["ui.removeSetup"]({ action: "confirm", token: again.token }, context(false, "settings"))).toEqual({ kind: "removed" })
+  expect(removed).toEqual([{ removing: acct }])
+})
+
+test("withdrawal runs only from Settings, and an unusable import file is refused as such", async () => {
+  const { handlers, context } = receiver()
+  expect(await handlers["ui.withdraw"]({ expected: { v: 1, at: 1 } }, context())).toEqual({ kind: "unavailable", reason: "operation" })
+  expect(await handlers["ui.withdraw"]({ expected: { v: 1, at: 1 } }, context(false, "settings"))).toEqual({ kind: "withdrawn" })
+  expect(await handlers["ui.importSettings"]({ action: "prepare", text: "{}" }, context(false, "settings"))).toEqual({ kind: "refused", reason: "invalid-file" })
+  expect(await handlers["ui.importSettings"]({ action: "prepare", text: "{}" }, context(true, "settings"))).toEqual({ kind: "refused", reason: "private" })
 })

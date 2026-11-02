@@ -52,12 +52,31 @@ export type FilterSettingAnswer =
   | { readonly kind: "refused"; readonly reason: "private" | "sync-full" | "update-needed" | "invalid" | "unavailable" | "unconfirmed" }
   | UiUnavailable
 
+export type UiWithdrawal = { readonly kind: "withdrawn" } | { readonly kind: "refused"; readonly reason: "not-agreed" | "failed" | "unconfirmed" | "unavailable" } | UiUnavailable
+export type RemovalPayload = { readonly action: "prepare"; readonly acct: AccountKey } | { readonly action: "confirm"; readonly token: string }
+export type UiRemoval =
+  | { readonly kind: "confirm"; readonly token: string; readonly scope: "this-browser" | "syncing-browsers" }
+  | { readonly kind: "removed" | "unchanged" }
+  | { readonly kind: "refused"; readonly reason: "failed" | "unconfirmed" | "unavailable" | "private" | "sync-full" | "update-needed" | "invalid" }
+  | UiUnavailable
+export type UiExport = { readonly kind: "file"; readonly filename: string; readonly text: string } | { readonly kind: "refused" } | UiUnavailable
+export type ImportPayload = { readonly action: "prepare"; readonly text: string } | { readonly action: "confirm"; readonly token: string }
+export type UiImport =
+  | { readonly kind: "confirm"; readonly token: string; readonly accounts: number }
+  | { readonly kind: "imported" }
+  | { readonly kind: "refused"; readonly reason: "private" | "newer-format" | "invalid-file" | "failed" | "unavailable" }
+  | UiUnavailable
+
 export type PageMessages = {
   readonly "ui.status": { readonly payload: WindowClaim; readonly result: UiStatus }
   readonly "ui.pause": { readonly payload: WindowClaim & { readonly paused: boolean }; readonly result: UiPauseAnswer }
   readonly "ui.recentAdds": { readonly payload: WindowClaim & { readonly acct: AccountKey }; readonly result: UiRecentAdds }
   readonly "ui.device": { readonly payload: WindowClaim & { readonly change: DeviceSettingChange }; readonly result: DeviceSettingAnswer | UiUnavailable }
   readonly "ui.filter": { readonly payload: WindowClaim & { readonly change: FilterSettingChange }; readonly result: FilterSettingAnswer }
+  readonly "ui.withdraw": { readonly payload: WindowClaim & { readonly expected: { readonly v: number; readonly at: number } }; readonly result: UiWithdrawal }
+  readonly "ui.removeSetup": { readonly payload: WindowClaim & RemovalPayload; readonly result: UiRemoval }
+  readonly "ui.exportSettings": { readonly payload: WindowClaim; readonly result: UiExport }
+  readonly "ui.importSettings": { readonly payload: WindowClaim & ImportPayload; readonly result: UiImport }
 }
 export type PageCall = keyof PageMessages
 
@@ -101,6 +120,8 @@ export function isDeviceSettingAnswer(value: unknown): value is DeviceSettingAns
     || objectShape(value, { kind: v => v === "refused", reason: oneOf("private", "invalid", "unavailable", "unconfirmed") })
 }
 
+const token = (v: unknown): v is string => typeof v === "string" && v.length > 0 && v.length <= 64
+const refusal = <T extends string>(...reasons: readonly T[]) => (v: unknown) => objectShape(v, { kind: x => x === "refused", reason: oneOf(...reasons) })
 export const pageContract: RpcContract<PageMessages> = {
   "ui.status": { payload: (v): v is PageMessages["ui.status"]["payload"] => objectShape(v, {}, windowClaim), result: isUiStatus, timeoutMs: 8_000 },
   "ui.pause": { payload: (v): v is PageMessages["ui.pause"]["payload"] => objectShape(v, { paused: bool }, windowClaim),
@@ -112,7 +133,20 @@ export const pageContract: RpcContract<PageMessages> = {
     result: (v): v is DeviceSettingAnswer | UiUnavailable => isUiUnavailable(v) || isDeviceSettingAnswer(v), timeoutMs: 8_000 },
   "ui.filter": { payload: (v): v is PageMessages["ui.filter"]["payload"] => objectShape(v, { change: isFilterSettingChange }, windowClaim),
     result: (v): v is FilterSettingAnswer => isUiUnavailable(v) || objectShape(v, { kind: x => x === "confirmed" })
-      || objectShape(v, { kind: x => x === "refused", reason: oneOf("private", "sync-full", "update-needed", "invalid", "unavailable", "unconfirmed") }), timeoutMs: 12_000 }
+      || objectShape(v, { kind: x => x === "refused", reason: oneOf("private", "sync-full", "update-needed", "invalid", "unavailable", "unconfirmed") }), timeoutMs: 12_000 },
+  "ui.withdraw": { payload: (v): v is PageMessages["ui.withdraw"]["payload"] => objectShape(v, { expected: x => objectShape(x, { v: natural, at: natural }) }, windowClaim),
+    result: (v): v is UiWithdrawal => isUiUnavailable(v) || objectShape(v, { kind: x => x === "withdrawn" }) || refusal("not-agreed", "failed", "unconfirmed", "unavailable")(v), timeoutMs: 30_000 },
+  "ui.removeSetup": { payload: (v): v is PageMessages["ui.removeSetup"]["payload"] => objectShape(v, { action: x => x === "prepare", acct: isAccountKey }, windowClaim)
+      || objectShape(v, { action: x => x === "confirm", token }, windowClaim),
+    result: (v): v is UiRemoval => isUiUnavailable(v) || objectShape(v, { kind: x => x === "confirm", token, scope: oneOf("this-browser", "syncing-browsers") })
+      || objectShape(v, { kind: oneOf("removed", "unchanged") }) || refusal("failed", "unconfirmed", "unavailable", "private", "sync-full", "update-needed", "invalid")(v), timeoutMs: 30_000 },
+  "ui.exportSettings": { payload: (v): v is PageMessages["ui.exportSettings"]["payload"] => objectShape(v, {}, windowClaim),
+    result: (v): v is UiExport => isUiUnavailable(v) || objectShape(v, { kind: x => x === "refused" })
+      || objectShape(v, { kind: x => x === "file", filename: text, text: x => typeof x === "string" && x.length <= 4_000_000 }), timeoutMs: 20_000 },
+  "ui.importSettings": { payload: (v): v is PageMessages["ui.importSettings"]["payload"] => objectShape(v, { action: x => x === "prepare", text: x => typeof x === "string" && x.length <= 4_000_000 }, windowClaim)
+      || objectShape(v, { action: x => x === "confirm", token }, windowClaim),
+    result: (v): v is UiImport => isUiUnavailable(v) || objectShape(v, { kind: x => x === "confirm", token, accounts: natural }) || objectShape(v, { kind: x => x === "imported" })
+      || refusal("private", "newer-format", "invalid-file", "failed", "unavailable")(v), timeoutMs: 60_000 }
 }
 export function isPageCall(kind: string): kind is PageCall {
   return Object.hasOwn(pageContract, kind)

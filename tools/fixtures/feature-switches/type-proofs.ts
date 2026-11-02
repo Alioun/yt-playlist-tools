@@ -13,7 +13,7 @@ export type Proofs = [
   Check<Equal<ReturnType<Backend["changeFeatureSetting"]>, Promise<FeatureSettingAnswer>>>,
   Check<Equal<Extract<UiMessages["ui.change"]["payload"]["change"], { kind: "feature" | "music-section" | "shortcuts-music" }>, FeatureSettingChange>>,
   Check<Equal<Extract<UiMessages["ui.change"]["result"], { kind: "feature-setting" }>["outcome"], FeatureSettingAnswer>>,
-  Check<Equal<keyof UiMessages, "ui.clearAll" | "ui.change" | "ui.syncedChoices" | "ui.accountInView" | "ui.playlists" | "ui.create" | "ui.resolveChannel" | "ui.status" | "ui.pause" | "ui.recentAdds" | "ui.device" | "ui.filter">>,
+  Check<Equal<keyof UiMessages, "ui.clearAll" | "ui.change" | "ui.syncedChoices" | "ui.accountInView" | "ui.playlists" | "ui.create" | "ui.resolveChannel" | "ui.status" | "ui.pause" | "ui.recentAdds" | "ui.device" | "ui.filter" | "ui.withdraw" | "ui.removeSetup" | "ui.exportSettings" | "ui.importSettings">>,
   Check<Equal<Extract<FeatureSettingChange, { kind: "feature" }>["feature"], keyof typeof featureSettings>>,
   Check<Equal<Extract<FeatureSettingChange, { kind: "music-section" }>["value"], Settings["musicSection"]>>,
   Check<Equal<Extract<FeatureSettingChange, { kind: "shortcuts-music" }>["value"], Settings["shortcuts"]["music"]>>

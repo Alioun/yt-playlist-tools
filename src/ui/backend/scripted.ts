@@ -41,7 +41,11 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
       "ui.pause": payload => take("ui.pause", payload),
       "ui.recentAdds": payload => take("ui.recentAdds", payload),
       "ui.device": payload => take("ui.device", payload),
-      "ui.filter": payload => take("ui.filter", payload)
+      "ui.filter": payload => take("ui.filter", payload),
+      "ui.withdraw": payload => take("ui.withdraw", payload),
+      "ui.removeSetup": payload => take("ui.removeSetup", payload),
+      "ui.exportSettings": payload => take("ui.exportSettings", payload),
+      "ui.importSettings": payload => take("ui.importSettings", payload)
     }
   })
   function take<K extends keyof UiMessages>(kind: K, payload: UiMessages[K]["payload"]): UiMessages[K]["result"] {

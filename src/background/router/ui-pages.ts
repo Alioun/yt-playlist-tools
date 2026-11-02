@@ -1,5 +1,10 @@
 import { isRecentEntry, type DeviceSettingAnswer, type DeviceSettingChange, type FilterSettingAnswer, type PageMessages, type RecentEntry, type UiFeatureHealth, type UiTabFacts } from "../../shared/contracts/ui-pages"
 import type { LocalFilterChange, LocalFilterWriteResult } from "../store/local-filter-writer"
+import type { RemovalConfirmation, RemovalPreparation, RemovalResult } from "../store/account-removal-execution"
+import type { SettingsImportConfirmation, SettingsImportPreparation, SettingsImportResult } from "../store/settings-import-execution"
+import type { SettingsFileRead } from "../store/settings-file-read"
+import type { SettingsPageOrigin, WithdrawalResult } from "../store/store-lifecycle"
+import { exportFile } from "../../shared/settings-file"
 import type { UiUnavailable } from "../../shared/contracts/ui-playlists"
 import type { AccountKey } from "../../shared/model/validation"
 import type { RpcHandlers } from "../../shared/rpc/rpc"
@@ -14,7 +19,15 @@ export type PageReceiverPorts = {
     changeSession(change: SessionChange): Promise<SessionWrite>
     changeDeviceSetting(origin: UiOrigin, change: DeviceSettingChange): Promise<DeviceSettingAnswer>
     change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>
+    prepareAccountRemoval(origin: UiOrigin, acct: AccountKey): Promise<RemovalPreparation>
+    removeAccountSetup(origin: UiOrigin, confirmation: RemovalConfirmation): Promise<RemovalResult>
+    exportSettings(origin: UiOrigin): Promise<SettingsFileRead>
+    prepareSettingsImport(origin: UiOrigin, text: unknown): Promise<SettingsImportPreparation>
+    importSettings(origin: UiOrigin, input: { readonly confirmation: SettingsImportConfirmation; readonly replace: "confirmed" }): Promise<SettingsImportResult>
   }
+  readonly withdraw: (origin: SettingsPageOrigin, expected: { readonly v: number; readonly at: number }) => Promise<WithdrawalResult>
+  /** The version a settings file names (DATA-53). */
+  readonly version: string
   /** Raw `storage.session` reads, for the recent adds the session planner keeps but doesn't decode. */
   readonly session: { get(key: "recentAdds"): Promise<unknown> }
   readonly status: PageStatusSource
@@ -34,6 +47,16 @@ function recentEntry(raw: unknown, acct: AccountKey): RecentEntry | undefined {
 
 /** The page routes the popup and settings need besides the store's own changes (06 §6.8.3). */
 export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMessages, PageContext> {
+  // A confirmation stays with the principal that asked for it, so another page can't confirm it (ARC-MSG-04).
+  const removals = new Map<string, { readonly principal: string; readonly confirmation: RemovalConfirmation }>()
+  const imports = new Map<string, { readonly principal: string; readonly confirmation: SettingsImportConfirmation }>()
+  const remember = <T>(store: Map<string, { readonly principal: string; readonly confirmation: T }>, principal: string, confirmation: T) => {
+    if (store.size >= 32) store.delete(store.keys().next().value!)
+    const token = crypto.randomUUID()
+    store.set(token, { principal, confirmation })
+    return token
+  }
+  const settingsPage = (context: PageContext) => context.ui.ui.page === "settings"
   async function changeSession(edit: SessionChange["edits"][0]): Promise<SessionWrite | undefined> {
     const read = await ports.owner.readSession()
     if (read.kind !== "memory") return
@@ -68,6 +91,63 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
       if (answer.kind === "unconfirmed") return { kind: "refused", reason: "unconfirmed" }
       if (answer.kind === "unavailable") return { kind: "refused", reason: answer.reason === "newer-layout" ? "update-needed" : "unavailable" }
       return "ok" in answer.result ? { kind: "confirmed" } : { kind: "refused", reason: answer.result.refused }
+    },
+    async "ui.withdraw"({ expected }, context) {
+      if (!settingsPage(context)) return unavailable("operation")
+      const result = await ports.withdraw({ kind: "ui", page: "settings", origin: context.ui.ui.origin }, expected)
+      switch (result.kind) {
+        case "withdrawn": return { kind: "withdrawn" }
+        case "unchanged": return { kind: "refused", reason: "not-agreed" }
+        case "unconfirmed": return { kind: "refused", reason: "unconfirmed" }
+        case "failed": return { kind: "refused", reason: "failed" }
+        default: return { kind: "refused", reason: "unavailable" }
+      }
+    },
+    async "ui.removeSetup"(payload, context) {
+      if (!settingsPage(context)) return unavailable("operation")
+      if (context.ui.requester.incognito) return { kind: "refused", reason: "private" }
+      const origin = context.ui.ui.origin
+      if (payload.action === "prepare") {
+        const prepared = await ports.owner.prepareAccountRemoval(origin, payload.acct)
+        if (prepared.kind === "confirmation-required") return { kind: "confirm", token: remember(removals, context.ui.principal, prepared.confirmation), scope: prepared.scope.kind }
+        if (prepared.kind === "unchanged") return { kind: "unchanged" }
+        return prepared.kind === "result" ? { kind: "refused", reason: prepared.result.refused } : { kind: "refused", reason: prepared.kind === "failed" ? "failed" : "unavailable" }
+      }
+      const saved = removals.get(payload.token)
+      removals.delete(payload.token)
+      if (!saved || saved.principal !== context.ui.principal) return unavailable("operation")
+      const result = await ports.owner.removeAccountSetup(origin, saved.confirmation)
+      switch (result.kind) {
+        case "committed": return { kind: "removed" }
+        case "unchanged": return { kind: "unchanged" }
+        case "result": return { kind: "refused", reason: result.result.refused }
+        case "unconfirmed": return { kind: "refused", reason: "unconfirmed" }
+        case "failed": return { kind: "refused", reason: "failed" }
+        default: return { kind: "refused", reason: "unavailable" }
+      }
+    },
+    async "ui.exportSettings"(_payload, context) {
+      if (!settingsPage(context)) return unavailable("operation")
+      const read = await ports.owner.exportSettings(context.ui.ui.origin)
+      if (read.kind !== "source") return { kind: "refused" }
+      const file = exportFile({ source: read.source, version: ports.version, date: new Date(ports.now()).toISOString().slice(0, 10) })
+      return file.kind === "exported" ? { kind: "file", filename: file.file.filename, text: file.file.text } : { kind: "refused" }
+    },
+    async "ui.importSettings"(payload, context) {
+      if (!settingsPage(context)) return unavailable("operation")
+      if (context.ui.requester.incognito) return { kind: "refused", reason: "private" }
+      const origin = context.ui.ui.origin
+      if (payload.action === "prepare") {
+        const prepared = await ports.owner.prepareSettingsImport(origin, payload.text)
+        if (prepared.kind === "confirmation-required") return { kind: "confirm", token: remember(imports, context.ui.principal, prepared.confirmation), accounts: prepared.scope.accounts.length }
+        if (prepared.kind === "refused") return { kind: "refused", reason: prepared.reason === "private" ? "private" : prepared.reason === "invalid" ? "invalid-file" : prepared.reason === "update-needed" ? "newer-format" : "failed" }
+        return { kind: "refused", reason: "unavailable" }
+      }
+      const saved = imports.get(payload.token)
+      imports.delete(payload.token)
+      if (!saved || saved.principal !== context.ui.principal) return unavailable("operation")
+      const result = await ports.owner.importSettings(origin, { confirmation: saved.confirmation, replace: "confirmed" })
+      return result.kind === "committed" ? { kind: "imported" } : { kind: "refused", reason: result.kind === "unavailable" ? "unavailable" : "failed" }
     },
     async "ui.device"(payload, context) {
       const origin = context.ui.ui.origin

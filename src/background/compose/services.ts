@@ -117,6 +117,8 @@ export function composeServices(deps: {
       owner,
       session: { get: async key => (await native.storage.session.get(key))[key] },
       status: createPageStatus({ owner, statuses: workingStatuses, tab: tabId => browserTabs.port.get(tabId), build }),
+      withdraw: (origin, expected) => deps.lifecycle.withdrawConsent(origin, expected),
+      version: native.runtime.getManifest().version,
       now: () => Date.now()
     }
   })
