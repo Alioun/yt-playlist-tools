@@ -27,7 +27,7 @@ async function world(registered: string | null = acct) {
   const sender = { id: fakeBrowser.runtime.id, frameId: 0, url: raw.url, tab: raw } as never
   async function send(payload: unknown) {
     const replies: unknown[] = []
-    await fakeBrowser.runtime.onMessage.trigger({ v: CONTRACT_VERSION, build, id: "m-1", kind: "tab.health", payload }, sender, value => replies.push(value))
+    await Promise.all(await fakeBrowser.runtime.onMessage.trigger({ v: CONTRACT_VERSION, build, id: "m-1", kind: "tab.health", payload }, sender, value => replies.push(value)))
     await settle()
     return replies[0]
   }

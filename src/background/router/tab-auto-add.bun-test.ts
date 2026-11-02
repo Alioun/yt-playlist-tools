@@ -42,7 +42,7 @@ async function world(options: { incognito?: boolean; registered?: AccountKey | n
   let n = 0
   async function send(kind: string, payload: unknown): Promise<unknown> {
     const replies: unknown[] = []
-    await fakeBrowser.runtime.onMessage.trigger({ v: CONTRACT_VERSION, build, id: `m-${++n}`, kind, payload }, sender, value => replies.push(value))
+    await Promise.all(await fakeBrowser.runtime.onMessage.trigger({ v: CONTRACT_VERSION, build, id: `m-${++n}`, kind, payload }, sender, value => replies.push(value)))
     await settle()
     const reply = replies[0] as { result?: unknown } | undefined
     return reply && "result" in reply ? reply.result : "no answer"
