@@ -725,7 +725,7 @@ If the entire canonical namespace disappears while debt owns a known history, a 
 
 After confirmed local reconciliation, `onSyncResult` receives a typed `reconciliation` notice with adopted records, reverted keys, replication state, and exact local write observations. Settings invalidation follows confirmed completion. The command consumes and records both. Production presentation remains unconnected. Combined Agree derives its presentation from the same selected Settings as materialization. Explicit resume reuses its fixed effect without another access request or preset calculation.
 
-Global retained recovery, discard, native adapters, sender authentication, old-writer retirement, and production activation remain separate. Native browser verification is waived and unproven. Storage has no compare-and-swap, so unobserved foreign A-B-A changes and native crash durability remain unproven.
+In production, Settings' `ui.sync` route (`router/ui-pages.ts`) begins, applies, cancels and resumes joins, holds a waiting review behind a token for the page that asked, and calls `startSync()` after a committed join, because the owner starts sync only at its own start. Global retained recovery, discard and old-writer retirement remain separate. Native browser verification is waived and unproven. Storage has no compare-and-swap, so unobserved foreign A-B-A changes and native crash durability remain unproven.
 
 
 ## Explicit inactive interim installation
