@@ -144,7 +144,7 @@ function start(context: FeatureContext<"music", MusicActionServices>): void {
   const headers = new Map<Element, { readonly host: Host; shown: Shown }>()
   type BarHost = { readonly host: Host; readonly anchor: Element; shown: Shown | null; readonly stop: Dispose }
   let bar: BarHost | null = null
-  scope.add(() => { hover.dispose(); for (const entry of headers.values()) entry.host.dispose(); bar?.stop(); bar?.host.dispose() })
+  scope.add(() => { hover.dispose(); for (const entry of headers.values()) entry.host.dispose(); bar?.stop(); bar?.host.dispose(); watchedLike?.stop() })
   scope.on(hover.host, "pointerenter", () => { hideTimer() })
 
   function redraw() {
@@ -269,13 +269,28 @@ function start(context: FeatureContext<"music", MusicActionServices>): void {
     headers.clear()
   }
 
+  /** YouTube Music hides its like in a narrow window and while an ad plays; a hidden like is no anchor (YM-BAR-3). */
+  function shownLike(element: Element | null): Element | null {
+    if (!element || element.hasAttribute("hidden")) return null
+    return document.defaultView?.getComputedStyle(element).display === "none" ? null : element
+  }
+  // The like YouTube Music may hide or show again, watched while the setting is on so the Save follows it.
+  let watchedLike: { readonly element: Element; readonly stop: Dispose } | null = null
+  function watchLike(element: Element | null) {
+    if (watchedLike?.element === element) return
+    watchedLike?.stop()
+    watchedLike = element ? { element, stop: scope.observe(element, { attributes: true, attributeFilter: ["hidden", "style", "class"] }, () => syncBar()) } : null
+  }
   /** The opt-in Save beside YouTube Music's like, in the classic bar or the Wiz miniplayer; no anchor, nothing drawn (YM-BAR-2, YM-BAR-3). */
   function syncBar() {
     const current = view.read(), settings = settingsOf(current)
     const status = current ? statusOf(current, "music-actions") : undefined
     const on = settings?.buttons.bar === true && current?.signedIn === true && !withdrawn(status, "save") && !document.hidden
-    const classic = on ? document.querySelector("ytmusic-player-bar #like-button-renderer") : null
-    const anchor = classic ?? (on ? document.querySelector("ytmusic-miniplayer yt-video-action-bar-view-model") : null)
+    const classicLike = on ? document.querySelector("ytmusic-player-bar #like-button-renderer") : null
+    const wizBar = on && !classicLike ? document.querySelector("ytmusic-miniplayer yt-video-action-bar-view-model") : null
+    watchLike(classicLike ?? wizBar)
+    const classic = shownLike(classicLike)
+    const anchor = classic ?? shownLike(wizBar)
     if (bar && bar.anchor !== anchor) { bar.stop(); bar.host.dispose(); bar = null }
     if (!anchor) return
     if (!bar) {
@@ -318,6 +333,10 @@ function start(context: FeatureContext<"music", MusicActionServices>): void {
   scope.on(document, "focusin", pointed, true)
   scope.on(document, "pointerout", event => { if (event.relatedTarget === null) hideSoon() }, true)
   scope.on(document, "visibilitychange", () => syncBar())
+  // A narrow window hides the like through YouTube Music's styles, which no attribute shows, so a resize looks again.
+  let resized: Dispose = () => {}
+  const win = document.defaultView
+  if (win) scope.on(win, "resize", () => { resized(); resized = scope.timeout(() => { if (watchedLike) syncBar() }, 150) }, { passive: true })
   settleLooks()
 }
 

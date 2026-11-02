@@ -277,6 +277,28 @@ test("Save on the player bar sits before YouTube Music's like, follows the playi
   expect(playerBar.querySelector("pp-music-actions")).toBeNull()
 })
 
+test("the player-bar Save goes when YouTube Music hides its like, and comes back with it", async () => {
+  const playerBar = document.createElement("ytmusic-player-bar")
+  const like = document.createElement("div"); like.id = "like-button-renderer"
+  playerBar.append(like)
+  document.body.append(playerBar)
+  const f = setup({ view: actionsView({ buttons: { bar: true } }) })
+  f.timers.advance(0)
+  await settle()
+  expect(playerBar.querySelector("pp-music-actions")).not.toBeNull()
+  like.setAttribute("hidden", "")
+  await settle()
+  expect(playerBar.querySelector("pp-music-actions")).toBeNull()
+  like.removeAttribute("hidden")
+  await settle()
+  expect(like.previousElementSibling?.getAttribute("data-kind")).toBe("bar")
+  like.style.display = "none"
+  window.dispatchEvent(new Event("resize"))
+  f.timers.advance(150)
+  await settle()
+  expect(playerBar.querySelector("pp-music-actions")).toBeNull()
+})
+
 test("a key acting on the hovered item takes its button through the same states", async () => {
   const f = setup()
   const element = row("ytmusic-responsive-list-item-renderer", songRow)
