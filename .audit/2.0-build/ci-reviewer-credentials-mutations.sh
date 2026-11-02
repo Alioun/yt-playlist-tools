@@ -187,5 +187,11 @@ plant upper-bulk-secrets "$ci" 's/(VERSION: \$\{\{ steps\.version\.outputs\.vers
 plant upper-job-token "$release" 's/(      CHANNEL: \$\{\{ needs\.meta\.outputs\.channel \}\}\n)/$1      GH_TOKEN: \$\{\{ GITHUB.TOKEN \}\}\n/' -- "hold no secret or job token in a workflow- or job-level env"
 plant lower-login-name "$ci" 's/(VERSION: \$\{\{ steps\.version\.outputs\.version \}\}\n)/$1          LOGIN: \$\{\{ secrets.amo_reviewer_login \}\}\n/' -- "give AMO_REVIEWER_LOGIN only to the two reviewer steps"
 
+# A CODEOWNERS pattern without a slash matches at any depth, and the last match wins.
+plant owners-basename-later "$owners" 's/\z/releasing.md \@dummy-other\n/' -- "sends every file the approval covers to the owner"
+plant owners-directory-later "$owners" 's/\z/fixtures\/\n/' -- "sends every file the approval covers to the owner"
+plant old-owners-matcher "$tests" 's/codeOwnerRules\.findLast\(rule => codeOwnersMatch\(rule\.pattern, path\)\)/codeOwnerRules.findLast(rule => new Bun.Glob(rule.pattern.replace(\/^\\\/\/, "")).match(path))/; s/expect\(codeOwnersMatch\(pattern, path\)\)/expect(new Bun.Glob(pattern.replace(\/^\\\/\/, "")).match(path))/' -- \
+  "reads releasing.md against docs/development/releasing.md as GitHub does" "reads apps/ against deep/apps/main.ts as GitHub does"
+
 echo "$planted rows, $missed missed"
 exit $((missed > 0))

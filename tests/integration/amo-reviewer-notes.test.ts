@@ -170,17 +170,38 @@ function files(dir: string): string[] {
     .sort()
 }
 
+/**
+ * Whether a CODEOWNERS pattern matches `path`, as GitHub's docs describe it. A
+ * `/` before the end anchors the pattern at the root, and without one it
+ * matches at any depth. A trailing `/` matches only directories. A pattern
+ * that matches a directory covers everything in it, unless its last part has
+ * a wildcard: `docs/*` owns `docs/a.md` but not `docs/b/c.md`.
+ */
+function codeOwnersMatch(pattern: string, path: string): boolean {
+  const directoryOnly = pattern.endsWith("/")
+  const body = pattern.replace(/\/$/, "")
+  const anchored = body.includes("/")
+  const coversContents = directoryOnly || !/[*?]/.test(body.split("/").at(-1)!)
+  const glob = new Bun.Glob(body.replace(/^\//, ""))
+  const parts = path.split("/")
+  for (let end = 1; end <= parts.length; end++) {
+    if (end < parts.length ? !coversContents : directoryOnly) continue
+    for (let start = 0; start < (anchored ? 1 : end); start++) if (glob.match(parts.slice(start, end).join("/"))) return true
+  }
+  return false
+}
+
 const codeOwnerRules = readFileSync(join(root, ".github/CODEOWNERS"), "utf8")
   .split("\n")
   .map(line => line.replace(/#.*/, "").trim())
   .filter(Boolean)
   .map(line => {
     const [pattern = "", ...owners] = line.split(/\s+/)
-    return { glob: new Bun.Glob(pattern.replace(/^\//, "")), owners }
+    return { pattern, owners }
   })
 
 /** The owners GitHub requests for `path`. The last matching line wins, and a line with no owner leaves the file unowned. */
-const codeOwners = (path: string) => codeOwnerRules.findLast(rule => rule.glob.match(path))?.owners ?? []
+const codeOwners = (path: string) => codeOwnerRules.findLast(rule => codeOwnersMatch(rule.pattern, path))?.owners ?? []
 
 type Reference = { at: string; expression: string }
 
@@ -404,6 +425,29 @@ describe("CODEOWNERS", () => {
   ]
   // A file planted later in a directory the approval covers must reach the owner too.
   const approvedDirectories = [".github/workflows", "tests/integration/fixtures"]
+
+  // GitHub's documented examples, and the forms this CODEOWNERS uses.
+  const examples: [string, string, boolean][] = [
+    ["*.js", "src/deep/app.js", true],
+    ["docs/*", "docs/getting-started.md", true],
+    ["docs/*", "docs/build-app/troubleshooting.md", false],
+    ["docs/*", "src/docs/getting-started.md", false],
+    ["apps/", "deep/apps/main.ts", true],
+    ["apps/", "src/apps", false],
+    ["/docs/", "docs/a/b.md", true],
+    ["/docs/", "src/docs/a.md", false],
+    ["**/logs", "deeply/nested/logs/x.log", true],
+    ["/build/logs/", "build/logs/a/b.log", true],
+    ["/apps/github", "apps/github/x.ts", true],
+    ["releasing.md", "docs/development/releasing.md", true],
+    ["/scripts/amo-reviewer-notes.ts", "scripts/amo-reviewer-notes.ts", true],
+    ["/scripts/amo-reviewer-notes.ts", "x/scripts/amo-reviewer-notes.ts", false],
+    ["/.github/workflows/**", ".github/workflows/ci.yml", true],
+    ["/tests/integration/fixtures/**", "tests/integration/fixtures/a/b.tsx", true]
+  ]
+  test.each(examples)("reads %s against %s as GitHub does", (pattern, path, matches) => {
+    expect(codeOwnersMatch(pattern, path)).toBe(matches)
+  })
 
   test("sends every file the approval covers to the owner, as GitHub reads it", () => {
     expect(approved.filter(path => !existsSync(join(root, path)))).toEqual([])
