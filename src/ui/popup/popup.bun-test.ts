@@ -106,3 +106,13 @@ test("Playing now shows the song from the tab it read and saves it there, as tha
   expect(await screen.findByText("Saved to Mix.")).toBeTruthy()
   expect(saves).toEqual([{ tabId: 9, acct, request: { site: "music", video: "aaaaaaaaaaa", title: "Song", via: "quick-save", opener: "playing-now" } }])
 }, 20_000)
+
+test("Recent adds names what made each add, Playing now and keys from any tab included", async () => {
+  const entry = (feature: string, title: string) => ({ at: Date.now() - 60_000, source: { kind: "feature", feature }, gather: false,
+    playlists: [{ id: "PLm", title: "Mix" }], videos: [{ id: "aaaaaaaaaaa", title }] })
+  popup({ ...agreed }, { "ui.recentAdds": () => ({ kind: "recent", entries: [entry("playing-now", "Song"), entry("any-tab-keys", "Talk")] as never }) })
+  await userEvent.click(await screen.findByRole("button", { name: "Recent adds" }))
+  const sheet = await screen.findByRole("dialog", { name: "Recent adds" })
+  expect(await within(sheet).findByText(/^Playing now/)).toBeTruthy()
+  expect(within(sheet).getByText(/^Keys from any tab/)).toBeTruthy()
+}, 20_000)

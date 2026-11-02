@@ -15,10 +15,12 @@
   void backend.call("ui.recentAdds", { acct: untrack(() => acct) }).then(answer => {
     entries = answer.kind === "answered" && answer.result.kind === "recent" ? answer.result.entries : "failed"
   })
+  // What AddFlow writes: the feature that made the add, or its opener for a pick (DATA-52).
   const sources: Readonly<Record<string, Parameters<typeof i18n.message>[0]>> = {
     "auto-add": "recent_source_autoAdd", "quick-save": "recent_source_quickSave", "browser-menu": "recent_source_browserMenu", gather: "recent_source_gather",
     "auto-gather": "recent_source_autoGather", picker: "recent_source_picker", "watch-button": "recent_source_watchButton", "music-actions": "recent_source_musicActions",
-    "playing-now": "playing_title"
+    "playing-now": "playing_title", shortcuts: "feature_name_2", "queue-button": "feature_name_4", "card-menu": "feature_name_6", "music-keys": "feature_name_10",
+    "any-tab-keys": "feature_name_11"
   }
   function source(entry: RecentEntry): string {
     if (entry.source.kind === "shortcut") return display(entry.source.key, platform.os)
