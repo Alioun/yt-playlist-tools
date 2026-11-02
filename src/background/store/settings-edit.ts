@@ -214,6 +214,16 @@ function changeOption(current: Snapshot<Settings>, change: SharedOptionChange): 
       settings = decodeSettings(current)
       settings.gather.close = change.value
       break
+    case "gather.auto.unvisited":
+    case "gather.auto.background":
+    case "gather.auto.count": {
+      if (typeof change.value !== "boolean") return { kind: "invalid", reason: "invalid-option" }
+      const trigger = change.field === "gather.auto.unvisited" ? "unvisited" : change.field === "gather.auto.background" ? "background" : "count"
+      if (current.gather.auto[trigger] === change.value) return { kind: "unchanged" }
+      settings = decodeSettings(current)
+      settings.gather.auto[trigger] = change.value
+      break
+    }
     case "gather.auto.after":
       if (change.value !== "1h" && change.value !== "1d" && change.value !== "1w") return { kind: "invalid", reason: "invalid-option" }
       if (current.gather.auto.after === change.value) return { kind: "unchanged" }

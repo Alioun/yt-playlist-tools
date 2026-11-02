@@ -62,6 +62,9 @@ export type SharedOptionValues = {
   readonly "gather.to": Settings["gather"]["to"]
   readonly "gather.order": Settings["gather"]["order"]
   readonly "gather.close": Settings["gather"]["close"]
+  readonly "gather.auto.unvisited": Settings["gather"]["auto"]["unvisited"]
+  readonly "gather.auto.background": Settings["gather"]["auto"]["background"]
+  readonly "gather.auto.count": Settings["gather"]["auto"]["count"]
   readonly "gather.auto.after": Settings["gather"]["auto"]["after"]
   readonly "gather.auto.n": Settings["gather"]["auto"]["n"]
 }
@@ -113,6 +116,9 @@ const optionChecks = {
   "gather.to": v => v === "player" || v === "queue" || v === "playlist",
   "gather.order": v => typeof v === "string" && ["newest", "oldest", "english", "non-english", "left-to-right", "right-to-left", "shuffled"].includes(v),
   "gather.close": boolean,
+  "gather.auto.unvisited": boolean,
+  "gather.auto.background": boolean,
+  "gather.auto.count": boolean,
   "gather.auto.after": v => v === "1h" || v === "1d" || v === "1w",
   "gather.auto.n": v => v === 5 || v === 10 || v === 15 || v === 20 || v === 30 || v === 50,
 } satisfies Record<keyof SharedOptionValues, (value: unknown) => boolean>
