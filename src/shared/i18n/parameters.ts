@@ -757,6 +757,7 @@ export type MessageParameters = {
   "recovery_job_import": readonly []
   "recovery_continue": readonly []
   "recovery_leftLead": readonly []
+  "recovery_leftHeld": readonly []
   "recovery_item_autoAdd": readonly ["playlist"]
   "recovery_item_filter": readonly ["playlist"]
   "recovery_item_shortcut": readonly ["shortcut", "playlist"]

@@ -38,10 +38,15 @@ export type PageView =
     readonly unclaimed: Snapshot<Unclaimed> | null
     readonly sync: Snapshot<SyncState> | null
     readonly lastAccount: AccountKey | null
+    /**
+     * An earlier version's choices are kept, unused, for review (ACC-48). Restore and Discard need the interim
+     * conversion and checked playlist ownership, which stay off until ticket 25's live checks (G29).
+     */
+    readonly leftBehind: boolean
   }
   | { readonly kind: "unavailable"; readonly reason: "read" | "disposed" }
 
-const pageKeys = new Set(["schema", "device", "lastAccount", "unclaimed", "sync", "pending:sync-join"])
+const pageKeys = new Set(["schema", "device", "lastAccount", "unclaimed", "sync", "pending:sync-join", "interimConversion"])
 /** SYNC-08 steps 3 and 5: while the join question waits for an answer, the browser pushes nothing and its status reads `waiting`. */
 function joinWaiting(raw: unknown): boolean {
   return isRecord(raw) && raw.kind === "sync-join" && raw.phase === "choice"
@@ -110,7 +115,8 @@ export function readPageView(records: Readonly<Record<string, unknown>>): PageVi
       const state = decodeSyncState(records.sync)
       return joinWaiting(records["pending:sync-join"]) ? { ...state, status: "waiting" } : state
     }),
-    lastAccount: attempt(() => decodeLastAccount(records))
+    lastAccount: attempt(() => decodeLastAccount(records)),
+    leftBehind: Object.hasOwn(records, "interimConversion")
   }
 }
 

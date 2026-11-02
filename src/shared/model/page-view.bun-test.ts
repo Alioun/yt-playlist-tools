@@ -14,3 +14,10 @@ test("while the join question waits for an answer, pages read the sync status as
   expect(status(readPageView(records({ v: 2, kind: "sync-join", phase: "choice" })))).toBe("waiting")
   expect(status(readPageView(records({ v: 2, kind: "sync-join", phase: "outbound" })))).toBe("ok")
 })
+
+test("an earlier version's kept choices show as left behind until they can be reviewed (ACC-48, G29)", () => {
+  expect(pageViewKeeps("interimConversion")).toBe(true)
+  const leftBehind = (extra: object) => { const view = readPageView({ ...records(), ...extra }); return view.kind === "view" && view.leftBehind }
+  expect(leftBehind({})).toBe(false)
+  expect(leftBehind({ interimConversion: { v: 1 } })).toBe(true)
+})

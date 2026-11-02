@@ -121,10 +121,10 @@
       {/if}
       {#if consentLine}<p role="status" class="text-[13px]">{consentLine}</p>{/if}
     </section>
-    {#if jobs.length || results.size}
+    {#if jobs.length || results.size || view.leftBehind}
       <section class="bg-card flex flex-col gap-2 rounded-2xl border p-5" data-section="recovery" aria-labelledby="recovery-heading">
         <h3 id="recovery-heading" class="text-[15px] font-semibold">{i18n.message("recovery_heading")}</h3>
-        <p class="text-muted-foreground text-[13px]">{i18n.message("recovery_pausedLead")}</p>
+        {#if jobs.length || results.size}<p class="text-muted-foreground text-[13px]">{i18n.message("recovery_pausedLead")}</p>{/if}
         <ul class="flex flex-col gap-2">
           {#each jobs as job (job.id)}
             <li class="flex flex-wrap items-center gap-2 text-[13.5px]">
@@ -135,6 +135,17 @@
           {/each}
         </ul>
         {#each [...results].filter(([id]) => !jobs.some(job => job.id === id)) as [id, line] (id)}<p role="status" class="text-[12.5px]">{line}</p>{/each}
+        {#if view.leftBehind}
+          <!-- ACC-48: an earlier version's choices wait here, but reviewing them needs the interim conversion, which stays off (G29). -->
+          <div data-section="left-behind" class="flex flex-col gap-2">
+            <p class="text-muted-foreground text-[13px]">{i18n.message("recovery_leftLead")}</p>
+            <div class="flex flex-wrap items-center gap-2 text-[13.5px]">
+              <span id="left-behind-held" class="min-w-0 flex-1">{i18n.message("recovery_leftHeld")}</span>
+              <Button size="sm" variant="outline" disabled aria-describedby="left-behind-held">{i18n.message("recovery_restore")}</Button>
+              <Button size="sm" variant="outline" disabled aria-describedby="left-behind-held">{i18n.message("recovery_discard")}</Button>
+            </div>
+          </div>
+        {/if}
       </section>
     {/if}
     <section class="bg-card rounded-2xl border p-5">

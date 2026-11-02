@@ -183,6 +183,20 @@ test("Waiting for your review lists the work withdrawal paused, and each Continu
   expect(calls).toEqual([{ action: "read" }, { action: "continue", id: "1" }])
 }, 20_000)
 
+test("an earlier version's kept choices show under Waiting for your review, with Restore and Discard off and the reason (ACC-48, G29)", async () => {
+  settings({ ...agreed, interimConversion: { v: 1 } }, { "ui.pausedWork": () => ({ kind: "work", jobs: [] }) }, "#privacy")
+  const section = await screen.findByRole("region", { name: "Waiting for your review" }, { timeout: 5000 })
+  expect(within(section).getByText("These choices came from an earlier version of Perchling. None of them is used until you restore it.")).toBeTruthy()
+  const held = "Perchling can't restore or discard them yet, because it first has to confirm which of your accounts owns each playlist. Until then, it keeps them as they are."
+  expect(within(section).getByText(held)).toBeTruthy()
+  for (const name of ["Restore", "Discard"]) {
+    const button = within(section).getByRole("button", { name })
+    expect(button).toBeDisabled()
+    expect(button).toHaveAccessibleDescription(held)
+  }
+  expect(within(section).queryByText("These changes stopped when you withdrew your consent. They stay paused until you continue them.")).toBeNull()
+}, 20_000)
+
 test("with nothing paused, Privacy & data shows no review section", async () => {
   settings({ ...agreed }, { "ui.pausedWork": () => ({ kind: "work", jobs: [] }) }, "#privacy")
   await screen.findByText(/You agreed on/, {}, { timeout: 5000 })
