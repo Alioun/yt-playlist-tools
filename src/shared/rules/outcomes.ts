@@ -1,6 +1,5 @@
 import type { FeatureId, JobFailure } from "../contracts"
 import type { PlaylistId } from "../model"
-import { isPlaylistId } from "../model/validation"
 import type { FilterDecision } from "./channel-filter"
 
 const failures = [
@@ -223,42 +222,4 @@ function keys(named: readonly [PlaylistId, Failure, Limit][], per: keyof Remembe
 
 function entries<V>(record: Readonly<Record<PlaylistId, V>>): [PlaylistId, V][] {
   return Object.entries(record) as [PlaylistId, V][]
-}
-
-type Check = (value: unknown) => boolean
-function shape(value: unknown, fields: Record<string, Check>): boolean {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) return false
-  const keys = Object.keys(value)
-  return keys.length === Object.keys(fields).length && keys.every(key => Object.hasOwn(fields, key) && fields[key]?.(Reflect.get(value, key)) === true)
-}
-const oneOf = (...values: readonly unknown[]): Check => value => values.includes(value)
-const playlistList: Check = value => Array.isArray(value) && value.every(isPlaylistId)
-const playlistId: Check = isPlaylistId
-const count: Check = value => typeof value === "number" && Number.isSafeInteger(value) && value >= 0
-const failure: Check = value => failures.some(known => known === value)
-
-/** Page data from the background is parsed, never trusted (ARC-MSG-02). */
-export function isOutcome(value: unknown): value is Outcome {
-  return shape(value, { kind: oneOf("added", "already-in", "skipped") }) ||
-    shape(value, { kind: oneOf("filtered"), decision: oneOf("filtered", "filtered-unknown-channel") }) ||
-    shape(value, { kind: oneOf("failed"), failure })
-}
-function isMessage(value: unknown): value is Message {
-  const listed = { playlists: playlistList }
-  return shape(value, { kind: oneOf("pending", "saved", "first-pick", "already-in", "filtered", "unknown-channel"), ...listed }) ||
-    shape(value, { kind: oneOf("shortcut-set", "removed"), playlist: playlistId }) ||
-    shape(value, { kind: oneOf("no-playlist", "undo-failed") }) ||
-    shape(value, { kind: oneOf("saved-filtered"), saved: count, filtered: count }) ||
-    shape(value, { kind: oneOf("failed"), failure, ...listed }) ||
-    shape(value, { kind: oneOf("saved-failed"), saved: playlistList, failure, ...listed })
-}
-function isAction(value: unknown): value is Action {
-  return shape(value, { kind: oneOf("undo", "choose", "sign-in", "reload") }) ||
-    shape(value, { kind: oneOf("try-again"), playlists: playlistList }) ||
-    shape(value, { kind: oneOf("settings"), feature: oneOf("auto-add", "shortcuts"), playlist: playlistId })
-}
-export function isToastPlan(value: unknown): value is ToastPlan {
-  const keys: Check = item => Array.isArray(item) && item.every(key => typeof key === "string")
-  return shape(value, { tone: oneOf("progress", "confirmation", "hint", "failure"), auto: v => typeof v === "boolean", message: isMessage,
-    action: v => v === null || isAction(v), remember: v => shape(v, { tab: keys, session: keys }) })
 }

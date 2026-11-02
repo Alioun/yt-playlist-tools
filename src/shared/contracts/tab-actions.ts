@@ -71,6 +71,8 @@ const record = (value: unknown, entry: Check) => value !== null && typeof value 
 const playlists: Check = value => Array.isArray(value) && value.length <= 200 && value.every(isPlaylistId)
 const kinded: Check = value => value !== null && typeof value === "object" && typeof Reflect.get(value, "kind") === "string"
 const plan: Check = value => value !== null && typeof value === "object" && typeof Reflect.get(value, "tone") === "string" && kinded(Reflect.get(value, "message"))
+export const TITLE_LIMIT = 1000
+const title: Check = value => typeof value === "string" && value.length <= TITLE_LIMIT
 
 export function isUndoHandle(value: unknown): value is UndoHandle {
   return objectShape(value, { kind: oneOf("add", "gather", "remove"), id: v => typeof v === "string" && v.length > 0 && v.length <= 200 })

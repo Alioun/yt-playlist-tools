@@ -19,13 +19,13 @@ const reports: Report[] = [
 const report = (toast: unknown, extra: Record<string, unknown> = {}) =>
   ({ kind: "report", outcomes: { [music]: { kind: "added" } }, toast, feedback: true, undo: null, titles: { [music]: "Music" }, ...extra })
 
-test("the page accepts every toast the background plans, and refuses a report it can't trust", () => {
+test("the page accepts every toast the background plans, and refuses an outcome or toast with no kind", () => {
   const toasts = reports.map(planned => toastPlan(planned, true))
   expect(toasts.filter(toast => toast === null)).toEqual([])
   for (const toast of toasts) expect(isTabAddReport(report(toast))).toBe(true)
-  expect(isTabAddReport(report(null, { outcomes: { [music]: { kind: "vanished" } } }))).toBe(false)
-  expect(isTabAddReport(report(null, { outcomes: { [music]: { kind: "failed", failure: "made-up" } } }))).toBe(false)
-  expect(isTabAddReport(report({ ...toastPlan({ kind: "undo-failed" }, true), extra: true }))).toBe(false)
+  expect(isTabAddReport(report(null, { outcomes: { [music]: { added: true } } }))).toBe(false)
+  expect(isTabAddReport(report({ tone: "confirmation", message: "saved" }))).toBe(false)
+  expect(isTabAddReport(report(null, { outcomes: { "not a playlist": { kind: "added" } } }))).toBe(false)
 })
 
 test("an add may name its video within the title limit and carries no other extra field", () => {
