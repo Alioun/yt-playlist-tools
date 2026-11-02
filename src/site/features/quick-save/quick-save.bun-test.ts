@@ -56,7 +56,7 @@ async function setup(options: { view?: SiteView<"www">; answer?: TabAddReport } 
     undo: async () => ({ kind: "undone" }),
     playlists: async () => ({ kind: "cached", listing: { rows: [{ id: playlist, title: "Mixes" }], at: 1 } })
   } as unknown as TabActions
-  const popovers: Popovers = { openPicker(request) { opened.push(request) }, isOpen: () => false, close() {} }
+  const popovers: Popovers = { openPicker(request) { opened.push(request) }, openWatchMenu() {}, isOpen: () => false, close() {} }
   const stack = hitStack()
   const current = options.view ?? quickView()
   const scope = new Scope({ document, onError })

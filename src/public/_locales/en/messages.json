@@ -3048,5 +3048,8 @@
   },
   "browserMenu_choose": {
     "message": "Choose a playlist…"
+  },
+  "watchMenu_choose": {
+    "message": "Save to playlist…"
   }
 }

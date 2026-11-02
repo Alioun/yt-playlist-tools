@@ -2,6 +2,7 @@ import type { FeatureId } from "../../shared/contracts"
 import type { I18n } from "../../shared/i18n"
 import type { PlaylistId, ShortcutId, VideoId } from "../../shared/model"
 import type { PickerModel } from "../../shared/picker/model.svelte"
+import type { WatchMenuRequest } from "./watch-menu"
 
 /** Where the picker opens (YT-PK-12, UI-PICK-15). */
 export type PickerAnchor =
@@ -23,6 +24,7 @@ export type OpenPicker = {
 /** `popovers.js`'s interface on `__pp.popovers` (06 §6.4.2's Popovers). */
 export interface Popovers {
   openPicker(request: OpenPicker): void
+  openWatchMenu(request: WatchMenuRequest): void
   isOpen(): boolean
   close(): void
 }

@@ -6,7 +6,7 @@ import type { Popovers } from "./types"
 
 const viewport = { width: 1280, height: 800 }
 const panel = { width: 320, height: 400 }
-const fake: Popovers = { openPicker() {}, isOpen: () => false, close() {} }
+const fake: Popovers = { openPicker() {}, openWatchMenu() {}, isOpen: () => false, close() {} }
 afterEach(() => { const global = pageGlobal(); delete global.popovers; global.popoverWaiters?.clear() })
 
 test("from ▾ the picker opens below the split button, and above it when there's no room below", () => {

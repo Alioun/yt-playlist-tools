@@ -486,4 +486,5 @@ export const messageParameters = {
   "browserMenu_saveTo": [],
   "browserMenu_quickSave": [],
   "browserMenu_choose": [],
+  "watchMenu_choose": [],
 } as const

@@ -9,6 +9,7 @@ import type { SiteCore } from "../core/core"
 import type { Kit } from "../kit/install"
 import { placePicker, type PlacementAnchor } from "./placement"
 import { pagePickerSource } from "./source"
+import { createWatchMenu } from "./watch-menu"
 import type { OpenPicker, PickerRenderer, PickerViewEvent, Popovers } from "./types"
 
 const panelWidth = 320
@@ -148,9 +149,11 @@ export function createPopovers(options: {
     }, () => close())
   }
 
+  const menu = createWatchMenu({ document, core: options.core, kit: options.kit, picker: openPicker })
   return {
     openPicker,
-    isOpen: () => open !== null,
-    close: () => open?.close()
+    openWatchMenu: request => { open?.close(); menu.open(request) },
+    isOpen: () => open !== null || menu.isOpen(),
+    close: () => { open?.close(); menu.close() }
   }
 }

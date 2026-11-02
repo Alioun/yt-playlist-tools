@@ -50,7 +50,7 @@ function setup(options: { view?: SiteView<"www">; resolution?: WwwResolution; an
     add: async (request: TabAddRequest) => { adds.push(request); return options.answer ? options.answer() : saved },
     undo: async (undone: UndoHandle) => { undos.push(undone); return { kind: "undone" } }
   } as unknown as TabActions
-  const popovers: Popovers = { openPicker(request) { opened.push(request) }, isOpen: () => false, close() {} }
+  const popovers: Popovers = { openPicker(request) { opened.push(request) }, openWatchMenu() {}, isOpen: () => false, close() {} }
   let current: SiteView<"www"> | null = options.view ?? shortcutView()
   const listeners = new Set<(view: SiteView<"www">) => void>()
   const scope = new Scope({ document, onError })
