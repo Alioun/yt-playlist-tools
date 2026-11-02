@@ -426,7 +426,7 @@ test("actual browser artifact executes the acceptance matrix with injected effec
     expect(file.startsWith(resolve(import.meta.dir, "../../shared/model") + "/") ||
       file === resolve(import.meta.dir, "../../shared/contracts/json.ts") ||
       file.startsWith(resolve(import.meta.dir, "../../shared/keys") + "/") ||
-      [entry, ...["consent-withdrawal.ts", "consent-recovery.ts", "withdrawn-document-recovery.ts", "sync-join-execution.ts", "sync-join-persistence.ts", "consent-agreement.ts", "interim-persistence.ts", "interim-installation.ts", "first-edit-provenance.ts", "interim-conversion.ts", "interim-profile.ts", "account-removal-execution.ts", "account-removal-session.ts", "received-setup-removal.ts", "tombstone-expiry.ts", "claim-notice.ts", "shared-setting-execution.ts", "settings-edit.ts", "local-claim-writer.ts", "accounts.ts", "legacy.ts", "legacy-execution.ts", "legacy-startup.ts", "legacy-shortcut.ts", "interim-recovery-execution.ts", "interim-recovery-review.ts", "interim-canonical-authority.ts", "feature-settings.ts", "feature-settings-execution.ts", "feature-settings-mutation.ts", "feature-settings-progress.ts", "key-settings.ts", "key-settings-execution.ts", "key-settings-mutation.ts", "key-settings-progress.ts", "settings-import-execution.ts", "settings-import-persistence.ts", "settings-import-plan.ts", "settings-import-recovery.ts", "sync-mutation-pacing.ts", "sync-reset.ts", "sync-reset-receive.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file) || ["src/background/store/account-label.ts", "src/background/store/settings-file-read.ts", "src/shared/contracts/tabs.ts", "src/shared/settings-file/data.ts", "src/shared/settings-file/index.ts", "src/shared/settings-file/json.ts", "src/shared/settings-file/shape.ts", "src/background/monitor/thresholds.ts", "src/background/store/auto-add-choice.ts", "src/background/store/monitor-notice.ts", "src/background/store/monitor-session.ts", "src/background/store/playlist-cache.ts", "src/background/store/session-memory.ts", "src/background/store/setup-edit-execution.ts", "src/background/store/setup-edit.ts", "src/background/store/tab-projection.ts", "src/background/tabs/records.ts", "src/shared/contracts/auto-add-choice.ts", "src/shared/contracts/diagnostics.ts", "src/shared/contracts/endpoints.ts", "src/shared/contracts/first-run.ts", "src/shared/contracts/key-settings.ts", "src/shared/contracts/key-settings-fields.ts", "src/shared/contracts/music-playback.ts", "src/shared/contracts/shared-settings.ts", "src/shared/contracts/identifiers.ts", "src/shared/contracts/index.ts", "src/shared/contracts/jobs.ts", "src/shared/contracts/media.ts", "src/shared/contracts/object-shape.ts", "src/shared/contracts/page-ids.ts", "src/shared/contracts/protocol.ts", "src/shared/contracts/results.ts", "src/shared/contracts/shape-outline.ts", "src/shared/contracts/streams.ts", "src/shared/contracts/tab-view.ts", "src/shared/contracts/vocabulary.ts", "src/shared/features/registration.ts", "src/shared/features/registry.ts"].map(name => resolve(import.meta.dir, "../../..", name)).includes(file)).toBe(true)
+      [entry, ...["consent-withdrawal.ts", "consent-recovery.ts", "withdrawn-document-recovery.ts", "sync-join-execution.ts", "sync-join-persistence.ts", "consent-agreement.ts", "interim-persistence.ts", "interim-installation.ts", "first-edit-provenance.ts", "interim-conversion.ts", "interim-profile.ts", "account-removal-execution.ts", "account-removal-session.ts", "received-setup-removal.ts", "tombstone-expiry.ts", "claim-notice.ts", "shared-setting-execution.ts", "settings-edit.ts", "local-claim-writer.ts", "progress.ts", "accounts.ts", "legacy.ts", "legacy-execution.ts", "legacy-startup.ts", "legacy-shortcut.ts", "interim-recovery-execution.ts", "interim-recovery-review.ts", "interim-canonical-authority.ts", "feature-settings.ts", "feature-settings-execution.ts", "feature-settings-mutation.ts", "feature-settings-progress.ts", "key-settings.ts", "key-settings-execution.ts", "key-settings-mutation.ts", "key-settings-progress.ts", "settings-import-execution.ts", "settings-import-persistence.ts", "settings-import-plan.ts", "settings-import-recovery.ts", "sync-mutation-pacing.ts", "sync-reset.ts", "sync-reset-receive.ts"].map(name => resolve(import.meta.dir, name)), resolve(import.meta.dir, "write-preparation.ts"), resolve(import.meta.dir, "channel-filter-edit.ts"), resolve(import.meta.dir, "sync-write-admission.ts"), resolve(import.meta.dir, "sync-codec.ts"), resolve(import.meta.dir, "sync-inventory.ts")].includes(file) || ["src/background/store/account-label.ts", "src/background/store/settings-file-read.ts", "src/shared/contracts/tabs.ts", "src/shared/settings-file/data.ts", "src/shared/settings-file/index.ts", "src/shared/settings-file/json.ts", "src/shared/settings-file/shape.ts", "src/background/monitor/thresholds.ts", "src/background/store/auto-add-choice.ts", "src/background/store/monitor-notice.ts", "src/background/store/monitor-session.ts", "src/background/store/playlist-cache.ts", "src/background/store/session-memory.ts", "src/background/store/setup-edit-execution.ts", "src/background/store/setup-edit.ts", "src/background/store/tab-projection.ts", "src/background/tabs/records.ts", "src/shared/contracts/auto-add-choice.ts", "src/shared/contracts/diagnostics.ts", "src/shared/contracts/endpoints.ts", "src/shared/contracts/first-run.ts", "src/shared/contracts/key-settings.ts", "src/shared/contracts/key-settings-fields.ts", "src/shared/contracts/music-playback.ts", "src/shared/contracts/shared-settings.ts", "src/shared/contracts/identifiers.ts", "src/shared/contracts/index.ts", "src/shared/contracts/jobs.ts", "src/shared/contracts/media.ts", "src/shared/contracts/object-shape.ts", "src/shared/contracts/page-ids.ts", "src/shared/contracts/protocol.ts", "src/shared/contracts/results.ts", "src/shared/contracts/shape-outline.ts", "src/shared/contracts/streams.ts", "src/shared/contracts/tab-view.ts", "src/shared/contracts/vocabulary.ts", "src/shared/features/registration.ts", "src/shared/features/registry.ts"].map(name => resolve(import.meta.dir, "../../..", name)).includes(file)).toBe(true)
     for (const imported of new Bun.Transpiler({ loader: "ts" }).scanImports(await readFile(file, "utf8"))) {
       expect(imported.path.startsWith(".")).toBe(true)
       const base = resolve(dirname(file), imported.path)
@@ -1499,10 +1499,14 @@ async function receiveAcceptance(create: typeof createLocalFilterWriter, acct: A
     h.records[Q] = clone(remote[`s:filter:${acct}:PL_Q`])
     equal((await h.writer.flushSync()).kind, "reconciled", "existing outbound exact debt repair remains available")
   }
-  for (const patch of [{ at: 10, by: "device-a" }, { at: 10, by: "z" }, { at: 9 }, { gen: "f0", at: 10 }, { gen: "f0", at: 200 }]) {
+  for (const patch of [{ at: 10, by: "device-a" }, { at: 10, by: "a" }, { at: 9 }, { gen: "f0", at: 10 }, { gen: "f0", at: 200 }]) {
     const h = harness(); h.remote[B] = { ...incoming, ...patch }
     equal(await h.writer.receiveSyncDocument(key), unavailable("conflict"), "equal lower same-generation conflict")
     equal(h.sets, [], "conflict no write")
+  }
+  {
+    const h = harness(); h.remote[B] = { ...incoming, at: 10, by: "z" }
+    equal((await h.writer.receiveSyncDocument(key)).kind, "adopted", "SYNC-11: an edit at the same time from a larger device ID wins")
   }
   for (const variant of ["future", "dead", "null", "absent", "incomplete", "index", "stamp", "invalid"]) {
     const h = harness()
@@ -1528,7 +1532,8 @@ async function receiveAcceptance(create: typeof createLocalFilterWriter, acct: A
   for (const [tomb, result] of [
     [{ v: 1, gen: "f0", at: 10, by: "device-a", deleted: true }, adopted],
     [{ v: 1, gen: "dead", at: 10, by: "device-a", deleted: true }, unavailable("pending")],
-    [{ v: 1, gen: "f0", at: 20, by: "device-a", deleted: true }, unavailable("conflict")]
+    [{ v: 1, gen: "f0", at: 20, by: "device-a", deleted: true }, adopted],
+    [{ v: 1, gen: "f0", at: 20, by: "device-c", deleted: true }, unavailable("conflict")]
   ] as const) {
     const h = harness(); h.records[F] = tomb
     equal(await h.writer.receiveSyncDocument(key), result, "local Filter tombstone yields only to a newer live Filter " + tomb.gen + tomb.at)
@@ -1741,7 +1746,7 @@ test("receiver wrong alternatives fail at their intended observable assertions",
     { name: "split-sets", assertion: "one exact two-key set", source: original.replace('await guardedLocal.set({ ...clearsLastAccount ? { [LAST_ACCOUNT_KEY]: null } : {}, [name]: document, sync: next })', 'await guardedLocal.set({ ...clearsLastAccount ? { [LAST_ACCOUNT_KEY]: null } : {}, [name]: document }); await guardedLocal.set({ sync: next })') },
     { name: "pending-Q-acknowledgement", assertion: "one exact two-key set", source: original.replace('const next = repairedHistory(latest.history, [received])', 'const next = repairedHistory(latest.history, [received]); if (next && typeof next.pushed === "object" && next.pushed) Object.assign(next.pushed, { [`doc:filter:${key.acct}:PL_Q`]: "q1" })') },
     { name: "target-pending-overwrite", assertion: "target pending remains unavailable", source: original.replace('if (!Object.hasOwn(history.pushed, name) || history.pushed[name] !== initial.stamp.gen)', 'if (false)') },
-    { name: "equal-stamp-tie", assertion: "equal lower same-generation conflict", source: original.replace('incoming.at <= initial.stamp.at', 'incoming.at < initial.stamp.at') },
+    { name: "equal-stamp-tie", assertion: "equal lower same-generation conflict", source: original.replace('incoming.at === initial.stamp.at && incoming.by <= initial.stamp.by', 'false') },
     { name: "stale-metadata", assertion: "remote observation stage 2created", source: original.replace('if (!sameSyncJson(metadata, preflight.metadata))', 'if (false)') },
     { name: "outside-lane", assertion: "receive holds owner lane L0", source: original.replace('return enqueue(() => receiveAttempt(key))', 'return receiveAttempt(key)') },
     { name: "unchanged-echo", assertion: "unchanged adopted filter never echoes", source: original }
@@ -1902,7 +1907,7 @@ async function automaticIncomingAcceptance(create: typeof createLocalFilterWrite
       h.records[S].data.autoAdd.push({ pl, takes: "both" }); h.records[name] = clone(old); h.records.sync.pushed[name] = old.gen
       h.synced[base] = { ...old, gen: pl + "1", at: 20, data: { on: true } }
       if (fault === "pending") h.records[name].gen = pl + "pending"
-      if (fault === "equal") h.synced[base].at = 10
+      if (fault === "equal") { h.synced[base].at = 10; h.synced[base].by = "a" }
       if (fault === "lower") h.synced[base].at = 5
       if (fault === "same-generation") h.synced[base].gen = old.gen
       if (fault === "future") h.synced[base].v = 2
@@ -2297,7 +2302,7 @@ async function settingsIncomingAcceptance(create: typeof createLocalFilterWriter
     if (variant === "pending") h.records[D].gen = "pending"
     if (variant === "missing") delete h.records.sync.pushed[D]
     if (variant === "mismatch") h.records.sync.pushed[D] = "other"
-    if (variant === "equal") h.remote["s:settings"].at = 10
+    if (variant === "equal") { h.remote["s:settings"].at = 10; h.remote["s:settings"].by = "a" }
     if (variant === "lower") h.remote["s:settings"].at = 9
     if (variant === "same-gen") h.remote["s:settings"].gen = "s0"
     equal(await h.writer.receiveSyncDocument(key), unavailable(["pending", "missing", "mismatch"].includes(variant) ? "pending" : "conflict"), "Settings unavailable " + variant)
@@ -2440,7 +2445,7 @@ async function settingsIncomingAcceptance(create: typeof createLocalFilterWriter
     h.remote[F.replace("doc:", "s:")] = incomingFilter; h.remote[S.replace("doc:", "s:")] = clone(h.records[S])
     if (variant === "pending") h.records[D].gen = "pending"
     if (variant === "invalid") h.remote["s:settings"].data.theme = 42
-    if (variant === "equal") h.remote["s:settings"].at = 10
+    if (variant === "equal") { h.remote["s:settings"].at = 10; h.remote["s:settings"].by = "a" }
     if (variant === "foreign") h.remote["s:settings"].v = 2
     const originalHistory = clone(h.records.sync)
     await h.writer.startSync()
@@ -3050,7 +3055,8 @@ async function setupIncomingAcceptance(create: typeof createLocalFilterWriter, a
   for (const [tomb, result] of [
     [{ v: 1, gen: "a0", at: 10, by: "b", deleted: true }, adopted],
     [{ v: 1, gen: "dead", at: 10, by: "b", deleted: true }, unavailable("pending")],
-    [{ v: 1, gen: "a0", at: 30, by: "b", deleted: true }, unavailable("conflict")]
+    [{ v: 1, gen: "a0", at: 30, by: "b", deleted: true }, adopted],
+    [{ v: 1, gen: "a0", at: 30, by: "z", deleted: true }, unavailable("conflict")]
   ] as const) {
     const h = harness(); h.records[S] = tomb
     equal(await h.writer.receiveSyncDocument(key), result, "local Setup tombstone yields only to a newer live Setup " + tomb.gen + tomb.at)
@@ -3060,7 +3066,7 @@ async function setupIncomingAcceptance(create: typeof createLocalFilterWriter, a
     const h = harness()
     if (fault === "pending") h.records[S].gen = "pending"
     if (fault === "same-gen") h.synced[B] = { ...clone(incoming), gen: "a0" }
-    if (fault === "equal" || fault === "older") h.synced[B] = { ...clone(incoming), at: fault === "equal" ? 10 : 9 }
+    if (fault === "equal" || fault === "older") h.synced[B] = { ...clone(incoming), at: fault === "equal" ? 10 : 9, ...fault === "equal" ? { by: "a" } : {} }
     if (fault === "future") h.synced[B] = { ...clone(incoming), v: 2 }
     if (fault === "deleted") h.synced[B] = { v: 1, gen: "dead", at: 30, by: "b", deleted: true }
     if (fault === "malformed") h.synced[B] = { ...clone(incoming), data: { gather: 2 } }

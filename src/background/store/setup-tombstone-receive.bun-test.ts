@@ -122,7 +122,7 @@ test("a restart at any point of a Setup tombstone application converges on a fre
 }, 120_000)
 
 test.each([
-  ["conflict", (state: RemovalFixtureState) => { json(state.local[setupName]).at = 50 }],
+  ["conflict", (state: RemovalFixtureState) => { const local = json(state.local[setupName]); local.at = 50; local.by = "zz-local" }],
   ["pending", (state: RemovalFixtureState) => { json(json(state.local.sync).pushed)[setupName] = "unsent-edit" }]
 ] as const)("a %s Setup tombstone is refused before any account cleanup", async (reason, prepare) => {
   const seed = syncedSeed(); prepare(seed)

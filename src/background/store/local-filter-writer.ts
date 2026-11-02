@@ -1623,7 +1623,9 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     const history = decodeSyncState(initial.history)
     if (!Object.hasOwn(history.pushed, name) || history.pushed[name] !== initial.stamp.gen) return unavailable("pending")
     const incoming = remote.candidate.kind === "value" ? remote.candidate.value.document : remote.candidate.document
-    if (incoming.gen === initial.stamp.gen || incoming.at <= initial.stamp.at) return unavailable("conflict")
+    // SYNC-11: the newest edit wins, and at the same edit time the larger device ID does, so every browser picks the same one.
+    if (incoming.gen === initial.stamp.gen || incoming.at < initial.stamp.at ||
+      incoming.at === initial.stamp.at && incoming.by <= initial.stamp.by) return unavailable("conflict")
     const metadata = snapshot(remote.metadata)
     const document = snapshot(remote.candidate.json)
     const received: SyncDocumentRecord = { key, name, gen: incoming.gen, document }
