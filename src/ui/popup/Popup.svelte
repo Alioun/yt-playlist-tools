@@ -10,7 +10,7 @@
   import { createFeatureCopy, type PageFeatureId } from "../onboarding/features"
   import type { ExtensionPage } from "../shell/start"
   import { PageState } from "../lib/page-state.svelte"
-  import { banners, type Banner } from "../lib/notices"
+  import { banners, RESET_SEEN_KEY, type Banner } from "../lib/notices"
   import { accessSite, heldMessage, heldReason, isOn, shortcutsMusicHeld, wwwRows, type Held } from "../lib/held"
   import { summary } from "../lib/summaries"
   import { healthLine, stripLine } from "../lib/health"
@@ -43,8 +43,9 @@
   const device = $derived(view?.device.kind === "current" ? view.device.device : null)
   const openedOn = $derived(pageState.status?.kind === "status" && pageState.status.tab.kind === "site" ? pageState.status.tab.site : null)
   const site = $derived<Site>(chosenSite ?? openedOn ?? (localStorage.getItem(SITE_KEY) === "music" ? "music" : "www"))
+  let resetSeen = $state<string | null>(localStorage.getItem(RESET_SEEN_KEY))
   const shown = $derived(view ? banners({ view, sites: [site], tab: pageState.status?.kind === "status" ? pageState.status.tab : null,
-    account: pageState.account, access: pageState.access, private: pageState.private }) : [])
+    account: pageState.account, access: pageState.access, private: pageState.private, resetSeen }) : [])
   const banner = $derived<Banner | undefined>(shown[0])
   const strip = $derived(pageState.status?.kind === "status" ? stripLine(i18n, features, pageState.status.health.filter(row => row.site === site)) : null)
   const access = $derived(pageState.access ?? { www: true, music: true, browserMenu: true })
@@ -125,7 +126,10 @@
       case "show": page.openSettings("feature-auto-add"); break
       case "switch-account": page.open("https://www.youtube.com/channel_switcher"); break
       case "discard": void page.backend.call("ui.discardUnclaimed", {}); break
-      case "ok": if (shownBanner.kind === "claimed") void page.backend.call("ui.claimSeen", { acct: shownBanner.notice.acct as AccountKey }); break
+      case "ok":
+        if (shownBanner.kind === "claimed") void page.backend.call("ui.claimSeen", { acct: shownBanner.notice.acct as AccountKey })
+        if (shownBanner.kind === "reset") { resetSeen = shownBanner.id; try { localStorage.setItem(RESET_SEEN_KEY, shownBanner.id) } catch {} }
+        break
     }
   }
   function name(feature: PageFeatureId) { return features.featureOf(feature).name }

@@ -903,6 +903,8 @@ export type MessageParameters = {
   "banner_marks_text_one": readonly []
   "banner_marks_text_other": readonly []
   "banner_show": readonly []
+  "banner_reset_title": readonly []
+  "banner_reset_text": readonly []
   "banner_claimed": readonly ["account"]
   "banner_ok": readonly []
   "banner_unclaimed_title": readonly []

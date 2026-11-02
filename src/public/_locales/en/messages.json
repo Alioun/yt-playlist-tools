@@ -5270,6 +5270,12 @@
   "banner_show": {
     "message": "Show"
   },
+  "banner_reset_title": {
+    "message": "Reset from another browser"
+  },
+  "banner_reset_text": {
+    "message": "Your synced settings were deleted in another browser, so Perchling was reset here."
+  },
   "banner_claimed": {
     "message": "Perchling set up your 1.x auto-add playlists and shortcut for $ACCOUNT$.",
     "placeholders": {

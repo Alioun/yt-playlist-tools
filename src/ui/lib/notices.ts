@@ -26,10 +26,11 @@ export type Banner =
   | { readonly kind: "marks"; readonly count: number }
   | { readonly kind: "unclaimed" }
   | { readonly kind: "claimed"; readonly notice: Snapshot<ClaimNotice> }
+  | { readonly kind: "reset"; readonly id: string }
 export type BannerTone = "attention" | "info" | "done"
 export const bannerTone = {
   "newer-version": "attention", upgrade: "attention", consent: "attention", "consent-version": "attention", access: "attention",
-  "signed-out": "info", private: "info", "no-tab": "info", sync: "attention", marks: "attention", unclaimed: "attention", claimed: "done"
+  "signed-out": "info", private: "info", "no-tab": "info", sync: "attention", marks: "attention", unclaimed: "attention", claimed: "done", reset: "info"
 } as const satisfies Record<Banner["kind"], BannerTone>
 
 export type NoticeFacts = {
@@ -40,6 +41,15 @@ export type NoticeFacts = {
   readonly account: UiAccountInView | null
   readonly access: SiteAccess | null
   readonly private: boolean
+  /** The received reset this browser's pages already showed with OK, which they remember themselves. */
+  readonly resetSeen?: string | null
+}
+/** KEY for the received reset's OK, kept by the extension pages, so the notice shows until it's dismissed once (DATA-40). */
+export const RESET_SEEN_KEY = "perchling.resetSeen"
+/** The reset another browser's ticked Clear all sent here, which the store keeps in the local sync record (DATA-40). */
+export function receivedReset(view: View): string | null {
+  const received: unknown = view.sync ? (view.sync as { readonly resetReceived?: unknown }).resetReceived : undefined
+  return received !== null && typeof received === "object" && typeof (received as { id?: unknown }).id === "string" ? (received as { id: string }).id : null
 }
 
 function carried(view: View): Extract<Banner, { kind: "upgrade" }>["carried"] {
@@ -61,6 +71,8 @@ export function banners(facts: NoticeFacts): Banner[] {
   else if (!device?.consent) result.push({ kind: "consent" })
   else if (device.consent.v < CONSENT_VERSION) result.push({ kind: "consent-version", version: CONSENT_VERSION })
   if (!device?.consent) return result
+  const reset = receivedReset(view)
+  if (reset !== null && reset !== facts.resetSeen) result.push({ kind: "reset", id: reset })
   const settings = view.settings.kind === "value" ? view.settings.settings : null
   for (const site of facts.sites) {
     if (settings && facts.access && !facts.access[site] && needsAccess(site, settings)) result.push({ kind: "access", site })

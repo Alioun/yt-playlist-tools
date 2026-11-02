@@ -349,3 +349,16 @@ test("Playing now's ▾ opens the picker sheet for the playing song, in its own 
   await userEvent.click(await within(sheet).findByRole("checkbox", { name: "Talks" }, { timeout: 5000 }))
   await waitFor(() => expect(adds).toEqual([{ tabId: 9, acct, request: { site: "music", video: "bbbbbbbbbbb", opener: "playing-now", title: "Song", via: "picker", playlist: "PLb" } }]))
 }, 20_000)
+
+test("a reset another browser sent shows once, until OK (UI-POP-10 row 2, DATA-40)", async () => {
+  const reset = { ...agreed, sync: { joined: "r1", pushed: {}, status: "ok", editedSinceOff: false, resetReceived: { v: 1, id: "r1", created: 1, reset: true } } }
+  popup(reset)
+  expect(await screen.findByText("Reset from another browser", {}, { timeout: 5000 })).toBeTruthy()
+  expect(screen.getByText("Your synced settings were deleted in another browser, so Perchling was reset here.")).toBeTruthy()
+  await userEvent.click(screen.getByRole("button", { name: "OK" }))
+  await waitFor(() => expect(screen.queryByText("Reset from another browser")).toBeNull())
+  cleanup()
+  popup(reset)
+  await screen.findByRole("list", { name: "YouTube" }, { timeout: 5000 })
+  expect(screen.queryByText("Reset from another browser")).toBeNull()
+})

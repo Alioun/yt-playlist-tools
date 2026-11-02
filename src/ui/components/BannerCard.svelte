@@ -54,6 +54,7 @@
       case "unclaimed": return { title: m("banner_unclaimed_title"), text: m("banner_unclaimed_text", { account }),
         actions: [["switch-account", m("note_switchAccount")], ["discard", m("recovery_discard")]] }
       case "claimed": return claimed(banner.notice)
+      case "reset": return { title: m("banner_reset_title"), text: m("banner_reset_text"), actions: [["ok", m("banner_ok")]] }
     }
   })
 </script>

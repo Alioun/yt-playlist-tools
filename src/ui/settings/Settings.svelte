@@ -6,7 +6,7 @@
   import { createFeatureCopy } from "../onboarding/features"
   import type { ExtensionPage } from "../shell/start"
   import { PageState } from "../lib/page-state.svelte"
-  import { banners, type Banner } from "../lib/notices"
+  import { banners, RESET_SEEN_KEY, type Banner } from "../lib/notices"
   import { needsAccess } from "../lib/held"
   import { relativeTime } from "../lib/time"
   import type { AccountKey } from "../../shared/model/validation"
@@ -23,7 +23,8 @@
 
   const view = $derived(pageState.ready)
   const settings = $derived(pageState.settings)
-  const strip = $derived(view ? banners({ view, sites: ["www", "music"], tab: null, account: pageState.account, access: pageState.access, private: pageState.private }) : [])
+  let resetSeen = $state<string | null>(localStorage.getItem(RESET_SEEN_KEY))
+  const strip = $derived(view ? banners({ view, sites: ["www", "music"], tab: null, account: pageState.account, access: pageState.access, private: pageState.private, resetSeen }) : [])
   const health = $derived(pageState.status?.kind === "status" ? pageState.status.health : [])
   const dots = $derived.by((): Partial<Record<Section, boolean>> => {
     const access = pageState.access
@@ -77,7 +78,10 @@
       case "show": location.hash = "#feature-auto-add"; break
       case "switch-account": page.open("https://www.youtube.com/channel_switcher"); break
       case "discard": void page.backend.call("ui.discardUnclaimed", {}); break
-      case "ok": if (banner.kind === "claimed") void page.backend.call("ui.claimSeen", { acct: banner.notice.acct as AccountKey }); break
+      case "ok":
+        if (banner.kind === "claimed") void page.backend.call("ui.claimSeen", { acct: banner.notice.acct as AccountKey })
+        if (banner.kind === "reset") { resetSeen = banner.id; try { localStorage.setItem(RESET_SEEN_KEY, banner.id) } catch {} }
+        break
     }
   }
 </script>
