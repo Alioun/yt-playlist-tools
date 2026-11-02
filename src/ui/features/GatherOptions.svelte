@@ -21,6 +21,19 @@
     const answer = await backend.change(change)
     failed = answer.kind !== "confirmed"
   }
+  type AutoField = "gather.auto.unvisited" | "gather.auto.background" | "gather.auto.count"
+  // Ticking an automatic option with no gather playlist opens the chooser first, and the pick then ticks it (YT-GT-16).
+  let waiting = $state<AutoField | null>(null)
+  function auto(field: AutoField, event: Event & { currentTarget: HTMLInputElement }) {
+    if (hasPlaylist || !event.currentTarget.checked) { void save({ kind: "option", field, value: event.currentTarget.checked }); return }
+    event.currentTarget.checked = false
+    waiting = field
+  }
+  function chosen() {
+    const field = waiting
+    waiting = null
+    if (field) void save({ kind: "option", field, value: true })
+  }
   const uid = $props.id()
   const playlistTitle = $derived(pageState.title(pageState.setup?.setup.gather as never ?? null))
 </script>
@@ -54,9 +67,13 @@
     </div>
     <fieldset class="flex flex-col gap-2">
       <legend class="mb-1 font-medium">{playlistTitle ? i18n.message("gatherOpt_auto", { playlist: playlistTitle }) : i18n.message("gatherOpt_autoNoPlaylist")}</legend>
-      {#if !hasPlaylist}<p class="text-muted-foreground text-[12px]">{i18n.message("gatherOpt_needsPlaylist")}</p>{/if}
+      {#if waiting && !hasPlaylist}
+        <p class="text-[12px]" role="status">{i18n.message("gather_noPlaylist", { account: pageState.accountName() })}</p>
+        <DestinationChooser {pageState} destination={{ kind: "gather" }} label={i18n.message("gatherOpt_playlistLabel")} opened
+          purpose={{ kind: "gather", accountName: pageState.accountName() }} onchosen={chosen} />
+      {:else if !hasPlaylist}<p id="{uid}-needs" class="text-muted-foreground text-[12px]">{i18n.message("gatherOpt_needsPlaylist")}</p>{/if}
       <label class={clsx("flex items-start gap-2", !hasPlaylist && "opacity-60")}>
-        <input type="checkbox" class="mt-1" disabled={!hasPlaylist} checked={gather.auto.unvisited} onchange={event => save({ kind: "option", field: "gather.auto.unvisited", value: event.currentTarget.checked })} />
+        <input type="checkbox" class="mt-1" aria-describedby={hasPlaylist ? undefined : `${uid}-needs`} checked={gather.auto.unvisited} onchange={event => auto("gather.auto.unvisited", event)} />
         <span>{i18n.message("gatherOpt_unvisited")}
           <select class="border-input bg-background ml-1 h-7 rounded border px-1" disabled={!hasPlaylist} value={gather.auto.after}
             onchange={event => save({ kind: "option", field: "gather.auto.after", value: event.currentTarget.value as "1h" | "1d" | "1w" })}>
@@ -65,11 +82,11 @@
           <span class="text-muted-foreground block text-[12px]">{i18n.message("gatherOpt_unvisitedLine")}</span></span>
       </label>
       <label class={clsx("flex items-start gap-2", !hasPlaylist && "opacity-60")}>
-        <input type="checkbox" class="mt-1" disabled={!hasPlaylist} checked={gather.auto.background} onchange={event => save({ kind: "option", field: "gather.auto.background", value: event.currentTarget.checked })} />
+        <input type="checkbox" class="mt-1" aria-describedby={hasPlaylist ? undefined : `${uid}-needs`} checked={gather.auto.background} onchange={event => auto("gather.auto.background", event)} />
         <span>{i18n.message("gatherOpt_background")}<span class="text-muted-foreground block text-[12px]">{i18n.message("gatherOpt_backgroundLine")}</span></span>
       </label>
       <label class={clsx("flex items-start gap-2", !hasPlaylist && "opacity-60")}>
-        <input type="checkbox" class="mt-1" disabled={!hasPlaylist} checked={gather.auto.count} onchange={event => save({ kind: "option", field: "gather.auto.count", value: event.currentTarget.checked })} />
+        <input type="checkbox" class="mt-1" aria-describedby={hasPlaylist ? undefined : `${uid}-needs`} checked={gather.auto.count} onchange={event => auto("gather.auto.count", event)} />
         <span>{i18n.message("gatherOpt_count")}
           <select aria-label={i18n.message("gatherOpt_countLabel")} class="border-input bg-background ml-1 h-7 rounded border px-1" disabled={!hasPlaylist} value={String(gather.auto.n)}
             onchange={event => save({ kind: "option", field: "gather.auto.n", value: Number(event.currentTarget.value) as 5 | 10 | 15 | 20 | 30 | 50 })}>

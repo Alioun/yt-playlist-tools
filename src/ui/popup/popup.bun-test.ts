@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from "bun:test"
-import { cleanup, render, screen, within } from "@testing-library/svelte"
+import { cleanup, render, screen, waitFor, within } from "@testing-library/svelte"
 import userEvent from "@testing-library/user-event"
 import catalogue from "../../public/_locales/en/messages.json"
 import { englishI18n, scriptedMessages } from "../../../tools/fixtures/localization/scripted"
@@ -164,13 +164,23 @@ test("a gather's progress and result pushed for this window show in the row, and
   expect(scripted.pushGather({ windowId: 7, running: false, line: { text: "Elsewhere", tone: "confirmation", action: null } })).toBeUndefined()
 })
 
-test("a failure shows its own action, and a gather with no gather playlist opens the chooser", async () => {
+test("a failure shows its own action, and a gather with no gather playlist opens the chooser, then gathers once one is picked", async () => {
+  let gathers = 0
   const { opened } = popup({ ...gatherOn, [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" } }) }, {
     "ui.gathers": () => ({ kind: "gathers", running: false, line: null }),
-    "ui.gather": () => line("Choose a gather playlist for Ann first.", { kind: "choose" }, "muted")
+    "ui.gather": () => ++gathers === 1 ? line("Choose a gather playlist for Ann first.", { kind: "choose" }, "muted") : line("Saved 2 videos to Later."),
+    "ui.playlists": payload => payload.action === "open"
+      ? { kind: "open", operation: payload.operation, cached: { rows: [{ id: "PLa" as never, title: "Later" }], at: Date.now() }, freshness: "fresh", refresh: null }
+      : { kind: "released", operation: payload.operation },
+    "ui.change": payload => ({ kind: "destination", outcome: { kind: "confirmed", playlist: (payload.change as { playlist: never }).playlist } })
   })
   await userEvent.click(await screen.findByRole("button", { name: "Gather" }))
   expect(await screen.findByText("Choose a gather playlist for Ann first.")).toBeTruthy()
   expect(await screen.findByRole("button", { name: "Gather playlist: No playlist chosen" }, { timeout: 5000 })).toHaveAttribute("aria-expanded", "true")
   expect(opened).toEqual([])
+  // happy-dom leaves the floating picker unpositioned, so its rows count as hidden to role queries.
+  const row = await waitFor(() => { const found = document.querySelector<HTMLElement>('[data-picker-row="PLa"]'); if (!found) throw Error("no row"); return found }, { timeout: 5000 })
+  await userEvent.click(row)
+  expect(await screen.findByText("Saved 2 videos to Later.")).toBeTruthy()
+  expect(gathers).toBe(2)
 }, 20_000)

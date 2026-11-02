@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from "bun:test"
-import { cleanup, render, screen, within } from "@testing-library/svelte"
+import { cleanup, render, screen, waitFor, within } from "@testing-library/svelte"
 import userEvent from "@testing-library/user-event"
 import catalogue from "../../public/_locales/en/messages.json"
 import { englishI18n, scriptedMessages } from "../../../tools/fixtures/localization/scripted"
@@ -96,6 +96,48 @@ test("the diagnostics report names features and statuses, never the account", as
   expect(report.textContent).not.toContain(acct)
   expect(report.textContent).not.toContain("Ann")
   expect(screen.getByText("Partly working")).toBeTruthy()
+}, 20_000)
+
+test("the Gather tabs card shows the last gather with Undo, and Undo's answer in its place", async () => {
+  const undone: string[] = []
+  settings({ ...agreed, "doc:settings": stamped({ gather: { on: true, feedback: true, to: "player", order: "newest", close: false } }) }, {
+    "ui.gathers": () => ({ kind: "gathers", running: false, line: { text: "Last gather: 3 videos into Later, 5 minutes ago", tone: "muted", action: { kind: "undo", id: "g7" } } }),
+    "ui.gatherUndo": payload => { undone.push(payload.id); return { kind: "line", line: { text: "Removed 3 videos from Later and reopened their tabs.", tone: "confirmation", action: null } } }
+  }, "#feature-gather")
+  const line = await screen.findByText("Last gather: 3 videos into Later, 5 minutes ago", {}, { timeout: 5000 })
+  await userEvent.click(within(line).getByRole("button", { name: "Undo" }))
+  expect(await screen.findByText("Removed 3 videos from Later and reopened their tabs.", {}, { timeout: 5000 })).toBeTruthy()
+  expect(undone).toEqual(["g7"])
+  expect(screen.getByRole("link", { name: "Based on GatherTube by Karim Elgazar" })).toHaveAttribute("href", "https://github.com/karimelgazar/gathertube")
+}, 20_000)
+
+test("ticking an automatic gather option with no gather playlist opens the chooser first, and the pick ticks it (YT-GT-16)", async () => {
+  const sent: unknown[] = []
+  settings({ ...agreed, "doc:settings": stamped({ gather: { on: true, feedback: true, to: "player", order: "newest", close: false } }),
+    [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" } }), [`cache:${acct}`]: { listAt: Date.now(), playlists: [{ id: "PLa", title: "Later" }], order: {}, created: [], labelAt: null } }, {
+    "ui.gathers": () => ({ kind: "gathers", running: false, line: null }),
+    "ui.playlists": payload => payload.action === "open"
+      ? { kind: "open", operation: payload.operation, cached: { rows: [{ id: "PLa" as never, title: "Later" }], at: Date.now() }, freshness: "fresh", refresh: null }
+      : { kind: "released", operation: payload.operation },
+    "ui.change": payload => {
+      sent.push(payload.change)
+      const change = payload.change as { kind: string; playlist?: string }
+      return change.kind === "setup-destination" ? { kind: "destination", outcome: { kind: "confirmed", playlist: change.playlist as never } }
+        : { kind: "shared-setting", outcome: { kind: "confirmed", change: payload.change as never, status: "changed" } } as never
+    }
+  }, "#feature-gather")
+  const box = await screen.findByRole("checkbox", { name: /Save and close video tabs I open in the background/ }, { timeout: 5000 })
+  expect(box).toHaveAccessibleDescription("Choose a gather playlist first.")
+  await userEvent.click(box)
+  expect(box).not.toBeChecked()
+  expect(await screen.findByText("Choose a gather playlist for Ann first.")).toBeTruthy()
+  expect(await screen.findByRole("button", { name: "Gather playlist: No playlist chosen" }, { timeout: 5000 })).toHaveAttribute("aria-expanded", "true")
+  expect(sent).toEqual([])
+  // happy-dom leaves the floating picker unpositioned, so its rows count as hidden to role queries.
+  const row = await waitFor(() => { const found = document.querySelector<HTMLElement>('[data-picker-row="PLa"]'); if (!found) throw Error("no row"); return found }, { timeout: 5000 })
+  await userEvent.click(row)
+  await waitFor(() => expect(sent).toEqual([{ kind: "setup-destination", acct, destination: { kind: "gather" }, playlist: "PLa", expected: { setup: "live", playlist: null } },
+    { kind: "option", field: "gather.auto.background", value: true }]))
 }, 20_000)
 
 test("with synced settings full and a kept filter, Everywhere offers Remove kept filters and asks the background to remove them (SYNC-14)", async () => {

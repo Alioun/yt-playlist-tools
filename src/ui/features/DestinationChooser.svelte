@@ -33,8 +33,10 @@
     : pageState.private ? { kind: "disabled", explanation: i18n.message(destination.kind === "gather" ? "picker_privateGather" : "picker_privatePin") } as const
     : { kind: "available" } as const)
   const source = (context: ChooserContext) => pickerSource(pageState, context.account, context.site, { kind: "destination", destination })
+  // A pick that stored the choice, or a playlist made here, closes the chooser (UI-PICK-19).
   function outcome(event: PickerEvent) {
-    if (event.kind === "tick" && event.outcome.kind === "changed" || event.kind === "create" && event.outcome.kind === "created") {
+    const picked = event.kind === "tick" && (event.outcome.kind === "changed" || event.outcome.kind === "picked" && "ok" in event.outcome.choice)
+    if (picked || event.kind === "create" && event.outcome.kind === "created") {
       open = false
       onchosen?.()
     }
