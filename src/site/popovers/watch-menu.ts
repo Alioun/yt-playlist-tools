@@ -163,7 +163,7 @@ export function createWatchMenu(options: {
               button.textContent = i18n.message("filter_switchMode")
               return
             }
-            line.nextElementSibling?.classList.contains("ask") && line.nextElementSibling.remove()
+            if (line.nextElementSibling?.classList.contains("ask")) line.nextElementSibling.remove()
             button.setAttribute("aria-busy", "true")
             const send = control.send
             const done = await core.actions.filterChannel({ playlist: goal.pl, channel: channel.handle ? [channel.id, channel.title, channel.handle] : [channel.id, channel.title],
