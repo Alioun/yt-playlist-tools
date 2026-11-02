@@ -17,6 +17,8 @@ export type SiteHealth = {
   /** Auto-add couldn't measure this playback, or could measure the next one. */
   cantMeasure(): void
   measured(): void
+  /** YouTube Music's player bar shows a song but drew no like for the player-bar Save to sit beside (YM-FAIL-8). */
+  playerBarMissing(): void
 }
 
 /**
@@ -92,6 +94,11 @@ export function createSiteHealth(options: {
       const signal = own("cannot-measure", "auto-add")
       unmeasured = true
       if (admit(signal)) push({ kind: "signal", signal, evidence: "playback" })
+    },
+    playerBarMissing() {
+      const signal = own("anchor-missing", "music-actions")
+      if (!admit(signal)) return
+      push({ kind: "anchor", anchor: "music-player-bar", signal, observation: { kind: "player-bar", requiredHere: true, visible: true, settledMs: 3_000, present: false } })
     },
     // Only a page that couldn't measure a playback has anything for a measurable one to clear.
     measured() { if (unmeasured) { unmeasured = false; push({ kind: "measured" }) } },

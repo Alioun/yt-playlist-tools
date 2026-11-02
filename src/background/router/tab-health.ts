@@ -31,9 +31,10 @@ export function createTabHealthRouter(deps: {
         return
       case "anchor": {
         if (!Object.hasOwn(anchors, report.anchor)) return
-        const { relevant, visible, settledMs, distinctMainLinks, recognised } = report.observation
-        await deps.monitor.observeAnchor(context, { anchor: report.anchor, signal: report.signal,
-          observation: { kind: "content", relevant, visible, navigationAt: 0, observedAt: settledMs, distinctMainLinks, recognised } })
+        const seen = report.observation
+        await deps.monitor.observeAnchor(context, { anchor: report.anchor, signal: report.signal, observation: "kind" in seen
+          ? { kind: "player-bar", requiredHere: seen.requiredHere, visible: seen.visible, navigationAt: 0, observedAt: seen.settledMs, present: seen.present }
+          : { kind: "content", relevant: seen.relevant, visible: seen.visible, navigationAt: 0, observedAt: seen.settledMs, distinctMainLinks: seen.distinctMainLinks, recognised: seen.recognised } })
         return
       }
       case "success": await deps.monitor.succeeded(context, report.job); return

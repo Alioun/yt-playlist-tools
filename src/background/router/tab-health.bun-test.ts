@@ -51,6 +51,15 @@ test("a tab's batch reaches the Monitor as that tab: job signals with their evid
   w.dispose()
 })
 
+test("a missing player-bar like reaches the Monitor as a player-bar anchor (YM-FAIL-8)", async () => {
+  const w = await world()
+  await w.send({ acct, request: { reports: [{ kind: "anchor", anchor: "music-player-bar", signal: { ...signal, site: "music", feature: "music-actions", kind: "anchor-missing", job: null, route: null, watchId: null },
+    observation: { kind: "player-bar", requiredHere: true, visible: true, settledMs: 3000, present: false } }] } })
+  expect(w.calls).toEqual([["anchor", { anchor: "music-player-bar", signal: expect.objectContaining({ kind: "anchor-missing" }),
+    observation: { kind: "player-bar", requiredHere: true, visible: true, navigationAt: 0, observedAt: 3000, present: false } }]])
+  w.dispose()
+})
+
 test("a batch from a tab the registry holds for another account reaches nothing (ARC-ACC-49)", async () => {
   const w = await world("BBBBBBBBBBBBBBBB")
   await w.send({ acct, request: { reports: [{ kind: "success", job: "add" }] } })

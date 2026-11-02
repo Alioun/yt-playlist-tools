@@ -41,7 +41,7 @@ function row(tag: string, item: ItemInfo) {
   return element
 }
 
-function setup(options: { view?: SiteView<"music">; casting?: boolean; answer?: (action: QuickAction) => Promise<QuickAnswer> } = {}) {
+function setup(options: { view?: SiteView<"music">; casting?: boolean; answer?: (action: QuickAction) => Promise<QuickAnswer>; playing?: NowPlaying | null } = {}) {
   const timers = clock()
   const onError = () => {}
   const scope = new Scope({ document, onError })
@@ -52,13 +52,14 @@ function setup(options: { view?: SiteView<"music">; casting?: boolean; answer?: 
   let song: ((data: NowPlaying | null) => void) | null = null
   let current = options.view ?? actionsView()
   const listeners = new Set<(view: SiteView<"music">) => void>()
-  let preloads = 0
+  let preloads = 0, barMissing = 0
   void musicActions.start({
     site: "music", scope, document, i18n: englishI18n(), os: "windows",
     view: { read: () => current, subscribe(listener) { listeners.add(listener); return () => { listeners.delete(listener) } } },
     items: { track: () => () => {}, readPointed: () => pointed },
     page: {
-      run: async (_invocation, context) => {
+      run: async (invocation, context) => {
+        if (invocation.job.kind === "nowPlaying") return (options.playing === undefined ? { ok: false, reason: "unavailable" } : { ok: true, data: options.playing, route: "test" }) as never
         const item = context?.target ? info.get(context.target) : undefined
         return (item ? { ok: true, data: item, route: "test" } : { ok: false, reason: "unavailable" }) as never
       },
@@ -73,11 +74,12 @@ function setup(options: { view?: SiteView<"music">; casting?: boolean; answer?: 
     },
     actions: { playlists: async () => ({ kind: "cached", listing: { rows: [{ id: "PL_alpha" as never, title: "Favourites" }], at: 0 } }) },
     notices: { wouldAct: feature => { notices.push(feature) } },
-    preload: () => { preloads++ }
+    preload: () => { preloads++ },
+    health: { playerBarMissing: () => { barMissing++ } }
   })
   running.push(() => { scope.dispose(); timers.restore(); document.body.replaceChildren() })
   return {
-    acts, pickers, notices, timers, scope, get preloads() { return preloads },
+    acts, pickers, notices, timers, scope, get preloads() { return preloads }, get barMissing() { return barMissing },
     async hover(element: Element, item: ItemInfo, family: MusicFamily) {
       info.set(element, item)
       pointed = { kind: "pointed-item", target: { element, family, identity: { kind: "queue" }, signature: `${family}:${item.title}` } as unknown as MusicItemTarget }
@@ -315,4 +317,20 @@ test("switching the feature off removes every host", async () => {
   await f.hover(element, songRow, "responsive-row")
   f.scope.dispose()
   expect(document.querySelector("pp-music-actions")).toBeNull()
+})
+
+test("once the page settled, a player bar playing a song with no like at all is reported; a hidden like isn't (YM-FAIL-8, YM-BAR-3)", async () => {
+  const playerBar = document.createElement("ytmusic-player-bar")
+  document.body.append(playerBar)
+  const f = setup({ view: actionsView({ buttons: { bar: true } }), playing: nowPlaying })
+  f.timers.advance(3500)
+  await settle()
+  expect(f.barMissing).toBe(1)
+  running.splice(0).forEach(stop => stop())
+  const bar = document.createElement("ytmusic-player-bar"), like = document.createElement("div"); like.id = "like-button-renderer"; like.hidden = true
+  bar.append(like); document.body.append(bar)
+  const hidden = setup({ view: actionsView({ buttons: { bar: true } }), playing: nowPlaying })
+  hidden.timers.advance(3500)
+  await settle()
+  expect(hidden.barMissing).toBe(0)
 })

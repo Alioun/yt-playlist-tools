@@ -6,6 +6,7 @@ import type { TabActions } from "../../core/actions"
 import type { FeatureContext, FeatureDefinition, SiteView } from "../../core/feature-host"
 import type { MusicItems, MusicItemTarget } from "../../core/items-music"
 import type { Dispose } from "../../core/scope"
+import type { SiteHealth } from "../../core/health"
 import { quickActions, statusOf, withdrawn, type QuickAction } from "../../music/actions"
 import type { MusicQuick, QuickAnswer, QuickTarget } from "../../kit/music/quick"
 import { createHost, tooltip, type Drawn, type Host, type HostKind } from "./host"
@@ -25,6 +26,8 @@ export type MusicActionServices = {
   readonly notices: { wouldAct(feature: "music-actions"): void }
   /** Hover intent on a Save preloads `popovers.js` (YM-SAVE-16). */
   readonly preload: () => void
+  /** Hears a player bar that shows a song but drew no like where the Save should sit (YM-FAIL-8). */
+  readonly health?: Pick<SiteHealth, "playerBarMissing">
   readonly os: "macos" | "windows" | "linux"
 }
 type State = "idle" | "busy" | "done" | "failed"
@@ -308,10 +311,20 @@ function start(context: FeatureContext<"music", MusicActionServices>): void {
     redraw()
   }
 
+  // YM-FAIL-8: once the page settled, a visible player bar playing a song with no like at all is breakage. A like
+  // YouTube Music hides, in a narrow window or for an ad, is still there and isn't (YM-BAR-3). PROVISIONAL until a live check.
+  async function checkBar() {
+    const current = view.read(), settings = settingsOf(current)
+    if (settings?.buttons.bar !== true || current?.signedIn !== true || document.hidden || withdrawn(current ? statusOf(current, "music-actions") : undefined, "save")) return
+    const playerBar = document.querySelector("ytmusic-player-bar")
+    if (!playerBar || playerBar.hasAttribute("hidden") || playerBar.querySelector("#like-button-renderer, ytmusic-like-button-renderer")) return
+    const song = await page.run<JobOf<"nowPlaying">>({ job: { kind: "nowPlaying" } })
+    if (!scope.disposed && song.ok && song.data !== null) context.health?.playerBarMissing()
+  }
   let checks: Dispose[] = []
   function settleLooks() {
     for (const stop of checks) stop()
-    checks = settleChecks.map(ms => scope.timeout(() => { void syncHeaders(); syncBar() }, ms))
+    checks = settleChecks.map(ms => scope.timeout(() => { void syncHeaders(); syncBar(); if (ms === settleChecks.at(-1)) void checkBar() }, ms))
   }
   scope.add(page.watch("nav", () => { hide(); dropHeaders(); states.clear(); settleLooks() }))
   scope.add(quick.watch(progress => {
