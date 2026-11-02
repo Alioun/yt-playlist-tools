@@ -121,3 +121,13 @@ export function queueButtonText(i18n: I18n) {
 }
 export type QueueButtonText = ReturnType<typeof queueButtonText>
 export { musicHintText, wwwHintText, type MusicHint, type WwwHint } from "./hints"
+
+export function autoAddText(i18n: I18n) {
+  return {
+    cantMeasure(title: string | undefined): string {
+      const known = title !== undefined && title.trim() !== "" ? cut(title.trim()) : undefined
+      return known === undefined ? i18n.message("autoAdd_cantMeasure_untitled") : i18n.message("autoAdd_cantMeasure_named", { title: known })
+    }
+  }
+}
+export type AutoAddText = ReturnType<typeof autoAddText>

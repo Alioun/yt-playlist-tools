@@ -4,11 +4,7 @@ import { noticeText, siteFeedbackText } from "../../shared/copy"
 import type { I18n } from "../../shared/i18n"
 import type { PageChannel } from "../../shared/rpc/page-channel"
 import type { Deadline } from "../../shared/rpc/rpc"
-import { pageGlobal } from "../global"
-import { tabAskContract, type TabAskMessages } from "../../shared/contracts/tab-actions"
-import { createRpc } from "../../shared/rpc/rpc"
-import { createTabActions, type TabActions } from "./actions"
-import type { TabAsks } from "./asks"
+import { createBackgroundLink, type BackgroundLink } from "./background"
 import { createExtLink, type ExtLink, type ExtLinkRuntime } from "./extlink"
 import { createFeatureHost, type FeatureDefinition, type SiteFeatureId } from "./feature-host"
 import type { MusicItems, MusicItemsOptions } from "./items-music"
@@ -34,6 +30,7 @@ export type CoreServices<S extends Site> = {
   readonly actions: TabActions
   readonly notice: { request(due: DueNotice): void }
   readonly notices: { wouldAct(feature: SiteFeatureId<S>): void }
+  readonly background: BackgroundLink
 }
 export type SiteCore<S extends Site> = CoreServices<S> & {
   readonly site: S
@@ -86,10 +83,7 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
     build, site, page, runtime: options.runtime, deadline: options.deadline ?? timerDeadline,
     hiddenAtStart: document.visibilityState === "hidden", isView: isTabView
   })
-  const actions = createTabActions({ transport: options.runtime.transport, build, deadline: options.deadline ?? timerDeadline, account() {
-    const trusted = page.state
-    return trusted.kind !== "ready" ? undefined : trusted.snapshot.signedIn ? trusted.snapshot.acct : null
-  } })
+  const background = createBackgroundLink({ build, deadline: options.deadline ?? timerDeadline, transport: options.runtime.transport, link })
   const pointer = new Pointer({ document, onError })
   const report = { itemUnrecognised: ignore, pageSettled: ignore }
   const items = options.items({ document, onError, pointer, page, report })
@@ -108,7 +102,7 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
       detailsLabel: labels.details, dismissLabel: labels.dismiss, details: () => notices.update(null), dismiss: ignore, presented: ignore })
   }
   const services: CoreServices<S> = {
-    document, page, items, keys, i18n, actions,
+    document, page, items, keys, i18n, background,
     notice: { request },
     notices: { wouldAct(feature) {
       const due = link.view?.notices.find(notice => notice.features.some(id => id === feature))
@@ -140,7 +134,7 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
   function dispose() {
     if (disposed) return
     disposed = true
-    for (const stop of [() => host.dispose(), () => items.dispose(), () => pointer.dispose(), () => keys.dispose(), stopAsks, () => askRpc.dispose(), () => actions.dispose(), () => link.dispose(), () => root.dispose()]) {
+    for (const stop of [() => host.dispose(), () => items.dispose(), () => pointer.dispose(), () => keys.dispose(), () => background.dispose(), () => link.dispose(), () => root.dispose()]) {
       try { stop() } catch {}
     }
   }

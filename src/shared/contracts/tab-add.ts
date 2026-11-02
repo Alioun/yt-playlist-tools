@@ -20,6 +20,10 @@ export type TabAddReport =
       readonly undo: TabUndoHandle | null; readonly titles: Readonly<Partial<Record<PlaylistId, string>>> }
   | { readonly kind: "stopped"; readonly outcomes: Outcomes; readonly pending: readonly PlaylistId[]; readonly feedback: boolean; readonly toast: null; readonly undo: null }
   | { readonly kind: "choose" | "signed-out" | "no-tab" }
+export type TabUndo = { readonly acct: AccountKey; readonly handle: TabUndoHandle }
+export type TabUndoReport =
+  | { readonly kind: "undone" | "expired" | "signed-out" | "no-tab" | "stopped" }
+  | { readonly kind: "failed"; readonly toast: ToastPlan | null }
 /** Watch progress at DATA-27's checkpoints. A private tab keeps its own and never sends these (DATA-28). */
 export type TabProgress = { readonly len: number; readonly parts: readonly (readonly [number, number])[] }
 export type TabProgressLoad = { readonly acct: AccountKey; readonly video: VideoId }
@@ -27,6 +31,7 @@ export type TabProgressSave = TabProgressLoad & TabProgress
 
 export type TabAddMessages = {
   "tab.add": { payload: TabAdd; result: TabAddReport }
+  "tab.undo": { payload: TabUndo; result: TabUndoReport }
   "tab.progress.load": { payload: TabProgressLoad; result: TabProgress | null }
   "tab.progress.save": { payload: TabProgressSave; result: null }
   /** YT-AA-41: only the first playback per browser session that can't be measured gets a toast. */
@@ -67,6 +72,12 @@ export function tabAddMessages() {
     "tab.add": {
       payload: (v: unknown): v is TabAdd => objectShape(v, { acct: isAccountKey, request: isTabAddRequest }, { title: t => typeof t === "string" }),
       result: isTabAddReport, timeoutMs: 60_000
+    },
+    "tab.undo": {
+      payload: (v: unknown): v is TabUndo => objectShape(v, { acct: isAccountKey, handle: isTabUndoHandle }),
+      result: (v: unknown): v is TabUndoReport => objectShape(v, { kind: k => k === "undone" || k === "expired" || k === "signed-out" || k === "no-tab" || k === "stopped" }) ||
+        objectShape(v, { kind: k => k === "failed", toast: t => t === null || isToastPlan(t) }),
+      timeoutMs: 60_000
     },
     "tab.progress.load": {
       payload: (v: unknown): v is TabProgressLoad => objectShape(v, load),
