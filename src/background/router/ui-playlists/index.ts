@@ -43,6 +43,11 @@ export type UiRouterPorts = {
   readonly playingNow?: (requester: Requester) => Promise<PlayingNow>
   /** Playing now's Save, in the tab the row read (ARC-ACC-68). */
   readonly add?: (requester: Requester, payload: UiAddPayload) => Promise<UiAddAnswer>
+  /** The popup's This video and its Don't auto-add (UI-POP-12, UI-POP-14). */
+  readonly thisVideo?: {
+    thisTab(requester: Requester): Promise<import("../../../shared/contracts/this-video").ThisTab>
+    skip(requester: Requester, request: import("../../../shared/contracts/this-video").ThisVideoSkip): Promise<import("../../../shared/contracts/this-video").ThisVideoSkipAnswer>
+  }
   /** Gather tabs' calls (ARC-MSG-16), for the authenticated requester's window. */
   readonly gather?: GatherRoutes
   /** Every UI message wakes automatic gathering's unvisited check, which runs at most once a minute (ARC-MSG-16). */
@@ -361,6 +366,18 @@ export function createUiRouter(ports: UiRouterPorts) {
         if (!active || !ports.playingNow) return { kind: "unavailable" }
         const answer = await ports.playingNow(ui.requester)
         return active ? answer : { kind: "unavailable" }
+      },
+      async "ui.thisTab"(_payload, context) {
+        const ui = requireUi(context)
+        if (!active || !ports.thisVideo) return { kind: "unavailable" }
+        const answer = await ports.thisVideo.thisTab(ui.requester)
+        return active ? answer : { kind: "unavailable" }
+      },
+      async "ui.skip"({ windowId: _window, ...request }, context) {
+        const ui = requireUi(context)
+        if (!active || !ports.thisVideo) return { kind: "refused", reason: "unavailable" }
+        const answer = await ports.thisVideo.skip(ui.requester, request)
+        return active ? answer : { kind: "refused", reason: "unavailable" }
       },
       async "ui.add"(payload, context) {
         const ui = requireUi(context)

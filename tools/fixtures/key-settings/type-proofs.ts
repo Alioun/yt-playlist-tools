@@ -14,7 +14,7 @@ export type Proofs = [
   Check<Equal<Extract<UiMessages["ui.change"]["payload"]["change"], { kind: SharedSettingChange["kind"] }>, SharedSettingChange>>,
   Check<Equal<Extract<UiMessages["ui.change"]["payload"]["change"], { kind: FeatureSettingChange["kind"] }>, FeatureSettingChange>>,
   Check<Equal<Extract<UiMessages["ui.change"]["result"], { kind: "key-setting" }>["outcome"], KeySettingAnswer>>,
-  Check<Equal<keyof UiMessages, "ui.clearAll" | "ui.change" | "ui.syncedChoices" | "ui.accountInView" | "ui.playlists" | "ui.create" | "ui.resolveChannel" | "ui.status" | "ui.pause" | "ui.recentAdds" | "ui.device" | "ui.filter" | "ui.filterChannel" | "ui.removeKeptFilters" | "ui.diagnostics" | "ui.withdraw" | "ui.removeSetup" | "ui.exportSettings" | "ui.importSettings" | "ui.noteSeen" | "ui.noteAgree" | "ui.playingNow" | "ui.add" | "ui.gather" | "ui.gatherUndo" | "ui.gathers" | "ui.claimSeen" | "ui.discardUnclaimed">>
+  Check<Equal<keyof UiMessages, "ui.clearAll" | "ui.change" | "ui.syncedChoices" | "ui.accountInView" | "ui.playlists" | "ui.create" | "ui.resolveChannel" | "ui.status" | "ui.pause" | "ui.recentAdds" | "ui.device" | "ui.filter" | "ui.filterChannel" | "ui.removeKeptFilters" | "ui.diagnostics" | "ui.withdraw" | "ui.removeSetup" | "ui.exportSettings" | "ui.importSettings" | "ui.noteSeen" | "ui.noteAgree" | "ui.playingNow" | "ui.add" | "ui.gather" | "ui.gatherUndo" | "ui.gathers" | "ui.claimSeen" | "ui.discardUnclaimed" | "ui.thisTab" | "ui.skip">>
 ]
 function overloads(backend: Backend, key: KeySettingChange, option: SharedSettingChange, feature: FeatureSettingChange) {
   const a: Promise<KeySettingAnswer> = backend.change(key)

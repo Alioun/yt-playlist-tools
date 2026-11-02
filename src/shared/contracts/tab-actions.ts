@@ -5,6 +5,7 @@ import { isDestinationExpectation, isSetupDestination, isDestinationAnswer, type
 import type { PlaylistRow } from "./jobs"
 import { objectShape } from "./object-shape"
 import { isFeatureId, isPrivacy, isSite, type FeatureId, type Privacy, type Site } from "./vocabulary"
+import { isThisVideo, type ThisVideo } from "./this-video"
 
 /**
  * What a page asks the background to do for a user action (06 §6.8.2). The background resolves the tab's
@@ -217,6 +218,8 @@ export type TabAskMessages = {
   "bg.gatherToast": { payload: GatherToastLine & { readonly auto: boolean; readonly undo: string | null; readonly settings?: PlaylistId }; result: null }
   /** A YouTube Music key from any tab: save or like the playing song here, as its Save or Like key would (YM-ANY-2, YM-ANY-3). */
   "bg.music": { payload: { readonly action: "save" | "like"; readonly feedback: boolean }; result: MusicAskAnswer }
+  /** What a feature exposes about this tab: auto-add's view of the playing video, for the popup's This video (06 §6.8.2). */
+  "bg.query": { payload: { readonly name: "auto-add" }; result: ThisVideo | null }
 }
 /** `done` is the ✓ and `failed` the ✕ on the toolbar icon; `text` is the answer's tooltip (YM-ANY-4). */
 export type MusicAskAnswer = { readonly kind: "done" | "failed"; readonly text: string | null }
@@ -228,5 +231,7 @@ export const tabAskContract: RpcContract<TabAskMessages> = {
   "bg.gatherToast": { payload: (v): v is TabAskMessages["bg.gatherToast"]["payload"] => objectShape(v, { text: toastText, tone: oneOf("confirmation", "failure"), auto: bool,
     undo: v => v === null || gatherId(v) }, { settings: isPlaylistId }), result: (v): v is null => v === null, timeoutMs: 2_000 },
   "bg.music": { payload: (v): v is TabAskMessages["bg.music"]["payload"] => objectShape(v, { action: oneOf("save", "like"), feedback: bool }),
-    result: (v): v is MusicAskAnswer => objectShape(v, { kind: oneOf("done", "failed"), text: nullable(title) }), timeoutMs: 30_000 }
+    result: (v): v is MusicAskAnswer => objectShape(v, { kind: oneOf("done", "failed"), text: nullable(title) }), timeoutMs: 30_000 },
+  "bg.query": { payload: (v): v is TabAskMessages["bg.query"]["payload"] => objectShape(v, { name: oneOf("auto-add") }),
+    result: (v): v is ThisVideo | null => v === null || isThisVideo(v), timeoutMs: 8_000 }
 }

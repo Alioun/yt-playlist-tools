@@ -11,8 +11,8 @@ test("one catalogue authenticates private shared key/options/feature edits and r
     await w.owner.ready()
     expect(Object.keys(uiContract).sort()).toEqual(["ui.accountInView", "ui.add", "ui.change", "ui.claimSeen", "ui.clearAll", "ui.create", "ui.device", "ui.diagnostics", "ui.discardUnclaimed",
       "ui.exportSettings", "ui.filter", "ui.filterChannel", "ui.gather", "ui.gatherUndo", "ui.gathers", "ui.importSettings", "ui.noteAgree", "ui.noteSeen",
-      "ui.pause", "ui.playingNow", "ui.playlists", "ui.recentAdds", "ui.removeKeptFilters", "ui.removeSetup", "ui.resolveChannel", "ui.status", "ui.syncedChoices",
-      "ui.withdraw"])
+      "ui.pause", "ui.playingNow", "ui.playlists", "ui.recentAdds", "ui.removeKeptFilters", "ui.removeSetup", "ui.resolveChannel", "ui.skip", "ui.status",
+      "ui.syncedChoices", "ui.thisTab", "ui.withdraw"])
     expect(await w.assign({ kind: "undo" }, chord("z"))).toMatchObject({ kind: "confirmed" })
     expect(await w.backend.change({ kind: "theme", value: "dark" })).toMatchObject({ kind: "confirmed" })
     expect(await w.backend.change({ kind: "music-section", value: true })).toMatchObject({ kind: "confirmed" })

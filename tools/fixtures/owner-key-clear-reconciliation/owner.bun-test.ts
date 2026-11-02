@@ -107,8 +107,8 @@ test("renewed agreement with later key progress cannot continue the old reset", 
 test("single catalogue carries ui.clearAll and ui.change without a parallel feature route", () => {
   expect(Object.keys(uiContract).sort()).toEqual(["ui.accountInView", "ui.add", "ui.change", "ui.claimSeen", "ui.clearAll", "ui.create", "ui.device", "ui.diagnostics", "ui.discardUnclaimed",
     "ui.exportSettings", "ui.filter", "ui.filterChannel", "ui.gather", "ui.gatherUndo", "ui.gathers", "ui.importSettings", "ui.noteAgree", "ui.noteSeen",
-    "ui.pause", "ui.playingNow", "ui.playlists", "ui.recentAdds", "ui.removeKeptFilters", "ui.removeSetup", "ui.resolveChannel", "ui.status", "ui.syncedChoices",
-    "ui.withdraw"])
+    "ui.pause", "ui.playingNow", "ui.playlists", "ui.recentAdds", "ui.removeKeptFilters", "ui.removeSetup", "ui.resolveChannel", "ui.skip", "ui.status",
+    "ui.syncedChoices", "ui.thisTab", "ui.withdraw"])
   expect(Object.keys(uiContract).some(kind => kind.startsWith("ui.feature"))).toBe(false)
 })
 

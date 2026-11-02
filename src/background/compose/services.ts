@@ -1,10 +1,13 @@
 import { createAccounts } from "../accounts/accounts"
 import { composeActions, type Actions } from "./actions"
 import { composeAnyTab } from "./any-tab"
-import { composePlayingNow } from "./playing-now"
+import { composePlayingNow, createPlayingSave } from "./playing-now"
+import { composeThisTab } from "./this-tab"
+import { tabAskContract, type TabAskMessages } from "../../shared/contracts/tab-actions"
+import { createRpcCaller } from "../../shared/rpc/rpc"
 import { createSiteI18n } from "../../shared/i18n"
 import type { NativeBrowser } from "../adapters/browser"
-import { runtimeTransport, timerDeadline, type RuntimePort } from "../adapters/runtime"
+import { runtimeTransport, tabTarget, timerDeadline, type RuntimePort } from "../adapters/runtime"
 import { createBrowserTabs } from "../adapters/tabs"
 import { createPlaylists } from "../playlists/playlists"
 import type { Registrar } from "../registrar/ports"
@@ -159,6 +162,10 @@ export function composeServices(deps: {
     rpc: { build, deadline: timerDeadline },
     playingNow: composePlayingNow({ native, tabs, registrar, actions, consented: deps.consented }),
     add: createPlayingSave({ actions, i18n: siteI18n, consented: deps.consented }),
+    thisVideo: composeThisTab({ native, tabs, registrar, flow: actions.flow, consented: deps.consented, async ask(tabId, kind, payload) {
+      const caller = createRpcCaller<TabAskMessages>(tabTarget(native.tabs, tabId), { build, deadline: timerDeadline, contract: tabAskContract })
+      try { return await caller.call(kind, payload) } finally { caller.dispose() }
+    } }),
     gather: gather.routes,
     woke: () => gather.woke("ui"),
     pages: {

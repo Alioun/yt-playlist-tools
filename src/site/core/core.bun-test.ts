@@ -1,6 +1,7 @@
 import { afterEach, expect, test } from "bun:test"
 import { isTabView, type TabView } from "../../shared/contracts/tab-view"
 import { tabHelloMessages, tabMessages, type TabHelloMessages, type TabMessages } from "../../shared/contracts/tabs"
+import { tabAskContract, type TabAskMessages } from "../../shared/contracts/tab-actions"
 import { createMemoryNetwork } from "../../shared/rpc/memory"
 import { createDirectPageChannel } from "../../shared/rpc/page-channel"
 import { createRpc, createRpcCaller } from "../../shared/rpc/rpc"
@@ -61,8 +62,10 @@ async function startTab(view: TabView) {
   cleanups.push(() => page.dispose(), () => core.dispose(), () => hello.dispose(), () => push.dispose(), () => stack.restore())
   await core.page.hello
   await settle()
+  const asks = createRpcCaller<TabAskMessages>(background, { build, deadline, contract: tabAskContract })
+  cleanups.push(() => asks.dispose())
   return {
-    core, stack,
+    core, stack, asks,
     async publish(next: TabView) { current = next; await push.call("bg.view", next); await settle() },
     button() {
       const found = document.querySelector("pp-overlay")?.shadowRoot?.querySelector("[data-slot=queue] button")
@@ -98,6 +101,15 @@ test("the assembled core runs the real queue-button and card-menu files once the
   const plain = new MouseEvent("contextmenu", { bubbles: true, composed: true, cancelable: true })
   first.heading.dispatchEvent(plain)
   expect(plain.defaultPrevented).toBe(false)
+})
+
+test("the background's bg.query reads auto-add's view of the playing video from the page, and nothing without one", async () => {
+  const tab = await startTab(queueView())
+  expect(await tab.asks.call("bg.query", { name: "auto-add" })).toEqual({ kind: "answered", result: null })
+  const view = { video: "aaaaaaaaaaa" as never, title: "First video", state: { kind: "counting", goal: 50, watched: 20 } as const, watched: 20,
+    playlists: [{ pl: "PL_music" as never, pct: 50, outcome: "waiting" as const }], channel: null }
+  tab.core.thisVideo.publish(view)
+  expect(await tab.asks.call("bg.query", { name: "auto-add" })).toEqual({ kind: "answered", result: view })
 })
 
 test("a feature file whose feature isn't built records itself and draws nothing", async () => {

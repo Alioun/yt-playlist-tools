@@ -12,7 +12,8 @@ import type { Dispose, Scope } from "../../core/scope"
 import type { SiteHealth } from "../../core/health"
 import type { Feedback } from "../../kit/feedback"
 import type { ToastAction } from "../../kit/toaster/types"
-import { autoAddState, type AutoAddState } from "./state"
+import type { ThisVideo } from "../../../shared/contracts/this-video"
+import { autoAddState, thisVideo, type AutoAddState } from "./state"
 import {
   createTracker, evaluateGoals, progress, recordOutcome, recordReading, rememberEarlier, updateTracker,
   type DestinationOutcome, type PlaybackFacts, type Reading, type RememberedProgress, type Tracker, type TrackerSettings
@@ -28,6 +29,8 @@ export type AutoAddServices = {
   readonly clock: { now(): number }
   /** The watch-page button and the popup read this playback's state (YT-AA-38). */
   readonly status?: (state: AutoAddState) => void
+  /** This playback as the popup's This video and the watch-page button show it, or null with none (UI-POP-12, UI-YT-18). */
+  readonly thisVideo?: (view: ThisVideo | null) => void
   readonly log?: (message: string) => void
   /** Hears each playback auto-add can't measure, and the next one it can (HEALTH-11). */
   readonly health?: Pick<SiteHealth, "cantMeasure" | "measured">
@@ -133,7 +136,9 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
     }
   }
   function publish() {
-    context.status?.(autoAddState({ tracker: playback?.tracker ?? null, paused: current()?.paused === true, failures: playback?.failures ?? new Map() }))
+    const state = autoAddState({ tracker: playback?.tracker ?? null, paused: current()?.paused === true, failures: playback?.failures ?? new Map() })
+    context.status?.(state)
+    context.thisVideo?.(playback ? thisVideo({ tracker: playback.tracker, state, title: playback.title ?? null }) : null)
   }
 
   function save(target: Playback, reason: "leave" | "pause" | "continuous" | "run") {
@@ -335,7 +340,7 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
   view.subscribe(onView)
   scope.on(document, "visibilitychange", () => { if (document.visibilityState === "hidden" && playback) save(playback, "pause") })
   scope.on(document.defaultView ?? document, "pagehide", () => leave())
-  scope.add(() => { stopNav(); stopNav = nothing; const stop = stopPlayer; stopPlayer = nothing; stop(); stopPrompt(); leave() })
+  scope.add(() => { stopNav(); stopNav = nothing; const stop = stopPlayer; stopPlayer = nothing; stop(); stopPrompt(); leave(); context.thisVideo?.(null) })
   publish()
 }
 

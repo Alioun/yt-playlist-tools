@@ -1,4 +1,4 @@
-import type { BuildId, DiagnosticVocabulary, Site } from "../../shared/contracts"
+import type { BuildId, DiagnosticVocabulary, JobOf, Site } from "../../shared/contracts"
 import { isTabView, type DueNotice, type TabView } from "../../shared/contracts/tab-view"
 import { noticeText, siteFeedbackText } from "../../shared/copy"
 import type { I18n } from "../../shared/i18n"
@@ -16,6 +16,7 @@ import { createPageLink, type PageLink } from "./page-link"
 import { createSiteHealth, type SiteHealth } from "./health"
 import { Pointer } from "./pointer"
 import { Scope, type ScopeMountPort } from "./scope"
+import { createThisVideoChannel, type ThisVideoChannel } from "./this-video"
 
 export type SiteItems = { readonly www: WwwItems; readonly music: MusicItems }
 type ItemsOptions = WwwItemsOptions & MusicItemsOptions
@@ -33,6 +34,8 @@ export type CoreServices<S extends Site> = {
   readonly notices: { wouldAct(feature: SiteFeatureId<S>): void }
   /** Breakage a feature sees itself, for the Monitor (HEALTH-01). */
   readonly health: SiteHealth
+  /** Auto-add's view of the playing video, which the watch-page button and the popup show (YT-AA-38). */
+  readonly thisVideo: ThisVideoChannel
 }
 export type SiteCore<S extends Site> = CoreServices<S> & {
   readonly site: S
@@ -112,8 +115,17 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
     notices.update({ due, generation: {}, text: noticeText({ due, site, unavailableActionNames: [] }, i18n),
       detailsLabel: labels.details, dismissLabel: labels.dismiss, details: () => notices.update(null), dismiss: ignore, presented: ignore })
   }
+  const thisVideo = createThisVideoChannel()
+  // The popup's This video names the channel, for its Allow and Deny, so the channel is read only when asked (YT-CF-15).
+  async function query(): Promise<TabAskMessages["bg.query"]["result"]> {
+    const view = thisVideo.read()
+    if (!view) return null
+    const answer = await page.run<JobOf<"channelOf">>({ job: { kind: "channelOf", videoId: view.video } })
+    const found = answer.ok && answer.data.channelId !== null ? answer.data : null
+    return { ...view, channel: found?.channelId ? { id: found.channelId, title: found.title ?? "", handle: found.handle ?? null } : null }
+  }
   const services: CoreServices<S> = {
-    document, page, items, keys, i18n, actions, health,
+    document, page, items, keys, i18n, actions, health, thisVideo,
     notice: { request },
     notices: { wouldAct(feature) {
       const due = link.view?.notices.find(notice => notice.features.some(id => id === feature))
@@ -140,7 +152,8 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
       "bg.toast"(payload) { asks?.toast(payload); return null },
       "bg.gatherToast"(payload) { asks?.gatherToast(payload); return null },
       async "bg.picker"(payload) { return { kind: asks ? await asks.picker(payload) : "failed" } },
-      async "bg.music"(payload) { return asks?.music ? asks.music(payload) : { kind: "failed", text: null } }
+      async "bg.music"(payload) { return asks?.music ? asks.music(payload) : { kind: "failed", text: null } },
+      "bg.query": () => query()
     }
   })
   let disposed = false

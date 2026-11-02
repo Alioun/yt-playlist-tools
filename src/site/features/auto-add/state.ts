@@ -1,17 +1,8 @@
+import type { AutoAddState, PlaylistProgress, ThisVideo } from "../../../shared/contracts/this-video"
 import type { Failure } from "../../../shared/rules/outcomes"
 import { progress, type Tracker } from "./tracker"
 
-/**
- * YT-AA-38's one state per playback, which the watch-page button and the popup's This video show. Percentages are
- * whole numbers. An ad changes nothing, because the tracker keeps its counts while one plays.
- */
-export type AutoAddState =
-  | { readonly kind: "not-tracked" | "paused" | "live" | "cant-measure" | "skipped" }
-  | { readonly kind: "counting"; readonly goal: number; readonly watched: number | null }
-  | { readonly kind: "partly"; readonly added: readonly string[]; readonly pending: readonly string[]; readonly goal: number }
-  | { readonly kind: "added" | "already-in"; readonly playlists: readonly string[] }
-  | { readonly kind: "failed"; readonly playlists: readonly string[]; readonly offline: boolean }
-
+export type { AutoAddState } from "../../../shared/contracts/this-video"
 export function autoAddState(input: {
   readonly tracker: Tracker | null
   readonly paused: boolean
@@ -47,4 +38,20 @@ export function autoAddState(input: {
   const added = eligible.map(playlist => playlist.pl).filter(id => settled.get(id) === "added")
   if (added.length) return { kind: "added", playlists: added }
   return done.length ? { kind: "already-in", playlists: done } : { kind: "not-tracked" }
+}
+
+/**
+ * This playback as the popup's This video and the watch-page button show it (UI-POP-12 to UI-POP-14, UI-YT-18):
+ * the state, the share watched, and each taking playlist's goal and outcome. The channel joins when a reader asks.
+ */
+export function thisVideo(input: { readonly tracker: Tracker; readonly state: AutoAddState; readonly title: string | null }): ThisVideo {
+  const { tracker, state } = input
+  const settled = new Map<string, PlaylistProgress["outcome"]>()
+  for (const run of tracker.runs) if (run.kind === "settled") settled.set(run.playlist, run.outcome)
+  const playlists = tracker.settings.playlists.filter(playlist => playlist.takes === "both" || playlist.takes === tracker.kind).map((playlist): PlaylistProgress => ({
+    pl: playlist.pl as PlaylistProgress["pl"], pct: playlist.pct ?? tracker.settings.defaultPct,
+    outcome: settled.get(playlist.pl) ?? (tracker.settings.skipped.includes(playlist.pl) ? "skipped" : "waiting")
+  }))
+  const watched = progress(tracker).percentage
+  return { video: tracker.video, title: input.title, state, watched: watched === null ? null : Math.min(100, Math.floor(watched)), playlists, channel: null }
 }
