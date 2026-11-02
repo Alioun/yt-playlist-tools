@@ -119,19 +119,23 @@ function extensionPage(directory: string, html: string, size: (file: string) => 
   const assets = htmlAssets(directory, html)
   const entries = [...htmlScriptEntries(directory, html)]
   const initial = closure(directory, assets.scripts)
-  const lazy = new Map<string, Set<string>>()
+  const importers = new Map<string, string[]>()
   const queue = [...initial]
   const visited = new Set<string>()
   for (let file = queue.shift(); file !== undefined; file = queue.shift()) {
     if (visited.has(file)) continue
     visited.add(file)
     for (const target of chunkGraph(directory, file).dynamic) {
-      if (lazy.has(target) || initial.has(target)) continue
-      const files = new Set([...closure(directory, [target])].filter(item => !initial.has(item)))
-      lazy.set(target, files)
-      queue.push(...files)
+      if (initial.has(target)) continue
+      importers.set(target, [...importers.get(target) ?? [], file])
+      queue.push(...closure(directory, [target]))
     }
   }
+  // A lazy chunk weighs what it adds: when its import() runs, the importing chunk's static imports are loaded already.
+  const lazy = new Map([...importers].map(([target, from]) => {
+    const loaded = from.map(file => closure(directory, [file])).reduce((shared, next) => new Set([...shared].filter(item => next.has(item))))
+    return [target, new Set([...closure(directory, [target])].filter(item => !initial.has(item) && !loaded.has(item)))] as const
+  }))
   const sum = (files: Iterable<string>) => [...files].reduce((total, file) => total + size(file), 0)
   const names = new Map<string, number>()
   const lazyRows = [...lazy].map(([target, files]) => {

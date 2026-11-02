@@ -97,6 +97,19 @@ describe("check:budget", () => {
     expect(row(result, "popup/lazy/MusicTab")!.kb).toBeCloseTo(2, 1)
   })
 
+  test("weighs a lazy chunk opened from another lazy chunk by what it adds to the code its importers loaded", async () => {
+    const result = checkBudget([await build("chrome", { files: {
+      "chunks/options-EEEEEEEE.js": `import(\`./YouTube-FFFFFFFF.js\`);import(\`./Music-JJJJJJJJ.js\`);${weighing(3)}`,
+      "chunks/YouTube-FFFFFFFF.js": `import{a}from"./section-KKKKKKKK.js";import{b}from"./youtube-only-MMMMMMMM.js";import(\`./Picker-LLLLLLLL.js\`);${weighing(1)}`,
+      "chunks/Music-JJJJJJJJ.js": `import{a}from"./section-KKKKKKKK.js";import(\`./Picker-LLLLLLLL.js\`);${weighing(1.5)}`,
+      "chunks/section-KKKKKKKK.js": weighing(4),
+      "chunks/youtube-only-MMMMMMMM.js": weighing(2.5),
+      "chunks/Picker-LLLLLLLL.js": `import{a}from"./section-KKKKKKKK.js";import{b}from"./youtube-only-MMMMMMMM.js";${weighing(0.75)}`
+    } })], budget)
+    expect(row(result, "settings/lazy/YouTube")!.kb).toBeCloseTo(7.5, 0)
+    expect(row(result, "settings/lazy/Picker")!.kb).toBeCloseTo(0.75 + 2.5, 0)
+  })
+
   test("fails a piece over its budget in either build, naming the browser and the row", async () => {
     const over = { files: { "feature-card-menu.js": weighing(1.4) } }
     const result = checkBudget([await build("chrome"), await build("firefox", over)], budget)
