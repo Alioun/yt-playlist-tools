@@ -3,6 +3,7 @@ import { executeDeviceSetting } from "../store/device-setting"
 import { createPageReceiver, type PageReceiverPorts } from "./ui-pages"
 import type { SessionChange, SessionRead } from "../store/session-memory"
 import type { UiRequester } from "../adapters/ui-requester"
+import type { SyncJoinPreparation, SyncJoinResult } from "../store/sync-join-execution"
 
 const acct = "AAAAAAAAAAAAAAAA" as never, other = "BBBBBBBBBBBBBBBB"
 const memory = (paused: boolean) => ({ kind: "memory", revision: { reset: 0, accounts: new Map() }, sequence: 1, memory: { paused } }) as unknown as SessionRead
@@ -18,6 +19,8 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
   const held: unknown[] = [{ kind: "account-removal", selection: removalJob, occurrence: 1, record: { acct }, original: { v: 1, at: 1 }, recoverability: "exact-removal" },
     { kind: "sync-reset", selection: syncJob, record: {}, resume: "explicit-recovery" }, { kind: "unsupported", operation: "legacy", reason: "invalid" }]
   let paused = false
+  const sync = { preparation: { kind: "automatic", review: { kind: "sync-join-review" }, reason: "empty-copy" } as SyncJoinPreparation, calls: [] as string[], cancelled: 0, started: 0,
+    result: { kind: "committed", historyId: "h", replication: "pending", mutations: [] } as SyncJoinResult }
   const ports: PageReceiverPorts = {
     owner: {
       readSession: async () => memory(paused),
@@ -45,7 +48,12 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
       async readWithdrawnWork() {
         return held.length ? { kind: "held", review: { kind: "withdrawn-work-review" }, consent: null, work: held } as never : { kind: "none" }
       },
-      async recoverWithdrawnWork(_origin, input) { recovered.push(input.job); held.splice(0, 1); return { kind: "recovered" } as never }
+      async recoverWithdrawnWork(_origin, input) { recovered.push(input.job); held.splice(0, 1); return { kind: "recovered" } as never },
+      beginSyncJoin() { sync.calls.push("begin"); return { result: Promise.resolve(sync.preparation), cancel() { sync.cancelled++ } } },
+      async applySyncJoin(_origin, input) { sync.calls.push(input.kind === "choice" ? `apply:${input.choice}` : "apply:automatic"); return sync.result },
+      async cancelSyncJoin() { sync.calls.push("cancel"); return { kind: "cancelled" } },
+      async resumeSyncJoin() { sync.calls.push("resume"); return sync.result },
+      async startSync() { sync.started++ }
     },
     readAccess: async () => ({ www: true, music: false, browserMenu: false }),
     withdraw: async () => ({ kind: "withdrawn" }) as never,
@@ -56,7 +64,7 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
     ...overrides
   }
   const context = (incognito = false, page = "popup", principal = "p") => ({ ui: ui(incognito, page, principal), current: async () => ui(incognito, page, principal) })
-  return { handlers: createPageReceiver(ports), changes, filters, removed, marked, agreements, acknowledged, discarded, recovered, removalJob, context }
+  return { handlers: createPageReceiver(ports), changes, filters, removed, marked, agreements, acknowledged, discarded, recovered, removalJob, context, sync }
 }
 
 test("status answers Pause, the popup's tab and its feature health", async () => {
@@ -89,6 +97,44 @@ test("Privacy & data lists the work withdrawal paused, and Continue resumes only
     { id: "1", job: "removal", acct }, { id: "2", job: "sync", acct: null }] })
   expect(await handlers["ui.pausedWork"]({ action: "continue", id: "1" }, context(false, "settings"))).toEqual({ kind: "continued", jobs: [{ id: "1", job: "sync", acct: null }] })
   expect(recovered).toEqual([removalJob])
+})
+
+test("the sync switch joins at once when nothing needs choosing, starts syncing, and switches off (SYNC-08, SYNC-19)", async () => {
+  const { handlers, context, sync } = receiver()
+  expect(await handlers["ui.sync"]({ action: "join" }, context(false, "popup"))).toEqual({ kind: "unavailable", reason: "operation" })
+  expect(await handlers["ui.sync"]({ action: "join" }, context(true, "settings")), "a private window may switch sync (SYNC-25)").toEqual({ kind: "on" })
+  expect(sync.calls).toEqual(["begin", "apply:automatic"])
+  expect(sync.started).toBe(1)
+  expect(await handlers["ui.sync"]({ action: "off" }, context(false, "settings"))).toEqual({ kind: "off" })
+  expect(sync.calls.at(-1)).toBe("cancel")
+})
+
+test("the join question comes back as a token only the page that asked can answer, and Cancel leaves sync off (UI-SET-13)", async () => {
+  const { handlers, context, sync } = receiver()
+  sync.preparation = { kind: "choice-required", review: { kind: "sync-join-review" }, reason: "independent-settings", defaultChoice: "use-synced" }
+  const asked = await handlers["ui.sync"]({ action: "join" }, context(false, "settings", "page-a"))
+  if (asked.kind !== "choose") throw Error(`Expected the join question, got ${JSON.stringify(asked)}`)
+  expect(await handlers["ui.sync"]({ action: "choose", token: asked.token, choice: "use-synced" }, context(false, "settings", "page-b"))).toEqual({ kind: "unavailable", reason: "operation" })
+  const again = await handlers["ui.sync"]({ action: "join" }, context(false, "settings", "page-a"))
+  if (again.kind !== "choose") throw Error("Expected the question again")
+  expect(await handlers["ui.sync"]({ action: "choose", token: again.token, choice: "use-this-browser" }, context(false, "settings", "page-a"))).toEqual({ kind: "on" })
+  expect(sync.calls).toEqual(["begin", "begin", "apply:use-this-browser"])
+  const third = await handlers["ui.sync"]({ action: "join" }, context(false, "settings", "page-a"))
+  if (third.kind !== "choose") throw Error("Expected the question a third time")
+  expect(await handlers["ui.sync"]({ action: "cancel", token: third.token }, context(false, "settings", "page-a"))).toEqual({ kind: "off" })
+  expect(sync.cancelled).toBe(1)
+  expect(await handlers["ui.sync"]({ action: "choose", token: third.token, choice: "use-synced" }, context(false, "settings", "page-a")), "a cancelled question can't be answered").toEqual({ kind: "unavailable", reason: "operation" })
+})
+
+test("a join that doesn't fit names what takes the most room, and an interrupted join finishes on the next switch-on (SYNC-09)", async () => {
+  const { handlers, context, sync } = receiver()
+  sync.preparation = { kind: "refused", reason: "sync-full", quota: { exceeded: ["bytes"], bytes: 99_000, items: 40, largest: { kind: "filter", bytes: 40_000, items: 5 } } }
+  expect(await handlers["ui.sync"]({ action: "join" }, context(false, "settings"))).toEqual({ kind: "refused", reason: "sync-full", largest: { kind: "filter", bytes: 40_000 } })
+  sync.preparation = { kind: "unavailable", reason: "stale" }
+  expect(await handlers["ui.sync"]({ action: "join" }, context(false, "settings"))).toEqual({ kind: "refused", reason: "changed" })
+  sync.preparation = { kind: "unavailable", reason: "pending-join" }
+  expect(await handlers["ui.sync"]({ action: "join" }, context(false, "settings"))).toEqual({ kind: "on" })
+  expect(sync.calls.at(-1)).toBe("resume")
 })
 
 test("Pause writes session memory and answers the committed state; a private window can't pause", async () => {

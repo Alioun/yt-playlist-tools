@@ -14,6 +14,8 @@ export type FirstRunReceiverPorts = {
   readonly owner: FirstRunCanonicalOwner
   readonly readAccess: () => Promise<AgreementAccess | undefined>
   readonly lookup: Parameters<typeof beginSyncedChoicesLookup>[0]
+  /** Starts listening and pushing once Agree joins sync; the store starts sync only at its own start (SYNC-06). */
+  readonly startSync?: () => Promise<void>
 }
 
 export function createFirstRunReceiver(ports: FirstRunReceiverPorts) {
@@ -70,6 +72,7 @@ export function createFirstRunReceiver(ports: FirstRunReceiverPorts) {
               : { kind: "first-run", selected: change.selected, syncOn: false },
             access: Promise.resolve(access)
           })
+          if (result.kind === "joined") void ports.startSync?.().catch(() => {})
           return active ? { kind: "agreement", outcome: projectAgreement(change, result, access) } : refusal("unavailable")
         } catch { return refusal("rejected") }
       },

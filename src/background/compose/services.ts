@@ -149,6 +149,7 @@ export function composeServices(deps: {
     services: { kind: "ready", tabs, playlists },
     firstRun: {
       readAccess,
+      startSync: () => owner.startSync(),
       lookup: {
         sync: { get: () => native.storage.sync.get(null), subscribe(changed) {
           const listener = () => changed()

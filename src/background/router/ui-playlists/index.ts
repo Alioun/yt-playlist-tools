@@ -36,7 +36,7 @@ export type UiRouterPorts = {
   readonly native: UiRequesterPorts
   readonly owner: Owner
   readonly services: Services
-  readonly firstRun: Pick<FirstRunReceiverPorts, "lookup" | "readAccess">
+  readonly firstRun: Pick<FirstRunReceiverPorts, "lookup" | "readAccess" | "startSync">
   readonly transport: Transport<NativeSender>
   readonly rpc: Omit<RpcOptions<UiMessages>, "contract">
   /** Reads the popup's Playing now from the YouTube Music tab it picks (YM-POP-10, YM-POP-11). */
@@ -368,6 +368,7 @@ export function createUiRouter(ports: UiRouterPorts) {
       "ui.claimSeen": (payload, context) => page("ui.claimSeen", payload, context),
       "ui.discardUnclaimed": (payload, context) => page("ui.discardUnclaimed", payload, context),
       "ui.pausedWork": (payload, context) => page("ui.pausedWork", payload, context),
+      "ui.sync": (payload, context) => page("ui.sync", payload, context),
       async "ui.playingNow"(_payload, context) {
         const ui = requireUi(context)
         if (!active || !ports.playingNow) return { kind: "unavailable" }

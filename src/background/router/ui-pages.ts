@@ -1,4 +1,5 @@
-import { isRecentEntry, type DeviceSettingAnswer, type DeviceSettingChange, type FilterSettingAnswer, type PageMessages, type RecentEntry, type UiDiagnostics, type UiFeatureHealth, type UiTabFacts } from "../../shared/contracts/ui-pages"
+import { isRecentEntry, type DeviceSettingAnswer, type DeviceSettingChange, type FilterSettingAnswer, type PageMessages, type RecentEntry, type UiDiagnostics, type UiFeatureHealth, type UiSync, type UiTabFacts } from "../../shared/contracts/ui-pages"
+import type { SyncJoinOperation, SyncJoinPreparation, SyncJoinResult, SyncJoinReview, SyncJoinSide } from "../store/sync-join-execution"
 import type { FilterChannelChange, KeptFiltersResult, LocalFilterChange, LocalFilterWriteResult } from "../store/local-filter-writer"
 import type { RemovalConfirmation, RemovalPreparation, RemovalResult } from "../store/account-removal-execution"
 import type { SettingsImportConfirmation, SettingsImportPreparation, SettingsImportResult } from "../store/settings-import-execution"
@@ -33,6 +34,23 @@ function pausedJobs(work: readonly HeldWorkView[]): { readonly job: UiPausedJob;
   })
 }
 
+// A join that read changed storage, an incomplete copy or a reset history can simply be tried again (SYNC-08, SYNC-13).
+const changedJoin = new Set(["stale", "changed-generation", "incomplete", "ambiguous-history", "reset", "inventory"])
+function syncAnswer(result: Exclude<SyncJoinPreparation, { kind: "automatic" | "choice-required" }> | SyncJoinResult): UiSync {
+  switch (result.kind) {
+    case "committed": return { kind: "on" }
+    case "cancelled": return { kind: "off" }
+    case "unconfirmed": return { kind: "refused", reason: "unconfirmed" }
+    case "failed": return { kind: "refused", reason: "failed" }
+    case "unavailable": return { kind: "refused", reason: changedJoin.has(result.reason) ? "changed" : "failed" }
+    case "refused": {
+      if (result.reason !== "sync-full") return { kind: "refused", reason: result.reason === "update-needed" ? "update-needed" : "failed" }
+      const largest = result.quota?.largest
+      return { kind: "refused", reason: "sync-full", largest: largest && (largest.kind === "settings" || largest.kind === "setup" || largest.kind === "filter") ? { kind: largest.kind, bytes: largest.bytes } : null }
+    }
+  }
+}
+
 type UiOrigin = { readonly kind: "ui"; readonly windowId: number; readonly incognito: boolean }
 export type PageStatusSource = (ui: UiRequester) => Promise<{ readonly tab: UiTabFacts; readonly health: readonly UiFeatureHealth[] } | undefined>
 export type PageReceiverPorts = {
@@ -56,6 +74,12 @@ export type PageReceiverPorts = {
     discardUnclaimed(origin: UiOrigin): Promise<UnclaimedDiscard>
     readWithdrawnWork(origin: UiOrigin): Promise<HeldWorkRead>
     recoverWithdrawnWork(origin: UiOrigin, input: { readonly review: WithdrawnWorkReview; readonly job: HeldJobSelection }): Promise<ExactRecoveryResult>
+    beginSyncJoin(origin: UiOrigin): SyncJoinOperation
+    applySyncJoin(origin: UiOrigin, input: { readonly kind: "automatic"; readonly review: SyncJoinReview } | { readonly kind: "choice"; readonly review: SyncJoinReview; readonly choice: SyncJoinSide }): Promise<SyncJoinResult>
+    cancelSyncJoin(origin: UiOrigin): Promise<SyncJoinResult>
+    resumeSyncJoin(origin: UiOrigin): Promise<SyncJoinResult>
+    /** Starts listening and pushing once a join commits; the store starts sync only at its own start (SYNC-06). */
+    startSync(): Promise<void>
   }
   readonly readAccess: () => Promise<AgreementAccess | undefined>
   readonly withdraw: (origin: SettingsPageOrigin, expected: { readonly v: number; readonly at: number }) => Promise<WithdrawalResult>
@@ -96,6 +120,23 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
     const token = crypto.randomUUID()
     store.set(token, { principal, confirmation })
     return token
+  }
+  // The join question waits on the page that asked it; a page that never answers lets its review go once 32 newer ones arrive.
+  const joins = new Map<string, { readonly principal: string; readonly review: SyncJoinReview; readonly operation: SyncJoinOperation }>()
+  function rememberJoin(principal: string, review: SyncJoinReview, operation: SyncJoinOperation) {
+    if (joins.size >= 32) { const [oldest, entry] = joins.entries().next().value!; joins.delete(oldest); entry.operation.cancel() }
+    const token = crypto.randomUUID()
+    joins.set(token, { principal, review, operation })
+    return token
+  }
+  function takeJoin(token: string | null, principal: string) {
+    const saved = token === null ? undefined : joins.get(token)
+    if (token !== null) joins.delete(token)
+    return saved && saved.principal === principal ? saved : undefined
+  }
+  async function joined(result: SyncJoinResult): Promise<UiSync> {
+    if (result.kind === "committed") void ports.owner.startSync().catch(() => {})
+    return syncAnswer(result)
   }
   const settingsPage = (context: PageContext) => context.ui.ui.page === "settings"
   // A Continue resumes only the job the same page read, against the review it read (R167).
@@ -233,6 +274,7 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
         const result = await ports.owner.agree(origin, { review: read.review, displayedVersion: change.displayedVersion, access: Promise.resolve(access),
           choice: change.syncOn ? { kind: "upgrade-note", selected: change.selected, syncOn: true, join: { kind: "prepare" }, percentage: change.percentage }
             : { kind: "upgrade-note", selected: change.selected, syncOn: false, percentage: change.percentage } })
+        if (result.kind === "joined") void ports.owner.startSync().catch(() => {})
         return projectAgreement({ kind: "first-run-agree", displayedVersion: change.displayedVersion, attempt: change.attempt, selected: change.selected, syncOn: change.syncOn }, result, access)
       } catch { return refusal("rejected") }
     },
@@ -250,6 +292,32 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
       const kind = result.kind
       if (kind === "recovered" || kind === "key-settings-recovered" || kind === "feature-settings-recovered") return { kind: "continued", jobs }
       return { kind: "refused", reason: kind === "authorized-pending" || kind === "key-settings-pending" || kind === "feature-settings-pending" ? "unconfirmed" : "failed" }
+    },
+    // SYNC-25: the switch and the join question work from a private window too.
+    async "ui.sync"(payload, context) {
+      if (!settingsPage(context)) return unavailable("operation")
+      const origin = context.ui.ui.origin, principal = context.ui.principal
+      switch (payload.action) {
+        case "join": {
+          const operation = ports.owner.beginSyncJoin(origin)
+          const prepared = await operation.result
+          if (prepared.kind === "automatic") return joined(await ports.owner.applySyncJoin(origin, { kind: "automatic", review: prepared.review }))
+          if (prepared.kind === "choice-required") return { kind: "choose", token: rememberJoin(principal, prepared.review, operation) }
+          // Switching on again is the explicit action an interrupted join waits for before it finishes.
+          if (prepared.kind === "unavailable" && prepared.reason === "pending-join") return joined(await ports.owner.resumeSyncJoin(origin))
+          return syncAnswer(prepared)
+        }
+        case "choose": {
+          const saved = takeJoin(payload.token, principal)
+          if (!saved) return unavailable("operation")
+          return joined(await ports.owner.applySyncJoin(origin, { kind: "choice", review: saved.review, choice: payload.choice }))
+        }
+        case "cancel": {
+          takeJoin(payload.token, principal)?.operation.cancel()
+          return syncAnswer(await ports.owner.cancelSyncJoin(origin))
+        }
+        case "off": return syncAnswer(await ports.owner.cancelSyncJoin(origin))
+      }
     },
     async "ui.claimSeen"({ acct }, context) {
       const origin = context.ui.ui.origin

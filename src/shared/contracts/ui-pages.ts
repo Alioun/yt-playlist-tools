@@ -93,6 +93,23 @@ export type UiImport =
   | { readonly kind: "refused"; readonly reason: "private" | "newer-format" | "invalid-file" | "failed" | "unavailable" }
   | UiUnavailable
 
+/**
+ * Settings sync's switch and its join question (SYNC-08, SYNC-19, UI-SET-12, UI-SET-13). `join` switches sync on, or
+ * opens the question a later history left waiting. A question comes back as a token that only this page can answer.
+ */
+export type SyncPayload =
+  | { readonly action: "join" | "off" }
+  | { readonly action: "choose"; readonly token: string; readonly choice: "use-synced" | "use-this-browser" }
+  | { readonly action: "cancel"; readonly token: string | null }
+/** What takes the most room when the settings don't fit the synced copy (SYNC-09, SYNC-14). */
+export type SyncLargest = { readonly kind: "settings" | "setup" | "filter"; readonly bytes: number }
+export type UiSync =
+  | { readonly kind: "on" | "off" }
+  | { readonly kind: "choose"; readonly token: string }
+  | { readonly kind: "refused"; readonly reason: "sync-full"; readonly largest: SyncLargest | null }
+  | { readonly kind: "refused"; readonly reason: "update-needed" | "changed" | "unconfirmed" | "failed" }
+  | UiUnavailable
+
 export type NotePercentage = "keep" | "immediate" | "half"
 export type NoteAgreeChange = {
   readonly displayedVersion: number; readonly attempt: number; readonly selected: readonly import("./first-run").FirstRunFeature[]
@@ -122,6 +139,7 @@ export type PageMessages = {
   readonly "ui.claimSeen": { readonly payload: WindowClaim & { readonly acct: AccountKey }; readonly result: { readonly kind: "noted" | "unavailable" } }
   /** Discard deletes the unclaimed 1.x setup (ACC-33, DATA-42). */
   readonly "ui.discardUnclaimed": { readonly payload: WindowClaim; readonly result: UiDiscard }
+  readonly "ui.sync": { readonly payload: WindowClaim & SyncPayload; readonly result: UiSync }
   /** Work that withdrawal paused, which only an explicit Continue resumes (R167, UI-SET-16). */
   readonly "ui.pausedWork": { readonly payload: WindowClaim & ({ readonly action: "read" } | { readonly action: "continue"; readonly id: string }); readonly result: UiPausedWork }
 }
@@ -239,6 +257,12 @@ export const pageContract: RpcContract<PageMessages> = {
     result: (v): v is UiPausedWork => objectShape(v, { kind: oneOf("work", "continued"), jobs: list(job => objectShape(job, { id: token,
       job: oneOf("migration", "removal", "sync", "settings", "import"), acct: a => a === null || isAccountKey(a) }), 50) })
       || refusal("failed", "unconfirmed", "unavailable", "private")(v), timeoutMs: 60_000 },
+  "ui.sync": { payload: (v): v is PageMessages["ui.sync"]["payload"] => objectShape(v, { action: oneOf("join", "off") }, windowClaim)
+      || objectShape(v, { action: x => x === "choose", token, choice: oneOf("use-synced", "use-this-browser") }, windowClaim)
+      || objectShape(v, { action: x => x === "cancel", token: x => x === null || token(x) }, windowClaim),
+    result: (v): v is UiSync => isUiUnavailable(v) || objectShape(v, { kind: oneOf("on", "off") }) || objectShape(v, { kind: x => x === "choose", token })
+      || objectShape(v, { kind: x => x === "refused", reason: x => x === "sync-full", largest: x => x === null || objectShape(x, { kind: oneOf("settings", "setup", "filter"), bytes: natural }) })
+      || refusal("update-needed", "changed", "unconfirmed", "failed")(v), timeoutMs: 45_000 },
   "ui.discardUnclaimed": { payload: (v): v is PageMessages["ui.discardUnclaimed"]["payload"] => objectShape(v, {}, windowClaim),
     result: (v): v is UiDiscard => objectShape(v, { kind: oneOf("discarded", "absent") }) || refusal("private", "failed", "unavailable")(v), timeoutMs: 12_000 }
 }
