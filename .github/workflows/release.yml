@@ -89,6 +89,12 @@ jobs:
           [ "$CHANNEL" = beta ] && firefox=.output/firefox-mv3-beta
           bun scripts/check-manifest.ts .output/chrome-mv3 "$firefox"
 
+      - name: Assert bundle sizes are within budget
+        run: |
+          firefox=.output/firefox-mv3
+          [ "$CHANNEL" = beta ] && firefox=.output/firefox-mv3-beta
+          bun scripts/check-budget.ts .output/chrome-mv3 "$firefox"
+
       - name: Verify the AMO sources zip actually rebuilds
         run: |
           set -euo pipefail

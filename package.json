@@ -22,6 +22,7 @@
     "test:fixtures": "bun run scripts/run-fixture-gates.ts",
     "check:manifest": "bun scripts/check-manifest.ts .output/chrome-mv3 .output/firefox-mv3",
     "check:utf8": "bun scripts/check-utf8.ts .output/chrome-mv3 .output/firefox-mv3",
+    "check:budget": "bun scripts/check-budget.ts .output/chrome-mv3 .output/firefox-mv3",
     "build:pilot": "wxt build tools/fixtures/svelte-pilot",
     "build:pilot:firefox": "wxt build tools/fixtures/svelte-pilot -b firefox",
     "typecheck:pilot": "node tools/fixtures/svelte-pilot/typecheck.mjs",

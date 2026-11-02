@@ -95,6 +95,10 @@ jobs:
       - name: Assert manifests are correct
         run: bun run check:manifest
 
+      # Writes the size table to the job summary (Q-PERF-39).
+      - name: Assert bundle sizes are within budget
+        run: bun run check:budget
+
       # Chrome won't load a content script that isn't valid UTF-8.
       - name: Assert built text files are valid UTF-8
         run: bun run check:utf8

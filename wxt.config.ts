@@ -38,6 +38,7 @@ export default defineConfig({
     define: { "import.meta.env.PP_BUILD": JSON.stringify(`${packageJson.version}-${mode}`) },
     // An inline PostCSS config stops Vite from walking up into a parent checkout's config.
     css: { postcss: {} },
+    build: { sourcemap: process.env.PP_SOURCEMAP === "1" },
     resolve: { alias: { $kit: kitIndex } }
   }),
   manifest: ({ browser, mode }) => perchlingManifest({ browser, mode })
