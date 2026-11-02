@@ -5,7 +5,7 @@ import { playlistUiContract } from "./ui-playlists"
 import { pageContract } from "./ui-pages"
 
 test("one composed UI catalogue preserves first-run entries by identity", () => {
-  expect(Object.keys(uiContract).sort()).toEqual(["ui.accountInView", "ui.add", "ui.change", "ui.clearAll", "ui.create", "ui.device", "ui.exportSettings", "ui.filter",
+  expect(Object.keys(uiContract).sort()).toEqual(["ui.accountInView", "ui.add", "ui.change", "ui.clearAll", "ui.create", "ui.device", "ui.exportSettings", "ui.filter", "ui.gather", "ui.gatherUndo", "ui.gathers",
     "ui.importSettings", "ui.noteAgree", "ui.noteSeen", "ui.pause", "ui.playingNow", "ui.playlists", "ui.recentAdds", "ui.removeSetup",
     "ui.resolveChannel", "ui.status", "ui.syncedChoices", "ui.withdraw"])
   expect(uiContract["ui.status"]).toBe(pageContract["ui.status"])

@@ -19,6 +19,7 @@ import type { Creation, Playlists, ListOpen } from "../../playlists/playlists"
 import type { Requester, Tabs } from "../../tabs/ports"
 import type { PlayingNow } from "../../../shared/contracts/playing-now"
 import type { UiAddAnswer, UiAddPayload } from "../../../shared/contracts/ui-add"
+import type { UiGatherAnswer, UiGatherMessages, UiGathers } from "../../../shared/contracts/ui-gather"
 import type { createLocalFilterWriter } from "../../store/local-filter-writer"
 import { createFirstRunReceiver, type FirstRunReceiverPorts, type FirstRunCanonicalOwner } from "../first-run"
 import { listing, listRefresh, creationAnswer, jobOutcome, cacheStatus } from "./wire"
@@ -42,6 +43,15 @@ export type UiRouterPorts = {
   readonly playingNow?: (requester: Requester) => Promise<PlayingNow>
   /** Playing now's Save, in the tab the row read (ARC-ACC-68). */
   readonly add?: (requester: Requester, payload: UiAddPayload) => Promise<UiAddAnswer>
+  /** Gather tabs' calls (ARC-MSG-16), for the authenticated requester's window. */
+  readonly gather?: GatherRoutes
+  /** Every UI message wakes automatic gathering's unvisited check, which runs at most once a minute (ARC-MSG-16). */
+  readonly woke?: () => void
+}
+export type GatherRoutes = {
+  gather(requester: Requester, payload: UiGatherMessages["ui.gather"]["payload"]): Promise<UiGatherAnswer>
+  undo(requester: Requester, payload: UiGatherMessages["ui.gatherUndo"]["payload"]): Promise<UiGatherAnswer>
+  gathers(requester: Requester): Promise<UiGathers>
 }
 type ClearContext = Parameters<ReturnType<typeof createClearAllReceiver>["receiver"]["handlers"]["ui.clearAll"]>[1]
 type Context = { readonly kind: "clear-all"; readonly ui: ClearContext } | { readonly kind: "shared-settings"; readonly ui: UiContext; readonly principal: string | undefined; readonly current: () => Promise<boolean> } | { readonly kind: "first-run"; readonly ui: UiContext } | { readonly kind: "playlists"; readonly ui: UiRequester; readonly current: () => Promise<UiRequester | undefined> }
@@ -353,6 +363,24 @@ export function createUiRouter(ports: UiRouterPorts) {
         const answer = await ports.add(ui.requester, payload)
         return active ? answer : { kind: "unavailable" }
       },
+      async "ui.gather"(payload, context) {
+        const ui = requireUi(context)
+        if (!active || !ports.gather) return { kind: "unavailable" }
+        const answer = await ports.gather.gather(ui.requester, payload)
+        return active ? answer : { kind: "unavailable" }
+      },
+      async "ui.gatherUndo"(payload, context) {
+        const ui = requireUi(context)
+        if (!active || !ports.gather) return { kind: "unavailable" }
+        const answer = await ports.gather.undo(ui.requester, payload)
+        return active ? answer : { kind: "unavailable" }
+      },
+      async "ui.gathers"(_payload, context) {
+        const ui = requireUi(context)
+        if (!active || !ports.gather) return { kind: "unavailable" }
+        const answer = await ports.gather.gathers(ui.requester)
+        return active ? answer : { kind: "unavailable" }
+      },
       async "ui.resolveChannel"(payload, context) {
         const ui = requireUi(context), held = await gate(ui)
         if (held) return held
@@ -371,6 +399,7 @@ export function createUiRouter(ports: UiRouterPorts) {
           v: v => v === CONTRACT_VERSION, build: v => v === ports.rpc.build, id: v => typeof v === "string" && v.length > 0,
           kind: v => typeof v === "string" && Object.hasOwn(uiContract, v), payload: () => true
         })) return undefined
+        try { ports.woke?.() } catch {}
         const key = JSON.stringify([sender.id, sender.url, sender.documentId ?? null, sender.tab?.id ?? null, message.id])
         const text = JSON.stringify(message), previous = requests.get(key)
         if (previous) return previous.kind === "pending" && previous.text === text ? previous.answer : Promise.resolve(undefined)

@@ -4298,6 +4298,31 @@
   "gather_broken_playlist": {
     "message": "Gathering into a playlist isn't working right now because YouTube changed something."
   },
+  "gather_unavailable": {
+    "message": "Couldn't read this window's tabs, so nothing was gathered."
+  },
+  "gather_undoFailed": {
+    "message": "Couldn't undo."
+  },
+  "gather_reopened_one": {
+    "message": "Reopened $COUNT$ tab.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_reopened_other": {
+    "message": "Reopened $COUNT$ tabs.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "gather_button": {
+    "message": "Gather"
+  },
   "firstRun_pick_musicAccess_firefox": {
     "message": "Firefox will ask for access to music.youtube.com when you agree."
   },

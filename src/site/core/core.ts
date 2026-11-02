@@ -127,6 +127,7 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
     },
     handlers: {
       "bg.toast"(payload) { asks?.toast(payload); return null },
+      "bg.gatherToast"(payload) { asks?.gatherToast(payload); return null },
       async "bg.picker"(payload) { return { kind: asks ? await asks.picker(payload) : "failed" } },
       async "bg.music"(payload) { return asks?.music ? asks.music(payload) : { kind: "failed", text: null } }
     }

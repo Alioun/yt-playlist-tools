@@ -9,6 +9,7 @@ import type { TabActions } from "./actions"
 
 export type TabAsks = {
   toast(payload: TabAskMessages["bg.toast"]["payload"]): void
+  gatherToast(payload: TabAskMessages["bg.gatherToast"]["payload"]): void
   picker(payload: TabAskMessages["bg.picker"]["payload"]): Promise<"opened" | "failed">
   /** Only YouTube Music's kit answers these. */
   music?(payload: TabAskMessages["bg.music"]["payload"]): Promise<TabAskMessages["bg.music"]["result"]>
@@ -45,6 +46,18 @@ export function tabAsks(options: {
       const content = explicitContent({ session, actions: options.actions, i18n: options.i18n, location: window.location }, payload.answer,
         payload.title ? { video: payload.title } : {}, { choose: () => { void picker({ ...payload, choose: true }) } })
       if (content) session.toaster.show(content)
+    },
+    // A gather's toast carries Undo at most. Undo answers with the toast's next line, or closes it once it worked (YT-GT-21).
+    gatherToast({ text, tone, auto, undo }) {
+      const session = options.feedback()
+      if (!session) return
+      const action = undo === null ? null : session.action("undo", async () => {
+        const answer = await options.actions.gatherUndo(undo)
+        if (answer === null) return null
+        return "kind" in answer ? { text: options.i18n.message("gather_undoFailed"), tone: "failure", auto: false, action: null }
+          : { text: answer.text, tone: answer.tone, auto: false, action: null }
+      })
+      session.toaster.show({ text, tone, auto, action })
     }
   }
 }

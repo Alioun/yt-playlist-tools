@@ -27,7 +27,11 @@ export function boot(native: NativeBrowser, platform: Platform): Background {
     void openUpgradeNote({ device: async () => (await native.storage.local.get("device")).device, mark: flag => state.owner.markUpgradeNote(flag),
       open: () => openNoteTab(native) }, browserStart).catch(() => {}).finally(() => { browserStart = false })
   }
-  native.runtime.onStartup.addListener(() => { browserStart = true; noteChecked = false; checkNote() })
+  // A browser start is also when automatic gathering looks for unvisited tabs, and the minute trigger 2 ignores begins (ARC-MOD-39).
+  native.runtime.onStartup.addListener(() => {
+    browserStart = true; noteChecked = false; checkNote()
+    void ready.then(() => services?.gather.woke("startup"))
+  })
   let services: Services | undefined
   const lifecycle = composeStore(native, platform, () => createClearAllTeardown({
     registrar: current.registrar, extLinks: [], scripting: current.scripting,
@@ -49,7 +53,7 @@ export function boot(native: NativeBrowser, platform: Platform): Background {
     const stops = [state.owner.subscribeView(refresh), state.owner.subscribe(refresh)]
     stopOwner = () => { for (const stop of stops.splice(0)) stop() }
     services = composeServices({
-      native, runtime: gate.runtime, build: platform.build, owner: state.owner, registrar: current.registrar, consented, menuClicksHeard,
+      native, runtime: gate.runtime, build: platform.build, browser: platform.browser, owner: state.owner, registrar: current.registrar, consented, menuClicksHeard,
       lifecycle: { ...lifecycle, async clearAll(origin, options) {
         const result = await lifecycle.clearAll(origin, options)
         if (lifecycle.state().kind === "active" && services === undefined) restart()

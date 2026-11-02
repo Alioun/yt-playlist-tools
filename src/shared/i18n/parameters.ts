@@ -679,6 +679,11 @@ export type MessageParameters = {
   "gather_broken_player": readonly []
   "gather_broken_queue": readonly []
   "gather_broken_playlist": readonly []
+  "gather_unavailable": readonly []
+  "gather_undoFailed": readonly []
+  "gather_reopened_one": readonly ["count"]
+  "gather_reopened_other": readonly ["count"]
+  "gather_button": readonly []
   "firstRun_pick_musicAccess_firefox": readonly []
   "note_title": readonly []
   "note_credentials": readonly []
@@ -1489,6 +1494,8 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "gather_missing": ["playlist"],
   "gather_full": ["playlist"],
   "gather_queueUnconfirmed": ["count"],
+  "gather_reopened_one": ["count"],
+  "gather_reopened_other": ["count"],
   "note_autoAdd_playlists_one": ["count"],
   "note_autoAdd_playlists_other": ["count"],
   "note_autoAdd_neverAuthorised_one": ["count"],

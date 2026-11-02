@@ -149,6 +149,24 @@ export const tabActionContract: RpcContract<TabActionMessages> = {
     destination: isSetupDestination, expected: isDestinationExpectation, playlist: nullable(isPlaylistId) }))(v), result: isDestinationAnswer, timeoutMs: 15_000 }
 }
 
+/**
+ * A gather toast's Undo, sent from the tab the gather saved from (UI-TOAST-17, YT-GT-21). The answer is the toast's next
+ * line, or null when Undo worked, which closes the toast.
+ */
+export type GatherToastLine = { readonly text: string; readonly tone: "confirmation" | "failure" }
+export type TabGatherMessages = {
+  "tab.gatherUndo": { payload: { readonly acct: AccountKey | null; readonly request: { readonly id: string } }; result: GatherToastLine | null }
+}
+const gatherId = (value: unknown) => typeof value === "string" && value.length > 0 && value.length <= 200
+const toastText = (value: unknown) => typeof value === "string" && value.length > 0 && value.length <= 2_000
+export function isGatherToastLine(value: unknown): value is GatherToastLine {
+  return objectShape(value, { text: toastText, tone: oneOf("confirmation", "failure") })
+}
+export const tabGatherContract: RpcContract<TabGatherMessages> = {
+  "tab.gatherUndo": { payload: (v): v is TabGatherMessages["tab.gatherUndo"]["payload"] => pinned(r => objectShape(r, { id: gatherId }))(v),
+    result: (v): v is GatherToastLine | null => v === null || isGatherToastLine(v), timeoutMs: 60_000 }
+}
+
 const position = (value: unknown) => typeof value === "number" && Number.isFinite(value) && value >= 0
 const part: Check = value => Array.isArray(value) && value.length === 2 && position(value[0]) && position(value[1]) && value[1] > value[0]
 export function isTabProgress(value: unknown): value is TabProgress {
@@ -172,6 +190,8 @@ export const tabProgressContract: RpcContract<TabProgressMessages> = {
 export type TabAskMessages = {
   "bg.toast": { payload: { readonly answer: TabAddReport; readonly video: VideoId; readonly title: string | null; readonly opener: FeatureId }; result: null }
   "bg.picker": { payload: { readonly video: VideoId; readonly title: string | null; readonly choose: boolean; readonly opener: FeatureId }; result: { readonly kind: "opened" | "failed" } }
+  /** A gather's result in the tab it saved from (UI-TOAST-17). An automatic gather's toast is one the user didn't ask for. */
+  "bg.gatherToast": { payload: GatherToastLine & { readonly auto: boolean; readonly undo: string | null }; result: null }
   /** A YouTube Music key from any tab: save or like the playing song here, as its Save or Like key would (YM-ANY-2, YM-ANY-3). */
   "bg.music": { payload: { readonly action: "save" | "like"; readonly feedback: boolean }; result: MusicAskAnswer }
 }
@@ -182,6 +202,8 @@ export const tabAskContract: RpcContract<TabAskMessages> = {
     result: (v): v is null => v === null, timeoutMs: 2_000 },
   "bg.picker": { payload: (v): v is TabAskMessages["bg.picker"]["payload"] => objectShape(v, { video: isVideoId, title: nullable(title), choose: bool, opener: isFeatureId }),
     result: (v): v is TabAskMessages["bg.picker"]["result"] => objectShape(v, { kind: oneOf("opened", "failed") }), timeoutMs: 8_000 },
+  "bg.gatherToast": { payload: (v): v is TabAskMessages["bg.gatherToast"]["payload"] => objectShape(v, { text: toastText, tone: oneOf("confirmation", "failure"), auto: bool,
+    undo: v => v === null || gatherId(v) }), result: (v): v is null => v === null, timeoutMs: 2_000 },
   "bg.music": { payload: (v): v is TabAskMessages["bg.music"]["payload"] => objectShape(v, { action: oneOf("save", "like"), feedback: bool }),
     result: (v): v is MusicAskAnswer => objectShape(v, { kind: oneOf("done", "failed"), text: nullable(title) }), timeoutMs: 30_000 }
 }

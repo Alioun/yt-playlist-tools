@@ -1,5 +1,5 @@
 import { isBuildId, type BuildId, type Site } from "../../shared/contracts/vocabulary"
-import { isTabPing, tabHelloMessages, tabJobMessages, tabMessages, tabPingMessages, type TabHelloMessages, type TabJobMessages, type TabMessages, type TabPingMessages, type TabPing, type TabViewScope } from "../../shared/contracts/tabs"
+import { isTabPing, tabHelloMessages, tabJobMessages, tabMessages, tabPingMessages, type TabHello, type TabHelloMessages, type TabJobMessages, type TabMessages, type TabPingMessages, type TabPing, type TabViewScope } from "../../shared/contracts/tabs"
 import type { Job, JobInvocation, JobResult } from "../../shared/contracts/jobs"
 import { createRpc, createRpcCaller, type Deadline, type RpcOutcome } from "../../shared/rpc/rpc"
 import { authenticateTab, runtimeTransport, tabTarget, type RuntimePort, type TabsPort } from "./runtime"
@@ -141,8 +141,9 @@ export function createBrowserTabs(browser: TabsBrowser, options: { readonly buil
       return { kind: "requester", req: { windowId, incognito, activeTabId: tab.tabId } }
     } catch { return { kind: "unavailable" } }
   }
-  // `onSeen` hears each tab the registry admitted, so Accounts can check its label and claim the unclaimed 1.x setup (ACC-30).
-  function bindHello<View extends TabViewScope>(tabs: Tabs, producer: TabViewProducer<View>, onSeen?: (context: TabSeen) => void): () => void {
+  // `onSeen` hears each tab the registry admitted, so Accounts can check its label and claim the unclaimed 1.x setup (ACC-30),
+  // and Gather tabs hears how the page started (ARC-MSG-15).
+  function bindHello<View extends TabViewScope>(tabs: Tabs, producer: TabViewProducer<View>, onSeen?: (context: TabSeen, hello: TabHello) => void): () => void {
     if (disposed) return () => {}
     const rpc = createRpc<TabHelloMessages<View>, NativeSender>(runtimeTransport(browser.runtime), { build, deadline, contract: tabHelloMessages(producer.isView) })
     let bound = true
@@ -153,7 +154,7 @@ export function createBrowserTabs(browser: TabsBrowser, options: { readonly buil
         if (disposed || !bound || current.kind !== "tab" || current.tab.site !== context.site || current.tab.windowId !== context.windowId || current.tab.incognito !== context.origin.incognito) return null
         const result = await tabs.seen(context.origin.tabId, hello, producer)
         if (result.kind !== "seen") return null
-        try { onSeen?.({ tab: { ...current.tab, site: context.site }, info: { site: hello.site, build: hello.build, ...hello.signedIn ? { signedIn: true, acct: hello.acct } : { signedIn: false, acct: null } } }) } catch {}
+        try { onSeen?.({ tab: { ...current.tab, site: context.site }, info: { site: hello.site, build: hello.build, ...hello.signedIn ? { signedIn: true, acct: hello.acct } : { signedIn: false, acct: null } } }, hello) } catch {}
         return result.view
       }
     } })

@@ -1,8 +1,9 @@
 import type { DestinationAnswer } from "../../shared/contracts/first-run"
 import type { BuildId, Privacy } from "../../shared/contracts/vocabulary"
 import {
-  tabActionContract, type TabActionMessages, type TabAddReport, type TabAddRequest, type TabCreated, type TabDestinationChange,
-  type TabPlaylists, type TabRemoveReport, type TabRemoveRequest, type TabUndoReport, type UndoHandle
+  tabActionContract, tabGatherContract, tabProgressContract, TITLE_LIMIT, type GatherToastLine, type TabActionMessages, type TabAddReport, type TabAddRequest, type TabCreated,
+  type TabDestinationChange, type TabGatherMessages, type TabPlaylists, type TabProgress, type TabProgressMessages, type TabRemoveReport, type TabRemoveRequest,
+  type TabUndoReport, type UndoHandle
 } from "../../shared/contracts/tab-actions"
 import type { AccountKey, VideoId } from "../../shared/model"
 import { createRpcCaller, type Deadline } from "../../shared/rpc/rpc"
@@ -14,6 +15,8 @@ export type TabActions = {
   add(request: TabAddRequest): Promise<TabAddReport | Unanswered>
   remove(request: TabRemoveRequest): Promise<TabRemoveReport | Unanswered>
   undo(handle: UndoHandle): Promise<TabUndoReport | Unanswered>
+  /** A gather toast's Undo: null once it worked, else the line the toast shows instead. */
+  gatherUndo(id: string): Promise<GatherToastLine | null | Unanswered>
   release(handle: UndoHandle): void
   /** Asks the background to inject `popovers.js` into this tab (ARC-MAN-16). */
   need(): Promise<boolean>
@@ -31,6 +34,7 @@ export type TabActions = {
   videoChanged(): void
   dispose(): void
 }
+type Messages = TabActionMessages & TabProgressMessages & TabGatherMessages
 
 /**
  * The tab's side of a user action (06 §6.8.2). Every request carries the account PageLink trusts, which the
@@ -42,7 +46,7 @@ export function createTabActions(options: {
   readonly deadline: Deadline
   account(): AccountKey | null | undefined
 }): TabActions {
-  const rpc = createRpcCaller<TabActionMessages>(options.transport, { build: options.build, deadline: options.deadline, contract: tabActionContract })
+  const rpc = createRpcCaller<Messages>(options.transport, { build: options.build, deadline: options.deadline, contract: { ...tabActionContract, ...tabProgressContract, ...tabGatherContract } })
   const unanswered: Unanswered = { kind: "unanswered" }
   async function call<K extends keyof TabActionMessages, F>(kind: K, request: TabActionMessages[K]["payload"] extends { request: infer R } ? R : never, fallback: F):
     Promise<TabActionMessages[K]["result"] | F> {
@@ -56,6 +60,7 @@ export function createTabActions(options: {
     add: request => call("tab.add", request, unanswered),
     remove: request => call("tab.remove", request, unanswered),
     undo: handle => call("tab.undo", handle, unanswered),
+    gatherUndo: id => call("tab.gatherUndo", { id }, unanswered),
     release(handle) { void rpc.call("tab.release", { handle }) },
     async need() {
       const answer = await rpc.call("tab.need", { popovers: true })

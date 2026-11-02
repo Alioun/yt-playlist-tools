@@ -12,7 +12,7 @@ import { createUiRouter } from "../router/ui-playlists"
 import { createPageStatus } from "./page-status"
 import { createToolbarBadge, type ToolbarBadge } from "./badge"
 import { composeMonitor } from "./monitor"
-import { createPlayingNow } from "./playing-now"
+import { composeGather } from "./gather"
 import type { StartingOwner, StoreLifecycle } from "../store/store-lifecycle"
 import { createTabViewProducer } from "../tab-view/producer"
 import { createViewPublication } from "../tab-view/publication"
@@ -20,13 +20,21 @@ import { createTabs } from "../tabs/tabs"
 import type { BuildId } from "../../shared/contracts"
 import { siteBundles } from "../../shared/features/registration"
 
-export type Services = { readonly tabs: ReturnType<typeof createTabs>; readonly badge: ToolbarBadge; dispose(): void }
+export type Services = {
+  readonly tabs: ReturnType<typeof createTabs>
+  readonly actions: Actions
+  readonly anyTab: ReturnType<typeof composeAnyTab>
+  readonly badge: ToolbarBadge
+  readonly gather: ReturnType<typeof composeGather>
+  dispose(): void
+}
 
 /** Everything that needs a live store owner: Tabs and the tab view, Playlists, Accounts and the UI routes. */
 export function composeServices(deps: {
   readonly native: NativeBrowser
   readonly runtime: RuntimePort
   readonly build: BuildId
+  readonly browser: "chrome" | "firefox"
   readonly owner: StartingOwner
   readonly lifecycle: StoreLifecycle
   readonly registrar: Registrar
@@ -82,10 +90,14 @@ export function composeServices(deps: {
   const publication = createViewPublication({ owner, tabs, producer, privateSkips: actions.flow, clock,
     monitor: { subscribeView: () => () => {} } })
   const accounts = createAccounts({ owner, tabs, claim: { kind: "unavailable", reason: "production-ownership-required" }, now: () => Date.now() })
+  const gather = composeGather({ native: { ...native, runtime }, senders: { ...native, runtime },
+    browser: deps.browser, build, owner, tabs, nativeTabs: browserTabs.port, addFlow: actions.flow, settings: incognito => actions.settings(incognito), registrar,
+    statuses: monitor.statusProducer, consented: deps.consented, i18n: siteI18n, flash: (tabId, ok, title) => badge.flash(tabId, ok, title) })
   const producer = createTabViewProducer({ owner, addFlow: actions.flow, statuses: monitor.statusProducer, notices: monitor.noticeProducer, build })
-  const unbindHello = browserTabs.bindHello(tabs, producer, context => {
+  const unbindHello = browserTabs.bindHello(tabs, producer, (context, hello) => {
     badge.loaded(context.tab.tabId)
     void accounts.onSeen(context).catch(() => {})
+    gather.hello(context, hello)
   })
   const publication = createViewPublication({ owner, tabs, producer, privateSkips: actions.flow, clock, monitor })
   const autoAddRoutes = createAutoAddTabRouter({ transport: runtimeTransport(deps.runtime), senders: { ...native, runtime }, build,
@@ -114,6 +126,8 @@ export function composeServices(deps: {
     rpc: { build, deadline: timerDeadline },
     playingNow: composePlayingNow({ native, tabs, registrar, actions, consented: deps.consented }),
     add: createPlayingSave({ actions, i18n: siteI18n, consented: deps.consented }),
+    gather: gather.routes,
+    woke: () => gather.woke("ui"),
     pages: {
       owner,
       session: { get: async key => (await native.storage.session.get(key))[key] },
@@ -131,10 +145,13 @@ export function composeServices(deps: {
   native.permissions.onRemoved.addListener(repaint)
   repaint()
   return {
-    tabs, badge,
+    tabs, actions, anyTab, badge, gather,
     dispose() {
       for (const stop of [() => native.storage.onChanged.removeListener(changed), () => native.permissions.onAdded.removeListener(repaint),
-        () => native.permissions.onRemoved.removeListener(repaint), () => badge.dispose(), () => monitor.dispose(), () => router.dispose(), () => accounts.dispose(), () => playlists.dispose(), () => publication.dispose(),
+        () => native.permissions.onRemoved.removeListener(repaint), () => badge.dispose(), () => router.dispose(), () => autoAddRoutes.dispose(),
+        () => accounts.dispose(), () => gather.dispose(), stopMenuSettings, () => native.permissions.onAdded.removeListener(reconcileMenu),
+        () => native.permissions.onRemoved.removeListener(reconcileMenu), () => anyTab.dispose(), () => actions.dispose(), () => playlists.dispose(),
+        () => publication.dispose(), () => monitor.dispose(),
         unbindHello, () => producer.dispose(), () => tabs.dispose(), () => browserTabs.dispose()]) {
         try { stop() } catch {}
       }
