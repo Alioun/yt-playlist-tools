@@ -767,12 +767,13 @@ describe("the fill step", () => {
     expect(leaks(run.stdout + run.trace)).toEqual([])
   })
 
+  // Longer than runStep's 20-second kill, so a script with no timeout fails here, not by Bun's test timeout.
   test("gives up on an AMO that never answers", async () => {
     const amo = await fakeAmo("hang")
     const run = await runStep(fillStep, workspace(scriptFor(amo.origin, "1_000"), fullNotes))
     expect(run).toMatchObject({ exit: 1, stdout: "::error::reviewer-notes: upload-failed (no answer from AMO within 30 seconds, or a redirect)\n" })
     expect(amo.requests).toHaveLength(1)
-  })
+  }, 30_000)
 
   test("a missing login fails before any request", async () => {
     const amo = await fakeAmo()

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Plants one break at a time in a scratch copy of the G28 files and runs
-# tests/integration/amo-reviewer-notes.test.ts against it. Each break must
-# fail the named test. Dummy values only, no network, nothing outside the copy.
+# ci.yml's G28 proof step, as this checkout has it, against the copy. Each
+# break must fail the named tests, or the step itself. Dummy values only, no
+# network, nothing outside the copy.
 #
 # Usage: .audit/2.0-build/ci-reviewer-credentials-mutations.sh [base commit] [row...]
 # The base commit (default 14365d0d7, before the first review's fixes) supplies
@@ -16,21 +17,37 @@ only=" $* "
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
 : > "$scratch/empty.toml"
-echo '{}' > "$scratch/empty.json"
-copied=(.github/workflows .github/CODEOWNERS scripts/amo-reviewer-notes.ts scripts/amo-metadata.ts tests/integration/amo-reviewer-notes.test.ts tests/integration/fixtures/fake-amo.ts package.json docs/development/releasing.md .audit/2.0-build/ci-reviewer-credentials-design.md .audit/2.0-build/ci-reviewer-credentials-mutations.sh)
+copied=(.github/workflows .github/CODEOWNERS scripts/amo-reviewer-notes.ts tests/integration/amo-reviewer-notes.test.ts tests/integration/fixtures package.json docs/development/releasing.md .audit/2.0-build/ci-reviewer-credentials-design.md .audit/2.0-build/ci-reviewer-credentials-mutations.sh)
+proof=$(cd "$repo" && bun --config="$scratch/empty.toml" -e '
+  const steps = Bun.YAML.parse(await Bun.file(".github/workflows/ci.yml").text()).jobs.build.steps
+  console.log(steps.find(step => step.run?.includes("./tests/integration/amo-reviewer-notes.test.ts")).run)')
 missed=0
 planted=0
 
-# plant NAME FILE EDIT [FILE EDIT ...] -- TEST...
+# The failed tests in a Bun junit report, one per line as "fail NAME" or
+# "timeout NAME". A timeout is never a catch: it says the test hung, not why.
+failures() {
+  [[ -f $1 ]] || return 0
+  perl -0ne 'while (/<testcase name="([^"]*)"[^>]*?(?:\/>|>(.*?)<\/testcase>)/sg) {
+    my ($name, $body) = ($1, $2 // "");
+    next unless $body =~ /<failure type="([^"]*)"/;
+    my $kind = $1 eq "TimeoutError" ? "timeout" : "fail";
+    for ($name) { s/&lt;/</g; s/&gt;/>/g; s/&quot;/"/g; s/&apos;/\x27/g; s/&#10;/\n/g; s/&amp;/&/g }
+    print "$kind $name\n" }' "$1"
+}
+
+# plant NAME [FILE EDIT ...] -- EXPECTED...
 # EDIT is a perl -0 substitution, "base" for the file as it was at the base
-# commit, or "at:COMMIT" for the file as it was at COMMIT. Every TEST named
-# must fail.
+# commit, "at:COMMIT" for the file as it was at COMMIT, or "write:TEXT" for a
+# new file holding TEXT. Each EXPECTED is a test that must fail, or
+# "step:TEXT" for a step that must fail printing TEXT. A row with no EXPECTED
+# is a control: the step must pass with no test failed.
 plant() {
-  local name=$1 copy="$scratch/$1" path out expected
+  local name=$1 copy="$scratch/$1" temp="$scratch/$1-temp" path out status report fails expected
   shift
   [[ $only == "  " || $only == *" $name "* ]] || return 0
   planted=$((planted + 1))
-  mkdir -p "$copy"
+  mkdir -p "$copy" "$temp"
   for path in "${copied[@]}"; do
     mkdir -p "$copy/$(dirname "$path")"
     cp -R "$repo/$path" "$copy/$(dirname "$path")/"
@@ -39,22 +56,32 @@ plant() {
     case $2 in
       base) git -C "$repo" show "$base:$1" > "$copy/$1" ;;
       at:*) git -C "$repo" show "${2#at:}:$1" > "$copy/$1" ;;
+      write:*) printf '%s\n' "${2#write:}" > "$copy/$1" ;;
       *) perl -0pi -e "$2" "$copy/$1" ;;
     esac
     if cmp -s "$repo/$1" "$copy/$1"; then echo "BROKEN  $name: the edit to $1 changed nothing"; missed=$((missed + 1)); return; fi
     shift 2
   done
   shift
-  # As ci.yml runs it: no bunfig.toml, no tsconfig.json.
-  out=$(cd "$copy" && bun --config="$scratch/empty.toml" test --no-env-file --tsconfig-override="$scratch/empty.json" ./tests/integration/amo-reviewer-notes.test.ts 2>&1 || true)
+  status=0
+  out=$(cd "$copy" && env -i PATH="$PATH" HOME="$temp" RUNNER_TEMP="$temp" bash --noprofile --norc -eo pipefail -c "$proof" 2>&1) || status=$?
+  report="$temp/reviewer-login-proof.xml"
+  fails=$(failures "$report")
+  if [[ $# -eq 0 ]]; then
+    if [[ $status -eq 0 && -z $fails ]]; then echo "passed  $name"; else echo "FAILED  $name: the step exited $status"; sed "s/^/        /" <<<"$fails"; missed=$((missed + 1)); fi
+    return
+  fi
   for expected in "$@"; do
-    if ! grep '^(fail)' <<<"$out" | grep -qF -- "$expected"; then
-      echo "MISSED  $name: \"$expected\" passed"
+    case $expected in
+      step:*) [[ $status -ne 0 && $out == *"${expected#step:}"* ]] ;;
+      *) grep '^fail ' <<<"$fails" | grep -qF -- "$expected" ;;
+    esac || {
+      echo "MISSED  $name: \"$expected\" passed$(grep -q '^timeout ' <<<"$fails" && echo ", but $(grep -c '^timeout ' <<<"$fails") timed out")"
       missed=$((missed + 1))
       return
-    fi
+    }
   done
-  echo "caught  $name ($(grep -c '^(fail)' <<<"$out") failing)"
+  echo "caught  $name ($(grep -c '^fail ' <<<"$fails") failing)"
 }
 
 script=scripts/amo-reviewer-notes.ts
@@ -64,6 +91,7 @@ tests=tests/integration/amo-reviewer-notes.test.ts
 owners=.github/CODEOWNERS
 docs=docs/development/releasing.md
 
+plant control --
 plant old-script "$script" base -- "refuses to run with BUN_CONFIG_VERBOSE_FETCH set"
 plant follows-redirects "$script" 's/\n *redirect: "error",//' -- "never follows a redirect"
 plant no-timeout "$script" 's/signal: AbortSignal\.timeout\(30_000\)/signal: undefined \&\& AbortSignal.timeout(30_000)/' -- "gives up on an AMO that never answers"
@@ -125,5 +153,5 @@ plant old-runner \
 plant job-level-keys "$ci" base -- "hold no secret or job token in a workflow- or job-level env"
 plant old-leak-check "$tests" 's/forms\(value\)\.some\(form => text\.includes\(form\)\)/text.includes(value) || text.includes(JSON.stringify(value).slice(1, -1))/' -- "finds each value in every form a log could carry it"
 
-echo "$planted planted, $missed missed"
+echo "$planted rows, $missed missed"
 exit $((missed > 0))
