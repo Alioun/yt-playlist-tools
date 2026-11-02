@@ -10,6 +10,10 @@ import { type Certificate, type FakeAmo, type Mode, startFakeAmo, untrustedCerti
 // gets an environment built from scratch, so no real secret can reach it.
 
 const root = resolve(import.meta.dir, "../..")
+/** True for a directory, false for a file, undefined for nothing. The one path helper the file test allows besides literal joins, and it reads no file. */
+const isDirectory = (path: string) => statSync(join(root, path), { throwIfNoEntry: false })?.isDirectory()
+/** A path inside the repository with no `.` or `..` part and no wildcard. */
+const repositoryPath = String.raw`\.?[\w-][\w.-]*(?:/\.?[\w-][\w.-]*)*`
 const script = join(root, "scripts/amo-reviewer-notes.ts")
 const scriptSource = readFileSync(script, "utf8")
 const bash = Bun.which("bash")!
@@ -183,7 +187,7 @@ const owner = "@Alioun"
  */
 type CodeOwnersRule = { path: string; inside: boolean; owners: string[] }
 function codeOwnersRule(line: string): CodeOwnersRule | undefined {
-  const match = /^\/(\.?[\w-][\w.-]*(?:\/\.?[\w-][\w.-]*)*)(\/\*\*)?((?: +@[\w-]+)*)$/.exec(line)
+  const match = new RegExp(String.raw`^/(${repositoryPath})(/\*\*)?((?: +@[\w-]+)*)$`).exec(line)
   return match ? { path: match[1]!, inside: match[2] !== undefined, owners: match[3]!.split(" ").filter(Boolean) } : undefined
 }
 
@@ -245,15 +249,26 @@ function credentialReferences(): Reference[] {
 
 // Code no one code-owns could fake the proof from inside this process, so the
 // proof loads and runs only what the approval covers. Bun tries .tsx before
-// .ts for a name without an extension.
+// .ts for a name without an extension. Every repository path is a join of
+// the repository's top and one literal path, so the test can read each one.
+// Any other use of the top, such as a join of two parts, resolve() or a
+// template string, fails.
 describe("this file", () => {
   const source = readFileSync(import.meta.path, "utf8")
 
   test("imports the fake AMO by its full name, and reads or runs only files the approval covers", () => {
     const relative = new Bun.Transpiler({ loader: "ts" }).scanImports(source).map(found => found.path).filter(path => path.startsWith("."))
     expect(relative).toEqual(["./fixtures/fake-amo.ts"])
-    const used = [...source.matchAll(/join\(root, "([^"]+)"\)/g)].map(match => match[1]!)
-    const owned = (path: string) => (statSync(join(root, path)).isDirectory() ? ownsDirectory(path) : codeOwners(path).join() === owner)
+    // The [o] keeps each pattern from matching its own text.
+    const literal = new RegExp(String.raw`join\(r[o]ot, "(${repositoryPath})"\)`, "g")
+    const allowed = [
+      /^const r[o]ot = resolve\(import\.meta\.dir, "\.\.\/\.\."\)$/,
+      /^const isDirectory = \(path: string\) => statSync\(join\(r[o]ot, path\), \{ throwIfNoEntry: false \}\)\?\.isDirectory\(\)$/,
+      literal
+    ]
+    expect(source.split("\n").filter(line => /\broot\b/.test(allowed.reduce((text, pattern) => text.replace(pattern, ""), line)))).toEqual([])
+    const used = [...source.matchAll(literal)].map(match => match[1]!)
+    const owned = (path: string) => (isDirectory(path) ? ownsDirectory(path) : isDirectory(path) === false && codeOwners(path).join() === owner)
     expect(used.length).toBeGreaterThan(0)
     expect(used.filter(path => !owned(path))).toEqual([])
   })
@@ -482,7 +497,8 @@ describe("CODEOWNERS", () => {
   })
 
   test("sends every file the approval covers to the owner, as GitHub reads it", () => {
-    expect(approved.filter(path => !existsSync(join(root, path)))).toEqual([])
+    expect(approved.filter(path => isDirectory(path) !== false)).toEqual([])
+    expect(approvedDirectories.filter(directory => isDirectory(directory) !== true)).toEqual([])
     expect(approved.map(path => ({ path, owners: codeOwners(path) }))).toEqual(approved.map(path => ({ path, owners: [owner] })))
     expect(approvedDirectories.filter(directory => !ownsDirectory(directory))).toEqual([])
   })
