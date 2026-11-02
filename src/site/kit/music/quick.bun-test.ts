@@ -68,6 +68,17 @@ test("while casting every queue edit and its Undo answer that they aren't availa
   w.cast(false)
 }, { timeout: 10_000 })
 
+test("when YouTube Music shows its own toast for a queue edit, the edit stands and ours stays away, so only one shows", async () => {
+  const w = world({ noisy: ["queueInsert", "queueMove", "queueRemove"] })
+  expect(await w.quick.act("next", target(), click)).toMatchObject({ kind: "done", text: "“Get Lucky” will play next" })
+  expect(await w.quick.act("queue", target(ladyQueued, true), click)).toMatchObject({ kind: "done" })
+  expect(await w.quick.act("remove", target(ladyQueued), click)).toMatchObject({ kind: "done" })
+  expect(w.toast()).toBeNull()
+  const quiet = world({ noisy: ["nowPlaying"] })
+  await quiet.quick.act("next", target(), click)
+  expect(quiet.toast()?.content.text).toBe("“Get Lucky” will play next")
+})
+
 test("Remove from queue's Undo puts the song back where it was", async () => {
   const w = world()
   await w.quick.act("remove", target(ladyQueued), click)

@@ -1,5 +1,5 @@
 import { isLibraryEndpoint, isLikeEndpoint, isNavigationEndpoint, isQueueInsertEndpoint, isQueueItemId, isRemoveFromQueueEndpoint, isAddToPlaylistEndpoint } from "../../../src/shared/contracts"
-import type { ItemInfo, Job, JobInvocation, JobResult, NowPlaying, QueueItemId } from "../../../src/shared/contracts"
+import type { BreakageSignal, ItemInfo, Job, JobInvocation, JobResult, NowPlaying, QueueItemId } from "../../../src/shared/contracts"
 import type { TabAddReport, TabAddRequest, UndoHandle } from "../../../src/shared/contracts/tab-actions"
 import type { TabView } from "../../../src/shared/contracts/tab-view"
 import { isPlaylistId, isVideoId, type PlaylistId, type VideoId } from "../../../src/shared/model"
@@ -64,7 +64,7 @@ export const savedReport: TabAddReport = { kind: "report", outcomes: { [favourit
 type Answer = (job: Job, target: Element | undefined) => unknown
 /** A YouTube Music tab: the jobs the engine sends and how the page answers, the add flow, the toaster and the picker. */
 export function musicWorld(options: { view?: TabView; resolution?: MusicResolution; answers?: Partial<Record<Job["kind"], Answer>>;
-  add?: () => Promise<TabAddReport | Unanswered>; popovers?: Popovers | null } = {}) {
+  add?: () => Promise<TabAddReport | Unanswered>; popovers?: Popovers | null; noisy?: readonly Job["kind"][] } = {}) {
   const timers = clock()
   const onError = () => {}
   const root = new Scope({ document, onError })
@@ -89,9 +89,17 @@ export function musicWorld(options: { view?: TabView; resolution?: MusicResoluti
     navigate: () => ({ navigated: true }),
     itemInfo: () => playingItem
   }
+  const signals = new Set<(signal: BreakageSignal) => void>()
   const page = {
+    onSignal(listener: (signal: BreakageSignal) => void) { signals.add(listener); return () => { signals.delete(listener) } },
     async run<J extends Job>(invocation: JobInvocation<J>, context?: { target?: Element }): Promise<JobResult<J>> {
       jobs.push({ job: invocation.job, ...(invocation.acct ? { acct: invocation.acct } : {}), ...(context?.target ? { target: context.target } : {}) })
+      // The gateway signals before it answers, as the page channel delivers them (YM-FAIL-12).
+      if (options.noisy?.includes(invocation.job.kind)) {
+        const signal = { site: "music", feature: null, job: invocation.job.kind, route: "test", kind: "quiet-route-noisy", watchId: null, shape: null,
+          clientVersion: null, pageType: "other", count: 1, firstSeen: 0, lastSeen: 0 } as BreakageSignal
+        for (const listener of [...signals]) listener(signal)
+      }
       const answer = options.answers?.[invocation.job.kind] ?? defaults[invocation.job.kind]
       const data = answer ? answer(invocation.job, context?.target) : undefined
       if (data !== null && typeof data === "object" && "ok" in data && data.ok === false) return data as JobResult<J>

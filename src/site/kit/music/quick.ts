@@ -1,4 +1,4 @@
-import type { FeatureId, ItemInfo, Job, JobFailure, JobInvocation, JobOf, JobResult, LikeEndpoint, NowPlaying } from "../../../shared/contracts"
+import type { BreakageSignal, FeatureId, ItemInfo, Job, JobFailure, JobInvocation, JobOf, JobResult, LikeEndpoint, NowPlaying } from "../../../shared/contracts"
 import { isMusicAdFailure } from "../../../shared/contracts"
 import type { TabView } from "../../../shared/contracts/tab-view"
 import { cut, musicHintText, toastText, type MusicHint } from "../../../shared/copy"
@@ -54,7 +54,11 @@ import type { SiteHealth } from "../../core/health"
 export type MusicQuickDeps = {
   readonly owner: Scope
   readonly document: Document
-  readonly page: { run<J extends Job>(invocation: JobInvocation<J>, context?: { target?: Element }): Promise<JobResult<J>> }
+  readonly page: {
+    run<J extends Job>(invocation: JobInvocation<J>, context?: { target?: Element }): Promise<JobResult<J>>
+    /** The gateway's breakage signals, which say when YouTube Music showed its own toast for our queue edit (YM-FAIL-12). */
+    onSignal?(listener: (signal: BreakageSignal) => void): () => void
+  }
   readonly items: Pick<MusicItems, "resolve">
   readonly actions: TabActions
   /** Hears a key pointed at an item it can't recognise (HEALTH-01). */
@@ -108,10 +112,13 @@ export function createMusicQuick(deps: MusicQuickDeps) {
     const text = musicHintText(value, i18n)
     return value.kind === "unrecognised-item" ? failure(text) : hint(text)
   }
-  /** A confirmation: hidden with Show feedback off, never its effect (YM-FB-6). */
-  function confirm(input: QuickInput, text: string, undo: (() => Promise<ToastContent | null>) | null): QuickAnswer {
+  /**
+   * A confirmation: hidden with Show feedback off, never its effect (YM-FB-6). After a queue edit YouTube Music
+   * answered with its own toast, ours stays away, so only one shows (YM-FAIL-12).
+   */
+  function confirm(input: QuickInput, text: string, undo: (() => Promise<ToastContent | null>) | null, noisy = false): QuickAnswer {
     const feedback = session()
-    if (feedback && input.feedback) {
+    if (feedback && input.feedback && !noisy) {
       show({ text, tone: "confirmation", auto: false, action: undo ? feedback.action("undo", undo) : null })
     }
     return { kind: "done", text }
@@ -144,6 +151,15 @@ export function createMusicQuick(deps: MusicQuickDeps) {
   async function casting(): Promise<boolean> {
     const answer = await page.run<JobOf<"castState">>({ job: { kind: "castState" } })
     return answer.ok && answer.data.casting
+  }
+  /** Runs a queue edit, noting whether the gateway saw YouTube Music's own toast for it before it answered. */
+  async function edit<J extends Job>(invocation: JobInvocation<J>): Promise<{ readonly result: JobResult<J>; readonly noisy: boolean }> {
+    let noisy = false
+    const stop = page.onSignal?.(signal => { if (signal.kind === "quiet-route-noisy" && signal.job === invocation.job.kind) noisy = true })
+    try {
+      const result = await page.run(invocation)
+      return { result, noisy }
+    } finally { stop?.() }
   }
   /** Runs a queue edit's Undo, which casting stops too (YM-FB-9). */
   function queueUndo(run: () => Promise<{ readonly ok: boolean }>): () => Promise<ToastContent | null> {
@@ -192,38 +208,38 @@ export function createMusicQuick(deps: MusicQuickDeps) {
     const title = cut(subject.title)
     const id = subject.item?.queueItemId
     if (subject.move && id !== undefined) {
-      const moved = await page.run<JobOf<"queueMove">>({ job: { kind: "queueMove", id, to } })
+      const { result: moved, noisy } = await edit<JobOf<"queueMove">>({ job: { kind: "queueMove", id, to } })
       if (!moved.ok) return failed(action, moved, i18n.message("musicFail_move", { title }))
       if (!moved.data.moved) return hint(i18n.message(to === "next" ? "musicToast_alreadyNext" : "musicToast_alreadyEnd", { title }))
       const from = moved.data.from
       return confirm(input, i18n.message(to === "next" ? "musicToast_movedNext" : "musicToast_movedEnd", { title }),
-        queueUndo(() => page.run<JobOf<"queueMove">>({ job: { kind: "queueMove", id, to: from } })))
+        queueUndo(() => page.run<JobOf<"queueMove">>({ job: { kind: "queueMove", id, to: from } })), noisy)
     }
     const endpoint = subject.item?.endpoints[to]
     if (!endpoint) return failure(i18n.message("musicFail_queue", { title }))
     const before = await page.run<JobOf<"nowPlaying">>({ job: { kind: "nowPlaying" } })
-    const inserted = await page.run<JobOf<"queueInsert">>({ job: { kind: "queueInsert", endpoint, position: to } })
+    const { result: inserted, noisy } = await edit<JobOf<"queueInsert">>({ job: { kind: "queueInsert", endpoint, position: to } })
     if (!inserted.ok) return failed(action, inserted, i18n.message("musicFail_queue", { title }))
     // With nothing loaded, YouTube Music starts playing the item instead, and there's nothing to undo (YM-Q-6).
-    if (before.ok && before.data === null) return confirm(input, i18n.message("musicToast_playing", { title }), null)
+    if (before.ok && before.data === null) return confirm(input, i18n.message("musicToast_playing", { title }), null, noisy)
     const ids = inserted.data.ids
     const block = subject.item?.kind === "album" || subject.item?.kind === "playlist"
     const count = i18n.number(ids.length), many = i18n.plural(ids.length) === "one" ? "one" : "other"
     const text = block
       ? i18n.message(to === "next" ? `musicToast_playNextMany_${many}` : `musicToast_queuedMany_${many}`, { count, title })
       : i18n.message(to === "next" ? "musicToast_playNext" : "musicToast_queued", { title })
-    return confirm(input, text, queueUndo(() => page.run<JobOf<"queueRemoveIds">>({ job: { kind: "queueRemoveIds", ids } })))
+    return confirm(input, text, queueUndo(() => page.run<JobOf<"queueRemoveIds">>({ job: { kind: "queueRemoveIds", ids } })), noisy)
   }
 
   async function remove(subject: QuickTarget, input: QuickInput): Promise<QuickAnswer> {
     const title = cut(subject.title)
     const id = subject.item?.queueItemId, videoId = subject.videoId
     if (id === undefined || videoId === null) return failure(i18n.message("musicFail_remove", { title }))
-    const removed = await page.run<JobOf<"queueRemove">>({ job: { kind: "queueRemove", id } })
+    const { result: removed, noisy } = await edit<JobOf<"queueRemove">>({ job: { kind: "queueRemove", id } })
     if (!removed.ok) return failed("remove", removed, i18n.message("musicFail_remove", { title }))
     const index = removed.data.index
     return confirm(input, i18n.message("musicToast_removedQueue", { title }),
-      queueUndo(() => page.run<JobOf<"queueReinsert">>({ job: { kind: "queueReinsert", videoId, index } })))
+      queueUndo(() => page.run<JobOf<"queueReinsert">>({ job: { kind: "queueReinsert", videoId, index } })), noisy)
   }
 
   async function like(subject: QuickTarget, input: QuickInput, acct: AccountKey): Promise<QuickAnswer> {
