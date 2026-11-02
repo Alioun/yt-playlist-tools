@@ -1,0 +1,97 @@
+import { expect, test } from "bun:test"
+import { executeDeviceSetting } from "../store/device-setting"
+import { createPageReceiver, type PageReceiverPorts } from "./ui-pages"
+import type { SessionChange, SessionRead } from "../store/session-memory"
+import type { UiRequester } from "../adapters/ui-requester"
+
+const acct = "AAAAAAAAAAAAAAAA" as never, other = "BBBBBBBBBBBBBBBB"
+const memory = (paused: boolean) => ({ kind: "memory", revision: { reset: 0, accounts: new Map() }, sequence: 1, memory: { paused } }) as unknown as SessionRead
+const ui = (incognito = false) => ({ ui: { kind: "ui", page: "popup", origin: { kind: "ui", windowId: 3, incognito } },
+  requester: { windowId: 3, incognito, activeTabId: 9 }, principal: "p" }) as unknown as UiRequester
+
+function receiver(overrides: Partial<PageReceiverPorts> = {}) {
+  const changes: SessionChange[] = []
+  let paused = false
+  const ports: PageReceiverPorts = {
+    owner: {
+      readSession: async () => memory(paused),
+      async changeSession(change) {
+        changes.push(change)
+        const edit = change.edits[0]
+        if (edit.kind === "pause") paused = edit.paused
+        return { kind: "committed", revision: { reset: 0, accounts: new Map() }, sequence: 2, memory: { paused } } as never
+      },
+      changeDeviceSetting: async (_origin, change) => ({ kind: "confirmed", change })
+    },
+    session: { get: async () => [] },
+    status: async () => ({ tab: { kind: "site", site: "www", tabId: 9, signedIn: true, acct }, health: [{ feature: "auto-add", site: "www", state: "not-working", gaps: [] }] }),
+    now: () => 1000,
+    ...overrides
+  }
+  const context = (incognito = false) => ({ ui: ui(incognito), current: async () => ui(incognito) })
+  return { handlers: createPageReceiver(ports), changes, context }
+}
+
+test("status answers Pause, the popup's tab and its feature health", async () => {
+  const { handlers, context } = receiver()
+  expect(await handlers["ui.status"]({}, context())).toEqual({ kind: "status", paused: false,
+    tab: { kind: "site", site: "www", tabId: 9, signedIn: true, acct }, health: [{ feature: "auto-add", site: "www", state: "not-working", gaps: [] }] })
+})
+
+test("Pause writes session memory and answers the committed state; a private window can't pause", async () => {
+  const { handlers, changes, context } = receiver()
+  expect(await handlers["ui.pause"]({ paused: true }, context())).toEqual({ kind: "paused", paused: true })
+  expect(changes.map(change => change.edits)).toEqual([[{ kind: "pause", paused: true }]])
+  expect(await handlers["ui.pause"]({ paused: false }, context(true))).toEqual({ kind: "refused", reason: "unavailable" })
+})
+
+test("recent adds list only the account in view's adds, singles and gathers alike", async () => {
+  const rows = [
+    { kind: "single", acct, at: 5, source: { kind: "feature", feature: "auto-add" }, playlists: [{ id: "PLa", title: "A" }], video: { id: "aaaaaaaaaaa", title: "One" } },
+    { kind: "single", acct: other, at: 4, source: { kind: "feature", feature: "auto-add" }, playlists: [{ id: "PLb", title: "B" }], video: { id: "bbbbbbbbbbb", title: "Two" } },
+    { kind: "gather", acct, at: 3, source: { kind: "feature", feature: "gather" }, playlists: [{ id: "PLa", title: "A" }], videos: [{ id: "ccccccccccc", title: "Three" }] },
+    { kind: "single", acct, at: "bad" }
+  ]
+  const { handlers, context } = receiver({ session: { get: async () => rows } })
+  const answer = await handlers["ui.recentAdds"]({ acct }, context())
+  expect(answer.kind === "recent" && answer.entries.map(entry => [entry.videos.map(video => video.title), entry.gather])).toEqual([[["One"], false], [["Three"], true]])
+})
+
+test("switching recent adds off clears the list at once (DATA-52)", async () => {
+  const { handlers, changes, context } = receiver()
+  expect(await handlers["ui.device"]({ change: { field: "recentAdds", value: false } }, context())).toEqual({ kind: "confirmed", change: { field: "recentAdds", value: false } })
+  expect(changes.map(change => change.edits)).toEqual([[{ kind: "recent-adds-clear" }]])
+  await handlers["ui.device"]({ change: { field: "pickerSortAZ", value: true } }, context())
+  expect(changes).toHaveLength(1)
+})
+
+function local(records: Record<string, unknown>, options: { changeBeforeWrite?: boolean; dropWrite?: boolean } = {}) {
+  let reads = 0
+  return {
+    records,
+    async get(keys: readonly string[] | null) {
+      reads++
+      if (options.changeBeforeWrite && reads === 2) records.device = { ...(records.device as object), detailedLog: true }
+      return structuredClone(keys === null ? records : Object.fromEntries(keys.filter(key => key in records).map(key => [key, records[key]])))
+    },
+    async set(items: Record<string, unknown>) { if (!options.dropWrite) Object.assign(records, structuredClone(items)) }
+  }
+}
+const agreed = { schema: 1, device: { id: "device", consent: { v: 1, at: 1 }, syncOn: false, pickerSortAZ: false } }
+
+test("a device setting is written, read back and keeps the rest of the record", async () => {
+  const store = local(structuredClone(agreed))
+  expect(await executeDeviceSetting({ local: store as never, change: { field: "pickerSortAZ", value: true }, isStopped: () => false }))
+    .toEqual({ kind: "confirmed", change: { field: "pickerSortAZ", value: true } })
+  expect(store.records.device).toEqual({ id: "device", consent: { v: 1, at: 1 }, syncOn: false, pickerSortAZ: true })
+})
+
+test("a device setting refuses before consent, when the record changed meanwhile, and when the write didn't land", async () => {
+  const change = { field: "detailedLog", value: true } as const
+  expect(await executeDeviceSetting({ local: local({ schema: 1, device: { id: "d", consent: null, syncOn: false } }) as never, change, isStopped: () => false }))
+    .toEqual({ kind: "refused", reason: "unavailable" })
+  expect(await executeDeviceSetting({ local: local(structuredClone(agreed), { changeBeforeWrite: true }) as never, change: { field: "pickerSortAZ", value: true }, isStopped: () => false }))
+    .toEqual({ kind: "refused", reason: "unavailable" })
+  expect(await executeDeviceSetting({ local: local(structuredClone(agreed), { dropWrite: true }) as never, change, isStopped: () => false }))
+    .toEqual({ kind: "refused", reason: "unconfirmed" })
+})

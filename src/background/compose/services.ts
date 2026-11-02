@@ -8,7 +8,7 @@ import { createBrowserTabs } from "../adapters/tabs"
 import { createPlaylists } from "../playlists/playlists"
 import type { Registrar } from "../registrar/ports"
 import { createUiRouter } from "../router/ui-playlists"
-import { createAutoAddTabRouter } from "../router/tab-auto-add"
+import { createPageStatus } from "./page-status"
 import type { StartingOwner, StoreLifecycle } from "../store/store-lifecycle"
 import { createTabViewProducer, tabViewFacts, type NoticeProducer, type StatusProducer } from "../tab-view/producer"
 import { createViewPublication } from "../tab-view/publication"
@@ -112,7 +112,13 @@ export function composeServices(deps: {
       }
     },
     transport: runtimeTransport(deps.runtime),
-    rpc: { build, deadline: timerDeadline }
+    rpc: { build, deadline: timerDeadline },
+    pages: {
+      owner,
+      session: { get: async key => (await native.storage.session.get(key))[key] },
+      status: createPageStatus({ owner, statuses: workingStatuses, tab: tabId => browserTabs.port.get(tabId), build }),
+      now: () => Date.now()
+    }
   })
   return {
     tabs, actions, anyTab,

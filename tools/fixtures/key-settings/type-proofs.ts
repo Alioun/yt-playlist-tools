@@ -14,7 +14,7 @@ export type Proofs = [
   Check<Equal<Extract<UiMessages["ui.change"]["payload"]["change"], { kind: SharedSettingChange["kind"] }>, SharedSettingChange>>,
   Check<Equal<Extract<UiMessages["ui.change"]["payload"]["change"], { kind: FeatureSettingChange["kind"] }>, FeatureSettingChange>>,
   Check<Equal<Extract<UiMessages["ui.change"]["result"], { kind: "key-setting" }>["outcome"], KeySettingAnswer>>,
-  Check<Equal<keyof UiMessages, "ui.clearAll" | "ui.change" | "ui.syncedChoices" | "ui.accountInView" | "ui.playlists" | "ui.create" | "ui.resolveChannel">>
+  Check<Equal<keyof UiMessages, "ui.clearAll" | "ui.change" | "ui.syncedChoices" | "ui.accountInView" | "ui.playlists" | "ui.create" | "ui.resolveChannel" | "ui.status" | "ui.pause" | "ui.recentAdds" | "ui.device">>
 ]
 function overloads(backend: Backend, key: KeySettingChange, option: SharedSettingChange, feature: FeatureSettingChange) {
   const a: Promise<KeySettingAnswer> = backend.change(key)

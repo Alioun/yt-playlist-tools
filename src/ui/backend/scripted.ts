@@ -33,7 +33,11 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
       "ui.accountInView": () => take("ui.accountInView"),
       "ui.playlists": () => take("ui.playlists"),
       "ui.create": () => take("ui.create"),
-      "ui.resolveChannel": () => take("ui.resolveChannel")
+      "ui.resolveChannel": () => take("ui.resolveChannel"),
+      "ui.status": () => take("ui.status"),
+      "ui.pause": () => take("ui.pause"),
+      "ui.recentAdds": () => take("ui.recentAdds"),
+      "ui.device": () => take("ui.device")
     }
   })
   function take<K extends keyof UiMessages>(kind: K): UiMessages[K]["result"] {

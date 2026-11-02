@@ -41,6 +41,8 @@ import {
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
 import { changeFilterSetting, type FilterSettingInput } from "./channel-filter-edit"
+import { executeDeviceSetting } from "./device-setting"
+import { isDeviceSettingChange, type DeviceSettingAnswer, type DeviceSettingChange } from "../../shared/contracts/ui-pages"
 import { planSyncWrite, sameSyncJson, type SyncDocumentRecord } from "./sync-write-admission"
 import { readSyncDocument } from "./sync-codec"
 import { readSyncInventory } from "./sync-inventory"
@@ -326,6 +328,7 @@ type LocalFilterWriter = PlaylistCacheOwner & ProgressOwner & SettingsFileOwner 
   readLastAccount(scope: NormalWindowRouting): Promise<LastAccountRead>
   changeSession(change: SessionChange): Promise<SessionWrite>
   readClaimNotice(): Promise<ClaimNoticeRead>
+  changeDeviceSetting(origin: UiOrigin, change: DeviceSettingChange): Promise<DeviceSettingAnswer>
   acknowledgeClaimNotice(origin: NormalUiOrigin, expected: Snapshot<ClaimNotice>): Promise<ClaimNoticeAcknowledgement>
   read(view: "settings"): Promise<SettingsRead>
   subscribe(fn: (event: SettingsEvent) => void): () => void
@@ -3676,6 +3679,14 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       if (blocked) return Promise.resolve(blocked)
       const requested: SessionChange = { revision: { reset: change.revision.reset, accounts: new Map(change.revision.accounts) }, now: change.now, edits: [change.edits[0], ...change.edits.slice(1)] }
       return enqueue(() => changeSessionInLane(requested))
+    },
+    changeDeviceSetting(origin, change) {
+      if (!isJsonObject(origin) || origin.kind !== "ui" || typeof origin.incognito !== "boolean" || !isDeviceSettingChange(change)) return Promise.resolve({ kind: "refused", reason: "invalid" })
+      // The last visibility belongs to a normal window, as the picker's private rule says (UI-PICK-10).
+      if (origin.incognito && change.field === "newPlaylistVisibility") return Promise.resolve({ kind: "refused", reason: "private" })
+      const requested = structuredClone(change)
+      return enqueue(async () => initialization !== "ok" || claimConfirmation === "unconfirmed" ? { kind: "refused", reason: "unavailable" }
+        : executeDeviceSetting({ local: guardedLocal, change: requested, isStopped: disposed }))
     },
     readClaimNotice() {
       if (disposed()) return Promise.reject(new Error("Writer disposed"))

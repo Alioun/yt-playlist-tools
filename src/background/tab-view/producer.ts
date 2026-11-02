@@ -10,7 +10,8 @@ import {
   type DueNotice, type FeatureStatus, type TabFeature, type TabView, type TabViewFacts
 } from "../../shared/contracts/tab-view"
 import { isTabPing } from "../../shared/contracts/tabs"
-import type { BuildId } from "../../shared/contracts/vocabulary"
+import type { BuildId, Site } from "../../shared/contracts/vocabulary"
+import type { Settings } from "../../shared/model/types"
 
 export type StatusRead = { readonly kind: "statuses"; readonly facts: TabViewFacts; readonly statuses: readonly FeatureStatus[]; current(): boolean } |
   { readonly kind: "unavailable" }
@@ -29,6 +30,17 @@ export type TabViewPorts = {
 export function tabViewFacts(context: TabContext): TabViewFacts {
   const common = { site: context.tab.site, build: context.info.build, tabId: context.tab.tabId, windowId: context.tab.windowId, private: context.tab.incognito }
   return context.info.signedIn ? { ...common, signedIn: true, acct: context.info.acct } : { ...common, signedIn: false, acct: null }
+}
+/** The page features on for a site, with their options, as a tab view and the Monitor name them. */
+export function enabledTabFeatures(settings: Settings, site: Site): TabFeature[] | undefined {
+  const enabled: unknown[] = []
+  for (const feature of features) {
+    if (feature.setting === "device.syncOn" || !settings[feature.setting].on || site === "music" && !settings.musicSection) continue
+    const page = feature.pages[site]
+    if (!page || page.when && !page.when(settings)) continue
+    enabled.push({ id: feature.id, options: structuredClone(settings[feature.setting]) })
+  }
+  return enabled.every(isTabFeature) ? enabled : undefined
 }
 export function createTabViewProducer(ports: TabViewPorts): TabViewProducer<TabView> & { dispose(): void } {
   let disposed = false
@@ -51,14 +63,8 @@ export function createTabViewProducer(ports: TabViewPorts): TabViewProducer<TabV
         projection.account.kind === "unknown" || (projection.account.kind === "signed-in") !== facts.signedIn ||
         projection.account.kind === "signed-in" && projection.account.acct !== facts.acct) return unavailable
       const settings = decodeSettings(projection.settings.settings)
-      const enabled: unknown[] = []
-      for (const feature of features) {
-        if (feature.setting === "device.syncOn" || !settings[feature.setting].on || facts.site === "music" && !settings.musicSection) continue
-        const page = feature.pages[facts.site]
-        if (!page || page.when && !page.when(settings)) continue
-        enabled.push({ id: feature.id, options: structuredClone(settings[feature.setting]) })
-      }
-      if (!enabled.every(isTabFeature)) return unavailable
+      const enabled = enabledTabFeatures(settings, facts.site)
+      if (!enabled) return unavailable
       const health = await ports.statuses.read(structuredClone(context), structuredClone(enabled))
       if (disposed || health.kind !== "statuses" || !isTabViewFacts(health.facts) || !sameTabViewFacts(facts, health.facts) || !health.current()) return unavailable
       const statuses = structuredClone(health.statuses)

@@ -22,6 +22,8 @@ import { createFirstRunReceiver, type FirstRunReceiverPorts, type FirstRunCanoni
 import { listing, listRefresh, creationAnswer, jobOutcome, cacheStatus } from "./wire"
 import { createClearAllReceiver } from "../clear-all"
 import type { StoreLifecycle } from "../../store/store-lifecycle"
+import { createPageReceiver, type PageReceiverPorts, type PageContext } from "../ui-pages"
+import type { PageMessages } from "../../../shared/contracts/ui-pages"
 
 type Owner = FirstRunCanonicalOwner & Pick<ReturnType<typeof createLocalFilterWriter>, "readTabProjection" | "readSession">
 type Services = { readonly kind: "ready"; readonly tabs: Tabs; readonly playlists: Playlists } | { readonly kind: "unavailable" }
@@ -34,6 +36,8 @@ export type UiRouterPorts = {
   readonly firstRun: Pick<FirstRunReceiverPorts, "lookup" | "readAccess">
   readonly transport: Transport<NativeSender>
   readonly rpc: Omit<RpcOptions<UiMessages>, "contract">
+  /** The popup's and settings' own routes. Without them each page call answers unavailable. */
+  readonly pages?: PageReceiverPorts
 }
 type ClearContext = Parameters<ReturnType<typeof createClearAllReceiver>["receiver"]["handlers"]["ui.clearAll"]>[1]
 type Context = { readonly kind: "clear-all"; readonly ui: ClearContext } | { readonly kind: "shared-settings"; readonly ui: UiContext; readonly principal: string | undefined; readonly current: () => Promise<boolean> } | { readonly kind: "first-run"; readonly ui: UiContext } | { readonly kind: "playlists"; readonly ui: UiRequester; readonly current: () => Promise<UiRequester | undefined> }
@@ -68,6 +72,14 @@ export function createUiRouter(ports: UiRouterPorts) {
   let creationClosed = false
   const firstRun = createFirstRunReceiver({ sender: ports.native, owner: ports.owner, ...ports.firstRun })
   const clearAll = createClearAllReceiver({ native: ports.native, lifecycle: ports.lifecycle })
+  const pages = ports.pages ? createPageReceiver(ports.pages) : undefined
+  function page<K extends keyof PageMessages>(kind: K, payload: PageMessages[K]["payload"], context: Context): Promise<PageMessages[K]["result"]> | PageMessages[K]["result"] {
+    if (context.kind !== "playlists") throw Error("Wrong authenticated UI context")
+    if (!active) return unavailable("disposed")
+    if (!pages) return unavailable("collaborator")
+    const scoped: PageContext = { ui: context.ui, current: context.current }
+    return pages[kind](payload, scoped)
+  }
   async function gate(ui: UiRequester): Promise<UiUnavailable | undefined> {
     if (!active) return unavailable("disposed")
     if (ports.services.kind !== "ready") return unavailable("collaborator")
@@ -314,6 +326,10 @@ export function createUiRouter(ports: UiRouterPorts) {
         return playlists(payload, context)
       },
       "ui.create"(payload, context) { return create(payload, requireUi(context)) },
+      "ui.status": (payload, context) => page("ui.status", payload, context),
+      "ui.pause": (payload, context) => page("ui.pause", payload, context),
+      "ui.recentAdds": (payload, context) => page("ui.recentAdds", payload, context),
+      "ui.device": (payload, context) => page("ui.device", payload, context),
       async "ui.resolveChannel"(payload, context) {
         const ui = requireUi(context), held = await gate(ui)
         if (held) return held

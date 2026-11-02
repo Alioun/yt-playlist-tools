@@ -87,6 +87,8 @@ export type SessionEdit =
   | { readonly kind: "tab-seen"; readonly tabId: number; readonly info: TabRecord }
   | { readonly kind: "tab-forget"; readonly tabId: number; readonly expected: TabRecord }
   | { readonly kind: "pause"; readonly paused: boolean }
+  /** "Keep a list of recent adds" switched off clears the list at once (DATA-52). */
+  | { readonly kind: "recent-adds-clear" }
   | { readonly kind: "recent"; readonly tuple: RecentTuple }
   | { readonly kind: "forget"; readonly acct: AccountKey; readonly playlist: PlaylistId; readonly video: VideoId }
   | { readonly kind: "cooldown"; readonly acct: AccountKey; readonly until: number }
@@ -116,7 +118,8 @@ export function sessionEditAccount(edit: SessionEdit): AccountKey | null {
   switch (edit.kind) {
     case "tab-seen": return edit.info.acct
     case "tab-forget": return edit.expected.acct
-    case "pause": return null
+    case "pause":
+    case "recent-adds-clear": return null
     case "recent": return edit.tuple.acct
     case "gather": return edit.record.acct
     case "gather-reopen": return edit.record.acct
@@ -446,6 +449,7 @@ export function planSessionChange(raw: unknown, change: Omit<SessionChange, "rev
         break
       }
       case "pause": set("paused", edit.paused); break
+      case "recent-adds-clear": if (Array.isArray(next.recentAdds) && next.recentAdds.length) set("recentAdds", []); break
       case "recent":
       case "forget": {
         const match = edit.kind === "recent" ? edit.tuple : edit
