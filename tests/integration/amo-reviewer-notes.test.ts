@@ -634,10 +634,22 @@ describe("the CI job that runs these tests", () => {
   const proof = job.steps![2]!
   const expected = Number(/ tests="(\d+)" /.exec(proof.run!)?.[1])
 
-  // Whole, so no defaults, container, if or continue-on-error reaches the
-  // job, and nothing installed runs before the proof. GitHub would still pass
-  // the check with continue-on-error or an if that skips the step, and a
-  // shell entry could drop -e.
+  // A workflow-level env such as BUN_OPTIONS reaches every step, and a
+  // trigger or permission the approval doesn't cover could change the run.
+  test("ci.yml holds only the top-level keys the approval covers, with no env", () => {
+    const { jobs: _, ...top } = ci as Workflow & Record<string, unknown>
+    expect(top).toEqual({
+      name: "CI",
+      on: { push: { branches: ["dev", "main"] }, pull_request: null },
+      permissions: { contents: "read" },
+      concurrency: { group: "ci-${{ github.ref }}", "cancel-in-progress": true }
+    })
+  })
+
+  // Whole, so no env, defaults, container, if or continue-on-error reaches
+  // the job, and no step before the proof can write $GITHUB_ENV or install
+  // anything. GitHub would still pass the check with continue-on-error or an
+  // if that skips the step, and a shell entry could drop -e.
   test("runs checkout, setup-bun with the declared Bun and no cache, then the proof as a plain step, and nothing else", () => {
     expect(Object.keys(job).sort()).toEqual(["runs-on", "steps"])
     expect(job["runs-on" as keyof Job]).toBe("ubuntu-latest")
@@ -665,7 +677,7 @@ describe("the CI job that runs these tests", () => {
   })
 
   /** Runs the step's real run: block in a scratch checkout whose test file is a stand-in with `body`. */
-  async function runProof(body: string, plant: (dir: string) => void = () => {}) {
+  async function runProof(body: string, plant: (dir: string) => void = () => {}, env: Record<string, string> = {}) {
     const dir = mkdtempSync(join(tmpdir(), "reviewer-notes-ci-"))
     directories.push(dir)
     for (const sub of ["tests/integration", "_temp", "_bin"]) mkdirSync(join(dir, sub), { recursive: true })
@@ -674,7 +686,7 @@ describe("the CI job that runs these tests", () => {
     plant(dir)
     const child = Bun.spawn([bash, "--noprofile", "--norc", "-eo", "pipefail", "-c", proof.run!], {
       cwd: dir,
-      env: { PATH: `${join(dir, "_bin")}:/usr/bin:/bin`, HOME: join(dir, "_temp"), RUNNER_TEMP: join(dir, "_temp") },
+      env: { PATH: `${join(dir, "_bin")}:/usr/bin:/bin`, HOME: join(dir, "_temp"), RUNNER_TEMP: join(dir, "_temp"), ...env },
       stdout: "pipe",
       stderr: "pipe"
     })
@@ -701,6 +713,22 @@ describe("the CI job that runs these tests", () => {
       preloaded: existsSync(join(run.dir, "_preloaded")),
       redirected: existsSync(join(run.dir, "_redirected"))
     }).toEqual({ exit: 0, ran: true, preloaded: false, redirected: false })
+  })
+
+  // As a workflow-level env, or a step that writes $GITHUB_ENV, would set them.
+  // Bun reads BUN_OPTIONS even with --config.
+  test("loads no preload that BUN_OPTIONS or NODE_OPTIONS names", async () => {
+    const planted = await runProof(tests(expected), dir => {
+      for (const name of ["_bun-options", "_node-options"]) {
+        writeFileSync(join(dir, `${name}.ts`), `require("node:fs").writeFileSync(${JSON.stringify(join(dir, `${name}-ran`))}, "")\n`)
+      }
+    }, { BUN_OPTIONS: "--preload=./_bun-options.ts", NODE_OPTIONS: "--require=./_node-options.ts" })
+    expect({
+      exit: planted.exit,
+      ran: new RegExp(`\\b${expected} pass\\b`).test(planted.output),
+      bunOptions: existsSync(join(planted.dir, "_bun-options-ran")),
+      nodeOptions: existsSync(join(planted.dir, "_node-options-ran"))
+    }).toEqual({ exit: 0, ran: true, bunOptions: false, nodeOptions: false })
   })
 
   const short: [string, string, boolean][] = [

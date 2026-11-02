@@ -17,8 +17,9 @@ concurrency:
 jobs:
   # G28's secret-flow tests, in a job of their own whose name no other
   # workflow's job uses, so the main ruleset can require this check by name.
-  # A test compares the job whole, so only checkout and setup-bun run before
-  # the proof.
+  # A test compares the job and ci.yml's top-level keys whole, so no env
+  # reaches the proof from the workflow, and only checkout and setup-bun run
+  # before it, so no step of ours can set its environment through $GITHUB_ENV.
   g28-proof:
     runs-on: ubuntu-latest
     steps:
@@ -33,19 +34,20 @@ jobs:
       # Without the install and without the repo's bunfig.toml or
       # tsconfig.json, so only code-owned files decide whether they pass. A
       # tsconfig paths entry can make bun test register no test and still exit
-      # 0, and bunfig.toml preloads tests/setup. Bun's report must also count
-      # every test passed, so a file that exits early fails.
+      # 0, bunfig.toml preloads tests/setup, and BUN_OPTIONS preloads even with
+      # --config. Bun's report must also count every test passed, so a file
+      # that exits early fails.
       - name: Test the reviewer-login secret flow (G28)
         run: |
           : > "$RUNNER_TEMP/empty.toml"
           echo '{}' > "$RUNNER_TEMP/empty.json"
           report=$RUNNER_TEMP/reviewer-login-proof.xml
           rm -f "$report"
-          bun --config="$RUNNER_TEMP/empty.toml" test --no-env-file \
+          env -u BUN_OPTIONS -u NODE_OPTIONS bun --config="$RUNNER_TEMP/empty.toml" test --no-env-file \
             --tsconfig-override="$RUNNER_TEMP/empty.json" --reporter=junit --reporter-outfile="$report" \
             ./tests/integration/amo-reviewer-notes.test.ts
-          grep -Eq '^<testsuites name="bun test" tests="101" assertions="[0-9]+" failures="0" skipped="0" ' "$report" \
-            || { echo "::error::the G28 proof did not pass all 101 of its tests"; exit 1; }
+          grep -Eq '^<testsuites name="bun test" tests="103" assertions="[0-9]+" failures="0" skipped="0" ' "$report" \
+            || { echo "::error::the G28 proof did not pass all 103 of its tests"; exit 1; }
 
   build:
     runs-on: ubuntu-latest

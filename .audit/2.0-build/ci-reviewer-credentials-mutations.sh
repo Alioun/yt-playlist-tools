@@ -173,6 +173,12 @@ plant proof-continue-on-error "$ci" 's/(      - name: Test the reviewer-login se
 plant proof-if "$ci" 's/(      - name: Test the reviewer-login secret flow \(G28\)\n)/$1        if: github.event_name == \x27push\x27\n/' -- "$proof_job"
 plant proof-job-continue-on-error "$ci" 's/(  g28-proof:\n    runs-on: ubuntu-latest\n)/$1    continue-on-error: true\n/' -- "$proof_job"
 plant proof-cached-bun "$ci" 's/\n *# No cache entry another job saved[^\n]*\n *no-cache: true//' -- "$proof_job"
+# A workflow-level env, a job-level env, or a step that writes $GITHUB_ENV
+# could hand the proof BUN_OPTIONS, which Bun reads even with --config.
+plant ci-workflow-env "$ci" 's/^jobs:\n/env:\n  BUN_OPTIONS: --preload=.\/tests\/setup\/x.ts\n\njobs:\n/m' -- "ci.yml holds only the top-level keys the approval covers"
+plant proof-job-env "$ci" 's/(  g28-proof:\n    runs-on: ubuntu-latest\n)/$1    env:\n      BUN_OPTIONS: --preload=.\/tests\/setup\/x.ts\n/' -- "$proof_job"
+plant proof-step-writes-env "$ci" 's/(          no-cache: true\n\n)/$1      - run: echo "BUN_OPTIONS=--preload=.\/tests\/setup\/x.ts" >> "\$GITHUB_ENV"\n\n/' -- "$proof_job"
+plant proof-keeps-bun-options "$ci" 's/env -u BUN_OPTIONS -u NODE_OPTIONS //' -- "loads no preload that BUN_OPTIONS or NODE_OPTIONS names"
 # The ruleset requires the check by name, so no other job may carry it.
 plant proof-name-reused "$pages" 's/^  build:\n/  build:\n    name: g28-proof\n/m' -- "is the only job in any workflow whose check is named g28-proof"
 plant proof-name-computed "$release" 's/^  meta:\n/  meta:\n    name: \$\{\{ format(\x27g28-{0}\x27, \x27proof\x27) \}\}\n/m' -- "is the only job in any workflow whose check is named g28-proof"
