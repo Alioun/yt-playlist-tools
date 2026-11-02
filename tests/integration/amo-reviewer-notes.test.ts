@@ -356,6 +356,116 @@ describe("CODEOWNERS", () => {
   })
 })
 
+// The owner runs these by hand before storing anything, so each must print
+// true only for the settings releasing.md asks for, and fail closed otherwise.
+describe("the owner's setup commands in releasing.md", () => {
+  const releasing = readFileSync(join(root, "docs/development/releasing.md"), "utf8")
+  const checks = [...releasing.matchAll(/gh api "?repos\/Alioun\/yt-playlist-tools\/([^\s"]+)"? --jq '([^']+)'/g)].map(([, endpoint, filter]) => ({
+    endpoint: endpoint!,
+    filter: filter!
+  }))
+  const filter = (endpoint: string, includes = "") => checks.find(check => check.endpoint === endpoint && check.filter.includes(includes))!.filter
+  const jq = (program: string, input: unknown) => {
+    const run = spawnSync(Bun.which("jq")!, [program], { input: JSON.stringify(input), encoding: "utf8" })
+    return run.status === 0 ? run.stdout.trim() : `jq exited ${run.status}`
+  }
+  const without = <T extends object>(value: T, key: keyof T) => Object.fromEntries(Object.entries(value).filter(([name]) => name !== key))
+
+  test("the environment checks print true only for amo-reviewer as set up", () => {
+    const check = filter("environments/amo-reviewer")
+    const environment = {
+      can_admins_bypass: false,
+      deployment_branch_policy: { protected_branches: false, custom_branch_policies: true },
+      protection_rules: [{ type: "required_reviewers", reviewers: [{ type: "User", reviewer: { login: "Alioun" } }] }, { type: "branch_policy" }]
+    }
+    expect(jq(check, environment)).toBe("true")
+    const broken: [string, unknown][] = [
+      ["administrators may bypass", { ...environment, can_admins_bypass: true }],
+      ["the bypass setting is missing", without(environment, "can_admins_bypass")],
+      ["protected branches may deploy", { ...environment, deployment_branch_policy: { protected_branches: true, custom_branch_policies: false } }],
+      ["someone else reviews", { ...environment, protection_rules: [{ type: "required_reviewers", reviewers: [{ type: "User", reviewer: { login: "dummy-reviewer" } }] }] }]
+    ]
+    for (const [name, value] of broken) expect({ name, prints: jq(check, value) }).toEqual({ name, prints: "false" })
+
+    const branches = filter("environments/amo-reviewer/deployment-branch-policies")
+    expect(jq(branches, { branch_policies: [{ name: "main", type: "branch" }] })).toBe("true")
+    expect(jq(branches, { branch_policies: [{ name: "main", type: "branch" }, { name: "dev", type: "branch" }] })).toBe("false")
+    expect(jq(branches, { branch_policies: [{ name: "main", type: "tag" }] })).toBe("false")
+  })
+
+  test("the ruleset check prints true only when main needs the owner's review of its last push", () => {
+    const check = filter("rules/branches/main", "pull_request")
+    const parameters = {
+      required_approving_review_count: 1,
+      dismiss_stale_reviews_on_push: true,
+      require_code_owner_review: true,
+      require_last_push_approval: true,
+      required_review_thread_resolution: false
+    }
+    const rules = [{ type: "pull_request", ruleset_id: 42, parameters }, { type: "non_fast_forward", ruleset_id: 42 }, { type: "deletion", ruleset_id: 7 }]
+    expect(jq(check, rules)).toBe("true")
+    expect(jq(check, [])).toBe("false")
+    const weakened: [keyof typeof parameters, number | boolean][] = [
+      ["required_approving_review_count", 0],
+      ["dismiss_stale_reviews_on_push", false],
+      ["require_code_owner_review", false],
+      ["require_last_push_approval", false]
+    ]
+    for (const [name, value] of weakened) {
+      expect({ name, prints: jq(check, [{ type: "pull_request", parameters: { ...parameters, [name]: value } }]) }).toEqual({ name, prints: "false" })
+      expect({ name, missing: jq(check, [{ type: "pull_request", parameters: without(parameters, name) }]) }).toEqual({ name, missing: "false" })
+    }
+    expect(jq(filter("rules/branches/main", "ruleset_id"), rules).split("\n")).toEqual(["7", "42"])
+  })
+
+  test("the bypass check prints true only for a ruleset no one but the owner can bypass", () => {
+    const check = filter("rulesets/$id")
+    const admin = { actor_id: 5, actor_type: "RepositoryRole", bypass_mode: "always" }
+    const ruleset = { id: 42, enforcement: "active", bypass_actors: [admin] }
+    expect(jq(check, ruleset)).toBe("true")
+    expect(jq(check, { ...ruleset, bypass_actors: [] })).toBe("true")
+    const broken: [string, unknown][] = [
+      ["a GitHub App may bypass", { ...ruleset, bypass_actors: [admin, { actor_id: 1234, actor_type: "Integration", bypass_mode: "always" }] }],
+      ["a deploy key may bypass", { ...ruleset, bypass_actors: [admin, { actor_id: null, actor_type: "DeployKey", bypass_mode: "always" }] }],
+      ["the write role may bypass", { ...ruleset, bypass_actors: [{ ...admin, actor_id: 4 }] }],
+      ["the bypass list is hidden", without(ruleset, "bypass_actors")],
+      ["the ruleset only evaluates", { ...ruleset, enforcement: "evaluate" }]
+    ]
+    for (const [name, value] of broken) expect({ name, prints: jq(check, value) }).toEqual({ name, prints: "false" })
+  })
+
+  test("the digest command stores the approved script's digest, and nothing when git show fails", () => {
+    const command = [...releasing.matchAll(/```sh\n([\s\S]*?)```/g)].map(match => match[1]!).find(block => block.includes("gh variable set REVIEWER_NOTES_SHA256"))!
+    const dir = mkdtempSync(join(tmpdir(), "reviewer-notes-digest-"))
+    directories.push(dir)
+    const repo = join(dir, "repo")
+    const bin = join(dir, "bin")
+    const recorded = join(dir, "gh-arguments")
+    mkdirSync(join(repo, "scripts"), { recursive: true })
+    mkdirSync(bin)
+    writeFileSync(join(repo, "scripts/amo-reviewer-notes.ts"), scriptSource)
+    const git = Bun.which("git")!
+    const gitEnv = { PATH: "/usr/bin:/bin", HOME: dir, GIT_CONFIG_NOSYSTEM: "1" }
+    for (const args of [["init", "-q"], ["add", "."], ["-c", "user.name=G28", "-c", "user.email=g28@example.invalid", "-c", "commit.gpgsign=false", "commit", "-qm", "approved"]]) {
+      expect(spawnSync(git, args, { cwd: repo, env: gitEnv }).status).toBe(0)
+    }
+    // Only the stub gh and the tools the command names are on PATH, so no real gh can run.
+    writeFileSync(join(bin, "gh"), `#!/bin/sh\nprintf '%s\\n' "$@" > "${recorded}"\n`, { mode: 0o755 })
+    for (const tool of ["shasum", "cut"]) symlinkSync(Bun.which(tool, { PATH: "/usr/bin:/bin" })!, join(bin, tool))
+    symlinkSync(git, join(bin, "git"))
+    const run = (commit: string) =>
+      spawnSync(bash, ["--noprofile", "--norc", "-c", command.replaceAll("<approved commit>", commit)], { cwd: repo, env: { ...gitEnv, PATH: bin }, encoding: "utf8" })
+
+    expect(run("HEAD").status).toBe(0)
+    expect(readFileSync(recorded, "utf8").split("\n").filter(Boolean)).toEqual([
+      "variable", "set", "REVIEWER_NOTES_SHA256", "--env", "amo-reviewer", "--repo", "Alioun/yt-playlist-tools", "--body", sha256(scriptSource)
+    ])
+    rmSync(recorded)
+    expect(run("0000000000000000000000000000000000000000").status).not.toBe(0)
+    expect(existsSync(recorded)).toBe(false)
+  })
+})
+
 describe("the CI step that runs these tests", () => {
   const steps = workflows["ci.yml"]!.jobs.build!.steps!
   const proof = steps.find(step => step.run?.includes("./tests/integration/amo-reviewer-notes.test.ts"))!

@@ -62,6 +62,7 @@ release=.github/workflows/release.yml
 ci=.github/workflows/ci.yml
 tests=tests/integration/amo-reviewer-notes.test.ts
 owners=.github/CODEOWNERS
+docs=docs/development/releasing.md
 
 plant old-script "$script" base -- "refuses to run with BUN_CONFIG_VERBOSE_FETCH set"
 plant follows-redirects "$script" 's/\n *redirect: "error",//' -- "never follows a redirect"
@@ -111,6 +112,11 @@ plant ci-reads-tsconfig "$ci" 's/ --tsconfig-override="\$RUNNER_TEMP\/empty\.jso
 plant ci-after-install "$ci" 's/(      # G28\x27s secret-flow tests.*?\n\n)(      - name: Install dependencies\n.*?\n\n)/$2$1/s' -- "runs before bun install"
 plant runner-unowned "$owners" 's/^\/\.audit\/2\.0-build\/ci-reviewer-credentials-mutations\.sh \@Alioun\n//m' -- "sends every file the approval covers to the owner"
 plant docs-unowned-later "$owners" 's/\z/\/docs\/development\/releasing.md\n/' -- "sends every file the approval covers to the owner"
+plant env-admin-bypass "$docs" 's/\.can_admins_bypass == false and //' -- "the environment checks print true only for amo-reviewer as set up"
+plant ruleset-no-last-push "$docs" 's/ and \.parameters\.require_last_push_approval == true//' -- "the ruleset check prints true only when main needs the owner's review of its last push"
+plant ruleset-any-bypass "$docs" 's/ and all\(\.bypass_actors\[\]; \.actor_type == "RepositoryRole" and \.actor_id == 5\)//' -- "the bypass check prints true only for a ruleset no one but the owner can bypass"
+plant digest-without-pipefail "$docs" 's/\(set -euo pipefail(\n +digest=)/(set -eu$1/' -- "the digest command stores the approved script's digest, and nothing when git show fails"
+plant digest-round-1 "$docs" at:4684a5621 -- "the digest command stores the approved script's digest, and nothing when git show fails"
 plant old-runner \
   "$script" base \
   "$release" 's/          digest=\$REVIEWER_NOTES_SHA256\n          script=[^\n]*\n          metadata=[^\n]*\n          version=\$VERSION\n(?:.*\n)*?          exec "\$bun" [^\n]*\n/          cp scripts\/amo-reviewer-notes.ts "\$RUNNER_TEMP\/"\n          cd "\$RUNNER_TEMP"\n          echo "\$REVIEWER_NOTES_SHA256  amo-reviewer-notes.ts" | shasum -a 256 --check --status \\\n            || { echo "::error::amo-reviewer-notes.ts is not the approved version (G28)"; exit 1; }\n          bun --no-env-file amo-reviewer-notes.ts fill "\$VERSION" "\$GITHUB_WORKSPACE\/dist\/amo-metadata.json"\n/' -- \
