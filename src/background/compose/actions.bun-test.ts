@@ -65,7 +65,7 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
   const store = projectionWorld(initial)
   const site = youtube()
   const listeners = new Set<Listener>()
-  const ensured: unknown[] = [], ticks: string[] = []
+  const ensured: unknown[] = [], ticks: string[] = [], opened: unknown[] = []
   const known = { tabId: 9, acct: options.tabAccount === undefined ? a : options.tabAccount, privateTab: false } as unknown as KnownTab
   const tabs = {
     async known() { return [known] },
@@ -88,7 +88,7 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
   const actions = composeActions({ native: native as never, build, owner: store.owner, tabs, playlists, writable: () => true,
     closed: listener => { closedListeners.add(listener); return () => { closedListeners.delete(listener) } },
     registrar: { async ensure(tabId, what) { ensured.push({ tabId, what }) } }, requester: async () => null, log: () => {},
-    ticked: tabId => { ticks.push(`tick ${tabId}`) } })
+    ticked: tabId => { ticks.push(`tick ${tabId}`) }, openSettings: (hash, tabId) => { opened.push({ hash, tabId }) } })
   const sender = { id: "perchling", frameId: 0, url: "https://www.youtube.com/watch?v=aaaaaaaaaaa",
     tab: { id: 9, windowId: 3, incognito: false } } as NativeSender
   const transport = { send: (message: unknown) => new Promise<unknown>(resolve => {
@@ -113,7 +113,7 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
     return Array.isArray(rows) ? rows : []
   }
   const closeTab = (tabId: number) => { for (const listener of [...closedListeners]) listener(tabId) }
-  return { store, site, page, actions, ensured, ticks, view, recentAdds, closeTab }
+  return { store, site, page, actions, ensured, ticks, view, recentAdds, closeTab, opened }
 }
 
 test("a playlist shortcut saves the pointed video to this account's shortcut playlist, with Undo", async () => {
@@ -128,6 +128,13 @@ test("a playlist shortcut saves the pointed video to this account's shortcut pla
   const undone = await page.undo(report.undo!)
   expect(undone).toEqual({ kind: "undone" })
   expect(site.jobs).toContain("remove")
+})
+
+test("a failure toast's Settings opens Settings at that feature's playlist, beside the tab that asked (YT-ADD-29)", async () => {
+  const { page, opened } = world()
+  page.settings({ feature: "shortcuts", playlist: beta })
+  await until(() => opened.length === 1, "Settings opened")
+  expect(opened).toEqual([{ hash: `feature-shortcuts&playlist=${beta}`, tabId: 9 }])
 })
 
 test("an Undo handle stops working once the page releases it, its tab closes, or the tab loads a new page", async () => {

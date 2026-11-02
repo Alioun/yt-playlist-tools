@@ -48,10 +48,11 @@ export function tabAsks(options: {
       if (content) session.toaster.show(content)
     },
     // A gather's toast carries Undo at most. Undo answers with the toast's next line, or closes it once it worked (YT-GT-21).
-    gatherToast({ text, tone, auto, undo }) {
+    gatherToast({ text, tone, auto, undo, settings }) {
       const session = options.feedback()
       if (!session) return
-      const action = undo === null ? null : session.action("undo", async () => {
+      const open = settings === undefined ? null : session.action("settings", () => { options.actions.settings({ feature: "gather", playlist: settings }); return null })
+      const action = undo === null ? open : session.action("undo", async () => {
         const answer = await options.actions.gatherUndo(undo)
         if (answer === null) return null
         return "kind" in answer ? { text: options.i18n.message("gather_undoFailed"), tone: "failure", auto: false, action: null }

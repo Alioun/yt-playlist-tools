@@ -140,6 +140,8 @@ export function composeActions(deps: {
   readonly ticked?: (tabId: number) => void
   /** Hears each closed tab, whose Undo handles can no longer be used. */
   readonly closed?: (listener: (tabId: number) => void) => () => void
+  /** Opens Settings at a hash, beside the tab that asked (YT-ADD-29). */
+  readonly openSettings?: (hash: string, tabId: number) => void
   readonly log?: (line: string) => void
 }): Actions {
   const { native, owner, tabs, playlists, registrar } = deps
@@ -206,6 +208,7 @@ export function composeActions(deps: {
       }
     },
     "tab.release"({ handle }) { flow.release(handle); return null },
+    "tab.settings"({ feature, playlist }, context) { deps.openSettings?.(`feature-${feature}&playlist=${playlist}`, context.origin.tabId); return null },
     async "tab.need"(_request, context) {
       try { await registrar.ensure(context.origin.tabId, { popovers: true }); return { kind: "ok" } } catch { return { kind: "failed" } }
     },

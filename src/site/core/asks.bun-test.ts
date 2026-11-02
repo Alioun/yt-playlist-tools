@@ -21,12 +21,12 @@ function world(need: () => Promise<boolean>, gatherUndo: TabActions["gatherUndo"
   const keys = new Keys({ document, blockers: { menuOpen: () => false, dialogOpen: () => false, extensionPopoverOpen: () => false }, onError: () => {} })
   const i18n = englishI18n()
   const feedback = createFeedbackSession({ owner: root, document, keys, site: "www", i18n, labels, initial: { undoKey, features: [] }, now: timers.now, onError: () => {}, onCosmetic: () => {} })
-  const undone: unknown[] = []
-  const actions = { need, undo: async (handle: unknown) => { undone.push(handle); return { kind: "undone" } },
+  const undone: unknown[] = [], settings: unknown[] = []
+  const actions = { need, undo: async (handle: unknown) => { undone.push(handle); return { kind: "undone" } }, settings: (target: unknown) => { settings.push(target) },
     gatherUndo: async (id: string) => { undone.push(id); return gatherUndo(id) } } as unknown as TabActions
   const asks = tabAsks({ site: "www", document, actions, i18n, feedback: () => feedback.use(root) })
   running.push(() => { root.dispose(); keys.dispose(); timers.restore() })
-  return { asks, timers, undone, toast: () => feedback.read()?.feedback.toaster.read() ?? null }
+  return { asks, timers, undone, settings, toast: () => feedback.read()?.feedback.toaster.read() ?? null }
 }
 
 test("a save from another tab shows its answer as this tab's toast, with Undo", async () => {
@@ -67,4 +67,14 @@ test("a gather's toast carries Undo, which spends it once it worked and says so 
   await failing.toast()?.act()
   await settle()
   expect(failing.toast()?.content).toMatchObject({ text: "Couldn't undo.", tone: "failure", action: null })
+})
+
+test("a Missing or Full gather playlist's toast offers Settings at the gather playlist (YT-GT-33)", async () => {
+  Object.defineProperty(document, "fullscreenElement", { value: null, configurable: true })
+  running.push(() => { Reflect.deleteProperty(document, "fullscreenElement") })
+  const w = world(async () => true)
+  w.asks.gatherToast({ text: "Couldn't gather into Later, because it's full. All tabs stay open.", tone: "failure", auto: false, undo: null, settings: "PL_later" as PlaylistId })
+  expect(w.toast()?.content).toMatchObject({ tone: "failure", action: { kind: "settings", label: "Settings" } })
+  await w.toast()?.act()
+  expect(w.settings).toEqual([{ feature: "gather", playlist: "PL_later" }])
 })

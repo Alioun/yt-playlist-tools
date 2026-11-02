@@ -53,6 +53,8 @@ export type TabCreated = { readonly kind: "created"; readonly id: PlaylistId } |
 export type TabDestinationChange = { readonly destination: SetupDestination; readonly expected: DestinationExpectation; readonly playlist: PlaylistId | null }
 
 type Pinned<T> = { readonly acct: AccountKey | null; readonly request: T }
+/** A failure toast's **Settings**: the feature whose playlist is Missing or Full, at that playlist's row (YT-ADD-29, YT-GT-33). */
+export type TabSettingsTarget = { readonly feature: "auto-add" | "shortcuts" | "gather"; readonly playlist: PlaylistId }
 export type TabActionMessages = {
   "tab.add": { payload: Pinned<TabAddRequest>; result: TabAddReport }
   "tab.remove": { payload: Pinned<TabRemoveRequest>; result: TabRemoveReport }
@@ -63,6 +65,7 @@ export type TabActionMessages = {
   "tab.create": { payload: Pinned<{ readonly title: string; readonly privacy: Privacy; readonly video: VideoId | null }>; result: TabCreated }
   "tab.destination": { payload: Pinned<TabDestinationChange>; result: DestinationAnswer }
   "tab.device": { payload: { readonly change: TabDeviceChange }; result: TabDeviceAnswer }
+  "tab.settings": { payload: TabSettingsTarget; result: null }
   /** A listed channel read with a new title or @handle, for the store to write back (YT-CF-10). */
   "tab.channelLabel": { payload: Pinned<{ readonly channel: TabChannelLabel }>; result: null }
 }
@@ -156,6 +159,8 @@ export const tabActionContract: RpcContract<TabActionMessages> = {
     destination: isSetupDestination, expected: isDestinationExpectation, playlist: nullable(isPlaylistId) }))(v), result: isDestinationAnswer, timeoutMs: 15_000 },
   "tab.channelLabel": { payload: (v): v is TabActionMessages["tab.channelLabel"]["payload"] => pinned(r => objectShape(r, { channel: isTabChannelLabel }))(v),
     result: (v): v is null => v === null, timeoutMs: 8_000 },
+  "tab.settings": { payload: (v): v is TabSettingsTarget => objectShape(v, { feature: oneOf("auto-add", "shortcuts", "gather"), playlist: isPlaylistId }),
+    result: (v): v is null => v === null, timeoutMs: 2_000 },
   "tab.device": { payload: (v): v is TabActionMessages["tab.device"]["payload"] => objectShape(v, { change: isTabDeviceChange }),
     result: (v): v is TabDeviceAnswer => objectShape(v, { kind: oneOf("confirmed") }) || objectShape(v, { kind: oneOf("refused"), reason: oneOf("private", "invalid", "unavailable", "unconfirmed") }),
     timeoutMs: 8_000 }
@@ -209,7 +214,7 @@ export type TabAskMessages = {
   "bg.toast": { payload: { readonly answer: TabAddReport; readonly video: VideoId; readonly title: string | null; readonly opener: FeatureId }; result: null }
   "bg.picker": { payload: { readonly video: VideoId; readonly title: string | null; readonly choose: boolean; readonly opener: FeatureId }; result: { readonly kind: "opened" | "failed" } }
   /** A gather's result in the tab it saved from (UI-TOAST-17). An automatic gather's toast is one the user didn't ask for. */
-  "bg.gatherToast": { payload: GatherToastLine & { readonly auto: boolean; readonly undo: string | null }; result: null }
+  "bg.gatherToast": { payload: GatherToastLine & { readonly auto: boolean; readonly undo: string | null; readonly settings?: PlaylistId }; result: null }
   /** A YouTube Music key from any tab: save or like the playing song here, as its Save or Like key would (YM-ANY-2, YM-ANY-3). */
   "bg.music": { payload: { readonly action: "save" | "like"; readonly feedback: boolean }; result: MusicAskAnswer }
 }
@@ -221,7 +226,7 @@ export const tabAskContract: RpcContract<TabAskMessages> = {
   "bg.picker": { payload: (v): v is TabAskMessages["bg.picker"]["payload"] => objectShape(v, { video: isVideoId, title: nullable(title), choose: bool, opener: isFeatureId }),
     result: (v): v is TabAskMessages["bg.picker"]["result"] => objectShape(v, { kind: oneOf("opened", "failed") }), timeoutMs: 8_000 },
   "bg.gatherToast": { payload: (v): v is TabAskMessages["bg.gatherToast"]["payload"] => objectShape(v, { text: toastText, tone: oneOf("confirmation", "failure"), auto: bool,
-    undo: v => v === null || gatherId(v) }), result: (v): v is null => v === null, timeoutMs: 2_000 },
+    undo: v => v === null || gatherId(v) }, { settings: isPlaylistId }), result: (v): v is null => v === null, timeoutMs: 2_000 },
   "bg.music": { payload: (v): v is TabAskMessages["bg.music"]["payload"] => objectShape(v, { action: oneOf("save", "like"), feedback: bool }),
     result: (v): v is MusicAskAnswer => objectShape(v, { kind: oneOf("done", "failed"), text: nullable(title) }), timeoutMs: 30_000 }
 }

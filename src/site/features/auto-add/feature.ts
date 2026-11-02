@@ -21,7 +21,7 @@ import {
 export type AutoAddServices = {
   readonly document: Document
   readonly page: Pick<PageLink, "watch" | "onState" | "run">
-  readonly actions: Pick<TabActions, "add" | "undo" | "release" | "progress" | "cantMeasure" | "videoChanged" | "channelLabel">
+  readonly actions: Pick<TabActions, "add" | "undo" | "release" | "progress" | "cantMeasure" | "videoChanged" | "channelLabel" | "settings">
   readonly feedback: { use(owner: Scope): Feedback | null }
   readonly text: AutoAddText
   /** Monotonic milliseconds. */
@@ -270,6 +270,10 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
       action = { ...session.action("undo", () => undo(session, handle)), release: () => actions.release(handle) }
     }
     else if (plan.action?.kind === "reload") action = session.action("reload", () => { document.defaultView?.location.reload(); return null })
+    else if (plan.action?.kind === "settings") {
+      const target = { feature: plan.action.feature, playlist: plan.action.playlist }
+      action = session.action("settings", () => { actions.settings(target); return null })
+    }
     session.toaster.show(session.format(plan, titles, action))
   }
   async function undo(session: Feedback, handle: TabUndoHandle) {

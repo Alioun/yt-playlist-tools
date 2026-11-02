@@ -45,7 +45,7 @@ function world(initial: SiteView<"www"> = wwwView(), options: { stored?: TabProg
   const streams: { player?: (data: PlayerData) => void; nav?: (data: NavData) => void } = {}
   const adds: { request: TabAddRequest; title: string | undefined }[] = [], saves: { video: VideoId; progress: TabProgress }[] = []
   const toasts: ToastContent[] = [], logs: string[] = [], states: AutoAddState[] = []
-  const changed: number[] = [], released: string[] = [], labels: unknown[] = []
+  const changed: number[] = [], released: string[] = [], labels: unknown[] = [], settings: unknown[] = []
   let answer: (request: TabAddRequest) => TabAddReport = request => ({ kind: "report", toast: savedPlan, feedback: true, undo: { kind: "add", id: "g:1" },
     titles: { [music]: "Music videos" }, outcomes: Object.fromEntries((request.via === "auto-add" ? request.playlists : []).map(pl => [pl, { kind: "added" }])) })
   const cantMeasure = [...options.cantMeasure ?? [true, false]]
@@ -71,7 +71,8 @@ function world(initial: SiteView<"www"> = wwwView(), options: { stored?: TabProg
       channelLabel(channel) { labels.push(channel) },
       progress: { load: async video => video === first ? options.stored ?? null : null, async save(video, progress) { saves.push({ video, progress }) } },
       async cantMeasure() { return cantMeasure.shift() ?? false },
-      videoChanged() { changed.push(Date.now()) }
+      videoChanged() { changed.push(Date.now()) },
+      settings(target) { settings.push(target) }
     },
     feedback: { use: () => feedback },
     text: { cantMeasure: title => `cant-measure:${title ?? ""}` },
@@ -84,7 +85,7 @@ function world(initial: SiteView<"www"> = wwwView(), options: { stored?: TabProg
     subscribe(listener) { listeners.add(listener); return () => { listeners.delete(listener) } }
   } })
   const result = {
-    scope, adds, saves, toasts, logs, states, changed, released, labels,
+    scope, adds, saves, toasts, logs, states, changed, released, labels, settings,
     get watching() { return streams.player !== undefined },
     respond(next: typeof answer) { answer = next },
     publish(next: SiteView<"www">) { current = next; for (const listener of [...listeners]) listener(next) },
@@ -115,6 +116,19 @@ test("a video played to its playlist's goal is auto-added once, named, with the 
   expect(h.adds).toEqual([{ request: { site: "www", video: first, via: "auto-add", playlists: [music], channel: null }, title: "First video" }])
   expect(h.toasts.map(toast => [toast.text, toast.tone, toast.action?.kind ?? null])).toEqual([["saved:First video", "confirmation", "undo"]])
   expect(h.states.at(-1)).toEqual({ kind: "added", playlists: [music] })
+})
+
+test("an auto-add into a Missing playlist toasts with Settings, which opens Settings at that playlist (YT-ADD-29)", async () => {
+  const h = world()
+  h.respond(() => ({ kind: "report", feedback: true, undo: null, titles: { [music]: "Music videos" }, outcomes: { [music]: { kind: "failed", failure: "missing" } },
+    toast: { tone: "failure", auto: false, message: { kind: "failed", failure: "missing", playlists: [music] }, action: { kind: "settings", feature: "auto-add", playlist: music },
+      remember: { tab: [], session: [] } } }))
+  h.navigate(first, "First video")
+  await h.play(0, 60)
+  const action = h.toasts[0]?.action
+  expect(action?.kind).toBe("settings")
+  await action?.run()
+  expect(h.settings).toEqual([{ feature: "auto-add", playlist: music }])
 })
 
 test("an auto-add whose toast offers no Undo releases its handle at once; one with Undo leaves it to the toast", async () => {

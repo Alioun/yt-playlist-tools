@@ -190,7 +190,9 @@ export function composeGather(deps: {
       if (toast) {
         const tabId = result.served
         void deps.registrar.ensure(tabId, { core: true, kit: true })
-          .then(() => ask(tabId, "bg.gatherToast", { text: toast.text, tone: failure ? "failure" : "confirmation", auto: result.auto === true, undo: result.undo }))
+          .then(() => ask(tabId, "bg.gatherToast", { text: toast.text, tone: failure ? "failure" : "confirmation", auto: result.auto === true, undo: result.undo,
+            // A Missing or Full gather playlist's toast offers Settings where the popup row offers Choose (YT-GT-33).
+            ...toast.action?.kind === "choose" ? { settings: result.playlist } : {} }))
           .catch(() => {})
       }
     }

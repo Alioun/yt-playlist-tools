@@ -1,8 +1,9 @@
 import type { DestinationAnswer } from "../../shared/contracts/first-run"
 import type { BuildId, Privacy } from "../../shared/contracts/vocabulary"
 import {
-  tabActionContract, tabProgressContract, TITLE_LIMIT, type TabActionMessages, type TabAddReport, type TabAddRequest, type TabCreated, type TabDestinationChange, type TabChannelLabel, type TabDeviceAnswer, type TabDeviceChange,
-  type TabPlaylists, type TabProgress, type TabProgressMessages, type TabRemoveReport, type TabRemoveRequest, type TabUndoReport, type UndoHandle
+  tabActionContract, tabGatherContract, tabProgressContract, TITLE_LIMIT, type GatherToastLine, type TabActionMessages, type TabAddReport, type TabAddRequest, type TabCreated,
+  type TabDestinationChange, type TabChannelLabel, type TabDeviceAnswer, type TabDeviceChange, type TabGatherMessages, type TabPlaylists, type TabProgress, type TabProgressMessages,
+  type TabRemoveReport, type TabRemoveRequest, type TabSettingsTarget, type TabUndoReport, type UndoHandle
 } from "../../shared/contracts/tab-actions"
 import type { AccountKey, VideoId } from "../../shared/model"
 import { createRpcCaller, type Deadline } from "../../shared/rpc/rpc"
@@ -27,6 +28,8 @@ export type TabActions = {
   health(reports: readonly TabHealthReport[]): void
   /** Tells the background a listed channel's title or @handle changed (YT-CF-10). */
   channelLabel(channel: TabChannelLabel): void
+  /** Opens Settings at a feature's playlist, for a failure toast's **Settings** (YT-ADD-29). */
+  settings(target: TabSettingsTarget): void
   /** Saves this browser's Sort A–Z or last visibility from the page picker. */
   device(change: TabDeviceChange): Promise<TabDeviceAnswer>
   /** Auto-add's watch progress at DATA-27's checkpoints, kept per account by the background. */
@@ -77,6 +80,7 @@ export function createTabActions(options: {
     destination: change => call("tab.destination", change, { kind: "refused", reason: "unavailable" } as const),
     channelLabel(channel) { void call("tab.channelLabel", { channel }, null) },
     health(reports) { void call("tab.health", { reports }, null) },
+    settings(target) { void rpc.call("tab.settings", target) },
     async device(change) {
       const answer = await rpc.call("tab.device", { change })
       return answer.kind === "answered" ? answer.result : { kind: "refused", reason: "unavailable" }

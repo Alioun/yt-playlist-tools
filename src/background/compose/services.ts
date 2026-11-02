@@ -79,6 +79,10 @@ export function composeServices(deps: {
   const playlists = createPlaylists({ owner, tabs, now: () => Date.now() })
   const actions = composeActions({ native: { ...native, runtime }, build, owner, tabs, playlists, registrar, writable: deps.consented,
     ticked: tabId => badge.tick(tabId),
+    openSettings(hash, tabId) {
+      void native.tabs.get(tabId).then(tab => native.tabs.create({ url: runtime.getURL(`/options.html#${hash}`), openerTabId: tabId,
+        ...tab.index === undefined ? {} : { index: tab.index + 1 } })).catch(() => {})
+    },
     closed(listener) {
       native.tabs.onRemoved.addListener(listener)
       return () => native.tabs.onRemoved.removeListener(listener)
