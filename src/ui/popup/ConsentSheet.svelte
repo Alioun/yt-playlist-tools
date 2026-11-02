@@ -5,7 +5,6 @@
   import { createFirstRunOwner } from "../backend/first-run-owner"
   import { featurePermissionNeeds } from "../backend/shared-settings"
   import { createFirstRunText } from "../onboarding/text"
-  import catalogue from "../../public/_locales/en/messages.json"
   import { firstRunFeatures, type PageFeatureId } from "../onboarding/features"
   import { isOn } from "../lib/held"
   import type { PageState } from "../lib/page-state.svelte"
@@ -20,19 +19,24 @@
     variant?: "sheet" | "dialog"
   } = $props()
   const { backend, platform } = untrack(() => pageState.page)
-  const full = untrack(() => pageState.page.withCatalogue(catalogue))
-  const text = createFirstRunText(full)
-  const owner = createFirstRunOwner(backend, {
-    account: { read: async () => ({ kind: "no-tab" }) }, playlists: { title: async () => undefined },
-    chooser: { choose: async () => ({ kind: "unavailable" }) }, open: () => {}
-  }, platform, text)
+  const loading = untrack(() => pageState.page.canonical()).then(full => {
+    const text = createFirstRunText(full)
+    const owner = createFirstRunOwner(backend, {
+      account: { read: async () => ({ kind: "no-tab" }) }, playlists: { title: async () => undefined },
+      chooser: { choose: async () => ({ kind: "unavailable" }) }, open: () => {}
+    }, platform, text)
+    return { full, text, owner }
+  })
+  let loaded = $state.raw<Awaited<typeof loading> | null>(null)
+  void loading.then(value => { loaded = value })
   let attempt = 1
   let pending = $state(false)
   let result = $state<string | null>(null)
 
   function agree() {
     const settings = pageState.settings
-    if (!settings || pending) return
+    if (!settings || pending || !loaded) return
+    const { full, text, owner } = loaded
     const device = pageState.ready?.device.kind === "current" ? pageState.ready.device.device : null
     const needs = featurePermissionNeeds({ kind: "feature", feature, value: true } as never, settings)
     // The prompt is asked first in the click, before anything is awaited (R53).
@@ -55,10 +59,12 @@
 <div role="dialog" aria-modal="true" aria-labelledby="consent-heading" tabindex="-1"
   class={variant === "sheet" ? "bg-card absolute inset-x-0 top-[58px] bottom-0 z-20 flex flex-col overflow-y-auto border-t p-4 shadow-lg" : "bg-card flex max-h-[80vh] flex-col overflow-y-auto rounded-2xl p-6 shadow-xl"}
   onkeydown={event => { if (event.key === "Escape") { event.stopPropagation(); onclose() } }}>
-  <Disclosure context="feature" text={text.disclosure} browser={platform.browser} size={variant === "sheet" ? "sm" : "md"} level={2} headingId="consent-heading" />
-  {#if result}<p role="status" class="text-warning mt-3 text-[12.5px]">{result}</p>{/if}
-  <div class="mt-4 flex flex-wrap gap-2">
-    <Button {pending} onclick={agree}>{full.message("consentSheet_agree", { feature: name })}</Button>
-    <Button variant="outline" onclick={onclose}>{full.message("consentSheet_cancel")}</Button>
-  </div>
+  {#if loaded}
+    <Disclosure context="feature" text={loaded.text.disclosure} browser={platform.browser} size={variant === "sheet" ? "sm" : "md"} level={2} headingId="consent-heading" />
+    {#if result}<p role="status" class="text-warning mt-3 text-[12.5px]">{result}</p>{/if}
+    <div class="mt-4 flex flex-wrap gap-2">
+      <Button {pending} onclick={agree}>{loaded.full.message("consentSheet_agree", { feature: name })}</Button>
+      <Button variant="outline" onclick={onclose}>{loaded.full.message("consentSheet_cancel")}</Button>
+    </div>
+  {/if}
 </div>

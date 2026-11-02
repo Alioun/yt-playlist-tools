@@ -4,10 +4,9 @@
   import Mark from "../../components/Mark.svelte"
   import type { createFeatureCopy } from "../../onboarding/features"
   import type { PageState } from "../../lib/page-state.svelte"
-  import markSrc from "../../../assets/brand/icon.svg"
 
   // Settings › About (UI-SET-18, UI-BRAND-02).
-  let { pageState, features }: { pageState: PageState; features: ReturnType<typeof createFeatureCopy> } = $props()
+  let { pageState, features, markSrc }: { pageState: PageState; features: ReturnType<typeof createFeatureCopy>; markSrc: string } = $props()
   const { i18n } = untrack(() => pageState.page)
   let reporting = $state(false)
   const [before, after] = i18n.message("about_credit", { link: "\u0000" }).split("\u0000")

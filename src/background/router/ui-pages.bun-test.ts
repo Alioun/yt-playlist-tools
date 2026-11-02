@@ -32,7 +32,7 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
       importSettings: async () => ({ kind: "committed" }) as never
     },
     withdraw: async () => ({ kind: "withdrawn" }) as never,
-    version: "2.0.0",
+    version: () => "2.0.0",
     session: { get: async () => [] },
     status: async () => ({ tab: { kind: "site", site: "www", tabId: 9, signedIn: true, acct }, health: [{ feature: "auto-add", site: "www", state: "not-working", gaps: [] }] }),
     now: () => 1000,

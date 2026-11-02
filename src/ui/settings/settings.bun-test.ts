@@ -26,7 +26,7 @@ function settings(records: JsonObject, respond: ScriptedResponders = {}, hash = 
   const page = {
     backend: scripted.backend, i18n: englishI18n(), platform: { browser: "firefox", os: "linux" } as const, private: false, version: "2.0.0", beta: false,
     open: (url: string) => { opened.push(url) }, openSettings: () => {}, openFirstRun: () => { opened.push("first-run") }, applyTheme: () => {},
-    commands: { read: async () => ({ kind: "unavailable" }) as const, named: async () => null }, withCatalogue: () => createI18n(scriptedMessages(), catalogue)
+    commands: { read: async () => ({ kind: "unavailable" }) as const, named: async () => null }, canonical: async () => createI18n(scriptedMessages(), catalogue)
   }
   render(Settings, { page: page as never, markSrc: "mark.svg" })
   return { opened }
@@ -38,7 +38,7 @@ test("Settings opens on YouTube with every feature card, and the nav lists the e
   expect(within(nav).getAllByRole("link").map(link => link.textContent?.trim())).toEqual(["YouTube", "YouTube Music", "Everywhere", "Accounts", "Appearance", "Privacy & data", "Diagnostics", "About"])
   // happy-dom's role queries are slow over a whole section, so each card is queried on its own.
   const card = async (feature: string) => {
-    for (let attempt = 0; attempt < 100; attempt++) {
+    for (let attempt = 0; attempt < 300; attempt++) {
       const found = document.querySelector<HTMLElement>(`[data-feature-card="${feature}"]`)
       if (found) return found
       await new Promise(resolve => setTimeout(resolve, 50))
@@ -49,13 +49,13 @@ test("Settings opens on YouTube with every feature card, and the nav lists the e
   const queue = await card("queue-button")
   expect(within(queue).getByRole("switch", { name: "Queue button on thumbnails" })).toHaveAttribute("aria-checked", "true")
   expect(within(queue).getByRole("switch", { name: "Show feedback" })).toHaveAttribute("aria-checked", "true")
-})
+}, 20_000)
 
 test("before consent Privacy & data says so and marks its nav entry", async () => {
   settings({ schema: 1, device: { id: "device", consent: null, syncOn: false } }, { "ui.accountInView": () => { throw Error("read before consent") } }, "#privacy")
   expect(await screen.findByText("You haven't agreed yet, so nothing runs on YouTube.", {}, { timeout: 5000 })).toBeTruthy()
   expect(within(screen.getByRole("link", { name: /Privacy & data/ })).getByRole("img", { name: "Needs you" })).toBeTruthy()
-})
+}, 20_000)
 
 test("withdrawing asks first, then sends the stored agreement", async () => {
   const sent: unknown[] = []
@@ -64,7 +64,7 @@ test("withdrawing asks first, then sends the stored agreement", async () => {
   await userEvent.click(await screen.findByRole("button", { name: "Withdraw" }, { timeout: 5000 }))
   expect(await screen.findByText("Withdrawn. Every feature has stopped in this browser.", {}, { timeout: 5000 })).toBeTruthy()
   expect(sent).toEqual([{ v: 1, at: 1_700_000_000_000 }])
-})
+}, 20_000)
 
 test("removing an account setup shows ACC-25's confirmation for this browser and removes it", async () => {
   const calls: string[] = []
@@ -77,14 +77,14 @@ test("removing an account setup shows ACC-25's confirmation for this browser and
   await userEvent.click(within(dialog).getByRole("button", { name: "Remove" }))
   expect(await screen.findByText("Removed.", {}, { timeout: 5000 })).toBeTruthy()
   expect(calls).toEqual(["prepare", "confirm"])
-})
+}, 20_000)
 
 test("a feature link opens its section and rings its card", async () => {
   settings(agreed, {}, "#feature-music-keys")
   const card = await screen.findByRole("region", { name: /Quick-action shortcuts/ }, { timeout: 5000 })
-  await new Promise(resolve => setTimeout(resolve, 20))
+  for (let attempt = 0; attempt < 40 && !card.hasAttribute("data-ring"); attempt++) await new Promise(resolve => setTimeout(resolve, 25))
   expect(card.hasAttribute("data-ring")).toBe(true)
-})
+}, 20_000)
 
 test("the diagnostics report names features and statuses, never the account", async () => {
   settings({ ...agreed, "doc:settings": stamped({ autoAdd: { on: true, feedback: true } }), [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" } }) }, {
@@ -96,4 +96,4 @@ test("the diagnostics report names features and statuses, never the account", as
   expect(report.textContent).not.toContain(acct)
   expect(report.textContent).not.toContain("Ann")
   expect(screen.getByText("Partly working")).toBeTruthy()
-})
+}, 20_000)

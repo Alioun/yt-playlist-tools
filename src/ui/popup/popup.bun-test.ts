@@ -30,7 +30,7 @@ function popup(records: JsonObject, respond: ScriptedResponders = {}, grants = {
     backend: scripted.backend, i18n: englishI18n(), platform: { browser: "chrome", os: "windows" } as const, private: false,
     open: (url: string) => { opened.push(url) }, openSettings: (hash?: string) => { opened.push(`settings${hash ? `#${hash}` : ""}`) },
     openFirstRun: () => { opened.push("first-run") }, applyTheme: () => {}, version: "2.0.0", beta: false, commands: { read: async () => ({ kind: "unavailable" }) as const, named: async () => null },
-    withCatalogue: () => createI18n(scriptedMessages(), catalogue)
+    canonical: async () => createI18n(scriptedMessages(), catalogue)
   }
   render(Popup, { page: page as never, markSrc: "mark.svg" })
   return { opened, sent, scripted }

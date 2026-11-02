@@ -7,6 +7,8 @@ import type { SessionRead } from "../store/session-memory"
 import type { SettingsRead } from "../store/local-filter-writer"
 import { enabledTabFeatures, type StatusProducer } from "../tab-view/producer"
 import type { TabLookup } from "../tabs/ports"
+import type { TabRecord } from "../tabs/records"
+import type { Settings } from "../../shared/model/types"
 
 const rank = { working: 0, "partly-working": 1, "not-working": 2 } as const
 const MAX_TABS = 20
@@ -19,6 +21,19 @@ function gaps(status: FeatureStatus): HealthGap[] {
   return result
 }
 
+type StatusDeps = { readonly statuses: StatusProducer; readonly tab: (tabId: number) => Promise<TabLookup>; readonly build: BuildId }
+/** One known tab's feature statuses, from the status producer, as the tab view and the badge read them. */
+export async function readTabStatuses(deps: StatusDeps, settings: Settings, tabId: number, record: TabRecord, incognito: boolean | null): Promise<readonly FeatureStatus[]> {
+  const lookup = await deps.tab(tabId)
+  if (lookup.kind !== "tab" || incognito !== null && lookup.tab.incognito !== incognito) return []
+  const site: Site = record.site
+  const enabled = enabledTabFeatures(settings, site)
+  if (!enabled?.length) return []
+  const info = record.signedIn ? { site, build: deps.build, signedIn: true, acct: record.acct } as const
+    : { site, build: deps.build, signedIn: false, acct: null } as const
+  const read = await deps.statuses.read({ tab: { ...lookup.tab, site }, info }, enabled)
+  return read.kind === "statuses" ? read.statuses : []
+}
 /**
  * The popup's and settings' health facts (UI-POP-09): over a YouTube or YouTube Music tab, that tab's statuses;
  * over any other tab, the worst status of each feature across the open tabs of each site. The tab registry in
@@ -45,19 +60,10 @@ export function createPageStatus(deps: {
     await Promise.all(targets.map(async tabId => {
       const record = session.memory.tabs.get(tabId)
       if (!record) return
-      const lookup = await deps.tab(tabId)
-      if (lookup.kind !== "tab" || lookup.tab.incognito !== ui.requester.incognito) return
-      const site: Site = record.site
-      const enabled = enabledTabFeatures(settings, site)
-      if (!enabled?.length) return
-      const info = record.signedIn ? { site, build: deps.build, signedIn: true, acct: record.acct } as const
-        : { site, build: deps.build, signedIn: false, acct: null } as const
-      const read = await deps.statuses.read({ tab: { ...lookup.tab, site }, info }, enabled)
-      if (read.kind !== "statuses") return
-      for (const status of read.statuses) {
-        const key = `${site}:${status.feature}`
+      for (const status of await readTabStatuses(deps, settings, tabId, record, ui.requester.incognito)) {
+        const key = `${record.site}:${status.feature}`
         const previous = worst.get(key)
-        const next: UiFeatureHealth = { feature: status.feature, site, state: status.state, gaps: gaps(status) }
+        const next: UiFeatureHealth = { feature: status.feature, site: record.site, state: status.state, gaps: gaps(status) }
         if (!previous || rank[next.state] > rank[previous.state]) worst.set(key, next)
       }
     }))

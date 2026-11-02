@@ -9,6 +9,7 @@ import { createPlaylists } from "../playlists/playlists"
 import type { Registrar } from "../registrar/ports"
 import { createUiRouter } from "../router/ui-playlists"
 import { createPageStatus } from "./page-status"
+import { createToolbarBadge, type ToolbarBadge } from "./badge"
 import type { StartingOwner, StoreLifecycle } from "../store/store-lifecycle"
 import { createTabViewProducer, tabViewFacts, type NoticeProducer, type StatusProducer } from "../tab-view/producer"
 import { createViewPublication } from "../tab-view/publication"
@@ -16,12 +17,7 @@ import { createTabs } from "../tabs/tabs"
 import type { BuildId } from "../../shared/contracts"
 import { siteBundles } from "../../shared/features/registration"
 
-export type Services = {
-  readonly tabs: ReturnType<typeof createTabs>
-  readonly actions: Actions
-  readonly anyTab: ReturnType<typeof composeAnyTab>
-  dispose(): void
-}
+export type Services = { readonly tabs: ReturnType<typeof createTabs>; readonly badge: ToolbarBadge; dispose(): void }
 
 /**
  * Until the Monitor's production authority is bound (B35), every feature that's on reads as working, which is
@@ -118,14 +114,32 @@ export function composeServices(deps: {
       session: { get: async key => (await native.storage.session.get(key))[key] },
       status: createPageStatus({ owner, statuses: workingStatuses, tab: tabId => browserTabs.port.get(tabId), build }),
       withdraw: (origin, expected) => deps.lifecycle.withdrawConsent(origin, expected),
-      version: native.runtime.getManifest().version,
+      version: () => native.runtime.getManifest().version,
       now: () => Date.now()
     }
   })
+  const badge = createToolbarBadge({
+    action: {
+      setBadgeText: details => native.action.setBadgeText(details as never),
+      setBadgeBackgroundColor: details => native.action.setBadgeBackgroundColor(details),
+      setTitle: details => native.action.setTitle(details as never)
+    },
+    local: { get: () => native.storage.local.get(null) }, owner, statuses: workingStatuses,
+    access: site => native.permissions.contains({ origins: [siteBundles[site].match] }), tab: tabId => browserTabs.port.get(tabId), build,
+    i18n: { getMessage: (name, substitutions) => native.i18n.getMessage(name as never, substitutions) },
+    clock: { after: (milliseconds, run) => { const timer = setTimeout(run, milliseconds); return () => clearTimeout(timer) } }
+  })
+  const repaint = () => { void badge.refresh() }
+  const changed = (_changes: unknown, area: string) => { if (area === "local" || area === "session") repaint() }
+  native.storage.onChanged.addListener(changed)
+  native.permissions.onAdded.addListener(repaint)
+  native.permissions.onRemoved.addListener(repaint)
+  repaint()
   return {
-    tabs, actions, anyTab,
+    tabs, badge,
     dispose() {
-      for (const stop of [() => router.dispose(), () => autoAddRoutes.dispose(), () => accounts.dispose(), () => playlists.dispose(), () => publication.dispose(),
+      for (const stop of [() => native.storage.onChanged.removeListener(changed), () => native.permissions.onAdded.removeListener(repaint),
+        () => native.permissions.onRemoved.removeListener(repaint), () => badge.dispose(), () => router.dispose(), () => accounts.dispose(), () => playlists.dispose(), () => publication.dispose(),
         unbindHello, () => producer.dispose(), () => tabs.dispose(), () => browserTabs.dispose()]) {
         try { stop() } catch {}
       }

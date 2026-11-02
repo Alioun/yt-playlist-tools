@@ -4320,5 +4320,36 @@
   },
   "report_noAccount": {
     "message": "No GitHub account? Leave a review on the extension's store page, which the developer reads."
+  },
+  "badge_notWorking_one": {
+    "message": "$FEATURE$ isn't working in this tab",
+    "placeholders": {
+      "feature": {
+        "content": "$1"
+      }
+    }
+  },
+  "badge_notWorking_other": {
+    "message": "$COUNT$ features aren't working in this tab",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "badge_waiting": {
+    "message": "Perchling is waiting for your OK"
+  },
+  "badge_access": {
+    "message": "Perchling needs site access"
+  },
+  "badge_marks": {
+    "message": "A playlist you chose needs attention"
+  },
+  "badge_paused": {
+    "message": "Auto-add is paused"
+  },
+  "badge_ticked": {
+    "message": "Auto-added this tab's video"
   }
 }

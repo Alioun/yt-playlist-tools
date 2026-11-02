@@ -24,7 +24,12 @@ const retiredLocalStorage = ["cachedVideos", "playlists", "preventDuplicates"]
  * What every extension page starts from: the backend, its text and how to open the other pages. Only a page
  * that shows canonical English text (the disclosure) passes the catalogue; the others read the browser's own.
  */
-export function startExtensionPage(native: ExtensionPagePort, navigatorPlatform: string, catalogue?: MessageCatalogue, window: { readonly windowId?: number } = {}) {
+export type PageOptions = {
+  readonly windowId?: number
+  /** The canonical catalogue, loaded only by the lazy part that pins the disclosure (UI-ONB-09). */
+  readonly catalogue?: () => Promise<MessageCatalogue>
+}
+export function startExtensionPage(native: ExtensionPagePort, navigatorPlatform: string, catalogue?: MessageCatalogue, window: PageOptions = {}) {
   try { for (const key of retiredLocalStorage) localStorage.removeItem(key) } catch {}
   const scheme = matchMedia("(prefers-color-scheme: dark)")
   let stopTheme = followTheme(document.documentElement, "system", scheme)
@@ -43,7 +48,11 @@ export function startExtensionPage(native: ExtensionPagePort, navigatorPlatform:
     /** Follows Settings › Appearance on the popup, settings and first run (UI-IA-06, UI-SET-15). */
     applyTheme(theme: "system" | "light" | "dark") { stopTheme(); stopTheme = followTheme(document.documentElement, theme, scheme) },
     /** The canonical catalogue's text, for a lazy part that pins the disclosure (UI-ONB-09). */
-    withCatalogue: (full: MessageCatalogue) => createBrowserI18n(native, full),
+    async canonical() {
+      const full = catalogue ?? await window.catalogue?.()
+      if (!full) throw new Error("This page carries no canonical catalogue")
+      return createBrowserI18n(native, full)
+    },
     openSettings: (hash?: string) => { if (hash) open(native.runtime.getURL(`/options.html#${hash}`)); else void native.runtime.openOptionsPage() },
     openFirstRun: () => { open(native.runtime.getURL("/onboarding.html")) }
   }

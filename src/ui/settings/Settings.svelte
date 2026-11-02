@@ -116,7 +116,7 @@
         <p class="text-muted-foreground">{i18n.message("shell_unavailable")}</p>
       {:else if view}
         {#await loading then module}
-          <module.default {pageState} {features} {route} />
+          <module.default {pageState} {features} {route} {markSrc} />
         {/await}
       {/if}
     </main>

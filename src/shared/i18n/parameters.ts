@@ -1126,6 +1126,13 @@ export type MessageParameters = {
   "report_open": readonly []
   "report_cancel": readonly []
   "report_noAccount": readonly []
+  "badge_notWorking_one": readonly ["feature"]
+  "badge_notWorking_other": readonly ["count"]
+  "badge_waiting": readonly []
+  "badge_access": readonly []
+  "badge_marks": readonly []
+  "badge_paused": readonly []
+  "badge_ticked": readonly []
 }
 export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: MessageParameters[K] } = {
   "firstRun_continue_one": ["count"],
@@ -1535,4 +1542,6 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "diag_version": ["version"],
   "about_credit": ["link"],
   "report_opensWith": ["values"],
+  "badge_notWorking_one": ["feature"],
+  "badge_notWorking_other": ["count"],
 }

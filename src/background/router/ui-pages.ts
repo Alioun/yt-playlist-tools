@@ -27,7 +27,7 @@ export type PageReceiverPorts = {
   }
   readonly withdraw: (origin: SettingsPageOrigin, expected: { readonly v: number; readonly at: number }) => Promise<WithdrawalResult>
   /** The version a settings file names (DATA-53). */
-  readonly version: string
+  readonly version: () => string
   /** Raw `storage.session` reads, for the recent adds the session planner keeps but doesn't decode. */
   readonly session: { get(key: "recentAdds"): Promise<unknown> }
   readonly status: PageStatusSource
@@ -130,7 +130,7 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
       if (!settingsPage(context)) return unavailable("operation")
       const read = await ports.owner.exportSettings(context.ui.ui.origin)
       if (read.kind !== "source") return { kind: "refused" }
-      const file = exportFile({ source: read.source, version: ports.version, date: new Date(ports.now()).toISOString().slice(0, 10) })
+      const file = exportFile({ source: read.source, version: ports.version(), date: new Date(ports.now()).toISOString().slice(0, 10) })
       return file.kind === "exported" ? { kind: "file", filename: file.file.filename, text: file.file.text } : { kind: "refused" }
     },
     async "ui.importSettings"(payload, context) {
