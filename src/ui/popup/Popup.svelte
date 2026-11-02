@@ -22,6 +22,8 @@
   import type { SheetTarget } from "../features/source"
 
   let { page, markSrc }: { page: ExtensionPage; markSrc: string } = $props()
+  // The first view's stylesheet covers only the first view; each lazy part waits for the whole popup's (Q-PERF-35 rule 6).
+  const styled = <Part,>(part: Promise<Part>) => Promise.all([part, import("./lazy.css")]).then(([loaded]) => loaded)
   const pageState = new PageState(untrack(() => page))
   const { i18n } = untrack(() => page)
   const features = createFeatureCopy(i18n)
@@ -199,7 +201,7 @@
       <p class="text-muted-foreground text-sm">{i18n.message("shell_unavailable")}</p>
     {:else if view}
       {#if banner}
-        {#await import("../components/BannerCard.svelte") then { default: Card }}
+        {#await styled(import("../components/BannerCard.svelte")) then { default: Card }}
           <Card {banner} {i18n} account={pageState.accountName()} accountOf={acct => pageState.accountName(acct as AccountKey)} when={at => relativeTime(i18n, at)} onaction={act} />
         {/await}
       {/if}
@@ -208,7 +210,7 @@
         <div id="popup-panel" role="tabpanel">
           {#if site === "www" && settings && summaryFacts}
             {#if pageState.agreed && openedOn === "www"}
-              {#await import("./ThisVideo.svelte") then { default: ThisVideo }}
+              {#await styled(import("./ThisVideo.svelte")) then { default: ThisVideo }}
                 <div class="mb-3"><ThisVideo {pageState} onsave={save} /></div>
               {/await}
             {/if}
@@ -230,7 +232,7 @@
                     {/if}
                   {/snippet}
                   {#snippet details()}
-                    {#await import("../features/FeatureDetails.svelte") then { default: Details }}
+                    {#await styled(import("../features/FeatureDetails.svelte")) then { default: Details }}
                       <Details {pageState} {feature} variant="popup" />
                     {/await}
                   {/snippet}
@@ -238,7 +240,7 @@
               {/each}
             </ul>
             {#if choosing && gatherReady && pageState.acct}
-              {#await import("../features/DestinationChooser.svelte") then { default: Chooser }}
+              {#await styled(import("../features/DestinationChooser.svelte")) then { default: Chooser }}
                 <div class="mt-2" data-gather-chooser>
                   <Chooser {pageState} destination={{ kind: "gather" }} label={i18n.message("gatherOpt_playlistLabel")} opened
                     purpose={{ kind: "gather", accountName: pageState.accountName() }} onchosen={() => { void gather() }} />
@@ -246,7 +248,7 @@
               {/await}
             {/if}
           {:else if site === "music"}
-            {#await import("./MusicTab.svelte") then { default: Music }}
+            {#await styled(import("./MusicTab.svelte")) then { default: Music }}
               <Music {pageState} {features} ontoggle={toggle} ongiveaccess={giveAccess} onsave={save} />
             {/await}
           {/if}
@@ -256,22 +258,22 @@
   </div>
 
   {#if menuOpen && menuable}
-    {#await import("./AccountMenu.svelte") then { default: Menu }}
+    {#await styled(import("./AccountMenu.svelte")) then { default: Menu }}
       <Menu {pageState} onmanage={() => page.openSettings("accounts")} onopen={url => page.open(url)}
         onclose={restore => { menuOpen = false; if (restore) menuButton?.focus() }} />
     {/await}
   {/if}
 
   {#if sheet?.kind === "consent"}
-    {#await import("./ConsentSheet.svelte") then { default: Consent }}
+    {#await styled(import("./ConsentSheet.svelte")) then { default: Consent }}
       <Consent {pageState} feature={sheet.feature} name={name(sheet.feature)} onclose={() => { sheet = null }} />
     {/await}
   {:else if sheet?.kind === "save"}
-    {#await import("./SaveSheet.svelte") then { default: Sheet }}
+    {#await styled(import("./SaveSheet.svelte")) then { default: Sheet }}
       <Sheet {pageState} target={sheet.target} onclose={() => { sheet = null }} />
     {/await}
   {:else if sheet?.kind === "recent" && pageState.acct}
-    {#await import("./RecentAddsSheet.svelte") then { default: Recent }}
+    {#await styled(import("./RecentAddsSheet.svelte")) then { default: Recent }}
       <Recent {pageState} acct={pageState.acct} onclose={() => { sheet = null }} />
     {/await}
   {/if}
