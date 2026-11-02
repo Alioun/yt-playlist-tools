@@ -3004,52 +3004,204 @@
   "shell_unavailable": {
     "message": "Perchling can't read its settings right now."
   },
-  "site_addUnanswered": {
-    "message": "Couldn't confirm the save. Check the playlist on YouTube before you try again."
+  "filter_switch": {
+    "message": "Channel filter"
   },
-  "quickSave_idle": {
-    "message": "Save to $LIST$",
+  "filter_mode": {
+    "message": "Filter mode"
+  },
+  "filter_inputLabel": {
+    "message": "@handle or channel link"
+  },
+  "filter_add": {
+    "message": "Add"
+  },
+  "filter_removeChannel": {
+    "message": "Remove $CHANNEL$",
     "placeholders": {
-      "list": {
+      "channel": {
         "content": "$1"
       }
     }
   },
-  "quickSave_busy": {
-    "message": "Saving…"
+  "filter_switchMode": {
+    "message": "Switch"
   },
-  "quickSave_saved": {
-    "message": "Saved to $LIST$",
+  "filter_cancel": {
+    "message": "Cancel"
+  },
+  "filter_offEmpty": {
+    "message": "Off, so every channel gets in."
+  },
+  "filter_failed": {
+    "message": "Couldn't change the filter. Nothing changed."
+  },
+  "autoAddList_consent": {
+    "message": "Agree first, then choose playlists here. Until then nothing is read from YouTube."
+  },
+  "autoAddList_options": {
+    "message": "Options for $PLAYLIST$",
     "placeholders": {
-      "list": {
+      "playlist": {
         "content": "$1"
       }
     }
   },
-  "quickSave_failed": {
-    "message": "Couldn't save"
+  "autoAddList_takes": {
+    "message": "Takes"
   },
-  "quickSave_more": {
-    "message": "Save to…"
+  "autoAddList_takes_videos": {
+    "message": "Videos"
   },
-  "quickSave_moreKey": {
-    "message": "Save to… ($KEY$)",
+  "autoAddList_takes_shorts": {
+    "message": "Shorts"
+  },
+  "autoAddList_takes_both": {
+    "message": "Both"
+  },
+  "autoAddList_addsAt": {
+    "message": "Adds at"
+  },
+  "autoAddList_default": {
+    "message": "Default · $PERCENT$ %",
     "placeholders": {
-      "key": {
+      "percent": {
         "content": "$1"
       }
     }
   },
-  "browserMenu_saveTo": {
-    "message": "Save to"
+  "autoAddList_own": {
+    "message": "Its own"
   },
-  "browserMenu_quickSave": {
-    "message": "Quick-save playlist"
+  "autoAddList_percentLabel": {
+    "message": "Required percentage for $PLAYLIST$",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      }
+    }
   },
-  "browserMenu_choose": {
-    "message": "Choose a playlist…"
+  "autoAddList_pill_allow": {
+    "message": "Allow only · $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
   },
-  "watchMenu_choose": {
-    "message": "Save to playlist…"
+  "autoAddList_pill_deny": {
+    "message": "Deny · $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "autoAddList_pill_kept": {
+    "message": "All channels · $COUNT$ kept",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "autoAddList_pill_all": {
+    "message": "All channels"
+  },
+  "autoAddList_shortsToo": {
+    "message": "Shorts too"
+  },
+  "autoAddList_shortsOnly": {
+    "message": "Shorts only"
+  },
+  "autoAddList_percent": {
+    "message": "$PERCENT$ %",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      }
+    }
+  },
+  "autoAddList_new": {
+    "message": "New"
+  },
+  "autoAddList_nothingSaved": {
+    "message": "Nothing is saved for $ACCOUNT$ until you tick one.",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "autoAddList_syncOnly_one": {
+    "message": "$COUNT$ auto-add playlist · Open YouTube as $ACCOUNT$ to see it",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "account": {
+        "content": "$2"
+      }
+    }
+  },
+  "autoAddList_syncOnly_other": {
+    "message": "$COUNT$ auto-add playlists · Open YouTube as $ACCOUNT$ to see them",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "account": {
+        "content": "$2"
+      }
+    }
+  },
+  "autoAddList_readOnly": {
+    "message": "Account setups can be changed only in a normal window."
+  },
+  "held_siteAccess": {
+    "message": "Needs site access"
+  },
+  "held_musicOff": {
+    "message": "YouTube Music is off"
+  },
+  "held_browserMenu": {
+    "message": "Needs your OK"
+  },
+  "held_giveAccess": {
+    "message": "Give access"
+  },
+  "held_allow": {
+    "message": "Allow"
+  },
+  "health_notWorking_www": {
+    "message": "Not working right now, because YouTube changed something it relies on."
+  },
+  "health_notWorking_music": {
+    "message": "Not working right now, because YouTube Music changed something it relies on."
+  },
+  "health_partly": {
+    "message": "Partly working, because $GAP$.",
+    "placeholders": {
+      "gap": {
+        "content": "$1"
+      }
+    }
+  },
+  "health_gap_membership": {
+    "message": "it can't show where a video is already saved"
+  },
+  "health_gap_actions": {
+    "message": "some of its buttons can't run"
+  },
+  "health_gap_measure": {
+    "message": "it can't follow this video's progress"
+  },
+  "health_gap_destination": {
+    "message": "it can't gather into $DESTINATION$",
+    "placeholders": {
+      "destination": {
+        "content": "$1"
+      }
+    }
   }
 }
