@@ -28,6 +28,16 @@ jobs:
           # repo declares rather than drifting with "latest".
           bun-version-file: package.json
 
+      # G28's secret-flow tests, before the install and without the repo's
+      # bunfig.toml or tsconfig.json, so only code-owned files decide whether
+      # they pass. A tsconfig paths entry can make bun test register no test
+      # and still exit 0, and bunfig.toml preloads tests/setup.
+      - name: Test the reviewer-login secret flow (G28)
+        run: |
+          : > "$RUNNER_TEMP/empty.toml"
+          echo '{}' > "$RUNNER_TEMP/empty.json"
+          bun --config="$RUNNER_TEMP/empty.toml" test --no-env-file --tsconfig-override="$RUNNER_TEMP/empty.json" ./tests/integration/amo-reviewer-notes.test.ts
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 

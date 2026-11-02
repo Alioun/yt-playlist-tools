@@ -325,6 +325,54 @@ describe("the reviewer jobs", () => {
   })
 })
 
+describe("the CI step that runs these tests", () => {
+  const steps = workflows["ci.yml"]!.jobs.build!.steps!
+  const proof = steps.find(step => step.run?.includes("./tests/integration/amo-reviewer-notes.test.ts"))!
+
+  test("runs before bun install, so nothing installed can reach it", () => {
+    const install = steps.findIndex(step => /\bbun install\b/.test(step.run ?? ""))
+    expect(steps.indexOf(proof)).toBeGreaterThan(-1)
+    expect(steps.indexOf(proof)).toBeLessThan(install)
+  })
+
+  // A stand-in for this file, beside a bunfig.toml that preloads and a tsconfig.json that redirects node:fs.
+  test("loads no bunfig.toml preload and no tsconfig.json from the checkout", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "reviewer-notes-ci-"))
+    directories.push(dir)
+    for (const sub of ["tests/integration", "_temp", "_bin"]) mkdirSync(join(dir, sub), { recursive: true })
+    symlinkSync(process.execPath, join(dir, "_bin/bun"))
+    const preloaded = join(dir, "_preloaded")
+    const redirected = join(dir, "_redirected")
+    writeFileSync(join(dir, "tests/integration/amo-reviewer-notes.test.ts"), [
+      'import { expect, test } from "bun:test"',
+      'import { existsSync } from "node:fs"',
+      'test("stand-in", () => expect(existsSync).toBeFunction())'
+    ].join("\n") + "\n")
+    writeFileSync(join(dir, "_preload.ts"), `require("node:fs").writeFileSync(${JSON.stringify(preloaded)}, "")\n`)
+    writeFileSync(join(dir, "_planted.ts"), [
+      'const fs = process.getBuiltinModule("node:fs")',
+      `fs.writeFileSync(${JSON.stringify(redirected)}, "")`,
+      "export const { existsSync } = fs"
+    ].join("\n") + "\n")
+    writeFileSync(join(dir, "bunfig.toml"), '[test]\npreload = ["./_preload.ts"]\n')
+    writeFileSync(join(dir, "tsconfig.json"), JSON.stringify({ compilerOptions: { paths: { "*": ["./_planted.ts"] } } }))
+
+    const child = Bun.spawn([bash, "--noprofile", "--norc", "-eo", "pipefail", "-c", proof.run!], {
+      cwd: dir,
+      env: { PATH: `${join(dir, "_bin")}:/usr/bin:/bin`, HOME: join(dir, "_temp"), RUNNER_TEMP: join(dir, "_temp") },
+      stdout: "pipe",
+      stderr: "pipe"
+    })
+    const [stdout, stderr, exit] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited])
+    expect({ exit, ran: /\b1 pass\b/.test(stdout + stderr), preloaded: existsSync(preloaded), redirected: existsSync(redirected) }).toEqual({
+      exit: 0,
+      ran: true,
+      preloaded: false,
+      redirected: false
+    })
+  })
+})
+
 describe("the script", () => {
   test("imports only Node built-ins and has no way to spawn a process", () => {
     const imports = new Bun.Transpiler({ loader: "ts" }).scanImports(scriptSource).map(found => found.path)
