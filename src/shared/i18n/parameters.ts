@@ -1443,6 +1443,8 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "anyTab_noVideoTab": [],
   "anyTab_noMusicTab": [],
   "anyTab_noMusicAccess": [],
+  "anyTab_musicOff": [],
+  "anyTab_musicUnanswered": [],
   "breakage_autoAdd": [],
   "breakage_queueButton": [],
   "breakage_cardMenu": [],

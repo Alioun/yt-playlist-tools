@@ -39,8 +39,11 @@ export type QuickInput = {
   /** The key pressed, for the answer while its feature isn't working (YM-KEY-12). */
   readonly key?: Key
 }
-/** For a button's state and the any-tab ✓ or ✕ (YM-FB-7, YM-ANY-4). `idle` answered without doing anything: a hint, or a picker. */
-export type QuickAnswer = { readonly kind: "done" | "idle" | "failed"; readonly text: string | null }
+/**
+ * For a button's state and the any-tab ✓ or ✕ (YM-FB-7, YM-ANY-4). `idle` answered without doing anything: a hint,
+ * or a picker. `already` found the song already in the playlist: a ✓, and an idle button (YM-SAVE-15).
+ */
+export type QuickAnswer = { readonly kind: "done" | "already" | "idle" | "failed"; readonly text: string | null }
 type Targeted = { readonly kind: "target"; readonly target: QuickTarget }
 type ShortcutEntry = { readonly id: ShortcutId; readonly label: string; readonly watchLaterOnEveryAccount: boolean; readonly key: Key }
 /** A key's progress on an item, so a button showing that item goes through the same states (YM-KEY-11). */
@@ -274,7 +277,7 @@ export function createMusicQuick(deps: MusicQuickDeps) {
   function outcomeOf(answer: TabAddReport | Unanswered, playlist: PlaylistId | null): QuickAnswer["kind"] {
     if (answer.kind === "choose") return "idle"
     const outcome = answer.kind === "report" && playlist ? answer.outcomes[playlist] : undefined
-    return outcome?.kind === "added" ? "done" : outcome?.kind === "already-in" ? "idle" : "failed"
+    return outcome?.kind === "added" ? "done" : outcome?.kind === "already-in" ? "already" : "failed"
   }
   async function save(subject: QuickTarget, input: QuickInput): Promise<QuickAnswer> {
     const feedback = session(), view = deps.view()

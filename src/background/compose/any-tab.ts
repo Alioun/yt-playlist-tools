@@ -8,6 +8,7 @@ import { tabAskContract, type TabAddReport, type TabAskMessages } from "../../sh
 import { toastText } from "../../shared/copy"
 import type { I18n } from "../../shared/i18n"
 import { isVideoId, type PlaylistId, type VideoId } from "../../shared/model"
+import { siteBundles } from "../../shared/features/registration"
 import { createRpcCaller } from "../../shared/rpc/rpc"
 
 export type CandidateTab = {
@@ -21,6 +22,7 @@ type NativeTab = {
 type MenuInfo = { readonly menuItemId: string | number; readonly linkUrl?: string; readonly pageUrl?: string }
 
 const watchLater = "WL" as PlaylistId
+const musicCommands: Readonly<Record<string, "save" | "like">> = { "save-playing-song": "save", "like-playing-song": "like" }
 export const menuIds = { parent: "pp-save", quickSave: "pp-save-quick", watchLater: "pp-save-later", choose: "pp-save-choose" } as const
 export const flashMs = 3_000
 
@@ -107,8 +109,40 @@ export function composeAnyTab(deps: {
   }
 
   async function command(name: string): Promise<void> {
-    // The two YouTube Music keys belong to YouTube Music's own work (03 §22).
-    if (disposed || name !== "watch-later-current-video" || !deps.consented()) return
+    if (disposed || !deps.consented()) return
+    const action = Object.hasOwn(musicCommands, name) ? musicCommands[name] : undefined
+    if (action) await music(action)
+    else if (name === "watch-later-current-video") await watchLaterKey()
+  }
+
+  /**
+   * YouTube Music's two keys (YM-ANY). In the tab Playing now would read, they save or like the playing song as that
+   * tab's Save or Like key would with nothing pointed at, and answer with that tab's toast and the ✓ or ✕.
+   */
+  async function music(action: "save" | "like"): Promise<void> {
+    const focused = await native.windows.getLastFocused().catch(() => null)
+    if (!focused || typeof focused.id !== "number") return
+    const settings = await actions.settings(focused.incognito)
+    if (!settings?.anyTabKeys.on) return
+    const [shown] = await native.tabs.query({ active: true, windowId: focused.id }).catch(() => [] as NativeTab[])
+    if (!settings.musicSection) { await flash(shown?.id, false, i18n.message("anyTab_musicOff")); return }
+    if (!await native.permissions.contains({ origins: [siteBundles.music.match] }).catch(() => false)) {
+      await flash(shown?.id, false, i18n.message("anyTab_noMusicAccess"))
+      return
+    }
+    const raw = await native.tabs.query({ url: siteBundles.music.match }).catch(() => [] as NativeTab[])
+    const tabs = raw.flatMap(tab => { const value = candidate(tab); return value ? [value] : [] })
+    for (const tabId of tabOrder(tabs, { windowId: focused.id, incognito: focused.incognito })) {
+      if (!await inject(tabId)) continue
+      const answer = await ask(tabId, "bg.music", { action, feedback: settings.anyTabKeys.feedback })
+      const result = answer.kind === "answered" ? answer.result : { kind: "failed", text: null }
+      await flash(shown?.id, result.kind === "done", result.text ?? i18n.message("anyTab_musicUnanswered"))
+      return
+    }
+    await flash(shown?.id, false, i18n.message("anyTab_noMusicTab"))
+  }
+
+  async function watchLaterKey(): Promise<void> {
     const focused = await native.windows.getLastFocused().catch(() => null)
     if (!focused || typeof focused.id !== "number") return
     const settings = await actions.settings(focused.incognito)

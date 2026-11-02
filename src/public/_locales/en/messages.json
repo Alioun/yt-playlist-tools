@@ -3871,6 +3871,12 @@
   "anyTab_noMusicAccess": {
     "message": "No access to YouTube Music."
   },
+  "anyTab_musicOff": {
+    "message": "YouTube Music is off in Perchling."
+  },
+  "anyTab_musicUnanswered": {
+    "message": "YouTube Music didn't answer."
+  },
   "breakage_autoAdd": {
     "message": "Auto-add isn't working right now because YouTube changed something. It won't add the videos you watch until it works again."
   },

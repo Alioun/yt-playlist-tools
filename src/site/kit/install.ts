@@ -22,6 +22,16 @@ export type Kit = {
 }
 
 const ignore = () => {}
+const viewWaitMs = 5_000
+
+function viewReady(link: AnySiteCore["link"]): Promise<boolean> {
+  if (link.view) return Promise.resolve(true)
+  return new Promise(resolve => {
+    let stop = () => {}
+    const timer = setTimeout(() => { stop(); resolve(false) }, viewWaitMs)
+    stop = link.onView(view => { if (!view) return; clearTimeout(timer); stop(); resolve(true) })
+  })
+}
 
 /** One kit per page (06 §6.4.2): the toaster, the moving overlay and Svelte mounting for feature scopes. */
 export function installKit(core: AnySiteCore, lib: object, quick?: typeof createMusicQuick): Kit {
@@ -47,11 +57,14 @@ export function installKit(core: AnySiteCore, lib: object, quick?: typeof create
   core.attachKit({
     mount: svelteScopeMount(ignore),
     asks: music ? { ...asks, async music(payload) {
+      // A tab the background has just injected may still be meeting its page half and its view.
+      await core.page.hello
+      if (!await viewReady(link)) return { kind: "failed", text: null }
       const found = await music.playing(payload.action)
       const answer = found.kind === "target"
         ? await music.act(payload.action, found.target, { opener: "any-tab-keys", feedback: payload.feedback, by: "key", anyTab: true })
         : found
-      return { kind: answer.kind === "done" ? "done" : "failed", text: answer.text }
+      return { kind: answer.kind === "done" || answer.kind === "already" ? "done" : "failed", text: answer.text }
     } } : asks,
     notices: toaster ? toasterNoticePresenter({ source: toaster, scope: own, document }) : { present: () => ignore }
   })

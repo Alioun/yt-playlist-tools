@@ -125,3 +125,66 @@ test("Quick-save playlist from the menu saves the link's video, and with no quic
   expect(picking.adds).toEqual([])
   expect(picking.asks).toEqual([{ tabId: 7, kind: "bg.picker", payload: { video: "aaaaaaaaaaa", title: "First video", choose: false, opener: "browser-menu" } }])
 })
+
+function musicWorld(options: { settings?: (settings: Settings) => void; granted?: boolean; tabs?: CandidateTab[]; answer?: unknown } = {}) {
+  const settings = defaultSettings()
+  settings.anyTabKeys.on = true
+  options.settings?.(settings)
+  const log: string[] = []
+  const asks: { tabId: number; kind: string; payload: unknown }[] = []
+  const ensured: number[] = []
+  const music = options.tabs ?? [tab(8, { lastAccessed: 9 }), tab(9, { audible: true, lastAccessed: 2 })]
+  const native = {
+    windows: { async getLastFocused() { return { id: 1, incognito: false } } },
+    tabs: {
+      async query(query: { url?: string }) { return query.url === "https://music.youtube.com/*" ? music : query.url ? [] : [{ id: 2, windowId: 1, active: true }] },
+      async sendMessage(tabId: number, message: { v: number; build: string; id: string; kind: string; payload: unknown }) {
+        asks.push({ tabId, kind: message.kind, payload: message.payload })
+        return options.answer === undefined ? { v: message.v, build: message.build, id: message.id, kind: message.kind, result: { kind: "done", text: "Liked “Get Lucky”" } } : options.answer
+      }
+    },
+    action: {
+      async getTitle() { return "Perchling" },
+      async setBadgeBackgroundColor() {},
+      async setBadgeText({ tabId, text }: { tabId: number; text: string }) { if (text) log.push(`badge ${tabId} ${text}`) },
+      async setTitle({ tabId, title }: { tabId: number; title: string }) { if (title !== "Perchling") log.push(`title ${tabId} ${title}`) }
+    },
+    permissions: { async contains() { return options.granted ?? true } }
+  } as unknown as NativeBrowser
+  const actions = { async settings() { return settings } } as unknown as Actions
+  const anyTab = composeAnyTab({ native, build, actions, tabs: {} as Tabs, consented: () => true, i18n: englishI18n(), menuClicksHeard: true,
+    registrar: { async ensure(tabId) { ensured.push(tabId) } } })
+  return { anyTab, log, asks, ensured }
+}
+
+test("YouTube Music's keys act in the tab playing audio when none is active, ask it to like or save, and tick the icon with its answer", async () => {
+  const w = musicWorld({ settings: settings => { settings.anyTabKeys.feedback = false } })
+  await w.anyTab.command("like-playing-song")
+  expect(w.ensured).toEqual([9])
+  expect(w.asks).toEqual([{ tabId: 9, kind: "bg.music", payload: { action: "like", feedback: false } }])
+  expect(w.log).toEqual(["badge 2 ✓", "title 2 Liked “Get Lucky”"])
+  await w.anyTab.command("save-playing-song")
+  expect(w.asks[1]).toMatchObject({ kind: "bg.music", payload: { action: "save" } })
+})
+
+test("with the YouTube Music section off, without access, or with no YouTube Music tab, the keys only answer ✕", async () => {
+  const off = musicWorld({ settings: settings => { settings.musicSection = false } })
+  await off.anyTab.command("save-playing-song")
+  expect(off.log).toEqual(["badge 2 ✕", "title 2 YouTube Music is off in Perchling."])
+  const denied = musicWorld({ granted: false })
+  await denied.anyTab.command("save-playing-song")
+  expect(denied.log).toEqual(["badge 2 ✕", "title 2 No access to YouTube Music."])
+  const none = musicWorld({ tabs: [] })
+  await none.anyTab.command("like-playing-song")
+  expect(none.log).toEqual(["badge 2 ✕", "title 2 No YouTube Music tab is open."])
+  for (const world of [off, denied, none]) expect([world.ensured, world.asks]).toEqual([[], []])
+})
+
+test("a tab that doesn't answer gets a ✕, and with the feature off a key reads and injects nothing", async () => {
+  const silent = musicWorld({ answer: null })
+  await silent.anyTab.command("like-playing-song")
+  expect(silent.log).toEqual(["badge 2 ✕", "title 2 YouTube Music didn't answer."])
+  const switchedOff = musicWorld({ settings: settings => { settings.anyTabKeys.on = false } })
+  await switchedOff.anyTab.command("like-playing-song")
+  expect([switchedOff.ensured, switchedOff.asks, switchedOff.log]).toEqual([[], [], []])
+})
