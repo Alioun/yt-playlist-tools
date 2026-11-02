@@ -250,15 +250,23 @@ describe("the workflows", () => {
 })
 
 describe("the reviewer jobs", () => {
+  // Each job's whole condition once G28 is on. A prefix check would pass `false && … || anything`.
+  const gates: Record<string, string> = {
+    "check-reviewer-login":
+      "github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.meta.outputs.release == 'true' && needs.meta.outputs.channel == 'stable' && vars.PUBLISH_AMO == 'true'",
+    "fill-reviewer-notes": "needs.check-reviewer-login.result == 'success' && needs.submit-amo.result == 'success'"
+  }
+
   test("stay off until the owner approves G28", () => {
-    for (const id of reviewerJobs) expect(String(release.jobs[id]!.if)).toStartWith("false && ")
+    for (const id of reviewerJobs) expect({ id, if: release.jobs[id]!.if }).toEqual({ id, if: `false && ${gates[id]}` })
   })
 
   test("can't be turned on while an action in them is unpinned", () => {
     for (const id of reviewerJobs) {
       const job = release.jobs[id]!
-      const unpinned = job.steps!.filter(step => step.uses && !/@[0-9a-f]{40}$/.test(step.uses))
-      if (unpinned.length > 0) expect(String(job.if)).toStartWith("false && ")
+      const unpinned = job.steps!.some(step => step.uses && !/@[0-9a-f]{40}$/.test(step.uses))
+      const allowed = unpinned ? [`false && ${gates[id]}`] : [`false && ${gates[id]}`, gates[id]]
+      expect({ id, allowed: allowed.includes(String(job.if)) }).toEqual({ id, allowed: true })
     }
   })
 
