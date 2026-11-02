@@ -421,6 +421,26 @@ describe("the fill step", () => {
     expect(JSON.parse(Buffer.from(payload, "base64url").toString())).toMatchObject({ iss: jwtIssuer })
   })
 
+  test("spawns mktemp, cp and shasum without the login or the AMO keys", async () => {
+    const amo = await fakeAmo()
+    const dir = workspace(scriptFor(amo.origin), fullNotes)
+    const seen = join(dir, "_seen")
+    for (const tool of ["mktemp", "cp", "shasum"]) {
+      const stub = [
+        "#!/bin/sh",
+        `echo ${tool} >> "${seen}"`,
+        ...["AMO_REVIEWER_LOGIN", "FIREFOX_EXTENSION_ID", "FIREFOX_JWT_ISSUER", "FIREFOX_JWT_SECRET"].map(
+          name => `[ -z "\${${name}+set}" ] || echo "${tool} sees ${name}" >> "${seen}"`
+        ),
+        `exec ${Bun.which(tool, { PATH: "/usr/bin:/bin" })} "$@"`
+      ]
+      writeFileSync(join(dir, "_bin", tool), stub.join("\n") + "\n", { mode: 0o755 })
+    }
+    const run = await runStep(fillStep, dir)
+    expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: filled (AMO version 2.0.0, confirmed)\n" })
+    expect(readFileSync(seen, "utf8").split("\n").filter(Boolean).sort()).toEqual(["cp", "mktemp", "shasum"])
+  })
+
   test("the build's metadata never holds the login, and filling leaves it in no file", async () => {
     const amo = await fakeAmo()
     const dir = workspace(scriptFor(amo.origin))

@@ -204,7 +204,8 @@ jobs:
           name: release-${{ needs.meta.outputs.version }}
           path: dist
 
-      # Bun gets only the names it needs, from an empty directory with an
+      # Bun gets only the names it needs, and the tools before it get none of
+      # the login, from an empty directory with an
       # empty config and tsconfig, and runs the script only at the owner-set
       # digest. Without the override, Bun would read the nearest tsconfig.json
       # or jsconfig.json above the directory, whose paths can redirect node:fs.
@@ -218,7 +219,7 @@ jobs:
           metadata=$GITHUB_WORKSPACE/dist/amo-metadata.json
           temp=$RUNNER_TEMP
           for name in $(compgen -e); do
-            case $name in PATH|AMO_REVIEWER_LOGIN) ;; *) unset "$name" ;; esac
+            case $name in PATH) ;; AMO_REVIEWER_LOGIN) export -n "$name" ;; *) unset "$name" ;; esac
           done
           [[ $digest =~ ^[0-9a-f]{64}$ ]] \
             || { echo "::error::vars.REVIEWER_NOTES_SHA256 is not a SHA-256 digest (G28)"; exit 1; }
@@ -229,7 +230,7 @@ jobs:
           echo '{}' > empty.json
           echo "$digest  amo-reviewer-notes.ts" | shasum -a 256 --check --status \
             || { echo "::error::amo-reviewer-notes.ts is not the approved version (G28)"; exit 1; }
-          export HOME=$work
+          export AMO_REVIEWER_LOGIN HOME=$work
           exec bun --no-env-file --config=empty.toml --tsconfig-override=empty.json amo-reviewer-notes.ts check "$metadata"
 
   # Runs while check-reviewer-login is skipped (G28 off, or a beta), never after it failed.
@@ -395,7 +396,7 @@ jobs:
           version=$VERSION
           temp=$RUNNER_TEMP
           for name in $(compgen -e); do
-            case $name in PATH|AMO_REVIEWER_LOGIN|FIREFOX_EXTENSION_ID|FIREFOX_JWT_ISSUER|FIREFOX_JWT_SECRET) ;; *) unset "$name" ;; esac
+            case $name in PATH) ;; AMO_REVIEWER_LOGIN|FIREFOX_EXTENSION_ID|FIREFOX_JWT_ISSUER|FIREFOX_JWT_SECRET) export -n "$name" ;; *) unset "$name" ;; esac
           done
           [[ $digest =~ ^[0-9a-f]{64}$ ]] \
             || { echo "::error::vars.REVIEWER_NOTES_SHA256 is not a SHA-256 digest (G28)"; exit 1; }
@@ -406,7 +407,7 @@ jobs:
           echo '{}' > empty.json
           echo "$digest  amo-reviewer-notes.ts" | shasum -a 256 --check --status \
             || { echo "::error::amo-reviewer-notes.ts is not the approved version (G28)"; exit 1; }
-          export HOME=$work
+          export AMO_REVIEWER_LOGIN FIREFOX_EXTENSION_ID FIREFOX_JWT_ISSUER FIREFOX_JWT_SECRET HOME=$work
           exec bun --no-env-file --config=empty.toml --tsconfig-override=empty.json amo-reviewer-notes.ts fill "$version" "$metadata"
 
   submit-cws:

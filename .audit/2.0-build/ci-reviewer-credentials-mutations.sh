@@ -77,6 +77,7 @@ plant computed-require "$script" 's/\z/require(["node:child", "process"].join("_
 plant computed-import "$script" 's/\z/await import(["node:child", "process"].join("_"))\n/' -- "imports only Node built-ins"
 plant keeps-environment "$release" 's/ *for name in \$\(compgen -e\); do\n.*?\n *done\n//sg' -- \
   "strips BUN_CONFIG_VERBOSE_FETCH" "strips BUN_OPTIONS" "strips NODE_TLS_REJECT_UNAUTHORIZED" "strips NODE_EXTRA_CA_CERTS"
+plant exports-early "$release" 's/export -n "\$name"/:/g' -- "spawns mktemp, cp and shasum without the login or the AMO keys"
 plant runs-in-runner-temp "$release" 's/work=\$\(mktemp -d "\$temp\/reviewer-notes\.XXXXXX"\)/work=\$temp/g; s/ --config=empty\.toml//g' -- "loads no bunfig.toml planted"
 plant reads-parent-tsconfig "$release" 's/ --tsconfig-override=empty\.json//g' -- \
   "loads no _temp/tsconfig.json planted above the script" "loads no _temp/jsconfig.json planted above the script" \
