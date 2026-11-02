@@ -5,6 +5,9 @@ import type { SettingsImportConfirmation, SettingsImportPreparation, SettingsImp
 import type { SettingsFileRead } from "../store/settings-file-read"
 import type { SettingsPageOrigin, WithdrawalResult } from "../store/store-lifecycle"
 import { exportFile } from "../../shared/settings-file"
+import type { AgreementAccess, AgreementInput, AgreementResult } from "../store/consent-agreement"
+import type { UpgradeNoteFlag, UpgradeNoteFlagResult } from "../store/upgrade-note-flag"
+import { projectAgreement } from "./first-run-results"
 import type { UiUnavailable } from "../../shared/contracts/ui-playlists"
 import type { AccountKey } from "../../shared/model/validation"
 import type { RpcHandlers } from "../../shared/rpc/rpc"
@@ -24,7 +27,11 @@ export type PageReceiverPorts = {
     exportSettings(origin: UiOrigin): Promise<SettingsFileRead>
     prepareSettingsImport(origin: UiOrigin, text: unknown): Promise<SettingsImportPreparation>
     importSettings(origin: UiOrigin, input: { readonly confirmation: SettingsImportConfirmation; readonly replace: "confirmed" }): Promise<SettingsImportResult>
+    markUpgradeNote(flag: UpgradeNoteFlag): Promise<UpgradeNoteFlagResult>
+    readAgreement(origin: UiOrigin): Promise<import("../store/consent-agreement").AgreementRead>
+    agree(origin: UiOrigin, input: AgreementInput): Promise<AgreementResult>
   }
+  readonly readAccess: () => Promise<AgreementAccess | undefined>
   readonly withdraw: (origin: SettingsPageOrigin, expected: { readonly v: number; readonly at: number }) => Promise<WithdrawalResult>
   /** The version a settings file names (DATA-53). */
   readonly version: () => string
@@ -148,6 +155,28 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
       if (!saved || saved.principal !== context.ui.principal) return unavailable("operation")
       const result = await ports.owner.importSettings(origin, { confirmation: saved.confirmation, replace: "confirmed" })
       return result.kind === "committed" ? { kind: "imported" } : { kind: "refused", reason: result.kind === "unavailable" ? "unavailable" : "failed" }
+    },
+    async "ui.noteSeen"(_payload, context) {
+      if (context.ui.ui.page !== "onboarding") return { kind: "unavailable" }
+      const result = await ports.owner.markUpgradeNote("seen")
+      return { kind: result === "set" || result === "unchanged" ? "noted" : "unavailable" }
+    },
+    async "ui.noteAgree"({ change }, context) {
+      const refusal = (reason: "invalid" | "unavailable" | "update-needed" | "rejected") => ({ kind: "not-agreed", attempt: change.attempt, reason }) as const
+      if (context.ui.ui.page !== "onboarding" || context.ui.requester.incognito) return refusal("unavailable")
+      const origin = context.ui.ui.origin
+      try {
+        const read = await ports.owner.readAgreement(origin)
+        if (read.kind !== "review") return refusal(read.kind === "invalid" ? "invalid" : "unavailable")
+        if (read.version !== change.displayedVersion) return refusal("update-needed")
+        if (read.presentation.kind !== "canonical" || read.presentation.note?.state !== "pending") return refusal("unavailable")
+        const access = await ports.readAccess()
+        if (!access) return refusal("unavailable")
+        const result = await ports.owner.agree(origin, { review: read.review, displayedVersion: change.displayedVersion, access: Promise.resolve(access),
+          choice: change.syncOn ? { kind: "upgrade-note", selected: change.selected, syncOn: true, join: { kind: "prepare" }, percentage: change.percentage }
+            : { kind: "upgrade-note", selected: change.selected, syncOn: false, percentage: change.percentage } })
+        return projectAgreement({ kind: "first-run-agree", displayedVersion: change.displayedVersion, attempt: change.attempt, selected: change.selected, syncOn: change.syncOn }, result, access)
+      } catch { return refusal("rejected") }
     },
     async "ui.device"(payload, context) {
       const origin = context.ui.ui.origin

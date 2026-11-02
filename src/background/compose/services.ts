@@ -75,17 +75,17 @@ export function composeServices(deps: {
   const publication = createViewPublication({ owner, tabs, producer, privateSkips: actions.flow, clock,
     monitor: { subscribeView: () => () => {} } })
   const accounts = createAccounts({ owner, tabs, claim: { kind: "unavailable", reason: "production-ownership-required" }, now: () => Date.now() })
-  seen = context => { void accounts.onSeen(context).catch(() => {}) }
+  async function readAccess() {
+    const has = (origins: string[]) => native.permissions.contains({ origins })
+    return { www: await has([siteBundles.www.match]), music: await has([siteBundles.music.match]),
+      browserMenu: await native.permissions.contains({ permissions: ["contextMenus"] }) }
+  }
   const router = createUiRouter({
     lifecycle: deps.lifecycle, sharedSettings: owner, owner,
     native: { runtime, windows: native.windows, tabs: native.tabs },
     services: { kind: "ready", tabs, playlists },
     firstRun: {
-      async readAccess() {
-        const has = (origins: string[]) => native.permissions.contains({ origins })
-        return { www: await has([siteBundles.www.match]), music: await has([siteBundles.music.match]),
-          browserMenu: await native.permissions.contains({ permissions: ["contextMenus"] }) }
-      },
+      readAccess,
       lookup: {
         sync: { get: () => native.storage.sync.get(null), subscribe(changed) {
           const listener = () => changed()
@@ -102,6 +102,7 @@ export function composeServices(deps: {
       session: { get: async key => (await native.storage.session.get(key))[key] },
       status: createPageStatus({ owner, statuses: monitor.statusProducer, tab: tabId => browserTabs.port.get(tabId), build }),
       withdraw: (origin, expected) => deps.lifecycle.withdrawConsent(origin, expected),
+      readAccess: () => readAccess(),
       version: () => native.runtime.getManifest().version,
       now: () => Date.now()
     }

@@ -18,6 +18,16 @@ export async function openFirstRun(native: Pick<NativeBrowser, "tabs" | "runtime
   } catch { return "not-opened" }
 }
 
+/** The upgrade note opens in a background tab beside the current one, so a playing video isn't interrupted (REL-CON-01). */
+export async function openNoteTab(native: Pick<NativeBrowser, "tabs" | "runtime">): Promise<boolean> {
+  try {
+    const [current] = await native.tabs.query({ active: true, currentWindow: true })
+    const tab = await native.tabs.create({ url: native.runtime.getURL("/onboarding.html"), active: false,
+      ...current?.index === undefined ? {} : { index: current.index + 1 } })
+    return tab.id !== undefined
+  } catch { return false }
+}
+
 /** 1.x's IndexedDB cache, which the migration and Clear all remove (REL-MIG, DATA-49). */
 export function deleteRetiredDatabase(name: string): Promise<"deleted" | "unconfirmed"> {
   return new Promise(resolve => {

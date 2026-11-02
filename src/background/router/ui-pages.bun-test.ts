@@ -13,6 +13,7 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
   const changes: SessionChange[] = []
   const filters: unknown[] = []
   const removed: unknown[] = []
+  const marked: string[] = [], agreements: unknown[] = []
   let paused = false
   const ports: PageReceiverPorts = {
     owner: {
@@ -29,8 +30,12 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
       async removeAccountSetup(_origin, confirmation) { removed.push(confirmation); return { kind: "committed" } },
       exportSettings: async () => ({ kind: "unavailable", reason: "origin" }) as never,
       prepareSettingsImport: async () => ({ kind: "refused", reason: "invalid" }),
-      importSettings: async () => ({ kind: "committed" }) as never
+      importSettings: async () => ({ kind: "committed" }) as never,
+      async markUpgradeNote(flag) { marked.push(flag); return "set" },
+      readAgreement: async () => ({ kind: "review", version: 1, review: {} as never, presentation: { kind: "canonical", note: { state: "pending" } } }) as never,
+      async agree(_origin, input) { agreements.push(input.choice); return { kind: "agreed" } as never }
     },
+    readAccess: async () => ({ www: true, music: false, browserMenu: false }),
     withdraw: async () => ({ kind: "withdrawn" }) as never,
     version: () => "2.0.0",
     session: { get: async () => [] },
@@ -39,7 +44,7 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
     ...overrides
   }
   const context = (incognito = false, page = "popup", principal = "p") => ({ ui: ui(incognito, page, principal), current: async () => ui(incognito, page, principal) })
-  return { handlers: createPageReceiver(ports), changes, filters, removed, context }
+  return { handlers: createPageReceiver(ports), changes, filters, removed, marked, agreements, context }
 }
 
 test("status answers Pause, the popup's tab and its feature health", async () => {
@@ -134,4 +139,13 @@ test("withdrawal runs only from Settings, and an unusable import file is refused
   expect(await handlers["ui.withdraw"]({ expected: { v: 1, at: 1 } }, context(false, "settings"))).toEqual({ kind: "withdrawn" })
   expect(await handlers["ui.importSettings"]({ action: "prepare", text: "{}" }, context(false, "settings"))).toEqual({ kind: "refused", reason: "invalid-file" })
   expect(await handlers["ui.importSettings"]({ action: "prepare", text: "{}" }, context(true, "settings"))).toEqual({ kind: "refused", reason: "private" })
+})
+
+test("only the first-run page marks the note seen, and its Agree carries the question's answer as the note's choice", async () => {
+  const { handlers, marked, agreements, context } = receiver()
+  expect(await handlers["ui.noteSeen"]({}, context())).toEqual({ kind: "unavailable" })
+  expect(await handlers["ui.noteSeen"]({}, context(false, "onboarding"))).toEqual({ kind: "noted" })
+  expect(marked).toEqual(["seen"])
+  await handlers["ui.noteAgree"]({ change: { displayedVersion: 1, attempt: 1, selected: ["auto-add"], syncOn: false, percentage: "half" } }, context(false, "onboarding"))
+  expect(agreements).toEqual([{ kind: "upgrade-note", selected: ["auto-add"], syncOn: false, percentage: "half" }])
 })

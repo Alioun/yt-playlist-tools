@@ -335,6 +335,8 @@ export function createUiRouter(ports: UiRouterPorts) {
       "ui.removeSetup": (payload, context) => page("ui.removeSetup", payload, context),
       "ui.exportSettings": (payload, context) => page("ui.exportSettings", payload, context),
       "ui.importSettings": (payload, context) => page("ui.importSettings", payload, context),
+      "ui.noteSeen": (payload, context) => page("ui.noteSeen", payload, context),
+      "ui.noteAgree": (payload, context) => page("ui.noteAgree", payload, context),
       async "ui.resolveChannel"(payload, context) {
         const ui = requireUi(context), held = await gate(ui)
         if (held) return held

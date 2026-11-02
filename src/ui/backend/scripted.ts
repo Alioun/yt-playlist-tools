@@ -45,7 +45,9 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
       "ui.withdraw": payload => take("ui.withdraw", payload),
       "ui.removeSetup": payload => take("ui.removeSetup", payload),
       "ui.exportSettings": payload => take("ui.exportSettings", payload),
-      "ui.importSettings": payload => take("ui.importSettings", payload)
+      "ui.importSettings": payload => take("ui.importSettings", payload),
+      "ui.noteSeen": payload => take("ui.noteSeen", payload),
+      "ui.noteAgree": payload => take("ui.noteAgree", payload)
     }
   })
   function take<K extends keyof UiMessages>(kind: K, payload: UiMessages[K]["payload"]): UiMessages[K]["result"] {

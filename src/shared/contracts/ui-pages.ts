@@ -3,6 +3,7 @@ import { isFeatureId, isSite, type FeatureId, type Privacy, type Site } from "./
 import { isUiUnavailable, type UiUnavailable } from "./ui-playlists"
 import { isAccountKey, isPlaylistId, isVideoId, type AccountKey, type PlaylistId, type VideoId } from "../model/validation"
 import { isKey } from "../model/keys"
+import { isAgreementAnswer, isFeatureSelection } from "./first-run"
 import type { Key } from "../model/types"
 import type { RpcContract } from "../rpc/rpc"
 
@@ -67,6 +68,12 @@ export type UiImport =
   | { readonly kind: "refused"; readonly reason: "private" | "newer-format" | "invalid-file" | "failed" | "unavailable" }
   | UiUnavailable
 
+export type NotePercentage = "keep" | "immediate" | "half"
+export type NoteAgreeChange = {
+  readonly displayedVersion: number; readonly attempt: number; readonly selected: readonly import("./first-run").FirstRunFeature[]
+  readonly syncOn: boolean; readonly percentage: NotePercentage
+}
+
 export type PageMessages = {
   readonly "ui.status": { readonly payload: WindowClaim; readonly result: UiStatus }
   readonly "ui.pause": { readonly payload: WindowClaim & { readonly paused: boolean }; readonly result: UiPauseAnswer }
@@ -77,6 +84,10 @@ export type PageMessages = {
   readonly "ui.removeSetup": { readonly payload: WindowClaim & RemovalPayload; readonly result: UiRemoval }
   readonly "ui.exportSettings": { readonly payload: WindowClaim; readonly result: UiExport }
   readonly "ui.importSettings": { readonly payload: WindowClaim & ImportPayload; readonly result: UiImport }
+  /** The upgrade note was on screen (REL-CON-25). */
+  readonly "ui.noteSeen": { readonly payload: WindowClaim; readonly result: { readonly kind: "noted" | "unavailable" } }
+  /** The upgrade note's Agree, with its one question's answer (REL-CON-05). */
+  readonly "ui.noteAgree": { readonly payload: WindowClaim & { readonly change: NoteAgreeChange }; readonly result: import("./first-run").AgreementAnswer }
 }
 export type PageCall = keyof PageMessages
 
@@ -122,6 +133,10 @@ export function isDeviceSettingAnswer(value: unknown): value is DeviceSettingAns
 
 const token = (v: unknown): v is string => typeof v === "string" && v.length > 0 && v.length <= 64
 const refusal = <T extends string>(...reasons: readonly T[]) => (v: unknown) => objectShape(v, { kind: x => x === "refused", reason: oneOf(...reasons) })
+function isNoteAgreeChange(value: unknown): value is NoteAgreeChange {
+  return objectShape(value, { displayedVersion: v => natural(v) && v > 0, attempt: v => natural(v) && v > 0, selected: isFeatureSelection, syncOn: bool,
+    percentage: oneOf<NotePercentage>("keep", "immediate", "half") })
+}
 export const pageContract: RpcContract<PageMessages> = {
   "ui.status": { payload: (v): v is PageMessages["ui.status"]["payload"] => objectShape(v, {}, windowClaim), result: isUiStatus, timeoutMs: 8_000 },
   "ui.pause": { payload: (v): v is PageMessages["ui.pause"]["payload"] => objectShape(v, { paused: bool }, windowClaim),
@@ -146,7 +161,11 @@ export const pageContract: RpcContract<PageMessages> = {
   "ui.importSettings": { payload: (v): v is PageMessages["ui.importSettings"]["payload"] => objectShape(v, { action: x => x === "prepare", text: x => typeof x === "string" && x.length <= 4_000_000 }, windowClaim)
       || objectShape(v, { action: x => x === "confirm", token }, windowClaim),
     result: (v): v is UiImport => isUiUnavailable(v) || objectShape(v, { kind: x => x === "confirm", token, accounts: natural }) || objectShape(v, { kind: x => x === "imported" })
-      || refusal("private", "newer-format", "invalid-file", "failed", "unavailable")(v), timeoutMs: 60_000 }
+      || refusal("private", "newer-format", "invalid-file", "failed", "unavailable")(v), timeoutMs: 60_000 },
+  "ui.noteSeen": { payload: (v): v is PageMessages["ui.noteSeen"]["payload"] => objectShape(v, {}, windowClaim),
+    result: (v): v is PageMessages["ui.noteSeen"]["result"] => objectShape(v, { kind: oneOf("noted", "unavailable") }), timeoutMs: 8_000 },
+  "ui.noteAgree": { payload: (v): v is PageMessages["ui.noteAgree"]["payload"] => objectShape(v, { change: isNoteAgreeChange }, windowClaim),
+    result: isAgreementAnswer, timeoutMs: 60_000 }
 }
 export function isPageCall(kind: string): kind is PageCall {
   return Object.hasOwn(pageContract, kind)

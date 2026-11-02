@@ -42,6 +42,7 @@ import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contr
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
 import { changeFilterSetting, type FilterSettingInput } from "./channel-filter-edit"
 import { executeDeviceSetting } from "./device-setting"
+import { executeUpgradeNoteFlag, type UpgradeNoteFlag, type UpgradeNoteFlagResult } from "./upgrade-note-flag"
 import { isDeviceSettingChange, type DeviceSettingAnswer, type DeviceSettingChange } from "../../shared/contracts/ui-pages"
 import { planSyncWrite, sameSyncJson, type SyncDocumentRecord } from "./sync-write-admission"
 import { readSyncDocument } from "./sync-codec"
@@ -329,6 +330,7 @@ type LocalFilterWriter = PlaylistCacheOwner & ProgressOwner & SettingsFileOwner 
   changeSession(change: SessionChange): Promise<SessionWrite>
   readClaimNotice(): Promise<ClaimNoticeRead>
   changeDeviceSetting(origin: UiOrigin, change: DeviceSettingChange): Promise<DeviceSettingAnswer>
+  markUpgradeNote(flag: UpgradeNoteFlag): Promise<UpgradeNoteFlagResult>
   acknowledgeClaimNotice(origin: NormalUiOrigin, expected: Snapshot<ClaimNotice>): Promise<ClaimNoticeAcknowledgement>
   read(view: "settings"): Promise<SettingsRead>
   subscribe(fn: (event: SettingsEvent) => void): () => void
@@ -3679,6 +3681,11 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       if (blocked) return Promise.resolve(blocked)
       const requested: SessionChange = { revision: { reset: change.revision.reset, accounts: new Map(change.revision.accounts) }, now: change.now, edits: [change.edits[0], ...change.edits.slice(1)] }
       return enqueue(() => changeSessionInLane(requested))
+    },
+    markUpgradeNote(flag) {
+      if (flag !== "opened" && flag !== "seen" && flag !== "reopened") return Promise.resolve("unavailable")
+      return enqueue(async () => initialization !== "ok" || claimConfirmation === "unconfirmed" ? "unavailable"
+        : executeUpgradeNoteFlag({ local: guardedLocal, flag, isStopped: disposed }))
     },
     changeDeviceSetting(origin, change) {
       if (!isJsonObject(origin) || origin.kind !== "ui" || typeof origin.incognito !== "boolean" || !isDeviceSettingChange(change)) return Promise.resolve({ kind: "refused", reason: "invalid" })

@@ -1,4 +1,5 @@
-import { openFirstRun, releaseBrowserMenu, type NativeBrowser } from "./adapters/browser"
+import { openFirstRun, openNoteTab, releaseBrowserMenu, type NativeBrowser } from "./adapters/browser"
+import { openUpgradeNote } from "./compose/note-opener"
 import { createRuntimeGate } from "./adapters/runtime-gate"
 import { createClearAllTeardown } from "./adapters/store-lifecycle"
 import { composeRegistrar, registrarOwner } from "./compose/registrar"
@@ -17,10 +18,16 @@ export type Background = { readonly lifecycle: StoreLifecycle; readonly ready: P
 export function boot(native: NativeBrowser, platform: Platform): Background {
   const gate = createRuntimeGate(native.runtime)
   native.runtime.onInstalled.addListener(details => { if (details.reason === "install") void openFirstRun(native) })
-  // Keys from any tab and the browser's menu wake the worker, so their listeners join this first turn and wait for the services (YT-ANY, YT-BM).
-  native.commands?.onCommand.addListener(name => { void ready.then(() => services?.anyTab.command(name)) })
-  const menuClicksHeard = native.contextMenus !== undefined
-  native.contextMenus?.onClicked.addListener((info, tab) => { void ready.then(() => services?.anyTab.clicked(info, tab)) })
+  // The upgrade note reopens only at a browser start, which this first-turn listener is the one witness of (REL-CON-25).
+  let browserStart = false, noteChecked = false
+  const checkNote = () => {
+    const state = lifecycle.state()
+    if (state.kind !== "active" || noteChecked && !browserStart) return
+    noteChecked = true
+    void openUpgradeNote({ device: async () => (await native.storage.local.get("device")).device, mark: flag => state.owner.markUpgradeNote(flag),
+      open: () => openNoteTab(native) }, browserStart).catch(() => {}).finally(() => { browserStart = false })
+  }
+  native.runtime.onStartup.addListener(() => { browserStart = true; noteChecked = false; checkNote() })
   let services: Services | undefined
   const lifecycle = composeStore(native, platform, () => createClearAllTeardown({
     registrar: current.registrar, extLinks: [], scripting: current.scripting,
@@ -63,7 +70,7 @@ export function boot(native: NativeBrowser, platform: Platform): Background {
     services = undefined
   })
   gate.onAnswered(() => { void owner.refresh() })
-  const ready = lifecycle.ready().then(start, () => {}).finally(() => gate.open())
+  const ready = lifecycle.ready().then(start, () => {}).finally(() => { gate.open(); checkNote() })
   return { lifecycle, ready, async dispose() {
     stopOwner()
     services?.dispose()
