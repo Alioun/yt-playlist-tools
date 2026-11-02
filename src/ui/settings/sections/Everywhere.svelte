@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onDestroy, untrack } from "svelte"
   import Button from "../../components/Button.svelte"
-  import Switch from "../../components/Switch.svelte"
   import KeyRecorder from "../../keys/KeyRecorder.svelte"
   import { createKeySettingsClient } from "../../keys/client"
   import { keyRecorderText } from "../../keys/text"
@@ -12,25 +11,13 @@
   import type { PageState } from "../../lib/page-state.svelte"
   import { isOn } from "../../lib/held"
   import FeatureSwitchCard from "../FeatureSwitchCard.svelte"
+  import SyncCard from "../SyncCard.svelte"
   import OptionSwitch from "../OptionSwitch.svelte"
 
   // Settings › Everywhere (UI-SET-12, UI-SET-23): Settings sync, the undo key, Keys from any tab and the popup key.
   let { pageState, features }: { pageState: PageState; features: ReturnType<typeof createFeatureCopy> } = $props()
   const { i18n, backend, platform } = untrack(() => pageState.page)
   const settings = $derived(pageState.settings)
-  const device = $derived(pageState.ready?.device.kind === "current" ? pageState.ready.device.device : null)
-  const status = $derived(pageState.ready?.sync?.status ?? "off")
-  // SYNC-14: kept filters are those of playlists their account no longer auto-adds to.
-  const keptFilters = $derived((pageState.ready?.setups ?? []).reduce((count, row) =>
-    count + [...row.filters.keys()].filter(playlist => !row.setup.autoAdd.some(entry => entry.pl === playlist)).length, 0))
-  let removing = $state(false), removeFailed = $state(false)
-  async function removeKept() {
-    removing = true; removeFailed = false
-    try {
-      const answer = await backend.call("ui.removeKeptFilters", {})
-      removeFailed = !(answer.kind === "answered" && answer.result.kind === "removed")
-    } finally { removing = false }
-  }
   const keyText = keyRecorderText(i18n)
   const keys = createKeySettingsClient({ backend, platform, commands: untrack(() => pageState.page.commands), text: keyText, chooser: { open: async () => {} } })
   onDestroy(() => keys.dispose())
@@ -40,30 +27,11 @@
   void untrack(() => pageState.page.commands.named()).then(rows => { commands = rows })
   const commandName = { "save-playing-song": "command_savePlayingSong", "like-playing-song": "command_likePlayingSong", "watch-later-current-video": "command_watchLaterCurrentVideo" } as const
   const shortcutPage = platform.browser === "firefox" ? "about:addons" : "chrome://extensions/shortcuts"
-  const syncLine = $derived(!device?.syncOn ? i18n.message("set_sync_off") : status === "joining" ? i18n.message("set_sync_joining")
-    : status === "waiting" ? i18n.message("banner_sync_waiting") : status === "full" ? i18n.message("sync_full") : status === "update-needed" ? i18n.message("sync_updateNeeded") : i18n.message("set_sync_ok"))
 </script>
 
 {#if settings}
   <div class="flex flex-col gap-4">
-    <section id="feature-sync" data-feature-card="sync" class="bg-card rounded-2xl border p-5">
-      <div class="flex items-start gap-3">
-        <div class="min-w-0 flex-1">
-          <h3 class="text-[15px] font-semibold">{features.syncFeature.name}</h3>
-          <p class="text-muted-foreground mt-1 text-[13.5px]">{i18n.message(platform.browser === "firefox" ? "set_syncHelp_firefox" : "set_syncHelp_chrome")}</p>
-          <p class="mt-2 text-[13.5px]" role="status">{syncLine}</p>
-          {#if device?.syncOn && status === "full" && keptFilters > 0}
-            <div class="mt-2 flex flex-col items-start gap-1">
-              <Button size="sm" variant="outline" pending={removing} onclick={removeKept}>{i18n.message("sync_removeKeptFilters")}</Button>
-              <p class="text-muted-foreground text-[12.5px]">{i18n.message("sync_removeKeptFilters_hint")}</p>
-              {#if removeFailed}<p role="status" class="text-destructive text-[12.5px]">{i18n.message("filter_failed")}</p>{/if}
-            </div>
-          {/if}
-          <p class="text-muted-foreground mt-1 text-[12.5px]">{i18n.message("set_syncSwitchLater")}</p>
-        </div>
-        <Switch checked={device?.syncOn ?? false} label={features.syncFeature.name} disabled onchange={() => {}} />
-      </div>
-    </section>
+    <SyncCard {pageState} {features} />
     {#if anyOn}
       <section class="bg-card rounded-2xl border p-5">
         <div class="flex items-center justify-between gap-3">

@@ -5962,8 +5962,65 @@
   "set_sync_ok": {
     "message": "Synced."
   },
-  "set_syncSwitchLater": {
-    "message": "Turn Settings sync on or off at first run for now. Switching it here comes with a later update."
+  "set_syncJoin_title": {
+    "message": "Choose which settings to keep"
+  },
+  "set_syncJoin_lead": {
+    "message": "This browser has settings of its own, and so does the synced copy from your other browsers. Either way, an account set up on only one side keeps its setup."
+  },
+  "set_syncJoin_useSynced": {
+    "message": "Use synced settings"
+  },
+  "set_syncJoin_useSyncedLine": {
+    "message": "Your synced settings replace this browser's. For an account set up on both sides, the synced setup wins."
+  },
+  "set_syncJoin_useThis": {
+    "message": "Use this browser's settings"
+  },
+  "set_syncJoin_useThisLine": {
+    "message": "This browser's settings replace the synced ones. For an account set up on both sides, this browser's setup wins."
+  },
+  "set_syncJoin_full": {
+    "message": "Couldn't turn on Settings sync, because your settings don't fit in the synced copy. Nothing changed."
+  },
+  "set_syncJoin_largestSettings": {
+    "message": "Shared settings take $SIZE$ KB.",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "set_syncJoin_largestSetup": {
+    "message": "The largest account setup takes $SIZE$ KB.",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "set_syncJoin_largestFilter": {
+    "message": "The largest channel filter takes $SIZE$ KB.",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "set_syncJoin_updateNeeded": {
+    "message": "Couldn't turn on Settings sync, because another browser saved your synced settings with a newer version of Perchling. Update Perchling here, then try again."
+  },
+  "set_syncJoin_changed": {
+    "message": "Couldn't turn on Settings sync, because your synced settings changed meanwhile. Try again."
+  },
+  "set_syncJoin_failed": {
+    "message": "Couldn't turn on Settings sync. Nothing changed. Try again."
+  },
+  "set_syncOff_failed": {
+    "message": "Couldn't turn off Settings sync. Try again."
+  },
+  "set_sync_unconfirmed": {
+    "message": "Couldn't confirm the change to Settings sync. Reload this page to check."
   },
   "set_undoKey": {
     "message": "Undo key"

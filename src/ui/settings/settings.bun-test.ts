@@ -203,6 +203,44 @@ test("with synced settings full and a kept filter, Everywhere offers Remove kept
   expect(removed).toEqual([{}])
 }, 20_000)
 
+test("turning Settings sync on asks which settings to keep, and the choice goes back with the question's token (UI-SET-13)", async () => {
+  const sent: unknown[] = []
+  settings({ ...agreed, "doc:settings": stamped({}) }, { "ui.sync": payload => {
+    sent.push(payload)
+    return payload.action === "join" ? { kind: "choose", token: "join-1" } : { kind: "on" }
+  } }, "#everywhere")
+  const toggle = await screen.findByRole("switch", { name: "Settings sync" }, { timeout: 5000 })
+  expect(toggle).toHaveAttribute("aria-checked", "false")
+  await userEvent.click(toggle)
+  const dialog = await screen.findByRole("dialog", { name: "Choose which settings to keep" }, { timeout: 5000 })
+  expect(toggle, "the switch stays off until a choice applies").toHaveAttribute("aria-checked", "false")
+  expect(within(dialog).getAllByRole("button").map(button => button.textContent?.replace(/\s+/g, " ").trim())).toEqual([
+    "Use synced settings Your synced settings replace this browser's. For an account set up on both sides, the synced setup wins.",
+    "Use this browser's settings This browser's settings replace the synced ones. For an account set up on both sides, this browser's setup wins.", "Cancel"])
+  await userEvent.click(within(dialog).getByRole("button", { name: /Use this browser's settings/ }))
+  for (let turn = 0; turn < 100 && sent.length < 2; turn++) await new Promise(resolve => setTimeout(resolve, 10))
+  expect(sent).toEqual([{ action: "join" }, { action: "choose", token: "join-1", choice: "use-this-browser" }])
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
+}, 20_000)
+
+test("a join that doesn't fit says so and names what takes the most room (SYNC-09)", async () => {
+  settings({ ...agreed, "doc:settings": stamped({}) }, { "ui.sync": () => ({ kind: "refused", reason: "sync-full", largest: { kind: "filter", bytes: 39_000 } }) }, "#everywhere")
+  await userEvent.click(await screen.findByRole("switch", { name: "Settings sync" }, { timeout: 5000 }))
+  expect(await screen.findByText("Couldn't turn on Settings sync, because your settings don't fit in the synced copy. Nothing changed. The largest channel filter takes 39 KB.", {}, { timeout: 5000 })).toBeTruthy()
+}, 20_000)
+
+test("a later history's waiting question opens from the status link, and switching off sends off (R153, SYNC-19)", async () => {
+  const sent: unknown[] = []
+  settings({ schema: 1, device: { id: "device", consent: { v: 1, at: 1_700_000_000_000 }, syncOn: true }, "doc:settings": stamped({}),
+    sync: { joined: "history", pushed: {}, status: "ok", editedSinceOff: false }, "pending:sync-join": { v: 1, kind: "sync-join", phase: "choice" } },
+  { "ui.sync": payload => { sent.push(payload); return payload.action === "join" ? { kind: "choose", token: "later" } : { kind: "off" } } }, "#everywhere")
+  await userEvent.click(await screen.findByRole("button", { name: "Choose which settings to keep." }, { timeout: 5000 }))
+  const dialog = await screen.findByRole("dialog", { name: "Choose which settings to keep" }, { timeout: 5000 })
+  await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }))
+  for (let turn = 0; turn < 100 && sent.length < 2; turn++) await new Promise(resolve => setTimeout(resolve, 10))
+  expect(sent).toEqual([{ action: "join" }, { action: "cancel", token: "later" }])
+}, 20_000)
+
 test("Diagnostics runs Check now only when clicked, shows what answered, and puts the session's signals in the report (HEALTH-22 to HEALTH-24)", async () => {
   const checks: boolean[] = []
   const signal = { site: "www", feature: "quick-save", job: "add", route: "service.add", kind: "missing", pageType: "watch", clientVersion: "2.2", shape: null, count: 2, firstSeen: 1, lastSeen: 2 } as const

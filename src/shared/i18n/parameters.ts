@@ -1088,7 +1088,21 @@ export type MessageParameters = {
   "set_sync_off": readonly []
   "set_sync_joining": readonly []
   "set_sync_ok": readonly []
-  "set_syncSwitchLater": readonly []
+  "set_syncJoin_title": readonly []
+  "set_syncJoin_lead": readonly []
+  "set_syncJoin_useSynced": readonly []
+  "set_syncJoin_useSyncedLine": readonly []
+  "set_syncJoin_useThis": readonly []
+  "set_syncJoin_useThisLine": readonly []
+  "set_syncJoin_full": readonly []
+  "set_syncJoin_largestSettings": readonly ["size"]
+  "set_syncJoin_largestSetup": readonly ["size"]
+  "set_syncJoin_largestFilter": readonly ["size"]
+  "set_syncJoin_updateNeeded": readonly []
+  "set_syncJoin_changed": readonly []
+  "set_syncJoin_failed": readonly []
+  "set_syncOff_failed": readonly []
+  "set_sync_unconfirmed": readonly []
   "set_undoKey": readonly []
   "set_undoKeyLine": readonly []
   "set_anyTabOff": readonly []
@@ -1621,6 +1635,9 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "set_shownFor": ["account"],
   "set_showingFor": ["account"],
   "set_thisAccount": ["account"],
+  "set_syncJoin_largestSettings": ["size"],
+  "set_syncJoin_largestSetup": ["size"],
+  "set_syncJoin_largestFilter": ["size"],
   "set_accounts_summary_one": ["count"],
   "set_accounts_summary_other": ["count"],
   "set_accounts_removeThis": ["account"],
