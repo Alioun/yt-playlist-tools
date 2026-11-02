@@ -1136,7 +1136,6 @@ export type MessageParameters = {
   "firstRun_finish_done": readonly []
   "playing_save": readonly []
   "playing_saveTo": readonly ["song", "playlist"]
-  "playing_saved": readonly ["playlist"]
   "playing_failed": readonly []
   "playing_accountChanged": readonly []
   "playing_tabClosed": readonly []
@@ -1575,7 +1574,6 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "badge_notWorking_one": ["feature"],
   "badge_notWorking_other": ["count"],
   "playing_saveTo": ["song", "playlist"],
-  "playing_saved": ["playlist"],
   "playing_oneClick": ["playlist"],
   "playing_artist": ["title", "artist"],
 }

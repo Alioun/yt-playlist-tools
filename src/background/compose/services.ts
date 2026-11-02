@@ -65,8 +65,8 @@ export function composeServices(deps: {
       const [active] = await native.tabs.query({ active: true, windowId: origin.windowId }).catch(() => [])
       return { windowId: origin.windowId, incognito: origin.incognito, activeTabId: typeof active?.id === "number" ? active.id : null }
     } })
-  const anyTab = composeAnyTab({ native, build, actions, tabs, registrar, consented: deps.consented, menuClicksHeard: deps.menuClicksHeard,
-    i18n: createSiteI18n({ getMessage: (name, substitutions) => native.i18n.getMessage(name as never, substitutions) }) })
+  const siteI18n = createSiteI18n({ getMessage: (name, substitutions) => native.i18n.getMessage(name as never, substitutions) })
+  const anyTab = composeAnyTab({ native, build, actions, tabs, registrar, consented: deps.consented, menuClicksHeard: deps.menuClicksHeard, i18n: siteI18n })
   const reconcileMenu = () => { void anyTab.reconcileMenu() }
   const stopMenuSettings = owner.subscribe(reconcileMenu)
   native.permissions.onAdded.addListener(reconcileMenu)
@@ -99,7 +99,17 @@ export function composeServices(deps: {
     },
     transport: runtimeTransport(deps.runtime),
     rpc: { build, deadline: timerDeadline },
-    playingNow: composePlayingNow({ native, tabs, registrar, actions, consented: deps.consented })
+    playingNow: composePlayingNow({ native, tabs, registrar, actions, consented: deps.consented }),
+    add: createPlayingSave({ actions, i18n: siteI18n, consented: deps.consented }),
+    pages: {
+      owner,
+      session: { get: async key => (await native.storage.session.get(key))[key] },
+      status: createPageStatus({ owner, statuses: monitor.statusProducer, tab: tabId => browserTabs.port.get(tabId), build }),
+      withdraw: (origin, expected) => deps.lifecycle.withdrawConsent(origin, expected),
+      readAccess: () => readAccess(),
+      version: () => native.runtime.getManifest().version,
+      now: () => Date.now()
+    }
   })
   const badge = createToolbarBadge({
     action: {

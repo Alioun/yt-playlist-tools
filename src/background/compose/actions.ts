@@ -1,4 +1,4 @@
-import { createAddFlow, type AccountSettings, type AddFlow, type Feature, type Owner, type Shared, type Target } from "../add-flow/add-flow"
+import { createAddFlow, type AccountSettings, type AddFlow, type Feature, type Opener, type Owner, type Shared, type Target } from "../add-flow/add-flow"
 import { authenticateTab, runtimeTransport, timerDeadline, type RuntimePort, type TabContext } from "../adapters/runtime"
 import type { NativeSender, SenderOriginPorts } from "../adapters/sender-origin"
 import { createTabsExecution } from "../gather/execution"
@@ -10,6 +10,7 @@ import type { Requester, Tabs } from "../tabs/ports"
 import type { BuildId, FeatureId, Origin, Site } from "../../shared/contracts"
 import { toastPlan, type ExplicitOutcome } from "../../shared/rules/outcomes"
 import { tabActionContract, type PlaylistTitles, type TabActionMessages, type TabAddReport, type TabAddRequest, type TabCreated, type TabPlaylists, type TabUndoReport } from "../../shared/contracts/tab-actions"
+import type { PopupAddRequest } from "../../shared/contracts/ui-add"
 import { cacheRows } from "../../shared/model/account-cache"
 import { decodeSettings } from "../../shared/model/decodeSettings"
 import { defaultSettings } from "../../shared/model/defaults"
@@ -57,7 +58,7 @@ export function createAddFlowOwner(owner: Pick<StartingOwner, "readTabProjection
       titles: await cachedTitles(projection.account.acct, incognito, site)
     })
   }
-  function opened(feature: Feature): FeatureId {
+  function opened(feature: Feature): Opener {
     switch (feature.kind) {
       case "auto-add": return "auto-add"
       case "shortcut": return "shortcuts"
@@ -87,7 +88,10 @@ export function createAddFlowOwner(owner: Pick<StartingOwner, "readTabProjection
   }
   const port: Owner = {
     shared(feature): Shared {
-      const current = switches[opened(feature)]?.(settings)
+      const opener = opened(feature)
+      // Playing now shows only while the YouTube Music section is on, whichever of its features are (YM-POP-10).
+      if (opener === "playing-now") return { on: settings.musicSection, feedback: true }
+      const current = switches[opener]?.(settings)
       return { on: current?.on === true, feedback: current?.feedback !== false }
     },
     account(feature, acct): AccountSettings { return { targets: targets(feature, accounts.get(acct)), created: {} } },
@@ -105,6 +109,8 @@ export type Actions = {
   readonly flow: AddFlow
   /** An explicit add in a tab the background chose, as that tab's account (YT-ANY-05, YT-BM-04). */
   addInTab(tab: ActingTab, request: TabAddRequest): Promise<TabAddReport>
+  /** Playing now's save in the tab it read, only while that tab still shows `acct` in the popup's window kind (ARC-ACC-68). */
+  addFromPopup(tab: ActingTab, acct: AccountKey, request: PopupAddRequest): Promise<TabAddReport | { readonly kind: "account-changed" }>
   settings(incognito: boolean): Promise<Settings | null>
   dispose(): void
 }
@@ -143,7 +149,7 @@ export function composeActions(deps: {
     const known = view.port.titles(acct)
     return Object.fromEntries(ids.flatMap(id => known[id] ? [[id, known[id]]] : []))
   }
-  async function addIn(tab: ActingTab, acct: AccountKey | null, request: TabAddRequest): Promise<TabAddReport> {
+  async function addIn(tab: ActingTab, acct: AccountKey | null, request: TabAddRequest | PopupAddRequest): Promise<TabAddReport> {
     await view.load(tab.incognito, acct, tab.site)
     const { memory: _memory, ...report } = await flow.add(request, { kind: "tab", tabId: tab.tabId, incognito: tab.incognito })
     if (report.kind !== "report" && report.kind !== "stopped") return report
@@ -220,6 +226,12 @@ export function composeActions(deps: {
       const [known] = await tabs.known({ kind: "tab", tabId: tab.tabId })
       if (!known || known.privateTab !== tab.incognito) return { kind: "no-tab" }
       return addIn(tab, known.acct, request)
+    },
+    async addFromPopup(tab, acct, request) {
+      const [known] = await tabs.known({ kind: "tab", tabId: tab.tabId })
+      if (!known) return { kind: "no-tab" }
+      if (known.acct !== acct || known.privateTab !== tab.incognito) return { kind: "account-changed" }
+      return addIn(tab, acct, request)
     },
     async settings(incognito) {
       const read = await owner.readTabProjection({ private: incognito, account: { kind: "unknown" } }).catch(() => null)

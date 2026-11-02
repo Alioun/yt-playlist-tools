@@ -75,15 +75,6 @@ export type NoteAgreeChange = {
   readonly syncOn: boolean; readonly percentage: NotePercentage
 }
 
-export type UiPlayingNow =
-  | { readonly kind: "playing"; readonly tabId: number; readonly acct: AccountKey; readonly song: NowPlaying }
-  | { readonly kind: "nothing" | "signed-out" | "no-tab" | "held" }
-  | UiUnavailable
-export type PlayingSave = { readonly tabId: number; readonly acct: AccountKey; readonly videoId: VideoId; readonly playlistId: PlaylistId }
-export type UiPlayingSave =
-  | { readonly kind: "saved"; readonly setVideoId: string | null }
-  | { readonly kind: "failed" | "account-changed" | "no-tab" }
-  | UiUnavailable
 
 export type PageMessages = {
   readonly "ui.status": { readonly payload: WindowClaim; readonly result: UiStatus }
@@ -99,10 +90,6 @@ export type PageMessages = {
   readonly "ui.noteSeen": { readonly payload: WindowClaim; readonly result: { readonly kind: "noted" | "unavailable" } }
   /** The upgrade note's Agree, with its one question's answer (REL-CON-05). */
   readonly "ui.noteAgree": { readonly payload: WindowClaim & { readonly change: NoteAgreeChange }; readonly result: import("./first-run").AgreementAnswer }
-  /** Playing now: the song in the YouTube Music tab ARC-ACC-68 picks, with that tab and its account (UI-POP-17). */
-  readonly "ui.playingNow": { readonly payload: WindowClaim; readonly result: UiPlayingNow }
-  /** Playing now's Save, run in the tab it read, as that tab's account (YM-POP-2, YM-POP-5). */
-  readonly "ui.playingSave": { readonly payload: WindowClaim & { readonly save: PlayingSave }; readonly result: UiPlayingSave }
 }
 export type PageCall = keyof PageMessages
 
@@ -180,13 +167,7 @@ export const pageContract: RpcContract<PageMessages> = {
   "ui.noteSeen": { payload: (v): v is PageMessages["ui.noteSeen"]["payload"] => objectShape(v, {}, windowClaim),
     result: (v): v is PageMessages["ui.noteSeen"]["result"] => objectShape(v, { kind: oneOf("noted", "unavailable") }), timeoutMs: 8_000 },
   "ui.noteAgree": { payload: (v): v is PageMessages["ui.noteAgree"]["payload"] => objectShape(v, { change: isNoteAgreeChange }, windowClaim),
-    result: isAgreementAnswer, timeoutMs: 60_000 },
-  "ui.playingNow": { payload: (v): v is PageMessages["ui.playingNow"]["payload"] => objectShape(v, {}, windowClaim),
-    result: (v): v is UiPlayingNow => isUiUnavailable(v) || objectShape(v, { kind: oneOf("nothing", "signed-out", "no-tab", "held") })
-      || objectShape(v, { kind: x => x === "playing", tabId: natural, acct: isAccountKey, song: isNowPlaying }), timeoutMs: 12_000 },
-  "ui.playingSave": { payload: (v): v is PageMessages["ui.playingSave"]["payload"] => objectShape(v, { save: x => objectShape(x, { tabId: natural, acct: isAccountKey, videoId: isVideoId, playlistId: isPlaylistId }) }, windowClaim),
-    result: (v): v is UiPlayingSave => isUiUnavailable(v) || objectShape(v, { kind: oneOf("failed", "account-changed", "no-tab") })
-      || objectShape(v, { kind: x => x === "saved", setVideoId: x => x === null || typeof x === "string" }), timeoutMs: 30_000 }
+    result: isAgreementAnswer, timeoutMs: 60_000 }
 }
 export function isPageCall(kind: string): kind is PageCall {
   return Object.hasOwn(pageContract, kind)

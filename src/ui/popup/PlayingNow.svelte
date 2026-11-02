@@ -19,11 +19,13 @@
   async function save() {
     if (playing?.kind !== "playing" || !target || !title) return
     saving = true; result = null
-    const answer = await backend.call("ui.playingSave", { save: { tabId: playing.tabId, acct: playing.acct, videoId: playing.song.videoId, playlistId: target } })
+    const answer = await backend.call("ui.add", { tabId: playing.tabId, acct: playing.acct,
+      request: { site: "music", video: playing.song.videoId, title: playing.song.title, via: "quick-save", opener: "playing-now" } })
     saving = false
-    const kind = answer.kind === "answered" ? answer.result.kind : "failed"
-    result = kind === "saved" ? i18n.message("playing_saved", { playlist: title }) : kind === "account-changed" ? i18n.message("playing_accountChanged")
-      : kind === "no-tab" ? i18n.message("playing_tabClosed") : i18n.message("playing_failed")
+    const reply = answer.kind === "answered" ? answer.result : null
+    result = reply && "text" in reply ? reply.text : reply?.kind === "account-changed" ? i18n.message("playing_accountChanged")
+      : reply?.kind === "no-tab" ? i18n.message("playing_tabClosed") : reply?.kind === "signed-out" ? i18n.message("playing_signedOut")
+      : reply?.kind === "choose" ? i18n.message("playing_firstPick") : i18n.message("playing_failed")
   }
 </script>
 

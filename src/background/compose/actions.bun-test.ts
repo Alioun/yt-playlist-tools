@@ -1,5 +1,7 @@
 import { afterEach, expect, test } from "bun:test"
 import { composeActions } from "./actions"
+import { createPlayingSave } from "./playing-now"
+import { createPageReceiver, type PageReceiverPorts } from "../router/ui-pages"
 import { runtimeTransport } from "../adapters/runtime"
 import { createAutoAddTabRouter } from "../router/tab-auto-add"
 import { createTabViewProducer } from "../tab-view/producer"
@@ -20,6 +22,7 @@ import type { AccountKey, PlaylistId, VideoId } from "../../shared/model"
 import { projectionSeed, projectionWorld, document as doc, a, b, alpha, beta, video } from "../../../tools/fixtures/tab-projection/harness"
 import { build } from "../../../tools/fixtures/page-link/support"
 import { syntheticHealth, tabContext } from "../../../tools/fixtures/tab-view/harness"
+import { englishI18n } from "../../../tools/fixtures/localization/scripted"
 
 type Listener = (message: unknown, sender: NativeSender, respond: (answer?: unknown) => void) => boolean
 const route = "fixture-route" as RouteId
@@ -47,7 +50,7 @@ function youtube() {
     jobs.push(job.kind)
     switch (job.kind) {
       case "membership": return { ok: true, route, data: [...lists].map(([id, videos]) => ({ id, title: id, contains: videos.has(job.videoId) })) } as unknown as JobResult<J>
-      case "add": lists.get(job.playlistId)?.add(job.videoId); return { ok: true, route, data: { setVideoId: `entry-${++entry}` as SetVideoId } } as unknown as JobResult<J>
+      case "add": case "save": lists.get(job.playlistId)?.add(job.videoId); return { ok: true, route, data: { setVideoId: `entry-${++entry}` as SetVideoId } } as unknown as JobResult<J>
       case "remove": return { ok: true, route, data: null } as unknown as JobResult<J>
       default: return { ok: false, reason: "unavailable" } as unknown as JobResult<J>
     }
@@ -288,4 +291,39 @@ test("auto-add: progress saved when the page is left counts on the next visit, t
   const second = await watchPage(w, allowed)
   await second.play(13, 26)
   await until(() => w.site.lists.get(alpha)?.has(video) === true, "the add from both visits' progress")
+})
+
+// Account b's YouTube Music tab reads Playing now; its quick-save playlist is beta, and b's cache names it.
+function playingNowSeed(initial: Seed) {
+  autoAddSeed(initial)
+  initial.local[`cache:${b}`] = { listAt: 5, playlists: [{ id: beta, title: "Beta talks" }], order: {}, created: [], labelAt: null }
+}
+const popupWindow = { windowId: 3, incognito: false, activeTabId: 9 }
+const song = { site: "music", video, title: "First song", via: "quick-save", opener: "playing-now" } as const
+
+test("Playing now's Save runs through AddFlow in the tab it read with Quick actions off, and the popup's Recent adds lists it", async () => {
+  const w = world({ tabAccount: b, settings: { musicActions: { on: false, feedback: true } }, prepare: playingNowSeed })
+  const save = createPlayingSave({ actions: w.actions, i18n: englishI18n(), consented: () => true })
+  const answer = await save(popupWindow, { tabId: 9, acct: b, request: song })
+  expect(answer).toEqual({ kind: "added", text: expect.stringContaining("Beta talks") })
+  expect(w.site.jobs).toContain("save")
+  expect(w.site.lists.get(beta)?.has(video)).toBe(true)
+  await until(() => w.recentAdds().length === 1, "the Recent adds entry")
+  const pages = createPageReceiver({ session: { get: async () => w.recentAdds() } } as unknown as PageReceiverPorts)
+  const ui = { ui: { kind: "ui", page: "popup", origin: { kind: "ui", windowId: 3, incognito: false } }, requester: popupWindow, principal: "p" }
+  expect(await pages["ui.recentAdds"]({ acct: b }, { ui, current: async () => ui } as never)).toEqual({ kind: "recent", entries: [{ at: expect.any(Number),
+    source: { kind: "feature", feature: "playing-now" }, playlists: [{ id: beta, title: "Beta talks" }], videos: [{ id: video, title: "First song" }], gather: false }] })
+  expect(await save(popupWindow, { tabId: 9, acct: b, request: song })).toEqual({ kind: "already-in", text: expect.stringContaining("Beta talks") })
+})
+
+test("Playing now's Save refuses once the tab shows another account or the section switch is off, and writes nothing", async () => {
+  const changed = world({ tabAccount: a, prepare: playingNowSeed })
+  const save = createPlayingSave({ actions: changed.actions, i18n: englishI18n(), consented: () => true })
+  expect(await save(popupWindow, { tabId: 9, acct: b, request: song })).toEqual({ kind: "account-changed" })
+  expect(await save({ ...popupWindow, incognito: true }, { tabId: 9, acct: a, request: song })).toEqual({ kind: "account-changed" })
+  expect(changed.site.jobs).toEqual([])
+  const off = world({ tabAccount: b, settings: { musicSection: false }, prepare: playingNowSeed })
+  const offSave = createPlayingSave({ actions: off.actions, i18n: englishI18n(), consented: () => true })
+  expect((await offSave(popupWindow, { tabId: 9, acct: b, request: song })).kind).toBe("failed")
+  expect(off.site.jobs).toEqual([])
 })

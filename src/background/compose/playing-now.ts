@@ -5,6 +5,9 @@ import type { Actions } from "./actions"
 import { candidate, tabOrder, type NativeTab } from "./any-tab"
 import { isMusicAdFailure, type JobOf } from "../../shared/contracts"
 import type { PlayingNow } from "../../shared/contracts/playing-now"
+import type { UiAddAnswer, UiAddPayload } from "../../shared/contracts/ui-add"
+import { toastText } from "../../shared/copy"
+import type { I18n } from "../../shared/i18n"
 import { siteBundles } from "../../shared/features/registration"
 
 /**
@@ -39,5 +42,25 @@ export function composePlayingNow(deps: {
       if (isMusicAdFailure(result)) return { kind: "ad-playing", tabId }
     }
     return { kind: "no-tab" }
+  }
+}
+
+/**
+ * Playing now's Save (`ui.add`): AddFlow runs it in the tab the row read, as the account it was read with, and the
+ * row shows its answer in YM-SAVE's words (YM-POP-3, YM-POP-5). It never falls back to another tab.
+ */
+export function createPlayingSave(deps: {
+  readonly actions: Pick<Actions, "addFromPopup">
+  readonly i18n: I18n
+  readonly consented: () => boolean
+}) {
+  return async function save(req: Requester, payload: UiAddPayload): Promise<UiAddAnswer> {
+    if (!deps.consented()) return { kind: "unavailable" }
+    const report = await deps.actions.addFromPopup({ tabId: payload.tabId, incognito: req.incognito, site: "music" }, payload.acct, payload.request)
+    if (report.kind !== "report") return report.kind === "stopped" ? { kind: "failed", text: deps.i18n.message("playing_failed") } : report
+    const outcomes = Object.values(report.outcomes)
+    const kind = outcomes.some(outcome => outcome.kind === "added") ? "added" : outcomes.some(outcome => outcome.kind === "already-in") ? "already-in" : "failed"
+    const titles = { ...(payload.request.title ? { video: payload.request.title } : {}), playlists: report.titles }
+    return { kind, text: report.toast ? toastText(report.toast, titles, "music", deps.i18n) : deps.i18n.message("playing_failed") }
   }
 }

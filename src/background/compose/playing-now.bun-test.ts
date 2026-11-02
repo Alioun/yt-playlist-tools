@@ -6,6 +6,7 @@ import { composePlayingNow } from "./playing-now"
 import { defaultSettings } from "../../shared/model/defaults"
 import type { NowPlaying } from "../../shared/contracts"
 import type { Settings } from "../../shared/model"
+import { englishI18n } from "../../../tools/fixtures/localization/scripted"
 
 const song: NowPlaying = { videoId: "getLucky001" as never, title: "Get Lucky", artist: "Daft Punk", artwork: "https://lh3.googleusercontent.com/art", pos: 30, len: 248 }
 const req = { windowId: 1, incognito: false, activeTabId: 2 }
@@ -61,4 +62,13 @@ test("before consent, with the section off, without access or with no YouTube Mu
     expect(await w.read()).toEqual(answer)
     expect([w.ensured, w.ran]).toEqual([[], []])
   }
+})
+
+test("Save before consent reaches no tab", async () => {
+  const tried: unknown[] = []
+  const save = createPlayingSave({ consented: () => false, i18n: englishI18n(),
+    actions: { async addFromPopup(...call) { tried.push(call); return { kind: "no-tab" } } } })
+  const request = { site: "music", video: song.videoId, via: "quick-save", opener: "playing-now" } as const
+  expect(await save(req, { tabId: 6, acct: "AAAAAAAAAAAAAAAA" as never, request })).toEqual({ kind: "unavailable" })
+  expect(tried).toEqual([])
 })

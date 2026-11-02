@@ -6,6 +6,7 @@ import { applySessionEdits, emptySessionMemory, live, PAUSE_MS, RECENT_MS, sessi
   type SessionEdit, type SessionMemory, type SessionPort, type SessionRead, type SessionWrite, type SessionRevision, type Skip } from "../store/session-memory"
 import { isTabPing, type TabPing } from "../../shared/contracts/tabs"
 import type { TabAddRequest, TabRemoveRequest, UndoHandle } from "../../shared/contracts/tab-actions"
+import type { PopupAddRequest } from "../../shared/contracts/ui-add"
 
 // Facts the gateway recognised that JobResult can't carry. Each is a YT-ADD-28 row or YT-ADD-05's duplicate rejection.
 type WriteFact = "not-sent" | "duplicate" | "missing" | "full" | "refused" | "account-refused"
@@ -34,11 +35,13 @@ export type Execution = {
   served?: () => number | null
 }
 
+/** What opened an explicit add: a page's feature, or the popup's Playing now, which no feature switch gates. */
+export type Opener = FeatureId | PopupAddRequest["opener"]
 export type Feature =
   | { kind: "auto-add" }
   | { kind: "shortcut"; shortcut: ShortcutId }
-  | { kind: "quick-save"; site: Site; opener: FeatureId }
-  | { kind: "picker"; opener: FeatureId }
+  | { kind: "quick-save"; site: Site; opener: Opener }
+  | { kind: "picker"; opener: Opener }
 export type Target = { playlist: PlaylistId; filter?: Filter }
 export type Shared = { on: boolean; feedback: boolean }
 export type AccountSettings = { targets: readonly Target[]; created: Readonly<Partial<Record<PlaylistId, number>>> }
@@ -63,13 +66,8 @@ export type Ports = {
   generation(): string
 }
 
-export type AddRequest = { site: Site; video: VideoId; title?: string } & (
-  | { via: "auto-add"; playlists: readonly PlaylistId[]; channel: ChannelId | null }
-  | { via: "shortcut"; shortcut: ShortcutId }
-  | { via: "quick-save"; opener: FeatureId }
-  | { via: "picker" | "choose-quick-save" | "choose-shortcut"; opener: FeatureId; playlist: PlaylistId }
-)
-export type RemoveRequest = { site: Site; video: VideoId; playlist: PlaylistId; opener: FeatureId; tick: UndoHandle | null }
+export type AddRequest = TabAddRequest | PopupAddRequest
+export type RemoveRequest = TabRemoveRequest
 export type BatchOutcomes = readonly { video: VideoId; outcome: VideoOutcome }[]
 // A gather's own facts for its Undo record. They are planned once the outcomes are known, inside the batch's hold, and written in the record's one change.
 // The Recent entry takes the record's own time, so both name one moment.
@@ -571,7 +569,8 @@ export function createAddFlow(ports: Ports): AddFlow {
     const titles = ports.owner.titles(acct)
     const [first, ...rest] = (Object.keys(outcomes) as PlaylistId[]).filter(id => outcomes[id]?.kind === "added").map(id => ({ id, title: titles[id] ?? "" }))
     if (!first) return
-    const feature = request.via === "auto-add" ? "auto-add" : request.via === "shortcut" ? "shortcuts" : request.via === "quick-save" ? "quick-save" : request.opener
+    const feature = request.via === "auto-add" ? "auto-add" : request.via === "shortcut" ? "shortcuts" : request.opener === "playing-now" ? request.opener
+      : request.via === "quick-save" ? "quick-save" : request.opener
     note(scope, [{ kind: "recent-add", acct, entry: { at: ports.now(), video: { id: request.video, title: request.title ?? "" }, playlists: [first, ...rest],
       feature, ...(undo ? { undo: undo.id } : {}) } }], revision)
   }

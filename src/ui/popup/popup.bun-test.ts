@@ -94,15 +94,15 @@ test("the YouTube Music tab is its own part, with the section switch", async () 
   expect(screen.getByRole("switch", { name: "Playlist shortcuts here too" })).toBeDisabled()
 })
 
-test("Playing now shows the song from the tab it read and saves it there, as that tab's account", async () => {
+test("Playing now shows the song from the tab it read and saves it there, as that tab's account, with Quick actions off", async () => {
   const saves: unknown[] = []
-  popup({ ...agreed, "doc:settings": stamped({ musicActions: { on: true, feedback: true } }),
+  popup({ ...agreed, "doc:settings": stamped({ musicActions: { on: false, feedback: true } }),
     [`doc:setup:${acct}`]: stamped({ musicSave: "PLm" }), [`cache:${acct}`]: { listAt: 1, playlists: [{ id: "PLm", title: "Mix" }], order: {}, created: [], labelAt: null } }, {
-    "ui.playingNow": () => ({ kind: "playing", tabId: 9, acct: acct as never, song: { videoId: "aaaaaaaaaaa" as never, title: "Song", artist: "Band", pos: 1, len: 100 } }),
-    "ui.playingSave": payload => { saves.push(payload.save); return { kind: "saved", setVideoId: null } }
+    "ui.playingNow": () => ({ kind: "song", tabId: 9, acct: acct as never, song: { videoId: "aaaaaaaaaaa" as never, title: "Song", artist: "Band", pos: 1, len: 100 } }),
+    "ui.add": payload => { saves.push(payload); return { kind: "added", text: "Saved to Mix." } }
   }, { www: true, music: true, browserMenu: false })
   await userEvent.click(await screen.findByRole("tab", { name: "YouTube Music" }))
   await userEvent.click(await screen.findByRole("button", { name: "Save Song to Mix" }, { timeout: 5000 }))
   expect(await screen.findByText("Saved to Mix.")).toBeTruthy()
-  expect(saves).toEqual([{ tabId: 9, acct, videoId: "aaaaaaaaaaa", playlistId: "PLm" }])
+  expect(saves).toEqual([{ tabId: 9, acct, request: { site: "music", video: "aaaaaaaaaaa", title: "Song", via: "quick-save", opener: "playing-now" } }])
 }, 20_000)

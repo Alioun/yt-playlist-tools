@@ -6127,14 +6127,6 @@
       }
     }
   },
-  "playing_saved": {
-    "message": "Saved to $PLAYLIST$.",
-    "placeholders": {
-      "playlist": {
-        "content": "$1"
-      }
-    }
-  },
   "playing_failed": {
     "message": "Couldn't save, because the YouTube Music tab didn't answer. Try again."
   },

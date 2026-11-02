@@ -17,7 +17,8 @@
   })
   const sources: Readonly<Record<string, Parameters<typeof i18n.message>[0]>> = {
     "auto-add": "recent_source_autoAdd", "quick-save": "recent_source_quickSave", "browser-menu": "recent_source_browserMenu", gather: "recent_source_gather",
-    "auto-gather": "recent_source_autoGather", picker: "recent_source_picker", "watch-button": "recent_source_watchButton", "music-actions": "recent_source_musicActions"
+    "auto-gather": "recent_source_autoGather", picker: "recent_source_picker", "watch-button": "recent_source_watchButton", "music-actions": "recent_source_musicActions",
+    "playing-now": "playing_title"
   }
   function source(entry: RecentEntry): string {
     if (entry.source.kind === "shortcut") return display(entry.source.key, platform.os)
