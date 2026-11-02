@@ -10,7 +10,7 @@ import type { Dispose, Scope } from "../../core/scope"
 import type { Feedback } from "../../kit/feedback"
 import type { OverlayKit } from "../../kit/overlay"
 import type { Popovers } from "../../popovers/types"
-import { explicitAdd, explicitContent, type ExplicitContext } from "../explicit"
+import { explicitAdd, explicitContent, type ExplicitContext } from "../../explicit"
 import { glyph as stateGlyph } from "../queue-button/glyphs"
 
 export type QuickSaveServices = {

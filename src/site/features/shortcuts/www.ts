@@ -7,8 +7,8 @@ import type { WwwItems } from "../../core/items-www"
 import type { Keys } from "../../core/keys"
 import { Scope } from "../../core/scope"
 import type { Feedback } from "../../kit/feedback"
-import type { PickerAnchor, Popovers } from "../../popovers/types"
-import { explicitAdd, explicitContent, type ExplicitContext } from "../explicit"
+import { pickerAnchor, type Popovers } from "../../popovers/types"
+import { explicitAdd, explicitContent, type ExplicitContext } from "../../explicit"
 
 export type ShortcutServices = {
   readonly document: Document
@@ -24,21 +24,11 @@ export type ShortcutServices = {
 }
 type Target = { readonly video: VideoId; readonly title: string | undefined; readonly element: Element | null }
 
-const thumbnails = "a#thumbnail, ytd-thumbnail, yt-thumbnail-view-model, a.ytLockupViewModelContentImage, a.yt-lockup-view-model__content-image"
-const players = "#movie_player, #shorts-player"
 const ignore = () => {}
 
 function feature(view: SiteView<"www"> | null) {
   const found = view?.features.find(entry => entry.id === "shortcuts")
   return found?.id === "shortcuts" ? found : undefined
-}
-
-/** Where the picker key opens the picker: beside the card's thumbnail, else over the player, else the window (YT-PK-12). */
-export function pickerAnchor(document: Document, element: Element | null): PickerAnchor {
-  if (element) return { kind: "beside", element: element.querySelector(thumbnails) ?? element }
-  const player = document.querySelector(players)
-  if (player && player.getBoundingClientRect().width > 0) return { kind: "player", element: player }
-  return { kind: "window" }
 }
 
 function start(context: FeatureContext<"www", ShortcutServices>): void {

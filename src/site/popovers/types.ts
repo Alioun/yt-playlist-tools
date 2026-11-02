@@ -42,3 +42,14 @@ export type PickerRenderer = {
     onrequestclose(): void
   }): () => void
 }
+
+const thumbnails = "a#thumbnail, ytd-thumbnail, yt-thumbnail-view-model, a.ytLockupViewModelContentImage, a.yt-lockup-view-model__content-image"
+const players = "#movie_player, #shorts-player"
+
+/** Where a key opens the picker: beside the card's thumbnail, else over the player, else the window (YT-PK-12). */
+export function pickerAnchor(document: Document, element: Element | null): PickerAnchor {
+  if (element) return { kind: "beside", element: element.querySelector(thumbnails) ?? element }
+  const player = document.querySelector(players)
+  if (player && player.getBoundingClientRect().width > 0) return { kind: "player", element: player }
+  return { kind: "window" }
+}

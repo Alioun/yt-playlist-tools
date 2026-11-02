@@ -6,6 +6,7 @@ import type { PageChannel } from "../../shared/rpc/page-channel"
 import type { Deadline } from "../../shared/rpc/rpc"
 import { pageGlobal } from "../global"
 import { createTabActions, type TabActions } from "./actions"
+import { serveTabAsks } from "./asks"
 import { createExtLink, type ExtLink, type ExtLinkRuntime } from "./extlink"
 import { createFeatureHost, type FeatureDefinition, type SiteFeatureId } from "./feature-host"
 import type { MusicItems, MusicItemsOptions } from "./items-music"
@@ -120,11 +121,13 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
     onError: ignore
   })
   host.connect(link)
+  const stopAsks = serveTabAsks({ transport: options.runtime.transport, build, deadline: options.deadline ?? timerDeadline, document, root, actions, i18n,
+    identity: () => options.runtime.identity(), senderId: sender => options.runtime.senderId(sender) })
   let disposed = false
   function dispose() {
     if (disposed) return
     disposed = true
-    for (const stop of [() => host.dispose(), () => items.dispose(), () => pointer.dispose(), () => keys.dispose(), () => actions.dispose(), () => link.dispose(), () => root.dispose()]) {
+    for (const stop of [() => host.dispose(), () => items.dispose(), () => pointer.dispose(), () => keys.dispose(), stopAsks, () => actions.dispose(), () => link.dispose(), () => root.dispose()]) {
       try { stop() } catch {}
     }
   }

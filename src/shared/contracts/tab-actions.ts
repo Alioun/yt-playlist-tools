@@ -136,3 +136,18 @@ export const tabActionContract: RpcContract<TabActionMessages> = {
   "tab.destination": { payload: (v): v is TabActionMessages["tab.destination"]["payload"] => pinned(r => objectShape(r, {
     destination: isSetupDestination, expected: isDestinationExpectation, playlist: nullable(isPlaylistId) }))(v), result: isDestinationAnswer, timeoutMs: 15_000 }
 }
+
+/**
+ * What the background asks of a tab it acted in for keys from any tab and the browser's menu (YT-ANY-06,
+ * YT-BM-04): show an add's answer as that tab's toast, or open the picker there.
+ */
+export type TabAskMessages = {
+  "bg.toast": { payload: { readonly answer: TabAddReport; readonly video: VideoId; readonly title: string | null; readonly opener: FeatureId }; result: null }
+  "bg.picker": { payload: { readonly video: VideoId; readonly title: string | null; readonly choose: boolean; readonly opener: FeatureId }; result: { readonly kind: "opened" | "failed" } }
+}
+export const tabAskContract: RpcContract<TabAskMessages> = {
+  "bg.toast": { payload: (v): v is TabAskMessages["bg.toast"]["payload"] => objectShape(v, { answer: isTabAddReport, video: isVideoId, title: nullable(title), opener: isFeatureId }),
+    result: (v): v is null => v === null, timeoutMs: 2_000 },
+  "bg.picker": { payload: (v): v is TabAskMessages["bg.picker"]["payload"] => objectShape(v, { video: isVideoId, title: nullable(title), choose: bool, opener: isFeatureId }),
+    result: (v): v is TabAskMessages["bg.picker"]["result"] => objectShape(v, { kind: oneOf("opened", "failed") }), timeoutMs: 8_000 }
+}
