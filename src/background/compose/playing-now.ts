@@ -5,7 +5,7 @@ import type { Actions } from "./actions"
 import { candidate, tabOrder, type NativeTab } from "./any-tab"
 import { isMusicAdFailure, type JobOf } from "../../shared/contracts"
 import type { PlayingNow } from "../../shared/contracts/playing-now"
-import type { UiAddAnswer, UiAddPayload } from "../../shared/contracts/ui-add"
+import type { UiAddAnswer, UiAddPayload, UiAddUndoAnswer, UiAddUndoPayload } from "../../shared/contracts/ui-add"
 import { toastText } from "../../shared/copy"
 import type { I18n } from "../../shared/i18n"
 import { siteBundles } from "../../shared/features/registration"
@@ -61,6 +61,24 @@ export function createPlayingSave(deps: {
     const outcomes = Object.values(report.outcomes)
     const kind = outcomes.some(outcome => outcome.kind === "added") ? "added" : outcomes.some(outcome => outcome.kind === "already-in") ? "already-in" : "failed"
     const titles = { ...(payload.request.title ? { video: payload.request.title } : {}), playlists: report.titles }
-    return { kind, text: report.toast ? toastText(report.toast, titles, "music", deps.i18n) : deps.i18n.message("playing_failed") }
+    const text = report.toast ? toastText(report.toast, titles, "music", deps.i18n) : deps.i18n.message("playing_failed")
+    return kind === "added" && report.undo ? { kind, text, undo: report.undo } : { kind, text }
+  }
+}
+
+/** Undo of Playing now's save, in the tab it saved in, while that tab still shows the same account (YM-POP-3). */
+export function createPlayingUndo(deps: {
+  readonly actions: Pick<Actions, "undoFromPopup">
+  readonly i18n: I18n
+  readonly consented: () => boolean
+}) {
+  return async function undo(req: Requester, payload: UiAddUndoPayload): Promise<UiAddUndoAnswer> {
+    if (!deps.consented()) return { kind: "unavailable" }
+    const report = await deps.actions.undoFromPopup({ tabId: payload.tabId, incognito: req.incognito, site: "music" }, payload.acct, payload.handle)
+    switch (report.kind) {
+      case "undone": case "expired": case "no-tab": case "account-changed": return { kind: report.kind }
+      case "failed": return { kind: "failed", text: deps.i18n.message("feedback_www_manual_untitled_undo_failed") }
+      default: return { kind: "unavailable" }
+    }
   }
 }

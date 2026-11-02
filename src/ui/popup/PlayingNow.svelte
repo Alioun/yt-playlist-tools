@@ -1,8 +1,9 @@
 <script lang="ts">
   import { untrack } from "svelte"
   import Button from "../components/Button.svelte"
-  import type { UiPlayingNow } from "../../shared/contracts/ui-pages"
-  import { isPlaylistId } from "../../shared/model/validation"
+  import type { PlayingNow } from "../../shared/contracts/playing-now"
+  import { isPlaylistId, type AccountKey } from "../../shared/model/validation"
+  import type { UndoHandle } from "../../shared/contracts/tab-actions"
   import DestinationChooser from "../features/DestinationChooser.svelte"
   import type { PageState } from "../lib/page-state.svelte"
 
@@ -12,13 +13,15 @@
   let playing = $state.raw<UiPlayingNow | null>(null)
   let saving = $state(false)
   let result = $state<string | null>(null)
-  void backend.call("ui.playingNow", {}).then(answer => { playing = answer.kind === "answered" ? answer.result : { kind: "nothing" } })
-  const entry = $derived(playing?.kind === "playing" ? pageState.ready?.setups.find(row => row.acct === playing.acct) : undefined)
+  // A confirmed save offers Undo in its line, in the same tab as the same account (YM-POP-3).
+  let undo = $state.raw<{ readonly tabId: number; readonly acct: AccountKey; readonly handle: UndoHandle } | null>(null)
+  void backend.call("ui.playingNow", {}).then(answer => { playing = answer.kind === "answered" ? answer.result : { kind: "unavailable" } })
+  const entry = $derived(playing?.kind === "song" ? pageState.ready?.setups.find(row => row.acct === playing.acct) : undefined)
   const target = $derived(entry && isPlaylistId(entry.setup.musicSave) ? entry.setup.musicSave : null)
   const title = $derived(target ? pageState.title(target, playing?.kind === "playing" ? playing.acct : null) ?? i18n.message("picker_titleUnavailable") : null)
   async function save() {
-    if (playing?.kind !== "playing" || !target || !title) return
-    saving = true; result = null
+    if (playing?.kind !== "song" || !target || !title) return
+    saving = true; result = null; undo = null
     const answer = await backend.call("ui.add", { tabId: playing.tabId, acct: playing.acct,
       request: { site: "music", video: playing.song.videoId, title: playing.song.title, via: "quick-save", opener: "playing-now" } })
     saving = false
@@ -26,6 +29,19 @@
     result = reply && "text" in reply ? reply.text : reply?.kind === "account-changed" ? i18n.message("playing_accountChanged")
       : reply?.kind === "no-tab" ? i18n.message("playing_tabClosed") : reply?.kind === "signed-out" ? i18n.message("playing_signedOut")
       : reply?.kind === "choose" ? i18n.message("playing_firstPick") : i18n.message("playing_failed")
+    if (reply?.kind === "added" && reply.undo) undo = { tabId: playing.tabId, acct: playing.acct, handle: reply.undo }
+  }
+  async function takeBack() {
+    const pending = undo
+    if (!pending || saving) return
+    saving = true
+    const answer = await backend.call("ui.addUndo", pending)
+    saving = false
+    const reply = answer.kind === "answered" ? answer.result : null
+    if (reply?.kind === "undone") { undo = null; result = null; return }
+    undo = reply?.kind === "failed" || reply === null ? pending : null
+    result = reply?.kind === "failed" ? reply.text : reply?.kind === "account-changed" ? i18n.message("playing_accountChanged")
+      : reply?.kind === "no-tab" ? i18n.message("playing_tabClosed") : i18n.message("feedback_www_manual_untitled_undo_failed")
   }
 </script>
 
@@ -42,7 +58,7 @@
         <Button size="sm" pending={saving} aria-label={i18n.message("playing_saveTo", { song: playing.song.title, playlist: title })} onclick={save}>{i18n.message("playing_save")}</Button>
       {/if}
     </div>
-    {#if result}<p role="status" class="text-[12px]">{result}</p>{/if}
+    {#if result}<p role="status" class="text-[12px]">{result}{#if undo} <Button variant="link" size="sm" disabled={saving} onclick={takeBack}>{i18n.message("toast_action_undo")}</Button>{/if}</p>{/if}
     {#if title}
       <p class="text-muted-foreground text-[12px]">{i18n.message("playing_oneClick", { playlist: title })}</p>
     {:else}

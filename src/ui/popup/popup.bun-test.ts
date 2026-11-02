@@ -300,3 +300,18 @@ test("this channel's controls list it in a playlist's filter, and ask before cle
     { acct, playlist: "PLb", channel: ["UCaaaaaaaaaaaaaaaaaaaaaa", "Band", "@band"], action: "list", mode: "allow", clearListed: true, expectedGeneration: "gen-b" }
   ])
 })
+
+test("Playing now's save offers Undo in its line, which takes the song back in the same tab as the same account (YM-POP-3)", async () => {
+  const undos: unknown[] = []
+  popup({ ...agreed, [`doc:setup:${acct}`]: stamped({ musicSave: "PLm" }), [`cache:${acct}`]: { listAt: 1, playlists: [{ id: "PLm", title: "Mix" }], order: {}, created: [], labelAt: null } }, {
+    "ui.playingNow": () => ({ kind: "song", tabId: 9, acct: acct as never, song: { videoId: "aaaaaaaaaaa" as never, title: "Song", artist: "Band", pos: 1, len: 100 } }),
+    "ui.add": () => ({ kind: "added", text: "Saved to Mix.", undo: { kind: "add", id: "u1" } }),
+    "ui.addUndo": payload => { undos.push(payload); return { kind: "undone" } }
+  }, { www: true, music: true, browserMenu: false })
+  await userEvent.click(await screen.findByRole("tab", { name: "YouTube Music" }))
+  await userEvent.click(await screen.findByRole("button", { name: "Save Song to Mix" }, { timeout: 5000 }))
+  expect(await screen.findByText("Saved to Mix.")).toBeTruthy()
+  await userEvent.click(screen.getByRole("button", { name: "Undo" }))
+  expect(undos).toEqual([{ tabId: 9, acct, handle: { kind: "add", id: "u1" } }])
+  await waitFor(() => expect(screen.queryByText("Saved to Mix.")).toBeNull())
+}, 20_000)

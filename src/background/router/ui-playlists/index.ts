@@ -41,8 +41,9 @@ export type UiRouterPorts = {
   readonly rpc: Omit<RpcOptions<UiMessages>, "contract">
   /** Reads the popup's Playing now from the YouTube Music tab it picks (YM-POP-10, YM-POP-11). */
   readonly playingNow?: (requester: Requester) => Promise<PlayingNow>
-  /** Playing now's Save, in the tab the row read (ARC-ACC-68). */
+  /** Playing now's Save, in the tab the row read (ARC-ACC-68), and its Undo. */
   readonly add?: (requester: Requester, payload: UiAddPayload) => Promise<UiAddAnswer>
+  readonly addUndo?: (requester: Requester, payload: import("../../../shared/contracts/ui-add").UiAddUndoPayload) => Promise<import("../../../shared/contracts/ui-add").UiAddUndoAnswer>
   /** The popup's This video and its Don't auto-add (UI-POP-12, UI-POP-14). */
   readonly thisVideo?: {
     thisTab(requester: Requester): Promise<import("../../../shared/contracts/this-video").ThisTab>
@@ -365,6 +366,12 @@ export function createUiRouter(ports: UiRouterPorts) {
         const ui = requireUi(context)
         if (!active || !ports.playingNow) return { kind: "unavailable" }
         const answer = await ports.playingNow(ui.requester)
+        return active ? answer : { kind: "unavailable" }
+      },
+      async "ui.addUndo"(payload, context) {
+        const ui = requireUi(context)
+        if (!active || !ports.addUndo) return { kind: "unavailable" }
+        const answer = await ports.addUndo(ui.requester, payload)
         return active ? answer : { kind: "unavailable" }
       },
       async "ui.thisTab"(_payload, context) {

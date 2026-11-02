@@ -9,7 +9,7 @@ import type { StartingOwner } from "../store/store-lifecycle"
 import type { Requester, Tabs } from "../tabs/ports"
 import type { BuildId, FeatureId, Origin, Site } from "../../shared/contracts"
 import { toastPlan, type ExplicitOutcome } from "../../shared/rules/outcomes"
-import { tabActionContract, type PlaylistTitles, type TabActionMessages, type TabAddReport, type TabAddRequest, type TabCreated, type TabPlaylists, type TabUndoReport } from "../../shared/contracts/tab-actions"
+import { tabActionContract, type PlaylistTitles, type TabActionMessages, type TabAddReport, type TabAddRequest, type TabCreated, type TabPlaylists, type TabUndoReport, type UndoHandle } from "../../shared/contracts/tab-actions"
 import type { PopupAddRequest } from "../../shared/contracts/ui-add"
 import { cacheRows } from "../../shared/model/account-cache"
 import { decodeSettings } from "../../shared/model/decodeSettings"
@@ -120,6 +120,8 @@ export type Actions = {
   addInTab(tab: ActingTab, request: TabAddRequest): Promise<TabAddReport>
   /** Playing now's save in the tab it read, only while that tab still shows `acct` in the popup's window kind (ARC-ACC-68). */
   addFromPopup(tab: ActingTab, acct: AccountKey, request: PopupAddRequest): Promise<TabAddReport | { readonly kind: "account-changed" }>
+  /** Undo of Playing now's save, in the same tab, while it still shows `acct` (YM-POP-3). */
+  undoFromPopup(tab: ActingTab, acct: AccountKey, handle: UndoHandle): Promise<TabUndoReport | { readonly kind: "account-changed" }>
   settings(incognito: boolean): Promise<Settings | null>
   /** A new page load in the tab: the earlier load's toasts are gone, so their Undo handles go too (06 §6.8.2). */
   pageStarted(tabId: number): void
@@ -287,6 +289,18 @@ export function composeActions(deps: {
       if (!known) return { kind: "no-tab" }
       if (known.acct !== acct || known.privateTab !== tab.incognito) return { kind: "account-changed" }
       return addIn(tab, acct, request)
+    },
+    async undoFromPopup(tab, acct, handle) {
+      const [known] = await tabs.known({ kind: "tab", tabId: tab.tabId })
+      if (!known) return { kind: "no-tab" }
+      if (known.acct !== acct || known.privateTab !== tab.incognito) return { kind: "account-changed" }
+      const report = await flow.undo(handle, { kind: "tab", tabId: tab.tabId, incognito: tab.incognito })
+      switch (report.kind) {
+        case "undone": return { kind: "undone" }
+        case "failed": return { kind: "failed", completed: report.completed, of: report.of, failure: report.failure, toast: report.toast }
+        case "stopped": return { kind: "stopped", completed: report.completed, of: report.of }
+        default: return { kind: report.kind }
+      }
     },
     async settings(incognito) {
       const read = await owner.readTabProjection({ private: incognito, account: { kind: "unknown" } }).catch(() => null)

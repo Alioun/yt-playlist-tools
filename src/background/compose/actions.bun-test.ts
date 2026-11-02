@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test"
 import { composeActions, createAddFlowOwner } from "./actions"
-import { createPlayingSave } from "./playing-now"
+import { createPlayingSave, createPlayingUndo } from "./playing-now"
 import { createPageReceiver, type PageReceiverPorts } from "../router/ui-pages"
 import { runtimeTransport } from "../adapters/runtime"
 import { createAutoAddTabRouter } from "../router/tab-auto-add"
@@ -51,7 +51,7 @@ function youtube() {
     switch (job.kind) {
       case "membership": return { ok: true, route, data: [...lists].map(([id, videos]) => ({ id, title: id, contains: videos.has(job.videoId) })) } as unknown as JobResult<J>
       case "add": case "save": lists.get(job.playlistId)?.add(job.videoId); return { ok: true, route, data: { setVideoId: `entry-${++entry}` as SetVideoId } } as unknown as JobResult<J>
-      case "remove": return { ok: true, route, data: null } as unknown as JobResult<J>
+      case "remove": case "unsave": return { ok: true, route, data: null } as unknown as JobResult<J>
       default: return { ok: false, reason: "unavailable" } as unknown as JobResult<J>
     }
   }
@@ -409,7 +409,7 @@ test("Playing now's Save runs through AddFlow in the tab it read with Quick acti
   const w = world({ tabAccount: b, settings: { musicActions: { on: false, feedback: true } }, prepare: playingNowSeed })
   const save = createPlayingSave({ actions: w.actions, i18n: englishI18n(), consented: () => true })
   const answer = await save(popupWindow, { tabId: 9, acct: b, request: song })
-  expect(answer).toEqual({ kind: "added", text: expect.stringContaining("Beta talks") })
+  expect(answer).toEqual({ kind: "added", text: expect.stringContaining("Beta talks"), undo: { kind: "add", id: expect.any(String) } })
   expect(w.site.jobs).toContain("save")
   expect(w.site.lists.get(beta)?.has(video)).toBe(true)
   await until(() => w.recentAdds().length === 1, "the Recent adds entry")
@@ -418,6 +418,17 @@ test("Playing now's Save runs through AddFlow in the tab it read with Quick acti
   expect(await pages["ui.recentAdds"]({ acct: b }, { ui, current: async () => ui } as never)).toEqual({ kind: "recent", entries: [{ at: expect.any(Number),
     source: { kind: "feature", feature: "playing-now" }, playlists: [{ id: beta, title: "Beta talks" }], videos: [{ id: video, title: "First song" }], gather: false }] })
   expect(await save(popupWindow, { tabId: 9, acct: b, request: song })).toEqual({ kind: "already-in", text: expect.stringContaining("Beta talks") })
+})
+
+test("Playing now's save carries its Undo, which takes the song back in that tab while it shows the same account (YM-POP-3)", async () => {
+  const w = world({ tabAccount: b, settings: { musicActions: { on: false, feedback: true } }, prepare: playingNowSeed })
+  const answer = await createPlayingSave({ actions: w.actions, i18n: englishI18n(), consented: () => true })(popupWindow, { tabId: 9, acct: b, request: song })
+  if (answer.kind !== "added" || !answer.undo) throw Error("Expected a save with Undo")
+  const undo = createPlayingUndo({ actions: w.actions, i18n: englishI18n(), consented: () => true })
+  expect(await undo(popupWindow, { tabId: 9, acct: a, handle: answer.undo })).toEqual({ kind: "account-changed" })
+  expect(await undo(popupWindow, { tabId: 9, acct: b, handle: answer.undo })).toEqual({ kind: "undone" })
+  expect(w.site.jobs).toContain("unsave")
+  expect(await undo(popupWindow, { tabId: 9, acct: b, handle: answer.undo })).toEqual({ kind: "expired" })
 })
 
 test("Playing now's Save refuses once the tab shows another account or the section switch is off, and writes nothing", async () => {
