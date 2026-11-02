@@ -69,6 +69,12 @@ plant no-refusal "$script" 's/Object\.keys\(env\)\.some\(name => UNSAFE\.test\(n
 plant logs-tls-keys "$script" 's/\|\^SSLKEYLOGFILE\$//' -- "refuses to run with SSLKEYLOGFILE set"
 plant side-effect-import "$script" 's/^(import \{ readFileSync \} from "node:fs"\n)/$1import "node:vm"\n/m' -- "imports only Node built-ins"
 plant re-export "$script" 's/\z/export * from "node:os"\n/' -- "imports only Node built-ins"
+# The module name is built at run time, so neither Bun's import scanner nor a
+# search for "child_process" sees it.
+plant builtin-module "$script" 's/\z/process.getBuiltinModule(["node:child", "process"].join("_"))\n/' -- "imports only Node built-ins"
+plant meta-require "$script" 's/\z/import.meta.require(["node:child", "process"].join("_"))\n/' -- "imports only Node built-ins"
+plant computed-require "$script" 's/\z/require(["node:child", "process"].join("_"))\n/' -- "imports only Node built-ins"
+plant computed-import "$script" 's/\z/await import(["node:child", "process"].join("_"))\n/' -- "imports only Node built-ins"
 plant keeps-environment "$release" 's/ *for name in \$\(compgen -e\); do\n.*?\n *done\n//sg' -- \
   "strips BUN_CONFIG_VERBOSE_FETCH" "strips BUN_OPTIONS" "strips NODE_TLS_REJECT_UNAUTHORIZED" "strips NODE_EXTRA_CA_CERTS"
 plant runs-in-runner-temp "$release" 's/work=\$\(mktemp -d "\$temp\/reviewer-notes\.XXXXXX"\)/work=\$temp/g; s/ --config=empty\.toml//g' -- "loads no bunfig.toml planted"

@@ -300,7 +300,8 @@ describe("the script", () => {
   test("imports only Node built-ins and has no way to spawn a process", () => {
     const imports = new Bun.Transpiler({ loader: "ts" }).scanImports(scriptSource).map(found => found.path)
     expect(imports).toEqual(["node:crypto", "node:fs"])
-    expect(scriptSource).not.toMatch(/\bBun\.|child_process|process\.(binding|dlopen)/)
+    // The scanner lists only literal names, so every way to load a module by a computed one is banned.
+    expect(scriptSource).not.toMatch(/\bBun\.|child_process|process\.(binding|dlopen)|getBuiltinModule|import\.meta\.require|\bimport\(|\brequire\(/)
   })
 
   const unsafe: [string, string][] = [
