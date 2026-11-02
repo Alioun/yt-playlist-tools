@@ -7,7 +7,9 @@ import { startExtensionPage } from "../../ui/shell/start"
 
 const target = document.querySelector("#app")
 if (!target) throw new Error("Missing page host")
-// The popup names its window to the background, because it has no sender tab (ARC-MSG-06).
-const window = await browser.windows.getCurrent()
 const catalogue = () => import("../../shared/i18n/canonical").then(module => module.disclosureCatalogue)
-mount(Popup, { target, props: { page: startExtensionPage(browser, navigator.platform, undefined, { windowId: window.id, catalogue }), markSrc } })
+// The popup names its window to the background, because it has no sender tab (ARC-MSG-06). No top-level await:
+// the first view shares this chunk, and a lazy chunk importing an entry that awaits leaves the popup blank (Q-PERF-35 rule 3).
+void browser.windows.getCurrent().then(window => {
+  mount(Popup, { target, props: { page: startExtensionPage(browser, navigator.platform, undefined, { windowId: window.id, catalogue }), markSrc } })
+})
