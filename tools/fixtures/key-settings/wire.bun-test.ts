@@ -9,8 +9,8 @@ test("one catalogue authenticates private shared key/options/feature edits and r
   const w = world("wire", seed(), true)
   try {
     await w.owner.ready()
-    expect(Object.keys(uiContract).sort()).toEqual(["ui.accountInView", "ui.add", "ui.change", "ui.clearAll", "ui.create", "ui.device", "ui.exportSettings", "ui.filter", "ui.gather", "ui.gatherUndo", "ui.gathers",
-      "ui.importSettings", "ui.noteAgree", "ui.noteSeen", "ui.pause", "ui.playingNow", "ui.playlists", "ui.recentAdds", "ui.removeSetup",
+    expect(Object.keys(uiContract).sort()).toEqual(["ui.accountInView", "ui.add", "ui.change", "ui.clearAll", "ui.create", "ui.device", "ui.diagnostics", "ui.exportSettings", "ui.filter", "ui.filterChannel",
+      "ui.importSettings", "ui.noteAgree", "ui.noteSeen", "ui.pause", "ui.playingNow", "ui.playlists", "ui.recentAdds", "ui.removeKeptFilters", "ui.removeSetup",
       "ui.resolveChannel", "ui.status", "ui.syncedChoices", "ui.withdraw"])
     expect(await w.assign({ kind: "undo" }, chord("z"))).toMatchObject({ kind: "confirmed" })
     expect(await w.backend.change({ kind: "theme", value: "dark" })).toMatchObject({ kind: "confirmed" })

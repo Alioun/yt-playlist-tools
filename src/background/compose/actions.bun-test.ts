@@ -184,6 +184,17 @@ test("the page picker saves this browser's Sort A–Z and last visibility throug
   expect([device.pickerSortAZ, device.newPlaylistVisibility]).toEqual([false, "UNLISTED"])
 })
 
+test("a channel label the page read afresh is written into the account's filter as that tab's account", async () => {
+  const { page, store } = world()
+  page.channelLabel(["UCAAAAAAAAAAAAAAAAAAAAAA" as never, "Alpha, renamed", "@alpha"])
+  let row: unknown
+  for (let turn = 0; turn < 50 && !(Array.isArray(row) && row[1] === "Alpha, renamed"); turn++) {
+    await new Promise(resolve => setTimeout(resolve, 5))
+    row = (store.removal.state().local[`doc:filter:${a}:${alpha}`] as { data: { channels: unknown[] } }).data.channels[0]
+  }
+  expect(row).toEqual(["UCAAAAAAAAAAAAAAAAAAAAAA", "Alpha, renamed", "@alpha", "never-send"])
+})
+
 test("Watch later on every account saves to Watch later whatever the account's own target", async () => {
   const { page, site } = world()
   const report = await page.add({ site: "www", video, via: "shortcut", shortcut: "later1" as never })

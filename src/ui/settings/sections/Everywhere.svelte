@@ -20,6 +20,17 @@
   const settings = $derived(pageState.settings)
   const device = $derived(pageState.ready?.device.kind === "current" ? pageState.ready.device.device : null)
   const status = $derived(pageState.ready?.sync?.status ?? "off")
+  // SYNC-14: kept filters are those of playlists their account no longer auto-adds to.
+  const keptFilters = $derived((pageState.ready?.setups ?? []).reduce((count, row) =>
+    count + [...row.filters.keys()].filter(playlist => !row.setup.autoAdd.some(entry => entry.pl === playlist)).length, 0))
+  let removing = $state(false), removeFailed = $state(false)
+  async function removeKept() {
+    removing = true; removeFailed = false
+    try {
+      const answer = await backend.call("ui.removeKeptFilters", {})
+      removeFailed = !(answer.kind === "answered" && answer.result.kind === "removed")
+    } finally { removing = false }
+  }
   const keyText = keyRecorderText(i18n)
   const keys = createKeySettingsClient({ backend, platform, commands: untrack(() => pageState.page.commands), text: keyText, chooser: { open: async () => {} } })
   onDestroy(() => keys.dispose())
@@ -41,6 +52,13 @@
           <h3 class="text-[15px] font-semibold">{features.syncFeature.name}</h3>
           <p class="text-muted-foreground mt-1 text-[13.5px]">{i18n.message(platform.browser === "firefox" ? "set_syncHelp_firefox" : "set_syncHelp_chrome")}</p>
           <p class="mt-2 text-[13.5px]" role="status">{syncLine}</p>
+          {#if device?.syncOn && status === "full" && keptFilters > 0}
+            <div class="mt-2 flex flex-col items-start gap-1">
+              <Button size="sm" variant="outline" pending={removing} onclick={removeKept}>{i18n.message("sync_removeKeptFilters")}</Button>
+              <p class="text-muted-foreground text-[12.5px]">{i18n.message("sync_removeKeptFilters_hint")}</p>
+              {#if removeFailed}<p role="status" class="text-destructive text-[12.5px]">{i18n.message("filter_failed")}</p>{/if}
+            </div>
+          {/if}
           <p class="text-muted-foreground mt-1 text-[12.5px]">{i18n.message("set_syncSwitchLater")}</p>
         </div>
         <Switch checked={device?.syncOn ?? false} label={features.syncFeature.name} disabled onchange={() => {}} />

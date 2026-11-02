@@ -4760,6 +4760,9 @@
   "sync_removeKeptFilters": {
     "message": "Remove kept filters"
   },
+  "sync_removeKeptFilters_hint": {
+    "message": "Filters of playlists you no longer auto-add to."
+  },
   "sync_updateNeeded": {
     "message": "Update Perchling in this browser to keep syncing."
   },

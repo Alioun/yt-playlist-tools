@@ -1,7 +1,7 @@
 import { objectShape } from "./object-shape"
-import { isFeatureId, isSite, type FeatureId, type Privacy, type Site } from "./vocabulary"
+import { isBreakageKind, isFeatureId, isJobId, isSite, type BreakageKind, type FeatureId, type JobId, type Privacy, type Site } from "./vocabulary"
 import { isUiUnavailable, type UiUnavailable } from "./ui-playlists"
-import { isAccountKey, isPlaylistId, isVideoId, type AccountKey, type PlaylistId, type VideoId } from "../model/validation"
+import { isAccountKey, isChannelId, isPlaylistId, isVideoId, type AccountKey, type ChannelId, type PlaylistId, type VideoId } from "../model/validation"
 import { isKey } from "../model/keys"
 import { isAgreementAnswer, isFeatureSelection } from "./first-run"
 import type { Key } from "../model/types"
@@ -54,6 +54,30 @@ export type FilterSettingAnswer =
   | { readonly kind: "refused"; readonly reason: "private" | "sync-full" | "update-needed" | "invalid" | "unavailable" | "unconfirmed" }
   | UiUnavailable
 
+/** Lists or unlists one channel in a filter (YT-CF-14, YT-CF-15). `mode` is a "this channel" control's; the editor sends null. */
+export type FilterChannelChange = {
+  readonly acct: AccountKey
+  readonly playlist: PlaylistId
+  readonly channel: readonly [id: ChannelId, title: string, handle?: string]
+  readonly action: "list" | "unlist"
+  readonly mode: "allow" | "deny" | null
+  readonly clearListed: boolean
+  readonly expectedGeneration: string | null
+}
+/** SYNC-14's Remove kept filters: the filters of playlists no account auto-adds to any more. */
+export type UiKeptFilters = { readonly kind: "removed"; readonly filters: number } | { readonly kind: "refused"; readonly reason: "private" | "unavailable" | "unconfirmed" } | UiUnavailable
+/** One breakage signal as Diagnostics' report shows it (HEALTH-24). It names no video, playlist, channel or account (HEALTH-03). */
+export type UiSignal = {
+  readonly site: Site; readonly feature: FeatureId | null; readonly job: JobId | null; readonly route: string | null; readonly kind: BreakageKind
+  readonly pageType: string; readonly clientVersion: string | null; readonly shape: string | null; readonly count: number; readonly firstSeen: number; readonly lastSeen: number
+}
+/** Check now's answer for one site's serving tab: each read job and whether it answered (HEALTH-23). */
+export type UiCheck = { readonly site: Site; readonly at: number; readonly jobs: readonly { readonly job: JobId; readonly ok: boolean }[] }
+export type UiDiagnostics =
+  | { readonly kind: "diagnostics"; readonly checks: readonly UiCheck[]; readonly signals: readonly UiSignal[]; readonly tabs: { readonly www: boolean; readonly music: boolean } }
+  | { readonly kind: "refused"; readonly reason: "consent" | "no-tab" }
+  | UiUnavailable
+
 export type UiWithdrawal = { readonly kind: "withdrawn" } | { readonly kind: "refused"; readonly reason: "not-agreed" | "failed" | "unconfirmed" | "unavailable" } | UiUnavailable
 export type RemovalPayload = { readonly action: "prepare"; readonly acct: AccountKey } | { readonly action: "confirm"; readonly token: string }
 export type UiRemoval =
@@ -82,6 +106,10 @@ export type PageMessages = {
   readonly "ui.recentAdds": { readonly payload: WindowClaim & { readonly acct: AccountKey }; readonly result: UiRecentAdds }
   readonly "ui.device": { readonly payload: WindowClaim & { readonly change: DeviceSettingChange }; readonly result: DeviceSettingAnswer | UiUnavailable }
   readonly "ui.filter": { readonly payload: WindowClaim & { readonly change: FilterSettingChange }; readonly result: FilterSettingAnswer }
+  readonly "ui.filterChannel": { readonly payload: WindowClaim & { readonly change: FilterChannelChange }; readonly result: FilterSettingAnswer }
+  readonly "ui.removeKeptFilters": { readonly payload: WindowClaim; readonly result: UiKeptFilters }
+  /** Diagnostics' session evidence; `check` runs Check now first (HEALTH-22, HEALTH-23). */
+  readonly "ui.diagnostics": { readonly payload: WindowClaim & { readonly check: boolean }; readonly result: UiDiagnostics }
   readonly "ui.withdraw": { readonly payload: WindowClaim & { readonly expected: { readonly v: number; readonly at: number } }; readonly result: UiWithdrawal }
   readonly "ui.removeSetup": { readonly payload: WindowClaim & RemovalPayload; readonly result: UiRemoval }
   readonly "ui.exportSettings": { readonly payload: WindowClaim; readonly result: UiExport }
@@ -128,6 +156,24 @@ export function isFilterSettingChange(value: unknown): value is FilterSettingCha
     desired: v => objectShape(v, { mode: oneOf("allow", "deny"), on: bool }),
     expectedGeneration: v => v === null || typeof v === "string" && v.length > 0 && v.length <= 128 })
 }
+export function isFilterChannelChange(value: unknown): value is FilterChannelChange {
+  const channel = (v: unknown) => Array.isArray(v) && (v.length === 2 || v.length === 3) && isChannelId(v[0]) && typeof v[1] === "string" && v[1].length <= 1000 &&
+    (v.length === 2 || typeof v[2] === "string" && v[2].length <= 1000)
+  return objectShape(value, { acct: isAccountKey, playlist: isPlaylistId, channel, action: oneOf("list", "unlist"), mode: v => v === null || v === "allow" || v === "deny",
+    clearListed: bool, expectedGeneration: v => v === null || typeof v === "string" && v.length > 0 && v.length <= 128 })
+}
+function isUiSignal(value: unknown): value is UiSignal {
+  const nullableText = (v: unknown) => v === null || typeof v === "string" && v.length <= 2048
+  return objectShape(value, { site: isSite, feature: v => v === null || isFeatureId(v), job: v => v === null || isJobId(v), route: nullableText, kind: isBreakageKind,
+    pageType: text, clientVersion: nullableText, shape: nullableText, count: natural, firstSeen: natural, lastSeen: natural })
+}
+function isUiCheck(value: unknown): value is UiCheck {
+  return objectShape(value, { site: isSite, at: natural, jobs: list(v => objectShape(v, { job: isJobId, ok: bool }), 40) })
+}
+export function isUiDiagnostics(value: unknown): value is UiDiagnostics {
+  return isUiUnavailable(value) || objectShape(value, { kind: v => v === "refused", reason: oneOf("consent", "no-tab") })
+    || objectShape(value, { kind: v => v === "diagnostics", checks: list(isUiCheck, 2), signals: list(isUiSignal), tabs: v => objectShape(v, { www: bool, music: bool }) })
+}
 export function isDeviceSettingAnswer(value: unknown): value is DeviceSettingAnswer {
   return objectShape(value, { kind: v => v === "confirmed", change: isDeviceSettingChange })
     || objectShape(value, { kind: v => v === "refused", reason: oneOf("private", "invalid", "unavailable", "unconfirmed") })
@@ -151,6 +197,12 @@ export const pageContract: RpcContract<PageMessages> = {
   "ui.filter": { payload: (v): v is PageMessages["ui.filter"]["payload"] => objectShape(v, { change: isFilterSettingChange }, windowClaim),
     result: (v): v is FilterSettingAnswer => isUiUnavailable(v) || objectShape(v, { kind: x => x === "confirmed" })
       || objectShape(v, { kind: x => x === "refused", reason: oneOf("private", "sync-full", "update-needed", "invalid", "unavailable", "unconfirmed") }), timeoutMs: 12_000 },
+  "ui.filterChannel": { payload: (v): v is PageMessages["ui.filterChannel"]["payload"] => objectShape(v, { change: isFilterChannelChange }, windowClaim),
+    result: (v): v is FilterSettingAnswer => isUiUnavailable(v) || objectShape(v, { kind: x => x === "confirmed" })
+      || objectShape(v, { kind: x => x === "refused", reason: oneOf("private", "sync-full", "update-needed", "invalid", "unavailable", "unconfirmed") }), timeoutMs: 12_000 },
+  "ui.removeKeptFilters": { payload: (v): v is PageMessages["ui.removeKeptFilters"]["payload"] => objectShape(v, {}, windowClaim),
+    result: (v): v is UiKeptFilters => isUiUnavailable(v) || objectShape(v, { kind: x => x === "removed", filters: natural }) || refusal("private", "unavailable", "unconfirmed")(v), timeoutMs: 30_000 },
+  "ui.diagnostics": { payload: (v): v is PageMessages["ui.diagnostics"]["payload"] => objectShape(v, { check: bool }, windowClaim), result: isUiDiagnostics, timeoutMs: 45_000 },
   "ui.withdraw": { payload: (v): v is PageMessages["ui.withdraw"]["payload"] => objectShape(v, { expected: x => objectShape(x, { v: natural, at: natural }) }, windowClaim),
     result: (v): v is UiWithdrawal => isUiUnavailable(v) || objectShape(v, { kind: x => x === "withdrawn" }) || refusal("not-agreed", "failed", "unconfirmed", "unavailable")(v), timeoutMs: 30_000 },
   "ui.removeSetup": { payload: (v): v is PageMessages["ui.removeSetup"]["payload"] => objectShape(v, { action: x => x === "prepare", acct: isAccountKey }, windowClaim)

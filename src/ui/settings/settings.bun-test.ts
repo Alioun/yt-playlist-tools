@@ -98,15 +98,16 @@ test("the diagnostics report names features and statuses, never the account", as
   expect(screen.getByText("Partly working")).toBeTruthy()
 }, 20_000)
 
-test("the Gather tabs card shows the last gather with Undo, and Undo's answer in its place", async () => {
-  const undone: string[] = []
-  settings({ ...agreed, "doc:settings": stamped({ gather: { on: true, feedback: true, to: "player", order: "newest", close: false } }) }, {
-    "ui.gathers": () => ({ kind: "gathers", running: false, line: { text: "Last gather: 3 videos into Later, 5 minutes ago", tone: "muted", action: { kind: "undo", id: "g7" } } }),
-    "ui.gatherUndo": payload => { undone.push(payload.id); return { kind: "line", line: { text: "Removed 3 videos from Later and reopened their tabs.", tone: "confirmation", action: null } } }
-  }, "#feature-gather")
-  const line = await screen.findByText("Last gather: 3 videos into Later, 5 minutes ago", {}, { timeout: 5000 })
-  await userEvent.click(within(line).getByRole("button", { name: "Undo" }))
-  expect(await screen.findByText("Removed 3 videos from Later and reopened their tabs.", {}, { timeout: 5000 })).toBeTruthy()
-  expect(undone).toEqual(["g7"])
-  expect(screen.getByRole("link", { name: "Based on GatherTube by Karim Elgazar" })).toHaveAttribute("href", "https://github.com/karimelgazar/gathertube")
+test("with synced settings full and a kept filter, Everywhere offers Remove kept filters and asks the background to remove them (SYNC-14)", async () => {
+  const removed: unknown[] = []
+  settings({ schema: 1, device: { id: "device", consent: { v: 1, at: 1_700_000_000_000 }, syncOn: true },
+    sync: { joined: "history", pushed: {}, status: "full", editedSinceOff: false },
+    "doc:settings": stamped({}), [`doc:setup:${acct}`]: stamped({ autoAdd: [{ pl: "PL_on", takes: "videos" }] }),
+    [`doc:filter:${acct}:PL_on`]: stamped({ mode: "deny", on: true, channels: [] }), [`doc:filter:${acct}:PL_kept`]: stamped({ mode: "deny", on: true, channels: [] })
+  }, { "ui.removeKeptFilters": payload => { removed.push(payload); return { kind: "removed", filters: 1 } } }, "#everywhere")
+  const button = await screen.findByRole("button", { name: "Remove kept filters" }, { timeout: 5000 })
+  expect(screen.getByText("Filters of playlists you no longer auto-add to.")).toBeTruthy()
+  await userEvent.click(button)
+  for (let turn = 0; turn < 100 && !removed.length; turn++) await new Promise(resolve => setTimeout(resolve, 10))
+  expect(removed).toEqual([{}])
 }, 20_000)

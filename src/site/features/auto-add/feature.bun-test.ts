@@ -37,7 +37,7 @@ const savedPlan: ToastPlan = { tone: "confirmation", auto: true, message: { kind
 const worlds: { scope: Scope }[] = []
 afterEach(() => { for (const world of worlds.splice(0)) world.scope.dispose() })
 
-function world(initial: SiteView<"www"> = wwwView(), options: { stored?: TabProgress; cantMeasure?: boolean[] } = {}) {
+function world(initial: SiteView<"www"> = wwwView(), options: { stored?: TabProgress; cantMeasure?: boolean[]; channel?: { channelId: string; title?: string; handle?: string } } = {}) {
   document.body.replaceChildren()
   const scope = new Scope({ document, onError: error => { throw error } })
   let current = initial, now = 0
@@ -45,7 +45,7 @@ function world(initial: SiteView<"www"> = wwwView(), options: { stored?: TabProg
   const streams: { player?: (data: PlayerData) => void; nav?: (data: NavData) => void } = {}
   const adds: { request: TabAddRequest; title: string | undefined }[] = [], saves: { video: VideoId; progress: TabProgress }[] = []
   const toasts: ToastContent[] = [], logs: string[] = [], states: AutoAddState[] = []
-  const changed: number[] = [], released: string[] = []
+  const changed: number[] = [], released: string[] = [], labels: unknown[] = []
   let answer: (request: TabAddRequest) => TabAddReport = request => ({ kind: "report", toast: savedPlan, feedback: true, undo: { kind: "add", id: "g:1" },
     titles: { [music]: "Music videos" }, outcomes: Object.fromEntries((request.via === "auto-add" ? request.playlists : []).map(pl => [pl, { kind: "added" }])) })
   const cantMeasure = [...options.cantMeasure ?? [true, false]]
@@ -62,12 +62,13 @@ function world(initial: SiteView<"www"> = wwwView(), options: { stored?: TabProg
         return () => { if (streams[stream] === (callback as never)) delete streams[stream] }
       },
       onState(listener: (state: unknown) => void) { listener({ kind: "ready", snapshot: { signedIn: true, acct, pageType: "watch", startedHidden: false, navType: "navigate" } } as never); return () => {} },
-      run: async () => ({ ok: true, data: { channelId: null } }) as never
+      run: async () => ({ ok: true, data: options.channel ?? { channelId: null } }) as never
     } as unknown as AutoAddServices["page"],
     background: {
       async add(request, title) { adds.push({ request, title }); return answer(request) },
       async undo() { return { kind: "undone" } },
       release(handle) { released.push(handle.id) },
+      channelLabel(channel) { labels.push(channel) },
       progress: { load: async video => video === first ? options.stored ?? null : null, async save(video, progress) { saves.push({ video, progress }) } },
       async cantMeasure() { return cantMeasure.shift() ?? false },
       videoChanged() { changed.push(Date.now()) }
@@ -83,7 +84,7 @@ function world(initial: SiteView<"www"> = wwwView(), options: { stored?: TabProg
     subscribe(listener) { listeners.add(listener); return () => { listeners.delete(listener) } }
   } })
   const result = {
-    scope, adds, saves, toasts, logs, states, changed, released,
+    scope, adds, saves, toasts, logs, states, changed, released, labels,
     get watching() { return streams.player !== undefined },
     respond(next: typeof answer) { answer = next },
     publish(next: SiteView<"www">) { current = next; for (const listener of [...listeners]) listener(next) },
@@ -130,6 +131,19 @@ test("an auto-add whose toast offers no Undo releases its handle at once; one wi
   expect(shown.released).toEqual([])
   shown.toasts[0]?.action?.release?.()
   expect(shown.released).toEqual(["g:1"])
+})
+
+test("a read of a listed channel with a new title sends the label back once; an unchanged one sends nothing (YT-CF-10)", async () => {
+  const channel = "UCAAAAAAAAAAAAAAAAAAAAAA"
+  const filtered = (title: string) => ({ ...wwwView(), filters: [{ playlist: music, state: { kind: "value", filter: { mode: "deny", on: true, channels: [[channel, title, "@lofi"]] } } }] }) as SiteView<"www">
+  const cases: [string, unknown[]][] = [["Old name", [[channel, "Lofi Girl", "@lofi"]]], ["Lofi Girl", []]]
+  for (const [stored, expected] of cases) {
+    const h = world(filtered(stored), { channel: { channelId: channel, title: "Lofi Girl", handle: "@lofi" } })
+    h.navigate(first, "First video")
+    await h.play(0, 60)
+    expect(h.adds[0]).toMatchObject({ channel })
+    expect(h.labels).toEqual(expected)
+  }
 })
 
 test("after an add the tab tells the background once when its video changes in-app, so the toolbar tick clears", async () => {

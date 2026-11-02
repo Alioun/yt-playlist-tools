@@ -780,6 +780,7 @@ export type MessageParameters = {
   "sync_full": readonly []
   "sync_fullLargest": readonly ["largest"]
   "sync_removeKeptFilters": readonly []
+  "sync_removeKeptFilters_hint": readonly []
   "sync_updateNeeded": readonly []
   "googleAccess_link": readonly []
   "googleAccess_cloudProject": readonly []

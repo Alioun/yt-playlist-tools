@@ -5,8 +5,9 @@
   import ChannelFilterEditor from "../components/ChannelFilterEditor.svelte"
   import { createPickerText } from "../picker"
   import { PickerModel } from "../../shared/picker/model.svelte"
-  import { isPlaylistId, type AccountKey, type PlaylistId } from "../../shared/model/validation"
+  import { isChannelId, isPlaylistId, type AccountKey, type PlaylistId } from "../../shared/model/validation"
   import { createAutoAddEditor } from "../backend/page-source"
+  import { createChannelEditor } from "../backend/channel-edit"
   import type { PageState } from "../lib/page-state.svelte"
 
   // This account's auto-add list (UI-POP-23, UI-SET-10). The parent keys it by account, so one model serves one account.
@@ -16,6 +17,7 @@
   const source = untrack(() => pickerSource(pageState, acct, "www", { kind: "auto-add" }))
   const picker = new PickerModel({ source, site: "www", mode: "many" })
   const editor = createAutoAddEditor(backend, untrack(() => acct))
+  const channels = createChannelEditor(backend, i18n, untrack(() => acct))
   onDestroy(() => { picker.close(); source.dispose() })
   const entry = $derived(pageState.ready?.setups.find(row => row.acct === acct))
   const options = $derived(new Map<PlaylistId, AutoAddOptions>((entry?.setup.autoAdd ?? []).flatMap(row =>
@@ -41,7 +43,9 @@
     readOnly={pageState.private} ontakes={editor.takes} onpct={editor.pct}>
     {#snippet filter(playlist, title)}
       <ChannelFilterEditor filter={entry?.filters.get(playlist) ?? null} playlist={title} {i18n} readOnly={pageState.private}
-        onsetting={(desired, clear) => setting(playlist, desired, clear)} />
+        onsetting={(desired, clear) => setting(playlist, desired, clear)}
+        onadd={input => channels.add(playlist, input)}
+        onremove={id => { const channel = entry?.filters.get(playlist)?.channels.find(row => row[0] === id); return channel && isChannelId(channel[0]) ? channels.remove(playlist, [channel[0], channel[1]]) : Promise.resolve(false) }} />
     {/snippet}
   </AutoAddList>
 {/if}

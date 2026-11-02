@@ -26,6 +26,8 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
       },
       changeDeviceSetting: async (_origin, change) => ({ kind: "confirmed", change }),
       async change(_origin, change) { filters.push(change); return change.desired.on ? { kind: "result", result: { ok: true } } : { kind: "result", result: { refused: "sync-full" } } },
+      async changeFilterChannel(_origin, change) { filters.push(change); return { kind: "result", result: { ok: true } } },
+      async removeKeptFilters() { return { kind: "removed", filters: 2 } },
       prepareAccountRemoval: async (_origin, removing) => ({ kind: "confirmation-required", confirmation: { removing } as never, acct: removing, label: "Ann", scope: { kind: "this-browser" } }),
       async removeAccountSetup(_origin, confirmation) { removed.push(confirmation); return { kind: "committed" } },
       exportSettings: async () => ({ kind: "unavailable", reason: "origin" }) as never,
@@ -118,6 +120,20 @@ test("a filter setting reaches the store with its confirmation, and the store's 
   expect(filters).toEqual([{ acct, playlist: "PLa", desired: { mode: "deny", on: true }, clearListedChannels: "confirmed", expectedGeneration: "gen-1" }])
   expect(await handlers["ui.filter"]({ change: { ...change, desired: { mode: "deny", on: false }, clearListed: false } }, context())).toEqual({ kind: "refused", reason: "sync-full" })
   expect(await handlers["ui.filter"]({ change }, context(true))).toEqual({ kind: "refused", reason: "private" })
+})
+
+test("a channel edit carries a confirmed switch with its generation, and Remove kept filters answers how many went", async () => {
+  const { handlers, filters, context } = receiver()
+  const channel = ["UCAAAAAAAAAAAAAAAAAAAAAA", "Lofi Girl"] as never
+  const change = { acct, playlist: "PLa" as never, channel, action: "list", mode: "allow", clearListed: true, expectedGeneration: "gen-2" } as const
+  expect(await handlers["ui.filterChannel"]({ change }, context())).toEqual({ kind: "confirmed" })
+  expect(await handlers["ui.filterChannel"]({ change: { ...change, action: "unlist", mode: null, clearListed: false } }, context())).toEqual({ kind: "confirmed" })
+  expect(filters).toEqual([
+    { acct, playlist: "PLa", channel, action: "list", mode: "allow", clearListedChannels: "confirmed", expectedGeneration: "gen-2" },
+    { acct, playlist: "PLa", channel, action: "unlist", mode: null, clearListedChannels: "not-confirmed" }])
+  expect(await handlers["ui.filterChannel"]({ change }, context(true))).toEqual({ kind: "refused", reason: "private" })
+  expect(await handlers["ui.removeKeptFilters"]({}, context())).toEqual({ kind: "removed", filters: 2 })
+  expect(await handlers["ui.removeKeptFilters"]({}, context(true))).toEqual({ kind: "refused", reason: "private" })
 })
 
 test("removing a setup confirms with the token the same page got, and only Settings can ask", async () => {

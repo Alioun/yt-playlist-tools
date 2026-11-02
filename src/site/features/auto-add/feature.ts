@@ -4,7 +4,8 @@ import type { TabAddReport, TabProgress, TabUndoHandle } from "../../../shared/c
 import type { AutoAddText, Titles } from "../../../shared/copy"
 import type { ChannelId, PlaylistId, VideoId } from "../../../shared/model"
 import { toastPlan, type Failure, type Outcome } from "../../../shared/rules/outcomes"
-import type { BackgroundLink } from "../../core/background"
+import { channelLabel } from "../../../shared/rules/channel-filter"
+import type { TabActions } from "../../core/actions"
 import type { FeatureContext, FeatureDefinition, SiteView } from "../../core/feature-host"
 import type { PageLink } from "../../core/page-link"
 import type { Dispose, Scope } from "../../core/scope"
@@ -19,7 +20,7 @@ import {
 export type AutoAddServices = {
   readonly document: Document
   readonly page: Pick<PageLink, "watch" | "onState" | "run">
-  readonly actions: Pick<TabActions, "add" | "undo" | "release" | "progress" | "cantMeasure" | "videoChanged">
+  readonly actions: Pick<TabActions, "add" | "undo" | "release" | "progress" | "cantMeasure" | "videoChanged" | "channelLabel">
   readonly feedback: { use(owner: Scope): Feedback | null }
   readonly text: AutoAddText
   /** Monotonic milliseconds. */
@@ -222,7 +223,16 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
     const filters = current()?.filters ?? []
     if (!filters.some(row => due.includes(row.playlist) && row.state.filter.on)) return null
     const answer = await page.run<JobOf<"channelOf">>({ job: { kind: "channelOf", videoId: video } })
-    return answer.ok ? answer.data.channelId : null
+    if (!answer.ok || answer.data.channelId === null) return null
+    if (answer.data.title) noteLabel(filters, answer.data.channelId, channelLabel(answer.data.title, answer.data.handle))
+    return answer.data.channelId
+  }
+  // A read of a listed channel writes back only a changed label, so an unchanged one sends nothing (YT-CF-10).
+  function noteLabel(filters: SiteView<"www">["filters"], channel: ChannelId, label: ReturnType<typeof channelLabel>) {
+    const rows = filters.flatMap(row => row.state.filter.channels.filter(entry => entry[0] === channel))
+    if (rows.length && rows.some(row => row[1] !== label.title || row[2] !== label.handle)) {
+      actions.channelLabel(label.handle === undefined ? [channel, label.title] : [channel, label.title, label.handle])
+    }
   }
   async function send(target: Playback, due: readonly string[]) {
     const video = target.tracker.video

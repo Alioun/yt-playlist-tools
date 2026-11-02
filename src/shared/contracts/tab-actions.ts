@@ -63,7 +63,10 @@ export type TabActionMessages = {
   "tab.create": { payload: Pinned<{ readonly title: string; readonly privacy: Privacy; readonly video: VideoId | null }>; result: TabCreated }
   "tab.destination": { payload: Pinned<TabDestinationChange>; result: DestinationAnswer }
   "tab.device": { payload: { readonly change: TabDeviceChange }; result: TabDeviceAnswer }
+  /** A listed channel read with a new title or @handle, for the store to write back (YT-CF-10). */
+  "tab.channelLabel": { payload: Pinned<{ readonly channel: TabChannelLabel }>; result: null }
 }
+export type TabChannelLabel = readonly [id: ChannelId, title: string, handle?: string]
 /**
  * Auto-add's routes besides `tab.add`. YT-AA-41: only the first playback per browser session that can't be measured gets a toast.
  * `tab.videoChanged` clears this tab's toolbar tick, sent once when the video it ticked for changes in-app (ARC-MOD-38).
@@ -151,9 +154,14 @@ export const tabActionContract: RpcContract<TabActionMessages> = {
     result: isTabCreated, timeoutMs: 45_000 },
   "tab.destination": { payload: (v): v is TabActionMessages["tab.destination"]["payload"] => pinned(r => objectShape(r, {
     destination: isSetupDestination, expected: isDestinationExpectation, playlist: nullable(isPlaylistId) }))(v), result: isDestinationAnswer, timeoutMs: 15_000 },
+  "tab.channelLabel": { payload: (v): v is TabActionMessages["tab.channelLabel"]["payload"] => pinned(r => objectShape(r, { channel: isTabChannelLabel }))(v),
+    result: (v): v is null => v === null, timeoutMs: 8_000 },
   "tab.device": { payload: (v): v is TabActionMessages["tab.device"]["payload"] => objectShape(v, { change: isTabDeviceChange }),
     result: (v): v is TabDeviceAnswer => objectShape(v, { kind: oneOf("confirmed") }) || objectShape(v, { kind: oneOf("refused"), reason: oneOf("private", "invalid", "unavailable", "unconfirmed") }),
     timeoutMs: 8_000 }
+}
+function isTabChannelLabel(value: unknown): value is TabChannelLabel {
+  return Array.isArray(value) && (value.length === 2 || value.length === 3) && isChannelId(value[0]) && title(value[1]) && (value.length === 2 || title(value[2]))
 }
 export function isTabDeviceChange(value: unknown): value is TabDeviceChange {
   return objectShape(value, { field: oneOf("pickerSortAZ"), value: bool }) || objectShape(value, { field: oneOf("newPlaylistVisibility"), value: isPrivacy })

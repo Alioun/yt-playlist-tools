@@ -130,7 +130,7 @@ export type Actions = {
 export function composeActions(deps: {
   readonly native: SenderOriginPorts & { readonly runtime: SenderOriginPorts["runtime"] & RuntimePort }
   readonly build: BuildId
-  readonly owner: Pick<StartingOwner, "readTabProjection" | "readSession" | "changeSession" | "changeSetupDestination" | "readPlaylistCache" | "markPlaylists" | "changeDeviceSetting">
+  readonly owner: Pick<StartingOwner, "readTabProjection" | "readSession" | "changeSession" | "changeSetupDestination" | "readPlaylistCache" | "markPlaylists" | "changeDeviceSetting" | "refreshChannelLabels">
   readonly tabs: Tabs
   readonly playlists: Playlists
   readonly registrar: Pick<Registrar, "ensure">
@@ -230,6 +230,11 @@ export function composeActions(deps: {
       if (answer.kind === "created") return { kind: "created", id: answer.id }
       const outcome = answer.kind === "not-created" ? answer.outcome : null
       return { kind: "failed", reason: outcome?.kind === "result" && !outcome.result.ok && outcome.result.http === 429 ? "rateLimited" : "failed" }
+    },
+    async "tab.channelLabel"({ acct, request }, context) {
+      if (acct === null || !await pinned(context, acct)) return null
+      await owner.refreshChannelLabels({ acct, private: context.origin.incognito, channel: request.channel }).catch(() => {})
+      return null
     },
     // A device choice belongs to this browser, not the tab's account, so no account pin is needed.
     async "tab.device"({ change }, context) {

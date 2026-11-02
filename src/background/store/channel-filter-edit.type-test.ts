@@ -21,7 +21,7 @@ export type FilterSettingProofs = [
   Check<Equal<FilterSettingInput, ExpectedInput>>,
   Check<Equal<FilterSettingResult, ExpectedResult>>,
   Check<Equal<typeof changeFilterSetting, (input: ExpectedInput) => ExpectedResult>>,
-  Check<Equal<keyof typeof import("./channel-filter-edit"), "changeFilterSetting">>,
+  Check<Equal<keyof typeof import("./channel-filter-edit"), "changeFilterSetting" | "changeFilterChannel" | "refreshChannelLabel">>,
   Check<Equal<FilterSettingInput["desired"]["mode"], Filter["mode"]>>,
   Check<Equal<FilterSettingInput["desired"]["on"], Filter["on"]>>,
   Check<Equal<WritableKeys<FilterSettingInput>, never>>,

@@ -247,7 +247,7 @@ describe("actual browser artifact", () => {
       JSON.stringify({exports:Object.keys(operation),fixtures,beforeControls,controls,protectedReads});
     `
     const result = JSON.parse(executeSyntheticNodeRealm('import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; console.log(runInNewContext(readFileSync(0,"utf8"), {}, {timeout:30000}));', script, 35000))
-    expect(result.exports).toEqual(["changeFilterSetting"])
+    expect(result.exports).toEqual(["changeFilterChannel", "changeFilterSetting", "refreshChannelLabel"])
     expect(result.fixtures.cases).toBe(88)
     expect(result.fixtures.repeats).toBe(54)
     expect(result.fixtures.controls).toHaveLength(8)

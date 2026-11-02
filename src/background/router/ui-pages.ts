@@ -1,5 +1,5 @@
-import { isRecentEntry, type DeviceSettingAnswer, type DeviceSettingChange, type FilterSettingAnswer, type PageMessages, type RecentEntry, type UiFeatureHealth, type UiTabFacts } from "../../shared/contracts/ui-pages"
-import type { LocalFilterChange, LocalFilterWriteResult } from "../store/local-filter-writer"
+import { isRecentEntry, type DeviceSettingAnswer, type DeviceSettingChange, type FilterSettingAnswer, type PageMessages, type RecentEntry, type UiDiagnostics, type UiFeatureHealth, type UiTabFacts } from "../../shared/contracts/ui-pages"
+import type { FilterChannelChange, KeptFiltersResult, LocalFilterChange, LocalFilterWriteResult } from "../store/local-filter-writer"
 import type { RemovalConfirmation, RemovalPreparation, RemovalResult } from "../store/account-removal-execution"
 import type { SettingsImportConfirmation, SettingsImportPreparation, SettingsImportResult } from "../store/settings-import-execution"
 import type { SettingsFileRead } from "../store/settings-file-read"
@@ -22,6 +22,8 @@ export type PageReceiverPorts = {
     changeSession(change: SessionChange): Promise<SessionWrite>
     changeDeviceSetting(origin: UiOrigin, change: DeviceSettingChange): Promise<DeviceSettingAnswer>
     change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>
+    changeFilterChannel(origin: UiOrigin, change: FilterChannelChange): Promise<LocalFilterWriteResult>
+    removeKeptFilters(origin: UiOrigin): Promise<KeptFiltersResult>
     prepareAccountRemoval(origin: UiOrigin, acct: AccountKey): Promise<RemovalPreparation>
     removeAccountSetup(origin: UiOrigin, confirmation: RemovalConfirmation): Promise<RemovalResult>
     exportSettings(origin: UiOrigin): Promise<SettingsFileRead>
@@ -38,10 +40,18 @@ export type PageReceiverPorts = {
   /** Raw `storage.session` reads, for the recent adds the session planner keeps but doesn't decode. */
   readonly session: { get(key: "recentAdds"): Promise<unknown> }
   readonly status: PageStatusSource
+  /** The Monitor's session evidence for Diagnostics, and Check now (HEALTH-22, HEALTH-23). Without it the route answers unavailable. */
+  readonly diagnostics?: (ui: UiRequester, check: boolean) => Promise<UiDiagnostics>
   readonly now: () => number
 }
 export type PageContext = { readonly ui: UiRequester; readonly current: () => Promise<UiRequester | undefined> }
 const unavailable = (reason: UiUnavailable["reason"]): UiUnavailable => ({ kind: "unavailable", reason })
+
+function filterAnswer(answer: LocalFilterWriteResult): FilterSettingAnswer {
+  if (answer.kind === "unconfirmed") return { kind: "refused", reason: "unconfirmed" }
+  if (answer.kind === "unavailable") return { kind: "refused", reason: answer.reason === "newer-layout" ? "update-needed" : "unavailable" }
+  return "ok" in answer.result ? { kind: "confirmed" } : { kind: "refused", reason: answer.result.refused }
+}
 
 function recentEntry(raw: unknown, acct: AccountKey): RecentEntry | undefined {
   if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return
@@ -94,10 +104,24 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
       const request: LocalFilterChange = change.clearListed
         ? { acct: change.acct, playlist: change.playlist, desired: change.desired, clearListedChannels: "confirmed", expectedGeneration: change.expectedGeneration }
         : { acct: change.acct, playlist: change.playlist, desired: change.desired, clearListedChannels: "not-confirmed" }
-      const answer = await ports.owner.change(context.ui.ui.origin, request)
-      if (answer.kind === "unconfirmed") return { kind: "refused", reason: "unconfirmed" }
-      if (answer.kind === "unavailable") return { kind: "refused", reason: answer.reason === "newer-layout" ? "update-needed" : "unavailable" }
-      return "ok" in answer.result ? { kind: "confirmed" } : { kind: "refused", reason: answer.result.refused }
+      return filterAnswer(await ports.owner.change(context.ui.ui.origin, request))
+    },
+    async "ui.filterChannel"({ change }, context): Promise<FilterSettingAnswer> {
+      if (context.ui.requester.incognito) return { kind: "refused", reason: "private" }
+      const { clearListed, expectedGeneration, ...rest } = change
+      const request: FilterChannelChange = clearListed ? { ...rest, clearListedChannels: "confirmed", expectedGeneration } : { ...rest, clearListedChannels: "not-confirmed" }
+      return filterAnswer(await ports.owner.changeFilterChannel(context.ui.ui.origin, request))
+    },
+    async "ui.removeKeptFilters"(_payload, context) {
+      if (context.ui.requester.incognito) return { kind: "refused", reason: "private" }
+      const answer = await ports.owner.removeKeptFilters(context.ui.ui.origin)
+      if (answer.kind === "removed") return answer
+      return { kind: "refused", reason: answer.kind === "unconfirmed" ? "unconfirmed" : "unavailable" }
+    },
+    async "ui.diagnostics"({ check }, context) {
+      if (!ports.diagnostics) return unavailable("collaborator")
+      const answer = await ports.diagnostics(context.ui, check)
+      return await context.current() ? answer : unavailable("operation")
     },
     async "ui.withdraw"({ expected }, context) {
       if (!settingsPage(context)) return unavailable("operation")

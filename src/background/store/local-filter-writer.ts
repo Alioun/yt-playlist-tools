@@ -36,11 +36,11 @@ import { prepareFirstEditHistory, readFirstEditProvenance } from "./first-edit-p
 import {
   CONSENT_VERSION, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError,
   decodeDevice, decodeDocument, decodeFilter, decodeSettings, decodeSetup, decodeSyncState, decodeSyncMeta, documentKey, isAccountKey, parseDocumentKey,
-  isVideoId, isPlaylistId, readStoredUnclaimed, type AccountKey, type PlaylistId, type DocumentKey, type SyncOpaqueWrite
+  isVideoId, isPlaylistId, isChannelId, readStoredUnclaimed, type Filter, type AccountKey, type PlaylistId, type DocumentKey, type SyncOpaqueWrite
 } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
-import { changeFilterSetting, type FilterSettingInput } from "./channel-filter-edit"
+import { changeFilterChannel, changeFilterSetting, refreshChannelLabel, type ChannelLabel, type FilterSettingInput, type FilterSettingResult } from "./channel-filter-edit"
 import { executeDeviceSetting } from "./device-setting"
 import { executeUpgradeNoteFlag, type UpgradeNoteFlag, type UpgradeNoteFlagResult } from "./upgrade-note-flag"
 import type { DeviceSettingAnswer, DeviceSettingChange } from "../../shared/contracts/ui-pages"
@@ -103,6 +103,41 @@ export type LocalFilterChange = {
   | { readonly clearListedChannels: "not-confirmed" }
   | { readonly clearListedChannels: "confirmed"; readonly expectedGeneration: string | null }
 )
+
+/** Lists or unlists one channel (YT-CF-14, YT-CF-15). Confirming a switch to the other mode names the filter's generation, as a mode switch does. */
+export type FilterChannelChange = {
+  readonly acct: AccountKey
+  readonly playlist: PlaylistId
+  readonly channel: ChannelLabel
+  readonly action: "list" | "unlist"
+  readonly mode: "allow" | "deny" | null
+} & (
+  | { readonly clearListedChannels: "not-confirmed" }
+  | { readonly clearListedChannels: "confirmed"; readonly expectedGeneration: string | null }
+)
+export type KeptFiltersResult = { readonly kind: "removed"; readonly filters: number } | Exclude<LocalFilterWriteResult, { readonly kind: "result"; readonly result: { readonly ok: true } }>
+export type ChannelLabelRefresh = { readonly acct: AccountKey; readonly private: boolean; readonly channel: ChannelLabel }
+export type ChannelLabelResult = { readonly kind: "refreshed"; readonly filters: number } | { readonly kind: "refused"; readonly reason: "private" | "invalid" } | LocalFilterWriteResult
+
+function channelLabel(raw: unknown): raw is ChannelLabel {
+  return Array.isArray(raw) && (raw.length === 2 || raw.length === 3) && isChannelId(raw[0]) && typeof raw[1] === "string" && raw[1].length <= 1000 &&
+    (raw.length === 2 || typeof raw[2] === "string" && raw[2].length <= 1000)
+}
+function filterChannelChange(raw: FilterChannelChange): raw is FilterChannelChange {
+  return isJsonObject(raw) && isAccountKey(raw.acct) && isPlaylistId(raw.playlist) && channelLabel(raw.channel) &&
+    (raw.action === "list" || raw.action === "unlist") && (raw.mode === null || raw.mode === "allow" || raw.mode === "deny") &&
+    (raw.clearListedChannels === "not-confirmed" || raw.clearListedChannels === "confirmed" &&
+      (raw.expectedGeneration === null || typeof raw.expectedGeneration === "string"))
+}
+
+/** One filter document's edit. `scope: "any"` also reaches kept and orphaned filters, as a label refresh must (YT-CF-17). */
+type FilterEdit = {
+  readonly acct: AccountKey
+  readonly playlist: PlaylistId
+  readonly scope: "auto-add" | "any"
+  readonly allowance?: "headroom"
+  plan(current: Snapshot<Filter> | undefined, gen: string | null): FilterSettingResult | { readonly kind: "invalid" }
+}
 
 // The page contract validates this too; the owner checks it again without importing the page contract's closure.
 function deviceSettingChange(raw: unknown): raw is DeviceSettingChange {
@@ -354,6 +389,11 @@ type LocalFilterWriter = PlaylistCacheOwner & ProgressOwner & SettingsFileOwner 
   claim(): Promise<ClaimTransactionResult>
   discardUnclaimed(origin: UiOrigin): Promise<UnclaimedDiscard>
   change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>
+  changeFilterChannel(origin: UiOrigin, change: FilterChannelChange): Promise<LocalFilterWriteResult>
+  /** Writes a listed channel's fresh title and @handle into each of the account's filters that lists it, in the headroom (YT-CF-10, SYNC-16). */
+  refreshChannelLabels(request: ChannelLabelRefresh): Promise<ChannelLabelResult>
+  /** Turns every kept filter into a tombstone (SYNC-14, YT-CF-17). */
+  removeKeptFilters(origin: UiOrigin): Promise<KeptFiltersResult>
   receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>
   flushSync(): Promise<SyncFlushResult>
   startSync(): Promise<void>
@@ -1411,7 +1451,104 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     } finally { inResetExecution = false }
   }
 
-  async function execute(change: LocalFilterChange, at: number, event: SyncEvent | undefined): Promise<LocalFilterWriteResult> {
+  function settingEdit(change: LocalFilterChange): FilterEdit {
+    return { acct: change.acct, playlist: change.playlist, scope: "auto-add", plan(current, gen) {
+      const result = changeFilterSetting({ current, desired: change.desired, clearListedChannels: change.clearListedChannels })
+      if (result.kind === "confirmation-required") return { kind: "invalid" }
+      if (result.kind === "changed" && current && current.mode !== change.desired.mode && current.channels.length > 0 &&
+        (change.clearListedChannels !== "confirmed" || change.expectedGeneration !== gen)) return { kind: "invalid" }
+      return result
+    } }
+  }
+
+  function channelEdit(change: FilterChannelChange): FilterEdit {
+    return { acct: change.acct, playlist: change.playlist, scope: "auto-add", plan(current, gen) {
+      const result = changeFilterChannel({ current, channel: change.channel, action: change.action, mode: change.mode, clearListedChannels: change.clearListedChannels })
+      if (result.kind === "confirmation-required") return { kind: "invalid" }
+      if (result.kind === "changed" && current && change.mode !== null && current.mode !== change.mode && current.channels.length > 0 &&
+        (change.clearListedChannels !== "confirmed" || change.expectedGeneration !== gen)) return { kind: "invalid" }
+      return result
+    } }
+  }
+
+  // SYNC-14's Remove kept filters: every filter whose playlist its account no longer auto-adds to becomes a tombstone,
+  // so a synced copy that's full gets its room back and other browsers drop their copies too.
+  async function removeKeptFiltersInLane(event: SyncEvent | undefined): Promise<KeptFiltersResult> {
+    const records = await guardedLocal.get(null)
+    if (disposed()) return { kind: "unavailable", reason: "stale" }
+    const ready = authority(records)
+    if (ready.kind !== "ready") return ready
+    if (!isJsonObject(records)) return { kind: "unavailable", reason: "stale" }
+    const before = snapshot(records), at = deps.now(), documents: { key: DocumentKey & { kind: "filter" }; document: JsonObject }[] = []
+    for (const [name, raw] of Object.entries(before)) {
+      const key = parseDocumentKey(name)
+      if (key?.kind !== "filter" || !isJsonObject(raw)) continue
+      try {
+        const filter = decodeDocument(raw, decodeFilter), setup = decodeDocument(before[documentKey({ kind: "setup", acct: key.acct })], decodeSetup)
+        if (filter.kind !== "value" || setup.kind !== "value" || setup.document.data.autoAdd.some(entry => entry.pl === key.playlist)) continue
+      } catch (error) { if (error instanceof DecodeError) continue; throw error }
+      const document: JsonObject = { ...raw, v: DOCUMENT_VERSION, gen: deps.generation(), at, by: ready.device.id, deleted: true }
+      delete document.data
+      documents.push({ key, document })
+    }
+    const [first, ...rest] = documents
+    if (!first) return { kind: "removed", filters: 0 }
+    const items: Record<string, JsonValue> = Object.fromEntries(documents.map(row => [documentKey(row.key), row.document]))
+    if (ready.device.syncOn) {
+      const admission = planSyncWrite({ local: before, sync: await sync.get(), intent: { kind: "changed-batch", documents: [first, ...rest] } })
+      if (admission.kind === "unavailable") return { kind: "unavailable", reason: "sync-writer-required" }
+      if (admission.kind === "refused") return { kind: "result", result: { refused: admission.reason } }
+      if (admission.kind === "planned" && ready.history) {
+        const repaired = repairedHistory(ready.history.raw, admission.repairs)
+        if (repaired) items.sync = repaired
+      }
+    }
+    const effective = items.sync ?? ready.history?.raw
+    const patch = prepareFirstEditHistory({ history: effective === undefined || !isJsonObject(effective) ? { kind: "absent" } : { kind: "present", raw: effective }, syncOn: ready.device.syncOn })
+    if (patch.kind === "unavailable") return { kind: "unavailable", reason: "sync-writer-required" }
+    if (patch.kind === "set") items.sync = patch.sync
+    const current = await guardedLocal.get(null)
+    if (disposed() || !isJsonObject(current) || !sameSyncJson(before, current)) return { kind: "unavailable", reason: "stale" }
+    const expected = snapshot({ ...before, ...items })
+    try { await guardedLocal.set(items) } catch { claimConfirmation = "unconfirmed"; deactivate("stopped"); return { kind: "unconfirmed", cause: { kind: "readback" } } }
+    try {
+      const confirmed = await guardedLocal.get(null)
+      if (disposed() || !isJsonObject(confirmed) || !sameSyncJson(expected, confirmed)) {
+        claimConfirmation = "unconfirmed"; deactivate("stopped")
+        return { kind: "unconfirmed", cause: { kind: disposed() ? "authority" : "readback" } }
+      }
+    } catch (error) { claimConfirmation = "unconfirmed"; deactivate("stopped"); return { kind: "unconfirmed", cause: { kind: "read-failed", error } } }
+    for (const row of documents) emitView({ kind: "filter-changed", source: "local", acct: row.key.acct, playlist: row.key.playlist })
+    if (ready.device.syncOn) {
+      quietUntil = deps.syncClock.now() + 2000
+      arm(Math.max(quietUntil, mutationPace.nextInvocation), event)
+    }
+    return { kind: "removed", filters: documents.length }
+  }
+
+  async function refreshLabelsInLane(request: ChannelLabelRefresh, event: SyncEvent | undefined): Promise<ChannelLabelResult> {
+    const records = await guardedLocal.get(null)
+    if (disposed()) return { kind: "unavailable", reason: "stale" }
+    const playlists: PlaylistId[] = []
+    for (const [name, raw] of Object.entries(records)) {
+      const key = parseDocumentKey(name)
+      if (key?.kind !== "filter" || key.acct !== request.acct) continue
+      try {
+        const filter = decodeDocument(raw, decodeFilter)
+        if (filter.kind === "value" && refreshChannelLabel(filter.document.data, request.channel).kind === "changed") playlists.push(key.playlist)
+      } catch (error) { if (!(error instanceof DecodeError)) throw error }
+    }
+    let filters = 0
+    for (const playlist of playlists) {
+      const result = await execute({ acct: request.acct, playlist, scope: "any", allowance: "headroom",
+        plan: current => refreshChannelLabel(current, request.channel) }, deps.now(), event)
+      if (result.kind !== "result") return result
+      if ("ok" in result.result) filters++
+    }
+    return { kind: "refreshed", filters }
+  }
+
+  async function execute(change: FilterEdit, at: number, event: SyncEvent | undefined): Promise<LocalFilterWriteResult> {
     if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
     const invalid = { kind: "result", result: { refused: "invalid" } } as const
     const ok = { kind: "result", result: { ok: true } } as const
@@ -1436,7 +1573,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       if (!isJsonObject(rawSetup)) return { kind: "unavailable", reason: "account-context" }
       try {
         const setup = decodeDocument(rawSetup, decodeSetup)
-        if (setup.kind !== "value" || !setup.document.data.autoAdd.some(entry => entry.pl === change.playlist)) {
+        if (setup.kind !== "value" || change.scope === "auto-add" && !setup.document.data.autoAdd.some(entry => entry.pl === change.playlist)) {
           return { kind: "unavailable", reason: "account-context" }
         }
       } catch (error) {
@@ -1465,17 +1602,15 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       }
 
       const current = filter.kind === "value" ? filter.document.data : undefined
-      const result = changeFilterSetting({ current, desired: change.desired, clearListedChannels: change.clearListedChannels })
+      const result = change.plan(current, filter.kind === "value" ? filter.document.gen : null)
       if (result.kind === "unchanged") {
         if (!device.syncOn) return ok
-        const admission = planSyncWrite({ local: records, sync: await sync.get(),
+        const admission = planSyncWrite({ local: records, sync: await sync.get(), allowance: change.allowance,
           intent: { kind: "unchanged", key: { kind: "filter", acct: change.acct, playlist: change.playlist } } })
         if (admission.kind === "unavailable") return { kind: "unavailable", reason: "sync-writer-required" }
         return admission.kind === "refused" ? { kind: "result", result: { refused: admission.reason } } : ok
       }
-      if (result.kind === "confirmation-required") return invalid
-      if (filter.kind === "value" && current && current.mode !== change.desired.mode && current.channels.length > 0 &&
-        (change.clearListedChannels !== "confirmed" || change.expectedGeneration !== filter.document.gen)) return invalid
+      if (result.kind !== "changed") return invalid
 
       if (!exhaustive) {
         const complete = await guardedLocal.get(null)
@@ -1496,7 +1631,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       if (decodeDocument(envelope, decodeFilter).kind !== "value") throw new TypeError("Writer produced an unsupported Filter")
       const items: Record<string, JsonObject> = { [filterKey]: envelope }
       if (device.syncOn) {
-        const admission = planSyncWrite({ local: records, sync: await sync.get(), intent: {
+        const admission = planSyncWrite({ local: records, sync: await sync.get(), allowance: change.allowance, intent: {
           kind: "changed", key: { kind: "filter", acct: change.acct, playlist: change.playlist }, document: envelope
         } })
         if (admission.kind === "unavailable") return { kind: "unavailable", reason: "sync-writer-required" }
@@ -1574,16 +1709,17 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       if (key.kind === "setup") return { ...shared, selection: { kind: "setup" } } as const
       const setupName = documentKey({ kind: "setup", acct: key.acct }), setup = records[setupName]
       if (!Object.hasOwn(records, setupName) || !isJsonObject(setup)) return unavailable("account-context")
-      let removed
+      let removed, kept
       try {
         const supported = decodeDocument(setup, decodeSetup)
         if (supported.kind !== "value" && supported.kind !== "deleted") return unavailable("account-context")
         removed = supported.kind === "deleted"
+        kept = supported.kind === "value" && !supported.document.data.autoAdd.some(entry => entry.pl === key.playlist)
       } catch (error) {
         if (error instanceof DecodeError) return unavailable("account-context")
         throw error
       }
-      return { ...shared, selection: { kind: "filter", setup, removed } } as const
+      return { ...shared, selection: { kind: "filter", setup, removed, kept } } as const
     }
     function observation(records: Readonly<Record<string, unknown>>, joined: string | null) {
       if (records === null || typeof records !== "object" || Array.isArray(records) ||
@@ -1618,8 +1754,10 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     if (initial.kind !== "ready") return initial
     if (initial.deleted && key.kind === "settings") return unavailable("document")
     const removedAccount = initial.selection.kind === "filter" && initial.selection.removed
+    // A kept filter's playlist isn't auto-added here, so its tombstone can't leave auto-add running without a filter (SYNC-12, SYNC-14).
+    const keptFilter = initial.selection.kind === "filter" && initial.selection.kept
     const baseline = { device: snapshot(initial.device), history: snapshot(initial.history), raw: snapshot(initial.raw),
-      selection: initial.selection.kind === "filter" ? { kind: "filter", setup: snapshot(initial.selection.setup), removed: removedAccount } as const : initial.selection }
+      selection: initial.selection.kind === "filter" ? { kind: "filter", setup: snapshot(initial.selection.setup), removed: removedAccount, kept: keptFilter } as const : initial.selection }
     const sameSelection = (current: typeof initial.selection) => current.kind !== "filter"
       ? baseline.selection.kind === current.kind
       : baseline.selection.kind === "filter" && sameSyncJson(current.setup, baseline.selection.setup)
@@ -1638,7 +1776,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     // A newer live Setup or Filter replaces a local tombstone, so an older edit is all a tombstone keeps out.
     const tombstone = remote.candidate.kind === "deleted"
     if (removedAccount && !tombstone) return unavailable("account-context")
-    if (tombstone && (initial.deleted || !removedAccount && (key.kind !== "setup" || removal.kind === "unavailable"))) return unavailable("document")
+    if (tombstone && (initial.deleted || !removedAccount && !keptFilter && (key.kind !== "setup" || removal.kind === "unavailable"))) return unavailable("document")
     if (sameSyncJson(initial.raw, remote.candidate.json)) return { kind: "idle" }
     const history = decodeSyncState(initial.history)
     if (!Object.hasOwn(history.pushed, name) || history.pushed[name] !== initial.stamp.gen) return unavailable("pending")
@@ -4095,7 +4233,40 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       const at = deps.now()
       const event = ingress("edit")
       const requested: LocalFilterChange = { ...change, desired: { ...change.desired } }
-      return enqueue(() => execute(requested, at, event))
+      return enqueue(() => execute(settingEdit(requested), at, event))
+    },
+    async changeFilterChannel(origin, change) {
+      if (lifetime.kind === "disposed") throw new Error("Writer disposed")
+      if (initialization !== "ok") return { kind: "unavailable", reason: initialization === "newer-layout" ? "newer-layout" : "startup" }
+      if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
+      if (origin.kind !== "ui" || origin.incognito !== false || !Number.isInteger(origin.windowId) || origin.windowId < 0) {
+        return { kind: "result", result: { refused: "private" } }
+      }
+      if (!filterChannelChange(change)) return { kind: "result", result: { refused: "invalid" } }
+      const at = deps.now()
+      const event = ingress("edit")
+      const requested = structuredClone(change)
+      return enqueue(() => execute(channelEdit(requested), at, event))
+    },
+    async removeKeptFilters(origin) {
+      if (lifetime.kind === "disposed") throw new Error("Writer disposed")
+      if (initialization !== "ok") return { kind: "unavailable", reason: initialization === "newer-layout" ? "newer-layout" : "startup" }
+      if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
+      if (origin.kind !== "ui" || origin.incognito !== false || !Number.isInteger(origin.windowId) || origin.windowId < 0) {
+        return { kind: "result", result: { refused: "private" } }
+      }
+      const event = ingress("edit")
+      return enqueue(() => removeKeptFiltersInLane(event))
+    },
+    async refreshChannelLabels(request) {
+      if (lifetime.kind === "disposed") throw new Error("Writer disposed")
+      if (!isJsonObject(request) || !isAccountKey(request.acct) || typeof request.private !== "boolean" || !channelLabel(request.channel)) return { kind: "refused", reason: "invalid" }
+      if (request.private) return { kind: "refused", reason: "private" }
+      if (initialization !== "ok") return { kind: "unavailable", reason: initialization === "newer-layout" ? "newer-layout" : "startup" }
+      if (claimConfirmation === "unconfirmed") return { kind: "unavailable", reason: "stale" }
+      const event = ingress("edit")
+      const requested = structuredClone(request)
+      return enqueue(() => refreshLabelsInLane(requested, event))
     }
   }
   return { writer, readiness }
