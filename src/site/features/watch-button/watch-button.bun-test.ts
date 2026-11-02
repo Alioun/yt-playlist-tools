@@ -10,7 +10,7 @@ import { createFeedbackSession } from "../../kit/feedback/session"
 import type { Kit } from "../../kit/install"
 import { createWatchMenu, type WatchMenuRequest } from "../../popovers/watch-menu"
 import type { OpenPicker, Popovers } from "../../popovers/types"
-import { retryMs, row, watchButton } from "./feature"
+import { fit, retryMs, row, watchButton } from "./feature"
 import { createThisVideoChannel } from "../../core/this-video"
 import type { ThisVideo } from "../../../shared/contracts/this-video"
 import { clock, labels, settle, undoKey } from "../../../../tools/fixtures/site-toaster/harness"
@@ -212,4 +212,39 @@ test("a chip that would clear kept channels asks first, in the menu (YT-CF-15)",
   m.find("Switch").click(); await settle()
   expect(m.calls).toEqual([["channel", { playlist, channel: ["UCaaaaaaaaaaaaaaaaaaaaaa", "Band"], action: "list", mode: "allow", clearListed: true, expectedGeneration: "gen-1" }]])
   expect(m.find("Allowed")).toBeTruthy()
+})
+
+test("in a narrow row the pill folds to its icon, unfolds with 16 px to spare, and hides rather than push Save into the overflow (UI-YT-20, UI-YT-21)", () => {
+  expect(fit({ space: 200, full: 150, current: "full", saveFolded: false })).toBe("full")
+  expect(fit({ space: 140, full: 150, current: "full", saveFolded: false })).toBe("icon")
+  expect(fit({ space: 160, full: 150, current: "icon", saveFolded: false })).toBe("icon")
+  expect(fit({ space: 166, full: 150, current: "icon", saveFolded: false })).toBe("full")
+  expect(fit({ space: 30, full: 150, current: "icon", saveFolded: false })).toBe("hidden")
+  expect(fit({ space: 30, full: 150, current: "hidden", saveFolded: true })).toBe("icon")
+})
+
+test("a resize measures the row before YouTube does and sizes the button to fit", async () => {
+  const f = setup()
+  const buttons = actionRow()
+  const menu = buttons.parentElement as HTMLElement
+  const share = document.createElement("div"), save = document.createElement("yt-button-view-model")
+  const saveInner = document.createElement("button"); saveInner.setAttribute("aria-label", "Save to playlist"); save.append(saveInner)
+  buttons.append(share, save)
+  const widths = new Map<Element, number>([[share, 100], [save, 90]])
+  let menuWidth = 300
+  for (const element of [share, save]) element.getBoundingClientRect = () => ({ width: widths.get(element) ?? 0 }) as DOMRect
+  menu.getBoundingClientRect = () => ({ width: menuWidth }) as DOMRect
+  f.navigate(watchNav)
+  f.timers.advance(0)
+  const host = f.host() as HTMLElement
+  host.getBoundingClientRect = () => ({ width: 150 }) as DOMRect
+  f.thisVideo.publish(counting())
+  window.dispatchEvent(new Event("resize"))
+  expect(host.getAttribute("fit")).toBe("icon")
+  menuWidth = 500; window.dispatchEvent(new Event("resize"))
+  expect(host.getAttribute("fit")).toBe("full")
+  menuWidth = 200; window.dispatchEvent(new Event("resize"))
+  expect(host.getAttribute("fit")).toBe("hidden")
+  save.remove(); window.dispatchEvent(new Event("resize"))
+  expect(host.getAttribute("fit")).toBe("icon")
 })

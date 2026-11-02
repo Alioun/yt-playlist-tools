@@ -60,6 +60,8 @@ button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 svg { width: 24px; height: 24px; fill: currentColor; }
 .ring { fill: none; stroke: currentColor; stroke-width: 2; }
 .label:empty { display: none; }
+:host([fit=icon]) .label { display: none; }
+:host([fit=hidden]) { display: none; }
 `
 
 function options(view: SiteView<"www"> | null) {
@@ -73,6 +75,23 @@ function options(view: SiteView<"www"> | null) {
     pickerKey: shortcuts?.id === "shortcuts" && shortcuts.options.picker ? shortcuts.options.picker as Key : null
   }
 }
+
+/** The button's width state in a narrow row (UI-YT-20, UI-YT-21). */
+export type Fit = "full" | "icon" | "hidden"
+export const unfoldSlack = 16
+const iconWidth = 40
+/**
+ * How the button fits beside YouTube's own buttons: the full pill, icon-only, or hidden where even the icon would push
+ * YouTube's Save into "…". `space` is what the row leaves once YouTube's buttons, Save included, have their room. The
+ * pill unfolds only with 16 px to spare. Where YouTube folds Save on its own, the icon stays.
+ */
+export function fit(input: { readonly space: number; readonly full: number; readonly current: Fit; readonly saveFolded: boolean }): Fit {
+  if (input.space >= input.full + (input.current === "full" ? 0 : unfoldSlack)) return "full"
+  if (input.space >= iconWidth || input.saveFolded) return "icon"
+  return "hidden"
+}
+/** YouTube's Save in the action row and the row's own "…" overflow. PROVISIONAL until a live check. */
+const saveButton = "yt-button-view-model button[aria-label*='Save' i], ytd-button-renderer button[aria-label*='Save' i]"
 
 /**
  * The watch-page button (YT-WB): after Share and before Save in the watch page's action row, placed again after
@@ -98,6 +117,28 @@ function start(context: FeatureContext<"www", WatchButtonServices>): void {
   let naming = false
   let watchRow: Dispose = () => {}
   let retries: Dispose[] = []
+  let width: Fit = "full"
+  let fullWidth = 0
+  let nudged = false
+
+  // A capture-phase resize runs before YouTube's own fold logic, so YouTube measures the row with our button already sized (UI-YT-20).
+  function relayout() {
+    const row = host.parentElement, menu = row?.closest("ytd-menu-renderer")
+    if (!row || !menu) return
+    if (width === "full" && label.textContent) fullWidth = host.getBoundingClientRect().width || fullWidth
+    const others = [...row.children].filter(child => child !== host).reduce((sum, child) => sum + child.getBoundingClientRect().width, 0)
+      + [...menu.children].filter(child => child !== row).reduce((sum, child) => sum + child.getBoundingClientRect().width, 0)
+    const available = menu.getBoundingClientRect().width
+    if (available <= 0) return
+    const saveFolded = row.querySelector(saveButton) === null
+    const next = !label.textContent ? fit({ space: available - others, full: iconWidth, current: width, saveFolded }) === "hidden" ? "hidden" : "icon"
+      : fit({ space: available - others, full: fullWidth || iconWidth, current: width, saveFolded })
+    if (next !== width) { width = next; host.setAttribute("fit", next) }
+    // On a narrow first load YouTube has already folded Save, so the pill folds and YouTube measures once more.
+    if (saveFolded && width !== "full" && !nudged) { nudged = true; document.defaultView?.dispatchEvent(new Event("resize")) }
+  }
+  const win = document.defaultView
+  if (win) scope.on(win, "resize", () => { if (host.isConnected) relayout() }, { capture: true, passive: true })
 
   // Playlist names come from the cached list, read once the state names any (UI-YT-18).
   async function loadNames() {
@@ -131,6 +172,7 @@ function start(context: FeatureContext<"www", WatchButtonServices>): void {
       svg.append(path)
     }
     host.toggleAttribute("dark", document.documentElement.hasAttribute("dark"))
+    if (host.isConnected) relayout()
   }
   function place(): boolean {
     const current = options(view.read())
@@ -149,6 +191,7 @@ function start(context: FeatureContext<"www", WatchButtonServices>): void {
       watchRow = scope.observe(target, { childList: true }, () => { if (onWatch && !host.isConnected) place() })
     }
     render()
+    relayout()
     return true
   }
   function navigated(nav: NavData | null) {
@@ -156,6 +199,7 @@ function start(context: FeatureContext<"www", WatchButtonServices>): void {
     retries = []
     onWatch = nav?.navigation.kind === "watch"
     if (!onWatch) { watchRow(); host.remove(); return }
+    nudged = false
     for (const ms of retryMs) retries.push(scope.timeout(() => { if (host.isConnected) return; place() }, ms))
   }
   // The menu's auto-add rows: each playlist's goal or outcome, Don't auto-add, Pause and this channel's chips (UI-YT-22, YT-CF-15).
