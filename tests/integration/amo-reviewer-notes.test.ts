@@ -15,7 +15,7 @@ const scriptSource = readFileSync(script, "utf8")
 const bash = Bun.which("bash")!
 
 type Step = { name?: string; uses?: string; with?: Record<string, unknown>; env?: Record<string, string>; run?: string }
-type Job = { needs?: string[]; if?: unknown; environment?: string | { name: string }; env?: Record<string, string>; steps?: Step[] }
+type Job = { needs?: string[]; if?: unknown; environment?: string | { name: string }; uses?: string; env?: Record<string, string>; steps?: Step[] }
 type Workflow = { env?: Record<string, string>; jobs: Record<string, Job> }
 
 const workflowDir = join(root, ".github/workflows")
@@ -232,6 +232,20 @@ describe("the workflows", () => {
       "release.yml > jobs > check-reviewer-login > steps > Check the reviewer test account > env > AMO_REVIEWER_LOGIN",
       "release.yml > jobs > fill-reviewer-notes > steps > Put the reviewer test account into the reviewer notes > env > AMO_REVIEWER_LOGIN"
     ])
+  })
+
+  // The test below reads environment names as written, and only this repository's workflows.
+  test("name each environment literally, and call reusable workflows only from this repository", () => {
+    const hidden = Object.entries(workflows).flatMap(([file, workflow]) =>
+      Object.entries(workflow.jobs).flatMap(([id, job]) => {
+        const environment = typeof job.environment === "string" ? job.environment : job.environment?.name
+        return [
+          ...(environment?.includes("${{") ? [`${file} > ${id} > environment`] : []),
+          ...(job.uses !== undefined && !job.uses.startsWith("./.github/workflows/") ? [`${file} > ${id} > uses`] : [])
+        ]
+      })
+    )
+    expect(hidden).toEqual([])
   })
 
   test("let only the two reviewer jobs into the amo-reviewer environment", () => {

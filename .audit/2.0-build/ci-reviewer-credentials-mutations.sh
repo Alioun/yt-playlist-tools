@@ -94,6 +94,10 @@ plant fill-gate-widened "$release" 's/(if: false && needs\.check-reviewer-login[
 plant digest-in-repo "$release" 's/\$\{\{ vars\.REVIEWER_NOTES_SHA256 \}\}/46372e7ff86b8b5eb647c8fc616ec32167ac341848aae2d5fa4416eaa525ee06/' -- "hold no digest of the script"
 plant no-digest-check "$release" 's/\[\[ \$digest =~ \^\[0-9a-f\]\{64\}\$ \]\]/true/g' -- "refuses to run while vars.REVIEWER_NOTES_SHA256 is unset"
 plant shared-environment "$release" 's/(  submit-amo:\n(?:.*\n)*?    environment: )amo\n/$1amo-reviewer\n/' -- "let only the two reviewer jobs into the amo-reviewer environment"
+plant computed-environment "$ci" 's/^jobs:\n/jobs:\n  sneak:\n    runs-on: ubuntu-latest\n    environment: \$\{\{ format(\x27amo-{0}\x27, \x27reviewer\x27) \}\}\n    steps:\n      - run: "true"\n/m' -- \
+  "name each environment literally, and call reusable workflows only from this repository"
+plant foreign-workflow "$ci" 's/^jobs:\n/jobs:\n  sneak:\n    uses: other\/repo\/.github\/workflows\/x.yml\@0000000000000000000000000000000000000000\n/m' -- \
+  "name each environment literally, and call reusable workflows only from this repository"
 plant bulk-secrets "$ci" 's/(VERSION: \$\{\{ steps\.version\.outputs\.version \}\}\n)/$1          ALL: \$\{\{ toJSON(secrets) \}\}\n/' -- "read secrets only by name"
 plant indexed-secret "$ci" 's/(VERSION: \$\{\{ steps\.version\.outputs\.version \}\}\n)/$1          LOGIN: \$\{\{ secrets[\x27AMO_REVIEWER_LOGIN\x27] \}\}\n/' -- "read secrets only by name"
 plant old-runner \
