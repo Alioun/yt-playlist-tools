@@ -26,6 +26,8 @@ export type WatchMenuRequest = {
   readonly quickSave: { readonly playlist: PlaylistId; readonly name: string | null } | null
   /** The picker key's label while Playlist shortcuts has one (YT-KEY-34). */
   readonly pickerKey: string | null
+  /** The Shorts column's menu opens to the left of the button (UI-YT-23). */
+  readonly side?: "left"
 }
 
 const width = 280
@@ -212,7 +214,8 @@ export function createWatchMenu(options: {
     open = handle
     document.body.append(host)
     const rect = request.anchor.getBoundingClientRect(), view = document.defaultView
-    const at = placePicker({ kind: "below", box: { left: rect.left, top: rect.top, width: rect.width, height: rect.height } },
+    const box = request.side === "left" ? { left: rect.left - width - 8, top: rect.top, width, height: rect.height } : { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
+    const at = placePicker({ kind: request.side === "left" ? "on" : "below", box },
       { width, height: menu.getBoundingClientRect().height || 160 }, { width: view?.innerWidth ?? 1280, height: view?.innerHeight ?? 800 })
     host.style.left = `${at.left}px`; host.style.top = `${at.top}px`
     document.addEventListener("pointerdown", outside, true)

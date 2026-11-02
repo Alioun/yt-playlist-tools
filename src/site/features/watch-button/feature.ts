@@ -24,6 +24,9 @@ export type WatchButtonServices = {
 }
 
 export const row = "ytd-watch-metadata ytd-menu-renderer #top-level-buttons-computed"
+/** The active Short's action column and its sound button, which ours sits before (UI-YT-23). PROVISIONAL until a live check. */
+export const shortsColumn = "ytd-reel-video-renderer[is-active] reel-action-bar-view-model, ytd-reel-video-renderer[is-active] #actions"
+const shortsSound = "pivot-button-view-model, #pivot-button"
 /** Bounded re-placement after a navigation, while YouTube draws the action row (YT-WB-02). */
 export const retryMs = [0, 250, 1_000, 2_500] as const
 const mark = "M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2zm-4 11h-2v-2H9v-2h2V8h2v2h2v2h-2v2z"
@@ -58,6 +61,10 @@ button:hover { background: rgba(0,0,0,.1); }
 :host([dark]) button:hover { background: rgba(255,255,255,.2); }
 button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 svg { width: 24px; height: 24px; fill: currentColor; }
+:host([kind=shorts]) { display: flex; margin: 0 0 16px; }
+:host([kind=shorts]) button { flex-direction: column; gap: 4px; width: 48px; height: 78px; padding: 0; border-radius: 0; background: none; font: 400 12px/18px Roboto, Arial, sans-serif; }
+:host([kind=shorts]) svg { box-sizing: content-box; padding: 12px; border-radius: 50%; background: rgba(0,0,0,.05); }
+:host([kind=shorts][dark]) svg { background: rgba(255,255,255,.1); }
 .ring { fill: none; stroke: currentColor; stroke-width: 2; }
 .label:empty { display: none; }
 :host([fit=icon]) .label { display: none; }
@@ -71,6 +78,7 @@ function options(view: SiteView<"www"> | null) {
   const shortcuts = view.features.find(entry => entry.id === "shortcuts")
   return {
     working: view.statuses.find(status => status.feature === "watch-button")?.state !== "not-working",
+    shorts: feature.options.shorts,
     quickSave: (setup?.quickSave ?? null) as PlaylistId | null,
     pickerKey: shortcuts?.id === "shortcuts" && shortcuts.options.picker ? shortcuts.options.picker as Key : null
   }
@@ -112,6 +120,7 @@ function start(context: FeatureContext<"www", WatchButtonServices>): void {
   for (const type of ["click", "pointerdown", "pointerup", "mousedown", "mouseup", "keydown"]) scope.on<EventTarget, string>(host, type, event => event.stopPropagation())
   scope.add(() => host.remove())
   let onWatch = false
+  let onShorts = false
   let noticed = false
   let names: ReadonlyMap<string, string> | null = null
   let naming = false
@@ -154,10 +163,20 @@ function start(context: FeatureContext<"www", WatchButtonServices>): void {
     if (named && names === null) void loadNames()
     return watchStateText(view.state, { name: id => names?.get(id) ?? (id === "WL" ? i18n.message("picker_watchLater") : i18n.message("copy_missingPlaylist")), title: view.title }, i18n)
   }
+  // The Shorts column's short labels: Save, the share watched beside the pie, Added, Paused, Skipped (UI-YT-23).
+  function shortsLabel(view: ThisVideo | null): string {
+    switch (view?.state.kind) {
+      case "counting": case "partly": return i18n.message("watchShorts_percent", { percent: i18n.number(view.watched ?? 0) })
+      case "added": case "already-in": return i18n.message("watchShorts_added")
+      case "paused": return i18n.message("watchShorts_paused")
+      case "skipped": return i18n.message("watchShorts_skipped")
+      default: return i18n.message("watchShorts_save")
+    }
+  }
   function render() {
     const view = context.thisVideo.read()
     const shown = text(view)
-    label.textContent = shown.label ?? ""
+    label.textContent = onShorts ? shortsLabel(view) : shown.label ?? ""
     button.setAttribute("aria-label", shown.status)
     button.title = shown.status
     const share = pieShare(view)
@@ -172,12 +191,13 @@ function start(context: FeatureContext<"www", WatchButtonServices>): void {
       svg.append(path)
     }
     host.toggleAttribute("dark", document.documentElement.hasAttribute("dark"))
-    if (host.isConnected) relayout()
+    if (host.isConnected && !onShorts) relayout()
   }
   function place(): boolean {
     const current = options(view.read())
-    if (!current || !onWatch || document.fullscreenElement) { host.remove(); return true }
-    const target = document.querySelector(row)
+    if (!current || !(onWatch || onShorts && current.shorts) || document.fullscreenElement) { host.remove(); return true }
+    host.setAttribute("kind", onShorts ? "shorts" : "row")
+    const target = document.querySelector(onShorts ? shortsColumn : row)
     if (!target) return false
     if (!current.working) {
       host.remove()
@@ -185,20 +205,23 @@ function start(context: FeatureContext<"www", WatchButtonServices>): void {
       return true
     }
     if (host.parentElement !== target) {
-      target.append(host)
+      const sound = onShorts ? target.querySelector(shortsSound) : null
+      if (sound?.parentElement === target) target.insertBefore(host, sound)
+      else target.append(host)
       watchRow()
       // YouTube re-renders the row; one childList observer on it puts the button back (UI-YT-16).
-      watchRow = scope.observe(target, { childList: true }, () => { if (onWatch && !host.isConnected) place() })
+      watchRow = scope.observe(target, { childList: true }, () => { if ((onWatch || onShorts) && !host.isConnected) place() })
     }
     render()
-    relayout()
+    if (!onShorts) relayout()
     return true
   }
   function navigated(nav: NavData | null) {
     for (const cancel of retries) cancel()
     retries = []
     onWatch = nav?.navigation.kind === "watch"
-    if (!onWatch) { watchRow(); host.remove(); return }
+    onShorts = nav?.navigation.kind === "shorts"
+    if (!onWatch && !onShorts) { watchRow(); host.remove(); return }
     nudged = false
     for (const ms of retryMs) retries.push(scope.timeout(() => { if (host.isConnected) return; place() }, ms))
   }
@@ -226,7 +249,7 @@ function start(context: FeatureContext<"www", WatchButtonServices>): void {
     const autoAdd = shown && shown.video === video.data.videoId && shown.playlists.length ? await autoAddRows(shown) : null
     if (scope.disposed) return
     popovers.openWatchMenu({ video: video.data.videoId, ...(video.data.title ? { title: video.data.title } : {}), anchor: host,
-      status: text(shown).status, share: pieShare(shown), autoAdd,
+      status: text(shown).status, share: pieShare(shown), autoAdd, ...onShorts ? { side: "left" as const } : {},
       quickSave: current.quickSave ? { playlist: current.quickSave, name } : null,
       pickerKey: current.pickerKey ? display(current.pickerKey, context.os) : null })
   }
@@ -238,9 +261,9 @@ function start(context: FeatureContext<"www", WatchButtonServices>): void {
     stopNav = scope.add(page.watch("nav", navigated))
   }))
   scope.add(() => { stopNav(); watchRow(); for (const cancel of retries) cancel() })
-  view.subscribe(() => { if (onWatch) place() })
+  view.subscribe(() => { if (onWatch || onShorts) place() })
   scope.add(context.thisVideo.subscribe(() => { if (host.isConnected) render() }))
-  scope.on(document, "fullscreenchange", () => { if (onWatch) place() })
+  scope.on(document, "fullscreenchange", () => { if (onWatch || onShorts) place() })
   scope.on(button, "pointerenter", () => { void context.popovers() }, { once: true })
   scope.on(button, "click", () => { void open() })
 }

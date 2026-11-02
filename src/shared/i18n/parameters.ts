@@ -800,6 +800,11 @@ export type MessageParameters = {
   "browserMenu_saveTo": readonly []
   "browserMenu_quickSave": readonly []
   "browserMenu_choose": readonly []
+  "watchShorts_save": readonly []
+  "watchShorts_percent": readonly ["percent"]
+  "watchShorts_added": readonly []
+  "watchShorts_paused": readonly []
+  "watchShorts_skipped": readonly []
   "watchMenu_pause": readonly []
   "watchMenu_resume": readonly []
   "watchMenu_settings": readonly []
@@ -1560,6 +1565,10 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "recovery_replaceConfirm_body": ["account"],
   "recovery_restored": ["account"],
   "sync_fullLargest": ["largest"],
+  "quickSave_idle": ["list"],
+  "quickSave_saved": ["list"],
+  "quickSave_moreKey": ["key"],
+  "watchShorts_percent": ["percent"],
   "filter_removeChannel": ["channel"],
   "autoAddList_options": ["playlist"],
   "autoAddList_default": ["percent"],

@@ -23,10 +23,11 @@ const homeNav = { pageType: "HOME", video: null, navigation: { kind: "other" } }
 const running: (() => void)[] = []
 afterEach(() => { for (const stop of running.splice(0)) stop() })
 
-function buttonView(state: "working" | "not-working" = "working"): SiteView<"www"> {
+function buttonView(state: "working" | "not-working" = "working", shorts = false): SiteView<"www"> {
   const base = wireView("www", true)
   if (base.site !== "www") throw Error("Expected a www view")
-  return { ...base, features: base.features.map(feature => feature.id === "shortcuts" ? { ...feature, options: { ...feature.options, picker: altShiftP } } : feature),
+  return { ...base, features: base.features.map(feature => feature.id === "shortcuts" ? { ...feature, options: { ...feature.options, picker: altShiftP } }
+    : feature.id === "watch-button" ? { ...feature, options: { ...feature.options, shorts } } : feature),
     statuses: base.statuses.map(status => status.feature === "watch-button" ? { ...status, state } : status) } as SiteView<"www">
 }
 function actionRow() {
@@ -36,7 +37,7 @@ function actionRow() {
   return buttons
 }
 
-function setup(state: "working" | "not-working" = "working") {
+function setup(state: "working" | "not-working" = "working", shorts = false) {
   const timers = clock()
   const thisVideo = createThisVideoChannel()
   const navs: ((nav: NavData) => void)[] = []
@@ -44,7 +45,7 @@ function setup(state: "working" | "not-working" = "working") {
   const popovers: Popovers = { openPicker() {}, openWatchMenu(request) { menus.push(request) }, isOpen: () => false, close() {} }
   const scope = new Scope({ document, onError: () => {} })
   void watchButton.start({ site: "www", scope, document, i18n: englishI18n(), os: "windows", thisVideo,
-    view: { read: () => buttonView(state), subscribe: () => () => {} },
+    view: { read: () => buttonView(state, shorts), subscribe: () => () => {} },
     page: { onState(listener: (state: { kind: string }) => void) { listener({ kind: "ready" }); return () => {} },
       watch(_stream: string, listener: (nav: NavData) => void) { navs.push(listener); return () => {} },
       run: async () => ({ ok: true, route: "r", data: { videoId: video, title: "First video", length: 60, kind: "video" } }) } as never,
@@ -247,4 +248,25 @@ test("a resize measures the row before YouTube does and sizes the button to fit"
   expect(host.getAttribute("fit")).toBe("hidden")
   save.remove(); window.dispatchEvent(new Event("resize"))
   expect(host.getAttribute("fit")).toBe("icon")
+})
+
+test("with On Shorts too, the button joins the Short's action column before its sound button, with its short labels (UI-YT-23)", async () => {
+  const shortsNav = { pageType: "SHORTS", video: null, navigation: { kind: "shorts", videoId: video } } as unknown as NavData
+  const reel = document.createElement("ytd-reel-video-renderer"); reel.setAttribute("is-active", "")
+  const column = document.createElement("reel-action-bar-view-model"), sound = document.createElement("pivot-button-view-model")
+  column.append(document.createElement("div"), sound); reel.append(column); document.body.append(reel)
+  const off = setup("working", false)
+  off.navigate(shortsNav); off.timers.advance(0)
+  expect(off.host()).toBeNull()
+  running.splice(0).forEach(stop => stop())
+  document.body.append(reel)
+  const f = setup("working", true)
+  f.navigate(shortsNav); f.timers.advance(0)
+  expect(f.host()?.nextElementSibling).toBe(sound)
+  expect(f.host()?.getAttribute("kind")).toBe("shorts")
+  expect(f.button()?.textContent).toBe("Save")
+  f.thisVideo.publish(counting())
+  expect(f.button()?.textContent).toBe("30 %")
+  f.thisVideo.publish(counting({ state: { kind: "skipped" } }))
+  expect(f.button()?.textContent).toBe("Skipped")
 })
