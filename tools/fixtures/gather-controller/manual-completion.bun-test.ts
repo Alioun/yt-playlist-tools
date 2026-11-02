@@ -266,7 +266,8 @@ describe("the real AddFlow execution adapter over Tabs", () => {
       return { ok: false, reason: "unavailable" }
     }
     // The settings owner is the composition's Store port. Only the page-native job runner and the browser tab strip are fakes.
-    const owner: Owner = { shared: () => ({ on: true, feedback: true }), account: () => ({ targets: [], created: {} }), writable: () => true, mark: () => {} }
+    const owner: Owner = { shared: () => ({ on: true, feedback: true }), account: () => ({ targets: [], created: {} }), writable: () => true, mark: () => {},
+      recentAdds: () => true, titles: () => ({}) }
     const flow = createAddFlow({
       execution: createTabsExecution(f.tabs.engine, async origin => ({ windowId: origin.windowId, incognito: origin.incognito, activeTabId: 10 })),
       owner, session: f.tabs.session, now: () => f.tabs.clock.now(), wait: async () => {}, generation: () => "adapter"

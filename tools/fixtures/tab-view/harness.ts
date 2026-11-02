@@ -30,7 +30,9 @@ export function viewWorld(seed = projectionSeed(), health = syntheticHealth()) {
       writable: () => !ended,
       shared() { throw Error("Unexpected synthetic feature write") },
       account() { throw Error("Unexpected synthetic destination read") },
-      mark() { throw Error("Unexpected synthetic playlist mark") }
+      mark() { throw Error("Unexpected synthetic playlist mark") },
+      recentAdds() { throw Error("Unexpected synthetic Recent adds read") },
+      titles() { throw Error("Unexpected synthetic Recent adds read") }
     },
     async execution() { throw Error("Unexpected synthetic job execution") },
     now: () => 1_000_000,

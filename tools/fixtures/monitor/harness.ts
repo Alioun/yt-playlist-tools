@@ -95,7 +95,9 @@ export function monitorWorld(seed = compactSeed()) {
     owner: { writable: () => !stopped,
       shared() { throw Error("Synthetic Monitor consumer never changes feature choices") },
       account() { throw Error("Synthetic Monitor consumer never executes destination jobs") },
-      mark() { throw Error("Synthetic Monitor consumer never marks a playlist") } },
+      mark() { throw Error("Synthetic Monitor consumer never marks a playlist") },
+      recentAdds() { throw Error("Synthetic Monitor consumer never lists an add") },
+      titles() { throw Error("Synthetic Monitor consumer never lists an add") } },
     async execution() { throw Error("Synthetic Monitor consumer never executes jobs") },
     now: world.clock.now, generation: () => "synthetic-monitor-add-flow",
     async wait() { throw Error("Synthetic Monitor consumer never waits on an AddFlow action") }

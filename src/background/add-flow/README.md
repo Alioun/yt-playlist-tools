@@ -20,7 +20,7 @@ await flow.quiesce()
 
 `execution(origin, site)` resolves a page through the later Tabs caller. It returns an account, a `lane` for one page load and seven typed job methods. Every invocation carries its account pin. Each actual request checks owner authority, lane failures, account pauses and its pin after waiting for the lane. The real executor must enforce that pin against the page's live account.
 
-`owner.shared(feature)` captures the feature's switch and Show feedback. For picker operations the later owner resolves `{ kind: "picker", opener }` to the opener's settings. `owner.account(feature, acct)` reads account targets and creation times. `owner.writable()` represents consent and lifecycle authority. Each `owner.mark(change, origin)` retains the private-window origin. The store owns private-window refusal. That wiring is not built.
+`owner.shared(feature)` captures the feature's switch and Show feedback. For picker operations the later owner resolves `{ kind: "picker", opener }` to the opener's settings. `owner.account(feature, acct)` reads account targets and creation times. `owner.writable()` represents consent and lifecycle authority. `owner.recentAdds()` reads Keep a list of recent adds, and `owner.titles(acct)` names the account's cached playlists, so every add with an added outcome outside a private window lists one Recent adds entry, and its Undo drops it (DATA-52). Each `owner.mark(change, origin)` retains the private-window origin. The store owns private-window refusal. That wiring is not built.
 
 `now()` is wall time. It drives recent-add memory, account pauses and new-playlist waits, and every persisted deadline compares across workers. `wait(ms)` serves only the new-playlist wait. AddFlow creates no timer. Shutdown interrupts that wait through its stopping promise.
 
@@ -83,6 +83,6 @@ Withdrawal, shutdown or owner loss permanently stops this coordinator and revoke
 
 ## Limits and later checks
 
-The gateway adapter, recorded YouTube proof, Tabs routing, native `storage.session` wiring, Clear all data, the Gather controller, Recent adds and UI containers remain later work. Normalized contracts prove no raw status, endpoint, response mapping or signed-in capability. No credential or cookie code is added. Native guarantees remain unproven, privacy approval pending and production activation held.
+The gateway adapter, recorded YouTube proof, Tabs routing, native `storage.session` wiring, Clear all data, the Gather controller, the popup's Recent adds view and UI containers remain later work. Normalized contracts prove no raw status, endpoint, response mapping or signed-in capability. No credential or cookie code is added. Native guarantees remain unproven, privacy approval pending and production activation held.
 
 The focused commands, intended-line probes, sensitivity proposals and static replay evidence live in `.audit/add-flow-completion-authoring-20261029/` and, for session integration, `.audit/session-owner-20261029/`. Runtime acceptance belongs to the sole runtime lease holder.

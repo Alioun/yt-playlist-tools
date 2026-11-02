@@ -115,6 +115,7 @@
         }
       },
       "pickerSortAZ": true,
+      "recentAdds": true,
       "paused": true,
       "account": {
         "kind": "signed-in",
@@ -312,6 +313,7 @@
         }
       },
       "pickerSortAZ": true,
+      "recentAdds": true,
       "paused": true,
       "account": {
         "kind": "signed-in",
@@ -497,6 +499,7 @@
         }
       },
       "pickerSortAZ": true,
+      "recentAdds": true,
       "paused": true,
       "account": {
         "kind": "signed-out"
@@ -619,6 +622,7 @@
         }
       },
       "pickerSortAZ": true,
+      "recentAdds": true,
       "paused": true,
       "account": {
         "kind": "unknown"

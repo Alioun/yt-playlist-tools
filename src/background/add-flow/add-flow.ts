@@ -49,9 +49,9 @@ export type Owner = {
   writable(): boolean
   mark(change: Mark, origin: Origin): void
   // `device.recentAdds` (DATA-52). Off, no add is listed in Recent adds.
-  recentAdds?(): boolean
+  recentAdds(): boolean
   // The account's known playlist titles, for Recent adds. An unknown title is listed as empty.
-  titles?(acct: AccountKey): Readonly<Partial<Record<PlaylistId, string>>>
+  titles(acct: AccountKey): Readonly<Partial<Record<PlaylistId, string>>>
 }
 // `now` is wall time, because persisted deadlines must compare across workers. `generation` names this engine so no handle outlives it by accident.
 export type Ports = {
@@ -528,7 +528,7 @@ export function createAddFlow(ports: Ports): AddFlow {
       : plan.closing.length ? { windowId: plan.windowId, closing: plan.closing } : { windowId: plan.windowId }
     const record = { id, at: ports.now(), auto, acct, playlist, added: [first, ...rest] as const, ...closedFacts }
     // A private gather is never listed in Recent adds.
-    const recent = scope === "normal" && plan?.recent && ports.owner.recentAdds?.() !== false ? { recent: { ...plan.recent, at: record.at } } : {}
+    const recent = scope === "normal" && plan?.recent && ports.owner.recentAdds() ? { recent: { ...plan.recent, at: record.at } } : {}
     const kept = await remember(scope, [{ kind: "gather", record, ...recent, ...refused }], revision)
     return kept.kind === "remembered" ? { kind: "gather", id } : null
   }
@@ -567,8 +567,8 @@ export function createAddFlow(ports: Ports): AddFlow {
   // DATA-52: each add with an *added* outcome is one entry, never from a private window, and its Undo removes it.
   function listRecent(scope: Scope, acct: AccountKey, request: AddRequest, outcomes: Readonly<Record<PlaylistId, ExplicitOutcome>>,
     undo: UndoHandle | null, revision: SessionRevision | undefined) {
-    if (scope !== "normal" || ports.owner.recentAdds?.() === false) return
-    const titles = ports.owner.titles?.(acct) ?? {}
+    if (scope !== "normal" || !ports.owner.recentAdds()) return
+    const titles = ports.owner.titles(acct)
     const [first, ...rest] = (Object.keys(outcomes) as PlaylistId[]).filter(id => outcomes[id]?.kind === "added").map(id => ({ id, title: titles[id] ?? "" }))
     if (!first) return
     const feature = request.via === "auto-add" ? "auto-add" : request.via === "shortcut" ? "shortcuts" : request.via === "quick-save" ? "quick-save" : request.opener
