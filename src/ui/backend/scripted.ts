@@ -5,6 +5,7 @@ import { createRpc } from "../../shared/rpc/rpc"
 import type { JsonObject } from "../../shared/contracts/json"
 import type { BackendOptions, LocalChange, LocalListener } from "./backend"
 import { createBackend } from "./core"
+import { gatherPush, type GatherPush } from "../../shared/contracts/ui-gather"
 
 export type ScriptedAnswer = { [K in keyof UiMessages]: { readonly kind: K; readonly result: UiMessages[K]["result"] } }[keyof UiMessages]
 export type ScriptedResponders = { readonly [K in keyof UiMessages]?: (payload: UiMessages[K]["payload"]) => UiMessages[K]["result"] }
@@ -19,6 +20,7 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
   let records = structuredClone(options.records ?? {})
   let grants = options.grants ?? { www: true, music: false, browserMenu: false }
   const listeners = new Set<LocalListener>(), reads: (readonly string[])[] = []
+  const pushListeners = new Set<(message: unknown) => unknown>()
   const answers = [...options.answers]
   const network = createMemoryNetwork<undefined>({ delivery: "immediate" })
   // No sender capability is used by this scripted endpoint. Authentication is exercised by the native consumer.
@@ -84,7 +86,8 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
       request: site => Promise.resolve(grants[site]),
       hasBrowserMenu: () => Promise.resolve(grants.browserMenu),
       requestCombined: () => Promise.resolve({ music: grants.music, browserMenu: grants.browserMenu })
-    }
+    },
+    pushes: { listen(receive) { pushListeners.add(receive); return () => { pushListeners.delete(receive) } } }
   }, options)
   return {
     backend,
@@ -92,6 +95,11 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
     listening: () => listeners.size,
     remaining: () => answers.length,
     grant(value: typeof grants) { grants = value },
+    /** The background's `ui.gatherProgress`; answers what the page answered, as the browser hands back the first answer. */
+    pushGather(payload: GatherPush): unknown {
+      for (const receive of [...pushListeners]) { const answer = receive(gatherPush(options.build, payload)); if (answer !== undefined) return answer }
+      return undefined
+    },
     replace(items: JsonObject, area = "local") {
       const changes: LocalChange = Object.fromEntries(Object.entries(items).map(([key, value]) => [key, { oldValue: records[key], newValue: value }]))
       if (area === "local") records = { ...records, ...structuredClone(items) }

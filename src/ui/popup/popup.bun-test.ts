@@ -27,7 +27,7 @@ function popup(records: JsonObject, respond: ScriptedResponders = {}, grants = {
     ...respond
   } })
   const page = {
-    backend: scripted.backend, i18n: englishI18n(), platform: { browser: "chrome", os: "windows" } as const, private: false,
+    backend: scripted.backend, i18n: englishI18n(), platform: { browser: "chrome", os: "windows" } as const, private: false, windowId: 1,
     open: (url: string) => { opened.push(url) }, openSettings: (hash?: string) => { opened.push(`settings${hash ? `#${hash}` : ""}`) },
     openFirstRun: () => { opened.push("first-run") }, applyTheme: () => {}, version: "2.0.0", beta: false, commands: { read: async () => ({ kind: "unavailable" }) as const, named: async () => null },
     canonical: async () => createI18n(scriptedMessages(), catalogue)
@@ -115,4 +115,62 @@ test("Recent adds names what made each add, Playing now and keys from any tab in
   const sheet = await screen.findByRole("dialog", { name: "Recent adds" })
   expect(await within(sheet).findByText(/^Playing now/)).toBeTruthy()
   expect(within(sheet).getByText(/^Keys from any tab/)).toBeTruthy()
+}, 20_000)
+
+const gatherOn = { ...agreed, "doc:settings": stamped({ gather: { on: true, feedback: true, to: "playlist", order: "newest", close: true } }),
+  [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" }, gather: "PLa" }), [`cache:${acct}`]: { listAt: 1, playlists: [{ id: "PLa", title: "Later" }], order: {}, created: [], labelAt: null } }
+const line = (text: string, action: unknown = null, tone = "confirmation") => ({ kind: "line", line: { text, tone, action } }) as never
+
+test("Gather answers in its row with Undo, and Undo answers there too", async () => {
+  const calls: string[] = []
+  popup(gatherOn, {
+    "ui.gathers": () => { calls.push("gathers"); return { kind: "gathers", running: false, line: null } },
+    "ui.gather": () => { calls.push("gather"); return line("Saved 3 videos to Later and closed their tabs.", { kind: "undo", id: "g1" }) },
+    "ui.gatherUndo": payload => { calls.push(`undo ${payload.id}`); return line("Removed 3 videos from Later and reopened their tabs.") }
+  })
+  await userEvent.click(await screen.findByRole("button", { name: "Gather" }))
+  expect(await screen.findByText("Saved 3 videos to Later and closed their tabs.")).toBeTruthy()
+  await userEvent.click(screen.getByRole("button", { name: "Undo" }))
+  expect(await screen.findByText("Removed 3 videos from Later and reopened their tabs.")).toBeTruthy()
+  expect(screen.queryByRole("button", { name: "Undo" })).toBeNull()
+  expect(calls).toEqual(["gathers", "gather", "undo g1"])
+})
+
+test("Enter gathers while nothing in the popup has focus, and keeps its own meaning on a focused control", async () => {
+  let gathers = 0
+  popup(gatherOn, {
+    "ui.gathers": () => ({ kind: "gathers", running: false, line: { text: "Last gather: 2 videos into Later, 5 minutes ago", tone: "muted", action: { kind: "undo", id: "g0" } } }),
+    "ui.gather": () => { gathers++; return line("Gathered 4 videos into YouTube's player.") }
+  })
+  expect(await screen.findByText("Last gather: 2 videos into Later, 5 minutes ago")).toBeTruthy()
+  screen.getByRole("switch", { name: "Gather tabs" }).focus()
+  await userEvent.keyboard("{Enter}")
+  expect(gathers).toBe(0)
+  ;(document.activeElement as HTMLElement | null)?.blur()
+  await userEvent.keyboard("{Enter}")
+  expect(await screen.findByText("Gathered 4 videos into YouTube's player.")).toBeTruthy()
+  expect(gathers).toBe(1)
+})
+
+test("a gather's progress and result pushed for this window show in the row, and only its result counts as shown", async () => {
+  const { scripted } = popup(gatherOn, { "ui.gathers": () => ({ kind: "gathers", running: false, line: null }) })
+  await screen.findByRole("button", { name: "Gather" })
+  expect(scripted.pushGather({ windowId: 1, running: true, line: { text: "Checking 12 of 40…", tone: "muted", action: null } })).toBeUndefined()
+  expect(await screen.findByText("Checking 12 of 40…")).toBeTruthy()
+  expect(screen.getByRole("button", { name: "Gather" })).toHaveAttribute("aria-disabled", "true")
+  expect(scripted.pushGather({ windowId: 1, running: false, line: { text: "Saved 40 videos to Later.", tone: "confirmation", action: { kind: "undo", id: "g2" } } }))
+    .toEqual({ shown: true })
+  expect(await screen.findByText("Saved 40 videos to Later.")).toBeTruthy()
+  expect(scripted.pushGather({ windowId: 7, running: false, line: { text: "Elsewhere", tone: "confirmation", action: null } })).toBeUndefined()
+})
+
+test("a failure shows its own action, and a gather with no gather playlist opens the chooser", async () => {
+  const { opened } = popup({ ...gatherOn, [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" } }) }, {
+    "ui.gathers": () => ({ kind: "gathers", running: false, line: null }),
+    "ui.gather": () => line("Choose a gather playlist for Ann first.", { kind: "choose" }, "muted")
+  })
+  await userEvent.click(await screen.findByRole("button", { name: "Gather" }))
+  expect(await screen.findByText("Choose a gather playlist for Ann first.")).toBeTruthy()
+  expect(await screen.findByRole("button", { name: "Gather playlist: No playlist chosen" }, { timeout: 5000 })).toHaveAttribute("aria-expanded", "true")
+  expect(opened).toEqual([])
 }, 20_000)

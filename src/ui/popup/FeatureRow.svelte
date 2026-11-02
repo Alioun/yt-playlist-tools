@@ -8,7 +8,7 @@
 
   // A popup feature row (UI-POP-19, UI-POP-20): the glyph tile, name, summary, a health or held line and the
   // switch. Only a row that's on unfolds, and its content is the caller's lazy part.
-  let { feature, name, summary, on, held = null, line = null, lineTone = "muted", unfoldable = false, disabled = false, onswitch, action, details }: {
+  let { feature, name, summary, on, held = null, line = null, lineTone = "muted", unfoldable = false, disabled = false, onswitch, action, lineAction, details }: {
     feature: FeatureId
     name: string
     summary: string
@@ -20,6 +20,8 @@
     disabled?: boolean
     onswitch: (next: boolean) => void
     action?: Snippet
+    /** The line's own button, such as a gather's Undo (UI-POP-37). */
+    lineAction?: Snippet
     details?: Snippet
   } = $props()
   const uid = $props.id()
@@ -41,7 +43,7 @@
       {/if}
       {#if summary}<p class="text-muted-foreground truncate text-[12px]">{summary}</p>{/if}
       {#if held}<p id="{uid}-held" class="text-warning text-[12px]">{held}</p>{/if}
-      {#if line}<p class={clsx("text-[12px]", lineTone === "warning" ? "text-warning" : lineTone === "destructive" ? "text-destructive" : "text-muted-foreground")} role="status">{line}</p>{/if}
+      {#if line}<p class={clsx("text-[12px]", lineTone === "warning" ? "text-warning" : lineTone === "destructive" ? "text-destructive" : "text-muted-foreground")} role="status">{line}{#if lineAction} {@render lineAction()}{/if}</p>{/if}
     </div>
     {#if action}{@render action()}{/if}
     <Switch checked={on} held={held !== null} label={name} describedby={held ? `${uid}-held` : undefined} {disabled} onchange={onswitch} />

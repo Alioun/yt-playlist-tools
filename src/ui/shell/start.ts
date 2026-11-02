@@ -44,6 +44,8 @@ export function startExtensionPage(native: ExtensionPagePort, navigatorPlatform:
   const open = (url: string) => { void native.tabs.create({ url }) }
   return {
     backend, i18n, platform, private: native.extension?.inIncognitoContext === true, open, commands: createCommandKeys(native.commands),
+    /** The popup's own window; null on pages that open in a tab. */
+    windowId: window.windowId ?? null,
     version: native.runtime.getManifest().version, beta: build.mode === "beta",
     /** Follows Settings › Appearance on the popup, settings and first run (UI-IA-06, UI-SET-15). */
     applyTheme(theme: "system" | "light" | "dark") { stopTheme(); stopTheme = followTheme(document.documentElement, theme, scheme) },

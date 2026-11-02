@@ -12,6 +12,7 @@ import { firstRunKeys, readFirstRunSnapshot, type ReadScope, type UiSnapshot } f
 import { createRpcCaller } from "../../shared/rpc/rpc"
 import type { Backend, BackendOptions, BackendPorts, LocalListener, PageEvent, UiEvent } from "./backend"
 import { pageViewKeeps, readPageView, type PageView } from "../../shared/model/page-view"
+import { isGatherPush, type GatherPush } from "../../shared/contracts/ui-gather"
 
 import { confirmsAutoAdd, type AutoAddReadChange, type AutoAddReadAnswer, type AutoAddChoiceChange, type AutoAddChoiceAnswer } from "../../shared/contracts/auto-add-choice"
 
@@ -239,6 +240,22 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
       dispose: stop
     }
   }
+  const gatherListeners = new Set<(push: GatherPush) => boolean>()
+  let stopPushes: (() => void) | null = null
+  function watchGather(fn: (push: GatherPush) => boolean) {
+    if (disposed || !ports.pushes) return () => {}
+    gatherListeners.add(fn)
+    stopPushes ??= ports.pushes.listen(message => {
+      if (disposed || !isGatherPush(message, options.build)) return undefined
+      let shown = false
+      for (const listener of [...gatherListeners]) { try { shown = listener(message.payload) || shown } catch {} }
+      return shown ? { shown: true } : undefined
+    })
+    return () => {
+      gatherListeners.delete(fn)
+      if (!gatherListeners.size) { stopPushes?.(); stopPushes = null }
+    }
+  }
   function playlistList(request: Parameters<Backend["playlistList"]>[0]) {
     const enabled = !disposed && playlistLists.size < 256
     const operation = createPlaylistOperation(call, { ...request }, enabled ? "ready" : disposed ? "disposed" : "capacity", () => {
@@ -260,6 +277,9 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
     rpc.dispose()
     for (const entry of views.values()) entry.listeners.clear()
     pageListeners.clear()
+    gatherListeners.clear()
+    stopPushes?.()
+    stopPushes = null
     removeUnusedListener()
   }
   const access: Backend["access"] = {
@@ -274,6 +294,6 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
       return change(requested)
     }
   }, requestedChange, settings)
-  return { keys, load: scope => read(view(scope)), watch, loadPage: readPage, watchPage, change, changeFeatureSetting, call, playlistList, creation, access, dispose,
+  return { keys, load: scope => read(view(scope)), watch, loadPage: readPage, watchPage, change, changeFeatureSetting, call, watchGather, playlistList, creation, access, dispose,
     clearAll: payload => disposed ? Promise.resolve({ kind: "failed", failure: "disposed" }) : rpc.call("ui.clearAll", payload) }
 }

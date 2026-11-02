@@ -3,7 +3,7 @@ import { createFirstRunHarness } from "../../../tools/fixtures/first-run-backend
 import { matchesRenderedDisclosure, FIRST_RUN_DISCLOSURE_VERSION } from "./rendered-disclosure"
 import catalogue from "../../public/_locales/en/messages.json"
 import { englishFirstRunText, scriptedMessages } from "../../../tools/fixtures/localization/scripted"
-import { createBrowserI18n } from "./browser"
+import { createBrowserBackend, createBrowserI18n } from "./browser"
 
 test("Chrome starts one combined native request before awaiting permission observations", async () => {
   const h = await createFirstRunHarness()
@@ -135,4 +135,31 @@ test("a fresh first-run context starts no account service or chooser work", asyn
     expect(h.stats().accountReads).toBe(0)
     expect(h.stats().chooserCalls).toBe(0)
   } finally { await h.dispose() }
+})
+
+test("a page hears Gather's pushes from the background only, and answers shown only when it showed one", async () => {
+  type Listener = (message: unknown, sender: { id?: string; tab?: unknown }, respond: (answer?: unknown) => void) => boolean
+  const listeners = new Set<Listener>()
+  const backend = createBrowserBackend({
+    storage: { local: { get: async () => ({}) }, onChanged: { addListener() {}, removeListener() {} } },
+    runtime: { id: "perchling", sendMessage: async () => undefined, getManifest: () => ({ version: "2.0.0" }) as never,
+      onMessage: { addListener: (fn: Listener) => { listeners.add(fn) }, removeListener: (fn: Listener) => { listeners.delete(fn) } } as never },
+    permissions: { contains: async () => true, request: async () => true }
+  } as never, { build: "page-test" as never, deadline: () => () => {}, browser: "chrome" })
+  const heard: string[] = []
+  const stop = backend.watchGather(push => { heard.push(push.line?.text ?? ""); return !push.running })
+  const deliver = (payload: unknown, sender: { id?: string; tab?: unknown }) => {
+    const answers: unknown[] = []
+    for (const listener of listeners) listener({ v: 1, build: "page-test", kind: "ui.gatherProgress", payload }, sender, answer => { answers.push(answer) })
+    return answers
+  }
+  const line = (text: string) => ({ text, tone: "muted", action: null })
+  expect(deliver({ windowId: 1, running: true, line: line("Checking 1 of 3…") }, { id: "perchling" })).toEqual([])
+  expect(deliver({ windowId: 1, running: false, line: line("Saved 3 videos to Later.") }, { id: "perchling" })).toEqual([{ shown: true }])
+  expect(deliver({ windowId: 1, running: false, line: line("From a page") }, { id: "perchling", tab: { id: 4 } })).toEqual([])
+  expect(deliver({ windowId: 1, running: false, line: line("From elsewhere") }, { id: "another-extension" })).toEqual([])
+  expect(heard).toEqual(["Checking 1 of 3…", "Saved 3 videos to Later."])
+  stop()
+  expect(listeners.size).toBe(0)
+  backend.dispose()
 })

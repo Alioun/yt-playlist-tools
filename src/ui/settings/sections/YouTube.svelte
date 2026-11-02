@@ -10,6 +10,7 @@
   import type { PageState } from "../../lib/page-state.svelte"
   import FeatureSwitchCard from "../FeatureSwitchCard.svelte"
   import OptionSwitch from "../OptionSwitch.svelte"
+  import { GatherRow } from "../../lib/gather.svelte"
 
   // Settings › YouTube (UI-SET-10).
   let { pageState, features }: { pageState: PageState; features: ReturnType<typeof createFeatureCopy> } = $props()
@@ -17,7 +18,11 @@
   const settings = $derived(pageState.settings)
   const keyText = keyRecorderText(i18n)
   const keys = createKeySettingsClient({ backend, platform, commands: untrack(() => pageState.page.commands), text: keyText, chooser: { open: async () => {} } })
-  onDestroy(() => keys.dispose())
+  // "Last gather: …", with Undo while it's offered (UI-SET-24).
+  const gatherRow = new GatherRow(untrack(() => pageState.page))
+  onDestroy(() => { keys.dispose(); gatherRow.dispose() })
+  const gatherOn = $derived(settings?.gather.on === true && pageState.agreed)
+  $effect(() => { if (gatherOn) untrack(() => { void gatherRow.refresh() }) })
   let pctFailed = $state(false)
   async function defaultPct(value: number) {
     pctFailed = false
@@ -79,6 +84,11 @@
     <FeatureSwitchCard {pageState} {features} feature="gather">
       <FeatureDetails {pageState} feature="gather" variant="settings" />
       <OptionSwitch {pageState} field="gather.feedback" checked={settings.gather.feedback} label={i18n.message("set_feedback")} note={i18n.message("set_gatherFeedbackNote")} />
+      {#if gatherOn && gatherRow.line}
+        {@const action = gatherRow.line.action}
+        <p class="mt-2 text-[12.5px]" role="status" data-gather-line>{gatherRow.line.text}
+          {#if action?.kind === "undo"}<Button size="sm" variant="link" disabled={gatherRow.running} onclick={() => gatherRow.undo(action.id)}>{i18n.message("toast_action_undo")}</Button>{/if}</p>
+      {/if}
       <p class="text-muted-foreground mt-2 text-[12.5px]">{i18n.message("set_gatherKeys")}</p>
       <a class="text-primary mt-1 block text-[12.5px] hover:underline" href="https://github.com/karimelgazar/gathertube" target="_blank" rel="noreferrer">{i18n.message("set_gatherCredit")}</a>
     </FeatureSwitchCard>

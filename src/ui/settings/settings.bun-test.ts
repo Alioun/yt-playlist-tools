@@ -97,3 +97,16 @@ test("the diagnostics report names features and statuses, never the account", as
   expect(report.textContent).not.toContain("Ann")
   expect(screen.getByText("Partly working")).toBeTruthy()
 }, 20_000)
+
+test("the Gather tabs card shows the last gather with Undo, and Undo's answer in its place", async () => {
+  const undone: string[] = []
+  settings({ ...agreed, "doc:settings": stamped({ gather: { on: true, feedback: true, to: "player", order: "newest", close: false } }) }, {
+    "ui.gathers": () => ({ kind: "gathers", running: false, line: { text: "Last gather: 3 videos into Later, 5 minutes ago", tone: "muted", action: { kind: "undo", id: "g7" } } }),
+    "ui.gatherUndo": payload => { undone.push(payload.id); return { kind: "line", line: { text: "Removed 3 videos from Later and reopened their tabs.", tone: "confirmation", action: null } } }
+  }, "#feature-gather")
+  const line = await screen.findByText("Last gather: 3 videos into Later, 5 minutes ago", {}, { timeout: 5000 })
+  await userEvent.click(within(line).getByRole("button", { name: "Undo" }))
+  expect(await screen.findByText("Removed 3 videos from Later and reopened their tabs.", {}, { timeout: 5000 })).toBeTruthy()
+  expect(undone).toEqual(["g7"])
+  expect(screen.getByRole("link", { name: "Based on GatherTube by Karim Elgazar" })).toHaveAttribute("href", "https://github.com/karimelgazar/gathertube")
+}, 20_000)

@@ -15,13 +15,16 @@
   import { summary } from "../lib/summaries"
   import { healthLine, stripLine } from "../lib/health"
   import { relativeTime } from "../lib/time"
+  import { GatherRow } from "../lib/gather.svelte"
+  import type { GatherLineAction } from "../../shared/contracts/ui-gather"
   import FeatureRow from "./FeatureRow.svelte"
 
   let { page, markSrc }: { page: ExtensionPage; markSrc: string } = $props()
   const pageState = new PageState(untrack(() => page))
   const { i18n } = untrack(() => page)
   const features = createFeatureCopy(i18n)
-  onDestroy(() => pageState.dispose())
+  const gatherRow = new GatherRow(untrack(() => page))
+  onDestroy(() => { pageState.dispose(); gatherRow.dispose() })
   const SITE_KEY = "perchling.popupSite"
   let chosenSite = $state<Site | null>(null)
   let lines = $state<Partial<Record<PageFeatureId, { text: string; tone: "muted" | "warning" | "destructive" }>>>({})
@@ -39,6 +42,34 @@
   const strip = $derived(pageState.status?.kind === "status" ? stripLine(i18n, features, pageState.status.health.filter(row => row.site === site)) : null)
   const access = $derived(pageState.access ?? { www: true, music: true, browserMenu: true })
   const recentButton = $derived(pageState.agreed && device?.recentAdds !== false)
+  const signInUrl = "https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fwww.youtube.com%2F"
+  // Gather tabs' row (UI-POP-35): its button, Enter while nothing has focus, and the line's one action.
+  const gatherReady = $derived(settings !== null && isOn(settings, "gather") && pageState.agreed && held("gather") === null)
+  let choosing = $state(false)
+  $effect(() => { if (gatherReady) untrack(() => { void gatherRow.refresh() }) })
+  async function gather(retry?: string) {
+    choosing = false
+    const answer = await gatherRow.gather(retry)
+    if (answer?.action?.kind === "choose") choosing = true
+  }
+  function gatherKey(event: KeyboardEvent) {
+    if (event.key !== "Enter" || event.defaultPrevented || event.repeat || sheet !== null || site !== "www" || !gatherReady || gatherRow.running) return
+    const focused = document.activeElement
+    if (focused && focused !== document.body) return
+    event.preventDefault()
+    void gather()
+  }
+  const actionLabels = { undo: "toast_action_undo", retry: "toast_action_try_again", choose: "toast_action_choose", "sign-in": "toast_action_sign_in",
+    "open-youtube": "picker_openYouTube" } as const satisfies Record<GatherLineAction["kind"], Parameters<typeof i18n.message>[0]>
+  function gatherAct(action: GatherLineAction) {
+    switch (action.kind) {
+      case "undo": void gatherRow.undo(action.id); break
+      case "retry": void gather(action.id); break
+      case "choose": choosing = true; break
+      case "sign-in": page.open(signInUrl); break
+      case "open-youtube": page.open("https://www.youtube.com/"); break
+    }
+  }
 
   function select(next: Site) {
     chosenSite = next
@@ -81,7 +112,7 @@
     switch (action) {
       case "review": page.openFirstRun(); break
       case "give-access": if (shownBanner.kind === "access") void page.backend.access.request(shownBanner.site).then(() => pageState.refreshAccess()); break
-      case "sign-in": page.open("https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fwww.youtube.com%2F"); break
+      case "sign-in": page.open(signInUrl); break
       case "open-youtube": page.open("https://www.youtube.com/"); break
       case "details": page.openSettings("everywhere"); break
       case "show": page.openSettings("feature-auto-add"); break
@@ -92,6 +123,7 @@
   function line(feature: PageFeatureId) {
     const own = lines[feature]
     if (own) return own
+    if (feature === "gather" && gatherReady && gatherRow.line) return { text: gatherRow.line.text, tone: gatherRow.line.tone === "failure" ? "destructive" as const : "muted" as const }
     const health = pageState.status?.kind === "status" ? pageState.status.health.find(row => row.feature === feature && row.site === site) : undefined
     const text = healthLine(i18n, health)
     if (text) return { text, tone: "warning" as const }
@@ -101,6 +133,15 @@
   const summaryFacts = $derived(settings ? { settings, setup: pageState.setup, account: pageState.accountName(), signedIn: pageState.signedIn,
     paused: pageState.paused, os: page.platform.os, title: (id: Parameters<typeof pageState.title>[0]) => pageState.title(id) } : null)
 </script>
+
+<svelte:window onkeydown={gatherKey} />
+
+{#snippet gatherAction()}
+  {#if gatherRow.line?.action && !lines.gather}
+    {@const action = gatherRow.line.action}
+    <Button variant="link" size="sm" disabled={gatherRow.running} onclick={() => gatherAct(action)}>{i18n.message(actionLabels[action.kind])}</Button>
+  {/if}
+{/snippet}
 
 <div class="bg-background text-foreground relative flex max-h-[600px] min-h-[420px] w-[360px] flex-col" data-popup>
   <header class="header-line relative flex h-[58px] shrink-0 items-center gap-2.5 px-3">
@@ -153,12 +194,14 @@
                 <FeatureRow {feature} name={name(feature)} summary={summary(i18n, feature, summaryFacts)} on={isOn(settings, feature)}
                   held={reason ? i18n.message(heldMessage[reason]) : null} line={shownLine?.text ?? null} lineTone={shownLine?.tone}
                   disabled={!pageState.editable} unfoldable={pageState.agreed && ["auto-add", "shortcuts", "quick-save", "gather"].includes(feature)}
-                  onswitch={next => toggle(feature, next)}>
+                  lineAction={feature === "gather" ? gatherAction : undefined} onswitch={next => toggle(feature, next)}>
                   {#snippet action()}
                     {#if reason === "site-access" || reason === "browser-menu"}
                       <Button size="sm" variant="outline" onclick={() => giveAccess(feature)}>{i18n.message(reason === "browser-menu" ? "held_allow" : "held_giveAccess")}</Button>
                     {:else if feature === "auto-add" && isOn(settings, feature) && pageState.agreed && !pageState.private}
                       <Button size="sm" variant="outline" pending={pausing} onclick={pause}>{i18n.message(pageState.paused ? "pop_resume" : "pop_pause")}</Button>
+                    {:else if feature === "gather" && gatherReady}
+                      <Button size="sm" variant="outline" pending={gatherRow.running} disabled={!pageState.editable} onclick={() => gather()}>{i18n.message("gather_button")}</Button>
                     {/if}
                   {/snippet}
                   {#snippet details()}
@@ -169,6 +212,14 @@
                 </FeatureRow>
               {/each}
             </ul>
+            {#if choosing && gatherReady && pageState.acct}
+              {#await import("../features/DestinationChooser.svelte") then { default: Chooser }}
+                <div class="mt-2" data-gather-chooser>
+                  <Chooser {pageState} destination={{ kind: "gather" }} label={i18n.message("gatherOpt_playlistLabel")} opened
+                    purpose={{ kind: "gather", accountName: pageState.accountName() }} onchosen={() => { void gather() }} />
+                </div>
+              {/await}
+            {/if}
           {:else if site === "music"}
             {#await import("./MusicTab.svelte") then { default: Music }}
               <Music {pageState} {features} ontoggle={toggle} ongiveaccess={giveAccess} />

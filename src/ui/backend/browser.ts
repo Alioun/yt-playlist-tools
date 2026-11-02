@@ -11,7 +11,7 @@ export type BrowserBackendPort = {
     readonly local: Pick<NativeBrowser["storage"]["local"], "get">
     readonly onChanged: Pick<NativeBrowser["storage"]["onChanged"], "addListener" | "removeListener">
   }
-  readonly runtime: Pick<NativeBrowser["runtime"], "sendMessage" | "getManifest">
+  readonly runtime: Pick<NativeBrowser["runtime"], "sendMessage" | "getManifest"> & Partial<Pick<NativeBrowser["runtime"], "id" | "onMessage">>
   readonly permissions: Pick<NativeBrowser["permissions"], "contains" | "request">
 }
 type PermissionQuery = { origins?: string[]; permissions?: ["contextMenus"] }
@@ -48,7 +48,20 @@ export function createBrowserBackend(native: BrowserBackendPort, options: Backen
       all: () => native.storage.local.get(null),
       onChanged: native.storage.onChanged
     },
-    send: message => native.runtime.sendMessage(message), access
+    send: message => native.runtime.sendMessage(message), access,
+    pushes: { listen(receive) {
+      const onMessage = native.runtime.onMessage
+      if (!onMessage) return () => {}
+      // Only the background reaches pages without a sender tab; a content script's message names its tab.
+      const listener = (message: unknown, sender: { readonly id?: string; readonly tab?: unknown }, respond: (answer?: unknown) => void) => {
+        if (sender.tab !== undefined || sender.id !== native.runtime.id) return false
+        const answer = receive(message)
+        if (answer !== undefined) respond(answer)
+        return false
+      }
+      onMessage.addListener(listener as never)
+      return () => onMessage.removeListener(listener as never)
+    } }
   }, options)
 }
 

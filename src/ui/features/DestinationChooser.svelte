@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte"
   import { pickerSource } from "./source"
   import { PlaylistChooser, createPickerText, type ChooserContext, type PickerEvent } from "../picker"
   import type { SetupDestination } from "../../shared/contracts/first-run"
@@ -7,17 +8,21 @@
   import type { PageState } from "../lib/page-state.svelte"
 
   // One setup destination's chooser (UI-PICK-19): the quick-save, YouTube Music save, gather or a shortcut's playlist.
-  let { pageState, destination, site = "www", label, purpose, everyAccount = false }: {
+  let { pageState, destination, site = "www", label, purpose, everyAccount = false, opened = false, onchosen }: {
     pageState: PageState
     destination: SetupDestination
     site?: Site
     label: string
     purpose: ChooserContext["purpose"]
     everyAccount?: boolean
+    /** Opens the picker at once, as a gather with no gather playlist does (YT-GT-16). */
+    opened?: boolean
+    /** A playlist was chosen or made here. */
+    onchosen?: () => void
   } = $props()
   const { i18n } = pageState.page
   const text = createPickerText(i18n)
-  let open = $state(false)
+  let open = $state(untrack(() => opened))
   const acct = $derived(pageState.acct)
   const setup = $derived(pageState.setup?.setup ?? null)
   const current = $derived.by(() => {
@@ -29,8 +34,10 @@
     : { kind: "available" } as const)
   const source = (context: ChooserContext) => pickerSource(pageState, context.account, context.site, { kind: "destination", destination })
   function outcome(event: PickerEvent) {
-    if (event.kind === "tick" && event.outcome.kind === "changed") open = false
-    if (event.kind === "create" && event.outcome.kind === "created") open = false
+    if (event.kind === "tick" && event.outcome.kind === "changed" || event.kind === "create" && event.outcome.kind === "created") {
+      open = false
+      onchosen?.()
+    }
   }
 </script>
 

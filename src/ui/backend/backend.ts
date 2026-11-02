@@ -12,6 +12,7 @@ import type { ReadScope, UiSnapshot } from "../../shared/model/first-run-view"
 import type { PageView } from "../../shared/model/page-view"
 import type { Deadline, RpcOutcome } from "../../shared/rpc/rpc"
 import type { ClearAllPayload, ClearAllAnswer } from "../../shared/contracts/clear-all"
+import type { GatherPush } from "../../shared/contracts/ui-gather"
 
 import type { AutoAddReadChange, AutoAddReadAnswer, AutoAddChoiceChange, AutoAddChoiceAnswer } from "../../shared/contracts/auto-add-choice"
 export type { AutoAddReadChange, AutoAddReadAnswer, AutoAddChoiceChange, AutoAddChoiceAnswer, AutoAddEdit, AutoAddFact } from "../../shared/contracts/auto-add-choice"
@@ -60,6 +61,8 @@ export type Backend = {
   change(change: SharedSettingChange): Promise<SharedSettingAnswer>
   change(change: KeySettingChange): Promise<KeySettingAnswer>
   call<K extends UiCall>(kind: K, args: UiArgs<K>): Promise<UiResult<K>>
+  /** Gather tabs' pushes, `ui.gatherProgress` (ARC-MSG-16). A listener answers true when it showed a result, which only the popup on that window does. */
+  watchGather(fn: (push: GatherPush) => boolean): () => void
   playlistList(request: { readonly acct: AccountKey; readonly site: Site; readonly refresh?: boolean }): UiPlaylistOperation
   creation(request: { readonly acct: AccountKey; readonly site: Site }): UiCreation
   readonly access: Access
@@ -74,4 +77,6 @@ export type BackendPorts = {
   readonly local: ReadOnlyLocal
   readonly send: (message: unknown) => Promise<unknown>
   readonly access: Access
+  /** Messages the background sends to extension pages; the adapter passes on only the background's own. */
+  readonly pushes?: { listen(receive: (message: unknown) => unknown): () => void }
 }
