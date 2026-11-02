@@ -2,6 +2,7 @@ import { isTabView, type DueNotice, type FeatureStatus, type TabView } from "../
 import type { Job } from "../../../src/shared/contracts"
 import { isVideoId } from "../../../src/shared/model/validation"
 import { createFeatureHost, type SiteView } from "../../../src/site/core/feature-host"
+import { linkedVideo, recogniseWwwItem } from "../../../src/site/core/items-www"
 import { Scope } from "../../../src/site/core/scope"
 import { cardMenuFeature, type CardMenuServices } from "../../../src/site/features/card-menu/card-menu"
 import { checked, flush, harness, snapshot } from "../page-link/support"
@@ -83,7 +84,7 @@ export async function cardMenuHarness(options: {
   const host = createFeatureHost<"www", CardMenuServices>({
     site: "www",
     createScope() { const scope = new Scope({ document, onError: error => { errors.push(error) } }); scopes.push(scope); return scope },
-    createContext: () => ({ document, page: page.link, notice: options.notice ?? { request: due => { requests.push(due) } } }),
+    createContext: () => ({ document, items: { recognise: recogniseWwwItem, linkedVideo }, page: page.link, notice: options.notice ?? { request: due => { requests.push(due) } } }),
     onEmpty: () => {}, onError: failure => { errors.push(failure) }
   })
   const observer = new Scope({ document, onError: error => { errors.push(error) } })

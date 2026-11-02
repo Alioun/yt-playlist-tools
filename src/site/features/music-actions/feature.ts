@@ -1,6 +1,6 @@
 import type { ItemInfo, Job, JobInvocation, JobOf, JobResult, Stream, StreamData } from "../../../shared/contracts"
 import type { I18n } from "../../../shared/i18n"
-import { display } from "../../../shared/keys/policy"
+import { display } from "$kit"
 import type { Key, PlaylistId } from "../../../shared/model"
 import type { TabActions } from "../../core/actions"
 import type { FeatureContext, FeatureDefinition, SiteView } from "../../core/feature-host"

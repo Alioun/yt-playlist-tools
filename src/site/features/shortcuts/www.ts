@@ -5,11 +5,11 @@ import type { TabActions } from "../../core/actions"
 import type { FeatureContext, FeatureDefinition, SiteView } from "../../core/feature-host"
 import type { WwwItems } from "../../core/items-www"
 import type { Keys } from "../../core/keys"
-import { Scope } from "../../core/scope"
 import type { SiteHealth } from "../../core/health"
 import type { Feedback } from "../../kit/feedback"
-import { pickerAnchor, type Popovers } from "../../popovers/types"
-import { explicitAdd, explicitContent, type ExplicitContext } from "../../explicit"
+import type { Popovers } from "../../popovers/types"
+import type { ExplicitContext } from "../../explicit"
+import { explicitAdd, explicitContent, pickerAnchor, Scope } from "$kit"
 
 export type ShortcutServices = {
   readonly document: Document

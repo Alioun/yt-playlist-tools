@@ -1,21 +1,21 @@
 import type { TabAddReport } from "../../../shared/contracts/tab-actions"
 import type { I18n } from "../../../shared/i18n"
-import { display } from "../../../shared/keys/policy"
 import type { Key, PlaylistId, VideoId } from "../../../shared/model"
 import type { TabActions, Unanswered } from "../../core/actions"
 import type { FeatureContext, FeatureDefinition, SiteView } from "../../core/feature-host"
-import { recogniseWwwItem, type WwwItems, type WwwItemTarget, type WwwPointed } from "../../core/items-www"
+import type { WwwItems, WwwItemTarget, WwwPointed } from "../../core/items-www"
 import type { PageLink } from "../../core/page-link"
 import type { Dispose, Scope } from "../../core/scope"
 import type { Feedback } from "../../kit/feedback"
 import type { OverlayKit } from "../../kit/overlay"
 import type { Popovers } from "../../popovers/types"
-import { explicitAdd, explicitContent, type ExplicitContext } from "../../explicit"
+import type { ExplicitContext } from "../../explicit"
+import { display, explicitAdd, explicitContent } from "$kit"
 import { glyph as stateGlyph } from "../queue-button/glyphs"
 
 export type QuickSaveServices = {
   readonly document: Document
-  readonly items: Pick<WwwItems, "track" | "readPointed">
+  readonly items: Pick<WwwItems, "track" | "readPointed" | "recognise">
   readonly page: Pick<PageLink, "watch" | "onState">
   readonly actions: TabActions
   readonly feedback: { use(owner: Scope): Feedback | null }
@@ -122,7 +122,7 @@ function start(context: FeatureContext<"www", QuickSaveServices>): void {
     const value = shown
     if (!value) return null
     const options = optionsOf(view.read())
-    const fresh = value.target.element.isConnected ? supported(recogniseWwwItem(value.target.element), options?.shorts ?? false) : null
+    const fresh = value.target.element.isConnected ? supported(items.recognise(value.target.element), options?.shorts ?? false) : null
     if (!fresh || !sameItem(fresh, value.target) || !value.link.isConnected) { conceal(); return null }
     return value
   }

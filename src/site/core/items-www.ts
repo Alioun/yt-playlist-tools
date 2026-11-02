@@ -175,6 +175,10 @@ export class WwwItems {
 
   constructor(private readonly options: WwwItemsOptions) {}
 
+  /** For feature files, which reach the core's recognition through this instance instead of bundling their own. */
+  recognise(element: Element): WwwPointed { return recogniseWwwItem(element) }
+  linkedVideo(element: Element): Pick<VideoInfo, "videoId" | "kind"> | undefined { return linkedVideo(element) }
+
   track(owner: Scope): Dispose {
     if (this.ended || owner.disposed) return nothing
     const lease: Lease = { release: nothing }

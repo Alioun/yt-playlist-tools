@@ -1,8 +1,9 @@
 import type { JobOf } from "../../../shared/contracts"
 import type { QueueButtonText, QueueButtonToast } from "../../../shared/copy"
-import { toastPlan, type ToastPlan } from "../../../shared/rules/outcomes"
+import type { ToastPlan } from "../../../shared/rules/outcomes"
+import { toastPlan } from "$kit"
 import type { FeatureContext, FeatureDefinition, SiteView } from "../../core/feature-host"
-import { recogniseWwwItem, type WwwItems, type WwwItemTarget, type WwwPointed } from "../../core/items-www"
+import type { WwwItems, WwwItemTarget, WwwPointed } from "../../core/items-www"
 import type { PageLink } from "../../core/page-link"
 import type { Dispose, Scope } from "../../core/scope"
 import type { Feedback } from "../../kit/feedback"
@@ -16,7 +17,7 @@ export interface QueueNotices {
 }
 export type QueueButtonServices = {
   readonly document: Document
-  readonly items: Pick<WwwItems, "track" | "readPointed">
+  readonly items: Pick<WwwItems, "track" | "readPointed" | "recognise">
   readonly page: Pick<PageLink, "run" | "watch" | "onState">
   readonly feedback: { use(owner: Scope): Feedback | null }
   readonly overlay: Pick<OverlayKit, "use">
@@ -106,7 +107,7 @@ function start(context: FeatureContext<"www", QueueButtonServices>): void {
   function current(): Shown | null {
     const value = shown
     if (!value) return null
-    const fresh = value.target.element.isConnected ? supported(recogniseWwwItem(value.target.element)) : null
+    const fresh = value.target.element.isConnected ? supported(items.recognise(value.target.element)) : null
     if (!fresh || !sameItem(fresh, value.target) || !value.link.isConnected) { conceal(); return null }
     return value
   }

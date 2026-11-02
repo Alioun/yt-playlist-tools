@@ -56,45 +56,45 @@
     },
     {
       "row": "www/core",
-      "kb": 28.1,
+      "kb": 28.2,
       "since": "2026-11-02",
       "why": "The real core carries the whole message-parameter table, contract validators and the page channel; the 4.12 KB rough core had none."
     },
     {
       "row": "www/auto-add",
-      "kb": 6.5,
+      "kb": 5.5,
       "since": "2026-11-02",
-      "why": "Carries its own copy of the outcome rules the kit already has."
+      "why": "The watch tracker, player feed and status measure over the row set before auto-add was built. It links the outcome rules from the kit."
     },
     {
       "row": "www/shortcuts",
-      "kb": 4.6,
+      "kb": 2.0,
       "since": "2026-11-02",
-      "why": "Carries its own copies of the outcome rules, explicit-add and Scope that the core and kit already have."
+      "why": "Bindings, actions and the hint copy measure over the 1 KB row; explicit-add, Scope and the picker anchor are linked from the kit."
     },
     {
       "row": "www/quick-save",
-      "kb": 7.0,
+      "kb": 3.6,
       "since": "2026-11-02",
-      "why": "Carries its own copies of Items, the outcome rules and explicit-add that the core and kit already have."
+      "why": "The split button with its states and tooltip measures over the row; Items, explicit-add and key display are linked from the core and kit."
     },
     {
       "row": "www/queue-button",
-      "kb": 5.9,
+      "kb": 3.6,
       "since": "2026-11-02",
-      "why": "Carries its own copies of Items and the outcome rules that the core and kit already have."
+      "why": "The queue button with its states, glyphs and toasts measures over the 1 KB row; Items and the outcome rules are linked from the core and kit."
     },
     {
       "row": "www/watch-button",
-      "kb": 4.8,
+      "kb": 4.5,
       "since": "2026-11-02",
-      "why": "The built pill measures over the row set from the rough build."
+      "why": "The built pill measures over the row set from the rough build; key display is linked from the kit."
     },
     {
       "row": "www/card-menu",
-      "kb": 3.0,
+      "kb": 1.6,
       "since": "2026-11-02",
-      "why": "Carries its own copy of Items, which the core already has (the 1.18 KB build linked it)."
+      "why": "The decision table and the page-side click measure 0.27 KB over the 1.25 KB row with Items linked from the core."
     },
     {
       "row": "music/page",
@@ -110,13 +110,13 @@
     },
     {
       "row": "music/kit",
-      "kb": 31.4,
+      "kb": 31.7,
       "since": "2026-11-02",
-      "why": "YouTube Music's quick-action table and the shared copy table ride in the kit."
+      "why": "YouTube Music's quick-action table and the shared copy table ride in the kit, which also exports the code features link to instead of bundling."
     },
     {
       "row": "music/music-actions",
-      "kb": 8.0,
+      "kb": 7.7,
       "since": "2026-11-02",
       "why": "R85's four more actions and the icons landed in this file."
     },
