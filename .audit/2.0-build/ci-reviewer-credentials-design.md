@@ -1,6 +1,6 @@
 # G28: the reviewer test account in CI
 
-Status: **proposal, not approved.** Both jobs that read the secret start with `if: false && …`, so GitHub skips them. Nothing here has run against a real secret. This version answers both secret-flow reviews, `ci-reviewer-credentials-review-1.md` and `ci-reviewer-credentials-review-2.md`. The last two sections map each finding to its fix.
+Status: **proposal, not approved.** Both jobs that read the secret start with `if: false && …`, so GitHub skips them. Nothing here has run against a real secret. This version answers four secret-flow reviews: `ci-reviewer-credentials-review-1.md`, `ci-reviewer-credentials-review-2.md`, and the third and fourth, reported in their own sessions. The sections at the end map each finding to its fix.
 
 ## Goal
 
@@ -55,9 +55,9 @@ The value travels through a variable and a pipe, never argv, and the command pri
 
 **The digest lives in the environment.** `vars.REVIEWER_NOTES_SHA256` is an environment variable only the owner can set. The workflows hold no digest, and a test fails if one appears. Whoever edits the script can no longer move the pin in the same pull request. The owner computes the digest from the approved commit (`git show <commit>:scripts/amo-reviewer-notes.ts | shasum -a 256`). `vars.` falls back to a repository variable of the same name when the environment has none, so the setup checks that no repository variable is called `REVIEWER_NOTES_SHA256` or `BUN_SHA256`.
 
-**Code owners.** `.github/CODEOWNERS` names the owner for itself, `.github/workflows/**`, the script, its tests, the whole `tests/integration/fixtures/` directory, the planted-break runner, this design, `docs/development/releasing.md`, `package.json` and `bun.lock`. A test resolves every file the approval covers, and a file planted later in either covered directory, through CODEOWNERS and expects the owner. It reads patterns by GitHub's rules: a pattern with no `/` before its end matches at any depth, and the last matching line wins.
+**Code owners.** `.github/CODEOWNERS` names the owner for itself, `.github/workflows/**`, the script, its tests, the whole `tests/integration/fixtures/` directory, the planted-break runner, this design, `docs/development/releasing.md`, `package.json` and `bun.lock`. A test resolves every file the approval covers through CODEOWNERS and expects the owner, and it expects the owner for everything either covered directory holds now or later. Every line must be a path from the repository's top with no wildcard but a final `/**`, then `@logins`, and a test fails any other line. GitHub's CODEOWNERS ignores some gitignore syntax, such as `!`, `[ ]` and `{a,b}`, so a matcher that read those could disagree with GitHub. In the forms left, `/x` owns the file `x` or everything in the directory `x`, `/x/**` owns everything in `x`, and the last matching line wins. A directory counts as owned only when the last line covering all of it names the owner and so does every line inside it.
 
-**The `main` ruleset.** Code owners count only once the ruleset requires their review, and only if a later push can't slip past that review. The ruleset needs at least one approval, review from Code Owners, approval of the most recent reviewable push, stale approvals dismissed on push, and CI's `build` check, which runs the proof. Its bypass list holds the Repository admin role, which in a personal repository is the owner alone, or nothing. Without last-push approval, a commit pushed after the owner approved would merge without the owner's review, and an agent could merge it. `releasing.md` setup step 3 sets the ruleset up and gives `true`/`false` checks for it. Tests run each check against fixture API answers.
+**The `main` ruleset.** Code owners count only once the ruleset requires their review, and only if a later push can't slip past that review. The ruleset needs at least one approval, review from Code Owners, approval of the most recent reviewable push, stale approvals dismissed on push, and CI's `g28-proof` check, the job that runs the proof. `release.yml` and `pages.yml` each have a `build` job that a dispatch can run, so a check named `build` could come from either, and a test fails any other job whose name or ID is `g28-proof` or whose name is computed. Its bypass list holds the Repository admin role, which in a personal repository is the owner alone, or nothing. Without last-push approval, a commit pushed after the owner approved would merge without the owner's review, and an agent could merge it. `releasing.md` setup step 3 sets the ruleset up and gives `true`/`false` checks for it. Tests run each check against fixture API answers.
 
 ## The two jobs
 
@@ -177,22 +177,23 @@ The `internal-error` catch-all stays, but no test reaches it any more. The first
 
 ## Tests (credential-free)
 
-`tests/integration/amo-reviewer-notes.test.ts`, 102 tests, all passing. CI runs them in a step of its own in `ci.yml`'s `build` job, after checkout and setup-bun (with `no-cache: true`) and before `bun install`:
+`tests/integration/amo-reviewer-notes.test.ts`, 107 tests, all passing. CI runs them in `ci.yml`'s `g28-proof` job, which holds checkout, setup-bun (with `no-cache: true`) and this step, and nothing else:
 
 ```sh
 : > "$RUNNER_TEMP/empty.toml"
 echo '{}' > "$RUNNER_TEMP/empty.json"
 report=$RUNNER_TEMP/reviewer-login-proof.xml
 rm -f "$report"
-bun --config="$RUNNER_TEMP/empty.toml" test --no-env-file --tsconfig-override="$RUNNER_TEMP/empty.json" \
-  --reporter=junit --reporter-outfile="$report" ./tests/integration/amo-reviewer-notes.test.ts
-grep -Eq '^<testsuites name="bun test" tests="102" assertions="[0-9]+" failures="0" skipped="0" ' "$report" \
-  || { echo "::error::the G28 proof did not pass all 102 of its tests"; exit 1; }
+env -u BUN_OPTIONS -u NODE_OPTIONS bun --config="$RUNNER_TEMP/empty.toml" test --no-env-file \
+  --tsconfig-override="$RUNNER_TEMP/empty.json" --reporter=junit --reporter-outfile="$report" \
+  ./tests/integration/amo-reviewer-notes.test.ts
+grep -Eq '^<testsuites name="bun test" tests="107" assertions="[0-9]+" failures="0" skipped="0" ' "$report" \
+  || { echo "::error::the G28 proof did not pass all 107 of its tests"; exit 1; }
 ```
 
 The count check is there because Bun exits 0 when a file exits 0 before it registers its tests. The third review planted a `fake-amo.tsx` that did so, and the step passed with no test run. A change that adds or removes a test changes the number in `ci.yml` too, which needs the owner's review like the rest of the file.
 
-The repository's `bunfig.toml` preloads four `tests/setup/*.ts` files, and `tsconfig.json` extends `.wxt/tsconfig.json`, which `bun install` writes. None of them is code-owned, and through the full suite each could neuter the proof. A planted `tsconfig.json` whose `paths` maps `*` to its own file made `bun test` register no test in the file and still exit 0. Each override alone still let the other file through, and both together stopped both. Before the install, with both overrides, only code-owned files decide the result. The full suite still runs the file a second time, with the preloads. That run proves nothing extra and isn't part of the approval.
+The repository's `bunfig.toml` preloads four `tests/setup/*.ts` files, and `tsconfig.json` extends `.wxt/tsconfig.json`, which `bun install` writes. None of them is code-owned, and through the full suite each could neuter the proof. A planted `tsconfig.json` whose `paths` maps `*` to its own file made `bun test` register no test in the file and still exit 0. Each override alone still let the other file through, and both together stopped both. Before the install, with both overrides, only code-owned files decide the result. `BUN_OPTIONS=--preload=…` still preloads with `--config` (measured on Bun 1.4.3), and the fourth review made such a preload write a passing junit report and exit 0. A workflow-level `env` or a step before the proof writing `$GITHUB_ENV` could set it. A test compares `ci.yml`'s top-level keys whole, so the workflow holds no `env`, and the job test holds the steps before the proof to checkout and setup-bun. The step also runs Bun under `env -u BUN_OPTIONS -u NODE_OPTIONS`. Bun 1.4.3 ignored `NODE_OPTIONS=--require=…` here, so dropping it is only a margin. The full suite still runs the file a second time, with the preloads. That run proves nothing extra and isn't part of the approval.
 
 At the first proposal's base commit the file had 33 tests and one failed: it ran `amo-metadata.ts --strict` on a stable build and expected success, but `--strict` fails on the four test-account placeholders. That test now builds without `--strict`, and since the third review it lives in `tests/integration/amo-metadata-login.test.ts`, which the full suite runs. `amo-metadata.ts` isn't code-owned, so it can't run inside the proof. The proof keeps the half that fills from a fixture's metadata and finds the login in no file.
 
@@ -201,13 +202,13 @@ At the first proposal's base commit the file had 33 tests and one failed: it ran
 - **Real fetch.** `tests/integration/fixtures/fake-amo.ts` is a local HTTP or HTTPS server, and the script's own `fetch` reaches it over a socket. The only change to the script under test is the API origin, and, for one test, the timeout. Each is a string swap that a test checks matched exactly once. The server answers in eight ways: store, store without echoing, a cut-off body, other notes, a 400 quoting the notes, a dropped connection, no answer, and a 308 to a second server that records what reaches it.
 - **The real `run:` blocks.** The step tests take both blocks from `release.yml`, map each step's `env:` expressions to dummies, and run them under GitHub's `bash --noprofile --norc -eo pipefail`, plus `-x`, in a temporary runner workspace. `vars.BUN_SHA256` is empty unless a test sets it to the running Bun's digest, to another digest, or to a non-digest.
 - **A tampered runner.** The fill step runs with `BUN_CONFIG_VERBOSE_FETCH=curl`, with `BUN_OPTIONS="--preload <planted file>"`, with a `bunfig.toml` that preloads planted in the workspace, `scripts/`, `RUNNER_TEMP` and `HOME`, with a `tsconfig.json` or `jsconfig.json` mapping every import to planted code one and two levels above the script, with `NODE_TLS_REJECT_UNAUTHORIZED=0` or `NODE_EXTRA_CA_CERTS` against an HTTPS fake whose certificate nothing trusts, and with a `BUN_` name that isn't a shell identifier. Nothing leaks, the planted code never runs, and the untrusted server never gets a request. Stubs for `mktemp`, `cp` and `shasum` record that none of them sees the login or the AMO keys. The script alone refuses each of eight unsafe variables before AMO hears anything.
-- **This file.** Its only relative import is `./fixtures/fake-amo.ts`, by its full name, since Bun tries `.tsx` before `.ts` for a name without one. Every repository path it reads or runs through `join(root, …)` resolves to the owner in CODEOWNERS.
+- **This file.** Its only relative import is `./fixtures/fake-amo.ts`, by its full name, since Bun tries `.tsx` before `.ts` for a name without one. Every line that names `root` is its declaration, a stat-only helper that tells a file from a directory, or `join(root, "<path>")` with one literal path that has no `.` or `..` part. A test fails any other use, such as `join(root, "scripts", name)`, `resolve(root, …)`, `` `${root}/…` `` or an alias, and resolves each literal path to the owner in CODEOWNERS, as a file or as a whole directory. The test reads only `root`. Another base, such as `import.meta.dir` or the working directory, would get past it, and only the owner's review of this code-owned file stops that.
 - **The workflows.** Every workflow reads secrets and the job token only by name, in any case, as GitHub reads them: `secrets['…']`, `toJSON(secrets)`, `toJSON(SECRETS)`, a `secrets:` key, `GITHUB.TOKEN` at job level, and `github` whole (as in `toJSON(github)`) fail. No workflow sets `defaults`. Every `actions/checkout` in a job that can write sets `persist-credentials: false`. No workflow- or job-level `env` holds a secret or `github.token`. `AMO_REVIEWER_LOGIN` appears in exactly the two reviewer steps. Every environment name is literal, every job-level `uses:` calls a workflow under `./.github/workflows/`, and only the two reviewer jobs use `amo-reviewer`. Both run on `ubuntu-24.04` with exactly the keys, values and step keys the approval covers. Both stay off, compared whole against their expected condition, can't turn on while an action is unpinned, check out only the script without credentials, run nothing but the three actions and their step, and install the declared Bun without a cache. `submit-amo` waits for the check, and the fill waits for both. The workflows hold no digest.
-- **The CI step.** It comes before `bun install`, on a setup-bun without a cache, as a step with only a name and a `run:` in a job with no `continue-on-error` or `defaults`. Tests run its real `run:` block against stand-in test files with the expected number of tests. Beside a `bunfig.toml` that preloads and a `tsconfig.json` that redirects `node:fs`, the stand-in passes, and neither planted file takes effect. A stand-in with one failing test, one test fewer, one skipped test, or a `process.exit(0)` before its tests fails the step.
-- **CODEOWNERS.** Every file the approval covers exists and resolves to the owner, and so does a file planted later in `.github/workflows/` or `tests/integration/fixtures/`. Sixteen cases from GitHub's documented examples hold the matcher to GitHub's rules.
-- **The owner's commands in `releasing.md`.** Each `--jq` filter runs through `jq` against fixture API answers. It prints `true` for the settings the setup asks for, and `false` when any one is weakened or missing: administrator bypass, another reviewer, protected-branch deployment, a repository-level digest in any case, each pull-request rule parameter, the `build` status check, a GitHub App, deploy key or lesser role in the bypass list, a hidden bypass list, and evaluate-only enforcement. The ruleset block runs with a stub `gh` that answers from fixtures through `jq`, and prints `false` when no ruleset applies to `main` or `gh` fails. The digest command runs in a scratch git repository with a stub `gh` as the only `gh` on `PATH`. It passes the approved script's digest to `gh`, and with a missing commit it fails without calling `gh`.
+- **The CI job.** `ci.yml`'s top-level keys (`name`, `on`, `permissions`, `concurrency`) are compared whole, so it has no workflow-level `env`. The `g28-proof` job is compared whole too: `runs-on` and three steps, checkout, setup-bun with the declared Bun and no cache, and the proof with only a name and a `run:`. No other job in any workflow has `g28-proof` as its ID or name, and none computes its name. Tests run the proof's real `run:` block against stand-in test files with the expected number of tests. Beside a `bunfig.toml` that preloads and a `tsconfig.json` that redirects `node:fs`, and with `BUN_OPTIONS` and `NODE_OPTIONS` naming preloads, the stand-in passes and nothing planted takes effect. A stand-in with one failing test, one test fewer, one skipped test, or a `process.exit(0)` before its tests fails the step.
+- **CODEOWNERS.** Every line has one of the two forms, and ten lines in other forms (negation, braces, brackets, a wildcard, a path without the leading `/`, a trailing `/`, a `..`, a team and a trailing comment) are left unread. Every file the approval covers is a file and resolves to the owner, and both covered directories are directories the owner owns whole. Nine cases hold the matcher to GitHub's reading of the two forms.
+- **The owner's commands in `releasing.md`.** Each `--jq` filter runs through `jq` against fixture API answers. It prints `true` for the settings the setup asks for, and `false` when any one is weakened or missing: administrator bypass, another reviewer, protected-branch deployment, a repository-level digest in any case, each pull-request rule parameter, the `g28-proof` status check (a `build` check alone fails), a GitHub App, deploy key or lesser role in the bypass list, a hidden bypass list, and evaluate-only enforcement. The ruleset block runs with a stub `gh` that answers from fixtures through `jq`, in bash, in bash with `IFS` empty (which splits words as zsh does, not at all), and in zsh where it is installed. With two rulesets it prints a line for each, `false` for one `gh` can't read, and `false` when no ruleset applies to `main` or `gh` fails. The old `for id in $ids` loop ran `gh` once with both IDs under zsh. The digest command runs in a scratch git repository with a stub `gh` as the only `gh` on `PATH`. It passes the approved script's digest to `gh`, and with a missing commit it fails without calling `gh`.
 
-**Each test was shown to catch a break.** `.audit/2.0-build/ci-reviewer-credentials-mutations.sh` copies the G28 files to a scratch directory, plants one break, runs `ci.yml`'s real proof step against the copy in a scratch environment, and reads Bun's junit report. A row expects named tests to fail, or the step itself to fail with a given line. A test that timed out never counts as a catch. Two control rows plant nothing that should matter and must pass with no test failed: `control` plants nothing, and `planted-tsx-beside-full-name` plants a `fake-amo.tsx` that exits 0. Naming rows after the base commit runs only those. All 75 breaks are caught and both controls pass:
+**Each test was shown to catch a break.** `.audit/2.0-build/ci-reviewer-credentials-mutations.sh` copies the G28 files to a scratch directory, plants one break, runs `ci.yml`'s real proof step against the copy in a scratch environment, and reads Bun's junit report. A row expects named tests to fail, or the step itself to fail with a given line. A test that timed out never counts as a catch. Two control rows plant nothing that should matter and must pass with no test failed: `control` plants nothing, and `planted-tsx-beside-full-name` plants a `fake-amo.tsx` that exits 0. Naming rows after the base commit runs only those. All 97 breaks are caught and both controls pass:
 
 | Row | Break | Tests that fail |
 |---|---|---|
@@ -245,7 +246,7 @@ At the first proposal's base commit the file had 33 tests and one failed: it ran
 | job-level-token | `GH_TOKEN` back in `submit-amo`'s job env | the job-level env test |
 | ci-reads-bunfig | the CI step without `--config` | the CI isolation test |
 | ci-reads-tsconfig | the CI step without `--tsconfig-override` | the CI isolation test |
-| ci-after-install | the CI step after `bun install` | the CI order and cache tests |
+| ci-after-install | a `bun install` step before the proof | the job test (6 in all, as the proof moves down a step) |
 | runner-unowned | the runner's CODEOWNERS line removed | the CODEOWNERS test |
 | docs-unowned-later | a later CODEOWNERS line with no owner for `releasing.md` | the CODEOWNERS test and the test of this file's paths |
 | env-admin-bypass | the environment check without `can_admins_bypass` | the environment-check test |
@@ -265,11 +266,17 @@ At the first proposal's base commit the file had 33 tests and one failed: it ran
 | fixture-file-owned | CODEOWNERS naming only `fake-amo.ts`, as in round 2 | the CODEOWNERS test, on a file planted later |
 | proof-counts-fewer | the step expecting one test fewer | 3; the step fails on its count |
 | proof-ignores-count | the count check ending in `exit 0` | the short-count tests |
-| proof-or-true | `\|\| true` after `bun test`, with no count check | 5, including the failing-test case |
-| proof-continue-on-error | `continue-on-error: true` on the proof step | the plain-step test |
-| proof-if | an `if` on the proof step | the plain-step test |
-| proof-job-continue-on-error | `continue-on-error: true` on the build job | the plain-step test |
-| proof-cached-bun | the proof's setup-bun without `no-cache` | the cache test |
+| proof-or-true | `\|\| true` after `bun test`, with no count check | 6, including the failing-test case |
+| proof-continue-on-error | `continue-on-error: true` on the proof step | the job test |
+| proof-if | an `if` on the proof step | the job test |
+| proof-job-continue-on-error | `continue-on-error: true` on the `g28-proof` job | the job test |
+| proof-cached-bun | the proof's setup-bun without `no-cache` | the job test |
+| ci-workflow-env | a workflow-level `env` with `BUN_OPTIONS` in `ci.yml` | the top-level keys test |
+| proof-job-env | a job-level `env` with `BUN_OPTIONS` on `g28-proof` | the job test |
+| proof-step-writes-env | a step before the proof writing `BUN_OPTIONS` to `$GITHUB_ENV` | the job test (6 in all) |
+| proof-keeps-bun-options | the proof without `env -u BUN_OPTIONS -u NODE_OPTIONS` | the `BUN_OPTIONS` preload test |
+| proof-name-reused | `name: g28-proof` on `pages.yml`'s build job | the check-name test |
+| proof-name-computed | a computed `name` on `release.yml`'s `meta` job | the check-name test |
 | reviewer-latest-image | the check job back on `ubuntu-latest` | the job-shape test |
 | reviewer-container | a `container:` in the fill job | the job-shape test |
 | reviewer-job-defaults | job-level `defaults` with `shell: sh {0}` | the job-shape test |
@@ -280,16 +287,32 @@ At the first proposal's base commit the file had 33 tests and one failed: it ran
 | upper-bulk-secrets | `toJSON(SECRETS)` in `ci.yml` | the reference test, which missed it before |
 | upper-job-token | `GITHUB.TOKEN` in `submit-amo`'s job env | the job-level env test, which missed it before |
 | lower-login-name | `secrets.amo_reviewer_login` in a `ci.yml` step | the login-reference test, which missed it before |
-| owners-basename-later | a later `releasing.md @dummy-other` line | the CODEOWNERS test and the test of this file's paths, which the old matcher passed |
-| owners-directory-later | a later `fixtures/` line with no owner | the CODEOWNERS test |
-| old-owners-matcher | the root-anchored `Bun.Glob` matcher again | 7 of GitHub's examples |
-| ruleset-no-build-check | the ruleset check without the `build` status check | the ruleset test |
+| owners-basename-later | a later `releasing.md @dummy-other` line | the form test |
+| owners-directory-later | a later `fixtures/` line with no owner | the form test |
+| owners-brace | a later `/scripts/{amo-reviewer-notes,amo-metadata}.ts` line | the form test |
+| owners-bracket | a later `/scripts/amo-reviewer-notes.[t]s @dummy-other` line | the form test |
+| owners-negation | a later `!/docs/development/releasing.md` line | the form test |
+| owners-wildcard-directory | a later `/tests/*/fixtures/** @dummy-other` line | the form test |
+| owners-inner-later | a later line giving `fake-amo.ts` to `@dummy-other` | the CODEOWNERS test, which the one-file probe passed |
+| owners-directory-reowned | the fixtures directory given to `@dummy-other`, then the probe file back to the owner | the CODEOWNERS test |
+| owners-prefix-match | the matcher without the `/` after a rule's path | 3: two examples and the CODEOWNERS test |
+| owners-directory-self | a `/**` rule matching its own directory | its example |
+| root-two-parts | `join(root, "scripts", "amo-metadata.ts")` in this file | the test of this file's paths |
+| root-resolve | `resolve(root, "scripts/amo-metadata.ts")` | the test of this file's paths |
+| root-template | `` `${root}/scripts/amo-metadata.ts` `` | the test of this file's paths |
+| root-dot-dot | `join(root, ".github/workflows/../../scripts/amo-metadata.ts")` | the test of this file's paths |
+| root-alias | `const top = root` | the test of this file's paths |
+| root-helper-reads | the stat helper reading the file instead | the test of this file's paths and the CODEOWNERS test |
+| ruleset-no-proof-check | the ruleset check without the `g28-proof` status check | the ruleset test |
+| ruleset-build-check | the ruleset check requiring `build` instead | the ruleset test and the ruleset-block test |
 | repo-digest-any-case | the repository-variable check without `ascii_upcase` | the repository-variable test |
 | ruleset-loop-silent | the ruleset loop without its `false` for no ID | the ruleset-block test |
+| ruleset-loop-split | the old `for id in $ids` loop | the ruleset-block test, in bash without word splitting and in zsh |
+| ruleset-loop-gh-silent | the loop without `\|\| echo false` for a ruleset `gh` can't read | the ruleset-block test |
 | submit-amo-keeps-token | `submit-amo`'s checkout keeping its token | the checkout test |
-| write-all-keeps-token | `permissions: write-all` on `ci.yml`'s build job | the checkout test, for its two checkouts |
+| write-all-keeps-token | `permissions: write-all` on `ci.yml`'s build job | the checkout test |
 
-The full run took about 21 minutes on this machine, in four batches of named rows, with Homebrew's bash 5.3.20 first on `PATH`.
+The full run of 99 rows finished in under 10 minutes on this machine, as five batches of named rows run side by side, with Homebrew's bash 5.3.20 first on `PATH`.
 
 ## Unverified, to settle when turning it on
 
@@ -302,8 +325,8 @@ The full run took about 21 minutes on this machine, in four batches of named row
 - **Which build setup-bun installs on `ubuntu-24.04`.** From memory, `bun-linux-x64` on a CPU with AVX2 and the `-baseline` build otherwise. A `vars.BUN_SHA256` for the wrong build fails closed.
 - **The field names in the `gh api` checks.** `can_admins_bypass`, `deployment_branch_policy`, `protection_rules[].reviewers[].reviewer.login`, `branch_policies[].type`, the repository variables' `variables[].name`, the branch rules' `type`, `ruleset_id` and `parameters` (`required_approving_review_count`, `dismiss_stale_reviews_on_push`, `require_code_owner_review`, `require_last_push_approval`), and the ruleset's `enforcement` and `bypass_actors[]` (`actor_type`, `actor_id`). All from memory of the REST docs. A wrong name makes a check print `false` or fail, never print `true`. The Repository admin role's ID, 5, is from memory too, and it is the one exception: if 5 named a lesser role, the check would accept that role. So the owner also confirms on the ruleset page that its only bypass entry reads Repository admin.
 
-- **GitHub's CODEOWNERS rules.** The matcher follows GitHub's CODEOWNERS docs and their examples as I recall them; this session had no network. `docs/*` not covering nested files is the one place GitHub departs from gitignore, and the examples test holds it.
-- **The `required_status_checks` rule's fields.** `parameters.required_status_checks[].context` is from memory of the REST docs. A wrong name prints `false`. The check accepts a `build` status from any source. Requiring GitHub Actions as its source would also need the app's ID, which isn't verified here.
+- **GitHub's CODEOWNERS rules.** That `/x` owns everything in a directory `x`, and `/x/**` everything in it, follows GitHub's CODEOWNERS docs and their examples (`/apps/github`, `/build/logs/`, `docs/**`) as I recall them; this session had no network. Every other form fails the form test, so nothing rests on how GitHub reads it.
+- **The `required_status_checks` rule's fields.** `parameters.required_status_checks[].context` is from memory of the REST docs. A wrong name prints `false`. The check accepts a `g28-proof` status from any source, so a GitHub App or a token that can write commit statuses could post one. Requiring GitHub Actions as its source would also need the app's ID, which isn't verified here.
 - **Bun's junit report.** Measured on Bun 1.4.3 here: its `<testsuites>` line carries `tests`, `assertions`, `failures` and `skipped` in that order, and a timed-out test's failure has `type="TimeoutError"`. A Bun that writes it differently fails the step, never passes it.
 
 ### The owner's dry run
@@ -321,6 +344,7 @@ Three of these need GitHub itself (second review, N7). A dry run in a scratch re
 ## Owner caveats
 
 - **The settings are checked once (third review, H-f).** The environment, variable and ruleset checks in `releasing.md` steps 2 and 3 show the settings as they are on the day the owner runs them. Nothing in CI watches them afterwards, and an admin can change any of them. The owner reruns steps 2 and 3 before each stable release, and stops the release if any line prints `false`.
+- **`submit-amo`'s token and the AMO keys are readable on the runner (fourth review, item 5).** The fourth review found that the job's user has passwordless `sudo` on GitHub-hosted runners, so any process in a job can read the runner's memory, which holds the job's secrets and its token (not run here). `submit-amo` runs `bun install`, `wxt` and `web-ext` with the AMO keys and a token that can write releases, so code from the lockfile can read both. `persist-credentials: false` and step-level `env` only keep the token out of files and other steps' environments. The proposed fix, outside this change: a separate `gh-release-upload` job with `contents: write` that downloads the signed `.xpi` as an artifact and runs `gh release upload`, with no install and no code but `gh`, while `submit-amo` drops to `contents: read`. The AMO keys stay where `wxt` and `web-ext` use them. The login never reaches `submit-amo`, and the reviewer jobs install nothing.
 - **The dry run includes debug logging (third review, H-g).** Runner and step debug logging print more than a normal run, and nobody has seen what they print for a multi-line secret. The dry run's step 6 settles it with the dummy login, before the real one exists.
 
 ## Findings outside this change
@@ -332,18 +356,19 @@ Three of these need GitHub itself (second review, N7). A dry run in a scratch re
 
 ## What the owner approves
 
-The owner's rules require three things before this runs: these credential-free behavior tests, a separate agent review of the secret flow, and the owner's approval. The tests are done and pass. The third review ran and its findings are fixed here. A fourth review of this round has not run. The approval covers the files below at one commit, and a change to any of them needs all three again.
+The owner's rules require three things before this runs: these credential-free behavior tests, a separate agent review of the secret flow, and the owner's approval. The tests are done and pass. The fourth review, of the third round's fixes, found no leak and no blocker, and its findings are fixed here. No review of these fixes has run. The approval covers the files below at one commit, and a change to any of them needs all three again.
 
 1. `scripts/amo-reviewer-notes.ts`, whose digest at that commit goes into `vars.REVIEWER_NOTES_SHA256`. It is the only code that reads the value.
 2. `.github/workflows/release.yml` as a whole. It decides which jobs use `amo-reviewer`, in what order they run, that a failed check stops `submit-amo`, and what the reviewer steps run.
 3. In each reviewer job, the `runs-on: ubuntu-24.04` label and the runner image GitHub serves under it, the three actions at the upstream commits the owner pins, and Bun 1.4.3 as `oven-sh/setup-bun` installs it, at `vars.BUN_SHA256` if the owner sets it.
-4. The proof and what runs it: `tests/integration/amo-reviewer-notes.test.ts`, the whole `tests/integration/fixtures/` directory, the step "Test the reviewer-login secret flow (G28)" in `.github/workflows/ci.yml` with its expected test count, the checkout before it and the setup-bun before it with `no-cache: true`, `package.json`'s `packageManager` (the Bun that runs the proof), and `.audit/2.0-build/ci-reviewer-credentials-mutations.sh`.
+4. The proof and what runs it: `tests/integration/amo-reviewer-notes.test.ts`, the whole `tests/integration/fixtures/` directory, `.github/workflows/ci.yml`'s top-level keys (`name`, `on`, `permissions` and `concurrency`, with no `env`), its `g28-proof` job whole (checkout, setup-bun with `no-cache: true`, and the step "Test the reviewer-login secret flow (G28)" with `env -u BUN_OPTIONS -u NODE_OPTIONS` and its expected test count), `package.json`'s `packageManager` (the Bun that runs the proof), and `.audit/2.0-build/ci-reviewer-credentials-mutations.sh`.
 5. `.github/CODEOWNERS`.
 6. `docs/development/releasing.md`: the "reviewer test account" section and the `main` ruleset line, which are the owner's procedure for the environment, the ruleset and the secret.
 7. This design.
-8. Settings, which are not files. The `amo-reviewer` environment: the owner as required reviewer, `main` only, administrator bypass off and checked, its three secrets, `REVIEWER_NOTES_SHA256`, and `BUN_SHA256` if set. No repository-level `REVIEWER_NOTES_SHA256` or `BUN_SHA256`, checked. The `main` ruleset: one approval, review from Code Owners, last-push approval, stale approvals dismissed, CI's `build` check required, no bypass but Repository admin, checked, and checked again before each stable release. And `vars.PUBLISH_AMO`.
+8. Settings, which are not files. The `amo-reviewer` environment: the owner as required reviewer, `main` only, administrator bypass off and checked, its three secrets, `REVIEWER_NOTES_SHA256`, and `BUN_SHA256` if set. No repository-level `REVIEWER_NOTES_SHA256` or `BUN_SHA256`, checked. The `main` ruleset: one approval, review from Code Owners, last-push approval, stale approvals dismissed, CI's `g28-proof` check required, no bypass but Repository admin, checked, and checked again before each stable release. And `vars.PUBLISH_AMO`.
+9. The risks under "Owner caveats", accepted as they stand: the settings checked by hand, debug logging settled by the dry run, and `submit-amo`'s token and AMO keys readable on its runner until a `gh-release-upload` job takes the token.
 
-`bunfig.toml`, `tests/setup/*.ts`, `tsconfig.json`, `scripts/run-bun-tests.ts`, `package.json`'s test scripts and `ci.yml`'s Test step are off the list. The proof step runs before the install, with an empty config and tsconfig, and names the test file itself. The checkout and setup-bun before it are on their tags, like every action in `ci.yml`. A moved tag there could fake the proof, so the owner may pin those two as well.
+`bunfig.toml`, `tests/setup/*.ts`, `tsconfig.json`, `scripts/run-bun-tests.ts`, `package.json`'s test scripts and the rest of `ci.yml`'s jobs are off the list. The proof runs in a job with no install, with an empty config and tsconfig and without `BUN_OPTIONS`, and names the test file itself. The checkout and setup-bun before it are on their tags, like every action in `ci.yml`. A moved tag there could fake the proof, so the owner may pin those two as well.
 
 The first proposal's list also had `package.json`'s dependencies, `bun.lock`, `amo-version.ts` and `check-signed-build.sh`, because they ran in `submit-amo` beside the login. They no longer share a job with it. `scripts/amo-metadata.ts` and the `store/notes/` templates write the notes the fill sends. A changed template can change what AMO receives, but not where the request goes. Until the third review the proof ran `amo-metadata.ts` itself. Its test now lives outside the proof, so the file stays off the list, and a test holds the proof to code-owned paths. The owner may still add it and the templates.
 
@@ -404,3 +429,14 @@ The first proposal's list also had `package.json`'s dependencies, `bun.lock`, `a
 | H-f | The settings are checked once | Recorded under "Owner caveats", and "Turning it on" step 7 reruns `releasing.md` steps 2 and 3 before each stable release | owner step |
 | H-g | Debug logging is unseen | The dry run's step 6 re-runs with debug logging | owner step |
 | Nits | Runner, hang test and `releasing.md` | The runner has a control row and runs the real CI step; timeouts don't count as catches. The hang test has 30 seconds. The variable check uses `ascii_upcase` with `--paginate`, and the ruleset loop prints `false` when no ID comes back | `repo-digest-any-case`, `ruleset-loop-silent`; `no-timeout` caught by assertion, not by timeout |
+
+## How the fourth review's findings were addressed
+
+| # | Finding | Change | Evidence |
+|---|---|---|---|
+| 1 | A workflow-level `env` such as `BUN_OPTIONS=--preload=…`, or a step before checkout writing `$GITHUB_ENV`, could fake the proof. The review made a preload write a passing 102-test junit report and exit 0 | A test compares `ci.yml`'s top-level keys whole, with no `env`. The proof's job is compared whole: checkout, setup-bun, the proof. Bun runs under `env -u BUN_OPTIONS -u NODE_OPTIONS`. Approval item 4 names the top-level keys | the top-level keys, job and `BUN_OPTIONS` preload tests; `ci-workflow-env`, `proof-job-env`, `proof-step-writes-env`, `proof-keeps-bun-options` |
+| 2 | The paths guard saw only the literal `join(root, "…")`, so `join(root, "scripts", …)`, `resolve(root, …)` and `${root}/…` passed | Every line naming `root` must be its declaration, a stat-only helper, or `join(root, "<one literal path>")` with no `.` or `..` part | the test of this file's paths; `root-two-parts`, `root-resolve`, `root-template`, `root-dot-dot`, `root-alias`, `root-helper-reads` |
+| 3 | The CODEOWNERS matcher read `!`, `[ ]` and `{a,b}`, which GitHub ignores, and its wildcard-directory rule might differ from GitHub's | Only `/path` and `/path/**` lines with `@logins` are read, and a test fails any other line. A directory is owned only when the last line covering it and every line inside it name the owner | the form test, 10 unread lines, 9 examples; `owners-brace`, `owners-bracket`, `owners-negation`, `owners-wildcard-directory`, `owners-inner-later`, `owners-directory-reowned`, `owners-prefix-match`, `owners-directory-self` |
+| 4 | The required `build` check was ambiguous: `release.yml` and `pages.yml` also have a dispatchable `build` job | The proof runs in `ci.yml`'s `g28-proof` job, whose name no other job uses or computes. The documented ruleset and its check require `g28-proof` | the job, check-name and ruleset tests; `proof-name-reused`, `proof-name-computed`, `ruleset-no-proof-check`, `ruleset-build-check` |
+| 5 | `submit-amo`'s token and AMO keys are readable in memory through `sudo` on hosted runners | Recorded under "Owner caveats" with the proposed `gh-release-upload` job, and added to the approval as item 9 | owner decision |
+| Nit | `releasing.md`'s ruleset loop didn't split IDs in zsh | `printf \| while read -r`, which runs the same in zsh and bash, and `false` for a ruleset `gh` can't read | the ruleset-block test in three shells; `ruleset-loop-split`, `ruleset-loop-gh-silent` |
