@@ -168,7 +168,7 @@
       "id": "G28",
       "topic": "Store reviewer credentials in CI (REL-STORE-21, 24, REL-CI-46)",
       "answer": "Design it now: the agent writes the design and credential-free tests, then brings them to the owner for approval before anything runs.",
-      "landed": "pending"
+      "landed": "Owner approved the design and approval list on 2026-11-02 at 2.0/ci-reviewer-credentials-2 tip 403d3109c, after five secret-flow reviews; integrating onto compose-units. All secret-reading jobs stay off until the owner pins the actions, runs the dry run, sets up amo-reviewer and commits the turn-on."
     },
     {
       "id": "G29",
