@@ -8,6 +8,9 @@ const acct = "AAAAAAAAAAAAAAAA", other = "BBBBBBBBBBBBBBBB", selected = "PL_sele
 if (!isAccountKey(acct) || !isAccountKey(other) || !isPlaylistId(selected)) throw Error("Expected canonical synthetic identifiers")
 const setupName = `doc:setup:${acct}`
 const liveFilters = ["selected", "kept", "orphan", "off", "empty"].map(name => `doc:filter:${acct}:PL_${name}`)
+// The fixture's Setup auto-adds PL_selected and PL_off, so these filters are kept ones, in receive order.
+const keptFilters = ["empty", "kept", "orphan"].map(name => `doc:filter:${acct}:PL_${name}`)
+const keptChanges = (): ConfirmedViewChange[] => keptFilters.map(name => ({ kind: "filter-changed", source: "sync", acct, playlist: name.split(":").at(-1) as never }))
 
 function json(value: unknown): JsonObject {
   if (!isJsonValue(value) || value === null || typeof value !== "object" || Array.isArray(value)) throw Error("Expected JSON object")
@@ -52,7 +55,8 @@ test("a Setup tombstone arriving with its Filter tombstones removes the account 
     expect(state.local).toEqual(expected.local)
     expect(state.session).toEqual(expected.session)
     expect(h.io.some(entry => entry.kind.startsWith("sync.set"))).toBe(false)
-    expect(events.filter(event => "acct" in event && event.acct === acct)).toEqual([{ kind: "account-removed", acct, source: "sync" }])
+    // Filters sort before their Setup, and a kept filter's tombstone applies under the live Setup (SYNC-14), so those three land first.
+    expect(events.filter(event => "acct" in event && event.acct === acct)).toEqual([...keptChanges(), { kind: "account-removed", acct, source: "sync" }])
     expect(await owner.readSetup(acct)).toEqual({ kind: "value", view: { kind: "none", acct } })
   } finally { await owner.dispose() }
 })
@@ -69,16 +73,19 @@ test.each(["setup-first", "filters-first"] as const)("Setup and Filter tombstone
       expect(first.local).toEqual(partial.local)
       expect(first.session).toEqual(partial.session)
     } else {
-      expect(first.local).toEqual(seed.local)
+      // Only the auto-added playlists' filters wait for their Setup's tombstone; kept filters' tombstones apply at once (SYNC-14).
+      const kept = structuredClone(seed.local), pushed = json(json(kept.sync).pushed)
+      for (const name of keptFilters) { kept[name] = tombstone(name); pushed[name] = tombstone(name).gen! }
+      expect(first.local).toEqual(kept)
       expect(first.session).toEqual(seed.session)
-      expect(events).toEqual([])
+      expect(events.map(event => event.kind)).toEqual(keptFilters.map(() => "filter-changed"))
     }
     arrive(h, order === "setup-first" ? liveFilters : [setupName])
     h.fireSync(); await settle(owner)
     const state = h.state(), expected = removedHere(seed, [setupName, ...liveFilters])
     expect(state.local).toEqual(expected.local)
     expect(state.session).toEqual(expected.session)
-    expect(events.filter(event => "acct" in event && event.acct === acct)).toEqual([{ kind: "account-removed", acct, source: "sync" }])
+    expect(events.filter(event => "acct" in event && event.acct === acct)).toEqual([...order === "filters-first" ? keptChanges() : [], { kind: "account-removed", acct, source: "sync" }])
   } finally { await owner.dispose() }
 })
 

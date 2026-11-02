@@ -806,7 +806,8 @@ async function flushAcceptance(create: typeof createLocalFilterWriter, acct: Acc
   const g0 = { v: 1, gen: "g0", at: 1, by: "old", ...own, data: { mode: "deny", on: true, channels: [], future: { keep: true } } }
   const g1 = { ...g0, gen: "g1", at: 10, data: { ...g0.data, on: false } }
   const setupDoc = { v: 1, gen: "setup", at: 1, by: "old", data: { autoAdd: [{ pl: playlist, takes: "videos" }] } }
-  const history = { joined: "H", pushed: { [key]: "g0", [setup]: "setup" }, status: "full", editedSinceOff: true, future: { keep: [1, null, own] }, v: 99, ...own }
+  // A fitting push from full settles the status to ok (SYNC-17), which sync-new-documents covers, so these exact effects start at ok.
+  const history = { joined: "H", pushed: { [key]: "g0", [setup]: "setup" }, status: "ok", editedSinceOff: true, future: { keep: [1, null, own] }, v: 99, ...own }
   const meta = { v: 1, id: "H", created: 0, extra: own }
   const seed = (): Record<string, unknown> => ({ schema: 1, device: { id: "device", consent: { v: 1, at: 1 }, syncOn: true }, sync: clone(history), [setup]: setupDoc, [key]: g1 })
   const remote = (): Record<string, unknown> => ({ "s:meta": meta, [base]: g0, [`s:${setup.slice(4)}`]: setupDoc })
@@ -884,7 +885,9 @@ async function flushAcceptance(create: typeof createLocalFilterWriter, acct: Acc
     equal(outcome.kind, "pushed", "whole inventory pushes")
     equal(h.syncWrites, [items], "literal six-item native batch")
     equal(h.syncRecords, { ...syncRecords, ...items }, "old chunks unknown occupancy and newer copy survive")
-    equal(h.sets, [pending(1065000), { sync: { ...ack, pushed: { ...ack.pushed, "doc:settings": "settings-pending", [tombKey]: "tomb" } } }], "protected newer generation is never acknowledged")
+    const acknowledged = { ...ack, pushed: { ...ack.pushed, "doc:settings": "settings-pending", [tombKey]: "tomb" } }
+    // SYNC-23: the newer copy another browser wrote also turns the status to update-needed, once.
+    equal(h.sets, [pending(1065000), { sync: acknowledged }, { sync: { ...acknowledged, status: "update-needed" } }], "protected newer generation is never acknowledged")
     equal(await h.writer.flushSync(), { kind: "idle" }, "chunked whole repeat is idle")
     const single = { v: 1, gen: "small", at: 30, by: "device", data: {} }
     h.records["doc:settings"] = single
@@ -1006,7 +1009,8 @@ async function flushAcceptance(create: typeof createLocalFilterWriter, acct: Acc
     if (fault === "unknown-pushed") h.records.sync = { ...history, pushed: { opaque: "g0" } }
     if (fault === "full") h.syncRecords.occupied = "x".repeat(8192)
     equal(await h.writer.flushSync(), { kind: fault === "full" ? "blocked" : "unavailable" }, "whole batch refusal " + fault)
-    equal(h.sets, [], "refused flush no history writes")
+    // A blocked flush writes only the full status, never history or documents (SYNC-17).
+    equal(h.sets, fault === "full" ? [{ sync: { ...history, status: "full" } }] : [], "refused flush no history writes")
     equal(h.syncWrites, [], "refused flush no partial push")
   }
   {
@@ -1023,7 +1027,7 @@ async function flushAcceptance(create: typeof createLocalFilterWriter, acct: Acc
     h.records.sync = { ...history, pushed: { ...history.pushed, "doc:settings": "restore" } }
     equal(await h.writer.flushSync(), { kind: "blocked" }, "whole pending plus acknowledged restoration refuses together")
     equal(h.syncWrites, [], "whole pending refusal never partially pushes")
-    equal(h.sets, [], "whole pending refusal never acknowledges")
+    equal(h.sets, [{ sync: { ...history, pushed: { ...history.pushed, "doc:settings": "restore" }, status: "full" } }], "whole pending refusal never acknowledges")
   }
   return { assertions }
 }
@@ -1930,7 +1934,8 @@ async function automaticIncomingAcceptance(create: typeof createLocalFilterWrite
     await h.writer.startSync()
     equal(h.records[F], f1, "exclusions continue to F " + fault); equal(h.records[R], r1, "exclusions continue to R " + fault)
     for (const [name, raw] of Object.entries(excluded)) equal(h.records[name], raw, "excluded target exact " + fault + name)
-    if (fault === "absent-local") equal(Object.keys(h.records).filter(n => /PL_(A|PP|Z)$/.test(n)), [], "absent local never created")
+    // SYNC-06: a document only the synced copy holds is created from it.
+    if (fault === "absent-local") for (const name of Object.keys(h.synced).filter(n => /PL_(A|PP|Z)$/.test(n))) equal(h.records[name.replace("s:", "doc:")], h.synced[name], "absent local created from the synced copy " + name)
     await h.writer.dispose(); cases.push("exclusions-" + fault)
   }
   for (const fault of ["pending", "disappeared", "future", "equal-divergence"]) {
@@ -2906,7 +2911,7 @@ function keptIncomingFaults(original: string) {
     { name: "selected-only", assertion: "kept manual raw adoption", source: original.replace('if (supported.kind !== "value" && supported.kind !== "deleted")', 'if (supported.kind !== "value" && supported.kind !== "deleted" || supported.kind === "value" && !supported.document.data.autoAdd.some(entry => entry.pl === key.playlist))') },
     { name: "no-Setup-validation", assertion: "kept unsupported Setup refusal", source: original.replace('if (key.kind === "settings") return { ...shared, selection: { kind: "settings" } } as const', 'if (true) return { ...shared, selection: { kind: "settings" } } as const') },
     { name: "no-raw-Setup-equality", assertion: "kept held stale Setup R0", source: original.replace('baseline.selection.kind === "filter" && sameSyncJson(current.setup, baseline.selection.setup)', 'baseline.selection.kind === "filter"') },
-    { name: "editable-kept", assertion: "kept UI selection remains required", source: original.replace(' || !setup.document.data.autoAdd.some(entry => entry.pl === change.playlist)', '') },
+    { name: "editable-kept", assertion: "kept UI selection remains required", source: original.replace(' || change.scope === "auto-add" && !setup.document.data.autoAdd.some(entry => entry.pl === change.playlist)', '') },
     { name: "outside-kept-lane", assertion: "kept same lane held IO L0", source: original.replace('return enqueue(() => receiveAttempt(key))', 'return receiveAttempt(key)') },
     { name: "decoded-kept", assertion: "kept raw omitted defaults", source: original.replace('const document = snapshot(remote.candidate.json)', 'const document = snapshot(JSON.parse(JSON.stringify(remote.candidate.value.document)))') },
     { name: "prepared-kept", assertion: "kept raw omitted defaults", source: original.replace('const document = snapshot(remote.candidate.json)', 'const document = snapshot(remote.candidate.json); const prepared = prepareDocumentBody({ kind: "filter", data: document.data }); if (prepared.kind === "prepared") document.data = prepared.data') },
@@ -3116,9 +3121,12 @@ async function setupIncomingAcceptance(create: typeof createLocalFilterWriter, a
       { [K]: k1, sync: { ...history, pushed: { ...pushed, [K]: "k1" } } },
       { [P]: p1, sync: { ...history, pushed: { ...pushed, [K]: "k1", [P]: "p1" } } },
       { [T]: t1, sync: { ...history, pushed: { ...pushed, [K]: "k1", [P]: "p1", [T]: "t1" } } },
-      { [S]: incoming, sync: { ...history, pushed: { ...pushed, [K]: "k1", [P]: "p1", [T]: "t1", [S]: "a1" } } }
+      { [S]: incoming, sync: { ...history, pushed: { ...pushed, [K]: "k1", [P]: "p1", [T]: "t1", [S]: "a1" } } },
+      // SYNC-06: documents only the synced copy holds follow, and a new account's filter waits for its setup.
+      { "doc:setup:BBBBBBBBBBBBBBBB": incoming, sync: { ...history, pushed: { ...pushed, [K]: "k1", [P]: "p1", [T]: "t1", [S]: "a1", "doc:setup:BBBBBBBBBBBBBBBB": "a1" } } },
+      { "doc:filter:BBBBBBBBBBBBBBBB:PL_X": k1, sync: { ...history, pushed: { ...pushed, [K]: "k1", [P]: "p1", [T]: "t1", [S]: "a1", "doc:setup:BBBBBBBBBBBBBBBB": "a1", "doc:filter:BBBBBBBBBBBBBBBB:PL_X": "k1" } } }
     ], "Setup K P T S cumulative lexical batches")
-    equal(Object.hasOwn(h.records, "doc:setup:BBBBBBBBBBBBBBBB"), false, "Setup remote-only never created")
+    equal(Object.hasOwn(h.records, "doc:setup:BBBBBBBBBBBBBBBB"), true, "Setup remote-only created")
     equal(Object.hasOwn(h.records, "doc:filter:AAAAAAAAAAAAAAAA:PL_N"), false, "Setup newly selected missing Filter never created")
     equal(await h.change(), unavailable("account-context"), "Setup kept UI selection remains required")
     const pl = "PL_P"; if (!isPlaylistId(pl)) throw Error("Invalid fixture")

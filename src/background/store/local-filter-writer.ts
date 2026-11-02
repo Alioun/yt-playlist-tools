@@ -45,7 +45,7 @@ import { executeDeviceSetting } from "./device-setting"
 import { executeUpgradeNoteFlag, type UpgradeNoteFlag, type UpgradeNoteFlagResult } from "./upgrade-note-flag"
 import type { DeviceSettingAnswer, DeviceSettingChange } from "../../shared/contracts/ui-pages"
 import { planSyncWrite, sameSyncJson, type SyncDocumentRecord } from "./sync-write-admission"
-import { readSyncDocument } from "./sync-codec"
+import { projectSyncWrite, readSyncDocument } from "./sync-codec"
 import { readSyncInventory } from "./sync-inventory"
 import { prepareDocumentBody } from "./write-preparation"
 import { executeLocalClaim, type ClaimHost, type ClaimTransactionResult } from "./local-claim-writer"
@@ -465,6 +465,8 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
   let joinHeld = false
   let joinRemoteRevision = 0
   let observedJoinRemote: JsonObject | undefined
+  // The status the latest flush read, so settling it costs nothing while it stays the same.
+  let flushedStatus: ReturnType<typeof decodeSyncState>["status"] | undefined
   const rawStartup = startup
   let observedInterimSnapshot: InterimPersistenceSnapshot | undefined
   if (rawStartup) startup = { ...rawStartup, context: detachAgreement(rawStartup.context),
@@ -1313,22 +1315,31 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     if (!ready.device.syncOn) return
     if (retainedHold(records)) return { kind: "unavailable" }
     const targets: SyncReceiveKey[] = []
-    // Documents only the synced copy holds are received too, so another browser's new setup or filter arrives here (SYNC-06).
-    const remoteNames: string[] = []
-    const observed = await readJoinSync()
-    if (isJsonObject(observed)) {
-      const inventory = readSyncInventory({ items: Object.entries(observed).map(([key, value]) => ({ key, value })) })
-      if (inventory.kind === "read") for (const entry of inventory.documents) if (entry.result.kind === "value") remoteNames.push(documentKey(entry.key))
-    }
-    for (const name of [...new Set([...Object.keys(records), ...remoteNames])].sort()) {
+    const receivable = (name: string) => {
       const key = parseDocumentKey(name)
-      if ((key?.kind === "settings" || key?.kind === "filter" || key?.kind === "setup") && documentKey(key) === name) targets.push(key)
+      return (key?.kind === "settings" || key?.kind === "filter" || key?.kind === "setup") && documentKey(key) === name ? key : undefined
     }
-    if (targets.length === 0 && isJsonObject(records) && isJsonObject(observed) && await signalJoinHistory(records, observed)) return { kind: "unavailable" }
+    for (const name of Object.keys(records).sort()) { const key = receivable(name); if (key) targets.push(key) }
+    if (targets.length === 0 && isJsonObject(records)) {
+      const remote = await readJoinSync()
+      if (isJsonObject(remote) && await signalJoinHistory(records, remote)) return { kind: "unavailable" }
+    }
     // Filters sort before their Setup, so a Setup that removes or restores its account revisits that account's Filters once.
     const removed = (raw: unknown) => isJsonObject(raw) && raw.deleted === true
     const queue = [...targets]
-    for (let index = 0; index < queue.length; index++) {
+    // Documents only the synced copy holds come after this browser's own, from the copy those receives just read,
+    // so another browser's new setup or filter arrives here without a read of its own (SYNC-06).
+    let remoteOnly = false
+    for (let index = 0; index < queue.length || !remoteOnly; index++) {
+      if (index === queue.length) {
+        remoteOnly = true
+        const observed = observedJoinRemote
+        const inventory = observed ? readSyncInventory({ items: Object.entries(observed).map(([key, value]) => ({ key, value })) }) : undefined
+        const names = inventory?.kind === "read" ? inventory.documents.filter(entry => entry.result.kind === "value").map(entry => documentKey(entry.key)) : []
+        const extra = names.filter(name => !Object.hasOwn(records, name)).sort().flatMap(name => receivable(name) ?? [])
+        targets.push(...extra); queue.push(...extra)
+        if (index === queue.length) break
+      }
       const key = queue[index]!
       if (lifetime.kind !== "active") return
       const result = await receiveAttempt(key)
@@ -1413,23 +1424,32 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     try { result = await flush(event) } catch (error) { deactivate("stopped"); throw error }
     if (result.kind === "acknowledgement-failed" || result.kind === "unconfirmed") deactivate("stopped")
     if (result.kind !== "deferred") cancelTicket()
-    try { await settleStatus(result) } catch {}
+    // Deciding needs no IO, so a status that stays the same doesn't even cost the flush an extra turn.
+    const status = statusAfter(result)
+    if (status) try { await writeStatus(status) } catch {}
     return result
   }
 
   // SYNC-17 and SYNC-23: the status says when the synced copy went over the browsers' quota, which stops this browser
   // pushing until room frees up, and when another browser wrote a document version this one can't read.
-  async function settleStatus(result: SyncFlushResult) {
+  function statusAfter(result: SyncFlushResult): "ok" | "full" | "update-needed" | undefined {
     if (result.kind !== "blocked" && result.kind !== "pushed" && result.kind !== "idle" && result.kind !== "cleaned" && result.kind !== "reconciled") return
+    const seen = flushedStatus
+    flushedStatus = undefined
+    let wanted: "ok" | "full" | "update-needed" = result.kind === "blocked" ? "full" : "ok"
+    if (wanted === "ok" && observedJoinRemote) {
+      const inventory = readSyncInventory({ items: Object.entries(observedJoinRemote).map(([key, value]) => ({ key, value })) })
+      // A flush with nothing to send proves no room, so a copy still over the quota stays full until something is removed.
+      if (inventory.kind === "read" && inventory.occupancy.kind === "full" && projectSyncWrite({ current: Object.entries(observedJoinRemote).map(([key, value]) => ({ key, value })), set: [], limits: "quota" }).kind === "full") wanted = "full"
+      else if (inventory.kind === "read" && inventory.documents.some(entry => entry.result.kind === "newer-version")) wanted = "update-needed"
+    }
+    // The flush already read the status, so a status that stays the same costs no read or write.
+    return seen === undefined || seen === wanted ? undefined : wanted
+  }
+  async function writeStatus(status: "ok" | "full" | "update-needed") {
     const records = await guardedLocal.get(null)
     const ready = authority(records)
     if (disposed() || ready.kind !== "ready" || !ready.device.syncOn || !ready.history || !isJsonObject(records)) return
-    let status: "ok" | "full" | "update-needed" = result.kind === "blocked" ? "full" : "ok"
-    if (status === "ok") {
-      const remote = await sync.get()
-      const inventory = isJsonObject(remote) ? readSyncInventory({ items: Object.entries(remote).map(([key, value]) => ({ key, value })) }) : undefined
-      if (inventory?.kind === "read" && inventory.documents.some(entry => entry.result.kind === "newer-version")) status = "update-needed"
-    }
     if (decodeSyncState(ready.history.raw).status === status || disposed()) return
     const before = snapshot(records), next = { ...ready.history.raw, status }
     await guardedLocal.set({ sync: next })
@@ -1521,24 +1541,24 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     }
     const [first, ...rest] = documents
     if (!first) return { kind: "removed", filters: 0 }
-    const items: Record<string, JsonValue> = Object.fromEntries(documents.map(row => [documentKey(row.key), row.document]))
+    const writes: Record<string, JsonValue> = Object.fromEntries(documents.map(row => [documentKey(row.key), row.document]))
     if (ready.device.syncOn) {
       const admission = planSyncWrite({ local: before, sync: await sync.get(), intent: { kind: "changed-batch", documents: [first, ...rest] } })
       if (admission.kind === "unavailable") return { kind: "unavailable", reason: "sync-writer-required" }
       if (admission.kind === "refused") return { kind: "result", result: { refused: admission.reason } }
       if (admission.kind === "planned" && ready.history) {
         const repaired = repairedHistory(ready.history.raw, admission.repairs)
-        if (repaired) items.sync = repaired
+        if (repaired) writes.sync = repaired
       }
     }
-    const effective = items.sync ?? ready.history?.raw
+    const effective = writes.sync ?? ready.history?.raw
     const patch = prepareFirstEditHistory({ history: effective === undefined || !isJsonObject(effective) ? { kind: "absent" } : { kind: "present", raw: effective }, syncOn: ready.device.syncOn })
     if (patch.kind === "unavailable") return { kind: "unavailable", reason: "sync-writer-required" }
-    if (patch.kind === "set") items.sync = patch.sync
+    if (patch.kind === "set") writes.sync = patch.sync
     const current = await guardedLocal.get(null)
     if (disposed() || !isJsonObject(current) || !sameSyncJson(before, current)) return { kind: "unavailable", reason: "stale" }
-    const expected = snapshot({ ...before, ...items })
-    try { await guardedLocal.set(items) } catch { claimConfirmation = "unconfirmed"; deactivate("stopped"); return { kind: "unconfirmed", cause: { kind: "readback" } } }
+    const expected = snapshot({ ...before, ...writes })
+    try { await guardedLocal.set(writes) } catch { claimConfirmation = "unconfirmed"; deactivate("stopped"); return { kind: "unconfirmed", cause: { kind: "readback" } } }
     try {
       const confirmed = await guardedLocal.get(null)
       if (disposed() || !isJsonObject(confirmed) || !sameSyncJson(expected, confirmed)) {
@@ -1788,6 +1808,8 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
         try { if (decodeDocument(records[documentKey({ kind: "setup", acct: key.acct })], decodeSetup).kind !== "value") return unavailable("account-context") }
         catch (error) { if (error instanceof DecodeError) return unavailable("account-context"); throw error }
       }
+      // A pushed entry with no local copy is a damaged history, not another browser's document.
+      if (Object.hasOwn(decodeSyncState(ready.history.raw).pushed, name)) return unavailable("document")
       const joined = ready.history.joined, before = snapshot(records)
       const observedRemote = await readJoinSync()
       const remote = observation(observedRemote, joined)
@@ -1796,23 +1818,22 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       if (remote.kind !== "ready") return remote
       // A synced tombstone agrees with this browser's absence.
       if (remote.candidate.kind !== "value") return { kind: "idle" }
-      if (Object.hasOwn(decodeSyncState(ready.history.raw).pushed, name)) return unavailable("pending")
-      const document = snapshot(remote.candidate.json), metadata = snapshot(remote.metadata)
-      const received: SyncDocumentRecord = { key, name, gen: remote.candidate.value.document.gen, document }
+      const adopted = snapshot(remote.candidate.json), observedMeta = snapshot(remote.metadata)
+      const received: SyncDocumentRecord = { key, name, gen: remote.candidate.value.document.gen, document: adopted }
       const preflight = observation(await sync.get(), joined)
       if (disposed()) return unavailable("authority")
       if (preflight.kind !== "ready") return preflight
-      if (!sameSyncJson(metadata, preflight.metadata)) return unavailable("history")
-      if (!sameSyncJson(document, preflight.candidate.json)) return unavailable("document")
+      if (!sameSyncJson(observedMeta, preflight.metadata)) return unavailable("history")
+      if (!sameSyncJson(adopted, preflight.candidate.json)) return unavailable("document")
       const latest = await guardedLocal.get(null)
       if (disposed() || !isJsonObject(latest) || !sameSyncJson(before, latest)) return unavailable("authority")
       const history = repairedHistory(ready.history.raw, [received])
       if (!history) throw new TypeError("Missing incoming acknowledgement")
-      try { await guardedLocal.set({ [name]: document, sync: history }) } catch (error) { return { kind: "local-set-failed", received, error } }
+      try { await guardedLocal.set({ [name]: adopted, sync: history }) } catch (error) { return { kind: "local-set-failed", received, error } }
       try {
         const after = await guardedLocal.get(null)
         if (disposed()) return { kind: "unconfirmed", received, cause: { kind: "authority" } }
-        if (!isJsonObject(after) || !sameSyncJson(snapshot({ ...before, [name]: document, sync: history }), after)) return { kind: "unconfirmed", received, cause: { kind: "readback" } }
+        if (!isJsonObject(after) || !sameSyncJson(snapshot({ ...before, [name]: adopted, sync: history }), after)) return { kind: "unconfirmed", received, cause: { kind: "readback" } }
       } catch (error) { return { kind: "unconfirmed", received, cause: { kind: "read-failed", error } } }
       if (key.kind === "filter") emitView({ kind: "filter-changed", source: "sync", acct: key.acct, playlist: key.playlist })
       else emitView({ kind: "setup-changed", source: "sync", acct: key.acct })
@@ -1941,6 +1962,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     records = loaded
     ready = authority(records)
     if (ready.kind !== "ready") return { kind: "unavailable" }
+    flushedStatus = ready.history ? decodeSyncState(ready.history.raw).status : undefined
     const time = clock()
     if (!time) { cancelTicket(); return { kind: "unavailable" } }
     if (hold && !admitted(event, time)) { cancelTicket(); return recoveryDeferral(time) }
