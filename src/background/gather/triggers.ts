@@ -21,7 +21,7 @@ export type TriggerPorts = {
   readonly session: Pick<SessionPort, "read">
   // ARC-ACC-73's serving tab for a gather in `windowId`, never one of `exclude`. Null when no signed-in tab with a gather playlist answers.
   serving(windowId: number, exclude: ReadonlySet<number>): Promise<AutomaticServing | null>
-  readonly gather: Pick<Gather, "automatic">
+  readonly gather: Pick<Gather, "automatic" | "activated">
   readonly clock: { now(): number; readonly after: Deadline }
   // The popup row's "Waiting for a signed-in YouTube tab to save from." (YT-GT-28) starts and ends here.
   waiting(waiting: boolean): void
@@ -93,6 +93,8 @@ export function createGatherTriggers(ports: TriggerPorts): GatherTriggers {
       const memory = read.memory
       const window = listed.filter(tab => tab.windowId === windowId)
       if (window.some(tab => tab.incognito)) return null
+      // A tab Undo reopened rejoins automatic gathering once the user has switched to it (YT-GT-26).
+      for (const tab of window) if (tab.active && memory.gather.kept.has(tab.tabId)) await ports.gather.activated(tab.tabId, "normal")
       const autoTabs: GatherAutoTab[] = window.flatMap(tab => {
         const video = videoOf(tab.url, access)
         return video ? [{ id: tab.tabId, index: tab.index, video, lastAccessed: tab.lastAccessed, active: tab.active, pinned: tab.pinned,

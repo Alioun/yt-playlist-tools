@@ -142,6 +142,29 @@ describe("a window reaching N video tabs (trigger 3)", () => {
   })
 })
 
+describe("tabs automatic gathering leaves alone", () => {
+  test("a tab Undo reopened stays out until the user switches to it", async () => {
+    const w = world({ unvisited: true })
+    w.f.window.open(20, watch(video(1)), "Reopened", { lastAccessed: w.wall() - 2 * DAY })
+    const read = await w.f.tabs.session.read()
+    if (read.kind !== "memory") throw new Error("No session")
+    await w.f.tabs.session.change({ revision: read.revision, now: 1, edits: [{ kind: "gather-kept", add: [20], remove: [] }] })
+    w.triggers.woke("ui")
+    await w.advance(200)
+    expect(w.saved()).toEqual([])
+    const row = w.f.window.rows.get(20)
+    if (row) row.active = true
+    w.f.tabs.clock.advance(61_000)
+    w.triggers.woke("ui")
+    await w.advance(200)
+    if (row) { row.active = false; row.lastAccessed = w.wall() - 2 * DAY }
+    w.f.tabs.clock.advance(61_000)
+    w.triggers.woke("ui")
+    await w.advance(200)
+    expect(w.saved()).toEqual([video(1)])
+  })
+})
+
 describe("unvisited for a while (trigger 1)", () => {
   test("a wake checks every normal window for tabs unvisited a day, at most once a minute, and never a private window", async () => {
     const w = world({ unvisited: true })
