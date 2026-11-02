@@ -1134,6 +1134,15 @@ export type MessageParameters = {
   "badge_paused": readonly []
   "badge_ticked": readonly []
   "firstRun_finish_done": readonly []
+  "playing_save": readonly []
+  "playing_saveTo": readonly ["song", "playlist"]
+  "playing_saved": readonly ["playlist"]
+  "playing_failed": readonly []
+  "playing_accountChanged": readonly []
+  "playing_tabClosed": readonly []
+  "playing_oneClick": readonly ["playlist"]
+  "playing_firstPick": readonly []
+  "playing_artist": readonly ["title", "artist"]
 }
 export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: MessageParameters[K] } = {
   "firstRun_continue_one": ["count"],
@@ -1545,4 +1554,8 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "report_opensWith": ["values"],
   "badge_notWorking_one": ["feature"],
   "badge_notWorking_other": ["count"],
+  "playing_saveTo": ["song", "playlist"],
+  "playing_saved": ["playlist"],
+  "playing_oneClick": ["playlist"],
+  "playing_artist": ["title", "artist"],
 }

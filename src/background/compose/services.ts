@@ -11,6 +11,7 @@ import { createUiRouter } from "../router/ui-playlists"
 import { createPageStatus } from "./page-status"
 import { createToolbarBadge, type ToolbarBadge } from "./badge"
 import { composeMonitor } from "./monitor"
+import { createPlayingNow } from "./playing-now"
 import type { StartingOwner, StoreLifecycle } from "../store/store-lifecycle"
 import { createTabViewProducer } from "../tab-view/producer"
 import { createViewPublication } from "../tab-view/publication"
@@ -103,6 +104,7 @@ export function composeServices(deps: {
       status: createPageStatus({ owner, statuses: monitor.statusProducer, tab: tabId => browserTabs.port.get(tabId), build }),
       withdraw: (origin, expected) => deps.lifecycle.withdrawConsent(origin, expected),
       readAccess: () => readAccess(),
+      playing: createPlayingNow({ tabs, native: browserTabs.port, session: () => owner.readSession(), consented: deps.consented }),
       version: () => native.runtime.getManifest().version,
       now: () => Date.now()
     }

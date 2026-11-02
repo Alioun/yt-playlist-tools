@@ -4354,5 +4354,58 @@
   },
   "firstRun_finish_done": {
     "message": "Done"
+  },
+  "playing_save": {
+    "message": "Save"
+  },
+  "playing_saveTo": {
+    "message": "Save $SONG$ to $PLAYLIST$",
+    "placeholders": {
+      "song": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "playing_saved": {
+    "message": "Saved to $PLAYLIST$.",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      }
+    }
+  },
+  "playing_failed": {
+    "message": "Couldn't save, because the YouTube Music tab didn't answer. Try again."
+  },
+  "playing_accountChanged": {
+    "message": "Couldn't save, because the YouTube Music tab changed accounts. Reopen the popup."
+  },
+  "playing_tabClosed": {
+    "message": "Couldn't save, because the YouTube Music tab closed."
+  },
+  "playing_oneClick": {
+    "message": "One click saves to $PLAYLIST$",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      }
+    }
+  },
+  "playing_firstPick": {
+    "message": "Your first pick becomes the quick-save playlist."
+  },
+  "playing_artist": {
+    "message": "$TITLE$ · $ARTIST$",
+    "placeholders": {
+      "title": {
+        "content": "$1"
+      },
+      "artist": {
+        "content": "$2"
+      }
+    }
   }
 }

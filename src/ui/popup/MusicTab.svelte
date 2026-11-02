@@ -10,6 +10,7 @@
   import DestinationChooser from "../features/DestinationChooser.svelte"
   import MusicButtons from "../features/MusicButtons.svelte"
   import FeatureRow from "./FeatureRow.svelte"
+  import PlayingNow from "./PlayingNow.svelte"
 
   // The popup's YouTube Music tab (UI-POP-16, UI-POP-18), its own chunk.
   let { pageState, features, ontoggle, ongiveaccess }: {
@@ -50,6 +51,7 @@
     </section>
     {#if line}<p role="status" class="text-destructive text-[12px]">{line}</p>{/if}
     {#if settings.musicSection}
+      {#if pageState.agreed && access.music}<PlayingNow {pageState} />{/if}
       <ul class="bg-card rounded-xl border" aria-label={i18n.message("site_music")}>
         {#each ["music-actions", "music-keys"] as const as feature (feature)}
           {@const reason = heldReason(feature, settings, pageState.agreed, access)}

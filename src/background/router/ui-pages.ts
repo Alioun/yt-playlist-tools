@@ -32,6 +32,10 @@ export type PageReceiverPorts = {
     agree(origin: UiOrigin, input: AgreementInput): Promise<AgreementResult>
   }
   readonly readAccess: () => Promise<AgreementAccess | undefined>
+  readonly playing?: {
+    now(ui: UiRequester): Promise<import("../../shared/contracts/ui-pages").UiPlayingNow>
+    save(ui: UiRequester, save: import("../../shared/contracts/ui-pages").PlayingSave): Promise<import("../../shared/contracts/ui-pages").UiPlayingSave>
+  }
   readonly withdraw: (origin: SettingsPageOrigin, expected: { readonly v: number; readonly at: number }) => Promise<WithdrawalResult>
   /** The version a settings file names (DATA-53). */
   readonly version: () => string
@@ -177,6 +181,12 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
             : { kind: "upgrade-note", selected: change.selected, syncOn: false, percentage: change.percentage } })
         return projectAgreement({ kind: "first-run-agree", displayedVersion: change.displayedVersion, attempt: change.attempt, selected: change.selected, syncOn: change.syncOn }, result, access)
       } catch { return refusal("rejected") }
+    },
+    async "ui.playingNow"(_payload, context) {
+      return ports.playing ? ports.playing.now(context.ui) : unavailable("collaborator")
+    },
+    async "ui.playingSave"({ save }, context) {
+      return ports.playing ? ports.playing.save(context.ui, save) : unavailable("collaborator")
     },
     async "ui.device"(payload, context) {
       const origin = context.ui.ui.origin
