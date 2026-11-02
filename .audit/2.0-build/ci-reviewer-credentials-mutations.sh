@@ -82,6 +82,10 @@ plant runs-in-runner-temp "$release" 's/work=\$\(mktemp -d "\$temp\/reviewer-not
 plant reads-parent-tsconfig "$release" 's/ --tsconfig-override=empty\.json//g' -- \
   "loads no _temp/tsconfig.json planted above the script" "loads no _temp/jsconfig.json planted above the script" \
   "loads no tsconfig.json planted above the script" "loads no jsconfig.json planted above the script"
+plant unchecked-bun "$release" 's/ *if \[\[ -n \$bun_digest \]\]; then\n.*?\n *fi\n//sg' -- \
+  "check-reviewer-login refuses a Bun that isn't at vars.BUN_SHA256" "fill-reviewer-notes refuses a Bun that isn't at vars.BUN_SHA256"
+plant bun-digest-unchecked-format "$release" 's/\[\[ -z \$bun_digest \|\| \$bun_digest =~ \^\[0-9a-f\]\{64\}\$ \]\]/true/g' -- "refuses a vars.BUN_SHA256 that isn't a digest"
+plant bun-digest-wrong-file "$release" 's/echo "\$bun_digest  \$bun"/echo "\$bun_digest  amo-reviewer-notes.ts"/g' -- "runs the script once Bun matches vars.BUN_SHA256"
 plant gate-open "$release" 's/if: false && github\.event_name/if: github.event_name/' -- "can't be turned on while an action in them is unpinned"
 plant digest-in-repo "$release" 's/\$\{\{ vars\.REVIEWER_NOTES_SHA256 \}\}/46372e7ff86b8b5eb647c8fc616ec32167ac341848aae2d5fa4416eaa525ee06/' -- "hold no digest of the script"
 plant no-digest-check "$release" 's/\[\[ \$digest =~ \^\[0-9a-f\]\{64\}\$ \]\]/true/g' -- "refuses to run while vars.REVIEWER_NOTES_SHA256 is unset"
@@ -90,7 +94,7 @@ plant bulk-secrets "$ci" 's/(VERSION: \$\{\{ steps\.version\.outputs\.version \}
 plant indexed-secret "$ci" 's/(VERSION: \$\{\{ steps\.version\.outputs\.version \}\}\n)/$1          LOGIN: \$\{\{ secrets[\x27AMO_REVIEWER_LOGIN\x27] \}\}\n/' -- "read secrets only by name"
 plant old-runner \
   "$script" base \
-  "$release" 's/          digest=\$REVIEWER_NOTES_SHA256\n          script=[^\n]*\n          metadata=[^\n]*\n          version=\$VERSION\n(?:.*\n)*?          exec bun [^\n]*\n/          cp scripts\/amo-reviewer-notes.ts "\$RUNNER_TEMP\/"\n          cd "\$RUNNER_TEMP"\n          echo "\$REVIEWER_NOTES_SHA256  amo-reviewer-notes.ts" | shasum -a 256 --check --status \\\n            || { echo "::error::amo-reviewer-notes.ts is not the approved version (G28)"; exit 1; }\n          bun --no-env-file amo-reviewer-notes.ts fill "\$VERSION" "\$GITHUB_WORKSPACE\/dist\/amo-metadata.json"\n/' -- \
+  "$release" 's/          digest=\$REVIEWER_NOTES_SHA256\n          script=[^\n]*\n          metadata=[^\n]*\n          version=\$VERSION\n(?:.*\n)*?          exec "\$bun" [^\n]*\n/          cp scripts\/amo-reviewer-notes.ts "\$RUNNER_TEMP\/"\n          cd "\$RUNNER_TEMP"\n          echo "\$REVIEWER_NOTES_SHA256  amo-reviewer-notes.ts" | shasum -a 256 --check --status \\\n            || { echo "::error::amo-reviewer-notes.ts is not the approved version (G28)"; exit 1; }\n          bun --no-env-file amo-reviewer-notes.ts fill "\$VERSION" "\$GITHUB_WORKSPACE\/dist\/amo-metadata.json"\n/' -- \
   "strips BUN_CONFIG_VERBOSE_FETCH" "strips BUN_OPTIONS" "loads no bunfig.toml planted" "strips NODE_TLS_REJECT_UNAUTHORIZED" "strips NODE_EXTRA_CA_CERTS"
 plant job-level-keys "$ci" base -- "hold no secret in a workflow- or job-level env"
 plant old-leak-check "$tests" 's/forms\(value\)\.some\(form => text\.includes\(form\)\)/text.includes(value) || text.includes(JSON.stringify(value).slice(1, -1))/' -- "finds each value in every form a log could carry it"

@@ -117,17 +117,18 @@ function workspace(source: string, notes?: string): string {
   return dir
 }
 
-type Options = { login?: string; digest?: string; amoKeys?: boolean; env?: Record<string, string> }
+type Options = { login?: string; digest?: string; bunDigest?: string; amoKeys?: boolean; env?: Record<string, string> }
 
 /**
  * Runs a step's real `run:` block as GitHub does, plus `-x`, so stderr traces
  * every command line it spawns. The step's own `env:` decides which dummy
  * reaches which name; a missing secret is empty, as on GitHub.
  */
-async function runStep(step: Step, dir: string, { login = rawLogin, digest, amoKeys = true, env: extra = {} }: Options = {}) {
+async function runStep(step: Step, dir: string, { login = rawLogin, digest, bunDigest = "", amoKeys = true, env: extra = {} }: Options = {}) {
   const dummies: Record<string, string> = {
     "${{ secrets.AMO_REVIEWER_LOGIN }}": login,
     "${{ vars.REVIEWER_NOTES_SHA256 }}": digest ?? sha256(readFileSync(join(dir, "scripts/amo-reviewer-notes.ts"))),
+    "${{ vars.BUN_SHA256 }}": bunDigest,
     "${{ env.AMO_GUID }}": release.env!.AMO_GUID!,
     "${{ secrets.FIREFOX_JWT_ISSUER }}": amoKeys ? jwtIssuer : "",
     "${{ secrets.FIREFOX_JWT_SECRET }}": amoKeys ? jwtSecret : "",
@@ -340,7 +341,7 @@ describe("the check step", () => {
     const amo = await fakeAmo()
     const run = await runStep(checkStep, workspace(scriptFor(amo.origin), fullNotes))
     expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: ready\n" })
-    expect(run.trace).toContain("+ exec bun --no-env-file --config=empty.toml --tsconfig-override=empty.json amo-reviewer-notes.ts check ")
+    expect(run.trace).toMatch(/\n\+ exec \S+\/_bin\/bun --no-env-file --config=empty\.toml --tsconfig-override=empty\.json amo-reviewer-notes\.ts check /)
     expect(amo.requests).toEqual([])
     expect(leaks(run.stdout + run.trace)).toEqual([])
   })
@@ -388,13 +389,34 @@ describe("the check step", () => {
   test("refuses to run a script that isn't at the owner's digest", async () => {
     const run = await runStep(checkStep, workspace(scriptSource, fullNotes), { digest: "f".repeat(64) })
     expect(run).toMatchObject({ exit: 1, stdout: "::error::amo-reviewer-notes.ts is not the approved version (G28)\n" })
-    expect(run.trace).not.toContain("+ exec bun")
+    expect(run.trace).not.toContain("+ exec ")
   })
 
   test.each([["unset", ""], ["not a digest", "dummy-digest-0000"]])("refuses to run while vars.REVIEWER_NOTES_SHA256 is %s", async (_, digest) => {
     const run = await runStep(checkStep, workspace(scriptSource, fullNotes), { digest })
     expect(run).toMatchObject({ exit: 1, stdout: "::error::vars.REVIEWER_NOTES_SHA256 is not a SHA-256 digest (G28)\n" })
-    expect(run.trace).not.toContain("+ exec bun")
+    expect(run.trace).not.toContain("+ exec ")
+  })
+})
+
+describe("the Bun check", () => {
+  test("runs the script once Bun matches vars.BUN_SHA256", async () => {
+    const run = await runStep(checkStep, workspace(scriptSource, fullNotes), { bunDigest: sha256(readFileSync(process.execPath)) })
+    expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: ready\n" })
+  })
+
+  test.each(reviewerJobs)("%s refuses a Bun that isn't at vars.BUN_SHA256", async id => {
+    const amo = await fakeAmo()
+    const run = await runStep(loginStep(id), workspace(scriptFor(amo.origin), fullNotes), { bunDigest: "f".repeat(64) })
+    expect(run).toMatchObject({ exit: 1, stdout: "::error::bun is not the approved build (G28)\n" })
+    expect(run.trace).not.toContain("+ exec ")
+    expect(amo.requests).toEqual([])
+  })
+
+  test("refuses a vars.BUN_SHA256 that isn't a digest", async () => {
+    const run = await runStep(checkStep, workspace(scriptSource, fullNotes), { bunDigest: "dummy-digest-0000" })
+    expect(run).toMatchObject({ exit: 1, stdout: "::error::vars.BUN_SHA256 is not a SHA-256 digest (G28)\n" })
+    expect(run.trace).not.toContain("+ exec ")
   })
 })
 
@@ -403,7 +425,7 @@ describe("the fill step", () => {
     const amo = await fakeAmo()
     const run = await runStep(fillStep, workspace(scriptFor(amo.origin), fullNotes))
     expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: filled (AMO version 2.0.0, confirmed)\n" })
-    expect(run.trace).toContain("+ exec bun --no-env-file --config=empty.toml --tsconfig-override=empty.json amo-reviewer-notes.ts fill 2.0.0 ")
+    expect(run.trace).toMatch(/\n\+ exec \S+\/_bin\/bun --no-env-file --config=empty\.toml --tsconfig-override=empty\.json amo-reviewer-notes\.ts fill 2\.0\.0 /)
     expect(leaks(run.stdout + run.trace)).toEqual([])
 
     expect(amo.requests).toHaveLength(1)
