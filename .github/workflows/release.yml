@@ -144,7 +144,6 @@ jobs:
     env:
       VERSION: ${{ needs.meta.outputs.version }}
       PRERELEASE: ${{ needs.meta.outputs.channel == 'beta' && '--prerelease' || '' }}
-      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -156,6 +155,8 @@ jobs:
       # this commit and finishes the job. A GITHUB_TOKEN tag starts no other
       # workflow, which is why releasing happens here rather than on a tag push.
       - name: Tag and create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           tag="v$VERSION"
@@ -255,7 +256,6 @@ jobs:
     env:
       VERSION: ${{ needs.meta.outputs.version }}
       CHANNEL: ${{ needs.meta.outputs.channel }}
-      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v7
 
@@ -361,8 +361,12 @@ jobs:
           scripts/check-signed-build.sh checked from-amo
           echo "The signed beta holds exactly the checked files."
 
+      # The only step with the token, which can write releases: bun install,
+      # wxt and web-ext run earlier in this job.
       - name: Attach the signed beta to the pre-release
         if: env.CHANNEL == 'beta'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: gh release upload "v$VERSION" signed/*.xpi --clobber --repo "$GITHUB_REPOSITORY"
 
   # G28: once AMO has the version and its sources, sets its reviewer notes to the
@@ -472,8 +476,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: write
-    env:
-      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Rebuild the site
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main

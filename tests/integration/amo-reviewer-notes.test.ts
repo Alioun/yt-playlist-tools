@@ -172,14 +172,20 @@ function files(dir: string): string[] {
 
 type Reference = { at: string; expression: string }
 
-/** Every use of the secrets context in every workflow, and where it sits. Steps are named by their name or action. */
-function secretReferences(): Reference[] {
+/**
+ * Every use of the secrets context and of the job token in every workflow, and
+ * where it sits: `github.token`, or `github` whole, as `toJSON(github)` carries
+ * the token too. Steps are named by their name or action.
+ */
+function credentialReferences(): Reference[] {
   const found: Reference[] = []
   const visit = (value: unknown, at: string[], isExpression: boolean) => {
     if (typeof value === "string") {
       const expressions = isExpression ? [value] : [...value.matchAll(/\$\{\{([\s\S]*?)\}\}/g)].map(match => match[1]!)
       for (const expression of expressions) {
-        for (const match of expression.matchAll(/\bsecrets\b(?:\.[A-Za-z_][\w-]*)?/g)) found.push({ at: at.join(" > "), expression: match[0] })
+        for (const match of expression.matchAll(/\bsecrets\b(?:\.[A-Za-z_][\w-]*)?|(?<![\w.-])github(?:\.token\b|(?![\w.-]))/g)) {
+          found.push({ at: at.join(" > "), expression: match[0] })
+        }
       }
     } else if (Array.isArray(value)) {
       value.forEach((item: unknown, index) => {
@@ -217,18 +223,18 @@ describe("the leak check", () => {
 })
 
 describe("the workflows", () => {
-  test("read secrets only by name, never in bulk or by a computed name", () => {
-    const bulk = secretReferences().filter(reference => !/^secrets\.[A-Za-z_][\w-]*$/.test(reference.expression))
+  test("read secrets and the job token only by name, never in bulk or by a computed name", () => {
+    const bulk = credentialReferences().filter(({ expression }) => expression !== "github.token" && !/^secrets\.[A-Za-z_][\w-]*$/.test(expression))
     expect(bulk).toEqual([])
   })
 
-  test("hold no secret in a workflow- or job-level env, where every step would see it", () => {
-    const wide = secretReferences().filter(({ at }) => at.includes(" > env > ") && !at.includes(" > steps > "))
+  test("hold no secret or job token in a workflow- or job-level env, where every step would see it", () => {
+    const wide = credentialReferences().filter(({ at }) => at.includes(" > env > ") && !at.includes(" > steps > "))
     expect(wide).toEqual([])
   })
 
   test("give AMO_REVIEWER_LOGIN only to the two reviewer steps, each through its own env", () => {
-    expect(secretReferences().filter(reference => reference.expression === "secrets.AMO_REVIEWER_LOGIN").map(reference => reference.at)).toEqual([
+    expect(credentialReferences().filter(reference => reference.expression === "secrets.AMO_REVIEWER_LOGIN").map(reference => reference.at)).toEqual([
       "release.yml > jobs > check-reviewer-login > steps > Check the reviewer test account > env > AMO_REVIEWER_LOGIN",
       "release.yml > jobs > fill-reviewer-notes > steps > Put the reviewer test account into the reviewer notes > env > AMO_REVIEWER_LOGIN"
     ])
