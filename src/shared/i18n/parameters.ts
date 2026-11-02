@@ -483,4 +483,7 @@ export const messageParameters = {
   "quickSave_failed": [],
   "quickSave_more": [],
   "quickSave_moreKey": ["key"],
+  "browserMenu_saveTo": [],
+  "browserMenu_quickSave": [],
+  "browserMenu_choose": [],
 } as const

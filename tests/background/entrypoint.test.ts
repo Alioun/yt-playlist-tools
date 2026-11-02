@@ -40,6 +40,8 @@ function nativeRegistration(granted: readonly string[]) {
       async unregisterContentScripts({ ids }: { ids: string[] }) { scripts = scripts.filter(script => !ids.includes(script.id)) },
       async executeScript() { return [] }
     },
+    commands: { onCommand: fakeEvent() },
+    contextMenus: { onClicked: fakeEvent(), async removeAll() {}, create() {} },
     permissions: {
       async contains(request: { origins?: string[]; permissions?: string[] }) {
         return (request.permissions ?? []).length === 0 && (request.origins ?? []).every(origin => granted.includes(origin))

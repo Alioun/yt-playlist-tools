@@ -3039,5 +3039,14 @@
         "content": "$1"
       }
     }
+  },
+  "browserMenu_saveTo": {
+    "message": "Save to"
+  },
+  "browserMenu_quickSave": {
+    "message": "Quick-save playlist"
+  },
+  "browserMenu_choose": {
+    "message": "Choose a playlist…"
   }
 }

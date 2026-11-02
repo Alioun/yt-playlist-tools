@@ -7,8 +7,9 @@ import type { Registrar } from "../registrar/ports"
 import { projectDestination } from "../router/first-run-results"
 import type { StartingOwner } from "../store/store-lifecycle"
 import type { Requester, Tabs } from "../tabs/ports"
-import type { BuildId, FeatureId, Origin } from "../../shared/contracts"
-import { tabActionContract, type PlaylistTitles, type TabActionMessages, type TabAddReport, type TabCreated, type TabPlaylists, type TabUndoReport } from "../../shared/contracts/tab-actions"
+import type { BuildId, FeatureId, Origin, Site } from "../../shared/contracts"
+import { toastPlan, type ExplicitOutcome } from "../../shared/rules/outcomes"
+import { tabActionContract, type PlaylistTitles, type TabActionMessages, type TabAddReport, type TabAddRequest, type TabCreated, type TabPlaylists, type TabUndoReport } from "../../shared/contracts/tab-actions"
 import { cacheRows } from "../../shared/model/account-cache"
 import { decodeSettings } from "../../shared/model/decodeSettings"
 import { defaultSettings } from "../../shared/model/defaults"
@@ -87,7 +88,15 @@ export function createAddFlowOwner(owner: Pick<StartingOwner, "readTabProjection
   return { port, load }
 }
 
-export type Actions = { readonly flow: AddFlow; load(incognito: boolean, acct: AccountKey | null): Promise<void>; dispose(): void }
+export type ActingTab = { readonly tabId: number; readonly incognito: boolean; readonly site: Site }
+export type Actions = {
+  readonly flow: AddFlow
+  load(incognito: boolean, acct: AccountKey | null): Promise<void>
+  /** An explicit add in a tab the background chose, as that tab's account (YT-ANY-05, YT-BM-04). */
+  addInTab(tab: ActingTab, request: TabAddRequest): Promise<TabAddReport>
+  settings(incognito: boolean): Promise<Settings | null>
+  dispose(): void
+}
 
 /** The add flow over the Tabs engine, and the tab routes a page's user actions use (06 §6.8.2). */
 export function composeActions(deps: {
@@ -118,12 +127,23 @@ export function composeActions(deps: {
     const [known] = await tabs.known({ kind: "tab", tabId: context.origin.tabId })
     return known !== undefined && known.acct === acct && known.privateTab === context.origin.incognito
   }
-  async function titlesOf(acct: AccountKey | null, context: TabContext, ids: readonly PlaylistId[]): Promise<PlaylistTitles> {
+  async function titlesOf(acct: AccountKey | null, tab: ActingTab, ids: readonly PlaylistId[]): Promise<PlaylistTitles> {
     if (acct === null || !ids.length) return {}
-    const read = await owner.readPlaylistCache({ acct, private: context.origin.incognito }).catch(() => null)
+    const read = await owner.readPlaylistCache({ acct, private: tab.incognito }).catch(() => null)
     if (read?.kind !== "cache" || read.cache === null) return {}
     const wanted = new Set(ids)
-    return Object.fromEntries(cacheRows(read.cache, context.site).filter(row => wanted.has(row.id) && row.title).map(row => [row.id, row.title]))
+    return Object.fromEntries(cacheRows(read.cache, tab.site).filter(row => wanted.has(row.id) && row.title).map(row => [row.id, row.title]))
+  }
+  async function addIn(tab: ActingTab, acct: AccountKey | null, request: TabAddRequest): Promise<TabAddReport> {
+    await view.load(tab.incognito, acct)
+    const { memory: _memory, ...report } = await flow.add(request, { kind: "tab", tabId: tab.tabId, incognito: tab.incognito })
+    if (report.kind !== "report" && report.kind !== "stopped") return report
+    const ids = Object.keys(report.outcomes) as PlaylistId[]
+    if (ids.length) log(`add (${request.via}) ${Object.entries(report.outcomes).map(([playlist, outcome]) => `${playlist}=${outcome.kind === "failed" ? outcome.failure : outcome.kind}`).join(" ")}`)
+    // A pick's toast belongs to its picker, but a save from the browser's menu or a key from any tab has no picker to plan it.
+    const toast = report.kind === "report" && report.toast === null && request.via === "picker" && (request.opener === "browser-menu" || request.opener === "any-tab-keys")
+      ? toastPlan({ kind: "quick-save", outcomes: report.outcomes as Record<PlaylistId, ExplicitOutcome> }, report.feedback) : report.toast
+    return { ...report, toast, titles: await titlesOf(acct, tab, ids) } as TabAddReport
   }
   function requestOf(context: TabContext): Requester {
     return { windowId: context.windowId, incognito: context.origin.incognito, activeTabId: context.origin.tabId }
@@ -131,18 +151,13 @@ export function composeActions(deps: {
   const unbind = rpc.handle({ authenticate: authenticateTab(native), handlers: {
     async "tab.add"({ acct, request }, context): Promise<TabAddReport> {
       if (request.site !== context.site || !await pinned(context, acct)) return { kind: "no-tab" }
-      await view.load(context.origin.incognito, acct)
-      const { memory: _memory, ...report } = await flow.add(request, context.origin)
-      if (report.kind !== "report" && report.kind !== "stopped") return report
-      const ids = Object.keys(report.outcomes) as PlaylistId[]
-      if (ids.length) log(`add (${request.via}) ${Object.entries(report.outcomes).map(([playlist, outcome]) => `${playlist}=${outcome.kind === "failed" ? outcome.failure : outcome.kind}`).join(" ")}`)
-      return { ...report, titles: await titlesOf(acct, context, ids) }
+      return addIn({ tabId: context.origin.tabId, incognito: context.origin.incognito, site: context.site }, acct, request)
     },
     async "tab.remove"({ acct, request }, context) {
       if (request.site !== context.site || !await pinned(context, acct)) return { kind: "no-tab" }
       await view.load(context.origin.incognito, acct)
       const { memory: _memory, ...report } = await flow.remove(request, context.origin)
-      return report.kind === "removed" ? { ...report, titles: await titlesOf(acct, context, [report.playlist]) } : report
+      return report.kind === "removed" ? { ...report, titles: await titlesOf(acct, { tabId: context.origin.tabId, incognito: context.origin.incognito, site: context.site }, [report.playlist]) } : report
     },
     async "tab.undo"({ acct, request }, context): Promise<TabUndoReport> {
       if (!await pinned(context, acct)) return { kind: "no-tab" }
@@ -192,6 +207,15 @@ export function composeActions(deps: {
   } })
   return {
     flow, load: view.load,
+    async addInTab(tab, request) {
+      const [known] = await tabs.known({ kind: "tab", tabId: tab.tabId })
+      if (!known || known.privateTab !== tab.incognito) return { kind: "no-tab" }
+      return addIn(tab, known.acct, request)
+    },
+    async settings(incognito) {
+      const read = await owner.readTabProjection({ private: incognito, account: { kind: "unknown" } }).catch(() => null)
+      return read?.kind === "projection" && read.projection.settings.kind === "value" ? decodeSettings(read.projection.settings.settings) : null
+    },
     dispose() {
       unbind()
       rpc.dispose()

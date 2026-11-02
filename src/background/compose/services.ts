@@ -1,5 +1,7 @@
 import { createAccounts } from "../accounts/accounts"
 import { composeActions, type Actions } from "./actions"
+import { composeAnyTab } from "./any-tab"
+import { createSiteI18n } from "../../shared/i18n"
 import type { NativeBrowser } from "../adapters/browser"
 import { runtimeTransport, timerDeadline, type RuntimePort } from "../adapters/runtime"
 import { createBrowserTabs } from "../adapters/tabs"
@@ -13,7 +15,12 @@ import { createTabs } from "../tabs/tabs"
 import type { BuildId } from "../../shared/contracts"
 import { siteBundles } from "../../shared/features/registration"
 
-export type Services = { readonly tabs: ReturnType<typeof createTabs>; readonly actions: Actions; dispose(): void }
+export type Services = {
+  readonly tabs: ReturnType<typeof createTabs>
+  readonly actions: Actions
+  readonly anyTab: ReturnType<typeof composeAnyTab>
+  dispose(): void
+}
 
 /**
  * Until the Monitor's production authority is bound (B35), every feature that's on reads as working, which is
@@ -36,6 +43,7 @@ export function composeServices(deps: {
   readonly lifecycle: StoreLifecycle
   readonly registrar: Registrar
   readonly consented: () => boolean
+  readonly menuClicksHeard: boolean
 }): Services {
   const { native, build, owner, registrar } = deps
   const runtime = { ...deps.runtime, id: native.runtime.id, getURL: (path: string) => native.runtime.getURL(path as never) }
@@ -59,6 +67,13 @@ export function composeServices(deps: {
       const [active] = await native.tabs.query({ active: true, windowId: origin.windowId }).catch(() => [])
       return { windowId: origin.windowId, incognito: origin.incognito, activeTabId: typeof active?.id === "number" ? active.id : null }
     } })
+  const anyTab = composeAnyTab({ native, build, actions, tabs, registrar, consented: deps.consented, menuClicksHeard: deps.menuClicksHeard,
+    i18n: createSiteI18n({ getMessage: (name, substitutions) => native.i18n.getMessage(name as never, substitutions) }) })
+  const reconcileMenu = () => { void anyTab.reconcileMenu() }
+  const stopMenuSettings = owner.subscribe(reconcileMenu)
+  native.permissions.onAdded.addListener(reconcileMenu)
+  native.permissions.onRemoved.addListener(reconcileMenu)
+  reconcileMenu()
   const producer = createTabViewProducer({ owner, addFlow: actions.flow, statuses: workingStatuses, notices: noNotices, build })
   const unbindHello = browserTabs.bindHello(tabs, producer)
   const publication = createViewPublication({ owner, tabs, producer, privateSkips: actions.flow, clock,
@@ -87,9 +102,10 @@ export function composeServices(deps: {
     rpc: { build, deadline: timerDeadline }
   })
   return {
-    tabs, actions,
+    tabs, actions, anyTab,
     dispose() {
-      for (const stop of [() => router.dispose(), () => accounts.dispose(), () => actions.dispose(), () => playlists.dispose(), () => publication.dispose(),
+      for (const stop of [() => router.dispose(), () => accounts.dispose(), stopMenuSettings, () => native.permissions.onAdded.removeListener(reconcileMenu),
+        () => native.permissions.onRemoved.removeListener(reconcileMenu), () => anyTab.dispose(), () => actions.dispose(), () => playlists.dispose(), () => publication.dispose(),
         unbindHello, () => producer.dispose(), () => tabs.dispose(), () => browserTabs.dispose()]) {
         try { stop() } catch {}
       }

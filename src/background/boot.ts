@@ -17,6 +17,10 @@ export type Background = { readonly lifecycle: StoreLifecycle; readonly ready: P
 export function boot(native: NativeBrowser, platform: Platform): Background {
   const gate = createRuntimeGate(native.runtime)
   native.runtime.onInstalled.addListener(details => { if (details.reason === "install") void openFirstRun(native) })
+  // Keys from any tab and the browser's menu wake the worker, so their listeners join this first turn and wait for the services (YT-ANY, YT-BM).
+  native.commands?.onCommand.addListener(name => { void ready.then(() => services?.anyTab.command(name)) })
+  const menuClicksHeard = native.contextMenus !== undefined
+  native.contextMenus?.onClicked.addListener((info, tab) => { void ready.then(() => services?.anyTab.clicked(info, tab)) })
   let services: Services | undefined
   const lifecycle = composeStore(native, platform, () => createClearAllTeardown({
     registrar: current.registrar, extLinks: [], scripting: current.scripting,
@@ -38,7 +42,7 @@ export function boot(native: NativeBrowser, platform: Platform): Background {
     const stops = [state.owner.subscribeView(refresh), state.owner.subscribe(refresh)]
     stopOwner = () => { for (const stop of stops.splice(0)) stop() }
     services = composeServices({
-      native, runtime: gate.runtime, build: platform.build, owner: state.owner, registrar: current.registrar, consented,
+      native, runtime: gate.runtime, build: platform.build, owner: state.owner, registrar: current.registrar, consented, menuClicksHeard,
       lifecycle: { ...lifecycle, async clearAll(origin, options) {
         const result = await lifecycle.clearAll(origin, options)
         if (lifecycle.state().kind === "active" && services === undefined) restart()
