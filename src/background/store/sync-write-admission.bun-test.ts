@@ -12,6 +12,7 @@ export type AdmissionProofs = [
   Check<Equal<SyncWritePlanInput, {
     readonly local: Readonly<Record<string, unknown>>
     readonly sync: Readonly<Record<string, unknown>>
+    readonly allowance?: "headroom"
     readonly intent: { readonly kind: "flush" } | { readonly kind: "unchanged"; readonly key: DocumentKey }
       | { readonly kind: "changed"; readonly key: DocumentKey; readonly document: JsonObject }
       | { readonly kind: "changed-batch"; readonly documents: readonly [
@@ -232,4 +233,17 @@ test("a tombstone only sync holds lets edits and flushes through while a live do
   const live = { ...f.sync, [gone]: { v: 1, gen: "alive", at: 2, by: "elsewhere", data: { mode: "deny", on: true, channels: [] } } }
   expect(planSyncWrite({ ...f, sync: live })).toEqual(unavailable)
   expect(planSyncWrite({ ...f, sync: live, intent: { kind: "flush" } })).toEqual(unavailable)
+})
+
+test("a user's change must fit the budget, while a label refresh, a mark or a flush may use the headroom up to the browsers' quota (SYNC-16)", () => {
+  const f = fixture()
+  const filler = (count: number) => Object.fromEntries(Array.from({ length: count }, (_, i) => [`unknown:${i}`, 0]))
+  const overBudget = { ...f.sync, ...filler(479) }
+  expect(planSyncWrite({ ...f, sync: overBudget })).toEqual(full)
+  expect(planSyncWrite({ ...f, sync: overBudget, allowance: "headroom" })).toMatchObject(admitted)
+  const pending = { ...f, local: { ...f.local, [localKey]: candidate }, sync: overBudget, intent: { kind: "flush" } } as const
+  expect(planSyncWrite(pending)).toMatchObject(admitted)
+  const overQuota = { ...f.sync, ...filler(511) }
+  expect(planSyncWrite({ ...f, sync: overQuota, allowance: "headroom" })).toEqual(full)
+  expect(planSyncWrite({ ...pending, sync: overQuota })).toEqual(full)
 })

@@ -36,7 +36,7 @@ import { prepareFirstEditHistory, readFirstEditProvenance } from "./first-edit-p
 import {
   CONSENT_VERSION, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError,
   decodeDevice, decodeDocument, decodeFilter, decodeSettings, decodeSetup, decodeSyncState, decodeSyncMeta, documentKey, isAccountKey, parseDocumentKey,
-  isVideoId, readStoredUnclaimed, type AccountKey, type PlaylistId, type DocumentKey, type SyncOpaqueWrite
+  isVideoId, isPlaylistId, readStoredUnclaimed, type AccountKey, type PlaylistId, type DocumentKey, type SyncOpaqueWrite
 } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
@@ -58,7 +58,7 @@ import { executeSharedSetting, type LocalSettingsWriteResult } from "./shared-se
 import { executeSetupDestination, executeSetupEdit, type SetupDestinationResult } from "./setup-edit-execution"
 import { autoAddFact, planAutoAddChoice, type AutoAddChoiceResult } from "./auto-add-choice"
 import { isAutoAddReadChange, isAutoAddChoiceChange, isAutoAddLifetime, type AutoAddReadChange, type AutoAddReadAnswer, type AutoAddChoiceChange, type AutoAddLifetime } from "../../shared/contracts/auto-add-choice"
-import { parseSetupDestinationChange, readAccountSetup, type AccountSetupRead, type SetupDestinationChange, type SetupEvent } from "./setup-edit"
+import { parseSetupDestinationChange, parseSetupMarkRequest, planSetupMarks, readAccountSetup, type AccountSetupRead, type SetupDestinationChange, type SetupEvent, type SetupMark, type SetupMarkRequest } from "./setup-edit"
 import type { SharedSettingChange } from "./settings-edit"
 import type { ClaimNotice } from "../../shared/model"
 import type { Snapshot } from "../../shared/model/settings-view"
@@ -347,6 +347,8 @@ type LocalFilterWriter = PlaylistCacheOwner & ProgressOwner & SettingsFileOwner 
   subscribeSetup(fn: (event: SetupEvent) => void): () => void
   subscribeView(fn: (event: ConfirmedViewChange) => void, revoked?: () => void): () => void
   changeSetupDestination(origin: UiOrigin, change: SetupDestinationChange): Promise<SetupDestinationResult>
+  /** Records or clears Missing and Full marks, which may use the synced headroom (YT-ADD-36, SYNC-16). Private windows write none. */
+  markPlaylists(request: SetupMarkRequest): Promise<SetupDestinationResult>
   readAutoAddChoice(origin: UiOrigin, request: AutoAddReadChange): Promise<AutoAddReadAnswer>
   changeAutoAddChoice(origin: UiOrigin, change: AutoAddChoiceChange): Promise<AutoAddChoiceResult>
   claim(): Promise<ClaimTransactionResult>
@@ -2147,6 +2149,32 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
       return { kind: due ? "lookup" : "current", capture, label: structuredClone(state.label), checkedAt, lastAccount: lastChanged ? "committed" : "unchanged" }
     } catch { return { kind: "failed", stage: "read" } }
   }
+  async function markPlaylistsInLane(acct: AccountKey, marks: readonly SetupMark[]): Promise<SetupDestinationResult> {
+    const blocked = setupUnavailable()
+    if (blocked) return blocked
+    const arrival = lifetime.kind === "active" ? clock() : undefined
+    const result = await executeSetupEdit({ local: guardedLocal, sync, authority: records => retainedHold(records) ? { kind: "unavailable", reason: "startup" } : authority(records), repairHistory: repairedHistory, disposed, now: deps.now, generation: deps.generation, remove: runAccountRemoval }, acct,
+      records => planSetupMarks(records, acct, marks), "headroom")
+    if (result.kind === "unconfirmed" || result.kind === "failed" && result.stage === "set") {
+      claimConfirmation = "unconfirmed"
+      deactivate("stopped")
+    }
+    if (result.kind === "committed") {
+      emit({ kind: "setup-changed", source: "local", acct })
+      quietUntil = deps.syncClock.now() + 2000
+      if (lifetime.kind === "active") arm(Math.max(quietUntil, mutationPace.nextInvocation), arrival ? { kind: "edit", ...arrival, epoch } : undefined)
+    }
+    return result
+  }
+  // A Missing mark clears once a list read shows the playlist again (DATA-21).
+  async function clearListedMissing(input: CacheAbsorption, write: PlaylistCacheWrite): Promise<void> {
+    if (input.kind !== "list" || write.kind !== "committed" && write.kind !== "unchanged") return
+    const read = readAccountSetup(await guardedLocal.get(null), input.acct)
+    if (read.kind !== "value" || read.view.kind !== "live") return
+    const marks = read.view.setup.marks, listed = new Set<string>(input.rows.map(row => row.id))
+    const cleared = Object.keys(marks).flatMap((playlist): SetupMark[] => marks[playlist] === "missing" && listed.has(playlist) && isPlaylistId(playlist) ? [{ playlist, mark: "clear" }] : [])
+    if (cleared.length) await markPlaylistsInLane(input.acct, cleared)
+  }
   async function completeAccountLabelInLane(capture: PlaylistCacheCapture, input: Parameters<AccountLabelsOwner["completeAccountLabel"]>[1]): Promise<AccountLabelWrite> {
     const lookup = labelLookups.get(capture), saved = cacheCaptures.get(capture)
     if (!lookup || lookup.completed || !saved || saved.acct !== input.acct) return { kind: "stale" }
@@ -2158,7 +2186,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
         const state = accountLabelState(records, input.acct)
         return labelCaptureCurrent(capture, records) && state.kind === "label" && state.checkedAt === lookup.checkedAt
           ? planAccountLabel(records, input.acct, lookup.label, label) : { kind: "stale", reason: "setup" }
-      })
+      }, "headroom")
     if (result.kind === "unconfirmed" || result.kind === "failed" && result.stage === "set") {
       claimConfirmation = "unconfirmed"
       deactivate("stopped")
@@ -3635,7 +3663,11 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     },
     absorbPlaylistCache(capture, input) {
       const requested = structuredClone(input)
-      return enqueue(() => absorbPlaylistCacheInLane(capture, requested))
+      return enqueue(async () => {
+        const write = await absorbPlaylistCacheInLane(capture, requested)
+        try { await clearListedMissing(requested, write) } catch {}
+        return write
+      })
     },
     discardUnclaimed(origin) {
       if (!agreementOrigin(origin)) return Promise.resolve({ kind: "refused", reason: "invalid" })
@@ -3871,6 +3903,13 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
         }
         return result
       })
+    },
+    markPlaylists(request) {
+      if (disposed()) return Promise.resolve({ kind: "unavailable", reason: "disposed" })
+      const requested = parseSetupMarkRequest(request)
+      if (!requested) return Promise.resolve({ kind: "result", result: { refused: "invalid" } })
+      if (requested.private) return Promise.resolve({ kind: "result", result: { refused: "private" } })
+      return enqueue(() => markPlaylistsInLane(requested.acct, requested.marks))
     },
     async changeKeySetting(origin, change, principal) {
       if (!agreementOrigin(origin) || !isKeySettingChange(change)) return { kind: "refused", reason: "invalid" }

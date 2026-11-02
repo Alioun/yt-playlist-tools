@@ -10,6 +10,11 @@ type Candidate = Extract<SyncWritePlanInput["intent"], { kind: "changed-batch" }
 export type SyncWritePlanInput = {
   readonly local: Readonly<Record<string, unknown>>
   readonly sync: Readonly<Record<string, unknown>>
+  /**
+   * A user's change must fit the budget. Label refreshes and marks may use the headroom up to the browsers' quota
+   * (SYNC-16), and so may a flush, which only sends what was already admitted.
+   */
+  readonly allowance?: "headroom"
   readonly intent:
     | { readonly kind: "flush" }
     | { readonly kind: "unchanged"; readonly key: DocumentKey }
@@ -177,7 +182,8 @@ export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
   }
   const planned = { kind: "planned", items: [...set].map(([key, value]) => ({ key, value })), sent: [...documents.values()], repairs, metadata: rawMeta } as const
   if (intent.kind === "flush" && set.size === 0) return planned
-  const projection = projectSyncWrite({ current, set: [...set].map(([key, value]) => ({ key, value })) })
+  const projection = projectSyncWrite({ current, set: [...set].map(([key, value]) => ({ key, value })),
+    limits: intent.kind === "flush" || input.allowance === "headroom" ? "quota" : "budget" })
   if (projection.kind === "invalid") return unavailable
   return projection.kind === "full" ? { kind: "refused", reason: "sync-full" } : planned
 }

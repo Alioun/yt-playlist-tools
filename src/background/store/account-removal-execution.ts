@@ -480,6 +480,7 @@ type AccountWrite = { readonly key: AccountDocumentKey; readonly document: JsonO
 export function planAccountDocumentWrite(input: {
   readonly local: Readonly<Record<string, unknown>>
   readonly sync: Readonly<Record<string, unknown>>
+  readonly allowance?: "headroom"
   readonly intent:
     | { readonly kind: "unchanged"; readonly key: AccountDocumentKey }
     | ({ readonly kind: "changed" } & AccountWrite)

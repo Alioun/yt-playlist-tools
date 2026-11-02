@@ -43,7 +43,9 @@ export async function executeSetupDestination(deps: SetupEditPorts, change: Setu
   return executeSetupEdit(deps, change.acct, records => planSetupDestination({ records, change }))
 }
 
-export async function executeSetupEdit(deps: SetupEditPorts, acct: AccountKey, planEdit: (records: JsonObject) => SetupDestinationPlan): Promise<SetupDestinationResult> {
+/** `headroom` admits a label refresh or a mark into the synced headroom (SYNC-16). */
+export async function executeSetupEdit(deps: SetupEditPorts, acct: AccountKey, planEdit: (records: JsonObject) => SetupDestinationPlan,
+  allowance?: "headroom"): Promise<SetupDestinationResult> {
   const invalid = { kind: "result", result: { refused: "invalid" } } as const
   const unavailable = { kind: "unavailable", reason: "sync-writer-required" } as const
   const stopped = { kind: "unavailable", reason: "disposed" } as const
@@ -76,7 +78,7 @@ export async function executeSetupEdit(deps: SetupEditPorts, acct: AccountKey, p
       }
       case "unchanged": {
         if (!ready.device.syncOn) return { kind: "unchanged" }
-        const admission = planAccountDocumentWrite({ local: before, sync: await deps.sync.get(), intent: { kind: "unchanged", key: { kind: "setup", acct } } })
+        const admission = planAccountDocumentWrite({ local: before, sync: await deps.sync.get(), allowance, intent: { kind: "unchanged", key: { kind: "setup", acct } } })
         if (deps.disposed()) return stopped
         if (admission.kind === "unavailable") return unavailable
         if (admission.kind === "refused") return { kind: "result", result: { refused: admission.reason } }
@@ -93,7 +95,7 @@ export async function executeSetupEdit(deps: SetupEditPorts, acct: AccountKey, p
     if (!jsonObject(envelope) || decodeDocument(envelope, decodeSetup).kind !== "value") return invalid
     const items: JsonObject = { [name]: envelope }
     if (ready.device.syncOn) {
-      const admission = planAccountDocumentWrite({ local: before, sync: await deps.sync.get(), intent: { kind: "changed", key: plan.key, document: envelope } })
+      const admission = planAccountDocumentWrite({ local: before, sync: await deps.sync.get(), allowance, intent: { kind: "changed", key: plan.key, document: envelope } })
       if (deps.disposed()) return stopped
       if (admission.kind === "unavailable") return unavailable
       if (admission.kind === "refused") return { kind: "result", result: { refused: admission.reason } }

@@ -11,7 +11,9 @@ type Check<T extends true> = T
 type Writer = ReturnType<typeof createLocalFilterWriter>
 export type SetupEditProofs = [
   Check<Equal<keyof typeof import("./setup-edit-execution"), "executeSetupDestination" | "executeSetupEdit">>,
-  Check<Equal<keyof typeof import("./setup-edit"), "parseSetupDestinationChange" | "readAccountSetup" | "expectDestination" | "planSetupDestination" | "planSetupAccountChoice">>,
+  Check<Equal<keyof typeof import("./setup-edit"), "parseSetupDestinationChange" | "readAccountSetup" | "expectDestination" | "planSetupDestination" | "planSetupAccountChoice" | "parseSetupMarkRequest" | "planSetupMarks">>,
+  Check<Equal<Parameters<Writer["markPlaylists"]>, [request: import("./setup-edit").SetupMarkRequest]>>,
+  Check<Equal<ReturnType<Writer["markPlaylists"]>, Promise<SetupDestinationResult>>>,
   Check<Equal<SetupEditPorts, Parameters<typeof executeSharedSetting>[0] & { readonly remove: (capture: RemovalCapture, expectedRecords: import("../../shared/contracts/json").JsonObject) => Promise<RemovalResult> }>>,
   Check<Equal<Parameters<Writer["changeSetupDestination"]>, [origin: Extract<Origin, { kind: "ui" }>, change: SetupDestinationChange]>>,
   Check<Equal<ReturnType<Writer["changeSetupDestination"]>, Promise<SetupDestinationResult>>>,

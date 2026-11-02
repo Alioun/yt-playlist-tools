@@ -5,6 +5,8 @@ import {
 import { readSettingsView, type Snapshot } from "../../shared/model/settings-view"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import { changeAccountChoice, type AccountChoice } from "./accounts"
+import { normalizeSetupForWrite } from "../../shared/model/normalize"
+import { sameSyncJson } from "./sync-write-admission"
 
 export type SetupDestination =
   | { readonly kind: "quick-save" | "music-save" | "gather" }
@@ -213,4 +215,37 @@ export function planSetupAccountChoice(records: JsonObject, acct: AccountKey, ch
     case "remove": return { kind: "remove" }
     case "save": return { kind: "save", key: { kind: "setup", acct }, setup: result.bodies.setup, context }
   }
+}
+
+/** A Missing or Full mark on one playlist, or its clearing (YT-ADD-36, DATA-21). */
+export type SetupMark = { readonly playlist: PlaylistId; readonly mark: "missing" | "full" | "clear" }
+export type SetupMarkRequest = { readonly acct: AccountKey; readonly private: boolean; readonly marks: readonly [SetupMark, ...SetupMark[]] }
+export function parseSetupMarkRequest(raw: unknown): SetupMarkRequest | undefined {
+  if (!plain(raw, ["acct", "private", "marks"]) || !isAccountKey(raw.acct) || typeof raw.private !== "boolean" || !Array.isArray(raw.marks)) return
+  const marks = raw.marks.flatMap((row: unknown): SetupMark[] => {
+    if (!plain(row, ["playlist", "mark"]) || !isPlaylistId(row.playlist)) return []
+    const mark = row.mark
+    return mark === "missing" || mark === "full" || mark === "clear" ? [{ playlist: row.playlist, mark }] : []
+  })
+  const [first, ...rest] = marks
+  return first && marks.length === raw.marks.length && marks.length <= 200 ? { acct: raw.acct, private: raw.private, marks: [first, ...rest] } : undefined
+}
+/** Marks go only on playlists the setup chooses; a playlist it no longer chooses has its mark dropped (DATA-15). */
+export function planSetupMarks(records: JsonObject, acct: AccountKey, changes: readonly SetupMark[]): SetupDestinationPlan {
+  const settings = readSettings(records), document = readSetupDocument(records, acct)
+  if (settings === "invalid" || document.kind === "invalid") return { kind: "invalid" }
+  if (document.kind === "newer-version") return { kind: "update-needed" }
+  if (document.kind !== "live") return { kind: "unchanged" }
+  const setup = document.setup
+  const context = {
+    shortcutIds: new Set(settings === "newer-version" ? Object.keys(setup.targets) : settings.shortcuts.list.map(row => row.id)),
+    additionalChosenPlaylists: settings === "newer-version" ? new Set(Object.keys(setup.marks).filter(isPlaylistId)) : watchLaterChosen(settings, setup.targets)
+  }
+  const marks: Record<string, "missing" | "full"> = { ...setup.marks }
+  for (const change of changes) {
+    if (change.mark === "clear") delete marks[change.playlist]
+    else marks[change.playlist] = change.mark
+  }
+  const before = normalizeSetupForWrite(setup, context).marks, after = normalizeSetupForWrite({ ...setup, marks }, context).marks
+  return sameSyncJson(before, after) ? { kind: "unchanged" } : { kind: "save", key: { kind: "setup", acct }, setup: { ...setup, marks: after }, context }
 }

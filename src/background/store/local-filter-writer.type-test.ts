@@ -105,7 +105,7 @@ export type LocalWriterProofs = [
   Check<Equal<SyncStorage, { get(): Promise<Readonly<Record<string, unknown>>>; set(items: Readonly<Record<string, JsonValue>>): Promise<void>; remove?(keys: readonly string[]): Promise<void>; subscribe(changed: () => void): () => void }>>,
   Check<Equal<SyncClock, { now(): number; wallNow(): number; after(milliseconds: number, run: () => void): () => void }>>,
   Check<Equal<SyncAutomaticResult, SyncFlushResult | import("./local-filter-writer").SyncReconciliationNotice | import("./sync-reset-receive").ReceivedResetResult | { kind: "rejected"; error: unknown }>>,
-  Check<Equal<Omit<ReturnType<typeof createLocalFilterWriter>, "readWithdrawnWork" | "recoverWithdrawnWork" | "readTabProjection" | "readLastAccount" | "readAutoAddChoice" | "changeAutoAddChoice" | "changeDeviceSetting" | "markUpgradeNote">, ReturnType<ExpectedFactory>>>,
+  Check<Equal<Omit<ReturnType<typeof createLocalFilterWriter>, "readWithdrawnWork" | "recoverWithdrawnWork" | "readTabProjection" | "readLastAccount" | "readAutoAddChoice" | "changeAutoAddChoice" | "changeDeviceSetting" | "markUpgradeNote" | "markPlaylists">, ReturnType<ExpectedFactory>>>,
   Check<Equal<ReturnType<typeof createLocalFilterWriter>["readTabProjection"], (request: TabProjectionRequest) => Promise<TabProjectionRead>>>,
   Check<Equal<ReturnType<typeof createLocalFilterWriter>["readLastAccount"], (scope: NormalWindowRouting) => Promise<LastAccountRead>>>,
   Check<Equal<typeof createBrowserLocalFilterWriter, ExpectedAdapter>>,

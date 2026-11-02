@@ -275,14 +275,17 @@
     },
     "setup": {
       "v": 1,
-      "gen": "setup",
-      "at": 1,
+      "gen": "removed-1",
+      "at": 1700000000000,
       "by": "fixture",
       "data": {
         "quickSave": "PL_alpha",
-        "marks": {
-          "PL_alpha": "missing"
-        }
+        "marks": {},
+        "label": null,
+        "autoAdd": [],
+        "targets": {},
+        "musicSave": null,
+        "gather": null
       }
     }
   },
