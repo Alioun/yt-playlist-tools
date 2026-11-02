@@ -476,8 +476,10 @@ describe("the owner's setup commands in releasing.md", () => {
 })
 
 describe("the CI step that runs these tests", () => {
-  const steps = workflows["ci.yml"]!.jobs.build!.steps!
+  const ci = workflows["ci.yml"]!
+  const steps = ci.jobs.build!.steps!
   const proof = steps.find(step => step.run?.includes("./tests/integration/amo-reviewer-notes.test.ts"))!
+  const expected = Number(/ tests="(\d+)" /.exec(proof.run!)?.[1])
 
   test("runs before bun install, so nothing installed can reach it", () => {
     const install = steps.findIndex(step => /\bbun install\b/.test(step.run ?? ""))
@@ -485,28 +487,26 @@ describe("the CI step that runs these tests", () => {
     expect(steps.indexOf(proof)).toBeLessThan(install)
   })
 
-  // A stand-in for this file, beside a bunfig.toml that preloads and a tsconfig.json that redirects node:fs.
-  test("loads no bunfig.toml preload and no tsconfig.json from the checkout", async () => {
+  test("runs on the Bun package.json declares, without a cache", () => {
+    expect(steps[steps.indexOf(proof) - 1]).toEqual({ uses: "oven-sh/setup-bun@v2", with: { "bun-version-file": "package.json", "no-cache": true } })
+  })
+
+  // GitHub would still pass the build check with continue-on-error or an if
+  // that skips the step, and a shell or defaults entry could drop -e.
+  test("is a plain step whose failure fails the build job", () => {
+    expect(Object.keys(proof).sort()).toEqual(["name", "run"])
+    const { steps: _, ...job } = ci.jobs.build! as Job & Record<string, unknown>
+    expect(Object.keys(job).sort()).toEqual(["outputs", "runs-on"])
+  })
+
+  /** Runs the step's real run: block in a scratch checkout whose test file is a stand-in with `body`. */
+  async function runProof(body: string, plant: (dir: string) => void = () => {}) {
     const dir = mkdtempSync(join(tmpdir(), "reviewer-notes-ci-"))
     directories.push(dir)
     for (const sub of ["tests/integration", "_temp", "_bin"]) mkdirSync(join(dir, sub), { recursive: true })
     symlinkSync(process.execPath, join(dir, "_bin/bun"))
-    const preloaded = join(dir, "_preloaded")
-    const redirected = join(dir, "_redirected")
-    writeFileSync(join(dir, "tests/integration/amo-reviewer-notes.test.ts"), [
-      'import { expect, test } from "bun:test"',
-      'import { existsSync } from "node:fs"',
-      'test("stand-in", () => expect(existsSync).toBeFunction())'
-    ].join("\n") + "\n")
-    writeFileSync(join(dir, "_preload.ts"), `require("node:fs").writeFileSync(${JSON.stringify(preloaded)}, "")\n`)
-    writeFileSync(join(dir, "_planted.ts"), [
-      'const fs = process.getBuiltinModule("node:fs")',
-      `fs.writeFileSync(${JSON.stringify(redirected)}, "")`,
-      "export const { existsSync } = fs"
-    ].join("\n") + "\n")
-    writeFileSync(join(dir, "bunfig.toml"), '[test]\npreload = ["./_preload.ts"]\n')
-    writeFileSync(join(dir, "tsconfig.json"), JSON.stringify({ compilerOptions: { paths: { "*": ["./_planted.ts"] } } }))
-
+    writeFileSync(join(dir, "tests/integration/amo-reviewer-notes.test.ts"), ['import { expect, test } from "bun:test"', 'import { existsSync } from "node:fs"', body].join("\n") + "\n")
+    plant(dir)
     const child = Bun.spawn([bash, "--noprofile", "--norc", "-eo", "pipefail", "-c", proof.run!], {
       cwd: dir,
       env: { PATH: `${join(dir, "_bin")}:/usr/bin:/bin`, HOME: join(dir, "_temp"), RUNNER_TEMP: join(dir, "_temp") },
@@ -514,12 +514,39 @@ describe("the CI step that runs these tests", () => {
       stderr: "pipe"
     })
     const [stdout, stderr, exit] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited])
-    expect({ exit, ran: /\b1 pass\b/.test(stdout + stderr), preloaded: existsSync(preloaded), redirected: existsSync(redirected) }).toEqual({
-      exit: 0,
-      ran: true,
-      preloaded: false,
-      redirected: false
+    return { dir, exit, output: stdout + stderr }
+  }
+  const tests = (count: number) => `for (let i = 0; i < ${count}; i++) test(\`stand-in \${i}\`, () => expect(existsSync).toBeFunction())`
+
+  // A bunfig.toml that preloads and a tsconfig.json that redirects node:fs, beside a stand-in that passes.
+  test("loads no bunfig.toml preload and no tsconfig.json from the checkout", async () => {
+    const run = await runProof(tests(expected), dir => {
+      writeFileSync(join(dir, "_preload.ts"), `require("node:fs").writeFileSync(${JSON.stringify(join(dir, "_preloaded"))}, "")\n`)
+      writeFileSync(join(dir, "_planted.ts"), [
+        'const fs = process.getBuiltinModule("node:fs")',
+        `fs.writeFileSync(${JSON.stringify(join(dir, "_redirected"))}, "")`,
+        "export const { existsSync } = fs"
+      ].join("\n") + "\n")
+      writeFileSync(join(dir, "bunfig.toml"), '[test]\npreload = ["./_preload.ts"]\n')
+      writeFileSync(join(dir, "tsconfig.json"), JSON.stringify({ compilerOptions: { paths: { "*": ["./_planted.ts"] } } }))
     })
+    expect({
+      exit: run.exit,
+      ran: new RegExp(`\\b${expected} pass\\b`).test(run.output),
+      preloaded: existsSync(join(run.dir, "_preloaded")),
+      redirected: existsSync(join(run.dir, "_redirected"))
+    }).toEqual({ exit: 0, ran: true, preloaded: false, redirected: false })
+  })
+
+  const short: [string, string, boolean][] = [
+    ["one test fails", `test("fails", () => expect(1).toBe(2))\n${tests(expected - 1)}`, false],
+    ["one test fewer runs", tests(expected - 1), true],
+    ["one test is skipped", `test.skip("skipped", () => {})\n${tests(expected - 1)}`, true],
+    ["the file exits 0 before any test", `process.exit(0)\n${tests(expected)}`, true]
+  ]
+  test.each(short)("fails when %s", async (_, body, counted) => {
+    const run = await runProof(body)
+    expect({ exit: run.exit, counted: run.output.includes(`::error::the G28 proof did not pass all ${expected} of its tests`) }).toEqual({ exit: 1, counted })
   })
 })
 

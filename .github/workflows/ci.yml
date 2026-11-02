@@ -27,16 +27,25 @@ jobs:
           # Reads the `packageManager` field, so CI runs the exact Bun the
           # repo declares rather than drifting with "latest".
           bun-version-file: package.json
+          # The G28 proof below runs on this Bun, so no cache entry another
+          # job saved may replace it.
+          no-cache: true
 
       # G28's secret-flow tests, before the install and without the repo's
       # bunfig.toml or tsconfig.json, so only code-owned files decide whether
       # they pass. A tsconfig paths entry can make bun test register no test
-      # and still exit 0, and bunfig.toml preloads tests/setup.
+      # and still exit 0, and bunfig.toml preloads tests/setup. Bun's report
+      # must also count every test passed, so a file that exits early fails.
       - name: Test the reviewer-login secret flow (G28)
         run: |
           : > "$RUNNER_TEMP/empty.toml"
           echo '{}' > "$RUNNER_TEMP/empty.json"
-          bun --config="$RUNNER_TEMP/empty.toml" test --no-env-file --tsconfig-override="$RUNNER_TEMP/empty.json" ./tests/integration/amo-reviewer-notes.test.ts
+          report=$RUNNER_TEMP/reviewer-login-proof.xml
+          rm -f "$report"
+          bun --config="$RUNNER_TEMP/empty.toml" test --no-env-file --tsconfig-override="$RUNNER_TEMP/empty.json" \
+            --reporter=junit --reporter-outfile="$report" ./tests/integration/amo-reviewer-notes.test.ts
+          grep -Eq '^<testsuites name="bun test" tests="81" assertions="[0-9]+" failures="0" skipped="0" ' "$report" \
+            || { echo "::error::the G28 proof did not pass all 81 of its tests"; exit 1; }
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
