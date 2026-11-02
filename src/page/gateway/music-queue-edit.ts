@@ -7,7 +7,7 @@ import { failed, unavailable } from "./music-queue"
 import type { MusicContext } from "./music-queue"
 import type { HandlerRoute } from "./port"
 
-type Moved = { ok: true; from: number } | JobFailure
+type Moved = { ok: true; from: number; moved: boolean } | JobFailure
 
 export function createMusicQueueEdits(ctx: MusicContext) {
   async function remove(job: JobOf<"queueRemove">, scope: JobScope): Promise<PageJobResult<JobOf<"queueRemove">>> {
@@ -46,21 +46,21 @@ export function createMusicQueueEdits(ctx: MusicContext) {
     const target = to === "next" ? from > panel.current ? panel.current + 1 : panel.current : to === "end" ? panel.entries.length - 1 : to
     const entry = panel.entries[from]
     if (!entry || target < 0 || target >= panel.entries.length) return failed
-    if (target === from) return { ok: true, from }
+    if (target === from) return { ok: true, from, moved: false }
     if (!ctx.fire(route, () => ctx.port.drop(entry.raw, target))) return unavailable
     const moved = await ctx.until(scope, () => {
       const now = ctx.snapshot(route)
       return now !== undefined && indexOf(now, id) === target
     }, true)
     if (!moved) { ctx.notice("no-effect", route); return failed }
-    return { ok: true, from }
+    return { ok: true, from, moved: true }
   }
 
   async function move(job: JobOf<"queueMove">, scope: JobScope): Promise<PageJobResult<JobOf<"queueMove">>> {
     const route = ctx.handlers("queueMove")[0]
     if (!route || ctx.casting() || !ctx.present(route)) return unavailable
     const moved = await moveEntry(route, job.id, job.to, scope)
-    return moved.ok ? { ok: true, data: { from: moved.from }, route: route.id } : moved
+    return moved.ok ? { ok: true, data: { from: moved.from, moved: moved.moved }, route: route.id } : moved
   }
 
   async function reinsert(job: JobOf<"queueReinsert">, scope: JobScope): Promise<PageJobResult<JobOf<"queueReinsert">>> {

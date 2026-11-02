@@ -148,11 +148,11 @@ test("Remove from queue answers the old index for Undo and fails on a stale or s
 
 test("Play next and Add to queue move a queued entry and answer where it came from", async () => {
   const h = musicWorld(undefined, 1)
-  expect(await run(h, { kind: "queueMove", id: 3, to: "next" })).toEqual({ ok: true, data: { from: 3 }, route: "music-reorder.queueMove" })
+  expect(await run(h, { kind: "queueMove", id: 3, to: "next" })).toEqual({ ok: true, data: { from: 3, moved: true }, route: "music-reorder.queueMove" })
   expect(h.ids()).toEqual([0, 1, 3, 2])
-  expect(await run(h, { kind: "queueMove", id: 0, to: "end" })).toEqual({ ok: true, data: { from: 0 }, route: "music-reorder.queueMove" })
+  expect(await run(h, { kind: "queueMove", id: 0, to: "end" })).toEqual({ ok: true, data: { from: 0, moved: true }, route: "music-reorder.queueMove" })
   expect(h.ids()).toEqual([1, 3, 2, 0])
-  expect(await run(h, { kind: "queueMove", id: 0, to: 0 })).toEqual({ ok: true, data: { from: 3 }, route: "music-reorder.queueMove" })
+  expect(await run(h, { kind: "queueMove", id: 0, to: 0 })).toEqual({ ok: true, data: { from: 3, moved: true }, route: "music-reorder.queueMove" })
   expect(h.ids()).toEqual([0, 1, 3, 2])
 })
 
@@ -162,7 +162,7 @@ test("a move never fires on a stale panel, the playing song or an entry already 
   expect(await run(h, { kind: "queueMove", id: 3, to: "next" })).toEqual(failed)
   h.faults.delete("stale-panel")
   expect(await run(h, { kind: "queueMove", id: 1, to: "end" })).toEqual(failed)
-  expect(await run(h, { kind: "queueMove", id: 2, to: "next" })).toEqual({ ok: true, data: { from: 2 }, route: "music-reorder.queueMove" })
+  expect(await run(h, { kind: "queueMove", id: 2, to: "next" })).toEqual({ ok: true, data: { from: 2, moved: false }, route: "music-reorder.queueMove" })
   expect(h.calls.filter(call => call.kind === "drop")).toEqual([])
 })
 

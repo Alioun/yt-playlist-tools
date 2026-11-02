@@ -86,7 +86,8 @@ export type JobDataById = {
   queueInsert: { ids: QueueItemId[] }
   queueRemove: { index: number }
   queueRemoveIds: { removed: number }
-  queueMove: { from: number }
+  /** `moved` is false when the entry already sat where it was sent, so nothing fired (YM-MOVE-5). */
+  queueMove: { from: number; moved: boolean }
   queueReinsert: { id: QueueItemId }
   like: null
   library: { inLibrary: boolean }
@@ -201,7 +202,7 @@ const dataGuards = {
   queueInsert: v => shape(v, { ids: x => queueIds(x, 1) }),
   queueRemove: v => shape(v, { index: integer }),
   queueRemoveIds: (v, job) => job.kind === "queueRemoveIds" && removed(v, job.ids.length),
-  queueMove: v => shape(v, { from: integer }), queueReinsert: v => shape(v, { id: isQueueItemId }),
+  queueMove: v => shape(v, { from: integer, moved: boolean }), queueReinsert: v => shape(v, { id: isQueueItemId }),
   like: noData, library: v => shape(v, { inLibrary: boolean }), navigate: v => shape(v, { navigated: x => x === true }),
   nowPlaying: v => v === null || isNowPlaying(v), castState: v => shape(v, { casting: boolean })
 } satisfies Record<JobId, (value: unknown, job: Job) => boolean>

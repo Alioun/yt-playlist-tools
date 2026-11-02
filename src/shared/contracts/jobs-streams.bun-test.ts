@@ -109,7 +109,7 @@ const fixtures = {
   queueInsert: { job: { kind: "queueInsert", endpoint: next, position: "next" }, data: { ids: [queueId, numericId] } },
   queueRemove: { job: { kind: "queueRemove", id: queueId }, data: { index: 0 } },
   queueRemoveIds: { job: { kind: "queueRemoveIds", ids: [queueId, numericId] }, data: { removed: 2 } },
-  queueMove: { job: { kind: "queueMove", id: numericId, to: "next" }, data: { from: 2 } },
+  queueMove: { job: { kind: "queueMove", id: numericId, to: "next" }, data: { from: 2, moved: true } },
   queueReinsert: { job: { kind: "queueReinsert", videoId: video, index: 0 }, data: { id: numericId } },
   like: { job: { kind: "like", endpoint: like }, data: null },
   library: { job: { kind: "library", endpoint: library }, data: { inLibrary: false } },

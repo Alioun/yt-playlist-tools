@@ -2,8 +2,8 @@
 {"step":"play-next","answer":{"ok":true,"data":{"ids":[4]},"route":"music-menu-item.queueInsert"}}
 {"step":"album-to-end","answer":{"ok":true,"data":{"ids":[5,6,7]},"route":"music-menu-item.queueInsert"}}
 {"step":"undo-album","answer":{"ok":true,"data":{"removed":3},"route":"music-queue.queueRemoveIds"}}
-{"step":"move-to-next","answer":{"ok":true,"data":{"from":4},"route":"music-reorder.queueMove"}}
-{"step":"undo-move","answer":{"ok":true,"data":{"from":2},"route":"music-reorder.queueMove"}}
+{"step":"move-to-next","answer":{"ok":true,"data":{"from":4,"moved":true},"route":"music-reorder.queueMove"}}
+{"step":"undo-move","answer":{"ok":true,"data":{"from":2,"moved":true},"route":"music-reorder.queueMove"}}
 {"step":"remove","answer":{"ok":true,"data":{"index":3},"route":"music-queue.queueRemove"}}
 {"step":"undo-remove","answer":{"ok":true,"data":{"id":8},"route":"music-replay.queueReinsert"}}
 {"step":"like","answer":{"ok":true,"data":null,"route":"music-service.like"}}
