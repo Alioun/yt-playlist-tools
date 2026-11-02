@@ -1133,6 +1133,7 @@ export type MessageParameters = {
   "badge_marks": readonly []
   "badge_paused": readonly []
   "badge_ticked": readonly []
+  "firstRun_finish_done": readonly []
 }
 export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: MessageParameters[K] } = {
   "firstRun_continue_one": ["count"],

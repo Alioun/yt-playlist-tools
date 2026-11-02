@@ -28,7 +28,11 @@ export type FirstRunServices = {
       | { readonly kind: "cancelled" }
       | { readonly kind: "unavailable" }
       | { readonly kind: "chosen"; readonly destination: SetupDestination; readonly playlist: PlaylistId | null }
+      /** The picker saved the choice itself, through the store's own change, so nothing is left to write. */
+      | { readonly kind: "saved"; readonly destination: SetupDestination }
     >
+    /** Auto-add's list, which saves each tick itself (UI-ONB-05). Resolves when the user closes it. */
+    manage?(input: { readonly account: Extract<ServingAccount, { kind: "account" }> }): Promise<void>
   }
   open(destination: Parameters<FirstRunOwner["open"]>[0]): void
 }
@@ -128,7 +132,7 @@ export function createFirstRunOwner(backend: Backend, services: FirstRunServices
   }
   async function choosePlaylist(request: ChoiceRequest): Promise<ChoiceOutcome> {
     if (!active || !confirmed) return { kind: "failed", reason: "unavailable" }
-    if (request.purpose === "auto-add") return { kind: "failed", reason: "picker-unavailable" }
+    if (request.purpose === "auto-add" && !services.chooser.manage) return { kind: "failed", reason: "picker-unavailable" }
     try {
       const account = await services.account.read()
       if (!active || account.kind !== "account") return { kind: "failed", reason: "unavailable" }
@@ -136,9 +140,24 @@ export function createFirstRunOwner(backend: Backend, services: FirstRunServices
       if (!active || snapshot.kind !== "snapshot" || snapshot.layout !== "current" || snapshot.device.kind !== "current"
         || snapshot.device.consent !== "agreed" || snapshot.device.upgradePending || !("value" in snapshot.settings) || !("value" in snapshot.setup)
         || !snapshot.settings.value.selected.includes(request.feature)) return { kind: "failed", reason: "unavailable" }
+      if (request.purpose === "auto-add" && services.chooser.manage) {
+        await services.chooser.manage({ account })
+        const after = await backend.load({ acct: account.key })
+        if (!active || after.kind !== "snapshot" || !("value" in after.setup)) return { kind: "failed", reason: "unavailable" }
+        const selected = await selection(account.key, after.setup.value.autoAdd)
+        return selected && active ? { kind: "confirmed", selection: selected } : { kind: "failed", reason: "unavailable" }
+      }
       const chosen = await services.chooser.choose({ account, request, settings: snapshot.settings.value, setup: snapshot.setup.value })
       if (!active) return { kind: "failed", reason: "unavailable" }
       if (chosen.kind === "cancelled") return { kind: "cancelled" }
+      if (chosen.kind === "saved") {
+        if (!matchesChoice(request, chosen.destination, snapshot.settings.value)) return { kind: "failed", reason: "picker-unavailable" }
+        const after = await backend.load({ acct: account.key })
+        if (!active || after.kind !== "snapshot" || !("value" in after.setup)) return { kind: "failed", reason: "unavailable" }
+        const playlist = destinationValue(after.setup.value, chosen.destination)
+        const selected = await selection(account.key, playlist === null ? [] : [playlist])
+        return selected && active ? { kind: "confirmed", selection: selected } : { kind: "failed", reason: "unavailable" }
+      }
       if (chosen.kind === "unavailable" || !matchesChoice(request, chosen.destination, snapshot.settings.value)) return { kind: "failed", reason: "picker-unavailable" }
       const currentAccount = await services.account.read()
       if (!active || currentAccount.kind !== "account" || currentAccount.key !== account.key) return { kind: "failed", reason: "unavailable" }

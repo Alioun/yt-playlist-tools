@@ -1,4 +1,8 @@
 @import "tailwindcss" source(none);
 @source "./";
 @source "../components";
+@source "../features";
+@source "../picker";
+@source "../keys";
+@source "../lib";
 @import "../lib/theme.css";

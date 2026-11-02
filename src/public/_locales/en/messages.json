@@ -4351,5 +4351,8 @@
   },
   "badge_ticked": {
     "message": "Auto-added this tab's video"
+  },
+  "firstRun_finish_done": {
+    "message": "Done"
   }
 }
