@@ -1,0 +1,52 @@
+import { afterEach, expect, test } from "bun:test"
+import type { TabAddReport } from "../../shared/contracts/tab-actions"
+import type { PlaylistId } from "../../shared/model"
+import { pageGlobal } from "../global"
+import { createFeedbackSession } from "../kit/feedback/session"
+import type { OpenPicker } from "../popovers/types"
+import { tabAsks } from "./asks"
+import type { TabActions } from "./actions"
+import { Keys } from "./keys"
+import { Scope } from "./scope"
+import { clock, labels, settle, undoKey } from "../../../tools/fixtures/site-toaster/harness"
+import { englishI18n } from "../../../tools/fixtures/localization/scripted"
+
+const WL = "WL" as PlaylistId
+const running: (() => void)[] = []
+afterEach(() => { for (const stop of running.splice(0)) stop(); delete pageGlobal().popovers })
+
+function world(need: () => Promise<boolean>) {
+  const timers = clock()
+  const root = new Scope({ document, onError: () => {} })
+  const keys = new Keys({ document, blockers: { menuOpen: () => false, dialogOpen: () => false, extensionPopoverOpen: () => false }, onError: () => {} })
+  const i18n = englishI18n()
+  const feedback = createFeedbackSession({ owner: root, document, keys, site: "www", i18n, labels, initial: { undoKey, features: [] }, now: timers.now, onError: () => {}, onCosmetic: () => {} })
+  const undone: unknown[] = []
+  const actions = { need, undo: async (handle: unknown) => { undone.push(handle); return { kind: "undone" } } } as unknown as TabActions
+  const asks = tabAsks({ document, actions, i18n, feedback: () => feedback.use(root) })
+  running.push(() => { root.dispose(); keys.dispose(); timers.restore() })
+  return { asks, timers, undone, toast: () => feedback.read()?.feedback.toaster.read() ?? null }
+}
+
+test("a save from another tab shows its answer as this tab's toast, with Undo", async () => {
+  const w = world(async () => true)
+  const answer: TabAddReport = { kind: "report", outcomes: { [WL]: { kind: "added" } }, feedback: true, undo: { kind: "add", id: "e:1" }, titles: {},
+    toast: { tone: "confirmation", auto: false, message: { kind: "saved", playlists: [WL] }, action: { kind: "undo" }, remember: { tab: [], session: [] } } }
+  w.asks.toast({ answer, video: "aaaaaaaaaaa" as never, title: "First video", opener: "any-tab-keys" })
+  expect(w.toast()?.content.text).toBe("Saved “First video” to Watch later")
+  await w.toast()?.act()
+  expect(w.undone).toEqual([{ kind: "add", id: "e:1" }])
+})
+
+test("the browser menu's Choose a playlist opens the picker here, or says the list couldn't open", async () => {
+  const opened: OpenPicker[] = []
+  pageGlobal().popovers = { openPicker(request) { opened.push(request) }, openWatchMenu() {}, isOpen: () => false, close() {} }
+  const w = world(async () => true)
+  expect(await w.asks.picker({ video: "aaaaaaaaaaa" as never, title: null, choose: false, opener: "browser-menu" })).toBe("opened")
+  expect(opened.map(({ mode, anchor, opener }) => ({ mode, anchor: anchor.kind, opener }))).toEqual([{ mode: { kind: "save" }, anchor: "window", opener: "browser-menu" }])
+  delete pageGlobal().popovers
+  const failing = world(async () => false)
+  expect(await failing.asks.picker({ video: "aaaaaaaaaaa" as never, title: null, choose: true, opener: "browser-menu" })).toBe("failed")
+  await settle()
+  expect(failing.toast()?.content.text).toBe("Couldn't open the playlist list. Try again.")
+})

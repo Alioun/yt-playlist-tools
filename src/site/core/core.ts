@@ -5,8 +5,10 @@ import type { I18n } from "../../shared/i18n"
 import type { PageChannel } from "../../shared/rpc/page-channel"
 import type { Deadline } from "../../shared/rpc/rpc"
 import { pageGlobal } from "../global"
+import { tabAskContract, type TabAskMessages } from "../../shared/contracts/tab-actions"
+import { createRpc } from "../../shared/rpc/rpc"
 import { createTabActions, type TabActions } from "./actions"
-import { serveTabAsks } from "./asks"
+import type { TabAsks } from "./asks"
 import { createExtLink, type ExtLink, type ExtLinkRuntime } from "./extlink"
 import { createFeatureHost, type FeatureDefinition, type SiteFeatureId } from "./feature-host"
 import type { MusicItems, MusicItemsOptions } from "./items-music"
@@ -42,7 +44,7 @@ export type SiteCore<S extends Site> = CoreServices<S> & {
   readonly disposed: boolean
   define(definition: FeatureDefinition<S, CoreServices<S>>): void
   /** The kit lends Svelte mounting to feature scopes and takes over the not-working notice (ARC-MOD-32). */
-  attachKit(kit: { readonly mount: ScopeMountPort; readonly notices: NoticePresenter }): void
+  attachKit(kit: { readonly mount: ScopeMountPort; readonly notices: NoticePresenter; readonly asks?: TabAsks }): void
   dispose(): void
 }
 export type AnySiteCore = SiteCore<"www"> | SiteCore<"music">
@@ -121,13 +123,24 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
     onError: ignore
   })
   host.connect(link)
-  const stopAsks = serveTabAsks({ transport: options.runtime.transport, build, deadline: options.deadline ?? timerDeadline, document, root, actions, i18n,
-    identity: () => options.runtime.identity(), senderId: sender => options.runtime.senderId(sender) })
+  // The background's asks of a tab it acted in arrive here; the kit answers them, so without it they fail (YT-ANY-06).
+  let asks: TabAsks | undefined
+  const askRpc = createRpc<TabAskMessages, Sender>(options.runtime.transport, { build, deadline: options.deadline ?? timerDeadline, contract: tabAskContract })
+  const stopAsks = askRpc.handle({
+    authenticate({ sender }) {
+      const id = options.runtime.identity()
+      return id !== undefined && options.runtime.senderId(sender) === id ? { kind: "accepted", context: null } : { kind: "rejected" }
+    },
+    handlers: {
+      "bg.toast"(payload) { asks?.toast(payload); return null },
+      async "bg.picker"(payload) { return { kind: asks ? await asks.picker(payload) : "failed" } }
+    }
+  })
   let disposed = false
   function dispose() {
     if (disposed) return
     disposed = true
-    for (const stop of [() => host.dispose(), () => items.dispose(), () => pointer.dispose(), () => keys.dispose(), stopAsks, () => actions.dispose(), () => link.dispose(), () => root.dispose()]) {
+    for (const stop of [() => host.dispose(), () => items.dispose(), () => pointer.dispose(), () => keys.dispose(), stopAsks, () => askRpc.dispose(), () => actions.dispose(), () => link.dispose(), () => root.dispose()]) {
       try { stop() } catch {}
     }
   }
@@ -138,6 +151,7 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
     define: definition => host.define(definition),
     attachKit(kit) {
       mount = kit.mount
+      asks = kit.asks
       notices.transfer(kit.notices)
     },
     dispose

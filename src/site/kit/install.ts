@@ -1,6 +1,7 @@
 import type { Site } from "../../shared/contracts"
 import { siteFeedbackText } from "../../shared/copy"
 import type { AnySiteCore } from "../core/core"
+import { tabAsks } from "../core/asks"
 import { Scope } from "../core/scope"
 import { toasterNoticePresenter } from "./feedback/notice"
 import { createFeedbackSession } from "./feedback/session"
@@ -34,6 +35,7 @@ export function installKit(core: AnySiteCore, lib: object): Kit {
   const toaster = feedback.use(own)?.toaster
   core.attachKit({
     mount: svelteScopeMount(ignore),
+    asks: tabAsks({ document, actions: core.actions, i18n, feedback: () => feedback.use(root) }),
     notices: toaster ? toasterNoticePresenter({ source: toaster, scope: own, document }) : { present: () => ignore }
   })
   return { site, feedback, overlay, lib }
