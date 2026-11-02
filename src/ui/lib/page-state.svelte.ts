@@ -36,6 +36,7 @@ export class PageState {
   }
   #seen(view: PageView) {
     this.view = view
+    if (view.kind === "view" && view.settings.kind === "value") this.page.applyTheme(view.settings.settings.theme)
     if (this.agreed && !this.#accountRead) {
       this.#accountRead = true
       void this.refreshAccount()

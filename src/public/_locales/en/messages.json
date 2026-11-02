@@ -3904,5 +3904,421 @@
   },
   "shortcuts_failed": {
     "message": "Couldn't change the shortcut. Nothing changed."
+  },
+  "set_title": {
+    "message": "Settings"
+  },
+  "set_shownFor": {
+    "message": "Playlists shown for $ACCOUNT$",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "set_showingFor": {
+    "message": "Showing setup for $ACCOUNT$",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "set_navLabel": {
+    "message": "Settings sections"
+  },
+  "set_needsYou": {
+    "message": "Needs you"
+  },
+  "set_nav_youtube": {
+    "message": "YouTube"
+  },
+  "set_nav_music": {
+    "message": "YouTube Music"
+  },
+  "set_nav_everywhere": {
+    "message": "Everywhere"
+  },
+  "set_nav_accounts": {
+    "message": "Accounts"
+  },
+  "set_nav_appearance": {
+    "message": "Appearance"
+  },
+  "set_nav_privacy": {
+    "message": "Privacy & data"
+  },
+  "set_nav_diagnostics": {
+    "message": "Diagnostics"
+  },
+  "set_nav_about": {
+    "message": "About"
+  },
+  "set_feedback": {
+    "message": "Show feedback"
+  },
+  "set_forEveryAccount": {
+    "message": "For every account"
+  },
+  "set_defaultPct": {
+    "message": "Default required percentage"
+  },
+  "set_tick": {
+    "message": "Tick the toolbar icon when this tab's video is auto-added"
+  },
+  "set_pausedMark": {
+    "message": "Show on the toolbar icon while auto-add is paused"
+  },
+  "set_pausedMarkNote": {
+    "message": "The ! for something that needs you always comes first."
+  },
+  "set_thisAccount": {
+    "message": "Playlists for $ACCOUNT$",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "set_qsShorts": {
+    "message": "On Shorts shelves too"
+  },
+  "set_wbShorts": {
+    "message": "On Shorts too"
+  },
+  "set_wbFeedbackNote": {
+    "message": "Covers the Save rows in its menu too."
+  },
+  "set_cmLinks": {
+    "message": "Links inside cards keep the browser's menu"
+  },
+  "set_bmLine": {
+    "message": "Shows Save to ▸ on video links and on the watch page. With Right-click for the video menu on, hold Shift on cards."
+  },
+  "set_gatherFeedbackNote": {
+    "message": "Shows a message when it gathers by itself, or after the popup has closed."
+  },
+  "set_gatherKeys": {
+    "message": "In the popup, Enter gathers. On YouTube, Shift+N and Shift+P move through YouTube's list."
+  },
+  "set_gatherCredit": {
+    "message": "Based on GatherTube by Karim Elgazar"
+  },
+  "set_musicSection": {
+    "message": "YouTube Music section"
+  },
+  "set_syncHelp_chrome": {
+    "message": "Uses Chrome's own sync. Your settings reach your other browsers only if you're signed in to the browser and it syncs extensions."
+  },
+  "set_syncHelp_firefox": {
+    "message": "Uses Firefox's own sync. Your settings reach your other browsers only if you're signed in to the browser and it syncs extensions (Add-ons in Firefox Sync)."
+  },
+  "set_sync_off": {
+    "message": "Off in this browser."
+  },
+  "set_sync_joining": {
+    "message": "Looking for synced settings…"
+  },
+  "set_sync_ok": {
+    "message": "Synced."
+  },
+  "set_syncSwitchLater": {
+    "message": "Turn Settings sync on or off at first run for now. Switching it here comes with a later update."
+  },
+  "set_undoKey": {
+    "message": "Undo key"
+  },
+  "set_undoKeyLine": {
+    "message": "Runs Undo on the message showing on any YouTube or YouTube Music page."
+  },
+  "set_anyTabOff": {
+    "message": "These keys stay listed in your browser's shortcut settings, and do nothing while this is off."
+  },
+  "set_anyTabSetKeys": {
+    "message": "Set keys in your browser"
+  },
+  "set_popupKey": {
+    "message": "To open this popup with a key, set one in your browser's shortcut settings."
+  },
+  "set_accounts_none": {
+    "message": "No account setups yet. Open YouTube and choose a playlist to start one."
+  },
+  "set_accounts_summary_one": {
+    "message": "$COUNT$ auto-add playlist",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "set_accounts_summary_other": {
+    "message": "$COUNT$ auto-add playlists",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "set_accounts_remove": {
+    "message": "Remove"
+  },
+  "set_accounts_removeThis": {
+    "message": "Remove $ACCOUNT$'s setup? Its auto-add playlists, channel filters, shortcut playlists and quick-save playlists are deleted from this browser. Your playlists on YouTube aren't touched.",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "set_accounts_removeEvery": {
+    "message": "Remove $ACCOUNT$'s setup? Its auto-add playlists, channel filters, shortcut playlists and quick-save playlists are deleted from every browser that syncs your settings. Your playlists on YouTube aren't touched.",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "set_accounts_removed": {
+    "message": "Removed."
+  },
+  "set_accounts_failed": {
+    "message": "Couldn't remove the setup. Nothing changed."
+  },
+  "set_accounts_unclaimed": {
+    "message": "Your playlists from 1.x"
+  },
+  "set_accounts_unclaimedLine_one": {
+    "message": "$COUNT$ auto-add playlist waits for the YouTube account it belongs to.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "set_accounts_unclaimedLine_other": {
+    "message": "$COUNT$ auto-add playlists wait for the YouTube account they belong to.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "set_theme_system": {
+    "message": "System"
+  },
+  "set_theme_light": {
+    "message": "Light"
+  },
+  "set_theme_dark": {
+    "message": "Dark"
+  },
+  "set_themeLine": {
+    "message": "Covers the popup, settings and first run. On YouTube, our buttons follow YouTube's own look."
+  },
+  "set_consentHeading": {
+    "message": "Consent"
+  },
+  "set_notAgreed": {
+    "message": "You haven't agreed yet, so nothing runs on YouTube."
+  },
+  "set_keptHeading": {
+    "message": "What's kept in this browser"
+  },
+  "set_recentAdds": {
+    "message": "Keep a list of recent adds until the browser closes"
+  },
+  "set_fileHeading": {
+    "message": "Your settings in a file"
+  },
+  "set_export": {
+    "message": "Export settings"
+  },
+  "set_exportLine": {
+    "message": "The file holds your playlist IDs, channel filters and account names. Keep it private."
+  },
+  "set_exportFailed": {
+    "message": "Couldn't export your settings. Try again."
+  },
+  "set_import": {
+    "message": "Import settings"
+  },
+  "set_importPrivate": {
+    "message": "Import settings in a normal window."
+  },
+  "set_importConfirm": {
+    "message": "Import settings from $FILE$? Your shared settings, and the setups of the $COUNT$ accounts in the file, are replaced. Other accounts' setups are kept.",
+    "placeholders": {
+      "file": {
+        "content": "$1"
+      },
+      "count": {
+        "content": "$2"
+      }
+    }
+  },
+  "set_importButton": {
+    "message": "Import"
+  },
+  "set_imported": {
+    "message": "Settings imported."
+  },
+  "set_importNewer": {
+    "message": "This file was made by a newer version of Perchling. Update it here first."
+  },
+  "set_importInvalid": {
+    "message": "This isn't a Perchling settings file."
+  },
+  "set_importFailed": {
+    "message": "Couldn't import the file. Nothing changed."
+  },
+  "set_googleHeading": {
+    "message": "1.x's Google access"
+  },
+  "set_clearHeading": {
+    "message": "Clear all data"
+  },
+  "set_clearButton": {
+    "message": "Clear all data…"
+  },
+  "set_cleared": {
+    "message": "Cleared. First run opens again."
+  },
+  "set_clearFailed": {
+    "message": "Couldn't clear everything. Reload this page to check."
+  },
+  "set_cancel": {
+    "message": "Cancel"
+  },
+  "diag_statusHeading": {
+    "message": "Status"
+  },
+  "diag_working": {
+    "message": "Working"
+  },
+  "diag_partly": {
+    "message": "Partly working"
+  },
+  "diag_notWorking": {
+    "message": "Not working"
+  },
+  "diag_off": {
+    "message": "Off"
+  },
+  "diag_held": {
+    "message": "Can't run yet"
+  },
+  "diag_reportHeading": {
+    "message": "Diagnostics report"
+  },
+  "diag_copy": {
+    "message": "Copy"
+  },
+  "diag_copied": {
+    "message": "Copied."
+  },
+  "diag_known": {
+    "message": "Known problems"
+  },
+  "diag_report": {
+    "message": "Report a problem"
+  },
+  "diag_detailedLog": {
+    "message": "Detailed console log"
+  },
+  "diag_detailedLogLine": {
+    "message": "Logs every route attempt with its timing to the browser console, for a bug report. Nothing leaves this browser."
+  },
+  "diag_version": {
+    "message": "Version $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "diag_beta": {
+    "message": "(beta)"
+  },
+  "diag_updates": {
+    "message": "Updates install by themselves."
+  },
+  "about_name": {
+    "message": "Perchling for YouTube™"
+  },
+  "about_formerly": {
+    "message": "formerly YouTube Playlist Tools"
+  },
+  "about_attribution": {
+    "message": "YouTube is a trademark of Google LLC."
+  },
+  "about_notAffiliated": {
+    "message": "Not affiliated with or endorsed by YouTube or Google."
+  },
+  "about_credit": {
+    "message": "Gather tabs is a port of $LINK$ by Karim Elgazar (MIT licence), which is no longer maintained.",
+    "placeholders": {
+      "link": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_title": {
+    "message": "Report a problem"
+  },
+  "report_lead": {
+    "message": "Reports go to GitHub, where they're public. You need a GitHub account. There's no support e-mail."
+  },
+  "report_broken": {
+    "message": "A feature says it isn't working"
+  },
+  "report_brokenLine": {
+    "message": "YouTube probably changed something. Check Known problems first. If it's listed there, a 👍 on it helps more than a new report."
+  },
+  "report_wrong": {
+    "message": "Something went wrong"
+  },
+  "report_wrongLine": {
+    "message": "Say what you did, what you expected and what happened instead. Paste the diagnostics report if you can."
+  },
+  "report_idea": {
+    "message": "An idea"
+  },
+  "report_ideaLine": {
+    "message": "Say what you'd like to do, and where you'd look for it."
+  },
+  "report_feature": {
+    "message": "Feature"
+  },
+  "report_upgrade": {
+    "message": "Upgrade from 1.x"
+  },
+  "report_pages": {
+    "message": "The popup or Settings"
+  },
+  "report_other": {
+    "message": "Something else"
+  },
+  "report_opensWith": {
+    "message": "GitHub opens with $VALUES$.",
+    "placeholders": {
+      "values": {
+        "content": "$1"
+      }
+    }
+  },
+  "report_copy": {
+    "message": "Copy diagnostics report"
+  },
+  "report_copyLine": {
+    "message": "Paste it into the form's Diagnostics field if you want to share it."
+  },
+  "report_open": {
+    "message": "Open GitHub"
+  },
+  "report_cancel": {
+    "message": "Cancel"
+  },
+  "report_noAccount": {
+    "message": "No GitHub account? Leave a review on the extension's store page, which the developer reads."
   }
 }

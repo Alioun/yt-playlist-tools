@@ -1,4 +1,0 @@
-@import "tailwindcss" source(none);
-@source "./";
-@source "../components";
-@import "../lib/theme.css";

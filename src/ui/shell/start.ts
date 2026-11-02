@@ -26,7 +26,8 @@ const retiredLocalStorage = ["cachedVideos", "playlists", "preventDuplicates"]
  */
 export function startExtensionPage(native: ExtensionPagePort, navigatorPlatform: string, catalogue?: MessageCatalogue, window: { readonly windowId?: number } = {}) {
   try { for (const key of retiredLocalStorage) localStorage.removeItem(key) } catch {}
-  followTheme(document.documentElement, "system", matchMedia("(prefers-color-scheme: dark)"))
+  const scheme = matchMedia("(prefers-color-scheme: dark)")
+  let stopTheme = followTheme(document.documentElement, "system", scheme)
   const platform: Platform = { browser: build.browser, os: /mac/i.test(navigatorPlatform) ? "macos" : /win/i.test(navigatorPlatform) ? "windows" : "linux" }
   // The popup names its window, because it has no sender tab (ARC-MSG-06).
   const backend = createBrowserBackend(native, { build: build.build, deadline: timerDeadline, browser: build.browser,
@@ -38,6 +39,9 @@ export function startExtensionPage(native: ExtensionPagePort, navigatorPlatform:
   const open = (url: string) => { void native.tabs.create({ url }) }
   return {
     backend, i18n, platform, private: native.extension?.inIncognitoContext === true, open, commands: createCommandKeys(native.commands),
+    version: native.runtime.getManifest().version, beta: build.mode === "beta",
+    /** Follows Settings › Appearance on the popup, settings and first run (UI-IA-06, UI-SET-15). */
+    applyTheme(theme: "system" | "light" | "dark") { stopTheme(); stopTheme = followTheme(document.documentElement, theme, scheme) },
     /** The canonical catalogue's text, for a lazy part that pins the disclosure (UI-ONB-09). */
     withCatalogue: (full: MessageCatalogue) => createBrowserI18n(native, full),
     openSettings: (hash?: string) => { if (hash) open(native.runtime.getURL(`/options.html#${hash}`)); else void native.runtime.openOptionsPage() },
