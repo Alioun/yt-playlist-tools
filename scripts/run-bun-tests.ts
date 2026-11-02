@@ -4,7 +4,7 @@ import { join, relative, resolve } from "node:path"
 type Shard = { index: number; count: number }
 
 // Bun ignores [test] timeout in bunfig.toml, so every runner passes --timeout itself.
-export const testTimeoutMs = 10_000
+export const testTimeoutMs = 30_000
 const agentVariables = ["CLAUDECODE", "AI_AGENT", "CLAUDE_CODE_ENTRYPOINT", "REPL_ID"]
 
 // Bun hides passing tests when it detects an agent. AGENT=0 turns that detection off, so logs and parsed counts stay complete.

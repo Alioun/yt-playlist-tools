@@ -53,7 +53,7 @@ test("all shards form the complete disjoint discovery and own the tests root onc
 test("the default command passes every discovered entry, an explicit timeout and child conditions", async () => {
   const cwd = await fixture(), commands: string[][] = []
   expect(await runBunTests([], { cwd, spawn: async command => { commands.push(command); return 0 } })).toBe(0)
-  expect(commands).toEqual([[process.execPath, "test", "--no-env-file", "--isolate", "--conditions=browser", "--timeout", "10000", "./tests", "./src/nested/a.bun-test.ts", "./src/z.bun-test.ts"]])
+  expect(commands).toEqual([[process.execPath, "test", "--no-env-file", "--isolate", "--conditions=browser", "--timeout", "30000", "./tests", "./src/nested/a.bun-test.ts", "./src/z.bun-test.ts"]])
 })
 
 test("a test slower than Bun's 5 s default passes under the runner's timeout", async () => {
