@@ -1,10 +1,10 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test"
 import { spawnSync } from "node:child_process"
 import { createHash, createHmac } from "node:crypto"
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
-import { type Certificate, type FakeAmo, type Mode, startFakeAmo, untrustedCertificate } from "./fixtures/fake-amo"
+import { type Certificate, type FakeAmo, type Mode, startFakeAmo, untrustedCertificate } from "./fixtures/fake-amo.ts"
 
 // Credential-free (G28): every value below is a fake, and each child process
 // gets an environment built from scratch, so no real secret can reach it.
@@ -170,6 +170,18 @@ function files(dir: string): string[] {
     .sort()
 }
 
+const codeOwnerRules = readFileSync(join(root, ".github/CODEOWNERS"), "utf8")
+  .split("\n")
+  .map(line => line.replace(/#.*/, "").trim())
+  .filter(Boolean)
+  .map(line => {
+    const [pattern = "", ...owners] = line.split(/\s+/)
+    return { glob: new Bun.Glob(pattern.replace(/^\//, "")), owners }
+  })
+
+/** The owners GitHub requests for `path`. The last matching line wins, and a line with no owner leaves the file unowned. */
+const codeOwners = (path: string) => codeOwnerRules.findLast(rule => rule.glob.match(path))?.owners ?? []
+
 type Reference = { at: string; expression: string }
 
 /**
@@ -202,6 +214,22 @@ function credentialReferences(): Reference[] {
   for (const [file, workflow] of Object.entries(workflows)) visit(workflow, [file], false)
   return found
 }
+
+// Code no one code-owns could fake the proof from inside this process, so the
+// proof loads and runs only what the approval covers. Bun tries .tsx before
+// .ts for a name without an extension.
+describe("this file", () => {
+  const source = readFileSync(import.meta.path, "utf8")
+
+  test("imports the fake AMO by its full name, and reads or runs only files the approval covers", () => {
+    const relative = new Bun.Transpiler({ loader: "ts" }).scanImports(source).map(found => found.path).filter(path => path.startsWith("."))
+    expect(relative).toEqual(["./fixtures/fake-amo.ts"])
+    const used = [...source.matchAll(/join\(root, "([^"]+)"\)/g)].map(match => match[1]!)
+    const owned = (path: string) => codeOwners(statSync(join(root, path)).isDirectory() ? `${path}/planted-later.tsx` : path).join() === "@Alioun"
+    expect(used.length).toBeGreaterThan(0)
+    expect(used.filter(path => !owned(path))).toEqual([])
+  })
+})
 
 describe("the leak check", () => {
   test("finds each value in every form a log could carry it", () => {
@@ -339,20 +367,13 @@ describe("CODEOWNERS", () => {
     "docs/development/releasing.md",
     "package.json"
   ]
+  // A file planted later in a directory the approval covers must reach the owner too.
+  const approvedDirectories = [".github/workflows", "tests/integration/fixtures"]
 
   test("sends every file the approval covers to the owner, as GitHub reads it", () => {
-    const rules = readFileSync(join(root, ".github/CODEOWNERS"), "utf8")
-      .split("\n")
-      .map(line => line.replace(/#.*/, "").trim())
-      .filter(Boolean)
-      .map(line => {
-        const [pattern = "", ...owners] = line.split(/\s+/)
-        return { glob: new Bun.Glob(pattern.replace(/^\//, "")), owners }
-      })
-    // The last matching line wins, and a line with no owner leaves the file unowned.
-    const owners = (path: string) => rules.findLast(rule => rule.glob.match(path))?.owners ?? []
     expect(approved.filter(path => !existsSync(join(root, path)))).toEqual([])
-    expect(approved.map(path => ({ path, owners: owners(path) }))).toEqual(approved.map(path => ({ path, owners: ["@Alioun"] })))
+    const paths = [...approved, ...approvedDirectories.map(directory => `${directory}/planted-later.tsx`)]
+    expect(paths.map(path => ({ path, owners: codeOwners(path) }))).toEqual(paths.map(path => ({ path, owners: ["@Alioun"] })))
   })
 })
 
@@ -716,24 +737,10 @@ describe("the fill step", () => {
     expect(readFileSync(seen, "utf8").split("\n").filter(Boolean).sort()).toEqual(["cp", "mktemp", "shasum"])
   })
 
-  test("the build's metadata never holds the login, and filling leaves it in no file", async () => {
+  test("filling leaves the login in no file", async () => {
     const amo = await fakeAmo()
-    const dir = workspace(scriptFor(amo.origin))
-    mkdirSync(join(dir, "store/notes"), { recursive: true })
-    mkdirSync(join(dir, "store/release-notes"))
-    writeFileSync(join(dir, "store/notes/reviewer-full.md"), fullNotes + "\n")
-    writeFileSync(join(dir, "store/release-notes/2.0.0.md"), "Release notes.\n")
-    // Without --strict: a release build fails on the four placeholders until amo-metadata.ts lets them through.
-    const build = spawnSync(
-      process.execPath,
-      ["--no-env-file", join(root, "scripts/amo-metadata.ts"), "--version", "2.0.0", "--kind", "major", "--channel", "stable", "--out", "dist/amo-metadata.json"],
-      { cwd: dir, env: { PATH: "/usr/bin:/bin", HOME: join(dir, "_home"), AMO_REVIEWER_LOGIN: rawLogin }, encoding: "utf8" }
-    )
-    expect(build.status).toBe(0)
+    const dir = workspace(scriptFor(amo.origin), fullNotes)
     const archived = readFileSync(join(dir, "dist/amo-metadata.json"), "utf8")
-    expect(JSON.parse(archived).version.approval_notes).toBe(fullNotes)
-    expect(leaks(archived + build.stdout + build.stderr)).toEqual([])
-
     const run = await runStep(fillStep, dir)
     expect(run.exit).toBe(0)
     expect(JSON.parse(amo.requests[0]!.body)).toEqual({ approval_notes: filledNotes })

@@ -153,5 +153,25 @@ plant old-runner \
 plant job-level-keys "$ci" base -- "hold no secret or job token in a workflow- or job-level env"
 plant old-leak-check "$tests" 's/forms\(value\)\.some\(form => text\.includes\(form\)\)/text.includes(value) || text.includes(JSON.stringify(value).slice(1, -1))/' -- "finds each value in every form a log could carry it"
 
+# Bun tries .tsx before .ts for an import without an extension. The planted
+# file exports the imported names, as Bun links them before it runs the file.
+plant extensionless-import "$tests" 's/"\.\/fixtures\/fake-amo\.ts"/".\/fixtures\/fake-amo"/' -- "imports the fake AMO by its full name"
+plant planted-tsx "$tests" 's/"\.\/fixtures\/fake-amo\.ts"/".\/fixtures\/fake-amo"/' tests/integration/fixtures/fake-amo.tsx 'write:export const startFakeAmo = 0, untrustedCertificate = 0; process.exit(0)' -- \
+  "step:::error::the G28 proof did not pass all"
+plant planted-tsx-beside-full-name tests/integration/fixtures/fake-amo.tsx 'write:export const startFakeAmo = 0, untrustedCertificate = 0; process.exit(0)' --
+plant metadata-in-proof "$tests" 's/\z/const metadataScript = join(root, "scripts\/amo-metadata.ts")\n/' -- "reads or runs only files the approval covers"
+plant fixtures-unowned "$owners" 's/^\/tests\/integration\/fixtures\/\*\* \@Alioun\n//m' -- "sends every file the approval covers to the owner"
+plant fixture-file-owned "$owners" 's/^\/tests\/integration\/fixtures\/\*\* \@Alioun$/\/tests\/integration\/fixtures\/fake-amo.ts \@Alioun/m' -- \
+  "sends every file the approval covers to the owner"
+# The CI proof step and its count.
+plant proof-counts-fewer "$ci" 's/tests="(\d+)"/"tests=\"" . ($1 - 1) . "\""/e' -- "step:::error::the G28 proof did not pass all"
+plant proof-ignores-count "$ci" 's/(the G28 proof did not pass all \d+ of its tests"; )exit 1/${1}exit 0/' -- "fails when one test fewer runs"
+plant proof-or-true "$ci" 's/(--reporter-outfile="\$report" \.\/tests\/integration\/amo-reviewer-notes\.test\.ts)\n.*?\n.*?\n/$1 || true\n/s' -- \
+  "fails when one test fails"
+plant proof-continue-on-error "$ci" 's/(      - name: Test the reviewer-login secret flow \(G28\)\n)/$1        continue-on-error: true\n/' -- "is a plain step whose failure fails the build job"
+plant proof-if "$ci" 's/(      - name: Test the reviewer-login secret flow \(G28\)\n)/$1        if: github.event_name == \x27push\x27\n/' -- "is a plain step whose failure fails the build job"
+plant proof-job-continue-on-error "$ci" 's/(  build:\n    runs-on: ubuntu-latest\n)/$1    continue-on-error: true\n/' -- "is a plain step whose failure fails the build job"
+plant proof-cached-bun "$ci" 's/\n *# The G28 proof below runs on this Bun.*?\n.*?\n *no-cache: true//s' -- "runs on the Bun package.json declares, without a cache"
+
 echo "$planted rows, $missed missed"
 exit $((missed > 0))
