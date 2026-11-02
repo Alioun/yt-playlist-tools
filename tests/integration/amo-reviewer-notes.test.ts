@@ -584,8 +584,10 @@ describe("the owner's setup commands in releasing.md", () => {
     expect(jq(filter("rules/branches/main", "ruleset_id"), rules).split("\n")).toEqual(["7", "42"])
   })
 
-  // The block as written, with a stub gh that answers from fixtures through jq.
-  test("the ruleset commands print false when no ruleset applies to main, or gh fails", () => {
+  // The block as written, with a stub gh that answers from fixtures through
+  // jq, in bash, in bash without word splitting as zsh runs a script, and in
+  // zsh where it is installed.
+  test("the ruleset commands print a line per ruleset in zsh and bash, and false when none applies to main or gh fails", () => {
     const block = [...releasing.matchAll(/```sh\n([\s\S]*?)```/g)].map(match => match[1]!).find(block => block.includes("rulesets/$id"))!
     const dir = mkdtempSync(join(tmpdir(), "reviewer-notes-ruleset-"))
     directories.push(dir)
@@ -596,21 +598,33 @@ describe("the owner's setup commands in releasing.md", () => {
       `[ -f "${dir}/$file" ] || exit 1`,
       `exec ${Bun.which("jq")!} -r "$4" "${dir}/$file"`
     ].join("\n") + "\n", { mode: 0o755 })
+    const zsh = Bun.which("zsh")
+    const shells: [string, string[]][] = [
+      ["bash", [bash, "--noprofile", "--norc", "-c", block]],
+      ["bash without word splitting", [bash, "--noprofile", "--norc", "-c", `IFS=\n${block}`]],
+      ...(zsh ? [["zsh", [zsh, "-f", "-c", block]] as [string, string[]]] : [])
+    ]
     const run = (rules: unknown, rulesets: Record<number, unknown>) => {
-      rmSync(join(dir, "rules.json"), { force: true })
+      for (const file of readdirSync(dir).filter(file => file.endsWith(".json"))) rmSync(join(dir, file))
       if (rules !== undefined) writeFileSync(join(dir, "rules.json"), JSON.stringify(rules))
       for (const [id, ruleset] of Object.entries(rulesets)) writeFileSync(join(dir, `ruleset-${id}.json`), JSON.stringify(ruleset))
-      return spawnSync(bash, ["--noprofile", "--norc", "-c", block], { cwd: dir, env: { PATH: join(dir, "bin") }, encoding: "utf8" }).stdout.split("\n").filter(Boolean)
+      return shells.map(([shell, [command, ...args]]) => ({
+        shell,
+        lines: spawnSync(command!, args, { cwd: dir, env: { PATH: join(dir, "bin") }, encoding: "utf8" }).stdout.split("\n").filter(Boolean)
+      }))
     }
+    const each = (lines: string[]) => shells.map(([shell]) => ({ shell, lines }))
     const parameters = { required_approving_review_count: 1, dismiss_stale_reviews_on_push: true, require_code_owner_review: true, require_last_push_approval: true }
     const rules = [
       { type: "pull_request", ruleset_id: 42, parameters },
-      { type: "required_status_checks", ruleset_id: 42, parameters: { required_status_checks: [{ context: "g28-proof" }] } }
+      { type: "required_status_checks", ruleset_id: 42, parameters: { required_status_checks: [{ context: "g28-proof" }] } },
+      { type: "deletion", ruleset_id: 7 }
     ]
-    const ruleset = { id: 42, enforcement: "active", bypass_actors: [] }
-    expect(run(rules, { 42: ruleset })).toEqual(["true", "true"])
-    expect(run([], {})).toEqual(["false", "false"])
-    expect(run(undefined, {})).toEqual(["false"])
+    const ruleset = (id: number) => ({ id, enforcement: "active", bypass_actors: [] })
+    expect(run(rules, { 7: ruleset(7), 42: ruleset(42) })).toEqual(each(["true", "true", "true"]))
+    expect(run(rules, { 42: ruleset(42) })).toEqual(each(["true", "false", "true"]))
+    expect(run([], {})).toEqual(each(["false", "false"]))
+    expect(run(undefined, {})).toEqual(each(["false"]))
   })
 
   test("the bypass check prints true only for a ruleset no one but the owner can bypass", () => {

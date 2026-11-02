@@ -227,7 +227,11 @@ plant ruleset-build-check "$docs" 's/\.context == "g28-proof"/.context == "build
   "the ruleset check prints true only when main needs the owner's review of its last push"
 plant repo-digest-any-case "$docs" 's/\(\.name \| ascii_upcase\) as \$name \| \$name != "REVIEWER_NOTES_SHA256" and \$name != "BUN_SHA256"/.name != "REVIEWER_NOTES_SHA256" and .name != "BUN_SHA256"/' -- \
   "the repository-variable check prints true only when no repository variable can stand in for a digest"
-plant ruleset-loop-silent "$docs" 's/^ *\[ -n "\$ids" \] \|\| echo false\n//m' -- "the ruleset commands print false when no ruleset applies to main"
+ruleset_block="the ruleset commands print a line per ruleset in zsh and bash, and false when none applies to main or gh fails"
+plant ruleset-loop-silent "$docs" 's/^ *\[ -n "\$ids" \] \|\| echo false\n//m' -- "$ruleset_block"
+# zsh doesn't split an unquoted $ids into words, so a for loop ran gh once with every ID.
+plant ruleset-loop-split "$docs" 's/printf \x27%s\\n\x27 "\$ids" \| while read -r id; do\n *\[ -n "\$id" \] \|\| continue\n/for id in \$ids; do\n/' -- "$ruleset_block"
+plant ruleset-loop-gh-silent "$docs" 's/(\.actor_id == 5\)\x27) \|\| echo false/$1/' -- "$ruleset_block"
 
 # Outside G28: submit-amo can write releases.
 plant submit-amo-keeps-token "$release" 's/(  submit-amo:\n(?:.*\n)*?      - uses: actions\/checkout\@v7\n)        with:\n          persist-credentials: false\n/$1/' -- \
