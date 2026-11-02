@@ -5,7 +5,7 @@ import type { Titles } from "../../shared/copy"
 import type { PlaylistId } from "../../shared/model"
 import { PickerModel, type Picked, type UntickOutcome } from "../../shared/picker/model.svelte"
 import type { ToastPlan } from "../../shared/rules/outcomes"
-import type { SiteCore } from "../core/core"
+import type { AnySiteCore, SiteCore } from "../core/core"
 import type { Kit } from "../kit/install"
 import { placePicker, type PlacementAnchor } from "./placement"
 import { pagePickerSource } from "./source"
@@ -35,7 +35,7 @@ function anchorBox(request: OpenPicker): PlacementAnchor {
  * away from YouTube's hotkeys (YT-PK-10).
  */
 export function createPopovers(options: {
-  readonly core: () => SiteCore<"www"> | undefined
+  readonly core: () => AnySiteCore | undefined
   readonly kit: () => Kit | undefined
   readonly document: Document
   readonly os: "macos" | "windows" | "linux"
@@ -47,16 +47,18 @@ export function createPopovers(options: {
   function openPicker(request: OpenPicker): void {
     const core = options.core(), kit = options.kit()
     const view = core?.link.view
-    if (!core || !kit || !view || view.site !== "www" || !view.signedIn) return
+    if (!core || !kit || !view || view.site !== core.site || !view.signedIn) return
     open?.close()
     const account = view.acct
     const source = pagePickerSource({
       actions: core.actions, page: core.page, view, request, now: () => Date.now(),
       live: () => { const current = core.link.view; return !core.disposed && current?.signedIn === true && current.acct === account }
     })
+    // No check marks on YouTube Music until ticket 25's M2 check (G35, R191).
+    const marks = view.site === "www"
     const picker = request.mode.kind === "save"
-      ? new PickerModel({ source, site: "www", mode: "save" })
-      : new PickerModel({ source, site: "www", mode: "choose" })
+      ? new PickerModel({ source, site: view.site, mode: "save", marks })
+      : new PickerModel({ source, site: view.site, mode: "choose", marks })
     const purpose = request.mode.kind === "save" ? "save" : request.mode.shortcut ? "shortcut" : "quickSave"
     const feedback = feedbackFor(view, request.opener)
     const shortcutId = request.mode.kind === "choose" ? request.mode.shortcut : null
@@ -118,10 +120,12 @@ export function createPopovers(options: {
     void createIsolatedElement({ name: "pp-picker", mode: "open", isolateEvents: true }).then(({ parentElement: host, isolatedElement, shadow }) => {
       if (closed) return
       host.style.cssText = "all: initial; position: fixed; z-index: 2310; left: 0; top: 0; visibility: hidden;"
-      host.toggleAttribute("dark", document.documentElement.hasAttribute("dark"))
+      // YouTube Music is always dark (UI-YM-03); YouTube marks its dark theme on <html>.
+      const dark = core.site === "music" || document.documentElement.hasAttribute("dark")
+      host.toggleAttribute("dark", dark)
       const style = document.createElement("style"); style.textContent = options.renderer.css; shadow.prepend(style)
       const frame = document.createElement("div")
-      frame.className = document.documentElement.hasAttribute("dark") ? "dark" : ""
+      frame.className = dark ? "dark" : ""
       frame.style.cssText = `width: ${panelWidth}px; display: flex; flex-direction: column;`
       isolatedElement.append(frame)
       const full = document.fullscreenElement
@@ -149,7 +153,8 @@ export function createPopovers(options: {
     }, () => close())
   }
 
-  const menu = createWatchMenu({ document, core: options.core, kit: options.kit, picker: openPicker })
+  const menu = createWatchMenu({ document, core: () => { const core = options.core(); return core?.site === "www" ? core as SiteCore<"www"> : undefined },
+    kit: options.kit, picker: openPicker })
   return {
     openPicker,
     openWatchMenu: request => { open?.close(); menu.open(request) },

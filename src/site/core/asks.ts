@@ -3,7 +3,8 @@ import type { I18n } from "../../shared/i18n"
 import { explicitContent } from "../explicit"
 import type { Feedback } from "../kit/feedback"
 import { loadPopovers } from "../popovers/loader"
-import { pickerAnchor } from "../popovers/types"
+import { musicPickerAnchor, pickerAnchor } from "../popovers/types"
+import type { Site } from "../../shared/contracts"
 import type { TabActions } from "./actions"
 
 export type TabAsks = {
@@ -17,6 +18,7 @@ export type TabAsks = {
  * them here once the kit is in the page.
  */
 export function tabAsks(options: {
+  readonly site: Site
   readonly document: Document
   readonly actions: TabActions
   readonly i18n: I18n
@@ -29,7 +31,7 @@ export function tabAsks(options: {
       options.feedback()?.toaster.show({ text: options.i18n.message("picker_loadFailed"), tone: "failure", auto: false, action: null })
       return "failed"
     }
-    popovers.openPicker({ video: payload.video, ...(payload.title ? { title: payload.title } : {}), anchor: pickerAnchor(options.document, null),
+    popovers.openPicker({ video: payload.video, ...(payload.title ? { title: payload.title } : {}), anchor: options.site === "music" ? musicPickerAnchor(options.document, null) : pickerAnchor(options.document, null),
       mode: payload.choose ? { kind: "choose", shortcut: null } : { kind: "save" }, opener: payload.opener })
     return "opened"
   }

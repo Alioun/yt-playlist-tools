@@ -1,7 +1,7 @@
 export type Box = { readonly left: number; readonly top: number; readonly width: number; readonly height: number }
 export type Placement = { readonly left: number; readonly top: number; readonly maxHeight: number }
 export type PlacementAnchor =
-  | { readonly kind: "below" | "on" | "beside" | "player"; readonly box: Box }
+  | { readonly kind: "below" | "on" | "beside" | "player" | "above"; readonly box: Box }
   | { readonly kind: "window" }
 
 const gap = 8
@@ -10,8 +10,8 @@ const maxHeight = 560
 
 /**
  * YT-PK-12 and UI-PICK-15 in viewport pixels: below the split, flipping above with no room; on the watch-page
- * pill; beside the card's thumbnail on its right, else its left; over the player at its top centre; else the
- * window's top centre. The panel never leaves the viewport.
+ * pill; beside the card's thumbnail on its right, else its left; over the player at its top centre; centred above
+ * YouTube Music's player bar (YM-PICK-2); else the window's top centre. The panel never leaves the viewport.
  */
 export function placePicker(anchor: PlacementAnchor, panel: { readonly width: number; readonly height: number },
   viewport: { readonly width: number; readonly height: number }): Placement {
@@ -36,6 +36,11 @@ export function placePicker(anchor: PlacementAnchor, panel: { readonly width: nu
       const left = right + panel.width <= viewport.width - margin ? right : box.left - gap - panel.width
       const top = Math.max(margin, Math.min(box.top, viewport.height - margin - Math.min(panel.height, maxHeight)))
       return { left: clampLeft(left), top, maxHeight: room(top) }
+    }
+    case "above": {
+      const height = Math.min(panel.height, maxHeight, box.top - gap - margin)
+      const top = Math.max(margin, box.top - gap - height)
+      return { left: clampLeft(box.left + (box.width - panel.width) / 2), top, maxHeight: Math.max(120, box.top - gap - top) }
     }
     case "player": {
       const top = Math.max(margin, box.top + gap)

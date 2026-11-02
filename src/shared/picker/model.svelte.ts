@@ -3,10 +3,11 @@ import type { Key, PlaylistId } from "../model"
 import type { CreateFailure, ItemPort, Listing, Mark, PickerSource, Undo } from "./source"
 
 export type Mode = "save" | "choose" | "many"
-export type PickerOptions =
+/** `marks: false` reads no membership, so rows show no check marks and no "Couldn't check" line (YM-PICK-6, R191). */
+export type PickerOptions = { readonly marks?: boolean } & (
   | { readonly source: PickerSource<ItemPort>; readonly site: Site; readonly mode: "save" }
   | { readonly source: PickerSource; readonly site: Site; readonly mode: "choose" }
-  | { readonly source: PickerSource<null>; readonly site: Site; readonly mode: "many" }
+  | { readonly source: PickerSource<null>; readonly site: Site; readonly mode: "many" })
 
 export type Refusal = Extract<ChangeResult, { refused: string }>["refused"]
 export type TitleProblem = "required" | "too-long" | "angle-brackets"
@@ -175,7 +176,7 @@ export class PickerModel {
     this.#chosen = new Set(source.chosen)
     this.form.privacy = source.privacy ?? "PRIVATE"
     void this.#open(source)
-    if (source.item) void this.#readMembership(source.item)
+    if (source.item && options.marks !== false) void this.#readMembership(source.item)
   }
 
   get closed(): boolean { return this.#closed }

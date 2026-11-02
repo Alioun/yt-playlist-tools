@@ -10,6 +10,7 @@ export type PickerAnchor =
   | { readonly kind: "on"; readonly element: Element }
   | { readonly kind: "beside"; readonly element: Element }
   | { readonly kind: "player"; readonly element: Element }
+  | { readonly kind: "above"; readonly element: Element }
   | { readonly kind: "window" }
 /** Choose mode sets the quick-save playlist, or with `shortcut` that shortcut's playlist (YT-PK-09). */
 export type PickerMode = { readonly kind: "save" } | { readonly kind: "choose"; readonly shortcut: ShortcutId | null }
@@ -53,5 +54,16 @@ export function pickerAnchor(document: Document, element: Element | null): Picke
   if (element) return { kind: "beside", element: element.querySelector(thumbnails) ?? element }
   const player = document.querySelector(players)
   if (player && player.getBoundingClientRect().width > 0) return { kind: "player", element: player }
+  return { kind: "window" }
+}
+
+const musicPlayers = "ytmusic-player-bar, ytmusic-miniplayer"
+
+/** Where the picker opens on YouTube Music: below the target's Save button when one shows, else centred above the player (YM-PICK-2). */
+export function musicPickerAnchor(document: Document, button: Element | null): PickerAnchor {
+  if (button?.isConnected) return { kind: "below", element: button }
+  for (const player of document.querySelectorAll(musicPlayers)) {
+    if (player.getBoundingClientRect().width > 0) return { kind: "above", element: player }
+  }
   return { kind: "window" }
 }

@@ -35,7 +35,7 @@ export function installKit(core: AnySiteCore, lib: object): Kit {
   const toaster = feedback.use(own)?.toaster
   core.attachKit({
     mount: svelteScopeMount(ignore),
-    asks: tabAsks({ document, actions: core.actions, i18n, feedback: () => feedback.use(root) }),
+    asks: tabAsks({ site, document, actions: core.actions, i18n, feedback: () => feedback.use(root) }),
     notices: toaster ? toasterNoticePresenter({ source: toaster, scope: own, document }) : { present: () => ignore }
   })
   return { site, feedback, overlay, lib }

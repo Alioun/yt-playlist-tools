@@ -29,12 +29,15 @@ function changeResult(answer: DestinationAnswer): ChangeResult {
  */
 export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> {
   const { actions, page, view, request } = deps
+  const { site } = view
   const setup = view.setup?.kind === "live" ? view.setup.setup : null
   const acct = view.signedIn ? view.acct : null
   const shortcut = request.mode.kind === "choose" ? request.mode.shortcut : null
-  const destination: SetupDestination = shortcut ? { kind: "shortcut", shortcut } : { kind: "quick-save" }
-  let current: PlaylistId | null = (shortcut ? setup?.targets[shortcut] : setup?.quickSave) as PlaylistId | null | undefined ?? null
-  let quickSave = (setup?.quickSave ?? null) as PlaylistId | null
+  // YouTube Music's one-click Save has its own playlist, separate from YouTube's thumbnail quick-save (YM-ACC-2).
+  const quickSaveDestination: SetupDestination = { kind: site === "music" ? "music-save" : "quick-save" }
+  const destination: SetupDestination = shortcut ? { kind: "shortcut", shortcut } : quickSaveDestination
+  let quickSave = ((site === "music" ? setup?.musicSave : setup?.quickSave) ?? null) as PlaylistId | null
+  let current: PlaylistId | null = (shortcut ? setup?.targets[shortcut] as PlaylistId | undefined : quickSave) ?? null
   let live = setup !== null
   const ticks = new Map<PlaylistId, UndoHandle>()
   const via = request.mode.kind === "save" ? "picker" : shortcut ? "choose-shortcut" : "choose-quick-save"
@@ -59,7 +62,7 @@ export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> {
       return answer.ok ? { kind: "read", rows: answer.data } : { kind: "unreadable" }
     },
     async add(id): Promise<AddAnswer> {
-      const report = await actions.add({ site: "www", video: request.video, via, opener: request.opener, playlist: id, ...(request.title ? { title: request.title } : {}) })
+      const report = await actions.add({ site, video: request.video, via, opener: request.opener, playlist: id })
       if (report.kind !== "report") return { kind: "failed" }
       const outcome = report.outcomes[id]
       if (outcome?.kind === "already-in") return { kind: "already-in" }
@@ -69,7 +72,7 @@ export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> {
       return { kind: "added", entry: report.undo.id as SetVideoId, undo: undoOf(report.undo) }
     },
     async remove(id) {
-      const report = await actions.remove({ site: "www", video: request.video, playlist: id, opener: request.opener, tick: ticks.get(id) ?? null })
+      const report = await actions.remove({ site, video: request.video, playlist: id, opener: request.opener, tick: ticks.get(id) ?? null })
       if (report.kind !== "removed") return { kind: "failed" }
       ticks.delete(id)
       return { kind: "removed", undo: undoOf(report.undo) }
@@ -80,7 +83,8 @@ export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> {
     }
   }
   const keys = new Map<PlaylistId, Key>()
-  const shortcuts = view.site === "www" ? view.features.find(feature => feature.id === "shortcuts") : undefined
+  // A Music tab view lists Playlist shortcuts only while "Also on YouTube Music" is on, so its keys are live here (YM-PICK-4).
+  const shortcuts = view.features.find(feature => feature.id === "shortcuts")
   if (shortcuts?.id === "shortcuts") {
     for (const entry of shortcuts.options.list) {
       const target = entry.watchLaterOnEveryAccount ? "WL" : setup?.targets[entry.id]
@@ -116,7 +120,7 @@ export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> {
       return answer.kind === "created" ? { kind: "created", id: answer.id, undo: null } : answer
     },
     async pin(id) {
-      const result = await set({ kind: "quick-save" }, id, quickSave)
+      const result = await set(quickSaveDestination, id, quickSave)
       if ("ok" in result) { quickSave = id; if (!shortcut) current = id }
       return result
     },

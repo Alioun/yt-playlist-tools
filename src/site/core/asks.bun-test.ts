@@ -23,7 +23,7 @@ function world(need: () => Promise<boolean>) {
   const feedback = createFeedbackSession({ owner: root, document, keys, site: "www", i18n, labels, initial: { undoKey, features: [] }, now: timers.now, onError: () => {}, onCosmetic: () => {} })
   const undone: unknown[] = []
   const actions = { need, undo: async (handle: unknown) => { undone.push(handle); return { kind: "undone" } } } as unknown as TabActions
-  const asks = tabAsks({ document, actions, i18n, feedback: () => feedback.use(root) })
+  const asks = tabAsks({ site: "www", document, actions, i18n, feedback: () => feedback.use(root) })
   running.push(() => { root.dispose(); keys.dispose(); timers.restore() })
   return { asks, timers, undone, toast: () => feedback.read()?.feedback.toaster.read() ?? null }
 }
