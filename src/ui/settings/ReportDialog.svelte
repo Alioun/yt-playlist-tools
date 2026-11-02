@@ -17,14 +17,14 @@
     report?: string | null
     onclose: () => void
   } = $props()
-  const { i18n, platform } = untrack(() => pageState.page)
+  const { i18n, platform, version: built, beta } = untrack(() => pageState.page)
   const health = $derived(pageState.status?.kind === "status" ? pageState.status.health : [])
   let chosen = $state<ReportFeature>(untrack(() => feature))
   const initialBroken = untrack(() => health.some(row => row.feature === feature && row.state !== "working"))
   let kind = $state<ReportKind>(initialBroken ? "not-working" : "problem")
   let copied = $state(false)
   const browser = browserLabel(navigator.userAgent, platform.browser)
-  const version = `${pageState.page.version}${pageState.page.beta ? " (beta)" : ""}`
+  const version = `${built}${beta ? " (beta)" : ""}`
   const special = { upgrade: "report_upgrade", pages: "report_pages", other: "report_other" } as const
   const name = $derived(chosen in special ? i18n.message(special[chosen as keyof typeof special]) : featureName(features, chosen as FeatureId))
   const status = $derived.by(() => {

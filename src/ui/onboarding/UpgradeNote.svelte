@@ -30,7 +30,7 @@
   let phase = $state<"review" | "not-now" | "agreeing" | "done">("review")
   let failure = $state<string | null>(null)
   let attempt = 1
-  const others = text.features.firstRunFeatures.filter(feature => feature.id !== "auto-add" && (feature.id !== "shortcuts" || !keptShortcut))
+  const others = untrack(() => text).features.firstRunFeatures.filter(feature => feature.id !== "auto-add" && (feature.id !== "shortcuts" || !keptShortcut))
   const selected = $derived([...autoAdd && keptAutoAdd ? ["auto-add" as const] : [], ...shortcuts && keyConverts ? ["shortcuts" as const] : [], ...picked])
   const count = $derived(selected.length)
   const key = found.shortcut.key ? display(found.shortcut.key, platform.os) : ""

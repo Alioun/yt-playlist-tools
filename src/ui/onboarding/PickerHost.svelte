@@ -13,8 +13,10 @@
   let { pageState, request, onclose }: { pageState: PageState; request: HostRequest; onclose: (saved: boolean) => void } = $props()
   const { i18n, platform } = untrack(() => pageState.page)
   const text = createPickerText(i18n)
+  // The picker and its source are made once for this mount; a new request opens a new host.
   const asked = untrack(() => request)
-  const source = asked.kind === "choose" ? pickerSource(pageState, asked.acct, asked.site, { kind: "destination", destination: asked.destination }) : null
+  const state = untrack(() => pageState)
+  const source = asked.kind === "choose" ? pickerSource(state, asked.acct, asked.site, { kind: "destination", destination: asked.destination }) : null
   const picker = source && asked.kind === "choose" ? new PickerModel({ source, site: asked.site, mode: "choose" }) : null
   onDestroy(() => { picker?.close(); source?.dispose() })
   function outcome(event: PickerEvent) {

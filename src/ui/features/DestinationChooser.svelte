@@ -20,7 +20,7 @@
     /** A playlist was chosen or made here. */
     onchosen?: () => void
   } = $props()
-  const { i18n } = pageState.page
+  const { i18n } = untrack(() => pageState.page)
   const text = createPickerText(i18n)
   let open = $state(untrack(() => opened))
   const acct = $derived(pageState.acct)
