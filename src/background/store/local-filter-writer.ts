@@ -687,7 +687,7 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     isStopped: disposed, now: () => deps.now(), generation: () => deps.generation()
   }
   const importHost = deps.settingsImport ?? { kind: "unavailable" }
-  const importExecution = importHost.kind === "fixture" ? createSettingsImportExecution({
+  const importExecution = importHost.kind !== "unavailable" ? createSettingsImportExecution({
     local: {
       async get(keys) { const records = await storage.get(keys); if (keys === null) recognizeImport(records); return records },
       async set(items) { if (disposed()) throw new Error("Writer disposed"); await storage.set(items) }

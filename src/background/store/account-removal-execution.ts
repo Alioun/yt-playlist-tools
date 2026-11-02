@@ -127,7 +127,7 @@ export function accountRemovalLocalName(key: RemovalLocalKey, acct: AccountKey):
   }
   throw new TypeError("Removal key escaped its accepted account")
 }
-function removalLocalName(key: RemovalLocalKey): string {
+export function removalLocalName(key: RemovalLocalKey): string {
   if (key.kind !== "continuation") return accountRemovalLocalName(key, key.kind === "document" ? key.key.acct : key.acct)
   if (!object(key) || Object.keys(key).length !== 1) throw new TypeError("Invalid account removal key")
   return pendingAccountRemovalKey

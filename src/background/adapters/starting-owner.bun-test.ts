@@ -7,16 +7,18 @@ import type { JsonObject } from "../../shared/contracts/json"
 import { agreedSeed, check, gate, startingOwnerFixture } from "../../../tools/fixtures/starting-owner/support"
 import { acct, one, ui, seed, captured, change } from "../../../tools/fixtures/auto-add-choice/harness"
 import { runStartingOwnerConsumer } from "../../../tools/fixtures/starting-owner/run"
-import { fileText as settingsImportFile } from "../../../tools/fixtures/settings-import-execution/harness"
+import { fileText as settingsImportFile, initial as importSeed } from "../../../tools/fixtures/settings-import-execution/harness"
 
-test("native complete owner forwards import refusal without assembling a fixture cleanup host", async () => {
-  const h = startingOwnerFixture(agreedSeed()), owner = createBrowserStartingLocalFilterWriter(h.native, h.options)
+test("the native owner imports a settings file through the browser's own cleanup host (UI-SET-22, DATA-55)", async () => {
+  const h = startingOwnerFixture(importSeed().local as JsonObject), owner = createBrowserStartingLocalFilterWriter(h.native, h.options)
   try {
     expect(await owner.ready()).toBe("ok")
-    const before = h.records(), writes = h.counts.localSet
-    expect(await owner.prepareSettingsImport(ui, settingsImportFile())).toEqual({ kind: "unavailable", reason: "cleanup-host" })
+    const prepared = await owner.prepareSettingsImport(ui, settingsImportFile())
+    if (prepared.kind !== "confirmation-required") throw Error(`Expected a confirmation, got ${prepared.kind}`)
+    const writes = h.counts.localSet
+    expect((await owner.importSettings(ui, { confirmation: prepared.confirmation, replace: "confirmed" })).kind).toBe("committed")
+    expect(h.counts.localSet).toBeGreaterThan(writes)
     expect(await owner.resumeSettingsImport(ui)).toEqual({ kind: "idle" })
-    expect(h.records()).toEqual(before); expect(h.counts.localSet).toBe(writes)
   } finally { await owner.dispose() }
 })
 

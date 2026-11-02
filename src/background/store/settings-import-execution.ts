@@ -5,7 +5,7 @@ import { createImportPlanner, type ImportPlan } from "../../shared/settings-file
 import { agreementOrigin } from "./consent-agreement"
 import { readConsentDevice } from "./consent-withdrawal"
 import { consentJobsKey, parseConsentJobs, type ConsentJobs } from "./consent-recovery"
-import { pendingAccountRemovalKey, removalProgressShards, type AccountRemovalHost, type RemovalLocalKey } from "./account-removal-execution"
+import { pendingAccountRemovalKey, removalProgressShards, type AccountRemovalHost, type RemovalLocalKey, removalLocalName } from "./account-removal-execution"
 import type { RemovalSessionEffect } from "./account-removal-session"
 import { pendingSyncJoinKey, readSyncJoinCheckpoint } from "./sync-join-persistence"
 import type { LocalWriteStorage, SyncStorage } from "./local-filter-writer"
@@ -34,12 +34,16 @@ export type SettingsImportOwner = {
   resumeSettingsImport(origin: UiOrigin): Promise<SettingsImportResult | { readonly kind: "idle" }>
 }
 export type SettingsImportLocalRemoval = Exclude<RemovalLocalKey, { readonly kind: "continuation" }>
-export type SettingsImportHost = { readonly kind: "unavailable" } | {
-  readonly kind: "fixture"
+type ImportCleanupPorts = {
   removeLocal(keys: readonly SettingsImportLocalRemoval[]): Promise<void>
   readonly session: Extract<AccountRemovalHost, { kind: "fixture" }>["session"]
 }
-type Cleanup = Extract<SettingsImportHost, { kind: "fixture" }>
+export type SettingsImportHost = { readonly kind: "unavailable" } | ({ readonly kind: "fixture" } & ImportCleanupPorts) | ({ readonly kind: "native" } & ImportCleanupPorts)
+type Cleanup = Exclude<SettingsImportHost, { kind: "unavailable" }>
+/** The browser's own cleanup for an import's replaced accounts: their local records and session state (DATA-55, UI-SET-22). */
+export function nativeSettingsImportHost(ports: { removeLocal(names: readonly string[]): Promise<void>; readonly session: Cleanup["session"] }): SettingsImportHost {
+  return { kind: "native", removeLocal: keys => ports.removeLocal(keys.map(removalLocalName)), session: ports.session }
+}
 export type SettingsImportDependencies = {
   readonly local: LocalWriteStorage
   readonly sync: Pick<SyncStorage, "get">
