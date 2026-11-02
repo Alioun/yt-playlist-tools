@@ -142,6 +142,7 @@ function browser(gather: Record<string, unknown>) {
   const granted = ["https://www.youtube.com/*"]
   function worker() {
     const onMessage = event<Listener>()
+    const onRemoved = event<(tabId: number) => void>()
     const native = {
       ...fakeBrowser,
       storage: fakeBrowser.storage,
@@ -155,8 +156,11 @@ function browser(gather: Record<string, unknown>) {
           return popupOpen && message.payload.windowId === 1 ? { shown: true } : undefined
         }
       },
-      tabs: { ...tabs.native,
-        async remove(ids: number[]) { return removing ? removing(ids) : tabs.native.remove(ids) },
+      tabs: { ...tabs.native, onRemoved,
+        async remove(ids: number[]) {
+          await (removing ? removing(ids) : tabs.native.remove(ids))
+          for (const id of ids) for (const listener of [...onRemoved.listeners]) listener(id)
+        },
         async sendMessage(tabId: number, message: unknown) {
           messagedTabs.add(tabId)
           const answer = servingTabs.has(tabId) && tabs.tabs.has(tabId) ? site.receive(message) : undefined
