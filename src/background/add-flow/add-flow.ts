@@ -48,6 +48,10 @@ export type Owner = {
   account(feature: Feature, acct: AccountKey): AccountSettings
   writable(): boolean
   mark(change: Mark, origin: Origin): void
+  // `device.recentAdds` (DATA-52). Off, no add is listed in Recent adds.
+  recentAdds?(): boolean
+  // The account's known playlist titles, for Recent adds. An unknown title is listed as empty.
+  titles?(acct: AccountKey): Readonly<Partial<Record<PlaylistId, string>>>
 }
 // `now` is wall time, because persisted deadlines must compare across workers. `generation` names this engine so no handle outlives it by accident.
 export type Ports = {
@@ -59,8 +63,13 @@ export type Ports = {
   generation(): string
 }
 
-export type AddRequest = TabAddRequest
-export type RemoveRequest = TabRemoveRequest
+export type AddRequest = { site: Site; video: VideoId; title?: string } & (
+  | { via: "auto-add"; playlists: readonly PlaylistId[]; channel: ChannelId | null }
+  | { via: "shortcut"; shortcut: ShortcutId }
+  | { via: "quick-save"; opener: FeatureId }
+  | { via: "picker" | "choose-quick-save" | "choose-shortcut"; opener: FeatureId; playlist: PlaylistId }
+)
+export type RemoveRequest = { site: Site; video: VideoId; playlist: PlaylistId; opener: FeatureId; tick: UndoHandle | null }
 export type BatchOutcomes = readonly { video: VideoId; outcome: VideoOutcome }[]
 // A gather's own facts for its Undo record. They are planned once the outcomes are known, inside the batch's hold, and written in the record's one change.
 // The Recent entry takes the record's own time, so both name one moment.
@@ -519,7 +528,7 @@ export function createAddFlow(ports: Ports): AddFlow {
       : plan.closing.length ? { windowId: plan.windowId, closing: plan.closing } : { windowId: plan.windowId }
     const record = { id, at: ports.now(), auto, acct, playlist, added: [first, ...rest] as const, ...closedFacts }
     // A private gather is never listed in Recent adds.
-    const recent = scope === "normal" && plan?.recent ? { recent: { ...plan.recent, at: record.at } } : {}
+    const recent = scope === "normal" && plan?.recent && ports.owner.recentAdds?.() !== false ? { recent: { ...plan.recent, at: record.at } } : {}
     const kept = await remember(scope, [{ kind: "gather", record, ...recent, ...refused }], revision)
     return kept.kind === "remembered" ? { kind: "gather", id } : null
   }
@@ -553,6 +562,18 @@ export function createAddFlow(ports: Ports): AddFlow {
     if (!record) return
     return { kind: "gather", acct: record.acct, site: "www", auto: record.auto, record,
       entries: record.added.map(({ video, setVideoId }) => ({ playlist: record.playlist, video, identity: setVideoId !== null ? { setVideoId } : { videoId: video } })) }
+  }
+
+  // DATA-52: each add with an *added* outcome is one entry, never from a private window, and its Undo removes it.
+  function listRecent(scope: Scope, acct: AccountKey, request: AddRequest, outcomes: Readonly<Record<PlaylistId, ExplicitOutcome>>,
+    undo: UndoHandle | null, revision: SessionRevision | undefined) {
+    if (scope !== "normal" || ports.owner.recentAdds?.() === false) return
+    const titles = ports.owner.titles?.(acct) ?? {}
+    const [first, ...rest] = (Object.keys(outcomes) as PlaylistId[]).filter(id => outcomes[id]?.kind === "added").map(id => ({ id, title: titles[id] ?? "" }))
+    if (!first) return
+    const feature = request.via === "auto-add" ? "auto-add" : request.via === "shortcut" ? "shortcuts" : request.via === "quick-save" ? "quick-save" : request.opener
+    note(scope, [{ kind: "recent-add", acct, entry: { at: ports.now(), video: { id: request.video, title: request.title ?? "" }, playlists: [first, ...rest],
+      feature, ...(undo ? { undo: undo.id } : {}) } }], revision)
   }
 
   function featureOf(request: AddRequest): Feature {
@@ -626,6 +647,7 @@ export function createAddFlow(ports: Ports): AddFlow {
       })
       active()
       const undo = keep({ kind: "add", acct, site: request.site, auto: request.via === "auto-add", entries: written.entries }, scope, exec.lane, authorities.get(exec))
+      listRecent(scope, acct, request, written.outcomes, undo, authorities.get(exec))
       if (request.via === "auto-add") {
         const outcomes: Record<PlaylistId, Outcome> = { ...early, ...written.outcomes }
         for (const playlist of written.held) outcomes[playlist] = { kind: "failed", failure: "membership-unreadable" }
@@ -748,6 +770,7 @@ export function createAddFlow(ports: Ports): AddFlow {
         active()
         if (failure) return failed(failure)
         undos.delete(handle.id)
+        if (scope === "normal" && handle.kind !== "remove") note(scope, [{ kind: "recent-add-undone", acct: work.acct, undo: handle.id }], authorities.get(exec))
         const closing = saved?.closing ?? []
         return (saved?.closed?.length || closing.length) && saved?.windowId !== undefined
           ? { kind: "undone", reopen: { windowId: saved.windowId, closed: saved.closed ?? [], ...closing.length ? { closing } : {} } }

@@ -47,7 +47,8 @@ export type Call = { lane: string; acct: AccountKey; job: Job }
 type Tab = { acct: AccountKey | null; load: number }
 
 // A controllable execution port over an in-memory YouTube, plus a store-like owner.
-export function harness(options: { session?: SessionPort; clock?: number } = {}) {
+// Recent adds stay off unless a case asks for them, so the session traces other cases pin keep their shape.
+export function harness(options: { session?: SessionPort; clock?: number; recentAdds?: boolean; titles?: Readonly<Record<string, string>> } = {}) {
   let clock = options.clock ?? 1_000_000
   let writable = true
   let hanging = false
@@ -147,7 +148,9 @@ export function harness(options: { session?: SessionPort; clock?: number } = {})
         return { targets: setups.get(`${acct} ${featureKey(feature)}`) ?? [], created: { ...created } }
       },
       writable: () => writable,
-      mark: (change, origin) => { marks.push([change, origin]) }
+      mark: (change, origin) => { marks.push([change, origin]) },
+      recentAdds: () => options.recentAdds ?? false,
+      titles: () => ({ ...options.titles })
     },
     session: port,
     generation: () => generation,

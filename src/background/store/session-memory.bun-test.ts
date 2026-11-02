@@ -79,3 +79,21 @@ test("tab boundary rejects private facts, raw identity, browser objects and inco
     { "1": { site: "www", signedIn: true, acct, private: true } }, { "1": { site: "www", signedIn: true, acct, datasyncId: "raw" } },
     { "1": { site: "www", signedIn: true, acct, window: {} } }, { "1": { site: "www", acct } }]) expect(parseSessionMemory({ tabs })).toBeUndefined()
 })
+
+test("the can't-measure toast's shown-once key is accepted and read back for the whole browser session", () => {
+  const plan = planSessionChange({}, { now: 1, edits: [{ kind: "shown-global", acct, scope: "normal", keys: ["auto-add:cant-measure"] }] })
+  expect(plan && parseSessionMemory(plan.expected)?.shown.global.has("auto-add:cant-measure")).toBe(true)
+  expect(planSessionChange({}, { now: 1, edits: [{ kind: "shown-global", acct, scope: "normal", keys: ["auto-add:anything"] }] })).toBeUndefined()
+})
+
+test("a Recent adds entry leaves the list with the Undo it names, and gathers name theirs too", () => {
+  const entry = { at: 5, video: { id: video, title: "Video" }, playlists: [{ id: playlist, title: "Playlist" }] as const, feature: "quick-save", undo: "e:1" }
+  const added = planSessionChange({}, { now: 5, edits: [{ kind: "recent-add", acct, entry }] })
+  expect(added?.items.recentAdds).toEqual([{ kind: "single", acct, at: 5, source: { kind: "feature", feature: "quick-save" },
+    playlists: [{ id: playlist, title: "Playlist" }], video: { id: video, title: "Video" }, undo: "e:1" }])
+  const undone = planSessionChange(added?.expected, { now: 6, edits: [{ kind: "recent-add-undone", acct: other, undo: "e:1" }, { kind: "recent-add-undone", acct, undo: "e:1" }] })
+  expect(undone?.items.recentAdds).toEqual([])
+  const gathered = planSessionChange({}, { now: 7, edits: [{ kind: "gather", record: { id: "g1", at: 7, auto: false, acct, playlist, added: [{ video, setVideoId: null }] },
+    recent: { at: 7, playlist: { id: playlist, title: "Playlist" }, videos: [{ id: video, title: "Video" }] } }] })
+  expect((gathered?.items.recentAdds as { undo?: string }[] | undefined)?.[0]?.undo).toBe("g1")
+})

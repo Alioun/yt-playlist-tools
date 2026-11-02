@@ -11,7 +11,7 @@ import { createRpc, type Deadline } from "../../shared/rpc/rpc"
 import type { Transport } from "../../shared/rpc/transport"
 
 type AutoAddRoutes = Pick<TabAddMessages, "tab.progress.load" | "tab.progress.save" | "tab.cantMeasure">
-export const CANT_MEASURE_SHOWN = "cant-measure"
+export const CANT_MEASURE_SHOWN = "auto-add:cant-measure"
 
 /**
  * Auto-add's tab routes besides `tab.add`: progress at DATA-27's checkpoints and the once-per-session can't-measure

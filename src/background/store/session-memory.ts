@@ -62,6 +62,14 @@ export type GatherRecentAdd = {
   readonly videos: readonly [{ readonly id: VideoId; readonly title: string }, ...{ readonly id: VideoId; readonly title: string }[]]
 }
 export const RECENT_ADDS = 50
+/** One Recent adds entry for an add by any feature but Gather (DATA-52). `undo` names the add's Undo, which removes it. */
+export type RecentAdd = {
+  readonly at: number
+  readonly video: { readonly id: VideoId; readonly title: string }
+  readonly playlists: readonly [{ readonly id: PlaylistId; readonly title: string }, ...{ readonly id: PlaylistId; readonly title: string }[]]
+  readonly feature: string
+  readonly undo?: string
+}
 export type SessionMemory = {
   readonly tabs: ReadonlyMap<number, TabRecord>
   readonly paused: boolean
@@ -84,6 +92,8 @@ export type SessionEdit =
   | { readonly kind: "cooldown"; readonly acct: AccountKey; readonly until: number }
   | { readonly kind: "skip"; readonly acct: AccountKey; readonly video: VideoId; readonly playlists: Skip }
   | { readonly kind: "unskip"; readonly acct: AccountKey; readonly video: VideoId }
+  | { readonly kind: "recent-add"; readonly acct: AccountKey; readonly entry: RecentAdd }
+  | { readonly kind: "recent-add-undone"; readonly acct: AccountKey; readonly undo: string }
   | { readonly kind: "shown"; readonly acct: AccountKey; readonly keys: readonly string[] }
   | { readonly kind: "shown-global"; readonly acct: AccountKey | null; readonly scope: "normal"; readonly keys: readonly string[] }
   | { readonly kind: "monitor"; readonly acct: AccountKey | null; readonly scope: "normal"; readonly vocabulary: DiagnosticVocabulary; readonly operations: readonly MonitorOperation[] }
@@ -383,9 +393,14 @@ function gatherJson(record: GatherUndo): JsonObject {
     ...(record.closing ? { closing: closingJson(record.closing) } : {}) }
 }
 
-function recentAddJson(acct: AccountKey, recent: GatherRecentAdd): JsonObject {
+function recentAddJson(acct: AccountKey, recent: GatherRecentAdd, undo: string): JsonObject {
   return { kind: "gather", acct, at: recent.at, source: { kind: "feature", feature: "gather" },
-    playlists: [{ id: recent.playlist.id, title: recent.playlist.title }], videos: recent.videos.map(({ id, title }) => ({ id, title })) }
+    playlists: [{ id: recent.playlist.id, title: recent.playlist.title }], videos: recent.videos.map(({ id, title }) => ({ id, title })), undo }
+}
+function singleAddJson(acct: AccountKey, entry: RecentAdd): JsonObject {
+  return { kind: "single", acct, at: entry.at, source: { kind: "feature", feature: entry.feature },
+    playlists: entry.playlists.map(({ id, title }) => ({ id, title })), video: { id: entry.video.id, title: entry.video.title },
+    ...(entry.undo === undefined ? {} : { undo: entry.undo }) }
 }
 
 // Applies edits to a fresh raw record and names only the touched keys, so a commit never rewrites unrelated names or other accounts' fields.
@@ -467,8 +482,19 @@ export function planSessionChange(raw: unknown, change: Omit<SessionChange, "rev
         set("shown", { ...outer, global, accounts })
         break
       }
+      case "recent-add": {
+        const rows = Array.isArray(next.recentAdds) ? next.recentAdds : []
+        set("recentAdds", [singleAddJson(edit.acct, edit.entry), ...rows].slice(0, RECENT_ADDS))
+        break
+      }
+      case "recent-add-undone": {
+        const rows = Array.isArray(next.recentAdds) ? next.recentAdds : []
+        const kept = rows.filter(row => !(object(row) && row.acct === edit.acct && row.undo === edit.undo))
+        if (kept.length !== rows.length) set("recentAdds", kept)
+        break
+      }
       case "shown-global": {
-        if (edit.scope !== "normal" || edit.keys.some(key => !/^monitor:(www|music):(auto-add|shortcuts|quick-save|queue-button|watch-button|card-menu|gather|music-actions|music-keys|browser-menu|any-tab-keys)$/.test(key))) return
+        if (edit.scope !== "normal" || edit.keys.some(key => !/^(?:monitor:(www|music):(auto-add|shortcuts|quick-save|queue-button|watch-button|card-menu|gather|music-actions|music-keys|browser-menu|any-tab-keys)|auto-add:cant-measure)$/.test(key))) return
         const outer = envelope(next.shown)
         if (!outer) return
         set("shown", { ...outer, global: { ...outer.global, once: [...new Set([...(strings(outer.global.once) ?? []), ...edit.keys])] } })
@@ -576,7 +602,7 @@ export function planSessionChange(raw: unknown, change: Omit<SessionChange, "rev
         set("gather", written)
         if (edit.kind === "gather" && edit.recent) {
           const rows = Array.isArray(next.recentAdds) ? next.recentAdds : []
-          set("recentAdds", [recentAddJson(edit.record.acct, edit.recent), ...rows].slice(0, RECENT_ADDS))
+          set("recentAdds", [recentAddJson(edit.record.acct, edit.recent, edit.record.id), ...rows].slice(0, RECENT_ADDS))
         }
         break
       }
