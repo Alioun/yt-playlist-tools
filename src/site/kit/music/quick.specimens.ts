@@ -101,6 +101,7 @@ export function musicWorld(options: { view?: TabView; resolution?: MusicResoluti
   const actions = {
     add: async (request: TabAddRequest) => { adds.push(request); return options.add ? options.add() : savedReport },
     undo: async (undone: UndoHandle) => { undos.push(undone); return { kind: "undone" } },
+    playlists: async () => ({ kind: "cached", listing: { rows: [{ id: favourites, title: "Favourites" }], at: 0 } }),
     need: async () => true
   } as unknown as TabActions
   const popovers: Popovers = { openPicker(request) { opened.push(request) }, openWatchMenu() {}, isOpen: () => false, close() {} }

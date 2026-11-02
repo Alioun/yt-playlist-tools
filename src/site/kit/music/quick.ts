@@ -40,6 +40,7 @@ export type QuickInput = {
 /** For a button's state and the any-tab ✓ or ✕ (YM-FB-7, YM-ANY-4). `idle` answered without doing anything: a hint, or a picker. */
 export type QuickAnswer = { readonly kind: "done" | "idle" | "failed"; readonly text: string | null }
 type Targeted = { readonly kind: "target"; readonly target: QuickTarget }
+type ShortcutEntry = { readonly id: ShortcutId; readonly label: string; readonly watchLaterOnEveryAccount: boolean }
 /** A key's progress on an item, so a button showing that item goes through the same states (YM-KEY-11). */
 export type QuickProgress = { readonly element: Element; readonly action: QuickAction; readonly state: "busy" | QuickAnswer["kind"] }
 
@@ -298,6 +299,22 @@ export function createMusicQuick(deps: MusicQuickDeps) {
     }
   }
 
+  /** A playlist shortcut's explicit add to its playlist on this account; with none, its Choose picks one (YM-PS-4, YM-PS-5). */
+  async function shortcut(subject: QuickTarget, entry: ShortcutEntry, input: QuickInput): Promise<QuickAnswer> {
+    const feedback = session(), view = deps.view()
+    const video = subject.videoId
+    if (!feedback || !view || video === null) return { kind: "idle", text: null }
+    const setup = view.setup?.kind === "live" ? view.setup.setup : null
+    const playlist = (entry.watchLaterOnEveryAccount ? "WL" : setup?.targets[entry.id] ?? null) as PlaylistId | null
+    const answer = await explicitAdd({ session: feedback, actions, i18n, location: deps.location }, {
+      feedback: input.feedback, keyWithoutButton: true, pending: playlist ? [playlist] : [],
+      titles: { ...(subject.title ? { video: subject.title } : {}), ...(entry.label ? { shortcut: entry.label } : {}), ...(setup?.label?.name ? { account: setup.label.name } : {}) },
+      handlers: { choose: () => { void openPicker(subject, input, "choose", entry.id) } }
+    }, () => actions.add({ site: "music", video, via: "shortcut", shortcut: entry.id }))
+    log(`save ${video} ${answer.kind === "report" && playlist ? answer.outcomes[playlist]?.kind ?? answer.kind : answer.kind}`)
+    return { kind: outcomeOf(answer, playlist), text: saveText(answer, subject.title) }
+  }
+
   /** Runs one action on a known target, after the signed-in and casting checks it needs (YM-ACC-5, YM-CAST-2). */
   async function act(action: QuickAction, subject: QuickTarget, input: QuickInput): Promise<QuickAnswer> {
     const spec = quickActions[action]
@@ -348,6 +365,12 @@ export function createMusicQuick(deps: MusicQuickDeps) {
       const answer = await act(action, found.target, input)
       if (element) report({ element, action, state: answer.kind })
       return answer
+    },
+    /** A playlist shortcut's key: songs only, the pointed-at song else the playing one (YM-PS-3). */
+    async pressShortcut(entry: ShortcutEntry, input: QuickInput): Promise<QuickAnswer> {
+      const found = await target("playlist-shortcut")
+      if (deps.owner.disposed) return { kind: "idle", text: null }
+      return found.kind === "target" ? shortcut(found.target, entry, input) : found
     },
     watch(watcher: (progress: QuickProgress) => void): () => void {
       watchers.add(watcher)

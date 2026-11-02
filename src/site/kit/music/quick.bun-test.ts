@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test"
 import type { TabView } from "../../../shared/contracts/tab-view"
-import { album, ladyQueued, musicWorld, nowPlaying, playingItem, song, songRow, type MusicWorld } from "./quick.specimens"
+import { album, ladyQueued, musicWorld, nowPlaying, playingItem, savedReport, song, songRow, type MusicWorld } from "./quick.specimens"
 import { settle } from "../../../../tools/fixtures/site-toaster/harness"
 import { wireView } from "../../../../tools/fixtures/tab-view/cases"
 
@@ -188,4 +188,34 @@ test("the picker opens below the Save button that was used, for the playing song
   expect(w.opened).toEqual([{ video: song, title: "Get Lucky", opener: "music-actions", anchor: { kind: "below", element: button }, mode: { kind: "save" } }])
   const broken = world({ popovers: null })
   expect(await broken.quick.act("picker", target(), key)).toEqual({ kind: "failed", text: "Couldn't open the playlist list. Try again." })
+})
+
+const shortcutEntry = { id: "orig01" as never, label: "Alpha", watchLaterOnEveryAccount: false }
+const shortcutKey = { opener: "shortcuts", feedback: true, by: "key" } as const
+
+test("a playlist shortcut saves the pointed-at or playing song to its playlist, with the pending toast after 1 s", async () => {
+  let answer = (_: typeof savedReport) => {}
+  const w = world({ add: () => new Promise(resolve => { answer = resolve }) })
+  const pending = w.quick.pressShortcut(shortcutEntry, shortcutKey)
+  await settle()
+  expect(w.adds).toEqual([{ site: "music", video: song, via: "shortcut", shortcut: "orig01" as never }])
+  w.timers.advance(1000)
+  expect(w.toast()?.content.text).toBe("Saving “Get Lucky” to Favourites…")
+  answer(savedReport)
+  expect(await pending).toEqual({ kind: "done", text: "Saved “Get Lucky” to Favourites" })
+})
+
+test("a playlist shortcut on an album only says songs can be saved, and one with no playlist offers Choose for that shortcut", async () => {
+  const albumPointed = world({ resolution: { kind: "unsupported-item", target: {} as never, item: album, action: "playlist-shortcut", reason: "songs-only" } })
+  expect(await albumPointed.quick.pressShortcut(shortcutEntry, shortcutKey)).toEqual({ kind: "idle", text: "Only songs can be saved to playlists." })
+  expect(albumPointed.adds).toEqual([])
+  const noPlaylist = { kind: "report", outcomes: {}, feedback: true, undo: null, titles: {},
+    toast: { tone: "hint", auto: false, message: { kind: "no-playlist" }, action: { kind: "choose" }, remember: { tab: [], session: [] } } } as const
+  const w = world({ add: async () => noPlaylist })
+  await w.quick.pressShortcut(shortcutEntry, shortcutKey)
+  await settle()
+  expect(w.toast()?.content.text).toBe("Alpha has no playlist on Alpha yet.")
+  await w.toast()?.act()
+  await settle()
+  expect(w.opened).toMatchObject([{ video: song, mode: { kind: "choose", shortcut: "orig01" }, opener: "shortcuts", anchor: { kind: "window" } }])
 })
