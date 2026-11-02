@@ -13,7 +13,7 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
   const changes: SessionChange[] = []
   const filters: unknown[] = []
   const removed: unknown[] = []
-  const marked: string[] = [], agreements: unknown[] = []
+  const marked: string[] = [], agreements: unknown[] = [], acknowledged: unknown[] = [], discarded: string[] = []
   let paused = false
   const ports: PageReceiverPorts = {
     owner: {
@@ -35,7 +35,10 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
       importSettings: async () => ({ kind: "committed" }) as never,
       async markUpgradeNote(flag) { marked.push(flag); return "set" },
       readAgreement: async () => ({ kind: "review", version: 1, review: {} as never, presentation: { kind: "canonical", note: { state: "pending" } } }) as never,
-      async agree(_origin, input) { agreements.push(input.choice); return { kind: "agreed" } as never }
+      async agree(_origin, input) { agreements.push(input.choice); return { kind: "agreed" } as never },
+      readClaimNotice: async () => ({ kind: "pending", notice: { acct: "AAAAAAAAAAAAAAAA", dropped: 1 } }) as never,
+      async acknowledgeClaimNotice(origin, expected) { acknowledged.push({ origin, expected }); return { kind: "committed", write: { kind: "resolved" } } },
+      async discardUnclaimed() { discarded.push("discard"); return { kind: "discarded" } }
     },
     readAccess: async () => ({ www: true, music: false, browserMenu: false }),
     withdraw: async () => ({ kind: "withdrawn" }) as never,
@@ -46,13 +49,29 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
     ...overrides
   }
   const context = (incognito = false, page = "popup", principal = "p") => ({ ui: ui(incognito, page, principal), current: async () => ui(incognito, page, principal) })
-  return { handlers: createPageReceiver(ports), changes, filters, removed, marked, agreements, context }
+  return { handlers: createPageReceiver(ports), changes, filters, removed, marked, agreements, acknowledged, discarded, context }
 }
 
 test("status answers Pause, the popup's tab and its feature health", async () => {
   const { handlers, context } = receiver()
   expect(await handlers["ui.status"]({}, context())).toEqual({ kind: "status", paused: false,
     tab: { kind: "site", site: "www", tabId: 9, signedIn: true, acct }, health: [{ feature: "auto-add", site: "www", state: "not-working", gaps: [] }] })
+})
+
+test("OK on the claim result acknowledges the notice it showed, and never another account's or from a private window (ACC-32)", async () => {
+  const { handlers, acknowledged, context } = receiver()
+  expect(await handlers["ui.claimSeen"]({ acct: "BBBBBBBBBBBBBBBB" as never }, context())).toEqual({ kind: "unavailable" })
+  expect(await handlers["ui.claimSeen"]({ acct }, context(true))).toEqual({ kind: "unavailable" })
+  expect(acknowledged).toEqual([])
+  expect(await handlers["ui.claimSeen"]({ acct }, context())).toEqual({ kind: "noted" })
+  expect(acknowledged).toEqual([{ origin: { kind: "ui", windowId: 3, incognito: false }, expected: { acct, dropped: 1 } }])
+})
+
+test("Discard deletes the unclaimed setup, and a private window can't (ACC-33)", async () => {
+  const { handlers, discarded, context } = receiver()
+  expect(await handlers["ui.discardUnclaimed"]({}, context(true))).toEqual({ kind: "refused", reason: "private" })
+  expect(await handlers["ui.discardUnclaimed"]({}, context())).toEqual({ kind: "discarded" })
+  expect(discarded).toEqual(["discard"])
 })
 
 test("Pause writes session memory and answers the committed state; a private window can't pause", async () => {

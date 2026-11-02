@@ -354,6 +354,8 @@ export function createUiRouter(ports: UiRouterPorts) {
       "ui.importSettings": (payload, context) => page("ui.importSettings", payload, context),
       "ui.noteSeen": (payload, context) => page("ui.noteSeen", payload, context),
       "ui.noteAgree": (payload, context) => page("ui.noteAgree", payload, context),
+      "ui.claimSeen": (payload, context) => page("ui.claimSeen", payload, context),
+      "ui.discardUnclaimed": (payload, context) => page("ui.discardUnclaimed", payload, context),
       async "ui.playingNow"(_payload, context) {
         const ui = requireUi(context)
         if (!active || !ports.playingNow) return { kind: "unavailable" }

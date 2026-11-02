@@ -13,6 +13,10 @@ import type { AccountKey } from "../../shared/model/validation"
 import type { RpcHandlers } from "../../shared/rpc/rpc"
 import type { UiRequester } from "../adapters/ui-requester"
 import type { SessionChange, SessionRead, SessionWrite } from "../store/session-memory"
+import type { ClaimNoticeAcknowledgement, ClaimNoticeRead, NormalUiOrigin } from "../store/claim-notice"
+import type { UnclaimedDiscard } from "../store/local-filter-writer"
+import type { ClaimNotice } from "../../shared/model/types"
+import type { Snapshot } from "../../shared/model/settings-view"
 
 type UiOrigin = { readonly kind: "ui"; readonly windowId: number; readonly incognito: boolean }
 export type PageStatusSource = (ui: UiRequester) => Promise<{ readonly tab: UiTabFacts; readonly health: readonly UiFeatureHealth[] } | undefined>
@@ -32,6 +36,9 @@ export type PageReceiverPorts = {
     markUpgradeNote(flag: UpgradeNoteFlag): Promise<UpgradeNoteFlagResult>
     readAgreement(origin: UiOrigin): Promise<import("../store/consent-agreement").AgreementRead>
     agree(origin: UiOrigin, input: AgreementInput): Promise<AgreementResult>
+    readClaimNotice(): Promise<ClaimNoticeRead>
+    acknowledgeClaimNotice(origin: NormalUiOrigin, expected: Snapshot<ClaimNotice>): Promise<ClaimNoticeAcknowledgement>
+    discardUnclaimed(origin: UiOrigin): Promise<UnclaimedDiscard>
   }
   readonly readAccess: () => Promise<AgreementAccess | undefined>
   readonly withdraw: (origin: SettingsPageOrigin, expected: { readonly v: number; readonly at: number }) => Promise<WithdrawalResult>
@@ -201,6 +208,19 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
             : { kind: "upgrade-note", selected: change.selected, syncOn: false, percentage: change.percentage } })
         return projectAgreement({ kind: "first-run-agree", displayedVersion: change.displayedVersion, attempt: change.attempt, selected: change.selected, syncOn: change.syncOn }, result, access)
       } catch { return refusal("rejected") }
+    },
+    async "ui.claimSeen"({ acct }, context) {
+      const origin = context.ui.ui.origin
+      if (origin.incognito) return { kind: "unavailable" }
+      const read = await ports.owner.readClaimNotice()
+      if (read.kind !== "pending" || read.notice.acct !== acct) return { kind: "unavailable" }
+      const result = await ports.owner.acknowledgeClaimNotice({ ...origin, incognito: false }, read.notice)
+      return { kind: result.kind === "committed" || result.kind === "unchanged" ? "noted" : "unavailable" }
+    },
+    async "ui.discardUnclaimed"(_payload, context) {
+      if (context.ui.requester.incognito) return { kind: "refused", reason: "private" }
+      const result = await ports.owner.discardUnclaimed(context.ui.ui.origin)
+      return result.kind === "discarded" || result.kind === "absent" ? { kind: result.kind } : { kind: "refused", reason: result.kind === "failed" ? "failed" : "unavailable" }
     },
     async "ui.device"(payload, context) {
       const origin = context.ui.ui.origin

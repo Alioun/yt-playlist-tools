@@ -4,6 +4,8 @@ import type { Site } from "../../shared/contracts/vocabulary"
 import { CONSENT_VERSION } from "../../shared/model/documents"
 import type { PageView } from "../../shared/model/page-view"
 import type { AccountKey } from "../../shared/model/validation"
+import type { ClaimNotice } from "../../shared/model/types"
+import type { Snapshot } from "../../shared/model/settings-view"
 import { needsAccess, type SiteAccess } from "./held"
 
 type View = Extract<PageView, { kind: "view" }>
@@ -23,10 +25,11 @@ export type Banner =
   | { readonly kind: "sync"; readonly status: "waiting" | "full" | "update-needed" }
   | { readonly kind: "marks"; readonly count: number }
   | { readonly kind: "unclaimed" }
+  | { readonly kind: "claimed"; readonly notice: Snapshot<ClaimNotice> }
 export type BannerTone = "attention" | "info" | "done"
 export const bannerTone = {
   "newer-version": "attention", upgrade: "attention", consent: "attention", "consent-version": "attention", access: "attention",
-  "signed-out": "info", private: "info", "no-tab": "info", sync: "attention", marks: "attention", unclaimed: "attention"
+  "signed-out": "info", private: "info", "no-tab": "info", sync: "attention", marks: "attention", unclaimed: "attention", claimed: "done"
 } as const satisfies Record<Banner["kind"], BannerTone>
 
 export type NoticeFacts = {
@@ -74,5 +77,7 @@ export function banners(facts: NoticeFacts): Banner[] {
   const marks = setup ? Object.keys(setup.setup.marks).length : 0
   if (marks > 0) result.push({ kind: "marks", count: marks })
   if (view.unclaimed && acct && !view.setups.some(entry => entry.acct === acct)) result.push({ kind: "unclaimed" })
+  // The claim result shows once, in a normal window, until OK (ACC-32).
+  if (device.claimNotice && !facts.private) result.push({ kind: "claimed", notice: device.claimNotice })
   return result
 }

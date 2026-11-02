@@ -118,7 +118,12 @@ export type PageMessages = {
   readonly "ui.noteSeen": { readonly payload: WindowClaim; readonly result: { readonly kind: "noted" | "unavailable" } }
   /** The upgrade note's Agree, with its one question's answer (REL-CON-05). */
   readonly "ui.noteAgree": { readonly payload: WindowClaim & { readonly change: NoteAgreeChange }; readonly result: import("./first-run").AgreementAnswer }
+  /** The popup's one-time claim result was dismissed with OK, for the account it named (ACC-32, UI-POP-10 row 12). */
+  readonly "ui.claimSeen": { readonly payload: WindowClaim & { readonly acct: AccountKey }; readonly result: { readonly kind: "noted" | "unavailable" } }
+  /** Discard deletes the unclaimed 1.x setup (ACC-33, DATA-42). */
+  readonly "ui.discardUnclaimed": { readonly payload: WindowClaim; readonly result: UiDiscard }
 }
+export type UiDiscard = { readonly kind: "discarded" | "absent" } | { readonly kind: "refused"; readonly reason: "private" | "failed" | "unavailable" }
 export type PageCall = keyof PageMessages
 
 const natural = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0
@@ -219,7 +224,11 @@ export const pageContract: RpcContract<PageMessages> = {
   "ui.noteSeen": { payload: (v): v is PageMessages["ui.noteSeen"]["payload"] => objectShape(v, {}, windowClaim),
     result: (v): v is PageMessages["ui.noteSeen"]["result"] => objectShape(v, { kind: oneOf("noted", "unavailable") }), timeoutMs: 8_000 },
   "ui.noteAgree": { payload: (v): v is PageMessages["ui.noteAgree"]["payload"] => objectShape(v, { change: isNoteAgreeChange }, windowClaim),
-    result: isAgreementAnswer, timeoutMs: 60_000 }
+    result: isAgreementAnswer, timeoutMs: 60_000 },
+  "ui.claimSeen": { payload: (v): v is PageMessages["ui.claimSeen"]["payload"] => objectShape(v, { acct: isAccountKey }, windowClaim),
+    result: (v): v is PageMessages["ui.claimSeen"]["result"] => objectShape(v, { kind: oneOf("noted", "unavailable") }), timeoutMs: 8_000 },
+  "ui.discardUnclaimed": { payload: (v): v is PageMessages["ui.discardUnclaimed"]["payload"] => objectShape(v, {}, windowClaim),
+    result: (v): v is UiDiscard => objectShape(v, { kind: oneOf("discarded", "absent") }) || refusal("private", "failed", "unavailable")(v), timeoutMs: 12_000 }
 }
 export function isPageCall(kind: string): kind is PageCall {
   return Object.hasOwn(pageContract, kind)

@@ -882,6 +882,8 @@ export type MessageParameters = {
   "banner_marks_text_one": readonly []
   "banner_marks_text_other": readonly []
   "banner_show": readonly []
+  "banner_claimed": readonly ["account"]
+  "banner_ok": readonly []
   "banner_unclaimed_title": readonly []
   "banner_unclaimed_text": readonly ["account"]
   "summary_autoAdd_one": readonly ["count", "percent"]
@@ -1554,6 +1556,7 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "banner_private_none": ["account"],
   "banner_noTab_text": ["when"],
   "banner_marks_other": ["count"],
+  "banner_claimed": ["account"],
   "banner_unclaimed_text": ["account"],
   "summary_autoAdd_one": ["count", "percent"],
   "summary_autoAdd_other": ["count", "percent"],

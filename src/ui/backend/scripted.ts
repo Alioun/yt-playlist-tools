@@ -57,7 +57,9 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
       "ui.add": payload => take("ui.add", payload),
       "ui.gather": payload => take("ui.gather", payload),
       "ui.gatherUndo": payload => take("ui.gatherUndo", payload),
-      "ui.gathers": payload => take("ui.gathers", payload)
+      "ui.gathers": payload => take("ui.gathers", payload),
+      "ui.claimSeen": payload => take("ui.claimSeen", payload),
+      "ui.discardUnclaimed": payload => take("ui.discardUnclaimed", payload)
     }
   })
   function take<K extends keyof UiMessages>(kind: K, payload: UiMessages[K]["payload"]): UiMessages[K]["result"] {

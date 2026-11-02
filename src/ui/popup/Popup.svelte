@@ -17,6 +17,7 @@
   import { relativeTime } from "../lib/time"
   import { GatherRow } from "../lib/gather.svelte"
   import type { GatherLineAction } from "../../shared/contracts/ui-gather"
+  import type { AccountKey } from "../../shared/model/validation"
   import FeatureRow from "./FeatureRow.svelte"
 
   let { page, markSrc }: { page: ExtensionPage; markSrc: string } = $props()
@@ -117,6 +118,8 @@
       case "details": page.openSettings("everywhere"); break
       case "show": page.openSettings("feature-auto-add"); break
       case "switch-account": page.open("https://www.youtube.com/channel_switcher"); break
+      case "discard": void page.backend.call("ui.discardUnclaimed", {}); break
+      case "ok": if (shownBanner.kind === "claimed") void page.backend.call("ui.claimSeen", { acct: shownBanner.notice.acct as AccountKey }); break
     }
   }
   function name(feature: PageFeatureId) { return features.featureOf(feature).name }
@@ -180,7 +183,7 @@
     {:else if view}
       {#if banner}
         {#await import("../components/BannerCard.svelte") then { default: Card }}
-          <Card {banner} {i18n} account={pageState.accountName()} when={at => relativeTime(i18n, at)} onaction={act} />
+          <Card {banner} {i18n} account={pageState.accountName()} accountOf={acct => pageState.accountName(acct as AccountKey)} when={at => relativeTime(i18n, at)} onaction={act} />
         {/await}
       {/if}
       {#if banner?.kind !== "newer-version"}

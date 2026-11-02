@@ -5187,6 +5187,17 @@
   "banner_show": {
     "message": "Show"
   },
+  "banner_claimed": {
+    "message": "Perchling set up your 1.x auto-add playlists and shortcut for $ACCOUNT$.",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "banner_ok": {
+    "message": "OK"
+  },
   "banner_unclaimed_title": {
     "message": "Your playlists from 1.x belong to another YouTube account."
   },

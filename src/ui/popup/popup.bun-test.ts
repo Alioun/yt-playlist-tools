@@ -184,3 +184,31 @@ test("a failure shows its own action, and a gather with no gather playlist opens
   expect(await screen.findByText("Saved 2 videos to Later.")).toBeTruthy()
   expect(gathers).toBe(2)
 }, 20_000)
+
+test("the claim result shows once with what Perchling left out, and OK dismisses it for the account it named (ACC-32)", async () => {
+  const seen: unknown[] = []
+  popup({ ...agreed, device: { ...agreed.device, claimNotice: { acct, dropped: 2, claim: { autoAddAdded: 1, filtersAdded: 0, shortcut: { kind: "filled", shortcut: "orig01" } } } },
+    [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" } }) }, { "ui.claimSeen": payload => { seen.push(payload); return { kind: "noted" } } })
+  expect(await screen.findByText("Perchling set up your 1.x auto-add playlists and shortcut for Ann.", {}, { timeout: 5000 })).toBeTruthy()
+  expect(screen.getByText("Perchling left out 2 of them, because they weren't on this account.")).toBeTruthy()
+  await userEvent.click(screen.getByRole("button", { name: "OK" }))
+  expect(seen).toEqual([{ acct }])
+})
+
+test("a claim that skipped the shortcut names that on its own and claims nothing about it (REL-MIG-37)", async () => {
+  popup({ ...agreed, device: { ...agreed.device, claimNotice: { acct, dropped: 0, claim: { autoAddAdded: 1, filtersAdded: 0, shortcut: { kind: "skipped", reason: "deleted-original" } } } },
+    [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" } }) })
+  expect(await screen.findByText("Perchling checked your choices from 1.x for Ann.", {}, { timeout: 5000 })).toBeTruthy()
+  expect(screen.getByText("Your 1.x shortcut was deleted, so Perchling left it out.")).toBeTruthy()
+})
+
+test("the unclaimed 1.x setup offers Switch account and Discard, which deletes it (ACC-33)", async () => {
+  let discarded = 0
+  const { opened } = popup({ ...agreed, unclaimed: { from: "1.4.5", at: 1, autoAdd: [], shortcutPlaylist: null, filters: {} } },
+    { "ui.discardUnclaimed": () => { discarded++; return { kind: "discarded" } } })
+  expect(await screen.findByText("Your playlists from 1.x belong to another YouTube account.", {}, { timeout: 5000 })).toBeTruthy()
+  await userEvent.click(screen.getByRole("button", { name: "Switch account" }))
+  expect(opened).toEqual(["https://www.youtube.com/channel_switcher"])
+  await userEvent.click(screen.getByRole("button", { name: "Discard" }))
+  expect(discarded).toBe(1)
+})

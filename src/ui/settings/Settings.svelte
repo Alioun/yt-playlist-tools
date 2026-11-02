@@ -9,6 +9,7 @@
   import { banners, type Banner } from "../lib/notices"
   import { needsAccess } from "../lib/held"
   import { relativeTime } from "../lib/time"
+  import type { AccountKey } from "../../shared/model/validation"
   import { parseRoute, sections, type Route, type Section } from "./route"
 
   let { page, markSrc }: { page: ExtensionPage; markSrc: string } = $props()
@@ -75,6 +76,8 @@
       case "details": location.hash = "#everywhere"; break
       case "show": location.hash = "#feature-auto-add"; break
       case "switch-account": page.open("https://www.youtube.com/channel_switcher"); break
+      case "discard": void page.backend.call("ui.discardUnclaimed", {}); break
+      case "ok": if (banner.kind === "claimed") void page.backend.call("ui.claimSeen", { acct: banner.notice.acct as AccountKey }); break
     }
   }
 </script>
@@ -92,7 +95,7 @@
     <div class="mx-auto flex max-w-5xl flex-col gap-2 px-6 pt-4" data-strip>
       {#await import("../components/BannerCard.svelte") then { default: Card }}
         {#each strip as banner (banner.kind + ("site" in banner ? banner.site : ""))}
-          <Card {banner} {i18n} account={pageState.accountName()} when={at => relativeTime(i18n, at)} onaction={act} />
+          <Card {banner} {i18n} account={pageState.accountName()} accountOf={acct => pageState.accountName(acct as AccountKey)} when={at => relativeTime(i18n, at)} onaction={act} />
         {/each}
       {/await}
     </div>
