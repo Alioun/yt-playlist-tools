@@ -19,7 +19,7 @@
   const sources: Readonly<Record<string, Parameters<typeof i18n.message>[0]>> = {
     "auto-add": "recent_source_autoAdd", "quick-save": "recent_source_quickSave", "browser-menu": "recent_source_browserMenu", gather: "recent_source_gather",
     "auto-gather": "recent_source_autoGather", picker: "recent_source_picker", "watch-button": "recent_source_watchButton", "music-actions": "recent_source_musicActions",
-    "playing-now": "playing_title", shortcuts: "feature_name_2", "queue-button": "feature_name_4", "card-menu": "feature_name_6", "music-keys": "feature_name_10",
+    "playing-now": "playing_title", popup: "recent_source_picker", shortcuts: "feature_name_2", "queue-button": "feature_name_4", "card-menu": "feature_name_6", "music-keys": "feature_name_10",
     "any-tab-keys": "feature_name_11"
   }
   function source(entry: RecentEntry): string {

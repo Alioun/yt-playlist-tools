@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test"
 import { composeActions, createAddFlowOwner } from "./actions"
-import { createPlayingSave, createPlayingUndo } from "./playing-now"
+import { createPlayingSave, createPlayingUndo, createPopupItem } from "./playing-now"
 import { createPageReceiver, type PageReceiverPorts } from "../router/ui-pages"
 import { runtimeTransport } from "../adapters/runtime"
 import { createAutoAddTabRouter } from "../router/tab-auto-add"
@@ -429,6 +429,21 @@ test("Playing now's save carries its Undo, which takes the song back in that tab
   expect(await undo(popupWindow, { tabId: 9, acct: b, handle: answer.undo })).toEqual({ kind: "undone" })
   expect(w.site.jobs).toContain("unsave")
   expect(await undo(popupWindow, { tabId: 9, acct: b, handle: answer.undo })).toEqual({ kind: "expired" })
+})
+
+test("the popup's picker sheet reads membership, saves and unticks in the tab's own account, whatever feature switches say (UI-POP-14)", async () => {
+  const w = world({ settings: { quickSave: { on: false, feedback: true } } })
+  const item = createPopupItem({ actions: w.actions, consented: () => true })
+  const save = createPlayingSave({ actions: w.actions, i18n: englishI18n(), consented: () => true })
+  const request = { site: "www", video, opener: "popup", title: "First video" } as const
+  expect(await item.membership(popupWindow, { tabId: 9, acct: a, site: "www", video })).toMatchObject({ kind: "read" })
+  const added = await save(popupWindow, { tabId: 9, acct: a, request: { ...request, via: "picker", playlist: beta } })
+  if (added.kind !== "added" || !added.undo) throw Error("Expected a save with its handle")
+  expect(w.site.lists.get(beta)?.has(video)).toBe(true)
+  expect(await item.remove(popupWindow, { tabId: 9, acct: a, request: { site: "www", video, playlist: beta, opener: "popup", tick: added.undo } }))
+    .toEqual({ kind: "removed", undo: { kind: "remove", id: expect.any(String) } })
+  expect(w.site.jobs).toContain("remove")
+  expect(await item.remove(popupWindow, { tabId: 9, acct: b, request: { site: "www", video, playlist: beta, opener: "popup", tick: null } })).toEqual({ kind: "account-changed" })
 })
 
 test("Playing now's Save refuses once the tab shows another account or the section switch is off, and writes nothing", async () => {

@@ -315,3 +315,37 @@ test("Playing now's save offers Undo in its line, which takes the song back in t
   expect(undos).toEqual([{ tabId: 9, acct, handle: { kind: "add", id: "u1" } }])
   await waitFor(() => expect(screen.queryByText("Saved to Mix.")).toBeNull())
 }, 20_000)
+
+const sheetList: ScriptedResponders = { "ui.playlists": payload => payload.action === "open"
+  ? { kind: "open", operation: payload.operation, cached: { rows: [{ id: "PLa" as never, title: "Music" }, { id: "PLb" as never, title: "Talks" }], at: Date.now() }, freshness: "fresh", refresh: null }
+  : { kind: "released", operation: payload.operation } }
+
+test("This video's Save to… opens the picker sheet, whose ticks save in the tab's own account and read its membership there (UI-POP-14, UI-PICK-02)", async () => {
+  const adds: unknown[] = [], reads: unknown[] = []
+  popup(videoSetup(), { ...sheetList, "ui.thisTab": () => thisVideo(),
+    "ui.membership": payload => { reads.push(payload); return { kind: "read", rows: [{ id: "PLa" as never, title: "Music", contains: true }, { id: "PLb" as never, title: "Talks", contains: false }] } },
+    "ui.add": payload => { adds.push(payload); return { kind: "added", text: "Saved", undo: { kind: "add", id: "s1" } } } })
+  const card = await screen.findByRole("region", { name: "This video" }, { timeout: 5000 })
+  await userEvent.click(await within(card).findByRole("button", { name: "Details" }))
+  await userEvent.click(within(card).getByRole("button", { name: "Save to…" }))
+  const sheet = await screen.findByRole("dialog", {}, { timeout: 5000 })
+  expect(await within(sheet).findByRole("checkbox", { name: "Music" }, { timeout: 5000 })).toHaveAttribute("aria-checked", "true")
+  await userEvent.click(within(sheet).getByRole("checkbox", { name: "Talks" }))
+  await waitFor(() => expect(adds).toEqual([{ tabId: 4, acct, request: { site: "www", video: "aaaaaaaaaaa", opener: "popup", title: "First video", via: "picker", playlist: "PLb" } }]))
+  expect(reads).toEqual([{ tabId: 4, acct, site: "www", video: "aaaaaaaaaaa" }])
+}, 20_000)
+
+test("Playing now's ▾ opens the picker sheet for the playing song, in its own tab (YM-POP-4)", async () => {
+  const adds: unknown[] = []
+  popup({ ...agreed, [`doc:setup:${acct}`]: stamped({ musicSave: "PLa" }), [`cache:${acct}`]: { listAt: 1, playlists: [{ id: "PLa", title: "Music" }], order: {}, created: [], labelAt: null } }, {
+    ...sheetList,
+    "ui.playingNow": () => ({ kind: "song", tabId: 9, acct: acct as never, song: { videoId: "bbbbbbbbbbb" as never, title: "Song", artist: "Band", pos: 1, len: 100 } }),
+    "ui.membership": () => ({ kind: "read", rows: [{ id: "PLa" as never, title: "Music", contains: false }, { id: "PLb" as never, title: "Talks", contains: false }] }),
+    "ui.add": payload => { adds.push(payload); return { kind: "added", text: "Saved", undo: { kind: "add", id: "s2" } } }
+  }, { www: true, music: true, browserMenu: false })
+  await userEvent.click(await screen.findByRole("tab", { name: "YouTube Music" }))
+  await userEvent.click(await screen.findByRole("button", { name: "Save to playlist…" }, { timeout: 5000 }))
+  const sheet = await screen.findByRole("dialog", {}, { timeout: 5000 })
+  await userEvent.click(await within(sheet).findByRole("checkbox", { name: "Talks" }, { timeout: 5000 }))
+  await waitFor(() => expect(adds).toEqual([{ tabId: 9, acct, request: { site: "music", video: "bbbbbbbbbbb", opener: "playing-now", title: "Song", via: "picker", playlist: "PLb" } }]))
+}, 20_000)

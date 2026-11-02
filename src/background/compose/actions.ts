@@ -10,11 +10,12 @@ import type { Requester, Tabs } from "../tabs/ports"
 import type { BuildId, FeatureId, Origin, Site } from "../../shared/contracts"
 import { toastPlan, type ExplicitOutcome } from "../../shared/rules/outcomes"
 import { tabActionContract, type PlaylistTitles, type TabActionMessages, type TabAddReport, type TabAddRequest, type TabCreated, type TabPlaylists, type TabUndoReport, type UndoHandle } from "../../shared/contracts/tab-actions"
-import type { PopupAddRequest } from "../../shared/contracts/ui-add"
+import type { PopupAddRequest, PopupRemoveRequest, UiMembershipAnswer, UiRemoveAnswer } from "../../shared/contracts/ui-add"
+import type { JobOf } from "../../shared/contracts"
 import { cacheRows } from "../../shared/model/account-cache"
 import { decodeSettings } from "../../shared/model/decodeSettings"
 import { defaultSettings } from "../../shared/model/defaults"
-import type { AccountKey, Filter, PlaylistId, Settings, Setup } from "../../shared/model"
+import type { AccountKey, Filter, PlaylistId, Settings, Setup, VideoId } from "../../shared/model"
 import { createRpc } from "../../shared/rpc/rpc"
 
 type Switch = { readonly on: boolean; readonly feedback?: boolean }
@@ -94,6 +95,8 @@ export function createAddFlowOwner(owner: Pick<StartingOwner, "readTabProjection
       const opener = opened(feature)
       // Playing now shows only while the YouTube Music section is on, whichever of its features are (YM-POP-10).
       if (opener === "playing-now") return { on: settings.musicSection, feedback: true }
+      // The popup's own picker sheet answers in place, so no feature switch gates it (UI-POP-14).
+      if (opener === "popup") return { on: true, feedback: true }
       const current = switches[opener]?.(settings)
       return { on: current?.on === true, feedback: current?.feedback !== false }
     },
@@ -120,6 +123,9 @@ export type Actions = {
   addInTab(tab: ActingTab, request: TabAddRequest): Promise<TabAddReport>
   /** Playing now's save in the tab it read, only while that tab still shows `acct` in the popup's window kind (ARC-ACC-68). */
   addFromPopup(tab: ActingTab, acct: AccountKey, request: PopupAddRequest): Promise<TabAddReport | { readonly kind: "account-changed" }>
+  /** The popup picker sheet's untick and membership read, in the same tab, while it still shows `acct` (UI-POP-14, YM-POP-4). */
+  removeFromPopup(tab: ActingTab, acct: AccountKey, request: PopupRemoveRequest): Promise<UiRemoveAnswer>
+  membershipFromPopup(tab: ActingTab, acct: AccountKey, video: VideoId, req: Requester): Promise<UiMembershipAnswer>
   /** Undo of Playing now's save, in the same tab, while it still shows `acct` (YM-POP-3). */
   undoFromPopup(tab: ActingTab, acct: AccountKey, handle: UndoHandle): Promise<TabUndoReport | { readonly kind: "account-changed" }>
   settings(incognito: boolean): Promise<Settings | null>
@@ -289,6 +295,21 @@ export function composeActions(deps: {
       if (!known) return { kind: "no-tab" }
       if (known.acct !== acct || known.privateTab !== tab.incognito) return { kind: "account-changed" }
       return addIn(tab, acct, request)
+    },
+    async removeFromPopup(tab, acct, request) {
+      const [known] = await tabs.known({ kind: "tab", tabId: tab.tabId })
+      if (!known) return { kind: "no-tab" }
+      if (known.acct !== acct || known.privateTab !== tab.incognito) return { kind: "account-changed" }
+      await view.load(tab.incognito, acct, tab.site)
+      const report = await flow.remove(request, { kind: "tab", tabId: tab.tabId, incognito: tab.incognito })
+      return report.kind === "removed" ? { kind: "removed", undo: report.undo } : report.kind === "no-tab" ? { kind: "no-tab" } : { kind: "failed" }
+    },
+    async membershipFromPopup(tab, acct, video, req) {
+      const [known] = await tabs.known({ kind: "tab", tabId: tab.tabId })
+      if (!known) return { kind: "no-tab" }
+      if (known.acct !== acct || known.privateTab !== tab.incognito) return { kind: "account-changed" }
+      const outcome = await tabs.runIn<JobOf<"membership">>(tab.tabId, { job: { kind: "membership", videoId: video }, acct }, { site: tab.site, req, account: { kind: "account", acct, signedIn: true } })
+      return outcome.kind === "result" && outcome.result.ok ? { kind: "read", rows: outcome.result.data } : { kind: "unreadable" }
     },
     async undoFromPopup(tab, acct, handle) {
       const [known] = await tabs.known({ kind: "tab", tabId: tab.tabId })

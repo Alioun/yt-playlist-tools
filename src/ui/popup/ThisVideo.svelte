@@ -8,10 +8,11 @@
   import { channelControls, type ChannelControl } from "../../shared/rules/channel-filter"
   import type { AccountKey, PlaylistId } from "../../shared/model/validation"
   import type { PageState } from "../lib/page-state.svelte"
+  import type { SheetTarget } from "../features/source"
 
   // This video (UI-POP-12 to UI-POP-14): the active YouTube tab's video, as that tab's own account (UI-POP-08), with
   // the status line, the watched meter and, unfolded, each playlist's outcome, Don't auto-add and this channel's filters.
-  let { pageState }: { pageState: PageState } = $props()
+  let { pageState, onsave }: { pageState: PageState; onsave?: (target: SheetTarget) => void } = $props()
   const { i18n, backend } = untrack(() => pageState.page)
   let tab = $state.raw<ThisTab | null>(null)
   let open = $state(false)
@@ -98,7 +99,7 @@
         {/each}
       </div>
     {/if}
-    {#if shown.video.state.kind !== "not-tracked" || shown.video.playlists.length}
+    {#if shown.video.state.kind !== "not-tracked" || shown.video.playlists.length || onsave}
       <button type="button" aria-expanded={open} class="text-primary mt-2 flex items-center gap-0.5 text-[12.5px] font-medium" onclick={() => { open = !open }}>
         {i18n.message("thisVideo_details")}<Glyph name={open ? "chevron-down" : "chevron-right"} class="size-3.5" /></button>
     {/if}
@@ -140,6 +141,10 @@
               <p class="text-muted-foreground">{i18n.message("channelFilter_unknown")}</p>
             {/if}
           </div>
+        {/if}
+        {#if onsave}
+          <Button size="sm" variant="outline" class="self-start" onclick={() => onsave({ tabId: shown.tabId, acct: shown.acct, site: "www", video: shown.video.video,
+            title: shown.video.title, opener: "popup" })}>{i18n.message("quickSave_more")}</Button>
         {/if}
         {#if failure}<p role="status" class="text-destructive">{failure}</p>{/if}
       </div>

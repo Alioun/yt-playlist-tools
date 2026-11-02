@@ -11,13 +11,16 @@
   import MusicButtons from "../features/MusicButtons.svelte"
   import FeatureRow from "./FeatureRow.svelte"
   import PlayingNow from "./PlayingNow.svelte"
+  import type { SheetTarget } from "../features/source"
 
   // The popup's YouTube Music tab (UI-POP-16, UI-POP-18), its own chunk.
-  let { pageState, features, ontoggle, ongiveaccess }: {
+  let { pageState, features, ontoggle, ongiveaccess, onsave }: {
     pageState: PageState
     features: ReturnType<typeof createFeatureCopy>
     ontoggle: (feature: PageFeatureId, next: boolean) => void
     ongiveaccess: (feature: PageFeatureId) => void
+    /** Opens the popup's picker sheet for the playing song (YM-POP-4). */
+    onsave?: (target: SheetTarget) => void
   } = $props()
   const { i18n, backend, platform } = untrack(() => pageState.page)
   const settings = $derived(pageState.settings)
@@ -51,7 +54,7 @@
     </section>
     {#if line}<p role="status" class="text-destructive text-[12px]">{line}</p>{/if}
     {#if settings.musicSection}
-      {#if pageState.agreed && access.music}<PlayingNow {pageState} />{/if}
+      {#if pageState.agreed && access.music}<PlayingNow {pageState} {onsave} />{/if}
       <ul class="bg-card rounded-xl border" aria-label={i18n.message("site_music")}>
         {#each ["music-actions", "music-keys"] as const as feature (feature)}
           {@const reason = heldReason(feature, settings, pageState.agreed, access)}

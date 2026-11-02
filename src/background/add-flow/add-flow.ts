@@ -6,7 +6,7 @@ import { applySessionEdits, emptySessionMemory, live, PAUSE_MS, RECENT_MS, sessi
   type SessionEdit, type SessionMemory, type SessionPort, type SessionRead, type SessionWrite, type SessionRevision, type Skip } from "../store/session-memory"
 import { isTabPing, type TabPing } from "../../shared/contracts/tabs"
 import type { TabAddRequest, TabRemoveRequest, UndoHandle } from "../../shared/contracts/tab-actions"
-import type { PopupAddRequest } from "../../shared/contracts/ui-add"
+import type { PopupAddRequest, PopupRemoveRequest } from "../../shared/contracts/ui-add"
 
 // Facts the gateway recognised that JobResult can't carry. Each is a YT-ADD-28 row or YT-ADD-05's duplicate rejection.
 type WriteFact = "not-sent" | "duplicate" | "missing" | "full" | "refused" | "account-refused"
@@ -67,7 +67,7 @@ export type Ports = {
 }
 
 export type AddRequest = TabAddRequest | PopupAddRequest
-export type RemoveRequest = TabRemoveRequest
+export type RemoveRequest = TabRemoveRequest | PopupRemoveRequest
 export type BatchOutcomes = readonly { video: VideoId; outcome: VideoOutcome }[]
 // A gather's own facts for its Undo record. They are planned once the outcomes are known, inside the batch's hold, and written in the record's one change.
 // The Recent entry takes the record's own time, so both name one moment.

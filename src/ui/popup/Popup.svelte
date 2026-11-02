@@ -19,6 +19,7 @@
   import type { GatherLineAction } from "../../shared/contracts/ui-gather"
   import type { AccountKey } from "../../shared/model/validation"
   import FeatureRow from "./FeatureRow.svelte"
+  import type { SheetTarget } from "../features/source"
 
   let { page, markSrc }: { page: ExtensionPage; markSrc: string } = $props()
   const pageState = new PageState(untrack(() => page))
@@ -29,7 +30,8 @@
   const SITE_KEY = "perchling.popupSite"
   let chosenSite = $state<Site | null>(null)
   let lines = $state<Partial<Record<PageFeatureId, { text: string; tone: "muted" | "warning" | "destructive" }>>>({})
-  let sheet = $state<{ readonly kind: "consent"; readonly feature: PageFeatureId } | { readonly kind: "recent" } | null>(null)
+  let sheet = $state<{ readonly kind: "consent"; readonly feature: PageFeatureId } | { readonly kind: "recent" } | { readonly kind: "save"; readonly target: SheetTarget } | null>(null)
+  const save = (target: SheetTarget) => { sheet = { kind: "save", target } }
   let pausing = $state(false)
   // With two or more setups, in a normal window, the header's account is a menu of which setup to show (UI-POP-07).
   let menuOpen = $state(false)
@@ -203,7 +205,7 @@
           {#if site === "www" && settings && summaryFacts}
             {#if pageState.agreed && openedOn === "www"}
               {#await import("./ThisVideo.svelte") then { default: ThisVideo }}
-                <div class="mb-3"><ThisVideo {pageState} /></div>
+                <div class="mb-3"><ThisVideo {pageState} onsave={save} /></div>
               {/await}
             {/if}
             <ul class="bg-card rounded-xl border" aria-label={i18n.message("site_www")}>
@@ -241,7 +243,7 @@
             {/if}
           {:else if site === "music"}
             {#await import("./MusicTab.svelte") then { default: Music }}
-              <Music {pageState} {features} ontoggle={toggle} ongiveaccess={giveAccess} />
+              <Music {pageState} {features} ontoggle={toggle} ongiveaccess={giveAccess} onsave={save} />
             {/await}
           {/if}
         </div>
@@ -259,6 +261,10 @@
   {#if sheet?.kind === "consent"}
     {#await import("./ConsentSheet.svelte") then { default: Consent }}
       <Consent {pageState} feature={sheet.feature} name={name(sheet.feature)} onclose={() => { sheet = null }} />
+    {/await}
+  {:else if sheet?.kind === "save"}
+    {#await import("./SaveSheet.svelte") then { default: Sheet }}
+      <Sheet {pageState} target={sheet.target} onclose={() => { sheet = null }} />
     {/await}
   {:else if sheet?.kind === "recent" && pageState.acct}
     {#await import("./RecentAddsSheet.svelte") then { default: Recent }}

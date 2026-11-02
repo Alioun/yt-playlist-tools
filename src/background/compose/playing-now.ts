@@ -5,7 +5,7 @@ import type { Actions } from "./actions"
 import { candidate, tabOrder, type NativeTab } from "./any-tab"
 import { isMusicAdFailure, type JobOf } from "../../shared/contracts"
 import type { PlayingNow } from "../../shared/contracts/playing-now"
-import type { UiAddAnswer, UiAddPayload, UiAddUndoAnswer, UiAddUndoPayload } from "../../shared/contracts/ui-add"
+import type { UiAddAnswer, UiAddPayload, UiAddUndoAnswer, UiAddUndoPayload, UiMembershipAnswer, UiMembershipPayload, UiRemoveAnswer, UiRemovePayload } from "../../shared/contracts/ui-add"
 import { toastText } from "../../shared/copy"
 import type { I18n } from "../../shared/i18n"
 import { siteBundles } from "../../shared/features/registration"
@@ -56,7 +56,7 @@ export function createPlayingSave(deps: {
 }) {
   return async function save(req: Requester, payload: UiAddPayload): Promise<UiAddAnswer> {
     if (!deps.consented()) return { kind: "unavailable" }
-    const report = await deps.actions.addFromPopup({ tabId: payload.tabId, incognito: req.incognito, site: "music" }, payload.acct, payload.request)
+    const report = await deps.actions.addFromPopup({ tabId: payload.tabId, incognito: req.incognito, site: payload.request.site }, payload.acct, payload.request)
     if (report.kind !== "report") return report.kind === "stopped" ? { kind: "failed", text: deps.i18n.message("playing_failed") } : report
     const outcomes = Object.values(report.outcomes)
     const kind = outcomes.some(outcome => outcome.kind === "added") ? "added" : outcomes.some(outcome => outcome.kind === "already-in") ? "already-in" : "failed"
@@ -74,11 +74,25 @@ export function createPlayingUndo(deps: {
 }) {
   return async function undo(req: Requester, payload: UiAddUndoPayload): Promise<UiAddUndoAnswer> {
     if (!deps.consented()) return { kind: "unavailable" }
-    const report = await deps.actions.undoFromPopup({ tabId: payload.tabId, incognito: req.incognito, site: "music" }, payload.acct, payload.handle)
+    const report = await deps.actions.undoFromPopup({ tabId: payload.tabId, incognito: req.incognito, site: payload.site ?? "music" }, payload.acct, payload.handle)
     switch (report.kind) {
       case "undone": case "expired": case "no-tab": case "account-changed": return { kind: report.kind }
       case "failed": return { kind: "failed", text: deps.i18n.message("feedback_www_manual_untitled_undo_failed") }
       default: return { kind: "unavailable" }
+    }
+  }
+}
+
+/** The popup picker sheet's untick and membership read, in the tab its row names, as that tab's account (UI-POP-14, YM-POP-4). */
+export function createPopupItem(deps: { readonly actions: Pick<Actions, "removeFromPopup" | "membershipFromPopup">; readonly consented: () => boolean }) {
+  return {
+    async remove(req: Requester, payload: UiRemovePayload): Promise<UiRemoveAnswer> {
+      if (!deps.consented()) return { kind: "unavailable" }
+      return deps.actions.removeFromPopup({ tabId: payload.tabId, incognito: req.incognito, site: payload.request.site }, payload.acct, payload.request)
+    },
+    async membership(req: Requester, payload: UiMembershipPayload): Promise<UiMembershipAnswer> {
+      if (!deps.consented()) return { kind: "unavailable" }
+      return deps.actions.membershipFromPopup({ tabId: payload.tabId, incognito: req.incognito, site: payload.site }, payload.acct, payload.video, req)
     }
   }
 }

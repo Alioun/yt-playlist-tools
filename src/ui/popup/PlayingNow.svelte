@@ -6,9 +6,11 @@
   import type { UndoHandle } from "../../shared/contracts/tab-actions"
   import DestinationChooser from "../features/DestinationChooser.svelte"
   import type { PageState } from "../lib/page-state.svelte"
+  import type { SheetTarget } from "../features/source"
+  import Glyph from "../components/Glyph.svelte"
 
   // Playing now (UI-POP-17): the playing song with Save to the YouTube Music quick-save playlist, answered inline.
-  let { pageState }: { pageState: PageState } = $props()
+  let { pageState, onsave }: { pageState: PageState; onsave?: (target: SheetTarget) => void } = $props()
   const { i18n, backend } = untrack(() => pageState.page)
   let playing = $state.raw<UiPlayingNow | null>(null)
   let saving = $state(false)
@@ -54,9 +56,16 @@
         <p class="truncate text-[13.5px] font-medium">{playing.song.title}</p>
         <p class="text-muted-foreground truncate text-[12px]">{playing.song.artist}</p>
       </div>
-      {#if target && title}
-        <Button size="sm" pending={saving} aria-label={i18n.message("playing_saveTo", { song: playing.song.title, playlist: title })} onclick={save}>{i18n.message("playing_save")}</Button>
-      {/if}
+      <span class="flex shrink-0">
+        {#if target && title}
+          <Button size="sm" pending={saving} class={onsave ? "rounded-r-none" : ""} aria-label={i18n.message("playing_saveTo", { song: playing.song.title, playlist: title })} onclick={save}>{i18n.message("playing_save")}</Button>
+        {/if}
+        {#if onsave}
+          {@const song = playing}
+          <Button size="sm" variant={target && title ? "default" : "outline"} class={target && title ? "rounded-l-none border-l border-l-white/30 px-1.5" : ""} aria-label={i18n.message("musicAction_savePicker")}
+            onclick={() => onsave({ tabId: song.tabId, acct: song.acct, site: "music", video: song.song.videoId, title: song.song.title, opener: "playing-now" })}><Glyph name="chevron-down" /></Button>
+        {/if}
+      </span>
     </div>
     {#if result}<p role="status" class="text-[12px]">{result}{#if undo} <Button variant="link" size="sm" disabled={saving} onclick={takeBack}>{i18n.message("toast_action_undo")}</Button>{/if}</p>{/if}
     {#if title}

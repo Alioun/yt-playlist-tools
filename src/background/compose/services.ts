@@ -1,7 +1,7 @@
 import { createAccounts } from "../accounts/accounts"
 import { composeActions, type Actions } from "./actions"
 import { composeAnyTab } from "./any-tab"
-import { composePlayingNow, createPlayingSave, createPlayingUndo } from "./playing-now"
+import { composePlayingNow, createPlayingSave, createPlayingUndo, createPopupItem } from "./playing-now"
 import { composeThisTab } from "./this-tab"
 import { tabAskContract, type TabAskMessages } from "../../shared/contracts/tab-actions"
 import { createRpcCaller } from "../../shared/rpc/rpc"
@@ -163,6 +163,7 @@ export function composeServices(deps: {
     playingNow: composePlayingNow({ native, tabs, registrar, actions, consented: deps.consented }),
     add: createPlayingSave({ actions, i18n: siteI18n, consented: deps.consented }),
     addUndo: createPlayingUndo({ actions, i18n: siteI18n, consented: deps.consented }),
+    item: createPopupItem({ actions, consented: deps.consented }),
     thisVideo: composeThisTab({ native, tabs, registrar, flow: actions.flow, consented: deps.consented, async ask(tabId, kind, payload) {
       const caller = createRpcCaller<TabAskMessages>(tabTarget(native.tabs, tabId), { build, deadline: timerDeadline, contract: tabAskContract })
       try { return await caller.call(kind, payload) } finally { caller.dispose() }

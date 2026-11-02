@@ -44,6 +44,11 @@ export type UiRouterPorts = {
   /** Playing now's Save, in the tab the row read (ARC-ACC-68), and its Undo. */
   readonly add?: (requester: Requester, payload: UiAddPayload) => Promise<UiAddAnswer>
   readonly addUndo?: (requester: Requester, payload: import("../../../shared/contracts/ui-add").UiAddUndoPayload) => Promise<import("../../../shared/contracts/ui-add").UiAddUndoAnswer>
+  /** The popup picker sheet's untick and membership read (UI-POP-14, YM-POP-4). */
+  readonly item?: {
+    remove(requester: Requester, payload: import("../../../shared/contracts/ui-add").UiRemovePayload): Promise<import("../../../shared/contracts/ui-add").UiRemoveAnswer>
+    membership(requester: Requester, payload: import("../../../shared/contracts/ui-add").UiMembershipPayload): Promise<import("../../../shared/contracts/ui-add").UiMembershipAnswer>
+  }
   /** The popup's This video and its Don't auto-add (UI-POP-12, UI-POP-14). */
   readonly thisVideo?: {
     thisTab(requester: Requester): Promise<import("../../../shared/contracts/this-video").ThisTab>
@@ -366,6 +371,18 @@ export function createUiRouter(ports: UiRouterPorts) {
         const ui = requireUi(context)
         if (!active || !ports.playingNow) return { kind: "unavailable" }
         const answer = await ports.playingNow(ui.requester)
+        return active ? answer : { kind: "unavailable" }
+      },
+      async "ui.remove"(payload, context) {
+        const ui = requireUi(context)
+        if (!active || !ports.item) return { kind: "unavailable" }
+        const answer = await ports.item.remove(ui.requester, payload)
+        return active ? answer : { kind: "unavailable" }
+      },
+      async "ui.membership"(payload, context) {
+        const ui = requireUi(context)
+        if (!active || !ports.item) return { kind: "unavailable" }
+        const answer = await ports.item.membership(ui.requester, payload)
         return active ? answer : { kind: "unavailable" }
       },
       async "ui.addUndo"(payload, context) {
