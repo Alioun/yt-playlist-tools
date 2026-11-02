@@ -29,8 +29,8 @@ const API = "https://addons.mozilla.org/api/v5"
 const USAGE = "usage: amo-reviewer-notes.ts check <metadata file> | fill <version> <metadata file>"
 const FIELDS = ["email", "password", "code1", "code2"] as const
 // Bun's own switches (BUN_CONFIG_VERBOSE_FETCH prints each request, body included),
-// Node's TLS switches, proxies and certificate stores.
-const UNSAFE = /^(BUN_|NODE_|SSL_CERT_)|^(https?|all)_proxy$/i
+// Node's TLS switches, proxies, certificate stores and TLS key logging.
+const UNSAFE = /^(BUN_|NODE_|SSL_CERT_)|^(https?|all)_proxy$|^SSLKEYLOGFILE$/i
 
 type Login = Record<(typeof FIELDS)[number], string>
 type Outcome = { line: string; exit: 0 | 1 | 2 }
@@ -118,7 +118,7 @@ async function run(args: string[], env: NodeJS.ProcessEnv): Promise<Outcome> {
   if (!parsed) return { line: USAGE, exit: 2 }
   const { version, path } = parsed
   if (Object.keys(env).some(name => UNSAFE.test(name))) {
-    return failed("environment-unsafe (a BUN_, NODE_, SSL_CERT_ or proxy variable is set)")
+    return failed("environment-unsafe (a BUN_, NODE_, SSL_CERT_, SSLKEYLOGFILE or proxy variable is set)")
   }
 
   const notes = readNotes(path)

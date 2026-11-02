@@ -66,6 +66,7 @@ plant old-script "$script" base -- "refuses to run with BUN_CONFIG_VERBOSE_FETCH
 plant follows-redirects "$script" 's/\n *redirect: "error",//' -- "never follows a redirect"
 plant no-timeout "$script" 's/signal: AbortSignal\.timeout\(30_000\)/signal: undefined \&\& AbortSignal.timeout(30_000)/' -- "gives up on an AMO that never answers"
 plant no-refusal "$script" 's/Object\.keys\(env\)\.some\(name => UNSAFE\.test\(name\)\)/false/' -- "refuses to run with NODE_TLS_REJECT_UNAUTHORIZED set"
+plant logs-tls-keys "$script" 's/\|\^SSLKEYLOGFILE\$//' -- "refuses to run with SSLKEYLOGFILE set"
 plant side-effect-import "$script" 's/^(import \{ readFileSync \} from "node:fs"\n)/$1import "node:vm"\n/m' -- "imports only Node built-ins"
 plant re-export "$script" 's/\z/export * from "node:os"\n/' -- "imports only Node built-ins"
 plant keeps-environment "$release" 's/ *for name in \$\(compgen -e\); do\n.*?\n *done\n//sg' -- \

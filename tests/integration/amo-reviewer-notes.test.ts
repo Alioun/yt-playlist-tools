@@ -309,6 +309,7 @@ describe("the script", () => {
     ["NODE_TLS_REJECT_UNAUTHORIZED", "0"],
     ["NODE_EXTRA_CA_CERTS", "/dev/null"],
     ["SSL_CERT_FILE", "/dev/null"],
+    ["SSLKEYLOGFILE", "/dev/null"],
     ["HTTPS_PROXY", "http://127.0.0.1:9"],
     ["http_proxy", "http://127.0.0.1:9"]
   ]
@@ -322,7 +323,7 @@ describe("the script", () => {
       FIREFOX_JWT_SECRET: jwtSecret,
       [name]: value
     })
-    expect(run).toMatchObject({ exit: 1, stdout: "::error::reviewer-notes: environment-unsafe (a BUN_, NODE_, SSL_CERT_ or proxy variable is set)\n" })
+    expect(run).toMatchObject({ exit: 1, stdout: "::error::reviewer-notes: environment-unsafe (a BUN_, NODE_, SSL_CERT_, SSLKEYLOGFILE or proxy variable is set)\n" })
     expect(amo.requests).toEqual([])
     expect(leaks(run.stdout + run.stderr)).toEqual([])
   })
