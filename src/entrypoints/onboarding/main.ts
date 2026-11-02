@@ -4,7 +4,7 @@ import { browser } from "wxt/browser"
 import markSrc from "../../assets/brand/icon.svg"
 import { OnboardingPage } from "../../ui/onboarding"
 import { startFirstRun } from "../../ui/onboarding/start"
-import { disclosureCatalogue } from "../../ui/shell/disclosure-catalogue"
+import { disclosureCatalogue } from "../../shared/i18n/canonical"
 import { startExtensionPage } from "../../ui/shell/start"
 
 const target = document.querySelector("#first-run")

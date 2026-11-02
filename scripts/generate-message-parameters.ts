@@ -4,6 +4,7 @@ type Entry = { readonly message: string; readonly placeholders?: Readonly<Record
 
 const cataloguePath = new URL("../src/public/_locales/en/messages.json", import.meta.url)
 const parametersPath = new URL("../src/shared/i18n/parameters.ts", import.meta.url)
+const canonicalPath = new URL("../src/shared/i18n/canonical.ts", import.meta.url)
 const source = readFileSync(cataloguePath, "utf8")
 const catalogue: Record<string, Entry> = JSON.parse(source)
 
@@ -25,10 +26,18 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
 ${entries.filter(([, names]) => names.length).map(([key, names]) => `  ${JSON.stringify(key)}: [${names.join(", ")}],`).join("\n")}
 }
 `
+const disclosure = Object.entries(numbered).filter(([key]) => key.startsWith("disclosure_"))
+const canonical = `// Generated from src/public/_locales/en/messages.json by scripts/generate-message-parameters.ts.
+// The disclosure's canonical English, which agreement pins (UI-ONB-09), so extension pages carry it and not the catalogue.
+export const disclosureCatalogue = {
+${disclosure.map(([key, entry]) => `  ${JSON.stringify(key)}: { message: ${JSON.stringify(entry.message)} },`).join("\n")}
+} as const
+`
 if (process.argv.includes("--check")) {
   const stale = [
     ...source === numberedText ? [] : ["src/public/_locales/en/messages.json numbers some placeholders out of name order."],
-    ...readFileSync(parametersPath, "utf8") === text ? [] : ["src/shared/i18n/parameters.ts is out of date."]
+    ...readFileSync(parametersPath, "utf8") === text ? [] : ["src/shared/i18n/parameters.ts is out of date."],
+    ...readFileSync(canonicalPath, "utf8") === canonical ? [] : ["src/shared/i18n/canonical.ts is out of date."]
   ]
   if (stale.length) {
     console.error(`${stale.join(" ")} Run bun scripts/generate-message-parameters.ts`)
@@ -37,4 +46,5 @@ if (process.argv.includes("--check")) {
 } else {
   if (source !== numberedText) writeFileSync(cataloguePath, numberedText)
   writeFileSync(parametersPath, text)
+  writeFileSync(canonicalPath, canonical)
 }

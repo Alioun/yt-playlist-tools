@@ -1,9 +1,26 @@
 import { expect, test } from "bun:test"
 import catalogue from "../../public/_locales/en/messages.json"
+import { disclosureCatalogue } from "./canonical"
 import { createI18n, createSiteI18n, richParts, type MessageKey } from "./index"
 import { messagePlaceholders } from "./parameters"
 import { sha256 } from "./identity"
 import { scriptedMessages, stretch } from "../../../tools/fixtures/localization/scripted"
+
+test("the catalogue numbers each message's placeholders in name order, which page scripts rely on", () => {
+  const entries: [string, { message: string; placeholders?: Record<string, { content: string }> }][] = Object.entries(catalogue)
+  for (const [key, entry] of entries) {
+    const names = Object.keys(entry.placeholders ?? {}).sort()
+    expect(names.map(name => entry.placeholders?.[name]?.content), key).toEqual(names.map((_, index) => `$${index + 1}`))
+  }
+})
+
+test("extension pages carry the catalogue's own canonical English for every disclosure message", () => {
+  const entries: [string, { message: string }][] = Object.entries(catalogue)
+  expect<unknown>(disclosureCatalogue).toEqual(Object.fromEntries(entries.filter(([key]) => key.startsWith("disclosure_")).map(([key, entry]) => [key, { message: entry.message }])))
+  const site = createSiteI18n({ getMessage: () => "native" }, "en", disclosureCatalogue)
+  expect(site.canonical("disclosure_intro")).toBe(catalogue.disclosure_intro.message)
+  expect(() => site.canonical("firstRun_welcome")).toThrow("Canonical text is for extension pages")
+})
 
 test("named values become native positional substitutions in catalogue order", () => {
   const calls: unknown[] = []

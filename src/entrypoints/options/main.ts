@@ -7,5 +7,5 @@ import { startExtensionPage } from "../../ui/shell/start"
 
 const target = document.querySelector("#app")
 if (!target) throw new Error("Missing page host")
-const catalogue = () => import("../../ui/shell/disclosure-catalogue").then(module => module.disclosureCatalogue)
+const catalogue = () => import("../../shared/i18n/canonical").then(module => module.disclosureCatalogue)
 mount(Settings, { target, props: { page: startExtensionPage(browser, navigator.platform, undefined, { catalogue }), markSrc } })
