@@ -10,6 +10,8 @@ import type { TabActions } from "./actions"
 export type TabAsks = {
   toast(payload: TabAskMessages["bg.toast"]["payload"]): void
   picker(payload: TabAskMessages["bg.picker"]["payload"]): Promise<"opened" | "failed">
+  /** Only YouTube Music's kit answers these. */
+  music?(payload: TabAskMessages["bg.music"]["payload"]): Promise<TabAskMessages["bg.music"]["result"]>
 }
 
 /**

@@ -146,10 +146,16 @@ export const tabActionContract: RpcContract<TabActionMessages> = {
 export type TabAskMessages = {
   "bg.toast": { payload: { readonly answer: TabAddReport; readonly video: VideoId; readonly title: string | null; readonly opener: FeatureId }; result: null }
   "bg.picker": { payload: { readonly video: VideoId; readonly title: string | null; readonly choose: boolean; readonly opener: FeatureId }; result: { readonly kind: "opened" | "failed" } }
+  /** A YouTube Music key from any tab: save or like the playing song here, as its Save or Like key would (YM-ANY-2, YM-ANY-3). */
+  "bg.music": { payload: { readonly action: "save" | "like"; readonly feedback: boolean }; result: MusicAskAnswer }
 }
+/** `done` is the ✓ and `failed` the ✕ on the toolbar icon; `text` is the answer's tooltip (YM-ANY-4). */
+export type MusicAskAnswer = { readonly kind: "done" | "failed"; readonly text: string | null }
 export const tabAskContract: RpcContract<TabAskMessages> = {
   "bg.toast": { payload: (v): v is TabAskMessages["bg.toast"]["payload"] => objectShape(v, { answer: isTabAddReport, video: isVideoId, title: nullable(title), opener: isFeatureId }),
     result: (v): v is null => v === null, timeoutMs: 2_000 },
   "bg.picker": { payload: (v): v is TabAskMessages["bg.picker"]["payload"] => objectShape(v, { video: isVideoId, title: nullable(title), choose: bool, opener: isFeatureId }),
-    result: (v): v is TabAskMessages["bg.picker"]["result"] => objectShape(v, { kind: oneOf("opened", "failed") }), timeoutMs: 8_000 }
+    result: (v): v is TabAskMessages["bg.picker"]["result"] => objectShape(v, { kind: oneOf("opened", "failed") }), timeoutMs: 8_000 },
+  "bg.music": { payload: (v): v is TabAskMessages["bg.music"]["payload"] => objectShape(v, { action: oneOf("save", "like"), feedback: bool }),
+    result: (v): v is MusicAskAnswer => objectShape(v, { kind: oneOf("done", "failed"), text: nullable(title) }), timeoutMs: 30_000 }
 }
