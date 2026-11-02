@@ -188,19 +188,19 @@ jobs:
     environment: amo-reviewer
     steps:
       # Only the script: no package.json, lockfile, bunfig or install.
-      - uses: actions/checkout@v7 # TODO(owner, G28): pin to the commit SHA v7 resolves to
+      - uses: actions/checkout@v7 # TODO(owner, G28): pin to the commit upstream's v7 tag peels to (design, "Turning it on")
         with:
           sparse-checkout: /scripts/amo-reviewer-notes.ts
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
       # package.json isn't checked out; a test holds this to its packageManager.
-      - uses: oven-sh/setup-bun@v2 # TODO(owner, G28): pin to the commit SHA v2 resolves to
+      - uses: oven-sh/setup-bun@v2 # TODO(owner, G28): pin to the commit upstream's v2 tag peels to (design, "Turning it on")
         with:
           bun-version: 1.4.3
           no-cache: true
 
-      - uses: actions/download-artifact@v8 # TODO(owner, G28): pin to the commit SHA v8 resolves to
+      - uses: actions/download-artifact@v8 # TODO(owner, G28): pin to the commit upstream's v8 tag peels to (design, "Turning it on")
         with:
           name: release-${{ needs.meta.outputs.version }}
           path: dist
@@ -379,18 +379,18 @@ jobs:
     timeout-minutes: 10
     environment: amo-reviewer
     steps:
-      - uses: actions/checkout@v7 # TODO(owner, G28): pin to the commit SHA v7 resolves to
+      - uses: actions/checkout@v7 # TODO(owner, G28): pin to the commit upstream's v7 tag peels to (design, "Turning it on")
         with:
           sparse-checkout: /scripts/amo-reviewer-notes.ts
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
-      - uses: oven-sh/setup-bun@v2 # TODO(owner, G28): pin to the commit SHA v2 resolves to
+      - uses: oven-sh/setup-bun@v2 # TODO(owner, G28): pin to the commit upstream's v2 tag peels to (design, "Turning it on")
         with:
           bun-version: 1.4.3
           no-cache: true
 
-      - uses: actions/download-artifact@v8 # TODO(owner, G28): pin to the commit SHA v8 resolves to
+      - uses: actions/download-artifact@v8 # TODO(owner, G28): pin to the commit upstream's v8 tag peels to (design, "Turning it on")
         with:
           name: release-${{ needs.meta.outputs.version }}
           path: dist
