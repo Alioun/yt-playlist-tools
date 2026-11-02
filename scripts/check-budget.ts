@@ -1,6 +1,7 @@
 import { appendFileSync, existsSync, readdirSync, readFileSync } from "node:fs"
 import { basename, join } from "node:path"
 import { gzipSync } from "node:zlib"
+import { parseAst } from "vite"
 import type { Site } from "../src/shared/contracts/vocabulary"
 import { popoversBundle, siteBundles } from "../src/shared/features/registration"
 import { features } from "../src/shared/features/registry"
@@ -86,6 +87,10 @@ function closure(directory: string, roots: readonly string[]): Set<string> {
   return found
 }
 
+function htmlScriptEntries(directory: string, html: string): string[] {
+  return [...readFileSync(join(directory, html), "utf8").matchAll(/<script[^>]*\bsrc="([^"]+)"/g)].map(match => match[1]!.replace(/^\//, ""))
+}
+
 function htmlAssets(directory: string, html: string) {
   const text = readFileSync(join(directory, html), "utf8")
   const attribute = (pattern: RegExp) => [...text.matchAll(pattern)].map(match => match[1]!.replace(/^\//, ""))
@@ -97,9 +102,22 @@ function htmlAssets(directory: string, html: string) {
 
 const chunkName = (file: string) => basename(file).replace(/-[\w-]{8}\.js$/, "")
 
+function hasTopLevelAwait(code: string): boolean {
+  const walk = (node: unknown): boolean => {
+    if (node === null || typeof node !== "object") return false
+    if (Array.isArray(node)) return node.some(walk)
+    const type = Reflect.get(node, "type")
+    if (type === "FunctionDeclaration" || type === "FunctionExpression" || type === "ArrowFunctionExpression") return false
+    if (type === "AwaitExpression" || (type === "ForOfStatement" && Reflect.get(node, "await") === true)) return true
+    return Object.entries(node).some(([key, value]) => key !== "parent" && walk(value))
+  }
+  return walk(parseAst(code).body)
+}
+
 /** An extension page: its first view (the HTML's scripts and modulepreloads, with their static imports) and each lazy chunk. */
 function extensionPage(directory: string, html: string, size: (file: string) => Kb) {
   const assets = htmlAssets(directory, html)
+  const entries = [...htmlScriptEntries(directory, html)]
   const initial = closure(directory, assets.scripts)
   const lazy = new Map<string, Set<string>>()
   const queue = [...initial]
@@ -122,8 +140,12 @@ function extensionPage(directory: string, html: string, size: (file: string) => 
     names.set(name, count)
     return { name: count > 1 ? `${name}~${count}` : name, target, kb: sum(files), files }
   })
+  // Q-PERF-35 rule 3: a chunk that imports an entry waiting on a top-level await waits forever, and the page renders blank.
+  const all = [...new Set([...initial, ...lazyRows.flatMap(row => [...row.files])])]
+  const deadlocks = entries.filter(entry => hasTopLevelAwait(readFileSync(join(directory, entry), "utf8")))
+    .flatMap(entry => all.filter(file => chunkGraph(directory, file).imports.includes(entry)).map(file => `${html}: ${file} imports ${entry}, which has a top-level await (Q-PERF-35 rule 3)`))
   return {
-    js: sum(initial), css: sum(assets.styles), initial, lazy: lazyRows,
+    js: sum(initial), css: sum(assets.styles), initial, lazy: lazyRows, deadlocks,
     /** The first view plus a lazy part that loads before the first frame in some view. */
     with: (name: string) => {
       const part = lazyRows.find(row => row.name === name)
@@ -227,6 +249,7 @@ export function checkBuild(directory: string, budget: PerfBudget): BuildReport {
     ...htmlAssets(directory, page === popup ? "popup.html" : page === settings ? "options.html" : "onboarding.html").styles,
     ...[...page.initial, ...page.lazy.flatMap(part => [...part.files])].flatMap(file => [...readFileSync(join(directory, file), "utf8").matchAll(/assets\/[\w.-]+\.css/g)].map(match => match[0]))
   ]))
+  failures.push(...[popup, settings, firstRun].flatMap(page => page.deadlocks.map(problem => `${browser}: ${problem}`)))
   for (const file of files.filter(file => file.endsWith(".css") && !ownedCss.has(file))) failures.push(`${browser}: ${file} belongs to no extension page; page scripts inject their CSS (Q-PERF-21)`)
   failures.push(...provenanceProblems(directory, browser))
   return { browser, rows, failures }

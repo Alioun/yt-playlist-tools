@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite"
 import { fileURLToPath } from "node:url"
 import { defineConfig } from "wxt"
 import { keepActionTitle, perchlingManifest } from "./build/manifest"
+import { buildPagesApart } from "./build/extension-pages"
 import { createPageLink } from "./build/page-link"
 import packageJson from "./package.json"
 import { pageLinkEntries } from "./src/shared/features/registration"
@@ -32,7 +33,11 @@ export default defineConfig({
       }
     }
   },
-  hooks: { ...link.hooks, "build:manifestGenerated": keepActionTitle },
+  hooks: {
+    ...link.hooks,
+    "entrypoints:grouped": (wxt, groups) => { buildPagesApart(wxt, groups); link.hooks["entrypoints:grouped"](wxt, groups) },
+    "build:manifestGenerated": keepActionTitle
+  },
   vite: ({ mode }) => ({
     plugins: [tailwindcss()],
     define: { "import.meta.env.PP_BUILD": JSON.stringify(`${packageJson.version}-${mode}`) },

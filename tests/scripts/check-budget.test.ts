@@ -29,16 +29,17 @@ function noise(length: number, seed: number): string {
   return Array.from({ length }, () => String.fromCharCode(35 + ((state = (state * 1103515245 + 12345) % 2 ** 31) % 57))).join("")
 }
 
-/** Text that weighs `kb` KB at gzip -9, give or take a few bytes. */
+/** A JavaScript statement that weighs `kb` KB at gzip -9, give or take a few bytes. */
 function weighing(kb: number, seed = Math.round(kb * 1000)): string {
+  const statement = (length: number) => `\`${noise(length, seed)}\`;`
   let low = 0
   let high = Math.ceil(kb * 1024 * 2)
   while (low < high) {
     const middle = (low + high) >> 1
-    if (gzipSync(noise(middle, seed), { level: 9 }).byteLength < kb * 1024) low = middle + 1
+    if (gzipSync(statement(middle), { level: 9 }).byteLength < kb * 1024) low = middle + 1
     else high = middle
   }
-  return noise(low, seed)
+  return statement(low)
 }
 
 type Overrides = { files?: Record<string, string>; evidence?: Record<string, string[]>; manifest?: object }
@@ -148,6 +149,14 @@ describe("check:budget", () => {
       "chrome: feature-quick-save.js carries kit code instead of linking it (/repo/src/site/kit/overlay/index.ts)",
       "chrome: kit-www.js carries Bits UI (/repo/node_modules/bits-ui/dist/index.js)"
     ])
+  })
+
+  test("fails a page whose lazy chunk imports an entry that waits on a top-level await", async () => {
+    const entry = `const window = await getCurrent();import(\`./MusicTab-DDDDDDDD.js\`);${weighing(3)}`
+    const deadlock = await build("chrome", { files: { "chunks/popup-AAAAAAAA.js": entry, "chunks/MusicTab-DDDDDDDD.js": `import{a}from"./popup-AAAAAAAA.js";${weighing(2)}` } })
+    expect(checkBudget([deadlock], budget).failures).toEqual(["chrome: popup.html: chunks/MusicTab-DDDDDDDD.js imports chunks/popup-AAAAAAAA.js, which has a top-level await (Q-PERF-35 rule 3)"])
+    const insideFunction = await build("chrome", { files: { "chunks/popup-AAAAAAAA.js": `async function f(){await g()}import(\`./MusicTab-DDDDDDDD.js\`);${weighing(3)}`, "chunks/MusicTab-DDDDDDDD.js": `import{a}from"./popup-AAAAAAAA.js";${weighing(2)}` } })
+    expect(checkBudget([insideFunction], budget).failures).toEqual([])
   })
 
   test("refuses to measure a build with source maps", async () => {

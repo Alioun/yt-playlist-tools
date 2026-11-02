@@ -122,9 +122,9 @@
     },
     {
       "row": "popup/www/js",
-      "kb": 65.9,
+      "kb": 63.2,
       "since": "2026-11-02",
-      "why": "One multi-page build shares chunks between the popup, settings and the first-run page (Q-PERF-35 rule 1)."
+      "why": "Svelte runtime 18 KB, the backend, about 6 KB of RPC contract validators, model decoders, key policy and icons, in a long tail no single cut removes."
     },
     {
       "row": "popup/www/css",
@@ -134,9 +134,9 @@
     },
     {
       "row": "popup/music/js",
-      "kb": 112.9,
+      "kb": 109.0,
       "since": "2026-11-02",
-      "why": "The YouTube Music tab chunk pulls settings-only code that the multi-page build shares."
+      "why": "The first view plus the YouTube Music tab, which statically loads the picker and Bits UI (about 35 KB) for its destination chooser."
     },
     {
       "row": "popup/music/css",
@@ -146,37 +146,37 @@
     },
     {
       "row": "popup/lazy/FeatureDetails",
-      "kb": 58.0,
+      "kb": 55.1,
       "since": "2026-11-02",
-      "why": "Feature details pull the picker and Bits UI through shared chunks."
+      "why": "Feature details statically load the picker and Bits UI (about 35 KB) for the destination chooser and auto-add list."
     },
     {
       "row": "popup/lazy/MusicTab",
-      "kb": 47.1,
+      "kb": 45.8,
       "since": "2026-11-02",
-      "why": "The YouTube Music tab pulls the picker and Bits UI through shared chunks."
+      "why": "The YouTube Music tab statically loads the picker and Bits UI (about 35 KB) for its destination chooser."
     },
     {
       "row": "settings/lazy/YouTube",
-      "kb": 71.5,
+      "kb": 65.5,
       "since": "2026-11-02",
-      "why": "The YouTube section pulls the picker, Bits UI and the destination chooser through shared chunks."
+      "why": "The YouTube section statically loads the picker and Bits UI (about 35 KB) for its destination choosers and auto-add list."
     },
     {
       "row": "settings/lazy/Music",
-      "kb": 71.9,
+      "kb": 64.8,
       "since": "2026-11-02",
-      "why": "The YouTube Music section pulls the picker, Bits UI and the destination chooser through shared chunks."
+      "why": "The YouTube Music section statically loads the picker and Bits UI (about 35 KB) for its destination chooser."
     },
     {
       "row": "first-run/js",
-      "kb": 76.0,
+      "kb": 62.4,
       "since": "2026-11-02",
-      "why": "The first run shares chunks with the popup and settings in one multi-page build (Q-PERF-35 rule 1), and its first view carries the backend and first-run owner."
+      "why": "Svelte runtime, the backend and first-run owner, contract validators and the first view, built on its own page build."
     },
     {
       "row": "first-run/upgrade/js",
-      "kb": 81.2,
+      "kb": 66.4,
       "since": "2026-11-02",
       "why": "As first-run/js, plus the upgrade note."
     },
