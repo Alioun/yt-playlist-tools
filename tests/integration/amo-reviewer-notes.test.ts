@@ -393,6 +393,15 @@ describe("the owner's setup commands in releasing.md", () => {
     expect(jq(branches, { branch_policies: [{ name: "main", type: "tag" }] })).toBe("false")
   })
 
+  test("the repository-variable check prints true only when no repository variable can stand in for a digest", () => {
+    const check = filter("actions/variables")
+    const variable = (name: string) => ({ name, value: "true" })
+    expect(jq(check, { total_count: 2, variables: [variable("PUBLISH_AMO"), variable("PUBLISH_CWS")] })).toBe("true")
+    expect(jq(check, { total_count: 2, variables: [variable("PUBLISH_AMO"), variable("REVIEWER_NOTES_SHA256")] })).toBe("false")
+    expect(jq(check, { total_count: 1, variables: [variable("BUN_SHA256")] })).toBe("false")
+    expect(jq(check, { message: "Not Found" })).not.toBe("true")
+  })
+
   test("the ruleset check prints true only when main needs the owner's review of its last push", () => {
     const check = filter("rules/branches/main", "pull_request")
     const parameters = {

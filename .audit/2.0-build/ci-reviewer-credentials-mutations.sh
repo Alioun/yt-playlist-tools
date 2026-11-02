@@ -113,6 +113,7 @@ plant ci-after-install "$ci" 's/(      # G28\x27s secret-flow tests.*?\n\n)(    
 plant runner-unowned "$owners" 's/^\/\.audit\/2\.0-build\/ci-reviewer-credentials-mutations\.sh \@Alioun\n//m' -- "sends every file the approval covers to the owner"
 plant docs-unowned-later "$owners" 's/\z/\/docs\/development\/releasing.md\n/' -- "sends every file the approval covers to the owner"
 plant env-admin-bypass "$docs" 's/\.can_admins_bypass == false and //' -- "the environment checks print true only for amo-reviewer as set up"
+plant repo-digest-allowed "$docs" 's/ and \.name != "BUN_SHA256"//' -- "the repository-variable check prints true only when no repository variable can stand in for a digest"
 plant ruleset-no-last-push "$docs" 's/ and \.parameters\.require_last_push_approval == true//' -- "the ruleset check prints true only when main needs the owner's review of its last push"
 plant ruleset-any-bypass "$docs" 's/ and all\(\.bypass_actors\[\]; \.actor_type == "RepositoryRole" and \.actor_id == 5\)//' -- "the bypass check prints true only for a ruleset no one but the owner can bypass"
 plant digest-without-pipefail "$docs" 's/\(set -euo pipefail(\n +digest=)/(set -eu$1/' -- "the digest command stores the approved script's digest, and nothing when git show fails"
