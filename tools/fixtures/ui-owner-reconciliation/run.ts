@@ -1,7 +1,7 @@
 import expectedCalls from "./expected-calls.json"
 import { wireCalls } from "./wire-calls"
 import { deepStrictEqual, equal } from "node:assert/strict"
-import { bridgeHarness, consumerSeed, popup, a, alpha, beta, created, settle, check } from "../ui-read-playlist-bridge/harness"
+import { bridgeHarness, popup, a, alpha, beta, created, settle, check } from "../ui-read-playlist-bridge/harness"
 import { deferred, success } from "../playlists-cache/harness"
 import { isJsonValue } from "../../../src/shared/contracts/json"
 import { firstRunContract } from "../../../src/shared/contracts/first-run"

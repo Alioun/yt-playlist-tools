@@ -466,7 +466,7 @@ class FilterAttempt {
   }
   async admission(permit: ExactRetainedFilterPermit) {
     await this.fresh(); this.stopped()
-    const { key, effect } = parsedFilterKey(this.identity.operation.record)
+    const { effect } = parsedFilterKey(this.identity.operation.record)
     if (effect.admission.kind === "off") return
     const remote = await this.deps.readSync(permit); this.stopped()
     if (!consentObject(remote)) throw new ObservationError({ kind: "different" })
@@ -737,7 +737,7 @@ class PlaylistAttempt {
   }
   async admission(permit: ExactRetainedPlaylistPermit) {
     await this.fresh(); this.stopped()
-    const { key, effect } = parsedPlaylistKey(this.identity.operation.record)
+    const { effect } = parsedPlaylistKey(this.identity.operation.record)
     if (effect.admission.kind === "off") return
     const remote = await this.deps.readSync(permit); this.stopped()
     if (!consentObject(remote)) throw new ObservationError({ kind: "different" })

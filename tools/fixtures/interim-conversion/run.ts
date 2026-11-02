@@ -10,7 +10,6 @@ import { createStoreStartupHost, isStartupValueKey, projectInterimSnapshot, type
 import { isJsonValue, type JsonObject, type JsonValue } from "../../../src/shared/contracts/json"
 import { isAccountKey, isPlaylistId } from "../../../src/shared/model/validation"
 import { decodeDocument, decodeFilter, decodeSettings, decodeSetup } from "../../../src/shared/model"
-import type { InterimConversionContext } from "../../../src/background/store/interim-conversion"
 
 const A = "AAAAAAAAAAAAAAAA", B = "BBBBBBBBBBBBBBBB", C = "CCCCCCCCCCCCCCCC", D = "DDDDDDDDDDDDDDDD", E = "EEEEEEEEEEEEEEEE"
 const channel = "UCaaaaaaaaaaaaaaaaaaaaaa"

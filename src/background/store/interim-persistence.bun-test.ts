@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test"
 import { executeInterimRetention, readRetainedInterim, readRetainedCheckpoint, recoveredRetainedV1AgreementDifference, retainedCheckpointDifference, projectInterimNote, type InterimPersistenceSnapshot } from "./interim-persistence"
 import { createStartingLocalFilterWriter, createLocalFilterWriter, StartupReadinessError } from "./local-filter-writer"
-import { createInterimHarness, interimFixture, interimSnapshot, runInterimConversion, withdrawalRetainedV1Fixture } from "../../../tools/fixtures/interim-conversion/run"
+import { createInterimHarness, interimSnapshot, runInterimConversion, withdrawalRetainedV1Fixture } from "../../../tools/fixtures/interim-conversion/run"
 import { createRemovalHarness, removalFixture } from "../../../tools/fixtures/account-removal-execution/run"
 import { isAccountKey } from "../../shared/model/validation"
 import { isJsonValue, type JsonValue, type JsonObject } from "../../shared/contracts/json"

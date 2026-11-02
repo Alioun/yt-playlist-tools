@@ -4,7 +4,7 @@ import { isKeySettingChange, type KeySettingChange, type KeySettingAnswer } from
 import { executeFeatureSetting, type FeatureSettingWriteResult } from "./feature-settings-execution"
 import type { FeatureAccess } from "./feature-settings"
 import { isFeatureSettingChange, type FeatureSettingChange } from "../../shared/contracts/shared-settings"
-import { featureProgressKey, featureProgressPending, recoverFeatureProgress } from "./feature-settings-progress"
+import { featureProgressPending, recoverFeatureProgress } from "./feature-settings-progress"
 import { createSettingsImportExecution, type SettingsImportOwner, type SettingsImportResult, type SettingsImportHost } from "./settings-import-execution"
 import { readSettingsImport, settingsImportKey } from "./settings-import-persistence"
 import { parseConsentJobs } from "./consent-recovery"

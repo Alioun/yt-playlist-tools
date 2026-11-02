@@ -4,7 +4,7 @@ import type { AnchorObservation, EnabledMonitorFeature } from "./ports"
 import type { AnchorId } from "../../shared/features/registry"
 import { context, monitorWorld, pageFeature, signalValue, syntheticHealthFacts, instance } from "../../../tools/fixtures/monitor/harness"
 import { deferred, a, b } from "../../../tools/fixtures/tabs/harness"
-import { isTabView, type FeatureStatus } from "../../shared/contracts/tab-view"
+import { isTabView } from "../../shared/contracts/tab-view"
 import { defaultSettings } from "../../shared/model"
 import type { TabContext } from "../tabs/ports"
 

@@ -1,5 +1,5 @@
 import { deriveInterimInstallationEffect, readInterimInstallationHistory, retainedInstallationDifference, type RetainedInstallationV3, type RetainedInstallationHistory, type ConfirmedRetainedAgreementV2, type InterimInstallationDifference } from "./interim-installation"
-import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
+import { isJsonValue, type JsonObject } from "../../shared/contracts/json"
 import { readRetainedRecovery, retainedRecoveryDifference, recoveryHistory, type RetainedRecoveryV4 } from "./interim-recovery-execution"
 import { archiveRetained, coversArchivedSource, currentAuthorityAnchor, readCanonicalAuthorityRecord, type RetainedCanonicalAuthorityV5 } from "./interim-canonical-authority"
 import { isRecord } from "../../shared/model/codec"

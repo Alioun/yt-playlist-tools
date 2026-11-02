@@ -1,4 +1,4 @@
-import { isBreakageSignal, type BreakageSignal } from "../../shared/contracts/diagnostics"
+import { isBreakageSignal } from "../../shared/contracts/diagnostics"
 import { isTabViewFacts, sameTabViewFacts, isPageFeatureId, type FeatureStatus, type TabFeature } from "../../shared/contracts/tab-view"
 import type { AccountKey } from "../../shared/model/validation"
 import type { FeatureId, JobId } from "../../shared/contracts/vocabulary"

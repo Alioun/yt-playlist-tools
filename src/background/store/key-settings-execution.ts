@@ -1,5 +1,5 @@
 import { decodeDocument, decodeSettings, decodeSetup, DOCUMENT_VERSION, parseDocumentKey, documentKey, isShortcutId,
-  type AccountKey, type ShortcutId, type Settings, type Shortcut } from "../../shared/model"
+  type AccountKey, type ShortcutId, type Shortcut } from "../../shared/model"
 import { readSettingsView } from "../../shared/model/settings-view"
 import { type JsonObject } from "../../shared/contracts/json"
 import { isKeySettingChange, type KeySettingChange, type KeySettingAnswer, type KeySettingRefusal } from "../../shared/contracts/key-settings"

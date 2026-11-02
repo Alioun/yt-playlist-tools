@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { documentKey, defaultSettings, defaultSetup, parseDocumentKey, type DocumentKey } from "../../shared/model"
+import { documentKey, defaultSettings, defaultSetup, parseDocumentKey } from "../../shared/model"
 import { createImportPlanner } from "../../shared/settings-file"
 import type { JsonObject } from "../../shared/contracts/json"
 import { planSettingsImport, type SettingsImportPlan, type SettingsImportPlanResult } from "./settings-import-plan"

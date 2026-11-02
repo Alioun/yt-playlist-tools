@@ -224,7 +224,7 @@ test("never lets unrelated or malformed answers satisfy a pending call", async (
 test("bounds an undelivered call with its kind's one-shot deadline and ignores the late answer", async () => {
   const { network, caller, time, seen } = setup("queued")
   let outcome: RpcOutcome<unknown> | undefined
-  caller.call("test.add", { video: "v1", playlists: ["a"] }).then(value => { outcome = value })
+  void caller.call("test.add", { video: "v1", playlists: ["a"] }).then(value => { outcome = value })
   time.advance(9_999)
   await flush()
   expect(outcome).toBeUndefined()

@@ -1,0 +1,57 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "options": {
+    "typeAware": true
+  },
+  "rules": {
+    "no-unused-vars": [
+      "warn",
+      {
+        "args": "none",
+        "varsIgnorePattern": "^_",
+        "ignoreRestSiblings": true
+      }
+    ],
+    "unicorn/no-useless-spread": "off",
+    "typescript/no-floating-promises": "error",
+    "typescript/await-thenable": "error",
+    "typescript/unbound-method": "off"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*type-test.ts"
+      ],
+      "rules": {
+        "no-unused-vars": "off",
+        "no-unused-expressions": "off",
+        "typescript/no-floating-promises": "off",
+        "typescript/await-thenable": "off"
+      }
+    },
+    {
+      "files": [
+        "**/*.bun-test.ts",
+        "**/*.test.ts",
+        "tests/**",
+        "tools/fixtures/**"
+      ],
+      "rules": {
+        "typescript/await-thenable": "off"
+      }
+    },
+    {
+      "files": [
+        "src/ui/onboarding/first-run.bun-test.ts"
+      ],
+      "rules": {
+        "typescript/no-floating-promises": "warn"
+      }
+    }
+  ],
+  "ignorePatterns": [
+    ".output/**",
+    "**/.wxt/**",
+    "**/.svelte-check/**"
+  ]
+}

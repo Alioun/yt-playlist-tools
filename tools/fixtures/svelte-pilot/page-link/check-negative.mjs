@@ -19,7 +19,7 @@ const kitMusic = { type: "unlisted-script", name: "kit-music" }
 const unrelated = [{ type: "background", name: "background" }, { type: "unlisted-page", name: "control" }]
 const core = { type: "unlisted-script", name: "core-www" }
 const groups = [kitMusic, unrelated, feature, kitWww, core]
-hooks["entrypoints:grouped"]({}, groups)
+void hooks["entrypoints:grouped"]({}, groups)
 assert.deepEqual(groups, [unrelated, feature, core, kitMusic, kitWww])
 assert.throws(() => hooks["entrypoints:grouped"]({}, [[kitWww, feature]]), /mixed kit group/)
 const externalCalls = []
@@ -28,7 +28,7 @@ const outputs = [
   { format: "iife", name: "OriginalTwo", entryFileNames: "original-two.js", globals: { existing: "OriginalGlobal" } }
 ]
 const config = { build: { rollupOptions: { external: (...values) => { externalCalls.push(values); return values[0] === "existing" }, output: outputs } } }
-hooks["vite:build:extendConfig"]([feature], config)
+void hooks["vite:build:extendConfig"]([feature], config)
 assert.equal(config.build.rollupOptions.external("existing", "caller", false), true)
 assert.deepEqual(externalCalls, [["existing", "caller", false]])
 assert.equal(config.build.rollupOptions.external("svelte", "caller", false), true)
@@ -39,7 +39,7 @@ assert.equal(outputs[0].globals("existing"), "original.existing")
 assert.equal(outputs[1].globals("existing"), "OriginalGlobal")
 assert.equal(outputs[0].globals("svelte/internal/client"), "globalThis.__pp.svelte.client")
 const arrayExternal = { build: { rollupOptions: { external: ["existing", /^other$/g], output: { format: "iife", globals: { existing: "Existing" } } } } }
-hooks["vite:build:extendConfig"]([feature], arrayExternal)
+void hooks["vite:build:extendConfig"]([feature], arrayExternal)
 assert(arrayExternal.build.rollupOptions.external("existing", undefined, false))
 assert(arrayExternal.build.rollupOptions.external("other", undefined, false))
 assert(arrayExternal.build.rollupOptions.external("other", undefined, false))

@@ -157,7 +157,7 @@ export function createRpc<M extends RpcMap, Sender>(transport: Transport<Sender>
           if (inflight.delete(release)) resolve(undefined)
         }
         inflight.add(release)
-        answer(sender).then(value => {
+        void answer(sender).then(value => {
           if (inflight.delete(release)) resolve(value)
         })
       })

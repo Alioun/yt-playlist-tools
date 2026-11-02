@@ -1,6 +1,6 @@
 import { completedList } from "./harness"
 import { deepStrictEqual } from "node:assert/strict"
-import { bridgeHarness, consumerSeed, a, created, video, nativeTab, signedIn, success, check, popup, settings, settle } from "./harness"
+import { bridgeHarness, a, created, video, nativeTab, signedIn, success, check, popup, settings, settle } from "./harness"
 import { isJsonValue } from "../../../src/shared/contracts/json"
 import { isUiCreationAnswer } from "../../../src/shared/contracts/ui-playlists"
 import { isCreationId } from "../../../src/shared/contracts/ui-playlists"

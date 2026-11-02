@@ -1,6 +1,6 @@
 import { prepareFirstEditHistory, readFirstEditProvenance } from "./first-edit-provenance"
 import {
-  CONSENT_VERSION, DOCUMENT_VERSION, DecodeError, decodeDevice, decodeDocument, decodeFilter, decodeLastAccount, decodeSetup, LAST_ACCOUNT_KEY,
+  CONSENT_VERSION, DOCUMENT_VERSION, DecodeError, decodeDocument, decodeFilter, decodeLastAccount, decodeSetup, LAST_ACCOUNT_KEY,
   documentKey, parseDocumentKey, isAccountKey, isPlaylistId, type AccountKey, type Device, type DocumentKey, type Filter, type Tombstone
 } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"

@@ -655,4 +655,4 @@ export async function runClaimFixture(api = { create: createStartingLocalFilterW
 }
 
 export const fixtureRun = import.meta.main ? runClaimFixture() : Promise.resolve(undefined)
-if (import.meta.main) fixtureRun.then(result => console.log(JSON.stringify(result, (_, value: unknown) => value instanceof Error ? { name: value.name, message: value.message } : value)))
+if (import.meta.main) void fixtureRun.then(result => console.log(JSON.stringify(result, (_, value: unknown) => value instanceof Error ? { name: value.name, message: value.message } : value)))

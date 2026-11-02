@@ -5,7 +5,7 @@ import { isInterimSourceKey, isInterimCanonicalKey, type StoreStartupHost } from
 import { pendingAccountRemovalKey } from "../../../src/background/store/account-removal-execution"
 import { pendingSyncJoinKey } from "../../../src/background/store/sync-join-persistence"
 import { createStoreLifecycle, clearMarkerKey, type ClearAllResult, type LifecycleState, type SettingsPageOrigin, type StartingOwner,
-  type StoreLifecycle, type StoreLifecycleDependencies } from "../../../src/background/store/store-lifecycle"
+  type StoreLifecycleDependencies } from "../../../src/background/store/store-lifecycle"
 import type { JsonObject, JsonValue } from "../../../src/shared/contracts/json"
 
 export type LifecycleStores = { local: JsonObject; session: JsonObject; database: "present" | "absent" }

@@ -33,7 +33,7 @@ await check("transformed-module-identity", async () => {
   const entry = (name) => ({ type: "unlisted-script", name })
   const plugin = (name) => {
     const config = {}
-    link.hooks["vite:build:extendConfig"]([entry(name)], config)
+    void link.hooks["vite:build:extendConfig"]([entry(name)], config)
     return config.plugins.at(-1)
   }
   const context = { parse: (code) => parseSync("probe.js", code, { sourceType: "module" }).program }
@@ -54,7 +54,7 @@ await check("transformed-module-identity", async () => {
   transform(www, "same.js", "export default 42;")
   assert.match(kit("www"), /root:\{\}/)
   assert.match(kit("music"), /"hydrate":/)
-  link.hooks["entrypoints:grouped"]({}, [entry("kit-www"), entry("consumer-www")])
+  void link.hooks["entrypoints:grouped"]({}, [entry("kit-www"), entry("consumer-www")])
   assert.match(kit("music"), /root:\{\}/)
   assert.match(kit("www"), /root:\{\}/)
   return { replacement: true, removal: true, variants: true, siteIndependence: true, generationReset: true }

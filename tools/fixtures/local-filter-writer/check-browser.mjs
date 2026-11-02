@@ -479,7 +479,7 @@ try {
   result.rounds.push({ stage: "native-joined-full-browser-restart", native: browser.native, ...retry })
 } finally { await browser.context.close() }
 
-const flushKey = key, flushBase = key.replace("doc:", "s:"), tombKey = "doc:filter:BBBBBBBBBBBBBBBB:PL_T"
+const flushBase = key.replace("doc:", "s:"), tombKey = "doc:filter:BBBBBBBBBBBBBBBB:PL_T"
 const flushG0 = { v: 1, gen: "g0", at: 1, by: "old", ...own, data: { mode: "deny", on: true, channels: [], future: { keep: true } } }
 const flushG1 = { ...flushG0, gen: "g1", at: 10, data: { ...flushG0.data, on: false } }
 const flushSettings = { v: 1, gen: "settings-pending", at: 1, by: "old", data: { future: "x".repeat(9000) } }

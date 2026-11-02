@@ -1,6 +1,6 @@
 import { GlobalRegistrator } from "@happy-dom/global-registrator"
 import { isPageType, isVideoInfo } from "../../../src/shared/contracts"
-import { checked, expectedKey, harness, invocation, nav, rawIdentity, route, snapshot, syntheticSignal } from "./support"
+import { checked, expectedKey, harness, invocation, nav, rawIdentity, snapshot, syntheticSignal } from "./support"
 
 export async function runPageLinkFixture(dom: boolean) {
   const video = checked(isVideoInfo, { videoId: "dQw4w9WgXcQ", title: "Synthetic video", length: 120, kind: "video" })
