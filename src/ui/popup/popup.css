@@ -1,0 +1,8 @@
+@import "tailwindcss" source(none);
+@source "./";
+@source "../components";
+@source "../features";
+@source "../picker";
+@source "../keys";
+@source "../onboarding";
+@import "../lib/theme.css";

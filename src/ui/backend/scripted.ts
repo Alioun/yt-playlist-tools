@@ -7,9 +7,12 @@ import type { BackendOptions, LocalChange, LocalListener } from "./backend"
 import { createBackend } from "./core"
 
 export type ScriptedAnswer = { [K in keyof UiMessages]: { readonly kind: K; readonly result: UiMessages[K]["result"] } }[keyof UiMessages]
+export type ScriptedResponders = { readonly [K in keyof UiMessages]?: (payload: UiMessages[K]["payload"]) => UiMessages[K]["result"] }
 export type ScriptedBackendOptions = BackendOptions & {
   readonly records?: JsonObject
   readonly answers: readonly ScriptedAnswer[]
+  /** Answers by kind, for pages that call the same route many times in no fixed order. Queued answers go first. */
+  readonly respond?: ScriptedResponders
   readonly grants?: PermissionGrant & { readonly www: boolean }
 }
 export function createScriptedBackend(options: ScriptedBackendOptions) {
@@ -27,20 +30,27 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
   const unhandle = rpc.handle({
     authenticate: () => ({ kind: "accepted", context: undefined }),
     handlers: {
-      "ui.clearAll": () => take("ui.clearAll"),
-      "ui.change": () => take("ui.change"),
-      "ui.syncedChoices": () => take("ui.syncedChoices"),
-      "ui.accountInView": () => take("ui.accountInView"),
-      "ui.playlists": () => take("ui.playlists"),
-      "ui.create": () => take("ui.create"),
-      "ui.resolveChannel": () => take("ui.resolveChannel"),
-      "ui.status": () => take("ui.status"),
-      "ui.pause": () => take("ui.pause"),
-      "ui.recentAdds": () => take("ui.recentAdds"),
-      "ui.device": () => take("ui.device")
+      "ui.clearAll": payload => take("ui.clearAll", payload),
+      "ui.change": payload => take("ui.change", payload),
+      "ui.syncedChoices": payload => take("ui.syncedChoices", payload),
+      "ui.accountInView": payload => take("ui.accountInView", payload),
+      "ui.playlists": payload => take("ui.playlists", payload),
+      "ui.create": payload => take("ui.create", payload),
+      "ui.resolveChannel": payload => take("ui.resolveChannel", payload),
+      "ui.status": payload => take("ui.status", payload),
+      "ui.pause": payload => take("ui.pause", payload),
+      "ui.recentAdds": payload => take("ui.recentAdds", payload),
+      "ui.device": payload => take("ui.device", payload),
+      "ui.filter": payload => take("ui.filter", payload)
     }
   })
-  function take<K extends keyof UiMessages>(kind: K): UiMessages[K]["result"] {
+  function take<K extends keyof UiMessages>(kind: K, payload: UiMessages[K]["payload"]): UiMessages[K]["result"] {
+    const responder = options.respond?.[kind] as ((payload: UiMessages[K]["payload"]) => UiMessages[K]["result"]) | undefined
+    if (responder && answers[0]?.kind !== kind) {
+      const result: unknown = responder(payload)
+      if (!uiContract[kind].result(result)) throw Error(`Scripted ${kind} answer is invalid`)
+      return structuredClone(result) as UiMessages[K]["result"]
+    }
     const next = answers.shift(), result: unknown = next?.result
     if (next?.kind !== kind || !uiContract[kind].result(result)) throw Error("Scripted answer unavailable")
     return structuredClone(result)

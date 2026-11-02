@@ -1,4 +1,5 @@
-import { isRecentEntry, type DeviceSettingAnswer, type DeviceSettingChange, type PageMessages, type RecentEntry, type UiFeatureHealth, type UiTabFacts } from "../../shared/contracts/ui-pages"
+import { isRecentEntry, type DeviceSettingAnswer, type DeviceSettingChange, type FilterSettingAnswer, type PageMessages, type RecentEntry, type UiFeatureHealth, type UiTabFacts } from "../../shared/contracts/ui-pages"
+import type { LocalFilterChange, LocalFilterWriteResult } from "../store/local-filter-writer"
 import type { UiUnavailable } from "../../shared/contracts/ui-playlists"
 import type { AccountKey } from "../../shared/model/validation"
 import type { RpcHandlers } from "../../shared/rpc/rpc"
@@ -12,6 +13,7 @@ export type PageReceiverPorts = {
     readSession(): Promise<SessionRead>
     changeSession(change: SessionChange): Promise<SessionWrite>
     changeDeviceSetting(origin: UiOrigin, change: DeviceSettingChange): Promise<DeviceSettingAnswer>
+    change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>
   }
   /** Raw `storage.session` reads, for the recent adds the session planner keeps but doesn't decode. */
   readonly session: { get(key: "recentAdds"): Promise<unknown> }
@@ -56,6 +58,16 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
       const rows = Array.isArray(raw) ? raw : []
       const entries = rows.flatMap(row => recentEntry(row, payload.acct) ?? []).slice(0, 50)
       return await context.current() ? { kind: "recent", entries } : unavailable("operation")
+    },
+    async "ui.filter"({ change }, context): Promise<FilterSettingAnswer> {
+      if (context.ui.requester.incognito) return { kind: "refused", reason: "private" }
+      const request: LocalFilterChange = change.clearListed
+        ? { acct: change.acct, playlist: change.playlist, desired: change.desired, clearListedChannels: "confirmed", expectedGeneration: change.expectedGeneration }
+        : { acct: change.acct, playlist: change.playlist, desired: change.desired, clearListedChannels: "not-confirmed" }
+      const answer = await ports.owner.change(context.ui.ui.origin, request)
+      if (answer.kind === "unconfirmed") return { kind: "refused", reason: "unconfirmed" }
+      if (answer.kind === "unavailable") return { kind: "refused", reason: answer.reason === "newer-layout" ? "update-needed" : "unavailable" }
+      return "ok" in answer.result ? { kind: "confirmed" } : { kind: "refused", reason: answer.result.refused }
     },
     async "ui.device"(payload, context) {
       const origin = context.ui.ui.origin

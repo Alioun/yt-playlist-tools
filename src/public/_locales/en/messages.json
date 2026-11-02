@@ -3203,5 +3203,706 @@
         "content": "$1"
       }
     }
+  },
+  "pop_recentAdds": {
+    "message": "Recent adds"
+  },
+  "pop_openSettings": {
+    "message": "Open settings"
+  },
+  "pop_readingAccount": {
+    "message": "Reading the account in this tab"
+  },
+  "pop_showSetupFor": {
+    "message": "Show the setup for"
+  },
+  "pop_setupMenuNote": {
+    "message": "This only changes what you see here. YouTube stays on the account you're signed in as."
+  },
+  "pop_manageSetups": {
+    "message": "Manage account setups"
+  },
+  "pop_sitesLabel": {
+    "message": "Sites"
+  },
+  "pop_unfold": {
+    "message": "Show $FEATURE$ options",
+    "placeholders": {
+      "feature": {
+        "content": "$1"
+      }
+    }
+  },
+  "pop_pause": {
+    "message": "Pause"
+  },
+  "pop_resume": {
+    "message": "Resume"
+  },
+  "pop_pauseFailed": {
+    "message": "Couldn't change Pause. Try again."
+  },
+  "pop_switchFailed": {
+    "message": "Couldn't change this. Nothing changed."
+  },
+  "pop_switchRefused_site_access": {
+    "message": "Perchling needs access to the site first."
+  },
+  "pop_switchRefused_browser_menu_permission": {
+    "message": "Perchling needs your OK for the browser's menu first."
+  },
+  "pop_switchRefused_sync_full": {
+    "message": "Synced settings are full, so this wasn't saved."
+  },
+  "pop_switchRefused_update_needed": {
+    "message": "Update Perchling to change this."
+  },
+  "strip_one_www": {
+    "message": "$FEATURE$ isn't working in this tab because YouTube changed something.",
+    "placeholders": {
+      "feature": {
+        "content": "$1"
+      }
+    }
+  },
+  "strip_one_music": {
+    "message": "$FEATURE$ isn't working in this tab because YouTube Music changed something.",
+    "placeholders": {
+      "feature": {
+        "content": "$1"
+      }
+    }
+  },
+  "strip_many": {
+    "message": "$COUNT$ features aren't working in this tab.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "strip_partly": {
+    "message": "$FEATURE$ is partly working in this tab.",
+    "placeholders": {
+      "feature": {
+        "content": "$1"
+      }
+    }
+  },
+  "strip_details": {
+    "message": "Details"
+  },
+  "banner_newer_title": {
+    "message": "This version of Perchling is older than your settings."
+  },
+  "banner_newer_text": {
+    "message": "Update it to continue."
+  },
+  "banner_upgrade_title": {
+    "message": "Perchling 2.0 is waiting for your OK"
+  },
+  "banner_upgrade_both": {
+    "message": "Auto-add and your shortcut are paused until you agree. Perchling needs no Google credentials anymore."
+  },
+  "banner_upgrade_autoAdd": {
+    "message": "Auto-add is paused until you agree. Perchling needs no Google credentials anymore."
+  },
+  "banner_upgrade_shortcut": {
+    "message": "Your shortcut is paused until you agree. Perchling needs no Google credentials anymore."
+  },
+  "banner_upgrade_nothing": {
+    "message": "Nothing runs until you agree. Perchling needs no Google credentials anymore."
+  },
+  "banner_consent_text": {
+    "message": "Nothing runs on YouTube until you agree. Switching a feature on asks first."
+  },
+  "banner_consentVersion_title": {
+    "message": "Perchling $VERSION$ handles your data in a new way. Review and agree to keep it running.",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "banner_access_text": {
+    "message": "Features stay on, but nothing runs until you give access."
+  },
+  "banner_signedOut_title": {
+    "message": "You're not signed in to YouTube in this tab."
+  },
+  "banner_private_title": {
+    "message": "Private window"
+  },
+  "banner_private_inUse": {
+    "message": "$ACCOUNT$'s setup is in use. You can change it only in a normal window.",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "banner_private_none": {
+    "message": "$ACCOUNT$ has no setup yet. A private window can't save one, so set it up in a normal window.",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "banner_noTab_title": {
+    "message": "No YouTube tab is open"
+  },
+  "banner_noTab_text": {
+    "message": "This is saved data from $WHEN$. Switches still work. Saving and new playlists need a tab.",
+    "placeholders": {
+      "when": {
+        "content": "$1"
+      }
+    }
+  },
+  "banner_noTab_textNoStamp": {
+    "message": "Switches still work. Saving and new playlists need a tab."
+  },
+  "banner_noMusicTab_title": {
+    "message": "No YouTube Music tab is open"
+  },
+  "banner_noMusicTab_text": {
+    "message": "Playing now needs one. Switches still work."
+  },
+  "banner_openMusic": {
+    "message": "Open YouTube Music"
+  },
+  "banner_sync_waiting": {
+    "message": "Choose which settings to keep."
+  },
+  "banner_sync_fullText": {
+    "message": "Changes that need more room aren't saved."
+  },
+  "banner_sync_update": {
+    "message": "Settings sync needs an update"
+  },
+  "banner_marks_one": {
+    "message": "A playlist you chose needs attention"
+  },
+  "banner_marks_other": {
+    "message": "$COUNT$ playlists you chose need attention",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "banner_marks_text_one": {
+    "message": "It's marked Missing or Full, with Remove."
+  },
+  "banner_marks_text_other": {
+    "message": "They're marked Missing or Full, with Remove."
+  },
+  "banner_show": {
+    "message": "Show"
+  },
+  "banner_unclaimed_title": {
+    "message": "Your playlists from 1.x belong to another YouTube account."
+  },
+  "banner_unclaimed_text": {
+    "message": "Switch to it on YouTube to use them, or set up $ACCOUNT$ below.",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "summary_autoAdd_one": {
+    "message": "$COUNT$ playlist · adds at $PERCENT$ %",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "percent": {
+        "content": "$2"
+      }
+    }
+  },
+  "summary_autoAdd_other": {
+    "message": "$COUNT$ playlists · adds at $PERCENT$ %",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "percent": {
+        "content": "$2"
+      }
+    }
+  },
+  "summary_autoAdd_paused": {
+    "message": "Paused until you resume it or restart the browser"
+  },
+  "summary_autoAdd_none": {
+    "message": "No playlists for $ACCOUNT$ yet",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "summary_autoAdd_signedOut": {
+    "message": "Sign in to YouTube to choose playlists"
+  },
+  "summary_shortcuts_none": {
+    "message": "No shortcuts yet"
+  },
+  "summary_quickSave_set": {
+    "message": "One click saves to $PLAYLIST$",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      }
+    }
+  },
+  "summary_quickSave_unset": {
+    "message": "Asks where to save the first time"
+  },
+  "summary_queue": {
+    "message": "Adds to the end of the queue"
+  },
+  "summary_watch": {
+    "message": "Under the video, before YouTube's Save"
+  },
+  "summary_cardMenu": {
+    "message": "Right-click a video for YouTube's ⋮ menu"
+  },
+  "summary_browserMenu": {
+    "message": "Save to ▸ in the browser's right-click menu"
+  },
+  "summary_gather_player": {
+    "message": "Into YouTube's player · $ORDER$",
+    "placeholders": {
+      "order": {
+        "content": "$1"
+      }
+    }
+  },
+  "summary_gather_queue": {
+    "message": "Into YouTube's queue · $ORDER$",
+    "placeholders": {
+      "order": {
+        "content": "$1"
+      }
+    }
+  },
+  "summary_gather_playlist": {
+    "message": "Into $PLAYLIST$ · $ORDER$",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      },
+      "order": {
+        "content": "$2"
+      }
+    }
+  },
+  "summary_gather_auto": {
+    "message": "$SUMMARY$ · Automatic on",
+    "placeholders": {
+      "summary": {
+        "content": "$1"
+      }
+    }
+  },
+  "summary_gather_noPlaylist": {
+    "message": "a playlist you choose"
+  },
+  "gatherOrder_newest": {
+    "message": "newest first"
+  },
+  "gatherOrder_oldest": {
+    "message": "oldest first"
+  },
+  "gatherOrder_english": {
+    "message": "English first"
+  },
+  "gatherOrder_nonEnglish": {
+    "message": "non-English first"
+  },
+  "gatherOrder_leftToRight": {
+    "message": "left to right"
+  },
+  "gatherOrder_rightToLeft": {
+    "message": "right to left"
+  },
+  "gatherOrder_shuffled": {
+    "message": "shuffled"
+  },
+  "summary_quickActions_none": {
+    "message": "No buttons chosen"
+  },
+  "summary_more": {
+    "message": "+$COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "summary_noKey": {
+    "message": "No key"
+  },
+  "music_sectionTitle": {
+    "message": "On YouTube Music"
+  },
+  "music_sectionOn": {
+    "message": "Your features below run on music.youtube.com"
+  },
+  "music_sectionOff": {
+    "message": "Off, so nothing of ours runs there. Your choices are kept."
+  },
+  "music_psName": {
+    "message": "Playlist shortcuts here too"
+  },
+  "music_psOff": {
+    "message": "Turn on Playlist shortcuts in the YouTube tab"
+  },
+  "music_psOn": {
+    "message": "They save the song you're pointing at or playing"
+  },
+  "music_saveName": {
+    "message": "Quick-save playlist"
+  },
+  "music_saveSet": {
+    "message": "Save to playlist adds to $PLAYLIST$",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      }
+    }
+  },
+  "music_saveUnset": {
+    "message": "Not chosen yet, so the first save asks"
+  },
+  "music_saveSubtitle": {
+    "message": "Save to playlist adds songs here in one click."
+  },
+  "music_keysActsOn": {
+    "message": "A key acts on the song you're pointing at, else the one playing."
+  },
+  "music_keysUndo": {
+    "message": "Undo, set in Settings › Everywhere"
+  },
+  "music_changeKeys": {
+    "message": "Change keys"
+  },
+  "playing_title": {
+    "message": "Playing now"
+  },
+  "playing_signedOut": {
+    "message": "Sign in to YouTube Music to save songs."
+  },
+  "consentSheet_agree": {
+    "message": "Agree and turn on $FEATURE$",
+    "placeholders": {
+      "feature": {
+        "content": "$1"
+      }
+    }
+  },
+  "consentSheet_cancel": {
+    "message": "Cancel"
+  },
+  "consentSheet_musicDenied": {
+    "message": "Your agreement is saved, but $FEATURE$ stays off, because Perchling has no access to YouTube Music.",
+    "placeholders": {
+      "feature": {
+        "content": "$1"
+      }
+    }
+  },
+  "consentSheet_failed": {
+    "message": "Couldn't save your agreement. Nothing changed. Try again."
+  },
+  "recent_title": {
+    "message": "Recent adds"
+  },
+  "recent_lead": {
+    "message": "Since the browser started · $ACCOUNT$",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "recent_empty": {
+    "message": "Nothing added since the browser started."
+  },
+  "recent_gathered": {
+    "message": "$COUNT$ videos → $PLAYLIST$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "playlist": {
+        "content": "$2"
+      }
+    }
+  },
+  "recent_to": {
+    "message": "→"
+  },
+  "recent_close": {
+    "message": "Close recent adds"
+  },
+  "recent_unavailable": {
+    "message": "Couldn't read recent adds. Try again."
+  },
+  "recent_source_autoAdd": {
+    "message": "Auto-add"
+  },
+  "recent_source_quickSave": {
+    "message": "Quick-save"
+  },
+  "recent_source_browserMenu": {
+    "message": "Save from the browser's menu"
+  },
+  "recent_source_gather": {
+    "message": "Gather tabs"
+  },
+  "recent_source_autoGather": {
+    "message": "Automatic gathering"
+  },
+  "recent_source_picker": {
+    "message": "Save to…"
+  },
+  "recent_source_watchButton": {
+    "message": "Watch-page button"
+  },
+  "recent_source_musicActions": {
+    "message": "Quick actions"
+  },
+  "recent_source_other": {
+    "message": "Perchling"
+  },
+  "sheet_close": {
+    "message": "Close"
+  },
+  "musicButton_next": {
+    "message": "Play next"
+  },
+  "musicButton_queue": {
+    "message": "Add to queue"
+  },
+  "musicButton_save": {
+    "message": "Save to playlist"
+  },
+  "musicButton_like": {
+    "message": "Like"
+  },
+  "musicButton_remove": {
+    "message": "Remove from queue"
+  },
+  "musicButton_bar": {
+    "message": "Save on the player bar"
+  },
+  "musicButton_library": {
+    "message": "Save to library"
+  },
+  "musicButton_mix": {
+    "message": "Start mix"
+  },
+  "musicButton_album": {
+    "message": "Go to album"
+  },
+  "musicButton_artist": {
+    "message": "Go to artist"
+  },
+  "musicButton_picker": {
+    "message": "Save to playlist…"
+  },
+  "musicWhere_next": {
+    "message": "Songs, albums and playlists. Moves a queued song up."
+  },
+  "musicWhere_queue": {
+    "message": "Songs, albums and playlists. Moves a queued song to the end."
+  },
+  "musicWhere_save": {
+    "message": "Songs. One click saves to the quick-save playlist, and ▾ opens the picker."
+  },
+  "musicWhere_like": {
+    "message": "Songs, where YouTube Music shows no like button of its own"
+  },
+  "musicWhere_remove": {
+    "message": "Queue items"
+  },
+  "musicWhere_bar": {
+    "message": "Shown beside YouTube Music's like, in the classic bar and the new miniplayer."
+  },
+  "musicWhere_library": {
+    "message": "Songs, albums and playlists, where YouTube Music shows no library button of its own"
+  },
+  "musicWhere_mix": {
+    "message": "Songs, albums and playlists. Replaces the queue."
+  },
+  "musicWhere_album": {
+    "message": "Songs that belong to an album"
+  },
+  "musicWhere_artist": {
+    "message": "Songs, albums and playlists"
+  },
+  "musicActions_warning": {
+    "message": "Each extra button squeezes narrow rows more. On Home's Quick picks at common laptop widths, a hovered row's title can disappear, but its tooltip still names the song."
+  },
+  "gather_into_playlist": {
+    "message": "A playlist"
+  },
+  "gatherOpt_into": {
+    "message": "Gather into"
+  },
+  "gatherOpt_player": {
+    "message": "YouTube's player"
+  },
+  "gatherOpt_playerLine": {
+    "message": "Up to 50 videos, as YouTube's own list with Shuffle and Loop. More go to YouTube's queue."
+  },
+  "gatherOpt_queue": {
+    "message": "YouTube's queue"
+  },
+  "gatherOpt_queueLine": {
+    "message": "Up to 200 videos, in YouTube's queue panel, where you can reorder and remove them."
+  },
+  "gatherOpt_order": {
+    "message": "Order"
+  },
+  "gatherOpt_order_newest": {
+    "message": "Newest tabs first"
+  },
+  "gatherOpt_order_oldest": {
+    "message": "Oldest tabs first"
+  },
+  "gatherOpt_order_english": {
+    "message": "English videos first"
+  },
+  "gatherOpt_order_nonEnglish": {
+    "message": "Non-English videos first"
+  },
+  "gatherOpt_order_leftToRight": {
+    "message": "Tabs from left to right"
+  },
+  "gatherOpt_order_rightToLeft": {
+    "message": "Tabs from right to left"
+  },
+  "gatherOpt_order_shuffled": {
+    "message": "Shuffled"
+  },
+  "gatherOpt_languageLine": {
+    "message": "Uses your browser's own language detection on each title."
+  },
+  "gatherOpt_close": {
+    "message": "Close gathered tabs"
+  },
+  "gatherOpt_closeLine": {
+    "message": "Each tab closes once its video is safely in the list or playlist."
+  },
+  "gatherOpt_auto": {
+    "message": "Automatically, into $PLAYLIST$",
+    "placeholders": {
+      "playlist": {
+        "content": "$1"
+      }
+    }
+  },
+  "gatherOpt_autoNoPlaylist": {
+    "message": "Automatically, into the gather playlist"
+  },
+  "gatherOpt_unvisited": {
+    "message": "Save and close video tabs I haven't switched to for"
+  },
+  "gatherOpt_after_1h": {
+    "message": "1 hour"
+  },
+  "gatherOpt_after_1d": {
+    "message": "1 day"
+  },
+  "gatherOpt_after_1w": {
+    "message": "1 week"
+  },
+  "gatherOpt_unvisitedLine": {
+    "message": "There's no timer. It checks when Perchling is in use anyway, such as when you open this popup, a YouTube page with one of its features loads, or the browser starts. So it can run hours late."
+  },
+  "gatherOpt_background": {
+    "message": "Save and close video tabs I open in the background"
+  },
+  "gatherOpt_backgroundLine": {
+    "message": "A second after they load, unless you switch to them first. Middle-clicking a video then saves it for later."
+  },
+  "gatherOpt_count": {
+    "message": "When a window reaches this many video tabs, save and close them"
+  },
+  "gatherOpt_countLabel": {
+    "message": "Video tabs"
+  },
+  "gatherOpt_countLine": {
+    "message": "All but the tab you're on."
+  },
+  "gatherOpt_never": {
+    "message": "Never the tab you're on, pinned tabs, tabs playing sound, or private windows."
+  },
+  "gatherOpt_needsPlaylist": {
+    "message": "Choose a gather playlist first."
+  },
+  "gatherOpt_playlistLabel": {
+    "message": "Gather playlist"
+  },
+  "option_failed": {
+    "message": "Couldn't save that. Nothing changed."
+  },
+  "chooser_quickSave": {
+    "message": "Quick-save playlist"
+  },
+  "chooser_signInFirst": {
+    "message": "Sign in to YouTube to choose a playlist."
+  },
+  "shortcuts_count": {
+    "message": "$COUNT$ of 20",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "shortcuts_keyHeader": {
+    "message": "Key"
+  },
+  "shortcuts_nameHeader": {
+    "message": "Name"
+  },
+  "shortcuts_savesTo": {
+    "message": "Saves to on $ACCOUNT$",
+    "placeholders": {
+      "account": {
+        "content": "$1"
+      }
+    }
+  },
+  "shortcuts_label": {
+    "message": "Name of this shortcut"
+  },
+  "shortcuts_remove": {
+    "message": "Remove this shortcut"
+  },
+  "shortcuts_undo": {
+    "message": "Undo"
+  },
+  "shortcuts_shortcut": {
+    "message": "Shortcut"
+  },
+  "shortcuts_everyAccount": {
+    "message": "Watch later on every account"
+  },
+  "shortcuts_pickerKey": {
+    "message": "Picker key"
+  },
+  "shortcuts_alsoMusic": {
+    "message": "Also on YouTube Music"
+  },
+  "shortcuts_failed": {
+    "message": "Couldn't change the shortcut. Nothing changed."
   }
 }

@@ -330,6 +330,7 @@ export function createUiRouter(ports: UiRouterPorts) {
       "ui.pause": (payload, context) => page("ui.pause", payload, context),
       "ui.recentAdds": (payload, context) => page("ui.recentAdds", payload, context),
       "ui.device": (payload, context) => page("ui.device", payload, context),
+      "ui.filter": (payload, context) => page("ui.filter", payload, context),
       async "ui.resolveChannel"(payload, context) {
         const ui = requireUi(context), held = await gate(ui)
         if (held) return held

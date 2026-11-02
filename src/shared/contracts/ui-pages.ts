@@ -39,11 +39,25 @@ export type DeviceSettingAnswer =
   | { readonly kind: "confirmed"; readonly change: DeviceSettingChange }
   | { readonly kind: "refused"; readonly reason: "private" | "invalid" | "unavailable" | "unconfirmed" }
 
+export type FilterSettingChange = {
+  readonly acct: AccountKey
+  readonly playlist: PlaylistId
+  readonly desired: { readonly mode: "allow" | "deny"; readonly on: boolean }
+  /** A mode switch with channels listed clears them only once the user confirmed it (UI-PICK-21). */
+  readonly clearListed: boolean
+  readonly expectedGeneration: string | null
+}
+export type FilterSettingAnswer =
+  | { readonly kind: "confirmed" }
+  | { readonly kind: "refused"; readonly reason: "private" | "sync-full" | "update-needed" | "invalid" | "unavailable" | "unconfirmed" }
+  | UiUnavailable
+
 export type PageMessages = {
   readonly "ui.status": { readonly payload: WindowClaim; readonly result: UiStatus }
   readonly "ui.pause": { readonly payload: WindowClaim & { readonly paused: boolean }; readonly result: UiPauseAnswer }
   readonly "ui.recentAdds": { readonly payload: WindowClaim & { readonly acct: AccountKey }; readonly result: UiRecentAdds }
   readonly "ui.device": { readonly payload: WindowClaim & { readonly change: DeviceSettingChange }; readonly result: DeviceSettingAnswer | UiUnavailable }
+  readonly "ui.filter": { readonly payload: WindowClaim & { readonly change: FilterSettingChange }; readonly result: FilterSettingAnswer }
 }
 export type PageCall = keyof PageMessages
 
@@ -77,6 +91,11 @@ export function isDeviceSettingChange(value: unknown): value is DeviceSettingCha
   return objectShape(value, { field: oneOf("recentAdds", "detailedLog", "pickerSortAZ"), value: bool })
     || objectShape(value, { field: v => v === "newPlaylistVisibility", value: oneOf("PRIVATE", "UNLISTED", "PUBLIC") })
 }
+export function isFilterSettingChange(value: unknown): value is FilterSettingChange {
+  return objectShape(value, { acct: isAccountKey, playlist: isPlaylistId, clearListed: bool,
+    desired: v => objectShape(v, { mode: oneOf("allow", "deny"), on: bool }),
+    expectedGeneration: v => v === null || typeof v === "string" && v.length > 0 && v.length <= 128 })
+}
 export function isDeviceSettingAnswer(value: unknown): value is DeviceSettingAnswer {
   return objectShape(value, { kind: v => v === "confirmed", change: isDeviceSettingChange })
     || objectShape(value, { kind: v => v === "refused", reason: oneOf("private", "invalid", "unavailable", "unconfirmed") })
@@ -90,7 +109,10 @@ export const pageContract: RpcContract<PageMessages> = {
   "ui.recentAdds": { payload: (v): v is PageMessages["ui.recentAdds"]["payload"] => objectShape(v, { acct: isAccountKey }, windowClaim),
     result: (v): v is UiRecentAdds => isUiUnavailable(v) || objectShape(v, { kind: x => x === "recent", entries: list(isRecentEntry, 50) }), timeoutMs: 8_000 },
   "ui.device": { payload: (v): v is PageMessages["ui.device"]["payload"] => objectShape(v, { change: isDeviceSettingChange }, windowClaim),
-    result: (v): v is DeviceSettingAnswer | UiUnavailable => isUiUnavailable(v) || isDeviceSettingAnswer(v), timeoutMs: 8_000 }
+    result: (v): v is DeviceSettingAnswer | UiUnavailable => isUiUnavailable(v) || isDeviceSettingAnswer(v), timeoutMs: 8_000 },
+  "ui.filter": { payload: (v): v is PageMessages["ui.filter"]["payload"] => objectShape(v, { change: isFilterSettingChange }, windowClaim),
+    result: (v): v is FilterSettingAnswer => isUiUnavailable(v) || objectShape(v, { kind: x => x === "confirmed" })
+      || objectShape(v, { kind: x => x === "refused", reason: oneOf("private", "sync-full", "update-needed", "invalid", "unavailable", "unconfirmed") }), timeoutMs: 12_000 }
 }
 export function isPageCall(kind: string): kind is PageCall {
   return Object.hasOwn(pageContract, kind)

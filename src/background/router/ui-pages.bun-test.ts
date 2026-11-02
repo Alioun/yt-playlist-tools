@@ -11,6 +11,7 @@ const ui = (incognito = false) => ({ ui: { kind: "ui", page: "popup", origin: { 
 
 function receiver(overrides: Partial<PageReceiverPorts> = {}) {
   const changes: SessionChange[] = []
+  const filters: unknown[] = []
   let paused = false
   const ports: PageReceiverPorts = {
     owner: {
@@ -21,7 +22,8 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
         if (edit.kind === "pause") paused = edit.paused
         return { kind: "committed", revision: { reset: 0, accounts: new Map() }, sequence: 2, memory: { paused } } as never
       },
-      changeDeviceSetting: async (_origin, change) => ({ kind: "confirmed", change })
+      changeDeviceSetting: async (_origin, change) => ({ kind: "confirmed", change }),
+      async change(_origin, change) { filters.push(change); return change.desired.on ? { kind: "result", result: { ok: true } } : { kind: "result", result: { refused: "sync-full" } } }
     },
     session: { get: async () => [] },
     status: async () => ({ tab: { kind: "site", site: "www", tabId: 9, signedIn: true, acct }, health: [{ feature: "auto-add", site: "www", state: "not-working", gaps: [] }] }),
@@ -29,7 +31,7 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
     ...overrides
   }
   const context = (incognito = false) => ({ ui: ui(incognito), current: async () => ui(incognito) })
-  return { handlers: createPageReceiver(ports), changes, context }
+  return { handlers: createPageReceiver(ports), changes, filters, context }
 }
 
 test("status answers Pause, the popup's tab and its feature health", async () => {
@@ -94,4 +96,13 @@ test("a device setting refuses before consent, when the record changed meanwhile
     .toEqual({ kind: "refused", reason: "unavailable" })
   expect(await executeDeviceSetting({ local: local(structuredClone(agreed), { dropWrite: true }) as never, change, isStopped: () => false }))
     .toEqual({ kind: "refused", reason: "unconfirmed" })
+})
+
+test("a filter setting reaches the store with its confirmation, and the store's refusal comes back", async () => {
+  const { handlers, filters, context } = receiver()
+  const change = { acct, playlist: "PLa" as never, desired: { mode: "deny", on: true } as const, clearListed: true, expectedGeneration: "gen-1" }
+  expect(await handlers["ui.filter"]({ change }, context())).toEqual({ kind: "confirmed" })
+  expect(filters).toEqual([{ acct, playlist: "PLa", desired: { mode: "deny", on: true }, clearListedChannels: "confirmed", expectedGeneration: "gen-1" }])
+  expect(await handlers["ui.filter"]({ change: { ...change, desired: { mode: "deny", on: false }, clearListed: false } }, context())).toEqual({ kind: "refused", reason: "sync-full" })
+  expect(await handlers["ui.filter"]({ change }, context(true))).toEqual({ kind: "refused", reason: "private" })
 })

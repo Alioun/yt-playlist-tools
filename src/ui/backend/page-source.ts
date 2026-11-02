@@ -110,3 +110,28 @@ export function createPageSource(backend: Backend, context: PageSourceContext): 
     dispose: () => list.dispose()
   }
 }
+
+/** Takes and Adds at for one ticked auto-add playlist, each read fresh so it never writes over a newer edit (UI-PICK-20). */
+export function createAutoAddEditor(backend: Backend, acct: AccountKey) {
+  async function edit(playlist: PlaylistId, make: (fact: { readonly takes: "videos" | "shorts" | "both"; readonly pct: number | null }) => import("../../shared/contracts/auto-add-choice").AutoAddEdit | null): Promise<boolean> {
+    const read = await backend.change({ kind: "auto-add-read", acct, playlist })
+    if (read.kind !== "value" || read.fact.kind !== "selected") return false
+    const next = make(read.fact)
+    if (!next) return true
+    const answer = await backend.change({ kind: "auto-add-choice", acct, playlist, lifetime: read.lifetime, edit: next })
+    return answer.kind === "auto-add-confirmed"
+  }
+  return {
+    takes: (playlist: PlaylistId, takes: "videos" | "shorts" | "both") => edit(playlist, fact => fact.takes === takes ? null : { kind: "takes", expected: fact.takes, takes }),
+    pct: (playlist: PlaylistId, pct: number | null) => edit(playlist, fact => fact.pct === pct ? null : { kind: "percentage", expected: fact.pct, pct })
+  }
+}
+/** The keys of playlist shortcuts that save to each playlist on this account, for the picker's chips (UI-PICK-05). */
+export function shortcutKeys(settings: Snapshot<import("../../shared/model/types").Settings>, setup: Snapshot<Setup> | null): ReadonlyMap<PlaylistId, Key> {
+  const keys = new Map<PlaylistId, Key>()
+  for (const row of settings.shortcuts.list) {
+    const target = setup?.targets[row.id] ?? (row.watchLaterOnEveryAccount ? "WL" : null)
+    if (row.key && isPlaylistId(target) && !keys.has(target)) keys.set(target, { ...row.key })
+  }
+  return keys
+}

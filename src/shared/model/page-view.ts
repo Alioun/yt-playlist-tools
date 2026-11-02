@@ -21,6 +21,8 @@ export type PageSetup = {
   readonly setup: Snapshot<Setup>
   readonly cache: AccountCache | null
   readonly filters: ReadonlyMap<PlaylistId, Snapshot<Filter>>
+  /** Each filter's generation, which a confirmed mode switch names so it never clears a newer edit. */
+  readonly filterGens: ReadonlyMap<PlaylistId, string>
 }
 /**
  * What the popup and settings show from `storage.local` (UI-POP-02), from one read decoded once. A record that
@@ -66,15 +68,15 @@ function liveSetup(raw: unknown): Setup | null {
   const read = attempt(() => decodeDocument(raw, decodeSetup))
   return read?.kind === "value" ? read.document.data : null
 }
-function liveFilter(raw: unknown): Filter | null {
+function liveFilter(raw: unknown): { readonly filter: Filter; readonly gen: string } | null {
   const read = attempt(() => decodeDocument(raw, decodeFilter))
-  return read?.kind === "value" ? read.document.data : null
+  return read?.kind === "value" ? { filter: read.document.data, gen: read.document.gen } : null
 }
 
 export function readPageView(records: Readonly<Record<string, unknown>>): PageView {
   const schema = records.schema
   const setups = new Map<AccountKey, Setup>()
-  const filters = new Map<AccountKey, Map<PlaylistId, Filter>>()
+  const filters = new Map<AccountKey, Map<PlaylistId, { readonly filter: Filter; readonly gen: string }>>()
   for (const [key, raw] of Object.entries(records)) {
     const document = parseDocumentKey(key)
     if (document?.kind === "setup") {
@@ -94,7 +96,9 @@ export function readPageView(records: Readonly<Record<string, unknown>>): PageVi
     settings: readSettingsView(records["doc:settings"]),
     setups: [...setups].map(([acct, setup]) => {
       const cacheKey = `cache:${acct}`
-      return { acct, setup, filters: filters.get(acct) ?? new Map(),
+      const own = [...filters.get(acct) ?? []]
+      return { acct, setup, filters: new Map(own.map(([playlist, entry]) => [playlist, entry.filter])),
+        filterGens: new Map(own.map(([playlist, entry]) => [playlist, entry.gen])),
         cache: Object.hasOwn(records, cacheKey) ? attempt(() => decodeAccountCache(records[cacheKey])) : null }
     }).sort((a, b) => (a.setup.label?.name ?? "").localeCompare(b.setup.label?.name ?? "") || a.acct.localeCompare(b.acct)),
     unclaimed: stored?.kind === "pending" ? stored.data : null,
