@@ -1,4 +1,5 @@
 import { isChannelId, type ChannelId, type Filter } from "../model"
+import type { Snapshot } from "../model/settings-view"
 
 export type FilterDecision = "pass" | "filtered" | "filtered-unknown-channel"
 
@@ -42,8 +43,8 @@ export type ChannelControl =
   | { readonly mode: Filter["mode"]; readonly state: "listed"; readonly send: { readonly action: "unlist"; readonly mode: null; readonly clearListed: false } }
   | { readonly mode: Filter["mode"]; readonly state: "confirm"; readonly kept: number; readonly send: { readonly action: "list"; readonly mode: Filter["mode"]; readonly clearListed: true } }
   | { readonly mode: Filter["mode"]; readonly state: "greyed" }
-export function channelControls(filter: Filter | undefined, channel: ChannelId): readonly [ChannelControl, ChannelControl] {
-  const current = filter ?? { mode: "deny", on: false, channels: [] }
+export function channelControls(filter: Snapshot<Filter> | undefined, channel: ChannelId): readonly [ChannelControl, ChannelControl] {
+  const current: Snapshot<Filter> = filter ?? { mode: "deny", on: false, channels: [] }
   const listed = current.channels.some(([id]) => id === channel)
   const control = (mode: Filter["mode"]): ChannelControl => {
     if (current.on) {

@@ -137,6 +137,19 @@ test("a failure toast's Settings opens Settings at that feature's playlist, besi
   expect(opened).toEqual([{ hash: `feature-shortcuts&playlist=${beta}`, tabId: 9 }])
 })
 
+test("the watch-page menu skips the video, pauses auto-add and lists this channel, as the tab's account (UI-YT-22)", async () => {
+  const w = world()
+  expect(await w.page.skip(video, true)).toBe(true)
+  expect(await w.page.pause(true)).toBe(true)
+  expect(await w.page.filterChannel({ playlist: alpha, channel: ["UCbbbbbbbbbbbbbbbbbbbbbb" as never, "Band"], action: "list", mode: null, clearListed: false, expectedGeneration: null })).toBe(true)
+  const view = await w.view()
+  expect(view.paused).toBe(true)
+  expect(view.skips?.entries.find(([id]) => id === video)?.[1]).toBe("all")
+  const filter = view.filters.find(row => row.playlist === alpha)?.state.filter
+  expect(filter?.channels.some(([id]) => id === "UCbbbbbbbbbbbbbbbbbbbbbb")).toBe(true)
+  expect(await world({ pageAccount: b }).page.skip(video, true)).toBe(false)
+})
+
 test("an Undo handle stops working once the page releases it, its tab closes, or the tab loads a new page", async () => {
   for (const end of ["release", "close", "new page"] as const) {
     const { page, site, actions, closeTab } = world()

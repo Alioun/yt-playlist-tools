@@ -20,7 +20,8 @@ export type ProjectedSkip = readonly [video: VideoId, playlists: Skip]
 export type ProjectedFilter = {
   readonly playlist: PlaylistId
   readonly state:
-    | { readonly kind: "value" | "default"; readonly filter: Snapshot<Filter> }
+    | { readonly kind: "value"; readonly filter: Snapshot<Filter>; readonly gen: string }
+    | { readonly kind: "default"; readonly filter: Snapshot<Filter> }
     | { readonly kind: "newer-version"; readonly version: number }
     | { readonly kind: "invalid" }
 }
@@ -135,7 +136,7 @@ function accountFilters(records: Readonly<Record<string, unknown>>, acct: Accoun
       if (!isJsonValue(raw)) state = { kind: "invalid" }
       else {
         const doc = decodeDocument(structuredClone(raw), decodeFilter)
-        state = doc.kind === "value" ? { kind: "value", filter: projectFilter(doc.document.data) }
+        state = doc.kind === "value" ? { kind: "value", filter: projectFilter(doc.document.data), gen: doc.document.gen }
           : doc.kind === "newer-version" ? { kind: "newer-version", version: doc.version }
           : { kind: "default", filter: defaultFilter() }
       }

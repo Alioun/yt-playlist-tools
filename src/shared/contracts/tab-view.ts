@@ -35,7 +35,8 @@ export type FeatureStatus = {
 }
 export type DueNotice = { readonly kind: "not-working"; readonly features: readonly PageFeatureId[] }
 export type TabSkip = readonly [video: VideoId, playlists: "all" | readonly PlaylistId[]]
-export type TabFilter = { readonly playlist: PlaylistId; readonly state: { readonly kind: "value" | "default"; readonly filter: Snapshot<Filter> } }
+/** A filter's `gen` lets a page confirm a change that clears its kept channels against the version it showed (YT-CF-15). */
+export type TabFilter = { readonly playlist: PlaylistId; readonly state: { readonly kind: "value"; readonly filter: Snapshot<Filter>; readonly gen?: string } | { readonly kind: "default"; readonly filter: Snapshot<Filter> } }
 export type TabSetup = { readonly kind: "none" } | { readonly kind: "live"; readonly setup: Snapshot<Setup> }
 type ViewSite = { readonly site: "www"; readonly features: readonly WwwFeature[] } |
   { readonly site: "music"; readonly features: readonly MusicFeature[] }
@@ -117,7 +118,7 @@ export function isTabFilter(value: unknown): value is TabFilter {
   const filter: Check = v => objectShape(v, { mode: oneOf("allow", "deny"), on: bool,
     channels: list(row => Array.isArray(row) && (row.length === 2 || row.length === 3) && isChannelId(row[0]) && text(row[1]) && (row.length === 2 || text(row[2]))) })
   return objectShape(value, { playlist: isPlaylistId, state: v =>
-    objectShape(v, { kind: kind => kind === "value", filter }) ||
+    objectShape(v, { kind: kind => kind === "value", filter }, { gen: g => typeof g === "string" && g.length > 0 && g.length <= 128 }) ||
     objectShape(v, { kind: kind => kind === "default", filter: v => objectShape(v, {
       mode: mode => mode === "deny", on: on => on === false, channels: rows => Array.isArray(rows) && rows.length === 0
     }) }) })

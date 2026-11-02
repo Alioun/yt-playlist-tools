@@ -11,6 +11,8 @@ import type { Kit } from "../../kit/install"
 import { createWatchMenu, type WatchMenuRequest } from "../../popovers/watch-menu"
 import type { OpenPicker, Popovers } from "../../popovers/types"
 import { retryMs, row, watchButton } from "./feature"
+import { createThisVideoChannel } from "../../core/this-video"
+import type { ThisVideo } from "../../../shared/contracts/this-video"
 import { clock, labels, settle, undoKey } from "../../../../tools/fixtures/site-toaster/harness"
 import { englishI18n } from "../../../../tools/fixtures/localization/scripted"
 import { playlist, video, wireView } from "../../../../tools/fixtures/tab-view/cases"
@@ -36,11 +38,12 @@ function actionRow() {
 
 function setup(state: "working" | "not-working" = "working") {
   const timers = clock()
+  const thisVideo = createThisVideoChannel()
   const navs: ((nav: NavData) => void)[] = []
   const menus: WatchMenuRequest[] = [], notices: string[] = []
   const popovers: Popovers = { openPicker() {}, openWatchMenu(request) { menus.push(request) }, isOpen: () => false, close() {} }
   const scope = new Scope({ document, onError: () => {} })
-  void watchButton.start({ site: "www", scope, document, i18n: englishI18n(), os: "windows", status: () => null,
+  void watchButton.start({ site: "www", scope, document, i18n: englishI18n(), os: "windows", thisVideo,
     view: { read: () => buttonView(state), subscribe: () => () => {} },
     page: { onState(listener: (state: { kind: string }) => void) { listener({ kind: "ready" }); return () => {} },
       watch(_stream: string, listener: (nav: NavData) => void) { navs.push(listener); return () => {} },
@@ -48,7 +51,8 @@ function setup(state: "working" | "not-working" = "working") {
     actions: { playlists: async () => ({ kind: "cached", listing: { rows: [{ id: playlist, title: "Mixes" }], at: 1 } }) } as never,
     notices: { wouldAct: feature => { notices.push(feature) } }, popovers: async () => popovers })
   running.push(() => { scope.dispose(); timers.restore(); document.body.replaceChildren() })
-  return { timers, menus, notices, navigate: (nav: NavData) => { for (const listener of navs) listener(nav) }, host: () => document.querySelector("pp-watch-button") }
+  const button = () => document.querySelector("pp-watch-button")?.shadowRoot?.querySelector("button") ?? null
+  return { timers, menus, notices, thisVideo, button, navigate: (nav: NavData) => { for (const listener of navs) listener(nav) }, host: () => document.querySelector("pp-watch-button") }
 }
 
 test("on a watch page the button joins the action row once YouTube draws it, and comes back when YouTube drops it", async () => {
@@ -108,7 +112,7 @@ function menuWorld(answer: TabAddReport) {
   const anchor = document.createElement("pp-watch-button"); document.body.append(anchor)
   const menu = createWatchMenu({ document, core: () => core, kit: () => ({ feedback } as unknown as Kit), picker: request => { pickers.push(request) } })
   running.push(() => { menu.close(); root.dispose(); keys.dispose(); timers.restore(); document.body.replaceChildren() })
-  menu.open({ video, title: "First video", anchor, status: "Save this video with Perchling", quickSave: { playlist, name: "Mixes" }, pickerKey: "Alt+Shift+P" })
+  menu.open({ video, title: "First video", anchor, status: "Save this video with Perchling", share: null, autoAdd: null, quickSave: { playlist, name: "Mixes" }, pickerKey: "Alt+Shift+P" })
   const rows = () => [...document.querySelector("pp-watch-menu")?.shadowRoot?.querySelectorAll("button") ?? []]
   return { adds, pickers, rows, anchor, toast: () => feedback.read()?.feedback.toaster.read() ?? null }
 }
@@ -116,7 +120,7 @@ function menuWorld(answer: TabAddReport) {
 test("the menu's Save row saves to the quick-save playlist in place and raises no toast for a confirmed save", async () => {
   const saved: TabAddReport = { kind: "report", outcomes: { [playlist]: { kind: "added" } }, feedback: true, undo: null, titles: {}, toast: null }
   const m = menuWorld(saved)
-  expect(m.rows().map(button => button.textContent)).toEqual(["Save to Mixes", "Save to… (Alt+Shift+P)"])
+  expect(m.rows().map(button => button.textContent)).toEqual(["Save to Mixes", "Save to… (Alt+Shift+P)", "Perchling settings"])
   m.rows()[0]?.click()
   await settle()
   expect(m.adds).toEqual([{ site: "www", video, via: "quick-save", opener: "watch-button", title: "First video" }])
@@ -134,4 +138,78 @@ test("a failed Save row reads Couldn't save and answers with the add flow's fail
   expect(m.toast()?.content.tone).toBe("failure")
   m.rows()[1]?.click()
   expect(m.pickers.map(({ mode, anchor, opener }) => ({ mode, anchor: anchor.kind, opener }))).toEqual([{ mode: { kind: "save" }, anchor: "on", opener: "watch-button" }])
+})
+
+const counting = (overrides: Partial<ThisVideo> = {}): ThisVideo => ({ video, title: "First video", state: { kind: "counting", goal: 50, watched: 30 }, watched: 30,
+  playlists: [{ pl: playlist, pct: 50, outcome: "waiting" }], channel: null, ...overrides })
+
+test("the button shows auto-add's state: a pie toward the goal while counting, then Auto-added with the playlist named (UI-YT-18, UI-YT-19)", async () => {
+  const f = setup()
+  actionRow()
+  f.navigate(watchNav)
+  f.timers.advance(0)
+  f.thisVideo.publish(counting())
+  expect(f.button()?.textContent).toBe("Auto-adds at 50 %")
+  expect(f.button()?.getAttribute("aria-label")).toBe("Auto-adds at 50 % · 30 % watched")
+  expect(f.button()?.querySelector("[data-pie]")?.getAttribute("data-pie")).toBe("60")
+  f.thisVideo.publish(counting({ state: { kind: "added", playlists: [playlist] }, playlists: [{ pl: playlist, pct: 50, outcome: "added" }] }))
+  await settle()
+  expect(f.button()?.textContent).toBe("Auto-added")
+  expect(f.button()?.getAttribute("aria-label")).toBe("Auto-added to Mixes")
+  expect(f.button()?.querySelector("[data-pie]")).toBeNull()
+  f.thisVideo.publish(null)
+  expect(f.button()?.textContent).toBe("")
+})
+
+function autoMenu(options: { skip?: () => boolean; filter?: { mode: "allow" | "deny"; on: boolean; channels: [string, string][] } } = {}) {
+  const timers = clock()
+  const root = new Scope({ document, onError: () => {} })
+  const keys = new Keys({ document, blockers: { menuOpen: () => false, dialogOpen: () => false, extensionPopoverOpen: () => false }, onError: () => {} })
+  const i18n = englishI18n()
+  const feedback = createFeedbackSession({ owner: root, document, keys, site: "www", i18n, labels, initial: { undoKey, features: [] }, now: timers.now, onError: () => {}, onCosmetic: () => {} })
+  const calls: unknown[] = []
+  const core = { i18n, root, actions: {
+    skip: async (id: string, skip: boolean) => { calls.push(["skip", id, skip]); return options.skip?.() ?? true },
+    pause: async (paused: boolean) => { calls.push(["pause", paused]); return true },
+    filterChannel: async (change: unknown) => { calls.push(["channel", change]); return true },
+    settings: (target: unknown) => { calls.push(["settings", target]) }
+  } } as unknown as SiteCore<"www">
+  const anchor = document.createElement("pp-watch-button"); document.body.append(anchor)
+  const menu = createWatchMenu({ document, core: () => core, kit: () => ({ feedback } as unknown as Kit), picker: () => {} })
+  running.push(() => { menu.close(); root.dispose(); keys.dispose(); timers.restore(); document.body.replaceChildren() })
+  const channel = { id: "UCaaaaaaaaaaaaaaaaaaaaaa" as never, title: "Band", handle: null }
+  menu.open({ video, title: "First video", anchor, status: "Auto-adds at 50 % · 30 % watched", share: .6, quickSave: null, pickerKey: null,
+    autoAdd: { view: counting({ channel }), names: new Map([[playlist, "Mixes"]]), paused: false,
+      filters: options.filter ? [{ playlist: playlist as PlaylistId, state: { kind: "value", filter: options.filter, gen: "gen-1" } }] : [] } })
+  const shadow = () => document.querySelector("pp-watch-menu")?.shadowRoot
+  const rows = () => [...shadow()?.querySelectorAll("button") ?? []]
+  const find = (text: string) => { const found = rows().find(button => button.textContent === text); if (!found) throw Error(`No row ${text}`); return found }
+  return { calls, rows, find, shadow }
+}
+
+test("the menu lists auto-add's goals, Don't auto-add, Pause, this channel's chips and Perchling settings, each answering in place (UI-YT-22)", async () => {
+  const m = autoMenu()
+  expect(m.shadow()?.querySelector(".status svg [d]")).not.toBeNull()
+  expect([...m.shadow()?.querySelectorAll(".goal") ?? []].map(row => row.textContent)).toEqual(["MixesAt 50 %"])
+  expect(m.rows().map(button => button.textContent)).toEqual(["Don't auto-add this video", "Pause auto-add", "Allow only", "Deny", "Save to playlist…", "Save to…", "Perchling settings"])
+  m.find("Don't auto-add this video").click(); await settle()
+  expect(m.find("Auto-add this video again")).toBeTruthy()
+  m.find("Pause auto-add").click(); await settle()
+  expect(m.find("Resume auto-add")).toBeTruthy()
+  m.find("Deny").click(); await settle()
+  expect(m.find("Denied").getAttribute("aria-pressed")).toBe("true")
+  m.find("Perchling settings").click()
+  expect(m.calls).toEqual([["skip", video, true], ["pause", true],
+    ["channel", { playlist, channel: ["UCaaaaaaaaaaaaaaaaaaaaaa", "Band"], action: "list", mode: "deny", clearListed: false, expectedGeneration: null }],
+    ["settings", { feature: "watch-button" }]])
+})
+
+test("a chip that would clear kept channels asks first, in the menu (YT-CF-15)", async () => {
+  const m = autoMenu({ filter: { mode: "deny", on: false, channels: [["UCbbbbbbbbbbbbbbbbbbbbbb", "Talk"]] } })
+  m.find("Allow only").click(); await settle()
+  expect(m.shadow()?.querySelector(".ask")?.textContent).toBe("Turn on Allow only for Mixes? This clears its 1 denied channel.")
+  expect(m.calls).toEqual([])
+  m.find("Switch").click(); await settle()
+  expect(m.calls).toEqual([["channel", { playlist, channel: ["UCaaaaaaaaaaaaaaaaaaaaaa", "Band"], action: "list", mode: "allow", clearListed: true, expectedGeneration: "gen-1" }]])
+  expect(m.find("Allowed")).toBeTruthy()
 })

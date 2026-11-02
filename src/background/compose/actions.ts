@@ -130,7 +130,7 @@ export type Actions = {
 export function composeActions(deps: {
   readonly native: SenderOriginPorts & { readonly runtime: SenderOriginPorts["runtime"] & RuntimePort }
   readonly build: BuildId
-  readonly owner: Pick<StartingOwner, "readTabProjection" | "readSession" | "changeSession" | "changeSetupDestination" | "readPlaylistCache" | "markPlaylists" | "changeDeviceSetting" | "refreshChannelLabels">
+  readonly owner: Pick<StartingOwner, "readTabProjection" | "readSession" | "changeSession" | "changeSetupDestination" | "readPlaylistCache" | "markPlaylists" | "changeDeviceSetting" | "refreshChannelLabels" | "changeFilterChannel">
   readonly tabs: Tabs
   readonly playlists: Playlists
   readonly registrar: Pick<Registrar, "ensure">
@@ -208,7 +208,26 @@ export function composeActions(deps: {
       }
     },
     "tab.release"({ handle }) { flow.release(handle); return null },
-    "tab.settings"({ feature, playlist }, context) { deps.openSettings?.(`feature-${feature}&playlist=${playlist}`, context.origin.tabId); return null },
+    "tab.settings"({ feature, playlist }, context) { deps.openSettings?.(playlist ? `feature-${feature}&playlist=${playlist}` : `feature-${feature}`, context.origin.tabId); return null },
+    async "tab.skip"({ acct, request }, context) {
+      if (acct === null || !await pinned(context, acct)) return { kind: "refused" }
+      const report = await flow.skip(request.skip ? { kind: "skip", acct, video: request.video, playlists: "all" } : { kind: "unskip", acct, video: request.video }, context.origin)
+      return { kind: report.kind === "remembered" ? "done" : "refused" }
+    },
+    async "tab.pause"({ acct, request }, context) {
+      if (context.origin.incognito || !await pinned(context, acct)) return { kind: "refused" }
+      return { kind: (await flow.pause(request.paused)).kind === "remembered" ? "done" : "refused" }
+    },
+    async "tab.filterChannel"({ acct, request }, context) {
+      if (acct === null || context.origin.incognito || !await pinned(context, acct)) return { kind: "refused" }
+      const { clearListed, expectedGeneration, ...rest } = request
+      const change = clearListed ? { ...rest, acct, clearListedChannels: "confirmed" as const, expectedGeneration }
+        : { ...rest, acct, clearListedChannels: "not-confirmed" as const }
+      try {
+        const answer = await owner.changeFilterChannel({ kind: "ui", windowId: context.windowId, incognito: false }, change)
+        return { kind: answer.kind === "result" && "ok" in answer.result ? "done" : "refused" }
+      } catch { return { kind: "refused" } }
+    },
     async "tab.need"(_request, context) {
       try { await registrar.ensure(context.origin.tabId, { popovers: true }); return { kind: "ok" } } catch { return { kind: "failed" } }
     },

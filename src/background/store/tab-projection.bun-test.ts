@@ -193,7 +193,7 @@ describe("canonical owner tab storage projection", () => {
       expect(await filter).toEqual({ kind: "result", result: { ok: true } })
       const read = account(await h.owner.readTabProjection(signedIn))
       expect(read.setup.kind === "value" && read.setup.view.kind === "live" && read.setup.view.setup.quickSave).toBe(beta)
-      expect(read.filters[0]).toEqual({ playlist: alpha, state: { kind: "value", filter: { mode: "allow", on: false, channels: [["UCAAAAAAAAAAAAAAAAAAAAAA", "Alpha channel", "@alpha"]] } } })
+      expect(read.filters[0]).toEqual({ playlist: alpha, state: { kind: "value", filter: { mode: "allow", on: false, channels: [["UCAAAAAAAAAAAAAAAAAAAAAA", "Alpha channel", "@alpha"]] }, gen: expect.any(String) } })
     } finally { wait.release(); await h.owner.dispose() }
   })
 

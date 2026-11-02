@@ -6,6 +6,7 @@ import type { PlaylistRow } from "./jobs"
 import { objectShape } from "./object-shape"
 import { isFeatureId, isPrivacy, isSite, type FeatureId, type Privacy, type Site } from "./vocabulary"
 import { isThisVideo, type ThisVideo } from "./this-video"
+import type { FilterChannelChange } from "./ui-pages"
 
 /**
  * What a page asks the background to do for a user action (06 §6.8.2). The background resolves the tab's
@@ -54,8 +55,15 @@ export type TabCreated = { readonly kind: "created"; readonly id: PlaylistId } |
 export type TabDestinationChange = { readonly destination: SetupDestination; readonly expected: DestinationExpectation; readonly playlist: PlaylistId | null }
 
 type Pinned<T> = { readonly acct: AccountKey | null; readonly request: T }
-/** A failure toast's **Settings**: the feature whose playlist is Missing or Full, at that playlist's row (YT-ADD-29, YT-GT-33). */
-export type TabSettingsTarget = { readonly feature: "auto-add" | "shortcuts" | "gather"; readonly playlist: PlaylistId }
+/**
+ * Settings at a feature's card: a failure toast's **Settings** names the playlist that's Missing or Full (YT-ADD-29,
+ * YT-GT-33), and the watch-page menu's **Perchling settings** opens its own card (UI-YT-22).
+ */
+export type TabSettingsTarget = { readonly feature: "auto-add" | "shortcuts" | "gather" | "watch-button"; readonly playlist?: PlaylistId }
+/** The watch-page menu's auto-add rows, as the tab's account: Don't auto-add this video, Pause, and this channel's chips (UI-YT-22). */
+export type TabSkip = { readonly video: VideoId; readonly skip: boolean }
+export type TabFilterChannel = Omit<FilterChannelChange, "acct">
+export type TabMemoryAnswer = { readonly kind: "done" | "refused" }
 export type TabActionMessages = {
   "tab.add": { payload: Pinned<TabAddRequest>; result: TabAddReport }
   "tab.remove": { payload: Pinned<TabRemoveRequest>; result: TabRemoveReport }
@@ -67,6 +75,9 @@ export type TabActionMessages = {
   "tab.destination": { payload: Pinned<TabDestinationChange>; result: DestinationAnswer }
   "tab.device": { payload: { readonly change: TabDeviceChange }; result: TabDeviceAnswer }
   "tab.settings": { payload: TabSettingsTarget; result: null }
+  "tab.skip": { payload: Pinned<TabSkip>; result: TabMemoryAnswer }
+  "tab.pause": { payload: Pinned<{ readonly paused: boolean }>; result: TabMemoryAnswer }
+  "tab.filterChannel": { payload: Pinned<TabFilterChannel>; result: TabMemoryAnswer }
   /** A listed channel read with a new title or @handle, for the store to write back (YT-CF-10). */
   "tab.channelLabel": { payload: Pinned<{ readonly channel: TabChannelLabel }>; result: null }
 }
@@ -145,7 +156,13 @@ export function isTabCreated(value: unknown): value is TabCreated {
     || objectShape(value, { kind: oneOf("failed"), reason: oneOf("rateLimited", "publicCap", "noChannel", "notAllowed", "failed") })
 }
 
-const title: Check = value => typeof value === "string" && value.length <= 1000
+const isMemoryAnswer = (v: unknown): v is TabMemoryAnswer => objectShape(v, { kind: oneOf("done", "refused") })
+const label = (v: unknown) => typeof v === "string" && v.length <= 1000
+function isTabFilterChannel(value: unknown): value is TabFilterChannel {
+  return objectShape(value, { playlist: isPlaylistId, action: oneOf("list", "unlist"), mode: v => v === null || v === "allow" || v === "deny", clearListed: bool,
+    channel: v => Array.isArray(v) && (v.length === 2 || v.length === 3) && isChannelId(v[0]) && label(v[1]) && (v.length === 2 || label(v[2])),
+    expectedGeneration: v => v === null || typeof v === "string" && v.length > 0 && v.length <= 128 })
+}
 export const tabActionContract: RpcContract<TabActionMessages> = {
   "tab.add": { payload: (v): v is TabActionMessages["tab.add"]["payload"] => pinned(isTabAddRequest)(v), result: isTabAddReport, timeoutMs: 60_000 },
   "tab.remove": { payload: (v): v is TabActionMessages["tab.remove"]["payload"] => pinned(isTabRemoveRequest)(v), result: isTabRemoveReport, timeoutMs: 60_000 },
@@ -160,8 +177,12 @@ export const tabActionContract: RpcContract<TabActionMessages> = {
     destination: isSetupDestination, expected: isDestinationExpectation, playlist: nullable(isPlaylistId) }))(v), result: isDestinationAnswer, timeoutMs: 15_000 },
   "tab.channelLabel": { payload: (v): v is TabActionMessages["tab.channelLabel"]["payload"] => pinned(r => objectShape(r, { channel: isTabChannelLabel }))(v),
     result: (v): v is null => v === null, timeoutMs: 8_000 },
-  "tab.settings": { payload: (v): v is TabSettingsTarget => objectShape(v, { feature: oneOf("auto-add", "shortcuts", "gather"), playlist: isPlaylistId }),
+  "tab.settings": { payload: (v): v is TabSettingsTarget => objectShape(v, { feature: oneOf("auto-add", "shortcuts", "gather", "watch-button") }, { playlist: isPlaylistId }),
     result: (v): v is null => v === null, timeoutMs: 2_000 },
+  "tab.skip": { payload: (v): v is TabActionMessages["tab.skip"]["payload"] => pinned(r => objectShape(r, { video: isVideoId, skip: bool }))(v), result: isMemoryAnswer, timeoutMs: 8_000 },
+  "tab.pause": { payload: (v): v is TabActionMessages["tab.pause"]["payload"] => pinned(r => objectShape(r, { paused: bool }))(v), result: isMemoryAnswer, timeoutMs: 8_000 },
+  "tab.filterChannel": { payload: (v): v is TabActionMessages["tab.filterChannel"]["payload"] =>
+    pinned(isTabFilterChannel)(v), result: isMemoryAnswer, timeoutMs: 12_000 },
   "tab.device": { payload: (v): v is TabActionMessages["tab.device"]["payload"] => objectShape(v, { change: isTabDeviceChange }),
     result: (v): v is TabDeviceAnswer => objectShape(v, { kind: oneOf("confirmed") }) || objectShape(v, { kind: oneOf("refused"), reason: oneOf("private", "invalid", "unavailable", "unconfirmed") }),
     timeoutMs: 8_000 }

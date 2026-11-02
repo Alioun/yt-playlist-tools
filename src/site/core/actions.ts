@@ -3,7 +3,7 @@ import type { BuildId, Privacy } from "../../shared/contracts/vocabulary"
 import {
   tabActionContract, tabGatherContract, tabProgressContract, TITLE_LIMIT, type GatherToastLine, type TabActionMessages, type TabAddReport, type TabAddRequest, type TabCreated,
   type TabDestinationChange, type TabChannelLabel, type TabDeviceAnswer, type TabDeviceChange, type TabGatherMessages, type TabPlaylists, type TabProgress, type TabProgressMessages,
-  type TabRemoveReport, type TabRemoveRequest, type TabSettingsTarget, type TabUndoReport, type UndoHandle
+  type TabRemoveReport, type TabRemoveRequest, type TabSettingsTarget, type TabUndoReport, type UndoHandle, type TabFilterChannel
 } from "../../shared/contracts/tab-actions"
 import type { AccountKey, VideoId } from "../../shared/model"
 import { createRpcCaller, type Deadline } from "../../shared/rpc/rpc"
@@ -30,6 +30,10 @@ export type TabActions = {
   channelLabel(channel: TabChannelLabel): void
   /** Opens Settings at a feature's playlist, for a failure toast's **Settings** (YT-ADD-29). */
   settings(target: TabSettingsTarget): void
+  /** The watch-page menu's Don't auto-add this video, Pause and this channel's chips, as this tab's account (UI-YT-22). */
+  skip(video: VideoId, skip: boolean): Promise<boolean>
+  pause(paused: boolean): Promise<boolean>
+  filterChannel(change: TabFilterChannel): Promise<boolean>
   /** Saves this browser's Sort A–Z or last visibility from the page picker. */
   device(change: TabDeviceChange): Promise<TabDeviceAnswer>
   /** Auto-add's watch progress at DATA-27's checkpoints, kept per account by the background. */
@@ -81,6 +85,9 @@ export function createTabActions(options: {
     channelLabel(channel) { void call("tab.channelLabel", { channel }, null) },
     health(reports) { void call("tab.health", { reports }, null) },
     settings(target) { void rpc.call("tab.settings", target) },
+    skip: async (video, skip) => (await call("tab.skip", { video, skip }, null))?.kind === "done",
+    pause: async paused => (await call("tab.pause", { paused }, null))?.kind === "done",
+    filterChannel: async change => (await call("tab.filterChannel", change, null))?.kind === "done",
     async device(change) {
       const answer = await rpc.call("tab.device", { change })
       return answer.kind === "answered" ? answer.result : { kind: "refused", reason: "unavailable" }
