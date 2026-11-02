@@ -79,19 +79,21 @@ Set it up in this order. Store nothing until every check in steps 2 and 3 prints
    - you as required reviewer, self-review allowed;
    - under **Deployment branches and tags**, **Selected branches and tags** with the one rule `main`, a branch;
    - **Allow administrators to bypass configured protection rules** turned off.
-2. Check that only `main` can deploy to `amo-reviewer`, that you review it, that no administrator can skip your review, and that no repository variable stands in for the environment's digests, which `vars.` would read if the environment lacked them. Each command prints `true` or `false`:
+2. Check that only `main` can deploy to `amo-reviewer`, that you review it, that no administrator can skip your review, and that no repository variable stands in for the environment's digests, which `vars.` would read if the environment lacked them. GitHub reads variable names in any case. Each command prints `true` or `false`, and the last one line per page of variables:
 
    ```sh
    gh api repos/Alioun/yt-playlist-tools/environments/amo-reviewer --jq '.can_admins_bypass == false and .deployment_branch_policy == {"protected_branches": false, "custom_branch_policies": true} and [.protection_rules[] | select(.type == "required_reviewers") | .reviewers[].reviewer.login] == ["Alioun"]'
    gh api repos/Alioun/yt-playlist-tools/environments/amo-reviewer/deployment-branch-policies --jq '[.branch_policies[] | {name, type}] == [{"name": "main", "type": "branch"}]'
-   gh api repos/Alioun/yt-playlist-tools/actions/variables --jq 'all(.variables[]; .name != "REVIEWER_NOTES_SHA256" and .name != "BUN_SHA256")' --paginate
+   gh api repos/Alioun/yt-playlist-tools/actions/variables --jq 'all(.variables[]; (.name | ascii_upcase) as $name | $name != "REVIEWER_NOTES_SHA256" and $name != "BUN_SHA256")' --paginate
    ```
 
-3. Set up the `main` ruleset so that nothing reaches `main` without your review of its last push. Under **Settings › Rules › Rulesets**, its **Require a pull request before merging** needs at least one approval, **Dismiss stale pull request approvals when new commits are pushed**, **Require review from Code Owners** and **Require approval of the most recent reviewable push**. Its bypass list holds **Repository admin**, which here is you alone, or nothing: no GitHub App, deploy key or other role. Without last-push approval, a commit pushed after your approval would merge without your review, and an agent could merge it. Then check it. The first command prints `true` or `false`, and the loop prints one such line for each ruleset on `main`:
+3. Set up the `main` ruleset so that nothing reaches `main` without your review of its last push. Under **Settings › Rules › Rulesets**, its **Require a pull request before merging** needs at least one approval, **Dismiss stale pull request approvals when new commits are pushed**, **Require review from Code Owners** and **Require approval of the most recent reviewable push**. Its **Require status checks to pass** lists CI's `build` check, which runs the G28 tests. Its bypass list holds **Repository admin**, which here is you alone, or nothing: no GitHub App, deploy key or other role. Without last-push approval, a commit pushed after your approval would merge without your review, and an agent could merge it. Then check it. The first command prints `true` or `false`, and the loop prints one such line for each ruleset on `main`, or `false` when it finds none:
 
    ```sh
-   gh api repos/Alioun/yt-playlist-tools/rules/branches/main --jq 'any(.[]; .type == "pull_request" and .parameters.required_approving_review_count >= 1 and .parameters.dismiss_stale_reviews_on_push == true and .parameters.require_code_owner_review == true and .parameters.require_last_push_approval == true)'
-   for id in $(gh api repos/Alioun/yt-playlist-tools/rules/branches/main --jq '[.[].ruleset_id] | unique | .[]'); do
+   gh api repos/Alioun/yt-playlist-tools/rules/branches/main --jq 'any(.[]; .type == "pull_request" and .parameters.required_approving_review_count >= 1 and .parameters.dismiss_stale_reviews_on_push == true and .parameters.require_code_owner_review == true and .parameters.require_last_push_approval == true) and any(.[]; .type == "required_status_checks" and any(.parameters.required_status_checks[]; .context == "build"))'
+   ids=$(gh api repos/Alioun/yt-playlist-tools/rules/branches/main --jq '[.[].ruleset_id] | unique | .[]')
+   [ -n "$ids" ] || echo false
+   for id in $ids; do
      gh api "repos/Alioun/yt-playlist-tools/rulesets/$id" --jq '.enforcement == "active" and (.bypass_actors | type == "array") and all(.bypass_actors[]; .actor_type == "RepositoryRole" and .actor_id == 5)'
    done
    ```

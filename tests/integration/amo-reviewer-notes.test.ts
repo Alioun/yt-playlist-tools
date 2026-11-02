@@ -499,6 +499,8 @@ describe("the owner's setup commands in releasing.md", () => {
     expect(jq(check, { total_count: 2, variables: [variable("PUBLISH_AMO"), variable("PUBLISH_CWS")] })).toBe("true")
     expect(jq(check, { total_count: 2, variables: [variable("PUBLISH_AMO"), variable("REVIEWER_NOTES_SHA256")] })).toBe("false")
     expect(jq(check, { total_count: 1, variables: [variable("BUN_SHA256")] })).toBe("false")
+    expect(jq(check, { total_count: 1, variables: [variable("reviewer_notes_sha256")] })).toBe("false")
+    expect(jq(check, { total_count: 1, variables: [variable("Bun_Sha256")] })).toBe("false")
     expect(jq(check, { message: "Not Found" })).not.toBe("true")
   })
 
@@ -511,9 +513,16 @@ describe("the owner's setup commands in releasing.md", () => {
       require_last_push_approval: true,
       required_review_thread_resolution: false
     }
-    const rules = [{ type: "pull_request", ruleset_id: 42, parameters }, { type: "non_fast_forward", ruleset_id: 42 }, { type: "deletion", ruleset_id: 7 }]
+    const status = (context: string) => ({
+      type: "required_status_checks",
+      ruleset_id: 42,
+      parameters: { strict_required_status_checks_policy: false, required_status_checks: [{ context: "lint" }, { context }] }
+    })
+    const rules = [{ type: "pull_request", ruleset_id: 42, parameters }, status("build"), { type: "non_fast_forward", ruleset_id: 42 }, { type: "deletion", ruleset_id: 7 }]
     expect(jq(check, rules)).toBe("true")
     expect(jq(check, [])).toBe("false")
+    expect(jq(check, [rules[0]])).toBe("false")
+    expect(jq(check, [rules[0], status("test")])).toBe("false")
     const weakened: [keyof typeof parameters, number | boolean][] = [
       ["required_approving_review_count", 0],
       ["dismiss_stale_reviews_on_push", false],
@@ -521,10 +530,39 @@ describe("the owner's setup commands in releasing.md", () => {
       ["require_last_push_approval", false]
     ]
     for (const [name, value] of weakened) {
-      expect({ name, prints: jq(check, [{ type: "pull_request", parameters: { ...parameters, [name]: value } }]) }).toEqual({ name, prints: "false" })
-      expect({ name, missing: jq(check, [{ type: "pull_request", parameters: without(parameters, name) }]) }).toEqual({ name, missing: "false" })
+      expect({ name, prints: jq(check, [{ type: "pull_request", parameters: { ...parameters, [name]: value } }, status("build")]) }).toEqual({ name, prints: "false" })
+      expect({ name, missing: jq(check, [{ type: "pull_request", parameters: without(parameters, name) }, status("build")]) }).toEqual({ name, missing: "false" })
     }
     expect(jq(filter("rules/branches/main", "ruleset_id"), rules).split("\n")).toEqual(["7", "42"])
+  })
+
+  // The block as written, with a stub gh that answers from fixtures through jq.
+  test("the ruleset commands print false when no ruleset applies to main, or gh fails", () => {
+    const block = [...releasing.matchAll(/```sh\n([\s\S]*?)```/g)].map(match => match[1]!).find(block => block.includes("rulesets/$id"))!
+    const dir = mkdtempSync(join(tmpdir(), "reviewer-notes-ruleset-"))
+    directories.push(dir)
+    mkdirSync(join(dir, "bin"))
+    writeFileSync(join(dir, "bin/gh"), [
+      "#!/bin/sh",
+      'case $2 in */rules/branches/main) file=rules.json ;; */rulesets/*) file="ruleset-${2##*/}.json" ;; *) exit 1 ;; esac',
+      `[ -f "${dir}/$file" ] || exit 1`,
+      `exec ${Bun.which("jq")!} -r "$4" "${dir}/$file"`
+    ].join("\n") + "\n", { mode: 0o755 })
+    const run = (rules: unknown, rulesets: Record<number, unknown>) => {
+      rmSync(join(dir, "rules.json"), { force: true })
+      if (rules !== undefined) writeFileSync(join(dir, "rules.json"), JSON.stringify(rules))
+      for (const [id, ruleset] of Object.entries(rulesets)) writeFileSync(join(dir, `ruleset-${id}.json`), JSON.stringify(ruleset))
+      return spawnSync(bash, ["--noprofile", "--norc", "-c", block], { cwd: dir, env: { PATH: join(dir, "bin") }, encoding: "utf8" }).stdout.split("\n").filter(Boolean)
+    }
+    const parameters = { required_approving_review_count: 1, dismiss_stale_reviews_on_push: true, require_code_owner_review: true, require_last_push_approval: true }
+    const rules = [
+      { type: "pull_request", ruleset_id: 42, parameters },
+      { type: "required_status_checks", ruleset_id: 42, parameters: { required_status_checks: [{ context: "build" }] } }
+    ]
+    const ruleset = { id: 42, enforcement: "active", bypass_actors: [] }
+    expect(run(rules, { 42: ruleset })).toEqual(["true", "true"])
+    expect(run([], {})).toEqual(["false", "false"])
+    expect(run(undefined, {})).toEqual(["false"])
   })
 
   test("the bypass check prints true only for a ruleset no one but the owner can bypass", () => {

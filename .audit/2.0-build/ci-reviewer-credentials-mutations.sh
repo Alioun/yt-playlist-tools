@@ -141,7 +141,7 @@ plant ci-after-install "$ci" 's/(      # G28\x27s secret-flow tests.*?\n\n)(    
 plant runner-unowned "$owners" 's/^\/\.audit\/2\.0-build\/ci-reviewer-credentials-mutations\.sh \@Alioun\n//m' -- "sends every file the approval covers to the owner"
 plant docs-unowned-later "$owners" 's/\z/\/docs\/development\/releasing.md\n/' -- "sends every file the approval covers to the owner"
 plant env-admin-bypass "$docs" 's/\.can_admins_bypass == false and //' -- "the environment checks print true only for amo-reviewer as set up"
-plant repo-digest-allowed "$docs" 's/ and \.name != "BUN_SHA256"//' -- "the repository-variable check prints true only when no repository variable can stand in for a digest"
+plant repo-digest-allowed "$docs" 's/ and \$name != "BUN_SHA256"//' -- "the repository-variable check prints true only when no repository variable can stand in for a digest"
 plant ruleset-no-last-push "$docs" 's/ and \.parameters\.require_last_push_approval == true//' -- "the ruleset check prints true only when main needs the owner's review of its last push"
 plant ruleset-any-bypass "$docs" 's/ and all\(\.bypass_actors\[\]; \.actor_type == "RepositoryRole" and \.actor_id == 5\)//' -- "the bypass check prints true only for a ruleset no one but the owner can bypass"
 plant digest-without-pipefail "$docs" 's/\(set -euo pipefail(\n +digest=)/(set -eu$1/' -- "the digest command stores the approved script's digest, and nothing when git show fails"
@@ -192,6 +192,13 @@ plant owners-basename-later "$owners" 's/\z/releasing.md \@dummy-other\n/' -- "s
 plant owners-directory-later "$owners" 's/\z/fixtures\/\n/' -- "sends every file the approval covers to the owner"
 plant old-owners-matcher "$tests" 's/codeOwnerRules\.findLast\(rule => codeOwnersMatch\(rule\.pattern, path\)\)/codeOwnerRules.findLast(rule => new Bun.Glob(rule.pattern.replace(\/^\\\/\/, "")).match(path))/; s/expect\(codeOwnersMatch\(pattern, path\)\)/expect(new Bun.Glob(pattern.replace(\/^\\\/\/, "")).match(path))/' -- \
   "reads releasing.md against docs/development/releasing.md as GitHub does" "reads apps/ against deep/apps/main.ts as GitHub does"
+
+# The owner's setup commands.
+plant ruleset-no-build-check "$docs" 's/ and any\(\.\[\]; \.type == "required_status_checks" and any\(\.parameters\.required_status_checks\[\]; \.context == "build"\)\)//' -- \
+  "the ruleset check prints true only when main needs the owner's review of its last push"
+plant repo-digest-any-case "$docs" 's/\(\.name \| ascii_upcase\) as \$name \| \$name != "REVIEWER_NOTES_SHA256" and \$name != "BUN_SHA256"/.name != "REVIEWER_NOTES_SHA256" and .name != "BUN_SHA256"/' -- \
+  "the repository-variable check prints true only when no repository variable can stand in for a digest"
+plant ruleset-loop-silent "$docs" 's/^ *\[ -n "\$ids" \] \|\| echo false\n//m' -- "the ruleset commands print false when no ruleset applies to main"
 
 echo "$planted rows, $missed missed"
 exit $((missed > 0))
