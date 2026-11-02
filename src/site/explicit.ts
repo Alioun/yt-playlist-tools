@@ -15,7 +15,8 @@ export const signedOutPlan: ToastPlan = {
 
 export type ExplicitContext = {
   readonly session: Feedback
-  readonly actions: Pick<TabActions, "undo">
+  /** `playlists` names the pending toast's playlists from the cached list. */
+  readonly actions: Pick<TabActions, "undo"> & Partial<Pick<TabActions, "playlists">>
   readonly i18n: I18n
   readonly location: Pick<Location, "href" | "assign">
 }
@@ -64,6 +65,18 @@ export function explicitContent(context: ExplicitContext, answer: TabAddReport |
   }
 }
 
+/** The pending toast names its playlists before the add answers, so it reads them from the cached list (YT-ADD-22). */
+async function pendingTitles(context: ExplicitContext, pending: readonly PlaylistId[], titles: Titles): Promise<Titles> {
+  const missing = pending.filter(id => id !== "WL" && !titles.playlists?.[id])
+  if (!missing.length || !context.actions.playlists) return titles
+  try {
+    const answer = await context.actions.playlists(false)
+    const rows = answer.kind === "cached" || answer.kind === "listed" ? answer.listing?.rows ?? [] : []
+    const found = Object.fromEntries(rows.filter(row => missing.includes(row.id) && row.title).map(row => [row.id, row.title]))
+    return { ...titles, playlists: { ...titles.playlists, ...found } }
+  } catch { return titles }
+}
+
 /**
  * Runs an explicit add with its pending toast: after 1 s for a key, or at once for a button, unless Show feedback
  * is off (YT-ADD-22, YT-KEY-24). The answer's toast replaces it.
@@ -76,8 +89,9 @@ export async function explicitAdd(context: ExplicitContext, input: {
   readonly handlers: ExplicitHandlers
 }, add: () => Promise<TabAddReport | Unanswered>): Promise<TabAddReport | Unanswered> {
   const plan = input.pending.length ? toastPlan({ kind: "pending", playlists: input.pending }, input.feedback) : null
+  const titles = plan ? await pendingTitles(context, input.pending, input.titles) : input.titles
   const operation = context.session.toaster.begin({ keyWithoutButton: input.keyWithoutButton,
-    pending: plan ? context.session.format(plan, named(input.titles, {}, context.i18n), null) : null })
+    pending: plan ? context.session.format(plan, named(titles, {}, context.i18n), null) : null })
   let answer: TabAddReport | Unanswered
   try { answer = await add() } catch { answer = { kind: "unanswered" } }
   operation.finish(explicitContent(context, answer, input.titles, input.handlers))
