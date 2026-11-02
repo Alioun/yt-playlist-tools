@@ -1,5 +1,6 @@
 import type { I18n } from "../../shared/i18n"
-import { display, type Platform } from "../../shared/keys"
+import { display } from "../../shared/keys/policy"
+import type { Platform } from "../../shared/keys/types"
 import type { MusicAction, Settings } from "../../shared/model/types"
 import type { Snapshot } from "../../shared/model/settings-view"
 import { isPlaylistId, type PlaylistId } from "../../shared/model/validation"

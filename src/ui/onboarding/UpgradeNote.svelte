@@ -5,7 +5,7 @@
   import FeatureChoice from "../components/FeatureChoice.svelte"
   import Mark from "../components/Mark.svelte"
   import RichText from "../components/RichText.svelte"
-  import { display } from "../../shared/keys"
+  import { display } from "../../shared/keys/policy"
   import type { NotePercentage } from "../../shared/contracts/ui-pages"
   import type { UpgradeDetails } from "../../shared/model/types"
   import type { Snapshot } from "../../shared/model/settings-view"

@@ -2,7 +2,7 @@
   import { untrack } from "svelte"
   import Button from "../components/Button.svelte"
   import Switch from "../components/Switch.svelte"
-  import { display } from "../../shared/keys"
+  import { display } from "../../shared/keys/policy"
   import type { createFeatureCopy, PageFeatureId } from "../onboarding/features"
   import type { PageState } from "../lib/page-state.svelte"
   import { heldMessage, heldReason, isOn } from "../lib/held"

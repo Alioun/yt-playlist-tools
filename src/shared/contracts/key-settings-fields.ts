@@ -1,5 +1,6 @@
 import type { Key, Settings } from "../model"
-import { findConflicts, type ShortcutTarget } from "../keys"
+import { findConflicts } from "../keys/bindings"
+import type { ShortcutTarget } from "../keys/types"
 import type { ConflictObservation } from "./key-settings"
 
 export function keyForWire(key: Readonly<Key> | null): Key | null {
