@@ -20,7 +20,8 @@ test("a Full mark past the browsers' sync limit stays in this browser, and goes 
     expect((await owner.markPlaylists({ acct: acct as never, private: false, marks: [{ playlist: playlist as never, mark: "full" }] })).kind).toBe("committed")
     const saved = h.records()
     expect(record(record(saved[setupName]).data).marks, "the mark is saved here").toEqual({ [playlist]: "full" })
-    const gen = String(record(saved[setupName]).gen)
+    const gen = record(saved[setupName]).gen
+    if (typeof gen !== "string") throw Error("Expected the saved setup's gen")
     expect(record(saved.sync).deferred, "and waits for room").toEqual({ [setupName]: gen })
     now = 10_000
     expect((await owner.flushSync()).kind, "while the synced copy is over the limit, nothing goes").toBe("idle")

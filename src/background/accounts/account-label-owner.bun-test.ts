@@ -98,7 +98,7 @@ test("past the browsers' sync limit the label is saved here and waits for room, 
     expect(await h.owner.completeAccountLabel(captured.capture, { acct: a, label: { name: "Kept" } })).toMatchObject({ kind: "committed", label: { name: "Kept" } })
     const setup = object(h.stored()[`doc:setup:${a}`])
     expect(object(setup.data).label).toMatchObject({ name: "Kept" })
-    expect(object(h.stored().sync).deferred).toEqual({ [`doc:setup:${a}`]: String(setup.gen) })
+    expect(object(h.stored().sync).deferred).toEqual({ [`doc:setup:${a}`]: setup.gen as string })
     expect(h.removal.state().sync).toEqual(initial.sync)
   } finally { await h.dispose() }
 })
