@@ -183,7 +183,8 @@ jobs:
     # Off until the owner approves G28. Turning it on deletes `false && ` here
     # and in fill-reviewer-notes, once every action below is pinned to a commit.
     if: false && github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.meta.outputs.release == 'true' && needs.meta.outputs.channel == 'stable' && vars.PUBLISH_AMO == 'true'
-    runs-on: ubuntu-latest
+    # A named image, so a move of ubuntu-latest needs the owner's approval.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     environment: amo-reviewer
     steps:
@@ -375,7 +376,8 @@ jobs:
     needs: [meta, check-reviewer-login, submit-amo]
     # Off until the owner approves G28, like check-reviewer-login.
     if: false && needs.check-reviewer-login.result == 'success' && needs.submit-amo.result == 'success'
-    runs-on: ubuntu-latest
+    # A named image, so a move of ubuntu-latest needs the owner's approval.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     environment: amo-reviewer
     steps:

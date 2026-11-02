@@ -16,7 +16,7 @@ const bash = Bun.which("bash")!
 
 type Step = { name?: string; uses?: string; with?: Record<string, unknown>; env?: Record<string, string>; run?: string }
 type Job = { needs?: string[]; if?: unknown; environment?: string | { name: string }; uses?: string; env?: Record<string, string>; steps?: Step[] }
-type Workflow = { env?: Record<string, string>; jobs: Record<string, Job> }
+type Workflow = { env?: Record<string, string>; defaults?: unknown; jobs: Record<string, Job> }
 
 const workflowDir = join(root, ".github/workflows")
 const workflowTexts = Object.fromEntries(
@@ -291,6 +291,10 @@ describe("the workflows", () => {
     expect(users).toEqual(reviewerJobs.map(id => `release.yml > ${id}`))
   })
 
+  test("set no workflow-level defaults, which would change every run step's shell or directory", () => {
+    expect(Object.entries(workflows).filter(([, workflow]) => "defaults" in workflow).map(([file]) => file)).toEqual([])
+  })
+
   test("hold no digest of the script; the owner sets it in vars.REVIEWER_NOTES_SHA256", () => {
     for (const text of Object.values(workflowTexts)) expect(text).not.toMatch(/\b[0-9a-f]{64}\b/)
     for (const step of [checkStep, fillStep]) expect(step.env!.REVIEWER_NOTES_SHA256).toBe("${{ vars.REVIEWER_NOTES_SHA256 }}")
@@ -315,6 +319,36 @@ describe("the reviewer jobs", () => {
       const unpinned = job.steps!.some(step => step.uses && !/@[0-9a-f]{40}$/.test(step.uses))
       const allowed = unpinned ? [`false && ${gates[id]}`] : [`false && ${gates[id]}`, gates[id]]
       expect({ id, allowed: allowed.includes(String(job.if)) }).toEqual({ id, allowed: true })
+    }
+  })
+
+  // Whole, so no container, services, defaults, permissions, shell, working
+  // directory or continue-on-error can slip in. The gate tests compare each if.
+  test("hold exactly the keys and values the approval covers, on a named runner image", () => {
+    const needs: Record<string, string[]> = { "check-reviewer-login": ["meta", "build"], "fill-reviewer-notes": ["meta", "check-reviewer-login", "submit-amo"] }
+    const env: Record<string, Record<string, string>> = {
+      "check-reviewer-login": {
+        AMO_REVIEWER_LOGIN: "${{ secrets.AMO_REVIEWER_LOGIN }}",
+        REVIEWER_NOTES_SHA256: "${{ vars.REVIEWER_NOTES_SHA256 }}",
+        BUN_SHA256: "${{ vars.BUN_SHA256 }}"
+      },
+      "fill-reviewer-notes": {
+        AMO_REVIEWER_LOGIN: "${{ secrets.AMO_REVIEWER_LOGIN }}",
+        FIREFOX_EXTENSION_ID: "${{ env.AMO_GUID }}",
+        FIREFOX_JWT_ISSUER: "${{ secrets.FIREFOX_JWT_ISSUER }}",
+        FIREFOX_JWT_SECRET: "${{ secrets.FIREFOX_JWT_SECRET }}",
+        VERSION: "${{ needs.meta.outputs.version }}",
+        REVIEWER_NOTES_SHA256: "${{ vars.REVIEWER_NOTES_SHA256 }}",
+        BUN_SHA256: "${{ vars.BUN_SHA256 }}"
+      }
+    }
+    for (const id of reviewerJobs) {
+      const { steps = [], if: _, ...job } = release.jobs[id]! as Job & Record<string, unknown>
+      expect({ id, keys: Object.keys(release.jobs[id]!).sort() }).toEqual({ id, keys: ["environment", "if", "needs", "runs-on", "steps", "timeout-minutes"] })
+      expect({ id, job }).toEqual({ id, job: { needs: needs[id], "runs-on": "ubuntu-24.04", "timeout-minutes": 10, environment: "amo-reviewer" } })
+      expect({ id, steps: steps.map(step => Object.keys(step).sort()) }).toEqual({ id, steps: [["uses", "with"], ["uses", "with"], ["uses", "with"], ["env", "name", "run"]] })
+      expect({ id, download: steps[2]!.with }).toEqual({ id, download: { name: "release-${{ needs.meta.outputs.version }}", path: "dist" } })
+      expect({ id, env: steps[3]!.env }).toEqual({ id, env: env[id] })
     }
   })
 

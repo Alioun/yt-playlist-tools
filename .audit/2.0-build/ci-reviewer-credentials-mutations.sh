@@ -173,5 +173,14 @@ plant proof-if "$ci" 's/(      - name: Test the reviewer-login secret flow \(G28
 plant proof-job-continue-on-error "$ci" 's/(  build:\n    runs-on: ubuntu-latest\n)/$1    continue-on-error: true\n/' -- "is a plain step whose failure fails the build job"
 plant proof-cached-bun "$ci" 's/\n *# The G28 proof below runs on this Bun.*?\n.*?\n *no-cache: true//s' -- "runs on the Bun package.json declares, without a cache"
 
+# The reviewer jobs' shape.
+plant reviewer-latest-image "$release" 's/(  check-reviewer-login:\n(?:.*\n)*?    runs-on: )ubuntu-24\.04/${1}ubuntu-latest/' -- "hold exactly the keys and values the approval covers"
+plant reviewer-container "$release" 's/(  fill-reviewer-notes:\n(?:.*\n)*?    runs-on: ubuntu-24\.04\n)/${1}    container: ubuntu:24.04\n/' -- "hold exactly the keys and values the approval covers"
+plant reviewer-job-defaults "$release" 's/(  check-reviewer-login:\n(?:.*\n)*?    runs-on: ubuntu-24\.04\n)/${1}    defaults:\n      run:\n        shell: sh {0}\n/' -- "hold exactly the keys and values the approval covers"
+plant reviewer-step-shell "$release" 's/(      - name: Put the reviewer test account into the reviewer notes\n)/${1}        shell: sh {0}\n/' -- "hold exactly the keys and values the approval covers"
+plant reviewer-step-continue "$release" 's/(      - name: Check the reviewer test account\n)/${1}        continue-on-error: true\n/' -- "hold exactly the keys and values the approval covers"
+plant reviewer-step-env "$release" 's/(          BUN_SHA256: \$\{\{ vars\.BUN_SHA256 \}\}\n        run: \|\n          digest=\$REVIEWER_NOTES_SHA256\n          script=)/          BUN_CONFIG_VERBOSE_FETCH: curl\n$1/' -- "hold exactly the keys and values the approval covers"
+plant workflow-defaults "$release" 's/^jobs:\n/defaults:\n  run:\n    shell: sh {0}\n\njobs:\n/m' -- "set no workflow-level defaults"
+
 echo "$planted rows, $missed missed"
 exit $((missed > 0))

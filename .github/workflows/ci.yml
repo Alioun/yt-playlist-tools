@@ -44,8 +44,8 @@ jobs:
           rm -f "$report"
           bun --config="$RUNNER_TEMP/empty.toml" test --no-env-file --tsconfig-override="$RUNNER_TEMP/empty.json" \
             --reporter=junit --reporter-outfile="$report" ./tests/integration/amo-reviewer-notes.test.ts
-          grep -Eq '^<testsuites name="bun test" tests="82" assertions="[0-9]+" failures="0" skipped="0" ' "$report" \
-            || { echo "::error::the G28 proof did not pass all 82 of its tests"; exit 1; }
+          grep -Eq '^<testsuites name="bun test" tests="84" assertions="[0-9]+" failures="0" skipped="0" ' "$report" \
+            || { echo "::error::the G28 proof did not pass all 84 of its tests"; exit 1; }
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
