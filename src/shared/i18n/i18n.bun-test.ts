@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test"
 import catalogue from "../../public/_locales/en/messages.json"
 import { createI18n, createSiteI18n, richParts, type MessageKey } from "./index"
-import { messageParameters } from "./parameters"
+import { messagePlaceholders } from "./parameters"
 import { sha256 } from "./identity"
 import { scriptedMessages, stretch } from "../../../tools/fixtures/localization/scripted"
 
@@ -59,9 +59,10 @@ test("page scripts substitute every message exactly as the catalogue does, witho
   const calls: unknown[] = []
   const native = { getMessage(name: string, values?: string | string[]) { calls.push({ name, values }); return scripted.getMessage(name, values) } }
   const full = createI18n(native, catalogue), site = createSiteI18n(native)
-  for (const key of Object.keys(messageParameters) as MessageKey[]) {
-    const values = Object.fromEntries(messageParameters[key].map((name, index) => [name, `value-${index}`]))
-    const send = (i18n: typeof full) => Reflect.apply(i18n.message, i18n, [key, ...(messageParameters[key].length ? [values] : [])])
+  for (const key of Object.keys(catalogue) as MessageKey[]) {
+    const names: readonly string[] = messagePlaceholders[key] ?? []
+    const values = Object.fromEntries(names.map((name, index) => [name, `value-${index}`]))
+    const send = (i18n: typeof full) => Reflect.apply(i18n.message, i18n, [key, ...(names.length ? [values] : [])])
     calls.length = 0
     const fromSite = send(site)
     const siteCall = calls.splice(0)

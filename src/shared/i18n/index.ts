@@ -1,7 +1,7 @@
-import { messageParameters } from "./parameters"
+import { messagePlaceholders, type MessageParameters } from "./parameters"
 
-export type MessageKey = keyof typeof messageParameters
-export type MessageValues<K extends MessageKey> = { readonly [Name in typeof messageParameters[K][number]]: string }
+export type MessageKey = keyof MessageParameters
+export type MessageValues<K extends MessageKey> = { readonly [Name in MessageParameters[K][number]]: string }
 export type SimpleMessageKey = { [K in MessageKey]: keyof MessageValues<K> extends never ? K : never }[MessageKey]
 type Exact<Actual, Expected> = Actual & Record<Exclude<keyof Actual, keyof Expected>, never>
 type Arguments<K extends MessageKey, P extends MessageValues<K>> = keyof MessageValues<K> extends never
@@ -45,11 +45,11 @@ export function createI18n(native: NativeMessagePort, catalogue: MessageCatalogu
 }
 
 /**
- * For page scripts, which can't carry the whole catalogue. Placeholder names come from `messageParameters`,
+ * For page scripts, which can't carry the whole catalogue. Placeholder names come from `messagePlaceholders`,
  * whose order is each message's placeholder order. Canonical English text isn't available here.
  */
 export function createSiteI18n(native: NativeMessagePort, locale = "en"): I18n {
-  return localized(native, key => messageParameters[key], () => { throw new Error("Canonical text is for extension pages") }, locale)
+  return localized(native, key => messagePlaceholders[key] ?? [], () => { throw new Error("Canonical text is for extension pages") }, locale)
 }
 
 function localized(native: NativeMessagePort, placeholderNames: (key: MessageKey) => readonly string[], canonicalText: (key: SimpleMessageKey) => string, locale: string) {
@@ -80,7 +80,8 @@ function localized(native: NativeMessagePort, placeholderNames: (key: MessageKey
     plural(count: number): "one" | "other" { return plurals.select(count) === "one" ? "one" : "other" },
     number(value: number): string { return numbers.format(value) },
     date(value: Date | number, options?: Intl.DateTimeFormatOptions): string { return new Intl.DateTimeFormat(locale, options).format(value) },
-    time(value: Date | number, options: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit" }): string { return new Intl.DateTimeFormat(locale, options).format(value) }
+    time(value: Date | number, options: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit" }): string { return new Intl.DateTimeFormat(locale, options).format(value) },
+    relative(value: number, unit: Intl.RelativeTimeFormatUnit): string { return new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(value, unit) }
   }
 }
 

@@ -9,7 +9,7 @@ import { receivedResetKey } from "../../../src/background/store/sync-reset-recei
 import { classifyConsentWork } from "../../../src/background/store/consent-recovery"
 import { uiContract } from "../../../src/shared/contracts/ui"
 import { decodeSettings } from "../../../src/shared/model"
-import { messageParameters } from "../../../src/shared/i18n/parameters"
+import { messagePlaceholders } from "../../../src/shared/i18n/parameters"
 import type { JsonObject } from "../../../src/shared/contracts/json"
 
 if (settingsOrigin.kind !== "ui") throw Error("Expected the settings page UI origin")
@@ -116,7 +116,9 @@ test("toaster and notice copy is localized with exact parameters", () => {
     "notice_feature_card_menu", "notice_feature_gather", "notice_feature_music_actions", "notice_feature_music_keys"] as const
   for (const key of added) {
     expect(Object.hasOwn(messages, key), `${key} localized`).toBe(true)
-    expect(Object.keys(messages[key]?.placeholders ?? {}).sort(), `${key} placeholders`).toEqual([...messageParameters[key]].sort())
+    const names: readonly string[] = messagePlaceholders[key] ?? []
+    expect(Object.keys(messages[key]?.placeholders ?? {}).sort(), `${key} placeholders`).toEqual([...names].sort())
   }
-  expect(Object.keys(messages).sort(), "every message has parameters").toEqual(Object.keys(messageParameters).sort())
+  const parameterized = Object.keys(messages).filter(key => Object.keys(messages[key]?.placeholders ?? {}).length)
+  expect(parameterized.sort(), "every message with placeholders names them").toEqual(Object.keys(messagePlaceholders).sort())
 })

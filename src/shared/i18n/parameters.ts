@@ -1,142 +1,1030 @@
 // Generated from src/public/_locales/en/messages.json by scripts/generate-message-parameters.ts.
-export const messageParameters = {
-  "firstRun_welcome": [],
-  "firstRun_intro": [],
-  "firstRun_step_1": [],
-  "firstRun_step_2": [],
-  "firstRun_step_3": [],
-  "firstRun_stepsLabel": [],
-  "firstRun_pick_heading": [],
-  "firstRun_pick_lead": [],
-  "firstRun_pick_syncLead": [],
-  "firstRun_pick_looking": [],
-  "firstRun_pick_notFound": [],
-  "firstRun_pick_updateNeeded": [],
-  "firstRun_pick_lookupFailed": [],
-  "firstRun_pick_fromSync": [],
-  "firstRun_pick_pageHint": [],
-  "firstRun_pick_musicAccess": [],
-  "firstRun_pick_footer": [],
-  "firstRun_consent_picked": [],
-  "firstRun_consent_agreeing": [],
-  "firstRun_consent_notNow": [],
-  "firstRun_consent_change": [],
-  "firstRun_consent_refused_sync_full": [],
-  "firstRun_consent_refused_update_needed": [],
-  "firstRun_consent_refused_invalid": [],
-  "firstRun_consent_refused_rejected": [],
-  "firstRun_consent_refused_unconfirmed": [],
-  "firstRun_consent_refused_unavailable": [],
-  "firstRun_consent_refused_join_required": [],
-  "firstRun_notNow_strong": [],
-  "firstRun_notNow_rest": [],
-  "firstRun_notNow_back": [],
-  "firstRun_finish_heading": [],
-  "firstRun_finish_leadOn": [],
-  "firstRun_finish_leadOff": [],
-  "firstRun_finish_loading": [],
-  "firstRun_finish_unavailable": [],
-  "firstRun_finish_noAccess": [],
-  "firstRun_finish_noAccessRest": [],
-  "firstRun_finish_giveAccess": [],
-  "firstRun_finish_noMusicAccess": [],
-  "firstRun_finish_noMusicAccessRest": [],
-  "firstRun_finish_giveMusicAccess": [],
-  "firstRun_finish_accessDenied": [],
-  "firstRun_finish_noTab": [],
-  "firstRun_finish_noTabRest": [],
-  "firstRun_finish_signedOut": [],
-  "firstRun_finish_signedOutRest": [],
-  "firstRun_finish_signIn": [],
-  "firstRun_finish_accountLead": [],
-  "firstRun_finish_ready": [],
-  "firstRun_finish_gatherReady": [],
-  "firstRun_finish_needsAccess": [],
-  "firstRun_finish_needsBrowserMenu": [],
-  "firstRun_finish_alsoOnMusicHeld": [],
-  "firstRun_finish_needsAccount": [],
-  "firstRun_finish_choose": [],
-  "firstRun_finish_choosing": [],
-  "firstRun_finish_noneChosen": [],
-  "firstRun_finish_noPlaylists": [],
-  "firstRun_finish_autoAddLead": [],
-  "firstRun_finish_quickSaves": [],
-  "firstRun_finish_musicSaves": [],
-  "firstRun_finish_choiceFailed_picker_unavailable": [],
-  "firstRun_finish_choiceFailed_private": [],
-  "firstRun_finish_choiceFailed_rejected": [],
-  "firstRun_finish_choiceFailed_unconfirmed": [],
-  "firstRun_finish_choiceFailed_unavailable": [],
-  "firstRun_finish_openYouTube": [],
-  "firstRun_finish_openSettings": [],
+export type MessageParameters = {
+  "firstRun_welcome": readonly []
+  "firstRun_intro": readonly []
+  "firstRun_step_1": readonly []
+  "firstRun_step_2": readonly []
+  "firstRun_step_3": readonly []
+  "firstRun_stepsLabel": readonly []
+  "firstRun_pick_heading": readonly []
+  "firstRun_pick_lead": readonly []
+  "firstRun_pick_syncLead": readonly []
+  "firstRun_pick_looking": readonly []
+  "firstRun_pick_notFound": readonly []
+  "firstRun_pick_updateNeeded": readonly []
+  "firstRun_pick_lookupFailed": readonly []
+  "firstRun_pick_fromSync": readonly []
+  "firstRun_pick_pageHint": readonly []
+  "firstRun_pick_musicAccess": readonly []
+  "firstRun_pick_footer": readonly []
+  "firstRun_consent_picked": readonly []
+  "firstRun_consent_agreeing": readonly []
+  "firstRun_consent_notNow": readonly []
+  "firstRun_consent_change": readonly []
+  "firstRun_consent_refused_sync_full": readonly []
+  "firstRun_consent_refused_update_needed": readonly []
+  "firstRun_consent_refused_invalid": readonly []
+  "firstRun_consent_refused_rejected": readonly []
+  "firstRun_consent_refused_unconfirmed": readonly []
+  "firstRun_consent_refused_unavailable": readonly []
+  "firstRun_consent_refused_join_required": readonly []
+  "firstRun_notNow_strong": readonly []
+  "firstRun_notNow_rest": readonly []
+  "firstRun_notNow_back": readonly []
+  "firstRun_finish_heading": readonly []
+  "firstRun_finish_leadOn": readonly []
+  "firstRun_finish_leadOff": readonly []
+  "firstRun_finish_loading": readonly []
+  "firstRun_finish_unavailable": readonly []
+  "firstRun_finish_noAccess": readonly []
+  "firstRun_finish_noAccessRest": readonly []
+  "firstRun_finish_giveAccess": readonly []
+  "firstRun_finish_noMusicAccess": readonly []
+  "firstRun_finish_noMusicAccessRest": readonly []
+  "firstRun_finish_giveMusicAccess": readonly []
+  "firstRun_finish_accessDenied": readonly []
+  "firstRun_finish_noTab": readonly []
+  "firstRun_finish_noTabRest": readonly []
+  "firstRun_finish_signedOut": readonly []
+  "firstRun_finish_signedOutRest": readonly []
+  "firstRun_finish_signIn": readonly []
+  "firstRun_finish_accountLead": readonly []
+  "firstRun_finish_ready": readonly []
+  "firstRun_finish_gatherReady": readonly []
+  "firstRun_finish_needsAccess": readonly []
+  "firstRun_finish_needsBrowserMenu": readonly []
+  "firstRun_finish_alsoOnMusicHeld": readonly []
+  "firstRun_finish_needsAccount": readonly []
+  "firstRun_finish_choose": readonly []
+  "firstRun_finish_choosing": readonly []
+  "firstRun_finish_noneChosen": readonly []
+  "firstRun_finish_noPlaylists": readonly []
+  "firstRun_finish_autoAddLead": readonly []
+  "firstRun_finish_quickSaves": readonly []
+  "firstRun_finish_musicSaves": readonly []
+  "firstRun_finish_choiceFailed_picker_unavailable": readonly []
+  "firstRun_finish_choiceFailed_private": readonly []
+  "firstRun_finish_choiceFailed_rejected": readonly []
+  "firstRun_finish_choiceFailed_unconfirmed": readonly []
+  "firstRun_finish_choiceFailed_unavailable": readonly []
+  "firstRun_finish_openYouTube": readonly []
+  "firstRun_finish_openSettings": readonly []
+  "firstRun_continue_one": readonly ["count"]
+  "firstRun_continue_other": readonly ["count"]
+  "firstRun_continue_none": readonly []
+  "firstRun_consentLead_one": readonly []
+  "firstRun_consentLead_other": readonly ["count"]
+  "firstRun_consentLead_none": readonly []
+  "firstRun_agree_one": readonly ["count"]
+  "firstRun_agree_other": readonly ["count"]
+  "firstRun_agree_none": readonly []
+  "firstRun_chooseFor": readonly ["feature"]
+  "firstRun_shortcutSaves": readonly ["key"]
+  "firstRun_pick_found": readonly []
+  "disclosure_heading_first_run": readonly []
+  "disclosure_heading_upgrade_note": readonly []
+  "disclosure_heading_feature": readonly []
+  "disclosure_intro": readonly []
+  "disclosure_bullet_1": readonly []
+  "disclosure_bullet_2": readonly []
+  "disclosure_bullet_3": readonly []
+  "disclosure_bullet_4": readonly []
+  "disclosure_bullet_5": readonly []
+  "disclosure_bullet_6": readonly []
+  "disclosure_closing_chrome": readonly []
+  "disclosure_closing_firefox": readonly []
+  "disclosure_policyLabel": readonly []
+  "feature_name_12": readonly []
+  "feature_name_11": readonly []
+  "feature_name_10": readonly []
+  "feature_name_9": readonly []
+  "feature_name_8": readonly []
+  "feature_name_7": readonly []
+  "feature_name_6": readonly []
+  "feature_name_5": readonly []
+  "feature_name_4": readonly []
+  "feature_name_3": readonly []
+  "feature_name_2": readonly []
+  "feature_name_1": readonly []
+  "feature_description_11": readonly []
+  "feature_description_10": readonly []
+  "feature_description_9": readonly []
+  "feature_description_8": readonly []
+  "feature_description_7": readonly []
+  "feature_description_6": readonly []
+  "feature_description_5": readonly []
+  "feature_description_4": readonly []
+  "feature_description_3": readonly []
+  "feature_description_2": readonly []
+  "feature_description_1": readonly []
+  "footprintText_right_click": readonly []
+  "footprintText_buttons": readonly []
+  "footprintText_keys": readonly []
+  "footprintText_none": readonly []
+  "groupHeading_everywhere": readonly []
+  "groupHeading_music": readonly []
+  "groupHeading_youtube": readonly []
+  "feature_sync_chrome": readonly []
+  "feature_sync_firefox": readonly []
+  "copy_missingPlaylist": readonly []
+  "copy_shortcut": readonly []
+  "copy_account": readonly []
+  "copy_channel": readonly []
+  "copy_list_two": readonly ["first", "second"]
+  "copy_list_three": readonly ["first", "second", "third"]
+  "copy_list_more": readonly ["first", "second", "count"]
+  "feedback_www_manual_untitled_pending": readonly ["targets"]
+  "feedback_www_manual_untitled_saved": readonly ["targets"]
+  "feedback_www_manual_untitled_removed": readonly ["target"]
+  "feedback_www_manual_untitled_undo_failed": readonly []
+  "feedback_www_manual_untitled_first_pick": readonly ["targets"]
+  "feedback_www_manual_untitled_shortcut_set": readonly ["shortcut", "target"]
+  "feedback_www_manual_untitled_already_in": readonly ["targets"]
+  "feedback_www_manual_untitled_no_playlist": readonly ["shortcut", "account"]
+  "feedback_www_manual_untitled_filtered": readonly ["channel", "targets"]
+  "feedback_www_manual_untitled_unknown_channel": readonly ["targets"]
+  "feedback_www_manual_untitled_saved_filtered_one_one": readonly ["saved", "filtered"]
+  "feedback_www_manual_untitled_saved_filtered_one_other": readonly ["saved", "filtered"]
+  "feedback_www_manual_untitled_saved_filtered_other_one": readonly ["saved", "filtered"]
+  "feedback_www_manual_untitled_saved_filtered_other_other": readonly ["saved", "filtered"]
+  "feedback_www_manual_untitled_failed_signed_out_one": readonly []
+  "feedback_www_manual_untitled_saved_failed_signed_out_one": readonly ["success"]
+  "feedback_www_manual_untitled_failed_not_sent_one": readonly ["targets"]
+  "feedback_www_manual_untitled_saved_failed_not_sent_one": readonly ["success", "targets"]
+  "feedback_www_manual_untitled_failed_unconfirmed_one": readonly ["targets"]
+  "feedback_www_manual_untitled_saved_failed_unconfirmed_one": readonly ["success", "targets"]
+  "feedback_www_manual_untitled_failed_missing_one": readonly ["targets"]
+  "feedback_www_manual_untitled_saved_failed_missing_one": readonly ["success", "targets"]
+  "feedback_www_manual_untitled_failed_full_one": readonly ["targets"]
+  "feedback_www_manual_untitled_saved_failed_full_one": readonly ["success", "targets"]
+  "feedback_www_manual_untitled_failed_refused_one": readonly []
+  "feedback_www_manual_untitled_saved_failed_refused_one": readonly ["success", "targets"]
+  "feedback_www_manual_untitled_failed_rate_limited_one": readonly []
+  "feedback_www_manual_untitled_saved_failed_rate_limited_one": readonly ["success", "targets"]
+  "feedback_www_manual_untitled_failed_account_changed_one": readonly []
+  "feedback_www_manual_untitled_saved_failed_account_changed_one": readonly ["success"]
+  "feedback_www_manual_untitled_failed_account_refused_one": readonly []
+  "feedback_www_manual_untitled_saved_failed_account_refused_one": readonly ["success"]
+  "feedback_www_manual_untitled_failed_membership_unreadable_one": readonly []
+  "feedback_www_manual_untitled_saved_failed_membership_unreadable_one": readonly ["success"]
+  "feedback_www_manual_untitled_failed_unrecognised_one": readonly ["targets"]
+  "feedback_www_manual_untitled_saved_failed_unrecognised_one": readonly ["success", "targets"]
+  "feedback_www_manual_untitled_failed_missing_other": readonly ["targets"]
+  "feedback_www_manual_untitled_saved_failed_missing_other": readonly ["success", "targets"]
+  "feedback_www_manual_untitled_failed_full_other": readonly ["targets"]
+  "feedback_www_manual_untitled_saved_failed_full_other": readonly ["success", "targets"]
+  "feedback_www_manual_named_pending": readonly ["video", "targets"]
+  "feedback_www_manual_named_saved": readonly ["video", "targets"]
+  "feedback_www_manual_named_removed": readonly ["video", "target"]
+  "feedback_www_manual_named_first_pick": readonly ["video", "targets"]
+  "feedback_www_manual_named_already_in": readonly ["video", "targets"]
+  "feedback_www_manual_named_filtered": readonly ["video", "channel", "targets"]
+  "feedback_www_manual_named_unknown_channel": readonly ["video", "targets"]
+  "feedback_www_manual_named_saved_filtered_one_one": readonly ["video", "saved", "filtered"]
+  "feedback_www_manual_named_saved_filtered_one_other": readonly ["video", "saved", "filtered"]
+  "feedback_www_manual_named_saved_filtered_other_one": readonly ["video", "saved", "filtered"]
+  "feedback_www_manual_named_saved_filtered_other_other": readonly ["video", "saved", "filtered"]
+  "feedback_www_manual_named_saved_failed_signed_out_one": readonly ["video", "success"]
+  "feedback_www_manual_named_failed_not_sent_one": readonly ["video", "targets"]
+  "feedback_www_manual_named_saved_failed_not_sent_one": readonly ["video", "success", "targets"]
+  "feedback_www_manual_named_failed_unconfirmed_one": readonly ["video", "targets"]
+  "feedback_www_manual_named_saved_failed_unconfirmed_one": readonly ["video", "success", "targets"]
+  "feedback_www_manual_named_failed_missing_one": readonly ["video", "targets"]
+  "feedback_www_manual_named_saved_failed_missing_one": readonly ["video", "success", "targets"]
+  "feedback_www_manual_named_failed_full_one": readonly ["video", "targets"]
+  "feedback_www_manual_named_saved_failed_full_one": readonly ["video", "success", "targets"]
+  "feedback_www_manual_named_failed_refused_one": readonly ["video"]
+  "feedback_www_manual_named_saved_failed_refused_one": readonly ["video", "success", "targets"]
+  "feedback_www_manual_named_failed_rate_limited_one": readonly ["video"]
+  "feedback_www_manual_named_saved_failed_rate_limited_one": readonly ["video", "success", "targets"]
+  "feedback_www_manual_named_saved_failed_account_changed_one": readonly ["video", "success"]
+  "feedback_www_manual_named_saved_failed_account_refused_one": readonly ["video", "success"]
+  "feedback_www_manual_named_failed_membership_unreadable_one": readonly ["video"]
+  "feedback_www_manual_named_saved_failed_membership_unreadable_one": readonly ["video", "success"]
+  "feedback_www_manual_named_failed_unrecognised_one": readonly ["video", "targets"]
+  "feedback_www_manual_named_saved_failed_unrecognised_one": readonly ["video", "success", "targets"]
+  "feedback_www_manual_named_failed_missing_other": readonly ["video", "targets"]
+  "feedback_www_manual_named_saved_failed_missing_other": readonly ["video", "success", "targets"]
+  "feedback_www_manual_named_failed_full_other": readonly ["video", "targets"]
+  "feedback_www_manual_named_saved_failed_full_other": readonly ["video", "success", "targets"]
+  "feedback_www_auto_untitled_saved": readonly ["targets"]
+  "feedback_www_auto_untitled_saved_failed_signed_out_one": readonly ["success"]
+  "feedback_www_auto_untitled_failed_not_sent_one": readonly ["targets"]
+  "feedback_www_auto_untitled_saved_failed_not_sent_one": readonly ["success", "targets"]
+  "feedback_www_auto_untitled_failed_unconfirmed_one": readonly ["targets"]
+  "feedback_www_auto_untitled_saved_failed_unconfirmed_one": readonly ["success", "targets"]
+  "feedback_www_auto_untitled_failed_missing_one": readonly ["targets"]
+  "feedback_www_auto_untitled_saved_failed_missing_one": readonly ["success", "targets"]
+  "feedback_www_auto_untitled_failed_full_one": readonly ["targets"]
+  "feedback_www_auto_untitled_saved_failed_full_one": readonly ["success", "targets"]
+  "feedback_www_auto_untitled_failed_refused_one": readonly []
+  "feedback_www_auto_untitled_saved_failed_refused_one": readonly ["success", "targets"]
+  "feedback_www_auto_untitled_failed_rate_limited_one": readonly []
+  "feedback_www_auto_untitled_saved_failed_rate_limited_one": readonly ["success", "targets"]
+  "feedback_www_auto_untitled_saved_failed_account_changed_one": readonly ["success"]
+  "feedback_www_auto_untitled_saved_failed_account_refused_one": readonly ["success"]
+  "feedback_www_auto_untitled_saved_failed_membership_unreadable_one": readonly ["success"]
+  "feedback_www_auto_untitled_failed_unrecognised_one": readonly ["targets"]
+  "feedback_www_auto_untitled_saved_failed_unrecognised_one": readonly ["success", "targets"]
+  "feedback_www_auto_untitled_failed_missing_other": readonly ["targets"]
+  "feedback_www_auto_untitled_saved_failed_missing_other": readonly ["success", "targets"]
+  "feedback_www_auto_untitled_failed_full_other": readonly ["targets"]
+  "feedback_www_auto_untitled_saved_failed_full_other": readonly ["success", "targets"]
+  "feedback_www_auto_named_saved": readonly ["video", "targets"]
+  "feedback_www_auto_named_saved_failed_signed_out_one": readonly ["video", "success"]
+  "feedback_www_auto_named_failed_not_sent_one": readonly ["video", "targets"]
+  "feedback_www_auto_named_saved_failed_not_sent_one": readonly ["video", "success", "targets"]
+  "feedback_www_auto_named_failed_unconfirmed_one": readonly ["video", "targets"]
+  "feedback_www_auto_named_saved_failed_unconfirmed_one": readonly ["video", "success", "targets"]
+  "feedback_www_auto_named_failed_missing_one": readonly ["video", "targets"]
+  "feedback_www_auto_named_saved_failed_missing_one": readonly ["video", "success", "targets"]
+  "feedback_www_auto_named_failed_full_one": readonly ["video", "targets"]
+  "feedback_www_auto_named_saved_failed_full_one": readonly ["video", "success", "targets"]
+  "feedback_www_auto_named_failed_refused_one": readonly ["video"]
+  "feedback_www_auto_named_saved_failed_refused_one": readonly ["video", "success", "targets"]
+  "feedback_www_auto_named_failed_rate_limited_one": readonly ["video"]
+  "feedback_www_auto_named_saved_failed_rate_limited_one": readonly ["video", "success", "targets"]
+  "feedback_www_auto_named_saved_failed_account_changed_one": readonly ["video", "success"]
+  "feedback_www_auto_named_saved_failed_account_refused_one": readonly ["video", "success"]
+  "feedback_www_auto_named_saved_failed_membership_unreadable_one": readonly ["video", "success"]
+  "feedback_www_auto_named_failed_unrecognised_one": readonly ["video", "targets"]
+  "feedback_www_auto_named_saved_failed_unrecognised_one": readonly ["video", "success", "targets"]
+  "feedback_www_auto_named_failed_missing_other": readonly ["video", "targets"]
+  "feedback_www_auto_named_saved_failed_missing_other": readonly ["video", "success", "targets"]
+  "feedback_www_auto_named_failed_full_other": readonly ["video", "targets"]
+  "feedback_www_auto_named_saved_failed_full_other": readonly ["video", "success", "targets"]
+  "feedback_music_manual_untitled_pending": readonly ["targets"]
+  "feedback_music_manual_untitled_saved": readonly ["targets"]
+  "feedback_music_manual_untitled_removed": readonly ["target"]
+  "feedback_music_manual_untitled_first_pick": readonly ["targets"]
+  "feedback_music_manual_untitled_already_in": readonly ["targets"]
+  "feedback_music_manual_untitled_filtered": readonly ["channel", "targets"]
+  "feedback_music_manual_untitled_unknown_channel": readonly ["targets"]
+  "feedback_music_manual_untitled_saved_filtered_one_one": readonly ["saved", "filtered"]
+  "feedback_music_manual_untitled_saved_filtered_one_other": readonly ["saved", "filtered"]
+  "feedback_music_manual_untitled_saved_filtered_other_one": readonly ["saved", "filtered"]
+  "feedback_music_manual_untitled_saved_filtered_other_other": readonly ["saved", "filtered"]
+  "feedback_music_manual_untitled_failed_signed_out_one": readonly []
+  "feedback_music_manual_untitled_saved_failed_signed_out_one": readonly ["success"]
+  "feedback_music_manual_untitled_failed_not_sent_one": readonly ["targets"]
+  "feedback_music_manual_untitled_saved_failed_not_sent_one": readonly ["success", "targets"]
+  "feedback_music_manual_untitled_failed_unconfirmed_one": readonly ["targets"]
+  "feedback_music_manual_untitled_saved_failed_unconfirmed_one": readonly ["success", "targets"]
+  "feedback_music_manual_untitled_failed_missing_one": readonly ["targets"]
+  "feedback_music_manual_untitled_saved_failed_missing_one": readonly ["success", "targets"]
+  "feedback_music_manual_untitled_failed_full_one": readonly ["targets"]
+  "feedback_music_manual_untitled_saved_failed_full_one": readonly ["success", "targets"]
+  "feedback_music_manual_untitled_failed_refused_one": readonly []
+  "feedback_music_manual_untitled_saved_failed_refused_one": readonly ["success", "targets"]
+  "feedback_music_manual_untitled_failed_rate_limited_one": readonly []
+  "feedback_music_manual_untitled_saved_failed_rate_limited_one": readonly ["success", "targets"]
+  "feedback_music_manual_untitled_saved_failed_account_changed_one": readonly ["success"]
+  "feedback_music_manual_untitled_saved_failed_account_refused_one": readonly ["success"]
+  "feedback_music_manual_untitled_failed_membership_unreadable_one": readonly []
+  "feedback_music_manual_untitled_saved_failed_membership_unreadable_one": readonly ["success"]
+  "feedback_music_manual_untitled_failed_unrecognised_one": readonly ["targets"]
+  "feedback_music_manual_untitled_saved_failed_unrecognised_one": readonly ["success", "targets"]
+  "feedback_music_manual_untitled_failed_missing_other": readonly ["targets"]
+  "feedback_music_manual_untitled_saved_failed_missing_other": readonly ["success", "targets"]
+  "feedback_music_manual_untitled_failed_full_other": readonly ["targets"]
+  "feedback_music_manual_untitled_saved_failed_full_other": readonly ["success", "targets"]
+  "feedback_music_manual_named_saved_failed_signed_out_one": readonly ["video", "success"]
+  "feedback_music_manual_named_failed_unconfirmed_one": readonly ["video", "targets"]
+  "feedback_music_manual_named_saved_failed_unconfirmed_one": readonly ["video", "success", "targets"]
+  "feedback_music_manual_named_failed_refused_one": readonly ["video"]
+  "feedback_music_manual_named_saved_failed_refused_one": readonly ["video", "success", "targets"]
+  "feedback_music_manual_named_failed_rate_limited_one": readonly ["video"]
+  "feedback_music_manual_named_saved_failed_rate_limited_one": readonly ["video", "success", "targets"]
+  "feedback_music_manual_named_failed_unrecognised_one": readonly ["video", "targets"]
+  "feedback_music_manual_named_saved_failed_unrecognised_one": readonly ["video", "success", "targets"]
+  "feedback_music_auto_untitled_saved": readonly ["targets"]
+  "feedback_music_auto_untitled_saved_failed_signed_out_one": readonly ["success"]
+  "feedback_music_auto_untitled_failed_not_sent_one": readonly ["targets"]
+  "feedback_music_auto_untitled_saved_failed_not_sent_one": readonly ["success", "targets"]
+  "feedback_music_auto_untitled_failed_unconfirmed_one": readonly ["targets"]
+  "feedback_music_auto_untitled_saved_failed_unconfirmed_one": readonly ["success", "targets"]
+  "feedback_music_auto_untitled_failed_missing_one": readonly ["targets"]
+  "feedback_music_auto_untitled_saved_failed_missing_one": readonly ["success", "targets"]
+  "feedback_music_auto_untitled_failed_full_one": readonly ["targets"]
+  "feedback_music_auto_untitled_saved_failed_full_one": readonly ["success", "targets"]
+  "feedback_music_auto_untitled_failed_refused_one": readonly []
+  "feedback_music_auto_untitled_saved_failed_refused_one": readonly ["success", "targets"]
+  "feedback_music_auto_untitled_failed_rate_limited_one": readonly []
+  "feedback_music_auto_untitled_saved_failed_rate_limited_one": readonly ["success", "targets"]
+  "feedback_music_auto_untitled_saved_failed_account_changed_one": readonly ["success"]
+  "feedback_music_auto_untitled_saved_failed_account_refused_one": readonly ["success"]
+  "feedback_music_auto_untitled_saved_failed_membership_unreadable_one": readonly ["success"]
+  "feedback_music_auto_untitled_failed_unrecognised_one": readonly ["targets"]
+  "feedback_music_auto_untitled_saved_failed_unrecognised_one": readonly ["success", "targets"]
+  "feedback_music_auto_untitled_failed_missing_other": readonly ["targets"]
+  "feedback_music_auto_untitled_saved_failed_missing_other": readonly ["success", "targets"]
+  "feedback_music_auto_untitled_failed_full_other": readonly ["targets"]
+  "feedback_music_auto_untitled_saved_failed_full_other": readonly ["success", "targets"]
+  "feedback_music_auto_named_saved_failed_signed_out_one": readonly ["video", "success"]
+  "feedback_music_auto_named_failed_unconfirmed_one": readonly ["video", "targets"]
+  "feedback_music_auto_named_saved_failed_unconfirmed_one": readonly ["video", "success", "targets"]
+  "feedback_music_auto_named_failed_refused_one": readonly ["video"]
+  "feedback_music_auto_named_saved_failed_refused_one": readonly ["video", "success", "targets"]
+  "feedback_music_auto_named_failed_rate_limited_one": readonly ["video"]
+  "feedback_music_auto_named_saved_failed_rate_limited_one": readonly ["video", "success", "targets"]
+  "feedback_music_auto_named_failed_unrecognised_one": readonly ["video", "targets"]
+  "feedback_music_auto_named_saved_failed_unrecognised_one": readonly ["video", "success", "targets"]
+  "picker_saveTitle": readonly []
+  "picker_saveMusicTitle": readonly []
+  "picker_quickTitle": readonly []
+  "picker_quickMusicTitle": readonly []
+  "picker_quickSubtitle": readonly []
+  "picker_quickMusicSubtitle": readonly []
+  "picker_gatherTitle": readonly []
+  "picker_gatherSubtitle": readonly ["account"]
+  "picker_manyTitle": readonly []
+  "picker_refresh": readonly []
+  "picker_sort": readonly []
+  "picker_search": readonly []
+  "picker_close": readonly []
+  "picker_listLabel": readonly []
+  "picker_checkingVideo": readonly []
+  "picker_checkingSong": readonly []
+  "picker_known_one": readonly ["count"]
+  "picker_known_other": readonly ["count"]
+  "picker_unreadableVideo": readonly []
+  "picker_unreadableSong": readonly []
+  "picker_savedList": readonly ["time"]
+  "picker_noSavedList": readonly []
+  "picker_noTab": readonly []
+  "picker_loadingList": readonly []
+  "picker_listUnavailable": readonly []
+  "picker_emptyList": readonly []
+  "picker_emptySearch": readonly []
+  "picker_refreshFailed": readonly []
+  "picker_private": readonly []
+  "picker_unlisted": readonly []
+  "picker_public": readonly []
+  "picker_unknownPrivacy": readonly []
+  "picker_videos_one": readonly ["count"]
+  "picker_videos_other": readonly ["count"]
+  "picker_songs_one": readonly ["count"]
+  "picker_songs_other": readonly ["count"]
+  "picker_privateVideos_one": readonly ["count"]
+  "picker_privateVideos_other": readonly ["count"]
+  "picker_unlistedVideos_one": readonly ["count"]
+  "picker_unlistedVideos_other": readonly ["count"]
+  "picker_publicVideos_one": readonly ["count"]
+  "picker_publicVideos_other": readonly ["count"]
+  "picker_privateSongs_one": readonly ["count"]
+  "picker_privateSongs_other": readonly ["count"]
+  "picker_unlistedSongs_one": readonly ["count"]
+  "picker_unlistedSongs_other": readonly ["count"]
+  "picker_publicSongs_one": readonly ["count"]
+  "picker_publicSongs_other": readonly ["count"]
+  "picker_newRow": readonly []
+  "picker_goneRow": readonly []
+  "picker_titleUnavailable": readonly []
+  "picker_watchLater": readonly []
+  "picker_watchLaterEveryAccount": readonly []
+  "picker_pin": readonly []
+  "picker_pinned": readonly []
+  "picker_pinFor": readonly ["playlist"]
+  "picker_pinnedFor": readonly ["playlist"]
+  "picker_privatePin": readonly []
+  "picker_privateGather": readonly []
+  "picker_missing": readonly []
+  "picker_full": readonly []
+  "picker_remove": readonly []
+  "picker_removeChoice": readonly ["playlist"]
+  "picker_busy": readonly []
+  "picker_alreadyIn": readonly []
+  "picker_couldNotSave": readonly []
+  "picker_couldNotRemove": readonly []
+  "picker_removed": readonly []
+  "picker_refused_private": readonly []
+  "picker_refused_sync_full": readonly []
+  "picker_refused_update_needed": readonly []
+  "picker_refused_invalid": readonly []
+  "picker_newPlaylist": readonly []
+  "picker_title": readonly []
+  "picker_visibility": readonly []
+  "picker_cancel": readonly []
+  "picker_create": readonly []
+  "picker_required": readonly []
+  "picker_tooLong": readonly []
+  "picker_angleBrackets": readonly []
+  "picker_duplicate": readonly ["playlist"]
+  "picker_creation_signedOut": readonly []
+  "picker_creation_noTab": readonly []
+  "picker_creation_noChannel": readonly []
+  "picker_creation_private": readonly []
+  "picker_openYouTube": readonly []
+  "picker_createChannel": readonly []
+  "picker_create_rateLimited": readonly []
+  "picker_create_publicCap": readonly []
+  "picker_create_noChannel": readonly []
+  "picker_create_notAllowed": readonly []
+  "picker_create_failed": readonly []
+  "picker_createChoiceRefused": readonly []
+  "clearAll_syncedKeptNewer": readonly []
+  "picker_pickedPrivate": readonly []
+  "picker_sortPending": readonly []
+  "picker_sortRefused": readonly []
+  "picker_noneChosen": readonly []
+  "picker_chooserName": readonly ["label", "playlist"]
+  "picker_shortcutLabel": readonly ["key"]
+  "toast_action_undo": readonly []
+  "toast_action_try_again": readonly []
+  "toast_action_settings": readonly []
+  "toast_action_choose": readonly []
+  "toast_action_sign_in": readonly []
+  "toast_action_reload": readonly []
+  "toast_nothingToUndo": readonly []
+  "toast_details": readonly []
+  "toast_dismiss": readonly []
+  "notice_www_one": readonly ["features"]
+  "notice_www_other": readonly ["features"]
+  "notice_watch": readonly []
+  "notice_music_one": readonly ["features"]
+  "notice_music_other": readonly ["features"]
+  "notice_feature_auto_add": readonly []
+  "notice_feature_shortcuts": readonly []
+  "notice_feature_quick_save": readonly []
+  "notice_feature_queue_button": readonly []
+  "notice_feature_watch_button": readonly []
+  "notice_feature_card_menu": readonly []
+  "notice_feature_gather": readonly []
+  "notice_feature_music_actions": readonly []
+  "notice_feature_music_keys": readonly []
+  "queueButton_idle": readonly []
+  "queueButton_busy": readonly []
+  "queueButton_added": readonly []
+  "queueButton_unconfirmed": readonly []
+  "queueButton_failed": readonly []
+  "queueButton_toast_added_untitled": readonly []
+  "queueButton_toast_unconfirmed_untitled": readonly []
+  "queueButton_toast_failed_untitled": readonly []
+  "queueButton_toast_added_named": readonly ["title"]
+  "queueButton_toast_unconfirmed_named": readonly ["title"]
+  "queueButton_toast_failed_named": readonly ["title"]
+  "extName": readonly []
+  "extShortName": readonly []
+  "extDescription": readonly []
+  "actionTitle": readonly []
+  "command_savePlayingSong": readonly []
+  "command_likePlayingSong": readonly []
+  "command_watchLaterCurrentVideo": readonly []
+  "site_www": readonly []
+  "site_music": readonly []
+  "picker_shortcutTitle": readonly []
+  "picker_loadFailed": readonly []
+  "autoAdd_goal_start": readonly []
+  "autoAdd_goal_full": readonly []
+  "autoAdd_cantMeasure_named": readonly ["title"]
+  "autoAdd_cantMeasure_untitled": readonly []
+  "watchState_counting_label": readonly ["percent"]
+  "watchState_counting_status": readonly ["percent", "watched"]
+  "watchState_partly_label": readonly ["percent"]
+  "watchState_partly_status": readonly ["added", "pending", "percent"]
+  "watchState_added_label": readonly []
+  "watchState_added_status": readonly ["targets"]
+  "watchState_alreadyIn": readonly ["targets"]
+  "watchState_failed_label": readonly []
+  "watchState_failed_offline": readonly ["targets"]
+  "watchState_failed_named": readonly ["title"]
+  "watchState_failed_untitled": readonly []
+  "watchState_skipped_label": readonly []
+  "watchState_skipped_status": readonly []
+  "watchState_paused_label": readonly []
+  "watchState_paused_status": readonly []
+  "watchState_live_label": readonly []
+  "watchState_live_status": readonly []
+  "watchState_cantMeasure_label": readonly []
+  "watchState_cantMeasure_status": readonly []
+  "watchState_untracked": readonly []
+  "channelFilter_allowOnly": readonly []
+  "channelFilter_deny": readonly []
+  "channelFilter_hint_allow": readonly []
+  "channelFilter_hint_deny": readonly []
+  "channelFilter_toDeny_one": readonly ["count"]
+  "channelFilter_toDeny_other": readonly ["count"]
+  "channelFilter_toAllow_one": readonly ["count"]
+  "channelFilter_toAllow_other": readonly ["count"]
+  "channelFilter_offKeptDenied_one": readonly ["count"]
+  "channelFilter_offKeptDenied_other": readonly ["count"]
+  "channelFilter_offKeptAllowed_one": readonly ["count"]
+  "channelFilter_offKeptAllowed_other": readonly ["count"]
+  "channelFilter_emptyAllow": readonly ["playlist"]
+  "channelFilter_chip": readonly ["title", "handle"]
+  "channelFilter_listCurrent_allow": readonly ["channel"]
+  "channelFilter_listCurrent_deny": readonly ["channel"]
+  "channelFilter_turnOnAllow_one": readonly ["playlist", "count"]
+  "channelFilter_turnOnAllow_other": readonly ["playlist", "count"]
+  "channelFilter_turnOnDeny_one": readonly ["playlist", "count"]
+  "channelFilter_turnOnDeny_other": readonly ["playlist", "count"]
+  "channelFilter_allowed": readonly []
+  "channelFilter_denied": readonly []
+  "channelFilter_usesAllow": readonly ["playlist"]
+  "channelFilter_usesDeny": readonly ["playlist"]
+  "channelFilter_lookingUp": readonly []
+  "channelFilter_unknown": readonly []
+  "channelFilter_needsTab": readonly []
+  "channelFilter_notFound": readonly []
+  "channelFilter_notChannel": readonly []
+  "shortcuts_presetNoKey": readonly ["other", "key"]
+  "shortcuts_whereKeysWork": readonly []
+  "shortcuts_add": readonly []
+  "shortcuts_limit": readonly []
+  "shortcuts_removed": readonly []
+  "recorder_noKey": readonly []
+  "recorder_pressKeys": readonly []
+  "recorder_escToCancel": readonly []
+  "recorder_saving": readonly []
+  "recorder_record": readonly ["title"]
+  "recorder_clear": readonly ["title"]
+  "recorder_refused_enterSpace": readonly []
+  "recorder_refused_ctrlAlt": readonly []
+  "recorder_refused_reserved": readonly []
+  "recorder_refused_other": readonly []
+  "recorder_conflict_one": readonly ["others", "key"]
+  "recorder_conflict_other": readonly ["others", "key"]
+  "recorder_conflictLabel": readonly []
+  "recorder_useHere": readonly []
+  "recorder_cancel": readonly []
+  "recorder_clash_site": readonly ["site", "key", "action"]
+  "recorder_clash_browser": readonly ["browser", "key", "action"]
+  "recorder_clash_command": readonly ["key", "command"]
+  "recorder_commandsUnavailable": readonly []
+  "recorder_answer_stale": readonly []
+  "recorder_answer_missingTarget": readonly []
+  "recorder_answer_expired": readonly []
+  "recorder_answer_syncFull": readonly []
+  "recorder_answer_updateNeeded": readonly []
+  "recorder_answer_unconfirmed": readonly []
+  "recorder_answer_rejected": readonly []
+  "recorder_answer_invalid": readonly []
+  "recorder_answer_unavailable": readonly []
+  "hint_unrecognisedItem": readonly []
+  "wwwHint_pointAtVideo": readonly []
+  "wwwHint_videosOnly": readonly []
+  "wwwHint_ads": readonly []
+  "musicHint_nothingPlaying": readonly []
+  "musicHint_adPlaying": readonly []
+  "musicHint_queueOnly": readonly []
+  "musicHint_songsOnly": readonly []
+  "musicHint_autoplay": readonly []
+  "musicHint_casting": readonly []
+  "musicHint_unavailable": readonly ["action", "kind"]
+  "musicHint_anyTabNoQuickSave": readonly ["account"]
+  "musicAction_save": readonly []
+  "musicAction_next": readonly []
+  "musicAction_end": readonly []
+  "musicAction_remove": readonly []
+  "musicAction_move": readonly []
+  "musicAction_like": readonly []
+  "musicAction_library": readonly []
+  "musicAction_mix": readonly []
+  "musicAction_album": readonly []
+  "musicAction_artist": readonly []
+  "musicKind_song": readonly []
+  "musicKind_video": readonly []
+  "musicKind_episode": readonly []
+  "musicKind_upload": readonly []
+  "musicKind_album": readonly []
+  "musicKind_playlist": readonly []
+  "musicKind_artist": readonly []
+  "musicKind_other": readonly []
+  "musicToast_playNext": readonly ["title"]
+  "musicToast_playNextMany_one": readonly ["count", "title"]
+  "musicToast_playNextMany_other": readonly ["count", "title"]
+  "musicToast_queued": readonly ["title"]
+  "musicToast_queuedMany_one": readonly ["count", "title"]
+  "musicToast_queuedMany_other": readonly ["count", "title"]
+  "musicToast_playing": readonly ["title"]
+  "musicToast_movedNext": readonly ["title"]
+  "musicToast_movedEnd": readonly ["title"]
+  "musicToast_removedQueue": readonly ["title"]
+  "musicToast_liked": readonly ["title"]
+  "musicToast_unliked": readonly ["title"]
+  "musicToast_librarySaved": readonly ["title"]
+  "musicToast_libraryRemoved": readonly ["title"]
+  "musicToast_alreadyNext": readonly ["title"]
+  "musicToast_alreadyEnd": readonly ["title"]
+  "musicFail_signedOutLike": readonly []
+  "musicFail_signedOutLibrary": readonly []
+  "musicFail_library": readonly ["title"]
+  "musicFail_mix": readonly ["title"]
+  "musicFail_album": readonly ["title"]
+  "musicFail_artist": readonly ["title"]
+  "musicFail_queue": readonly ["title"]
+  "musicFail_move": readonly ["title"]
+  "musicFail_remove": readonly ["title"]
+  "musicFail_like": readonly ["title"]
+  "musicFail_keyBroken": readonly ["action", "key"]
+  "musicFail_keyUnavailable": readonly ["action"]
+  "access_musicShortcutsDenied": readonly []
+  "access_musicKeysMissing": readonly []
+  "anyTab_noVideoTab": readonly []
+  "anyTab_noMusicTab": readonly []
+  "anyTab_noMusicAccess": readonly []
+  "breakage_autoAdd": readonly []
+  "breakage_queueButton": readonly []
+  "breakage_cardMenu": readonly []
+  "breakage_accountKeys_www": readonly []
+  "breakage_accountKeys_music": readonly []
+  "breakage_site_www": readonly []
+  "breakage_site_music": readonly []
+  "gather_player_one": readonly ["count"]
+  "gather_player_other": readonly ["count"]
+  "gather_playerOverflow": readonly ["count"]
+  "gather_queue_one": readonly ["count"]
+  "gather_queue_other": readonly ["count"]
+  "gather_queueOverflow_one": readonly ["count"]
+  "gather_queueOverflow_other": readonly ["count"]
+  "gather_saved_one": readonly ["count", "playlist"]
+  "gather_saved_other": readonly ["count", "playlist"]
+  "gather_alreadyIn_one": readonly ["count"]
+  "gather_alreadyIn_other": readonly ["count"]
+  "gather_savedClosed_one": readonly ["count", "playlist"]
+  "gather_savedClosed_other": readonly ["count", "playlist"]
+  "gather_autoRow_one": readonly ["count", "playlist", "when"]
+  "gather_autoRow_other": readonly ["count", "playlist", "when"]
+  "gather_toast_one": readonly ["count", "playlist"]
+  "gather_toast_other": readonly ["count", "playlist"]
+  "gather_toastClosed_one": readonly ["count", "playlist"]
+  "gather_toastClosed_other": readonly ["count", "playlist"]
+  "gather_toastAuto_one": readonly ["count", "playlist"]
+  "gather_toastAuto_other": readonly ["count", "playlist"]
+  "gather_checking": readonly ["index", "count"]
+  "gather_saving_one": readonly ["count"]
+  "gather_saving_other": readonly ["count"]
+  "gather_noTabs": readonly []
+  "gather_noPlaylist": readonly ["account"]
+  "gather_waiting": readonly []
+  "gather_undone_one": readonly ["count", "playlist"]
+  "gather_undone_other": readonly ["count", "playlist"]
+  "gather_last_one": readonly ["count", "destination", "when"]
+  "gather_last_other": readonly ["count", "destination", "when"]
+  "gather_destination_player": readonly []
+  "gather_destination_queue": readonly []
+  "gather_unsaved_one": readonly ["count"]
+  "gather_unsaved_other": readonly ["count"]
+  "gather_unsavedRefused_one": readonly ["count"]
+  "gather_unsavedRefused_other": readonly ["count"]
+  "gather_unsavedRateLimited_one": readonly ["count"]
+  "gather_unsavedRateLimited_other": readonly ["count"]
+  "gather_missing": readonly ["playlist"]
+  "gather_full": readonly ["playlist"]
+  "gather_signedOut": readonly []
+  "gather_noYouTubeTab": readonly []
+  "gather_playerUnconfirmed": readonly []
+  "gather_queueUnconfirmed": readonly ["count"]
+  "gather_queueTabTimeout": readonly []
+  "gather_broken_player": readonly []
+  "gather_broken_queue": readonly []
+  "gather_broken_playlist": readonly []
+  "firstRun_pick_musicAccess_firefox": readonly []
+  "note_title": readonly []
+  "note_credentials": readonly []
+  "note_credentials_unknown": readonly []
+  "note_pin": readonly []
+  "note_whyName": readonly []
+  "note_noAccess": readonly []
+  "note_kept_heading": readonly []
+  "note_kept_paused": readonly []
+  "note_autoAdd_playlists_one": readonly ["count"]
+  "note_autoAdd_playlists_other": readonly ["count"]
+  "note_autoAdd_neverAuthorised_one": readonly ["count"]
+  "note_autoAdd_neverAuthorised_other": readonly ["count"]
+  "note_autoAdd_unknownHistory_one": readonly ["count"]
+  "note_autoAdd_unknownHistory_other": readonly ["count"]
+  "note_autoAdd_dropped_one": readonly ["count"]
+  "note_autoAdd_dropped_other": readonly ["count"]
+  "note_autoAdd_percent": readonly ["percent"]
+  "note_autoAdd_counts": readonly []
+  "note_autoAdd_once": readonly []
+  "note_autoAdd_feedbackOff": readonly []
+  "note_autoAdd_feedbackOn": readonly []
+  "note_autoAdd_shorts": readonly []
+  "note_shortcuts_saves": readonly ["key"]
+  "note_shortcuts_ctrlFixed": readonly ["key"]
+  "note_shortcuts_bareKey": readonly []
+  "note_shortcuts_alsoNew": readonly []
+  "note_shortcuts_unconvertible": readonly ["raw"]
+  "note_shortcuts_noPlaylist": readonly ["key"]
+  "note_shortcuts_noKey": readonly []
+  "note_new_heading": readonly []
+  "note_new_lead": readonly []
+  "note_question_unset": readonly []
+  "note_question_unset_start": readonly []
+  "note_question_unset_half": readonly []
+  "note_question_neverAuthorised": readonly []
+  "note_question_neverAuthorised_half": readonly []
+  "note_question_start": readonly []
+  "note_question_unknown": readonly []
+  "note_question_half": readonly []
+  "note_done": readonly []
+  "note_outcome_claimed": readonly ["account", "titles"]
+  "note_outcome_checked": readonly ["account"]
+  "note_outcome_shortcutDeleted": readonly []
+  "note_outcome_shortcutUnknown": readonly []
+  "note_outcome_dropped_one": readonly ["count"]
+  "note_outcome_dropped_other": readonly ["count"]
+  "note_outcome_signedOut": readonly []
+  "note_outcome_noTab": readonly []
+  "note_outcome_otherAccount": readonly []
+  "note_switchAccount": readonly []
+  "note_outcome_nothing": readonly []
+  "note_notNow": readonly []
+  "note_recoveryWaiting": readonly []
+  "note_reviewInSettings": readonly []
+  "consent_agreedOn": readonly ["date"]
+  "consent_readAgain": readonly []
+  "consent_withdraw": readonly []
+  "consent_withdrawConfirm": readonly []
+  "consent_withdrawButton": readonly []
+  "consent_cancel": readonly []
+  "consent_withdrawn": readonly []
+  "consent_withdrawFailed": readonly []
+  "consent_withdrawUnconfirmed": readonly []
+  "recovery_heading": readonly []
+  "recovery_pausedLead": readonly []
+  "recovery_job_migration": readonly []
+  "recovery_job_removal": readonly ["account"]
+  "recovery_job_syncJoin": readonly []
+  "recovery_continue": readonly []
+  "recovery_leftLead": readonly []
+  "recovery_item_autoAdd": readonly ["playlist"]
+  "recovery_item_filter": readonly ["playlist"]
+  "recovery_item_shortcut": readonly ["shortcut", "playlist"]
+  "recovery_goesTo": readonly ["account"]
+  "recovery_restore": readonly []
+  "recovery_discard": readonly []
+  "recovery_whichAccount": readonly []
+  "recovery_noSetupHere": readonly []
+  "recovery_setUpFirst": readonly ["account"]
+  "recovery_filterClash": readonly ["account", "playlist"]
+  "recovery_replaceFilter": readonly []
+  "recovery_replaceConfirm_title": readonly []
+  "recovery_replaceConfirm_body": readonly ["account"]
+  "recovery_replace": readonly []
+  "recovery_discardConfirm_title": readonly []
+  "recovery_discardConfirm_body": readonly []
+  "recovery_cancel": readonly []
+  "recovery_restored": readonly ["account"]
+  "recovery_discarded": readonly []
+  "recovery_continued": readonly []
+  "recovery_failed": readonly []
+  "recovery_unconfirmed": readonly []
+  "sync_full": readonly []
+  "sync_fullLargest": readonly ["largest"]
+  "sync_removeKeptFilters": readonly []
+  "sync_updateNeeded": readonly []
+  "googleAccess_link": readonly []
+  "googleAccess_cloudProject": readonly []
+  "shell_settingsHeading": readonly []
+  "shell_settings": readonly []
+  "shell_waiting": readonly []
+  "shell_review": readonly []
+  "shell_noFeatures": readonly []
+  "shell_unavailable": readonly []
+  "filter_switch": readonly []
+  "filter_mode": readonly []
+  "filter_inputLabel": readonly []
+  "filter_add": readonly []
+  "filter_removeChannel": readonly ["channel"]
+  "filter_switchMode": readonly []
+  "filter_cancel": readonly []
+  "filter_offEmpty": readonly []
+  "filter_failed": readonly []
+  "autoAddList_consent": readonly []
+  "autoAddList_options": readonly ["playlist"]
+  "autoAddList_takes": readonly []
+  "autoAddList_takes_videos": readonly []
+  "autoAddList_takes_shorts": readonly []
+  "autoAddList_takes_both": readonly []
+  "autoAddList_addsAt": readonly []
+  "autoAddList_default": readonly ["percent"]
+  "autoAddList_own": readonly []
+  "autoAddList_percentLabel": readonly ["playlist"]
+  "autoAddList_pill_allow": readonly ["count"]
+  "autoAddList_pill_deny": readonly ["count"]
+  "autoAddList_pill_kept": readonly ["count"]
+  "autoAddList_pill_all": readonly []
+  "autoAddList_shortsToo": readonly []
+  "autoAddList_shortsOnly": readonly []
+  "autoAddList_percent": readonly ["percent"]
+  "autoAddList_new": readonly []
+  "autoAddList_nothingSaved": readonly ["account"]
+  "autoAddList_syncOnly_one": readonly ["count", "account"]
+  "autoAddList_syncOnly_other": readonly ["count", "account"]
+  "autoAddList_readOnly": readonly []
+  "held_siteAccess": readonly []
+  "held_musicOff": readonly []
+  "held_browserMenu": readonly []
+  "held_giveAccess": readonly []
+  "held_allow": readonly []
+  "health_notWorking_www": readonly []
+  "health_notWorking_music": readonly []
+  "health_partly": readonly ["gap"]
+  "health_gap_membership": readonly []
+  "health_gap_actions": readonly []
+  "health_gap_measure": readonly []
+  "health_gap_destination": readonly ["destination"]
+  "pop_recentAdds": readonly []
+  "pop_openSettings": readonly []
+  "pop_readingAccount": readonly []
+  "pop_showSetupFor": readonly []
+  "pop_setupMenuNote": readonly []
+  "pop_manageSetups": readonly []
+  "pop_sitesLabel": readonly []
+  "pop_unfold": readonly ["feature"]
+  "pop_pause": readonly []
+  "pop_resume": readonly []
+  "pop_pauseFailed": readonly []
+  "pop_switchFailed": readonly []
+  "pop_switchRefused_site_access": readonly []
+  "pop_switchRefused_browser_menu_permission": readonly []
+  "pop_switchRefused_sync_full": readonly []
+  "pop_switchRefused_update_needed": readonly []
+  "strip_one_www": readonly ["feature"]
+  "strip_one_music": readonly ["feature"]
+  "strip_many": readonly ["count"]
+  "strip_partly": readonly ["feature"]
+  "strip_details": readonly []
+  "banner_newer_title": readonly []
+  "banner_newer_text": readonly []
+  "banner_upgrade_title": readonly []
+  "banner_upgrade_both": readonly []
+  "banner_upgrade_autoAdd": readonly []
+  "banner_upgrade_shortcut": readonly []
+  "banner_upgrade_nothing": readonly []
+  "banner_consent_text": readonly []
+  "banner_consentVersion_title": readonly ["version"]
+  "banner_access_text": readonly []
+  "banner_signedOut_title": readonly []
+  "banner_private_title": readonly []
+  "banner_private_inUse": readonly ["account"]
+  "banner_private_none": readonly ["account"]
+  "banner_noTab_title": readonly []
+  "banner_noTab_text": readonly ["when"]
+  "banner_noTab_textNoStamp": readonly []
+  "banner_noMusicTab_title": readonly []
+  "banner_noMusicTab_text": readonly []
+  "banner_openMusic": readonly []
+  "banner_sync_waiting": readonly []
+  "banner_sync_fullText": readonly []
+  "banner_sync_update": readonly []
+  "banner_marks_one": readonly []
+  "banner_marks_other": readonly ["count"]
+  "banner_marks_text_one": readonly []
+  "banner_marks_text_other": readonly []
+  "banner_show": readonly []
+  "banner_unclaimed_title": readonly []
+  "banner_unclaimed_text": readonly ["account"]
+  "summary_autoAdd_one": readonly ["count", "percent"]
+  "summary_autoAdd_other": readonly ["count", "percent"]
+  "summary_autoAdd_paused": readonly []
+  "summary_autoAdd_none": readonly ["account"]
+  "summary_autoAdd_signedOut": readonly []
+  "summary_shortcuts_none": readonly []
+  "summary_quickSave_set": readonly ["playlist"]
+  "summary_quickSave_unset": readonly []
+  "summary_queue": readonly []
+  "summary_watch": readonly []
+  "summary_cardMenu": readonly []
+  "summary_browserMenu": readonly []
+  "summary_gather_player": readonly ["order"]
+  "summary_gather_queue": readonly ["order"]
+  "summary_gather_playlist": readonly ["playlist", "order"]
+  "summary_gather_auto": readonly ["summary"]
+  "summary_gather_noPlaylist": readonly []
+  "gatherOrder_newest": readonly []
+  "gatherOrder_oldest": readonly []
+  "gatherOrder_english": readonly []
+  "gatherOrder_nonEnglish": readonly []
+  "gatherOrder_leftToRight": readonly []
+  "gatherOrder_rightToLeft": readonly []
+  "gatherOrder_shuffled": readonly []
+  "summary_quickActions_none": readonly []
+  "summary_more": readonly ["count"]
+  "summary_noKey": readonly []
+  "music_sectionTitle": readonly []
+  "music_sectionOn": readonly []
+  "music_sectionOff": readonly []
+  "music_psName": readonly []
+  "music_psOff": readonly []
+  "music_psOn": readonly []
+  "music_saveName": readonly []
+  "music_saveSet": readonly ["playlist"]
+  "music_saveUnset": readonly []
+  "music_saveSubtitle": readonly []
+  "music_keysActsOn": readonly []
+  "music_keysUndo": readonly []
+  "music_changeKeys": readonly []
+  "playing_title": readonly []
+  "playing_signedOut": readonly []
+  "consentSheet_agree": readonly ["feature"]
+  "consentSheet_cancel": readonly []
+  "consentSheet_musicDenied": readonly ["feature"]
+  "consentSheet_failed": readonly []
+  "recent_title": readonly []
+  "recent_lead": readonly ["account"]
+  "recent_empty": readonly []
+  "recent_gathered": readonly ["count", "playlist"]
+  "recent_to": readonly []
+  "recent_close": readonly []
+  "recent_unavailable": readonly []
+  "recent_source_autoAdd": readonly []
+  "recent_source_quickSave": readonly []
+  "recent_source_browserMenu": readonly []
+  "recent_source_gather": readonly []
+  "recent_source_autoGather": readonly []
+  "recent_source_picker": readonly []
+  "recent_source_watchButton": readonly []
+  "recent_source_musicActions": readonly []
+  "recent_source_other": readonly []
+  "sheet_close": readonly []
+  "musicButton_next": readonly []
+  "musicButton_queue": readonly []
+  "musicButton_save": readonly []
+  "musicButton_like": readonly []
+  "musicButton_remove": readonly []
+  "musicButton_bar": readonly []
+  "musicButton_library": readonly []
+  "musicButton_mix": readonly []
+  "musicButton_album": readonly []
+  "musicButton_artist": readonly []
+  "musicButton_picker": readonly []
+  "musicWhere_next": readonly []
+  "musicWhere_queue": readonly []
+  "musicWhere_save": readonly []
+  "musicWhere_like": readonly []
+  "musicWhere_remove": readonly []
+  "musicWhere_bar": readonly []
+  "musicWhere_library": readonly []
+  "musicWhere_mix": readonly []
+  "musicWhere_album": readonly []
+  "musicWhere_artist": readonly []
+  "musicActions_warning": readonly []
+  "gather_into_playlist": readonly []
+  "gatherOpt_into": readonly []
+  "gatherOpt_player": readonly []
+  "gatherOpt_playerLine": readonly []
+  "gatherOpt_queue": readonly []
+  "gatherOpt_queueLine": readonly []
+  "gatherOpt_order": readonly []
+  "gatherOpt_order_newest": readonly []
+  "gatherOpt_order_oldest": readonly []
+  "gatherOpt_order_english": readonly []
+  "gatherOpt_order_nonEnglish": readonly []
+  "gatherOpt_order_leftToRight": readonly []
+  "gatherOpt_order_rightToLeft": readonly []
+  "gatherOpt_order_shuffled": readonly []
+  "gatherOpt_languageLine": readonly []
+  "gatherOpt_close": readonly []
+  "gatherOpt_closeLine": readonly []
+  "gatherOpt_auto": readonly ["playlist"]
+  "gatherOpt_autoNoPlaylist": readonly []
+  "gatherOpt_unvisited": readonly []
+  "gatherOpt_after_1h": readonly []
+  "gatherOpt_after_1d": readonly []
+  "gatherOpt_after_1w": readonly []
+  "gatherOpt_unvisitedLine": readonly []
+  "gatherOpt_background": readonly []
+  "gatherOpt_backgroundLine": readonly []
+  "gatherOpt_count": readonly []
+  "gatherOpt_countLabel": readonly []
+  "gatherOpt_countLine": readonly []
+  "gatherOpt_never": readonly []
+  "gatherOpt_needsPlaylist": readonly []
+  "gatherOpt_playlistLabel": readonly []
+  "option_failed": readonly []
+  "chooser_quickSave": readonly []
+  "chooser_signInFirst": readonly []
+  "shortcuts_count": readonly ["count"]
+  "shortcuts_keyHeader": readonly []
+  "shortcuts_nameHeader": readonly []
+  "shortcuts_savesTo": readonly ["account"]
+  "shortcuts_label": readonly []
+  "shortcuts_remove": readonly []
+  "shortcuts_undo": readonly []
+  "shortcuts_shortcut": readonly []
+  "shortcuts_everyAccount": readonly []
+  "shortcuts_pickerKey": readonly []
+  "shortcuts_alsoMusic": readonly []
+  "shortcuts_failed": readonly []
+}
+export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: MessageParameters[K] } = {
   "firstRun_continue_one": ["count"],
   "firstRun_continue_other": ["count"],
-  "firstRun_continue_none": [],
-  "firstRun_consentLead_one": [],
   "firstRun_consentLead_other": ["count"],
-  "firstRun_consentLead_none": [],
   "firstRun_agree_one": ["count"],
   "firstRun_agree_other": ["count"],
-  "firstRun_agree_none": [],
   "firstRun_chooseFor": ["feature"],
   "firstRun_shortcutSaves": ["key"],
-  "firstRun_pick_found": [],
-  "disclosure_heading_first_run": [],
-  "disclosure_heading_upgrade_note": [],
-  "disclosure_heading_feature": [],
-  "disclosure_intro": [],
-  "disclosure_bullet_1": [],
-  "disclosure_bullet_2": [],
-  "disclosure_bullet_3": [],
-  "disclosure_bullet_4": [],
-  "disclosure_bullet_5": [],
-  "disclosure_bullet_6": [],
-  "disclosure_closing_chrome": [],
-  "disclosure_closing_firefox": [],
-  "disclosure_policyLabel": [],
-  "feature_name_12": [],
-  "feature_name_11": [],
-  "feature_name_10": [],
-  "feature_name_9": [],
-  "feature_name_8": [],
-  "feature_name_7": [],
-  "feature_name_6": [],
-  "feature_name_5": [],
-  "feature_name_4": [],
-  "feature_name_3": [],
-  "feature_name_2": [],
-  "feature_name_1": [],
-  "feature_description_11": [],
-  "feature_description_10": [],
-  "feature_description_9": [],
-  "feature_description_8": [],
-  "feature_description_7": [],
-  "feature_description_6": [],
-  "feature_description_5": [],
-  "feature_description_4": [],
-  "feature_description_3": [],
-  "feature_description_2": [],
-  "feature_description_1": [],
-  "footprintText_right_click": [],
-  "footprintText_buttons": [],
-  "footprintText_keys": [],
-  "footprintText_none": [],
-  "groupHeading_everywhere": [],
-  "groupHeading_music": [],
-  "groupHeading_youtube": [],
-  "feature_sync_chrome": [],
-  "feature_sync_firefox": [],
-  "copy_missingPlaylist": [],
-  "copy_shortcut": [],
-  "copy_account": [],
-  "copy_channel": [],
   "copy_list_two": ["first", "second"],
   "copy_list_three": ["first", "second", "third"],
   "copy_list_more": ["first", "second", "count"],
   "feedback_www_manual_untitled_pending": ["targets"],
   "feedback_www_manual_untitled_saved": ["targets"],
   "feedback_www_manual_untitled_removed": ["target"],
-  "feedback_www_manual_untitled_undo_failed": [],
   "feedback_www_manual_untitled_first_pick": ["targets"],
   "feedback_www_manual_untitled_shortcut_set": ["shortcut", "target"],
   "feedback_www_manual_untitled_already_in": ["targets"],
@@ -147,7 +1035,6 @@ export const messageParameters = {
   "feedback_www_manual_untitled_saved_filtered_one_other": ["saved", "filtered"],
   "feedback_www_manual_untitled_saved_filtered_other_one": ["saved", "filtered"],
   "feedback_www_manual_untitled_saved_filtered_other_other": ["saved", "filtered"],
-  "feedback_www_manual_untitled_failed_signed_out_one": [],
   "feedback_www_manual_untitled_saved_failed_signed_out_one": ["success"],
   "feedback_www_manual_untitled_failed_not_sent_one": ["targets"],
   "feedback_www_manual_untitled_saved_failed_not_sent_one": ["success", "targets"],
@@ -157,15 +1044,10 @@ export const messageParameters = {
   "feedback_www_manual_untitled_saved_failed_missing_one": ["success", "targets"],
   "feedback_www_manual_untitled_failed_full_one": ["targets"],
   "feedback_www_manual_untitled_saved_failed_full_one": ["success", "targets"],
-  "feedback_www_manual_untitled_failed_refused_one": [],
   "feedback_www_manual_untitled_saved_failed_refused_one": ["success", "targets"],
-  "feedback_www_manual_untitled_failed_rate_limited_one": [],
   "feedback_www_manual_untitled_saved_failed_rate_limited_one": ["success", "targets"],
-  "feedback_www_manual_untitled_failed_account_changed_one": [],
   "feedback_www_manual_untitled_saved_failed_account_changed_one": ["success"],
-  "feedback_www_manual_untitled_failed_account_refused_one": [],
   "feedback_www_manual_untitled_saved_failed_account_refused_one": ["success"],
-  "feedback_www_manual_untitled_failed_membership_unreadable_one": [],
   "feedback_www_manual_untitled_saved_failed_membership_unreadable_one": ["success"],
   "feedback_www_manual_untitled_failed_unrecognised_one": ["targets"],
   "feedback_www_manual_untitled_saved_failed_unrecognised_one": ["success", "targets"],
@@ -217,9 +1099,7 @@ export const messageParameters = {
   "feedback_www_auto_untitled_saved_failed_missing_one": ["success", "targets"],
   "feedback_www_auto_untitled_failed_full_one": ["targets"],
   "feedback_www_auto_untitled_saved_failed_full_one": ["success", "targets"],
-  "feedback_www_auto_untitled_failed_refused_one": [],
   "feedback_www_auto_untitled_saved_failed_refused_one": ["success", "targets"],
-  "feedback_www_auto_untitled_failed_rate_limited_one": [],
   "feedback_www_auto_untitled_saved_failed_rate_limited_one": ["success", "targets"],
   "feedback_www_auto_untitled_saved_failed_account_changed_one": ["success"],
   "feedback_www_auto_untitled_saved_failed_account_refused_one": ["success"],
@@ -264,7 +1144,6 @@ export const messageParameters = {
   "feedback_music_manual_untitled_saved_filtered_one_other": ["saved", "filtered"],
   "feedback_music_manual_untitled_saved_filtered_other_one": ["saved", "filtered"],
   "feedback_music_manual_untitled_saved_filtered_other_other": ["saved", "filtered"],
-  "feedback_music_manual_untitled_failed_signed_out_one": [],
   "feedback_music_manual_untitled_saved_failed_signed_out_one": ["success"],
   "feedback_music_manual_untitled_failed_not_sent_one": ["targets"],
   "feedback_music_manual_untitled_saved_failed_not_sent_one": ["success", "targets"],
@@ -274,13 +1153,10 @@ export const messageParameters = {
   "feedback_music_manual_untitled_saved_failed_missing_one": ["success", "targets"],
   "feedback_music_manual_untitled_failed_full_one": ["targets"],
   "feedback_music_manual_untitled_saved_failed_full_one": ["success", "targets"],
-  "feedback_music_manual_untitled_failed_refused_one": [],
   "feedback_music_manual_untitled_saved_failed_refused_one": ["success", "targets"],
-  "feedback_music_manual_untitled_failed_rate_limited_one": [],
   "feedback_music_manual_untitled_saved_failed_rate_limited_one": ["success", "targets"],
   "feedback_music_manual_untitled_saved_failed_account_changed_one": ["success"],
   "feedback_music_manual_untitled_saved_failed_account_refused_one": ["success"],
-  "feedback_music_manual_untitled_failed_membership_unreadable_one": [],
   "feedback_music_manual_untitled_saved_failed_membership_unreadable_one": ["success"],
   "feedback_music_manual_untitled_failed_unrecognised_one": ["targets"],
   "feedback_music_manual_untitled_saved_failed_unrecognised_one": ["success", "targets"],
@@ -307,9 +1183,7 @@ export const messageParameters = {
   "feedback_music_auto_untitled_saved_failed_missing_one": ["success", "targets"],
   "feedback_music_auto_untitled_failed_full_one": ["targets"],
   "feedback_music_auto_untitled_saved_failed_full_one": ["success", "targets"],
-  "feedback_music_auto_untitled_failed_refused_one": [],
   "feedback_music_auto_untitled_saved_failed_refused_one": ["success", "targets"],
-  "feedback_music_auto_untitled_failed_rate_limited_one": [],
   "feedback_music_auto_untitled_saved_failed_rate_limited_one": ["success", "targets"],
   "feedback_music_auto_untitled_saved_failed_account_changed_one": ["success"],
   "feedback_music_auto_untitled_saved_failed_account_refused_one": ["success"],
@@ -329,38 +1203,10 @@ export const messageParameters = {
   "feedback_music_auto_named_saved_failed_rate_limited_one": ["video", "success", "targets"],
   "feedback_music_auto_named_failed_unrecognised_one": ["video", "targets"],
   "feedback_music_auto_named_saved_failed_unrecognised_one": ["video", "success", "targets"],
-  "picker_saveTitle": [],
-  "picker_saveMusicTitle": [],
-  "picker_quickTitle": [],
-  "picker_quickMusicTitle": [],
-  "picker_quickSubtitle": [],
-  "picker_quickMusicSubtitle": [],
-  "picker_gatherTitle": [],
   "picker_gatherSubtitle": ["account"],
-  "picker_manyTitle": [],
-  "picker_refresh": [],
-  "picker_sort": [],
-  "picker_search": [],
-  "picker_close": [],
-  "picker_listLabel": [],
-  "picker_checkingVideo": [],
-  "picker_checkingSong": [],
   "picker_known_one": ["count"],
   "picker_known_other": ["count"],
-  "picker_unreadableVideo": [],
-  "picker_unreadableSong": [],
   "picker_savedList": ["time"],
-  "picker_noSavedList": [],
-  "picker_noTab": [],
-  "picker_loadingList": [],
-  "picker_listUnavailable": [],
-  "picker_emptyList": [],
-  "picker_emptySearch": [],
-  "picker_refreshFailed": [],
-  "picker_private": [],
-  "picker_unlisted": [],
-  "picker_public": [],
-  "picker_unknownPrivacy": [],
   "picker_videos_one": ["count"],
   "picker_videos_other": ["count"],
   "picker_songs_one": ["count"],
@@ -377,146 +1223,187 @@ export const messageParameters = {
   "picker_unlistedSongs_other": ["count"],
   "picker_publicSongs_one": ["count"],
   "picker_publicSongs_other": ["count"],
-  "picker_newRow": [],
-  "picker_goneRow": [],
-  "picker_titleUnavailable": [],
-  "picker_watchLater": [],
-  "picker_watchLaterEveryAccount": [],
-  "picker_pin": [],
-  "picker_pinned": [],
   "picker_pinFor": ["playlist"],
   "picker_pinnedFor": ["playlist"],
-  "picker_privatePin": [],
-  "picker_privateGather": [],
-  "picker_missing": [],
-  "picker_full": [],
-  "picker_remove": [],
   "picker_removeChoice": ["playlist"],
-  "picker_busy": [],
-  "picker_alreadyIn": [],
-  "picker_couldNotSave": [],
-  "picker_couldNotRemove": [],
-  "picker_removed": [],
-  "picker_refused_private": [],
-  "picker_refused_sync_full": [],
-  "picker_refused_update_needed": [],
-  "picker_refused_invalid": [],
-  "picker_newPlaylist": [],
-  "picker_title": [],
-  "picker_visibility": [],
-  "picker_cancel": [],
-  "picker_create": [],
-  "picker_required": [],
-  "picker_tooLong": [],
-  "picker_angleBrackets": [],
   "picker_duplicate": ["playlist"],
-  "picker_creation_signedOut": [],
-  "picker_creation_noTab": [],
-  "picker_creation_noChannel": [],
-  "picker_creation_private": [],
-  "picker_openYouTube": [],
-  "picker_createChannel": [],
-  "picker_create_rateLimited": [],
-  "picker_create_publicCap": [],
-  "picker_create_noChannel": [],
-  "picker_create_notAllowed": [],
-  "picker_create_failed": [],
-  "picker_createChoiceRefused": [],
-  "clearAll_syncedKeptNewer": [],
-  "picker_pickedPrivate": [],
-  "picker_sortPending": [],
-  "picker_sortRefused": [],
-  "picker_noneChosen": [],
   "picker_chooserName": ["label", "playlist"],
   "picker_shortcutLabel": ["key"],
-  "toast_action_undo": [],
-  "toast_action_try_again": [],
-  "toast_action_settings": [],
-  "toast_action_choose": [],
-  "toast_action_sign_in": [],
-  "toast_action_reload": [],
-  "toast_nothingToUndo": [],
-  "toast_details": [],
-  "toast_dismiss": [],
   "notice_www_one": ["features"],
   "notice_www_other": ["features"],
-  "notice_watch": [],
   "notice_music_one": ["features"],
   "notice_music_other": ["features"],
-  "notice_feature_auto_add": [],
-  "notice_feature_shortcuts": [],
-  "notice_feature_quick_save": [],
-  "notice_feature_queue_button": [],
-  "notice_feature_watch_button": [],
-  "notice_feature_card_menu": [],
-  "notice_feature_gather": [],
-  "notice_feature_music_actions": [],
-  "notice_feature_music_keys": [],
-  "queueButton_idle": [],
-  "queueButton_busy": [],
-  "queueButton_added": [],
-  "queueButton_unconfirmed": [],
-  "queueButton_failed": [],
-  "queueButton_toast_added_untitled": [],
-  "queueButton_toast_unconfirmed_untitled": [],
-  "queueButton_toast_failed_untitled": [],
   "queueButton_toast_added_named": ["title"],
   "queueButton_toast_unconfirmed_named": ["title"],
   "queueButton_toast_failed_named": ["title"],
-  "extName": [],
-  "extShortName": [],
-  "extDescription": [],
-  "actionTitle": [],
-  "command_savePlayingSong": [],
-  "command_likePlayingSong": [],
-  "command_watchLaterCurrentVideo": [],
-  "shell_settingsHeading": [],
-  "shell_settings": [],
-  "shell_waiting": [],
-  "shell_review": [],
-  "shell_noFeatures": [],
-  "shell_unavailable": [],
-  "filter_switch": [],
-  "filter_mode": [],
-  "filter_inputLabel": [],
-  "filter_add": [],
+  "autoAdd_cantMeasure_named": ["title"],
+  "watchState_counting_label": ["percent"],
+  "watchState_counting_status": ["percent", "watched"],
+  "watchState_partly_label": ["percent"],
+  "watchState_partly_status": ["added", "pending", "percent"],
+  "watchState_added_status": ["targets"],
+  "watchState_alreadyIn": ["targets"],
+  "watchState_failed_offline": ["targets"],
+  "watchState_failed_named": ["title"],
+  "channelFilter_toDeny_one": ["count"],
+  "channelFilter_toDeny_other": ["count"],
+  "channelFilter_toAllow_one": ["count"],
+  "channelFilter_toAllow_other": ["count"],
+  "channelFilter_offKeptDenied_one": ["count"],
+  "channelFilter_offKeptDenied_other": ["count"],
+  "channelFilter_offKeptAllowed_one": ["count"],
+  "channelFilter_offKeptAllowed_other": ["count"],
+  "channelFilter_emptyAllow": ["playlist"],
+  "channelFilter_chip": ["title", "handle"],
+  "channelFilter_listCurrent_allow": ["channel"],
+  "channelFilter_listCurrent_deny": ["channel"],
+  "channelFilter_turnOnAllow_one": ["playlist", "count"],
+  "channelFilter_turnOnAllow_other": ["playlist", "count"],
+  "channelFilter_turnOnDeny_one": ["playlist", "count"],
+  "channelFilter_turnOnDeny_other": ["playlist", "count"],
+  "channelFilter_usesAllow": ["playlist"],
+  "channelFilter_usesDeny": ["playlist"],
+  "shortcuts_presetNoKey": ["other", "key"],
+  "recorder_record": ["title"],
+  "recorder_clear": ["title"],
+  "recorder_conflict_one": ["others", "key"],
+  "recorder_conflict_other": ["others", "key"],
+  "recorder_clash_site": ["site", "key", "action"],
+  "recorder_clash_browser": ["browser", "key", "action"],
+  "recorder_clash_command": ["key", "command"],
+  "musicHint_unavailable": ["action", "kind"],
+  "musicHint_anyTabNoQuickSave": ["account"],
+  "musicToast_playNext": ["title"],
+  "musicToast_playNextMany_one": ["count", "title"],
+  "musicToast_playNextMany_other": ["count", "title"],
+  "musicToast_queued": ["title"],
+  "musicToast_queuedMany_one": ["count", "title"],
+  "musicToast_queuedMany_other": ["count", "title"],
+  "musicToast_playing": ["title"],
+  "musicToast_movedNext": ["title"],
+  "musicToast_movedEnd": ["title"],
+  "musicToast_removedQueue": ["title"],
+  "musicToast_liked": ["title"],
+  "musicToast_unliked": ["title"],
+  "musicToast_librarySaved": ["title"],
+  "musicToast_libraryRemoved": ["title"],
+  "musicToast_alreadyNext": ["title"],
+  "musicToast_alreadyEnd": ["title"],
+  "musicFail_library": ["title"],
+  "musicFail_mix": ["title"],
+  "musicFail_album": ["title"],
+  "musicFail_artist": ["title"],
+  "musicFail_queue": ["title"],
+  "musicFail_move": ["title"],
+  "musicFail_remove": ["title"],
+  "musicFail_like": ["title"],
+  "musicFail_keyBroken": ["action", "key"],
+  "musicFail_keyUnavailable": ["action"],
+  "gather_player_one": ["count"],
+  "gather_player_other": ["count"],
+  "gather_playerOverflow": ["count"],
+  "gather_queue_one": ["count"],
+  "gather_queue_other": ["count"],
+  "gather_queueOverflow_one": ["count"],
+  "gather_queueOverflow_other": ["count"],
+  "gather_saved_one": ["count", "playlist"],
+  "gather_saved_other": ["count", "playlist"],
+  "gather_alreadyIn_one": ["count"],
+  "gather_alreadyIn_other": ["count"],
+  "gather_savedClosed_one": ["count", "playlist"],
+  "gather_savedClosed_other": ["count", "playlist"],
+  "gather_autoRow_one": ["count", "playlist", "when"],
+  "gather_autoRow_other": ["count", "playlist", "when"],
+  "gather_toast_one": ["count", "playlist"],
+  "gather_toast_other": ["count", "playlist"],
+  "gather_toastClosed_one": ["count", "playlist"],
+  "gather_toastClosed_other": ["count", "playlist"],
+  "gather_toastAuto_one": ["count", "playlist"],
+  "gather_toastAuto_other": ["count", "playlist"],
+  "gather_checking": ["index", "count"],
+  "gather_saving_one": ["count"],
+  "gather_saving_other": ["count"],
+  "gather_noPlaylist": ["account"],
+  "gather_undone_one": ["count", "playlist"],
+  "gather_undone_other": ["count", "playlist"],
+  "gather_last_one": ["count", "destination", "when"],
+  "gather_last_other": ["count", "destination", "when"],
+  "gather_unsaved_one": ["count"],
+  "gather_unsaved_other": ["count"],
+  "gather_unsavedRefused_one": ["count"],
+  "gather_unsavedRefused_other": ["count"],
+  "gather_unsavedRateLimited_one": ["count"],
+  "gather_unsavedRateLimited_other": ["count"],
+  "gather_missing": ["playlist"],
+  "gather_full": ["playlist"],
+  "gather_queueUnconfirmed": ["count"],
+  "note_autoAdd_playlists_one": ["count"],
+  "note_autoAdd_playlists_other": ["count"],
+  "note_autoAdd_neverAuthorised_one": ["count"],
+  "note_autoAdd_neverAuthorised_other": ["count"],
+  "note_autoAdd_unknownHistory_one": ["count"],
+  "note_autoAdd_unknownHistory_other": ["count"],
+  "note_autoAdd_dropped_one": ["count"],
+  "note_autoAdd_dropped_other": ["count"],
+  "note_autoAdd_percent": ["percent"],
+  "note_shortcuts_saves": ["key"],
+  "note_shortcuts_ctrlFixed": ["key"],
+  "note_shortcuts_unconvertible": ["raw"],
+  "note_shortcuts_noPlaylist": ["key"],
+  "note_outcome_claimed": ["account", "titles"],
+  "note_outcome_checked": ["account"],
+  "note_outcome_dropped_one": ["count"],
+  "note_outcome_dropped_other": ["count"],
+  "consent_agreedOn": ["date"],
+  "recovery_job_removal": ["account"],
+  "recovery_item_autoAdd": ["playlist"],
+  "recovery_item_filter": ["playlist"],
+  "recovery_item_shortcut": ["shortcut", "playlist"],
+  "recovery_goesTo": ["account"],
+  "recovery_setUpFirst": ["account"],
+  "recovery_filterClash": ["account", "playlist"],
+  "recovery_replaceConfirm_body": ["account"],
+  "recovery_restored": ["account"],
+  "sync_fullLargest": ["largest"],
   "filter_removeChannel": ["channel"],
-  "filter_switchMode": [],
-  "filter_cancel": [],
-  "filter_offEmpty": [],
-  "filter_failed": [],
-  "autoAddList_consent": [],
   "autoAddList_options": ["playlist"],
-  "autoAddList_takes": [],
-  "autoAddList_takes_videos": [],
-  "autoAddList_takes_shorts": [],
-  "autoAddList_takes_both": [],
-  "autoAddList_addsAt": [],
   "autoAddList_default": ["percent"],
-  "autoAddList_own": [],
   "autoAddList_percentLabel": ["playlist"],
   "autoAddList_pill_allow": ["count"],
   "autoAddList_pill_deny": ["count"],
   "autoAddList_pill_kept": ["count"],
-  "autoAddList_pill_all": [],
-  "autoAddList_shortsToo": [],
-  "autoAddList_shortsOnly": [],
   "autoAddList_percent": ["percent"],
-  "autoAddList_new": [],
   "autoAddList_nothingSaved": ["account"],
   "autoAddList_syncOnly_one": ["count", "account"],
   "autoAddList_syncOnly_other": ["count", "account"],
-  "autoAddList_readOnly": [],
-  "held_siteAccess": [],
-  "held_musicOff": [],
-  "held_browserMenu": [],
-  "held_giveAccess": [],
-  "held_allow": [],
-  "health_notWorking_www": [],
-  "health_notWorking_music": [],
   "health_partly": ["gap"],
-  "health_gap_membership": [],
-  "health_gap_actions": [],
-  "health_gap_measure": [],
   "health_gap_destination": ["destination"],
-} as const
+  "pop_unfold": ["feature"],
+  "strip_one_www": ["feature"],
+  "strip_one_music": ["feature"],
+  "strip_many": ["count"],
+  "strip_partly": ["feature"],
+  "banner_consentVersion_title": ["version"],
+  "banner_private_inUse": ["account"],
+  "banner_private_none": ["account"],
+  "banner_noTab_text": ["when"],
+  "banner_marks_other": ["count"],
+  "banner_unclaimed_text": ["account"],
+  "summary_autoAdd_one": ["count", "percent"],
+  "summary_autoAdd_other": ["count", "percent"],
+  "summary_autoAdd_none": ["account"],
+  "summary_quickSave_set": ["playlist"],
+  "summary_gather_player": ["order"],
+  "summary_gather_queue": ["order"],
+  "summary_gather_playlist": ["playlist", "order"],
+  "summary_gather_auto": ["summary"],
+  "summary_more": ["count"],
+  "music_saveSet": ["playlist"],
+  "consentSheet_agree": ["feature"],
+  "consentSheet_musicDenied": ["feature"],
+  "recent_lead": ["account"],
+  "recent_gathered": ["count", "playlist"],
+  "gatherOpt_auto": ["playlist"],
+  "shortcuts_count": ["count"],
+  "shortcuts_savesTo": ["account"],
+}
