@@ -54,7 +54,8 @@ export type GatherChecks = Readonly<{
 }>
 
 export type GatherPickMemory = Readonly<{
-  account: AccountKey
+  // The saving account `refused` belongs to; null before automatic gathering has picked its serving tab.
+  account: AccountKey | null
   refused: ReadonlySet<VideoId>
   kept: ReadonlySet<number>
   lastGatherAt: number | null

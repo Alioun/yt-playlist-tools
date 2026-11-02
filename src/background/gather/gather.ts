@@ -12,6 +12,8 @@ export const CONFIRM_MS = [2_000, 10_000] as const
 export const LOAD_MS = [1_000, 3_000, 10_000] as const
 export const PROGRESS_MS = 250
 export const KEPT_GATHERS = 5
+// Automatic gathering takes at most 50 videos a gather; more wait for the next one (YT-GT-27).
+export const AUTO_LIMIT = 50
 
 export type Destination = Settings["gather"]["to"]
 export type Scope = "normal" | "private"
@@ -37,8 +39,13 @@ export type GatherPorts = {
   observe(event: GatherEvent): void
 }
 
+// The tab automatic gathering saves from and its account's gather playlist (ARC-ACC-73), picked by the triggers.
+export type AutomaticServing = { readonly tabId: number; readonly acct: AccountKey; readonly playlist: PlaylistId; readonly title: string }
+export type AutomaticRun = { readonly windowId: number; readonly tabIds: readonly number[]; readonly serving: AutomaticServing }
+
 export type Failed = { readonly video: VideoId; readonly failure: Extract<VideoOutcome, { kind: "failed" }>["failure"] }
-export type GatherResult = { readonly id: string; readonly windowId: number; readonly scope: Scope; readonly at: number } & (
+// `auto` marks a gather automatic gathering ran (YT-GT-22). `served` is the tab a playlist gather saved from, where its toast shows.
+export type GatherResult = { readonly id: string; readonly windowId: number; readonly scope: Scope; readonly at: number; readonly auto?: true } & (
   | { readonly kind: "off" | "busy" | "no-videos" | "unavailable" | "stopped" | "signed-out" | "no-tab" }
   | { readonly kind: "choose"; readonly acct: AccountKey }
   | { readonly kind: "unhealthy"; readonly to: Destination }
@@ -47,7 +54,7 @@ export type GatherResult = { readonly id: string; readonly windowId: number; rea
       readonly outcome: "confirmed" | "not-loaded" | "not-confirmed"; readonly closed: number; readonly navigated: number; readonly unconfirmed?: number }
   | { readonly kind: "playlist"; readonly acct: AccountKey; readonly playlist: PlaylistId; readonly title: string
       readonly saved: number; readonly already: number; readonly failed: readonly Failed[]; readonly closed: number; readonly navigated: number
-      readonly kept: boolean; readonly undo: string | null; readonly retry: boolean; readonly unconfirmed?: number })
+      readonly kept: boolean; readonly undo: string | null; readonly retry: boolean; readonly unconfirmed?: number; readonly served?: number })
 // `unconfirmed` counts tabs the one remove call may not have closed: still open or unreadable afterwards. `unopened` counts tabs Undo could not reopen.
 export type GatherUndoResult =
   | { readonly kind: "undone"; readonly reopened: number; readonly unopened?: number }
@@ -62,6 +69,8 @@ export type GatherState = { readonly last: readonly GatherResult[]; readonly und
 
 export type Gather = {
   now(req: Requester): Promise<GatherResult>
+  // An automatic gather of the tabs the triggers picked: into the serving account's gather playlist, always closing what it saved.
+  automatic(run: AutomaticRun): Promise<GatherResult>
   retry(id: string, req: Requester): Promise<GatherResult>
   undo(id: string, req: Requester): Promise<GatherUndoResult>
   last(scope: Scope): Promise<GatherState>
@@ -272,9 +281,10 @@ export function createGather(ports: GatherPorts): Gather {
     return report("confirmed", await close(await recheck(sources, new Set(taken.map(({ video }) => video)))))
   }
 
-  async function playlist(base: Base, req: Requester, sources: readonly Source[], videos: readonly VideoId[],
+  async function playlist(base: Base, origin: Origin, sources: readonly Source[], videos: readonly VideoId[],
     target: Extract<GatherTarget, { kind: "playlist" }>): Promise<GatherResult> {
     const scope = base.scope
+    const auto = base.auto === true
     const titles = new Map<VideoId, string>()
     for (const { tab, video } of sources) if (!titles.has(video)) titles.set(video, languageTitle(tab.title))
     let closing: Closing = { plan: [], navigated: 0 }
@@ -287,7 +297,7 @@ export function createGather(ports: GatherPorts): Gather {
     }
     const record = async (outcomes: BatchOutcomes): Promise<BatchRecord> => {
       const settled = new Set(outcomes.flatMap(({ video, outcome }) => outcome.kind === "added" || outcome.kind === "already-in" ? [video] : []))
-      closing = ports.settings().close ? await recheck(sources, settled) : closing
+      closing = auto || ports.settings().close ? await recheck(sources, settled) : closing
       const [firstAdded, ...moreAdded] = outcomes.flatMap(({ video, outcome }) => outcome.kind === "added" ? [{ id: video, title: titles.get(video) ?? "" }] : [])
       const recent: BatchRecord["recent"] = firstAdded ? { playlist: { id: target.playlist, title: target.title }, videos: [firstAdded, ...moreAdded] } : null
       // Only YouTube refusing a video is taken as lasting here. Which other failures are lasting is the automatic unit's open rule.
@@ -295,7 +305,7 @@ export function createGather(ports: GatherPorts): Gather {
       return { windowId: base.windowId, closed: closing.plan.map(({ tab }) => tab), recent,
         closing: closing.plan.map(({ tabId, video, tab }) => ({ tabId, video, tab })), ...refused.length ? { refused } : {} }
     }
-    const report = await ports.addFlow.batch({ playlist: target.playlist, videos, auto: false, acct: target.acct, progress, record }, originOf(req))
+    const report = await ports.addFlow.batch({ playlist: target.playlist, videos, auto, acct: target.acct, progress, record }, origin)
     if (disposed || report.kind === "stopped") return { ...base, kind: "stopped" }
     if (report.kind === "signed-out" || report.kind === "no-tab") return { ...base, kind: report.kind }
     const count = (kind: VideoOutcome["kind"]) => report.outcomes.filter(({ outcome }) => outcome.kind === kind).length
@@ -305,7 +315,7 @@ export function createGather(ports: GatherPorts): Gather {
     const done = keptRecord ? await close(closing, report.served ?? null) : nothingClosed(closing)
     let settledRecord = true
     if (report.undo && closing.plan.length && !disposed) {
-      const settledWrite = await ports.addFlow.settle(report.undo, done.closed, originOf(req))
+      const settledWrite = await ports.addFlow.settle(report.undo, done.closed, origin)
       settledRecord = settledWrite.kind === "remembered"
     }
     const id = report.undo?.id ?? base.id
@@ -317,13 +327,13 @@ export function createGather(ports: GatherPorts): Gather {
     }
     return { ...base, id, kind: "playlist", acct: target.acct, playlist: target.playlist, title: target.title, saved: count("added"), already: count("already-in"),
       failed, closed: done.closed.length, navigated: done.navigated, kept: keptRecord && settledRecord, undo: report.undo?.id ?? null, retry: retries.has(id),
-      ...done.unconfirmed ? { unconfirmed: done.unconfirmed } : {} }
+      ...done.unconfirmed ? { unconfirmed: done.unconfirmed } : {}, ...typeof report.served === "number" ? { served: report.served } : {} }
   }
 
-  type Base = { readonly id: string; readonly windowId: number; readonly scope: Scope; readonly at: number }
+  type Base = { readonly id: string; readonly windowId: number; readonly scope: Scope; readonly at: number; readonly auto?: true }
 
-  async function run(req: Requester, work: (base: Base) => Promise<GatherResult>): Promise<GatherResult> {
-    const base: Base = { id: `${instance}:${++serial}`, windowId: req.windowId, scope: scopeOf(req), at: ports.clock.now() }
+  async function run(req: Requester, work: (base: Base) => Promise<GatherResult>, auto = false): Promise<GatherResult> {
+    const base: Base = { id: `${instance}:${++serial}`, windowId: req.windowId, scope: scopeOf(req), at: ports.clock.now(), ...auto ? { auto: true } : {} }
     if (disposed) return { ...base, kind: "stopped" }
     if (busy.has(req.windowId)) return { ...base, kind: "busy" }
     busy.add(req.windowId)
@@ -352,8 +362,27 @@ export function createGather(ports: GatherPorts): Gather {
       if (disposed) return { ...base, kind: "stopped" }
       if (target.kind === "choose") return { ...base, kind: "choose", acct: target.acct }
       if (target.kind !== "playlist") return { ...base, kind: target.kind }
-      return playlist(base, req, sources, ordered.map(({ video }) => video), target)
+      return playlist(base, originOf(req), sources, ordered.map(({ video }) => video), target)
     })
+  }
+
+  // Automatic gathering never runs in a private window, and saves from the tab the triggers picked, as that tab's account.
+  function automatic(job: AutomaticRun): Promise<GatherResult> {
+    const req: Requester = { windowId: job.windowId, incognito: false, activeTabId: null }
+    return run(req, async base => {
+      if (!ports.settings().on) return { ...base, kind: "off" }
+      const picked = new Set(job.tabIds)
+      const captured = await capture(req)
+      if (disposed) return { ...base, kind: "stopped" }
+      if (!captured) return { ...base, kind: "unavailable" }
+      const sources = captured.filter(({ tab }) => picked.has(tab.tabId) && tab.tabId !== job.serving.tabId)
+      if (!sources.length) return { ...base, kind: "no-videos" }
+      const videos = (await arrange(sources)).slice(0, AUTO_LIMIT).map(({ video }) => video)
+      if (ports.health("playlist") === "not-working") return { ...base, kind: "unhealthy", to: "playlist" }
+      const taken = new Set(videos)
+      return playlist(base, { kind: "tab", tabId: job.serving.tabId, incognito: false }, sources.filter(({ video }) => taken.has(video)), videos,
+        { kind: "playlist", ...job.serving })
+    }, true)
   }
 
   function retry(id: string, req: Requester): Promise<GatherResult> {
@@ -370,7 +399,7 @@ export function createGather(ports: GatherPorts): Gather {
       if (target.kind !== "playlist" || target.acct !== found.acct || target.playlist !== found.playlist) {
         return target.kind === "playlist" ? { ...base, kind: "unavailable" } : target.kind === "choose" ? { ...base, kind: "choose", acct: target.acct } : { ...base, kind: target.kind }
       }
-      return playlist(base, req, found.sources, found.videos, target)
+      return playlist(base, originOf(req), found.sources, found.videos, target)
     })
   }
 
@@ -472,5 +501,5 @@ export function createGather(ports: GatherPorts): Gather {
     kept.private.clear()
   }
 
-  return { now, retry, undo, last, activated, dispose }
+  return { now, automatic, retry, undo, last, activated, dispose }
 }

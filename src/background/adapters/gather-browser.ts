@@ -5,7 +5,7 @@ type BrowserTab = import("wxt/browser").Browser.tabs.Tab
 // The browser calls Gather needs, and nothing that reaches into a tab: no sendMessage, executeScript, update or reload.
 export type GatherBrowser = {
   readonly tabs: {
-    query(query: { windowId: number; url: string[] }): Promise<BrowserTab[]>
+    query(query: { windowId?: number; url: string[] }): Promise<BrowserTab[]>
     get(tabId: number): Promise<BrowserTab>
     create(props: { windowId: number; url: string; active: boolean; index?: number; discarded?: boolean; title?: string }): Promise<BrowserTab>
     remove(tabIds: number[]): Promise<void>
@@ -25,7 +25,8 @@ function parse(tab: BrowserTab): GatherTab | undefined {
   if (!isTabId(tab.id) || !isTabId(tab.windowId) || typeof tab.url !== "string" || typeof tab.index !== "number" || tab.index < 0 ||
     typeof tab.incognito !== "boolean") return
   const lastAccessed = typeof tab.lastAccessed === "number" && Number.isFinite(tab.lastAccessed) && tab.lastAccessed >= 0 ? tab.lastAccessed : 0
-  return { tabId: tab.id, windowId: tab.windowId, index: tab.index, url: tab.url, title: typeof tab.title === "string" ? tab.title : "", lastAccessed, incognito: tab.incognito }
+  return { tabId: tab.id, windowId: tab.windowId, index: tab.index, url: tab.url, title: typeof tab.title === "string" ? tab.title : "", lastAccessed, incognito: tab.incognito,
+    active: tab.active === true, pinned: tab.pinned === true, audible: tab.audible === true }
 }
 
 // Firefox can open reopened tabs unloaded; Chrome has no such option. Passing the old title with it is still open (ARC-ACC-76, G7).
@@ -33,7 +34,7 @@ export function createGatherBrowser(browser: GatherBrowser, options: { readonly 
   return {
     async queryVideos(windowId, patterns) {
       try {
-        const found = await browser.tabs.query({ windowId, url: [...patterns] })
+        const found = await browser.tabs.query({ ...windowId === null ? {} : { windowId }, url: [...patterns] })
         return { kind: "tabs", tabs: found.flatMap(tab => parse(tab) ?? []) }
       } catch { return { kind: "unavailable" } }
     },

@@ -14,7 +14,7 @@ export const privateWindow: Requester = { windowId: 2, incognito: true, activeTa
 export const route = brand(isRouteId, "gather-fixture-route")
 
 export type BrowserCall =
-  | { kind: "query"; windowId: number; patterns: readonly string[] }
+  | { kind: "query"; windowId: number | null; patterns: readonly string[] }
   | { kind: "read"; tabId: number }
   | { kind: "create"; windowId: number; url: string; active: boolean; index?: number }
   | { kind: "create-window"; urls: readonly string[] }
@@ -32,7 +32,7 @@ export function browser(fixture: ReturnType<typeof tabsFixture>) {
     survives: new Set<number>(), removeRejects: false, unreadable: new Set<number>() }
   const reopenTitles: { url: string; title: string }[] = []
   const strip = ({ status: _status, ...tab }: Row): GatherTab => tab
-  const inWindow = (windowId: number) => [...rows.values()].filter(row => row.windowId === windowId).sort((x, y) => x.index - y.index)
+  const inWindow = (windowId: number | null) => [...rows.values()].filter(row => windowId === null || row.windowId === windowId).sort((x, y) => x.windowId - y.windowId || x.index - y.index)
   const matches = (url: string, pattern: string) => url.startsWith(pattern.slice(0, -1))
   const native: GatherNativePort = {
     async queryVideos(windowId, patterns) {
@@ -53,7 +53,7 @@ export function browser(fixture: ReturnType<typeof tabsFixture>) {
       const index = props.index ?? inWindow(props.windowId).length
       for (const row of inWindow(props.windowId)) if (row.index >= index) row.index++
       const created: Row = { tabId, windowId: props.windowId, index, url: props.url, title: "", lastAccessed: fixture.clock.now(),
-        incognito: props.windowId === 2, status: "loading" }
+        incognito: props.windowId === 2, active: props.active, pinned: false, audible: false, status: "loading" }
       rows.set(tabId, created)
       fixture.seedTab(nativeTab(tabId, { windowId: props.windowId, incognito: created.incognito, active: props.active }), signedOut())
       const list = props.url.startsWith("https://www.youtube.com/watch_videos?video_ids=")
@@ -70,7 +70,7 @@ export function browser(fixture: ReturnType<typeof tabsFixture>) {
       windows.add(windowId)
       const tabIds = urls.map((url, index) => {
         const tabId = ++serial
-        rows.set(tabId, { tabId, windowId, index, url, title: "", lastAccessed: 0, incognito: false, status: "loading" })
+        rows.set(tabId, { tabId, windowId, index, url, title: "", lastAccessed: 0, incognito: false, active: false, pinned: false, audible: false, status: "loading" })
         return tabId
       })
       return { kind: "created", tabIds }
@@ -87,7 +87,7 @@ export function browser(fixture: ReturnType<typeof tabsFixture>) {
     open(tabId: number, url: string, title: string, patch: Partial<Row> = {}) {
       const windowId = patch.windowId ?? 1
       rows.set(tabId, { tabId, windowId, index: patch.index ?? inWindow(windowId).length, url, title, lastAccessed: patch.lastAccessed ?? tabId,
-        incognito: windowId === 2, status: "complete", ...patch })
+        incognito: windowId === 2, active: false, pinned: false, audible: false, status: "complete", ...patch })
     },
     navigate(tabId: number, url: string) { const row = rows.get(tabId); if (row) row.url = url },
     closeWindow(windowId: number) { windows.delete(windowId); for (const row of inWindow(windowId)) rows.delete(row.tabId) },

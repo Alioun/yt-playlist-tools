@@ -31,8 +31,8 @@ export type TabNativePort = {
   view<View extends TabViewScope>(tabId: number, view: View, isView: (value: unknown) => value is View, milliseconds: number, signal: AbortSignal): Promise<TabReply<null>>
   dispose(): void
 }
-// Gather tabs' additions to the seam (ARC-ACC-72, ARC-ACC-76). A gathered tab is only read: address, title, place and access time.
-// Nothing here messages, injects into, activates, reloads or wakes a tab.
+// Gather tabs' additions to the seam (ARC-ACC-72, ARC-ACC-76). A gathered tab is only read: address, title, place and access time,
+// and the facts automatic gathering leaves tabs out by. Nothing here messages, injects into, activates, reloads or wakes a tab.
 export type GatherTab = {
   readonly tabId: number
   readonly windowId: number
@@ -41,12 +41,16 @@ export type GatherTab = {
   readonly title: string
   readonly lastAccessed: number
   readonly incognito: boolean
+  readonly active: boolean
+  readonly pinned: boolean
+  readonly audible: boolean
 }
 export type GatherTabRead =
   | { readonly kind: "tab"; readonly tab: GatherTab; readonly status: "loading" | "complete" }
   | { readonly kind: "gone" | "unavailable" }
 export type GatherNativePort = {
-  queryVideos(windowId: number, patterns: readonly string[]): Promise<{ readonly kind: "tabs"; readonly tabs: readonly GatherTab[] } | { readonly kind: "unavailable" }>
+  // `null` reads every window at once, for automatic gathering's unvisited check (ARC-ACC-72).
+  queryVideos(windowId: number | null, patterns: readonly string[]): Promise<{ readonly kind: "tabs"; readonly tabs: readonly GatherTab[] } | { readonly kind: "unavailable" }>
   read(tabId: number): Promise<GatherTabRead>
   // `reopened` marks an Undo reopen. Firefox opens it unloaded with its old title (ARC-ACC-76); other browsers ignore it.
   create(props: { readonly windowId: number; readonly url: string; readonly active: boolean; readonly index?: number },
