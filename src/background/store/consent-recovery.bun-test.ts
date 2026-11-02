@@ -1,40 +1,13 @@
 import { expect, test } from "bun:test"
 import { createLocalFilterWriter, createStartingLocalFilterWriter, StartupReadinessError } from "./local-filter-writer"
-import { consentObject, readConsentDevice, withdrawalItems } from "./consent-withdrawal"
-import { parseConsentJobs, acceptedRemovalLedger, createConsentRecovery, executeExactRetainedV1Acceptance, executeExactRetainedAgreement, type ExactRetainedV1AcceptancePermit } from "./consent-recovery"
+import { consentObject, readConsentDevice } from "./consent-withdrawal"
+import { parseConsentJobs, acceptedRemovalLedger, createConsentRecovery, executeExactRetainedV1Acceptance, executeExactRetainedAgreement, type ExactRetainedV1AcceptancePermit, consentJobsKey, sameConsentValue, executeExactRetainedInstallation, type ExactRetainedInstallationPermit } from "./consent-recovery"
 import { pendingAccountRemovalKey } from "./account-removal-execution"
 import { createRemovalHarness, removalFixture, withdrawRemovalFixture } from "../../../tools/fixtures/account-removal-execution/run"
 import type { JsonObject } from "../../shared/contracts/json"
-import { isAccountKey } from "../../shared/model"
-
-const origin = { kind: "ui", windowId: 1, incognito: false } as const
-function account(value: string) { if (!isAccountKey(value)) throw Error("Invalid synthetic account"); return value }
-const acct = account("AAAAAAAAAAAAAAAA")
-
-async function accepted(synced = false) {
-  const h = createRemovalHarness(removalFixture(synced), { details: true })
-  const writer = createLocalFilterWriter(h.deps)
-  const preparation = await writer.prepareAccountRemoval(origin, acct)
-  if (preparation.kind !== "confirmation-required") throw Error("Missing real removal confirmation")
-  await writer.removeAccountSetup(origin, preparation.confirmation)
-  await writer.dispose()
-  const seed = h.mutations[0]?.after
-  if (!seed || !seed.local[pendingAccountRemovalKey]) throw Error("Missing accepted removal seed")
-  return (await withdrawRemovalFixture(seed)).state
-}
-
-async function agreed(synced = false) {
-  const h = createRemovalHarness(await accepted(synced), { details: true })
-  const writer = createStartingLocalFilterWriter({ ...h.deps, startup: h.startup })
-  await expect(writer.ready()).rejects.toBeInstanceOf(StartupReadinessError)
-  expect(h.mutations).toEqual([])
-  const review = await writer.readAgreement(origin)
-  if (review.kind !== "review" || review.presentation.kind !== "held") throw Error("Missing held disclosure")
-  const result = await writer.agree(origin, { review: review.review, choice: { kind: "disclosure" }, displayedVersion: 1, access: new Promise(() => {}) })
-  expect(result.kind).toBe("committed")
-  expect(h.mutations.length).toBe(1)
-  return { h, writer }
-}
+import { renewWithdrawalAgreement, createInterimHarness, interimSnapshot } from "../../../tools/fixtures/interim-conversion/run"
+import { sameSyncJson } from "./sync-write-admission"
+import { origin, acct, accepted, agreed, v1Owner, v1Selection, rawObject, v1Stage, v1Stages, completedV1, installationRawJob, installation, installationInput, completedInstallation, retainedV1Seed, retainedInstallationSeed } from "../../../tools/fixtures/consent-recovery/cases"
 
 for (const synced of [false, true]) test(`held agreement and exact removal preserve current consent, ${synced ? "synced" : "local"}`, async () => {
   const { h, writer } = await agreed(synced), before = h.state()
@@ -303,55 +276,6 @@ for (const permission of ["prepared", "armed", "done"] as const) test(`withdrawa
   }
 })
 
-import { withdrawalRetainedAgreementFixture, withdrawalRetainedV1Fixture, renewWithdrawalAgreement, createInterimHarness, interimSnapshot, runWithdrawalRetainedAgreement } from "../../../tools/fixtures/interim-conversion/run"
-import { consentJobsKey, classifyConsentWork } from "./consent-recovery"
-import { readRetainedCheckpoint, recoveredRetainedAgreementDifference, retainedCheckpointDifference } from "./interim-persistence"
-import { sameSyncJson } from "./sync-write-admission"
-
-let retainedSeed: ReturnType<typeof withdrawalRetainedAgreementFixture> | undefined
-async function retained() {
-  const fixture = await (retainedSeed ??= withdrawalRetainedAgreementFixture())
-  const h = createInterimHarness(fixture.stores.local), writer = createStartingLocalFilterWriter(h.deps)
-  await expect(writer.ready()).rejects.toBeInstanceOf(StartupReadinessError)
-  return { h, writer, fixture }
-}
-async function retainedSelection(writer: ReturnType<typeof createStartingLocalFilterWriter>, ui = origin) {
-  const review = await writer.readWithdrawnWork(ui)
-  if (review.kind !== "held") throw Error("Missing retained review")
-  const selected = review.work.find(view => view.kind === "retained-agreement")
-  if (selected?.kind !== "retained-agreement") throw Error("Missing retained selection")
-  return { review: review.review, job: selected.selection }
-}
-
-test("actual withdrawal V2 observer covers exact receipt stages, faults, private origins and serialized restarts", async () => {
-  const observed = await runWithdrawalRetainedAgreement()
-  expect(observed.v3Installation.cases).toBe(55)
-  expect(observed.v3Installation.newAcceptance.cases).toBe(80)
-  expect(observed.v3Installation.subsets.length).toBe(8)
-  expect(observed.cases).toBe(42)
-  expect(observed.assertions).toBeGreaterThanOrEqual(410)
-  expect(observed.restarts.length).toBe(5)
-  expect(observed.v1Acceptance.cases).toBe(64)
-  expect(observed.v1Acceptance.subsets.length).toBe(8)
-  expect(observed.v1Acceptance.renewals.length).toBe(6)
-  expect(observed.v1Acceptance.restarts.length).toBe(6)
-}, 300000)
-
-for (const fault of ["copied-review", "copied-selection", "foreign-owner", "wrong-origin", "serialized"]) test(`retained ${fault} confirmation grants no authority and consumes attempted owner review`, async () => {
-  const { h, writer } = await retained(), selected = await retainedSelection(writer), before = h.records()
-  const foreign = createStartingLocalFilterWriter(h.deps)
-  await expect(foreign.ready()).rejects.toBeInstanceOf(StartupReadinessError)
-  const input = fault === "copied-review" ? { ...selected, review: { ...selected.review } } : fault === "copied-selection" ? { ...selected, job: { ...selected.job } } : fault === "serialized" ? JSON.parse(JSON.stringify(selected)) : selected
-  const result = await (fault === "foreign-owner" ? foreign : writer).recoverWithdrawnWork(fault === "wrong-origin" ? { ...origin, windowId: 2 } : origin, input)
-  expect(result.kind).not.toBe("recovered"); expect(h.writes).toEqual([]); expect(h.records()).toEqual(before)
-  if (fault === "copied-selection" || fault === "wrong-origin") expect(await writer.recoverWithdrawnWork(origin, selected)).toEqual({ kind: "unavailable", reason: "stale" })
-  await foreign.dispose(); await writer.dispose()
-})
-
-import { withdrawalConfirmedInstallationFixture, newInstallationStage } from "../../../tools/fixtures/interim-conversion/run"
-import { interimConversionKey } from "./interim-persistence"
-import { executeExactRetainedInstallationAcceptance, type ExactRetainedInstallationAcceptancePermit } from "./consent-recovery"
-import { sameConsentValue } from "./consent-recovery"
 test("complete consent equality preserves JSON semantics and rejects non-plain data without getters", () => {
   const values: import("../../shared/contracts/json").JsonValue[] = [null,false,true,0,1,"",[],{},[null,false,{ nested:[1,"x"] }],{ a:1,b:[null,false] },{ b:[null,false],a:1 },{ "__proto__":null,other:1 }]
   for(const left of values)for(const right of values)expect(sameConsentValue(left,right)).toBe(sameSyncJson(left,right))
@@ -360,485 +284,6 @@ test("complete consent equality preserves JSON semantics and rejects non-plain d
   for(const invalid of [undefined,NaN,Infinity,()=>{},getter,Object.create({ inherited:true }),{ value:undefined }])expect(sameConsentValue(invalid,invalid)).toBe(false)
   expect(invoked).toBe(0)
 })
-let newInstallationSeed: ReturnType<typeof withdrawalConfirmedInstallationFixture> | undefined
-async function newInstallationOwner(raw?: JsonObject) {
-  const fixture = await (newInstallationSeed ??= withdrawalConfirmedInstallationFixture())
-  const h = createInterimHarness(raw ?? fixture.stores.local), writer = createStartingLocalFilterWriter(h.deps)
-  await expect(writer.ready()).rejects.toBeInstanceOf(StartupReadinessError)
-  expect(h.writes).toEqual([])
-  return { h, writer, fixture }
-}
-async function newInstallationInput(writer: ReturnType<typeof createStartingLocalFilterWriter>) {
-  const read = await writer.readWithdrawnWork(origin)
-  if (read.kind !== "held") throw Error("Missing new installation read")
-  const view = read.work.find(view => view.kind === "retained-installation-acceptance")
-  if (view?.kind !== "retained-installation-acceptance") throw Error("Missing new installation selection")
-  expect(read.work.some(view => view.kind === "retained-installation")).toBe(false)
-  return { input: { review: read.review, job: view.selection }, view }
-}
-async function completedNewInstallation() {
-  const { h, writer } = await newInstallationOwner(), { input, view } = await newInstallationInput(writer), before = h.records(), states: JsonObject[] = [], batches: JsonObject[] = []
-  h.write(async (items, apply) => { apply(items); states.push(h.records()); batches.push(items) })
-  const result = await writer.recoverWithdrawnWork(origin, input)
-  expect(result.kind).toBe("recovered")
-  await writer.dispose()
-  return { before, view, result, states, batches, records: h.records() }
-}
-test("new installation draft allocates only in the exact two-key acceptance and finishes installed done held", async () => {
-  const { before, view, result, states, batches, records } = await completedNewInstallation()
-  expect(batches.map(newInstallationStage)).toEqual(["prepare", "authorize", "accept", "documents", "retire", "record", "done"])
-  for (const state of states.slice(0,2)) {
-    const ledger = parseConsentJobs(state[consentJobsKey])
-    expect(ledger?.next).toBe(0); expect(ledger?.jobs).toEqual([])
-    expect(ledger?.retainedInstallation?.registration).toEqual({ kind: "unregistered", expectedNext: 0 })
-  }
-  expect(Object.keys(batches[2]!)).toEqual([interimConversionKey, consentJobsKey])
-  expect(parseConsentJobs(states[2]![consentJobsKey])?.next).toBe(1)
-  expect(parseConsentJobs(records[consentJobsKey])?.retainedInstallation?.registration).toEqual({ kind: "registered", occurrence: 0 })
-  expect(parseConsentJobs(records[consentJobsKey])?.jobs[0]?.permission.kind).toBe("done")
-  expect(records.device).toEqual(before.device)
-  expect(rawObject(records.interimConversion).agreed).toEqual(before.interimConversion)
-  expect(view.descriptor.accepted.agreed.agreement.effect.consent.at).toBe(200)
-  expect(view.current.at).toBe(300)
-  expect(result.kind === "recovered" && result.completion.operation === "retained-installation-acceptance" && result.completion.result.installation.activation).toBe("held")
-})
-for (const rejected of [false,true]) for (const mask of [0,1,2,3]) test(`new installation exact acceptance subset ${mask}, rejection ${rejected}`, async () => {
-  const { h, writer, fixture } = await newInstallationOwner(), { input } = await newInstallationInput(writer)
-  h.write(async (items, apply) => {
-    if (newInstallationStage(items) !== "accept") { apply(items); return }
-    apply(Object.fromEntries([interimConversionKey,consentJobsKey].filter((_,index) => mask & 2 ** index).map(key => [key,items[key]!])) )
-    if (rejected) throw h.error
-  })
-  const result = await writer.recoverWithdrawnWork(origin,input)
-  expect(result.kind).toBe(mask === 3 ? "recovered" : mask === 0 && rejected ? "failed" : "unconfirmed")
-  if (mask !== 3) expect(h.writes.map(newInstallationStage)).toEqual(["prepare","authorize","accept"])
-  if (result.kind === "failed" || result.kind === "unconfirmed") expect("confirmedPermissionWrites" in result && result.confirmedPermissionWrites.length).toBe(2)
-  expect(parseConsentJobs(h.records()[consentJobsKey])?.next).toBe(mask & 2 ? 1 : 0)
-  if (mask === 1 || mask === 2 || mask === 0 && !rejected) {
-    const read = await writer.readWithdrawnWork(origin)
-    expect(read.kind === "held" && read.work.some(view => view.kind === "retained-installation" || view.kind === "retained-installation-acceptance")).toBe(false)
-  }
-  const captured = h.records(); await writer.dispose()
-  if (mask === 1 || mask === 2) {
-    const renewal = await renewWithdrawalAgreement({ ...fixture.stores, local: captured }), restart = await newInstallationOwner(renewal.stores.local), fresh = await newInstallationInput(restart.writer)
-    expect(fresh.view.registration.kind).toBe(mask === 1 ? "unregistered" : "registered")
-    expect((await restart.writer.recoverWithdrawnWork(origin,fresh.input)).kind).toBe("recovered")
-    expect(parseConsentJobs(restart.h.records()[consentJobsKey])?.next).toBe(1)
-    expect(restart.h.writes.map(newInstallationStage)).toContain("accept")
-    expect(rawObject(restart.h.records().interimConversion).agreed).toEqual(rawObject(captured.interimConversion).v === 3 ? rawObject(captured.interimConversion).agreed : captured.interimConversion)
-    await restart.writer.dispose()
-  }
-})
-for (const kind of ["receipt","v1"] as const) test(`actual completed ${kind} permits a separate installation occurrence and preserves history`, async () => {
-  const fixture = await withdrawalConfirmedInstallationFixture(kind), before = parseConsentJobs(fixture.stores.local[consentJobsKey]), { h, writer } = await newInstallationOwner(fixture.stores.local), { input,view } = await newInstallationInput(writer)
-  expect(before?.next).toBe(1)
-  expect((await writer.recoverWithdrawnWork(origin,input)).kind).toBe("recovered")
-  const after = parseConsentJobs(h.records()[consentJobsKey])
-  expect(after?.next).toBe(2); expect(after?.jobs[0]).toEqual(before?.jobs[0]); expect(after?.retainedV1).toEqual(before?.retainedV1)
-  expect(after?.jobs[1]?.identity.original).toEqual(view.descriptor.accepted.agreed.agreement.effect.consent)
-  if (kind === "v1") { expect(view.current.at).toBe(301); expect(view.descriptor.accepted.agreed.agreement.effect.consent.at).toBe(300) }
-  await writer.dispose()
-})
-test("installation witness parser rejects malformed and non-plain drafts without invoking accessors", async () => {
-  const { states } = await completedNewInstallation(), valid = rawObject(states[0]![consentJobsKey])
-  expect(parseConsentJobs(valid)).toBeDefined()
-  for (const mutate of [
-    (raw: JsonObject) => { raw.extra = true },
-    (raw: JsonObject) => { rawObject(raw.retainedInstallation).extra = true },
-    (raw: JsonObject) => { rawObject(rawObject(raw.retainedInstallation).registration).expectedNext = -1 },
-    (raw: JsonObject) => { rawObject(rawObject(raw.retainedInstallation).descriptor).effect = {} },
-    (raw: JsonObject) => { rawObject(rawObject(raw.retainedInstallation).descriptor).deviceId = "foreign" },
-    (raw: JsonObject) => { rawObject(raw.retainedInstallation).registration = { kind:"registered", occurrence:0 } },
-    (raw: JsonObject) => { rawObject(rawObject(raw.retainedInstallation).permission).kind = "done" }
-  ]) { const raw = rawObject(JSON.parse(JSON.stringify(valid))); mutate(raw); expect(parseConsentJobs(raw)).toBeUndefined() }
-  let invoked = 0
-  const accessor = rawObject(JSON.parse(JSON.stringify(valid)))
-  Object.defineProperty(rawObject(accessor.retainedInstallation),"descriptor",{ enumerable:true,get(){ invoked++; throw Error("Getter called") } })
-  expect(parseConsentJobs(accessor)).toBeUndefined(); expect(invoked).toBe(0)
-})
-test("new installation V3-only counter drift suppresses old-V3 fallback", async () => {
-  const { before,states,batches } = await completedNewInstallation(), ledger = rawObject(JSON.parse(JSON.stringify(states[1]![consentJobsKey])))
-  ledger.next = 1
-  const { h,writer } = await newInstallationOwner({ ...before,interimConversion:batches[2]!.interimConversion!,[consentJobsKey]:ledger })
-  const read = await writer.readWithdrawnWork(origin)
-  expect(read.kind === "held" && read.work.some(view => view.kind === "retained-installation" || view.kind === "retained-installation-acceptance")).toBe(false)
-  expect(h.writes).toEqual([]); await writer.dispose()
-})
-test("new installation done history blocks identical V2 or accepted V3 reappearance", async () => {
-  const { records,before,batches } = await completedNewInstallation()
-  for (const checkpoint of [before.interimConversion,batches[2]!.interimConversion]) {
-    const { h,writer } = await newInstallationOwner({ ...records,interimConversion:checkpoint! }), read = await writer.readWithdrawnWork(origin)
-    expect(read.kind === "held" && read.work.some(view => view.kind === "retained-installation" || view.kind === "retained-installation-acceptance")).toBe(false)
-    expect(h.writes).toEqual([]); await writer.dispose()
-  }
-})
-test("new installation private confirmation consumes review and writes nothing", async () => {
-  const { h,writer } = await newInstallationOwner(), { input } = await newInstallationInput(writer)
-  expect(await writer.recoverWithdrawnWork({ ...origin,incognito:true },input)).toEqual({ kind:"refused",reason:"private" })
-  expect(await writer.recoverWithdrawnWork(origin,input)).toEqual({ kind:"unavailable",reason:"stale" })
-  expect(h.writes).toEqual([]); await writer.dispose()
-})
-
-for (const stage of ["prepare","authorize","accept","documents","retire","record","done"] as const) test(`new installation ${stage} stops after actual withdrawal and re-agreement`, async () => {
-  const { h,writer,fixture } = await newInstallationOwner(), { input } = await newInstallationInput(writer)
-  let fired = false
-  const queued: Promise<unknown>[] = []
-  h.write(async (items,apply) => {
-    apply(items)
-    if (newInstallationStage(items) !== stage || fired) return
-    fired = true
-    queued.push(writer.resumeInterimInstallation(origin),writer.changeSharedSetting(origin,{ kind:"theme",value:"dark" }),writer.recoverWithdrawnWork(origin,input))
-    const renewal = await renewWithdrawalAgreement({ ...fixture.stores,local:h.records() })
-    h.foreign(records => { for (const key of Object.keys(records)) delete records[key]; Object.assign(records,renewal.stores.local) })
-  })
-  expect((await writer.recoverWithdrawnWork(origin,input)).kind).not.toBe("recovered")
-  expect(fired).toBe(true)
-  expect(h.writes.map(newInstallationStage)).toEqual((["prepare","authorize","accept","documents","retire","record","done"] as const).slice(0,["prepare","authorize","accept","documents","retire","record","done"].indexOf(stage)+1))
-  for (const value of await Promise.all(queued)) expect(rawObject(value).kind).not.toBe("committed")
-  const read = await writer.readWithdrawnWork(origin)
-  expect(read.kind === "held" && read.work.some(view => view.kind === "retained-installation-acceptance")).toBe(false)
-  await writer.dispose()
-})
-for (const rejected of [false,true]) for (let mask=0;mask<64;mask++) test(`new installation fixed documents subset ${mask}, rejection ${rejected}`, async () => {
-  const { h,writer } = await newInstallationOwner(), { input } = await newInstallationInput(writer)
-  h.write(async (items,apply) => {
-    if (newInstallationStage(items) !== "documents") { apply(items); return }
-    const entries = Object.entries(items)
-    expect(entries.length).toBe(6)
-    apply(Object.fromEntries(entries.filter((_,index) => mask & 2 ** index)))
-    if (rejected) throw h.error
-  })
-  expect((await writer.recoverWithdrawnWork(origin,input)).kind).toBe(mask === 63 ? "recovered" : "authorized-pending")
-  if (mask !== 63) expect(h.writes.map(newInstallationStage)).toEqual(["prepare","authorize","accept","documents"])
-  const partial = h.records(); await writer.dispose()
-  if (mask !== 63) {
-    const restart = await newInstallationOwner(partial), fresh = await newInstallationInput(restart.writer)
-    expect((await restart.writer.recoverWithdrawnWork(origin,fresh.input)).kind).toBe("recovered")
-    expect(restart.h.writes.filter(items => newInstallationStage(items) === "documents").length).toBe(1)
-    expect(parseConsentJobs(restart.h.records()[consentJobsKey])?.next).toBe(1)
-    await restart.writer.dispose()
-  }
-})
-test("new installation terminal continuation preserves progress and never repairs documents", async () => {
-  const { states } = await completedNewInstallation(), fixture = await (newInstallationSeed ??= withdrawalConfirmedInstallationFixture())
-  const renewed = await renewWithdrawalAgreement({ ...fixture.stores,local:states[4]! }), { h,writer } = await newInstallationOwner(renewed.stores.local), { input } = await newInstallationInput(writer)
-  expect((await writer.recoverWithdrawnWork(origin,input)).kind).toBe("recovered")
-  expect(h.writes.map(newInstallationStage)).toEqual(["prepare","authorize","retire","record","done"])
-  for (const items of h.writes.filter(items => Object.hasOwn(items,consentJobsKey))) expect(parseConsentJobs(items[consentJobsKey])?.jobs[0]?.progress.kind).toBe("terminal")
-  await writer.dispose()
-  const missing = rawObject(JSON.parse(JSON.stringify(renewed.stores.local))), documents = Object.keys(states[3]!).filter(key => key.startsWith("doc:"))
-  delete missing[documents[0]!]
-  const invalid = await newInstallationOwner(missing), read = await invalid.writer.readWithdrawnWork(origin)
-  expect(read.kind === "held" && read.work.some(view => view.kind === "retained-installation-acceptance")).toBe(false)
-  expect(invalid.h.writes).toEqual([]); await invalid.writer.dispose()
-})
-test("new installation independent completion retains a confirmed executor and independent read failure", async () => {
-  const { h,writer } = await newInstallationOwner(), { input } = await newInstallationInput(writer)
-  let done = false, reads = 0
-  h.write(async (items,apply) => { apply(items); if (newInstallationStage(items) === "done") done = true })
-  h.get(async () => { if (done && ++reads === 5) { h.get(undefined); throw h.readError } })
-  const result = await writer.recoverWithdrawnWork(origin,input)
-  if (result.kind !== "authorized-pending" || !("completionCheck" in result)) throw Error("Missing independent acceptance completion")
-  expect(result.observation.kind).toBe("confirmed"); expect(result.completionCheck).toEqual({ kind:"read-failed",error:h.readError })
-  const read = await writer.readWithdrawnWork(origin)
-  expect(read.kind === "held" && read.work.some(view => view.kind === "retained-installation-acceptance")).toBe(false)
-  await writer.dispose()
-})
-for (const target of ["device-extension","device-id","history","source","canonical","checkpoint"] as const) test(`new installation complete ${target} drift invalidates its review`, async () => {
-  const { h,writer } = await newInstallationOwner(), { input } = await newInstallationInput(writer)
-  h.foreign(records => {
-    if (target === "device-extension") rawObject(records.device).future = { changed:true }
-    else if (target === "device-id") rawObject(records.device).id = "foreign"
-    else if (target === "history") rawObject(records.sync).extra = { changed:true }
-    else if (target === "source") records.toastEnabled = true
-    else if (target === "canonical") records["doc:settings"] = { v:99 }
-    else rawObject(records.interimConversion).future = { changed:true }
-  })
-  const before = h.records()
-  expect((await writer.recoverWithdrawnWork(origin,input)).kind).toBe("unavailable")
-  expect(h.records()).toEqual(before); expect(h.writes).toEqual([]); await writer.dispose()
-})
-test("new installation observed Device A-B-A during acceptance closes its owner", async () => {
-  const { h,writer } = await newInstallationOwner(), { input } = await newInstallationInput(writer)
-  h.write(async (items,apply) => {
-    apply(items)
-    if (newInstallationStage(items) !== "accept") return
-    const actual = h.records()
-    h.get(async () => {
-      h.foreign(records => { rawObject(records.device).future = { changed:true } })
-      h.get(async () => { h.get(undefined); h.foreign(records => { records.device=actual.device! }) })
-    })
-  })
-  expect((await writer.recoverWithdrawnWork(origin,input)).kind).toBe("unconfirmed")
-  h.get(undefined)
-  const read = await writer.readWithdrawnWork(origin)
-  expect(read.kind === "held" && read.work.some(view => view.kind === "retained-installation-acceptance")).toBe(false)
-  expect(h.writes.map(newInstallationStage)).toEqual(["prepare","authorize","accept"]); await writer.dispose()
-})
-test("installation acceptance permits are separate one-use references and revoked before executor authority", async () => {
-  const fixture = await (newInstallationSeed ??= withdrawalConfirmedInstallationFixture()), h = createInterimHarness(fixture.stores.local)
-  let captured: ExactRetainedInstallationAcceptancePermit | undefined, accepted = 0
-  const acceptancePorts = { async setAccepted(batch: import("./consent-recovery").RetainedInstallationAcceptanceBatch) {
-    accepted++
-    if (!captured) throw Error("Missing acceptance permit")
-    expect(await executeExactRetainedInstallationAcceptance(captured,acceptancePorts)).toEqual({ kind:"unavailable",reason:"stale" })
-    if (!consentObject(batch)) throw Error("Invalid batch JSON")
-    await h.deps.local.set(batch)
-  } }
-  const recovery = createConsentRecovery({ observe:() => h.deps.local.get(null),observeRetainedAgreement:async () => interimSnapshot(h.records()),revision:() => 0,stopped:() => false,set:items => h.deps.local.set(items),onRetainedV1Uncertainty(){},onRetainedInstallationUncertainty(){},async execute(){ throw Error("Unexpected removal") },
-    async executeRetainedInstallationAcceptance(permit) {
-      captured=permit
-      expect(await executeExactRetainedInstallationAcceptance({ ...permit },acceptancePorts)).toEqual({ kind:"unavailable",reason:"stale" })
-      return executeExactRetainedInstallationAcceptance(permit,acceptancePorts)
-    },
-    async executeRetainedInstallation(permit) {
-      if (!captured) throw Error("Missing prior acceptance")
-      expect(await executeExactRetainedInstallationAcceptance(captured,acceptancePorts)).toEqual({ kind:"unavailable",reason:"stale" })
-      return executeExactRetainedInstallation(permit,{ async setDocuments(effect){ const items:JsonObject=Object.fromEntries([...effect.documents.map(x=>[x.path,x.document]),...effect.caches.map(x=>[x.path,x.data])]); if(effect.schema.kind==="set")items.schema=effect.schema.value; await h.deps.local.set(items) },setLedger:ledger=>h.deps.local.set({ [consentJobsKey]:ledger }),async setInstalled(record){ if(!consentObject(record))throw Error("Invalid receipt"); await h.deps.local.set({ interimConversion:record }) } })
-    }
-  })
-  const read=await recovery.read(origin)
-  if(read.kind!=="held")throw Error("Missing acceptance review")
-  const view=read.work.find(view=>view.kind==="retained-installation-acceptance")
-  if(view?.kind!=="retained-installation-acceptance")throw Error("Missing acceptance selection")
-  expect((await recovery.recover(origin,{ review:read.review,job:view.selection })).kind).toBe("recovered")
-  expect(accepted).toBe(1)
-  if(!captured)throw Error("Missing consumed permit")
-  expect(await executeExactRetainedInstallationAcceptance(captured,acceptancePorts)).toEqual({ kind:"unavailable",reason:"stale" })
-})
-
-for (const drift of ["device-extension", "source", "tombstone", "unrelated", "checkpoint", "control"]) test(`retained ${drift} drift never borrows a captured review`, async () => {
-  const { h, writer } = await retained(), selected = await retainedSelection(writer)
-  h.foreign(records => {
-    if (drift === "device-extension" && records.device && typeof records.device === "object" && !Array.isArray(records.device)) records.device.foreign = true
-    if (drift === "source") records.sessionConsent = 0
-    if (drift === "tombstone") records["doc:settings"] = { v: 1, gen: "later", at: 999, by: "other", deleted: true }
-    if (drift === "unrelated") records.unrelated = { drift: true }
-    if (drift === "checkpoint" && records.interimConversion && typeof records.interimConversion === "object" && !Array.isArray(records.interimConversion)) records.interimConversion.extra = true
-    if (drift === "control" && records["consent:state"] && typeof records["consent:state"] === "object" && !Array.isArray(records["consent:state"])) records["consent:state"].generation = 4
-  })
-  const before = h.records(), result = await writer.recoverWithdrawnWork(origin, selected)
-  expect(result.kind).not.toBe("recovered"); expect(h.writes).toEqual([]); expect(h.records()).toEqual(before)
-  await writer.dispose()
-})
-
-test("observed changed-back Device and historical facts invalidate the old retained review", async () => {
-  for (const drift of ["device", "history"]) {
-    const fixture = await (retainedSeed ??= withdrawalRetainedAgreementFixture()), h = createInterimHarness(fixture.stores.local)
-    let changed = false
-    const writer = createStartingLocalFilterWriter({ ...h.deps, startup: { ...h.deps.startup, async readInterimSnapshot() {
-      const source = await h.deps.startup.readInterimSnapshot()
-      return changed ? { ...source, historicalAuthorization: { kind: "known", value: true } } : source
-    } } })
-    await expect(writer.ready()).rejects.toBeInstanceOf(StartupReadinessError)
-    const selected = await retainedSelection(writer), before = h.records()
-    if (drift === "device") h.foreign(records => { if (records.device && typeof records.device === "object" && !Array.isArray(records.device)) records.device.foreign = true })
-    else changed = true
-    await writer.readWithdrawnWork(origin)
-    changed = false; h.foreign(records => Object.assign(records, before))
-    expect(await writer.recoverWithdrawnWork(origin, selected)).toEqual({ kind: "unavailable", reason: "stale" })
-    expect(h.writes).toEqual([]); await writer.dispose()
-  }
-})
-
-for (const counter of ["occurrence", "generation", "time"]) test(`exhausted ${counter} cannot authorize retained receipt writes`, async () => {
-  const { h, writer } = await retained()
-  h.foreign(records => {
-    if (counter === "occurrence") records[consentJobsKey] = { v: 1, kind: "consent-jobs", deviceId: "synthetic-device", next: Number.MAX_SAFE_INTEGER, jobs: [] }
-    else if (records["consent:state"] && typeof records["consent:state"] === "object" && !Array.isArray(records["consent:state"])) records["consent:state"][counter === "generation" ? "generation" : "lastAgreementAt"] = Number.MAX_SAFE_INTEGER
-  })
-  const read = await writer.readWithdrawnWork(origin)
-  expect(read.kind).toBe("held")
-  if (read.kind === "held") expect(read.work.some(view => view.kind === "retained-agreement")).toBe(false)
-  expect(h.writes).toEqual([]); await writer.dispose()
-})
-
-test("fresh agreement with repeated clocks invalidates older authority and leaves the original receipt unchanged", async () => {
-  const { h, writer, fixture } = await retained(), selected = await retainedSelection(writer), shown = await writer.readAgreement(origin)
-  if (shown.kind !== "review") throw Error("Missing actual repeated agreement")
-  expect((await writer.agree(origin, { review: shown.review, displayedVersion: shown.version, choice: { kind: "disclosure" }, access: new Promise(() => {}) })).kind).toBe("committed")
-  const read = readConsentDevice(h.records())
-  expect(read.kind === "supported" && read.device.consent?.at).toBe(301)
-  expect(await writer.recoverWithdrawnWork(origin, selected)).toEqual({ kind: "unavailable", reason: "stale" })
-  expect(h.records().interimConversion).toEqual(fixture.stores.local.interimConversion)
-  const fresh = await retainedSelection(writer)
-  expect((await writer.recoverWithdrawnWork(origin, fresh)).kind).toBe("recovered")
-  expect(h.records().device).toEqual({ ...fixture.stores.local.device as object, consent: { v: 1, at: 301 } })
-  await writer.dispose()
-})
-
-test("complete receipt plus done occurrence cannot authorize identical reappearing acceptance", async () => {
-  const { h, writer, fixture } = await retained(), input = await retainedSelection(writer)
-  expect((await writer.recoverWithdrawnWork(origin, input)).kind).toBe("recovered")
-  const completed = h.records(), writes = h.writes.length
-  h.foreign(records => { records.interimConversion = fixture.stores.local.interimConversion! })
-  const read = await writer.readWithdrawnWork(origin)
-  expect(read.kind === "held" && read.work.some(view => view.kind === "retained-agreement")).toBe(false)
-  expect(h.writes.length).toBe(writes)
-  expect(h.records()[consentJobsKey]).toEqual(completed[consentJobsKey])
-  await writer.dispose()
-})
-
-test("retained work without a sanitized source host remains inspection-only", async () => {
-  const fixture = await (retainedSeed ??= withdrawalRetainedAgreementFixture()), h = createInterimHarness(fixture.stores.local), writer = createLocalFilterWriter(h.deps)
-  const read = await writer.readWithdrawnWork(origin)
-  expect(read.kind === "held" && read.work.some(view => view.kind === "retained-agreement")).toBe(false)
-  expect(h.writes).toEqual([]); await writer.dispose()
-})
-
-test("the public comparison permits only current consent and exact terminal receipt progression", async () => {
-  const fixture = await (retainedSeed ??= withdrawalRetainedAgreementFixture()), parsed = readRetainedCheckpoint(fixture.stores.local.interimConversion)
-  if (parsed.kind !== "agreement") throw Error("Generated accepted V2 invalid")
-  const snapshot = interimSnapshot(fixture.stores.local), current = { v: 1, at: 300 }
-  expect(retainedCheckpointDifference(parsed.checkpoint, snapshot)).toBe("canonical")
-  expect(recoveredRetainedAgreementDifference(parsed.checkpoint, snapshot, current, "accepted")).toBeUndefined()
-  const raw = fixture.stores.local.interimConversion
-  if (!raw || typeof raw !== "object" || Array.isArray(raw) || !raw.agreement || typeof raw.agreement !== "object" || Array.isArray(raw.agreement)) throw Error("Generated raw V2 missing")
-  const confirmed = { ...raw, agreement: { ...raw.agreement, kind: "confirmed" } }, terminal = { ...snapshot, checkpoint: { kind: "present" as const, value: confirmed } }
-  expect(recoveredRetainedAgreementDifference(parsed.checkpoint, terminal, current, "accepted")).toBe("checkpoint")
-  expect(recoveredRetainedAgreementDifference(parsed.checkpoint, terminal, current, "terminal")).toBeUndefined()
-  expect(recoveredRetainedAgreementDifference(parsed.checkpoint, { ...snapshot, canonical: { ...snapshot.canonical, device: { ...fixture.stores.local.device as object, foreign: true } } }, current, "terminal")).toBe("canonical")
-  expect(recoveredRetainedAgreementDifference(parsed.checkpoint, { ...snapshot, priorCredentialPresence: { kind: "known", value: false } }, current, "terminal")).toBe("history")
-})
-
-test("strict retained ledger parsing preserves order and rejects mismatched identity, fields and progression", async () => {
-  const fixture = await (retainedSeed ??= withdrawalRetainedAgreementFixture()), record = fixture.stores.local.interimConversion
-  if (!record || typeof record !== "object" || Array.isArray(record)) throw Error("Missing generated raw accepted receipt")
-  const identity = { deviceId: "synthetic-device", occurrence: 4, operation: { kind: "retained-agreement", record }, original: { v: 1, at: 100 } }
-  const entry = { identity, progress: { kind: "accepted" }, permission: { kind: "held" } }
-  const ledger = { v: 1, kind: "consent-jobs", deviceId: "synthetic-device", next: 5, jobs: [entry, { ...entry, identity: { ...identity, occurrence: 2 } }] }
-  expect(parseConsentJobs(ledger)?.jobs.map(job => job.identity.occurrence)).toEqual([4, 2])
-  const invalid = [
-    { ...ledger, next: 4 }, { ...ledger, jobs: [entry, entry] }, { ...ledger, extra: true },
-    { ...ledger, jobs: [{ ...entry, identity: { ...identity, original: { v: 1, at: 300 } } }] },
-    { ...ledger, jobs: [{ ...entry, identity: { ...identity, deviceId: "foreign" } }] },
-    { ...ledger, jobs: [{ ...entry, permission: { kind: "retiring", generation: 2, current: { v: 1, at: 300 } } }] },
-    { ...ledger, jobs: [{ ...entry, progress: { kind: "terminal" } }] },
-    { ...ledger, jobs: [{ ...entry, permission: { kind: "prepared", generation: 2, current: { v: 1, at: 300 }, extra: true } }] }
-  ]
-  for (const value of invalid) expect(parseConsentJobs(value)).toBeUndefined()
-})
-
-test("terminal receipt recovery after actual rewithdrawal and repeated-clock agreement never returns to accepted progress", async () => {
-  const { h, writer, fixture } = await retained()
-  h.write(async (items, apply) => {
-    if (Object.hasOwn(items, "interimConversion")) throw h.error
-    apply(items)
-  })
-  const selected = await retainedSelection(writer), interrupted = await writer.recoverWithdrawnWork(origin, selected)
-  expect(interrupted.kind).toBe("authorized-pending")
-  expect(parseConsentJobs(h.records()[consentJobsKey])?.jobs[0]?.permission.kind).toBe("retiring")
-  const terminal = { ...fixture.stores, local: h.records() }
-  await writer.dispose()
-  const withdrawal = await withdrawRemovalFixture(terminal), fresh = createInterimHarness(withdrawal.state.local), owner = createStartingLocalFilterWriter(fresh.deps)
-  await expect(owner.ready()).rejects.toBeInstanceOf(StartupReadinessError)
-  const shown = await owner.readAgreement(origin)
-  if (shown.kind !== "review") throw Error("Missing terminal held agreement")
-  expect((await owner.agree(origin, { review: shown.review, displayedVersion: shown.version, choice: { kind: "disclosure" }, access: new Promise(() => {}) })).kind).toBe("committed")
-  const consent = readConsentDevice(fresh.records())
-  expect(consent.kind === "supported" && consent.device.consent?.at).toBe(301)
-  const start = fresh.writes.length, input = await retainedSelection(owner), result = await owner.recoverWithdrawnWork(origin, input)
-  expect(result.kind).toBe("recovered")
-  for (const batch of fresh.writes.slice(start).filter(batch => Object.hasOwn(batch, consentJobsKey))) expect(parseConsentJobs(batch[consentJobsKey])?.jobs[0]?.progress.kind).toBe("terminal")
-  expect(fresh.writes.slice(start).some(batch => Object.hasOwn(batch, "device"))).toBe(false)
-  const ledger = parseConsentJobs(fresh.records()[consentJobsKey])
-  expect(ledger?.next).toBe(1); expect(ledger?.jobs[0]?.identity).toEqual(parseConsentJobs(terminal.local[consentJobsKey])?.jobs[0]?.identity)
-  await owner.dispose()
-})
-
-for (const drift of ["snapshot-store", "history"]) test(`retained ${drift} disagreement offers inspection without an executable selection`, async () => {
-  const fixture = await (retainedSeed ??= withdrawalRetainedAgreementFixture()), h = createInterimHarness(fixture.stores.local)
-  const owner = createStartingLocalFilterWriter({ ...h.deps, startup: { ...h.deps.startup, async readInterimSnapshot() {
-    const source = await h.deps.startup.readInterimSnapshot()
-    return drift === "snapshot-store" ? { ...source, source: {} } : { ...source, historicalAuthorization: { kind: "known", value: true } }
-  } } })
-  await expect(owner.ready()).rejects.toBeInstanceOf(StartupReadinessError)
-  const read = await owner.readWithdrawnWork(origin)
-  expect(read.kind === "held" && read.work.some(view => view.kind === "retained-agreement")).toBe(false)
-  expect(h.writes).toEqual([]); await owner.dispose()
-})
-
-test("a final read failure after confirmed done remains authorized-pending with its completed executor observation", async () => {
-  const { h, writer } = await retained(), input = await retainedSelection(writer)
-  let done = false, reads = 0
-  h.write(async (items, apply) => { apply(items); if (parseConsentJobs(items[consentJobsKey])?.jobs[0]?.permission.kind === "done") done = true })
-  h.get(async () => { if (done && ++reads === 3) throw h.readError })
-  const result = await writer.recoverWithdrawnWork(origin, input)
-  expect(result.kind).toBe("authorized-pending")
-  if (result.kind !== "authorized-pending" || !("completionCheck" in result)) throw Error("Missing retained final observation")
-  expect(result.observation.kind).toBe("confirmed")
-  expect(result.completionCheck).toEqual({ kind: "read-failed", error: h.readError })
-  expect(h.writes.length).toBe(5)
-  expect(parseConsentJobs(h.records()[consentJobsKey])?.jobs[0]?.permission.kind).toBe("done")
-  await writer.dispose()
-})
-
-test("retained drift during the executor preflight permits no terminal or receipt write", async () => {
-  const { h, writer } = await retained(), input = await retainedSelection(writer)
-  let armed = false, reads = 0
-  h.write(async (items, apply) => { apply(items); if (parseConsentJobs(items[consentJobsKey])?.jobs[0]?.permission.kind === "armed") armed = true })
-  h.get(async () => { if (armed && ++reads === 3) h.foreign(records => { if (records.device && typeof records.device === "object" && !Array.isArray(records.device)) records.device.later = true }) })
-  const result = await writer.recoverWithdrawnWork(origin, input)
-  expect(result.kind).toBe("authorized-pending")
-  expect(h.writes.length).toBe(2)
-  expect(readRetainedCheckpoint(h.records().interimConversion).kind).toBe("agreement")
-  const raw = h.records().interimConversion
-  expect(raw && typeof raw === "object" && !Array.isArray(raw) && raw.agreement && typeof raw.agreement === "object" && !Array.isArray(raw.agreement) && raw.agreement.kind).toBe("accepted")
-  await writer.dispose()
-})
-
-test("retained owner reviews are consumed even by malformed confirmation shapes", async () => {
-  const { h, writer } = await retained(), input = await retainedSelection(writer), malformed = { ...input, extra: true }
-  expect(await writer.recoverWithdrawnWork(origin, malformed)).toEqual({ kind: "refused", reason: "invalid-input" })
-  expect(await writer.recoverWithdrawnWork(origin, input)).toEqual({ kind: "unavailable", reason: "stale" })
-  expect(h.writes).toEqual([]); await writer.dispose()
-})
-
-test("retained authorize preflight drift preserves a confirmed applied prepare rejection", async () => {
-  const { h, writer } = await retained(), input = await retainedSelection(writer)
-  let prepared = false, reads = 0
-  h.write(async (items, apply) => { apply(items); if (parseConsentJobs(items[consentJobsKey])?.jobs[0]?.permission.kind === "prepared") { prepared = true; throw h.error } })
-  h.get(async () => { if (prepared && ++reads === 3) h.foreign(records => { records.unrelated = { later: true } }) })
-  const result = await writer.recoverWithdrawnWork(origin, input)
-  expect(result.kind).toBe("failed")
-  if (result.kind !== "failed" || !("confirmedPermissionWrites" in result)) throw Error("Missing retained permission prefix")
-  expect(result.stage).toBe("authorize")
-  expect(result.confirmedPermissionWrites).toEqual([{ stage: "prepare", write: { kind: "rejected", error: h.error } }])
-  expect(h.writes.length).toBe(1); await writer.dispose()
-})
-
-let v1Seed: ReturnType<typeof withdrawalRetainedV1Fixture> | undefined
-async function v1Owner() {
-  const fixture = await (v1Seed ??= withdrawalRetainedV1Fixture()), h = createInterimHarness(fixture.stores.local), writer = createStartingLocalFilterWriter(h.deps)
-  await expect(writer.ready()).rejects.toBeInstanceOf(StartupReadinessError)
-  return { fixture, h, writer }
-}
-async function v1Selection(writer: ReturnType<typeof createStartingLocalFilterWriter>, ui = origin) {
-  const read = await writer.readWithdrawnWork(ui)
-  if (read.kind !== "held") throw Error("V1 review missing")
-  const selected = read.work.find(view => view.kind === "retained-v1-acceptance")
-  if (!selected || selected.kind !== "retained-v1-acceptance") throw Error("V1 selection missing")
-  return { review: read.review, job: selected.selection }
-}
-function rawObject(raw: unknown): JsonObject { if (!consentObject(raw)) throw Error("Expected complete JSON object"); return raw }
-function v1Stage(items: JsonObject) {
-  if (Object.hasOwn(items, "interimConversion")) return Object.hasOwn(items, consentJobsKey) ? "accept" : "record"
-  const ledger = parseConsentJobs(items[consentJobsKey]), witness = ledger && "retainedV1" in ledger ? ledger.retainedV1 : undefined
-  const permission = witness && "permission" in witness ? witness.permission.kind : ledger?.jobs[0]?.permission.kind
-  return permission === "prepared" ? "prepare" : permission === "armed" ? "authorize" : permission === "retiring" ? "retire" : "done"
-}
-const v1Stages = ["prepare", "authorize", "accept", "retire", "record", "done"] as const
-let v1Completed: Promise<{ batches: JsonObject[]; records: JsonObject }> | undefined
-function completedV1() {
-  return v1Completed ??= (async () => {
-    const { h, writer } = await v1Owner(), input = await v1Selection(writer)
-    const result = await writer.recoverWithdrawnWork(origin, input)
-    expect(result.kind).toBe("recovered")
-    await writer.dispose()
-    return { batches: h.writes, records: h.records() }
-  })()
-}
-
 for (const fault of ["copied-review", "copied-selection", "foreign-owner", "wrong-origin", "serialized", "malformed"]) test(`V1 ${fault} consumes the attempted review without effects`, async () => {
   const { h, writer } = await v1Owner(), input = await v1Selection(writer), before = h.records()
   const other = await v1Owner()
@@ -892,7 +337,7 @@ for (const prior of ["prepare", "authorize", "accept", "retire", "record"] as co
 
 test("V1 observed Device and history ABA invalidates earlier authority", async () => {
   for (const drift of ["device", "history"] as const) {
-    const fixture = await (v1Seed ??= withdrawalRetainedV1Fixture()), h = createInterimHarness(fixture.stores.local)
+    const fixture = await retainedV1Seed(), h = createInterimHarness(fixture.stores.local)
     let history = false
     const startup = { ...h.deps.startup, async readInterimSnapshot() { const value = await h.deps.startup.readInterimSnapshot(); return history ? { ...value, historicalAuthorization: { kind: "known" as const, value: true } } : value } }
     const writer = createStartingLocalFilterWriter({ ...h.deps, startup })
@@ -944,7 +389,7 @@ test("strict V1 proposal parsing rejects malformed wrappers without invoking acc
 })
 
 test("V1 accepted history never grants a done occurrence to reappearing work", async () => {
-  const { records } = await completedV1(), fixture = await (v1Seed ??= withdrawalRetainedV1Fixture())
+  const { records } = await completedV1(), fixture = await retainedV1Seed()
   const ledger = rawObject(records[consentJobsKey]), descriptor = rawObject(rawObject(ledger.retainedV1).descriptor)
   for (const checkpoint of [fixture.stores.local.interimConversion, descriptor.accepted]) {
     const seed = { ...records, interimConversion: checkpoint! }, h = createInterimHarness(seed), writer = createStartingLocalFilterWriter(h.deps)
@@ -957,7 +402,7 @@ test("V1 accepted history never grants a done occurrence to reappearing work", a
 })
 
 for (const counter of ["occurrence", "generation", "time"] as const) test(`V1 exhausted ${counter} stays inspectable without an executable selection`, async () => {
-  const fixture = await (v1Seed ??= withdrawalRetainedV1Fixture()), { batches } = await completedV1(), seed = rawObject(JSON.parse(JSON.stringify(fixture.stores.local)))
+  const fixture = await retainedV1Seed(), { batches } = await completedV1(), seed = rawObject(JSON.parse(JSON.stringify(fixture.stores.local)))
   if (counter === "occurrence") { const ledger = rawObject(JSON.parse(JSON.stringify(batches[0]![consentJobsKey]))); ledger.next = Number.MAX_SAFE_INTEGER; seed[consentJobsKey] = ledger }
   else rawObject(seed["consent:state"])[counter === "generation" ? "generation" : "lastAgreementAt"] = Number.MAX_SAFE_INTEGER
   const h = createInterimHarness(seed), owner = createStartingLocalFilterWriter(h.deps)
@@ -969,7 +414,7 @@ for (const counter of ["occurrence", "generation", "time"] as const) test(`V1 ex
 })
 
 test("V2-only acceptance with a changed counter pin cannot use receipt fallback", async () => {
-  const { batches } = await completedV1(), fixture = await (v1Seed ??= withdrawalRetainedV1Fixture())
+  const { batches } = await completedV1(), fixture = await retainedV1Seed()
   const ledger = rawObject(JSON.parse(JSON.stringify(batches[1]![consentJobsKey]))); ledger.next = 1
   const seed = { ...fixture.stores.local, interimConversion: batches[2]!.interimConversion!, [consentJobsKey]: ledger }
   expect(parseConsentJobs(ledger)).toBeDefined()
@@ -1005,7 +450,7 @@ test("V1 confirmed prepare cannot invoke acceptance without confirmed armed perm
 })
 
 for (const unavailable of ["snapshot", "executor", "history", "snapshot-store"] as const) test(`V1 missing or different ${unavailable} permits inspection only`, async () => {
-  const fixture = await (v1Seed ??= withdrawalRetainedV1Fixture()), h = createInterimHarness(fixture.stores.local)
+  const fixture = await retainedV1Seed(), h = createInterimHarness(fixture.stores.local)
   let barriers = 0
   const recovery = createConsentRecovery({ observe: () => h.deps.local.get(null), revision: () => 0, stopped: () => false, set: items => h.deps.local.set(items),
     observeRetainedAgreement: async () => {
@@ -1033,7 +478,7 @@ for (const stage of v1Stages) test(`V1 known unchanged ${stage} rejection permit
 })
 
 test("V1 acceptance permits are one-use references and remain separate from receipt authority", async () => {
-  const fixture = await (v1Seed ??= withdrawalRetainedV1Fixture()), h = createInterimHarness(fixture.stores.local)
+  const fixture = await retainedV1Seed(), h = createInterimHarness(fixture.stores.local)
   let permit: ExactRetainedV1AcceptancePermit | undefined, barriers = 0, acceptedSets = 0
   const deps = { observe: () => h.deps.local.get(null), observeRetainedAgreement: async () => interimSnapshot(h.records()), revision: () => 0, stopped: () => false,
     set: (items: JsonObject) => h.deps.local.set(items), onRetainedV1Uncertainty() { barriers++ }, async execute() { return { kind: "unavailable" as const, reason: "startup" as const } },
@@ -1073,40 +518,6 @@ test("V1 final independent completion failure preserves the confirmed receipt an
   await writer.dispose()
 })
 
-
-import { withdrawalRetainedInstallationFixture } from "../../../tools/fixtures/interim-conversion/run"
-import { executeExactRetainedInstallation, type ExactRetainedInstallationPermit } from "./consent-recovery"
-function installationRawJob(ledger: JsonObject): JsonObject {
-  if (!Array.isArray(ledger.jobs)) throw Error("Expected jobs array")
-  return rawObject(ledger.jobs[0])
-}
-let installationSeed: ReturnType<typeof withdrawalRetainedInstallationFixture> | undefined
-async function installation(seed?: JsonObject) {
-  const fixture = await (installationSeed ??= withdrawalRetainedInstallationFixture())
-  if (fixture.kind !== "ready") throw Error("Old accepted V3 fixture unreachable")
-  const h = createInterimHarness(seed ?? fixture.stores.local), writer = createStartingLocalFilterWriter(h.deps)
-  await expect(writer.ready()).rejects.toBeInstanceOf(StartupReadinessError)
-  return { h, writer, fixture }
-}
-async function installationInput(writer: ReturnType<typeof createStartingLocalFilterWriter>, ui: Parameters<typeof writer.readWithdrawnWork>[0] = origin) {
-  const read = await writer.readWithdrawnWork(ui)
-  if (read.kind !== "held") throw Error("Installation work not held")
-  const view = read.work.find(view => view.kind === "retained-installation")
-  if (view?.kind !== "retained-installation") throw Error("Installation selection absent")
-  return { input: { review: read.review, job: view.selection }, view }
-}
-let installationDone: Promise<{ records: JsonObject; states: JsonObject[]; batches: JsonObject[] }> | undefined
-async function completedInstallation() {
-  return installationDone ??= (async () => {
-    const { h, writer } = await installation(), states: JsonObject[] = []
-    h.write(async (items, apply) => { apply(items); states.push(h.records()) })
-    const { input } = await installationInput(writer)
-    expect((await writer.recoverWithdrawnWork(origin, input)).kind).toBe("recovered")
-    const records = h.records(); await writer.dispose()
-    return { records, states, batches: h.writes }
-  })()
-}
-
 test("installation captures reject copied, foreign, consumed and malformed recognized reviews", async () => {
   const { h, writer } = await installation(), foreign = await installation(), before = h.records(), { input } = await installationInput(writer)
   expect(await writer.recoverWithdrawnWork(origin, { review: { ...input.review }, job: input.job })).toEqual({ kind: "unavailable", reason: "stale" })
@@ -1141,7 +552,7 @@ for (const field of ["device", "source", "history"] as const) test(`installation
 })
 
 for (const counter of ["next", "generation", "lastAgreementAt"] as const) test(`installation exhausted ${counter} remains held`, async () => {
-  const fixture = await (installationSeed ??= withdrawalRetainedInstallationFixture()), raw = rawObject(JSON.parse(JSON.stringify(fixture.stores.local)))
+  const fixture = await retainedInstallationSeed(), raw = rawObject(JSON.parse(JSON.stringify(fixture.stores.local)))
   if (counter === "next") raw[consentJobsKey] = { v: 1, kind: "consent-jobs", deviceId: "synthetic-device", next: Number.MAX_SAFE_INTEGER, jobs: [] }
   else rawObject(raw["consent:state"])[counter] = Number.MAX_SAFE_INTEGER
   const { h, writer } = await installation(raw), read = await writer.readWithdrawnWork(origin)
@@ -1194,7 +605,7 @@ test("terminal installation cannot repair a missing, edited or tombstoned docume
 })
 
 test("terminal installation reauthorization retains progress under a later actual agreement", async () => {
-  const { states } = await completedInstallation(), fixture = await (installationSeed ??= withdrawalRetainedInstallationFixture())
+  const { states } = await completedInstallation(), fixture = await retainedInstallationSeed()
   const renewed = await renewWithdrawalAgreement({ ...fixture.stores, local: states[3]! }), { h, writer } = await installation(renewed.stores.local)
   const { input, view } = await installationInput(writer)
   expect(view.progress).toBe("terminal"); expect(view.current.at).toBe(301)
@@ -1205,7 +616,7 @@ test("terminal installation reauthorization retains progress under a later actua
 })
 
 test("done installation suppresses fallback for identical accepted V3 reappearance", async () => {
-  const { records } = await completedInstallation(), fixture = await (installationSeed ??= withdrawalRetainedInstallationFixture())
+  const { records } = await completedInstallation(), fixture = await retainedInstallationSeed()
   const reappeared = { ...records, interimConversion: fixture.stores.local.interimConversion! }, { h, writer } = await installation(reappeared)
   const read = await writer.readWithdrawnWork(origin)
   expect(read.kind === "held" && read.work.some(view => view.kind === "retained-installation")).toBe(false)
@@ -1213,7 +624,7 @@ test("done installation suppresses fallback for identical accepted V3 reappearan
 })
 
 test("installation permit is distinct, one use, and unavailable after its attempt", async () => {
-  const fixture = await (installationSeed ??= withdrawalRetainedInstallationFixture()), h = createInterimHarness(fixture.stores.local)
+  const fixture = await retainedInstallationSeed(), h = createInterimHarness(fixture.stores.local)
   let saved: ExactRetainedInstallationPermit | undefined
   const ports = { setDocuments: async () => { throw Error("Copied permit executed documents") }, setInstalled: async () => { throw Error("Copied permit executed receipt") }, setLedger: async () => { throw Error("Copied permit executed ledger") } }
   const recovery = createConsentRecovery({ observe: () => h.deps.local.get(null), observeRetainedAgreement: () => h.deps.startup.readInterimSnapshot(), revision: () => 0, stopped: () => false,
@@ -1242,7 +653,6 @@ test("installation permit is distinct, one use, and unavailable after its attemp
   if (!saved) throw Error("Permit not observed")
   expect(await executeExactRetainedInstallation(saved, ports)).toEqual({ kind: "unavailable", reason: "stale", mutations: [] })
 })
-
 
 for (const stage of ["prepare", "authorize", "documents", "retire", "record", "done"] as const) test(`installation ${stage} drains its invoked setter and refuses queued effects after actual withdrawal`, async () => {
   const { h, writer, fixture } = await installation(), { input } = await installationInput(writer)
@@ -1297,7 +707,7 @@ test("installation unexpected changed-back readback closes execution even after 
   })
   expect((await writer.recoverWithdrawnWork(origin, input)).kind).toBe("unconfirmed")
   h.get(undefined)
-  const fixture = await (installationSeed ??= withdrawalRetainedInstallationFixture())
+  const fixture = await retainedInstallationSeed()
   h.foreign(records => { records.device = fixture.stores.local.device! })
   const read = await writer.readWithdrawnWork(origin)
   expect(h.records().device).toEqual(fixture.stores.local.device)
@@ -1305,9 +715,8 @@ test("installation unexpected changed-back readback closes execution even after 
   expect(h.writes.length).toBe(1); await writer.dispose()
 })
 
-
 for (const unavailable of ["source", "executor", "facts"] as const) test(`installation missing ${unavailable} permits inspection only`, async () => {
-  const fixture = await (installationSeed ??= withdrawalRetainedInstallationFixture()), h = createInterimHarness(fixture.stores.local)
+  const fixture = await retainedInstallationSeed(), h = createInterimHarness(fixture.stores.local)
   const recovery = createConsentRecovery({ observe: () => h.deps.local.get(null), revision: () => 0, stopped: () => false, set: items => h.deps.local.set(items), onRetainedV1Uncertainty() {},
     observeRetainedAgreement: unavailable === "source" ? undefined : async () => { const source = await h.deps.startup.readInterimSnapshot(); return unavailable === "facts" ? { ...source, priorCredentialPresence: { kind: "known", value: true } } : source },
     executeRetainedInstallation: unavailable === "executor" ? undefined : async () => { throw Error("Inspection executed installation") }, async execute() { throw Error("Inspection executed removal") } })
@@ -1317,7 +726,7 @@ for (const unavailable of ["source", "executor", "facts"] as const) test(`instal
 })
 
 test("composed compatible V3 and V2 root extensions survive the exact installed receipt", async () => {
-  const fixture = await (installationSeed ??= withdrawalRetainedInstallationFixture()), records = rawObject(JSON.parse(JSON.stringify(fixture.stores.local)))
+  const fixture = await retainedInstallationSeed(), records = rawObject(JSON.parse(JSON.stringify(fixture.stores.local)))
   const raw = rawObject(records.interimConversion), agreed = rawObject(raw.agreed)
   raw.future = { root: [null, false] }; agreed.future = { v2: [false, null] }
   const { h, writer } = await installation(records), { input } = await installationInput(writer)
@@ -1328,7 +737,7 @@ test("composed compatible V3 and V2 root extensions survive the exact installed 
 })
 
 test("composed old V1 witness and sibling job bytes survive installation ledger parsing and replacement", async () => {
-  const old = await completedV1(), current = await completedInstallation(), fixture = await (installationSeed ??= withdrawalRetainedInstallationFixture())
+  const old = await completedV1(), current = await completedInstallation(), fixture = await retainedInstallationSeed()
   const prior = rawObject(old.records[consentJobsKey]), base = rawObject(current.states[0]![consentJobsKey])
   const job = rawObject(JSON.parse(JSON.stringify(installationRawJob(base)))), identity = rawObject(job.identity)
   identity.occurrence = 1
