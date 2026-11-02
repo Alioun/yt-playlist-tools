@@ -36,7 +36,7 @@ import { prepareFirstEditHistory, readFirstEditProvenance } from "./first-edit-p
 import {
   CONSENT_VERSION, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError,
   decodeDevice, decodeDocument, decodeFilter, decodeSettings, decodeSetup, decodeSyncState, decodeSyncMeta, documentKey, isAccountKey, parseDocumentKey,
-  isVideoId, type AccountKey, type PlaylistId, type DocumentKey, type SyncOpaqueWrite
+  isVideoId, readStoredUnclaimed, type AccountKey, type PlaylistId, type DocumentKey, type SyncOpaqueWrite
 } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
@@ -339,6 +339,7 @@ type LocalFilterWriter = PlaylistCacheOwner & ProgressOwner & SettingsFileOwner 
   readAutoAddChoice(origin: UiOrigin, request: AutoAddReadChange): Promise<AutoAddReadAnswer>
   changeAutoAddChoice(origin: UiOrigin, change: AutoAddChoiceChange): Promise<AutoAddChoiceResult>
   claim(): Promise<ClaimTransactionResult>
+  discardUnclaimed(origin: UiOrigin): Promise<UnclaimedDiscard>
   change(origin: UiOrigin, change: LocalFilterChange): Promise<LocalFilterWriteResult>
   receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>
   flushSync(): Promise<SyncFlushResult>
@@ -361,6 +362,12 @@ function progressParts(value: unknown): [number, number][] | null {
   }
   return parts
 }
+
+/** DATA-42: Discard deletes the unclaimed 1.x setup, the same way a claim consumes it. */
+export type UnclaimedDiscard =
+  | { readonly kind: "discarded" | "absent" }
+  | { readonly kind: "failed"; readonly stage: "set" }
+  | TabProjectionUnavailable | TabProjectionInvalid | { readonly kind: "refused"; readonly reason: "invalid" }
 
 export class StartupReadinessError extends Error {
   constructor(readonly result: Extract<ReceivedResetResult, { kind: "reset-held" }> | { readonly kind: "consent-held"; readonly work: readonly HeldWorkView[] } | { readonly kind: "pending-join"; readonly observation: "accepted" | "outbound" | "choice" | "invalid" | "newer-version" } | { readonly kind: "interim-held"; readonly result: Exclude<InterimRetentionResult, { kind: "not-interim" | "newer-layout" }> } | Exclude<StartupExecutionResult, { kind: "ok" | "newer-layout" }> | { readonly kind: "disposed" } | { readonly kind: "pending-removal"; readonly result: Exclude<RemovalResult, { kind: "committed" | "unchanged" }> }) {
@@ -3618,6 +3625,18 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     absorbPlaylistCache(capture, input) {
       const requested = structuredClone(input)
       return enqueue(() => absorbPlaylistCacheInLane(capture, requested))
+    },
+    discardUnclaimed(origin) {
+      if (!agreementOrigin(origin)) return Promise.resolve({ kind: "refused", reason: "invalid" })
+      return enqueue(async (): Promise<UnclaimedDiscard> => {
+        const read = await readProgressRecordsInLane(["unclaimed"])
+        if (read.kind !== "records") return read
+        let stored
+        try { stored = readStoredUnclaimed(read.records.unclaimed) } catch { stored = { kind: "pending" } as const }
+        if (stored.kind !== "pending") return { kind: "absent" }
+        try { await removalLocal.set({ unclaimed: null }) } catch { return { kind: "failed", stage: "set" } }
+        return { kind: "discarded" }
+      })
     },
     loadProgress(request) {
       const captured = progressRequest(request)
