@@ -58,7 +58,7 @@ The compact consumer is `tools/fixtures/first-run-backend/run.ts`. It has a fixe
 
 ## Localization binding
 
-`createBrowserI18n` accepts only native `getMessage` and `getUILanguage`, plus the actual English catalogue supplied by entry assembly. It exposes no Backend, account, storage or write authority. `shared/i18n` remains pure and has no browser import or global locale. Generated placeholder-name metadata keeps its imports inside the shared layer. The catalogue consistency fixture checks this metadata against the actual JSON.
+`createBrowserI18n` accepts only native `getMessage` and `getUILanguage`, plus the disclosure's canonical English from the actual catalogue (`ui/shell/disclosure-catalogue.ts`), so a page carries those entries and not the whole catalogue. It exposes no Backend, account, storage or write authority. `shared/i18n` remains pure and has no browser import or global locale. Generated placeholder-name metadata keeps its imports inside the shared layer. The catalogue consistency fixture checks this metadata against the actual JSON.
 
 Create one `FirstRunText` snapshot from that localization instance. Pass the same snapshot to `createFirstRunOwner` and `FirstRun`. The disclosure text is captured before rendering and is reused for agreement checks. The local agreement request carries that same object. A different view snapshot refuses before any RPC. Only explicit existing fields enter the wire request. Permission requests still start in the existing synchronous click path. First-run agreement remains version 1. Main entry wiring and manifest localization are unapplied assembly proposals in the localization audit bundle.
 

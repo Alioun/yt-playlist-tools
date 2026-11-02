@@ -1,4 +1,4 @@
-import { createSiteI18n, type MessageCatalogue } from "../../shared/i18n"
+import { createSiteI18n, type CanonicalCatalogue } from "../../shared/i18n"
 import type { Platform } from "../../shared/keys"
 import { platform as build } from "../../shared/platform"
 import type { Deadline } from "../../shared/rpc/rpc"
@@ -26,10 +26,10 @@ const retiredLocalStorage = ["cachedVideos", "playlists", "preventDuplicates"]
  */
 export type PageOptions = {
   readonly windowId?: number
-  /** The canonical catalogue, loaded only by the lazy part that pins the disclosure (UI-ONB-09). */
-  readonly catalogue?: () => Promise<MessageCatalogue>
+  /** The disclosure's canonical text, loaded only by the lazy part that pins it (UI-ONB-09). */
+  readonly catalogue?: () => Promise<CanonicalCatalogue>
 }
-export function startExtensionPage(native: ExtensionPagePort, navigatorPlatform: string, catalogue?: MessageCatalogue, window: PageOptions = {}) {
+export function startExtensionPage(native: ExtensionPagePort, navigatorPlatform: string, catalogue?: CanonicalCatalogue, window: PageOptions = {}) {
   try { for (const key of retiredLocalStorage) localStorage.removeItem(key) } catch {}
   const scheme = matchMedia("(prefers-color-scheme: dark)")
   let stopTheme = followTheme(document.documentElement, "system", scheme)

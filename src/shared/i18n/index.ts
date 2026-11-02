@@ -37,6 +37,8 @@ export function richParts(text: string): readonly RichPart[] {
 }
 
 export type MessageCatalogue = Readonly<Record<MessageKey, Entry>>
+/** Canonical English for some messages: what a page that pins text (the disclosure) carries. */
+export type CanonicalCatalogue = Readonly<Partial<Record<SimpleMessageKey, Entry>>>
 
 export function createI18n(native: NativeMessagePort, catalogue: MessageCatalogue, locale = "en") {
   return localized(native, key => Object.entries(catalogue[key].placeholders ?? {})
@@ -45,12 +47,16 @@ export function createI18n(native: NativeMessagePort, catalogue: MessageCatalogu
 }
 
 /**
- * For page scripts, which can't carry the whole catalogue. The catalogue numbers each message's placeholders
- * in name order (scripts/generate-message-parameters.ts), so the sorted value names are the substitution order.
- * Canonical English text isn't available here.
+ * For page scripts and extension pages, which don't carry the whole catalogue. The catalogue numbers each message's
+ * placeholders in name order (scripts/generate-message-parameters.ts), so the sorted value names are the substitution
+ * order. Canonical English text is available only for the messages `canonical` holds.
  */
-export function createSiteI18n(native: NativeMessagePort, locale = "en"): I18n {
-  return localized(native, (_key, values) => Object.keys(values).sort(), () => { throw new Error("Canonical text is for extension pages") }, locale)
+export function createSiteI18n(native: NativeMessagePort, locale = "en", canonical: CanonicalCatalogue = {}): I18n {
+  return localized(native, (_key, values) => Object.keys(values).sort(), key => {
+    const entry = canonical[key]
+    if (!entry) throw new Error("Canonical text is for extension pages")
+    return entry.message
+  }, locale)
 }
 
 function localized(native: NativeMessagePort, placeholderNames: (key: MessageKey, values: object) => readonly string[], canonicalText: (key: SimpleMessageKey) => string, locale: string) {

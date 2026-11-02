@@ -1,5 +1,5 @@
 import type { browser as nativeBrowser } from "wxt/browser"
-import { createI18n, type MessageCatalogue } from "../../shared/i18n"
+import { createSiteI18n, type CanonicalCatalogue } from "../../shared/i18n"
 import type { PermissionGrant, PermissionNeeds } from "../../shared/contracts/first-run"
 import type { Site } from "../../shared/contracts/vocabulary"
 import type { BackendOptions, Access } from "./backend"
@@ -67,12 +67,12 @@ export function createBrowserBackend(native: BrowserBackendPort, options: Backen
 
 export type BrowserLocalizationPort = { readonly i18n: { readonly getMessage: unknown; getUILanguage(): string } }
 
-export function createBrowserI18n(native: BrowserLocalizationPort, catalogue: MessageCatalogue) {
+export function createBrowserI18n(native: BrowserLocalizationPort, catalogue: CanonicalCatalogue) {
   const getMessage = native.i18n.getMessage
   if (typeof getMessage !== "function") throw new TypeError("Native localization getMessage is unavailable")
-  return createI18n({ getMessage(name, substitutions) {
+  return createSiteI18n({ getMessage(name, substitutions) {
     const result: unknown = Reflect.apply(getMessage, native.i18n, [name, substitutions])
     if (typeof result !== "string") throw new TypeError("Native localization result is not text")
     return result
-  } }, catalogue, native.i18n.getUILanguage())
+  } }, native.i18n.getUILanguage(), catalogue)
 }

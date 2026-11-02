@@ -122,7 +122,7 @@
     },
     {
       "row": "popup/www/js",
-      "kb": 66.0,
+      "kb": 65.9,
       "since": "2026-11-02",
       "why": "One multi-page build shares chunks between the popup, settings and the first-run page (Q-PERF-35 rule 1)."
     },
@@ -134,7 +134,7 @@
     },
     {
       "row": "popup/music/js",
-      "kb": 113.0,
+      "kb": 112.9,
       "since": "2026-11-02",
       "why": "The YouTube Music tab chunk pulls settings-only code that the multi-page build shares."
     },
@@ -170,13 +170,13 @@
     },
     {
       "row": "first-run/js",
-      "kb": 106.0,
+      "kb": 76.0,
       "since": "2026-11-02",
-      "why": "The first-run page imports the whole message catalogue as JavaScript, and shares chunks with the popup and settings."
+      "why": "The first run shares chunks with the popup and settings in one multi-page build (Q-PERF-35 rule 1), and its first view carries the backend and first-run owner."
     },
     {
       "row": "first-run/upgrade/js",
-      "kb": 111.2,
+      "kb": 81.2,
       "since": "2026-11-02",
       "why": "As first-run/js, plus the upgrade note."
     },
