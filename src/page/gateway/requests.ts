@@ -55,8 +55,10 @@ export function channelUrl(input: string): string | undefined {
   const value = input.trim()
   if (/^UC[A-Za-z0-9_-]{22}$/.test(value)) return `https://www.youtube.com/channel/${value}`
   if (/^@[A-Za-z0-9_.-]+$/.test(value)) return `https://www.youtube.com/${value}`
+  // A bare handle is accepted as YT-CF-16 lists it; a handle has 3 to 30 of these characters.
+  if (/^[A-Za-z0-9_.-]{3,30}$/.test(value)) return `https://www.youtube.com/@${value}`
   try {
-    const url = new URL(value, "https://www.youtube.com")
+    const url = new URL(/^(?:www\.|m\.)?youtube\.com\//.test(value) ? `https://${value}` : value, "https://www.youtube.com")
     if (url.protocol !== "https:" || url.username || url.password || !["www.youtube.com", "youtube.com", "m.youtube.com"].includes(url.hostname) || url.port) return undefined
     if (!/^\/(?:channel\/UC[A-Za-z0-9_-]{22}|@[\w.-]+|c\/[\w.-]+|user\/[\w.-]+)\/?$/.test(url.pathname)) return undefined
     return `https://www.youtube.com${url.pathname}`
