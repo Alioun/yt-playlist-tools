@@ -1,7 +1,7 @@
 import { prepareFirstEditHistory, readFirstEditProvenance } from "./first-edit-provenance"
 import {
-  CONSENT_VERSION, DOCUMENT_VERSION, DecodeError, decodeDocument, decodeFilter, decodeLastAccount, decodeSetup, LAST_ACCOUNT_KEY,
-  documentKey, parseDocumentKey, isAccountKey, isPlaylistId, type AccountKey, type Device, type DocumentKey, type Filter, type Tombstone
+  CONSENT_VERSION, DOCUMENT_VERSION, DecodeError, decodeDevice, decodeDocument, decodeFilter, decodeLastAccount, decodeSetup, LAST_ACCOUNT_KEY,
+  documentKey, parseDocumentKey, isAccountKey, isPlaylistId, PROGRESS_SHARDS, type AccountKey, type ProgressShard, type Device, type DocumentKey, type Filter, type Tombstone
 } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
@@ -35,8 +35,8 @@ export type RemovalResult =
     readonly cause: { readonly kind: "authority" | "readback" } | { readonly kind: "read-failed"; readonly error: unknown } }
 
 export type AccountDocumentKey = Extract<DocumentKey, { kind: "setup" | "filter" }>
-export type ProgressShard = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15
-export const removalProgressShards: readonly ProgressShard[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+export type { ProgressShard } from "../../shared/model"
+export const removalProgressShards = PROGRESS_SHARDS
 export const pendingAccountRemovalKey = "pending:account-removal"
 export type RemovalLocalKey =
   | { readonly kind: "document"; readonly key: AccountDocumentKey }

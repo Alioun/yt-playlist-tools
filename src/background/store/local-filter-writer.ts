@@ -36,7 +36,7 @@ import { prepareFirstEditHistory, readFirstEditProvenance } from "./first-edit-p
 import {
   CONSENT_VERSION, DOCUMENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError,
   decodeDevice, decodeDocument, decodeFilter, decodeSettings, decodeSetup, decodeSyncState, decodeSyncMeta, documentKey, isAccountKey, parseDocumentKey,
-  type AccountKey, type PlaylistId, type DocumentKey, type SyncOpaqueWrite
+  isVideoId, type AccountKey, type PlaylistId, type DocumentKey, type SyncOpaqueWrite
 } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import type { ChangeResult, Origin } from "../../shared/contracts/results"
@@ -46,6 +46,7 @@ import { readSyncDocument } from "./sync-codec"
 import { readSyncInventory } from "./sync-inventory"
 import { prepareDocumentBody } from "./write-preparation"
 import { executeLocalClaim, type ClaimHost, type ClaimTransactionResult } from "./local-claim-writer"
+import { createProgressPruneClock, planProgressSave, progressAuthority, progressReadKeys, readProgressEntry, type ProgressLoad, type ProgressOwner, type ProgressSave, type ProgressSaveRequest, type ProgressRequest } from "./progress"
 
 import { executeLegacyStartup, type StartupExecutionResult } from "./legacy-execution"
 
@@ -289,7 +290,7 @@ type LocalFilterWriterDependencies = {
   readonly onSyncResult: (result: SyncAutomaticResult) => void
 }
 
-type LocalFilterWriter = PlaylistCacheOwner & SettingsFileOwner & SettingsImportOwner & AccountLabelsOwner & {
+type LocalFilterWriter = PlaylistCacheOwner & ProgressOwner & SettingsFileOwner & SettingsImportOwner & AccountLabelsOwner & {
   receiveSyncReset(): Promise<ReceivedResetResult>
   readWithdrawnWork(origin: UiOrigin): Promise<HeldWorkRead>
   recoverWithdrawnWork(origin: UiOrigin, input: { readonly review: WithdrawnWorkReview; readonly job: HeldJobSelection }): Promise<ExactRecoveryResult>
@@ -343,6 +344,22 @@ type LocalFilterWriter = PlaylistCacheOwner & SettingsFileOwner & SettingsImport
   flushSync(): Promise<SyncFlushResult>
   startSync(): Promise<void>
   dispose(): Promise<void>
+}
+
+function progressRequest(request: ProgressRequest): ProgressRequest | null {
+  return request !== null && typeof request === "object" && isAccountKey(request.acct) && isVideoId(request.video) && typeof request.private === "boolean"
+    ? { acct: request.acct, video: request.video, private: request.private } : null
+}
+function progressParts(value: unknown): [number, number][] | null {
+  if (!Array.isArray(value) || value.length > 10_000) return null
+  const parts: [number, number][] = []
+  for (const part of value) {
+    if (!Array.isArray(part) || part.length !== 2) return null
+    const [start, end] = part
+    if (typeof start !== "number" || typeof end !== "number" || !Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start) return null
+    parts.push([start, end])
+  }
+  return parts
 }
 
 export class StartupReadinessError extends Error {
@@ -2201,6 +2218,40 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     }
     return { kind: "committed", cache: planned }
   }
+  const progressPrune = createProgressPruneClock()
+  async function readProgressRecordsInLane(keys: readonly string[]): Promise<
+    { readonly kind: "records"; readonly records: Readonly<Record<string, unknown>> } | TabProjectionUnavailable | TabProjectionInvalid
+  > {
+    const blocked = projectionUnavailable()
+    if (blocked) return blocked
+    let records: Readonly<Record<string, unknown>>
+    try { records = await removalLocal.get(["schema", "device", pendingAccountRemovalKey, ...keys]) }
+    catch { return projectionUnavailable() ?? { kind: "unavailable", reason: "stale" } }
+    const stopped = projectionUnavailable()
+    if (stopped) return stopped
+    if (importPending) return { kind: "unavailable", reason: "stale" }
+    if (Object.hasOwn(records, pendingAccountRemovalKey)) return { kind: "unavailable", reason: "pending-removal" }
+    const device = readProjectionDevice(records)
+    return device.kind === "ready" ? { kind: "records", records } : device
+  }
+  async function loadProgressInLane(request: ProgressRequest): Promise<ProgressLoad> {
+    const read = await readProgressRecordsInLane(progressReadKeys(request.acct, request.video, false))
+    if (read.kind !== "records") return read
+    return progressAuthority(read.records, request.acct) ?? readProgressEntry(read.records, request.acct, request.video, deps.now())
+  }
+  async function saveProgressInLane(request: ProgressSaveRequest): Promise<ProgressSave> {
+    const now = deps.now()
+    const prune = progressPrune.due(request.acct, now)
+    const read = await readProgressRecordsInLane(progressReadKeys(request.acct, request.video, prune))
+    if (read.kind !== "records") return read
+    const refused = progressAuthority(read.records, request.acct)
+    if (refused) return refused
+    const items = planProgressSave(read.records, request, now, prune)
+    if (prune) progressPrune.done(request.acct, now)
+    if (Object.keys(items).length === 0) return { kind: "unchanged" }
+    try { await removalLocal.set(items) } catch { return { kind: "failed", stage: "set" } }
+    return { kind: "committed" }
+  }
   async function readTabProjectionInLane(request: TabProjectionRequest): Promise<TabProjectionRead> {
     const first = await readProjectionRecordsInLane()
     if (first.kind !== "records") return first
@@ -3565,6 +3616,19 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     absorbPlaylistCache(capture, input) {
       const requested = structuredClone(input)
       return enqueue(() => absorbPlaylistCacheInLane(capture, requested))
+    },
+    loadProgress(request) {
+      const captured = progressRequest(request)
+      if (!captured) return Promise.resolve({ kind: "refused", reason: "invalid" })
+      if (captured.private) return Promise.resolve({ kind: "refused", reason: "private" })
+      return enqueue(() => loadProgressInLane(captured))
+    },
+    saveProgress(request) {
+      const captured = progressRequest(request)
+      const len = request.len, parts = progressParts(request.parts)
+      if (!captured || typeof len !== "number" || !Number.isFinite(len) || len <= 0 || !parts) return Promise.resolve({ kind: "refused", reason: "invalid" })
+      if (captured.private) return Promise.resolve({ kind: "refused", reason: "private" })
+      return enqueue(() => saveProgressInLane({ ...captured, len, parts }))
     },
     readTabProjection(request) {
       const blocked = projectionUnavailable()
