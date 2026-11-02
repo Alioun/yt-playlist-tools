@@ -56,5 +56,5 @@ export function startFirstRun(page: ExtensionPage) {
       ? "https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fwww.youtube.com%2F" : "https://www.youtube.com/")
   }
   const text = createFirstRunText(page.i18n)
-  return { text, owner: createFirstRunOwner(page.backend, services, page.platform, text) }
+  return { text, pageState, owner: createFirstRunOwner(page.backend, services, page.platform, text) }
 }
