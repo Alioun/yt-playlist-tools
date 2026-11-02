@@ -47,6 +47,10 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
         reads.push([...keys])
         return structuredClone(Object.fromEntries(keys.filter(key => Object.hasOwn(records, key)).map(key => [key, records[key]])))
       },
+      async all() {
+        reads.push(["*"])
+        return structuredClone(records)
+      },
       onChanged: { addListener: fn => { listeners.add(fn) }, removeListener: fn => { listeners.delete(fn) } }
     },
     send: network.connect(undefined).send,

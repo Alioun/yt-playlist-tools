@@ -9,7 +9,7 @@ import type { RpcCaller } from "../../shared/rpc/rpc"
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
 type Check<T extends true> = T
 export type FirstRunBackendProofs = [
-  Check<Equal<keyof ReadOnlyLocal, "get" | "onChanged">>,
+  Check<Equal<keyof ReadOnlyLocal, "get" | "all" | "onChanged">>,
   Check<Equal<keyof RpcCaller<UiMessages>, "call" | "dispose">>,
   Check<Equal<"origin" extends keyof Change ? true : false, false>>,
   Check<Equal<"permissions" extends keyof AgreeChange ? true : false, false>>,

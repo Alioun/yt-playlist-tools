@@ -9,6 +9,7 @@ import type { UiCreationAnswer, UiNewPlaylist } from "../../shared/contracts/ui-
 import type { AgreeChange, AgreementAnswer, DestinationChange, DestinationAnswer, PermissionGrant, PermissionNeeds } from "../../shared/contracts/first-run"
 import type { Site, BuildId } from "../../shared/contracts/vocabulary"
 import type { ReadScope, UiSnapshot } from "../../shared/model/first-run-view"
+import type { PageView } from "../../shared/model/page-view"
 import type { Deadline, RpcOutcome } from "../../shared/rpc/rpc"
 import type { ClearAllPayload, ClearAllAnswer } from "../../shared/contracts/clear-all"
 
@@ -16,15 +17,19 @@ import type { AutoAddReadChange, AutoAddReadAnswer, AutoAddChoiceChange, AutoAdd
 export type { AutoAddReadChange, AutoAddReadAnswer, AutoAddChoiceChange, AutoAddChoiceAnswer, AutoAddEdit, AutoAddFact } from "../../shared/contracts/auto-add-choice"
 
 export type { UiSnapshot, ReadScope } from "../../shared/model/first-run-view"
+export type { PageView, PageSetup, PageDevice } from "../../shared/model/page-view"
 export type { AgreeChange, AgreementAnswer, Change, DestinationChange, DestinationAnswer } from "../../shared/contracts/first-run"
 export type UiCall = keyof UiMessages
 export type UiArgs<K extends UiCall> = UiMessages[K]["payload"]
 export type UiResult<K extends UiCall> = RpcOutcome<UiMessages[K]["result"]>
 export type UiEvent = { readonly kind: "view"; readonly snapshot: UiSnapshot }
+export type PageEvent = { readonly kind: "page"; readonly view: PageView }
 export type LocalChange = { readonly [key: string]: { readonly oldValue?: unknown; readonly newValue?: unknown } }
 export type LocalListener = (changes: LocalChange, areaName: string) => void
 export type ReadOnlyLocal = {
   get(keys: readonly string[]): Promise<Readonly<Record<string, unknown>>>
+  /** Every record, for the one page-view read (UI-POP-02). The page keeps only the records it shows. */
+  all(): Promise<Readonly<Record<string, unknown>>>
   readonly onChanged: { addListener(listener: LocalListener): void; removeListener(listener: LocalListener): void }
 }
 export type Access = {
@@ -44,6 +49,9 @@ export type Backend = {
   changeFeatureSetting(change: FeatureSettingChange, settings: Snapshot<Settings>): Promise<FeatureSettingAnswer>
   load(scope?: ReadScope): Promise<UiSnapshot>
   watch(fn: (event: UiEvent) => void, scope?: ReadScope): () => void
+  /** The popup's and settings' whole view, from one `storage.local` read (UI-POP-02). */
+  loadPage(): Promise<PageView>
+  watchPage(fn: (event: PageEvent) => void): () => void
   change(change: AgreeChange): Promise<AgreementAnswer>
   change(change: DestinationChange): Promise<DestinationAnswer>
   change(change: AutoAddReadChange): Promise<AutoAddReadAnswer>

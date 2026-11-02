@@ -39,7 +39,7 @@ test("a timed-out or lost auto-add answer sends the mutation once and never retr
   if (!isAccountKey(acct) || !isPlaylistId(playlist) || !isAutoAddLifetime(lifetime)) throw Error("fixture identities")
   let expire = () => {}, answer: (value: unknown) => void = () => {}, sends = 0
   const backend = createBackend({
-    local: { async get() { return {} }, onChanged: { addListener() {}, removeListener() {} } },
+    local: { async get() { return {} }, async all() { return {} }, onChanged: { addListener() {}, removeListener() {} } },
     send() { sends++; return new Promise(resolve => { answer = resolve }) },
     access: { has: async () => false, request: async () => false, requestCombined: async () => ({ music: false, browserMenu: false }), hasBrowserMenu: async () => false }
   }, { build: build(), deadline(_ms, fn) { expire = fn; return () => {} } })
@@ -60,6 +60,7 @@ function controlled() {
   const backend = createBackend({
     local: {
       get(keys) { reads.push([...keys]); return new Promise(resolve => { pending.push(resolve) }) },
+      all() { reads.push(["*"]); return new Promise(resolve => { pending.push(resolve) }) },
       onChanged: { addListener(fn) { adds++; listeners.add(fn) }, removeListener(fn) { removes++; listeners.delete(fn) } }
     },
     async send() { sends++; return undefined },

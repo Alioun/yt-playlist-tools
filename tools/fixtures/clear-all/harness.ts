@@ -157,7 +157,7 @@ export function clearFixture(initial: JsonObject = agreedSeed(), shared = shared
       firstRun: { readAccess: async () => undefined, lookup: { sync: { get: async () => shared.records(), subscribe: () => () => {} }, clock, isCurrent: () => true } },
       transport: network.connect(sender), rpc: { build, deadline: () => () => {} }
     })
-    const backend = createBackend({ local: { get: keys => h.options.local.get(keys), onChanged: { addListener() {}, removeListener() {} } },
+    const backend = createBackend({ local: { get: keys => h.options.local.get(keys), all: () => h.options.local.get(null), onChanged: { addListener() {}, removeListener() {} } },
       send: connection.send, access: { has: async () => true, request: async () => true, hasBrowserMenu: async () => true,
         requestCombined: async () => ({ music: true, browserMenu: true }) } }, { build, deadline: () => () => {} })
     return { backend, network, router, dispose() { backend.dispose(); router.dispose() } }

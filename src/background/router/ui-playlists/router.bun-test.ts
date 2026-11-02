@@ -173,7 +173,7 @@ test("channel transport failure preserves unknown delivery", async () => {
 })
 test("Backend rejects malformed cross-kind wire answers", async () => {
   const backend = createBackend({
-    local: { get: async () => ({}), onChanged: { addListener() {}, removeListener() {} } },
+    local: { get: async () => ({}), all: async () => ({}), onChanged: { addListener() {}, removeListener() {} } },
     async send(message) {
       if (!objectShape(message, { v: v => typeof v === "number", build: v => v === build(), id: v => typeof v === "string",
         kind: v => typeof v === "string", payload: () => true })) return undefined

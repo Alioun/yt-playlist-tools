@@ -10,7 +10,8 @@ import type { RpcOutcome } from "../../shared/rpc/rpc"
 import { confirmsSelection, isChangePayload, type AgreeChange, type AgreementAnswer, type DestinationAnswer, type DestinationChange, type Change } from "../../shared/contracts/first-run"
 import { firstRunKeys, readFirstRunSnapshot, type ReadScope, type UiSnapshot } from "../../shared/model/first-run-view"
 import { createRpcCaller } from "../../shared/rpc/rpc"
-import type { Backend, BackendOptions, BackendPorts, LocalListener, UiEvent } from "./backend"
+import type { Backend, BackendOptions, BackendPorts, LocalListener, PageEvent, UiEvent } from "./backend"
+import { pageViewKeeps, readPageView, type PageView } from "../../shared/model/page-view"
 
 import { confirmsAutoAdd, type AutoAddReadChange, type AutoAddReadAnswer, type AutoAddChoiceChange, type AutoAddChoiceAnswer } from "../../shared/contracts/auto-add-choice"
 
@@ -45,8 +46,33 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
     ...(options.windowId === undefined ? {} : { windowId: options.windowId }), ...args
   })
   const views = new Map<string, View>()
+  const pageListeners = new Set<(event: PageEvent) => void>()
+  let pageEpoch = 0
   let disposed = false
   let listening = false
+
+  function readPage(): Promise<PageView> {
+    if (disposed) return Promise.resolve({ kind: "unavailable", reason: "disposed" })
+    return Promise.resolve().then(() => ports.local.all())
+      .then(records => readPageView(Object.fromEntries(Object.entries(records).filter(([key]) => pageViewKeeps(key)))))
+      .catch((): PageView => ({ kind: "unavailable", reason: "read" }))
+      .then(view => disposed ? { kind: "unavailable", reason: "disposed" } : view)
+  }
+  function refreshPage() {
+    const epoch = ++pageEpoch
+    void readPage().then(view => {
+      if (disposed || epoch !== pageEpoch) return
+      for (const listener of [...pageListeners]) {
+        if (!pageListeners.has(listener)) continue
+        try { listener({ kind: "page", view }) } catch {}
+      }
+    })
+  }
+  function listen() {
+    if (listening) return
+    ports.local.onChanged.addListener(changed)
+    listening = true
+  }
 
   function view(scope?: ReadScope): View {
     const key = scope?.acct ?? ""
@@ -73,6 +99,7 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
   }
   const changed: LocalListener = (changes, area) => {
     if (disposed || area !== "local") return
+    if (pageListeners.size && Object.keys(changes).some(pageViewKeeps)) refreshPage()
     for (const [stop, request] of [...playlistLists]) {
       if (Object.hasOwn(changes, "device") || Object.hasOwn(changes, "schema") || Object.hasOwn(changes, `doc:setup:${request.acct}`)) stop()
     }
@@ -91,7 +118,7 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
     }
   }
   function removeUnusedListener() {
-    if (listening && playlistLists.size === 0 && ![...views.values()].some(entry => entry.listeners.size)) {
+    if (listening && playlistLists.size === 0 && pageListeners.size === 0 && ![...views.values()].some(entry => entry.listeners.size)) {
       listening = false
       ports.local.onChanged.removeListener(changed)
     }
@@ -101,15 +128,22 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
     const entry = view(scope)
     const listener = (event: UiEvent) => fn(event)
     entry.listeners.add(listener)
-    if (!listening) {
-      ports.local.onChanged.addListener(changed)
-      listening = true
-    }
+    listen()
     let active = true
     return () => {
       if (!active) return
       active = false
       entry.listeners.delete(listener)
+      removeUnusedListener()
+    }
+  }
+  function watchPage(fn: (event: PageEvent) => void) {
+    if (disposed) return () => {}
+    const listener = (event: PageEvent) => fn(event)
+    pageListeners.add(listener)
+    listen()
+    return () => {
+      if (!pageListeners.delete(listener)) return
       removeUnusedListener()
     }
   }
@@ -213,7 +247,7 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
     })
     if (enabled) {
       playlistLists.set(operation.dispose, { ...request })
-      if (!listening) { ports.local.onChanged.addListener(changed); listening = true }
+      listen()
     }
     return operation
   }
@@ -225,6 +259,7 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
     keys.dispose()
     rpc.dispose()
     for (const entry of views.values()) entry.listeners.clear()
+    pageListeners.clear()
     removeUnusedListener()
   }
   const access: Backend["access"] = {
@@ -239,6 +274,6 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
       return change(requested)
     }
   }, requestedChange, settings)
-  return { keys, load: scope => read(view(scope)), watch, change, changeFeatureSetting, call, playlistList, creation, access, dispose,
+  return { keys, load: scope => read(view(scope)), watch, loadPage: readPage, watchPage, change, changeFeatureSetting, call, playlistList, creation, access, dispose,
     clearAll: payload => disposed ? Promise.resolve({ kind: "failed", failure: "disposed" }) : rpc.call("ui.clearAll", payload) }
 }

@@ -45,6 +45,7 @@ export function createBrowserBackend(native: BrowserBackendPort, options: Backen
   return createBackend({
     local: {
       get: keys => native.storage.local.get([...keys]),
+      all: () => native.storage.local.get(null),
       onChanged: native.storage.onChanged
     },
     send: message => native.runtime.sendMessage(message), access
