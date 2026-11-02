@@ -70,24 +70,38 @@ test("unknown label extensions neither cause redundant generations nor disappear
   } finally { await h.dispose() }
 })
 
-for (const reason of ["sync-full", "update-needed"] as const) {
-  test(`the real Setup admission returns ${reason} without applying the label`, async () => {
-    const initial = seed()
-    object(initial.local.device).syncOn = true
-    initial.local.sync = { joined: "history", pushed: { "doc:settings": "original", [`doc:setup:${a}`]: "original", [`doc:setup:${b}`]: "original" }, status: "ok", editedSinceOff: false, everEdited: true }
-    initial.sync = { "s:meta": { v: 1, id: "history", created: 0 }, "s:settings": structuredClone(initial.local["doc:settings"]!),
-      [`s:setup:${a}`]: structuredClone(initial.local[`doc:setup:${a}`]!), [`s:setup:${b}`]: structuredClone(initial.local[`doc:setup:${b}`]!) }
-    if (reason === "sync-full") for (let index = 0; index < 600; index++) initial.sync[`retained:${index}`] = "keep"
-    else object(initial.sync[`s:setup:${a}`]).v = 2
-    const h = world(initial)
-    try {
-      const captured = lookup(await h.owner.seeAccountLabel({ acct: a, private: false, at: epoch }))
-      expect(await h.owner.completeAccountLabel(captured.capture, { acct: a, label: { name: "Refused" } })).toEqual({ kind: "setup", result: { kind: "result", result: { refused: reason } } })
-      expect(h.stored()[`doc:setup:${a}`]).toEqual(initial.local[`doc:setup:${a}`])
-      expect(h.removal.state().sync).toEqual(initial.sync)
-    } finally { await h.dispose() }
-  })
+function syncedSeed(reason: "sync-full" | "update-needed") {
+  const initial = seed()
+  object(initial.local.device).syncOn = true
+  initial.local.sync = { joined: "history", pushed: { "doc:settings": "original", [`doc:setup:${a}`]: "original", [`doc:setup:${b}`]: "original" }, status: "ok", editedSinceOff: false, everEdited: true }
+  initial.sync = { "s:meta": { v: 1, id: "history", created: 0 }, "s:settings": structuredClone(initial.local["doc:settings"]!),
+    [`s:setup:${a}`]: structuredClone(initial.local[`doc:setup:${a}`]!), [`s:setup:${b}`]: structuredClone(initial.local[`doc:setup:${b}`]!) }
+  if (reason === "sync-full") for (let index = 0; index < 600; index++) initial.sync[`retained:${index}`] = "keep"
+  else object(initial.sync[`s:setup:${a}`]).v = 2
+  return initial
 }
+
+test("the real Setup admission returns update-needed without applying the label", async () => {
+  const initial = syncedSeed("update-needed"), h = world(initial)
+  try {
+    const captured = lookup(await h.owner.seeAccountLabel({ acct: a, private: false, at: epoch }))
+    expect(await h.owner.completeAccountLabel(captured.capture, { acct: a, label: { name: "Refused" } })).toEqual({ kind: "setup", result: { kind: "result", result: { refused: "update-needed" } } })
+    expect(h.stored()[`doc:setup:${a}`]).toEqual(initial.local[`doc:setup:${a}`])
+    expect(h.removal.state().sync).toEqual(initial.sync)
+  } finally { await h.dispose() }
+})
+
+test("past the browsers' sync limit the label is saved here and waits for room, with the synced copy untouched (SYNC-16)", async () => {
+  const initial = syncedSeed("sync-full"), h = world(initial)
+  try {
+    const captured = lookup(await h.owner.seeAccountLabel({ acct: a, private: false, at: epoch }))
+    expect(await h.owner.completeAccountLabel(captured.capture, { acct: a, label: { name: "Kept" } })).toMatchObject({ kind: "committed", label: { name: "Kept" } })
+    const setup = object(h.stored()[`doc:setup:${a}`])
+    expect(object(setup.data).label).toMatchObject({ name: "Kept" })
+    expect(object(h.stored().sync).deferred).toEqual({ [`doc:setup:${a}`]: String(setup.gen) })
+    expect(h.removal.state().sync).toEqual(initial.sync)
+  } finally { await h.dispose() }
+})
 
 test("unreadable device authority and owner disposal refuse pending labels", async () => {
   for (const change of ["authority", "dispose"] as const) {
