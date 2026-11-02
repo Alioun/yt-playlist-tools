@@ -12,17 +12,8 @@ bun run typecheck:pilot
 bun run test
 ```
 
-`test` runs `test:legacy` and then `test:bun`. Both must pass in the existing CI build job.
+`test` runs `test:bun` and then `test:fixtures`.
 The pilot adds five Bun tests in `tests/integration`.
-
-Use `*.test.ts` for target tests. Bun discovers all tests below `./tests` and `./src/shared/model`.
-This includes `tests/guards/**/*.test.ts` without another script change.
-The command also names `src/shared/model/model.bun-test.ts` explicitly because Bun does not discover that suffix through its directory scan. `bunfig.toml` excludes `tests/browser/**` from this DOM runner.
-Vitest discovers only `src/**` and explicitly excludes `src/shared/model/**/*.test.ts` and `src/shared/model/model.bun-test.ts`.
-The model and guard owners can add tests without changing dependencies or config.
-When another source directory migrates, add its Bun discovery root and its Vitest exclusion in the same change.
-Do not use bare `bun test` during this migration, because it also discovers the retained Vitest tests.
-`test:watch` and `test:coverage` still operate on the legacy suite only.
 
 `typecheck:pilot` invokes the following checker after clearing only this fixture's generated `.svelte-check` directory.
 The cleanup prevents stale diagnostics from deleted Svelte files in svelte-check 4.7.7.

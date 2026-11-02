@@ -4,12 +4,12 @@
 
 ## Tests
 
-Tests use Vitest with three projects: `chrome`, `firefox` (`*.firefox.test.ts`) and `server`. `bun test` can't run them because it doesn't resolve WXT's imports. [`vitest.config.ts`](../../vitest.config.ts) sets `import.meta.env.FIREFOX` itself, since `WxtVitest()` doesn't under Vitest.
+Every test runs under `bun test`; the repo has no other runner. Unit and component tests sit beside their code as `*.bun-test.ts`, and the cross-cutting ones live under `tests/` as `*.test.ts`. [`bunfig.toml`](../../bunfig.toml) preloads Svelte compilation, happy-dom and the fake browser.
 
 ```bash
-bun run test           # once
-bun run test:watch
-bun run test:coverage
+bun run test           # test:bun, then test:fixtures
+bun run test:bun       # every Bun test
+bun run test:fixtures  # the gates in tools/fixtures/gates.ts
 ```
 
 ## CI

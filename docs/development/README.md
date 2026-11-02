@@ -9,7 +9,7 @@ bun install
 bun run dev            # Chrome
 bun run dev:firefox    # Firefox
 bun run compile        # typecheck
-bun run test           # unit tests (test:watch, test:coverage)
+bun run test           # Bun tests and fixture gates
 bun run build          # Chrome
 bun run build:firefox  # Firefox
 bun run zip            # Chrome package
