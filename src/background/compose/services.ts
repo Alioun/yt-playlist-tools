@@ -8,6 +8,7 @@ import { createBrowserTabs } from "../adapters/tabs"
 import { createPlaylists } from "../playlists/playlists"
 import type { Registrar } from "../registrar/ports"
 import { createUiRouter } from "../router/ui-playlists"
+import { createAutoAddTabRouter } from "../router/tab-auto-add"
 import type { StartingOwner, StoreLifecycle } from "../store/store-lifecycle"
 import { createTabViewProducer, tabViewFacts, type NoticeProducer, type StatusProducer } from "../tab-view/producer"
 import { createViewPublication } from "../tab-view/publication"
@@ -61,6 +62,16 @@ export function composeServices(deps: {
     },
     clock, enabled: deps.consented
   })
+  const privateSkips = {
+    readPrivateSkips: async () => ({ kind: "unavailable", reason: "context" }) as const,
+    subscribePrivateSkips: () => () => {}
+  }
+  const producer = createTabViewProducer({ owner, addFlow: privateSkips, statuses: workingStatuses, notices: noNotices, build })
+  const unbindHello = browserTabs.bindHello(tabs, producer)
+  const publication = createViewPublication({ owner, tabs, producer, privateSkips, clock,
+    monitor: { subscribeView: () => () => {} } })
+  const autoAddRoutes = createAutoAddTabRouter({ transport: runtimeTransport(deps.runtime), senders: { ...native, runtime }, build,
+    deadline: timerDeadline, tabs, owner, now: () => Date.now() })
   const playlists = createPlaylists({ owner, tabs, now: () => Date.now() })
   const actions = composeActions({ native: { ...native, runtime }, build, owner, tabs, playlists, registrar, writable: deps.consented,
     async requester(origin) {
@@ -104,8 +115,7 @@ export function composeServices(deps: {
   return {
     tabs, actions, anyTab,
     dispose() {
-      for (const stop of [() => router.dispose(), () => accounts.dispose(), stopMenuSettings, () => native.permissions.onAdded.removeListener(reconcileMenu),
-        () => native.permissions.onRemoved.removeListener(reconcileMenu), () => anyTab.dispose(), () => actions.dispose(), () => playlists.dispose(), () => publication.dispose(),
+      for (const stop of [() => router.dispose(), () => autoAddRoutes.dispose(), () => accounts.dispose(), () => playlists.dispose(), () => publication.dispose(),
         unbindHello, () => producer.dispose(), () => tabs.dispose(), () => browserTabs.dispose()]) {
         try { stop() } catch {}
       }
