@@ -201,6 +201,11 @@
         <SiteTabs selected={site} opened={openedOn} labels={{ www: i18n.message("site_www"), music: i18n.message("site_music") }} panel="popup-panel" onselect={select} />
         <div id="popup-panel" role="tabpanel">
           {#if site === "www" && settings && summaryFacts}
+            {#if pageState.agreed && openedOn === "www"}
+              {#await import("./ThisVideo.svelte") then { default: ThisVideo }}
+                <div class="mb-3"><ThisVideo {pageState} /></div>
+              {/await}
+            {/if}
             <ul class="bg-card rounded-xl border" aria-label={i18n.message("site_www")}>
               {#each wwwRows as feature (feature)}
                 {@const reason = held(feature)}

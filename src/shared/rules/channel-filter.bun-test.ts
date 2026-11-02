@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import { decodeFilter, isChannelId, type Filter } from "../model"
-import { channelLabel, decide, offlineChannel, type FilterDecision } from "./channel-filter"
+import { decodeFilter, isChannelId, type ChannelId, type Filter } from "../model"
+import { channelControls, channelLabel, decide, offlineChannel, type FilterDecision } from "./channel-filter"
 
 function channel(value: string) {
   if (!isChannelId(value)) throw new Error("Invalid synthetic channel ID")
@@ -72,4 +72,17 @@ describe("typing a channel with no YouTube tab open (YT-CF-16)", () => {
     expect(channelLabel(`${"t".repeat(120)} `, ` @${"h".repeat(40)}`)).toEqual({ title: "t".repeat(100), handle: `@${"h".repeat(29)}` })
     expect(channelLabel("Short")).toEqual({ title: "Short" })
   })
+})
+
+test("this channel's controls follow YT-CF-15: an on filter offers only its mode, an off one offers both, asking before it clears kept channels", () => {
+  const channel = "UCaaaaaaaaaaaaaaaaaaaaaa" as ChannelId, other = "UCbbbbbbbbbbbbbbbbbbbbbb"
+  const states = (filter: Parameters<typeof channelControls>[0]) => channelControls(filter, channel).map(control => control.state)
+  expect(states(undefined)).toEqual(["available", "available"])
+  expect(channelControls(undefined, channel)[0]).toMatchObject({ send: { action: "list", mode: "allow", clearListed: false } })
+  expect(states({ mode: "deny", on: true, channels: [] })).toEqual(["greyed", "available"])
+  expect(states({ mode: "deny", on: true, channels: [[channel, "Band"]] })).toEqual(["greyed", "listed"])
+  expect(channelControls({ mode: "deny", on: true, channels: [[channel, "Band"]] }, channel)[1]).toMatchObject({ send: { action: "unlist" } })
+  expect(states({ mode: "deny", on: false, channels: [[other, "Talk"], [other, "Talk"], [other, "Talk"]] })).toEqual(["confirm", "available"])
+  expect(channelControls({ mode: "deny", on: false, channels: [[other, "Talk"], [other, "Talk"], [other, "Talk"]] }, channel)[0])
+    .toEqual({ mode: "allow", state: "confirm", kept: 3, send: { action: "list", mode: "allow", clearListed: true } })
 })

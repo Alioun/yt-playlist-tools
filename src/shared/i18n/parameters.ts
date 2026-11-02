@@ -889,6 +889,19 @@ export type MessageParameters = {
   "summary_autoAdd_one": readonly ["count", "percent"]
   "summary_autoAdd_other": readonly ["count", "percent"]
   "summary_autoAdd_paused": readonly []
+  "thisVideo_heading": readonly []
+  "thisVideo_details": readonly []
+  "thisVideo_meter": readonly ["watched"]
+  "thisVideo_dontAutoAdd": readonly []
+  "thisVideo_autoAddAgain": readonly []
+  "thisVideo_outcome_waiting": readonly ["percent"]
+  "thisVideo_outcome_added": readonly []
+  "thisVideo_outcome_alreadyIn": readonly []
+  "thisVideo_outcome_filtered": readonly []
+  "thisVideo_outcome_failed": readonly []
+  "thisVideo_outcome_skipped": readonly []
+  "thisVideo_channelFilters": readonly ["channel"]
+  "thisVideo_skipFailed": readonly []
   "summary_autoAdd_none": readonly ["account"]
   "summary_autoAdd_signedOut": readonly []
   "summary_shortcuts_none": readonly []
@@ -1560,6 +1573,9 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "banner_unclaimed_text": ["account"],
   "summary_autoAdd_one": ["count", "percent"],
   "summary_autoAdd_other": ["count", "percent"],
+  "thisVideo_meter": ["watched"],
+  "thisVideo_outcome_waiting": ["percent"],
+  "thisVideo_channelFilters": ["channel"],
   "summary_autoAdd_none": ["account"],
   "summary_quickSave_set": ["playlist"],
   "summary_gather_player": ["order"],

@@ -239,3 +239,64 @@ test("with one setup the header's account is a label, not a menu", async () => {
   expect(await screen.findByText("Ann", {}, { timeout: 5000 })).toBeTruthy()
   expect(screen.queryByRole("button", { name: "Show the setup for" })).toBeNull()
 })
+
+const thisVideo = (video: Record<string, unknown> = {}) => ({ kind: "video", tabId: 4, acct, video: { video: "aaaaaaaaaaa", title: "First video",
+  state: { kind: "counting", goal: 50, watched: 30 }, watched: 30, playlists: [{ pl: "PLa", pct: 50, outcome: "waiting" }, { pl: "PLb", pct: 90, outcome: "waiting" }],
+  channel: { id: "UCaaaaaaaaaaaaaaaaaaaaaa", title: "Band", handle: "@band" }, ...video } }) as never
+const videoSetup = (filters: Record<string, unknown> = {}) => ({ ...agreed, "doc:settings": stamped({ autoAdd: { on: true, feedback: true, pct: 50 } }),
+  [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" }, autoAdd: [{ pl: "PLa", takes: "videos" }, { pl: "PLb", takes: "both", pct: 90 }] }),
+  [`cache:${acct}`]: { listAt: 1, playlists: [{ id: "PLa", title: "Music" }, { id: "PLb", title: "Talks" }], order: {}, created: [], labelAt: null }, ...filters })
+
+test("This video shows the tab's video, its status line and a watched meter with a tick per goal (UI-POP-12, UI-POP-13)", async () => {
+  popup(videoSetup(), { "ui.thisTab": () => thisVideo() })
+  const card = await screen.findByRole("region", { name: "This video" }, { timeout: 5000 })
+  expect(await within(card).findByText("First video")).toBeTruthy()
+  expect(within(card).getByText("Auto-adds at 50 % · 30 % watched")).toBeTruthy()
+  const meter = within(card).getByRole("meter", { name: "30 % watched" })
+  expect(meter).toHaveAttribute("aria-valuenow", "30")
+  expect([...meter.querySelectorAll("[data-goal]")].map(tick => [tick.getAttribute("data-goal"), tick.getAttribute("data-reached")])).toEqual([["50", "false"], ["90", "false"]])
+})
+
+test("This video's details list each playlist's outcome, and Don't auto-add skips the video for the tab's account (UI-POP-14)", async () => {
+  const skips: unknown[] = []
+  popup(videoSetup(), { "ui.thisTab": () => thisVideo({ state: { kind: "partly", added: ["PLa"], pending: ["PLb"], goal: 90 }, watched: 60,
+    playlists: [{ pl: "PLa", pct: 50, outcome: "added" }, { pl: "PLb", pct: 90, outcome: "waiting" }] }),
+    "ui.skip": payload => { skips.push(payload); return { kind: "skipped" } } })
+  const card = await screen.findByRole("region", { name: "This video" }, { timeout: 5000 })
+  expect(await within(card).findByText("Added to Music · Talks at 90 %")).toBeTruthy()
+  await userEvent.click(within(card).getByRole("button", { name: "Details" }))
+  const details = card.querySelector("[data-this-video-details]") as HTMLElement
+  expect([...details.querySelectorAll("li")].map(row => row.textContent)).toEqual(["MusicAuto-added", "TalksAt 90 %"])
+  await userEvent.click(within(card).getByRole("button", { name: "Don't auto-add this video" }))
+  expect(skips).toEqual([{ tabId: 4, acct, video: "aaaaaaaaaaa", skip: true }])
+})
+
+test("a skipped video reads Not auto-adding this video with Undo, which unskips it (UI-POP-12, R23)", async () => {
+  const skips: unknown[] = []
+  popup(videoSetup(), { "ui.thisTab": () => thisVideo({ state: { kind: "skipped" }, playlists: [{ pl: "PLa", pct: 50, outcome: "skipped" }] }),
+    "ui.skip": payload => { skips.push(payload); return { kind: "unskipped" } } })
+  const card = await screen.findByRole("region", { name: "This video" }, { timeout: 5000 })
+  expect(await within(card).findByText("Not auto-adding this video")).toBeTruthy()
+  await userEvent.click(within(card).getByRole("button", { name: "Undo" }))
+  expect(skips).toEqual([{ tabId: 4, acct, video: "aaaaaaaaaaa", skip: false }])
+})
+
+test("this channel's controls list it in a playlist's filter, and ask before clearing kept channels of the other mode (YT-CF-15)", async () => {
+  const changes: unknown[] = []
+  popup(videoSetup({ [`doc:filter:${acct}:PLb`]: { ...(stamped({ mode: "deny", on: false, channels: [["UCbbbbbbbbbbbbbbbbbbbbbb", "Talk"], ["UCcccccccccccccccccccccc", "Chat"]] }) as object), gen: "gen-b" } }),
+    { "ui.thisTab": () => thisVideo(), "ui.filterChannel": payload => { changes.push(payload.change); return { kind: "confirmed" } } })
+  const card = await screen.findByRole("region", { name: "This video" }, { timeout: 5000 })
+  await userEvent.click(await within(card).findByRole("button", { name: "Details" }))
+  expect(within(card).getByText("Channel filters · Band")).toBeTruthy()
+  const music = card.querySelector("[data-channel-row=PLa]") as HTMLElement
+  await userEvent.click(within(music).getByRole("button", { name: "Deny" }))
+  const talks = card.querySelector("[data-channel-row=PLb]") as HTMLElement
+  await userEvent.click(within(talks).getByRole("button", { name: "Allow only" }))
+  const ask = within(card).getByRole("alertdialog")
+  expect(within(ask).getByText("Turn on Allow only for Talks? This clears its 2 denied channels.")).toBeTruthy()
+  await userEvent.click(within(ask).getByRole("button", { name: "Switch" }))
+  expect(changes).toEqual([
+    { acct, playlist: "PLa", channel: ["UCaaaaaaaaaaaaaaaaaaaaaa", "Band", "@band"], action: "list", mode: "deny", clearListed: false, expectedGeneration: null },
+    { acct, playlist: "PLb", channel: ["UCaaaaaaaaaaaaaaaaaaaaaa", "Band", "@band"], action: "list", mode: "allow", clearListed: true, expectedGeneration: "gen-b" }
+  ])
+})

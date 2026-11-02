@@ -5234,6 +5234,60 @@
   "summary_autoAdd_paused": {
     "message": "Paused until you resume it or restart the browser"
   },
+  "thisVideo_heading": {
+    "message": "This video"
+  },
+  "thisVideo_details": {
+    "message": "Details"
+  },
+  "thisVideo_meter": {
+    "message": "$WATCHED$ % watched",
+    "placeholders": {
+      "watched": {
+        "content": "$1"
+      }
+    }
+  },
+  "thisVideo_dontAutoAdd": {
+    "message": "Don't auto-add this video"
+  },
+  "thisVideo_autoAddAgain": {
+    "message": "Auto-add this video again"
+  },
+  "thisVideo_outcome_waiting": {
+    "message": "At $PERCENT$ %",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      }
+    }
+  },
+  "thisVideo_outcome_added": {
+    "message": "Auto-added"
+  },
+  "thisVideo_outcome_alreadyIn": {
+    "message": "Already in it"
+  },
+  "thisVideo_outcome_filtered": {
+    "message": "Filtered out"
+  },
+  "thisVideo_outcome_failed": {
+    "message": "Couldn't add"
+  },
+  "thisVideo_outcome_skipped": {
+    "message": "Not auto-adding"
+  },
+  "thisVideo_channelFilters": {
+    "message": "Channel filters · $CHANNEL$",
+    "placeholders": {
+      "channel": {
+        "content": "$1"
+      }
+    }
+  },
+  "thisVideo_skipFailed": {
+    "message": "Couldn't change that. Try again."
+  },
   "summary_autoAdd_none": {
     "message": "No playlists for $ACCOUNT$ yet",
     "placeholders": {

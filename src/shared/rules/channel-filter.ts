@@ -29,3 +29,30 @@ export function channelLabel(title: string, handle?: string): { readonly title: 
   const cut = (text: string, limit: number) => [...text].slice(0, limit).join("")
   return { title: cut(title.trim(), 100), ...(handle ? { handle: cut(handle.trim(), 30) } : {}) }
 }
+
+/**
+ * YT-CF-15's "this channel" control for one mode of one playlist's filter, and what choosing it sends:
+ * - `available` lists the channel, switching an off filter on in this mode and keeping its kept channels;
+ * - `listed` reads Allowed or Denied, and choosing it again unlists the channel;
+ * - `confirm` turns an off filter on in the other mode, which clears its `kept` channels once confirmed;
+ * - `greyed` is the other mode of a filter that's on.
+ */
+export type ChannelControl =
+  | { readonly mode: Filter["mode"]; readonly state: "available"; readonly send: { readonly action: "list"; readonly mode: Filter["mode"] | null; readonly clearListed: false } }
+  | { readonly mode: Filter["mode"]; readonly state: "listed"; readonly send: { readonly action: "unlist"; readonly mode: null; readonly clearListed: false } }
+  | { readonly mode: Filter["mode"]; readonly state: "confirm"; readonly kept: number; readonly send: { readonly action: "list"; readonly mode: Filter["mode"]; readonly clearListed: true } }
+  | { readonly mode: Filter["mode"]; readonly state: "greyed" }
+export function channelControls(filter: Filter | undefined, channel: ChannelId): readonly [ChannelControl, ChannelControl] {
+  const current = filter ?? { mode: "deny", on: false, channels: [] }
+  const listed = current.channels.some(([id]) => id === channel)
+  const control = (mode: Filter["mode"]): ChannelControl => {
+    if (current.on) {
+      if (mode !== current.mode) return { mode, state: "greyed" }
+      return listed ? { mode, state: "listed", send: { action: "unlist", mode: null, clearListed: false } }
+        : { mode, state: "available", send: { action: "list", mode: null, clearListed: false } }
+    }
+    if (mode === current.mode || current.channels.length === 0) return { mode, state: "available", send: { action: "list", mode, clearListed: false } }
+    return { mode, state: "confirm", kept: current.channels.length, send: { action: "list", mode, clearListed: true } }
+  }
+  return [control("allow"), control("deny")]
+}
