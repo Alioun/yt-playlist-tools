@@ -4,6 +4,7 @@ import type { AnySiteCore } from "../core/core"
 import { tabAsks } from "../core/asks"
 import type { MusicItems } from "../core/items-music"
 import { loadPopovers } from "../popovers/loader"
+import { osOf } from "../../shared/keys/policy"
 import type { createMusicQuick, MusicQuick } from "./music/quick"
 import { Scope } from "../core/scope"
 import { toasterNoticePresenter } from "./feedback/notice"
@@ -40,7 +41,8 @@ export function installKit(core: AnySiteCore, lib: object, quick?: typeof create
   const toaster = feedback.use(own)?.toaster
   const timer = (ms: number, done: () => void) => { const id = setTimeout(done, ms); return () => clearTimeout(id) }
   const music = quick && core.site === "music" ? quick({ owner: root, document, page: core.page, items: core.items as MusicItems, actions: core.actions,
-    i18n, view: () => link.view, feedback: () => feedback.use(root), popovers: () => loadPopovers(core.actions.need, timer), location: window.location }) : null
+    i18n, view: () => link.view, feedback: () => feedback.use(root), popovers: () => loadPopovers(core.actions.need, timer), location: window.location,
+    notices: core.notices as { wouldAct(feature: "music-keys" | "shortcuts"): void }, os: osOf(navigator.platform) }) : null
   const asks = tabAsks({ site, document, actions: core.actions, i18n, feedback: () => feedback.use(root) })
   core.attachKit({
     mount: svelteScopeMount(ignore),

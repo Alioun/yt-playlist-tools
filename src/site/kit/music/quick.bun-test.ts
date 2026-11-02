@@ -190,7 +190,8 @@ test("the picker opens below the Save button that was used, for the playing song
   expect(await broken.quick.act("picker", target(), key)).toEqual({ kind: "failed", text: "Couldn't open the playlist list. Try again." })
 })
 
-const shortcutEntry = { id: "orig01" as never, label: "Alpha", watchLaterOnEveryAccount: false }
+const altJ = { code: "KeyJ", char: "j", ctrl: false, alt: true, shift: false, meta: false }
+const shortcutEntry = { id: "orig01" as never, label: "Alpha", watchLaterOnEveryAccount: false, key: altJ }
 const shortcutKey = { opener: "shortcuts", feedback: true, by: "key" } as const
 
 test("a playlist shortcut saves the pointed-at or playing song to its playlist, with the pending toast after 1 s", async () => {
@@ -218,4 +219,33 @@ test("a playlist shortcut on an album only says songs can be saved, and one with
   await w.toast()?.act()
   await settle()
   expect(w.opened).toMatchObject([{ video: song, mode: { kind: "choose", shortcut: "orig01" }, opener: "shortcuts", anchor: { kind: "window" } }])
+})
+
+function withStatus(feature: "music-keys" | "shortcuts", status: { state: "not-working" | "partly-working"; actions?: ("next" | "queue" | "save")[] }): TabView {
+  const base = wireView("music")
+  return { ...base, statuses: base.statuses.map(entry => entry.feature === feature ? { ...entry, ...status } : entry) } as TabView
+}
+const altN = { code: "KeyN", char: "n", ctrl: false, alt: true, shift: false, meta: false }
+
+test("while Quick-action shortcuts isn't working each key still answers, names its key, and raises the notice", async () => {
+  const w = world({ view: withStatus("music-keys", { state: "not-working" }) })
+  expect(await w.quick.press("next", { ...key, key: altN })).toEqual({ kind: "failed",
+    text: "Play next (Alt+N) isn't working right now because YouTube Music changed something. Use its ⋮ menu for now." })
+  expect(w.notices).toEqual(["music-keys"])
+  expect(w.jobs).toEqual([])
+})
+
+test("an action unavailable in this tab answers its key with a pointer to the popup, and the others still run", async () => {
+  const w = world({ view: withStatus("music-keys", { state: "partly-working", actions: ["next", "queue"] }) })
+  expect(await w.quick.press("queue", { ...key, key: altN })).toEqual({ kind: "failed", text: "Add to queue isn't working right now. The popup shows why." })
+  expect(w.notices).toEqual([])
+  expect((await w.quick.press("like", { ...key, key: altN })).kind).toBe("done")
+})
+
+test("while Playlist shortcuts isn't working its keys answer as Save to playlist and raise the notice", async () => {
+  const w = world({ view: withStatus("shortcuts", { state: "not-working" }) })
+  expect((await w.quick.pressShortcut(shortcutEntry, shortcutKey)).text)
+    .toBe("Save to playlist (Alt+J) isn't working right now because YouTube Music changed something. Use its ⋮ menu for now.")
+  expect(w.notices).toEqual(["shortcuts"])
+  expect(w.adds).toEqual([])
 })

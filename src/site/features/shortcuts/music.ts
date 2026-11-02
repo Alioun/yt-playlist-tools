@@ -1,26 +1,15 @@
-import type { I18n } from "../../../shared/i18n"
 import type { Key, ShortcutId } from "../../../shared/model"
 import type { FeatureContext, FeatureDefinition, SiteView } from "../../core/feature-host"
 import type { MusicItems } from "../../core/items-music"
 import type { Keys } from "../../core/keys"
-import { Scope } from "../../core/scope"
-import type { Feedback } from "../../kit/feedback"
-import { brokenKeyText, statusOf } from "../../kit/music/actions"
+import type { Dispose } from "../../core/scope"
 import type { MusicQuick } from "../../kit/music/quick"
 
 export type MusicShortcutServices = {
-  readonly document: Document
   readonly items: Pick<MusicItems, "track">
   readonly keys: Pick<Keys, "register">
   readonly quick: Pick<MusicQuick, "pressShortcut">
-  readonly feedback: { use(owner: Scope): Feedback | null }
-  readonly i18n: I18n
-  readonly notices: { wouldAct(feature: "shortcuts"): void }
-  readonly os: "macos" | "windows" | "linux"
 }
-type Entry = { readonly id: ShortcutId; readonly key: Key; readonly label: string; readonly watchLaterOnEveryAccount: boolean }
-
-const ignore = () => {}
 
 function options(view: SiteView<"music"> | null) {
   const feature = view?.features.find(entry => entry.id === "shortcuts")
@@ -32,24 +21,10 @@ function options(view: SiteView<"music"> | null) {
  * option is on. The picker key stays on YouTube; Quick-action shortcuts' Save… key does its job here (YM-PS-7).
  */
 function start(context: FeatureContext<"music", MusicShortcutServices>): void {
-  const { scope, view, document, items, keys, quick, i18n, notices } = context
+  const { scope, view, items, keys, quick } = context
   items.track(scope)
-  let bound: Scope | null = null
+  let bound: Dispose[] = []
   let signature: string | null = null
-
-  async function save(entry: Entry) {
-    const current = view.read(), settings = options(current)
-    const feedback = context.feedback.use(scope)
-    if (!current || !settings || !feedback) return
-    const status = statusOf(current, "shortcuts")
-    const broken = brokenKeyText(status, "save", entry.key, i18n, context.os)
-    if (broken) {
-      if (status?.state === "not-working") notices.wouldAct("shortcuts")
-      feedback.toaster.show({ text: broken, tone: "failure", auto: false, action: null })
-      return
-    }
-    await quick.pressShortcut(entry, { opener: "shortcuts", feedback: settings.feedback, by: "key" })
-  }
 
   function bind() {
     const settings = options(view.read())
@@ -57,13 +32,13 @@ function start(context: FeatureContext<"music", MusicShortcutServices>): void {
     const next = settings ? JSON.stringify(entries) : null
     if (next === signature) return
     signature = next
-    bound?.dispose()
-    bound = null
-    if (!settings) return
-    const child = new Scope({ document, onError: ignore })
-    scope.add(() => child.dispose())
-    bound = child
-    for (const entry of entries) keys.register(child, { target: { kind: "playlist", id: entry.id }, run: () => save(entry) }, { kind: "enabled", key: entry.key })
+    for (const release of bound.splice(0)) release()
+    for (const entry of entries) {
+      bound.push(keys.register(scope, { target: { kind: "playlist", id: entry.id }, run: async () => {
+        const feedback = options(view.read())?.feedback
+        if (feedback !== undefined) await quick.pressShortcut(entry, { opener: "shortcuts", feedback, by: "key" })
+      } }, { kind: "enabled", key: entry.key }).release)
+    }
   }
   view.subscribe(bind)
   bind()

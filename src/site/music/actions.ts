@@ -1,9 +1,9 @@
-import type { FeatureStatus, PageFeatureId } from "../../../shared/contracts/tab-view"
-import type { I18n, SimpleMessageKey } from "../../../shared/i18n"
-import { display } from "../../../shared/keys/policy"
-import type { Key, MusicAction } from "../../../shared/model"
-import type { MusicAction as ItemAction } from "../../core/items-music"
-import type { SiteView } from "../../core/feature-host"
+import type { FeatureStatus, PageFeatureId } from "../../shared/contracts/tab-view"
+import type { I18n, SimpleMessageKey } from "../../shared/i18n"
+import { display } from "../../shared/keys/policy"
+import type { Key, MusicAction } from "../../shared/model"
+import type { MusicAction as ItemAction } from "../core/items-music"
+import type { SiteView } from "../core/feature-host"
 
 /** A quick action by its settings name (YM-FEAT-2, YM-FEAT-3). `picker` is Save to playlist…, the picker. */
 export type QuickAction = MusicAction | "picker"
@@ -11,7 +11,7 @@ type Spec = { readonly item: ItemAction; readonly name: SimpleMessageKey; readon
 
 /**
  * Each action's item check, its name, and whether casting stops it or it needs a signed-in account (YM-CAST-2,
- * YM-ACC-5). It's its own file so a feature file can read it without the kit's engine.
+ * YM-ACC-5). It sits outside the kit so feature files can read it; a feature file never carries kit code.
  */
 export const quickActions: Readonly<Record<QuickAction, Spec>> = {
   next: { item: "next", name: "musicAction_next", queueEdit: true, account: false },

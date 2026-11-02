@@ -73,7 +73,7 @@ export function musicWorld(options: { view?: TabView; resolution?: MusicResoluti
   const feedback = createFeedbackSession({ owner: root, document, keys, site: "music", i18n, labels, initial: { undoKey, features: [] },
     now: timers.now, onError, onCosmetic: () => {} })
   const jobs: { readonly job: Job; readonly acct?: string; readonly target?: Element }[] = []
-  const adds: TabAddRequest[] = [], undos: UndoHandle[] = [], opened: OpenPicker[] = [], visited: string[] = [], logs: string[] = []
+  const adds: TabAddRequest[] = [], undos: UndoHandle[] = [], opened: OpenPicker[] = [], visited: string[] = [], logs: string[] = [], notices: string[] = []
   let casting = false
   let queue = 100
   const defaults: Partial<Record<Job["kind"], Answer>> = {
@@ -115,10 +115,11 @@ export function musicWorld(options: { view?: TabView; resolution?: MusicResoluti
     view: () => view, feedback: () => feedback.use(root),
     popovers: async () => options.popovers === undefined ? popovers : options.popovers,
     location: { href: "https://music.youtube.com/watch?v=getLucky001", assign: (url: string) => { visited.push(url) }, reload: () => { visited.push("reload") } },
+    notices: { wouldAct: feature => { notices.push(feature) } }, os: "windows",
     log: line => { logs.push(line) }
   })
   return {
-    quick, jobs, adds, undos, opened, visited, logs, timers, root, keys, feedback, queueElement,
+    quick, jobs, adds, undos, opened, visited, logs, notices, timers, root, keys, feedback, queueElement,
     sent: (kind: Job["kind"]): unknown[] => jobs.filter(entry => entry.job.kind === kind).map(entry => entry.job),
     toast: () => feedback.read()?.feedback.toaster.read() ?? null,
     cast(on: boolean) { casting = on },

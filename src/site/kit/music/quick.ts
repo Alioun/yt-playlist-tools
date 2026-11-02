@@ -3,7 +3,7 @@ import { isMusicAdFailure } from "../../../shared/contracts"
 import type { TabView } from "../../../shared/contracts/tab-view"
 import { cut, musicHintText, toastText, type MusicHint } from "../../../shared/copy"
 import type { I18n } from "../../../shared/i18n"
-import type { AccountKey, PlaylistId, ShortcutId, VideoId } from "../../../shared/model"
+import type { AccountKey, Key, PlaylistId, ShortcutId, VideoId } from "../../../shared/model"
 import { signInUrl } from "../../../shared/youtube/sign-in"
 import type { TabActions, Unanswered } from "../../core/actions"
 import type { MusicItems, MusicResolution } from "../../core/items-music"
@@ -13,9 +13,9 @@ import { musicPickerAnchor, type Popovers } from "../../popovers/types"
 import type { Feedback } from "../feedback"
 import type { ToastContent } from "../toaster/types"
 import type { TabAddReport } from "../../../shared/contracts/tab-actions"
-import { quickActions, type QuickAction } from "./actions"
+import { brokenKeyText, quickActions, statusOf, type QuickAction } from "../../music/actions"
 
-export type { QuickAction } from "./actions"
+export type { QuickAction } from "../../music/actions"
 
 /** What a quick action acts on: a pointed or clicked item, or the playing song (YM-TGT-1, YM-TGT-2). */
 export type QuickTarget = {
@@ -36,11 +36,13 @@ export type QuickInput = {
   readonly button?: Element | null
   /** A key from any tab can't open a picker in a tab the user isn't looking at (YM-ANY-2). */
   readonly anyTab?: boolean
+  /** The key pressed, for the answer while its feature isn't working (YM-KEY-12). */
+  readonly key?: Key
 }
 /** For a button's state and the any-tab ✓ or ✕ (YM-FB-7, YM-ANY-4). `idle` answered without doing anything: a hint, or a picker. */
 export type QuickAnswer = { readonly kind: "done" | "idle" | "failed"; readonly text: string | null }
 type Targeted = { readonly kind: "target"; readonly target: QuickTarget }
-type ShortcutEntry = { readonly id: ShortcutId; readonly label: string; readonly watchLaterOnEveryAccount: boolean }
+type ShortcutEntry = { readonly id: ShortcutId; readonly label: string; readonly watchLaterOnEveryAccount: boolean; readonly key: Key }
 /** A key's progress on an item, so a button showing that item goes through the same states (YM-KEY-11). */
 export type QuickProgress = { readonly element: Element; readonly action: QuickAction; readonly state: "busy" | QuickAnswer["kind"] }
 
@@ -55,6 +57,8 @@ export type MusicQuickDeps = {
   readonly feedback: () => Feedback | null
   readonly popovers: () => Promise<Popovers | null>
   readonly location: Pick<Location, "href" | "assign" | "reload">
+  readonly notices: { wouldAct(feature: "music-keys" | "shortcuts"): void }
+  readonly os: "macos" | "windows" | "linux"
   readonly log?: (line: string) => void
 }
 
@@ -62,7 +66,7 @@ const queueItems = "ytmusic-player-queue ytmusic-player-queue-item, ytmusic-play
 const playingReads = 25
 const likeStatus = { liked: "LIKE", "not-liked": "INDIFFERENT", disliked: "DISLIKE" } as const
 
-function statusOf(endpoint: LikeEndpoint): string | undefined {
+function likeStatusOf(endpoint: LikeEndpoint): string | undefined {
   const body = endpoint.likeEndpoint
   const status = body !== null && typeof body === "object" && !Array.isArray(body) ? body.status : undefined
   return typeof status === "string" ? status : undefined
@@ -217,7 +221,7 @@ export function createMusicQuick(deps: MusicQuickDeps) {
     const title = cut(subject.title)
     const endpoint = subject.item?.endpoints.like
     if (!endpoint) return failure(i18n.message("musicFail_like", { title }))
-    const liking = statusOf(endpoint) === "LIKE"
+    const liking = likeStatusOf(endpoint) === "LIKE"
     const result = await page.run<JobOf<"like">>({ job: { kind: "like", endpoint }, acct })
     if (!result.ok) return failed("like", result, i18n.message("musicFail_like", { title }))
     // A click's answer is the icon, as with YouTube Music's own like; a key may have no button in view (YM-LIKE-3, YM-LIKE-4).
@@ -340,6 +344,20 @@ export function createMusicQuick(deps: MusicQuickDeps) {
     }
   }
 
+  /**
+   * A key whose feature isn't working, or whose action is unavailable in this tab, still answers each press and
+   * raises the feature's notice, so it never does nothing silently (YM-KEY-12, R50, R68).
+   */
+  function withdrawnKey(feature: "music-keys" | "shortcuts", action: QuickAction, input: QuickInput): QuickAnswer | null {
+    const view = deps.view()
+    if (!input.key || view?.site !== "music") return null
+    const status = statusOf(view, feature)
+    const text = brokenKeyText(status, action, input.key, i18n, deps.os)
+    if (!text) return null
+    if (status?.state === "not-working") deps.notices.wouldAct(feature)
+    return failure(text)
+  }
+
   /** The playing song, whatever the pointer is on: a key from any tab and the player-bar Save (YM-ANY-2, YM-BAR-7). */
   async function playing(action: QuickAction): Promise<Targeted | QuickAnswer> {
     const answer = await page.run<JobOf<"nowPlaying">>({ job: { kind: "nowPlaying" } })
@@ -357,6 +375,8 @@ export function createMusicQuick(deps: MusicQuickDeps) {
     casting,
     /** A key's press: the pointed-at item, else the playing song (YM-KEY-10). */
     async press(action: QuickAction, input: QuickInput): Promise<QuickAnswer> {
+      const broken = withdrawnKey("music-keys", action, input)
+      if (broken) return broken
       const found = await target(action)
       if (deps.owner.disposed) return { kind: "idle", text: null }
       if (found.kind !== "target") return found
@@ -368,6 +388,8 @@ export function createMusicQuick(deps: MusicQuickDeps) {
     },
     /** A playlist shortcut's key: songs only, the pointed-at song else the playing one (YM-PS-3). */
     async pressShortcut(entry: ShortcutEntry, input: QuickInput): Promise<QuickAnswer> {
+      const broken = withdrawnKey("shortcuts", "save", { ...input, key: entry.key })
+      if (broken) return broken
       const found = await target("playlist-shortcut")
       if (deps.owner.disposed) return { kind: "idle", text: null }
       return found.kind === "target" ? shortcut(found.target, entry, input) : found
