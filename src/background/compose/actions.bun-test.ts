@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from "bun:test"
-import { composeActions } from "./actions"
+import { composeActions, createAddFlowOwner } from "./actions"
 import { createPlayingSave } from "./playing-now"
 import { createPageReceiver, type PageReceiverPorts } from "../router/ui-pages"
 import { runtimeTransport } from "../adapters/runtime"
@@ -149,6 +149,39 @@ test("closing another tab leaves this tab's Undo working", async () => {
   if (report.kind !== "report" || !report.undo) throw Error("Expected an add with Undo")
   closeTab(10)
   expect(await page.undo(report.undo)).toEqual({ kind: "undone" })
+})
+
+test("a confirmed add to a playlist marked Missing clears its mark in the store (YT-ADD-36)", async () => {
+  const { page, store } = world()
+  const report = await page.add({ site: "www", video, via: "quick-save", opener: "quick-save" })
+  expect(report.kind === "report" && report.outcomes[alpha]).toEqual({ kind: "added" })
+  let marks: unknown
+  for (let turn = 0; turn < 50; turn++) {
+    const read = await store.owner.readSetup(a)
+    marks = read.kind === "value" && read.view.kind === "live" ? read.view.setup.marks : undefined
+    if (marks && Object.keys(marks).length === 0) break
+    await new Promise(resolve => setTimeout(resolve, 5))
+  }
+  expect(marks).toEqual({})
+})
+
+test("AddFlow learns when this browser created a playlist, so an add to it waits until it's 30 s old (YT-ADD-39)", async () => {
+  // The fixture store's clock reads 100, so a playlist created at 90 is 10 ms old to it.
+  const at = 90
+  const { store } = world({ prepare: initial => {
+    initial.local[`cache:${a}`] = { listAt: null, playlists: [], order: {}, created: [{ id: beta, title: "New one", privacy: "PRIVATE", at }], labelAt: null }
+  } })
+  const view = createAddFlowOwner(store.owner, () => true)
+  await view.load(false, a, "www")
+  expect(view.port.account({ kind: "shortcut", shortcut: "orig01" as never }, a)).toEqual({ targets: [{ playlist: beta }], created: { [beta]: at } })
+})
+
+test("the page picker saves this browser's Sort A–Z and last visibility through the store", async () => {
+  const { page, store } = world()
+  expect(await page.device({ field: "pickerSortAZ", value: false })).toEqual({ kind: "confirmed" })
+  expect(await page.device({ field: "newPlaylistVisibility", value: "UNLISTED" })).toEqual({ kind: "confirmed" })
+  const device = store.removal.state().local.device as Record<string, unknown>
+  expect([device.pickerSortAZ, device.newPlaylistVisibility]).toEqual([false, "UNLISTED"])
 })
 
 test("Watch later on every account saves to Watch later whatever the account's own target", async () => {

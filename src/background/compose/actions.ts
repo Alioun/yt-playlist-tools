@@ -18,7 +18,8 @@ import type { AccountKey, Filter, PlaylistId, Settings, Setup } from "../../shar
 import { createRpc } from "../../shared/rpc/rpc"
 
 type Switch = { readonly on: boolean; readonly feedback?: boolean }
-type AccountView = { readonly setup: Setup | null; readonly filters: ReadonlyMap<PlaylistId, Filter>; readonly titles: PlaylistTitles }
+type AccountView = { readonly setup: Setup | null; readonly filters: ReadonlyMap<PlaylistId, Filter>; readonly titles: PlaylistTitles
+  readonly created: Readonly<Partial<Record<PlaylistId, number>>> }
 
 const switches: Partial<Record<FeatureId, (settings: Settings) => Switch>> = {
   "auto-add": s => s.autoAdd, shortcuts: s => s.shortcuts, "quick-save": s => s.quickSave, "queue-button": s => s.queueButton,
@@ -31,15 +32,17 @@ const switches: Partial<Record<FeatureId, (settings: Settings) => Switch>> = {
  * every feature's switch and Show feedback, Keep a list of recent adds, and the acting account's setup, filters
  * and cached playlist titles (ARC-MSG-05).
  */
-export function createAddFlowOwner(owner: Pick<StartingOwner, "readTabProjection" | "readPlaylistCache">, writable: () => boolean) {
+export function createAddFlowOwner(owner: Pick<StartingOwner, "readTabProjection" | "readPlaylistCache" | "markPlaylists">, writable: () => boolean) {
   let settings: Settings = defaultSettings()
   // Keep a list of recent adds is on by default (DATA-52).
   let recentAdds = true
   const accounts = new Map<AccountKey, AccountView>()
-  async function cachedTitles(acct: AccountKey, incognito: boolean, site: Site): Promise<PlaylistTitles> {
+  // Cached titles name playlists in toasts and Recent adds; creation times hold an add to a new playlist until it's 30 s old (YT-ADD-39).
+  async function cached(acct: AccountKey, incognito: boolean, site: Site): Promise<Pick<AccountView, "titles" | "created">> {
     const read = await owner.readPlaylistCache({ acct, private: incognito }).catch(() => null)
-    if (read?.kind !== "cache" || read.cache === null) return {}
-    return Object.fromEntries(cacheRows(read.cache, site).filter(row => row.title).map(row => [row.id, row.title]))
+    if (read?.kind !== "cache" || read.cache === null) return { titles: {}, created: {} }
+    return { titles: Object.fromEntries(cacheRows(read.cache, site).filter(row => row.title).map(row => [row.id, row.title])),
+      created: Object.fromEntries(read.cache.created.map(row => [row.id, row.at])) }
   }
   async function load(incognito: boolean, acct: AccountKey | null, site: Site): Promise<void> {
     const read = await owner.readTabProjection({ private: incognito, account: acct === null ? { kind: "unknown" } : { kind: "signed-in", acct } })
@@ -55,7 +58,7 @@ export function createAddFlowOwner(owner: Pick<StartingOwner, "readTabProjection
     }
     accounts.set(projection.account.acct, {
       setup: setup.kind === "value" && setup.view.kind === "live" ? structuredClone(setup.view.setup) as Setup : null, filters,
-      titles: await cachedTitles(projection.account.acct, incognito, site)
+      ...await cached(projection.account.acct, incognito, site)
     })
   }
   function opened(feature: Feature): Opener {
@@ -94,10 +97,16 @@ export function createAddFlowOwner(owner: Pick<StartingOwner, "readTabProjection
       const current = switches[opener]?.(settings)
       return { on: current?.on === true, feedback: current?.feedback !== false }
     },
-    account(feature, acct): AccountSettings { return { targets: targets(feature, accounts.get(acct)), created: {} } },
+    account(feature, acct): AccountSettings { return { targets: targets(feature, accounts.get(acct)), created: accounts.get(acct)?.created ?? {} } },
     writable,
-    // The store has no Missing or Full mark writer yet; marks stay unrecorded until it does.
-    mark() {},
+    // A mark is the setup's own write, so it syncs; a private window writes none (YT-ADD-36).
+    mark(change, origin) {
+      if (origin.kind !== "tab" && origin.kind !== "ui") return
+      // Every confirmed add clears its playlist's mark, so a playlist already in that state costs no store turn.
+      const marks = accounts.get(change.acct)?.setup?.marks
+      if (marks && (marks[change.playlist] ?? "clear") === change.mark) return
+      void owner.markPlaylists({ acct: change.acct, private: origin.incognito, marks: [{ playlist: change.playlist, mark: change.mark }] }).catch(() => {})
+    },
     recentAdds: () => recentAdds,
     titles: acct => accounts.get(acct)?.titles ?? {}
   }
@@ -121,7 +130,7 @@ export type Actions = {
 export function composeActions(deps: {
   readonly native: SenderOriginPorts & { readonly runtime: SenderOriginPorts["runtime"] & RuntimePort }
   readonly build: BuildId
-  readonly owner: Pick<StartingOwner, "readTabProjection" | "readSession" | "changeSession" | "changeSetupDestination" | "readPlaylistCache">
+  readonly owner: Pick<StartingOwner, "readTabProjection" | "readSession" | "changeSession" | "changeSetupDestination" | "readPlaylistCache" | "markPlaylists" | "changeDeviceSetting">
   readonly tabs: Tabs
   readonly playlists: Playlists
   readonly registrar: Pick<Registrar, "ensure">
@@ -221,6 +230,13 @@ export function composeActions(deps: {
       if (answer.kind === "created") return { kind: "created", id: answer.id }
       const outcome = answer.kind === "not-created" ? answer.outcome : null
       return { kind: "failed", reason: outcome?.kind === "result" && !outcome.result.ok && outcome.result.http === 429 ? "rateLimited" : "failed" }
+    },
+    // A device choice belongs to this browser, not the tab's account, so no account pin is needed.
+    async "tab.device"({ change }, context) {
+      try {
+        const answer = await owner.changeDeviceSetting({ kind: "ui", windowId: context.windowId, incognito: context.origin.incognito }, change)
+        return answer.kind === "confirmed" ? { kind: "confirmed" } : answer
+      } catch { return { kind: "refused", reason: "unavailable" } }
     },
     async "tab.destination"({ acct, request }, context) {
       if (acct === null || !await pinned(context, acct)) return { kind: "refused", reason: "unavailable" }

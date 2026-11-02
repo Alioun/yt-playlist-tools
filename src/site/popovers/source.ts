@@ -1,7 +1,7 @@
 import type { ChangeResult, JobOf, SetVideoId } from "../../shared/contracts"
 import type { DestinationAnswer, SetupDestination } from "../../shared/contracts/first-run"
 import type { TabView } from "../../shared/contracts/tab-view"
-import type { UndoHandle } from "../../shared/contracts/tab-actions"
+import type { TabDeviceChange, UndoHandle } from "../../shared/contracts/tab-actions"
 import type { Key, PlaylistId } from "../../shared/model"
 import type { AddAnswer, ItemPort, Mark, PickerSource, Undo } from "../../shared/picker/source"
 import type { TabActions } from "../core/actions"
@@ -51,6 +51,10 @@ export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> &
       const answer = await actions.undo(handle)
       return { kind: answer.kind === "undone" ? "undone" : "failed" }
     }
+  }
+  async function saveDevice(change: TabDeviceChange): Promise<ChangeResult> {
+    const answer = await actions.device(change)
+    return answer.kind === "confirmed" ? { ok: true } : { refused: answer.reason === "private" ? "private" : "invalid" }
   }
   async function set(kind: SetupDestination, playlist: PlaylistId | null, previous: PlaylistId | null): Promise<ChangeResult> {
     const answer = await actions.destination({ destination: kind, playlist,
@@ -134,9 +138,8 @@ export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> &
       if ("ok" in result) { current = next; if (!shortcut) quickSave = next }
       return result
     },
-    // No store operation saves this browser's sort order or last visibility from a page yet.
-    saveSortAZ: async () => ({ refused: "invalid" }),
-    savePrivacy: async () => ({ refused: "invalid" }),
+    saveSortAZ: on => saveDevice({ field: "pickerSortAZ", value: on }),
+    savePrivacy: privacy => saveDevice({ field: "newPlaylistVisibility", value: privacy }),
     release() {
       for (const handle of handles.values()) actions.release(handle)
       handles.clear()

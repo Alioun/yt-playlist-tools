@@ -13,9 +13,10 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 0))
 
 function source(site: "www" | "music", mode: OpenPicker["mode"] = { kind: "save" }) {
   const adds: TabAddRequest[] = [], removes: TabRemoveRequest[] = [], destinations: TabDestinationChange[] = [], jobs: string[] = []
-  const released: string[] = []
+  const released: string[] = [], devices: unknown[] = []
   const actions = {
     release: (handle: { id: string }) => { released.push(handle.id) },
+    device: async (change: { field: string }) => { devices.push(change); return change.field === "newPlaylistVisibility" ? { kind: "refused", reason: "private" } : { kind: "confirmed" } },
     add: async (request: TabAddRequest) => { adds.push(request); return { kind: "report", outcomes: { [other]: { kind: "added" } }, toast: null, feedback: true, undo: { kind: "add", id: "a1" }, titles: {} } },
     remove: async (request: TabRemoveRequest) => { removes.push(request); return { kind: "removed", playlist: other, video, feedback: true, toast: null, undo: { kind: "remove", id: "r1" }, titles: {} } },
     destination: async (change: TabDestinationChange) => { destinations.push(change); return { kind: "confirmed" } },
@@ -25,8 +26,15 @@ function source(site: "www" | "music", mode: OpenPicker["mode"] = { kind: "save"
   const built = pagePickerSource({ actions, view, now: () => Date.now(), live: () => true,
     request: { video, anchor: { kind: "window" }, mode, opener: site === "music" ? "music-actions" : "quick-save" },
     page: { run: async job => { jobs.push(job.job.kind); return { ok: true, data: [], route: "r" } as never } } })
-  return { built, adds, removes, destinations, jobs, released }
+  return { built, adds, removes, destinations, jobs, released, devices }
 }
+
+test("Sort A–Z and the last visibility save through the background, and a private refusal reads as private", async () => {
+  const www = source("www")
+  expect(await www.built.saveSortAZ(true)).toEqual({ ok: true })
+  expect(await www.built.savePrivacy("PUBLIC")).toEqual({ refused: "private" })
+  expect(www.devices).toEqual([{ field: "pickerSortAZ", value: true }, { field: "newPlaylistVisibility", value: "PUBLIC" }])
+})
 
 test("releasing the source lets go of every add and removal handle it received, once", async () => {
   const www = source("www")

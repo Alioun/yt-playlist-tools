@@ -1,9 +1,8 @@
 import type { DestinationAnswer } from "../../shared/contracts/first-run"
 import type { BuildId, Privacy } from "../../shared/contracts/vocabulary"
 import {
-  tabActionContract, tabGatherContract, tabProgressContract, TITLE_LIMIT, type GatherToastLine, type TabActionMessages, type TabAddReport, type TabAddRequest, type TabCreated,
-  type TabDestinationChange, type TabGatherMessages, type TabPlaylists, type TabProgress, type TabProgressMessages, type TabRemoveReport, type TabRemoveRequest,
-  type TabUndoReport, type UndoHandle
+  tabActionContract, tabProgressContract, TITLE_LIMIT, type TabActionMessages, type TabAddReport, type TabAddRequest, type TabCreated, type TabDestinationChange, type TabDeviceAnswer, type TabDeviceChange,
+  type TabPlaylists, type TabProgress, type TabProgressMessages, type TabRemoveReport, type TabRemoveRequest, type TabUndoReport, type UndoHandle
 } from "../../shared/contracts/tab-actions"
 import type { AccountKey, VideoId } from "../../shared/model"
 import { createRpcCaller, type Deadline } from "../../shared/rpc/rpc"
@@ -23,6 +22,8 @@ export type TabActions = {
   playlists(refresh: boolean): Promise<TabPlaylists>
   create(playlist: { readonly title: string; readonly privacy: Privacy; readonly video: VideoId | null }): Promise<TabCreated>
   destination(change: TabDestinationChange): Promise<DestinationAnswer>
+  /** Saves this browser's Sort A–Z or last visibility from the page picker. */
+  device(change: TabDeviceChange): Promise<TabDeviceAnswer>
   /** Auto-add's watch progress at DATA-27's checkpoints, kept per account by the background. */
   readonly progress: {
     load(video: VideoId): Promise<TabProgress | null>
@@ -69,6 +70,10 @@ export function createTabActions(options: {
     playlists: refresh => call("tab.playlists", { refresh }, { kind: "failed" } as const),
     create: playlist => call("tab.create", playlist, { kind: "failed", reason: "failed" } as const),
     destination: change => call("tab.destination", change, { kind: "refused", reason: "unavailable" } as const),
+    async device(change) {
+      const answer = await rpc.call("tab.device", { change })
+      return answer.kind === "answered" ? answer.result : { kind: "refused", reason: "unavailable" }
+    },
     progress: {
       load: video => call("tab.progress.load", { video }, null),
       async save(video, progress) { await call("tab.progress.save", { video, progress }, null) }

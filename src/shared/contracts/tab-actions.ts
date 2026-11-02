@@ -40,6 +40,9 @@ export type TabUndoReport =
   | { readonly kind: "expired" }
   | Ended
 export type TabListing = { readonly rows: readonly PlaylistRow[]; readonly at: number }
+/** The page picker's own device choices: Sort A–Z and the last visibility for new playlists (UI-PICK-10, UI-PICK-26). */
+export type TabDeviceChange = { readonly field: "pickerSortAZ"; readonly value: boolean } | { readonly field: "newPlaylistVisibility"; readonly value: Privacy }
+export type TabDeviceAnswer = { readonly kind: "confirmed" } | { readonly kind: "refused"; readonly reason: "private" | "invalid" | "unavailable" | "unconfirmed" }
 /** `cached` answers a read without YouTube; `listed`, `noTab` and `failed` answer a refresh. */
 export type TabPlaylists =
   | { readonly kind: "cached"; readonly listing: TabListing | null }
@@ -59,6 +62,7 @@ export type TabActionMessages = {
   "tab.playlists": { payload: Pinned<{ readonly refresh: boolean }>; result: TabPlaylists }
   "tab.create": { payload: Pinned<{ readonly title: string; readonly privacy: Privacy; readonly video: VideoId | null }>; result: TabCreated }
   "tab.destination": { payload: Pinned<TabDestinationChange>; result: DestinationAnswer }
+  "tab.device": { payload: { readonly change: TabDeviceChange }; result: TabDeviceAnswer }
 }
 /**
  * Auto-add's routes besides `tab.add`. YT-AA-41: only the first playback per browser session that can't be measured gets a toast.
@@ -146,7 +150,13 @@ export const tabActionContract: RpcContract<TabActionMessages> = {
   "tab.create": { payload: (v): v is TabActionMessages["tab.create"]["payload"] => pinned(r => objectShape(r, { title, privacy: isPrivacy, video: nullable(isVideoId) }))(v),
     result: isTabCreated, timeoutMs: 45_000 },
   "tab.destination": { payload: (v): v is TabActionMessages["tab.destination"]["payload"] => pinned(r => objectShape(r, {
-    destination: isSetupDestination, expected: isDestinationExpectation, playlist: nullable(isPlaylistId) }))(v), result: isDestinationAnswer, timeoutMs: 15_000 }
+    destination: isSetupDestination, expected: isDestinationExpectation, playlist: nullable(isPlaylistId) }))(v), result: isDestinationAnswer, timeoutMs: 15_000 },
+  "tab.device": { payload: (v): v is TabActionMessages["tab.device"]["payload"] => objectShape(v, { change: isTabDeviceChange }),
+    result: (v): v is TabDeviceAnswer => objectShape(v, { kind: oneOf("confirmed") }) || objectShape(v, { kind: oneOf("refused"), reason: oneOf("private", "invalid", "unavailable", "unconfirmed") }),
+    timeoutMs: 8_000 }
+}
+export function isTabDeviceChange(value: unknown): value is TabDeviceChange {
+  return objectShape(value, { field: oneOf("pickerSortAZ"), value: bool }) || objectShape(value, { field: oneOf("newPlaylistVisibility"), value: isPrivacy })
 }
 
 /**
