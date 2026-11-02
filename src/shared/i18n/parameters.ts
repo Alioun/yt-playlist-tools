@@ -132,7 +132,7 @@ export type MessageParameters = {
   "copy_channel": readonly []
   "copy_list_two": readonly ["first", "second"]
   "copy_list_three": readonly ["first", "second", "third"]
-  "copy_list_more": readonly ["first", "second", "count"]
+  "copy_list_more": readonly ["count", "first", "second"]
   "feedback_www_manual_untitled_pending": readonly ["targets"]
   "feedback_www_manual_untitled_saved": readonly ["targets"]
   "feedback_www_manual_untitled_removed": readonly ["target"]
@@ -140,13 +140,13 @@ export type MessageParameters = {
   "feedback_www_manual_untitled_first_pick": readonly ["targets"]
   "feedback_www_manual_untitled_shortcut_set": readonly ["shortcut", "target"]
   "feedback_www_manual_untitled_already_in": readonly ["targets"]
-  "feedback_www_manual_untitled_no_playlist": readonly ["shortcut", "account"]
+  "feedback_www_manual_untitled_no_playlist": readonly ["account", "shortcut"]
   "feedback_www_manual_untitled_filtered": readonly ["channel", "targets"]
   "feedback_www_manual_untitled_unknown_channel": readonly ["targets"]
-  "feedback_www_manual_untitled_saved_filtered_one_one": readonly ["saved", "filtered"]
-  "feedback_www_manual_untitled_saved_filtered_one_other": readonly ["saved", "filtered"]
-  "feedback_www_manual_untitled_saved_filtered_other_one": readonly ["saved", "filtered"]
-  "feedback_www_manual_untitled_saved_filtered_other_other": readonly ["saved", "filtered"]
+  "feedback_www_manual_untitled_saved_filtered_one_one": readonly ["filtered", "saved"]
+  "feedback_www_manual_untitled_saved_filtered_one_other": readonly ["filtered", "saved"]
+  "feedback_www_manual_untitled_saved_filtered_other_one": readonly ["filtered", "saved"]
+  "feedback_www_manual_untitled_saved_filtered_other_other": readonly ["filtered", "saved"]
   "feedback_www_manual_untitled_failed_signed_out_one": readonly []
   "feedback_www_manual_untitled_saved_failed_signed_out_one": readonly ["success"]
   "feedback_www_manual_untitled_failed_not_sent_one": readonly ["targets"]
@@ -173,40 +173,40 @@ export type MessageParameters = {
   "feedback_www_manual_untitled_saved_failed_missing_other": readonly ["success", "targets"]
   "feedback_www_manual_untitled_failed_full_other": readonly ["targets"]
   "feedback_www_manual_untitled_saved_failed_full_other": readonly ["success", "targets"]
-  "feedback_www_manual_named_pending": readonly ["video", "targets"]
-  "feedback_www_manual_named_saved": readonly ["video", "targets"]
-  "feedback_www_manual_named_removed": readonly ["video", "target"]
-  "feedback_www_manual_named_first_pick": readonly ["video", "targets"]
-  "feedback_www_manual_named_already_in": readonly ["video", "targets"]
-  "feedback_www_manual_named_filtered": readonly ["video", "channel", "targets"]
-  "feedback_www_manual_named_unknown_channel": readonly ["video", "targets"]
-  "feedback_www_manual_named_saved_filtered_one_one": readonly ["video", "saved", "filtered"]
-  "feedback_www_manual_named_saved_filtered_one_other": readonly ["video", "saved", "filtered"]
-  "feedback_www_manual_named_saved_filtered_other_one": readonly ["video", "saved", "filtered"]
-  "feedback_www_manual_named_saved_filtered_other_other": readonly ["video", "saved", "filtered"]
-  "feedback_www_manual_named_saved_failed_signed_out_one": readonly ["video", "success"]
-  "feedback_www_manual_named_failed_not_sent_one": readonly ["video", "targets"]
-  "feedback_www_manual_named_saved_failed_not_sent_one": readonly ["video", "success", "targets"]
-  "feedback_www_manual_named_failed_unconfirmed_one": readonly ["video", "targets"]
-  "feedback_www_manual_named_saved_failed_unconfirmed_one": readonly ["video", "success", "targets"]
-  "feedback_www_manual_named_failed_missing_one": readonly ["video", "targets"]
-  "feedback_www_manual_named_saved_failed_missing_one": readonly ["video", "success", "targets"]
-  "feedback_www_manual_named_failed_full_one": readonly ["video", "targets"]
-  "feedback_www_manual_named_saved_failed_full_one": readonly ["video", "success", "targets"]
+  "feedback_www_manual_named_pending": readonly ["targets", "video"]
+  "feedback_www_manual_named_saved": readonly ["targets", "video"]
+  "feedback_www_manual_named_removed": readonly ["target", "video"]
+  "feedback_www_manual_named_first_pick": readonly ["targets", "video"]
+  "feedback_www_manual_named_already_in": readonly ["targets", "video"]
+  "feedback_www_manual_named_filtered": readonly ["channel", "targets", "video"]
+  "feedback_www_manual_named_unknown_channel": readonly ["targets", "video"]
+  "feedback_www_manual_named_saved_filtered_one_one": readonly ["filtered", "saved", "video"]
+  "feedback_www_manual_named_saved_filtered_one_other": readonly ["filtered", "saved", "video"]
+  "feedback_www_manual_named_saved_filtered_other_one": readonly ["filtered", "saved", "video"]
+  "feedback_www_manual_named_saved_filtered_other_other": readonly ["filtered", "saved", "video"]
+  "feedback_www_manual_named_saved_failed_signed_out_one": readonly ["success", "video"]
+  "feedback_www_manual_named_failed_not_sent_one": readonly ["targets", "video"]
+  "feedback_www_manual_named_saved_failed_not_sent_one": readonly ["success", "targets", "video"]
+  "feedback_www_manual_named_failed_unconfirmed_one": readonly ["targets", "video"]
+  "feedback_www_manual_named_saved_failed_unconfirmed_one": readonly ["success", "targets", "video"]
+  "feedback_www_manual_named_failed_missing_one": readonly ["targets", "video"]
+  "feedback_www_manual_named_saved_failed_missing_one": readonly ["success", "targets", "video"]
+  "feedback_www_manual_named_failed_full_one": readonly ["targets", "video"]
+  "feedback_www_manual_named_saved_failed_full_one": readonly ["success", "targets", "video"]
   "feedback_www_manual_named_failed_refused_one": readonly ["video"]
-  "feedback_www_manual_named_saved_failed_refused_one": readonly ["video", "success", "targets"]
+  "feedback_www_manual_named_saved_failed_refused_one": readonly ["success", "targets", "video"]
   "feedback_www_manual_named_failed_rate_limited_one": readonly ["video"]
-  "feedback_www_manual_named_saved_failed_rate_limited_one": readonly ["video", "success", "targets"]
-  "feedback_www_manual_named_saved_failed_account_changed_one": readonly ["video", "success"]
-  "feedback_www_manual_named_saved_failed_account_refused_one": readonly ["video", "success"]
+  "feedback_www_manual_named_saved_failed_rate_limited_one": readonly ["success", "targets", "video"]
+  "feedback_www_manual_named_saved_failed_account_changed_one": readonly ["success", "video"]
+  "feedback_www_manual_named_saved_failed_account_refused_one": readonly ["success", "video"]
   "feedback_www_manual_named_failed_membership_unreadable_one": readonly ["video"]
-  "feedback_www_manual_named_saved_failed_membership_unreadable_one": readonly ["video", "success"]
-  "feedback_www_manual_named_failed_unrecognised_one": readonly ["video", "targets"]
-  "feedback_www_manual_named_saved_failed_unrecognised_one": readonly ["video", "success", "targets"]
-  "feedback_www_manual_named_failed_missing_other": readonly ["video", "targets"]
-  "feedback_www_manual_named_saved_failed_missing_other": readonly ["video", "success", "targets"]
-  "feedback_www_manual_named_failed_full_other": readonly ["video", "targets"]
-  "feedback_www_manual_named_saved_failed_full_other": readonly ["video", "success", "targets"]
+  "feedback_www_manual_named_saved_failed_membership_unreadable_one": readonly ["success", "video"]
+  "feedback_www_manual_named_failed_unrecognised_one": readonly ["targets", "video"]
+  "feedback_www_manual_named_saved_failed_unrecognised_one": readonly ["success", "targets", "video"]
+  "feedback_www_manual_named_failed_missing_other": readonly ["targets", "video"]
+  "feedback_www_manual_named_saved_failed_missing_other": readonly ["success", "targets", "video"]
+  "feedback_www_manual_named_failed_full_other": readonly ["targets", "video"]
+  "feedback_www_manual_named_saved_failed_full_other": readonly ["success", "targets", "video"]
   "feedback_www_auto_untitled_saved": readonly ["targets"]
   "feedback_www_auto_untitled_saved_failed_signed_out_one": readonly ["success"]
   "feedback_www_auto_untitled_failed_not_sent_one": readonly ["targets"]
@@ -230,29 +230,29 @@ export type MessageParameters = {
   "feedback_www_auto_untitled_saved_failed_missing_other": readonly ["success", "targets"]
   "feedback_www_auto_untitled_failed_full_other": readonly ["targets"]
   "feedback_www_auto_untitled_saved_failed_full_other": readonly ["success", "targets"]
-  "feedback_www_auto_named_saved": readonly ["video", "targets"]
-  "feedback_www_auto_named_saved_failed_signed_out_one": readonly ["video", "success"]
-  "feedback_www_auto_named_failed_not_sent_one": readonly ["video", "targets"]
-  "feedback_www_auto_named_saved_failed_not_sent_one": readonly ["video", "success", "targets"]
-  "feedback_www_auto_named_failed_unconfirmed_one": readonly ["video", "targets"]
-  "feedback_www_auto_named_saved_failed_unconfirmed_one": readonly ["video", "success", "targets"]
-  "feedback_www_auto_named_failed_missing_one": readonly ["video", "targets"]
-  "feedback_www_auto_named_saved_failed_missing_one": readonly ["video", "success", "targets"]
-  "feedback_www_auto_named_failed_full_one": readonly ["video", "targets"]
-  "feedback_www_auto_named_saved_failed_full_one": readonly ["video", "success", "targets"]
+  "feedback_www_auto_named_saved": readonly ["targets", "video"]
+  "feedback_www_auto_named_saved_failed_signed_out_one": readonly ["success", "video"]
+  "feedback_www_auto_named_failed_not_sent_one": readonly ["targets", "video"]
+  "feedback_www_auto_named_saved_failed_not_sent_one": readonly ["success", "targets", "video"]
+  "feedback_www_auto_named_failed_unconfirmed_one": readonly ["targets", "video"]
+  "feedback_www_auto_named_saved_failed_unconfirmed_one": readonly ["success", "targets", "video"]
+  "feedback_www_auto_named_failed_missing_one": readonly ["targets", "video"]
+  "feedback_www_auto_named_saved_failed_missing_one": readonly ["success", "targets", "video"]
+  "feedback_www_auto_named_failed_full_one": readonly ["targets", "video"]
+  "feedback_www_auto_named_saved_failed_full_one": readonly ["success", "targets", "video"]
   "feedback_www_auto_named_failed_refused_one": readonly ["video"]
-  "feedback_www_auto_named_saved_failed_refused_one": readonly ["video", "success", "targets"]
+  "feedback_www_auto_named_saved_failed_refused_one": readonly ["success", "targets", "video"]
   "feedback_www_auto_named_failed_rate_limited_one": readonly ["video"]
-  "feedback_www_auto_named_saved_failed_rate_limited_one": readonly ["video", "success", "targets"]
-  "feedback_www_auto_named_saved_failed_account_changed_one": readonly ["video", "success"]
-  "feedback_www_auto_named_saved_failed_account_refused_one": readonly ["video", "success"]
-  "feedback_www_auto_named_saved_failed_membership_unreadable_one": readonly ["video", "success"]
-  "feedback_www_auto_named_failed_unrecognised_one": readonly ["video", "targets"]
-  "feedback_www_auto_named_saved_failed_unrecognised_one": readonly ["video", "success", "targets"]
-  "feedback_www_auto_named_failed_missing_other": readonly ["video", "targets"]
-  "feedback_www_auto_named_saved_failed_missing_other": readonly ["video", "success", "targets"]
-  "feedback_www_auto_named_failed_full_other": readonly ["video", "targets"]
-  "feedback_www_auto_named_saved_failed_full_other": readonly ["video", "success", "targets"]
+  "feedback_www_auto_named_saved_failed_rate_limited_one": readonly ["success", "targets", "video"]
+  "feedback_www_auto_named_saved_failed_account_changed_one": readonly ["success", "video"]
+  "feedback_www_auto_named_saved_failed_account_refused_one": readonly ["success", "video"]
+  "feedback_www_auto_named_saved_failed_membership_unreadable_one": readonly ["success", "video"]
+  "feedback_www_auto_named_failed_unrecognised_one": readonly ["targets", "video"]
+  "feedback_www_auto_named_saved_failed_unrecognised_one": readonly ["success", "targets", "video"]
+  "feedback_www_auto_named_failed_missing_other": readonly ["targets", "video"]
+  "feedback_www_auto_named_saved_failed_missing_other": readonly ["success", "targets", "video"]
+  "feedback_www_auto_named_failed_full_other": readonly ["targets", "video"]
+  "feedback_www_auto_named_saved_failed_full_other": readonly ["success", "targets", "video"]
   "feedback_music_manual_untitled_pending": readonly ["targets"]
   "feedback_music_manual_untitled_saved": readonly ["targets"]
   "feedback_music_manual_untitled_removed": readonly ["target"]
@@ -260,10 +260,10 @@ export type MessageParameters = {
   "feedback_music_manual_untitled_already_in": readonly ["targets"]
   "feedback_music_manual_untitled_filtered": readonly ["channel", "targets"]
   "feedback_music_manual_untitled_unknown_channel": readonly ["targets"]
-  "feedback_music_manual_untitled_saved_filtered_one_one": readonly ["saved", "filtered"]
-  "feedback_music_manual_untitled_saved_filtered_one_other": readonly ["saved", "filtered"]
-  "feedback_music_manual_untitled_saved_filtered_other_one": readonly ["saved", "filtered"]
-  "feedback_music_manual_untitled_saved_filtered_other_other": readonly ["saved", "filtered"]
+  "feedback_music_manual_untitled_saved_filtered_one_one": readonly ["filtered", "saved"]
+  "feedback_music_manual_untitled_saved_filtered_one_other": readonly ["filtered", "saved"]
+  "feedback_music_manual_untitled_saved_filtered_other_one": readonly ["filtered", "saved"]
+  "feedback_music_manual_untitled_saved_filtered_other_other": readonly ["filtered", "saved"]
   "feedback_music_manual_untitled_failed_signed_out_one": readonly []
   "feedback_music_manual_untitled_saved_failed_signed_out_one": readonly ["success"]
   "feedback_music_manual_untitled_failed_not_sent_one": readonly ["targets"]
@@ -288,15 +288,15 @@ export type MessageParameters = {
   "feedback_music_manual_untitled_saved_failed_missing_other": readonly ["success", "targets"]
   "feedback_music_manual_untitled_failed_full_other": readonly ["targets"]
   "feedback_music_manual_untitled_saved_failed_full_other": readonly ["success", "targets"]
-  "feedback_music_manual_named_saved_failed_signed_out_one": readonly ["video", "success"]
-  "feedback_music_manual_named_failed_unconfirmed_one": readonly ["video", "targets"]
-  "feedback_music_manual_named_saved_failed_unconfirmed_one": readonly ["video", "success", "targets"]
+  "feedback_music_manual_named_saved_failed_signed_out_one": readonly ["success", "video"]
+  "feedback_music_manual_named_failed_unconfirmed_one": readonly ["targets", "video"]
+  "feedback_music_manual_named_saved_failed_unconfirmed_one": readonly ["success", "targets", "video"]
   "feedback_music_manual_named_failed_refused_one": readonly ["video"]
-  "feedback_music_manual_named_saved_failed_refused_one": readonly ["video", "success", "targets"]
+  "feedback_music_manual_named_saved_failed_refused_one": readonly ["success", "targets", "video"]
   "feedback_music_manual_named_failed_rate_limited_one": readonly ["video"]
-  "feedback_music_manual_named_saved_failed_rate_limited_one": readonly ["video", "success", "targets"]
-  "feedback_music_manual_named_failed_unrecognised_one": readonly ["video", "targets"]
-  "feedback_music_manual_named_saved_failed_unrecognised_one": readonly ["video", "success", "targets"]
+  "feedback_music_manual_named_saved_failed_rate_limited_one": readonly ["success", "targets", "video"]
+  "feedback_music_manual_named_failed_unrecognised_one": readonly ["targets", "video"]
+  "feedback_music_manual_named_saved_failed_unrecognised_one": readonly ["success", "targets", "video"]
   "feedback_music_auto_untitled_saved": readonly ["targets"]
   "feedback_music_auto_untitled_saved_failed_signed_out_one": readonly ["success"]
   "feedback_music_auto_untitled_failed_not_sent_one": readonly ["targets"]
@@ -320,15 +320,15 @@ export type MessageParameters = {
   "feedback_music_auto_untitled_saved_failed_missing_other": readonly ["success", "targets"]
   "feedback_music_auto_untitled_failed_full_other": readonly ["targets"]
   "feedback_music_auto_untitled_saved_failed_full_other": readonly ["success", "targets"]
-  "feedback_music_auto_named_saved_failed_signed_out_one": readonly ["video", "success"]
-  "feedback_music_auto_named_failed_unconfirmed_one": readonly ["video", "targets"]
-  "feedback_music_auto_named_saved_failed_unconfirmed_one": readonly ["video", "success", "targets"]
+  "feedback_music_auto_named_saved_failed_signed_out_one": readonly ["success", "video"]
+  "feedback_music_auto_named_failed_unconfirmed_one": readonly ["targets", "video"]
+  "feedback_music_auto_named_saved_failed_unconfirmed_one": readonly ["success", "targets", "video"]
   "feedback_music_auto_named_failed_refused_one": readonly ["video"]
-  "feedback_music_auto_named_saved_failed_refused_one": readonly ["video", "success", "targets"]
+  "feedback_music_auto_named_saved_failed_refused_one": readonly ["success", "targets", "video"]
   "feedback_music_auto_named_failed_rate_limited_one": readonly ["video"]
-  "feedback_music_auto_named_saved_failed_rate_limited_one": readonly ["video", "success", "targets"]
-  "feedback_music_auto_named_failed_unrecognised_one": readonly ["video", "targets"]
-  "feedback_music_auto_named_saved_failed_unrecognised_one": readonly ["video", "success", "targets"]
+  "feedback_music_auto_named_saved_failed_rate_limited_one": readonly ["success", "targets", "video"]
+  "feedback_music_auto_named_failed_unrecognised_one": readonly ["targets", "video"]
+  "feedback_music_auto_named_saved_failed_unrecognised_one": readonly ["success", "targets", "video"]
   "picker_saveTitle": readonly []
   "picker_saveMusicTitle": readonly []
   "picker_quickTitle": readonly []
@@ -511,13 +511,13 @@ export type MessageParameters = {
   "channelFilter_offKeptAllowed_one": readonly ["count"]
   "channelFilter_offKeptAllowed_other": readonly ["count"]
   "channelFilter_emptyAllow": readonly ["playlist"]
-  "channelFilter_chip": readonly ["title", "handle"]
+  "channelFilter_chip": readonly ["handle", "title"]
   "channelFilter_listCurrent_allow": readonly ["channel"]
   "channelFilter_listCurrent_deny": readonly ["channel"]
-  "channelFilter_turnOnAllow_one": readonly ["playlist", "count"]
-  "channelFilter_turnOnAllow_other": readonly ["playlist", "count"]
-  "channelFilter_turnOnDeny_one": readonly ["playlist", "count"]
-  "channelFilter_turnOnDeny_other": readonly ["playlist", "count"]
+  "channelFilter_turnOnAllow_one": readonly ["count", "playlist"]
+  "channelFilter_turnOnAllow_other": readonly ["count", "playlist"]
+  "channelFilter_turnOnDeny_one": readonly ["count", "playlist"]
+  "channelFilter_turnOnDeny_other": readonly ["count", "playlist"]
   "channelFilter_allowed": readonly []
   "channelFilter_denied": readonly []
   "channelFilter_usesAllow": readonly ["playlist"]
@@ -527,7 +527,7 @@ export type MessageParameters = {
   "channelFilter_needsTab": readonly []
   "channelFilter_notFound": readonly []
   "channelFilter_notChannel": readonly []
-  "shortcuts_presetNoKey": readonly ["other", "key"]
+  "shortcuts_presetNoKey": readonly ["key", "other"]
   "shortcuts_whereKeysWork": readonly []
   "shortcuts_add": readonly []
   "shortcuts_limit": readonly []
@@ -542,14 +542,14 @@ export type MessageParameters = {
   "recorder_refused_ctrlAlt": readonly []
   "recorder_refused_reserved": readonly []
   "recorder_refused_other": readonly []
-  "recorder_conflict_one": readonly ["others", "key"]
-  "recorder_conflict_other": readonly ["others", "key"]
+  "recorder_conflict_one": readonly ["key", "others"]
+  "recorder_conflict_other": readonly ["key", "others"]
   "recorder_conflictLabel": readonly []
   "recorder_useHere": readonly []
   "recorder_cancel": readonly []
-  "recorder_clash_site": readonly ["site", "key", "action"]
-  "recorder_clash_browser": readonly ["browser", "key", "action"]
-  "recorder_clash_command": readonly ["key", "command"]
+  "recorder_clash_site": readonly ["action", "key", "site"]
+  "recorder_clash_browser": readonly ["action", "browser", "key"]
+  "recorder_clash_command": readonly ["command", "key"]
   "recorder_commandsUnavailable": readonly []
   "recorder_answer_stale": readonly []
   "recorder_answer_missingTarget": readonly []
@@ -618,6 +618,12 @@ export type MessageParameters = {
   "musicFail_like": readonly ["title"]
   "musicFail_keyBroken": readonly ["action", "key"]
   "musicFail_keyUnavailable": readonly ["action"]
+  "musicAction_removeQueue": readonly []
+  "musicAction_savePicker": readonly []
+  "musicAction_mixTip": readonly []
+  "musicTip_key": readonly ["action", "key"]
+  "musicTip_named": readonly ["action", "title"]
+  "musicTip_namedKey": readonly ["action", "key", "title"]
   "access_musicShortcutsDenied": readonly []
   "access_musicKeysMissing": readonly []
   "anyTab_noVideoTab": readonly []
@@ -651,7 +657,7 @@ export type MessageParameters = {
   "gather_toastClosed_other": readonly ["count", "playlist"]
   "gather_toastAuto_one": readonly ["count", "playlist"]
   "gather_toastAuto_other": readonly ["count", "playlist"]
-  "gather_checking": readonly ["index", "count"]
+  "gather_checking": readonly ["count", "index"]
   "gather_saving_one": readonly ["count"]
   "gather_saving_other": readonly ["count"]
   "gather_noTabs": readonly []
@@ -760,7 +766,7 @@ export type MessageParameters = {
   "recovery_leftHeld": readonly []
   "recovery_item_autoAdd": readonly ["playlist"]
   "recovery_item_filter": readonly ["playlist"]
-  "recovery_item_shortcut": readonly ["shortcut", "playlist"]
+  "recovery_item_shortcut": readonly ["playlist", "shortcut"]
   "recovery_goesTo": readonly ["account"]
   "recovery_restore": readonly []
   "recovery_discard": readonly []
@@ -840,8 +846,8 @@ export type MessageParameters = {
   "autoAddList_percent": readonly ["percent"]
   "autoAddList_new": readonly []
   "autoAddList_nothingSaved": readonly ["account"]
-  "autoAddList_syncOnly_one": readonly ["count", "account"]
-  "autoAddList_syncOnly_other": readonly ["count", "account"]
+  "autoAddList_syncOnly_one": readonly ["account", "count"]
+  "autoAddList_syncOnly_other": readonly ["account", "count"]
   "autoAddList_readOnly": readonly []
   "held_siteAccess": readonly []
   "held_musicOff": readonly []
@@ -937,7 +943,7 @@ export type MessageParameters = {
   "summary_browserMenu": readonly []
   "summary_gather_player": readonly ["order"]
   "summary_gather_queue": readonly ["order"]
-  "summary_gather_playlist": readonly ["playlist", "order"]
+  "summary_gather_playlist": readonly ["order", "playlist"]
   "summary_gather_auto": readonly ["summary"]
   "summary_gather_noPlaylist": readonly []
   "gatherOrder_newest": readonly []
@@ -1134,7 +1140,7 @@ export type MessageParameters = {
   "set_exportFailed": readonly []
   "set_import": readonly []
   "set_importPrivate": readonly []
-  "set_importConfirm": readonly ["file", "count"]
+  "set_importConfirm": readonly ["count", "file"]
   "set_importButton": readonly []
   "set_imported": readonly []
   "set_importNewer": readonly []
@@ -1166,7 +1172,7 @@ export type MessageParameters = {
   "diag_checkLine": readonly []
   "diag_checkNoTab": readonly []
   "diag_openYouTube": readonly []
-  "diag_checked": readonly ["site", "done", "total"]
+  "diag_checked": readonly ["done", "site", "total"]
   "diag_checkFailed": readonly []
   "about_name": readonly []
   "about_formerly": readonly []
@@ -1200,13 +1206,13 @@ export type MessageParameters = {
   "badge_ticked": readonly []
   "firstRun_finish_done": readonly []
   "playing_save": readonly []
-  "playing_saveTo": readonly ["song", "playlist"]
+  "playing_saveTo": readonly ["playlist", "song"]
   "playing_failed": readonly []
   "playing_accountChanged": readonly []
   "playing_tabClosed": readonly []
   "playing_oneClick": readonly ["playlist"]
   "playing_firstPick": readonly []
-  "playing_artist": readonly ["title", "artist"]
+  "playing_artist": readonly ["artist", "title"]
 }
 export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: MessageParameters[K] } = {
   "firstRun_continue_one": ["count"],
@@ -1218,20 +1224,20 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "firstRun_shortcutSaves": ["key"],
   "copy_list_two": ["first", "second"],
   "copy_list_three": ["first", "second", "third"],
-  "copy_list_more": ["first", "second", "count"],
+  "copy_list_more": ["count", "first", "second"],
   "feedback_www_manual_untitled_pending": ["targets"],
   "feedback_www_manual_untitled_saved": ["targets"],
   "feedback_www_manual_untitled_removed": ["target"],
   "feedback_www_manual_untitled_first_pick": ["targets"],
   "feedback_www_manual_untitled_shortcut_set": ["shortcut", "target"],
   "feedback_www_manual_untitled_already_in": ["targets"],
-  "feedback_www_manual_untitled_no_playlist": ["shortcut", "account"],
+  "feedback_www_manual_untitled_no_playlist": ["account", "shortcut"],
   "feedback_www_manual_untitled_filtered": ["channel", "targets"],
   "feedback_www_manual_untitled_unknown_channel": ["targets"],
-  "feedback_www_manual_untitled_saved_filtered_one_one": ["saved", "filtered"],
-  "feedback_www_manual_untitled_saved_filtered_one_other": ["saved", "filtered"],
-  "feedback_www_manual_untitled_saved_filtered_other_one": ["saved", "filtered"],
-  "feedback_www_manual_untitled_saved_filtered_other_other": ["saved", "filtered"],
+  "feedback_www_manual_untitled_saved_filtered_one_one": ["filtered", "saved"],
+  "feedback_www_manual_untitled_saved_filtered_one_other": ["filtered", "saved"],
+  "feedback_www_manual_untitled_saved_filtered_other_one": ["filtered", "saved"],
+  "feedback_www_manual_untitled_saved_filtered_other_other": ["filtered", "saved"],
   "feedback_www_manual_untitled_saved_failed_signed_out_one": ["success"],
   "feedback_www_manual_untitled_failed_not_sent_one": ["targets"],
   "feedback_www_manual_untitled_saved_failed_not_sent_one": ["success", "targets"],
@@ -1252,40 +1258,40 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "feedback_www_manual_untitled_saved_failed_missing_other": ["success", "targets"],
   "feedback_www_manual_untitled_failed_full_other": ["targets"],
   "feedback_www_manual_untitled_saved_failed_full_other": ["success", "targets"],
-  "feedback_www_manual_named_pending": ["video", "targets"],
-  "feedback_www_manual_named_saved": ["video", "targets"],
-  "feedback_www_manual_named_removed": ["video", "target"],
-  "feedback_www_manual_named_first_pick": ["video", "targets"],
-  "feedback_www_manual_named_already_in": ["video", "targets"],
-  "feedback_www_manual_named_filtered": ["video", "channel", "targets"],
-  "feedback_www_manual_named_unknown_channel": ["video", "targets"],
-  "feedback_www_manual_named_saved_filtered_one_one": ["video", "saved", "filtered"],
-  "feedback_www_manual_named_saved_filtered_one_other": ["video", "saved", "filtered"],
-  "feedback_www_manual_named_saved_filtered_other_one": ["video", "saved", "filtered"],
-  "feedback_www_manual_named_saved_filtered_other_other": ["video", "saved", "filtered"],
-  "feedback_www_manual_named_saved_failed_signed_out_one": ["video", "success"],
-  "feedback_www_manual_named_failed_not_sent_one": ["video", "targets"],
-  "feedback_www_manual_named_saved_failed_not_sent_one": ["video", "success", "targets"],
-  "feedback_www_manual_named_failed_unconfirmed_one": ["video", "targets"],
-  "feedback_www_manual_named_saved_failed_unconfirmed_one": ["video", "success", "targets"],
-  "feedback_www_manual_named_failed_missing_one": ["video", "targets"],
-  "feedback_www_manual_named_saved_failed_missing_one": ["video", "success", "targets"],
-  "feedback_www_manual_named_failed_full_one": ["video", "targets"],
-  "feedback_www_manual_named_saved_failed_full_one": ["video", "success", "targets"],
+  "feedback_www_manual_named_pending": ["targets", "video"],
+  "feedback_www_manual_named_saved": ["targets", "video"],
+  "feedback_www_manual_named_removed": ["target", "video"],
+  "feedback_www_manual_named_first_pick": ["targets", "video"],
+  "feedback_www_manual_named_already_in": ["targets", "video"],
+  "feedback_www_manual_named_filtered": ["channel", "targets", "video"],
+  "feedback_www_manual_named_unknown_channel": ["targets", "video"],
+  "feedback_www_manual_named_saved_filtered_one_one": ["filtered", "saved", "video"],
+  "feedback_www_manual_named_saved_filtered_one_other": ["filtered", "saved", "video"],
+  "feedback_www_manual_named_saved_filtered_other_one": ["filtered", "saved", "video"],
+  "feedback_www_manual_named_saved_filtered_other_other": ["filtered", "saved", "video"],
+  "feedback_www_manual_named_saved_failed_signed_out_one": ["success", "video"],
+  "feedback_www_manual_named_failed_not_sent_one": ["targets", "video"],
+  "feedback_www_manual_named_saved_failed_not_sent_one": ["success", "targets", "video"],
+  "feedback_www_manual_named_failed_unconfirmed_one": ["targets", "video"],
+  "feedback_www_manual_named_saved_failed_unconfirmed_one": ["success", "targets", "video"],
+  "feedback_www_manual_named_failed_missing_one": ["targets", "video"],
+  "feedback_www_manual_named_saved_failed_missing_one": ["success", "targets", "video"],
+  "feedback_www_manual_named_failed_full_one": ["targets", "video"],
+  "feedback_www_manual_named_saved_failed_full_one": ["success", "targets", "video"],
   "feedback_www_manual_named_failed_refused_one": ["video"],
-  "feedback_www_manual_named_saved_failed_refused_one": ["video", "success", "targets"],
+  "feedback_www_manual_named_saved_failed_refused_one": ["success", "targets", "video"],
   "feedback_www_manual_named_failed_rate_limited_one": ["video"],
-  "feedback_www_manual_named_saved_failed_rate_limited_one": ["video", "success", "targets"],
-  "feedback_www_manual_named_saved_failed_account_changed_one": ["video", "success"],
-  "feedback_www_manual_named_saved_failed_account_refused_one": ["video", "success"],
+  "feedback_www_manual_named_saved_failed_rate_limited_one": ["success", "targets", "video"],
+  "feedback_www_manual_named_saved_failed_account_changed_one": ["success", "video"],
+  "feedback_www_manual_named_saved_failed_account_refused_one": ["success", "video"],
   "feedback_www_manual_named_failed_membership_unreadable_one": ["video"],
-  "feedback_www_manual_named_saved_failed_membership_unreadable_one": ["video", "success"],
-  "feedback_www_manual_named_failed_unrecognised_one": ["video", "targets"],
-  "feedback_www_manual_named_saved_failed_unrecognised_one": ["video", "success", "targets"],
-  "feedback_www_manual_named_failed_missing_other": ["video", "targets"],
-  "feedback_www_manual_named_saved_failed_missing_other": ["video", "success", "targets"],
-  "feedback_www_manual_named_failed_full_other": ["video", "targets"],
-  "feedback_www_manual_named_saved_failed_full_other": ["video", "success", "targets"],
+  "feedback_www_manual_named_saved_failed_membership_unreadable_one": ["success", "video"],
+  "feedback_www_manual_named_failed_unrecognised_one": ["targets", "video"],
+  "feedback_www_manual_named_saved_failed_unrecognised_one": ["success", "targets", "video"],
+  "feedback_www_manual_named_failed_missing_other": ["targets", "video"],
+  "feedback_www_manual_named_saved_failed_missing_other": ["success", "targets", "video"],
+  "feedback_www_manual_named_failed_full_other": ["targets", "video"],
+  "feedback_www_manual_named_saved_failed_full_other": ["success", "targets", "video"],
   "feedback_www_auto_untitled_saved": ["targets"],
   "feedback_www_auto_untitled_saved_failed_signed_out_one": ["success"],
   "feedback_www_auto_untitled_failed_not_sent_one": ["targets"],
@@ -1307,29 +1313,29 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "feedback_www_auto_untitled_saved_failed_missing_other": ["success", "targets"],
   "feedback_www_auto_untitled_failed_full_other": ["targets"],
   "feedback_www_auto_untitled_saved_failed_full_other": ["success", "targets"],
-  "feedback_www_auto_named_saved": ["video", "targets"],
-  "feedback_www_auto_named_saved_failed_signed_out_one": ["video", "success"],
-  "feedback_www_auto_named_failed_not_sent_one": ["video", "targets"],
-  "feedback_www_auto_named_saved_failed_not_sent_one": ["video", "success", "targets"],
-  "feedback_www_auto_named_failed_unconfirmed_one": ["video", "targets"],
-  "feedback_www_auto_named_saved_failed_unconfirmed_one": ["video", "success", "targets"],
-  "feedback_www_auto_named_failed_missing_one": ["video", "targets"],
-  "feedback_www_auto_named_saved_failed_missing_one": ["video", "success", "targets"],
-  "feedback_www_auto_named_failed_full_one": ["video", "targets"],
-  "feedback_www_auto_named_saved_failed_full_one": ["video", "success", "targets"],
+  "feedback_www_auto_named_saved": ["targets", "video"],
+  "feedback_www_auto_named_saved_failed_signed_out_one": ["success", "video"],
+  "feedback_www_auto_named_failed_not_sent_one": ["targets", "video"],
+  "feedback_www_auto_named_saved_failed_not_sent_one": ["success", "targets", "video"],
+  "feedback_www_auto_named_failed_unconfirmed_one": ["targets", "video"],
+  "feedback_www_auto_named_saved_failed_unconfirmed_one": ["success", "targets", "video"],
+  "feedback_www_auto_named_failed_missing_one": ["targets", "video"],
+  "feedback_www_auto_named_saved_failed_missing_one": ["success", "targets", "video"],
+  "feedback_www_auto_named_failed_full_one": ["targets", "video"],
+  "feedback_www_auto_named_saved_failed_full_one": ["success", "targets", "video"],
   "feedback_www_auto_named_failed_refused_one": ["video"],
-  "feedback_www_auto_named_saved_failed_refused_one": ["video", "success", "targets"],
+  "feedback_www_auto_named_saved_failed_refused_one": ["success", "targets", "video"],
   "feedback_www_auto_named_failed_rate_limited_one": ["video"],
-  "feedback_www_auto_named_saved_failed_rate_limited_one": ["video", "success", "targets"],
-  "feedback_www_auto_named_saved_failed_account_changed_one": ["video", "success"],
-  "feedback_www_auto_named_saved_failed_account_refused_one": ["video", "success"],
-  "feedback_www_auto_named_saved_failed_membership_unreadable_one": ["video", "success"],
-  "feedback_www_auto_named_failed_unrecognised_one": ["video", "targets"],
-  "feedback_www_auto_named_saved_failed_unrecognised_one": ["video", "success", "targets"],
-  "feedback_www_auto_named_failed_missing_other": ["video", "targets"],
-  "feedback_www_auto_named_saved_failed_missing_other": ["video", "success", "targets"],
-  "feedback_www_auto_named_failed_full_other": ["video", "targets"],
-  "feedback_www_auto_named_saved_failed_full_other": ["video", "success", "targets"],
+  "feedback_www_auto_named_saved_failed_rate_limited_one": ["success", "targets", "video"],
+  "feedback_www_auto_named_saved_failed_account_changed_one": ["success", "video"],
+  "feedback_www_auto_named_saved_failed_account_refused_one": ["success", "video"],
+  "feedback_www_auto_named_saved_failed_membership_unreadable_one": ["success", "video"],
+  "feedback_www_auto_named_failed_unrecognised_one": ["targets", "video"],
+  "feedback_www_auto_named_saved_failed_unrecognised_one": ["success", "targets", "video"],
+  "feedback_www_auto_named_failed_missing_other": ["targets", "video"],
+  "feedback_www_auto_named_saved_failed_missing_other": ["success", "targets", "video"],
+  "feedback_www_auto_named_failed_full_other": ["targets", "video"],
+  "feedback_www_auto_named_saved_failed_full_other": ["success", "targets", "video"],
   "feedback_music_manual_untitled_pending": ["targets"],
   "feedback_music_manual_untitled_saved": ["targets"],
   "feedback_music_manual_untitled_removed": ["target"],
@@ -1337,10 +1343,10 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "feedback_music_manual_untitled_already_in": ["targets"],
   "feedback_music_manual_untitled_filtered": ["channel", "targets"],
   "feedback_music_manual_untitled_unknown_channel": ["targets"],
-  "feedback_music_manual_untitled_saved_filtered_one_one": ["saved", "filtered"],
-  "feedback_music_manual_untitled_saved_filtered_one_other": ["saved", "filtered"],
-  "feedback_music_manual_untitled_saved_filtered_other_one": ["saved", "filtered"],
-  "feedback_music_manual_untitled_saved_filtered_other_other": ["saved", "filtered"],
+  "feedback_music_manual_untitled_saved_filtered_one_one": ["filtered", "saved"],
+  "feedback_music_manual_untitled_saved_filtered_one_other": ["filtered", "saved"],
+  "feedback_music_manual_untitled_saved_filtered_other_one": ["filtered", "saved"],
+  "feedback_music_manual_untitled_saved_filtered_other_other": ["filtered", "saved"],
   "feedback_music_manual_untitled_saved_failed_signed_out_one": ["success"],
   "feedback_music_manual_untitled_failed_not_sent_one": ["targets"],
   "feedback_music_manual_untitled_saved_failed_not_sent_one": ["success", "targets"],
@@ -1361,15 +1367,15 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "feedback_music_manual_untitled_saved_failed_missing_other": ["success", "targets"],
   "feedback_music_manual_untitled_failed_full_other": ["targets"],
   "feedback_music_manual_untitled_saved_failed_full_other": ["success", "targets"],
-  "feedback_music_manual_named_saved_failed_signed_out_one": ["video", "success"],
-  "feedback_music_manual_named_failed_unconfirmed_one": ["video", "targets"],
-  "feedback_music_manual_named_saved_failed_unconfirmed_one": ["video", "success", "targets"],
+  "feedback_music_manual_named_saved_failed_signed_out_one": ["success", "video"],
+  "feedback_music_manual_named_failed_unconfirmed_one": ["targets", "video"],
+  "feedback_music_manual_named_saved_failed_unconfirmed_one": ["success", "targets", "video"],
   "feedback_music_manual_named_failed_refused_one": ["video"],
-  "feedback_music_manual_named_saved_failed_refused_one": ["video", "success", "targets"],
+  "feedback_music_manual_named_saved_failed_refused_one": ["success", "targets", "video"],
   "feedback_music_manual_named_failed_rate_limited_one": ["video"],
-  "feedback_music_manual_named_saved_failed_rate_limited_one": ["video", "success", "targets"],
-  "feedback_music_manual_named_failed_unrecognised_one": ["video", "targets"],
-  "feedback_music_manual_named_saved_failed_unrecognised_one": ["video", "success", "targets"],
+  "feedback_music_manual_named_saved_failed_rate_limited_one": ["success", "targets", "video"],
+  "feedback_music_manual_named_failed_unrecognised_one": ["targets", "video"],
+  "feedback_music_manual_named_saved_failed_unrecognised_one": ["success", "targets", "video"],
   "feedback_music_auto_untitled_saved": ["targets"],
   "feedback_music_auto_untitled_saved_failed_signed_out_one": ["success"],
   "feedback_music_auto_untitled_failed_not_sent_one": ["targets"],
@@ -1391,15 +1397,15 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "feedback_music_auto_untitled_saved_failed_missing_other": ["success", "targets"],
   "feedback_music_auto_untitled_failed_full_other": ["targets"],
   "feedback_music_auto_untitled_saved_failed_full_other": ["success", "targets"],
-  "feedback_music_auto_named_saved_failed_signed_out_one": ["video", "success"],
-  "feedback_music_auto_named_failed_unconfirmed_one": ["video", "targets"],
-  "feedback_music_auto_named_saved_failed_unconfirmed_one": ["video", "success", "targets"],
+  "feedback_music_auto_named_saved_failed_signed_out_one": ["success", "video"],
+  "feedback_music_auto_named_failed_unconfirmed_one": ["targets", "video"],
+  "feedback_music_auto_named_saved_failed_unconfirmed_one": ["success", "targets", "video"],
   "feedback_music_auto_named_failed_refused_one": ["video"],
-  "feedback_music_auto_named_saved_failed_refused_one": ["video", "success", "targets"],
+  "feedback_music_auto_named_saved_failed_refused_one": ["success", "targets", "video"],
   "feedback_music_auto_named_failed_rate_limited_one": ["video"],
-  "feedback_music_auto_named_saved_failed_rate_limited_one": ["video", "success", "targets"],
-  "feedback_music_auto_named_failed_unrecognised_one": ["video", "targets"],
-  "feedback_music_auto_named_saved_failed_unrecognised_one": ["video", "success", "targets"],
+  "feedback_music_auto_named_saved_failed_rate_limited_one": ["success", "targets", "video"],
+  "feedback_music_auto_named_failed_unrecognised_one": ["targets", "video"],
+  "feedback_music_auto_named_saved_failed_unrecognised_one": ["success", "targets", "video"],
   "picker_gatherSubtitle": ["account"],
   "picker_known_one": ["count"],
   "picker_known_other": ["count"],
@@ -1451,23 +1457,23 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "channelFilter_offKeptAllowed_one": ["count"],
   "channelFilter_offKeptAllowed_other": ["count"],
   "channelFilter_emptyAllow": ["playlist"],
-  "channelFilter_chip": ["title", "handle"],
+  "channelFilter_chip": ["handle", "title"],
   "channelFilter_listCurrent_allow": ["channel"],
   "channelFilter_listCurrent_deny": ["channel"],
-  "channelFilter_turnOnAllow_one": ["playlist", "count"],
-  "channelFilter_turnOnAllow_other": ["playlist", "count"],
-  "channelFilter_turnOnDeny_one": ["playlist", "count"],
-  "channelFilter_turnOnDeny_other": ["playlist", "count"],
+  "channelFilter_turnOnAllow_one": ["count", "playlist"],
+  "channelFilter_turnOnAllow_other": ["count", "playlist"],
+  "channelFilter_turnOnDeny_one": ["count", "playlist"],
+  "channelFilter_turnOnDeny_other": ["count", "playlist"],
   "channelFilter_usesAllow": ["playlist"],
   "channelFilter_usesDeny": ["playlist"],
-  "shortcuts_presetNoKey": ["other", "key"],
+  "shortcuts_presetNoKey": ["key", "other"],
   "recorder_record": ["title"],
   "recorder_clear": ["title"],
-  "recorder_conflict_one": ["others", "key"],
-  "recorder_conflict_other": ["others", "key"],
-  "recorder_clash_site": ["site", "key", "action"],
-  "recorder_clash_browser": ["browser", "key", "action"],
-  "recorder_clash_command": ["key", "command"],
+  "recorder_conflict_one": ["key", "others"],
+  "recorder_conflict_other": ["key", "others"],
+  "recorder_clash_site": ["action", "key", "site"],
+  "recorder_clash_browser": ["action", "browser", "key"],
+  "recorder_clash_command": ["command", "key"],
   "musicHint_unavailable": ["action", "kind"],
   "musicHint_anyTabNoQuickSave": ["account"],
   "musicToast_playNext": ["title"],
@@ -1501,21 +1507,7 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "musicAction_mixTip": [],
   "musicTip_key": ["action", "key"],
   "musicTip_named": ["action", "title"],
-  "musicTip_namedKey": ["action", "title", "key"],
-  "access_musicShortcutsDenied": [],
-  "access_musicKeysMissing": [],
-  "anyTab_noVideoTab": [],
-  "anyTab_noMusicTab": [],
-  "anyTab_noMusicAccess": [],
-  "anyTab_musicOff": [],
-  "anyTab_musicUnanswered": [],
-  "breakage_autoAdd": [],
-  "breakage_queueButton": [],
-  "breakage_cardMenu": [],
-  "breakage_accountKeys_www": [],
-  "breakage_accountKeys_music": [],
-  "breakage_site_www": [],
-  "breakage_site_music": [],
+  "musicTip_namedKey": ["action", "key", "title"],
   "gather_player_one": ["count"],
   "gather_player_other": ["count"],
   "gather_playerOverflow": ["count"],
@@ -1537,7 +1529,7 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "gather_toastClosed_other": ["count", "playlist"],
   "gather_toastAuto_one": ["count", "playlist"],
   "gather_toastAuto_other": ["count", "playlist"],
-  "gather_checking": ["index", "count"],
+  "gather_checking": ["count", "index"],
   "gather_saving_one": ["count"],
   "gather_saving_other": ["count"],
   "gather_noPlaylist": ["account"],
@@ -1577,7 +1569,7 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "recovery_job_removal": ["account"],
   "recovery_item_autoAdd": ["playlist"],
   "recovery_item_filter": ["playlist"],
-  "recovery_item_shortcut": ["shortcut", "playlist"],
+  "recovery_item_shortcut": ["playlist", "shortcut"],
   "recovery_goesTo": ["account"],
   "recovery_setUpFirst": ["account"],
   "recovery_filterClash": ["account", "playlist"],
@@ -1597,8 +1589,8 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "autoAddList_pill_kept": ["count"],
   "autoAddList_percent": ["percent"],
   "autoAddList_nothingSaved": ["account"],
-  "autoAddList_syncOnly_one": ["count", "account"],
-  "autoAddList_syncOnly_other": ["count", "account"],
+  "autoAddList_syncOnly_one": ["account", "count"],
+  "autoAddList_syncOnly_other": ["account", "count"],
   "health_partly": ["gap"],
   "health_gap_destination": ["destination"],
   "pop_unfold": ["feature"],
@@ -1622,7 +1614,7 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "summary_quickSave_set": ["playlist"],
   "summary_gather_player": ["order"],
   "summary_gather_queue": ["order"],
-  "summary_gather_playlist": ["playlist", "order"],
+  "summary_gather_playlist": ["order", "playlist"],
   "summary_gather_auto": ["summary"],
   "summary_more": ["count"],
   "music_saveSet": ["playlist"],
@@ -1645,14 +1637,14 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "set_accounts_removeEvery": ["account"],
   "set_accounts_unclaimedLine_one": ["count"],
   "set_accounts_unclaimedLine_other": ["count"],
-  "set_importConfirm": ["file", "count"],
+  "set_importConfirm": ["count", "file"],
   "diag_version": ["version"],
-  "diag_checked": ["site", "done", "total"],
+  "diag_checked": ["done", "site", "total"],
   "about_credit": ["link"],
   "report_opensWith": ["values"],
   "badge_notWorking_one": ["feature"],
   "badge_notWorking_other": ["count"],
-  "playing_saveTo": ["song", "playlist"],
+  "playing_saveTo": ["playlist", "song"],
   "playing_oneClick": ["playlist"],
-  "playing_artist": ["title", "artist"],
+  "playing_artist": ["artist", "title"],
 }

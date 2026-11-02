@@ -457,13 +457,13 @@
     "message": "$FIRST$, $SECOND$ and $COUNT$ more",
     "placeholders": {
       "first": {
-        "content": "$1"
-      },
-      "second": {
         "content": "$2"
       },
-      "count": {
+      "second": {
         "content": "$3"
+      },
+      "count": {
+        "content": "$1"
       }
     }
   },
@@ -525,10 +525,10 @@
     "message": "$SHORTCUT$ has no playlist on $ACCOUNT$ yet.",
     "placeholders": {
       "shortcut": {
-        "content": "$1"
+        "content": "$2"
       },
       "account": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -555,10 +555,10 @@
     "message": "Auto-added this video to $SAVED$ playlist · filtered out of $FILTERED$ playlist",
     "placeholders": {
       "saved": {
-        "content": "$1"
+        "content": "$2"
       },
       "filtered": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -566,10 +566,10 @@
     "message": "Auto-added this video to $SAVED$ playlist · filtered out of $FILTERED$ playlists",
     "placeholders": {
       "saved": {
-        "content": "$1"
+        "content": "$2"
       },
       "filtered": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -577,10 +577,10 @@
     "message": "Auto-added this video to $SAVED$ playlists · filtered out of $FILTERED$ playlist",
     "placeholders": {
       "saved": {
-        "content": "$1"
+        "content": "$2"
       },
       "filtered": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -588,10 +588,10 @@
     "message": "Auto-added this video to $SAVED$ playlists · filtered out of $FILTERED$ playlists",
     "placeholders": {
       "saved": {
-        "content": "$1"
+        "content": "$2"
       },
       "filtered": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -804,10 +804,10 @@
     "message": "Saving “$VIDEO$” to $TARGETS$…",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -815,10 +815,10 @@
     "message": "Saved “$VIDEO$” to $TARGETS$",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -826,10 +826,10 @@
     "message": "Removed “$VIDEO$” from $TARGET$",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "target": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -837,10 +837,10 @@
     "message": "Saved “$VIDEO$” to $TARGETS$. One click now saves there.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -848,10 +848,10 @@
     "message": "“$VIDEO$” is already in $TARGETS$",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -859,13 +859,13 @@
     "message": "Didn't auto-add “$VIDEO$”, because $CHANNEL$ is filtered out of $TARGETS$",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "channel": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -873,10 +873,10 @@
     "message": "Didn't auto-add “$VIDEO$” to $TARGETS$, because Perchling couldn't tell which channel it's from.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -884,13 +884,13 @@
     "message": "Auto-added “$VIDEO$” to $SAVED$ playlist · filtered out of $FILTERED$ playlist",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "saved": {
         "content": "$2"
       },
       "filtered": {
-        "content": "$3"
+        "content": "$1"
       }
     }
   },
@@ -898,13 +898,13 @@
     "message": "Auto-added “$VIDEO$” to $SAVED$ playlist · filtered out of $FILTERED$ playlists",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "saved": {
         "content": "$2"
       },
       "filtered": {
-        "content": "$3"
+        "content": "$1"
       }
     }
   },
@@ -912,13 +912,13 @@
     "message": "Auto-added “$VIDEO$” to $SAVED$ playlists · filtered out of $FILTERED$ playlist",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "saved": {
         "content": "$2"
       },
       "filtered": {
-        "content": "$3"
+        "content": "$1"
       }
     }
   },
@@ -926,13 +926,13 @@
     "message": "Auto-added “$VIDEO$” to $SAVED$ playlists · filtered out of $FILTERED$ playlists",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "saved": {
         "content": "$2"
       },
       "filtered": {
-        "content": "$3"
+        "content": "$1"
       }
     }
   },
@@ -940,10 +940,10 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Sign in to YouTube to save videos.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -951,10 +951,10 @@
     "message": "Couldn't save “$VIDEO$” to $TARGETS$. Check your connection.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -962,13 +962,13 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$. Check your connection.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -976,10 +976,10 @@
     "message": "Couldn't confirm “$VIDEO$” was saved to $TARGETS$. YouTube didn't answer.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -987,13 +987,13 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't confirm it was added to $TARGETS$. YouTube didn't answer.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1001,10 +1001,10 @@
     "message": "Couldn't save “$VIDEO$”, because $TARGETS$ doesn't exist anymore.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1012,13 +1012,13 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because it doesn't exist anymore.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1026,10 +1026,10 @@
     "message": "Couldn't save “$VIDEO$”, because $TARGETS$ is full.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1037,13 +1037,13 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because it's full.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1059,13 +1059,13 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because YouTube doesn't allow it.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1081,13 +1081,13 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$. YouTube is limiting requests, so try again in a minute.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1095,10 +1095,10 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Your YouTube account changed in another tab. Reload this page to keep saving here.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1106,10 +1106,10 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. YouTube doesn't let this account save to playlists.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1125,10 +1125,10 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't check “$VIDEO$”'s playlists, so auto-add didn't run.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1136,10 +1136,10 @@
     "message": "Couldn't save “$VIDEO$” to $TARGETS$. Use YouTube's own Save for now.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1147,13 +1147,13 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$. Use YouTube's own Save for now.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1161,10 +1161,10 @@
     "message": "Couldn't save “$VIDEO$”, because $TARGETS$ don't exist anymore.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1172,13 +1172,13 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because they don't exist anymore.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1186,10 +1186,10 @@
     "message": "Couldn't save “$VIDEO$”, because $TARGETS$ are full.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1197,13 +1197,13 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because they're full.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1412,10 +1412,10 @@
     "message": "Auto-added “$VIDEO$” to $TARGETS$",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1423,10 +1423,10 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Sign in to YouTube to save videos.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1434,10 +1434,10 @@
     "message": "Couldn't auto-add “$VIDEO$” to $TARGETS$. Check your connection.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1445,13 +1445,13 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$. Check your connection.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1459,10 +1459,10 @@
     "message": "Couldn't confirm “$VIDEO$” was auto-added to $TARGETS$. YouTube didn't answer.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1470,13 +1470,13 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't confirm it was added to $TARGETS$. YouTube didn't answer.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1484,10 +1484,10 @@
     "message": "Couldn't auto-add “$VIDEO$”, because $TARGETS$ doesn't exist anymore.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1495,13 +1495,13 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because it doesn't exist anymore.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1509,10 +1509,10 @@
     "message": "Couldn't auto-add “$VIDEO$”, because $TARGETS$ is full.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1520,13 +1520,13 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because it's full.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1542,13 +1542,13 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because YouTube doesn't allow it.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1564,13 +1564,13 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$. YouTube is limiting requests, so try again in a minute.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1578,10 +1578,10 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Your YouTube account changed in another tab. Reload this page to keep saving here.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1589,10 +1589,10 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. YouTube doesn't let this account save to playlists.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1600,10 +1600,10 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't check “$VIDEO$”'s playlists, so auto-add didn't run.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1611,10 +1611,10 @@
     "message": "Couldn't auto-add “$VIDEO$” to $TARGETS$. Use YouTube's own Save for now.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1622,13 +1622,13 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$. Use YouTube's own Save for now.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1636,10 +1636,10 @@
     "message": "Couldn't auto-add “$VIDEO$”, because $TARGETS$ don't exist anymore.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1647,13 +1647,13 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because they don't exist anymore.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1661,10 +1661,10 @@
     "message": "Couldn't auto-add “$VIDEO$”, because $TARGETS$ are full.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1672,13 +1672,13 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because they're full.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -1745,10 +1745,10 @@
     "message": "Auto-added this song to $SAVED$ playlist · filtered out of $FILTERED$ playlist",
     "placeholders": {
       "saved": {
-        "content": "$1"
+        "content": "$2"
       },
       "filtered": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1756,10 +1756,10 @@
     "message": "Auto-added this song to $SAVED$ playlist · filtered out of $FILTERED$ playlists",
     "placeholders": {
       "saved": {
-        "content": "$1"
+        "content": "$2"
       },
       "filtered": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1767,10 +1767,10 @@
     "message": "Auto-added this song to $SAVED$ playlists · filtered out of $FILTERED$ playlist",
     "placeholders": {
       "saved": {
-        "content": "$1"
+        "content": "$2"
       },
       "filtered": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1778,10 +1778,10 @@
     "message": "Auto-added this song to $SAVED$ playlists · filtered out of $FILTERED$ playlists",
     "placeholders": {
       "saved": {
-        "content": "$1"
+        "content": "$2"
       },
       "filtered": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1988,10 +1988,10 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Sign in to YouTube Music to save songs.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1999,10 +1999,10 @@
     "message": "Couldn't confirm “$VIDEO$” was saved to $TARGETS$. YouTube Music didn't answer.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -2010,13 +2010,13 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't confirm it was added to $TARGETS$. YouTube Music didn't answer.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -2032,13 +2032,13 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because YouTube Music doesn't allow it.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -2054,13 +2054,13 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$. YouTube Music is limiting requests, so try again in a minute.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -2068,10 +2068,10 @@
     "message": "Couldn't save “$VIDEO$” to $TARGETS$. Try YouTube Music's ⋮ menu.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -2079,13 +2079,13 @@
     "message": "Saved “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$. Try YouTube Music's ⋮ menu.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -2294,10 +2294,10 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Sign in to YouTube Music to save songs.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -2305,10 +2305,10 @@
     "message": "Couldn't confirm “$VIDEO$” was auto-added to $TARGETS$. YouTube Music didn't answer.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -2316,13 +2316,13 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't confirm it was added to $TARGETS$. YouTube Music didn't answer.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -2338,13 +2338,13 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$, because YouTube Music doesn't allow it.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -2360,13 +2360,13 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$. YouTube Music is limiting requests, so try again in a minute.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -2374,10 +2374,10 @@
     "message": "Couldn't auto-add “$VIDEO$” to $TARGETS$. Try YouTube Music's ⋮ menu.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$2"
       },
       "targets": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -2385,13 +2385,13 @@
     "message": "Auto-added “$VIDEO$” to $SUCCESS$. Couldn't add it to $TARGETS$. Try YouTube Music's ⋮ menu.",
     "placeholders": {
       "video": {
-        "content": "$1"
+        "content": "$3"
       },
       "success": {
-        "content": "$2"
+        "content": "$1"
       },
       "targets": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -3212,10 +3212,10 @@
     "message": "$TITLE$ · $HANDLE$",
     "placeholders": {
       "title": {
-        "content": "$1"
+        "content": "$2"
       },
       "handle": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -3239,10 +3239,10 @@
     "message": "Turn on Allow only for $PLAYLIST$? This clears its $COUNT$ denied channel.",
     "placeholders": {
       "playlist": {
-        "content": "$1"
+        "content": "$2"
       },
       "count": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -3250,10 +3250,10 @@
     "message": "Turn on Allow only for $PLAYLIST$? This clears its $COUNT$ denied channels.",
     "placeholders": {
       "playlist": {
-        "content": "$1"
+        "content": "$2"
       },
       "count": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -3261,10 +3261,10 @@
     "message": "Turn on Deny for $PLAYLIST$? This clears its $COUNT$ allowed channel.",
     "placeholders": {
       "playlist": {
-        "content": "$1"
+        "content": "$2"
       },
       "count": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -3272,10 +3272,10 @@
     "message": "Turn on Deny for $PLAYLIST$? This clears its $COUNT$ allowed channels.",
     "placeholders": {
       "playlist": {
-        "content": "$1"
+        "content": "$2"
       },
       "count": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -3320,10 +3320,10 @@
     "message": "No key, because $OTHER$ uses $KEY$",
     "placeholders": {
       "other": {
-        "content": "$1"
+        "content": "$2"
       },
       "key": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -3383,10 +3383,10 @@
     "message": "$OTHERS$ already uses $KEY$.",
     "placeholders": {
       "others": {
-        "content": "$1"
+        "content": "$2"
       },
       "key": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -3394,10 +3394,10 @@
     "message": "$OTHERS$ already use $KEY$.",
     "placeholders": {
       "others": {
-        "content": "$1"
+        "content": "$2"
       },
       "key": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -3414,13 +3414,13 @@
     "message": "$SITE$ uses $KEY$ for $ACTION$. This shortcut replaces it on $SITE$.",
     "placeholders": {
       "site": {
-        "content": "$1"
+        "content": "$3"
       },
       "key": {
         "content": "$2"
       },
       "action": {
-        "content": "$3"
+        "content": "$1"
       }
     }
   },
@@ -3428,13 +3428,13 @@
     "message": "$BROWSER$ uses $KEY$ to $ACTION$. This shortcut replaces it on YouTube pages.",
     "placeholders": {
       "browser": {
-        "content": "$1"
-      },
-      "key": {
         "content": "$2"
       },
-      "action": {
+      "key": {
         "content": "$3"
+      },
+      "action": {
+        "content": "$1"
       }
     }
   },
@@ -3442,10 +3442,10 @@
     "message": "Your browser uses $KEY$ for $COMMAND$ (Keys from any tab), so this shortcut never reaches the page.",
     "placeholders": {
       "key": {
-        "content": "$1"
+        "content": "$2"
       },
       "command": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -3849,10 +3849,10 @@
         "content": "$1"
       },
       "title": {
-        "content": "$2"
+        "content": "$3"
       },
       "key": {
-        "content": "$3"
+        "content": "$2"
       }
     }
   },
@@ -4112,10 +4112,10 @@
     "message": "Checking $INDEX$ of $COUNT$…",
     "placeholders": {
       "index": {
-        "content": "$1"
+        "content": "$2"
       },
       "count": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -4663,10 +4663,10 @@
     "message": "Shortcut $SHORTCUT$: $PLAYLIST$",
     "placeholders": {
       "shortcut": {
-        "content": "$1"
+        "content": "$2"
       },
       "playlist": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -5009,10 +5009,10 @@
     "message": "$COUNT$ auto-add playlist · Open YouTube as $ACCOUNT$ to see it",
     "placeholders": {
       "count": {
-        "content": "$1"
+        "content": "$2"
       },
       "account": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -5020,10 +5020,10 @@
     "message": "$COUNT$ auto-add playlists · Open YouTube as $ACCOUNT$ to see them",
     "placeholders": {
       "count": {
-        "content": "$1"
+        "content": "$2"
       },
       "account": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -5437,10 +5437,10 @@
     "message": "Into $PLAYLIST$ · $ORDER$",
     "placeholders": {
       "playlist": {
-        "content": "$1"
+        "content": "$2"
       },
       "order": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -6149,10 +6149,10 @@
     "message": "Import settings from $FILE$? Your shared settings, and the setups of the $COUNT$ accounts in the file, are replaced. Other accounts' setups are kept.",
     "placeholders": {
       "file": {
-        "content": "$1"
+        "content": "$2"
       },
       "count": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -6258,10 +6258,10 @@
     "message": "$DONE$ of $TOTAL$ reads answered on $SITE$.",
     "placeholders": {
       "site": {
-        "content": "$1"
+        "content": "$2"
       },
       "done": {
-        "content": "$2"
+        "content": "$1"
       },
       "total": {
         "content": "$3"
@@ -6391,10 +6391,10 @@
     "message": "Save $SONG$ to $PLAYLIST$",
     "placeholders": {
       "song": {
-        "content": "$1"
+        "content": "$2"
       },
       "playlist": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -6422,10 +6422,10 @@
     "message": "$TITLE$ · $ARTIST$",
     "placeholders": {
       "title": {
-        "content": "$1"
+        "content": "$2"
       },
       "artist": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   }

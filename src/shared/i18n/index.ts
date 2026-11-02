@@ -1,4 +1,4 @@
-import { messagePlaceholders, type MessageParameters } from "./parameters"
+import type { MessageParameters } from "./parameters"
 
 export type MessageKey = keyof MessageParameters
 export type MessageValues<K extends MessageKey> = { readonly [Name in MessageParameters[K][number]]: string }
@@ -45,19 +45,20 @@ export function createI18n(native: NativeMessagePort, catalogue: MessageCatalogu
 }
 
 /**
- * For page scripts, which can't carry the whole catalogue. Placeholder names come from `messagePlaceholders`,
- * whose order is each message's placeholder order. Canonical English text isn't available here.
+ * For page scripts, which can't carry the whole catalogue. The catalogue numbers each message's placeholders
+ * in name order (scripts/generate-message-parameters.ts), so the sorted value names are the substitution order.
+ * Canonical English text isn't available here.
  */
 export function createSiteI18n(native: NativeMessagePort, locale = "en"): I18n {
-  return localized(native, key => messagePlaceholders[key] ?? [], () => { throw new Error("Canonical text is for extension pages") }, locale)
+  return localized(native, (_key, values) => Object.keys(values).sort(), () => { throw new Error("Canonical text is for extension pages") }, locale)
 }
 
-function localized(native: NativeMessagePort, placeholderNames: (key: MessageKey) => readonly string[], canonicalText: (key: SimpleMessageKey) => string, locale: string) {
+function localized(native: NativeMessagePort, placeholderNames: (key: MessageKey, values: object) => readonly string[], canonicalText: (key: SimpleMessageKey) => string, locale: string) {
   const plurals = new Intl.PluralRules(locale)
   const numbers = new Intl.NumberFormat(locale, { useGrouping: false, maximumFractionDigits: 20 })
   function message<K extends MessageKey, const P extends MessageValues<K>>(key: K, ...args: Arguments<K, P>): string {
     const values: object = args[0] ?? {}
-    const placeholders = placeholderNames(key)
+    const placeholders = placeholderNames(key, values)
     if (Object.keys(values).length !== placeholders.length) throw new Error(`Invalid localization values ${key}`)
     const substitutions = placeholders.map(name => {
       const value: unknown = Reflect.get(values, name)
