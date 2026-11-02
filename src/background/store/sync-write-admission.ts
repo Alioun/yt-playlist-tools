@@ -141,6 +141,9 @@ export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
     } else if (remote.json.gen !== state.pushed[name] || raw.gen === state.pushed[name]) return unavailable
     if (raw.gen !== state.pushed[name]) documents.set(name, record)
   }
+  // SYNC-16: a mark or label refresh saved past the quota waits outside admission, so it never blocks anything else.
+  const waiting = new Map<string, SyncDocumentRecord>()
+  for (const [name, record] of documents) if (state.deferred?.[name] === record.gen) { waiting.set(name, record); documents.delete(name) }
   if (intent.kind === "unchanged") {
     const remote = remotes.get(documentKey(intent.key))
     return !Object.hasOwn(local, documentKey(intent.key)) && remote && complete(remote) ? unavailable : { kind: "unchanged" }
@@ -168,6 +171,7 @@ export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
     if (!complete(candidate)) return invalid
     documents.set(name, { key: item.key, name,
       gen: candidate.kind === "value" ? candidate.value.document.gen : candidate.document.gen, document: item.document })
+    waiting.delete(name)
   }
   const set = new Map<string, JsonValue>()
   for (const [name, outgoing] of documents) {
@@ -180,10 +184,28 @@ export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
       set.set(item.key, item.value)
     }
   }
-  const planned = { kind: "planned", items: [...set].map(([key, value]) => ({ key, value })), sent: [...documents.values()], repairs, metadata: rawMeta } as const
-  if (intent.kind === "flush" && set.size === 0) return planned
-  const projection = projectSyncWrite({ current, set: [...set].map(([key, value]) => ({ key, value })),
-    limits: intent.kind === "flush" || input.allowance === "headroom" ? "quota" : "budget" })
-  if (projection.kind === "invalid") return unavailable
-  return projection.kind === "full" ? { kind: "refused", reason: "sync-full" } : planned
+  let items: readonly SyncItem[] = [...set].map(([key, value]) => ({ key, value }))
+  const sent = [...documents.values()]
+  if (intent.kind !== "flush" || set.size > 0) {
+    const projection = projectSyncWrite({ current, set: [...set].map(([key, value]) => ({ key, value })),
+      limits: intent.kind === "flush" || input.allowance === "headroom" ? "quota" : "budget" })
+    if (projection.kind === "invalid") return unavailable
+    if (projection.kind === "full") return { kind: "refused", reason: "sync-full" }
+  }
+  // A flush adds each waiting document that now fits the quota, in key order, and leaves the rest for a later flush.
+  if (intent.kind === "flush") for (const name of [...waiting.keys()].sort()) {
+    const record = waiting.get(name)!, encoded = encodeSyncDocument(record)
+    if (encoded.kind !== "encoded") continue
+    const next = [...items, ...encoded.encoded.items]
+    if (projectSyncWrite({ current, set: next, limits: "quota" }).kind !== "fits") continue
+    items = next
+    sent.push(record)
+  }
+  return { kind: "planned", items, sent, repairs, metadata: rawMeta }
+}
+
+/** Saves an automatic update past the quota locally, to push once room frees up (SYNC-16). Acknowledging its push drops it. */
+export function deferSyncDocument(history: JsonObject, name: string, gen: string): JsonObject {
+  const deferred = jsonObject(history.deferred) ? history.deferred : {}
+  return { ...history, deferred: { ...deferred, [name]: gen } }
 }

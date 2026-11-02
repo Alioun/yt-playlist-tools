@@ -13,6 +13,7 @@ const opaqueWrite = object<SyncOpaqueWrite>({
 export const decodeSyncState: (raw: unknown) => SyncState = object<SyncState>({
   joined: nullable(nonempty),
   pushed: dictionary(() => true, nonempty),
+  deferred: optional(dictionary(() => true, nonempty)),
   status: oneOf("off", "joining", "ok", "full", "update-needed", "waiting"),
   editedSinceOff: boolean,
   everEdited: optional(boolean),

@@ -3,7 +3,7 @@ import { DOCUMENT_VERSION, decodeDocument, decodeSetup, documentKey, type Accoun
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import type { ChangeResult } from "../../shared/contracts/results"
 import type { executeSharedSetting } from "./shared-setting-execution"
-import { sameSyncJson } from "./sync-write-admission"
+import { deferSyncDocument, sameSyncJson } from "./sync-write-admission"
 import { prepareDocumentBody } from "./write-preparation"
 import { planAccountDocumentWrite, captureAccountRemoval, type RemovalCapture, type RemovalResult } from "./account-removal-execution"
 import { planSetupDestination, readAccountSetup, type AccountSetupView, type SetupDestinationChange, type SetupDestinationPlan } from "./setup-edit"
@@ -43,7 +43,7 @@ export async function executeSetupDestination(deps: SetupEditPorts, change: Setu
   return executeSetupEdit(deps, change.acct, records => planSetupDestination({ records, change }))
 }
 
-/** `headroom` admits a label refresh or a mark into the synced headroom (SYNC-16). */
+/** `headroom` admits a label refresh or a mark into the synced headroom, and past it keeps the edit here until room frees up (SYNC-16). */
 export async function executeSetupEdit(deps: SetupEditPorts, acct: AccountKey, planEdit: (records: JsonObject) => SetupDestinationPlan,
   allowance?: "headroom"): Promise<SetupDestinationResult> {
   const invalid = { kind: "result", result: { refused: "invalid" } } as const
@@ -98,7 +98,9 @@ export async function executeSetupEdit(deps: SetupEditPorts, acct: AccountKey, p
       const admission = planAccountDocumentWrite({ local: before, sync: await deps.sync.get(), allowance, intent: { kind: "changed", key: plan.key, document: envelope } })
       if (deps.disposed()) return stopped
       if (admission.kind === "unavailable") return unavailable
-      if (admission.kind === "refused") return { kind: "result", result: { refused: admission.reason } }
+      if (admission.kind === "refused" && !(admission.reason === "sync-full" && allowance === "headroom" && jsonObject(before.sync))) return { kind: "result", result: { refused: admission.reason } }
+      // SYNC-16: past the browsers' own limit, a mark or label refresh stays in this browser until room frees up.
+      if (admission.kind === "refused" && jsonObject(before.sync)) items.sync = deferSyncDocument(before.sync, name, envelope.gen)
       if (admission.kind === "planned" && ready.history) {
         if (!jsonObject(before.sync)) return unavailable
         const repaired = deps.repairHistory(before.sync, admission.repairs)

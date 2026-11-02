@@ -44,7 +44,7 @@ import { changeFilterChannel, changeFilterSetting, refreshChannelLabel, type Cha
 import { executeDeviceSetting } from "./device-setting"
 import { executeUpgradeNoteFlag, type UpgradeNoteFlag, type UpgradeNoteFlagResult } from "./upgrade-note-flag"
 import type { DeviceSettingAnswer, DeviceSettingChange } from "../../shared/contracts/ui-pages"
-import { planSyncWrite, sameSyncJson, type SyncDocumentRecord } from "./sync-write-admission"
+import { deferSyncDocument, planSyncWrite, sameSyncJson, type SyncDocumentRecord } from "./sync-write-admission"
 import { projectSyncWrite, readSyncDocument } from "./sync-codec"
 import { readSyncInventory } from "./sync-inventory"
 import { prepareDocumentBody } from "./write-preparation"
@@ -263,7 +263,13 @@ function repairedHistory(raw: JsonObject, repairs: readonly SyncDocumentRecord[]
   if (!isJsonObject(raw.pushed)) throw new TypeError("Missing raw pushed history")
   const pushed = { ...raw.pushed }
   for (const record of pending) Object.defineProperty(pushed, record.name, { value: record.gen, enumerable: true, writable: true, configurable: true })
-  const next = { ...raw, pushed }
+  const next: JsonObject = { ...raw, pushed }
+  // An acknowledged document no longer waits for room (SYNC-16).
+  if (isJsonObject(raw.deferred) && pending.some(record => Object.hasOwn(raw.deferred as JsonObject, record.name))) {
+    const deferred = Object.fromEntries(Object.entries(raw.deferred).filter(([name]) => !pending.some(record => record.name === name)))
+    if (Object.keys(deferred).length) next.deferred = deferred
+    else delete next.deferred
+  }
   if (!isJsonObject(next)) throw new TypeError("Writer produced a non-JSON history")
   decodeSyncState(next)
   return next
@@ -1683,7 +1689,8 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
           kind: "changed", key: { kind: "filter", acct: change.acct, playlist: change.playlist }, document: envelope
         } })
         if (admission.kind === "unavailable") return { kind: "unavailable", reason: "sync-writer-required" }
-        if (admission.kind === "refused") return { kind: "result", result: { refused: admission.reason } }
+        if (admission.kind === "refused" && !(admission.reason === "sync-full" && change.allowance === "headroom" && history)) return { kind: "result", result: { refused: admission.reason } }
+        if (admission.kind === "refused" && history) items.sync = deferSyncDocument(history.raw, filterKey, envelope.gen)
         if (admission.kind === "planned" && history) {
           const repaired = repairedHistory(history.raw, admission.repairs)
           if (repaired) items.sync = repaired

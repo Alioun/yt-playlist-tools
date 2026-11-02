@@ -8,7 +8,7 @@ type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B 
 type Check<T extends true> = T
 export type AdmissionProofs = [
   Check<Equal<typeof planSyncWrite, (input: SyncWritePlanInput) => SyncWritePlan>>,
-  Check<Equal<keyof typeof import("./sync-write-admission"), "planSyncWrite" | "sameSyncJson">>,
+  Check<Equal<keyof typeof import("./sync-write-admission"), "planSyncWrite" | "sameSyncJson" | "deferSyncDocument">>,
   Check<Equal<SyncWritePlanInput, {
     readonly local: Readonly<Record<string, unknown>>
     readonly sync: Readonly<Record<string, unknown>>
@@ -246,4 +246,18 @@ test("a user's change must fit the budget, while a label refresh, a mark or a fl
   const overQuota = { ...f.sync, ...filler(511) }
   expect(planSyncWrite({ ...f, sync: overQuota, allowance: "headroom" })).toEqual(full)
   expect(planSyncWrite({ ...pending, sync: overQuota })).toEqual(full)
+})
+
+test("a mark or label refresh saved past the quota waits outside admission, and a flush pushes it once room frees up (SYNC-16)", () => {
+  const f = fixture()
+  const held = { ...stamp, gen: "held", at: 50, by: "device", data: { mode: "deny", on: true, channels: [], future: "x".repeat(45000) } }
+  const local = { ...f.local, sync: { joined: "history", pushed: { [localKey]: "old" }, deferred: { [keptKey]: "held" }, status: "ok", editedSinceOff: false }, [keptKey]: held }
+  const crowded = { ...f.sync, ...Object.fromEntries(Array.from({ length: 9 }, (_, i) => [`unknown:${i}`, "y".repeat(7000)])) }
+  expect(planSyncWrite({ ...f, local, sync: crowded }), "a user's change still fits the budget").toMatchObject({ kind: "planned", sent: [{ name: localKey, gen: "g1" }] })
+  expect(planSyncWrite({ ...f, local: { ...local, sync: f.local.sync }, sync: crowded }), "the same document as an ordinary pending edit counts against it").toEqual(full)
+  const flush = { ...f, local, intent: { kind: "flush" } } as const
+  expect(planSyncWrite({ ...flush, sync: crowded }), "a flush leaves it waiting while it doesn't fit").toMatchObject({ kind: "planned", items: [], sent: [], repairs: [] })
+  expect(planSyncWrite({ ...flush, sync: f.sync }), "with room again, the next flush sends it").toMatchObject({ kind: "planned", sent: [{ name: keptKey, gen: "held" }] })
+  const edited = { ...held, gen: "newer", data: { mode: "allow", on: true, channels: [] } }
+  expect(planSyncWrite({ ...flush, local: { ...local, [keptKey]: edited }, sync: crowded }), "a later edit to the document is ordinary again").toMatchObject({ kind: "planned", sent: [{ name: keptKey, gen: "newer" }] })
 })

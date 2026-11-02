@@ -491,7 +491,7 @@ Toast copy, timing, hidden tabs and fullscreen are in [02 YouTube](02-youtube.md
   - The message: "Synced settings are full. {Largest}: remove some, or turn off sync in this browser to keep more here." {Largest} names what takes the most room, for example "Music's channel filter uses 39 KB".
   - If kept filters take room, it offers **Remove kept filters**, described as "Filters of playlists you no longer auto-add to".
 - **SYNC-15** A refused change is never kept locally and left unsynced. Browsers never differ silently.
-- **SYNC-16** Label refreshes and Missing/Full marks may use the headroom. If even that's gone, they stay local until room frees up.
+- **SYNC-16** Label refreshes and Missing/Full marks may use the headroom. If even that's gone, they stay local until room frees up. The local `SyncState.deferred` names each such document and its gen. Admission leaves them out, so they never refuse another change, and each push adds those that fit again (R198).
 - **SYNC-17** If the synced copy goes over anyway (a browser-side merge ignores quotas), this browser stops pushing, and the status says "Synced settings are full". It recovers as soon as the user removes something.
 - **SYNC-18** The per-item limit (8,192 bytes) never reaches the user: larger documents are split.
 
@@ -772,6 +772,7 @@ type SyncOpaqueWrite = {
 type SyncState = {
   joined: string | null // the s:meta id this browser last synced with
   pushed: Record<string /* document */, string /* gen */>
+  deferred?: Record<string /* document */, string /* gen */> // SYNC-16: marks and label refreshes past the quota, until room frees up (R198)
   status: "off" | "joining" | "ok" | "full" | "update-needed" | "waiting" // SYNC-24 (R13)
   editedSinceOff: boolean
   opaqueWrite?: SyncOpaqueWrite // absent in older records; no migration or schema-version change

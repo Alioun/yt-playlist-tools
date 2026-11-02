@@ -13,6 +13,7 @@ export type SyncStateProofs = [
   Check<Equal<SyncState, {
     joined: string | null
     pushed: Record<string, string>
+    deferred?: Record<string, string>
     status: "off" | "joining" | "ok" | "full" | "update-needed" | "waiting"
     editedSinceOff: boolean
     opaqueWrite?: SyncOpaqueWrite

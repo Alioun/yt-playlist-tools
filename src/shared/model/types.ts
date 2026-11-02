@@ -19,6 +19,8 @@ export type SyncState = {
   everEdited?: boolean
   joined: string | null
   pushed: Record<string, string>
+  /** Marks and label refreshes saved past the browsers' own sync limit, by document and gen, until room frees up (SYNC-16). */
+  deferred?: Record<string, string>
   status: "off" | "joining" | "ok" | "full" | "update-needed" | "waiting"
   editedSinceOff: boolean
 }

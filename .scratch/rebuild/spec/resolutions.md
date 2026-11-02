@@ -762,3 +762,7 @@ G31 put every user-facing string through unslop, pinned ones included. These rec
   - §12.1 quotes `store/notes/reviewer-full.md` as the plain text AMO shows. REL-STORE-22's hotfix template takes its first sentence, `{fix}`, from `store/notes/hotfix/{version}.md`, and both the hotfix and beta templates now name `SOURCE_CODE_REVIEW.md`.
   - §12.3 quotes `SOURCE_CODE_REVIEW.md`, which lists the layout as a table.
   - The privacy policy (§10.2) stays as the user approved it on 2026-11-01 (G14), and `site/privacy/` matches it word for word. §10.1's site layout already matches `site/`.
+
+## Build follow-ups, 2026-11-02 (R197–R198)
+
+- **R198. Marks and labels past the sync limit wait for room.** G40 queued SYNC-16's second half, and this builds it. A Missing or Full mark, an account label refresh or a channel label refresh that doesn't fit even the browsers' own quota is saved in this browser anyway. The local `SyncState.deferred` records its document and gen in the same write. Admission leaves a deferred document out, so it never refuses the user's own changes. Each push adds the deferred documents that fit again, in key order, and leaves the rest for a later push. Acknowledging a document's push removes its entry, and a later ordinary edit to the document is pending as usual. Nothing is synced about the wait, and the status stays as SYNC-17 sets it ([SYNC-16](04-features-accounts-data.md#35-budget-and-full), DATA-12).
