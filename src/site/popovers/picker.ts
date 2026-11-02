@@ -71,6 +71,8 @@ export function createPopovers(options: {
     let closed = false
     let release = () => {}
     let stopOutside = () => {}
+    // Toasts whose Undo still needs this open's handles. They go once the picker is closed and no toast holds them.
+    let holding = 0
 
     function close() {
       if (closed) return
@@ -79,6 +81,7 @@ export function createPopovers(options: {
       stopOutside()
       picker.close()
       release()
+      if (holding === 0) source.release()
     }
     const handle = { close }
     open = handle
@@ -86,10 +89,11 @@ export function createPopovers(options: {
     function confirm(plan: ToastPlan, id: PlaylistId, undo: (() => Promise<{ kind: "undone" | "failed" }>) | null) {
       const session = kit!.feedback.use(core!.root)
       if (!session) return
-      const action = undo && plan.action?.kind === "undo" ? session.action("undo", async () => {
+      const action = undo && plan.action?.kind === "undo" ? { ...session.action("undo", async () => {
         const answer = await undo()
         return answer.kind === "undone" ? null : session.format({ tone: "failure", auto: false, message: { kind: "undo-failed" }, action: null, remember: nothing }, {}, null)
-      }) : null
+      }), release() { holding--; if (closed && holding === 0) source.release() } } : null
+      if (action) holding++
       session.toaster.show(session.format(plan, titles(id), action))
     }
     function picked(outcome: Picked) {

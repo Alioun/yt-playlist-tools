@@ -40,8 +40,20 @@ export function createToaster(options: ToasterOptions) {
   const pauses = new Set<"hover" | "focus">()
   const listeners = new Set<(view: ToastView | null) => void>()
   const consumedUndo = new WeakSet<ToastAction>()
+  const releasable = new Set<ToastAction>()
   function available(content: ToastContent): ToastContent {
+    if (content.action?.release && !consumedUndo.has(content.action)) releasable.add(content.action)
     return content.action?.kind === "undo" && consumedUndo.has(content.action) ? { ...content, action: null } : content
+  }
+  // An Undo whose toast left without being used can never run again, so its handle is released (06 §6.8.2).
+  function sweep(all = false) {
+    const held = all ? new Set<ToastAction>() : new Set([current, queued, notice].flatMap(entry => entry?.content.action ? [entry.content.action] : []))
+    for (const action of [...releasable]) {
+      if (held.has(action)) continue
+      releasable.delete(action)
+      if (consumedUndo.has(action)) continue
+      try { action.release?.() } catch (error) { report(error) }
+    }
   }
   function report(error: unknown) { try { options.onError(error) } catch {} }
   const live = () => !scope.disposed
@@ -98,6 +110,7 @@ export function createToaster(options: ToasterOptions) {
       }, entry.remaining)
     }
     notify()
+    sweep()
   }
   function entry(content: ToastContent, kind: Entry["kind"] = "transient", dismiss: Entry["dismiss"] = null): Entry {
     return { id: ++sequence, generation: 0, content: available(content), kind, remaining: 6000, busy: false, spent: false, dismiss, presented: null }
@@ -249,7 +262,7 @@ export function createToaster(options: ToasterOptions) {
   })
   scope.add(() => {
     stopClock(); pendingTimer(); operation = null; delayed = null; current = queued = notice = null; rendered = null; revision++
-    notify(); listeners.clear()
+    notify(); listeners.clear(); sweep(true)
   })
   return api
 }

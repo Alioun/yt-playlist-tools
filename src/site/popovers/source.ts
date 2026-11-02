@@ -27,7 +27,7 @@ function changeResult(answer: DestinationAnswer): ChangeResult {
  * The in-page picker's `PickerSource` (UI-PICK-01): membership through this tab's gateway, every write through
  * the background's add flow and store, and the account's facts from this tab's view (ARC-MSG-05).
  */
-export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> {
+export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> & { release(): void } {
   const { actions, page, view, request } = deps
   const { site } = view
   const setup = view.setup?.kind === "live" ? view.setup.setup : null
@@ -40,6 +40,9 @@ export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> {
   let current: PlaylistId | null = (shortcut ? setup?.targets[shortcut] as PlaylistId | undefined : quickSave) ?? null
   let live = setup !== null
   const ticks = new Map<PlaylistId, UndoHandle>()
+  // Every handle this open received, so they can all go once nothing can use them (06 §6.8.2).
+  const handles = new Map<string, UndoHandle>()
+  const held = (handle: UndoHandle | null) => { if (handle) handles.set(`${handle.kind}:${handle.id}`, handle); return handle }
   const via = request.mode.kind === "save" ? "picker" : shortcut ? "choose-shortcut" : "choose-quick-save"
 
   function undoOf(handle: UndoHandle | null): Undo {
@@ -68,6 +71,7 @@ export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> {
       if (outcome?.kind === "already-in") return { kind: "already-in" }
       if (outcome?.kind !== "added" || !report.undo) return { kind: "failed" }
       ticks.set(id, report.undo)
+      held(report.undo)
       // The model hands this entry back to `remove`; the add's handle is what names that exact entry for AddFlow.
       return { kind: "added", entry: report.undo.id as SetVideoId, undo: undoOf(report.undo) }
     },
@@ -75,7 +79,7 @@ export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> {
       const report = await actions.remove({ site, video: request.video, playlist: id, opener: request.opener, tick: ticks.get(id) ?? null })
       if (report.kind !== "removed") return { kind: "failed" }
       ticks.delete(id)
-      return { kind: "removed", undo: undoOf(report.undo) }
+      return { kind: "removed", undo: undoOf(held(report.undo)) }
     },
     async create(playlist) {
       const answer = await actions.create({ title: playlist.title, privacy: playlist.privacy, video: request.video })
@@ -132,6 +136,10 @@ export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> {
     },
     // No store operation saves this browser's sort order or last visibility from a page yet.
     saveSortAZ: async () => ({ refused: "invalid" }),
-    savePrivacy: async () => ({ refused: "invalid" })
+    savePrivacy: async () => ({ refused: "invalid" }),
+    release() {
+      for (const handle of handles.values()) actions.release(handle)
+      handles.clear()
+    }
   }
 }

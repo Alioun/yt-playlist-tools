@@ -13,9 +13,11 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 0))
 
 function source(site: "www" | "music", mode: OpenPicker["mode"] = { kind: "save" }) {
   const adds: TabAddRequest[] = [], removes: TabRemoveRequest[] = [], destinations: TabDestinationChange[] = [], jobs: string[] = []
+  const released: string[] = []
   const actions = {
+    release: (handle: { id: string }) => { released.push(handle.id) },
     add: async (request: TabAddRequest) => { adds.push(request); return { kind: "report", outcomes: { [other]: { kind: "added" } }, toast: null, feedback: true, undo: { kind: "add", id: "a1" }, titles: {} } },
-    remove: async (request: TabRemoveRequest) => { removes.push(request); return { kind: "removed", playlist: other, video, feedback: true, toast: null, undo: null, titles: {} } },
+    remove: async (request: TabRemoveRequest) => { removes.push(request); return { kind: "removed", playlist: other, video, feedback: true, toast: null, undo: { kind: "remove", id: "r1" }, titles: {} } },
     destination: async (change: TabDestinationChange) => { destinations.push(change); return { kind: "confirmed" } },
     playlists: async () => ({ kind: "cached", listing: { rows: [{ id: playlist, title: "Favourites" }, { id: other, title: "Beta" }], at: Date.now() } })
   } as unknown as TabActions
@@ -23,8 +25,17 @@ function source(site: "www" | "music", mode: OpenPicker["mode"] = { kind: "save"
   const built = pagePickerSource({ actions, view, now: () => Date.now(), live: () => true,
     request: { video, anchor: { kind: "window" }, mode, opener: site === "music" ? "music-actions" : "quick-save" },
     page: { run: async job => { jobs.push(job.job.kind); return { ok: true, data: [], route: "r" } as never } } })
-  return { built, adds, removes, destinations, jobs }
+  return { built, adds, removes, destinations, jobs, released }
 }
+
+test("releasing the source lets go of every add and removal handle it received, once", async () => {
+  const www = source("www")
+  await www.built.item.add(other)
+  await www.built.item.remove(other, null)
+  expect(www.released).toEqual([])
+  www.built.release(); www.built.release()
+  expect(www.released).toEqual(["a1", "r1"])
+})
 
 test("on YouTube Music the picker saves and removes as a YouTube Music add, and pins YouTube Music's one-click playlist", async () => {
   const music = source("music")

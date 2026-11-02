@@ -84,7 +84,9 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
       onMessage: { addListener: (listener: Listener) => { listeners.add(listener) }, removeListener: (listener: Listener) => { listeners.delete(listener) } } },
     windows: { async get(id: number) { return { id, incognito: false } } }
   }
+  const closedListeners = new Set<(tabId: number) => void>()
   const actions = composeActions({ native: native as never, build, owner: store.owner, tabs, playlists, writable: () => true,
+    closed: listener => { closedListeners.add(listener); return () => { closedListeners.delete(listener) } },
     registrar: { async ensure(tabId, what) { ensured.push({ tabId, what }) } }, requester: async () => null, log: () => {},
     ticked: tabId => { ticks.push(`tick ${tabId}`) } })
   const sender = { id: "perchling", frameId: 0, url: "https://www.youtube.com/watch?v=aaaaaaaaaaa",
@@ -110,7 +112,8 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
     const rows = store.removal.state().session.recentAdds
     return Array.isArray(rows) ? rows : []
   }
-  return { store, site, page, actions, ensured, ticks, view, recentAdds }
+  const closeTab = (tabId: number) => { for (const listener of [...closedListeners]) listener(tabId) }
+  return { store, site, page, actions, ensured, ticks, view, recentAdds, closeTab }
 }
 
 test("a playlist shortcut saves the pointed video to this account's shortcut playlist, with Undo", async () => {
@@ -125,6 +128,27 @@ test("a playlist shortcut saves the pointed video to this account's shortcut pla
   const undone = await page.undo(report.undo!)
   expect(undone).toEqual({ kind: "undone" })
   expect(site.jobs).toContain("remove")
+})
+
+test("an Undo handle stops working once the page releases it, its tab closes, or the tab loads a new page", async () => {
+  for (const end of ["release", "close", "new page"] as const) {
+    const { page, site, actions, closeTab } = world()
+    const report = await page.add({ site: "www", video, via: "shortcut", shortcut: "orig01" as never })
+    if (report.kind !== "report" || !report.undo) throw Error("Expected an add with Undo")
+    if (end === "release") { page.release(report.undo); await new Promise(resolve => setTimeout(resolve, 0)) }
+    else if (end === "close") closeTab(9)
+    else actions.pageStarted(9)
+    expect(await page.undo(report.undo)).toEqual({ kind: "expired" })
+    expect(site.jobs).not.toContain("remove")
+  }
+})
+
+test("closing another tab leaves this tab's Undo working", async () => {
+  const { page, closeTab } = world()
+  const report = await page.add({ site: "www", video, via: "shortcut", shortcut: "orig01" as never })
+  if (report.kind !== "report" || !report.undo) throw Error("Expected an add with Undo")
+  closeTab(10)
+  expect(await page.undo(report.undo)).toEqual({ kind: "undone" })
 })
 
 test("Watch later on every account saves to Watch later whatever the account's own target", async () => {

@@ -45,7 +45,7 @@ function world(initial: SiteView<"www"> = wwwView(), options: { stored?: TabProg
   const streams: { player?: (data: PlayerData) => void; nav?: (data: NavData) => void } = {}
   const adds: { request: TabAddRequest; title: string | undefined }[] = [], saves: { video: VideoId; progress: TabProgress }[] = []
   const toasts: ToastContent[] = [], logs: string[] = [], states: AutoAddState[] = []
-  const changed: number[] = []
+  const changed: number[] = [], released: string[] = []
   let answer: (request: TabAddRequest) => TabAddReport = request => ({ kind: "report", toast: savedPlan, feedback: true, undo: { kind: "add", id: "g:1" },
     titles: { [music]: "Music videos" }, outcomes: Object.fromEntries((request.via === "auto-add" ? request.playlists : []).map(pl => [pl, { kind: "added" }])) })
   const cantMeasure = [...options.cantMeasure ?? [true, false]]
@@ -67,6 +67,7 @@ function world(initial: SiteView<"www"> = wwwView(), options: { stored?: TabProg
     background: {
       async add(request, title) { adds.push({ request, title }); return answer(request) },
       async undo() { return { kind: "undone" } },
+      release(handle) { released.push(handle.id) },
       progress: { load: async video => video === first ? options.stored ?? null : null, async save(video, progress) { saves.push({ video, progress }) } },
       async cantMeasure() { return cantMeasure.shift() ?? false },
       videoChanged() { changed.push(Date.now()) }
@@ -82,7 +83,7 @@ function world(initial: SiteView<"www"> = wwwView(), options: { stored?: TabProg
     subscribe(listener) { listeners.add(listener); return () => { listeners.delete(listener) } }
   } })
   const result = {
-    scope, adds, saves, toasts, logs, states, changed,
+    scope, adds, saves, toasts, logs, states, changed, released,
     get watching() { return streams.player !== undefined },
     respond(next: typeof answer) { answer = next },
     publish(next: SiteView<"www">) { current = next; for (const listener of [...listeners]) listener(next) },
@@ -113,6 +114,22 @@ test("a video played to its playlist's goal is auto-added once, named, with the 
   expect(h.adds).toEqual([{ request: { site: "www", video: first, via: "auto-add", playlists: [music], channel: null }, title: "First video" }])
   expect(h.toasts.map(toast => [toast.text, toast.tone, toast.action?.kind ?? null])).toEqual([["saved:First video", "confirmation", "undo"]])
   expect(h.states.at(-1)).toEqual({ kind: "added", playlists: [music] })
+})
+
+test("an auto-add whose toast offers no Undo releases its handle at once; one with Undo leaves it to the toast", async () => {
+  const quiet = world()
+  quiet.respond(request => ({ kind: "report", toast: null, feedback: false, undo: { kind: "add", id: "g:quiet" }, titles: {},
+    outcomes: Object.fromEntries((request.via === "auto-add" ? request.playlists : []).map(pl => [pl, { kind: "added" }])) }))
+  quiet.navigate(first, "First video")
+  await quiet.play(0, 60)
+  expect(quiet.toasts).toEqual([])
+  expect(quiet.released).toEqual(["g:quiet"])
+  const shown = world()
+  shown.navigate(first, "First video")
+  await shown.play(0, 60)
+  expect(shown.released).toEqual([])
+  shown.toasts[0]?.action?.release?.()
+  expect(shown.released).toEqual(["g:1"])
 })
 
 test("after an add the tab tells the background once when its video changes in-app, so the toolbar tick clears", async () => {

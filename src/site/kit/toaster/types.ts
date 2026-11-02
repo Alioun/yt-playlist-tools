@@ -4,6 +4,8 @@ export type ToastAction = {
   readonly kind: Action["kind"]
   readonly label: string
   run(): Promise<ToastContent | null> | ToastContent | null
+  /** Lets the background drop an Undo handle once its toast is gone without being used. Called at most once. */
+  release?(): void
 }
 export type ToastContent = {
   readonly text: string

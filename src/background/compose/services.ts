@@ -73,6 +73,10 @@ export function composeServices(deps: {
   const playlists = createPlaylists({ owner, tabs, now: () => Date.now() })
   const actions = composeActions({ native: { ...native, runtime }, build, owner, tabs, playlists, registrar, writable: deps.consented,
     ticked: tabId => badge.tick(tabId),
+    closed(listener) {
+      native.tabs.onRemoved.addListener(listener)
+      return () => native.tabs.onRemoved.removeListener(listener)
+    },
     async requester(origin) {
       const [active] = await native.tabs.query({ active: true, windowId: origin.windowId }).catch(() => [])
       return { windowId: origin.windowId, incognito: origin.incognito, activeTabId: typeof active?.id === "number" ? active.id : null }
@@ -94,7 +98,9 @@ export function composeServices(deps: {
     browser: deps.browser, build, owner, tabs, nativeTabs: browserTabs.port, addFlow: actions.flow, settings: incognito => actions.settings(incognito), registrar,
     statuses: monitor.statusProducer, i18n: siteI18n, flash: (tabId, ok, title) => badge.flash(tabId, ok, title) })
   const producer = createTabViewProducer({ owner, addFlow: actions.flow, statuses: monitor.statusProducer, notices: monitor.noticeProducer, build })
-  const unbindHello = browserTabs.bindHello(tabs, producer, (context, hello) => {
+  // A hello starts a page load, since each site core says hello once.
+  const unbindHello = browserTabs.bindHello(tabs, producer, context => {
+    actions.pageStarted(context.tab.tabId)
     badge.loaded(context.tab.tabId)
     void accounts.onSeen(context).catch(() => {})
     gather.hello(context, hello)

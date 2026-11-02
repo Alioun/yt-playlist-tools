@@ -19,7 +19,7 @@ import {
 export type AutoAddServices = {
   readonly document: Document
   readonly page: Pick<PageLink, "watch" | "onState" | "run">
-  readonly actions: Pick<TabActions, "add" | "undo" | "progress" | "cantMeasure" | "videoChanged">
+  readonly actions: Pick<TabActions, "add" | "undo" | "release" | "progress" | "cantMeasure" | "videoChanged">
   readonly feedback: { use(owner: Scope): Feedback | null }
   readonly text: AutoAddText
   /** Monotonic milliseconds. */
@@ -246,12 +246,15 @@ function start(context: FeatureContext<"www", AutoAddServices>): void {
 
   function announce(target: Playback, report: Extract<TabAddReport, { kind: "report" }>) {
     const plan = report.toast
-    if (!plan) return
-    const session = context.feedback.use(scope)
-    if (!session) return
+    const session = plan ? context.feedback.use(scope) : null
+    if (report.undo && (!session || plan?.action?.kind !== "undo")) actions.release(report.undo)
+    if (!plan || !session) return
     const titles: Titles = { ...(target.title === undefined ? {} : { video: target.title }), playlists: report.titles }
     let action: ToastAction | null = null
-    if (plan.action?.kind === "undo" && report.undo) action = session.action("undo", () => undo(session, report.undo!))
+    if (plan.action?.kind === "undo" && report.undo) {
+      const handle = report.undo
+      action = { ...session.action("undo", () => undo(session, handle)), release: () => actions.release(handle) }
+    }
     else if (plan.action?.kind === "reload") action = session.action("reload", () => { document.defaultView?.location.reload(); return null })
     session.toaster.show(session.format(plan, titles, action))
   }

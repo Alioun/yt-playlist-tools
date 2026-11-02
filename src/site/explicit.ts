@@ -16,7 +16,7 @@ export const signedOutPlan: ToastPlan = {
 export type ExplicitContext = {
   readonly session: Feedback
   /** `playlists` names the pending toast's playlists from the cached list. */
-  readonly actions: Pick<TabActions, "undo"> & Partial<Pick<TabActions, "playlists">>
+  readonly actions: Pick<TabActions, "undo"> & Partial<Pick<TabActions, "playlists" | "release">>
   readonly i18n: I18n
   readonly location: Pick<Location, "href" | "assign">
 }
@@ -36,12 +36,12 @@ function named(titles: Titles, extra: Readonly<Record<PlaylistId, string>>, i18n
 export function actionFor(context: ExplicitContext, kind: Action["kind"] | undefined, undo: UndoHandle | null, handlers: ExplicitHandlers): ToastAction | null {
   const { session, actions } = context
   switch (kind) {
-    case "undo": return undo ? session.action("undo", async () => {
+    case "undo": return undo ? { ...session.action("undo", async () => {
       const answer = await actions.undo(undo)
       if (answer.kind === "undone") return null
       const failed = toastPlan({ kind: "undo-failed" }, true)
       return failed ? session.format(failed, {}, null) : null
-    }) : null
+    }), release: () => actions.release?.(undo) } : null
     case "choose": return handlers.choose ? session.action("choose", () => { handlers.choose?.(); return null }) : null
     case "try-again": return handlers.retry ? session.action("try-again", () => { handlers.retry?.(); return null }) : null
     case "sign-in": return session.action("sign-in", () => { context.location.assign(signInUrl(context.location.href)); return null })
@@ -54,6 +54,8 @@ export function explicitContent(context: ExplicitContext, answer: TabAddReport |
   const { session, i18n } = context
   switch (answer.kind) {
     case "report": {
+      // A toast without Undo, or no toast at all, leaves nothing that could use the handle.
+      if (answer.undo && answer.toast?.action?.kind !== "undo") context.actions.release?.(answer.undo)
       if (!answer.toast) return null
       return session.format(answer.toast, named(titles, answer.titles, i18n), actionFor(context, answer.toast.action?.kind, answer.undo, handlers))
     }

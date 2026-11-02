@@ -199,3 +199,46 @@ test("hidden pending keeps zero timers and restores once; disposal rejects every
     f.timers.advance(10000); expect(f.toaster.read()).toBeNull(); expect(f.timers.count).toBe(0); expect(f.scope.resourceCount).toBe(0)
   } finally { f.dispose() }
 })
+
+describe("an Undo's handle is released once its toast can't use it", () => {
+  function undoToast(name: string, released: string[], run: () => ToastContent | null = () => null): ToastContent {
+    return { ...text(name), action: { kind: "undo", label: "Undo", run, release() { released.push(name) } } }
+  }
+  test("when the toast times out, once", () => {
+    const f = fixture(), released: string[] = []
+    try {
+      f.toaster.show(undoToast("timed", released)); f.timers.advance(5999)
+      expect(released).toEqual([])
+      f.timers.advance(1); f.timers.advance(6000)
+      expect(released).toEqual(["timed"])
+    } finally { f.dispose() }
+    expect(released).toEqual(["timed"])
+  })
+  test("when another toast replaces it, but not while it waits hidden", () => {
+    const f = fixture(), released: string[] = []
+    try {
+      f.hidden(true)
+      f.toaster.show(undoToast("waiting", released))
+      expect(released).toEqual([])
+      f.hidden(false)
+      f.toaster.show(text("next"))
+      expect(released).toEqual(["waiting"])
+    } finally { f.dispose() }
+  })
+  test("never after its Undo ran, because the Undo itself retires the handle", async () => {
+    const f = fixture(), released: string[] = []
+    try {
+      f.toaster.show(undoToast("used", released)); f.present()
+      await f.toaster.read()?.act(); await settle()
+      f.timers.advance(6000)
+      expect(released).toEqual([])
+    } finally { f.dispose() }
+    expect(released).toEqual([])
+  })
+  test("when the page's scope ends with the toast still showing", () => {
+    const f = fixture(), released: string[] = []
+    f.toaster.show(undoToast("showing", released))
+    f.dispose()
+    expect(released).toEqual(["showing"])
+  })
+})

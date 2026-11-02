@@ -112,6 +112,8 @@ export type Actions = {
   /** Playing now's save in the tab it read, only while that tab still shows `acct` in the popup's window kind (ARC-ACC-68). */
   addFromPopup(tab: ActingTab, acct: AccountKey, request: PopupAddRequest): Promise<TabAddReport | { readonly kind: "account-changed" }>
   settings(incognito: boolean): Promise<Settings | null>
+  /** A new page load in the tab: the earlier load's toasts are gone, so their Undo handles go too (06 §6.8.2). */
+  pageStarted(tabId: number): void
   dispose(): void
 }
 
@@ -127,6 +129,8 @@ export function composeActions(deps: {
   readonly requester: (origin: Extract<Origin, { kind: "ui" }>) => Promise<Requester | null>
   /** A tab whose current video auto-add just added to a playlist, for the toolbar's tick (YT-AA-42). */
   readonly ticked?: (tabId: number) => void
+  /** Hears each closed tab, whose Undo handles can no longer be used. */
+  readonly closed?: (listener: (tabId: number) => void) => () => void
   readonly log?: (line: string) => void
 }): Actions {
   const { native, owner, tabs, playlists, registrar } = deps
@@ -165,6 +169,8 @@ export function composeActions(deps: {
   function requestOf(context: TabContext): Requester {
     return { windowId: context.windowId, incognito: context.origin.incognito, activeTabId: context.origin.tabId }
   }
+  const pageEnded = (tabId: number) => flow.releaseTab(`tab:${tabId}`)
+  const stopClosed = deps.closed?.(pageEnded) ?? (() => {})
   const unbind = rpc.handle({ authenticate: authenticateTab(native), handlers: {
     async "tab.add"({ acct, request }, context): Promise<TabAddReport> {
       if (request.site !== context.site || !await pinned(context, acct)) return { kind: "no-tab" }
@@ -243,7 +249,9 @@ export function composeActions(deps: {
       const read = await owner.readTabProjection({ private: incognito, account: { kind: "unknown" } }).catch(() => null)
       return read?.kind === "projection" && read.projection.settings.kind === "value" ? decodeSettings(read.projection.settings.settings) : null
     },
+    pageStarted: pageEnded,
     dispose() {
+      stopClosed()
       unbind()
       rpc.dispose()
       void flow.quiesce()
