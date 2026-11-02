@@ -68,6 +68,9 @@ plant follows-redirects "$script" 's/\n *redirect: "error",//' -- "never follows
 plant no-timeout "$script" 's/signal: AbortSignal\.timeout\(30_000\)/signal: undefined \&\& AbortSignal.timeout(30_000)/' -- "gives up on an AMO that never answers"
 plant no-refusal "$script" 's/Object\.keys\(env\)\.some\(name => UNSAFE\.test\(name\)\)/false/' -- "refuses to run with NODE_TLS_REJECT_UNAUTHORIZED set"
 plant logs-tls-keys "$script" 's/\|\^SSLKEYLOGFILE\$//' -- "refuses to run with SSLKEYLOGFILE set"
+# Caught only where bash passes the name on to Bun (Homebrew bash 5.3.20 does;
+# bash 3.2 stops the step itself, which this row would report as missed).
+plant no-refusal-odd-name "$script" 's/Object\.keys\(env\)\.some\(name => UNSAFE\.test\(name\)\)/false/' -- "stops before AMO hears anything when a BUN_ name isn't a shell identifier"
 plant side-effect-import "$script" 's/^(import \{ readFileSync \} from "node:fs"\n)/$1import "node:vm"\n/m' -- "imports only Node built-ins"
 plant re-export "$script" 's/\z/export * from "node:os"\n/' -- "imports only Node built-ins"
 # The module name is built at run time, so neither Bun's import scanner nor a

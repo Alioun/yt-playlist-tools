@@ -699,6 +699,16 @@ describe("the fill step on a tampered runner", () => {
     expect(preload.ran()).toBe(false)
   })
 
+  // Bash 3.2 lists such a name in compgen -e, and unset then stops the step.
+  // Homebrew's bash 5.3.20 leaves it out, so it reaches the script, which refuses it.
+  test("stops before AMO hears anything when a BUN_ name isn't a shell identifier", async () => {
+    const amo = await fakeAmo()
+    const run = await runStep(fillStep, workspace(scriptFor(amo.origin), fullNotes), { env: { "BUN_CONFIG_VERBOSE-FETCH": "curl" } })
+    expect(run.exit).toBe(1)
+    expect(amo.requests).toEqual([])
+    expect(leaks(run.stdout + run.trace)).toEqual([])
+  })
+
   // Bun reads the nearest tsconfig.json or jsconfig.json above the script. Its
   // paths can send even node:fs to planted code, which then runs beside the login.
   test.each(["_temp/tsconfig.json", "_temp/jsconfig.json", "tsconfig.json", "jsconfig.json"])("loads no %s planted above the script", async config => {
