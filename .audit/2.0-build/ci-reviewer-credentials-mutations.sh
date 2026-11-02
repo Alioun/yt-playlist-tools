@@ -3,36 +3,50 @@
 # tests/integration/amo-reviewer-notes.test.ts against it. Each break must
 # fail the named test. Dummy values only, no network, nothing outside the copy.
 #
-# Usage: .audit/2.0-build/ci-reviewer-credentials-mutations.sh [base commit]
+# Usage: .audit/2.0-build/ci-reviewer-credentials-mutations.sh [base commit] [row...]
 # The base commit (default 14365d0d7, before the first review's fixes) supplies
-# the old script, launcher and leak check for the "old code" rows.
+# the old script, launcher and leak check for the "old code" rows. Naming rows
+# runs only those.
 set -euo pipefail
 
 repo=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 base=${1:-14365d0d7}
+shift $(($# > 0 ? 1 : 0))
+only=" $* "
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
-copied=(.github/workflows scripts/amo-reviewer-notes.ts scripts/amo-metadata.ts tests/integration/amo-reviewer-notes.test.ts tests/integration/fixtures/fake-amo.ts package.json)
+: > "$scratch/empty.toml"
+echo '{}' > "$scratch/empty.json"
+copied=(.github/workflows .github/CODEOWNERS scripts/amo-reviewer-notes.ts scripts/amo-metadata.ts tests/integration/amo-reviewer-notes.test.ts tests/integration/fixtures/fake-amo.ts package.json docs/development/releasing.md .audit/2.0-build/ci-reviewer-credentials-design.md .audit/2.0-build/ci-reviewer-credentials-mutations.sh)
 missed=0
+planted=0
 
 # plant NAME FILE EDIT [FILE EDIT ...] -- TEST...
-# EDIT is a perl -0 substitution, or "base" for the file as it was at the base
-# commit. Every TEST named must fail.
+# EDIT is a perl -0 substitution, "base" for the file as it was at the base
+# commit, or "at:COMMIT" for the file as it was at COMMIT. Every TEST named
+# must fail.
 plant() {
   local name=$1 copy="$scratch/$1" path out expected
   shift
+  [[ $only == "  " || $only == *" $name "* ]] || return 0
+  planted=$((planted + 1))
   mkdir -p "$copy"
   for path in "${copied[@]}"; do
     mkdir -p "$copy/$(dirname "$path")"
     cp -R "$repo/$path" "$copy/$(dirname "$path")/"
   done
   while [[ $1 != -- ]]; do
-    if [[ $2 == base ]]; then git -C "$repo" show "$base:$1" > "$copy/$1"; else perl -0pi -e "$2" "$copy/$1"; fi
+    case $2 in
+      base) git -C "$repo" show "$base:$1" > "$copy/$1" ;;
+      at:*) git -C "$repo" show "${2#at:}:$1" > "$copy/$1" ;;
+      *) perl -0pi -e "$2" "$copy/$1" ;;
+    esac
     if cmp -s "$repo/$1" "$copy/$1"; then echo "BROKEN  $name: the edit to $1 changed nothing"; missed=$((missed + 1)); return; fi
     shift 2
   done
   shift
-  out=$(cd "$copy" && bun test --no-env-file tests/integration/amo-reviewer-notes.test.ts 2>&1 || true)
+  # As ci.yml runs it: no bunfig.toml, no tsconfig.json.
+  out=$(cd "$copy" && bun --config="$scratch/empty.toml" test --no-env-file --tsconfig-override="$scratch/empty.json" ./tests/integration/amo-reviewer-notes.test.ts 2>&1 || true)
   for expected in "$@"; do
     if ! grep '^(fail)' <<<"$out" | grep -qF -- "$expected"; then
       echo "MISSED  $name: \"$expected\" passed"
@@ -70,5 +84,5 @@ plant old-runner \
 plant job-level-keys "$ci" base -- "hold no secret in a workflow- or job-level env"
 plant old-leak-check "$tests" 's/forms\(value\)\.some\(form => text\.includes\(form\)\)/text.includes(value) || text.includes(JSON.stringify(value).slice(1, -1))/' -- "finds each value in every form a log could carry it"
 
-echo "$missed missed"
+echo "$planted planted, $missed missed"
 exit $((missed > 0))
