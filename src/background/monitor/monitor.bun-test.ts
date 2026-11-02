@@ -154,6 +154,20 @@ test("Gather failures name destinations and only a failed player stops Gather", 
   } finally { await h.dispose() }
 })
 
+test("YouTube's player failing in one tab stops Gather in the account's other tabs too, and a gather the player confirms restarts it", async () => {
+  const { h, c } = seeded(context("www", false, 1))
+  const other = context("www", false, 2)
+  try {
+    h.seedContext(other, visible, syntheticHealthFacts("www"))
+    for (const tab of [c, other]) h.changeHealth(tab, facts => ({ ...facts, gather: { ...facts.gather, player: "no-effect" } }))
+    const signal = signalValue("no-effect", { feature: "gather", job: null, route: null })
+    for (let n = 0; n < 2; n++) await h.monitor.signal(c, signal, { kind: "gather", destination: "player" })
+    expect((await statuses(h, other, [pageFeature("gather")]))[0]).toMatchObject({ state: "not-working", destinations: ["player"] })
+    h.changeHealth(other, facts => ({ ...facts, gather: { ...facts.gather, player: "usable" } }))
+    expect(await state(h, other, [pageFeature("gather")])).toBe("working")
+  } finally { await h.dispose() }
+})
+
 test("diagnostic-only fallback and cosmetic records never cause failure or notices", async () => {
   const { h, c } = seeded()
   try {

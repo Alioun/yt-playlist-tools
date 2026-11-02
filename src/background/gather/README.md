@@ -17,4 +17,6 @@
 - `copy.ts` words every result, Undo and progress in YT-GT-32 and YT-GT-33's copy, with the line's one action. The popup row, the Settings card, a page's toast and the badge's tooltip all read it.
 - `compose/gather.ts` wires it all in the background: the browser adapter, the `ui.gather`, `ui.gatherUndo` and `ui.gathers` routes, `ui.gatherProgress` pushes, the toast in the tab a gather saved from with its `tab.gatherUndo`, the badge's 3 s mark, and ARC-ACC-73's serving tab for automatic gathering.
 
-Not here yet: the player's `no-effect` signal reaches only the log until the Monitor's site signals carry it, and a Missing or Full gather playlist's toast has no Settings action.
+- A player tab that shows no list in 10 s is a `no-effect` signal (HEALTH-29). `compose/gather.ts` records it in the Monitor on the first youtube.com tab the registry knows in the gather's scope. After 2 in a row the Monitor's authority reads YouTube's player as `no-effect`, so Gather is not working and the next player gather answers that the player isn't working. A gather the player confirms, or a reload of that tab, clears it. Gather reads its own destinations' health from the Monitor on the same tab.
+
+Not here yet: a Missing or Full gather playlist's toast has no Settings action, and the popup's health list shows no background feature, Gather included.

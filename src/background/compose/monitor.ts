@@ -21,6 +21,8 @@ export function composeMonitor(deps: {
   readonly clock: { now(): number; after(milliseconds: number, run: () => void): () => void }
   /** The page halves' shipped routes and vocabulary. Without them every job reads as one usable route and no signal validates. */
   readonly sites?: SiteDiagnostics
+  /** Whether YouTube's player showed Gather's lists lately, which only the Gather module sees. */
+  readonly player?: () => "usable" | "no-effect"
 }) {
   const jobs = new Set<JobId>(), anchorIds = new Set<AnchorId>()
   for (const feature of features) for (const health of Object.values(feature.health)) {
@@ -49,7 +51,7 @@ export function composeMonitor(deps: {
         site: context.tab.site, core: "present", accountKeys: "present",
         jobs: new Map([...jobs].map(job => [job, shipped(context.tab.site, job)])),
         anchors: new Map([...anchorIds].map(anchor => [anchor, notApplicable])),
-        gather: { player: "usable", queue: "usable", playlist: "usable" },
+        gather: { player: deps.player?.() ?? "usable", queue: "usable", playlist: "usable" },
         background: new Map([["sync", { state: "working", kinds: [] }]])
       } }
     },

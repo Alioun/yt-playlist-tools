@@ -39,6 +39,7 @@ function strip() {
     const windowId = patch.windowId ?? 1
     const tab: Tab = { id, windowId, index: inWindow(windowId).length, url, title: `${url.slice(-11)} - YouTube`, active: false, pinned: false, audible: false,
       incognito: windows.get(windowId)?.incognito ?? false, lastAccessed: Date.now(), status: "complete", discarded: false, ...patch }
+    if (tab.active) for (const other of inWindow(windowId)) other.active = false
     tabs.set(id, tab)
     return tab
   }
@@ -193,12 +194,13 @@ function browser(gather: Record<string, unknown>) {
         if (!claimed) resolve(undefined)
       })
     }
-    const popupSender: Sender = { id: extension, url: native.runtime.getURL("/popup.html"), documentId: "popup-document" }
-    const popup: Backend = createBackend({
+    // The toolbar popup open in a window.
+    const popupIn = (windowId: number): Backend => createBackend({
       local: { get: keys => fakeBrowser.storage.local.get([...keys]), all: () => fakeBrowser.storage.local.get(null), onChanged: fakeBrowser.storage.onChanged },
-      send: message => send(message, popupSender),
+      send: message => send(message, { id: extension, url: native.runtime.getURL("/popup.html"), documentId: `popup-document-${windowId}` }),
       access: { has: async () => true, request: async () => true, requestCombined: async () => ({ music: false, browserMenu: false }), hasBrowserMenu: async () => false }
-    }, { build, deadline: timerDeadline, windowId: 1 })
+    }, { build, deadline: timerDeadline, windowId })
+    const popup = popupIn(1)
     let serial = 0
     // The YouTube tab's site core says hello when its page loads (ARC-MSG-15).
     function hello(tabId: number, start: { hidden: boolean; fresh: boolean } = { hidden: false, fresh: true }) {
@@ -214,7 +216,7 @@ function browser(gather: Record<string, unknown>) {
       if (!result.line) throw new Error(`No line: ${JSON.stringify(result)}`)
       return result.line
     }
-    return { background, native, popup, hello, line }
+    return { background, native, popup, popupIn, hello, line }
   }
   return {
     tabs, site, pushes, badges, messagedTabs, worker,
@@ -331,3 +333,36 @@ test("opening the popup wakes automatic gathering, which saves a tab unvisited f
   expect(world.badges).toContainEqual(["title", { tabId: 1, title: "Gathered 1 video into Watch later by itself, this minute." }])
   expect(await w.line(w.popup.call("ui.gathers", {}))).toMatchObject({ text: "Gathered 1 video into Watch later by itself, this minute.", action: { kind: "undo" } })
 })
+
+test("two gathers in a row whose YouTube's player tab shows no list reach the Monitor, so Diagnostics lists them and the next player gather answers that the player isn't working", async () => {
+  const world = browser({ to: "player" })
+  await world.seed()
+  world.tabs.windows.set(2, { id: 2, incognito: false, focused: false })
+  world.tabs.open(1, "https://www.youtube.com/", { active: true })
+  world.tabs.open(40, watch(1))
+  world.tabs.open(41, watch(2), { windowId: 2 })
+  const w = world.worker()
+  running.push(w.background)
+  await w.background.ready
+  // The tab registry starts once the store reports consent; a hello before that is dropped, as a real tab's would be.
+  await eventually(async () => { const status = await w.popup.call("ui.status", {}); return status.kind === "answered" && status.result.kind === "status" }, "the popup's status")
+  await w.hello(1)
+
+  // YouTube never turns the new tabs' watch_videos address into a list, so neither 10 s check confirms it. Two windows wait out one 10 s together.
+  const missed = await Promise.all([w.line(w.popup.call("ui.gather", {})), w.line(w.popupIn(2).call("ui.gather", {}))])
+  for (const line of missed) expect(line.text).toContain("Couldn't confirm YouTube made the list, so all tabs stay open.")
+  expect(world.tabs.urls(1)).toContain(watch(1))
+  expect(world.tabs.urls(2)).toContain(watch(2))
+
+  // Each miss reaches the Monitor just after the popup's answer.
+  let signals: unknown[] = []
+  await eventually(async () => {
+    const diagnostics = await w.popup.call("ui.diagnostics", { check: false })
+    signals = diagnostics.kind === "answered" && diagnostics.result.kind === "diagnostics" ? [...diagnostics.result.signals] : []
+    return signals.some(row => (row as { count: number }).count === 2)
+  }, "both misses in Diagnostics")
+  expect(signals).toEqual([expect.objectContaining({ site: "www", feature: "gather", job: null, route: null, kind: "no-effect", count: 2 })])
+  const opened = world.tabs.tabs.size
+  expect(await w.line(w.popup.call("ui.gather", {}))).toMatchObject({ text: "Gathering into YouTube's player isn't working right now because YouTube changed something.", tone: "failure" })
+  expect(world.tabs.tabs.size).toBe(opened)
+}, 30_000)

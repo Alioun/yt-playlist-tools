@@ -9,9 +9,9 @@ import { createGatherTriggers, type WakeReason } from "../gather/triggers"
 import type { Registrar } from "../registrar/ports"
 import type { GatherRoutes } from "../router/ui-playlists"
 import type { StartingOwner } from "../store/store-lifecycle"
-import type { StatusProducer } from "../tab-view/producer"
+import type { Monitor } from "../monitor/monitor"
+import { MONITOR_NO_EFFECTS } from "../monitor/thresholds"
 import type { Requester, TabContext, TabNativePort, Tabs } from "../tabs/ports"
-import { readTabStatuses } from "./page-status"
 import type { BuildId, JobOf } from "../../shared/contracts"
 import { tabAskContract, tabGatherContract, type TabAskMessages, type TabGatherMessages } from "../../shared/contracts/tab-actions"
 import type { TabHello } from "../../shared/contracts/tabs"
@@ -45,9 +45,9 @@ export function composeGather(deps: {
   readonly addFlow: AddFlow
   readonly settings: (incognito: boolean) => Promise<Settings | null>
   readonly registrar: Pick<Registrar, "ensure">
-  readonly statuses: StatusProducer
   readonly i18n: I18n
   readonly flash: (tabId: number, ok: boolean, title: string) => void
+  readonly monitor: Pick<Monitor, "signal" | "statuses">
   readonly log?: (line: string) => void
 }) {
   const { native, i18n } = deps
@@ -56,6 +56,8 @@ export function composeGather(deps: {
   let settings: Settings["gather"] = defaultSettings().gather
   let access: GatherAccess = { www: false, music: false, musicSection: false }
   let health: Health = working
+  // Player gathers in a row whose new tab showed no list. The Monitor reads YouTube's player as not working from 2 (HEALTH-29).
+  let playerMisses = 0
   let disposed = false
   const running = new Set<number>()
   // A private window's gathers live in memory only, so their Undo is spent here once it worked.
@@ -67,17 +69,34 @@ export function composeGather(deps: {
     const has = (match: string) => native.permissions.contains({ origins: [match] }).catch(() => false)
     return { www: await has(siteBundles.www.match), music: await has(siteBundles.music.match), musicSection: all.musicSection }
   }
+  // Gather's status and YouTube's player belong to no one tab, so both are read from and reported on the first youtube.com tab the registry knows in the scope.
+  async function reporting(scope: Scope): Promise<TabContext | null> {
+    for (const known of await deps.tabs.known({ kind: "all" })) {
+      if (known.privateTab !== (scope === "private")) continue
+      const lookup = await deps.nativeTabs.get(known.tabId)
+      if (lookup.kind !== "tab" || lookup.tab.site !== "www") continue
+      const acct = known.acct
+      return { tab: { ...lookup.tab, site: "www" },
+        info: acct === null ? { site: "www", build: deps.build, signedIn: false, acct } : { site: "www", build: deps.build, signedIn: true, acct } }
+    }
+    return null
+  }
   // Gather's status follows its destinations (YT-GT-36): not working without YouTube's player, partly working without the queue or the playlist route.
-  async function readHealth(all: Settings): Promise<Health> {
-    const session = await deps.owner.readSession().catch(() => null)
-    if (session?.kind !== "memory") return working
-    const found = [...session.memory.tabs].find(([, record]) => record.site === "www")
-    if (!found) return working
-    const statuses = await readTabStatuses({ statuses: deps.statuses, tab: tabId => deps.nativeTabs.get(tabId), build: deps.build }, all, found[0], found[1], false).catch(() => [])
-    const status = statuses.find(row => row.feature === "gather")
+  async function readHealth(all: Settings, scope: Scope): Promise<Health> {
+    const context = await reporting(scope).catch(() => null)
+    if (!context) return working
+    const read = await deps.monitor.statuses(context, [{ id: "gather", options: { ...all.gather, on: true } }]).catch(() => null)
+    const status = read?.kind === "statuses" ? read.statuses.find(row => row.feature === "gather") : undefined
     if (!status || status.state === "working") return working
-    return { player: status.state === "not-working" ? "not-working" : "working", queue: status.jobs.includes("queueAddList") ? "not-working" : "working",
-      playlist: status.jobs.some(job => job === "addBatch" || job === "removeBatch" || job === "membership") ? "not-working" : "working" }
+    const down = (to: Destination) => status.destinations.includes(to) ? "not-working" : "working"
+    return { player: status.state === "not-working" ? down("player") : "working", queue: down("queue"), playlist: down("playlist") }
+  }
+  async function playerNoEffect(scope: Scope): Promise<void> {
+    const context = await reporting(scope)
+    if (!context) { log("gather into YouTube's player: no list within 10 s, and no youtube.com tab to report it from"); return }
+    const now = Date.now()
+    await deps.monitor.signal(context, { site: "www", feature: "gather", job: null, route: null, kind: "no-effect", watchId: null,
+      shape: null, clientVersion: null, pageType: "other", count: 1, firstSeen: now, lastSeen: now }, { kind: "gather", destination: "player" })
   }
   async function prepare(incognito: boolean): Promise<Settings | null> {
     // A message can wake the worker before its store has started; the settings read waits for it.
@@ -86,7 +105,7 @@ export function composeGather(deps: {
     if (!all) return null
     settings = all.gather
     access = await readAccess(all)
-    health = await readHealth(all)
+    health = await readHealth(all, incognito ? "private" : "normal")
     return all
   }
 
@@ -191,10 +210,11 @@ export function composeGather(deps: {
     clock: { now: () => Date.now(), after: timerDeadline },
     observe(event) {
       if (event.kind === "progress") void push({ windowId: event.windowId, running: true, line: progressLine(event.done, event.total, i18n) })
-      else if (event.kind === "result") void delivered(event.result).catch(() => {})
-      else if (event.kind === "undo") log(`gather undo: ${event.result.kind}`)
-      // The Monitor's site signals carry the player's no-effect once they reach the background; until then it's logged.
-      else log("gather into YouTube's player: no list within 10 s")
+      else if (event.kind === "result") {
+        if (event.result.kind === "player" && event.result.confirmed) playerMisses = 0
+        void delivered(event.result).catch(() => {})
+      } else if (event.kind === "undo") log(`gather undo: ${event.result.kind}`)
+      else { playerMisses++; void playerNoEffect(event.scope).catch(() => {}) }
     }
   })
 
@@ -328,6 +348,7 @@ export function composeGather(deps: {
 
   return {
     routes,
+    player: (): "usable" | "no-effect" => playerMisses >= MONITOR_NO_EFFECTS ? "no-effect" : "usable",
     // Every tab.hello wakes trigger 1's check; a video tab's starts or joins its window's burst while trigger 2 or 3 is on.
     hello(context: TabContext, hello: TabHello): void {
       if (disposed) return

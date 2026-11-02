@@ -95,7 +95,9 @@ export function deriveStatus(input: { readonly enabled: readonly EnabledMonitorF
     }
     const destinations: MonitorStatus["destinations"][number][] = []
     if (feature.id === "gather") {
-      const playerFailed = facts.gather.player === "no-effect" && records.some(row => row.evidence.kind === "gather" && row.evidence.destination === "player" && row.signal.kind === "no-effect")
+      // YouTube's player is no tab's, so its evidence counts from any of the account's tabs on the site.
+      const playerFailed = facts.gather.player === "no-effect" && input.journal.signals.some(row => row.active && row.signal.site === facts.site &&
+        row.evidence.kind === "gather" && row.evidence.destination === "player" && row.signal.kind === "no-effect")
       if (playerFailed) { whole = true; destinations.push("player"); kinds.push("no-effect") }
       for (const target of ["queue", "playlist"] as const) {
         const destinationJobs: readonly JobId[] = target === "queue" ? ["queueAddList"] : ["account", "membership", "addBatch", "removeBatch"]

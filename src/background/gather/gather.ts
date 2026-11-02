@@ -63,7 +63,7 @@ export type GatherEvent =
   | { readonly kind: "progress"; readonly id: string; readonly windowId: number; readonly scope: Scope; readonly done: number; readonly total: number }
   | { readonly kind: "result"; readonly result: GatherResult }
   | { readonly kind: "undo"; readonly id: string; readonly scope: Scope; readonly result: GatherUndoResult }
-  | { readonly kind: "signal"; readonly destination: "player"; readonly signal: "no-effect" }
+  | { readonly kind: "signal"; readonly scope: Scope; readonly destination: "player"; readonly signal: "no-effect" }
 // `history` is the canonical record for the normal realm, so it survives a worker restart; `last` is this worker's own results.
 export type GatherState = { readonly last: readonly GatherResult[]; readonly undoable: readonly string[]; readonly kept: readonly number[]; readonly history: readonly GatherRecord[] }
 
@@ -243,7 +243,7 @@ export function createGather(ports: GatherPorts): Gather {
     }, false)
     if (disposed) return { ...base, kind: "stopped" }
     if (!confirmed) {
-      emit({ kind: "signal", destination: "player", signal: "no-effect" })
+      emit({ kind: "signal", scope: base.scope, destination: "player", signal: "no-effect" })
       return { ...base, kind: "player", count: videos.length, confirmed, closed: 0, navigated: 0 }
     }
     await sent(base, "player", videos.length)

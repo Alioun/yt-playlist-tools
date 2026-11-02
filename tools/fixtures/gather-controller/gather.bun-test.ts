@@ -29,7 +29,7 @@ describe("gather into YouTube's player", () => {
     const result = await f.drive(f.gather.now(normalWindow))
     expect(result).toMatchObject({ kind: "player", confirmed: false, closed: 0 })
     expect(f.window.removed()).toEqual([])
-    expect(f.events).toContainEqual({ kind: "signal", destination: "player", signal: "no-effect" })
+    expect(f.events).toContainEqual({ kind: "signal", scope: "normal", destination: "player", signal: "no-effect" })
   })
 
   test("more than 50 goes to the queue and says why; a health refusal closes nothing", async () => {

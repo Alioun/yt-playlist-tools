@@ -63,7 +63,8 @@ export function composeServices(deps: {
     clock, enabled: deps.consented
   })
   const monitor = composeMonitor({ owner: { readSession: () => owner.readSession(), changeSession: change => owner.changeSession(change),
-    subscribeView: fn => owner.subscribeView(fn) }, clock: { now: () => performance.now(), after: timerDeadline }, sites: deps.sites })
+    subscribeView: fn => owner.subscribeView(fn) }, clock: { now: () => performance.now(), after: timerDeadline }, sites: deps.sites,
+    player: () => gather.player() })
   const badge = createToolbarBadge({
     action: {
       setBadgeText: details => native.action.setBadgeText(details as never),
@@ -101,7 +102,7 @@ export function composeServices(deps: {
   const accounts = createAccounts({ owner, tabs, claim: { kind: "unavailable", reason: "production-ownership-required" }, now: () => Date.now() })
   const gather = composeGather({ native: { ...native, runtime }, senders: { ...native, runtime },
     browser: deps.browser, build, owner, tabs, nativeTabs: browserTabs.port, addFlow: actions.flow, settings: incognito => actions.settings(incognito), registrar,
-    statuses: monitor.statusProducer, i18n: siteI18n, flash: (tabId, ok, title) => badge.flash(tabId, ok, title) })
+    monitor, i18n: siteI18n, flash: (tabId, ok, title) => badge.flash(tabId, ok, title) })
   const producer = createTabViewProducer({ owner, addFlow: actions.flow, statuses: monitor.statusProducer, notices: monitor.noticeProducer, build })
   // A hello starts a page load, since each site core says hello once.
   // A new page load whose probe passed clears its tab's earlier breakage, but only a tab with evidence costs a write (HEALTH-12).
