@@ -122,51 +122,15 @@
     },
     {
       "row": "popup/www/js",
-      "kb": 63.2,
+      "kb": 57.4,
       "since": "2026-11-02",
-      "why": "Svelte runtime 18 KB, the backend, about 6 KB of RPC contract validators, model decoders, key policy and icons, in a long tail no single cut removes."
-    },
-    {
-      "row": "popup/www/css",
-      "kb": 8.2,
-      "since": "2026-11-02",
-      "why": "One Tailwind stylesheet serves the whole popup, lazy parts included."
+      "why": "Svelte runtime 18 KB, the backend, about 6 KB of RPC contract validators, model decoders, key display and icons, in a long tail no single cut removes. Lowered from 63.3 when the first view became one chunk and the picker loaded on first open (G43)."
     },
     {
       "row": "popup/music/js",
-      "kb": 109.0,
+      "kb": 67.6,
       "since": "2026-11-02",
-      "why": "The first view plus the YouTube Music tab, which statically loads the picker and Bits UI (about 35 KB) for its destination chooser."
-    },
-    {
-      "row": "popup/music/css",
-      "kb": 8.2,
-      "since": "2026-11-02",
-      "why": "One Tailwind stylesheet serves the whole popup, lazy parts included."
-    },
-    {
-      "row": "popup/lazy/FeatureDetails",
-      "kb": 55.1,
-      "since": "2026-11-02",
-      "why": "Feature details statically load the picker and Bits UI (about 35 KB) for the destination chooser and auto-add list."
-    },
-    {
-      "row": "popup/lazy/MusicTab",
-      "kb": 45.8,
-      "since": "2026-11-02",
-      "why": "The YouTube Music tab statically loads the picker and Bits UI (about 35 KB) for its destination chooser."
-    },
-    {
-      "row": "settings/lazy/YouTube",
-      "kb": 65.5,
-      "since": "2026-11-02",
-      "why": "The YouTube section statically loads the picker and Bits UI (about 35 KB) for its destination choosers and auto-add list."
-    },
-    {
-      "row": "settings/lazy/Music",
-      "kb": 64.8,
-      "since": "2026-11-02",
-      "why": "The YouTube Music section statically loads the picker and Bits UI (about 35 KB) for its destination chooser."
+      "why": "The first view plus the YouTube Music tab, whose destination chooser now loads only its button and the picker's text; the picker loads on first open (G43). Lowered from 109.1."
     },
     {
       "row": "first-run/js",
@@ -176,9 +140,9 @@
     },
     {
       "row": "first-run/upgrade/js",
-      "kb": 66.4,
+      "kb": 66.3,
       "since": "2026-11-02",
-      "why": "As first-run/js, plus the upgrade note. Raised from 66.4 when 2.0/sync-join merged: Agree now starts sync after a join."
+      "why": "As first-run/js, plus the upgrade note. Lowered from 66.6 when the note stopped loading the key recorder through the keys barrel."
     }
   ]
 }
