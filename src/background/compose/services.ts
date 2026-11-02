@@ -10,26 +10,15 @@ import type { Registrar } from "../registrar/ports"
 import { createUiRouter } from "../router/ui-playlists"
 import { createPageStatus } from "./page-status"
 import { createToolbarBadge, type ToolbarBadge } from "./badge"
+import { composeMonitor } from "./monitor"
 import type { StartingOwner, StoreLifecycle } from "../store/store-lifecycle"
-import { createTabViewProducer, tabViewFacts, type NoticeProducer, type StatusProducer } from "../tab-view/producer"
+import { createTabViewProducer } from "../tab-view/producer"
 import { createViewPublication } from "../tab-view/publication"
 import { createTabs } from "../tabs/tabs"
 import type { BuildId } from "../../shared/contracts"
 import { siteBundles } from "../../shared/features/registration"
 
 export type Services = { readonly tabs: ReturnType<typeof createTabs>; readonly badge: ToolbarBadge; dispose(): void }
-
-/**
- * Until the Monitor's production authority is bound (B35), every feature that's on reads as working, which is
- * what the Monitor reports for a tab with no breakage evidence, and no notice is due.
- */
-const workingStatuses: StatusProducer = { async read(context, enabled) {
-  return { kind: "statuses", facts: tabViewFacts(context), current: () => true,
-    statuses: enabled.map(feature => ({ feature: feature.id, state: "working", jobs: [], anchors: [], actions: [], kinds: [] })) }
-} }
-const noNotices: NoticeProducer = { async read(context) {
-  return { kind: "notices", facts: tabViewFacts(context), notices: [], current: () => true }
-} }
 
 /** Everything that needs a live store owner: Tabs and the tab view, Playlists, Accounts and the UI routes. */
 export function composeServices(deps: {
@@ -62,13 +51,12 @@ export function composeServices(deps: {
     readPrivateSkips: async () => ({ kind: "unavailable", reason: "context" }) as const,
     subscribePrivateSkips: () => () => {}
   }
-  const producer = createTabViewProducer({ owner, addFlow: privateSkips, statuses: workingStatuses, notices: noNotices, build })
-  let seen: (context: Parameters<typeof accounts.onSeen>[0]) => void = () => {}
-  const unbindHello = browserTabs.bindHello(tabs, producer, context => seen(context))
+  const monitor = composeMonitor({ owner: { readSession: () => owner.readSession(), changeSession: change => owner.changeSession(change),
+    subscribeView: fn => owner.subscribeView(fn) }, clock: { now: () => performance.now(), after: timerDeadline } })
+  const producer = createTabViewProducer({ owner, addFlow: privateSkips, statuses: monitor.statusProducer, notices: monitor.noticeProducer, build })
+  const unbindHello = browserTabs.bindHello(tabs, producer)
   const publication = createViewPublication({ owner, tabs, producer, privateSkips, clock,
-    monitor: { subscribeView: () => () => {} } })
-  const autoAddRoutes = createAutoAddTabRouter({ transport: runtimeTransport(deps.runtime), senders: { ...native, runtime }, build,
-    deadline: timerDeadline, tabs, owner, now: () => Date.now() })
+    monitor })
   const playlists = createPlaylists({ owner, tabs, now: () => Date.now() })
   const actions = composeActions({ native: { ...native, runtime }, build, owner, tabs, playlists, registrar, writable: deps.consented,
     async requester(origin) {
@@ -112,7 +100,7 @@ export function composeServices(deps: {
     pages: {
       owner,
       session: { get: async key => (await native.storage.session.get(key))[key] },
-      status: createPageStatus({ owner, statuses: workingStatuses, tab: tabId => browserTabs.port.get(tabId), build }),
+      status: createPageStatus({ owner, statuses: monitor.statusProducer, tab: tabId => browserTabs.port.get(tabId), build }),
       withdraw: (origin, expected) => deps.lifecycle.withdrawConsent(origin, expected),
       version: () => native.runtime.getManifest().version,
       now: () => Date.now()
@@ -124,7 +112,7 @@ export function composeServices(deps: {
       setBadgeBackgroundColor: details => native.action.setBadgeBackgroundColor(details),
       setTitle: details => native.action.setTitle(details as never)
     },
-    local: { get: () => native.storage.local.get(null) }, owner, statuses: workingStatuses,
+    local: { get: () => native.storage.local.get(null) }, owner, statuses: monitor.statusProducer,
     access: site => native.permissions.contains({ origins: [siteBundles[site].match] }), tab: tabId => browserTabs.port.get(tabId), build,
     i18n: { getMessage: (name, substitutions) => native.i18n.getMessage(name as never, substitutions) },
     clock: { after: (milliseconds, run) => { const timer = setTimeout(run, milliseconds); return () => clearTimeout(timer) } }
@@ -139,7 +127,7 @@ export function composeServices(deps: {
     tabs, badge,
     dispose() {
       for (const stop of [() => native.storage.onChanged.removeListener(changed), () => native.permissions.onAdded.removeListener(repaint),
-        () => native.permissions.onRemoved.removeListener(repaint), () => badge.dispose(), () => router.dispose(), () => accounts.dispose(), () => playlists.dispose(), () => publication.dispose(),
+        () => native.permissions.onRemoved.removeListener(repaint), () => badge.dispose(), () => monitor.dispose(), () => router.dispose(), () => accounts.dispose(), () => playlists.dispose(), () => publication.dispose(),
         unbindHello, () => producer.dispose(), () => tabs.dispose(), () => browserTabs.dispose()]) {
         try { stop() } catch {}
       }
