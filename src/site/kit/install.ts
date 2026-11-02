@@ -24,12 +24,12 @@ export type Kit = {
 const ignore = () => {}
 const viewWaitMs = 5_000
 
-function viewReady(link: AnySiteCore["link"]): Promise<boolean> {
+function viewReady(link: AnySiteCore["link"], scope: Scope): Promise<boolean> {
   if (link.view) return Promise.resolve(true)
   return new Promise(resolve => {
     let stop = () => {}
-    const timer = setTimeout(() => { stop(); resolve(false) }, viewWaitMs)
-    stop = link.onView(view => { if (!view) return; clearTimeout(timer); stop(); resolve(true) })
+    const timer = scope.timeout(() => { stop(); resolve(false) }, viewWaitMs)
+    stop = link.onView(view => { if (!view) return; timer(); stop(); resolve(true) })
   })
 }
 
@@ -49,7 +49,7 @@ export function installKit(core: AnySiteCore, lib: object, quick?: typeof create
   const own = new Scope({ document, onError: ignore })
   root.add(() => own.dispose())
   const toaster = feedback.use(own)?.toaster
-  const timer = (ms: number, done: () => void) => { const id = setTimeout(done, ms); return () => clearTimeout(id) }
+  const timer = (ms: number, done: () => void) => own.timeout(done, ms)
   const music = quick && core.site === "music" ? quick({ owner: root, document, page: core.page, items: core.items as MusicItems, actions: core.actions,
     i18n, view: () => link.view, feedback: () => feedback.use(root), popovers: () => loadPopovers(core.actions.need, timer), location: window.location,
     notices: core.notices as { wouldAct(feature: "music-keys" | "shortcuts"): void }, os: osOf(navigator.platform) }) : null
@@ -59,7 +59,7 @@ export function installKit(core: AnySiteCore, lib: object, quick?: typeof create
     asks: music ? { ...asks, async music(payload) {
       // A tab the background has just injected may still be meeting its page half and its view.
       await core.page.hello
-      if (!await viewReady(link)) return { kind: "failed", text: null }
+      if (!await viewReady(link, own)) return { kind: "failed", text: null }
       const found = await music.playing(payload.action)
       const answer = found.kind === "target"
         ? await music.act(payload.action, found.target, { opener: "any-tab-keys", feedback: payload.feedback, by: "key", anyTab: true })

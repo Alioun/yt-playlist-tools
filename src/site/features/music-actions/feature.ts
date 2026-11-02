@@ -139,12 +139,12 @@ function start(context: FeatureContext<"music", MusicActionServices>): void {
   }
 
   // The moving host for rows, cards and queue items (UI-YM-07).
-  const hover = createHost(document, "row", tip, (id, button) => { if (shownHover) void press(shownHover, hover, id, button) }, context.preload)
+  const hover = createHost(scope, document, "row", tip, (id, button) => { if (shownHover) void press(shownHover, hover, id, button) }, context.preload)
   let shownHover: Shown | null = null
   const headers = new Map<Element, { readonly host: Host; shown: Shown }>()
   type BarHost = { readonly host: Host; readonly anchor: Element; shown: Shown | null; readonly stop: Dispose }
   let bar: BarHost | null = null
-  scope.add(() => { hover.host.remove(); for (const entry of headers.values()) entry.host.host.remove(); bar?.stop(); bar?.host.host.remove() })
+  scope.add(() => { hover.dispose(); for (const entry of headers.values()) entry.host.dispose(); bar?.stop(); bar?.host.dispose() })
   scope.on(hover.host, "pointerenter", () => { hideTimer() })
 
   function redraw() {
@@ -248,7 +248,7 @@ function start(context: FeatureContext<"music", MusicActionServices>): void {
   async function syncHeaders() {
     for (const [header, entry] of headers) {
       if (header.isConnected) continue
-      entry.host.host.remove()
+      entry.host.dispose()
       headers.delete(header)
     }
     for (const header of document.querySelectorAll("ytmusic-responsive-header-renderer")) {
@@ -256,7 +256,7 @@ function start(context: FeatureContext<"music", MusicActionServices>): void {
       const next = await offer(header, "header", "")
       const box = header.querySelector("#action-buttons")
       if (!next || !box || scope.disposed || headers.has(header)) continue
-      const host = createHost(document, "header", tip, (id, button) => { const entry = headers.get(header); if (entry) void press(entry.shown, host, id, button) }, context.preload)
+      const host = createHost(scope, document, "header", tip, (id, button) => { const entry = headers.get(header); if (entry) void press(entry.shown, host, id, button) }, context.preload)
       const menu = menuOf(box)
       if (menu) menu.before(host.host)
       else box.append(host.host)
@@ -265,7 +265,7 @@ function start(context: FeatureContext<"music", MusicActionServices>): void {
     }
   }
   function dropHeaders() {
-    for (const entry of headers.values()) entry.host.host.remove()
+    for (const entry of headers.values()) entry.host.dispose()
     headers.clear()
   }
 
@@ -276,11 +276,11 @@ function start(context: FeatureContext<"music", MusicActionServices>): void {
     const on = settings?.buttons.bar === true && current?.signedIn === true && !withdrawn(status, "save") && !document.hidden
     const classic = on ? document.querySelector("ytmusic-player-bar #like-button-renderer") : null
     const anchor = classic ?? (on ? document.querySelector("ytmusic-miniplayer yt-video-action-bar-view-model") : null)
-    if (bar && bar.anchor !== anchor) { bar.stop(); bar.host.host.remove(); bar = null }
+    if (bar && bar.anchor !== anchor) { bar.stop(); bar.host.dispose(); bar = null }
     if (!anchor) return
     if (!bar) {
       const kind: HostKind = classic ? "bar" : "wiz"
-      const host = createHost(document, kind, tip, (id, button) => { if (bar?.shown) void press(bar.shown, host, id, button) }, context.preload)
+      const host = createHost(scope, document, kind, tip, (id, button) => { if (bar?.shown) void press(bar.shown, host, id, button) }, context.preload)
       // The song is followed from the app's own events, and only while the Save is drawn (YM-BAR-7, YM-BAR-9).
       const entry: BarHost = { host, anchor, shown: null, stop: page.watch("nowPlaying", song => {
         entry.shown = song ? { element: anchor, family: "bar", signature: song.videoId, actions: ["save"], casting: false,

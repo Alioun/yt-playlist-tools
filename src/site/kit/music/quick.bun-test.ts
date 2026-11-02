@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test"
 import type { TabView } from "../../../shared/contracts/tab-view"
-import { album, ladyQueued, musicWorld, nowPlaying, playingItem, savedReport, song, songRow, type MusicWorld } from "./quick.specimens"
+import { album, ladyQueued, musicWorld, nowPlaying, playingItem, savedReport, song, songRow, type MusicWorld } from "../../../../tools/fixtures/music-quick/specimens"
 import { settle } from "../../../../tools/fixtures/site-toaster/harness"
 import { wireView } from "../../../../tools/fixtures/tab-view/cases"
 

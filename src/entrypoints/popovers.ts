@@ -11,6 +11,5 @@ export default defineUnlistedScript(() => {
   const core = live()
   if (global.popovers || !core) return
   global.loaded.set("popovers", core.build)
-  const os = osOf(navigator.platform)
-  announcePopovers(createPopovers({ core: live, kit: () => global.kit, document, os, renderer: pagePicker }))
+  announcePopovers(createPopovers({ core: live, kit: () => global.kit, document, os: osOf(navigator.platform), renderer: pagePicker }))
 })

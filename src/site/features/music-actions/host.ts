@@ -17,7 +17,7 @@ export type Drawn = {
 export type Tooltip = { show(target: HTMLElement, text: () => string): void; hide(): void }
 
 // The Wiz miniplayer expands on any click that isn't on a button, and the page's hotkeys must not see ours (YM-QA-14, UI-YM-08).
-const isolated = ["click", "dblclick", "auxclick", "pointerdown", "pointerup", "mousedown", "mouseup", "contextmenu", "keydown", "keyup", "keypress"]
+const isolated = ["click", "dblclick", "auxclick", "pointerdown", "pointerup", "mousedown", "mouseup", "contextmenu", "keydown", "keyup", "keypress"] as const
 const tipDelay = 500
 
 /** YouTube's tooltip in one top-level host, 0.5 s after the pointer or focus arrives, above the button (UI-YM-05). */
@@ -50,15 +50,20 @@ export function tooltip(document: Document, owner: Scope): Tooltip {
   }
 }
 
-/** A host of ours with its buttons. The page sees one element; the buttons live in its open shadow root. */
-export function createHost(document: Document, kind: HostKind, tip: Tooltip, press: (id: string, button: HTMLElement) => void, intent: () => void) {
+/**
+ * A host of ours with its buttons. The page sees one element; the buttons live in its open shadow root. Their
+ * listeners belong to the feature's scope and end with it, or sooner when the host is disposed.
+ */
+export function createHost(scope: Scope, document: Document, kind: HostKind, tip: Tooltip, press: (id: string, button: HTMLElement) => void, intent: () => void) {
   const host = document.createElement("pp-music-actions")
   host.dataset.kind = kind
   const shadow = host.attachShadow({ mode: "open" })
   const style = document.createElement("style"); style.textContent = musicSkin
   const set = document.createElement("div"); set.className = "set"
   shadow.append(style, set)
-  for (const type of isolated) host.addEventListener(type, event => event.stopPropagation())
+  const stops: Dispose[] = []
+  const on = <K extends keyof HTMLElementEventMap>(target: HTMLElement, type: K, fn: (event: HTMLElementEventMap[K]) => void) => { stops.push(scope.on(target, type, fn)) }
+  for (const type of isolated) on(host, type, event => event.stopPropagation())
   const buttons = new Map<string, { readonly element: HTMLButtonElement; drawn: Drawn | null }>()
   let split: HTMLElement | null = null
 
@@ -68,13 +73,13 @@ export function createHost(document: Document, kind: HostKind, tip: Tooltip, pre
     const element = document.createElement("button")
     element.type = "button"
     const entry = { element, drawn: null as Drawn | null }
-    element.addEventListener("click", () => { tip.hide(); press(id, element) })
+    on(element, "click", () => { tip.hide(); press(id, element) })
     // Hover intent on a Save preloads the picker's code (YM-SAVE-16).
     const show = () => { if (entry.drawn) tip.show(element, () => entry.drawn?.tip ?? ""); if (entry.drawn?.icon !== undefined && (id === "save" || id === "more" || id === "choose")) intent() }
-    element.addEventListener("pointerenter", show)
-    element.addEventListener("focus", show)
-    element.addEventListener("pointerleave", () => tip.hide())
-    element.addEventListener("blur", () => tip.hide())
+    on(element, "pointerenter", show)
+    on(element, "focus", show)
+    on(element, "pointerleave", () => tip.hide())
+    on(element, "blur", () => tip.hide())
     buttons.set(id, entry)
     return entry
   }
@@ -110,7 +115,12 @@ export function createHost(document: Document, kind: HostKind, tip: Tooltip, pre
       else if (split && (parts.length !== split.children.length || parts.some((part, index) => split?.children[index] !== part))) split.replaceChildren(...parts)
       if (children.length !== set.children.length || children.some((child, index) => set.children[index] !== child)) set.replaceChildren(...children)
     },
-    read: (id: string) => buttons.get(id)?.element ?? null
+    read: (id: string) => buttons.get(id)?.element ?? null,
+    /** Takes the host off the page for good and ends its listeners. */
+    dispose() {
+      for (const stop of stops.splice(0)) stop()
+      host.remove()
+    }
   }
 }
 export type Host = ReturnType<typeof createHost>
