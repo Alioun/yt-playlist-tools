@@ -340,7 +340,7 @@ describe("the check step", () => {
     const amo = await fakeAmo()
     const run = await runStep(checkStep, workspace(scriptFor(amo.origin), fullNotes))
     expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: ready\n" })
-    expect(run.trace).toContain("+ exec bun --no-env-file --config=empty.toml amo-reviewer-notes.ts check ")
+    expect(run.trace).toContain("+ exec bun --no-env-file --config=empty.toml --tsconfig-override=empty.json amo-reviewer-notes.ts check ")
     expect(amo.requests).toEqual([])
     expect(leaks(run.stdout + run.trace)).toEqual([])
   })
@@ -403,7 +403,7 @@ describe("the fill step", () => {
     const amo = await fakeAmo()
     const run = await runStep(fillStep, workspace(scriptFor(amo.origin), fullNotes))
     expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: filled (AMO version 2.0.0, confirmed)\n" })
-    expect(run.trace).toContain("+ exec bun --no-env-file --config=empty.toml amo-reviewer-notes.ts fill 2.0.0 ")
+    expect(run.trace).toContain("+ exec bun --no-env-file --config=empty.toml --tsconfig-override=empty.json amo-reviewer-notes.ts fill 2.0.0 ")
     expect(leaks(run.stdout + run.trace)).toEqual([])
 
     expect(amo.requests).toHaveLength(1)
@@ -548,6 +548,25 @@ describe("the fill step on a tampered runner", () => {
     const run = await runStep(fillStep, dir)
     expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: filled (AMO version 2.0.0, confirmed)\n" })
     expect(preload.ran()).toBe(false)
+  })
+
+  // Bun reads the nearest tsconfig.json or jsconfig.json above the script. Its
+  // paths can send even node:fs to planted code, which then runs beside the login.
+  test.each(["_temp/tsconfig.json", "_temp/jsconfig.json", "tsconfig.json", "jsconfig.json"])("loads no %s planted above the script", async config => {
+    const amo = await fakeAmo()
+    const dir = workspace(scriptFor(amo.origin), fullNotes)
+    const planted = join(dir, "_planted.ts")
+    const marker = join(dir, "_redirected")
+    writeFileSync(planted, [
+      'const fs = process.getBuiltinModule("node:fs")',
+      `fs.writeFileSync(${JSON.stringify(marker)}, "")`,
+      "export const { readFileSync } = fs",
+      'export const { createHmac, randomUUID } = process.getBuiltinModule("node:crypto")'
+    ].join("\n") + "\n")
+    writeFileSync(join(dir, config), JSON.stringify({ compilerOptions: { paths: { "*": [planted] } } }))
+    const run = await runStep(fillStep, dir)
+    expect(run).toMatchObject({ exit: 0, stdout: "reviewer-notes: filled (AMO version 2.0.0, confirmed)\n" })
+    expect(existsSync(marker)).toBe(false)
   })
 
   test.each(["NODE_TLS_REJECT_UNAUTHORIZED", "NODE_EXTRA_CA_CERTS"])("strips %s, so a certificate nothing trusts stays untrusted", async name => {
