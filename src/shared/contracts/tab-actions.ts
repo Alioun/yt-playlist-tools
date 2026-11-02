@@ -1,0 +1,135 @@
+import type { ExplicitFailure, Outcome, ToastPlan } from "../rules/outcomes"
+import { isAccountKey, isChannelId, isPlaylistId, isShortcutId, isVideoId, type AccountKey, type ChannelId, type PlaylistId, type ShortcutId, type VideoId } from "../model/validation"
+import type { RpcContract } from "../rpc/rpc"
+import { isDestinationExpectation, isSetupDestination, isDestinationAnswer, type DestinationAnswer, type DestinationExpectation, type SetupDestination } from "./first-run"
+import type { PlaylistRow } from "./jobs"
+import { objectShape } from "./object-shape"
+import { isFeatureId, isPrivacy, isSite, type FeatureId, type Privacy, type Site } from "./vocabulary"
+
+/**
+ * What a page asks the background to do for a user action (06 §6.8.2). The background resolves the tab's
+ * account from its registry and refuses a request whose `acct` differs (ARC-ACC-49).
+ */
+export type UndoHandle = { readonly kind: "add" | "gather" | "remove"; readonly id: string }
+export type TabAddRequest = { readonly site: Site; readonly video: VideoId } & (
+  | { readonly via: "auto-add"; readonly playlists: readonly PlaylistId[]; readonly channel: ChannelId | null }
+  | { readonly via: "shortcut"; readonly shortcut: ShortcutId }
+  | { readonly via: "quick-save"; readonly opener: FeatureId }
+  | { readonly via: "picker" | "choose-quick-save" | "choose-shortcut"; readonly opener: FeatureId; readonly playlist: PlaylistId }
+)
+export type TabRemoveRequest = {
+  readonly site: Site; readonly video: VideoId; readonly playlist: PlaylistId; readonly opener: FeatureId; readonly tick: UndoHandle | null
+}
+type Ended = { readonly kind: "signed-out" | "no-tab" }
+export type TabAddReport =
+  | { readonly kind: "report"; readonly outcomes: Readonly<Record<PlaylistId, Outcome>>; readonly toast: ToastPlan | null; readonly feedback: boolean; readonly undo: UndoHandle | null }
+  | { readonly kind: "stopped"; readonly outcomes: Readonly<Record<PlaylistId, Outcome>>; readonly pending: readonly PlaylistId[]; readonly feedback: boolean; readonly toast: null; readonly undo: null }
+  | { readonly kind: "choose" }
+  | Ended
+export type TabRemoveReport =
+  | { readonly kind: "removed"; readonly playlist: PlaylistId; readonly video: VideoId; readonly feedback: boolean; readonly toast: ToastPlan | null; readonly undo: UndoHandle | null }
+  | { readonly kind: "failed"; readonly failure: ExplicitFailure }
+  | { readonly kind: "stopped"; readonly removed: boolean; readonly playlist: PlaylistId; readonly video: VideoId; readonly undo: null }
+  | Ended
+export type TabUndoReport =
+  | { readonly kind: "undone" }
+  | { readonly kind: "failed"; readonly completed: number; readonly of: number; readonly failure: ExplicitFailure; readonly toast: ToastPlan | null }
+  | { readonly kind: "stopped"; readonly completed: number; readonly of: number }
+  | { readonly kind: "expired" }
+  | Ended
+export type TabListing = { readonly rows: readonly PlaylistRow[]; readonly at: number }
+/** `cached` answers a read without YouTube; `listed`, `noTab` and `failed` answer a refresh. */
+export type TabPlaylists =
+  | { readonly kind: "cached"; readonly listing: TabListing | null }
+  | { readonly kind: "listed"; readonly listing: TabListing }
+  | { readonly kind: "noTab" | "failed" }
+export type TabCreateFailure = "rateLimited" | "publicCap" | "noChannel" | "notAllowed" | "failed"
+export type TabCreated = { readonly kind: "created"; readonly id: PlaylistId } | { readonly kind: "failed"; readonly reason: TabCreateFailure }
+export type TabDestinationChange = { readonly destination: SetupDestination; readonly expected: DestinationExpectation; readonly playlist: PlaylistId | null }
+
+type Pinned<T> = { readonly acct: AccountKey | null; readonly request: T }
+export type TabActionMessages = {
+  "tab.add": { payload: Pinned<TabAddRequest>; result: TabAddReport }
+  "tab.remove": { payload: Pinned<TabRemoveRequest>; result: TabRemoveReport }
+  "tab.undo": { payload: Pinned<UndoHandle>; result: TabUndoReport }
+  "tab.release": { payload: { readonly handle: UndoHandle }; result: null }
+  "tab.need": { payload: { readonly popovers: true }; result: { readonly kind: "ok" | "failed" } }
+  "tab.playlists": { payload: Pinned<{ readonly refresh: boolean }>; result: TabPlaylists }
+  "tab.create": { payload: Pinned<{ readonly title: string; readonly privacy: Privacy; readonly video: VideoId | null }>; result: TabCreated }
+  "tab.destination": { payload: Pinned<TabDestinationChange>; result: DestinationAnswer }
+}
+
+type Check = (value: unknown) => boolean
+const bool: Check = value => typeof value === "boolean"
+const count: Check = value => typeof value === "number" && Number.isSafeInteger(value) && value >= 0
+const oneOf = (...values: readonly unknown[]): Check => value => values.includes(value)
+const nullable = (check: Check): Check => value => value === null || check(value)
+const record = (value: unknown, entry: Check) => value !== null && typeof value === "object" && !Array.isArray(value)
+  && Object.entries(value).every(([key, item]) => isPlaylistId(key) && entry(item))
+const playlists: Check = value => Array.isArray(value) && value.length <= 200 && value.every(isPlaylistId)
+const kinded: Check = value => value !== null && typeof value === "object" && typeof Reflect.get(value, "kind") === "string"
+const plan: Check = value => value !== null && typeof value === "object" && typeof Reflect.get(value, "tone") === "string" && kinded(Reflect.get(value, "message"))
+
+export function isUndoHandle(value: unknown): value is UndoHandle {
+  return objectShape(value, { kind: oneOf("add", "gather", "remove"), id: v => typeof v === "string" && v.length > 0 && v.length <= 200 })
+}
+export function isTabAddRequest(value: unknown): value is TabAddRequest {
+  const base = { site: isSite, video: isVideoId }
+  return objectShape(value, { ...base, via: oneOf("auto-add"), playlists, channel: nullable(isChannelId) })
+    || objectShape(value, { ...base, via: oneOf("shortcut"), shortcut: isShortcutId })
+    || objectShape(value, { ...base, via: oneOf("quick-save"), opener: isFeatureId })
+    || objectShape(value, { ...base, via: oneOf("picker", "choose-quick-save", "choose-shortcut"), opener: isFeatureId, playlist: isPlaylistId })
+}
+export function isTabRemoveRequest(value: unknown): value is TabRemoveRequest {
+  return objectShape(value, { site: isSite, video: isVideoId, playlist: isPlaylistId, opener: isFeatureId, tick: nullable(isUndoHandle) })
+}
+function pinned(request: Check): Check {
+  return value => objectShape(value, { acct: nullable(isAccountKey), request })
+}
+const undo = nullable(isUndoHandle)
+export function isTabAddReport(value: unknown): value is TabAddReport {
+  return objectShape(value, { kind: oneOf("report"), outcomes: v => record(v, kinded), toast: nullable(plan), feedback: bool, undo })
+    || objectShape(value, { kind: oneOf("stopped"), outcomes: v => record(v, kinded), pending: playlists, feedback: bool, toast: v => v === null, undo: v => v === null })
+    || objectShape(value, { kind: oneOf("choose", "signed-out", "no-tab") })
+}
+export function isTabRemoveReport(value: unknown): value is TabRemoveReport {
+  return objectShape(value, { kind: oneOf("removed"), playlist: isPlaylistId, video: isVideoId, feedback: bool, toast: nullable(plan), undo })
+    || objectShape(value, { kind: oneOf("failed"), failure: v => typeof v === "string" })
+    || objectShape(value, { kind: oneOf("stopped"), removed: bool, playlist: isPlaylistId, video: isVideoId, undo: v => v === null })
+    || objectShape(value, { kind: oneOf("signed-out", "no-tab") })
+}
+export function isTabUndoReport(value: unknown): value is TabUndoReport {
+  return objectShape(value, { kind: oneOf("failed"), completed: count, of: count, failure: v => typeof v === "string", toast: nullable(plan) })
+    || objectShape(value, { kind: oneOf("stopped"), completed: count, of: count })
+    || objectShape(value, { kind: oneOf("undone", "expired", "signed-out", "no-tab") })
+}
+function isRow(value: unknown): value is PlaylistRow {
+  return objectShape(value, { id: isPlaylistId, title: v => typeof v === "string" }, { privacy: isPrivacy, count, thumb: v => typeof v === "string" })
+}
+function isListing(value: unknown): value is TabListing {
+  return objectShape(value, { rows: v => Array.isArray(v) && v.every(isRow), at: count })
+}
+export function isTabPlaylists(value: unknown): value is TabPlaylists {
+  return objectShape(value, { kind: oneOf("cached"), listing: nullable(isListing) })
+    || objectShape(value, { kind: oneOf("listed"), listing: isListing })
+    || objectShape(value, { kind: oneOf("noTab", "failed") })
+}
+export function isTabCreated(value: unknown): value is TabCreated {
+  return objectShape(value, { kind: oneOf("created"), id: isPlaylistId })
+    || objectShape(value, { kind: oneOf("failed"), reason: oneOf("rateLimited", "publicCap", "noChannel", "notAllowed", "failed") })
+}
+
+const title: Check = value => typeof value === "string" && value.length <= 1000
+export const tabActionContract: RpcContract<TabActionMessages> = {
+  "tab.add": { payload: (v): v is TabActionMessages["tab.add"]["payload"] => pinned(isTabAddRequest)(v), result: isTabAddReport, timeoutMs: 60_000 },
+  "tab.remove": { payload: (v): v is TabActionMessages["tab.remove"]["payload"] => pinned(isTabRemoveRequest)(v), result: isTabRemoveReport, timeoutMs: 60_000 },
+  "tab.undo": { payload: (v): v is TabActionMessages["tab.undo"]["payload"] => pinned(isUndoHandle)(v), result: isTabUndoReport, timeoutMs: 60_000 },
+  "tab.release": { payload: (v): v is TabActionMessages["tab.release"]["payload"] => objectShape(v, { handle: isUndoHandle }), result: (v): v is null => v === null, timeoutMs: 2_000 },
+  "tab.need": { payload: (v): v is TabActionMessages["tab.need"]["payload"] => objectShape(v, { popovers: v => v === true }),
+    result: (v): v is TabActionMessages["tab.need"]["result"] => objectShape(v, { kind: oneOf("ok", "failed") }), timeoutMs: 5_000 },
+  "tab.playlists": { payload: (v): v is TabActionMessages["tab.playlists"]["payload"] => pinned(r => objectShape(r, { refresh: bool }))(v), result: isTabPlaylists, timeoutMs: 45_000 },
+  "tab.create": { payload: (v): v is TabActionMessages["tab.create"]["payload"] => pinned(r => objectShape(r, { title, privacy: isPrivacy, video: nullable(isVideoId) }))(v),
+    result: isTabCreated, timeoutMs: 45_000 },
+  "tab.destination": { payload: (v): v is TabActionMessages["tab.destination"]["payload"] => pinned(r => objectShape(r, {
+    destination: isSetupDestination, expected: isDestinationExpectation, playlist: nullable(isPlaylistId) }))(v), result: isDestinationAnswer, timeoutMs: 15_000 }
+}

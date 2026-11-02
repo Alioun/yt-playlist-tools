@@ -5,6 +5,7 @@ import { failureOf, toastPlan, type ExplicitFailure, type ExplicitOutcome, type 
 import { applySessionEdits, emptySessionMemory, live, PAUSE_MS, RECENT_MS, sessionAccountCurrent, sessionEditAccount, type GatherClosedTab, type GatherClosing, type GatherRecentAdd, type GatherReopen, type GatherUndo,
   type SessionEdit, type SessionMemory, type SessionPort, type SessionRead, type SessionWrite, type SessionRevision, type Skip } from "../store/session-memory"
 import { isTabPing, type TabPing } from "../../shared/contracts/tabs"
+import type { TabAddRequest, TabRemoveRequest, UndoHandle } from "../../shared/contracts/tab-actions"
 
 // Facts the gateway recognised that JobResult can't carry. Each is a YT-ADD-28 row or YT-ADD-05's duplicate rejection.
 type WriteFact = "not-sent" | "duplicate" | "missing" | "full" | "refused" | "account-refused"
@@ -58,13 +59,8 @@ export type Ports = {
   generation(): string
 }
 
-export type AddRequest = { site: Site; video: VideoId } & (
-  | { via: "auto-add"; playlists: readonly PlaylistId[]; channel: ChannelId | null }
-  | { via: "shortcut"; shortcut: ShortcutId }
-  | { via: "quick-save"; opener: FeatureId }
-  | { via: "picker" | "choose-quick-save" | "choose-shortcut"; opener: FeatureId; playlist: PlaylistId }
-)
-export type RemoveRequest = { site: Site; video: VideoId; playlist: PlaylistId; opener: FeatureId; tick: UndoHandle | null }
+export type AddRequest = TabAddRequest
+export type RemoveRequest = TabRemoveRequest
 export type BatchOutcomes = readonly { video: VideoId; outcome: VideoOutcome }[]
 // A gather's own facts for its Undo record. They are planned once the outcomes are known, inside the batch's hold, and written in the record's one change.
 // The Recent entry takes the record's own time, so both name one moment.
@@ -81,7 +77,7 @@ export type BatchRequest = {
   record?: (outcomes: BatchOutcomes) => Promise<BatchRecord>
 }
 
-export type UndoHandle = { kind: "add" | "gather" | "remove"; id: string }
+export type { UndoHandle }
 // The later tab router resolves `acct` from its authenticated registry, never from a page message.
 export type SkipRequest = { acct: AccountKey; video: VideoId } & ({ kind: "skip"; playlists: Skip } | { kind: "unskip" })
 export type MemoryReport =

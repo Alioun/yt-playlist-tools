@@ -1,4 +1,5 @@
 import { createAccounts } from "../accounts/accounts"
+import { composeActions, type Actions } from "./actions"
 import type { NativeBrowser } from "../adapters/browser"
 import { runtimeTransport, timerDeadline, type RuntimePort } from "../adapters/runtime"
 import { createBrowserTabs } from "../adapters/tabs"
@@ -12,7 +13,7 @@ import { createTabs } from "../tabs/tabs"
 import type { BuildId } from "../../shared/contracts"
 import { siteBundles } from "../../shared/features/registration"
 
-export type Services = { readonly tabs: ReturnType<typeof createTabs>; dispose(): void }
+export type Services = { readonly tabs: ReturnType<typeof createTabs>; readonly actions: Actions; dispose(): void }
 
 /**
  * Until the Monitor's production authority is bound (B35), every feature that's on reads as working, which is
@@ -52,15 +53,16 @@ export function composeServices(deps: {
     },
     clock, enabled: deps.consented
   })
-  const privateSkips = {
-    readPrivateSkips: async () => ({ kind: "unavailable", reason: "context" }) as const,
-    subscribePrivateSkips: () => () => {}
-  }
-  const producer = createTabViewProducer({ owner, addFlow: privateSkips, statuses: workingStatuses, notices: noNotices, build })
-  const unbindHello = browserTabs.bindHello(tabs, producer)
-  const publication = createViewPublication({ owner, tabs, producer, privateSkips, clock,
-    monitor: { subscribeView: () => () => {} } })
   const playlists = createPlaylists({ owner, tabs, now: () => Date.now() })
+  const actions = composeActions({ native: { ...native, runtime }, build, owner, tabs, playlists, registrar, writable: deps.consented,
+    async requester(origin) {
+      const [active] = await native.tabs.query({ active: true, windowId: origin.windowId }).catch(() => [])
+      return { windowId: origin.windowId, incognito: origin.incognito, activeTabId: typeof active?.id === "number" ? active.id : null }
+    } })
+  const producer = createTabViewProducer({ owner, addFlow: actions.flow, statuses: workingStatuses, notices: noNotices, build })
+  const unbindHello = browserTabs.bindHello(tabs, producer)
+  const publication = createViewPublication({ owner, tabs, producer, privateSkips: actions.flow, clock,
+    monitor: { subscribeView: () => () => {} } })
   const accounts = createAccounts({ owner, tabs, claim: { kind: "unavailable", reason: "production-ownership-required" }, now: () => Date.now() })
   const router = createUiRouter({
     lifecycle: deps.lifecycle, sharedSettings: owner, owner,
@@ -85,9 +87,9 @@ export function composeServices(deps: {
     rpc: { build, deadline: timerDeadline }
   })
   return {
-    tabs,
+    tabs, actions,
     dispose() {
-      for (const stop of [() => router.dispose(), () => accounts.dispose(), () => playlists.dispose(), () => publication.dispose(),
+      for (const stop of [() => router.dispose(), () => accounts.dispose(), () => actions.dispose(), () => playlists.dispose(), () => publication.dispose(),
         unbindHello, () => producer.dispose(), () => tabs.dispose(), () => browserTabs.dispose()]) {
         try { stop() } catch {}
       }

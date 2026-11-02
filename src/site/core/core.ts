@@ -4,6 +4,8 @@ import { noticeText, siteFeedbackText } from "../../shared/copy"
 import type { I18n } from "../../shared/i18n"
 import type { PageChannel } from "../../shared/rpc/page-channel"
 import type { Deadline } from "../../shared/rpc/rpc"
+import { pageGlobal } from "../global"
+import { createTabActions, type TabActions } from "./actions"
 import { createExtLink, type ExtLink, type ExtLinkRuntime } from "./extlink"
 import { createFeatureHost, type FeatureDefinition, type SiteFeatureId } from "./feature-host"
 import type { MusicItems, MusicItemsOptions } from "./items-music"
@@ -25,6 +27,8 @@ export type CoreServices<S extends Site> = {
   readonly items: SiteItems[S]
   readonly keys: Keys
   readonly i18n: I18n
+  /** User actions through the background: adds, removals, Undo, the playlist list and the popovers (06 §6.8.2). */
+  readonly actions: TabActions
   readonly notice: { request(due: DueNotice): void }
   readonly notices: { wouldAct(feature: SiteFeatureId<S>): void }
 }
@@ -65,7 +69,7 @@ function blockers(document: Document): KeyBlockers {
   return {
     menuOpen: () => document.querySelector("tp-yt-iron-dropdown:not([aria-hidden='true']) [role='menu'], ytmusic-menu-popup-renderer[role='menu']") !== null,
     dialogOpen: () => document.querySelector("dialog[open], tp-yt-paper-dialog[opened]") !== null,
-    extensionPopoverOpen: () => false
+    extensionPopoverOpen: () => pageGlobal().popovers?.isOpen() === true
   }
 }
 
@@ -79,6 +83,10 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
     build, site, page, runtime: options.runtime, deadline: options.deadline ?? timerDeadline,
     hiddenAtStart: document.visibilityState === "hidden", isView: isTabView
   })
+  const actions = createTabActions({ transport: options.runtime.transport, build, deadline: options.deadline ?? timerDeadline, account() {
+    const trusted = page.state
+    return trusted.kind !== "ready" ? undefined : trusted.snapshot.signedIn ? trusted.snapshot.acct : null
+  } })
   const pointer = new Pointer({ document, onError })
   const report = { itemUnrecognised: ignore, pageSettled: ignore }
   const items = options.items({ document, onError, pointer, page, report })
@@ -97,7 +105,7 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
       detailsLabel: labels.details, dismissLabel: labels.dismiss, details: () => notices.update(null), dismiss: ignore, presented: ignore })
   }
   const services: CoreServices<S> = {
-    document, page, items, keys, i18n,
+    document, page, items, keys, i18n, actions,
     notice: { request },
     notices: { wouldAct(feature) {
       const due = link.view?.notices.find(notice => notice.features.some(id => id === feature))
@@ -116,7 +124,7 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
   function dispose() {
     if (disposed) return
     disposed = true
-    for (const stop of [() => host.dispose(), () => items.dispose(), () => pointer.dispose(), () => keys.dispose(), () => link.dispose(), () => root.dispose()]) {
+    for (const stop of [() => host.dispose(), () => items.dispose(), () => pointer.dispose(), () => keys.dispose(), () => actions.dispose(), () => link.dispose(), () => root.dispose()]) {
       try { stop() } catch {}
     }
   }

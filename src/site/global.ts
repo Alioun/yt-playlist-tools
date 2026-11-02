@@ -1,6 +1,7 @@
 import type { BuildId, Site } from "../shared/contracts"
 import type { AnySiteCore, SiteCore } from "./core/core"
 import type { Kit } from "./kit/install"
+import type { Popovers } from "./popovers/types"
 
 /**
  * `globalThis.__pp` in the isolated world (ARC-MOD-16). Every isolated script of ours in a frame shares it.
@@ -11,6 +12,10 @@ export type PageGlobal = {
   core?: AnySiteCore
   kit?: Kit
   svelte?: unknown
+  /** Installed by `popovers.js` (ARC-MOD-16, ARC-MOD-17). */
+  popovers?: Popovers
+  /** Opens waiting for `popovers.js`, which wakes them once it installs (each bundle has its own module state). */
+  popoverWaiters?: Set<(popovers: Popovers) => void>
   loaded: Map<string, BuildId>
   documentId?: string
 }
