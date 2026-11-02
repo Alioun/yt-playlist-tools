@@ -160,9 +160,14 @@ export function composeActions(deps: {
     },
     async "tab.playlists"({ acct, request }, context): Promise<TabPlaylists> {
       if (acct === null || !await pinned(context, acct)) return { kind: "noTab" }
-      const open = await playlists.list(acct, { site: context.site, req: requestOf(context), originalTab: context.origin.tabId, refresh: request.refresh })
+      // A cached read never reaches YouTube; the picker asks for a refresh itself when the list is stale (YT-PK-02).
+      if (!request.refresh) {
+        const read = await owner.readPlaylistCache({ acct, private: context.origin.incognito }).catch(() => null)
+        if (read?.kind !== "cache") return { kind: "failed" }
+        return { kind: "cached", listing: read.cache === null || read.cache.listAt === null ? null : { rows: cacheRows(read.cache, context.site), at: read.cache.listAt } }
+      }
+      const open = await playlists.list(acct, { site: context.site, req: requestOf(context), originalTab: context.origin.tabId, refresh: true })
       if (open.kind !== "open") return { kind: "failed" }
-      if (!request.refresh) return { kind: "cached", listing: open.cached && open.cached.at !== null ? { rows: open.cached.rows, at: open.cached.at } : null }
       const fresh = await (open.refresh ?? Promise.resolve(null))
       if (fresh?.kind === "listed") return { kind: "listed", listing: { rows: fresh.listing.rows, at: fresh.listing.at } }
       return { kind: fresh?.outcome.kind === "no-tab" ? "noTab" : "failed" }

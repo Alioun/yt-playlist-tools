@@ -59,7 +59,8 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
     async accountInView() { return { kind: "none" } }
   } as unknown as Tabs
   const playlists = {
-    async list() { return { kind: "open", cached: { rows: [{ id: alpha, title: "Alpha" }], at: 5 }, freshness: "fresh", refresh: null } }
+    async list() { return { kind: "open", cached: null, freshness: "absent",
+      refresh: Promise.resolve({ kind: "listed", listing: { rows: [{ id: alpha, title: "Alpha" }], at: 5 } }) } }
   } as unknown as Playlists
   const native = {
     runtime: { id: "perchling", getURL: (path: string) => `chrome-extension://perchling${path}`, async sendMessage() {},
@@ -140,9 +141,11 @@ test("an untick removes the entry and offers Undo, and a pick in choose mode sto
   expect(setup.kind === "value" && setup.view.kind === "live" && setup.view.setup.quickSave).toBe(beta)
 })
 
-test("the picker's playlist list comes from the cache, and popovers load through the Registrar", async () => {
-  const { page, ensured } = world()
-  expect(await page.playlists(false)).toEqual({ kind: "cached", listing: { rows: [{ id: alpha, title: "Alpha" }], at: 5 } })
+test("the picker's cached list never reaches YouTube, a refresh does, and popovers load through the Registrar", async () => {
+  const { page, ensured, site } = world()
+  expect(await page.playlists(false)).toEqual({ kind: "cached", listing: null })
+  expect(await page.playlists(true)).toEqual({ kind: "listed", listing: { rows: [{ id: alpha, title: "Alpha" }], at: 5 } })
+  expect(site.jobs).toEqual([])
   expect(await page.need()).toBe(true)
   expect(ensured).toEqual([{ tabId: 9, what: { popovers: true } }])
 })
