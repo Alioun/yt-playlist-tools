@@ -121,3 +121,8 @@ export function display(key: Readonly<Key>, os: Platform["os"]): string {
   const label = char ?? names[key.code] ?? key.code.replace(/^Key|^Digit/, "")
   return `${held}${held && os !== "macos" ? "+" : ""}${label}`
 }
+
+/** The key-label convention for a `navigator.platform` string. */
+export function osOf(platform: string): Platform["os"] {
+  return /mac/i.test(platform) ? "macos" : /win/i.test(platform) ? "windows" : "linux"
+}
