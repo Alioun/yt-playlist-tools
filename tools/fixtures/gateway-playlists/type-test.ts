@@ -2,6 +2,7 @@ import type { BatchAddResult, JobOf, RemovalIdentity } from "../../../src/shared
 import type { GatewayRequestPort, Dispatch } from "../../../src/page/gateway/port"
 import type { WwwRequestBoundary } from "../../../src/page/gateway/www-request"
 import { createGateway } from "../../../src/page/gateway"
+import { wwwGateway } from "../../../src/page/gateway/www"
 import type { PageReadPort } from "../../../src/page/read-port"
 import { entry, playlist, video } from "./specimens"
 
@@ -11,7 +12,7 @@ declare const raw: unknown
 declare const native: WwwRequestBoundary
 
 export async function correlation() {
-  const gateway = createGateway({ site: "www", page, requests })
+  const gateway = createGateway({ site: wwwGateway, page, requests })
   const result = await gateway.run({ kind: "create", title: "List", privacy: "PRIVATE", videoId: video })
   if (result.ok) {
     result.data.playlistId.toUpperCase()

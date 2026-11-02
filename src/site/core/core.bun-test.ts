@@ -5,7 +5,8 @@ import { tabAskContract, type TabAskMessages } from "../../shared/contracts/tab-
 import { createMemoryNetwork } from "../../shared/rpc/memory"
 import { createDirectPageChannel } from "../../shared/rpc/page-channel"
 import { createRpc, createRpcCaller } from "../../shared/rpc/rpc"
-import { createLiveGateway } from "../../page/adapters/live-gateway"
+import { createLiveWwwGateway } from "../../page/adapters/live-www-gateway"
+import { wwwGateway } from "../../page/gateway/www"
 import { vocabularyFor } from "../../page/gateway/port"
 import { wwwRoutes } from "../../page/routes/www"
 import { startPage } from "../../page/start"
@@ -43,7 +44,7 @@ function withCardMenu(view: TabView): TabView {
 async function startTab(view: TabView) {
   Object.assign(window, { ytcfg: { get: (key: string) => ({ LOGGED_IN: true, DATASYNC_ID: rawIdentity } as Record<string, unknown>)[key] } })
   const channel = createDirectPageChannel()
-  const page = startPage({ site: "www", build, window, document, channel, createGateway: createLiveGateway })
+  const page = startPage({ site: wwwGateway, build, window, document, channel, createGateway: createLiveWwwGateway })
   const network = createMemoryNetwork<Sender>({ delivery: "immediate" })
   const background = network.connect({ id: extensionId })
   const tab = network.connect({ id: extensionId })

@@ -3,7 +3,10 @@ import { createHash, webcrypto } from "node:crypto"
 import { CONTRACT_VERSION, isBuildId, type BuildId } from "../shared/contracts"
 import { createDirectPageChannel, pagePresenceEvent } from "../shared/rpc/page-channel"
 import { createPageLink } from "../site/core/page-link"
-import { createLiveGateway } from "./adapters/live-gateway"
+import { createLiveMusicGateway } from "./adapters/live-music-gateway"
+import { createLiveWwwGateway } from "./adapters/live-www-gateway"
+import { musicGateway } from "./gateway/music"
+import { wwwGateway } from "./gateway/www"
 import { startPage } from "./start"
 
 function buildId(value: string): BuildId {
@@ -11,6 +14,10 @@ function buildId(value: string): BuildId {
   return value
 }
 const build = buildId("page-start-test")
+const sites = {
+  www: { site: wwwGateway, createGateway: createLiveWwwGateway },
+  music: { site: musicGateway, createGateway: createLiveMusicGateway }
+}
 const identity = "synthetic-identity||page-start"
 const cleanups: (() => void)[] = []
 afterEach(() => {
@@ -26,8 +33,8 @@ function start(site: "www" | "music" = "www") {
   const channel = createDirectPageChannel()
   let gateways = 0
   const page = startPage({
-    site, build, window, document, channel,
-    createGateway(options) { gateways++; return createLiveGateway(options) }
+    site: sites[site].site, build, window, document, channel,
+    createGateway(options) { gateways++; return sites[site].createGateway(options) }
   })
   const link = () => {
     const created = createPageLink({ site, build, vocabulary: vocabularyOf(site), digest: bytes => webcrypto.subtle.digest("SHA-256", bytes) }, channel)
@@ -38,7 +45,7 @@ function start(site: "www" | "music" = "www") {
   return { page, channel, link, gateways: () => gateways }
 }
 function vocabularyOf(site: "www" | "music") {
-  const probe = createLiveGateway({ site, window, document })
+  const probe = sites[site].createGateway({ window, document })
   cleanups.push(() => probe.dispose())
   return probe.gateway.vocabulary
 }
@@ -80,8 +87,8 @@ test("a newer build's retire disposes the page half and its gateway, and the sam
   setConfig({ LOGGED_IN: false })
   const disposed: string[] = []
   const channel = createDirectPageChannel()
-  const page = startPage({ site: "www", build, window, document, channel, createGateway(options) {
-    const live = createLiveGateway(options)
+  const page = startPage({ site: wwwGateway, build, window, document, channel, createGateway(options) {
+    const live = createLiveWwwGateway(options)
     return { gateway: live.gateway, dispose() { disposed.push("gateway"); live.dispose() } }
   } })
   cleanups.push(() => page.dispose())
@@ -96,7 +103,7 @@ test("the page half answers the background's presence check for its own build on
   const here = (detail: string) => !document.dispatchEvent(new CustomEvent(pagePresenceEvent, { detail, cancelable: true }))
   expect(here(build)).toBe(false)
   const channel = createDirectPageChannel()
-  const page = startPage({ site: "www", build, window, document, channel })
+  const page = startPage({ site: wwwGateway, createGateway: createLiveWwwGateway, build, window, document, channel })
   cleanups.push(() => page.dispose())
   expect([here(build), here("another-build")]).toEqual([true, false])
   channel.send("retire", JSON.stringify({ v: CONTRACT_VERSION, build: "page-start-next", kind: "retire" }))

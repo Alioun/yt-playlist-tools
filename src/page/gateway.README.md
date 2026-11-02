@@ -101,7 +101,7 @@ Aggregate success never confirms individual batch additions.
 Missing correlated action facts remain unconfirmed.
 Removal batches require correlated entry IDs before counting removals.
 
-`adapters/live-gateway.ts` composes the existing live read port and the site's request adapter into `createGateway`.
+`adapters/live-www-gateway.ts` and `adapters/live-music-gateway.ts` compose the live read port and the site's request adapter into `createGateway`, with the site's route table and job builders from `gateway/www.ts` or `gateway/music.ts`. Each page half imports only its own site's, so neither bundles the other site's jobs.
 Its owner disposes the composition when retiring the page.
 The www adapter finds the global resolver by shape, caches it, and searches once more after its method disappears.
 Service requests own a hidden node and completion listener until settlement or cancellation.

@@ -1,18 +1,22 @@
 import { afterEach, expect, test } from "bun:test"
 import { createLiveReadPort } from "../../../src/page/live-reads"
 import { createGateway } from "../../../src/page/gateway"
+import { wwwGateway } from "../../../src/page/gateway/www"
+import { musicGateway } from "../../../src/page/gateway/music"
 import { defineRaw } from "../../../src/page/live-read.specimens"
 import { rawSong } from "../../../src/page/gateway.specimens"
 import { parseTargetVideo } from "../../../src/page/read-parsers"
 import { readRoutes, readWatches } from "../../../src/page/read-port"
 import { firstVideo, secondVideo, shortVideo, legacyData, lockupData, shortsData } from "./specimens"
 
+const siteGateways = { www: wwwGateway, music: musicGateway }
+
 const cleanups: (() => void)[] = []
 afterEach(() => { for (const cleanup of cleanups.splice(0).reverse()) cleanup() })
 function pageFixture(site: "www" | "music" = "www") {
   const doc = document.implementation.createHTMLDocument("Explicitly synthetic renderer data")
   const page = createLiveReadPort({ site, document: doc, window })
-  const gateway = createGateway({ site, page, now: () => 0 })
+  const gateway = createGateway({ site: siteGateways[site], page, now: () => 0 })
   cleanups.push(() => gateway.dispose(), () => page.dispose())
   function target(tag: string, key: string, raw: unknown) {
     const element = doc.createElement(tag), button = doc.createElement("button")

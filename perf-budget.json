@@ -50,9 +50,9 @@
   "exceptions": [
     {
       "row": "www/page",
-      "kb": 30.6,
+      "kb": 26.6,
       "since": "2026-11-02",
-      "why": "The real gateway, route table and job parsers replaced a 0.69 KB stub; it also carries YouTube Music's gateway code."
+      "why": "The real gateway, its job parsers and the contract checks on what it sends replaced a 0.69 KB stub. A MAIN-world script cannot load code later without a new injected file, so all of it loads with the page."
     },
     {
       "row": "www/core",
@@ -98,9 +98,9 @@
     },
     {
       "row": "music/page",
-      "kb": 30.6,
+      "kb": 25.2,
       "since": "2026-11-02",
-      "why": "The real gateway, route table and job parsers replaced the rough build's queue-only jobs; it also carries YouTube's gateway code."
+      "why": "The real gateway, its job parsers and the contract checks on what it sends replaced the rough build queue-only jobs. A MAIN-world script cannot load code later without a new injected file, so all of it loads with the page."
     },
     {
       "row": "music/core",

@@ -2,9 +2,13 @@ import type { JobFailure, Site } from "../../../src/shared/contracts"
 import { isChannelId, isPlaylistId, isVideoId } from "../../../src/shared/model/validation"
 import { isSetVideoId } from "../../../src/shared/contracts"
 import { createGateway } from "../../../src/page/gateway"
+import { wwwGateway } from "../../../src/page/gateway/www"
+import { musicGateway } from "../../../src/page/gateway/music"
 import { scriptedPage, syntheticIdentity } from "../../../src/page/gateway.specimens"
 import type { GatewayClock } from "../../../src/page/gateway/lanes"
 import type { AttemptContext, Dispatch, GatewayRequestPort, HttpAnswer, RequestSpec, Transport } from "../../../src/page/gateway/port"
+
+const siteGateways = { www: wwwGateway, music: musicGateway }
 
 export function check(condition: unknown, code: string): asserts condition { if (!condition) throw new Error(code) }
 export function same(actual: unknown, expected: unknown, code: string): void { check(JSON.stringify(actual) === JSON.stringify(expected), code) }
@@ -73,7 +77,7 @@ export function recorded(site: Site = "www") {
     }
   }
   const signals: unknown[] = []
-  const gateway = createGateway({ site, page: page.port, requests: port, clock, signals: signal => signals.push(signal) })
+  const gateway = createGateway({ site: siteGateways[site], page: page.port, requests: port, clock, signals: signal => signals.push(signal) })
   return { page, clock, calls, scripts, available, port, gateway, signals, get cancellations() { return cancellations } }
 }
 export function held(answer = deferred<HttpAnswer>()): { answer: ReturnType<typeof deferred<HttpAnswer>>; script: Script } {

@@ -1,4 +1,5 @@
 import { createGateway } from "../../../src/page/gateway"
+import { wwwGateway } from "../../../src/page/gateway/www"
 import { scriptedPage, syntheticIdentity } from "../../../src/page/gateway.specimens"
 import type { WwwQueuePort } from "../../../src/page/gateway/www-queue"
 import type { AttemptContext, Dispatch, GatewayRequestPort, HttpAnswer } from "../../../src/page/gateway/port"
@@ -115,7 +116,7 @@ export function queueWorld(options: { signedIn?: boolean | "missing"; card?: unk
     }
   }
   const unused: GatewayRequestPort = { has: () => true, send() { throw new Error("Queue jobs must not use the request port") } }
-  const gateway = createGateway({ site: "www", page: page.port, requests: unused, queue: port, clock, signals: signal => signals.push(signal) })
+  const gateway = createGateway({ site: wwwGateway, page: page.port, requests: unused, queue: port, clock, signals: signal => signals.push(signal) })
   return Object.assign(world, { port, gateway })
 }
 export function pending(apply: (world: ScriptWorld, call: Call) => HttpAnswer | undefined | void, late?: ReturnType<typeof deferred<HttpAnswer>>): Script {

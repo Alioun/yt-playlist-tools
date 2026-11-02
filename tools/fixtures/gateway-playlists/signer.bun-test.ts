@@ -1,6 +1,7 @@
 import { test } from "bun:test"
 import type { JobFailure, Site } from "../../../src/shared/contracts"
 import { createGateway } from "../../../src/page/gateway"
+import { wwwGateway } from "../../../src/page/gateway/www"
 import { dispatchWwwRequest } from "../../../src/page/gateway/www-request"
 import type { CookieName, NativeRequest, WwwRequestBoundary } from "../../../src/page/gateway/www-request"
 import type { AttemptContext } from "../../../src/page/gateway/port"
@@ -104,7 +105,7 @@ test("Music can never enter the www signer even with a misleading origin", async
 test("wrong-account write after signing is prevented by a fresh configuration check", async () => {
   const p = dummy(), waiting = deferred<ArrayBuffer>()
   p.port.sha1 = async () => waiting.promise
-  const gateway = createGateway({ site: "www", page: p.page.port, clock: p.clock, requests: {
+  const gateway = createGateway({ site: wwwGateway, page: p.page.port, clock: p.clock, requests: {
     has: via => via === "signed",
     send: (_via, spec, context) => dispatchWwwRequest({ port: p.port, spec, signed: true, context })
   } })
@@ -120,7 +121,7 @@ test("wrong-account write after signing is prevented by a fresh configuration ch
 test("expiry during hashing prevents a late request", async () => {
   const p = dummy(), waiting = deferred<ArrayBuffer>()
   p.port.sha1 = async () => waiting.promise
-  const gateway = createGateway({ site: "www", page: p.page.port, clock: p.clock, requests: {
+  const gateway = createGateway({ site: wwwGateway, page: p.page.port, clock: p.clock, requests: {
     has: via => via === "signed", send: (_via, spec, context) => dispatchWwwRequest({ port: p.port, spec, signed: true, context })
   } })
   const pending = gateway.run({ kind: "add", playlistId: playlist, videoId: video })
@@ -145,7 +146,7 @@ test("all dummy signer failure paths keep secret values out of results and diagn
       http: mode === "http" ? 403 : 200,
       body: { ...identity(), ...(mode === "shape" ? {} : { status: "STATUS_FAILED" }), debug: p.privateValue, headers: { Authorization: p.privateValue } }
     })
-    const gateway = createGateway({ site: "www", page: p.page.port, clock: p.clock, signals: signal => signals.push(signal), requests: {
+    const gateway = createGateway({ site: wwwGateway, page: p.page.port, clock: p.clock, signals: signal => signals.push(signal), requests: {
       has: via => via === "signed", send: (_via, spec, context) => dispatchWwwRequest({ port: p.port, spec, signed: true, context })
     } })
     const answer = await gateway.run({ kind: "add", playlistId: playlist, videoId: video })
@@ -169,7 +170,7 @@ test("every awaited cookie hash is followed by account admission before another 
       if (++count === changedAt) p.page.config.DATASYNC_ID = ["fixture", "changed", String(changedAt)].join("-")
       return result
     }
-    const gateway = createGateway({ site: "www", page: p.page.port, clock: p.clock, requests: {
+    const gateway = createGateway({ site: wwwGateway, page: p.page.port, clock: p.clock, requests: {
       has: via => via === "signed", send: (_via, spec, context) => dispatchWwwRequest({ port: p.port, spec, signed: true, context })
     } })
     const result = await gateway.run({ kind: "add", playlistId: playlist, videoId: video })

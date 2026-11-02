@@ -1,9 +1,13 @@
 import { afterEach, expect, test } from "bun:test"
 import { createGateway } from "./gateway"
+import { wwwGateway } from "./gateway/www"
+import { musicGateway } from "./gateway/music"
 import { createLiveReadPort } from "./live-reads"
 import { defineRaw, installRawPlayer, trackNativeEvents } from "./live-read.specimens"
 import { rawNavigation, rawPlayer, rawQueueItem, rawSong, syntheticIdentity, syntheticNextVideo, syntheticVideo } from "./gateway.specimens"
 import { readRoutes, readWatches } from "./read-port"
+
+const siteGateways = { www: wwwGateway, music: musicGateway }
 
 const cleanups: (() => void)[] = []
 afterEach(() => { for (const cleanup of cleanups.splice(0).reverse()) cleanup() })
@@ -17,7 +21,7 @@ function localPage(site: "www" | "music" = "www") {
   let navigation: unknown = rawNavigation()
   const page = createLiveReadPort({ site, window, document: doc, bindings: { navigation: { read: () => navigation } } })
   cleanups.push(() => page.dispose())
-  const gateway = createGateway({ site, page, now: () => 10 })
+  const gateway = createGateway({ site: siteGateways[site], page, now: () => 10 })
   cleanups.push(() => gateway.dispose())
   return { doc, page, gateway, setNavigation(value: unknown) { navigation = value } }
 }
@@ -84,7 +88,7 @@ test("replacement counting players drop old listeners and stale callbacks publis
 
 test("the raw event cache exists only while navigation is watched and nav streams own no timeupdate listener", () => {
   const doc = document.implementation.createHTMLDocument("Synthetic navigation"), player = installRawPlayer(doc)
-  const page = createLiveReadPort({ site: "www", window, document: doc }), gateway = createGateway({ site: "www", page })
+  const page = createLiveReadPort({ site: "www", window, document: doc }), gateway = createGateway({ site: wwwGateway, page })
   const tracked = trackNativeEvents(player.video)
   cleanups.push(tracked.restore, () => page.dispose(), () => gateway.dispose())
   const values: unknown[] = [], stop = gateway.watch("nav", value => values.push(value))
@@ -133,7 +137,7 @@ test("Music live metadata and explicit raw state bindings work without a player 
   const page = createLiveReadPort({ site: "music", window, document: doc, bindings: {
     musicState: { read: () => { throw new Error(syntheticIdentity) } }, castPlayer: { read: () => false }
   } })
-  const gateway = createGateway({ site: "music", page })
+  const gateway = createGateway({ site: musicGateway, page })
   cleanups.push(() => page.dispose(), () => gateway.dispose())
   expect(await gateway.run({ kind: "nowPlaying" })).toEqual<unknown>({ ok: true, route: readRoutes.nowPlaying, data: { videoId: syntheticVideo, title: "Song", artist: "Artist", pos: 12, len: 180 } })
   expect(await gateway.run({ kind: "castState" })).toEqual({ ok: true, route: readRoutes.castState, data: { casting: false } })
@@ -147,7 +151,7 @@ test("Music notifications have one owned binding, with exact release and no stal
   const page = createLiveReadPort({ site: "music", window, document: doc, bindings: { queueChanges: {
     onChange(changed) { starts++; rawChanged = changed; return () => { stops++ } }
   } } })
-  const gateway = createGateway({ site: "music", page }), values: unknown[] = []
+  const gateway = createGateway({ site: musicGateway, page }), values: unknown[] = []
   cleanups.push(() => page.dispose(), () => gateway.dispose())
   const a = gateway.watch("queue", value => values.push(value)), b = gateway.watch("queue", () => {})
   expect([starts, stops]).toEqual([1, 0])

@@ -1,6 +1,7 @@
 import { test } from "bun:test"
 import { isBreakageSignal } from "../../../src/shared/contracts"
 import { createGateway } from "../../../src/page/gateway"
+import { wwwGateway } from "../../../src/page/gateway/www"
 import { createLanes } from "../../../src/page/gateway/lanes"
 import { syntheticIdentity } from "../../../src/page/gateway.specimens"
 import { field } from "../../../src/page/read-parsers"
@@ -114,7 +115,7 @@ test("missing signed-out and mismatched identities refuse account jobs without d
     p.gateway.dispose()
     p.page.config.LOGGED_IN = mode === "signed-out" ? false : true
     p.page.config.DATASYNC_ID = mode === "missing" ? undefined : syntheticIdentity
-    const gateway = createGateway({ site: "www", page: p.page.port, requests: p.port, clock: p.clock })
+    const gateway = createGateway({ site: wwwGateway, page: p.page.port, requests: p.port, clock: p.clock })
     if (mode === "mismatched") p.page.config.DATASYNC_ID = "changed-synthetic-account"
     const result = await gateway.run({ kind: "add", playlistId: playlist, videoId: video })
     check(!result.ok && result.reason === (mode === "missing" ? "unavailable" : mode === "signed-out" ? "signedOut" : "accountChanged"), "Account preflight changed")

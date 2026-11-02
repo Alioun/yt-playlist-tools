@@ -3,11 +3,15 @@ import { isBreakageSignal, isJobResultFor, isProbeReportFor } from "../shared/co
 import type { BreakageSignal, PlayerData, Stream } from "../shared/contracts"
 import { isVideoId } from "../shared/model/validation"
 import { createGateway } from "./gateway"
+import { wwwGateway } from "./gateway/www"
+import { musicGateway } from "./gateway/music"
 import { readRoutes, readVocabulary, readWatches } from "./read-port"
 import {
   rawMusicPlayer, rawNavigation, rawPlayer, rawQueueItem, rawResponse, rawSong, scriptedPage, specimenProvenance,
   syntheticChannel, syntheticIdentity, syntheticNextVideo, syntheticVideo
 } from "./gateway.specimens"
+
+const siteGateways = { www: wwwGateway, music: musicGateway }
 
 function videoId(value = syntheticVideo) {
   if (!isVideoId(value)) throw new Error("Invalid synthetic video")
@@ -23,7 +27,7 @@ const success = (data: unknown, route: unknown) => ({ ok: true, data, route })
 
 test("raw identity is pinned whole only in PageJobResult, and is never a shared account result", async () => {
   const p = scriptedPage(), signals: BreakageSignal[] = []
-  const g = createGateway({ site: "www", page: p.port, now: () => 10, signals: value => signals.push(value) })
+  const g = createGateway({ site: wwwGateway, page: p.port, now: () => 10, signals: value => signals.push(value) })
   const answer = await g.run({ kind: "account" })
   expect(answer).toEqual<unknown>(success({ signedIn: true, datasyncId: syntheticIdentity }, readRoutes.account))
   expect(isJobResultFor({ kind: "account" }, answer)).toBe(false)
@@ -43,7 +47,7 @@ test("signed-out visitor IDs stay signed out and missing or throwing config is u
     if (mode === "signed-out") { p.config.LOGGED_IN = false; p.config.DATASYNC_ID = "VSYNTHETIC||" }
     if (mode === "missing") delete p.config.DATASYNC_ID
     if (mode === "throws") p.faults.add("config")
-    const g = createGateway({ site: "music", page: p.port, signals: value => signals.push(value), now: () => 10 })
+    const g = createGateway({ site: musicGateway, page: p.port, signals: value => signals.push(value), now: () => 10 })
     expect(await g.run({ kind: "account" })).toEqual<unknown>(mode === "signed-out" ? success({ signedIn: false, datasyncId: null }, readRoutes.account) : unavailable)
     expect(g.account).toEqual(mode === "signed-out" ? { signedIn: false, datasyncId: null } : null)
     expect(signals.every(value => isBreakageSignal(value, readVocabulary))).toBe(true)
@@ -53,7 +57,7 @@ test("signed-out visitor IDs stay signed out and missing or throwing config is u
 })
 
 test("navigation response precedes the player response and channel reads never fabricate absence", async () => {
-  const p = scriptedPage(), g = createGateway({ site: "www", page: p.port })
+  const p = scriptedPage(), g = createGateway({ site: wwwGateway, page: p.port })
   p.values.watchPlayer = rawPlayer(syntheticVideo, { response: rawResponse(syntheticVideo, { title: "Player title" }) })
   expect(await g.run({ kind: "videoInfo" })).toEqual<unknown>(success({ videoId: syntheticVideo, title: "Synthetic video", length: 120, kind: "video" }, readRoutes.videoInfo))
   expect(await g.run({ kind: "channelOf", videoId: videoId() })).toEqual<unknown>(success({ channelId: syntheticChannel, title: "Synthetic channel" }, readRoutes.channelOf))
@@ -67,10 +71,10 @@ test("navigation response precedes the player response and channel reads never f
 
 test("targeted video and Music item reads forward the actual element without marker writes", async () => {
   const target = document.createElement("article"), p = scriptedPage({ targetData: { videoId: syntheticNextVideo, title: { simpleText: "Target" } } })
-  const www = createGateway({ site: "www", page: p.port })
+  const www = createGateway({ site: wwwGateway, page: p.port })
   expect(await www.run({ kind: "videoInfo" }, { target })).toEqual<unknown>(success({ videoId: syntheticNextVideo, title: "Target", length: null, kind: "video" }, readRoutes.videoInfo))
   expect(p.reads).toEqual([{ what: "targetData", target }])
-  const music = createGateway({ site: "music", page: p.port })
+  const music = createGateway({ site: musicGateway, page: p.port })
   p.values.targetData = rawSong()
   const answer = await music.run({ kind: "itemInfo" }, { target })
   expect(answer).toEqual<unknown>(success({
@@ -89,7 +93,7 @@ test("targeted video and Music item reads forward the actual element without mar
 })
 
 test("unknown kinds and invalid native endpoint targets are unavailable", async () => {
-  const target = document.createElement("article"), p = scriptedPage(), g = createGateway({ site: "music", page: p.port })
+  const target = document.createElement("article"), p = scriptedPage(), g = createGateway({ site: musicGateway, page: p.port })
   p.values.targetData = { ...rawSong(), musicVideoType: "UNKNOWN_NEW_KIND" }
   expect(await g.run({ kind: "itemInfo" }, { target })).toEqual<unknown>(unavailable)
   p.values.targetData = { ...rawSong(), menu: { menuRenderer: { items: [{ menuServiceItemRenderer: { serviceEndpoint: {
@@ -102,7 +106,7 @@ test("unknown kinds and invalid native endpoint targets are unavailable", async 
 })
 
 test("navigation disagreement suppresses both stale reads and counting; Shorts use their own player", async () => {
-  const p = scriptedPage(), g = createGateway({ site: "www", page: p.port, now: () => 10 }), readings: unknown[] = []
+  const p = scriptedPage(), g = createGateway({ site: wwwGateway, page: p.port, now: () => 10 }), readings: unknown[] = []
   const stop = g.watch("player", value => readings.push(value))
   p.emit("player")
   expect(readings).toEqual([content])
@@ -121,7 +125,7 @@ test("navigation disagreement suppresses both stale reads and counting; Shorts u
 
 test("miniplayer IDs count only after their own watch-context identity event", () => {
   const p = scriptedPage({ navigation: rawNavigation("other"), location: { pathname: "/", search: "" } })
-  const g = createGateway({ site: "www", page: p.port, now: () => 10 }), values: unknown[] = []
+  const g = createGateway({ site: wwwGateway, page: p.port, now: () => 10 }), values: unknown[] = []
   const stop = g.watch("player", value => values.push(value))
   p.emit("player")
   expect(values).toEqual([])
@@ -147,7 +151,7 @@ test("ordinary and Shorts ads emit only the ad variant without content reads", (
       get videoData(): never { throw new Error("Content read during ad") }, get currentTime(): never { throw new Error("Position read during ad") }
     }
     p.values[shorts ? "shortsPlayer" : "watchPlayer"] = raw
-    const g = createGateway({ site: "www", page: p.port, now: () => 10 }), values: unknown[] = []
+    const g = createGateway({ site: wwwGateway, page: p.port, now: () => 10 }), values: unknown[] = []
     g.watch("player", value => values.push(value))
     p.emit("player")
     expect(values).toEqual([{ ad: true, at: 10, player: shorts ? "shorts" : "watch" }])
@@ -164,7 +168,7 @@ test("clip, provisional kids marker and all documented live flags are preserved"
   ]
   for (const variant of variants) {
     const p = scriptedPage({ watchPlayer: rawPlayer(syntheticVideo, { response: { ...rawResponse(syntheticVideo, variant.flags), ...variant.extra } }) })
-    const g = createGateway({ site: "www", page: p.port, now: () => 10 }), values: PlayerData[] = []
+    const g = createGateway({ site: wwwGateway, page: p.port, now: () => 10 }), values: PlayerData[] = []
     g.watch("player", value => values.push(value)); p.emit("player")
     expect(values).toEqual<unknown>([{ ...content, ...variant.expected }])
     g.dispose()
@@ -182,7 +186,7 @@ test("nonfinite or invalid raw times, lengths, rates and flags never become read
   ]
   for (const override of invalid) {
     const p = scriptedPage({ watchPlayer: rawPlayer(syntheticVideo, override) })
-    const g = createGateway({ site: "www", page: p.port }), values: unknown[] = []
+    const g = createGateway({ site: wwwGateway, page: p.port }), values: unknown[] = []
     g.watch("player", value => values.push(value)); p.emit("player")
     expect(values).toEqual([])
     g.dispose()
@@ -194,7 +198,7 @@ test("Music reads metadata and largest artwork without a player bar, with select
     title: "Synthetic song", artist: "Synthetic artist", album: "Synthetic album",
     artwork: [{ src: "https://synthetic.invalid/small", sizes: "96x96" }, { src: "https://synthetic.invalid/large", sizes: "512x512" }]
   } })
-  const g = createGateway({ site: "music", page: p.port })
+  const g = createGateway({ site: musicGateway, page: p.port })
   expect(await g.run({ kind: "nowPlaying" })).toEqual<unknown>(success({ videoId: syntheticVideo, title: "Synthetic song", artist: "Synthetic artist", album: "Synthetic album", artwork: "https://synthetic.invalid/large", pos: 12, len: 180 }, readRoutes.nowPlaying))
   p.values.mediaMetadata = null
   p.values.musicQueue = [rawQueueItem(syntheticVideo, 7, { selected: true, longBylineText: { runs: [{ text: "Fallback artist" }] } })]
@@ -210,7 +214,7 @@ test("Music reads metadata and largest artwork without a player bar, with select
 
 test("cast primary, malformed and throwing hooks fall back safely under supported test encodings", async () => {
   const p = scriptedPage({ musicState: { castStatus: true }, castPlayer: false })
-  const signals: BreakageSignal[] = [], g = createGateway({ site: "music", page: p.port, signals: value => signals.push(value), now: () => 10 })
+  const signals: BreakageSignal[] = [], g = createGateway({ site: musicGateway, page: p.port, signals: value => signals.push(value), now: () => 10 })
   expect(await g.run({ kind: "castState" })).toEqual<unknown>(success({ casting: true }, readRoutes.castState))
   p.values.musicState = { castStatus: "unqualified-enum" }
   expect(await g.run({ kind: "castState" })).toEqual<unknown>(success({ casting: false }, readRoutes.castState))
@@ -226,7 +230,7 @@ test("cast primary, malformed and throwing hooks fall back safely under supporte
 
 test("probe and diagnostics share IDs, scrub unknown keys and contain no identity, values or exception strings", async () => {
   const p = scriptedPage({ targetData: { [syntheticIdentity]: "https://synthetic.invalid/private", musicVideoType: syntheticIdentity } })
-  const signals: BreakageSignal[] = [], g = createGateway({ site: "music", page: p.port, now: () => 10, signals: value => signals.push(value) })
+  const signals: BreakageSignal[] = [], g = createGateway({ site: musicGateway, page: p.port, now: () => 10, signals: value => signals.push(value) })
   const report = await g.probe()
   expect(isProbeReportFor({ site: "music", watchIds: readVocabulary.watchIds }, report)).toBe(true)
   await g.run({ kind: "itemInfo" }, { target: document.createElement("article") })
@@ -242,7 +246,7 @@ test("probe and diagnostics share IDs, scrub unknown keys and contain no identit
 })
 
 test("watchers share exact ownership, tolerate throwing subscribers and reject stale callbacks after release", () => {
-  const p = scriptedPage(), g = createGateway({ site: "www", page: p.port, now: () => 10 }), values: unknown[] = []
+  const p = scriptedPage(), g = createGateway({ site: wwwGateway, page: p.port, now: () => 10 }), values: unknown[] = []
   const first = g.watch("player", () => { throw new Error("Synthetic subscriber failure") })
   const second = g.watch("player", value => values.push(value))
   expect(p.active()).toBe(3)
@@ -262,7 +266,7 @@ test("watchers share exact ownership, tolerate throwing subscribers and reject s
 
 test("unsupported streams attach nothing and gateway instances own independent watchers", async () => {
   for (const site of ["www", "music"] as const) {
-    const p = scriptedPage(), g = createGateway({ site, page: p.port })
+    const p = scriptedPage(), g = createGateway({ site: siteGateways[site], page: p.port })
     const unsupported: Stream[] = site === "www" ? ["nowPlaying", "queue"] : ["player"]
     for (const stream of unsupported) g.watch(stream, () => { throw new Error("Unsupported stream") })()
     expect(p.active()).toBe(0)
@@ -270,7 +274,7 @@ test("unsupported streams attach nothing and gateway instances own independent w
     expect(await g.run({ kind: "accountLabel" })).toEqual<unknown>(unavailable)
     g.dispose()
   }
-  const p = scriptedPage(), a = createGateway({ site: "www", page: p.port }), b = createGateway({ site: "www", page: p.port })
+  const p = scriptedPage(), a = createGateway({ site: wwwGateway, page: p.port }), b = createGateway({ site: wwwGateway, page: p.port })
   a.watch("nav", () => {}); b.watch("nav", () => {})
   expect(p.active()).toBe(4)
   a.dispose(); expect(p.active()).toBe(2)
@@ -279,7 +283,7 @@ test("unsupported streams attach nothing and gateway instances own independent w
 
 test("Music queue and nowPlaying push only on owned events and refuse absent notification binding", () => {
   const p = scriptedPage({ musicQueue: [rawQueueItem()], watchPlayer: rawMusicPlayer(), mediaMetadata: { title: "Song", artist: "Artist", artwork: [] } })
-  const g = createGateway({ site: "music", page: p.port }), queues: unknown[] = [], playing: unknown[] = []
+  const g = createGateway({ site: musicGateway, page: p.port }), queues: unknown[] = [], playing: unknown[] = []
   const stopQueue = g.watch("queue", value => queues.push(value)), stopNow = g.watch("nowPlaying", value => playing.push(value))
   p.emit("queue")
   expect(queues).toEqual([{ ids: [7] }])
@@ -299,7 +303,7 @@ test("synchronous subscription delivery followed by disposal releases every acqu
     changed({ id: "movie_player" })
     return stop
   } }
-  const g = createGateway({ site: "www", page: port })
+  const g = createGateway({ site: wwwGateway, page: port })
   g.watch("player", () => { g.dispose() })
   expect(p.active()).toBe(0)
   expect(p.callbacks.every(callback => callback.stops === 1)).toBe(true)
@@ -309,7 +313,7 @@ test("Shorts API absence uses only an agreeing navigation response and the scope
   const p = scriptedPage({ navigation: rawNavigation("shorts"), location: { pathname: `/shorts/${syntheticVideo}`, search: "" }, shortsPlayer: {
     adShowing: false, adActive: false, video: { currentTime: 9, duration: 120, playbackRate: 1, paused: false, seeking: false }
   } })
-  const g = createGateway({ site: "www", page: p.port, now: () => 10 }), values: unknown[] = []
+  const g = createGateway({ site: wwwGateway, page: p.port, now: () => 10 }), values: unknown[] = []
   g.watch("player", value => values.push(value)); p.emit("player")
   expect(values).toEqual([{ ...content, player: "shorts", pos: 9, rate: 1 }])
   p.values.navigation = { ...rawNavigation("shorts"), response: {} }
@@ -320,7 +324,7 @@ test("Shorts API absence uses only an agreeing navigation response and the scope
 test("item autoplay comes from the targeted automix context and missing context stays unavailable", async () => {
   const target = document.createElement("button")
   const p = scriptedPage({ targetData: { ...rawSong(), autoplay: true }, targetContext: { inAutomix: false } })
-  const g = createGateway({ site: "music", page: p.port })
+  const g = createGateway({ site: musicGateway, page: p.port })
   const outside = await g.run({ kind: "itemInfo" }, { target })
   expect(outside).toHaveProperty("data.autoplay", false)
   p.values.targetData = { ...rawSong(), autoplay: false }
@@ -338,7 +342,7 @@ test("item autoplay comes from the targeted automix context and missing context 
 })
 
 test("item classification rejects a malformed native navigation endpoint", async () => {
-  const target = document.createElement("article"), p = scriptedPage(), g = createGateway({ site: "music", page: p.port })
+  const target = document.createElement("article"), p = scriptedPage(), g = createGateway({ site: musicGateway, page: p.port })
   p.values.targetData = { title: { simpleText: "Synthetic album" }, navigationEndpoint: { browseEndpoint: {
     browseEndpointContextSupportedConfigs: { browseEndpointContextMusicConfig: { pageType: "MUSIC_PAGE_TYPE_ALBUM" } }
   } } }
@@ -351,7 +355,7 @@ test("item classification rejects a malformed native navigation endpoint", async
 test("a throwing cast-status property uses the fallback without leaking its exception", async () => {
   const signals: BreakageSignal[] = []
   const p = scriptedPage({ musicState: { get castStatus(): never { throw new Error(syntheticIdentity) } }, castPlayer: false })
-  const g = createGateway({ site: "music", page: p.port, signals: signal => signals.push(signal), now: () => 10 })
+  const g = createGateway({ site: musicGateway, page: p.port, signals: signal => signals.push(signal), now: () => 10 })
   expect(await g.run({ kind: "castState" })).toEqual<unknown>(success({ casting: false }, readRoutes.castState))
   expect(signals).toEqual([{
     site: "music", feature: null, job: "castState", route: readRoutes.castState, kind: "threw", watchId: readWatches.musicState,
@@ -366,7 +370,7 @@ test("a failed stream subscription releases earlier hooks and identifies the fai
     if (event === "player") throw new Error(syntheticIdentity)
     return p.port.on(event, changed)
   } }
-  const g = createGateway({ site: "www", page: port, signals: signal => signals.push(signal), now: () => 10 })
+  const g = createGateway({ site: wwwGateway, page: port, signals: signal => signals.push(signal), now: () => 10 })
   const stop = g.watch("player", () => { throw new Error("No reading expected") })
   expect(p.active()).toBe(0)
   expect(p.callbacks.map(callback => callback.stops)).toEqual([1, 1])
@@ -378,7 +382,7 @@ test("a failed stream subscription releases earlier hooks and identifies the fai
 
 test("navigation streams serialize the complete reading and suppress stale video metadata on both sites", () => {
   for (const site of ["www", "music"] as const) {
-    const p = scriptedPage(), g = createGateway({ site, page: p.port }), values: unknown[] = []
+    const p = scriptedPage(), g = createGateway({ site: siteGateways[site], page: p.port }), values: unknown[] = []
     const stop = g.watch("nav", value => values.push(value))
     p.emit("navigation")
     expect(values).toEqual([{

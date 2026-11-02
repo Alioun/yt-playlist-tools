@@ -1,21 +1,19 @@
 import { isPageType, parseJsonText, type BreakageSignal, type BuildId, type DiagnosticPageType, type PageType, type Site } from "../shared/contracts"
 import { isPageRetireMessage, type PageHelloSnapshot, type PageNavigationType } from "../shared/contracts/page"
 import { createDomPageChannel, pagePresenceEvent, type PageChannel } from "../shared/rpc/page-channel"
-import { createLiveGateway } from "./adapters/live-gateway"
 import { servePage, type PageEndpoint } from "./channel"
-import type { ReadGateway } from "./gateway"
+import type { ReadGateway, SiteGateway } from "./gateway"
 import { vocabularyFor } from "./gateway/port"
-import { musicRoutes } from "./routes/music"
-import { wwwRoutes } from "./routes/www"
 
 type LiveGateway = { readonly gateway: ReadGateway; dispose(): void }
 export type PageStartOptions = {
-  readonly site: Site
+  readonly site: SiteGateway
   readonly build: BuildId
   readonly window: Window
   readonly document: Document
   readonly channel?: PageChannel
-  readonly createGateway?: (options: { site: Site; window: Window; document: Document }) => LiveGateway
+  /** The site's live gateway; each page half passes its own, so it bundles only its site's jobs. */
+  readonly createGateway: (options: { window: Window; document: Document }) => LiveGateway
 }
 
 const navigationTypes: readonly PageNavigationType[] = ["navigate", "reload", "back_forward", "prerender"]
@@ -42,7 +40,8 @@ function pageType(site: Site, location: Location): PageType {
  * account, doesn't exist yet at document_start.
  */
 export function startPage(options: PageStartOptions): PageEndpoint {
-  const { site, build, window: win, document: doc } = options
+  const { build, window: win, document: doc } = options
+  const site = options.site.id
   const startedHidden = doc.visibilityState === "hidden"
   const navType = navigationType(win)
   const channel = options.channel ?? createDomPageChannel(doc)
@@ -52,7 +51,7 @@ export function startPage(options: PageStartOptions): PageEndpoint {
 
   function gateway(): ReadGateway {
     if (!live) {
-      live = (options.createGateway ?? createLiveGateway)({ site, window: win, document: doc })
+      live = options.createGateway({ window: win, document: doc })
       live.gateway.onSignal(signal => { for (const sink of [...sinks]) sink(signal) })
     }
     return live.gateway
@@ -68,7 +67,7 @@ export function startPage(options: PageStartOptions): PageEndpoint {
     probe: () => gateway().probe()
   }, {
     site, build, snapshot,
-    vocabulary: vocabularyFor(site === "www" ? wwwRoutes : musicRoutes),
+    vocabulary: vocabularyFor(options.site.table),
     signals(sink) {
       sinks.add(sink)
       return () => { sinks.delete(sink) }

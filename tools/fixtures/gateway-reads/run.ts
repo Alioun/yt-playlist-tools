@@ -1,5 +1,7 @@
 import { GlobalRegistrator } from "@happy-dom/global-registrator"
 import { createGateway } from "../../../src/page/gateway"
+import { wwwGateway } from "../../../src/page/gateway/www"
+import { musicGateway } from "../../../src/page/gateway/music"
 import { readRoutes, readVocabulary, readWatches } from "../../../src/page/read-port"
 import { rawMusicPlayer, rawQueueItem, rawSong, scriptedPage, syntheticIdentity, syntheticVideo } from "../../../src/page/gateway.specimens"
 import { servePage } from "../../../src/page/channel"
@@ -10,6 +12,8 @@ import { createDirectPageChannel, createDomPageChannel } from "../../../src/shar
 import type { PageChannel } from "../../../src/shared/rpc/page-channel"
 import { createPageLink } from "../../../src/site/core/page-link"
 import type { PageLinkClock } from "../../../src/site/core/page-link"
+
+const siteGateways = { www: wwwGateway, music: musicGateway }
 
 function check(value: unknown, message: string): asserts value { if (!value) throw new Error(message) }
 function equal(actual: unknown, expected: unknown, message: string): void {
@@ -41,7 +45,7 @@ export async function runGatewayReadConsumer(dom: boolean): Promise<string> {
       watchPlayer: rawMusicPlayer(), mediaMetadata: { title: "Song", artist: "Artist", artwork: [] }, musicQueue: [rawQueueItem()], musicState: { castStatus: false }, castPlayer: false
     } : {}) })
     p.setQueueChanges(site === "music")
-    const gateway = createGateway({ site, page: p.port, now: () => 10 })
+    const gateway = createGateway({ site: siteGateways[site], page: p.port, now: () => 10 })
     const pageAccount = await gateway.run({ kind: "account" })
     equal(pageAccount, { ok: true, data: { signedIn: true, datasyncId: syntheticIdentity }, route: readRoutes.account }, "Raw account boundary changed")
     const snapshot: PageHelloSnapshot = { signedIn: true, datasyncId: syntheticIdentity, pageType, startedHidden: false, navType: "navigate" }

@@ -14,8 +14,6 @@ import {
   parseTargetVideo, parseVideoResponse
 } from "./read-parsers"
 import type { Navigation } from "./read-parsers"
-import { wwwRoutes } from "./routes/www"
-import { musicRoutes } from "./routes/music"
 import { handlerWatches, musicHandlers, requestWatches, vocabularyFor } from "./gateway/port"
 import type { GatewayRequestPort, HandlerRoute, PageUiRoute, RequestRoute, RequestSpec, RouteTable } from "./gateway/port"
 import { createLanes, systemClock } from "./gateway/lanes"
@@ -26,12 +24,10 @@ import { attempt } from "./gateway/attempt"
 import { requestAnswer } from "./gateway/answers"
 import type { AnswerStep, ParsedJob } from "./gateway/answers"
 import { answerFailure } from "./parsers/playlists"
-import { createWwwQueue } from "./gateway/www-queue"
-import type { WwwQueuePort } from "./gateway/www-queue"
-import { createMusicContext, createMusicQueue } from "./gateway/music-queue"
-import type { MusicPagePort } from "./gateway/music-queue"
-import { createMusicQueueEdits } from "./gateway/music-queue-edit"
-import { createMusicLibrary } from "./gateway/music-library"
+import type { createWwwQueue, WwwQueuePort } from "./gateway/www-queue"
+import type { createMusicContext, createMusicQueue, MusicPagePort } from "./gateway/music-queue"
+import type { createMusicQueueEdits } from "./gateway/music-queue-edit"
+import type { createMusicLibrary } from "./gateway/music-library"
 
 type ReadJobId = keyof typeof readRoutes
 type ReadContext = { job: Job; target?: Element }
@@ -49,6 +45,15 @@ const queueJobs: readonly QueueJobId[] = ["queueAdd", "queueUndo", "queueAddList
 type MusicJobId = "queueInsert" | "queueRemove" | "queueRemoveIds" | "queueMove" | "queueReinsert" | "like" | "library" | "navigate"
 const musicJobs: readonly MusicJobId[] = ["queueInsert", "queueRemove", "queueRemoveIds", "queueMove", "queueReinsert", "like", "library", "navigate"]
 
+type MusicJobs = ReturnType<typeof createMusicQueue> & ReturnType<typeof createMusicQueueEdits> & ReturnType<typeof createMusicLibrary>
+/** What one site brings to the gateway: its route table and its own job builders, so each page half bundles only its site's. */
+export type SiteGateway = {
+  readonly id: Site
+  readonly table: RouteTable
+  readonly queue?: typeof createWwwQueue
+  readonly music?: (context: Parameters<typeof createMusicContext>[0], reads: Parameters<typeof createMusicLibrary>[1]) => MusicJobs
+}
+
 export interface ReadGateway extends PageGatewayOperations {
   readonly disposed: boolean
   readonly vocabulary: DiagnosticVocabulary
@@ -59,14 +64,14 @@ export interface ReadGateway extends PageGatewayOperations {
 }
 
 export function createGateway(options: {
-  site: Site; page: PageReadPort; requests?: GatewayRequestPort; queue?: WwwQueuePort; music?: MusicPagePort; clock?: GatewayClock;
+  site: SiteGateway; page: PageReadPort; requests?: GatewayRequestPort; queue?: WwwQueuePort; music?: MusicPagePort; clock?: GatewayClock;
   signals?: (signal: BreakageSignal) => void; now?: () => number
 }): ReadGateway {
-  const { site, page } = options
+  const { page } = options
+  const { id: site, table } = options.site
   const now = options.now ?? Date.now
   const clock = options.clock ?? { ...systemClock, now }
   const lanes = createLanes(clock)
-  const table: RouteTable = site === "www" ? wwwRoutes : musicRoutes
   const vocabulary = options.requests || options.queue || options.music ? vocabularyFor(table) : readVocabulary
   const lastPrivacy = new Map<string, "PRIVATE" | "UNLISTED" | "PUBLIC" | undefined>()
   const signalSinks = new Set<(signal: BreakageSignal) => void>()
@@ -146,7 +151,7 @@ export function createGateway(options: {
     return add && undo && list && menu ? { add, undo, list, menu } : undefined
   }
   const routesForQueue = site === "www" ? queueRoutes() : undefined
-  const queue = options.queue && routesForQueue ? createWwwQueue({
+  const queue = options.queue && routesForQueue && options.site.queue ? options.site.queue({
     port: options.queue, clock, routes: routesForQueue,
     card: target => page.read("targetData", target),
     check: () => guard.check(false),
@@ -165,20 +170,16 @@ export function createGateway(options: {
       case "queueAddList": return lanes.run("app-state", scope => queue.addList(job, scope))
     }
   }
-  const musicContext = site === "music" && options.music ? createMusicContext({
+  const music = site === "music" && options.music && options.site.music ? options.site.music({
     port: options.music, page, clock, table,
     casting: () => routes.castState.read()?.casting === true,
     notice(kind, route, raw) {
       requestSignal(kind, route, musicJobs.find(id => table[id].some(entry => entry.id === route.id)) ?? "queueInsert", raw)
     }
+  }, {
+    item: target => routes.itemInfo.read({ job: { kind: "itemInfo" }, target }),
+    location: () => read("location")
   }) : undefined
-  const music = musicContext ? {
-    ...createMusicQueue(musicContext), ...createMusicQueueEdits(musicContext),
-    ...createMusicLibrary(musicContext, {
-      item: target => routes.itemInfo.read({ job: { kind: "itemInfo" }, target }),
-      location: () => read("location")
-    })
-  } : undefined
   async function musicJob(job: JobOf<MusicJobId>, target: Element | undefined): Promise<PageJobResult> {
     if (!music) return { ok: false, reason: "unavailable" }
     const blocked = guard.check(needsAccount(job))

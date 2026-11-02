@@ -1,4 +1,5 @@
 import { createGateway } from "../../../src/page/gateway"
+import { musicGateway } from "../../../src/page/gateway/music"
 import { createLiveReadPort } from "../../../src/page/live-reads"
 import { defineRaw, installRawPlayer } from "../../../src/page/live-read.specimens"
 import { rawNavigation, rawMusicPlayer } from "../../../src/page/gateway.specimens"
@@ -60,7 +61,7 @@ export async function musicFixture(dom = false, overrides: Partial<Record<PageRe
     has: id => native.has(id), dispose: () => native.dispose()
   }
   const signals: BreakageSignal[] = []
-  const gateway = createGateway({ site: "music", page, now: () => 0, signals: signal => { signals.push(signal) } })
+  const gateway = createGateway({ site: musicGateway, page, now: () => 0, signals: signal => { signals.push(signal) } })
   const build = "items-music-synthetic"
   const pageType = "HOME"
   if (!isBuildId(build) || !isPageType(pageType)) throw Error("Invalid synthetic header")

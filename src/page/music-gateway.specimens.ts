@@ -1,4 +1,5 @@
 import { createGateway } from "./gateway"
+import { musicGateway } from "./gateway/music"
 import { scriptedPage, syntheticVideo } from "./gateway.specimens"
 import type { GatewayClock } from "./gateway/lanes"
 import type { MusicPagePort } from "./gateway/music-queue"
@@ -151,6 +152,6 @@ export function musicWorld(videos: string[] = [syntheticVideo, "queued00002", "q
       else world.setItems([queueEntry("mixstart001", state.queue.nextQueueItemId++)])
     }
   }
-  const gateway = createGateway({ site: "music", page: page.port, music: port, clock, now: () => clock.now(), signals: signal => world.signals.push(signal) })
+  const gateway = createGateway({ site: musicGateway, page: page.port, music: port, clock, now: () => clock.now(), signals: signal => world.signals.push(signal) })
   return Object.assign(world, { port, gateway })
 }

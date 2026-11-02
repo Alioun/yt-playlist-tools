@@ -1,4 +1,5 @@
 import { createGateway } from "../../../src/page/gateway"
+import { wwwGateway } from "../../../src/page/gateway/www"
 import { createLiveReadPort } from "../../../src/page/live-reads"
 import { defineRaw, installRawPlayer } from "../../../src/page/live-read.specimens"
 import { rawNavigation } from "../../../src/page/gateway.specimens"
@@ -43,7 +44,7 @@ export async function itemsFixture(dom = false) {
   const restoreConfig = defineRaw(window, "ytcfg", { get: (key: string) => key === "LOGGED_IN" ? false : undefined })
   let navigation: unknown = rawNavigation("other")
   const page = createLiveReadPort({ site: "www", document, window, bindings: { navigation: { read: () => navigation } } })
-  const gateway = createGateway({ site: "www", page, now: () => 0 })
+  const gateway = createGateway({ site: wwwGateway, page, now: () => 0 })
   const build = "items-www-synthetic"
   const pageType = "HOME"
   if (!isBuildId(build) || !isPageType(pageType)) throw Error("Invalid synthetic header")

@@ -2,6 +2,7 @@ import type { ItemInfo, JobOf, LikeEndpoint, PlayerData, QueueInsertEndpoint } f
 import type { PageAccountData } from "../shared/contracts/page"
 import { isQueueInsertEndpoint } from "../shared/contracts"
 import { createGateway } from "./gateway"
+import { musicGateway } from "./gateway/music"
 import type { ReadGateway } from "./gateway"
 import type { PageReadPort } from "./read-port"
 
@@ -52,7 +53,7 @@ export async function correlatedResults() {
 }
 
 export function readOnlyPort() {
-  createGateway({ site: "music", page: port })
+  createGateway({ site: musicGateway, page: port })
   // @ts-expect-error negative:read-port-has-no-cookie-operation
   port.cookie("session")
   // @ts-expect-error negative:read-port-has-no-request-operation

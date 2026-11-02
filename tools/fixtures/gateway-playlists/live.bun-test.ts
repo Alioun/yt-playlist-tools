@@ -3,6 +3,8 @@ import { GlobalRegistrator } from "@happy-dom/global-registrator"
 import { createLiveWwwRequests } from "../../../src/page/adapters/live-www"
 import { createLiveMusicRequests } from "../../../src/page/adapters/live-music"
 import { createGateway } from "../../../src/page/gateway"
+import { wwwGateway } from "../../../src/page/gateway/www"
+import { musicGateway } from "../../../src/page/gateway/music"
 import { requestFor } from "../../../src/page/gateway/requests"
 import type { AttemptContext } from "../../../src/page/gateway/port"
 import { scriptedPage } from "../../../src/page/gateway.specimens"
@@ -56,7 +58,7 @@ test("command callbacks settle once and rejected promises never trigger a second
     return Promise.reject(new Error("Synthetic hook rejection"))
   } } } })
   const requests = createLiveWwwRequests({ window: wwwWindow, document, page: page.port })
-  const gateway = createGateway({ site: "www", page: page.port, requests, clock })
+  const gateway = createGateway({ site: wwwGateway, page: page.port, requests, clock })
   const result = await gateway.run({ kind: "add", playlistId: playlist, videoId: video })
   check(!result.ok && result.reason === "unconfirmed" && invocations === 1, "Rejected command retried a write")
   callback(lateOptions, "onSuccess", { ...identity("late-synthetic-account"), status: "STATUS_SUCCEEDED" })
@@ -82,7 +84,7 @@ test("service request owns a hidden element and releases completion listeners", 
   }
   app.addEventListener("yt-action", listener)
   const requests = createLiveWwwRequests({ window: wwwWindow, document, page: page.port })
-  const gateway = createGateway({ site: "www", page: page.port, requests, clock })
+  const gateway = createGateway({ site: wwwGateway, page: page.port, requests, clock })
   try {
     const result = await gateway.run({ kind: "create", title: "Created", privacy: "PRIVATE", videoId: video })
     check(result.ok && result.data.playlistId === playlist && calls === 1 && app.children.length === 0, "Service completion did not settle once or clean its node")
@@ -97,7 +99,7 @@ test("service timeout removes its node and an uncertain create is not retried", 
   const listener = () => { actions++ }
   app.addEventListener("yt-action", listener)
   const native = createLiveWwwRequests({ window: wwwWindow, document, page: page.port })
-  const gateway = createGateway({ site: "www", page: page.port, clock, requests: { has: via => via === "service", send: (...args) => native.send(...args) } })
+  const gateway = createGateway({ site: wwwGateway, page: page.port, clock, requests: { has: via => via === "service", send: (...args) => native.send(...args) } })
   try {
     const pending = gateway.run({ kind: "create", title: "Created", privacy: "PRIVATE" })
     await drain(); same(app.children.length, 1, "Service node was never attached")
@@ -119,7 +121,7 @@ test("Music saves use networkManager fetch without response action replay or www
   Reflect.set(app, "networkManager", manager)
   Reflect.set(app, "handlePlaylistEditEndpoint", () => { throw new Error("Noisy Music endpoint used") })
   const requests = createLiveMusicRequests({ window: musicWindow, document })
-  const gateway = createGateway({ site: "music", page: page.port, requests, clock })
+  const gateway = createGateway({ site: musicGateway, page: page.port, requests, clock })
   try {
     check(!requests.has("signed") && !requests.has("command"), "Music exposed www transport")
     const result = await gateway.run({ kind: "save", playlistId: playlist, videoId: video })
