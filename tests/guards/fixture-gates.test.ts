@@ -1,15 +1,20 @@
 import { describe, expect, test } from "bun:test"
-import { existsSync, readdirSync, readFileSync } from "node:fs"
-import { join } from "node:path"
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join, relative, sep } from "node:path"
 import { worktreePath } from "../../scripts/relativize-fixture-paths"
 import { fixtureGates, gateId, type FixtureGate } from "../../tools/fixtures/gates"
 
 const root = "tools/fixtures"
 const at = (gate: { fixture: string }, path: string) => join(root, gate.fixture, path)
-const fixtureFiles = readdirSync(root, { recursive: true, withFileTypes: true })
-  .filter(entry => entry.isFile() && entry.parentPath !== root)
-  .map(entry => join(entry.parentPath, entry.name))
-  .sort()
+// Building a fixture makes WXT write a .wxt/ folder, tsconfig included, which is build output rather than a gated fixture file.
+function listFixtureFiles(directory: string) {
+  return readdirSync(directory, { recursive: true, withFileTypes: true })
+    .filter(entry => entry.isFile() && entry.parentPath !== directory && !relative(directory, entry.parentPath).split(sep).includes(".wxt"))
+    .map(entry => join(entry.parentPath, entry.name))
+    .sort()
+}
+const fixtureFiles = listFixtureFiles(root)
 
 const runnable: { pattern: RegExp; what: string }[] = [
   { pattern: /\.(bun-)?test\.tsx?$/, what: "test" },
@@ -40,6 +45,19 @@ function referenced(gate: FixtureGate): string[] {
 }
 
 describe("fixture gate registry", () => {
+  test("files WXT generates under a fixture's .wxt/ folder are not fixture files", () => {
+    const directory = mkdtempSync(join(tmpdir(), "fixture-files-"))
+    try {
+      for (const file of ["pilot/tsconfig.json", "pilot/.wxt/tsconfig.json", "pilot/.wxt/types/paths.d.ts", "top.json"]) {
+        mkdirSync(join(directory, file, ".."), { recursive: true })
+        writeFileSync(join(directory, file), "{}")
+      }
+      expect(listFixtureFiles(directory)).toEqual([join(directory, "pilot/tsconfig.json")])
+    } finally {
+      rmSync(directory, { recursive: true })
+    }
+  })
+
   test("every fixture test, consumer and type project has a gate in tools/fixtures/gates.ts", () => {
     const gated = new Set(fixtureGates.flatMap(covered))
     const missing = fixtureFiles.flatMap(file => runnable.filter(kind => kind.pattern.test(file) && !gated.has(file)).map(kind => `${kind.what} ${file}`))

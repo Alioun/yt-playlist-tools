@@ -30,3 +30,18 @@ The test freezes admission hashes of each file, rule, reason, and evidence tuple
 - Svelte's installed parser locates instance and module scripts, including TypeScript generic attributes, and ignores script tags inside HTML comments. The checker copies those script ranges at their original offsets for TypeScript analysis. Template expressions, HTML entrypoints, and build output are not analyzed for architecture violations. Component parse errors and script syntax errors fail with their source line. Parser compatibility with future syntax requires a fixture and an explicit toolchain update.
 
 Registry, fixture-privacy, and watchlist guards are not implemented by this unit. Their authoritative artifacts do not exist yet. No placeholder artifacts are created.
+
+## The forbidden-API guards
+
+[`forbidden.test.ts`](forbidden.test.ts) scans the same production scripts with [`forbidden.ts`](forbidden.ts). Each rule names the spec ID it enforces:
+
+| Rule | Fails when |
+|---|---|
+| `update-listener` | `onUpdateAvailable` appears anywhere (REL-MIG-06) |
+| `item-migrations` | a `defineItem` call passes `version` or `migrations` (REL-MIG-07) |
+| `oauth` | `browser.identity`, `chrome.identity`, `getAuthToken`, `launchWebAuthFlow` or `removeCachedAuthToken` appears, or `src/lib` exists (REL-CI-53) |
+| `outbound` | `XMLHttpRequest`, `sendBeacon`, `WebSocket`, `EventSource` or `RTCPeerConnection` appears, or a global `fetch` is called anywhere except `src/page/adapters/live-www.ts` (HEALTH-21) |
+| `container-id` | `cookieStoreId` appears, as a name or a string key (ACC-41) |
+| `state-identity` | kit or feature code compares a proxied `$state` value by identity (Q-TEST-33, UI-RULE-33) |
+
+`state-identity` treats a `$state` binding as proxied when it starts as an object, array or `new` value, or when its type argument isn't a primitive or a DOM type. `$state.raw` doesn't proxy. Elements read through `for...of` or an array callback such as `find` count as proxied too. It fails on `===`, `!==`, `==` or `!=` against the binding or an element access on it, and on `includes`, `indexOf` or `lastIndexOf` with a non-literal argument. A property read such as `row.id` passes, so comparing by ID passes. Svelte templates aren't scanned.

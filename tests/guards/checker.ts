@@ -46,7 +46,7 @@ export function readAliases(root: string): Aliases {
   return config.config.compilerOptions?.paths ?? {}
 }
 
-function scriptText(source: Source): string {
+export function scriptText(source: Source): string {
   if (!source.file.endsWith(".svelte")) return source.text
   const component = parse(source.text, { modern: true, filename: source.file })
   const characters = source.text.split("").map(character => /[\r\n\u2028\u2029]/.test(character) ? character : " ")
