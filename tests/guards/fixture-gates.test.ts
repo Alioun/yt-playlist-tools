@@ -7,10 +7,12 @@ import { fixtureGates, gateId, type FixtureGate } from "../../tools/fixtures/gat
 
 const root = "tools/fixtures"
 const at = (gate: { fixture: string }, path: string) => join(root, gate.fixture, path)
-// Building a fixture makes WXT write a .wxt/ folder, tsconfig included, which is build output rather than a gated fixture file.
+// Two kinds of generated file aren't fixture files: the .wxt/ folder WXT writes when a fixture is built,
+// and the .fixture-gate-<pid>.tsconfig.json a running negatives gate writes beside its project.
 function listFixtureFiles(directory: string) {
   return readdirSync(directory, { recursive: true, withFileTypes: true })
-    .filter(entry => entry.isFile() && entry.parentPath !== directory && !relative(directory, entry.parentPath).split(sep).includes(".wxt"))
+    .filter(entry => entry.isFile() && entry.parentPath !== directory && !entry.name.startsWith(".fixture-gate-")
+      && !relative(directory, entry.parentPath).split(sep).includes(".wxt"))
     .map(entry => join(entry.parentPath, entry.name))
     .sort()
 }
@@ -45,10 +47,10 @@ function referenced(gate: FixtureGate): string[] {
 }
 
 describe("fixture gate registry", () => {
-  test("files WXT generates under a fixture's .wxt/ folder are not fixture files", () => {
+  test("files WXT generates under .wxt/ and a running gate's temporary tsconfig are not fixture files", () => {
     const directory = mkdtempSync(join(tmpdir(), "fixture-files-"))
     try {
-      for (const file of ["pilot/tsconfig.json", "pilot/.wxt/tsconfig.json", "pilot/.wxt/types/paths.d.ts", "top.json"]) {
+      for (const file of ["pilot/tsconfig.json", "pilot/.wxt/tsconfig.json", "pilot/.wxt/types/paths.d.ts", "pilot/.fixture-gate-123.tsconfig.json", "top.json"]) {
         mkdirSync(join(directory, file, ".."), { recursive: true })
         writeFileSync(join(directory, file), "{}")
       }
