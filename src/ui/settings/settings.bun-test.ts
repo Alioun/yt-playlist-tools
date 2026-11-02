@@ -164,6 +164,31 @@ test("a chooser's New playlist links to YouTube without a tab, and to Create cha
   expect(noChannel.opened).toEqual(["https://www.youtube.com/create_channel"])
 }, 20_000)
 
+test("Waiting for your review lists the work withdrawal paused, and each Continue resumes only its own job (R167, UI-SET-16)", async () => {
+  const calls: unknown[] = []
+  settings({ ...agreed, [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" } }) }, {
+    "ui.pausedWork": payload => {
+      calls.push(payload)
+      return payload.action === "read" ? { kind: "work", jobs: [{ id: "1", job: "removal", acct: acct as never }, { id: "2", job: "sync", acct: null }] }
+        : { kind: "continued", jobs: [{ id: "2", job: "sync", acct: null }] }
+    }
+  }, "#privacy")
+  const section = await screen.findByRole("region", { name: "Waiting for your review" }, { timeout: 5000 })
+  expect(within(section).getByText("These changes stopped when you withdrew your consent. They stay paused until you continue them.")).toBeTruthy()
+  expect(within(section).getByText("Removing Ann's setup")).toBeTruthy()
+  expect(within(section).getByText("Joining Settings sync")).toBeTruthy()
+  await userEvent.click(within(section).getAllByRole("button", { name: "Continue" })[0]!)
+  expect(await within(section).findByText("Continued.")).toBeTruthy()
+  expect(within(section).queryByText("Removing Ann's setup")).toBeNull()
+  expect(calls).toEqual([{ action: "read" }, { action: "continue", id: "1" }])
+}, 20_000)
+
+test("with nothing paused, Privacy & data shows no review section", async () => {
+  settings({ ...agreed }, { "ui.pausedWork": () => ({ kind: "work", jobs: [] }) }, "#privacy")
+  await screen.findByText(/You agreed on/, {}, { timeout: 5000 })
+  expect(screen.queryByRole("region", { name: "Waiting for your review" })).toBeNull()
+}, 20_000)
+
 test("with synced settings full and a kept filter, Everywhere offers Remove kept filters and asks the background to remove them (SYNC-14)", async () => {
   const removed: unknown[] = []
   settings({ schema: 1, device: { id: "device", consent: { v: 1, at: 1_700_000_000_000 }, syncOn: true },

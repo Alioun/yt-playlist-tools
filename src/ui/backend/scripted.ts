@@ -64,7 +64,8 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
       "ui.skip": payload => take("ui.skip", payload),
       "ui.addUndo": payload => take("ui.addUndo", payload),
       "ui.remove": payload => take("ui.remove", payload),
-      "ui.membership": payload => take("ui.membership", payload)
+      "ui.membership": payload => take("ui.membership", payload),
+      "ui.pausedWork": payload => take("ui.pausedWork", payload)
     }
   })
   function take<K extends keyof UiMessages>(kind: K, payload: UiMessages[K]["payload"]): UiMessages[K]["result"] {

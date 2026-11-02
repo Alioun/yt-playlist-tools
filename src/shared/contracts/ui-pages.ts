@@ -122,7 +122,14 @@ export type PageMessages = {
   readonly "ui.claimSeen": { readonly payload: WindowClaim & { readonly acct: AccountKey }; readonly result: { readonly kind: "noted" | "unavailable" } }
   /** Discard deletes the unclaimed 1.x setup (ACC-33, DATA-42). */
   readonly "ui.discardUnclaimed": { readonly payload: WindowClaim; readonly result: UiDiscard }
+  /** Work that withdrawal paused, which only an explicit Continue resumes (R167, UI-SET-16). */
+  readonly "ui.pausedWork": { readonly payload: WindowClaim & ({ readonly action: "read" } | { readonly action: "continue"; readonly id: string }); readonly result: UiPausedWork }
 }
+/** One paused job as Privacy & data names it: bringing over 1.x settings, removing a setup, joining sync, a settings change or an import. */
+export type UiPausedJob = { readonly id: string; readonly job: "migration" | "removal" | "sync" | "settings" | "import"; readonly acct: AccountKey | null }
+export type UiPausedWork =
+  | { readonly kind: "work" | "continued"; readonly jobs: readonly UiPausedJob[] }
+  | { readonly kind: "refused"; readonly reason: "failed" | "unconfirmed" | "unavailable" | "private" }
 export type UiDiscard = { readonly kind: "discarded" | "absent" } | { readonly kind: "refused"; readonly reason: "private" | "failed" | "unavailable" }
 export type PageCall = keyof PageMessages
 
@@ -227,6 +234,11 @@ export const pageContract: RpcContract<PageMessages> = {
     result: isAgreementAnswer, timeoutMs: 60_000 },
   "ui.claimSeen": { payload: (v): v is PageMessages["ui.claimSeen"]["payload"] => objectShape(v, { acct: isAccountKey }, windowClaim),
     result: (v): v is PageMessages["ui.claimSeen"]["result"] => objectShape(v, { kind: oneOf("noted", "unavailable") }), timeoutMs: 8_000 },
+  "ui.pausedWork": { payload: (v): v is PageMessages["ui.pausedWork"]["payload"] => objectShape(v, { action: x => x === "read" }, windowClaim)
+      || objectShape(v, { action: x => x === "continue", id: token }, windowClaim),
+    result: (v): v is UiPausedWork => objectShape(v, { kind: oneOf("work", "continued"), jobs: list(job => objectShape(job, { id: token,
+      job: oneOf("migration", "removal", "sync", "settings", "import"), acct: a => a === null || isAccountKey(a) }), 50) })
+      || refusal("failed", "unconfirmed", "unavailable", "private")(v), timeoutMs: 60_000 },
   "ui.discardUnclaimed": { payload: (v): v is PageMessages["ui.discardUnclaimed"]["payload"] => objectShape(v, {}, windowClaim),
     result: (v): v is UiDiscard => objectShape(v, { kind: oneOf("discarded", "absent") }) || refusal("private", "failed", "unavailable")(v), timeoutMs: 12_000 }
 }

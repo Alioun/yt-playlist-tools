@@ -17,6 +17,21 @@ import type { ClaimNoticeAcknowledgement, ClaimNoticeRead, NormalUiOrigin } from
 import type { UnclaimedDiscard } from "../store/local-filter-writer"
 import type { ClaimNotice } from "../../shared/model/types"
 import type { Snapshot } from "../../shared/model/settings-view"
+import type { ExactRecoveryResult, HeldJobSelection, HeldWorkRead, HeldWorkView, WithdrawnWorkReview } from "../store/consent-recovery"
+import type { UiPausedJob } from "../../shared/contracts/ui-pages"
+import { isAccountKey } from "../../shared/model/validation"
+
+/** The paused jobs Privacy & data can continue, named for the user; work the store can't recover shows nothing to continue (R167). */
+function pausedJobs(work: readonly HeldWorkView[]): { readonly job: UiPausedJob; readonly selection: HeldJobSelection }[] {
+  return work.flatMap((view, index) => {
+    if (view.kind === "unsupported") return []
+    const id = String(index + 1)
+    const job: UiPausedJob["job"] = view.kind === "account-removal" ? "removal" : view.kind === "sync-reset" ? "sync"
+      : view.kind === "key-settings" || view.kind === "feature-settings" ? "settings" : view.kind === "settings-import" ? "import" : "migration"
+    const acct = view.kind === "account-removal" && isAccountKey(view.record.acct) ? view.record.acct : null
+    return [{ job: { id, job, acct }, selection: view.selection }]
+  })
+}
 
 type UiOrigin = { readonly kind: "ui"; readonly windowId: number; readonly incognito: boolean }
 export type PageStatusSource = (ui: UiRequester) => Promise<{ readonly tab: UiTabFacts; readonly health: readonly UiFeatureHealth[] } | undefined>
@@ -39,6 +54,8 @@ export type PageReceiverPorts = {
     readClaimNotice(): Promise<ClaimNoticeRead>
     acknowledgeClaimNotice(origin: NormalUiOrigin, expected: Snapshot<ClaimNotice>): Promise<ClaimNoticeAcknowledgement>
     discardUnclaimed(origin: UiOrigin): Promise<UnclaimedDiscard>
+    readWithdrawnWork(origin: UiOrigin): Promise<HeldWorkRead>
+    recoverWithdrawnWork(origin: UiOrigin, input: { readonly review: WithdrawnWorkReview; readonly job: HeldJobSelection }): Promise<ExactRecoveryResult>
   }
   readonly readAccess: () => Promise<AgreementAccess | undefined>
   readonly withdraw: (origin: SettingsPageOrigin, expected: { readonly v: number; readonly at: number }) => Promise<WithdrawalResult>
@@ -81,6 +98,16 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
     return token
   }
   const settingsPage = (context: PageContext) => context.ui.ui.page === "settings"
+  // A Continue resumes only the job the same page read, against the review it read (R167).
+  const paused = new Map<string, { readonly review: WithdrawnWorkReview; readonly selections: ReadonlyMap<string, HeldJobSelection> }>()
+  async function readPaused(context: PageContext) {
+    const read = await ports.owner.readWithdrawnWork(context.ui.ui.origin)
+    if (read.kind !== "held") { paused.delete(context.ui.principal); return read.kind === "none" ? [] : undefined }
+    const jobs = pausedJobs(read.work)
+    if (paused.size >= 32 && !paused.has(context.ui.principal)) paused.delete(paused.keys().next().value!)
+    paused.set(context.ui.principal, { review: read.review, selections: new Map(jobs.map(entry => [entry.job.id, entry.selection])) })
+    return jobs.map(entry => entry.job)
+  }
   async function changeSession(edit: SessionChange["edits"][0]): Promise<SessionWrite | undefined> {
     const read = await ports.owner.readSession()
     if (read.kind !== "memory") return
@@ -208,6 +235,21 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
             : { kind: "upgrade-note", selected: change.selected, syncOn: false, percentage: change.percentage } })
         return projectAgreement({ kind: "first-run-agree", displayedVersion: change.displayedVersion, attempt: change.attempt, selected: change.selected, syncOn: change.syncOn }, result, access)
       } catch { return refusal("rejected") }
+    },
+    async "ui.pausedWork"(payload, context) {
+      if (!settingsPage(context)) return { kind: "refused", reason: "unavailable" }
+      if (context.ui.requester.incognito) return { kind: "refused", reason: "private" }
+      if (payload.action === "read") {
+        const jobs = await readPaused(context)
+        return jobs ? { kind: "work", jobs } : { kind: "refused", reason: "unavailable" }
+      }
+      const saved = paused.get(context.ui.principal), selection = saved?.selections.get(payload.id)
+      if (!saved || !selection) return { kind: "refused", reason: "unavailable" }
+      const result = await ports.owner.recoverWithdrawnWork(context.ui.ui.origin, { review: saved.review, job: selection })
+      const jobs = await readPaused(context) ?? []
+      const kind = result.kind
+      if (kind === "recovered" || kind === "key-settings-recovered" || kind === "feature-settings-recovered") return { kind: "continued", jobs }
+      return { kind: "refused", reason: kind === "authorized-pending" || kind === "key-settings-pending" || kind === "feature-settings-pending" ? "unconfirmed" : "failed" }
     },
     async "ui.claimSeen"({ acct }, context) {
       const origin = context.ui.ui.origin

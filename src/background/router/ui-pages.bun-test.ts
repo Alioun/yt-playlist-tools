@@ -13,7 +13,10 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
   const changes: SessionChange[] = []
   const filters: unknown[] = []
   const removed: unknown[] = []
-  const marked: string[] = [], agreements: unknown[] = [], acknowledged: unknown[] = [], discarded: string[] = []
+  const marked: string[] = [], agreements: unknown[] = [], acknowledged: unknown[] = [], discarded: string[] = [], recovered: unknown[] = []
+  const removalJob = { kind: "held-job-selection", job: "removal" }, syncJob = { kind: "held-job-selection", job: "sync" }
+  const held: unknown[] = [{ kind: "account-removal", selection: removalJob, occurrence: 1, record: { acct }, original: { v: 1, at: 1 }, recoverability: "exact-removal" },
+    { kind: "sync-reset", selection: syncJob, record: {}, resume: "explicit-recovery" }, { kind: "unsupported", operation: "legacy", reason: "invalid" }]
   let paused = false
   const ports: PageReceiverPorts = {
     owner: {
@@ -38,7 +41,11 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
       async agree(_origin, input) { agreements.push(input.choice); return { kind: "agreed" } as never },
       readClaimNotice: async () => ({ kind: "pending", notice: { acct: "AAAAAAAAAAAAAAAA", dropped: 1 } }) as never,
       async acknowledgeClaimNotice(origin, expected) { acknowledged.push({ origin, expected }); return { kind: "committed", write: { kind: "resolved" } } },
-      async discardUnclaimed() { discarded.push("discard"); return { kind: "discarded" } }
+      async discardUnclaimed() { discarded.push("discard"); return { kind: "discarded" } },
+      async readWithdrawnWork() {
+        return held.length ? { kind: "held", review: { kind: "withdrawn-work-review" }, consent: null, work: held } as never : { kind: "none" }
+      },
+      async recoverWithdrawnWork(_origin, input) { recovered.push(input.job); held.splice(0, 1); return { kind: "recovered" } as never }
     },
     readAccess: async () => ({ www: true, music: false, browserMenu: false }),
     withdraw: async () => ({ kind: "withdrawn" }) as never,
@@ -49,7 +56,7 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
     ...overrides
   }
   const context = (incognito = false, page = "popup", principal = "p") => ({ ui: ui(incognito, page, principal), current: async () => ui(incognito, page, principal) })
-  return { handlers: createPageReceiver(ports), changes, filters, removed, marked, agreements, acknowledged, discarded, context }
+  return { handlers: createPageReceiver(ports), changes, filters, removed, marked, agreements, acknowledged, discarded, recovered, removalJob, context }
 }
 
 test("status answers Pause, the popup's tab and its feature health", async () => {
@@ -72,6 +79,16 @@ test("Discard deletes the unclaimed setup, and a private window can't (ACC-33)",
   expect(await handlers["ui.discardUnclaimed"]({}, context(true))).toEqual({ kind: "refused", reason: "private" })
   expect(await handlers["ui.discardUnclaimed"]({}, context())).toEqual({ kind: "discarded" })
   expect(discarded).toEqual(["discard"])
+})
+
+test("Privacy & data lists the work withdrawal paused, and Continue resumes only the job that page read (R167)", async () => {
+  const { handlers, recovered, removalJob, context } = receiver()
+  expect(await handlers["ui.pausedWork"]({ action: "read" }, context(false, "popup"))).toEqual({ kind: "refused", reason: "unavailable" })
+  expect(await handlers["ui.pausedWork"]({ action: "continue", id: "1" }, context(false, "settings", "other"))).toEqual({ kind: "refused", reason: "unavailable" })
+  expect(await handlers["ui.pausedWork"]({ action: "read" }, context(false, "settings"))).toEqual({ kind: "work", jobs: [
+    { id: "1", job: "removal", acct }, { id: "2", job: "sync", acct: null }] })
+  expect(await handlers["ui.pausedWork"]({ action: "continue", id: "1" }, context(false, "settings"))).toEqual({ kind: "continued", jobs: [{ id: "1", job: "sync", acct: null }] })
+  expect(recovered).toEqual([removalJob])
 })
 
 test("Pause writes session memory and answers the committed state; a private window can't pause", async () => {

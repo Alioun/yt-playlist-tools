@@ -753,6 +753,8 @@ export type MessageParameters = {
   "recovery_job_migration": readonly []
   "recovery_job_removal": readonly ["account"]
   "recovery_job_syncJoin": readonly []
+  "recovery_job_settings": readonly []
+  "recovery_job_import": readonly []
   "recovery_continue": readonly []
   "recovery_leftLead": readonly []
   "recovery_item_autoAdd": readonly ["playlist"]

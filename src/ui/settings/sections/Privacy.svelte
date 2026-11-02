@@ -7,6 +7,8 @@
   import { richParts } from "../../../shared/i18n"
   import type { createFeatureCopy } from "../../onboarding/features"
   import type { PageState } from "../../lib/page-state.svelte"
+  import type { UiPausedJob } from "../../../shared/contracts/ui-pages"
+  import type { AccountKey } from "../../../shared/model/validation"
 
   // Settings › Privacy & data (UI-SET-16, UI-SET-22).
   let { pageState }: { pageState: PageState; features: ReturnType<typeof createFeatureCopy> } = $props()
@@ -24,6 +26,22 @@
     device: device ? { syncOn: device.syncOn, id: device.id, consent: device.consent } : undefined, sync: view.sync ?? undefined })) : null)
   let clearState = $state<ReturnType<NonNullable<typeof clear>["state"]>>({ kind: "closed" })
   let alsoSynced = $state(false)
+  // Waiting for your review (R167, R181, UI-SET-16): work withdrawal paused, each job continued only by its own click.
+  let jobs = $state.raw<readonly UiPausedJob[]>([])
+  let results = $state.raw<ReadonlyMap<string, string>>(new Map())
+  let continuing = $state<string | null>(null)
+  void backend.call("ui.pausedWork", { action: "read" }).then(answer => { if (answer.kind === "answered" && answer.result.kind === "work") jobs = answer.result.jobs })
+  const jobName = (job: UiPausedJob) => job.job === "removal" ? i18n.message("recovery_job_removal", { account: pageState.accountName(job.acct as AccountKey | null) })
+    : i18n.message(job.job === "migration" ? "recovery_job_migration" : job.job === "sync" ? "recovery_job_syncJoin" : job.job === "settings" ? "recovery_job_settings" : "recovery_job_import")
+  async function resume(job: UiPausedJob) {
+    if (continuing) return
+    continuing = job.id
+    const answer = await backend.call("ui.pausedWork", { action: "continue", id: job.id })
+    continuing = null
+    const reply = answer.kind === "answered" ? answer.result : null
+    results = new Map(results).set(job.id, i18n.message(reply?.kind === "continued" ? "recovery_continued" : reply?.kind === "refused" && reply.reason === "unconfirmed" ? "recovery_unconfirmed" : "recovery_failed"))
+    if (reply?.kind === "continued") jobs = jobs.filter(entry => entry.id !== job.id)
+  }
 
   async function withdraw() {
     if (!device?.consent) return
@@ -103,6 +121,22 @@
       {/if}
       {#if consentLine}<p role="status" class="text-[13px]">{consentLine}</p>{/if}
     </section>
+    {#if jobs.length || results.size}
+      <section class="bg-card flex flex-col gap-2 rounded-2xl border p-5" data-section="recovery" aria-labelledby="recovery-heading">
+        <h3 id="recovery-heading" class="text-[15px] font-semibold">{i18n.message("recovery_heading")}</h3>
+        <p class="text-muted-foreground text-[13px]">{i18n.message("recovery_pausedLead")}</p>
+        <ul class="flex flex-col gap-2">
+          {#each jobs as job (job.id)}
+            <li class="flex flex-wrap items-center gap-2 text-[13.5px]">
+              <span class="min-w-0 flex-1">{jobName(job)}</span>
+              <Button size="sm" variant="outline" pending={continuing === job.id} disabled={continuing !== null && continuing !== job.id} onclick={() => resume(job)}>{i18n.message("recovery_continue")}</Button>
+              {#if results.get(job.id)}<p role="status" class="w-full text-[12.5px]">{results.get(job.id)}</p>{/if}
+            </li>
+          {/each}
+        </ul>
+        {#each [...results].filter(([id]) => !jobs.some(job => job.id === id)) as [id, line] (id)}<p role="status" class="text-[12.5px]">{line}</p>{/each}
+      </section>
+    {/if}
     <section class="bg-card rounded-2xl border p-5">
       <h3 class="mb-2 text-[15px] font-semibold">{i18n.message("set_keptHeading")}</h3>
       <div class="flex items-start justify-between gap-4 text-[13.5px]">

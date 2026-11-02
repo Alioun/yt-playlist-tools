@@ -4628,6 +4628,12 @@
   "recovery_job_syncJoin": {
     "message": "Joining Settings sync"
   },
+  "recovery_job_settings": {
+    "message": "Saving your settings changes"
+  },
+  "recovery_job_import": {
+    "message": "Importing your settings file"
+  },
   "recovery_continue": {
     "message": "Continue"
   },
