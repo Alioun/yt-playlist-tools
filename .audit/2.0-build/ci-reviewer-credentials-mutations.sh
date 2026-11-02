@@ -182,5 +182,10 @@ plant reviewer-step-continue "$release" 's/(      - name: Check the reviewer tes
 plant reviewer-step-env "$release" 's/(          BUN_SHA256: \$\{\{ vars\.BUN_SHA256 \}\}\n        run: \|\n          digest=\$REVIEWER_NOTES_SHA256\n          script=)/          BUN_CONFIG_VERBOSE_FETCH: curl\n$1/' -- "hold exactly the keys and values the approval covers"
 plant workflow-defaults "$release" 's/^jobs:\n/defaults:\n  run:\n    shell: sh {0}\n\njobs:\n/m' -- "set no workflow-level defaults"
 
+# GitHub reads context and secret names in any case.
+plant upper-bulk-secrets "$ci" 's/(VERSION: \$\{\{ steps\.version\.outputs\.version \}\}\n)/$1          ALL: \$\{\{ toJSON(SECRETS) \}\}\n/' -- "read secrets and the job token only by name"
+plant upper-job-token "$release" 's/(      CHANNEL: \$\{\{ needs\.meta\.outputs\.channel \}\}\n)/$1      GH_TOKEN: \$\{\{ GITHUB.TOKEN \}\}\n/' -- "hold no secret or job token in a workflow- or job-level env"
+plant lower-login-name "$ci" 's/(VERSION: \$\{\{ steps\.version\.outputs\.version \}\}\n)/$1          LOGIN: \$\{\{ secrets.amo_reviewer_login \}\}\n/' -- "give AMO_REVIEWER_LOGIN only to the two reviewer steps"
+
 echo "$planted rows, $missed missed"
 exit $((missed > 0))

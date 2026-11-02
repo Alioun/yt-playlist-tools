@@ -187,7 +187,8 @@ type Reference = { at: string; expression: string }
 /**
  * Every use of the secrets context and of the job token in every workflow, and
  * where it sits: `github.token`, or `github` whole, as `toJSON(github)` carries
- * the token too. Steps are named by their name or action.
+ * the token too. GitHub reads context and secret names in any case, so this
+ * does too. Steps are named by their name or action.
  */
 function credentialReferences(): Reference[] {
   const found: Reference[] = []
@@ -195,7 +196,7 @@ function credentialReferences(): Reference[] {
     if (typeof value === "string") {
       const expressions = isExpression ? [value] : [...value.matchAll(/\$\{\{([\s\S]*?)\}\}/g)].map(match => match[1]!)
       for (const expression of expressions) {
-        for (const match of expression.matchAll(/\bsecrets\b(?:\.[A-Za-z_][\w-]*)?|(?<![\w.-])github(?:\.token\b|(?![\w.-]))/g)) {
+        for (const match of expression.matchAll(/\bsecrets\b(?:\.[a-z_][\w-]*)?|(?<![\w.-])github(?:\.token\b|(?![\w.-]))/gi)) {
           found.push({ at: at.join(" > "), expression: match[0] })
         }
       }
@@ -206,7 +207,7 @@ function credentialReferences(): Reference[] {
       })
     } else if (typeof value === "object" && value !== null) {
       for (const [key, item] of Object.entries(value)) {
-        if (key === "secrets") found.push({ at: [...at, key].join(" > "), expression: "secrets:" })
+        if (key.toLowerCase() === "secrets") found.push({ at: [...at, key].join(" > "), expression: "secrets:" })
         visit(item, [...at, key], key === "if")
       }
     }
@@ -252,7 +253,7 @@ describe("the leak check", () => {
 
 describe("the workflows", () => {
   test("read secrets and the job token only by name, never in bulk or by a computed name", () => {
-    const bulk = credentialReferences().filter(({ expression }) => expression !== "github.token" && !/^secrets\.[A-Za-z_][\w-]*$/.test(expression))
+    const bulk = credentialReferences().filter(({ expression }) => expression.toLowerCase() !== "github.token" && !/^secrets\.[a-z_][\w-]*$/i.test(expression))
     expect(bulk).toEqual([])
   })
 
@@ -262,7 +263,7 @@ describe("the workflows", () => {
   })
 
   test("give AMO_REVIEWER_LOGIN only to the two reviewer steps, each through its own env", () => {
-    expect(credentialReferences().filter(reference => reference.expression === "secrets.AMO_REVIEWER_LOGIN").map(reference => reference.at)).toEqual([
+    expect(credentialReferences().filter(reference => reference.expression.toLowerCase() === "secrets.amo_reviewer_login").map(reference => reference.at)).toEqual([
       "release.yml > jobs > check-reviewer-login > steps > Check the reviewer test account > env > AMO_REVIEWER_LOGIN",
       "release.yml > jobs > fill-reviewer-notes > steps > Put the reviewer test account into the reviewer notes > env > AMO_REVIEWER_LOGIN"
     ])
@@ -382,7 +383,7 @@ describe("the reviewer jobs", () => {
   test("never expand the login on a command line", () => {
     for (const step of [checkStep, fillStep]) {
       expect(step.run).not.toMatch(/\$\{?AMO_REVIEWER_LOGIN/)
-      expect(step.run).not.toContain("secrets.")
+      expect(step.run).not.toMatch(/secrets\./i)
     }
   })
 })
