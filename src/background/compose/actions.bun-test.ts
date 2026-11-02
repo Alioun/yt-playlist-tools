@@ -119,7 +119,7 @@ test("quick-save on an account with no quick-save playlist asks the page to open
 test("a feature that is off adds nothing", async () => {
   const { page, site } = world({ settings: { quickSave: { on: false, feedback: true, shortsShelves: false } } })
   const report = await page.add({ site: "www", video, via: "quick-save", opener: "quick-save" })
-  expect(report).toEqual({ kind: "report", outcomes: {}, toast: null, feedback: true, undo: null })
+  expect(report).toEqual({ kind: "report", outcomes: {}, toast: null, feedback: true, undo: null, titles: {} })
   expect(site.jobs).toEqual([])
 })
 

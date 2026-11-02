@@ -8,7 +8,8 @@ import { projectDestination } from "../router/first-run-results"
 import type { StartingOwner } from "../store/store-lifecycle"
 import type { Requester, Tabs } from "../tabs/ports"
 import type { BuildId, FeatureId, Origin } from "../../shared/contracts"
-import { tabActionContract, type TabActionMessages, type TabAddReport, type TabCreated, type TabPlaylists, type TabUndoReport } from "../../shared/contracts/tab-actions"
+import { tabActionContract, type PlaylistTitles, type TabActionMessages, type TabAddReport, type TabCreated, type TabPlaylists, type TabUndoReport } from "../../shared/contracts/tab-actions"
+import { cacheRows } from "../../shared/model/account-cache"
 import { decodeSettings } from "../../shared/model/decodeSettings"
 import { defaultSettings } from "../../shared/model/defaults"
 import type { AccountKey, Filter, PlaylistId, Settings, Setup } from "../../shared/model"
@@ -92,7 +93,7 @@ export type Actions = { readonly flow: AddFlow; load(incognito: boolean, acct: A
 export function composeActions(deps: {
   readonly native: SenderOriginPorts & { readonly runtime: SenderOriginPorts["runtime"] & RuntimePort }
   readonly build: BuildId
-  readonly owner: Pick<StartingOwner, "readTabProjection" | "readSession" | "changeSession" | "changeSetupDestination">
+  readonly owner: Pick<StartingOwner, "readTabProjection" | "readSession" | "changeSession" | "changeSetupDestination" | "readPlaylistCache">
   readonly tabs: Tabs
   readonly playlists: Playlists
   readonly registrar: Pick<Registrar, "ensure">
@@ -117,6 +118,13 @@ export function composeActions(deps: {
     const [known] = await tabs.known({ kind: "tab", tabId: context.origin.tabId })
     return known !== undefined && known.acct === acct && known.privateTab === context.origin.incognito
   }
+  async function titlesOf(acct: AccountKey | null, context: TabContext, ids: readonly PlaylistId[]): Promise<PlaylistTitles> {
+    if (acct === null || !ids.length) return {}
+    const read = await owner.readPlaylistCache({ acct, private: context.origin.incognito }).catch(() => null)
+    if (read?.kind !== "cache" || read.cache === null) return {}
+    const wanted = new Set(ids)
+    return Object.fromEntries(cacheRows(read.cache, context.site).filter(row => wanted.has(row.id) && row.title).map(row => [row.id, row.title]))
+  }
   function requestOf(context: TabContext): Requester {
     return { windowId: context.windowId, incognito: context.origin.incognito, activeTabId: context.origin.tabId }
   }
@@ -125,17 +133,16 @@ export function composeActions(deps: {
       if (request.site !== context.site || !await pinned(context, acct)) return { kind: "no-tab" }
       await view.load(context.origin.incognito, acct)
       const { memory: _memory, ...report } = await flow.add(request, context.origin)
-      if (report.kind === "report" || report.kind === "stopped") {
-        const outcomes = Object.entries(report.outcomes).map(([playlist, outcome]) => `${playlist}=${outcome.kind === "failed" ? outcome.failure : outcome.kind}`)
-        if (outcomes.length) log(`add (${request.via}) ${outcomes.join(" ")}`)
-      }
-      return report
+      if (report.kind !== "report" && report.kind !== "stopped") return report
+      const ids = Object.keys(report.outcomes) as PlaylistId[]
+      if (ids.length) log(`add (${request.via}) ${Object.entries(report.outcomes).map(([playlist, outcome]) => `${playlist}=${outcome.kind === "failed" ? outcome.failure : outcome.kind}`).join(" ")}`)
+      return { ...report, titles: await titlesOf(acct, context, ids) }
     },
     async "tab.remove"({ acct, request }, context) {
       if (request.site !== context.site || !await pinned(context, acct)) return { kind: "no-tab" }
       await view.load(context.origin.incognito, acct)
       const { memory: _memory, ...report } = await flow.remove(request, context.origin)
-      return report
+      return report.kind === "removed" ? { ...report, titles: await titlesOf(acct, context, [report.playlist]) } : report
     },
     async "tab.undo"({ acct, request }, context): Promise<TabUndoReport> {
       if (!await pinned(context, acct)) return { kind: "no-tab" }

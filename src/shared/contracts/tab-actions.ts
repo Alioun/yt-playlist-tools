@@ -21,13 +21,15 @@ export type TabRemoveRequest = {
   readonly site: Site; readonly video: VideoId; readonly playlist: PlaylistId; readonly opener: FeatureId; readonly tick: UndoHandle | null
 }
 type Ended = { readonly kind: "signed-out" | "no-tab" }
+/** The cached titles of the playlists a report names, so the page's toast can name them (YT-ADD-23). */
+export type PlaylistTitles = Readonly<Record<PlaylistId, string>>
 export type TabAddReport =
-  | { readonly kind: "report"; readonly outcomes: Readonly<Record<PlaylistId, Outcome>>; readonly toast: ToastPlan | null; readonly feedback: boolean; readonly undo: UndoHandle | null }
-  | { readonly kind: "stopped"; readonly outcomes: Readonly<Record<PlaylistId, Outcome>>; readonly pending: readonly PlaylistId[]; readonly feedback: boolean; readonly toast: null; readonly undo: null }
+  | { readonly kind: "report"; readonly outcomes: Readonly<Record<PlaylistId, Outcome>>; readonly toast: ToastPlan | null; readonly feedback: boolean; readonly undo: UndoHandle | null; readonly titles: PlaylistTitles }
+  | { readonly kind: "stopped"; readonly outcomes: Readonly<Record<PlaylistId, Outcome>>; readonly pending: readonly PlaylistId[]; readonly feedback: boolean; readonly toast: null; readonly undo: null; readonly titles: PlaylistTitles }
   | { readonly kind: "choose" }
   | Ended
 export type TabRemoveReport =
-  | { readonly kind: "removed"; readonly playlist: PlaylistId; readonly video: VideoId; readonly feedback: boolean; readonly toast: ToastPlan | null; readonly undo: UndoHandle | null }
+  | { readonly kind: "removed"; readonly playlist: PlaylistId; readonly video: VideoId; readonly feedback: boolean; readonly toast: ToastPlan | null; readonly undo: UndoHandle | null; readonly titles: PlaylistTitles }
   | { readonly kind: "failed"; readonly failure: ExplicitFailure }
   | { readonly kind: "stopped"; readonly removed: boolean; readonly playlist: PlaylistId; readonly video: VideoId; readonly undo: null }
   | Ended
@@ -87,13 +89,14 @@ function pinned(request: Check): Check {
   return value => objectShape(value, { acct: nullable(isAccountKey), request })
 }
 const undo = nullable(isUndoHandle)
+const titles: Check = value => record(value, item => typeof item === "string")
 export function isTabAddReport(value: unknown): value is TabAddReport {
-  return objectShape(value, { kind: oneOf("report"), outcomes: v => record(v, kinded), toast: nullable(plan), feedback: bool, undo })
-    || objectShape(value, { kind: oneOf("stopped"), outcomes: v => record(v, kinded), pending: playlists, feedback: bool, toast: v => v === null, undo: v => v === null })
+  return objectShape(value, { kind: oneOf("report"), outcomes: v => record(v, kinded), toast: nullable(plan), feedback: bool, undo, titles })
+    || objectShape(value, { kind: oneOf("stopped"), outcomes: v => record(v, kinded), pending: playlists, feedback: bool, toast: v => v === null, undo: v => v === null, titles })
     || objectShape(value, { kind: oneOf("choose", "signed-out", "no-tab") })
 }
 export function isTabRemoveReport(value: unknown): value is TabRemoveReport {
-  return objectShape(value, { kind: oneOf("removed"), playlist: isPlaylistId, video: isVideoId, feedback: bool, toast: nullable(plan), undo })
+  return objectShape(value, { kind: oneOf("removed"), playlist: isPlaylistId, video: isVideoId, feedback: bool, toast: nullable(plan), undo, titles })
     || objectShape(value, { kind: oneOf("failed"), failure: v => typeof v === "string" })
     || objectShape(value, { kind: oneOf("stopped"), removed: bool, playlist: isPlaylistId, video: isVideoId, undo: v => v === null })
     || objectShape(value, { kind: oneOf("signed-out", "no-tab") })
