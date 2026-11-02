@@ -615,7 +615,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 - **Q-PERF-17.** YouTube Music's weights are backed by the rough build's measurement (35.2 KB eager). Its **time** budgets are **PROVISIONAL**: they're set by analogy with YouTube and haven't been measured on YouTube Music.
 - **Q-PERF-44.** **The decisions of 2026-10-20 change no budget number** ([ticket 24](../issues/24-performance-budget.md); R99):
   - **Four more YouTube Music actions (R85)** add an estimated 1–1.5 KB to `feature-music-actions.js`, four bindings to `feature-music-keys.js`, and the `library` and `navigate` jobs to `page-music.js`. They're rebalanced within YouTube Music's 43 KB (Q-PERF-16). If they still don't fit, their code moves to a lazy file loaded the first time one of them is used. The site total stays 43 KB.
-  - **Keys from any tab (R88) and Save from the browser's menu (R91)** have no row: they register nothing, and when used they inject the page half, core and kit, which have rows (Q-PERF-9). Their background code counts toward the background's 25 KB (PROVISIONAL, Q-PERF-31).
+  - **Keys from any tab (R88) and Save from the browser's menu (R91)** have no row: they register nothing, and when used they inject the page half, core and kit, which have rows (Q-PERF-9). Their background code counts toward the background's 227.2 KB ceiling (R199, Q-PERF-31).
   - **Recent adds (R86):** the popup's first view gains only the header button; the sheet is a lazy chunk under the 45 KB lazy budget, expected under 4 KB. The YouTube Music popup's 0.6 KB of headroom is tight, so Q-PERF-32's matching-cut rule applies. Moving copy into `_locales/en/messages.json` (R93), which isn't JavaScript and isn't counted, is expected to cover it.
   - **Save from the browser's menu** adds one row to the popup's YouTube tab; Keys from any tab adds none.
   - **The toolbar tick and "paused" (R92)** are background code only.
@@ -682,7 +682,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 | **Settings, initial = the first frame** | 60 KB JS + 10 KB CSS; first frame within 100 ms cold at 1× | 38.8 + 8.5 KB |
 | **Settings, each lazy section** (Diagnostics included) | 45 KB | shortcuts 33.5, auto-add 25.9, privacy 11.5 |
 | **First-run page, first frame** (`onboarding.html`, in both its views: first run and the upgrade note, R37) | 30 KB JS; its CSS and the lazy step 3 are reported, not gated (R47) | 23.2 + 8.2 KB; step 3 +39.1 KB |
-| **Background** (**PROVISIONAL**) | 25 KB, with no UI code | 1.5.0: 7.5 KB |
+| **Background** | 227.2 KB ceiling, with no UI code (R199) | 227.15 KB at 2.0/compose-units `ff2ca402`; 1.5.0: 7.5 KB |
 
 - **Q-PERF-32.** The popup's budget stays 40 KB on both sites. To keep the YouTube Music popup inside it, banner copy loads only when a banner shows. Any addition to the YouTube Music popup's first view needs a matching cut.
 - **Q-PERF-33.** Settings' 60 KB is the first frame only. The shown section's options load right after the first frame, without a click; every other section loads when opened. Each is a lazy section ([UI-SET-06](05-ui.md#frame)).
@@ -815,7 +815,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 - **Q-PERF-67. Gather tabs changes no budget number** (R139):
   - the popup's first view gains one row, a few hundred bytes, inside the 40 KB ([Q-PERF-31](#766-popup-settings-the-first-run-page-and-background));
   - its unfolded options in the popup and its Settings card are lazy chunks, each at most 45 KB;
-  - its background code (gathering, ordering and the triggers), an estimated 3–4 KB gzip, counts toward the background's 25 KB (PROVISIONAL);
+  - its background code (gathering, ordering and the triggers), an estimated 3–4 KB gzip, counts toward the background's 227.2 KB ceiling (R199);
   - it has no page file, so `perf-budget.json` has no row for it ([ARC-REG-11](06-architecture.md#66-the-feature-registry)).
 
 **Enforcement**

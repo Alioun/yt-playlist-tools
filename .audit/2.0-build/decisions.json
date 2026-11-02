@@ -241,6 +241,30 @@
       "topic": "Marks and labels past the sync limit",
       "answer": "For now a Missing/Full mark or label refresh past the browsers' own sync limit is not saved. SYNC-16's stay-local-until-room behavior is a queued follow-up.",
       "landed": "pending follow-up"
+    },
+    {
+      "id": "G41",
+      "topic": "Site totals (Q-PERF-12, 13, 16)",
+      "answer": "Keep the original budgets as the target; build the lazy MAIN-world jobs file and the lazy picker first, then revisit re-baselining.",
+      "landed": "pending"
+    },
+    {
+      "id": "G42",
+      "topic": "Lazy MAIN-world jobs file",
+      "answer": "Build it now, before the beta: the background injects the gateway's job code on a page's first job.",
+      "landed": "pending"
+    },
+    {
+      "id": "G43",
+      "topic": "Lazy picker",
+      "answer": "Build it now: split PlaylistChooser so the picker loads when it opens (Q-PERF-31).",
+      "landed": "pending"
+    },
+    {
+      "id": "G44",
+      "topic": "Background budget",
+      "answer": "Replace the provisional 25 KB with a 227.2 KB ceiling the gate enforces.",
+      "landed": "perf-budget.json"
     }
   ],
   "coordinatorCalls": [
