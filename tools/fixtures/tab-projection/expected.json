@@ -115,6 +115,7 @@
         }
       },
       "pickerSortAZ": true,
+      "newPlaylistVisibility": null,
       "recentAdds": true,
       "paused": true,
       "account": {
@@ -313,6 +314,7 @@
         }
       },
       "pickerSortAZ": true,
+      "newPlaylistVisibility": null,
       "recentAdds": true,
       "paused": true,
       "account": {
@@ -499,6 +501,7 @@
         }
       },
       "pickerSortAZ": true,
+      "newPlaylistVisibility": null,
       "recentAdds": true,
       "paused": true,
       "account": {
@@ -622,6 +625,7 @@
         }
       },
       "pickerSortAZ": true,
+      "newPlaylistVisibility": null,
       "recentAdds": true,
       "paused": true,
       "account": {

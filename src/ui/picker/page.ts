@@ -4,7 +4,7 @@ import type { PickerModel } from "../../shared/picker/model.svelte"
 import themeCss from "../lib/theme.css?inline"
 import PickerPanel from "./PickerPanel.svelte"
 import { createPickerText } from "./text"
-import type { PickerEvent } from "./types"
+import { pickerHelpUrl, type PickerEvent, type PickerHelp } from "./types"
 
 /** The in-page picker's view for `popovers.js` (UI-PICK-13): the extension's PickerPanel with the theme inlined into the host. */
 export const pagePicker = {
@@ -20,7 +20,8 @@ export const pagePicker = {
   }): () => void {
     const component = mount(PickerPanel, { target, props: {
       picker: props.picker, text: createPickerText(props.i18n), purpose: { kind: props.purpose }, platform: props.os,
-      onoutcome: props.onoutcome, onrequestclose: () => props.onrequestclose()
+      onoutcome: props.onoutcome, onrequestclose: () => props.onrequestclose(),
+      onhelp: (action: PickerHelp) => { target.ownerDocument.defaultView?.open(pickerHelpUrl[action], "_blank", "noopener") }
     } })
     return () => { void unmount(component) }
   }

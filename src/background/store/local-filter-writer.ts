@@ -2535,10 +2535,12 @@ function createOwner(deps: LocalFilterWriterDependencies, startup?: StoreStartup
     if (first.kind !== "records") return first
     const session = await readSessionSnapshotInLane()
     if (session.kind !== "memory") return session
-    const projection = projectTabStorage({ records: first.records, request, memory: session.memory, pickerSortAZ: first.device.pickerSortAZ, recentAdds: first.device.recentAdds })
+    const projection = projectTabStorage({ records: first.records, request, memory: session.memory, pickerSortAZ: first.device.pickerSortAZ,
+      newPlaylistVisibility: first.device.newPlaylistVisibility, recentAdds: first.device.recentAdds })
     const latest = await readProjectionRecordsInLane()
     if (latest.kind !== "records") return latest
-    const current = projectTabStorage({ records: latest.records, request, memory: session.memory, pickerSortAZ: latest.device.pickerSortAZ, recentAdds: latest.device.recentAdds })
+    const current = projectTabStorage({ records: latest.records, request, memory: session.memory, pickerSortAZ: latest.device.pickerSortAZ,
+      newPlaylistVisibility: latest.device.newPlaylistVisibility, recentAdds: latest.device.recentAdds })
     if (!isJsonValue(projection) || !isJsonValue(current) || !sameSyncJson(projection, current)) return { kind: "unavailable", reason: "stale" }
     return { kind: "projection", projection: current }
   }

@@ -3,6 +3,7 @@ import {
   defaultFilter, isAccountKey, parseDocumentKey, type AccountKey, type Filter, type Key, type Settings, type Setup, type PlaylistId, type VideoId
 } from "../../shared/model"
 import { isJsonValue } from "../../shared/contracts/json"
+import type { Privacy } from "../../shared/contracts/vocabulary"
 import { objectShape } from "../../shared/contracts/object-shape"
 import { readSettingsView, type SettingsView, type Snapshot } from "../../shared/model/settings-view"
 import { readAccountSetup, type AccountSetupRead } from "./setup-edit"
@@ -27,6 +28,8 @@ export type TabStorageProjection = {
   readonly private: boolean
   readonly settings: SettingsView
   readonly pickerSortAZ: boolean
+  /** This browser's last visibility for a new playlist, which the page picker's form starts on (YT-NEW-03). */
+  readonly newPlaylistVisibility: Privacy | null
   readonly recentAdds: boolean
   readonly paused: boolean
   readonly account:
@@ -57,7 +60,7 @@ export function isNormalWindowRouting(value: unknown): value is NormalWindowRout
 }
 
 export function readProjectionDevice(records: Readonly<Record<string, unknown>>):
-  | { readonly kind: "ready"; readonly pickerSortAZ: boolean; readonly recentAdds: boolean; readonly lastAccount: AccountKey | null }
+  | { readonly kind: "ready"; readonly pickerSortAZ: boolean; readonly newPlaylistVisibility: Privacy | null; readonly recentAdds: boolean; readonly lastAccount: AccountKey | null }
   | TabProjectionUnavailable | TabProjectionInvalid {
   const schema = records.schema
   if (typeof schema === "number" && Number.isSafeInteger(schema) && schema > STORAGE_SCHEMA_VERSION) return { kind: "unavailable", reason: "newer-layout" }
@@ -69,7 +72,7 @@ export function readProjectionDevice(records: Readonly<Record<string, unknown>>)
     const device = decodeDevice(raw)
     if (device.consent?.v !== CONSENT_VERSION) return { kind: "unavailable", reason: "consent-held" }
     if (device.upgradeNote?.state === "pending") return { kind: "unavailable", reason: "startup" }
-    return { kind: "ready", pickerSortAZ: device.pickerSortAZ, recentAdds: device.recentAdds, lastAccount: decodeLastAccount(records) }
+    return { kind: "ready", pickerSortAZ: device.pickerSortAZ, newPlaylistVisibility: device.newPlaylistVisibility, recentAdds: device.recentAdds, lastAccount: decodeLastAccount(records) }
   } catch (error) {
     if (error instanceof DecodeError) return { kind: "invalid", part: "device" }
     throw error
@@ -148,10 +151,11 @@ function accountFilters(records: Readonly<Record<string, unknown>>, acct: Accoun
 // An absent filter row uses the model's default. An unreadable row never does.
 export function projectTabStorage(input: {
   readonly records: Readonly<Record<string, unknown>>; readonly request: TabProjectionRequest
-  readonly memory: SessionMemory; readonly pickerSortAZ: boolean; readonly recentAdds: boolean
+  readonly memory: SessionMemory; readonly pickerSortAZ: boolean; readonly newPlaylistVisibility?: Privacy | null; readonly recentAdds: boolean
 }): TabStorageProjection {
   const { records, request, memory, pickerSortAZ, recentAdds } = input
-  const shared = { private: request.private, settings: projectSettings(records["doc:settings"]), pickerSortAZ, recentAdds, paused: memory.paused }
+  const shared = { private: request.private, settings: projectSettings(records["doc:settings"]), pickerSortAZ,
+    newPlaylistVisibility: input.newPlaylistVisibility ?? null, recentAdds, paused: memory.paused }
   if (request.account.kind !== "signed-in") return { ...shared, account: { kind: request.account.kind } }
   const acct = request.account.acct
   const entries: ProjectedSkip[] = [...(request.private ? [] : memory.skips.get(acct) ?? [])]

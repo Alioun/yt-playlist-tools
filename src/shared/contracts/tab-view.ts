@@ -6,7 +6,7 @@ import { anchors, features, type AnchorId } from "../features/registry"
 import { objectShape } from "./object-shape"
 import { supportsJob, type AccountData } from "./jobs"
 import type { TabPing } from "./tabs"
-import { isBreakageKind, isBuildId, isJobId, isSite, type BreakageKind, type JobId, type Site } from "./vocabulary"
+import { isBreakageKind, isBuildId, isJobId, isPrivacy, isSite, type BreakageKind, type JobId, type Privacy, type Site } from "./vocabulary"
 
 type FeatureOptions = {
   "auto-add": Settings["autoAdd"]
@@ -49,6 +49,8 @@ export type TabView = ViewSite & ViewAccount & {
   readonly build: TabPing["build"]
   readonly undoKey: Snapshot<Key> | null
   readonly pickerSortAZ: boolean
+  /** This browser's last visibility for a new playlist, absent until one is picked (YT-NEW-03). */
+  readonly newPlaylistVisibility?: Privacy
   readonly paused: boolean
   readonly statuses: readonly FeatureStatus[]
   readonly notices: readonly DueNotice[]
@@ -158,10 +160,11 @@ export function isTabView(value: unknown): value is TabView {
   try {
     const common = { site: isSite, build: isBuildId, private: bool, pickerSortAZ: bool, paused: bool, undoKey: isTabKey,
       features: list(isTabFeature), statuses: list(v => v !== null && typeof v === "object"), notices: list(isDueNotice) }
+    const optional = { newPlaylistVisibility: isPrivacy }
     if (!(objectShape(value, { ...common, signedIn: v => v === false, acct: v => v === null, setup: v => v === null,
-      filters: v => Array.isArray(v) && v.length === 0, skips: v => v === null }) ||
+      filters: v => Array.isArray(v) && v.length === 0, skips: v => v === null }, optional) ||
       objectShape(value, { ...common, signedIn: v => v === true, acct: isAccountKey, setup: isTabSetup, filters: list(isTabFilter),
-        skips: v => objectShape(v, { kind: oneOf("normal", "private"), entries: isTabSkips }) }))) return false
+        skips: v => objectShape(v, { kind: oneOf("normal", "private"), entries: isTabSkips }) }, optional))) return false
     if (!isSite(value.site) || !Array.isArray(value.features) || !Array.isArray(value.statuses) || !Array.isArray(value.notices) || !Array.isArray(value.filters)) return false
     const site = value.site, skipKind = value.private ? "private" : "normal"
     const options: unknown[] = value.features, statuses: unknown[] = value.statuses,

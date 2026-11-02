@@ -107,7 +107,7 @@ export function pagePickerSource(deps: PageSourceDeps): PickerSource<ItemPort> &
     tab: true,
     creation: acct === null ? "signedOut" : label && !label.handle ? "noChannel" : "available",
     sortAZ: view.pickerSortAZ,
-    privacy: null,
+    privacy: view.newPlaylistVisibility ?? null,
     quickSave,
     chosen: request.mode.kind === "choose" && current ? [current] : [],
     keys,

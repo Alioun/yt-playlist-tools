@@ -78,7 +78,8 @@ export function createPageSource(backend: Backend, context: PageSourceContext): 
     item: null,
     private: context.private,
     tab: context.tab,
-    creation: context.signedIn ? "available" : "signedOut",
+    // An account whose label has no @handle has no channel, so creating can't work there (YT-NEW-07).
+    creation: !context.signedIn ? "signedOut" : context.setup?.label && !context.setup.label.handle ? "noChannel" : "available",
     sortAZ: context.sortAZ,
     privacy: context.privacy,
     quickSave: context.setup && isPlaylistId(context.setup.quickSave) ? context.setup.quickSave : null,

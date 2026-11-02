@@ -11,7 +11,7 @@ import { playlist, video, wireView } from "../../../tools/fixtures/tab-view/case
 const other = "PL_beta" as PlaylistId
 const settle = () => new Promise(resolve => setTimeout(resolve, 0))
 
-function source(site: "www" | "music", mode: OpenPicker["mode"] = { kind: "save" }) {
+function source(site: "www" | "music", mode: OpenPicker["mode"] = { kind: "save" }, extra: Partial<ReturnType<typeof wireView>> = {}) {
   const adds: TabAddRequest[] = [], removes: TabRemoveRequest[] = [], destinations: TabDestinationChange[] = [], jobs: string[] = []
   const released: string[] = [], devices: unknown[] = []
   const actions = {
@@ -22,7 +22,7 @@ function source(site: "www" | "music", mode: OpenPicker["mode"] = { kind: "save"
     destination: async (change: TabDestinationChange) => { destinations.push(change); return { kind: "confirmed" } },
     playlists: async () => ({ kind: "cached", listing: { rows: [{ id: playlist, title: "Favourites" }, { id: other, title: "Beta" }], at: Date.now() } })
   } as unknown as TabActions
-  const view = wireView(site)
+  const view = { ...wireView(site), ...extra } as ReturnType<typeof wireView>
   const built = pagePickerSource({ actions, view, now: () => Date.now(), live: () => true,
     request: { video, anchor: { kind: "window" }, mode, opener: site === "music" ? "music-actions" : "quick-save" },
     page: { run: async job => { jobs.push(job.job.kind); return { ok: true, data: [], route: "r" } as never } } })
@@ -34,6 +34,11 @@ test("Sort A–Z and the last visibility save through the background, and a priv
   expect(await www.built.saveSortAZ(true)).toEqual({ ok: true })
   expect(await www.built.savePrivacy("PUBLIC")).toEqual({ refused: "private" })
   expect(www.devices).toEqual([{ field: "pickerSortAZ", value: true }, { field: "newPlaylistVisibility", value: "PUBLIC" }])
+})
+
+test("New playlist starts on this browser's last visibility, else Private (YT-NEW-03)", () => {
+  expect(new PickerModel({ source: source("www", { kind: "save" }, { newPlaylistVisibility: "PUBLIC" }).built, site: "www", mode: "save" }).form.privacy).toBe("PUBLIC")
+  expect(new PickerModel({ source: source("www").built, site: "www", mode: "save" }).form.privacy).toBe("PRIVATE")
 })
 
 test("releasing the source lets go of every add and removal handle it received, once", async () => {

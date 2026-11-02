@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from "svelte"
   import { pickerSource } from "./source"
-  import { PlaylistChooser, createPickerText, type ChooserContext, type PickerEvent } from "../picker"
+  import { PlaylistChooser, createPickerText, pickerHelpUrl, type ChooserContext, type PickerEvent } from "../picker"
   import type { SetupDestination } from "../../shared/contracts/first-run"
   import type { Site } from "../../shared/contracts/vocabulary"
   import { destinationValue } from "../backend/page-source"
@@ -47,5 +47,5 @@
   <PlaylistChooser {open} {current} {label} {availability} {text} platform={pageState.page.platform.os} watchLaterEveryAccount={everyAccount}
     context={{ account: acct, site, private: pageState.private, purpose }} createSource={source}
     onrequest={request => { open = request.kind === "open" }} onoutcome={outcome}
-    onrelease={release => { release.picker.close() }} />
+    onrelease={release => { release.picker.close() }} onhelp={action => pageState.page.open(pickerHelpUrl[action])} />
 {/if}

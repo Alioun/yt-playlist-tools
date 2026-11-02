@@ -23,6 +23,10 @@ export type PickerEvent =
 
 export type CloseRequest = { readonly reason: "escape" | "dismiss" | "trigger" | "button" }
 export type PickerHelp = "openYouTube" | "createChannel"
+/** Where New playlist's links go when creating can't be used here (UI-PICK-11, YT-NEW-07). */
+export const pickerHelpUrl: Readonly<Record<PickerHelp, string>> = {
+  openYouTube: "https://www.youtube.com/", createChannel: "https://www.youtube.com/create_channel"
+}
 
 export type PickerPanelProps = {
   readonly picker: PickerModel

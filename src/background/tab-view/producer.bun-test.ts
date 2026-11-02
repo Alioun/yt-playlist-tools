@@ -36,6 +36,21 @@ test("real owner produces detached site options, keys, sort and only this accoun
   } finally { await h.dispose() }
 })
 
+test("the view carries this browser's last visibility for new playlists once one was picked (YT-NEW-03)", async () => {
+  const seed = projectionSeed()
+  seed.local.device = { ...(seed.local.device as object), newPlaylistVisibility: "UNLISTED" }
+  const h = viewWorld(seed)
+  try {
+    const result = await h.producer.produce(tabContext())
+    expect(result.kind === "view" && result.view.newPlaylistVisibility).toBe("UNLISTED")
+  } finally { await h.dispose() }
+  const unset = viewWorld()
+  try {
+    const result = await unset.producer.produce(tabContext())
+    expect(result.kind === "view" && "newPlaylistVisibility" in result.view).toBe(false)
+  } finally { await unset.dispose() }
+})
+
 test("registry gates include file-free Gather and exclude non-page features", async () => {
   const settings = defaultSettings()
   for (const section of [settings.autoAdd, settings.shortcuts, settings.quickSave, settings.queueButton, settings.watchButton,

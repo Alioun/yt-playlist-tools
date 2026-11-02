@@ -140,6 +140,30 @@ test("ticking an automatic gather option with no gather playlist opens the choos
     { kind: "option", field: "gather.auto.background", value: true }]))
 }, 20_000)
 
+test("a chooser's New playlist links to YouTube without a tab, and to Create channel for an account with no channel (UI-PICK-11)", async () => {
+  const list: ScriptedResponders = { "ui.playlists": payload => payload.action === "open"
+    ? { kind: "open", operation: payload.operation, cached: { rows: [{ id: "PLa" as never, title: "Later" }], at: Date.now() }, freshness: "fresh", refresh: null }
+    : { kind: "released", operation: payload.operation } }
+  const quickSave = { ...agreed, "doc:settings": stamped({ quickSave: { on: true, feedback: true } }) }
+  async function open() {
+    await userEvent.click(await screen.findByRole("button", { name: /^Quick-save playlist/ }, { timeout: 5000 }))
+    // happy-dom leaves the floating picker unpositioned, so its contents have no accessible names; they're found by text.
+    return within(await screen.findByRole("dialog", { hidden: true }, { timeout: 5000 }))
+  }
+  const away = settings({ ...quickSave, [`doc:setup:${acct}`]: stamped({ label: { name: "Ann", handle: "@ann" } }) },
+    { ...list, "ui.accountInView": () => ({ kind: "account", source: "last-account", acct: acct as never }) }, "#feature-quick-save")
+  const picker = await open()
+  expect(await picker.findByText("Open YouTube to create playlists")).toBeTruthy()
+  await userEvent.click(picker.getByText("Open YouTube"))
+  expect(away.opened).toEqual(["https://www.youtube.com/"])
+  cleanup()
+  const noChannel = settings({ ...quickSave, [`doc:setup:${acct}`]: stamped({ label: { name: "Ann" } }) }, list, "#feature-quick-save")
+  const second = await open()
+  expect(await second.findByText("This account needs a YouTube channel to create playlists")).toBeTruthy()
+  await userEvent.click(second.getByText("Create channel"))
+  expect(noChannel.opened).toEqual(["https://www.youtube.com/create_channel"])
+}, 20_000)
+
 test("with synced settings full and a kept filter, Everywhere offers Remove kept filters and asks the background to remove them (SYNC-14)", async () => {
   const removed: unknown[] = []
   settings({ schema: 1, device: { id: "device", consent: { v: 1, at: 1_700_000_000_000 }, syncOn: true },
@@ -181,6 +205,6 @@ test("with no YouTube tab open, Check now gives way to Open YouTube (HEALTH-23)"
   }, "#diagnostics")
   expect(await screen.findByText("Open YouTube to check", {}, { timeout: 5000 })).toBeTruthy()
   expect(screen.queryByRole("button", { name: "Check now" })).toBeNull()
-  await userEvent.click(screen.getByRole("button", { name: "Open YouTube" }))
+  await userEvent.click(await screen.findByText("Open YouTube"))
   expect(opened).toEqual(["https://www.youtube.com/"])
 }, 20_000)

@@ -7,6 +7,7 @@
   import type { PlaylistId } from "../../shared/model/validation"
   import type { PickerModel, PickerRow } from "../../shared/picker/model.svelte"
   import type { PickerText } from "../picker/text"
+  import type { PickerHelp } from "../picker/types"
   import NewPlaylist from "../picker/NewPlaylist.svelte"
   import Glyph from "./Glyph.svelte"
   import PercentField from "./PercentField.svelte"
@@ -15,7 +16,7 @@
 
   // The auto-add list (UI-PICK-20), many mode over the shared picker model. Ticks go through the model; each
   // ticked playlist's options are the caller's, so the popup and settings write them the same way.
-  let { picker, text, i18n, variant, options, filters, defaultPct, readOnly = false, ontakes, onpct, filter }: {
+  let { picker, text, i18n, variant, options, filters, defaultPct, readOnly = false, ontakes, onpct, onhelp, filter }: {
     picker: PickerModel
     text: PickerText
     i18n: I18n
@@ -26,6 +27,7 @@
     readOnly?: boolean
     ontakes: (id: PlaylistId, takes: AutoAddPlaylist["takes"]) => Promise<boolean>
     onpct: (id: PlaylistId, pct: number | null) => Promise<boolean>
+    onhelp?: (action: PickerHelp) => void
     filter: Snippet<[PlaylistId, string]>
   } = $props()
   const uid = $props.id()
@@ -143,6 +145,6 @@
     {/each}
   </ul>
   {#if !readOnly}
-    <NewPlaylist {picker} {text} onpending={() => {}} onoutcome={() => {}} />
+    <NewPlaylist {picker} {text} {onhelp} onpending={() => {}} onoutcome={() => {}} />
   {/if}
 </div>

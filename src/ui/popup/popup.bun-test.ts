@@ -172,7 +172,7 @@ test("a failure shows its own action, and a gather with no gather playlist opens
     "ui.playlists": payload => payload.action === "open"
       ? { kind: "open", operation: payload.operation, cached: { rows: [{ id: "PLa" as never, title: "Later" }], at: Date.now() }, freshness: "fresh", refresh: null }
       : { kind: "released", operation: payload.operation },
-    "ui.change": payload => ({ kind: "destination", outcome: { kind: "confirmed", playlist: (payload.change as { playlist: never }).playlist } })
+    "ui.change": payload => ({ kind: "destination", outcome: { kind: "confirmed", playlist: (payload.change as unknown as { playlist: never }).playlist } })
   })
   await userEvent.click(await screen.findByRole("button", { name: "Gather" }))
   expect(await screen.findByText("Choose a gather playlist for Ann first.")).toBeTruthy()

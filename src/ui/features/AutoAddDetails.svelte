@@ -3,7 +3,7 @@
   import { onDestroy, untrack } from "svelte"
   import AutoAddList, { type AutoAddOptions } from "../components/AutoAddList.svelte"
   import ChannelFilterEditor from "../components/ChannelFilterEditor.svelte"
-  import { createPickerText } from "../picker"
+  import { createPickerText, pickerHelpUrl } from "../picker"
   import { PickerModel } from "../../shared/picker/model.svelte"
   import { isChannelId, isPlaylistId, type AccountKey, type PlaylistId } from "../../shared/model/validation"
   import { createAutoAddEditor } from "../backend/page-source"
@@ -40,7 +40,7 @@
   {#if !entry}<p class="text-muted-foreground mb-1 text-[12.5px]">{i18n.message("autoAddList_nothingSaved", { account: pageState.accountName(acct) })}</p>{/if}
   {#if pageState.private}<p class="text-muted-foreground mb-1 text-[12.5px]">{i18n.message("autoAddList_readOnly")}</p>{/if}
   <AutoAddList {picker} {text} {i18n} {variant} {options} filters={entry?.filters ?? new Map()} defaultPct={pageState.settings?.autoAdd.pct ?? 50}
-    readOnly={pageState.private} ontakes={editor.takes} onpct={editor.pct}>
+    readOnly={pageState.private} ontakes={editor.takes} onpct={editor.pct} onhelp={action => pageState.page.open(pickerHelpUrl[action])}>
     {#snippet filter(playlist, title)}
       <ChannelFilterEditor filter={entry?.filters.get(playlist) ?? null} playlist={title} {i18n} readOnly={pageState.private}
         onsetting={(desired, clear) => setting(playlist, desired, clear)}

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, untrack } from "svelte"
   import Button from "../components/Button.svelte"
-  import { PickerPanel, createPickerText, type PickerEvent } from "../picker"
+  import { PickerPanel, createPickerText, pickerHelpUrl, type PickerEvent } from "../picker"
   import { PickerModel } from "../../shared/picker/model.svelte"
   import type { HostRequest } from "./picker-host"
   import AutoAddDetails from "../features/AutoAddDetails.svelte"
@@ -28,7 +28,8 @@
 <div class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-6" role="presentation">
   <div role="dialog" aria-modal="true" aria-label={i18n.message("picker_listLabel")} class="bg-card flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-2xl shadow-xl">
     {#if picker && asked.kind === "choose"}
-      <PickerPanel {picker} {text} purpose={asked.purpose} platform={platform.os} onoutcome={outcome} onrequestclose={() => onclose(false)} />
+      <PickerPanel {picker} {text} purpose={asked.purpose} platform={platform.os} onoutcome={outcome} onrequestclose={() => onclose(false)}
+        onhelp={action => state.page.open(pickerHelpUrl[action])} />
     {:else if asked.kind === "manage"}
       <div class="flex flex-col gap-3 overflow-y-auto p-5">
         <AutoAddDetails {pageState} acct={asked.acct} variant="settings" />

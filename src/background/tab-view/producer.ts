@@ -103,6 +103,7 @@ export function createTabViewProducer(ports: TabViewPorts): TabViewProducer<TabV
         if (disposed || latest.kind !== "skips" || JSON.stringify(skips) !== JSON.stringify({ kind: "private", entries: latest.entries })) return unavailable
       }
       const view: unknown = { ...context.info, private: facts.private, features: enabled, pickerSortAZ: projection.pickerSortAZ,
+        ...projection.newPlaylistVisibility ? { newPlaylistVisibility: projection.newPlaylistVisibility } : {},
         undoKey: settings.undoKey, paused: projection.paused, setup, filters, skips, statuses, notices }
       return !disposed && health.current() && due.current() && isTabViewFor(facts, view) ? { kind: "view", view } : unavailable
     } catch { return unavailable }
