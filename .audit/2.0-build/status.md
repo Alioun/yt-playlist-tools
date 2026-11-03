@@ -50,3 +50,10 @@ Decisions G1 to G17 and the coordinator's own calls are in `decisions.json`.
 ## Reconciling the main checkout
 
 `t3-8e91ff1c` on `feat/2.0-store-write-preparation` still has 237 uncommitted changes from before the composition. Their relation to `2.0/compose-units` hasn't been checked.
+
+
+## 2026-11-03: the build is complete and CI passes locally
+
+`2.0/compose-units` at the final-gates fast-forward. The whole CI passed locally there: compile, lint, format:check, both builds, check-archives, check:manifest, check:budget, check:utf8, the release cases, the G28 proof (108), test:fixtures 145 of 145 gates, test:bun 4,367 pass, and the svelte-pilot job. Decisions G1 to G47 are in `decisions.json`.
+
+Held for the owner: production and release activation (1.99.1), live YouTube and YouTube Music checks (ticket 25, M1, M3, M5, T28), native behaviour, rendering and axe, G28's setup steps and turn-on, enabling Pages, store screenshots.
