@@ -1,12 +1,13 @@
 import { afterEach, expect, test } from "bun:test"
 import { isTabView, type TabView } from "../../shared/contracts/tab-view"
 import { tabHelloMessages, tabMessages, type TabHelloMessages, type TabMessages } from "../../shared/contracts/tabs"
-import { tabAskContract, type TabAskMessages } from "../../shared/contracts/tab-actions"
+import { tabActionContract, tabAskContract, type TabActionMessages, type TabAskMessages } from "../../shared/contracts/tab-actions"
 import { createMemoryNetwork } from "../../shared/rpc/memory"
-import { createDirectPageChannel } from "../../shared/rpc/page-channel"
+import { createDirectPageChannel, pageJobsPresenceEvent } from "../../shared/rpc/page-channel"
 import { createRpc, createRpcCaller } from "../../shared/rpc/rpc"
-import { createLiveWwwGateway } from "../../page/adapters/live-www-gateway"
-import { wwwGateway } from "../../page/gateway/www"
+import { createLiveWwwJobs } from "../../page/adapters/live-www-jobs"
+import { createLiveWwwReads } from "../../page/adapters/live-www-reads"
+import { offerJobs } from "../../page/jobs-port"
 import { vocabularyFor } from "../../page/gateway/port"
 import { wwwRoutes } from "../../page/routes/www"
 import { startPage } from "../../page/start"
@@ -44,7 +45,7 @@ function withCardMenu(view: TabView): TabView {
 async function startTab(view: TabView) {
   Object.assign(window, { ytcfg: { get: (key: string) => ({ LOGGED_IN: true, DATASYNC_ID: rawIdentity } as Record<string, unknown>)[key] } })
   const channel = createDirectPageChannel()
-  const page = startPage({ site: wwwGateway, build, window, document, channel, createGateway: createLiveWwwGateway })
+  const page = startPage({ site: "www", build, window, document, channel, createReads: createLiveWwwReads })
   const network = createMemoryNetwork<Sender>({ delivery: "immediate" })
   const background = network.connect({ id: extensionId })
   const tab = network.connect({ id: extensionId })
@@ -52,6 +53,16 @@ async function startTab(view: TabView) {
   let current = view
   const hello = createRpc<TabHelloMessages<TabView>, Sender>(background, { build, deadline, contract: tabHelloMessages(isTabView) })
   hello.handle({ authenticate: () => ({ kind: "accepted", context: null }), handlers: { "tab.hello": () => current } })
+  // The background's tab.need: Registrar.ensure injects the jobs file unless the probe finds it, then confirms with the probe.
+  let needs = 0, injections = 0
+  const here = () => !document.dispatchEvent(new CustomEvent(pageJobsPresenceEvent, { detail: build, cancelable: true }))
+  const actions = createRpc<Pick<TabActionMessages, "tab.need">, Sender>(background, { build, deadline, contract: { "tab.need": tabActionContract["tab.need"] } })
+  actions.handle({ authenticate: () => ({ kind: "accepted", context: null }), handlers: { "tab.need": request => {
+    needs++
+    if (!("jobs" in request)) return { kind: "failed" }
+    if (!here()) { injections++; offerJobs(document, { site: "www", build, create: createLiveWwwJobs }) }
+    return { kind: here() ? "ok" : "failed" }
+  } } })
   const push = createRpcCaller<TabMessages<TabView>>(background, { build, deadline, contract: tabMessages(isTabView) })
   const core = startSiteCore({
     site: "www", build, document, channel, i18n: englishI18n(), vocabulary: vocabularyFor(wwwRoutes), deadline,
@@ -60,13 +71,13 @@ async function startTab(view: TabView) {
   })
   pageGlobal().core = core
   const stack = hitStack()
-  cleanups.push(() => page.dispose(), () => core.dispose(), () => hello.dispose(), () => push.dispose(), () => stack.restore())
+  cleanups.push(() => page.dispose(), () => core.dispose(), () => hello.dispose(), () => actions.dispose(), () => push.dispose(), () => stack.restore())
   await core.page.hello
   await settle()
   const asks = createRpcCaller<TabAskMessages>(background, { build, deadline, contract: tabAskContract })
   cleanups.push(() => asks.dispose())
   return {
-    core, stack, asks,
+    core, stack, asks, needs: () => needs, injections: () => injections, here,
     async publish(next: TabView) { current = next; await push.call("bg.view", next); await settle() },
     button() {
       const found = document.querySelector("pp-overlay")?.shadowRoot?.querySelector("[data-slot=queue] button")
@@ -111,6 +122,16 @@ test("the background's bg.query reads auto-add's view of the playing video from 
     playlists: [{ pl: "PL_music" as never, pct: 50, outcome: "waiting" as const }], channel: null }
   tab.core.thisVideo.publish(view)
   expect(await tab.asks.call("bg.query", { name: "auto-add" })).toEqual({ kind: "answered", result: view })
+})
+
+test("the core's first job asks the background for the jobs file once, and later jobs reuse it", async () => {
+  const tab = await startTab(queueView())
+  const videoId = "aaaaaaaaaaa" as never
+  expect(await tab.core.page.run({ job: { kind: "videoInfo" } })).toMatchObject({ ok: false })
+  expect([tab.needs(), tab.here()]).toEqual([0, false])
+  await tab.core.page.run({ job: { kind: "channelOf", videoId } })
+  await tab.core.page.run({ job: { kind: "channelOf", videoId } })
+  expect([tab.needs(), tab.injections(), tab.here()]).toEqual([1, 1, true])
 })
 
 test("a feature file whose feature isn't built records itself and draws nothing", async () => {

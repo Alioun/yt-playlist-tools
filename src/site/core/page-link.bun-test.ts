@@ -498,3 +498,47 @@ test("an account trip also disarms an already pending pinned caller", async () =
   first.resolve({ ok: true, data: [], route })
   expect(await beforeTrip).toEqual({ ok: false, reason: "accountChanged" })
 })
+
+function needingPage(answerHello = true) {
+  const channel = createDirectPageChannel()
+  const loaded: unknown[] = []
+  const stop = channel.listen("req", detail => {
+    const parsed = parseJsonText(detail)
+    if (!parsed.ok) return
+    const req = object(parsed.value)
+    if (req.kind === "hello" && answerHello) channel.send("res", JSON.stringify({ ...header, kind: "hello", site: "www", snapshot: snapshot(null) }))
+    if (req.kind === "loaded") loaded.push(req.ok)
+  })
+  return { channel, loaded, stop, need: () => channel.send("res", JSON.stringify({ ...header, kind: "need" })) }
+}
+
+test("the page half's need asks the background for the jobs file, and its answer goes back as loaded", async () => {
+  const page = needingPage(), background = deferred<boolean>()
+  let asked = 0
+  const link = createPageLink({ build, site: "www", vocabulary, clock: new ManualClock(), loadJobs: () => { asked++; return background.promise } }, page.channel)
+  owned.push(() => { link.dispose(); page.stop() })
+  await link.hello
+  page.need()
+  expect([asked, page.loaded]).toEqual([1, []])
+  background.resolve(true)
+  await flush()
+  expect(page.loaded).toEqual([true])
+})
+
+test("a need before hello, from another build, or with no background to ask loads nothing", async () => {
+  const early = needingPage(false)
+  let asked = 0
+  const link = createPageLink({ build, site: "www", vocabulary, clock: new ManualClock(), loadJobs: async () => { asked++; return true } }, early.channel)
+  owned.push(() => { link.dispose(); early.stop() })
+  early.need()
+  early.channel.send("res", JSON.stringify({ ...header, build: nextBuild, kind: "need" }))
+  await flush()
+  expect([asked, early.loaded]).toEqual([0, [false]])
+  const page = needingPage()
+  const bare = createPageLink({ build, site: "www", vocabulary, clock: new ManualClock() }, page.channel)
+  owned.push(() => { bare.dispose(); page.stop() })
+  await bare.hello
+  page.need()
+  await flush()
+  expect(page.loaded).toEqual([false])
+})

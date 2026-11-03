@@ -173,12 +173,12 @@ function browser(gather: Record<string, unknown>) {
       permissions: { async contains(request: { origins?: string[]; permissions?: string[] }) {
         return (request.permissions ?? []).length === 0 && (request.origins ?? []).every(origin => granted.includes(origin))
       }, onAdded: event(), onRemoved: event() },
-      // The YouTube tab already runs our page half, core and kit, so the Registrar's probe finds nothing to inject.
+      // The YouTube tab already runs our page half, core and kit, without the jobs file, so the Registrar's probe finds nothing to inject.
       scripting: { async getRegisteredContentScripts() { return [] }, async registerContentScripts() {}, async updateContentScripts() {},
         async unregisterContentScripts() {},
         async executeScript(injection: { target: { tabId: number }; world: "ISOLATED" | "MAIN" }) {
           if (!servingTabs.has(injection.target.tabId)) return []
-          return injection.world === "MAIN" ? [{ frameId: 0, result: true }]
+          return injection.world === "MAIN" ? [{ frameId: 0, result: [true, false] }]
             : [{ frameId: 0, documentId: "youtube-document", result: { documentId: "youtube-document", loaded: [["core-www", build], ["kit-www", build]] } }]
         } },
       commands: { onCommand: event() },

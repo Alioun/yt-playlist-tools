@@ -156,7 +156,7 @@ export function createRegistrar(ports: RegistrarPorts): Registrar {
       if (loaded(inspected, file, ports)) continue
       await authority(snapshot, target.site)
       await tab(snapshot, target.id, target.site, script)
-      const injection: Injection = { tabId: target.id, site: target.site, build: ports.build, documentId, world: file === `${siteBundles[target.site].page}.js` ? "MAIN" : "ISOLATED", file }
+      const injection: Injection = { tabId: target.id, site: target.site, build: ports.build, documentId, world: file.startsWith("page-") ? "MAIN" : "ISOLATED", file }
       let call: "resolved" | "rejected" = "resolved"
       try { await ports.scripting.executeScript(injection) } catch { call = "rejected" }
       let after: ProbeObservation = { kind: "unavailable", reason: "not-observed" }
@@ -239,15 +239,17 @@ export function createRegistrar(ports: RegistrarPorts): Registrar {
       const state = await snapshot(epoch)
       if (!state.owner.consent) refuse("consent")
       if (!state.owner.schemaOk) refuse("schema")
-      if (!what.core && !what.kit && !what.popovers) return
+      if (!Object.values(what).includes(true)) return
       const target = await tab(state, tabId)
       const names = siteBundles[target.site]
       const files = [
         ...(what.core || what.kit ? [`${names.page}.js`, `${names.core}.js`] : []),
         ...(what.kit ? [`${names.kit}.js`] : []),
+        ...(what.jobs ? [`${names.jobs}.js`] : []),
         ...(what.popovers ? [`${popoversBundle}.js`] : [])
       ]
-      const prerequisites = what.popovers ? [`${names.page}.js`, `${names.core}.js`, `${names.kit}.js`].filter(file => !files.includes(file)) : []
+      const needed = what.popovers ? [names.page, names.core, names.kit] : what.jobs ? [names.page, names.core] : []
+      const prerequisites = needed.map(name => `${name}.js`).filter(file => !files.includes(file))
       await inject(state, target, files, undefined, prerequisites)
     })
   }

@@ -4,12 +4,14 @@
       "www": {
         "match": "https://www.youtube.com/*",
         "page": "page-www",
+        "jobs": "page-jobs-www",
         "core": "core-www",
         "kit": "kit-www"
       },
       "music": {
         "match": "https://music.youtube.com/*",
         "page": "page-music",
+        "jobs": "page-jobs-music",
         "core": "core-music",
         "kit": "kit-music"
       }
@@ -23,6 +25,9 @@
     "page-www": {
       "kind": "page"
     },
+    "page-jobs-www": {
+      "kind": "page"
+    },
     "core-www": {
       "kind": "page"
     },
@@ -31,6 +36,9 @@
       "site": "www"
     },
     "page-music": {
+      "kind": "page"
+    },
+    "page-jobs-music": {
       "kind": "page"
     },
     "core-music": {

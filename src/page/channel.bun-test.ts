@@ -83,7 +83,7 @@ function harness(options: {
     answers.push(parsed.ok ? parsed.value : { unparsed: detail })
   })
   const endpoint = servePage(gateway.ops, {
-    site, build, vocabulary, snapshot: options.snapshot ?? (() => snapshot),
+    site, build, vocabulary: () => vocabulary, snapshot: options.snapshot ?? (() => snapshot),
     signals: onSignal => {
       sinks.add(onSignal)
       return () => { sinks.delete(onSignal); signalStops++ }

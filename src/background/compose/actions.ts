@@ -236,8 +236,8 @@ export function composeActions(deps: {
         return { kind: answer.kind === "result" && "ok" in answer.result ? "done" : "refused" }
       } catch { return { kind: "refused" } }
     },
-    async "tab.need"(_request, context) {
-      try { await registrar.ensure(context.origin.tabId, { popovers: true }); return { kind: "ok" } } catch { return { kind: "failed" } }
+    async "tab.need"(request, context) {
+      try { await registrar.ensure(context.origin.tabId, request); return { kind: "ok" } } catch { return { kind: "failed" } }
     },
     async "tab.playlists"({ acct, request }, context): Promise<TabPlaylists> {
       if (acct === null || !await pinned(context, acct)) return { kind: "noTab" }

@@ -93,7 +93,7 @@ export async function musicFixture(dom = false, overrides: Partial<Record<PageRe
     },
     listen: (wire, listener) => inner.listen(wire, listener)
   }
-  const endpoint = servePage(gateway, { site: "music", build, vocabulary: gateway.vocabulary,
+  const endpoint = servePage(gateway, { site: "music", build, vocabulary: () => gateway.vocabulary,
     snapshot: () => ({ signedIn: false, datasyncId: null, pageType, startedHidden: false, navType: "navigate" }),
     signals: listener => gateway.onSignal(listener) }, channel)
   const clock = new ManualClock()

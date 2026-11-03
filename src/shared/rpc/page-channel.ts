@@ -12,6 +12,10 @@ export const pageEventTypes = { req: "ppt:req", res: "ppt:res", retire: "ppt:ret
  * build ID, and the page half of that build cancels it. Nothing is written into the page.
  */
 export const pagePresenceEvent = "ppt:here"
+/** The same check for the jobs file: the page half cancels it once it has taken that build's jobs file (G42). */
+export const pageJobsPresenceEvent = "ppt:jobs"
+/** The jobs file offers itself to the page half of its build with this event, in the page's own world. */
+export const pageJobsEvent = "ppt:jobs-offer"
 
 export function createDomPageChannel(doc: Document): PageChannel {
   return {

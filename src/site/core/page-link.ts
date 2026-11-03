@@ -7,7 +7,7 @@ import type {
   JobResult, MessageHeader, PageRequestId, PageWatchId, ProbeReport, Site, Stream, StreamData
 } from "../../shared/contracts"
 import {
-  isPageHelloAnswer, isPageJobDataFor, isPageProbeAnswerFor, isPageRetireMessage,
+  isPageHelloAnswer, isPageJobDataFor, isPageNeedEvent, isPageProbeAnswerFor, isPageRetireMessage,
   isPageRunAnswerFor, isPageSignalEvent, isPageStreamEventFor
 } from "../../shared/contracts/page"
 import type { PageAccountData, PageHelloSnapshot, PageRequestMessage } from "../../shared/contracts/page"
@@ -31,6 +31,8 @@ export type PageLinkOptions = {
   vocabulary: DiagnosticVocabulary
   clock?: PageLinkClock
   digest?: (bytes: Uint8Array<ArrayBuffer>) => Promise<ArrayBuffer>
+  /** Asks the background to load this tab's jobs file, for the page half's `need` (G42). Absent, every need is refused. */
+  loadJobs?: () => Promise<boolean>
 }
 export interface PageLink {
   readonly state: PageLinkState
@@ -270,6 +272,11 @@ export function createPageLink(options: PageLinkOptions, channel: PageChannel): 
     try { send({ ...header, kind: "watch", id, stream }) } catch { stop() }
     return stop
   }
+  // The page half asks once per load; the Registrar's ensure is serialized and loads a file a tab already has only once.
+  async function loadJobs(): Promise<void> {
+    const ok = state.kind === "ready" && await options.loadJobs?.().catch(() => false) === true
+    try { send({ ...header, kind: "loaded", ok }) } catch { /* The page half's own deadline fails its waiting jobs. */ }
+  }
   function dispose(): void {
     if (disposed) return
     disposed = true
@@ -296,6 +303,7 @@ export function createPageLink(options: PageLinkOptions, channel: PageChannel): 
       if (isPageWatchId(value.id)) watches.get(value.id)?.receive(value)
     }
     if (!disposed && isPageSignalEvent(value, { build, site, vocabulary })) notify(signalListeners, value.signal)
+    if (!disposed && isPageNeedEvent(value, build)) void loadJobs()
   }))
   owned.push(channel.listen("retire", detail => {
     const parsed = parseJsonText(detail)

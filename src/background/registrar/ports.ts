@@ -70,7 +70,7 @@ export type AccessPort = {
 }
 export type StartupPort = { subscribe(started: () => void): () => void }
 
-export type EnsureWhat = { readonly core?: boolean; readonly kit?: boolean; readonly popovers?: boolean }
+export type EnsureWhat = { readonly core?: boolean; readonly kit?: boolean; readonly popovers?: boolean; readonly jobs?: boolean }
 
 export type Refusal = "disposed" | "superseded" | "owner-not-ready" | "consent" | "schema" | "access" | "tab-unavailable" | "document-changed" | "prerequisite-missing"
 export type FailureFact =

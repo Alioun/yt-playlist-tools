@@ -121,7 +121,7 @@ export function harness(options: {
     }
   }
   const endpoint = servePage(gateway, {
-    site: options.link?.site ?? "www", build: options.link?.build ?? build, vocabulary,
+    site: options.link?.site ?? "www", build: options.link?.build ?? build, vocabulary: () => vocabulary,
     snapshot: options.pageSnapshot ?? (() => snapshot()),
     signals(listener) { signals.add(listener); return () => { signals.delete(listener); signalStops++ } }
   }, tracked.channel)

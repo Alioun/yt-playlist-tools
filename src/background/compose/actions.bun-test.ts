@@ -260,13 +260,14 @@ test("an untick removes the entry and offers Undo, and a pick in choose mode sto
   expect(setup.kind === "value" && setup.view.kind === "live" && setup.view.setup.quickSave).toBe(beta)
 })
 
-test("the picker's cached list never reaches YouTube, a refresh does, and popovers load through the Registrar", async () => {
+test("the picker's cached list never reaches YouTube, a refresh does, and popovers and the jobs file load through the Registrar", async () => {
   const { page, ensured, site } = world()
   expect(await page.playlists(false)).toEqual({ kind: "cached", listing: null })
   expect(await page.playlists(true)).toEqual({ kind: "listed", listing: { rows: [{ id: alpha, title: "Alpha" }], at: 5 } })
   expect(site.jobs).toEqual([])
   expect(await page.need()).toBe(true)
-  expect(ensured).toEqual([{ tabId: 9, what: { popovers: true } }])
+  expect(await page.loadJobs()).toBe(true)
+  expect(ensured).toEqual([{ tabId: 9, what: { popovers: true } }, { tabId: 9, what: { jobs: true } }])
 })
 
 const allowed = "UCAAAAAAAAAAAAAAAAAAAAAA", elsewhere = `UC${"B".repeat(22)}`

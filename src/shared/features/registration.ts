@@ -20,10 +20,14 @@ export type RegistrationFeature = {
 export type PageBundle = { kind: "feature" | "kit"; site: Site } | { kind: "page" | "unrelated" }
 export type EntryOwnership = Readonly<Record<string, PageBundle>>
 
+/**
+ * Files named `page-…` run in the page's own world (MAIN): the page half and its jobs file. `jobs` is never registered;
+ * the Registrar injects it on a page's first job (G42). Every other file runs in the isolated world.
+ */
 export const siteBundles = {
-  www: { match: "https://www.youtube.com/*", page: "page-www", core: "core-www", kit: "kit-www" },
-  music: { match: "https://music.youtube.com/*", page: "page-music", core: "core-music", kit: "kit-music" }
-} as const satisfies Record<Site, { match: string; page: string; core: string; kit: string }>
+  www: { match: "https://www.youtube.com/*", page: "page-www", jobs: "page-jobs-www", core: "core-www", kit: "kit-www" },
+  music: { match: "https://music.youtube.com/*", page: "page-music", jobs: "page-jobs-music", core: "core-music", kit: "kit-music" }
+} as const satisfies Record<Site, { match: string; page: string; jobs: string; core: string; kit: string }>
 export const popoversBundle = "popovers"
 const sites: readonly Site[] = ["www", "music"]
 
@@ -42,6 +46,7 @@ export function pageLinkEntries(registry: readonly RegistrationFeature[]): Entry
   for (const site of sites) {
     const names = siteBundles[site]
     entries[names.page] = { kind: "page" }
+    entries[names.jobs] = { kind: "page" }
     entries[names.core] = { kind: "page" }
     entries[names.kit] = { kind: "kit", site }
   }

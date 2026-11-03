@@ -1,4 +1,4 @@
-import type { SiteGateway } from "../gateway"
+import type { SiteGateway } from "../jobs-gateway"
 import { wwwRoutes } from "../routes/www"
 import { createWwwQueue } from "./www-queue"
 

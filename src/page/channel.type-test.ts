@@ -2,7 +2,7 @@ import type { BreakageSignal, JobOf, JobResult, ProbeReport, StreamData } from "
 import type { PageAccountData, PageHelloSnapshot, PageJobResult } from "../shared/contracts/page"
 import type { PageChannel } from "../shared/rpc/page-channel"
 import { servePage } from "./channel"
-import type { PageEndpoint, PageGatewayOperations, PageServeOptions } from "./channel"
+import type { PageEndpoint, PageGatewayOperations, PageServeEndpoint, PageServeOptions } from "./channel"
 // @ts-expect-error The dispatcher belongs to the page world, not the safe contracts root.
 import { servePage as rootServePage } from "../shared/contracts"
 
@@ -11,7 +11,7 @@ type Assert<T extends true> = T
 type AccountRun = Awaited<ReturnType<PageGatewayOperations["run"]>>
 export type PageServeRelationships = [
   Assert<Equal<Parameters<typeof servePage>, [gateway: PageGatewayOperations, options: PageServeOptions, channel: PageChannel]>>,
-  Assert<Equal<ReturnType<typeof servePage>, PageEndpoint>>,
+  Assert<Equal<ReturnType<typeof servePage>, PageServeEndpoint>>,
   Assert<Equal<Extract<PageJobResult<JobOf<"account">>, { ok: true }>["data"], PageAccountData>>,
   Assert<Equal<AccountRun, PageJobResult>>,
   Assert<Equal<ReturnType<PageServeOptions["snapshot"]>, PageHelloSnapshot | undefined>>,

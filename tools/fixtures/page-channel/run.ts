@@ -41,7 +41,7 @@ export async function runPageChannelFixture(): Promise<FixtureRecord[]> {
     if (parsed.ok) answers.push(parsed.value)
   })
   const endpoint = servePage(gateway, {
-    site: "www", build, vocabulary: { routes: [route], watchIds: [dependency], schemaKeys: [] },
+    site: "www", build, vocabulary: () => ({ routes: [route], watchIds: [dependency], schemaKeys: [] }),
     snapshot: () => ({ signedIn: false, datasyncId: null, pageType: checked(isPageType, "HOME"), startedHidden: false, navType: "navigate" }),
     signals: () => () => {}
   }, channel)

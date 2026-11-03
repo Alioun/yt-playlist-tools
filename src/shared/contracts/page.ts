@@ -37,9 +37,9 @@ export function isPageJobResultFor<J extends Job>(job: J, value: unknown): value
 export type {
   PageNavigationType, PageHelloSnapshot, PageHelloAnswer, PageRequestPayloadByKind,
   PageRequestMessage, PageRetireMessage, PageCoreMessage, PageRunAnswer, PageStreamEvent,
-  PageProbeAnswer, PageSignalEvent, PageAnswerByKind, PageGatewayMessage
+  PageProbeAnswer, PageSignalEvent, PageNeedEvent, PageAnswerByKind, PageGatewayMessage
 } from "./page-messages"
 export {
   isPageRequestMessage, isPageHelloAnswer, isPageRunAnswerFor, isPageStreamEventFor,
-  isPageProbeAnswerFor, isPageSignalEvent, isPageRetireMessage
+  isPageProbeAnswerFor, isPageSignalEvent, isPageNeedEvent, isPageRetireMessage
 } from "./page-messages"

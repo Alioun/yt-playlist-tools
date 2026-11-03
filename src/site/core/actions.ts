@@ -21,6 +21,8 @@ export type TabActions = {
   release(handle: UndoHandle): void
   /** Asks the background to inject `popovers.js` into this tab (ARC-MAN-16). */
   need(): Promise<boolean>
+  /** Asks the background to inject this page's jobs file into this tab, for the page half's first job (G42). */
+  loadJobs(): Promise<boolean>
   playlists(refresh: boolean): Promise<TabPlaylists>
   create(playlist: { readonly title: string; readonly privacy: Privacy; readonly video: VideoId | null }): Promise<TabCreated>
   destination(change: TabDestinationChange): Promise<DestinationAnswer>
@@ -69,16 +71,18 @@ export function createTabActions(options: {
     const answer = await rpc.call(kind, payload)
     return answer.kind === "answered" ? answer.result : fallback
   }
+  async function need(what: Messages["tab.need"]["payload"]): Promise<boolean> {
+    const answer = await rpc.call("tab.need", what)
+    return answer.kind === "answered" && answer.result.kind === "ok"
+  }
   return {
     add: request => call("tab.add", request, unanswered),
     remove: request => call("tab.remove", request, unanswered),
     undo: handle => call("tab.undo", handle, unanswered),
     gatherUndo: id => call("tab.gatherUndo", { id }, unanswered),
     release(handle) { void rpc.call("tab.release", { handle }) },
-    async need() {
-      const answer = await rpc.call("tab.need", { popovers: true })
-      return answer.kind === "answered" && answer.result.kind === "ok"
-    },
+    need: () => need({ popovers: true }),
+    loadJobs: () => need({ jobs: true }),
     playlists: refresh => call("tab.playlists", { refresh }, { kind: "failed" } as const),
     create: playlist => call("tab.create", playlist, { kind: "failed", reason: "failed" } as const),
     destination: change => call("tab.destination", change, { kind: "refused", reason: "unavailable" } as const),

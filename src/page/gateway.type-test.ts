@@ -3,10 +3,10 @@ import type { PageAccountData } from "../shared/contracts/page"
 import { isQueueInsertEndpoint } from "../shared/contracts"
 import { createGateway } from "./gateway"
 import { musicGateway } from "./gateway/music"
-import type { ReadGateway } from "./gateway"
+import type { Gateway } from "./gateway"
 import type { PageReadPort } from "./read-port"
 
-declare const gateway: ReadGateway
+declare const gateway: Gateway
 declare const port: PageReadPort
 declare const target: Element
 declare const like: LikeEndpoint

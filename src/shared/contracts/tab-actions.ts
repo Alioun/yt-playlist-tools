@@ -69,7 +69,8 @@ export type TabActionMessages = {
   "tab.remove": { payload: Pinned<TabRemoveRequest>; result: TabRemoveReport }
   "tab.undo": { payload: Pinned<UndoHandle>; result: TabUndoReport }
   "tab.release": { payload: { readonly handle: UndoHandle }; result: null }
-  "tab.need": { payload: { readonly popovers: true }; result: { readonly kind: "ok" | "failed" } }
+  /** Loads the picker, or this page's jobs file on its first job (G42), into the asking tab. */
+  "tab.need": { payload: { readonly popovers: true } | { readonly jobs: true }; result: { readonly kind: "ok" | "failed" } }
   "tab.playlists": { payload: Pinned<{ readonly refresh: boolean }>; result: TabPlaylists }
   "tab.create": { payload: Pinned<{ readonly title: string; readonly privacy: Privacy; readonly video: VideoId | null }>; result: TabCreated }
   "tab.destination": { payload: Pinned<TabDestinationChange>; result: DestinationAnswer }
@@ -168,7 +169,7 @@ export const tabActionContract: RpcContract<TabActionMessages> = {
   "tab.remove": { payload: (v): v is TabActionMessages["tab.remove"]["payload"] => pinned(isTabRemoveRequest)(v), result: isTabRemoveReport, timeoutMs: 60_000 },
   "tab.undo": { payload: (v): v is TabActionMessages["tab.undo"]["payload"] => pinned(isUndoHandle)(v), result: isTabUndoReport, timeoutMs: 60_000 },
   "tab.release": { payload: (v): v is TabActionMessages["tab.release"]["payload"] => objectShape(v, { handle: isUndoHandle }), result: (v): v is null => v === null, timeoutMs: 2_000 },
-  "tab.need": { payload: (v): v is TabActionMessages["tab.need"]["payload"] => objectShape(v, { popovers: v => v === true }),
+  "tab.need": { payload: (v): v is TabActionMessages["tab.need"]["payload"] => objectShape(v, { popovers: oneOf(true) }) || objectShape(v, { jobs: oneOf(true) }),
     result: (v): v is TabActionMessages["tab.need"]["result"] => objectShape(v, { kind: oneOf("ok", "failed") }), timeoutMs: 5_000 },
   "tab.playlists": { payload: (v): v is TabActionMessages["tab.playlists"]["payload"] => pinned(r => objectShape(r, { refresh: bool }))(v), result: isTabPlaylists, timeoutMs: 45_000 },
   "tab.create": { payload: (v): v is TabActionMessages["tab.create"]["payload"] => pinned(r => objectShape(r, { title, privacy: isPrivacy, video: nullable(isVideoId) }))(v),

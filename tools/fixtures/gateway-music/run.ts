@@ -25,7 +25,7 @@ export async function runGatewayMusicConsumer(dom: boolean): Promise<string> {
     }
   }
   const snapshot: PageHelloSnapshot = { signedIn: true, datasyncId: syntheticIdentity, pageType, startedHidden: false, navType: "navigate" }
-  const endpoint = servePage(w.gateway, { site: "music", build, vocabulary: w.gateway.vocabulary, snapshot: () => snapshot, signals: sink => w.gateway.onSignal(sink) }, channel)
+  const endpoint = servePage(w.gateway, { site: "music", build, vocabulary: () => w.gateway.vocabulary, snapshot: () => snapshot, signals: sink => w.gateway.onSignal(sink) }, channel)
   const linkClock = new Clock(), link = createPageLink({ site: "music", build, vocabulary: w.gateway.vocabulary, clock: linkClock }, channel)
   let acct: unknown
   const step = async (name: string, job: unknown, account = false) => {

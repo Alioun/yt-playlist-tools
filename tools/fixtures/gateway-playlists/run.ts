@@ -46,7 +46,7 @@ export async function runGatewayPlaylistConsumer(dom: boolean): Promise<string> 
       }
     }
     const snapshot: PageHelloSnapshot = { signedIn: true, datasyncId: syntheticIdentity, pageType, startedHidden: false, navType: "navigate" }
-    const endpoint = servePage(p.gateway, { site, build, vocabulary: p.gateway.vocabulary, snapshot: () => snapshot, signals: sink => p.gateway.onSignal(sink) }, channel)
+    const endpoint = servePage(p.gateway, { site, build, vocabulary: () => p.gateway.vocabulary, snapshot: () => snapshot, signals: sink => p.gateway.onSignal(sink) }, channel)
     const linkClock = new Clock(), link = createPageLink({ site, build, vocabulary: p.gateway.vocabulary, clock: linkClock }, channel)
     try {
       records.push({ site, step: "hello", answer: await link.hello })

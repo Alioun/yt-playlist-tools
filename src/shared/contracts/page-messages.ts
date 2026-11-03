@@ -33,6 +33,8 @@ export type PageRequestPayloadByKind = {
   watch: { id: PageWatchId; stream: Stream }
   unwatch: { id: PageWatchId }
   probe: { id: PageRequestId }
+  /** The core's answer to `need`: whether the background loaded the jobs file and confirmed it (G42). */
+  loaded: { ok: boolean }
 }
 export type PageRequestMessage = {
   [K in keyof PageRequestPayloadByKind]: MessageHeader & { kind: K } & PageRequestPayloadByKind[K]
@@ -47,12 +49,15 @@ export type PageStreamEvent<S extends Stream = Stream> = {
 }[S]
 export type PageProbeAnswer = MessageHeader & { kind: "probe"; id: PageRequestId; report: ProbeReport }
 export type PageSignalEvent = MessageHeader & { kind: "signal"; signal: BreakageSignal }
+/** The page half asks the core for its jobs file on its first job (G42). */
+export type PageNeedEvent = MessageHeader & { kind: "need" }
 export type PageAnswerByKind = {
   hello: PageHelloAnswer
   run: PageRunAnswer
   stream: PageStreamEvent
   probe: PageProbeAnswer
   signal: PageSignalEvent
+  need: PageNeedEvent
 }
 export type PageGatewayMessage = PageAnswerByKind[keyof PageAnswerByKind]
 
@@ -75,6 +80,7 @@ export function isPageRequestMessage(value: unknown, expectedBuild: BuildId): va
       case "watch": return envelope(value, expectedBuild, "watch", { id: isPageWatchId, stream: isStream })
       case "unwatch": return envelope(value, expectedBuild, "unwatch", { id: isPageWatchId })
       case "probe": return envelope(value, expectedBuild, "probe", { id: isPageRequestId })
+      case "loaded": return envelope(value, expectedBuild, "loaded", { ok: v => typeof v === "boolean" })
       default: return false
     }
   } catch { return false }
@@ -119,6 +125,9 @@ export function isPageSignalEvent(
   return envelope(value, expected.build, "signal", {
     signal: v => isBreakageSignal(v, expected.vocabulary) && v.site === expected.site
   })
+}
+export function isPageNeedEvent(value: unknown, expectedBuild: BuildId): value is PageNeedEvent {
+  return envelope(value, expectedBuild, "need", {})
 }
 export function isPageRetireMessage(value: unknown): value is PageRetireMessage {
   return objectShape(value, { v: v => v === CONTRACT_VERSION, build: isBuildId, kind: v => v === "retire" })

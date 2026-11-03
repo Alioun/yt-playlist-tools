@@ -290,6 +290,51 @@ describe("Registrar public behavior", () => {
     registrar.dispose()
   })
 
+  test("a page's first job loads its site's jobs file into the page's world once, and only behind its page half and core", async () => {
+    const fake = scriptedRegistrar({ settings: settings("autoAdd", "musicActions") })
+    fake.open(tabFact(1))
+    fake.open(tabFact(2, { site: "music", url: "https://music.youtube.com/watch?v=fixture" }))
+    const registrar = await started(fake)
+    const eager = executed(fake)
+    expect(eager.some(([, , file]) => String(file).startsWith("page-jobs"))).toBe(false)
+    expect([...fake.scripts.values()].flatMap(script => script.js).some(file => file.startsWith("page-jobs"))).toBe(false)
+    await registrar.ensure(1, { jobs: true })
+    await registrar.ensure(1, { jobs: true })
+    await registrar.ensure(2, { jobs: true })
+    expect(executed(fake).slice(eager.length)).toEqual([[1, "MAIN", "page-jobs-www.js"], [2, "MAIN", "page-jobs-music.js"]])
+    fake.open(tabFact(3))
+    expect(await failure(registrar.ensure(3, { jobs: true }))).toEqual({ kind: "refused", reason: "prerequisite-missing" })
+    expect(executed(fake).length).toBe(eager.length + 2)
+    registrar.dispose()
+  })
+
+  test("after a worker restart a new Registrar finds the jobs file a tab has, and loads it again where the tab lost it", async () => {
+    const fake = scriptedRegistrar()
+    const halves = [{ file: "page-www.js", build: fixtureBuild }, { file: "core-www.js", build: fixtureBuild }]
+    fake.open(tabFact(1), halves)
+    fake.open(tabFact(2), [...halves, { file: "page-jobs-www.js", build: buildId("registrar-fixture-older") }])
+    const before = await started(fake)
+    await before.ensure(1, { jobs: true })
+    before.dispose()
+    const after = await started(fake)
+    await after.ensure(1, { jobs: true })
+    expect(executed(fake)).toEqual([[1, "MAIN", "page-jobs-www.js"]])
+    fake.open(tabFact(1), halves, "document-1-reloaded")
+    await after.ensure(1, { jobs: true })
+    await after.ensure(2, { jobs: true })
+    expect(executed(fake)).toEqual([[1, "MAIN", "page-jobs-www.js"], [1, "MAIN", "page-jobs-www.js"], [2, "MAIN", "page-jobs-www.js"]])
+    after.dispose()
+  })
+
+  test("once Clear all has disposed the Registrar, a page asking for its jobs file loads nothing", async () => {
+    const fake = scriptedRegistrar()
+    fake.open(tabFact(1), [{ file: "page-www.js", build: fixtureBuild }, { file: "core-www.js", build: fixtureBuild }])
+    const registrar = await started(fake)
+    registrar.dispose()
+    expect(await failure(registrar.ensure(1, { jobs: true }))).toEqual({ kind: "refused", reason: "disposed" })
+    expect(executed(fake)).toEqual([])
+  })
+
   test("repeated ensure leaves settings unchanged and loads popovers only on use", async () => {
     const fake = scriptedRegistrar()
     fake.open(tabFact(1))

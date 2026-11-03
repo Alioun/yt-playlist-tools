@@ -61,7 +61,7 @@ export async function runGatewayReadConsumer(dom: boolean): Promise<string> {
         return release
       }
     }
-    const endpoint = servePage(gateway, { site, build, vocabulary: readVocabulary, snapshot: () => snapshot, signals: sink => gateway.onSignal(sink) }, channel)
+    const endpoint = servePage(gateway, { site, build, vocabulary: () => readVocabulary, snapshot: () => snapshot, signals: sink => gateway.onSignal(sink) }, channel)
     const clock = new Clock(), link = createPageLink({ site, build, vocabulary: readVocabulary, clock }, channel)
     const target = document.createElement("article")
     document.body.append(target)

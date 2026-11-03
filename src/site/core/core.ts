@@ -83,8 +83,12 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
   const { site, build, document, i18n } = options
   const onError = ignore
   const root = new Scope({ document, onError })
-  const link_ = createPageLink({ site, build, vocabulary: options.vocabulary }, options.channel)
-  // The batch goes out on a later turn, by which time the background client below exists.
+  // An action reads the account PageLink trusts, made just below, only when it runs.
+  const actions = createTabActions({ transport: options.runtime.transport, build, deadline: options.deadline ?? timerDeadline, account() {
+    const trusted = page.state
+    return trusted.kind !== "ready" ? undefined : trusted.snapshot.signedIn ? trusted.snapshot.acct : null
+  } })
+  const link_ = createPageLink({ site, build, vocabulary: options.vocabulary, loadJobs: actions.loadJobs }, options.channel)
   const health = createSiteHealth({ site, page: link_, send: reports => actions.health(reports), now: () => Date.now(),
     online: () => typeof navigator === "undefined" || navigator.onLine !== false, later: (run, ms) => root.timeout(run, ms) })
   // Every job answered here, the background's included, can clear its earlier signals in this tab (HEALTH-12).
@@ -97,7 +101,6 @@ export function startSiteCore<S extends Site, Sender>(options: SiteCoreOptions<S
     build, site, page, runtime: options.runtime, deadline: options.deadline ?? timerDeadline,
     hiddenAtStart: document.visibilityState === "hidden", isView: isTabView
   })
-  const background = createBackgroundLink({ build, deadline: options.deadline ?? timerDeadline, transport: options.runtime.transport, link })
   const pointer = new Pointer({ document, onError })
   const report = { itemUnrecognised: ignore, pageSettled: health.settled }
   const items = options.items({ document, onError, pointer, page, report })

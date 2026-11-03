@@ -63,7 +63,7 @@ export async function runGatewayQueueConsumer(dom: boolean): Promise<string> {
     }
   }
   const snapshot: PageHelloSnapshot = { signedIn: false, datasyncId: null, pageType, startedHidden: false, navType: "navigate" }
-  const endpoint = servePage(w.gateway, { site: "www", build, vocabulary: w.gateway.vocabulary, snapshot: () => snapshot, signals: sink => w.gateway.onSignal(sink) }, channel)
+  const endpoint = servePage(w.gateway, { site: "www", build, vocabulary: () => w.gateway.vocabulary, snapshot: () => snapshot, signals: sink => w.gateway.onSignal(sink) }, channel)
   const linkClock = new Clock(), link = createPageLink({ site: "www", build, vocabulary: w.gateway.vocabulary, clock: linkClock }, channel)
   const element = document.createElement("ytd-rich-item-renderer")
   document.body.append(element)

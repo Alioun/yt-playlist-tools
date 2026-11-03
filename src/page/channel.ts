@@ -8,7 +8,7 @@ import {
   isPageSignalEvent, isPageStreamEventFor
 } from "../shared/contracts/page"
 import type {
-  PageGatewayMessage, PageHelloAnswer, PageHelloSnapshot, PageJobResult, PageProbeAnswer, PageRequestMessage,
+  PageGatewayMessage, PageHelloAnswer, PageHelloSnapshot, PageJobResult, PageNeedEvent, PageProbeAnswer, PageRequestMessage,
   PageRunAnswer, PageSignalEvent
 } from "../shared/contracts/page"
 import type { PageChannel } from "../shared/rpc/page-channel"
@@ -21,16 +21,21 @@ export interface PageGatewayOperations {
 export type PageServeOptions = {
   site: Site
   build: BuildId
-  vocabulary: DiagnosticVocabulary
+  /** Read on every probe answer and signal: the jobs file's routes join the read half's once it loads. */
+  vocabulary: () => DiagnosticVocabulary
   /** Undefined leaves `hello` unanswered, so PageLink times out instead of reading a wrong account. */
   snapshot: () => PageHelloSnapshot | undefined
   signals: (onSignal: (signal: BreakageSignal) => void) => () => void
+  /** The core's answer to `need` (G42). */
+  loaded?: (ok: boolean) => void
 }
 export type PageEndpoint = { readonly disposed: boolean; dispose(): void }
+/** `need` asks the core for this page's jobs file; the core answers with `loaded`. */
+export type PageServeEndpoint = PageEndpoint & { need(): void }
 
 type Watch = { id: PageWatchId; stream: Stream; released: boolean; stop?: () => void }
 
-export function servePage(gateway: PageGatewayOperations, options: PageServeOptions, channel: PageChannel): PageEndpoint {
+export function servePage(gateway: PageGatewayOperations, options: PageServeOptions, channel: PageChannel): PageServeEndpoint {
   const { site, build, vocabulary } = options
   const header: MessageHeader = { v: CONTRACT_VERSION, build }
   const watches = new Map<PageWatchId, Watch>()
@@ -75,7 +80,7 @@ export function servePage(gateway: PageGatewayOperations, options: PageServeOpti
   function answerProbe(id: PageRequestId): void {
     void gateway.probe().then(report => {
       const answer: PageProbeAnswer = { ...header, kind: "probe", id, report }
-      if (isPageProbeAnswerFor({ id, site, watchIds: vocabulary.watchIds }, answer, build)) send(answer)
+      if (isPageProbeAnswerFor({ id, site, watchIds: vocabulary().watchIds }, answer, build)) send(answer)
     }).catch(() => {})
   }
   function receive(message: PageRequestMessage, target: Element | null): void {
@@ -95,6 +100,7 @@ export function servePage(gateway: PageGatewayOperations, options: PageServeOpti
         return
       }
       case "probe": return answerProbe(message.id)
+      case "loaded": return options.loaded?.(message.ok)
     }
   }
   function dispose(): void {
@@ -119,7 +125,7 @@ export function servePage(gateway: PageGatewayOperations, options: PageServeOpti
   try {
     owned.push(options.signals(signal => {
       const event: PageSignalEvent = { ...header, kind: "signal", signal }
-      if (isPageSignalEvent(event, { build, site, vocabulary })) send(event)
+      if (isPageSignalEvent(event, { build, site, vocabulary: vocabulary() })) send(event)
     }))
   } catch (error) {
     dispose()
@@ -129,6 +135,10 @@ export function servePage(gateway: PageGatewayOperations, options: PageServeOpti
 
   return {
     get disposed() { return disposed },
-    dispose
+    dispose,
+    need() {
+      const event: PageNeedEvent = { ...header, kind: "need" }
+      send(event)
+    }
   }
 }

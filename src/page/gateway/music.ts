@@ -1,4 +1,4 @@
-import type { SiteGateway } from "../gateway"
+import type { SiteGateway } from "../jobs-gateway"
 import { musicRoutes } from "../routes/music"
 import { createMusicLibrary } from "./music-library"
 import { createMusicContext, createMusicQueue } from "./music-queue"

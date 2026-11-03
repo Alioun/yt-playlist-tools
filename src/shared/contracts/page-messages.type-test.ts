@@ -26,9 +26,9 @@ type Pairwise<Values extends unknown[]> = Values extends [infer Head, ...infer T
   ? Distinct<Head, Tail[number]> extends true ? Pairwise<Tail> : false : true
 type PageReads = { kind: "account" | "accountLabel" }
 export type PageRelationships = [
-  Assert<Equal<keyof PageRequestPayloadByKind, "hello" | "run" | "watch" | "unwatch" | "probe">>,
-  Assert<Equal<PageCoreMessage["kind"], "hello" | "run" | "watch" | "unwatch" | "probe" | "retire">>,
-  Assert<Equal<keyof PageAnswerByKind, "hello" | "run" | "stream" | "probe" | "signal">>,
+  Assert<Equal<keyof PageRequestPayloadByKind, "hello" | "run" | "watch" | "unwatch" | "probe" | "loaded">>,
+  Assert<Equal<PageCoreMessage["kind"], "hello" | "run" | "watch" | "unwatch" | "probe" | "loaded" | "retire">>,
+  Assert<Equal<keyof PageAnswerByKind, "hello" | "run" | "stream" | "probe" | "signal" | "need">>,
   Assert<Equal<PageGatewayMessage["kind"], keyof PageAnswerByKind>>,
   Assert<Equal<keyof JobInputById, JobId>>,
   Assert<Equal<keyof JobDataById, JobId>>,

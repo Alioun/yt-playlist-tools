@@ -147,6 +147,11 @@ describe("production feature registry", () => {
     expect(fake.listenerCounts).toEqual([0, 0, 0])
   })
 
+  test("only the page halves and their jobs files are named page-…, the files the Registrar injects into the page's world", () => {
+    expect(Object.keys(pageLinkEntries(features)).filter(name => name.startsWith("page-")).sort())
+      .toEqual(["page-jobs-music", "page-jobs-www", "page-music", "page-www"])
+  })
+
   test("deterministic consumer emits the complete fixed registry and planner record", () => {
     expect<unknown>(registryRecord()).toEqual(expected)
     expect(registryRecord()).toEqual(registryRecord())
