@@ -18,7 +18,10 @@
   // A confirmed save offers Undo in its line, in the same tab as the same account (YM-POP-3).
   let undo = $state.raw<{ readonly tabId: number; readonly acct: AccountKey; readonly handle: UndoHandle } | null>(null)
   void backend.call("ui.playingNow", {}).then(answer => { playing = answer.kind === "answered" ? answer.result : { kind: "unavailable" } })
-  const entry = $derived(playing?.kind === "song" ? pageState.ready?.setups.find(row => row.acct === playing.acct) : undefined)
+  const entry = $derived.by(() => {
+    const now = playing
+    return now?.kind === "song" ? pageState.ready?.setups.find(row => row.acct === now.acct) : undefined
+  })
   const target = $derived(entry && isPlaylistId(entry.setup.musicSave) ? entry.setup.musicSave : null)
   const title = $derived(target ? pageState.title(target, playing?.kind === "playing" ? playing.acct : null) ?? i18n.message("picker_titleUnavailable") : null)
   async function save() {

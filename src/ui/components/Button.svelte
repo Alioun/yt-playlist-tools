@@ -25,6 +25,8 @@
     children: Snippet
     "aria-label"?: string
     "aria-describedby"?: string
+    "aria-pressed"?: boolean
+    title?: string
   } = $props()
 
   function click(event: MouseEvent) {

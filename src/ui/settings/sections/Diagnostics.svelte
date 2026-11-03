@@ -29,11 +29,11 @@
     return { feature: row.id as FeatureId, site, label: held ? i18n.message("diag_held") : status?.state === "not-working" ? i18n.message("diag_notWorking")
       : status?.state === "partly-working" ? i18n.message("diag_partly") : i18n.message("diag_working"), broken: status !== undefined && status.state !== "working" }
   }) : [])
+  let evidence = $state<Extract<UiDiagnostics, { kind: "diagnostics" }> | null>(null)
   const report = $derived(pageState.ready ? diagnosticsReport({ view: pageState.ready, version: pageState.page.version, beta: pageState.page.beta,
     browser: browserLabel(navigator.userAgent, platform.browser), os: platform.os, access: pageState.access, health,
     signedIn: pageState.status?.kind === "status" && pageState.status.tab.kind === "site" ? pageState.status.tab.signedIn : null, evidence }) : "")
   // HEALTH-22, HEALTH-23: the session's signals feed the report, and Check now runs only when clicked.
-  let evidence = $state<Extract<UiDiagnostics, { kind: "diagnostics" }> | null>(null)
   let checking = $state(false), checkFailed = $state(false)
   async function diagnostics(check: boolean) {
     const answer = await backend.call("ui.diagnostics", { check })

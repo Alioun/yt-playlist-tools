@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { SimpleMessageKey } from "../../shared/i18n"
   import { untrack } from "svelte"
   import Button from "../components/Button.svelte"
   import Glyph from "../components/Glyph.svelte"
@@ -16,7 +17,7 @@
     entries = answer.kind === "answered" && answer.result.kind === "recent" ? answer.result.entries : "failed"
   })
   // What AddFlow writes: the feature that made the add, or its opener for a pick (DATA-52).
-  const sources: Readonly<Record<string, Parameters<typeof i18n.message>[0]>> = {
+  const sources: Readonly<Record<string, SimpleMessageKey>> = {
     "auto-add": "recent_source_autoAdd", "quick-save": "recent_source_quickSave", "browser-menu": "recent_source_browserMenu", gather: "recent_source_gather",
     "auto-gather": "recent_source_autoGather", picker: "recent_source_picker", "watch-button": "recent_source_watchButton", "music-actions": "recent_source_musicActions",
     "playing-now": "playing_title", popup: "recent_source_picker", shortcuts: "feature_name_2", "queue-button": "feature_name_4", "card-menu": "feature_name_6", "music-keys": "feature_name_10",

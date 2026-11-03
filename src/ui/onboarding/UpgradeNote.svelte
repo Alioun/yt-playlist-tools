@@ -27,6 +27,9 @@
   let shortcuts = $state(keyConverts)
   let picked = $state<PageFeatureId[]>([])
   let answer = $state<"immediate" | "half">(!found.pct.authorised ? "half" : "immediate")
+  const questions = found.pct.authorised
+    ? ([["immediate", "note_question_unset_start"], ["half", "note_question_unset_half"]] as const)
+    : ([["half", "note_question_neverAuthorised_half"], ["immediate", "note_question_start"]] as const)
   let phase = $state<"review" | "not-now" | "agreeing" | "done">("review")
   let failure = $state<string | null>(null)
   let attempt = 1
@@ -108,7 +111,7 @@
                 {#if found.pct.wasUnset}
                   <fieldset class="mt-1 flex flex-col gap-1">
                     <legend>{i18n.message(found.pct.authorised ? "note_question_unset" : "note_question_neverAuthorised")}</legend>
-                    {#each (found.pct.authorised ? [["immediate", "note_question_unset_start"], ["half", "note_question_unset_half"]] : [["half", "note_question_neverAuthorised_half"], ["immediate", "note_question_start"]]) as const as [value, label] (value)}
+                    {#each questions as [value, label] (value)}
                       <label class="flex items-center gap-2"><input type="radio" name="note-question" checked={answer === value} onchange={() => { answer = value }} />{i18n.message(label)}</label>
                     {/each}
                   </fieldset>

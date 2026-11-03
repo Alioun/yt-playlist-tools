@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { SimpleMessageKey } from "../../shared/i18n"
   import clsx from "clsx"
   import { onDestroy, untrack } from "svelte"
   import Button from "../components/Button.svelte"
@@ -40,7 +41,7 @@
     return watchStateText(state, { name, title: shown.video.title }, i18n).status
   })
   const reached = (row: PlaylistProgress) => row.outcome === "added" || row.outcome === "already-in" || (shown?.video.watched ?? 0) >= row.pct
-  const outcomes: Readonly<Record<Exclude<PlaylistProgress["outcome"], "waiting">, Parameters<typeof i18n.message>[0]>> = {
+  const outcomes: Readonly<Record<Exclude<PlaylistProgress["outcome"], "waiting">, SimpleMessageKey>> = {
     added: "thisVideo_outcome_added", "already-in": "thisVideo_outcome_alreadyIn", filtered: "thisVideo_outcome_filtered", failed: "thisVideo_outcome_failed", skipped: "thisVideo_outcome_skipped"
   }
   const outcome = (row: PlaylistProgress) => row.outcome === "waiting" ? i18n.message("thisVideo_outcome_waiting", { percent: i18n.number(row.pct) }) : i18n.message(outcomes[row.outcome])

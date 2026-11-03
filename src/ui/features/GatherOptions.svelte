@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { SimpleMessageKey } from "../../shared/i18n"
   import clsx from "clsx"
   import { untrack } from "svelte"
   import Switch from "../components/Switch.svelte"
@@ -13,7 +14,7 @@
   const gather = $derived(pageState.settings?.gather)
   const hasPlaylist = $derived(pageState.setup?.setup.gather != null)
   let failed = $state(false)
-  const orders: readonly [GatherOrder, Parameters<typeof i18n.message>[0]][] = [
+  const orders: readonly [GatherOrder, SimpleMessageKey][] = [
     ["newest", "gatherOpt_order_newest"], ["oldest", "gatherOpt_order_oldest"], ["english", "gatherOpt_order_english"],
     ["non-english", "gatherOpt_order_nonEnglish"], ["left-to-right", "gatherOpt_order_leftToRight"], ["right-to-left", "gatherOpt_order_rightToLeft"], ["shuffled", "gatherOpt_order_shuffled"]]
   async function save(change: SharedSettingChange) {

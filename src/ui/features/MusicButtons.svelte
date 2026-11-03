@@ -1,5 +1,6 @@
 <script lang="ts">
   import { untrack } from "svelte"
+  import type { SharedSettingChange } from "../../shared/contracts/shared-settings"
   import type { PageState } from "../lib/page-state.svelte"
   import { musicActionName, musicButtons, musicWhere } from "../lib/summaries"
 
@@ -10,7 +11,7 @@
   const buttons = $derived(pageState.settings?.musicActions.buttons)
   async function set(button: (typeof musicButtons)[number], value: boolean) {
     failed = false
-    const answer = await backend.change({ kind: "option", field: `musicActions.buttons.${button}`, value } as never)
+    const answer = await backend.change({ kind: "option", field: `musicActions.buttons.${button}`, value } as SharedSettingChange)
     failed = answer.kind !== "confirmed"
   }
 </script>
