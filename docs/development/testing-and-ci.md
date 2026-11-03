@@ -20,7 +20,7 @@ Bun ignores `[test] timeout` in `bunfig.toml`, so both runners pass `--timeout` 
 
 [`.oxlintrc.json`](../../.oxlintrc.json) makes floating promises and awaits of non-promises errors. Its other rules only warn for now.
 
-[`.oxfmtrc.json`](../../.oxfmtrc.json) holds the house style: no semicolons, double quotes, no trailing commas, lines up to 200 characters. It leaves Svelte files alone, because oxfmt's Svelte support is experimental, and it skips prose, fixture records and the files the G28 approval covers.
+[`.oxfmtrc.json`](../../.oxfmtrc.json) holds the house style: no semicolons, double quotes, no trailing commas, lines up to 200 characters. It leaves Svelte files alone, because oxfmt's Svelte support is experimental, and it skips prose, fixture records and the files the G28 approval covers. The one commit that reformatted the repo is listed in [`.git-blame-ignore-revs`](../../.git-blame-ignore-revs). Run `git config blame.ignoreRevsFile .git-blame-ignore-revs` once, and `git blame` skips it.
 
 ## CI
 

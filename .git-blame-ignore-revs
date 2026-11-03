@@ -1,0 +1,5 @@
+# Commits git blame skips. Turn it on once per clone:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: format the repository with oxfmt (G37)
+71b23e0a601a32bd46e54c4e93f5e4a1e0684fe9
