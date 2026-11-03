@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "semi": false,
+  "trailingComma": "none",
+  "arrowParens": "avoid",
+  "quoteProps": "preserve",
+  "printWidth": 200,
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "**/*.svelte",
+    "**/*.md",
+    ".scratch/",
+    ".audit/",
+    "docs/",
+    "site/",
+    "assets/",
+    ".output/",
+    ".wxt/",
+    "tools/fixtures/**/*.json",
+    ".github/",
+    "package.json",
+    "bun.lock",
+    "scripts/amo-reviewer-notes.ts",
+    "tests/integration/amo-reviewer-notes.test.ts",
+    "tests/integration/fixtures/"
+  ]
+}

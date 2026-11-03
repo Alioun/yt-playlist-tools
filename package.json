@@ -16,6 +16,8 @@
     "zip:beta": "wxt zip -b firefox --mode beta",
     "compile": "node node_modules/@typescript/native/bin/tsc --noEmit",
     "lint": "oxlint src tests tools scripts build",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "test": "bun run test:bun && bun run test:fixtures",
     "postinstall": "wxt prepare",
     "test:bun": "bun run scripts/run-bun-tests.ts",

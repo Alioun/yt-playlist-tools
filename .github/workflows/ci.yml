@@ -69,6 +69,9 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: Format
+        run: bun run format:check
+
       - name: Typecheck
         run: bun run compile
 
