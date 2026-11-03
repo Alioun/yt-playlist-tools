@@ -258,7 +258,7 @@
       "id": "G43",
       "topic": "Lazy picker",
       "answer": "Build it now: split PlaylistChooser so the picker loads when it opens (Q-PERF-31).",
-      "landed": "pending"
+      "landed": "2.0/lazy-picker"
     },
     {
       "id": "G44",
