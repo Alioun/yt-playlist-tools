@@ -72,7 +72,7 @@ export function createFeatureCopy(i18n: I18n) {
     "gather": { name: i18n.message("feature_name_8"), description: i18n.message("feature_description_8") },
     "music-actions": { name: i18n.message("feature_name_9"), description: i18n.message("feature_description_9") },
     "music-keys": { name: i18n.message("feature_name_10"), description: i18n.message("feature_description_10") },
-    "any-tab-keys": { name: i18n.message("feature_name_11"), description: i18n.message("feature_description_11") },
+    "any-tab-keys": { name: i18n.message("feature_name_11"), description: i18n.message("feature_description_11") }
   } satisfies Record<PageFeatureId, { readonly name: string; readonly description: string }>
   const localized: readonly LocalizedFeature[] = firstRunFeatures.map(feature => ({ ...feature, ...labels[feature.id] }))
 
@@ -82,9 +82,15 @@ export function createFeatureCopy(i18n: I18n) {
     description: (kind: BrowserKind) => i18n.message(kind === "firefox" ? "feature_sync_firefox" : "feature_sync_chrome")
   } as const
 
-  return { footprintText, groupHeading, firstRunFeatures: localized, syncFeature, featureOf: (id: PageFeatureId) => {
-    const feature = localized.find(feature => feature.id === id)
-    if (!feature) throw new Error(`Unknown first-run feature ${id}`)
-    return feature
-  } }
+  return {
+    footprintText,
+    groupHeading,
+    firstRunFeatures: localized,
+    syncFeature,
+    featureOf: (id: PageFeatureId) => {
+      const feature = localized.find(feature => feature.id === id)
+      if (!feature) throw new Error(`Unknown first-run feature ${id}`)
+      return feature
+    }
+  }
 }

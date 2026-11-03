@@ -13,10 +13,17 @@ export const fixtureRegistry: readonly RegistrationFeature[] = [
   { id: "auto-add", setting: "autoAdd", pages: { www: { file: "feature-auto-add", needs: ["kit"] } } },
   { id: "card-menu", setting: "cardMenu", pages: { www: { file: "feature-card-menu", needs: [] } } },
   { id: "music-actions", setting: "musicActions", pages: { music: { file: "feature-music-actions", needs: ["kit"] } } },
-  { id: "gather", setting: "gather", pages: { www: {
-    needs: [], matches: ["https://www.youtube.com/watch*", "https://www.youtube.com/live/*"],
-    when: settings => settings.gather.auto.background || settings.gather.auto.count
-  } } }
+  {
+    id: "gather",
+    setting: "gather",
+    pages: {
+      www: {
+        needs: [],
+        matches: ["https://www.youtube.com/watch*", "https://www.youtube.com/live/*"],
+        when: settings => settings.gather.auto.background || settings.gather.auto.count
+      }
+    }
+  }
 ]
 export function settings(...enabled: ("autoAdd" | "cardMenu" | "musicActions" | "gather")[]): Settings {
   const result = defaultSettings()
@@ -27,13 +34,15 @@ export function observedScript(script: RegisteredScript): ObservedScript {
   return { ...structuredClone(script), css: [], excludeMatches: [], matchOriginAsFallback: false }
 }
 export function tabFact(id: number, extra: Partial<TabFact> = {}): TabFact {
-  return { id, site: "www", url: "https://www.youtube.com/watch?v=fixture", active: false, focusedWindow: false,
-    audible: false, lastAccessed: id, discarded: false, frozen: false, ...extra }
+  return { id, site: "www", url: "https://www.youtube.com/watch?v=fixture", active: false, focusedWindow: false, audible: false, lastAccessed: id, discarded: false, frozen: false, ...extra }
 }
 export function deferred<T>() {
   let resolve: (value: T | PromiseLike<T>) => void = () => {}
   let reject: (reason?: unknown) => void = () => {}
-  const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no })
+  const promise = new Promise<T>((yes, no) => {
+    resolve = yes
+    reject = no
+  })
   return { promise, resolve, reject }
 }
 
@@ -55,10 +64,18 @@ export type Step = {
 }
 export type ScriptedRegistrar = ReturnType<typeof scriptedRegistrar>
 
-export function scriptedRegistrar(initial: { readonly settings?: Settings; readonly consent?: boolean; readonly schemaOk?: boolean; readonly held?: boolean; readonly registry?: readonly RegistrationFeature[] } = {}) {
-  let owner: OwnerSnapshot = initial.held ? { kind: "held", revision: 0 } : {
-    kind: "ok", revision: 0, settings: structuredClone(initial.settings ?? settings()), consent: initial.consent ?? true, schemaOk: initial.schemaOk ?? true
-  }
+export function scriptedRegistrar(
+  initial: { readonly settings?: Settings; readonly consent?: boolean; readonly schemaOk?: boolean; readonly held?: boolean; readonly registry?: readonly RegistrationFeature[] } = {}
+) {
+  let owner: OwnerSnapshot = initial.held
+    ? { kind: "held", revision: 0 }
+    : {
+        kind: "ok",
+        revision: 0,
+        settings: structuredClone(initial.settings ?? settings()),
+        consent: initial.consent ?? true,
+        schemaOk: initial.schemaOk ?? true
+      }
   const ownerListeners = new Set<() => void>()
   const accessListeners = new Set<() => void>()
   const startupListeners = new Set<() => void>()
@@ -73,14 +90,21 @@ export function scriptedRegistrar(initial: { readonly settings?: Settings; reado
   let maxMutationsActive = 0
   function subscribe(listeners: Set<() => void>, listener: () => void) {
     listeners.add(listener)
-    return () => { listeners.delete(listener) }
+    return () => {
+      listeners.delete(listener)
+    }
   }
-  function emit(listeners: Set<() => void>) { for (const listener of [...listeners]) listener() }
+  function emit(listeners: Set<() => void>) {
+    for (const listener of [...listeners]) listener()
+  }
   async function invoke(call: Call, effect: (apply: "all" | "first" | "none", step: Step) => void = () => {}) {
     calls.push(structuredClone(call))
     const step = steps.get(call.operation)?.shift() ?? {}
     const mutation = ["register", "update", "unregister", "execute"].includes(call.operation)
-    if (mutation) { mutationsActive += 1; maxMutationsActive = Math.max(maxMutationsActive, mutationsActive) }
+    if (mutation) {
+      mutationsActive += 1
+      maxMutationsActive = Math.max(maxMutationsActive, mutationsActive)
+    }
     try {
       step.entered?.()
       if (step.wait) await step.wait
@@ -88,23 +112,38 @@ export function scriptedRegistrar(initial: { readonly settings?: Settings; reado
       effect(step.outcome?.apply ?? "all", step)
       if (step.outcome?.kind === "reject") throw Error("Scripted port rejection")
       return step
-    } finally { if (mutation) mutationsActive -= 1 }
+    } finally {
+      if (mutation) mutationsActive -= 1
+    }
   }
   const ports: RegistrarPorts = {
-    build: fixtureBuild, registry: initial.registry ?? fixtureRegistry,
+    build: fixtureBuild,
+    registry: initial.registry ?? fixtureRegistry,
     owner: {
-      async ready() { await invoke({ operation: "ready" }); return owner.kind === "ok" ? "ok" : "held" },
+      async ready() {
+        await invoke({ operation: "ready" })
+        return owner.kind === "ok" ? "ok" : "held"
+      },
       current: () => structuredClone(owner),
       subscribe: listener => subscribe(ownerListeners, listener)
     },
     access: {
-      async contains(site) { await invoke({ operation: "access", site }); return access[site] },
-      async offer(tabId, site) { await invoke({ operation: "offer", tabId, site }); return "offered" },
+      async contains(site) {
+        await invoke({ operation: "access", site })
+        return access[site]
+      },
+      async offer(tabId, site) {
+        await invoke({ operation: "offer", tabId, site })
+        return "offered"
+      },
       subscribe: listener => subscribe(accessListeners, listener)
     },
     startup: { subscribe: listener => subscribe(startupListeners, listener) },
     tabs: {
-      async list() { await invoke({ operation: "tabs-list" }); return structuredClone([...tabs.values()]) },
+      async list() {
+        await invoke({ operation: "tabs-list" })
+        return structuredClone([...tabs.values()])
+      },
       async get(tabId) {
         await invoke({ operation: "tabs-get", tabId })
         const tab = tabs.get(tabId)
@@ -121,7 +160,10 @@ export function scriptedRegistrar(initial: { readonly settings?: Settings; reado
       }
     },
     scripting: {
-      async list() { await invoke({ operation: "list" }); return structuredClone([...scripts.values()]) },
+      async list() {
+        await invoke({ operation: "list" })
+        return structuredClone([...scripts.values()])
+      },
       async register(input) {
         await invoke({ operation: "register", scripts: input }, apply => {
           for (const script of apply === "none" ? [] : apply === "first" ? input.slice(0, 1) : input) {
@@ -152,12 +194,23 @@ export function scriptedRegistrar(initial: { readonly settings?: Settings; reado
         })
       }
     },
-    backgroundError: error => { errors.push(error) }
+    backgroundError: error => {
+      errors.push(error)
+    }
   }
   return {
-    ports, calls, errors, scripts, tabs, documents,
-    get maxMutationsActive() { return maxMutationsActive },
-    get listenerCounts() { return [ownerListeners.size, accessListeners.size, startupListeners.size] },
+    ports,
+    calls,
+    errors,
+    scripts,
+    tabs,
+    documents,
+    get maxMutationsActive() {
+      return maxMutationsActive
+    },
+    get listenerCounts() {
+      return [ownerListeners.size, accessListeners.size, startupListeners.size]
+    },
     scriptNext(operation: Operation, step: Step) {
       const pending = steps.get(operation) ?? []
       pending.push(step)
@@ -172,22 +225,37 @@ export function scriptedRegistrar(initial: { readonly settings?: Settings; reado
       return { entered: entered.promise, release: () => release.resolve() }
     },
     changeOwner(change: { readonly settings?: Settings; readonly consent?: boolean; readonly schemaOk?: boolean; readonly held?: boolean }, notify = true) {
-      owner = change.held ? { kind: "held", revision: owner.revision + 1 } : {
-        kind: "ok", revision: owner.revision + 1,
-        settings: structuredClone(change.settings ?? (owner.kind === "ok" ? owner.settings : settings())),
-        consent: change.consent ?? (owner.kind === "ok" && owner.consent),
-        schemaOk: change.schemaOk ?? (owner.kind === "ok" && owner.schemaOk)
-      }
+      owner = change.held
+        ? { kind: "held", revision: owner.revision + 1 }
+        : {
+            kind: "ok",
+            revision: owner.revision + 1,
+            settings: structuredClone(change.settings ?? (owner.kind === "ok" ? owner.settings : settings())),
+            consent: change.consent ?? (owner.kind === "ok" && owner.consent),
+            schemaOk: change.schemaOk ?? (owner.kind === "ok" && owner.schemaOk)
+          }
       if (notify) emit(ownerListeners)
     },
-    changeAccess(site: Site, granted: boolean, notify = true) { access[site] = granted; if (notify) emit(accessListeners) },
-    startup() { emit(startupListeners) },
+    changeAccess(site: Site, granted: boolean, notify = true) {
+      access[site] = granted
+      if (notify) emit(accessListeners)
+    },
+    startup() {
+      emit(startupListeners)
+    },
     open(tab: TabFact, loaded: readonly { readonly file: string; readonly build: BuildId }[] = [], documentId = `document-${tab.id}`) {
       tabs.set(tab.id, structuredClone(tab))
       documents.set(tab.id, { documentId, loaded: new Map(loaded.map(entry => [entry.file, entry.build])) })
     },
-    close(tabId: number) { tabs.delete(tabId); documents.delete(tabId) },
-    executions() { return calls.flatMap(call => call.operation === "execute" ? [call.injection] : []) },
-    mutations() { return calls.filter(call => ["register", "update", "unregister", "execute"].includes(call.operation)) }
+    close(tabId: number) {
+      tabs.delete(tabId)
+      documents.delete(tabId)
+    },
+    executions() {
+      return calls.flatMap(call => (call.operation === "execute" ? [call.injection] : []))
+    },
+    mutations() {
+      return calls.filter(call => ["register", "update", "unregister", "execute"].includes(call.operation))
+    }
   }
 }

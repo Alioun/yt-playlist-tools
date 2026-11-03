@@ -10,13 +10,10 @@ type NativeTabs = Pick<ReturnType<typeof createBrowserTabs>, "requester">
 // Tabs calls this after binding the page account to native tab and window facts.
 export function readStorageForTab(owner: Owner, context: TabContext): Promise<TabProjectionRead> {
   if (context.info.site !== context.tab.site) return Promise.resolve({ kind: "invalid", part: "request" })
-  return owner.readTabProjection({ private: context.tab.incognito, account: context.info.signedIn
-    ? { kind: "signed-in", acct: context.info.acct } : { kind: "signed-out" } })
+  return owner.readTabProjection({ private: context.tab.incognito, account: context.info.signedIn ? { kind: "signed-in", acct: context.info.acct } : { kind: "signed-out" } })
 }
 
-export function bindNativeRoutingAccounts(input: {
-  readonly owner: Owner; readonly native: NativeTabs; readonly sender: NativeSender; readonly popupWindowId: unknown
-}): TabsPorts["accounts"] {
+export function bindNativeRoutingAccounts(input: { readonly owner: Owner; readonly native: NativeTabs; readonly sender: NativeSender; readonly popupWindowId: unknown }): TabsPorts["accounts"] {
   const { owner, native, sender, popupWindowId } = input
   async function normalRequester() {
     const result = await native.requester(sender, popupWindowId)

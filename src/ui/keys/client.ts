@@ -9,7 +9,10 @@ import type { KeyRecorderText } from "./text"
 export type ShortcutChooser = { open(input: { readonly shortcut: ShortcutId }): Promise<void> }
 export type ShortcutTitles = { readonly account: AccountKey; readonly titles: ReadonlyMap<ShortcutId, string> }
 export function createKeySettingsClient(input: {
-  readonly backend: Backend; readonly platform: Platform; readonly commands: CommandKeys; readonly chooser: ShortcutChooser
+  readonly backend: Backend
+  readonly platform: Platform
+  readonly commands: CommandKeys
+  readonly chooser: ShortcutChooser
   readonly text: KeyRecorderText
 }) {
   let active = true
@@ -34,17 +37,27 @@ export function createKeySettingsClient(input: {
   }
   function recorder(target: ShortcutTarget, chooseAfterCommit = false): KeyRecorderController {
     let choose = chooseAfterCommit
-    const controller = createKeyRecorderController({ target, platform: input.platform, commands: input.commands, text: input.text, settings, send,
+    const controller = createKeyRecorderController({
+      target,
+      platform: input.platform,
+      commands: input.commands,
+      text: input.text,
+      settings,
+      send,
       async committed() {
         if (!choose || !active || target.kind !== "playlist" || !isShortcutId(target.id)) return
         choose = false
         await input.chooser.open({ shortcut: target.id })
-      } })
+      }
+    })
     controllers.add(controller)
     return controller
   }
   return {
-    ready: input.backend.keys.load(), settings, recorder, send,
+    ready: input.backend.keys.load(),
+    settings,
+    recorder,
+    send,
     async add() {
       const answer = await send({ kind: "shortcut-add" })
       if (answer.kind !== "added") return { kind: "answer", answer } as const
@@ -62,17 +75,21 @@ export function createKeySettingsClient(input: {
     },
     remove(id: ShortcutId) {
       const row = settings().shortcuts.list.find(row => row.id === id)
-      return row ? send({ kind: "shortcut-remove", id, expected: { id: row.id, key: keyForWire(row.key), label: row.label, watchLaterOnEveryAccount: row.watchLaterOnEveryAccount } })
+      return row
+        ? send({ kind: "shortcut-remove", id, expected: { id: row.id, key: keyForWire(row.key), label: row.label, watchLaterOnEveryAccount: row.watchLaterOnEveryAccount } })
         : Promise.resolve({ kind: "refused", reason: "missing-target" } satisfies KeySettingAnswer)
     },
-    undo(receipt: string) { return send({ kind: "shortcut-undo", receipt }) },
+    undo(receipt: string) {
+      return send({ kind: "shortcut-undo", receipt })
+    },
     name(id: ShortcutId, account: AccountKey, context: ShortcutTitles): string {
       const row = settings().shortcuts.list.find(row => row.id === id)
       return row?.label || (context.account === account ? context.titles.get(id) : undefined) || (row?.key ? display(row.key, input.platform.os) : input.text.noKey)
     },
     dispose() {
       if (!active) return
-      active = false; unsubscribe()
+      active = false
+      unsubscribe()
       for (const controller of controllers) controller.dispose()
       controllers.clear()
     }

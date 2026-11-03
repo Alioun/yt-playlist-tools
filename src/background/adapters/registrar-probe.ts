@@ -9,9 +9,11 @@ type Injection<Args extends unknown[], Result> = {
   readonly func: (...args: Args) => Result
   readonly args?: Args
 }
-export type ProbeBrowser = { readonly scripting: {
-  executeScript<Args extends unknown[], Result>(injection: Injection<Args, Result>): Promise<readonly { readonly frameId: number; readonly documentId?: string; readonly result?: unknown }[]>
-} }
+export type ProbeBrowser = {
+  readonly scripting: {
+    executeScript<Args extends unknown[], Result>(injection: Injection<Args, Result>): Promise<readonly { readonly frameId: number; readonly documentId?: string; readonly result?: unknown }[]>
+  }
+}
 
 // Our isolated world records bundle names as keys; only the builds need parsing.
 function isolatedInventory(): { documentId: string; loaded: [string, unknown][] } {
@@ -33,19 +35,23 @@ const fileOf = (name: string) => `${name}.js`
  * presence event once it has taken that build's jobs file (G42).
  */
 export function nativeRegistrarProbe(browser: ProbeBrowser): ProbePort {
-  return { async inspect({ tabId, site, build }) {
-    try {
-      const [isolated] = await browser.scripting.executeScript({ target: { tabId, frameIds: [0] }, world: "ISOLATED", func: isolatedInventory })
-      const [main] = await browser.scripting.executeScript({ target: { tabId, frameIds: [0] }, world: "MAIN", func: mainWorldPresent, args: [[pagePresenceEvent, pageJobsPresenceEvent], build] })
-      const inventory: unknown = isolated?.result
-      if (!isolated || !main || inventory === null || typeof inventory !== "object") return { kind: "unavailable", reason: "not-observed" }
-      const { documentId, loaded } = inventory as ReturnType<typeof isolatedInventory>
-      const nativeDocument = "documentId" in isolated && typeof isolated.documentId === "string" ? isolated.documentId : documentId
-      const files = loaded.flatMap(([file, fileBuild]) => isBuildId(fileBuild) ? [{ file: fileOf(file), build: fileBuild }] : [])
-      const [page, jobs] = Array.isArray(main.result) ? main.result : []
-      if (page === true) files.push({ file: fileOf(siteBundles[site].page), build })
-      if (jobs === true) files.push({ file: fileOf(siteBundles[site].jobs), build })
-      return { kind: "observed", documentId: nativeDocument, loaded: files }
-    } catch { return { kind: "unavailable", reason: "inaccessible" } }
-  } }
+  return {
+    async inspect({ tabId, site, build }) {
+      try {
+        const [isolated] = await browser.scripting.executeScript({ target: { tabId, frameIds: [0] }, world: "ISOLATED", func: isolatedInventory })
+        const [main] = await browser.scripting.executeScript({ target: { tabId, frameIds: [0] }, world: "MAIN", func: mainWorldPresent, args: [[pagePresenceEvent, pageJobsPresenceEvent], build] })
+        const inventory: unknown = isolated?.result
+        if (!isolated || !main || inventory === null || typeof inventory !== "object") return { kind: "unavailable", reason: "not-observed" }
+        const { documentId, loaded } = inventory as ReturnType<typeof isolatedInventory>
+        const nativeDocument = "documentId" in isolated && typeof isolated.documentId === "string" ? isolated.documentId : documentId
+        const files = loaded.flatMap(([file, fileBuild]) => (isBuildId(fileBuild) ? [{ file: fileOf(file), build: fileBuild }] : []))
+        const [page, jobs] = Array.isArray(main.result) ? main.result : []
+        if (page === true) files.push({ file: fileOf(siteBundles[site].page), build })
+        if (jobs === true) files.push({ file: fileOf(siteBundles[site].jobs), build })
+        return { kind: "observed", documentId: nativeDocument, loaded: files }
+      } catch {
+        return { kind: "unavailable", reason: "inaccessible" }
+      }
+    }
+  }
 }

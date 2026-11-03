@@ -17,13 +17,33 @@ async function world(registered: string | null = acct) {
   spyOn(fakeBrowser.tabs, "get").mockImplementation(async () => raw as never)
   const calls: unknown[] = []
   const monitor = {
-    async signal(_context: unknown, value: unknown, evidence: unknown) { calls.push(["signal", (value as { kind: string }).kind, evidence]); return { kind: "accepted", scope: "normal" } as const },
-    async observeAnchor(_context: unknown, input: unknown) { calls.push(["anchor", input]); return { kind: "accepted", scope: "normal" } as const },
-    async succeeded(_context: unknown, job: unknown) { calls.push(["success", job]); return { kind: "accepted", scope: "normal" } as const },
-    async measured() { calls.push(["measured"]); return { kind: "accepted", scope: "normal" } as const }
+    async signal(_context: unknown, value: unknown, evidence: unknown) {
+      calls.push(["signal", (value as { kind: string }).kind, evidence])
+      return { kind: "accepted", scope: "normal" } as const
+    },
+    async observeAnchor(_context: unknown, input: unknown) {
+      calls.push(["anchor", input])
+      return { kind: "accepted", scope: "normal" } as const
+    },
+    async succeeded(_context: unknown, job: unknown) {
+      calls.push(["success", job])
+      return { kind: "accepted", scope: "normal" } as const
+    },
+    async measured() {
+      calls.push(["measured"])
+      return { kind: "accepted", scope: "normal" } as const
+    }
   }
-  const router = createTabHealthRouter({ transport: runtimeTransport(fakeBrowser.runtime), senders: fakeBrowser, build, deadline: manualClock().after, monitor: monitor as never,
-    async context(_sender, claimed) { return claimed === registered ? { tab: { tabId: raw.id }, info: {} } as never : null } })
+  const router = createTabHealthRouter({
+    transport: runtimeTransport(fakeBrowser.runtime),
+    senders: fakeBrowser,
+    build,
+    deadline: manualClock().after,
+    monitor: monitor as never,
+    async context(_sender, claimed) {
+      return claimed === registered ? ({ tab: { tabId: raw.id }, info: {} } as never) : null
+    }
+  })
   const sender = { id: fakeBrowser.runtime.id, frameId: 0, url: raw.url, tab: raw } as never
   async function send(payload: unknown) {
     const replies: unknown[] = []
@@ -36,27 +56,65 @@ async function world(registered: string | null = acct) {
 
 test("a tab's batch reaches the Monitor as that tab: job signals with their evidence, anchors, successes and a measured playback", async () => {
   const w = await world()
-  await w.send({ acct, request: { reports: [
-    { kind: "signal", signal, evidence: "job", online: true, answered: false },
-    { kind: "signal", signal: { ...signal, kind: "cannot-measure", job: null, route: null, watchId: null, feature: "auto-add" }, evidence: "playback" },
-    { kind: "anchor", anchor: "www-cards", signal: { ...signal, kind: "anchor-missing", job: null, route: null, watchId: null },
-      observation: { relevant: true, visible: true, settledMs: 3000, distinctMainLinks: 8, recognised: 1 } },
-    { kind: "success", job: "add" }, { kind: "measured" }] } })
+  await w.send({
+    acct,
+    request: {
+      reports: [
+        { kind: "signal", signal, evidence: "job", online: true, answered: false },
+        { kind: "signal", signal: { ...signal, kind: "cannot-measure", job: null, route: null, watchId: null, feature: "auto-add" }, evidence: "playback" },
+        {
+          kind: "anchor",
+          anchor: "www-cards",
+          signal: { ...signal, kind: "anchor-missing", job: null, route: null, watchId: null },
+          observation: { relevant: true, visible: true, settledMs: 3000, distinctMainLinks: 8, recognised: 1 }
+        },
+        { kind: "success", job: "add" },
+        { kind: "measured" }
+      ]
+    }
+  })
   expect(w.calls).toEqual([
     ["signal", "missing", { kind: "job", online: true, otherRequestsAnswer: false }],
     ["signal", "cannot-measure", { kind: "playback" }],
-    ["anchor", { anchor: "www-cards", signal: expect.objectContaining({ kind: "anchor-missing" }),
-      observation: { kind: "content", relevant: true, visible: true, navigationAt: 0, observedAt: 3000, distinctMainLinks: 8, recognised: 1 } }],
-    ["success", "add"], ["measured"]])
+    [
+      "anchor",
+      {
+        anchor: "www-cards",
+        signal: expect.objectContaining({ kind: "anchor-missing" }),
+        observation: { kind: "content", relevant: true, visible: true, navigationAt: 0, observedAt: 3000, distinctMainLinks: 8, recognised: 1 }
+      }
+    ],
+    ["success", "add"],
+    ["measured"]
+  ])
   w.dispose()
 })
 
 test("a missing player-bar like reaches the Monitor as a player-bar anchor (YM-FAIL-8)", async () => {
   const w = await world()
-  await w.send({ acct, request: { reports: [{ kind: "anchor", anchor: "music-player-bar", signal: { ...signal, site: "music", feature: "music-actions", kind: "anchor-missing", job: null, route: null, watchId: null },
-    observation: { kind: "player-bar", requiredHere: true, visible: true, settledMs: 3000, present: false } }] } })
-  expect(w.calls).toEqual([["anchor", { anchor: "music-player-bar", signal: expect.objectContaining({ kind: "anchor-missing" }),
-    observation: { kind: "player-bar", requiredHere: true, visible: true, navigationAt: 0, observedAt: 3000, present: false } }]])
+  await w.send({
+    acct,
+    request: {
+      reports: [
+        {
+          kind: "anchor",
+          anchor: "music-player-bar",
+          signal: { ...signal, site: "music", feature: "music-actions", kind: "anchor-missing", job: null, route: null, watchId: null },
+          observation: { kind: "player-bar", requiredHere: true, visible: true, settledMs: 3000, present: false }
+        }
+      ]
+    }
+  })
+  expect(w.calls).toEqual([
+    [
+      "anchor",
+      {
+        anchor: "music-player-bar",
+        signal: expect.objectContaining({ kind: "anchor-missing" }),
+        observation: { kind: "player-bar", requiredHere: true, visible: true, navigationAt: 0, observedAt: 3000, present: false }
+      }
+    ]
+  ])
   w.dispose()
 })
 

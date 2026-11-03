@@ -24,9 +24,7 @@ export type ObservedScript = {
   readonly persistAcrossSessions: boolean
   readonly matchOriginAsFallback: boolean
 }
-export type RegistrationObservation =
-  | { readonly kind: "observed"; readonly scripts: readonly ObservedScript[] }
-  | { readonly kind: "unavailable" }
+export type RegistrationObservation = { readonly kind: "observed"; readonly scripts: readonly ObservedScript[] } | { readonly kind: "unavailable" }
 
 export type TabFact = {
   readonly id: number

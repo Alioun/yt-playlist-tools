@@ -9,8 +9,7 @@ import { MONITOR_CANNOT_MEASURE, MONITOR_MIN_LINKS, MONITOR_RECOGNISED_RATIO, MO
 export function anchorMissing(observation: AnchorObservation): boolean {
   if (observation.kind === "not-applicable" || !observation.visible || observation.observedAt < observation.navigationAt + MONITOR_SETTLE_MS) return false
   if (observation.kind === "player-bar") return observation.requiredHere && !observation.present
-  return observation.relevant && observation.distinctMainLinks >= MONITOR_MIN_LINKS &&
-    observation.recognised < observation.distinctMainLinks * MONITOR_RECOGNISED_RATIO
+  return observation.relevant && observation.distinctMainLinks >= MONITOR_MIN_LINKS && observation.recognised < observation.distinctMainLinks * MONITOR_RECOGNISED_RATIO
 }
 function actionEnabled(feature: EnabledMonitorFeature, action: MusicAction): boolean {
   if (feature.id === "music-actions") return feature.options.buttons[action]
@@ -35,8 +34,12 @@ function withEvidence(routes: JobRoutes | undefined, records: readonly MonitorRe
   })
   return first ? { routes: [first, ...rest] } : routes
 }
-export function deriveStatus(input: { readonly enabled: readonly EnabledMonitorFeature[]; readonly facts: HealthFacts; readonly journal: MonitorJournal; readonly tabId: number }):
-  { readonly kind: "statuses"; readonly statuses: readonly MonitorStatus[] } | { readonly kind: "unavailable" } {
+export function deriveStatus(input: {
+  readonly enabled: readonly EnabledMonitorFeature[]
+  readonly facts: HealthFacts
+  readonly journal: MonitorJournal
+  readonly tabId: number
+}): { readonly kind: "statuses"; readonly statuses: readonly MonitorStatus[] } | { readonly kind: "unavailable" } {
   const { facts, enabled, tabId } = input
   const records = input.journal.signals.filter(row => row.tabId === tabId && row.signal.site === facts.site && row.active)
   const statuses: MonitorStatus[] = []
@@ -44,24 +47,38 @@ export function deriveStatus(input: { readonly enabled: readonly EnabledMonitorF
     if (!feature.options.on) continue
     if (feature.id === "sync") {
       const current = facts.background.get("sync")
-      if (!current || current.state !== "working" && !current.kinds.length) return { kind: "unavailable" }
+      if (!current || (current.state !== "working" && !current.kinds.length)) return { kind: "unavailable" }
       statuses.push({ feature: "sync", state: current.state, jobs: [], anchors: [], actions: [], kinds: [...current.kinds], destinations: [] })
       continue
     }
     const health = dependencies(feature, facts)
     if (!health) return { kind: "unavailable" }
     if (feature.id === "gather" && facts.core === "present" && facts.gather.player === "unavailable") return { kind: "unavailable" }
-    const actionEntries = Object.entries(health.actions ?? {}).filter((row): row is [MusicAction, readonly JobId[]] =>
-      (row[0] === "next" || row[0] === "queue" || row[0] === "save" || row[0] === "like" || row[0] === "remove" || row[0] === "library" || row[0] === "mix" || row[0] === "album" || row[0] === "artist") && actionEnabled(feature, row[0]))
+    const actionEntries = Object.entries(health.actions ?? {}).filter(
+      (row): row is [MusicAction, readonly JobId[]] =>
+        (row[0] === "next" ||
+          row[0] === "queue" ||
+          row[0] === "save" ||
+          row[0] === "like" ||
+          row[0] === "remove" ||
+          row[0] === "library" ||
+          row[0] === "mix" ||
+          row[0] === "album" ||
+          row[0] === "artist") &&
+        actionEnabled(feature, row[0])
+    )
     const jobsNeeded = unique([...health.required, ...health.optional, ...actionEntries.flatMap(([, jobs]) => jobs)])
-    const anchorIds = unique([...health.anchors, ...health.optionalAnchors ?? []])
+    const anchorIds = unique([...health.anchors, ...(health.optionalAnchors ?? [])])
     if (facts.core === "present" && (jobsNeeded.some(job => !facts.jobs.has(job)) || anchorIds.some(anchor => !facts.anchors.has(anchor)))) return { kind: "unavailable" }
     const relevant = (row: MonitorRecord) => row.signal.feature === null || row.signal.feature === feature.id
     const failed = (job: JobId): boolean => {
       if (job === "account" && facts.accountKeys === "missing") return true
       if (input.journal.passed.some(row => row.tabId === tabId && row.site === facts.site && (row.job === null || row.job === job))) return false
       const failure = records.filter(row => row.signal.job === job && relevant(row))
-      const routes = withEvidence(facts.jobs.get(job), records.filter(row => row.signal.job === job))
+      const routes = withEvidence(
+        facts.jobs.get(job),
+        records.filter(row => row.signal.job === job)
+      )
       if (failure.some(row => row.signal.kind === "no-effect")) return true
       if (!routes || routes.routes.some(route => route.state === "usable")) return false
       return routes.routes.every(route => route.state !== "timeout" || failure.some(row => row.signal.kind === "timeout"))
@@ -70,43 +87,64 @@ export function deriveStatus(input: { readonly enabled: readonly EnabledMonitorF
     // A tab's anchor check arrives as a recorded signal, so it outlives the worker that heard it.
     const missingAnchors = anchorIds.filter(anchor => {
       const observation = facts.anchors.get(anchor)
-      return observation !== undefined && anchorMissing(observation) ||
-        records.some(row => row.signal.kind === "anchor-missing" && row.evidence.kind === "anchor" && row.evidence.anchor === anchor)
+      return (observation !== undefined && anchorMissing(observation)) || records.some(row => row.signal.kind === "anchor-missing" && row.evidence.kind === "anchor" && row.evidence.anchor === anchor)
     })
     const actions = actionEntries.filter(([, jobs]) => jobs.some(failed)).map(([action]) => action)
     let whole = facts.core === "missing" || health.required.some(failed) || health.anchors.some(anchor => missingAnchors.includes(anchor))
     let partial = jobs.length > 0 || missingAnchors.length > 0 || actions.length > 0
     if (actions.length && actions.length === actionEntries.length) whole = true
     const kinds: BreakageKind[] = []
-    if (facts.core === "missing" || facts.accountKeys === "missing" && jobs.includes("account")) kinds.push("missing")
+    if (facts.core === "missing" || (facts.accountKeys === "missing" && jobs.includes("account"))) kinds.push("missing")
     if (missingAnchors.length) kinds.push("anchor-missing")
     for (const row of records.filter(relevant)) {
       const kind = row.signal.kind
-      if (kind === "quiet-route-noisy" && row.signal.feature === feature.id) { partial = true; kinds.push(kind) }
+      if (kind === "quiet-route-noisy" && row.signal.feature === feature.id) {
+        partial = true
+        kinds.push(kind)
+      }
       if (kind === "item-unrecognised" && row.signal.feature === feature.id) {
-        partial = true; kinds.push(kind)
+        partial = true
+        kinds.push(kind)
         if (feature.id === "quick-save" || feature.id === "queue-button" || feature.id === "card-menu") whole = true
       }
       if (kind === "cannot-measure" && feature.id === "auto-add") {
-        partial = true; kinds.push(kind)
-        if (input.journal.counters.some(counter => counter.tabId === tabId && counter.site === facts.site && counter.feature === "auto-add" && counter.cannotMeasure >= MONITOR_CANNOT_MEASURE)) whole = true
+        partial = true
+        kinds.push(kind)
+        if (input.journal.counters.some(counter => counter.tabId === tabId && counter.site === facts.site && counter.feature === "auto-add" && counter.cannotMeasure >= MONITOR_CANNOT_MEASURE))
+          whole = true
       }
       if (row.signal.job !== null && jobs.includes(row.signal.job) && kind !== "cannot-measure" && kind !== "anchor-missing") kinds.push(kind)
     }
     const destinations: MonitorStatus["destinations"][number][] = []
     if (feature.id === "gather") {
       // YouTube's player is no tab's, so its evidence counts from any of the account's tabs on the site.
-      const playerFailed = facts.gather.player === "no-effect" && input.journal.signals.some(row => row.active && row.signal.site === facts.site &&
-        row.evidence.kind === "gather" && row.evidence.destination === "player" && row.signal.kind === "no-effect")
-      if (playerFailed) { whole = true; destinations.push("player"); kinds.push("no-effect") }
+      const playerFailed =
+        facts.gather.player === "no-effect" &&
+        input.journal.signals.some(row => row.active && row.signal.site === facts.site && row.evidence.kind === "gather" && row.evidence.destination === "player" && row.signal.kind === "no-effect")
+      if (playerFailed) {
+        whole = true
+        destinations.push("player")
+        kinds.push("no-effect")
+      }
       for (const target of ["queue", "playlist"] as const) {
         const destinationJobs: readonly JobId[] = target === "queue" ? ["queueAddList"] : ["account", "membership", "addBatch", "removeBatch"]
-        if (facts.gather[target] !== "usable" || destinationJobs.some(job => jobs.includes(job))) { partial = true; destinations.push(target) }
+        if (facts.gather[target] !== "usable" || destinationJobs.some(job => jobs.includes(job))) {
+          partial = true
+          destinations.push(target)
+        }
       }
       if (!playerFailed && facts.core === "present") whole = false
     }
     if ((whole || partial) && !jobs.length && !missingAnchors.length && !actions.length && !kinds.length) kinds.push("no-effect")
-    statuses.push({ feature: feature.id, state: whole ? "not-working" : partial ? "partly-working" : "working", jobs: unique(jobs), anchors: missingAnchors, actions, kinds: unique(kinds), destinations })
+    statuses.push({
+      feature: feature.id,
+      state: whole ? "not-working" : partial ? "partly-working" : "working",
+      jobs: unique(jobs),
+      anchors: missingAnchors,
+      actions,
+      kinds: unique(kinds),
+      destinations
+    })
   }
   return { kind: "statuses", statuses }
 }

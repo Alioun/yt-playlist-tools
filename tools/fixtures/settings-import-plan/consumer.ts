@@ -8,13 +8,18 @@ import { decodeSettings } from "../../../src/shared/model"
 import { expectedPuts, expectedSettings, expectedSession, expectedTombstones, expectedSyncBatch, scenario } from "./specimens"
 
 export function consume(syncOn: boolean): { case: string; documentChanges: number; removedAccounts: number; receipt: false } {
-  const input = scenario(syncOn), result = planSettingsImport(input)
+  const input = scenario(syncOn),
+    result = planSettingsImport(input)
   if (result.kind !== "planned") throw new Error(`Consumer refused ${JSON.stringify(result)}`)
   const expectedDocuments = { ...expectedPuts(), ...(syncOn ? expectedTombstones() : {}) }
   const actual = Object.fromEntries(result.documents.changes.filter(change => change.kind === "put").map(change => [documentKey(change.key), change.document]))
   deepStrictEqual(JSON.parse(JSON.stringify(actual)), expectedDocuments, "consumer complete independently expected documents")
   deepStrictEqual(JSON.parse(JSON.stringify(result.expected.session)), expectedSession(), "consumer complete independently expected cleanup")
-  deepStrictEqual(JSON.parse(JSON.stringify(prepareDocumentBody({ kind: "settings", data: decodeSettings(expectedSettings()) }))), { kind: "prepared", data: expectedSettings() }, "consumer actual preparation")
+  deepStrictEqual(
+    JSON.parse(JSON.stringify(prepareDocumentBody({ kind: "settings", data: decodeSettings(expectedSettings()) }))),
+    { kind: "prepared", data: expectedSettings() },
+    "consumer actual preparation"
+  )
   if (syncOn) {
     if (input.sync.kind !== "on" || result.documents.sync.kind !== "on") throw new Error("consumer sync facts")
     const [first, ...rest] = expectedSyncBatch()

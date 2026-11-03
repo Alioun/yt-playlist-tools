@@ -1,13 +1,20 @@
 import {
-  decodeDocument, decodeFilter, decodeSettings, decodeSetup, defaultSettings, parseDocumentKey,
-  STORAGE_SCHEMA_VERSION, type AccountKey, type DecodedDocument, type Filter, type Setup
+  decodeDocument,
+  decodeFilter,
+  decodeSettings,
+  decodeSetup,
+  defaultSettings,
+  parseDocumentKey,
+  STORAGE_SCHEMA_VERSION,
+  type AccountKey,
+  type DecodedDocument,
+  type Filter,
+  type Setup
 } from "../../shared/model"
 import { isRecord } from "../../shared/model/codec"
 import type { Origin } from "../../shared/contracts/results"
 import { isJsonValue } from "../../shared/contracts/json"
-import {
-  createImportPlanner, type ImportResult, type ImportWindow, type SettingsFileSource
-} from "../../shared/settings-file"
+import { createImportPlanner, type ImportResult, type ImportWindow, type SettingsFileSource } from "../../shared/settings-file"
 import { unsafeKey } from "../../shared/settings-file/shape"
 import { filterData, settingsData, setupData } from "../../shared/settings-file/data"
 import type { LocalWriteStorage } from "./local-filter-writer"
@@ -24,8 +31,17 @@ export type SettingsFileOwner = {
 }
 
 export function settingsFileWindow(origin: unknown): ImportWindow {
-  if (!isJsonValue(origin) || !isRecord(origin) || !["kind", "windowId", "incognito"].every(key => Object.hasOwn(origin, key)) || origin.kind !== "ui" || typeof origin.windowId !== "number" ||
-    !Number.isSafeInteger(origin.windowId) || origin.windowId < 0 || typeof origin.incognito !== "boolean") return "unavailable"
+  if (
+    !isJsonValue(origin) ||
+    !isRecord(origin) ||
+    !["kind", "windowId", "incognito"].every(key => Object.hasOwn(origin, key)) ||
+    origin.kind !== "ui" ||
+    typeof origin.windowId !== "number" ||
+    !Number.isSafeInteger(origin.windowId) ||
+    origin.windowId < 0 ||
+    typeof origin.incognito !== "boolean"
+  )
+    return "unavailable"
   return origin.incognito ? "private" : "normal"
 }
 
@@ -40,8 +56,10 @@ class UnsupportedSettingsFileDocument extends Error {}
 
 function selected<T>(document: DecodedDocument<T>, project: (data: T) => T): DecodedDocument<T> {
   switch (document.kind) {
-    case "absent": return { kind: "absent" }
-    case "newer-version": throw new UnsupportedSettingsFileDocument()
+    case "absent":
+      return { kind: "absent" }
+    case "newer-version":
+      throw new UnsupportedSettingsFileDocument()
     case "deleted": {
       const { v, gen, at, by } = document.document
       return { kind: "deleted", document: { v, gen, at, by, deleted: true } }
@@ -77,15 +95,12 @@ export function selectSettingsFileSource(records: Readonly<Record<string, unknow
         account(key.acct).setup = selected(decodeDocument(records[name], decodeSetup), data => setupData(data, shared, false))
       } else {
         if (unsafeKey(key.playlist)) return { kind: "unavailable", reason: "invalid-document" }
-        account(key.acct).filters.push({ playlist: key.playlist,
-          document: selected(decodeDocument<Filter>(records[name], decodeFilter), data => filterData(data, false)) })
+        account(key.acct).filters.push({ playlist: key.playlist, document: selected(decodeDocument<Filter>(records[name], decodeFilter), data => filterData(data, false)) })
       }
     }
-    return { kind: "source", source: { kind: "settings-file-source", settings,
-      accounts: [...accounts.values()].sort((a, b) => a.account < b.account ? -1 : a.account > b.account ? 1 : 0) } }
+    return { kind: "source", source: { kind: "settings-file-source", settings, accounts: [...accounts.values()].sort((a, b) => (a.account < b.account ? -1 : a.account > b.account ? 1 : 0)) } }
   } catch (error) {
-    return { kind: "unavailable", reason: error instanceof UnsupportedSettingsFileDocument
-      ? "unsupported-document" : "invalid-document" }
+    return { kind: "unavailable", reason: error instanceof UnsupportedSettingsFileDocument ? "unsupported-document" : "invalid-document" }
   }
 }
 
@@ -110,5 +125,7 @@ export async function readSettingsFile(input: {
     if (latest.kind !== "source") return latest
     if (JSON.stringify(first.source) !== JSON.stringify(latest.source)) return { kind: "unavailable", reason: "stale" }
     return latest
-  } catch { return input.unavailable() ?? { kind: "unavailable", reason: "read-failed" } }
+  } catch {
+    return input.unavailable() ?? { kind: "unavailable", reason: "read-failed" }
+  }
 }

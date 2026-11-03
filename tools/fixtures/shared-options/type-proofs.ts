@@ -3,7 +3,7 @@ import type { BrowserStartingOwner } from "../../../src/background/adapters/star
 import type { createStartingLocalFilterWriter } from "../../../src/background/store/local-filter-writer"
 import type { executeSharedSetting } from "../../../src/background/store/shared-setting-execution"
 import { cases } from "./specimens"
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 type Owner = ReturnType<typeof createStartingLocalFilterWriter>
 export type ForwardingProofs = [

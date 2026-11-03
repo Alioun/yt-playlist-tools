@@ -18,11 +18,7 @@
   --brand-violet: #7b5cd6;
   --brand-slate: #5e6875;
   --brand-gradient: linear-gradient(120deg, var(--brand-teal), var(--brand-violet));
-  --brand-wash: linear-gradient(
-    120deg,
-    color-mix(in oklch, var(--brand-teal) 8%, transparent),
-    color-mix(in oklch, var(--brand-violet) 8%, transparent)
-  );
+  --brand-wash: linear-gradient(120deg, color-mix(in oklch, var(--brand-teal) 8%, transparent), color-mix(in oklch, var(--brand-violet) 8%, transparent));
 
   --background: oklch(0.985 0.003 255);
   --foreground: oklch(0.24 0.018 262);
@@ -56,11 +52,7 @@
 }
 
 .dark {
-  --brand-wash: linear-gradient(
-    120deg,
-    color-mix(in oklch, var(--brand-teal) 7%, transparent),
-    color-mix(in oklch, var(--brand-violet) 9%, transparent)
-  );
+  --brand-wash: linear-gradient(120deg, color-mix(in oklch, var(--brand-teal) 7%, transparent), color-mix(in oklch, var(--brand-violet) 9%, transparent));
 
   --background: oklch(0.175 0.012 262);
   --foreground: oklch(0.95 0.006 255);
@@ -94,8 +86,7 @@
 }
 
 @theme inline {
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", "Ubuntu Sans", Ubuntu, Cantarell,
-    "Noto Sans", system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", "Ubuntu Sans", Ubuntu, Cantarell, "Noto Sans", system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Ubuntu Sans Mono", "DejaVu Sans Mono", monospace;
 
   --radius-sm: calc(var(--radius) - 4px);

@@ -12,7 +12,18 @@ declare const port: SessionPort
 declare const ports: Omit<Ports, "session">
 
 export const change: SessionChange = { revision: emptySessionRevision, now: 1, edits: [{ kind: "skip", acct, video, playlists: [playlist] }] }
-export const gather: GatherUndo = { id: "engine:1", seq: 1, at: 1, auto: false, acct, playlist, added: [{ video, setVideoId: entry }, { video, setVideoId: null }] }
+export const gather: GatherUndo = {
+  id: "engine:1",
+  seq: 1,
+  at: 1,
+  auto: false,
+  acct,
+  playlist,
+  added: [
+    { video, setVideoId: entry },
+    { video, setVideoId: null }
+  ]
+}
 export const committed: SessionWrite = { kind: "committed", memory, revision: emptySessionRevision, sequence: 1 }
 export const wired: Ports = { ...ports, session: port }
 export const handle: UndoHandle = { kind: "gather", id: "engine:1" }
@@ -47,8 +58,20 @@ export const blindTabDelete: SessionChange = { revision: emptySessionRevision, n
 // @ts-expect-error A canonical tab edit has no browser object or private payload.
 export const privateTab: SessionChange = { revision: emptySessionRevision, now: 1, edits: [{ kind: "tab-seen", tabId: 1, info: { site: "www", signedIn: true, acct, incognito: true } }] }
 
-export const gatherWithClosed: SessionChange = { revision: emptySessionRevision, now: 1, edits: [{ kind: "gather",
-  record: { id: "engine:3", at: 1, auto: false, acct, playlist, added: [{ video, setVideoId: entry }], windowId: 1, closed: [{ url: "https://www.youtube.com/watch?v=x", index: 0, title: "x" }] },
-  recent: { at: 1, playlist: { id: playlist, title: "Later" }, videos: [{ id: video, title: "x" }] } }] }
+export const gatherWithClosed: SessionChange = {
+  revision: emptySessionRevision,
+  now: 1,
+  edits: [
+    {
+      kind: "gather",
+      record: { id: "engine:3", at: 1, auto: false, acct, playlist, added: [{ video, setVideoId: entry }], windowId: 1, closed: [{ url: "https://www.youtube.com/watch?v=x", index: 0, title: "x" }] },
+      recent: { at: 1, playlist: { id: playlist, title: "Later" }, videos: [{ id: video, title: "x" }] }
+    }
+  ]
+}
 // @ts-expect-error negative: session-gather-recent-one-write. A Recent entry rides only on its gather edit, never as its own edit.
-export const loneRecent: SessionChange = { revision: emptySessionRevision, now: 1, edits: [{ kind: "recent-add", recent: { at: 1, playlist: { id: playlist, title: "Later" }, videos: [{ id: video, title: "x" }] } }] }
+export const loneRecent: SessionChange = {
+  revision: emptySessionRevision,
+  now: 1,
+  edits: [{ kind: "recent-add", recent: { at: 1, playlist: { id: playlist, title: "Later" }, videos: [{ id: video, title: "x" }] } }]
+}

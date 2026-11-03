@@ -4,10 +4,13 @@ import { changeFilterChannel } from "./channel-filter-edit"
 import type { ChannelId, PlaylistId } from "../../shared/model"
 
 const origin = { kind: "ui", windowId: 1, incognito: false } as const
-const listed = "UCAAAAAAAAAAAAAAAAAAAAAA" as ChannelId, other = "UCBBBBBBBBBBBBBBBBBBBBBB" as ChannelId
+const listed = "UCAAAAAAAAAAAAAAAAAAAAAA" as ChannelId,
+  other = "UCBBBBBBBBBBBBBBBBBBBBBB" as ChannelId
 const kept = "PL_kept" as PlaylistId
 const worlds: ReturnType<typeof projectionWorld>[] = []
-afterEach(async () => { for (const world of worlds.splice(0)) await world.owner.dispose() })
+afterEach(async () => {
+  for (const world of worlds.splice(0)) await world.owner.dispose()
+})
 function world() {
   const initial = projectionSeed()
   initial.local[`doc:filter:${a}:${kept}`] = doc({ mode: "deny", on: true, channels: [[listed, "Alpha channel", "@alpha"]] })
@@ -15,13 +18,21 @@ function world() {
   worlds.push(created)
   return created
 }
-const stored = (store: ReturnType<typeof world>, playlist: PlaylistId) => store.removal.state().local[`doc:filter:${a}:${playlist}`] as { gen: string; deleted?: true; data?: { mode: string; on: boolean; channels: unknown[][] } }
+const stored = (store: ReturnType<typeof world>, playlist: PlaylistId) =>
+  store.removal.state().local[`doc:filter:${a}:${playlist}`] as { gen: string; deleted?: true; data?: { mode: string; on: boolean; channels: unknown[][] } }
 
 test("the editor lists a typed channel in the filter's own mode and a chip's ✕ unlists it (YT-CF-14)", async () => {
   const store = world()
   const list = { acct: a, playlist: alpha, channel: [other, "Beta channel", "@beta"], mode: null, clearListedChannels: "not-confirmed" } as const
   expect(await store.owner.changeFilterChannel(origin, { ...list, action: "list" })).toEqual({ kind: "result", result: { ok: true } })
-  expect(stored(store, alpha).data).toMatchObject({ mode: "allow", on: true, channels: [[listed, "Alpha channel", "@alpha", "never-send"], [other, "Beta channel", "@beta"]] })
+  expect(stored(store, alpha).data).toMatchObject({
+    mode: "allow",
+    on: true,
+    channels: [
+      [listed, "Alpha channel", "@alpha", "never-send"],
+      [other, "Beta channel", "@beta"]
+    ]
+  })
   expect(await store.owner.changeFilterChannel(origin, { ...list, action: "unlist" })).toEqual({ kind: "result", result: { ok: true } })
   expect(stored(store, alpha).data?.channels.map(row => row[0])).toEqual([listed])
 })
@@ -35,8 +46,19 @@ test("a private window lists nothing, and a playlist the account doesn't auto-ad
 
 test("a 'this channel' control on a filter that's off turns it on in its remembered mode, but the other mode needs confirming first (YT-CF-15)", () => {
   const off = { mode: "deny" as const, on: false, channels: [[listed, "Alpha channel"]] as [string, string][] }
-  const ask = (mode: "allow" | "deny", confirmed = false) => changeFilterChannel({ current: off, channel: [other, "Beta"], action: "list", mode, clearListedChannels: confirmed ? "confirmed" : "not-confirmed" })
-  expect(ask("deny")).toEqual({ kind: "changed", filter: { mode: "deny", on: true, channels: [[listed, "Alpha channel"], [other, "Beta"]] } })
+  const ask = (mode: "allow" | "deny", confirmed = false) =>
+    changeFilterChannel({ current: off, channel: [other, "Beta"], action: "list", mode, clearListedChannels: confirmed ? "confirmed" : "not-confirmed" })
+  expect(ask("deny")).toEqual({
+    kind: "changed",
+    filter: {
+      mode: "deny",
+      on: true,
+      channels: [
+        [listed, "Alpha channel"],
+        [other, "Beta"]
+      ]
+    }
+  })
   expect(ask("allow")).toEqual({ kind: "confirmation-required" })
   expect(ask("allow", true)).toEqual({ kind: "changed", filter: { mode: "allow", on: true, channels: [[other, "Beta"]] } })
   expect(changeFilterChannel({ current: { ...off, on: true }, channel: [other, "Beta"], action: "list", mode: "allow", clearListedChannels: "confirmed" })).toEqual({ kind: "invalid" })

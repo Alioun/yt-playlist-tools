@@ -9,16 +9,23 @@ import type { Ports as AddFlowPorts } from "../add-flow/add-flow"
 type NativeBrowser = typeof import("wxt/browser").browser
 type Dependencies = Parameters<typeof createStartingLocalFilterWriter>[0]
 type StartingOwner = ReturnType<typeof createStartingLocalFilterWriter>
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 export type CompleteOwnerMethods = Check<{ [Name in keyof StartingOwner]: Equal<BrowserStartingOwner[Name], StartingOwner[Name]> }[keyof StartingOwner]>
 export type CanonicalSessionRead = Check<Equal<BrowserStartingOwner["session"]["read"], StartingOwner["readSession"]>>
 export type CanonicalSessionChange = Check<Equal<BrowserStartingOwner["session"]["change"], StartingOwner["changeSession"]>>
 
-function boundaries(native: NativeBrowser, options: BrowserStartingOwnerOptions, owner: BrowserStartingOwner, change: SessionChange,
-  claim: Extract<Dependencies["claim"], { kind: "fixture" }>, removal: Extract<NonNullable<Dependencies["removal"]>, { kind: "fixture" }>,
-  join: Extract<NonNullable<Dependencies["join"]>, { kind: "fixture" }>, recovery: Extract<NonNullable<Dependencies["recovery"]>, { kind: "fixture" }>,
-  canonicalAuthority: Extract<NonNullable<Dependencies["canonicalAuthority"]>, { kind: "fixture" }>) {
+function boundaries(
+  native: NativeBrowser,
+  options: BrowserStartingOwnerOptions,
+  owner: BrowserStartingOwner,
+  change: SessionChange,
+  claim: Extract<Dependencies["claim"], { kind: "fixture" }>,
+  removal: Extract<NonNullable<Dependencies["removal"]>, { kind: "fixture" }>,
+  join: Extract<NonNullable<Dependencies["join"]>, { kind: "fixture" }>,
+  recovery: Extract<NonNullable<Dependencies["recovery"]>, { kind: "fixture" }>,
+  canonicalAuthority: Extract<NonNullable<Dependencies["canonicalAuthority"]>, { kind: "fixture" }>
+) {
   const canonical: StartingOwner = owner
   const receiver: FirstRunReceiverPorts["owner"] = owner
   const session: SessionPort = owner.session
@@ -53,7 +60,9 @@ function boundaries(native: NativeBrowser, options: BrowserStartingOwnerOptions,
   // @ts-expect-error Fixture canonical authority cannot enter native configuration.
   void createBrowserStartingLocalFilterWriter(native, { ...options, canonicalAuthority })
   const settingsImport: Extract<NonNullable<Dependencies["settingsImport"]>, { kind: "fixture" }> = {
-    kind: "fixture", removeLocal: async () => {}, session: removal.session
+    kind: "fixture",
+    removeLocal: async () => {},
+    session: removal.session
   }
   // @ts-expect-error Fixture import cleanup cannot enter native configuration.
   void createBrowserStartingLocalFilterWriter(native, { ...options, settingsImport })

@@ -8,7 +8,10 @@ type Records = Readonly<Record<string, unknown>>
 export function deferred<T>() {
   let resolve!: (value: T) => void
   let reject!: (error: unknown) => void
-  const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no })
+  const promise = new Promise<T>((yes, no) => {
+    resolve = yes
+    reject = no
+  })
   return { promise, resolve, reject }
 }
 
@@ -31,15 +34,16 @@ export function lookupSnapshot(input: { history?: string; generation?: string; c
   const encoded = encodeSyncDocument({
     key: { kind: "settings" },
     document: {
-      v: 1, gen: input.generation ?? "settings-a", at: 100, by: "synthetic-device", data: settings,
+      v: 1,
+      gen: input.generation ?? "settings-a",
+      at: 100,
+      by: "synthetic-device",
+      data: settings,
       extension: input.chunked ? "synthetic extension ".repeat(1_000) : { label: "not part of the review" }
     }
   })
   if (encoded.kind !== "encoded") throw Error("Synthetic Settings must encode")
-  return Object.fromEntries([
-    ["s:meta", { v: 1, id: input.history ?? "synthetic-history-a", created: 50 }],
-    ...encoded.encoded.items.map(item => [item.key, item.value])
-  ])
+  return Object.fromEntries([["s:meta", { v: 1, id: input.history ?? "synthetic-history-a", created: 50 }], ...encoded.encoded.items.map(item => [item.key, item.value])])
 }
 
 export function createLookupFixture(initial: Records = {}) {
@@ -50,8 +54,13 @@ export function createLookupFixture(initial: Records = {}) {
   const delays: number[] = []
   const forbidden: string[] = []
   const effects = {
-    reads: 0, subscriptions: 0, unsubscriptions: 0, delays, timerCancellations: 0,
-    maxConcurrentReads: 0, forbidden
+    reads: 0,
+    subscriptions: 0,
+    unsubscriptions: 0,
+    delays,
+    timerCancellations: 0,
+    maxConcurrentReads: 0,
+    forbidden
   }
   const listeners = new Set<() => void>()
   const savedListeners: (() => void)[] = []
@@ -73,7 +82,10 @@ export function createLookupFixture(initial: Records = {}) {
       effects.subscriptions++
       listeners.add(changed)
       savedListeners.push(changed)
-      return () => { effects.unsubscriptions++; listeners.delete(changed) }
+      return () => {
+        effects.unsubscriptions++
+        listeners.delete(changed)
+      }
     }
   }
   const clock = {
@@ -82,7 +94,10 @@ export function createLookupFixture(initial: Records = {}) {
       effects.delays.push(milliseconds)
       const timer = { at: now + milliseconds, run, cancelled: false }
       timers.push(timer)
-      return () => { effects.timerCancellations++; timer.cancelled = true }
+      return () => {
+        effects.timerCancellations++
+        timer.cancelled = true
+      }
     }
   }
   const deps = { sync, clock, isCurrent: () => current }
@@ -91,27 +106,42 @@ export function createLookupFixture(initial: Records = {}) {
     [sync, ["set", "remove", "clear", "claim", "permissions", "register"]],
     [clock, ["wallNow", "random"]]
   ] satisfies [object, string[]][]) {
-    for (const name of names) Object.defineProperty(target, name, { get() {
-      effects.forbidden.push(name)
-      throw Error(`Prohibited injected port ${name}`)
-    } })
+    for (const name of names)
+      Object.defineProperty(target, name, {
+        get() {
+          effects.forbidden.push(name)
+          throw Error(`Prohibited injected port ${name}`)
+        }
+      })
   }
   return {
-    deps, effects, queuedReads,
+    deps,
+    effects,
+    queuedReads,
     begin: () => beginSyncedChoicesLookup(deps),
-    replaceRecords(next: Records) { records = next },
+    replaceRecords(next: Records) {
+      records = next
+    },
     change(next: Records = records) {
       records = next
       for (const changed of [...listeners]) changed()
     },
-    loseLifetime() { current = false },
+    loseLifetime() {
+      current = false
+    },
     advance(milliseconds: number, fire = true) {
       now += milliseconds
       if (fire) for (const timer of timers) if (!timer.cancelled && timer.at <= now) timer.run()
     },
-    savedChange() { for (const changed of savedListeners) changed() },
-    savedDeadline() { for (const timer of timers) timer.run() },
-    observation() { return { ...copy(effects), activeListeners: listeners.size, activeTimers: timers.filter(timer => !timer.cancelled).length } }
+    savedChange() {
+      for (const changed of savedListeners) changed()
+    },
+    savedDeadline() {
+      for (const timer of timers) timer.run()
+    },
+    observation() {
+      return { ...copy(effects), activeListeners: listeners.size, activeTimers: timers.filter(timer => !timer.cancelled).length }
+    }
   }
 }
 
@@ -124,9 +154,17 @@ export async function runSyncJoinLookupFixture() {
     const result = await lookup.result
     await drainLookup()
     const effects = fixture.observation()
-    if (effects.forbidden.length || effects.activeListeners || effects.activeTimers ||
-        effects.delays.length !== 1 || effects.delays[0] !== 10_000 || effects.timerCancellations !== 1 ||
-        effects.subscriptions !== 1 || effects.unsubscriptions !== 1 || effects.maxConcurrentReads !== 1) {
+    if (
+      effects.forbidden.length ||
+      effects.activeListeners ||
+      effects.activeTimers ||
+      effects.delays.length !== 1 ||
+      effects.delays[0] !== 10_000 ||
+      effects.timerCancellations !== 1 ||
+      effects.subscriptions !== 1 ||
+      effects.unsubscriptions !== 1 ||
+      effects.maxConcurrentReads !== 1
+    ) {
       throw Error(`Lookup lifetime or capability violation in ${name}`)
     }
     cases.push({ name, result, effects })
@@ -139,7 +177,9 @@ export async function runSyncJoinLookupFixture() {
   const found = await record("complete", immediate, immediateLookup)
   if (found.kind !== "found") throw Error("Complete Settings must produce review choices")
   let reviewed: { kind: "draft"; label: "From sync"; features: { -readonly [K in keyof typeof found.features]: boolean } } | null = {
-    kind: "draft", label: "From sync", features: { ...found.features }
+    kind: "draft",
+    label: "From sync",
+    features: { ...found.features }
   }
   const displayed = copy(reviewed)
   reviewed.features.autoAdd = false
@@ -195,7 +235,10 @@ export async function runSyncJoinLookupFixture() {
   const chunked = lookupSnapshot({ chunked: true })
   const pointer = Object.fromEntries(Object.entries(chunked).filter(([key]) => !key.includes("@")))
   const chunks = Object.fromEntries(Object.entries(chunked).filter(([key]) => key.includes("@")))
-  for (const [name, first] of [["pointer-first", pointer], ["chunks-first", { "s:meta": chunked["s:meta"], ...chunks }]] as const) {
+  for (const [name, first] of [
+    ["pointer-first", pointer],
+    ["chunks-first", { "s:meta": chunked["s:meta"], ...chunks }]
+  ] as const) {
     const fixture = createLookupFixture(first)
     const lookup = fixture.begin()
     await drainLookup()

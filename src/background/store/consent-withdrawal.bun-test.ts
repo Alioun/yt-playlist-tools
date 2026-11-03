@@ -36,48 +36,101 @@ test("partial, malformed, newer and exhausted control cannot normalize Device", 
 
 function deferred() {
   let resolve = () => {}
-  const promise = new Promise<void>(done => { resolve = done })
+  const promise = new Promise<void>(done => {
+    resolve = done
+  })
   return { promise, resolve }
 }
-for (const stage of ["observation", "mutation"] as const) test(`Clear all supersedes withdrawal during ${stage}`, async () => {
-  const h = createLifecycleHarness(lifecycleSeeds.current()), deps = h.deps(), entered = deferred(), gate = deferred()
-  if (!deps.consentDevice) throw Error("Missing named consent port")
-  const port = deps.consentDevice
-  let first = true, admitted = false
-  const supervisor = createStoreLifecycle({ ...deps, consentDevice: {
-    async get(keys) { if (admitted && stage === "observation" && first) { first = false; entered.resolve(); await gate.promise } return port.get(keys) },
-    async set(items) { if (stage === "mutation") { entered.resolve(); await gate.promise } await port.set(items) }
-  } })
-  await supervisor.ready()
-  const seed = readConsentDevice(h.stores().local)
-  if (seed.kind !== "supported") throw Error("Missing supported Device")
-  admitted = true
-  const pending = supervisor.withdrawConsent(settingsOrigin, seed.device.consent)
-  expect(supervisor.owner()).toBeUndefined()
-  expect(supervisor.withdrawConsent(settingsOrigin, seed.device.consent)).toBe(pending)
-  await entered.promise
-  const clearing = supervisor.clearAll(settingsOrigin, unticked)
-  expect(await pending).toEqual({ kind: "superseded", by: "clear-all" })
-  if (stage === "observation") {
-    expect((await clearing).kind).toBe("cleared")
-    gate.resolve()
-  } else {
-    for (let turn = 0; turn < 15; turn++) await Promise.resolve()
-    expect(h.calls.some(call => Array.isArray(call) && call[0] === "supervisor" && call[1] === "local.set")).toBe(false)
-    gate.resolve()
-    expect((await clearing).kind).toBe("cleared")
-  }
-  await supervisor.dispose()
-  expect(h.stores()).toEqual({ local: { schema: 1 }, session: {}, database: "absent" })
-})
+for (const stage of ["observation", "mutation"] as const)
+  test(`Clear all supersedes withdrawal during ${stage}`, async () => {
+    const h = createLifecycleHarness(lifecycleSeeds.current()),
+      deps = h.deps(),
+      entered = deferred(),
+      gate = deferred()
+    if (!deps.consentDevice) throw Error("Missing named consent port")
+    const port = deps.consentDevice
+    let first = true,
+      admitted = false
+    const supervisor = createStoreLifecycle({
+      ...deps,
+      consentDevice: {
+        async get(keys) {
+          if (admitted && stage === "observation" && first) {
+            first = false
+            entered.resolve()
+            await gate.promise
+          }
+          return port.get(keys)
+        },
+        async set(items) {
+          if (stage === "mutation") {
+            entered.resolve()
+            await gate.promise
+          }
+          await port.set(items)
+        }
+      }
+    })
+    await supervisor.ready()
+    const seed = readConsentDevice(h.stores().local)
+    if (seed.kind !== "supported") throw Error("Missing supported Device")
+    admitted = true
+    const pending = supervisor.withdrawConsent(settingsOrigin, seed.device.consent)
+    expect(supervisor.owner()).toBeUndefined()
+    expect(supervisor.withdrawConsent(settingsOrigin, seed.device.consent)).toBe(pending)
+    await entered.promise
+    const clearing = supervisor.clearAll(settingsOrigin, unticked)
+    expect(await pending).toEqual({ kind: "superseded", by: "clear-all" })
+    if (stage === "observation") {
+      expect((await clearing).kind).toBe("cleared")
+      gate.resolve()
+    } else {
+      for (let turn = 0; turn < 15; turn++) await Promise.resolve()
+      expect(h.calls.some(call => Array.isArray(call) && call[0] === "supervisor" && call[1] === "local.set")).toBe(false)
+      gate.resolve()
+      expect((await clearing).kind).toBe("cleared")
+    }
+    await supervisor.dispose()
+    expect(h.stores()).toEqual({ local: { schema: 1 }, session: {}, database: "absent" })
+  })
 
 test("withdrawal stops both producers before the first hanging Device read and disposal settles it", async () => {
-  const h = createLifecycleHarness(lifecycleSeeds.current()), deps = h.deps(), gate = deferred(), entered = deferred(), order: string[] = []
+  const h = createLifecycleHarness(lifecycleSeeds.current()),
+    deps = h.deps(),
+    gate = deferred(),
+    entered = deferred(),
+    order: string[] = []
   let admitted = false
-  const supervisor = createStoreLifecycle({ ...deps,
-    startOwner() { const owner = deps.startOwner(); return { ...owner, dispose() { order.push("dispose"); return owner.dispose() } } },
-    producers: { quiesce() { order.push("quiesce"); return deps.producers.quiesce() } },
-    consentDevice: { async get() { if (!admitted) return {}; order.push("read"); entered.resolve(); await gate.promise; return {} }, async set() { throw Error("Unexpected write") } }
+  const supervisor = createStoreLifecycle({
+    ...deps,
+    startOwner() {
+      const owner = deps.startOwner()
+      return {
+        ...owner,
+        dispose() {
+          order.push("dispose")
+          return owner.dispose()
+        }
+      }
+    },
+    producers: {
+      quiesce() {
+        order.push("quiesce")
+        return deps.producers.quiesce()
+      }
+    },
+    consentDevice: {
+      async get() {
+        if (!admitted) return {}
+        order.push("read")
+        entered.resolve()
+        await gate.promise
+        return {}
+      },
+      async set() {
+        throw Error("Unexpected write")
+      }
+    }
   })
   await supervisor.ready()
   admitted = true
@@ -89,42 +142,62 @@ test("withdrawal stops both producers before the first hanging Device read and d
   gate.resolve()
 })
 
-for (const mode of ["exact", "applied-reject", "unchanged-reject", "partial", "read-failed"] as const) test(`withdrawal reports exact persistence separately, ${mode}`, async () => {
-  const h = createLifecycleHarness(lifecycleSeeds.current()), deps = h.deps(), original = deps.consentDevice
-  if (!original) throw Error("Missing consent port")
-  let written = false
-  const supervisor = createStoreLifecycle({ ...deps, consentDevice: {
-    get(keys) { if (written && mode === "read-failed") return Promise.reject(Error("Synthetic readback failure")); return original.get(keys) },
-    async set(items) {
-      if (!("device" in items)) return original.set(items)
-      written = true
-      if (mode === "unchanged-reject") throw Error("Synthetic unchanged rejection")
-      if (mode === "partial") { await original.set(items); return original.set({ ...items, device: { ...items.device, consent: { v: 1, at: 1 } } }) }
-      await original.set(items)
-      if (mode === "applied-reject") throw Error("Synthetic applied rejection")
+for (const mode of ["exact", "applied-reject", "unchanged-reject", "partial", "read-failed"] as const)
+  test(`withdrawal reports exact persistence separately, ${mode}`, async () => {
+    const h = createLifecycleHarness(lifecycleSeeds.current()),
+      deps = h.deps(),
+      original = deps.consentDevice
+    if (!original) throw Error("Missing consent port")
+    let written = false
+    const supervisor = createStoreLifecycle({
+      ...deps,
+      consentDevice: {
+        get(keys) {
+          if (written && mode === "read-failed") return Promise.reject(Error("Synthetic readback failure"))
+          return original.get(keys)
+        },
+        async set(items) {
+          if (!("device" in items)) return original.set(items)
+          written = true
+          if (mode === "unchanged-reject") throw Error("Synthetic unchanged rejection")
+          if (mode === "partial") {
+            await original.set(items)
+            return original.set({ ...items, device: { ...items.device, consent: { v: 1, at: 1 } } })
+          }
+          await original.set(items)
+          if (mode === "applied-reject") throw Error("Synthetic applied rejection")
+        }
+      }
+    })
+    await supervisor.ready()
+    const read = readConsentDevice(h.stores().local)
+    if (read.kind !== "supported") throw Error("Missing Device")
+    const before = h.stores(),
+      events: unknown[] = []
+    supervisor.subscribe(event => {
+      events.push(event)
+    })
+    const result = await supervisor.withdrawConsent(settingsOrigin, read.device.consent)
+    expect(result.kind).toBe(mode === "exact" || mode === "applied-reject" ? "withdrawn" : mode === "unchanged-reject" ? "failed" : "unconfirmed")
+    if (result.kind === "withdrawn") {
+      expect(supervisor.state().kind).toBe("held")
+      expect(result.write.kind).toBe(mode === "applied-reject" ? "rejected" : "resolved")
+      const after = h.stores(),
+        projected = { ...after.local }
+      projected.device = before.local.device!
+      delete projected["consent:state"]
+      expect({ ...after, local: projected }).toEqual(before)
+    } else {
+      expect(events).toEqual([])
+      expect(supervisor.owner()).toBeUndefined()
     }
-  } })
-  await supervisor.ready()
-  const read = readConsentDevice(h.stores().local)
-  if (read.kind !== "supported") throw Error("Missing Device")
-  const before = h.stores(), events: unknown[] = []
-  supervisor.subscribe(event => { events.push(event) })
-  const result = await supervisor.withdrawConsent(settingsOrigin, read.device.consent)
-  expect(result.kind).toBe(mode === "exact" || mode === "applied-reject" ? "withdrawn" : mode === "unchanged-reject" ? "failed" : "unconfirmed")
-  if (result.kind === "withdrawn") {
-    expect(supervisor.state().kind).toBe("held")
-    expect(result.write.kind).toBe(mode === "applied-reject" ? "rejected" : "resolved")
-    const after = h.stores(), projected = { ...after.local }
-    projected.device = before.local.device!
-    delete projected["consent:state"]
-    expect({ ...after, local: projected }).toEqual(before)
-  } else { expect(events).toEqual([]); expect(supervisor.owner()).toBeUndefined() }
-  expect(h.ledger.syncCalls).toBe(0)
-  await supervisor.dispose()
-})
+    expect(h.ledger.syncCalls).toBe(0)
+    await supervisor.dispose()
+  })
 
 test("repeated withdrawal and agreement advance generation while preserving the first historical basis", async () => {
-  const h = createLifecycleHarness(lifecycleSeeds.current()), supervisor = createStoreLifecycle(h.deps())
+  const h = createLifecycleHarness(lifecycleSeeds.current()),
+    supervisor = createStoreLifecycle(h.deps())
   await supervisor.ready()
   const first = readConsentDevice(h.stores().local)
   if (first.kind !== "supported" || !first.device.consent) throw Error("Missing Device")
@@ -134,7 +207,9 @@ test("repeated withdrawal and agreement advance generation while preserving the 
     if (!owner) throw Error("Missing held owner")
     const review = await owner.readAgreement({ kind: "ui", windowId: 1, incognito: false })
     if (review.kind !== "review") throw Error("Missing held agreement")
-    expect((await owner.agree({ kind: "ui", windowId: 1, incognito: false }, { review: review.review, displayedVersion: 1, choice: { kind: "disclosure" }, access: new Promise(() => {}) })).kind).toBe("committed")
+    expect((await owner.agree({ kind: "ui", windowId: 1, incognito: false }, { review: review.review, displayedVersion: 1, choice: { kind: "disclosure" }, access: new Promise(() => {}) })).kind).toBe(
+      "committed"
+    )
     const current = readConsentDevice(h.stores().local)
     if (current.kind !== "supported") throw Error("Missing current Device")
     expect((await supervisor.withdrawConsent(settingsOrigin, current.device.consent)).kind).toBe("withdrawn")
@@ -150,7 +225,8 @@ test("a failed owner stop writes no consent and an explicit Clear all retries it
   const h = createLifecycleHarness(lifecycleSeeds.current(), { faults: [{ port: "owner.dispose", occurrence: 1, mode: "reject" }] })
   const supervisor = createStoreLifecycle(h.deps())
   await supervisor.ready()
-  const before = h.stores(), read = readConsentDevice(before.local)
+  const before = h.stores(),
+    read = readConsentDevice(before.local)
   if (read.kind !== "supported") throw Error("Missing Device")
   expect(await supervisor.withdrawConsent(settingsOrigin, read.device.consent)).toMatchObject({ kind: "failed", stage: "stop", shutdown: { kind: "unconfirmed" } })
   expect(h.stores()).toEqual(before)
@@ -160,31 +236,43 @@ test("a failed owner stop writes no consent and an explicit Clear all retries it
 })
 
 test("a first Device-only final effect retains confirmed withdrawal intent across a real restart", async () => {
-  const h = createLifecycleHarness(lifecycleSeeds.current()), deps = h.deps(), port = deps.consentDevice
+  const h = createLifecycleHarness(lifecycleSeeds.current()),
+    deps = h.deps(),
+    port = deps.consentDevice
   if (!port) throw Error("Missing consent port")
-  const writes: string[][] = [], confirmations: unknown[] = []
-  const supervisor = createStoreLifecycle({ ...deps, consentDevice: {
-    async get(keys) { const records = await port.get(keys); confirmations.push(records); return records },
-    async set(items) {
-      writes.push(Object.keys(items))
-      if ("device" in items) {
-        expect(confirmations.some(records => typeof records === "object" && records !== null &&
-          "consent:state" in records && JSON.stringify(records).includes('"withdrawing"'))).toBe(true)
-        const current = await port.get(["schema", "device", "consent:state"])
-        const control = parseConsentState(current["consent:state"])
-        if (!control) throw Error("Missing confirmed intent")
-        await port.set({ ...items, "consent:state": control })
-      } else await port.set(items)
+  const writes: string[][] = [],
+    confirmations: unknown[] = []
+  const supervisor = createStoreLifecycle({
+    ...deps,
+    consentDevice: {
+      async get(keys) {
+        const records = await port.get(keys)
+        confirmations.push(records)
+        return records
+      },
+      async set(items) {
+        writes.push(Object.keys(items))
+        if ("device" in items) {
+          expect(confirmations.some(records => typeof records === "object" && records !== null && "consent:state" in records && JSON.stringify(records).includes('"withdrawing"'))).toBe(true)
+          const current = await port.get(["schema", "device", "consent:state"])
+          const control = parseConsentState(current["consent:state"])
+          if (!control) throw Error("Missing confirmed intent")
+          await port.set({ ...items, "consent:state": control })
+        } else await port.set(items)
+      }
     }
-  } })
+  })
   await supervisor.ready()
-  const before = h.stores(), parsed = readConsentDevice(before.local)
+  const before = h.stores(),
+    parsed = readConsentDevice(before.local)
   if (parsed.kind !== "supported") throw Error("Missing Device")
   const result = await supervisor.withdrawConsent(settingsOrigin, parsed.device.consent)
   expect(writes[0]).toEqual(["consent:state"])
   expect(result.kind).toBe("unconfirmed")
   await supervisor.dispose()
-  const persisted = h.stores(), restart = createLifecycleHarness(persisted), next = createStoreLifecycle(restart.deps())
+  const persisted = h.stores(),
+    restart = createLifecycleHarness(persisted),
+    next = createStoreLifecycle(restart.deps())
   await next.ready()
   expect(next.state().kind).toBe("held")
   expect(restart.stores()).toEqual(persisted)
@@ -199,54 +287,91 @@ test("actual intent and final fault histories hold at every serialized restart b
 })
 
 for (const target of ["initial-read", "baseline-read", "intent-write", "intent-readback", "final-baseline", "final-write", "final-readback"] as const) {
-  for (const action of ["clear-all", "dispose"] as const) test(`${action} supersedes a hanging ${target} without a later effect`, async () => {
-    const h = createLifecycleHarness(lifecycleSeeds.current()), deps = h.deps(), port = deps.consentDevice, entered = deferred(), gate = deferred()
-    if (!port) throw Error("Missing consent port")
-    let reads = 0, writes = 0, erased = false, disposed = false, admitted = false
-    const targetRead = target === "initial-read" ? 1 : target === "baseline-read" ? 2 : target === "intent-readback" ? 3 : target === "final-baseline" ? 4 : target === "final-readback" ? 5 : 0
-    const targetWrite = target === "intent-write" ? 1 : target === "final-write" ? 2 : 0
-    const supervisor = createStoreLifecycle({ ...deps, consentDevice: {
-      async get(keys) { const records = await port.get(keys); if (admitted && ++reads === targetRead) { entered.resolve(); await gate.promise }; return records },
-      async set(items) { if (++writes === targetWrite) { entered.resolve(); await gate.promise }; expect(erased).toBe(false); await port.set(items) }
-    } })
-    await supervisor.ready()
-    admitted = true
-    const read = readConsentDevice(h.stores().local)
-    if (read.kind !== "supported") throw Error("Missing Device")
-    const pending = supervisor.withdrawConsent(settingsOrigin, read.device.consent)
-    expect(supervisor.withdrawConsent(settingsOrigin, read.device.consent)).toBe(pending)
-    expect(await supervisor.withdrawConsent(settingsOrigin, { v: 1, at: 999 })).toEqual({ kind: "unavailable", reason: "withdrawal-in-progress" })
-    await entered.promise
-    const invoked = writes
-    const completion = action === "clear-all" ? supervisor.clearAll(settingsOrigin, unticked).then(result => { expect(result.kind).toBe("cleared"); erased = true }) : supervisor.dispose().then(() => { disposed = true })
-    expect(await pending).toEqual({ kind: "superseded", by: action })
-    if (targetWrite) {
+  for (const action of ["clear-all", "dispose"] as const)
+    test(`${action} supersedes a hanging ${target} without a later effect`, async () => {
+      const h = createLifecycleHarness(lifecycleSeeds.current()),
+        deps = h.deps(),
+        port = deps.consentDevice,
+        entered = deferred(),
+        gate = deferred()
+      if (!port) throw Error("Missing consent port")
+      let reads = 0,
+        writes = 0,
+        erased = false,
+        disposed = false,
+        admitted = false
+      const targetRead = target === "initial-read" ? 1 : target === "baseline-read" ? 2 : target === "intent-readback" ? 3 : target === "final-baseline" ? 4 : target === "final-readback" ? 5 : 0
+      const targetWrite = target === "intent-write" ? 1 : target === "final-write" ? 2 : 0
+      const supervisor = createStoreLifecycle({
+        ...deps,
+        consentDevice: {
+          async get(keys) {
+            const records = await port.get(keys)
+            if (admitted && ++reads === targetRead) {
+              entered.resolve()
+              await gate.promise
+            }
+            return records
+          },
+          async set(items) {
+            if (++writes === targetWrite) {
+              entered.resolve()
+              await gate.promise
+            }
+            expect(erased).toBe(false)
+            await port.set(items)
+          }
+        }
+      })
+      await supervisor.ready()
+      admitted = true
+      const read = readConsentDevice(h.stores().local)
+      if (read.kind !== "supported") throw Error("Missing Device")
+      const pending = supervisor.withdrawConsent(settingsOrigin, read.device.consent)
+      expect(supervisor.withdrawConsent(settingsOrigin, read.device.consent)).toBe(pending)
+      expect(await supervisor.withdrawConsent(settingsOrigin, { v: 1, at: 999 })).toEqual({ kind: "unavailable", reason: "withdrawal-in-progress" })
+      await entered.promise
+      const invoked = writes
+      const completion =
+        action === "clear-all"
+          ? supervisor.clearAll(settingsOrigin, unticked).then(result => {
+              expect(result.kind).toBe("cleared")
+              erased = true
+            })
+          : supervisor.dispose().then(() => {
+              disposed = true
+            })
+      expect(await pending).toEqual({ kind: "superseded", by: action })
+      if (targetWrite) {
+        for (let turn = 0; turn < 20; turn++) await Promise.resolve()
+        expect(erased).toBe(false)
+        expect(disposed).toBe(false)
+        expect(h.calls.some(call => Array.isArray(call) && call[0] === "supervisor" && call[1] === "local.set")).toBe(false)
+        gate.resolve()
+        await completion
+      } else {
+        await completion
+        gate.resolve()
+      }
+      await supervisor.dispose()
       for (let turn = 0; turn < 20; turn++) await Promise.resolve()
-      expect(erased).toBe(false)
-      expect(disposed).toBe(false)
-      expect(h.calls.some(call => Array.isArray(call) && call[0] === "supervisor" && call[1] === "local.set")).toBe(false)
-      gate.resolve()
-      await completion
-    } else {
-      await completion
-      gate.resolve()
-    }
-    await supervisor.dispose()
-    for (let turn = 0; turn < 20; turn++) await Promise.resolve()
-    expect(writes).toBe(invoked)
-    if (action === "clear-all") expect(h.stores()).toEqual({ local: { schema: 1 }, session: {}, database: "absent" })
-    expect(h.ledger.liveOwners).toBe(0)
-    expect(h.ledger.exclusionViolations).toBe(0)
-  })
+      expect(writes).toBe(invoked)
+      if (action === "clear-all") expect(h.stores()).toEqual({ local: { schema: 1 }, session: {}, database: "absent" })
+      expect(h.ledger.liveOwners).toBe(0)
+      expect(h.ledger.exclusionViolations).toBe(0)
+    })
 }
 
 test("a confirmed withdrawal event can reenter Clear all without reviving either consent record", async () => {
-  const h = createLifecycleHarness(lifecycleSeeds.current()), supervisor = createStoreLifecycle(h.deps())
+  const h = createLifecycleHarness(lifecycleSeeds.current()),
+    supervisor = createStoreLifecycle(h.deps())
   await supervisor.ready()
   const read = readConsentDevice(h.stores().local)
   if (read.kind !== "supported") throw Error("Missing Device")
   let clearing: ReturnType<typeof supervisor.clearAll> | undefined
-  supervisor.subscribe(event => { if (event.kind === "consent-withdrawn") clearing = supervisor.clearAll(settingsOrigin, unticked) })
+  supervisor.subscribe(event => {
+    if (event.kind === "consent-withdrawn") clearing = supervisor.clearAll(settingsOrigin, unticked)
+  })
   const result = await supervisor.withdrawConsent(settingsOrigin, read.device.consent)
   expect(result).toEqual({ kind: "superseded", by: "clear-all" })
   expect((await clearing)?.kind).toBe("cleared")
@@ -255,44 +380,52 @@ test("a confirmed withdrawal event can reenter Clear all without reviving either
   expect(h.ledger.exclusionViolations).toBe(0)
 })
 
-for (const deviceApplied of [false, true]) test(`explicit retry completes the same intent with ${deviceApplied ? "null" : "original"} Device consent`, async () => {
-  const h = createLifecycleHarness(lifecycleSeeds.current()), deps = h.deps(), port = deps.consentDevice
-  if (!port) throw Error("Missing port")
-  const supervisor = createStoreLifecycle({ ...deps, consentDevice: {
-    get: keys => port.get(keys),
-    async set(items) {
-      if (!("device" in items)) return port.set(items)
-      if (deviceApplied) {
-        const read = readConsentDevice(await port.get(["schema", "device", "consent:state"]))
-        if (read.kind !== "supported" || !read.control) throw Error("Missing intent")
-        await port.set({ device: items.device, "consent:state": read.control })
+for (const deviceApplied of [false, true])
+  test(`explicit retry completes the same intent with ${deviceApplied ? "null" : "original"} Device consent`, async () => {
+    const h = createLifecycleHarness(lifecycleSeeds.current()),
+      deps = h.deps(),
+      port = deps.consentDevice
+    if (!port) throw Error("Missing port")
+    const supervisor = createStoreLifecycle({
+      ...deps,
+      consentDevice: {
+        get: keys => port.get(keys),
+        async set(items) {
+          if (!("device" in items)) return port.set(items)
+          if (deviceApplied) {
+            const read = readConsentDevice(await port.get(["schema", "device", "consent:state"]))
+            if (read.kind !== "supported" || !read.control) throw Error("Missing intent")
+            await port.set({ device: items.device, "consent:state": read.control })
+          }
+          throw Error("Synthetic incomplete final write")
+        }
       }
-      throw Error("Synthetic incomplete final write")
-    }
-  } })
-  await supervisor.ready()
-  const original = readConsentDevice(h.stores().local)
-  if (original.kind !== "supported" || !original.device.consent) throw Error("Missing original agreement")
-  expect((await supervisor.withdrawConsent(settingsOrigin, original.device.consent)).kind).toBe(deviceApplied ? "unconfirmed" : "failed")
-  await supervisor.dispose()
-  const seed = h.stores(), intent = readConsentDevice(seed.local)
-  if (intent.kind !== "supported" || intent.control?.state.kind !== "withdrawing") throw Error("Missing persisted intent")
-  expect(agreementItems(intent, 1000)).toBeUndefined()
-  expect(sameSyncJson(withdrawalIntentItems(intent)?.["consent:state"] ?? null, intent.control)).toBe(true)
-  const restarted = createLifecycleHarness(seed), next = createStoreLifecycle(restarted.deps())
-  await next.ready()
-  expect(next.state().kind).toBe("held")
-  const owner = next.owner()
-  if (!owner) throw Error("Missing held owner")
-  expect(await owner.readAgreement({ kind: "ui", windowId: 1, incognito: false })).toEqual({ kind: "unavailable", reason: "consent-held" })
-  expect(restarted.stores()).toEqual(seed)
-  expect(restarted.calls.filter(call => Array.isArray(call) && call.includes("local.set"))).toEqual([])
-  const result = await next.withdrawConsent(settingsOrigin, original.device.consent)
-  expect(result.kind).toBe("withdrawn")
-  const final = readConsentDevice(restarted.stores().local)
-  if (final.kind !== "supported") throw Error("Invalid final pair")
-  expect(final.control?.state.kind).toBe("withdrawn")
-  expect(final.control?.generation).toBe(intent.control.generation)
-  expect(final.device.consent).toBeNull()
-  await next.dispose()
-})
+    })
+    await supervisor.ready()
+    const original = readConsentDevice(h.stores().local)
+    if (original.kind !== "supported" || !original.device.consent) throw Error("Missing original agreement")
+    expect((await supervisor.withdrawConsent(settingsOrigin, original.device.consent)).kind).toBe(deviceApplied ? "unconfirmed" : "failed")
+    await supervisor.dispose()
+    const seed = h.stores(),
+      intent = readConsentDevice(seed.local)
+    if (intent.kind !== "supported" || intent.control?.state.kind !== "withdrawing") throw Error("Missing persisted intent")
+    expect(agreementItems(intent, 1000)).toBeUndefined()
+    expect(sameSyncJson(withdrawalIntentItems(intent)?.["consent:state"] ?? null, intent.control)).toBe(true)
+    const restarted = createLifecycleHarness(seed),
+      next = createStoreLifecycle(restarted.deps())
+    await next.ready()
+    expect(next.state().kind).toBe("held")
+    const owner = next.owner()
+    if (!owner) throw Error("Missing held owner")
+    expect(await owner.readAgreement({ kind: "ui", windowId: 1, incognito: false })).toEqual({ kind: "unavailable", reason: "consent-held" })
+    expect(restarted.stores()).toEqual(seed)
+    expect(restarted.calls.filter(call => Array.isArray(call) && call.includes("local.set"))).toEqual([])
+    const result = await next.withdrawConsent(settingsOrigin, original.device.consent)
+    expect(result.kind).toBe("withdrawn")
+    const final = readConsentDevice(restarted.stores().local)
+    if (final.kind !== "supported") throw Error("Invalid final pair")
+    expect(final.control?.state.kind).toBe("withdrawn")
+    expect(final.control?.generation).toBe(intent.control.generation)
+    expect(final.device.consent).toBeNull()
+    await next.dispose()
+  })

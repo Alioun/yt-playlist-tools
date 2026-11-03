@@ -17,8 +17,7 @@ test("Tabs supplies the real owner with its authenticated normal, private and si
   const window = await fakeBrowser.windows.create({ incognito: false })
   if (window?.id === undefined) throw Error("Fixture window missing")
   const native = createBrowserTabs(fakeBrowser, { build, deadline: h.clock.after })
-  const accounts = bindNativeRoutingAccounts({ owner: h.owner, native,
-    sender: { id: fakeBrowser.runtime.id, url: fakeBrowser.runtime.getURL("/popup.html") }, popupWindowId: window.id })
+  const accounts = bindNativeRoutingAccounts({ owner: h.owner, native, sender: { id: fakeBrowser.runtime.id, url: fakeBrowser.runtime.getURL("/popup.html") }, popupWindowId: window.id })
   const engine = createTabs({ ...h.ports, accounts })
   const reads: TabProjectionRead[] = []
   const producer: TabViewProducer<FixtureView> = {
@@ -46,9 +45,15 @@ test("Tabs supplies the real owner with its authenticated normal, private and si
     try {
       expect(await restarted.accountInView(normal)).toEqual({ kind: "account", source: "active", tabId: 1, signedIn: true, acct: a })
       expect(await restarted.accountInView({ ...normal, activeTabId: 3 })).toEqual({ kind: "account", source: "active", tabId: 3, signedIn: false, acct: null })
-    } finally { restarted.dispose() }
+    } finally {
+      restarted.dispose()
+    }
     expect(JSON.stringify(reads[0])).not.toContain(b)
-  } finally { engine.dispose(); native.dispose(); await h.dispose() }
+  } finally {
+    engine.dispose()
+    native.dispose()
+    await h.dispose()
+  }
 })
 
 test("routing account bindings authenticate each caller and recheck Setup reads", async () => {
@@ -58,8 +63,7 @@ test("routing account bindings authenticate each caller and recheck Setup reads"
   const native = createBrowserTabs(fakeBrowser, { build, deadline: h.clock.after })
   const trusted = { id: fakeBrowser.runtime.id, url: fakeBrowser.runtime.getURL("/popup.html") }
   const first = bindNativeRoutingAccounts({ owner: h.owner, native, sender: trusted, popupWindowId: window.id })
-  const foreign = bindNativeRoutingAccounts({ owner: h.owner, native,
-    sender: { ...trusted, id: "foreign-extension" }, popupWindowId: window.id })
+  const foreign = bindNativeRoutingAccounts({ owner: h.owner, native, sender: { ...trusted, id: "foreign-extension" }, popupWindowId: window.id })
   try {
     expect(await first.lastAccount()).toBe(b)
     const before = h.removal.io.length
@@ -73,5 +77,8 @@ test("routing account bindings authenticate each caller and recheck Setup reads"
       return result
     }
     expect(await first.hasSetup(b)).toBe(false)
-  } finally { native.dispose(); await h.dispose() }
+  } finally {
+    native.dispose()
+    await h.dispose()
+  }
 })

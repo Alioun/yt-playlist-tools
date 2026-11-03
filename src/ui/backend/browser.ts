@@ -19,10 +19,21 @@ const origins = { www: "https://www.youtube.com/*", music: "https://music.youtub
 
 export function createBrowserBackend(native: BrowserBackendPort, options: BackendOptions & { readonly browser: "chrome" | "firefox" }) {
   function contains(query: PermissionQuery): Promise<boolean> {
-    try { return native.permissions.contains(query).then(value => value === true, () => false) } catch { return Promise.resolve(false) }
+    try {
+      return native.permissions.contains(query).then(
+        value => value === true,
+        () => false
+      )
+    } catch {
+      return Promise.resolve(false)
+    }
   }
-  function has(site: Site) { return contains({ origins: [origins[site]] }) }
-  function hasBrowserMenu() { return contains({ permissions: ["contextMenus"] }) }
+  function has(site: Site) {
+    return contains({ origins: [origins[site]] })
+  }
+  function hasBrowserMenu() {
+    return contains({ permissions: ["contextMenus"] })
+  }
   function requestCombined(needs: PermissionNeeds): Promise<PermissionGrant> {
     let prompt: Promise<boolean> = Promise.resolve(false)
     try {
@@ -32,37 +43,45 @@ export function createBrowserBackend(native: BrowserBackendPort, options: Backen
       if (needs.browserMenu && manifest.optional_permissions?.includes("contextMenus")) query.permissions = ["contextMenus"]
       if (query.origins || query.permissions) prompt = native.permissions.request(query)
     } catch {}
-    return prompt.catch(() => false).then(async () => {
-      const [music, browserMenu] = await Promise.all([has("music"), hasBrowserMenu()])
-      return { music, browserMenu }
-    })
+    return prompt
+      .catch(() => false)
+      .then(async () => {
+        const [music, browserMenu] = await Promise.all([has("music"), hasBrowserMenu()])
+        return { music, browserMenu }
+      })
   }
   function request(site: Site): Promise<boolean> {
     if (site === "music") return requestCombined({ music: true, browserMenu: false }).then(grant => grant.music)
     return has("www")
   }
   const access: Access = { has, request, requestCombined, hasBrowserMenu }
-  return createBackend({
-    local: {
-      get: keys => native.storage.local.get([...keys]),
-      all: () => native.storage.local.get(null),
-      onChanged: native.storage.onChanged
-    },
-    send: message => native.runtime.sendMessage(message), access,
-    pushes: { listen(receive) {
-      const onMessage = native.runtime.onMessage
-      if (!onMessage) return () => {}
-      // Only the background reaches pages without a sender tab; a content script's message names its tab.
-      const listener = (message: unknown, sender: { readonly id?: string; readonly tab?: unknown }, respond: (answer?: unknown) => void) => {
-        if (sender.tab !== undefined || sender.id !== native.runtime.id) return false
-        const answer = receive(message)
-        if (answer !== undefined) respond(answer)
-        return false
+  return createBackend(
+    {
+      local: {
+        get: keys => native.storage.local.get([...keys]),
+        all: () => native.storage.local.get(null),
+        onChanged: native.storage.onChanged
+      },
+      send: message => native.runtime.sendMessage(message),
+      access,
+      pushes: {
+        listen(receive) {
+          const onMessage = native.runtime.onMessage
+          if (!onMessage) return () => {}
+          // Only the background reaches pages without a sender tab; a content script's message names its tab.
+          const listener = (message: unknown, sender: { readonly id?: string; readonly tab?: unknown }, respond: (answer?: unknown) => void) => {
+            if (sender.tab !== undefined || sender.id !== native.runtime.id) return false
+            const answer = receive(message)
+            if (answer !== undefined) respond(answer)
+            return false
+          }
+          onMessage.addListener(listener as never)
+          return () => onMessage.removeListener(listener as never)
+        }
       }
-      onMessage.addListener(listener as never)
-      return () => onMessage.removeListener(listener as never)
-    } }
-  }, options)
+    },
+    options
+  )
 }
 
 export type BrowserLocalizationPort = { readonly i18n: { readonly getMessage: unknown; getUILanguage(): string } }
@@ -70,9 +89,15 @@ export type BrowserLocalizationPort = { readonly i18n: { readonly getMessage: un
 export function createBrowserI18n(native: BrowserLocalizationPort, catalogue: CanonicalCatalogue) {
   const getMessage = native.i18n.getMessage
   if (typeof getMessage !== "function") throw new TypeError("Native localization getMessage is unavailable")
-  return createSiteI18n({ getMessage(name, substitutions) {
-    const result: unknown = Reflect.apply(getMessage, native.i18n, [name, substitutions])
-    if (typeof result !== "string") throw new TypeError("Native localization result is not text")
-    return result
-  } }, native.i18n.getUILanguage(), catalogue)
+  return createSiteI18n(
+    {
+      getMessage(name, substitutions) {
+        const result: unknown = Reflect.apply(getMessage, native.i18n, [name, substitutions])
+        if (typeof result !== "string") throw new TypeError("Native localization result is not text")
+        return result
+      }
+    },
+    native.i18n.getUILanguage(),
+    catalogue
+  )
 }

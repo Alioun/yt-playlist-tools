@@ -47,7 +47,10 @@ export type Settings = {
   undoKey: Key | null
   autoAdd: { on: boolean; feedback: boolean; pct: number; toolbarTick: boolean; toolbarPaused: boolean }
   shortcuts: {
-    on: boolean; feedback: boolean; music: boolean; preset: boolean
+    on: boolean
+    feedback: boolean
+    music: boolean
+    preset: boolean
     picker: Key | null
     list: Shortcut[]
   }
@@ -58,23 +61,30 @@ export type Settings = {
   browserMenu: { on: boolean; feedback: boolean }
   musicSection: boolean
   musicActions: {
-    on: boolean; feedback: boolean; preset: boolean
+    on: boolean
+    feedback: boolean
+    preset: boolean
     buttons: Record<MusicAction | "bar", boolean>
   }
   musicKeys: {
-    on: boolean; feedback: boolean; preset: boolean
+    on: boolean
+    feedback: boolean
+    preset: boolean
     keys: Record<MusicAction | "picker", Key | null>
   }
   anyTabKeys: { on: boolean; feedback: boolean }
   gather: {
-    on: boolean; feedback: boolean
+    on: boolean
+    feedback: boolean
     to: "player" | "queue" | "playlist"
     order: GatherOrder
     close: boolean
     auto: {
-      unvisited: boolean; after: "1h" | "1d" | "1w"
+      unvisited: boolean
+      after: "1h" | "1d" | "1w"
       background: boolean
-      count: boolean; n: 5 | 10 | 15 | 20 | 30 | 50
+      count: boolean
+      n: 5 | 10 | 15 | 20 | 30 | 50
     }
   }
 }

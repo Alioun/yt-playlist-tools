@@ -23,14 +23,14 @@ export function createPlaylistOperation(call: Backend["call"], request: Request,
   let waiting: number | null = null
   let pending: Promise<RpcOutcome<UiPlaylistAnswer>> | undefined
   const closed = (): RpcOutcome<UiPlaylistAnswer> => ({ kind: "failed", failure: "disposed" })
-  const opened = active ? call("ui.playlists", { action: "open", operation, acct: request.acct, site: request.site, refresh: request.refresh === true })
-    .then(answer => active ? correlated(answer, "open") : closed())
-    : Promise.resolve(availability === "capacity" ? { kind: "answered", result: { kind: "unavailable", reason: "capacity" } } satisfies RpcOutcome<UiPlaylistAnswer> : closed())
+  const opened = active
+    ? call("ui.playlists", { action: "open", operation, acct: request.acct, site: request.site, refresh: request.refresh === true }).then(answer => (active ? correlated(answer, "open") : closed()))
+    : Promise.resolve(availability === "capacity" ? ({ kind: "answered", result: { kind: "unavailable", reason: "capacity" } } satisfies RpcOutcome<UiPlaylistAnswer>) : closed())
   function correlated(answer: RpcOutcome<UiPlaylistAnswer>, kind: "open" | "refreshed"): RpcOutcome<UiPlaylistAnswer> {
     if (answer.kind !== "answered" || answer.result.kind === "unavailable") return answer
-    return answer.result.kind === kind && answer.result.operation === operation
-      && (answer.result.kind !== "refreshed" || answer.result.generation === generation)
-      ? answer : { kind: "failed", failure: "invalid-answer" }
+    return answer.result.kind === kind && answer.result.operation === operation && (answer.result.kind !== "refreshed" || answer.result.generation === generation)
+      ? answer
+      : { kind: "failed", failure: "invalid-answer" }
   }
   function refresh(): Promise<RpcOutcome<UiPlaylistAnswer>> {
     if (!active) return Promise.resolve(closed())
@@ -51,15 +51,21 @@ export function createPlaylistOperation(call: Backend["call"], request: Request,
       return result
     })()
     pending = work
-    void work.then(() => { if (pending === work) pending = undefined }, () => { if (pending === work) pending = undefined })
+    void work.then(
+      () => {
+        if (pending === work) pending = undefined
+      },
+      () => {
+        if (pending === work) pending = undefined
+      }
+    )
     return work
   }
   return {
     opened,
     async cachedList() {
       const answer = await opened
-      return active && answer.kind === "answered" && answer.result.kind === "open" && answer.result.cached !== null
-        ? pickerListing(answer.result.cached) : null
+      return active && answer.kind === "answered" && answer.result.kind === "open" && answer.result.cached !== null ? pickerListing(answer.result.cached) : null
     },
     refresh,
     async freshList(): Promise<ListAnswer> {

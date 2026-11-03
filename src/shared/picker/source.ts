@@ -7,15 +7,11 @@ export type ListAnswer = { readonly kind: "listed"; readonly listing: Listing } 
 export type MembershipAnswer = { readonly kind: "read"; readonly rows: readonly MembershipRow[] } | { readonly kind: "unreadable" }
 /** The owner's Undo for a confirmed change. The caller decides where it is offered. */
 export type Undo = () => Promise<{ readonly kind: "undone" | "failed" }>
-export type AddAnswer =
-  | { readonly kind: "added"; readonly entry: SetVideoId; readonly undo: Undo }
-  | { readonly kind: "already-in" | "failed" }
+export type AddAnswer = { readonly kind: "added"; readonly entry: SetVideoId; readonly undo: Undo } | { readonly kind: "already-in" | "failed" }
 export type RemoveAnswer = { readonly kind: "removed"; readonly undo: Undo } | { readonly kind: "failed" }
 /** YT-NEW-07's rows, as the source recognised them. */
 export type CreateFailure = "rateLimited" | "publicCap" | "noChannel" | "notAllowed" | "failed"
-export type CreateAnswer =
-  | { readonly kind: "created"; readonly id: PlaylistId; readonly undo: Undo | null }
-  | { readonly kind: "failed"; readonly reason: CreateFailure }
+export type CreateAnswer = { readonly kind: "created"; readonly id: PlaylistId; readonly undo: Undo | null } | { readonly kind: "failed"; readonly reason: CreateFailure }
 export type NewPlaylist = { readonly title: string; readonly privacy: Privacy }
 export type Mark = Setup["marks"][string]
 

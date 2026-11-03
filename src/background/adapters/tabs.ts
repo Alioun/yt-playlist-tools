@@ -1,5 +1,18 @@
 import { isBuildId, type BuildId, type Site } from "../../shared/contracts/vocabulary"
-import { isTabPing, tabHelloMessages, tabJobMessages, tabMessages, tabPingMessages, type TabHello, type TabHelloMessages, type TabJobMessages, type TabMessages, type TabPingMessages, type TabPing, type TabViewScope } from "../../shared/contracts/tabs"
+import {
+  isTabPing,
+  tabHelloMessages,
+  tabJobMessages,
+  tabMessages,
+  tabPingMessages,
+  type TabHello,
+  type TabHelloMessages,
+  type TabJobMessages,
+  type TabMessages,
+  type TabPingMessages,
+  type TabPing,
+  type TabViewScope
+} from "../../shared/contracts/tabs"
 import type { Job, JobInvocation, JobResult } from "../../shared/contracts/jobs"
 import { createRpc, createRpcCaller, type Deadline, type RpcOutcome } from "../../shared/rpc/rpc"
 import { authenticateTab, runtimeTransport, tabTarget, type RuntimePort, type TabsPort } from "./runtime"
@@ -23,7 +36,9 @@ function siteOf(url: string | undefined): Site | null {
     const parsed = new URL(url)
     if (parsed.protocol !== "https:" || parsed.port !== "" || parsed.username !== "" || parsed.password !== "") return null
     return parsed.hostname === "www.youtube.com" ? "www" : parsed.hostname === "music.youtube.com" ? "music" : null
-  } catch { return null }
+  } catch {
+    return null
+  }
 }
 
 export function createBrowserTabs(browser: TabsBrowser, options: { readonly build: BuildId; readonly deadline: Deadline }) {
@@ -34,13 +49,28 @@ export function createBrowserTabs(browser: TabsBrowser, options: { readonly buil
   const receivers = new Set<() => void>()
   async function facts(tab: BrowserTab): Promise<NativeTab | undefined> {
     if (disposed) return
-    if (!isTabId(tab.id) || !isTabId(tab.windowId) || typeof tab.incognito !== "boolean" || typeof tab.active !== "boolean" ||
-      tab.discarded !== undefined && typeof tab.discarded !== "boolean" || tab.frozen !== undefined && typeof tab.frozen !== "boolean" ||
-      tab.lastAccessed !== undefined && (typeof tab.lastAccessed !== "number" || !Number.isFinite(tab.lastAccessed) || tab.lastAccessed < 0)) return
+    if (
+      !isTabId(tab.id) ||
+      !isTabId(tab.windowId) ||
+      typeof tab.incognito !== "boolean" ||
+      typeof tab.active !== "boolean" ||
+      (tab.discarded !== undefined && typeof tab.discarded !== "boolean") ||
+      (tab.frozen !== undefined && typeof tab.frozen !== "boolean") ||
+      (tab.lastAccessed !== undefined && (typeof tab.lastAccessed !== "number" || !Number.isFinite(tab.lastAccessed) || tab.lastAccessed < 0))
+    )
+      return
     const window = await browser.windows.get(tab.windowId)
     if (disposed || window.id !== tab.windowId || window.incognito !== tab.incognito) return
-    return { tabId: tab.id, windowId: tab.windowId, incognito: tab.incognito, site: siteOf(tab.url),
-      lastAccessed: tab.lastAccessed ?? 0, active: tab.active, discarded: tab.discarded ?? false, frozen: tab.frozen ?? false }
+    return {
+      tabId: tab.id,
+      windowId: tab.windowId,
+      incognito: tab.incognito,
+      site: siteOf(tab.url),
+      lastAccessed: tab.lastAccessed ?? 0,
+      active: tab.active,
+      discarded: tab.discarded ?? false,
+      frozen: tab.frozen ?? false
+    }
   }
   async function get(tabId: number): Promise<TabLookup> {
     if (disposed || !isTabId(tabId)) return { kind: "unavailable" }
@@ -53,14 +83,20 @@ export function createBrowserTabs(browser: TabsBrowser, options: { readonly buil
       try {
         const all = await browser.tabs.query({})
         return !disposed && all.every(tab => isTabId(tab.id)) && !all.some(tab => tab.id === tabId) ? { kind: "gone" } : { kind: "unavailable" }
-      } catch { return { kind: "unavailable" } }
+      } catch {
+        return { kind: "unavailable" }
+      }
     }
   }
   const unavailable = (): RpcOutcome<never> => ({ kind: "failed", failure: disposed ? "disposed" : "transport" })
   async function call<T>(tabId: number, signal: AbortSignal, run: (send: ReturnType<typeof tabTarget>, own: (stop: () => void) => void) => Promise<RpcOutcome<T>>): Promise<TabReply<T>> {
     if (disposed || signal.aborted) return { kind: "failed", failure: "disposed" }
     let stop = () => {}
-    const own = (dispose: () => void) => { stop = dispose; active.add(stop); signal.addEventListener("abort", stop, { once: true }) }
+    const own = (dispose: () => void) => {
+      stop = dispose
+      active.add(stop)
+      signal.addEventListener("abort", stop, { once: true })
+    }
     try {
       const answer = await run(tabTarget(browser.tabs, tabId), own)
       if (answer.kind === "failed" && answer.failure === "transport" && !signal.aborted && !disposed) {
@@ -68,8 +104,13 @@ export function createBrowserTabs(browser: TabsBrowser, options: { readonly buil
         if (current.kind === "gone") return { kind: "gone" }
       }
       return answer
-    } catch { return unavailable() }
-    finally { active.delete(stop); signal.removeEventListener("abort", stop); stop() }
+    } catch {
+      return unavailable()
+    } finally {
+      active.delete(stop)
+      signal.removeEventListener("abort", stop)
+      stop()
+    }
   }
   const port: TabNativePort = {
     get,
@@ -85,13 +126,18 @@ export function createBrowserTabs(browser: TabsBrowser, options: { readonly buil
           normalized.push(tab)
         }
         return disposed ? { kind: "unavailable" } : { kind: "tabs", tabs: normalized }
-      } catch { return { kind: "unavailable" } }
+      } catch {
+        return { kind: "unavailable" }
+      }
     },
     ping(tabId, milliseconds, signal) {
       return call(tabId, signal, (send, own) => {
         const contract = tabPingMessages()
-        const caller = createRpcCaller<TabPingMessages>(send, { build, deadline,
-          contract: { ...contract, "bg.ping": { ...contract["bg.ping"], result: (v: unknown): v is TabPing => isTabPing(v) && v.build === build, timeoutMs: milliseconds } } })
+        const caller = createRpcCaller<TabPingMessages>(send, {
+          build,
+          deadline,
+          contract: { ...contract, "bg.ping": { ...contract["bg.ping"], result: (v: unknown): v is TabPing => isTabPing(v) && v.build === build, timeoutMs: milliseconds } }
+        })
         own(caller.dispose)
         return caller.call("bg.ping", {})
       })
@@ -106,8 +152,7 @@ export function createBrowserTabs(browser: TabsBrowser, options: { readonly buil
     view<View extends TabViewScope>(tabId: number, view: View, isView: (value: unknown) => value is View, milliseconds: number, signal: AbortSignal) {
       return call(tabId, signal, (send, own) => {
         const contract = tabMessages(isView)
-        const caller = createRpcCaller<TabMessages<View>>(send, { build, deadline,
-          contract: { ...contract, "bg.view": { ...contract["bg.view"], timeoutMs: milliseconds } } })
+        const caller = createRpcCaller<TabMessages<View>>(send, { build, deadline, contract: { ...contract, "bg.view": { ...contract["bg.view"], timeoutMs: milliseconds } } })
         own(caller.dispose)
         return caller.call("bg.view", view)
       })
@@ -139,7 +184,9 @@ export function createBrowserTabs(browser: TabsBrowser, options: { readonly buil
       const tab = await facts(first)
       if (!tab || tab.windowId !== windowId || tab.incognito !== incognito || !tab.active) return { kind: "unavailable" }
       return { kind: "requester", req: { windowId, incognito, activeTabId: tab.tabId } }
-    } catch { return { kind: "unavailable" } }
+    } catch {
+      return { kind: "unavailable" }
+    }
   }
   // `onSeen` hears each tab the registry admitted, so Accounts can check its label and claim the unclaimed 1.x setup (ACC-30),
   // and Gather tabs hears how the page started (ARC-MSG-15).
@@ -147,18 +194,36 @@ export function createBrowserTabs(browser: TabsBrowser, options: { readonly buil
     if (disposed) return () => {}
     const rpc = createRpc<TabHelloMessages<View>, NativeSender>(runtimeTransport(browser.runtime), { build, deadline, contract: tabHelloMessages(producer.isView) })
     let bound = true
-    const unbind = rpc.handle({ authenticate: authenticateTab(browser), handlers: {
-      async "tab.hello"(hello, context) {
-        if (disposed || !bound || hello.site !== context.site || hello.build !== build) return null
-        const current = await get(context.origin.tabId)
-        if (disposed || !bound || current.kind !== "tab" || current.tab.site !== context.site || current.tab.windowId !== context.windowId || current.tab.incognito !== context.origin.incognito) return null
-        const result = await tabs.seen(context.origin.tabId, hello, producer)
-        if (result.kind !== "seen") return null
-        try { onSeen?.({ tab: { ...current.tab, site: context.site }, info: { site: hello.site, build: hello.build, ...hello.signedIn ? { signedIn: true, acct: hello.acct } : { signedIn: false, acct: null } } }, hello) } catch {}
-        return result.view
+    const unbind = rpc.handle({
+      authenticate: authenticateTab(browser),
+      handlers: {
+        async "tab.hello"(hello, context) {
+          if (disposed || !bound || hello.site !== context.site || hello.build !== build) return null
+          const current = await get(context.origin.tabId)
+          if (disposed || !bound || current.kind !== "tab" || current.tab.site !== context.site || current.tab.windowId !== context.windowId || current.tab.incognito !== context.origin.incognito)
+            return null
+          const result = await tabs.seen(context.origin.tabId, hello, producer)
+          if (result.kind !== "seen") return null
+          try {
+            onSeen?.(
+              {
+                tab: { ...current.tab, site: context.site },
+                info: { site: hello.site, build: hello.build, ...(hello.signedIn ? { signedIn: true, acct: hello.acct } : { signedIn: false, acct: null }) }
+              },
+              hello
+            )
+          } catch {}
+          return result.view
+        }
       }
-    } })
-    const stop = () => { if (!bound) return; bound = false; receivers.delete(stop); unbind(); rpc.dispose() }
+    })
+    const stop = () => {
+      if (!bound) return
+      bound = false
+      receivers.delete(stop)
+      unbind()
+      rpc.dispose()
+    }
     receivers.add(stop)
     return stop
   }

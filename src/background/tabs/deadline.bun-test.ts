@@ -8,21 +8,25 @@ const mutation = { job: { kind: "create", title: "Synthetic deadline", privacy: 
 
 for (const route of ["serve", "runIn"] satisfies readonly ("serve" | "runIn")[]) {
   test(`${route} reports a stalled mutation at ten seconds, sends once and ignores its late answer`, async () => {
-    const h = tabsFixture(), late = deferred<unknown>()
+    const h = tabsFixture(),
+      late = deferred<unknown>()
     try {
       h.seedTab(nativeTab(1), signedIn())
       h.seedTab(nativeTab(2), signedIn())
-      let remoteMutations = 0, done = false
-      h.hooks.run = () => { remoteMutations++; return late.promise }
-      const pending = (route === "serve"
-        ? h.engine.serve(mutation, need)
-        : h.engine.runIn(1, mutation, need)).then(result => { done = true; return result })
+      let remoteMutations = 0,
+        done = false
+      h.hooks.run = () => {
+        remoteMutations++
+        return late.promise
+      }
+      const pending = (route === "serve" ? h.engine.serve(mutation, need) : h.engine.runIn(1, mutation, need)).then(result => {
+        done = true
+        return result
+      })
       await settle()
       expect(remoteMutations).toBe(1)
       expect(done).toBe(false)
-      expect(h.calls.filter(call => call.kind === "run")).toEqual([
-        { kind: "run", tabId: 1, invocation: mutation, milliseconds: 10_000 }
-      ])
+      expect(h.calls.filter(call => call.kind === "run")).toEqual([{ kind: "run", tabId: 1, invocation: mutation, milliseconds: 10_000 }])
       h.clock.advance(9_999)
       await settle()
       expect(done).toBe(false)
@@ -38,10 +42,10 @@ for (const route of ["serve", "runIn"] satisfies readonly ("serve" | "runIn")[])
       await settle()
       expect(await pending).toEqual(report)
       expect(remoteMutations).toBe(1)
-      expect(h.calls.filter(call => call.kind === "run")).toEqual([
-        { kind: "run", tabId: 1, invocation: mutation, milliseconds: 10_000 }
-      ])
+      expect(h.calls.filter(call => call.kind === "run")).toEqual([{ kind: "run", tabId: 1, invocation: mutation, milliseconds: 10_000 }])
       expect(h.clock.pending).toBe(0)
-    } finally { await h.dispose() }
+    } finally {
+      await h.dispose()
+    }
   })
 }

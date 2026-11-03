@@ -12,40 +12,121 @@ import type { ClaimAuthorityState } from "../../../src/background/store/local-cl
 import { isJsonValue, type JsonObject } from "../../../src/shared/contracts/json"
 import { isAccountKey, isPlaylistId, type PlaylistId } from "../../../src/shared/model/validation"
 
-const clone = <T>(value: T): T => value === undefined ? value : JSON.parse(JSON.stringify(value))
-function jsonObject(value: unknown): value is JsonObject { return value !== null && typeof value === "object" && !Array.isArray(value) && isJsonValue(value) }
+const clone = <T>(value: T): T => (value === undefined ? value : JSON.parse(JSON.stringify(value)))
+function jsonObject(value: unknown): value is JsonObject {
+  return value !== null && typeof value === "object" && !Array.isArray(value) && isJsonValue(value)
+}
 export function recoveryEqual(actual: unknown, expected: unknown, label: string): void {
-  const stable = (value: unknown) => JSON.stringify(value, (_, child: unknown) => child && typeof child === "object" && !Array.isArray(child)
-    ? Object.fromEntries(Object.entries(child).sort(([a], [b]) => a.localeCompare(b))) : child)
+  const stable = (value: unknown) =>
+    JSON.stringify(value, (_, child: unknown) =>
+      child && typeof child === "object" && !Array.isArray(child) ? Object.fromEntries(Object.entries(child).sort(([a], [b]) => a.localeCompare(b))) : child
+    )
   if (stable(actual) !== stable(expected)) throw Error(label)
 }
 export function createRecoveryHarness(seed: JsonObject = recoveryAcceptanceFixture.seed, remoteSeed?: JsonObject) {
-  const h = createInterimHarness(seed), account = "AAAAAAAAAAAAAAAA", playlist = "PL_KEPT"
+  const h = createInterimHarness(seed),
+    account = "AAAAAAAAAAAAAAAA",
+    playlist = "PL_KEPT"
   if (!isAccountKey(account) || !isPlaylistId(playlist)) throw Error("Invalid synthetic recovery identity")
-  let authority: ClaimAuthorityState = { kind: "ready", authority: { acct: account, lease: "fixture-lease-1", browserSession: "fixture-browser-session-1", consentGeneration: "fixture-canonical-consent-1", signedIn: true, incognito: false } }
-  let owned = true, allocation = false, forbidAllocation = false, remote = clone(remoteSeed), generation = "recovery-001"
+  let authority: ClaimAuthorityState = {
+    kind: "ready",
+    authority: { acct: account, lease: "fixture-lease-1", browserSession: "fixture-browser-session-1", consentGeneration: "fixture-canonical-consent-1", signedIn: true, incognito: false }
+  }
+  let owned = true,
+    allocation = false,
+    forbidAllocation = false,
+    remote = clone(remoteSeed),
+    generation = "recovery-001"
   const playlists = new Set<PlaylistId>([playlist])
-  const recovery: RecoveryHost = { kind: "fixture",
-    snapshot: { async read() { h.effects.push("recovery-snapshot"); const records = h.records(); return { retained: interimSnapshot(records), history: Object.hasOwn(records, "sync") ? { kind: "present", raw: records.sync } : { kind: "absent" } } } },
-    authority: { async read() { h.effects.push("recovery-authority"); return clone(authority) } },
-    accounts: { async read() { h.effects.push("recovery-accounts"); return authority.kind === "ready" ? [clone(authority.authority)] : [] } },
-    ownership: { async lookup(grant): Promise<RecoveryOwnership> { h.effects.push("recovery-ownership"); return owned ? { kind: "fixture-owned", authority: clone(grant), ownedPlaylistIds: new Set(playlists) } : { kind: "unavailable" } } }
+  const recovery: RecoveryHost = {
+    kind: "fixture",
+    snapshot: {
+      async read() {
+        h.effects.push("recovery-snapshot")
+        const records = h.records()
+        return { retained: interimSnapshot(records), history: Object.hasOwn(records, "sync") ? { kind: "present", raw: records.sync } : { kind: "absent" } }
+      }
+    },
+    authority: {
+      async read() {
+        h.effects.push("recovery-authority")
+        return clone(authority)
+      }
+    },
+    accounts: {
+      async read() {
+        h.effects.push("recovery-accounts")
+        return authority.kind === "ready" ? [clone(authority.authority)] : []
+      }
+    },
+    ownership: {
+      async lookup(grant): Promise<RecoveryOwnership> {
+        h.effects.push("recovery-ownership")
+        return owned ? { kind: "fixture-owned", authority: clone(grant), ownedPlaylistIds: new Set(playlists) } : { kind: "unavailable" }
+      }
+    }
   }
-  const deps = { ...h.deps, recovery,
-    now() { h.effects.push("stamp"); if (forbidAllocation) throw Error("Restart allocated time"); return allocation ? 200 : 100 },
-    generation() { h.effects.push("generation"); if (forbidAllocation) throw Error("Restart allocated generation"); return generation },
-    sync: remoteSeed ? { ...h.deps.sync, async get() { h.effects.push("sync-get"); if (!remote) throw Error("Missing synthetic remote inventory"); return clone(remote) } } : h.deps.sync
+  const deps = {
+    ...h.deps,
+    recovery,
+    now() {
+      h.effects.push("stamp")
+      if (forbidAllocation) throw Error("Restart allocated time")
+      return allocation ? 200 : 100
+    },
+    generation() {
+      h.effects.push("generation")
+      if (forbidAllocation) throw Error("Restart allocated generation")
+      return generation
+    },
+    sync: remoteSeed
+      ? {
+          ...h.deps.sync,
+          async get() {
+            h.effects.push("sync-get")
+            if (!remote) throw Error("Missing synthetic remote inventory")
+            return clone(remote)
+          }
+        }
+      : h.deps.sync
   }
-  return { ...h, deps, account, playlist,
-    allocateReplacement() { allocation = true }, forbidAllocation() { forbidAllocation = true }, permitAllocation() { forbidAllocation = false },
-    replacementGeneration(value: string) { generation = value },
-    allowPlaylist(value: string) { if (!isPlaylistId(value)) throw Error("Invalid synthetic playlist"); playlists.add(value) },
-    authority(value: ClaimAuthorityState) { authority = clone(value) }, ownership(value: boolean) { owned = value },
-    remote(fn: (records: JsonObject) => void) { if (!remote) throw Error("No remote fixture"); fn(remote) }
+  return {
+    ...h,
+    deps,
+    account,
+    playlist,
+    allocateReplacement() {
+      allocation = true
+    },
+    forbidAllocation() {
+      forbidAllocation = true
+    },
+    permitAllocation() {
+      forbidAllocation = false
+    },
+    replacementGeneration(value: string) {
+      generation = value
+    },
+    allowPlaylist(value: string) {
+      if (!isPlaylistId(value)) throw Error("Invalid synthetic playlist")
+      playlists.add(value)
+    },
+    authority(value: ClaimAuthorityState) {
+      authority = clone(value)
+    },
+    ownership(value: boolean) {
+      owned = value
+    },
+    remote(fn: (records: JsonObject) => void) {
+      if (!remote) throw Error("No remote fixture")
+      fn(remote)
+    }
   }
 }
 export async function recoveryHeld(owner: ReturnType<typeof createStartingLocalFilterWriter>) {
-  try { await owner.ready() } catch (error) {
+  try {
+    await owner.ready()
+  } catch (error) {
     if (error instanceof StartupReadinessError && error.result.kind === "interim-held") return error.result.result
     throw error
   }
@@ -56,7 +137,12 @@ export async function recoveryAgree(owner: ReturnType<typeof createStartingLocal
   await recoveryHeld(owner)
   const read = await owner.readAgreement(recoveryUi)
   if (read.kind !== "review") throw Error("Actual retained disclosure unavailable")
-  const result = await owner.agree(recoveryUi, { review: read.review, displayedVersion: read.version, choice: { kind: "retained-disclosure" }, access: Promise.resolve({ www: false, music: false, browserMenu: false }) })
+  const result = await owner.agree(recoveryUi, {
+    review: read.review,
+    displayedVersion: read.version,
+    choice: { kind: "retained-disclosure" },
+    access: Promise.resolve({ www: false, music: false, browserMenu: false })
+  })
   if (result.kind !== "committed") throw Error("Actual retained agreement failed")
   h.allocateReplacement()
   return result
@@ -73,23 +159,46 @@ export async function observeInterimRecoveryExecution() {
   const observations: unknown[] = []
   for (const syncing of [false, true]) {
     const seed = syncing ? { ...clone(recoveryAcceptanceFixture.seed), ...clone(recoverySyncFixture.seedOverrides) } : clone(recoveryAcceptanceFixture.seed)
-    const h = createRecoveryHarness(seed, syncing ? recoverySyncFixture.remoteInventory : undefined), owner = createStartingLocalFilterWriter(h.deps)
-    const agreement = await recoveryAgree(owner, h), before = h.records(), effectsBeforeOpen = h.effects.length, writesBeforeOpen = h.writes.length
+    const h = createRecoveryHarness(seed, syncing ? recoverySyncFixture.remoteInventory : undefined),
+      owner = createStartingLocalFilterWriter(h.deps)
+    const agreement = await recoveryAgree(owner, h),
+      before = h.records(),
+      effectsBeforeOpen = h.effects.length,
+      writesBeforeOpen = h.writes.length
     const { opened, item, prepared } = await recoveryPrepare(owner)
     if (prepared.kind !== "confirmation-required") throw Error("Separate filter replacement confirmation unavailable")
     recoveryEqual(h.records(), before, "Open and preparation preserve the complete store")
     recoveryEqual(h.writes.length, writesBeforeOpen, "Preparation performs no writes")
-    recoveryEqual(h.effects.slice(effectsBeforeOpen).filter(x => x === "stamp" || x === "generation" || x === "sync-get"), [], "Preparation allocates and admits nothing")
-    recoveryEqual({ kind: prepared.kind, acct: prepared.acct, playlist: prepared.playlist, current: prepared.current, retained: prepared.retained, scope: prepared.scope },
-      { ...recoveryAcceptanceFixture.expectedConfirmation, scope: syncing ? recoverySyncFixture.expectedScope : recoveryAcceptanceFixture.expectedConfirmation.scope }, "Both literal semantic filters are shown")
+    recoveryEqual(
+      h.effects.slice(effectsBeforeOpen).filter(x => x === "stamp" || x === "generation" || x === "sync-get"),
+      [],
+      "Preparation allocates and admits nothing"
+    )
+    recoveryEqual(
+      { kind: prepared.kind, acct: prepared.acct, playlist: prepared.playlist, current: prepared.current, retained: prepared.retained, scope: prepared.scope },
+      { ...recoveryAcceptanceFixture.expectedConfirmation, scope: syncing ? recoverySyncFixture.expectedScope : recoveryAcceptanceFixture.expectedConfirmation.scope },
+      "Both literal semantic filters are shown"
+    )
     const snapshots: JsonObject[] = []
-    h.write(async (items, apply) => { apply(items); snapshots.push(h.records()) })
+    h.write(async (items, apply) => {
+      apply(items)
+      snapshots.push(h.records())
+    })
     const result = await owner.replaceInterimFilter(recoveryUi, prepared.confirmation)
     if (result.kind !== "committed") throw Error("Actual replacement did not commit")
-    recoveryEqual(result.mutations.map(x => x.stage), ["accept", "documents", "record"], "Fixed readback-confirmed transaction stages")
-    const fixed = syncing ? { ...clone(recoveryAcceptanceFixture.expectedFixedEffect), after: recoverySyncFixture.expectedFixedFilterAfter,
-      history: { before: { kind: "present", raw: recoverySyncFixture.seedOverrides.sync }, after: recoverySyncFixture.expectedFixedHistoryAfter }, scope: recoverySyncFixture.expectedScope,
-      admission: { kind: "synced", joined: "fixture-history", requiredRepairs: recoverySyncFixture.expectedRepairIdentities.map(x => ({ ...x, document: seed[x.name as keyof typeof seed] })) } }
+    recoveryEqual(
+      result.mutations.map(x => x.stage),
+      ["accept", "documents", "record"],
+      "Fixed readback-confirmed transaction stages"
+    )
+    const fixed = syncing
+      ? {
+          ...clone(recoveryAcceptanceFixture.expectedFixedEffect),
+          after: recoverySyncFixture.expectedFixedFilterAfter,
+          history: { before: { kind: "present", raw: recoverySyncFixture.seedOverrides.sync }, after: recoverySyncFixture.expectedFixedHistoryAfter },
+          scope: recoverySyncFixture.expectedScope,
+          admission: { kind: "synced", joined: "fixture-history", requiredRepairs: recoverySyncFixture.expectedRepairIdentities.map(x => ({ ...x, document: seed[x.name as keyof typeof seed] })) }
+        }
       : recoveryAcceptanceFixture.expectedFixedEffect
     for (const [index, snapshot] of snapshots.entries()) {
       const read = readRetainedCheckpoint(snapshot.interimConversion)
@@ -99,46 +208,112 @@ export async function observeInterimRecoveryExecution() {
       const effect = read.checkpoint.pending.kind === "filter-replacement" ? read.checkpoint.pending.effect : first?.kind === "filter-replaced" ? first.effect : undefined
       recoveryEqual(effect, fixed, "Independently expected literal fixed effect")
       const expected: JsonObject = { ...before, interimConversion: snapshot.interimConversion! }
-      if (index > 0) { expected["doc:filter:AAAAAAAAAAAAAAAA:PL_KEPT"] = clone(syncing ? recoverySyncFixture.expectedFixedFilterAfter : recoveryAcceptanceFixture.expectedFixedEffect.after); expected.sync = clone(syncing ? recoverySyncFixture.expectedFixedHistoryAfter.raw : recoveryAcceptanceFixture.expectedFixedEffect.history.after.raw) }
+      if (index > 0) {
+        expected["doc:filter:AAAAAAAAAAAAAAAA:PL_KEPT"] = clone(syncing ? recoverySyncFixture.expectedFixedFilterAfter : recoveryAcceptanceFixture.expectedFixedEffect.after)
+        expected.sync = clone(syncing ? recoverySyncFixture.expectedFixedHistoryAfter.raw : recoveryAcceptanceFixture.expectedFixedEffect.history.after.raw)
+      }
       recoveryEqual(snapshot, expected, "Complete stage store preserves every unowned value")
       recoveryEqual(read.checkpoint.resolutions.length, index === 2 ? 1 : 0, "Receipt is recorded only at the final stage")
     }
-    const serialized = JSON.stringify(h.records()), effects = clone(h.effects), writes = clone(h.writes)
+    const serialized = JSON.stringify(h.records()),
+      effects = clone(h.effects),
+      writes = clone(h.writes)
     await owner.dispose()
     const reopenedHarness = createRecoveryHarness(JSON.parse(serialized), syncing ? recoverySyncFixture.remoteInventory : undefined)
     reopenedHarness.forbidAllocation()
-    const reopenedOwner = createStartingLocalFilterWriter(reopenedHarness.deps), readiness = await recoveryHeld(reopenedOwner), reopened = await reopenedOwner.readInterimRecovery()
+    const reopenedOwner = createStartingLocalFilterWriter(reopenedHarness.deps),
+      readiness = await recoveryHeld(reopenedOwner),
+      reopened = await reopenedOwner.readInterimRecovery()
     if (reopened.kind !== "review") throw Error("Completed recovery did not reopen")
     recoveryEqual(reopened.resolved.length, 1, "Restart exposes one validated historical resolution")
-    recoveryEqual(reopened.view.items.map(x => x.intent), opened.view.items.map(() => "none"), "Restart discards all drafts")
+    recoveryEqual(
+      reopened.view.items.map(x => x.intent),
+      opened.view.items.map(() => "none"),
+      "Restart discards all drafts"
+    )
     recoveryEqual(reopenedHarness.writes, [], "Restart is read only")
-    recoveryEqual(reopenedHarness.effects.filter(x => x === "stamp" || x === "generation" || x === "recovery-ownership" || x === "sync-get"), [], "Restart has no authority lookup, allocation or admission")
+    recoveryEqual(
+      reopenedHarness.effects.filter(x => x === "stamp" || x === "generation" || x === "recovery-ownership" || x === "sync-get"),
+      [],
+      "Restart has no authority lookup, allocation or admission"
+    )
     recoveryEqual(reopenedHarness.records(), JSON.parse(serialized), "Serialized restart bytes remain intact")
     await reopenedOwner.dispose()
-    observations.push({ syncing, agreement, before, opened, selected: item, confirmation: prepared, result, snapshots, serialized, effects, writes, readiness, reopened, restartEffects: reopenedHarness.effects })
+    observations.push({
+      syncing,
+      agreement,
+      before,
+      opened,
+      selected: item,
+      confirmation: prepared,
+      result,
+      snapshots,
+      serialized,
+      effects,
+      writes,
+      readiness,
+      reopened,
+      restartEffects: reopenedHarness.effects
+    })
   }
-  return { mode: "synthetic-confirmed-filter-replacement", observations, activation: "held", production: "not-connected", native: "waived-and-unproven",
-    limitation: "Synthetic storage, authority and ownership only. Native durability and exclusion remain unproven." }
+  return {
+    mode: "synthetic-confirmed-filter-replacement",
+    observations,
+    activation: "held",
+    production: "not-connected",
+    native: "waived-and-unproven",
+    limitation: "Synthetic storage, authority and ownership only. Native durability and exclusion remain unproven."
+  }
 }
 
-
 export function observeInterimRecoveryReview() {
-  const A = "AAAAAAAAAAAAAAAA", B = "BBBBBBBBBBBBBBBB", C = "CCCCCCCCCCCCCCCC"
+  const A = "AAAAAAAAAAAAAAAA",
+    B = "BBBBBBBBBBBBBBBB",
+    C = "CCCCCCCCCCCCCCCC"
   const channel = "UCaaaaaaaaaaaaaaaaaaaaaa"
   const source = {
     accountBodies: {
-      [`account:${A}`]: { playlists: ["PL_SAME", "PL_SAME"], shortcutPlaylistId: "WL", filters: { PL_KEPT: { mode: "deny", enabled: false, channels: [channel] } }, labels: { [channel]: { title: "Synthetic channel", handle: "@synthetic" } }, cachedPlaylists: [], cachedAt: null },
+      [`account:${A}`]: {
+        playlists: ["PL_SAME", "PL_SAME"],
+        shortcutPlaylistId: "WL",
+        filters: { PL_KEPT: { mode: "deny", enabled: false, channels: [channel] } },
+        labels: { [channel]: { title: "Synthetic channel", handle: "@synthetic" } },
+        cachedPlaylists: [],
+        cachedAt: null
+      },
       [`account:${C}`]: { playlists: ["PL_SAME"], shortcutPlaylistId: "WL", filters: {}, labels: {}, cachedPlaylists: [], cachedAt: null }
     },
-    savedAccountKeys: [B, B], legacyClaimed: true,
+    savedAccountKeys: [B, B],
+    legacyClaimed: true,
     globals: { playlists: ["PL_GLOBAL"], addToPlaylistID: "WL", channelFilters: { PL_ORPHAN: { mode: "allow", enabled: false, channels: [] } } }
   }
-  const input: InterimConversionInput = { schema: 1, source, canonical: { documents: {}, caches: {}, device: undefined, unclaimed: null }, historicalAuthorization: { kind: "unknown" }, priorCredentialPresence: { kind: "unknown" } }
-  const context: InterimConversionContext = { deviceId: "synthetic-device", at: 123, platform: { browser: "firefox", os: "linux" }, commands: [], interimShortcutId: "conv01", documentGenerations: { "doc:settings": "settings", [`doc:setup:${A}`]: "setup-A", [`doc:setup:${C}`]: "setup-C", [`doc:filter:${A}:PL_KEPT`]: "filter" } }
+  const input: InterimConversionInput = {
+    schema: 1,
+    source,
+    canonical: { documents: {}, caches: {}, device: undefined, unclaimed: null },
+    historicalAuthorization: { kind: "unknown" },
+    priorCredentialPresence: { kind: "unknown" }
+  }
+  const context: InterimConversionContext = {
+    deviceId: "synthetic-device",
+    at: 123,
+    platform: { browser: "firefox", os: "linux" },
+    commands: [],
+    interimShortcutId: "conv01",
+    documentGenerations: { "doc:settings": "settings", [`doc:setup:${A}`]: "setup-A", [`doc:setup:${C}`]: "setup-C", [`doc:filter:${A}:PL_KEPT`]: "filter" }
+  }
   const conversion = planInterimConversion(input, context)
   const current: RecoveryObservation = { captureId: "synthetic-retained-capture", schema: input.schema, conversion, canonical: input.canonical }
-  const snapshot = () => ({ schema: input.schema, source: structuredClone(source), canonical: { documents: structuredClone(input.canonical.documents), caches: structuredClone(input.canonical.caches), device: { kind: "undefined" }, unclaimed: input.canonical.unclaimed }, historicalAuthorization: input.historicalAuthorization, priorCredentialPresence: input.priorCredentialPresence })
-  const before = snapshot(), reader = openInterimRecoveryReview(current), opened = reader.read(current)
+  const snapshot = () => ({
+    schema: input.schema,
+    source: structuredClone(source),
+    canonical: { documents: structuredClone(input.canonical.documents), caches: structuredClone(input.canonical.caches), device: { kind: "undefined" }, unclaimed: input.canonical.unclaimed },
+    historicalAuthorization: input.historicalAuthorization,
+    priorCredentialPresence: input.priorCredentialPresence
+  })
+  const before = snapshot(),
+    reader = openInterimRecoveryReview(current),
+    opened = reader.read(current)
   if (opened.kind !== "review") throw new Error("Synthetic command could not open review")
   const restoreItem = opened.view.items.find(item => item.id.sourceKey === `account:${A}` && item.kind === "playlist" && item.id.path[1] === 1)
   const discardItem = opened.view.items.find(item => item.id.sourceKey === `account:${A}` && item.kind === "filter")
@@ -153,11 +328,24 @@ export function observeInterimRecoveryReview() {
   const staleSelection = reader.select({ current: changed, item: discardItem.id, intent: "restore" })
   const returnedToOriginal = reader.read(current)
   const reopened = openInterimRecoveryReview(changed).read(changed)
-  return { mode: "synthetic-read-only-item-review", before, conversion, opened, restoreDraft, discardDraft, clearedDraft, after, stale, staleSelection, returnedToOriginal, reopened,
-    limitation: "In-memory comparison of caller-supplied evidence only. No native freshness, persistence, ownership or execution is proven.", production: "not-connected", native: "waived-and-unproven" }
+  return {
+    mode: "synthetic-read-only-item-review",
+    before,
+    conversion,
+    opened,
+    restoreDraft,
+    discardDraft,
+    clearedDraft,
+    after,
+    stale,
+    staleSelection,
+    returnedToOriginal,
+    reopened,
+    limitation: "In-memory comparison of caller-supplied evidence only. No native freshness, persistence, ownership or execution is proven.",
+    production: "not-connected",
+    native: "waived-and-unproven"
+  }
 }
-
-
 
 export const recoveryAcceptanceFixture = {
   "purpose": "Static independently expected data for the future implementation worker. No runtime observation or executed test is claimed.",
@@ -195,10 +383,7 @@ export const recoveryAcceptanceFixture = {
         "musicSave": null,
         "gather": null,
         "marks": {},
-        "future": [
-          null,
-          false
-        ]
+        "future": [null, false]
       }
     },
     "doc:filter:AAAAAAAAAAAAAAAA:PL_KEPT": {
@@ -211,21 +396,11 @@ export const recoveryAcceptanceFixture = {
         "mode": "allow",
         "on": true,
         "channels": [
-          [
-            "UCaaaaaaaaaaaaaaaaaaaaaa",
-            "Canonical channel",
-            "@canonical"
-          ],
-          [
-            "UCcccccccccccccccccccccc",
-            "Other canonical channel"
-          ]
+          ["UCaaaaaaaaaaaaaaaaaaaaaa", "Canonical channel", "@canonical"],
+          ["UCcccccccccccccccccccccc", "Other canonical channel"]
         ],
         "extension": {
-          "keep": [
-            null,
-            false
-          ]
+          "keep": [null, false]
         }
       }
     },
@@ -246,17 +421,12 @@ export const recoveryAcceptanceFixture = {
         }
       },
       "extension": {
-        "retain": [
-          false,
-          null
-        ]
+        "retain": [false, null]
       }
     },
     "unclaimed": {
       "from": "1.5.0",
-      "autoAdd": [
-        "PL_PENDING"
-      ],
+      "autoAdd": ["PL_PENDING"],
       "shortcutPlaylist": "WL",
       "originalShortcutId": "orig01",
       "filters": {},
@@ -269,9 +439,7 @@ export const recoveryAcceptanceFixture = {
         "PL_KEPT": {
           "mode": "deny",
           "enabled": false,
-          "channels": [
-            "UCbbbbbbbbbbbbbbbbbbbbbb"
-          ]
+          "channels": ["UCbbbbbbbbbbbbbbbbbbbbbb"]
         }
       },
       "labels": {
@@ -284,34 +452,21 @@ export const recoveryAcceptanceFixture = {
       "cachedAt": null
     },
     "account:BBBBBBBBBBBBBBBB": {
-      "playlists": [
-        "PL_SIBLING",
-        "PL_SIBLING"
-      ],
+      "playlists": ["PL_SIBLING", "PL_SIBLING"],
       "shortcutPlaylistId": "",
       "filters": {},
       "labels": {},
       "cachedPlaylists": [],
       "cachedAt": null
     },
-    "savedAccountKeys": [
-      "AAAAAAAAAAAAAAAA",
-      "BBBBBBBBBBBBBBBB"
-    ],
+    "savedAccountKeys": ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB"],
     "sessionConsent": 1,
     "sessionGeneration": "old-synthetic-session",
     "legacyClaimed": true,
-    "playlists": [
-      "PL_GLOBAL",
-      "PL_GLOBAL"
-    ],
+    "playlists": ["PL_GLOBAL", "PL_GLOBAL"],
     "addToPlaylistID": "WL",
     "unrelated": {
-      "keep": [
-        null,
-        false,
-        "opaque synthetic text"
-      ]
+      "keep": [null, false, "opaque synthetic text"]
     }
   },
   "ui": {
@@ -330,15 +485,10 @@ export const recoveryAcceptanceFixture = {
       "incognito": false
     }
   },
-  "ownershipInputForReadonlySet": [
-    "PL_KEPT"
-  ],
+  "ownershipInputForReadonlySet": ["PL_KEPT"],
   "selectedOccurrence": {
     "sourceKey": "account:AAAAAAAAAAAAAAAA",
-    "path": [
-      "filters",
-      "PL_KEPT"
-    ]
+    "path": ["filters", "PL_KEPT"]
   },
   "expectedInspection": {
     "outcomeKind": "blocked",
@@ -360,13 +510,7 @@ export const recoveryAcceptanceFixture = {
         "playlist": "PL_KEPT",
         "mode": "deny",
         "on": false,
-        "channels": [
-          [
-            "UCbbbbbbbbbbbbbbbbbbbbbb",
-            "Retained channel",
-            "@retained"
-          ]
-        ],
+        "channels": [["UCbbbbbbbbbbbbbbbbbbbbbb", "Retained channel", "@retained"]],
         "kept": true
       },
       "destination": {
@@ -379,29 +523,19 @@ export const recoveryAcceptanceFixture = {
     "sourceOccurrencesThatStayIndependent": [
       {
         "sourceKey": "account:BBBBBBBBBBBBBBBB",
-        "path": [
-          "playlists",
-          0
-        ]
+        "path": ["playlists", 0]
       },
       {
         "sourceKey": "account:BBBBBBBBBBBBBBBB",
-        "path": [
-          "playlists",
-          1
-        ]
+        "path": ["playlists", 1]
       },
       {
         "sourceKey": "playlists",
-        "path": [
-          0
-        ]
+        "path": [0]
       },
       {
         "sourceKey": "playlists",
-        "path": [
-          1
-        ]
+        "path": [1]
       },
       {
         "sourceKey": "addToPlaylistID",
@@ -432,27 +566,14 @@ export const recoveryAcceptanceFixture = {
       "mode": "allow",
       "on": true,
       "channels": [
-        [
-          "UCaaaaaaaaaaaaaaaaaaaaaa",
-          "Canonical channel",
-          "@canonical"
-        ],
-        [
-          "UCcccccccccccccccccccccc",
-          "Other canonical channel"
-        ]
+        ["UCaaaaaaaaaaaaaaaaaaaaaa", "Canonical channel", "@canonical"],
+        ["UCcccccccccccccccccccccc", "Other canonical channel"]
       ]
     },
     "retained": {
       "mode": "deny",
       "on": false,
-      "channels": [
-        [
-          "UCbbbbbbbbbbbbbbbbbbbbbb",
-          "Retained channel",
-          "@retained"
-        ]
-      ]
+      "channels": [["UCbbbbbbbbbbbbbbbbbbbbbb", "Retained channel", "@retained"]]
     },
     "scope": {
       "kind": "this-browser"
@@ -462,10 +583,7 @@ export const recoveryAcceptanceFixture = {
     "kind": "filter-replacement",
     "item": {
       "sourceKey": "account:AAAAAAAAAAAAAAAA",
-      "path": [
-        "filters",
-        "PL_KEPT"
-      ]
+      "path": ["filters", "PL_KEPT"]
     },
     "key": {
       "kind": "filter",
@@ -487,10 +605,7 @@ export const recoveryAcceptanceFixture = {
         "musicSave": null,
         "gather": null,
         "marks": {},
-        "future": [
-          null,
-          false
-        ]
+        "future": [null, false]
       }
     },
     "before": {
@@ -503,21 +618,11 @@ export const recoveryAcceptanceFixture = {
         "mode": "allow",
         "on": true,
         "channels": [
-          [
-            "UCaaaaaaaaaaaaaaaaaaaaaa",
-            "Canonical channel",
-            "@canonical"
-          ],
-          [
-            "UCcccccccccccccccccccccc",
-            "Other canonical channel"
-          ]
+          ["UCaaaaaaaaaaaaaaaaaaaaaa", "Canonical channel", "@canonical"],
+          ["UCcccccccccccccccccccccc", "Other canonical channel"]
         ],
         "extension": {
-          "keep": [
-            null,
-            false
-          ]
+          "keep": [null, false]
         }
       }
     },
@@ -530,18 +635,9 @@ export const recoveryAcceptanceFixture = {
       "data": {
         "mode": "deny",
         "on": false,
-        "channels": [
-          [
-            "UCbbbbbbbbbbbbbbbbbbbbbb",
-            "Retained channel",
-            "@retained"
-          ]
-        ],
+        "channels": [["UCbbbbbbbbbbbbbbbbbbbbbb", "Retained channel", "@retained"]],
         "extension": {
-          "keep": [
-            null,
-            false
-          ]
+          "keep": [null, false]
         }
       }
     },
@@ -565,10 +661,7 @@ export const recoveryAcceptanceFixture = {
             }
           },
           "extension": {
-            "retain": [
-              false,
-              null
-            ]
+            "retain": [false, null]
           }
         }
       },
@@ -591,10 +684,7 @@ export const recoveryAcceptanceFixture = {
             }
           },
           "extension": {
-            "retain": [
-              false,
-              null
-            ]
+            "retain": [false, null]
           }
         }
       }
@@ -617,9 +707,7 @@ export const recoveryAcceptanceFixture = {
     },
     {
       "stage": "accept",
-      "setKeys": [
-        "interimConversion"
-      ],
+      "setKeys": ["interimConversion"],
       "canonicalFilter": "before",
       "history": "before",
       "checkpointVersion": 4,
@@ -628,10 +716,7 @@ export const recoveryAcceptanceFixture = {
     },
     {
       "stage": "documents",
-      "setKeys": [
-        "doc:filter:AAAAAAAAAAAAAAAA:PL_KEPT",
-        "sync"
-      ],
+      "setKeys": ["doc:filter:AAAAAAAAAAAAAAAA:PL_KEPT", "sync"],
       "canonicalFilter": "after",
       "history": "after",
       "checkpointVersion": 4,
@@ -640,9 +725,7 @@ export const recoveryAcceptanceFixture = {
     },
     {
       "stage": "record",
-      "setKeys": [
-        "interimConversion"
-      ],
+      "setKeys": ["interimConversion"],
       "canonicalFilter": "after",
       "history": "after",
       "checkpointVersion": 4,
@@ -660,15 +743,7 @@ export const recoveryAcceptanceFixture = {
       "history": "before",
       "startupWrites": 0,
       "readKind": "pending",
-      "resumeSetKeys": [
-        [
-          "doc:filter:AAAAAAAAAAAAAAAA:PL_KEPT",
-          "sync"
-        ],
-        [
-          "interimConversion"
-        ]
-      ],
+      "resumeSetKeys": [["doc:filter:AAAAAAAAAAAAAAAA:PL_KEPT", "sync"], ["interimConversion"]],
       "afterResolutionCount": 1
     },
     {
@@ -698,11 +773,7 @@ export const recoveryAcceptanceFixture = {
       "history": "after",
       "startupWrites": 0,
       "readKind": "pending",
-      "resumeSetKeys": [
-        [
-          "interimConversion"
-        ]
-      ],
+      "resumeSetKeys": [["interimConversion"]],
       "afterResolutionCount": 1
     },
     {
@@ -753,10 +824,7 @@ export const recoveryAcceptanceFixture = {
       "on": false,
       "channels": [],
       "extension": {
-        "keep": [
-          null,
-          false
-        ]
+        "keep": [null, false]
       }
     }
   },
@@ -782,13 +850,7 @@ export const recoveryAcceptanceFixture = {
     "data": {
       "mode": "deny",
       "on": false,
-      "channels": [
-        [
-          "UCbbbbbbbbbbbbbbbbbbbbbb",
-          "Retained channel",
-          "@retained"
-        ]
-      ]
+      "channels": [["UCbbbbbbbbbbbbbbbbbbbbbb", "Retained channel", "@retained"]]
     },
     "expected": {
       "kind": "unavailable",
@@ -851,7 +913,8 @@ export const recoveryAcceptanceFixture = {
 }
 
 export const recoverySyncFixture = {
-  "purpose": "Static sync-on variant. Start with acceptance-fixtures.json seed and replace only device and sync with seedOverrides. The future verifier must supply the literal remoteInventory through the owner's existing sync.get port. No code was executed to obtain these expectations.",
+  "purpose":
+    "Static sync-on variant. Start with acceptance-fixtures.json seed and replace only device and sync with seedOverrides. The future verifier must supply the literal remoteInventory through the owner's existing sync.get port. No code was executed to obtain these expectations.",
   "seedOverrides": {
     "device": {
       "id": "synthetic-device",
@@ -878,10 +941,7 @@ export const recoverySyncFixture = {
         }
       },
       "extension": {
-        "retain": [
-          false,
-          null
-        ]
+        "retain": [false, null]
       }
     }
   },
@@ -915,10 +975,7 @@ export const recoverySyncFixture = {
         "musicSave": null,
         "gather": null,
         "marks": {},
-        "future": [
-          null,
-          false
-        ]
+        "future": [null, false]
       }
     },
     "s:filter:AAAAAAAAAAAAAAAA:PL_KEPT": {
@@ -931,21 +988,11 @@ export const recoverySyncFixture = {
         "mode": "allow",
         "on": true,
         "channels": [
-          [
-            "UCaaaaaaaaaaaaaaaaaaaaaa",
-            "Canonical channel",
-            "@canonical"
-          ],
-          [
-            "UCcccccccccccccccccccccc",
-            "Other canonical channel"
-          ]
+          ["UCaaaaaaaaaaaaaaaaaaaaaa", "Canonical channel", "@canonical"],
+          ["UCcccccccccccccccccccccc", "Other canonical channel"]
         ],
         "extension": {
-          "keep": [
-            null,
-            false
-          ]
+          "keep": [null, false]
         }
       }
     }
@@ -1015,10 +1062,7 @@ export const recoverySyncFixture = {
         }
       },
       "extension": {
-        "retain": [
-          false,
-          null
-        ]
+        "retain": [false, null]
       }
     }
   },
@@ -1031,18 +1075,9 @@ export const recoverySyncFixture = {
     "data": {
       "mode": "deny",
       "on": false,
-      "channels": [
-        [
-          "UCbbbbbbbbbbbbbbbbbbbbbb",
-          "Retained channel",
-          "@retained"
-        ]
-      ],
+      "channels": [["UCbbbbbbbbbbbbbbbbbbbbbb", "Retained channel", "@retained"]],
       "extension": {
-        "keep": [
-          null,
-          false
-        ]
+        "keep": [null, false]
       }
     }
   },
@@ -1121,17 +1156,12 @@ export const authorityAcceptanceFixture = {
       "recentAdds": true,
       "legacyCleared": false,
       "extension": {
-        "keep": [
-          null,
-          false
-        ]
+        "keep": [null, false]
       }
     },
     "unclaimed": null,
     "account:AAAAAAAAAAAAAAAA": {
-      "playlists": [
-        "PL_ONE"
-      ],
+      "playlists": ["PL_ONE"],
       "shortcutPlaylistId": "",
       "filters": {
         "PL_ONE": {
@@ -1144,22 +1174,14 @@ export const authorityAcceptanceFixture = {
       "cachedPlaylists": [],
       "cachedAt": null
     },
-    "savedAccountKeys": [
-      "AAAAAAAAAAAAAAAA"
-    ],
+    "savedAccountKeys": ["AAAAAAAAAAAAAAAA"],
     "sessionConsent": 1,
     "sessionGeneration": "old-session",
     "legacyClaimed": true,
-    "playlists": [
-      "PL_GLOBAL",
-      "PL_GLOBAL"
-    ],
+    "playlists": ["PL_GLOBAL", "PL_GLOBAL"],
     "addToPlaylistID": "PL_GLOBAL_TARGET",
     "unrelated": {
-      "keep": [
-        "unchanged",
-        null
-      ]
+      "keep": ["unchanged", null]
     }
   },
   "setupProcedure": [
@@ -1186,10 +1208,7 @@ export const authorityAcceptanceFixture = {
       "recentAdds": true,
       "legacyCleared": false,
       "extension": {
-        "keep": [
-          null,
-          false
-        ]
+        "keep": [null, false]
       }
     },
     "unclaimed": null,
@@ -1368,9 +1387,7 @@ export const authorityAcceptanceFixture = {
     "orderedMutationTrace": [
       {
         "kind": "local-set",
-        "keys": [
-          "interimConversion"
-        ],
+        "keys": ["interimConversion"],
         "handoffKind": "accepted"
       },
       {
@@ -1380,20 +1397,12 @@ export const authorityAcceptanceFixture = {
       },
       {
         "kind": "local-set",
-        "keys": [
-          "interimConversion"
-        ],
+        "keys": ["interimConversion"],
         "handoffKind": "canonical"
       }
     ],
     "freshConsumer": {
-      "order": [
-        "old-owner-dispose-drained",
-        "retained-controller-release",
-        "new-starting-owner",
-        "exclusive-capability-acquired",
-        "fresh-ready-ok"
-      ],
+      "order": ["old-owner-dispose-drained", "retained-controller-release", "new-starting-owner", "exclusive-capability-acquired", "fresh-ready-ok"],
       "oldReadyPromise": "same-promise-same-rejection-object",
       "freshReady": "ok",
       "canonicalInventory": "exactly-installedCanonical-before-ordinary-edit",
@@ -1401,16 +1410,12 @@ export const authorityAcceptanceFixture = {
       "globalPlaylistOccurrencesStillUnresolved": [
         {
           "sourceKey": "playlists",
-          "path": [
-            0
-          ],
+          "path": [0],
           "value": "PL_GLOBAL"
         },
         {
           "sourceKey": "playlists",
-          "path": [
-            1
-          ],
+          "path": [1],
           "value": "PL_GLOBAL"
         }
       ],
@@ -1508,9 +1513,7 @@ export const authorityAcceptanceFixture = {
       "freshStartup": "held-pending",
       "automaticWrites": [],
       "explicitAction": "resume-retained-authority",
-      "resumeWrites": [
-        "interimConversion:canonical"
-      ],
+      "resumeWrites": ["interimConversion:canonical"],
       "newHandoffIds": 0
     },
     {
@@ -1521,9 +1524,7 @@ export const authorityAcceptanceFixture = {
       "automaticWrites": [],
       "explicitAction": "resume-retained-authority",
       "resumeRetirement": "same-id-idempotent",
-      "resumeWrites": [
-        "interimConversion:canonical"
-      ]
+      "resumeWrites": ["interimConversion:canonical"]
     },
     {
       "cut": "canonical-record-applied-before-promise-rejection",
@@ -1617,23 +1618,40 @@ export type FixtureSupervisorState = {
 export function createAuthorityHarness(seed: JsonObject = authorityAcceptanceFixture.seed, saved?: FixtureSupervisorState) {
   const h = createRecoveryHarness(clone(seed))
   h.allowPlaylist("PL_ONE")
-  let source = saved?.source ? clone(saved.source) : undefined, handoffId = saved?.handoffId ?? undefined
+  let source = saved?.source ? clone(saved.source) : undefined,
+    handoffId = saved?.handoffId ?? undefined
   const sourceEpoch = saved?.sourceEpoch ?? "fixture-interim-epoch-1"
-  let retired = saved?.retired ?? false, priorStopped = !saved, serial = 0, activeWrites = 0, maxWriters = 0
+  let retired = saved?.retired ?? false,
+    priorStopped = !saved,
+    serial = 0,
+    activeWrites = 0,
+    maxWriters = 0
   type Reservation = { readonly kind: "controller" | "canonical"; readonly actor: string; readonly identity: object }
   let reservation: Reservation | undefined
-  let writeLane = Promise.resolve(), retireHook: (() => Promise<void>) | undefined, acquireHook: (() => Promise<void>) | undefined
-  const pending = new Map<Promise<void>, string>(), producers = new Set<string>(), revoked = new Set<object>()
+  let writeLane = Promise.resolve(),
+    retireHook: (() => Promise<void>) | undefined,
+    acquireHook: (() => Promise<void>) | undefined
+  const pending = new Map<Promise<void>, string>(),
+    producers = new Set<string>(),
+    revoked = new Set<object>()
   const trace: unknown[] = []
   let remote: JsonObject = { "s:meta": { v: 1, id: "fixture-new-history", created: 10 } }
-  const syncListeners = new Set<() => void>(), timers = new Set<() => void>()
+  const syncListeners = new Set<() => void>(),
+    timers = new Set<() => void>()
   function permitted(actor: string): boolean {
     return reservation ? reservation.actor === actor && !revoked.has(reservation.identity) : !retired && priorStopped
   }
   function capability(current: Reservation) {
     return {
-      async assertCurrent(): Promise<"current" | "lost"> { return reservation === current && !revoked.has(current.identity) ? "current" : "lost" },
-      async release() { if (reservation === current) { trace.push({ kind: current.kind + "-release", actor: current.actor }); reservation = undefined } }
+      async assertCurrent(): Promise<"current" | "lost"> {
+        return reservation === current && !revoked.has(current.identity) ? "current" : "lost"
+      },
+      async release() {
+        if (reservation === current) {
+          trace.push({ kind: current.kind + "-release", actor: current.actor })
+          reservation = undefined
+        }
+      }
     }
   }
   function actor(name: string) {
@@ -1643,7 +1661,9 @@ export function createAuthorityHarness(seed: JsonObject = authorityAcceptanceFix
       async set(items: Readonly<Record<string, import("../../../src/shared/contracts/json").JsonValue>>) {
         if (!permitted(name)) throw Error("Synthetic producer fenced")
         let done = () => {}
-        const task = new Promise<void>(resolve => { done = resolve })
+        const task = new Promise<void>(resolve => {
+          done = resolve
+        })
         pending.set(task, name)
         const before = writeLane
         writeLane = before.then(() => task)
@@ -1652,32 +1672,45 @@ export function createAuthorityHarness(seed: JsonObject = authorityAcceptanceFix
           if (!permitted(name)) throw Error("Synthetic delayed producer fenced")
           if (retired && reservation?.kind === "controller") {
             const raw = items.interimConversion
-            if (Object.keys(items).length !== 1 || !jsonObject(raw) || !jsonObject(raw.handoff) || raw.handoff.kind !== "canonical" || raw.handoff.handoffId !== handoffId) throw Error("Retired controller exceeded its recording right")
+            if (Object.keys(items).length !== 1 || !jsonObject(raw) || !jsonObject(raw.handoff) || raw.handoff.kind !== "canonical" || raw.handoff.handoffId !== handoffId)
+              throw Error("Retired controller exceeded its recording right")
           }
-          activeWrites++; maxWriters = Math.max(maxWriters, activeWrites)
+          activeWrites++
+          maxWriters = Math.max(maxWriters, activeWrites)
           trace.push({ kind: "local-set", actor: name, items: clone(items) })
           await h.deps.local.set(items)
-        } finally { activeWrites = Math.max(0, activeWrites - 1); pending.delete(task); done() }
+        } finally {
+          activeWrites = Math.max(0, activeWrites - 1)
+          pending.delete(task)
+          done()
+        }
       }
     }
     const canonicalAuthority: import("../../../src/background/store/interim-canonical-authority").CanonicalAuthorityHost = {
       kind: "fixture",
       async observeSource(input) {
         if (!source) source = clone(input.source)
-        try { recoveryEqual(source, input.source, "Epoch source identity") } catch { return { kind: "unavailable" } }
+        try {
+          recoveryEqual(source, input.source, "Epoch source identity")
+        } catch {
+          return { kind: "unavailable" }
+        }
         return { kind: "source-epoch", sourceEpoch }
       },
       async begin(input) {
-        if (!source || input.sourceEpoch !== sourceEpoch || reservation || !priorStopped || retired && input.kind === "new") return { kind: "unavailable" }
-        if (input.kind === "resume") { if (!handoffId || input.handoffId !== handoffId) return { kind: "unavailable" } }
-        else handoffId = `fixture-handoff-${++serial}`
+        if (!source || input.sourceEpoch !== sourceEpoch || reservation || !priorStopped || (retired && input.kind === "new")) return { kind: "unavailable" }
+        if (input.kind === "resume") {
+          if (!handoffId || input.handoffId !== handoffId) return { kind: "unavailable" }
+        } else handoffId = `fixture-handoff-${++serial}`
         if (!handoffId) return { kind: "unavailable" }
-        const current: Reservation = { kind: "controller", actor: name, identity: {} }; reservation = current
+        const current: Reservation = { kind: "controller", actor: name, identity: {} }
+        reservation = current
         trace.push({ kind: "begin", actor: name, input: clone(input), handoffId })
         return { kind: "controller", sourceEpoch, handoffId, capability: capability(current) }
       },
       async retire(input) {
-        if (input.sourceEpoch !== sourceEpoch || input.handoffId !== handoffId || reservation?.kind !== "controller" || reservation.actor !== name || revoked.has(reservation.identity)) return { kind: "unconfirmed" }
+        if (input.sourceEpoch !== sourceEpoch || input.handoffId !== handoffId || reservation?.kind !== "controller" || reservation.actor !== name || revoked.has(reservation.identity))
+          return { kind: "unconfirmed" }
         retired = true
         trace.push({ kind: "retire", ...input, producers: [...producers].sort() })
         await retireHook?.()
@@ -1689,73 +1722,175 @@ export function createAuthorityHarness(seed: JsonObject = authorityAcceptanceFix
       async acquire(input) {
         await acquireHook?.()
         if (!priorStopped || !retired || reservation || input.sourceEpoch !== sourceEpoch || input.handoffId !== handoffId) return { kind: "unavailable" }
-        const current: Reservation = { kind: "canonical", actor: name, identity: {} }; reservation = current
+        const current: Reservation = { kind: "canonical", actor: name, identity: {} }
+        reservation = current
         trace.push({ kind: "exclusive-acquired", actor: name })
         return { kind: "exclusive", capability: capability(current) }
       }
     }
     const session = {
-      async get() { h.effects.push("session-get"); if (!permitted(name)) throw Error("Session actor fenced"); return {} },
-      async set(_items: unknown) { if (!permitted(name)) throw Error("Session actor fenced"); h.effects.push("session-set") },
-      async remove(_keys: unknown) { if (!permitted(name)) throw Error("Session actor fenced"); h.effects.push("session-remove") }
+      async get() {
+        h.effects.push("session-get")
+        if (!permitted(name)) throw Error("Session actor fenced")
+        return {}
+      },
+      async set(_items: unknown) {
+        if (!permitted(name)) throw Error("Session actor fenced")
+        h.effects.push("session-set")
+      },
+      async remove(_keys: unknown) {
+        if (!permitted(name)) throw Error("Session actor fenced")
+        h.effects.push("session-remove")
+      }
     }
-    const removal: import("../../../src/background/store/account-removal-execution").AccountRemovalHost = { kind: "fixture", session,
+    const removal: import("../../../src/background/store/account-removal-execution").AccountRemovalHost = {
+      kind: "fixture",
+      session,
       async removeLocal(keys) {
         if (!permitted(name)) throw Error("Removal actor fenced")
         const names = keys.map(key => accountRemovalLocalName(key, h.account))
         trace.push({ kind: "ordinary-remove", keys: names })
-        h.foreign(records => { for (const key of names) delete records[key] })
+        h.foreign(records => {
+          for (const key of names) delete records[key]
+        })
       }
     }
-    const join: import("../../../src/background/store/sync-join-execution").SyncJoinHost = { kind: "fixture", session,
+    const join: import("../../../src/background/store/sync-join-execution").SyncJoinHost = {
+      kind: "fixture",
+      session,
       async removeLocal(keys) {
         if (!permitted(name)) throw Error("Join actor fenced")
-        h.foreign(records => { for (const key of keys.map(syncJoinLocalName)) delete records[key] })
+        h.foreign(records => {
+          for (const key of keys.map(syncJoinLocalName)) delete records[key]
+        })
       }
     }
-    const claim: import("../../../src/background/store/local-claim-writer").ClaimHost = { kind: "fixture", authority: h.deps.recovery.authority,
-      session: { async takeLookup() { h.effects.push("claim-lookup-taken"); return true } },
-      ownership: { async lookup(authority) {
-        if (h.deps.recovery.kind !== "fixture") return { kind: "unavailable" }
-        const owned = await h.deps.recovery.ownership.lookup(authority)
-        return owned.kind === "fixture-owned" ? { ...owned, lineage: "local-migration-only" } : owned
-      } }
+    const claim: import("../../../src/background/store/local-claim-writer").ClaimHost = {
+      kind: "fixture",
+      authority: h.deps.recovery.authority,
+      session: {
+        async takeLookup() {
+          h.effects.push("claim-lookup-taken")
+          return true
+        }
+      },
+      ownership: {
+        async lookup(authority) {
+          if (h.deps.recovery.kind !== "fixture") return { kind: "unavailable" }
+          const owned = await h.deps.recovery.ownership.lookup(authority)
+          return owned.kind === "fixture-owned" ? { ...owned, lineage: "local-migration-only" } : owned
+        }
+      }
     }
-    return { ...h.deps, local, canonicalAuthority, removal, join, claim,
-      startup: { ...h.deps.startup, async readSnapshot(): Promise<never> { h.effects.push("legacy-readSnapshot"); throw Error("Released archive reached legacy startup") } },
-      sync: { async get() { h.effects.push("sync-get"); return clone(remote) }, async set(items: Readonly<Record<string, import("../../../src/shared/contracts/json").JsonValue>>) { if (!permitted(name)) throw Error("Sync actor fenced"); h.effects.push("sync-set"); remote = { ...remote, ...clone(items) } }, subscribe(listener: () => void) { h.effects.push("sync-subscribe"); syncListeners.add(listener); return () => { syncListeners.delete(listener) } } },
-      syncClock: { ...h.deps.syncClock, after(_delay: number, callback: () => void) { h.effects.push("timer"); timers.add(callback); return () => { timers.delete(callback) } } }
+    return {
+      ...h.deps,
+      local,
+      canonicalAuthority,
+      removal,
+      join,
+      claim,
+      startup: {
+        ...h.deps.startup,
+        async readSnapshot(): Promise<never> {
+          h.effects.push("legacy-readSnapshot")
+          throw Error("Released archive reached legacy startup")
+        }
+      },
+      sync: {
+        async get() {
+          h.effects.push("sync-get")
+          return clone(remote)
+        },
+        async set(items: Readonly<Record<string, import("../../../src/shared/contracts/json").JsonValue>>) {
+          if (!permitted(name)) throw Error("Sync actor fenced")
+          h.effects.push("sync-set")
+          remote = { ...remote, ...clone(items) }
+        },
+        subscribe(listener: () => void) {
+          h.effects.push("sync-subscribe")
+          syncListeners.add(listener)
+          return () => {
+            syncListeners.delete(listener)
+          }
+        }
+      },
+      syncClock: {
+        ...h.deps.syncClock,
+        after(_delay: number, callback: () => void) {
+          h.effects.push("timer")
+          timers.add(callback)
+          return () => {
+            timers.delete(callback)
+          }
+        }
+      }
     }
   }
-  return { ...h, actor, trace,
+  return {
+    ...h,
+    actor,
+    trace,
     delayedProducer(name: string, wait: Promise<void>, items: JsonObject) {
       const port = actor(name)
       let drained = () => {}
-      const drain = new Promise<void>(resolve => { drained = resolve })
+      const drain = new Promise<void>(resolve => {
+        drained = resolve
+      })
       pending.set(drain, name)
       return (async () => {
-        try { await wait; await port.local.set(items); return { kind: "written" } as const }
-        catch { return { kind: "fenced" } as const }
-        finally { pending.delete(drain); drained() }
+        try {
+          await wait
+          await port.local.set(items)
+          return { kind: "written" } as const
+        } catch {
+          return { kind: "fenced" } as const
+        } finally {
+          pending.delete(drain)
+          drained()
+        }
       })()
     },
-    supervisor(): FixtureSupervisorState { return { source: source ? clone(source) : null, sourceEpoch, handoffId: handoffId ?? null, retired } },
-    stopPriorProducers() { priorStopped = true; trace.push({ kind: "prior-producers-stopped" }) },
-    retire(fn: typeof retireHook) { retireHook = fn }, acquire(fn: typeof acquireHook) { acquireHook = fn },
-    revoke() { if (reservation) revoked.add(reservation.identity) },
+    supervisor(): FixtureSupervisorState {
+      return { source: source ? clone(source) : null, sourceEpoch, handoffId: handoffId ?? null, retired }
+    },
+    stopPriorProducers() {
+      priorStopped = true
+      trace.push({ kind: "prior-producers-stopped" })
+    },
+    retire(fn: typeof retireHook) {
+      retireHook = fn
+    },
+    acquire(fn: typeof acquireHook) {
+      acquireHook = fn
+    },
+    revoke() {
+      if (reservation) revoked.add(reservation.identity)
+    },
     maximumWriters: () => maxWriters,
-    remote(value: JsonObject) { remote = clone(value) },
+    remote(value: JsonObject) {
+      remote = clone(value)
+    },
     resources: () => ({ pending: pending.size, listeners: syncListeners.size, timers: timers.size, reservation: reservation?.kind ?? "none" })
   }
 }
 export async function installAuthorityFixture(h: ReturnType<typeof createAuthorityHarness>) {
-  const owner = createStartingLocalFilterWriter(h.actor("retained")), ready = owner.ready()
+  const owner = createStartingLocalFilterWriter(h.actor("retained")),
+    ready = owner.ready()
   let rejection: unknown
-  try { await ready } catch (error) { rejection = error }
+  try {
+    await ready
+  } catch (error) {
+    rejection = error
+  }
   if (!rejection) throw Error("Installation unexpectedly released readiness")
   const agreement = await owner.readAgreement(recoveryUi)
   if (agreement.kind !== "review") throw Error("No actual retained disclosure")
-  const agreed = await owner.agree(recoveryUi, { review: agreement.review, displayedVersion: 1, choice: { kind: "retained-disclosure" }, access: Promise.resolve({ www: false, music: false, browserMenu: false }) })
+  const agreed = await owner.agree(recoveryUi, {
+    review: agreement.review,
+    displayedVersion: 1,
+    choice: { kind: "retained-disclosure" },
+    access: Promise.resolve({ www: false, music: false, browserMenu: false })
+  })
   if (agreed.kind !== "committed") throw Error("No actual confirmed agreement")
   const installation = await owner.readInterimInstallation(recoveryUi)
   if (installation.kind !== "review") throw Error("No actual installation review")
@@ -1769,18 +1904,38 @@ export async function releaseAuthorityFixture(h: ReturnType<typeof createAuthori
   return owner.releaseRetainedAuthority(recoveryUi, shown.review)
 }
 export async function observeCanonicalAuthorityExecution() {
-  const h = createAuthorityHarness(), initial = await installAuthorityFixture(h)
-  const before = h.records(), startWrites = h.writes.length, startEffects = h.effects.length
+  const h = createAuthorityHarness(),
+    initial = await installAuthorityFixture(h)
+  const before = h.records(),
+    startWrites = h.writes.length,
+    startEffects = h.effects.length
   recoveryEqual(Object.fromEntries(Object.entries(before).filter(([key]) => isInterimCanonicalKey(key))), authorityAcceptanceFixture.installedCanonical, "Independent installed canonical oracle")
   const released = await releaseAuthorityFixture(h, initial.owner)
   if (released.kind !== "restart-required") throw Error("Release did not require a fresh owner " + JSON.stringify(released))
-  recoveryEqual(released.mutations.map(x => x.stage), ["accept", "retire", "record"], "Exact handoff stages")
-  const recorded = h.records(), writes = clone(h.writes.slice(startWrites)), handoffEffects = clone(h.effects.slice(startEffects))
-  recoveryEqual(writes.map(x => Object.keys(x)), [["interimConversion"], ["interimConversion"]], "Release writes only the checkpoint twice")
-  const blocked = createStartingLocalFilterWriter(h.actor("too-early")); await recoveryHeld(blocked); await blocked.dispose()
+  recoveryEqual(
+    released.mutations.map(x => x.stage),
+    ["accept", "retire", "record"],
+    "Exact handoff stages"
+  )
+  const recorded = h.records(),
+    writes = clone(h.writes.slice(startWrites)),
+    handoffEffects = clone(h.effects.slice(startEffects))
+  recoveryEqual(
+    writes.map(x => Object.keys(x)),
+    [["interimConversion"], ["interimConversion"]],
+    "Release writes only the checkpoint twice"
+  )
+  const blocked = createStartingLocalFilterWriter(h.actor("too-early"))
+  await recoveryHeld(blocked)
+  await blocked.dispose()
   await initial.owner.dispose()
   recoveryEqual(initial.owner.ready() === initial.ready, true, "Old readiness promise identity")
-  let rejection: unknown; try { await initial.ready } catch (error) { rejection = error }
+  let rejection: unknown
+  try {
+    await initial.ready
+  } catch (error) {
+    rejection = error
+  }
   recoveryEqual(rejection === initial.rejection, true, "Old readiness rejection object identity")
   const fresh = createStartingLocalFilterWriter(h.actor("canonical"))
   recoveryEqual(await fresh.ready(), "ok", "Fresh exclusive owner ready")
@@ -1792,33 +1947,56 @@ export async function observeCanonicalAuthorityExecution() {
   if (review.kind !== "review" || review.activation !== "canonical") throw Error("No canonical archived recovery review")
   recoveryEqual(review.resolved, [], "Release does not invent resolutions")
   const globals = review.view.items.filter(x => x.id.sourceKey === "playlists")
-  recoveryEqual(globals.map(x => x.id.path), [[0], [1]], "Duplicate global occurrences remain unresolved")
-  h.allocateReplacement(); h.replacementGeneration("canonical-edit-1")
-  const playlist = "PL_ONE"; if (!isPlaylistId(playlist)) throw Error("Invalid fixture playlist")
+  recoveryEqual(
+    globals.map(x => x.id.path),
+    [[0], [1]],
+    "Duplicate global occurrences remain unresolved"
+  )
+  h.allocateReplacement()
+  h.replacementGeneration("canonical-edit-1")
+  const playlist = "PL_ONE"
+  if (!isPlaylistId(playlist)) throw Error("Invalid fixture playlist")
   const edit = await fresh.change(recoveryUi, { acct: h.account, playlist, desired: { mode: "allow", on: true }, clearListedChannels: "not-confirmed" })
   recoveryEqual(h.records()["doc:filter:AAAAAAAAAAAAAAAA:PL_ONE"], authorityAcceptanceFixture.laterOrdinaryEdit.expectedFilter, "Real ordinary edit oracle")
   recoveryEqual(h.records().sync, authorityAcceptanceFixture.laterOrdinaryEdit.expectedHistory, "Real first-edit provenance oracle")
   recoveryEqual(h.records().interimConversion, recorded.interimConversion, "Ordinary edit preserves historical checkpoint")
   await fresh.dispose()
-  const serialized = JSON.stringify(h.records()), supervisor = h.supervisor(), restart = createAuthorityHarness(JSON.parse(serialized), supervisor)
-  restart.stopPriorProducers(); restart.forbidAllocation()
+  const serialized = JSON.stringify(h.records()),
+    supervisor = h.supervisor(),
+    restart = createAuthorityHarness(JSON.parse(serialized), supervisor)
+  restart.stopPriorProducers()
+  restart.forbidAllocation()
   const reopened = createStartingLocalFilterWriter(restart.actor("restart"))
   recoveryEqual(await reopened.ready(), "ok", "Serialized edited state restarts")
   recoveryEqual(restart.records(), JSON.parse(serialized), "Edited state survives without replay")
   restart.permitAllocation()
-  const settings = await reopened.read("settings"), settingChange = await reopened.changeSharedSetting(recoveryUi, { kind: "theme", value: "system" })
-  const notice = await reopened.readClaimNotice(), claim = await reopened.claim(), agreement = await reopened.readAgreement(recoveryUi), join = await reopened.readSyncJoin(recoveryUi)
+  const settings = await reopened.read("settings"),
+    settingChange = await reopened.changeSharedSetting(recoveryUi, { kind: "theme", value: "system" })
+  const notice = await reopened.readClaimNotice(),
+    claim = await reopened.claim(),
+    agreement = await reopened.readAgreement(recoveryUi),
+    join = await reopened.readSyncJoin(recoveryUi)
   if (agreement.kind !== "review") throw Error("Canonical agreement review refused archive")
-  const agreed = await reopened.agree(recoveryUi, { review: agreement.review, displayedVersion: 1, choice: { kind: "disclosure" }, access: Promise.resolve({ www: false, music: false, browserMenu: false }) })
+  const agreed = await reopened.agree(recoveryUi, {
+    review: agreement.review,
+    displayedVersion: 1,
+    choice: { kind: "disclosure" },
+    access: Promise.resolve({ www: false, music: false, browserMenu: false })
+  })
   if (agreed.kind !== "unchanged" && agreed.kind !== "committed") throw Error("Canonical Agree refused archive " + JSON.stringify(agreed))
   const expectedNotice = { acct: restart.account, dropped: 2 }
-  restart.foreign(records => { if (!jsonObject(records.device)) throw Error("No device"); records.device.claimNotice = clone(expectedNotice) })
-  const pendingNotice = await reopened.readClaimNotice(), acknowledged = await reopened.acknowledgeClaimNotice(recoveryUi, expectedNotice)
+  restart.foreign(records => {
+    if (!jsonObject(records.device)) throw Error("No device")
+    records.device.claimNotice = clone(expectedNotice)
+  })
+  const pendingNotice = await reopened.readClaimNotice(),
+    acknowledged = await reopened.acknowledgeClaimNotice(recoveryUi, expectedNotice)
   if (acknowledged.kind !== "committed") throw Error("Canonical notice acknowledgement failed " + JSON.stringify(acknowledged))
   const settingsDocument = restart.records()["doc:settings"]
   if (!jsonObject(settingsDocument) || !jsonObject(settingsDocument.data)) throw Error("No canonical settings")
   restart.remote({ "s:meta": { v: 1, id: "fixture-new-history", created: 10 }, "s:settings": { ...settingsDocument, gen: "remote-settings", data: { ...settingsDocument.data, theme: "dark" } } })
-  const operation = reopened.beginSyncJoin(recoveryUi), preparation = await operation.result
+  const operation = reopened.beginSyncJoin(recoveryUi),
+    preparation = await operation.result
   if (preparation.kind !== "choice-required") throw Error("Unknown provenance did not require explicit join choice " + JSON.stringify(preparation))
   const cancelled = await reopened.cancelSyncJoin(recoveryUi)
   recoveryEqual(cancelled, { kind: "cancelled" }, "Explicit join cancellation preserves sync off")
@@ -1831,11 +2009,53 @@ export async function observeCanonicalAuthorityExecution() {
   const removed = await reopened.removeAccountSetup(recoveryUi, removal.confirmation)
   if (removed.kind !== "committed") throw Error("Ordinary removal failed " + JSON.stringify(removed))
   recoveryEqual(restart.records().interimConversion, recorded.interimConversion, "Account removal preserves archive")
-  recoveryEqual(Object.fromEntries(Object.entries(restart.records()).filter(([key]) => isInterimSourceKey(key))), Object.fromEntries(Object.entries(before).filter(([key]) => isInterimSourceKey(key))), "Account removal preserves every raw source value")
+  recoveryEqual(
+    Object.fromEntries(Object.entries(restart.records()).filter(([key]) => isInterimSourceKey(key))),
+    Object.fromEntries(Object.entries(before).filter(([key]) => isInterimSourceKey(key))),
+    "Account removal preserves every raw source value"
+  )
   await reopened.dispose()
-  return { mode: "synthetic-canonical-authority", initial: { agreed: initial.agreed, installed: initial.installed }, before, released, recorded, writes, handoffEffects, recovery: review, edit, serialized, supervisor, restart: { settings, settingChange, notice, claim, agreement, agreed, pendingNotice, acknowledged, join, preparation, cancelled, joinResume, receive, removed, records: restart.records(), writes: restart.writes, effects: restart.effects, trace: restart.trace }, trace: h.trace, effects: h.effects, maximumWriters: h.maximumWriters(), resources: h.resources(), restartResources: restart.resources(), production: "not-connected", native: "waived-and-unproven" }
+  return {
+    mode: "synthetic-canonical-authority",
+    initial: { agreed: initial.agreed, installed: initial.installed },
+    before,
+    released,
+    recorded,
+    writes,
+    handoffEffects,
+    recovery: review,
+    edit,
+    serialized,
+    supervisor,
+    restart: {
+      settings,
+      settingChange,
+      notice,
+      claim,
+      agreement,
+      agreed,
+      pendingNotice,
+      acknowledged,
+      join,
+      preparation,
+      cancelled,
+      joinResume,
+      receive,
+      removed,
+      records: restart.records(),
+      writes: restart.writes,
+      effects: restart.effects,
+      trace: restart.trace
+    },
+    trace: h.trace,
+    effects: h.effects,
+    maximumWriters: h.maximumWriters(),
+    resources: h.resources(),
+    restartResources: restart.resources(),
+    production: "not-connected",
+    native: "waived-and-unproven"
+  }
 }
-
 
 export async function recoveryDiscardSelection(owner: ReturnType<typeof createStartingLocalFilterWriter>, sourceKey: string, path: readonly (string | number)[]) {
   const opened = await owner.readInterimRecovery()
@@ -1846,38 +2066,83 @@ export async function recoveryDiscardSelection(owner: ReturnType<typeof createSt
 }
 export async function observeInterimRecoveryDiscard() {
   const forbidden = ["stamp", "generation", "recovery-ownership", "sync-get", "sync-set", "sync-subscribe", "timer"]
-  const unchanged = (before: JsonObject, after: JsonObject) => recoveryEqual({ ...after, interimConversion: before.interimConversion }, before, "Discard preserves the complete store except its checkpoint")
+  const unchanged = (before: JsonObject, after: JsonObject) =>
+    recoveryEqual({ ...after, interimConversion: before.interimConversion }, before, "Discard preserves the complete store except its checkpoint")
   const seed = clone(recoveryAcceptanceFixture.seed)
   seed.playlists = ["PL_GLOBAL", "PL_GLOBAL"]
-  const held = createRecoveryHarness(seed), heldOwner = createStartingLocalFilterWriter(held.deps)
-  const agreement = await recoveryAgree(heldOwner, held), v2 = held.records()
-  const first = await recoveryDiscardSelection(heldOwner, "playlists", [0]), heldStart = held.writes.length, heldEffects = held.effects.length
-  held.ownership(false); held.forbidAllocation()
+  const held = createRecoveryHarness(seed),
+    heldOwner = createStartingLocalFilterWriter(held.deps)
+  const agreement = await recoveryAgree(heldOwner, held),
+    v2 = held.records()
+  const first = await recoveryDiscardSelection(heldOwner, "playlists", [0]),
+    heldStart = held.writes.length,
+    heldEffects = held.effects.length
+  held.ownership(false)
+  held.forbidAllocation()
   const firstResult = await heldOwner.discardInterimItem(recoveryUi, { capture: first.opened.capture, item: first.item.id })
-  recoveryEqual(firstResult, { kind: "committed", item: first.item.id, activation: "held", mutations: [{ stage: "record", write: { kind: "resolved" } }] }, "V2 discard confirms exactly one checkpoint write")
-  const afterFirst = held.records(), literal = { kind: "discarded", item: { sourceKey: "playlists", path: [0] } }
-  recoveryEqual(held.writes.slice(heldStart), [{ interimConversion: { v: 4, kind: "retained-interim", basis: { checkpoint: v2.interimConversion, history: { kind: "present", raw: v2.sync } }, resolutions: [literal], pending: { kind: "none" } } }], "Literal single-occurrence V4 receipt")
+  recoveryEqual(
+    firstResult,
+    { kind: "committed", item: first.item.id, activation: "held", mutations: [{ stage: "record", write: { kind: "resolved" } }] },
+    "V2 discard confirms exactly one checkpoint write"
+  )
+  const afterFirst = held.records(),
+    literal = { kind: "discarded", item: { sourceKey: "playlists", path: [0] } }
+  recoveryEqual(
+    held.writes.slice(heldStart),
+    [
+      {
+        interimConversion: {
+          v: 4,
+          kind: "retained-interim",
+          basis: { checkpoint: v2.interimConversion, history: { kind: "present", raw: v2.sync } },
+          resolutions: [literal],
+          pending: { kind: "none" }
+        }
+      }
+    ],
+    "Literal single-occurrence V4 receipt"
+  )
   unchanged(v2, afterFirst)
-  recoveryEqual(held.effects.slice(heldEffects).filter(x => forbidden.includes(String(x))), [], "Discard allocates nothing and proves no destination")
+  recoveryEqual(
+    held.effects.slice(heldEffects).filter(x => forbidden.includes(String(x))),
+    [],
+    "Discard allocates nothing and proves no destination"
+  )
   const sibling = first.opened.view.items.find(row => row.id.sourceKey === "playlists" && row.id.path[0] === 1)
   if (!sibling) throw Error("Missing literal equal sibling")
   const reused = await heldOwner.discardInterimItem(recoveryUi, { capture: first.opened.capture, item: sibling.id })
   recoveryEqual(reused, { kind: "unavailable", reason: "stale" }, "Each sibling needs a fresh explicit action")
   await heldOwner.dispose()
-  const heldSerialized = JSON.stringify(held.records()), heldRestart = createRecoveryHarness(JSON.parse(heldSerialized)); heldRestart.forbidAllocation()
-  const reopenedHeld = createStartingLocalFilterWriter(heldRestart.deps), heldReadiness = await recoveryHeld(reopenedHeld), heldReview = await reopenedHeld.readInterimRecovery()
+  const heldSerialized = JSON.stringify(held.records()),
+    heldRestart = createRecoveryHarness(JSON.parse(heldSerialized))
+  heldRestart.forbidAllocation()
+  const reopenedHeld = createStartingLocalFilterWriter(heldRestart.deps),
+    heldReadiness = await recoveryHeld(reopenedHeld),
+    heldReview = await reopenedHeld.readInterimRecovery()
   if (heldReview.kind !== "review") throw Error("V4 discard did not reopen")
-  recoveryEqual(heldReview.view.items.filter(row => row.id.sourceKey === "playlists").map(row => ({ path: row.id.path, intent: row.intent, inactive: row.inactive })), [{ path: [1], intent: "none", inactive: true }], "Restart suppresses exactly the confirmed occurrence")
+  recoveryEqual(
+    heldReview.view.items.filter(row => row.id.sourceKey === "playlists").map(row => ({ path: row.id.path, intent: row.intent, inactive: row.inactive })),
+    [{ path: [1], intent: "none", inactive: true }],
+    "Restart suppresses exactly the confirmed occurrence"
+  )
   recoveryEqual(heldRestart.writes, [], "V4 restart never retries discard")
   recoveryEqual(heldRestart.records(), JSON.parse(heldSerialized), "V4 restart preserves every byte value")
   await reopenedHeld.dispose()
 
-  const h = createAuthorityHarness(), installed = await installAuthorityFixture(h), v3 = h.records()
-  const archivedSelection = await recoveryDiscardSelection(installed.owner, "playlists", [0]), v3Start = h.writes.length
+  const h = createAuthorityHarness(),
+    installed = await installAuthorityFixture(h),
+    v3 = h.records()
+  const archivedSelection = await recoveryDiscardSelection(installed.owner, "playlists", [0]),
+    v3Start = h.writes.length
   const archivedResult = await installed.owner.discardInterimItem(recoveryUi, { capture: archivedSelection.opened.capture, item: archivedSelection.item.id })
   recoveryEqual(archivedResult.kind, "committed", "Actual installed V3 advances to completed V4")
-  const v4 = h.records(); unchanged(v3, v4)
-  recoveryEqual(h.writes.slice(v3Start).map(write => Object.keys(write)), [["interimConversion"]], "Installed discard has one record write")
+  const v4 = h.records()
+  unchanged(v3, v4)
+  recoveryEqual(
+    h.writes.slice(v3Start).map(write => Object.keys(write)),
+    [["interimConversion"]],
+    "Installed discard has one record write"
+  )
   const release = await releaseAuthorityFixture(h, installed.owner)
   recoveryEqual(release.kind, "restart-required", "Nonempty completed V4 releases through the actual handoff")
   const released = h.records()
@@ -1886,75 +2151,178 @@ export async function observeInterimRecoveryDiscard() {
   await installed.owner.dispose()
   const fresh = createStartingLocalFilterWriter(h.actor("discard-canonical"))
   recoveryEqual(await fresh.ready(), "ok", "Discard uses a fresh exclusive canonical owner")
-  h.allocateReplacement(); h.replacementGeneration("canonical-edit-1")
-  const playlist = "PL_ONE"; if (!isPlaylistId(playlist)) throw Error("Invalid discard fixture playlist")
+  h.allocateReplacement()
+  h.replacementGeneration("canonical-edit-1")
+  const playlist = "PL_ONE"
+  if (!isPlaylistId(playlist)) throw Error("Invalid discard fixture playlist")
   const edit = await fresh.change(recoveryUi, { acct: h.account, playlist, desired: { mode: "allow", on: true }, clearListedChannels: "not-confirmed" })
   recoveryEqual(edit, { kind: "result", result: { ok: true } }, "Current canonical edit succeeds before discard")
-  const beforeSuffix = h.records(), suffix = await recoveryDiscardSelection(fresh, "playlists", [1]), suffixStart = h.writes.length, suffixEffects = h.effects.length
-  h.ownership(false); h.forbidAllocation()
+  const beforeSuffix = h.records(),
+    suffix = await recoveryDiscardSelection(fresh, "playlists", [1]),
+    suffixStart = h.writes.length,
+    suffixEffects = h.effects.length
+  h.ownership(false)
+  h.forbidAllocation()
   const suffixResult = await fresh.discardInterimItem(recoveryUi, { capture: suffix.opened.capture, item: suffix.item.id })
   recoveryEqual(suffixResult, { kind: "committed", item: suffix.item.id, activation: "canonical", mutations: [{ stage: "record", write: { kind: "resolved" } }] }, "V5 appends one flat suffix discard")
-  const afterSuffix = h.records(); unchanged(beforeSuffix, afterSuffix)
-  recoveryEqual(h.writes.slice(suffixStart), [{ interimConversion: { ...released.interimConversion, resolutions: [{ kind: "discarded", item: { sourceKey: "playlists", path: [1] } }] } }], "V5 preserves exact archive and handoff")
-  recoveryEqual(h.effects.slice(suffixEffects).filter(x => forbidden.includes(String(x))), [], "V5 discard changes no history or allocation")
+  const afterSuffix = h.records()
+  unchanged(beforeSuffix, afterSuffix)
+  recoveryEqual(
+    h.writes.slice(suffixStart),
+    [{ interimConversion: { ...released.interimConversion, resolutions: [{ kind: "discarded", item: { sourceKey: "playlists", path: [1] } }] } }],
+    "V5 preserves exact archive and handoff"
+  )
+  recoveryEqual(
+    h.effects.slice(suffixEffects).filter(x => forbidden.includes(String(x))),
+    [],
+    "V5 discard changes no history or allocation"
+  )
   h.permitAllocation()
   const removal = await fresh.prepareAccountRemoval(recoveryUi, h.account)
   if (removal.kind !== "confirmation-required") throw Error("No current canonical removal")
   const removed = await fresh.removeAccountSetup(recoveryUi, removal.confirmation)
   recoveryEqual(removed.kind, "committed", "Current canonical tombstones survive discard")
   await fresh.dispose()
-  const serialized = JSON.stringify(h.records()), supervisor = h.supervisor(), restart = createAuthorityHarness(JSON.parse(serialized), supervisor)
-  restart.stopPriorProducers(); restart.forbidAllocation()
+  const serialized = JSON.stringify(h.records()),
+    supervisor = h.supervisor(),
+    restart = createAuthorityHarness(JSON.parse(serialized), supervisor)
+  restart.stopPriorProducers()
+  restart.forbidAllocation()
   const reopened = createStartingLocalFilterWriter(restart.actor("discard-restart"))
   recoveryEqual(await reopened.ready(), "ok", "Serialized discard reacquires fresh authority")
   const review = await reopened.readInterimRecovery()
   if (review.kind !== "review") throw Error("No reopened V5 discard review")
-  recoveryEqual(review.discarded.map(item => ({ sourceKey: item.sourceKey, path: item.path })), [{ sourceKey: "playlists", path: [0] }, { sourceKey: "playlists", path: [1] }], "Archive and suffix are both resolved")
-  recoveryEqual(review.view.items.filter(row => row.id.sourceKey === "playlists"), [], "Discarded siblings never reappear")
+  recoveryEqual(
+    review.discarded.map(item => ({ sourceKey: item.sourceKey, path: item.path })),
+    [
+      { sourceKey: "playlists", path: [0] },
+      { sourceKey: "playlists", path: [1] }
+    ],
+    "Archive and suffix are both resolved"
+  )
+  recoveryEqual(
+    review.view.items.filter(row => row.id.sourceKey === "playlists"),
+    [],
+    "Discarded siblings never reappear"
+  )
   recoveryEqual(restart.records(), JSON.parse(serialized), "Current edits and tombstones survive without historical replay")
   recoveryEqual(restart.writes, [], "Released restart performs no automatic IO")
   await reopened.dispose()
-  const resources = h.resources(), restartResources = restart.resources()
+  const resources = h.resources(),
+    restartResources = restart.resources()
   recoveryEqual(resources, { pending: 0, listeners: 0, timers: 0, reservation: "none" }, "Discard owner disposes every resource")
   recoveryEqual(restartResources, resources, "Restart owner disposes every resource")
   const checkpoint = afterSuffix.interimConversion
   if (!jsonObject(checkpoint) || !Array.isArray(checkpoint.resolutions)) throw Error("No discard parser control checkpoint")
   const parserControls = []
-  for (const receipt of [{ kind: "discarded", item: { path: [0], sourceKey: "playlists" } },
-    { kind: "discarded", item: { sourceKey: "playlists", path: [] } }, { kind: "discarded", item: { sourceKey: "playlists", path: ["1"] } }]) {
+  for (const receipt of [
+    { kind: "discarded", item: { path: [0], sourceKey: "playlists" } },
+    { kind: "discarded", item: { sourceKey: "playlists", path: [] } },
+    { kind: "discarded", item: { sourceKey: "playlists", path: ["1"] } }
+  ]) {
     const result = readRetainedCheckpoint({ ...checkpoint, resolutions: [...checkpoint.resolutions, receipt] })
     recoveryEqual(result, { kind: "invalid" }, "Discard parser rejects duplicate archive locators and invented occurrences")
     parserControls.push({ receipt, result })
   }
   const faults = []
   for (const mode of ["rejected-unchanged", "rejected-applied", "resolved-missing", "corrupt", "read-failed"] as const) {
-    const f = createRecoveryHarness(), owner = createStartingLocalFilterWriter(f.deps)
+    const f = createRecoveryHarness(),
+      owner = createStartingLocalFilterWriter(f.deps)
     await recoveryAgree(owner, f)
-    const selection = await recoveryDiscardSelection(owner, "playlists", [0]), before = f.records(), start = f.writes.length
+    const selection = await recoveryDiscardSelection(owner, "playlists", [0]),
+      before = f.records(),
+      start = f.writes.length
     f.forbidAllocation()
-    if (mode === "corrupt" || mode === "read-failed") f.write(async (items, apply) => {
-      apply(items)
-      if (mode === "corrupt") f.foreign(records => { records.unrelated = { divergent: true } })
-      else f.get(async () => { throw f.readError })
-    })
+    if (mode === "corrupt" || mode === "read-failed")
+      f.write(async (items, apply) => {
+        apply(items)
+        if (mode === "corrupt")
+          f.foreign(records => {
+            records.unrelated = { divergent: true }
+          })
+        else
+          f.get(async () => {
+            throw f.readError
+          })
+      })
     else f.mode(mode)
     const result = await owner.discardInterimItem(recoveryUi, { capture: selection.opened.capture, item: selection.item.id })
     recoveryEqual(result.kind, mode === "rejected-unchanged" ? "failed" : mode === "rejected-applied" ? "committed" : "unconfirmed", "Discard outcome follows actual storage " + mode)
     if (mode === "rejected-unchanged") {
       recoveryEqual(f.records(), before, "Unapplied rejected discard preserves storage")
-      recoveryEqual(await owner.discardInterimItem(recoveryUi, { capture: selection.opened.capture, item: selection.item.id }), { kind: "unavailable", reason: "stale" }, "Failed discard consumes its private capture")
+      recoveryEqual(
+        await owner.discardInterimItem(recoveryUi, { capture: selection.opened.capture, item: selection.item.id }),
+        { kind: "unavailable", reason: "stale" },
+        "Failed discard consumes its private capture"
+      )
     }
-    recoveryEqual(f.writes.slice(start).map(write => Object.keys(write)), [["interimConversion"]], "Every discard fault attempts only one record write")
-    const stored = JSON.stringify(f.records()); await owner.dispose()
-    const reopenedHarness = createRecoveryHarness(JSON.parse(stored)); reopenedHarness.forbidAllocation()
-    const reopenedOwner = createStartingLocalFilterWriter(reopenedHarness.deps), readiness = await recoveryHeld(reopenedOwner), reopenedReview = await reopenedOwner.readInterimRecovery()
+    recoveryEqual(
+      f.writes.slice(start).map(write => Object.keys(write)),
+      [["interimConversion"]],
+      "Every discard fault attempts only one record write"
+    )
+    const stored = JSON.stringify(f.records())
+    await owner.dispose()
+    const reopenedHarness = createRecoveryHarness(JSON.parse(stored))
+    reopenedHarness.forbidAllocation()
+    const reopenedOwner = createStartingLocalFilterWriter(reopenedHarness.deps),
+      readiness = await recoveryHeld(reopenedOwner),
+      reopenedReview = await reopenedOwner.readInterimRecovery()
     recoveryEqual(reopenedHarness.writes, [], "Fault restart never retries discard")
     if (reopenedReview.kind !== "review") throw Error("No fault restart review " + mode)
     recoveryEqual(reopenedReview.discarded.length, mode === "rejected-unchanged" || mode === "resolved-missing" ? 0 : 1, "Restart uses the actual complete checkpoint")
     await reopenedOwner.dispose()
-    faults.push({ mode, before, result, stored, writes: f.writes.slice(start), effects: f.effects, restart: { readiness, review: reopenedReview, records: reopenedHarness.records(), writes: reopenedHarness.writes, effects: reopenedHarness.effects } })
+    faults.push({
+      mode,
+      before,
+      result,
+      stored,
+      writes: f.writes.slice(start),
+      effects: f.effects,
+      restart: { readiness, review: reopenedReview, records: reopenedHarness.records(), writes: reopenedHarness.writes, effects: reopenedHarness.effects }
+    })
   }
-  return { mode: "synthetic-exact-occurrence-discard", held: { agreement, v2, first: first.opened, firstResult, afterFirst, reused, writes: held.writes, effects: held.effects, serialized: heldSerialized, restart: { readiness: heldReadiness, review: heldReview, records: heldRestart.records(), writes: heldRestart.writes, effects: heldRestart.effects } }, canonical: { agreed: installed.agreed, installed: installed.installed, v3, archivedResult, v4, release, released, edit, beforeSuffix, suffixResult, afterSuffix, removed, serialized, supervisor, writes: h.writes, effects: h.effects, trace: h.trace, restart: { review, records: restart.records(), writes: restart.writes, effects: restart.effects, trace: restart.trace }, resources, restartResources }, parserControls, faults, production: "not-connected", native: "waived-and-unproven" }
+  return {
+    mode: "synthetic-exact-occurrence-discard",
+    held: {
+      agreement,
+      v2,
+      first: first.opened,
+      firstResult,
+      afterFirst,
+      reused,
+      writes: held.writes,
+      effects: held.effects,
+      serialized: heldSerialized,
+      restart: { readiness: heldReadiness, review: heldReview, records: heldRestart.records(), writes: heldRestart.writes, effects: heldRestart.effects }
+    },
+    canonical: {
+      agreed: installed.agreed,
+      installed: installed.installed,
+      v3,
+      archivedResult,
+      v4,
+      release,
+      released,
+      edit,
+      beforeSuffix,
+      suffixResult,
+      afterSuffix,
+      removed,
+      serialized,
+      supervisor,
+      writes: h.writes,
+      effects: h.effects,
+      trace: h.trace,
+      restart: { review, records: restart.records(), writes: restart.writes, effects: restart.effects, trace: restart.trace },
+      resources,
+      restartResources
+    },
+    parserControls,
+    faults,
+    production: "not-connected",
+    native: "waived-and-unproven"
+  }
 }
 
 export function createGlobalPlaylistRestoreHarness(seed?: JsonObject, saved?: FixtureSupervisorState) {
@@ -1967,11 +2335,29 @@ export function createGlobalPlaylistRestoreHarness(seed?: JsonObject, saved?: Fi
   }
   const h = createAuthorityHarness(initial, saved)
   h.allowPlaylist("PL_GLOBAL")
-  const authorityA = { acct: h.account, lease: "fixture-lease-1", browserSession: "fixture-browser-session-1", consentGeneration: "fixture-canonical-consent-1", signedIn: true, incognito: false } as const
+  const authorityA = {
+    acct: h.account,
+    lease: "fixture-lease-1",
+    browserSession: "fixture-browser-session-1",
+    consentGeneration: "fixture-canonical-consent-1",
+    signedIn: true,
+    incognito: false
+  } as const
   const authorityB = { ...authorityA, acct: accountB, lease: "fixture-lease-B", browserSession: "fixture-browser-session-B" }
   let accounts = [authorityA, authorityB]
-  h.deps.recovery.accounts.read = async () => { h.effects.push("recovery-accounts"); return clone(accounts) }
-  return { ...h, accountB, authorityA, authorityB, accounts(value: typeof accounts) { accounts = clone(value) } }
+  h.deps.recovery.accounts.read = async () => {
+    h.effects.push("recovery-accounts")
+    return clone(accounts)
+  }
+  return {
+    ...h,
+    accountB,
+    authorityA,
+    authorityB,
+    accounts(value: typeof accounts) {
+      accounts = clone(value)
+    }
+  }
 }
 export async function globalPlaylistRestoreSelection(owner: ReturnType<typeof createStartingLocalFilterWriter>, index: number) {
   const selection = await recoveryDiscardSelection(owner, "playlists", [index])
@@ -1982,63 +2368,131 @@ export async function globalPlaylistRestoreSelection(owner: ReturnType<typeof cr
 export async function observeGlobalPlaylistRestore() {
   const cases = []
   for (const order of ["B-then-A", "A-then-B"] as const) {
-    const h = createGlobalPlaylistRestoreHarness(), installed = await installAuthorityFixture(h)
+    const h = createGlobalPlaylistRestoreHarness(),
+      installed = await installAuthorityFixture(h)
     const released = await releaseAuthorityFixture(h, installed.owner)
     recoveryEqual(released.kind, "restart-required", "Restore requires actual authority handoff")
     await installed.owner.dispose()
     const owner = createStartingLocalFilterWriter(h.actor("playlist-" + order))
     recoveryEqual(await owner.ready(), "ok", "Restore acquires a fresh canonical owner")
     h.allocateReplacement()
-    const before = h.records(), start = h.writes.length, steps = []
+    const before = h.records(),
+      start = h.writes.length,
+      steps = []
     for (const index of [0, 1]) {
-      const acct = order === "B-then-A" ? index === 0 ? h.accountB : h.account : index === 0 ? h.account : h.accountB
+      const acct = order === "B-then-A" ? (index === 0 ? h.accountB : h.account) : index === 0 ? h.account : h.accountB
       const selected = await globalPlaylistRestoreSelection(owner, index)
       recoveryEqual(Object.keys(selected.prepared).sort(), ["kind", "choice", "item", "entry", "owners", "scope"].sort(), "Choice has no default destination")
-      recoveryEqual(selected.prepared.owners.map(row => row.acct), [h.account, h.accountB], "Two stable verified owners")
+      recoveryEqual(
+        selected.prepared.owners.map(row => row.acct),
+        [h.account, h.accountB],
+        "Two stable verified owners"
+      )
       recoveryEqual(selected.prepared.owners.find(row => row.acct === acct)?.status, "available", "Chosen live Setup is selectable")
-      const prior = h.records(), name = `doc:setup:${acct}`, setup = prior[name], writeStart = h.writes.length
+      const prior = h.records(),
+        name = `doc:setup:${acct}`,
+        setup = prior[name],
+        writeStart = h.writes.length
       if (!jsonObject(setup) || !jsonObject(setup.data) || !Array.isArray(setup.data.autoAdd)) throw Error("Missing literal live Setup")
       h.replacementGeneration(`playlist-${order}-${index}`)
       const result = await owner.restoreInterimPlaylist(recoveryUi, { choice: selected.prepared.choice, acct })
       recoveryEqual(result.kind, "committed", "Explicit destination restores its exact retained occurrence")
       if (result.kind !== "committed") throw Error("Restore failed")
-      recoveryEqual(result.mutations.map(row => row.stage), ["accept", "documents", "record"], "Restore confirms every fixed stage")
-      const after = h.records(), expected = { ...setup, v: 1, gen: `playlist-${order}-${index}`, at: 200, by: "synthetic-device", data: { ...setup.data, autoAdd: [...setup.data.autoAdd, { pl: "PL_GLOBAL", takes: "videos" }] } }
+      recoveryEqual(
+        result.mutations.map(row => row.stage),
+        ["accept", "documents", "record"],
+        "Restore confirms every fixed stage"
+      )
+      const after = h.records(),
+        expected = {
+          ...setup,
+          v: 1,
+          gen: `playlist-${order}-${index}`,
+          at: 200,
+          by: "synthetic-device",
+          data: { ...setup.data, autoAdd: [...setup.data.autoAdd, { pl: "PL_GLOBAL", takes: "videos" }] }
+        }
       recoveryEqual(after[name], expected, "Exact append uses the shared default percentage")
       recoveryEqual({ ...after, [name]: prior[name], sync: prior.sync, interimConversion: prior.interimConversion }, prior, "Restore preserves every unrelated record and source position")
       const checkpoint = prior.interimConversion
       if (!jsonObject(checkpoint) || !Array.isArray(checkpoint.resolutions)) throw Error("No flat fixture checkpoint")
       const expectedHistory = { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true }
-      const effect = { kind: "playlist-restore", item: { sourceKey: "playlists", path: [index] }, key: { kind: "setup", acct }, before: setup, after: expected,
-        history: { before: Object.hasOwn(prior, "sync") ? { kind: "present", raw: prior.sync } : { kind: "absent" }, after: { kind: "present", raw: expectedHistory } }, scope: { kind: "this-browser" }, admission: { kind: "off" } }
+      const effect = {
+        kind: "playlist-restore",
+        item: { sourceKey: "playlists", path: [index] },
+        key: { kind: "setup", acct },
+        before: setup,
+        after: expected,
+        history: { before: Object.hasOwn(prior, "sync") ? { kind: "present", raw: prior.sync } : { kind: "absent" }, after: { kind: "present", raw: expectedHistory } },
+        scope: { kind: "this-browser" },
+        admission: { kind: "off" }
+      }
       const accepted = { ...checkpoint, pending: { kind: "playlist-restore", effect } }
       const completed = { ...checkpoint, resolutions: [...checkpoint.resolutions, { kind: "playlist-restored", effect }], pending: { kind: "none" } }
       recoveryEqual(after, { ...prior, [name]: expected, sync: expectedHistory, interimConversion: completed }, "Complete restore store preserves archive, handoff and prior receipt bytes")
-      recoveryEqual(h.writes.slice(writeStart), [{ interimConversion: accepted }, { [name]: expected, sync: expectedHistory }, { interimConversion: completed }], "All three writes match the literal fixed document and history effect")
+      recoveryEqual(
+        h.writes.slice(writeStart),
+        [{ interimConversion: accepted }, { [name]: expected, sync: expectedHistory }, { interimConversion: completed }],
+        "All three writes match the literal fixed document and history effect"
+      )
       const reused = await owner.restoreInterimPlaylist(recoveryUi, { choice: selected.prepared.choice, acct })
       recoveryEqual(reused, { kind: "unavailable", reason: "stale" }, "A choice is consumed once")
       steps.push({ acct, selected: selected.prepared, result, prior, after, reused })
     }
     const raw = h.records().interimConversion
     if (!jsonObject(raw) || !Array.isArray(raw.resolutions)) throw Error("Missing flat restore receipts")
-    recoveryEqual(raw.resolutions.map(receipt => jsonObject(receipt) && receipt.kind), ["playlist-restored", "playlist-restored"], "Equal sibling occurrences have independent receipts")
-    const serialized = JSON.stringify(h.records()), supervisor = h.supervisor()
+    recoveryEqual(
+      raw.resolutions.map(receipt => jsonObject(receipt) && receipt.kind),
+      ["playlist-restored", "playlist-restored"],
+      "Equal sibling occurrences have independent receipts"
+    )
+    const serialized = JSON.stringify(h.records()),
+      supervisor = h.supervisor()
     await owner.dispose()
     const restart = createGlobalPlaylistRestoreHarness(JSON.parse(serialized), supervisor)
-    restart.stopPriorProducers(); restart.forbidAllocation()
+    restart.stopPriorProducers()
+    restart.forbidAllocation()
     const reopened = createStartingLocalFilterWriter(restart.actor("playlist-restart"))
     recoveryEqual(await reopened.ready(), "ok", "Serialized restore reacquires the current canonical owner")
     const read = await reopened.readInterimRecovery()
     recoveryEqual(read.kind === "review" && read.view.items.filter(row => row.id.sourceKey === "playlists"), [], "Both exact occurrences remain consumed")
     recoveryEqual(restart.records(), JSON.parse(serialized), "Restart preserves complete current records")
     recoveryEqual(restart.writes, [], "Restart performs no replay")
-    recoveryEqual(restart.effects.filter(effect => ["stamp", "generation", "recovery-ownership", "recovery-accounts"].includes(String(effect))), [], "Restart performs no restore allocation or ownership lookup")
+    recoveryEqual(
+      restart.effects.filter(effect => ["stamp", "generation", "recovery-ownership", "recovery-accounts"].includes(String(effect))),
+      [],
+      "Restart performs no restore allocation or ownership lookup"
+    )
     await reopened.dispose()
     recoveryEqual(h.resources(), { pending: 0, listeners: 0, timers: 0, reservation: "none" }, "Restore releases its resources")
     recoveryEqual(restart.resources(), h.resources(), "Restart releases its resources")
-    cases.push({ order, released, before, steps, serialized, writes: h.writes.slice(start), effects: h.effects, trace: h.trace, restart: { records: restart.records(), writes: restart.writes, effects: restart.effects, read }, resources: h.resources() })
+    cases.push({
+      order,
+      released,
+      before,
+      steps,
+      serialized,
+      writes: h.writes.slice(start),
+      effects: h.effects,
+      trace: h.trace,
+      restart: { records: restart.records(), writes: restart.writes, effects: restart.effects, read },
+      resources: h.resources()
+    })
   }
   return { mode: "synthetic-explicit-global-playlist-restore", cases, native: "waived-and-unproven", production: "not-connected" }
 }
 
-if (import.meta.main) process.stdout.write(JSON.stringify({ review: observeInterimRecoveryReview(), execution: await observeInterimRecoveryExecution(), authority: await observeCanonicalAuthorityExecution(), discard: await observeInterimRecoveryDiscard(), playlistRestore: await observeGlobalPlaylistRestore() }, null, 2) + "\n")
+if (import.meta.main)
+  process.stdout.write(
+    JSON.stringify(
+      {
+        review: observeInterimRecoveryReview(),
+        execution: await observeInterimRecoveryExecution(),
+        authority: await observeCanonicalAuthorityExecution(),
+        discard: await observeInterimRecoveryDiscard(),
+        playlistRestore: await observeGlobalPlaylistRestore()
+      },
+      null,
+      2
+    ) + "\n"
+  )

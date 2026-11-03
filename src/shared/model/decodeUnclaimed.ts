@@ -14,17 +14,15 @@ const decode = object<Unclaimed>({
     return raw
   }),
   originalShortcutId: optional(checked(isShortcutId, "a six-character shortcut ID")),
-  filters: dictionary(isPlaylistId, decodeFilter), at: natural
+  filters: dictionary(isPlaylistId, decodeFilter),
+  at: natural
 })
 
 export function decodeUnclaimed(raw: unknown): Unclaimed {
   return decode(raw, "unclaimed")
 }
 
-export type StoredUnclaimed =
-  | { kind: "absent" }
-  | { kind: "consumed" }
-  | { kind: "pending"; data: Unclaimed }
+export type StoredUnclaimed = { kind: "absent" } | { kind: "consumed" } | { kind: "pending"; data: Unclaimed }
 
 export function readStoredUnclaimed(raw: unknown): StoredUnclaimed {
   if (raw === undefined) return { kind: "absent" }

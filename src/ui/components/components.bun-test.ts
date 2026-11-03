@@ -17,7 +17,7 @@ const localized = englishFirstRunText()
 const text = (value: string) => createRawSnippet(() => ({ render: () => `<span>${value}</span>` }))
 
 test("structured emphasis escapes markup and preserves text spacing", () => {
-  const view = render(RichText, { parts: richParts('[[strong]]<img src=x onerror=bad>[[/strong]] rest') })
+  const view = render(RichText, { parts: richParts("[[strong]]<img src=x onerror=bad>[[/strong]] rest") })
   expect(view.container.querySelector("img")).toBeNull()
   expect(view.container.querySelector("strong")?.textContent).toBe("<img src=x onerror=bad>")
   expect(view.container.textContent).toBe("<img src=x onerror=bad> rest")

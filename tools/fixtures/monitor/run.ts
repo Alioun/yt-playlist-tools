@@ -7,14 +7,20 @@ export function stable(value: unknown): string {
   function order(value: JsonValue): JsonValue {
     if (value === null || typeof value !== "object") return value
     if (Array.isArray(value)) return value.map(order)
-    return Object.fromEntries(Object.entries(value).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([key, child]) => [key, order(child)]))
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([key, child]) => [key, order(child)])
+    )
   }
   const text = JSON.stringify(order(value)) + "\n"
   if (new TextEncoder().encode(text).byteLength > 65_536) throw Error("Monitor consumer exceeded its complete-output bound")
   return text
 }
 export async function runMonitorConsumer() {
-  const h = monitorWorld(), normal = context("www", false, 1, null), privateTab = context("www", true, 2, null)
+  const h = monitorWorld(),
+    normal = context("www", false, 1, null),
+    privateTab = context("www", true, 2, null)
   async function view(input: typeof normal): Promise<TabView> {
     const read = await h.producer.produce(input)
     if (read.kind !== "view" || !isTabView(read.view)) throw Error("Real complete TabView producer unavailable or invalid")
@@ -47,14 +53,28 @@ export async function runMonitorConsumer() {
     const storedAfterNormal = h.stored()
     h.seedContext(privateTab, { visible: true, fullscreen: false }, syntheticHealthFacts("www"))
     await h.monitor.signal(privateTab, signalValue("cannot-measure", { job: null, route: null }), { kind: "playback" })
-    const privateView = await view(privateTab), privateDiagnostics = await h.monitor.diagnostics(privateTab)
+    const privateView = await view(privateTab),
+      privateDiagnostics = await h.monitor.diagnostics(privateTab)
     if (JSON.stringify(h.stored()) !== JSON.stringify(storedAfterNormal)) throw Error("Private facts leaked into canonical persistence")
     h.hold(true)
     const held = await h.producer.produce(normal)
     if (held.kind !== "unavailable") throw Error("Unavailable producer reported working")
-    return { kind: "monitor-consumer", syntheticInputs: ["native-tabs", "route-probe-facts", "visibility", "clock", "storage-host"],
-      nativeProvenance: "unproven", productionAssembly: "absent", before, offered, after, privateView, privateDiagnostics,
-      session: h.stored(), sessionWrites: h.sessionWrites(), held }
-  } finally { await h.dispose() }
+    return {
+      kind: "monitor-consumer",
+      syntheticInputs: ["native-tabs", "route-probe-facts", "visibility", "clock", "storage-host"],
+      nativeProvenance: "unproven",
+      productionAssembly: "absent",
+      before,
+      offered,
+      after,
+      privateView,
+      privateDiagnostics,
+      session: h.stored(),
+      sessionWrites: h.sessionWrites(),
+      held
+    }
+  } finally {
+    await h.dispose()
+  }
 }
 if (import.meta.main) process.stdout.write(stable(await runMonitorConsumer()))

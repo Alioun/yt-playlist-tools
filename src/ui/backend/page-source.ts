@@ -37,8 +37,14 @@ function result(answer: { readonly kind: string; readonly reason?: string }): Ch
 }
 export function destinationValue(setup: Snapshot<Setup> | null, destination: SetupDestination): PlaylistId | null {
   if (!setup) return null
-  const value = destination.kind === "shortcut" ? setup.targets[destination.shortcut] ?? null
-    : destination.kind === "quick-save" ? setup.quickSave : destination.kind === "music-save" ? setup.musicSave : setup.gather
+  const value =
+    destination.kind === "shortcut"
+      ? (setup.targets[destination.shortcut] ?? null)
+      : destination.kind === "quick-save"
+        ? setup.quickSave
+        : destination.kind === "music-save"
+          ? setup.musicSave
+          : setup.gather
   return isPlaylistId(value) ? value : null
 }
 
@@ -50,12 +56,16 @@ export function destinationValue(setup: Snapshot<Setup> | null, destination: Set
 export function createPageSource(backend: Backend, context: PageSourceContext): PickerSource<null> & { dispose(): void } {
   const list = backend.playlistList({ acct: context.acct, site: context.site })
   const lifetimes = new Map<PlaylistId, AutoAddLifetime>()
-  const chosen = context.purpose.kind === "auto-add"
-    ? (context.setup?.autoAdd ?? []).map(row => row.pl).filter(isPlaylistId)
-    : [destinationValue(context.setup, context.purpose.destination)].filter((id): id is PlaylistId => id !== null)
+  const chosen =
+    context.purpose.kind === "auto-add"
+      ? (context.setup?.autoAdd ?? []).map(row => row.pl).filter(isPlaylistId)
+      : [destinationValue(context.setup, context.purpose.destination)].filter((id): id is PlaylistId => id !== null)
   async function destination(target: SetupDestination, playlist: PlaylistId | null): Promise<ChangeResult> {
     const answer = await backend.change({
-      kind: "setup-destination", acct: context.acct, destination: target, playlist,
+      kind: "setup-destination",
+      acct: context.acct,
+      destination: target,
+      playlist,
       expected: context.setup ? { setup: "live", playlist: destinationValue(context.setup, target) } : { setup: "none" }
     })
     return result(answer)
@@ -89,7 +99,7 @@ export function createPageSource(backend: Backend, context: PageSourceContext): 
     authorized: () => context.agreed,
     now: () => Date.now(),
     cachedList: () => list.cachedList(),
-    freshList: () => context.tab ? list.freshList() : Promise.resolve({ kind: "noTab" }),
+    freshList: () => (context.tab ? list.freshList() : Promise.resolve({ kind: "noTab" })),
     async create(playlist): Promise<CreateAnswer> {
       const creation = backend.creation({ acct: context.acct, site: context.site })
       try {
@@ -99,7 +109,9 @@ export function createPageSource(backend: Backend, context: PageSourceContext): 
         if (created.kind === "created") return { kind: "created", id: created.id, undo: null }
         const failure = created.kind === "not-created" && created.outcome.kind === "result" && !created.outcome.result.ok ? created.outcome.result : undefined
         return { kind: "failed", reason: failure && "http" in failure && failure.http === 429 ? "rateLimited" : "failed" }
-      } finally { creation.dispose() }
+      } finally {
+        creation.dispose()
+      }
     },
     pin: id => destination({ kind: "quick-save" }, id),
     choose(id, on) {
@@ -114,7 +126,10 @@ export function createPageSource(backend: Backend, context: PageSourceContext): 
 
 /** Takes and Adds at for one ticked auto-add playlist, each read fresh so it never writes over a newer edit (UI-PICK-20). */
 export function createAutoAddEditor(backend: Backend, acct: AccountKey) {
-  async function edit(playlist: PlaylistId, make: (fact: { readonly takes: "videos" | "shorts" | "both"; readonly pct: number | null }) => import("../../shared/contracts/auto-add-choice").AutoAddEdit | null): Promise<boolean> {
+  async function edit(
+    playlist: PlaylistId,
+    make: (fact: { readonly takes: "videos" | "shorts" | "both"; readonly pct: number | null }) => import("../../shared/contracts/auto-add-choice").AutoAddEdit | null
+  ): Promise<boolean> {
     const read = await backend.change({ kind: "auto-add-read", acct, playlist })
     if (read.kind !== "value" || read.fact.kind !== "selected") return false
     const next = make(read.fact)
@@ -123,8 +138,8 @@ export function createAutoAddEditor(backend: Backend, acct: AccountKey) {
     return answer.kind === "auto-add-confirmed"
   }
   return {
-    takes: (playlist: PlaylistId, takes: "videos" | "shorts" | "both") => edit(playlist, fact => fact.takes === takes ? null : { kind: "takes", expected: fact.takes, takes }),
-    pct: (playlist: PlaylistId, pct: number | null) => edit(playlist, fact => fact.pct === pct ? null : { kind: "percentage", expected: fact.pct, pct })
+    takes: (playlist: PlaylistId, takes: "videos" | "shorts" | "both") => edit(playlist, fact => (fact.takes === takes ? null : { kind: "takes", expected: fact.takes, takes })),
+    pct: (playlist: PlaylistId, pct: number | null) => edit(playlist, fact => (fact.pct === pct ? null : { kind: "percentage", expected: fact.pct, pct }))
   }
 }
 /** The keys of playlist shortcuts that save to each playlist on this account, for the picker's chips (UI-PICK-05). */

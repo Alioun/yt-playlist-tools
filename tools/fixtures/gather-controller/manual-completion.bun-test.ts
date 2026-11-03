@@ -41,7 +41,11 @@ describe("normal manual history in the canonical session record", () => {
     const f = gatherFixture({ settings: { to: "playlist" } })
     f.window.open(10, watch(v[0]!), "One")
     f.window.open(11, watch(v[1]!), "Two")
-    const gatherSaves = (from: number) => f.tabs.sessionWrites().slice(from).filter(write => /^session\.set:(.*,)?gather(,|$)/.test(write)).length
+    const gatherSaves = (from: number) =>
+      f.tabs
+        .sessionWrites()
+        .slice(from)
+        .filter(write => /^session\.set:(.*,)?gather(,|$)/.test(write)).length
     let before = f.tabs.sessionWrites().length
     const gathered = await f.drive(f.gather.now(normalWindow))
     expect(gathered).toMatchObject({ kind: "playlist", saved: 2, closed: 2 })
@@ -67,7 +71,12 @@ describe("normal manual history in the canonical session record", () => {
     expect(await f.drive(f.gather.undo(gathered.undo, normalWindow))).toEqual({ kind: "undone", reopened: 2 })
     expect(f.yt.count("removeBatch") + f.yt.count("remove")).toBe(removals)
     expect(f.yt.has(a, later, v[0]!) && f.yt.has(a, later, v[1]!)).toBe(true)
-    expect(f.window.created().slice(before).map(call => call.kind === "create" ? call.url : null)).toEqual([watch(v[0]!), watch(v[1]!)])
+    expect(
+      f.window
+        .created()
+        .slice(before)
+        .map(call => (call.kind === "create" ? call.url : null))
+    ).toEqual([watch(v[0]!), watch(v[1]!)])
     expect(await f.drive(f.gather.undo(gathered.undo, normalWindow))).toEqual({ kind: "expired" })
   })
 })
@@ -87,7 +96,12 @@ describe("closing is a plan until the browser shows the tab gone", () => {
     if (gathered.kind !== "playlist" || !gathered.undo) throw new Error("expected an undoable gather")
     const before = f.window.created().length
     expect(await f.drive(f.gather.undo(gathered.undo, normalWindow))).toEqual({ kind: "undone", reopened: 1 })
-    expect(f.window.created().slice(before).map(call => call.kind === "create" ? call.url : null)).toEqual([watch(v[0]!)])
+    expect(
+      f.window
+        .created()
+        .slice(before)
+        .map(call => (call.kind === "create" ? call.url : null))
+    ).toEqual([watch(v[0]!)])
   })
 
   test("a rejected remove call is never retried and nothing it may not have closed reopens", async () => {
@@ -109,7 +123,11 @@ describe("closing is a plan until the browser shows the tab gone", () => {
     const f = gatherFixture({ settings: { to: "playlist" } })
     f.window.open(10, watch(v[0]!), "One")
     const remove = f.window.native.remove
-    f.window.native.remove = async ids => { const answer = await remove(ids); f.window.behaviour.unreadable.add(10); return answer }
+    f.window.native.remove = async ids => {
+      const answer = await remove(ids)
+      f.window.behaviour.unreadable.add(10)
+      return answer
+    }
     const gathered = await f.drive(f.gather.now(normalWindow))
     expect(gathered).toMatchObject({ kind: "playlist", saved: 1, closed: 0, unconfirmed: 1 })
     if (gathered.kind !== "playlist" || !gathered.undo) throw new Error("expected an undoable gather")
@@ -169,7 +187,11 @@ describe("a worker that stops between closing tabs and the second save", () => {
   // The worker dies right after the one remove call, before the after-close readback is saved.
   const stopAfterRemove = (f: ReturnType<typeof gatherFixture>) => {
     const remove = f.window.native.remove
-    f.window.native.remove = async ids => { const answer = await remove(ids); f.gather.dispose(); return answer }
+    f.window.native.remove = async ids => {
+      const answer = await remove(ids)
+      f.gather.dispose()
+      return answer
+    }
   }
   const restartedUndoId = async (f: ReturnType<typeof gatherFixture>) => {
     const gather = JSON.stringify(f.tabs.stored().gather)
@@ -197,8 +219,12 @@ describe("a worker that stops between closing tabs and the second save", () => {
     expect(f.yt.has(a, later, v[0]!) || f.yt.has(a, later, v[1]!) || f.yt.has(a, later, v[2]!)).toBe(false)
     expect(f.window.created().slice(before)).toEqual([
       { kind: "create", windowId: 1, url: watch(v[0]!), active: false, index: 0 },
-      { kind: "create", windowId: 1, url: watch(v[2]!), active: false, index: 2 }])
-    expect(f.window.reopenTitles).toEqual([{ url: watch(v[0]!), title: "One" }, { url: watch(v[2]!), title: "Three" }])
+      { kind: "create", windowId: 1, url: watch(v[2]!), active: false, index: 2 }
+    ])
+    expect(f.window.reopenTitles).toEqual([
+      { url: watch(v[0]!), title: "One" },
+      { url: watch(v[2]!), title: "Three" }
+    ])
     expect([...f.window.rows.values()].filter(row => row.url === watch(v[1]!)).map(row => row.tabId)).toEqual([11])
   })
 
@@ -266,11 +292,21 @@ describe("the real AddFlow execution adapter over Tabs", () => {
       return { ok: false, reason: "unavailable" }
     }
     // The settings owner is the composition's Store port. Only the page-native job runner and the browser tab strip are fakes.
-    const owner: Owner = { shared: () => ({ on: true, feedback: true }), account: () => ({ targets: [], created: {} }), writable: () => true, mark: () => {},
-      recentAdds: () => true, titles: () => ({}) }
+    const owner: Owner = {
+      shared: () => ({ on: true, feedback: true }),
+      account: () => ({ targets: [], created: {} }),
+      writable: () => true,
+      mark: () => {},
+      recentAdds: () => true,
+      titles: () => ({})
+    }
     const flow = createAddFlow({
       execution: createTabsExecution(f.tabs.engine, async origin => ({ windowId: origin.windowId, incognito: origin.incognito, activeTabId: 10 })),
-      owner, session: f.tabs.session, now: () => f.tabs.clock.now(), wait: async () => {}, generation: () => "adapter"
+      owner,
+      session: f.tabs.session,
+      now: () => f.tabs.clock.now(),
+      wait: async () => {},
+      generation: () => "adapter"
     })
     const gather = createGather({ ...f.ports(), addFlow: flow })
     const gathered = await f.drive(gather.now(normalWindow))
@@ -286,12 +322,30 @@ describe("Firefox reopening at the browser boundary", () => {
     let refuse = false
     const fake: GatherBrowser = {
       tabs: {
-        query: async () => [], get: async () => { throw new Error("gone") }, remove: async () => {},
+        query: async () => [],
+        get: async () => {
+          throw new Error("gone")
+        },
+        remove: async () => {},
         create: async props => {
           created.push({ ...props })
           if (refuse && props.discarded) throw new Error("discarded refused")
-          return { id: 77 + created.length, windowId: props.windowId, index: props.index ?? 0, url: props.url, incognito: false, active: props.active, lastAccessed: 0,
-            pinned: false, highlighted: false, selected: false, discarded: props.discarded ?? false, autoDiscardable: true, groupId: -1, frozen: false }
+          return {
+            id: 77 + created.length,
+            windowId: props.windowId,
+            index: props.index ?? 0,
+            url: props.url,
+            incognito: false,
+            active: props.active,
+            lastAccessed: 0,
+            pinned: false,
+            highlighted: false,
+            selected: false,
+            discarded: props.discarded ?? false,
+            autoDiscardable: true,
+            groupId: -1,
+            frozen: false
+          }
         }
       },
       windows: { get: async () => ({}), create: async () => ({ tabs: [] }) }
@@ -303,7 +357,8 @@ describe("Firefox reopening at the browser boundary", () => {
     expect(await firefox.create({ windowId: 1, url: watch(v[1]!), active: false, index: 4 }, { title: "Two" })).toMatchObject({ kind: "created" })
     expect(created.slice(1)).toEqual([
       { windowId: 1, url: watch(v[1]!), active: false, index: 4, discarded: true, title: "Two" },
-      { windowId: 1, url: watch(v[1]!), active: false, index: 4 }])
+      { windowId: 1, url: watch(v[1]!), active: false, index: 4 }
+    ])
     const chrome = createGatherBrowser(fake, { unloadedReopen: false })
     created.length = 0
     await chrome.create({ windowId: 1, url: watch(v[2]!), active: false, index: 0 }, { title: "Three" })
@@ -317,10 +372,22 @@ describe("absence at the browser boundary", () => {
     const created: unknown[] = []
     const fake: GatherBrowser = {
       tabs: {
-        query: async () => [], get: async () => { throw failure.tab }, remove: async () => {},
-        create: async props => { created.push(props); throw new Error("unexpected create") }
+        query: async () => [],
+        get: async () => {
+          throw failure.tab
+        },
+        remove: async () => {},
+        create: async props => {
+          created.push(props)
+          throw new Error("unexpected create")
+        }
       },
-      windows: { get: async () => { throw failure.window }, create: async () => ({ tabs: [] }) }
+      windows: {
+        get: async () => {
+          throw failure.window
+        },
+        create: async () => ({ tabs: [] })
+      }
     }
     return { failure, created, port: createGatherBrowser(fake, { unloadedReopen: false }) }
   }

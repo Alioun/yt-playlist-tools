@@ -6,7 +6,7 @@ import type { PageEndpoint, PageGatewayOperations, PageServeEndpoint, PageServeO
 // @ts-expect-error The dispatcher belongs to the page world, not the safe contracts root.
 import { servePage as rootServePage } from "../shared/contracts"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Assert<T extends true> = T
 type AccountRun = Awaited<ReturnType<PageGatewayOperations["run"]>>
 export type PageServeRelationships = [
@@ -28,15 +28,23 @@ declare const report: ProbeReport
 export function positives(): void {
   const operations: PageGatewayOperations = {
     run: async () => ({ ok: false, reason: "unavailable" }),
-    watch: (_stream, onData) => { void onData; return () => {} },
+    watch: (_stream, onData) => {
+      void onData
+      return () => {}
+    },
     probe: async () => report
   }
   const endpoint: PageEndpoint = servePage(operations, options, channel)
   endpoint.dispose()
   void gateway.run(accountJob).then(result => {
-    if (result.ok) { const raw: string | null = result.data.datasyncId; void raw }
+    if (result.ok) {
+      const raw: string | null = result.data.datasyncId
+      void raw
+    }
   })
-  gateway.watch("queue", (data: StreamData<"queue">) => { void data.ids })
+  gateway.watch("queue", (data: StreamData<"queue">) => {
+    void data.ids
+  })
 }
 
 export function negatives(): void {
@@ -48,7 +56,9 @@ export function negatives(): void {
   const raw: PageJobResult<JobOf<"account">> = safeAccountResult
   void raw
   // @ts-expect-error Stream callbacks receive that stream's data.
-  gateway.watch("queue", (data: StreamData<"nav">) => { void data })
+  gateway.watch("queue", (data: StreamData<"nav">) => {
+    void data
+  })
   // @ts-expect-error Snapshot and signal sources are explicit dependencies.
   servePage(gateway, { site: "www", build: options.build, vocabulary: options.vocabulary }, channel)
   // @ts-expect-error The signal source must hand back its disposer.

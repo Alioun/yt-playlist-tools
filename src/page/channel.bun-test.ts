@@ -1,7 +1,5 @@
 import { afterEach, expect, test } from "bun:test"
-import {
-  CONTRACT_VERSION, isBuildId, isPageRequestId, isPageType, isPageWatchId, isRouteId, isWatchId, parseJsonText
-} from "../shared/contracts"
+import { CONTRACT_VERSION, isBuildId, isPageRequestId, isPageType, isPageWatchId, isRouteId, isWatchId, parseJsonText } from "../shared/contracts"
 import type { BreakageSignal, Job, ProbeReport, Site, Stream, StreamData } from "../shared/contracts"
 import { isPageHelloAnswer, isPageProbeAnswerFor, isPageRunAnswerFor, isPageSignalEvent, isPageStreamEventFor } from "../shared/contracts/page"
 import type { PageHelloSnapshot, PageJobResult } from "../shared/contracts/page"
@@ -22,20 +20,40 @@ const requestId = checked(isPageRequestId, "request-1")
 const watchId = checked(isPageWatchId, "subscription-1")
 const vocabulary = { routes: [route], watchIds: [dependency], schemaKeys: ["data"] }
 const snapshot: PageHelloSnapshot = {
-  signedIn: true, datasyncId: "synthetic-identity", pageType: checked(isPageType, "WATCH"), startedHidden: false, navType: "navigate"
+  signedIn: true,
+  datasyncId: "synthetic-identity",
+  pageType: checked(isPageType, "WATCH"),
+  startedHidden: false,
+  navType: "navigate"
 }
 const header = { v: CONTRACT_VERSION, build }
 const sites: readonly Site[] = ["www", "music"]
 const account = { ok: true, data: { signedIn: true, datasyncId: "synthetic-identity" }, route }
 const nav = { pageType: "WATCH", video: null, navigation: { kind: "other" } }
 const signal: BreakageSignal = {
-  site: "www", feature: null, job: null, route: null, kind: "timeout", watchId: null, shape: null,
-  clientVersion: "2.20261024.00.00", pageType: "watch", count: 1, firstSeen: 0, lastSeen: 0
+  site: "www",
+  feature: null,
+  job: null,
+  route: null,
+  kind: "timeout",
+  watchId: null,
+  shape: null,
+  clientVersion: "2.20261024.00.00",
+  pageType: "watch",
+  count: 1,
+  firstSeen: 0,
+  lastSeen: 0
 }
 const flush = () => new Promise<void>(resolve => setTimeout(resolve, 0))
 const cleanups: (() => void)[] = []
 afterEach(() => {
-  for (const cleanup of cleanups.splice(0)) { try { cleanup() } catch { /* the test already asserted it */ } }
+  for (const cleanup of cleanups.splice(0)) {
+    try {
+      cleanup()
+    } catch {
+      /* the test already asserted it */
+    }
+  }
 })
 
 type Pending = { job: Job; target: Element | undefined; resolve(value: unknown): void; reject(error: unknown): void }
@@ -56,7 +74,9 @@ function fakeGateway(initial?: (watcher: Watcher, onData: (value: unknown) => vo
       const watcher: Watcher = { stream, emit, stops: 0 }
       watchers.push(watcher)
       initial?.(watcher, emit)
-      return () => { watcher.stops++ }
+      return () => {
+        watcher.stops++
+      }
     },
     probe() {
       return new Promise<ProbeReport>((resolve, reject) => {
@@ -67,9 +87,14 @@ function fakeGateway(initial?: (watcher: Watcher, onData: (value: unknown) => vo
   return { ops, runs, probes, watchers }
 }
 
-function harness(options: {
-  site?: Site; channel?: PageChannel; gateway?: ReturnType<typeof fakeGateway>; snapshot?: () => PageHelloSnapshot | undefined
-} = {}) {
+function harness(
+  options: {
+    site?: Site
+    channel?: PageChannel
+    gateway?: ReturnType<typeof fakeGateway>
+    snapshot?: () => PageHelloSnapshot | undefined
+  } = {}
+) {
   const site = options.site ?? "www"
   const channel = options.channel ?? createDirectPageChannel()
   const gateway = options.gateway ?? fakeGateway()
@@ -82,21 +107,39 @@ function harness(options: {
     const parsed = parseJsonText(detail)
     answers.push(parsed.ok ? parsed.value : { unparsed: detail })
   })
-  const endpoint = servePage(gateway.ops, {
-    site, build, vocabulary: () => vocabulary, snapshot: options.snapshot ?? (() => snapshot),
-    signals: onSignal => {
-      sinks.add(onSignal)
-      return () => { sinks.delete(onSignal); signalStops++ }
-    }
-  }, channel)
+  const endpoint = servePage(
+    gateway.ops,
+    {
+      site,
+      build,
+      vocabulary: () => vocabulary,
+      snapshot: options.snapshot ?? (() => snapshot),
+      signals: onSignal => {
+        sinks.add(onSignal)
+        return () => {
+          sinks.delete(onSignal)
+          signalStops++
+        }
+      }
+    },
+    channel
+  )
   cleanups.push(stopAnswers, () => endpoint.dispose())
   return {
-    site, channel, gateway, endpoint, answers, details,
-    request: (payload: Record<string, unknown>, target?: Element) =>
-      channel.send("req", JSON.stringify({ ...header, ...payload }), target),
+    site,
+    channel,
+    gateway,
+    endpoint,
+    answers,
+    details,
+    request: (payload: Record<string, unknown>, target?: Element) => channel.send("req", JSON.stringify({ ...header, ...payload }), target),
     retire: (value: unknown) => channel.send("retire", JSON.stringify(value)),
-    signal: (value: BreakageSignal) => { for (const sink of [...sinks]) sink(value) },
-    get signalStops() { return signalStops }
+    signal: (value: BreakageSignal) => {
+      for (const sink of [...sinks]) sink(value)
+    },
+    get signalStops() {
+      return signalStops
+    }
   }
 }
 
@@ -109,7 +152,9 @@ function card(): Element {
 for (const site of sites) {
   test(`DOM hello on ${site} answers on document with the supplied snapshot as a composed JSON string`, () => {
     const events: CustomEvent[] = []
-    const record = (event: Event) => { if (event instanceof CustomEvent) events.push(event) }
+    const record = (event: Event) => {
+      if (event instanceof CustomEvent) events.push(event)
+    }
     document.addEventListener("ppt:res", record)
     try {
       const page = harness({ site, channel: createDomPageChannel(document) })
@@ -130,7 +175,7 @@ for (const site of sites) {
 
 test("hello stays unanswered while the page can't name its account yet, then answers once it can", () => {
   let known = false
-  const page = harness({ snapshot: () => known ? snapshot : undefined })
+  const page = harness({ snapshot: () => (known ? snapshot : undefined) })
   page.request({ kind: "hello" })
   expect(page.answers).toEqual([])
   known = true
@@ -150,7 +195,10 @@ test("DOM item jobs run with their actual element and document jobs run without 
   const itemId = checked(isPageRequestId, "request-item")
   page.request({ kind: "run", id: itemId, job: cardMenu }, item)
   page.request({ kind: "run", id: requestId, job: { kind: "account" } })
-  expect(page.gateway.runs.map(run => [run.job, run.target])).toEqual([[cardMenu, item], [{ kind: "account" }, undefined]])
+  expect(page.gateway.runs.map(run => [run.job, run.target])).toEqual([
+    [cardMenu, item],
+    [{ kind: "account" }, undefined]
+  ])
   expect(item.attributes).toHaveLength(0)
   page.gateway.runs[1]?.resolve(account)
   page.gateway.runs[0]?.resolve({ ok: true, data: null, route })
@@ -183,13 +231,23 @@ test("the boundary drops non-string, malformed and wrong-build requests before a
   raw(undefined)
   document.dispatchEvent(new Event("ppt:req"))
   for (const text of [
-    "{", "null", "[]", JSON.stringify("run"),
-    JSON.stringify({ ...valid, build: otherBuild }), JSON.stringify({ ...valid, v: 2 }), JSON.stringify({ ...valid, v: "1" }),
-    JSON.stringify({ ...valid, extra: true }), JSON.stringify({ ...valid, kind: "launch" }), JSON.stringify({ ...valid, kind: "retire" }),
-    JSON.stringify({ ...valid, id: "" }), JSON.stringify({ ...valid, job: { kind: "account", extra: 1 } }),
-    JSON.stringify({ ...valid, job: { kind: "unknown" } }), JSON.stringify({ ...header, kind: "hello", site: "www" }),
+    "{",
+    "null",
+    "[]",
+    JSON.stringify("run"),
+    JSON.stringify({ ...valid, build: otherBuild }),
+    JSON.stringify({ ...valid, v: 2 }),
+    JSON.stringify({ ...valid, v: "1" }),
+    JSON.stringify({ ...valid, extra: true }),
+    JSON.stringify({ ...valid, kind: "launch" }),
+    JSON.stringify({ ...valid, kind: "retire" }),
+    JSON.stringify({ ...valid, id: "" }),
+    JSON.stringify({ ...valid, job: { kind: "account", extra: 1 } }),
+    JSON.stringify({ ...valid, job: { kind: "unknown" } }),
+    JSON.stringify({ ...header, kind: "hello", site: "www" }),
     JSON.stringify({ ...header, kind: "watch", id: watchId, stream: "radio" })
-  ]) raw(text)
+  ])
+    raw(text)
   expect(page.gateway.runs).toEqual([])
   expect(page.gateway.watchers).toEqual([])
   expect(page.answers).toEqual([])
@@ -354,7 +412,10 @@ test("a throwing subscription disposer cannot strand the other watches or listen
     const stop = watch(stream, onData)
     if (!first) return stop
     first = false
-    return () => { stop(); throw new Error("synthetic disposer failure") }
+    return () => {
+      stop()
+      throw new Error("synthetic disposer failure")
+    }
   }
   const page = harness({ gateway })
   page.request({ kind: "watch", id: "w1", stream: "nav" })
@@ -368,7 +429,9 @@ test("a throwing subscription disposer cannot strand the other watches or listen
 
 test("a throwing gateway watch leaves no subscription behind", () => {
   const gateway = fakeGateway()
-  gateway.ops.watch = () => { throw new Error("synthetic watch failure") }
+  gateway.ops.watch = () => {
+    throw new Error("synthetic watch failure")
+  }
   const page = harness({ gateway })
   expect(() => page.request({ kind: "watch", id: watchId, stream: "nav" })).toThrow("synthetic watch failure")
   page.endpoint.dispose()
@@ -377,7 +440,9 @@ test("a throwing gateway watch leaves no subscription behind", () => {
 
 test("a throwing core listener does not break the endpoint", () => {
   const page = harness()
-  const stop = page.channel.listen("res", () => { throw new Error("synthetic consumer failure") })
+  const stop = page.channel.listen("res", () => {
+    throw new Error("synthetic consumer failure")
+  })
   expect(() => page.request({ kind: "hello" })).toThrow("synthetic consumer failure")
   stop()
   page.request({ kind: "hello" })

@@ -1,15 +1,9 @@
 import type { PageFeatureId } from "./features"
 import type { AccessSite, ChoiceFailure, FirstRunOwner, PlaylistSelection, SetupRow, SetupView } from "./owner"
 
-export type SetupState =
-  | { readonly kind: "loading" }
-  | { readonly kind: "unavailable" }
-  | Extract<SetupView, { kind: "ready" }>
+export type SetupState = { readonly kind: "loading" } | { readonly kind: "unavailable" } | Extract<SetupView, { kind: "ready" }>
 
-export type RowChoice =
-  | { readonly kind: "idle" }
-  | { readonly kind: "pending" }
-  | { readonly kind: "failed"; readonly reason: ChoiceFailure }
+export type RowChoice = { readonly kind: "idle" } | { readonly kind: "pending" } | { readonly kind: "failed"; readonly reason: ChoiceFailure }
 
 export function createSetup(owner: FirstRunOwner) {
   let view = $state<SetupState>({ kind: "loading" })
@@ -32,15 +26,17 @@ export function createSetup(owner: FirstRunOwner) {
 
   function replaceSelection(feature: PageFeatureId, selection: PlaylistSelection) {
     if (view.kind !== "ready") return
-    const rows = view.rows.map((row): SetupRow => row.feature === feature && row.target
-      ? { ...row, target: { ...row.target, selection } }
-      : row)
+    const rows = view.rows.map((row): SetupRow => (row.feature === feature && row.target ? { ...row, target: { ...row.target, selection } } : row))
     view = { ...view, rows }
   }
 
   return {
-    get view() { return view },
-    get accessDenied() { return accessDenied },
+    get view() {
+      return view
+    },
+    get accessDenied() {
+      return accessDenied
+    },
     choice(feature: PageFeatureId): RowChoice {
       return choices[feature] ?? { kind: "idle" }
     },

@@ -11,7 +11,7 @@ export type ReadJobId = keyof typeof readRoutes
 /** The reads the streams already carry the code for; a pointed card's video, its item and the channel load the jobs file. */
 type OwnReadId = "account" | "videoInfo" | "nowPlaying" | "castState"
 type ReadRoute<K extends ReadJobId> = {
-  id: typeof readRoutes[K]
+  id: (typeof readRoutes)[K]
   read(): PageJobData<JobOf<K>> | JobFailureFor<JobOf<K>> | undefined
 }
 type StreamSlot = {
@@ -47,39 +47,59 @@ export interface ReadGateway extends PageReads {
   dispose(): void
 }
 
-export function isReadJob(job: JobId): job is ReadJobId { return Object.hasOwn(readRoutes, job) }
-function isOwnRead(job: JobId): job is OwnReadId { return job === "account" || job === "videoInfo" || job === "nowPlaying" || job === "castState" }
+export function isReadJob(job: JobId): job is ReadJobId {
+  return Object.hasOwn(readRoutes, job)
+}
+function isOwnRead(job: JobId): job is OwnReadId {
+  return job === "account" || job === "videoInfo" || job === "nowPlaying" || job === "castState"
+}
 
-export function createReadGateway(options: {
-  site: Site; page: PageReadPort; signals?: (signal: BreakageSignal) => void; now?: () => number
-}): ReadGateway {
+export function createReadGateway(options: { site: Site; page: PageReadPort; signals?: (signal: BreakageSignal) => void; now?: () => number }): ReadGateway {
   const { page, site } = options
   const now = options.now ?? Date.now
   const signalSinks = new Set<(signal: BreakageSignal) => void>()
   if (options.signals) signalSinks.add(options.signals)
   const slots: Record<Stream, StreamSlot> = {
-    nav: { subscribers: new Set(), stop: undefined }, player: { subscribers: new Set(), stop: undefined },
-    nowPlaying: { subscribers: new Set(), stop: undefined }, queue: { subscribers: new Set(), stop: undefined }
+    nav: { subscribers: new Set(), stop: undefined },
+    player: { subscribers: new Set(), stop: undefined },
+    nowPlaying: { subscribers: new Set(), stop: undefined },
+    queue: { subscribers: new Set(), stop: undefined }
   }
   let disposed = false
   let confirmedMiniplayerVideo: unknown
 
   function stamp(): number {
-    try { const at = now(); return Number.isSafeInteger(at) && at >= 0 ? at : 0 } catch { return 0 }
+    try {
+      const at = now()
+      return Number.isSafeInteger(at) && at >= 0 ? at : 0
+    } catch {
+      return 0
+    }
   }
   function emit(event: BreakageSignal): void {
     for (const sink of [...signalSinks]) {
       if (!signalSinks.has(sink) || disposed) continue
-      try { sink(event) } catch {}
+      try {
+        sink(event)
+      } catch {}
     }
   }
   function signal(kind: "missing" | "threw" | "unrecognised", watchId: WatchId, job: JobId | null, raw?: unknown): void {
     if (disposed) return
     const at = stamp()
     emit({
-      site, feature: null, job, route: job !== null && isReadJob(job) ? readRoutes[job] : null,
-      kind, watchId, shape: kind === "unrecognised" ? makeShapeOutline(isJsonValue(raw) ? raw : null, readVocabulary.schemaKeys) : null,
-      clientVersion: null, pageType: "other", count: 1, firstSeen: at, lastSeen: at
+      site,
+      feature: null,
+      job,
+      route: job !== null && isReadJob(job) ? readRoutes[job] : null,
+      kind,
+      watchId,
+      shape: kind === "unrecognised" ? makeShapeOutline(isJsonValue(raw) ? raw : null, readVocabulary.schemaKeys) : null,
+      clientVersion: null,
+      pageType: "other",
+      count: 1,
+      firstSeen: at,
+      lastSeen: at
     })
   }
   function read(what: PageRead, job: JobId | null = null, target?: Element): unknown {
@@ -87,14 +107,20 @@ export function createReadGateway(options: {
       const value = page.read(what, target)
       if (value === undefined) signal("missing", readWatches[what], job)
       return value
-    } catch { signal("threw", readWatches[what], job); return undefined }
+    } catch {
+      signal("threw", readWatches[what], job)
+      return undefined
+    }
   }
   function parsed<T>(watchId: WatchId, raw: unknown, job: JobId | null, parse: () => T | undefined): T | undefined {
     try {
       const value = parse()
       if (value === undefined && raw !== undefined) signal("unrecognised", watchId, job, raw)
       return value
-    } catch { signal("threw", watchId, job); return undefined }
+    } catch {
+      signal("threw", watchId, job)
+      return undefined
+    }
   }
   function pinAccount(): PageLoadAccount {
     try {
@@ -103,7 +129,9 @@ export function createReadGateway(options: {
       const id = page.config("DATASYNC_ID")
       if (loggedIn === true && typeof id === "string" && id.length > 0) return { kind: "known", data: { signedIn: true, datasyncId: id } }
       signal("missing", readWatches.identity, "account")
-    } catch { signal("threw", readWatches.identity, "account") }
+    } catch {
+      signal("threw", readWatches.identity, "account")
+    }
     return { kind: "unavailable" }
   }
   const account = pinAccount()
@@ -114,7 +142,8 @@ export function createReadGateway(options: {
   }
   function locationAgrees(nav: Navigation | undefined, id: unknown): boolean {
     const raw = read("location")
-    const pathname = field(raw, "pathname"), search = field(raw, "search")
+    const pathname = field(raw, "pathname"),
+      search = field(raw, "search")
     if (typeof pathname !== "string" || typeof search !== "string") return false
     if (nav && nav.navigation.kind !== "other" && nav.navigation.videoId !== id) return false
     if (pathname === "/watch") return new URLSearchParams(search).get("v") === id
@@ -124,15 +153,14 @@ export function createReadGateway(options: {
   function current(job: JobId | null) {
     const nav = navigation(job)
     const location = read("location", job)
-    const shorts = nav?.navigation.kind === "shorts" || typeof field(location, "pathname") === "string" && String(field(location, "pathname")).startsWith("/shorts/")
+    const shorts = nav?.navigation.kind === "shorts" || (typeof field(location, "pathname") === "string" && String(field(location, "pathname")).startsWith("/shorts/"))
     const source: "watchPlayer" | "shortsPlayer" = shorts ? "shortsPlayer" : "watchPlayer"
-    return { nav, raw: read(source, job), source, player: shorts ? "shorts" as const : "watch" as const }
+    return { nav, raw: read(source, job), source, player: shorts ? ("shorts" as const) : ("watch" as const) }
   }
   function video() {
     const { nav, raw, source, player } = current("videoInfo")
     const kind = player === "shorts" ? "short" : "video"
-    const ad = field(raw, "adShowing") === true || field(raw, "adActive") === true ||
-      field(raw, "presentingPlayerType") === 2 || player === "shorts" && nav?.ad === true
+    const ad = field(raw, "adShowing") === true || field(raw, "adActive") === true || field(raw, "presentingPlayerType") === 2 || (player === "shorts" && nav?.ad === true)
     if (ad) {
       if (player !== "watch" || nav?.navigation.kind !== "watch") return undefined
       const content = parseVideoResponse(nav.response, "video")
@@ -156,21 +184,24 @@ export function createReadGateway(options: {
     return parsed(readWatches.mediaMetadata, metadata, "nowPlaying", () => parseMusicPlayback({ metadata, player, queue }))
   }
   const routes = {
-    account: { id: readRoutes.account, read: () => account.kind === "known" ? account.data : undefined },
+    account: { id: readRoutes.account, read: () => (account.kind === "known" ? account.data : undefined) },
     videoInfo: { id: readRoutes.videoInfo, read: video },
     nowPlaying: { id: readRoutes.nowPlaying, read: nowPlaying },
-    castState: { id: readRoutes.castState, read() {
-      const state = read("musicState", "castState")
-      const primary = parsed(readWatches.musicState, state, "castState", () => {
-        const casting = field(state, "castStatus")
-        return typeof casting === "boolean" ? { casting } : undefined
-      })
-      if (primary !== undefined) return primary
-      const fallback = read("castPlayer", "castState")
-      if (typeof fallback === "boolean") return { casting: fallback }
-      if (fallback !== undefined) signal("unrecognised", readWatches.castPlayer, "castState", fallback)
-      return undefined
-    } }
+    castState: {
+      id: readRoutes.castState,
+      read() {
+        const state = read("musicState", "castState")
+        const primary = parsed(readWatches.musicState, state, "castState", () => {
+          const casting = field(state, "castStatus")
+          return typeof casting === "boolean" ? { casting } : undefined
+        })
+        if (primary !== undefined) return primary
+        const fallback = read("castPlayer", "castState")
+        if (typeof fallback === "boolean") return { casting: fallback }
+        if (fallback !== undefined) signal("unrecognised", readWatches.castPlayer, "castState", fallback)
+        return undefined
+      }
+    }
   } satisfies { [K in OwnReadId]: ReadRoute<K> }
 
   function serves(job: Job, ctx?: { target?: Element }): boolean {
@@ -188,15 +219,14 @@ export function createReadGateway(options: {
       case "player": {
         const { nav, raw, source, player } = current(null)
         return parsed(readWatches[source], raw, null, () => {
-          const isAd = field(raw, "adShowing") === true || field(raw, "adActive") === true ||
-            field(raw, "presentingPlayerType") === 2 || player === "shorts" && nav?.ad === true
-          const id = isAd ? undefined : field(raw, "videoData", "video_id") ??
-            (player === "shorts" ? field(nav?.response, "videoDetails", "videoId") : undefined)
+          const isAd = field(raw, "adShowing") === true || field(raw, "adActive") === true || field(raw, "presentingPlayerType") === 2 || (player === "shorts" && nav?.ad === true)
+          const id = isAd ? undefined : (field(raw, "videoData", "video_id") ?? (player === "shorts" ? field(nav?.response, "videoDetails", "videoId") : undefined))
           if (!isAd && !locationAgrees(nav, id)) return undefined
           return parsePlayer({ raw, navigation: nav, player, at: stamp(), miniplayerConfirmed: confirmedMiniplayerVideo !== undefined && confirmedMiniplayerVideo === id })
         })
       }
-      case "nowPlaying": return nowPlaying()
+      case "nowPlaying":
+        return nowPlaying()
       case "queue": {
         const raw = read("musicQueue")
         return parsed(readWatches.musicQueue, raw, null, () => parseQueue(raw))
@@ -207,23 +237,33 @@ export function createReadGateway(options: {
     const slot = slots[stream]
     if (disposed || slot.subscribers.size === 0) return
     let data: unknown
-    try { data = streamReading(stream) } catch { return }
+    try {
+      data = streamReading(stream)
+    } catch {
+      return
+    }
     if (!isStreamData(stream, data)) return
     for (const sink of [...slot.subscribers]) {
       if (disposed || !slot.subscribers.has(sink)) continue
-      try { sink(data) } catch {}
+      try {
+        sink(data)
+      } catch {}
     }
   }
   function present(id: WatchId): boolean {
-    try { return page.has(id) } catch { signal("threw", id, null); return false }
+    try {
+      return page.has(id)
+    } catch {
+      signal("threw", id, null)
+      return false
+    }
   }
   function attach(stream: Stream): () => void {
     const releases: (() => void)[] = []
     let active = true
     let attaching: WatchId = readWatches.navigation
     const add = (event: PageEvent) => {
-      attaching = event === "queue" ? readWatches.queueChanges : event === "music" ? readWatches.mediaMetadata :
-        event === "navigation" ? readWatches.navigation : readWatches.watchPlayer
+      attaching = event === "queue" ? readWatches.queueChanges : event === "music" ? readWatches.mediaMetadata : event === "navigation" ? readWatches.navigation : readWatches.watchPlayer
       const changed = (detail: unknown) => {
         if (!active || disposed) return
         if (event === "navigation") confirmedMiniplayerVideo = undefined
@@ -235,27 +275,57 @@ export function createReadGateway(options: {
     const stop = () => {
       if (!active) return
       active = false
-      for (const release of releases.splice(0)) { try { release() } catch {} }
+      for (const release of releases.splice(0)) {
+        try {
+          release()
+        } catch {}
+      }
     }
     try {
-      if (stream === "nav") { add("navigation"); add("playerIdentity") }
-      if (stream === "player") { add("navigation"); add("playerIdentity"); add("player") }
-      if (stream === "nowPlaying") { add("playerIdentity"); add("music"); if (present(readWatches.queueChanges)) add("queue") }
+      if (stream === "nav") {
+        add("navigation")
+        add("playerIdentity")
+      }
+      if (stream === "player") {
+        add("navigation")
+        add("playerIdentity")
+        add("player")
+      }
+      if (stream === "nowPlaying") {
+        add("playerIdentity")
+        add("music")
+        if (present(readWatches.queueChanges)) add("queue")
+      }
       if (stream === "queue") {
-        if (!present(readWatches.queueChanges)) { signal("missing", readWatches.queueChanges, null); return stop }
+        if (!present(readWatches.queueChanges)) {
+          signal("missing", readWatches.queueChanges, null)
+          return stop
+        }
         add("queue")
       }
-    } catch { stop(); signal("threw", attaching, null) }
+    } catch {
+      stop()
+      signal("threw", attaching, null)
+    }
     return stop
   }
   return {
-    site, page,
-    get disposed() { return disposed },
+    site,
+    page,
+    get disposed() {
+      return disposed
+    },
     account: account.kind === "known" ? Object.freeze({ ...account.data }) : null,
-    read, parsed, present, current, agrees: locationAgrees,
+    read,
+    parsed,
+    present,
+    current,
+    agrees: locationAgrees,
     casting: () => routes.castState.read()?.casting === true,
     serves,
-    emit(event) { if (!disposed) emit(event) },
+    emit(event) {
+      if (!disposed) emit(event)
+    },
     async run<J extends Job>(job: J, ctx?: { target?: Element }): Promise<PageJobResult<J>> {
       try {
         if (disposed || !isJob(job) || !supportsJob(site, job.kind) || !serves(job, ctx) || !isOwnRead(job.kind)) return { ok: false, reason: "unavailable" }
@@ -269,7 +339,9 @@ export function createReadGateway(options: {
     watch<S extends Stream>(stream: S, onData: (data: StreamData<S>) => void): () => void {
       if (disposed || !supportsStream(site, stream)) return () => {}
       const slot = slots[stream]
-      const sink = (raw: unknown) => { if (isStreamData(stream, raw)) onData(raw) }
+      const sink = (raw: unknown) => {
+        if (isStreamData(stream, raw)) onData(raw)
+      }
       slot.subscribers.add(sink)
       if (slot.subscribers.size === 1) {
         const stop = attach(stream)
@@ -281,14 +353,20 @@ export function createReadGateway(options: {
         if (!active) return
         active = false
         slot.subscribers.delete(sink)
-        if (slot.subscribers.size === 0) { const stop = slot.stop; slot.stop = undefined; stop?.() }
+        if (slot.subscribers.size === 0) {
+          const stop = slot.stop
+          slot.stop = undefined
+          stop?.()
+        }
       }
     },
     onSignal(listener) {
       if (disposed) return () => {}
       const sink = (event: BreakageSignal) => listener(event)
       signalSinks.add(sink)
-      return () => { signalSinks.delete(sink) }
+      return () => {
+        signalSinks.delete(sink)
+      }
     },
     dispose() {
       if (disposed) return

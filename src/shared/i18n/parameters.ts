@@ -1646,5 +1646,5 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "badge_notWorking_other": ["count"],
   "playing_saveTo": ["playlist", "song"],
   "playing_oneClick": ["playlist"],
-  "playing_artist": ["artist", "title"],
+  "playing_artist": ["artist", "title"]
 }

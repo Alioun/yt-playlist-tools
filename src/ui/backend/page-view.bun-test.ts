@@ -3,8 +3,13 @@ import { isBuildId } from "../../shared/contracts/vocabulary"
 import { createScriptedBackend } from "./scripted"
 import type { PageView } from "./backend"
 
-const build = (() => { const value = "page-view-test"; if (!isBuildId(value)) throw Error("build"); return value })()
-const acct = "AAAAAAAAAAAAAAAA", other = "BBBBBBBBBBBBBBBB"
+const build = (() => {
+  const value = "page-view-test"
+  if (!isBuildId(value)) throw Error("build")
+  return value
+})()
+const acct = "AAAAAAAAAAAAAAAA",
+  other = "BBBBBBBBBBBBBBBB"
 const stamped = (data: object) => ({ v: 1, gen: "g", at: 1, by: "device", data }) as never
 
 function backend(records: Record<string, unknown>) {
@@ -17,7 +22,8 @@ function view(page: PageView) {
 
 test("a page view reads every setup with its filters and cache, and drops watch progress and 1.x leftovers", async () => {
   const scripted = backend({
-    schema: 1, device: { id: "device", consent: { v: 1, at: 5 }, syncOn: true, recentAdds: false },
+    schema: 1,
+    device: { id: "device", consent: { v: 1, at: 5 }, syncOn: true, recentAdds: false },
     [`doc:setup:${acct}`]: stamped({ label: { name: "Zed" }, autoAdd: [{ pl: "PLzed", takes: "both", pct: 30 }] }),
     [`doc:setup:${other}`]: stamped({ label: { name: "Ann" }, quickSave: "PLann" }),
     [`doc:filter:${acct}:PLzed`]: stamped({ mode: "allow", on: true, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "Tiny Science"]] }),
@@ -29,7 +35,10 @@ test("a page view reads every setup with its filters and cache, and drops watch 
   const page = view(await scripted.backend.loadPage())
   expect(page.layout).toBe("current")
   expect(page.device.kind === "current" && page.device.device.recentAdds).toBe(false)
-  expect(page.setups.map(entry => [entry.acct, entry.setup.label?.name])).toEqual([[other, "Ann"], [acct, "Zed"]])
+  expect(page.setups.map(entry => [entry.acct, entry.setup.label?.name])).toEqual([
+    [other, "Ann"],
+    [acct, "Zed"]
+  ])
   const zed = page.setups[1]!
   expect(zed.setup.autoAdd).toEqual([{ pl: "PLzed", takes: "both", pct: 30 }])
   expect(zed.filters.get("PLzed" as never)?.channels).toEqual([["UCaaaaaaaaaaaaaaaaaaaaaa", "Tiny Science"]])
@@ -42,7 +51,8 @@ test("a page view reads every setup with its filters and cache, and drops watch 
 
 test("a removed setup isn't listed, and a record that doesn't decode reads as absent", async () => {
   const scripted = backend({
-    schema: 1, device: { id: "device", consent: null, syncOn: false },
+    schema: 1,
+    device: { id: "device", consent: null, syncOn: false },
     [`doc:setup:${acct}`]: { v: 1, gen: "g", at: 1, by: "device", deleted: true },
     [`doc:setup:${other}`]: stamped({ autoAdd: "not a list" }),
     sync: { status: 7 }
@@ -57,7 +67,9 @@ test("a removed setup isn't listed, and a record that doesn't decode reads as ab
 test("a watched page redraws for a setup change and not for watch progress", async () => {
   const scripted = backend({ schema: 1, device: { id: "device", consent: { v: 1, at: 5 }, syncOn: false } })
   const seen: number[] = []
-  const stop = scripted.backend.watchPage(event => { seen.push(view(event.view).setups.length) })
+  const stop = scripted.backend.watchPage(event => {
+    seen.push(view(event.view).setups.length)
+  })
   scripted.replace({ [`progress:${acct}:3`]: { any: 1 } })
   scripted.replace({ [`doc:setup:${acct}`]: stamped({ quickSave: "PLx" }) })
   await Bun.sleep(0)

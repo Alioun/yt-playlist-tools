@@ -5,10 +5,20 @@ import type { RegisteredScript } from "../../shared/features/registration"
 import { buildId, fixtureBuild, observedScript, scriptedRegistrar, settings, tabFact, type ScriptedRegistrar } from "../../../tools/fixtures/registrar/scripted"
 
 const main: RegisteredScript = { id: "pp-www-page", js: ["page-www.js"], matches: ["https://www.youtube.com/*"], world: "MAIN", runAt: "document_start", allFrames: false, persistAcrossSessions: true }
-const isolated: RegisteredScript = { id: "pp-www", js: ["core-www.js", "kit-www.js", "feature-auto-add.js"], matches: ["https://www.youtube.com/*"], world: "ISOLATED", runAt: "document_idle", allFrames: false, persistAcrossSessions: true }
+const isolated: RegisteredScript = {
+  id: "pp-www",
+  js: ["core-www.js", "kit-www.js", "feature-auto-add.js"],
+  matches: ["https://www.youtube.com/*"],
+  world: "ISOLATED",
+  runAt: "document_idle",
+  allFrames: false,
+  persistAcrossSessions: true
+}
 
 async function failure(work: Promise<void>): Promise<FailureFact> {
-  try { await work } catch (error) {
+  try {
+    await work
+  } catch (error) {
     if (error instanceof RegistrarError) return error.fact
     throw error
   }
@@ -69,13 +79,13 @@ describe("Registrar public behavior", () => {
     const registrar = await started(fake)
     fake.changeOwner({ settings: settings("autoAdd", "cardMenu") })
     await registrar.reconcile()
-    expect(fake.calls.flatMap(call => call.operation === "update" ? [call.scripts] : [])).toEqual([
+    expect(fake.calls.flatMap(call => (call.operation === "update" ? [call.scripts] : []))).toEqual([
       [{ ...isolated, js: ["core-www.js", "kit-www.js", "feature-auto-add.js", "feature-card-menu.js"] }]
     ])
     fake.changeOwner({ consent: false })
     await registrar.reconcile()
     expect([...fake.scripts.values()]).toEqual([unrelated])
-    expect(fake.calls.flatMap(call => call.operation === "unregister" ? [call.ids] : [])).toEqual([["pp-www-page", "pp-www"]])
+    expect(fake.calls.flatMap(call => (call.operation === "unregister" ? [call.ids] : []))).toEqual([["pp-www-page", "pp-www"]])
     registrar.dispose()
   })
 
@@ -90,7 +100,11 @@ describe("Registrar public behavior", () => {
     blocked.release()
     await work
     expect(fake.scripts.get("pp-www")?.js).toEqual(["core-www.js", "feature-card-menu.js"])
-    expect(executed(fake)).toEqual([[1, "MAIN", "page-www.js"], [1, "ISOLATED", "core-www.js"], [1, "ISOLATED", "feature-card-menu.js"]])
+    expect(executed(fake)).toEqual([
+      [1, "MAIN", "page-www.js"],
+      [1, "ISOLATED", "core-www.js"],
+      [1, "ISOLATED", "feature-card-menu.js"]
+    ])
     expect(fake.maxMutationsActive).toBe(1)
     registrar.dispose()
   })
@@ -208,7 +222,10 @@ describe("Registrar public behavior", () => {
     }
     expect(executed(fake)).toEqual([[1, "MAIN", "page-www.js"]])
     await registrar.ensure(1, { core: true })
-    expect(executed(fake)).toEqual([[1, "MAIN", "page-www.js"], [1, "ISOLATED", "core-www.js"]])
+    expect(executed(fake)).toEqual([
+      [1, "MAIN", "page-www.js"],
+      [1, "ISOLATED", "core-www.js"]
+    ])
     registrar.dispose()
   })
 
@@ -236,10 +253,14 @@ describe("Registrar public behavior", () => {
     fake.open(tabFact(5, { discarded: true, lastAccessed: 999 }))
     fake.open(tabFact(6, { frozen: true, lastAccessed: 999 }))
     const registrar = await started(fake)
-    expect(executed(fake)).toEqual([2, 3, 4, 1].flatMap(tabId => [
-      [tabId, "MAIN", "page-www.js"], [tabId, "ISOLATED", "core-www.js"],
-      [tabId, "ISOLATED", "kit-www.js"], [tabId, "ISOLATED", "feature-auto-add.js"]
-    ]))
+    expect(executed(fake)).toEqual(
+      [2, 3, 4, 1].flatMap(tabId => [
+        [tabId, "MAIN", "page-www.js"],
+        [tabId, "ISOLATED", "core-www.js"],
+        [tabId, "ISOLATED", "kit-www.js"],
+        [tabId, "ISOLATED", "feature-auto-add.js"]
+      ])
+    )
     expect(fake.maxMutationsActive).toBe(1)
     registrar.dispose()
   })
@@ -259,10 +280,7 @@ describe("Registrar public behavior", () => {
 
   test("only missing current-build code executes", async () => {
     const fake = scriptedRegistrar({ settings: settings("autoAdd") })
-    fake.open(tabFact(1), [
-      ...["page-www.js", "core-www.js", "kit-www.js"].map(file => ({ file, build: fixtureBuild })),
-      { file: "feature-auto-add.js", build: buildId("old-build") }
-    ])
+    fake.open(tabFact(1), [...["page-www.js", "core-www.js", "kit-www.js"].map(file => ({ file, build: fixtureBuild })), { file: "feature-auto-add.js", build: buildId("old-build") }])
     const registrar = await started(fake)
     expect(executed(fake)).toEqual([[1, "ISOLATED", "feature-auto-add.js"]])
     await registrar.reconcile()
@@ -301,7 +319,10 @@ describe("Registrar public behavior", () => {
     await registrar.ensure(1, { jobs: true })
     await registrar.ensure(1, { jobs: true })
     await registrar.ensure(2, { jobs: true })
-    expect(executed(fake).slice(eager.length)).toEqual([[1, "MAIN", "page-jobs-www.js"], [2, "MAIN", "page-jobs-music.js"]])
+    expect(executed(fake).slice(eager.length)).toEqual([
+      [1, "MAIN", "page-jobs-www.js"],
+      [2, "MAIN", "page-jobs-music.js"]
+    ])
     fake.open(tabFact(3))
     expect(await failure(registrar.ensure(3, { jobs: true }))).toEqual({ kind: "refused", reason: "prerequisite-missing" })
     expect(executed(fake).length).toBe(eager.length + 2)
@@ -310,7 +331,10 @@ describe("Registrar public behavior", () => {
 
   test("after a worker restart a new Registrar finds the jobs file a tab has, and loads it again where the tab lost it", async () => {
     const fake = scriptedRegistrar()
-    const halves = [{ file: "page-www.js", build: fixtureBuild }, { file: "core-www.js", build: fixtureBuild }]
+    const halves = [
+      { file: "page-www.js", build: fixtureBuild },
+      { file: "core-www.js", build: fixtureBuild }
+    ]
     fake.open(tabFact(1), halves)
     fake.open(tabFact(2), [...halves, { file: "page-jobs-www.js", build: buildId("registrar-fixture-older") }])
     const before = await started(fake)
@@ -322,13 +346,20 @@ describe("Registrar public behavior", () => {
     fake.open(tabFact(1), halves, "document-1-reloaded")
     await after.ensure(1, { jobs: true })
     await after.ensure(2, { jobs: true })
-    expect(executed(fake)).toEqual([[1, "MAIN", "page-jobs-www.js"], [1, "MAIN", "page-jobs-www.js"], [2, "MAIN", "page-jobs-www.js"]])
+    expect(executed(fake)).toEqual([
+      [1, "MAIN", "page-jobs-www.js"],
+      [1, "MAIN", "page-jobs-www.js"],
+      [2, "MAIN", "page-jobs-www.js"]
+    ])
     after.dispose()
   })
 
   test("once Clear all has disposed the Registrar, a page asking for its jobs file loads nothing", async () => {
     const fake = scriptedRegistrar()
-    fake.open(tabFact(1), [{ file: "page-www.js", build: fixtureBuild }, { file: "core-www.js", build: fixtureBuild }])
+    fake.open(tabFact(1), [
+      { file: "page-www.js", build: fixtureBuild },
+      { file: "core-www.js", build: fixtureBuild }
+    ])
     const registrar = await started(fake)
     registrar.dispose()
     expect(await failure(registrar.ensure(1, { jobs: true }))).toEqual({ kind: "refused", reason: "disposed" })
@@ -346,11 +377,19 @@ describe("Registrar public behavior", () => {
     expect(await failure(registrar.ensure(1, { popovers: true }))).toEqual({ kind: "refused", reason: "prerequisite-missing" })
     await registrar.ensure(1, { core: true })
     await registrar.ensure(1, { core: true })
-    expect(executed(fake)).toEqual([[1, "MAIN", "page-www.js"], [1, "ISOLATED", "core-www.js"]])
+    expect(executed(fake)).toEqual([
+      [1, "MAIN", "page-www.js"],
+      [1, "ISOLATED", "core-www.js"]
+    ])
     await registrar.ensure(1, { core: true, kit: true })
     await registrar.ensure(1, { popovers: true })
     await registrar.ensure(1, { popovers: true })
-    expect(executed(fake)).toEqual([[1, "MAIN", "page-www.js"], [1, "ISOLATED", "core-www.js"], [1, "ISOLATED", "kit-www.js"], [1, "ISOLATED", "popovers.js"]])
+    expect(executed(fake)).toEqual([
+      [1, "MAIN", "page-www.js"],
+      [1, "ISOLATED", "core-www.js"],
+      [1, "ISOLATED", "kit-www.js"],
+      [1, "ISOLATED", "popovers.js"]
+    ])
     expect(fake.scripts.size).toBe(0)
     expect(fake.ports.owner.current()).toEqual(ownerBefore)
     registrar.dispose()
@@ -384,8 +423,16 @@ describe("Registrar public behavior", () => {
     const build = buildId("replacement-build")
     const second = createRegistrar({ ...fake.ports, build })
     await second.reconcile()
-    expect(fake.executions().slice(4).map(call => [call.file, call.build])).toEqual([
-      ["page-www.js", build], ["core-www.js", build], ["kit-www.js", build], ["feature-auto-add.js", build]
+    expect(
+      fake
+        .executions()
+        .slice(4)
+        .map(call => [call.file, call.build])
+    ).toEqual([
+      ["page-www.js", build],
+      ["core-www.js", build],
+      ["kit-www.js", build],
+      ["feature-auto-add.js", build]
     ])
     fake.startup()
     await second.reconcile()
@@ -438,12 +485,18 @@ describe("Registrar public behavior", () => {
     const fake = scriptedRegistrar({ settings: settings("autoAdd") })
     fake.scripts.set(main.id, observedScript(main))
     fake.scripts.set(isolated.id, {
-      ...observedScript(isolated), js: ["kit-www.js", "core-www.js", "feature-auto-add.js"], runAt: "document_start",
-      allFrames: true, persistAcrossSessions: false, matchOriginAsFallback: true, css: ["unexpected.css"], excludeMatches: ["https://www.youtube.com/watch*"]
+      ...observedScript(isolated),
+      js: ["kit-www.js", "core-www.js", "feature-auto-add.js"],
+      runAt: "document_start",
+      allFrames: true,
+      persistAcrossSessions: false,
+      matchOriginAsFallback: true,
+      css: ["unexpected.css"],
+      excludeMatches: ["https://www.youtube.com/watch*"]
     })
     const registrar = await started(fake)
     expect(fake.scripts.get(isolated.id)).toEqual(observedScript(isolated))
-    expect(fake.calls.flatMap(call => call.operation === "update" ? [call.scripts] : [])).toEqual([[isolated]])
+    expect(fake.calls.flatMap(call => (call.operation === "update" ? [call.scripts] : []))).toEqual([[isolated]])
     expect(fake.calls.filter(call => call.operation === "register")).toHaveLength(0)
     registrar.dispose()
   })
@@ -495,9 +548,18 @@ describe("Registrar public behavior", () => {
 
   test("partial subscription setup removes already acquired subscriptions", () => {
     const fake = scriptedRegistrar()
-    expect(() => createRegistrar({ ...fake.ports, access: { ...fake.ports.access, subscribe() { throw Error("Subscription refused") } } })).toThrow(RegistrarError)
+    expect(() =>
+      createRegistrar({
+        ...fake.ports,
+        access: {
+          ...fake.ports.access,
+          subscribe() {
+            throw Error("Subscription refused")
+          }
+        }
+      })
+    ).toThrow(RegistrarError)
     expect(fake.listenerCounts).toEqual([0, 0, 0])
     expect(fake.calls).toEqual([])
   })
-
 })

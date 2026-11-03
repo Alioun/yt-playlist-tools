@@ -1,5 +1,8 @@
 export class DecodeError extends TypeError {
-  constructor(readonly path: string, expected: string) {
+  constructor(
+    readonly path: string,
+    expected: string
+  ) {
     super(`${path}: expected ${expected}`)
     this.name = "DecodeError"
   }
@@ -31,16 +34,13 @@ export function oneOf<const T extends string | number>(...choices: T[]): Decoder
 }
 
 export function optional<T>(decode: Decoder<T>): Decoder<T | undefined> {
-  return (raw, path) => raw === undefined ? undefined : decode(raw, path)
+  return (raw, path) => (raw === undefined ? undefined : decode(raw, path))
 }
 export function nullable<T>(decode: Decoder<T>): Decoder<T | null> {
-  return (raw, path) => raw === null ? null : decode(raw, path)
+  return (raw, path) => (raw === null ? null : decode(raw, path))
 }
 
-export function object<T extends object>(
-  fields: { [P in keyof T]-?: Decoder<T[P]> },
-  defaults: () => Partial<NoInfer<T>> = () => ({})
-): Decoder<T> {
+export function object<T extends object>(fields: { [P in keyof T]-?: Decoder<T[P]> }, defaults: () => Partial<NoInfer<T>> = () => ({})): Decoder<T> {
   return (raw, path = "value") => {
     if (raw === undefined) raw = {}
     if (!isRecord(raw)) throw new DecodeError(path, "an object")

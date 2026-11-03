@@ -54,8 +54,19 @@ test("the percent field saves on Enter, puts back out-of-range input, and the sl
 
 test("switching a filter's mode with channels listed asks first, then clears them", async () => {
   const onsetting = mock(async (_desired: unknown, _clear: boolean) => true)
-  render(ChannelFilterEditor, { i18n, playlist: "Later", onsetting,
-    filter: { mode: "allow", on: true, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "Tiny Science", "@tinyscience"], ["UCbbbbbbbbbbbbbbbbbbbbbb", "Two"]] } })
+  render(ChannelFilterEditor, {
+    i18n,
+    playlist: "Later",
+    onsetting,
+    filter: {
+      mode: "allow",
+      on: true,
+      channels: [
+        ["UCaaaaaaaaaaaaaaaaaaaaaa", "Tiny Science", "@tinyscience"],
+        ["UCbbbbbbbbbbbbbbbbbbbbbb", "Two"]
+      ]
+    }
+  })
   expect(screen.getByText("Tiny Science · @tinyscience")).toBeTruthy()
   await userEvent.click(screen.getByRole("radio", { name: "Deny" }))
   expect(screen.getByText("Switch to Deny? This clears its 2 allowed channels.")).toBeTruthy()
@@ -65,8 +76,7 @@ test("switching a filter's mode with channels listed asks first, then clears the
 })
 
 test("a switched-off filter says its channels are kept, and an empty allow list warns", async () => {
-  const off = render(ChannelFilterEditor, { i18n, playlist: "Later", onsetting: async () => true,
-    filter: { mode: "deny", on: false, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "Tiny Science"]] } })
+  const off = render(ChannelFilterEditor, { i18n, playlist: "Later", onsetting: async () => true, filter: { mode: "deny", on: false, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "Tiny Science"]] } })
   expect(screen.getByText("Off, so every channel gets in. It keeps its 1 denied channel for when you turn it back on.")).toBeTruthy()
   off.unmount()
   render(ChannelFilterEditor, { i18n, playlist: "Later", onsetting: async () => true, filter: { mode: "allow", on: true, channels: [] } })
@@ -74,8 +84,7 @@ test("a switched-off filter says its channels are kept, and an empty allow list 
 })
 
 test("a channel add shows the lookup's error in place and keeps the typed text", async () => {
-  render(ChannelFilterEditor, { i18n, playlist: "Later", onsetting: async () => true, filter: null,
-    onadd: async () => ({ kind: "error", message: "Couldn't find that channel on YouTube." }) })
+  render(ChannelFilterEditor, { i18n, playlist: "Later", onsetting: async () => true, filter: null, onadd: async () => ({ kind: "error", message: "Couldn't find that channel on YouTube." }) })
   await userEvent.type(screen.getByRole("textbox", { name: "@handle or channel link" }), "@nobody")
   await userEvent.click(screen.getByRole("button", { name: "Add" }))
   expect(await screen.findByText("Couldn't find that channel on YouTube.")).toBeTruthy()
@@ -83,14 +92,31 @@ test("a channel add shows the lookup's error in place and keeps the typed text",
 })
 
 test("the auto-add list ticks through the model and opens a ticked playlist's options with its summary", async () => {
-  const alpha = playlist("PLalpha"), beta = playlist("PLbeta")
+  const alpha = playlist("PLalpha"),
+    beta = playlist("PLbeta")
   const { source, ledger } = chooserSource({ chosen: [alpha] })
   const picker = new PickerModel({ source, site: "www", mode: "many" })
   const ontakes = mock(async () => true)
   const filter = createRawSnippet(() => ({ render: () => "<p>filter editor</p>" }))
-  render(AutoAddList, { picker, text: createPickerText(i18n), i18n, variant: "popup", defaultPct: 50, ontakes, onpct: async () => true, filter,
-    options: new Map([[alpha, { takes: "both", pct: 30 }]]), filters: new Map([[alpha, { mode: "allow", on: true, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "A"]] }]]) })
-  ledger.answer("cachedList", { rows: [{ id: alpha, title: "Alpha", privacy: "PRIVATE", count: 1 }, { id: beta, title: "Beta", privacy: "PRIVATE", count: 2 }], at: NOW })
+  render(AutoAddList, {
+    picker,
+    text: createPickerText(i18n),
+    i18n,
+    variant: "popup",
+    defaultPct: 50,
+    ontakes,
+    onpct: async () => true,
+    filter,
+    options: new Map([[alpha, { takes: "both", pct: 30 }]]),
+    filters: new Map([[alpha, { mode: "allow", on: true, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "A"]] }]])
+  })
+  ledger.answer("cachedList", {
+    rows: [
+      { id: alpha, title: "Alpha", privacy: "PRIVATE", count: 1 },
+      { id: beta, title: "Beta", privacy: "PRIVATE", count: 2 }
+    ],
+    at: NOW
+  })
   await settle()
   flushSync()
   expect(screen.getByRole("checkbox", { name: /Alpha/ })).toHaveAttribute("aria-checked", "true")

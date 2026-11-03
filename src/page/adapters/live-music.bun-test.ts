@@ -7,7 +7,13 @@ if (typeof document === "undefined") GlobalRegistrator.register({ url: "https://
 else (window as unknown as { happyDOM: { setURL(url: string): void } }).happyDOM.setURL("https://music.youtube.com/watch?v=synthetic01")
 
 const commands: unknown[] = []
-class MenuItem extends HTMLElement { ytmusicServiceMenuItemBehavior = { handleCommand: (command: unknown) => { commands.push(command) } } }
+class MenuItem extends HTMLElement {
+  ytmusicServiceMenuItemBehavior = {
+    handleCommand: (command: unknown) => {
+      commands.push(command)
+    }
+  }
+}
 class QueuePanel extends HTMLElement {}
 if (!customElements.get("ytmusic-menu-service-item-renderer")) customElements.define("ytmusic-menu-service-item-renderer", MenuItem)
 if (!customElements.get("ytmusic-player-queue")) customElements.define("ytmusic-player-queue", QueuePanel)
@@ -17,10 +23,20 @@ function page() {
   const wrapped = { playlistPanelVideoWrapperRenderer: { primaryRenderer: queueEntry("queued00002", 1) } }
   let state = { queue: { items: [queueEntry("synthetic01", 0), wrapped] as unknown[] } }
   const listeners = new Set<() => void>()
-  const store = { getState: () => state, dispatch() {}, subscribe(listener: () => void) { listeners.add(listener); return () => listeners.delete(listener) } }
+  const store = {
+    getState: () => state,
+    dispatch() {},
+    subscribe(listener: () => void) {
+      listeners.add(listener)
+      return () => listeners.delete(listener)
+    }
+  }
   const queue = { store, getItems: () => state.queue.items, getCurrentItemIndex: () => 0, removeItem() {} }
   const app = Object.assign(document.createElement("ytmusic-app"), {
-    queue, networkManager: { fetch: () => Promise.resolve({}) }, handleServiceEndpoint() {}, handleNavigationEndpoint() {}
+    queue,
+    networkManager: { fetch: () => Promise.resolve({}) },
+    handleServiceEndpoint() {},
+    handleNavigationEndpoint() {}
   })
   const panel = Object.assign(document.createElement("ytmusic-player-queue"), { queue, data: state.queue.items, onDrop() {} })
   panel.id = "queue"
@@ -31,13 +47,21 @@ function page() {
     drops.push({ index: [...dragEl.parentElement.children].indexOf(dragEl), data: dragEl.data })
   })
   return {
-    app, panel, wrapped, drops, listeners,
-    set(next: typeof state) { state = next; for (const listener of [...listeners]) listener() }
+    app,
+    panel,
+    wrapped,
+    drops,
+    listeners,
+    set(next: typeof state) {
+      state = next
+      for (const listener of [...listeners]) listener()
+    }
   }
 }
 
 test("the live port finds each YouTube Music handler and checks the reorder path as ARC-ACC-29 says", () => {
-  const p = page(), port = createLiveMusicPage({ window, document })
+  const p = page(),
+    port = createLiveMusicPage({ window, document })
   for (const handler of ["menu-item", "replay", "queue", "reorder", "service", "navigation"] as const) expect(port.has(handler)).toBe(true)
   Reflect.set(p.panel, "queue", {})
   expect(port.has("reorder")).toBe(false)
@@ -56,7 +80,8 @@ test("the menu item route hands the command to a detached menu item's own behavi
 })
 
 test("the reorder drop names the target index and passes the entry's renderer, wrapper included", () => {
-  const p = page(), port = createLiveMusicPage({ window, document })
+  const p = page(),
+    port = createLiveMusicPage({ window, document })
   port.drop(p.wrapped, 0)
   port.drop(queueEntry("synthetic01", 0), 1)
   expect(p.drops).toEqual([
@@ -66,9 +91,12 @@ test("the reorder drop names the target index and passes the entry's renderer, w
 })
 
 test("store bindings read the app state and report only queue changes", () => {
-  const p = page(), bindings = createLiveMusicBindings({ window, document })
+  const p = page(),
+    bindings = createLiveMusicBindings({ window, document })
   let changes = 0
-  const stop = bindings.queueChanges?.onChange(() => { changes++ })
+  const stop = bindings.queueChanges?.onChange(() => {
+    changes++
+  })
   expect(bindings.musicState?.read()).toMatchObject({ queue: { items: expect.any(Array) } })
   const items = [queueEntry("synthetic01", 0)]
   p.set({ queue: { items } })

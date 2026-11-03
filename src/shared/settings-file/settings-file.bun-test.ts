@@ -3,8 +3,14 @@ import { decodeDocument, decodeFilter, decodeSettings, decodeSetup, defaultSetti
 import { createImportPlanner, exportBlob, exportFile } from "."
 import { accountA, accountB, canonicalSource, expectedPlanText, expectedText, fixture, freeze, playlist, record, unrelatedAccount } from "../../../tools/fixtures/settings-file/specimens"
 
-function shortcut(value: string) { if (!isShortcutId(value)) throw Error("fixture-shortcut"); return value }
-function channel(value: string) { if (!isChannelId(value)) throw Error("fixture-channel"); return value }
+function shortcut(value: string) {
+  if (!isShortcutId(value)) throw Error("fixture-shortcut")
+  return value
+}
+function channel(value: string) {
+  if (!isChannelId(value)) throw Error("fixture-channel")
+  return value
+}
 
 const normal = createImportPlanner("normal")
 const exportInput = () => ({ source: canonicalSource(), version: "2.0.0-rc.1+fixture", date: "2026-10-29" })
@@ -25,12 +31,26 @@ test("export includes every supported field and kept filter in exact determinist
 test("export excludes every device field and every non-settings storage area before consent", () => {
   const input = exportInput()
   const forbidden = {
-    device: { id: "device-marker", consent: { v: 1, at: 17 }, syncOn: true, upgradeNote: "upgrade-marker",
-      claimNotice: "claim-marker", newPlaylistVisibility: "PUBLIC", pickerSortAZ: true,
-      detailedLog: true, recentAdds: true, legacyCleared: true },
+    device: {
+      id: "device-marker",
+      consent: { v: 1, at: 17 },
+      syncOn: true,
+      upgradeNote: "upgrade-marker",
+      claimNotice: "claim-marker",
+      newPlaylistVisibility: "PUBLIC",
+      pickerSortAZ: true,
+      detailedLog: true,
+      recentAdds: true,
+      legacyCleared: true
+    },
     lastAccount: accountA,
-    consent: null, sync: "sync-marker", cache: "cache-marker", progress: "progress-marker", session: "session-marker",
-    unclaimed: "unclaimed-marker", arbitrary: "arbitrary-marker"
+    consent: null,
+    sync: "sync-marker",
+    cache: "cache-marker",
+    progress: "progress-marker",
+    session: "session-marker",
+    unclaimed: "unclaimed-marker",
+    arbitrary: "arbitrary-marker"
   }
   Object.assign(input.source, forbidden)
   if (input.source.settings.kind !== "value") throw new Error("fixture-settings")
@@ -89,63 +109,239 @@ test("private import refuses before parsing and file privacy claims cannot overr
 })
 
 test("newer valid format has its distinct refusal even with unfamiliar data", () => {
-  expect(normal.importFile(JSON.stringify({ format: 2, product: "Perchling", version: "99.0.0", date: "2026-10-29", futureData: true })))
-    .toEqual({ kind: "refused", reason: "newer-format", copy: "DATA-55.newer-format" })
+  expect(normal.importFile(JSON.stringify({ format: 2, product: "Perchling", version: "99.0.0", date: "2026-10-29", futureData: true }))).toEqual({
+    kind: "refused",
+    reason: "newer-format",
+    copy: "DATA-55.newer-format"
+  })
 })
 
 test("newer format with current-shaped data is still refused", () => {
-  expect(normal.importFile(expectedText.replace('"format": 1,', '"format": 2,')))
-    .toEqual({ kind: "refused", reason: "newer-format", copy: "DATA-55.newer-format" })
+  expect(normal.importFile(expectedText.replace('"format": 1,', '"format": 2,'))).toEqual({ kind: "refused", reason: "newer-format", copy: "DATA-55.newer-format" })
 })
 
 describe("invalid files do not become canonical defaults", () => {
   const changes: [string, (raw: Record<string, unknown>) => void][] = [
-    ["missing settings", raw => { delete raw.settings }],
-    ["partial settings", raw => { raw.settings = {} }],
-    ["missing autoAdd feedback", raw => { delete record(record(raw.settings).autoAdd).feedback }],
-    ["missing music key", raw => { delete record(record(record(raw.settings).musicKeys).keys).artist }],
-    ["missing gather count", raw => { delete record(record(record(raw.settings).gather).auto).count }],
-    ["null settings", raw => { raw.settings = null }],
-    ["wrong product", raw => { raw.product = "Other" }],
-    ["missing version", raw => { delete raw.version }],
-    ["bad version", raw => { raw.version = "not-a-version" }],
-    ["numeric version", raw => { raw.version = 2 }],
-    ["format string", raw => { raw.format = "1" }],
-    ["format zero", raw => { raw.format = 0 }],
-    ["format fractional", raw => { raw.format = 1.5 }],
-    ["format null", raw => { raw.format = null }],
-    ["missing format", raw => { delete raw.format }],
-    ["invalid date", raw => { raw.date = "2026-02-29" }],
-    ["environment date", raw => { raw.date = "2026-10-29T00:00:00Z" }],
-    ["unknown header", raw => { raw.device = {} }],
-    ["unknown settings field", raw => { record(raw.settings).device = {} }],
-    ["out of range percentage", raw => { record(record(raw.settings).autoAdd).pct = 101 }],
-    ["invented physical key", raw => { record(record(raw.settings).undoKey).code = "InventedKey" }],
-    ["missing key modifier", raw => { delete record(record(raw.settings).undoKey).ctrl }],
-    ["duplicate shortcut identities", raw => {
-      const shortcuts = record(record(raw.settings).shortcuts)
-      if (!Array.isArray(shortcuts.list)) throw new Error("fixture-list")
-      shortcuts.list = [shortcuts.list[0], shortcuts.list[0]]
-    }],
-    ["invalid gather count", raw => { record(record(record(raw.settings).gather).auto).n = 7 }],
-    ["bad account identity", raw => { raw.accounts = { invalid: {} } }],
-    ["account array", raw => { raw.accounts = [] }],
-    ["missing setup", raw => { delete record(record(raw.accounts)[accountA]).setup }],
-    ["partial setup", raw => { record(record(raw.accounts)[accountA]).setup = {} }],
-    ["bad playlist identity", raw => { record(record(raw.accounts)[accountA]).filters = { "bad:id": { mode: "deny", on: false, channels: [] } } }],
-    ["bad destination identity", raw => { record(record(record(raw.accounts)[accountA]).setup).quickSave = "bad:id" }],
-    ["bad shortcut identity", raw => { record(record(record(raw.accounts)[accountA]).setup).targets = { "bad:id": "PL_TARGET" } }],
-    ["partial filter", raw => { record(record(record(raw.accounts)[accountA]).filters).PL_KEPT = { mode: "deny", channels: [] } }],
-    ["bad channel identity", raw => { record(record(record(raw.accounts)[accountA]).filters).PL_KEPT = { mode: "deny", on: true, channels: [["bad", "title"]] } }],
-    ["excess channel slots", raw => { record(record(record(raw.accounts)[accountA]).filters).PL_KEPT = { mode: "deny", on: true, channels: [["UCAAAAAAAAAAAAAAAAAAAAAA", "title", "@handle", "tail"]] } }],
-    ["imported provenance", raw => { record(record(record(raw.accounts)[accountA]).setup).gen = "imported-authority" }]
+    [
+      "missing settings",
+      raw => {
+        delete raw.settings
+      }
+    ],
+    [
+      "partial settings",
+      raw => {
+        raw.settings = {}
+      }
+    ],
+    [
+      "missing autoAdd feedback",
+      raw => {
+        delete record(record(raw.settings).autoAdd).feedback
+      }
+    ],
+    [
+      "missing music key",
+      raw => {
+        delete record(record(record(raw.settings).musicKeys).keys).artist
+      }
+    ],
+    [
+      "missing gather count",
+      raw => {
+        delete record(record(record(raw.settings).gather).auto).count
+      }
+    ],
+    [
+      "null settings",
+      raw => {
+        raw.settings = null
+      }
+    ],
+    [
+      "wrong product",
+      raw => {
+        raw.product = "Other"
+      }
+    ],
+    [
+      "missing version",
+      raw => {
+        delete raw.version
+      }
+    ],
+    [
+      "bad version",
+      raw => {
+        raw.version = "not-a-version"
+      }
+    ],
+    [
+      "numeric version",
+      raw => {
+        raw.version = 2
+      }
+    ],
+    [
+      "format string",
+      raw => {
+        raw.format = "1"
+      }
+    ],
+    [
+      "format zero",
+      raw => {
+        raw.format = 0
+      }
+    ],
+    [
+      "format fractional",
+      raw => {
+        raw.format = 1.5
+      }
+    ],
+    [
+      "format null",
+      raw => {
+        raw.format = null
+      }
+    ],
+    [
+      "missing format",
+      raw => {
+        delete raw.format
+      }
+    ],
+    [
+      "invalid date",
+      raw => {
+        raw.date = "2026-02-29"
+      }
+    ],
+    [
+      "environment date",
+      raw => {
+        raw.date = "2026-10-29T00:00:00Z"
+      }
+    ],
+    [
+      "unknown header",
+      raw => {
+        raw.device = {}
+      }
+    ],
+    [
+      "unknown settings field",
+      raw => {
+        record(raw.settings).device = {}
+      }
+    ],
+    [
+      "out of range percentage",
+      raw => {
+        record(record(raw.settings).autoAdd).pct = 101
+      }
+    ],
+    [
+      "invented physical key",
+      raw => {
+        record(record(raw.settings).undoKey).code = "InventedKey"
+      }
+    ],
+    [
+      "missing key modifier",
+      raw => {
+        delete record(record(raw.settings).undoKey).ctrl
+      }
+    ],
+    [
+      "duplicate shortcut identities",
+      raw => {
+        const shortcuts = record(record(raw.settings).shortcuts)
+        if (!Array.isArray(shortcuts.list)) throw new Error("fixture-list")
+        shortcuts.list = [shortcuts.list[0], shortcuts.list[0]]
+      }
+    ],
+    [
+      "invalid gather count",
+      raw => {
+        record(record(record(raw.settings).gather).auto).n = 7
+      }
+    ],
+    [
+      "bad account identity",
+      raw => {
+        raw.accounts = { invalid: {} }
+      }
+    ],
+    [
+      "account array",
+      raw => {
+        raw.accounts = []
+      }
+    ],
+    [
+      "missing setup",
+      raw => {
+        delete record(record(raw.accounts)[accountA]).setup
+      }
+    ],
+    [
+      "partial setup",
+      raw => {
+        record(record(raw.accounts)[accountA]).setup = {}
+      }
+    ],
+    [
+      "bad playlist identity",
+      raw => {
+        record(record(raw.accounts)[accountA]).filters = { "bad:id": { mode: "deny", on: false, channels: [] } }
+      }
+    ],
+    [
+      "bad destination identity",
+      raw => {
+        record(record(record(raw.accounts)[accountA]).setup).quickSave = "bad:id"
+      }
+    ],
+    [
+      "bad shortcut identity",
+      raw => {
+        record(record(record(raw.accounts)[accountA]).setup).targets = { "bad:id": "PL_TARGET" }
+      }
+    ],
+    [
+      "partial filter",
+      raw => {
+        record(record(record(raw.accounts)[accountA]).filters).PL_KEPT = { mode: "deny", channels: [] }
+      }
+    ],
+    [
+      "bad channel identity",
+      raw => {
+        record(record(record(raw.accounts)[accountA]).filters).PL_KEPT = { mode: "deny", on: true, channels: [["bad", "title"]] }
+      }
+    ],
+    [
+      "excess channel slots",
+      raw => {
+        record(record(record(raw.accounts)[accountA]).filters).PL_KEPT = { mode: "deny", on: true, channels: [["UCAAAAAAAAAAAAAAAAAAAAAA", "title", "@handle", "tail"]] }
+      }
+    ],
+    [
+      "imported provenance",
+      raw => {
+        record(record(record(raw.accounts)[accountA]).setup).gen = "imported-authority"
+      }
+    ]
   ]
-  for (const [name, change] of changes) test(name, () => {
-    const raw = fixture()
-    change(raw)
-    expect(normal.importFile(JSON.stringify(raw))).toEqual(invalid)
-  })
-  test.each(["", "null", "[]", "{}", "{", "\"sentinel-private-file-value\"", "{\"format\":NaN}"])("fixed refusal for %s", text => {
+  for (const [name, change] of changes)
+    test(name, () => {
+      const raw = fixture()
+      change(raw)
+      expect(normal.importFile(JSON.stringify(raw))).toEqual(invalid)
+    })
+  test.each(["", "null", "[]", "{}", "{", '"sentinel-private-file-value"', '{"format":NaN}'])("fixed refusal for %s", text => {
     expect(normal.importFile(text)).toEqual(invalid)
   })
 })
@@ -156,7 +352,8 @@ test("duplicate and escaped duplicate members never silently overwrite accounts 
     expectedText.replace('"format": 1,', '"format": 1, "for\\u006dat": 1,'),
     expectedText.replace('"accounts": {', '"accounts": {"AAAAAAAAAAAAAAAA": {},'),
     expectedText.replace('"PL_AUTO": {', '"PL_AUTO": {}, "PL_AUTO": {')
-  ]) expect(normal.importFile(text)).toEqual(invalid)
+  ])
+    expect(normal.importFile(text)).toEqual(invalid)
 })
 
 test("unsafe member keys at every level refuse without prototype changes", () => {
@@ -194,13 +391,24 @@ test("canonical normalization trims labels and orphan references while retaining
 test("tombstones read as absent and live filter-only accounts remain exportable", () => {
   const stamp = { v: 1, gen: "old", at: 0, by: "source" }
   const source = canonicalSource()
-  const result = exportFile({ source: { ...source, accounts: [
-    { account: accountA, setup: decodeDocument({ ...stamp, deleted: true }, decodeSetup), filters: [
-      { playlist: playlist("PL_LIVE"), document: decodeDocument({ ...stamp, data: { mode: "deny", on: false, channels: [] } }, decodeFilter) },
-      { playlist: playlist("PL_DELETED"), document: decodeDocument({ ...stamp, deleted: true }, decodeFilter) }
-    ] },
-    { account: accountB, setup: decodeDocument(undefined, decodeSetup), filters: [] }
-  ] }, version: "2.0.0", date: "2024-02-29" })
+  const result = exportFile({
+    source: {
+      ...source,
+      accounts: [
+        {
+          account: accountA,
+          setup: decodeDocument({ ...stamp, deleted: true }, decodeSetup),
+          filters: [
+            { playlist: playlist("PL_LIVE"), document: decodeDocument({ ...stamp, data: { mode: "deny", on: false, channels: [] } }, decodeFilter) },
+            { playlist: playlist("PL_DELETED"), document: decodeDocument({ ...stamp, deleted: true }, decodeFilter) }
+          ]
+        },
+        { account: accountB, setup: decodeDocument(undefined, decodeSetup), filters: [] }
+      ]
+    },
+    version: "2.0.0",
+    date: "2024-02-29"
+  })
   if (result.kind !== "exported") throw new Error("export-refused")
   const raw = fixture(result.file.text)
   expect(Object.keys(record(raw.accounts))).toEqual([accountA])
@@ -214,14 +422,35 @@ test("tombstones read as absent and live filter-only accounts remain exportable"
 
 test("export keeps a stored channel's known slots and leaves a newer version's extra columns out of the file", () => {
   const stamp = { v: 1, gen: "old", at: 0, by: "source" }
-  const channels = [["UCAAAAAAAAAAAAAAAAAAAAAA", "with handle", "@handle", "future-column"], ["UCBBBBBBBBBBBBBBBBBBBBBB", "no handle", null, "future-column"]]
-  const result = exportFile({ source: { ...canonicalSource(), accounts: [{ account: accountA, setup: decodeDocument(undefined, decodeSetup), filters: [
-    { playlist: playlist("PL_FUTURE"), document: decodeDocument({ ...stamp, data: { mode: "deny", on: true, channels } }, decodeFilter) }
-  ] }] }, version: "2.0.0", date: "2024-02-29" })
+  const channels = [
+    ["UCAAAAAAAAAAAAAAAAAAAAAA", "with handle", "@handle", "future-column"],
+    ["UCBBBBBBBBBBBBBBBBBBBBBB", "no handle", null, "future-column"]
+  ]
+  const result = exportFile({
+    source: {
+      ...canonicalSource(),
+      accounts: [
+        {
+          account: accountA,
+          setup: decodeDocument(undefined, decodeSetup),
+          filters: [{ playlist: playlist("PL_FUTURE"), document: decodeDocument({ ...stamp, data: { mode: "deny", on: true, channels } }, decodeFilter) }]
+        }
+      ]
+    },
+    version: "2.0.0",
+    date: "2024-02-29"
+  })
   if (result.kind !== "exported") throw new Error("export-refused")
-  expect(record(record(fixture(result.file.text).accounts)[accountA]).filters).toEqual({ PL_FUTURE: { mode: "deny", on: true, channels: [
-    ["UCAAAAAAAAAAAAAAAAAAAAAA", "with handle", "@handle"], ["UCBBBBBBBBBBBBBBBBBBBBBB", "no handle"]
-  ] } })
+  expect(record(record(fixture(result.file.text).accounts)[accountA]).filters).toEqual({
+    PL_FUTURE: {
+      mode: "deny",
+      on: true,
+      channels: [
+        ["UCAAAAAAAAAAAAAAAAAAAAAA", "with handle", "@handle"],
+        ["UCBBBBBBBBBBBBBBBBBBBBBB", "no handle"]
+      ]
+    }
+  })
 })
 
 test("canonical defaulting stays available internally while an incomplete external file refuses", () => {
@@ -236,9 +465,15 @@ test("unsupported documents never silently export as defaults", () => {
   const expected = { kind: "refused", reason: "unsupported-document" } as const
   expect(exportFile({ ...exportInput(), source: { ...source, settings: decodeDocument(stamp, decodeSettings) } })).toEqual(expected)
   expect(exportFile({ ...exportInput(), source: { ...source, accounts: [{ account: accountA, setup: decodeDocument(stamp, decodeSetup), filters: [] }] } })).toEqual(expected)
-  expect(exportFile({ ...exportInput(), source: { ...source, accounts: [{ account: accountA, setup: decodeDocument(undefined, decodeSetup), filters: [
-    { playlist: playlist("PL_NEWER"), document: decodeDocument(stamp, decodeFilter) }
-  ] }] } })).toEqual(expected)
+  expect(
+    exportFile({
+      ...exportInput(),
+      source: {
+        ...source,
+        accounts: [{ account: accountA, setup: decodeDocument(undefined, decodeSetup), filters: [{ playlist: playlist("PL_NEWER"), document: decodeDocument(stamp, decodeFilter) }] }]
+      }
+    })
+  ).toEqual(expected)
 })
 
 test("duplicate source accounts and filters refuse rather than silently overwrite", () => {

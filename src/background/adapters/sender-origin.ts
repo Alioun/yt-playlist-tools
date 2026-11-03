@@ -48,10 +48,13 @@ async function windowPrivacy(deps: SenderOriginPorts, windowId: number): Promise
   } catch {}
 }
 
-export async function resolveSenderOrigin(deps: SenderOriginPorts, input: {
-  readonly sender: NativeSender
-  readonly popupWindowId: unknown
-}): Promise<SenderOriginResult> {
+export async function resolveSenderOrigin(
+  deps: SenderOriginPorts,
+  input: {
+    readonly sender: NativeSender
+    readonly popupWindowId: unknown
+  }
+): Promise<SenderOriginResult> {
   const { sender } = input
   if (sender.id !== deps.runtime.id || (sender.frameId !== undefined && sender.frameId !== 0)) {
     return { kind: "unavailable", reason: "identity" }
@@ -69,7 +72,7 @@ export async function resolveSenderOrigin(deps: SenderOriginPorts, input: {
   const tab = sender.tab
   if (!caller || sender.frameId !== 0 || !tab || !isNativeId(tab.id)) return { kind: "unavailable", reason: "identity" }
   const { id: tabId, windowId, incognito } = tab
-  if (!isNativeId(windowId) || typeof incognito !== "boolean" || await windowPrivacy(deps, windowId) !== incognito) {
+  if (!isNativeId(windowId) || typeof incognito !== "boolean" || (await windowPrivacy(deps, windowId)) !== incognito) {
     return { kind: "unavailable", reason: "privacy", page: caller.kind === "page" ? caller.page : "tab" }
   }
   if (caller.kind === "page") return { kind: "ui", page: caller.page, origin: { kind: "ui", windowId, incognito } }

@@ -9,19 +9,30 @@ export function createMusicLibrary(ctx: MusicContext, options: { item(target: El
   async function like(job: JobOf<"like">, scope: JobScope): Promise<PageJobResult<JobOf<"like">>> {
     const route = ctx.handlers("like")[0]
     if (!route || !ctx.present(route)) return unavailable
-    const status = field(job.endpoint, "likeEndpoint", "status"), videoId = field(job.endpoint, "likeEndpoint", "target", "videoId")
+    const status = field(job.endpoint, "likeEndpoint", "status"),
+      videoId = field(job.endpoint, "likeEndpoint", "target", "videoId")
     if (!ctx.fire(route, () => ctx.port.service(job.endpoint))) return unavailable
     const done = { ok: true as const, data: null, route: route.id }
-    if (typeof status !== "string" || typeof videoId !== "string") { ctx.notice("cannot-measure", route); return done }
+    if (typeof status !== "string" || typeof videoId !== "string") {
+      ctx.notice("cannot-measure", route)
+      return done
+    }
     let readable = false
-    const confirmed = await ctx.until(scope, () => {
-      const value = field(ctx.state(route), "likeStatus", "videos", videoId)
-      readable ||= value !== undefined
-      return value === status
-    }, false)
+    const confirmed = await ctx.until(
+      scope,
+      () => {
+        const value = field(ctx.state(route), "likeStatus", "videos", videoId)
+        readable ||= value !== undefined
+        return value === status
+      },
+      false
+    )
     if (confirmed) return done
     if (!scope.active) return { ok: false, reason: "unconfirmed" }
-    if (!readable) { ctx.notice("cannot-measure", route); return done }
+    if (!readable) {
+      ctx.notice("cannot-measure", route)
+      return done
+    }
     ctx.notice("no-effect", route)
     return failed
   }
@@ -47,7 +58,9 @@ export function createMusicLibrary(ctx: MusicContext, options: { item(target: El
     if (mix && ctx.casting()) return unavailable
     const where = () => {
       let queue: unknown
-      try { queue = ctx.port.items() } catch {}
+      try {
+        queue = ctx.port.items()
+      } catch {}
       const ids = Array.isArray(queue) ? queue.map(item => String(field(queueRenderer(item), "navigationEndpoint", "watchEndpoint", "index"))) : []
       return JSON.stringify([options.location(), ids])
     }

@@ -71,8 +71,13 @@ describe("matching", () => {
 
   const fields = [
     ...["", "text", "search", "email", "url", "tel", "password", "number", "date", "datetime-local", "month", "week", "time", "unknown"].map(inputType => ({ tagName: "INPUT", inputType })),
-    { tagName: "textarea" }, { tagName: "SELECT" }, { isContentEditable: true },
-    { contentEditable: true }, { contentEditable: "" }, { contentEditable: "true" }, { contentEditable: "plaintext-only" },
+    { tagName: "textarea" },
+    { tagName: "SELECT" },
+    { isContentEditable: true },
+    { contentEditable: true },
+    { contentEditable: "" },
+    { contentEditable: "true" },
+    { contentEditable: "plaintext-only" },
     ...["textbox", "searchbox", "combobox", "spinbutton", "presentation textbox"].map(role => ({ role }))
   ] satisfies PathDescriptor[]
 
@@ -102,9 +107,7 @@ describe("matching", () => {
     expect(calls).toBe(0)
   })
 
-  test.each([
-    { repeat: true }, { isComposing: true }, { keyCode: 229 }, { altGraph: true }
-  ])("ignored facts pass through %j", ignored => {
+  test.each([{ repeat: true }, { isComposing: true }, { keyCode: 229 }, { altGraph: true }])("ignored facts pass through %j", ignored => {
     expect(match(facts(ignored), [{ target: playlist, key: key("w") }], context)).toBeNull()
   })
 
@@ -160,16 +163,22 @@ describe("site bindings and conflicts", () => {
   })
 
   test("clear leaves the shortcut, label, Watch Later choice and unknown fields intact", () => {
-    const settings = decodeSettings({ ...settingsWithShortcut(), futureRoot: { value: 1 }, shortcuts: {
-      ...settingsWithShortcut().shortcuts, futureShortcuts: true,
-      list: [{ ...settingsWithShortcut().shortcuts.list[0], futureShortcut: { value: 2 } }]
-    } })
+    const settings = decodeSettings({
+      ...settingsWithShortcut(),
+      futureRoot: { value: 1 },
+      shortcuts: {
+        ...settingsWithShortcut().shortcuts,
+        futureShortcuts: true,
+        list: [{ ...settingsWithShortcut().shortcuts.list[0], futureShortcut: { value: 2 } }]
+      }
+    })
     freeze(settings)
     const result = assignKey(settings, playlist, null)
     if (result.kind !== "assigned") throw new Error("Expected assignment")
-    expect(result.settings).toMatchObject({ futureRoot: { value: 1 }, shortcuts: { futureShortcuts: true, list: [
-      { id: "save01", key: null, label: "Later", watchLaterOnEveryAccount: true, futureShortcut: { value: 2 } }
-    ] } })
+    expect(result.settings).toMatchObject({
+      futureRoot: { value: 1 },
+      shortcuts: { futureShortcuts: true, list: [{ id: "save01", key: null, label: "Later", watchLaterOnEveryAccount: true, futureShortcut: { value: 2 } }] }
+    })
   })
 
   test("Undo is live for a toast or a shortcut feature, with the Music section as a gate", () => {
@@ -198,28 +207,51 @@ describe("one-time presets", () => {
     if (!isShortcutId(original)) throw new Error("Invalid fixture ID")
     const reservedShortcutIds = new Set([original])
     Object.defineProperties(reservedShortcutIds, {
-      add: { value() { throw new Error("Reservation mutation") } },
-      delete: { value() { throw new Error("Reservation mutation") } },
-      clear: { value() { throw new Error("Reservation mutation") } }
+      add: {
+        value() {
+          throw new Error("Reservation mutation")
+        }
+      },
+      delete: {
+        value() {
+          throw new Error("Reservation mutation")
+        }
+      },
+      clear: {
+        value() {
+          throw new Error("Reservation mutation")
+        }
+      }
     })
-    const settings = decodeSettings({ ...settingsWithShortcut(), futureRoot: { keep: true }, shortcuts: {
-      ...settingsWithShortcut().shortcuts, futureShortcuts: [1],
-      list: [{ ...settingsWithShortcut().shortcuts.list[0], futureRow: { keep: true } }]
-    } })
+    const settings = decodeSettings({
+      ...settingsWithShortcut(),
+      futureRoot: { keep: true },
+      shortcuts: {
+        ...settingsWithShortcut().shortcuts,
+        futureShortcuts: [1],
+        list: [{ ...settingsWithShortcut().shortcuts.list[0], futureRow: { keep: true } }]
+      }
+    })
     const before = structuredClone(settings)
     freeze(settings)
     expect(settings.shortcuts.list.some(row => row.id === original)).toBe(false)
-    expect(() => applyPresets(settings, { feature: "shortcuts", shortcutId: original, reservedShortcutIds }))
-      .toThrow(new TypeError("A new six-character shortcut ID is required"))
+    expect(() => applyPresets(settings, { feature: "shortcuts", shortcutId: original, reservedShortcutIds })).toThrow(new TypeError("A new six-character shortcut ID is required"))
     expect(settings).toEqual(before)
     expect([...reservedShortcutIds]).toEqual([original])
     const result = applyPresets(settings, { feature: "shortcuts", shortcutId: "fresh1", reservedShortcutIds })
-    expect(result).toEqual({ kind: "applied", blocked: [{ target: { kind: "playlist", id: "fresh1" }, key: key("w"),
-      conflicts: [{ target: playlist, sites: ["www", "music"] }] }], settings: {
-      ...before, shortcuts: { ...before.shortcuts, preset: true, picker: key("p", { alt: true, shift: true }), list: [
-        ...before.shortcuts.list, { id: "fresh1", key: null, label: "", watchLaterOnEveryAccount: true }
-      ] }
-    } })
+    expect(result).toEqual({
+      kind: "applied",
+      blocked: [{ target: { kind: "playlist", id: "fresh1" }, key: key("w"), conflicts: [{ target: playlist, sites: ["www", "music"] }] }],
+      settings: {
+        ...before,
+        shortcuts: {
+          ...before.shortcuts,
+          preset: true,
+          picker: key("p", { alt: true, shift: true }),
+          list: [...before.shortcuts.list, { id: "fresh1", key: null, label: "", watchLaterOnEveryAccount: true }]
+        }
+      }
+    })
     expect(settings).toEqual(before)
     expect([...reservedShortcutIds]).toEqual([original])
   })
@@ -230,15 +262,22 @@ describe("one-time presets", () => {
     freeze(settings)
     const request = { feature: "shortcuts", shortcutId: "orig01", reservedShortcutIds: new Set<ShortcutId>() } as const
     Object.defineProperties(request, {
-      shortcutId: { get() { throw new Error("No fresh candidate needed") } },
-      reservedShortcutIds: { get() { throw new Error("No reservation evidence needed for a no-op") } }
+      shortcutId: {
+        get() {
+          throw new Error("No fresh candidate needed")
+        }
+      },
+      reservedShortcutIds: {
+        get() {
+          throw new Error("No reservation evidence needed for a no-op")
+        }
+      }
     })
     expect(applyPresets(settings, request)).toEqual({ kind: "unchanged", settings, blocked: [] })
     expect(applyPresets(settings, request).settings).toBe(settings)
     const original = "orig01"
     if (!isShortcutId(original)) throw new Error("Invalid fixture ID")
-    expect(applyPresets(settings, { feature: "shortcuts", shortcutId: original, reservedShortcutIds: new Set([original]) }))
-      .toEqual({ kind: "unchanged", settings, blocked: [] })
+    expect(applyPresets(settings, { feature: "shortcuts", shortcutId: original, reservedShortcutIds: new Set([original]) })).toEqual({ kind: "unchanged", settings, blocked: [] })
   })
 
   test.each(["", "short", "longer1", "bad!id", "é12345"])("invalid fresh candidate %p leaves all inputs unchanged", shortcutId => {
@@ -256,11 +295,14 @@ describe("one-time presets", () => {
     settings.undoKey = key("p", { alt: true, shift: true })
     freeze(settings)
     const result = applyPresets(settings, { feature: "shortcuts", shortcutId: "fresh1", reservedShortcutIds: new Set<ShortcutId>() })
-    expect(result).toEqual({ kind: "applied", settings: { ...settings, shortcuts: { ...settings.shortcuts, preset: true,
-      list: [...settings.shortcuts.list, { id: "fresh1", key: null, label: "", watchLaterOnEveryAccount: true }] } }, blocked: [
-      { target: { kind: "playlist", id: "fresh1" }, key: key("w"), conflicts: [{ target: playlist, sites: ["www", "music"] }] },
-      { target: { kind: "picker" }, key: key("p", { alt: true, shift: true }), conflicts: [{ target: { kind: "undo" }, sites: ["www"] }] }
-    ] })
+    expect(result).toEqual({
+      kind: "applied",
+      settings: { ...settings, shortcuts: { ...settings.shortcuts, preset: true, list: [...settings.shortcuts.list, { id: "fresh1", key: null, label: "", watchLaterOnEveryAccount: true }] } },
+      blocked: [
+        { target: { kind: "playlist", id: "fresh1" }, key: key("w"), conflicts: [{ target: playlist, sites: ["www", "music"] }] },
+        { target: { kind: "picker" }, key: key("p", { alt: true, shift: true }), conflicts: [{ target: { kind: "undo" }, sites: ["www"] }] }
+      ]
+    })
   })
 
   test("playlist defaults create Watch Later and the YouTube-only picker without enabling features", () => {
@@ -268,16 +310,32 @@ describe("one-time presets", () => {
     freeze(settings)
     const result = applyPresets(settings, { feature: "shortcuts", shortcutId: "later1", reservedShortcutIds: new Set<ShortcutId>() })
     expect(result.kind).toBe("applied")
-    expect(result.settings.shortcuts).toEqual({ on: false, feedback: true, music: true, preset: true,
-      picker: key("p", { alt: true, shift: true }), list: [{ id: "later1", key: key("w"), label: "", watchLaterOnEveryAccount: true }] })
+    expect(result.settings.shortcuts).toEqual({
+      on: false,
+      feedback: true,
+      music: true,
+      preset: true,
+      picker: key("p", { alt: true, shift: true }),
+      list: [{ id: "later1", key: key("w"), label: "", watchLaterOnEveryAccount: true }]
+    })
     expect(result.blocked).toEqual([])
     expect(result.settings.undoKey).toEqual(key("u"))
   })
 
   test("Music gets exactly the six approved keys and the four new actions stay unbound", () => {
     const result = applyPresets(defaultSettings(), { feature: "music-keys" })
-    expect(result.settings.musicKeys.keys).toEqual({ next: key("n"), queue: key("q"), save: key("p"),
-      picker: key("p", { alt: true, shift: true }), like: key("l"), remove: key("r"), library: null, mix: null, album: null, artist: null })
+    expect(result.settings.musicKeys.keys).toEqual({
+      next: key("n"),
+      queue: key("q"),
+      save: key("p"),
+      picker: key("p", { alt: true, shift: true }),
+      like: key("l"),
+      remove: key("r"),
+      library: null,
+      mix: null,
+      album: null,
+      artist: null
+    })
     expect(result.settings.musicKeys.on).toBe(false)
   })
 
@@ -333,7 +391,9 @@ describe("recorder", () => {
   })
 
   test.each([
-    { key: "Escape", code: "Escape" }, { key: "Tab", code: "Tab" }, { key: "Tab", code: "Tab", shiftKey: true }
+    { key: "Escape", code: "Escape" },
+    { key: "Tab", code: "Tab" },
+    { key: "Tab", code: "Tab", shiftKey: true }
   ])("cancels without changing the old key for %j", event => {
     const state = recording()
     const result = recorder(state, { kind: "keydown", facts: facts(event) }, recordContext())
@@ -359,12 +419,11 @@ describe("recorder", () => {
   })
 
   test("Ctrl+Alt with any additional modifiers and AltGr are refused", () => {
-    for (const shiftKey of [false, true]) for (const metaKey of [false, true]) {
-      expect(recorder(recording(), { kind: "keydown", facts: facts({ ctrlKey: true, shiftKey, metaKey }) }, recordContext()).state)
-        .toMatchObject({ kind: "recording", refusal: "ctrl-alt" })
-    }
-    expect(recorder(recording(), { kind: "keydown", facts: facts({ altGraph: true }) }, recordContext()).state)
-      .toMatchObject({ kind: "recording", refusal: "ctrl-alt" })
+    for (const shiftKey of [false, true])
+      for (const metaKey of [false, true]) {
+        expect(recorder(recording(), { kind: "keydown", facts: facts({ ctrlKey: true, shiftKey, metaKey }) }, recordContext()).state).toMatchObject({ kind: "recording", refusal: "ctrl-alt" })
+      }
+    expect(recorder(recording(), { kind: "keydown", facts: facts({ altGraph: true }) }, recordContext()).state).toMatchObject({ kind: "recording", refusal: "ctrl-alt" })
   })
 
   test.each([{ isComposing: true }, { keyCode: 229 }, { repeat: true }])("IME and repeat remain untouched %j", ignored => {
@@ -376,8 +435,7 @@ describe("recorder", () => {
   })
 
   test.each(["Control", "Alt", "Shift", "Meta", "OS", "AltGraph", "Fn", "FnLock"])("%s alone keeps waiting", name => {
-    expect(recorder(recording(), { kind: "keydown", facts: facts({ key: name, code: name }) }, recordContext()).state)
-      .toMatchObject({ kind: "recording", refusal: null })
+    expect(recorder(recording(), { kind: "keydown", facts: facts({ key: name, code: name }) }, recordContext()).state).toMatchObject({ kind: "recording", refusal: null })
   })
 
   test("unsupported physical codes cannot create persisted keys", () => {
@@ -423,8 +481,7 @@ describe("recorder", () => {
   })
 
   test("clear commits null without removing a playlist shortcut", () => {
-    expect(recorder(recording(), { kind: "clear" }, recordContext())).toEqual({ state: { kind: "idle", key: null }, consume: false,
-      outcome: { kind: "commit", key: null, clear: [] } })
+    expect(recorder(recording(), { kind: "clear" }, recordContext())).toEqual({ state: { kind: "idle", key: null }, consume: false, outcome: { kind: "commit", key: null, clear: [] } })
   })
 })
 
@@ -462,18 +519,19 @@ describe("browser policy and display", () => {
   test("recorder rejects the browser's reserved keys without changing the old key", () => {
     for (const platform of [chrome, firefox, { browser: "chrome", os: "macos" }, { browser: "firefox", os: "macos" }] satisfies Platform[]) {
       const event = facts({ key: "t", code: "KeyT", altKey: false, ctrlKey: platform.os !== "macos", metaKey: platform.os === "macos" })
-      expect(recorder(recording(), { kind: "keydown", facts: event }, recordContext(defaultSettings(), platform)).state)
-        .toMatchObject({ kind: "recording", key: key("p"), refusal: "reserved" })
+      expect(recorder(recording(), { kind: "keydown", facts: event }, recordContext(defaultSettings(), platform)).state).toMatchObject({ kind: "recording", key: key("p"), refusal: "reserved" })
     }
   })
 
   test("warnings name site, browser and caller-supplied any-tab command clashes without refusing the key", () => {
     expect(shortcutWarnings(key("k", {}), { sites: ["www", "music"], platform: chrome, commands: [] })).toEqual([
-      { kind: "site", site: "www", action: "Play/pause" }, { kind: "site", site: "music", action: "Previous song" }
+      { kind: "site", site: "www", action: "Play/pause" },
+      { kind: "site", site: "music", action: "Previous song" }
     ])
     expect(shortcutWarnings(key("q", {}), { sites: ["music"], platform: firefox, commands: [] })).toEqual([{ kind: "site", site: "music", action: "Toggle queue" }])
     expect(shortcutWarnings(key("d"), { sites: ["www"], platform: chrome, commands: [{ key: key("d"), command: "Save current video" }] })).toEqual([
-      { kind: "browser", action: "go to the address bar" }, { kind: "command", command: "Save current video" }
+      { kind: "browser", action: "go to the address bar" },
+      { kind: "command", command: "Save current video" }
     ])
     expect(recorder(recording(), { kind: "keydown", facts: facts({ key: "d", code: "KeyD" }) }, recordContext()).outcome.kind).toBe("commit")
     for (const char of ["n", "q", "p", "l", "r", "w", "u"]) expect(shortcutWarnings(key(char), { sites: ["www", "music"], platform: chrome, commands: [] })).toEqual([])

@@ -1,9 +1,17 @@
-import type { ConfirmedRetainedAgreementV2, RetainedInstallationV3, RetainedInstallationHistory, InterimInstallationReview, InterimInstallationResult, InterimInstallationStatus, InterimInstallationEffect } from "./interim-installation"
+import type {
+  ConfirmedRetainedAgreementV2,
+  RetainedInstallationV3,
+  RetainedInstallationHistory,
+  InterimInstallationReview,
+  InterimInstallationResult,
+  InterimInstallationStatus,
+  InterimInstallationEffect
+} from "./interim-installation"
 import { deriveInterimInstallationEffect, retainedInstallationDifference } from "./interim-installation"
 import { retainedCheckpointDifference, type RetainedAgreementV2, type InterimPersistenceSnapshot } from "./interim-persistence"
 import { createStartingLocalFilterWriter, createLocalFilterWriter } from "./local-filter-writer"
 import type { Snapshot } from "../../shared/model/settings-view"
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 export type InstallationProofs = [
   Check<Equal<RetainedInstallationV3["v"], 3>>,
@@ -14,7 +22,14 @@ export type InstallationProofs = [
   Check<Equal<Extract<InterimInstallationStatus, { kind: "installed" }>["recovery"], "retained">>,
   Check<Equal<"device" extends keyof InterimInstallationEffect ? true : false, false>>
 ]
-function negative(owner: ReturnType<typeof createStartingLocalFilterWriter>, checkpoint: Snapshot<RetainedInstallationV3>, current: InterimPersistenceSnapshot, v2: RetainedAgreementV2, review: InterimInstallationReview, history: RetainedInstallationHistory) {
+function negative(
+  owner: ReturnType<typeof createStartingLocalFilterWriter>,
+  checkpoint: Snapshot<RetainedInstallationV3>,
+  current: InterimPersistenceSnapshot,
+  v2: RetainedAgreementV2,
+  review: InterimInstallationReview,
+  history: RetainedInstallationHistory
+) {
   // @ts-expect-error v3 comparison requires observed history.
   retainedCheckpointDifference({ ...v2, v: checkpoint.v }, current)
   // @ts-expect-error Pure installation comparison cannot waive history.
@@ -37,13 +52,19 @@ function negative(owner: ReturnType<typeof createStartingLocalFilterWriter>, che
 }
 void negative
 
-
 import { recoveredRetainedInstallationDifference, type AcceptedRetainedInstallationV3, type InstalledRetainedInstallationV3 } from "./interim-installation"
 function recoveredPositive(accepted: Snapshot<AcceptedRetainedInstallationV3>, current: InterimPersistenceSnapshot, history: RetainedInstallationHistory, effect: InterimInstallationEffect) {
   void recoveredRetainedInstallationDifference({ accepted, current, history, effect, agreement: { v: 1, at: 300 }, expected: { checkpoint: "accepted", progress: "accepted" } })
   void recoveredRetainedInstallationDifference({ accepted, current, history, effect, agreement: { v: 1, at: 301 }, expected: { checkpoint: "installed", progress: "terminal" } })
 }
-function recoveredNegative(accepted: Snapshot<AcceptedRetainedInstallationV3>, installed: Snapshot<InstalledRetainedInstallationV3>, v2: Snapshot<ConfirmedRetainedAgreementV2>, current: InterimPersistenceSnapshot, history: RetainedInstallationHistory, effect: InterimInstallationEffect) {
+function recoveredNegative(
+  accepted: Snapshot<AcceptedRetainedInstallationV3>,
+  installed: Snapshot<InstalledRetainedInstallationV3>,
+  v2: Snapshot<ConfirmedRetainedAgreementV2>,
+  current: InterimPersistenceSnapshot,
+  history: RetainedInstallationHistory,
+  effect: InterimInstallationEffect
+) {
   const input = { accepted, current, history, effect, agreement: { v: 1 as const, at: 300 }, expected: { checkpoint: "accepted" as const, progress: "accepted" as const } }
   // @ts-expect-error Confirmed V2 is not an accepted installation.
   const wrongVersion: Parameters<typeof recoveredRetainedInstallationDifference>[0]["accepted"]["v"] = v2.v

@@ -12,11 +12,12 @@ const text = createPickerText(englishI18n())
 const alpha = playlist("PLalpha")
 for (const mode of ["save", "choose", "many"] satisfies Mode[]) {
   const fixture = mode === "save" ? itemSource() : chooserSource()
-  const picker = mode === "save"
-    ? new PickerModel({ source: itemSourceForSave(), site: "www", mode })
-    : mode === "many"
-      ? new PickerModel({ source: chooserForMany(), site: "www", mode })
-      : new PickerModel({ source: fixture.source, site: "www", mode })
+  const picker =
+    mode === "save"
+      ? new PickerModel({ source: itemSourceForSave(), site: "www", mode })
+      : mode === "many"
+        ? new PickerModel({ source: chooserForMany(), site: "www", mode })
+        : new PickerModel({ source: fixture.source, site: "www", mode })
   function itemSourceForSave() {
     if (fixture.source.item === null) throw new Error("Synthetic save requires an item")
     return { ...fixture.source, item: fixture.source.item }
@@ -28,12 +29,14 @@ for (const mode of ["save", "choose", "many"] satisfies Mode[]) {
   const events: PickerEvent[] = []
   const view = render(PickerPanel, { picker, text, purpose: { kind: "save" }, platform: "linux", onoutcome: (event: PickerEvent) => events.push(event), onrequestclose: () => {} })
   fixture.ledger.answer("cachedList", { rows: [{ id: alpha, title: "Synthetic Alpha" }], at: NOW })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   const search = view.getByRole("searchbox")
   await fireEvent.keyDown(search, { key: "Enter" })
   if (mode === "save") fixture.ledger.answer("add", { kind: "failed" })
   else fixture.ledger.answer("choose", { refused: "sync-full" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   process.stdout.write(JSON.stringify({ synthetic: true, mode, searchFocused: document.activeElement === search, checked: view.getByRole("checkbox").getAttribute("aria-checked"), events }) + "\n")
   picker.close()
   cleanup()

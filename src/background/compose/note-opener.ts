@@ -16,7 +16,7 @@ export async function openUpgradeNote(ports: NoteOpenerPorts, browserStart: bool
   const device = await ports.device()
   const note = record(device) ? device.upgradeNote : undefined
   if (!record(note) || note.state !== "pending") return "none"
-  if (note.opened !== true) return await ports.open() && await ports.mark("opened") === "set" ? "opened" : "none"
+  if (note.opened !== true) return (await ports.open()) && (await ports.mark("opened")) === "set" ? "opened" : "none"
   if (!browserStart || note.seen === true || note.reopened === true) return "none"
-  return await ports.open() && await ports.mark("reopened") === "set" ? "reopened" : "none"
+  return (await ports.open()) && (await ports.mark("reopened")) === "set" ? "reopened" : "none"
 }

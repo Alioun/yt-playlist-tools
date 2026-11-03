@@ -13,9 +13,10 @@ export function isMusicAdFailure(value: unknown): value is MusicAdFailure {
   return objectShape(value, {
     ok: v => v === false,
     reason: v => v === "unavailable",
-    detail: v => objectShape(v, {
-      kind: kind => kind === "music-ad",
-      evidence: evidence => evidence === "adShowing" || evidence === "adActive" || evidence === "presentingPlayerType"
-    })
+    detail: v =>
+      objectShape(v, {
+        kind: kind => kind === "music-ad",
+        evidence: evidence => evidence === "adShowing" || evidence === "adActive" || evidence === "presentingPlayerType"
+      })
   })
 }

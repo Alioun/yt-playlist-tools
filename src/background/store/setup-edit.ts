@@ -1,6 +1,22 @@
 import {
-  DecodeError, decodeDocument, decodeFilter, decodeSetup, defaultFilter, documentKey, isAccountKey, isPlaylistId, isShortcutId, parseDocumentKey,
-  type AccountKey, type DocumentKey, type Filter, type PlaylistId, type Settings, type Setup, type SetupContext, type ShortcutId
+  DecodeError,
+  decodeDocument,
+  decodeFilter,
+  decodeSetup,
+  defaultFilter,
+  documentKey,
+  isAccountKey,
+  isPlaylistId,
+  isShortcutId,
+  parseDocumentKey,
+  type AccountKey,
+  type DocumentKey,
+  type Filter,
+  type PlaylistId,
+  type Settings,
+  type Setup,
+  type SetupContext,
+  type ShortcutId
 } from "../../shared/model"
 import { readSettingsView, type Snapshot } from "../../shared/model/settings-view"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
@@ -8,13 +24,9 @@ import { changeAccountChoice, type AccountChoice } from "./accounts"
 import { normalizeSetupForWrite } from "../../shared/model/normalize"
 import { sameSyncJson } from "./sync-write-admission"
 
-export type SetupDestination =
-  | { readonly kind: "quick-save" | "music-save" | "gather" }
-  | { readonly kind: "shortcut"; readonly shortcut: ShortcutId }
+export type SetupDestination = { readonly kind: "quick-save" | "music-save" | "gather" } | { readonly kind: "shortcut"; readonly shortcut: ShortcutId }
 
-export type SetupDestinationExpectation =
-  | { readonly setup: "none" }
-  | { readonly setup: "live"; readonly playlist: PlaylistId | null }
+export type SetupDestinationExpectation = { readonly setup: "none" } | { readonly setup: "live"; readonly playlist: PlaylistId | null }
 
 export type SetupDestinationChange = {
   readonly acct: AccountKey
@@ -23,13 +35,9 @@ export type SetupDestinationChange = {
   readonly playlist: PlaylistId | null
 }
 
-export type AccountSetupView =
-  | { readonly kind: "none"; readonly acct: AccountKey }
-  | { readonly kind: "live"; readonly acct: AccountKey; readonly setup: Snapshot<Setup> }
+export type AccountSetupView = { readonly kind: "none"; readonly acct: AccountKey } | { readonly kind: "live"; readonly acct: AccountKey; readonly setup: Snapshot<Setup> }
 
-export type AccountSetupRead =
-  | { readonly kind: "value"; readonly view: AccountSetupView }
-  | { readonly kind: "newer-version" | "invalid" }
+export type AccountSetupRead = { readonly kind: "value"; readonly view: AccountSetupView } | { readonly kind: "newer-version" | "invalid" }
 
 export type SetupEvent = { readonly kind: "setup-changed"; readonly source: "local" | "sync"; readonly acct: AccountKey }
 
@@ -37,14 +45,13 @@ export type SetupDestinationPlan =
   | { readonly kind: "unchanged" | "invalid" | "update-needed" | "remove" }
   | { readonly kind: "stale"; readonly reason: "setup" | "destination" | "shortcut" }
   | {
-    readonly kind: "save"
-    readonly key: Extract<DocumentKey, { kind: "setup" }>
-    readonly setup: Setup
-    readonly context: Readonly<Required<SetupContext>>
-  }
+      readonly kind: "save"
+      readonly key: Extract<DocumentKey, { kind: "setup" }>
+      readonly setup: Setup
+      readonly context: Readonly<Required<SetupContext>>
+    }
 
-const fields = { "quick-save": "quickSave", "music-save": "musicSave", gather: "gather" } as const satisfies
-  Record<Exclude<SetupDestination["kind"], "shortcut">, keyof Setup>
+const fields = { "quick-save": "quickSave", "music-save": "musicSave", gather: "gather" } as const satisfies Record<Exclude<SetupDestination["kind"], "shortcut">, keyof Setup>
 
 function plain(raw: unknown, keys: readonly string[]): raw is Record<string, unknown> {
   if (raw === null || typeof raw !== "object" || Array.isArray(raw) || !isJsonValue(raw)) return false
@@ -75,7 +82,10 @@ function parseExpectation(raw: unknown): SetupDestinationExpectation | undefined
 
 export function parseSetupDestinationChange(raw: unknown): SetupDestinationChange | undefined {
   if (!plain(raw, ["acct", "destination", "expected", "playlist"])) return
-  const acct = raw.acct, destination = parseDestination(raw.destination), expected = parseExpectation(raw.expected), playlist = parseChoice(raw.playlist)
+  const acct = raw.acct,
+    destination = parseDestination(raw.destination),
+    expected = parseExpectation(raw.expected),
+    playlist = parseChoice(raw.playlist)
   if (!isAccountKey(acct) || !destination || !expected || playlist === undefined) return
   return Object.freeze({ acct, destination, expected, playlist })
 }
@@ -87,9 +97,7 @@ function detach(value: JsonValue): JsonValue {
 }
 
 function destinationOf(setup: Snapshot<Setup>, destination: SetupDestination): PlaylistId | null {
-  const value = destination.kind === "shortcut"
-    ? Object.hasOwn(setup.targets, destination.shortcut) ? setup.targets[destination.shortcut] : null
-    : setup[fields[destination.kind]]
+  const value = destination.kind === "shortcut" ? (Object.hasOwn(setup.targets, destination.shortcut) ? setup.targets[destination.shortcut] : null) : setup[fields[destination.kind]]
   return isPlaylistId(value) ? value : null
 }
 
@@ -119,7 +127,8 @@ function readSetupDocument(records: Readonly<Record<string, unknown>>, acct: Acc
 }
 
 export function readAccountSetup(records: Readonly<Record<string, unknown>>, acct: AccountKey): AccountSetupRead {
-  const settings = readSettings(records), document = readSetupDocument(records, acct)
+  const settings = readSettings(records),
+    document = readSetupDocument(records, acct)
   if (settings === "invalid" || document.kind === "invalid") return { kind: "invalid" }
   if (document.kind === "newer-version") return { kind: "newer-version" }
   if (document.kind === "none") return { kind: "value", view: Object.freeze({ kind: "none", acct }) }
@@ -148,18 +157,16 @@ function accountFilters(records: JsonObject, acct: AccountKey): Record<string, F
 
 function watchLaterChosen(settings: Snapshot<Settings>, targets: Readonly<Record<string, string>>): ReadonlySet<PlaylistId> {
   const playlist = "WL"
-  return isPlaylistId(playlist) && settings.shortcuts.list.some(row => row.watchLaterOnEveryAccount && !Object.hasOwn(targets, row.id))
-    ? new Set([playlist]) : new Set<PlaylistId>()
+  return isPlaylistId(playlist) && settings.shortcuts.list.some(row => row.watchLaterOnEveryAccount && !Object.hasOwn(targets, row.id)) ? new Set([playlist]) : new Set<PlaylistId>()
 }
 
 export function planSetupDestination(input: { readonly records: JsonObject; readonly change: SetupDestinationChange }): SetupDestinationPlan {
   const { records, change } = input
-  const settings = readSettings(records), document = readSetupDocument(records, change.acct)
+  const settings = readSettings(records),
+    document = readSetupDocument(records, change.acct)
   if (settings === "invalid" || document.kind === "invalid") return { kind: "invalid" }
   if (document.kind === "newer-version") return { kind: "update-needed" }
-  const shortcutIds = new Set(settings === "newer-version"
-    ? document.kind === "live" ? Object.keys(document.setup.targets) : []
-    : settings.shortcuts.list.map(row => row.id))
+  const shortcutIds = new Set(settings === "newer-version" ? (document.kind === "live" ? Object.keys(document.setup.targets) : []) : settings.shortcuts.list.map(row => row.id))
   if (change.destination.kind === "shortcut") {
     if (settings !== "newer-version" && !shortcutIds.has(change.destination.shortcut)) return { kind: "stale", reason: "shortcut" }
     shortcutIds.add(change.destination.shortcut)
@@ -176,27 +183,33 @@ export function planSetupDestination(input: { readonly records: JsonObject; read
     else targets[change.destination.shortcut] = change.playlist
   }
   // Unknown shared choices cannot justify pruning account references or marks.
-  const additionalChosenPlaylists = settings === "newer-version"
-    ? new Set(document.kind === "live" ? Object.keys(document.setup.marks).filter(isPlaylistId) : [])
-    : watchLaterChosen(settings, targets)
+  const additionalChosenPlaylists = settings === "newer-version" ? new Set(document.kind === "live" ? Object.keys(document.setup.marks).filter(isPlaylistId) : []) : watchLaterChosen(settings, targets)
   const context = { shortcutIds, additionalChosenPlaylists }
-  const choice: AccountChoice = change.destination.kind === "shortcut"
-    ? { kind: "shortcut-target", shortcut: change.destination.shortcut, playlist: change.playlist }
-    : { kind: "save-target", field: fields[change.destination.kind], playlist: change.playlist }
+  const choice: AccountChoice =
+    change.destination.kind === "shortcut"
+      ? { kind: "shortcut-target", shortcut: change.destination.shortcut, playlist: change.playlist }
+      : { kind: "save-target", field: fields[change.destination.kind], playlist: change.playlist }
   const result = changeAccountChoice({
-    acct: change.acct, context, choice,
+    acct: change.acct,
+    context,
+    choice,
     current: document.kind === "live" ? { kind: "present", bodies: { setup: document.setup, filters } } : { kind: "absent" }
   })
   switch (result.kind) {
-    case "unchanged": return { kind: "unchanged" }
-    case "invalid": return { kind: "invalid" }
-    case "remove": return { kind: "remove" }
-    case "save": return { kind: "save", key: { kind: "setup", acct: change.acct }, setup: result.bodies.setup, context }
+    case "unchanged":
+      return { kind: "unchanged" }
+    case "invalid":
+      return { kind: "invalid" }
+    case "remove":
+      return { kind: "remove" }
+    case "save":
+      return { kind: "save", key: { kind: "setup", acct: change.acct }, setup: result.bodies.setup, context }
   }
 }
 
 export function planSetupAccountChoice(records: JsonObject, acct: AccountKey, choice: Extract<AccountChoice, { kind: "auto-add" | "takes" | "percentage" }>): SetupDestinationPlan {
-  const settings = readSettings(records), document = readSetupDocument(records, acct)
+  const settings = readSettings(records),
+    document = readSetupDocument(records, acct)
   if (settings === "invalid" || document.kind === "invalid") return { kind: "invalid" }
   if (document.kind === "newer-version") return { kind: "update-needed" }
   const filters = accountFilters(records, acct)
@@ -204,16 +217,18 @@ export function planSetupAccountChoice(records: JsonObject, acct: AccountKey, ch
   const setup = document.kind === "live" ? document.setup : undefined
   const context = {
     shortcutIds: new Set(settings === "newer-version" ? Object.keys(setup?.targets ?? {}) : settings.shortcuts.list.map(row => row.id)),
-    additionalChosenPlaylists: settings === "newer-version"
-      ? new Set(Object.keys(setup?.marks ?? {}).filter(isPlaylistId)) : watchLaterChosen(settings, setup?.targets ?? {})
+    additionalChosenPlaylists: settings === "newer-version" ? new Set(Object.keys(setup?.marks ?? {}).filter(isPlaylistId)) : watchLaterChosen(settings, setup?.targets ?? {})
   }
-  const result = changeAccountChoice({ acct, context, choice, current: setup
-    ? { kind: "present", bodies: { setup, filters } } : { kind: "absent" } })
+  const result = changeAccountChoice({ acct, context, choice, current: setup ? { kind: "present", bodies: { setup, filters } } : { kind: "absent" } })
   switch (result.kind) {
-    case "unchanged": return { kind: "unchanged" }
-    case "invalid": return { kind: "invalid" }
-    case "remove": return { kind: "remove" }
-    case "save": return { kind: "save", key: { kind: "setup", acct }, setup: result.bodies.setup, context }
+    case "unchanged":
+      return { kind: "unchanged" }
+    case "invalid":
+      return { kind: "invalid" }
+    case "remove":
+      return { kind: "remove" }
+    case "save":
+      return { kind: "save", key: { kind: "setup", acct }, setup: result.bodies.setup, context }
   }
 }
 
@@ -232,7 +247,8 @@ export function parseSetupMarkRequest(raw: unknown): SetupMarkRequest | undefine
 }
 /** Marks go only on playlists the setup chooses; a playlist it no longer chooses has its mark dropped (DATA-15). */
 export function planSetupMarks(records: JsonObject, acct: AccountKey, changes: readonly SetupMark[]): SetupDestinationPlan {
-  const settings = readSettings(records), document = readSetupDocument(records, acct)
+  const settings = readSettings(records),
+    document = readSetupDocument(records, acct)
   if (settings === "invalid" || document.kind === "invalid") return { kind: "invalid" }
   if (document.kind === "newer-version") return { kind: "update-needed" }
   if (document.kind !== "live") return { kind: "unchanged" }
@@ -246,6 +262,7 @@ export function planSetupMarks(records: JsonObject, acct: AccountKey, changes: r
     if (change.mark === "clear") delete marks[change.playlist]
     else marks[change.playlist] = change.mark
   }
-  const before = normalizeSetupForWrite(setup, context).marks, after = normalizeSetupForWrite({ ...setup, marks }, context).marks
+  const before = normalizeSetupForWrite(setup, context).marks,
+    after = normalizeSetupForWrite({ ...setup, marks }, context).marks
   return sameSyncJson(before, after) ? { kind: "unchanged" } : { kind: "save", key: { kind: "setup", acct }, setup: { ...setup, marks: after }, context }
 }

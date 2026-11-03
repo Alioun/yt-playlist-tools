@@ -3,7 +3,9 @@ import { isChangePayload, isChangeAnswer } from "./first-run"
 import { confirmsAutoAdd, isAutoAddChoiceChange, isAutoAddChoiceAnswer, isAutoAddLifetime } from "./auto-add-choice"
 import { isAccountKey, isPlaylistId } from "../model/validation"
 
-const acct = "AAAAAAAAAAAAAAAA", one = "PL_one", two = "PL_two"
+const acct = "AAAAAAAAAAAAAAAA",
+  one = "PL_one",
+  two = "PL_two"
 if (!isAccountKey(acct) || !isPlaylistId(one) || !isPlaylistId(two)) throw Error("fixture identities")
 
 const lifetime = "00000000-0000-4000-8000-000000000001"
@@ -18,15 +20,29 @@ test("auto-add DTOs accept separate field edits and bounded nullable percentages
 })
 test("auto-add boundary rejects unexpected fields and raw invalid identities without invoking accessors", () => {
   for (const invalid of [
-    { ...change, acct: "invalid" }, { ...change, playlist: "!" }, { ...change, lifetime: "copied" },
-    { ...change, origin: { kind: "ui", incognito: false } }, { ...change, account: { name: "Forged" } },
-    { ...change, autoAdd: [] }, { ...change, setup: {} }, { ...change, edit: { ...change.edit, takes: "both" } },
+    { ...change, acct: "invalid" },
+    { ...change, playlist: "!" },
+    { ...change, lifetime: "copied" },
+    { ...change, origin: { kind: "ui", incognito: false } },
+    { ...change, account: { name: "Forged" } },
+    { ...change, autoAdd: [] },
+    { ...change, setup: {} },
+    { ...change, edit: { ...change.edit, takes: "both" } },
     { ...change, edit: { kind: "takes", expected: "videos", takes: "all" } },
     { ...change, edit: { kind: "percentage", expected: -1, pct: 20 } },
     { ...change, edit: { kind: "auto-add", expected: false, chosen: 1 } }
-  ]) expect(isAutoAddChoiceChange(invalid)).toBe(false)
+  ])
+    expect(isAutoAddChoiceChange(invalid)).toBe(false)
   let called = 0
-  expect(isAutoAddChoiceChange({ ...change, get origin() { called++; return {} } })).toBe(false)
+  expect(
+    isAutoAddChoiceChange({
+      ...change,
+      get origin() {
+        called++
+        return {}
+      }
+    })
+  ).toBe(false)
   expect(called).toBe(0)
 })
 test("auto-add answers carry only detached facts with explicit operation and account correlation", () => {

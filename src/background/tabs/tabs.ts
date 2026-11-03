@@ -3,8 +3,20 @@ import { sameTabAccount, type TabHello, type TabPing, type TabViewScope } from "
 import { sessionAccountCurrent, type SessionRead, type SessionRevision, type SessionWrite } from "../store/session-memory"
 import { replaceTab, TAB_LIMIT, type TabRecord } from "./records"
 import type {
-  AccountInView, NativeTab, RegistryResult, Requester, RoutingNeed, SeenResult, TabContext,
-  TabGuard, TabJobOutcome, Tabs, TabsPorts, TabViewProducer, ViewTarget, PublicationResult
+  AccountInView,
+  NativeTab,
+  RegistryResult,
+  Requester,
+  RoutingNeed,
+  SeenResult,
+  TabContext,
+  TabGuard,
+  TabJobOutcome,
+  Tabs,
+  TabsPorts,
+  TabViewProducer,
+  ViewTarget,
+  PublicationResult
 } from "./ports"
 
 export const CANDIDATE_MS = 2_000
@@ -13,19 +25,25 @@ const MAX_CANDIDATES = 3
 type Snapshot = Extract<SessionRead, { kind: "memory" }>
 type RegistryFailure = Exclude<SessionWrite, { kind: "committed" }>
 type Bounded<T> = { kind: "value"; value: T } | { kind: "timeout" | "disposed" | "failed" }
-type Probe = { kind: "ready"; context: TabContext; expiresAt: number } | { kind: "miss" } | TabGuard |
-  { kind: "session"; result: SessionWrite }
+type Probe = { kind: "ready"; context: TabContext; expiresAt: number } | { kind: "miss" } | TabGuard | { kind: "session"; result: SessionWrite }
 
 class LiveTab {
   private readonly lifetime = Symbol("known tab")
-  constructor(readonly tabId: number, readonly acct: TabRecord["acct"], readonly privateTab: boolean) {}
+  constructor(
+    readonly tabId: number,
+    readonly acct: TabRecord["acct"],
+    readonly privateTab: boolean
+  ) {}
 }
 export type KnownTab = LiveTab
 export function matchesViewTarget(tab: KnownTab, target: ViewTarget): boolean {
   switch (target.kind) {
-    case "all": return true
-    case "tab": return tab.tabId === target.tabId
-    case "account": return tab.acct === target.acct && (target.scope === "all" || tab.privateTab === (target.scope === "private"))
+    case "all":
+      return true
+    case "tab":
+      return tab.tabId === target.tabId
+    case "account":
+      return tab.acct === target.acct && (target.scope === "all" || tab.privateTab === (target.scope === "private"))
   }
 }
 
@@ -38,8 +56,14 @@ export function createTabs(ports: TabsPorts): Tabs {
   const live = new Map<number, { handle: KnownTab; row: TabRecord; windowId: number | null; build: TabPing["build"] | null }>()
   function trackLive(tabId: number, row: TabRecord, privateTab: boolean, native?: NativeTab, info?: TabPing) {
     const previous = live.get(tabId)
-    if (previous && previous.handle.privateTab === privateTab && previous.row.site === row.site && sameTabAccount(previous.row, row) &&
-      (!native || previous.windowId === null || previous.windowId === native.windowId) && (!info || previous.build === null || previous.build === info.build)) {
+    if (
+      previous &&
+      previous.handle.privateTab === privateTab &&
+      previous.row.site === row.site &&
+      sameTabAccount(previous.row, row) &&
+      (!native || previous.windowId === null || previous.windowId === native.windowId) &&
+      (!info || previous.build === null || previous.build === info.build)
+    ) {
       previous.row = row
       if (native) previous.windowId = native.windowId
       if (info) previous.build = info.build
@@ -47,7 +71,11 @@ export function createTabs(ports: TabsPorts): Tabs {
     }
     live.delete(tabId)
     live.set(tabId, { handle: new LiveTab(tabId, row.acct, privateTab), row, windowId: native?.windowId ?? null, build: info?.build ?? null })
-    while (live.size > TAB_LIMIT * 2) { const first = live.keys().next(); if (first.done) break; live.delete(first.value) }
+    while (live.size > TAB_LIMIT * 2) {
+      const first = live.keys().next()
+      if (first.done) break
+      live.delete(first.value)
+    }
   }
 
   function guard(): TabGuard | undefined {
@@ -58,7 +86,8 @@ export function createTabs(ports: TabsPorts): Tabs {
     if (disposed || signal?.aborted) return Promise.resolve({ kind: "disposed" })
     if (!ports.enabled() || milliseconds <= 0) return Promise.resolve({ kind: "timeout" })
     return new Promise(resolve => {
-      let open = true, cancel = () => {}
+      let open = true,
+        cancel = () => {}
       const controller = new AbortController()
       const finish = (value: Bounded<T>) => {
         if (!open) return
@@ -73,9 +102,18 @@ export function createTabs(ports: TabsPorts): Tabs {
       pending.add(stop)
       signal?.addEventListener("abort", stop, { once: true })
       cancel = ports.clock.after(milliseconds, () => finish({ kind: "timeout" }))
-      if (!open) { cancel(); return }
-      try { work(controller.signal).then(value => finish({ kind: "value", value }), () => finish({ kind: "failed" })) }
-      catch { finish({ kind: "failed" }) }
+      if (!open) {
+        cancel()
+        return
+      }
+      try {
+        work(controller.signal).then(
+          value => finish({ kind: "value", value }),
+          () => finish({ kind: "failed" })
+        )
+      } catch {
+        finish({ kind: "failed" })
+      }
     })
   }
   async function snapshot(signal?: AbortSignal): Promise<SessionRead> {
@@ -90,7 +128,11 @@ export function createTabs(ports: TabsPorts): Tabs {
       }
       if (adopted && adopted.revision.reset !== read.revision.reset) {
         live.clear()
-        for (const listener of [...lifetimeListeners]) { try { listener() } catch {} }
+        for (const listener of [...lifetimeListeners]) {
+          try {
+            listener()
+          } catch {}
+        }
       }
       for (const [tabId, row] of read.memory.tabs) {
         if (!live.get(tabId)?.handle.privateTab) trackLive(tabId, row, false)
@@ -104,10 +146,12 @@ export function createTabs(ports: TabsPorts): Tabs {
   }
   function infoRecord(info: TabPing, previous: TabRecord | undefined, hello?: TabHello): TabRecord {
     const same = previous && previous.site === info.site && sameTabAccount(previous, info) ? previous : undefined
-    const extra = hello ? { hidden: hello.hidden, fresh: hello.fresh, at: ports.clock.wallNow() }
-      : same ? { ...(same.hidden === undefined ? {} : { hidden: same.hidden }),
-        ...(same.fresh === undefined ? {} : { fresh: same.fresh }), ...(same.at === undefined ? {} : { at: same.at }) } : {}
-    const seenAt = !hello && same ? same.seenAt ?? same.at ?? ports.clock.wallNow() : ports.clock.wallNow()
+    const extra = hello
+      ? { hidden: hello.hidden, fresh: hello.fresh, at: ports.clock.wallNow() }
+      : same
+        ? { ...(same.hidden === undefined ? {} : { hidden: same.hidden }), ...(same.fresh === undefined ? {} : { fresh: same.fresh }), ...(same.at === undefined ? {} : { at: same.at }) }
+        : {}
+    const seenAt = !hello && same ? (same.seenAt ?? same.at ?? ports.clock.wallNow()) : ports.clock.wallNow()
     const account: AccountData = info.signedIn ? { signedIn: true, acct: info.acct } : { signedIn: false, acct: null }
     return { site: info.site, ...extra, seenAt, ...account }
   }
@@ -130,7 +174,12 @@ export function createTabs(ports: TabsPorts): Tabs {
   async function forget(tabId: number, incognito: boolean, captured: Snapshot): Promise<RegistryFailure | undefined> {
     if (disposed) return
     live.delete(tabId)
-    if (incognito) { const next = new Map(privateRows); next.delete(tabId); privateRows = next; return }
+    if (incognito) {
+      const next = new Map(privateRows)
+      next.delete(tabId)
+      privateRows = next
+      return
+    }
     const expected = captured.memory.tabs.get(tabId)
     if (expected) {
       const result = await ports.session.change({ revision: captured.revision, now: ports.clock.wallNow(), edits: [{ kind: "tab-forget", tabId, expected }] })
@@ -144,7 +193,10 @@ export function createTabs(ports: TabsPorts): Tabs {
       const stopped = () => signal.aborted || guard() !== undefined || remaining() <= 0
       const current = await ports.native.get(tabId)
       if (stopped()) return { kind: "miss" }
-      if (current.kind === "gone") { const failed = await forget(tabId, need.req.incognito, captured); return failed ? { kind: "session", result: failed } : { kind: "miss" } }
+      if (current.kind === "gone") {
+        const failed = await forget(tabId, need.req.incognito, captured)
+        return failed ? { kind: "session", result: failed } : { kind: "miss" }
+      }
       if (current.kind !== "tab") return { kind: "miss" }
       if (current.tab.incognito !== need.req.incognito) return { kind: "guard", reason: "privacy" }
       if (current.tab.site !== need.site) return { kind: "guard", reason: "site" }
@@ -160,11 +212,17 @@ export function createTabs(ports: TabsPorts): Tabs {
         ping = await ports.native.ping(tabId, remaining(), signal)
       }
       if (stopped()) return { kind: "miss" }
-      if (ping.kind === "gone") { const failed = await forget(tabId, need.req.incognito, captured); return failed ? { kind: "session", result: failed } : { kind: "miss" } }
+      if (ping.kind === "gone") {
+        const failed = await forget(tabId, need.req.incognito, captured)
+        return failed ? { kind: "session", result: failed } : { kind: "miss" }
+      }
       if (ping.kind !== "answered" || ping.result.site !== need.site) return { kind: "miss" }
       const latest = await ports.native.get(tabId)
       if (stopped()) return { kind: "miss" }
-      if (latest.kind === "gone") { const failed = await forget(tabId, need.req.incognito, captured); return failed ? { kind: "session", result: failed } : { kind: "miss" } }
+      if (latest.kind === "gone") {
+        const failed = await forget(tabId, need.req.incognito, captured)
+        return failed ? { kind: "session", result: failed } : { kind: "miss" }
+      }
       if (latest.kind !== "tab" || !eligible(latest.tab, need) || latest.tab.windowId !== current.tab.windowId) return { kind: "miss" }
       const registry = await remember(latest.tab, ping.result, captured)
       if (stopped()) return { kind: "miss" }
@@ -190,14 +248,20 @@ export function createTabs(ports: TabsPorts): Tabs {
     const prepared = await bounded(remaining(), async (signal): Promise<{ kind: "ready" } | TabJobOutcome<J>> => {
       const current = await ports.native.get(context.tab.tabId)
       if (signal.aborted || guard()) return guard() ?? { kind: "guard", reason: "disposed" }
-      if (current.kind === "gone") { const failed = await forget(context.tab.tabId, need.req.incognito, captured); return failed ? { kind: "session", result: failed } : { kind: "no-tab", attempted: [context.tab.tabId] } }
+      if (current.kind === "gone") {
+        const failed = await forget(context.tab.tabId, need.req.incognito, captured)
+        return failed ? { kind: "session", result: failed } : { kind: "no-tab", attempted: [context.tab.tabId] }
+      }
       if (current.kind !== "tab") return { kind: "transport", tabId: context.tab.tabId, failure: "transport", delivery: "unknown" }
       if (current.tab.incognito !== need.req.incognito) return { kind: "guard", reason: "privacy" }
       if (!eligible(current.tab, need) || current.tab.windowId !== context.tab.windowId) return { kind: "guard", reason: "site" }
       // The endpoint must guard the invocation's account again after this ping.
       const ping = await ports.native.ping(context.tab.tabId, remaining(), signal)
       if (signal.aborted || guard()) return guard() ?? { kind: "guard", reason: "disposed" }
-      if (ping.kind === "gone") { const failed = await forget(context.tab.tabId, need.req.incognito, captured); return failed ? { kind: "session", result: failed } : { kind: "no-tab", attempted: [context.tab.tabId] } }
+      if (ping.kind === "gone") {
+        const failed = await forget(context.tab.tabId, need.req.incognito, captured)
+        return failed ? { kind: "session", result: failed } : { kind: "no-tab", attempted: [context.tab.tabId] }
+      }
       if (ping.kind !== "answered") return { kind: "transport", tabId: context.tab.tabId, failure: ping.failure, delivery: "unknown" }
       if (ping.result.site !== need.site) return { kind: "guard", reason: "site" }
       const changed = accountGuard(ping.result, need)
@@ -233,14 +297,20 @@ export function createTabs(ports: TabsPorts): Tabs {
       if (registry.kind !== "committed" && registry.kind !== "remembered") return { kind: "session", result: registry }
       const projected = await producer.produce({ tab: { ...native.tab, site: hello.site }, info: hello })
       if (signal.aborted || guard()) return guard() ?? { kind: "unavailable" }
-      if (projected.kind !== "view" || !producer.isView(projected.view) || projected.view.private !== native.tab.incognito ||
-        projected.view.build !== hello.build || !sameTabAccount(projected.view, hello)) return { kind: "guard", reason: "view" }
+      if (
+        projected.kind !== "view" ||
+        !producer.isView(projected.view) ||
+        projected.view.private !== native.tab.incognito ||
+        projected.view.build !== hello.build ||
+        !sameTabAccount(projected.view, hello)
+      )
+        return { kind: "guard", reason: "view" }
       const current = await ports.native.get(tabId)
       if (signal.aborted || guard()) return guard() ?? { kind: "unavailable" }
       if (current.kind !== "tab" || current.tab.site !== hello.site || current.tab.incognito !== native.tab.incognito || current.tab.windowId !== native.tab.windowId) return { kind: "unavailable" }
       return { kind: "seen", registry, view: projected.view }
     })
-    return result.kind === "value" ? result.value : guard() ?? { kind: "unavailable" }
+    return result.kind === "value" ? result.value : (guard() ?? { kind: "unavailable" })
   }
   async function accountInView(req: Requester): Promise<AccountInView> {
     const stopped = guard()
@@ -257,15 +327,20 @@ export function createTabs(ports: TabsPorts): Tabs {
     for (const tab of candidates) {
       if (tab.site === null) continue
       const found = await probe(tab.tabId, { site: tab.site, req }, captured, { used: false }, false)
-      if (found.kind === "ready") return { kind: "account", source: tab === active ? "active" : "recent", tabId: tab.tabId,
-        ...(found.context.info.signedIn ? { signedIn: true, acct: found.context.info.acct } : { signedIn: false, acct: null }) }
+      if (found.kind === "ready")
+        return {
+          kind: "account",
+          source: tab === active ? "active" : "recent",
+          tabId: tab.tabId,
+          ...(found.context.info.signedIn ? { signedIn: true, acct: found.context.info.acct } : { signedIn: false, acct: null })
+        }
       if (found.kind === "session") return { kind: "unavailable", reason: "session" }
       if (guard()) return { kind: "unavailable", reason: disposed ? "disposed" : "held" }
     }
     if (req.incognito) return { kind: "none" }
     const fallback = await bounded(CANDIDATE_MS, async () => {
       const acct = await ports.accounts.lastAccount()
-      return acct !== null && await ports.accounts.hasSetup(acct) ? acct : null
+      return acct !== null && (await ports.accounts.hasSetup(acct)) ? acct : null
     })
     if (guard()) return { kind: "unavailable", reason: disposed ? "disposed" : "held" }
     return fallback.kind === "value" && fallback.value !== null ? { kind: "account", source: "last-account", acct: fallback.value } : { kind: "none" }
@@ -278,14 +353,17 @@ export function createTabs(ports: TabsPorts): Tabs {
     const queried = await bounded(CANDIDATE_MS, () => ports.native.query(need.site))
     if (queried.kind !== "value" || queried.value.kind !== "tabs") return guard() ?? { kind: "no-tab", attempted: [] }
     const rows = need.req.incognito ? privateRows : captured.memory.tabs
-    const candidates = queried.value.tabs.filter(tab => eligible(tab, need)).filter(tab => {
-      const row = rows.get(tab.tabId)
-      return need.account.kind === "any" || row === undefined || row.site !== need.site || row.acct === need.account.acct
-    })
-    const rank = (tab: NativeTab) => tab.tabId === need.req.activeTabId && tab.windowId === need.req.windowId ? 0
-      : rows.get(tab.tabId)?.acct === (need.account.kind === "account" ? need.account.acct : undefined) ? 1 : 2
+    const candidates = queried.value.tabs
+      .filter(tab => eligible(tab, need))
+      .filter(tab => {
+        const row = rows.get(tab.tabId)
+        return need.account.kind === "any" || row === undefined || row.site !== need.site || row.acct === need.account.acct
+      })
+    const rank = (tab: NativeTab) =>
+      tab.tabId === need.req.activeTabId && tab.windowId === need.req.windowId ? 0 : rows.get(tab.tabId)?.acct === (need.account.kind === "account" ? need.account.acct : undefined) ? 1 : 2
     candidates.sort((a, b) => rank(a) - rank(b) || b.lastAccessed - a.lastAccessed || a.tabId - b.tabId)
-    const attempted: number[] = [], injection = { used: false }
+    const attempted: number[] = [],
+      injection = { used: false }
     for (const tab of candidates.slice(0, MAX_CANDIDATES)) {
       if (guard()) return guard() ?? { kind: "no-tab", attempted }
       attempted.push(tab.tabId)
@@ -297,7 +375,7 @@ export function createTabs(ports: TabsPorts): Tabs {
       }
       if (found.kind === "ready" && !accountGuard(found.context.info, need)) {
         const dispatched = await dispatch(found.context, found.expiresAt, invocation, need, captured)
-        if (dispatched.kind === "no-tab" || dispatched.kind === "guard" && ["accountChanged", "signedOut", "site", "privacy"].includes(dispatched.reason)) continue
+        if (dispatched.kind === "no-tab" || (dispatched.kind === "guard" && ["accountChanged", "signedOut", "site", "privacy"].includes(dispatched.reason))) continue
         return dispatched
       }
     }
@@ -309,8 +387,11 @@ export function createTabs(ports: TabsPorts): Tabs {
     const captured = await snapshot()
     if (captured.kind !== "memory") return { kind: "session", result: captured }
     const found = await probe(tabId, need, captured, { used: false }, true)
-    return found.kind === "ready" ? dispatch(found.context, found.expiresAt, invocation, need, captured)
-      : found.kind === "session" || found.kind === "guard" ? found : { kind: "no-tab", attempted: [tabId] }
+    return found.kind === "ready"
+      ? dispatch(found.context, found.expiresAt, invocation, need, captured)
+      : found.kind === "session" || found.kind === "guard"
+        ? found
+        : { kind: "no-tab", attempted: [tabId] }
   }
   async function push<View extends TabViewScope>(req: Requester, producer: TabViewProducer<View>) {
     const stopped = guard()
@@ -318,7 +399,8 @@ export function createTabs(ports: TabsPorts): Tabs {
     const captured = await snapshot()
     if (captured.kind !== "memory") return { kind: "session" as const, result: captured }
     const rows = req.incognito ? privateRows : captured.memory.tabs
-    let sent = 0, failed = 0
+    let sent = 0,
+      failed = 0
     for (const [tabId, row] of [...rows].slice(0, TAB_LIMIT)) {
       const stopped = guard()
       if (stopped) return stopped
@@ -329,16 +411,28 @@ export function createTabs(ports: TabsPorts): Tabs {
           if (guard()) return guard() ?? { sent, failed }
           if (cleanup.kind === "value" && cleanup.value) return { kind: "session" as const, result: cleanup.value }
         }
-        failed++; continue
+        failed++
+        continue
       }
       const found = await probe(tabId, { site: row.site, req }, captured, { used: true }, false)
       if (found.kind === "session") return found
-      if (found.kind !== "ready") { failed++; continue }
+      if (found.kind !== "ready") {
+        failed++
+        continue
+      }
       const context = found.context
       const answer = await bounded(CANDIDATE_MS, async (signal): Promise<boolean | { kind: "session"; result: SessionWrite }> => {
         const projected = await producer.produce(context)
-        if (signal.aborted || guard() || projected.kind !== "view" || !producer.isView(projected.view) ||
-          projected.view.private !== req.incognito || projected.view.build !== context.info.build || !sameTabAccount(projected.view, context.info)) return false
+        if (
+          signal.aborted ||
+          guard() ||
+          projected.kind !== "view" ||
+          !producer.isView(projected.view) ||
+          projected.view.private !== req.incognito ||
+          projected.view.build !== context.info.build ||
+          !sameTabAccount(projected.view, context.info)
+        )
+          return false
         const ping = await ports.native.ping(tabId, CANDIDATE_MS, signal)
         if (signal.aborted || guard() || ping.kind !== "answered" || ping.result.site !== row.site || !sameTabAccount(ping.result, context.info)) return false
         const latest = await ports.native.get(tabId)
@@ -367,50 +461,87 @@ export function createTabs(ports: TabsPorts): Tabs {
     const record = live.get(handle.tabId)
     const valid = () => !signal.aborted && !guard() && live.get(handle.tabId) === record && record?.handle === handle
     if (!record || !valid()) return { kind: "skipped" }
-    const answer = await bounded(CANDIDATE_MS, async (cancellation): Promise<PublicationResult> => {
-      const stopped = () => cancellation.aborted || !valid()
-      const captured = await snapshot(cancellation)
-      if (stopped() || captured.kind !== "memory") return { kind: "skipped" }
-      const native = await ports.native.get(handle.tabId)
-      if (stopped() || native.kind !== "tab") {
-        if (native.kind === "gone") live.delete(handle.tabId)
-        return { kind: "skipped" }
-      }
-      const eligibleCore = (tab: NativeTab) => tab.site === record.row.site && tab.incognito === handle.privateTab && !tab.discarded && !tab.frozen &&
-        (record.windowId === null || record.windowId === tab.windowId)
-      if (!eligibleCore(native.tab) || native.tab.site === null) return { kind: "skipped" }
-      const ping = await ports.native.ping(handle.tabId, CANDIDATE_MS, cancellation)
-      if (stopped() || ping.kind !== "answered" || ping.result.site !== native.tab.site || !sameTabAccount(ping.result, record.row) ||
-        record.build !== null && record.build !== ping.result.build) return { kind: "skipped" }
-      const context: TabContext = { tab: { ...native.tab, site: native.tab.site }, info: ping.result }
-      const projected = await producer.produce(context)
-      if (stopped() || projected.kind !== "view" || !producer.isView(projected.view) || projected.view.build !== context.info.build ||
-        projected.view.private !== handle.privateTab || !sameTabAccount(projected.view, context.info)) return { kind: "skipped" }
-      const latestPing = await ports.native.ping(handle.tabId, CANDIDATE_MS, cancellation)
-      if (stopped() || latestPing.kind !== "answered" || latestPing.result.site !== context.info.site || latestPing.result.build !== context.info.build ||
-        !sameTabAccount(latestPing.result, context.info)) return { kind: "skipped" }
-      const revision = await snapshot(cancellation)
-      if (stopped() || revision.kind !== "memory" || !sessionAccountCurrent(captured.revision, revision.revision, context.info.acct)) return { kind: "skipped" }
-      const latest = await ports.native.get(handle.tabId)
-      if (stopped() || latest.kind !== "tab" || !eligibleCore(latest.tab) || latest.tab.windowId !== native.tab.windowId || !beforeSend() || stopped()) return { kind: "skipped" }
-      const reply = await ports.native.view(handle.tabId, projected.view, producer.isView, CANDIDATE_MS, cancellation)
-      if (reply.kind === "gone" && valid()) live.delete(handle.tabId)
-      return { kind: !stopped() && reply.kind === "answered" ? "sent" : "skipped" }
-    }, signal)
+    const answer = await bounded(
+      CANDIDATE_MS,
+      async (cancellation): Promise<PublicationResult> => {
+        const stopped = () => cancellation.aborted || !valid()
+        const captured = await snapshot(cancellation)
+        if (stopped() || captured.kind !== "memory") return { kind: "skipped" }
+        const native = await ports.native.get(handle.tabId)
+        if (stopped() || native.kind !== "tab") {
+          if (native.kind === "gone") live.delete(handle.tabId)
+          return { kind: "skipped" }
+        }
+        const eligibleCore = (tab: NativeTab) =>
+          tab.site === record.row.site && tab.incognito === handle.privateTab && !tab.discarded && !tab.frozen && (record.windowId === null || record.windowId === tab.windowId)
+        if (!eligibleCore(native.tab) || native.tab.site === null) return { kind: "skipped" }
+        const ping = await ports.native.ping(handle.tabId, CANDIDATE_MS, cancellation)
+        if (stopped() || ping.kind !== "answered" || ping.result.site !== native.tab.site || !sameTabAccount(ping.result, record.row) || (record.build !== null && record.build !== ping.result.build))
+          return { kind: "skipped" }
+        const context: TabContext = { tab: { ...native.tab, site: native.tab.site }, info: ping.result }
+        const projected = await producer.produce(context)
+        if (
+          stopped() ||
+          projected.kind !== "view" ||
+          !producer.isView(projected.view) ||
+          projected.view.build !== context.info.build ||
+          projected.view.private !== handle.privateTab ||
+          !sameTabAccount(projected.view, context.info)
+        )
+          return { kind: "skipped" }
+        const latestPing = await ports.native.ping(handle.tabId, CANDIDATE_MS, cancellation)
+        if (
+          stopped() ||
+          latestPing.kind !== "answered" ||
+          latestPing.result.site !== context.info.site ||
+          latestPing.result.build !== context.info.build ||
+          !sameTabAccount(latestPing.result, context.info)
+        )
+          return { kind: "skipped" }
+        const revision = await snapshot(cancellation)
+        if (stopped() || revision.kind !== "memory" || !sessionAccountCurrent(captured.revision, revision.revision, context.info.acct)) return { kind: "skipped" }
+        const latest = await ports.native.get(handle.tabId)
+        if (stopped() || latest.kind !== "tab" || !eligibleCore(latest.tab) || latest.tab.windowId !== native.tab.windowId || !beforeSend() || stopped()) return { kind: "skipped" }
+        const reply = await ports.native.view(handle.tabId, projected.view, producer.isView, CANDIDATE_MS, cancellation)
+        if (reply.kind === "gone" && valid()) live.delete(handle.tabId)
+        return { kind: !stopped() && reply.kind === "answered" ? "sent" : "skipped" }
+      },
+      signal
+    )
     return answer.kind === "value" ? answer.value : { kind: "skipped" }
   }
   function dispose() {
     if (disposed) return
     disposed = true
-    for (const listener of [...lifetimeListeners]) { try { listener() } catch {} }
-    lifetimeListeners.clear(); live.clear()
+    for (const listener of [...lifetimeListeners]) {
+      try {
+        listener()
+      } catch {}
+    }
+    lifetimeListeners.clear()
+    live.clear()
     for (const stop of [...pending]) stop()
     privateRows = new Map()
     ports.native.dispose()
   }
-  return { seen, accountInView, serve, runIn, push, known, publish, subscribeLifetime(listener) {
-    if (disposed) { listener(); return () => {} }
-    lifetimeListeners.add(listener)
-    return () => { lifetimeListeners.delete(listener) }
-  }, dispose }
+  return {
+    seen,
+    accountInView,
+    serve,
+    runIn,
+    push,
+    known,
+    publish,
+    subscribeLifetime(listener) {
+      if (disposed) {
+        listener()
+        return () => {}
+      }
+      lifetimeListeners.add(listener)
+      return () => {
+        lifetimeListeners.delete(listener)
+      }
+    },
+    dispose
+  }
 }

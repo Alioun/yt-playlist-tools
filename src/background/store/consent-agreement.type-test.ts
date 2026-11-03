@@ -4,7 +4,7 @@ import type { Snapshot } from "../../shared/model/settings-view"
 import type { AgreementRead, AgreementReview, AgreementChoice, AgreementInput, AgreementResult, AgreementApplication, PageFeatureId, UiOrigin } from "./consent-agreement"
 import type { createLocalFilterWriter, createStartingLocalFilterWriter } from "./local-filter-writer"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 export type AgreementProofs = [
   Check<Equal<PageFeatureId, Exclude<FeatureId, "sync">>>,
@@ -37,7 +37,10 @@ function negative(owner: ReturnType<typeof createStartingLocalFilterWriter>, ori
     // @ts-expect-error An uncertain result does not publish consent.
     void result.consent
   }
-  void join; void sync; void retained; void application
+  void join
+  void sync
+  void retained
+  void application
 }
 void negative
 
@@ -49,6 +52,8 @@ function joined(review: SyncJoinReview) {
   const answer: AgreementChoice = { kind: "upgrade-note", selected: [], syncOn: true, percentage: "keep", join: { kind: "answer", review, choice: "use-synced" } }
   // @ts-expect-error An answer requires a side selected by the user.
   const missing: AgreementJoin = { kind: "answer", review }
-  void prepare; void answer; void missing
+  void prepare
+  void answer
+  void missing
 }
 void joined

@@ -100,8 +100,6 @@ if (command === "status" && version) {
   writeFileSync(xpi, Buffer.from(await response.arrayBuffer()))
   console.log(`Downloaded ${xpi}`)
 } else {
-  console.error(
-    "usage: amo-version.ts status <version> | attach-source <version> <zip> | download <version> <dir> [timeout minutes]"
-  )
+  console.error("usage: amo-version.ts status <version> | attach-source <version> <zip> | download <version> <dir> [timeout minutes]")
   process.exit(2)
 }

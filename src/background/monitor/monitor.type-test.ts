@@ -49,6 +49,11 @@ export const pollingClock: MonitorPorts = { ...ports, clock: { now: () => 0 } }
 // @ts-expect-error Status detail is immutable to consumers.
 status.actions.push("save")
 
-monitor.subscribeView(event => { const tabId: number = event.tabId; void tabId })
+monitor.subscribeView(event => {
+  const tabId: number = event.tabId
+  void tabId
+})
 // @ts-expect-error negative: monitor-view-not-generic. Projected changes identify the affected tab.
-monitor.subscribeView((event: { kind: "all" }) => { void event })
+monitor.subscribeView((event: { kind: "all" }) => {
+  void event
+})

@@ -4,7 +4,12 @@ import { deferred, enabled, focusVisibility, hitStack, keysFixture, move, otherK
 
 const first = owner()
 const second = owner()
-const pointer = new Pointer({ document, onError: error => { throw error } })
+const pointer = new Pointer({
+  document,
+  onError: error => {
+    throw error
+  }
+})
 const { keys, failures, open } = keysFixture()
 const card = document.createElement("article")
 const nested = document.createElement("section")
@@ -21,13 +26,17 @@ const hits = hitStack([preview, nested, card])
 const visibility = focusVisibility(keyboard)
 // happy-dom matches :focus-visible on the activeElement fallback, so an unfocused body would read as keyboard focus.
 const idle = focusVisibility(document.body, false)
-const write = (value: unknown) => { console.log(JSON.stringify(value)) }
+const write = (value: unknown) => {
+  console.log(JSON.stringify(value))
+}
 const stack = () => {
   const facts = pointer.read()
   return facts.kind === "pointer" ? facts.stack.map(element => element.id) : []
 }
 let later = 0
-const observe = () => { later++ }
+const observe = () => {
+  later++
+}
 
 try {
   write({ case: "idle", pointer: pointer.read(), consumed: press().defaultPrevented })
@@ -39,7 +48,11 @@ try {
   let calls = 0
   let inFlight: Promise<void> | undefined
   let invocationKind = "none"
-  const run = () => { invocationKind = pointer.read().kind; calls++; return inFlight }
+  const run = () => {
+    invocationKind = pointer.read().kind
+    calls++
+    return inFlight
+  }
   const firstBinding = keys.register(first, { target: { kind: "picker" }, run }, enabled)
   const secondBinding = keys.register(second, { target: { kind: "picker" }, run }, enabled)
   window.addEventListener("keydown", observe)
@@ -86,9 +99,20 @@ try {
   secondBinding.release()
 
   let undos = 0
-  const undo = registerCoreUndo(keys, second, { undoCurrent() { undos++ } }, {
-    undoKey, toastVisible: false, shortcutEnabled: false
-  })
+  const undo = registerCoreUndo(
+    keys,
+    second,
+    {
+      undoCurrent() {
+        undos++
+      }
+    },
+    {
+      undoKey,
+      toastVisible: false,
+      shortcutEnabled: false
+    }
+  )
   write({ case: "undo-inactive", consumed: press().defaultPrevented, undos })
   undo.update({ undoKey, toastVisible: false, shortcutEnabled: true })
   const emptyUndo = press()

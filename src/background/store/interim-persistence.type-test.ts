@@ -1,8 +1,17 @@
-import { executeInterimRetention, readRetainedInterim, projectInterimNote, type RetainedInterimRead, type InterimPersistenceSnapshot, type InterimRetentionResult, type InterimNoteRead, type StoreStartupHost } from "./interim-persistence"
+import {
+  executeInterimRetention,
+  readRetainedInterim,
+  projectInterimNote,
+  type RetainedInterimRead,
+  type InterimPersistenceSnapshot,
+  type InterimRetentionResult,
+  type InterimNoteRead,
+  type StoreStartupHost
+} from "./interim-persistence"
 import { createLocalFilterWriter, createStartingLocalFilterWriter, StartupReadinessError } from "./local-filter-writer"
 import type { StartupHost } from "./legacy-execution"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 export type InterimPersistenceProofs = [
   Check<Equal<typeof readRetainedInterim, (raw: unknown) => RetainedInterimRead>>,
@@ -34,7 +43,8 @@ function negative(deps: Parameters<typeof createLocalFilterWriter>[0], old: Star
     // @ts-expect-error Reads cannot allocate another conversion row.
     note.checkpoint.context.interimShortcutId = "other1"
   }
-  void incomplete; void completed
+  void incomplete
+  void completed
 }
 void negative
 
@@ -52,7 +62,8 @@ function successorNegative(successor: RetainedAgreementV2, original: RetainedInt
   const missing: RetainedAgreementV2 = { v: 2, kind: "retained-interim", retained: original, agreement: { kind: "confirmed" } }
   // @ts-expect-error No conversion installation is authorized by v2.
   successor.agreement = { kind: "installed", effect: successor.agreement.effect }
-  void wrong; void missing
+  void wrong
+  void missing
 }
 void successorNegative
 
@@ -90,7 +101,11 @@ export type RecoveryPersistenceProofs = [
 ]
 
 import { recoveredRetainedAgreementDifference } from "./interim-persistence"
-function recoveredComparisonPositive(checkpoint: import("../../shared/model/settings-view").Snapshot<RetainedAgreementV2>, current: InterimPersistenceSnapshot, agreement: RetainedAgreementEffect["consent"]) {
+function recoveredComparisonPositive(
+  checkpoint: import("../../shared/model/settings-view").Snapshot<RetainedAgreementV2>,
+  current: InterimPersistenceSnapshot,
+  agreement: RetainedAgreementEffect["consent"]
+) {
   void recoveredRetainedAgreementDifference(checkpoint, current, agreement, "terminal")
   // @ts-expect-error Comparison accepts only the selected accepted or terminal progression.
   recoveredRetainedAgreementDifference(checkpoint, current, agreement, "installed")

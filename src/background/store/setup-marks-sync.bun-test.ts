@@ -3,7 +3,9 @@ import { createBrowserStartingLocalFilterWriter } from "../adapters/starting-own
 import { agreedSeed, startingOwnerFixture } from "../../../tools/fixtures/starting-owner/support"
 import type { JsonObject } from "../../shared/contracts/json"
 
-const acct = "AAAAAAAAAAAAAAAA", playlist = "PL_alpha", setupName = `doc:setup:${acct}`
+const acct = "AAAAAAAAAAAAAAAA",
+  playlist = "PL_alpha",
+  setupName = `doc:setup:${acct}`
 const record = (value: unknown) => value as JsonObject
 
 test("a Full mark past the browsers' sync limit stays in this browser, and goes to the synced copy once room frees up (SYNC-16)", async () => {
@@ -33,5 +35,7 @@ test("a Full mark past the browsers' sync limit stays in this browser, and goes 
     const after = record(h.records().sync)
     expect(record(after.pushed)[setupName]).toBe(gen)
     expect(Object.hasOwn(after, "deferred"), "the acknowledged mark no longer waits").toBe(false)
-  } finally { await owner.dispose() }
+  } finally {
+    await owner.dispose()
+  }
 })

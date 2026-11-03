@@ -19,9 +19,7 @@
   },
   "overrides": [
     {
-      "files": [
-        "**/*type-test.ts"
-      ],
+      "files": ["**/*type-test.ts"],
       "rules": {
         "no-unused-vars": "off",
         "no-unused-expressions": "off",
@@ -30,28 +28,17 @@
       }
     },
     {
-      "files": [
-        "**/*.bun-test.ts",
-        "**/*.test.ts",
-        "tests/**",
-        "tools/fixtures/**"
-      ],
+      "files": ["**/*.bun-test.ts", "**/*.test.ts", "tests/**", "tools/fixtures/**"],
       "rules": {
         "typescript/await-thenable": "off"
       }
     },
     {
-      "files": [
-        "src/ui/onboarding/first-run.bun-test.ts"
-      ],
+      "files": ["src/ui/onboarding/first-run.bun-test.ts"],
       "rules": {
         "typescript/no-floating-promises": "warn"
       }
     }
   ],
-  "ignorePatterns": [
-    ".output/**",
-    "**/.wxt/**",
-    "**/.svelte-check/**"
-  ]
+  "ignorePatterns": [".output/**", "**/.wxt/**", "**/.svelte-check/**"]
 }

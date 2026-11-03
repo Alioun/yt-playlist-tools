@@ -24,7 +24,8 @@ test("complete canonical enumeration includes kept filters and an account withou
 })
 
 test("source and file contain only declared canonical fields", () => {
-  const records = seed(), read = selectSettingsFileSource(records)
+  const records = seed(),
+    read = selectSettingsFileSource(records)
   expect(JSON.stringify(read)).not.toContain("PRIVATE")
   expect(Object.keys(read)).toEqual(["kind", "source"])
   if (read.kind !== "source") throw Error("missing-source")
@@ -73,14 +74,28 @@ test("malformed canonical keys are refused rather than silently omitted", () => 
 })
 
 test("privacy is a separate boundary fact and refuses before input coercion or parsing", () => {
-  const text = { toString() { throw Error("text-was-touched") }, get privacy() { throw Error("payload-privacy-was-touched") } }
+  const text = {
+    toString() {
+      throw Error("text-was-touched")
+    },
+    get privacy() {
+      throw Error("payload-privacy-was-touched")
+    }
+  }
   expect(checkSettingsFile("private", text)).toEqual({ kind: "refused", reason: "private", copy: "DATA-54.private" })
   expect(checkSettingsFile("unavailable", text)).toEqual({ kind: "refused", reason: "privacy-unavailable", copy: "DATA-54.private" })
-  for (const value of [undefined, null, [], {}, { kind: "tab", windowId: 7, incognito: false },
-    { kind: "ui", windowId: -1, incognito: false }, { kind: "ui", windowId: 1.5, incognito: false },
-    { kind: "ui", windowId: 7, incognito: "false" }]) expect(settingsFileWindow(value)).toBe("unavailable")
+  for (const value of [
+    undefined,
+    null,
+    [],
+    {},
+    { kind: "tab", windowId: 7, incognito: false },
+    { kind: "ui", windowId: -1, incognito: false },
+    { kind: "ui", windowId: 1.5, incognito: false },
+    { kind: "ui", windowId: 7, incognito: "false" }
+  ])
+    expect(settingsFileWindow(value)).toBe("unavailable")
 })
-
 
 test("private and unavailable checking never call JSON parsing", () => {
   const exported = file()
@@ -92,5 +107,7 @@ test("private and unavailable checking never call JSON parsing", () => {
     expect(parse).not.toHaveBeenCalled()
     expect(checkSettingsFile("normal", exported.file.text).kind).toBe("import-plan")
     expect(parse).toHaveBeenCalled()
-  } finally { parse.mockRestore() }
+  } finally {
+    parse.mockRestore()
+  }
 })

@@ -55,36 +55,42 @@ export function createMemoryNetwork<Sender>(options: { readonly delivery: "immed
           reject(new Error("Memory send failed"))
         }
         const run = (lost: boolean) => {
-          const claims = listeners.filter(listener => listener.connection !== from).flatMap(listener => {
-            try {
-              const claim = listener.receive({ message: JSON.parse(text), sender: structuredClone(identity) })
-              return claim === undefined ? [] : [claim]
-            } catch {
-              return [Promise.reject(new Error("Memory receiver threw"))]
-            }
-          })
+          const claims = listeners
+            .filter(listener => listener.connection !== from)
+            .flatMap(listener => {
+              try {
+                const claim = listener.receive({ message: JSON.parse(text), sender: structuredClone(identity) })
+                return claim === undefined ? [] : [claim]
+              } catch {
+                return [Promise.reject(new Error("Memory receiver threw"))]
+              }
+            })
           if (claims.length === 0) return fail("no-receiver")
           if (lost) fail("lost")
           let answered = lost
           for (const claim of claims) {
-            claim.then(value => {
-              const answer = serialize(value)
-              if (answered || !answer.ok) {
-                log.push({ event: "dropped", to: from, text: answer.ok ? answer.text : null })
-                return
+            claim.then(
+              value => {
+                const answer = serialize(value)
+                if (answered || !answer.ok) {
+                  log.push({ event: "dropped", to: from, text: answer.ok ? answer.text : null })
+                  return
+                }
+                answered = true
+                log.push({ event: "answered", to: from, text: answer.text })
+                resolve(answer.text === null ? undefined : JSON.parse(answer.text))
+              },
+              () => {
+                if (answered) return
+                answered = true
+                fail("receiver-error")
               }
-              answered = true
-              log.push({ event: "answered", to: from, text: answer.text })
-              resolve(answer.text === null ? undefined : JSON.parse(answer.text))
-            }, () => {
-              if (answered) return
-              answered = true
-              fail("receiver-error")
-            })
+            )
           }
         }
         const item: QueuedSend = {
-          from, text,
+          from,
+          text,
           deliver: () => settle(() => run(false)),
           reject: () => settle(() => fail("scripted")),
           lose: () => settle(() => run(true))

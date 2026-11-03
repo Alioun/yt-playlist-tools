@@ -37,6 +37,11 @@ export async function correlation() {
   requests.has("page-read")
   // @ts-expect-error negative:plain-unvalidated-playlist-string
   gateway.run({ kind: "remove", playlistId: "PLunchecked", setVideoId: entry })
-  void mixed; void unknownEntry; void pending; void guessed; void invalid; void playlist
+  void mixed
+  void unknownEntry
+  void pending
+  void guessed
+  void invalid
+  void playlist
   gateway.dispose()
 }

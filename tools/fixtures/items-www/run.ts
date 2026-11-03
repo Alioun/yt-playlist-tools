@@ -4,7 +4,9 @@ import { rawNavigation } from "../../../src/page/gateway.specimens"
 import { flush, itemsFixture } from "./harness"
 import { card, firstVideo, secondVideo, shortVideo, playlist, unknownCard } from "./specimens"
 
-function check(value: unknown, message: string): asserts value { if (!value) throw Error(message) }
+function check(value: unknown, message: string): asserts value {
+  if (!value) throw Error(message)
+}
 function videoId(answer: WwwResolution): string {
   check(answer.kind === "pointed-item" || answer.kind === "current-video", "Expected a resolved video")
   return answer.video.videoId
@@ -16,7 +18,9 @@ export async function runItemsConsumer(dom: boolean): Promise<string> {
   try {
     records.push({ step: "inactive", kind: (await h.items.resolve()).kind })
     const release = h.items.track(h.owner())
-    const first = card(), modern = card("yt-lockup-view-model", secondVideo), short = card("ytm-shorts-lockup-view-model", shortVideo)
+    const first = card(),
+      modern = card("yt-lockup-view-model", secondVideo),
+      short = card("ytm-shorts-lockup-view-model", shortVideo)
     h.point(first.button)
     let answer = await h.items.resolve()
     records.push({ step: "legacy", kind: answer.kind, videoId: videoId(answer), target: h.reads.at(-1)?.target === first.element })
@@ -34,10 +38,12 @@ export async function runItemsConsumer(dom: boolean): Promise<string> {
     check(answer.kind === "unsupported-item", "Unsupported playlist fell back")
     records.push({ step: "playlist", kind: answer.kind, reason: answer.reason, reads: h.reads.length - before })
     const unknown = unknownCard()
-    h.point(unknown.button); before = h.reads.length
+    h.point(unknown.button)
+    before = h.reads.length
     answer = await h.items.resolve()
     records.push({ step: "unrecognised", kind: answer.kind, reports: h.failures.length, reads: h.reads.length - before })
-    h.point(first.button); h.stack.set([modern.button])
+    h.point(first.button)
+    h.stack.set([modern.button])
     answer = await h.items.resolve()
     records.push({ step: "stationary", kind: answer.kind, videoId: videoId(answer) })
     const preview = document.createElement("ytd-video-preview")
@@ -51,12 +57,14 @@ export async function runItemsConsumer(dom: boolean): Promise<string> {
     h.point(endTile.anchor)
     answer = await h.items.resolve()
     records.push({ step: "player", kind: answer.kind, videoId: videoId(answer) })
-    h.point(first.button); h.delayAnswers()
+    h.point(first.button)
+    h.delayAnswers()
     const pending = h.items.resolve()
     await flush()
     check(h.heldAnswers === 1, "Serialized answer was not delayed")
     first.anchor.href = `/watch?v=${secondVideo}`
-    h.releaseAnswers(); answer = await pending
+    h.releaseAnswers()
+    answer = await pending
     check(answer.kind === "stale-target", "Recycled card accepted old details")
     records.push({ step: "recycled", kind: answer.kind, reason: answer.reason })
     document.body.replaceChildren()
@@ -78,19 +86,26 @@ export async function runItemsConsumer(dom: boolean): Promise<string> {
     records.push({ step: "last-release", kind: (await h.items.resolve()).kind, timers: h.timers.count })
     h.items.track(h.owner())
     const again = card("yt-lockup-view-model", secondVideo)
-    h.point(again.button); answer = await h.items.resolve()
+    h.point(again.button)
+    answer = await h.items.resolve()
     records.push({ step: "reacquired", kind: answer.kind, videoId: videoId(answer) })
-    h.items.dispose(); h.link.dispose()
+    h.items.dispose()
+    h.link.dispose()
     records.push({ step: "disposed", owners: h.owners.reduce((count, owner) => count + owner.resourceCount, 0), timers: h.timers.count, linkDeadlines: h.clock.count })
     check(h.errors.length === 0, "Scope reported a cleanup error")
     return records.map(record => JSON.stringify(record)).join("\n") + "\n"
-  } finally { h.dispose() }
+  } finally {
+    h.dispose()
+  }
 }
 
 if (import.meta.main) {
   const adapter = process.argv[2]
   check(adapter === "direct" || adapter === "dom", "Expected direct or dom")
   GlobalRegistrator.register({ url: "https://www.youtube.com/" })
-  try { process.stdout.write(await runItemsConsumer(adapter === "dom")) }
-  finally { await GlobalRegistrator.unregister() }
+  try {
+    process.stdout.write(await runItemsConsumer(adapter === "dom"))
+  } finally {
+    await GlobalRegistrator.unregister()
+  }
 }

@@ -1,6 +1,21 @@
 import {
-  CONSENT_VERSION, STORAGE_SCHEMA_VERSION, DecodeError, decodeDevice, decodeDocument, decodeFilter, decodeLastAccount,
-  defaultFilter, isAccountKey, parseDocumentKey, type AccountKey, type Filter, type Key, type Settings, type Setup, type PlaylistId, type VideoId
+  CONSENT_VERSION,
+  STORAGE_SCHEMA_VERSION,
+  DecodeError,
+  decodeDevice,
+  decodeDocument,
+  decodeFilter,
+  decodeLastAccount,
+  defaultFilter,
+  isAccountKey,
+  parseDocumentKey,
+  type AccountKey,
+  type Filter,
+  type Key,
+  type Settings,
+  type Setup,
+  type PlaylistId,
+  type VideoId
 } from "../../shared/model"
 import { isJsonValue } from "../../shared/contracts/json"
 import type { Privacy } from "../../shared/contracts/vocabulary"
@@ -9,9 +24,7 @@ import { readSettingsView, type SettingsView, type Snapshot } from "../../shared
 import { readAccountSetup, type AccountSetupRead } from "./setup-edit"
 import type { SessionMemory, SessionUnavailableReason, Skip } from "./session-memory"
 
-export type ProjectionAccount =
-  | { readonly kind: "signed-in"; readonly acct: AccountKey }
-  | { readonly kind: "signed-out" | "unknown"; readonly acct?: never }
+export type ProjectionAccount = { readonly kind: "signed-in"; readonly acct: AccountKey } | { readonly kind: "signed-out" | "unknown"; readonly acct?: never }
 export type TabProjectionRequest = { readonly private: boolean; readonly account: ProjectionAccount }
 export type NormalWindowRouting = { readonly kind: "normal-window"; readonly windowId: number; readonly incognito: false }
 export type TabProjectionUnavailable = { readonly kind: "unavailable"; readonly reason: SessionUnavailableReason | "pending-removal" }
@@ -36,39 +49,41 @@ export type TabStorageProjection = {
   readonly account:
     | { readonly kind: "signed-out" | "unknown"; readonly acct?: never }
     | {
-      readonly kind: "signed-in"
-      readonly acct: AccountKey
-      readonly setup: AccountSetupRead
-      readonly filters: readonly ProjectedFilter[]
-      readonly skips: { readonly kind: "normal"; readonly entries: readonly ProjectedSkip[] } | { readonly kind: "private-required" }
-    }
+        readonly kind: "signed-in"
+        readonly acct: AccountKey
+        readonly setup: AccountSetupRead
+        readonly filters: readonly ProjectedFilter[]
+        readonly skips: { readonly kind: "normal"; readonly entries: readonly ProjectedSkip[] } | { readonly kind: "private-required" }
+      }
 }
 export type TabProjectionRead = { readonly kind: "projection"; readonly projection: TabStorageProjection } | TabProjectionUnavailable | TabProjectionInvalid
 export type LastAccountRead =
   | { readonly kind: "account"; readonly acct: AccountKey }
   | { readonly kind: "none" }
   | { readonly kind: "newer-version" | "invalid"; readonly part: "setup" }
-  | TabProjectionUnavailable | TabProjectionInvalid
+  | TabProjectionUnavailable
+  | TabProjectionInvalid
 
 export function isTabProjectionRequest(value: unknown): value is TabProjectionRequest {
-  const account = (v: unknown) => objectShape(v, { kind: x => x === "signed-in", acct: isAccountKey }) ||
-    objectShape(v, { kind: x => x === "signed-out" || x === "unknown" })
+  const account = (v: unknown) => objectShape(v, { kind: x => x === "signed-in", acct: isAccountKey }) || objectShape(v, { kind: x => x === "signed-out" || x === "unknown" })
   return objectShape(value, { private: v => typeof v === "boolean", account })
 }
 export function isNormalWindowRouting(value: unknown): value is NormalWindowRouting {
-  return objectShape(value, { kind: v => v === "normal-window", incognito: v => v === false,
-    windowId: v => typeof v === "number" && Number.isSafeInteger(v) && v >= 0 })
+  return objectShape(value, { kind: v => v === "normal-window", incognito: v => v === false, windowId: v => typeof v === "number" && Number.isSafeInteger(v) && v >= 0 })
 }
 
-export function readProjectionDevice(records: Readonly<Record<string, unknown>>):
+export function readProjectionDevice(
+  records: Readonly<Record<string, unknown>>
+):
   | { readonly kind: "ready"; readonly pickerSortAZ: boolean; readonly newPlaylistVisibility: Privacy | null; readonly recentAdds: boolean; readonly lastAccount: AccountKey | null }
-  | TabProjectionUnavailable | TabProjectionInvalid {
+  | TabProjectionUnavailable
+  | TabProjectionInvalid {
   const schema = records.schema
   if (typeof schema === "number" && Number.isSafeInteger(schema) && schema > STORAGE_SCHEMA_VERSION) return { kind: "unavailable", reason: "newer-layout" }
   if (schema !== STORAGE_SCHEMA_VERSION) return { kind: "unavailable", reason: "startup" }
   const raw = records.device
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw) || !isJsonValue(raw) ||
-    !["id", "consent", "syncOn"].every(key => Object.hasOwn(raw, key))) return { kind: "invalid", part: "device" }
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw) || !isJsonValue(raw) || !["id", "consent", "syncOn"].every(key => Object.hasOwn(raw, key)))
+    return { kind: "invalid", part: "device" }
   try {
     const device = decodeDevice(raw)
     if (device.consent?.v !== CONSENT_VERSION) return { kind: "unavailable", reason: "consent-held" }
@@ -81,32 +96,75 @@ export function readProjectionDevice(records: Readonly<Record<string, unknown>>)
 }
 
 function projectKey(key: Snapshot<Key> | null): Key | null {
-  return key === null ? null : { code: key.code, ctrl: key.ctrl, alt: key.alt, shift: key.shift, meta: key.meta,
-    ...(key.char === undefined ? {} : { char: key.char }) }
+  return key === null ? null : { code: key.code, ctrl: key.ctrl, alt: key.alt, shift: key.shift, meta: key.meta, ...(key.char === undefined ? {} : { char: key.char }) }
 }
 function projectSettings(raw: unknown): SettingsView {
   const read = readSettingsView(raw)
   if (read.kind !== "value") return read
-  const s = read.settings, buttons = s.musicActions.buttons, keys = s.musicKeys.keys
+  const s = read.settings,
+    buttons = s.musicActions.buttons,
+    keys = s.musicKeys.keys
   const settings: Settings = {
-    theme: s.theme, undoKey: projectKey(s.undoKey),
+    theme: s.theme,
+    undoKey: projectKey(s.undoKey),
     autoAdd: { on: s.autoAdd.on, feedback: s.autoAdd.feedback, pct: s.autoAdd.pct, toolbarTick: s.autoAdd.toolbarTick, toolbarPaused: s.autoAdd.toolbarPaused },
-    shortcuts: { on: s.shortcuts.on, feedback: s.shortcuts.feedback, music: s.shortcuts.music, preset: s.shortcuts.preset, picker: projectKey(s.shortcuts.picker),
-      list: s.shortcuts.list.map(row => ({ id: row.id, label: row.label, key: projectKey(row.key), watchLaterOnEveryAccount: row.watchLaterOnEveryAccount })) },
+    shortcuts: {
+      on: s.shortcuts.on,
+      feedback: s.shortcuts.feedback,
+      music: s.shortcuts.music,
+      preset: s.shortcuts.preset,
+      picker: projectKey(s.shortcuts.picker),
+      list: s.shortcuts.list.map(row => ({ id: row.id, label: row.label, key: projectKey(row.key), watchLaterOnEveryAccount: row.watchLaterOnEveryAccount }))
+    },
     quickSave: { on: s.quickSave.on, feedback: s.quickSave.feedback, shortsShelves: s.quickSave.shortsShelves },
     queueButton: { on: s.queueButton.on, feedback: s.queueButton.feedback },
     watchButton: { on: s.watchButton.on, feedback: s.watchButton.feedback, shorts: s.watchButton.shorts },
     cardMenu: { on: s.cardMenu.on, keepLinkMenu: s.cardMenu.keepLinkMenu },
-    browserMenu: { on: s.browserMenu.on, feedback: s.browserMenu.feedback }, musicSection: s.musicSection,
-    musicActions: { on: s.musicActions.on, feedback: s.musicActions.feedback, preset: s.musicActions.preset,
-      buttons: { next: buttons.next, queue: buttons.queue, save: buttons.save, like: buttons.like, remove: buttons.remove, bar: buttons.bar,
-        library: buttons.library, mix: buttons.mix, album: buttons.album, artist: buttons.artist } },
-    musicKeys: { on: s.musicKeys.on, feedback: s.musicKeys.feedback, preset: s.musicKeys.preset,
-      keys: { next: projectKey(keys.next), queue: projectKey(keys.queue), save: projectKey(keys.save), picker: projectKey(keys.picker),
-        like: projectKey(keys.like), remove: projectKey(keys.remove), library: projectKey(keys.library), mix: projectKey(keys.mix), album: projectKey(keys.album), artist: projectKey(keys.artist) } },
+    browserMenu: { on: s.browserMenu.on, feedback: s.browserMenu.feedback },
+    musicSection: s.musicSection,
+    musicActions: {
+      on: s.musicActions.on,
+      feedback: s.musicActions.feedback,
+      preset: s.musicActions.preset,
+      buttons: {
+        next: buttons.next,
+        queue: buttons.queue,
+        save: buttons.save,
+        like: buttons.like,
+        remove: buttons.remove,
+        bar: buttons.bar,
+        library: buttons.library,
+        mix: buttons.mix,
+        album: buttons.album,
+        artist: buttons.artist
+      }
+    },
+    musicKeys: {
+      on: s.musicKeys.on,
+      feedback: s.musicKeys.feedback,
+      preset: s.musicKeys.preset,
+      keys: {
+        next: projectKey(keys.next),
+        queue: projectKey(keys.queue),
+        save: projectKey(keys.save),
+        picker: projectKey(keys.picker),
+        like: projectKey(keys.like),
+        remove: projectKey(keys.remove),
+        library: projectKey(keys.library),
+        mix: projectKey(keys.mix),
+        album: projectKey(keys.album),
+        artist: projectKey(keys.artist)
+      }
+    },
     anyTabKeys: { on: s.anyTabKeys.on, feedback: s.anyTabKeys.feedback },
-    gather: { on: s.gather.on, feedback: s.gather.feedback, to: s.gather.to, order: s.gather.order, close: s.gather.close,
-      auto: { unvisited: s.gather.auto.unvisited, after: s.gather.auto.after, background: s.gather.auto.background, count: s.gather.auto.count, n: s.gather.auto.n } }
+    gather: {
+      on: s.gather.on,
+      feedback: s.gather.feedback,
+      to: s.gather.to,
+      order: s.gather.order,
+      close: s.gather.close,
+      auto: { unvisited: s.gather.auto.unvisited, after: s.gather.auto.after, background: s.gather.auto.background, count: s.gather.auto.count, n: s.gather.auto.n }
+    }
   }
   return { kind: "value", settings }
 }
@@ -117,12 +175,16 @@ function projectSetup(records: Readonly<Record<string, unknown>>, acct: AccountK
   const setup: Setup = {
     label: s.label === null ? null : { name: s.label.name, ...(s.label.handle === undefined ? {} : { handle: s.label.handle }), ...(s.label.avatar === undefined ? {} : { avatar: s.label.avatar }) },
     autoAdd: s.autoAdd.map(row => ({ pl: row.pl, takes: row.takes, ...(row.pct === undefined ? {} : { pct: row.pct }) })),
-    targets: { ...s.targets }, quickSave: s.quickSave, musicSave: s.musicSave, gather: s.gather, marks: { ...s.marks }
+    targets: { ...s.targets },
+    quickSave: s.quickSave,
+    musicSave: s.musicSave,
+    gather: s.gather,
+    marks: { ...s.marks }
   }
   return { kind: "value", view: { kind: "live", acct, setup } }
 }
 function projectFilter(filter: Filter): Filter {
-  return { mode: filter.mode, on: filter.on, channels: filter.channels.map(([id, title, handle]) => handle === undefined ? [id, title] : [id, title, handle]) }
+  return { mode: filter.mode, on: filter.on, channels: filter.channels.map(([id, title, handle]) => (handle === undefined ? [id, title] : [id, title, handle])) }
 }
 
 function accountFilters(records: Readonly<Record<string, unknown>>, acct: AccountKey): readonly ProjectedFilter[] {
@@ -136,9 +198,12 @@ function accountFilters(records: Readonly<Record<string, unknown>>, acct: Accoun
       if (!isJsonValue(raw)) state = { kind: "invalid" }
       else {
         const doc = decodeDocument(structuredClone(raw), decodeFilter)
-        state = doc.kind === "value" ? { kind: "value", filter: projectFilter(doc.document.data), gen: doc.document.gen }
-          : doc.kind === "newer-version" ? { kind: "newer-version", version: doc.version }
-          : { kind: "default", filter: defaultFilter() }
+        state =
+          doc.kind === "value"
+            ? { kind: "value", filter: projectFilter(doc.document.data), gen: doc.document.gen }
+            : doc.kind === "newer-version"
+              ? { kind: "newer-version", version: doc.version }
+              : { kind: "default", filter: defaultFilter() }
       }
     } catch (error) {
       if (!(error instanceof DecodeError)) throw error
@@ -151,21 +216,37 @@ function accountFilters(records: Readonly<Record<string, unknown>>, acct: Accoun
 
 // An absent filter row uses the model's default. An unreadable row never does.
 export function projectTabStorage(input: {
-  readonly records: Readonly<Record<string, unknown>>; readonly request: TabProjectionRequest
-  readonly memory: SessionMemory; readonly pickerSortAZ: boolean; readonly newPlaylistVisibility?: Privacy | null; readonly recentAdds: boolean
+  readonly records: Readonly<Record<string, unknown>>
+  readonly request: TabProjectionRequest
+  readonly memory: SessionMemory
+  readonly pickerSortAZ: boolean
+  readonly newPlaylistVisibility?: Privacy | null
+  readonly recentAdds: boolean
 }): TabStorageProjection {
   const { records, request, memory, pickerSortAZ, recentAdds } = input
-  const shared = { private: request.private, settings: projectSettings(records["doc:settings"]), pickerSortAZ,
-    newPlaylistVisibility: input.newPlaylistVisibility ?? null, recentAdds, paused: memory.paused }
+  const shared = {
+    private: request.private,
+    settings: projectSettings(records["doc:settings"]),
+    pickerSortAZ,
+    newPlaylistVisibility: input.newPlaylistVisibility ?? null,
+    recentAdds,
+    paused: memory.paused
+  }
   if (request.account.kind !== "signed-in") return { ...shared, account: { kind: request.account.kind } }
   const acct = request.account.acct
-  const entries: ProjectedSkip[] = [...(request.private ? [] : memory.skips.get(acct) ?? [])]
-    .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
+  const entries: ProjectedSkip[] = [...(request.private ? [] : (memory.skips.get(acct) ?? []))]
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([video, skip]): ProjectedSkip => [video, skip === "all" ? "all" : [...skip]])
-  return { ...shared, account: {
-    kind: "signed-in", acct, setup: projectSetup(records, acct), filters: accountFilters(records, acct),
-    skips: request.private ? { kind: "private-required" } : { kind: "normal", entries }
-  } }
+  return {
+    ...shared,
+    account: {
+      kind: "signed-in",
+      acct,
+      setup: projectSetup(records, acct),
+      filters: accountFilters(records, acct),
+      skips: request.private ? { kind: "private-required" } : { kind: "normal", entries }
+    }
+  }
 }
 
 export function projectLastAccount(records: Readonly<Record<string, unknown>>, acct: AccountKey | null): LastAccountRead {

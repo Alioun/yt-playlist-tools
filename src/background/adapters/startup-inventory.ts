@@ -6,17 +6,20 @@ import { isStartupValueKey, type SanitizedStartupInventory } from "./startup-sou
  * leaves this function. The interim build's history isn't observable here, so both historical facts are unknown.
  */
 export function nativeStartupInventory(local: { get(keys: null): Promise<Record<string, unknown>> }): { readInventory(): Promise<SanitizedStartupInventory> } {
-  return { async readInventory() {
-    const stored = await local.get(null)
-    const presentLocalKeys = Object.keys(stored)
-    const values: Record<string, unknown> = {}
-    for (const name of presentLocalKeys) if (isStartupValueKey(name)) values[name] = stored[name]
-    const refreshToken: unknown = stored.refreshToken
-    return {
-      presentLocalKeys, values,
-      legacyAuthorization: { kind: "observed", refreshTokenWasNonempty: typeof refreshToken === "string" && refreshToken.length > 0 },
-      historicalAuthorization: { kind: "unknown" },
-      priorCredentialPresence: { kind: "unknown" }
+  return {
+    async readInventory() {
+      const stored = await local.get(null)
+      const presentLocalKeys = Object.keys(stored)
+      const values: Record<string, unknown> = {}
+      for (const name of presentLocalKeys) if (isStartupValueKey(name)) values[name] = stored[name]
+      const refreshToken: unknown = stored.refreshToken
+      return {
+        presentLocalKeys,
+        values,
+        legacyAuthorization: { kind: "observed", refreshTokenWasNonempty: typeof refreshToken === "string" && refreshToken.length > 0 },
+        historicalAuthorization: { kind: "unknown" },
+        priorCredentialPresence: { kind: "unknown" }
+      }
     }
-  } }
+  }
 }

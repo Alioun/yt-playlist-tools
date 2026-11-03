@@ -42,8 +42,8 @@ type Owed = { readonly background: ReadonlySet<number>; readonly count: boolean;
 
 const anyTrigger = (settings: Readonly<Settings["gather"]>) => settings.on && (settings.auto.unvisited || settings.auto.background || settings.auto.count)
 const patterns = (access: GatherAccess) => [
-  ...access.www ? ["https://www.youtube.com/watch*", "https://www.youtube.com/live/*"] : [],
-  ...access.music && access.musicSection ? ["https://music.youtube.com/watch*"] : []
+  ...(access.www ? ["https://www.youtube.com/watch*", "https://www.youtube.com/live/*"] : []),
+  ...(access.music && access.musicSection ? ["https://music.youtube.com/watch*"] : [])
 ]
 
 /**
@@ -64,16 +64,22 @@ export function createGatherTriggers(ports: TriggerPorts): GatherTriggers {
   function setWaiting(next: boolean) {
     if (waiting === next || disposed) return
     waiting = next
-    try { ports.waiting(next) } catch {}
+    try {
+      ports.waiting(next)
+    } catch {}
   }
 
   function start(tab: GatherTab, row: { readonly hidden?: boolean; readonly fresh?: boolean; readonly at?: number } | undefined): GatherStart {
     if (row?.hidden === undefined || row.fresh === undefined || row.at === undefined) return { kind: "unobserved" }
-    return { kind: "observed", hidden: row.hidden, fresh: row.fresh,
+    return {
+      kind: "observed",
+      hidden: row.hidden,
+      fresh: row.fresh,
       // How the browser's restored tabs report themselves is PROVISIONAL (G6); the startup minute covers them meanwhile.
       restored: false,
       loadedInStartupMinute: startedAt !== null && row.at - startedAt < STARTUP_MS,
-      switchedToSincePageStart: tab.lastAccessed > row.at }
+      switchedToSincePageStart: tab.lastAccessed > row.at
+    }
   }
 
   async function gatherIn(windowId: number, due: Owed, settings: Readonly<Settings["gather"]>, tabs: readonly GatherTab[] | null): Promise<GatherResult | null> {
@@ -84,10 +90,12 @@ export function createGatherTriggers(ports: TriggerPorts): GatherTriggers {
     running.add(windowId)
     try {
       const access = await ports.access()
-      const listed = tabs ?? await (async () => {
-        const queried = await ports.native.queryVideos(windowId, patterns(access))
-        return queried.kind === "tabs" ? queried.tabs : null
-      })()
+      const listed =
+        tabs ??
+        (await (async () => {
+          const queried = await ports.native.queryVideos(windowId, patterns(access))
+          return queried.kind === "tabs" ? queried.tabs : null
+        })())
       const read = await ports.session.read()
       if (disposed || !listed || read.kind !== "memory") return null
       const memory = read.memory
@@ -97,8 +105,21 @@ export function createGatherTriggers(ports: TriggerPorts): GatherTriggers {
       for (const tab of window) if (tab.active && memory.gather.kept.has(tab.tabId)) await ports.gather.activated(tab.tabId, "normal")
       const autoTabs: GatherAutoTab[] = window.flatMap(tab => {
         const video = videoOf(tab.url, access)
-        return video ? [{ id: tab.tabId, index: tab.index, video, lastAccessed: tab.lastAccessed, active: tab.active, pinned: tab.pinned,
-          audible: tab.audible, incognito: tab.incognito, start: start(tab, memory.tabs.get(tab.tabId)) }] : []
+        return video
+          ? [
+              {
+                id: tab.tabId,
+                index: tab.index,
+                video,
+                lastAccessed: tab.lastAccessed,
+                active: tab.active,
+                pinned: tab.pinned,
+                audible: tab.audible,
+                incognito: tab.incognito,
+                start: start(tab, memory.tabs.get(tab.tabId))
+              }
+            ]
+          : []
       })
       const now = ports.clock.now()
       const checks: GatherChecks = { unvisited: due.unvisited ? "due" : "not-due", background: due.background, count: due.count ? "due" : "not-due" }
@@ -114,7 +135,10 @@ export function createGatherTriggers(ports: TriggerPorts): GatherTriggers {
       }
       const serving = await ports.serving(windowId, new Set(first.selected))
       if (disposed) return null
-      if (!serving) { setWaiting(true); return null }
+      if (!serving) {
+        setWaiting(true)
+        return null
+      }
       const picked = choose(serving.acct, memory.gather.refused.get(serving.acct) ?? new Set()).selected
       if (!picked.length) return null
       const result = await ports.gather.automatic({ windowId, tabIds: picked, serving })
@@ -137,7 +161,7 @@ export function createGatherTriggers(ports: TriggerPorts): GatherTriggers {
     const windows = new Map<number, GatherTab[]>()
     for (const tab of queried.tabs) {
       if (tab.incognito) continue
-      windows.set(tab.windowId, [...windows.get(tab.windowId) ?? [], tab])
+      windows.set(tab.windowId, [...(windows.get(tab.windowId) ?? []), tab])
     }
     for (const [windowId, tabs] of windows) {
       if (disposed) return
@@ -148,7 +172,11 @@ export function createGatherTriggers(ports: TriggerPorts): GatherTriggers {
   async function wake(): Promise<void> {
     const settings = await ports.settings()
     if (disposed || !settings) return
-    if (!anyTrigger(settings)) { owed.clear(); setWaiting(false); return }
+    if (!anyTrigger(settings)) {
+      owed.clear()
+      setWaiting(false)
+      return
+    }
     const now = ports.clock.now()
     if (settings.auto.unvisited && (lastCheck === null || now - lastCheck >= CHECK_EVERY_MS)) {
       lastCheck = now
@@ -180,7 +208,9 @@ export function createGatherTriggers(ports: TriggerPorts): GatherTriggers {
     if (tab.hidden && tab.fresh) burst.background.add(tab.tabId)
     burst.cancel()
     const current = burst
-    current.cancel = ports.clock.after(Math.max(0, Math.min(QUIET_MS, current.first + BURST_CAP_MS - now)), () => { void fire(tab.windowId, current).catch(() => {}) })
+    current.cancel = ports.clock.after(Math.max(0, Math.min(QUIET_MS, current.first + BURST_CAP_MS - now)), () => {
+      void fire(tab.windowId, current).catch(() => {})
+    })
   }
 
   let waking: Promise<void> | null = null
@@ -188,11 +218,16 @@ export function createGatherTriggers(ports: TriggerPorts): GatherTriggers {
     if (disposed) return
     if (reason === "startup") startedAt = ports.clock.now()
     if (waking) return
-    waking = wake().catch(() => {}).finally(() => { waking = null })
+    waking = wake()
+      .catch(() => {})
+      .finally(() => {
+        waking = null
+      })
   }
 
   return {
-    seen, woke,
+    seen,
+    woke,
     waiting: () => waiting,
     dispose() {
       if (disposed) return

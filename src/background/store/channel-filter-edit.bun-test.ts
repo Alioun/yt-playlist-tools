@@ -34,12 +34,18 @@ function fixtureSuite(change: typeof changeFilterSetting, decode: typeof decodeF
     }
     return value
   }
-  const A = "UCaaaaaaaaaaaaaaaaaaaaaa", B = "UCbbbbbbbbbbbbbbbbbbbbbb"
+  const A = "UCaaaaaaaaaaaaaaaaaaaaaa",
+    B = "UCbbbbbbbbbbbbbbbbbbbbbb"
   const states: FilterSettingInput["desired"][] = [
-    { mode: "deny", on: false }, { mode: "deny", on: true },
-    { mode: "allow", on: false }, { mode: "allow", on: true }
+    { mode: "deny", on: false },
+    { mode: "deny", on: true },
+    { mode: "allow", on: false },
+    { mode: "allow", on: true }
   ]
-  const rows = [[A, "A", "@a"], [B, "B", undefined, { future: "B" }]]
+  const rows = [
+    [A, "A", "@a"],
+    [B, "B", undefined, { future: "B" }]
+  ]
   const retained = [
     { mode: "deny", on: false, channels: rows, future: { keep: true } },
     { mode: "deny", on: true, channels: rows, future: { keep: true } },
@@ -71,7 +77,8 @@ function fixtureSuite(change: typeof changeFilterSetting, decode: typeof decodeF
     ["cleared", "cleared", "retained", "unchanged"]
   ]
   function runMatrix(operation: typeof change) {
-    let cases = 0, repeats = 0
+    let cases = 0,
+      repeats = 0
     function run(input: FilterSettingInput, expected: unknown, previous: unknown, label: string) {
       const result = operation(freeze(input))
       equal(result, expected, label)
@@ -89,10 +96,14 @@ function fixtureSuite(change: typeof changeFilterSetting, decode: typeof decodeF
           for (const populated of [false, true]) {
             const previous = populated ? retained[source] : cleared[source]
             const outcome = (clearListedChannels === "confirmed" ? confirmed : unconfirmed)[source]?.[target]
-            const expected = source === target ? { kind: "unchanged" }
-              : !populated ? { kind: "changed", filter: cleared[target] }
-              : outcome === "confirmation-required" ? { kind: "confirmation-required" }
-              : { kind: "changed", filter: outcome === "retained" ? retained[target] : cleared[target] }
+            const expected =
+              source === target
+                ? { kind: "unchanged" }
+                : !populated
+                  ? { kind: "changed", filter: cleared[target] }
+                  : outcome === "confirmation-required"
+                    ? { kind: "confirmation-required" }
+                    : { kind: "changed", filter: outcome === "retained" ? retained[target] : cleared[target] }
             run({ current: decode(previous), desired, clearListedChannels }, expected, previous, `${source} to ${target} populated=${populated} ${clearListedChannels}`)
           }
         }
@@ -102,55 +113,88 @@ function fixtureSuite(change: typeof changeFilterSetting, decode: typeof decodeF
     const handle = " @" + "𐐀".repeat(35) + " "
     const duplicates = [
       [B, title, undefined, { tail: [1, { keep: true }] }, "fifth"],
-      [A, "A", handle], [B, "second B", "@b", { last: true }],
-      [A, "Two columns"], [B, "Absent tail", undefined]
+      [A, "A", handle],
+      [B, "second B", "@b", { last: true }],
+      [A, "Two columns"],
+      [B, "Absent tail", undefined]
     ]
     for (const state of states) {
       const previous = { ...state, channels: duplicates, future: { keep: true } }
       for (const clearListedChannels of ["not-confirmed", "confirmed"] satisfies FilterSettingInput["clearListedChannels"][]) {
         run({ current: decode(previous), desired: state, clearListedChannels }, { kind: "unchanged" }, previous, "duplicate long-label no-op")
         const desired = { mode: state.mode, on: !state.on }
-        run({ current: decode(previous), desired, clearListedChannels }, {
-          kind: "changed", filter: { mode: state.mode, on: !state.on, channels: duplicates, future: { keep: true } }
-        }, previous, "duplicate long-label switch")
+        run(
+          { current: decode(previous), desired, clearListedChannels },
+          {
+            kind: "changed",
+            filter: { mode: state.mode, on: !state.on, channels: duplicates, future: { keep: true } }
+          },
+          previous,
+          "duplicate long-label switch"
+        )
       }
     }
     return { cases, repeats }
   }
   const matrix = runMatrix(change)
   const controls: [string, typeof change][] = [
-    ["no-op writes", input => {
-      const result = change(input)
-      return result.kind === "unchanged" ? { kind: "changed", filter: decode(input.current) } : result
-    }],
+    [
+      "no-op writes",
+      input => {
+        const result = change(input)
+        return result.kind === "unchanged" ? { kind: "changed", filter: decode(input.current) } : result
+      }
+    ],
     ["missing off-mode confirmation", input => change({ ...input, clearListedChannels: input.current?.on === false ? "confirmed" : input.clearListedChannels })],
-    ["retained channels on mode change", input => {
-      const result = change(input)
-      return result.kind === "changed" && input.current && input.current.mode !== input.desired.mode
-        ? { kind: "changed", filter: decode({ ...result.filter, channels: input.current.channels }) } : result
-    }],
-    ["lost body extension", input => {
-      const result = change(input)
-      return result.kind === "changed" ? { kind: "changed", filter: decode({ mode: result.filter.mode, on: result.filter.on, channels: result.filter.channels }) } : result
-    }],
-    ["lost tuple columns", input => {
-      const result = change(input)
-      return result.kind === "changed" ? { kind: "changed", filter: decode({ ...result.filter, channels: result.filter.channels.map(([id, title, handle]) => [id, title, handle]) }) } : result
-    }],
-    ["off deletes document", input => input.desired.on ? change(input) : { kind: "unchanged" }],
-    ["normalized labels and deduplicated order", input => {
-      const result = change(input)
-      return result.kind === "changed" ? { kind: "changed", filter: decode({ ...result.filter, channels: [...new Map(result.filter.channels.map(([id, title]) => [id, [id, title.slice(0, 100)]] )).values()].reverse() }) } : result
-    }],
-    ["mutated frozen input", input => {
-      if (input.current) Object.defineProperty(input.current, "on", { value: input.desired.on })
-      return change(input)
-    }]
+    [
+      "retained channels on mode change",
+      input => {
+        const result = change(input)
+        return result.kind === "changed" && input.current && input.current.mode !== input.desired.mode
+          ? { kind: "changed", filter: decode({ ...result.filter, channels: input.current.channels }) }
+          : result
+      }
+    ],
+    [
+      "lost body extension",
+      input => {
+        const result = change(input)
+        return result.kind === "changed" ? { kind: "changed", filter: decode({ mode: result.filter.mode, on: result.filter.on, channels: result.filter.channels }) } : result
+      }
+    ],
+    [
+      "lost tuple columns",
+      input => {
+        const result = change(input)
+        return result.kind === "changed" ? { kind: "changed", filter: decode({ ...result.filter, channels: result.filter.channels.map(([id, title, handle]) => [id, title, handle]) }) } : result
+      }
+    ],
+    ["off deletes document", input => (input.desired.on ? change(input) : { kind: "unchanged" })],
+    [
+      "normalized labels and deduplicated order",
+      input => {
+        const result = change(input)
+        return result.kind === "changed"
+          ? { kind: "changed", filter: decode({ ...result.filter, channels: [...new Map(result.filter.channels.map(([id, title]) => [id, [id, title.slice(0, 100)]])).values()].reverse() }) }
+          : result
+      }
+    ],
+    [
+      "mutated frozen input",
+      input => {
+        if (input.current) Object.defineProperty(input.current, "on", { value: input.desired.on })
+        return change(input)
+      }
+    ]
   ]
   const caught: string[] = []
   for (const [name, alternative] of controls) {
     let failed = false
-    try { runMatrix(alternative) } catch { failed = true }
+    try {
+      runMatrix(alternative)
+    } catch {
+      failed = true
+    }
     check(failed, `control escaped ${name}`)
     caught.push(name)
   }
@@ -166,7 +210,14 @@ test("literal mode/on matrix preserves immutable bodies and rejects broken alter
 
 test("equal settings return before inspecting channel data", () => {
   let reads = 0
-  const current = Object.freeze({ mode: "deny", on: false, get channels() { reads++; return [] } } satisfies NonNullable<FilterSettingInput["current"]>)
+  const current = Object.freeze({
+    mode: "deny",
+    on: false,
+    get channels() {
+      reads++
+      return []
+    }
+  } satisfies NonNullable<FilterSettingInput["current"]>)
   expect(changeFilterSetting({ current, desired: { mode: "deny", on: false }, clearListedChannels: "confirmed" })).toEqual({ kind: "unchanged" })
   expect(reads).toBe(0)
   expect(changeFilterSetting({ current, desired: { mode: "deny", on: true }, clearListedChannels: "not-confirmed" }).kind).toBe("changed")
@@ -174,11 +225,21 @@ test("equal settings return before inspecting channel data", () => {
 })
 
 test("real rule, preparation and sync preserve remembered list, tuple bridge and envelope extensions", () => {
-  const A = "UCaaaaaaaaaaaaaaaaaaaaaa", B = "UCbbbbbbbbbbbbbbbbbbbbbb"
-  const acct = "aaaaaaaaaaaaaaaa", playlist = "PL_A"
+  const A = "UCaaaaaaaaaaaaaaaaaaaaaa",
+    B = "UCbbbbbbbbbbbbbbbbbbbbbb"
+  const acct = "aaaaaaaaaaaaaaaa",
+    playlist = "PL_A"
   if (!isChannelId(A) || !isAccountKey(acct) || !isPlaylistId(playlist)) throw new Error("Invalid synthetic IDs")
   const key = { kind: "filter", acct, playlist } satisfies Parameters<typeof encodeSyncDocument>[0]["key"]
-  const initial = decodeFilter({ mode: "deny", on: true, channels: [[A, "A", "@a"], [B, "B", undefined, { future: "B" }]], future: { keep: true } })
+  const initial = decodeFilter({
+    mode: "deny",
+    on: true,
+    channels: [
+      [A, "A", "@a"],
+      [B, "B", undefined, { future: "B" }]
+    ],
+    future: { keep: true }
+  })
   const previous = { v: 1, gen: "old", at: 1, by: "fixture", futureEnvelope: { keep: [true] }, data: initial }
   expect(encodeSyncDocument({ key, document: previous })).toEqual({ kind: "invalid", field: "document", reason: "json" })
   function save(result: FilterSettingResult) {
@@ -196,10 +257,26 @@ test("real rule, preparation and sync preserve remembered list, tuple bridge and
   }
   expect(decide(initial, A)).toBe("filtered")
   const off = save(changeFilterSetting({ current: initial, desired: { mode: "deny", on: false }, clearListedChannels: "not-confirmed" }))
-  expect(off.json).toEqual({ mode: "deny", on: false, channels: [[A, "A", "@a"], [B, "B", null, { future: "B" }]], future: { keep: true } })
+  expect(off.json).toEqual({
+    mode: "deny",
+    on: false,
+    channels: [
+      [A, "A", "@a"],
+      [B, "B", null, { future: "B" }]
+    ],
+    future: { keep: true }
+  })
   expect(decide(off.filter, A)).toBe("pass")
   const on = save(changeFilterSetting({ current: off.filter, desired: { mode: "deny", on: true }, clearListedChannels: "not-confirmed" }))
-  expect<unknown>(on.filter).toEqual({ mode: "deny", on: true, channels: [[A, "A", "@a"], [B, "B", undefined, { future: "B" }]], future: { keep: true } })
+  expect<unknown>(on.filter).toEqual({
+    mode: "deny",
+    on: true,
+    channels: [
+      [A, "A", "@a"],
+      [B, "B", undefined, { future: "B" }]
+    ],
+    future: { keep: true }
+  })
   expect(decide(on.filter, A)).toBe("filtered")
   expect(changeFilterSetting({ current: off.filter, desired: { mode: "allow", on: true }, clearListedChannels: "not-confirmed" })).toEqual({ kind: "confirmation-required" })
   const allow = save(changeFilterSetting({ current: on.filter, desired: { mode: "allow", on: true }, clearListedChannels: "confirmed" }))
@@ -218,7 +295,7 @@ describe("actual browser artifact", () => {
       for (const imported of new Bun.Transpiler({ loader: "ts" }).scanImports(await readFile(file, "utf8"))) {
         expect(imported.path.startsWith(".")).toBe(true)
         const base = resolve(dirname(file), imported.path)
-        await inspect(await Bun.file(`${base}.ts`).exists() ? `${base}.ts` : resolve(base, "index.ts"))
+        await inspect((await Bun.file(`${base}.ts`).exists()) ? `${base}.ts` : resolve(base, "index.ts"))
       }
     }
     await inspect(entrypoint)
@@ -246,7 +323,13 @@ describe("actual browser artifact", () => {
       try { Math.random; } catch (error) { if (error !== violation) throw error; controls++; }
       JSON.stringify({exports:Object.keys(operation),fixtures,beforeControls,controls,protectedReads});
     `
-    const result = JSON.parse(executeSyntheticNodeRealm('import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; console.log(runInNewContext(readFileSync(0,"utf8"), {}, {timeout:30000}));', script, 35000))
+    const result = JSON.parse(
+      executeSyntheticNodeRealm(
+        'import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; console.log(runInNewContext(readFileSync(0,"utf8"), {}, {timeout:30000}));',
+        script,
+        35000
+      )
+    )
     expect(result.exports).toEqual(["changeFilterChannel", "changeFilterSetting", "refreshChannelLabel"])
     expect(result.fixtures.cases).toBe(88)
     expect(result.fixtures.repeats).toBe(54)

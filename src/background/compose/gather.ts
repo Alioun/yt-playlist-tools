@@ -76,8 +76,7 @@ export function composeGather(deps: {
       const lookup = await deps.nativeTabs.get(known.tabId)
       if (lookup.kind !== "tab" || lookup.tab.site !== "www") continue
       const acct = known.acct
-      return { tab: { ...lookup.tab, site: "www" },
-        info: acct === null ? { site: "www", build: deps.build, signedIn: false, acct } : { site: "www", build: deps.build, signedIn: true, acct } }
+      return { tab: { ...lookup.tab, site: "www" }, info: acct === null ? { site: "www", build: deps.build, signedIn: false, acct } : { site: "www", build: deps.build, signedIn: true, acct } }
     }
     return null
   }
@@ -88,15 +87,21 @@ export function composeGather(deps: {
     const read = await deps.monitor.statuses(context, [{ id: "gather", options: { ...all.gather, on: true } }]).catch(() => null)
     const status = read?.kind === "statuses" ? read.statuses.find(row => row.feature === "gather") : undefined
     if (!status || status.state === "working") return working
-    const down = (to: Destination) => status.destinations.includes(to) ? "not-working" : "working"
+    const down = (to: Destination) => (status.destinations.includes(to) ? "not-working" : "working")
     return { player: status.state === "not-working" ? down("player") : "working", queue: down("queue"), playlist: down("playlist") }
   }
   async function playerNoEffect(scope: Scope): Promise<void> {
     const context = await reporting(scope)
-    if (!context) { log("gather into YouTube's player: no list within 10 s, and no youtube.com tab to report it from"); return }
+    if (!context) {
+      log("gather into YouTube's player: no list within 10 s, and no youtube.com tab to report it from")
+      return
+    }
     const now = Date.now()
-    await deps.monitor.signal(context, { site: "www", feature: "gather", job: null, route: null, kind: "no-effect", watchId: null,
-      shape: null, clientVersion: null, pageType: "other", count: 1, firstSeen: now, lastSeen: now }, { kind: "gather", destination: "player" })
+    await deps.monitor.signal(
+      context,
+      { site: "www", feature: "gather", job: null, route: null, kind: "no-effect", watchId: null, shape: null, clientVersion: null, pageType: "other", count: 1, firstSeen: now, lastSeen: now },
+      { kind: "gather", destination: "player" }
+    )
   }
   async function prepare(incognito: boolean): Promise<Settings | null> {
     // A message can wake the worker before its store has started; the settings read waits for it.
@@ -111,7 +116,7 @@ export function composeGather(deps: {
 
   async function setupOf(acct: AccountKey): Promise<Setup | null> {
     const read = await deps.owner.readSetup(acct).catch(() => null)
-    return read?.kind === "value" && read.view.kind === "live" ? read.view.setup as Setup : null
+    return read?.kind === "value" && read.view.kind === "live" ? (read.view.setup as Setup) : null
   }
   async function titleOf(acct: AccountKey, playlist: PlaylistId, incognito: boolean): Promise<string> {
     if (playlist === "WL") return i18n.message("picker_watchLater")
@@ -141,16 +146,26 @@ export function composeGather(deps: {
       const [top] = detected.languages
       if (!detected.isReliable || !top || top.language === "und") return "no-answer"
       return top.language === "en" || top.language.startsWith("en-") ? "english" : "other"
-    } catch { return "no-answer" }
+    } catch {
+      return "no-answer"
+    }
   }
 
   async function push(payload: GatherPush): Promise<boolean> {
     if (disposed) return false
-    try { return isGatherPushShown(await native.runtime.sendMessage(gatherPush(deps.build, payload))) } catch { return false }
+    try {
+      return isGatherPushShown(await native.runtime.sendMessage(gatherPush(deps.build, payload)))
+    } catch {
+      return false
+    }
   }
   async function ask<K extends keyof TabAskMessages>(tabId: number, kind: K, payload: TabAskMessages[K]["payload"]) {
     const caller = createRpcCaller<TabAskMessages>(tabTarget(native.tabs, tabId), { build: deps.build, deadline: timerDeadline, contract: tabAskContract })
-    try { return await caller.call(kind, payload) } finally { caller.dispose() }
+    try {
+      return await caller.call(kind, payload)
+    } finally {
+      caller.dispose()
+    }
   }
   async function focusedTab(windowId: number): Promise<number | null> {
     try {
@@ -158,15 +173,23 @@ export function composeGather(deps: {
       if (focused.id !== windowId || !focused.focused) return null
       const [shown] = await native.tabs.query({ active: true, windowId })
       return typeof shown?.id === "number" ? shown.id : null
-    } catch { return null }
+    } catch {
+      return null
+    }
   }
 
   function logResult(result: GatherResult): void {
     const how = result.auto ? "by itself" : "from the popup"
     switch (result.kind) {
-      case "playlist": log(`gather ${how}: saved ${result.saved}, already in ${result.already}, failed ${result.failed.length}, closed ${result.closed}`); break
-      case "player": case "queue": log(`gather ${how} into ${result.kind}: ${result.count} videos, closed ${result.closed}`); break
-      default: log(`gather ${how}: ${result.kind}`)
+      case "playlist":
+        log(`gather ${how}: saved ${result.saved}, already in ${result.already}, failed ${result.failed.length}, closed ${result.closed}`)
+        break
+      case "player":
+      case "queue":
+        log(`gather ${how} into ${result.kind}: ${result.count} videos, closed ${result.closed}`)
+        break
+      default:
+        log(`gather ${how}: ${result.kind}`)
     }
   }
   // Where a result shows once nothing else can show it (YT-GT-31).
@@ -189,10 +212,18 @@ export function composeGather(deps: {
       const toast = resultLine(result, copy, "toast")
       if (toast) {
         const tabId = result.served
-        void deps.registrar.ensure(tabId, { core: true, kit: true })
-          .then(() => ask(tabId, "bg.gatherToast", { text: toast.text, tone: failure ? "failure" : "confirmation", auto: result.auto === true, undo: result.undo,
-            // A Missing or Full gather playlist's toast offers Settings where the popup row offers Choose (YT-GT-33).
-            ...toast.action?.kind === "choose" ? { settings: result.playlist } : {} }))
+        void deps.registrar
+          .ensure(tabId, { core: true, kit: true })
+          .then(() =>
+            ask(tabId, "bg.gatherToast", {
+              text: toast.text,
+              tone: failure ? "failure" : "confirmation",
+              auto: result.auto === true,
+              undo: result.undo,
+              // A Missing or Full gather playlist's toast offers Settings where the popup row offers Choose (YT-GT-33).
+              ...(toast.action?.kind === "choose" ? { settings: result.playlist } : {})
+            })
+          )
           .catch(() => {})
       }
     }
@@ -201,7 +232,9 @@ export function composeGather(deps: {
   }
 
   const gather: Gather = createGather({
-    native: port, addFlow: deps.addFlow, tabs: deps.tabs,
+    native: port,
+    addFlow: deps.addFlow,
+    tabs: deps.tabs,
     session: { read: () => deps.owner.readSession(), change: change => deps.owner.changeSession(change) },
     settings: () => settings,
     access: () => access,
@@ -216,7 +249,10 @@ export function composeGather(deps: {
         if (event.result.kind === "player" && event.result.confirmed) playerMisses = 0
         void delivered(event.result).catch(() => {})
       } else if (event.kind === "undo") log(`gather undo: ${event.result.kind}`)
-      else { playerMisses++; void playerNoEffect(event.scope).catch(() => {}) }
+      else {
+        playerMisses++
+        void playerNoEffect(event.scope).catch(() => {})
+      }
     }
   })
 
@@ -226,11 +262,13 @@ export function composeGather(deps: {
     const queried = await deps.nativeTabs.query("www")
     if (queried.kind !== "tabs") return null
     let focused: number | null = null
-    try { const window = await native.windows.getLastFocused(); if (window.focused && typeof window.id === "number") focused = window.id } catch {}
+    try {
+      const window = await native.windows.getLastFocused()
+      if (window.focused && typeof window.id === "number") focused = window.id
+    } catch {}
     const eligible = queried.tabs.filter(tab => !tab.incognito && !tab.discarded && !tab.frozen && !exclude.has(tab.tabId))
     const recent = [...eligible].sort((x, y) => y.lastAccessed - x.lastAccessed)
-    const order = [...new Set([...eligible.filter(tab => tab.windowId === focused && tab.active), ...recent.filter(tab => tab.windowId === windowId), ...recent]
-      .map(tab => tab.tabId))].slice(0, 3)
+    const order = [...new Set([...eligible.filter(tab => tab.windowId === focused && tab.active), ...recent.filter(tab => tab.windowId === windowId), ...recent].map(tab => tab.tabId))].slice(0, 3)
     let injected = false
     for (const tabId of order) {
       const [known] = await deps.tabs.known({ kind: "tab", tabId })
@@ -238,8 +276,7 @@ export function composeGather(deps: {
       if (!known) {
         if (injected) continue
         injected = true
-        const answer = await deps.tabs.runIn<JobOf<"account">>(tabId, { job: { kind: "account" } },
-          { site: "www", req: { windowId, incognito: false, activeTabId: null }, account: { kind: "any" } })
+        const answer = await deps.tabs.runIn<JobOf<"account">>(tabId, { job: { kind: "account" } }, { site: "www", req: { windowId, incognito: false, activeTabId: null }, account: { kind: "any" } })
         acct = answer.kind === "result" && answer.result.ok && answer.result.data.signedIn ? answer.result.data.acct : null
       }
       if (acct === null) continue
@@ -263,7 +300,9 @@ export function composeGather(deps: {
     serving,
     gather,
     clock: { now: () => Date.now(), after: timerDeadline },
-    waiting: waiting => { void push({ windowId: null, running: false, line: waiting ? waitingLine(i18n) : null }) }
+    waiting: waiting => {
+      void push({ windowId: null, running: false, line: waiting ? waitingLine(i18n) : null })
+    }
   })
 
   async function undone(state: GatherState, id: string, incognito: boolean): Promise<{ count: number; title: string } | null> {
@@ -281,13 +320,26 @@ export function composeGather(deps: {
       if (record.kind === "sent") return { id: record.record.id, at: record.record.at, auto: record.record.auto, count: record.record.count, destination: { kind: record.to }, undo: false }
       const own = state.last.find(result => result.kind === "playlist" && result.undo === record.record.id)
       const count = own?.kind === "playlist" ? own.saved : record.kind === "undo" ? record.record.added.length : 0
-      return { id: record.record.id, at: record.record.at, auto: record.record.auto, count, undo: state.undoable.includes(record.record.id),
-        destination: { kind: "playlist", title: own?.kind === "playlist" ? own.title : await titleOf(record.record.acct, record.record.playlist, false) } }
+      return {
+        id: record.record.id,
+        at: record.record.at,
+        auto: record.record.auto,
+        count,
+        undo: state.undoable.includes(record.record.id),
+        destination: { kind: "playlist", title: own?.kind === "playlist" ? own.title : await titleOf(record.record.acct, record.record.playlist, false) }
+      }
     }
-    const result = state.last.find(entry => entry.kind === "playlist" || entry.kind === "player" && entry.confirmed || entry.kind === "queue" && entry.outcome === "confirmed")
+    const result = state.last.find(entry => entry.kind === "playlist" || (entry.kind === "player" && entry.confirmed) || (entry.kind === "queue" && entry.outcome === "confirmed"))
     if (!result) return null
-    if (result.kind === "playlist") return { id: result.undo ?? result.id, at: result.at, auto: result.auto === true, count: result.saved,
-      undo: result.undo !== null && !undoneIds.has(result.undo), destination: { kind: "playlist", title: result.title } }
+    if (result.kind === "playlist")
+      return {
+        id: result.undo ?? result.id,
+        at: result.at,
+        auto: result.auto === true,
+        count: result.saved,
+        undo: result.undo !== null && !undoneIds.has(result.undo),
+        destination: { kind: "playlist", title: result.title }
+      }
     if (result.kind === "player" || result.kind === "queue") return { id: result.id, at: result.at, auto: false, count: result.count, undo: false, destination: { kind: result.kind } }
     return null
   }
@@ -312,7 +364,9 @@ export function composeGather(deps: {
         const result = payload.retry ? await gather.retry(payload.retry, req) : await gather.now(req)
         const copy = await context(result.kind === "choose" ? result.acct : result.kind === "playlist" ? result.acct : null)
         return answer(resultLine(result, copy), result)
-      } finally { running.delete(req.windowId) }
+      } finally {
+        running.delete(req.windowId)
+      }
     },
     async undo(req, payload) {
       const state = await ready(req)
@@ -334,23 +388,35 @@ export function composeGather(deps: {
 
   // A gather toast's Undo, from the tab it saved from, as that tab's account (UI-TOAST-17).
   const tabRpc = createRpc<TabGatherMessages, NativeSender>(runtimeTransport(native.runtime), { build: deps.build, deadline: timerDeadline, contract: tabGatherContract })
-  const unhandle = tabRpc.handle({ authenticate: authenticateTab(deps.senders), handlers: {
-    async "tab.gatherUndo"({ acct, request }, tab) {
-      const [known] = await deps.tabs.known({ kind: "tab", tabId: tab.origin.tabId })
-      if (!known || known.acct !== acct || known.privateTab !== tab.origin.incognito || await ready({ windowId: tab.windowId, incognito: tab.origin.incognito, activeTabId: tab.origin.tabId }) !== "ready") {
-        return { text: i18n.message("gather_undoFailed"), tone: "failure" }
+  const unhandle = tabRpc.handle({
+    authenticate: authenticateTab(deps.senders),
+    handlers: {
+      async "tab.gatherUndo"({ acct, request }, tab) {
+        const [known] = await deps.tabs.known({ kind: "tab", tabId: tab.origin.tabId })
+        if (
+          !known ||
+          known.acct !== acct ||
+          known.privateTab !== tab.origin.incognito ||
+          (await ready({ windowId: tab.windowId, incognito: tab.origin.incognito, activeTabId: tab.origin.tabId })) !== "ready"
+        ) {
+          return { text: i18n.message("gather_undoFailed"), tone: "failure" }
+        }
+        const req: Requester = { windowId: tab.windowId, incognito: tab.origin.incognito, activeTabId: tab.origin.tabId }
+        const before = await undone(await gather.last(req.incognito ? "private" : "normal"), request.id, req.incognito)
+        const result = await gather.undo(request.id, req)
+        if (result.kind === "undone") {
+          undoneIds.add(request.id)
+          void push({ windowId: null, running: false, line: null })
+          return null
+        }
+        return { text: undoLine(result, before, i18n).text, tone: "failure" }
       }
-      const req: Requester = { windowId: tab.windowId, incognito: tab.origin.incognito, activeTabId: tab.origin.tabId }
-      const before = await undone(await gather.last(req.incognito ? "private" : "normal"), request.id, req.incognito)
-      const result = await gather.undo(request.id, req)
-      if (result.kind === "undone") { undoneIds.add(request.id); void push({ windowId: null, running: false, line: null }); return null }
-      return { text: undoLine(result, before, i18n).text, tone: "failure" }
     }
-  } })
+  })
 
   return {
     routes,
-    player: (): "usable" | "no-effect" => playerMisses >= MONITOR_NO_EFFECTS ? "no-effect" : "usable",
+    player: (): "usable" | "no-effect" => (playerMisses >= MONITOR_NO_EFFECTS ? "no-effect" : "usable"),
     // Every tab.hello wakes trigger 1's check; a video tab's starts or joins its window's burst while trigger 2 or 3 is on.
     hello(context: TabContext, hello: TabHello): void {
       if (disposed) return
@@ -367,11 +433,17 @@ export function composeGather(deps: {
         triggers.woke("hello")
       })().catch(() => {})
     },
-    woke(reason: WakeReason): void { if (!disposed) triggers.woke(reason) },
+    woke(reason: WakeReason): void {
+      if (!disposed) triggers.woke(reason)
+    },
     dispose() {
       if (disposed) return
       disposed = true
-      for (const stop of [() => triggers.dispose(), () => gather.dispose(), unhandle, () => tabRpc.dispose()]) { try { stop() } catch {} }
+      for (const stop of [() => triggers.dispose(), () => gather.dispose(), unhandle, () => tabRpc.dispose()]) {
+        try {
+          stop()
+        } catch {}
+      }
     }
   }
 }

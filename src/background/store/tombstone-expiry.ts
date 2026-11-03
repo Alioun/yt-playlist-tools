@@ -1,5 +1,16 @@
-import { DecodeError, decodeDocument, decodeFilter, decodeSetup, decodeSyncMeta, decodeSyncState, documentKey, parseDocumentKey,
-  type AccountKey, type DocumentKey, type Tombstone } from "../../shared/model"
+import {
+  DecodeError,
+  decodeDocument,
+  decodeFilter,
+  decodeSetup,
+  decodeSyncMeta,
+  decodeSyncState,
+  documentKey,
+  parseDocumentKey,
+  type AccountKey,
+  type DocumentKey,
+  type Tombstone
+} from "../../shared/model"
 import type { JsonObject } from "../../shared/contracts/json"
 import { readSyncDocument, type RawSyncItem } from "./sync-codec"
 
@@ -32,7 +43,8 @@ function localTombstone(key: AccountDocumentKey, raw: unknown): Tombstone | unde
 
 function sameHistory({ local, sync }: Observed): Record<string, string> | undefined {
   try {
-    const history = decodeSyncState(local.sync), meta = decodeSyncMeta(sync["s:meta"])
+    const history = decodeSyncState(local.sync),
+      meta = decodeSyncMeta(sync["s:meta"])
     return history.joined !== null && meta.v === 1 && meta.id === history.joined && meta.reset !== true ? history.pushed : undefined
   } catch (error) {
     if (error instanceof DecodeError) return undefined
@@ -43,14 +55,20 @@ function sameHistory({ local, sync }: Observed): Record<string, string> | undefi
 // Reads only the pass's own snapshot, so a pass with nothing to expire costs no storage access.
 export function hasExpiryCandidate({ local, wall }: Omit<Observed, "sync">): boolean {
   let pushed: Record<string, string>
-  try { pushed = decodeSyncState(local.sync).pushed } catch (error) {
+  try {
+    pushed = decodeSyncState(local.sync).pushed
+  } catch (error) {
     if (error instanceof DecodeError) return false
     throw error
   }
-  return Object.keys(pushed).some(name => accountKey(name) && !Object.hasOwn(local, name)) || Object.keys(local).some(name => {
-    const key = accountKey(name), stamp = key?.kind === "setup" ? localTombstone(key, local[name]) : undefined
-    return stamp !== undefined && pushed[name] === stamp.gen && expired(stamp, wall)
-  })
+  return (
+    Object.keys(pushed).some(name => accountKey(name) && !Object.hasOwn(local, name)) ||
+    Object.keys(local).some(name => {
+      const key = accountKey(name),
+        stamp = key?.kind === "setup" ? localTombstone(key, local[name]) : undefined
+      return stamp !== undefined && pushed[name] === stamp.gen && expired(stamp, wall)
+    })
+  )
 }
 
 // G18: a Setup tombstone expires 30 days after its edit time, and its account's Filter tombstones go with it.
@@ -58,17 +76,19 @@ export function hasExpiryCandidate({ local, wall }: Omit<Observed, "sync">): boo
 export function planLocalTombstoneExpiry(observed: Observed): LocalTombstoneExpiry {
   const pushed = sameHistory(observed)
   if (!pushed) return { documents: [], pushed: [] }
-  const { local, wall } = observed, items: RawSyncItem[] = Object.entries(observed.sync).map(([key, value]) => ({ key, value }))
+  const { local, wall } = observed,
+    items: RawSyncItem[] = Object.entries(observed.sync).map(([key, value]) => ({ key, value }))
   const remoteGone = (key: AccountDocumentKey, age: boolean) => {
     const remote = readSyncDocument({ key, items })
-    return remote.kind === "absent" || remote.kind === "deleted" && (!age || expired(remote.document, wall))
+    return remote.kind === "absent" || (remote.kind === "deleted" && (!age || expired(remote.document, wall)))
   }
   const acknowledged = (key: AccountDocumentKey) => {
     const stamp = localTombstone(key, local[documentKey(key)])
     return stamp && pushed[documentKey(key)] === stamp.gen ? stamp : undefined
   }
   const keys = Object.keys(local).flatMap(name => accountKey(name) ?? [])
-  const documents: AccountDocumentKey[] = [], expiring = new Set<AccountKey>()
+  const documents: AccountDocumentKey[] = [],
+    expiring = new Set<AccountKey>()
   for (const setup of keys) {
     if (setup.kind !== "setup") continue
     const stamp = acknowledged(setup)
@@ -81,8 +101,7 @@ export function planLocalTombstoneExpiry(observed: Observed): LocalTombstoneExpi
   // A restart between the local removal and the history write leaves these entries without their documents.
   const dangling = Object.keys(pushed).filter(name => {
     const key = accountKey(name)
-    return key && !Object.hasOwn(local, name) && remoteGone(key, false) &&
-      (expiring.has(key.acct) || !Object.hasOwn(local, documentKey({ kind: "setup", acct: key.acct })))
+    return key && !Object.hasOwn(local, name) && remoteGone(key, false) && (expiring.has(key.acct) || !Object.hasOwn(local, documentKey({ kind: "setup", acct: key.acct })))
   })
   return { documents, pushed: [...documents.map(documentKey), ...dangling] }
 }
@@ -92,9 +111,10 @@ export function planLocalTombstoneExpiry(observed: Observed): LocalTombstoneExpi
 export function planSyncTombstoneCleanup(observed: Observed): readonly string[] {
   const pushed = sameHistory(observed)
   if (!pushed) return []
-  const { local, sync, wall } = observed, items: RawSyncItem[] = Object.entries(sync).map(([key, value]) => ({ key, value }))
+  const { local, sync, wall } = observed,
+    items: RawSyncItem[] = Object.entries(sync).map(([key, value]) => ({ key, value }))
   const held = (key: AccountDocumentKey) => Object.hasOwn(local, documentKey(key)) || Object.hasOwn(pushed, documentKey(key))
-  const remote = Object.keys(sync).flatMap(item => item.startsWith("s:") ? accountKey(`doc:${item.slice(2)}`) ?? [] : [])
+  const remote = Object.keys(sync).flatMap(item => (item.startsWith("s:") ? (accountKey(`doc:${item.slice(2)}`) ?? []) : []))
   const removed: string[] = []
   for (const setup of remote) {
     if (setup.kind !== "setup" || held(setup)) continue

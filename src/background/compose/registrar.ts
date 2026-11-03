@@ -28,11 +28,14 @@ export function registrarOwner(lifecycle: StoreLifecycle) {
   }
   async function refresh(): Promise<void> {
     const next = await read().catch(() => undefined)
-    const same = next === undefined ? snapshot.kind === "held"
-      : snapshot.kind === "ok" && JSON.stringify({ ...snapshot, revision: 0 }) === JSON.stringify({ ...next, revision: 0 })
+    const same = next === undefined ? snapshot.kind === "held" : snapshot.kind === "ok" && JSON.stringify({ ...snapshot, revision: 0 }) === JSON.stringify({ ...next, revision: 0 })
     if (same) return
     snapshot = next === undefined ? { kind: "held", revision: ++revision } : { ...next, revision: ++revision }
-    for (const listener of [...listeners]) { try { listener() } catch {} }
+    for (const listener of [...listeners]) {
+      try {
+        listener()
+      } catch {}
+    }
   }
   const port: OwnerPort = {
     async ready() {
@@ -44,7 +47,9 @@ export function registrarOwner(lifecycle: StoreLifecycle) {
     current: () => snapshot,
     subscribe(changed) {
       listeners.add(changed)
-      return () => { listeners.delete(changed) }
+      return () => {
+        listeners.delete(changed)
+      }
     }
   }
   return { port, refresh }
@@ -52,7 +57,11 @@ export function registrarOwner(lifecycle: StoreLifecycle) {
 
 export function composeRegistrar(native: RegistrarBrowser & ProbeBrowser, build: BuildId, owner: OwnerPort): { registrar: Registrar; scripting: ScriptingPort } {
   const ports = browserRegistrarPorts({
-    browser: native, build, registry: features, owner, probe: nativeRegistrarProbe(native),
+    browser: native,
+    build,
+    registry: features,
+    owner,
+    probe: nativeRegistrarProbe(native),
     backgroundError: error => console.warn("[Perchling] registration", error.fact)
   })
   return { registrar: createRegistrar(ports), scripting: ports.scripting }

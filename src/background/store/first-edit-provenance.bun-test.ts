@@ -2,23 +2,21 @@ import { describe, expect, test } from "bun:test"
 import type { JsonObject } from "../../shared/contracts/json"
 import { prepareFirstEditHistory, readFirstEditProvenance, type FirstEditHistoryPatch, type FirstEditProvenance, type StoredEditHistory } from "./first-edit-provenance"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 export type FirstEditProofs = [
   Check<Equal<StoredEditHistory, { readonly kind: "absent" } | { readonly kind: "present"; readonly raw: unknown }>>,
-  Check<Equal<FirstEditProvenance,
-    { readonly kind: "unedited" } | { readonly kind: "edited" } | { readonly kind: "unknown" } | { readonly kind: "invalid" }>>,
-  Check<Equal<FirstEditHistoryPatch,
-    { readonly kind: "unchanged" } | { readonly kind: "set"; readonly sync: JsonObject } |
-    { readonly kind: "unavailable"; readonly reason: "history" }>>,
+  Check<Equal<FirstEditProvenance, { readonly kind: "unedited" } | { readonly kind: "edited" } | { readonly kind: "unknown" } | { readonly kind: "invalid" }>>,
+  Check<Equal<FirstEditHistoryPatch, { readonly kind: "unchanged" } | { readonly kind: "set"; readonly sync: JsonObject } | { readonly kind: "unavailable"; readonly reason: "history" }>>,
   Check<Equal<typeof readFirstEditProvenance, (history: StoredEditHistory) => FirstEditProvenance>>,
-  Check<Equal<typeof prepareFirstEditHistory,
-    (input: { readonly history: StoredEditHistory; readonly syncOn: boolean }) => FirstEditHistoryPatch>>
+  Check<Equal<typeof prepareFirstEditHistory, (input: { readonly history: StoredEditHistory; readonly syncOn: boolean }) => FirstEditHistoryPatch>>
 ]
 
 const old = { joined: null, pushed: {}, status: "off", editedSinceOff: false }
 const first = { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true }
-function present(raw: unknown): StoredEditHistory { return { kind: "present", raw } }
+function present(raw: unknown): StoredEditHistory {
+  return { kind: "present", raw }
+}
 
 describe("first-edit provenance", () => {
   test("absence and old false edit bits never certify an unedited lineage", () => {
@@ -62,9 +60,14 @@ describe("first-edit provenance", () => {
           for (const syncOn of [false, true]) {
             const before = JSON.stringify(raw)
             const patch = prepareFirstEditHistory({ history: present(raw), syncOn })
-            expect(patch).toEqual(everEdited === true && syncOn ? { kind: "unchanged" } : {
-              kind: "set", sync: { ...raw, everEdited: true, ...(!syncOn ? { editedSinceOff: true } : {}) }
-            })
+            expect(patch).toEqual(
+              everEdited === true && syncOn
+                ? { kind: "unchanged" }
+                : {
+                    kind: "set",
+                    sync: { ...raw, everEdited: true, ...(!syncOn ? { editedSinceOff: true } : {}) }
+                  }
+            )
             expect(JSON.stringify(raw)).toBe(before)
             if (patch.kind !== "set") continue
             const restarted: unknown = JSON.parse(JSON.stringify(patch.sync))
@@ -75,12 +78,13 @@ describe("first-edit provenance", () => {
       }
     }
     expect(prepareFirstEditHistory({ history: present(first), syncOn: false })).toEqual({ kind: "unchanged" })
-    expect(prepareFirstEditHistory({ history: present({ ...old, editedSinceOff: true }), syncOn: true }))
-      .toEqual({ kind: "set", sync: first })
+    expect(prepareFirstEditHistory({ history: present({ ...old, editedSinceOff: true }), syncOn: true })).toEqual({ kind: "set", sync: first })
   })
 
   test("retains every raw extension, acknowledged repair and R155 value with detached output", () => {
-    const raw: JsonObject = JSON.parse('{"joined":"synthetic-history","pushed":{"doc:settings":"repaired-generation","__proto__":"opaque-generation"},"status":"waiting","editedSinceOff":false,"opaqueWrite":{"gate":{"kind":"held","notBefore":60000,"extension":[null,{"keep":true}]},"diagnostic":{"name":null,"message":"original diagnostic","extension":{"keep":[1]}},"__proto__":{"opaque":true}},"future":{"items":[{"keep":true}]},"__proto__":{"inert":true},"toJSON":"inert"}')
+    const raw: JsonObject = JSON.parse(
+      '{"joined":"synthetic-history","pushed":{"doc:settings":"repaired-generation","__proto__":"opaque-generation"},"status":"waiting","editedSinceOff":false,"opaqueWrite":{"gate":{"kind":"held","notBefore":60000,"extension":[null,{"keep":true}]},"diagnostic":{"name":null,"message":"original diagnostic","extension":{"keep":[1]}},"__proto__":{"opaque":true}},"future":{"items":[{"keep":true}]},"__proto__":{"inert":true},"toJSON":"inert"}'
+    )
     const before = JSON.stringify(raw)
     for (const syncOn of [false, true]) {
       const patch = prepareFirstEditHistory({ history: present(raw), syncOn })
@@ -108,18 +112,41 @@ describe("first-edit provenance", () => {
     const cyclic: Record<string, unknown> = { ...old }
     cyclic.extension = cyclic
     let accessorCalls = 0
-    const accessor = Object.defineProperty({ ...old }, "extension", { enumerable: true, get() { accessorCalls++; return true } })
-    const malformed: unknown[] = [undefined, null, false, 0, "off", [], {},
+    const accessor = Object.defineProperty({ ...old }, "extension", {
+      enumerable: true,
+      get() {
+        accessorCalls++
+        return true
+      }
+    })
+    const malformed: unknown[] = [
+      undefined,
+      null,
+      false,
+      0,
+      "off",
+      [],
+      {},
       ...Object.keys(old).map(key => Object.fromEntries(Object.entries(old).filter(([field]) => field !== key))),
       ...[null, "false", 0, 1, [], {}, undefined].map(everEdited => ({ ...old, everEdited })),
-      { ...old, joined: "" }, { ...old, pushed: [] }, { ...old, pushed: { other: "" } },
-      { ...old, status: "unsupported" }, { ...old, editedSinceOff: null },
+      { ...old, joined: "" },
+      { ...old, pushed: [] },
+      { ...old, pushed: { other: "" } },
+      { ...old, status: "unsupported" },
+      { ...old, editedSinceOff: null },
       { ...old, editedSinceOff: true, everEdited: false },
       { ...old, opaqueWrite: { gate: { kind: "held", notBefore: -1 }, diagnostic: null } },
       { ...old, opaqueWrite: { gate: null, diagnostic: { name: 1, message: null } } },
-      { ...old, extension: undefined }, { ...old, extension: Infinity }, { ...old, extension: NaN },
-      { ...old, extension: () => true }, { ...old, extension: Symbol("invalid") }, { ...old, extension: 1n },
-      { ...old, extension: new Map() }, { ...old, extension: Array(1) }, cyclic, accessor,
+      { ...old, extension: undefined },
+      { ...old, extension: Infinity },
+      { ...old, extension: NaN },
+      { ...old, extension: () => true },
+      { ...old, extension: Symbol("invalid") },
+      { ...old, extension: 1n },
+      { ...old, extension: new Map() },
+      { ...old, extension: Array(1) },
+      cyclic,
+      accessor,
       Object.defineProperty({ ...old }, "hidden", { value: true }),
       { ...old, [Symbol("invalid")]: true }
     ]

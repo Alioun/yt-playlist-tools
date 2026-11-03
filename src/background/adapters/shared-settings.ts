@@ -11,7 +11,9 @@ export function nativeSharedSettingsAccess(permissions: SharedSettingsPermission
         const removed = await permissions.remove({ permissions: ["contextMenus"] })
         const granted = await permissions.contains({ permissions: ["contextMenus"] })
         return typeof removed === "boolean" && granted === false ? { kind: "released" } : { kind: "unconfirmed" }
-      } catch { return { kind: "unconfirmed" } }
+      } catch {
+        return { kind: "unconfirmed" }
+      }
     }
   }
 }

@@ -9,7 +9,11 @@ const dynamic = /\bimport\s*\(/
 
 async function source(path: string): Promise<{ path: string; text: string } | undefined> {
   for (const candidate of path.endsWith(".ts") ? [path] : [`${path}.ts`, join(path, "index.ts")]) {
-    try { return { path: candidate, text: await readFile(candidate, "utf8") } } catch { /* Try the next resolution. */ }
+    try {
+      return { path: candidate, text: await readFile(candidate, "utf8") }
+    } catch {
+      /* Try the next resolution. */
+    }
   }
   return undefined
 }
@@ -22,14 +26,14 @@ export async function reachableModules(entry: string): Promise<{ files: string[]
     const next = pending.pop()
     if (next === undefined || files.has(next)) continue
     const loaded = await source(next)
-    if (!loaded) { packages.add(`unresolved:${next}`); continue }
+    if (!loaded) {
+      packages.add(`unresolved:${next}`)
+      continue
+    }
     if (files.has(loaded.path)) continue
     files.add(loaded.path)
     if (dynamic.test(loaded.text)) packages.add(`dynamic:${loaded.path}`)
-    const specifiers = [
-      ...[...loaded.text.matchAll(fromClause)].filter(match => match[2] === undefined).map(match => match[4] ?? ""),
-      ...[...loaded.text.matchAll(bare)].map(match => match[1] ?? "")
-    ]
+    const specifiers = [...[...loaded.text.matchAll(fromClause)].filter(match => match[2] === undefined).map(match => match[4] ?? ""), ...[...loaded.text.matchAll(bare)].map(match => match[1] ?? "")]
     for (const specifier of specifiers) {
       if (specifier.startsWith(".")) pending.push(normalize(join(dirname(loaded.path), specifier)))
       else packages.add(specifier)

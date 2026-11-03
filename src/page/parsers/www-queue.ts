@@ -18,7 +18,8 @@ function record(value: unknown): value is Record<string, unknown> {
 function panelEntry(raw: unknown): QueueEntry | undefined | null {
   const renderer = field(raw, "playlistPanelVideoRenderer")
   if (renderer === undefined) return null
-  const videoId = field(renderer, "videoId"), setVideoId = field(renderer, "playlistSetVideoId")
+  const videoId = field(renderer, "videoId"),
+    setVideoId = field(renderer, "playlistSetVideoId")
   return isVideoId(videoId) && isSetVideoId(setVideoId) ? { videoId, setVideoId } : undefined
 }
 export function parseQueuePanel(candidates: unknown): QueuePanel | undefined {
@@ -42,10 +43,13 @@ export function parseQueuePanel(candidates: unknown): QueuePanel | undefined {
   return undefined
 }
 export function hasQueueList(candidates: unknown): boolean {
-  return Array.isArray(candidates) && candidates.some(data => {
-    const listId = field(data, "playlistId")
-    return typeof listId === "string" && listId.startsWith("TLPQ")
-  })
+  return (
+    Array.isArray(candidates) &&
+    candidates.some(data => {
+      const listId = field(data, "playlistId")
+      return typeof listId === "string" && listId.startsWith("TLPQ")
+    })
+  )
 }
 export function parseMiniplayer(raw: unknown): boolean | undefined {
   return typeof raw === "boolean" ? raw : undefined
@@ -66,7 +70,10 @@ export function parseQueueCard(raw: unknown): QueueCard | undefined {
     const next = pending[index]
     if (!next) break
     const { value, owner } = next
-    if (Array.isArray(value)) { for (const item of value) pending.push({ value: item, owner }); continue }
+    if (Array.isArray(value)) {
+      for (const item of value) pending.push({ value: item, owner })
+      continue
+    }
     if (!record(value)) continue
     if (queueCommandFor(value, video.videoId)) return { videoId: video.videoId, command: owner ?? value }
     const signal = Array.isArray(field(value, "signalServiceEndpoint", "actions"))
@@ -82,8 +89,7 @@ function toastIn(value: unknown, depth: number): boolean {
   if (!record(value)) return false
   if (value.addToToastAction !== undefined) return true
   if (field(value, "openPopupAction", "popupType") === "TOAST") return true
-  return ["actions", "onResponseReceivedActions", "onResponseReceivedEndpoints", "clientActions", "command"]
-    .some(key => toastIn(value[key], depth + 1))
+  return ["actions", "onResponseReceivedActions", "onResponseReceivedEndpoints", "clientActions", "command"].some(key => toastIn(value[key], depth + 1))
 }
 export function parseQueueAnswer(body: unknown): QueueAnswer {
   const status = field(body, "status")
@@ -92,7 +98,10 @@ export function parseQueueAnswer(body: unknown): QueueAnswer {
   if (Array.isArray(results)) {
     for (const result of results) {
       const id = field(result, "playlistEditVideoAddedResultData", "setVideoId")
-      if (isSetVideoId(id)) { setVideoId = id; break }
+      if (isSetVideoId(id)) {
+        setVideoId = id
+        break
+      }
     }
   }
   return { status: typeof status === "string" ? status : undefined, setVideoId, noisy: toastIn(body, 0) }

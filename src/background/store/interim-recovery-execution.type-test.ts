@@ -4,14 +4,25 @@ import type { UiOrigin } from "./account-removal-execution"
 import type { RetainedAgreementV2 } from "./interim-persistence"
 import type { RetainedInstallationV3 } from "./interim-installation"
 import type { RecoveryItemId } from "./interim-recovery-review"
-import type { RecoveryCapture, FilterReplacementConfirmation, RecoveryHost, RecoveryOwnership, RecoveryRead, RecoveryPreparation,
-  RecoveryTransactionResult, RetainedRecoveryV4, RecoveryLocator, FilterReplacementEffect, RecoveryStoredObject } from "./interim-recovery-execution"
+import type {
+  RecoveryCapture,
+  FilterReplacementConfirmation,
+  RecoveryHost,
+  RecoveryOwnership,
+  RecoveryRead,
+  RecoveryPreparation,
+  RecoveryTransactionResult,
+  RetainedRecoveryV4,
+  RecoveryLocator,
+  FilterReplacementEffect,
+  RecoveryStoredObject
+} from "./interim-recovery-execution"
 import { createStartingLocalFilterWriter, createLocalFilterWriter } from "./local-filter-writer"
 import { retainedRecoveryDifference } from "./interim-recovery-execution"
 import type { InterimPersistenceSnapshot } from "./interim-persistence"
 import type { PlaylistDestinationChoice, PlaylistRestoreEffect, PlaylistRestorePreparation } from "./interim-recovery-execution"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 type Owner = ReturnType<typeof createStartingLocalFilterWriter>
 export type RecoveryProofs = [
@@ -42,8 +53,19 @@ export type RecoveryProofs = [
   Check<Equal<"lineage" extends keyof Extract<RecoveryOwnership, { kind: "fixture-owned" }> ? true : false, false>>,
   Check<Equal<Parameters<typeof createStartingLocalFilterWriter>[0]["recovery"], RecoveryHost | undefined>>
 ]
-function negative(owner: Owner, origin: UiOrigin, capture: RecoveryCapture, confirmation: FilterReplacementConfirmation, checkpoint: Snapshot<RetainedRecoveryV4>, record: RetainedRecoveryV4,
-  v2: RetainedAgreementV2, v3: RetainedInstallationV3, current: InterimPersistenceSnapshot, effect: FilterReplacementEffect, history: RecoveryStoredObject) {
+function negative(
+  owner: Owner,
+  origin: UiOrigin,
+  capture: RecoveryCapture,
+  confirmation: FilterReplacementConfirmation,
+  checkpoint: Snapshot<RetainedRecoveryV4>,
+  record: RetainedRecoveryV4,
+  v2: RetainedAgreementV2,
+  v3: RetainedInstallationV3,
+  current: InterimPersistenceSnapshot,
+  effect: FilterReplacementEffect,
+  history: RecoveryStoredObject
+) {
   // @ts-expect-error Discard requires the owner-private capture.
   owner.discardInterimItem(origin, { item: { captureId: "display", sourceKey: "playlists", path: [0] } })
   // @ts-expect-error Discard does not choose a destination.
@@ -73,7 +95,11 @@ function negative(owner: Owner, origin: UiOrigin, capture: RecoveryCapture, conf
     // @ts-expect-error Absent history cannot supply invented raw values.
     history.raw = {}
   }
-  void acceptedBasis; void pendingBasis; void recursive; void observed; void globalDestination
+  void acceptedBasis
+  void pendingBasis
+  void recursive
+  void observed
+  void globalDestination
 }
 void negative
 
@@ -96,6 +122,9 @@ function playlistNegative(owner: Owner, origin: UiOrigin, choice: PlaylistDestin
   const readOnly: RecoveryItemId = { sourceKey: "playlists", path: [0], captureId: "display", restore: owner.restoreInterimPlaylist }
   // @ts-expect-error Destination status has no cross-occurrence consumption variant.
   const status: Extract<PlaylistRestorePreparation, { kind: "destination-required" }>["owners"][number]["status"] = "restored-elsewhere"
-  void single; void readOnly; void status; void filterKey
+  void single
+  void readOnly
+  void status
+  void filterKey
 }
 void playlistNegative

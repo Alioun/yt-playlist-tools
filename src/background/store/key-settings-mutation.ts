@@ -12,9 +12,10 @@ function jsonObject(value: unknown): value is JsonObject {
   return value !== null && typeof value === "object" && !Array.isArray(value) && isJsonValue(value)
 }
 
-export async function executeKeySettingsMutation(deps: SettingsMutationDependencies, editSettings: (
-  settings: ReturnType<typeof decodeSettings>, records: JsonObject
-) => SharedSettingResult): Promise<LocalSettingsWriteResult> {
+export async function executeKeySettingsMutation(
+  deps: SettingsMutationDependencies,
+  editSettings: (settings: ReturnType<typeof decodeSettings>, records: JsonObject) => SharedSettingResult
+): Promise<LocalSettingsWriteResult> {
   const invalid = { kind: "result", result: { refused: "invalid" } } as const
   const unavailable = { kind: "unavailable", reason: "sync-writer-required" } as const
   try {
@@ -48,8 +49,7 @@ export async function executeKeySettingsMutation(deps: SettingsMutationDependenc
     }
     records = copyObject(records)
     const raw = baseline["doc:settings"]
-    const envelope = { ...(jsonObject(raw) ? raw : {}), v: DOCUMENT_VERSION,
-      gen: deps.generation(), at: deps.now(), by: ready.device.id, data: edit.settings }
+    const envelope = { ...(jsonObject(raw) ? raw : {}), v: DOCUMENT_VERSION, gen: deps.generation(), at: deps.now(), by: ready.device.id, data: edit.settings }
     if ("deleted" in envelope) delete envelope.deleted
     if (!jsonObject(envelope) || decodeDocument(envelope, decodeSettings).kind !== "value") return invalid
     const items: JsonObject = { "doc:settings": envelope }
@@ -71,14 +71,22 @@ export async function executeKeySettingsMutation(deps: SettingsMutationDependenc
     const before = await deps.local.get(["schema", "device", "sync", "doc:settings"])
     if (!jsonObject(before) || !sameSyncJson(readSettingsSnapshot(before), baseline)) return { kind: "unavailable", reason: "stale" }
     if (deps.disposed()) return { kind: "unavailable", reason: "disposed" }
-    try { await deps.local.set(items) } catch (error) { return { kind: "failed", stage: "set", error } }
+    try {
+      await deps.local.set(items)
+    } catch (error) {
+      return { kind: "failed", stage: "set", error }
+    }
     try {
       const confirmed = await deps.local.get(["schema", "device", "sync", "doc:settings"])
       if (deps.disposed()) return { kind: "unconfirmed", cause: { kind: "authority" } }
       if (!jsonObject(confirmed) || !sameSyncJson(readSettingsSnapshot(confirmed), { ...baseline, ...items })) return { kind: "unconfirmed", cause: { kind: "readback" } }
       return { kind: "committed" }
-    } catch (error) { return { kind: "unconfirmed", cause: { kind: "read-failed", error } } }
-  } catch (error) { return { kind: "failed", stage: "before-set", error } }
+    } catch (error) {
+      return { kind: "unconfirmed", cause: { kind: "read-failed", error } }
+    }
+  } catch (error) {
+    return { kind: "failed", stage: "before-set", error }
+  }
 }
 
 function copy(value: JsonValue): JsonValue {

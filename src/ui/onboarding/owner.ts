@@ -30,8 +30,7 @@ export type FeatureApplication =
   | { readonly feature: Exclude<PageFeatureId, "shortcuts">; readonly state: "enabled" | "held-site-access" | "held-browser-menu" }
   | { readonly feature: "shortcuts"; readonly state: "enabled"; readonly alsoOnMusic: "enabled" | "held-site-access" }
 
-export type AgreementRefusal =
-  | "sync-full" | "update-needed" | "invalid" | "rejected" | "unconfirmed" | "unavailable" | "join-required"
+export type AgreementRefusal = "sync-full" | "update-needed" | "invalid" | "rejected" | "unconfirmed" | "unavailable" | "join-required"
 
 // Only a read-back-confirmed commit maps to "agreed". A resolved write that was never confirmed is "unconfirmed".
 export type AgreementOutcome =
@@ -40,16 +39,10 @@ export type AgreementOutcome =
 
 export type AccountLabel = { readonly name: string; readonly handle?: string }
 
-export type YouTubeState =
-  | { readonly kind: "no-access" }
-  | { readonly kind: "no-tab" }
-  | { readonly kind: "signed-out" }
-  | { readonly kind: "account"; readonly account: AccountLabel }
+export type YouTubeState = { readonly kind: "no-access" } | { readonly kind: "no-tab" } | { readonly kind: "signed-out" } | { readonly kind: "account"; readonly account: AccountLabel }
 
 export type PlaylistPurpose = "auto-add" | "shortcut" | "quick-save" | "music-quick-save"
-export type PlaylistSelection =
-  | { readonly kind: "none" }
-  | { readonly kind: "chosen"; readonly titles: readonly string[] }
+export type PlaylistSelection = { readonly kind: "none" } | { readonly kind: "chosen"; readonly titles: readonly string[] }
 
 export type PlaylistTarget =
   | { readonly purpose: "shortcut"; readonly key: string; readonly selection: PlaylistSelection }
@@ -68,10 +61,7 @@ export type SetupView =
 
 export type ChoiceRequest = { readonly feature: PageFeatureId; readonly purpose: PlaylistPurpose }
 export type ChoiceFailure = "picker-unavailable" | "private" | "rejected" | "unconfirmed" | "unavailable"
-export type ChoiceOutcome =
-  | { readonly kind: "confirmed"; readonly selection: PlaylistSelection }
-  | { readonly kind: "cancelled" }
-  | { readonly kind: "failed"; readonly reason: ChoiceFailure }
+export type ChoiceOutcome = { readonly kind: "confirmed"; readonly selection: PlaylistSelection } | { readonly kind: "cancelled" } | { readonly kind: "failed"; readonly reason: ChoiceFailure }
 
 export type AccessSite = "www" | "music"
 export type Destination = "youtube" | "sign-in" | "settings"

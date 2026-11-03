@@ -16,10 +16,7 @@ export type SetupDestinationResult =
   | { readonly kind: "unavailable"; readonly reason: "startup" | "newer-layout" | "consent-held" | "sync-writer-required" | "stale" | "disposed" }
   | { readonly kind: "removal"; readonly result: Exclude<RemovalResult, { readonly kind: "committed" | "unchanged" }> }
   | { readonly kind: "failed"; readonly stage: "before-set" | "set"; readonly error: unknown }
-  | { readonly kind: "unconfirmed"; readonly cause:
-    | { readonly kind: "authority" | "readback" }
-    | { readonly kind: "read-failed" | "rejected"; readonly error: unknown }
-  }
+  | { readonly kind: "unconfirmed"; readonly cause: { readonly kind: "authority" | "readback" } | { readonly kind: "read-failed" | "rejected"; readonly error: unknown } }
 
 // The same owner lane ports as the shared Settings write, so Setup edits gain no second persistence path.
 export type SetupEditPorts = Parameters<typeof executeSharedSetting>[0] & {
@@ -44,8 +41,7 @@ export async function executeSetupDestination(deps: SetupEditPorts, change: Setu
 }
 
 /** `headroom` admits a label refresh or a mark into the synced headroom, and past it keeps the edit here until room frees up (SYNC-16). */
-export async function executeSetupEdit(deps: SetupEditPorts, acct: AccountKey, planEdit: (records: JsonObject) => SetupDestinationPlan,
-  allowance?: "headroom"): Promise<SetupDestinationResult> {
+export async function executeSetupEdit(deps: SetupEditPorts, acct: AccountKey, planEdit: (records: JsonObject) => SetupDestinationPlan, allowance?: "headroom"): Promise<SetupDestinationResult> {
   const invalid = { kind: "result", result: { refused: "invalid" } } as const
   const unavailable = { kind: "unavailable", reason: "sync-writer-required" } as const
   const stopped = { kind: "unavailable", reason: "disposed" } as const
@@ -58,9 +54,12 @@ export async function executeSetupEdit(deps: SetupEditPorts, acct: AccountKey, p
     const before = copyObject(records)
     const plan = planEdit(before)
     switch (plan.kind) {
-      case "invalid": return invalid
-      case "update-needed": return { kind: "result", result: { refused: "update-needed" } }
-      case "stale": return { kind: "stale", reason: plan.reason }
+      case "invalid":
+        return invalid
+      case "update-needed":
+        return { kind: "result", result: { refused: "update-needed" } }
+      case "stale":
+        return { kind: "stale", reason: plan.reason }
       case "remove": {
         const captured = captureAccountRemoval(before, acct, ready)
         if (captured.kind === "unchanged") return { kind: "unavailable", reason: "stale" }
@@ -72,9 +71,10 @@ export async function executeSetupEdit(deps: SetupEditPorts, acct: AccountKey, p
           const confirmed = await deps.local.get(null)
           if (deps.disposed() || deps.authority(confirmed).kind !== "ready") return { kind: "unconfirmed", cause: { kind: "authority" } }
           const read = readAccountSetup(confirmed, acct)
-          return read.kind === "value" && read.view.kind === "none"
-            ? { kind: "committed", view: read.view } : { kind: "unconfirmed", cause: { kind: "readback" } }
-        } catch (error) { return { kind: "unconfirmed", cause: { kind: "read-failed", error } } }
+          return read.kind === "value" && read.view.kind === "none" ? { kind: "committed", view: read.view } : { kind: "unconfirmed", cause: { kind: "readback" } }
+        } catch (error) {
+          return { kind: "unconfirmed", cause: { kind: "read-failed", error } }
+        }
       }
       case "unchanged": {
         if (!ready.device.syncOn) return { kind: "unchanged" }
@@ -84,13 +84,14 @@ export async function executeSetupEdit(deps: SetupEditPorts, acct: AccountKey, p
         if (admission.kind === "refused") return { kind: "result", result: { refused: admission.reason } }
         return { kind: "unchanged" }
       }
-      case "save": break
+      case "save":
+        break
     }
     const prepared = prepareDocumentBody({ kind: "setup", data: plan.setup, context: plan.context })
     if (prepared.kind !== "prepared") return invalid
-    const name = documentKey(plan.key), raw = before[name]
-    const envelope = { ...(jsonObject(raw) ? raw : {}), v: DOCUMENT_VERSION,
-      gen: deps.generation(), at: deps.now(), by: ready.device.id, data: prepared.data }
+    const name = documentKey(plan.key),
+      raw = before[name]
+    const envelope = { ...(jsonObject(raw) ? raw : {}), v: DOCUMENT_VERSION, gen: deps.generation(), at: deps.now(), by: ready.device.id, data: prepared.data }
     if ("deleted" in envelope) delete envelope.deleted
     if (!jsonObject(envelope) || decodeDocument(envelope, decodeSetup).kind !== "value") return invalid
     const items: JsonObject = { [name]: envelope }
@@ -116,11 +117,15 @@ export async function executeSetupEdit(deps: SetupEditPorts, acct: AccountKey, p
     if (deps.disposed()) return stopped
     if (!jsonObject(current) || !sameSyncJson(current, before)) return { kind: "unavailable", reason: "stale" }
     const expected = copyObject({ ...before, ...items })
-    try { await deps.local.set(items) } catch (error) {
+    try {
+      await deps.local.set(items)
+    } catch (error) {
       try {
         const after = await deps.local.get(null)
         return jsonObject(after) && sameSyncJson(after, before) ? { kind: "failed", stage: "set", error } : { kind: "unconfirmed", cause: { kind: "rejected", error } }
-      } catch { return { kind: "unconfirmed", cause: { kind: "rejected", error } } }
+      } catch {
+        return { kind: "unconfirmed", cause: { kind: "rejected", error } }
+      }
     }
     try {
       const confirmed = await deps.local.get(null)
@@ -130,6 +135,10 @@ export async function executeSetupEdit(deps: SetupEditPorts, acct: AccountKey, p
       const read = readAccountSetup(confirmed, acct)
       if (read.kind !== "value" || read.view.kind !== "live") return { kind: "unconfirmed", cause: { kind: "readback" } }
       return { kind: "committed", view: read.view }
-    } catch (error) { return { kind: "unconfirmed", cause: { kind: "read-failed", error } } }
-  } catch (error) { return { kind: "failed", stage: "before-set", error } }
+    } catch (error) {
+      return { kind: "unconfirmed", cause: { kind: "read-failed", error } }
+    }
+  } catch (error) {
+    return { kind: "failed", stage: "before-set", error }
+  }
 }

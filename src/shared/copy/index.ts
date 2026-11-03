@@ -18,14 +18,19 @@ const limit = 40
 
 export function cut(title: string): string {
   const parts = [...characters.segment(title)]
-  return parts.length > limit ? `${parts.slice(0, limit).map(part => part.segment).join("")}…` : title
+  return parts.length > limit
+    ? `${parts
+        .slice(0, limit)
+        .map(part => part.segment)
+        .join("")}…`
+    : title
 }
 
 export { list } from "./list"
 import { list } from "./list"
 
 export function toastText(plan: ToastPlan, titles: Titles, site: Site, i18n: I18n): string {
-  const known = (text: string | undefined) => text !== undefined && text.trim() !== "" ? text : undefined
+  const known = (text: string | undefined) => (text !== undefined && text.trim() !== "" ? text : undefined)
   const video = known(titles.video)
   const playlist = (id: PlaylistId) => {
     const title = known(titles.playlists?.[id])
@@ -34,7 +39,12 @@ export function toastText(plan: ToastPlan, titles: Titles, site: Site, i18n: I18
   const names = (ids: readonly PlaylistId[]) => list(ids.map(playlist), i18n)
   const messages = feedbackMessages[`${site}_${plan.auto ? "auto" : "manual"}_${video === undefined ? "untitled" : "named"}`]
   const values: FeedbackValues = {
-    video: video === undefined ? "" : cut(video), targets: "", target: "", success: "", saved: "", filtered: "",
+    video: video === undefined ? "" : cut(video),
+    targets: "",
+    target: "",
+    success: "",
+    saved: "",
+    filtered: "",
     shortcut: known(titles.shortcut) ?? i18n.message("copy_shortcut"),
     account: known(titles.account) ?? i18n.message("copy_account"),
     channel: known(titles.channel) ?? i18n.message("copy_channel")
@@ -46,18 +56,28 @@ export function toastText(plan: ToastPlan, titles: Titles, site: Site, i18n: I18
     case "first-pick":
     case "already-in":
     case "filtered":
-    case "unknown-channel": return messages[message.kind](i18n, { ...values, targets: names(message.playlists) })
+    case "unknown-channel":
+      return messages[message.kind](i18n, { ...values, targets: names(message.playlists) })
     case "removed":
-    case "shortcut-set": return messages[message.kind](i18n, { ...values, target: playlist(message.playlist) })
+    case "shortcut-set":
+      return messages[message.kind](i18n, { ...values, target: playlist(message.playlist) })
     case "undo-failed":
-    case "no-playlist": return messages[message.kind](i18n, values)
-    case "saved-filtered": return messages[`saved-filtered_${i18n.plural(message.saved)}_${i18n.plural(message.filtered)}`](i18n, {
-      ...values, saved: i18n.number(message.saved), filtered: i18n.number(message.filtered)
-    })
-    case "failed": return messages[`failed_${message.failure}_${i18n.plural(message.playlists.length)}`](i18n, { ...values, targets: names(message.playlists) })
-    case "saved-failed": return messages[`saved-failed_${message.failure}_${i18n.plural(message.playlists.length)}`](i18n, {
-      ...values, success: names(message.saved), targets: names(message.playlists)
-    })
+    case "no-playlist":
+      return messages[message.kind](i18n, values)
+    case "saved-filtered":
+      return messages[`saved-filtered_${i18n.plural(message.saved)}_${i18n.plural(message.filtered)}`](i18n, {
+        ...values,
+        saved: i18n.number(message.saved),
+        filtered: i18n.number(message.filtered)
+      })
+    case "failed":
+      return messages[`failed_${message.failure}_${i18n.plural(message.playlists.length)}`](i18n, { ...values, targets: names(message.playlists) })
+    case "saved-failed":
+      return messages[`saved-failed_${message.failure}_${i18n.plural(message.playlists.length)}`](i18n, {
+        ...values,
+        success: names(message.saved),
+        targets: names(message.playlists)
+      })
   }
 }
 
@@ -70,15 +90,22 @@ const featureKeys = {
   "card-menu": "notice_feature_card_menu",
   "gather": "notice_feature_gather",
   "music-actions": "notice_feature_music_actions",
-  "music-keys": "notice_feature_music_keys",
+  "music-keys": "notice_feature_music_keys"
 } satisfies Record<PageFeatureId, SimpleMessageKey>
 
 export function siteFeedbackText(i18n: I18n) {
   return {
-    actions: { undo: i18n.message("toast_action_undo"), "try-again": i18n.message("toast_action_try_again"),
-      settings: i18n.message("toast_action_settings"), choose: i18n.message("toast_action_choose"),
-      "sign-in": i18n.message("toast_action_sign_in"), reload: i18n.message("toast_action_reload") },
-    nothingToUndo: i18n.message("toast_nothingToUndo"), details: i18n.message("toast_details"), dismiss: i18n.message("toast_dismiss")
+    actions: {
+      undo: i18n.message("toast_action_undo"),
+      "try-again": i18n.message("toast_action_try_again"),
+      settings: i18n.message("toast_action_settings"),
+      choose: i18n.message("toast_action_choose"),
+      "sign-in": i18n.message("toast_action_sign_in"),
+      reload: i18n.message("toast_action_reload")
+    },
+    nothingToUndo: i18n.message("toast_nothingToUndo"),
+    details: i18n.message("toast_details"),
+    dismiss: i18n.message("toast_dismiss")
   }
 }
 
@@ -98,7 +125,7 @@ const queueLabelKeys = {
   busy: "queueButton_busy",
   added: "queueButton_added",
   unconfirmed: "queueButton_unconfirmed",
-  failed: "queueButton_failed",
+  failed: "queueButton_failed"
 } satisfies Record<QueueButtonLabel, SimpleMessageKey>
 
 export function queueButtonText(i18n: I18n) {
@@ -107,9 +134,12 @@ export function queueButtonText(i18n: I18n) {
     toast(kind: QueueButtonToast, title: string | undefined): string {
       const known = title !== undefined && title.trim() !== "" ? cut(title.trim()) : undefined
       switch (kind) {
-        case "added": return known === undefined ? i18n.message("queueButton_toast_added_untitled") : i18n.message("queueButton_toast_added_named", { title: known })
-        case "unconfirmed": return known === undefined ? i18n.message("queueButton_toast_unconfirmed_untitled") : i18n.message("queueButton_toast_unconfirmed_named", { title: known })
-        case "failed": return known === undefined ? i18n.message("queueButton_toast_failed_untitled") : i18n.message("queueButton_toast_failed_named", { title: known })
+        case "added":
+          return known === undefined ? i18n.message("queueButton_toast_added_untitled") : i18n.message("queueButton_toast_added_named", { title: known })
+        case "unconfirmed":
+          return known === undefined ? i18n.message("queueButton_toast_unconfirmed_untitled") : i18n.message("queueButton_toast_unconfirmed_named", { title: known })
+        case "failed":
+          return known === undefined ? i18n.message("queueButton_toast_failed_untitled") : i18n.message("queueButton_toast_failed_named", { title: known })
       }
     }
   }

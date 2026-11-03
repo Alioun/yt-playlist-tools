@@ -1,8 +1,5 @@
 import { documentKey, parseDocumentKey, type DocumentKey } from "../../shared/model"
-import {
-  projectSyncWrite, readSyncDocument,
-  type RawSyncItem, type ReadSyncResult, type SyncProjection, type WireInvalid
-} from "./sync-codec"
+import { projectSyncWrite, readSyncDocument, type RawSyncItem, type ReadSyncResult, type SyncProjection, type WireInvalid } from "./sync-codec"
 
 export type SyncInventoryDocument = {
   readonly key: DocumentKey
@@ -13,10 +10,10 @@ export type SyncInventoryDocument = {
 export type SyncInventoryResult =
   | WireInvalid
   | {
-    readonly kind: "read"
-    readonly documents: readonly SyncInventoryDocument[]
-    readonly occupancy: Exclude<SyncProjection, WireInvalid>
-  }
+      readonly kind: "read"
+      readonly documents: readonly SyncInventoryDocument[]
+      readonly occupancy: Exclude<SyncProjection, WireInvalid>
+    }
 
 export function readSyncInventory(input: { readonly items: readonly RawSyncItem[] }): SyncInventoryResult {
   const occupancy = projectSyncWrite({ current: input.items, set: [] })

@@ -4,7 +4,13 @@ import { resolveSenderOrigin } from "./sender-origin"
 import { acquireLocalFilterWriterArea } from "./starting-owner-area"
 import type { SessionPort } from "../store/session-memory"
 import {
-  createLocalFilterWriter, type LocalFilterChange, type LocalFilterWriteResult, type SyncAutomaticResult, type SyncFlushResult, type SyncReceiveKey, type SyncReceiveResult
+  createLocalFilterWriter,
+  type LocalFilterChange,
+  type LocalFilterWriteResult,
+  type SyncAutomaticResult,
+  type SyncFlushResult,
+  type SyncReceiveKey,
+  type SyncReceiveResult
 } from "../store/local-filter-writer"
 
 type NativeBrowser = typeof import("wxt/browser").browser
@@ -16,20 +22,30 @@ function parseChange(raw: unknown): LocalFilterChange | undefined {
   if (keys.some(key => !["acct", "playlist", "desired", "clearListedChannels", "expectedGeneration"].includes(key))) return
   if (!isAccountKey(raw.acct) || !isPlaylistId(raw.playlist)) return
   const desired = raw.desired
-  if (!desired || typeof desired !== "object" || Array.isArray(desired) || Object.keys(desired).length !== 2 ||
-    !Object.hasOwn(desired, "mode") || !Object.hasOwn(desired, "on") ||
-    (desired.mode !== "allow" && desired.mode !== "deny") || typeof desired.on !== "boolean") return
+  if (
+    !desired ||
+    typeof desired !== "object" ||
+    Array.isArray(desired) ||
+    Object.keys(desired).length !== 2 ||
+    !Object.hasOwn(desired, "mode") ||
+    !Object.hasOwn(desired, "on") ||
+    (desired.mode !== "allow" && desired.mode !== "deny") ||
+    typeof desired.on !== "boolean"
+  )
+    return
   const common = { acct: raw.acct, playlist: raw.playlist, desired: { mode: desired.mode, on: desired.on } } satisfies Pick<LocalFilterChange, "acct" | "playlist" | "desired">
   if (raw.clearListedChannels === "not-confirmed" && keys.length === 4 && !Object.hasOwn(raw, "expectedGeneration")) {
     return { ...common, clearListedChannels: "not-confirmed" }
   }
-  if (raw.clearListedChannels === "confirmed" && keys.length === 5 && Object.hasOwn(raw, "expectedGeneration") &&
-    (raw.expectedGeneration === null || typeof raw.expectedGeneration === "string")) {
+  if (raw.clearListedChannels === "confirmed" && keys.length === 5 && Object.hasOwn(raw, "expectedGeneration") && (raw.expectedGeneration === null || typeof raw.expectedGeneration === "string")) {
     return { ...common, clearListedChannels: "confirmed", expectedGeneration: raw.expectedGeneration }
   }
 }
 
-export function createBrowserLocalFilterWriter(nativeBrowser: NativeBrowser, options: { onSyncResult: (result: SyncAutomaticResult) => void }): {
+export function createBrowserLocalFilterWriter(
+  nativeBrowser: NativeBrowser,
+  options: { onSyncResult: (result: SyncAutomaticResult) => void }
+): {
   session: SessionPort
   changeFromSettings(raw: unknown, sender: NativeSender): Promise<LocalFilterWriteResult>
   receiveSyncDocument(key: SyncReceiveKey): Promise<SyncReceiveResult>
@@ -80,8 +96,11 @@ export function createBrowserLocalFilterWriter(nativeBrowser: NativeBrowser, opt
       startSync: () => writer.startSync(),
       dispose() {
         if (!disposal) {
-          try { disposal = writer.dispose().then(release) }
-          catch (error) { disposal = Promise.reject(error) }
+          try {
+            disposal = writer.dispose().then(release)
+          } catch (error) {
+            disposal = Promise.reject(error)
+          }
         }
         return disposal
       },

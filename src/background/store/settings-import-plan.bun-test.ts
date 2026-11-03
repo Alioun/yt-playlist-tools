@@ -7,8 +7,33 @@ import { prepareDocumentBody } from "./write-preparation"
 import { encodeSyncDocument, projectSyncWrite, SYNC_BUDGET_ITEMS } from "./sync-codec"
 import { planSyncWrite } from "./sync-write-admission"
 import {
-  A, B, C, D, E, F, at, deviceId, channel, expectedPuts, expectedSettings, expectedSession, expectedTombstones, expectedSyncBatch, expectedDocumentOrder,
-  fileData, freeze, fresh, json, object, old, parse, playlist, removedNames, scenario, stamp, syncInventory
+  A,
+  B,
+  C,
+  D,
+  E,
+  F,
+  at,
+  deviceId,
+  channel,
+  expectedPuts,
+  expectedSettings,
+  expectedSession,
+  expectedTombstones,
+  expectedSyncBatch,
+  expectedDocumentOrder,
+  fileData,
+  freeze,
+  fresh,
+  json,
+  object,
+  old,
+  parse,
+  playlist,
+  removedNames,
+  scenario,
+  stamp,
+  syncInventory
 } from "../../../tools/fixtures/settings-import-plan/specimens"
 
 function planned(result: SettingsImportPlanResult): SettingsImportPlan {
@@ -18,17 +43,24 @@ function planned(result: SettingsImportPlanResult): SettingsImportPlan {
 function puts(plan: SettingsImportPlan): JsonObject {
   return Object.fromEntries(plan.documents.changes.filter(change => change.kind === "put").map(change => [documentKey(change.key), change.document]))
 }
-function changedNames(plan: SettingsImportPlan): string[] { return plan.documents.changes.map(change => documentKey(change.key)).sort() }
+function changedNames(plan: SettingsImportPlan): string[] {
+  return plan.documents.changes.map(change => documentKey(change.key)).sort()
+}
 
 test("one local batch replaces shared settings and all included account documents", () => {
-  const input = freeze(scenario()), before = JSON.stringify(input)
+  const input = freeze(scenario()),
+    before = JSON.stringify(input)
   const result = planned(planSettingsImport(input))
   expect(puts(result)).toEqual(expectedPuts())
-  expect(result.documents.changes.filter(change => change.kind === "remove").map(change => documentKey(change.key)).sort()).toEqual([...removedNames].sort())
+  expect(
+    result.documents.changes
+      .filter(change => change.kind === "remove")
+      .map(change => documentKey(change.key))
+      .sort()
+  ).toEqual([...removedNames].sort())
   expect(changedNames(result)).toEqual([...Object.keys(expectedPuts()), ...removedNames].sort())
   expect(result.expected.session).toEqual(expectedSession())
-  const expectedLocal = { ...input.local, ...expectedPuts(), lastAccount: null,
-    sync: { ...object(input.local.sync), everEdited: true, editedSinceOff: true } }
+  const expectedLocal = { ...input.local, ...expectedPuts(), lastAccount: null, sync: { ...object(input.local.sync), everEdited: true, editedSinceOff: true } }
   for (const key of [...removedNames, `cache:${B}`, `progress:${B}:0`, `progress:${B}:15`]) Reflect.deleteProperty(expectedLocal, key)
   expect(result.expected.local).toEqual(expectedLocal)
   expect(JSON.stringify(input)).toBe(before)
@@ -44,11 +76,13 @@ test("omitted kept and orphan filters cannot survive replacement", () => {
 
 test("empty accounts have exact cleanup even without a prior Setup", () => {
   const result = planned(planSettingsImport(scenario()))
-  expect(result.cleanup.accounts).toEqual([B, D].map(acct => ({ acct, cacheKey: `cache:${acct}`,
-    progressKeys: Array.from({ length: 16 }, (_, i) => `progress:${acct}:${i}`), clearAccountSession: true, clearLastAccountIfMatches: true })))
+  expect(result.cleanup.accounts).toEqual(
+    [B, D].map(acct => ({ acct, cacheKey: `cache:${acct}`, progressKeys: Array.from({ length: 16 }, (_, i) => `progress:${acct}:${i}`), clearAccountSession: true, clearLastAccountIfMatches: true }))
+  )
   expect(result.cleanup.lastAccount).toEqual({ kind: "clear", acct: B })
   expect(result.cleanup.sessionEffects).toEqual([
-    { kind: "remove", key: { kind: "skips", acct: B } }, { kind: "remove", key: { kind: "cooldown", acct: B } },
+    { kind: "remove", key: { kind: "skips", acct: B } },
+    { kind: "remove", key: { kind: "cooldown", acct: B } },
     ...(["recent", "recentAdds", "shown", "breakage", "gather", "tabs"] as const).map(key => ({ kind: "set" as const, key, value: json(expectedSession()[key]) }))
   ])
   expect(Object.hasOwn(result.expected.local, `doc:setup:${D}`)).toBe(false)
@@ -57,7 +91,8 @@ test("empty accounts have exact cleanup even without a prior Setup", () => {
 })
 
 test("absent account data stays byte identical", () => {
-  const input = scenario(), result = planned(planSettingsImport(input))
+  const input = scenario(),
+    result = planned(planSettingsImport(input))
   for (const name of [`doc:setup:${C}`, `doc:filter:${C}:PL_C`, `cache:${C}`, `progress:${C}:3`, "unclaimed", "outside"]) {
     expect(JSON.stringify(result.expected.local[name])).toBe(JSON.stringify(input.local[name]))
   }
@@ -69,7 +104,8 @@ test("absent account data stays byte identical", () => {
 })
 
 test("already applied presets and imported keys survive without preset application", () => {
-  const result = planned(planSettingsImport(scenario())), settings = object(object(puts(result)["doc:settings"]).data)
+  const result = planned(planSettingsImport(scenario())),
+    settings = object(object(puts(result)["doc:settings"]).data)
   expect(settings).toEqual(expectedSettings())
   expect(object(settings.shortcuts).preset).toBe(true)
   expect(object(settings.musicKeys).preset).toBe(true)
@@ -80,11 +116,15 @@ test("already applied presets and imported keys survive without preset applicati
 })
 
 test("unknown fields and future tuple slots survive actual normalization", () => {
-  const input = scenario(), result = planned(planSettingsImport(input))
+  const input = scenario(),
+    result = planned(planSettingsImport(input))
   expect(puts(result)).toEqual(expectedPuts())
   const normalized = prepareDocumentBody({ kind: "filter", data: { mode: "allow", on: true, channels: [[channel, "t".repeat(110), "h".repeat(35)]] } })
   expect(normalized).toEqual({ kind: "prepared", data: { mode: "allow", on: true, channels: [[channel, "t".repeat(100), "h".repeat(30)]] } })
-  const data = fileData(), accounts = object(data.accounts), a = object(accounts[A]), filters = object(a.filters)
+  const data = fileData(),
+    accounts = object(data.accounts),
+    a = object(accounts[A]),
+    filters = object(a.filters)
   filters.PL_in = { mode: "allow", on: true, channels: [[channel, "new"]] }
   const noHandle = planned(planSettingsImport({ ...input, parsed: parse(data) }))
   expect(object(object(puts(noHandle)[`doc:filter:${A}:PL_in`]).data).channels).toEqual([[channel, "new", null, "future-column"]])
@@ -97,17 +137,20 @@ test("newer and malformed addressed documents refuse the whole import", () => {
     expect(planSettingsImport(input)).toEqual({ kind: "refused", reason: "update-needed" })
   }
   for (const raw of [null, false, { v: 1, gen: "broken", at: 0, by: "x", data: { mode: "invalid" } }]) {
-    const input = scenario(); input.local[`doc:filter:${A}:PL_orphan`] = raw
+    const input = scenario()
+    input.local[`doc:filter:${A}:PL_orphan`] = raw
     expect(planSettingsImport(input)).toEqual({ kind: "unavailable", reason: "inventory" })
   }
-  const malformedName = scenario(); malformedName.local[`doc:filter:${A}:bad:tail`] = {}
+  const malformedName = scenario()
+  malformedName.local[`doc:filter:${A}:bad:tail`] = {}
   expect(planSettingsImport(malformedName)).toEqual({ kind: "unavailable", reason: "inventory" })
 })
 
 test("sync on admits one complete independently constructed batch including tombstones", () => {
   const input = scenario(true)
   if (input.sync.kind !== "on") throw new Error("Expected sync facts")
-  const result = planned(planSettingsImport(input)), documents = { ...expectedPuts(), ...expectedTombstones() }
+  const result = planned(planSettingsImport(input)),
+    documents = { ...expectedPuts(), ...expectedTombstones() }
   expect(puts(result)).toEqual(documents)
   expect(result.documents.changes.every(change => change.kind === "put")).toBe(true)
   const [first, ...rest] = expectedSyncBatch()
@@ -141,7 +184,9 @@ test("remote newer addressed documents and changed join facts do not create a ba
 })
 
 test("canonical pushed-history repairs remain separate from fresh outgoing generations", () => {
-  const input = scenario(true), oldHistory = object(input.local.sync), originalPushed = json(oldHistory.pushed)
+  const input = scenario(true),
+    oldHistory = object(input.local.sync),
+    originalPushed = json(oldHistory.pushed)
   input.local.sync = { ...oldHistory, pushed: {}, everEdited: true }
   const result = planned(planSettingsImport(input))
   expect(result.documents.history).toEqual({ kind: "set", sync: { ...oldHistory, pushed: originalPushed, everEdited: true } })
@@ -149,19 +194,40 @@ test("canonical pushed-history repairs remain separate from fresh outgoing gener
 })
 
 test("per-account partitions each fit but whole import refuses with no document batch", () => {
-  const base = scenario(true), settings = json(defaultSettings()), setup = json({ ...defaultSetup(), quickSave: "PL_after" })
-  const local: JsonObject = { schema: 1, device: base.local.device ?? null, sync: { joined: "joined-copy", pushed: {}, status: "ok", editedSinceOff: false, everEdited: false },
-    "doc:settings": old("quota-settings", settings), [`doc:setup:${A}`]: old("quota-A", setup), [`doc:setup:${B}`]: old("quota-B", setup) }
+  const base = scenario(true),
+    settings = json(defaultSettings()),
+    setup = json({ ...defaultSetup(), quickSave: "PL_after" })
+  const local: JsonObject = {
+    schema: 1,
+    device: base.local.device ?? null,
+    sync: { joined: "joined-copy", pushed: {}, status: "ok", editedSinceOff: false, everEdited: false },
+    "doc:settings": old("quota-settings", settings),
+    [`doc:setup:${A}`]: old("quota-A", setup),
+    [`doc:setup:${B}`]: old("quota-B", setup)
+  }
   const remote = syncInventory(local)
   for (let i = 0, n = SYNC_BUDGET_ITEMS - Object.keys(remote).length - 1; i < n; i++) remote[`retained:${i}`] = 0
-  const parsed = parse({ format: 1, product: "Perchling", version: "2.0.0", date: "2026-10-30", settings,
-    accounts: { [A]: { setup, filters: { PL_new: { mode: "deny", on: false, channels: [] } } }, [B]: { setup, filters: { PL_new: { mode: "deny", on: false, channels: [] } } } } })
+  const parsed = parse({
+    format: 1,
+    product: "Perchling",
+    version: "2.0.0",
+    date: "2026-10-30",
+    settings,
+    accounts: { [A]: { setup, filters: { PL_new: { mode: "deny", on: false, channels: [] } } }, [B]: { setup, filters: { PL_new: { mode: "deny", on: false, channels: [] } } } }
+  })
   for (const acct of [A, B]) {
-    const admission = planSyncWrite({ local, sync: remote, intent: { kind: "changed-batch", documents: [
-      { key: { kind: "settings" }, document: stamp("doc:settings", settings) },
-      { key: { kind: "setup", acct }, document: stamp(`doc:setup:${acct}`, setup) },
-      { key: { kind: "filter", acct, playlist: playlist("PL_new") }, document: stamp(`doc:filter:${acct}:PL_new`, { mode: "deny", on: false, channels: [] }) }
-    ] } })
+    const admission = planSyncWrite({
+      local,
+      sync: remote,
+      intent: {
+        kind: "changed-batch",
+        documents: [
+          { key: { kind: "settings" }, document: stamp("doc:settings", settings) },
+          { key: { kind: "setup", acct }, document: stamp(`doc:setup:${acct}`, setup) },
+          { key: { kind: "filter", acct, playlist: playlist("PL_new") }, document: stamp(`doc:filter:${acct}:PL_new`, { mode: "deny", on: false, channels: [] }) }
+        ]
+      }
+    })
     expect(admission.kind).toBe("planned")
   }
   const result = planSettingsImport({ parsed, local, session: {}, sync: { kind: "on", records: remote }, at, generation: fresh })
@@ -175,12 +241,15 @@ test("retained occupancy and unsupported sync history yield no partial result", 
   input.sync.records["retained:too-large"] = "x".repeat(8192)
   expect(planSettingsImport(input)).toEqual({ kind: "refused", reason: "sync-full" })
   for (const history of [null, {}, { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: false }]) {
-    const off = scenario(); off.local.sync = json(history)
+    const off = scenario()
+    off.local.sync = json(history)
     expect(planSettingsImport(off)).toEqual({ kind: "unavailable", reason: "history" })
   }
-  const noHistory = scenario(); delete noHistory.local.sync
+  const noHistory = scenario()
+  delete noHistory.local.sync
   expect(planned(planSettingsImport(noHistory)).documents.history).toEqual({ kind: "set", sync: { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true } })
-  const session = scenario(); session.session.tabs = { bad: true }
+  const session = scenario()
+  session.session.tabs = { bad: true }
   expect(planSettingsImport(session)).toEqual({ kind: "unavailable", reason: "session" })
 })
 
@@ -188,7 +257,8 @@ test("matching imported values still produce fresh generations", () => {
   const input = scenario()
   const oldSettings = object(expectedSettings())
   input.local["doc:settings"] = old("equal-old-generation", oldSettings)
-  const result = planned(planSettingsImport(input)), settings = object(puts(result)["doc:settings"])
+  const result = planned(planSettingsImport(input)),
+    settings = object(puts(result)["doc:settings"])
   expect(settings.data).toEqual(oldSettings)
   expect(settings.gen).toBe("fresh:doc:settings")
   expect(settings.at).toBe(at)
@@ -198,7 +268,8 @@ test("matching imported values still produce fresh generations", () => {
 })
 
 test("capture detaches exact local session consent and join identities", () => {
-  const input = scenario(true), result = planned(planSettingsImport(input))
+  const input = scenario(true),
+    result = planned(planSettingsImport(input))
   expect(result.capture.local).toEqual(input.local)
   expect(result.capture.session).toEqual(input.session)
   expect(result.capture.binding).toEqual({ deviceId, consent: { v: 1, at: 7 }, consentControl: null, joined: "joined-copy" })
@@ -209,17 +280,21 @@ test("capture detaches exact local session consent and join identities", () => {
   expect(Object.hasOwn(result.capture.local, `doc:filter:${A}:PL_added_after_capture`)).toBe(false)
   expect(result.capture.session.outside).toEqual({ keep: true })
   expect(Object.hasOwn(result.capture.sync.records, "lateOccupancy")).toBe(false)
-  const off = scenario(); off.local.lastAccount = C
+  const off = scenario()
+  off.local.lastAccount = C
   expect(planned(planSettingsImport(off)).cleanup.lastAccount).toEqual({ kind: "unchanged" })
 })
 
 test("file validation and consent remain separate from pure planning", () => {
-  const raw = fileData(); object(raw.settings).consent = { v: 1, at: 1 }
+  const raw = fileData()
+  object(raw.settings).consent = { v: 1, at: 1 }
   expect(createImportPlanner("normal").importFile(JSON.stringify(raw)).kind).toBe("refused")
-  const newer = fileData(); newer.format = 2
+  const newer = fileData()
+  newer.format = 2
   expect(createImportPlanner("normal").importFile(JSON.stringify(newer))).toEqual({ kind: "refused", reason: "newer-format", copy: "DATA-55.newer-format" })
   expect(createImportPlanner("private").importFile(JSON.stringify(fileData())).kind).toBe("refused")
-  const input = scenario(); object(input.local.device).consent = null
+  const input = scenario()
+  object(input.local.device).consent = null
   const result = planned(planSettingsImport(input))
   expect(result.capture.binding.consent).toBe(null)
   expect(object(result.expected.local.device).consent).toBe(null)
@@ -237,7 +312,8 @@ test("successive removed accounts share one final cleanup snapshot", () => {
 })
 
 test("an empty imported account removes orphan documents even without a current Setup", () => {
-  const input = scenario(); delete input.local[`doc:setup:${B}`]
+  const input = scenario()
+  delete input.local[`doc:setup:${B}`]
   const result = planned(planSettingsImport(input))
   expect(Object.hasOwn(result.expected.local, `doc:filter:${B}:PL_B_keep`)).toBe(false)
   expect(Object.hasOwn(result.expected.local, `cache:${B}`)).toBe(false)
@@ -245,7 +321,9 @@ test("an empty imported account removes orphan documents even without a current 
 })
 
 test("Settings alone is a nonempty fresh batch and preserves all absent accounts", () => {
-  const input = scenario(), data = fileData(); data.accounts = {}
+  const input = scenario(),
+    data = fileData()
+  data.accounts = {}
   const result = planned(planSettingsImport({ ...input, parsed: parse(data) }))
   expect(result.documents.changes).toHaveLength(1)
   expect(result.cleanup.accounts).toEqual([])
@@ -254,8 +332,15 @@ test("Settings alone is a nonempty fresh batch and preserves all absent accounts
 
 test("recognized consent generation is captured without granting execution", () => {
   const input = scenario()
-  input.local["consent:state"] = { v: 1, kind: "consent-state", deviceId, generation: 4, lastAgreementAt: 7,
-    legacyBasis: { kind: "observed", agreement: { v: 1, at: 7 } }, state: { kind: "agreed", current: { v: 1, at: 7 }, prior: null } }
+  input.local["consent:state"] = {
+    v: 1,
+    kind: "consent-state",
+    deviceId,
+    generation: 4,
+    lastAgreementAt: 7,
+    legacyBasis: { kind: "observed", agreement: { v: 1, at: 7 } },
+    state: { kind: "agreed", current: { v: 1, at: 7 }, prior: null }
+  }
   const result = planned(planSettingsImport(input))
   if (result.capture.binding.consentControl === null) throw Error("Expected captured consent control")
   expect(input.local["consent:state"]).toEqual(result.capture.binding.consentControl)
@@ -264,7 +349,9 @@ test("recognized consent generation is captured without granting execution", () 
 })
 
 test("retained old chunks stay charged beside the actual new generation", () => {
-  const input = scenario(true), name = `doc:filter:${A}:PL_in`, raw = object(input.local[name])
+  const input = scenario(true),
+    name = `doc:filter:${A}:PL_in`,
+    raw = object(input.local[name])
   object(raw.data).future = "f".repeat(18000)
   const remote = syncInventory(input.local)
   const result = planned(planSettingsImport({ ...input, sync: { kind: "on", records: remote } }))

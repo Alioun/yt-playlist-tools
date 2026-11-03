@@ -65,7 +65,11 @@ async function build(browser: "chrome" | "firefox", overrides: Overrides = {}) {
     "onboarding.html": `<script type="module" src="/chunks/onboarding-GGGGGGGG.js"></script>`,
     "chunks/onboarding-GGGGGGGG.js": `import(\`./UpgradeNote-HHHHHHHH.js\`);${weighing(3)}`,
     "chunks/UpgradeNote-HHHHHHHH.js": weighing(1),
-    ...Object.fromEntries(Object.values(sitePieces()).flat().map(piece => [piece.file, weighing(0.5, piece.file.length)])),
+    ...Object.fromEntries(
+      Object.values(sitePieces())
+        .flat()
+        .map(piece => [piece.file, weighing(0.5, piece.file.length)])
+    ),
     ...overrides.files
   }
   for (const [path, content] of Object.entries(files)) {
@@ -74,7 +78,16 @@ async function build(browser: "chrome" | "firefox", overrides: Overrides = {}) {
   }
   const evidenceDir = join(root, "page-link", `${browser}-build`)
   await mkdir(evidenceDir, { recursive: true })
-  const labels = [...new Set([...Object.values(sitePieces()).flat().map(piece => piece.file.replace(/\.js$/, "")), "popovers", "page-jobs-www", "page-jobs-music"])]
+  const labels = [
+    ...new Set([
+      ...Object.values(sitePieces())
+        .flat()
+        .map(piece => piece.file.replace(/\.js$/, "")),
+      "popovers",
+      "page-jobs-www",
+      "page-jobs-music"
+    ])
+  ]
   for (const label of labels) {
     const modules = overrides.evidence?.[label] ?? [`/repo/src/${label}.ts`]
     await writeFile(join(evidenceDir, `${label}.json`), JSON.stringify({ chunks: [{ file: `${label}.js`, modules }] }))
@@ -101,14 +114,21 @@ describe("check:budget", () => {
   })
 
   test("weighs a lazy chunk opened from another lazy chunk by what it adds to the code its importers loaded", async () => {
-    const result = checkBudget([await build("chrome", { files: {
-      "chunks/options-EEEEEEEE.js": `import(\`./YouTube-FFFFFFFF.js\`);import(\`./Music-JJJJJJJJ.js\`);${weighing(3)}`,
-      "chunks/YouTube-FFFFFFFF.js": `import{a}from"./section-KKKKKKKK.js";import{b}from"./youtube-only-MMMMMMMM.js";import(\`./Picker-LLLLLLLL.js\`);${weighing(1)}`,
-      "chunks/Music-JJJJJJJJ.js": `import{a}from"./section-KKKKKKKK.js";import(\`./Picker-LLLLLLLL.js\`);${weighing(1.5)}`,
-      "chunks/section-KKKKKKKK.js": weighing(4),
-      "chunks/youtube-only-MMMMMMMM.js": weighing(2.5),
-      "chunks/Picker-LLLLLLLL.js": `import{a}from"./section-KKKKKKKK.js";import{b}from"./youtube-only-MMMMMMMM.js";${weighing(0.75)}`
-    } })], budget)
+    const result = checkBudget(
+      [
+        await build("chrome", {
+          files: {
+            "chunks/options-EEEEEEEE.js": `import(\`./YouTube-FFFFFFFF.js\`);import(\`./Music-JJJJJJJJ.js\`);${weighing(3)}`,
+            "chunks/YouTube-FFFFFFFF.js": `import{a}from"./section-KKKKKKKK.js";import{b}from"./youtube-only-MMMMMMMM.js";import(\`./Picker-LLLLLLLL.js\`);${weighing(1)}`,
+            "chunks/Music-JJJJJJJJ.js": `import{a}from"./section-KKKKKKKK.js";import(\`./Picker-LLLLLLLL.js\`);${weighing(1.5)}`,
+            "chunks/section-KKKKKKKK.js": weighing(4),
+            "chunks/youtube-only-MMMMMMMM.js": weighing(2.5),
+            "chunks/Picker-LLLLLLLL.js": `import{a}from"./section-KKKKKKKK.js";import{b}from"./youtube-only-MMMMMMMM.js";${weighing(0.75)}`
+          }
+        })
+      ],
+      budget
+    )
     expect(row(result, "settings/lazy/YouTube")!.kb).toBeCloseTo(7.5, 0)
     expect(row(result, "settings/lazy/Picker")!.kb).toBeCloseTo(0.75 + 2.5, 0)
   })
@@ -171,7 +191,12 @@ describe("check:budget", () => {
     const entry = `const window = await getCurrent();import(\`./MusicTab-DDDDDDDD.js\`);${weighing(3)}`
     const deadlock = await build("chrome", { files: { "chunks/popup-AAAAAAAA.js": entry, "chunks/MusicTab-DDDDDDDD.js": `import{a}from"./popup-AAAAAAAA.js";${weighing(2)}` } })
     expect(checkBudget([deadlock], budget).failures).toEqual(["chrome: popup.html: chunks/MusicTab-DDDDDDDD.js imports chunks/popup-AAAAAAAA.js, which has a top-level await (Q-PERF-35 rule 3)"])
-    const insideFunction = await build("chrome", { files: { "chunks/popup-AAAAAAAA.js": `async function f(){await g()}import(\`./MusicTab-DDDDDDDD.js\`);${weighing(3)}`, "chunks/MusicTab-DDDDDDDD.js": `import{a}from"./popup-AAAAAAAA.js";${weighing(2)}` } })
+    const insideFunction = await build("chrome", {
+      files: {
+        "chunks/popup-AAAAAAAA.js": `async function f(){await g()}import(\`./MusicTab-DDDDDDDD.js\`);${weighing(3)}`,
+        "chunks/MusicTab-DDDDDDDD.js": `import{a}from"./popup-AAAAAAAA.js";${weighing(2)}`
+      }
+    })
     expect(checkBudget([insideFunction], budget).failures).toEqual([])
   })
 

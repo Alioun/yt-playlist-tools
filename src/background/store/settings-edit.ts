@@ -1,9 +1,7 @@
 import { decodeSettings, isPercent, normalizeSettingsForWrite } from "../../shared/model"
 import type { Settings } from "../../shared/model"
 
-type Snapshot<T> = T extends object
-  ? { readonly [P in keyof T]: Snapshot<T[P]> }
-  : T
+type Snapshot<T> = T extends object ? { readonly [P in keyof T]: Snapshot<T[P]> } : T
 
 import type { SharedSettingChange, SharedOptionChange } from "../../shared/contracts/shared-settings"
 export type { SharedSettingChange, SharedOptionChange, SharedOptionValues } from "../../shared/contracts/shared-settings"
@@ -13,10 +11,7 @@ export type SharedSettingResult =
   | { readonly kind: "invalid"; readonly reason: "invalid-percentage" | "invalid-option" }
   | { readonly kind: "changed"; readonly settings: Settings }
 
-export function changeSharedSetting(input: {
-  readonly current: Snapshot<Settings>
-  readonly change: SharedSettingChange
-}): SharedSettingResult {
+export function changeSharedSetting(input: { readonly current: Snapshot<Settings>; readonly change: SharedSettingChange }): SharedSettingResult {
   const { current, change } = input
   if (change === null || typeof change !== "object") return { kind: "invalid", reason: "invalid-option" }
   let settings: Settings
@@ -33,7 +28,8 @@ export function changeSharedSetting(input: {
       settings = decodeSettings(current)
       settings.autoAdd.pct = change.value
       break
-    case "option": return changeOption(current, change)
+    case "option":
+      return changeOption(current, change)
     default: {
       const exhaustive: never = change
       void exhaustive
@@ -203,7 +199,16 @@ function changeOption(current: Snapshot<Settings>, change: SharedOptionChange): 
       settings.gather.to = change.value
       break
     case "gather.order":
-      if (change.value !== "newest" && change.value !== "oldest" && change.value !== "english" && change.value !== "non-english" && change.value !== "left-to-right" && change.value !== "right-to-left" && change.value !== "shuffled") return { kind: "invalid", reason: "invalid-option" }
+      if (
+        change.value !== "newest" &&
+        change.value !== "oldest" &&
+        change.value !== "english" &&
+        change.value !== "non-english" &&
+        change.value !== "left-to-right" &&
+        change.value !== "right-to-left" &&
+        change.value !== "shuffled"
+      )
+        return { kind: "invalid", reason: "invalid-option" }
       if (current.gather.order === change.value) return { kind: "unchanged" }
       settings = decodeSettings(current)
       settings.gather.order = change.value

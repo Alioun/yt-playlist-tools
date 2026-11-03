@@ -7,7 +7,8 @@ type Owner = ReturnType<typeof createStartingLocalFilterWriter>
 export function ownerTypeChecks(owner: Owner, plan: ImportPlan, tab: Extract<Origin, { kind: "tab" }>) {
   const bound: SettingsFileOwner = owner
   const normal = { kind: "ui", windowId: 7, incognito: false } as const
-  const exported = bound.exportSettings(normal), checked = bound.importCheck(normal, "{}")
+  const exported = bound.exportSettings(normal),
+    checked = bound.importCheck(normal, "{}")
   // @ts-expect-error negative: tab-cannot-call-owner-export
   owner.exportSettings(tab)
   // @ts-expect-error negative: file-plan-is-not-native-origin

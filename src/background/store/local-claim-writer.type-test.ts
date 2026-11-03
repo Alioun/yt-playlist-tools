@@ -3,13 +3,18 @@ import type { AccountKey, PlaylistId } from "../../shared/model"
 import type { JsonValue } from "../../shared/contracts/json"
 import type { ClaimAuthority, ClaimAuthorityState, ClaimOwnership, ClaimHost, ClaimTransactionResult, executeLocalClaim } from "./local-claim-writer"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 type Deps = Extract<ClaimHost, { kind: "fixture" }>
 export type ClaimWriterProofs = [
   Check<Equal<keyof typeof import("./local-claim-writer"), "executeLocalClaim">>,
   Check<Equal<Parameters<ReturnType<typeof createLocalFilterWriter>["claim"]>, []>>,
-  Check<Equal<ClaimAuthority, { readonly acct: AccountKey; readonly lease: string; readonly browserSession: string; readonly consentGeneration: string; readonly signedIn: true; readonly incognito: false }>>,
+  Check<
+    Equal<
+      ClaimAuthority,
+      { readonly acct: AccountKey; readonly lease: string; readonly browserSession: string; readonly consentGeneration: string; readonly signedIn: true; readonly incognito: false }
+    >
+  >,
   Check<Equal<LocalWriteStorage, { get(keys: readonly string[] | null): Promise<Readonly<Record<string, unknown>>>; set(items: Readonly<Record<string, JsonValue>>): Promise<void> }>>,
   Check<Equal<Deps["authority"], { read(): Promise<ClaimAuthorityState> }>>,
   Check<Equal<Deps["session"], { takeLookup(authority: ClaimAuthority): Promise<boolean> }>>,
@@ -17,8 +22,7 @@ export type ClaimWriterProofs = [
   Check<Equal<Extract<ClaimOwnership, { kind: "fixture-owned" }>["ownedPlaylistIds"], ReadonlySet<PlaylistId>>>,
   Check<Equal<"remove" extends keyof LocalWriteStorage ? true : false, false>>
 ]
-function negative(writer: ReturnType<typeof createLocalFilterWriter>, authority: ClaimAuthority,
-  ownership: Extract<ClaimOwnership, { kind: "fixture-owned" }>, local: LocalWriteStorage) {
+function negative(writer: ReturnType<typeof createLocalFilterWriter>, authority: ClaimAuthority, ownership: Extract<ClaimOwnership, { kind: "fixture-owned" }>, local: LocalWriteStorage) {
   // @ts-expect-error Requests cannot select account or origin authority.
   writer.claim({ acct: authority.acct, incognito: false })
   // @ts-expect-error Ownership IDs must be validated brands.
@@ -34,7 +38,9 @@ function negative(writer: ReturnType<typeof createLocalFilterWriter>, authority:
 }
 void negative
 
-type ExpectedOwnership = { readonly kind: "fixture-owned"; readonly authority: ClaimAuthority; readonly lineage: "local-migration-only"; readonly ownedPlaylistIds: ReadonlySet<PlaylistId> } | { readonly kind: "unavailable" }
+type ExpectedOwnership =
+  | { readonly kind: "fixture-owned"; readonly authority: ClaimAuthority; readonly lineage: "local-migration-only"; readonly ownedPlaylistIds: ReadonlySet<PlaylistId> }
+  | { readonly kind: "unavailable" }
 type ExpectedWrite = { readonly kind: "resolved" } | { readonly kind: "rejected"; readonly error: unknown }
 type ExpectedResult =
   | { readonly kind: "absent" | "consumed" | "empty-source" | "no-match" }
@@ -42,22 +48,34 @@ type ExpectedResult =
   | { readonly kind: "unavailable"; readonly reason: "authority" | "startup" | "sync-on" | "inventory" | "ownership" | "checked-this-session" | "removal-required" | "notice-pending" | "stale" }
   | { readonly kind: "invalid"; readonly field: string }
   | { readonly kind: "failed"; readonly stage: "before-set" | "set-not-observed"; readonly error: unknown }
-  | { readonly kind: "unconfirmed"; readonly write: ExpectedWrite; readonly cause:
-    | { readonly kind: "authority" | "readback" }
-    | { readonly kind: "read-failed"; readonly error: unknown } }
+  | { readonly kind: "unconfirmed"; readonly write: ExpectedWrite; readonly cause: { readonly kind: "authority" | "readback" } | { readonly kind: "read-failed"; readonly error: unknown } }
 export type ExactClaimProofs = [
   Check<Equal<ClaimOwnership, ExpectedOwnership>>,
   Check<Equal<ClaimAuthorityState, { readonly kind: "ready"; readonly authority: ClaimAuthority } | { readonly kind: "unavailable" }>>,
   Check<Equal<ClaimTransactionResult, ExpectedResult>>,
-  Check<Equal<typeof executeLocalClaim, (deps: {
-    readonly local: LocalWriteStorage; readonly host: Extract<ClaimHost, { kind: "fixture" }>;
-    readonly now: () => number; readonly generation: () => string
-  }) => Promise<ClaimTransactionResult>>>,
-  Check<Equal<ClaimHost, { readonly kind: "unavailable" } | {
-    readonly kind: "fixture"; readonly authority: { read(): Promise<ClaimAuthorityState> };
-    readonly session: { takeLookup(authority: ClaimAuthority): Promise<boolean> };
-    readonly ownership: { lookup(authority: ClaimAuthority): Promise<ClaimOwnership> }
-  }>>
+  Check<
+    Equal<
+      typeof executeLocalClaim,
+      (deps: {
+        readonly local: LocalWriteStorage
+        readonly host: Extract<ClaimHost, { kind: "fixture" }>
+        readonly now: () => number
+        readonly generation: () => string
+      }) => Promise<ClaimTransactionResult>
+    >
+  >,
+  Check<
+    Equal<
+      ClaimHost,
+      | { readonly kind: "unavailable" }
+      | {
+          readonly kind: "fixture"
+          readonly authority: { read(): Promise<ClaimAuthorityState> }
+          readonly session: { takeLookup(authority: ClaimAuthority): Promise<boolean> }
+          readonly ownership: { lookup(authority: ClaimAuthority): Promise<ClaimOwnership> }
+        }
+    >
+  >
 ]
 
 async function readonlyStorage(local: LocalWriteStorage, host: ClaimHost, authority: ClaimAuthority) {

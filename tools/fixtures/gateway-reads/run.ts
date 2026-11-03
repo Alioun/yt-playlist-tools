@@ -15,7 +15,9 @@ import type { PageLinkClock } from "../../../src/site/core/page-link"
 
 const siteGateways = { www: wwwGateway, music: musicGateway }
 
-function check(value: unknown, message: string): asserts value { if (!value) throw new Error(message) }
+function check(value: unknown, message: string): asserts value {
+  if (!value) throw new Error(message)
+}
 function equal(actual: unknown, expected: unknown, message: string): void {
   check(JSON.stringify(actual) === JSON.stringify(expected), message)
 }
@@ -26,24 +28,41 @@ function checked<T>(guard: (value: unknown) => value is T, value: unknown): T {
 class Clock implements PageLinkClock {
   private serial = 0
   private pending = new Map<number, () => void>()
-  now() { return 0 }
+  now() {
+    return 0
+  }
   after(_ms: number, callback: () => void) {
     const id = ++this.serial
     this.pending.set(id, callback)
-    return () => { this.pending.delete(id) }
+    return () => {
+      this.pending.delete(id)
+    }
   }
-  get count() { return this.pending.size }
+  get count() {
+    return this.pending.size
+  }
 }
 
 export async function runGatewayReadConsumer(dom: boolean): Promise<string> {
-  const build = checked(isBuildId, "gateway-read-synthetic"), pageType = checked(isPageType, "WATCH")
+  const build = checked(isBuildId, "gateway-read-synthetic"),
+    pageType = checked(isPageType, "WATCH")
   const acct = "TfkIStY8bVGtNWk5"
   const records: { site: Site; step: string; answer: unknown }[] = []
   for (const site of ["www", "music"] as const) {
     const rawTarget = site === "www" ? { videoId: syntheticVideo, title: { simpleText: "Target" } } : rawSong()
-    const p = scriptedPage({ targetData: rawTarget, targetContext: site === "music" ? { inAutomix: false } : undefined, ...(site === "music" ? {
-      watchPlayer: rawMusicPlayer(), mediaMetadata: { title: "Song", artist: "Artist", artwork: [] }, musicQueue: [rawQueueItem()], musicState: { castStatus: false }, castPlayer: false
-    } : {}) })
+    const p = scriptedPage({
+      targetData: rawTarget,
+      targetContext: site === "music" ? { inAutomix: false } : undefined,
+      ...(site === "music"
+        ? {
+            watchPlayer: rawMusicPlayer(),
+            mediaMetadata: { title: "Song", artist: "Artist", artwork: [] },
+            musicQueue: [rawQueueItem()],
+            musicState: { castStatus: false },
+            castPlayer: false
+          }
+        : {})
+    })
     p.setQueueChanges(site === "music")
     const gateway = createGateway({ site: siteGateways[site], page: p.port, now: () => 10 })
     const pageAccount = await gateway.run({ kind: "account" })
@@ -53,16 +72,22 @@ export async function runGatewayReadConsumer(dom: boolean): Promise<string> {
     const releases = new Set<() => void>()
     let lastTarget: Element | undefined
     const channel: PageChannel = {
-      send(wire, text, target) { if (target) lastTarget = target; inner.send(wire, text, target) },
+      send(wire, text, target) {
+        if (target) lastTarget = target
+        inner.send(wire, text, target)
+      },
       listen(wire, changed) {
         const stop = inner.listen(wire, changed)
-        const release = () => { if (releases.delete(release)) stop() }
+        const release = () => {
+          if (releases.delete(release)) stop()
+        }
         releases.add(release)
         return release
       }
     }
     const endpoint = servePage(gateway, { site, build, vocabulary: () => readVocabulary, snapshot: () => snapshot, signals: sink => gateway.onSignal(sink) }, channel)
-    const clock = new Clock(), link = createPageLink({ site, build, vocabulary: readVocabulary, clock }, channel)
+    const clock = new Clock(),
+      link = createPageLink({ site, build, vocabulary: readVocabulary, clock }, channel)
     const target = document.createElement("article")
     document.body.append(target)
     try {
@@ -74,40 +99,83 @@ export async function runGatewayReadConsumer(dom: boolean): Promise<string> {
       equal(account, { ok: true, data: { signedIn: true, acct }, route: readRoutes.account }, "PageLink account projection differs")
       records.push({ site, step: "account", answer: account })
       const item = site === "www" ? await link.run({ job: { kind: "videoInfo" } }, { target }) : await link.run({ job: { kind: "itemInfo" } }, { target })
-      const expectedItem = site === "www" ? { videoId: syntheticVideo, title: "Target", length: null, kind: "video" } : {
-        kind: "song", type: { kind: "music-video", musicVideoType: "MUSIC_VIDEO_TYPE_ATV" }, title: "Synthetic song",
-        selected: false, autoplay: false, hasOwnLike: true, likeState: "not-liked",
-        endpoints: {
-          end: { queueAddEndpoint: { queueTarget: { videoId: syntheticVideo }, queueInsertPosition: "INSERT_AT_END" } },
-          save: { addToPlaylistEndpoint: { videoId: syntheticVideo } },
-          next: { queueAddEndpoint: { queueTarget: { videoId: syntheticVideo }, queueInsertPosition: "INSERT_AFTER_CURRENT_VIDEO" } }
-        }, videoId: syntheticVideo, queueItemId: 7
-      }
+      const expectedItem =
+        site === "www"
+          ? { videoId: syntheticVideo, title: "Target", length: null, kind: "video" }
+          : {
+              kind: "song",
+              type: { kind: "music-video", musicVideoType: "MUSIC_VIDEO_TYPE_ATV" },
+              title: "Synthetic song",
+              selected: false,
+              autoplay: false,
+              hasOwnLike: true,
+              likeState: "not-liked",
+              endpoints: {
+                end: { queueAddEndpoint: { queueTarget: { videoId: syntheticVideo }, queueInsertPosition: "INSERT_AT_END" } },
+                save: { addToPlaylistEndpoint: { videoId: syntheticVideo } },
+                next: { queueAddEndpoint: { queueTarget: { videoId: syntheticVideo }, queueInsertPosition: "INSERT_AFTER_CURRENT_VIDEO" } }
+              },
+              videoId: syntheticVideo,
+              queueItemId: 7
+            }
       equal(item, { ok: true, data: expectedItem, route: site === "www" ? readRoutes.videoInfo : readRoutes.itemInfo }, "Target result differs")
       check(lastTarget === target && p.reads.some(read => read.what === "targetData" && read.target === target), "Target element was lost")
       records.push({ site, step: "target", answer: { result: item, actualTarget: lastTarget === target } })
       const probe = await link.probe()
-      const expectedPresent = new Set([readWatches.identity, readWatches.navigation, readWatches.location, readWatches.watchPlayer, readWatches.targetData,
-        ...(site === "music" ? [readWatches.targetContext, readWatches.mediaMetadata, readWatches.musicQueue, readWatches.musicState, readWatches.castPlayer, readWatches.queueChanges] : [])])
+      const expectedPresent = new Set([
+        readWatches.identity,
+        readWatches.navigation,
+        readWatches.location,
+        readWatches.watchPlayer,
+        readWatches.targetData,
+        ...(site === "music" ? [readWatches.targetContext, readWatches.mediaMetadata, readWatches.musicQueue, readWatches.musicState, readWatches.castPlayer, readWatches.queueChanges] : [])
+      ])
       equal(probe, { ok: true, report: { site, entries: readVocabulary.watchIds.map(id => ({ id, present: expectedPresent.has(id) })) } }, "Probe differs from owned vocabulary")
       records.push({ site, step: "probe", answer: probe })
-      const stream: Stream = site === "www" ? "player" : "queue", values: StreamData<Stream>[] = []
+      const stream: Stream = site === "www" ? "player" : "queue",
+        values: StreamData<Stream>[] = []
       const stop = link.watch(stream, value => values.push(value))
       p.emit(site === "www" ? "player" : "queue")
-      const expectedStream = site === "www" ? [{
-        ad: false, at: 10, player: "watch", videoId: syntheticVideo, pos: 15, len: 120, listedLength: 120, rate: 1.25,
-        playing: true, seeking: false, content: "video", isPostLiveDvr: false, isLive: false, isUpcoming: false, isLiveContent: false
-      }] : [{ ids: [7] }]
+      const expectedStream =
+        site === "www"
+          ? [
+              {
+                ad: false,
+                at: 10,
+                player: "watch",
+                videoId: syntheticVideo,
+                pos: 15,
+                len: 120,
+                listedLength: 120,
+                rate: 1.25,
+                playing: true,
+                seeking: false,
+                content: "video",
+                isPostLiveDvr: false,
+                isLive: false,
+                isUpcoming: false,
+                isLiveContent: false
+              }
+            ]
+          : [{ ids: [7] }]
       equal(values, expectedStream, "Serialized stream differs")
       records.push({ site, step: "stream", answer: values })
-      endpoint.dispose(); endpoint.dispose()
+      endpoint.dispose()
+      endpoint.dispose()
       check(p.active() === 0 && p.callbacks.every(callback => callback.stops === 1), "Endpoint leaked event ownership")
       p.stale(site === "www" ? "player" : "queue")
       equal(values, expectedStream, "Stale callback published")
-      stop(); link.dispose(); gateway.dispose()
+      stop()
+      link.dispose()
+      gateway.dispose()
       equal([p.active(), releases.size, clock.count], [0, 0, 0], "Disposal leaked owned resources")
       records.push({ site, step: "disposed", answer: { pageListeners: p.active(), channelListeners: releases.size, deadlines: clock.count } })
-    } finally { target.remove(); link.dispose(); endpoint.dispose(); gateway.dispose() }
+    } finally {
+      target.remove()
+      link.dispose()
+      endpoint.dispose()
+      gateway.dispose()
+    }
   }
   const output = records.map(record => JSON.stringify(record)).join("\n") + "\n"
   check(!output.includes(syntheticIdentity) && !output.includes("datasyncId"), "Raw identity escaped public consumer output")
@@ -118,6 +186,9 @@ if (import.meta.main) {
   const adapter = process.argv[2]
   check(adapter === "direct" || adapter === "dom", "Expected direct or dom")
   GlobalRegistrator.register({ url: `https://www.youtube.com/watch?v=${syntheticVideo}` })
-  try { process.stdout.write(await runGatewayReadConsumer(adapter === "dom")) }
-  finally { await GlobalRegistrator.unregister() }
+  try {
+    process.stdout.write(await runGatewayReadConsumer(adapter === "dom"))
+  } finally {
+    await GlobalRegistrator.unregister()
+  }
 }

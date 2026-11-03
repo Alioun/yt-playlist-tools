@@ -5,7 +5,11 @@ const clear: BadgeFacts = { consentPending: false, accessMissing: false, marks: 
 const facts = (overrides: Partial<BadgeFacts>): BadgeFacts => ({ ...clear, ...overrides })
 
 test.each([
-  ["consent wins over everything", { consentPending: true, accessMissing: true, marks: true, paused: true, notWorking: new Map([[1, ["auto-add"]]]) }, { text: "!", color: "violet", reason: "consent" }],
+  [
+    "consent wins over everything",
+    { consentPending: true, accessMissing: true, marks: true, paused: true, notWorking: new Map([[1, ["auto-add"]]]) },
+    { text: "!", color: "violet", reason: "consent" }
+  ],
   ["site access comes next", { accessMissing: true, marks: true, notWorking: new Map([[1, ["auto-add"]]]) }, { text: "!", color: "violet", reason: "access" }],
   ["not working is amber and only on its tab", { marks: true, notWorking: new Map([[1, ["queue-button"]]]) }, { text: "!", color: "amber", reason: "not-working", features: ["queue-button"] }],
   ["Missing or Full is violet", { marks: true, paused: true }, { text: "!", color: "violet", reason: "marks" }],
@@ -28,23 +32,57 @@ import { scriptedMessages } from "../../../tools/fixtures/localization/scripted"
 function driver(records: Record<string, unknown>, options: { www?: boolean; broken?: number[]; paused?: boolean } = {}) {
   const calls: string[] = []
   let fire: (() => void) | undefined
-  const statuses = { async read(context: { tab: { tabId: number } }, enabled: readonly { id: string }[]) {
-    return { kind: "statuses", facts: {} as never, current: () => true,
-      statuses: enabled.map(feature => ({ feature: feature.id, state: options.broken?.includes(context.tab.tabId) ? "not-working" : "working", jobs: [], anchors: [], actions: [], kinds: [] })) }
-  } }
+  const statuses = {
+    async read(context: { tab: { tabId: number } }, enabled: readonly { id: string }[]) {
+      return {
+        kind: "statuses",
+        facts: {} as never,
+        current: () => true,
+        statuses: enabled.map(feature => ({ feature: feature.id, state: options.broken?.includes(context.tab.tabId) ? "not-working" : "working", jobs: [], anchors: [], actions: [], kinds: [] }))
+      }
+    }
+  }
   const badge = createToolbarBadge({
     action: {
-      async setBadgeText(details) { calls.push(`text ${details.tabId ?? "all"} ${details.text}`) },
-      async setBadgeBackgroundColor(details) { calls.push(`color ${details.tabId ?? "all"} ${details.color}`) },
-      async setTitle(details) { calls.push(`title ${details.tabId ?? "all"} ${details.title}`) }
+      async setBadgeText(details) {
+        calls.push(`text ${details.tabId ?? "all"} ${details.text}`)
+      },
+      async setBadgeBackgroundColor(details) {
+        calls.push(`color ${details.tabId ?? "all"} ${details.color}`)
+      },
+      async setTitle(details) {
+        calls.push(`title ${details.tabId ?? "all"} ${details.title}`)
+      }
     },
     local: { get: async () => records },
-    owner: { readSession: async () => ({ kind: "memory", revision: { reset: 0, accounts: new Map() }, sequence: 1,
-      memory: { paused: options.paused ?? false, tabs: new Map([[7, { site: "www", signedIn: false, acct: null }], [8, { site: "www", signedIn: false, acct: null }]]) } }) as never },
-    access: async site => site === "www" ? options.www ?? true : false,
-    statuses: statuses as never, tab: async tabId => ({ kind: "tab", tab: { tabId, windowId: 1, incognito: false, site: "www", lastAccessed: 0, active: true, discarded: false, frozen: false } }) as never,
-    build: "test" as never, i18n: scriptedMessages(),
-    clock: { after(_ms, run) { fire = run; return () => { fire = undefined } } }
+    owner: {
+      readSession: async () =>
+        ({
+          kind: "memory",
+          revision: { reset: 0, accounts: new Map() },
+          sequence: 1,
+          memory: {
+            paused: options.paused ?? false,
+            tabs: new Map([
+              [7, { site: "www", signedIn: false, acct: null }],
+              [8, { site: "www", signedIn: false, acct: null }]
+            ])
+          }
+        }) as never
+    },
+    access: async site => (site === "www" ? (options.www ?? true) : false),
+    statuses: statuses as never,
+    tab: async tabId => ({ kind: "tab", tab: { tabId, windowId: 1, incognito: false, site: "www", lastAccessed: 0, active: true, discarded: false, frozen: false } }) as never,
+    build: "test" as never,
+    i18n: scriptedMessages(),
+    clock: {
+      after(_ms, run) {
+        fire = run
+        return () => {
+          fire = undefined
+        }
+      }
+    }
   })
   return { badge, calls, fire: () => fire?.() }
 }
@@ -81,8 +119,10 @@ test("a key's answer shows for 3 s over everything, then the tab returns to its 
   expect(calls.slice(0, 2)).toEqual(["text 7 null", "title 7 null"])
 })
 
-const autoAdd = (toolbarTick: boolean) => ({ ...agreedRecords, "doc:settings": { v: 1, gen: "g", at: 1, by: "d",
-  data: { autoAdd: { on: true, feedback: true, pct: 73, toolbarTick, toolbarPaused: true } } } })
+const autoAdd = (toolbarTick: boolean) => ({
+  ...agreedRecords,
+  "doc:settings": { v: 1, gen: "g", at: 1, by: "d", data: { autoAdd: { on: true, feedback: true, pct: 73, toolbarTick, toolbarPaused: true } } }
+})
 
 test("auto-add's tick shows on its tab until the video changes, and not while the tick option is off or auto-add is paused", async () => {
   const { badge, calls } = driver(autoAdd(true))

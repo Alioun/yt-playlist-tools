@@ -42,7 +42,7 @@ try {
       try {
         const page = await context.newPage()
         const errors = []
-        page.on("pageerror", (error) => errors.push(error.message))
+        page.on("pageerror", error => errors.push(error.message))
         await context.route("**/*", route => {
           if (new URL(route.request().url()).origin === origin) return route.continue()
           errors.push(`blocked off-origin request ${route.request().url()}`)
@@ -78,5 +78,5 @@ try {
   }
 } finally {
   await browser?.close()
-  await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
+  await new Promise((resolve, reject) => server.close(error => (error ? reject(error) : resolve())))
 }

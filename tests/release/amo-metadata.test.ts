@@ -6,7 +6,7 @@ import { join, resolve } from "node:path"
 import { buildAmoMetadata, nextRelease } from "../../scripts/amo-metadata"
 
 const root = resolve(import.meta.dir, "../..")
-const fromRepo = (path: string) => existsSync(join(root, path)) ? readFileSync(join(root, path), "utf8") : undefined
+const fromRepo = (path: string) => (existsSync(join(root, path)) ? readFileSync(join(root, path), "utf8") : undefined)
 const directories: string[] = []
 
 afterEach(() => {
@@ -25,9 +25,7 @@ test("the first beta's metadata is complete, so a strict release run passes the 
   const { status, metadata, stdout } = runCli("--version", "1.99.1", "--kind", "minor", "--channel", "beta", "--previous", "1.4.5", "--strict")
   expect(stdout).not.toContain("::error::")
   expect(status).toBe(0)
-  expect(metadata.version.approval_notes).toBe(
-    "Pre-release 1.99.1 of 2.0.0, self-distributed to beta testers. Same build instructions, in SOURCE_CODE_REVIEW.md in the sources zip."
-  )
+  expect(metadata.version.approval_notes).toBe("Pre-release 1.99.1 of 2.0.0, self-distributed to beta testers. Same build instructions, in SOURCE_CODE_REVIEW.md in the sources zip.")
   expect(metadata.version.release_notes["en-US"]).toStartWith("The first beta of Perchling for YouTube™ 2.0")
 })
 
@@ -59,21 +57,20 @@ test("a strict stable release passes with the reviewer test account left for its
 })
 
 test("a strict release still refuses every other unfilled placeholder in the reviewer notes", () => {
-  const read = (path: string) => path === "store/notes/reviewer-full.md"
-    ? "Test account\n- {email} / {password}, codes {code1} and {code2}.\nTested by {reviewer} on {date}." : fromRepo(path)
+  const read = (path: string) => (path === "store/notes/reviewer-full.md" ? "Test account\n- {email} / {password}, codes {code1} and {code2}.\nTested by {reviewer} on {date}." : fromRepo(path))
   const { problems, deferred } = buildAmoMetadata({ version: "2.0.0", kind: "major", channel: "stable", previous: "1.99.3", read })
   expect(problems).toEqual(["store/notes/reviewer-full.md has no value for {reviewer}, {date}"])
   expect(deferred).toEqual(["{email}", "{password}", "{code1}", "{code2}"])
 })
 
 test("test-account placeholders outside the reviewer notes are still refused", () => {
-  const read = (path: string) => path === "store/release-notes/2.0.0.md" ? "Log in as {email}." : fromRepo(path)
+  const read = (path: string) => (path === "store/release-notes/2.0.0.md" ? "Log in as {email}." : fromRepo(path))
   const { problems } = buildAmoMetadata({ version: "2.0.0", kind: "major", channel: "stable", previous: "1.99.3", read })
   expect(problems).toEqual(["store/release-notes/2.0.0.md has no value for {email}"])
 })
 
 test("a strict hotfix without its fix sentence fails even though the test account passes", () => {
-  const read = (path: string) => path === "store/release-notes/2.0.1.md" ? "- Auto-add works again." : fromRepo(path)
+  const read = (path: string) => (path === "store/release-notes/2.0.1.md" ? "- Auto-add works again." : fromRepo(path))
   const strict = runCli("--version", "2.0.1", "--kind", "patch", "--channel", "stable", "--previous", "2.0.0", "--strict")
   expect(strict.status).toBe(1)
   expect(strict.stdout).toContain("::error::store/notes/reviewer-hotfix.md has no value for {fix}")
@@ -83,9 +80,12 @@ test("a strict hotfix without its fix sentence fails even though the test accoun
 })
 
 test("a hotfix takes its first sentence from its own file and names the release it follows", () => {
-  const read = (path: string) => path === "store/notes/hotfix/2.0.1.md"
-    ? "<!-- for reviewers -->\nFixes auto-add after a YouTube change to the watch page's player data.\nIgnored second line."
-    : path === "store/release-notes/2.0.1.md" ? "- Auto-add works again after a YouTube change." : fromRepo(path)
+  const read = (path: string) =>
+    path === "store/notes/hotfix/2.0.1.md"
+      ? "<!-- for reviewers -->\nFixes auto-add after a YouTube change to the watch page's player data.\nIgnored second line."
+      : path === "store/release-notes/2.0.1.md"
+        ? "- Auto-add works again after a YouTube change."
+        : fromRepo(path)
   const { template, metadata, problems } = buildAmoMetadata({ version: "2.0.1", kind: "patch", channel: "stable", previous: "2.0.0", read })
   expect(template).toBe("hotfix")
   expect(metadata.version.approval_notes).toStartWith(

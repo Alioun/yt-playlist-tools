@@ -13,5 +13,5 @@ export function isOn(settings: Snapshot<Settings>, feature: FirstRunFeature): bo
 /** Whether a site's access counts as missing for the badge and the banner (FT-46, FT-47, R53). */
 export function needsAccess(site: Site, settings: Snapshot<Settings>): boolean {
   if (site === "www") return wwwRows.some(feature => isOn(settings, feature)) || settings.anyTabKeys.on
-  return settings.musicSection && (musicFeatures.some(feature => isOn(settings, feature)) || settings.shortcuts.on && settings.shortcuts.music)
+  return settings.musicSection && (musicFeatures.some(feature => isOn(settings, feature)) || (settings.shortcuts.on && settings.shortcuts.music))
 }

@@ -14,21 +14,33 @@ import { englishI18n, scriptedMessages } from "../../tools/fixtures/localization
 
 const build = platform.build
 const extension = "perchling-sync-e2e"
-const here = "AAAAAAAAAAAAAAAA", elsewhere = "BBBBBBBBBBBBBBBB"
+const here = "AAAAAAAAAAAAAAAA",
+  elsewhere = "BBBBBBBBBBBBBBBB"
 type Listener = (message: unknown, sender: unknown, respond: (answer?: unknown) => void) => boolean | undefined
 
 function event<T extends (...args: never[]) => unknown>() {
   const listeners = new Set<T>()
-  return { listeners, addListener: (fn: T) => { listeners.add(fn) }, removeListener: (fn: T) => { listeners.delete(fn) }, hasListener: (fn: T) => listeners.has(fn) }
+  return {
+    listeners,
+    addListener: (fn: T) => {
+      listeners.add(fn)
+    },
+    removeListener: (fn: T) => {
+      listeners.delete(fn)
+    },
+    hasListener: (fn: T) => listeners.has(fn)
+  }
 }
 // Browsers omit absent keys from storage reads; WXT's fake returns them as undefined, which reads as present.
 function omitAbsentKeys() {
   for (const area of [fakeBrowser.storage.local, fakeBrowser.storage.session, fakeBrowser.storage.sync]) {
     const get = area.get.bind(area)
-    Object.assign(area, { async get(keys?: unknown) {
-      const found: Record<string, unknown> = await get(keys as never)
-      return Object.fromEntries(Object.entries(found).filter(([, value]) => value !== undefined))
-    } })
+    Object.assign(area, {
+      async get(keys?: unknown) {
+        const found: Record<string, unknown> = await get(keys as never)
+        return Object.fromEntries(Object.entries(found).filter(([, value]) => value !== undefined))
+      }
+    })
   }
 }
 const stamped = (gen: string, by: string, data: Record<string, unknown>) => ({ v: 1, gen, at: 5, by, data })
@@ -36,7 +48,8 @@ const stamped = (gen: string, by: string, data: Record<string, unknown>) => ({ v
 // This browser has edited settings of its own; another browser already started the synced copy.
 async function seed() {
   await fakeBrowser.storage.local.set({
-    schema: 1, device: { id: "this-browser", consent: { v: 1, at: 1 }, syncOn: false },
+    schema: 1,
+    device: { id: "this-browser", consent: { v: 1, at: 1 }, syncOn: false },
     "doc:settings": stamped("settings-here", "this-browser", { theme: "light" }),
     [`doc:setup:${here}`]: stamped("setup-here", "this-browser", { label: { name: "Here" } }),
     sync: { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true }
@@ -54,41 +67,100 @@ function worker() {
   const getURL = (path: string) => `chrome-extension://${extension}${path.startsWith("/") ? path : `/${path}`}`
   const native = {
     ...fakeBrowser,
-    runtime: { id: extension, getURL, getManifest: () => ({ version: "2.0.0", manifest_version: 3 }), onMessage, onInstalled: event(), onStartup: event(),
-      async sendMessage() { return undefined } },
-    tabs: { onRemoved: event(), async query() { return [] }, async get(id: number) { throw new Error(`No tab with id: ${id}.`) },
-      async sendMessage() { throw new Error("Could not establish connection. Receiving end does not exist.") } },
-    windows: { async get(id: number) { return { id, incognito: false } }, async getLastFocused() { return { id: 1, incognito: false } } },
-    i18n: { ...scriptedMessages(), async detectLanguage() { return { isReliable: false, languages: [] } } },
-    permissions: { async contains() { return true }, onAdded: event(), onRemoved: event() },
-    scripting: { async getRegisteredContentScripts() { return [] }, async registerContentScripts() {}, async updateContentScripts() {},
-      async unregisterContentScripts() {}, async executeScript() { return [] } },
+    runtime: {
+      id: extension,
+      getURL,
+      getManifest: () => ({ version: "2.0.0", manifest_version: 3 }),
+      onMessage,
+      onInstalled: event(),
+      onStartup: event(),
+      async sendMessage() {
+        return undefined
+      }
+    },
+    tabs: {
+      onRemoved: event(),
+      async query() {
+        return []
+      },
+      async get(id: number) {
+        throw new Error(`No tab with id: ${id}.`)
+      },
+      async sendMessage() {
+        throw new Error("Could not establish connection. Receiving end does not exist.")
+      }
+    },
+    windows: {
+      async get(id: number) {
+        return { id, incognito: false }
+      },
+      async getLastFocused() {
+        return { id: 1, incognito: false }
+      }
+    },
+    i18n: {
+      ...scriptedMessages(),
+      async detectLanguage() {
+        return { isReliable: false, languages: [] }
+      }
+    },
+    permissions: {
+      async contains() {
+        return true
+      },
+      onAdded: event(),
+      onRemoved: event()
+    },
+    scripting: {
+      async getRegisteredContentScripts() {
+        return []
+      },
+      async registerContentScripts() {},
+      async updateContentScripts() {},
+      async unregisterContentScripts() {},
+      async executeScript() {
+        return []
+      }
+    },
     commands: { onCommand: event() },
     contextMenus: { onClicked: event(), async removeAll() {}, create() {} },
     action: { async setBadgeText() {}, async setBadgeBackgroundColor() {}, async setTitle() {} }
   } as unknown as NativeBrowser
   const background = boot(native, platform)
   // The Settings tab: its messages reach the background's own listener, as the browser delivers them.
-  const send = (message: unknown) => new Promise<unknown>(resolve => {
-    let claimed = false
-    const sender = { id: extension, url: getURL("/options.html"), frameId: 0, documentId: "settings-document", tab: { id: 50, windowId: 1, incognito: false } }
-    for (const listener of [...onMessage.listeners]) if (listener(message, sender, resolve) === true) claimed = true
-    if (!claimed) resolve(undefined)
-  })
-  const backend = createBackend({
-    local: { get: keys => fakeBrowser.storage.local.get([...keys]), all: () => fakeBrowser.storage.local.get(null), onChanged: fakeBrowser.storage.onChanged },
-    send,
-    access: { has: async () => true, request: async () => true, requestCombined: async () => ({ music: true, browserMenu: false }), hasBrowserMenu: async () => false }
-  }, { build, deadline: timerDeadline })
+  const send = (message: unknown) =>
+    new Promise<unknown>(resolve => {
+      let claimed = false
+      const sender = { id: extension, url: getURL("/options.html"), frameId: 0, documentId: "settings-document", tab: { id: 50, windowId: 1, incognito: false } }
+      for (const listener of [...onMessage.listeners]) if (listener(message, sender, resolve) === true) claimed = true
+      if (!claimed) resolve(undefined)
+    })
+  const backend = createBackend(
+    {
+      local: { get: keys => fakeBrowser.storage.local.get([...keys]), all: () => fakeBrowser.storage.local.get(null), onChanged: fakeBrowser.storage.onChanged },
+      send,
+      access: { has: async () => true, request: async () => true, requestCombined: async () => ({ music: true, browserMenu: false }), hasBrowserMenu: async () => false }
+    },
+    { build, deadline: timerDeadline }
+  )
   return { background, backend }
 }
 
 function openSettings(backend: ReturnType<typeof worker>["backend"]) {
   location.hash = "#everywhere"
   const page = {
-    backend, i18n: englishI18n(), platform: { browser: "chrome", os: "linux" } as const, private: false, version: "2.0.0", beta: false,
-    open: () => {}, openSettings: () => {}, openFirstRun: () => {}, applyTheme: () => {},
-    commands: { read: async () => ({ kind: "unavailable" }) as const, named: async () => null }, canonical: async () => createI18n(scriptedMessages(), catalogue)
+    backend,
+    i18n: englishI18n(),
+    platform: { browser: "chrome", os: "linux" } as const,
+    private: false,
+    version: "2.0.0",
+    beta: false,
+    open: () => {},
+    openSettings: () => {},
+    openFirstRun: () => {},
+    applyTheme: () => {},
+    commands: { read: async () => ({ kind: "unavailable" }) as const, named: async () => null },
+    canonical: async () => createI18n(scriptedMessages(), catalogue)
   }
   render(Settings, { page: page as never, markSrc: "mark.svg" })
 }
@@ -103,7 +175,8 @@ async function eventually(check: () => boolean | Promise<boolean>, what: string,
 const record = (value: unknown) => value as Record<string, unknown>
 const running: Background[] = []
 afterEach(async () => {
-  cleanup(); location.hash = ""
+  cleanup()
+  location.hash = ""
   for (const background of running.splice(0)) await background.dispose().catch(() => {})
 })
 
@@ -127,8 +200,10 @@ test("turning Settings sync on in Settings asks which settings to keep, takes th
   expect(local[`doc:setup:${elsewhere}`], "the other browser's account arrives here").toEqual(stamped("setup-elsewhere", "other-browser", { label: { name: "Elsewhere" } }))
   expect(local[`doc:setup:${here}`], "this browser's own account keeps its setup").toEqual(stamped("setup-here", "this-browser", { label: { name: "Here" } }))
   await eventually(async () => (await fakeBrowser.storage.sync.get(`s:setup:${here}`))[`s:setup:${here}`] !== undefined, "this browser's account pushed to the synced copy")
-  await eventually(async () => record((await fakeBrowser.storage.local.get("sync")).sync).status === "ok" && !Object.hasOwn(await fakeBrowser.storage.local.get(null), "pending:sync-join"),
-    "the push confirmed and the join retired")
+  await eventually(
+    async () => record((await fakeBrowser.storage.local.get("sync")).sync).status === "ok" && !Object.hasOwn(await fakeBrowser.storage.local.get(null), "pending:sync-join"),
+    "the push confirmed and the join retired"
+  )
   await eventually(() => screen.queryByText("Synced.") !== null, "Settings says synced")
   expect(screen.getByRole("switch", { name: "Settings sync" })).toHaveAttribute("aria-checked", "true")
 

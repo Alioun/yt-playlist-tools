@@ -3,11 +3,50 @@ import type { UiMessages } from "./ui"
 import type { FirstRunMessages } from "./first-run"
 
 type Check<T extends true> = T
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 export type CatalogueProofs = [
   Check<Equal<UiMessages["ui.change"], FirstRunMessages["ui.change"]>>,
   Check<Equal<UiMessages["ui.syncedChoices"], FirstRunMessages["ui.syncedChoices"]>>,
-  Check<Equal<keyof UiMessages, "ui.clearAll" | "ui.change" | "ui.syncedChoices" | "ui.accountInView" | "ui.playlists" | "ui.create" | "ui.resolveChannel" | "ui.status" | "ui.pause" | "ui.recentAdds" | "ui.device" | "ui.filter" | "ui.filterChannel" | "ui.removeKeptFilters" | "ui.diagnostics" | "ui.withdraw" | "ui.removeSetup" | "ui.exportSettings" | "ui.importSettings" | "ui.noteSeen" | "ui.noteAgree" | "ui.playingNow" | "ui.add" | "ui.gather" | "ui.gatherUndo" | "ui.gathers" | "ui.claimSeen" | "ui.discardUnclaimed" | "ui.thisTab" | "ui.skip" | "ui.addUndo" | "ui.remove" | "ui.membership" | "ui.pausedWork" | "ui.sync">>
+  Check<
+    Equal<
+      keyof UiMessages,
+      | "ui.clearAll"
+      | "ui.change"
+      | "ui.syncedChoices"
+      | "ui.accountInView"
+      | "ui.playlists"
+      | "ui.create"
+      | "ui.resolveChannel"
+      | "ui.status"
+      | "ui.pause"
+      | "ui.recentAdds"
+      | "ui.device"
+      | "ui.filter"
+      | "ui.filterChannel"
+      | "ui.removeKeptFilters"
+      | "ui.diagnostics"
+      | "ui.withdraw"
+      | "ui.removeSetup"
+      | "ui.exportSettings"
+      | "ui.importSettings"
+      | "ui.noteSeen"
+      | "ui.noteAgree"
+      | "ui.playingNow"
+      | "ui.add"
+      | "ui.gather"
+      | "ui.gatherUndo"
+      | "ui.gathers"
+      | "ui.claimSeen"
+      | "ui.discardUnclaimed"
+      | "ui.thisTab"
+      | "ui.skip"
+      | "ui.addUndo"
+      | "ui.remove"
+      | "ui.membership"
+      | "ui.pausedWork"
+      | "ui.sync"
+    >
+  >
 ]
 function negatives(handlers: RpcHandlers<UiMessages, undefined>) {
   // @ts-expect-error negative: invented-message. Every UI call is in the composed catalogue.

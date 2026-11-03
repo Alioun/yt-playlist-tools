@@ -3,22 +3,24 @@ import type { PlaylistId } from "../model"
 import type { FilterDecision } from "./channel-filter"
 
 const failures = [
-  "signed-out", "not-sent", "unconfirmed", "missing", "full", "refused", "rate-limited", "paused",
-  "account-changed", "account-refused", "membership-unreadable", "unrecognised"
+  "signed-out",
+  "not-sent",
+  "unconfirmed",
+  "missing",
+  "full",
+  "refused",
+  "rate-limited",
+  "paused",
+  "account-changed",
+  "account-refused",
+  "membership-unreadable",
+  "unrecognised"
 ] as const
-export type Failure = typeof failures[number]
+export type Failure = (typeof failures)[number]
 export type ExplicitFailure = Exclude<Failure, "membership-unreadable">
 
-export type Outcome =
-  | { kind: "added" }
-  | { kind: "already-in" }
-  | { kind: "filtered"; decision: Exclude<FilterDecision, "pass"> }
-  | { kind: "skipped" }
-  | { kind: "failed"; failure: Failure }
-export type ExplicitOutcome =
-  | { kind: "added" }
-  | { kind: "already-in" }
-  | { kind: "failed"; failure: ExplicitFailure }
+export type Outcome = { kind: "added" } | { kind: "already-in" } | { kind: "filtered"; decision: Exclude<FilterDecision, "pass"> } | { kind: "skipped" } | { kind: "failed"; failure: Failure }
+export type ExplicitOutcome = { kind: "added" } | { kind: "already-in" } | { kind: "failed"; failure: ExplicitFailure }
 
 export type Explicit = "shortcut" | "quick-save" | "picker" | "choose-quick-save" | "choose-shortcut"
 export type Shown = { tab: ReadonlySet<string>; session: ReadonlySet<string> }
@@ -65,11 +67,16 @@ export type ToastPlan = {
 
 export function failureOf(answer: JobFailure): Failure {
   switch (answer.reason) {
-    case "signedOut": return "signed-out"
-    case "accountChanged": return "account-changed"
-    case "unavailable": return "unrecognised"
-    case "unconfirmed": return "unconfirmed"
-    case "failed": return answer.http === 429 ? "rate-limited" : "unrecognised"
+    case "signedOut":
+      return "signed-out"
+    case "accountChanged":
+      return "account-changed"
+    case "unavailable":
+      return "unrecognised"
+    case "unconfirmed":
+      return "unconfirmed"
+    case "failed":
+      return answer.http === 429 ? "rate-limited" : "unrecognised"
   }
 }
 
@@ -103,13 +110,18 @@ type Limit = { per: keyof Remember; key: string } | "silent" | null
 function autoAddLimit(failure: Failure, playlist: PlaylistId): Limit {
   switch (failure) {
     case "signed-out":
-    case "paused": return "silent"
+    case "paused":
+      return "silent"
     case "missing":
-    case "full": return { per: "session", key: `${failure}:${playlist}` }
-    case "refused": return { per: "session", key: failure }
+    case "full":
+      return { per: "session", key: `${failure}:${playlist}` }
+    case "refused":
+      return { per: "session", key: failure }
     case "account-changed":
-    case "account-refused": return { per: "tab", key: failure }
-    default: return null
+    case "account-refused":
+      return { per: "tab", key: failure }
+    default:
+      return null
   }
 }
 
@@ -130,16 +142,12 @@ function autoAddPlan(outcomes: Readonly<Record<PlaylistId, Outcome>>, shown: Sho
     const named = failed.filter(([, failure]) => failure === lead)
     const playlists = named.map(([playlist]) => playlist)
     const remember = { tab: keys(named, "tab"), session: keys(named, "session") }
-    const message: Message = added.length
-      ? { kind: "saved-failed", saved: added, failure: lead, playlists }
-      : { kind: "failed", failure: lead, playlists }
+    const message: Message = added.length ? { kind: "saved-failed", saved: added, failure: lead, playlists } : { kind: "failed", failure: lead, playlists }
     return plan("failure", true, message, autoAddFix(lead, playlists), remember)
   }
   if (added.length) {
     if (!feedback) return null
-    const message: Message = filtered.length
-      ? { kind: "saved-filtered", saved: added.length, filtered: filtered.length }
-      : { kind: "saved", playlists: added }
+    const message: Message = filtered.length ? { kind: "saved-filtered", saved: added.length, filtered: filtered.length } : { kind: "saved", playlists: added }
     return plan("confirmation", true, message, { kind: "undo" })
   }
   const unknown = filtered.filter(([, decision]) => decision === "filtered-unknown-channel").map(([playlist]) => playlist)
@@ -155,11 +163,15 @@ function autoAddFix(failure: Failure, playlists: readonly PlaylistId[]): Action 
   switch (failure) {
     case "not-sent":
     case "unconfirmed":
-    case "unrecognised": return { kind: "try-again", playlists }
+    case "unrecognised":
+      return { kind: "try-again", playlists }
     case "missing":
-    case "full": return playlists[0] ? { kind: "settings", feature: "auto-add", playlist: playlists[0] } : null
-    case "account-changed": return { kind: "reload" }
-    default: return null
+    case "full":
+      return playlists[0] ? { kind: "settings", feature: "auto-add", playlist: playlists[0] } : null
+    case "account-changed":
+      return { kind: "reload" }
+    default:
+      return null
   }
 }
 
@@ -175,9 +187,7 @@ function explicitPlan(via: Explicit, outcomes: Readonly<Record<PlaylistId, Expli
   const lead = leading(failed.map(([, failure]) => failure))
   if (lead) {
     const playlists = failed.filter(([, failure]) => failure === lead).map(([playlist]) => playlist)
-    const message: Message = added.length
-      ? { kind: "saved-failed", saved: added, failure: lead, playlists }
-      : { kind: "failed", failure: lead, playlists }
+    const message: Message = added.length ? { kind: "saved-failed", saved: added, failure: lead, playlists } : { kind: "failed", failure: lead, playlists }
     return plan("failure", false, message, explicitFix(via, lead, playlists))
   }
   if (added.length) {
@@ -196,13 +206,16 @@ function confirmation(via: Explicit, added: readonly PlaylistId[]): Message {
 
 function explicitFix(via: Explicit, failure: ExplicitFailure, playlists: readonly PlaylistId[]): Action | null {
   switch (failure) {
-    case "signed-out": return { kind: "sign-in" }
-    case "account-changed": return { kind: "reload" }
+    case "signed-out":
+      return { kind: "sign-in" }
+    case "account-changed":
+      return { kind: "reload" }
     case "missing":
     case "full":
       if (via === "quick-save") return { kind: "choose" }
       return via === "shortcut" && playlists[0] ? { kind: "settings", feature: "shortcuts", playlist: playlists[0] } : null
-    default: return null
+    default:
+      return null
   }
 }
 

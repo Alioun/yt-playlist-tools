@@ -10,13 +10,20 @@ const natural = (raw: unknown): raw is number => typeof raw === "number" && Numb
 const text = (raw: unknown): raw is string => typeof raw === "string" && raw.length > 0
 export type ResetMetadata = { readonly v: 1; readonly reset: true; readonly id: string; readonly created: number }
 export type SyncedClearMarker = {
-  readonly v: 2; readonly kind: "clear-all"; readonly scope: "synced"
-  readonly metadata: ResetMetadata; readonly phase: "set" | "remove" | "done"
-  readonly notBefore: number; readonly wait: "pace" | "opaque"
+  readonly v: 2
+  readonly kind: "clear-all"
+  readonly scope: "synced"
+  readonly metadata: ResetMetadata
+  readonly phase: "set" | "remove" | "done"
+  readonly notBefore: number
+  readonly wait: "pace" | "opaque"
   readonly diagnostic: JsonValue
 }
-export type ResetEffect = { readonly operation: "set" | "remove" | "marker-set"; readonly names: readonly string[];
-  readonly outcome: { readonly kind: "resolved" } | { readonly kind: "rejected"; readonly error: unknown } }
+export type ResetEffect = {
+  readonly operation: "set" | "remove" | "marker-set"
+  readonly names: readonly string[]
+  readonly outcome: { readonly kind: "resolved" } | { readonly kind: "rejected"; readonly error: unknown }
+}
 export type SyncedResetResult =
   | { readonly kind: "confirmed"; readonly marker: SyncedClearMarker; readonly effects: readonly ResetEffect[] }
   | { readonly kind: "deferred"; readonly notBefore: number; readonly marker: SyncedClearMarker; readonly effects: readonly ResetEffect[] }
@@ -44,14 +51,23 @@ export function resetMetadata(raw: unknown): ResetMetadata | undefined {
   } catch {}
 }
 export function readSyncedClearMarker(raw: unknown): SyncedClearMarker | undefined {
-  if (!objectShape(raw, { v: v => v === 2, kind: v => v === "clear-all", scope: v => v === "synced",
-    metadata: v => resetMetadata(v) !== undefined, phase: v => v === "set" || v === "remove" || v === "done",
-    notBefore: natural, wait: v => v === "pace" || v === "opaque", diagnostic: isJsonValue })) return
+  if (
+    !objectShape(raw, {
+      v: v => v === 2,
+      kind: v => v === "clear-all",
+      scope: v => v === "synced",
+      metadata: v => resetMetadata(v) !== undefined,
+      phase: v => v === "set" || v === "remove" || v === "done",
+      notBefore: natural,
+      wait: v => v === "pace" || v === "opaque",
+      diagnostic: isJsonValue
+    })
+  )
+    return
   const metadata = resetMetadata(raw.metadata)
-  if (!metadata || !natural(raw.notBefore) || !isJsonValue(raw.diagnostic) ||
-    raw.phase !== "set" && raw.phase !== "remove" && raw.phase !== "done" || raw.wait !== "pace" && raw.wait !== "opaque") return
-  return { v: 2, kind: "clear-all", scope: "synced", metadata, phase: raw.phase,
-    notBefore: raw.notBefore, wait: raw.wait, diagnostic: raw.diagnostic }
+  if (!metadata || !natural(raw.notBefore) || !isJsonValue(raw.diagnostic) || (raw.phase !== "set" && raw.phase !== "remove" && raw.phase !== "done") || (raw.wait !== "pace" && raw.wait !== "opaque"))
+    return
+  return { v: 2, kind: "clear-all", scope: "synced", metadata, phase: raw.phase, notBefore: raw.notBefore, wait: raw.wait, diagnostic: raw.diagnostic }
 }
 const jsonRecord = (raw: unknown): raw is JsonObject => raw !== null && typeof raw === "object" && !Array.isArray(raw) && isJsonValue(raw)
 function failureDiagnostic(error: unknown): JsonObject {
@@ -62,7 +78,11 @@ export function createSyncReset(ports: SyncResetPorts) {
   const ownedOpaque = new Set<string>()
   async function write(marker: SyncedClearMarker, live: () => boolean, effects: ResetEffect[]): Promise<boolean> {
     let outcome: ResetEffect["outcome"] = { kind: "resolved" }
-    try { await ports.local.set({ [markerKey]: marker }) } catch (error) { outcome = { kind: "rejected", error } }
+    try {
+      await ports.local.set({ [markerKey]: marker })
+    } catch (error) {
+      outcome = { kind: "rejected", error }
+    }
     effects.push({ operation: "marker-set", names: [markerKey], outcome })
     if (!live()) return false
     const read = await ports.local.get([markerKey])
@@ -97,8 +117,13 @@ export function createSyncReset(ports: SyncResetPorts) {
       if (Object.hasOwn(local, "sync")) {
         try {
           const gate = decodeSyncState(local.sync).opaqueWrite?.gate
-          if (gate) { notBefore = Math.max(notBefore, gate.notBefore, time.wall + 60000); wait = "opaque" }
-        } catch { return { kind: "unavailable", reason: "marker" } }
+          if (gate) {
+            notBefore = Math.max(notBefore, gate.notBefore, time.wall + 60000)
+            wait = "opaque"
+          }
+        } catch {
+          return { kind: "unavailable", reason: "marker" }
+        }
       }
       const remote = await ports.sync.get()
       const used = new Set<string>()
@@ -109,8 +134,7 @@ export function createSyncReset(ports: SyncResetPorts) {
       if (!text(id) || used.has(id)) return { kind: "unavailable", reason: "marker" }
       const metadata: ResetMetadata = { v: 1, reset: true, id, created: time.wall }
       decodeSyncMeta(metadata)
-      return { kind: "prepared", marker: { v: 2, kind: "clear-all", scope: "synced", metadata,
-        phase: "set", notBefore, wait, diagnostic: null } }
+      return { kind: "prepared", marker: { v: 2, kind: "clear-all", scope: "synced", metadata, phase: "set", notBefore, wait, diagnostic: null } }
     },
     async run(initial: SyncedClearMarker, live: () => boolean): Promise<SyncedResetResult> {
       const effects: ResetEffect[] = []
@@ -128,21 +152,26 @@ export function createSyncReset(ports: SyncResetPorts) {
           const time = syncMutationTime(ports.pace, ports.clock)
           if (!time) return { kind: "unavailable", reason: "clock" }
           const floor = Math.max(ports.pace.nextInvocation, time.mono + Math.max(0, marker.notBefore - time.wall))
-          if (time.mono < floor || marker.wait === "opaque" && event.wall < marker.notBefore)
-            return { kind: "deferred", marker, effects, notBefore: floor }
+          if (time.mono < floor || (marker.wait === "opaque" && event.wall < marker.notBefore)) return { kind: "deferred", marker, effects, notBefore: floor }
           const remote = await ports.sync.get()
           if (!live() || !jsonRecord(remote)) return { kind: "unconfirmed", stage: "sync", effects }
           const exact = Object.keys(remote).length === 1 && sameSyncJson(remote["s:meta"] ?? null, marker.metadata)
-          if (marker.phase === "done" || marker.phase === "remove" && exact) {
+          if (marker.phase === "done" || (marker.phase === "remove" && exact)) {
             if (!exact) return { kind: "unconfirmed", stage: "sync", effects }
             marker = { ...marker, phase: "done", wait: "pace" }
-            if (!await write(marker, live, effects)) return { kind: "unconfirmed", stage: "marker", effects }
+            if (!(await write(marker, live, effects))) return { kind: "unconfirmed", stage: "marker", effects }
             return { kind: "confirmed", marker, effects }
           }
           if (marker.phase === "remove" && !sameSyncJson(remote["s:meta"] ?? null, marker.metadata)) return { kind: "unconfirmed", stage: "sync", effects }
-          const names = marker.phase === "set" ? ["s:meta"] : Object.keys(remote).filter(name => name !== "s:meta").sort().slice(0, 32)
+          const names =
+            marker.phase === "set"
+              ? ["s:meta"]
+              : Object.keys(remote)
+                  .filter(name => name !== "s:meta")
+                  .sort()
+                  .slice(0, 32)
           const armed: SyncedClearMarker = { ...marker, wait: "opaque", notBefore: time.wall + 60000 }
-          if (!await write(armed, live, effects)) return { kind: "unconfirmed", stage: "marker", effects }
+          if (!(await write(armed, live, effects))) return { kind: "unconfirmed", stage: "marker", effects }
           ownedOpaque.add(`${armed.metadata.id}:${armed.notBefore}`)
           if (!live()) return { kind: "unavailable", reason: "disposed" }
           const invoked = syncMutationTime(ports.pace, ports.clock)
@@ -152,26 +181,32 @@ export function createSyncReset(ports: SyncResetPorts) {
           try {
             if (marker.phase === "set") await ports.sync.set({ "s:meta": marker.metadata })
             else await ports.sync.remove(names)
-          } catch (error) { outcome = { kind: "rejected", error } }
+          } catch (error) {
+            outcome = { kind: "rejected", error }
+          }
           effects.push({ operation: marker.phase === "set" ? "set" : "remove", names, outcome })
           if (!live()) return { kind: "unavailable", reason: "disposed" }
           const read = await ports.sync.get()
           if (!jsonRecord(read)) return { kind: "unconfirmed", stage: "sync", effects }
-          const applied = sameSyncJson(read["s:meta"] ?? null, marker.metadata) &&
-            (marker.phase === "set" || names.every(name => !Object.hasOwn(read, name)))
+          const applied = sameSyncJson(read["s:meta"] ?? null, marker.metadata) && (marker.phase === "set" || names.every(name => !Object.hasOwn(read, name)))
           const after = syncMutationTime(ports.pace, ports.clock)
           if (!after) return { kind: "unavailable", reason: "clock" }
-          marker = { ...marker, phase: applied ? "remove" : marker.phase,
+          marker = {
+            ...marker,
+            phase: applied ? "remove" : marker.phase,
             wait: outcome.kind === "rejected" ? "opaque" : "pace",
             notBefore: Math.max(invoked.wall + 5000, outcome.kind === "rejected" ? after.wall + 60000 : 0),
-            diagnostic: outcome.kind === "rejected" ? failureDiagnostic(outcome.error) : marker.diagnostic }
+            diagnostic: outcome.kind === "rejected" ? failureDiagnostic(outcome.error) : marker.diagnostic
+          }
           if (marker.wait === "opaque") ownedOpaque.add(`${marker.metadata.id}:${marker.notBefore}`)
           if (outcome.kind === "rejected") ports.pace.nextInvocation = Math.max(ports.pace.nextInvocation, after.mono + 60000)
-          if (!await write(marker, live, effects)) return { kind: "unconfirmed", stage: "marker", effects }
+          if (!(await write(marker, live, effects))) return { kind: "unconfirmed", stage: "marker", effects }
           if (!applied && outcome.kind === "resolved") return { kind: "unconfirmed", stage: "sync", effects }
         }
         return { kind: "deferred", marker, effects, notBefore: ports.pace.nextInvocation }
-      } catch (error) { return { kind: "unconfirmed", stage: "sync", effects, error } }
+      } catch (error) {
+        return { kind: "unconfirmed", stage: "sync", effects, error }
+      }
     }
   }
 }

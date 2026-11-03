@@ -8,7 +8,7 @@ import { authenticateTab, authenticateUi, runtimeTransport, tabTarget, timerDead
 import type { RuntimePort, TabContext, TabsPort, TabTarget, UiContext } from "./runtime"
 import type { NativeSender, SenderOriginPorts, SenderPage } from "./sender-origin"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 
 type Calls = { "test.hello": { payload: { site: Site }; result: { site: Site } } }
@@ -19,8 +19,12 @@ declare const build: BuildId
 declare const contract: RpcContract<Calls>
 
 export const nativePorts = [
-  native.runtime satisfies RuntimePort, native.tabs satisfies TabsPort, native satisfies SenderOriginPorts,
-  fake.runtime satisfies RuntimePort, fake.tabs satisfies TabsPort, fake satisfies SenderOriginPorts
+  native.runtime satisfies RuntimePort,
+  native.tabs satisfies TabsPort,
+  native satisfies SenderOriginPorts,
+  fake.runtime satisfies RuntimePort,
+  fake.tabs satisfies TabsPort,
+  fake satisfies SenderOriginPorts
 ]
 
 export type RuntimeProofs = [

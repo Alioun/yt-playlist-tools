@@ -58,7 +58,7 @@ export function pageLinkEntries(registry: readonly RegistrationFeature[]): Entry
       const page = feature.pages[site]
       if (!page) continue
       const prefix = siteBundles[site].match.slice(0, -1)
-      if (page.matches && (!page.matches.length || page.matches.some((match) => !match.startsWith(prefix) || /[\s#]/.test(match)))) {
+      if (page.matches && (!page.matches.length || page.matches.some(match => !match.startsWith(prefix) || /[\s#]/.test(match)))) {
         throw Error(`Off-site or invalid registration matches for ${feature.id} on ${site}`)
       }
       if (!page.file) {
@@ -74,13 +74,7 @@ export function pageLinkEntries(registry: readonly RegistrationFeature[]): Entry
   return entries
 }
 
-export function desired(
-  registry: readonly RegistrationFeature[],
-  settings: Settings,
-  consent: boolean,
-  access: Readonly<Record<Site, boolean>>,
-  schemaOk: boolean,
-): RegisteredScript[] {
+export function desired(registry: readonly RegistrationFeature[], settings: Settings, consent: boolean, access: Readonly<Record<Site, boolean>>, schemaOk: boolean): RegisteredScript[] {
   if (!consent || !schemaOk) return []
   pageLinkEntries(registry)
   const result: RegisteredScript[] = []
@@ -94,10 +88,10 @@ export function desired(
     }
     if (!selected.length) continue
     const names = siteBundles[site]
-    const matches = [...new Set(selected.flatMap((page) => page.matches ?? [names.match]))]
+    const matches = [...new Set(selected.flatMap(page => page.matches ?? [names.match]))]
     const effectiveMatches = matches.includes(names.match) ? [names.match] : matches
-    const files = [...new Set(selected.flatMap((page) => page.file ? [`${page.file}.js`] : []))]
-    const js = [`${names.core}.js`, ...(selected.some((page) => page.needs.includes("kit")) ? [`${names.kit}.js`] : []), ...files]
+    const files = [...new Set(selected.flatMap(page => (page.file ? [`${page.file}.js`] : [])))]
+    const js = [`${names.core}.js`, ...(selected.some(page => page.needs.includes("kit")) ? [`${names.kit}.js`] : []), ...files]
     result.push(
       { id: `pp-${site}-page`, matches: [...effectiveMatches], js: [`${names.page}.js`], world: "MAIN", runAt: "document_start", allFrames: false, persistAcrossSessions: true },
       { id: `pp-${site}`, matches: [...effectiveMatches], js, world: "ISOLATED", runAt: "document_idle", allFrames: false, persistAcrossSessions: true }

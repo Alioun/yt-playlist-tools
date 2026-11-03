@@ -1,6 +1,22 @@
 import {
-  decodeDocument, decodeProgress, decodeSetup, documentKey, DecodeError, progressJson, progressKey, progressLive, progressShard, pruneProgress,
-  rememberProgress, PROGRESS_PRUNE_MS, PROGRESS_SHARDS, type AccountKey, type Progress, type ProgressParts, type ProgressShard, type VideoId
+  decodeDocument,
+  decodeProgress,
+  decodeSetup,
+  documentKey,
+  DecodeError,
+  progressJson,
+  progressKey,
+  progressLive,
+  progressShard,
+  pruneProgress,
+  rememberProgress,
+  PROGRESS_PRUNE_MS,
+  PROGRESS_SHARDS,
+  type AccountKey,
+  type Progress,
+  type ProgressParts,
+  type ProgressShard,
+  type VideoId
 } from "../../shared/model"
 import { readSettingsView } from "../../shared/model/settings-view"
 import { isJsonValue, type JsonValue } from "../../shared/contracts/json"
@@ -12,12 +28,10 @@ export type ProgressSaveRequest = ProgressRequest & { readonly len: number; read
 export type ProgressRefusal = { readonly kind: "refused"; readonly reason: "private" | "off" | "no-setup" | "invalid" }
 export type ProgressLoad =
   | { readonly kind: "progress"; readonly progress: { readonly len: number; readonly parts: ProgressParts } | null }
-  | ProgressRefusal | TabProjectionUnavailable | TabProjectionInvalid
-export type ProgressSave =
-  | { readonly kind: "committed" | "unchanged" }
   | ProgressRefusal
-  | { readonly kind: "failed"; readonly stage: "set" }
-  | TabProjectionUnavailable | TabProjectionInvalid
+  | TabProjectionUnavailable
+  | TabProjectionInvalid
+export type ProgressSave = { readonly kind: "committed" | "unchanged" } | ProgressRefusal | { readonly kind: "failed"; readonly stage: "set" } | TabProjectionUnavailable | TabProjectionInvalid
 /** The store's watch-progress operations (DATA-24 to DATA-29, DATA-56). Private tabs keep progress themselves (DATA-28). */
 export type ProgressOwner = {
   loadProgress(request: ProgressRequest): Promise<ProgressLoad>
@@ -53,8 +67,7 @@ export function readProgressEntry(records: Readonly<Record<string, unknown>>, ac
  * The items one save writes: the video's shard, plus every shard the prune changed when it's due. Nothing is
  * returned when the stored copy already says the same.
  */
-export function planProgressSave(records: Readonly<Record<string, unknown>>, request: ProgressSaveRequest, now: number, prune: boolean):
-  Readonly<Record<string, JsonValue>> {
+export function planProgressSave(records: Readonly<Record<string, unknown>>, request: ProgressSaveRequest, now: number, prune: boolean): Readonly<Record<string, JsonValue>> {
   const read = (shard: ProgressShard): Progress => decodeProgress(records[progressKey(request.acct, shard)])
   const own = progressShard(request.video)
   const next: Partial<Record<ProgressShard, Progress>> = { [own]: rememberProgress(read(own), request.video, request, now) }
@@ -66,7 +79,8 @@ export function planProgressSave(records: Readonly<Record<string, unknown>>, req
   for (const shard of PROGRESS_SHARDS) {
     const value = next[shard]
     if (!value) continue
-    const key = progressKey(request.acct, shard), json = progressJson(value)
+    const key = progressKey(request.acct, shard),
+      json = progressJson(value)
     const stored = records[key]
     if (stored === undefined ? Object.keys(json).length === 0 : isStoredJson(stored) && sameSyncJson(stored, json)) continue
     items[key] = json
@@ -81,8 +95,13 @@ function isStoredJson(value: unknown): value is JsonValue {
 export function createProgressPruneClock() {
   const pruned = new Map<AccountKey, number>()
   return {
-    due: (acct: AccountKey, now: number) => { const at = pruned.get(acct); return at === undefined || now - at >= PROGRESS_PRUNE_MS || now < at },
-    done: (acct: AccountKey, now: number) => { pruned.set(acct, now) },
+    due: (acct: AccountKey, now: number) => {
+      const at = pruned.get(acct)
+      return at === undefined || now - at >= PROGRESS_PRUNE_MS || now < at
+    },
+    done: (acct: AccountKey, now: number) => {
+      pruned.set(acct, now)
+    },
     forget: () => pruned.clear()
   }
 }

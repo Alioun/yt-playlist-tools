@@ -19,9 +19,11 @@ type Calls = {
 }
 const contract: RpcContract<Calls> = {
   "test.add": {
-    payload: (v): v is Calls["test.add"]["payload"] => objectShape(v, {
-      video: x => typeof x === "string", playlists: x => Array.isArray(x) && x.every(p => typeof p === "string")
-    }),
+    payload: (v): v is Calls["test.add"]["payload"] =>
+      objectShape(v, {
+        video: x => typeof x === "string",
+        playlists: x => Array.isArray(x) && x.every(p => typeof p === "string")
+      }),
     result: (v): v is Calls["test.add"]["result"] => objectShape(v, { added: x => typeof x === "number" }),
     timeoutMs: 10_000
   },
@@ -36,11 +38,16 @@ const background: Sender = { context: "page", page: "background" }
 
 function clock() {
   const timers = new Map<number, { at: number; expire: () => void }>()
-  let now = 0, next = 0, cancels = 0
+  let now = 0,
+    next = 0,
+    cancels = 0
   const deadline: Deadline = (ms, expire) => {
     const id = next++
     timers.set(id, { at: now + ms, expire })
-    return () => { cancels++; timers.delete(id) }
+    return () => {
+      cancels++
+      timers.delete(id)
+    }
   }
   return {
     deadline,
@@ -67,7 +74,10 @@ function setup(delivery: "immediate" | "queued" = "immediate", from: Sender = ta
   receiver.handle({
     authenticate: tabOnly,
     handlers: {
-      "test.add": (payload, context) => { seen.push({ payload, context }); return { added: payload.playlists.length } },
+      "test.add": (payload, context) => {
+        seen.push({ payload, context })
+        return { added: payload.playlists.length }
+      },
       "test.ping": () => ({ pong: "background" })
     }
   })
@@ -103,8 +113,14 @@ test("answers synchronous handlers and nested calls in both directions", async (
   const backgroundRpc = createRpc(network.connect(background), { build, contract, deadline: time.deadline })
   const order: string[] = []
   tabRpc.handle({
-    authenticate: ({ sender }) => sender.context === "page" ? { kind: "accepted", context: null } : { kind: "rejected" },
-    handlers: { "test.add": () => ({ added: -1 }), "test.ping": () => { order.push("tab ping"); return { pong: "tab" } } }
+    authenticate: ({ sender }) => (sender.context === "page" ? { kind: "accepted", context: null } : { kind: "rejected" }),
+    handlers: {
+      "test.add": () => ({ added: -1 }),
+      "test.ping": () => {
+        order.push("tab ping")
+        return { pong: "tab" }
+      }
+    }
   })
   backgroundRpc.handle({
     authenticate: tabOnly,
@@ -166,24 +182,64 @@ function stub() {
       }
     }
   }
-  return { transport, receivers, answerWith(next: (message: unknown) => Promise<unknown>) { answer = next } }
+  return {
+    transport,
+    receivers,
+    answerWith(next: (message: unknown) => Promise<unknown>) {
+      answer = next
+    }
+  }
 }
 
 test("drops malformed, accessor, non-JSON, mismatched and unknown requests without a handler call", () => {
   const raw = stub()
   const time = clock()
   const rpc = createRpc(raw.transport, { build, contract, deadline: time.deadline })
-  let handled = 0, getters = 0
-  rpc.handle({ authenticate: tabOnly, handlers: { "test.add": () => { handled++; return { added: 0 } }, "test.ping": () => { handled++; return { pong: "" } } } })
+  let handled = 0,
+    getters = 0
+  rpc.handle({
+    authenticate: tabOnly,
+    handlers: {
+      "test.add": () => {
+        handled++
+        return { added: 0 }
+      },
+      "test.ping": () => {
+        handled++
+        return { pong: "" }
+      }
+    }
+  })
   const valid = { v: 1, build: "synthetic-build", id: "1", kind: "test.ping", payload: null }
   const accessor = { ...valid }
-  Object.defineProperty(accessor, "payload", { enumerable: true, get: () => { getters++; return null } })
+  Object.defineProperty(accessor, "payload", {
+    enumerable: true,
+    get: () => {
+      getters++
+      return null
+    }
+  })
   const messages: unknown[] = [
-    undefined, null, "text", JSON.stringify(valid), [valid], accessor,
-    { ...valid, v: 2 }, { ...valid, v: "1" }, { ...valid, build: "other-build" }, { v: 1, id: "1", kind: "test.ping", payload: null },
-    { ...valid, id: "" }, { ...valid, id: 1 }, { ...valid, kind: "test.unknown" }, { ...valid, kind: "constructor" },
-    { ...valid, kind: "toString" }, { ...valid, payload: undefined }, { v: 1, build: "synthetic-build", id: "1", kind: "test.ping" },
-    { ...valid, origin: { kind: "background" } }, { ...valid, sender: tab }, { ...valid, result: { pong: "" } },
+    undefined,
+    null,
+    "text",
+    JSON.stringify(valid),
+    [valid],
+    accessor,
+    { ...valid, v: 2 },
+    { ...valid, v: "1" },
+    { ...valid, build: "other-build" },
+    { v: 1, id: "1", kind: "test.ping", payload: null },
+    { ...valid, id: "" },
+    { ...valid, id: 1 },
+    { ...valid, kind: "test.unknown" },
+    { ...valid, kind: "constructor" },
+    { ...valid, kind: "toString" },
+    { ...valid, payload: undefined },
+    { v: 1, build: "synthetic-build", id: "1", kind: "test.ping" },
+    { ...valid, origin: { kind: "background" } },
+    { ...valid, sender: tab },
+    { ...valid, result: { pong: "" } },
     { ...valid, kind: "test.add", payload: { video: "v", playlists: [Number.NaN] } },
     { ...valid, kind: "test.add", payload: { video: "v", playlists: [], origin: "background" } },
     Object.assign(Object.create({ inherited: true }), valid)
@@ -199,14 +255,22 @@ test("never lets unrelated or malformed answers satisfy a pending call", async (
   const time = clock()
   const rpc = createRpc(raw.transport, { build, contract, deadline: time.deadline })
   const header = { v: 1, build: "synthetic-build", kind: "test.ping" }
-  const idOf = (message: unknown) => typeof message === "object" && message !== null && "id" in message && typeof message.id === "string" ? message.id : ""
+  const idOf = (message: unknown) => (typeof message === "object" && message !== null && "id" in message && typeof message.id === "string" ? message.id : "")
   const answers: ((id: string) => unknown)[] = [
-    () => undefined, () => null, () => "text", id => [{ ...header, id, result: { pong: "x" } }],
-    id => ({ ...header, id: `${id}0`, result: { pong: "x" } }), () => ({ ...header, id: "1", result: { pong: "x" } }),
-    id => ({ ...header, id, kind: "test.add", result: { pong: "x" } }), id => ({ ...header, id, build: "other-build", result: { pong: "x" } }),
-    id => ({ ...header, id, v: 2, result: { pong: "x" } }), id => ({ ...header, id, result: { pong: 1 } }),
-    id => ({ ...header, id, result: { pong: "x" }, extra: true }), id => ({ ...header, id, payload: null }),
-    id => ({ ...header, id, result: { pong: "x" }, failure: "receiver" }), id => ({ ...header, id, failure: { message: "boom", stack: "trace" } })
+    () => undefined,
+    () => null,
+    () => "text",
+    id => [{ ...header, id, result: { pong: "x" } }],
+    id => ({ ...header, id: `${id}0`, result: { pong: "x" } }),
+    () => ({ ...header, id: "1", result: { pong: "x" } }),
+    id => ({ ...header, id, kind: "test.add", result: { pong: "x" } }),
+    id => ({ ...header, id, build: "other-build", result: { pong: "x" } }),
+    id => ({ ...header, id, v: 2, result: { pong: "x" } }),
+    id => ({ ...header, id, result: { pong: 1 } }),
+    id => ({ ...header, id, result: { pong: "x" }, extra: true }),
+    id => ({ ...header, id, payload: null }),
+    id => ({ ...header, id, result: { pong: "x" }, failure: "receiver" }),
+    id => ({ ...header, id, failure: { message: "boom", stack: "trace" } })
   ]
   const outcomes: RpcOutcome<unknown>[] = []
   for (const answer of answers) {
@@ -224,7 +288,9 @@ test("never lets unrelated or malformed answers satisfy a pending call", async (
 test("bounds an undelivered call with its kind's one-shot deadline and ignores the late answer", async () => {
   const { network, caller, time, seen } = setup("queued")
   let outcome: RpcOutcome<unknown> | undefined
-  void caller.call("test.add", { video: "v1", playlists: ["a"] }).then(value => { outcome = value })
+  void caller.call("test.add", { video: "v1", playlists: ["a"] }).then(value => {
+    outcome = value
+  })
   time.advance(9_999)
   await flush()
   expect(outcome).toBeUndefined()
@@ -263,7 +329,9 @@ test("bounds a handler that never answers and turns a throwing handler into a fi
   receiver.handle({
     authenticate: tabOnly,
     handlers: {
-      "test.add": () => { throw Object.assign(new Error("secret input v1"), { stack: "synthetic stack" }) },
+      "test.add": () => {
+        throw Object.assign(new Error("secret input v1"), { stack: "synthetic stack" })
+      },
       "test.ping": () => new Promise(() => {})
     }
   })
@@ -282,12 +350,27 @@ test("publishes only the first of duplicate answers", async () => {
   const { network, caller, time } = setup()
   const settings = createRpc(network.connect({ context: "page", page: "settings" }), { build, contract, deadline: time.deadline })
   let duplicates = 0
-  settings.handle({ authenticate: tabOnly, handlers: { "test.add": async () => { duplicates++; await flush(); return { added: 99 } }, "test.ping": () => ({ pong: "settings" }) } })
+  settings.handle({
+    authenticate: tabOnly,
+    handlers: {
+      "test.add": async () => {
+        duplicates++
+        await flush()
+        return { added: 99 }
+      },
+      "test.ping": () => ({ pong: "settings" })
+    }
+  })
   expect(await caller.call("test.add", { video: "v1", playlists: ["a"] })).toEqual({ kind: "answered", result: { added: 1 } })
   await flush()
   await flush()
   expect(duplicates).toBe(1)
-  expect(network.trace().filter(entry => entry.event !== "sent").map(entry => entry.event)).toEqual(["answered", "dropped"])
+  expect(
+    network
+      .trace()
+      .filter(entry => entry.event !== "sent")
+      .map(entry => entry.event)
+  ).toEqual(["answered", "dropped"])
 })
 
 test("disposal settles pending calls once, cancels deadlines once and removes listeners", async () => {
@@ -316,13 +399,21 @@ test("tolerates reentrant disposal from a deadline canceller and a listener disp
   const raw = stub()
   let cancels = 0
   const rpc = createRpc(raw.transport, {
-    build, contract, deadline: () => () => { cancels++; rpc.dispose() }
+    build,
+    contract,
+    deadline: () => () => {
+      cancels++
+      rpc.dispose()
+    }
   })
   const stop = rpc.handle({ authenticate: tabOnly, handlers: { "test.add": () => ({ added: 0 }), "test.ping": () => ({ pong: "" }) } })
   const calls = [rpc.call("test.ping", null), rpc.call("test.ping", null)]
   rpc.dispose()
   stop()
-  expect(await Promise.all(calls)).toEqual([{ kind: "failed", failure: "disposed" }, { kind: "failed", failure: "disposed" }])
+  expect(await Promise.all(calls)).toEqual([
+    { kind: "failed", failure: "disposed" },
+    { kind: "failed", failure: "disposed" }
+  ])
   expect(cancels).toBe(2)
   expect(raw.receivers).toHaveLength(0)
 })
@@ -336,10 +427,22 @@ test("a receiver disposed during a pending handler never publishes its late resu
   let authenticated: (value: Authentication<{ tabId: number }>) => void = () => {}
   let pingHandled = 0
   const stop = receiver.handle({
-    authenticate: ({ sender, request }) => request.kind === "test.ping"
-      ? new Promise<Authentication<{ tabId: number }>>(resolve => { authenticated = resolve })
-      : tabOnly({ sender }),
-    handlers: { "test.add": () => new Promise<{ added: number }>(resolve => { finish = resolve }), "test.ping": () => { pingHandled++; return { pong: "" } } }
+    authenticate: ({ sender, request }) =>
+      request.kind === "test.ping"
+        ? new Promise<Authentication<{ tabId: number }>>(resolve => {
+            authenticated = resolve
+          })
+        : tabOnly({ sender }),
+    handlers: {
+      "test.add": () =>
+        new Promise<{ added: number }>(resolve => {
+          finish = resolve
+        }),
+      "test.ping": () => {
+        pingHandled++
+        return { pong: "" }
+      }
+    }
   })
   const add = caller.call("test.add", { video: "v1", playlists: [] })
   const ping = caller.call("test.ping", null)
@@ -361,7 +464,10 @@ test("send-only callers answer synchronous delivery without registering or readi
   let listenerReads = 0
   const target = {
     send: connection.send,
-    get listen(): Transport<Sender>["listen"] { listenerReads++; throw new Error("Listener must not be read") }
+    get listen(): Transport<Sender>["listen"] {
+      listenerReads++
+      throw new Error("Listener must not be read")
+    }
   }
   const caller = createRpcCaller(target, { build, contract, deadline: time.deadline })
   expect(network.listening()).toBe(0)
@@ -388,15 +494,25 @@ test("send-only callers correlate overlap and never retry rejected, lost, timed 
   const caller = createRpcCaller({ send: connection.send }, { build, contract, deadline: time.deadline })
   const receiver = createRpc(network.connect(background), { build, contract, deadline: time.deadline })
   const writes: string[] = []
-  receiver.handle({ authenticate: tabOnly, handlers: {
-    "test.add": payload => { writes.push(payload.video); return { added: payload.playlists.length } },
-    "test.ping": () => ({ pong: "sync" })
-  } })
+  receiver.handle({
+    authenticate: tabOnly,
+    handlers: {
+      "test.add": payload => {
+        writes.push(payload.video)
+        return { added: payload.playlists.length }
+      },
+      "test.ping": () => ({ pong: "sync" })
+    }
+  })
   const add = (video: string, playlists: string[] = []) => caller.call("test.add", { video, playlists })
-  const first = add("first", ["a"]), second = add("second", ["a", "b"])
+  const first = add("first", ["a"]),
+    second = add("second", ["a", "b"])
   network.queued()[1]!.deliver()
   network.queued()[0]!.deliver()
-  expect(await Promise.all([first, second])).toEqual([{ kind: "answered", result: { added: 1 } }, { kind: "answered", result: { added: 2 } }])
+  expect(await Promise.all([first, second])).toEqual([
+    { kind: "answered", result: { added: 1 } },
+    { kind: "answered", result: { added: 2 } }
+  ])
   const rejected = add("rejected")
   network.queued()[0]!.reject()
   expect(await rejected).toEqual({ kind: "failed", failure: "transport" })
@@ -427,14 +543,26 @@ test("rejects accessor and non-JSON answers without invoking getters or exposing
   const time = clock()
   const caller = createRpcCaller({ send: raw.transport.send }, { build, contract, deadline: time.deadline })
   let getters = 0
-  for (const result of [Object.defineProperty({}, "pong", { enumerable: true, get() { getters++; throw new Error("arbitrary synthetic text") } }), { pong: "x", unsafe: Number.NaN }, new Date(0)]) {
+  for (const result of [
+    Object.defineProperty({}, "pong", {
+      enumerable: true,
+      get() {
+        getters++
+        throw new Error("arbitrary synthetic text")
+      }
+    }),
+    { pong: "x", unsafe: Number.NaN },
+    new Date(0)
+  ]) {
     raw.answerWith(async message => {
       if (!objectShape(message, { v: () => true, build: () => true, id: x => typeof x === "string", kind: () => true, payload: () => true })) throw new Error("Fixture envelope")
       return { v: 1, build, id: message.id, kind: "test.ping", result }
     })
     expect(await caller.call("test.ping", null)).toEqual({ kind: "failed", failure: "invalid-answer" })
   }
-  raw.answerWith(() => { throw new Error("arbitrary synthetic text") })
+  raw.answerWith(() => {
+    throw new Error("arbitrary synthetic text")
+  })
   expect(await caller.call("test.ping", null)).toEqual({ kind: "failed", failure: "transport" })
   expect(getters).toBe(0)
   expect(time.cancels()).toBe(time.created())
@@ -455,7 +583,15 @@ test("body claims cannot select native sender context", async () => {
   const trusted = createRpcCaller(network.connect(tab), { build, contract: claims, deadline: time.deadline })
   const receiver = createRpc(network.connect(background), { build, contract: claims, deadline: time.deadline })
   const contexts: number[] = []
-  receiver.handle({ authenticate: tabOnly, handlers: { "test.claim": (_payload, context) => { contexts.push(context.tabId); return context } } })
+  receiver.handle({
+    authenticate: tabOnly,
+    handlers: {
+      "test.claim": (_payload, context) => {
+        contexts.push(context.tabId)
+        return context
+      }
+    }
+  })
   expect(await untrusted.call("test.claim", { frameId: 0, tabId: 999 })).toEqual({ kind: "failed", failure: "invalid-answer" })
   expect(contexts).toEqual([])
   expect(await trusted.call("test.claim", { frameId: 3, tabId: 999 })).toEqual({ kind: "answered", result: { tabId: 7 } })
@@ -472,8 +608,13 @@ test("reentrant calls from a listener disposer are already disposed", async () =
   let sends = 0
   let reentrant: Promise<RpcOutcome<Calls["test.ping"]["result"]>> | undefined
   const transport: Transport<Sender> = {
-    send: () => { sends++; return Promise.resolve(undefined) },
-    listen: () => () => { reentrant = rpc.call("test.ping", null) }
+    send: () => {
+      sends++
+      return Promise.resolve(undefined)
+    },
+    listen: () => () => {
+      reentrant = rpc.call("test.ping", null)
+    }
   }
   const rpc = createRpc(transport, { build, contract, deadline: time.deadline })
   rpc.handle({ authenticate: tabOnly, handlers: { "test.add": () => ({ added: 0 }), "test.ping": () => ({ pong: "" }) } })

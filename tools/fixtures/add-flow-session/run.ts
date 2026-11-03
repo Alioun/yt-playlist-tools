@@ -6,8 +6,11 @@ import { brand, harness, no, shortcut, tabOrigin } from "../add-flow/harness"
 
 // Two sequential engines and a private window over one actual canonical owner. Prints reports and native session calls.
 export async function runAddFlowSessionFixture() {
-  const acct = brand(isAccountKey, "AAAAAAAAAAAAAAAA"), music = brand(isPlaylistId, "PLmusic"), later = brand(isPlaylistId, "WL")
-  const video = brand(isVideoId, "vid00000001"), second = brand(isVideoId, "vid00000002")
+  const acct = brand(isAccountKey, "AAAAAAAAAAAAAAAA"),
+    music = brand(isPlaylistId, "PLmusic"),
+    later = brand(isPlaylistId, "WL")
+  const video = brand(isVideoId, "vid00000001"),
+    second = brand(isVideoId, "vid00000002")
   const removal = createRemovalHarness({ ...removalFixture(), session: { unknown: { keep: true } } })
   const owner = createLocalFilterWriter(removal.deps)
   const port: SessionPort = { read: () => owner.readSession(), change: change => owner.changeSession(change) }
@@ -19,11 +22,15 @@ export async function runAddFlowSessionFixture() {
   const lines: unknown[] = []
   let seen = 0
   const step = (name: string, value: unknown) => {
-    const calls = removal.io.slice(seen).filter(entry => entry.phase === "invoked" && entry.kind.startsWith("session.")).map(entry => entry.kind)
+    const calls = removal.io
+      .slice(seen)
+      .filter(entry => entry.phase === "invoked" && entry.kind.startsWith("session."))
+      .map(entry => entry.kind)
     seen = removal.io.length
     lines.push({ step: name, value, session: calls })
   }
-  const normal = tabOrigin(1), incognito = tabOrigin(2, true)
+  const normal = tabOrigin(1),
+    incognito = tabOrigin(2, true)
 
   step("normal shortcut add", await yt.flow.add({ via: "shortcut", site: "www", video, shortcut }, normal))
   const gathered = await yt.flow.batch({ playlist: later, videos: [second], auto: false }, normal)

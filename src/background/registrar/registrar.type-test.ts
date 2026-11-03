@@ -11,7 +11,7 @@ declare const tabs: TabsPort
 declare const build: BuildId
 
 type Check<T extends true> = T
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 export type RegistrarProofs = [
   Check<Equal<ReturnType<typeof createRegistrar>, Registrar>>,
   Check<Equal<ReturnType<Registrar["reconcile"]>, Promise<void>>>,

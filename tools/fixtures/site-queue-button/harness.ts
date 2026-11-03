@@ -33,10 +33,12 @@ export function queueView(options: QueueViewOptions = {}): SiteView<"www"> {
   const { signedIn = true, feedback = true, state = "working", on = true } = options
   const base = wireView("www", signedIn)
   if (base.site !== "www") throw Error("Expected a www specimen")
-  const features = on ? base.features.flatMap(feature => feature.id === "queue-button" ? [{ ...feature, options: { ...feature.options, feedback } }] : []) : []
+  const features = on ? base.features.flatMap(feature => (feature.id === "queue-button" ? [{ ...feature, options: { ...feature.options, feedback } }] : [])) : []
   const value = checked(isTabView, {
-    ...base, ...(signedIn ? { acct: expectedKey(rawIdentity) } : {}), features,
-    statuses: on ? base.statuses.flatMap(status => status.feature === "queue-button" ? [{ ...status, state, jobs: brokenJobs[state] }] : []) : [],
+    ...base,
+    ...(signedIn ? { acct: expectedKey(rawIdentity) } : {}),
+    features,
+    statuses: on ? base.statuses.flatMap(status => (status.feature === "queue-button" ? [{ ...status, state, jobs: brokenJobs[state] }] : [])) : [],
     notices: on && state === "not-working" ? [{ kind: "not-working", features: ["queue-button"] }] : []
   })
   if (value.site !== "www") throw Error("Expected a validated www view")
@@ -84,30 +86,54 @@ export async function queueFixture(options: { readonly view?: SiteView<"www">; r
   const restoreHidden = raw(document, "hidden", false)
   const restoreFull = raw(document, "fullscreenElement", null)
   const timers = clock()
-  const errors: unknown[] = [], failures: unknown[] = [], notices: string[] = []
-  const onError = (error: unknown) => { errors.push(error) }
+  const errors: unknown[] = [],
+    failures: unknown[] = [],
+    notices: string[] = []
+  const onError = (error: unknown) => {
+    errors.push(error)
+  }
   const root = new Scope({ document, onError })
   const ext = createExtLink({
-    build, site: "www", page: page.link, deadline, hiddenAtStart: false, isView: isTabView,
+    build,
+    site: "www",
+    page: page.link,
+    deadline,
+    hiddenAtStart: false,
+    isView: isTabView,
     runtime: { transport: siteEnd, identity: () => "synthetic-queue-extension", senderId: sender => sender.id }
   })
   const pointer = new Pointer({ document, onError })
   const items = new WwwItems({ document, onError, pointer, page: page.link, report: { itemUnrecognised: () => {}, pageSettled: () => {} } })
   const keys = new Keys({ document, blockers: { menuOpen: () => false, dialogOpen: () => false, extensionPopoverOpen: () => false }, onError })
   const i18n = englishI18n()
-  const feedback = createFeedbackSession({ owner: root, document, keys, site: "www", i18n, labels,
-    initial: { undoKey, features: [] }, now: timers.now, onError, onCosmetic: () => {} })
+  const feedback = createFeedbackSession({ owner: root, document, keys, site: "www", i18n, labels, initial: { undoKey, features: [] }, now: timers.now, onError, onCosmetic: () => {} })
   const overlay = createOverlayKit({ owner: root, document, onError })
   const services: QueueButtonServices = {
-    document, items, page: page.link, feedback, overlay, text: queueButtonText(i18n),
-    notices: { wouldAct: feature => { notices.push(feature) } }
+    document,
+    items,
+    page: page.link,
+    feedback,
+    overlay,
+    text: queueButtonText(i18n),
+    notices: {
+      wouldAct: feature => {
+        notices.push(feature)
+      }
+    }
   }
   const scopes: Scope[] = []
   const host = createFeatureHost<"www", QueueButtonServices>({
     site: "www",
-    createScope() { const scope = new Scope({ document, onError }); scopes.push(scope); return scope },
+    createScope() {
+      const scope = new Scope({ document, onError })
+      scopes.push(scope)
+      return scope
+    },
     createContext: () => services,
-    onEmpty: () => {}, onError: failure => { failures.push(failure) }
+    onEmpty: () => {},
+    onError: failure => {
+      failures.push(failure)
+    }
   })
   const stack = hitStack()
   host.define(queueButton)
@@ -115,11 +141,29 @@ export async function queueFixture(options: { readonly view?: SiteView<"www">; r
   await page.link.hello
   await settle()
   return {
-    page, ext, host, items, pointer, overlay, feedback, timers, errors, failures, notices, scopes, stack,
-    respond(next: Script) { script = next },
+    page,
+    ext,
+    host,
+    items,
+    pointer,
+    overlay,
+    feedback,
+    timers,
+    errors,
+    failures,
+    notices,
+    scopes,
+    stack,
+    respond(next: Script) {
+      script = next
+    },
     deferred,
     route,
-    async publish(view: TabView) { current = view; await caller.call("bg.view", view); await settle() },
+    async publish(view: TabView) {
+      current = view
+      await caller.call("bg.view", view)
+      await settle()
+    },
     hover(element: Element, under: readonly Element[] = []) {
       stack.set([element, ...under])
       element.dispatchEvent(new PointerEvent("pointerover", { clientX: 12, clientY: 18, bubbles: true, composed: true }))
@@ -137,14 +181,37 @@ export async function queueFixture(options: { readonly view?: SiteView<"www">; r
       return found instanceof HTMLButtonElement && !found.closest("[hidden]") ? found : null
     },
     toast: () => feedback.read()?.feedback.toaster.read() ?? null,
-    present() { const toaster = feedback.read()?.feedback.toaster; const view = toaster?.read(); if (toaster && view) toaster.presented(view) },
+    present() {
+      const toaster = feedback.read()?.feedback.toaster
+      const view = toaster?.read()
+      if (toaster && view) toaster.presented(view)
+    },
     runs: (kind: Job["kind"]) => page.calls.filter(call => call.job.kind === kind),
-    fullscreen(value: Element | null) { Object.defineProperty(document, "fullscreenElement", { configurable: true, value }); document.dispatchEvent(new Event("fullscreenchange")) },
-    hidden(value: boolean) { Object.defineProperty(document, "hidden", { configurable: true, value }); document.dispatchEvent(new Event("visibilitychange")) },
-    navigate() { for (const watcher of page.watchers) if (watcher.stream === "nav") watcher.emit(nav) },
+    fullscreen(value: Element | null) {
+      Object.defineProperty(document, "fullscreenElement", { configurable: true, value })
+      document.dispatchEvent(new Event("fullscreenchange"))
+    },
+    hidden(value: boolean) {
+      Object.defineProperty(document, "hidden", { configurable: true, value })
+      document.dispatchEvent(new Event("visibilitychange"))
+    },
+    navigate() {
+      for (const watcher of page.watchers) if (watcher.stream === "nav") watcher.emit(nav)
+    },
     dispose() {
-      host.dispose(); items.dispose(); pointer.dispose(); keys.dispose(); root.dispose(); ext.dispose(); caller.dispose(); hello.dispose(); page.dispose()
-      stack.restore(); timers.restore(); restoreHidden(); restoreFull()
+      host.dispose()
+      items.dispose()
+      pointer.dispose()
+      keys.dispose()
+      root.dispose()
+      ext.dispose()
+      caller.dispose()
+      hello.dispose()
+      page.dispose()
+      stack.restore()
+      timers.restore()
+      restoreHidden()
+      restoreFull()
       document.body.replaceChildren()
     }
   }

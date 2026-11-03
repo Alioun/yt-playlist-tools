@@ -18,48 +18,89 @@ export type Background = { readonly lifecycle: StoreLifecycle; readonly ready: P
 
 export function boot(native: NativeBrowser, platform: Platform, sites?: SiteDiagnostics): Background {
   const gate = createRuntimeGate(native.runtime)
-  native.runtime.onInstalled.addListener(details => { if (details.reason === "install") void openFirstRun(native) })
+  native.runtime.onInstalled.addListener(details => {
+    if (details.reason === "install") void openFirstRun(native)
+  })
+  // Keys from any tab and the browser's menu wake the worker, so their listeners join this first turn and wait for the services (YT-ANY, YT-BM).
+  native.commands?.onCommand.addListener(name => {
+    void ready.then(() => services?.anyTab.command(name))
+  })
+  const menuClicksHeard = native.contextMenus !== undefined
+  native.contextMenus?.onClicked.addListener((info, tab) => {
+    void ready.then(() => services?.anyTab.clicked(info, tab))
+  })
   // The upgrade note reopens only at a browser start, which this first-turn listener is the one witness of (REL-CON-25).
-  let browserStart = false, noteChecked = false
+  let browserStart = false,
+    noteChecked = false
   const checkNote = () => {
     const state = lifecycle.state()
-    if (state.kind !== "active" || noteChecked && !browserStart) return
+    if (state.kind !== "active" || (noteChecked && !browserStart)) return
     noteChecked = true
-    void openUpgradeNote({ device: async () => (await native.storage.local.get("device")).device, mark: flag => state.owner.markUpgradeNote(flag),
-      open: () => openNoteTab(native) }, browserStart).catch(() => {}).finally(() => { browserStart = false })
+    void openUpgradeNote({ device: async () => (await native.storage.local.get("device")).device, mark: flag => state.owner.markUpgradeNote(flag), open: () => openNoteTab(native) }, browserStart)
+      .catch(() => {})
+      .finally(() => {
+        browserStart = false
+      })
   }
   // A browser start is also when automatic gathering looks for unvisited tabs, and the minute trigger 2 ignores begins (ARC-MOD-39).
   native.runtime.onStartup.addListener(() => {
-    browserStart = true; noteChecked = false; checkNote()
+    browserStart = true
+    noteChecked = false
+    checkNote()
     void ready.then(() => services?.gather.woke("startup"))
   })
   let services: Services | undefined
-  const lifecycle = composeStore(native, platform, () => createClearAllTeardown({
-    registrar: current.registrar, extLinks: [], scripting: current.scripting,
-    get tabs() { if (!services) throw new Error("Clear all before the tab services started"); return services.tabs },
-    drainInvokedWork: async () => "drained",
-    tearDownAllOpenTabs: async () => "torn-down",
-    releaseBrowserMenu: () => releaseBrowserMenu(native)
-  }))
+  const lifecycle = composeStore(native, platform, () =>
+    createClearAllTeardown({
+      registrar: current.registrar,
+      extLinks: [],
+      scripting: current.scripting,
+      get tabs() {
+        if (!services) throw new Error("Clear all before the tab services started")
+        return services.tabs
+      },
+      drainInvokedWork: async () => "drained",
+      tearDownAllOpenTabs: async () => "torn-down",
+      releaseBrowserMenu: () => releaseBrowserMenu(native)
+    })
+  )
   const owner = registrarOwner(lifecycle)
   let current = composeRegistrar(native, platform.build, owner.port)
-  const consented = () => { const snapshot = owner.port.current(); return snapshot.kind === "ok" && snapshot.consent && snapshot.schemaOk }
+  const consented = () => {
+    const snapshot = owner.port.current()
+    return snapshot.kind === "ok" && snapshot.consent && snapshot.schemaOk
+  }
   let stopOwner = () => {}
 
   function start() {
     const state = lifecycle.state()
     if (state.kind !== "active") return
     stopOwner()
-    const refresh = () => { void owner.refresh() }
+    const refresh = () => {
+      void owner.refresh()
+    }
     const stops = [state.owner.subscribeView(refresh), state.owner.subscribe(refresh)]
-    stopOwner = () => { for (const stop of stops.splice(0)) stop() }
+    stopOwner = () => {
+      for (const stop of stops.splice(0)) stop()
+    }
     services = composeServices({
-      native, runtime: gate.runtime, build: platform.build, owner: state.owner, registrar: current.registrar, consented, menuClicksHeard, sites,
-      lifecycle: { ...lifecycle, async clearAll(origin, options) {
-        const result = await lifecycle.clearAll(origin, options)
-        if (lifecycle.state().kind === "active" && services === undefined) restart()
-        return result
-      } }
+      native,
+      runtime: gate.runtime,
+      build: platform.build,
+      browser: platform.browser,
+      owner: state.owner,
+      registrar: current.registrar,
+      consented,
+      menuClicksHeard,
+      sites,
+      lifecycle: {
+        ...lifecycle,
+        async clearAll(origin, options) {
+          const result = await lifecycle.clearAll(origin, options)
+          if (lifecycle.state().kind === "active" && services === undefined) restart()
+          return result
+        }
+      }
     })
   }
   function restart() {
@@ -74,12 +115,24 @@ export function boot(native: NativeBrowser, platform: Platform, sites?: SiteDiag
     services?.dispose()
     services = undefined
   })
-  gate.onAnswered(() => { void owner.refresh() })
-  const ready = lifecycle.ready().then(start, () => {}).finally(() => { gate.open(); checkNote() })
-  return { lifecycle, ready, async dispose() {
-    stopOwner()
-    services?.dispose()
-    current.registrar.dispose()
-    await lifecycle.dispose()
-  } }
+  gate.onAnswered(() => {
+    void owner.refresh()
+  })
+  const ready = lifecycle
+    .ready()
+    .then(start, () => {})
+    .finally(() => {
+      gate.open()
+      checkNote()
+    })
+  return {
+    lifecycle,
+    ready,
+    async dispose() {
+      stopOwner()
+      services?.dispose()
+      current.registrar.dispose()
+      await lifecycle.dispose()
+    }
+  }
 }

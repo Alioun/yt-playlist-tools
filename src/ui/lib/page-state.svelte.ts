@@ -30,8 +30,14 @@ export class PageState {
 
   constructor(page: ExtensionPage) {
     this.page = page
-    void page.backend.loadPage().then(view => { this.#seen(view) })
-    this.#stops.push(page.backend.watchPage(event => { this.#seen(event.view) }))
+    void page.backend.loadPage().then(view => {
+      this.#seen(view)
+    })
+    this.#stops.push(
+      page.backend.watchPage(event => {
+        this.#seen(event.view)
+      })
+    )
     void this.refreshAccess()
   }
   #seen(view: PageView) {
@@ -43,7 +49,9 @@ export class PageState {
       void this.refreshStatus()
     }
   }
-  get ready(): View | null { return this.view?.kind === "view" ? this.view : null }
+  get ready(): View | null {
+    return this.view?.kind === "view" ? this.view : null
+  }
   get settings(): Snapshot<Settings> | null {
     const view = this.ready
     return view?.settings.kind === "value" ? view.settings.settings : null
@@ -56,14 +64,22 @@ export class PageState {
     const view = this.ready
     return view !== null && view.layout === "current" && view.settings.kind === "value"
   }
-  get paused(): boolean { return this.status?.kind === "status" && this.status.paused }
-  get tabAccount(): AccountKey | null { return accountKeyOf(this.account) }
-  get acct(): AccountKey | null { return this.chosen ?? this.tabAccount }
+  get paused(): boolean {
+    return this.status?.kind === "status" && this.status.paused
+  }
+  get tabAccount(): AccountKey | null {
+    return accountKeyOf(this.account)
+  }
+  get acct(): AccountKey | null {
+    return this.chosen ?? this.tabAccount
+  }
   get setup(): PageSetup | undefined {
     const acct = this.acct
     return acct ? this.ready?.setups.find(entry => entry.acct === acct) : undefined
   }
-  get private(): boolean { return this.page.private }
+  get private(): boolean {
+    return this.page.private
+  }
   get signedIn(): boolean {
     return this.account?.kind === "account" && (this.account.source === "last-account" || this.account.signedIn)
   }
@@ -80,7 +96,7 @@ export class PageState {
     if (id === null) return null
     if (id === WATCH_LATER) return this.page.i18n.message("picker_watchLater")
     const cache = acct ? this.ready?.setups.find(entry => entry.acct === acct)?.cache : undefined
-    return cache ? [...cacheRows(cache, "www"), ...cacheRows(cache, "music")].find(row => row.id === id)?.title ?? null : null
+    return cache ? ([...cacheRows(cache, "www"), ...cacheRows(cache, "music")].find(row => row.id === id)?.title ?? null) : null
   }
   async refreshAccess() {
     const access = this.page.backend.access
@@ -104,5 +120,7 @@ export class PageState {
     void this.refreshStatus()
     return answer
   }
-  dispose() { for (const stop of this.#stops.splice(0)) stop() }
+  dispose() {
+    for (const stop of this.#stops.splice(0)) stop()
+  }
 }

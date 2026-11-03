@@ -1,16 +1,37 @@
 import type { Site } from "../../shared/contracts/vocabulary"
 import { desired, popoversBundle, siteBundles, type RegisteredScript } from "../../shared/features/registration"
-import { RegistrarError, type EnsureWhat, type FailureFact, type Injection, type ObservedScript, type OwnerSnapshot, type ProbeObservation, type Refusal, type Registrar, type RegistrarPorts, type RegistrationObservation, type TabFact } from "./ports"
+import {
+  RegistrarError,
+  type EnsureWhat,
+  type FailureFact,
+  type Injection,
+  type ObservedScript,
+  type OwnerSnapshot,
+  type ProbeObservation,
+  type Refusal,
+  type Registrar,
+  type RegistrarPorts,
+  type RegistrationObservation,
+  type TabFact
+} from "./ports"
 
 export const ownedRegistrationIds = ["pp-www-page", "pp-www", "pp-music-page", "pp-music"] as const satisfies readonly RegisteredScript["id"][]
 const sites: readonly Site[] = ["www", "music"]
 type Snapshot = { readonly owner: Extract<OwnerSnapshot, { kind: "ok" }>; readonly epoch: number; readonly scripts: RegisteredScript[]; readonly intent: RegisteredScript[] }
 
 function same(actual: ObservedScript, wanted: RegisteredScript): boolean {
-  return actual.id === wanted.id && actual.world === wanted.world && actual.runAt === wanted.runAt &&
-    actual.allFrames === wanted.allFrames && actual.persistAcrossSessions === wanted.persistAcrossSessions &&
-    !actual.matchOriginAsFallback && actual.css.length === 0 && actual.excludeMatches.length === 0 &&
-    JSON.stringify(actual.js) === JSON.stringify(wanted.js) && JSON.stringify(actual.matches) === JSON.stringify(wanted.matches)
+  return (
+    actual.id === wanted.id &&
+    actual.world === wanted.world &&
+    actual.runAt === wanted.runAt &&
+    actual.allFrames === wanted.allFrames &&
+    actual.persistAcrossSessions === wanted.persistAcrossSessions &&
+    !actual.matchOriginAsFallback &&
+    actual.css.length === 0 &&
+    actual.excludeMatches.length === 0 &&
+    JSON.stringify(actual.js) === JSON.stringify(wanted.js) &&
+    JSON.stringify(actual.matches) === JSON.stringify(wanted.matches)
+  )
 }
 function siteOfId(id: RegisteredScript["id"]): Site {
   return id === "pp-www" || id === "pp-www-page" ? "www" : "music"
@@ -24,13 +45,20 @@ function featureFiles(script: RegisteredScript, site: Site): string[] {
 function matches(tab: TabFact, script: RegisteredScript): boolean {
   const url = new URL(tab.url)
   url.hash = ""
-  return script.matches.some(pattern => new RegExp(`^${pattern.split("*").map(part => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join(".*")}$`).test(url.href))
+  return script.matches.some(pattern =>
+    new RegExp(
+      `^${pattern
+        .split("*")
+        .map(part => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+        .join(".*")}$`
+    ).test(url.href)
+  )
 }
 function eligible(tab: TabFact): boolean {
   return !tab.discarded && !tab.frozen
 }
 function paced(tabs: readonly TabFact[]): TabFact[] {
-  const priority = (tab: TabFact) => tab.active && tab.focusedWindow ? 0 : tab.audible ? 1 : 2
+  const priority = (tab: TabFact) => (tab.active && tab.focusedWindow ? 0 : tab.audible ? 1 : 2)
   return [...tabs].filter(eligible).sort((a, b) => priority(a) - priority(b) || b.lastAccessed - a.lastAccessed || a.id - b.id)
 }
 function loaded(probe: Extract<ProbeObservation, { kind: "observed" }>, file: string, ports: RegistrarPorts): boolean {
@@ -46,7 +74,9 @@ function failed(fact: FailureFact): never {
   throw new RegistrarError(fact)
 }
 async function boundary<T>(operation: Extract<FailureFact, { kind: "port" }>["operation"], call: () => Promise<T>): Promise<T> {
-  try { return await call() } catch (error) {
+  try {
+    return await call()
+  } catch (error) {
     if (error instanceof RegistrarError) throw error
     return failed({ kind: "port", operation })
   }
@@ -102,18 +132,31 @@ export function createRegistrar(ports: RegistrarPorts): Registrar {
     }
   }
   function serialize(work: () => Promise<void>): Promise<void> {
-    const run = tail.then(() => {
-      if (disposed) refuse("disposed")
-      return work()
-    }).catch(error => { throw asRegistrarError(error) })
+    const run = tail
+      .then(() => {
+        if (disposed) refuse("disposed")
+        return work()
+      })
+      .catch(error => {
+        throw asRegistrarError(error)
+      })
     tail = run.catch(() => {})
     return run
   }
   async function observe(): Promise<RegistrationObservation> {
     if (disposed) return { kind: "unavailable" }
-    try { return { kind: "observed", scripts: await ports.scripting.list() } } catch { return { kind: "unavailable" } }
+    try {
+      return { kind: "observed", scripts: await ports.scripting.list() }
+    } catch {
+      return { kind: "unavailable" }
+    }
   }
-  async function mutate(snapshot: Snapshot, operation: "register" | "update" | "unregister", scripts: readonly RegisteredScript[], ids: readonly RegisteredScript["id"][]): Promise<readonly ObservedScript[]> {
+  async function mutate(
+    snapshot: Snapshot,
+    operation: "register" | "update" | "unregister",
+    scripts: readonly RegisteredScript[],
+    ids: readonly RegisteredScript["id"][]
+  ): Promise<readonly ObservedScript[]> {
     current(snapshot)
     if (operation !== "unregister") for (const site of new Set(scripts.map(script => siteOfId(script.id)))) await authority(snapshot, site)
     let call: "resolved" | "rejected" = "resolved"
@@ -121,11 +164,15 @@ export function createRegistrar(ports: RegistrarPorts): Registrar {
       if (operation === "register") await ports.scripting.register(scripts)
       else if (operation === "update") await ports.scripting.update(scripts)
       else await ports.scripting.unregister(ids)
-    } catch { call = "rejected" }
+    } catch {
+      call = "rejected"
+    }
     const after = await observe()
-    if (call === "rejected" || after.kind !== "observed" ||
-      (operation === "unregister" ? after.scripts.some(script => ids.some(id => id === script.id)) :
-        scripts.some(script => !after.scripts.some(actual => same(actual, script))))) {
+    if (
+      call === "rejected" ||
+      after.kind !== "observed" ||
+      (operation === "unregister" ? after.scripts.some(script => ids.some(id => id === script.id)) : scripts.some(script => !after.scripts.some(actual => same(actual, script))))
+    ) {
       return failed({ kind: "registration", operation, call, after })
     }
     current(snapshot)
@@ -158,10 +205,16 @@ export function createRegistrar(ports: RegistrarPorts): Registrar {
       await tab(snapshot, target.id, target.site, script)
       const injection: Injection = { tabId: target.id, site: target.site, build: ports.build, documentId, world: file.startsWith("page-") ? "MAIN" : "ISOLATED", file }
       let call: "resolved" | "rejected" = "resolved"
-      try { await ports.scripting.executeScript(injection) } catch { call = "rejected" }
+      try {
+        await ports.scripting.executeScript(injection)
+      } catch {
+        call = "rejected"
+      }
       let after: ProbeObservation = { kind: "unavailable", reason: "not-observed" }
       if (!disposed) {
-        try { after = await probe(snapshot, target) } catch (error) {
+        try {
+          after = await probe(snapshot, target)
+        } catch (error) {
           if (error instanceof RegistrarError && error.fact.kind === "probe-unavailable") after = error.fact.after
         }
       }
@@ -196,7 +249,8 @@ export function createRegistrar(ports: RegistrarPorts): Registrar {
             const target = await tab(state, candidate.id, candidate.site, wanted)
             await inject(state, target, [`${siteBundles[target.site].page}.js`, ...wanted.js], wanted)
           } catch (error) {
-            const skipped = error instanceof RegistrarError &&
+            const skipped =
+              error instanceof RegistrarError &&
               ((error.fact.kind === "refused" && error.fact.reason === "tab-unavailable") ||
                 (error.fact.kind === "probe-unavailable" && ["closed", "inaccessible", "unsupported"].includes(error.fact.after.reason)))
             if (!skipped) throw error
@@ -223,14 +277,18 @@ export function createRegistrar(ports: RegistrarPorts): Registrar {
         while (!disposed && completed < requested) {
           const through = requested
           const token = epoch
-          try { await pass(token) } catch (error) {
+          try {
+            await pass(token)
+          } catch (error) {
             const failure = asRegistrarError(error)
             if (!(failure.fact.kind === "refused" && failure.fact.reason === "superseded" && token !== epoch)) firstFailure ??= failure
           }
           completed = through
         }
         if (firstFailure) throw firstFailure
-      } finally { scheduled = undefined }
+      } finally {
+        scheduled = undefined
+      }
     })
     return scheduled
   }
@@ -257,11 +315,16 @@ export function createRegistrar(ports: RegistrarPorts): Registrar {
     if (disposed) return
     void reconcile().catch(error => {
       if (!disposed && error instanceof RegistrarError) {
-        try { ports.backgroundError(error) } catch {}
+        try {
+          ports.backgroundError(error)
+        } catch {}
       }
     })
   }
-  const startup = () => { previous = []; background() }
+  const startup = () => {
+    previous = []
+    background()
+  }
   const unsubscribe: (() => void)[] = []
   try {
     unsubscribe.push(ports.owner.subscribe(background))
@@ -269,19 +332,28 @@ export function createRegistrar(ports: RegistrarPorts): Registrar {
     unsubscribe.push(ports.startup.subscribe(startup))
   } catch (error) {
     disposed = true
-    for (const stop of unsubscribe) { try { stop() } catch {} }
+    for (const stop of unsubscribe) {
+      try {
+        stop()
+      } catch {}
+    }
     throw asRegistrarError(error)
   }
   background()
   return {
-    reconcile, ensure,
+    reconcile,
+    ensure,
     dispose() {
       if (disposed) return
       disposed = true
       epoch += 1
       let failure: RegistrarError | undefined
       for (const stop of unsubscribe) {
-        try { stop() } catch (error) { failure ??= asRegistrarError(error) }
+        try {
+          stop()
+        } catch (error) {
+          failure ??= asRegistrarError(error)
+        }
       }
       if (failure) throw failure
     }

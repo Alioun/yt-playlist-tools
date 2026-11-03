@@ -56,35 +56,67 @@ export function composeServices(deps: {
   const tabs = createTabs({
     session: { read: () => owner.readSession(), change: change => owner.changeSession(change) },
     native: browserTabs.port,
-    registrar: { async ensure(tabId) {
-      try { await registrar.ensure(tabId, { core: true }); return { kind: "ready" } } catch { return { kind: "unavailable" } }
-    } },
+    registrar: {
+      async ensure(tabId) {
+        try {
+          await registrar.ensure(tabId, { core: true })
+          return { kind: "ready" }
+        } catch {
+          return { kind: "unavailable" }
+        }
+      }
+    },
     accounts: {
       lastAccount: async () => null,
-      async hasSetup(acct) { const read = await owner.readSetup(acct); return read.kind === "value" && read.view.kind === "live" }
+      async hasSetup(acct) {
+        const read = await owner.readSetup(acct)
+        return read.kind === "value" && read.view.kind === "live"
+      }
     },
-    clock, enabled: deps.consented
+    clock,
+    enabled: deps.consented
   })
-  const monitor = composeMonitor({ owner: { readSession: () => owner.readSession(), changeSession: change => owner.changeSession(change),
-    subscribeView: fn => owner.subscribeView(fn) }, clock: { now: () => performance.now(), after: timerDeadline }, sites: deps.sites,
-    player: () => gather.player() })
+  const monitor = composeMonitor({
+    owner: { readSession: () => owner.readSession(), changeSession: change => owner.changeSession(change), subscribeView: fn => owner.subscribeView(fn) },
+    clock: { now: () => performance.now(), after: timerDeadline },
+    sites: deps.sites,
+    player: () => gather.player()
+  })
   const badge = createToolbarBadge({
     action: {
       setBadgeText: details => native.action.setBadgeText(details as never),
       setBadgeBackgroundColor: details => native.action.setBadgeBackgroundColor(details),
       setTitle: details => native.action.setTitle(details as never)
     },
-    local: { get: () => native.storage.local.get(null) }, owner, statuses: monitor.statusProducer,
-    access: site => native.permissions.contains({ origins: [siteBundles[site].match] }), tab: tabId => browserTabs.port.get(tabId), build,
+    local: { get: () => native.storage.local.get(null) },
+    owner,
+    statuses: monitor.statusProducer,
+    access: site => native.permissions.contains({ origins: [siteBundles[site].match] }),
+    tab: tabId => browserTabs.port.get(tabId),
+    build,
     i18n: { getMessage: (name, substitutions) => native.i18n.getMessage(name as never, substitutions) },
-    clock: { after: (milliseconds, run) => { const timer = setTimeout(run, milliseconds); return () => clearTimeout(timer) } }
+    clock: {
+      after: (milliseconds, run) => {
+        const timer = setTimeout(run, milliseconds)
+        return () => clearTimeout(timer)
+      }
+    }
   })
   const playlists = createPlaylists({ owner, tabs, now: () => Date.now() })
-  const actions = composeActions({ native: { ...native, runtime }, build, owner, tabs, playlists, registrar, writable: deps.consented,
+  const actions = composeActions({
+    native: { ...native, runtime },
+    build,
+    owner,
+    tabs,
+    playlists,
+    registrar,
+    writable: deps.consented,
     ticked: tabId => badge.tick(tabId),
     openSettings(hash, tabId) {
-      void native.tabs.get(tabId).then(tab => native.tabs.create({ url: runtime.getURL(`/options.html#${hash}`), openerTabId: tabId,
-        ...tab.index === undefined ? {} : { index: tab.index + 1 } })).catch(() => {})
+      void native.tabs
+        .get(tabId)
+        .then(tab => native.tabs.create({ url: runtime.getURL(`/options.html#${hash}`), openerTabId: tabId, ...(tab.index === undefined ? {} : { index: tab.index + 1 }) }))
+        .catch(() => {})
     },
     closed(listener) {
       native.tabs.onRemoved.addListener(listener)
@@ -93,11 +125,23 @@ export function composeServices(deps: {
     async requester(origin) {
       const [active] = await native.tabs.query({ active: true, windowId: origin.windowId }).catch(() => [])
       return { windowId: origin.windowId, incognito: origin.incognito, activeTabId: typeof active?.id === "number" ? active.id : null }
-    } })
+    }
+  })
   const siteI18n = createSiteI18n({ getMessage: (name, substitutions) => native.i18n.getMessage(name as never, substitutions) })
-  const anyTab = composeAnyTab({ native, build, actions, tabs, registrar, consented: deps.consented, menuClicksHeard: deps.menuClicksHeard, i18n: siteI18n,
-    flash: (tabId, ok, title) => badge.flash(tabId, ok, title) })
-  const reconcileMenu = () => { void anyTab.reconcileMenu() }
+  const anyTab = composeAnyTab({
+    native,
+    build,
+    actions,
+    tabs,
+    registrar,
+    consented: deps.consented,
+    menuClicksHeard: deps.menuClicksHeard,
+    i18n: siteI18n,
+    flash: (tabId, ok, title) => badge.flash(tabId, ok, title)
+  })
+  const reconcileMenu = () => {
+    void anyTab.reconcileMenu()
+  }
   const stopMenuSettings = owner.subscribe(reconcileMenu)
   native.permissions.onAdded.addListener(reconcileMenu)
   native.permissions.onRemoved.addListener(reconcileMenu)
@@ -107,9 +151,21 @@ export function composeServices(deps: {
   const publication = createViewPublication({ owner, tabs, producer, privateSkips: actions.flow, clock,
     monitor: { subscribeView: () => () => {} } })
   const accounts = createAccounts({ owner, tabs, claim: { kind: "unavailable", reason: "production-ownership-required" }, now: () => Date.now() })
-  const gather = composeGather({ native: { ...native, runtime }, senders: { ...native, runtime },
-    browser: deps.browser, build, owner, tabs, nativeTabs: browserTabs.port, addFlow: actions.flow, settings: incognito => actions.settings(incognito), registrar,
-    monitor, i18n: siteI18n, flash: (tabId, ok, title) => badge.flash(tabId, ok, title) })
+  const gather = composeGather({
+    native: { ...native, runtime },
+    senders: { ...native, runtime },
+    browser: deps.browser,
+    build,
+    owner,
+    tabs,
+    nativeTabs: browserTabs.port,
+    addFlow: actions.flow,
+    settings: incognito => actions.settings(incognito),
+    registrar,
+    monitor,
+    i18n: siteI18n,
+    flash: (tabId, ok, title) => badge.flash(tabId, ok, title)
+  })
   const producer = createTabViewProducer({ owner, addFlow: actions.flow, statuses: monitor.statusProducer, notices: monitor.noticeProducer, build })
   // A hello starts a page load, since each site core says hello once.
   // A new page load whose probe passed clears its tab's earlier breakage, but only a tab with evidence costs a write (HEALTH-12).
@@ -126,37 +182,55 @@ export function composeServices(deps: {
     gather.hello(context, hello)
   })
   const publication = createViewPublication({ owner, tabs, producer, privateSkips: actions.flow, clock, monitor })
-  const healthRoutes = createTabHealthRouter({ transport: runtimeTransport(deps.runtime), senders: { ...native, runtime }, build, deadline: timerDeadline, monitor,
+  const healthRoutes = createTabHealthRouter({
+    transport: runtimeTransport(deps.runtime),
+    senders: { ...native, runtime },
+    build,
+    deadline: timerDeadline,
+    monitor,
     async context(sender, acct) {
       const [known] = await tabs.known({ kind: "tab", tabId: sender.origin.tabId })
       if (!known || known.acct !== acct || known.privateTab !== sender.origin.incognito) return null
       const lookup = await browserTabs.port.get(sender.origin.tabId)
       if (lookup.kind !== "tab" || lookup.tab.site !== sender.site) return null
-      return { tab: { ...lookup.tab, site: sender.site },
-        info: acct === null ? { site: sender.site, build, signedIn: false, acct: null } : { site: sender.site, build, signedIn: true, acct } }
-    } })
+      return { tab: { ...lookup.tab, site: sender.site }, info: acct === null ? { site: sender.site, build, signedIn: false, acct: null } : { site: sender.site, build, signedIn: true, acct } }
+    }
+  })
   const diagnostics = createDiagnostics({ tabs, tab: tabId => browserTabs.port.get(tabId), monitor, build, consented: deps.consented, now: () => Date.now() })
-  const autoAddRoutes = createAutoAddTabRouter({ transport: runtimeTransport(deps.runtime), senders: { ...native, runtime }, build,
-    deadline: timerDeadline, tabs, owner, untick: tabId => badge.untick(tabId), now: () => Date.now() })
+  const autoAddRoutes = createAutoAddTabRouter({
+    transport: runtimeTransport(deps.runtime),
+    senders: { ...native, runtime },
+    build,
+    deadline: timerDeadline,
+    tabs,
+    owner,
+    untick: tabId => badge.untick(tabId),
+    now: () => Date.now()
+  })
   async function readAccess() {
     const has = (origins: string[]) => native.permissions.contains({ origins })
-    return { www: await has([siteBundles.www.match]), music: await has([siteBundles.music.match]),
-      browserMenu: await native.permissions.contains({ permissions: ["contextMenus"] }) }
+    return { www: await has([siteBundles.www.match]), music: await has([siteBundles.music.match]), browserMenu: await native.permissions.contains({ permissions: ["contextMenus"] }) }
   }
   const router = createUiRouter({
-    lifecycle: deps.lifecycle, sharedSettings: owner, owner,
+    lifecycle: deps.lifecycle,
+    sharedSettings: owner,
+    owner,
     native: { runtime, windows: native.windows, tabs: native.tabs },
     services: { kind: "ready", tabs, playlists },
     firstRun: {
       readAccess,
       startSync: () => owner.startSync(),
       lookup: {
-        sync: { get: () => native.storage.sync.get(null), subscribe(changed) {
-          const listener = () => changed()
-          native.storage.sync.onChanged.addListener(listener)
-          return () => native.storage.sync.onChanged.removeListener(listener)
-        } },
-        clock, isCurrent: () => true
+        sync: {
+          get: () => native.storage.sync.get(null),
+          subscribe(changed) {
+            const listener = () => changed()
+            native.storage.sync.onChanged.addListener(listener)
+            return () => native.storage.sync.onChanged.removeListener(listener)
+          }
+        },
+        clock,
+        isCurrent: () => true
       }
     },
     transport: runtimeTransport(deps.runtime),
@@ -165,18 +239,37 @@ export function composeServices(deps: {
     add: createPlayingSave({ actions, i18n: siteI18n, consented: deps.consented }),
     addUndo: createPlayingUndo({ actions, i18n: siteI18n, consented: deps.consented }),
     item: createPopupItem({ actions, consented: deps.consented }),
-    thisVideo: composeThisTab({ native, tabs, registrar, flow: actions.flow, consented: deps.consented, async ask(tabId, kind, payload) {
-      const caller = createRpcCaller<TabAskMessages>(tabTarget(native.tabs, tabId), { build, deadline: timerDeadline, contract: tabAskContract })
-      try { return await caller.call(kind, payload) } finally { caller.dispose() }
-    } }),
+    thisVideo: composeThisTab({
+      native,
+      tabs,
+      registrar,
+      flow: actions.flow,
+      consented: deps.consented,
+      async ask(tabId, kind, payload) {
+        const caller = createRpcCaller<TabAskMessages>(tabTarget(native.tabs, tabId), { build, deadline: timerDeadline, contract: tabAskContract })
+        try {
+          return await caller.call(kind, payload)
+        } finally {
+          caller.dispose()
+        }
+      }
+    }),
     gather: gather.routes,
     woke: () => gather.woke("ui"),
     pages: {
       owner,
       session: { get: async key => (await native.storage.session.get(key))[key] },
-      status: createPageStatus({ owner, statuses: monitor.statusProducer, tab: tabId => browserTabs.port.get(tabId), build,
+      status: createPageStatus({
+        owner,
+        statuses: monitor.statusProducer,
+        tab: tabId => browserTabs.port.get(tabId),
+        build,
         monitor: (context, enabled) => monitor.statuses(context, enabled),
-        syncOn: async () => { const { device } = await native.storage.local.get("device"); return device !== null && typeof device === "object" && (device as { syncOn?: unknown }).syncOn === true } }),
+        syncOn: async () => {
+          const { device } = await native.storage.local.get("device")
+          return device !== null && typeof device === "object" && (device as { syncOn?: unknown }).syncOn === true
+        }
+      }),
       diagnostics: (_ui, check) => diagnostics.read(check),
       withdraw: (origin, expected) => deps.lifecycle.withdrawConsent(origin, expected),
       readAccess: () => readAccess(),
@@ -184,22 +277,49 @@ export function composeServices(deps: {
       now: () => Date.now()
     }
   })
-  const repaint = () => { void badge.refresh() }
-  const changed = (_changes: unknown, area: string) => { if (area === "local" || area === "session") repaint() }
+  const repaint = () => {
+    void badge.refresh()
+  }
+  const changed = (_changes: unknown, area: string) => {
+    if (area === "local" || area === "session") repaint()
+  }
   native.storage.onChanged.addListener(changed)
   native.permissions.onAdded.addListener(repaint)
   native.permissions.onRemoved.addListener(repaint)
   repaint()
   return {
-    tabs, actions, anyTab, badge, gather,
+    tabs,
+    actions,
+    anyTab,
+    badge,
+    gather,
     dispose() {
-      for (const stop of [() => native.storage.onChanged.removeListener(changed), () => native.permissions.onAdded.removeListener(repaint),
-        () => native.permissions.onRemoved.removeListener(repaint), () => badge.dispose(), () => router.dispose(), () => autoAddRoutes.dispose(), () => healthRoutes.dispose(),
-        () => accounts.dispose(), stopMenuSettings, () => native.permissions.onAdded.removeListener(reconcileMenu),
-        () => native.permissions.onRemoved.removeListener(reconcileMenu), () => anyTab.dispose(), () => actions.dispose(), () => playlists.dispose(),
-        () => publication.dispose(), () => monitor.dispose(),
-        unbindHello, () => producer.dispose(), () => tabs.dispose(), () => browserTabs.dispose()]) {
-        try { stop() } catch {}
+      for (const stop of [
+        () => native.storage.onChanged.removeListener(changed),
+        () => native.permissions.onAdded.removeListener(repaint),
+        () => native.permissions.onRemoved.removeListener(repaint),
+        () => badge.dispose(),
+        () => router.dispose(),
+        () => autoAddRoutes.dispose(),
+        () => healthRoutes.dispose(),
+        () => accounts.dispose(),
+        () => gather.dispose(),
+        stopMenuSettings,
+        () => native.permissions.onAdded.removeListener(reconcileMenu),
+        () => native.permissions.onRemoved.removeListener(reconcileMenu),
+        () => anyTab.dispose(),
+        () => actions.dispose(),
+        () => playlists.dispose(),
+        () => publication.dispose(),
+        () => monitor.dispose(),
+        unbindHello,
+        () => producer.dispose(),
+        () => tabs.dispose(),
+        () => browserTabs.dispose()
+      ]) {
+        try {
+          stop()
+        } catch {}
       }
     }
   }

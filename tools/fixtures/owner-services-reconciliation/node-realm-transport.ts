@@ -12,9 +12,14 @@ function withRealmFile<T>(runner: string, script: string, run: (runner: string, 
     writeFileSync(file, script, { encoding: "utf8", mode: 0o600 })
     const contextImport = /import\s*\{\s*runInNewContext\s*\}\s*from\s*"node:vm";?/
     if (!contextImport.test(runner)) throw Error("Expected the pinned Node VM runner")
-    const ordinaryGlobalRunner = runner.replace(contextImport, 'import { createContext, runInContext, constants } from "node:vm";const runInNewContext=(source, globals, options)=>{const realm=createContext(constants.DONT_CONTEXTIFY);Object.defineProperties(realm,Object.getOwnPropertyDescriptors(globals));return runInContext(source,realm,options)};')
+    const ordinaryGlobalRunner = runner.replace(
+      contextImport,
+      'import { createContext, runInContext, constants } from "node:vm";const runInNewContext=(source, globals, options)=>{const realm=createContext(constants.DONT_CONTEXTIFY);Object.defineProperties(realm,Object.getOwnPropertyDescriptors(globals));return runInContext(source,realm,options)};'
+    )
     return run(ordinaryGlobalRunner.replace(needle, 'readFileSync(process.argv[1],"utf8")'), file)
-  } finally { rmSync(directory, { recursive: true, force: true }) }
+  } finally {
+    rmSync(directory, { recursive: true, force: true })
+  }
 }
 
 export function executeSyntheticNodeRealm(runner: string, script: string, timeout: number): string {

@@ -23,10 +23,7 @@ export function isPercent(value: unknown): value is number {
   return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 100
 }
 
-export type DocumentKey =
-  | { kind: "settings" }
-  | { kind: "setup"; acct: AccountKey }
-  | { kind: "filter"; acct: AccountKey; playlist: PlaylistId }
+export type DocumentKey = { kind: "settings" } | { kind: "setup"; acct: AccountKey } | { kind: "filter"; acct: AccountKey; playlist: PlaylistId }
 
 export function parseDocumentKey(value: unknown): DocumentKey | null {
   if (value === "doc:settings") return { kind: "settings" }
@@ -40,8 +37,11 @@ export function parseDocumentKey(value: unknown): DocumentKey | null {
 
 export function documentKey(document: DocumentKey): string {
   switch (document.kind) {
-    case "settings": return "doc:settings"
-    case "setup": return `doc:setup:${document.acct}`
-    case "filter": return `doc:filter:${document.acct}:${document.playlist}`
+    case "settings":
+      return "doc:settings"
+    case "setup":
+      return `doc:setup:${document.acct}`
+    case "filter":
+      return `doc:filter:${document.acct}:${document.playlist}`
   }
 }

@@ -47,27 +47,42 @@ export async function runUiBridgeConsumer() {
     transcript.push({ case: "signed-out", answer: signed })
     h.h.seedTab()
     h.h.seedTab(nativeTab(9, { windowId: 2, incognito: true, active: true }), signedIn())
-    const privateView = h.open(popup(2), 2), writes = h.h.cacheWrites
+    const privateView = h.open(popup(2), 2),
+      writes = h.h.cacheWrites
     const privateList = await completedList(privateView, { acct: a, site: "www", refresh: true, windowId: 2 })
-    check(privateList.kind === "answered" && privateList.result.kind === "open" && privateList.result.refresh?.kind === "listed"
-      && privateList.result.refresh.cache.kind === "caller-owned" && privateList.result.refresh.cache.reason === "private", "private requester remains private")
+    check(
+      privateList.kind === "answered" &&
+        privateList.result.kind === "open" &&
+        privateList.result.refresh?.kind === "listed" &&
+        privateList.result.refresh.cache.kind === "caller-owned" &&
+        privateList.result.refresh.cache.reason === "private",
+      "private requester remains private"
+    )
     check(h.h.cacheWrites === writes, "private list never writes cache")
     transcript.push({ case: "private-list", answer: privateList, additionalWrites: h.h.cacheWrites - writes })
     const noSetup = "CCCCCCCCCCCCCCCC"
     check(isAccountKey(noSetup), "no-Setup account brand")
     h.h.seedTab(nativeTab(3, { active: false }), signedIn(noSetup))
     const noSetupList = await completedList(backend, { acct: noSetup, site: "music", refresh: false, windowId: 1 })
-    check(noSetupList.kind === "answered" && noSetupList.result.kind === "open" && noSetupList.result.cached === null
-      && noSetupList.result.refresh?.kind === "listed" && noSetupList.result.refresh.cache.kind === "caller-owned"
-      && noSetupList.result.refresh.cache.reason === "no-setup", "no-Setup list is caller-owned")
+    check(
+      noSetupList.kind === "answered" &&
+        noSetupList.result.kind === "open" &&
+        noSetupList.result.cached === null &&
+        noSetupList.result.refresh?.kind === "listed" &&
+        noSetupList.result.refresh.cache.kind === "caller-owned" &&
+        noSetupList.result.refresh.cache.reason === "no-setup",
+      "no-Setup list is caller-owned"
+    )
     transcript.push({ case: "no-setup", answer: noSetupList })
     const before = h.h.calls.length
-    check(await h.send({ windowId: 99 }) === undefined, "missing window refused")
-    check(await h.send({ windowId: 1 }, "ui.accountInView", { ...popup(), id: "forged-extension" }) === undefined, "forged sender refused")
-    check(await h.send({ windowId: 1 }, "ui.accountInView", settings()) === undefined, "tab page cannot claim popup window")
+    check((await h.send({ windowId: 99 })) === undefined, "missing window refused")
+    check((await h.send({ windowId: 1 }, "ui.accountInView", { ...popup(), id: "forged-extension" })) === undefined, "forged sender refused")
+    check((await h.send({ windowId: 1 }, "ui.accountInView", settings())) === undefined, "tab page cannot claim popup window")
     check(h.h.calls.length === before, "rejected native identity calls no service")
     transcript.push({ case: "forged-window", serviceCalls: h.h.calls.length - before })
-    h.h.pings.set(1, signedIn(noSetup)); h.h.tabs.delete(3); h.h.tabs.delete(9)
+    h.h.pings.set(1, signedIn(noSetup))
+    h.h.tabs.delete(3)
+    h.h.tabs.delete(9)
     const changed = await completedList(backend, { acct: a, site: "www", refresh: true, windowId: 1 })
     check(changed.kind === "answered" && changed.result.kind === "open" && changed.result.refresh?.kind === "not-listed", "account change cannot run another account's list")
     transcript.push({ case: "account-change", answer: changed })
@@ -75,7 +90,9 @@ export async function runUiBridgeConsumer() {
     const fallback = await backend.call("ui.accountInView", { windowId: 1 })
     check(fallback.kind === "answered" && fallback.result.kind === "account" && fallback.result.source === "last-account", "actual last-account fallback")
     transcript.push({ case: "fallback", answer: fallback })
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
   check(h.network.listening() === 0 && h.counts().localListeners === 0 && h.h.clock.pending === 0, "consumer tears down all listeners and deadlines")
 
   const firstRun = await createFirstRunHarness()
@@ -87,7 +104,9 @@ export async function runUiBridgeConsumer() {
     const agreement = await backend.change({ kind: "first-run-agree", displayedVersion: 1, attempt: 1, selected: ["quick-save"], syncOn: false })
     check(agreement.kind === "agreed", "first-run agreement survives composed router")
     transcript.push({ case: "held-and-agree", held, agreement, accessReads: firstRun.stats().accessReads })
-  } finally { await firstRun.dispose() }
+  } finally {
+    await firstRun.dispose()
+  }
 
   h = bridgeHarness()
   try {
@@ -98,7 +117,9 @@ export async function runUiBridgeConsumer() {
     deepStrictEqual(await form.status(), answer, "status retains confirmed creation after owner stops")
     transcript.push({ case: "failed-readback", answer, creates: h.h.runs("create").length })
     form.dispose()
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 
   h = bridgeHarness({ delivery: "queued" })
   const creationEntered = deferred<void>()
@@ -120,13 +141,17 @@ export async function runUiBridgeConsumer() {
     await creationEntered.promise
     const before = h.h.runs("create").length
     deepStrictEqual(await form.submit({ title: "Retry would duplicate", privacy: "PUBLIC" }), lost, "lost answer does not resend")
-    const status = form.status(); await h.flush()
+    const status = form.status()
+    await h.flush()
     const known = await status
     check(known.kind === "answered" && known.result.kind === "created", "status recovers actual operation result")
     check(h.h.runs("create").length === before && before === 1, "lost operation never retries write")
     transcript.push({ case: "lost-creation-answer", lost, status: known, creates: before })
-    form.dispose(); await h.flush()
-  } finally { await h.dispose() }
+    form.dispose()
+    await h.flush()
+  } finally {
+    await h.dispose()
+  }
 
   h = bridgeHarness()
   try {
@@ -151,10 +176,14 @@ export async function runUiBridgeConsumer() {
     check(h.h.runs("create").length === 1, "repeated operation does not create again")
     check(firstCreate.kind === "answered" && isUiCreationAnswer(firstCreate.result), "valid creation wire answer")
     transcript.push({ case: "persistent-operation", answer: firstCreate, creates: h.h.runs("create").length })
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
   transcript.push({ case: "eof", nativeListeners: h.network.listening(), localListeners: h.counts().localListeners, deadlines: h.h.clock.pending })
   check(isJsonValue(transcript), "full consumer transcript is finite JSON")
   return transcript
 }
-export async function uiBridgeJson() { return `${JSON.stringify(await runUiBridgeConsumer(), null, 2)}\n` }
+export async function uiBridgeJson() {
+  return `${JSON.stringify(await runUiBridgeConsumer(), null, 2)}\n`
+}
 if (import.meta.main) process.stdout.write(await uiBridgeJson())

@@ -2,7 +2,7 @@ import type { Origin } from "../../shared/contracts/results"
 import type { AccountKey } from "../../shared/model"
 import type { createLocalFilterWriter } from "./local-filter-writer"
 import type { SyncJoinOperation, SyncJoinPreparation, SyncJoinResult, SyncJoinStatus, SyncJoinReview, SyncJoinHost, SyncJoinLocalRemoval } from "./sync-join-execution"
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 type Owner = ReturnType<typeof createLocalFilterWriter>
 type UiOrigin = Extract<Origin, { kind: "ui" }>
@@ -23,6 +23,7 @@ function negative(owner: Owner, origin: UiOrigin, review: SyncJoinReview, acct: 
   const removal: SyncJoinLocalRemoval = { kind: "document", acct }
   // @ts-expect-error Progress shards remain bounded.
   const shard: SyncJoinLocalRemoval = { kind: "progress", acct, shard: 16 }
-  void removal; void shard
+  void removal
+  void shard
 }
 void negative

@@ -7,7 +7,9 @@ import type { Settings } from "../../shared/model"
 
 const DAY = 86_400_000
 const running: GatherTriggers[] = []
-afterEach(() => { for (const triggers of running.splice(0)) triggers.dispose() })
+afterEach(() => {
+  for (const triggers of running.splice(0)) triggers.dispose()
+})
 
 function world(auto: Partial<Settings["gather"]["auto"]>, options: { serving?: AutomaticServing | null } = {}) {
   const f = gatherFixture({ settings: { to: "player", close: false, auto: { unvisited: false, after: "1d", background: false, count: false, n: 5, ...auto } } })
@@ -19,10 +21,15 @@ function world(auto: Partial<Settings["gather"]["auto"]>, options: { serving?: A
     access: async () => ({ www: true, music: false, musicSection: false }),
     native: f.window.native,
     session: f.tabs.session,
-    async serving(_windowId, exclude) { servingAsked.push([...exclude].sort((x, y) => x - y)); return serving },
+    async serving(_windowId, exclude) {
+      servingAsked.push([...exclude].sort((x, y) => x - y))
+      return serving
+    },
     gather: f.gather,
     clock: { now: () => f.tabs.clock.wallNow(), after: (ms, run) => f.tabs.clock.after(ms, run) },
-    waiting: value => { waits.push(value) }
+    waiting: value => {
+      waits.push(value)
+    }
   })
   running.push(triggers)
   const wall = () => f.tabs.clock.wallNow()
@@ -36,7 +43,12 @@ function world(auto: Partial<Settings["gather"]["auto"]>, options: { serving?: A
     triggers.woke("hello")
   }
   async function advance(ms: number) {
-    for (let step = 0; step < ms; step += 100) { f.tabs.clock.advance(100); await settle(); await new Promise(resolve => setTimeout(resolve, 0)); await settle() }
+    for (let step = 0; step < ms; step += 100) {
+      f.tabs.clock.advance(100)
+      await settle()
+      await new Promise(resolve => setTimeout(resolve, 0))
+      await settle()
+    }
   }
   const saved = () => f.yt.entries(a, later).map(({ video }) => video)
   const batches = () => f.yt.calls.filter(call => call.job.kind === "addBatch").length
@@ -157,7 +169,10 @@ describe("tabs automatic gathering leaves alone", () => {
     w.f.tabs.clock.advance(61_000)
     w.triggers.woke("ui")
     await w.advance(200)
-    if (row) { row.active = false; row.lastAccessed = w.wall() - 2 * DAY }
+    if (row) {
+      row.active = false
+      row.lastAccessed = w.wall() - 2 * DAY
+    }
     w.f.tabs.clock.advance(61_000)
     w.triggers.woke("ui")
     await w.advance(200)

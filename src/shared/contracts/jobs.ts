@@ -16,9 +16,7 @@ import type { MusicAdFailure } from "./music-playback"
 import { isMusicAdFailure } from "./music-playback"
 
 type EmptyInput = Record<never, never>
-export type RemovalIdentity =
-  | { setVideoId: SetVideoId; videoId?: never }
-  | { videoId: VideoId; setVideoId?: never }
+export type RemovalIdentity = { setVideoId: SetVideoId; videoId?: never } | { videoId: VideoId; setVideoId?: never }
 export type JobInputById = {
   account: EmptyInput
   accountLabel: EmptyInput
@@ -55,13 +53,9 @@ export type Job = JobById[JobId]
 export type JobOf<K extends JobId> = JobById[K]
 export type MembershipRow = { id: PlaylistId; title: string; privacy?: Privacy; count?: number; contains: boolean }
 export type PlaylistRow = { id: PlaylistId; title: string; privacy?: Privacy; count?: number; thumb?: string }
-export type BatchAddResult =
-  | { videoId: VideoId; setVideoId: SetVideoId | null; failure?: never }
-  | { videoId: VideoId; failure: JobFailure; setVideoId?: never }
+export type BatchAddResult = { videoId: VideoId; setVideoId: SetVideoId | null; failure?: never } | { videoId: VideoId; failure: JobFailure; setVideoId?: never }
 export type AccountData = { signedIn: true; acct: AccountKey } | { signedIn: false; acct: null }
-export type QueueAddData =
-  | { confirmed: false; quiet: boolean }
-  | { confirmed: true; quiet: boolean; undo?: { listId: QueueListId; setVideoId: SetVideoId } }
+export type QueueAddData = { confirmed: false; quiet: boolean } | { confirmed: true; quiet: boolean; undo?: { listId: QueueListId; setVideoId: SetVideoId } }
 export type JobDataById = {
   account: AccountData
   accountLabel: AccountLabel
@@ -99,14 +93,10 @@ export type JobData<J extends Job> = JobDataById[J["kind"]]
 type JobFailureDetailById = { [K in JobId]: K extends "nowPlaying" ? MusicAdFailure : never }
 export type JobFailureFor<J extends Job = Job> = JobFailure | JobFailureDetailById[J["kind"]]
 export type JobResult<J extends Job = Job> = { ok: true; data: JobData<J>; route: RouteId } | JobFailureFor<J>
-export type AccountJobId =
-  | "accountLabel" | "membership" | "playlists" | "add" | "remove" | "addBatch"
-  | "removeBatch" | "save" | "unsave" | "create" | "like" | "library"
+export type AccountJobId = "accountLabel" | "membership" | "playlists" | "add" | "remove" | "addBatch" | "removeBatch" | "save" | "unsave" | "create" | "like" | "library"
 export type AccountJob = JobOf<AccountJobId>
 export type JobInvocation<J extends Job = Job> = {
-  [K in J["kind"]]: K extends AccountJobId
-    ? { job: J & JobOf<K>; acct: AccountKey }
-    : { job: J & JobOf<K>; acct?: never }
+  [K in J["kind"]]: K extends AccountJobId ? { job: J & JobOf<K>; acct: AccountKey } : { job: J & JobOf<K>; acct?: never }
 }[J["kind"]]
 
 type Check = (value: unknown) => boolean
@@ -122,9 +112,10 @@ function shape(value: unknown, required: Fields, optional: Fields = {}): value i
     for (const key of Object.keys(required)) {
       if (!Object.hasOwn(value, key) || !required[key]?.(value[key])) return false
     }
-    return Object.keys(value).every(key => Object.hasOwn(required, key) ||
-      Object.hasOwn(optional, key) && optional[key]?.(value[key]))
-  } catch { return false }
+    return Object.keys(value).every(key => Object.hasOwn(required, key) || (Object.hasOwn(optional, key) && optional[key]?.(value[key])))
+  } catch {
+    return false
+  }
 }
 function list(value: unknown, check: Check, min = 0, max = Infinity): value is unknown[] {
   return Array.isArray(value) && isJsonValue(value) && value.length >= min && value.length <= max && value.every(check)
@@ -133,38 +124,50 @@ function queueIds(value: unknown, min = 0): boolean {
   return list(value, isQueueItemId, min) && new Set(value).size === value.length
 }
 const inputFields = {
-  account: {}, accountLabel: {}, membership: { videoId: isVideoId }, playlists: {},
+  account: {},
+  accountLabel: {},
+  membership: { videoId: isVideoId },
+  playlists: {},
   add: { playlistId: isPlaylistId, videoId: isVideoId },
   remove: { playlistId: isPlaylistId, setVideoId: isSetVideoId },
   addBatch: { playlistId: isPlaylistId, videoIds: v => list(v, isVideoId, 1, 50) },
   removeBatch: { playlistId: isPlaylistId, setVideoIds: v => list(v, isSetVideoId, 1, 50) },
   save: { playlistId: isPlaylistId, videoId: isVideoId },
   unsave: { playlistId: isPlaylistId, setVideoId: isSetVideoId },
-  create: { title: text, privacy: isPrivacy }, channelOf: { videoId: isVideoId },
-  resolveChannel: { input: text }, videoInfo: {}, queueAdd: {},
+  create: { title: text, privacy: isPrivacy },
+  channelOf: { videoId: isVideoId },
+  resolveChannel: { input: text },
+  videoInfo: {},
+  queueAdd: {},
   queueUndo: { listId: isQueueListId, setVideoId: isSetVideoId },
-  queueAddList: { videoIds: v => list(v, isVideoId, 1, 199) }, openCardMenu: { videoId: isVideoId }, itemInfo: {},
+  queueAddList: { videoIds: v => list(v, isVideoId, 1, 199) },
+  openCardMenu: { videoId: isVideoId },
+  itemInfo: {},
   queueInsert: { endpoint: isQueueInsertEndpoint, position: v => v === "next" || v === "end" },
-  queueRemove: { id: isQueueItemId }, queueRemoveIds: { ids: v => list(v, isQueueItemId) },
+  queueRemove: { id: isQueueItemId },
+  queueRemoveIds: { ids: v => list(v, isQueueItemId) },
   queueMove: { id: isQueueItemId, to: v => v === "next" || v === "end" || integer(v) },
-  queueReinsert: { videoId: isVideoId, index: integer }, like: { endpoint: isLikeEndpoint },
-  library: { endpoint: isLibraryEndpoint }, navigate: { endpoint: isNavigationEndpoint }, nowPlaying: {}, castState: {}
+  queueReinsert: { videoId: isVideoId, index: integer },
+  like: { endpoint: isLikeEndpoint },
+  library: { endpoint: isLibraryEndpoint },
+  navigate: { endpoint: isNavigationEndpoint },
+  nowPlaying: {},
+  castState: {}
 } satisfies Record<JobId, Fields>
 export function isJob(value: unknown): value is Job {
   try {
     if (value === null || typeof value !== "object" || !isJsonValue(value) || Array.isArray(value) || !Object.hasOwn(value, "kind") || !isJobId(value.kind)) return false
-    if (value.kind === "remove" || value.kind === "unsave") return (
-      shape(value, { kind: isJobId, playlistId: isPlaylistId, setVideoId: isSetVideoId }) ||
-      shape(value, { kind: isJobId, playlistId: isPlaylistId, videoId: isVideoId })
-    )
+    if (value.kind === "remove" || value.kind === "unsave")
+      return shape(value, { kind: isJobId, playlistId: isPlaylistId, setVideoId: isSetVideoId }) || shape(value, { kind: isJobId, playlistId: isPlaylistId, videoId: isVideoId })
     if (!shape(value, { kind: isJobId, ...inputFields[value.kind] }, value.kind === "create" ? { videoId: isVideoId } : {})) return false
     if (value.kind !== "queueInsert") return true
     const endpoint = value.endpoint
     if (!isQueueInsertEndpoint(endpoint)) return false
     const body = endpoint.queueAddEndpoint
-    return body !== null && typeof body === "object" && !Array.isArray(body) &&
-      body.queueInsertPosition === (value.position === "next" ? "INSERT_AFTER_CURRENT_VIDEO" : "INSERT_AT_END")
-  } catch { return false }
+    return body !== null && typeof body === "object" && !Array.isArray(body) && body.queueInsertPosition === (value.position === "next" ? "INSERT_AFTER_CURRENT_VIDEO" : "INSERT_AT_END")
+  } catch {
+    return false
+  }
 }
 function membershipRow(value: unknown): boolean {
   return shape(value, { id: isPlaylistId, title: text, contains: boolean }, { privacy: isPrivacy, count: integer })
@@ -173,8 +176,7 @@ function playlistRow(value: unknown): boolean {
   return shape(value, { id: isPlaylistId, title: text }, { privacy: isPrivacy, count: integer, thumb: nonempty })
 }
 function batchEntry(value: unknown): boolean {
-  return shape(value, { videoId: isVideoId, setVideoId: addedIdentity }) ||
-    shape(value, { videoId: isVideoId, failure: isJobFailure })
+  return shape(value, { videoId: isVideoId, setVideoId: addedIdentity }) || shape(value, { videoId: isVideoId, failure: isJobFailure })
 }
 const addedIdentity: Check = value => value === null || isSetVideoId(value)
 function removed(value: unknown, maximum: number): boolean {
@@ -183,61 +185,126 @@ function removed(value: unknown, maximum: number): boolean {
 const dataGuards = {
   account: v => shape(v, { signedIn: x => x === true, acct: isAccountKey }) || shape(v, { signedIn: x => x === false, acct: noData }),
   accountLabel: v => shape(v, { name: text }, { handle: text, avatar: nonempty }),
-  membership: v => list(v, membershipRow), playlists: v => list(v, playlistRow),
-  add: v => shape(v, { setVideoId: addedIdentity }), remove: noData,
-  addBatch: (v, job) => job.kind === "addBatch" && shape(v, { results: x => list(x, batchEntry) }) &&
-    Array.isArray(v.results) && v.results.length === job.videoIds.length &&
+  membership: v => list(v, membershipRow),
+  playlists: v => list(v, playlistRow),
+  add: v => shape(v, { setVideoId: addedIdentity }),
+  remove: noData,
+  addBatch: (v, job) =>
+    job.kind === "addBatch" &&
+    shape(v, { results: x => list(x, batchEntry) }) &&
+    Array.isArray(v.results) &&
+    v.results.length === job.videoIds.length &&
     v.results.every((entry, index) => entry !== null && typeof entry === "object" && !Array.isArray(entry) && entry.videoId === job.videoIds[index]),
   removeBatch: (v, job) => job.kind === "removeBatch" && removed(v, job.setVideoIds.length),
-  save: v => shape(v, { setVideoId: addedIdentity }), unsave: noData,
+  save: v => shape(v, { setVideoId: addedIdentity }),
+  unsave: noData,
   create: v => shape(v, { playlistId: isPlaylistId }),
   channelOf: v => shape(v, { channelId: noData }) || shape(v, { channelId: isChannelId }, { title: text, handle: text }),
-  resolveChannel: v => shape(v, { channelId: isChannelId, title: text }, { handle: text }), videoInfo: isVideoInfo,
-  queueAdd: v => shape(v, { confirmed: x => x === false, quiet: boolean }) ||
-    shape(v, { confirmed: x => x === true, quiet: boolean }, { undo: x => shape(x, { listId: isQueueListId, setVideoId: isSetVideoId }) }),
+  resolveChannel: v => shape(v, { channelId: isChannelId, title: text }, { handle: text }),
+  videoInfo: isVideoInfo,
+  queueAdd: v =>
+    shape(v, { confirmed: x => x === false, quiet: boolean }) || shape(v, { confirmed: x => x === true, quiet: boolean }, { undo: x => shape(x, { listId: isQueueListId, setVideoId: isSetVideoId }) }),
   queueUndo: noData,
-  queueAddList: (v, job) => job.kind === "queueAddList" && shape(v, { confirmed: boolean, count: integer }) &&
-    typeof v.count === "number" && v.count <= job.videoIds.length && (!v.confirmed || v.count === job.videoIds.length),
-  openCardMenu: noData, itemInfo: isItemInfo,
+  queueAddList: (v, job) =>
+    job.kind === "queueAddList" &&
+    shape(v, { confirmed: boolean, count: integer }) &&
+    typeof v.count === "number" &&
+    v.count <= job.videoIds.length &&
+    (!v.confirmed || v.count === job.videoIds.length),
+  openCardMenu: noData,
+  itemInfo: isItemInfo,
   queueInsert: v => shape(v, { ids: x => queueIds(x, 1) }),
   queueRemove: v => shape(v, { index: integer }),
   queueRemoveIds: (v, job) => job.kind === "queueRemoveIds" && removed(v, job.ids.length),
-  queueMove: v => shape(v, { from: integer, moved: boolean }), queueReinsert: v => shape(v, { id: isQueueItemId }),
-  like: noData, library: v => shape(v, { inLibrary: boolean }), navigate: v => shape(v, { navigated: x => x === true }),
-  nowPlaying: v => v === null || isNowPlaying(v), castState: v => shape(v, { casting: boolean })
+  queueMove: v => shape(v, { from: integer, moved: boolean }),
+  queueReinsert: v => shape(v, { id: isQueueItemId }),
+  like: noData,
+  library: v => shape(v, { inLibrary: boolean }),
+  navigate: v => shape(v, { navigated: x => x === true }),
+  nowPlaying: v => v === null || isNowPlaying(v),
+  castState: v => shape(v, { casting: boolean })
 } satisfies Record<JobId, (value: unknown, job: Job) => boolean>
 export function isJobDataFor<J extends Job>(job: J, value: unknown): value is JobData<J> {
-  try { return isJob(job) && dataGuards[job.kind](value, job) }
-  catch { return false }
+  try {
+    return isJob(job) && dataGuards[job.kind](value, job)
+  } catch {
+    return false
+  }
 }
 export function isJobResultFor<J extends Job>(job: J, value: unknown): value is JobResult<J> {
   try {
-    return isJob(job) && (isJobFailureFor(job, value) || shape(value, {
-      ok: v => v === true, route: isRouteId, data: v => isJobDataFor(job, v)
-    }))
-  } catch { return false }
+    return (
+      isJob(job) &&
+      (isJobFailureFor(job, value) ||
+        shape(value, {
+          ok: v => v === true,
+          route: isRouteId,
+          data: v => isJobDataFor(job, v)
+        }))
+    )
+  } catch {
+    return false
+  }
 }
 export function isJobFailureFor<J extends Job>(job: J, value: unknown): value is JobFailureFor<J> {
-  try { return isJob(job) && (isJobFailure(value) || job.kind === "nowPlaying" && isMusicAdFailure(value)) }
-  catch { return false }
+  try {
+    return isJob(job) && (isJobFailure(value) || (job.kind === "nowPlaying" && isMusicAdFailure(value)))
+  } catch {
+    return false
+  }
 }
 const accountJobs = {
-  accountLabel: true, membership: true, playlists: true, add: true, remove: true, addBatch: true,
-  removeBatch: true, save: true, unsave: true, create: true, like: true, library: true
+  accountLabel: true,
+  membership: true,
+  playlists: true,
+  add: true,
+  remove: true,
+  addBatch: true,
+  removeBatch: true,
+  save: true,
+  unsave: true,
+  create: true,
+  like: true,
+  library: true
 } satisfies Record<AccountJobId, true>
 export function isJobInvocation(value: unknown): value is JobInvocation {
   try {
     if (!shape(value, { job: isJob }, { acct: isAccountKey }) || !isJob(value.job)) return false
     return Object.hasOwn(accountJobs, value.job.kind) === Object.hasOwn(value, "acct")
-  } catch { return false }
+  } catch {
+    return false
+  }
 }
 const jobSites = {
-  account: ["www", "music"], accountLabel: ["www", "music"], membership: ["www", "music"], playlists: ["www"],
-  add: ["www"], remove: ["www"], addBatch: ["www"], removeBatch: ["www"], save: ["music"], unsave: ["music"],
-  create: ["www", "music"], channelOf: ["www"], resolveChannel: ["www"], videoInfo: ["www"], queueAdd: ["www"],
-  queueUndo: ["www"], queueAddList: ["www"], openCardMenu: ["www"], itemInfo: ["music"], queueInsert: ["music"],
-  queueRemove: ["music"], queueRemoveIds: ["music"], queueMove: ["music"], queueReinsert: ["music"], like: ["music"],
-  library: ["music"], navigate: ["music"], nowPlaying: ["music"], castState: ["music"]
+  account: ["www", "music"],
+  accountLabel: ["www", "music"],
+  membership: ["www", "music"],
+  playlists: ["www"],
+  add: ["www"],
+  remove: ["www"],
+  addBatch: ["www"],
+  removeBatch: ["www"],
+  save: ["music"],
+  unsave: ["music"],
+  create: ["www", "music"],
+  channelOf: ["www"],
+  resolveChannel: ["www"],
+  videoInfo: ["www"],
+  queueAdd: ["www"],
+  queueUndo: ["www"],
+  queueAddList: ["www"],
+  openCardMenu: ["www"],
+  itemInfo: ["music"],
+  queueInsert: ["music"],
+  queueRemove: ["music"],
+  queueRemoveIds: ["music"],
+  queueMove: ["music"],
+  queueReinsert: ["music"],
+  like: ["music"],
+  library: ["music"],
+  navigate: ["music"],
+  nowPlaying: ["music"],
+  castState: ["music"]
 } satisfies Record<JobId, readonly Site[]>
 export function supportsJob(site: Site, job: JobId): boolean {
   return jobSites[job].some(supported => supported === site)

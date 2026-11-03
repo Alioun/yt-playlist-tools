@@ -23,7 +23,7 @@ const clean = (id: string) => id.replace(/\?.*$/, "").replaceAll("\\", "/")
 const emptyNames = (): ImportedNames => ({ root: new Set(), client: new Set(), disclose: false })
 
 function classify(entries: readonly Entrypoint[], ownership: EntryOwnership): PageBundle {
-  if (!entries.every((entry) => entry.type === "unlisted-script")) return { kind: "unrelated" }
+  if (!entries.every(entry => entry.type === "unlisted-script")) return { kind: "unrelated" }
   const entry = entries[0]
   if (!entry || entries.length !== 1) throw Error("page-link requires independent unlisted IIFEs")
   const bundle = Object.hasOwn(ownership, entry.name) ? ownership[entry.name] : undefined
@@ -71,9 +71,19 @@ function collect(ast: ESTree.Program, code: string, id: string, development: boo
     const fn = node.type === "FunctionDeclaration" || node.type === "FunctionExpression" || node.type === "ArrowFunctionExpression"
     if ((node.type === "FunctionDeclaration" || node.type === "ClassDeclaration") && node.id) bind(node.id, incoming)
     const parent = parents.get(node)
-    const functionBody = node.type === "BlockStatement" && (parent?.type === "FunctionDeclaration" || parent?.type === "FunctionExpression" || parent?.type === "ArrowFunctionExpression") && parent.body === node
+    const functionBody =
+      node.type === "BlockStatement" && (parent?.type === "FunctionDeclaration" || parent?.type === "FunctionExpression" || parent?.type === "ArrowFunctionExpression") && parent.body === node
     const varScope = fn || functionBody || node.type === "StaticBlock"
-    if (varScope || node.type === "BlockStatement" || node.type === "CatchClause" || node.type === "ForStatement" || node.type === "ForOfStatement" || node.type === "ForInStatement" || node.type === "SwitchStatement" || node.type === "ClassExpression") {
+    if (
+      varScope ||
+      node.type === "BlockStatement" ||
+      node.type === "CatchClause" ||
+      node.type === "ForStatement" ||
+      node.type === "ForOfStatement" ||
+      node.type === "ForInStatement" ||
+      node.type === "SwitchStatement" ||
+      node.type === "ClassExpression"
+    ) {
       scope = { parent: incoming, functionScope: varScope, bindings: new Map() }
     }
     scopes.set(node, scope)
@@ -135,11 +145,12 @@ function collect(ast: ESTree.Program, code: string, id: string, development: boo
           else if (parent.computed && parent.property.type === "Literal" && typeof parent.property.value === "string") names[namespace].add(parent.property.value)
           else if (!development) fail(parent, "dynamic namespace access escapes exact collection")
         } else {
-          const propertyName = (parent?.type === "MemberExpression" && parent.property === node && !parent.computed)
-            || (parent?.type === "Property" && parent.key === node && !parent.computed && !parent.shorthand)
-            || ((parent?.type === "MethodDefinition" || parent?.type === "PropertyDefinition") && parent.key === node && !parent.computed)
-            || ((parent?.type === "LabeledStatement" || parent?.type === "BreakStatement" || parent?.type === "ContinueStatement") && parent.label === node)
-            || (parent?.type === "ExportSpecifier" && parent.exported === node)
+          const propertyName =
+            (parent?.type === "MemberExpression" && parent.property === node && !parent.computed) ||
+            (parent?.type === "Property" && parent.key === node && !parent.computed && !parent.shorthand) ||
+            ((parent?.type === "MethodDefinition" || parent?.type === "PropertyDefinition") && parent.key === node && !parent.computed) ||
+            ((parent?.type === "LabeledStatement" || parent?.type === "BreakStatement" || parent?.type === "ContinueStatement") && parent.label === node) ||
+            (parent?.type === "ExportSpecifier" && parent.exported === node)
           if (!development && !propertyName) fail(node, "namespace escape prevents exact collection")
         }
       }
@@ -206,7 +217,7 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
     const others: typeof groups = []
     for (const group of groups) {
       const entries = Array.isArray(group) ? group : [group]
-      const kitCount = entries.filter((entry) => entry.type === "unlisted-script" && options.entries[entry.name]?.kind === "kit").length
+      const kitCount = entries.filter(entry => entry.type === "unlisted-script" && options.entries[entry.name]?.kind === "kit").length
       if (kitCount && kitCount !== entries.length) throw Error("page-link mixed kit group")
       ;(kitCount ? kits : others).push(group)
     }
@@ -216,31 +227,34 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
     const bundle = classify(entries, options.entries)
     pageBuild = bundle.kind !== "unrelated"
     if (bundle.kind === "unrelated") return
-    const label = entries.map((entry) => entry.name).join(",")
+    const label = entries.map(entry => entry.name).join(",")
     const inheritedExternals = new Map<string, Set<string | undefined>>()
     const composedExternals = new Set<string>()
     const renderedImports = new Map<string | null, Set<string>>()
     config.plugins ??= []
     if (bundle.kind === "feature") {
       config.build ??= {}
-      const rollup = config.build.rollupOptions ??= {}
+      const rollup = (config.build.rollupOptions ??= {})
       const external = rollup.external
       rollup.external = (id, importer, resolved) => {
         if (specifiers.has(id)) return true
         if (id.startsWith("svelte/")) throw Error(`knownSvelteSpecifier ${importer}: ${id}`)
-        const inherited = typeof external === "function" ? external(id, importer, resolved)
-          : typeof external === "boolean" ? external
-          : (typeof external === "string" ? [external] : external instanceof RegExp ? [external] : external ?? []).some((item) => {
-          if (typeof item === "string") return item === id
-          const lastIndex = item.lastIndex
-          item.lastIndex = 0
-          const matches = item.test(id)
-          item.lastIndex = lastIndex
-          return matches
-        })
+        const inherited =
+          typeof external === "function"
+            ? external(id, importer, resolved)
+            : typeof external === "boolean"
+              ? external
+              : (typeof external === "string" ? [external] : external instanceof RegExp ? [external] : (external ?? [])).some(item => {
+                  if (typeof item === "string") return item === id
+                  const lastIndex = item.lastIndex
+                  item.lastIndex = 0
+                  const matches = item.test(id)
+                  item.lastIndex = lastIndex
+                  return matches
+                })
         if (inherited) {
           let importers = inheritedExternals.get(id)
-          if (!importers) inheritedExternals.set(id, importers = new Set())
+          if (!importers) inheritedExternals.set(id, (importers = new Set()))
           importers.add(importer)
         }
         return inherited
@@ -248,11 +262,11 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
       const outputs = Array.isArray(rollup.output) ? rollup.output : [rollup.output ?? {}]
       for (const output of outputs) {
         const globals = output.globals
-        output.globals = (id) => {
+        output.globals = id => {
           const specifier = specifiers.get(id)
           if (specifier?.kind === "namespace") return `globalThis.__pp.svelte.${specifier.namespace}`
           if (specifier?.kind === "library") return specifier.global
-          return typeof globals === "function" ? globals(id) : globals?.[id] ?? id
+          return typeof globals === "function" ? globals(id) : (globals?.[id] ?? id)
         }
       }
       rollup.output = Array.isArray(rollup.output) ? outputs : outputs[0]
@@ -260,12 +274,20 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
     const plugin: Plugin = {
       name: `page-link:${label}`,
       enforce: "post",
-      buildStart() { buildOrder.push(label) },
-      resolveId(id) { if (id === virtualId && bundle.kind === "kit") return resolvedVirtualId },
+      buildStart() {
+        buildOrder.push(label)
+      },
+      resolveId(id) {
+        if (id === virtualId && bundle.kind === "kit") return resolvedVirtualId
+      },
       load(id) {
         if (id !== resolvedVirtualId || bundle.kind !== "kit") return
         const names = combined(bundle.site)
-        const dictionary = (namespace: Namespace) => `{${[...names[namespace]].sort().map((name) => `${JSON.stringify(name)}:${namespace}[${JSON.stringify(name)}]`).join(",")}}`
+        const dictionary = (namespace: Namespace) =>
+          `{${[...names[namespace]]
+            .sort()
+            .map(name => `${JSON.stringify(name)}:${namespace}[${JSON.stringify(name)}]`)
+            .join(",")}}`
         return `${names.disclose || development ? `import ${JSON.stringify(disclose)};` : ""}\nimport * as root from 'svelte';\nimport * as client from 'svelte/internal/client';\nexport default {root:${development ? "root" : dictionary("root")},client:${development ? "client" : dictionary("client")}};`
       },
       transform: {
@@ -278,7 +300,7 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
             return
           }
           let modules = imports.get(bundle.site)
-          if (!modules) imports.set(bundle.site, modules = new Map())
+          if (!modules) imports.set(bundle.site, (modules = new Map()))
           modules.set(id, names)
         }
       },
@@ -322,7 +344,7 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
             if (artifact.fileName.endsWith(".css")) this.error(`noPageCss ${label}: ${artifact.fileName}`)
             continue
           }
-          if (artifact.imports.some((id) => !renderedImports.get(artifact.facadeModuleId)?.has(id)) || artifact.dynamicImports.length) this.error(`unlistedIifeOnly ${label}`)
+          if (artifact.imports.some(id => !renderedImports.get(artifact.facadeModuleId)?.has(id)) || artifact.dynamicImports.length) this.error(`unlistedIifeOnly ${label}`)
           const modules = Object.keys(artifact.modules).map(clean)
           for (const id of modules) {
             const owner = packageOwner(id)
@@ -336,13 +358,31 @@ export function createPageLink(options: { siteRoot: string; kitIndex: string; ev
         const names = "site" in bundle ? combined(bundle.site) : emptyNames()
         const directory = resolve(options.evidenceDir, `${browser}-${development ? "dev" : "build"}`)
         mkdirSync(directory, { recursive: true })
-        writeFileSync(resolve(directory, `${label}.json`), JSON.stringify({ label, bundle, development, buildOrder, names: { root: [...names.root].sort(), client: [...names.client].sort(), disclose: names.disclose }, contributions: "site" in bundle ? [...imports.get(bundle.site)?.keys() ?? []] : [], chunks }, null, 2))
+        writeFileSync(
+          resolve(directory, `${label}.json`),
+          JSON.stringify(
+            {
+              label,
+              bundle,
+              development,
+              buildOrder,
+              names: { root: [...names.root].sort(), client: [...names.client].sort(), disclose: names.disclose },
+              contributions: "site" in bundle ? [...(imports.get(bundle.site)?.keys() ?? [])] : [],
+              chunks
+            },
+            null,
+            2
+          )
+        )
       }
     }
     config.plugins.push(plugin)
   }
   const hooks = {
-    "config:resolved": (wxt) => { development = wxt.config.command === "serve"; browser = wxt.config.browser },
+    "config:resolved": wxt => {
+      development = wxt.config.command === "serve"
+      browser = wxt.config.browser
+    },
     "entrypoints:grouped": buildKitsLast,
     "vite:build:extendConfig": linkPageScripts
   } satisfies Partial<WxtHooks>

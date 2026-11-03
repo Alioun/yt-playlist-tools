@@ -13,7 +13,11 @@ export type GatherSummary = {
 }
 export type CopyContext = { readonly i18n: I18n; readonly account: string; readonly now: number }
 
-const units: readonly [Intl.RelativeTimeFormatUnit, number][] = [["day", 86_400_000], ["hour", 3_600_000], ["minute", 60_000]]
+const units: readonly [Intl.RelativeTimeFormatUnit, number][] = [
+  ["day", 86_400_000],
+  ["hour", 3_600_000],
+  ["minute", 60_000]
+]
 function ago(i18n: I18n, at: number, now: number): string {
   const elapsed = Math.max(0, now - at)
   for (const [unit, size] of units) if (elapsed >= size) return i18n.relative(-Math.floor(elapsed / size), unit)
@@ -25,7 +29,8 @@ const n = (i18n: I18n, count: number) => i18n.number(count)
 // The failed videos' sentence: each failure keeps its own videos' tabs open (YT-GT-20, YT-GT-33).
 function unsaved(i18n: I18n, failed: readonly Failed[]): string | null {
   if (!failed.length) return null
-  const count = n(i18n, failed.length), one = i18n.plural(failed.length) === "one"
+  const count = n(i18n, failed.length),
+    one = i18n.plural(failed.length) === "one"
   if (failed.every(({ failure }) => failure === "refused")) return i18n.message(one ? "gather_unsavedRefused_one" : "gather_unsavedRefused_other", { count })
   if (failed.some(({ failure }) => failure === "rate-limited")) return i18n.message(one ? "gather_unsavedRateLimited_one" : "gather_unsavedRateLimited_other", { count })
   return i18n.message(one ? "gather_unsaved_one" : "gather_unsaved_other", { count })
@@ -38,20 +43,25 @@ function playlistText(result: Extract<GatherResult, { kind: "playlist" }>, conte
   const whole = result.failed.length > 0 && result.saved === 0 && result.already === 0
   if (whole && result.failed.every(({ failure }) => failure === "missing")) return line(i18n.message("gather_missing", { playlist }), "failure", { kind: "choose" })
   if (whole && result.failed.every(({ failure }) => failure === "full")) return line(i18n.message("gather_full", { playlist }), "failure", { kind: "choose" })
-  const count = n(i18n, result.saved), one = i18n.plural(result.saved) === "one"
+  const count = n(i18n, result.saved),
+    one = i18n.plural(result.saved) === "one"
   const closed = result.closed > 0
-  const first = surface === "toast"
-    ? result.auto ? i18n.message(one ? "gather_toastAuto_one" : "gather_toastAuto_other", { count, playlist })
-      : closed ? i18n.message(one ? "gather_toastClosed_one" : "gather_toastClosed_other", { count, playlist })
-        : i18n.message(one ? "gather_toast_one" : "gather_toast_other", { count, playlist })
-    : result.auto ? i18n.message(one ? "gather_autoRow_one" : "gather_autoRow_other", { count, playlist, when: ago(i18n, result.at, context.now) })
-      : closed ? i18n.message(one ? "gather_savedClosed_one" : "gather_savedClosed_other", { count, playlist })
-        : i18n.message(one ? "gather_saved_one" : "gather_saved_other", { count, playlist })
+  const first =
+    surface === "toast"
+      ? result.auto
+        ? i18n.message(one ? "gather_toastAuto_one" : "gather_toastAuto_other", { count, playlist })
+        : closed
+          ? i18n.message(one ? "gather_toastClosed_one" : "gather_toastClosed_other", { count, playlist })
+          : i18n.message(one ? "gather_toast_one" : "gather_toast_other", { count, playlist })
+      : result.auto
+        ? i18n.message(one ? "gather_autoRow_one" : "gather_autoRow_other", { count, playlist, when: ago(i18n, result.at, context.now) })
+        : closed
+          ? i18n.message(one ? "gather_savedClosed_one" : "gather_savedClosed_other", { count, playlist })
+          : i18n.message(one ? "gather_saved_one" : "gather_saved_other", { count, playlist })
   const already = result.already > 0 ? i18n.message(i18n.plural(result.already) === "one" ? "gather_alreadyIn_one" : "gather_alreadyIn_other", { count: n(i18n, result.already) }) : null
   const failure = unsaved(i18n, result.failed)
   const text = [first, already, failure].filter((part): part is string => part !== null).join(" ")
-  const action: GatherLineAction | null = failure && result.retry && surface === "row" ? { kind: "retry", id: result.id }
-    : result.undo ? { kind: "undo", id: result.undo } : null
+  const action: GatherLineAction | null = failure && result.retry && surface === "row" ? { kind: "retry", id: result.id } : result.undo ? { kind: "undo", id: result.undo } : null
   return line(text, failure ? "failure" : "confirmation", action)
 }
 
@@ -70,21 +80,32 @@ export function resultLine(result: GatherResult, context: CopyContext, surface: 
       if (result.why === "player-takes-50") return line(i18n.message("gather_playerOverflow", { count: n(i18n, result.count) }), "confirmation")
       return line(i18n.message(i18n.plural(result.count) === "one" ? "gather_queue_one" : "gather_queue_other", { count: n(i18n, result.count) }), "confirmation")
     }
-    case "playlist": return playlistText(result, context, surface)
-    case "no-videos": return line(i18n.message("gather_noTabs"), "muted")
-    case "choose": return line(i18n.message("gather_noPlaylist", { account: context.account }), "muted", { kind: "choose" })
-    case "signed-out": return line(i18n.message("gather_signedOut"), "failure", { kind: "sign-in" })
-    case "no-tab": return line(i18n.message("gather_noYouTubeTab"), "failure", { kind: "open-youtube" })
-    case "unhealthy": return line(i18n.message(result.to === "player" ? "gather_broken_player" : result.to === "queue" ? "gather_broken_queue" : "gather_broken_playlist"), "failure")
-    case "unavailable": return line(i18n.message("gather_unavailable"), "failure")
-    case "off": case "busy": case "stopped": return null
+    case "playlist":
+      return playlistText(result, context, surface)
+    case "no-videos":
+      return line(i18n.message("gather_noTabs"), "muted")
+    case "choose":
+      return line(i18n.message("gather_noPlaylist", { account: context.account }), "muted", { kind: "choose" })
+    case "signed-out":
+      return line(i18n.message("gather_signedOut"), "failure", { kind: "sign-in" })
+    case "no-tab":
+      return line(i18n.message("gather_noYouTubeTab"), "failure", { kind: "open-youtube" })
+    case "unhealthy":
+      return line(i18n.message(result.to === "player" ? "gather_broken_player" : result.to === "queue" ? "gather_broken_queue" : "gather_broken_playlist"), "failure")
+    case "unavailable":
+      return line(i18n.message("gather_unavailable"), "failure")
+    case "off":
+    case "busy":
+    case "stopped":
+      return null
   }
 }
 
 /** Undo's answer (YT-GT-21). `undone` names what the gather saved; any failure reads "Couldn't undo." and reopened nothing. */
 export function undoLine(result: GatherUndoResult, undone: { readonly count: number; readonly title: string } | null, i18n: I18n): GatherLine {
   if (result.kind !== "undone") return line(i18n.message("gather_undoFailed"), "failure")
-  if (!undone || undone.count === 0) return line(i18n.message(i18n.plural(result.reopened) === "one" ? "gather_reopened_one" : "gather_reopened_other", { count: n(i18n, result.reopened) }), "confirmation")
+  if (!undone || undone.count === 0)
+    return line(i18n.message(i18n.plural(result.reopened) === "one" ? "gather_reopened_one" : "gather_reopened_other", { count: n(i18n, result.reopened) }), "confirmation")
   return line(i18n.message(i18n.plural(undone.count) === "one" ? "gather_undone_one" : "gather_undone_other", { count: n(i18n, undone.count), playlist: undone.title }), "confirmation")
 }
 
@@ -98,12 +119,15 @@ export function progressLine(done: number, total: number, i18n: I18n): GatherLin
 /** The idle line (UI-POP-37): the last gather, with Undo while it's offered. An automatic gather says it ran by itself. */
 export function lastLine(summary: GatherSummary, context: CopyContext): GatherLine {
   const { i18n } = context
-  const count = n(i18n, summary.count), one = i18n.plural(summary.count) === "one", when = ago(i18n, summary.at, context.now)
-  const destination = summary.destination.kind === "playlist" ? summary.destination.title
-    : i18n.message(summary.destination.kind === "player" ? "gather_destination_player" : "gather_destination_queue")
-  const text = summary.auto && summary.destination.kind === "playlist"
-    ? i18n.message(one ? "gather_autoRow_one" : "gather_autoRow_other", { count, playlist: destination, when })
-    : i18n.message(one ? "gather_last_one" : "gather_last_other", { count, destination, when })
+  const count = n(i18n, summary.count),
+    one = i18n.plural(summary.count) === "one",
+    when = ago(i18n, summary.at, context.now)
+  const destination =
+    summary.destination.kind === "playlist" ? summary.destination.title : i18n.message(summary.destination.kind === "player" ? "gather_destination_player" : "gather_destination_queue")
+  const text =
+    summary.auto && summary.destination.kind === "playlist"
+      ? i18n.message(one ? "gather_autoRow_one" : "gather_autoRow_other", { count, playlist: destination, when })
+      : i18n.message(one ? "gather_last_one" : "gather_last_other", { count, destination, when })
   return line(text, "muted", summary.undo ? { kind: "undo", id: summary.id } : null)
 }
 

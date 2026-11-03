@@ -133,8 +133,11 @@ function main(): number {
   }
 
   const result = buildAmoMetadata({
-    version, kind, channel, previous,
-    read: path => existsSync(path) ? readFileSync(path, "utf8") : undefined
+    version,
+    kind,
+    channel,
+    previous,
+    read: path => (existsSync(path) ? readFileSync(path, "utf8") : undefined)
   })
 
   for (const problem of result.problems) console.log(`::${strict ? "error" : "warning"}::${problem}`)

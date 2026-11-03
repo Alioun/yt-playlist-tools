@@ -8,7 +8,12 @@ import { isJsonValue, type JsonObject } from "../../shared/contracts/json"
 import { sameSyncJson } from "./sync-write-admission"
 
 export function sameConflicts(left: readonly ConflictObservation[], right: readonly ConflictObservation[]): boolean {
-  return left.length === right.length && left.every(row => right.some(other => sameTarget(row.target, other.target) && sameKey(row.key, other.key) && row.sites.length === other.sites.length && row.sites.every(site => other.sites.includes(site))))
+  return (
+    left.length === right.length &&
+    left.every(row =>
+      right.some(other => sameTarget(row.target, other.target) && sameKey(row.key, other.key) && row.sites.length === other.sites.length && row.sites.every(site => other.sites.includes(site)))
+    )
+  )
 }
 export function reservedShortcutIds(settings: Readonly<Settings>, records: JsonObject, retired: readonly ShortcutId[]): Set<ShortcutId> {
   const reserved = new Set<ShortcutId>([...retired, ...settings.shortcuts.list.map(row => row.id).filter(isShortcutId)])
@@ -23,13 +28,14 @@ export function reservedShortcutIds(settings: Readonly<Settings>, records: JsonO
   }
   return reserved
 }
-export type KeyPlan =
-  | { readonly kind: "answer"; readonly answer: KeySettingAnswer }
-  | { readonly kind: "edit"; readonly settings: Settings; readonly added: ShortcutId | undefined }
+export type KeyPlan = { readonly kind: "answer"; readonly answer: KeySettingAnswer } | { readonly kind: "edit"; readonly settings: Settings; readonly added: ShortcutId | undefined }
 
 export function planKeySetting(input: {
-  readonly current: Settings; readonly records: JsonObject; readonly change: Exclude<KeySettingChange, { kind: "shortcut-remove" | "shortcut-undo" }>
-  readonly retired: readonly ShortcutId[]; readonly allocate: () => string
+  readonly current: Settings
+  readonly records: JsonObject
+  readonly change: Exclude<KeySettingChange, { kind: "shortcut-remove" | "shortcut-undo" }>
+  readonly retired: readonly ShortcutId[]
+  readonly allocate: () => string
 }): KeyPlan {
   const { change } = input
   let settings = decodeSettings(input.current)
@@ -52,7 +58,10 @@ export function planKeySetting(input: {
     let id: ShortcutId | undefined
     for (let attempt = 0; attempt < 32; attempt++) {
       const candidate = input.allocate()
-      if (isShortcutId(candidate) && !reserved.has(candidate)) { id = candidate; break }
+      if (isShortcutId(candidate) && !reserved.has(candidate)) {
+        id = candidate
+        break
+      }
     }
     if (!id) return refused("unavailable")
     settings.shortcuts.list.push({ id, key: null, label: "", watchLaterOnEveryAccount: false })
@@ -68,8 +77,10 @@ export function planKeySetting(input: {
       row.watchLaterOnEveryAccount = change.value
     }
   }
-  if (isJsonValue(settings) && isJsonValue(input.current) && sameSyncJson(settings, input.current)) return {
-    kind: "answer", answer: { kind: "confirmed", change, status: "unchanged" }
-  }
+  if (isJsonValue(settings) && isJsonValue(input.current) && sameSyncJson(settings, input.current))
+    return {
+      kind: "answer",
+      answer: { kind: "confirmed", change, status: "unchanged" }
+    }
   return { kind: "edit", settings, added: undefined }
 }

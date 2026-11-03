@@ -45,14 +45,20 @@ export function view(options: { keepLinkMenu?: boolean; signedIn?: boolean; setu
   const base = wireView("www", options.signedIn ?? true)
   if (base.site !== "www") throw Error("Expected a www specimen")
   const on = options.on ?? true
-  const features = on ? base.features.filter(feature => feature.id === "card-menu")
-    .map(feature => feature.id === "card-menu" ? { ...feature, options: { ...feature.options, keepLinkMenu: options.keepLinkMenu ?? false } } : feature) : []
+  const features = on
+    ? base.features
+        .filter(feature => feature.id === "card-menu")
+        .map(feature => (feature.id === "card-menu" ? { ...feature, options: { ...feature.options, keepLinkMenu: options.keepLinkMenu ?? false } } : feature))
+    : []
   const status: FeatureStatus = options.broken
     ? { feature: "card-menu", state: "not-working", jobs: ["openCardMenu"], anchors: [], actions: [], kinds: ["missing"] }
     : { feature: "card-menu", state: "working", jobs: [], anchors: [], actions: [], kinds: [] }
   const notices: DueNotice[] = options.broken ? [{ kind: "not-working", features: ["card-menu"] }] : []
   const result = checked(isTabView, {
-    ...base, features, statuses: on ? [status] : [], notices: on ? notices : [],
+    ...base,
+    features,
+    statuses: on ? [status] : [],
+    notices: on ? notices : [],
     ...(options.setup === "none" && base.signedIn ? { setup: { kind: "none" } } : {})
   })
   if (result.site !== "www") throw Error("Expected a validated www view")
@@ -63,17 +69,20 @@ export function rightClick(init: { shiftKey?: boolean } = {}): MouseEvent {
   return new MouseEvent("contextmenu", { bubbles: true, cancelable: true, composed: true, button: 2, shiftKey: init.shiftKey ?? false })
 }
 
-export async function cardMenuHarness(options: {
-  initial?: TabView | null
-  signedIn?: boolean
-  gate?: Promise<unknown>
-  run?: (job: Job, context?: { target?: Element }) => Promise<unknown>
-  notice?: CardMenuServices["notice"]
-} = {}) {
+export async function cardMenuHarness(
+  options: {
+    initial?: TabView | null
+    signedIn?: boolean
+    gate?: Promise<unknown>
+    run?: (job: Job, context?: { target?: Element }) => Promise<unknown>
+    notice?: CardMenuServices["notice"]
+  } = {}
+) {
   document.body.innerHTML = markup
   const gate = options.gate
   const page = harness({
-    ...(options.signedIn === false ? { pageSnapshot: () => snapshot(null) } : {}), ...(options.run ? { run: options.run } : {}),
+    ...(options.signedIn === false ? { pageSnapshot: () => snapshot(null) } : {}),
+    ...(options.run ? { run: options.run } : {}),
     ...(gate ? { link: { digest: (bytes: Uint8Array<ArrayBuffer>) => gate.then(() => crypto.subtle.digest("SHA-256", bytes)) } } : {})
   })
   if (!gate) await page.link.hello
@@ -83,17 +92,55 @@ export async function cardMenuHarness(options: {
   const requests: DueNotice[] = []
   const host = createFeatureHost<"www", CardMenuServices>({
     site: "www",
-    createScope() { const scope = new Scope({ document, onError: error => { errors.push(error) } }); scopes.push(scope); return scope },
-    createContext: () => ({ document, items: { recognise: recogniseWwwItem, linkedVideo }, page: page.link, notice: options.notice ?? { request: due => { requests.push(due) } } }),
-    onEmpty: () => {}, onError: failure => { errors.push(failure) }
+    createScope() {
+      const scope = new Scope({
+        document,
+        onError: error => {
+          errors.push(error)
+        }
+      })
+      scopes.push(scope)
+      return scope
+    },
+    createContext: () => ({
+      document,
+      items: { recognise: recogniseWwwItem, linkedVideo },
+      page: page.link,
+      notice: options.notice ?? {
+        request: due => {
+          requests.push(due)
+        }
+      }
+    }),
+    onEmpty: () => {},
+    onError: failure => {
+      errors.push(failure)
+    }
   })
-  const observer = new Scope({ document, onError: error => { errors.push(error) } })
+  const observer = new Scope({
+    document,
+    onError: error => {
+      errors.push(error)
+    }
+  })
   const seen: { prevented: boolean }[] = []
-  observer.on(document, "contextmenu", event => { seen.push({ prevented: event.defaultPrevented }) })
+  observer.on(document, "contextmenu", event => {
+    seen.push({ prevented: event.defaultPrevented })
+  })
   const menuCalls = () => page.calls.filter(call => call.job.kind === "openCardMenu")
   return {
-    host, source, page, scopes, errors, requests, seen, menuCalls,
-    start() { host.define(cardMenuFeature); host.connect(source.link) },
+    host,
+    source,
+    page,
+    scopes,
+    errors,
+    requests,
+    seen,
+    menuCalls,
+    start() {
+      host.define(cardMenuFeature)
+      host.connect(source.link)
+    },
     byId(id: string): Element {
       const element = document.getElementById(id)
       if (!element) throw Error(`Missing fixture element ${id}`)
@@ -105,6 +152,11 @@ export async function cardMenuHarness(options: {
       return event
     },
     settle: flush,
-    dispose() { host.dispose(); observer.dispose(); page.dispose(); document.body.innerHTML = "" }
+    dispose() {
+      host.dispose()
+      observer.dispose()
+      page.dispose()
+      document.body.innerHTML = ""
+    }
   }
 }

@@ -14,12 +14,15 @@ export async function runPageLinkFixture(dom: boolean) {
     try {
       const answer = await h.link.run({ job: { kind: "openCardMenu", videoId: video.videoId } }, { target })
       records.push({ step: "target", answer: { result: answer, actualTarget: h.calls.at(-1)?.context?.target === target } })
-    } finally { target.remove() }
+    } finally {
+      target.remove()
+    }
     records.push({ step: "probe", answer: await h.link.probe() })
     const stream: unknown[] = []
     const stop = h.link.watch("nav", data => stream.push(data))
     h.watchers[0]?.emit(nav)
-    stop(); stop()
+    stop()
+    stop()
     h.watchers[0]?.emit({ ...nav, pageType: checked(isPageType, "HOME") })
     records.push({ step: "stream", answer: { values: stream, stops: h.watchers[0]?.stops } })
     const signals: unknown[] = []
@@ -34,9 +37,15 @@ export async function runPageLinkFixture(dom: boolean) {
     const text = records.map(record => JSON.stringify(record)).join("\n") + "\n"
     if (text.includes(rawIdentity) || text.includes("datasyncId")) throw new Error("Unsafe synthetic fixture output")
     const hello = records[0]?.answer
-    if (JSON.stringify(hello) !== JSON.stringify({ ok: true, snapshot: { signedIn: true, acct: expectedKey(rawIdentity), pageType: checked(isPageType, "WATCH"), video, startedHidden: true, navType: "reload" } })) throw new Error("Synthetic account projection mismatch")
+    if (
+      JSON.stringify(hello) !==
+      JSON.stringify({ ok: true, snapshot: { signedIn: true, acct: expectedKey(rawIdentity), pageType: checked(isPageType, "WATCH"), video, startedHidden: true, navType: "reload" } })
+    )
+      throw new Error("Synthetic account projection mismatch")
     return text
-  } finally { h.dispose() }
+  } finally {
+    h.dispose()
+  }
 }
 
 if (import.meta.main) {

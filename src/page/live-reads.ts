@@ -19,25 +19,37 @@ export interface LiveReadPort extends PageReadPort {
 type Sink = (detail: unknown) => void
 type Root = { node: Element; video: Element | null; ad: boolean; media: boolean; stops: (() => void)[] }
 const targetRenderers = [
-  "ytmusic-responsive-list-item-renderer", "ytmusic-two-row-item-renderer", "ytmusic-player-queue-item",
-  "ytmusic-responsive-header-renderer", "ytd-video-renderer", "ytd-rich-grid-media",
-  "ytd-grid-video-renderer", "ytd-compact-video-renderer", "ytd-playlist-panel-video-renderer",
-  "ytd-playlist-video-renderer", "yt-lockup-view-model", "ytm-shorts-lockup-view-model"
+  "ytmusic-responsive-list-item-renderer",
+  "ytmusic-two-row-item-renderer",
+  "ytmusic-player-queue-item",
+  "ytmusic-responsive-header-renderer",
+  "ytd-video-renderer",
+  "ytd-rich-grid-media",
+  "ytd-grid-video-renderer",
+  "ytd-compact-video-renderer",
+  "ytd-playlist-panel-video-renderer",
+  "ytd-playlist-video-renderer",
+  "yt-lockup-view-model",
+  "ytm-shorts-lockup-view-model"
 ].join(",")
 
 function invoke(receiver: unknown, name: string): unknown {
   const method = field(receiver, name)
   return typeof method === "function" ? Reflect.apply(method, receiver, []) : undefined
 }
-function callable(receiver: unknown, name: string): boolean { return typeof field(receiver, name) === "function" }
+function callable(receiver: unknown, name: string): boolean {
+  return typeof field(receiver, name) === "function"
+}
 
-export function createLiveReadPort(options: {
-  site: Site; window: Window; document: Document; bindings?: LiveReadBindings
-}): LiveReadPort {
+export function createLiveReadPort(options: { site: Site; window: Window; document: Document; bindings?: LiveReadBindings }): LiveReadPort {
   const { site, window: win, document: doc } = options
   const bindings = options.bindings ?? {}
   const sinks: Record<PageEvent, Set<Sink>> = {
-    navigation: new Set(), playerIdentity: new Set(), player: new Set(), music: new Set(), queue: new Set()
+    navigation: new Set(),
+    playerIdentity: new Set(),
+    player: new Set(),
+    music: new Set(),
+    queue: new Set()
   }
   const roots = new Map<string, Root>()
   const navigationStops: (() => void)[] = []
@@ -50,34 +62,55 @@ export function createLiveReadPort(options: {
     if (disposed) return
     for (const sink of [...sinks[event]]) {
       if (!sinks[event].has(sink) || disposed) continue
-      try { sink(detail) } catch {}
+      try {
+        sink(detail)
+      } catch {}
     }
   }
   function listen(node: EventTarget, event: string, changed: EventListener): () => void {
     let active = true
-    const listener: EventListener = value => { if (active && !disposed) changed(value) }
+    const listener: EventListener = value => {
+      if (active && !disposed) changed(value)
+    }
     node.addEventListener(event, listener)
-    return () => { if (active) { active = false; node.removeEventListener(event, listener) } }
+    return () => {
+      if (active) {
+        active = false
+        node.removeEventListener(event, listener)
+      }
+    }
   }
   function clear(stops: (() => void)[]): void {
-    for (const stop of stops.splice(0)) { try { stop() } catch {} }
+    for (const stop of stops.splice(0)) {
+      try {
+        stop()
+      } catch {}
+    }
   }
   function needsIdentity(): boolean {
     return sinks.playerIdentity.size + sinks.player.size + sinks.music.size > 0
   }
-  function needsMedia(): boolean { return sinks.player.size + sinks.music.size > 0 }
+  function needsMedia(): boolean {
+    return sinks.player.size + sinks.music.size > 0
+  }
   function stopRoots(): void {
     for (const root of roots.values()) clear(root.stops)
     roots.clear()
   }
   function reconcileRoots(): void {
-    if (disposed || !needsIdentity()) { stopRoots(); return }
+    if (disposed || !needsIdentity()) {
+      stopRoots()
+      return
+    }
     for (const id of site === "www" ? ["movie_player", "shorts-player"] : ["movie_player"]) {
       const node = doc.getElementById(id)
       const video = node?.querySelector("video") ?? null
       const old = roots.get(id)
       if (old?.node === node && old?.video === video && old?.media === needsMedia()) continue
-      if (old) { clear(old.stops); roots.delete(id) }
+      if (old) {
+        clear(old.stops)
+        roots.delete(id)
+      }
       if (!node) continue
       const root: Root = { node, video, ad: old?.node === node && old.video === video && old.ad, media: needsMedia(), stops: [] }
       roots.set(id, root)
@@ -89,13 +122,35 @@ export function createLiveReadPort(options: {
       }
       root.stops.push(listen(node, "onVideoDataChange", changed))
       if (needsMedia()) {
-        root.stops.push(listen(node, "onAdStart", () => { if (current()) { root.ad = true; emit("player"); emit("music") } }))
-        root.stops.push(listen(node, "onAdEnd", () => { if (current()) { root.ad = false; emit("player"); emit("music") } }))
-        if (video) for (const event of ["timeupdate", "play", "pause", "seeking", "seeked", "ratechange", "durationchange", "loadedmetadata", "emptied"]) {
-          root.stops.push(listen(video, event, () => {
-            if (current() && node.querySelector("video") === video) { emit("player"); emit("music") }
-          }))
-        }
+        root.stops.push(
+          listen(node, "onAdStart", () => {
+            if (current()) {
+              root.ad = true
+              emit("player")
+              emit("music")
+            }
+          })
+        )
+        root.stops.push(
+          listen(node, "onAdEnd", () => {
+            if (current()) {
+              root.ad = false
+              emit("player")
+              emit("music")
+            }
+          })
+        )
+        if (video)
+          for (const event of ["timeupdate", "play", "pause", "seeking", "seeked", "ratechange", "durationchange", "loadedmetadata", "emptied"]) {
+            root.stops.push(
+              listen(video, event, () => {
+                if (current() && node.querySelector("video") === video) {
+                  emit("player")
+                  emit("music")
+                }
+              })
+            )
+          }
       }
     }
   }
@@ -110,11 +165,13 @@ export function createLiveReadPort(options: {
   function updateEvents(): void {
     const needsNavigation = sinks.navigation.size > 0 || needsIdentity()
     if (needsNavigation && navigationStops.length === 0) {
-      navigationStops.push(listen(doc, "yt-navigate-finish", event => {
-        rawNavigation = "detail" in event ? event.detail : undefined
-        reconcileRoots()
-        emit("navigation", rawNavigation)
-      }))
+      navigationStops.push(
+        listen(doc, "yt-navigate-finish", event => {
+          rawNavigation = "detail" in event ? event.detail : undefined
+          reconcileRoots()
+          emit("navigation", rawNavigation)
+        })
+      )
     } else if (!needsNavigation) {
       clear(navigationStops)
       rawNavigation = undefined
@@ -125,8 +182,15 @@ export function createLiveReadPort(options: {
     if (sinks.queue.size > 0 && !queueStop) {
       if (!bindings.queueChanges) throw new Error("Missing queue change binding")
       let active = true
-      const release = bindings.queueChanges.onChange(() => { if (active && !disposed) emit("queue") })
-      const stop = () => { if (active) { active = false; release() } }
+      const release = bindings.queueChanges.onChange(() => {
+        if (active && !disposed) emit("queue")
+      })
+      const stop = () => {
+        if (active) {
+          active = false
+          release()
+        }
+      }
       if (disposed || sinks.queue.size === 0) stop()
       else queueStop = stop
     } else if (sinks.queue.size === 0 && queueStop) {
@@ -141,17 +205,33 @@ export function createLiveReadPort(options: {
     if (!root) return undefined
     const video = root.querySelector("video")
     return {
-      adShowing: root.classList.contains("ad-showing"), adActive: roots.get(id)?.node === root && roots.get(id)?.ad === true,
-      get presentingPlayerType() { return invoke(root, "getPresentingPlayerType") },
-      get videoData() { return invoke(root, "getVideoData") },
-      get response() { return invoke(root, "getPlayerResponse") },
-      get currentTime() { return invoke(root, "getCurrentTime") },
-      get duration() { return invoke(root, "getDuration") },
+      adShowing: root.classList.contains("ad-showing"),
+      adActive: roots.get(id)?.node === root && roots.get(id)?.ad === true,
+      get presentingPlayerType() {
+        return invoke(root, "getPresentingPlayerType")
+      },
+      get videoData() {
+        return invoke(root, "getVideoData")
+      },
+      get response() {
+        return invoke(root, "getPlayerResponse")
+      },
+      get currentTime() {
+        return invoke(root, "getCurrentTime")
+      },
+      get duration() {
+        return invoke(root, "getDuration")
+      },
       get video() {
-        return video ? {
-          currentTime: field(video, "currentTime"), duration: field(video, "duration"),
-          playbackRate: field(video, "playbackRate"), paused: field(video, "paused"), seeking: field(video, "seeking")
-        } : undefined
+        return video
+          ? {
+              currentTime: field(video, "currentTime"),
+              duration: field(video, "duration"),
+              playbackRate: field(video, "playbackRate"),
+              paused: field(video, "paused"),
+              seeking: field(video, "seeking")
+            }
+          : undefined
       }
     }
   }
@@ -161,21 +241,22 @@ export function createLiveReadPort(options: {
     if (!renderer) return undefined
     const modern = renderer.matches("yt-lockup-view-model, ytm-shorts-lockup-view-model")
     if (!modern) return field(renderer, "data")
-    if (site !== "www" || !renderer.isConnected || renderer.ownerDocument !== doc ||
-        renderer.closest("ytd-ad-slot-renderer, ytd-in-feed-ad-layout-renderer")) return undefined
+    if (site !== "www" || !renderer.isConnected || renderer.ownerDocument !== doc || renderer.closest("ytd-ad-slot-renderer, ytd-in-feed-ad-layout-renderer")) return undefined
     const key = renderer.matches("yt-lockup-view-model") ? "lockupViewModel" : "shortsLockupViewModel"
     const data = field(renderer, "data")
     const wrapped = field(data, key)
     const direct = field(renderer, key)
     const other = key === "lockupViewModel" ? "shortsLockupViewModel" : "lockupViewModel"
     if (field(data, other) !== undefined || field(renderer, other) !== undefined) return undefined
-    if (wrapped !== undefined && ["contentId", "videoId", "contentType", "onTap", "title", "metadata", "overlayMetadata", "rendererContext", "navigationEndpoint"]
-      .some(name => field(data, name) !== undefined)) return undefined
+    if (
+      wrapped !== undefined &&
+      ["contentId", "videoId", "contentType", "onTap", "title", "metadata", "overlayMetadata", "rendererContext", "navigationEndpoint"].some(name => field(data, name) !== undefined)
+    )
+      return undefined
     const candidate = wrapped ?? data
     if (candidate !== undefined && direct !== undefined && candidate !== direct) return undefined
     const raw = candidate ?? direct
-    if (key === "lockupViewModel" ? field(raw, "metadata", "lockupMetadataViewModel") === undefined :
-        field(raw, "overlayMetadata") === undefined || field(raw, "onTap") === undefined) return undefined
+    if (key === "lockupViewModel" ? field(raw, "metadata", "lockupMetadataViewModel") === undefined : field(raw, "overlayMetadata") === undefined || field(raw, "onTap") === undefined) return undefined
     return raw
   }
   const app = () => doc.querySelector("ytmusic-app")
@@ -189,9 +270,11 @@ export function createLiveReadPort(options: {
       const node = doc.getElementById(id === readWatches.watchPlayer ? "movie_player" : "shorts-player")
       return node !== null && callable(node, "getVideoData") && callable(node, "getPlayerResponse")
     }
-    if (id === readWatches.targetData) return [...doc.querySelectorAll(targetRenderers)].some(renderer =>
-      "data" in renderer || site === "www" && renderer.matches("yt-lockup-view-model, ytm-shorts-lockup-view-model") &&
-      ("lockupViewModel" in renderer || "shortsLockupViewModel" in renderer))
+    if (id === readWatches.targetData)
+      return [...doc.querySelectorAll(targetRenderers)].some(
+        renderer =>
+          "data" in renderer || (site === "www" && renderer.matches("yt-lockup-view-model, ytm-shorts-lockup-view-model") && ("lockupViewModel" in renderer || "shortsLockupViewModel" in renderer))
+      )
     if (id === readWatches.targetContext) return site === "music" && doc.querySelector(targetRenderers) !== null
     if (id === readWatches.mediaMetadata) return site === "music" && field(win, "navigator", "mediaSession") !== undefined
     if (id === readWatches.musicQueue) return site === "music" && callable(queue(), "getItems")
@@ -201,33 +284,47 @@ export function createLiveReadPort(options: {
     return false
   }
   return {
-    get disposed() { return disposed },
+    get disposed() {
+      return disposed
+    },
     config(key) {
       if (disposed) return undefined
-      const ytcfg = field(win, "ytcfg"), get = field(ytcfg, "get")
+      const ytcfg = field(win, "ytcfg"),
+        get = field(ytcfg, "get")
       return typeof get === "function" ? Reflect.apply(get, ytcfg, [key]) : undefined
     },
     read(what, target) {
       if (disposed) return undefined
       switch (what) {
-        case "navigation": return bindings.navigation ? bindings.navigation.read() : rawNavigation
-        case "location": return { pathname: win.location.pathname, search: win.location.search }
-        case "watchPlayer": return player("movie_player")
-        case "shortsPlayer": return site === "www" ? player("shorts-player") : undefined
-        case "targetData": return targetData(target)
-        case "targetContext": return site === "music" && target?.closest(targetRenderers) ?
-          { inAutomix: target.closest("#automix-contents") !== null } : undefined
-        case "mediaMetadata": return site === "music" ? field(win, "navigator", "mediaSession", "metadata") : undefined
-        case "musicQueue": return site === "music" ? invoke(queue(), "getItems") : undefined
-        case "musicState": return site === "music" ? bindings.musicState?.read() : undefined
-        case "castPlayer": return site === "music" ? bindings.castPlayer?.read() : undefined
+        case "navigation":
+          return bindings.navigation ? bindings.navigation.read() : rawNavigation
+        case "location":
+          return { pathname: win.location.pathname, search: win.location.search }
+        case "watchPlayer":
+          return player("movie_player")
+        case "shortsPlayer":
+          return site === "www" ? player("shorts-player") : undefined
+        case "targetData":
+          return targetData(target)
+        case "targetContext":
+          return site === "music" && target?.closest(targetRenderers) ? { inAutomix: target.closest("#automix-contents") !== null } : undefined
+        case "mediaMetadata":
+          return site === "music" ? field(win, "navigator", "mediaSession", "metadata") : undefined
+        case "musicQueue":
+          return site === "music" ? invoke(queue(), "getItems") : undefined
+        case "musicState":
+          return site === "music" ? bindings.musicState?.read() : undefined
+        case "castPlayer":
+          return site === "music" ? bindings.castPlayer?.read() : undefined
       }
     },
     on(event, changed) {
       if (disposed) return () => {}
       const sink: Sink = detail => changed(detail)
       sinks[event].add(sink)
-      try { updateEvents() } catch (error) {
+      try {
+        updateEvents()
+      } catch (error) {
         sinks[event].delete(sink)
         updateEvents()
         throw error
@@ -250,12 +347,15 @@ export function createLiveReadPort(options: {
       stopRoots()
       const stop = queueStop
       queueStop = undefined
-      try { stop?.() } finally { rawNavigation = undefined }
+      try {
+        stop?.()
+      } finally {
+        rawNavigation = undefined
+      }
     }
   }
 }
 
 function isElement(value: unknown): value is Element {
-  return value !== null && typeof value === "object" && field(value, "nodeType") === 1 &&
-    typeof field(value, "closest") === "function"
+  return value !== null && typeof value === "object" && field(value, "nodeType") === 1 && typeof field(value, "closest") === "function"
 }

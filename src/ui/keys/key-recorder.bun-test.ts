@@ -15,7 +15,9 @@ function recorder(answer: (change: KeySettingChange) => KeySettingAnswer) {
   const sent: KeySettingChange[] = []
   let settings = defaultSettings()
   const controller = createKeyRecorderController({
-    target: { kind: "undo" }, platform: { browser: "chrome", os: "windows" }, text,
+    target: { kind: "undo" },
+    platform: { browser: "chrome", os: "windows" },
+    text,
     commands: { read: async () => ({ kind: "available", keys: [] }) },
     settings: () => settings,
     async send(change) {

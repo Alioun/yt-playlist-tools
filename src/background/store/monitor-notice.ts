@@ -14,7 +14,9 @@ export function isMonitorNoticeKey(value: unknown): value is string {
   return !extra.length && prefix === "monitor" && isSite(site) && isFeatureId(feature)
 }
 const natural = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0
-export function noticeClaimToken(value: unknown): value is string { return typeof value === "string" && /^[a-f0-9]{16}:[1-9][0-9]*$/.test(value) }
+export function noticeClaimToken(value: unknown): value is string {
+  return typeof value === "string" && /^[a-f0-9]{16}:[1-9][0-9]*$/.test(value)
+}
 export function noticeClaims(global: JsonObject): ReadonlyMap<string, { token: string; until: number }> | undefined {
   const raw = global.monitorPending
   if (raw === undefined) return new Map()
@@ -29,7 +31,7 @@ export function noticeClaims(global: JsonObject): ReadonlyMap<string, { token: s
 export function applyMonitorNotice(global: JsonObject, edit: MonitorNoticeChange, now: number): JsonObject | undefined {
   if (!natural(now) || !noticeClaimToken(edit.token) || !edit.keys.length || !edit.keys.every(isMonitorNoticeKey)) return
   const claims = noticeClaims(global)
-  if (!claims || global.once !== undefined && (!Array.isArray(global.once) || !global.once.every(value => typeof value === "string"))) return
+  if (!claims || (global.once !== undefined && (!Array.isArray(global.once) || !global.once.every(value => typeof value === "string")))) return
   const once = new Set(Array.isArray(global.once) ? global.once.filter((value): value is string => typeof value === "string") : [])
   const pending = new Map(claims)
   for (const key of edit.keys) {

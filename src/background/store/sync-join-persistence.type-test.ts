@@ -8,7 +8,10 @@ function negative(effect: JoinMaterialization) {
   const off: SyncJoinCheckpointV1 = { v: 1, kind: "sync-join", phase: "off", unfinishedTarget: "H", debt: effect.debt }
   // @ts-expect-error Consent observations are fixed values, never promises.
   const facts: JoinAgreementFacts = { kind: "first-run", selected: [], access: Promise.resolve({ www: true, music: true, browserMenu: true }) }
-  void recursive; void debt; void off; void facts
+  void recursive
+  void debt
+  void off
+  void facts
 }
 void negative
 
@@ -22,6 +25,10 @@ function v2Negative(effect: ReconcileEffect) {
   const agreement: ReconcileEffect = { ...effect, agreement: { kind: "none" } }
   // @ts-expect-error An off marker retains no document bodies.
   const off: SyncJoinCheckpointV2 = { v: 2, kind: "sync-join", phase: "off", unfinishedTarget: "H", effect }
-  void accepted; void legacy; void chain; void agreement; void off
+  void accepted
+  void legacy
+  void chain
+  void agreement
+  void off
 }
 void v2Negative

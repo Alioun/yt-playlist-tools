@@ -7,10 +7,19 @@ import { pendingAccountRemovalKey } from "../../../src/background/store/account-
 import { createRemovalHarness, removalFixture, withdrawRemovalFixture } from "../account-removal-execution/run"
 import type { JsonObject } from "../../../src/shared/contracts/json"
 import { isAccountKey } from "../../../src/shared/model"
-import { withdrawalRetainedAgreementFixture, withdrawalRetainedV1Fixture, createInterimHarness, withdrawalConfirmedInstallationFixture, withdrawalRetainedInstallationFixture } from "../interim-conversion/run"
+import {
+  withdrawalRetainedAgreementFixture,
+  withdrawalRetainedV1Fixture,
+  createInterimHarness,
+  withdrawalConfirmedInstallationFixture,
+  withdrawalRetainedInstallationFixture
+} from "../interim-conversion/run"
 
 export const origin = { kind: "ui", windowId: 1, incognito: false } as const
-export function account(value: string) { if (!isAccountKey(value)) throw Error("Invalid synthetic account"); return value }
+export function account(value: string) {
+  if (!isAccountKey(value)) throw Error("Invalid synthetic account")
+  return value
+}
 export const acct = account("AAAAAAAAAAAAAAAA")
 
 export async function accepted(synced = false) {
@@ -39,10 +48,13 @@ export async function agreed(synced = false) {
 }
 
 let retainedSeed: ReturnType<typeof withdrawalRetainedAgreementFixture> | undefined
-export function retainedAgreementSeed() { return retainedSeed ??= withdrawalRetainedAgreementFixture() }
+export function retainedAgreementSeed() {
+  return (retainedSeed ??= withdrawalRetainedAgreementFixture())
+}
 export async function retained() {
   const fixture = await retainedAgreementSeed()
-  const h = createInterimHarness(fixture.stores.local), writer = createStartingLocalFilterWriter(h.deps)
+  const h = createInterimHarness(fixture.stores.local),
+    writer = createStartingLocalFilterWriter(h.deps)
   await expect(writer.ready()).rejects.toBeInstanceOf(StartupReadinessError)
   return { h, writer, fixture }
 }
@@ -55,10 +67,13 @@ export async function retainedSelection(writer: ReturnType<typeof createStarting
 }
 
 let newInstallationSeed: ReturnType<typeof withdrawalConfirmedInstallationFixture> | undefined
-export function confirmedInstallationSeed() { return newInstallationSeed ??= withdrawalConfirmedInstallationFixture() }
+export function confirmedInstallationSeed() {
+  return (newInstallationSeed ??= withdrawalConfirmedInstallationFixture())
+}
 export async function newInstallationOwner(raw?: JsonObject) {
   const fixture = await confirmedInstallationSeed()
-  const h = createInterimHarness(raw ?? fixture.stores.local), writer = createStartingLocalFilterWriter(h.deps)
+  const h = createInterimHarness(raw ?? fixture.stores.local),
+    writer = createStartingLocalFilterWriter(h.deps)
   await expect(writer.ready()).rejects.toBeInstanceOf(StartupReadinessError)
   expect(h.writes).toEqual([])
   return { h, writer, fixture }
@@ -72,17 +87,29 @@ export async function newInstallationInput(writer: ReturnType<typeof createStart
   return { input: { review: read.review, job: view.selection }, view }
 }
 export async function completedNewInstallation() {
-  const { h, writer } = await newInstallationOwner(), { input, view } = await newInstallationInput(writer), before = h.records(), states: JsonObject[] = [], batches: JsonObject[] = []
-  h.write(async (items, apply) => { apply(items); states.push(h.records()); batches.push(items) })
+  const { h, writer } = await newInstallationOwner(),
+    { input, view } = await newInstallationInput(writer),
+    before = h.records(),
+    states: JsonObject[] = [],
+    batches: JsonObject[] = []
+  h.write(async (items, apply) => {
+    apply(items)
+    states.push(h.records())
+    batches.push(items)
+  })
   const result = await writer.recoverWithdrawnWork(origin, input)
   expect(result.kind).toBe("recovered")
   await writer.dispose()
   return { before, view, result, states, batches, records: h.records() }
 }
 let v1Seed: ReturnType<typeof withdrawalRetainedV1Fixture> | undefined
-export function retainedV1Seed() { return v1Seed ??= withdrawalRetainedV1Fixture() }
+export function retainedV1Seed() {
+  return (v1Seed ??= withdrawalRetainedV1Fixture())
+}
 export async function v1Owner() {
-  const fixture = await retainedV1Seed(), h = createInterimHarness(fixture.stores.local), writer = createStartingLocalFilterWriter(h.deps)
+  const fixture = await retainedV1Seed(),
+    h = createInterimHarness(fixture.stores.local),
+    writer = createStartingLocalFilterWriter(h.deps)
   await expect(writer.ready()).rejects.toBeInstanceOf(StartupReadinessError)
   return { fixture, h, writer }
 }
@@ -93,23 +120,28 @@ export async function v1Selection(writer: ReturnType<typeof createStartingLocalF
   if (!selected || selected.kind !== "retained-v1-acceptance") throw Error("V1 selection missing")
   return { review: read.review, job: selected.selection }
 }
-export function rawObject(raw: unknown): JsonObject { if (!consentObject(raw)) throw Error("Expected complete JSON object"); return raw }
+export function rawObject(raw: unknown): JsonObject {
+  if (!consentObject(raw)) throw Error("Expected complete JSON object")
+  return raw
+}
 export function v1Stage(items: JsonObject) {
   if (Object.hasOwn(items, "interimConversion")) return Object.hasOwn(items, consentJobsKey) ? "accept" : "record"
-  const ledger = parseConsentJobs(items[consentJobsKey]), witness = ledger && "retainedV1" in ledger ? ledger.retainedV1 : undefined
+  const ledger = parseConsentJobs(items[consentJobsKey]),
+    witness = ledger && "retainedV1" in ledger ? ledger.retainedV1 : undefined
   const permission = witness && "permission" in witness ? witness.permission.kind : ledger?.jobs[0]?.permission.kind
   return permission === "prepared" ? "prepare" : permission === "armed" ? "authorize" : permission === "retiring" ? "retire" : "done"
 }
 export const v1Stages = ["prepare", "authorize", "accept", "retire", "record", "done"] as const
 let v1Completed: Promise<{ batches: JsonObject[]; records: JsonObject }> | undefined
 export function completedV1() {
-  return v1Completed ??= (async () => {
-    const { h, writer } = await v1Owner(), input = await v1Selection(writer)
+  return (v1Completed ??= (async () => {
+    const { h, writer } = await v1Owner(),
+      input = await v1Selection(writer)
     const result = await writer.recoverWithdrawnWork(origin, input)
     expect(result.kind).toBe("recovered")
     await writer.dispose()
     return { batches: h.writes, records: h.records() }
-  })()
+  })())
 }
 
 export function installationRawJob(ledger: JsonObject): JsonObject {
@@ -117,11 +149,14 @@ export function installationRawJob(ledger: JsonObject): JsonObject {
   return rawObject(ledger.jobs[0])
 }
 let installationSeed: ReturnType<typeof withdrawalRetainedInstallationFixture> | undefined
-export function retainedInstallationSeed() { return installationSeed ??= withdrawalRetainedInstallationFixture() }
+export function retainedInstallationSeed() {
+  return (installationSeed ??= withdrawalRetainedInstallationFixture())
+}
 export async function installation(seed?: JsonObject) {
   const fixture = await retainedInstallationSeed()
   if (fixture.kind !== "ready") throw Error("Old accepted V3 fixture unreachable")
-  const h = createInterimHarness(seed ?? fixture.stores.local), writer = createStartingLocalFilterWriter(h.deps)
+  const h = createInterimHarness(seed ?? fixture.stores.local),
+    writer = createStartingLocalFilterWriter(h.deps)
   await expect(writer.ready()).rejects.toBeInstanceOf(StartupReadinessError)
   return { h, writer, fixture }
 }
@@ -134,12 +169,17 @@ export async function installationInput(writer: ReturnType<typeof createStarting
 }
 let installationDone: Promise<{ records: JsonObject; states: JsonObject[]; batches: JsonObject[] }> | undefined
 export async function completedInstallation() {
-  return installationDone ??= (async () => {
-    const { h, writer } = await installation(), states: JsonObject[] = []
-    h.write(async (items, apply) => { apply(items); states.push(h.records()) })
+  return (installationDone ??= (async () => {
+    const { h, writer } = await installation(),
+      states: JsonObject[] = []
+    h.write(async (items, apply) => {
+      apply(items)
+      states.push(h.records())
+    })
     const { input } = await installationInput(writer)
     expect((await writer.recoverWithdrawnWork(origin, input)).kind).toBe("recovered")
-    const records = h.records(); await writer.dispose()
+    const records = h.records()
+    await writer.dispose()
     return { records, states, batches: h.writes }
-  })()
+  })())
 }

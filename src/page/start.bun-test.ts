@@ -40,7 +40,12 @@ afterEach(() => {
   Reflect.deleteProperty(window, "ytcfg")
 })
 const here = (event: string, detail: string = build) => !document.dispatchEvent(new CustomEvent(event, { detail, cancelable: true }))
-const settle = async () => { for (let turn = 0; turn < 5; turn++) { await drain(); await new Promise(resolve => setTimeout(resolve, 0)) } }
+const settle = async () => {
+  for (let turn = 0; turn < 5; turn++) {
+    await drain()
+    await new Promise(resolve => setTimeout(resolve, 0))
+  }
+}
 
 function setConfig(config: Record<string, unknown> | undefined) {
   if (config === undefined) Reflect.deleteProperty(window, "ytcfg")
@@ -53,18 +58,37 @@ function setConfig(config: Record<string, unknown> | undefined) {
  */
 function liveTab(site: Site = "www") {
   const channel = createDirectPageChannel()
-  let reads = 0, loads = 0
+  let reads = 0,
+    loads = 0
   const page = startPage({
-    site, build, window, document, channel,
-    createReads(options) { reads++; return live[site].createReads(options) }
+    site,
+    build,
+    window,
+    document,
+    channel,
+    createReads(options) {
+      reads++
+      return live[site].createReads(options)
+    }
   })
-  const link = createPageLink({ site, build, vocabulary: live[site].vocabulary, digest: bytes => webcrypto.subtle.digest("SHA-256", bytes),
-    async loadJobs() {
-      loads++
-      if (!here(pageJobsPresenceEvent)) offerJobs(document, { site, build, create: live[site].create })
-      return here(pageJobsPresenceEvent)
-    } }, channel)
-  cleanups.push(() => link.dispose(), () => page.dispose())
+  const link = createPageLink(
+    {
+      site,
+      build,
+      vocabulary: live[site].vocabulary,
+      digest: bytes => webcrypto.subtle.digest("SHA-256", bytes),
+      async loadJobs() {
+        loads++
+        if (!here(pageJobsPresenceEvent)) offerJobs(document, { site, build, create: live[site].create })
+        return here(pageJobsPresenceEvent)
+      }
+    },
+    channel
+  )
+  cleanups.push(
+    () => link.dispose(),
+    () => page.dispose()
+  )
   return { page, channel, link, reads: () => reads, loads: () => loads }
 }
 
@@ -72,42 +96,87 @@ function liveTab(site: Site = "www") {
 function scriptedTab(options: { load?: (inject: () => void) => Promise<void> } = {}) {
   const site: Site = "www"
   const scripted = scriptedPage()
-  const clock = new Clock(), linkClock = new Clock()
+  const clock = new Clock(),
+    linkClock = new Clock()
   const channel = createDirectPageChannel()
   const sent: RequestSpec[] = []
   let answer: () => Promise<{ http: number; body: unknown }> = async () => ({ http: 200, body: added() })
   const made: Jobs[] = []
   const disposed: Jobs[] = []
-  let needs = 0, injections = 0
+  let needs = 0,
+    injections = 0
   const requests: GatewayRequestPort = {
     has: via => via === "signed",
-    send(_via, spec) { sent.push(spec); return { kind: "pending", answer: answer(), cancel() {} } }
+    send(_via, spec) {
+      sent.push(spec)
+      return { kind: "pending", answer: answer(), cancel() {} }
+    }
   }
   function create(host: JobsHost): Jobs {
     const jobs = createJobsGateway({ site: wwwGateway, reads: host.reads, requests, clock })
-    const tracked: Jobs = { vocabulary: jobs.vocabulary, run: (job, ctx) => jobs.run(job, ctx), probe: () => jobs.probe(),
-      dispose() { disposed.push(tracked); jobs.dispose() } }
+    const tracked: Jobs = {
+      vocabulary: jobs.vocabulary,
+      run: (job, ctx) => jobs.run(job, ctx),
+      probe: () => jobs.probe(),
+      dispose() {
+        disposed.push(tracked)
+        jobs.dispose()
+      }
+    }
     made.push(tracked)
     return tracked
   }
-  const inject = () => { injections++; offerJobs(document, { site, build, create }) }
-  const page = startPage({ site, build, window, document, channel, clock,
+  const inject = () => {
+    injections++
+    offerJobs(document, { site, build, create })
+  }
+  const page = startPage({
+    site,
+    build,
+    window,
+    document,
+    channel,
+    clock,
     createReads: () => {
       const gateway = createReadGateway({ site, page: scripted.port })
       return { gateway, dispose: () => gateway.dispose() }
-    } })
-  const link = createPageLink({ site, build, vocabulary: vocabularyFor(wwwRoutes), clock: linkClock, digest: bytes => webcrypto.subtle.digest("SHA-256", bytes),
-    async loadJobs() {
-      needs++
-      if (!here(pageJobsPresenceEvent)) await (options.load ? options.load(inject) : Promise.resolve(inject()))
-      return here(pageJobsPresenceEvent)
-    } }, channel)
-  cleanups.push(() => link.dispose(), () => page.dispose())
+    }
+  })
+  const link = createPageLink(
+    {
+      site,
+      build,
+      vocabulary: vocabularyFor(wwwRoutes),
+      clock: linkClock,
+      digest: bytes => webcrypto.subtle.digest("SHA-256", bytes),
+      async loadJobs() {
+        needs++
+        if (!here(pageJobsPresenceEvent)) await (options.load ? options.load(inject) : Promise.resolve(inject()))
+        return here(pageJobsPresenceEvent)
+      }
+    },
+    channel
+  )
+  cleanups.push(
+    () => link.dispose(),
+    () => page.dispose()
+  )
   const acct = accountKey(syntheticIdentity)
   return {
-    scripted, clock, channel, page, link, sent, made, disposed, inject,
-    needs: () => needs, injections: () => injections,
-    answerWith(next: () => Promise<{ http: number; body: unknown }>) { answer = next },
+    scripted,
+    clock,
+    channel,
+    page,
+    link,
+    sent,
+    made,
+    disposed,
+    inject,
+    needs: () => needs,
+    injections: () => injections,
+    answerWith(next: () => Promise<{ http: number; body: unknown }>) {
+      answer = next
+    },
     add: () => link.run({ job: { kind: "add", playlistId: playlist, videoId: video }, acct }),
     async ready() {
       await settle()
@@ -119,7 +188,17 @@ function scriptedTab(options: { load?: (inject: () => void) => Promise<void> } =
 test("the page half reads no YouTube config before the core asks, then answers hello with the hashed account", async () => {
   const channel = createDirectPageChannel()
   let reads = 0
-  const page = startPage({ site: "www", build, window, document, channel, createReads(options) { reads++; return createLiveWwwReads(options) } })
+  const page = startPage({
+    site: "www",
+    build,
+    window,
+    document,
+    channel,
+    createReads(options) {
+      reads++
+      return createLiveWwwReads(options)
+    }
+  })
   cleanups.push(() => page.dispose())
   expect(reads).toBe(0)
   setConfig({ LOGGED_IN: true, DATASYNC_ID: identity })
@@ -128,9 +207,16 @@ test("the page half reads no YouTube config before the core asks, then answers h
   const hello = await link.hello
   expect(reads).toBe(1)
   expect(location.pathname).toBe("/watch")
-  expect(hello).toEqual<unknown>({ ok: true, snapshot: {
-    signedIn: true, acct: accountKey(identity), pageType: "watch", startedHidden: false, navType: null
-  } })
+  expect(hello).toEqual<unknown>({
+    ok: true,
+    snapshot: {
+      signedIn: true,
+      acct: accountKey(identity),
+      pageType: "watch",
+      startedHidden: false,
+      navType: null
+    }
+  })
 })
 
 test("a probe loads the jobs file and passes the core's vocabulary check on both sites, signed out", async () => {
@@ -150,7 +236,9 @@ test("without YouTube's config the page leaves hello unanswered instead of guess
   const page = startPage({ site: "www", createReads: createLiveWwwReads, build, window, document, channel })
   cleanups.push(() => page.dispose())
   const answers: unknown[] = []
-  channel.listen("res", detail => { answers.push(detail) })
+  channel.listen("res", detail => {
+    answers.push(detail)
+  })
   channel.send("req", JSON.stringify({ v: CONTRACT_VERSION, build, kind: "hello" }))
   expect(answers).toEqual([])
 })
@@ -159,7 +247,9 @@ test("a page that runs no job never asks for the jobs file, whatever it reads or
   const tab = scriptedTab()
   await tab.ready()
   const navigations: unknown[] = []
-  const stop = tab.link.watch("nav", data => { navigations.push(data) })
+  const stop = tab.link.watch("nav", data => {
+    navigations.push(data)
+  })
   tab.scripted.emit("navigation")
   const current = await tab.link.run({ job: { kind: "videoInfo" } })
   stop()
@@ -178,9 +268,15 @@ test("the first job loads the jobs file once, and later jobs reuse it", async ()
 
 test("jobs that arrive while the file loads wait, and none runs before the background confirms the load", async () => {
   const confirm = deferred<void>()
-  const tab = scriptedTab({ async load(inject) { inject(); await confirm.promise } })
+  const tab = scriptedTab({
+    async load(inject) {
+      inject()
+      await confirm.promise
+    }
+  })
   await tab.ready()
-  const first = tab.add(), second = tab.add()
+  const first = tab.add(),
+    second = tab.add()
   await settle()
   expect([tab.needs(), tab.made.length, here(pageJobsPresenceEvent), tab.sent.length]).toEqual([1, 1, true, 0])
   confirm.resolve()
@@ -190,7 +286,11 @@ test("jobs that arrive while the file loads wait, and none runs before the backg
 
 test("a refused load fails the waiting jobs as never sent, and the next job asks again", async () => {
   let refuse = true
-  const tab = scriptedTab({ async load(inject) { if (!refuse) inject() } })
+  const tab = scriptedTab({
+    async load(inject) {
+      if (!refuse) inject()
+    }
+  })
   await tab.ready()
   expect(await tab.add()).toEqual({ ok: false, reason: "unavailable" })
   expect([tab.sent.length, tab.made.length]).toEqual([0, 0])
@@ -208,7 +308,17 @@ test("a jobs file that loads after an account switch keeps the account the page 
 })
 
 test("a jobs file from another build, or one nobody asked for, is never taken", async () => {
-  const tab = scriptedTab({ async load() { offerJobs(document, { site: "www", build: buildId("page-start-other"), create: () => { throw new Error("taken") } }) } })
+  const tab = scriptedTab({
+    async load() {
+      offerJobs(document, {
+        site: "www",
+        build: buildId("page-start-other"),
+        create: () => {
+          throw new Error("taken")
+        }
+      })
+    }
+  })
   await tab.ready()
   tab.inject()
   expect(here(pageJobsPresenceEvent)).toBe(false)
@@ -219,7 +329,12 @@ test("a jobs file from another build, or one nobody asked for, is never taken", 
 test("with no answer from the core within 10 s the waiting jobs fail as never sent, and the next job asks again", async () => {
   const late = deferred<void>()
   let hang = true
-  const tab = scriptedTab({ async load(inject) { if (hang) await late.promise; else inject() } })
+  const tab = scriptedTab({
+    async load(inject) {
+      if (hang) await late.promise
+      else inject()
+    }
+  })
   await tab.ready()
   const stuck = tab.add()
   await settle()
@@ -234,7 +349,12 @@ test("with no answer from the core within 10 s the waiting jobs fail as never se
 
 test("waiting for the jobs file counts against the job's 10 s, so a late load leaves the job only the rest", async () => {
   const confirm = deferred<void>()
-  const tab = scriptedTab({ async load(inject) { await confirm.promise; inject() } })
+  const tab = scriptedTab({
+    async load(inject) {
+      await confirm.promise
+      inject()
+    }
+  })
   await tab.ready()
   tab.answerWith(() => new Promise(() => {}))
   const job = tab.add()
@@ -244,7 +364,9 @@ test("waiting for the jobs file counts against the job's 10 s, so a late load le
   await settle()
   expect(tab.sent.length).toBe(1)
   let answered: unknown
-  void job.then(result => { answered = result })
+  void job.then(result => {
+    answered = result
+  })
   tab.clock.advance(1_001)
   await settle()
   expect(answered).toEqual({ ok: false, reason: "unconfirmed" })

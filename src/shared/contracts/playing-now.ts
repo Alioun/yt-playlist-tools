@@ -16,11 +16,16 @@ export type PlayingNowMessages = {
 }
 
 const natural = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0
-const oneOf = (...values: readonly string[]) => (value: unknown) => typeof value === "string" && values.includes(value)
+const oneOf =
+  (...values: readonly string[]) =>
+  (value: unknown) =>
+    typeof value === "string" && values.includes(value)
 export function isPlayingNow(value: unknown): value is PlayingNow {
-  return objectShape(value, { kind: oneOf("song"), tabId: natural, song: isNowPlaying })
-    || objectShape(value, { kind: oneOf("nothing-playing", "ad-playing", "signed-out"), tabId: natural })
-    || objectShape(value, { kind: oneOf("no-tab", "no-access", "off", "unavailable") })
+  return (
+    objectShape(value, { kind: oneOf("song"), tabId: natural, acct: isAccountKey, song: isNowPlaying }) ||
+    objectShape(value, { kind: oneOf("nothing-playing", "ad-playing", "signed-out"), tabId: natural }) ||
+    objectShape(value, { kind: oneOf("no-tab", "no-access", "off", "unavailable") })
+  )
 }
 export const playingNowContract: RpcContract<PlayingNowMessages> = {
   "ui.playingNow": {

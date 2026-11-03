@@ -21,7 +21,9 @@ function id(value: string): PlaylistId {
 const titles: Titles = {
   video: "A synthetic video whose title runs longer than forty characters",
   playlists: { [id("PLmusic")]: "Music", [id("PLlearning")]: "Learning", [id("WL")]: "Watch later", [id("PLold")]: "Old stuff", [id("PLgym")]: "Gym" },
-  channel: "Synthetic channel", shortcut: "Alt+1", account: "Synthetic account"
+  channel: "Synthetic channel",
+  shortcut: "Alt+1",
+  account: "Synthetic account"
 }
 
 export const steps: readonly Step[] = [
@@ -48,7 +50,7 @@ export const steps: readonly Step[] = [
   { tab: "a", site: "www", feedback: true, via: "shortcut", answers: { PLmusic: { raw: { reason: "missing" } } } },
   { tab: "a", site: "www", feedback: false, via: "quick-save", answers: { PLgym: { raw: { ok: false, reason: "unavailable" } } } },
   { tab: "a", site: "www", feedback: false, via: "quick-save", answers: { PLgym: { notSent: true } } },
-  { tab: "m", site: "music", feedback: false, via: "quick-save", answers: { PLgym: { notSent: true } } },
+  { tab: "m", site: "music", feedback: false, via: "quick-save", answers: { PLgym: { notSent: true } } }
 ]
 
 function outcomeOf(answer: Answer): Outcome | "rejected-answer" {
@@ -93,7 +95,11 @@ export function runAddFeedbackFixture(input: readonly Step[] = steps) {
     for (const key of plan?.remember.tab ?? []) tab.add(key)
     for (const key of plan?.remember.session ?? []) session.add(key)
     return {
-      step: index, tab: step.tab, site: step.site, via: step.via, feedback: step.feedback,
+      step: index,
+      tab: step.tab,
+      site: step.site,
+      via: step.via,
+      feedback: step.feedback,
       toast: plan && { text: toastText(plan, titles, step.site, i18n), tone: plan.tone, auto: plan.auto, action: plan.action, remember: plan.remember }
     }
   })

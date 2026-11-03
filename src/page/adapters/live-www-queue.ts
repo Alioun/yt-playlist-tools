@@ -24,14 +24,19 @@ export function createLiveWwwQueue(options: { window: Window; document: Document
     },
     connected: target => target.isConnected && target.ownerDocument === doc,
     onAction(seen) {
-      const listener = (event: Event) => { seen("detail" in event ? event.detail : undefined) }
+      const listener = (event: Event) => {
+        seen("detail" in event ? event.detail : undefined)
+      }
       doc.addEventListener("yt-action", listener, true)
       return () => doc.removeEventListener("yt-action", listener, true)
     },
     openMenu(target) {
       for (const selector of cardMenuButtons) {
         const button = target.querySelector(selector)
-        if (button instanceof HTMLElement && button.isConnected) { button.click(); return "clicked" }
+        if (button instanceof HTMLElement && button.isConnected) {
+          button.click()
+          return "clicked"
+        }
       }
       return "missing"
     }

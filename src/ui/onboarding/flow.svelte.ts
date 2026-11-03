@@ -1,8 +1,6 @@
 import type { FirstRunText } from "./text"
 import { featureOf, inCatalogueOrder, type PageFeatureId } from "./features"
-import type {
-  AgreementRefusal, FeatureApplication, FirstRunOwner, PermissionGrant, PermissionNeeds, SyncedChoicesLookup
-} from "./owner"
+import type { AgreementRefusal, FeatureApplication, FirstRunOwner, PermissionGrant, PermissionNeeds, SyncedChoicesLookup } from "./owner"
 
 export type Step = "pick" | "consent" | "not-now" | "finish"
 export type SyncLookupState = "off" | "looking" | "found" | "not-found" | "update-needed" | "failed" | "stopped"
@@ -65,13 +63,27 @@ export function createFirstRun(owner: FirstRunOwner, text: FirstRunText) {
   }
 
   return {
-    get step() { return step },
-    get picked() { return picked },
-    get fromSync() { return fromSync },
-    get syncOn() { return syncOn },
-    get lookup() { return lookup },
-    get agreement() { return agreement },
-    get asksMusicAccess() { return needs().music },
+    get step() {
+      return step
+    },
+    get picked() {
+      return picked
+    },
+    get fromSync() {
+      return fromSync
+    },
+    get syncOn() {
+      return syncOn
+    },
+    get lookup() {
+      return lookup
+    },
+    get agreement() {
+      return agreement
+    },
+    get asksMusicAccess() {
+      return needs().music
+    },
     toggle(id: PageFeatureId, on: boolean) {
       if (disposed || step !== "pick") return
       picked = inCatalogueOrder(on ? [...picked, id] : picked.filter(other => other !== id))

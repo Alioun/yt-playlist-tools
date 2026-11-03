@@ -11,7 +11,9 @@ export function runFirstEditProvenanceFixture() {
   }
   const old = { joined: null, pushed: {}, status: "off", editedSinceOff: false }
   const first = { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true }
-  const retained: JsonObject = JSON.parse('{"joined":"synthetic-history","pushed":{"doc:settings":"g1","opaque:key":"g2","__proto__":"g3"},"status":"waiting","editedSinceOff":false,"opaqueWrite":{"gate":{"kind":"held","notBefore":60000,"futureGate":[null,false]},"diagnostic":{"name":"SyntheticFailure","message":"original opaque message","futureDiagnostic":{"keep":true}},"futureOpaque":[1]},"future":{"items":[{"keep":true},null]},"__proto__":{"inert":true},"toJSON":"inert"}')
+  const retained: JsonObject = JSON.parse(
+    '{"joined":"synthetic-history","pushed":{"doc:settings":"g1","opaque:key":"g2","__proto__":"g3"},"status":"waiting","editedSinceOff":false,"opaqueWrite":{"gate":{"kind":"held","notBefore":60000,"futureGate":[null,false]},"diagnostic":{"name":"SyntheticFailure","message":"original opaque message","futureDiagnostic":{"keep":true}},"futureOpaque":[1]},"future":{"items":[{"keep":true},null]},"__proto__":{"inert":true},"toJSON":"inert"}'
+  )
   const cases: { name: string; history: StoredEditHistory; expected: string }[] = [
     { name: "absent", history: { kind: "absent" }, expected: "unknown" },
     { name: "old-null-joined", history: { kind: "present", raw: old }, expected: "unknown" },
@@ -53,7 +55,9 @@ export function runFirstEditProvenanceFixture() {
     return { input: raw, decoded }
   })
   let malformedFlagRejected = false
-  try { decodeSyncState({ ...old, everEdited: "false" }) } catch (error) {
+  try {
+    decodeSyncState({ ...old, everEdited: "false" })
+  } catch (error) {
     if (!(error instanceof DecodeError)) throw error
     malformedFlagRejected = true
   }
@@ -61,10 +65,13 @@ export function runFirstEditProvenanceFixture() {
 
   const callerInput = { before: { theme: "system" }, after: { theme: "system" }, history: { kind: "absent" } } as const
   let helperCalls = 0
-  const noOpPatch = JSON.stringify(callerInput.before) === JSON.stringify(callerInput.after) ? null : (() => {
-    helperCalls++
-    return prepareFirstEditHistory({ history: callerInput.history, syncOn: false })
-  })()
+  const noOpPatch =
+    JSON.stringify(callerInput.before) === JSON.stringify(callerInput.after)
+      ? null
+      : (() => {
+          helperCalls++
+          return prepareFirstEditHistory({ history: callerInput.history, syncOn: false })
+        })()
   equal({ helperCalls, patch: noOpPatch }, { helperCalls: 0, patch: null }, "no-op caller does not request a patch")
 
   const ambiguity = [
@@ -76,13 +83,27 @@ export function runFirstEditProvenanceFixture() {
     return { input, history: { kind: "absent" }, read }
   })
   const restartInput = JSON.parse(JSON.stringify(first))
-  const restart = { input: restartInput, read: readFirstEditProvenance({ kind: "present", raw: restartInput }),
-    patch: prepareFirstEditHistory({ history: { kind: "present", raw: restartInput }, syncOn: false }) }
+  const restart = {
+    input: restartInput,
+    read: readFirstEditProvenance({ kind: "present", raw: restartInput }),
+    patch: prepareFirstEditHistory({ history: { kind: "present", raw: restartInput }, syncOn: false })
+  }
   equal(restart.read, { kind: "edited" }, "serialized edited fact")
   equal(restart.patch, { kind: "unchanged" }, "serialized patch idempotence")
-  return { kind: "pure-derivation", production: "not-connected", "owner-integration": "pending",
-    precondition: "admitted actual changed-document transaction", positiveInitialization: "not-implemented",
-    observations, decoder, malformedFlagRejected, noOpCaller: { input: callerInput, helperCalls, patch: noOpPatch }, ambiguity, restart, assertions }
+  return {
+    kind: "pure-derivation",
+    production: "not-connected",
+    "owner-integration": "pending",
+    precondition: "admitted actual changed-document transaction",
+    positiveInitialization: "not-implemented",
+    observations,
+    decoder,
+    malformedFlagRejected,
+    noOpCaller: { input: callerInput, helperCalls, patch: noOpPatch },
+    ambiguity,
+    restart,
+    assertions
+  }
 }
 
 if (import.meta.main) console.log(JSON.stringify(runFirstEditProvenanceFixture(), null, 2))

@@ -13,8 +13,10 @@ import type { EnabledMonitorFeature, MonitorStatus } from "../monitor/ports"
 import type { TabContext } from "../tabs/ports"
 
 /** The Monitor's statuses for any enabled feature, background ones included (HEALTH-29). */
-export type MonitorStatuses = (context: TabContext, enabled: readonly EnabledMonitorFeature[]) =>
-  Promise<{ readonly kind: "statuses"; readonly statuses: readonly MonitorStatus[] } | { readonly kind: "unavailable" }>
+export type MonitorStatuses = (
+  context: TabContext,
+  enabled: readonly EnabledMonitorFeature[]
+) => Promise<{ readonly kind: "statuses"; readonly statuses: readonly MonitorStatus[] } | { readonly kind: "unavailable" }>
 /**
  * The features that run from the background rather than a page script, read against a tab of their site: Save from
  * the browser's menu, Keys from any tab, Gather tabs without its automatic page script, and Settings sync (HEALTH-29).
@@ -45,12 +47,11 @@ type HealthDeps = StatusDeps & { readonly monitor?: MonitorStatuses; readonly sy
 /** One known tab's feature statuses, from the status producer, as the tab view and the badge read them. */
 export async function readTabStatuses(deps: StatusDeps, settings: Settings, tabId: number, record: TabRecord, incognito: boolean | null): Promise<readonly FeatureStatus[]> {
   const lookup = await deps.tab(tabId)
-  if (lookup.kind !== "tab" || incognito !== null && lookup.tab.incognito !== incognito) return []
+  if (lookup.kind !== "tab" || (incognito !== null && lookup.tab.incognito !== incognito)) return []
   const site: Site = record.site
   const enabled = enabledTabFeatures(settings, site)
   if (!enabled?.length) return []
-  const info = record.signedIn ? { site, build: deps.build, signedIn: true, acct: record.acct } as const
-    : { site, build: deps.build, signedIn: false, acct: null } as const
+  const info = record.signedIn ? ({ site, build: deps.build, signedIn: true, acct: record.acct } as const) : ({ site, build: deps.build, signedIn: false, acct: null } as const)
   const read = await deps.statuses.read({ tab: { ...lookup.tab, site }, info }, enabled)
   return read.kind === "statuses" ? read.statuses : []
 }
@@ -59,16 +60,19 @@ async function readTabHealth(deps: HealthDeps, settings: Settings, syncOn: boole
   const site: Site = record.site
   if (!deps.monitor) return (await readTabStatuses(deps, settings, tabId, record, incognito)).map(status => ({ feature: status.feature, site, state: status.state, gaps: gaps(status) }))
   const lookup = await deps.tab(tabId)
-  if (lookup.kind !== "tab" || incognito !== null && lookup.tab.incognito !== incognito) return []
+  if (lookup.kind !== "tab" || (incognito !== null && lookup.tab.incognito !== incognito)) return []
   const paged = enabledTabFeatures(settings, site) ?? []
   const enabled = [...paged, ...backgroundFeatures(settings, syncOn, site, paged)]
   if (!enabled.length) return []
-  const info = record.signedIn ? { site, build: deps.build, signedIn: true, acct: record.acct } as const
-    : { site, build: deps.build, signedIn: false, acct: null } as const
+  const info = record.signedIn ? ({ site, build: deps.build, signedIn: true, acct: record.acct } as const) : ({ site, build: deps.build, signedIn: false, acct: null } as const)
   const read = await deps.monitor({ tab: { ...lookup.tab, site }, info }, enabled)
   if (read.kind !== "statuses") return []
-  return read.statuses.map(status => ({ feature: status.feature, site, state: status.state,
-    gaps: [...gaps(status), ...status.destinations.map(destination => destinationGaps[destination])].slice(0, 6) }))
+  return read.statuses.map(status => ({
+    feature: status.feature,
+    site,
+    state: status.state,
+    gaps: [...gaps(status), ...status.destinations.map(destination => destinationGaps[destination])].slice(0, 6)
+  }))
 }
 /**
  * The popup's and settings' health facts (UI-POP-09): over a YouTube or YouTube Music tab, that tab's statuses;
@@ -87,24 +91,28 @@ export function createPageStatus(deps: {
     const [session, settingsRead] = await Promise.all([deps.owner.readSession(), deps.owner.read("settings")])
     if (session.kind !== "memory") return
     const active = ui.requester.activeTabId === null ? undefined : session.memory.tabs.get(ui.requester.activeTabId)
-    const tab: UiTabFacts = active && ui.requester.activeTabId !== null
-      ? active.signedIn ? { kind: "site", site: active.site, tabId: ui.requester.activeTabId, signedIn: true, acct: active.acct }
-        : { kind: "site", site: active.site, tabId: ui.requester.activeTabId, signedIn: false, acct: null }
-      : { kind: "other" }
+    const tab: UiTabFacts =
+      active && ui.requester.activeTabId !== null
+        ? active.signedIn
+          ? { kind: "site", site: active.site, tabId: ui.requester.activeTabId, signedIn: true, acct: active.acct }
+          : { kind: "site", site: active.site, tabId: ui.requester.activeTabId, signedIn: false, acct: null }
+        : { kind: "other" }
     if (settingsRead.kind !== "value") return { tab, health: [] }
     const settings = decodeSettings(settingsRead.settings)
-    const syncOn = await deps.syncOn?.().catch(() => false) ?? false
+    const syncOn = (await deps.syncOn?.().catch(() => false)) ?? false
     const targets = tab.kind === "site" ? [tab.tabId] : [...session.memory.tabs.keys()].slice(0, MAX_TABS)
     const worst = new Map<string, UiFeatureHealth>()
-    await Promise.all(targets.map(async tabId => {
-      const record = session.memory.tabs.get(tabId)
-      if (!record) return
-      for (const next of await readTabHealth(deps, settings, syncOn, tabId, record, ui.requester.incognito)) {
-        const key = `${record.site}:${next.feature}`
-        const previous = worst.get(key)
-        if (!previous || rank[next.state] > rank[previous.state]) worst.set(key, next)
-      }
-    }))
+    await Promise.all(
+      targets.map(async tabId => {
+        const record = session.memory.tabs.get(tabId)
+        if (!record) return
+        for (const next of await readTabHealth(deps, settings, syncOn, tabId, record, ui.requester.incognito)) {
+          const key = `${record.site}:${next.feature}`
+          const previous = worst.get(key)
+          if (!previous || rank[next.state] > rank[previous.state]) worst.set(key, next)
+        }
+      })
+    )
     return { tab, health: [...worst.values()] }
   }
 }

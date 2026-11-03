@@ -9,14 +9,17 @@ export function createAccountGuard(page: PageReadPort, pinned: PageAccountData |
     if (required && changed) return { ok: false, reason: "accountChanged" }
     if (!pinned) return required ? { ok: false, reason: "unavailable" } : null
     try {
-      const loggedIn = page.config("LOGGED_IN"), id = page.config("DATASYNC_ID")
-      if (pinned.signedIn && (loggedIn === false || typeof id === "string" && id !== pinned.datasyncId)) changed = true
+      const loggedIn = page.config("LOGGED_IN"),
+        id = page.config("DATASYNC_ID")
+      if (pinned.signedIn && (loggedIn === false || (typeof id === "string" && id !== pinned.datasyncId))) changed = true
       if (required && changed) return { ok: false, reason: "accountChanged" }
       if (!required) return null
       if (!pinned.signedIn) return { ok: false, reason: "signedOut" }
       if (loggedIn !== true || typeof id !== "string" || id.length === 0) return { ok: false, reason: "unavailable" }
       return null
-    } catch { return required ? { ok: false, reason: "unavailable" } : null }
+    } catch {
+      return required ? { ok: false, reason: "unavailable" } : null
+    }
   }
   return {
     check,

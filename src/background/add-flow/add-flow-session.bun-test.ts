@@ -10,11 +10,16 @@ function brand<T>(check: (value: unknown) => value is T, value: string): T {
   if (!check(value)) throw Error(`Invalid synthetic identifier ${value}`)
   return value
 }
-const acct = brand(isAccountKey, "AAAAAAAAAAAAAAAA"), other = brand(isAccountKey, "BBBBBBBBBBBBBBBB")
-const music = brand(isPlaylistId, "PLmusic"), learning = brand(isPlaylistId, "PLlearning"), later = brand(isPlaylistId, "WL")
-const video = brand(isVideoId, "vid00000001"), second = brand(isVideoId, "vid00000002")
+const acct = brand(isAccountKey, "AAAAAAAAAAAAAAAA"),
+  other = brand(isAccountKey, "BBBBBBBBBBBBBBBB")
+const music = brand(isPlaylistId, "PLmusic"),
+  learning = brand(isPlaylistId, "PLlearning"),
+  later = brand(isPlaylistId, "WL")
+const video = brand(isVideoId, "vid00000001"),
+  second = brand(isVideoId, "vid00000002")
 const wall = 1_700_000_000_000
-const normalTab = tabOrigin(1), privateTab = tabOrigin(2, true)
+const normalTab = tabOrigin(1),
+  privateTab = tabOrigin(2, true)
 const unrelated = (): JsonObject => ({ tabs: { "1": { acct: other, site: "www", signedIn: true } }, unknown: { acct, keep: true }, [`skips:${other}`]: { vid00000009: ["PLother"] } })
 
 // One actual owner over the removal fixture's local and session areas. Its io log is the native call record.
@@ -34,10 +39,14 @@ function world(session: JsonObject = unrelated()) {
 describe("two engines over one canonical owner", () => {
   test("a restarted engine keeps the 60-second memory and the 429 hold in wall time", async () => {
     const { removal, port, yt } = world()
-    yt.script.add.push(() => undefined, () => no<"add">("failed", 429))
+    yt.script.add.push(
+      () => undefined,
+      () => no<"add">("failed", 429)
+    )
     const first = await yt.flow.add({ via: "shortcut", site: "www", video, shortcut }, normalTab)
     expect(first.kind === "report" && first.outcomes).toEqual({ [music]: { kind: "added" } })
-    const remembered = yt.engine(port, "remembered"), beforeRecent = yt.calls.length
+    const remembered = yt.engine(port, "remembered"),
+      beforeRecent = yt.calls.length
     const recent = await remembered.add({ via: "auto-add", site: "www", video, playlists: [music], channel: null }, normalTab)
     expect(recent.kind === "report" && recent.outcomes[music]).toEqual({ kind: "already-in" })
     expect(yt.calls.length).toBe(beforeRecent)
@@ -49,7 +58,8 @@ describe("two engines over one canonical owner", () => {
     expect(removal.state().session).toEqual({ ...unrelated(), recent: [{ acct, playlist: music, video, at: wall }], [`cooldown:${acct}`]: wall + 60_000 })
 
     yt.advance(59_999)
-    const restarted = yt.engine(port, "restarted"), sent = yt.calls.length
+    const restarted = yt.engine(port, "restarted"),
+      sent = yt.calls.length
     const auto = await restarted.add({ via: "auto-add", site: "www", video, playlists: [music], channel: null }, normalTab)
     expect(auto.kind === "report" && auto.outcomes[music]).toEqual({ kind: "failed", failure: "paused" })
     const paused = await restarted.add({ via: "shortcut", site: "www", video: second, shortcut }, normalTab)
@@ -79,7 +89,10 @@ describe("two engines over one canonical owner", () => {
 
   test("private memory never reaches a storage call and never borrows normal records", async () => {
     const { removal, sessionCalls, yt } = world()
-    yt.script.add.push(() => undefined, () => no<"add">("failed", 429))
+    yt.script.add.push(
+      () => undefined,
+      () => no<"add">("failed", 429)
+    )
     await yt.flow.skip({ kind: "skip", acct, video: second, playlists: "all" }, privateTab)
     await yt.flow.add({ via: "shortcut", site: "www", video, shortcut }, privateTab)
     const gathered = await yt.flow.batch({ playlist: later, videos: [video, second], auto: false }, privateTab)
@@ -101,12 +114,18 @@ describe("two engines over one canonical owner", () => {
     const added = await yt.flow.add({ via: "shortcut", site: "www", video, shortcut }, normalTab)
     const gathered = await yt.flow.batch({ playlist: later, videos: [second], auto: false }, normalTab)
     if (added.kind !== "report" || !added.undo || gathered.kind !== "report" || !gathered.undo) throw Error("Expected handles")
-    expect([added.undo, gathered.undo]).toEqual([{ kind: "add", id: "engine:1" }, { kind: "gather", id: "engine:2" }])
+    expect([added.undo, gathered.undo]).toEqual([
+      { kind: "add", id: "engine:1" },
+      { kind: "gather", id: "engine:2" }
+    ])
     const record = removal.state().session.gather
     const entry = yt.entries(acct, later)[0]?.entry
     if (!entry) throw Error("Expected the fixture's confirmed gather entry")
-    expect(record).toEqual({ v: 1, global: {}, accounts: { [acct]: { last: [{ id: "engine:2", seq: 1, at: wall, auto: false, to: "playlist", count: 1, acct,
-      playlist: later, added: [{ video: second, setVideoId: entry }] }] } } })
+    expect(record).toEqual({
+      v: 1,
+      global: {},
+      accounts: { [acct]: { last: [{ id: "engine:2", seq: 1, at: wall, auto: false, to: "playlist", count: 1, acct, playlist: later, added: [{ video: second, setVideoId: entry }] }] } }
+    })
     await yt.flow.quiesce()
     expect(removal.state().session.gather).toEqual(record)
 
@@ -129,9 +148,11 @@ describe("two engines over one canonical owner", () => {
       if (report.kind === "report") handles.push(report.undo)
     }
     const gather = removal.state().session.gather
-    const last = gather && typeof gather === "object" && !Array.isArray(gather) && gather.accounts && typeof gather.accounts === "object" && !Array.isArray(gather.accounts) ? gather.accounts[acct] : undefined
-    expect(last && typeof last === "object" && !Array.isArray(last) && Array.isArray(last.last) ? last.last.map(row => row && typeof row === "object" && !Array.isArray(row) ? row.id : null) : null)
-      .toEqual(["engine-5:1", "engine-4:1", "engine-3:1", "engine-2:1", "engine-1:1"])
+    const last =
+      gather && typeof gather === "object" && !Array.isArray(gather) && gather.accounts && typeof gather.accounts === "object" && !Array.isArray(gather.accounts) ? gather.accounts[acct] : undefined
+    expect(
+      last && typeof last === "object" && !Array.isArray(last) && Array.isArray(last.last) ? last.last.map(row => (row && typeof row === "object" && !Array.isArray(row) ? row.id : null)) : null
+    ).toEqual(["engine-5:1", "engine-4:1", "engine-3:1", "engine-2:1", "engine-1:1"])
     const oldest = handles[0]
     if (!oldest) throw Error("Expected the first gather handle")
     expect(await yt.engine(port, "reader").undo(oldest, normalTab)).toEqual({ kind: "expired" })
@@ -160,7 +181,9 @@ describe("owner lifecycle and storage failures", () => {
     const host = removal.deps.removal
     if (host.kind !== "fixture") throw Error("Expected the fixture session host")
     const set = host.session.set
-    host.session.set = async () => { throw Error("Synthetic session rejection") }
+    host.session.set = async () => {
+      throw Error("Synthetic session rejection")
+    }
     expect(await yt.flow.pause(true)).toEqual({ kind: "failed", applied: false, error: Error("Synthetic session rejection") })
     expect((await owner.readSession()).kind).toBe("memory")
     host.session.set = async () => {}

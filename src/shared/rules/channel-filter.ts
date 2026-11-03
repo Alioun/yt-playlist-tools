@@ -22,7 +22,9 @@ export function offlineChannel(input: string): ChannelId | null {
     if (url.protocol !== "https:" || !["www.youtube.com", "youtube.com", "m.youtube.com"].includes(url.hostname)) return null
     const id = /^\/channel\/([^/]+)\/?$/.exec(url.pathname)?.[1] ?? null
     return isChannelId(id) ? id : null
-  } catch { return null }
+  } catch {
+    return null
+  }
 }
 
 /** Stored channel labels are cut at 100 characters for titles and 30 for handles (YT-CF-10). */
@@ -49,8 +51,7 @@ export function channelControls(filter: Snapshot<Filter> | undefined, channel: C
   const control = (mode: Filter["mode"]): ChannelControl => {
     if (current.on) {
       if (mode !== current.mode) return { mode, state: "greyed" }
-      return listed ? { mode, state: "listed", send: { action: "unlist", mode: null, clearListed: false } }
-        : { mode, state: "available", send: { action: "list", mode: null, clearListed: false } }
+      return listed ? { mode, state: "listed", send: { action: "unlist", mode: null, clearListed: false } } : { mode, state: "available", send: { action: "list", mode: null, clearListed: false } }
     }
     if (mode === current.mode || current.channels.length === 0) return { mode, state: "available", send: { action: "list", mode, clearListed: false } }
     return { mode, state: "confirm", kept: current.channels.length, send: { action: "list", mode, clearListed: true } }

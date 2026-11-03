@@ -1,7 +1,25 @@
 import {
-  DOCUMENT_VERSION, DecodeError, decodeDocument, decodeFilter, decodeSettings, decodeSetup,
-  decodeLastAccount, decodeSyncState, defaultSettings, documentKey, isAccountKey, isPlaylistId, isSetupEmpty,
-  parseDocumentKey, type AccountKey, type Device, type DocumentKey, type Filter, type Settings, type Setup, LAST_ACCOUNT_KEY
+  DOCUMENT_VERSION,
+  DecodeError,
+  decodeDocument,
+  decodeFilter,
+  decodeSettings,
+  decodeSetup,
+  decodeLastAccount,
+  decodeSyncState,
+  defaultSettings,
+  documentKey,
+  isAccountKey,
+  isPlaylistId,
+  isSetupEmpty,
+  parseDocumentKey,
+  type AccountKey,
+  type Device,
+  type DocumentKey,
+  type Filter,
+  type Settings,
+  type Setup,
+  LAST_ACCOUNT_KEY
 } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import type { ImportPlan } from "../../shared/settings-file"
@@ -29,8 +47,7 @@ export type SettingsImportPlanInput = {
   readonly at: number
   readonly generation: (key: DocumentKey) => string
 }
-export type ImportAccountCleanup = Pick<SetupRemoval,
-  "acct" | "cacheKey" | "progressKeys" | "clearAccountSession" | "clearLastAccountIfMatches">
+export type ImportAccountCleanup = Pick<SetupRemoval, "acct" | "cacheKey" | "progressKeys" | "clearAccountSession" | "clearLastAccountIfMatches">
 export type SettingsImportPlan = {
   readonly kind: "planned"
   readonly execution: "requires-owner-continuation"
@@ -57,7 +74,8 @@ export type SettingsImportPlan = {
   }
   readonly expected: { readonly local: JsonObject; readonly session: JsonObject }
 }
-export type SettingsImportPlanResult = SettingsImportPlan
+export type SettingsImportPlanResult =
+  | SettingsImportPlan
   | { readonly kind: "refused"; readonly reason: "invalid" | "update-needed" | "sync-full" }
   | { readonly kind: "unavailable"; readonly reason: "inventory" | "device" | "history" | "session" | "sync-facts" | "stamp" }
 
@@ -76,15 +94,23 @@ type BodyShape = Parameters<typeof project>[0]
 // Dictionaries replace their members. Rows retain extensions only when their domain identity survives.
 function replaceKnown(shape: BodyShape, before: JsonValue | undefined, incoming: JsonValue): JsonValue {
   switch (shape.kind) {
-    case "value": return incoming
-    case "nullable": return incoming === null ? null : replaceKnown(shape.item, before, incoming)
-    case "optional": return replaceKnown(shape.item, before, incoming)
-    case "dictionary": return incoming
+    case "value":
+      return incoming
+    case "nullable":
+      return incoming === null ? null : replaceKnown(shape.item, before, incoming)
+    case "optional":
+      return replaceKnown(shape.item, before, incoming)
+    case "dictionary":
+      return incoming
     case "object": {
       if (!object(incoming)) throw new TypeError("Import object body")
-      const previous = object(before) ? before : {}, result = { ...previous, ...incoming }
+      const previous = object(before) ? before : {},
+        result = { ...previous, ...incoming }
       for (const [key, child] of Object.entries(shape.fields)) {
-        if (!Object.hasOwn(incoming, key)) { delete result[key]; continue }
+        if (!Object.hasOwn(incoming, key)) {
+          delete result[key]
+          continue
+        }
         const value = incoming[key]
         if (value === undefined) throw new TypeError("Import body field")
         Object.defineProperty(result, key, { value: replaceKnown(child, previous[key], value), enumerable: true, configurable: true, writable: true })
@@ -94,13 +120,14 @@ function replaceKnown(shape: BodyShape, before: JsonValue | undefined, incoming:
     case "list": {
       if (!Array.isArray(incoming)) throw new TypeError("Import list body")
       const previous = Array.isArray(before) ? before : []
-      const identity = shape.item.kind === "object"
-        ? Object.hasOwn(shape.item.fields, "id") ? "id" : Object.hasOwn(shape.item.fields, "pl") ? "pl" : null : null
+      const identity = shape.item.kind === "object" ? (Object.hasOwn(shape.item.fields, "id") ? "id" : Object.hasOwn(shape.item.fields, "pl") ? "pl" : null) : null
       return incoming.map(row => {
-        const old = shape.item.kind === "channel" && Array.isArray(row)
-          ? previous.find(candidate => Array.isArray(candidate) && candidate[0] === row[0])
-          : identity !== null && object(row)
-            ? previous.find(candidate => object(candidate) && candidate[identity] === row[identity]) : undefined
+        const old =
+          shape.item.kind === "channel" && Array.isArray(row)
+            ? previous.find(candidate => Array.isArray(candidate) && candidate[0] === row[0])
+            : identity !== null && object(row)
+              ? previous.find(candidate => object(candidate) && candidate[identity] === row[identity])
+              : undefined
         return replaceKnown(shape.item, old, row)
       })
     }
@@ -114,9 +141,12 @@ function replaceKnown(shape: BodyShape, before: JsonValue | undefined, incoming:
 
 function supported(key: DocumentKey, raw: JsonObject) {
   switch (key.kind) {
-    case "settings": return decodeDocument(raw, decodeSettings)
-    case "setup": return decodeDocument(raw, decodeSetup)
-    case "filter": return decodeDocument(raw, decodeFilter)
+    case "settings":
+      return decodeDocument(raw, decodeSettings)
+    case "setup":
+      return decodeDocument(raw, decodeSetup)
+    case "filter":
+      return decodeDocument(raw, decodeFilter)
   }
 }
 function prepare(input: PrepareBodyInput, previous: Presence): JsonObject | undefined {
@@ -125,23 +155,33 @@ function prepare(input: PrepareBodyInput, previous: Presence): JsonObject | unde
   const before = previous.kind === "present" ? previous.document.data : undefined
   const shape = input.kind === "settings" ? settingsShape : input.kind === "setup" ? setupShape : filterShape
   const data = replaceKnown(shape, before, raw.data)
-  const prepared = input.kind === "settings" ? prepareDocumentBody({ kind: "settings", data: decodeSettings(data) })
-    : input.kind === "filter" ? prepareDocumentBody({ kind: "filter", data: decodeFilter(data) })
-      : prepareDocumentBody({ kind: "setup", data: decodeSetup(data), context: input.context })
+  const prepared =
+    input.kind === "settings"
+      ? prepareDocumentBody({ kind: "settings", data: decodeSettings(data) })
+      : input.kind === "filter"
+        ? prepareDocumentBody({ kind: "filter", data: decodeFilter(data) })
+        : prepareDocumentBody({ kind: "setup", data: decodeSetup(data), context: input.context })
   return prepared.kind === "prepared" ? prepared.data : undefined
 }
 
 export function planSettingsImport(input: SettingsImportPlanInput): SettingsImportPlanResult {
   const invalid = { kind: "refused", reason: "invalid" } satisfies SettingsImportPlanResult
   if (!object(input.local) || !object(input.session) || Object.keys(Object.prototype).length > 0) return { kind: "unavailable", reason: "inventory" }
-  if (input.parsed.kind !== "import-plan" || input.parsed.provenance !== "fresh-edit-required" ||
-    input.parsed.accountCount !== input.parsed.accounts.length || input.parsed.replacement.sharedSettings !== "replace" ||
-    input.parsed.replacement.includedAccounts !== "replace-setup-and-all-filters" || input.parsed.replacement.absentAccounts !== "keep") return invalid
-  const local = copyObject(input.local), session = copyObject(input.session)
+  if (
+    input.parsed.kind !== "import-plan" ||
+    input.parsed.provenance !== "fresh-edit-required" ||
+    input.parsed.accountCount !== input.parsed.accounts.length ||
+    input.parsed.replacement.sharedSettings !== "replace" ||
+    input.parsed.replacement.includedAccounts !== "replace-setup-and-all-filters" ||
+    input.parsed.replacement.absentAccounts !== "keep"
+  )
+    return invalid
+  const local = copyObject(input.local),
+    session = copyObject(input.session)
   const ready = readConsentDevice(local)
   if (ready.kind !== "supported") return { kind: "unavailable", reason: "device" }
   const deviceId = ready.device.id
-  if (ready.device.syncOn !== (input.sync.kind === "on") || input.sync.kind === "on" && !object(input.sync.records)) return { kind: "unavailable", reason: "sync-facts" }
+  if (ready.device.syncOn !== (input.sync.kind === "on") || (input.sync.kind === "on" && !object(input.sync.records))) return { kind: "unavailable", reason: "sync-facts" }
   if (!Number.isSafeInteger(input.at) || input.at < 0) return { kind: "unavailable", reason: "stamp" }
   const sync: ImportSyncFacts = input.sync.kind === "off" ? { kind: "off" } : { kind: "on", records: copyObject(input.sync.records) }
   let joined: string | null = null
@@ -151,7 +191,10 @@ export function planSettingsImport(input: SettingsImportPlanInput): SettingsImpo
       if (sync.kind === "off" ? state.status !== "off" : state.joined === null || !["ok", "full", "update-needed"].includes(state.status)) return { kind: "unavailable", reason: "history" }
       joined = state.joined
     } else if (sync.kind === "on") return { kind: "unavailable", reason: "history" }
-  } catch (error) { if (error instanceof DecodeError) return { kind: "unavailable", reason: "history" }; throw error }
+  } catch (error) {
+    if (error instanceof DecodeError) return { kind: "unavailable", reason: "history" }
+    throw error
+  }
 
   const addressed = new Map<string, { key: DocumentKey; before: Presence }>()
   const accountKeys = new Set<AccountKey>()
@@ -191,19 +234,31 @@ export function planSettingsImport(input: SettingsImportPlanInput): SettingsImpo
       }
       addressed.set(name, { key, before })
     }
-  } catch (error) { if (error instanceof DecodeError) return { kind: "unavailable", reason: "inventory" }; throw error }
+  } catch (error) {
+    if (error instanceof DecodeError) return { kind: "unavailable", reason: "inventory" }
+    throw error
+  }
 
   const generations = new Set<string>()
   for (const [name, value] of Object.entries(local)) if (parseDocumentKey(name) && object(value) && typeof value.gen === "string") generations.add(value.gen)
   if (sync.kind === "on") for (const [name, value] of Object.entries(sync.records)) if (name.startsWith("s:") && object(value) && typeof value.gen === "string") generations.add(value.gen)
   function put(key: DocumentKey, before: Presence, data: JsonObject | null): Put | undefined {
     let gen: string
-    try { gen = input.generation(key) } catch { return }
+    try {
+      gen = input.generation(key)
+    } catch {
+      return
+    }
     if (typeof gen !== "string" || gen.length === 0 || generations.has(gen)) return
     generations.add(gen)
     const document: JsonObject = { ...(before.kind === "present" ? before.document : {}), v: DOCUMENT_VERSION, gen, at: input.at, by: deviceId }
-    if (data === null) { delete document.data; document.deleted = true }
-    else { delete document.deleted; document.data = data }
+    if (data === null) {
+      delete document.data
+      document.deleted = true
+    } else {
+      delete document.deleted
+      document.data = data
+    }
     return { kind: "put", key, before, document }
   }
   const settingsBefore = addressed.get("doc:settings")
@@ -215,10 +270,12 @@ export function planSettingsImport(input: SettingsImportPlanInput): SettingsImpo
       if (decoded.kind === "value") current = decoded.document.data
     }
     const incoming = input.parsed.settings
-    const settings: Settings = { ...incoming,
+    const settings: Settings = {
+      ...incoming,
       shortcuts: { ...incoming.shortcuts, preset: incoming.shortcuts.preset || current.shortcuts.preset },
       musicActions: { ...incoming.musicActions, preset: incoming.musicActions.preset || current.musicActions.preset },
-      musicKeys: { ...incoming.musicKeys, preset: incoming.musicKeys.preset || current.musicKeys.preset } }
+      musicKeys: { ...incoming.musicKeys, preset: incoming.musicKeys.preset || current.musicKeys.preset }
+    }
     const settingsData = prepare({ kind: "settings", data: settings }, settingsBefore.before)
     if (!settingsData) return invalid
     const normalizedSettings = decodeSettings(settingsData)
@@ -226,14 +283,17 @@ export function planSettingsImport(input: SettingsImportPlanInput): SettingsImpo
     if (!first) return { kind: "unavailable", reason: "stamp" }
     const changes: [ImportDocumentChange, ...ImportDocumentChange[]] = [first]
     const allWrites: Put[] = [first]
-    const cleanups: ImportAccountCleanup[] = [], sessionEffects: RemovalSessionEffect[] = []
+    const cleanups: ImportAccountCleanup[] = [],
+      sessionEffects: RemovalSessionEffect[] = []
     let expectedSession = copyObject(session)
     for (const entry of input.parsed.accounts) {
       const setupKey: DocumentKey = { kind: "setup", acct: entry.account }
       const setupBefore = addressed.get(documentKey(setupKey))
       if (!setupBefore) return invalid
-      const context = { shortcutIds: new Set(normalizedSettings.shortcuts.list.map(row => row.id)),
-        additionalChosenPlaylists: new Set(normalizedSettings.shortcuts.list.some(row => row.watchLaterOnEveryAccount && !Object.hasOwn(entry.setup.targets, row.id)) ? ["WL"] : []) }
+      const context = {
+        shortcutIds: new Set(normalizedSettings.shortcuts.list.map(row => row.id)),
+        additionalChosenPlaylists: new Set(normalizedSettings.shortcuts.list.some(row => row.watchLaterOnEveryAccount && !Object.hasOwn(entry.setup.targets, row.id)) ? ["WL"] : [])
+      }
       const setupData = prepare({ kind: "setup", data: entry.setup, context }, setupBefore.before)
       if (!setupData) return invalid
       const setup: Setup = decodeSetup(setupData)
@@ -258,7 +318,11 @@ export function planSettingsImport(input: SettingsImportPlanInput): SettingsImpo
         else {
           const filter: Filter | undefined = filters.get(key.playlist)
           if (filter === undefined) data = null
-          else { const prepared = prepare({ kind: "filter", data: filter }, member.before); if (!prepared) return invalid; data = prepared }
+          else {
+            const prepared = prepare({ kind: "filter", data: filter }, member.before)
+            if (!prepared) return invalid
+            data = prepared
+          }
         }
         if (data === null && member.before.kind === "absent") continue
         if (data === null && sync.kind === "off") {
@@ -266,16 +330,19 @@ export function planSettingsImport(input: SettingsImportPlanInput): SettingsImpo
         } else {
           const change = put(key, member.before, data)
           if (!change) return { kind: "unavailable", reason: "stamp" }
-          changes.push(change); allWrites.push(change)
+          changes.push(change)
+          allWrites.push(change)
         }
       }
     }
     let syncPlan: SettingsImportPlan["documents"]["sync"] = { kind: "off" }
     let effectiveHistory = local.sync
     if (sync.kind === "on") {
-      const admission = planSyncWrite({ local, sync: sync.records, intent: { kind: "changed-batch", documents: [
-        { key: first.key, document: first.document }, ...allWrites.slice(1).map(({ key, document }) => ({ key, document }))
-      ] } })
+      const admission = planSyncWrite({
+        local,
+        sync: sync.records,
+        intent: { kind: "changed-batch", documents: [{ key: first.key, document: first.document }, ...allWrites.slice(1).map(({ key, document }) => ({ key, document }))] }
+      })
       if (admission.kind === "refused") return admission
       if (admission.kind !== "planned") return { kind: "unavailable", reason: "sync-facts" }
       syncPlan = { kind: "on", admission }
@@ -284,8 +351,8 @@ export function planSettingsImport(input: SettingsImportPlanInput): SettingsImpo
     }
     const preparedHistory = prepareFirstEditHistory({ history: Object.hasOwn(local, "sync") ? { kind: "present", raw: effectiveHistory } : { kind: "absent" }, syncOn: sync.kind === "on" })
     if (preparedHistory.kind === "unavailable") return { kind: "unavailable", reason: "history" }
-    const history: SettingsImportPlan["documents"]["history"] = preparedHistory.kind === "unchanged" && syncPlan.kind === "on" && syncPlan.admission.repairs.length > 0 && object(effectiveHistory)
-      ? { kind: "set", sync: effectiveHistory } : preparedHistory
+    const history: SettingsImportPlan["documents"]["history"] =
+      preparedHistory.kind === "unchanged" && syncPlan.kind === "on" && syncPlan.admission.repairs.length > 0 && object(effectiveHistory) ? { kind: "set", sync: effectiveHistory } : preparedHistory
     const expectedLocal = copyObject(local)
     for (const change of changes) {
       const name = documentKey(change.key)
@@ -299,9 +366,16 @@ export function planSettingsImport(input: SettingsImportPlanInput): SettingsImpo
     const last = cleanups.find(cleanup => cleanup.acct === storedLast)
     const lastAccount: SettingsImportPlan["cleanup"]["lastAccount"] = last ? { kind: "clear", acct: last.acct } : { kind: "unchanged" }
     if (last) expectedLocal[LAST_ACCOUNT_KEY] = null
-    return { kind: "planned", execution: "requires-owner-continuation", documents: { changes, history, sync: syncPlan },
+    return {
+      kind: "planned",
+      execution: "requires-owner-continuation",
+      documents: { changes, history, sync: syncPlan },
       cleanup: { accounts: cleanups, sessionEffects, lastAccount },
       capture: { local, session, sync, binding: { deviceId: ready.device.id, consent: ready.device.consent, consentControl: ready.control, joined } },
-      expected: { local: expectedLocal, session: expectedSession } }
-  } catch (error) { if (error instanceof DecodeError || error instanceof TypeError) return invalid; throw error }
+      expected: { local: expectedLocal, session: expectedSession }
+    }
+  } catch (error) {
+    if (error instanceof DecodeError || error instanceof TypeError) return invalid
+    throw error
+  }
 }

@@ -11,12 +11,20 @@ const root = fileURLToPath(new URL("./", import.meta.url))
 const repository = resolve(root, "../../../..")
 const cases = resolve(root, ".output/cases")
 const results = []
-const hooks = createPageLink({ entries: fixtureEntries, siteRoot: resolve(root, "src/site"), kitIndex: resolve(root, "src/site/kit/index.ts"), evidenceDir: resolve(root, ".output/hook-checks") }).hooks
+const hooks = createPageLink({
+  entries: fixtureEntries,
+  siteRoot: resolve(root, "src/site"),
+  kitIndex: resolve(root, "src/site/kit/index.ts"),
+  evidenceDir: resolve(root, ".output/hook-checks")
+}).hooks
 assert.throws(() => hooks["vite:build:extendConfig"]([{ type: "unlisted-script", name: "undeclared-www" }], {}), /missing entry ownership/)
 const feature = { type: "unlisted-script", name: "consumer-www" }
 const kitWww = { type: "unlisted-script", name: "kit-www" }
 const kitMusic = { type: "unlisted-script", name: "kit-music" }
-const unrelated = [{ type: "background", name: "background" }, { type: "unlisted-page", name: "control" }]
+const unrelated = [
+  { type: "background", name: "background" },
+  { type: "unlisted-page", name: "control" }
+]
 const core = { type: "unlisted-script", name: "core-www" }
 const groups = [kitMusic, unrelated, feature, kitWww, core]
 void hooks["entrypoints:grouped"]({}, groups)
@@ -24,10 +32,20 @@ assert.deepEqual(groups, [unrelated, feature, core, kitMusic, kitWww])
 assert.throws(() => hooks["entrypoints:grouped"]({}, [[kitWww, feature]]), /mixed kit group/)
 const externalCalls = []
 const outputs = [
-  { format: "iife", name: "OriginalOne", entryFileNames: "original-one.js", globals: (id) => `original.${id}` },
+  { format: "iife", name: "OriginalOne", entryFileNames: "original-one.js", globals: id => `original.${id}` },
   { format: "iife", name: "OriginalTwo", entryFileNames: "original-two.js", globals: { existing: "OriginalGlobal" } }
 ]
-const config = { build: { rollupOptions: { external: (...values) => { externalCalls.push(values); return values[0] === "existing" }, output: outputs } } }
+const config = {
+  build: {
+    rollupOptions: {
+      external: (...values) => {
+        externalCalls.push(values)
+        return values[0] === "existing"
+      },
+      output: outputs
+    }
+  }
+}
 void hooks["vite:build:extendConfig"]([feature], config)
 assert.equal(config.build.rollupOptions.external("existing", "caller", false), true)
 assert.deepEqual(externalCalls, [["existing", "caller", false]])
@@ -61,10 +79,10 @@ async function build(path, flags = []) {
   return new Promise((resolveResult, reject) => {
     const child = spawn(process.execPath, [resolve(repository, "node_modules/wxt/bin/wxt.mjs"), "build", path, ...flags], { cwd: repository, env: { ...process.env, NO_COLOR: "1" } })
     let output = ""
-    child.stdout.on("data", (data) => output += data)
-    child.stderr.on("data", (data) => output += data)
+    child.stdout.on("data", data => (output += data))
+    child.stderr.on("data", data => (output += data))
     child.on("error", reject)
-    child.on("exit", (status) => resolveResult({ status, output }))
+    child.on("exit", status => resolveResult({ status, output }))
   })
 }
 async function snapshot(path, label) {
@@ -77,12 +95,22 @@ async function snapshot(path, label) {
 const svelteClient = fileURLToPath(import.meta.resolve("svelte")).replace("index-server.js", "index-client.js")
 const negatives = [
   { name: "unknown-svelte", entry: "consumer-www", code: 'import "svelte/not-a-real-export";', predicate: "knownSvelteSpecifier" },
-  { name: "bundled-runtime", entry: "consumer-www", code: `import { tick as privateTick } from ${JSON.stringify(svelteClient)}; globalThis.__badRuntime = privateTick;`, predicate: "noFeatureRuntime" },
+  {
+    name: "bundled-runtime",
+    entry: "consumer-www",
+    code: `import { tick as privateTick } from ${JSON.stringify(svelteClient)}; globalThis.__badRuntime = privateTick;`,
+    predicate: "noFeatureRuntime"
+  },
   { name: "direct-kit", entry: "consumer-www", code: 'import { Badge as PrivateBadge } from "../site/kit"; globalThis.__badKit = PrivateBadge;', predicate: "noFeatureKitImplementation" },
   { name: "eager-bits", entry: "kit-www", code: 'import { Popover } from "bits-ui"; globalThis.__badBits = Popover;', predicate: "lazyBitsOnly" },
   { name: "page-css", entry: "core-www", code: 'import "../site/bad.css";', predicate: "noPageCss" },
   { name: "namespace-escape", entry: "consumer-www", code: 'import * as SvelteNamespace from "svelte"; globalThis.__badNamespace = SvelteNamespace;', predicate: "namespace escape" },
-  { name: "dynamic-namespace", entry: "consumer-www", code: 'import * as SvelteNamespace from "svelte"; globalThis.__badDynamic = SvelteNamespace[globalThis.__fixtureKey];', predicate: "dynamic namespace access" }
+  {
+    name: "dynamic-namespace",
+    entry: "consumer-www",
+    code: 'import * as SvelteNamespace from "svelte"; globalThis.__badDynamic = SvelteNamespace[globalThis.__fixtureKey];',
+    predicate: "dynamic namespace access"
+  }
 ]
 await mkdir(cases, { recursive: true })
 for (const negative of negatives) {
@@ -91,9 +119,7 @@ for (const negative of negatives) {
   const imports = negative.code.match(/import[^;]+;/g) ?? []
   const effect = negative.code.replace(/import[^;]+;/g, "")
   const original = await readFile(entry, "utf8")
-  const source = original.includes("=> {")
-    ? original.replace("=> {", `=> {\n${effect}`)
-    : original.replace('=> install("consumer")', `=> { ${effect}; return install("consumer") }`)
+  const source = original.includes("=> {") ? original.replace("=> {", `=> {\n${effect}`) : original.replace('=> install("consumer")', `=> { ${effect}; return install("consumer") }`)
   await writeFile(entry, `${imports.join("\n")}\n${source}`)
   if (negative.name === "page-css") await writeFile(resolve(path, "src/site/bad.css"), ".negative-control{color:red}")
   const result = await build(path)
@@ -114,12 +140,15 @@ results.push({ name: "old-suffix-classification", status: suffixResult.status, p
 const precision = await fixture("precision")
 const consumer = resolve(precision, "src/entrypoints/consumer-music.ts")
 const original = await readFile(consumer, "utf8")
-const readNames = async (site) => JSON.parse(await readFile(resolve(precision, `.output/evidence/chrome-build/kit-${site}.json`), "utf8")).names
+const readNames = async site => JSON.parse(await readFile(resolve(precision, `.output/evidence/chrome-build/kit-${site}.json`), "utf8")).names
 let result = await build(precision)
 assert.equal(result.status, 0, result.output)
 const before = { www: await readNames("www"), music: await readNames("music") }
 await writeFile(resolve(precision, "src/site/consumer/MusicOnly.svelte"), '<script lang="ts">let items = $state([1,2]);</script>{#each items as item}<span>{item}</span>{/each}')
-await writeFile(consumer, `import MusicOnly from "../site/consumer/MusicOnly.svelte";\nimport { mount as musicMount } from "svelte";\n${original.replace('=> install("consumer")', '=> { install("consumer"); musicMount(MusicOnly, { target: globalThis.__pp.kit.layer }) }')}`)
+await writeFile(
+  consumer,
+  `import MusicOnly from "../site/consumer/MusicOnly.svelte";\nimport { mount as musicMount } from "svelte";\n${original.replace('=> install("consumer")', '=> { install("consumer"); musicMount(MusicOnly, { target: globalThis.__pp.kit.layer }) }')}`
+)
 result = await build(precision)
 assert.equal(result.status, 0, result.output)
 const added = { www: await readNames("www"), music: await readNames("music") }
@@ -140,11 +169,31 @@ assert.equal(beta.development, false)
 assert(!beta.names.root.includes("hydrate"))
 const alias = await fixture("binding-precision")
 const entry = resolve(alias, "src/entrypoints/consumer-www.ts")
-await writeFile(entry, `${await readFile(entry, "utf8")}\nimport * as S from "svelte";\nimport * as C from "svelte/internal/client";\nvoid S.tick; void S.untrack; void C["if"]; void C["index"];
-export { flushSync as fixtureFlush } from "svelte";\nfunction shadow(S) { return S.neverExportThis; }\nfunction hoisted() { void S.neverExportVar; var S = {}; }\nconst property = { S: 1 }; void property.S;\nclass StaticShadow { static { var S = { noStaticExport: 1 }; void S.noStaticExport; } }\nvoid S.unmount;\nfunction defaults(value = S.hydratable) { var S = {}; return value; }\nswitch (S.getAllContexts) { case null: let S = {}; void S.noSwitchExport; }\nvoid defaults; void StaticShadow;\nvoid shadow; void hoisted; void property;\n`)
+await writeFile(
+  entry,
+  `${await readFile(entry, "utf8")}\nimport * as S from "svelte";\nimport * as C from "svelte/internal/client";\nvoid S.tick; void S.untrack; void C["if"]; void C["index"];
+export { flushSync as fixtureFlush } from "svelte";\nfunction shadow(S) { return S.neverExportThis; }\nfunction hoisted() { void S.neverExportVar; var S = {}; }\nconst property = { S: 1 }; void property.S;\nclass StaticShadow { static { var S = { noStaticExport: 1 }; void S.noStaticExport; } }\nvoid S.unmount;\nfunction defaults(value = S.hydratable) { var S = {}; return value; }\nswitch (S.getAllContexts) { case null: let S = {}; void S.noSwitchExport; }\nvoid defaults; void StaticShadow;\nvoid shadow; void hoisted; void property;\n`
+)
 result = await build(alias)
 assert.equal(result.status, 0, result.output)
 const boundNames = JSON.parse(await readFile(resolve(alias, ".output/evidence/chrome-build/kit-www.json"), "utf8")).names
-assert.deepEqual(boundNames, { ...before.www, root: [...new Set([...before.www.root, "untrack", "flushSync", "unmount", "hydratable", "getAllContexts"])].sort(), client: [...new Set([...before.www.client, "index"])].sort() })
-await writeFile(resolve(root, ".output/negative.json"), JSON.stringify({ hooks: { grouping: "pass", mixedKit: "rejected", externals: "callback and string/regexp arrays preserved", globals: "object and callback output arrays preserved" }, negatives: results, precision: { before, added, removed: before.music, runtimeFixtures: ["precision-added", "precision-removed"] }, bindings: boundNames, beta: beta.names }, null, 2))
+assert.deepEqual(boundNames, {
+  ...before.www,
+  root: [...new Set([...before.www.root, "untrack", "flushSync", "unmount", "hydratable", "getAllContexts"])].sort(),
+  client: [...new Set([...before.www.client, "index"])].sort()
+})
+await writeFile(
+  resolve(root, ".output/negative.json"),
+  JSON.stringify(
+    {
+      hooks: { grouping: "pass", mixedKit: "rejected", externals: "callback and string/regexp arrays preserved", globals: "object and callback output arrays preserved" },
+      negatives: results,
+      precision: { before, added, removed: before.music, runtimeFixtures: ["precision-added", "precision-removed"] },
+      bindings: boundNames,
+      beta: beta.names
+    },
+    null,
+    2
+  )
+)
 console.log("Per-site add/remove, beta-mode subset, aliases, reserved properties and lexical shadowing passed")

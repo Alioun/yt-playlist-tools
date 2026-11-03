@@ -9,9 +9,13 @@ import { wwwView } from "./views"
 
 export { settle }
 export function lifecycleHarness(changeAccount = false) {
-  const page = pageHarness(changeAccount ? { run: async () => ({ ok: false, reason: "accountChanged" }) } : {
-    run: async () => ({ ok: true, data: null, route })
-  })
+  const page = pageHarness(
+    changeAccount
+      ? { run: async () => ({ ok: false, reason: "accountChanged" }) }
+      : {
+          run: async () => ({ ok: true, data: null, route })
+        }
+  )
   type Sender = { readonly id: string }
   const network = createMemoryNetwork<Sender>({ delivery: "immediate" })
   const background = network.connect({ id: "synthetic-lifecycle-extension" })
@@ -22,13 +26,27 @@ export function lifecycleHarness(changeAccount = false) {
   hello.handle({ authenticate: () => ({ kind: "accepted", context: null }), handlers: { "tab.hello": () => wwwView() } })
   const caller = createRpcCaller<TabMessages<TabView>>(background, { build, deadline, contract: tabMessages(isTabView) })
   const ext = createExtLink({
-    build, site: "www", page: page.link, deadline, hiddenAtStart: false, isView: isTabView,
+    build,
+    site: "www",
+    page: page.link,
+    deadline,
+    hiddenAtStart: false,
+    isView: isTabView,
     runtime: { transport: site, identity: () => identity, senderId: sender => sender.id }
   })
   return {
-    page, ext,
+    page,
+    ext,
     push: (view: TabView) => caller.call("bg.view", view),
-    orphan() { identity = undefined; return ext.view },
-    dispose() { ext.dispose(); caller.dispose(); hello.dispose(); page.dispose() }
+    orphan() {
+      identity = undefined
+      return ext.view
+    },
+    dispose() {
+      ext.dispose()
+      caller.dispose()
+      hello.dispose()
+      page.dispose()
+    }
   }
 }

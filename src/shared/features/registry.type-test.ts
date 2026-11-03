@@ -7,7 +7,11 @@ export const registrarRegistry: readonly RegistrationFeature[] = features
 export const validSetting: SettingsPath = "autoAdd"
 export const validHealth: HealthDependencies = { required: ["add"], optional: ["remove"], anchors: ["www-cards"] }
 export const validFeature: FeatureDef = {
-  id: "sync", setting: "device.syncOn", footprint: "none", pages: {}, health: {}
+  id: "sync",
+  setting: "device.syncOn",
+  footprint: "none",
+  pages: {},
+  health: {}
 }
 
 // @ts-expect-error A missing Settings key cannot select a feature.

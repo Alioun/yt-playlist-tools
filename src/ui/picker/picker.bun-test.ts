@@ -15,7 +15,9 @@ import { createPickerText } from "./text"
 import PickerPanel from "./PickerPanel.svelte"
 import PlaylistChooser from "./PlaylistChooser.svelte"
 
-function visible(element: HTMLElement) { expect({ visible: toBeVisible(element).pass, text: element.textContent }).toEqual({ visible: true, text: element.textContent }) }
+function visible(element: HTMLElement) {
+  expect({ visible: toBeVisible(element).pass, text: element.textContent }).toEqual({ visible: true, text: element.textContent })
+}
 
 const alpha = playlist("PLalpha")
 const beta = playlist("PLbeta")
@@ -55,7 +57,8 @@ test("cached rows work before membership arrives, and a pending action keeps foc
   expect(row.getAttribute("aria-busy")).toBe("true")
   expect(row.getAttribute("aria-checked")).toBe("false")
   ledger.answer("add", { kind: "added", entry: entry("entry-alpha"), undo: undoing() })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(row.getAttribute("aria-checked")).toBe("true")
   expect(view.onoutcome).toHaveBeenCalledWith({ kind: "tick", id: alpha, outcome: { kind: "added" } })
   expect(view.onoutcome).toHaveBeenCalledTimes(1)
@@ -66,13 +69,15 @@ test("pending removal stays checked, then a failed removal stays checked with it
   panel({ source, site: "www", mode: "save" })
   await list(ledger)
   ledger.answer("membership", { kind: "read", rows: [{ ...rows[0]!, contains: true }] })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   const row = screen.getByRole("checkbox", { name: "Synthetic Alpha" })
   await userEvent.setup().click(row)
   expect(row.getAttribute("aria-checked")).toBe("true")
   expect(row).toHaveFocus()
   ledger.answer("remove", { kind: "failed" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(row.getAttribute("aria-checked")).toBe("true")
   visible(screen.getByText("Couldn't remove"))
 })
@@ -95,14 +100,20 @@ test("ArrowDown, Home, End, arrows, Space and Enter activate only their intended
   await user.keyboard("{Home}{Enter}")
   expect(ledger.calls("choose")).toEqual([[alpha, true]])
   ledger.answer("choose", { ok: true })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   await fireEvent.keyDown(screen.getByRole("checkbox", { name: "Synthetic Alpha" }), { key: "Enter", code: "Enter", repeat: true, bubbles: true, composed: true })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(ledger.calls("choose")).toEqual([[alpha, true]])
   await user.keyboard(" ")
-  expect(ledger.calls("choose")).toEqual([[alpha, true], [alpha, false]])
+  expect(ledger.calls("choose")).toEqual([
+    [alpha, true],
+    [alpha, false]
+  ])
   ledger.answer("choose", { refused: "invalid" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(first.getAttribute("aria-checked")).toBe("true")
 })
 
@@ -128,12 +139,15 @@ test("Escape is contained and requests closure without turning a model answer in
   try {
     await userEvent.setup().click(screen.getByRole("checkbox", { name: "Synthetic Alpha" }))
     ledger.answer("choose", { ok: true })
-    await settle(); flushSync()
+    await settle()
+    flushSync()
     expect(view.onrequestclose).not.toHaveBeenCalled()
     await userEvent.setup().keyboard("{Escape}")
     expect(outside).not.toHaveBeenCalled()
     expect(view.onrequestclose).toHaveBeenCalledWith({ reason: "escape" })
-  } finally { document.removeEventListener("keydown", outside) }
+  } finally {
+    document.removeEventListener("keydown", outside)
+  }
 })
 
 test("a refused choose keeps the real prior choice and exposes the exact refusal", async () => {
@@ -142,7 +156,8 @@ test("a refused choose keeps the real prior choice and exposes the exact refusal
   await list(ledger)
   await userEvent.setup().click(screen.getByRole("checkbox", { name: "Synthetic Beta" }))
   ledger.answer("choose", { refused: "sync-full" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(screen.getByRole("checkbox", { name: "Synthetic Alpha" }).getAttribute("aria-checked")).toBe("true")
   expect(screen.getByRole("checkbox", { name: "Synthetic Beta" }).getAttribute("aria-checked")).toBe("false")
   expect(view.onoutcome).toHaveBeenCalledWith({ kind: "tick", id: beta, outcome: { kind: "refused", reason: "sync-full" } })
@@ -155,9 +170,11 @@ test("a saved item with a refused choice remains a partial outcome and does not 
   await list(ledger)
   await userEvent.setup().click(screen.getByRole("checkbox", { name: "Synthetic Alpha" }))
   ledger.answer("add", { kind: "added", entry: entry("entry-alpha"), undo: undoing() })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   ledger.answer("choose", { refused: "sync-full" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   visible(screen.getByText("This choice wasn't saved because browser sync is full."))
   expect(screen.getByRole("checkbox", { name: "Synthetic Beta" }).getAttribute("aria-checked")).toBe("true")
   expect(screen.getByRole("checkbox", { name: "Synthetic Alpha" }).getAttribute("aria-checked")).toBe("false")
@@ -179,13 +196,16 @@ test("list failure is visible, and refresh never invents a successful answer", a
   const { source, ledger } = chooserSource()
   const view = panel({ source, site: "www", mode: "choose" })
   ledger.answer("cachedList", null)
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   ledger.answer("freshList", { kind: "failed" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   visible(screen.getByText("Playlist data is unavailable. Refresh playlists to try again."))
   await userEvent.setup().click(screen.getByRole("button", { name: "Refresh playlists" }))
   ledger.answer("freshList", { kind: "failed" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   visible(screen.getByText("Couldn't refresh playlists. Try again."))
   expect(view.onoutcome).toHaveBeenCalledWith({ kind: "refresh", outcome: { kind: "failed" } })
 })
@@ -211,7 +231,8 @@ test("creation validates, permits duplicate titles, preserves typed text on fail
   await user.click(create)
   expect(ledger.calls("create")).toEqual([[{ title: "Synthetic Alpha", privacy: "PRIVATE" }]])
   ledger.answer("create", { kind: "failed", reason: "rateLimited" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(title).toHaveValue("Synthetic Alpha")
   visible(screen.getByText("YouTube won't create more playlists right now. Try again in a few minutes."))
   expect(view.onoutcome).toHaveBeenCalledWith({ kind: "create", outcome: { kind: "failed", reason: "rateLimited" } })
@@ -226,9 +247,11 @@ test("creation followed by a refused selection keeps the refusal visible and doe
   await user.type(screen.getByRole("textbox", { name: "Title" }), "Synthetic created")
   await user.click(screen.getByRole("button", { name: /^Create$/ }))
   ledger.answer("create", { kind: "created", id: playlist("PLcreated"), undo: null })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   ledger.answer("choose", { refused: "sync-full" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(screen.queryByRole("form", { name: "New playlist" })).not.toBeNull()
   visible(within(screen.getByRole("form", { name: "New playlist" })).getByText("This choice wasn't saved because browser sync is full."))
   visible(screen.getByRole("form", { name: "New playlist" }))
@@ -245,7 +268,8 @@ test("sort stays visibly confirmed while pending and reverts after refusal", asy
   await userEvent.setup().click(control)
   expect(ledger.calls("saveSortAZ")).toEqual([[true]])
   ledger.answer("saveSortAZ", { refused: "invalid" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(control.getAttribute("aria-checked")).toBe("false")
   visible(screen.getByText("The sort order wasn't saved. The previous order is shown."))
 })
@@ -267,11 +291,21 @@ test("chooser is controlled, shows the supplied title, and uses independent mode
     return source
   })
   const onrequest = mock(() => {})
-  const onrelease = mock((event: ChooserRelease) => { event.picker.close() })
+  const onrelease = mock((event: ChooserRelease) => {
+    event.picker.close()
+  })
   const props = {
-    open: false, context: context(), current: { kind: "playlist", id: beta, title: "Actual supplied title" },
-    label: "Synthetic destination", availability: { kind: "available" }, createSource, text,
-    platform: "linux", onrequest, onoutcome: mock(() => {}), onrelease
+    open: false,
+    context: context(),
+    current: { kind: "playlist", id: beta, title: "Actual supplied title" },
+    label: "Synthetic destination",
+    availability: { kind: "available" },
+    createSource,
+    text,
+    platform: "linux",
+    onrequest,
+    onoutcome: mock(() => {}),
+    onrelease
   } satisfies import("./types").PlaylistChooserProps
   const view = render(PlaylistChooser, { props })
   const trigger = screen.getByRole("button", { name: "Synthetic destination: Actual supplied title" })
@@ -286,7 +320,8 @@ test("chooser is controlled, shows the supplied title, and uses independent mode
   expect(onrequest).toHaveBeenCalledWith({ kind: "close", reason: "escape" })
   await view.rerender({ ...props, open: false })
   expect(onrelease).toHaveBeenCalledWith(expect.objectContaining({ kind: "released", reason: "caller", context: props.context, pending: [] }))
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(trigger).toHaveFocus()
   await view.rerender({ ...props, open: true })
   await list(ledgers[1]!)
@@ -299,9 +334,17 @@ test("the trigger asks to open on Enter or Space, names its dialog while open, a
   const { source, ledger } = chooserSource()
   const onrequest = mock((_: ChooserRequest) => {})
   const props = {
-    open: false, context: context(), current: { kind: "none" }, label: "Synthetic destination",
-    availability: { kind: "available" }, createSource: () => source, text, platform: "linux",
-    onrequest, onoutcome: () => {}, onrelease: (event: ChooserRelease) => event.picker.close()
+    open: false,
+    context: context(),
+    current: { kind: "none" },
+    label: "Synthetic destination",
+    availability: { kind: "available" },
+    createSource: () => source,
+    text,
+    platform: "linux",
+    onrequest,
+    onoutcome: () => {},
+    onrelease: (event: ChooserRelease) => event.picker.close()
   } satisfies import("./types").PlaylistChooserProps
   const view = render(PlaylistChooser, { props })
   const trigger = screen.getByRole("button", { name: "Synthetic destination: No playlist chosen" })
@@ -321,10 +364,21 @@ test("the trigger asks to open on Enter or Space, names its dialog while open, a
 
 test("private gather chooser is disabled with the exact explanation and performs no read", () => {
   const createSource = mock(() => chooserSource().source)
-  render(PlaylistChooser, { props: {
-    open: true, context: { ...context(), private: true }, current: { kind: "none" }, label: "Gather playlist",
-    availability: { kind: "available" }, createSource, text, platform: "linux", onrequest: () => {}, onoutcome: () => {}, onrelease: (event: ChooserRelease) => event.picker.close()
-  } })
+  render(PlaylistChooser, {
+    props: {
+      open: true,
+      context: { ...context(), private: true },
+      current: { kind: "none" },
+      label: "Gather playlist",
+      availability: { kind: "available" },
+      createSource,
+      text,
+      platform: "linux",
+      onrequest: () => {},
+      onoutcome: () => {},
+      onrelease: (event: ChooserRelease) => event.picker.close()
+    }
+  })
   expect(screen.getByRole("button", { name: "Gather playlist: No playlist chosen" })).toBeDisabled()
   visible(screen.getByText("The gather playlist can't be changed in a private window."))
   expect(createSource).not.toHaveBeenCalled()
@@ -336,7 +390,8 @@ test("a private item's pick exposes its skipped choice without a default confirm
   await list(ledger)
   await userEvent.setup().click(screen.getByRole("checkbox", { name: "Synthetic Alpha" }))
   ledger.answer("add", { kind: "already-in" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(ledger.calls("choose")).toEqual([])
   expect(view.onoutcome).toHaveBeenCalledWith({ kind: "tick", id: alpha, outcome: { kind: "picked", id: alpha, save: "already-in", undo: null, choice: { skipped: "private" } } })
   expect(view.onrequestclose).not.toHaveBeenCalled()
@@ -350,7 +405,8 @@ test("a failed save reports failure in place and does not display a checked fact
   const row = screen.getByRole("checkbox", { name: "Synthetic Alpha" })
   await userEvent.setup().click(row)
   ledger.answer("add", { kind: "failed" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(row).toHaveFocus()
   expect(row.getAttribute("aria-checked")).toBe("false")
   visible(screen.getByText("Couldn't save"))
@@ -361,7 +417,8 @@ test("unreadable membership and unknown list facts stay explicit", async () => {
   panel({ source, site: "music", mode: "save" })
   ledger.answer("cachedList", { rows: [{ id: alpha, title: "Synthetic Alpha" }], at: NOW })
   ledger.answer("membership", { kind: "unreadable" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   visible(screen.getByText("Couldn't check where this song already is"))
   visible(screen.getByText("Visibility unavailable"))
   expect(screen.queryByText(/\d+ songs?/)).toBeNull()
@@ -372,7 +429,8 @@ test("a missing title is not replaced with a playlist identifier", async () => {
   const { source, ledger } = chooserSource({ chosen: [gone] })
   const view = panel({ source, site: "www", mode: "choose" })
   ledger.answer("cachedList", { rows: [], at: NOW })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   visible(screen.getByRole("checkbox", { name: "Playlist title unavailable" }))
   visible(screen.getByText("No longer on YouTube, or not this account's"))
   expect(view.container.textContent).not.toContain("PLgone")
@@ -424,7 +482,13 @@ test("150 code points are accepted, longer titles are rejected, and creation tri
 })
 
 test("marks remove only a many-mode choice, and a refused pin leaves the actual pin in place", async () => {
-  const many = chooserSource({ chosen: [alpha], marks: new Map([[alpha, "missing"], [beta, "full"]]) })
+  const many = chooserSource({
+    chosen: [alpha],
+    marks: new Map([
+      [alpha, "missing"],
+      [beta, "full"]
+    ])
+  })
   const view = panel({ source: many.source, site: "www", mode: "many" })
   await list(many.ledger)
   visible(screen.getByText("Missing"))
@@ -433,7 +497,8 @@ test("marks remove only a many-mode choice, and a refused pin leaves the actual 
   expect(many.ledger.calls("choose")).toEqual([[alpha, false]])
   expect(many.ledger.calls("remove")).toEqual([])
   many.ledger.answer("choose", { refused: "invalid" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(screen.getByRole("checkbox", { name: "Synthetic Alpha" }).getAttribute("aria-checked")).toBe("true")
   view.unmount()
   const pin = chooserSource({ quickSave: alpha })
@@ -442,7 +507,8 @@ test("marks remove only a many-mode choice, and a refused pin leaves the actual 
   const control = screen.getByRole("button", { name: "Use Synthetic Beta for one-click save" })
   await userEvent.setup().click(control)
   pin.ledger.answer("pin", { refused: "sync-full" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(control.getAttribute("aria-pressed")).toBe("false")
   expect(screen.getByRole("button", { name: "One-click save goes to Synthetic Alpha" }).getAttribute("aria-pressed")).toBe("true")
 })
@@ -461,7 +527,8 @@ test("a private first pick confirms the save and says the playlist choice isn't 
   const row = screen.getByRole("checkbox", { name: "Synthetic Alpha" })
   await userEvent.setup().click(row)
   ledger.answer("add", { kind: "added", entry: entry("entry-alpha"), undo: undoing() })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   visible(screen.getByText("Saved. Private windows don't keep your playlist choice."))
   expect(ledger.calls("choose")).toEqual([])
   expect(screen.getByRole("button", { name: "Use Synthetic Alpha for one-click save" })).toBeDisabled()
@@ -475,7 +542,8 @@ test("a refused first-pick choice keeps the picker open with the save, the failu
   ledger.answer("add", { kind: "added", entry: entry("entry-alpha"), undo: undoing() })
   await settle()
   ledger.answer("choose", { refused: "sync-full" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(picker.closed).toBe(false)
   visible(screen.getByText("Saved this video to Synthetic Alpha"))
   visible(screen.getByText("This choice wasn't saved because browser sync is full."))
@@ -483,9 +551,13 @@ test("a refused first-pick choice keeps the picker open with the save, the failu
   await userEvent.setup().click(screen.getByRole("button", { name: "Try again" }))
   await settle()
   expect(ledger.calls("add")).toEqual([[alpha]])
-  expect(ledger.calls("choose")).toEqual([[alpha, true], [alpha, true]])
+  expect(ledger.calls("choose")).toEqual([
+    [alpha, true],
+    [alpha, true]
+  ])
   ledger.answer("choose", { ok: true })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(screen.queryByText("This choice wasn't saved because browser sync is full.")).toBeNull()
   expect(screen.queryByRole("button", { name: "Undo" })).toBeNull()
   expect(row.getAttribute("aria-checked")).toBe("true")
@@ -499,9 +571,11 @@ test("Undo after a refused first-pick choice removes the save", async () => {
   ledger.answer("add", { kind: "added", entry: entry("entry-alpha"), undo })
   await settle()
   ledger.answer("choose", { refused: "update-needed" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   await userEvent.setup().click(screen.getByRole("button", { name: "Undo" }))
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(undo).toHaveBeenCalledTimes(1)
   visible(screen.getByText("Removed"))
   expect(screen.queryByRole("button", { name: "Try again" })).toBeNull()
@@ -514,9 +588,11 @@ test("a failed Undo says so and keeps the choice retry", async () => {
   ledger.answer("add", { kind: "added", entry: entry("entry-alpha"), undo: undoing("failed") })
   await settle()
   ledger.answer("choose", { refused: "sync-full" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   await userEvent.setup().click(screen.getByRole("button", { name: "Undo" }))
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   visible(screen.getByText("Couldn't undo."))
   expect(screen.queryByRole("button", { name: "Undo" })).toBeNull()
   visible(screen.getByRole("button", { name: "Try again" }))
@@ -534,7 +610,8 @@ test("independent panels never share selection, search, or pending writes", asyn
   await userEvent.setup().click(firstPanel.getByRole("checkbox", { name: "Synthetic Alpha" }))
   expect(second.ledger.calls("choose")).toEqual([])
   first.ledger.answer("choose", { ok: true })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(firstPanel.getByRole("checkbox", { name: "Synthetic Alpha" }).getAttribute("aria-checked")).toBe("true")
   expect(secondPanel.getByRole("checkbox", { name: "Synthetic Alpha" }).getAttribute("aria-checked")).toBe("false")
   await userEvent.setup().type(firstPanel.getByRole("searchbox"), "Absent")
@@ -545,9 +622,19 @@ test("session release gives the caller the real pending outcome without choosing
   const { source, ledger } = itemSource()
   let released: ChooserRelease | null = null
   const props = {
-    open: true, context: context(), current: { kind: "none" }, label: "Synthetic destination",
-    availability: { kind: "available" }, createSource: () => source, text, platform: "linux",
-    onrequest: () => {}, onoutcome: mock(() => {}), onrelease: (event: ChooserRelease) => { released = event }
+    open: true,
+    context: context(),
+    current: { kind: "none" },
+    label: "Synthetic destination",
+    availability: { kind: "available" },
+    createSource: () => source,
+    text,
+    platform: "linux",
+    onrequest: () => {},
+    onoutcome: mock(() => {}),
+    onrelease: (event: ChooserRelease) => {
+      released = event
+    }
   } satisfies import("./types").PlaylistChooserProps
   const view = render(PlaylistChooser, { props })
   await screen.findByRole("dialog")
@@ -561,7 +648,8 @@ test("session release gives the caller the real pending outcome without choosing
   expect(release().picker.closed).toBe(false)
   expect(release().pending).toHaveLength(1)
   ledger.answer("add", { kind: "already-in" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(ledger.calls("choose")).toEqual([[alpha, true]])
   ledger.answer("choose", { refused: "sync-full" })
   const event = await release().pending[0]
@@ -576,17 +664,32 @@ test("two chooser containers release and mutate only their own model", async () 
   const releaseFirst = mock((event: ChooserRelease) => event.picker.close())
   const releaseSecond = mock((event: ChooserRelease) => event.picker.close())
   const base = {
-    open: true, context: context(), current: { kind: "none" }, label: "Synthetic destination",
-    availability: { kind: "available" }, text, platform: "linux", onrequest: () => {}, onoutcome: () => {}
+    open: true,
+    context: context(),
+    current: { kind: "none" },
+    label: "Synthetic destination",
+    availability: { kind: "available" },
+    text,
+    platform: "linux",
+    onrequest: () => {},
+    onoutcome: () => {}
   } satisfies Omit<import("./types").PlaylistChooserProps, "createSource" | "onrelease">
-  const firstView = render(PlaylistChooser, { props: {
-    ...base, context: { ...base.context, purpose: { kind: "named", title: "Synthetic first chooser", subtitle: null } },
-    createSource: () => first.source, onrelease: releaseFirst
-  } })
-  const secondView = render(PlaylistChooser, { props: {
-    ...base, context: { ...base.context, purpose: { kind: "named", title: "Synthetic second chooser", subtitle: null } },
-    createSource: () => second.source, onrelease: releaseSecond
-  } })
+  const firstView = render(PlaylistChooser, {
+    props: {
+      ...base,
+      context: { ...base.context, purpose: { kind: "named", title: "Synthetic first chooser", subtitle: null } },
+      createSource: () => first.source,
+      onrelease: releaseFirst
+    }
+  })
+  const secondView = render(PlaylistChooser, {
+    props: {
+      ...base,
+      context: { ...base.context, purpose: { kind: "named", title: "Synthetic second chooser", subtitle: null } },
+      createSource: () => second.source,
+      onrelease: releaseSecond
+    }
+  })
   await screen.findByRole("dialog", { name: "Synthetic second chooser" })
   await list(first.ledger)
   expect(second.ledger.calls("cachedList")).toEqual([[]])
@@ -599,14 +702,14 @@ test("two chooser containers release and mutate only their own model", async () 
   expect(second.ledger.calls("choose")).toEqual([[alpha, true]])
   expect(first.ledger.calls("choose")).toEqual([])
   second.ledger.answer("choose", { refused: "sync-full" })
-  await settle(); flushSync()
+  await settle()
+  flushSync()
   expect(secondDialog.getByRole("checkbox", { name: "Synthetic Alpha" }).getAttribute("aria-checked")).toBe("false")
   secondView.unmount()
 })
 
 test("choose mode opened from a shortcut has its own title and no line under it, on both sites", () => {
   const headings = createPickerText(englishI18n())
-  for (const site of ["www", "music"] as const)
-    expect(headings.heading({ kind: "shortcut" }, site)).toEqual({ title: "Pick the shortcut's playlist", subtitle: null })
+  for (const site of ["www", "music"] as const) expect(headings.heading({ kind: "shortcut" }, site)).toEqual({ title: "Pick the shortcut's playlist", subtitle: null })
   expect(headings.heading({ kind: "quickSave" }, "www")).toEqual({ title: "Save videos to…", subtitle: "One click will save here from now on." })
 })

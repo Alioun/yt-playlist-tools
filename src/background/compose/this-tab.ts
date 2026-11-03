@@ -35,7 +35,11 @@ export function composeThisTab(deps: {
     if (!found) return { kind: "none" }
     const asked = await deps.ask(found.tabId, "bg.query", { name: "auto-add" }).catch(() => null)
     if (asked?.kind === "answered" && asked.result) return { kind: "video", ...found, video: asked.result as Extract<ThisTab, { kind: "video" }>["video"] }
-    try { await deps.registrar.ensure(found.tabId, { core: true }) } catch { return { kind: "none" } }
+    try {
+      await deps.registrar.ensure(found.tabId, { core: true })
+    } catch {
+      return { kind: "none" }
+    }
     const info = await deps.tabs.runIn<JobOf<"videoInfo">>(found.tabId, { job: { kind: "videoInfo" } }, { site: "www", req, account: { kind: "account", acct: found.acct, signedIn: true } })
     if (info.kind !== "result" || !info.result.ok) return { kind: "none" }
     return { kind: "video", ...found, video: { video: info.result.data.videoId, title: info.result.data.title ?? null, state: { kind: "not-tracked" }, watched: null, playlists: [], channel: null } }
@@ -47,8 +51,10 @@ export function composeThisTab(deps: {
     if (!found) return { kind: "refused", reason: "unavailable" }
     if (found.acct !== request.acct) return { kind: "refused", reason: "account-changed" }
     const origin = { kind: "tab", tabId: request.tabId, incognito: req.incognito } as const
-    const report = await deps.flow.skip(request.skip ? { kind: "skip", acct: request.acct, video: request.video, playlists: "all" }
-      : { kind: "unskip", acct: request.acct, video: request.video }, origin)
+    const report = await deps.flow.skip(
+      request.skip ? { kind: "skip", acct: request.acct, video: request.video, playlists: "all" } : { kind: "unskip", acct: request.acct, video: request.video },
+      origin
+    )
     return report.kind === "remembered" ? { kind: request.skip ? "skipped" : "unskipped" } : { kind: "refused", reason: "unavailable" }
   }
   return { thisTab, skip }

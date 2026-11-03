@@ -23,9 +23,12 @@ const tabContract: RpcContract<TabCalls> = {
 const uiContract: RpcContract<UiCalls> = {
   "fixture.window": {
     payload: (value): value is UiCalls["fixture.window"]["payload"] => objectShape(value, { windowId: isNumber }),
-    result: (value): value is UiCalls["fixture.window"]["result"] => objectShape(value, {
-      page: page => page === "popup" || page === "settings" || page === "onboarding", windowId: isNumber, incognito: isFlag
-    }),
+    result: (value): value is UiCalls["fixture.window"]["result"] =>
+      objectShape(value, {
+        page: page => page === "popup" || page === "settings" || page === "onboarding",
+        windowId: isNumber,
+        incognito: isFlag
+      }),
     timeoutMs: 2_000
   }
 }
@@ -35,7 +38,9 @@ function routedFrom(sender: NativeSender, claims: unknown[][]): Transport<Native
     async send(message) {
       if (!fakeBrowser.runtime.onMessage.hasListeners()) throw new Error("No listeners available")
       let respond!: (response: unknown) => void
-      const response = new Promise<unknown>(resolve => { respond = resolve })
+      const response = new Promise<unknown>(resolve => {
+        respond = resolve
+      })
       const results: readonly unknown[] = await fakeBrowser.runtime.onMessage.trigger(message, sender, value => respond(value))
       claims.push([...results])
       return results.includes(true) ? response : undefined
@@ -54,7 +59,9 @@ function buildId(value: string): BuildId {
 export async function runNativeRuntimeFixture() {
   const build = buildId("fixture-build")
   const unhandledRejections: string[] = []
-  const record = () => { unhandledRejections.push("unhandled") }
+  const record = () => {
+    unhandledRejections.push("unhandled")
+  }
   process.on("unhandledRejection", record)
   fakeBrowser.reset()
 
@@ -108,10 +115,12 @@ export async function runNativeRuntimeFixture() {
   }
   fakeBrowser.runtime.onMessage.addListener(legacy)
 
-  const label = (value: unknown): unknown => JSON.parse(JSON.stringify(value, (key, item: unknown) =>
-    typeof item !== "number" ? item
-      : key === "tabId" ? tabNames.get(item) ?? "unknown-tab"
-      : key === "windowId" ? windowNames.get(item) ?? "unknown-window" : item))
+  const label = (value: unknown): unknown =>
+    JSON.parse(
+      JSON.stringify(value, (key, item: unknown) =>
+        typeof item !== "number" ? item : key === "tabId" ? (tabNames.get(item) ?? "unknown-tab") : key === "windowId" ? (windowNames.get(item) ?? "unknown-window") : item
+      )
+    )
   const calls: { readonly call: string; readonly claims: unknown[][]; readonly outcome: unknown }[] = []
   async function tabCall(call: string, sender: NativeSender, site: Site) {
     const claims: unknown[][] = []
@@ -154,25 +163,36 @@ export async function runNativeRuntimeFixture() {
   const wwwTabId = www.tab?.id ?? -1
   const target = tabTarget(tabs, wwwTabId)
   const answered = await target.send(envelope)
-  const rejected = await tabTarget({ sendMessage: () => Promise.reject(new Error("Synthetic closed tab")) }, wwwTabId).send(envelope)
-    .then(() => "resolved", () => "rejected")
+  const rejected = await tabTarget({ sendMessage: () => Promise.reject(new Error("Synthetic closed tab")) }, wwwTabId)
+    .send(envelope)
+    .then(
+      () => "resolved",
+      () => "rejected"
+    )
   const tabTargetResult = { sent, answered: answered ?? null, rejected, keys: Object.keys(target) }
 
   const qualifiedSent: unknown[] = []
   const qualifiedClaims: unknown[][] = []
-  const qualifiedTarget = tabTarget({
-    sendMessage(tabId, message, options) {
-      qualifiedSent.push(label({ tabId, message, options }))
-      return routedFrom(www, qualifiedClaims).send(message)
-    }
-  }, wwwTabId)
+  const qualifiedTarget = tabTarget(
+    {
+      sendMessage(tabId, message, options) {
+        qualifiedSent.push(label({ tabId, message, options }))
+        return routedFrom(www, qualifiedClaims).send(message)
+      }
+    },
+    wwwTabId
+  )
   const qualifiedCaller = createRpcCaller(qualifiedTarget, { build, contract: tabContract, deadline: timerDeadline })
   const qualifiedOutcome = await qualifiedCaller.call("fixture.hello", { site: "music" })
   qualifiedCaller.dispose()
   const qualifiedDisposed = await qualifiedCaller.call("fixture.hello", { site: "www" })
   const qualifiedResult = {
-    sent: qualifiedSent, claims: qualifiedClaims, outcome: label(qualifiedOutcome), afterDisposal: qualifiedDisposed,
-    targetKeys: Object.keys(qualifiedTarget), callerKeys: Object.keys(qualifiedCaller)
+    sent: qualifiedSent,
+    claims: qualifiedClaims,
+    outcome: label(qualifiedOutcome),
+    afterDisposal: qualifiedDisposed,
+    targetKeys: Object.keys(qualifiedTarget),
+    callerKeys: Object.keys(qualifiedCaller)
   }
 
   tabEndpoint.dispose()
@@ -183,8 +203,13 @@ export async function runNativeRuntimeFixture() {
   await new Promise(resolve => setTimeout(resolve, 0))
   process.off("unhandledRejection", record)
   return {
-    calls, tabTarget: tabTargetResult, qualifiedCaller: qualifiedResult, handled, afterDisposal,
-    listening: fakeBrowser.runtime.onMessage.hasListeners(), unhandledRejections
+    calls,
+    tabTarget: tabTargetResult,
+    qualifiedCaller: qualifiedResult,
+    handled,
+    afterDisposal,
+    listening: fakeBrowser.runtime.onMessage.hasListeners(),
+    unhandledRejections
   }
 }
 
@@ -193,7 +218,12 @@ if (import.meta.main) {
   for (const call of result.calls) process.stdout.write(`${JSON.stringify(call)}\n`)
   process.stdout.write(`${JSON.stringify({ tabTarget: result.tabTarget })}\n`)
   process.stdout.write(`${JSON.stringify({ qualifiedCaller: result.qualifiedCaller })}\n`)
-  process.stdout.write(`${JSON.stringify({
-    handled: result.handled, afterDisposal: result.afterDisposal, listening: result.listening, unhandledRejections: result.unhandledRejections
-  })}\n`)
+  process.stdout.write(
+    `${JSON.stringify({
+      handled: result.handled,
+      afterDisposal: result.afterDisposal,
+      listening: result.listening,
+      unhandledRejections: result.unhandledRejections
+    })}\n`
+  )
 }

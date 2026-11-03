@@ -47,7 +47,7 @@ export function explain(file: string): { total: number; shares: Share[] } {
     }
     starts.forEach((start, position) => {
       const end = starts[position + 1]?.column ?? text.length
-      const name = start.source === undefined ? "(unmapped)" : map.sources[start.source] ?? "(unknown)"
+      const name = start.source === undefined ? "(unmapped)" : (map.sources[start.source] ?? "(unknown)")
       const list = slices.get(name) ?? []
       list.push({ line: index, start: start.column, end })
       slices.set(name, list)
@@ -55,23 +55,27 @@ export function explain(file: string): { total: number; shares: Share[] } {
   })
   const total = gzipKb(code)
   const without = (removed: readonly Slice[]) => {
-    const byLine = Map.groupBy(removed, (slice) => slice.line)
-    return lines.map((text, index) => {
-      const cut = (byLine.get(index) ?? []).toSorted((a, b) => a.start - b.start)
-      let kept = ""
-      let at = 0
-      for (const slice of cut) {
-        kept += text.slice(at, slice.start)
-        at = slice.end
-      }
-      return kept + text.slice(at)
-    }).join("\n")
+    const byLine = Map.groupBy(removed, slice => slice.line)
+    return lines
+      .map((text, index) => {
+        const cut = (byLine.get(index) ?? []).toSorted((a, b) => a.start - b.start)
+        let kept = ""
+        let at = 0
+        for (const slice of cut) {
+          kept += text.slice(at, slice.start)
+          at = slice.end
+        }
+        return kept + text.slice(at)
+      })
+      .join("\n")
   }
-  const shares = [...slices].map(([name, list]) => ({
-    source: name.replace(/^(\.\.\/)+/, "").replace(/^.*node_modules\//, "node_modules/"),
-    bytes: list.reduce((sum, slice) => sum + Buffer.byteLength(lines[slice.line]?.slice(slice.start, slice.end) ?? ""), 0),
-    kb: total - gzipKb(without(list))
-  })).sort((a, b) => b.kb - a.kb)
+  const shares = [...slices]
+    .map(([name, list]) => ({
+      source: name.replace(/^(\.\.\/)+/, "").replace(/^.*node_modules\//, "node_modules/"),
+      bytes: list.reduce((sum, slice) => sum + Buffer.byteLength(lines[slice.line]?.slice(slice.start, slice.end) ?? ""), 0),
+      kb: total - gzipKb(without(list))
+    }))
+    .sort((a, b) => b.kb - a.kb)
   return { total, shares }
 }
 

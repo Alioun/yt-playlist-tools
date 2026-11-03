@@ -19,12 +19,17 @@ function outDir() {
 }
 
 const asset = (tag: string, name: string) => ({ name, browser_download_url: `https://github.com/Alioun/yt-playlist-tools/releases/download/${tag}/${name}` })
-const apiRelease = (tag: string, prerelease: boolean, published: string, assets: { name: string; browser_download_url: string }[] = []) =>
-  ({ tag_name: tag, draft: false, prerelease, published_at: published, assets })
+const apiRelease = (tag: string, prerelease: boolean, published: string, assets: { name: string; browser_download_url: string }[] = []) => ({
+  tag_name: tag,
+  draft: false,
+  prerelease,
+  published_at: published,
+  assets
+})
 
 function build(releases: Release[]) {
   const out = outDir()
-  const hashes = new Map(releases.flatMap(release => release.xpi ? [[release.xpi.url, `hash-of-${release.version}`] as const] : []))
+  const hashes = new Map(releases.flatMap(release => (release.xpi ? [[release.xpi.url, `hash-of-${release.version}`] as const] : [])))
   buildSite({ root, out, releases, hashes })
   const read = (path: string) => readFileSync(join(out, path), "utf8")
   return { out, read, updates: JSON.parse(read("beta/updates.json")) }
@@ -51,8 +56,18 @@ test("before the first beta, the site has the policy, no beta notice and an empt
 test("during the beta, testers get every signed beta in version order, with HTTPS links and hashes", () => {
   const { updates } = build(during)
   expect(updates.addons[GECKO_ID].updates).toEqual([
-    { version: "1.99.1", update_link: "https://github.com/Alioun/yt-playlist-tools/releases/download/v1.99.1/perchling-1.99.1.xpi", update_hash: "sha256:hash-of-1.99.1", applications: { gecko: { strict_min_version: "140.0" } } },
-    { version: "1.99.2", update_link: "https://github.com/Alioun/yt-playlist-tools/releases/download/v1.99.2/perchling-1.99.2.xpi", update_hash: "sha256:hash-of-1.99.2", applications: { gecko: { strict_min_version: "140.0" } } }
+    {
+      version: "1.99.1",
+      update_link: "https://github.com/Alioun/yt-playlist-tools/releases/download/v1.99.1/perchling-1.99.1.xpi",
+      update_hash: "sha256:hash-of-1.99.1",
+      applications: { gecko: { strict_min_version: "140.0" } }
+    },
+    {
+      version: "1.99.2",
+      update_link: "https://github.com/Alioun/yt-playlist-tools/releases/download/v1.99.2/perchling-1.99.2.xpi",
+      update_hash: "sha256:hash-of-1.99.2",
+      applications: { gecko: { strict_min_version: "140.0" } }
+    }
   ])
 })
 
@@ -77,23 +92,16 @@ test("at launch, the AMO-signed 2.0.0 is the last entry, so testers move to the 
 })
 
 test("a stable release without an attached .xpi adds no hand-off entry", () => {
-  const { updates } = build(parseReleases([
-    apiRelease("v1.99.1", true, "2026-12-01T10:00:00Z", [asset("v1.99.1", "a.xpi")]),
-    apiRelease("v2.0.0", false, "2027-01-05T10:00:00Z")
-  ]))
+  const { updates } = build(parseReleases([apiRelease("v1.99.1", true, "2026-12-01T10:00:00Z", [asset("v1.99.1", "a.xpi")]), apiRelease("v2.0.0", false, "2027-01-05T10:00:00Z")]))
   expect(updates.addons[GECKO_ID].updates.map((entry: { version: string }) => entry.version)).toEqual(["1.99.1"])
 })
 
 test("a release with two .xpi files fails the build rather than guessing", () => {
-  expect(() => parseReleases([apiRelease("v1.99.1", true, "2026-12-01T10:00:00Z", [asset("v1.99.1", "a.xpi"), asset("v1.99.1", "b.xpi")])]))
-    .toThrow("v1.99.1 has 2 .xpi files")
+  expect(() => parseReleases([apiRelease("v1.99.1", true, "2026-12-01T10:00:00Z", [asset("v1.99.1", "a.xpi"), asset("v1.99.1", "b.xpi")])])).toThrow("v1.99.1 has 2 .xpi files")
 })
 
 test("versions sort by number, not as text", () => {
-  const releases = parseReleases([
-    apiRelease("v1.99.10", true, "2026-12-20T10:00:00Z", [asset("v1.99.10", "c.xpi")]),
-    apiRelease("v1.99.9", true, "2026-12-19T10:00:00Z", [asset("v1.99.9", "b.xpi")])
-  ])
+  const releases = parseReleases([apiRelease("v1.99.10", true, "2026-12-20T10:00:00Z", [asset("v1.99.10", "c.xpi")]), apiRelease("v1.99.9", true, "2026-12-19T10:00:00Z", [asset("v1.99.9", "b.xpi")])])
   expect(releases.map(release => release.version)).toEqual(["1.99.9", "1.99.10"])
 })
 

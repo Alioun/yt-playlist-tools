@@ -1,9 +1,7 @@
 import type { Site } from "../../shared/contracts"
 import type { Platform } from "../../shared/keys"
 import type { AccountKey, PlaylistId } from "../../shared/model"
-import type {
-  CreateOutcome, PickerModel, PinOutcome, RefreshOutcome, SettingOutcome, TickOutcome, UndoOutcome, UntickOutcome
-} from "../../shared/picker/model.svelte"
+import type { CreateOutcome, PickerModel, PinOutcome, RefreshOutcome, SettingOutcome, TickOutcome, UndoOutcome, UntickOutcome } from "../../shared/picker/model.svelte"
 import type { PickerSource } from "../../shared/picker/source"
 import type { PickerText } from "./text"
 
@@ -25,7 +23,8 @@ export type CloseRequest = { readonly reason: "escape" | "dismiss" | "trigger" |
 export type PickerHelp = "openYouTube" | "createChannel"
 /** Where New playlist's links go when creating can't be used here (UI-PICK-11, YT-NEW-07). */
 export const pickerHelpUrl: Readonly<Record<PickerHelp, string>> = {
-  openYouTube: "https://www.youtube.com/", createChannel: "https://www.youtube.com/create_channel"
+  openYouTube: "https://www.youtube.com/",
+  createChannel: "https://www.youtube.com/create_channel"
 }
 
 export type PickerPanelProps = {
@@ -46,15 +45,9 @@ export type ChooserContext = {
   readonly private: boolean
   readonly purpose: PickerPurpose & { readonly kind: "quickSave" | "gather" | "named" }
 }
-export type CurrentPlaylist =
-  | { readonly kind: "none" }
-  | { readonly kind: "playlist"; readonly id: PlaylistId; readonly title: string | null }
-export type ChooserAvailability =
-  | { readonly kind: "available" }
-  | { readonly kind: "disabled"; readonly explanation: string }
-export type ChooserRequest =
-  | { readonly kind: "open" }
-  | { readonly kind: "close"; readonly reason: CloseRequest["reason"] }
+export type CurrentPlaylist = { readonly kind: "none" } | { readonly kind: "playlist"; readonly id: PlaylistId; readonly title: string | null }
+export type ChooserAvailability = { readonly kind: "available" } | { readonly kind: "disabled"; readonly explanation: string }
+export type ChooserRequest = { readonly kind: "open" } | { readonly kind: "close"; readonly reason: CloseRequest["reason"] }
 export type ChooserRelease = {
   readonly kind: "released"
   readonly reason: "caller" | "context" | "unmount" | "disabled"

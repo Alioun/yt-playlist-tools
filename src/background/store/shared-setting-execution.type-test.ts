@@ -2,7 +2,7 @@ import { executeSharedSetting, type LocalSettingsWriteResult } from "./shared-se
 import type { SharedSettingChange } from "./settings-edit"
 import type { createStartingLocalFilterWriter } from "./local-filter-writer"
 import type { BrowserStartingOwner } from "../adapters/starting-owner"
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 export type ExecutionProofs = [
   Check<Equal<keyof typeof import("./shared-setting-execution"), "executeSharedSetting">>,

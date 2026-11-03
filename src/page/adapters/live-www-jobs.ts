@@ -8,7 +8,9 @@ import { createWwwResolver } from "./www-resolver"
 export function createLiveWwwJobs({ window, document, reads }: JobsHost): Jobs {
   const resolver = createWwwResolver(window)
   return createJobsGateway({
-    site: wwwGateway, reads,
-    requests: createLiveWwwRequests({ window, document, page: reads.page, resolver }), queue: createLiveWwwQueue({ window, document, resolver })
+    site: wwwGateway,
+    reads,
+    requests: createLiveWwwRequests({ window, document, page: reads.page, resolver }),
+    queue: createLiveWwwQueue({ window, document, resolver })
   })
 }

@@ -1,7 +1,4 @@
-import {
-  DecodeError, decodeSyncMeta, decodeSyncState, documentKey, parseDocumentKey, isAccountKey, isPlaylistId,
-  type DocumentKey, type Stamp
-} from "../../shared/model"
+import { DecodeError, decodeSyncMeta, decodeSyncState, documentKey, parseDocumentKey, isAccountKey, isPlaylistId, type DocumentKey, type Stamp } from "../../shared/model"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import { encodeSyncDocument, projectSyncWrite, readSyncDocument, type ReadSyncResult, type SyncItem } from "./sync-codec"
 
@@ -19,10 +16,7 @@ export type SyncWritePlanInput = {
     | { readonly kind: "flush" }
     | { readonly kind: "unchanged"; readonly key: DocumentKey }
     | { readonly kind: "changed"; readonly key: DocumentKey; readonly document: JsonObject }
-    | { readonly kind: "changed-batch"; readonly documents: readonly [
-      { readonly key: DocumentKey; readonly document: JsonObject },
-      ...{ readonly key: DocumentKey; readonly document: JsonObject }[]
-    ] }
+    | { readonly kind: "changed-batch"; readonly documents: readonly [{ readonly key: DocumentKey; readonly document: JsonObject }, ...{ readonly key: DocumentKey; readonly document: JsonObject }[]] }
 }
 export type SyncDocumentRecord = {
   readonly key: DocumentKey
@@ -33,12 +27,12 @@ export type SyncDocumentRecord = {
 export type SyncWritePlan =
   | { kind: "unchanged" }
   | {
-    kind: "planned"
-    items: readonly SyncItem[]
-    sent: readonly SyncDocumentRecord[]
-    repairs: readonly SyncDocumentRecord[]
-    metadata: JsonObject
-  }
+      kind: "planned"
+      items: readonly SyncItem[]
+      sent: readonly SyncDocumentRecord[]
+      repairs: readonly SyncDocumentRecord[]
+      metadata: JsonObject
+    }
   | { kind: "refused"; reason: "sync-full" | "update-needed" | "invalid" }
   | { kind: "unavailable" }
 
@@ -73,8 +67,7 @@ function complete(result: ReadSyncResult): result is Extract<ReadSyncResult, { k
 export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
   const unavailable = { kind: "unavailable" } as const
   const { local, sync, intent } = input
-  if (!jsonObject(local) || !jsonObject(sync) || Object.keys(Object.prototype).length > 0 ||
-    !Object.hasOwn(local, "sync") || !Object.hasOwn(sync, "s:meta")) return unavailable
+  if (!jsonObject(local) || !jsonObject(sync) || Object.keys(Object.prototype).length > 0 || !Object.hasOwn(local, "sync") || !Object.hasOwn(sync, "s:meta")) return unavailable
   const rawMeta = sync["s:meta"]
   if (!jsonObject(rawMeta) || (Object.hasOwn(rawMeta, "reset") && rawMeta.reset === true)) return unavailable
   let state
@@ -96,10 +89,10 @@ export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
   const remotes = new Map<string, ReadSyncResult>()
   for (const item of proposed) {
     if (!jsonObject(item) || !jsonObject(item.key)) return invalid
-    if (item.key.kind !== "settings" && (!isAccountKey(item.key.acct) ||
-      (item.key.kind === "filter" && !isPlaylistId(item.key.playlist)))) return invalid
+    if (item.key.kind !== "settings" && (!isAccountKey(item.key.acct) || (item.key.kind === "filter" && !isPlaylistId(item.key.playlist)))) return invalid
     if (intent.kind === "changed-batch" && Object.keys(item).some(field => field !== "key" && field !== "document")) return invalid
-    const name = documentKey(item.key), key = parseDocumentKey(name)
+    const name = documentKey(item.key),
+      key = parseDocumentKey(name)
     if (!key || remotes.has(name)) return invalid
     remotes.set(name, readSyncDocument({ key, items: current }))
   }
@@ -107,8 +100,7 @@ export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
   if ([...remotes.values()].some(remote => remote.kind === "newer-version")) return { kind: "refused", reason: "update-needed" }
   for (const [name, remote] of remotes) {
     const base = `s:${name.slice(4)}`
-    if (remote.kind === "invalid" || remote.kind === "incomplete" ||
-      (Object.hasOwn(sync, base) && sync[base] === null)) return unavailable
+    if (remote.kind === "invalid" || remote.kind === "incomplete" || (Object.hasOwn(sync, base) && sync[base] === null)) return unavailable
   }
 
   const documents = new Map<string, SyncDocumentRecord>()
@@ -116,7 +108,8 @@ export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
   const names = intent.kind === "unchanged" ? [documentKey(intent.key)] : Object.keys(local).filter(key => key.startsWith("doc:"))
   for (const name of names) {
     if (!Object.hasOwn(local, name)) continue
-    const key = parseDocumentKey(name), raw = local[name]
+    const key = parseDocumentKey(name),
+      raw = local[name]
     if (!key || documentKey(key) !== name || !jsonObject(raw)) return unavailable
     const base = `s:${name.slice(4)}`
     const own = readSyncDocument({ key, items: [{ key: base, value: raw }] })
@@ -143,7 +136,11 @@ export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
   }
   // SYNC-16: a mark or label refresh saved past the quota waits outside admission, so it never blocks anything else.
   const waiting = new Map<string, SyncDocumentRecord>()
-  for (const [name, record] of documents) if (state.deferred?.[name] === record.gen) { waiting.set(name, record); documents.delete(name) }
+  for (const [name, record] of documents)
+    if (state.deferred?.[name] === record.gen) {
+      waiting.set(name, record)
+      documents.delete(name)
+    }
   if (intent.kind === "unchanged") {
     const remote = remotes.get(documentKey(intent.key))
     return !Object.hasOwn(local, documentKey(intent.key)) && remote && complete(remote) ? unavailable : { kind: "unchanged" }
@@ -169,16 +166,14 @@ export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
     const name = documentKey(item.key)
     const candidate = readSyncDocument({ key: item.key, items: [{ key: `s:${name.slice(4)}`, value: item.document }] })
     if (!complete(candidate)) return invalid
-    documents.set(name, { key: item.key, name,
-      gen: candidate.kind === "value" ? candidate.value.document.gen : candidate.document.gen, document: item.document })
+    documents.set(name, { key: item.key, name, gen: candidate.kind === "value" ? candidate.value.document.gen : candidate.document.gen, document: item.document })
     waiting.delete(name)
   }
   const set = new Map<string, JsonValue>()
   for (const [name, outgoing] of documents) {
     const encoded = encodeSyncDocument(outgoing)
     if (encoded.kind === "item-too-large") return { kind: "refused", reason: "sync-full" }
-    if (encoded.kind !== "encoded") return remotes.has(name)
-      ? { kind: "refused", reason: "invalid" } : unavailable
+    if (encoded.kind !== "encoded") return remotes.has(name) ? { kind: "refused", reason: "invalid" } : unavailable
     for (const item of encoded.encoded.items) {
       if (set.has(item.key)) return unavailable
       set.set(item.key, item.value)
@@ -187,20 +182,21 @@ export function planSyncWrite(input: SyncWritePlanInput): SyncWritePlan {
   let items: readonly SyncItem[] = [...set].map(([key, value]) => ({ key, value }))
   const sent = [...documents.values()]
   if (intent.kind !== "flush" || set.size > 0) {
-    const projection = projectSyncWrite({ current, set: [...set].map(([key, value]) => ({ key, value })),
-      limits: intent.kind === "flush" || input.allowance === "headroom" ? "quota" : "budget" })
+    const projection = projectSyncWrite({ current, set: [...set].map(([key, value]) => ({ key, value })), limits: intent.kind === "flush" || input.allowance === "headroom" ? "quota" : "budget" })
     if (projection.kind === "invalid") return unavailable
     if (projection.kind === "full") return { kind: "refused", reason: "sync-full" }
   }
   // A flush adds each waiting document that now fits the quota, in key order, and leaves the rest for a later flush.
-  if (intent.kind === "flush") for (const name of [...waiting.keys()].sort()) {
-    const record = waiting.get(name)!, encoded = encodeSyncDocument(record)
-    if (encoded.kind !== "encoded") continue
-    const next = [...items, ...encoded.encoded.items]
-    if (projectSyncWrite({ current, set: next, limits: "quota" }).kind !== "fits") continue
-    items = next
-    sent.push(record)
-  }
+  if (intent.kind === "flush")
+    for (const name of [...waiting.keys()].sort()) {
+      const record = waiting.get(name)!,
+        encoded = encodeSyncDocument(record)
+      if (encoded.kind !== "encoded") continue
+      const next = [...items, ...encoded.encoded.items]
+      if (projectSyncWrite({ current, set: next, limits: "quota" }).kind !== "fits") continue
+      items = next
+      sent.push(record)
+    }
   return { kind: "planned", items, sent, repairs, metadata: rawMeta }
 }
 

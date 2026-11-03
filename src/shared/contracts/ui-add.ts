@@ -40,41 +40,57 @@ export type UiAddMessages = {
 
 const natural = (value: unknown) => typeof value === "number" && Number.isSafeInteger(value) && value >= 0
 const is = (expected: string) => (value: unknown) => value === expected
-const oneOf = (...values: readonly string[]) => (value: unknown) => typeof value === "string" && values.includes(value)
+const oneOf =
+  (...values: readonly string[]) =>
+  (value: unknown) =>
+    typeof value === "string" && values.includes(value)
 const optionalTitle = { title: (title: unknown) => typeof title === "string" && title.length <= TITLE_LIMIT }
 const opener = oneOf("playing-now", "popup")
 function isPopupAddRequest(value: unknown): value is PopupAddRequest {
-  return objectShape(value, { site: is("music"), video: isVideoId, via: is("quick-save"), opener: is("playing-now") }, optionalTitle)
-    || objectShape(value, { site: isSite, video: isVideoId, via: oneOf("picker", "choose-quick-save"), opener, playlist: isPlaylistId }, optionalTitle)
+  return (
+    objectShape(value, { site: is("music"), video: isVideoId, via: is("quick-save"), opener: is("playing-now") }, optionalTitle) ||
+    objectShape(value, { site: isSite, video: isVideoId, via: oneOf("picker", "choose-quick-save"), opener, playlist: isPlaylistId }, optionalTitle)
+  )
 }
-const membershipRow = (row: unknown) => objectShape(row, { id: isPlaylistId, title: v => typeof v === "string" && v.length <= 1000, contains: v => typeof v === "boolean" },
-  { privacy: oneOf("PRIVATE", "UNLISTED", "PUBLIC"), count: natural })
+const membershipRow = (row: unknown) =>
+  objectShape(
+    row,
+    { id: isPlaylistId, title: v => typeof v === "string" && v.length <= 1000, contains: v => typeof v === "boolean" },
+    { privacy: oneOf("PRIVATE", "UNLISTED", "PUBLIC"), count: natural }
+  )
 export const uiAddContract: RpcContract<UiAddMessages> = {
   "ui.add": {
     payload: (value): value is UiAddPayload => objectShape(value, { tabId: natural, acct: isAccountKey, request: isPopupAddRequest }, { windowId: natural }),
-    result: (value): value is UiAddAnswer => objectShape(value, { kind: oneOf("added"), text: text => typeof text === "string" && text.length <= 2000 }, { undo: isUndoHandle })
-      || objectShape(value, { kind: oneOf("already-in", "failed"), text: text => typeof text === "string" && text.length <= 2000 })
-      || objectShape(value, { kind: oneOf("choose", "signed-out", "no-tab", "account-changed", "unavailable") }),
+    result: (value): value is UiAddAnswer =>
+      objectShape(value, { kind: oneOf("added"), text: text => typeof text === "string" && text.length <= 2000 }, { undo: isUndoHandle }) ||
+      objectShape(value, { kind: oneOf("already-in", "failed"), text: text => typeof text === "string" && text.length <= 2000 }) ||
+      objectShape(value, { kind: oneOf("choose", "signed-out", "no-tab", "account-changed", "unavailable") }),
     // A save waits for the tab's membership read and the write, and for a playlist made under 30 s ago to be 30 s old (YM-SAVE-13).
     timeoutMs: 60_000
   },
   "ui.remove": {
-    payload: (value): value is UiRemovePayload => objectShape(value, { tabId: natural, acct: isAccountKey, request: r => objectShape(r, { site: isSite, video: isVideoId,
-      playlist: isPlaylistId, opener, tick: t => t === null || isUndoHandle(t) }) }, { windowId: natural }),
-    result: (value): value is UiRemoveAnswer => objectShape(value, { kind: oneOf("removed"), undo: u => u === null || isUndoHandle(u) })
-      || objectShape(value, { kind: oneOf("failed", "no-tab", "account-changed", "unavailable") }),
+    payload: (value): value is UiRemovePayload =>
+      objectShape(
+        value,
+        { tabId: natural, acct: isAccountKey, request: r => objectShape(r, { site: isSite, video: isVideoId, playlist: isPlaylistId, opener, tick: t => t === null || isUndoHandle(t) }) },
+        { windowId: natural }
+      ),
+    result: (value): value is UiRemoveAnswer =>
+      objectShape(value, { kind: oneOf("removed"), undo: u => u === null || isUndoHandle(u) }) || objectShape(value, { kind: oneOf("failed", "no-tab", "account-changed", "unavailable") }),
     timeoutMs: 60_000
   },
   "ui.membership": {
     payload: (value): value is UiMembershipPayload => objectShape(value, { tabId: natural, acct: isAccountKey, site: isSite, video: isVideoId }, { windowId: natural }),
-    result: (value): value is UiMembershipAnswer => objectShape(value, { kind: oneOf("read"), rows: r => Array.isArray(r) && r.length <= 5000 && r.every(membershipRow) })
-      || objectShape(value, { kind: oneOf("unreadable", "no-tab", "account-changed", "unavailable") }),
+    result: (value): value is UiMembershipAnswer =>
+      objectShape(value, { kind: oneOf("read"), rows: r => Array.isArray(r) && r.length <= 5000 && r.every(membershipRow) }) ||
+      objectShape(value, { kind: oneOf("unreadable", "no-tab", "account-changed", "unavailable") }),
     timeoutMs: 45_000
   },
   "ui.addUndo": {
     payload: (value): value is UiAddUndoPayload => objectShape(value, { tabId: natural, acct: isAccountKey, handle: isUndoHandle }, { windowId: natural, site: isSite }),
-    result: (value): value is UiAddUndoAnswer => objectShape(value, { kind: oneOf("undone", "expired", "no-tab", "account-changed", "unavailable") })
-      || objectShape(value, { kind: oneOf("failed"), text: text => typeof text === "string" && text.length <= 2000 }),
+    result: (value): value is UiAddUndoAnswer =>
+      objectShape(value, { kind: oneOf("undone", "expired", "no-tab", "account-changed", "unavailable") }) ||
+      objectShape(value, { kind: oneOf("failed"), text: text => typeof text === "string" && text.length <= 2000 }),
     timeoutMs: 60_000
   }
 }

@@ -15,7 +15,9 @@ async function statuses(h: ReturnType<typeof monitorWorld>, c: TabContext, enabl
   if (result.kind !== "statuses") throw Error("Expected actual Monitor statuses")
   return result.statuses
 }
-async function state(h: ReturnType<typeof monitorWorld>, c: TabContext, enabled?: readonly EnabledMonitorFeature[]) { return (await statuses(h, c, enabled))[0]?.state }
+async function state(h: ReturnType<typeof monitorWorld>, c: TabContext, enabled?: readonly EnabledMonitorFeature[]) {
+  return (await statuses(h, c, enabled))[0]?.state
+}
 function seeded(c = context()) {
   const h = monitorWorld()
   h.seedContext(c, visible, syntheticHealthFacts(c.tab.site))
@@ -27,7 +29,10 @@ test("three eligible consecutive timeouts gate failure and success clears it", a
   try {
     h.routes(c, "add", "timeout")
     expect(await state(h, c)).toBe("working")
-    for (let n = 0; n < 2; n++) { await h.monitor.signal(c, signalValue("timeout"), answered); expect(await state(h, c)).toBe("working") }
+    for (let n = 0; n < 2; n++) {
+      await h.monitor.signal(c, signalValue("timeout"), answered)
+      expect(await state(h, c)).toBe("working")
+    }
     await h.monitor.interrupted(c, "add", "offline")
     await h.monitor.signal(c, signalValue("timeout"), answered)
     expect(await state(h, c)).toBe("working")
@@ -40,7 +45,9 @@ test("three eligible consecutive timeouts gate failure and success clears it", a
     await h.monitor.succeeded(c, "add")
     expect(await state(h, c)).toBe("working")
     expect((await h.monitor.diagnostics(c))?.signals.some(row => row.signal.kind === "timeout" && !row.active)).toBe(true)
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("two no-effects are required and an intervening success resets the run", async () => {
@@ -55,7 +62,9 @@ test("two no-effects are required and an intervening success resets the run", as
     expect(await state(h, c)).toBe("not-working")
     await h.monitor.reloadPassed(c)
     expect(await state(h, c)).toBe("working")
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("cannot-measure is partial until the third playback and measured playback recovers", async () => {
@@ -63,7 +72,10 @@ test("cannot-measure is partial until the third playback and measured playback r
   const value = signalValue("cannot-measure", { job: null, route: null })
   try {
     expect(await state(h, c)).toBe("working")
-    for (let n = 0; n < 2; n++) { await h.monitor.signal(c, value, { kind: "playback" }); expect(await state(h, c)).toBe("partly-working") }
+    for (let n = 0; n < 2; n++) {
+      await h.monitor.signal(c, value, { kind: "playback" })
+      expect(await state(h, c)).toBe("partly-working")
+    }
     await h.monitor.measured(c)
     expect(await state(h, c)).toBe("working")
     for (let n = 0; n < 2; n++) await h.monitor.signal(c, value, { kind: "playback" })
@@ -72,7 +84,9 @@ test("cannot-measure is partial until the third playback and measured playback r
     expect(await state(h, c)).toBe("not-working")
     await h.monitor.measured(c)
     expect(await state(h, c)).toBe("working")
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("anchors require settled relevant visible content, six distinct links and fewer than half recognised", () => {
@@ -99,7 +113,9 @@ test("one shipped fallback keeps the required job working and exhaustion breaks 
     expect(await state(h, c)).toBe("not-working")
     await h.monitor.signal(c, signalValue("fell-back"), { kind: "diagnostic" })
     expect(await state(h, c)).toBe("working")
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("optional jobs and anchors are partial while required anchors stop the feature", async () => {
@@ -107,10 +123,18 @@ test("optional jobs and anchors are partial while required anchors stop the feat
   try {
     h.routes(c, "remove", "rejected")
     expect(await state(h, c)).toBe("partly-working")
-    h.changeHealth(c, facts => ({ ...facts, anchors: new Map<AnchorId, AnchorObservation>([...facts.anchors, ["www-cards", { kind: "content", relevant: true, visible: true, navigationAt: 0, observedAt: 3_000, distinctMainLinks: 6, recognised: 2 }]]) }))
+    h.changeHealth(c, facts => ({
+      ...facts,
+      anchors: new Map<AnchorId, AnchorObservation>([
+        ...facts.anchors,
+        ["www-cards", { kind: "content", relevant: true, visible: true, navigationAt: 0, observedAt: 3_000, distinctMainLinks: 6, recognised: 2 }]
+      ])
+    }))
     expect(await state(h, c, [pageFeature("shortcuts")])).toBe("partly-working")
     expect(await state(h, c, [pageFeature("quick-save")])).toBe("not-working")
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("core failure stops the site while missing account keys preserve queue actions", async () => {
@@ -121,23 +145,30 @@ test("core failure stops the site while missing account keys preserve queue acti
     expect((await statuses(h, c, enabled)).map(row => row.state)).toEqual(["not-working", "working", "working"])
     h.changeHealth(c, facts => ({ ...facts, core: "missing" }))
     expect((await statuses(h, c, enabled)).map(row => row.state)).toEqual(["not-working", "not-working", "not-working"])
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("Music action detail names unavailable enabled actions and preserves queue actions", async () => {
-  const c = context("music"), { h } = seeded(c)
+  const c = context("music"),
+    { h } = seeded(c)
   const feature = pageFeature("music-actions")
   if (feature.id !== "music-actions") throw Error("Expected Music feature")
   const enabled = [{ ...feature, options: { ...feature.options, buttons: { ...feature.options.buttons, save: true, like: true } } }]
   try {
     h.changeHealth(c, facts => ({ ...facts, accountKeys: "missing" }))
-    expect(await statuses(h, c, enabled)).toEqual([{ feature: "music-actions", state: "partly-working", jobs: ["account"], anchors: [], actions: ["save", "like"], kinds: ["missing"], destinations: [] }])
+    expect(await statuses(h, c, enabled)).toEqual([
+      { feature: "music-actions", state: "partly-working", jobs: ["account"], anchors: [], actions: ["save", "like"], kinds: ["missing"], destinations: [] }
+    ])
     h.routes(c, "queueInsert", "missing")
     expect((await statuses(h, c, enabled))[0]?.actions).toEqual(["next", "queue", "save", "like"])
     expect(await state(h, c, enabled)).toBe("not-working")
     const keys = pageFeature("music-keys")
     expect((await statuses(h, c, [keys]))[0]?.actions).toEqual(["next", "queue", "save", "like", "library"])
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("Gather failures name destinations and only a failed player stops Gather", async () => {
@@ -151,7 +182,9 @@ test("Gather failures name destinations and only a failed player stops Gather", 
     expect(await state(h, c, [pageFeature("gather")])).toBe("partly-working")
     await h.monitor.signal(c, signal, { kind: "gather", destination: "player" })
     expect((await statuses(h, c, [pageFeature("gather")]))[0]).toMatchObject({ state: "not-working", destinations: ["player", "queue"] })
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("YouTube's player failing in one tab stops Gather in the account's other tabs too, and a gather the player confirms restarts it", async () => {
@@ -165,7 +198,9 @@ test("YouTube's player failing in one tab stops Gather in the account's other ta
     expect((await statuses(h, other, [pageFeature("gather")]))[0]).toMatchObject({ state: "not-working", destinations: ["player"] })
     h.changeHealth(other, facts => ({ ...facts, gather: { ...facts.gather, player: "usable" } }))
     expect(await state(h, other, [pageFeature("gather")])).toBe("working")
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("diagnostic-only fallback and cosmetic records never cause failure or notices", async () => {
@@ -178,25 +213,33 @@ test("diagnostic-only fallback and cosmetic records never cause failure or notic
     const result = await h.monitor.noticeProducer.read(c, [{ feature: "auto-add", state: "working", jobs: [], anchors: [], actions: [], kinds: [] }])
     expect(result.kind === "notices" ? result.notices : undefined).toEqual([])
     expect((await h.monitor.diagnostics(c))?.signals).toHaveLength(3)
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("quiet-route-noisy is partial on both sites with feedback disabled", async () => {
   for (const site of ["www", "music"] as const) {
-    const c = context(site), { h } = seeded(c)
+    const c = context(site),
+      { h } = seeded(c)
     const feature = pageFeature(site === "www" ? "queue-button" : "music-actions")
     if (feature.id !== "queue-button" && feature.id !== "music-actions") throw Error("Expected queue feature")
     const disabledFeedback = feature.id === "queue-button" ? { ...feature, options: { ...feature.options, feedback: false } } : { ...feature, options: { ...feature.options, feedback: false } }
     try {
       await h.monitor.signal(c, signalValue("quiet-route-noisy", { site, feature: feature.id, job: site === "www" ? "queueAdd" : "queueInsert" }), answered)
       expect(await state(h, c, [disabledFeedback])).toBe("partly-working")
-    } finally { await h.dispose() }
+    } finally {
+      await h.dispose()
+    }
   }
 })
 
 test("per-tab, per-site, per-account and private facts stay isolated and snapshots are detached", async () => {
   const { h, c } = seeded()
-  const otherTab = context("www", false, 2), music = context("music", false, 3), privateTab = context("www", true, 4), otherAccount = context("www", false, 5, b)
+  const otherTab = context("www", false, 2),
+    music = context("music", false, 3),
+    privateTab = context("www", true, 4),
+    otherAccount = context("www", false, 5, b)
   try {
     for (const input of [otherTab, music, privateTab, otherAccount]) h.seedContext(input, visible, syntheticHealthFacts(input.tab.site))
     await h.monitor.signal(c, signalValue("no-effect"), answered)
@@ -211,11 +254,14 @@ test("per-tab, per-site, per-account and private facts stay isolated and snapsho
     if (!first) throw Error("Expected signal")
     first.signal.count = 900
     expect((await h.monitor.diagnostics(c))?.signals[0]?.signal.count).toBe(2)
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("private signal, counters and notice acknowledgements never persist", async () => {
-  const c = context("www", true), { h } = seeded(c)
+  const c = context("www", true),
+    { h } = seeded(c)
   try {
     h.changeHealth(c, facts => ({ ...facts, core: "missing" }))
     await h.monitor.signal(c, signalValue("cannot-measure", { job: null, route: null }), { kind: "playback" })
@@ -230,7 +276,9 @@ test("private signal, counters and notice acknowledgements never persist", async
     expect(await h.monitor.flush()).toEqual({ kind: "idle" })
     expect(h.stored()).toEqual({ unknown: { keep: true } })
     expect(h.sessionWrites()).toEqual([])
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("normal signals coalesce for ten seconds and two engines merge over one real owner", async () => {
@@ -242,7 +290,8 @@ test("normal signals coalesce for ten seconds and two engines merge over one rea
     await h.advance(9_999)
     expect(h.sessionWrites()).toEqual([])
     await h.advance(1)
-    await h.monitor.flush(); await second.flush()
+    await h.monitor.flush()
+    await second.flush()
     expect(h.sessionWrites()).toHaveLength(1)
     await h.advance(10_000)
     await second.flush()
@@ -252,7 +301,9 @@ test("normal signals coalesce for ten seconds and two engines merge over one rea
     expect(journal?.counters.find(row => row.job === "add")?.noEffects).toBe(2)
     expect(await state(h, c)).toBe("not-working")
     expect(h.stored().unknown).toEqual({ keep: true })
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("restart restores normal threshold counters and once state", async () => {
@@ -260,7 +311,8 @@ test("restart restores normal threshold counters and once state", async () => {
   let next: ReturnType<typeof monitorWorld> | undefined
   try {
     await h.monitor.signal(c, signalValue("no-effect"), answered)
-    await h.advance(10_000); await h.monitor.flush()
+    await h.advance(10_000)
+    await h.monitor.flush()
     const seed = h.removal.state()
     next = monitorWorld(seed)
     next.seedContext(c, visible, syntheticHealthFacts("www"))
@@ -268,7 +320,10 @@ test("restart restores normal threshold counters and once state", async () => {
     await restarted.signal(c, signalValue("no-effect"), answered)
     const result = await restarted.statuses(c, [pageFeature("auto-add")])
     expect(result.kind === "statuses" ? result.statuses[0]?.state : undefined).toBe("not-working")
-  } finally { await next?.dispose(); await h.dispose() }
+  } finally {
+    await next?.dispose()
+    await h.dispose()
+  }
 })
 
 test("the oldest distinct signal is evicted at two hundred records", async () => {
@@ -279,12 +334,15 @@ test("the oldest distinct signal is evicted at two hundred records", async () =>
       h.seedContext(c, visible, syntheticHealthFacts("www"))
       await h.monitor.signal(c, signalValue("cosmetic", { firstSeen: index, lastSeen: index }), { kind: "diagnostic" })
     }
-    await h.advance(10_000); await h.monitor.flush()
+    await h.advance(10_000)
+    await h.monitor.flush()
     const journal = await h.monitor.diagnostics(context("www", false, 200))
     expect(journal?.signals).toHaveLength(200)
     expect(journal?.signals[0]?.tabId).toBe(1)
     expect(journal?.signals.at(-1)?.tabId).toBe(200)
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("real account removal revokes a pending flush and never resurrects the account", async () => {
@@ -295,25 +353,32 @@ test("real account removal revokes a pending flush and never resurrects the acco
     const prepared = await h.owner.prepareAccountRemoval(origin, a)
     if (prepared.kind !== "confirmation-required") throw Error("Expected real removal preparation")
     expect((await h.owner.removeAccountSetup(origin, prepared.confirmation)).kind).toBe("committed")
-    await h.advance(10_000); await h.monitor.flush()
+    await h.advance(10_000)
+    await h.monitor.flush()
     const read = await h.owner.readSession()
     expect(read.kind === "memory" ? read.memory.breakage.accounts.has(a) : undefined).toBe(false)
     expect(h.sessionWrites().filter(name => name === "session.set:breakage")).toEqual([])
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 async function signalSetOrdinal() {
   const { h, c } = seeded()
   try {
     await h.monitor.signal(c, signalValue("no-effect"), answered)
-    await h.advance(10_000); await h.monitor.flush()
+    await h.advance(10_000)
+    await h.monitor.flush()
     const operation = h.removal.io.find(row => row.phase === "invoked" && row.kind === "session.set:breakage")
     if (!operation) throw Error("Expected real session set boundary")
     return operation.n
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 }
 test("clean rejected writes retain queued evidence for an explicit later flush", async () => {
-  const ordinal = await signalSetOrdinal(), { h, c } = seeded()
+  const ordinal = await signalSetOrdinal(),
+    { h, c } = seeded()
   try {
     await h.monitor.signal(c, signalValue("no-effect"), answered)
     h.removal.fault({ at: ordinal, kind: "reject", when: "before" })
@@ -325,7 +390,9 @@ test("clean rejected writes retain queued evidence for an explicit later flush",
     h.removal.fault()
     expect((await h.monitor.flush()).kind).toBe("committed")
     expect((await h.monitor.diagnostics(c))?.signals[0]?.signal.count).toBe(1)
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("applied rejected and unconfirmed writes remain unavailable rather than reporting confirmed success", async () => {
@@ -340,7 +407,9 @@ test("applied rejected and unconfirmed writes remain unavailable rather than rep
       expect(result).toMatchObject(kind === "reject" ? { kind: "failed", applied: true } : { kind: "unconfirmed" })
       expect((await h.owner.readSession()).kind).toBe("unavailable")
       expect(await h.monitor.statusProducer.read(c, [pageFeature("auto-add")])).toEqual({ kind: "unavailable" })
-    } finally { await h.dispose() }
+    } finally {
+      await h.dispose()
+    }
   }
 })
 
@@ -354,7 +423,7 @@ test("notices batch at sixty milliseconds, defer visibility and require actual a
     await h.monitor.wouldAct(c, enabled, "shortcuts")
     const read = await h.monitor.statusProducer.read(c, enabled)
     if (read.kind !== "statuses") throw Error("Expected actual statuses")
-    expect((await h.monitor.noticeProducer.read(c, read.statuses))).toMatchObject({ kind: "notices", notices: [] })
+    expect(await h.monitor.noticeProducer.read(c, read.statuses)).toMatchObject({ kind: "notices", notices: [] })
     await h.advance(1)
     h.visibility(c, false, false)
     expect(await h.monitor.noticeProducer.read(c, read.statuses)).toMatchObject({ kind: "notices", notices: [] })
@@ -373,15 +442,19 @@ test("notices batch at sixty milliseconds, defer visibility and require actual a
     await h.monitor.wouldAct(c, enabled, "auto-add")
     await h.advance(60)
     expect(await h.monitor.noticeProducer.read(c, read.statuses)).toMatchObject({ kind: "notices", notices: [] })
-    await h.advance(10_000); await h.monitor.flush()
+    await h.advance(10_000)
+    await h.monitor.flush()
     const normal = await h.owner.readSession()
     expect(normal.kind === "memory" ? [...normal.memory.shown.global] : undefined).toEqual(["monitor:www:auto-add", "monitor:www:shortcuts"])
     expect(await h.monitor.acknowledgeNotice(c, delivery.token)).toEqual({ kind: "unavailable" })
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("the first eligible visible tab claims delivery and a later tab cannot acknowledge it", async () => {
-  const { h, c } = seeded(), other = context("www", false, 2)
+  const { h, c } = seeded(),
+    other = context("www", false, 2)
   try {
     h.seedContext(other, visible, { ...syntheticHealthFacts("www"), core: "missing" })
     h.changeHealth(c, facts => ({ ...facts, core: "missing" }))
@@ -394,7 +467,9 @@ test("the first eligible visible tab claims delivery and a later tab cannot ackn
     if (delivery.kind !== "delivery") throw Error("Expected visible delivery")
     expect(await h.monitor.acknowledgeNotice(c, delivery.token)).toEqual({ kind: "unavailable" })
     expect((await h.monitor.acknowledgeNotice(other, delivery.token)).kind).toBe("accepted")
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("two engines claim one normal notice through the real owner and restart restores once", async () => {
@@ -404,9 +479,11 @@ test("two engines claim one normal notice through the real owner and restart res
   let restarted: ReturnType<typeof monitorWorld> | undefined
   try {
     h.changeHealth(c, facts => ({ ...facts, core: "missing" }))
-    await h.monitor.wouldAct(c, enabled, "auto-add"); await second.wouldAct(c, enabled, "auto-add")
+    await h.monitor.wouldAct(c, enabled, "auto-add")
+    await second.wouldAct(c, enabled, "auto-add")
     await h.advance(60)
-    const firstRead = await h.monitor.statusProducer.read(c, enabled), secondRead = await second.statusProducer.read(c, enabled)
+    const firstRead = await h.monitor.statusProducer.read(c, enabled),
+      secondRead = await second.statusProducer.read(c, enabled)
     if (firstRead.kind !== "statuses" || secondRead.kind !== "statuses") throw Error("Expected actual status producers")
     const delivery = await h.monitor.claimNotice(c, firstRead)
     if (delivery.kind !== "delivery") throw Error("Expected first delivery")
@@ -422,16 +499,21 @@ test("two engines claim one normal notice through the real owner and restart res
     const restored = await restarted.monitor.statusProducer.read(c, enabled)
     if (restored.kind !== "statuses") throw Error("Expected restored status authority")
     expect(await restarted.monitor.noticeProducer.read(c, restored.statuses)).toMatchObject({ kind: "notices", notices: [] })
-  } finally { await restarted?.dispose(); await h.dispose() }
+  } finally {
+    await restarted?.dispose()
+    await h.dispose()
+  }
 })
 
 test("explicit release allows the next eligible tab and stale delivery tokens cannot acknowledge", async () => {
-  const { h, c } = seeded(), other = context("www", false, 2)
+  const { h, c } = seeded(),
+    other = context("www", false, 2)
   const enabled = [pageFeature("auto-add")]
   try {
     h.changeHealth(c, facts => ({ ...facts, core: "missing" }))
     h.seedContext(other, visible, { ...syntheticHealthFacts("www"), core: "missing" })
-    await h.monitor.wouldAct(c, enabled, "auto-add"); await h.advance(60)
+    await h.monitor.wouldAct(c, enabled, "auto-add")
+    await h.advance(60)
     const read = await h.monitor.statusProducer.read(c, enabled)
     if (read.kind !== "statuses") throw Error("Expected statuses")
     const first = await h.monitor.claimNotice(c, read)
@@ -444,16 +526,24 @@ test("explicit release allows the next eligible tab and stale delivery tokens ca
     const next = await h.monitor.claimNotice(other, nextRead)
     expect(next.kind).toBe("delivery")
     expect(await h.monitor.acknowledgeNotice(c, first.token)).toEqual({ kind: "unavailable" })
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("missing current route or probe authority remains unavailable", async () => {
   const { h, c } = seeded()
   try {
-    h.changeHealth(c, facts => { const jobs = new Map(facts.jobs); jobs.delete("add"); return { ...facts, jobs } })
+    h.changeHealth(c, facts => {
+      const jobs = new Map(facts.jobs)
+      jobs.delete("add")
+      return { ...facts, jobs }
+    })
     expect(await h.monitor.statusProducer.read(c, [pageFeature("auto-add")])).toEqual({ kind: "unavailable" })
     expect(await h.producer.produce(c)).toEqual({ kind: "unavailable" })
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("Gather names playlist exhaustion without stopping its working player", async () => {
@@ -467,13 +557,17 @@ test("Gather names playlist exhaustion without stopping its working player", asy
     h.routes(c, "addBatch", "usable")
     h.changeHealth(c, facts => ({ ...facts, accountKeys: "missing" }))
     expect((await statuses(h, c, enabled))[0]).toMatchObject({ state: "partly-working", jobs: ["account"], destinations: ["playlist"] })
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("repeated pending features retain one notice timer and subscriptions stop at disposal", async () => {
   const { h, c } = seeded()
   let updates = 0
-  const unsubscribe = h.monitor.subscribe(() => { updates++ })
+  const unsubscribe = h.monitor.subscribe(() => {
+    updates++
+  })
   try {
     h.changeHealth(c, facts => ({ ...facts, core: "missing" }))
     const enabled = [pageFeature("auto-add")]
@@ -488,20 +582,29 @@ test("repeated pending features retain one notice timer and subscriptions stop a
     h.visibility(c, true, false)
     expect(updates).toBe(before)
     expect(h.clock.pending).toBe(0)
-  } finally { unsubscribe(); await h.dispose() }
+  } finally {
+    unsubscribe()
+    await h.dispose()
+  }
 })
 
 test("diagnostic ingress rejects unlisted route and watch names, raw values and account data", async () => {
   const { h, c } = seeded()
   const valid = signalValue("unrecognised")
   try {
-    for (const value of [{ ...valid, route: "unlisted-route" }, { ...valid, watchId: "unlisted-watch" },
-      { ...valid, acct: "synthetic-account-data" }, { ...valid, shape: { kind: "string", value: "synthetic-raw-response" } }]) {
+    for (const value of [
+      { ...valid, route: "unlisted-route" },
+      { ...valid, watchId: "unlisted-watch" },
+      { ...valid, acct: "synthetic-account-data" },
+      { ...valid, shape: { kind: "string", value: "synthetic-raw-response" } }
+    ]) {
       expect(await h.monitor.signal(c, value, answered)).toEqual({ kind: "invalid" })
     }
     expect((await h.monitor.diagnostics(c))?.signals).toEqual([])
     expect(h.sessionWrites()).toEqual([])
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("producer authority, context changes, notice changes and disposal revoke captured reads", async () => {
@@ -521,57 +624,82 @@ test("producer authority, context changes, notice changes and disposal revoke ca
     if (beforeNotice.kind !== "statuses") throw Error("Expected statuses")
     await h.monitor.wouldAct(c, [pageFeature("auto-add")], "auto-add")
     expect(beforeNotice.current()).toBe(false)
-    const gate = deferred<void>(), entered = deferred<void>()
-    h.beforeHealth(async () => { entered.resolve(); await gate.promise })
+    const gate = deferred<void>(),
+      entered = deferred<void>()
+    h.beforeHealth(async () => {
+      entered.resolve()
+      await gate.promise
+    })
     const pending = h.monitor.statusProducer.read(c, [pageFeature("auto-add")])
     await entered.promise
-    h.monitor.dispose(); gate.resolve()
+    h.monitor.dispose()
+    gate.resolve()
     expect(await pending).toEqual({ kind: "unavailable" })
     expect(h.clock.pending).toBe(0)
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
 test("background-only registry features use the wider union without entering the page union", async () => {
   const { h, c } = seeded()
   try {
-    const settings = defaultSettings(); settings.browserMenu.on = true; settings.anyTabKeys.on = true; settings.gather.on = true
+    const settings = defaultSettings()
+    settings.browserMenu.on = true
+    settings.anyTabKeys.on = true
+    settings.gather.on = true
     const enabled = enabledBackground({ settings, site: "www", syncOn: true })
     expect(enabled.map(row => row.id)).toEqual(["browser-menu", "any-tab-keys", "gather", "sync"])
     expect((await statuses(h, c, enabled)).map(row => row.feature)).toEqual(["browser-menu", "any-tab-keys", "gather", "sync"])
     expect(isTabView({ features: enabled })).toBe(false)
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 
-
 test("view subscribers compare actual statuses while generic subscribers still observe bookkeeping", async () => {
-  const { h, c } = seeded(), projected: number[] = [], generic: number[] = []
+  const { h, c } = seeded(),
+    projected: number[] = [],
+    generic: number[] = []
   const stop = h.monitor.subscribeView(event => projected.push(event.tabId))
   const stopGeneric = h.monitor.subscribe(() => generic.push(1))
   try {
     expect((await h.producer.produce(c)).kind).toBe("view")
-    await h.monitor.signal(c, signalValue("no-effect"), answered); await h.advance(0)
+    await h.monitor.signal(c, signalValue("no-effect"), answered)
+    await h.advance(0)
     expect(generic).toHaveLength(1)
     expect(projected).toEqual([])
-    await h.monitor.signal(c, signalValue("no-effect"), answered); await h.advance(0)
+    await h.monitor.signal(c, signalValue("no-effect"), answered)
+    await h.advance(0)
     expect(projected).toEqual([c.tab.tabId])
-    await h.monitor.flush(); await h.advance(0)
+    await h.monitor.flush()
+    await h.advance(0)
     expect(projected).toEqual([c.tab.tabId])
-    stop(); stop()
-    await h.monitor.succeeded(c, "add"); await h.advance(0)
+    stop()
+    stop()
+    await h.monitor.succeeded(c, "add")
+    await h.advance(0)
     expect(projected).toEqual([c.tab.tabId])
-  } finally { stop(); stopGeneric(); await h.dispose() }
+  } finally {
+    stop()
+    stopGeneric()
+    await h.dispose()
+  }
 })
 
 test("a due-notice transition notifies the observed tab only after the actual deadline", async () => {
-  const { h, c } = seeded(), projected: number[] = []
+  const { h, c } = seeded(),
+    projected: number[] = []
   const stop = h.monitor.subscribeView(event => projected.push(event.tabId))
   try {
     expect((await h.producer.produce(c)).kind).toBe("view")
     await h.monitor.signal(c, signalValue("no-effect"), answered)
-    await h.monitor.signal(c, signalValue("no-effect"), answered); await h.advance(0)
+    await h.monitor.signal(c, signalValue("no-effect"), answered)
+    await h.advance(0)
     expect((await h.producer.produce(c)).kind).toBe("view")
     projected.length = 0
-    await h.monitor.wouldAct(c, [pageFeature("auto-add")], "auto-add"); await h.advance(0)
+    await h.monitor.wouldAct(c, [pageFeature("auto-add")], "auto-add")
+    await h.advance(0)
     expect(projected).toEqual([])
     await h.advance(59)
     expect(projected).toEqual([])
@@ -579,5 +707,8 @@ test("a due-notice transition notifies the observed tab only after the actual de
     expect(projected).toEqual([c.tab.tabId])
     const view = await h.producer.produce(c)
     expect(view.kind === "view" && view.view.notices).toEqual([{ kind: "not-working", features: ["auto-add"] }])
-  } finally { stop(); await h.dispose() }
+  } finally {
+    stop()
+    await h.dispose()
+  }
 })

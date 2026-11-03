@@ -2,7 +2,7 @@ import type { AgreementOutcome, FeatureApplication, FirstRunOwner, SetupRow } fr
 import type { DisclosureText } from "./text"
 import type { PageFeatureId } from "./features"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 export type FirstRunOwnerProofs = [
   Check<Equal<Parameters<FirstRunOwner["agree"]>[0]["displayed"], DisclosureText>>,

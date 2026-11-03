@@ -6,10 +6,7 @@ import { isJsonValue, type JsonValue } from "../contracts/json"
 import type { Settings } from "./types"
 
 export type Snapshot<T> = T extends object ? { readonly [P in keyof T]: Snapshot<T[P]> } : T
-export type SettingsView =
-  | { readonly kind: "value"; readonly settings: Snapshot<Settings> }
-  | { readonly kind: "newer-version"; readonly version: number }
-  | { readonly kind: "invalid" }
+export type SettingsView = { readonly kind: "value"; readonly settings: Snapshot<Settings> } | { readonly kind: "newer-version"; readonly version: number } | { readonly kind: "invalid" }
 
 function detach(value: JsonValue): JsonValue {
   if (value === null || typeof value !== "object") return value
@@ -27,9 +24,12 @@ export function readSettingsView(rawDocument: unknown): SettingsView {
     const document = decodeDocument(detach(rawDocument), decodeSettings)
     switch (document.kind) {
       case "absent":
-      case "deleted": return { kind: "value", settings: defaultSettings() }
-      case "value": return { kind: "value", settings: document.document.data }
-      case "newer-version": return { kind: "newer-version", version: document.version }
+      case "deleted":
+        return { kind: "value", settings: defaultSettings() }
+      case "value":
+        return { kind: "value", settings: document.document.data }
+      case "newer-version":
+        return { kind: "newer-version", version: document.version }
     }
   } catch (error) {
     if (error instanceof DecodeError) return { kind: "invalid" }

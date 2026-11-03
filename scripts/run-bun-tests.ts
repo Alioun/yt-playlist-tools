@@ -36,10 +36,10 @@ export function selectTestEntries(entries: readonly string[], shard?: Shard): st
   return entries.filter((_, position) => !shard || position % shard.count === shard.index - 1)
 }
 
-export async function runBunTests(args: readonly string[], {
-  cwd = process.cwd(),
-  spawn = (command: string[], env: Record<string, string | undefined>) => Bun.spawn(command, { cwd, env, stdin: "inherit", stdout: "inherit", stderr: "inherit" }).exited
-} = {}): Promise<number> {
+export async function runBunTests(
+  args: readonly string[],
+  { cwd = process.cwd(), spawn = (command: string[], env: Record<string, string | undefined>) => Bun.spawn(command, { cwd, env, stdin: "inherit", stdout: "inherit", stderr: "inherit" }).exited } = {}
+): Promise<number> {
   const shard = parseShard(args)
   const entries = selectTestEntries(await discoverTestEntries(cwd), shard)
   if (entries.length === 0) return 0

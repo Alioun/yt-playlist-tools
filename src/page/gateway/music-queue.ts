@@ -37,36 +37,70 @@ export const failed: JobFailure = { ok: false, reason: "failed" }
 const unconfirmed: JobFailure = { ok: false, reason: "unconfirmed" }
 
 export function createMusicContext(options: {
-  port: MusicPagePort; page: PageReadPort; clock: GatewayClock; table: RouteTable
-  casting(): boolean; notice(kind: BreakageKind, route: HandlerRoute, raw?: unknown): void
+  port: MusicPagePort
+  page: PageReadPort
+  clock: GatewayClock
+  table: RouteTable
+  casting(): boolean
+  notice(kind: BreakageKind, route: HandlerRoute, raw?: unknown): void
 }) {
   const { port, page, clock, notice } = options
   function handlers(job: keyof RouteTable): HandlerRoute[] {
     return options.table[job].filter((route): route is HandlerRoute => route.kind === "handler")
   }
   function present(route: HandlerRoute): boolean {
-    try { if (port.has(route.handler)) return true } catch { notice("threw", route); return false }
+    try {
+      if (port.has(route.handler)) return true
+    } catch {
+      notice("threw", route)
+      return false
+    }
     notice("missing", route)
     return false
   }
   function snapshot(route: HandlerRoute): QueueSnapshot | undefined {
     let items: unknown, current: unknown
-    try { items = port.items(); current = port.current() } catch { notice("threw", route); return undefined }
+    try {
+      items = port.items()
+      current = port.current()
+    } catch {
+      notice("threw", route)
+      return undefined
+    }
     const value = parseQueueSnapshot(items, current)
     if (!value) notice(items === undefined ? "missing" : "unrecognised", route, items)
     return value
   }
   function state(route: HandlerRoute): unknown {
-    try { return port.state() } catch { notice("threw", route); return undefined }
+    try {
+      return port.state()
+    } catch {
+      notice("threw", route)
+      return undefined
+    }
   }
   function fire(route: HandlerRoute, act: () => void): boolean {
-    try { act(); return true } catch { notice("threw", route); return false }
+    try {
+      act()
+      return true
+    } catch {
+      notice("threw", route)
+      return false
+    }
   }
   function quiet(scope: JobScope): () => boolean {
     let noisy = false
     let stop = () => {}
-    try { stop = port.onToast(() => { noisy = true }) } catch {}
-    scope.onClose(() => { try { stop() } catch {} })
+    try {
+      stop = port.onToast(() => {
+        noisy = true
+      })
+    } catch {}
+    scope.onClose(() => {
+      try {
+        stop()
+      } catch {}
+    })
     return () => noisy
   }
   function until(scope: JobScope, look: () => boolean, queueEvents: boolean): Promise<boolean> {
@@ -80,22 +114,35 @@ export function createMusicContext(options: {
       const finish = (found: boolean) => {
         if (!active) return
         active = false
-        stopTimer(); stopScope()
-        try { stopEvents() } catch {}
+        stopTimer()
+        stopScope()
+        try {
+          stopEvents()
+        } catch {}
         resolve(found)
       }
       const check = () => {
         if (!active) return
-        if (!scope.active) { finish(false); return }
+        if (!scope.active) {
+          finish(false)
+          return
+        }
         let found = false
-        try { found = look() } catch {}
+        try {
+          found = look()
+        } catch {}
         if (found) finish(true)
       }
       stopScope = scope.onClose(() => finish(false))
       if (!active) return
       let heard = false
       if (queueEvents) {
-        try { if (page.has(readWatches.queueChanges)) { stopEvents = page.on("queue", check); heard = true } } catch {}
+        try {
+          if (page.has(readWatches.queueChanges)) {
+            stopEvents = page.on("queue", check)
+            heard = true
+          }
+        } catch {}
       }
       const timed = growthChecks.filter(offset => offset < end)
       const offsets = heard ? [0, end] : timed.length < growthChecks.length ? timed.concat(end) : timed
@@ -104,7 +151,10 @@ export function createMusicContext(options: {
         check()
         if (!active) return
         const next = offsets[++index]
-        if (next === undefined) { finish(false); return }
+        if (next === undefined) {
+          finish(false)
+          return
+        }
         stopTimer = clock.after(Math.max(0, next - (clock.now() - start)), step)
       }
       step()
@@ -118,30 +168,44 @@ export function createMusicContext(options: {
       const finish = (answer: Answer) => {
         if (!active) return
         active = false
-        stopTimer(); stopScope()
+        stopTimer()
+        stopScope()
         resolve(answer)
       }
       stopScope = scope.onClose(() => finish({ kind: "timeout" }))
       if (!active) return
       stopTimer = clock.after(Math.max(0, scope.remaining() - laneMargin), () => finish({ kind: "timeout" }))
-      pending.then(body => finish({ kind: "answer", body }), error => finish({ kind: "lost", error }))
+      pending.then(
+        body => finish({ kind: "answer", body }),
+        error => finish({ kind: "lost", error })
+      )
     })
   }
   async function grown(route: HandlerRoute, before: QueueSnapshot, scope: JobScope, videoId?: VideoId): Promise<Grown> {
     const known = new Set(before.entries.map(entry => String(entry.id)))
     let fresh: QueueEntry[] = []
-    await until(scope, () => {
-      const now = snapshot(route)
-      fresh = now?.entries.filter(entry => !known.has(String(entry.id)) && (videoId === undefined || entry.videoId === videoId)) ?? []
-      return fresh.length > 0
-    }, true)
+    await until(
+      scope,
+      () => {
+        const now = snapshot(route)
+        fresh = now?.entries.filter(entry => !known.has(String(entry.id)) && (videoId === undefined || entry.videoId === videoId)) ?? []
+        return fresh.length > 0
+      },
+      true
+    )
     if (!scope.active) return unconfirmed
-    if (fresh.length === 0) { notice("no-effect", route); return failed }
+    if (fresh.length === 0) {
+      notice("no-effect", route)
+      return failed
+    }
     return { ok: true, entries: fresh }
   }
   async function replay(route: HandlerRoute, body: JsonObject, scope: JobScope): Promise<"sent" | "not-sent" | JobFailure> {
-    const target = field(body, "queueTarget"), position = field(body, "queueInsertPosition")
-    const videoId = field(target, "videoId"), playlistId = field(target, "playlistId"), params = field(target, "params")
+    const target = field(body, "queueTarget"),
+      position = field(body, "queueInsertPosition")
+    const videoId = field(target, "videoId"),
+      playlistId = field(target, "playlistId"),
+      params = field(target, "params")
     const now = snapshot(route)
     if (!now) return "not-sent"
     if (now.entries.length === 0) {
@@ -151,11 +215,18 @@ export function createMusicContext(options: {
     }
     const contextParams = field(state(route), "queue", "queueContextParams")
     const request = {
-      ...(contextParams !== undefined ? { queueContextParams: contextParams } : {}), queueInsertPosition: position,
-      ...(videoId !== undefined ? { videoIds: [videoId] } : { playlistId }), ...(params !== undefined ? { params } : {})
+      ...(contextParams !== undefined ? { queueContextParams: contextParams } : {}),
+      queueInsertPosition: position,
+      ...(videoId !== undefined ? { videoIds: [videoId] } : { playlistId }),
+      ...(params !== undefined ? { params } : {})
     }
     let pending: Promise<unknown>
-    try { pending = Promise.resolve(port.fetchQueue(request)) } catch { notice("threw", route); return "not-sent" }
+    try {
+      pending = Promise.resolve(port.fetchQueue(request))
+    } catch {
+      notice("threw", route)
+      return "not-sent"
+    }
     const answer = await within(scope, pending)
     if (answer.kind !== "answer") {
       notice(answer.kind === "timeout" ? "timeout" : "rejected", route)
@@ -163,7 +234,10 @@ export function createMusicContext(options: {
       return typeof http === "number" && Number.isInteger(http) && http >= 400 && http <= 599 ? { ...failed, http } : failed
     }
     const parsed = parseQueueReplay(answer.body)
-    if (!parsed) { notice("unrecognised", route, answer.body); return failed }
+    if (!parsed) {
+      notice("unrecognised", route, answer.body)
+      return failed
+    }
     const latest = snapshot(route)
     if (!latest || !scope.active) return failed
     const index = position === "INSERT_AFTER_CURRENT_VIDEO" ? latest.current + 1 : latest.entries.length
@@ -172,7 +246,9 @@ export function createMusicContext(options: {
       if (parsed.params !== undefined) port.dispatch({ type: "SET_QUEUE_CONTEXT_PARAMS", payload: parsed.params })
       port.dispatch({ type: "ADD_ITEMS", payload: { nextQueueItemId, index, items: parsed.items, shouldAssignIds: true } })
       port.dispatch({ type: "SET_IS_RAAR_ENABLED", payload: false })
-    }) ? "sent" : failed
+    })
+      ? "sent"
+      : failed
   }
   return { port, notice, casting: options.casting, handlers, present, snapshot, state, fire, quiet, until, grown, replay }
 }
@@ -216,11 +292,15 @@ export function createMusicQueue(ctx: MusicContext) {
     const noisy = ctx.quiet(scope)
     for (const id of waiting.keys()) ctx.fire(route, () => ctx.port.remove(id))
     let gone = 0
-    await ctx.until(scope, () => {
-      const now = ctx.snapshot(route)
-      if (now) gone = [...waiting.values()].filter(id => indexOf(now, id) < 0).length
-      return gone === waiting.size
-    }, true)
+    await ctx.until(
+      scope,
+      () => {
+        const now = ctx.snapshot(route)
+        if (now) gone = [...waiting.values()].filter(id => indexOf(now, id) < 0).length
+        return gone === waiting.size
+      },
+      true
+    )
     if (gone < waiting.size) ctx.notice("no-effect", route)
     if (gone === 0) return failed
     if (noisy()) ctx.notice("quiet-route-noisy", route)

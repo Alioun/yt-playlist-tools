@@ -2,7 +2,7 @@ import type { PlaylistId } from "../model"
 import { PickerModel, type Mode, type PickerRow, type TickOutcome, type UntickOutcome } from "./model.svelte"
 import type { ItemPort, PickerSource, Undo } from "./source"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 
 declare const itemSource: PickerSource<ItemPort>

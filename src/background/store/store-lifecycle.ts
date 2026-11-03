@@ -15,9 +15,7 @@ export type ClearMarker = { readonly v: 1; readonly kind: "clear-all" } | Synced
 const localRemovalBatch = 32
 
 // An unknown window counts as private (DATA-30), so the authenticated sender's privacy refusal still admits Clear all (DATA-32).
-export type SettingsPageOrigin =
-  | { readonly kind: "ui"; readonly page: "settings"; readonly origin: UiOrigin }
-  | { readonly kind: "unavailable"; readonly reason: "privacy"; readonly page: "settings" }
+export type SettingsPageOrigin = { readonly kind: "ui"; readonly page: "settings"; readonly origin: UiOrigin } | { readonly kind: "unavailable"; readonly reason: "privacy"; readonly page: "settings" }
 export type ClearAllOptions = { readonly alsoSynced: boolean }
 
 export type Outcome = { readonly kind: "resolved" } | { readonly kind: "rejected"; readonly error: unknown }
@@ -52,7 +50,14 @@ export type IncompleteClear =
 /** "kept-newer-layout": the box was ticked, but a layout newer than this build knows leaves synced settings to the version that wrote them (R168, R174). */
 export type SyncedClear = "untouched" | "reset" | "kept-newer-layout"
 export type ClearAllResult =
-  | { readonly kind: "cleared"; readonly next: "first-run"; readonly effects: readonly ClearEffect[]; readonly readiness: FreshReadiness; readonly synced: SyncedClear; readonly opening?: FirstRunOpening }
+  | {
+      readonly kind: "cleared"
+      readonly next: "first-run"
+      readonly effects: readonly ClearEffect[]
+      readonly readiness: FreshReadiness
+      readonly synced: SyncedClear
+      readonly opening?: FirstRunOpening
+    }
   | { readonly kind: "unavailable"; readonly reason: "invalid-origin" | "invalid-options" | "synced-reset-unsupported" | "scope-in-progress" | "disposed" }
   | IncompleteClear
 export type FirstRunOpening = { readonly kind: "opened" } | { readonly kind: "unconfirmed"; readonly reason: "rejected" | "not-opened" }
@@ -83,7 +88,14 @@ export type WithdrawalResult =
   | { readonly kind: "failed"; readonly stage: "intent"; readonly write: Outcome; readonly shutdown: Shutdown }
   | { readonly kind: "failed"; readonly stage: "set"; readonly intent: ConfirmedWithdrawalIntent; readonly write: Outcome; readonly shutdown: Shutdown }
   | { readonly kind: "unconfirmed"; readonly stage: "intent"; readonly write: Outcome; readonly cause: "different" | "read-failed"; readonly shutdown: Shutdown }
-  | { readonly kind: "unconfirmed"; readonly stage: "device"; readonly intent: ConfirmedWithdrawalIntent; readonly write: Outcome | { readonly kind: "not-invoked" }; readonly cause: "different" | "read-failed"; readonly shutdown: Shutdown }
+  | {
+      readonly kind: "unconfirmed"
+      readonly stage: "device"
+      readonly intent: ConfirmedWithdrawalIntent
+      readonly write: Outcome | { readonly kind: "not-invoked" }
+      readonly cause: "different" | "read-failed"
+      readonly shutdown: Shutdown
+    }
   | { readonly kind: "superseded"; readonly by: "clear-all" | "dispose" }
 
 // The supervisor reads only the marker by name. Its port types admit no whole-area read and no value read under any other key.
@@ -130,7 +142,9 @@ type Phase =
 
 type ClearingPhase = { readonly kind: "clearing"; readonly scope: ClearAllOptions; readonly operation: Promise<ClearAllResult>; owner: StartingOwner | null }
 type WithdrawalPhase = {
-  readonly kind: "withdrawing"; readonly expected: Agreement | null; readonly operation: Promise<WithdrawalResult>
+  readonly kind: "withdrawing"
+  readonly expected: Agreement | null
+  readonly operation: Promise<WithdrawalResult>
   readonly settle: (result: WithdrawalResult) => void
   stopping: Promise<Stop>
   mutation?: Promise<Outcome>
@@ -142,15 +156,17 @@ const refuse = (reason: Extract<ClearAllResult, { kind: "unavailable" }>["reason
 
 function attempt(effect: () => PromiseLike<unknown>): Promise<Outcome> {
   try {
-    return Promise.resolve(effect()).then((): Outcome => resolved, (error: unknown): Outcome => ({ kind: "rejected", error }))
+    return Promise.resolve(effect()).then(
+      (): Outcome => resolved,
+      (error: unknown): Outcome => ({ kind: "rejected", error })
+    )
   } catch (error) {
     return Promise.resolve<Outcome>({ kind: "rejected", error })
   }
 }
 
 function exactRecord(raw: unknown, keys: readonly string[]): raw is Readonly<Record<string, unknown>> {
-  return raw !== null && typeof raw === "object" && !Array.isArray(raw) &&
-    Object.keys(raw).length === keys.length && keys.every(key => Object.hasOwn(raw, key))
+  return raw !== null && typeof raw === "object" && !Array.isArray(raw) && Object.keys(raw).length === keys.length && keys.every(key => Object.hasOwn(raw, key))
 }
 
 // Validation reads a detached plain copy, so caller getters, proxies and later mutation cannot change an admitted request.
@@ -167,8 +183,14 @@ function isSettingsPageOrigin(raw: unknown): boolean {
   if (exactRecord(value, ["kind", "reason", "page"])) return value.kind === "unavailable" && value.reason === "privacy" && value.page === "settings"
   if (!exactRecord(value, ["kind", "page", "origin"]) || value.kind !== "ui" || value.page !== "settings") return false
   const origin = value.origin
-  return exactRecord(origin, ["kind", "windowId", "incognito"]) && origin.kind === "ui" &&
-    typeof origin.windowId === "number" && Number.isSafeInteger(origin.windowId) && origin.windowId >= 0 && typeof origin.incognito === "boolean"
+  return (
+    exactRecord(origin, ["kind", "windowId", "incognito"]) &&
+    origin.kind === "ui" &&
+    typeof origin.windowId === "number" &&
+    Number.isSafeInteger(origin.windowId) &&
+    origin.windowId >= 0 &&
+    typeof origin.incognito === "boolean"
+  )
 }
 
 function readClearAllOptions(raw: unknown): ClearAllOptions | undefined {
@@ -224,20 +246,27 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
 
   function state(): LifecycleState {
     switch (phase.kind) {
-      case "active": return { kind: "active", owner: phase.owner }
-      case "held": return { kind: "held", owner: phase.owner }
-      case "blocked": return phase.state
-      case "clearing": return { kind: "clearing" }
+      case "active":
+        return { kind: "active", owner: phase.owner }
+      case "held":
+        return { kind: "held", owner: phase.owner }
+      case "blocked":
+        return phase.state
+      case "clearing":
+        return { kind: "clearing" }
       case "starting":
       case "withdrawing":
       case "withdrawal-stopped":
       case "opening-held":
-      case "disposed": return { kind: phase.kind }
+      case "disposed":
+        return { kind: phase.kind }
     }
   }
 
   function track<T>(operation: Promise<T>): Promise<T> {
-    const settled = () => { operations.delete(operation) }
+    const settled = () => {
+      operations.delete(operation)
+    }
     operations.add(operation)
     void operation.then(settled, settled)
     return operation
@@ -245,13 +274,17 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
 
   function emit(event: LifecycleEvent) {
     for (const listener of [...listeners]) {
-      try { listener(event) } catch {}
+      try {
+        listener(event)
+      } catch {}
     }
   }
 
   // Clear completion or disposal settles readiness when it supersedes an unsettled marker read.
   let settleStartup: (state: LifecycleState) => void = () => {}
-  const startup = new Promise<LifecycleState>(resolve => { settleStartup = resolve })
+  const startup = new Promise<LifecycleState>(resolve => {
+    settleStartup = resolve
+  })
   const gate = phase
   void (async () => {
     let presence: ReturnType<typeof markerPresence> | MarkerReadFailure
@@ -272,10 +305,17 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
       if (phase !== gate) return
       const fresh = start()
       if (fresh.kind === "started" && held) {
-        const opening = { kind: "opening-held", owner: fresh.owner, stopping: Promise.resolve<Stop>({ owner: null, ownerStop: { kind: "no-owner" }, producerStop: { kind: "resolved" } }), withdrawal: null } as const
+        const opening = {
+          kind: "opening-held",
+          owner: fresh.owner,
+          stopping: Promise.resolve<Stop>({ owner: null, ownerStop: { kind: "no-owner" }, producerStop: { kind: "resolved" } }),
+          withdrawal: null
+        } as const
         phase = opening
         let classified: "active" | "held" = "active"
-        try { await fresh.owner.ready() } catch (error) {
+        try {
+          await fresh.owner.ready()
+        } catch (error) {
           if (error instanceof StartupReadinessError && error.result.kind === "consent-held") classified = "held"
           else if (phase === opening) phase = { kind: "blocked", state: { kind: "blocked", reason: "owner-start-failed", error }, retiring: fresh.owner }
         }
@@ -283,8 +323,7 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
         settleStartup(state())
         return
       }
-      phase = fresh.kind === "started" ? { kind: "active", owner: fresh.owner } :
-        { kind: "blocked", state: { kind: "blocked", reason: "owner-start-failed", error: fresh.error }, retiring: null }
+      phase = fresh.kind === "started" ? { kind: "active", owner: fresh.owner } : { kind: "blocked", state: { kind: "blocked", reason: "owner-start-failed", error: fresh.error }, retiring: null }
     } else if (presence === "present") phase = { kind: "blocked", state: { kind: "blocked", reason: "clear-pending" }, retiring: null }
     else phase = { kind: "blocked", state: { kind: "blocked", reason: "marker-read-failed", read: presence === "unknown" ? { kind: "invalid" } : presence }, retiring: null }
     settleStartup(state())
@@ -333,31 +372,55 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
     }
     const stop = withdrawing.stopping
     let baseline: JsonValue | undefined
-    try { baseline = detach(await deps.consentDevice!.get(consentDeviceKeys)) } catch {
+    try {
+      baseline = detach(await deps.consentDevice!.get(consentDeviceKeys))
+    } catch {
       const stopped = shutdown(await stop)
-      finish({ kind: "failed", stage: "observation", shutdown: stopped }); return
+      finish({ kind: "failed", stage: "observation", shutdown: stopped })
+      return
     }
     if (!live()) return
     const stopped = shutdown(await stop)
     if (!live()) return
-    if (stopped.kind !== "confirmed") { finish({ kind: "failed", stage: "stop", shutdown: stopped }); return }
+    if (stopped.kind !== "confirmed") {
+      finish({ kind: "failed", stage: "stop", shutdown: stopped })
+      return
+    }
     const read = readConsentDevice(baseline)
-    if (read.kind !== "supported") { finish({ kind: "unavailable", reason: read.kind === "newer-layout" ? "newer-layout" : "layout", shutdown: stopped }); return }
+    if (read.kind !== "supported") {
+      finish({ kind: "unavailable", reason: read.kind === "newer-layout" ? "newer-layout" : "layout", shutdown: stopped })
+      return
+    }
     const expected = read.control?.state.kind === "withdrawing" ? read.control.state.prior : read.device.consent
     if (!expected || withdrawing.expected === null || !sameSyncJson(expected, withdrawing.expected)) {
-      finish({ kind: "unchanged", reason: !expected ? "not-agreed" : "different-consent", shutdown: stopped }); return
+      finish({ kind: "unchanged", reason: !expected ? "not-agreed" : "different-consent", shutdown: stopped })
+      return
     }
-    const intentItems = withdrawalIntentItems(read), items = withdrawalItems(read)
-    if (!intentItems || !items || !baseline || typeof baseline !== "object" || Array.isArray(baseline)) { finish({ kind: "unavailable", reason: "layout", shutdown: stopped }); return }
+    const intentItems = withdrawalIntentItems(read),
+      items = withdrawalItems(read)
+    if (!intentItems || !items || !baseline || typeof baseline !== "object" || Array.isArray(baseline)) {
+      finish({ kind: "unavailable", reason: "layout", shutdown: stopped })
+      return
+    }
     try {
       const current = detach(await deps.consentDevice!.get(consentDeviceKeys))
       if (!live()) return
-      if (!baseline || !current || !sameSyncJson(baseline, current)) { finish({ kind: "failed", stage: "observation", shutdown: stopped }); return }
-    } catch { finish({ kind: "failed", stage: "observation", shutdown: stopped }); return }
+      if (!baseline || !current || !sameSyncJson(baseline, current)) {
+        finish({ kind: "failed", stage: "observation", shutdown: stopped })
+        return
+      }
+    } catch {
+      finish({ kind: "failed", stage: "observation", shutdown: stopped })
+      return
+    }
     if (!live()) return
     function mutate(value: Parameters<ConsentDevicePort["set"]>[0]): Promise<Outcome> {
       let settleMutation: (outcome: Outcome) => void = () => {}
-      const mutation = track(new Promise<Outcome>(resolve => { settleMutation = resolve }))
+      const mutation = track(
+        new Promise<Outcome>(resolve => {
+          settleMutation = resolve
+        })
+      )
       withdrawing.mutation = mutation
       void attempt(() => deps.consentDevice!.set(value)).then(settleMutation)
       return mutation
@@ -366,8 +429,11 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
     if (!live()) return
     const intentBaseline = { ...baseline, ...intentItems }
     let intentObserved: JsonValue | undefined
-    try { intentObserved = detach(await deps.consentDevice!.get(consentDeviceKeys)) } catch {
-      finish({ kind: "unconfirmed", stage: "intent", write: intentWrite, cause: "read-failed", shutdown: stopped }); return
+    try {
+      intentObserved = detach(await deps.consentDevice!.get(consentDeviceKeys))
+    } catch {
+      finish({ kind: "unconfirmed", stage: "intent", write: intentWrite, cause: "read-failed", shutdown: stopped })
+      return
     }
     if (!live()) return
     if (!intentObserved || !sameSyncJson(intentBaseline, intentObserved)) {
@@ -379,14 +445,23 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
     try {
       const current = detach(await deps.consentDevice!.get(consentDeviceKeys))
       if (!live()) return
-      if (!current || !sameSyncJson(intentBaseline, current)) { finish({ kind: "unconfirmed", stage: "device", intent, write: { kind: "not-invoked" }, cause: "different", shutdown: stopped }); return }
-    } catch { finish({ kind: "unconfirmed", stage: "device", intent, write: { kind: "not-invoked" }, cause: "read-failed", shutdown: stopped }); return }
+      if (!current || !sameSyncJson(intentBaseline, current)) {
+        finish({ kind: "unconfirmed", stage: "device", intent, write: { kind: "not-invoked" }, cause: "different", shutdown: stopped })
+        return
+      }
+    } catch {
+      finish({ kind: "unconfirmed", stage: "device", intent, write: { kind: "not-invoked" }, cause: "read-failed", shutdown: stopped })
+      return
+    }
     if (!live()) return
     const write = await mutate(items)
     if (!live()) return
     let observed: JsonValue | undefined
-    try { observed = detach(await deps.consentDevice!.get(consentDeviceKeys)) } catch {
-      finish({ kind: "unconfirmed", stage: "device", intent, write, cause: "read-failed", shutdown: stopped }); return
+    try {
+      observed = detach(await deps.consentDevice!.get(consentDeviceKeys))
+    } catch {
+      finish({ kind: "unconfirmed", stage: "device", intent, write, cause: "read-failed", shutdown: stopped })
+      return
     }
     if (!live()) return
     if (!observed || !baseline || typeof baseline !== "object" || Array.isArray(baseline) || !sameSyncJson({ ...baseline, ...items }, observed)) {
@@ -395,13 +470,20 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
       return
     }
     const fresh = start()
-    if (fresh.kind !== "started") { emit({ kind: "consent-withdrawn", shutdown: stopped }); finish({ kind: "withdrawn", intent, write, shutdown: stopped, activation: "held" }); return }
+    if (fresh.kind !== "started") {
+      emit({ kind: "consent-withdrawn", shutdown: stopped })
+      finish({ kind: "withdrawn", intent, write, shutdown: stopped, activation: "held" })
+      return
+    }
     const opening = { kind: "opening-held", owner: fresh.owner, stopping: stop, withdrawal: withdrawing } as const
     phase = opening
     emit({ kind: "consent-withdrawn", shutdown: stopped })
-    try { await fresh.owner.ready() } catch (error) {
+    try {
+      await fresh.owner.ready()
+    } catch (error) {
       if (!(error instanceof StartupReadinessError && error.result.kind === "consent-held")) {
-        if (phase === opening) phase = { kind: "withdrawal-stopped", stopping: track(attempt(() => fresh.owner.dispose())).then(ownerStop => ({ owner: fresh.owner, ownerStop, producerStop: { kind: "resolved" } })) }
+        if (phase === opening)
+          phase = { kind: "withdrawal-stopped", stopping: track(attempt(() => fresh.owner.dispose())).then(ownerStop => ({ owner: fresh.owner, ownerStop, producerStop: { kind: "resolved" } })) }
       }
     }
     if (phase === opening) phase = { kind: "held", owner: fresh.owner }
@@ -487,11 +569,17 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
     if (fresh.kind === "rejected") {
       let opening: FirstRunOpening | undefined
       if (deps.openFirstRun && live()) {
-        try { opening = await deps.openFirstRun() } catch { opening = { kind: "unconfirmed", reason: "rejected" } }
+        try {
+          opening = await deps.openFirstRun()
+        } catch {
+          opening = { kind: "unconfirmed", reason: "rejected" }
+        }
       }
       emit({ kind: "cleared", next: "first-run" })
-      return { result: { kind: "cleared", next: "first-run", effects, readiness: fresh, synced, ...(opening ? { opening } : {}) },
-        phase: { kind: "blocked", state: { kind: "blocked", reason: "owner-start-failed", error: fresh.error }, retiring: null } }
+      return {
+        result: { kind: "cleared", next: "first-run", effects, readiness: fresh, synced, ...(opening ? { opening } : {}) },
+        phase: { kind: "blocked", state: { kind: "blocked", reason: "owner-start-failed", error: fresh.error }, retiring: null }
+      }
     }
     clearing.owner = fresh.owner
     emit({ kind: "cleared", next: "first-run" })
@@ -503,11 +591,15 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
       readiness = { kind: "rejected", error }
     }
     if (!live()) return disposed({ kind: "disposed" })
-    const next: ClearCompletion["phase"] = readiness.kind === "ready" ? { kind: "active", owner: fresh.owner } :
-      { kind: "blocked", state: { kind: "blocked", reason: "owner-start-failed", error: readiness.error }, retiring: fresh.owner }
+    const next: ClearCompletion["phase"] =
+      readiness.kind === "ready" ? { kind: "active", owner: fresh.owner } : { kind: "blocked", state: { kind: "blocked", reason: "owner-start-failed", error: readiness.error }, retiring: fresh.owner }
     let opening: FirstRunOpening | undefined
     if (deps.openFirstRun) {
-      try { opening = await deps.openFirstRun() } catch { opening = { kind: "unconfirmed", reason: "rejected" } }
+      try {
+        opening = await deps.openFirstRun()
+      } catch {
+        opening = { kind: "unconfirmed", reason: "rejected" }
+      }
     }
     if (!live()) return disposed({ kind: "disposed" })
     return { result: { kind: "cleared", next: "first-run", effects, readiness, synced, ...(opening ? { opening } : {}) }, phase: next }
@@ -515,7 +607,7 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
 
   return {
     state,
-    owner: () => phase.kind === "active" || phase.kind === "held" ? phase.owner : undefined,
+    owner: () => (phase.kind === "active" || phase.kind === "held" ? phase.owner : undefined),
     ready: () => startup,
     withdrawConsent(origin, expected) {
       if (phase.kind === "disposed") return Promise.resolve({ kind: "unavailable", reason: "disposed" })
@@ -524,13 +616,20 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
       if (request !== null && !isAgreement(request)) return Promise.resolve({ kind: "unavailable", reason: "invalid-input" })
       if (phase.kind === "clearing") return Promise.resolve({ kind: "unavailable", reason: "clearing" })
       if (phase.kind === "withdrawing") return sameSyncJson(phase.expected, request) ? phase.operation : Promise.resolve({ kind: "unavailable", reason: "withdrawal-in-progress" })
-      if (phase.kind === "opening-held") return phase.withdrawal && sameSyncJson(phase.withdrawal.expected, request) ? phase.withdrawal.operation : Promise.resolve({ kind: "unavailable", reason: "withdrawal-in-progress" })
+      if (phase.kind === "opening-held")
+        return phase.withdrawal && sameSyncJson(phase.withdrawal.expected, request) ? phase.withdrawal.operation : Promise.resolve({ kind: "unavailable", reason: "withdrawal-in-progress" })
       if (!deps.consentDevice) return Promise.resolve({ kind: "unavailable", reason: "consent-port" })
       const prior = phase
       let settle: (result: WithdrawalResult) => void = () => {}
-      const operation = new Promise<WithdrawalResult>(resolve => { settle = resolve })
+      const operation = new Promise<WithdrawalResult>(resolve => {
+        settle = resolve
+      })
       let settleStop: (stop: Stop) => void = () => {}
-      const stopping = track(new Promise<Stop>(resolve => { settleStop = resolve }))
+      const stopping = track(
+        new Promise<Stop>(resolve => {
+          settleStop = resolve
+        })
+      )
       const withdrawing: WithdrawalPhase = { kind: "withdrawing", expected: request, operation, settle, stopping }
       phase = withdrawing
       void fence(prior).then(settleStop)
@@ -546,28 +645,37 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
       if (phase.kind === "clearing") return phase.scope.alsoSynced === request.alsoSynced ? phase.operation : refuse("scope-in-progress")
       const prior = phase
       let settle: (result: ClearAllResult) => void = () => {}
-      const operation = track(new Promise<ClearAllResult>(resolve => { settle = resolve }))
+      const operation = track(
+        new Promise<ClearAllResult>(resolve => {
+          settle = resolve
+        })
+      )
       const clearing: ClearingPhase = { kind: "clearing", scope: request, operation, owner: null }
       phase = clearing
       if (prior.kind === "withdrawing") prior.settle({ kind: "superseded", by: "clear-all" })
       if (prior.kind === "opening-held") prior.withdrawal?.settle({ kind: "superseded", by: "clear-all" })
-      void erase(fence(prior), clearing).then(completion => {
-        if (phase === clearing) phase = completion.phase
-        settleStartup(state())
-        settle(completion.result)
-      }, (error: unknown) => {
-        const result: IncompleteClear = { kind: "failed", stage: "boundary", error }
-        if (phase === clearing) phase = { kind: "blocked", state: { kind: "blocked", reason: "clear-incomplete", result }, retiring: clearing.owner }
-        settleStartup(state())
-        settle(result)
-      })
+      void erase(fence(prior), clearing).then(
+        completion => {
+          if (phase === clearing) phase = completion.phase
+          settleStartup(state())
+          settle(completion.result)
+        },
+        (error: unknown) => {
+          const result: IncompleteClear = { kind: "failed", stage: "boundary", error }
+          if (phase === clearing) phase = { kind: "blocked", state: { kind: "blocked", reason: "clear-incomplete", result }, retiring: clearing.owner }
+          settleStartup(state())
+          settle(result)
+        }
+      )
       return operation
     },
     subscribe(listener) {
       if (phase.kind === "disposed") return () => {}
       const own = (event: LifecycleEvent) => listener(event)
       listeners.add(own)
-      return () => { listeners.delete(own) }
+      return () => {
+        listeners.delete(own)
+      }
     },
     dispose() {
       if (disposal) return disposal

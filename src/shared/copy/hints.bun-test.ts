@@ -26,7 +26,6 @@ test("YouTube and YouTube Music share the unrecognised-item answer", () => {
 
 test("YouTube hints answer a key with nothing to save", () => {
   expect(wwwHintText({ kind: "no-pointed-item" }, i18n)).toBe("Point at a video to save it.")
-  for (const reason of ["playlist", "mix", "channel", "post"] as const)
-    expect(wwwHintText({ kind: "unsupported-item", reason }, i18n)).toBe("Only videos can be saved to playlists.")
+  for (const reason of ["playlist", "mix", "channel", "post"] as const) expect(wwwHintText({ kind: "unsupported-item", reason }, i18n)).toBe("Only videos can be saved to playlists.")
   expect(wwwHintText({ kind: "unsupported-item", reason: "ad" }, i18n)).toBe("Ads can't be saved.")
 })

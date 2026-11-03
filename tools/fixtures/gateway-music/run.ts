@@ -15,18 +15,23 @@ const pageType = checked(isPageType, "MUSIC_PAGE_TYPE_ALBUM")
 export async function runGatewayMusicConsumer(dom: boolean): Promise<string> {
   const records: { step: string; answer: unknown }[] = []
   const w = musicWorld(undefined, 1)
-  const inner = dom ? createDomPageChannel(document) : createDirectPageChannel(), releases = new Set<() => void>()
+  const inner = dom ? createDomPageChannel(document) : createDirectPageChannel(),
+    releases = new Set<() => void>()
   const channel: PageChannel = {
     send: (...args) => inner.send(...args),
     listen(wire, listener) {
       const stop = inner.listen(wire, listener)
-      const release = () => { if (releases.delete(release)) stop() }
-      releases.add(release); return release
+      const release = () => {
+        if (releases.delete(release)) stop()
+      }
+      releases.add(release)
+      return release
     }
   }
   const snapshot: PageHelloSnapshot = { signedIn: true, datasyncId: syntheticIdentity, pageType, startedHidden: false, navType: "navigate" }
   const endpoint = servePage(w.gateway, { site: "music", build, vocabulary: () => w.gateway.vocabulary, snapshot: () => snapshot, signals: sink => w.gateway.onSignal(sink) }, channel)
-  const linkClock = new Clock(), link = createPageLink({ site: "music", build, vocabulary: w.gateway.vocabulary, clock: linkClock }, channel)
+  const linkClock = new Clock(),
+    link = createPageLink({ site: "music", build, vocabulary: w.gateway.vocabulary, clock: linkClock }, channel)
   let acct: unknown
   const step = async (name: string, job: unknown, account = false) => {
     const answer = link.run(checked(isJobInvocation, { job, ...(account ? { acct } : {}) }))
@@ -52,10 +57,16 @@ export async function runGatewayMusicConsumer(dom: boolean): Promise<string> {
     records.push({ step: "queue", answer: w.videos() })
     records.push({ step: "handler-calls", answer: w.calls.map(call => call.kind) })
     records.push({ step: "signals", answer: w.signals.map(signal => `${signal.kind} ${signal.route}`) })
-    endpoint.dispose(); link.dispose(); w.gateway.dispose()
+    endpoint.dispose()
+    link.dispose()
+    w.gateway.dispose()
     const disposal = { pageListeners: w.page.active(), channelListeners: releases.size, deadlines: w.clock.count + linkClock.count }
     records.push({ step: "disposed", answer: disposal })
-  } finally { endpoint.dispose(); link.dispose(); w.gateway.dispose() }
+  } finally {
+    endpoint.dispose()
+    link.dispose()
+    w.gateway.dispose()
+  }
   const output = records.map(record => JSON.stringify(record)).join("\n") + "\n"
   check(!output.includes(syntheticIdentity) && !output.includes("datasyncId"), "Consumer output includes private page material")
   return output
@@ -65,6 +76,9 @@ if (import.meta.main) {
   const adapter = process.argv[2]
   check(adapter === "direct" || adapter === "dom", "Expected direct or dom")
   GlobalRegistrator.register({ url: "https://music.youtube.com" })
-  try { process.stdout.write(await runGatewayMusicConsumer(adapter === "dom")) }
-  finally { await GlobalRegistrator.unregister() }
+  try {
+    process.stdout.write(await runGatewayMusicConsumer(adapter === "dom"))
+  } finally {
+    await GlobalRegistrator.unregister()
+  }
 }

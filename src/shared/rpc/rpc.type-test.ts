@@ -3,7 +3,7 @@ import { createRpc, createRpcCaller } from "./rpc"
 import type { Authentication, Deadline, Rpc, RpcCaller, RpcContract, RpcFailure, RpcOutcome, RpcReceiver, RpcRequest } from "./rpc"
 import type { Transport } from "./transport"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Assert<T extends true> = T
 
 type NativeSender = { readonly id: string; readonly frameId: number }
@@ -102,7 +102,7 @@ export function receiverShapes() {
   rpc.handle({ handlers: { "test.add": () => ({ added: 0 }), "test.ping": () => ({ pong: "p" }) } })
   const bodySender: RpcReceiver<Calls, NativeSender, null> = {
     // @ts-expect-error Authentication reads the native sender type, not a body-supplied origin.
-    authenticate: ({ sender }: { sender: { origin: string }; request: RpcRequest<Calls> }) => sender.origin === "tab" ? { kind: "accepted", context: null } : { kind: "rejected" },
+    authenticate: ({ sender }: { sender: { origin: string }; request: RpcRequest<Calls> }) => (sender.origin === "tab" ? { kind: "accepted", context: null } : { kind: "rejected" }),
     handlers: { "test.add": () => ({ added: 0 }), "test.ping": () => ({ pong: "p" }) }
   }
   void bodySender

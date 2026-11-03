@@ -19,7 +19,8 @@ export type ScriptedBackendOptions = BackendOptions & {
 export function createScriptedBackend(options: ScriptedBackendOptions) {
   let records = structuredClone(options.records ?? {})
   let grants = options.grants ?? { www: true, music: false, browserMenu: false }
-  const listeners = new Set<LocalListener>(), reads: (readonly string[])[] = []
+  const listeners = new Set<LocalListener>(),
+    reads: (readonly string[])[] = []
   const pushListeners = new Set<(message: unknown) => unknown>()
   const answers = [...options.answers]
   const network = createMemoryNetwork<undefined>({ delivery: "immediate" })
@@ -76,40 +77,63 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
       if (!uiContract[kind].result(result)) throw Error(`Scripted ${kind} answer is invalid`)
       return structuredClone(result) as UiMessages[K]["result"]
     }
-    const next = answers.shift(), result: unknown = next?.result
+    const next = answers.shift(),
+      result: unknown = next?.result
     if (next?.kind !== kind || !uiContract[kind].result(result)) throw Error("Scripted answer unavailable")
     return structuredClone(result)
   }
-  const backend = createBackend({
-    local: {
-      async get(keys) {
-        reads.push([...keys])
-        return structuredClone(Object.fromEntries(keys.filter(key => Object.hasOwn(records, key)).map(key => [key, records[key]])))
+  const backend = createBackend(
+    {
+      local: {
+        async get(keys) {
+          reads.push([...keys])
+          return structuredClone(Object.fromEntries(keys.filter(key => Object.hasOwn(records, key)).map(key => [key, records[key]])))
+        },
+        async all() {
+          reads.push(["*"])
+          return structuredClone(records)
+        },
+        onChanged: {
+          addListener: fn => {
+            listeners.add(fn)
+          },
+          removeListener: fn => {
+            listeners.delete(fn)
+          }
+        }
       },
-      async all() {
-        reads.push(["*"])
-        return structuredClone(records)
+      send: network.connect(undefined).send,
+      access: {
+        has: site => Promise.resolve(grants[site]),
+        request: site => Promise.resolve(grants[site]),
+        hasBrowserMenu: () => Promise.resolve(grants.browserMenu),
+        requestCombined: () => Promise.resolve({ music: grants.music, browserMenu: grants.browserMenu })
       },
-      onChanged: { addListener: fn => { listeners.add(fn) }, removeListener: fn => { listeners.delete(fn) } }
+      pushes: {
+        listen(receive) {
+          pushListeners.add(receive)
+          return () => {
+            pushListeners.delete(receive)
+          }
+        }
+      }
     },
-    send: network.connect(undefined).send,
-    access: {
-      has: site => Promise.resolve(grants[site]),
-      request: site => Promise.resolve(grants[site]),
-      hasBrowserMenu: () => Promise.resolve(grants.browserMenu),
-      requestCombined: () => Promise.resolve({ music: grants.music, browserMenu: grants.browserMenu })
-    },
-    pushes: { listen(receive) { pushListeners.add(receive); return () => { pushListeners.delete(receive) } } }
-  }, options)
+    options
+  )
   return {
     backend,
     reads: () => reads.map(keys => [...keys]),
     listening: () => listeners.size,
     remaining: () => answers.length,
-    grant(value: typeof grants) { grants = value },
+    grant(value: typeof grants) {
+      grants = value
+    },
     /** The background's `ui.gatherProgress`; answers what the page answered, as the browser hands back the first answer. */
     pushGather(payload: GatherPush): unknown {
-      for (const receive of [...pushListeners]) { const answer = receive(gatherPush(options.build, payload)); if (answer !== undefined) return answer }
+      for (const receive of [...pushListeners]) {
+        const answer = receive(gatherPush(options.build, payload))
+        if (answer !== undefined) return answer
+      }
       return undefined
     },
     replace(items: JsonObject, area = "local") {
@@ -117,6 +141,10 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
       if (area === "local") records = { ...records, ...structuredClone(items) }
       for (const listener of listeners) listener(changes, area)
     },
-    dispose() { backend.dispose(); unhandle(); rpc.dispose() }
+    dispose() {
+      backend.dispose()
+      unhandle()
+      rpc.dispose()
+    }
   }
 }

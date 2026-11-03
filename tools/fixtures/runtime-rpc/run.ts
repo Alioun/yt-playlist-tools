@@ -49,8 +49,14 @@ export async function runRuntimeRpcFixture() {
   background.handle({
     authenticate: frameZero,
     handlers: {
-      "fixture.add": ({ video, playlists }, { tabId }) => { handled.push(`add ${video} for tab ${tabId}`); return { added: playlists } },
-      "fixture.hello": ({ site }, { tabId }) => { handled.push(`hello ${site} for tab ${tabId}`); return { tabId } }
+      "fixture.add": ({ video, playlists }, { tabId }) => {
+        handled.push(`add ${video} for tab ${tabId}`)
+        return { added: playlists }
+      },
+      "fixture.hello": ({ site }, { tabId }) => {
+        handled.push(`hello ${site} for tab ${tabId}`)
+        return { tabId }
+      }
     }
   })
   const calls = [
@@ -70,7 +76,14 @@ export async function runRuntimeRpcFixture() {
   subframe.dispose()
   const callerDisposalListeners = network.listening() - 1
   background.dispose()
-  return { outcomes, handled, trace: network.trace(), pendingDeadlines: timers.length, listening: network.listening(), callerListeners: { construction: callerConstructionListeners, calls: callerCallListeners, disposal: callerDisposalListeners } }
+  return {
+    outcomes,
+    handled,
+    trace: network.trace(),
+    pendingDeadlines: timers.length,
+    listening: network.listening(),
+    callerListeners: { construction: callerConstructionListeners, calls: callerCallListeners, disposal: callerDisposalListeners }
+  }
 }
 
 if (import.meta.main) {

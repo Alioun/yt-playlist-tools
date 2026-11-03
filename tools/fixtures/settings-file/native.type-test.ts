@@ -2,8 +2,7 @@ import type { AccountKey, ChannelId, PlaylistId } from "../../../src/shared/mode
 import type { SetupDestinationResult } from "../../../src/background/store/setup-edit-execution"
 import { createImportPlanner, exportFile, type FileFilter, type FileHeader, type FileSetup, type ImportAccount, type ImportPlan, type ImportPlanner } from "../../../src/shared/settings-file"
 
-export function settingsFileTypeChecks(plan: ImportPlan, channel: ChannelId, playlist: PlaylistId, account: AccountKey,
-  rawStorage: Readonly<Record<string, unknown>>, rawPayload: unknown) {
+export function settingsFileTypeChecks(plan: ImportPlan, channel: ChannelId, playlist: PlaylistId, account: AccountKey, rawStorage: Readonly<Record<string, unknown>>, rawPayload: unknown) {
   // @ts-expect-error negative: raw-storage-export
   exportFile({ source: rawStorage, version: "2.0.0", date: "2026-10-29" })
   // @ts-expect-error negative: invented-plan-variant

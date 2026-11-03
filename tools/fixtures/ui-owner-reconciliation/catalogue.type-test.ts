@@ -7,7 +7,7 @@ import type { FirstRunCanonicalOwner, FirstRunReceiverPorts } from "../../../src
 import type { BrowserStartingOwner } from "../../../src/background/adapters/starting-owner"
 import type { createStartingLocalFilterWriter } from "../../../src/background/store/local-filter-writer"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 type Canonical = ReturnType<typeof createStartingLocalFilterWriter>
 export type ReconciliationProofs = [
@@ -18,8 +18,14 @@ export type ReconciliationProofs = [
   Check<Equal<{ [Name in keyof Canonical]: Equal<BrowserStartingOwner[Name], Canonical[Name]> }[keyof Canonical], true>>
 ]
 
-function negatives(owner: FirstRunCanonicalOwner, backend: Backend, list: ListOperationId, creation: CreationId,
-  read: Parameters<FirstRunCanonicalOwner["readAutoAddChoice"]>[1], edit: Parameters<FirstRunCanonicalOwner["changeAutoAddChoice"]>[1]) {
+function negatives(
+  owner: FirstRunCanonicalOwner,
+  backend: Backend,
+  list: ListOperationId,
+  creation: CreationId,
+  read: Parameters<FirstRunCanonicalOwner["readAutoAddChoice"]>[1],
+  edit: Parameters<FirstRunCanonicalOwner["changeAutoAddChoice"]>[1]
+) {
   const { readAutoAddChoice, ...withoutRead } = owner
   const { changeAutoAddChoice, ...withoutEdit } = owner
   // @ts-expect-error negative: missing-auto-add-read. The receiver needs the canonical read method.

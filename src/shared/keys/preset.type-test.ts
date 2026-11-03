@@ -2,7 +2,7 @@ import type { Key, Settings, ShortcutId } from "../model"
 import type { applyPresets, PresetConflict, PresetRequest, PresetResult, ShortcutTarget, Conflict } from "./index"
 import type * as runtime from "./index"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 type PlaylistRequest = Extract<PresetRequest, { feature: "shortcuts" }>
 
@@ -15,7 +15,24 @@ export type PresetContractProofs = [
   Check<Equal<typeof applyPresets, (settings: Readonly<Settings>, request: PresetRequest) => PresetResult>>,
   Check<Equal<PresetResult, { kind: "applied" | "unchanged"; settings: Readonly<Settings>; blocked: readonly PresetConflict[] }>>,
   Check<Equal<PresetConflict, { target: ShortcutTarget; key: Readonly<Key>; conflicts: readonly Conflict[] }>>,
-  Check<Equal<keyof typeof runtime, "match" | "keyMatches" | "keysOverlap" | "isTyping" | "bindingsForSite" | "findConflicts" | "assignKey" | "applyPresets" | "isReserved" | "shortcutWarnings" | "display" | "displayModifiers" | "recorder">>
+  Check<
+    Equal<
+      keyof typeof runtime,
+      | "match"
+      | "keyMatches"
+      | "keysOverlap"
+      | "isTyping"
+      | "bindingsForSite"
+      | "findConflicts"
+      | "assignKey"
+      | "applyPresets"
+      | "isReserved"
+      | "shortcutWarnings"
+      | "display"
+      | "displayModifiers"
+      | "recorder"
+    >
+  >
 ]
 
 function requestChecks(settings: Settings, ids: ReadonlySet<ShortcutId>, strings: Set<string>, apply: typeof applyPresets) {

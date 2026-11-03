@@ -5,10 +5,7 @@
 
 export type Checker = "tsc" | "svelte-check"
 
-export type NegativeSource =
-  | { readonly cases: string }
-  | { readonly directivesIn: string; readonly codes: readonly number[] }
-  | { readonly svelteFiles: Readonly<Record<string, number>> }
+export type NegativeSource = { readonly cases: string } | { readonly directivesIn: string; readonly codes: readonly number[] } | { readonly svelteFiles: Readonly<Record<string, number>> }
 
 export type FixtureGate =
   | { readonly kind: "suite"; readonly fixture: string; readonly files: readonly string[]; readonly testTimeoutMs?: number; readonly timeoutMs?: number }
@@ -23,7 +20,12 @@ const adapters = [["direct"], ["dom"]] as const
 const tsc = (fixture: string, project = "tsconfig.json"): FixtureGate => ({ kind: "types", fixture, project, checker: "tsc" })
 const svelte = (fixture: string, project = "tsconfig.json"): FixtureGate => ({ kind: "types", fixture, project, checker: "svelte-check" })
 const consumer = (fixture: string, rest: Omit<Extract<FixtureGate, { kind: "consumer" }>, "kind" | "fixture"> = {}): FixtureGate => ({ kind: "consumer", fixture, ...rest })
-const suite = (fixture: string, files: readonly string[], rest: Omit<Extract<FixtureGate, { kind: "suite" }>, "kind" | "fixture" | "files"> = {}): FixtureGate => ({ kind: "suite", fixture, files, ...rest })
+const suite = (fixture: string, files: readonly string[], rest: Omit<Extract<FixtureGate, { kind: "suite" }>, "kind" | "fixture" | "files"> = {}): FixtureGate => ({
+  kind: "suite",
+  fixture,
+  files,
+  ...rest
+})
 const heavy = 540_000
 
 export const fixtureGates: readonly FixtureGate[] = [
@@ -101,7 +103,10 @@ export const fixtureGates: readonly FixtureGate[] = [
   consumer("items-www", { variants: adapters, expected: "expected.jsonl" }),
   tsc("items-www"),
 
-  suite("key-settings", ["account-lifetime.bun-test.ts", "consumer.bun-test.ts", "owner.bun-test.ts", "recorder.bun-test.ts", "recovery.bun-test.ts", "sync.bun-test.ts", "wire.bun-test.ts"], { testTimeoutMs: 60_000, timeoutMs: heavy }),
+  suite("key-settings", ["account-lifetime.bun-test.ts", "consumer.bun-test.ts", "owner.bun-test.ts", "recorder.bun-test.ts", "recovery.bun-test.ts", "sync.bun-test.ts", "wire.bun-test.ts"], {
+    testTimeoutMs: 60_000,
+    timeoutMs: heavy
+  }),
   consumer("key-settings", { variants: routes, expected: "expected.jsonl" }),
   tsc("key-settings"),
   svelte("key-settings", "svelte.tsconfig.json"),
@@ -111,7 +116,12 @@ export const fixtureGates: readonly FixtureGate[] = [
   suite("localization", ["qualification.bun-test.ts", "run.bun-test.ts"]),
   consumer("localization"),
   { kind: "script", fixture: "localization", file: "check-catalogue.ts" },
-  { kind: "negatives", fixture: "localization", project: "../first-run-backend/qualification.tsconfig.json", source: { directivesIn: "../../../src/shared/i18n/i18n.type-test.ts", codes: [2322, 2345, 2353, 2554] } },
+  {
+    kind: "negatives",
+    fixture: "localization",
+    project: "../first-run-backend/qualification.tsconfig.json",
+    source: { directivesIn: "../../../src/shared/i18n/i18n.type-test.ts", codes: [2322, 2345, 2353, 2554] }
+  },
 
   suite("monitor", ["consumer.bun-test.ts"], { testTimeoutMs: 10_000 }),
   consumer("monitor", { expected: "expected.jsonl" }),
@@ -138,7 +148,22 @@ export const fixtureGates: readonly FixtureGate[] = [
   suite("picker-ui", ["dom-diagnostic.bun-test.ts", "integrated.bun-test.ts"]),
   consumer("picker-ui", { expected: "expected-consumer.jsonl" }),
   svelte("picker-ui"),
-  { kind: "negatives", fixture: "picker-ui", project: "tsconfig.json", source: { svelteFiles: { "negatives/FakeModel.svelte": 6, "negatives/OutcomeReceipt.svelte": 6, "negatives/SharedModel.svelte": 7, "negatives/RawAccount.svelte": 6, "negatives/ManyWithItem.svelte": 4, "negatives/Uncontrolled.svelte": 6, "negatives/MissingRelease.svelte": 6 } } },
+  {
+    kind: "negatives",
+    fixture: "picker-ui",
+    project: "tsconfig.json",
+    source: {
+      svelteFiles: {
+        "negatives/FakeModel.svelte": 6,
+        "negatives/OutcomeReceipt.svelte": 6,
+        "negatives/SharedModel.svelte": 7,
+        "negatives/RawAccount.svelte": 6,
+        "negatives/ManyWithItem.svelte": 4,
+        "negatives/Uncontrolled.svelte": 6,
+        "negatives/MissingRelease.svelte": 6
+      }
+    }
+  },
 
   suite("playlists-cache", ["consumer.bun-test.ts"], { testTimeoutMs: 10_000 }),
   consumer("playlists-cache", { expected: "expected.json" }),
@@ -232,11 +257,17 @@ export const fixtureGates: readonly FixtureGate[] = [
 
 export function gateId(gate: FixtureGate): string {
   switch (gate.kind) {
-    case "suite": return `${gate.fixture} suite`
-    case "consumer": return `${gate.fixture} consumer${gate.variants ? ` ${gate.variants.map(variant => variant.join(" ")).join("|")}` : ""}`
-    case "library": return `${gate.fixture} library ${gate.file}`
-    case "types": return `${gate.fixture} types ${gate.project}`
-    case "negatives": return `${gate.fixture} negatives ${"cases" in gate.source ? gate.source.cases : "directivesIn" in gate.source ? gate.source.directivesIn : "svelte files"}`
-    case "script": return `${gate.fixture} script ${[gate.file, ...gate.args ?? []].join(" ")}`
+    case "suite":
+      return `${gate.fixture} suite`
+    case "consumer":
+      return `${gate.fixture} consumer${gate.variants ? ` ${gate.variants.map(variant => variant.join(" ")).join("|")}` : ""}`
+    case "library":
+      return `${gate.fixture} library ${gate.file}`
+    case "types":
+      return `${gate.fixture} types ${gate.project}`
+    case "negatives":
+      return `${gate.fixture} negatives ${"cases" in gate.source ? gate.source.cases : "directivesIn" in gate.source ? gate.source.directivesIn : "svelte files"}`
+    case "script":
+      return `${gate.fixture} script ${[gate.file, ...(gate.args ?? [])].join(" ")}`
   }
 }

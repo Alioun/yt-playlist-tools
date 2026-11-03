@@ -14,13 +14,16 @@ export function autoAddFact(view: AccountSetupView, playlist: AutoAddChoiceChang
 export function planAutoAddChoice(records: JsonObject, change: AutoAddChoiceChange): SetupDestinationPlan {
   const read = readAccountSetup(records, change.acct)
   if (read.kind !== "value") return { kind: read.kind === "newer-version" ? "update-needed" : "invalid" }
-  const fact = autoAddFact(read.view, change.playlist), edit = change.edit
-  const matches = edit.kind === "auto-add" ? (fact.kind === "selected") === edit.expected
-    : fact.kind === "selected" && (edit.kind === "takes" ? fact.takes === edit.expected : fact.pct === edit.expected)
+  const fact = autoAddFact(read.view, change.playlist),
+    edit = change.edit
+  const matches =
+    edit.kind === "auto-add" ? (fact.kind === "selected") === edit.expected : fact.kind === "selected" && (edit.kind === "takes" ? fact.takes === edit.expected : fact.pct === edit.expected)
   if (!matches) return { kind: "stale", reason: "destination" }
-  const choice: Extract<AccountChoice, { kind: "auto-add" | "takes" | "percentage" }> = edit.kind === "auto-add"
-    ? { kind: "auto-add", playlist: change.playlist, chosen: edit.chosen }
-    : edit.kind === "takes" ? { kind: "takes", playlist: change.playlist, takes: edit.takes }
-      : { kind: "percentage", playlist: change.playlist, pct: edit.pct }
+  const choice: Extract<AccountChoice, { kind: "auto-add" | "takes" | "percentage" }> =
+    edit.kind === "auto-add"
+      ? { kind: "auto-add", playlist: change.playlist, chosen: edit.chosen }
+      : edit.kind === "takes"
+        ? { kind: "takes", playlist: change.playlist, takes: edit.takes }
+        : { kind: "percentage", playlist: change.playlist, pct: edit.pct }
   return planSetupAccountChoice(records, change.acct, choice)
 }

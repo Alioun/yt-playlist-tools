@@ -5,8 +5,15 @@ import type { ExactSettingsImportPermit } from "./settings-import-recovery"
 import type { ExactRemovalPermit } from "./consent-recovery"
 import type { BrowserStartingOwner } from "../adapters/starting-owner"
 
-function negatives(owner: SettingsImportOwner, deps: SettingsImportDependencies, confirmation: SettingsImportConfirmation,
-  accepted: AcceptedSettingsImport, recovery: ExactSettingsImportPermit, removal: ExactRemovalPermit, native: BrowserStartingOwner) {
+function negatives(
+  owner: SettingsImportOwner,
+  deps: SettingsImportDependencies,
+  confirmation: SettingsImportConfirmation,
+  accepted: AcceptedSettingsImport,
+  recovery: ExactSettingsImportPermit,
+  removal: ExactRemovalPermit,
+  native: BrowserStartingOwner
+) {
   const origin = { kind: "ui", windowId: 1, incognito: false } as const
   // @ts-expect-error A file check cannot mint owner capture authority.
   const forged: SettingsImportConfirmation = { kind: "import-plan" }

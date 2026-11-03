@@ -9,13 +9,15 @@ const root = fileURLToPath(new URL("../../", import.meta.url))
 const entrypoints = fileURLToPath(new URL("../../src/entrypoints/", import.meta.url))
 
 test("every registry file has its entrypoint", () => {
-  const files = features.flatMap(feature => Object.values(feature.pages).flatMap(page => page?.file ? [page.file] : []))
+  const files = features.flatMap(feature => Object.values(feature.pages).flatMap(page => (page?.file ? [page.file] : [])))
   expect(files.filter(file => !existsSync(`${entrypoints}${file}.ts`))).toEqual([])
 })
 
 test("every page entrypoint is a registry file or a library", () => {
   const owned = pageLinkEntries(features)
-  const scripts = readdirSync(entrypoints).filter(name => name.endsWith(".ts") && name !== "background.ts").map(name => name.replace(/\.ts$/, ""))
+  const scripts = readdirSync(entrypoints)
+    .filter(name => name.endsWith(".ts") && name !== "background.ts")
+    .map(name => name.replace(/\.ts$/, ""))
   expect(scripts.filter(name => !Object.hasOwn(owned, name))).toEqual([])
 })
 

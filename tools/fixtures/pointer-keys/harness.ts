@@ -7,22 +7,41 @@ export const otherKey: NonNullable<TabView["undoKey"]> = { code: "KeyP", char: "
 export const enabled = { kind: "enabled", key: undoKey } satisfies import("../../../src/site/core/keys").BindingState
 
 export function owner(errors: unknown[] = []): Scope {
-  return new Scope({ document, onError: error => { errors.push(error) } })
+  return new Scope({
+    document,
+    onError: error => {
+      errors.push(error)
+    }
+  })
 }
 
 export function keysFixture() {
   const failures: KeyFailure[] = []
   const open = { menu: false, dialog: false, popover: false }
   const blockers: KeyBlockers = {
-    menuOpen: () => open.menu, dialogOpen: () => open.dialog, extensionPopoverOpen: () => open.popover
+    menuOpen: () => open.menu,
+    dialogOpen: () => open.dialog,
+    extensionPopoverOpen: () => open.popover
   }
-  const keys = new Keys({ document, blockers, onError: failure => { failures.push(failure) } })
+  const keys = new Keys({
+    document,
+    blockers,
+    onError: failure => {
+      failures.push(failure)
+    }
+  })
   return { keys, failures, open }
 }
 
 export function press(target: EventTarget = document.body, init: KeyboardEventInit = {}): KeyboardEvent {
   const event = new KeyboardEvent("keydown", {
-    key: "u", code: "KeyU", altKey: true, bubbles: true, cancelable: true, composed: true, ...init
+    key: "u",
+    code: "KeyU",
+    altKey: true,
+    bubbles: true,
+    cancelable: true,
+    composed: true,
+    ...init
   })
   const modifier = event.getModifierState.bind(event)
   // happy-dom reports AltGraph whenever Alt is held; a browser's Alt+U does not.
@@ -39,13 +58,20 @@ export function hitStack(initial: readonly Element[] = []) {
   let elements = initial
   let reads = 0
   const descriptor = Object.getOwnPropertyDescriptor(document, "elementsFromPoint")
-  Object.defineProperty(document, "elementsFromPoint", { configurable: true, value: (_x: number, _y: number) => {
-    reads++
-    return [...elements]
-  } })
+  Object.defineProperty(document, "elementsFromPoint", {
+    configurable: true,
+    value: (_x: number, _y: number) => {
+      reads++
+      return [...elements]
+    }
+  })
   return {
-    set(next: readonly Element[]) { elements = next },
-    get reads() { return reads },
+    set(next: readonly Element[]) {
+      elements = next
+    },
+    get reads() {
+      return reads
+    },
     restore() {
       if (descriptor) Object.defineProperty(document, "elementsFromPoint", descriptor)
       else Reflect.deleteProperty(document, "elementsFromPoint")
@@ -57,10 +83,11 @@ export function focusVisibility(element: HTMLElement, initial = true) {
   let visible = initial
   const descriptor = Object.getOwnPropertyDescriptor(element, "matches")
   const matches = element.matches.bind(element)
-  Object.defineProperty(element, "matches", { configurable: true, value: (selector: string) =>
-    selector === ":focus-visible" ? visible : matches(selector) })
+  Object.defineProperty(element, "matches", { configurable: true, value: (selector: string) => (selector === ":focus-visible" ? visible : matches(selector)) })
   return {
-    set(next: boolean) { visible = next },
+    set(next: boolean) {
+      visible = next
+    },
     restore() {
       if (descriptor) Object.defineProperty(element, "matches", descriptor)
       else Reflect.deleteProperty(element, "matches")
@@ -71,7 +98,10 @@ export function focusVisibility(element: HTMLElement, initial = true) {
 export function deferred() {
   let resolve = () => {}
   let reject: (error: unknown) => void = () => {}
-  const promise = new Promise<void>((yes, no) => { resolve = () => yes(); reject = no })
+  const promise = new Promise<void>((yes, no) => {
+    resolve = () => yes()
+    reject = no
+  })
   return { promise, resolve, reject }
 }
 

@@ -20,14 +20,12 @@ function text(report: Report, titles: Titles, site: "www" | "music" = "www", fee
   if (!plan) throw new Error("Expected a toast")
   return toastText(plan, titles, site, i18n)
 }
-const saved = (...playlists: PlaylistId[]): Report =>
-  ({ kind: "shortcut", outcomes: Object.fromEntries(playlists.map(id => [id, { kind: "added" }])) })
+const saved = (...playlists: PlaylistId[]): Report => ({ kind: "shortcut", outcomes: Object.fromEntries(playlists.map(id => [id, { kind: "added" }])) })
 
 describe("toast copy rules", () => {
   test("removal and Undo failure use the settled copy on both sites", () => {
     for (const site of ["www", "music"] as const) {
-      expect(text({ kind: "removed", playlist: a }, { video: "Get Lucky", playlists: { [a]: "Favourites" } }, site))
-        .toBe("Removed “Get Lucky” from Favourites")
+      expect(text({ kind: "removed", playlist: a }, { video: "Get Lucky", playlists: { [a]: "Favourites" } }, site)).toBe("Removed “Get Lucky” from Favourites")
       expect(text({ kind: "undo-failed" }, {}, site, false)).toBe("Couldn't undo.")
     }
     expect(text({ kind: "removed", playlist: a }, { playlists: names }, "music")).toBe("Removed this song from Music")
@@ -50,10 +48,8 @@ describe("toast copy rules", () => {
   test("cuts count user-perceived characters and never split one", () => {
     const family = "👨‍👩‍👧‍👦"
     const accented = "é"
-    expect(text(saved(a), { video: family.repeat(41), playlists: { [a]: accented.repeat(41) } }))
-      .toBe(`Saved “${family.repeat(40)}…” to ${accented.repeat(40)}…`)
-    expect(text(saved(a), { video: `${"a".repeat(39)}🎵🎵`, playlists: { [a]: "日本語のプレイリスト" } }))
-      .toBe(`Saved “${"a".repeat(39)}🎵…” to 日本語のプレイリスト`)
+    expect(text(saved(a), { video: family.repeat(41), playlists: { [a]: accented.repeat(41) } })).toBe(`Saved “${family.repeat(40)}…” to ${accented.repeat(40)}…`)
+    expect(text(saved(a), { video: `${"a".repeat(39)}🎵🎵`, playlists: { [a]: "日本語のプレイリスト" } })).toBe(`Saved “${"a".repeat(39)}🎵…” to 日本語のプレイリスト`)
   })
 
   test("an unknown or blank video title reads this video, or this song on YouTube Music", () => {
@@ -62,8 +58,9 @@ describe("toast copy rules", () => {
     expect(text(saved(a), { ...titles, video: "  " })).toBe("Saved this video to Music")
     expect(text(saved(a), titles, "music")).toBe("Saved this song to Music")
     expect(text({ kind: "quick-save", outcomes: { [a]: { kind: "already-in" } } }, titles)).toBe("This video is already in Music")
-    expect(text({ kind: "auto-add", outcomes: { [a]: { kind: "failed", failure: "membership-unreadable" } }, shown: { tab: new Set(), session: new Set() } }, titles))
-      .toBe("Couldn't check this video's playlists, so auto-add didn't run.")
+    expect(text({ kind: "auto-add", outcomes: { [a]: { kind: "failed", failure: "membership-unreadable" } }, shown: { tab: new Set(), session: new Set() } }, titles)).toBe(
+      "Couldn't check this video's playlists, so auto-add didn't run."
+    )
   })
 
   test("an unknown playlist title reads as no longer available", () => {
@@ -72,8 +69,7 @@ describe("toast copy rules", () => {
 
   test("only the shortcut confirmation quotes a playlist title, and cuts it", () => {
     const long = "y".repeat(45)
-    expect(text({ kind: "choose-shortcut", outcomes: { [a]: { kind: "added" } } }, { shortcut: "Gym mix", playlists: { [a]: long } }))
-      .toBe(`Gym mix now saves to “${"y".repeat(40)}…”.`)
+    expect(text({ kind: "choose-shortcut", outcomes: { [a]: { kind: "added" } } }, { shortcut: "Gym mix", playlists: { [a]: long } })).toBe(`Gym mix now saves to “${"y".repeat(40)}…”.`)
   })
 
   test("an account without a label reads Unnamed account", () => {
@@ -82,8 +78,7 @@ describe("toast copy rules", () => {
 
   test("YouTube Music uses its own name and song", () => {
     const titles = { video: "Get Lucky", playlists: { [a]: "Favourites" } }
-    const failed = (failure: "signed-out" | "unconfirmed" | "refused" | "rate-limited" | "unrecognised" | "missing"): Report =>
-      ({ kind: "quick-save", outcomes: { [a]: { kind: "failed", failure } } })
+    const failed = (failure: "signed-out" | "unconfirmed" | "refused" | "rate-limited" | "unrecognised" | "missing"): Report => ({ kind: "quick-save", outcomes: { [a]: { kind: "failed", failure } } })
     expect(text(saved(a), titles, "music")).toBe("Saved “Get Lucky” to Favourites")
     expect(text(failed("signed-out"), titles, "music")).toBe("Sign in to YouTube Music to save songs.")
     expect(text(failed("unconfirmed"), titles, "music")).toBe("Couldn't confirm “Get Lucky” was saved to Favourites. YouTube Music didn't answer.")
@@ -97,10 +92,8 @@ describe("toast copy rules", () => {
     test(`known not-sent reports keep the exact offline copy on ${site}`, () => {
       const outcomes = { [a]: { kind: "failed", failure: "not-sent" } } as const
       const titles = { video: "Song", playlists: names }
-      expect(text({ kind: "quick-save", outcomes }, titles, site, false))
-        .toBe("Couldn't save “Song” to Music. Check your connection.")
-      expect(text({ kind: "auto-add", outcomes, shown: { tab: new Set(), session: new Set() } }, titles, site, false))
-        .toBe("Couldn't auto-add “Song” to Music. Check your connection.")
+      expect(text({ kind: "quick-save", outcomes }, titles, site, false)).toBe("Couldn't save “Song” to Music. Check your connection.")
+      expect(text({ kind: "auto-add", outcomes, shown: { tab: new Set(), session: new Set() } }, titles, site, false)).toBe("Couldn't auto-add “Song” to Music. Check your connection.")
     })
   }
 

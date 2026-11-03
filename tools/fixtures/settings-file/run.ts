@@ -18,10 +18,17 @@ assert.deepEqual(planner.importFile(expectedText), fixture(expectedPlanText))
 assert.equal(JSON.stringify(source), before)
 assert.deepEqual(createImportPlanner("private").importFile(expectedText), { kind: "refused", reason: "private", copy: "DATA-54.private" })
 if (plan.kind !== "import-plan") throw new Error("consumer-plan-refused")
-process.stdout.write(JSON.stringify({
-  kind: "settings-file-consumer", filename: exported.file.filename, mime: exported.file.mime,
-  fileBytes: Buffer.byteLength(exported.file.text), fileSha256: createHash("sha256").update(exported.file.text).digest("hex"),
-  accountCount: plan.accountCount, accounts: plan.accounts.map(entry => entry.account),
-  filterPlaylists: plan.accounts.map(entry => entry.filters.map(filter => filter.playlist)),
-  absentAccounts: plan.replacement.absentAccounts, provenance: plan.provenance
-}) + "\n")
+process.stdout.write(
+  JSON.stringify({
+    kind: "settings-file-consumer",
+    filename: exported.file.filename,
+    mime: exported.file.mime,
+    fileBytes: Buffer.byteLength(exported.file.text),
+    fileSha256: createHash("sha256").update(exported.file.text).digest("hex"),
+    accountCount: plan.accountCount,
+    accounts: plan.accounts.map(entry => entry.account),
+    filterPlaylists: plan.accounts.map(entry => entry.filters.map(filter => filter.playlist)),
+    absentAccounts: plan.replacement.absentAccounts,
+    provenance: plan.provenance
+  }) + "\n"
+)

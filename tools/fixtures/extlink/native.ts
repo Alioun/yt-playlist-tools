@@ -17,15 +17,30 @@ export function callbackRuntime(transport: Transport<ExtLinkNativeSender>, id: s
         if (releases.has(listener)) return
         const stop = transport.listen(({ message, sender }) => {
           let respond: (value: unknown) => void = () => {}
-          const response = new Promise<unknown>(resolve => { respond = resolve })
-          const claim: unknown = listener(message, sender, value => { responses.push(value); respond(value) })
+          const response = new Promise<unknown>(resolve => {
+            respond = resolve
+          })
+          const claim: unknown = listener(message, sender, value => {
+            responses.push(value)
+            respond(value)
+          })
           claims.push(claim === true)
           return claim === true ? response : undefined
         })
         releases.set(listener, stop)
       },
-      removeListener(listener) { releases.get(listener)?.(); releases.delete(listener) }
+      removeListener(listener) {
+        releases.get(listener)?.()
+        releases.delete(listener)
+      }
     }
   }
-  return { runtime, claims, responses, get listening() { return releases.size } }
+  return {
+    runtime,
+    claims,
+    responses,
+    get listening() {
+      return releases.size
+    }
+  }
 }

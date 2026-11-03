@@ -12,15 +12,22 @@ import { firstVideo, secondVideo, shortVideo, legacyData, lockupData, shortsData
 const siteGateways = { www: wwwGateway, music: musicGateway }
 
 const cleanups: (() => void)[] = []
-afterEach(() => { for (const cleanup of cleanups.splice(0).reverse()) cleanup() })
+afterEach(() => {
+  for (const cleanup of cleanups.splice(0).reverse()) cleanup()
+})
 function pageFixture(site: "www" | "music" = "www") {
   const doc = document.implementation.createHTMLDocument("Explicitly synthetic renderer data")
   const page = createLiveReadPort({ site, document: doc, window })
   const gateway = createGateway({ site: siteGateways[site], page, now: () => 0 })
-  cleanups.push(() => gateway.dispose(), () => page.dispose())
+  cleanups.push(
+    () => gateway.dispose(),
+    () => page.dispose()
+  )
   function target(tag: string, key: string, raw: unknown) {
-    const element = doc.createElement(tag), button = doc.createElement("button")
-    element.append(button); doc.body.append(element)
+    const element = doc.createElement(tag),
+      button = doc.createElement("button")
+    element.append(button)
+    doc.body.append(element)
     defineRaw(element, key, raw)
     return { element, button }
   }
@@ -32,8 +39,11 @@ test("synthetic modern lockup admits validated metadata and command identity", a
   for (const key of ["data", "lockupViewModel"]) {
     const row = h.target("yt-lockup-view-model", key, lockupData())
     expect(h.page.has(readWatches.targetData)).toBe(true)
-    expect(await h.gateway.run({ kind: "videoInfo" }, { target: row.button })).toEqual<unknown>({ ok: true, route: readRoutes.videoInfo,
-      data: { videoId: secondVideo, title: "Synthetic lockup", length: null, kind: "video" } })
+    expect(await h.gateway.run({ kind: "videoInfo" }, { target: row.button })).toEqual<unknown>({
+      ok: true,
+      route: readRoutes.videoInfo,
+      data: { videoId: secondVideo, title: "Synthetic lockup", length: null, kind: "video" }
+    })
     expect(row.element.attributes.length + row.button.attributes.length).toBe(0)
     row.element.remove()
   }
@@ -45,8 +55,11 @@ test("synthetic Shorts data preserves the short kind", async () => {
   const h = pageFixture()
   for (const key of ["data", "shortsLockupViewModel"]) {
     const row = h.target("ytm-shorts-lockup-view-model", key, shortsData())
-    expect(await h.gateway.run({ kind: "videoInfo" }, { target: row.button })).toEqual<unknown>({ ok: true, route: readRoutes.videoInfo,
-      data: { videoId: shortVideo, title: "Synthetic Short", length: null, kind: "short" } })
+    expect(await h.gateway.run({ kind: "videoInfo" }, { target: row.button })).toEqual<unknown>({
+      ok: true,
+      route: readRoutes.videoInfo,
+      data: { videoId: shortVideo, title: "Synthetic Short", length: null, kind: "short" }
+    })
     row.element.remove()
   }
 })
@@ -55,14 +68,18 @@ test("legacy target paths and playlist rows keep the successful VideoInfo contra
   const h = pageFixture()
   for (const tag of ["ytd-video-renderer", "ytd-rich-grid-media", "ytd-grid-video-renderer", "ytd-compact-video-renderer", "ytd-playlist-panel-video-renderer", "ytd-playlist-video-renderer"]) {
     const row = h.target(tag, "data", legacyData())
-    expect(await h.gateway.run({ kind: "videoInfo" }, { target: row.button })).toEqual<unknown>({ ok: true, route: readRoutes.videoInfo,
-      data: { videoId: firstVideo, title: "Synthetic legacy", length: 120, kind: "video" } })
+    expect(await h.gateway.run({ kind: "videoInfo" }, { target: row.button })).toEqual<unknown>({
+      ok: true,
+      route: readRoutes.videoInfo,
+      data: { videoId: firstVideo, title: "Synthetic legacy", length: 120, kind: "video" }
+    })
     row.element.remove()
   }
 })
 
 test("invalid modern variants and ambiguous identities fail closed", async () => {
-  const h = pageFixture(), valid = lockupData()
+  const h = pageFixture(),
+    valid = lockupData()
   const variants: unknown[] = [
     { ...valid, contentType: "LOCKUP_CONTENT_TYPE_PLAYLIST" },
     { ...valid, contentType: "LOCKUP_CONTENT_TYPE_CHANNEL" },
@@ -91,7 +108,8 @@ test("invalid modern variants and ambiguous identities fail closed", async () =>
 })
 
 test("Shorts admission rejects malformed commands and playlist or ad masquerades", async () => {
-  const h = pageFixture(), valid = shortsData()
+  const h = pageFixture(),
+    valid = shortsData()
   for (const raw of [
     { ...valid, onTap: { innertubeCommand: { watchEndpoint: { videoId: shortVideo } } } },
     { ...valid, onTap: { innertubeCommand: { reelWatchEndpoint: { videoId: shortVideo, adClientParams: { isAd: true } } } } },
@@ -121,7 +139,8 @@ test("modern properties do not silently choose between conflicting sources or re
   expect(h.page.read("targetData", twoWrappers.button)).toBeUndefined()
   const ad = h.doc.createElement("ytd-ad-slot-renderer")
   const advertised = h.target("yt-lockup-view-model", "data", lockupData())
-  ad.append(advertised.element); h.doc.body.append(ad)
+  ad.append(advertised.element)
+  h.doc.body.append(ad)
   expect(h.page.read("targetData", advertised.button)).toBeUndefined()
   const detached = h.target("yt-lockup-view-model", "data", lockupData())
   detached.element.remove()
@@ -139,15 +158,26 @@ test("Music itemInfo keeps exact legacy endpoints, queue identity and selection"
   const h = pageFixture("music")
   for (const tag of ["ytmusic-responsive-list-item-renderer", "ytmusic-two-row-item-renderer", "ytmusic-player-queue-item", "ytmusic-responsive-header-renderer"]) {
     const row = h.target(tag, "data", rawSong())
-    expect(await h.gateway.run({ kind: "itemInfo" }, { target: row.button })).toEqual<unknown>({ ok: true, route: readRoutes.itemInfo, data: {
-      kind: "song", type: { kind: "music-video", musicVideoType: "MUSIC_VIDEO_TYPE_ATV" }, title: "Synthetic song",
-      videoId: firstVideo, queueItemId: 7, selected: false, autoplay: false, hasOwnLike: true, likeState: "not-liked",
-      endpoints: {
-        end: { queueAddEndpoint: { queueTarget: { videoId: firstVideo }, queueInsertPosition: "INSERT_AT_END" } },
-        save: { addToPlaylistEndpoint: { videoId: firstVideo } },
-        next: { queueAddEndpoint: { queueTarget: { videoId: firstVideo }, queueInsertPosition: "INSERT_AFTER_CURRENT_VIDEO" } }
+    expect(await h.gateway.run({ kind: "itemInfo" }, { target: row.button })).toEqual<unknown>({
+      ok: true,
+      route: readRoutes.itemInfo,
+      data: {
+        kind: "song",
+        type: { kind: "music-video", musicVideoType: "MUSIC_VIDEO_TYPE_ATV" },
+        title: "Synthetic song",
+        videoId: firstVideo,
+        queueItemId: 7,
+        selected: false,
+        autoplay: false,
+        hasOwnLike: true,
+        likeState: "not-liked",
+        endpoints: {
+          end: { queueAddEndpoint: { queueTarget: { videoId: firstVideo }, queueInsertPosition: "INSERT_AT_END" } },
+          save: { addToPlaylistEndpoint: { videoId: firstVideo } },
+          next: { queueAddEndpoint: { queueTarget: { videoId: firstVideo }, queueInsertPosition: "INSERT_AFTER_CURRENT_VIDEO" } }
+        }
       }
-    } })
+    })
     row.element.remove()
   }
   const modern = h.target("yt-lockup-view-model", "data", lockupData())

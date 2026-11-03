@@ -7,8 +7,12 @@ import { fileURLToPath } from "node:url"
 import { chromium } from "playwright"
 
 const args = process.argv.slice(2)
-if (![2, 4].includes(args.length) || args[0] !== "--browser" || !["chromium", "firefox"].includes(args[1]) || (args.length === 4 && (args[2] !== "--fixture-root" || !args[3]))) throw Error("Usage: check-browser.mjs --browser chromium|firefox [--fixture-root <generated-fixture>]")
-if (args[1] === "firefox") throw Error("Could not run Firefox installed-extension proof. Prerequisite: dependency owner must install the agreed Puppeteer 24.43.1 and Firefox 158 BiDi runtime. No Firefox driver is implemented by this unit.")
+if (![2, 4].includes(args.length) || args[0] !== "--browser" || !["chromium", "firefox"].includes(args[1]) || (args.length === 4 && (args[2] !== "--fixture-root" || !args[3])))
+  throw Error("Usage: check-browser.mjs --browser chromium|firefox [--fixture-root <generated-fixture>]")
+if (args[1] === "firefox")
+  throw Error(
+    "Could not run Firefox installed-extension proof. Prerequisite: dependency owner must install the agreed Puppeteer 24.43.1 and Firefox 158 BiDi runtime. No Firefox driver is implemented by this unit."
+  )
 const root = args[3] ? resolve(args[3]) : fileURLToPath(new URL("./", import.meta.url))
 const extension = resolve(root, ".output/chrome-mv3")
 const artifactDir = resolve(root, ".output/browser")
@@ -18,15 +22,19 @@ let context
 const evidence = { browser: "", sites: [], negative: [], selections: [] }
 try {
   context = await chromium.launchPersistentContext(profile, {
-    channel: "chromium", headless: true,
+    channel: "chromium",
+    headless: true,
     args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`]
   })
-  await context.route(/^https?:/, (route) => {
+  await context.route(/^https?:/, route => {
     const url = new URL(route.request().url())
     if (!["www.youtube.com", "music.youtube.com"].includes(url.hostname)) return route.abort()
-    return route.fulfill({ contentType: "text/html", body: '<!doctype html><html><head><style>.counter{color:rgb(255,0,0)!important}.fixture-popover{background:red!important}</style></head><body><main>Synthetic fixture only</main></body></html>' })
+    return route.fulfill({
+      contentType: "text/html",
+      body: "<!doctype html><html><head><style>.counter{color:rgb(255,0,0)!important}.fixture-popover{background:red!important}</style></head><body><main>Synthetic fixture only</main></body></html>"
+    })
   })
-  const worker = context.serviceWorkers()[0] ?? await context.waitForEvent("serviceworker")
+  const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent("serviceworker"))
   const extensionId = new URL(worker.url()).hostname
   const control = await context.newPage()
   await control.goto(`chrome-extension://${extensionId}/control.html`)
@@ -36,7 +44,7 @@ try {
     const plan = await call("plan", selection)
     const actual = await call("register", selection)
     const fields = ["id", "matches", "js", "world", "runAt", "allFrames", "persistAcrossSessions"]
-    const normalize = (rows) => rows.map((row) => Object.fromEntries(fields.map((field) => [field, field === "matches" ? [...row.matches].sort() : row[field]]))).sort((a, b) => a.id.localeCompare(b.id))
+    const normalize = rows => rows.map(row => Object.fromEntries(fields.map(field => [field, field === "matches" ? [...row.matches].sort() : row[field]]))).sort((a, b) => a.id.localeCompare(b.id))
     assert.deepEqual(normalize(actual), normalize(plan.expected))
     evidence.selections.push({ selection, plan, actual })
     return actual
@@ -44,8 +52,8 @@ try {
   const registered = await register()
   assert.equal(registered.length, 4)
   for (const site of ["www", "music"]) {
-    const main = registered.find((entry) => entry.id === `pp-${site}-page`)
-    const isolated = registered.find((entry) => entry.id === `pp-${site}`)
+    const main = registered.find(entry => entry.id === `pp-${site}-page`)
+    const isolated = registered.find(entry => entry.id === `pp-${site}`)
     assert.equal(main.world, "MAIN")
     assert.equal(main.runAt, "document_start")
     assert.equal(isolated.world, "ISOLATED")
@@ -53,8 +61,10 @@ try {
     assert.deepEqual(isolated.js, [`core-${site}.js`, `kit-${site}.js`, `consumer-${site}.js`])
     const page = await context.newPage()
     const errors = []
-    page.on("pageerror", (error) => errors.push(error.message))
-    page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()) })
+    page.on("pageerror", error => errors.push(error.message))
+    page.on("console", message => {
+      if (message.type() === "error") errors.push(message.text())
+    })
     const url = `https://${site}.youtube.com/linker-fixture`
     await page.goto(url)
     await page.getByRole("button", { name: "Count 0", exact: true }).waitFor()
@@ -78,7 +88,15 @@ try {
     assert.equal(result.events, 2)
     const styles = await page.evaluate(() => {
       const shadow = document.querySelector("#fixture-host").shadowRoot
-      return { color: getComputedStyle(shadow.querySelector(".counter")).color, styles: shadow.querySelectorAll("style").length, headStyles: document.head.querySelectorAll("style").length, mainCannotRead: document.documentElement.dataset.mainCannotRead, mainRan: document.documentElement.dataset.mainRan, mainAfterCore: typeof globalThis.__pp, mainReadyState: document.documentElement.dataset.mainReadyState }
+      return {
+        color: getComputedStyle(shadow.querySelector(".counter")).color,
+        styles: shadow.querySelectorAll("style").length,
+        headStyles: document.head.querySelectorAll("style").length,
+        mainCannotRead: document.documentElement.dataset.mainCannotRead,
+        mainRan: document.documentElement.dataset.mainRan,
+        mainAfterCore: typeof globalThis.__pp,
+        mainReadyState: document.documentElement.dataset.mainReadyState
+      }
     })
     assert.equal(styles.color, "rgb(20, 80, 140)")
     assert(styles.styles > 0)
@@ -104,8 +122,16 @@ try {
       const shadow = document.querySelector("#fixture-host").shadowRoot
       const trigger = shadow.querySelector("[data-popover-trigger]")
       const content = shadow.querySelector(".fixture-popover")
-      const a = trigger.getBoundingClientRect(), b = content.getBoundingClientRect()
-      return { background: getComputedStyle(content).backgroundColor, position: getComputedStyle(content.closest("[data-bits-floating-content-wrapper]")).position, offset: b.y - a.bottom, width: b.width, outer: !!document.querySelector(".fixture-popover"), headStyles: document.head.querySelectorAll("style").length }
+      const a = trigger.getBoundingClientRect(),
+        b = content.getBoundingClientRect()
+      return {
+        background: getComputedStyle(content).backgroundColor,
+        position: getComputedStyle(content.closest("[data-bits-floating-content-wrapper]")).position,
+        offset: b.y - a.bottom,
+        width: b.width,
+        outer: !!document.querySelector(".fixture-popover"),
+        headStyles: document.head.querySelectorAll("style").length
+      }
     })
     assert.equal(position.background, "rgb(240, 245, 250)")
     assert.equal(position.position, "fixed")
@@ -115,7 +141,7 @@ try {
     assert.equal(position.headStyles, 1)
     await page.keyboard.press("Escape")
     await content.waitFor({ state: "hidden" })
-    assert.equal(await page.getByRole("button", { name: "Open lazy popover" }).evaluate((node) => node.getRootNode().activeElement === node), true)
+    assert.equal(await page.getByRole("button", { name: "Open lazy popover" }).evaluate(node => node.getRootNode().activeElement === node), true)
     await call("files", tabId, [`late-${site}.js`])
     await page.getByRole("button", { name: "Count 0", exact: true }).click()
     await page.getByRole("button", { name: "Shared kit 1", exact: true }).waitFor()
@@ -158,7 +184,7 @@ try {
     const tabId = await call("tab", page.url())
     if (path !== "/") {
       await page.waitForFunction(() => document.documentElement.dataset.mainRan === "true")
-      await control.waitForFunction(async (tabId) => (await window.fixture.probe(tabId))[0].result.trace.includes("core"), tabId)
+      await control.waitForFunction(async tabId => (await window.fixture.probe(tabId))[0].result.trace.includes("core"), tabId)
     }
     const result = (await call("probe", tabId))[0].result
     assert.deepEqual(result, { trace: path === "/" ? [] : ["core"], kit: false, host: false })
@@ -177,7 +203,9 @@ try {
     const session = await context.newCDPSession(page)
     await session.send("Runtime.enable")
     let receivedException
-    const exception = new Promise((done) => { receivedException = done })
+    const exception = new Promise(done => {
+      receivedException = done
+    })
     session.on("Runtime.exceptionThrown", ({ exceptionDetails }) => {
       exceptions.push(exceptionDetails.exception?.description ?? exceptionDetails.text)
       receivedException()
@@ -188,16 +216,40 @@ try {
       await call("removeExport", tabId)
     }
     let rejection = ""
-    try { await call("files", tabId, ["consumer-www.js"]) } catch (error) { rejection = String(error) }
+    try {
+      await call("files", tabId, ["consumer-www.js"])
+    } catch (error) {
+      rejection = String(error)
+    }
     const rendered = await page.getByRole("button", { name: "Count 0", exact: true }).count()
     assert.equal(rendered, 0)
-    const failed = await control.evaluate(async (tabId) => (await chrome.scripting.executeScript({ target: { tabId }, world: "ISOLATED", func: () => ({ trace: globalThis.__pp.core.trace, present: !!document.querySelector("#fixture-host")?.shadowRoot?.querySelector(".counter") }) }))[0].result, tabId)
+    const failed = await control.evaluate(
+      async tabId =>
+        (
+          await chrome.scripting.executeScript({
+            target: { tabId },
+            world: "ISOLATED",
+            func: () => ({ trace: globalThis.__pp.core.trace, present: !!document.querySelector("#fixture-host")?.shadowRoot?.querySelector(".counter") })
+          })
+        )[0].result,
+      tabId
+    )
     assert(!failed.trace.includes("consumer"))
     let timeout
     try {
-      await Promise.race([exception, new Promise((_, reject) => { timeout = setTimeout(() => reject(Error(`${failure} did not raise a runtime exception`)), 5000) })])
-    } finally { clearTimeout(timeout) }
-    assert(exceptions.some((message) => failure === "missing-export" ? /if.*(function|undefined)/.test(message) : /(__pp|svelte|undefined)/.test(message)), `${failure} did not raise its expected runtime error: ${exceptions}`)
+      await Promise.race([
+        exception,
+        new Promise((_, reject) => {
+          timeout = setTimeout(() => reject(Error(`${failure} did not raise a runtime exception`)), 5000)
+        })
+      ])
+    } finally {
+      clearTimeout(timeout)
+    }
+    assert(
+      exceptions.some(message => (failure === "missing-export" ? /if.*(function|undefined)/.test(message) : /(__pp|svelte|undefined)/.test(message))),
+      `${failure} did not raise its expected runtime error: ${exceptions}`
+    )
     evidence.negative.push({ failure, rejection, failed, exceptions })
     await session.detach()
     await page.close()
@@ -205,8 +257,11 @@ try {
   evidence.browser = await worker.evaluate(() => navigator.userAgent)
   await writeFile(resolve(artifactDir, "chromium.json"), JSON.stringify(evidence, null, 2))
 } finally {
-  try { if (context) await context.close() }
-  finally { await rm(profile, { recursive: true, force: true }) }
+  try {
+    if (context) await context.close()
+  } finally {
+    await rm(profile, { recursive: true, force: true })
+  }
 }
 
 if (!args[3]) {
@@ -222,4 +277,7 @@ if (!args[3]) {
   }
   await writeFile(resolve(artifactDir, "chromium.json"), JSON.stringify(evidence, null, 2))
 }
-console.log("Installed Chromium extension passed both sites, shared components/runes, namespaces, worlds, styles, lazy Bits UI, later executeScript, and missing-export/absent-kit controls" + (args[3] ? "" : ". Added and removed music-only constructs passed the same checks."))
+console.log(
+  "Installed Chromium extension passed both sites, shared components/runes, namespaces, worlds, styles, lazy Bits UI, later executeScript, and missing-export/absent-kit controls" +
+    (args[3] ? "" : ". Added and removed music-only constructs passed the same checks.")
+)

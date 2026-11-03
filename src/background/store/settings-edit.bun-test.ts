@@ -19,7 +19,8 @@ type Dependencies = {
 test.each(optionCases)("ordinary option $name changes exactly its independent Settings body", specimen => {
   const raw = optionInitial["doc:settings"]
   if (raw === null || typeof raw !== "object" || Array.isArray(raw)) throw Error("Missing finite settings specimen")
-  const current = decodeSettings(raw.data), before = structuredClone(current)
+  const current = decodeSettings(raw.data),
+    before = structuredClone(current)
   const result = changeSharedSetting({ current, change: specimen.change })
   expect(result).toEqual<unknown>({ kind: "changed", settings: specimen.expectedSettings })
   expect(current).toEqual(before)
@@ -56,30 +57,48 @@ function fixtureSuite(change: typeof changeSharedSetting, dependencies: Dependen
   }
   const key = { code: "KeyS", ctrl: false, alt: true, shift: false, meta: false, keyFuture: { keep: [1, null] } }
   const source = {
-    theme: "system", undoKey: { ...key, char: "u" },
+    theme: "system",
+    undoKey: { ...key, char: "u" },
     autoAdd: { on: true, feedback: false, pct: 25, toolbarTick: false, toolbarPaused: true, autoFuture: ["keep", { pct: 0 }] },
     shortcuts: {
-      on: true, feedback: false, music: true, preset: true, picker: null,
+      on: true,
+      feedback: false,
+      music: true,
+      preset: true,
+      picker: null,
       list: [
         { id: "orig01", key: { ...key }, label: "  " + "🙂".repeat(41) + "  ", watchLaterOnEveryAccount: true, rowFuture: { tuple: ["keep", 0, false] } },
         { id: "save02", key: null, label: "  Other  ", watchLaterOnEveryAccount: false, rowFuture: "second" }
-      ], sectionFuture: { preset: "opaque" }
+      ],
+      sectionFuture: { preset: "opaque" }
     },
     quickSave: { on: false, feedback: true, shortsShelves: true },
-    queueButton: { on: true, feedback: false }, watchButton: { on: false, feedback: true, shorts: true },
-    cardMenu: { on: true, keepLinkMenu: true }, browserMenu: { on: false, feedback: false }, musicSection: false,
-    musicActions: { on: true, feedback: false, preset: true, buttons: { next: true, queue: false, save: true, like: false, remove: true, bar: false, library: true, mix: false, album: true, artist: false } },
+    queueButton: { on: true, feedback: false },
+    watchButton: { on: false, feedback: true, shorts: true },
+    cardMenu: { on: true, keepLinkMenu: true },
+    browserMenu: { on: false, feedback: false },
+    musicSection: false,
+    musicActions: {
+      on: true,
+      feedback: false,
+      preset: true,
+      buttons: { next: true, queue: false, save: true, like: false, remove: true, bar: false, library: true, mix: false, album: true, artist: false }
+    },
     musicKeys: { on: false, feedback: true, preset: true, keys: { next: null, queue: null, save: null, picker: null, like: null, remove: null, library: null, mix: null, album: null, artist: null } },
     anyTabKeys: { on: true, feedback: false },
     gather: { on: true, feedback: false, to: "playlist", order: "left-to-right", close: true, auto: { unvisited: true, after: "1w", background: false, count: true, n: 30 } },
-    rootFuture: { nested: ["名🙂", { keep: true, zero: 0 }] }, toJSON: "inert"
+    rootFuture: { nested: ["名🙂", { keep: true, zero: 0 }] },
+    toJSON: "inert"
   }
   const normalized = {
     ...source,
-    shortcuts: { ...source.shortcuts, list: [
-      { ...source.shortcuts.list[0], id: "orig01", key: { ...key }, label: "🙂".repeat(40), watchLaterOnEveryAccount: true, rowFuture: { tuple: ["keep", 0, false] } },
-      { id: "save02", key: null, label: "Other", watchLaterOnEveryAccount: false, rowFuture: "second" }
-    ] }
+    shortcuts: {
+      ...source.shortcuts,
+      list: [
+        { ...source.shortcuts.list[0], id: "orig01", key: { ...key }, label: "🙂".repeat(40), watchLaterOnEveryAccount: true, rowFuture: { tuple: ["keep", 0, false] } },
+        { id: "save02", key: null, label: "Other", watchLaterOnEveryAccount: false, rowFuture: "second" }
+      ]
+    }
   }
   const input = freeze(dependencies.decodeSettings(source))
   const others = freeze({
@@ -117,50 +136,81 @@ function fixtureSuite(change: typeof changeSharedSetting, dependencies: Dependen
   }
   const observations = matrix(change)
   const alternatives: [string, typeof change][] = [
-    ["no-op candidate", input => {
-      const result = change(input)
-      return result.kind === "unchanged" ? { kind: "changed", settings: dependencies.decodeSettings(input.current) } : result
-    }],
-    ["clamped percentage", input => change(input.change.kind === "default-percentage" ? { ...input, change: { kind: "default-percentage", value: Math.max(0, Math.min(100, Math.round(input.change.value))) } } : input)],
+    [
+      "no-op candidate",
+      input => {
+        const result = change(input)
+        return result.kind === "unchanged" ? { kind: "changed", settings: dependencies.decodeSettings(input.current) } : result
+      }
+    ],
+    [
+      "clamped percentage",
+      input => change(input.change.kind === "default-percentage" ? { ...input, change: { kind: "default-percentage", value: Math.max(0, Math.min(100, Math.round(input.change.value))) } } : input)
+    ],
     ["zero replaced", input => change(input.change.kind === "default-percentage" && input.change.value === 0 ? { ...input, change: { kind: "default-percentage", value: 50 } } : input)],
-    ["unknown root lost", input => {
-      const result = change(input)
-      if (result.kind === "changed") Reflect.deleteProperty(result.settings, "rootFuture")
-      return result
-    }],
-    ["unknown autoAdd lost", input => {
-      const result = change(input)
-      if (result.kind === "changed") Reflect.deleteProperty(result.settings.autoAdd, "autoFuture")
-      return result
-    }],
-    ["shortcut identity replaced", input => {
-      const result = change(input)
-      if (result.kind === "changed") result.settings.shortcuts.list[0]!.id = "new001"
-      return result
-    }],
-    ["unknown key lost", input => {
-      const result = change(input)
-      if (result.kind === "changed") Reflect.deleteProperty(result.settings.shortcuts.list[0]!.key!, "keyFuture")
-      return result
-    }],
-    ["normalization skipped", input => {
-      const result = change(input)
-      return result.kind === "changed" ? { kind: "changed", settings: dependencies.decodeSettings({ ...result.settings, shortcuts: input.current.shortcuts }) } : result
-    }],
-    ["input mutated", input => {
-      Object.defineProperty(input.current.autoAdd, "pct", { value: 50 })
-      return change(input)
-    }]
+    [
+      "unknown root lost",
+      input => {
+        const result = change(input)
+        if (result.kind === "changed") Reflect.deleteProperty(result.settings, "rootFuture")
+        return result
+      }
+    ],
+    [
+      "unknown autoAdd lost",
+      input => {
+        const result = change(input)
+        if (result.kind === "changed") Reflect.deleteProperty(result.settings.autoAdd, "autoFuture")
+        return result
+      }
+    ],
+    [
+      "shortcut identity replaced",
+      input => {
+        const result = change(input)
+        if (result.kind === "changed") result.settings.shortcuts.list[0]!.id = "new001"
+        return result
+      }
+    ],
+    [
+      "unknown key lost",
+      input => {
+        const result = change(input)
+        if (result.kind === "changed") Reflect.deleteProperty(result.settings.shortcuts.list[0]!.key!, "keyFuture")
+        return result
+      }
+    ],
+    [
+      "normalization skipped",
+      input => {
+        const result = change(input)
+        return result.kind === "changed" ? { kind: "changed", settings: dependencies.decodeSettings({ ...result.settings, shortcuts: input.current.shortcuts }) } : result
+      }
+    ],
+    [
+      "input mutated",
+      input => {
+        Object.defineProperty(input.current.autoAdd, "pct", { value: 50 })
+        return change(input)
+      }
+    ]
   ]
   const controls: string[] = []
   for (const [name, alternative] of alternatives) {
     let caught = false
-    try { matrix(alternative) } catch { caught = true }
+    try {
+      matrix(alternative)
+    } catch {
+      caught = true
+    }
     check(caught, `defect control escaped ${name}`)
     controls.push(name)
   }
   let hookCalls = 0
-  const hook = () => { hookCalls++; throw new Error("toJSON must not run") }
+  const hook = () => {
+    hookCalls++
+    throw new Error("toJSON must not run")
+  }
   const opaque = freeze(dependencies.decodeSettings({ ...source, rootFuture: { ...source.rootFuture, toJSON: hook } }))
   equal(change({ current: opaque, change: { kind: "theme", value: "system" } }), { kind: "unchanged" }, "opaque theme no-op")
   equal(change({ current: opaque, change: { kind: "default-percentage", value: 25 } }), { kind: "unchanged" }, "opaque percentage no-op")
@@ -169,13 +219,23 @@ function fixtureSuite(change: typeof changeSharedSetting, dependencies: Dependen
   equal(dependencies.prepareDocumentBody({ kind: "settings", data: opaqueChange.settings }), { kind: "invalid", reason: "json" }, "non-JSON extension refused at preparer")
   check(hookCalls === 0, "no serialization hook called")
   let unrelatedReads = 0
-  const early = { ...input, get shortcuts(): typeof input.shortcuts { unrelatedReads++; throw new Error("unrelated body read") } }
+  const early = {
+    ...input,
+    get shortcuts(): typeof input.shortcuts {
+      unrelatedReads++
+      throw new Error("unrelated body read")
+    }
+  }
   equal(change({ current: early, change: { kind: "theme", value: "system" } }), { kind: "unchanged" }, "theme returns before normalization")
   equal(change({ current: early, change: { kind: "default-percentage", value: 25 } }), { kind: "unchanged" }, "percentage returns before normalization")
   equal(change({ current: early, change: { kind: "default-percentage", value: NaN } }), { kind: "invalid", reason: "invalid-percentage" }, "invalid returns before normalization")
   check(unrelatedReads === 0, "no unrelated read on no-op or invalid input")
   let detectsNormalization = false
-  try { change({ current: early, change: { kind: "theme", value: "dark" } }) } catch { detectsNormalization = true }
+  try {
+    change({ current: early, change: { kind: "theme", value: "dark" } })
+  } catch {
+    detectsNormalization = true
+  }
   check(detectsNormalization && unrelatedReads > 0, "unrelated read guard positive control")
 
   const changed = change({ current: input, change: { kind: "default-percentage", value: 0 } })
@@ -183,11 +243,15 @@ function fixtureSuite(change: typeof changeSharedSetting, dependencies: Dependen
   changed.settings.shortcuts.list[0]!.key!.char = undefined
   const prepared = dependencies.prepareDocumentBody({ kind: "settings", data: changed.settings })
   const jsonBody = {
-    ...normalized, autoAdd: { ...normalized.autoAdd, pct: 0 },
-    shortcuts: { ...normalized.shortcuts, list: [
-      { ...normalized.shortcuts.list[0], id: "orig01", key, label: "🙂".repeat(40), watchLaterOnEveryAccount: true, rowFuture: { tuple: ["keep", 0, false] } },
-      { id: "save02", key: null, label: "Other", watchLaterOnEveryAccount: false, rowFuture: "second" }
-    ] }
+    ...normalized,
+    autoAdd: { ...normalized.autoAdd, pct: 0 },
+    shortcuts: {
+      ...normalized.shortcuts,
+      list: [
+        { ...normalized.shortcuts.list[0], id: "orig01", key, label: "🙂".repeat(40), watchLaterOnEveryAccount: true, rowFuture: { tuple: ["keep", 0, false] } },
+        { id: "save02", key: null, label: "Other", watchLaterOnEveryAccount: false, rowFuture: "second" }
+      ]
+    }
   }
   equal(prepared, { kind: "prepared", data: jsonBody }, "prepared complete JSON body and omitted optional char")
   check(prepared.kind === "prepared" && dependencies.isJsonValue(prepared.data), "strict JSON consumer body")
@@ -198,11 +262,15 @@ function fixtureSuite(change: typeof changeSharedSetting, dependencies: Dependen
   check(encoded.kind === "encoded", "consumer encoded")
   const read = dependencies.readSyncDocument({ key: { kind: "settings" }, items: encoded.encoded.items })
   equal(read, { kind: "value", value: { kind: "settings", document: { ...envelope, data: jsonBody } }, json: envelope }, "complete wire readback")
-  equal(others, {
-    device: { id: "fixture-device", syncOn: false, consent: null },
-    setup: { label: null, autoAdd: [{ pl: "PL_SYNTHETIC", takes: "both", pct: 0 }], targets: { orig01: "PL_SYNTHETIC" }, quickSave: null, musicSave: null, gather: null, marks: {} },
-    unclaimed: { originalShortcutId: "orig01", shortcutPlaylist: "PL_SYNTHETIC" }
-  }, "other input domains unchanged")
+  equal(
+    others,
+    {
+      device: { id: "fixture-device", syncOn: false, consent: null },
+      setup: { label: null, autoAdd: [{ pl: "PL_SYNTHETIC", takes: "both", pct: 0 }], targets: { orig01: "PL_SYNTHETIC" }, quickSave: null, musicSave: null, gather: null, marks: {} },
+      unclaimed: { originalShortcutId: "orig01", shortcutPlaylist: "PL_SYNTHETIC" }
+    },
+    "other input domains unchanged"
+  )
   return { observations, prepared, encoded, read, controls, hookCalls, unrelatedReadPositiveControl: detectsNormalization }
 }
 
@@ -245,7 +313,13 @@ test("minified browser module has the same complete observations in a guarded No
     try {Math.random} catch(error){if(error!==violation)throw error;positiveControls++}
     JSON.stringify({exports:Object.keys(operation),observation,beforeControls,protectedReads,positiveControls});
   `
-  const result = JSON.parse(executeSyntheticNodeRealm('import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; process.stdout.write(runInNewContext(readFileSync(0,"utf8"), {}, {timeout:30000}));', script, 35000))
+  const result = JSON.parse(
+    executeSyntheticNodeRealm(
+      'import {readFileSync} from "node:fs"; import {runInNewContext} from "node:vm"; process.stdout.write(runInNewContext(readFileSync(0,"utf8"), {}, {timeout:30000}));',
+      script,
+      35000
+    )
+  )
   expect(result.exports).toEqual(["changeSharedSetting"])
   expect(result.observation).toEqual(JSON.parse(JSON.stringify(fixtureSuite(changeSharedSetting, dependencies))))
   expect(result.positiveControls).toBe(30)

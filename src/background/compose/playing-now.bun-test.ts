@@ -12,21 +12,50 @@ const song: NowPlaying = { videoId: "getLucky001" as never, title: "Get Lucky", 
 const req = { windowId: 1, incognito: false, activeTabId: 2 }
 const musicTab = (id: number, change: object = {}) => ({ id, windowId: 1, incognito: false, active: false, audible: false, discarded: false, lastAccessed: id, ...change })
 
-function world(options: { settings?: (settings: Settings) => void; granted?: boolean; consented?: boolean; tabs?: object[];
-  answer?: (tabId: number) => unknown; acct?: string | null; failing?: number[] } = {}) {
+function world(
+  options: { settings?: (settings: Settings) => void; granted?: boolean; consented?: boolean; tabs?: object[]; answer?: (tabId: number) => unknown; acct?: string | null; failing?: number[] } = {}
+) {
   const settings = defaultSettings()
   options.settings?.(settings)
-  const ensured: { tabId: number; what: unknown }[] = [], ran: number[] = []
+  const ensured: { tabId: number; what: unknown }[] = [],
+    ran: number[] = []
   const native = {
-    tabs: { async query() { return options.tabs ?? [musicTab(5, { lastAccessed: 50 }), musicTab(6, { audible: true })] } },
-    permissions: { async contains() { return options.granted ?? true } }
+    tabs: {
+      async query() {
+        return options.tabs ?? [musicTab(5, { lastAccessed: 50 }), musicTab(6, { audible: true })]
+      }
+    },
+    permissions: {
+      async contains() {
+        return options.granted ?? true
+      }
+    }
   } as unknown as NativeBrowser
   const tabs = {
-    async known({ tabId }: { tabId: number }) { return [{ tabId, acct: options.acct === undefined ? "AAAAAAAAAAAAAAAA" : options.acct, privateTab: false }] },
-    async runIn(tabId: number) { ran.push(tabId); return { kind: "result", tabId, result: options.answer ? options.answer(tabId) : { ok: true, route: "r", data: song } } }
+    async known({ tabId }: { tabId: number }) {
+      return [{ tabId, acct: options.acct === undefined ? "AAAAAAAAAAAAAAAA" : options.acct, privateTab: false }]
+    },
+    async runIn(tabId: number) {
+      ran.push(tabId)
+      return { kind: "result", tabId, result: options.answer ? options.answer(tabId) : { ok: true, route: "r", data: song } }
+    }
   } as unknown as Tabs
-  const read = composePlayingNow({ native, tabs, actions: { async settings() { return settings } } as unknown as Actions, consented: () => options.consented ?? true,
-    registrar: { async ensure(tabId, what) { if (options.failing?.includes(tabId)) throw new Error("refused"); ensured.push({ tabId, what }) } } })
+  const read = composePlayingNow({
+    native,
+    tabs,
+    actions: {
+      async settings() {
+        return settings
+      }
+    } as unknown as Actions,
+    consented: () => options.consented ?? true,
+    registrar: {
+      async ensure(tabId, what) {
+        if (options.failing?.includes(tabId)) throw new Error("refused")
+        ensured.push({ tabId, what })
+      }
+    }
+  })
   return { read: () => read(req), ensured, ran }
 }
 
@@ -47,14 +76,21 @@ test("nothing playing, an ad, and a signed-out tab each name the tab and carry n
 })
 
 test("a tab that can't be injected or read is skipped for the next one in order", async () => {
-  const w = world({ failing: [6], answer: tabId => tabId === 5 ? { ok: true, route: "r", data: song } : { ok: false, reason: "failed" } })
-  expect(await w.read()).toEqual({ kind: "song", tabId: 5, song })
+  const w = world({ failing: [6], answer: tabId => (tabId === 5 ? { ok: true, route: "r", data: song } : { ok: false, reason: "failed" }) })
+  expect(await w.read()).toEqual({ kind: "song", tabId: 5, acct: "AAAAAAAAAAAAAAAA" as never, song })
 })
 
 test("before consent, with the section off, without access or with no YouTube Music tab, nothing is read or injected", async () => {
   const cases = [
     [world({ consented: false }), { kind: "unavailable" }],
-    [world({ settings: settings => { settings.musicSection = false } }), { kind: "off" }],
+    [
+      world({
+        settings: settings => {
+          settings.musicSection = false
+        }
+      }),
+      { kind: "off" }
+    ],
     [world({ granted: false }), { kind: "no-access" }],
     [world({ tabs: [] }), { kind: "no-tab" }]
   ] as const
@@ -66,8 +102,16 @@ test("before consent, with the section off, without access or with no YouTube Mu
 
 test("Save before consent reaches no tab", async () => {
   const tried: unknown[] = []
-  const save = createPlayingSave({ consented: () => false, i18n: englishI18n(),
-    actions: { async addFromPopup(...call) { tried.push(call); return { kind: "no-tab" } } } })
+  const save = createPlayingSave({
+    consented: () => false,
+    i18n: englishI18n(),
+    actions: {
+      async addFromPopup(...call) {
+        tried.push(call)
+        return { kind: "no-tab" }
+      }
+    }
+  })
   const request = { site: "music", video: song.videoId, via: "quick-save", opener: "playing-now" } as const
   expect(await save(req, { tabId: 6, acct: "AAAAAAAAAAAAAAAA" as never, request })).toEqual({ kind: "unavailable" })
   expect(tried).toEqual([])

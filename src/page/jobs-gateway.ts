@@ -43,7 +43,12 @@ export type SiteGateway = {
  * port and pinned identity, so a jobs file that loads after an account switch still answers `accountChanged`.
  */
 export function createJobsGateway(options: {
-  site: SiteGateway; reads: PageReads; requests?: GatewayRequestPort; queue?: WwwQueuePort; music?: MusicPagePort; clock?: GatewayClock
+  site: SiteGateway
+  reads: PageReads
+  requests?: GatewayRequestPort
+  queue?: WwwQueuePort
+  music?: MusicPagePort
+  clock?: GatewayClock
   now?: () => number
 }): Jobs {
   const { reads } = options
@@ -58,15 +63,29 @@ export function createJobsGateway(options: {
   let disposed = false
 
   function stamp(): number {
-    try { const at = now(); return Number.isSafeInteger(at) && at >= 0 ? at : 0 } catch { return 0 }
+    try {
+      const at = now()
+      return Number.isSafeInteger(at) && at >= 0 ? at : 0
+    } catch {
+      return 0
+    }
   }
   function requestSignal(kind: BreakageSignal["kind"], route: RequestRoute | PageUiRoute | HandlerRoute, job: JobId, raw?: unknown): void {
     if (disposed) return
     const at = stamp()
     reads.emit({
-      site, feature: null, job, route: route.id, kind, watchId: route.watchId,
+      site,
+      feature: null,
+      job,
+      route: route.id,
+      kind,
+      watchId: route.watchId,
       shape: kind === "unrecognised" ? makeShapeOutline(isJsonValue(raw) ? raw : null, vocabulary.schemaKeys) : null,
-      clientVersion: null, pageType: "other", count: 1, firstSeen: at, lastSeen: at
+      clientVersion: null,
+      pageType: "other",
+      count: 1,
+      firstSeen: at,
+      lastSeen: at
     })
   }
   function item(target: Element | undefined): ItemInfo | undefined {
@@ -88,14 +107,14 @@ export function createJobsGateway(options: {
         const raw = reads.read("targetData", "videoInfo", target)
         return reads.parsed(readWatches.targetData, raw, "videoInfo", () => parseTargetVideo(raw))
       }
-      case "itemInfo": return item(target)
+      case "itemInfo":
+        return item(target)
       case "channelOf": {
         const { nav, raw, source } = reads.current("channelOf")
         const playerId = field(raw, "videoData", "video_id")
         const currentId = playerId ?? (nav && nav.navigation.kind !== "other" ? nav.navigation.videoId : undefined)
         if (currentId !== job.videoId || !reads.agrees(nav, currentId)) return undefined
-        return parseChannel(nav?.response, job.videoId) ?? reads.parsed(readWatches[source], raw, "channelOf",
-          () => parseChannel(field(raw, "response"), job.videoId))
+        return parseChannel(nav?.response, job.videoId) ?? reads.parsed(readWatches[source], raw, "channelOf", () => parseChannel(field(raw, "response"), job.videoId))
       }
     }
   }
@@ -103,66 +122,97 @@ export function createJobsGateway(options: {
     return table[job].find((route): route is RequestRoute => route.kind === "request" && route.via === "command")
   }
   function queueRoutes() {
-    const add = commandRoute("queueAdd"), undo = commandRoute("queueUndo"), list = commandRoute("queueAddList")
+    const add = commandRoute("queueAdd"),
+      undo = commandRoute("queueUndo"),
+      list = commandRoute("queueAddList")
     const menu = table.openCardMenu.find((route): route is PageUiRoute => route.kind === "page-ui")
     return add && undo && list && menu ? { add, undo, list, menu } : undefined
   }
   const routesForQueue = site === "www" ? queueRoutes() : undefined
-  const queue = options.queue && routesForQueue && options.site.queue ? options.site.queue({
-    port: options.queue, clock, routes: routesForQueue,
-    card: target => page.read("targetData", target),
-    check: () => guard.check(false),
-    notice(kind, route, raw) {
-      requestSignal(kind, route, queueJobs.find(id => table[id].some(entry => entry.id === route.id)) ?? "queueAdd", raw)
-    }
-  }) : undefined
+  const queue =
+    options.queue && routesForQueue && options.site.queue
+      ? options.site.queue({
+          port: options.queue,
+          clock,
+          routes: routesForQueue,
+          card: target => page.read("targetData", target),
+          check: () => guard.check(false),
+          notice(kind, route, raw) {
+            requestSignal(kind, route, queueJobs.find(id => table[id].some(entry => entry.id === route.id)) ?? "queueAdd", raw)
+          }
+        })
+      : undefined
   async function queueJob(job: JobOf<QueueJobId>, target: Element | undefined, budget: number | undefined): Promise<PageJobResult> {
     if (!queue) return { ok: false, reason: "unavailable" }
     const blocked = guard.check(needsAccount(job))
     if (blocked) return blocked
     switch (job.kind) {
-      case "openCardMenu": return queue.menu(job, target)
-      case "queueAdd": return lanes.run("app-state", scope => queue.add(target, scope), budget)
-      case "queueUndo": return lanes.run("app-state", scope => queue.undo(job, scope), budget)
-      case "queueAddList": return lanes.run("app-state", scope => queue.addList(job, scope), budget)
+      case "openCardMenu":
+        return queue.menu(job, target)
+      case "queueAdd":
+        return lanes.run("app-state", scope => queue.add(target, scope), budget)
+      case "queueUndo":
+        return lanes.run("app-state", scope => queue.undo(job, scope), budget)
+      case "queueAddList":
+        return lanes.run("app-state", scope => queue.addList(job, scope), budget)
     }
   }
-  const music = site === "music" && options.music && options.site.music ? options.site.music({
-    port: options.music, page, clock, table,
-    casting: () => reads.casting(),
-    notice(kind, route, raw) {
-      requestSignal(kind, route, musicJobs.find(id => table[id].some(entry => entry.id === route.id)) ?? "queueInsert", raw)
-    }
-  }, {
-    item,
-    location: () => reads.read("location")
-  }) : undefined
+  const music =
+    site === "music" && options.music && options.site.music
+      ? options.site.music(
+          {
+            port: options.music,
+            page,
+            clock,
+            table,
+            casting: () => reads.casting(),
+            notice(kind, route, raw) {
+              requestSignal(kind, route, musicJobs.find(id => table[id].some(entry => entry.id === route.id)) ?? "queueInsert", raw)
+            }
+          },
+          {
+            item,
+            location: () => reads.read("location")
+          }
+        )
+      : undefined
   async function musicJob(job: JobOf<MusicJobId>, target: Element | undefined, budget: number | undefined): Promise<PageJobResult> {
     if (!music) return { ok: false, reason: "unavailable" }
     const blocked = guard.check(needsAccount(job))
     if (blocked) return blocked
-    return lanes.run("app-state", async (scope): Promise<PageJobResult> => {
-      const result = await musicStep(music, job, target, scope)
-      return guard.check(needsAccount(job)) ?? result
-    }, budget)
+    return lanes.run(
+      "app-state",
+      async (scope): Promise<PageJobResult> => {
+        const result = await musicStep(music, job, target, scope)
+        return guard.check(needsAccount(job)) ?? result
+      },
+      budget
+    )
   }
   function musicStep(jobs: NonNullable<typeof music>, job: JobOf<MusicJobId>, target: Element | undefined, scope: JobScope): Promise<PageJobResult> {
     switch (job.kind) {
-      case "queueInsert": return jobs.insert(job, scope)
-      case "queueRemove": return jobs.remove(job, scope)
-      case "queueRemoveIds": return jobs.removeIds(job, scope)
-      case "queueMove": return jobs.move(job, scope)
-      case "queueReinsert": return jobs.reinsert(job, scope)
-      case "like": return jobs.like(job, scope)
-      case "library": return jobs.library(job, target)
-      case "navigate": return jobs.navigate(job, scope)
+      case "queueInsert":
+        return jobs.insert(job, scope)
+      case "queueRemove":
+        return jobs.remove(job, scope)
+      case "queueRemoveIds":
+        return jobs.removeIds(job, scope)
+      case "queueMove":
+        return jobs.move(job, scope)
+      case "queueReinsert":
+        return jobs.reinsert(job, scope)
+      case "like":
+        return jobs.like(job, scope)
+      case "library":
+        return jobs.library(job, target)
+      case "navigate":
+        return jobs.navigate(job, scope)
     }
   }
   async function send(job: Job, spec: RequestSpec, scope: JobScope): Promise<AnswerStep> {
     const candidates = table[job.kind].filter((route): route is RequestRoute => route.kind === "request")
     const fail = (failure: JobFailure): AnswerStep => ({ kind: "failure", failure })
-    const check = () => guard.check(needsAccount(job)) ??
-      (!scope.active || disposed ? { ok: false as const, reason: "unconfirmed" as const } : null)
+    const check = () => guard.check(needsAccount(job)) ?? (!scope.active || disposed ? { ok: false as const, reason: "unconfirmed" as const } : null)
     for (let index = 0; index < candidates.length; index++) {
       const route = candidates[index]
       if (!route) continue
@@ -171,10 +221,22 @@ export function createJobsGateway(options: {
       const port = options.requests
       if (!port) return fail({ ok: false, reason: "unavailable" })
       let present = false
-      try { present = port.has(route.via) } catch { requestSignal("threw", route, job.kind) }
-      if (!present) { requestSignal("missing", route, job.kind); continue }
+      try {
+        present = port.has(route.via)
+      } catch {
+        requestSignal("threw", route, job.kind)
+      }
+      if (!present) {
+        requestSignal("missing", route, job.kind)
+        continue
+      }
       const result = await attempt({
-        port, route, spec, scope, clock, budget: scope.remaining() / Math.max(1, candidates.length - index),
+        port,
+        route,
+        spec,
+        scope,
+        clock,
+        budget: scope.remaining() / Math.max(1, candidates.length - index),
         context: { check, notice: kind => requestSignal(kind, route, job.kind), observe: body => guard.observe(body) },
         observe: body => guard.observe(body)
       })
@@ -182,20 +244,23 @@ export function createJobsGateway(options: {
       if (changed) return fail(changed)
       if (!scope.active || disposed) return fail({ ok: false, reason: "unconfirmed" })
       if (result.kind === "blocked") return fail(result.failure)
-      if (result.kind === "not-sent") { requestSignal(result.cause === "missing" ? "missing" : "threw", route, job.kind); continue }
+      if (result.kind === "not-sent") {
+        requestSignal(result.cause === "missing" ? "missing" : "threw", route, job.kind)
+        continue
+      }
       if (result.kind === "lost" || result.kind === "timeout") {
         requestSignal(result.kind === "timeout" ? "timeout" : "threw", route, job.kind)
         if (isWrite(job)) return fail({ ok: false, reason: "unconfirmed" })
         continue
       }
       const { http, body } = result.answer
-      const identityFailure = guard.response(needsAccount(job), body, site === "music" || job.kind !== "membership" && job.kind !== "playlists")
+      const identityFailure = guard.response(needsAccount(job), body, site === "music" || (job.kind !== "membership" && job.kind !== "playlists"))
       if (identityFailure) return fail(identityFailure)
       const failure = answerFailure(http, body)
-      const correlatedBatch = job.kind === "addBatch" && http >= 200 && http < 300 &&
-        field(body, "error") === undefined && Array.isArray(field(body, "playlistEditResults"))
+      const correlatedBatch = job.kind === "addBatch" && http >= 200 && http < 300 && field(body, "error") === undefined && Array.isArray(field(body, "playlistEditResults"))
       if (failure && !(correlatedBatch && failure.reason === "failed" && failure.status === "STATUS_FAILED")) {
-        requestSignal("rejected", route, job.kind); return fail(failure)
+        requestSignal("rejected", route, job.kind)
+        return fail(failure)
       }
       if (index > 0) requestSignal("fell-back", route, job.kind)
       return { kind: "answer", answer: result.answer, route }
@@ -210,9 +275,10 @@ export function createJobsGateway(options: {
     if (!first) return { ok: false, reason: "failed" }
     let parsed: ParsedJob
     try {
-      parsed = await requestAnswer({ job, first, send: spec => send(job, spec, scope), privacy: lastPrivacy,
-        unrecognised: (route, body) => requestSignal("unrecognised", route, job.kind, body) })
-    } catch { return { ok: false, reason: isWrite(job) ? "unconfirmed" : "unavailable" } }
+      parsed = await requestAnswer({ job, first, send: spec => send(job, spec, scope), privacy: lastPrivacy, unrecognised: (route, body) => requestSignal("unrecognised", route, job.kind, body) })
+    } catch {
+      return { ok: false, reason: isWrite(job) ? "unconfirmed" : "unavailable" }
+    }
     const changed = guard.check(needsAccount(job))
     if (changed) return changed
     if (!scope.active || disposed) return { ok: false, reason: "unconfirmed" }
@@ -252,23 +318,32 @@ export function createJobsGateway(options: {
         if (blocked) return blocked
         const result: unknown = await lanes.run("playlist", scope => requestJob(job, scope), ctx?.budget)
         return isPageJobResultFor<J>(job, result) ? result : { ok: false, reason: "unavailable" }
-      } catch { return { ok: false, reason: "unavailable" } }
+      } catch {
+        return { ok: false, reason: "unavailable" }
+      }
     },
     async probe(): Promise<ProbeReport> {
-      return { site, entries: vocabulary.watchIds.map(id => {
-        const transport = Object.entries(requestWatches).find(([, watch]) => watch === id)
-        const handler = musicHandlers.find(name => handlerWatches[name] === id)
-        let found = false
-        if (handler) {
-          try { found = !disposed && options.music?.has(handler) === true } catch {}
-        } else if (transport) {
-          const via = transport[0]
-          if (via === "command" || via === "service" || via === "signed" || via === "plain" || via === "music") {
-            try { found = !disposed && options.requests?.has(via) === true } catch {}
-          }
-        } else found = !disposed && reads.present(id)
-        return { id, present: found }
-      }) }
+      return {
+        site,
+        entries: vocabulary.watchIds.map(id => {
+          const transport = Object.entries(requestWatches).find(([, watch]) => watch === id)
+          const handler = musicHandlers.find(name => handlerWatches[name] === id)
+          let found = false
+          if (handler) {
+            try {
+              found = !disposed && options.music?.has(handler) === true
+            } catch {}
+          } else if (transport) {
+            const via = transport[0]
+            if (via === "command" || via === "service" || via === "signed" || via === "plain" || via === "music") {
+              try {
+                found = !disposed && options.requests?.has(via) === true
+              } catch {}
+            }
+          } else found = !disposed && reads.present(id)
+          return { id, present: found }
+        })
+      }
     },
     dispose() {
       if (disposed) return
@@ -280,6 +355,12 @@ export function createJobsGateway(options: {
   }
 }
 
-function isTargetRead(job: Job): job is JobOf<TargetReadId> { return (targetReads as readonly string[]).includes(job.kind) }
-function isQueueJob(job: Job): job is JobOf<QueueJobId> { return (queueJobs as readonly string[]).includes(job.kind) }
-function isMusicJob(job: Job): job is JobOf<MusicJobId> { return (musicJobs as readonly string[]).includes(job.kind) }
+function isTargetRead(job: Job): job is JobOf<TargetReadId> {
+  return (targetReads as readonly string[]).includes(job.kind)
+}
+function isQueueJob(job: Job): job is JobOf<QueueJobId> {
+  return (queueJobs as readonly string[]).includes(job.kind)
+}
+function isMusicJob(job: Job): job is JobOf<MusicJobId> {
+  return (musicJobs as readonly string[]).includes(job.kind)
+}

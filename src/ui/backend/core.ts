@@ -1,6 +1,13 @@
 import { changeFeatureFromClick } from "./shared-settings"
 import { createKeySettingsSource } from "./key-settings"
-import { isFeatureSettingChange, isSharedSettingChange, type FeatureSettingChange, type FeatureSettingAnswer, type SharedSettingChange, type SharedSettingAnswer } from "../../shared/contracts/shared-settings"
+import {
+  isFeatureSettingChange,
+  isSharedSettingChange,
+  type FeatureSettingChange,
+  type FeatureSettingAnswer,
+  type SharedSettingChange,
+  type SharedSettingAnswer
+} from "../../shared/contracts/shared-settings"
 import { isKeySettingChange, type KeySettingChange, type KeySettingAnswer } from "../../shared/contracts/key-settings"
 import { createPlaylistOperation } from "./playlist-list/operation"
 import { uiContract, type UiMessages } from "../../shared/contracts/ui"
@@ -30,22 +37,31 @@ const disposedView = (): UiSnapshot => ({ kind: "unavailable", reason: "disposed
 export function createBackend(ports: BackendPorts, options: BackendOptions): Backend {
   const keys = createKeySettingsSource(ports.local)
   const caller = crypto.randomUUID()
-  const rpc = createRpcCaller<UiMessages>({ async send(message) {
-    if (!objectShape(message, { v: v => typeof v === "number", build: v => v === options.build,
-      id: v => typeof v === "string", kind: v => typeof v === "string", payload: () => true })) throw Error("Invalid UI envelope")
-    const id = message.id, wireId = `${caller}:${id}`
-    const raw = await ports.send({ ...message, id: wireId })
-    if (objectShape(raw, { v: v => typeof v === "number", build: v => v === options.build,
-      id: v => v === wireId, kind: v => typeof v === "string", result: () => true })
-      || objectShape(raw, { v: v => typeof v === "number", build: v => v === options.build,
-        id: v => v === wireId, kind: v => typeof v === "string", failure: v => v === "receiver" })) return { ...raw, id }
-    return raw
-  } }, { ...options, contract: uiContract })
+  const rpc = createRpcCaller<UiMessages>(
+    {
+      async send(message) {
+        if (!objectShape(message, { v: v => typeof v === "number", build: v => v === options.build, id: v => typeof v === "string", kind: v => typeof v === "string", payload: () => true }))
+          throw Error("Invalid UI envelope")
+        const id = message.id,
+          wireId = `${caller}:${id}`
+        const raw = await ports.send({ ...message, id: wireId })
+        if (
+          objectShape(raw, { v: v => typeof v === "number", build: v => v === options.build, id: v => v === wireId, kind: v => typeof v === "string", result: () => true }) ||
+          objectShape(raw, { v: v => typeof v === "number", build: v => v === options.build, id: v => v === wireId, kind: v => typeof v === "string", failure: v => v === "receiver" })
+        )
+          return { ...raw, id }
+        return raw
+      }
+    },
+    { ...options, contract: uiContract }
+  )
   const creations = new Set<() => void>()
   const playlistLists = new Map<() => void, Parameters<Backend["playlistList"]>[0]>()
-  const call: Backend["call"] = (kind, args) => rpc.call(kind, {
-    ...(options.windowId === undefined ? {} : { windowId: options.windowId }), ...args
-  })
+  const call: Backend["call"] = (kind, args) =>
+    rpc.call(kind, {
+      ...(options.windowId === undefined ? {} : { windowId: options.windowId }),
+      ...args
+    })
   const views = new Map<string, View>()
   const pageListeners = new Set<(event: PageEvent) => void>()
   let pageEpoch = 0
@@ -54,10 +70,11 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
 
   function readPage(): Promise<PageView> {
     if (disposed) return Promise.resolve({ kind: "unavailable", reason: "disposed" })
-    return Promise.resolve().then(() => ports.local.all())
+    return Promise.resolve()
+      .then(() => ports.local.all())
       .then(records => readPageView(Object.fromEntries(Object.entries(records).filter(([key]) => pageViewKeeps(key)))))
       .catch((): PageView => ({ kind: "unavailable", reason: "read" }))
-      .then(view => disposed ? { kind: "unavailable", reason: "disposed" } : view)
+      .then(view => (disposed ? { kind: "unavailable", reason: "disposed" } : view))
   }
   function refreshPage() {
     const epoch = ++pageEpoch
@@ -65,7 +82,9 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
       if (disposed || epoch !== pageEpoch) return
       for (const listener of [...pageListeners]) {
         if (!pageListeners.has(listener)) continue
-        try { listener({ kind: "page", view }) } catch {}
+        try {
+          listener({ kind: "page", view })
+        } catch {}
       }
     })
   }
@@ -87,14 +106,21 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
   }
   function read(entry: View): Promise<UiSnapshot> {
     if (disposed) return Promise.resolve(disposedView())
-    const serial = ++entry.serial, epoch = entry.epoch
-    const pending = Promise.resolve().then(() => ports.local.get(entry.keys)).then(records => readFirstRunSnapshot(records, entry.scope),
-      (): UiSnapshot => ({ kind: "unavailable", reason: "read" })).catch((): UiSnapshot => ({ kind: "unavailable", reason: "read" })).then(snapshot => {
-      if (disposed) return disposedView()
-      if (entry.serial !== serial && entry.pending) return entry.pending
-      if (entry.epoch !== epoch) return read(entry)
-      return snapshot
-    })
+    const serial = ++entry.serial,
+      epoch = entry.epoch
+    const pending = Promise.resolve()
+      .then(() => ports.local.get(entry.keys))
+      .then(
+        records => readFirstRunSnapshot(records, entry.scope),
+        (): UiSnapshot => ({ kind: "unavailable", reason: "read" })
+      )
+      .catch((): UiSnapshot => ({ kind: "unavailable", reason: "read" }))
+      .then(snapshot => {
+        if (disposed) return disposedView()
+        if (entry.serial !== serial && entry.pending) return entry.pending
+        if (entry.epoch !== epoch) return read(entry)
+        return snapshot
+      })
     entry.pending = pending
     return pending
   }
@@ -113,7 +139,9 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
         entry.notified = epoch
         for (const listener of [...entry.listeners]) {
           if (!entry.listeners.has(listener) || disposed) continue
-          try { listener({ kind: "view", snapshot }) } catch {}
+          try {
+            listener({ kind: "view", snapshot })
+          } catch {}
         }
       })
     }
@@ -157,11 +185,10 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
   function change(change: KeySettingChange): Promise<KeySettingAnswer>
   async function change(change: Change): Promise<AgreementAnswer | DestinationAnswer | AutoAddReadAnswer | AutoAddChoiceAnswer | FeatureSettingAnswer | SharedSettingAnswer | KeySettingAnswer> {
     const payload = { change, ...(options.windowId === undefined ? {} : { windowId: options.windowId }) }
-    if (!isChangePayload(payload)) return change.kind === "first-run-agree"
-      ? { kind: "not-agreed", attempt: change.attempt, reason: "invalid" } : { kind: "refused", reason: "invalid" }
+    if (!isChangePayload(payload)) return change.kind === "first-run-agree" ? { kind: "not-agreed", attempt: change.attempt, reason: "invalid" } : { kind: "refused", reason: "invalid" }
     const result = await rpc.call("ui.change", payload)
-    if (result.kind !== "answered" || disposed) return change.kind === "first-run-agree"
-      ? { kind: "not-agreed", attempt: change.attempt, reason: "unavailable" } : { kind: "refused", reason: "unavailable" }
+    if (result.kind !== "answered" || disposed)
+      return change.kind === "first-run-agree" ? { kind: "not-agreed", attempt: change.attempt, reason: "unavailable" } : { kind: "refused", reason: "unavailable" }
     if (change.kind === "first-run-agree") {
       if (result.result.kind !== "agreement" || !confirmsSelection(change, result.result.outcome)) {
         return { kind: "not-agreed", attempt: change.attempt, reason: "unconfirmed" }
@@ -179,22 +206,29 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
       return result.result.outcome
     }
     if (isFeatureSettingChange(change)) {
-      if (result.result.kind !== "feature-setting" || result.result.outcome.kind === "confirmed" && JSON.stringify(result.result.outcome.change) !== JSON.stringify(change)) return { kind: "refused", reason: "unconfirmed" }
+      if (result.result.kind !== "feature-setting" || (result.result.outcome.kind === "confirmed" && JSON.stringify(result.result.outcome.change) !== JSON.stringify(change)))
+        return { kind: "refused", reason: "unconfirmed" }
       return result.result.outcome
     }
     if (isSharedSettingChange(change)) {
-      if (result.result.kind !== "shared-setting" || result.result.outcome.kind === "confirmed" && JSON.stringify(result.result.outcome.change) !== JSON.stringify(change)) return { kind: "refused", reason: "unconfirmed" }
+      if (result.result.kind !== "shared-setting" || (result.result.outcome.kind === "confirmed" && JSON.stringify(result.result.outcome.change) !== JSON.stringify(change)))
+        return { kind: "refused", reason: "unconfirmed" }
       return result.result.outcome
     }
     if (isKeySettingChange(change)) {
       if (result.result.kind !== "key-setting") return { kind: "refused", reason: "unconfirmed" }
       const answer = result.result.outcome
-      if (answer.kind === "confirmed" && JSON.stringify(answer.change) !== JSON.stringify(change) || answer.kind === "added" && change.kind !== "shortcut-add" ||
-        answer.kind === "removed" && (change.kind !== "shortcut-remove" || change.id !== answer.id) || answer.kind === "conflict" && change.kind !== "key") return { kind: "refused", reason: "unconfirmed" }
+      if (
+        (answer.kind === "confirmed" && JSON.stringify(answer.change) !== JSON.stringify(change)) ||
+        (answer.kind === "added" && change.kind !== "shortcut-add") ||
+        (answer.kind === "removed" && (change.kind !== "shortcut-remove" || change.id !== answer.id)) ||
+        (answer.kind === "conflict" && change.kind !== "key")
+      )
+        return { kind: "refused", reason: "unconfirmed" }
       return answer
     }
     if (change.kind !== "setup-destination") return { kind: "refused", reason: "invalid" }
-    if (result.result.kind !== "destination" || result.result.outcome.kind === "confirmed" && result.result.outcome.playlist !== change.playlist) {
+    if (result.result.kind !== "destination" || (result.result.outcome.kind === "confirmed" && result.result.outcome.playlist !== change.playlist)) {
       return { kind: "refused", reason: "unconfirmed" }
     }
     return result.result.outcome
@@ -223,8 +257,7 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
       submit(playlist: UiNewPlaylist) {
         if (!active || disposed) return Promise.resolve(closed())
         if (submission) return submission
-        const captured = { title: playlist.title, privacy: playlist.privacy,
-          ...(playlist.videoId === undefined ? {} : { videoId: playlist.videoId }) }
+        const captured = { title: playlist.title, privacy: playlist.privacy, ...(playlist.videoId === undefined ? {} : { videoId: playlist.videoId }) }
         submission = (async (): Promise<RpcOutcome<UiCreationAnswer>> => {
           const ready = await opened
           if (!active || disposed) return closed()
@@ -236,7 +269,9 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
         })
         return submission
       },
-      status() { return !active || disposed ? Promise.resolve(closed()) : current(rpc.call("ui.create", { action: "status", operation, ...window })) },
+      status() {
+        return !active || disposed ? Promise.resolve(closed()) : current(rpc.call("ui.create", { action: "status", operation, ...window }))
+      },
       dispose: stop
     }
   }
@@ -248,12 +283,19 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
     stopPushes ??= ports.pushes.listen(message => {
       if (disposed || !isGatherPush(message, options.build)) return undefined
       let shown = false
-      for (const listener of [...gatherListeners]) { try { shown = listener(message.payload) || shown } catch {} }
+      for (const listener of [...gatherListeners]) {
+        try {
+          shown = listener(message.payload) || shown
+        } catch {}
+      }
       return shown ? { shown: true } : undefined
     })
     return () => {
       gatherListeners.delete(fn)
-      if (!gatherListeners.size) { stopPushes?.(); stopPushes = null }
+      if (!gatherListeners.size) {
+        stopPushes?.()
+        stopPushes = null
+      }
     }
   }
   function playlistList(request: Parameters<Backend["playlistList"]>[0]) {
@@ -283,17 +325,37 @@ export function createBackend(ports: BackendPorts, options: BackendOptions): Bac
     removeUnusedListener()
   }
   const access: Backend["access"] = {
-    has: site => disposed ? Promise.resolve(false) : ports.access.has(site),
-    request: site => disposed ? Promise.resolve(false) : ports.access.request(site),
-    hasBrowserMenu: () => disposed ? Promise.resolve(false) : ports.access.hasBrowserMenu(),
-    requestCombined: needs => disposed ? Promise.resolve({ music: false, browserMenu: false }) : ports.access.requestCombined(needs)
+    has: site => (disposed ? Promise.resolve(false) : ports.access.has(site)),
+    request: site => (disposed ? Promise.resolve(false) : ports.access.request(site)),
+    hasBrowserMenu: () => (disposed ? Promise.resolve(false) : ports.access.hasBrowserMenu()),
+    requestCombined: needs => (disposed ? Promise.resolve({ music: false, browserMenu: false }) : ports.access.requestCombined(needs))
   }
-  const changeFeatureSetting: Backend["changeFeatureSetting"] = (requestedChange, settings) => changeFeatureFromClick({
-    access, active: () => !disposed,
-    async send(requested) {
-      return change(requested)
-    }
-  }, requestedChange, settings)
-  return { keys, load: scope => read(view(scope)), watch, loadPage: readPage, watchPage, change, changeFeatureSetting, call, watchGather, playlistList, creation, access, dispose,
-    clearAll: payload => disposed ? Promise.resolve({ kind: "failed", failure: "disposed" }) : rpc.call("ui.clearAll", payload) }
+  const changeFeatureSetting: Backend["changeFeatureSetting"] = (requestedChange, settings) =>
+    changeFeatureFromClick(
+      {
+        access,
+        active: () => !disposed,
+        async send(requested) {
+          return change(requested)
+        }
+      },
+      requestedChange,
+      settings
+    )
+  return {
+    keys,
+    load: scope => read(view(scope)),
+    watch,
+    loadPage: readPage,
+    watchPage,
+    change,
+    changeFeatureSetting,
+    call,
+    watchGather,
+    playlistList,
+    creation,
+    access,
+    dispose,
+    clearAll: payload => (disposed ? Promise.resolve({ kind: "failed", failure: "disposed" }) : rpc.call("ui.clearAll", payload))
+  }
 }

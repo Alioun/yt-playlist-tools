@@ -14,7 +14,13 @@ test("a compiled Svelte container renders cached rows, then membership checks, t
   const { source, ledger } = itemSource()
   const picker = new PickerModel({ source, site: "www", mode: "save" })
   render(Consumer, { props: { picker } })
-  ledger.answer("cachedList", { at: NOW, rows: [{ id: ROAD, title: "Road trip" }, { id: WL, title: "Watch later" }] })
+  ledger.answer("cachedList", {
+    at: NOW,
+    rows: [
+      { id: ROAD, title: "Road trip" },
+      { id: WL, title: "Watch later" }
+    ]
+  })
   await settle()
   flushSync()
   expect(items()).toEqual(["Watch later", "Road trip"])
@@ -22,7 +28,10 @@ test("a compiled Svelte container renders cached rows, then membership checks, t
   expect(road.closest("li")).toHaveAttribute("data-check", "loading")
   ledger.answer("membership", {
     kind: "read",
-    rows: [{ id: WL, title: "Watch later", contains: true }, { id: ROAD, title: "Road trip", contains: false }]
+    rows: [
+      { id: WL, title: "Watch later", contains: true },
+      { id: ROAD, title: "Road trip", contains: false }
+    ]
   })
   await settle()
   flushSync()
@@ -44,17 +53,28 @@ test("a compiled Svelte container renders cached rows, then membership checks, t
   picker.close()
 })
 
-
 test("a choose consumer renders fresh membership independently of selected checks", async () => {
   const { source, ledger } = itemSource({ chosen: [ROAD] })
   const picker = new PickerModel({ source, site: "www", mode: "choose" })
   render(Consumer, { props: { picker } })
-  ledger.answer("cachedList", { at: NOW, rows: [{ id: ROAD, title: "Road trip" }, { id: WL, title: "Watch later" }] })
+  ledger.answer("cachedList", {
+    at: NOW,
+    rows: [
+      { id: ROAD, title: "Road trip" },
+      { id: WL, title: "Watch later" }
+    ]
+  })
   await settle()
   flushSync()
   expect(screen.getByTestId("membership")).toHaveTextContent("checking")
   expect(screen.getByRole("button", { name: "Road trip" })).toHaveAttribute("aria-pressed", "true")
-  ledger.answer("membership", { kind: "read", rows: [{ id: WL, title: "Watch later", contains: true }, { id: ROAD, title: "Road trip", contains: false }] })
+  ledger.answer("membership", {
+    kind: "read",
+    rows: [
+      { id: WL, title: "Watch later", contains: true },
+      { id: ROAD, title: "Road trip", contains: false }
+    ]
+  })
   await settle()
   flushSync()
   expect(screen.getByTestId("membership")).toHaveTextContent("in 1")

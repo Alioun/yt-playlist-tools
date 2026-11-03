@@ -35,31 +35,38 @@ export function createAutoAddTabRouter(deps: {
     const [known] = await deps.tabs.known({ kind: "tab", tabId: context.origin.tabId })
     return known !== undefined && known.acct === acct && known.privateTab === context.origin.incognito
   }
-  const unbind = rpc.handle({ authenticate: authenticateTab(deps.senders), handlers: {
-    async "tab.progress.load"(request, context) {
-      if (context.origin.incognito || !await registered(context, request.acct)) return null
-      const read = await deps.owner.loadProgress({ acct: request.acct, video: request.video, private: false })
-      return read.kind === "progress" && read.progress ? { len: read.progress.len, parts: read.progress.parts } : null
-    },
-    async "tab.progress.save"(request, context) {
-      if (context.origin.incognito || !await registered(context, request.acct)) return null
-      await deps.owner.saveProgress({ acct: request.acct, video: request.video, private: false, len: request.len, parts: request.parts })
-      return null
-    },
-    async "tab.cantMeasure"(request, context) {
-      if (!await registered(context, request.acct)) return { show: false }
-      if (context.origin.incognito) return { show: true }
-      const read = await deps.owner.readSession()
-      if (read.kind !== "memory") return { show: true }
-      if (read.memory.shown.global.has(CANT_MEASURE_SHOWN)) return { show: false }
-      await deps.owner.changeSession({ revision: read.revision, now: deps.now(),
-        edits: [{ kind: "shown-global", acct: request.acct, scope: "normal", keys: [CANT_MEASURE_SHOWN] }] })
-      return { show: true }
-    },
-    async "tab.videoChanged"({ acct }, context) {
-      if (acct !== null && await registered(context, acct)) deps.untick?.(context.origin.tabId)
-      return null
+  const unbind = rpc.handle({
+    authenticate: authenticateTab(deps.senders),
+    handlers: {
+      async "tab.progress.load"({ acct, request }, context) {
+        if (acct === null || context.origin.incognito || !(await registered(context, acct))) return null
+        const read = await deps.owner.loadProgress({ acct, video: request.video, private: false })
+        return read.kind === "progress" && read.progress ? { len: read.progress.len, parts: read.progress.parts } : null
+      },
+      async "tab.progress.save"({ acct, request }, context) {
+        if (acct === null || context.origin.incognito || !(await registered(context, acct))) return null
+        await deps.owner.saveProgress({ acct, video: request.video, private: false, len: request.progress.len, parts: request.progress.parts })
+        return null
+      },
+      async "tab.cantMeasure"({ acct }, context) {
+        if (acct === null || !(await registered(context, acct))) return { show: false }
+        if (context.origin.incognito) return { show: true }
+        const read = await deps.owner.readSession()
+        if (read.kind !== "memory") return { show: true }
+        if (read.memory.shown.global.has(CANT_MEASURE_SHOWN)) return { show: false }
+        await deps.owner.changeSession({ revision: read.revision, now: deps.now(), edits: [{ kind: "shown-global", acct, scope: "normal", keys: [CANT_MEASURE_SHOWN] }] })
+        return { show: true }
+      },
+      async "tab.videoChanged"({ acct }, context) {
+        if (acct !== null && (await registered(context, acct))) deps.untick?.(context.origin.tabId)
+        return null
+      }
     }
-  } })
-  return { dispose() { unbind(); rpc.dispose() } }
+  })
+  return {
+    dispose() {
+      unbind()
+      rpc.dispose()
+    }
+  }
 }

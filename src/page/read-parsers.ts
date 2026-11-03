@@ -1,12 +1,18 @@
 import {
-  isAddToPlaylistEndpoint, isItemInfo, isLibraryEndpoint, isLikeEndpoint, isMusicType,
-  isNavigationEndpoint, isPageType, isQueueInsertEndpoint, isRemoveFromQueueEndpoint,
-  isMusicAdFailure, isStreamData, isVideoInfo
+  isAddToPlaylistEndpoint,
+  isItemInfo,
+  isLibraryEndpoint,
+  isLikeEndpoint,
+  isMusicType,
+  isNavigationEndpoint,
+  isPageType,
+  isQueueInsertEndpoint,
+  isRemoveFromQueueEndpoint,
+  isMusicAdFailure,
+  isStreamData,
+  isVideoInfo
 } from "../shared/contracts"
-import type {
-  ItemEndpoints, ItemInfo, ItemKind, ItemType, JobDataById, MusicAdEvidence, MusicAdFailure, NavData, NowPlaying,
-  PlayerData, QueueData, VideoInfo
-} from "../shared/contracts"
+import type { ItemEndpoints, ItemInfo, ItemKind, ItemType, JobDataById, MusicAdEvidence, MusicAdFailure, NavData, NowPlaying, PlayerData, QueueData, VideoInfo } from "../shared/contracts"
 import { isChannelId, isVideoId } from "../shared/model/validation"
 
 export function field(value: unknown, ...keys: string[]): unknown {
@@ -17,7 +23,9 @@ export function field(value: unknown, ...keys: string[]): unknown {
   }
   return current
 }
-function list(value: unknown): unknown[] | undefined { return Array.isArray(value) ? value : undefined }
+function list(value: unknown): unknown[] | undefined {
+  return Array.isArray(value) ? value : undefined
+}
 function text(value: unknown): string | undefined {
   if (typeof value === "string") return value
   const simple = field(value, "simpleText")
@@ -55,8 +63,7 @@ export function parseNavigation(raw: unknown): Navigation | undefined {
     if (!isVideoId(id)) return undefined
     const ad = field(reel, "adClientParams", "isAd")
     if (ad !== undefined && typeof ad !== "boolean") return undefined
-    return { pageType, navigation: { kind: reel !== undefined ? "shorts" : "watch", videoId: id },
-      ad: ad === true, response: field(raw, "response", "playerResponse") ?? field(raw, "playerResponse") }
+    return { pageType, navigation: { kind: reel !== undefined ? "shorts" : "watch", videoId: id }, ad: ad === true, response: field(raw, "response", "playerResponse") ?? field(raw, "playerResponse") }
   }
   return { pageType, navigation: { kind: "other" }, ad: false, response: undefined }
 }
@@ -81,13 +88,20 @@ export function parseChannel(raw: unknown, videoId: unknown): JobDataById["chann
 }
 
 function targetEndpoint(raw: unknown): Pick<VideoInfo, "videoId" | "kind"> | undefined {
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw) ||
-      field(raw, "browseEndpoint") !== undefined || field(raw, "watchPlaylistEndpoint") !== undefined ||
-      field(raw, "adClientParams") !== undefined) return undefined
-  const watch = field(raw, "watchEndpoint"), reel = field(raw, "reelWatchEndpoint")
+  if (
+    raw === null ||
+    typeof raw !== "object" ||
+    Array.isArray(raw) ||
+    field(raw, "browseEndpoint") !== undefined ||
+    field(raw, "watchPlaylistEndpoint") !== undefined ||
+    field(raw, "adClientParams") !== undefined
+  )
+    return undefined
+  const watch = field(raw, "watchEndpoint"),
+    reel = field(raw, "reelWatchEndpoint")
   if ((watch === undefined) === (reel === undefined)) return undefined
   const body = reel ?? watch
-  if (field(body, "adClientParams") !== undefined || field(body, "isAd") !== undefined && field(body, "isAd") !== false) return undefined
+  if (field(body, "adClientParams") !== undefined || (field(body, "isAd") !== undefined && field(body, "isAd") !== false)) return undefined
   const videoId = field(body, "videoId")
   return isVideoId(videoId) ? { videoId, kind: reel === undefined ? "video" : "short" } : undefined
 }
@@ -106,15 +120,24 @@ function sameTargetIdentity(raw: unknown, identity: Pick<VideoInfo, "videoId" | 
 }
 
 export function parseTargetVideo(raw: unknown): VideoInfo | undefined {
-  if (raw === null || typeof raw !== "object" || Array.isArray(raw) ||
-      field(raw, "isAd") !== undefined && field(raw, "isAd") !== false ||
-      ["adClientParams", "adSlotRenderer", "promotedSparklesWebRenderer", "browseEndpoint", "watchPlaylistEndpoint"]
-        .some(key => field(raw, key) !== undefined)) return undefined
+  if (
+    raw === null ||
+    typeof raw !== "object" ||
+    Array.isArray(raw) ||
+    (field(raw, "isAd") !== undefined && field(raw, "isAd") !== false) ||
+    ["adClientParams", "adSlotRenderer", "promotedSparklesWebRenderer", "browseEndpoint", "watchPlaylistEndpoint"].some(key => field(raw, key) !== undefined)
+  )
+    return undefined
   const lockup = field(raw, "metadata", "lockupMetadataViewModel")
   const shorts = field(raw, "overlayMetadata")
   const contentType = field(raw, "contentType")
-  const modern = lockup !== undefined || shorts !== undefined || contentType !== undefined ||
-    field(raw, "contentId") !== undefined || field(raw, "rendererContext") !== undefined || field(raw, "onTap") !== undefined
+  const modern =
+    lockup !== undefined ||
+    shorts !== undefined ||
+    contentType !== undefined ||
+    field(raw, "contentId") !== undefined ||
+    field(raw, "rendererContext") !== undefined ||
+    field(raw, "onTap") !== undefined
   if (modern) {
     if (lockup !== undefined && shorts !== undefined) return undefined
     if (contentType !== undefined && contentType !== "LOCKUP_CONTENT_TYPE_VIDEO") return undefined
@@ -146,13 +169,9 @@ export function parseTargetVideo(raw: unknown): VideoInfo | undefined {
   return isVideoInfo(value) ? value : undefined
 }
 
-export function parsePlayer(args: {
-  raw: unknown; navigation: Navigation | undefined; player: "watch" | "shorts";
-  at: number; miniplayerConfirmed: boolean
-}): PlayerData | undefined {
+export function parsePlayer(args: { raw: unknown; navigation: Navigation | undefined; player: "watch" | "shorts"; at: number; miniplayerConfirmed: boolean }): PlayerData | undefined {
   const { raw, navigation, player, at } = args
-  if (field(raw, "adShowing") === true || field(raw, "adActive") === true ||
-      player === "shorts" && navigation?.ad === true || field(raw, "presentingPlayerType") === 2) {
+  if (field(raw, "adShowing") === true || field(raw, "adActive") === true || (player === "shorts" && navigation?.ad === true) || field(raw, "presentingPlayerType") === 2) {
     const value = { ad: true, at, player }
     return isStreamData("player", value) ? value : undefined
   }
@@ -176,23 +195,33 @@ export function parsePlayer(args: {
   const seeking = field(raw, "video", "seeking")
   const clip = field(response, "clipConfig")
   if (clip !== undefined && clip !== null) {
-    const start = field(clip, "startTimeMs"), end = field(clip, "endTimeMs")
+    const start = field(clip, "startTimeMs"),
+      end = field(clip, "endTimeMs")
     if (typeof start !== "number" || !Number.isFinite(start) || start < 0 || typeof end !== "number" || !Number.isFinite(end) || end <= start) return undefined
   }
   const kids = field(response, "playabilityStatus", "miniplayer", "miniplayerRenderer", "playbackMode") === "PLAYBACK_MODE_PAUSED_ONLY"
   const value = {
-    ad: false, at, player, videoId, pos, len, listedLength, rate,
-    playing: typeof paused === "boolean" ? !paused : undefined, seeking,
+    ad: false,
+    at,
+    player,
+    videoId,
+    pos,
+    len,
+    listedLength,
+    rate,
+    playing: typeof paused === "boolean" ? !paused : undefined,
+    seeking,
     content: clip !== undefined && clip !== null ? "clip" : kids ? "made-for-kids" : "video",
-    isPostLiveDvr: field(details, "isPostLiveDvr") === true, isLive: field(details, "isLive") === true,
-    isUpcoming: field(details, "isUpcoming") === true, isLiveContent: field(details, "isLiveContent") === true
+    isPostLiveDvr: field(details, "isPostLiveDvr") === true,
+    isLive: field(details, "isLive") === true,
+    isUpcoming: field(details, "isUpcoming") === true,
+    isLiveContent: field(details, "isLiveContent") === true
   }
   return isStreamData("player", value) ? value : undefined
 }
 
 export function queueRenderer(item: unknown): unknown {
-  return field(item, "playlistPanelVideoRenderer") ??
-    field(item, "playlistPanelVideoWrapperRenderer", "primaryRenderer", "playlistPanelVideoRenderer")
+  return field(item, "playlistPanelVideoRenderer") ?? field(item, "playlistPanelVideoWrapperRenderer", "primaryRenderer", "playlistPanelVideoRenderer")
 }
 export function parseQueue(raw: unknown): QueueData | undefined {
   const items = list(raw)?.map(queueRenderer)
@@ -212,8 +241,8 @@ export function parseMusicPlayback(args: { metadata: unknown; player: unknown; q
   const presenting = field(player, "presentingPlayerType")
   if (presenting !== undefined && (typeof presenting !== "number" || !Number.isSafeInteger(presenting) || presenting < 0)) return undefined
   if (presenting !== undefined && presenting !== 0 && presenting !== 1 && presenting !== 2) return undefined
-  const evidence: MusicAdEvidence | undefined = field(player, "adShowing") === true ? "adShowing" :
-    field(player, "adActive") === true ? "adActive" : presenting === 2 ? "presentingPlayerType" : undefined
+  const evidence: MusicAdEvidence | undefined =
+    field(player, "adShowing") === true ? "adShowing" : field(player, "adActive") === true ? "adActive" : presenting === 2 ? "presentingPlayerType" : undefined
   const items = list(queue)?.map(queueRenderer)
   const selected = items?.filter(item => field(item, "selected") === true)
   if (!evidence && metadata === null && items?.length === 0 && field(player, "videoData") === undefined) return null
@@ -221,22 +250,31 @@ export function parseMusicPlayback(args: { metadata: unknown; player: unknown; q
   const primaryId = field(player, "videoData", "video_id")
   const fallbackId = field(fallback, "navigationEndpoint", "watchEndpoint", "videoId")
   const videoId = primaryId ?? fallbackId
-  if (!isVideoId(videoId) || fallback !== undefined && primaryId !== undefined && fallbackId !== primaryId) return undefined
+  if (!isVideoId(videoId) || (fallback !== undefined && primaryId !== undefined && fallbackId !== primaryId)) return undefined
   const pos = field(player, "video", "currentTime")
   const rawLen = field(player, "video", "duration")
   const len = rawLen === null ? null : duration(rawLen)
   if (evidence) {
     const responseId = field(player, "response", "videoDetails", "videoId")
-    if (!items || !parseQueue(queue) || items.some(item => item === null || typeof item !== "object" || Array.isArray(item) ||
-        field(item, "selected") !== undefined && typeof field(item, "selected") !== "boolean") ||
-        selected && selected.length > 1 || metadata === undefined ||
-        metadata !== null && (typeof metadata !== "object" || Array.isArray(metadata) || typeof field(metadata, "title") !== "string" || typeof field(metadata, "artist") !== "string") ||
-        responseId !== undefined && responseId !== videoId ||
-        typeof pos !== "number" || !Number.isFinite(pos) || pos < 0 || len === undefined ||
-        typeof field(player, "video", "paused") !== "boolean") return undefined
+    if (
+      !items ||
+      !parseQueue(queue) ||
+      items.some(item => item === null || typeof item !== "object" || Array.isArray(item) || (field(item, "selected") !== undefined && typeof field(item, "selected") !== "boolean")) ||
+      (selected && selected.length > 1) ||
+      metadata === undefined ||
+      (metadata !== null && (typeof metadata !== "object" || Array.isArray(metadata) || typeof field(metadata, "title") !== "string" || typeof field(metadata, "artist") !== "string")) ||
+      (responseId !== undefined && responseId !== videoId) ||
+      typeof pos !== "number" ||
+      !Number.isFinite(pos) ||
+      pos < 0 ||
+      len === undefined ||
+      typeof field(player, "video", "paused") !== "boolean"
+    )
+      return undefined
     return { ok: false, reason: "unavailable", detail: { kind: "music-ad", evidence } }
   }
-  const metadataTitle = field(metadata, "title"), metadataArtist = field(metadata, "artist")
+  const metadataTitle = field(metadata, "title"),
+    metadataArtist = field(metadata, "artist")
   const hasMetadata = typeof metadataTitle === "string" && typeof metadataArtist === "string"
   const title = hasMetadata ? metadataTitle : text(field(fallback, "title"))
   const artist = hasMetadata ? metadataArtist : text(field(fallback, "longBylineText"))
@@ -244,17 +282,20 @@ export function parseMusicPlayback(args: { metadata: unknown; player: unknown; q
   const artwork = hasMetadata ? list(field(metadata, "artwork")) : undefined
   let largest: { src: string; area: number } | undefined
   for (const art of artwork ?? []) {
-    const src = field(art, "src"), sizes = field(art, "sizes")
+    const src = field(art, "src"),
+      sizes = field(art, "sizes")
     if (typeof src !== "string" || !src || typeof sizes !== "string") continue
     let area = 0
     for (const size of sizes.split(/\s+/)) {
       const match = /^([0-9]+)x([0-9]+)$/.exec(size)
-      if (match) { const next = Number(match[1]) * Number(match[2]); if (Number.isSafeInteger(next)) area = Math.max(area, next) }
+      if (match) {
+        const next = Number(match[1]) * Number(match[2])
+        if (Number.isSafeInteger(next)) area = Math.max(area, next)
+      }
     }
     if (!largest || area > largest.area) largest = { src, area }
   }
-  const value = { videoId, title, artist, pos, len,
-    ...(typeof album === "string" && album ? { album } : {}), ...(largest ? { artwork: largest.src } : {}) }
+  const value = { videoId, title, artist, pos, len, ...(typeof album === "string" && album ? { album } : {}), ...(largest ? { artwork: largest.src } : {}) }
   return isStreamData("nowPlaying", value) ? value : undefined
 }
 
@@ -269,8 +310,11 @@ function itemType(raw: unknown): { kind: ItemKind; type: ItemType } | undefined 
   const music = field(raw, "musicVideoType") ?? field(endpoint, "watchEndpoint", "watchEndpointMusicSupportedConfigs", "watchEndpointMusicConfig", "musicVideoType")
   if (isMusicType(music)) {
     const kinds: Record<string, ItemKind> = {
-      MUSIC_VIDEO_TYPE_ATV: "song", MUSIC_VIDEO_TYPE_OMV: "video", MUSIC_VIDEO_TYPE_UGC: "video",
-      MUSIC_VIDEO_TYPE_PODCAST_EPISODE: "episode", MUSIC_VIDEO_TYPE_PRIVATELY_OWNED_TRACK: "upload"
+      MUSIC_VIDEO_TYPE_ATV: "song",
+      MUSIC_VIDEO_TYPE_OMV: "video",
+      MUSIC_VIDEO_TYPE_UGC: "video",
+      MUSIC_VIDEO_TYPE_PODCAST_EPISODE: "episode",
+      MUSIC_VIDEO_TYPE_PRIVATELY_OWNED_TRACK: "upload"
     }
     const kind = kinds[music]
     return kind ? { kind, type: { kind: "music-video", musicVideoType: music } } : undefined
@@ -278,7 +322,9 @@ function itemType(raw: unknown): { kind: ItemKind; type: ItemType } | undefined 
   const pageType = field(endpoint, "browseEndpoint", "browseEndpointContextSupportedConfigs", "browseEndpointContextMusicConfig", "pageType")
   if (!isPageType(pageType)) return undefined
   const kinds: Record<string, ItemKind> = {
-    MUSIC_PAGE_TYPE_ALBUM: "album", MUSIC_PAGE_TYPE_PLAYLIST: "playlist", MUSIC_PAGE_TYPE_ARTIST: "artist"
+    MUSIC_PAGE_TYPE_ALBUM: "album",
+    MUSIC_PAGE_TYPE_PLAYLIST: "playlist",
+    MUSIC_PAGE_TYPE_ARTIST: "artist"
   }
   const kind = kinds[pageType]
   return kind ? { kind, type: { kind: "browse", pageType } } : undefined
@@ -330,9 +376,15 @@ export function parseItem(raw: unknown, inAutomix: boolean): ItemInfo | undefine
   const videoId = field(raw, "videoId") ?? field(raw, "navigationEndpoint", "watchEndpoint", "videoId")
   const queueItemId = field(raw, "navigationEndpoint", "watchEndpoint", "index")
   const value = {
-    ...classified, title, selected: rawSelected === true, autoplay: inAutomix,
-    hasOwnLike: like !== undefined, likeState, endpoints,
-    ...(videoId !== undefined ? { videoId } : {}), ...(queueItemId !== undefined ? { queueItemId } : {})
+    ...classified,
+    title,
+    selected: rawSelected === true,
+    autoplay: inAutomix,
+    hasOwnLike: like !== undefined,
+    likeState,
+    endpoints,
+    ...(videoId !== undefined ? { videoId } : {}),
+    ...(queueItemId !== undefined ? { queueItemId } : {})
   }
   return isItemInfo(value) ? value : undefined
 }

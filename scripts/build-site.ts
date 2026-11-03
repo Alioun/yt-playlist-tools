@@ -169,7 +169,7 @@ async function fetchReleases(repo: string, token: string | undefined): Promise<A
       headers: { accept: "application/vnd.github+json", ...(token && { authorization: `Bearer ${token}` }) }
     })
     if (!response.ok) throw Error(`GitHub releases: HTTP ${response.status}`)
-    const batch = await response.json() as ApiRelease[]
+    const batch = (await response.json()) as ApiRelease[]
     all.push(...batch)
     if (batch.length < 100) return all
   }
@@ -178,7 +178,9 @@ async function fetchReleases(repo: string, token: string | undefined): Promise<A
 async function sha256Of(url: string): Promise<string> {
   const response = await fetch(url)
   if (!response.ok) throw Error(`${url}: HTTP ${response.status}`)
-  return createHash("sha256").update(new Uint8Array(await response.arrayBuffer())).digest("hex")
+  return createHash("sha256")
+    .update(new Uint8Array(await response.arrayBuffer()))
+    .digest("hex")
 }
 
 async function main(): Promise<number> {

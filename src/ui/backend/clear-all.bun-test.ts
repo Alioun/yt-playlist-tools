@@ -23,7 +23,10 @@ test("a newer layout that has synced offers the checkbox, and a ticked clear say
     expect(answer && clearAllNotice(answer, englishI18n())).toBe(keptText)
     expect(h.records()).toEqual({ schema: 1 })
     expect(h.shared.records()).toEqual(synced)
-  } finally { wire.dispose(); await h.dispose() }
+  } finally {
+    wire.dispose()
+    await h.dispose()
+  }
 })
 
 test("an unticked clear under a newer layout shows no synced-settings notice", async () => {
@@ -33,7 +36,10 @@ test("an unticked clear under a newer layout shows no synced-settings notice", a
     const answer = await h.confirm(wire.backend, false)
     expect(answer).toMatchObject({ kind: "clear-result", scope: "local", outcome: "cleared" })
     expect(clearAllNotice(answer, englishI18n())).toBeNull()
-  } finally { wire.dispose(); await h.dispose() }
+  } finally {
+    wire.dispose()
+    await h.dispose()
+  }
 })
 
 test("a newer layout with no sign of sync hides the checkbox", () => {

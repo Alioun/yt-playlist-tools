@@ -5,9 +5,7 @@ import type { ClaimTransactionResult } from "../store/local-claim-writer"
 import type { PlaylistCacheOwner, PlaylistCacheCapture, PlaylistCacheRead } from "../store/playlist-cache"
 import type { TabContext, Tabs, TabJobOutcome } from "../tabs/ports"
 
-export type Claiming =
-  | { readonly kind: "unavailable"; readonly reason: "production-ownership-required" }
-  | { readonly kind: "connected"; onSeen(context: TabContext): Promise<ClaimTransactionResult> }
+export type Claiming = { readonly kind: "unavailable"; readonly reason: "production-ownership-required" } | { readonly kind: "connected"; onSeen(context: TabContext): Promise<ClaimTransactionResult> }
 export type SeenClaim =
   | Extract<Claiming, { kind: "unavailable" }>
   | { readonly kind: "not-eligible"; readonly reason: "signed-out" | "private" | "held" | "disposed" }
@@ -38,9 +36,16 @@ export function accountDisplayName(label: AccountLabel | null, i18n: Pick<I18n, 
 }
 
 function contextValid(context: TabContext): boolean {
-  return context.tab.site === context.info.site && (context.tab.site === "www" || context.tab.site === "music") &&
-    Number.isSafeInteger(context.tab.tabId) && context.tab.tabId >= 0 && Number.isSafeInteger(context.tab.windowId) && context.tab.windowId >= 0 &&
-    typeof context.tab.incognito === "boolean" && (context.info.signedIn ? isAccountKey(context.info.acct) : context.info.acct === null)
+  return (
+    context.tab.site === context.info.site &&
+    (context.tab.site === "www" || context.tab.site === "music") &&
+    Number.isSafeInteger(context.tab.tabId) &&
+    context.tab.tabId >= 0 &&
+    Number.isSafeInteger(context.tab.windowId) &&
+    context.tab.windowId >= 0 &&
+    typeof context.tab.incognito === "boolean" &&
+    (context.info.signedIn ? isAccountKey(context.info.acct) : context.info.acct === null)
+  )
 }
 function copyContext(context: TabContext): TabContext {
   return { tab: { ...context.tab }, info: { ...context.info } }
@@ -55,16 +60,23 @@ export function createAccounts(ports: {
   let disposed = false
   const lookups = new Map<AccountKey, Lookup>()
   async function run(context: TabContext, acct: AccountKey): Promise<TabJobOutcome<LabelJob>> {
-    return ports.tabs.runIn<LabelJob>(context.tab.tabId, { job: { kind: "accountLabel" }, acct }, {
-      site: context.tab.site,
-      req: { windowId: context.tab.windowId, activeTabId: context.tab.tabId, incognito: context.tab.incognito },
-      account: { kind: "account", acct, signedIn: true }
-    })
+    return ports.tabs.runIn<LabelJob>(
+      context.tab.tabId,
+      { job: { kind: "accountLabel" }, acct },
+      {
+        site: context.tab.site,
+        req: { windowId: context.tab.windowId, activeTabId: context.tab.tabId, incognito: context.tab.incognito },
+        account: { kind: "account", acct, signedIn: true }
+      }
+    )
   }
   async function lookup(context: TabContext, acct: AccountKey, read: Extract<AccountLabelSeen, { kind: "lookup" }>): Promise<SeenLabel> {
     let outcome
-    try { outcome = await run(context, acct) }
-    catch { return { kind: "lookup-failed", acct, checkedAt: read.checkedAt, outcome: { kind: "exception" } } }
+    try {
+      outcome = await run(context, acct)
+    } catch {
+      return { kind: "lookup-failed", acct, checkedAt: read.checkedAt, outcome: { kind: "exception" } }
+    }
     if (disposed) return { kind: "disposed" }
     if (outcome.kind !== "result" || !outcome.result.ok) return { kind: "lookup-failed", acct, checkedAt: read.checkedAt, outcome }
     const label = checkedAccountLabel(outcome.result.data)
@@ -79,9 +91,14 @@ export function createAccounts(ports: {
     const active = lookups.get(acct)
     if (active && active.capture.sharesAuthority(read.capture)) return active.work
     if (read.kind === "current") return { kind: "stored", acct, label: read.label, checkedAt: read.checkedAt, lastAccount: read.lastAccount }
-    const work = lookup(context, acct, read), slot = { capture: read.capture, work }
+    const work = lookup(context, acct, read),
+      slot = { capture: read.capture, work }
     lookups.set(acct, slot)
-    try { return await work } finally { if (lookups.get(acct) === slot) lookups.delete(acct) }
+    try {
+      return await work
+    } finally {
+      if (lookups.get(acct) === slot) lookups.delete(acct)
+    }
   }
   return {
     async onSeen(supplied) {
@@ -92,11 +109,14 @@ export function createAccounts(ports: {
       if (context.tab.incognito) return { label: { kind: "private" }, claim: { kind: "not-eligible", reason: "private" } }
       const label = await seenLabel(context, context.info.acct)
       if (disposed) return { label, claim: { kind: "not-eligible", reason: "disposed" } }
-      if (label.kind !== "stored" && label.kind !== "no-setup" &&
-        !(label.kind === "completed" && (label.result.kind === "committed" || label.result.kind === "current"))) return { label, claim: { kind: "not-eligible", reason: "held" } }
+      if (label.kind !== "stored" && label.kind !== "no-setup" && !(label.kind === "completed" && (label.result.kind === "committed" || label.result.kind === "current")))
+        return { label, claim: { kind: "not-eligible", reason: "held" } }
       if (ports.claim.kind === "unavailable") return { label, claim: ports.claim }
-      try { return { label, claim: { kind: "owner", result: await ports.claim.onSeen(context) } } }
-      catch { return { label, claim: { kind: "failed" } } }
+      try {
+        return { label, claim: { kind: "owner", result: await ports.claim.onSeen(context) } }
+      } catch {
+        return { label, claim: { kind: "failed" } }
+      }
     },
     async readLiveLabel(supplied) {
       if (disposed) return { kind: "disposed" }
@@ -109,13 +129,19 @@ export function createAccounts(ports: {
       if (read.kind !== "cache") return { kind: "owner", result: read }
       if (read.authority.kind === "eligible") return { kind: "setup-present" }
       let outcome
-      try { outcome = await run(context, acct) }
-      catch { return { kind: "lookup-failed", outcome: { kind: "exception" } } }
+      try {
+        outcome = await run(context, acct)
+      } catch {
+        return { kind: "lookup-failed", outcome: { kind: "exception" } }
+      }
       if (disposed) return { kind: "disposed" }
       if (outcome.kind !== "result" || !outcome.result.ok) return { kind: "lookup-failed", outcome }
       const label = checkedAccountLabel(outcome.result.data)
       return label ? { kind: "label", acct, label, persistence: "caller-owned" } : { kind: "lookup-failed", outcome: { kind: "invalid-label" } }
     },
-    dispose() { disposed = true; lookups.clear() }
+    dispose() {
+      disposed = true
+      lookups.clear()
+    }
   }
 }

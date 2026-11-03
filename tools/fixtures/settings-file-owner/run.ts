@@ -13,4 +13,6 @@ try {
   if (plan.kind !== "import-plan" || plan.accountCount !== 3 || privateCheck.kind !== "refused" || privateCheck.reason !== "private") throw Error("consumer-check-failed")
   if (JSON.stringify(h.calls) !== JSON.stringify([{ get: null }, { get: null }, { get: null }, { get: null }])) throw Error("consumer-effects")
   console.log(JSON.stringify({ kind: "settings-file-owner", accountCount: plan.accountCount, privateCheck: privateCheck.reason, storageReads: 4, writes: 0 }))
-} finally { await h.owner.dispose() }
+} finally {
+  await h.owner.dispose()
+}

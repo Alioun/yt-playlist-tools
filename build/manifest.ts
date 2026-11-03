@@ -10,7 +10,7 @@ const commandMessages = {
   "save-playing-song": "__MSG_command_savePlayingSong__",
   "like-playing-song": "__MSG_command_likePlayingSong__",
   "watch-later-current-video": "__MSG_command_watchLaterCurrentVideo__"
-} as const satisfies Record<typeof keysFromAnyTab[number], string>
+} as const satisfies Record<(typeof keysFromAnyTab)[number], string>
 
 /** The 2.0 manifest (ARC-MAN-01, G21). WXT adds `version`, `background`, `action.default_popup` and `options_ui`. */
 export function perchlingManifest({ browser, mode }: ManifestTarget): UserManifest {
@@ -36,13 +36,17 @@ export function perchlingManifest({ browser, mode }: ManifestTarget): UserManife
       ...Object.fromEntries(keysFromAnyTab.map(name => [name, { description: commandMessages[name] }]))
     },
     ...(firefox
-      ? { browser_specific_settings: { gecko: {
-        id: geckoId,
-        strict_min_version: "140.0",
-        data_collection_permissions: { required: ["none"] },
-        // AMO rejects update_url in listed versions, so only beta builds carry it (REL-CI-10, ADR-0011).
-        ...(mode === "beta" && { update_url: betaUpdateUrl })
-      } } }
+      ? {
+          browser_specific_settings: {
+            gecko: {
+              id: geckoId,
+              strict_min_version: "140.0",
+              data_collection_permissions: { required: ["none"] },
+              // AMO rejects update_url in listed versions, so only beta builds carry it (REL-CI-10, ADR-0011).
+              ...(mode === "beta" && { update_url: betaUpdateUrl })
+            }
+          }
+        }
       : { minimum_chrome_version: "121" })
   }
 }

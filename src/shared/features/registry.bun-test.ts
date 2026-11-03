@@ -23,18 +23,29 @@ function fixedScenario(name: string) {
 describe("production feature registry", () => {
   test("catalogue covers the twelve feature IDs once in specification order", () => {
     expect(features.map(feature => feature.id)).toEqual([
-      "auto-add", "shortcuts", "quick-save", "queue-button", "watch-button", "card-menu",
-      "browser-menu", "gather", "music-actions", "music-keys", "any-tab-keys", "sync"
+      "auto-add",
+      "shortcuts",
+      "quick-save",
+      "queue-button",
+      "watch-button",
+      "card-menu",
+      "browser-menu",
+      "gather",
+      "music-actions",
+      "music-keys",
+      "any-tab-keys",
+      "sync"
     ])
     expect<unknown>(registryRecord().catalogue).toEqual(expected.catalogue)
   })
 
-  for (const input of scenarios()) test(`planner and eager files agree with fixed records for ${input.name}`, () => {
-    const fixed = fixedScenario(input.name)
-    expect<unknown>(desired(features, input.settings, input.consent, input.access, input.schemaOk)).toEqual(fixed.registrations)
-    expect(filesFor("www", input.settings)).toEqual(fixed.files.www)
-    expect(filesFor("music", input.settings)).toEqual(fixed.files.music)
-  })
+  for (const input of scenarios())
+    test(`planner and eager files agree with fixed records for ${input.name}`, () => {
+      const fixed = fixedScenario(input.name)
+      expect<unknown>(desired(features, input.settings, input.consent, input.access, input.schemaOk)).toEqual(fixed.registrations)
+      expect(filesFor("www", input.settings)).toEqual(fixed.files.www)
+      expect(filesFor("music", input.settings)).toEqual(fixed.files.music)
+    })
 
   test("ownership contains the exact production bundles and no synthetic file-free entries", () => {
     expect<unknown>(pageLinkEntries(features)).toEqual(expected.ownership)
@@ -45,9 +56,13 @@ describe("production feature registry", () => {
     const gather = features.find(feature => feature.id === "gather")
     expect(gather?.pages.www?.file).toBeUndefined()
     expect(gather?.pages.www?.needs).toEqual([])
-    expect(healthFor("gather")).toEqual({ www: {
-      required: [], optional: ["queueAddList", "membership", "addBatch", "removeBatch"], anchors: []
-    } })
+    expect(healthFor("gather")).toEqual({
+      www: {
+        required: [],
+        optional: ["queueAddList", "membership", "addBatch", "removeBatch"],
+        anchors: []
+      }
+    })
   })
 
   test("Music shortcut predicate remains independent of other Music features", () => {
@@ -78,9 +93,10 @@ describe("production feature registry", () => {
     const s = defaultSettings()
     s.cardMenu.on = true
     expect(filesFor("www", s)).toEqual(["page-www.js", "core-www.js", "feature-card-menu.js"])
-    for (const input of scenarios()) for (const site of sites) {
-      expect(filesFor(site, input.settings)).not.toContain("popovers.js")
-    }
+    for (const input of scenarios())
+      for (const site of sites) {
+        expect(filesFor(site, input.settings)).not.toContain("popovers.js")
+      }
   })
 
   test("each eager dependency appears once in stable planner order with detached lists", () => {
@@ -96,9 +112,15 @@ describe("production feature registry", () => {
 
   test("Music actions retain all action dependencies and separate optional Undo jobs", () => {
     const actionJobs = {
-      next: ["queueInsert", "queueMove", "castState"], queue: ["queueInsert", "queueMove", "castState"],
-      save: ["account", "save"], like: ["account", "like"], remove: ["queueRemove", "castState"],
-      library: ["account", "library"], mix: ["navigate", "castState"], album: ["navigate"], artist: ["navigate"]
+      next: ["queueInsert", "queueMove", "castState"],
+      queue: ["queueInsert", "queueMove", "castState"],
+      save: ["account", "save"],
+      like: ["account", "like"],
+      remove: ["queueRemove", "castState"],
+      library: ["account", "library"],
+      mix: ["navigate", "castState"],
+      album: ["navigate"],
+      artist: ["navigate"]
     }
     for (const id of ["music-actions", "music-keys"] as const) {
       const health = healthFor(id).music
@@ -110,14 +132,15 @@ describe("production feature registry", () => {
   })
 
   test("health jobs and anchor sites match the existing contract owners", () => {
-    for (const feature of features) for (const site of sites) {
-      const health = healthFor(feature.id)[site]
-      if (!health) continue
-      const jobs = [...health.required, ...health.optional, ...actionIds.flatMap(action => health.actions?.[action] ?? [])]
-      for (const job of jobs) expect(supportsJob(site, job)).toBe(true)
-      expect(new Set([...health.required, ...health.optional]).size).toBe(health.required.length + health.optional.length)
-      for (const anchor of [...health.anchors, ...(health.optionalAnchors ?? [])]) expect(anchors[anchor].site).toBe(site)
-    }
+    for (const feature of features)
+      for (const site of sites) {
+        const health = healthFor(feature.id)[site]
+        if (!health) continue
+        const jobs = [...health.required, ...health.optional, ...actionIds.flatMap(action => health.actions?.[action] ?? [])]
+        for (const job of jobs) expect(supportsJob(site, job)).toBe(true)
+        expect(new Set([...health.required, ...health.optional]).size).toBe(health.required.length + health.optional.length)
+        for (const anchor of [...health.anchors, ...(health.optionalAnchors ?? [])]) expect(anchors[anchor].site).toBe(site)
+      }
     expect(healthFor("browser-menu").www).toBeDefined()
     expect(healthFor("any-tab-keys").www).toBeDefined()
     expect(healthFor("any-tab-keys").music).toBeDefined()
@@ -133,9 +156,14 @@ describe("production feature registry", () => {
       await registrar.reconcile()
       const fixed = fixedScenario("everything").registrations
       const actual = [...fake.scripts.values()]
-      expect<unknown>(actual).toEqual(fixed.map(script => ({
-        ...script, css: [], excludeMatches: [], matchOriginAsFallback: false
-      })))
+      expect<unknown>(actual).toEqual(
+        fixed.map(script => ({
+          ...script,
+          css: [],
+          excludeMatches: [],
+          matchOriginAsFallback: false
+        }))
+      )
       expect(fake.errors).toEqual([])
       const before = fake.mutations().length
       await registrar.reconcile()
@@ -148,8 +176,11 @@ describe("production feature registry", () => {
   })
 
   test("only the page halves and their jobs files are named page-…, the files the Registrar injects into the page's world", () => {
-    expect(Object.keys(pageLinkEntries(features)).filter(name => name.startsWith("page-")).sort())
-      .toEqual(["page-jobs-music", "page-jobs-www", "page-music", "page-www"])
+    expect(
+      Object.keys(pageLinkEntries(features))
+        .filter(name => name.startsWith("page-"))
+        .sort()
+    ).toEqual(["page-jobs-music", "page-jobs-www", "page-music", "page-www"])
   })
 
   test("deterministic consumer emits the complete fixed registry and planner record", () => {

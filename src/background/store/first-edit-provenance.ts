@@ -3,20 +3,11 @@ import { DecodeError } from "../../shared/model/codec"
 import { decodeSyncState } from "../../shared/model/decodeSyncState"
 import type { SyncState } from "../../shared/model/types"
 
-export type StoredEditHistory =
-  | { readonly kind: "absent" }
-  | { readonly kind: "present"; readonly raw: unknown }
+export type StoredEditHistory = { readonly kind: "absent" } | { readonly kind: "present"; readonly raw: unknown }
 
-export type FirstEditProvenance =
-  | { readonly kind: "unedited" }
-  | { readonly kind: "edited" }
-  | { readonly kind: "unknown" }
-  | { readonly kind: "invalid" }
+export type FirstEditProvenance = { readonly kind: "unedited" } | { readonly kind: "edited" } | { readonly kind: "unknown" } | { readonly kind: "invalid" }
 
-export type FirstEditHistoryPatch =
-  | { readonly kind: "unchanged" }
-  | { readonly kind: "set"; readonly sync: JsonObject }
-  | { readonly kind: "unavailable"; readonly reason: "history" }
+export type FirstEditHistoryPatch = { readonly kind: "unchanged" } | { readonly kind: "set"; readonly sync: JsonObject } | { readonly kind: "unavailable"; readonly reason: "history" }
 
 function copy(value: JsonValue): JsonValue {
   if (value === null || typeof value !== "object") return value
@@ -50,14 +41,14 @@ export function readFirstEditProvenance(history: StoredEditHistory): FirstEditPr
 }
 
 // Call only for an admitted actual changed-document transaction.
-export function prepareFirstEditHistory(input: {
-  readonly history: StoredEditHistory
-  readonly syncOn: boolean
-}): FirstEditHistoryPatch {
+export function prepareFirstEditHistory(input: { readonly history: StoredEditHistory; readonly syncOn: boolean }): FirstEditHistoryPatch {
   if (input.history.kind === "absent") {
-    return input.syncOn ? { kind: "unavailable", reason: "history" } : {
-      kind: "set", sync: { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true }
-    }
+    return input.syncOn
+      ? { kind: "unavailable", reason: "history" }
+      : {
+          kind: "set",
+          sync: { joined: null, pushed: {}, status: "off", editedSinceOff: true, everEdited: true }
+        }
   }
   const parsed = supported(input.history.raw)
   if (!parsed) return { kind: "unavailable", reason: "history" }

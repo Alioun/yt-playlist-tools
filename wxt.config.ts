@@ -35,8 +35,14 @@ export default defineConfig({
   },
   hooks: {
     ...link.hooks,
-    "entrypoints:grouped": (wxt, groups) => { buildPagesApart(wxt, groups); link.hooks["entrypoints:grouped"](wxt, groups) },
-    "vite:build:extendConfig": (entries, config) => { link.hooks["vite:build:extendConfig"](entries, config); firstViewChunk(entries, config) },
+    "entrypoints:grouped": (wxt, groups) => {
+      buildPagesApart(wxt, groups)
+      link.hooks["entrypoints:grouped"](wxt, groups)
+    },
+    "vite:build:extendConfig": (entries, config) => {
+      link.hooks["vite:build:extendConfig"](entries, config)
+      firstViewChunk(entries, config)
+    },
     "build:manifestGenerated": keepActionTitle
   },
   vite: ({ mode }) => ({

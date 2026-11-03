@@ -11,7 +11,9 @@ import { firstVideo, secondVideo, row } from "../items-music/specimens"
 import { adFailure, indicators, jobs } from "./cases"
 
 const cleanups: (() => void)[] = []
-afterEach(() => { for (const cleanup of cleanups.splice(0).reverse()) cleanup() })
+afterEach(() => {
+  for (const cleanup of cleanups.splice(0).reverse()) cleanup()
+})
 async function fixture(dom: boolean, overrides: Partial<Record<PageRead, unknown>> = {}) {
   const h = await musicFixture(dom, overrides)
   cleanups.push(() => h.dispose())
@@ -22,7 +24,8 @@ async function fixture(dom: boolean, overrides: Partial<Record<PageRead, unknown
 for (const dom of [false, true]) {
   for (const evidence of indicators) {
     test(`${dom ? "DOM" : "direct"} explicit ${evidence} crosses the complete wire without a route diagnosis`, async () => {
-      const h = await fixture(dom), player = h.player()
+      const h = await fixture(dom),
+        player = h.player()
       h.setMetadata({ title: "Song", artist: "Artist" })
       const values: unknown[] = []
       cleanups.push(h.link.watch("nowPlaying", value => values.push(value)))
@@ -41,7 +44,8 @@ for (const dom of [false, true]) {
   }
 
   test(`${dom ? "DOM" : "direct"} explicit ad with null metadata stays an ad and missing data stays diagnosed`, async () => {
-    const h = await fixture(dom), player = h.player()
+    const h = await fixture(dom),
+      player = h.player()
     h.setMetadata(null)
     player.root.classList.add("ad-showing")
     h.signals.length = 0
@@ -68,10 +72,14 @@ for (const dom of [false, true]) {
   test(`${dom ? "DOM" : "direct"} malformed wire detail is ignored until the ordinary deadline`, async () => {
     const h = await fixture(dom)
     const malformed: JsonValue[] = [
-      { ...adFailure(), reason: "failed" }, { ...adFailure(), http: 200 }, { ...adFailure(), status: "ad" },
-      { ...adFailure(), extra: true }, { ...adFailure(), detail: { kind: "music-ad", evidence: "unknown" } },
+      { ...adFailure(), reason: "failed" },
+      { ...adFailure(), http: 200 },
+      { ...adFailure(), status: "ad" },
+      { ...adFailure(), extra: true },
+      { ...adFailure(), detail: { kind: "music-ad", evidence: "unknown" } },
       { ...adFailure(), detail: { kind: "music-ad", evidence: "adShowing", extra: true } },
-      { ...adFailure(), detail: null }, { ...adFailure(), detail: "adShowing" }
+      { ...adFailure(), detail: null },
+      { ...adFailure(), detail: "adShowing" }
     ]
     for (const result of malformed) {
       h.transformResult(() => result)
@@ -83,12 +91,14 @@ for (const dom of [false, true]) {
     }
     h.transformResult(() => adFailure())
     const pending = h.link.run({ job: { kind: "castState" } })
-    await flush(); h.clock.advance(10_000)
+    await flush()
+    h.clock.advance(10_000)
     expect(await pending).toEqual({ ok: false, reason: "unconfirmed" })
   })
 
   test(`${dom ? "DOM" : "direct"} ad answers recheck freshness and lifetime before producing an outcome`, async () => {
-    const h = await fixture(dom), player = h.player()
+    const h = await fixture(dom),
+      player = h.player()
     h.setMetadata({ title: "Song", artist: "Artist" })
     player.root.classList.add("ad-showing")
     h.delayAnswers()
@@ -102,25 +112,37 @@ for (const dom of [false, true]) {
     h.delayAnswers()
     const disposed = h.items.resolve()
     await flush()
-    h.items.dispose(); h.releaseAnswers()
+    h.items.dispose()
+    h.releaseAnswers()
     expect(await disposed).toEqual({ kind: "stale-target", reason: "lifetime" })
   })
 
   test(`${dom ? "DOM" : "direct"} selected queue targets expose an ad without inventing queue success`, async () => {
-    const h = await fixture(dom), player = h.player(), selected = row("ytmusic-player-queue-item", firstVideo, { selected: true, id: 7 })
-    h.setQueue([selected.data]); h.setMetadata(null); h.point(selected.button)
+    const h = await fixture(dom),
+      player = h.player(),
+      selected = row("ytmusic-player-queue-item", firstVideo, { selected: true, id: 7 })
+    h.setQueue([selected.data])
+    h.setMetadata(null)
+    h.point(selected.button)
     player.root.classList.add("ad-showing")
     expect(await h.items.resolve("next")).toEqual({ kind: "ad-playing", evidence: "adShowing" })
     expect(await h.link.run({ job: { kind: "queueMove", id: 7 as QueueItemId, to: "end" } })).toEqual({ ok: false, reason: "unavailable" })
   })
 
   test(`${dom ? "DOM" : "direct"} selected queue ad answers recheck native target identity`, async () => {
-    const h = await fixture(dom), player = h.player(), selected = row("ytmusic-player-queue-item", firstVideo, { selected: true, id: 7 })
-    h.setQueue([selected.data]); h.setMetadata(null); h.point(selected.button)
+    const h = await fixture(dom),
+      player = h.player(),
+      selected = row("ytmusic-player-queue-item", firstVideo, { selected: true, id: 7 })
+    h.setQueue([selected.data])
+    h.setMetadata(null)
+    h.point(selected.button)
     player.root.classList.add("ad-showing")
     let held = false
     h.transformResult(result => {
-      if (!held && isMusicAdFailure(result)) { held = true; h.delayAnswers() }
+      if (!held && isMusicAdFailure(result)) {
+        held = true
+        h.delayAnswers()
+      }
       return result
     })
     const pending = h.items.resolve("next")
@@ -134,7 +156,8 @@ for (const dom of [false, true]) {
   test(`${dom ? "DOM" : "direct"} replaced players and stale native callbacks cannot retain an ad`, async () => {
     const h = await musicFixture(dom)
     cleanups.push(() => h.dispose())
-    const first = h.player(), retired = trackNativeEvents(first.root)
+    const first = h.player(),
+      retired = trackNativeEvents(first.root)
     cleanups.push(retired.restore)
     h.items.track(h.owner())
     expect(retired.active()).toBeGreaterThan(0)
@@ -142,7 +165,8 @@ for (const dom of [false, true]) {
     first.root.dispatchEvent(new Event("onAdStart"))
     expect(await h.items.resolve()).toEqual({ kind: "ad-playing", evidence: "adActive" })
     first.root.remove()
-    const replacement = installRawPlayer(document, "movie_player", rawMusicPlayer()), events = trackNativeEvents(replacement.root)
+    const replacement = installRawPlayer(document, "movie_player", rawMusicPlayer()),
+      events = trackNativeEvents(replacement.root)
     cleanups.push(events.restore)
     expect(await h.items.resolve()).toMatchObject({ kind: "current-song", song: { videoId: firstVideo } })
     expect(retired.active()).toBe(0)
@@ -159,11 +183,13 @@ for (const dom of [false, true]) {
 }
 
 test("all unrelated jobs refuse playback details and both result guards agree", () => {
-  const build = "music-ad-census", id = "music:request:1"
+  const build = "music-ad-census",
+    id = "music:request:1"
   if (!isBuildId(build) || !isPageRequestId(id)) throw Error("Invalid synthetic envelope")
   for (const job of jobs) {
     for (const evidence of indicators) {
-      const result = adFailure(evidence), expected = job.kind === "nowPlaying"
+      const result = adFailure(evidence),
+        expected = job.kind === "nowPlaying"
       expect(isJobResultFor(job, result)).toBe(expected)
       expect(isPageJobResultFor(job, result)).toBe(expected)
       expect(isPageRunAnswerFor({ id, job }, { v: 1, build, kind: "run", id, result }, build)).toBe(expected)
@@ -179,11 +205,23 @@ test("all unrelated jobs refuse playback details and both result guards agree", 
 
 test("malformed and conflicting raw playback remains unavailable with route evidence", async () => {
   const badPlayers: unknown[] = [
-    undefined, null, {}, { adShowing: true },
-    ...[{ adShowing: "true" }, { adActive: 1 }, { presentingPlayerType: "2" }, { presentingPlayerType: -1 }, { presentingPlayerType: 2.5 }, { presentingPlayerType: 999 },
-      { adShowing: true, adActive: "true" }, { adActive: true, presentingPlayerType: "2" },
-      { adShowing: true, videoData: { video_id: "bad" } }, { adShowing: true, video: {} },
-      { adShowing: true, response: { videoDetails: { videoId: secondVideo } } }].map(value => ({ ...rawMusicPlayer(), ...value }))
+    undefined,
+    null,
+    {},
+    { adShowing: true },
+    ...[
+      { adShowing: "true" },
+      { adActive: 1 },
+      { presentingPlayerType: "2" },
+      { presentingPlayerType: -1 },
+      { presentingPlayerType: 2.5 },
+      { presentingPlayerType: 999 },
+      { adShowing: true, adActive: "true" },
+      { adActive: true, presentingPlayerType: "2" },
+      { adShowing: true, videoData: { video_id: "bad" } },
+      { adShowing: true, video: {} },
+      { adShowing: true, response: { videoDetails: { videoId: secondVideo } } }
+    ].map(value => ({ ...rawMusicPlayer(), ...value }))
   ]
   for (const watchPlayer of badPlayers) {
     const h = await fixture(true, { watchPlayer, mediaMetadata: { title: "Song", artist: "Artist" }, musicQueue: [] })
@@ -193,7 +231,9 @@ test("malformed and conflicting raw playback remains unavailable with route evid
     h.dispose()
   }
   for (const overrides of [
-    { mediaMetadata: undefined }, { musicQueue: undefined }, { mediaMetadata: { title: 3 } },
+    { mediaMetadata: undefined },
+    { musicQueue: undefined },
+    { mediaMetadata: { title: 3 } },
     { musicQueue: [rawQueueItem(secondVideo, 7, { selected: true })] },
     { musicQueue: [rawQueueItem(undefined, 7, { selected: true }), rawQueueItem(secondVideo, 8, { selected: true })] },
     { musicQueue: [rawQueueItem(undefined, 7, { selected: "true" })] }
@@ -208,7 +248,8 @@ test("malformed and conflicting raw playback remains unavailable with route evid
 test("success and stream schemas remain exact song or null", async () => {
   const h = await fixture(true)
   expect(await h.link.run({ job: { kind: "nowPlaying" } })).toEqual({ ok: true, route: readRoutes.nowPlaying, data: null })
-  const player = h.player(), song = { videoId: firstVideo, title: "Song", artist: "Artist", pos: 12, len: 180 }
+  const player = h.player(),
+    song = { videoId: firstVideo, title: "Song", artist: "Artist", pos: 12, len: 180 }
   h.setMetadata({ title: "Song", artist: "Artist" })
   const values: unknown[] = []
   cleanups.push(h.link.watch("nowPlaying", value => values.push(value)))

@@ -10,7 +10,10 @@ test("the catalogue numbers each message's placeholders in name order, which pag
   const entries: [string, { message: string; placeholders?: Record<string, { content: string }> }][] = Object.entries(catalogue)
   for (const [key, entry] of entries) {
     const names = Object.keys(entry.placeholders ?? {}).sort()
-    expect(names.map(name => entry.placeholders?.[name]?.content), key).toEqual(names.map((_, index) => `$${index + 1}`))
+    expect(
+      names.map(name => entry.placeholders?.[name]?.content),
+      key
+    ).toEqual(names.map((_, index) => `$${index + 1}`))
   }
 })
 
@@ -25,7 +28,15 @@ test("extension pages carry the catalogue's own canonical English for every disc
 test("named values become native positional substitutions in catalogue order", () => {
   const calls: unknown[] = []
   const scripted = scriptedMessages()
-  const i18n = createI18n({ getMessage(name, values) { calls.push({ name, values }); return scripted.getMessage(name, values) } }, catalogue)
+  const i18n = createI18n(
+    {
+      getMessage(name, values) {
+        calls.push({ name, values })
+        return scripted.getMessage(name, values)
+      }
+    },
+    catalogue
+  )
   expect(i18n.message("copy_list_three", { third: "C", first: "A", second: "B" })).toBe("A, B and C")
   expect(calls).toEqual([{ name: "copy_list_three", values: ["A", "B", "C"] }])
 })
@@ -50,7 +61,8 @@ test("concurrent instances keep their own native port and locale", async () => {
 
 test("emphasis is structured text and rejects unbalanced or nested markers", () => {
   expect(richParts('[[strong]]<img onerror="bad">[[/strong]] rest')).toEqual([
-    { kind: "strong", text: '<img onerror="bad">' }, { kind: "text", text: " rest" }
+    { kind: "strong", text: '<img onerror="bad">' },
+    { kind: "text", text: " rest" }
   ])
   for (const value of ["[[strong]]missing", "[[/strong]]", "[[strong]]outer[[strong]]inner[[/strong]]", "end[[/strong]][[strong]]start[[/strong]]"]) {
     expect(() => richParts(value)).toThrow("Invalid localization emphasis")
@@ -74,8 +86,14 @@ test("disclosure hashing follows SHA-256 known answers", () => {
 test("page scripts substitute every message exactly as the catalogue does, without carrying it", () => {
   const scripted = scriptedMessages()
   const calls: unknown[] = []
-  const native = { getMessage(name: string, values?: string | string[]) { calls.push({ name, values }); return scripted.getMessage(name, values) } }
-  const full = createI18n(native, catalogue), site = createSiteI18n(native)
+  const native = {
+    getMessage(name: string, values?: string | string[]) {
+      calls.push({ name, values })
+      return scripted.getMessage(name, values)
+    }
+  }
+  const full = createI18n(native, catalogue),
+    site = createSiteI18n(native)
   for (const key of Object.keys(catalogue) as MessageKey[]) {
     const names: readonly string[] = messagePlaceholders[key] ?? []
     const values = Object.fromEntries(names.map((name, index) => [name, `value-${index}`]))

@@ -11,13 +11,15 @@ export type ShapeOutline =
 
 const MAX_DEPTH = 6
 const MAX_BYTES = 2048
-const compare = (left: string, right: string): number => left < right ? -1 : left > right ? 1 : 0
-const sourceType = (value: ShapeOutline): string => value.kind === "cut" ? value.type : value.kind
+const compare = (left: string, right: string): number => (left < right ? -1 : left > right ? 1 : 0)
+const sourceType = (value: ShapeOutline): string => (value.kind === "cut" ? value.type : value.kind)
 
 function dataText(value: JsonValue): string {
   if (value === null || typeof value !== "object") return JSON.stringify(value)
   if (Array.isArray(value)) return `[${value.map(dataText).join(",")}]`
-  return `{${Object.entries(value).map(([key, child]) => `${JSON.stringify(key)}:${dataText(child)}`).join(",")}}`
+  return `{${Object.entries(value)
+    .map(([key, child]) => `${JSON.stringify(key)}:${dataText(child)}`)
+    .join(",")}}`
 }
 
 function byteLength(value: ShapeOutline): number {
@@ -32,7 +34,10 @@ function byteLength(value: ShapeOutline): number {
 function alternatives(nodes: readonly ShapeOutline[]): ShapeOutline[] {
   const groups = new Map<string, [ShapeOutline, ...ShapeOutline[]]>()
   const add = (node: ShapeOutline): void => {
-    if (node.kind === "union") { node.variants.forEach(add); return }
+    if (node.kind === "union") {
+      node.variants.forEach(add)
+      return
+    }
     const key = sourceType(node)
     const group = groups.get(key)
     if (group) group.push(node)
@@ -43,7 +48,10 @@ function alternatives(nodes: readonly ShapeOutline[]): ShapeOutline[] {
   for (const group of groups.values()) {
     const first = group[0]
     const cut = group.find(node => node.kind === "cut")
-    if (cut) { result.push(cut); continue }
+    if (cut) {
+      result.push(cut)
+      continue
+    }
     if (first.kind === "object") {
       const fields = new Map<string, ShapeOutline[]>()
       for (const node of group) {
@@ -54,10 +62,9 @@ function alternatives(nodes: readonly ShapeOutline[]): ShapeOutline[] {
           else fields.set(field.key, [field.value])
         }
       }
-      result.push({ kind: "object", fields: [...fields].sort(([a], [b]) => compare(a, b))
-        .map(([key, values]) => ({ key, value: merged(values) })) })
+      result.push({ kind: "object", fields: [...fields].sort(([a], [b]) => compare(a, b)).map(([key, values]) => ({ key, value: merged(values) })) })
     } else if (first.kind === "array") {
-      result.push({ kind: "array", items: arrayItems(group.flatMap(node => node.kind === "array" ? node.items : [])) })
+      result.push({ kind: "array", items: arrayItems(group.flatMap(node => (node.kind === "array" ? node.items : []))) })
     } else result.push(first)
   }
   return result.sort((a, b) => compare(sourceType(a), sourceType(b)))
@@ -78,8 +85,7 @@ function outline(value: JsonValue, keys: ReadonlySet<string>, depth: number): Sh
   if (typeof value === "number") return { kind: "number" }
   if (typeof value === "string") return { kind: "string" }
   if (Array.isArray(value)) {
-    return depth === MAX_DEPTH ? { kind: "cut", type: "array" } :
-      { kind: "array", items: arrayItems(value.map(item => outline(item, keys, depth + 1))) }
+    return depth === MAX_DEPTH ? { kind: "cut", type: "array" } : { kind: "array", items: arrayItems(value.map(item => outline(item, keys, depth + 1))) }
   }
   if (depth === MAX_DEPTH) return { kind: "cut", type: "object" }
   const fields = new Map<string, ShapeOutline[]>()
@@ -90,8 +96,7 @@ function outline(value: JsonValue, keys: ReadonlySet<string>, depth: number): Sh
     if (values) values.push(node)
     else fields.set(key, [node])
   }
-  return { kind: "object", fields: [...fields].sort(([a], [b]) => compare(a, b))
-    .map(([key, nodes]) => ({ key, value: merged(nodes) })) }
+  return { kind: "object", fields: [...fields].sort(([a], [b]) => compare(a, b)).map(([key, nodes]) => ({ key, value: merged(nodes) })) }
 }
 
 function prune(node: ShapeOutline): ShapeOutline {
@@ -101,7 +106,7 @@ function prune(node: ShapeOutline): ShapeOutline {
       if (!field) continue
       const child = prune(field.value)
       if (child !== field.value) {
-        return { kind: "object", fields: node.fields.map((entry, i) => i === index ? { key: entry.key, value: child } : entry) }
+        return { kind: "object", fields: node.fields.map((entry, i) => (i === index ? { key: entry.key, value: child } : entry)) }
       }
     }
     return { kind: "cut", type: "object" }
@@ -113,7 +118,7 @@ function prune(node: ShapeOutline): ShapeOutline {
       if (!original) continue
       const child = prune(original)
       if (child !== original) {
-        const next = children.map((entry, i) => i === index ? child : entry)
+        const next = children.map((entry, i) => (i === index ? child : entry))
         return node.kind === "array" ? { kind: "array", items: arrayItems(next) } : merged(next)
       }
     }
@@ -136,7 +141,7 @@ function canonicalAlternatives(values: unknown, keys: ReadonlySet<string>, depth
     if (!validNode(value, keys, depth) || value.kind === "union") return false
     const type = sourceType(value)
     const text = sourceType(value)
-    if (types.has(type) || previous !== undefined && compare(previous, text) >= 0) return false
+    if (types.has(type) || (previous !== undefined && compare(previous, text) >= 0)) return false
     types.add(type)
     previous = text
   }
@@ -147,7 +152,10 @@ function validNode(value: unknown, keys: ReadonlySet<string>, depth: number): va
   if (depth > MAX_DEPTH || value === null || typeof value !== "object" || Array.isArray(value) || !Object.hasOwn(value, "kind")) return false
   const kind: unknown = Object.getOwnPropertyDescriptor(value, "kind")?.value
   switch (kind) {
-    case "null": case "boolean": case "number": case "string":
+    case "null":
+    case "boolean":
+    case "number":
+    case "string":
       return objectShape(value, { kind: v => v === kind })
     case "cut":
       return objectShape(value, { kind: v => v === "cut", type: v => v === "object" || v === "array" })
@@ -155,27 +163,38 @@ function validNode(value: unknown, keys: ReadonlySet<string>, depth: number): va
       if (depth === MAX_DEPTH || !objectShape(value, { kind: v => v === "object", fields: Array.isArray }) || !Array.isArray(value.fields)) return false
       let previous: string | undefined
       return value.fields.every(field => {
-        if (!objectShape(field, {
-          key: v => typeof v === "string" && (v === "<key>" || keys.has(v)),
-          value: v => validNode(v, keys, depth + 1)
-        }) || typeof field.key !== "string") return false
+        if (
+          !objectShape(field, {
+            key: v => typeof v === "string" && (v === "<key>" || keys.has(v)),
+            value: v => validNode(v, keys, depth + 1)
+          }) ||
+          typeof field.key !== "string"
+        )
+          return false
         if (previous !== undefined && compare(previous, field.key) >= 0) return false
         previous = field.key
         return true
       })
     }
     case "array":
-      return depth < MAX_DEPTH && objectShape(value, {
-        kind: v => v === "array", items: v => Array.isArray(v) && v.length <= 1 && v.every(item => validNode(item, keys, depth + 1))
-      })
+      return (
+        depth < MAX_DEPTH &&
+        objectShape(value, {
+          kind: v => v === "array",
+          items: v => Array.isArray(v) && v.length <= 1 && v.every(item => validNode(item, keys, depth + 1))
+        })
+      )
     case "union":
       return objectShape(value, { kind: v => v === "union", variants: v => canonicalAlternatives(v, keys, depth) })
-    default: return false
+    default:
+      return false
   }
 }
 
 export function isShapeOutline(value: unknown, schemaKeys: readonly string[]): value is ShapeOutline {
   try {
     return isJsonValue(value) && validNode(value, new Set(schemaKeys), 0) && byteLength(value) <= MAX_BYTES
-  } catch { return false }
+  } catch {
+    return false
+  }
 }

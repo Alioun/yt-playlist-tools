@@ -10,23 +10,40 @@ import type { StoreStartupHost } from "../../../src/background/store/interim-per
 import { createStoreStartupHost } from "../../../src/background/adapters/startup-source"
 import { syntheticStartupInventory } from "../interim-conversion/run"
 
-const context: StoreStartupHost["context"] = { deviceId: "fixture-device", settingsGen: "migration", at: 1,
-  shortcutId: "orig01", platform: { browser: "chrome", os: "linux" }, commands: [] }
+const context: StoreStartupHost["context"] = { deviceId: "fixture-device", settingsGen: "migration", at: 1, shortcutId: "orig01", platform: { browser: "chrome", os: "linux" }, commands: [] }
 
-const originalPathFacts = { legacyAuthorization: { kind: "observed", refreshTokenWasNonempty: false },
-  historicalAuthorization: { kind: "unknown" }, priorCredentialPresence: { kind: "unknown" } } as const
+const originalPathFacts = {
+  legacyAuthorization: { kind: "observed", refreshTokenWasNonempty: false },
+  historicalAuthorization: { kind: "unknown" },
+  priorCredentialPresence: { kind: "unknown" }
+} as const
 
 function startupHost(area: { read(): Record<string, unknown>; remove(keys: readonly string[]): void }, effects: unknown[]): StoreStartupHost {
-  return createStoreStartupHost({ context, source: { async readInventory() { return syntheticStartupInventory(area.read(), originalPathFacts) } },
+  return createStoreStartupHost({
+    context,
+    source: {
+      async readInventory() {
+        return syntheticStartupInventory(area.read(), originalPathFacts)
+      }
+    },
     cleanup: {
-      async removeLocal(keys) { effects.push({ removeLocal: keys }); area.remove(keys) },
-      async deleteDatabase(name) { effects.push({ deleteDatabase: name }) },
-      async removeSession(keys) { effects.push({ removeSession: keys }) }
-    } })
+      async removeLocal(keys) {
+        effects.push({ removeLocal: keys })
+        area.remove(keys)
+      },
+      async deleteDatabase(name) {
+        effects.push({ deleteDatabase: name })
+      },
+      async removeSession(keys) {
+        effects.push({ removeSession: keys })
+      }
+    }
+  })
 }
 
 export function followSettings(owner: Pick<ReturnType<typeof createStartingLocalFilterWriter>, "read" | "subscribe">, publish: (view: SettingsRead) => void) {
-  let active = true, revision = 0
+  let active = true,
+    revision = 0
   let pending: Promise<void> = Promise.resolve()
   function refresh() {
     const reading = ++revision
@@ -35,93 +52,254 @@ export function followSettings(owner: Pick<ReturnType<typeof createStartingLocal
     })
     return pending
   }
-  const unsubscribe = owner.subscribe(() => { void refresh().catch(() => {}) })
+  const unsubscribe = owner.subscribe(() => {
+    void refresh().catch(() => {})
+  })
   const initial = refresh()
   return {
     initial,
-    async settled() { for (;;) { const current = pending; await current; if (current === pending) return } },
-    dispose() { active = false; revision++; unsubscribe() }
+    async settled() {
+      for (;;) {
+        const current = pending
+        await current
+        if (current === pending) return
+      }
+    },
+    dispose() {
+      active = false
+      revision++
+      unsubscribe()
+    }
   }
 }
-
 
 export function agreementHarness(initial: JsonObject = {}, remote: JsonObject = {}) {
-  let records = cloneAgreement(initial), syncRecords = cloneAgreement(remote), now = 200, generations = 0, reads = 0
+  let records = cloneAgreement(initial),
+    syncRecords = cloneAgreement(remote),
+    now = 200,
+    generations = 0,
+    reads = 0
   let setMode: "normal" | "rejected-applied" | "rejected-unchanged" | "ignored" | "partial" | "divergent" | "read-failed" | "rejected-read-failed" = "normal"
   let beforeGet: (() => Promise<void>) | undefined, beforeSet: (() => Promise<void>) | undefined
-  const effects: unknown[] = [], batches: JsonObject[] = [], events: unknown[] = [], memory = new Map<string, unknown>([["remembered", true]])
-  const writeError = new Error("Synthetic agreement write"), readError = new Error("Synthetic agreement readback")
-  const host = startupHost({ read: () => cloneAgreement(records), remove(keys) { for (const key of keys) delete records[key] } }, effects)
-  const deps = { startup: host,
-    local: { async get(keys: readonly string[] | null) {
-      effects.push({ get: keys }); reads++; await beforeGet?.()
-      if ((setMode === "read-failed" || setMode === "rejected-read-failed") && batches.length > 0) throw readError
-      return cloneAgreement(keys === null ? records : Object.fromEntries(Object.entries(records).filter(([key]) => keys.includes(key))))
-    }, async set(items: Readonly<Record<string, JsonValue>>) {
-      if (!isAgreementObject(items)) throw Error("Agreement non-JSON batch")
-      batches.push(cloneAgreement(items)); effects.push({ set: cloneAgreement(items) }); await beforeSet?.()
-      if (setMode === "rejected-unchanged") throw writeError
-      if (setMode === "ignored") return
-      if (setMode === "partial") records.device = cloneAgreement(items.device ?? null)
-      else records = { ...records, ...cloneAgreement(items) }
-      if (setMode === "divergent") records.foreign = true
-      if (setMode === "rejected-applied" || setMode === "rejected-read-failed") throw writeError
-    } },
+  const effects: unknown[] = [],
+    batches: JsonObject[] = [],
+    events: unknown[] = [],
+    memory = new Map<string, unknown>([["remembered", true]])
+  const writeError = new Error("Synthetic agreement write"),
+    readError = new Error("Synthetic agreement readback")
+  const host = startupHost(
+    {
+      read: () => cloneAgreement(records),
+      remove(keys) {
+        for (const key of keys) delete records[key]
+      }
+    },
+    effects
+  )
+  const deps = {
+    startup: host,
+    local: {
+      async get(keys: readonly string[] | null) {
+        effects.push({ get: keys })
+        reads++
+        await beforeGet?.()
+        if ((setMode === "read-failed" || setMode === "rejected-read-failed") && batches.length > 0) throw readError
+        return cloneAgreement(keys === null ? records : Object.fromEntries(Object.entries(records).filter(([key]) => keys.includes(key))))
+      },
+      async set(items: Readonly<Record<string, JsonValue>>) {
+        if (!isAgreementObject(items)) throw Error("Agreement non-JSON batch")
+        batches.push(cloneAgreement(items))
+        effects.push({ set: cloneAgreement(items) })
+        await beforeSet?.()
+        if (setMode === "rejected-unchanged") throw writeError
+        if (setMode === "ignored") return
+        if (setMode === "partial") records.device = cloneAgreement(items.device ?? null)
+        else records = { ...records, ...cloneAgreement(items) }
+        if (setMode === "divergent") records.foreign = true
+        if (setMode === "rejected-applied" || setMode === "rejected-read-failed") throw writeError
+      }
+    },
     claim: { kind: "unavailable" as const },
-    sync: { async get() { effects.push("sync-get"); return cloneAgreement(syncRecords) }, async set() { effects.push("sync-set"); throw Error("Agree cannot push") }, subscribe() { effects.push("sync-subscribe"); throw Error("Agree cannot subscribe") } },
-    syncClock: { now() { effects.push("mono"); return 0 }, wallNow() { effects.push("wall"); return 1000000 }, after() { effects.push("timer"); throw Error("Agree cannot schedule") } },
-    now() { effects.push({ stamp: now }); return now }, generation() { const gen = `agreement-${++generations}`; effects.push({ generation: gen }); return gen }, onSyncResult() { throw Error("Agree automatic callback") }
+    sync: {
+      async get() {
+        effects.push("sync-get")
+        return cloneAgreement(syncRecords)
+      },
+      async set() {
+        effects.push("sync-set")
+        throw Error("Agree cannot push")
+      },
+      subscribe() {
+        effects.push("sync-subscribe")
+        throw Error("Agree cannot subscribe")
+      }
+    },
+    syncClock: {
+      now() {
+        effects.push("mono")
+        return 0
+      },
+      wallNow() {
+        effects.push("wall")
+        return 1000000
+      },
+      after() {
+        effects.push("timer")
+        throw Error("Agree cannot schedule")
+      }
+    },
+    now() {
+      effects.push({ stamp: now })
+      return now
+    },
+    generation() {
+      const gen = `agreement-${++generations}`
+      effects.push({ generation: gen })
+      return gen
+    },
+    onSyncResult() {
+      throw Error("Agree automatic callback")
+    }
   }
-  return { deps, effects, batches, events, memory, writeError, readError, records: () => cloneAgreement(records), counters: () => ({ reads, generations }),
-    time(value: number) { now = value }, mode(value: typeof setMode) { setMode = value }, get(fn: typeof beforeGet) { beforeGet = fn }, set(fn: typeof beforeSet) { beforeSet = fn },
-    foreign(fn: (raw: JsonObject) => void) { fn(records) }, remote(fn: (raw: JsonObject) => void) { fn(syncRecords) },
-    retire(result: AgreementResult) { if (result.kind === "committed" && isAgreementObject(records["doc:settings"]) && isAgreementObject(records["doc:settings"].data) && isAgreementObject(records["doc:settings"].data.autoAdd) && records["doc:settings"].data.autoAdd.on === false) { memory.clear(); effects.push("memory-retired-before-activation") } }
+  return {
+    deps,
+    effects,
+    batches,
+    events,
+    memory,
+    writeError,
+    readError,
+    records: () => cloneAgreement(records),
+    counters: () => ({ reads, generations }),
+    time(value: number) {
+      now = value
+    },
+    mode(value: typeof setMode) {
+      setMode = value
+    },
+    get(fn: typeof beforeGet) {
+      beforeGet = fn
+    },
+    set(fn: typeof beforeSet) {
+      beforeSet = fn
+    },
+    foreign(fn: (raw: JsonObject) => void) {
+      fn(records)
+    },
+    remote(fn: (raw: JsonObject) => void) {
+      fn(syncRecords)
+    },
+    retire(result: AgreementResult) {
+      if (
+        result.kind === "committed" &&
+        isAgreementObject(records["doc:settings"]) &&
+        isAgreementObject(records["doc:settings"].data) &&
+        isAgreementObject(records["doc:settings"].data.autoAdd) &&
+        records["doc:settings"].data.autoAdd.on === false
+      ) {
+        memory.clear()
+        effects.push("memory-retired-before-activation")
+      }
+    }
   }
 }
-function cloneAgreement<T>(value: T): T { return JSON.parse(JSON.stringify(value)) }
-function isAgreementObject(value: unknown): value is JsonObject { return value !== null && typeof value === "object" && !Array.isArray(value) && isJsonValue(value) }
-function stableAgreement(value: unknown): string { return JSON.stringify(value, (_, raw: unknown) => raw instanceof Error ? { name: raw.name, message: raw.message } : raw && typeof raw === "object" && !Array.isArray(raw) ? Object.fromEntries(Object.entries(raw).sort(([a], [b]) => a.localeCompare(b))) : raw) }
+function cloneAgreement<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value))
+}
+function isAgreementObject(value: unknown): value is JsonObject {
+  return value !== null && typeof value === "object" && !Array.isArray(value) && isJsonValue(value)
+}
+function stableAgreement(value: unknown): string {
+  return JSON.stringify(value, (_, raw: unknown) =>
+    raw instanceof Error
+      ? { name: raw.name, message: raw.message }
+      : raw && typeof raw === "object" && !Array.isArray(raw)
+        ? Object.fromEntries(Object.entries(raw).sort(([a], [b]) => a.localeCompare(b)))
+        : raw
+  )
+}
 export async function runCanonicalAgreements(api = { create: createStartingLocalFilterWriter, preinitialized: createLocalFilterWriter }) {
   const outcomes: unknown[] = []
   let assertions = 0
-  function check(value: unknown, label: string): asserts value { assertions++; if (!value) throw Error(label) }
+  function check(value: unknown, label: string): asserts value {
+    assertions++
+    if (!value) throw Error(label)
+  }
   const ui = { kind: "ui", windowId: 1, incognito: false } as const
   const privateUi = { ...ui, incognito: true }
-  const allowed = { www: true, music: true, browserMenu: true }, denied = { www: true, music: false, browserMenu: false }
+  const allowed = { www: true, music: true, browserMenu: true },
+    denied = { www: true, music: false, browserMenu: false }
   const stamp = { v: 1, gen: "old", at: 1, by: "fixture-device", future: [null] }
-  const canonical = (settings = defaultSettings(), syncOn = false): JsonObject => ({ schema: 1, device: { id: "stored-identity", consent: null, syncOn, future: { keep: true } }, "doc:settings": { ...stamp, data: settings as unknown as JsonObject } })
+  const canonical = (settings = defaultSettings(), syncOn = false): JsonObject => ({
+    schema: 1,
+    device: { id: "stored-identity", consent: null, syncOn, future: { keep: true } },
+    "doc:settings": { ...stamp, data: settings as unknown as JsonObject }
+  })
   async function execute(name: string, initial: JsonObject, choice: AgreementChoice, access = allowed, remote: JsonObject = {}) {
-    const h = agreementHarness(initial, remote), owner = api.create(h.deps)
-    check(await owner.ready() === "ok", "agreement actual startup")
+    const h = agreementHarness(initial, remote),
+      owner = api.create(h.deps)
+    check((await owner.ready()) === "ok", "agreement actual startup")
     owner.subscribe(event => h.events.push(event))
     const review = await owner.readAgreement(ui)
     check(review.kind === "review", "agreement canonical review")
-    const before = h.records(), begin = h.effects.length
+    const before = h.records(),
+      begin = h.effects.length
     h.effects.push("initiating-explicit-Agree")
-    function requestMusic() { h.effects.push("request-music-before-await"); return Promise.resolve(access.music) }
-    function requestMenu() { h.effects.push("request-menu-before-await"); return Promise.resolve(access.browserMenu) }
-    const music = requestMusic(), menu = requestMenu()
+    function requestMusic() {
+      h.effects.push("request-music-before-await")
+      return Promise.resolve(access.music)
+    }
+    function requestMenu() {
+      h.effects.push("request-menu-before-await")
+      return Promise.resolve(access.browserMenu)
+    }
+    const music = requestMusic(),
+      menu = requestMenu()
     const observation = Promise.all([music, menu]).then(([music, browserMenu]) => ({ www: access.www, music, browserMenu }))
     const input = { review: review.review, displayedVersion: review.version, choice, access: observation }
     const result = await owner.agree(ui, input)
     h.retire(result)
     check(result.kind === "committed", "agreement combined commit")
     check(result.consent.at === 200 && result.consent.v === 1, "agreement invocation clock")
-    check(h.effects.slice(begin).indexOf("request-menu-before-await") < h.effects.slice(begin).findIndex(effect => isAgreementObject(effect) && "get" in effect), "permissions initiated before Store await")
+    check(
+      h.effects.slice(begin).indexOf("request-menu-before-await") < h.effects.slice(begin).findIndex(effect => isAgreementObject(effect) && "get" in effect),
+      "permissions initiated before Store await"
+    )
     const rawDevice = h.records().device
     check(isAgreementObject(rawDevice) && (isAgreementObject(before.device) ? rawDevice.id === before.device.id : rawDevice.id === context.deviceId), "agreement existing identity wins")
     h.time(999)
     const duplicate = await owner.agree(ui, input)
     check(duplicate.kind === "unchanged" && duplicate.consent.at === 200, "agreement duplicate keeps time")
-    const saved = h.records(), serialized = JSON.stringify(saved), writes = h.batches.length
+    const saved = h.records(),
+      serialized = JSON.stringify(saved),
+      writes = h.batches.length
     await owner.dispose()
-    const restartHarness = agreementHarness(JSON.parse(serialized), remote), restarted = api.create(restartHarness.deps)
-    check(await restarted.ready() === "ok", "canonical agreement restart ready")
+    const restartHarness = agreementHarness(JSON.parse(serialized), remote),
+      restarted = api.create(restartHarness.deps)
+    check((await restarted.ready()) === "ok", "canonical agreement restart ready")
     const restart = await restarted.readAgreement(privateUi)
     check(restart.kind === "review" && restart.presentation.kind === "canonical" && restart.presentation.consent?.at === 200, "canonical agreement restart consent")
     check(restartHarness.batches.length === 0 && restartHarness.counters().generations === 0 && h.batches.length === writes, "restart has no restamp or preset replay")
     await restarted.dispose()
-    outcomes.push({ name, initial, before, disclosure: review.presentation, choice, access, result, duplicate, serialized, saved, restart, restartEffects: restartHarness.effects, batches: h.batches, effects: h.effects, events: h.events, counters: h.counters(), memorySize: h.memory.size })
+    outcomes.push({
+      name,
+      initial,
+      before,
+      disclosure: review.presentation,
+      choice,
+      access,
+      result,
+      duplicate,
+      serialized,
+      saved,
+      restart,
+      restartEffects: restartHarness.effects,
+      batches: h.batches,
+      effects: h.effects,
+      events: h.events,
+      counters: h.counters(),
+      memorySize: h.memory.size
+    })
     return { h, result, saved }
   }
   const zero = await execute("first-run-zero", {}, { kind: "first-run", selected: [], syncOn: false })
@@ -129,87 +307,200 @@ export async function runCanonicalAgreements(api = { create: createStartingLocal
   const first = await execute("first-run-held-presets", {}, { kind: "first-run", selected: ["shortcuts", "music-keys", "browser-menu"], syncOn: false }, denied)
   check(first.result.settingsChanged && first.result.applications.some(app => app.state.kind === "held"), "first run denied features saved held")
   check(isAgreementObject(first.saved.sync) && first.saved.sync.everEdited === true && first.saved.sync.editedSinceOff === true, "agreement actual edit uses true provenance")
-  const upgrade = await execute("original-upgrade-agree", { playlists: ["PLabcdefghijklmnop"], watchLaterShortcut: "k" }, { kind: "upgrade-note", selected: ["auto-add", "shortcuts"], syncOn: false, percentage: "half" })
+  const upgrade = await execute(
+    "original-upgrade-agree",
+    { playlists: ["PLabcdefghijklmnop"], watchLaterShortcut: "k" },
+    { kind: "upgrade-note", selected: ["auto-add", "shortcuts"], syncOn: false, percentage: "half" }
+  )
   check(isAgreementObject(upgrade.saved.device) && isAgreementObject(upgrade.saved.device.upgradeNote) && upgrade.saved.device.upgradeNote.state === "done", "original note completes only via Agree")
-  check(isAgreementObject(upgrade.saved["doc:settings"]) && isAgreementObject(upgrade.saved["doc:settings"].data) && isAgreementObject(upgrade.saved["doc:settings"].data.autoAdd) && upgrade.saved["doc:settings"].data.autoAdd.pct === 50, "original unset percentage choice")
+  check(
+    isAgreementObject(upgrade.saved["doc:settings"]) &&
+      isAgreementObject(upgrade.saved["doc:settings"].data) &&
+      isAgreementObject(upgrade.saved["doc:settings"].data.autoAdd) &&
+      upgrade.saved["doc:settings"].data.autoAdd.pct === 50,
+    "original unset percentage choice"
+  )
   for (const feature of ["music-actions", "music-keys", "shortcuts", "any-tab-keys", "browser-menu"] as const) {
     const result = await execute(`denied-${feature}`, canonical(), { kind: "feature", feature }, denied)
     const data = result.saved["doc:settings"]
-    if (feature === "music-keys") check(isAgreementObject(data) && isAgreementObject(data.data) && isAgreementObject(data.data.musicKeys) && data.data.musicKeys.on === false && data.data.musicKeys.preset === false, "denied feature does not spend preset")
-    if (feature === "shortcuts") check(isAgreementObject(data) && isAgreementObject(data.data) && isAgreementObject(data.data.shortcuts) && data.data.shortcuts.on === true && data.data.shortcuts.music === false, "shortcuts exception saves YouTube only")
-    if (feature === "any-tab-keys") check(result.result.applications.some(app => app.scope === "music" && app.state.kind === "held"), "any tab exception keeps feature held")
+    if (feature === "music-keys")
+      check(
+        isAgreementObject(data) && isAgreementObject(data.data) && isAgreementObject(data.data.musicKeys) && data.data.musicKeys.on === false && data.data.musicKeys.preset === false,
+        "denied feature does not spend preset"
+      )
+    if (feature === "shortcuts")
+      check(
+        isAgreementObject(data) && isAgreementObject(data.data) && isAgreementObject(data.data.shortcuts) && data.data.shortcuts.on === true && data.data.shortcuts.music === false,
+        "shortcuts exception saves YouTube only"
+      )
+    if (feature === "any-tab-keys")
+      check(
+        result.result.applications.some(app => app.scope === "music" && app.state.kind === "held"),
+        "any tab exception keeps feature held"
+      )
   }
-  const settings = defaultSettings(); settings.autoAdd.on = true
-  const progress = await execute("original-auto-add-off-clears-all-progress", { playlists: ["PLabcdefghijklmnop"], "progress:AAAAAAAAAAAAAAAA:0": { remembered: 1 }, "progress:BBBBBBBBBBBBBBBB:15": { remembered: 2 } }, { kind: "upgrade-note", selected: [], percentage: "keep", syncOn: false })
-  check(stableAgreement(progress.saved["progress:AAAAAAAAAAAAAAAA:0"]) === "{}" && stableAgreement(progress.saved["progress:BBBBBBBBBBBBBBBB:15"]) === "{}" && progress.h.memory.size === 0, "agreement progress and memory retired")
+  const settings = defaultSettings()
+  settings.autoAdd.on = true
+  const progress = await execute(
+    "original-auto-add-off-clears-all-progress",
+    { playlists: ["PLabcdefghijklmnop"], "progress:AAAAAAAAAAAAAAAA:0": { remembered: 1 }, "progress:BBBBBBBBBBBBBBBB:15": { remembered: 2 } },
+    { kind: "upgrade-note", selected: [], percentage: "keep", syncOn: false }
+  )
+  check(
+    stableAgreement(progress.saved["progress:AAAAAAAAAAAAAAAA:0"]) === "{}" && stableAgreement(progress.saved["progress:BBBBBBBBBBBBBBBB:15"]) === "{}" && progress.h.memory.size === 0,
+    "agreement progress and memory retired"
+  )
   const joined = canonical(defaultSettings(), true)
-  joined.sync = { joined: "history", pushed: { "doc:settings": "old" }, status: "ok", editedSinceOff: false, everEdited: false, opaqueWrite: { gate: { kind: "held", notBefore: 1060000, future: [null] }, diagnostic: { name: "Original", message: "opaque", keep: true } }, future: { keep: true } }
+  joined.sync = {
+    joined: "history",
+    pushed: { "doc:settings": "old" },
+    status: "ok",
+    editedSinceOff: false,
+    everEdited: false,
+    opaqueWrite: { gate: { kind: "held", notBefore: 1060000, future: [null] }, diagnostic: { name: "Original", message: "opaque", keep: true } },
+    future: { keep: true }
+  }
   const remote: JsonObject = { "s:meta": { v: 1, id: "history", created: 0 }, "s:settings": joined["doc:settings"]! }
   const edited = await execute("stable-joined-feature", joined, { kind: "feature", feature: "queue-button" }, allowed, remote)
-  check(isAgreementObject(edited.saved.sync) && edited.saved.sync.everEdited === true && edited.saved.sync.editedSinceOff === false && stableAgreement(edited.saved.sync.opaqueWrite) === stableAgreement((joined.sync as JsonObject).opaqueWrite), "joined provenance preserves R155")
+  check(
+    isAgreementObject(edited.saved.sync) &&
+      edited.saved.sync.everEdited === true &&
+      edited.saved.sync.editedSinceOff === false &&
+      stableAgreement(edited.saved.sync.opaqueWrite) === stableAgreement((joined.sync as JsonObject).opaqueWrite),
+    "joined provenance preserves R155"
+  )
   const deviceOnly = await execute("joined-device-only-disclosure", joined, { kind: "disclosure" }, allowed, remote)
   check(!deviceOnly.h.effects.includes("sync-get") && stableAgreement(deviceOnly.saved.sync) === stableAgreement(joined.sync), "device-only agreement has no sync effect")
   for (const mode of ["rejected-applied", "rejected-unchanged", "ignored", "partial", "divergent", "read-failed", "rejected-read-failed"] as const) {
-    const h = agreementHarness(canonical()), owner = api.create(h.deps); await owner.ready()
-    const review = await owner.readAgreement(ui); check(review.kind === "review", "fault canonical review")
+    const h = agreementHarness(canonical()),
+      owner = api.create(h.deps)
+    await owner.ready()
+    const review = await owner.readAgreement(ui)
+    check(review.kind === "review", "fault canonical review")
     h.mode(mode)
     const result = await owner.agree(ui, { review: review.review, displayedVersion: review.version, choice: { kind: "feature", feature: "queue-button" }, access: Promise.resolve(allowed) })
     const expected = mode === "rejected-applied" ? "committed" : mode === "rejected-unchanged" ? "failed" : "unconfirmed"
     check(result.kind === expected, "canonical exact observation classification " + mode)
-    if (mode === "rejected-applied") check(result.kind === "committed" && result.mutations[0]?.write.kind === "rejected" && result.mutations[0].write.error === h.writeError, "applied rejection preserves identity")
+    if (mode === "rejected-applied")
+      check(result.kind === "committed" && result.mutations[0]?.write.kind === "rejected" && result.mutations[0].write.error === h.writeError, "applied rejection preserves identity")
     if (mode === "rejected-unchanged") check(result.kind === "failed" && result.stage === "canonical" && result.write.error === h.writeError, "unchanged rejection preserves identity")
-    if (mode === "read-failed" || mode === "rejected-read-failed") check(result.kind === "unconfirmed" && result.cause.kind === "read-failed" && result.cause.error === h.readError, "distinct read error retained")
+    if (mode === "read-failed" || mode === "rejected-read-failed")
+      check(result.kind === "unconfirmed" && result.cause.kind === "read-failed" && result.cause.error === h.readError, "distinct read error retained")
     if (mode === "rejected-read-failed") check(result.kind === "unconfirmed" && result.write.kind === "rejected" && result.write.error === h.writeError, "independent write and read errors retained")
     const barrier = await owner.readAgreement(ui)
     if (expected === "unconfirmed") {
       check(barrier.kind === "unavailable" && barrier.reason === "stale", "agreement uncertainty closes agreement reads")
-      check((await owner.read("settings")).kind === "unavailable" && (await owner.claim()).kind === "unavailable" && (await owner.flushSync()).kind === "unavailable", "agreement uncertainty closes ordinary owner")
+      check(
+        (await owner.read("settings")).kind === "unavailable" && (await owner.claim()).kind === "unavailable" && (await owner.flushSync()).kind === "unavailable",
+        "agreement uncertainty closes ordinary owner"
+      )
     }
-    await owner.dispose(); outcomes.push({ name: `canonical-${mode}`, result, barrier, records: h.records(), batches: h.batches, effects: h.effects, counters: h.counters() })
+    await owner.dispose()
+    outcomes.push({ name: `canonical-${mode}`, result, barrier, records: h.records(), batches: h.batches, effects: h.effects, counters: h.counters() })
   }
   for (const fault of ["full", "newer", "reset", "different-history", "ticked-sync", "stale-review", "copied-review", "private-origin-mismatch", "access-rejection"] as const) {
-    const h = agreementHarness(fault === "ticked-sync" ? {} : joined, remote), owner = api.create(h.deps); await owner.ready()
-    const review = await owner.readAgreement(ui); check(review.kind === "review", "admission review")
-    if (fault === "full") h.remote(raw => { for (let i = 0; i < 481; i++) raw[`occupied-${i}`] = "retained" })
-    if (fault === "newer") h.remote(raw => { raw["s:settings"] = { ...stamp, v: 2, data: {} } })
-    if (fault === "reset") h.remote(raw => { raw["s:meta"] = { v: 1, id: "history", created: 0, reset: true } })
-    if (fault === "different-history") h.remote(raw => { raw["s:meta"] = { v: 1, id: "other", created: 0 } })
-    if (fault === "stale-review") h.foreign(raw => { raw.extra = true })
-    const before = h.records(), writes = h.batches.length
+    const h = agreementHarness(fault === "ticked-sync" ? {} : joined, remote),
+      owner = api.create(h.deps)
+    await owner.ready()
+    const review = await owner.readAgreement(ui)
+    check(review.kind === "review", "admission review")
+    if (fault === "full")
+      h.remote(raw => {
+        for (let i = 0; i < 481; i++) raw[`occupied-${i}`] = "retained"
+      })
+    if (fault === "newer")
+      h.remote(raw => {
+        raw["s:settings"] = { ...stamp, v: 2, data: {} }
+      })
+    if (fault === "reset")
+      h.remote(raw => {
+        raw["s:meta"] = { v: 1, id: "history", created: 0, reset: true }
+      })
+    if (fault === "different-history")
+      h.remote(raw => {
+        raw["s:meta"] = { v: 1, id: "other", created: 0 }
+      })
+    if (fault === "stale-review")
+      h.foreign(raw => {
+        raw.extra = true
+      })
+    const before = h.records(),
+      writes = h.batches.length
     const choice = fault === "ticked-sync" ? { kind: "first-run", selected: [], syncOn: true } : { kind: "feature", feature: "queue-button" }
-    const input = { review: fault === "copied-review" ? { ...review.review } : review.review, displayedVersion: review.version, choice, access: fault === "access-rejection" ? Promise.reject(h.writeError) : Promise.resolve(allowed) }
+    const input = {
+      review: fault === "copied-review" ? { ...review.review } : review.review,
+      displayedVersion: review.version,
+      choice,
+      access: fault === "access-rejection" ? Promise.reject(h.writeError) : Promise.resolve(allowed)
+    }
     const result = await owner.agree(fault === "private-origin-mismatch" ? privateUi : ui, input as AgreementInput)
     check(result.kind !== "committed" && h.batches.length === writes && stableAgreement(before) === stableAgreement(h.records()), "refusal saves neither consent nor Settings " + fault)
     if (fault === "full" || fault === "newer") check(result.kind === "refused" && result.reason === (fault === "full" ? "sync-full" : "update-needed"), "R161 refusal reason")
     if (fault === "ticked-sync") check(result.kind === "unavailable" && result.reason === "join-required", "true sync tick is never dropped")
-    await owner.dispose(); outcomes.push({ name: fault, result, records: h.records(), batches: h.batches, effects: h.effects })
+    await owner.dispose()
+    outcomes.push({ name: fault, result, records: h.records(), batches: h.batches, effects: h.effects })
   }
   {
-    const acct = "AAAAAAAAAAAAAAAA", playlist = "PLabcdefghijklmnop"
+    const acct = "AAAAAAAAAAAAAAAA",
+      playlist = "PLabcdefghijklmnop"
     if (!isAccountKey(acct) || !isPlaylistId(playlist)) throw Error("Invalid agreement claim identifiers")
     const h = agreementHarness(upgrade.saved)
     let lookups = 0
     const authority: ClaimAuthority = { acct, lease: "after-agreement", browserSession: "synthetic-session", consentGeneration: "canonical", signedIn: true, incognito: false }
-    const owner = api.create({ ...h.deps, claim: {
-      kind: "fixture",
-      authority: { async read() { return { kind: "ready", authority } } },
-      session: { async takeLookup() { return true } },
-      ownership: { async lookup() { lookups++; return { kind: "fixture-owned", authority, lineage: "local-migration-only", ownedPlaylistIds: new Set([playlist]) } } }
-    } })
+    const owner = api.create({
+      ...h.deps,
+      claim: {
+        kind: "fixture",
+        authority: {
+          async read() {
+            return { kind: "ready", authority }
+          }
+        },
+        session: {
+          async takeLookup() {
+            return true
+          }
+        },
+        ownership: {
+          async lookup() {
+            lookups++
+            return { kind: "fixture-owned", authority, lineage: "local-migration-only", ownedPlaylistIds: new Set([playlist]) }
+          }
+        }
+      }
+    })
     await owner.ready()
-    const claim = await owner.claim(), pending = await owner.readClaimNotice()
+    const claim = await owner.claim(),
+      pending = await owner.readClaimNotice()
     check(claim.kind === "committed" && pending.kind === "pending" && lookups === 1, "claim is a separate normal ownership action after actual Agree")
     const acknowledgement = await owner.acknowledgeClaimNotice(ui, pending.notice)
     check(acknowledgement.kind === "committed" && (await owner.readClaimNotice()).kind === "empty", "claim notice needs separate OK after Agree")
-    await owner.dispose(); outcomes.push({ name: "actual-agreement-then-claim-and-notice-OK", agreementSaved: upgrade.saved, claim, pending, acknowledgement, lookups, records: h.records(), batches: h.batches, effects: h.effects })
+    await owner.dispose()
+    outcomes.push({
+      name: "actual-agreement-then-claim-and-notice-OK",
+      agreementSaved: upgrade.saved,
+      claim,
+      pending,
+      acknowledgement,
+      lookups,
+      records: h.records(),
+      batches: h.batches,
+      effects: h.effects
+    })
   }
   {
-    const setup = "doc:setup:AAAAAAAAAAAAAAAA", local = cloneAgreement(joined), sync = cloneAgreement(remote)
-    local[setup] = { ...stamp, gen: "setup-ack", data: {} }; sync["s:setup:AAAAAAAAAAAAAAAA"] = cloneAgreement(local[setup]!)
+    const setup = "doc:setup:AAAAAAAAAAAAAAAA",
+      local = cloneAgreement(joined),
+      sync = cloneAgreement(remote)
+    local[setup] = { ...stamp, gen: "setup-ack", data: {} }
+    sync["s:setup:AAAAAAAAAAAAAAAA"] = cloneAgreement(local[setup]!)
     check(isAgreementObject(local.sync) && isAgreementObject(local.sync.pushed), "repair history input")
     local.sync.pushed[setup] = "before-ack"
     const changed = await execute("joined-repair-before-first-edit", local, { kind: "feature", feature: "queue-button" }, allowed, sync)
-    check(isAgreementObject(changed.saved.sync) && isAgreementObject(changed.saved.sync.pushed) && changed.saved.sync.pushed[setup] === "setup-ack" && changed.saved.sync.everEdited === true, "agreement composes admitted repair before provenance")
+    check(
+      isAgreementObject(changed.saved.sync) && isAgreementObject(changed.saved.sync.pushed) && changed.saved.sync.pushed[setup] === "setup-ack" && changed.saved.sync.everEdited === true,
+      "agreement composes admitted repair before provenance"
+    )
   }
   for (const fault of ["noop-full", "noop-newer", "private-agreement", "reserved-preset", "deleted-original", "saved-percentage", "off-edit-back-to-defaults"] as const) {
     const savedSettings = defaultSettings()
@@ -219,225 +510,525 @@ export async function runCanonicalAgreements(api = { create: createStartingLocal
     if (fault.startsWith("noop-") && isAgreementObject(local)) local.sync = cloneAgreement(joined.sync!)
     if (fault === "reserved-preset" || fault === "deleted-original") {
       local.unclaimed = { from: "1.4.5", autoAdd: [], shortcutPlaylist: "WL", originalShortcutId: "orig01", filters: {}, at: 1 }
-      if (fault === "deleted-original") { savedSettings.shortcuts.preset = true; local["doc:settings"] = { ...stamp, data: savedSettings as unknown as JsonObject } }
+      if (fault === "deleted-original") {
+        savedSettings.shortcuts.preset = true
+        local["doc:settings"] = { ...stamp, data: savedSettings as unknown as JsonObject }
+      }
     }
     const sync = cloneAgreement(remote)
-    if (fault === "noop-full") { sync["s:settings"] = cloneAgreement(local["doc:settings"]!); for (let i = 0; i < 481; i++) sync[`occupied-${i}`] = "retained" }
+    if (fault === "noop-full") {
+      sync["s:settings"] = cloneAgreement(local["doc:settings"]!)
+      for (let i = 0; i < 481; i++) sync[`occupied-${i}`] = "retained"
+    }
     if (fault === "noop-newer") sync["s:settings"] = { ...stamp, v: 2, data: {} }
-    const h = agreementHarness(local as JsonObject, sync), owner = api.create(h.deps); await owner.ready()
+    const h = agreementHarness(local as JsonObject, sync),
+      owner = api.create(h.deps)
+    await owner.ready()
     const origin = fault === "private-agreement" ? privateUi : ui
-    const review = await owner.readAgreement(origin); check(review.kind === "review", "extra agreement review")
-    const choice: AgreementChoice = fault === "saved-percentage" ? { kind: "upgrade-note", selected: ["auto-add"], percentage: "keep", syncOn: false }
-      : fault === "off-edit-back-to-defaults" ? { kind: "feature", feature: "music-keys" }
-      : { kind: "feature", feature: fault === "reserved-preset" || fault === "deleted-original" ? "shortcuts" : "queue-button" }
+    const review = await owner.readAgreement(origin)
+    check(review.kind === "review", "extra agreement review")
+    const choice: AgreementChoice =
+      fault === "saved-percentage"
+        ? { kind: "upgrade-note", selected: ["auto-add"], percentage: "keep", syncOn: false }
+        : fault === "off-edit-back-to-defaults"
+          ? { kind: "feature", feature: "music-keys" }
+          : { kind: "feature", feature: fault === "reserved-preset" || fault === "deleted-original" ? "shortcuts" : "queue-button" }
     const result = await owner.agree(origin, { review: review.review, displayedVersion: review.version, choice, access: Promise.resolve(fault === "off-edit-back-to-defaults" ? denied : allowed) })
     check(result.kind === (fault === "reserved-preset" || fault === "noop-newer" ? "refused" : "committed"), "extra agreement result " + fault)
     const saved = h.records()
-    if (fault === "noop-full") check(result.kind === "committed" && result.settingsChanged === false && h.batches.length === 1 && Object.keys(h.batches[0]!).length === 1 && stableAgreement(saved.sync) === stableAgreement(joined.sync), "full no-op changes Device only without repair")
-    if (fault === "deleted-original") { const view = decodeDocument(saved["doc:settings"], decodeSettings); check(view.kind === "value" && view.document.data.shortcuts.list.length === 0, "deleted migrated row never recreated by Agree") }
-    if (fault === "saved-percentage") { const view = decodeDocument(saved["doc:settings"], decodeSettings); check(view.kind === "value" && view.document.data.autoAdd.pct === 82, "Agree preserves saved percentage") }
+    if (fault === "noop-full")
+      check(
+        result.kind === "committed" &&
+          result.settingsChanged === false &&
+          h.batches.length === 1 &&
+          Object.keys(h.batches[0]!).length === 1 &&
+          stableAgreement(saved.sync) === stableAgreement(joined.sync),
+        "full no-op changes Device only without repair"
+      )
+    if (fault === "deleted-original") {
+      const view = decodeDocument(saved["doc:settings"], decodeSettings)
+      check(view.kind === "value" && view.document.data.shortcuts.list.length === 0, "deleted migrated row never recreated by Agree")
+    }
+    if (fault === "saved-percentage") {
+      const view = decodeDocument(saved["doc:settings"], decodeSettings)
+      check(view.kind === "value" && view.document.data.autoAdd.pct === 82, "Agree preserves saved percentage")
+    }
     if (fault === "off-edit-back-to-defaults") check(isAgreementObject(saved.sync) && saved.sync.everEdited === true, "actual edit back to defaults has true provenance")
-    await owner.dispose(); outcomes.push({ name: fault, result, records: saved, batches: h.batches, effects: h.effects, counters: h.counters() })
+    await owner.dispose()
+    outcomes.push({ name: fault, result, records: saved, batches: h.batches, effects: h.effects, counters: h.counters() })
   }
 
   {
     const local = cloneAgreement(joined)
     if (!isAgreementObject(local.device)) throw Error("No active Device")
     local.device.consent = { v: 1, at: 1 }
-    const h = agreementHarness(local, remote), callbacks: (() => void)[] = [], timers: { run: () => void; cancelled: boolean }[] = [], automatic: unknown[] = []
+    const h = agreementHarness(local, remote),
+      callbacks: (() => void)[] = [],
+      timers: { run: () => void; cancelled: boolean }[] = [],
+      automatic: unknown[] = []
     let unsubscribed = 0
-    const owner = api.create({ ...h.deps,
-      sync: { ...h.deps.sync, subscribe(changed) { callbacks.push(changed); return () => { unsubscribed++ } } },
-      syncClock: { ...h.deps.syncClock, after(_milliseconds, run) { const timer = { run, cancelled: false }; timers.push(timer); return () => { timer.cancelled = true } } },
-      onSyncResult(result) { automatic.push(result) }
+    const owner = api.create({
+      ...h.deps,
+      sync: {
+        ...h.deps.sync,
+        subscribe(changed) {
+          callbacks.push(changed)
+          return () => {
+            unsubscribed++
+          }
+        }
+      },
+      syncClock: {
+        ...h.deps.syncClock,
+        after(_milliseconds, run) {
+          const timer = { run, cancelled: false }
+          timers.push(timer)
+          return () => {
+            timer.cancelled = true
+          }
+        }
+      },
+      onSyncResult(result) {
+        automatic.push(result)
+      }
     })
-    await owner.ready(); await owner.startSync()
+    await owner.ready()
+    await owner.startSync()
     check(callbacks.length === 1, "active owner subscription control")
-    const shown = await owner.readAgreement(ui); check(shown.kind === "review", "active agreement review")
+    const shown = await owner.readAgreement(ui)
+    check(shown.kind === "review", "active agreement review")
     h.mode("ignored")
     const result = await owner.agree(ui, { review: shown.review, displayedVersion: shown.version, choice: { kind: "feature", feature: "queue-button" }, access: Promise.resolve(allowed) })
     check(result.kind === "unconfirmed", "active ignored Agree stays uncertain")
     const before = h.effects.length
     for (const callback of callbacks) callback()
     for (const timer of timers) timer.run()
-    await owner.startSync(); await owner.flushSync(); await owner.read("settings"); await owner.readClaimNotice(); await owner.claim()
+    await owner.startSync()
+    await owner.flushSync()
+    await owner.read("settings")
+    await owner.readClaimNotice()
+    await owner.claim()
     check(h.effects.length === before && unsubscribed === 1 && timers.every(timer => timer.cancelled), "agreement barrier retires subscription and stale timer ingress")
-    await owner.dispose(); outcomes.push({ name: "active-agreement-global-barrier", result, automatic, unsubscribed, timers: timers.map(timer => ({ cancelled: timer.cancelled })), records: h.records(), batches: h.batches, effects: h.effects })
+    await owner.dispose()
+    outcomes.push({
+      name: "active-agreement-global-barrier",
+      result,
+      automatic,
+      unsubscribed,
+      timers: timers.map(timer => ({ cancelled: timer.cancelled })),
+      records: h.records(),
+      batches: h.batches,
+      effects: h.effects
+    })
   }
   for (const terminal of [false, true]) {
-    const h = agreementHarness(canonical()), owner = api.create(h.deps); await owner.ready()
-    const shown = await owner.readAgreement(ui); check(shown.kind === "review", "A-B-A actual review")
+    const h = agreementHarness(canonical()),
+      owner = api.create(h.deps)
+    await owner.ready()
+    const shown = await owner.readAgreement(ui)
+    check(shown.kind === "review", "A-B-A actual review")
     const input = { review: shown.review, displayedVersion: shown.version, choice: { kind: "feature", feature: "queue-button" } as const, access: Promise.resolve(allowed) }
     if (terminal) check((await owner.agree(ui, input)).kind === "committed", "terminal A-B-A actual agreement")
-    const saved = h.records(), writes = h.batches.length
-    h.foreign(raw => { raw["doc:settings"] = { ...stamp, gen: "observed-B", data: { theme: "dark" } } })
+    const saved = h.records(),
+      writes = h.batches.length
+    h.foreign(raw => {
+      raw["doc:settings"] = { ...stamp, gen: "observed-B", data: { theme: "dark" } }
+    })
     await owner.read("settings")
-    h.foreign(raw => { raw["doc:settings"] = cloneAgreement(saved["doc:settings"]!) })
+    h.foreign(raw => {
+      raw["doc:settings"] = cloneAgreement(saved["doc:settings"]!)
+    })
     await owner.read("settings")
     const result = await owner.agree(ui, input)
     check(result.kind === "unavailable" && result.reason === "stale" && h.batches.length === writes, "observed A-B-A permanently invalidates " + (terminal ? "terminal" : "review"))
-    await owner.dispose(); outcomes.push({ name: terminal ? "terminal-observed-A-B-A" : "review-observed-A-B-A", result, saved: h.records(), batches: h.batches, effects: h.effects })
+    await owner.dispose()
+    outcomes.push({ name: terminal ? "terminal-observed-A-B-A" : "review-observed-A-B-A", result, saved: h.records(), batches: h.batches, effects: h.effects })
   }
   return { assertions, outcomes }
 }
 
-export const joinedAgreementNames = ["unknown-choice", "use-this-browser", "upgrade-note", "proven-automatic", "empty-create", "zero-features", "zero-empty-create", "no-op-overlay", "deleted-original", "denied-site-access", "auto-add-off-progress", "full", "newer", "stale-lookup", "accepted-restart", "disposed-materialize"] as const
+export const joinedAgreementNames = [
+  "unknown-choice",
+  "use-this-browser",
+  "upgrade-note",
+  "proven-automatic",
+  "empty-create",
+  "zero-features",
+  "zero-empty-create",
+  "no-op-overlay",
+  "deleted-original",
+  "denied-site-access",
+  "auto-add-off-progress",
+  "full",
+  "newer",
+  "stale-lookup",
+  "accepted-restart",
+  "disposed-materialize"
+] as const
 export const sameHistoryAgreementNames = ["automatic-noop", "automatic-edit-progress", "full", "newer", "reset", "accepted-restart", "disposed", "denied-access", "private"] as const
 export async function runJoinedAgreements(api = { create: createStartingLocalFilterWriter, preinitialized: createLocalFilterWriter }, options: { case?: string; sameHistory?: boolean } = {}) {
-  const outcomes: unknown[] = [], assertions: string[] = []
-  function check(value: unknown, label: string): asserts value { assertions.push(label); if (!value) throw Error(label) }
+  const outcomes: unknown[] = [],
+    assertions: string[] = []
+  function check(value: unknown, label: string): asserts value {
+    assertions.push(label)
+    if (!value) throw Error(label)
+  }
   const ui = { kind: "ui", windowId: 1, incognito: false } as const
-  const remote = (): JsonObject => ({ "s:meta": { v: 1, id: "H", created: 0 }, "s:settings": { v: 1, gen: "remote-settings", at: 10, by: "remote", data: { autoAdd: { on: true }, theme: "dark" }, extension: { keep: true }, ...JSON.parse('{"__proto__":{"inert":true},"toJSON":"inert"}') } })
+  const remote = (): JsonObject => ({
+    "s:meta": { v: 1, id: "H", created: 0 },
+    "s:settings": {
+      v: 1,
+      gen: "remote-settings",
+      at: 10,
+      by: "remote",
+      data: { autoAdd: { on: true }, theme: "dark" },
+      extension: { keep: true },
+      ...JSON.parse('{"__proto__":{"inert":true},"toJSON":"inert"}')
+    }
+  })
   for (const name of joinedAgreementNames) {
     if (options.case && options.case !== name) continue
-    const initial: JsonObject = {}, sync = remote()
-    if (name === "upgrade-note") { initial.playlists = ["PLabcdefghijklmnop"]; initial.watchLaterShortcut = "k" }
+    const initial: JsonObject = {},
+      sync = remote()
+    if (name === "upgrade-note") {
+      initial.playlists = ["PLabcdefghijklmnop"]
+      initial.watchLaterShortcut = "k"
+    }
     if (name === "proven-automatic") initial.sync = { joined: null, pushed: {}, status: "off", editedSinceOff: false, everEdited: false }
     if (name === "empty-create" || name === "zero-empty-create") for (const key of Object.keys(sync)) delete sync[key]
     if (name === "no-op-overlay") jsonAgreement(sync["s:settings"]).data = { autoAdd: { on: false }, queueButton: { on: true }, theme: "dark" }
     if (name === "deleted-original") jsonAgreement(sync["s:settings"]).data = { autoAdd: { on: false }, shortcuts: { on: false, preset: true, list: [] } }
-    if (name === "auto-add-off-progress") { initial["progress:AAAAAAAAAAAAAAAA:0"] = { remembered: 1 }; initial["progress:BBBBBBBBBBBBBBBB:15"] = { remembered: 2 } }
+    if (name === "auto-add-off-progress") {
+      initial["progress:AAAAAAAAAAAAAAAA:0"] = { remembered: 1 }
+      initial["progress:BBBBBBBBBBBBBBBB:15"] = { remembered: 2 }
+    }
     if (name === "full") for (let i = 0; i < 481; i++) sync[`occupied-${i}`] = "retained"
     if (name === "newer") sync["s:settings"] = { v: 2, gen: "future", at: 10, by: "remote", data: {} }
     const h = syncJoinHarness({ local: initial, sync }, "agreement-candidate", api)
-    if (name === "upgrade-note") h.deps.startup.readSnapshot = startupHost({ read: () => h.state().local, remove(keys) { h.foreign(raw => { keys.forEach(key => { delete raw[key] }) }) } }, h.effects).readSnapshot
-    const owner = h.owner(); check(await owner.ready() === "ok", "true-ticked agreement uses actual starting owner")
-    const review = await owner.readAgreement(ui); check(review.kind === "review", "canonical true-ticked review")
-    const before = h.state(), beforeSets = h.localSets.length
-    const selected: readonly PageFeatureId[] = name === "denied-site-access" ? ["music-keys", "shortcuts", "browser-menu"] : name === "deleted-original" ? ["shortcuts"] : name === "zero-features" || name === "zero-empty-create" || name === "auto-add-off-progress" ? [] : ["queue-button"]
+    if (name === "upgrade-note")
+      h.deps.startup.readSnapshot = startupHost(
+        {
+          read: () => h.state().local,
+          remove(keys) {
+            h.foreign(raw => {
+              keys.forEach(key => {
+                delete raw[key]
+              })
+            })
+          }
+        },
+        h.effects
+      ).readSnapshot
+    const owner = h.owner()
+    check((await owner.ready()) === "ok", "true-ticked agreement uses actual starting owner")
+    const review = await owner.readAgreement(ui)
+    check(review.kind === "review", "canonical true-ticked review")
+    const before = h.state(),
+      beforeSets = h.localSets.length
+    const selected: readonly PageFeatureId[] =
+      name === "denied-site-access"
+        ? ["music-keys", "shortcuts", "browser-menu"]
+        : name === "deleted-original"
+          ? ["shortcuts"]
+          : name === "zero-features" || name === "zero-empty-create" || name === "auto-add-off-progress"
+            ? []
+            : ["queue-button"]
     const access = { www: true, music: name !== "denied-site-access", browserMenu: name !== "denied-site-access" }
     const ordering: string[] = []
-    function requestAccess() { ordering.push("request-before-await"); return Promise.resolve(access) }
+    function requestAccess() {
+      ordering.push("request-before-await")
+      return Promise.resolve(access)
+    }
     const kind = name === "upgrade-note" ? "upgrade-note" : "first-run"
-    const pending = owner.agree(ui, { review: review.review, displayedVersion: review.version, choice: kind === "upgrade-note" ? { kind, selected, percentage: "half", syncOn: true, join: { kind: "prepare" } } : { kind, selected, syncOn: true, join: { kind: "prepare" } }, access: requestAccess() })
-    ordering.push("owner-invoked"); await h.drain()
+    const pending = owner.agree(ui, {
+      review: review.review,
+      displayedVersion: review.version,
+      choice: kind === "upgrade-note" ? { kind, selected, percentage: "half", syncOn: true, join: { kind: "prepare" } } : { kind, selected, syncOn: true, join: { kind: "prepare" } },
+      access: requestAccess()
+    })
+    ordering.push("owner-invoked")
+    await h.drain()
     if (name === "empty-create" || name === "zero-empty-create") await h.tick(10000)
     const first = await pending
     let result = first
     if (first.kind === "choice-required") {
       check(h.localSets.length === beforeSets && stableAgreement(h.state()) === stableAgreement(before), "choice-required saves no consent or draft switch")
-      if (name === "stale-lookup") { h.remote(raw => { (raw["s:settings"] as JsonObject).gen = "changed-after-choice" }); await h.event() }
+      if (name === "stale-lookup") {
+        h.remote(raw => {
+          ;(raw["s:settings"] as JsonObject).gen = "changed-after-choice"
+        })
+        await h.event()
+      }
       h.time(300)
       if (name === "accepted-restart") h.fault("materialize", "rejected-unchanged")
       if (name === "disposed-materialize") h.fault("materialize", "disposed-after")
       const side = name === "use-this-browser" ? "use-this-browser" : "use-synced"
-      result = await owner.agree(ui, { review: review.review, displayedVersion: review.version, choice: kind === "upgrade-note" ? { kind, selected, percentage: "half", syncOn: true, join: { kind: "answer", review: first.review, choice: side } } : { kind, selected, syncOn: true, join: { kind: "answer", review: first.review, choice: side } }, access: requestAccess() })
+      result = await owner.agree(ui, {
+        review: review.review,
+        displayedVersion: review.version,
+        choice:
+          kind === "upgrade-note"
+            ? { kind, selected, percentage: "half", syncOn: true, join: { kind: "answer", review: first.review, choice: side } }
+            : { kind, selected, syncOn: true, join: { kind: "answer", review: first.review, choice: side } },
+        access: requestAccess()
+      })
     }
     let serialized: string | undefined, restart: unknown, resumed: unknown
     if (name === "full" || name === "newer" || name === "stale-lookup") {
-      check(result.kind !== "joined" && h.localSets.length === beforeSets && stableAgreement(h.state().local) === stableAgreement(before.local), "Q12 and stale join save neither consent nor switch " + name + " " + stableAgreement(result))
+      check(
+        result.kind !== "joined" && h.localSets.length === beforeSets && stableAgreement(h.state().local) === stableAgreement(before.local),
+        "Q12 and stale join save neither consent nor switch " + name + " " + stableAgreement(result)
+      )
       if (name !== "stale-lookup") check(result.kind === "refused" && result.reason === (name === "full" ? "sync-full" : "update-needed"), "true tick retains explicit admission refusal")
     } else if (name === "accepted-restart" || name === "disposed-materialize") {
       check(result.kind === (name === "accepted-restart" ? "failed" : "unconfirmed"), "interrupted true tick never becomes consent-only success")
-      serialized = JSON.stringify(h.state()); await owner.dispose()
-      const fresh = syncJoinHarness(JSON.parse(serialized), "changed-restart-candidates", api), restarted = fresh.owner()
-      restart = await restarted.ready().then(value => ({ value }), error => ({ pending: error.result }))
+      serialized = JSON.stringify(h.state())
+      await owner.dispose()
+      const fresh = syncJoinHarness(JSON.parse(serialized), "changed-restart-candidates", api),
+        restarted = fresh.owner()
+      restart = await restarted.ready().then(
+        value => ({ value }),
+        error => ({ pending: error.result })
+      )
       check(fresh.localSets.length === 0 && fresh.counters().gen === 0 && fresh.counters().nowCalls === 0, "ticked accepted restart does not replay Agree or allocate time")
       resumed = await restarted.resumeSyncJoin(ui)
       check((resumed as { kind?: string }).kind === "committed", "fresh owner explicitly resumes fixed true-ticked agreement")
       check(fresh.counters().gen === 0 && jsonAgreement(fresh.state().local.device).consent !== null, "fixed consent and presets survive changed candidates")
-      await restarted.dispose(); restart = { ready: restart, result: resumed, state: fresh.state(), effects: fresh.effects, counters: fresh.counters() }
+      await restarted.dispose()
+      restart = { ready: restart, result: resumed, state: fresh.state(), effects: fresh.effects, counters: fresh.counters() }
     } else {
       check(result.kind === "joined" && result.join.kind === "committed", "actual true-ticked combined Agree joins " + name + " " + stableAgreement(result))
-      const saved = h.state().local, device = jsonAgreement(saved.device)
+      const saved = h.state().local,
+        device = jsonAgreement(saved.device)
       check(device.syncOn === true && jsonAgreement(device.consent).at === (first.kind === "choice-required" ? 300 : 100), "applying click supplies exact consent time and true switch")
-      const materialization = h.localSets.slice(beforeSets).find(batch => Object.hasOwn(batch,"device"))
-      check(materialization && Object.hasOwn(materialization,"sync") && (name === "zero-empty-create" || Object.hasOwn(materialization,"doc:settings")), "ticked consent switch Settings and history share fixed local batch")
-      if (name === "no-op-overlay") check(!result.settingsChanged && h.counters().gen === 0 && jsonAgreement(saved["doc:settings"]).gen === "remote-settings", "matching reviewed switches preserve the selected raw envelope without restamping")
+      const materialization = h.localSets.slice(beforeSets).find(batch => Object.hasOwn(batch, "device"))
+      check(
+        materialization && Object.hasOwn(materialization, "sync") && (name === "zero-empty-create" || Object.hasOwn(materialization, "doc:settings")),
+        "ticked consent switch Settings and history share fixed local batch"
+      )
+      if (name === "no-op-overlay")
+        check(
+          !result.settingsChanged && h.counters().gen === 0 && jsonAgreement(saved["doc:settings"]).gen === "remote-settings",
+          "matching reviewed switches preserve the selected raw envelope without restamping"
+        )
       if (name === "deleted-original") {
         const settings = jsonAgreement(jsonAgreement(saved["doc:settings"]).data)
         check(stableAgreement(jsonAgreement(settings.shortcuts).list) === "[]", "true-ticked Agree never recreates a deleted original shortcut")
       }
-      if (name === "zero-empty-create") check(!Object.hasOwn(saved, "doc:settings") && !Object.hasOwn(jsonAgreement(saved.sync), "everEdited") && result.join.replication === "pending", "zero-feature empty join creates metadata debt without Settings or false provenance")
+      if (name === "zero-empty-create")
+        check(
+          !Object.hasOwn(saved, "doc:settings") && !Object.hasOwn(jsonAgreement(saved.sync), "everEdited") && result.join.replication === "pending",
+          "zero-feature empty join creates metadata debt without Settings or false provenance"
+        )
       if (name === "upgrade-note") check(jsonAgreement(device.upgradeNote).state === "done", "true-ticked original upgrade note finishes with combined join")
-      if (name === "auto-add-off-progress") check(stableAgreement(saved["progress:AAAAAAAAAAAAAAAA:0"]) === "{}" && stableAgreement(saved["progress:BBBBBBBBBBBBBBBB:15"]) === "{}", "auto-add off empties recognized progress across accounts")
-      if (name === "denied-site-access") check(result.applications.some(x => x.state.kind === "held") && jsonAgreement(saved.sync).everEdited === true, "denied access preserves explicit consent with held features and real edit provenance")
+      if (name === "auto-add-off-progress")
+        check(
+          stableAgreement(saved["progress:AAAAAAAAAAAAAAAA:0"]) === "{}" && stableAgreement(saved["progress:BBBBBBBBBBBBBBBB:15"]) === "{}",
+          "auto-add off empties recognized progress across accounts"
+        )
+      if (name === "denied-site-access")
+        check(
+          result.applications.some(x => x.state.kind === "held") && jsonAgreement(saved.sync).everEdited === true,
+          "denied access preserves explicit consent with held features and real edit provenance"
+        )
       if (name === "zero-features") check(device.syncOn && result.join.replication === "pending", "zero selected features still joins requested sync")
-      await owner.startSync(); await h.tick(10000)
+      await owner.startSync()
+      await h.tick(10000)
       check((await owner.readSyncJoin(ui)).kind === "joined", "ticked transaction reaches real native confirmation through existing scheduler")
       serialized = JSON.stringify(h.state())
     }
     await owner.dispose()
-    outcomes.push({ name, before, review, selected, access, ordering, first, result, serialized, restart, resumed, saved: h.state(), localSets: h.localSets, nativeSets: h.nativeSets, removals: h.removals, effects: h.effects, counters: h.counters() })
+    outcomes.push({
+      name,
+      before,
+      review,
+      selected,
+      access,
+      ordering,
+      first,
+      result,
+      serialized,
+      restart,
+      resumed,
+      saved: h.state(),
+      localSets: h.localSets,
+      nativeSets: h.nativeSets,
+      removals: h.removals,
+      effects: h.effects,
+      counters: h.counters()
+    })
   }
   return { productionConnected: false, native: "waived-unproven", assertions, outcomes, sameHistory: options.sameHistory === false ? undefined : await runSameHistoryAgreements(api) }
 }
-function jsonAgreement(raw: unknown): JsonObject { if (!isAgreementObject(raw)) throw Error("Invalid joined agreement JSON"); return raw }
+function jsonAgreement(raw: unknown): JsonObject {
+  if (!isAgreementObject(raw)) throw Error("Invalid joined agreement JSON")
+  return raw
+}
 
 export async function runSameHistoryAgreements(api = { create: createStartingLocalFilterWriter, preinitialized: createLocalFilterWriter }, selectedCase?: string) {
-  const outcomes: unknown[] = [], assertions: string[] = []
-  function check(value: unknown, label: string): asserts value { assertions.push(label); if (!value) throw Error(label) }
+  const outcomes: unknown[] = [],
+    assertions: string[] = []
+  function check(value: unknown, label: string): asserts value {
+    assertions.push(label)
+    if (!value) throw Error(label)
+  }
   const ui = { kind: "ui", windowId: 1, incognito: false } as const
   for (const name of sameHistoryAgreementNames) {
     if (selectedCase && selectedCase !== name) continue
-    const localSettings: JsonObject = { v: 1, gen: "local-newest-settings", at: 20, by: "stored-L", data: { theme: "light", queueButton: { on: true }, autoAdd: { on: name === "automatic-edit-progress" }, shortcuts: { on: false, preset: true, list: [] } }, ...JSON.parse('{"__proto__":{"preserve":true},"toJSON":"inert"}') }
-    const initial: JsonObject = { schema: 1, device: { id: "stored-L", consent: null, syncOn: false }, sync: { joined: "H", pushed: {}, status: "off", editedSinceOff: false, everEdited: true, extension: { preserve: true } }, "doc:settings": localSettings,
-      "progress:AAAAAAAAAAAAAAAA:0": { remembered: true }, "progress:BBBBBBBBBBBBBBBB:15": { remembered: true } }
-    const remote: JsonObject = { "s:meta": { v: 1, id: "H", created: 0 }, "s:settings": { v: 1, gen: "remote-older-settings", at: 10, by: "R", data: { theme: "dark", queueButton: { on: false }, autoAdd: { on: true } } } }
+    const localSettings: JsonObject = {
+      v: 1,
+      gen: "local-newest-settings",
+      at: 20,
+      by: "stored-L",
+      data: { theme: "light", queueButton: { on: true }, autoAdd: { on: name === "automatic-edit-progress" }, shortcuts: { on: false, preset: true, list: [] } },
+      ...JSON.parse('{"__proto__":{"preserve":true},"toJSON":"inert"}')
+    }
+    const initial: JsonObject = {
+      schema: 1,
+      device: { id: "stored-L", consent: null, syncOn: false },
+      sync: { joined: "H", pushed: {}, status: "off", editedSinceOff: false, everEdited: true, extension: { preserve: true } },
+      "doc:settings": localSettings,
+      "progress:AAAAAAAAAAAAAAAA:0": { remembered: true },
+      "progress:BBBBBBBBBBBBBBBB:15": { remembered: true }
+    }
+    const remote: JsonObject = {
+      "s:meta": { v: 1, id: "H", created: 0 },
+      "s:settings": { v: 1, gen: "remote-older-settings", at: 10, by: "R", data: { theme: "dark", queueButton: { on: false }, autoAdd: { on: true } } }
+    }
     if (name === "full") for (let i = 0; i < 481; i++) remote[`occupied-${i}`] = true
     if (name === "newer") remote["s:settings"] = { ...jsonAgreement(remote["s:settings"]), v: 2 }
     if (name === "reset") remote["s:meta"] = { ...jsonAgreement(remote["s:meta"]), reset: true }
-    jsonAgreement(initial.device).upgradeNote = { state: "pending", opened: true, seen: true, reopened: false, details: { from: "1.4.5", autoAdd: { kept: 0, dropped: 0 }, pct: { value: 50, wasUnset: true, authorised: false }, feedback: false, shortcut: { raw: "", key: null, playlist: false, note: "none" }, credentialsDeleted: false } }
+    jsonAgreement(initial.device).upgradeNote = {
+      state: "pending",
+      opened: true,
+      seen: true,
+      reopened: false,
+      details: {
+        from: "1.4.5",
+        autoAdd: { kept: 0, dropped: 0 },
+        pct: { value: 50, wasUnset: true, authorised: false },
+        feedback: false,
+        shortcut: { raw: "", key: null, playlist: false, note: "none" },
+        credentialsDeleted: false
+      }
+    }
     initial.unclaimed = { from: "1.4.5", autoAdd: [], shortcutPlaylist: null, filters: {}, at: 1 }
-    const h = syncJoinHarness({ local: initial, sync: remote }, "creation-must-not-replace-L", api), owner = h.owner()
-    check(await owner.ready() === "ok", "same-history combined Agree uses the real starting owner")
+    const h = syncJoinHarness({ local: initial, sync: remote }, "creation-must-not-replace-L", api),
+      owner = h.owner()
+    check((await owner.ready()) === "ok", "same-history combined Agree uses the real starting owner")
     const origin = name === "private" ? { ...ui, incognito: true } : ui
-    const shown = await owner.readAgreement(origin); check(shown.kind === "review", "same-history combined Agree has a real canonical review")
-    const before = h.state(), beforeSets = h.localSets.length
+    const shown = await owner.readAgreement(origin)
+    check(shown.kind === "review", "same-history combined Agree has a real canonical review")
+    const before = h.state(),
+      beforeSets = h.localSets.length
     if (name === "accepted-restart") h.fault("materialize", "rejected-unchanged")
     if (name === "disposed") h.fault("materialize", "disposed-after")
     let accessCalls = 0
     const access = { www: true, music: name !== "denied-access", browserMenu: true }
-    function requestAccess() { accessCalls++; return Promise.resolve(access) }
+    function requestAccess() {
+      accessCalls++
+      return Promise.resolve(access)
+    }
     const selected: readonly PageFeatureId[] = name === "denied-access" ? ["music-keys"] : ["queue-button"]
-    const result = await owner.agree(origin, { review: shown.review, displayedVersion: shown.version, choice: { kind: "upgrade-note", percentage: "keep", selected, syncOn: true, join: { kind: "prepare" } }, access: requestAccess() })
+    const result = await owner.agree(origin, {
+      review: shown.review,
+      displayedVersion: shown.version,
+      choice: { kind: "upgrade-note", percentage: "keep", selected, syncOn: true, join: { kind: "prepare" } },
+      access: requestAccess()
+    })
     check(result.kind !== "choice-required", "same-history automatic selection never asks a side question during Agree")
     let restart: unknown
     if (name === "full" || name === "newer" || name === "reset") {
       check(result.kind !== "joined" && h.localSets.length === beforeSets && stableAgreement(h.state()) === stableAgreement(before), "whole combined refusal saves no consent, switch or draft " + name)
     } else if (name === "accepted-restart" || name === "disposed") {
       check(result.kind === (name === "accepted-restart" ? "failed" : "unconfirmed"), "interrupted automatic Agree publishes no combined success")
-      const serialized = JSON.stringify(h.state()); await owner.dispose()
-      const fresh = syncJoinHarness(JSON.parse(serialized), "new-candidates-must-not-run", api), restarted = fresh.owner()
-      const ready = await restarted.ready().then(value => ({ value }), error => ({ pending: error.result }))
+      const serialized = JSON.stringify(h.state())
+      await owner.dispose()
+      const fresh = syncJoinHarness(JSON.parse(serialized), "new-candidates-must-not-run", api),
+        restarted = fresh.owner()
+      const ready = await restarted.ready().then(
+        value => ({ value }),
+        error => ({ pending: error.result })
+      )
       check(fresh.localSets.length === 0 && fresh.counters().nowCalls === 0 && fresh.counters().gen === 0, "accepted automatic Agree restart is read-only")
       const resumed = await restarted.resumeSyncJoin(ui)
-      check(resumed.kind === "committed" && fresh.counters().nowCalls === 0 && fresh.counters().gen === 0 && accessCalls === 1, "fixed automatic Agree resumes without another access request, consent time or preset")
-      await restarted.dispose(); restart = { serialized, ready, resumed, state: fresh.state(), effects: fresh.effects, counters: fresh.counters() }
+      check(
+        resumed.kind === "committed" && fresh.counters().nowCalls === 0 && fresh.counters().gen === 0 && accessCalls === 1,
+        "fixed automatic Agree resumes without another access request, consent time or preset"
+      )
+      await restarted.dispose()
+      restart = { serialized, ready, resumed, state: fresh.state(), effects: fresh.effects, counters: fresh.counters() }
     } else {
       check(result.kind === "joined" && result.join.kind === "committed", "automatic combined Agree actually completes " + name + " " + stableAgreement(result))
-      const saved = h.state().local, settings = jsonAgreement(saved["doc:settings"]), history = jsonAgreement(saved.sync)
-      check(jsonAgreement(jsonAgreement(saved.device).consent).at === 100 && jsonAgreement(saved.device).syncOn === true && history.everEdited === true, "automatic Agree persists the fixed click and preserves historical provenance")
+      const saved = h.state().local,
+        settings = jsonAgreement(saved["doc:settings"]),
+        history = jsonAgreement(saved.sync)
+      check(
+        jsonAgreement(jsonAgreement(saved.device).consent).at === 100 && jsonAgreement(saved.device).syncOn === true && history.everEdited === true,
+        "automatic Agree persists the fixed click and preserves historical provenance"
+      )
       check(jsonAgreement(settings.data).theme === "light", "Agree presentation and materialization both select the newer local Settings")
       check(stableAgreement(jsonAgreement(jsonAgreement(settings.data).shortcuts).list) === "[]", "automatic Agree preserves the deleted original shortcut row")
-      if (name === "automatic-noop" || name === "private") check(!result.settingsChanged && settings.gen === "local-newest-settings" && h.counters().gen === 0, "selected matching applications agree with materialization without restamping")
-      if (name === "automatic-edit-progress") check(result.settingsChanged && stableAgreement(saved["progress:AAAAAAAAAAAAAAAA:0"]) === "{}" && stableAgreement(saved["progress:BBBBBBBBBBBBBBBB:15"]) === "{}", "automatic Agree clears every recognized progress shard after its actual on-to-off edit")
-      if (name === "denied-access") check(result.applications.some(x => x.state.kind === "held"), "automatic Agree retains denied-access application reporting")
+      if (name === "automatic-noop" || name === "private")
+        check(!result.settingsChanged && settings.gen === "local-newest-settings" && h.counters().gen === 0, "selected matching applications agree with materialization without restamping")
+      if (name === "automatic-edit-progress")
+        check(
+          result.settingsChanged && stableAgreement(saved["progress:AAAAAAAAAAAAAAAA:0"]) === "{}" && stableAgreement(saved["progress:BBBBBBBBBBBBBBBB:15"]) === "{}",
+          "automatic Agree clears every recognized progress shard after its actual on-to-off edit"
+        )
+      if (name === "denied-access")
+        check(
+          result.applications.some(x => x.state.kind === "held"),
+          "automatic Agree retains denied-access application reporting"
+        )
     }
     await owner.dispose()
-    outcomes.push({ name, before, shown, access, accessCalls, result, restart, state: h.state(), localSets: h.localSets, nativeSets: h.nativeSets, mutations: h.mutationSnapshots, effects: h.effects, counters: h.counters() })
+    outcomes.push({
+      name,
+      before,
+      shown,
+      access,
+      accessCalls,
+      result,
+      restart,
+      state: h.state(),
+      localSets: h.localSets,
+      nativeSets: h.nativeSets,
+      mutations: h.mutationSnapshots,
+      effects: h.effects,
+      counters: h.counters()
+    })
   }
   return { outcomes, assertions }
 }
 
 export async function runClaimFixture(api = { create: createStartingLocalFilterWriter, preinitialized: createLocalFilterWriter }, includeAgreements = true) {
-  const acct = "synthetic_acct01", playlist = "PLowned"
+  const acct = "synthetic_acct01",
+    playlist = "PLowned"
   if (!isAccountKey(acct) || !isPlaylistId(playlist)) throw new Error("Invalid synthetic fixture identifiers")
-  const authority: ClaimAuthority = { acct, lease: "fixture-lease", browserSession: "fixture-session",
-    consentGeneration: "fixture-consent", signedIn: true, incognito: false }
+  const authority: ClaimAuthority = { acct, lease: "fixture-lease", browserSession: "fixture-session", consentGeneration: "fixture-consent", signedIn: true, incognito: false }
   const device = { ...defaultDevice("fixture-device"), consent: { v: 1, at: 1 }, extension: { keep: true } }
   const settings = defaultSettings()
   settings.shortcuts.list = [{ id: "orig01", key: null, label: "Renamed", watchLaterOnEveryAccount: true }]
   const envelope = (data: unknown) => ({ v: 1, gen: "old", at: 1, by: "fixture-device", data, extension: "retained" })
-  const carried: Unclaimed = { from: "1.5.0", autoAdd: [playlist], shortcutPlaylist: playlist,
-    originalShortcutId: "orig01", filters: { [playlist]: { mode: "allow", on: false, channels: [] } }, at: 1 }
+  const carried: Unclaimed = {
+    from: "1.5.0",
+    autoAdd: [playlist],
+    shortcutPlaylist: playlist,
+    originalShortcutId: "orig01",
+    filters: { [playlist]: { mode: "allow", on: false, channels: [] } },
+    at: 1
+  }
   const cases = ["choices", "existing", "filter-only", "skipped-empty", "joint"] as const
   const outcomes = []
   for (const name of cases) {
-    const source: Unclaimed = name === "filter-only" ? { ...carried, autoAdd: [], shortcutPlaylist: null }
-      : name === "skipped-empty" ? { ...carried, autoAdd: [], filters: {}, originalShortcutId: "gone01" } : carried
+    const source: Unclaimed =
+      name === "filter-only" ? { ...carried, autoAdd: [], shortcutPlaylist: null } : name === "skipped-empty" ? { ...carried, autoAdd: [], filters: {}, originalShortcutId: "gone01" } : carried
     let records: Record<string, unknown> = {
-      schema: 1, device, "doc:settings": envelope(settings), unclaimed: source,
+      schema: 1,
+      device,
+      "doc:settings": envelope(settings),
+      unclaimed: source,
       sync: { joined: "old-history", pushed: {}, status: "off", editedSinceOff: false, extension: "keep" }
     }
     if (name === "existing") {
@@ -446,59 +1037,112 @@ export async function runClaimFixture(api = { create: createStartingLocalFilterW
     }
     const batches: Readonly<Record<string, JsonValue>>[] = []
     const checked = new Set<string>()
-    let lookups = 0, generations = 0, reads = 0
-    let releaseLookup = () => {}, enteredLookup = () => {}
-    const held = new Promise<void>(resolve => { releaseLookup = resolve })
-    const entered = new Promise<void>(resolve => { enteredLookup = resolve })
+    let lookups = 0,
+      generations = 0,
+      reads = 0
+    let releaseLookup = () => {},
+      enteredLookup = () => {}
+    const held = new Promise<void>(resolve => {
+      releaseLookup = resolve
+    })
+    const entered = new Promise<void>(resolve => {
+      enteredLookup = resolve
+    })
     const deps = {
       local: {
-        async get() { reads++; const saved: Record<string, unknown> = JSON.parse(JSON.stringify(records)); return saved },
+        async get() {
+          reads++
+          const saved: Record<string, unknown> = JSON.parse(JSON.stringify(records))
+          return saved
+        },
         async set(items: Readonly<Record<string, JsonValue>>) {
           const saved: Record<string, JsonValue> = JSON.parse(JSON.stringify(items))
           batches.push(saved)
           records = { ...records, ...saved }
         }
       },
-      claim: { kind: "fixture" as const,
-        authority: { async read(): Promise<ClaimAuthorityState> { return { kind: "ready", authority } } },
-        session: { async takeLookup(active: ClaimAuthority) {
-          const key = `${active.acct}:${active.browserSession}`
-          if (checked.has(key)) return false
-          checked.add(key)
-          return true
-        } },
-        ownership: { async lookup(active: ClaimAuthority) {
-          lookups++
-          if (name === "joint") { enteredLookup(); await held }
-          return { kind: "fixture-owned" as const, authority: active,
-            lineage: "local-migration-only" as const, ownedPlaylistIds: new Set([playlist]) }
-        } }
+      claim: {
+        kind: "fixture" as const,
+        authority: {
+          async read(): Promise<ClaimAuthorityState> {
+            return { kind: "ready", authority }
+          }
+        },
+        session: {
+          async takeLookup(active: ClaimAuthority) {
+            const key = `${active.acct}:${active.browserSession}`
+            if (checked.has(key)) return false
+            checked.add(key)
+            return true
+          }
+        },
+        ownership: {
+          async lookup(active: ClaimAuthority) {
+            lookups++
+            if (name === "joint") {
+              enteredLookup()
+              await held
+            }
+            return { kind: "fixture-owned" as const, authority: active, lineage: "local-migration-only" as const, ownedPlaylistIds: new Set([playlist]) }
+          }
+        }
       },
-      sync: { async get() { throw Error("Unexpected sync read") }, async set() { throw Error("Unexpected sync write") }, subscribe() { throw Error("Unexpected subscription") } },
-      syncClock: { now: () => 0, wallNow: () => 1000000, after() { throw Error("Unexpected timer") } },
+      sync: {
+        async get() {
+          throw Error("Unexpected sync read")
+        },
+        async set() {
+          throw Error("Unexpected sync write")
+        },
+        subscribe() {
+          throw Error("Unexpected subscription")
+        }
+      },
+      syncClock: {
+        now: () => 0,
+        wallNow: () => 1000000,
+        after() {
+          throw Error("Unexpected timer")
+        }
+      },
       onSyncResult() {},
-      now: () => 100, generation: () => `fixture-${++generations}`
+      now: () => 100,
+      generation: () => `fixture-${++generations}`
     }
     const startupEffects: unknown[] = []
-    const startup = startupHost({ read: () => JSON.parse(JSON.stringify(records)), remove(keys) { for (const key of keys) delete records[key] } }, startupEffects)
+    const startup = startupHost(
+      {
+        read: () => JSON.parse(JSON.stringify(records)),
+        remove(keys) {
+          for (const key of keys) delete records[key]
+        }
+      },
+      startupEffects
+    )
     const writer = api.create({ ...deps, startup })
-    if (await writer.ready() !== "ok") throw Error("Canonical startup was not ready")
+    if ((await writer.ready()) !== "ok") throw Error("Canonical startup was not ready")
     const claiming = writer.claim()
     let joint
     if (name === "joint") {
       await entered
       const before = { reads, sets: batches.length }
-      const editing = writer.change({ kind: "ui", windowId: 1, incognito: false }, {
-        acct, playlist, desired: { mode: "allow", on: true }, clearListedChannels: "not-confirmed"
-      })
+      const editing = writer.change(
+        { kind: "ui", windowId: 1, incognito: false },
+        {
+          acct,
+          playlist,
+          desired: { mode: "allow", on: true },
+          clearListedChannels: "not-confirmed"
+        }
+      )
       for (let turn = 0; turn < 20; turn++) await Promise.resolve()
       if (reads !== before.reads || batches.length !== before.sets) throw Error("Filter entered held claim lane")
       releaseLookup()
       const claimed = await claiming
       const savedNotice = JSON.stringify(records.device)
       const edit = await editing
-      if (claimed.kind !== "committed" || edit.kind !== "result" || !("ok" in edit.result) ||
-        records.unclaimed !== null || JSON.stringify(records.device) !== savedNotice || batches.length !== 2) throw Error("Joint claim/edit did not preserve notice/null")
+      if (claimed.kind !== "committed" || edit.kind !== "result" || !("ok" in edit.result) || records.unclaimed !== null || JSON.stringify(records.device) !== savedNotice || batches.length !== 2)
+        throw Error("Joint claim/edit did not preserve notice/null")
       joint = { held: before, edit, filter: records[`doc:filter:${acct}:${playlist}`], preservedNoticeAndNull: true }
     }
     const result = await claiming
@@ -506,13 +1150,14 @@ export async function runClaimFixture(api = { create: createStartingLocalFilterW
       const sync = records.sync
       if (!sync || typeof sync !== "object" || !("editedSinceOff" in sync)) throw Error("Missing saved history")
       const changed = generations > 0
-      if (changed ? !("everEdited" in sync) || sync.everEdited !== true || sync.editedSinceOff !== true : "everEdited" in sync || sync.editedSinceOff !== false) throw Error("Claim provenance follows actual documents only")
+      if (changed ? !("everEdited" in sync) || sync.everEdited !== true || sync.editedSinceOff !== true : "everEdited" in sync || sync.editedSinceOff !== false)
+        throw Error("Claim provenance follows actual documents only")
     }
     await writer.dispose()
     const serialized = JSON.stringify(records)
     records = JSON.parse(serialized)
     const restarted = api.create({ ...deps, startup })
-    if (await restarted.ready() !== "ok") throw Error("Consumed restart was not ready")
+    if ((await restarted.ready()) !== "ok") throw Error("Consumed restart was not ready")
     const restart = await restarted.claim()
     await restarted.dispose()
     outcomes.push({ name, initialization: "separately-preinitialized-consented-fixture", startupEffects, result, restart, ...(joint ? { joint } : {}), saved: records, batches, lookups, generations })
@@ -522,24 +1167,82 @@ export async function runClaimFixture(api = { create: createStartingLocalFilterW
     let records: Record<string, unknown> = name === "fresh" ? {} : { playlists: ["PLabcdefghijklmnop"], watchLaterShortcut: "k" }
     const effects: unknown[] = []
     const batches: Readonly<Record<string, JsonValue>>[] = []
-    const startup = startupHost({ read: () => JSON.parse(JSON.stringify(records)), remove(keys) { for (const key of keys) delete records[key] } }, effects)
+    const startup = startupHost(
+      {
+        read: () => JSON.parse(JSON.stringify(records)),
+        remove(keys) {
+          for (const key of keys) delete records[key]
+        }
+      },
+      effects
+    )
     const deps = {
       startup,
-      local: { async get() { return JSON.parse(JSON.stringify(records)) }, async set(items: Readonly<Record<string, JsonValue>>) {
-        batches.push(JSON.parse(JSON.stringify(items))); records = { ...records, ...items }
-      } },
-      claim: { kind: "fixture" as const,
-        authority: { async read(): Promise<ClaimAuthorityState> { return { kind: "ready", authority } } },
-        session: { async takeLookup() { throw Error("Startup claim reached lookup budget") } },
-        ownership: { async lookup() { throw Error("Startup claim reached ownership") } }
+      local: {
+        async get() {
+          return JSON.parse(JSON.stringify(records))
+        },
+        async set(items: Readonly<Record<string, JsonValue>>) {
+          batches.push(JSON.parse(JSON.stringify(items)))
+          records = { ...records, ...items }
+        }
       },
-      sync: { async get() { throw Error("Unexpected startup sync read") }, async set() { throw Error("Unexpected startup sync write") }, subscribe() { throw Error("Unexpected startup subscription") } },
-      syncClock: { now: () => 0, wallNow: () => 1000000, after() { throw Error("Unexpected startup timer") } },
-      onSyncResult() {}, now: () => 100, generation() { throw Error("Unexpected startup generation") }
+      claim: {
+        kind: "fixture" as const,
+        authority: {
+          async read(): Promise<ClaimAuthorityState> {
+            return { kind: "ready", authority }
+          }
+        },
+        session: {
+          async takeLookup() {
+            throw Error("Startup claim reached lookup budget")
+          }
+        },
+        ownership: {
+          async lookup() {
+            throw Error("Startup claim reached ownership")
+          }
+        }
+      },
+      sync: {
+        async get() {
+          throw Error("Unexpected startup sync read")
+        },
+        async set() {
+          throw Error("Unexpected startup sync write")
+        },
+        subscribe() {
+          throw Error("Unexpected startup subscription")
+        }
+      },
+      syncClock: {
+        now: () => 0,
+        wallNow: () => 1000000,
+        after() {
+          throw Error("Unexpected startup timer")
+        }
+      },
+      onSyncResult() {},
+      now: () => 100,
+      generation() {
+        throw Error("Unexpected startup generation")
+      }
     }
     if (name === "cleanup-resume") {
-      const first = api.create({ ...deps, startup: { ...startup, async deleteDatabase() { throw Error("Synthetic interrupted cleanup") } } })
-      try { await first.ready(); throw Error("Interrupted cleanup released") } catch (error) {
+      const first = api.create({
+        ...deps,
+        startup: {
+          ...startup,
+          async deleteDatabase() {
+            throw Error("Synthetic interrupted cleanup")
+          }
+        }
+      })
+      try {
+        await first.ready()
+        throw Error("Interrupted cleanup released")
+      } catch (error) {
         if (!(error instanceof Error) || error.message !== "Synthetic interrupted cleanup") throw error
       }
       await first.dispose()
@@ -558,22 +1261,61 @@ export async function runClaimFixture(api = { create: createStartingLocalFilterW
     const consented = name === "canonical-settings-load-edit-follow"
     const savedClaim = JSON.parse(JSON.stringify(outcomes[0]?.saved))
     let records: Record<string, unknown> = consented ? savedClaim : { schema: 1 }
-    const preservedDevice = JSON.stringify(records.device), preservedUnclaimed = JSON.stringify(records.unclaimed)
-    const batches: Readonly<Record<string, JsonValue>>[] = [], effects: unknown[] = []
+    const preservedDevice = JSON.stringify(records.device),
+      preservedUnclaimed = JSON.stringify(records.unclaimed)
+    const batches: Readonly<Record<string, JsonValue>>[] = [],
+      effects: unknown[] = []
     let generations = 0
     const deps = {
-      startup: startupHost({ read: () => JSON.parse(JSON.stringify(records)), remove(keys) { for (const key of keys) delete records[key] } }, effects),
-      local: { async get(keys: readonly string[] | null) { return JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(records).filter(([key]) => keys === null || keys.includes(key))))) },
-        async set(items: Readonly<Record<string, JsonValue>>) { batches.push(JSON.parse(JSON.stringify(items))); records = { ...records, ...items } } },
+      startup: startupHost(
+        {
+          read: () => JSON.parse(JSON.stringify(records)),
+          remove(keys) {
+            for (const key of keys) delete records[key]
+          }
+        },
+        effects
+      ),
+      local: {
+        async get(keys: readonly string[] | null) {
+          return JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(records).filter(([key]) => keys === null || keys.includes(key)))))
+        },
+        async set(items: Readonly<Record<string, JsonValue>>) {
+          batches.push(JSON.parse(JSON.stringify(items)))
+          records = { ...records, ...items }
+        }
+      },
       claim: { kind: "unavailable" as const },
-      sync: { async get() { throw Error("Settings read/edit while off reached sync") }, async set() { throw Error("Settings read/edit while off pushed") }, subscribe() { throw Error("Settings follow created native subscription") } },
-      syncClock: { now: () => 0, wallNow: () => 1000000, after() { throw Error("Settings follow scheduled work") } },
-      onSyncResult() { throw Error("Settings follow attempted sync") }, now: () => 100, generation: () => `settings-${++generations}`
+      sync: {
+        async get() {
+          throw Error("Settings read/edit while off reached sync")
+        },
+        async set() {
+          throw Error("Settings read/edit while off pushed")
+        },
+        subscribe() {
+          throw Error("Settings follow created native subscription")
+        }
+      },
+      syncClock: {
+        now: () => 0,
+        wallNow: () => 1000000,
+        after() {
+          throw Error("Settings follow scheduled work")
+        }
+      },
+      onSyncResult() {
+        throw Error("Settings follow attempted sync")
+      },
+      now: () => 100,
+      generation: () => `settings-${++generations}`
     }
     const writer = api.create(deps)
-    if (await writer.ready() !== "ok") throw Error("Settings owner not ready")
+    if ((await writer.ready()) !== "ok") throw Error("Settings owner not ready")
     const followed: SettingsRead[] = []
-    const follower = followSettings(writer, view => { followed.push(view) })
+    const follower = followSettings(writer, view => {
+      followed.push(view)
+    })
     await follower.initial
     const theme = await writer.changeSharedSetting({ kind: "ui", windowId: 1, incognito: true }, { kind: "theme", value: "dark" })
     await follower.settled()
@@ -582,53 +1324,149 @@ export async function runClaimFixture(api = { create: createStartingLocalFilterW
     const final = await writer.read("settings")
     if (final.kind !== "value") throw Error("Settings view not readable")
     if (consented) {
-      if (theme.kind !== "committed" || percentage.kind !== "committed" || final.settings.theme !== "dark" || final.settings.autoAdd.pct !== 0 || followed.length !== 3 ||
-        followed[1]?.kind !== "value" || followed[1].settings.theme !== "dark" || followed[2]?.kind !== "value" || followed[2].settings.autoAdd.pct !== 0) throw Error("Settings follow did not observe both confirmed values")
-    } else if (theme.kind !== "unavailable" || theme.reason !== "startup" || percentage.kind !== "unavailable" || final.settings.theme !== "system" || final.settings.autoAdd.pct !== 50 || batches.length || generations) throw Error("Preconsent Settings read/write boundary failed")
-    follower.dispose(); await writer.dispose()
+      if (
+        theme.kind !== "committed" ||
+        percentage.kind !== "committed" ||
+        final.settings.theme !== "dark" ||
+        final.settings.autoAdd.pct !== 0 ||
+        followed.length !== 3 ||
+        followed[1]?.kind !== "value" ||
+        followed[1].settings.theme !== "dark" ||
+        followed[2]?.kind !== "value" ||
+        followed[2].settings.autoAdd.pct !== 0
+      )
+        throw Error("Settings follow did not observe both confirmed values")
+    } else if (
+      theme.kind !== "unavailable" ||
+      theme.reason !== "startup" ||
+      percentage.kind !== "unavailable" ||
+      final.settings.theme !== "system" ||
+      final.settings.autoAdd.pct !== 50 ||
+      batches.length ||
+      generations
+    )
+      throw Error("Preconsent Settings read/write boundary failed")
+    follower.dispose()
+    await writer.dispose()
     records = JSON.parse(JSON.stringify(records))
     const restarted = api.create(deps)
-    if (await restarted.ready() !== "ok") throw Error("Settings restart not ready")
+    if ((await restarted.ready()) !== "ok") throw Error("Settings restart not ready")
     const restart = await restarted.read("settings")
     await restarted.dispose()
-    if (JSON.stringify(restart) !== JSON.stringify(final) || JSON.stringify(records.device) !== preservedDevice || JSON.stringify(records.unclaimed) !== preservedUnclaimed) throw Error("Settings restart changed view or saved claim notice/null")
+    if (JSON.stringify(restart) !== JSON.stringify(final) || JSON.stringify(records.device) !== preservedDevice || JSON.stringify(records.unclaimed) !== preservedUnclaimed)
+      throw Error("Settings restart changed view or saved claim notice/null")
     settingsOutcomes.push({ name, origin: "trusted-synthetic-injection-no-production-sender-validation", followed, theme, percentage, final, restart, batches, effects, generations, saved: records })
   }
   const noticeOutcomes = []
   {
-    let records: Record<string, unknown> = { schema: 1, device: JSON.parse(JSON.stringify(device)),
-      "doc:settings": envelope(settings), unclaimed: JSON.parse(JSON.stringify(carried)),
-      sync: { joined: "old-history", pushed: {}, status: "off", editedSinceOff: false, extension: "keep" } }
+    let records: Record<string, unknown> = {
+      schema: 1,
+      device: JSON.parse(JSON.stringify(device)),
+      "doc:settings": envelope(settings),
+      unclaimed: JSON.parse(JSON.stringify(carried)),
+      sync: { joined: "old-history", pushed: {}, status: "off", editedSinceOff: false, extension: "keep" }
+    }
     const input = JSON.parse(JSON.stringify(records))
-    const batches: Readonly<Record<string, JsonValue>>[] = [], effects: unknown[] = [], events: unknown[] = []
+    const batches: Readonly<Record<string, JsonValue>>[] = [],
+      effects: unknown[] = [],
+      events: unknown[] = []
     const counters = { reads: 0, generations: 0, stamps: 0, monotonic: 0, wall: 0, lookups: 0, authority: 0, sync: 0, timers: 0 }
     const deps = {
-      startup: startupHost({ read: () => JSON.parse(JSON.stringify(records)), remove(keys) { for (const key of keys) delete records[key] } }, effects),
-      local: { async get() { counters.reads++; return JSON.parse(JSON.stringify(records)) }, async set(items: Readonly<Record<string, JsonValue>>) {
-        const saved = JSON.parse(JSON.stringify(items)); batches.push(saved); records = { ...records, ...saved }
-      } },
-      claim: { kind: "fixture" as const,
-        authority: { async read(): Promise<ClaimAuthorityState> { counters.authority++; return { kind: "ready", authority } } },
-        session: { async takeLookup() { return true } },
-        ownership: { async lookup(active: ClaimAuthority) { counters.lookups++; return { kind: "fixture-owned" as const, authority: active, lineage: "local-migration-only" as const, ownedPlaylistIds: new Set([playlist]) } } }
+      startup: startupHost(
+        {
+          read: () => JSON.parse(JSON.stringify(records)),
+          remove(keys) {
+            for (const key of keys) delete records[key]
+          }
+        },
+        effects
+      ),
+      local: {
+        async get() {
+          counters.reads++
+          return JSON.parse(JSON.stringify(records))
+        },
+        async set(items: Readonly<Record<string, JsonValue>>) {
+          const saved = JSON.parse(JSON.stringify(items))
+          batches.push(saved)
+          records = { ...records, ...saved }
+        }
       },
-      sync: { async get() { counters.sync++; throw Error("Notice accessed sync") }, async set() { counters.sync++; throw Error("Notice wrote sync") }, subscribe() { counters.sync++; throw Error("Notice subscribed") } },
-      syncClock: { now() { counters.monotonic++; return 0 }, wallNow() { counters.wall++; return 1000000 }, after() { counters.timers++; throw Error("Notice scheduled timer") } },
-      now() { counters.stamps++; return 100 }, generation() { return `notice-${++counters.generations}` }, onSyncResult() { throw Error("Notice emitted sync result") }
+      claim: {
+        kind: "fixture" as const,
+        authority: {
+          async read(): Promise<ClaimAuthorityState> {
+            counters.authority++
+            return { kind: "ready", authority }
+          }
+        },
+        session: {
+          async takeLookup() {
+            return true
+          }
+        },
+        ownership: {
+          async lookup(active: ClaimAuthority) {
+            counters.lookups++
+            return { kind: "fixture-owned" as const, authority: active, lineage: "local-migration-only" as const, ownedPlaylistIds: new Set([playlist]) }
+          }
+        }
+      },
+      sync: {
+        async get() {
+          counters.sync++
+          throw Error("Notice accessed sync")
+        },
+        async set() {
+          counters.sync++
+          throw Error("Notice wrote sync")
+        },
+        subscribe() {
+          counters.sync++
+          throw Error("Notice subscribed")
+        }
+      },
+      syncClock: {
+        now() {
+          counters.monotonic++
+          return 0
+        },
+        wallNow() {
+          counters.wall++
+          return 1000000
+        },
+        after() {
+          counters.timers++
+          throw Error("Notice scheduled timer")
+        }
+      },
+      now() {
+        counters.stamps++
+        return 100
+      },
+      generation() {
+        return `notice-${++counters.generations}`
+      },
+      onSyncResult() {
+        throw Error("Notice emitted sync result")
+      }
     }
     let writer = api.create(deps)
-    if (await writer.ready() !== "ok") throw Error("Notice startup not ready")
+    if ((await writer.ready()) !== "ok") throw Error("Notice startup not ready")
     const claim = await writer.claim()
     if (claim.kind !== "committed") throw Error("Notice claim did not commit")
-    const savedBeforeOK = JSON.parse(JSON.stringify(records)), claimBatches = batches.length
-    const first = await writer.readClaimNotice(), second = await writer.readClaimNotice()
+    const savedBeforeOK = JSON.parse(JSON.stringify(records)),
+      claimBatches = batches.length
+    const first = await writer.readClaimNotice(),
+      second = await writer.readClaimNotice()
     if (first.kind !== "pending" || JSON.stringify(first) !== JSON.stringify(second)) throw Error("Saved notice not pending")
     await writer.dispose()
     records = JSON.parse(JSON.stringify(records))
     writer = api.create(deps)
-    if (await writer.ready() !== "ok") throw Error("Notice pending restart not ready")
+    if ((await writer.ready()) !== "ok") throw Error("Notice pending restart not ready")
     const pendingAfterRestart = await writer.readClaimNotice()
-    if (JSON.stringify(pendingAfterRestart) !== JSON.stringify(first) || JSON.stringify(records) !== JSON.stringify(savedBeforeOK) || batches.length !== claimBatches) throw Error("Read/restart acknowledged notice")
+    if (JSON.stringify(pendingAfterRestart) !== JSON.stringify(first) || JSON.stringify(records) !== JSON.stringify(savedBeforeOK) || batches.length !== claimBatches)
+      throw Error("Read/restart acknowledged notice")
     const displayed = pendingAfterRestart
     if (displayed.kind !== "pending") throw Error("No notice for popup")
     const presentation = { kind: "synthetic-popup-presentation", visible: true, selected: "claim-notice", notice: displayed.notice }
@@ -636,23 +1474,65 @@ export async function runClaimFixture(api = { create: createStartingLocalFilterW
     writer.subscribe(event => events.push(event))
     const before = { ...counters }
     const acknowledgement = await writer.acknowledgeClaimNotice(action.origin, presentation.notice)
-    const reread = await writer.readClaimNotice(), duplicateOK = await writer.acknowledgeClaimNotice(action.origin, presentation.notice)
+    const reread = await writer.readClaimNotice(),
+      duplicateOK = await writer.acknowledgeClaimNotice(action.origin, presentation.notice)
     const after = { ...counters }
-    if (acknowledgement.kind !== "committed" || reread.kind !== "empty" || duplicateOK.kind !== "unchanged" || duplicateOK.reason !== "empty" || batches.length !== claimBatches + 1 || events.length ||
-      ["generations", "stamps", "monotonic", "wall", "authority", "lookups", "sync", "timers"].some(key => before[key as keyof typeof before] !== after[key as keyof typeof after])) throw Error("Notice OK effects mismatch")
+    if (
+      acknowledgement.kind !== "committed" ||
+      reread.kind !== "empty" ||
+      duplicateOK.kind !== "unchanged" ||
+      duplicateOK.reason !== "empty" ||
+      batches.length !== claimBatches + 1 ||
+      events.length ||
+      ["generations", "stamps", "monotonic", "wall", "authority", "lookups", "sync", "timers"].some(key => before[key as keyof typeof before] !== after[key as keyof typeof after])
+    )
+      throw Error("Notice OK effects mismatch")
     const noticeBatch = batches[claimBatches]
-    const expectedSaved = JSON.parse(JSON.stringify(savedBeforeOK)); expectedSaved.device.claimNotice = null
+    const expectedSaved = JSON.parse(JSON.stringify(savedBeforeOK))
+    expectedSaved.device.claimNotice = null
     if (JSON.stringify(records) !== JSON.stringify(expectedSaved) || JSON.stringify(noticeBatch) !== JSON.stringify({ device: expectedSaved.device })) throw Error("Notice changed other saved fields")
-    await writer.dispose(); records = JSON.parse(JSON.stringify(records))
+    await writer.dispose()
+    records = JSON.parse(JSON.stringify(records))
     const restarted = api.create(deps)
-    if (await restarted.ready() !== "ok") throw Error("Notice final restart not ready")
-    const restart = await restarted.readClaimNotice(), consumed = await restarted.claim()
+    if ((await restarted.ready()) !== "ok") throw Error("Notice final restart not ready")
+    const restart = await restarted.readClaimNotice(),
+      consumed = await restarted.claim()
     await restarted.dispose()
     if (restart.kind !== "empty" || consumed.kind !== "consumed" || JSON.stringify(records) !== JSON.stringify(expectedSaved)) throw Error("Notice removal did not survive restart")
-    noticeOutcomes.push({ name: "claim-notice", input, claim, first, second, pendingAfterRestart, savedBeforeOK, presentation, action, acknowledgement, reread, duplicateOK, restart, consumed, before, after, counters, saved: records, batches, effects, events })
+    noticeOutcomes.push({
+      name: "claim-notice",
+      input,
+      claim,
+      first,
+      second,
+      pendingAfterRestart,
+      savedBeforeOK,
+      presentation,
+      action,
+      acknowledgement,
+      reread,
+      duplicateOK,
+      restart,
+      consumed,
+      before,
+      after,
+      counters,
+      saved: records,
+      batches,
+      effects,
+      events
+    })
   }
-  return { fixture: "exclusive-synthetic-atomic-local-only", outcomes, startupOutcomes, settingsOutcomes, noticeOutcomes, agreementOutcomes: includeAgreements ? await runCanonicalAgreements(api) : undefined, joinAgreementOutcomes: includeAgreements ? await runJoinedAgreements(api) : undefined }
+  return {
+    fixture: "exclusive-synthetic-atomic-local-only",
+    outcomes,
+    startupOutcomes,
+    settingsOutcomes,
+    noticeOutcomes,
+    agreementOutcomes: includeAgreements ? await runCanonicalAgreements(api) : undefined,
+    joinAgreementOutcomes: includeAgreements ? await runJoinedAgreements(api) : undefined
+  }
 }
 
 export const fixtureRun = import.meta.main ? runClaimFixture() : Promise.resolve(undefined)
-if (import.meta.main) void fixtureRun.then(result => console.log(JSON.stringify(result, (_, value: unknown) => value instanceof Error ? { name: value.name, message: value.message } : value)))
+if (import.meta.main) void fixtureRun.then(result => console.log(JSON.stringify(result, (_, value: unknown) => (value instanceof Error ? { name: value.name, message: value.message } : value))))

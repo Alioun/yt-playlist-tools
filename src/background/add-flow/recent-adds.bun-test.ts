@@ -10,10 +10,13 @@ function brand<T>(check: (value: unknown) => value is T, value: string): T {
   return value
 }
 const acct = brand(isAccountKey, "AAAAAAAAAAAAAAAA")
-const music = brand(isPlaylistId, "PLmusic"), learning = brand(isPlaylistId, "PLlearning")
-const video = brand(isVideoId, "vid00000001"), second = brand(isVideoId, "vid00000002")
+const music = brand(isPlaylistId, "PLmusic"),
+  learning = brand(isPlaylistId, "PLlearning")
+const video = brand(isVideoId, "vid00000001"),
+  second = brand(isVideoId, "vid00000002")
 const wall = 1_700_000_000_000
-const normalTab = tabOrigin(1), privateTab = tabOrigin(2, true)
+const normalTab = tabOrigin(1),
+  privateTab = tabOrigin(2, true)
 
 function world(recentAdds = true) {
   const removal = createRemovalHarness({ ...removalFixture(), session: {} })
@@ -34,10 +37,27 @@ test("every add lists one entry with its video, playlists, feature and time, and
   await yt.flow.add({ via: "auto-add", site: "www", video: second, playlists: [music, learning], channel: null }, normalTab)
   await settle()
   expect(listed()).toEqual([
-    { kind: "single", acct, at: wall, source: { kind: "feature", feature: "auto-add" }, video: { id: second, title: "" },
-      playlists: [{ id: music, title: "Music videos" }, { id: learning, title: "Learning" }], undo: expect.any(String) },
-    { kind: "single", acct, at: wall, source: { kind: "feature", feature: "shortcuts" }, video: { id: video, title: "A video" },
-      playlists: [{ id: music, title: "Music videos" }], undo: expect.any(String) }
+    {
+      kind: "single",
+      acct,
+      at: wall,
+      source: { kind: "feature", feature: "auto-add" },
+      video: { id: second, title: "" },
+      playlists: [
+        { id: music, title: "Music videos" },
+        { id: learning, title: "Learning" }
+      ],
+      undo: expect.any(String)
+    },
+    {
+      kind: "single",
+      acct,
+      at: wall,
+      source: { kind: "feature", feature: "shortcuts" },
+      video: { id: video, title: "A video" },
+      playlists: [{ id: music, title: "Music videos" }],
+      undo: expect.any(String)
+    }
   ])
   if (report.kind !== "report" || !report.undo) throw Error("Expected an add with Undo")
   expect(await yt.flow.undo(report.undo, normalTab)).toEqual({ kind: "undone" })

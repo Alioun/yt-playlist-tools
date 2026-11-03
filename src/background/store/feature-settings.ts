@@ -15,8 +15,11 @@ export type FeaturePlan =
   | { readonly kind: "planned"; readonly settings: Settings; readonly limitedMusic: boolean; readonly blocked: readonly PresetConflict[] }
 
 export function planFeatureSetting(input: {
-  readonly current: Snapshot<Settings>; readonly records: JsonObject; readonly change: FeatureSettingChange
-  readonly access: AgreementAccess | undefined; readonly allocateShortcut: () => string
+  readonly current: Snapshot<Settings>
+  readonly records: JsonObject
+  readonly change: FeatureSettingChange
+  readonly access: AgreementAccess | undefined
+  readonly allocateShortcut: () => string
 }): FeaturePlan {
   const { change, records, access } = input
   let settings = decodeSettings(input.current)
@@ -51,20 +54,26 @@ export function planFeatureSetting(input: {
       let id: string | undefined
       for (let attempt = 0; attempt < 32; attempt++) {
         const candidate = input.allocateShortcut()
-        if (isShortcutId(candidate) && !reserved.has(candidate)) { id = candidate; break }
+        if (isShortcutId(candidate) && !reserved.has(candidate)) {
+          id = candidate
+          break
+        }
       }
       if (!id || settings.shortcuts.list.length >= 20) return { kind: "refused", reason: "invalid" }
       const preset = applyPresets(settings, { feature: "shortcuts", shortcutId: id, reservedShortcutIds: reserved })
-      settings = decodeSettings(preset.settings); blocked.push(...preset.blocked)
+      settings = decodeSettings(preset.settings)
+      blocked.push(...preset.blocked)
       settings.shortcuts.music = true
     }
     if (change.value && change.feature === "music-keys" && !settings.musicKeys.preset) {
       const preset = applyPresets(settings, { feature: "music-keys" })
-      settings = decodeSettings(preset.settings); blocked.push(...preset.blocked)
+      settings = decodeSettings(preset.settings)
+      blocked.push(...preset.blocked)
     }
     if (change.value && change.feature === "music-actions" && !settings.musicActions.preset) settings.musicActions.preset = true
     if (change.value && change.feature === "shortcuts" && settings.shortcuts.music && !access?.music) {
-      settings.shortcuts.music = false; limitedMusic = true
+      settings.shortcuts.music = false
+      limitedMusic = true
     }
     if (change.value && change.feature === "any-tab-keys" && !access?.music) limitedMusic = true
   }

@@ -6,9 +6,18 @@ export const sections = ["youtube", "music", "everywhere", "accounts", "appearan
 export type Section = (typeof sections)[number]
 export type Route = { readonly section: Section; readonly feature?: FeatureId; readonly playlist?: PlaylistId }
 export const featureSection = {
-  "auto-add": "youtube", shortcuts: "youtube", "quick-save": "youtube", "queue-button": "youtube", "watch-button": "youtube",
-  "card-menu": "youtube", "browser-menu": "youtube", gather: "youtube", "music-actions": "music", "music-keys": "music",
-  "any-tab-keys": "everywhere", sync: "everywhere"
+  "auto-add": "youtube",
+  shortcuts: "youtube",
+  "quick-save": "youtube",
+  "queue-button": "youtube",
+  "watch-button": "youtube",
+  "card-menu": "youtube",
+  "browser-menu": "youtube",
+  gather: "youtube",
+  "music-actions": "music",
+  "music-keys": "music",
+  "any-tab-keys": "everywhere",
+  sync: "everywhere"
 } as const satisfies Record<FeatureId, Section>
 
 /** Settings' hash routes (UI-SET-04, UI-SET-05, UI-IA-09): a section, or a feature's card and one of its playlists. */

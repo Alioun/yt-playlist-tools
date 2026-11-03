@@ -21,8 +21,12 @@ export interface Gateway extends PageGatewayOperations {
  */
 export function composeGateway(reads: ReadGateway, jobs: Jobs): Gateway {
   return {
-    get disposed() { return reads.disposed },
-    get vocabulary() { return jobs.vocabulary },
+    get disposed() {
+      return reads.disposed
+    },
+    get vocabulary() {
+      return jobs.vocabulary
+    },
     account: reads.account,
     run(job, ctx) {
       if (reads.disposed || !isJob(job) || !supportsJob(reads.site, job.kind) || reads.serves(job, ctx)) return reads.run(job, ctx)
@@ -32,7 +36,11 @@ export function composeGateway(reads: ReadGateway, jobs: Jobs): Gateway {
     probe: () => jobs.probe(),
     onSignal: listener => reads.onSignal(listener),
     dispose() {
-      try { jobs.dispose() } finally { reads.dispose() }
+      try {
+        jobs.dispose()
+      } finally {
+        reads.dispose()
+      }
     }
   }
 }

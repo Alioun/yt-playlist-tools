@@ -36,23 +36,32 @@ export function createFirstRunReceiver(ports: FirstRunReceiverPorts) {
           try {
             const result = await ports.owner.readAutoAddChoice(origin, change)
             return { kind: "auto-add-read", outcome: active ? result : { kind: "refused", reason: "unavailable" } }
-          } catch { return { kind: "auto-add-read", outcome: { kind: "refused", reason: "rejected" } } }
+          } catch {
+            return { kind: "auto-add-read", outcome: { kind: "refused", reason: "rejected" } }
+          }
         }
         if (change.kind === "auto-add-choice") {
           if (!active) return { kind: "auto-add-choice", outcome: { kind: "refused", reason: "unavailable" } }
           try {
             const result = await ports.owner.changeAutoAddChoice(origin, change)
             return { kind: "auto-add-choice", outcome: active ? projectAutoAddChoice(change, result) : { kind: "refused", reason: "unavailable" } }
-          } catch { return { kind: "auto-add-choice", outcome: { kind: "refused", reason: "rejected" } } }
+          } catch {
+            return { kind: "auto-add-choice", outcome: { kind: "refused", reason: "rejected" } }
+          }
         }
         if (change.kind === "setup-destination") {
           if (!active) return { kind: "destination", outcome: { kind: "refused", reason: "unavailable" } }
           try {
             const result = await ports.owner.changeSetupDestination(origin, {
-              acct: change.acct, destination: change.destination, expected: change.expected, playlist: change.playlist
+              acct: change.acct,
+              destination: change.destination,
+              expected: change.expected,
+              playlist: change.playlist
             })
             return { kind: "destination", outcome: active ? projectDestination(change, result) : { kind: "refused", reason: "unavailable" } }
-          } catch { return { kind: "destination", outcome: { kind: "refused", reason: "rejected" } } }
+          } catch {
+            return { kind: "destination", outcome: { kind: "refused", reason: "rejected" } }
+          }
         }
         if (change.kind !== "first-run-agree") throw Error("Shared edits require the canonical UI router")
         const refusal = (reason: "invalid" | "unavailable" | "update-needed" | "rejected"): ChangeAnswer => ({ kind: "agreement", outcome: { kind: "not-agreed", attempt: change.attempt, reason } })
@@ -68,13 +77,14 @@ export function createFirstRunReceiver(ports: FirstRunReceiverPorts) {
           const result = await ports.owner.agree(origin, {
             review: read.review,
             displayedVersion: change.displayedVersion,
-            choice: change.syncOn ? { kind: "first-run", selected: change.selected, syncOn: true, join: { kind: "prepare" } }
-              : { kind: "first-run", selected: change.selected, syncOn: false },
+            choice: change.syncOn ? { kind: "first-run", selected: change.selected, syncOn: true, join: { kind: "prepare" } } : { kind: "first-run", selected: change.selected, syncOn: false },
             access: Promise.resolve(access)
           })
           if (result.kind === "joined") void ports.startSync?.().catch(() => {})
           return active ? { kind: "agreement", outcome: projectAgreement(change, result, access) } : refusal("unavailable")
-        } catch { return refusal("rejected") }
+        } catch {
+          return refusal("rejected")
+        }
       },
       async "ui.syncedChoices"() {
         if (!active) return { kind: "unavailable" }
@@ -84,14 +94,21 @@ export function createFirstRunReceiver(ports: FirstRunReceiverPorts) {
           const result = await lookup.result
           if (!active) return { kind: "unavailable" }
           switch (result.kind) {
-            case "found": return { kind: "found", features: firstRunFeatures.filter(feature => result.features[featureSettings[feature]]) }
-            case "not-found": return { kind: "not-found" }
-            case "update-needed": return { kind: "update-needed" }
-            case "failed": return { kind: "failed" }
+            case "found":
+              return { kind: "found", features: firstRunFeatures.filter(feature => result.features[featureSettings[feature]]) }
+            case "not-found":
+              return { kind: "not-found" }
+            case "update-needed":
+              return { kind: "update-needed" }
+            case "failed":
+              return { kind: "failed" }
             case "cancelled":
-            case "unavailable": return { kind: "unavailable" }
+            case "unavailable":
+              return { kind: "unavailable" }
           }
-        } finally { lookups.delete(lookup) }
+        } finally {
+          lookups.delete(lookup)
+        }
       }
     }
   }

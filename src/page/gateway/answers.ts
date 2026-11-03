@@ -2,16 +2,17 @@ import type { Job, JobFailure, MembershipRow, PlaylistRow } from "../../shared/c
 import { isPlaylistId } from "../../shared/model/validation"
 import type { HttpAnswer, RequestRoute, RequestSpec } from "./port"
 import { channelBrowse, channelResolve, channelUrl, continuationFor, isWrite } from "./requests"
-import {
-  parseChannelDetails, parseLabel, parseMembership, parsePlaylists, parseRequestedChannel, parseResolved, parseWrite
-} from "../parsers/playlists"
+import { parseChannelDetails, parseLabel, parseMembership, parsePlaylists, parseRequestedChannel, parseResolved, parseWrite } from "../parsers/playlists"
 
 export type AnswerStep = { kind: "answer"; answer: HttpAnswer; route: RequestRoute } | { kind: "failure"; failure: JobFailure }
 export type ParsedJob = { kind: "parsed"; data: unknown; route: RequestRoute } | { kind: "failure"; failure: JobFailure }
 type Send = (spec: RequestSpec) => Promise<AnswerStep>
 
 export async function requestAnswer(options: {
-  job: Job; first: RequestSpec; send: Send; privacy: Map<string, MembershipRow["privacy"]>;
+  job: Job
+  first: RequestSpec
+  send: Send
+  privacy: Map<string, MembershipRow["privacy"]>
   unrecognised(route: RequestRoute, body: unknown): void
 }): Promise<ParsedJob> {
   const { job, send } = options
@@ -22,7 +23,10 @@ export async function requestAnswer(options: {
     return { kind: "failure", failure: { ok: false, reason: isWrite(job) ? "unconfirmed" : "unavailable" } }
   }
   if (job.kind === "membership" || job.kind === "playlists") {
-    const memberships: MembershipRow[] = [], playlists: PlaylistRow[] = [], ids = new Set<string>(), tokens = new Set<string>()
+    const memberships: MembershipRow[] = [],
+      playlists: PlaylistRow[] = [],
+      ids = new Set<string>(),
+      tokens = new Set<string>()
     for (let page = 0; page < 20; page++) {
       const parsed = job.kind === "membership" ? parseMembership(step.answer.body) : parsePlaylists(step.answer.body)
       if (!parsed) return bad()
@@ -34,8 +38,7 @@ export async function requestAnswer(options: {
         ids.add(row.id)
         if (job.kind === "membership") {
           if (!("contains" in row) || typeof row.contains !== "boolean") return bad()
-          memberships.push({ id: row.id, title: row.title, ...(row.privacy ? { privacy: row.privacy } : {}),
-            ...(row.count !== undefined ? { count: row.count } : {}), contains: row.contains })
+          memberships.push({ id: row.id, title: row.title, ...(row.privacy ? { privacy: row.privacy } : {}), ...(row.count !== undefined ? { count: row.count } : {}), contains: row.contains })
           if (row.privacy) options.privacy.set(row.id, row.privacy)
         } else {
           const cached = options.privacy.get(row.id)
@@ -72,8 +75,7 @@ export async function requestAnswer(options: {
     }
     return bad()
   }
-  const data = job.kind === "accountLabel" ? parseLabel(step.answer.body) : job.kind === "channelOf" ?
-    parseRequestedChannel(step.answer.body, job.videoId) : parseWrite(job, step.answer.body)
+  const data = job.kind === "accountLabel" ? parseLabel(step.answer.body) : job.kind === "channelOf" ? parseRequestedChannel(step.answer.body, job.videoId) : parseWrite(job, step.answer.body)
   return data === undefined ? bad() : { kind: "parsed", data, route: step.route }
 }
 

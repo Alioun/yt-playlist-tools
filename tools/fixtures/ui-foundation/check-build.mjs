@@ -19,12 +19,15 @@ for (const target of ["chrome-mv3", "firefox-mv3"]) {
   else assert.equal(manifest.browser_specific_settings.gecko.strict_min_version, "140.0")
   const files = await readdir(fixture, { recursive: true })
   assert(files.includes("onboarding.html"), "missing onboarding.html")
-  assert(files.some((file) => file.endsWith(".svg")), "missing the packaged mark")
-  const code = (await Promise.all(files.filter((file) => file.endsWith(".js")).map((file) => readFile(new URL(file, fixture), "utf8")))).join("\n")
+  assert(
+    files.some(file => file.endsWith(".svg")),
+    "missing the packaged mark"
+  )
+  const code = (await Promise.all(files.filter(file => file.endsWith(".js")).map(file => readFile(new URL(file, fixture), "utf8")))).join("\n")
   assert(code.includes(marker), "missing the compiled first-run page")
   assert(code.includes("https://alioun.github.io/yt-playlist-tools/privacy/"), "missing the policy link")
   assert(!/fonts\.googleapis|fonts\.gstatic|@import\s+url\(\s*["']?https?:/.test(code), "remote font or stylesheet in code")
-  const css = (await Promise.all(files.filter((file) => file.endsWith(".css")).map((file) => readFile(new URL(file, fixture), "utf8")))).join("\n")
+  const css = (await Promise.all(files.filter(file => file.endsWith(".css")).map(file => readFile(new URL(file, fixture), "utf8")))).join("\n")
   for (const token of ["--brand-wash", "--primary", "prefers-reduced-motion", ".dark"]) assert(css.includes(token), `missing ${token} in the stylesheet`)
   const production = new URL(`${target}/`, productionRoot)
   for (const file of await readdir(production, { recursive: true })) {

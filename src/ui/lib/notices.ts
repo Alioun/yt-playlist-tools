@@ -29,8 +29,19 @@ export type Banner =
   | { readonly kind: "reset"; readonly id: string }
 export type BannerTone = "attention" | "info" | "done"
 export const bannerTone = {
-  "newer-version": "attention", upgrade: "attention", consent: "attention", "consent-version": "attention", access: "attention",
-  "signed-out": "info", private: "info", "no-tab": "info", sync: "attention", marks: "attention", unclaimed: "attention", claimed: "done", reset: "info"
+  "newer-version": "attention",
+  upgrade: "attention",
+  consent: "attention",
+  "consent-version": "attention",
+  access: "attention",
+  "signed-out": "info",
+  private: "info",
+  "no-tab": "info",
+  sync: "attention",
+  marks: "attention",
+  unclaimed: "attention",
+  claimed: "done",
+  reset: "info"
 } as const satisfies Record<Banner["kind"], BannerTone>
 
 export type NoticeFacts = {
@@ -82,7 +93,7 @@ export function banners(facts: NoticeFacts): Banner[] {
   if (facts.tab?.kind === "site" && !facts.tab.signedIn && facts.sites.includes(facts.tab.site)) result.push({ kind: "signed-out" })
   if (facts.private && acct) result.push({ kind: "private", setup: setup ? "in-use" : "none", acct })
   // The account in view is YouTube's. YouTube Music's tab row belongs to Playing now (UI-POP-17).
-  const tabless = facts.account?.kind === "none" || facts.account?.kind === "account" && facts.account.source === "last-account"
+  const tabless = facts.account?.kind === "none" || (facts.account?.kind === "account" && facts.account.source === "last-account")
   if (tabless && facts.sites.includes("www")) result.push({ kind: "no-tab", site: "www", at: setup?.cache?.listAt ?? null })
   const status = view.sync?.status
   if (device.syncOn && (status === "waiting" || status === "full" || status === "update-needed")) result.push({ kind: "sync", status })

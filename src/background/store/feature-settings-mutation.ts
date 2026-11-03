@@ -10,8 +10,12 @@ import { prepareDocumentBody } from "./write-preparation"
 import type { LocalSettingsWriteResult } from "./shared-setting-execution"
 
 type Authority =
-  | { readonly kind: "ready"; readonly device: Device; readonly rawDevice: JsonObject; readonly history:
-    { readonly raw: JsonObject; readonly editedSinceOff: boolean; readonly joined: string | null } | undefined }
+  | {
+      readonly kind: "ready"
+      readonly device: Device
+      readonly rawDevice: JsonObject
+      readonly history: { readonly raw: JsonObject; readonly editedSinceOff: boolean; readonly joined: string | null } | undefined
+    }
   | { readonly kind: "unavailable"; readonly reason: "startup" | "newer-layout" | "sync-writer-required" | "account-context" | "stale" }
 
 function jsonObject(value: unknown): value is JsonObject {
@@ -28,11 +32,11 @@ export type SettingsMutationDependencies = {
   readonly generation: () => string
 }
 
-export async function executeSettingsMutation(deps: SettingsMutationDependencies, editSettings: (
-  settings: ReturnType<typeof decodeSettings>, records: JsonObject
-) => SharedSettingResult, commit?: (
-  baseline: JsonObject, items: JsonObject
-) => Promise<LocalSettingsWriteResult>): Promise<LocalSettingsWriteResult> {
+export async function executeSettingsMutation(
+  deps: SettingsMutationDependencies,
+  editSettings: (settings: ReturnType<typeof decodeSettings>, records: JsonObject) => SharedSettingResult,
+  commit?: (baseline: JsonObject, items: JsonObject) => Promise<LocalSettingsWriteResult>
+): Promise<LocalSettingsWriteResult> {
   const invalid = { kind: "result", result: { refused: "invalid" } } as const
   const unavailable = { kind: "unavailable", reason: "sync-writer-required" } as const
   try {
@@ -67,8 +71,7 @@ export async function executeSettingsMutation(deps: SettingsMutationDependencies
     }
     const snapshot = copyObject(records)
     const raw = baseline["doc:settings"]
-    const envelope = { ...(jsonObject(raw) ? raw : {}), v: DOCUMENT_VERSION,
-      gen: deps.generation(), at: deps.now(), by: ready.device.id, data: prepared.data }
+    const envelope = { ...(jsonObject(raw) ? raw : {}), v: DOCUMENT_VERSION, gen: deps.generation(), at: deps.now(), by: ready.device.id, data: prepared.data }
     if ("deleted" in envelope) delete envelope.deleted
     if (!jsonObject(envelope) || decodeDocument(envelope, decodeSettings).kind !== "value") return invalid
     const items: JsonObject = { "doc:settings": envelope }
@@ -91,14 +94,22 @@ export async function executeSettingsMutation(deps: SettingsMutationDependencies
     if (!jsonObject(before) || !sameSyncJson(readSettingsSnapshot(before), baseline)) return { kind: "unavailable", reason: "stale" }
     if (deps.disposed()) return { kind: "unavailable", reason: "disposed" }
     if (commit) return await commit(copyObject(snapshot), items)
-    try { await deps.local.set(items) } catch (error) { return { kind: "failed", stage: "set", error } }
+    try {
+      await deps.local.set(items)
+    } catch (error) {
+      return { kind: "failed", stage: "set", error }
+    }
     try {
       const confirmed = await deps.local.get(["schema", "device", "sync", "doc:settings"])
       if (deps.disposed()) return { kind: "unconfirmed", cause: { kind: "authority" } }
       if (!jsonObject(confirmed) || !sameSyncJson(readSettingsSnapshot(confirmed), { ...baseline, ...items })) return { kind: "unconfirmed", cause: { kind: "readback" } }
       return { kind: "committed" }
-    } catch (error) { return { kind: "unconfirmed", cause: { kind: "read-failed", error } } }
-  } catch (error) { return { kind: "failed", stage: "before-set", error } }
+    } catch (error) {
+      return { kind: "unconfirmed", cause: { kind: "read-failed", error } }
+    }
+  } catch (error) {
+    return { kind: "failed", stage: "before-set", error }
+  }
 }
 
 function copy(value: JsonValue): JsonValue {

@@ -1,8 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import {
-  isBuildId, isRouteId, isWatchId, isPageRequestId, isPageWatchId,
-  isProbeReport, isProbeReportFor, isBreakageSignal, isShapeOutline, makeShapeOutline
-} from "./index"
+import { isBuildId, isRouteId, isWatchId, isPageRequestId, isPageWatchId, isProbeReport, isProbeReportFor, isBreakageSignal, isShapeOutline, makeShapeOutline } from "./index"
 import { isPageSignalEvent } from "./page"
 import type { BreakageKind, BreakageSignal, DiagnosticVocabulary, JsonValue, ShapeOutline } from "./index"
 
@@ -15,13 +12,33 @@ const watch = checked(isWatchId, "synthetic-watch")
 const vocabulary = { routes: [route], watchIds: [watch], schemaKeys: ["data", "items", "value"] } satisfies DiagnosticVocabulary
 const report = { site: "www", entries: [{ id: watch, present: false }] }
 const signal = {
-  site: "www", feature: null, job: null, route: null, kind: "timeout", watchId: null, shape: null,
-  clientVersion: null, pageType: "other", count: 1, firstSeen: 0, lastSeen: 0
+  site: "www",
+  feature: null,
+  job: null,
+  route: null,
+  kind: "timeout",
+  watchId: null,
+  shape: null,
+  clientVersion: null,
+  pageType: "other",
+  count: 1,
+  firstSeen: 0,
+  lastSeen: 0
 } satisfies BreakageSignal
 const kinds = {
-  missing: true, threw: true, timeout: true, rejected: true, unrecognised: true,
-  "no-effect": true, "anchor-missing": true, "item-unrecognised": true, cosmetic: true,
-  "cannot-measure": true, "fell-back": true, "quiet-route-noisy": true, "resolver-ambiguous": true
+  missing: true,
+  threw: true,
+  timeout: true,
+  rejected: true,
+  unrecognised: true,
+  "no-effect": true,
+  "anchor-missing": true,
+  "item-unrecognised": true,
+  cosmetic: true,
+  "cannot-measure": true,
+  "fell-back": true,
+  "quiet-route-noisy": true,
+  "resolver-ambiguous": true
 } satisfies Record<BreakageKind, true>
 
 test("three page ID roles have nonempty representation guards", () => {
@@ -82,7 +99,16 @@ describe("breakage facts", () => {
       delete value[key]
       expect(isBreakageSignal(value, vocabulary)).toBe(false)
     }
-    expect(isBreakageSignal(new Proxy(signal, { get() { throw new Error("Proxy property read") } }), vocabulary)).toBe(false)
+    expect(
+      isBreakageSignal(
+        new Proxy(signal, {
+          get() {
+            throw new Error("Proxy property read")
+          }
+        }),
+        vocabulary
+      )
+    ).toBe(false)
   })
 })
 
@@ -117,12 +143,11 @@ describe("shape producer", () => {
     const first: JsonValue = { data: [{ value: 1 }, { items: [null, "private", 3] }, { value: true }] }
     const second: JsonValue = { data: [{ value: false }, { items: [9, "other", null, 9] }, { value: 999 }] }
     expect(makeShapeOutline(first, vocabulary.schemaKeys)).toEqual(makeShapeOutline(second, vocabulary.schemaKeys))
-    expect(makeShapeOutline({ alpha: { value: 1 }, beta: { items: [] } }, vocabulary.schemaKeys)).toEqual(
-      makeShapeOutline({ gamma: { items: [] }, delta: { value: 900 } }, vocabulary.schemaKeys)
-    )
-    expect(makeShapeOutline(["x", null, 1, false], [])).toEqual({ kind: "array", items: [{ kind: "union", variants: [
-      { kind: "boolean" }, { kind: "null" }, { kind: "number" }, { kind: "string" }
-    ] }] })
+    expect(makeShapeOutline({ alpha: { value: 1 }, beta: { items: [] } }, vocabulary.schemaKeys)).toEqual(makeShapeOutline({ gamma: { items: [] }, delta: { value: 900 } }, vocabulary.schemaKeys))
+    expect(makeShapeOutline(["x", null, 1, false], [])).toEqual({
+      kind: "array",
+      items: [{ kind: "union", variants: [{ kind: "boolean" }, { kind: "null" }, { kind: "number" }, { kind: "string" }] }]
+    })
     expect(makeShapeOutline([[[1]], [[true]]], [])).toEqual(makeShapeOutline([[[false, 3, 4]]], []))
   })
 
@@ -176,21 +201,51 @@ describe("shape producer", () => {
 
 test("independent malformed ASTs fail without trusting the producer", () => {
   for (const value of [
-    "string", null, { kind: "string", value: "private" }, { kind: "number", count: 1 },
-    { kind: "array", length: 3, items: [] }, { kind: "object", fields: [{ key: "unknown", value: { kind: "string" } }] },
-    { kind: "cut", type: "string" }, { kind: "union", variants: [] }, { kind: "union", variants: [{ kind: "null" }] },
+    "string",
+    null,
+    { kind: "string", value: "private" },
+    { kind: "number", count: 1 },
+    { kind: "array", length: 3, items: [] },
+    { kind: "object", fields: [{ key: "unknown", value: { kind: "string" } }] },
+    { kind: "cut", type: "string" },
+    { kind: "union", variants: [] },
+    { kind: "union", variants: [{ kind: "null" }] },
     { kind: "union", variants: [{ kind: "null" }, { kind: "null" }] },
     { kind: "union", variants: [{ kind: "string" }, { kind: "number" }] },
     { kind: "union", variants: [{ kind: "union", variants: [{ kind: "number" }, { kind: "string" }] }, { kind: "null" }] },
-    { kind: "array", items: [{ kind: "object", fields: [] }, { kind: "object", fields: [] }] },
+    {
+      kind: "array",
+      items: [
+        { kind: "object", fields: [] },
+        { kind: "object", fields: [] }
+      ]
+    },
     { kind: "array", items: [{ kind: "number" }, { kind: "string" }] },
-    { kind: "object", fields: [{ key: "value", value: { kind: "null" } }, { key: "data", value: { kind: "number" } }] },
-    { kind: "object", fields: [{ key: "data", value: { kind: "null" } }, { key: "data", value: { kind: "number" } }] }
-  ]) expect(isShapeOutline(value, vocabulary.schemaKeys)).toBe(false)
+    {
+      kind: "object",
+      fields: [
+        { key: "value", value: { kind: "null" } },
+        { key: "data", value: { kind: "number" } }
+      ]
+    },
+    {
+      kind: "object",
+      fields: [
+        { key: "data", value: { kind: "null" } },
+        { key: "data", value: { kind: "number" } }
+      ]
+    }
+  ])
+    expect(isShapeOutline(value, vocabulary.schemaKeys)).toBe(false)
   expect(isShapeOutline({ kind: "object", fields: [{ key: "<key>", value: { kind: "string" } }] }, [])).toBe(true)
   let getterCalls = 0
   const items = [{ kind: "string" }]
-  Object.defineProperty(items, "0", { get() { getterCalls++; return { kind: "string" } } })
+  Object.defineProperty(items, "0", {
+    get() {
+      getterCalls++
+      return { kind: "string" }
+    }
+  })
   expect(isShapeOutline({ kind: "array", items }, [])).toBe(false)
   expect(getterCalls).toBe(0)
   const parsed: unknown = JSON.parse('{"__proto__":{"private":"value"},"data":1}')
@@ -238,28 +293,40 @@ describe("outline serialization ignores inherited hooks", () => {
           let unchanged: ShapeOutline | undefined
           let failure: unknown
           try {
-            Object.defineProperty(prototype, "toJSON", accessor ? {
-              configurable: true,
-              get() {
-                getterReads++
-                if (throws) throw new Error("Inherited serialization getter ran")
-                return hook
-              }
-            } : { configurable: true, value: hook })
+            Object.defineProperty(
+              prototype,
+              "toJSON",
+              accessor
+                ? {
+                    configurable: true,
+                    get() {
+                      getterReads++
+                      if (throws) throw new Error("Inherited serialization getter ran")
+                      return hook
+                    }
+                  }
+                : { configurable: true, value: hook }
+            )
             for (const shape of fixtures) {
               const fact = { ...signal, kind: "unrecognised", shape }
               results.push([
                 isShapeOutline(shape, keys),
                 isBreakageSignal(fact, diagnosticVocabulary),
-                isPageSignalEvent({ v: 1, build, kind: "signal", signal: fact }, {
-                  build, site: "www", vocabulary: diagnosticVocabulary
-                })
+                isPageSignalEvent(
+                  { v: 1, build, kind: "signal", signal: fact },
+                  {
+                    build,
+                    site: "www",
+                    vocabulary: diagnosticVocabulary
+                  }
+                )
               ])
             }
             produced = makeShapeOutline(source, keys)
             unchanged = makeShapeOutline({ data: [null, { private_key: "OTHER", value: false }] }, ["data", "value"])
-          } catch (error) { failure = error }
-          finally {
+          } catch (error) {
+            failure = error
+          } finally {
             if (previous) Object.defineProperty(prototype, "toJSON", previous)
             else Reflect.deleteProperty(prototype, "toJSON")
           }

@@ -51,20 +51,44 @@ export function isReserved(key: Readonly<Key>, platform: Platform): boolean {
 }
 
 const youtubeKeys = [
-  ["KeyK", "Play/pause"], ["Space", "Play/pause"], ["KeyJ", "Seek backward"], ["KeyL", "Seek forward"],
-  ["KeyM", "Mute"], ["KeyF", "Fullscreen"], ["KeyC", "Captions"], ["KeyI", "Miniplayer"],
-  ["KeyT", "Theater mode"], ["ArrowLeft", "Seek backward"], ["ArrowRight", "Seek forward"],
-  ["ArrowUp", "Increase volume"], ["ArrowDown", "Decrease volume"]
+  ["KeyK", "Play/pause"],
+  ["Space", "Play/pause"],
+  ["KeyJ", "Seek backward"],
+  ["KeyL", "Seek forward"],
+  ["KeyM", "Mute"],
+  ["KeyF", "Fullscreen"],
+  ["KeyC", "Captions"],
+  ["KeyI", "Miniplayer"],
+  ["KeyT", "Theater mode"],
+  ["ArrowLeft", "Seek backward"],
+  ["ArrowRight", "Seek forward"],
+  ["ArrowUp", "Increase volume"],
+  ["ArrowDown", "Decrease volume"]
 ] satisfies [string, string][]
 
 const musicKeys = [
-  ["Space", "Play/pause"], ["Semicolon", "Play/pause"], ["KeyJ", "Next song"], ["KeyK", "Previous song"],
-  ["KeyL", "Seek forward"], ["KeyH", "Seek backward"], ["KeyS", "Shuffle"], ["KeyR", "Repeat"],
-  ["Equal", "Increase volume"], ["Minus", "Decrease volume"], ["KeyM", "Mute"], ["KeyQ", "Toggle queue"],
-  ["Escape", "Toggle queue / expanded player"], ["KeyF", "Fullscreen"], ["Slash", "Search"], ["KeyG", "Navigation sequence"]
+  ["Space", "Play/pause"],
+  ["Semicolon", "Play/pause"],
+  ["KeyJ", "Next song"],
+  ["KeyK", "Previous song"],
+  ["KeyL", "Seek forward"],
+  ["KeyH", "Seek backward"],
+  ["KeyS", "Shuffle"],
+  ["KeyR", "Repeat"],
+  ["Equal", "Increase volume"],
+  ["Minus", "Decrease volume"],
+  ["KeyM", "Mute"],
+  ["KeyQ", "Toggle queue"],
+  ["Escape", "Toggle queue / expanded player"],
+  ["KeyF", "Fullscreen"],
+  ["Slash", "Search"],
+  ["KeyG", "Navigation sequence"]
 ] satisfies [string, string][]
 
-const youtubeShiftKeys = [["KeyN", "Next video"], ["KeyP", "Previous video"]] satisfies [string, string][]
+const youtubeShiftKeys = [
+  ["KeyN", "Next video"],
+  ["KeyP", "Previous video"]
+] satisfies [string, string][]
 
 export function shortcutWarnings(key: Readonly<Key>, context: { sites: readonly Site[]; platform: Platform; commands: readonly BrowserCommand[] }): ShortcutWarning[] {
   const warnings: ShortcutWarning[] = []
@@ -83,13 +107,20 @@ export function shortcutWarnings(key: Readonly<Key>, context: { sites: readonly 
     }
     if (site === "music") {
       const shifted = [
-        ["KeyN", "Next song"], ["KeyP", "Previous song"], ["KeyL", "Seek forward 1 s"], ["KeyH", "Seek backward 1 s"],
-        ["ArrowLeft", "Seek backward"], ["ArrowRight", "Seek forward"]
+        ["KeyN", "Next song"],
+        ["KeyP", "Previous song"],
+        ["KeyL", "Seek forward 1 s"],
+        ["KeyH", "Seek backward 1 s"],
+        ["ArrowLeft", "Seek backward"],
+        ["ArrowRight", "Seek forward"]
       ] satisfies [string, string][]
       for (const [code, action] of shifted) {
         if (matchesKey(chord(code, { shift: true }), key)) warnings.push({ kind: "site", site, action })
       }
-      const fineSeek = [["ArrowLeft", "Seek backward 1 s"], ["ArrowRight", "Seek forward 1 s"]] satisfies [string, string][]
+      const fineSeek = [
+        ["ArrowLeft", "Seek backward 1 s"],
+        ["ArrowRight", "Seek forward 1 s"]
+      ] satisfies [string, string][]
       for (const [code, action] of fineSeek) {
         if (matchesKey(chord(code, { ctrl: true, shift: true }), key)) warnings.push({ kind: "site", site, action })
       }
@@ -105,9 +136,25 @@ export function shortcutWarnings(key: Readonly<Key>, context: { sites: readonly 
 }
 
 const names: Readonly<Record<string, string>> = {
-  ArrowUp: "↑", ArrowDown: "↓", ArrowLeft: "←", ArrowRight: "→", PageDown: "Page Down", PageUp: "Page Up",
-  Space: "Space", Escape: "Esc", Backquote: "`", Backslash: "\\", BracketLeft: "[", BracketRight: "]",
-  Comma: ",", Equal: "=", Minus: "-", Period: ".", Quote: "'", Semicolon: ";", Slash: "/"
+  ArrowUp: "↑",
+  ArrowDown: "↓",
+  ArrowLeft: "←",
+  ArrowRight: "→",
+  PageDown: "Page Down",
+  PageUp: "Page Up",
+  Space: "Space",
+  Escape: "Esc",
+  Backquote: "`",
+  Backslash: "\\",
+  BracketLeft: "[",
+  BracketRight: "]",
+  Comma: ",",
+  Equal: "=",
+  Minus: "-",
+  Period: ".",
+  Quote: "'",
+  Semicolon: ";",
+  Slash: "/"
 }
 
 export function displayModifiers(held: Modifiers, os: Platform["os"]): string {

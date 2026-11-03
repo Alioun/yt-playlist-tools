@@ -7,7 +7,8 @@ import { expectedQueueOutput, runGatewayQueueConsumer } from "./run"
 if (typeof document === "undefined") GlobalRegistrator.register({ url: "https://www.youtube.com" })
 
 test("real gateway, servePage and PageLink queue consumers match fixed records through EOF", async () => {
-  const direct = await runGatewayQueueConsumer(false), dom = await runGatewayQueueConsumer(true)
+  const direct = await runGatewayQueueConsumer(false),
+    dom = await runGatewayQueueConsumer(true)
   same(direct, expectedQueueOutput(), "Direct consumer differs from fixed records")
   same(dom, direct, "DOM consumer differs from direct consumer")
   same(direct, readFileSync(new URL("./expected-output.jsonl", import.meta.url), "utf8"), "Consumer differs from the checked-in JSONL")

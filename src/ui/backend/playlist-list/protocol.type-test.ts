@@ -5,8 +5,7 @@ import type { UiMessages } from "../../../shared/contracts/ui"
 import type { AccountKey } from "../../../shared/model/validation"
 import type { CreationId, ListOperationId, UiPlaylistAnswer, UiListCompletion } from "../../../shared/contracts/ui-playlists"
 
-function protocol(backend: Backend, caller: RpcCaller<UiMessages>, acct: AccountKey, operation: ListOperationId,
-  creation: CreationId, listing: Listing) {
+function protocol(backend: Backend, caller: RpcCaller<UiMessages>, acct: AccountKey, operation: ListOperationId, creation: CreationId, listing: Listing) {
   const read = backend.playlistList({ acct, site: "www" })
   const pickerMethods: Pick<PickerSource, "cachedList" | "freshList"> = read
   void caller.call("ui.playlists", { action: "open", operation, acct, site: "www", refresh: false })

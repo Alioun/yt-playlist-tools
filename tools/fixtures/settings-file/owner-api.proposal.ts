@@ -11,9 +11,7 @@ export type SettingsFileImportExecution =
 
 // This declaration proposes an adjoining owner API. It supplies no implementation or authority.
 export interface ProposedSettingsFileOwner {
-  exportSettings(origin: Extract<Origin, { kind: "ui" }>): Promise<
-    { readonly kind: "source"; readonly source: SettingsFileSource } | { readonly kind: "unavailable" }
-  >
+  exportSettings(origin: Extract<Origin, { kind: "ui" }>): Promise<{ readonly kind: "source"; readonly source: SettingsFileSource } | { readonly kind: "unavailable" }>
   importCheck(origin: Extract<Origin, { kind: "ui" }>, text: string): ImportResult
   changeImport(origin: Extract<Origin, { kind: "ui" }>, change: SettingsFileImportChange): Promise<SettingsFileImportExecution>
 }

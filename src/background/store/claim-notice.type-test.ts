@@ -4,7 +4,7 @@ import type { ClaimNotice } from "../../shared/model"
 import type { Snapshot } from "../../shared/model/settings-view"
 import type { Origin } from "../../shared/contracts/results"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 type Read =
   | { readonly kind: "empty" }
@@ -19,9 +19,7 @@ type Acknowledgement =
   | { readonly kind: "refused"; readonly reason: "invalid" }
   | { readonly kind: "unavailable"; readonly reason: "startup" | "newer-layout" | "stale" | "consent" | "upgrade-note" }
   | { readonly kind: "failed"; readonly stage: "before-set" | "set-not-observed"; readonly error: unknown }
-  | { readonly kind: "unconfirmed"; readonly write: Write; readonly cause:
-    | { readonly kind: "readback" | "stopped" }
-    | { readonly kind: "read-failed"; readonly error: unknown } }
+  | { readonly kind: "unconfirmed"; readonly write: Write; readonly cause: { readonly kind: "readback" | "stopped" } | { readonly kind: "read-failed"; readonly error: unknown } }
 type Writer = ReturnType<typeof createLocalFilterWriter>
 export type NoticeProofs = [
   Check<Equal<ClaimNoticeRead, Read>>,
@@ -29,7 +27,12 @@ export type NoticeProofs = [
   Check<Equal<ClaimNoticeAcknowledgement, Acknowledgement>>,
   Check<Equal<NormalUiOrigin, Extract<Origin, { kind: "ui" }> & { readonly incognito: false }>>,
   Check<Equal<typeof projectClaimNotice, (input: { readonly records: Readonly<Record<string, unknown>> }) => Read>>,
-  Check<Equal<typeof executeClaimNoticeAcknowledgement, (deps: { readonly local: LocalWriteStorage; readonly expected: Snapshot<ClaimNotice>; readonly isStopped: () => boolean }) => Promise<Acknowledgement>>>,
+  Check<
+    Equal<
+      typeof executeClaimNoticeAcknowledgement,
+      (deps: { readonly local: LocalWriteStorage; readonly expected: Snapshot<ClaimNotice>; readonly isStopped: () => boolean }) => Promise<Acknowledgement>
+    >
+  >,
   Check<Equal<Writer["readClaimNotice"], () => Promise<Read>>>,
   Check<Equal<Writer["acknowledgeClaimNotice"], (origin: NormalUiOrigin, expected: Snapshot<ClaimNotice>) => Promise<Acknowledgement>>>,
   Check<Equal<ReturnType<typeof createStartingLocalFilterWriter>["acknowledgeClaimNotice"], Writer["acknowledgeClaimNotice"]>>,

@@ -26,28 +26,47 @@ export function createTabHealthRouter(deps: {
   async function apply(context: TabContext, report: TabHealthReport): Promise<void> {
     switch (report.kind) {
       case "signal":
-        await deps.monitor.signal(context, report.signal, report.evidence === "job"
-          ? { kind: "job", online: report.online, otherRequestsAnswer: report.answered } : { kind: report.evidence })
+        await deps.monitor.signal(context, report.signal, report.evidence === "job" ? { kind: "job", online: report.online, otherRequestsAnswer: report.answered } : { kind: report.evidence })
         return
       case "anchor": {
         if (!Object.hasOwn(anchors, report.anchor)) return
         const seen = report.observation
-        await deps.monitor.observeAnchor(context, { anchor: report.anchor, signal: report.signal, observation: "kind" in seen
-          ? { kind: "player-bar", requiredHere: seen.requiredHere, visible: seen.visible, navigationAt: 0, observedAt: seen.settledMs, present: seen.present }
-          : { kind: "content", relevant: seen.relevant, visible: seen.visible, navigationAt: 0, observedAt: seen.settledMs, distinctMainLinks: seen.distinctMainLinks, recognised: seen.recognised } })
+        await deps.monitor.observeAnchor(context, {
+          anchor: report.anchor,
+          signal: report.signal,
+          observation:
+            "kind" in seen
+              ? { kind: "player-bar", requiredHere: seen.requiredHere, visible: seen.visible, navigationAt: 0, observedAt: seen.settledMs, present: seen.present }
+              : { kind: "content", relevant: seen.relevant, visible: seen.visible, navigationAt: 0, observedAt: seen.settledMs, distinctMainLinks: seen.distinctMainLinks, recognised: seen.recognised }
+        })
         return
       }
-      case "success": await deps.monitor.succeeded(context, report.job); return
-      case "measured": await deps.monitor.measured(context)
+      case "success":
+        await deps.monitor.succeeded(context, report.job)
+        return
+      case "measured":
+        await deps.monitor.measured(context)
     }
   }
-  const unbind = rpc.handle({ authenticate: authenticateTab(deps.senders), handlers: {
-    async "tab.health"({ acct, request }, sender) {
-      const context = await deps.context(sender, acct)
-      if (!context) return null
-      for (const report of request.reports) { try { await apply(context, report) } catch {} }
-      return null
+  const unbind = rpc.handle({
+    authenticate: authenticateTab(deps.senders),
+    handlers: {
+      async "tab.health"({ acct, request }, sender) {
+        const context = await deps.context(sender, acct)
+        if (!context) return null
+        for (const report of request.reports) {
+          try {
+            await apply(context, report)
+          } catch {}
+        }
+        return null
+      }
     }
-  } })
-  return { dispose() { unbind(); rpc.dispose() } }
+  })
+  return {
+    dispose() {
+      unbind()
+      rpc.dispose()
+    }
+  }
 }

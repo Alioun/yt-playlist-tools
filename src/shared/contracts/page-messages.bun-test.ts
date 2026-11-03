@@ -1,9 +1,6 @@
 import { expect, test } from "bun:test"
 import * as safe from "./index"
-import {
-  isPageRequestMessage, isPageHelloAnswer, isPageRunAnswerFor, isPageStreamEventFor,
-  isPageProbeAnswerFor, isPageSignalEvent, isPageRetireMessage
-} from "./page"
+import { isPageRequestMessage, isPageHelloAnswer, isPageRunAnswerFor, isPageStreamEventFor, isPageProbeAnswerFor, isPageSignalEvent, isPageRetireMessage } from "./page"
 import { isVideoId, isPlaylistId } from "../model/validation"
 import type { Job, Stream, StreamData, JsonValue } from "./index"
 
@@ -23,8 +20,18 @@ const header = { v: safe.CONTRACT_VERSION, build }
 const vocabulary = { routes: [route], watchIds: [dependency], schemaKeys: ["data"] }
 const report = { site: "www", entries: [{ id: dependency, present: true }] }
 const signal = {
-  site: "www", feature: null, job: null, route: null, kind: "timeout", watchId: null, shape: null,
-  clientVersion: "2.20261024.00.00", pageType: "watch", count: 1, firstSeen: 0, lastSeen: 0
+  site: "www",
+  feature: null,
+  job: null,
+  route: null,
+  kind: "timeout",
+  watchId: null,
+  shape: null,
+  clientVersion: "2.20261024.00.00",
+  pageType: "watch",
+  count: 1,
+  firstSeen: 0,
+  lastSeen: 0
 }
 const video = { videoId, title: "Synthetic title", length: null, kind: "video" }
 const snapshot = { signedIn: true, datasyncId: "synthetic-identity", pageType: "WATCH", startedHidden: true, navType: "navigate", video }
@@ -52,7 +59,10 @@ test("page run guards exercise both removal identities and confirmed missing add
     expect(isPageRunAnswerFor(pending, { ...answer, result: { ok: false, reason: "unconfirmed", data: { setVideoId: null } } }, build)).toBe(false)
   }
   const batch = { id, job: { kind: "addBatch", playlistId, videoIds: [videoId, video2] } } satisfies { id: typeof id; job: Job }
-  const results = [{ videoId, setVideoId: null }, { videoId: video2, setVideoId: "synthetic-entry" }]
+  const results = [
+    { videoId, setVideoId: null },
+    { videoId: video2, setVideoId: "synthetic-entry" }
+  ]
   const answer = { ...header, kind: "run", id, result: { ok: true, route, data: { results } } }
   expect(isPageRunAnswerFor(batch, answer, build)).toBe(true)
   expect(isPageRunAnswerFor(batch, { ...answer, result: { ...answer.result, data: { results: results.toReversed() } } }, build)).toBe(false)
@@ -60,10 +70,11 @@ test("page run guards exercise both removal identities and confirmed missing add
 const probePending = { id, site: "www", watchIds: [dependency] } as const
 const run = { ...header, kind: "run", id, result: { ok: true, data: { signedIn: true, datasyncId: "synthetic-identity" }, route } }
 const fixtures: { name: string; value: Record<string, unknown>; guard: (value: unknown) => boolean }[] = [
-  ...[
-    { kind: "hello" }, { kind: "run", id, job: pending.job }, { kind: "watch", id: watchId, stream: "nav" },
-    { kind: "unwatch", id: watchId }, { kind: "probe", id }
-  ].map(payload => ({ name: `request ${payload.kind}`, value: { ...header, ...payload }, guard: (value: unknown) => isPageRequestMessage(value, build) })),
+  ...[{ kind: "hello" }, { kind: "run", id, job: pending.job }, { kind: "watch", id: watchId, stream: "nav" }, { kind: "unwatch", id: watchId }, { kind: "probe", id }].map(payload => ({
+    name: `request ${payload.kind}`,
+    value: { ...header, ...payload },
+    guard: (value: unknown) => isPageRequestMessage(value, build)
+  })),
   { name: "retire", value: { ...header, kind: "retire" }, guard: isPageRetireMessage },
   { name: "hello answer", value: { ...header, kind: "hello", site: "www", snapshot }, guard: value => isPageHelloAnswer(value, { build, site: "www" }) },
   { name: "run answer", value: run, guard: value => isPageRunAnswerFor(pending, value, build) },
@@ -113,9 +124,17 @@ test("hello keeps raw identity and independent start facts on the page entrypoin
   }
   expect(isPageHelloAnswer({ ...hello, snapshot: { ...snapshot, signedIn: false, datasyncId: null } }, { build, site: "www" })).toBe(true)
   for (const change of [
-    { video: undefined }, { video: null }, { video: { ...video, length: 0 } }, { navType: "spa" },
-    { signedIn: false }, { datasyncId: null }, { datasyncId: "" }, { acct: "aaaaaaaaaaaaaaaa" }, { pageType: "" }
-  ]) expect(isPageHelloAnswer({ ...hello, snapshot: { ...snapshot, ...change } }, { build, site: "www" })).toBe(false)
+    { video: undefined },
+    { video: null },
+    { video: { ...video, length: 0 } },
+    { navType: "spa" },
+    { signedIn: false },
+    { datasyncId: null },
+    { datasyncId: "" },
+    { acct: "aaaaaaaaaaaaaaaa" },
+    { pageType: "" }
+  ])
+    expect(isPageHelloAnswer({ ...hello, snapshot: { ...snapshot, ...change } }, { build, site: "www" })).toBe(false)
   expect(isPageHelloAnswer(hello, { build, site: "music" })).toBe(false)
   const { datasyncId: omittedIdentity, ...safeSnapshot } = snapshot
   void omittedIdentity
@@ -130,14 +149,20 @@ test("run answers use the exact pending id, actual job and C1 batch correlation"
   expect(isPageRunAnswerFor(pending, { ...run, result: { ok: true, data: { signedIn: true, datasyncId: "synthetic", acct: "aaaaaaaaaaaaaaaa" }, route } }, build)).toBe(false)
   expect(isPageRunAnswerFor(pending, { ...run, result: { ok: false, reason: "accountChanged" } }, build)).toBe(true)
   const batch = { id, job: { kind: "addBatch", playlistId, videoIds: [videoId, video2] } } satisfies { id: typeof id; job: Job }
-  const results = [{ videoId, setVideoId: "occurrence" }, { videoId: video2, failure: { ok: false, reason: "failed" } }]
+  const results = [
+    { videoId, setVideoId: "occurrence" },
+    { videoId: video2, failure: { ok: false, reason: "failed" } }
+  ]
   const answer = { ...run, result: { ok: true, data: { results }, route } }
   expect(isPageRunAnswerFor(batch, answer, build)).toBe(true)
   expect(isPageRunAnswerFor(batch, { ...answer, result: { ...answer.result, data: { results: results.toReversed() } } }, build)).toBe(false)
   expect(isPageRunAnswerFor(batch, { ...answer, result: { ...answer.result, data: { results: results.slice(1) } } }, build)).toBe(false)
   for (const [job, data] of [
     [{ kind: "removeBatch", playlistId, setVideoIds: ["occurrence"] }, { removed: 2 }],
-    [{ kind: "queueAddList", videoIds: [videoId] }, { confirmed: true, count: 0 }]
+    [
+      { kind: "queueAddList", videoIds: [videoId] },
+      { confirmed: true, count: 0 }
+    ]
   ]) {
     if (!safe.isJob(job)) throw new Error("Invalid synthetic job")
     expect(isPageRunAnswerFor({ id, job }, { ...run, result: { ok: true, data, route } }, build)).toBe(false)
@@ -146,8 +171,10 @@ test("run answers use the exact pending id, actual job and C1 batch correlation"
 
 test("streams preserve all four correlated data families, queue order and ad/null branches", () => {
   const data = {
-    player: { ad: true, at: 0, player: "watch" }, nav: { pageType: "WATCH", video: null, navigation: { kind: "other" } },
-    nowPlaying: null, queue: { ids: ["second", 0, "first"] }
+    player: { ad: true, at: 0, player: "watch" },
+    nav: { pageType: "WATCH", video: null, navigation: { kind: "other" } },
+    nowPlaying: null,
+    queue: { ids: ["second", 0, "first"] }
   }
   for (const stream of Object.keys(data)) {
     if (!safe.isStream(stream)) throw new Error("Invalid synthetic stream")
@@ -162,8 +189,21 @@ test("streams preserve all four correlated data families, queue order and ad/nul
   expect(queue.data.ids.map(String)).toEqual(["second", "0", "first"])
   expect(isPageStreamEventFor({ id: watchId, stream: "queue" }, { ...queue, data: { ids: [0, 0] } }, build)).toBe(false)
   const player: StreamData<"player"> = {
-    ad: false, at: 0, player: "watch", videoId, pos: 1, len: null, listedLength: null, rate: 1,
-    playing: false, seeking: false, content: "video", isPostLiveDvr: false, isLive: true, isUpcoming: false, isLiveContent: true
+    ad: false,
+    at: 0,
+    player: "watch",
+    videoId,
+    pos: 1,
+    len: null,
+    listedLength: null,
+    rate: 1,
+    playing: false,
+    seeking: false,
+    content: "video",
+    isPostLiveDvr: false,
+    isLive: true,
+    isUpcoming: false,
+    isLiveContent: true
   }
   expect(isPageStreamEventFor({ id: watchId, stream: "player" }, { ...queue, data: player }, build)).toBe(true)
 })
@@ -179,9 +219,7 @@ test("probe and signal envelopes require their retained contextual facts", () =>
 
 function objectFields(value: unknown, prefix: string[] = []): string[][] {
   if (value === null || typeof value !== "object") return []
-  return Object.entries(value).flatMap(([key, child]) => [
-    ...(!Array.isArray(value) ? [[...prefix, key]] : []), ...objectFields(child, [...prefix, key])
-  ])
+  return Object.entries(value).flatMap(([key, child]) => [...(!Array.isArray(value) ? [[...prefix, key]] : []), ...objectFields(child, [...prefix, key])])
 }
 function parentAt(value: Record<string, unknown>, path: string[]): Record<string, unknown> {
   let current: unknown = value
@@ -207,11 +245,15 @@ test("all envelope and nested evidence rejects accessors without calling getters
         const copy = structuredClone(value)
         const parent = parentAt(copy, path)
         const original: unknown = parent[key]
-        Object.defineProperty(parent, key, { enumerable: true, configurable: true, get() {
-          getterCalls++
-          if (throwing) throw new Error("Getter must not execute")
-          return original
-        } })
+        Object.defineProperty(parent, key, {
+          enumerable: true,
+          configurable: true,
+          get() {
+            getterCalls++
+            if (throwing) throw new Error("Getter must not execute")
+            return original
+          }
+        })
         expect(guard(copy)).toBe(false)
       }
       const copy = structuredClone(value)
@@ -225,9 +267,20 @@ test("all envelope and nested evidence rejects accessors without calling getters
         let accepted: boolean
         let shadowAccepted: boolean
         try {
-          Object.defineProperty(Object.prototype, key, mode === "data" ? { value: original, configurable: true } : {
-            configurable: true, get() { getterCalls++; if (mode === "throwing") throw new Error("Inherited getter"); return original }
-          })
+          Object.defineProperty(
+            Object.prototype,
+            key,
+            mode === "data"
+              ? { value: original, configurable: true }
+              : {
+                  configurable: true,
+                  get() {
+                    getterCalls++
+                    if (mode === "throwing") throw new Error("Inherited getter")
+                    return original
+                  }
+                }
+          )
           accepted = guard(copy)
           shadowAccepted = guard(shadow)
         } finally {

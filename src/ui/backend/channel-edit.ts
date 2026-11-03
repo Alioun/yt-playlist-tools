@@ -36,7 +36,7 @@ export function createChannelEditor(backend: Backend, i18n: I18n, acct: AccountK
     async add(playlist: PlaylistId, input: string): Promise<ChannelAdd> {
       const resolved = await resolve(input)
       if (resolved.kind === "error") return resolved
-      return await change(playlist, resolved.channel, "list") ? { kind: "added" } : { kind: "error", message: i18n.message("filter_failed") }
+      return (await change(playlist, resolved.channel, "list")) ? { kind: "added" } : { kind: "error", message: i18n.message("filter_failed") }
     },
     remove: (playlist: PlaylistId, channel: Channel) => change(playlist, channel, "unlist")
   }

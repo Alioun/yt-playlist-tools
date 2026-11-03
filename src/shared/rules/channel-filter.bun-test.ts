@@ -12,7 +12,9 @@ const unlisted = channel("UCbbbbbbbbbbbbbbbbbbbbbb")
 
 describe("channel-filter decision table", () => {
   const cases: {
-    mode: Filter["mode"]; on: boolean; empty: boolean
+    mode: Filter["mode"]
+    on: boolean
+    empty: boolean
     decisions: [listed: FilterDecision, unlisted: FilterDecision, unknown: FilterDecision]
   }[] = [
     { mode: "allow", on: false, empty: false, decisions: ["pass", "pass", "pass"] },
@@ -22,7 +24,7 @@ describe("channel-filter decision table", () => {
     { mode: "deny", on: false, empty: false, decisions: ["pass", "pass", "pass"] },
     { mode: "deny", on: false, empty: true, decisions: ["pass", "pass", "pass"] },
     { mode: "deny", on: true, empty: false, decisions: ["filtered", "pass", "pass"] },
-    { mode: "deny", on: true, empty: true, decisions: ["pass", "pass", "pass"] },
+    { mode: "deny", on: true, empty: true, decisions: ["pass", "pass", "pass"] }
   ]
   for (const { mode, on, empty, decisions } of cases) {
     test(`${mode}, ${on ? "on" : "off"}, ${empty ? "empty" : "listed"}`, () => {
@@ -37,8 +39,10 @@ describe("channel-filter decision table", () => {
 
   test("matches only IDs, leaves labels and future state untouched", () => {
     const filter = decodeFilter({
-      mode: "allow", on: true, future: { behavior: "preserve" },
-      channels: [[listed, unlisted, "@other", { future: true }]],
+      mode: "allow",
+      on: true,
+      future: { behavior: "preserve" },
+      channels: [[listed, unlisted, "@other", { future: true }]]
     })
     const before = JSON.stringify(filter)
     Object.freeze(filter.channels[0])
@@ -75,14 +79,37 @@ describe("typing a channel with no YouTube tab open (YT-CF-16)", () => {
 })
 
 test("this channel's controls follow YT-CF-15: an on filter offers only its mode, an off one offers both, asking before it clears kept channels", () => {
-  const channel = "UCaaaaaaaaaaaaaaaaaaaaaa" as ChannelId, other = "UCbbbbbbbbbbbbbbbbbbbbbb"
+  const channel = "UCaaaaaaaaaaaaaaaaaaaaaa" as ChannelId,
+    other = "UCbbbbbbbbbbbbbbbbbbbbbb"
   const states = (filter: Parameters<typeof channelControls>[0]) => channelControls(filter, channel).map(control => control.state)
   expect(states(undefined)).toEqual(["available", "available"])
   expect(channelControls(undefined, channel)[0]).toMatchObject({ send: { action: "list", mode: "allow", clearListed: false } })
   expect(states({ mode: "deny", on: true, channels: [] })).toEqual(["greyed", "available"])
   expect(states({ mode: "deny", on: true, channels: [[channel, "Band"]] })).toEqual(["greyed", "listed"])
   expect(channelControls({ mode: "deny", on: true, channels: [[channel, "Band"]] }, channel)[1]).toMatchObject({ send: { action: "unlist" } })
-  expect(states({ mode: "deny", on: false, channels: [[other, "Talk"], [other, "Talk"], [other, "Talk"]] })).toEqual(["confirm", "available"])
-  expect(channelControls({ mode: "deny", on: false, channels: [[other, "Talk"], [other, "Talk"], [other, "Talk"]] }, channel)[0])
-    .toEqual({ mode: "allow", state: "confirm", kept: 3, send: { action: "list", mode: "allow", clearListed: true } })
+  expect(
+    states({
+      mode: "deny",
+      on: false,
+      channels: [
+        [other, "Talk"],
+        [other, "Talk"],
+        [other, "Talk"]
+      ]
+    })
+  ).toEqual(["confirm", "available"])
+  expect(
+    channelControls(
+      {
+        mode: "deny",
+        on: false,
+        channels: [
+          [other, "Talk"],
+          [other, "Talk"],
+          [other, "Talk"]
+        ]
+      },
+      channel
+    )[0]
+  ).toEqual({ mode: "allow", state: "confirm", kept: 3, send: { action: "list", mode: "allow", clearListed: true } })
 })

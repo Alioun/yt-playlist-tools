@@ -16,13 +16,15 @@ function emptyBody() {
 }
 function choices() {
   return {
-    playlists: [playlist, "WL"], shortcutPlaylistId: "WL",
+    playlists: [playlist, "WL"],
+    shortcutPlaylistId: "WL",
     filters: {
       [playlist]: { mode: "allow", enabled: true, channels: [channel] },
       [kept]: { mode: "deny", enabled: false, channels: [channel] }
     },
     labels: { [channel]: { title: "Synthetic channel", handle: "@synthetic" }, [extraChannel]: { title: "Unreferenced label" } },
-    cachedPlaylists: [{ id: playlist, title: "Synthetic playlist" }], cachedAt: 9000
+    cachedPlaylists: [{ id: playlist, title: "Synthetic playlist" }],
+    cachedAt: 9000
   }
 }
 function input(body: unknown = choices()): InterimProfileInput {
@@ -35,10 +37,7 @@ function freeze(value: unknown): void {
   }
 }
 
-export function exerciseInterimProfile(
-  inspect: typeof inspectInterimProfile = inspectInterimProfile,
-  startup: typeof planLegacyStartup = planLegacyStartup
-) {
+export function exerciseInterimProfile(inspect: typeof inspectInterimProfile = inspectInterimProfile, startup: typeof planLegacyStartup = planLegacyStartup) {
   const observations: Record<string, unknown> = {}
   let checks = 0
   function equal(actual: unknown, expected: unknown) {
@@ -77,14 +76,21 @@ export function exerciseInterimProfile(
 
   const inventory = observe("complete-independent-inventory", {
     accountBodies: { [`account:${account}`]: choices(), [`account:${other}`]: emptyBody() },
-    savedAccountKeys: [account, missing, account], canonicalDocuments: {}
+    savedAccountKeys: [account, missing, account],
+    canonicalDocuments: {}
   })
-  equal(inventory.accounts.map(entry => [entry.identity, entry.bodyPosition, entry.indexPositions, entry.body.kind]), [
-    [{ kind: "representable", key: account }, 0, [0, 2], "inspection"],
-    [{ kind: "representable", key: other }, 1, [], "inspection"],
-    [{ kind: "representable", key: missing }, null, [1], "index-only"]
-  ])
-  equal(inventory.index.map(entry => entry.duplicateOf), [null, null, 0])
+  equal(
+    inventory.accounts.map(entry => [entry.identity, entry.bodyPosition, entry.indexPositions, entry.body.kind]),
+    [
+      [{ kind: "representable", key: account }, 0, [0, 2], "inspection"],
+      [{ kind: "representable", key: other }, 1, [], "inspection"],
+      [{ kind: "representable", key: missing }, null, [1], "index-only"]
+    ]
+  )
+  equal(
+    inventory.index.map(entry => entry.duplicateOf),
+    [null, null, 0]
+  )
 
   const stamp = { v: 1, gen: "synthetic-gen", at: 1, by: "synthetic-device" }
   const canonical = {
@@ -120,10 +126,17 @@ export function exerciseInterimProfile(
   const longKey = `${account}x`
   const syntax = observe("accepted-interim-key-never-rekeyed", {
     accountBodies: { [`account:${longKey}`]: choices(), "account:bad!": emptyBody() },
-    savedAccountKeys: [longKey, "bad!", 3], canonicalDocuments: canonical
+    savedAccountKeys: [longKey, "bad!", 3],
+    canonicalDocuments: canonical
   })
-  equal(syntax.accounts.map(entry => entry.identity), [{ kind: "unsupported" }, { kind: "invalid" }])
-  equal(syntax.accounts.map(entry => entry.overlaps), [[], []])
+  equal(
+    syntax.accounts.map(entry => entry.identity),
+    [{ kind: "unsupported" }, { kind: "invalid" }]
+  )
+  equal(
+    syntax.accounts.map(entry => entry.overlaps),
+    [[], []]
+  )
   equal(syntax.index[2]?.identity, { kind: "invalid" })
   equal(syntax.issues[0], { kind: "unsupported", field: "accountBodies[0].key", reason: "account-key-not-representable" })
 
@@ -159,7 +172,9 @@ export function exerciseInterimProfile(
     equal(JSON.stringify(result.issues).includes("rejected-"), false)
   }
   const mixed = observe("invalid-body-does-not-hide-later-body", {
-    accountBodies: { "account:invalid!": null, [`account:${other}`]: choices() }, savedAccountKeys: [], canonicalDocuments: {}
+    accountBodies: { "account:invalid!": null, [`account:${other}`]: choices() },
+    savedAccountKeys: [],
+    canonicalDocuments: {}
   })
   equal(mixed.accounts.length, 2)
   equal(mixed.accounts[1]?.body.kind, "inspection")
@@ -174,14 +189,17 @@ export function exerciseInterimProfile(
     equal(result.accounts[0]?.body, complete.accounts[0]?.body)
   }
   for (const authorized of [false, true]) {
-    equal(observe(`captured-history-${authorized}`, { ...input(), historicalAuthorization: authorized }).historicalAuthorization,
-      authorized ? "known-authorized" : "known-unauthorized")
+    equal(observe(`captured-history-${authorized}`, { ...input(), historicalAuthorization: authorized }).historicalAuthorization, authorized ? "known-authorized" : "known-unauthorized")
   }
   for (const [name, supplied, field] of [
     ["bad-bodies", { ...input(), accountBodies: [] }, "accountBodies"],
     ["bad-index", { ...input(), savedAccountKeys: {} }, "savedAccountKeys"],
     ["bad-canonical", { ...input(), canonicalDocuments: [] }, "canonicalDocuments"],
-    ["bad-canonical-record", { ...input(), canonicalDocuments: { [`doc:filter:${account}:${kept}`]: { ...stamp, data: { channels: [["rejected-channel!", "rejected-title!"]] } } } }, "canonicalDocuments[0]"],
+    [
+      "bad-canonical-record",
+      { ...input(), canonicalDocuments: { [`doc:filter:${account}:${kept}`]: { ...stamp, data: { channels: [["rejected-channel!", "rejected-title!"]] } } } },
+      "canonicalDocuments[0]"
+    ],
     ["bad-consent", { ...input(), sessionConsent: 2 }, "sessionConsent"],
     ["bad-generation", { ...input(), sessionGeneration: 3 }, "sessionGeneration"],
     ["bad-claimed", { ...input(), legacyClaimed: "true" }, "legacyClaimed"],
@@ -196,8 +214,10 @@ export function exerciseInterimProfile(
 
   const context = { deviceId: "synthetic-device", settingsGen: "synthetic-gen", at: 1, shortcutId: "save01", platform: { browser: "firefox", os: "linux" }, commands: [] } as const
   for (const marker of [`account:${account}`, "savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"]) {
-    const result = startup({ schema: 1, device: undefined, settingsDocument: undefined, unclaimed: undefined,
-      legacy: { presentKeys: [], values: {}, refreshTokenWasNonempty: false }, interimKeysPresent: [marker] }, context)
+    const result = startup(
+      { schema: 1, device: undefined, settingsDocument: undefined, unclaimed: undefined, legacy: { presentKeys: [], values: {}, refreshTokenWasNonempty: false }, interimKeysPresent: [marker] },
+      context
+    )
     equal(result, { kind: "unsupported-state", reason: "interim-profile" })
     observations[`startup-${marker}`] = result
   }

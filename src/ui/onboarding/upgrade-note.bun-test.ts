@@ -7,20 +7,51 @@ import { createScriptedBackend } from "../backend/scripted"
 import { PageState } from "../lib/page-state.svelte"
 import OnboardingPage from "./OnboardingPage.svelte"
 
-const build = (() => { const value = "note-test"; if (!isBuildId(value)) throw Error("build"); return value })()
+const build = (() => {
+  const value = "note-test"
+  if (!isBuildId(value)) throw Error("build")
+  return value
+})()
 afterEach(() => cleanup())
-const details = { from: "1.4.5", autoAdd: { kept: 3, dropped: 0 }, pct: { value: 50, wasUnset: true, authorised: true }, feedback: true,
-  shortcut: { raw: "Alt+W", key: { code: "KeyW", char: "w", ctrl: false, alt: true, shift: false, meta: false }, playlist: true, note: "ok" }, credentialsDeleted: true }
+const details = {
+  from: "1.4.5",
+  autoAdd: { kept: 3, dropped: 0 },
+  pct: { value: 50, wasUnset: true, authorised: true },
+  feedback: true,
+  shortcut: { raw: "Alt+W", key: { code: "KeyW", char: "w", ctrl: false, alt: true, shift: false, meta: false }, playlist: true, note: "ok" },
+  credentialsDeleted: true
+}
 
 function note(sent: unknown[]) {
-  const scripted = createScriptedBackend({ build, deadline: () => () => {}, answers: [],
+  const scripted = createScriptedBackend({
+    build,
+    deadline: () => () => {},
+    answers: [],
     records: { schema: 1, device: { id: "d", consent: null, syncOn: false, upgradeNote: { state: "pending", details, opened: true, seen: false, reopened: false } } } as never,
     respond: {
-      "ui.noteSeen": () => { sent.push("seen"); return { kind: "noted" } },
-      "ui.noteAgree": payload => { sent.push(payload.change); return { kind: "agreed", attempt: payload.change.attempt, applications: [] } }
-    } })
-  const page = { backend: scripted.backend, i18n: englishI18n(), platform: { browser: "chrome", os: "windows" }, private: false, version: "2.0.0", beta: false,
-    open() {}, openSettings() {}, openFirstRun() {}, applyTheme() {}, commands: { read: async () => ({ kind: "unavailable" }), named: async () => null } }
+      "ui.noteSeen": () => {
+        sent.push("seen")
+        return { kind: "noted" }
+      },
+      "ui.noteAgree": payload => {
+        sent.push(payload.change)
+        return { kind: "agreed", attempt: payload.change.attempt, applications: [] }
+      }
+    }
+  })
+  const page = {
+    backend: scripted.backend,
+    i18n: englishI18n(),
+    platform: { browser: "chrome", os: "windows" },
+    private: false,
+    version: "2.0.0",
+    beta: false,
+    open() {},
+    openSettings() {},
+    openFirstRun() {},
+    applyTheme() {},
+    commands: { read: async () => ({ kind: "unavailable" }), named: async () => null }
+  }
   const pageState = new PageState(page as never)
   render(OnboardingPage, { pageState, owner: {} as never, text: englishFirstRunText(), markSrc: "m" })
 }

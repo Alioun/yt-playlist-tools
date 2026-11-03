@@ -6,8 +6,16 @@ import type { AccountKey } from "../../shared/model"
 
 // One read per read job that needs no item, as Check now runs them (HEALTH-23). Account jobs need a signed-in tab.
 const reads: Readonly<Record<Site, readonly { readonly job: JobId; readonly account: boolean }[]>> = {
-  www: [{ job: "account", account: false }, { job: "accountLabel", account: true }, { job: "playlists", account: true }],
-  music: [{ job: "account", account: false }, { job: "castState", account: false }, { job: "nowPlaying", account: false }]
+  www: [
+    { job: "account", account: false },
+    { job: "accountLabel", account: true },
+    { job: "playlists", account: true }
+  ],
+  music: [
+    { job: "account", account: false },
+    { job: "castState", account: false },
+    { job: "nowPlaying", account: false }
+  ]
 }
 
 /**
@@ -32,8 +40,10 @@ export function createDiagnostics(deps: {
       const lookup = await deps.tab(known.tabId).catch(() => null)
       if (lookup?.kind !== "tab" || lookup.tab.site === null) continue
       const site = lookup.tab.site
-      rows.push({ acct: known.acct, context: { tab: { ...lookup.tab, site },
-        info: known.acct === null ? { site, build: deps.build, signedIn: false, acct: null } : { site, build: deps.build, signedIn: true, acct: known.acct } } })
+      rows.push({
+        acct: known.acct,
+        context: { tab: { ...lookup.tab, site }, info: known.acct === null ? { site, build: deps.build, signedIn: false, acct: null } : { site, build: deps.build, signedIn: true, acct: known.acct } }
+      })
     }
     return rows.sort((x, y) => y.context.tab.lastAccessed - x.context.tab.lastAccessed)
   }
@@ -43,20 +53,34 @@ export function createDiagnostics(deps: {
     for (const read of reads[site]) {
       if (read.account && serving.acct === null) continue
       const invocation = (read.account ? { job: { kind: read.job }, acct: serving.acct } : { job: { kind: read.job } }) as never
-      const outcome = await deps.tabs.runIn<Job>(serving.context.tab.tabId, invocation, { site, req,
-        account: serving.acct === null ? { kind: "any" } : { kind: "account", acct: serving.acct, signedIn: true } }).catch(() => null)
+      const outcome = await deps.tabs
+        .runIn<Job>(serving.context.tab.tabId, invocation, { site, req, account: serving.acct === null ? { kind: "any" } : { kind: "account", acct: serving.acct, signedIn: true } })
+        .catch(() => null)
       jobs.push({ job: read.job, ok: outcome?.kind === "result" && outcome.result.ok })
     }
     return { site, at: deps.now(), jobs }
   }
-  function signals(journals: readonly (Awaited<ReturnType<Monitor["diagnostics"]>>)[]): UiSignal[] {
+  function signals(journals: readonly Awaited<ReturnType<Monitor["diagnostics"]>>[]): UiSignal[] {
     const seen = new Map<string, UiSignal>()
-    for (const journal of journals) for (const row of journal?.signals ?? []) {
-      const s = row.signal, shape = s.shape === null ? null : JSON.stringify(s.shape).slice(0, 2048)
-      const signal: UiSignal = { site: s.site, feature: s.feature, job: s.job, route: s.route, kind: s.kind, pageType: s.pageType, clientVersion: s.clientVersion,
-        shape, count: s.count, firstSeen: s.firstSeen, lastSeen: s.lastSeen }
-      seen.set(JSON.stringify([signal.site, signal.feature, signal.job, signal.route, signal.kind, signal.pageType, shape, row.tabId]), signal)
-    }
+    for (const journal of journals)
+      for (const row of journal?.signals ?? []) {
+        const s = row.signal,
+          shape = s.shape === null ? null : JSON.stringify(s.shape).slice(0, 2048)
+        const signal: UiSignal = {
+          site: s.site,
+          feature: s.feature,
+          job: s.job,
+          route: s.route,
+          kind: s.kind,
+          pageType: s.pageType,
+          clientVersion: s.clientVersion,
+          shape,
+          count: s.count,
+          firstSeen: s.firstSeen,
+          lastSeen: s.lastSeen
+        }
+        seen.set(JSON.stringify([signal.site, signal.feature, signal.job, signal.route, signal.kind, signal.pageType, shape, row.tabId]), signal)
+      }
     return [...seen.values()].sort((x, y) => x.firstSeen - y.firstSeen).slice(-200)
   }
   return {

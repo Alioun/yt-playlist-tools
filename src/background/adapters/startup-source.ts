@@ -1,8 +1,5 @@
 import type { HistoricalFact } from "../store/interim-conversion"
-import {
-  hasInterimEvidence, interimConversionKey, isInterimCanonicalKey, isInterimSourceKey,
-  type InterimPersistenceSnapshot, type StoreStartupHost
-} from "../store/interim-persistence"
+import { hasInterimEvidence, interimConversionKey, isInterimCanonicalKey, isInterimSourceKey, type InterimPersistenceSnapshot, type StoreStartupHost } from "../store/interim-persistence"
 import { LEGACY_DELETE_KEYS, type LegacyEvidence } from "../store/legacy"
 import type { StartupHost } from "../store/legacy-execution"
 import type { StartupSnapshot } from "../store/legacy-startup"
@@ -10,16 +7,12 @@ import type { StartupSnapshot } from "../store/legacy-startup"
 export type SanitizedStartupInventory = {
   readonly presentLocalKeys: readonly string[]
   readonly values: Readonly<Record<string, unknown>>
-  readonly legacyAuthorization:
-    | { readonly kind: "observed"; readonly refreshTokenWasNonempty: boolean }
-    | { readonly kind: "unavailable" }
+  readonly legacyAuthorization: { readonly kind: "observed"; readonly refreshTokenWasNonempty: boolean } | { readonly kind: "unavailable" }
   readonly historicalAuthorization: HistoricalFact
   readonly priorCredentialPresence: HistoricalFact
 }
 
-export type StartupSourceRefusalCode =
-  | "structure" | "accessor" | "duplicate-name" | "forbidden-value" | "absent-name" | "incomplete"
-  | "authorization-contradiction" | "authorization-unavailable"
+export type StartupSourceRefusalCode = "structure" | "accessor" | "duplicate-name" | "forbidden-value" | "absent-name" | "incomplete" | "authorization-contradiction" | "authorization-unavailable"
 
 export class StartupSourceRefusal extends Error {
   constructor(readonly code: StartupSourceRefusalCode) {
@@ -30,7 +23,13 @@ export class StartupSourceRefusal extends Error {
 
 type LegacyValueKey = keyof LegacyEvidence["values"]
 const legacyValueKeys = Object.keys({
-  playlists: 0, addToPlaylistID: 0, watchLaterShortcut: 0, requiredWatchPercentage: 0, toastEnabled: 0, channelFilters: 0, channelLabels: 0
+  playlists: 0,
+  addToPlaylistID: 0,
+  watchLaterShortcut: 0,
+  requiredWatchPercentage: 0,
+  toastEnabled: 0,
+  channelFilters: 0,
+  channelLabels: 0
 } satisfies Record<LegacyValueKey, 0>) as LegacyValueKey[]
 
 export function isStartupValueKey(name: string): boolean {
@@ -67,7 +66,10 @@ function detach(raw: unknown): unknown {
   const ancestors = new Set<object>()
   while (pending.length > 0) {
     const visit = pending.pop()!
-    if ("leave" in visit) { ancestors.delete(visit.leave); continue }
+    if ("leave" in visit) {
+      ancestors.delete(visit.leave)
+      continue
+    }
     const { source, target } = visit
     if (ancestors.has(source)) refuse("structure")
     ancestors.add(source)
@@ -103,7 +105,10 @@ function tag(raw: unknown): unknown {
 
 function fact(raw: unknown): HistoricalFact {
   const kind = tag(raw)
-  if (kind === "unknown") { record(raw, ["kind"]); return { kind } }
+  if (kind === "unknown") {
+    record(raw, ["kind"])
+    return { kind }
+  }
   if (kind !== "known") refuse("structure")
   const value = record(raw, ["kind", "value"]).get("value")
   if (typeof value !== "boolean") refuse("structure")
@@ -112,7 +117,10 @@ function fact(raw: unknown): HistoricalFact {
 
 function authorization(raw: unknown): SanitizedStartupInventory["legacyAuthorization"] {
   const kind = tag(raw)
-  if (kind === "unavailable") { record(raw, ["kind"]); return { kind } }
+  if (kind === "unavailable") {
+    record(raw, ["kind"])
+    return { kind }
+  }
   if (kind !== "observed") refuse("structure")
   const refreshTokenWasNonempty = record(raw, ["kind", "refreshTokenWasNonempty"]).get("refreshTokenWasNonempty")
   if (typeof refreshTokenWasNonempty !== "boolean") refuse("structure")
@@ -155,8 +163,13 @@ function observe(raw: SanitizedStartupInventory): Observation {
   if (legacyAuthorization.kind === "observed" && legacyAuthorization.refreshTokenWasNonempty && !present.has("refreshToken")) {
     refuse("authorization-contradiction")
   }
-  return { names: [...present], values, legacyAuthorization,
-    historicalAuthorization: fact(inventory.get("historicalAuthorization")), priorCredentialPresence: fact(inventory.get("priorCredentialPresence")) }
+  return {
+    names: [...present],
+    values,
+    legacyAuthorization,
+    historicalAuthorization: fact(inventory.get("historicalAuthorization")),
+    priorCredentialPresence: fact(inventory.get("priorCredentialPresence"))
+  }
 }
 
 function selected(observation: Observation, keep: (name: string) => boolean): Record<string, unknown> {
@@ -169,9 +182,13 @@ function selected(observation: Observation, keep: (name: string) => boolean): Re
 
 export function projectInterimSnapshot(inventory: SanitizedStartupInventory): InterimPersistenceSnapshot {
   const observation = observe(inventory)
-  return { source: selected(observation, isInterimSourceKey), canonical: selected(observation, isInterimCanonicalKey),
+  return {
+    source: selected(observation, isInterimSourceKey),
+    canonical: selected(observation, isInterimCanonicalKey),
     checkpoint: observation.values.has(interimConversionKey) ? { kind: "present", value: observation.values.get(interimConversionKey) } : { kind: "absent" },
-    historicalAuthorization: observation.historicalAuthorization, priorCredentialPresence: observation.priorCredentialPresence }
+    historicalAuthorization: observation.historicalAuthorization,
+    priorCredentialPresence: observation.priorCredentialPresence
+  }
 }
 
 function projectStartupSnapshot(inventory: SanitizedStartupInventory): StartupSnapshot {
@@ -179,9 +196,14 @@ function projectStartupSnapshot(inventory: SanitizedStartupInventory): StartupSn
   if (legacyAuthorization.kind === "unavailable") refuse("authorization-unavailable")
   const legacyValues: LegacyEvidence["values"] = {}
   for (const key of legacyValueKeys) if (values.has(key)) legacyValues[key] = values.get(key)
-  return { schema: values.get("schema"), device: values.get("device"), settingsDocument: values.get("doc:settings"), unclaimed: values.get("unclaimed"),
+  return {
+    schema: values.get("schema"),
+    device: values.get("device"),
+    settingsDocument: values.get("doc:settings"),
+    unclaimed: values.get("unclaimed"),
     legacy: { presentKeys: LEGACY_DELETE_KEYS.filter(key => names.includes(key)), values: legacyValues, refreshTokenWasNonempty: legacyAuthorization.refreshTokenWasNonempty },
-    interimKeysPresent: names.filter(name => hasInterimEvidence({ [name]: true })) }
+    interimKeysPresent: names.filter(name => hasInterimEvidence({ [name]: true }))
+  }
 }
 
 export function createStoreStartupHost(deps: {
@@ -192,10 +214,20 @@ export function createStoreStartupHost(deps: {
   const { source, cleanup } = deps
   return {
     context: detach(deps.context) as StartupHost["context"],
-    async readSnapshot() { return projectStartupSnapshot(await source.readInventory()) },
-    async readInterimSnapshot() { return projectInterimSnapshot(await source.readInventory()) },
-    async removeLocal(keys) { await cleanup.removeLocal(keys) },
-    async deleteDatabase(name) { await cleanup.deleteDatabase(name) },
-    async removeSession(keys) { await cleanup.removeSession(keys) }
+    async readSnapshot() {
+      return projectStartupSnapshot(await source.readInventory())
+    },
+    async readInterimSnapshot() {
+      return projectInterimSnapshot(await source.readInventory())
+    },
+    async removeLocal(keys) {
+      await cleanup.removeLocal(keys)
+    },
+    async deleteDatabase(name) {
+      await cleanup.deleteDatabase(name)
+    },
+    async removeSession(keys) {
+      await cleanup.removeSession(keys)
+    }
   }
 }

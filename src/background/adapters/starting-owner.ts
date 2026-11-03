@@ -13,9 +13,10 @@ type NativeHosts = {
   readonly [Name in HostName]?: Exclude<NonNullable<StartingDependencies[Name]>, { readonly kind: "fixture" }>
 }
 
-export type BrowserStartingOwnerOptions = Pick<StartingDependencies, "local" | "startup" | "onSyncResult">
-  & Pick<StartingDependencies, "resetReceive">
-  & Partial<Pick<StartingDependencies, "now" | "generation" | "syncClock" | "syncMutationPace" | "featureAccess" | "allocateShortcut">> & NativeHosts
+export type BrowserStartingOwnerOptions = Pick<StartingDependencies, "local" | "startup" | "onSyncResult"> &
+  Pick<StartingDependencies, "resetReceive"> &
+  Partial<Pick<StartingDependencies, "now" | "generation" | "syncClock" | "syncMutationPace" | "featureAccess" | "allocateShortcut">> &
+  NativeHosts
 
 export type BrowserStartingOwner = StartingOwner & {
   readonly session: { read: StartingOwner["readSession"]; change: StartingOwner["changeSession"] }
@@ -37,16 +38,26 @@ export function createBrowserStartingLocalFilterWriter(
   }
   try {
     const clock = options.syncClock ?? {
-      now: () => performance.now(), wallNow: () => Date.now(),
+      now: () => performance.now(),
+      wallNow: () => Date.now(),
       after(milliseconds: number, run: () => void) {
         const timer = setTimeout(run, milliseconds)
         return () => clearTimeout(timer)
       }
     }
     const session: StartingDependencies["session"] = {
-      get() { assertOpen(); return native.storage.session.get(null) },
-      set(items) { assertOpen(); return native.storage.session.set(items) },
-      remove(keys) { assertOpen(); return native.storage.session.remove(keys.map(key => `${key.kind}:${key.acct}`)) }
+      get() {
+        assertOpen()
+        return native.storage.session.get(null)
+      },
+      set(items) {
+        assertOpen()
+        return native.storage.session.set(items)
+      },
+      remove(keys) {
+        assertOpen()
+        return native.storage.session.remove(keys.map(key => `${key.kind}:${key.acct}`))
+      }
     }
     const owner = createStartingLocalFilterWriter({
       syncMutationPace: options.syncMutationPace,
@@ -55,40 +66,87 @@ export function createBrowserStartingLocalFilterWriter(
       featureAccess: native.permissions ? nativeSharedSettingsAccess(native.permissions) : options.featureAccess,
       allocateShortcut: options.allocateShortcut,
       local: {
-        get(keys) { assertOpen(); return options.local.get(keys) },
-        set(items) { assertOpen(); return options.local.set(items) }
+        get(keys) {
+          assertOpen()
+          return options.local.get(keys)
+        },
+        set(items) {
+          assertOpen()
+          return options.local.set(items)
+        }
       },
       claim: options.claim ?? { kind: "unavailable" },
-      removal: nativeAccountRemovalHost({ session, removeLocal(names) { assertOpen(); return native.storage.local.remove([...names]) } }),
-      join: options.join ?? nativeSyncJoinHost({ session, removeLocal(names) { assertOpen(); return native.storage.local.remove([...names]) } }),
+      removal: nativeAccountRemovalHost({
+        session,
+        removeLocal(names) {
+          assertOpen()
+          return native.storage.local.remove([...names])
+        }
+      }),
+      join:
+        options.join ??
+        nativeSyncJoinHost({
+          session,
+          removeLocal(names) {
+            assertOpen()
+            return native.storage.local.remove([...names])
+          }
+        }),
       recovery: options.recovery ?? { kind: "unavailable" },
       canonicalAuthority: options.canonicalAuthority ?? { kind: "unavailable" },
-      settingsImport: options.settingsImport ?? nativeSettingsImportHost({ session, removeLocal(names) { assertOpen(); return native.storage.local.remove([...names]) } }),
+      settingsImport:
+        options.settingsImport ??
+        nativeSettingsImportHost({
+          session,
+          removeLocal(names) {
+            assertOpen()
+            return native.storage.local.remove([...names])
+          }
+        }),
       session,
       sync: {
-        get() { assertOpen(); return native.storage.sync.get(null) },
-        set(items) { assertOpen(); return native.storage.sync.set(items) },
-        remove(keys) { assertOpen(); return native.storage.sync.remove([...keys]) },
+        get() {
+          assertOpen()
+          return native.storage.sync.get(null)
+        },
+        set(items) {
+          assertOpen()
+          return native.storage.sync.set(items)
+        },
+        remove(keys) {
+          assertOpen()
+          return native.storage.sync.remove([...keys])
+        },
         subscribe(changed) {
           assertOpen()
           const event = native.storage.sync.onChanged
           let active = true
-          const listener = () => { if (active && lifecycle.kind === "open") changed() }
+          const listener = () => {
+            if (active && lifecycle.kind === "open") changed()
+          }
           function remove() {
             active = false
-            try { event.removeListener(listener) }
-            catch (error) { unconfirmedTeardown ??= { error }; throw error }
+            try {
+              event.removeListener(listener)
+            } catch (error) {
+              unconfirmedTeardown ??= { error }
+              throw error
+            }
           }
-          try { event.addListener(listener) }
-          catch (error) {
-            try { remove() } catch {}
+          try {
+            event.addListener(listener)
+          } catch (error) {
+            try {
+              remove()
+            } catch {}
             throw error
           }
           return remove
         }
       },
       syncClock: {
-        now: () => clock.now(), wallNow: () => clock.wallNow(),
+        now: () => clock.now(),
+        wallNow: () => clock.wallNow(),
         after(milliseconds, run) {
           assertOpen()
           let active = true
@@ -99,14 +157,25 @@ export function createBrowserStartingLocalFilterWriter(
               active = false
               run()
             })
-          } catch (error) { active = false; unconfirmedTeardown ??= { error }; throw error }
+          } catch (error) {
+            active = false
+            unconfirmedTeardown ??= { error }
+            throw error
+          }
           return () => {
             active = false
-            try { cancel() } catch (error) { unconfirmedTeardown ??= { error }; throw error }
+            try {
+              cancel()
+            } catch (error) {
+              unconfirmedTeardown ??= { error }
+              throw error
+            }
           }
         }
       },
-      onSyncResult(result) { if (lifecycle.kind === "open") options.onSyncResult(result) },
+      onSyncResult(result) {
+        if (lifecycle.kind === "open") options.onSyncResult(result)
+      },
       now: options.now ?? (() => Date.now()),
       generation: options.generation ?? (() => crypto.randomUUID())
     })
@@ -125,13 +194,23 @@ export function createBrowserStartingLocalFilterWriter(
         if (lifecycle.kind === "closing") return lifecycle.result
         let resolve!: () => void
         let reject!: (error: unknown) => void
-        const result = new Promise<void>((done, failed) => { resolve = done; reject = failed })
+        const result = new Promise<void>((done, failed) => {
+          resolve = done
+          reject = failed
+        })
         lifecycle = { kind: "closing", result }
-        try { owner.dispose().then(() => {
-          if (unconfirmedTeardown) { reject(unconfirmedTeardown.error); return }
-          release(); resolve()
-        }, reject) }
-        catch (error) { reject(error) }
+        try {
+          owner.dispose().then(() => {
+            if (unconfirmedTeardown) {
+              reject(unconfirmedTeardown.error)
+              return
+            }
+            release()
+            resolve()
+          }, reject)
+        } catch (error) {
+          reject(error)
+        }
         return result
       }
     }

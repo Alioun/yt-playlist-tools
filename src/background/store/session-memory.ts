@@ -27,20 +27,38 @@ export type GatherClosedTab = { readonly url: string; readonly index: number; re
 // It is a plan, never evidence. Only the after-close check turns it into `closed`.
 export type GatherClosing = { readonly tabId: number; readonly video: VideoId; readonly tab: GatherClosedTab }
 export type GatherUndo = {
-  readonly id: string; readonly seq: number; readonly at: number; readonly auto: boolean
-  readonly acct: AccountKey; readonly playlist: PlaylistId; readonly added: readonly [GatherEntry, ...GatherEntry[]]
-  readonly windowId?: number; readonly closed?: readonly GatherClosedTab[]; readonly closing?: readonly GatherClosing[]
+  readonly id: string
+  readonly seq: number
+  readonly at: number
+  readonly auto: boolean
+  readonly acct: AccountKey
+  readonly playlist: PlaylistId
+  readonly added: readonly [GatherEntry, ...GatherEntry[]]
+  readonly windowId?: number
+  readonly closed?: readonly GatherClosedTab[]
+  readonly closing?: readonly GatherClosing[]
 }
 // A playlist gather whose every video was already in. Its Undo can only reopen the tabs it closed; it removes no playlist entry.
 export type GatherReopen = {
-  readonly id: string; readonly seq: number; readonly at: number; readonly auto: boolean
-  readonly acct: AccountKey; readonly playlist: PlaylistId; readonly windowId: number
-  readonly closed?: readonly GatherClosedTab[]; readonly closing?: readonly GatherClosing[]
+  readonly id: string
+  readonly seq: number
+  readonly at: number
+  readonly auto: boolean
+  readonly acct: AccountKey
+  readonly playlist: PlaylistId
+  readonly windowId: number
+  readonly closed?: readonly GatherClosedTab[]
+  readonly closing?: readonly GatherClosing[]
 }
 // A gather into YouTube's player or queue. It has no Undo; it is the window's last result only.
 export type GatherSent = {
-  readonly id: string; readonly seq: number; readonly at: number; readonly auto: boolean
-  readonly to: "player" | "queue"; readonly windowId: number; readonly count: number
+  readonly id: string
+  readonly seq: number
+  readonly at: number
+  readonly auto: boolean
+  readonly to: "player" | "queue"
+  readonly windowId: number
+  readonly count: number
 }
 export type GatherRecord =
   | { readonly to: "playlist"; readonly kind: "undo"; readonly record: GatherUndo }
@@ -58,7 +76,8 @@ export const PACED_WINDOWS = 50
 export const KEPT_TABS = 200
 // DATA-52's entry for one gather, committed in the same change as its DATA-58 record.
 export type GatherRecentAdd = {
-  readonly at: number; readonly playlist: { readonly id: PlaylistId; readonly title: string }
+  readonly at: number
+  readonly playlist: { readonly id: PlaylistId; readonly title: string }
   readonly videos: readonly [{ readonly id: VideoId; readonly title: string }, ...{ readonly id: VideoId; readonly title: string }[]]
 }
 export const RECENT_ADDS = 50
@@ -116,16 +135,24 @@ export type SessionStorage = Extract<AccountRemovalHost, { kind: "fixture" }>["s
 
 export function sessionEditAccount(edit: SessionEdit): AccountKey | null {
   switch (edit.kind) {
-    case "tab-seen": return edit.info.acct
-    case "tab-forget": return edit.expected.acct
+    case "tab-seen":
+      return edit.info.acct
+    case "tab-forget":
+      return edit.expected.acct
     case "pause":
-    case "recent-adds-clear": return null
-    case "recent": return edit.tuple.acct
-    case "gather": return edit.record.acct
-    case "gather-reopen": return edit.record.acct
+    case "recent-adds-clear":
+      return null
+    case "recent":
+      return edit.tuple.acct
+    case "gather":
+      return edit.record.acct
+    case "gather-reopen":
+      return edit.record.acct
     case "gather-sent":
-    case "gather-kept": return null
-    default: return edit.acct
+    case "gather-kept":
+      return null
+    default:
+      return edit.acct
   }
 }
 
@@ -155,7 +182,9 @@ export type SessionPort = {
 function object(value: unknown): value is JsonObject {
   return value !== null && typeof value === "object" && !Array.isArray(value) && isJsonValue(value)
 }
-function natural(value: unknown): value is number { return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 }
+function natural(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
+}
 function copy(raw: JsonObject): JsonObject {
   const value: unknown = JSON.parse(JSON.stringify(raw))
   if (!object(value)) throw new TypeError("Invalid session snapshot")
@@ -163,10 +192,9 @@ function copy(raw: JsonObject): JsonObject {
 }
 const ONCE_PER_ACCOUNT = /^(missing|full):/
 
-function envelope(raw: JsonValue | undefined): { v: 1; global: JsonObject; accounts: JsonObject } & JsonObject | undefined {
+function envelope(raw: JsonValue | undefined): ({ v: 1; global: JsonObject; accounts: JsonObject } & JsonObject) | undefined {
   if (raw === undefined) return { v: 1, global: {}, accounts: {} }
-  if (!object(raw) || raw.v !== 1 || !object(raw.global) || !object(raw.accounts) ||
-    !Object.entries(raw.accounts).every(([acct, bucket]) => isAccountKey(acct) && object(bucket))) return
+  if (!object(raw) || raw.v !== 1 || !object(raw.global) || !object(raw.accounts) || !Object.entries(raw.accounts).every(([acct, bucket]) => isAccountKey(acct) && object(bucket))) return
   return { ...raw, v: 1, global: raw.global, accounts: raw.accounts }
 }
 function strings(raw: JsonValue | undefined): readonly string[] | undefined {
@@ -185,8 +213,18 @@ function closedTab(raw: JsonValue): GatherClosedTab | undefined {
   return { url: raw.url, index: raw.index, title: raw.title }
 }
 function gatherRecord(raw: JsonValue, acct: AccountKey): GatherUndo | undefined {
-  if (!object(raw) || typeof raw.id !== "string" || !natural(raw.seq) || !natural(raw.at) || typeof raw.auto !== "boolean" ||
-    raw.to !== "playlist" || raw.acct !== acct || !isPlaylistId(raw.playlist) || !Array.isArray(raw.added)) return
+  if (
+    !object(raw) ||
+    typeof raw.id !== "string" ||
+    !natural(raw.seq) ||
+    !natural(raw.at) ||
+    typeof raw.auto !== "boolean" ||
+    raw.to !== "playlist" ||
+    raw.acct !== acct ||
+    !isPlaylistId(raw.playlist) ||
+    !Array.isArray(raw.added)
+  )
+    return
   const added = raw.added.map(entry).filter((item): item is GatherEntry => item !== undefined)
   const [first, ...rest] = added
   if (!first || added.length !== raw.added.length || raw.count !== added.length) return
@@ -196,8 +234,18 @@ function gatherRecord(raw: JsonValue, acct: AccountKey): GatherUndo | undefined 
   if (Array.isArray(raw.closed) && closed?.length !== raw.closed.length) return
   const closing = closingTabs(raw.closing)
   if (closing === null) return
-  return { id: raw.id, seq: raw.seq, at: raw.at, auto: raw.auto, acct, playlist: raw.playlist, added: [first, ...rest],
-    ...(natural(raw.windowId) ? { windowId: raw.windowId } : {}), ...(closed ? { closed } : {}), ...(closing ? { closing } : {}) }
+  return {
+    id: raw.id,
+    seq: raw.seq,
+    at: raw.at,
+    auto: raw.auto,
+    acct,
+    playlist: raw.playlist,
+    added: [first, ...rest],
+    ...(natural(raw.windowId) ? { windowId: raw.windowId } : {}),
+    ...(closed ? { closed } : {}),
+    ...(closing ? { closing } : {})
+  }
 }
 function closingTabs(raw: JsonValue | undefined): readonly GatherClosing[] | undefined | null {
   if (raw === undefined) return
@@ -215,18 +263,43 @@ function closedTabs(raw: JsonValue | undefined): readonly GatherClosedTab[] | un
   return rows.length === raw.length ? rows : null
 }
 function reopenRecord(raw: JsonValue, acct: AccountKey): GatherReopen | undefined {
-  if (!object(raw) || typeof raw.id !== "string" || !natural(raw.seq) || !natural(raw.at) || typeof raw.auto !== "boolean" ||
-    raw.to !== "playlist" || raw.acct !== acct || !isPlaylistId(raw.playlist) || !Array.isArray(raw.added) || raw.added.length !== 0 ||
-    raw.count !== 0 || !natural(raw.windowId)) return
-  const closed = closedTabs(raw.closed), closing = closingTabs(raw.closing)
-  if (closed === null || closing === null || !closed?.length && !closing?.length) return
-  return { id: raw.id, seq: raw.seq, at: raw.at, auto: raw.auto, acct, playlist: raw.playlist, windowId: raw.windowId,
-    ...(closed ? { closed } : {}), ...(closing ? { closing } : {}) }
+  if (
+    !object(raw) ||
+    typeof raw.id !== "string" ||
+    !natural(raw.seq) ||
+    !natural(raw.at) ||
+    typeof raw.auto !== "boolean" ||
+    raw.to !== "playlist" ||
+    raw.acct !== acct ||
+    !isPlaylistId(raw.playlist) ||
+    !Array.isArray(raw.added) ||
+    raw.added.length !== 0 ||
+    raw.count !== 0 ||
+    !natural(raw.windowId)
+  )
+    return
+  const closed = closedTabs(raw.closed),
+    closing = closingTabs(raw.closing)
+  if (closed === null || closing === null || (!closed?.length && !closing?.length)) return
+  return { id: raw.id, seq: raw.seq, at: raw.at, auto: raw.auto, acct, playlist: raw.playlist, windowId: raw.windowId, ...(closed ? { closed } : {}), ...(closing ? { closing } : {}) }
 }
 function sentRecord(raw: JsonValue): GatherSent | undefined {
-  if (!object(raw) || typeof raw.id !== "string" || !natural(raw.seq) || !natural(raw.at) || typeof raw.auto !== "boolean" ||
-    raw.to !== "player" && raw.to !== "queue" || !natural(raw.windowId) || !natural(raw.count) || raw.count === 0 ||
-    raw.acct !== undefined || raw.added !== undefined || raw.closed !== undefined || raw.closing !== undefined) return
+  if (
+    !object(raw) ||
+    typeof raw.id !== "string" ||
+    !natural(raw.seq) ||
+    !natural(raw.at) ||
+    typeof raw.auto !== "boolean" ||
+    (raw.to !== "player" && raw.to !== "queue") ||
+    !natural(raw.windowId) ||
+    !natural(raw.count) ||
+    raw.count === 0 ||
+    raw.acct !== undefined ||
+    raw.added !== undefined ||
+    raw.closed !== undefined ||
+    raw.closing !== undefined
+  )
+    return
   return { id: raw.id, seq: raw.seq, at: raw.at, auto: raw.auto, to: raw.to, windowId: raw.windowId, count: raw.count }
 }
 // `paced`, `kept` and the sent records are not account data. `refused` and playlist records live in their account's bucket, so removal ends them.
@@ -282,15 +355,29 @@ function closingJson(closing: readonly GatherClosing[]): JsonValue {
   return closing.map(({ tabId, video, tab }) => ({ tabId, video, tab: { url: tab.url, index: tab.index, title: tab.title } }))
 }
 function reopenJson(record: GatherReopen): JsonObject {
-  return { id: record.id, seq: record.seq, at: record.at, auto: record.auto, to: "playlist", count: 0, acct: record.acct, playlist: record.playlist,
-    added: [], windowId: record.windowId, ...(record.closed ? { closed: record.closed.map(({ url, index, title }) => ({ url, index, title })) } : {}),
-    ...(record.closing ? { closing: closingJson(record.closing) } : {}) }
+  return {
+    id: record.id,
+    seq: record.seq,
+    at: record.at,
+    auto: record.auto,
+    to: "playlist",
+    count: 0,
+    acct: record.acct,
+    playlist: record.playlist,
+    added: [],
+    windowId: record.windowId,
+    ...(record.closed ? { closed: record.closed.map(({ url, index, title }) => ({ url, index, title })) } : {}),
+    ...(record.closing ? { closing: closingJson(record.closing) } : {})
+  }
 }
 function gatherRecordJson(record: GatherRecord): JsonObject {
   switch (record.kind) {
-    case "undo": return gatherJson(record.record)
-    case "reopen": return reopenJson(record.record)
-    case "sent": return sentJson(record.record)
+    case "undo":
+      return gatherJson(record.record)
+    case "reopen":
+      return reopenJson(record.record)
+    case "sent":
+      return sentJson(record.record)
   }
 }
 function recordAccount(record: GatherRecord): AccountKey | null {
@@ -324,7 +411,7 @@ function gatherEnvelope(raw: JsonValue | undefined, memory: GatherMemory): JsonO
     const bucket: JsonObject = object(inner) ? { ...inner } : {}
     const rows = last.filter(record => recordAccount(record) === acct).map(gatherRecordJson)
     if (rows.length || Object.hasOwn(bucket, "last")) bucket.last = rows
-    const refused = isAccountKey(acct) ? [...memory.refused.get(acct) ?? []] : []
+    const refused = isAccountKey(acct) ? [...(memory.refused.get(acct) ?? [])] : []
     if (refused.length || Object.hasOwn(bucket, "refused")) bucket.refused = refused
     if (Object.keys(bucket).length || object(inner)) accounts[acct] = bucket
   }
@@ -345,10 +432,11 @@ export function parseSessionMemory(raw: unknown): SessionMemory | undefined {
       recent.push({ acct: row.acct, playlist: row.playlist, video: row.video, at: row.at })
     }
   }
-  const cooldowns = new Map<AccountKey, number>(), skips = new Map<AccountKey, Map<VideoId, Skip>>()
+  const cooldowns = new Map<AccountKey, number>(),
+    skips = new Map<AccountKey, Map<VideoId, Skip>>()
   for (const [name, value] of Object.entries(raw)) {
     const [kind, acct, ...extra] = name.split(":")
-    if (extra.length || acct === undefined || kind !== "skips" && kind !== "cooldown") continue
+    if (extra.length || acct === undefined || (kind !== "skips" && kind !== "cooldown")) continue
     if (!isAccountKey(acct)) return
     if (kind === "cooldown") {
       if (!natural(value)) return
@@ -365,7 +453,9 @@ export function parseSessionMemory(raw: unknown): SessionMemory | undefined {
     }
     skips.set(acct, videos)
   }
-  const shownRaw = envelope(raw.shown), gatherRaw = envelope(raw.gather), breakageRaw = envelope(raw.breakage)
+  const shownRaw = envelope(raw.shown),
+    gatherRaw = envelope(raw.gather),
+    breakageRaw = envelope(raw.breakage)
   if (!shownRaw || !gatherRaw || !breakageRaw || !isMonitorWriteTime(breakageRaw.global.monitorWrittenAt)) return
   const globalShown = strings(shownRaw.global.once)
   const monitorClaims = noticeClaims(shownRaw.global)
@@ -378,39 +468,73 @@ export function parseSessionMemory(raw: unknown): SessionMemory | undefined {
   }
   const gather = gatherMemory(gatherRaw)
   if (!gather) return
-  const gathers = gather.last.flatMap(record => record.kind === "undo" ? [record.record] : [])
+  const gathers = gather.last.flatMap(record => (record.kind === "undo" ? [record.record] : []))
   const breakageAccounts = new Map<AccountKey, JsonObject>()
   for (const [acct, value] of Object.entries(breakageRaw.accounts)) {
     if (!isAccountKey(acct) || !object(value)) return
     breakageAccounts.set(acct, copy(value))
   }
-  return { tabs, paused: raw.paused === true, recent, cooldowns, skips, shown: { global: new Set(globalShown), accounts: accountsShown }, gathers, gather,
-    breakage: { global: copy(breakageRaw.global), accounts: breakageAccounts }, monitorClaims }
+  return {
+    tabs,
+    paused: raw.paused === true,
+    recent,
+    cooldowns,
+    skips,
+    shown: { global: new Set(globalShown), accounts: accountsShown },
+    gathers,
+    gather,
+    breakage: { global: copy(breakageRaw.global), accounts: breakageAccounts },
+    monitorClaims
+  }
 }
 
 function gatherJson(record: GatherUndo): JsonObject {
-  return { id: record.id, seq: record.seq, at: record.at, auto: record.auto, to: "playlist", count: record.added.length,
-    acct: record.acct, playlist: record.playlist, added: record.added.map(({ video, setVideoId }) => ({ video, setVideoId })),
+  return {
+    id: record.id,
+    seq: record.seq,
+    at: record.at,
+    auto: record.auto,
+    to: "playlist",
+    count: record.added.length,
+    acct: record.acct,
+    playlist: record.playlist,
+    added: record.added.map(({ video, setVideoId }) => ({ video, setVideoId })),
     ...(record.windowId !== undefined ? { windowId: record.windowId } : {}),
     ...(record.closed ? { closed: record.closed.map(({ url, index, title }) => ({ url, index, title })) } : {}),
-    ...(record.closing ? { closing: closingJson(record.closing) } : {}) }
+    ...(record.closing ? { closing: closingJson(record.closing) } : {})
+  }
 }
 
 function recentAddJson(acct: AccountKey, recent: GatherRecentAdd, undo: string): JsonObject {
-  return { kind: "gather", acct, at: recent.at, source: { kind: "feature", feature: "gather" },
-    playlists: [{ id: recent.playlist.id, title: recent.playlist.title }], videos: recent.videos.map(({ id, title }) => ({ id, title })), undo }
+  return {
+    kind: "gather",
+    acct,
+    at: recent.at,
+    source: { kind: "feature", feature: "gather" },
+    playlists: [{ id: recent.playlist.id, title: recent.playlist.title }],
+    videos: recent.videos.map(({ id, title }) => ({ id, title })),
+    undo
+  }
 }
 function singleAddJson(acct: AccountKey, entry: RecentAdd): JsonObject {
-  return { kind: "single", acct, at: entry.at, source: { kind: "feature", feature: entry.feature },
-    playlists: entry.playlists.map(({ id, title }) => ({ id, title })), video: { id: entry.video.id, title: entry.video.title },
-    ...(entry.undo === undefined ? {} : { undo: entry.undo }) }
+  return {
+    kind: "single",
+    acct,
+    at: entry.at,
+    source: { kind: "feature", feature: entry.feature },
+    playlists: entry.playlists.map(({ id, title }) => ({ id, title })),
+    video: { id: entry.video.id, title: entry.video.title },
+    ...(entry.undo === undefined ? {} : { undo: entry.undo })
+  }
 }
 
 // Applies edits to a fresh raw record and names only the touched keys, so a commit never rewrites unrelated names or other accounts' fields.
 export function planSessionChange(raw: unknown, change: Omit<SessionChange, "revision">): SessionPlan | undefined {
   const memory = parseSessionMemory(raw)
   if (!memory || !object(raw)) return
-  const next = copy(raw), touched = new Set<RemovalSessionCollection>(), removed = new Map<string, RemovalSessionKey>()
+  const next = copy(raw),
+    touched = new Set<RemovalSessionCollection>(),
+    removed = new Map<string, RemovalSessionKey>()
   const set = (name: RemovalSessionCollection, value: JsonValue) => {
     next[name] = value
     touched.add(name)
@@ -448,13 +572,18 @@ export function planSessionChange(raw: unknown, change: Omit<SessionChange, "rev
         set("tabs", tabRecordsJson(kept))
         break
       }
-      case "pause": set("paused", edit.paused); break
-      case "recent-adds-clear": if (Array.isArray(next.recentAdds) && next.recentAdds.length) set("recentAdds", []); break
+      case "pause":
+        set("paused", edit.paused)
+        break
+      case "recent-adds-clear":
+        if (Array.isArray(next.recentAdds) && next.recentAdds.length) set("recentAdds", [])
+        break
       case "recent":
       case "forget": {
         const match = edit.kind === "recent" ? edit.tuple : edit
-        const kept = (Array.isArray(next.recent) ? next.recent : []).filter(row => object(row) && natural(row.at) && live(row.at, RECENT_MS, change.now) &&
-          !(row.acct === match.acct && row.playlist === match.playlist && row.video === match.video))
+        const kept = (Array.isArray(next.recent) ? next.recent : []).filter(
+          row => object(row) && natural(row.at) && live(row.at, RECENT_MS, change.now) && !(row.acct === match.acct && row.playlist === match.playlist && row.video === match.video)
+        )
         set("recent", edit.kind === "recent" ? [...kept, { acct: match.acct, playlist: match.playlist, video: match.video, at: edit.tuple.at }] : kept)
         break
       }
@@ -471,8 +600,7 @@ export function planSessionChange(raw: unknown, change: Omit<SessionChange, "rev
         if (edit.kind === "unskip") delete current[edit.video]
         else {
           const before = current[edit.video]
-          current[edit.video] = edit.playlists === "all" || before === "all" ? "all"
-            : [...new Set([...(Array.isArray(before) ? before.filter(isPlaylistId) : []), ...edit.playlists])]
+          current[edit.video] = edit.playlists === "all" || before === "all" ? "all" : [...new Set([...(Array.isArray(before) ? before.filter(isPlaylistId) : []), ...edit.playlists])]
         }
         if (Object.keys(current).length) set(name, current)
         else if (Object.hasOwn(next, name)) drop({ kind: "skips", acct: edit.acct })
@@ -498,7 +626,14 @@ export function planSessionChange(raw: unknown, change: Omit<SessionChange, "rev
         break
       }
       case "shown-global": {
-        if (edit.scope !== "normal" || edit.keys.some(key => !/^(?:monitor:(www|music):(auto-add|shortcuts|quick-save|queue-button|watch-button|card-menu|gather|music-actions|music-keys|browser-menu|any-tab-keys)|auto-add:cant-measure)$/.test(key))) return
+        if (
+          edit.scope !== "normal" ||
+          edit.keys.some(
+            key =>
+              !/^(?:monitor:(www|music):(auto-add|shortcuts|quick-save|queue-button|watch-button|card-menu|gather|music-actions|music-keys|browser-menu|any-tab-keys)|auto-add:cant-measure)$/.test(key)
+          )
+        )
+          return
         const outer = envelope(next.shown)
         if (!outer) return
         set("shown", { ...outer, global: { ...outer.global, once: [...new Set([...(strings(outer.global.once) ?? []), ...edit.keys])] } })
@@ -518,7 +653,7 @@ export function planSessionChange(raw: unknown, change: Omit<SessionChange, "rev
         const outer = envelope(next.breakage)
         if (!outer) return
         const last = outer.global.monitorWrittenAt
-        if (!isMonitorWriteTime(last) || last !== undefined && (change.now < last || change.now - last < MONITOR_WRITE_MS)) return
+        if (!isMonitorWriteTime(last) || (last !== undefined && (change.now < last || change.now - last < MONITOR_WRITE_MS))) return
         const accountBucket = edit.acct === null ? undefined : outer.accounts[edit.acct]
         const inner: JsonObject = edit.acct === null ? outer.global : object(accountBucket) ? accountBucket : {}
         let journal = readMonitorBucket(inner, edit.vocabulary)
@@ -538,7 +673,8 @@ export function planSessionChange(raw: unknown, change: Omit<SessionChange, "rev
           if (!parsed) return
           rows.push({ bucket: current, journal: parsed })
         }
-        const ordered = rows.flatMap((row, bucket) => row.journal.signals.map((signal, index) => ({ bucket, index, at: signal.signal.firstSeen })))
+        const ordered = rows
+          .flatMap((row, bucket) => row.journal.signals.map((signal, index) => ({ bucket, index, at: signal.signal.firstSeen })))
           .sort((a, b) => a.at - b.at || a.bucket - b.bucket || a.index - b.index)
         const evicted = ordered.slice(0, Math.max(0, ordered.length - MONITOR_SIGNALS))
         for (const [index, row] of rows.entries()) {
@@ -558,10 +694,12 @@ export function planSessionChange(raw: unknown, change: Omit<SessionChange, "rev
         if (!current) throw new TypeError("Planned session record no longer parses")
         const before = current.gather
         let last = [...before.last]
-        const paced = new Map(before.paced), kept = new Set(before.kept), refused = new Map(before.refused)
+        const paced = new Map(before.paced),
+          kept = new Set(before.kept),
+          refused = new Map(before.refused)
         const seq = last.reduce((top, record) => Math.max(top, record.record.seq), 0) + 1
         const refuse = (acct: AccountKey, videos: readonly VideoId[] | undefined) => {
-          if (videos?.length) refused.set(acct, new Set([...refused.get(acct) ?? [], ...videos]))
+          if (videos?.length) refused.set(acct, new Set([...(refused.get(acct) ?? []), ...videos]))
         }
         if (edit.kind === "gather") {
           last.unshift({ to: "playlist", kind: "undo", record: { ...edit.record, seq } })
@@ -582,9 +720,10 @@ export function planSessionChange(raw: unknown, change: Omit<SessionChange, "rev
           const found = last[index]
           if (index < 0 || !found || found.kind === "sent") break
           const [first, ...rest] = edit.added
-          last = first && found.kind === "undo"
-            ? last.map((record, at) => at === index ? { ...found, record: { ...found.record, added: [first, ...rest] } } : record)
-            : last.filter((_, at) => at !== index)
+          last =
+            first && found.kind === "undo"
+              ? last.map((record, at) => (at === index ? { ...found, record: { ...found.record, added: [first, ...rest] } } : record))
+              : last.filter((_, at) => at !== index)
         } else if (edit.kind === "gather-closed") {
           const index = last.findIndex(record => record.kind !== "sent" && record.record.id === edit.id && record.record.acct === edit.acct)
           const found = last[index]
@@ -594,12 +733,14 @@ export function planSessionChange(raw: unknown, change: Omit<SessionChange, "rev
           const named = edit.closed.map(tab => JSON.stringify([tab.url, tab.index, tab.title]))
           if (new Set(named).size !== named.length || named.some(key => !planned.includes(key))) return
           const closed = edit.closed.map(({ url, index, title }) => ({ url, index, title }))
-          last = found.kind === "reopen" && !closed.length ? last.filter((_, at) => at !== index)
-            : last.map((record, at) => at === index ? settled(found, closed) : record)
+          last = found.kind === "reopen" && !closed.length ? last.filter((_, at) => at !== index) : last.map((record, at) => (at === index ? settled(found, closed) : record))
         } else {
           if (![...edit.add, ...edit.remove].every(isTabId)) return
           for (const tabId of edit.remove) kept.delete(tabId)
-          for (const tabId of edit.add) { kept.delete(tabId); kept.add(tabId) }
+          for (const tabId of edit.add) {
+            kept.delete(tabId)
+            kept.add(tabId)
+          }
         }
         const written = gatherEnvelope(next.gather, { last: last.slice(0, GATHERS), paced, kept, refused })
         if (!written) throw new TypeError("Parsed session envelope changed")
@@ -627,7 +768,15 @@ export function planSessionChange(raw: unknown, change: Omit<SessionChange, "rev
 
 export const emptySessionMemory: SessionMemory = {
   tabs: new Map(),
-  paused: false, recent: [], cooldowns: new Map(), skips: new Map(), shown: { global: new Set(), accounts: new Map() }, gathers: [], gather: emptyGatherMemory, breakage: { global: {}, accounts: new Map() }, monitorClaims: new Map()
+  paused: false,
+  recent: [],
+  cooldowns: new Map(),
+  skips: new Map(),
+  shown: { global: new Set(), accounts: new Map() },
+  gathers: [],
+  gather: emptyGatherMemory,
+  breakage: { global: {}, accounts: new Map() },
+  monitorClaims: new Map()
 }
 
 // The canonical record for the names AddFlow owns, so private memory and pending normal edits use the same edit rules as the owner.
@@ -637,13 +786,16 @@ export function sessionRecord(memory: SessionMemory): JsonObject {
     paused: memory.paused,
     breakage: { v: 1, global: copy(memory.breakage.global), accounts: Object.fromEntries([...memory.breakage.accounts].map(([acct, bucket]) => [acct, copy(bucket)])) },
     recent: memory.recent.map(({ acct, playlist, video, at }) => ({ acct, playlist, video, at })),
-    shown: { v: 1, global: { once: [...memory.shown.global], monitorPending: Object.fromEntries([...memory.monitorClaims].map(([key, claim]) => [key, { ...claim }])) }, accounts: Object.fromEntries([...memory.shown.accounts].map(([acct, once]) => [acct, { once: [...once] }])) }
+    shown: {
+      v: 1,
+      global: { once: [...memory.shown.global], monitorPending: Object.fromEntries([...memory.monitorClaims].map(([key, claim]) => [key, { ...claim }])) },
+      accounts: Object.fromEntries([...memory.shown.accounts].map(([acct, once]) => [acct, { once: [...once] }]))
+    }
   }
   for (const [acct, until] of memory.cooldowns) record[`cooldown:${acct}`] = until
   for (const [acct, videos] of memory.skips) record[`skips:${acct}`] = Object.fromEntries([...videos].map(([video, skip]) => [video, skip === "all" ? "all" : [...skip]]))
   // `gathers` stays the authority for Undo records, so a caller that filters it also filters the whole gather memory.
-  const last = [...memory.gathers.map((gather): GatherRecord => ({ to: "playlist", kind: "undo", record: gather })),
-    ...memory.gather.last.filter(gather => gather.kind !== "undo")]
+  const last = [...memory.gathers.map((gather): GatherRecord => ({ to: "playlist", kind: "undo", record: gather })), ...memory.gather.last.filter(gather => gather.kind !== "undo")]
   const gather = gatherEnvelope(undefined, { ...memory.gather, last })
   if (!gather) throw new TypeError("Invalid gather memory")
   record.gather = gather

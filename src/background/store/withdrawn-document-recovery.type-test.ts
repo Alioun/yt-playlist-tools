@@ -1,14 +1,62 @@
-import { executeExactRetainedFilter, readExactFilterSync, type ExactRetainedFilterPermit, type RetainedFilterJobIdentity, type RetainedFilterDescriptor, type AcceptedFilterRecord, type CompletedFilterRecord, type RegisteredFilterWitness, type ConsentRetainedFilterJob, type FilterTerminalPorts, type FilterRecoveryPorts, type RetainedFilterExecution } from "./withdrawn-document-recovery"
-import { executeExactRetainedAgreement, executeExactRetainedInstallation, executeExactRetainedV1Acceptance, executeExactRetainedInstallationAcceptance, type ExactRemovalPermit, type ExactRetainedAgreementPermit, type ExactRetainedV1AcceptancePermit, type ExactRetainedInstallationPermit, type ExactRetainedInstallationAcceptancePermit, type ExactRecoveryResult, type ConsentJobs } from "./consent-recovery"
+import {
+  executeExactRetainedFilter,
+  readExactFilterSync,
+  type ExactRetainedFilterPermit,
+  type RetainedFilterJobIdentity,
+  type RetainedFilterDescriptor,
+  type AcceptedFilterRecord,
+  type CompletedFilterRecord,
+  type RegisteredFilterWitness,
+  type ConsentRetainedFilterJob,
+  type FilterTerminalPorts,
+  type FilterRecoveryPorts,
+  type RetainedFilterExecution
+} from "./withdrawn-document-recovery"
+import {
+  executeExactRetainedAgreement,
+  executeExactRetainedInstallation,
+  executeExactRetainedV1Acceptance,
+  executeExactRetainedInstallationAcceptance,
+  type ExactRemovalPermit,
+  type ExactRetainedAgreementPermit,
+  type ExactRetainedV1AcceptancePermit,
+  type ExactRetainedInstallationPermit,
+  type ExactRetainedInstallationAcceptancePermit,
+  type ExactRecoveryResult,
+  type ConsentJobs
+} from "./consent-recovery"
 import type { createLocalFilterWriter } from "./local-filter-writer"
 import type { JsonObject } from "../../shared/contracts/json"
 import type { PlaylistRestoreEffect } from "./interim-recovery-execution"
 import type { InstalledRetainedInstallationV3, AcceptedRetainedInstallationV3 } from "./interim-installation"
-import { executeExactRetainedPlaylist, readExactPlaylistSync, type ExactRetainedPlaylistPermit, type RetainedPlaylistJobIdentity, type RetainedPlaylistDescriptor, type AcceptedPlaylistRecord, type CompletedPlaylistRecord, type RegisteredPlaylistWitness, type ConsentRetainedPlaylistJob, type PlaylistTerminalPorts, type PlaylistRecoveryPorts, type RetainedPlaylistExecution, type RetainedPlaylistView } from "./withdrawn-document-recovery"
+import {
+  executeExactRetainedPlaylist,
+  readExactPlaylistSync,
+  type ExactRetainedPlaylistPermit,
+  type RetainedPlaylistJobIdentity,
+  type RetainedPlaylistDescriptor,
+  type AcceptedPlaylistRecord,
+  type CompletedPlaylistRecord,
+  type RegisteredPlaylistWitness,
+  type ConsentRetainedPlaylistJob,
+  type PlaylistTerminalPorts,
+  type PlaylistRecoveryPorts,
+  type RetainedPlaylistExecution,
+  type RetainedPlaylistView
+} from "./withdrawn-document-recovery"
 import type { FilterReplacementEffect } from "./interim-recovery-execution"
 type LocalFilterWriter = ReturnType<typeof createLocalFilterWriter>
 
-function positive(permit: ExactRetainedFilterPermit, ports: FilterRecoveryPorts, terminal: FilterTerminalPorts, identity: RetainedFilterJobIdentity, accepted: AcceptedFilterRecord, completed: CompletedFilterRecord, confirmed: Extract<RetainedFilterExecution, { kind: "confirmed" }>, owner: LocalFilterWriter) {
+function positive(
+  permit: ExactRetainedFilterPermit,
+  ports: FilterRecoveryPorts,
+  terminal: FilterTerminalPorts,
+  identity: RetainedFilterJobIdentity,
+  accepted: AcceptedFilterRecord,
+  completed: CompletedFilterRecord,
+  confirmed: Extract<RetainedFilterExecution, { kind: "confirmed" }>,
+  owner: LocalFilterWriter
+) {
   const descriptor: RetainedFilterDescriptor = { kind: "retained-filter-replacement", deviceId: identity.deviceId, accepted }
   const witness: RegisteredFilterWitness = { descriptor, registration: { kind: "registered", occurrence: identity.occurrence } }
   const job: ConsentRetainedFilterJob = { identity, progress: { kind: "accepted" }, permission: { kind: "held" } }
@@ -21,7 +69,23 @@ function positive(permit: ExactRetainedFilterPermit, ports: FilterRecoveryPorts,
   void owner.readWithdrawnWork({ kind: "ui", windowId: 1, incognito: false })
   void result
 }
-function negative(filter: ExactRetainedFilterPermit, removal: ExactRemovalPermit, receipt: ExactRetainedAgreementPermit, v1: ExactRetainedV1AcceptancePermit, installation: ExactRetainedInstallationPermit, acceptance: ExactRetainedInstallationAcceptancePermit, identity: RetainedFilterJobIdentity, accepted: AcceptedFilterRecord, completed: CompletedFilterRecord, installed: InstalledRetainedInstallationV3 & JsonObject, ports: FilterRecoveryPorts, terminal: FilterTerminalPorts, playlist: PlaylistRestoreEffect, owner: LocalFilterWriter, ledger: ConsentJobs) {
+function negative(
+  filter: ExactRetainedFilterPermit,
+  removal: ExactRemovalPermit,
+  receipt: ExactRetainedAgreementPermit,
+  v1: ExactRetainedV1AcceptancePermit,
+  installation: ExactRetainedInstallationPermit,
+  acceptance: ExactRetainedInstallationAcceptancePermit,
+  identity: RetainedFilterJobIdentity,
+  accepted: AcceptedFilterRecord,
+  completed: CompletedFilterRecord,
+  installed: InstalledRetainedInstallationV3 & JsonObject,
+  ports: FilterRecoveryPorts,
+  terminal: FilterTerminalPorts,
+  playlist: PlaylistRestoreEffect,
+  owner: LocalFilterWriter,
+  ledger: ConsentJobs
+) {
   // @ts-expect-error Public JSON cannot construct the private filter permit.
   const fabricated: ExactRetainedFilterPermit = {}
   // @ts-expect-error A durable armed permission is not process-local filter authority.
@@ -79,18 +143,52 @@ function negative(filter: ExactRetainedFilterPermit, removal: ExactRemovalPermit
   // @ts-expect-error A public recovery input cannot choose an account.
   owner.recoverWithdrawnWork({ kind: "ui", windowId: 1, incognito: false }, { review: { kind: "withdrawn-work-review" }, job: { kind: "held-job-selection" }, acct: playlist.key.acct })
   // @ts-expect-error A filter completion cannot use installation operation correlation.
-  const mixed: ExactRecoveryResult = { kind: "recovered", job: identity, completion: { operation: "retained-installation", result: { kind: "confirmed", identity, original: identity.original, current: identity.original, activation: "held", mutations: [] } }, remaining: [] }
+  const mixed: ExactRecoveryResult = {
+    kind: "recovered",
+    job: identity,
+    completion: { operation: "retained-installation", result: { kind: "confirmed", identity, original: identity.original, current: identity.original, activation: "held", mutations: [] } },
+    remaining: []
+  }
   // @ts-expect-error A failed filter execution cannot be recovered.
-  const failed: ExactRecoveryResult = { kind: "recovered", job: identity, completion: { operation: "retained-filter-replacement", result: { kind: "failed", identity, stage: "documents", write: { kind: "rejected", error: null }, mutations: [] } }, remaining: [] }
+  const failed: ExactRecoveryResult = {
+    kind: "recovered",
+    job: identity,
+    completion: { operation: "retained-filter-replacement", result: { kind: "failed", identity, stage: "documents", write: { kind: "rejected", error: null }, mutations: [] } },
+    remaining: []
+  }
   // @ts-expect-error There is no ledger-only acceptance repair port in this unit.
   ports.setAcceptance({ interimConversion: accepted, "consent:jobs": ledger })
   // @ts-expect-error Document witnesses cannot register an unaccepted predecessor.
   const unregistered: RegisteredFilterWitness = { descriptor: { kind: "retained-filter-replacement", deviceId: identity.deviceId, accepted }, registration: { kind: "unregistered", expectedNext: 0 } }
-  void [fabricated, devicePort, completedDescriptor, v3Completion, v3FilterBasis, heldTerminal, retiringAccepted, hostGeneration, wrongOriginal, stringLocator, noOccurrence, mixed, failed, unregistered]
+  void [
+    fabricated,
+    devicePort,
+    completedDescriptor,
+    v3Completion,
+    v3FilterBasis,
+    heldTerminal,
+    retiringAccepted,
+    hostGeneration,
+    wrongOriginal,
+    stringLocator,
+    noOccurrence,
+    mixed,
+    failed,
+    unregistered
+  ]
 }
 void [positive, negative]
 
-function playlistPositive(permit: ExactRetainedPlaylistPermit, ports: PlaylistRecoveryPorts, terminal: PlaylistTerminalPorts, identity: RetainedPlaylistJobIdentity, accepted: AcceptedPlaylistRecord, completed: CompletedPlaylistRecord, confirmed: Extract<RetainedPlaylistExecution, { kind: "confirmed" }>, owner: LocalFilterWriter) {
+function playlistPositive(
+  permit: ExactRetainedPlaylistPermit,
+  ports: PlaylistRecoveryPorts,
+  terminal: PlaylistTerminalPorts,
+  identity: RetainedPlaylistJobIdentity,
+  accepted: AcceptedPlaylistRecord,
+  completed: CompletedPlaylistRecord,
+  confirmed: Extract<RetainedPlaylistExecution, { kind: "confirmed" }>,
+  owner: LocalFilterWriter
+) {
   const descriptor: RetainedPlaylistDescriptor = { kind: "retained-playlist-restore", deviceId: identity.deviceId, accepted }
   const witness: RegisteredPlaylistWitness = { descriptor, registration: { kind: "registered", occurrence: identity.occurrence } }
   const job: ConsentRetainedPlaylistJob = { identity, progress: { kind: "accepted" }, permission: { kind: "held" } }
@@ -105,21 +203,58 @@ function playlistPositive(permit: ExactRetainedPlaylistPermit, ports: PlaylistRe
 }
 type InstalledPlaylistRecord = Extract<AcceptedPlaylistRecord, { readonly basis: { readonly checkpoint: { readonly v: 3 } } }>
 type InstalledCompletedPlaylistRecord = Extract<CompletedPlaylistRecord, { readonly basis: { readonly checkpoint: { readonly v: 3 } } }>
-function installedPlaylistPositive(installedAccepted: InstalledPlaylistRecord, installedCompleted: InstalledCompletedPlaylistRecord, accepted: AcceptedPlaylistRecord, installed: InstalledRetainedInstallationV3 & JsonObject, identity: RetainedPlaylistJobIdentity, terminal: PlaylistTerminalPorts, confirmed: Extract<RetainedPlaylistExecution, { kind: "confirmed" }>) {
+function installedPlaylistPositive(
+  installedAccepted: InstalledPlaylistRecord,
+  installedCompleted: InstalledCompletedPlaylistRecord,
+  accepted: AcceptedPlaylistRecord,
+  installed: InstalledRetainedInstallationV3 & JsonObject,
+  identity: RetainedPlaylistJobIdentity,
+  terminal: PlaylistTerminalPorts,
+  confirmed: Extract<RetainedPlaylistExecution, { kind: "confirmed" }>
+) {
   const reachable: [InstalledPlaylistRecord, InstalledCompletedPlaylistRecord] extends [never, unknown] | [unknown, never] ? false : true = true
   const basis: typeof accepted.basis.checkpoint = installed
   const accepting = installedAccepted.basis.checkpoint.agreed.agreement.effect
-  const installedIdentity: RetainedPlaylistJobIdentity = { deviceId: identity.deviceId, occurrence: identity.occurrence, operation: { kind: "retained-playlist-restore", record: installedAccepted }, original: accepting.consent }
+  const installedIdentity: RetainedPlaylistJobIdentity = {
+    deviceId: identity.deviceId,
+    occurrence: identity.occurrence,
+    operation: { kind: "retained-playlist-restore", record: installedAccepted },
+    original: accepting.consent
+  }
   const descriptor: RetainedPlaylistDescriptor = { kind: "retained-playlist-restore", deviceId: identity.deviceId, accepted: installedAccepted }
   const witness: RegisteredPlaylistWitness = { descriptor, registration: { kind: "registered", occurrence: installedIdentity.occurrence } }
   const job: ConsentRetainedPlaylistJob = { identity: installedIdentity, progress: { kind: "terminal" }, permission: { kind: "retiring", generation: 2, current: identity.original } }
   const local: { readonly kind: "off" } = installedAccepted.pending.effect.admission
   const scope: { readonly kind: "this-browser" } = installedAccepted.pending.effect.scope
-  const result: ExactRecoveryResult = { kind: "recovered", job: installedIdentity, completion: { operation: "retained-playlist-restore", result: { ...confirmed, identity: installedIdentity, original: accepting.consent } }, remaining: [] }
+  const result: ExactRecoveryResult = {
+    kind: "recovered",
+    job: installedIdentity,
+    completion: { operation: "retained-playlist-restore", result: { ...confirmed, identity: installedIdentity, original: accepting.consent } },
+    remaining: []
+  }
   void terminal.setCompleted(installedCompleted)
   void [reachable, basis, witness, job, local, scope, result]
 }
-function playlistNegative(permit: ExactRetainedPlaylistPermit, filter: ExactRetainedFilterPermit, removal: ExactRemovalPermit, receipt: ExactRetainedAgreementPermit, v1: ExactRetainedV1AcceptancePermit, installation: ExactRetainedInstallationPermit, acceptance: ExactRetainedInstallationAcceptancePermit, identity: RetainedPlaylistJobIdentity, accepted: AcceptedPlaylistRecord, completed: CompletedPlaylistRecord, filterRecord: AcceptedFilterRecord, acceptedInstallation: AcceptedRetainedInstallationV3 & JsonObject, installedAccepted: InstalledPlaylistRecord, ports: PlaylistRecoveryPorts, terminal: PlaylistTerminalPorts, filterPorts: FilterRecoveryPorts, effect: FilterReplacementEffect, owner: LocalFilterWriter) {
+function playlistNegative(
+  permit: ExactRetainedPlaylistPermit,
+  filter: ExactRetainedFilterPermit,
+  removal: ExactRemovalPermit,
+  receipt: ExactRetainedAgreementPermit,
+  v1: ExactRetainedV1AcceptancePermit,
+  installation: ExactRetainedInstallationPermit,
+  acceptance: ExactRetainedInstallationAcceptancePermit,
+  identity: RetainedPlaylistJobIdentity,
+  accepted: AcceptedPlaylistRecord,
+  completed: CompletedPlaylistRecord,
+  filterRecord: AcceptedFilterRecord,
+  acceptedInstallation: AcceptedRetainedInstallationV3 & JsonObject,
+  installedAccepted: InstalledPlaylistRecord,
+  ports: PlaylistRecoveryPorts,
+  terminal: PlaylistTerminalPorts,
+  filterPorts: FilterRecoveryPorts,
+  effect: FilterReplacementEffect,
+  owner: LocalFilterWriter
+) {
   // @ts-expect-error Public JSON cannot construct a playlist permit.
   const fabricated: ExactRetainedPlaylistPermit = {}
   // @ts-expect-error A copied display token cannot construct a playlist permit.
@@ -199,9 +334,27 @@ function playlistNegative(permit: ExactRetainedPlaylistPermit, filter: ExactReta
   // @ts-expect-error Terminal progress cannot have held permission.
   const held: ConsentRetainedPlaylistJob = { identity, progress: { kind: "terminal" }, permission: { kind: "held" } }
   // @ts-expect-error A completed view cannot be unregistered.
-  const unregistered: RetainedPlaylistView = { kind: "retained-playlist-restore", selection: { kind: "held-job-selection" }, identity, current: identity.original, recoverability: "exact-retained-document", registration: "unregistered", checkpoint: "completed", progress: "terminal" }
+  const unregistered: RetainedPlaylistView = {
+    kind: "retained-playlist-restore",
+    selection: { kind: "held-job-selection" },
+    identity,
+    current: identity.original,
+    recoverability: "exact-retained-document",
+    registration: "unregistered",
+    checkpoint: "completed",
+    progress: "terminal"
+  }
   // @ts-expect-error A completed view cannot have accepted progress.
-  const acceptedView: RetainedPlaylistView = { kind: "retained-playlist-restore", selection: { kind: "held-job-selection" }, identity, current: identity.original, recoverability: "exact-retained-document", registration: "registered", checkpoint: "completed", progress: "accepted" }
+  const acceptedView: RetainedPlaylistView = {
+    kind: "retained-playlist-restore",
+    selection: { kind: "held-job-selection" },
+    identity,
+    current: identity.original,
+    recoverability: "exact-retained-document",
+    registration: "registered",
+    checkpoint: "completed",
+    progress: "accepted"
+  }
   // @ts-expect-error A registered witness requires its occurrence.
   const witness: RegisteredPlaylistWitness = { descriptor: { kind: "retained-playlist-restore", deviceId: identity.deviceId, accepted }, registration: { kind: "registered" } }
   // @ts-expect-error The accepted locator is a global occurrence.
@@ -227,9 +380,41 @@ function playlistNegative(permit: ExactRetainedPlaylistPermit, filter: ExactReta
   // @ts-expect-error Recovery cannot accept a new generation.
   owner.recoverWithdrawnWork({ kind: "ui", windowId: 1, incognito: false }, { review: { kind: "withdrawn-work-review" }, job: { kind: "held-job-selection" }, generation: 3 })
   // @ts-expect-error A recovered playlist must keep playlist operation correlation.
-  const mixed: ExactRecoveryResult = { kind: "recovered", job: identity, completion: { operation: "retained-filter-replacement", result: { kind: "confirmed", identity, original: identity.original, current: identity.original, activation: "held", mutations: [] } }, remaining: [] }
+  const mixed: ExactRecoveryResult = {
+    kind: "recovered",
+    job: identity,
+    completion: { operation: "retained-filter-replacement", result: { kind: "confirmed", identity, original: identity.original, current: identity.original, activation: "held", mutations: [] } },
+    remaining: []
+  }
   // @ts-expect-error A recovered playlist cannot contain a failed execution.
-  const failed: ExactRecoveryResult = { kind: "recovered", job: identity, completion: { operation: "retained-playlist-restore", result: { kind: "failed", identity, stage: "documents", write: { kind: "rejected", error: null }, mutations: [] } }, remaining: [] }
-  void [fabricated, filterDescriptor, completedDescriptor, uninstalled, syncedV3, syncingV3, retiring, done, held, unregistered, acceptedView, witness, accountLocator, stringLocator, longLocator, rawAccount, rawPlaylist, generation, timestamp, mixed, failed]
+  const failed: ExactRecoveryResult = {
+    kind: "recovered",
+    job: identity,
+    completion: { operation: "retained-playlist-restore", result: { kind: "failed", identity, stage: "documents", write: { kind: "rejected", error: null }, mutations: [] } },
+    remaining: []
+  }
+  void [
+    fabricated,
+    filterDescriptor,
+    completedDescriptor,
+    uninstalled,
+    syncedV3,
+    syncingV3,
+    retiring,
+    done,
+    held,
+    unregistered,
+    acceptedView,
+    witness,
+    accountLocator,
+    stringLocator,
+    longLocator,
+    rawAccount,
+    rawPlaylist,
+    generation,
+    timestamp,
+    mixed,
+    failed
+  ]
 }
 void [playlistPositive, installedPlaylistPositive, playlistNegative]

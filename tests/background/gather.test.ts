@@ -17,16 +17,39 @@ const DAY = 86_400_000
 const video = (n: number) => `gat${String(n).padStart(8, "0")}`
 const watch = (n: number) => `https://www.youtube.com/watch?v=${video(n)}`
 
-type Tab = { id: number; windowId: number; index: number; url: string; title: string; active: boolean; pinned: boolean; audible: boolean
-  incognito: boolean; lastAccessed: number; status: "complete"; discarded: false }
+type Tab = {
+  id: number
+  windowId: number
+  index: number
+  url: string
+  title: string
+  active: boolean
+  pinned: boolean
+  audible: boolean
+  incognito: boolean
+  lastAccessed: number
+  status: "complete"
+  discarded: false
+}
 type Listener = (message: unknown, sender: unknown, respond: (answer?: unknown) => void) => boolean | undefined
 type Sender = { id: string; url: string; frameId?: number; documentId?: string; tab?: { id: number; windowId: number; incognito: boolean } }
 
 function event<T extends (...args: never[]) => unknown>() {
   const listeners = new Set<T>()
-  return { listeners, addListener: (fn: T) => { listeners.add(fn) }, removeListener: (fn: T) => { listeners.delete(fn) }, hasListener: (fn: T) => listeners.has(fn) }
+  return {
+    listeners,
+    addListener: (fn: T) => {
+      listeners.add(fn)
+    },
+    removeListener: (fn: T) => {
+      listeners.delete(fn)
+    },
+    hasListener: (fn: T) => listeners.has(fn)
+  }
 }
-function glob(pattern: string) { return new RegExp(`^${pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")}$`) }
+function glob(pattern: string) {
+  return new RegExp(`^${pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*")}$`)
+}
 
 // The browser's tab strip: windows, tabs and their places. Only the background reads and changes it, through the browser's calls.
 function strip() {
@@ -34,11 +57,27 @@ function strip() {
   const windows = new Map<number, { id: number; incognito: boolean; focused: boolean }>([[1, { id: 1, incognito: false, focused: true }]])
   let serial = 100
   const inWindow = (windowId: number) => [...tabs.values()].filter(tab => tab.windowId === windowId).sort((a, b) => a.index - b.index)
-  const reindex = (windowId: number) => inWindow(windowId).forEach((tab, index) => { tab.index = index })
+  const reindex = (windowId: number) =>
+    inWindow(windowId).forEach((tab, index) => {
+      tab.index = index
+    })
   function open(id: number, url: string, patch: Partial<Tab> = {}) {
     const windowId = patch.windowId ?? 1
-    const tab: Tab = { id, windowId, index: inWindow(windowId).length, url, title: `${url.slice(-11)} - YouTube`, active: false, pinned: false, audible: false,
-      incognito: windows.get(windowId)?.incognito ?? false, lastAccessed: Date.now(), status: "complete", discarded: false, ...patch }
+    const tab: Tab = {
+      id,
+      windowId,
+      index: inWindow(windowId).length,
+      url,
+      title: `${url.slice(-11)} - YouTube`,
+      active: false,
+      pinned: false,
+      audible: false,
+      incognito: windows.get(windowId)?.incognito ?? false,
+      lastAccessed: Date.now(),
+      status: "complete",
+      discarded: false,
+      ...patch
+    }
     if (tab.active) for (const other of inWindow(windowId)) other.active = false
     tabs.set(id, tab)
     return tab
@@ -46,8 +85,12 @@ function strip() {
   const native = {
     async query(info: { windowId?: number; active?: boolean; url?: string | string[]; discarded?: boolean }) {
       const urls = info.url === undefined ? null : (Array.isArray(info.url) ? info.url : [info.url]).map(glob)
-      return [...tabs.values()].filter(tab => (info.windowId === undefined || tab.windowId === info.windowId) && (info.active === undefined || tab.active === info.active)
-        && (urls === null || urls.some(url => url.test(tab.url)))).sort((a, b) => a.windowId - b.windowId || a.index - b.index).map(tab => ({ ...tab }))
+      return [...tabs.values()]
+        .filter(
+          tab => (info.windowId === undefined || tab.windowId === info.windowId) && (info.active === undefined || tab.active === info.active) && (urls === null || urls.some(url => url.test(tab.url)))
+        )
+        .sort((a, b) => a.windowId - b.windowId || a.index - b.index)
+        .map(tab => ({ ...tab }))
     },
     async get(tabId: number) {
       const tab = tabs.get(tabId)
@@ -68,8 +111,16 @@ function strip() {
     }
   }
   const nativeWindows = {
-    async get(windowId: number) { const window = windows.get(windowId); if (!window) throw new Error(`No window with id: ${windowId}.`); return { ...window } },
-    async getLastFocused() { const window = [...windows.values()].find(entry => entry.focused); if (!window) throw new Error("No window"); return { ...window } },
+    async get(windowId: number) {
+      const window = windows.get(windowId)
+      if (!window) throw new Error(`No window with id: ${windowId}.`)
+      return { ...window }
+    },
+    async getLastFocused() {
+      const window = [...windows.values()].find(entry => entry.focused)
+      if (!window) throw new Error("No window")
+      return { ...window }
+    },
     async create(props: { url: string[]; focused: false }) {
       const id = Math.max(...windows.keys()) + 1
       windows.set(id, { id, incognito: false, focused: false })
@@ -87,30 +138,47 @@ function youtube() {
   const jobs: string[] = []
   function answer(kind: string, payload: { job: { kind: string; videoId?: string; videoIds?: string[]; setVideoIds?: string[] } }): unknown {
     switch (kind) {
-      case "bg.ping": return { site: "www", build, signedIn: true, acct }
-      case "bg.view": return null
-      case "bg.gatherToast": toasts.push(payload); return null
+      case "bg.ping":
+        return { site: "www", build, signedIn: true, acct }
+      case "bg.view":
+        return null
+      case "bg.gatherToast":
+        toasts.push(payload)
+        return null
       case "bg.job": {
         const job = payload.job
         jobs.push(job.kind)
         const route = "e2e-route"
         switch (job.kind) {
-          case "account": return { ok: true, route, data: { signedIn: true, acct } }
-          case "membership": return { ok: true, route, data: [{ id: "WL", title: "Watch later", contains: [...later.values()].includes(job.videoId ?? "") }] }
-          case "addBatch": return { ok: true, route, data: { results: (job.videoIds ?? []).map(videoId => {
-            const setVideoId = `entry-${++entry}`
-            later.set(setVideoId, videoId)
-            return { videoId, setVideoId }
-          }) } }
-          case "removeBatch": return { ok: true, route, data: { removed: (job.setVideoIds ?? []).filter(id => later.delete(id)).length } }
-          default: return { ok: false, reason: "unavailable" }
+          case "account":
+            return { ok: true, route, data: { signedIn: true, acct } }
+          case "membership":
+            return { ok: true, route, data: [{ id: "WL", title: "Watch later", contains: [...later.values()].includes(job.videoId ?? "") }] }
+          case "addBatch":
+            return {
+              ok: true,
+              route,
+              data: {
+                results: (job.videoIds ?? []).map(videoId => {
+                  const setVideoId = `entry-${++entry}`
+                  later.set(setVideoId, videoId)
+                  return { videoId, setVideoId }
+                })
+              }
+            }
+          case "removeBatch":
+            return { ok: true, route, data: { removed: (job.setVideoIds ?? []).filter(id => later.delete(id)).length } }
+          default:
+            return { ok: false, reason: "unavailable" }
         }
       }
     }
     return undefined
   }
   return {
-    later, toasts, jobs,
+    later,
+    toasts,
+    jobs,
     receive(message: unknown) {
       const { id, kind, payload } = message as { id: string; kind: string; payload: never }
       const result = answer(kind, payload)
@@ -122,18 +190,23 @@ function youtube() {
 function omitAbsentKeys() {
   for (const area of [fakeBrowser.storage.local, fakeBrowser.storage.session, fakeBrowser.storage.sync]) {
     const get = area.get.bind(area)
-    Object.assign(area, { async get(keys?: unknown) {
-      const found: Record<string, unknown> = await get(keys as never)
-      return Object.fromEntries(Object.entries(found).filter(([, value]) => value !== undefined))
-    } })
+    Object.assign(area, {
+      async get(keys?: unknown) {
+        const found: Record<string, unknown> = await get(keys as never)
+        return Object.fromEntries(Object.entries(found).filter(([, value]) => value !== undefined))
+      }
+    })
   }
 }
-function documented(name: string, data: Record<string, unknown>) { return { v: 1, gen: `gen-${name}`, at: 1, by: "e2e-device", data } }
+function documented(name: string, data: Record<string, unknown>) {
+  return { v: 1, gen: `gen-${name}`, at: 1, by: "e2e-device", data }
+}
 
 // One browser: storage, the tab strip and YouTube outlive any background, as they do when the worker stops.
 function browser(gather: Record<string, unknown>) {
   omitAbsentKeys()
-  const tabs = strip(), site = youtube()
+  const tabs = strip(),
+    site = youtube()
   const servingTabs = new Set([1])
   const pushes: GatherPush[] = []
   const badges: unknown[] = []
@@ -148,8 +221,12 @@ function browser(gather: Record<string, unknown>) {
       ...fakeBrowser,
       storage: fakeBrowser.storage,
       runtime: {
-        id: extension, getURL: (path: string) => `chrome-extension://${extension}${path.startsWith("/") ? path : `/${path}`}`,
-        getManifest: () => ({ version: "2.0.0", manifest_version: 3 }), onMessage, onInstalled: event(), onStartup: event(),
+        id: extension,
+        getURL: (path: string) => `chrome-extension://${extension}${path.startsWith("/") ? path : `/${path}`}`,
+        getManifest: () => ({ version: "2.0.0", manifest_version: 3 }),
+        onMessage,
+        onInstalled: event(),
+        onStartup: event(),
         // The background's own pushes reach the open extension pages, never the background itself.
         async sendMessage(message: unknown) {
           if (!isGatherPush(message, build)) return undefined
@@ -157,7 +234,9 @@ function browser(gather: Record<string, unknown>) {
           return popupOpen && message.payload.windowId === 1 ? { shown: true } : undefined
         }
       },
-      tabs: { ...tabs.native, onRemoved,
+      tabs: {
+        ...tabs.native,
+        onRemoved,
         async remove(ids: number[]) {
           await (removing ? removing(ids) : tabs.native.remove(ids))
           for (const id of ids) for (const listener of [...onRemoved.listeners]) listener(id)
@@ -167,24 +246,60 @@ function browser(gather: Record<string, unknown>) {
           const answer = servingTabs.has(tabId) && tabs.tabs.has(tabId) ? site.receive(message) : undefined
           if (answer === undefined) throw new Error("Could not establish connection. Receiving end does not exist.")
           return answer
-        } },
+        }
+      },
       windows: tabs.nativeWindows,
-      i18n: { ...scriptedMessages(), async detectLanguage() { return { isReliable: false, languages: [] } } },
-      permissions: { async contains(request: { origins?: string[]; permissions?: string[] }) {
-        return (request.permissions ?? []).length === 0 && (request.origins ?? []).every(origin => granted.includes(origin))
-      }, onAdded: event(), onRemoved: event() },
+      i18n: {
+        ...scriptedMessages(),
+        async detectLanguage() {
+          return { isReliable: false, languages: [] }
+        }
+      },
+      permissions: {
+        async contains(request: { origins?: string[]; permissions?: string[] }) {
+          return (request.permissions ?? []).length === 0 && (request.origins ?? []).every(origin => granted.includes(origin))
+        },
+        onAdded: event(),
+        onRemoved: event()
+      },
       // The YouTube tab already runs our page half, core and kit, without the jobs file, so the Registrar's probe finds nothing to inject.
-      scripting: { async getRegisteredContentScripts() { return [] }, async registerContentScripts() {}, async updateContentScripts() {},
+      scripting: {
+        async getRegisteredContentScripts() {
+          return []
+        },
+        async registerContentScripts() {},
+        async updateContentScripts() {},
         async unregisterContentScripts() {},
         async executeScript(injection: { target: { tabId: number }; world: "ISOLATED" | "MAIN" }) {
           if (!servingTabs.has(injection.target.tabId)) return []
-          return injection.world === "MAIN" ? [{ frameId: 0, result: [true, false] }]
-            : [{ frameId: 0, documentId: "youtube-document", result: { documentId: "youtube-document", loaded: [["core-www", build], ["kit-www", build]] } }]
-        } },
+          return injection.world === "MAIN"
+            ? [{ frameId: 0, result: [true, false] }]
+            : [
+                {
+                  frameId: 0,
+                  documentId: "youtube-document",
+                  result: {
+                    documentId: "youtube-document",
+                    loaded: [
+                      ["core-www", build],
+                      ["kit-www", build]
+                    ]
+                  }
+                }
+              ]
+        }
+      },
       commands: { onCommand: event() },
       contextMenus: { onClicked: event(), async removeAll() {}, create() {} },
-      action: { async setBadgeText(details: unknown) { badges.push(["text", details]) }, async setBadgeBackgroundColor() {},
-        async setTitle(details: unknown) { badges.push(["title", details]) } }
+      action: {
+        async setBadgeText(details: unknown) {
+          badges.push(["text", details])
+        },
+        async setBadgeBackgroundColor() {},
+        async setTitle(details: unknown) {
+          badges.push(["title", details])
+        }
+      }
     } as unknown as NativeBrowser
     const background = boot(native, platform)
     function send(message: unknown, sender: Sender): Promise<unknown> {
@@ -195,19 +310,25 @@ function browser(gather: Record<string, unknown>) {
       })
     }
     // The toolbar popup open in a window.
-    const popupIn = (windowId: number): Backend => createBackend({
-      local: { get: keys => fakeBrowser.storage.local.get([...keys]), all: () => fakeBrowser.storage.local.get(null), onChanged: fakeBrowser.storage.onChanged },
-      send: message => send(message, { id: extension, url: native.runtime.getURL("/popup.html"), documentId: `popup-document-${windowId}` }),
-      access: { has: async () => true, request: async () => true, requestCombined: async () => ({ music: false, browserMenu: false }), hasBrowserMenu: async () => false }
-    }, { build, deadline: timerDeadline, windowId })
+    const popupIn = (windowId: number): Backend =>
+      createBackend(
+        {
+          local: { get: keys => fakeBrowser.storage.local.get([...keys]), all: () => fakeBrowser.storage.local.get(null), onChanged: fakeBrowser.storage.onChanged },
+          send: message => send(message, { id: extension, url: native.runtime.getURL("/popup.html"), documentId: `popup-document-${windowId}` }),
+          access: { has: async () => true, request: async () => true, requestCombined: async () => ({ music: false, browserMenu: false }), hasBrowserMenu: async () => false }
+        },
+        { build, deadline: timerDeadline, windowId }
+      )
     const popup = popupIn(1)
     let serial = 0
     // The YouTube tab's site core says hello when its page loads (ARC-MSG-15).
     function hello(tabId: number, start: { hidden: boolean; fresh: boolean } = { hidden: false, fresh: true }) {
       const tab = tabs.tabs.get(tabId)
       if (!tab) throw new Error("No such tab")
-      return send({ v: CONTRACT_VERSION, build, id: `hello-${++serial}`, kind: "tab.hello", payload: { site: "www", build, signedIn: true, acct, ...start } },
-        { id: extension, url: tab.url, frameId: 0, tab: { id: tabId, windowId: tab.windowId, incognito: tab.incognito } })
+      return send(
+        { v: CONTRACT_VERSION, build, id: `hello-${++serial}`, kind: "tab.hello", payload: { site: "www", build, signedIn: true, acct, ...start } },
+        { id: extension, url: tab.url, frameId: 0, tab: { id: tabId, windowId: tab.windowId, incognito: tab.incognito } }
+      )
     }
     async function line(call: Promise<{ kind: string; result?: unknown }>): Promise<GatherLine> {
       const answer = await call
@@ -219,17 +340,27 @@ function browser(gather: Record<string, unknown>) {
     return { background, native, popup, popupIn, hello, line }
   }
   return {
-    tabs, site, pushes, badges, messagedTabs, worker,
+    tabs,
+    site,
+    pushes,
+    badges,
+    messagedTabs,
+    worker,
     async seed() {
       await fakeBrowser.storage.local.set({
-        schema: 1, device: { id: "e2e-device", consent: { v: 1, at: 1 }, syncOn: false },
+        schema: 1,
+        device: { id: "e2e-device", consent: { v: 1, at: 1 }, syncOn: false },
         "doc:settings": documented("settings", { gather: { on: true, feedback: true, to: "playlist", order: "left-to-right", close: true, ...gather } }),
         [`doc:setup:${acct}`]: documented("setup", { label: { name: "Alpha" }, gather: "WL" }),
         sync: { joined: null, pushed: {}, status: "off", editedSinceOff: false, everEdited: false }
       })
     },
-    closePopup() { popupOpen = false },
-    onRemove(fn: (ids: number[]) => Promise<void>) { removing = fn }
+    closePopup() {
+      popupOpen = false
+    },
+    onRemove(fn: (ids: number[]) => Promise<void>) {
+      removing = fn
+    }
   }
 }
 
@@ -241,7 +372,9 @@ async function eventually(check: () => boolean | Promise<boolean>, what: string)
   throw new Error(`Timed out waiting: ${what}`)
 }
 const running: Background[] = []
-afterEach(async () => { for (const background of running.splice(0)) await background.dispose().catch(() => {}) })
+afterEach(async () => {
+  for (const background of running.splice(0)) await background.dispose().catch(() => {})
+})
 
 test("Gather in the popup saves the window's video tabs to the gather playlist, closes them, and Undo removes them and reopens the tabs", async () => {
   const world = browser({})
@@ -345,7 +478,10 @@ test("two gathers in a row whose YouTube's player tab shows no list reach the Mo
   running.push(w.background)
   await w.background.ready
   // The tab registry starts once the store reports consent; a hello before that is dropped, as a real tab's would be.
-  await eventually(async () => { const status = await w.popup.call("ui.status", {}); return status.kind === "answered" && status.result.kind === "status" }, "the popup's status")
+  await eventually(async () => {
+    const status = await w.popup.call("ui.status", {})
+    return status.kind === "answered" && status.result.kind === "status"
+  }, "the popup's status")
   await w.hello(1)
 
   // YouTube never turns the new tabs' watch_videos address into a list, so neither 10 s check confirms it. Two windows wait out one 10 s together.

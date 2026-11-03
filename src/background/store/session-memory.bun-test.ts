@@ -4,19 +4,24 @@ import { planSessionChange, parseSessionMemory, RECENT_MS } from "./session-memo
 import { removalFixture } from "../../../tools/fixtures/account-removal-execution/run"
 import { isAccountKey, isPlaylistId, isVideoId } from "../../shared/model"
 
-const acct = "AAAAAAAAAAAAAAAA", other = "BBBBBBBBBBBBBBBB"
+const acct = "AAAAAAAAAAAAAAAA",
+  other = "BBBBBBBBBBBBBBBB"
 if (!isAccountKey(acct) || !isAccountKey(other)) throw Error("Invalid synthetic account")
-const playlist = "PL_selected", video = "aaaaaaaaaaa"
+const playlist = "PL_selected",
+  video = "aaaaaaaaaaa"
 if (!isPlaylistId(playlist) || !isVideoId(video)) throw Error("Invalid synthetic identifiers")
 
 test("edits touch only their names and keep every unknown field, other account and private-free partition", () => {
   const session = { ...removalFixture().session, tabs: { "1": { site: "www", acct, signedIn: true } } }
-  const plan = planSessionChange(session, { now: 30, edits: [
-    { kind: "recent", tuple: { acct, playlist, video, at: 30 } },
-    { kind: "cooldown", acct: other, until: 400 },
-    { kind: "skip", acct, video, playlists: [playlist] },
-    { kind: "shown", acct, keys: ["missing:PL_selected", "refused"] }
-  ] })
+  const plan = planSessionChange(session, {
+    now: 30,
+    edits: [
+      { kind: "recent", tuple: { acct, playlist, video, at: 30 } },
+      { kind: "cooldown", acct: other, until: 400 },
+      { kind: "skip", acct, video, playlists: [playlist] },
+      { kind: "shown", acct, keys: ["missing:PL_selected", "refused"] }
+    ]
+  })
   if (!plan) throw Error("Supported fixture refused")
   expect(Object.keys(plan.items).sort()).toEqual(["cooldown:BBBBBBBBBBBBBBBB", "recent", "shown"])
   expect(plan.remove).toEqual([])
@@ -25,8 +30,12 @@ test("edits touch only their names and keep every unknown field, other account a
     { acct: other, playlist: "PL_selected", video: "bbbbbbbbbbb", at: 1, extension: { acct, keep: true } },
     { acct, playlist, video, at: 30 }
   ])
-  expect(plan.expected.shown).toEqual({ v: 1, global: { keep: true, accountLookingExtension: { acct, keep: true }, paced: { "1": 10 }, once: ["refused"] },
-    accounts: { [acct]: { owned: true, once: ["missing:PL_selected"] }, [other]: { extension: { keep: true } } }, extension: [null, 1] })
+  expect(plan.expected.shown).toEqual({
+    v: 1,
+    global: { keep: true, accountLookingExtension: { acct, keep: true }, paced: { "1": 10 }, once: ["refused"] },
+    accounts: { [acct]: { owned: true, once: ["missing:PL_selected"] }, [other]: { extension: { keep: true } } },
+    extension: [null, 1]
+  })
   expect(plan.expected[`skips:${acct}`]).toEqual({ [video]: "all" })
   const removal = planAccountSessionRemoval(acct, plan.expected)
   expect(removal.kind).toBe("supported")
@@ -35,7 +44,16 @@ test("edits touch only their names and keep every unknown field, other account a
 test("persisted windows end early when wall time moves backwards and never stretch", () => {
   const memory = parseSessionMemory({ recent: [{ acct, playlist, video, at: 1_000 }] })
   expect(memory?.recent).toEqual([{ acct, playlist, video, at: 1_000 }])
-  const later = planSessionChange({ recent: [{ acct, playlist, video, at: 1_000 }] }, { now: 1_000 + RECENT_MS, edits: [{ kind: "pause", paused: false }, { kind: "forget", acct: other, playlist, video }] })
+  const later = planSessionChange(
+    { recent: [{ acct, playlist, video, at: 1_000 }] },
+    {
+      now: 1_000 + RECENT_MS,
+      edits: [
+        { kind: "pause", paused: false },
+        { kind: "forget", acct: other, playlist, video }
+      ]
+    }
+  )
   expect(later?.expected.recent).toEqual([])
   const earlier = planSessionChange({ recent: [{ acct, playlist, video, at: 1_000 }] }, { now: 999, edits: [{ kind: "forget", acct: other, playlist, video }] })
   expect(earlier?.expected.recent).toEqual([])
@@ -44,7 +62,10 @@ test("persisted windows end early when wall time moves backwards and never stret
 test("the sixth gather evicts the oldest and an ended record is never recreated", () => {
   let raw: Record<string, unknown> = {}
   for (let n = 1; n <= 6; n++) {
-    const plan = planSessionChange(raw, { now: n, edits: [{ kind: "gather", record: { id: `g${n}`, at: n, auto: false, acct: n % 2 ? acct : other, playlist, added: [{ video, setVideoId: null }] } }] })
+    const plan = planSessionChange(raw, {
+      now: n,
+      edits: [{ kind: "gather", record: { id: `g${n}`, at: n, auto: false, acct: n % 2 ? acct : other, playlist, added: [{ video, setVideoId: null }] } }]
+    })
     if (!plan) throw Error("Gather refused")
     raw = plan.expected
   }
@@ -55,8 +76,16 @@ test("the sixth gather evicts the oldest and an ended record is never recreated"
 })
 
 test("malformed records refuse instead of being rewritten", () => {
-  for (const raw of [null, [], { paused: "yes" }, { recent: [{ acct, playlist, video: "short", at: 1 }] }, { [`cooldown:${acct}`]: -1 },
-    { [`skips:${acct}`]: { [video]: "some" } }, { shown: { v: 2, global: {}, accounts: {} } }, { gather: { v: 1, global: {}, accounts: { [acct]: { last: [{ id: "g" }] } } } }]) {
+  for (const raw of [
+    null,
+    [],
+    { paused: "yes" },
+    { recent: [{ acct, playlist, video: "short", at: 1 }] },
+    { [`cooldown:${acct}`]: -1 },
+    { [`skips:${acct}`]: { [video]: "some" } },
+    { shown: { v: 2, global: {}, accounts: {} } },
+    { gather: { v: 1, global: {}, accounts: { [acct]: { last: [{ id: "g" }] } } } }
+  ]) {
     expect(parseSessionMemory(raw)).toBeUndefined()
     expect(planSessionChange(raw, { now: 1, edits: [{ kind: "pause", paused: true }] })).toBeUndefined()
   }
@@ -74,10 +103,18 @@ test("tab edits preserve unrelated data, compare semantic fields and guard stale
 })
 
 test("tab boundary rejects private facts, raw identity, browser objects and inconsistent sign-in", () => {
-  for (const tabs of [[], { bad: {} }, { "01": { site: "www", signedIn: false, acct: null } },
-    { "1": { site: "www", signedIn: true, acct: null } }, { "1": { site: "www", signedIn: false, acct } },
-    { "1": { site: "www", signedIn: true, acct, private: true } }, { "1": { site: "www", signedIn: true, acct, datasyncId: "raw" } },
-    { "1": { site: "www", signedIn: true, acct, window: {} } }, { "1": { site: "www", acct } }]) expect(parseSessionMemory({ tabs })).toBeUndefined()
+  for (const tabs of [
+    [],
+    { bad: {} },
+    { "01": { site: "www", signedIn: false, acct: null } },
+    { "1": { site: "www", signedIn: true, acct: null } },
+    { "1": { site: "www", signedIn: false, acct } },
+    { "1": { site: "www", signedIn: true, acct, private: true } },
+    { "1": { site: "www", signedIn: true, acct, datasyncId: "raw" } },
+    { "1": { site: "www", signedIn: true, acct, window: {} } },
+    { "1": { site: "www", acct } }
+  ])
+    expect(parseSessionMemory({ tabs })).toBeUndefined()
 })
 
 test("the can't-measure toast's shown-once key is accepted and read back for the whole browser session", () => {
@@ -89,11 +126,29 @@ test("the can't-measure toast's shown-once key is accepted and read back for the
 test("a Recent adds entry leaves the list with the Undo it names, and gathers name theirs too", () => {
   const entry = { at: 5, video: { id: video, title: "Video" }, playlists: [{ id: playlist, title: "Playlist" }] as const, feature: "quick-save", undo: "e:1" }
   const added = planSessionChange({}, { now: 5, edits: [{ kind: "recent-add", acct, entry }] })
-  expect(added?.items.recentAdds).toEqual([{ kind: "single", acct, at: 5, source: { kind: "feature", feature: "quick-save" },
-    playlists: [{ id: playlist, title: "Playlist" }], video: { id: video, title: "Video" }, undo: "e:1" }])
-  const undone = planSessionChange(added?.expected, { now: 6, edits: [{ kind: "recent-add-undone", acct: other, undo: "e:1" }, { kind: "recent-add-undone", acct, undo: "e:1" }] })
+  expect(added?.items.recentAdds).toEqual([
+    { kind: "single", acct, at: 5, source: { kind: "feature", feature: "quick-save" }, playlists: [{ id: playlist, title: "Playlist" }], video: { id: video, title: "Video" }, undo: "e:1" }
+  ])
+  const undone = planSessionChange(added?.expected, {
+    now: 6,
+    edits: [
+      { kind: "recent-add-undone", acct: other, undo: "e:1" },
+      { kind: "recent-add-undone", acct, undo: "e:1" }
+    ]
+  })
   expect(undone?.items.recentAdds).toEqual([])
-  const gathered = planSessionChange({}, { now: 7, edits: [{ kind: "gather", record: { id: "g1", at: 7, auto: false, acct, playlist, added: [{ video, setVideoId: null }] },
-    recent: { at: 7, playlist: { id: playlist, title: "Playlist" }, videos: [{ id: video, title: "Video" }] } }] })
+  const gathered = planSessionChange(
+    {},
+    {
+      now: 7,
+      edits: [
+        {
+          kind: "gather",
+          record: { id: "g1", at: 7, auto: false, acct, playlist, added: [{ video, setVideoId: null }] },
+          recent: { at: 7, playlist: { id: playlist, title: "Playlist" }, videos: [{ id: video, title: "Video" }] }
+        }
+      ]
+    }
+  )
   expect((gathered?.items.recentAdds as { undo?: string }[] | undefined)?.[0]?.undo).toBe("g1")
 })

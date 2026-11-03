@@ -10,16 +10,24 @@ export function createDisclosure(i18n: I18n) {
   const headings = {
     "first-run": i18n.message("disclosure_heading_first_run"),
     "upgrade-note": i18n.message("disclosure_heading_upgrade_note"),
-    "feature": i18n.message("disclosure_heading_feature"),
+    "feature": i18n.message("disclosure_heading_feature")
   } satisfies Record<DisclosureContext, string>
   return {
     headings,
     canonical(browser: BrowserKind): readonly string[] {
-      return [i18n.canonical("disclosure_heading_first_run"), i18n.canonical("disclosure_intro"),
-        i18n.canonical("disclosure_bullet_1"), i18n.canonical("disclosure_bullet_2"), i18n.canonical("disclosure_bullet_3"),
-        i18n.canonical("disclosure_bullet_4"), i18n.canonical("disclosure_bullet_5"), i18n.canonical("disclosure_bullet_6"),
+      return [
+        i18n.canonical("disclosure_heading_first_run"),
+        i18n.canonical("disclosure_intro"),
+        i18n.canonical("disclosure_bullet_1"),
+        i18n.canonical("disclosure_bullet_2"),
+        i18n.canonical("disclosure_bullet_3"),
+        i18n.canonical("disclosure_bullet_4"),
+        i18n.canonical("disclosure_bullet_5"),
+        i18n.canonical("disclosure_bullet_6"),
         i18n.canonical(browser === "firefox" ? "disclosure_closing_firefox" : "disclosure_closing_chrome"),
-        i18n.canonical("disclosure_policyLabel"), policyUrl]
+        i18n.canonical("disclosure_policyLabel"),
+        policyUrl
+      ]
     },
     intro: i18n.message("disclosure_intro"),
     items: [
@@ -28,7 +36,7 @@ export function createDisclosure(i18n: I18n) {
       { parts: i18n.rich("disclosure_bullet_3") },
       { parts: i18n.rich("disclosure_bullet_4"), provisional: "ticket-25-cookie" },
       { parts: i18n.rich("disclosure_bullet_5") },
-      { parts: i18n.rich("disclosure_bullet_6") },
+      { parts: i18n.rich("disclosure_bullet_6") }
     ] satisfies readonly DisclosureItem[],
     closing: { chrome: i18n.message("disclosure_closing_chrome"), firefox: i18n.message("disclosure_closing_firefox") } satisfies Record<BrowserKind, string>,
     policyLabel: i18n.message("disclosure_policyLabel"),
@@ -54,15 +62,17 @@ export function createFirstRunCopy(i18n: I18n) {
       fromSync: i18n.message("firstRun_pick_fromSync"),
       pageHint: i18n.message("firstRun_pick_pageHint"),
       musicAccess: {
-        chrome: i18n.message("firstRun_pick_musicAccess"), firefox: i18n.message("firstRun_pick_musicAccess_firefox")
+        chrome: i18n.message("firstRun_pick_musicAccess"),
+        firefox: i18n.message("firstRun_pick_musicAccess_firefox")
       } satisfies Record<BrowserKind, string>,
       footer: i18n.message("firstRun_pick_footer"),
-      continue: (n: number) => n ? i18n.message(i18n.plural(n) === "one" ? "firstRun_continue_one" : "firstRun_continue_other", { count: i18n.number(n) }) : i18n.message("firstRun_continue_none")
+      continue: (n: number) => (n ? i18n.message(i18n.plural(n) === "one" ? "firstRun_continue_one" : "firstRun_continue_other", { count: i18n.number(n) }) : i18n.message("firstRun_continue_none"))
     },
     consent: {
-      lead: (n: number) => n ? i18n.plural(n) === "one" ? i18n.message("firstRun_consentLead_one") : i18n.message("firstRun_consentLead_other", { count: i18n.number(n) }) : i18n.message("firstRun_consentLead_none"),
+      lead: (n: number) =>
+        n ? (i18n.plural(n) === "one" ? i18n.message("firstRun_consentLead_one") : i18n.message("firstRun_consentLead_other", { count: i18n.number(n) })) : i18n.message("firstRun_consentLead_none"),
       picked: i18n.message("firstRun_consent_picked"),
-      agree: (n: number) => n ? i18n.message(i18n.plural(n) === "one" ? "firstRun_agree_one" : "firstRun_agree_other", { count: i18n.number(n) }) : i18n.message("firstRun_agree_none"),
+      agree: (n: number) => (n ? i18n.message(i18n.plural(n) === "one" ? "firstRun_agree_one" : "firstRun_agree_other", { count: i18n.number(n) }) : i18n.message("firstRun_agree_none")),
       agreeing: i18n.message("firstRun_consent_agreeing"),
       notNow: i18n.message("firstRun_consent_notNow"),
       change: i18n.message("firstRun_consent_change"),

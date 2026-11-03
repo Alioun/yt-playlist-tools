@@ -10,11 +10,15 @@ export const knownProblems = `${repository}/issues?q=is%3Aissue+is%3Aopen+label%
  * Report a problem's prefilled address (REL-STORE-37, R89): the form, its title and the four values, every one
  * URL-encoded. It never carries a video, playlist, channel, account or the diagnostics report.
  */
-export function reportAddress(input: {
-  readonly kind: ReportKind; readonly version: string; readonly browser: string; readonly feature: string; readonly status: string
-}): string {
+export function reportAddress(input: { readonly kind: ReportKind; readonly version: string; readonly browser: string; readonly feature: string; readonly status: string }): string {
   const title = input.kind === "problem" ? `${input.feature}: ` : input.kind === "not-working" ? `${input.feature} isn't working` : ""
-  const values: [string, string][] = [["template", forms[input.kind]], ["title", title], ["version", input.version], ["browser", input.browser], ["feature", input.feature]]
+  const values: [string, string][] = [
+    ["template", forms[input.kind]],
+    ["title", title],
+    ["version", input.version],
+    ["browser", input.browser],
+    ["feature", input.feature]
+  ]
   if (input.kind !== "idea") values.push(["status", input.status])
   return `${repository}/issues/new?${values.map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join("&")}`
 }

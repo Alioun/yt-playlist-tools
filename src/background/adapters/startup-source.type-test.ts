@@ -3,7 +3,7 @@ import type { HistoricalFact } from "../store/interim-conversion"
 import type { InterimPersistenceSnapshot, StoreStartupHost } from "../store/interim-persistence"
 import type { StartupHost } from "../store/legacy-execution"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 type Deps = Parameters<typeof createStoreStartupHost>[0]
 export type StartupSourceProofs = [

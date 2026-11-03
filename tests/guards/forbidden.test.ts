@@ -19,7 +19,7 @@ describe("forbidden APIs", () => {
     ["outbound", "src/site/core/socket.ts", 'new WebSocket("wss://example.com")'],
     ["container-id", "src/background/tabs/tabs.ts", "const store = tab.cookieStoreId"],
     ["container-id", "src/shared/model/device.ts", 'type Device = { "cookieStoreId": string }'],
-    ["state-identity", "src/site/kit/picker/Picker.svelte", "<script lang=\"ts\">let rows = $state([]); const picked = rows.find(row => row === chosen)</script>"],
+    ["state-identity", "src/site/kit/picker/Picker.svelte", '<script lang="ts">let rows = $state([]); const picked = rows.find(row => row === chosen)</script>'],
     ["state-identity", "src/site/kit/picker/model.svelte.ts", "let selection = $state<Row | undefined>(); export const isPicked = (row: Row) => selection === row"],
     ["state-identity", "src/site/features/gather/view.svelte.ts", "const state = $state({ rows: [] as Row[] }); export const has = (row: Row) => state.rows.includes(row) || rows[0] === state"],
     ["state-identity", "src/site/kit/list.svelte.ts", "let rows = $state([] as Row[]); export const second = (row: Row) => rows[1] !== row"]
@@ -32,20 +32,26 @@ describe("forbidden APIs", () => {
   test("permitted shapes pass: the gateway's own fetch, the port method, raw or primitive state, DOM state and ID comparisons", () => {
     expect(rules("src/page/adapters/live-www.ts", "const response = await win.fetch(url, init)")).toEqual([])
     expect(rules("src/page/gateway/www-request.ts", "return port.fetch(`https://www.youtube.com/youtubei/v1/${path}`, init)")).toEqual([])
-    expect(rules("src/site/kit/toaster/Toast.svelte", [
-      '<script lang="ts">',
-      "let view = $state.raw<ToastView | null>(null); let container = $state<HTMLDivElement | undefined>(); let count = $state(0); let open = $state<boolean>(false)",
-      "const same = view === next || container === event.target || count === 3 || open !== false",
-      "const rows = $state([] as Row[]); const found = rows.find(row => row.id === chosen.id); const at = rows.indexOf(\"x\"); const empty = rows.length === 0",
-      "</script>"
-    ].join("\n"))).toEqual([])
+    expect(
+      rules(
+        "src/site/kit/toaster/Toast.svelte",
+        [
+          '<script lang="ts">',
+          "let view = $state.raw<ToastView | null>(null); let container = $state<HTMLDivElement | undefined>(); let count = $state(0); let open = $state<boolean>(false)",
+          "const same = view === next || container === event.target || count === 3 || open !== false",
+          'const rows = $state([] as Row[]); const found = rows.find(row => row.id === chosen.id); const at = rows.indexOf("x"); const empty = rows.length === 0',
+          "</script>"
+        ].join("\n")
+      )
+    ).toEqual([])
     expect(rules("src/background/store/item.ts", 'storage.defineItem("local:x", { fallback: 1 })')).toEqual([])
     expect(rules("src/ui/settings/state.svelte.ts", "let rows = $state([]); export const same = (row: unknown) => rows[0] === row")).toEqual([])
   })
 
   test("findings name the file and line", () => {
-    expect(inspectForbidden([{ file: "src/background/boot.ts", text: "const a = 1\n\nbrowser.runtime.onUpdateAvailable" }]))
-      .toEqual([{ file: "src/background/boot.ts", line: 3, rule: "update-listener", evidence: "onUpdateAvailable" }])
+    expect(inspectForbidden([{ file: "src/background/boot.ts", text: "const a = 1\n\nbrowser.runtime.onUpdateAvailable" }])).toEqual([
+      { file: "src/background/boot.ts", line: 3, rule: "update-listener", evidence: "onUpdateAvailable" }
+    ])
   })
 
   test("the 1.x OAuth code and the rest of src/lib stay deleted (REL-CI-53)", () => {

@@ -28,13 +28,15 @@ function navigationType(win: Window): PageNavigationType | null {
     const entry = win.performance.getEntriesByType("navigation")[0]
     const type: unknown = entry && "type" in entry ? entry.type : undefined
     return navigationTypes.find(known => known === type) ?? null
-  } catch { return null }
+  } catch {
+    return null
+  }
 }
 
 function pageType(site: Site, location: Location): PageType {
   const path = location.pathname
-  const type: DiagnosticPageType = path === "/watch" ? "watch" : path.startsWith("/shorts/") ? "shorts"
-    : site === "music" ? "music-browse" : path === "/" ? "home" : path === "/results" ? "search" : "other"
+  const type: DiagnosticPageType =
+    path === "/watch" ? "watch" : path.startsWith("/shorts/") ? "shorts" : site === "music" ? "music-browse" : path === "/" ? "home" : path === "/results" ? "search" : "other"
   if (!isPageType(type)) throw new Error("Invalid page type")
   return type
 }
@@ -74,28 +76,48 @@ function createJobsLoader(options: { site: Site; build: BuildId; clock: GatewayC
       if (asking) return
       asking = true
       stopDeadline = clock.after(jobLimitMs, () => settle(false))
-      try { options.ask() } catch { settle(false) }
+      try {
+        options.ask()
+      } catch {
+        settle(false)
+      }
     })
   }
   const loader: Jobs = {
-    get vocabulary() { return jobs?.vocabulary ?? readVocabulary },
-    run: <J extends Job>(job: J, ctx?: JobContext) => use((ready, waited) => ready.run(job, waited > 0 ? { ...ctx, budget: jobLimitMs - waited } : ctx),
-      (): Promise<PageJobResult<J>> => Promise.resolve({ ok: false, reason: "unavailable" })),
-    probe: () => use(ready => ready.probe(), () => Promise.reject(new Error("The jobs file is unavailable"))),
+    get vocabulary() {
+      return jobs?.vocabulary ?? readVocabulary
+    },
+    run: <J extends Job>(job: J, ctx?: JobContext) =>
+      use(
+        (ready, waited) => ready.run(job, waited > 0 ? { ...ctx, budget: jobLimitMs - waited } : ctx),
+        (): Promise<PageJobResult<J>> => Promise.resolve({ ok: false, reason: "unavailable" })
+      ),
+    probe: () =>
+      use(
+        ready => ready.probe(),
+        () => Promise.reject(new Error("The jobs file is unavailable"))
+      ),
     dispose() {
       if (disposed) return
       disposed = true
       stopDeadline()
-      for (const entry of [...waiting]) { waiting.delete(entry); entry.fail() }
+      for (const entry of [...waiting]) {
+        waiting.delete(entry)
+        entry.fail()
+      }
       jobs?.dispose()
     }
   }
   return {
     loader,
-    get attached() { return jobs !== undefined },
+    get attached() {
+      return jobs !== undefined
+    },
     offer(detail: unknown): void {
       if (disposed || !asking || jobs || !isJobsOffer(detail, options)) return
-      try { jobs = detail.create(options.host()) } catch {}
+      try {
+        jobs = detail.create(options.host())
+      } catch {}
     },
     loaded(ok: boolean): void {
       if (!disposed && asking) settle(ok)
@@ -117,12 +139,13 @@ export function startPage(options: PageStartOptions): PageEndpoint {
   let live: { reads: LiveReads; gateway: Gateway } | undefined
   let retired = false
 
-  const jobs = createJobsLoader({ site, build, clock: options.clock ?? systemClock, ask: () => endpoint.need(),
-    host: () => ({ window: win, document: doc, reads: made().reads.gateway }) })
+  const jobs = createJobsLoader({ site, build, clock: options.clock ?? systemClock, ask: () => endpoint.need(), host: () => ({ window: win, document: doc, reads: made().reads.gateway }) })
   function made() {
     if (!live) {
       const reads = options.createReads({ window: win, document: doc })
-      reads.gateway.onSignal(signal => { for (const sink of [...sinks]) sink(signal) })
+      reads.gateway.onSignal(signal => {
+        for (const sink of [...sinks]) sink(signal)
+      })
       live = { reads, gateway: composeGateway(reads.gateway, jobs.loader) }
     }
     return live
@@ -132,26 +155,39 @@ export function startPage(options: PageStartOptions): PageEndpoint {
     return account ? { ...account, pageType: pageType(site, win.location), startedHidden, navType } : undefined
   }
 
-  const endpoint = servePage({
-    run: (job, context) => made().gateway.run(job, context),
-    watch: (stream, onData) => made().gateway.watch(stream, onData),
-    probe: () => made().gateway.probe()
-  }, {
-    site, build, snapshot,
-    vocabulary: () => jobs.loader.vocabulary,
-    loaded: ok => jobs.loaded(ok),
-    signals(sink) {
-      sinks.add(sink)
-      return () => { sinks.delete(sink) }
-    }
-  }, channel)
+  const endpoint = servePage(
+    {
+      run: (job, context) => made().gateway.run(job, context),
+      watch: (stream, onData) => made().gateway.watch(stream, onData),
+      probe: () => made().gateway.probe()
+    },
+    {
+      site,
+      build,
+      snapshot,
+      vocabulary: () => jobs.loader.vocabulary,
+      loaded: ok => jobs.loaded(ok),
+      signals(sink) {
+        sinks.add(sink)
+        return () => {
+          sinks.delete(sink)
+        }
+      }
+    },
+    channel
+  )
   const answer = (event: Event, present: boolean) => {
     if (present && event instanceof CustomEvent && event.detail === build) event.preventDefault()
   }
   const listeners: [string, (event: Event) => void][] = [
     [pagePresenceEvent, event => answer(event, true)],
     [pageJobsPresenceEvent, event => answer(event, jobs.attached)],
-    [pageJobsEvent, event => { if (event instanceof CustomEvent) jobs.offer(event.detail) }]
+    [
+      pageJobsEvent,
+      event => {
+        if (event instanceof CustomEvent) jobs.offer(event.detail)
+      }
+    ]
   ]
   for (const [type, listener] of listeners) doc.addEventListener(type, listener)
   function dispose() {
@@ -159,13 +195,24 @@ export function startPage(options: PageStartOptions): PageEndpoint {
     retired = true
     stopRetire()
     for (const [type, listener] of listeners) doc.removeEventListener(type, listener)
-    try { endpoint.dispose() } finally {
-      try { jobs.loader.dispose() } finally { live?.reads.dispose() }
+    try {
+      endpoint.dispose()
+    } finally {
+      try {
+        jobs.loader.dispose()
+      } finally {
+        live?.reads.dispose()
+      }
     }
   }
   const stopRetire = channel.listen("retire", detail => {
     const parsed = parseJsonText(detail)
     if (parsed.ok && isPageRetireMessage(parsed.value) && parsed.value.build !== build) dispose()
   })
-  return { get disposed() { return endpoint.disposed }, dispose }
+  return {
+    get disposed() {
+      return endpoint.disposed
+    },
+    dispose
+  }
 }

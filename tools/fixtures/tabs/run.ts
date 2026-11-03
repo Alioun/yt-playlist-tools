@@ -13,7 +13,9 @@ export async function runTabsFixture() {
     const routed = await restarted.serve({ job: { kind: "playlists" }, acct: a }, { site: "www", req: normal, account: accountA })
     const privateView = await h.engine.accountInView(privateRequester)
     return { seen, privateSeen, inView, privateView, routed, stored: h.stored(), calls: h.calls, sessionWrites: h.sessionWrites() }
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 }
 
 if (import.meta.main) process.stdout.write(`${JSON.stringify(await runTabsFixture())}\n`)

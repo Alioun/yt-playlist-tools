@@ -3,8 +3,7 @@ import type { TabStorageProjection, TabProjectionRequest } from "./tab-projectio
 import type { AccountKey } from "../../shared/model"
 import type { SessionRevision } from "./session-memory"
 
-function projectionBoundaries(owner: ReturnType<typeof createLocalFilterWriter>, acct: AccountKey,
-  view: TabStorageProjection, revision: SessionRevision) {
+function projectionBoundaries(owner: ReturnType<typeof createLocalFilterWriter>, acct: AccountKey, view: TabStorageProjection, revision: SessionRevision) {
   void owner.readTabProjection({ private: false, account: { kind: "signed-in", acct } })
   void owner.readTabProjection({ private: true, account: { kind: "unknown" } })
   void owner.readLastAccount({ kind: "normal-window", windowId: 1, incognito: false })

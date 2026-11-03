@@ -24,12 +24,14 @@ export function composeMonitor(deps: {
   /** Whether YouTube's player showed Gather's lists lately, which only the Gather module sees. */
   readonly player?: () => "usable" | "no-effect"
 }) {
-  const jobs = new Set<JobId>(), anchorIds = new Set<AnchorId>()
-  for (const feature of features) for (const health of Object.values(feature.health)) {
-    if (!health) continue
-    for (const job of [...health.required, ...health.optional, ...Object.values(health.actions ?? {}).flat()]) jobs.add(job)
-    for (const anchor of [...health.anchors, ...health.optionalAnchors ?? []]) anchorIds.add(anchor)
-  }
+  const jobs = new Set<JobId>(),
+    anchorIds = new Set<AnchorId>()
+  for (const feature of features)
+    for (const health of Object.values(feature.health)) {
+      if (!health) continue
+      for (const job of [...health.required, ...health.optional, ...Object.values(health.actions ?? {}).flat()]) jobs.add(job)
+      for (const anchor of [...health.anchors, ...(health.optionalAnchors ?? [])]) anchorIds.add(anchor)
+    }
   for (const job of ["queueAddList", "addBatch", "removeBatch", "membership", "account"] as const) jobs.add(job)
   const noEvidence: JobRoutes = { routes: [{ route: "no-evidence" as RouteId, state: "usable" }] }
   // A route's failures come from the tab's recorded signals; the authority only names the routes each job ships (HEALTH-07).
@@ -38,8 +40,11 @@ export function composeMonitor(deps: {
     return first ? { routes: [{ route: first, state: "usable" }, ...rest.map(route => ({ route, state: "usable" as const }))] } : noEvidence
   }
   const both = deps.sites ? [deps.sites.www.vocabulary, deps.sites.music.vocabulary] : []
-  const vocabulary: DiagnosticVocabulary = { routes: [...new Set(both.flatMap(row => row.routes))], watchIds: [...new Set(both.flatMap(row => row.watchIds))],
-    schemaKeys: [...new Set(both.flatMap(row => row.schemaKeys))] }
+  const vocabulary: DiagnosticVocabulary = {
+    routes: [...new Set(both.flatMap(row => row.routes))],
+    watchIds: [...new Set(both.flatMap(row => row.watchIds))],
+    schemaKeys: [...new Set(both.flatMap(row => row.schemaKeys))]
+  }
   const notApplicable: AnchorObservation = { kind: "not-applicable" }
   void anchors
   const authority: MonitorAuthority = {
@@ -47,15 +52,23 @@ export function composeMonitor(deps: {
       return { kind: "context", facts: tabViewFacts(context), visible: true, fullscreen: false, current: () => true }
     },
     async health(context: TabContext) {
-      return { kind: "health", current: () => true, facts: {
-        site: context.tab.site, core: "present", accountKeys: "present",
-        jobs: new Map([...jobs].map(job => [job, shipped(context.tab.site, job)])),
-        anchors: new Map([...anchorIds].map(anchor => [anchor, notApplicable])),
-        gather: { player: deps.player?.() ?? "usable", queue: "usable", playlist: "usable" },
-        background: new Map([["sync", { state: "working", kinds: [] }]])
-      } }
+      return {
+        kind: "health",
+        current: () => true,
+        facts: {
+          site: context.tab.site,
+          core: "present",
+          accountKeys: "present",
+          jobs: new Map([...jobs].map(job => [job, shipped(context.tab.site, job)])),
+          anchors: new Map([...anchorIds].map(anchor => [anchor, notApplicable])),
+          gather: { player: deps.player?.() ?? "usable", queue: "usable", playlist: "usable" },
+          background: new Map([["sync", { state: "working", kinds: [] }]])
+        }
+      }
     },
-    subscribe(changed) { return deps.owner.subscribeView(() => changed({ kind: "session" })) }
+    subscribe(changed) {
+      return deps.owner.subscribeView(() => changed({ kind: "session" }))
+    }
   }
   const instance = Array.from(crypto.getRandomValues(new Uint8Array(8)), byte => byte.toString(16).padStart(2, "0")).join("") as MonitorInstance
   return createMonitor({ owner: deps.owner, authority, vocabulary, instance, clock: deps.clock })

@@ -1,7 +1,8 @@
 import clsx from "clsx"
 
 // No base class sets a property a variant or size sets, because clsx doesn't merge utilities (UI-RULE-12).
-const base = "focus-visible:border-ring focus-visible:ring-ring/40 border bg-clip-padding font-medium focus-visible:ring-3 active:not-aria-disabled:translate-y-px inline-flex shrink-0 items-center justify-center max-w-full whitespace-normal text-center transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-progress [&_svg]:pointer-events-none [&_svg]:shrink-0"
+const base =
+  "focus-visible:border-ring focus-visible:ring-ring/40 border bg-clip-padding font-medium focus-visible:ring-3 active:not-aria-disabled:translate-y-px inline-flex shrink-0 items-center justify-center max-w-full whitespace-normal text-center transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-progress [&_svg]:pointer-events-none [&_svg]:shrink-0"
 
 const variants = {
   default: "border-transparent bg-primary text-primary-foreground hover:bg-primary/88 shadow-[inset_0_1px_0_rgb(255_255_255/0.12)]",

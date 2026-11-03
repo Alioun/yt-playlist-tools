@@ -7,8 +7,14 @@ export type ForbiddenFinding = { file: string; line: number; rule: ForbiddenRule
 /** Names that may not appear in production source at all, as an identifier, property or string key. */
 const forbiddenNames: Record<string, ForbiddenRule> = {
   onUpdateAvailable: "update-listener",
-  getAuthToken: "oauth", launchWebAuthFlow: "oauth", removeCachedAuthToken: "oauth",
-  XMLHttpRequest: "outbound", sendBeacon: "outbound", WebSocket: "outbound", EventSource: "outbound", RTCPeerConnection: "outbound",
+  getAuthToken: "oauth",
+  launchWebAuthFlow: "oauth",
+  removeCachedAuthToken: "oauth",
+  XMLHttpRequest: "outbound",
+  sendBeacon: "outbound",
+  WebSocket: "outbound",
+  EventSource: "outbound",
+  RTCPeerConnection: "outbound",
   cookieStoreId: "container-id"
 }
 const extensionNamespaces = new Set(["browser", "chrome"])
@@ -35,15 +41,23 @@ function primitiveType(type: ts.TypeNode): boolean {
   if (ts.isUnionTypeNode(type)) return type.types.every(primitiveType)
   if (ts.isLiteralTypeNode(type)) return true
   if (ts.isTypeReferenceNode(type)) return unproxied.test(type.typeName.getText())
-  return [ts.SyntaxKind.StringKeyword, ts.SyntaxKind.NumberKeyword, ts.SyntaxKind.BooleanKeyword, ts.SyntaxKind.BigIntKeyword,
-    ts.SyntaxKind.UndefinedKeyword, ts.SyntaxKind.NullKeyword, ts.SyntaxKind.SymbolKeyword].includes(type.kind)
+  return [
+    ts.SyntaxKind.StringKeyword,
+    ts.SyntaxKind.NumberKeyword,
+    ts.SyntaxKind.BooleanKeyword,
+    ts.SyntaxKind.BigIntKeyword,
+    ts.SyntaxKind.UndefinedKeyword,
+    ts.SyntaxKind.NullKeyword,
+    ts.SyntaxKind.SymbolKeyword
+  ].includes(type.kind)
 }
 
 /** Svelte proxies a plain object or array held in $state, so the binding may not be compared by identity. $state.raw doesn't proxy. */
 function proxiedState(declaration: ts.VariableDeclaration): boolean {
   const call = declaration.initializer && unwrap(declaration.initializer)
   if (!call || !ts.isCallExpression(call) || !ts.isIdentifier(call.expression) || call.expression.text !== "$state") return false
-  const [argument] = call.arguments, [type] = call.typeArguments ?? []
+  const [argument] = call.arguments,
+    [type] = call.typeArguments ?? []
   if (type) return !primitiveType(type)
   const value = argument && unwrap(argument)
   return value !== undefined && (ts.isObjectLiteralExpression(value) || ts.isArrayLiteralExpression(value) || ts.isNewExpression(value))
@@ -51,19 +65,34 @@ function proxiedState(declaration: ts.VariableDeclaration): boolean {
 
 function literal(node: ts.Expression): boolean {
   node = unwrap(node)
-  return ts.isLiteralExpression(node) || ts.isNoSubstitutionTemplateLiteral(node) || ts.isTemplateExpression(node) || ts.isTypeOfExpression(node)
-    || [ts.SyntaxKind.NullKeyword, ts.SyntaxKind.TrueKeyword, ts.SyntaxKind.FalseKeyword].includes(node.kind)
-    || (ts.isIdentifier(node) && node.text === "undefined") || ts.isPrefixUnaryExpression(node)
+  return (
+    ts.isLiteralExpression(node) ||
+    ts.isNoSubstitutionTemplateLiteral(node) ||
+    ts.isTemplateExpression(node) ||
+    ts.isTypeOfExpression(node) ||
+    [ts.SyntaxKind.NullKeyword, ts.SyntaxKind.TrueKeyword, ts.SyntaxKind.FalseKeyword].includes(node.kind) ||
+    (ts.isIdentifier(node) && node.text === "undefined") ||
+    ts.isPrefixUnaryExpression(node)
+  )
 }
 
 export function inspectForbidden(sources: readonly Source[]): ForbiddenFinding[] {
   const findings: ForbiddenFinding[] = []
   for (const source of sources) {
-    const file = ts.createSourceFile(source.file.endsWith(".svelte") ? `${source.file}.ts` : source.file, scriptText(source), ts.ScriptTarget.Latest, true,
-      source.file.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS)
-    const report = (rule: ForbiddenRule, node: ts.Node) => findings.push({
-      file: source.file, line: file.getLineAndCharacterOfPosition(node.getStart(file)).line + 1, rule, evidence: node.getText(file).replace(/\s+/g, " ").slice(0, 120)
-    })
+    const file = ts.createSourceFile(
+      source.file.endsWith(".svelte") ? `${source.file}.ts` : source.file,
+      scriptText(source),
+      ts.ScriptTarget.Latest,
+      true,
+      source.file.endsWith("x") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+    )
+    const report = (rule: ForbiddenRule, node: ts.Node) =>
+      findings.push({
+        file: source.file,
+        line: file.getLineAndCharacterOfPosition(node.getStart(file)).line + 1,
+        rule,
+        evidence: node.getText(file).replace(/\s+/g, " ").slice(0, 120)
+      })
     const proxied = new Set<string>()
     if (stateScope(source.file)) {
       const collect = (node: ts.Node): void => {
@@ -83,7 +112,8 @@ export function inspectForbidden(sources: readonly Source[]): ForbiddenFinding[]
         for (const declaration of node.initializer.declarations) if (ts.isIdentifier(declaration.name)) proxied.add(declaration.name.text)
       }
       if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) && elementCallbacks.has(node.expression.name.text) && rootedInState(node.expression.expression)) {
-        const [callback] = node.arguments, [element] = callback && (ts.isArrowFunction(callback) || ts.isFunctionExpression(callback)) ? callback.parameters : []
+        const [callback] = node.arguments,
+          [element] = callback && (ts.isArrowFunction(callback) || ts.isFunctionExpression(callback)) ? callback.parameters : []
         if (element && ts.isIdentifier(element.name)) proxied.add(element.name.text)
       }
       const name = ts.isIdentifier(node) || ts.isStringLiteral(node) ? node.text : undefined
@@ -91,17 +121,23 @@ export function inspectForbidden(sources: readonly Source[]): ForbiddenFinding[]
       if (ts.isPropertyAccessExpression(node) && node.name.text === "identity" && ts.isIdentifier(node.expression) && extensionNamespaces.has(node.expression.text)) report("oauth", node)
       if (ts.isCallExpression(node)) {
         const callee = unwrap(node.expression)
-        const globalFetch = ts.isIdentifier(callee) ? callee.text === "fetch"
+        const globalFetch = ts.isIdentifier(callee)
+          ? callee.text === "fetch"
           : ts.isPropertyAccessExpression(callee) && callee.name.text === "fetch" && ts.isIdentifier(callee.expression) && windowLike.has(callee.expression.text)
         if (globalFetch && source.file !== youtubeRequester) report("outbound", node)
         const calleeName = ts.isIdentifier(callee) ? callee.text : ts.isPropertyAccessExpression(callee) ? callee.name.text : undefined
-        if (calleeName === "defineItem" && node.arguments.some(argument => ts.isObjectLiteralExpression(argument)
-          && argument.properties.some(property => property.name && ["version", "migrations"].includes(propertyName(property.name) ?? "")))) report("item-migrations", node)
-        if (ts.isPropertyAccessExpression(callee) && identitySearches.has(callee.name.text) && rootedInState(callee.expression)
-          && node.arguments[0] && !literal(node.arguments[0])) report("state-identity", node)
+        if (
+          calleeName === "defineItem" &&
+          node.arguments.some(
+            argument => ts.isObjectLiteralExpression(argument) && argument.properties.some(property => property.name && ["version", "migrations"].includes(propertyName(property.name) ?? ""))
+          )
+        )
+          report("item-migrations", node)
+        if (ts.isPropertyAccessExpression(callee) && identitySearches.has(callee.name.text) && rootedInState(callee.expression) && node.arguments[0] && !literal(node.arguments[0]))
+          report("state-identity", node)
       }
-      if (ts.isBinaryExpression(node) && equality.has(node.operatorToken.kind)
-        && ((rootedInState(node.left) && !literal(node.right)) || (rootedInState(node.right) && !literal(node.left)))) report("state-identity", node)
+      if (ts.isBinaryExpression(node) && equality.has(node.operatorToken.kind) && ((rootedInState(node.left) && !literal(node.right)) || (rootedInState(node.right) && !literal(node.left))))
+        report("state-identity", node)
       ts.forEachChild(node, visit)
     }
     visit(file)

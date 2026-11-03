@@ -13,29 +13,33 @@ export type LocalSettingsWriteResult =
   | { readonly kind: "result"; readonly result: Extract<ChangeResult, { refused: string }> }
   | { readonly kind: "unavailable"; readonly reason: "startup" | "newer-layout" | "sync-writer-required" | "stale" | "disposed" }
   | { readonly kind: "failed"; readonly stage: "before-set" | "set"; readonly error: unknown }
-  | { readonly kind: "unconfirmed"; readonly cause:
-    | { readonly kind: "authority" | "readback" }
-    | { readonly kind: "read-failed"; readonly error: unknown }
-  }
+  | { readonly kind: "unconfirmed"; readonly cause: { readonly kind: "authority" | "readback" } | { readonly kind: "read-failed"; readonly error: unknown } }
 
 type Authority =
-  | { readonly kind: "ready"; readonly device: Device; readonly rawDevice: JsonObject; readonly history:
-    { readonly raw: JsonObject; readonly editedSinceOff: boolean; readonly joined: string | null } | undefined }
+  | {
+      readonly kind: "ready"
+      readonly device: Device
+      readonly rawDevice: JsonObject
+      readonly history: { readonly raw: JsonObject; readonly editedSinceOff: boolean; readonly joined: string | null } | undefined
+    }
   | { readonly kind: "unavailable"; readonly reason: "startup" | "newer-layout" | "sync-writer-required" | "account-context" | "stale" }
 
 function jsonObject(value: unknown): value is JsonObject {
   return value !== null && typeof value === "object" && !Array.isArray(value) && isJsonValue(value)
 }
 
-export async function executeSharedSetting(deps: {
-  readonly local: LocalWriteStorage
-  readonly sync: Pick<SyncStorage, "get">
-  readonly authority: (records: Readonly<Record<string, unknown>>) => Authority
-  readonly repairHistory: (raw: JsonObject, repairs: readonly SyncDocumentRecord[]) => JsonObject | undefined
-  readonly disposed: () => boolean
-  readonly now: () => number
-  readonly generation: () => string
-}, change: SharedSettingChange): Promise<LocalSettingsWriteResult> {
+export async function executeSharedSetting(
+  deps: {
+    readonly local: LocalWriteStorage
+    readonly sync: Pick<SyncStorage, "get">
+    readonly authority: (records: Readonly<Record<string, unknown>>) => Authority
+    readonly repairHistory: (raw: JsonObject, repairs: readonly SyncDocumentRecord[]) => JsonObject | undefined
+    readonly disposed: () => boolean
+    readonly now: () => number
+    readonly generation: () => string
+  },
+  change: SharedSettingChange
+): Promise<LocalSettingsWriteResult> {
   const invalid = { kind: "result", result: { refused: "invalid" } } as const
   const unavailable = { kind: "unavailable", reason: "sync-writer-required" } as const
   try {
@@ -70,8 +74,7 @@ export async function executeSharedSetting(deps: {
     }
     records = copyObject(records)
     const raw = baseline["doc:settings"]
-    const envelope = { ...(jsonObject(raw) ? raw : {}), v: DOCUMENT_VERSION,
-      gen: deps.generation(), at: deps.now(), by: ready.device.id, data: settings }
+    const envelope = { ...(jsonObject(raw) ? raw : {}), v: DOCUMENT_VERSION, gen: deps.generation(), at: deps.now(), by: ready.device.id, data: settings }
     if ("deleted" in envelope) delete envelope.deleted
     if (!jsonObject(envelope) || decodeDocument(envelope, decodeSettings).kind !== "value") return invalid
     const items: JsonObject = { "doc:settings": envelope }
@@ -93,14 +96,22 @@ export async function executeSharedSetting(deps: {
     const before = await deps.local.get(["schema", "device", "sync", "doc:settings"])
     if (!jsonObject(before) || !sameSyncJson(readSettingsSnapshot(before), baseline)) return { kind: "unavailable", reason: "stale" }
     if (deps.disposed()) return { kind: "unavailable", reason: "disposed" }
-    try { await deps.local.set(items) } catch (error) { return { kind: "failed", stage: "set", error } }
+    try {
+      await deps.local.set(items)
+    } catch (error) {
+      return { kind: "failed", stage: "set", error }
+    }
     try {
       const confirmed = await deps.local.get(["schema", "device", "sync", "doc:settings"])
       if (deps.disposed()) return { kind: "unconfirmed", cause: { kind: "authority" } }
       if (!jsonObject(confirmed) || !sameSyncJson(readSettingsSnapshot(confirmed), { ...baseline, ...items })) return { kind: "unconfirmed", cause: { kind: "readback" } }
       return { kind: "committed" }
-    } catch (error) { return { kind: "unconfirmed", cause: { kind: "read-failed", error } } }
-  } catch (error) { return { kind: "failed", stage: "before-set", error } }
+    } catch (error) {
+      return { kind: "unconfirmed", cause: { kind: "read-failed", error } }
+    }
+  } catch (error) {
+    return { kind: "failed", stage: "before-set", error }
+  }
 }
 
 function copy(value: JsonValue): JsonValue {

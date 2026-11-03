@@ -17,15 +17,29 @@ export function createLiveWwwRequests(options: { window: Window; document: Docum
     const app = doc.querySelector("ytd-app")
     if (!app) return { kind: "not-sent", cause: "missing" }
     let node: HTMLElement
-    try { node = doc.createElement("span"); node.hidden = true; app.append(node) }
-    catch { return { kind: "not-sent", cause: "preflight" } }
+    try {
+      node = doc.createElement("span")
+      node.hidden = true
+      app.append(node)
+    } catch {
+      return { kind: "not-sent", cause: "preflight" }
+    }
     const failure = context.check()
-    if (failure) { node.remove(); return { kind: "blocked", failure } }
+    if (failure) {
+      node.remove()
+      return { kind: "blocked", failure }
+    }
     let active = true
     let resolveAnswer: (answer: HttpAnswer) => void = () => {}
     let rejectAnswer: () => void = () => {}
-    const answer = new Promise<HttpAnswer>((resolve, reject) => { resolveAnswer = resolve; rejectAnswer = () => reject(new Error("Service answer lost")) })
-    const cleanup = () => { node.removeEventListener("yt-service-request-completed", completed); node.remove() }
+    const answer = new Promise<HttpAnswer>((resolve, reject) => {
+      resolveAnswer = resolve
+      rejectAnswer = () => reject(new Error("Service answer lost"))
+    })
+    const cleanup = () => {
+      node.removeEventListener("yt-service-request-completed", completed)
+      node.remove()
+    }
     const completed: EventListener = event => {
       if (!active || event.target !== node) return
       active = false
@@ -36,11 +50,30 @@ export function createLiveWwwRequests(options: { window: Window; document: Docum
     }
     node.addEventListener("yt-service-request-completed", completed)
     try {
-      node.dispatchEvent(new CustomEvent("yt-action", { bubbles: true, composed: true, detail: {
-        actionName: "yt-service-request", args: [spec.endpoint], returnValue: []
-      } }))
-    } catch { active = false; cleanup(); rejectAnswer() }
-    return { kind: "pending", answer, cancel() { active = false; cleanup() } }
+      node.dispatchEvent(
+        new CustomEvent("yt-action", {
+          bubbles: true,
+          composed: true,
+          detail: {
+            actionName: "yt-service-request",
+            args: [spec.endpoint],
+            returnValue: []
+          }
+        })
+      )
+    } catch {
+      active = false
+      cleanup()
+      rejectAnswer()
+    }
+    return {
+      kind: "pending",
+      answer,
+      cancel() {
+        active = false
+        cleanup()
+      }
+    }
   }
   return {
     has(via) {
@@ -54,23 +87,33 @@ export function createLiveWwwRequests(options: { window: Window; document: Docum
       if (via === "command") return resolver.command(spec.endpoint, context)
       if (via === "service") return service(spec, context)
       if (via !== "signed" && via !== "plain") return { kind: "not-sent", cause: "missing" }
-      return dispatchWwwRequest({ signed: via === "signed", spec, context, port: {
-        site: "www", origin: () => win.location.origin, config: key => page.config(key), now: () => Date.now(),
-        cookie(name) {
-          for (const piece of doc.cookie.split(";")) {
-            const index = piece.indexOf("=")
-            if (index >= 0 && piece.slice(0, index).trim() === name) return piece.slice(index + 1).trim()
+      return dispatchWwwRequest({
+        signed: via === "signed",
+        spec,
+        context,
+        port: {
+          site: "www",
+          origin: () => win.location.origin,
+          config: key => page.config(key),
+          now: () => Date.now(),
+          cookie(name) {
+            for (const piece of doc.cookie.split(";")) {
+              const index = piece.indexOf("=")
+              if (index >= 0 && piece.slice(0, index).trim() === name) return piece.slice(index + 1).trim()
+            }
+            return null
+          },
+          sha1: bytes => win.crypto.subtle.digest("SHA-1", new Uint8Array(bytes).buffer),
+          async fetch(url, init) {
+            const response = await win.fetch(url, init)
+            let body: unknown = null
+            try {
+              body = await response.json()
+            } catch {}
+            return { http: response.status, body }
           }
-          return null
-        },
-        sha1: bytes => win.crypto.subtle.digest("SHA-1", new Uint8Array(bytes).buffer),
-        async fetch(url, init) {
-          const response = await win.fetch(url, init)
-          let body: unknown = null
-          try { body = await response.json() } catch {}
-          return { http: response.status, body }
         }
-      } })
+      })
     }
   }
 }

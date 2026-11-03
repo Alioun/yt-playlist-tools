@@ -15,86 +15,114 @@ export type UiOrigin = Extract<Origin, { kind: "ui" }>
 export type PageFeatureId = Exclude<FeatureId, "sync">
 export type AgreementReview = { readonly kind: "agreement-review" }
 export type AgreementApplication = {
-  readonly feature: PageFeatureId; readonly scope: "www" | "music" | "browser";
-  readonly state:
-    | { readonly kind: "enabled" }
-    | { readonly kind: "held"; readonly reason: "site-access" | "browser-menu-permission" }
-    | { readonly kind: "off"; readonly reason: "denied-access" }
+  readonly feature: PageFeatureId
+  readonly scope: "www" | "music" | "browser"
+  readonly state: { readonly kind: "enabled" } | { readonly kind: "held"; readonly reason: "site-access" | "browser-menu-permission" } | { readonly kind: "off"; readonly reason: "denied-access" }
 }
 export type AgreementAccess = {
-  readonly www: boolean; readonly music: boolean; readonly browserMenu: boolean
+  readonly www: boolean
+  readonly music: boolean
+  readonly browserMenu: boolean
 }
 export type AgreementJoin = { readonly kind: "prepare" } | { readonly kind: "answer"; readonly review: SyncJoinReview; readonly choice: "use-synced" | "use-this-browser" }
 export type AgreementChoice =
   | { readonly kind: "first-run"; readonly selected: readonly PageFeatureId[]; readonly syncOn: true; readonly join: AgreementJoin }
   | { readonly kind: "upgrade-note"; readonly selected: readonly PageFeatureId[]; readonly syncOn: true; readonly join: AgreementJoin; readonly percentage: "keep" | "immediate" | "half" }
-  | { readonly kind: "first-run"; readonly selected: readonly PageFeatureId[];
-      readonly syncOn: false }
-  | { readonly kind: "upgrade-note"; readonly selected: readonly PageFeatureId[];
-      readonly syncOn: false; readonly percentage: "keep" | "immediate" | "half" }
+  | { readonly kind: "first-run"; readonly selected: readonly PageFeatureId[]; readonly syncOn: false }
+  | { readonly kind: "upgrade-note"; readonly selected: readonly PageFeatureId[]; readonly syncOn: false; readonly percentage: "keep" | "immediate" | "half" }
   | { readonly kind: "feature"; readonly feature: PageFeatureId }
   | { readonly kind: "disclosure" }
   | { readonly kind: "retained-disclosure" }
 export type AgreementInput = {
-  readonly review: AgreementReview; readonly displayedVersion: number;
-  readonly choice: AgreementChoice; readonly access: Promise<AgreementAccess>
+  readonly review: AgreementReview
+  readonly displayedVersion: number
+  readonly choice: AgreementChoice
+  readonly access: Promise<AgreementAccess>
 }
 export type AgreementPresentation =
-  | { readonly kind: "held"; readonly consent: Snapshot<Device["consent"]>; readonly work: readonly import("./consent-recovery").HeldWorkView[]; readonly allowedChoice: "disclosure"; readonly activation: "held" }
-  | { readonly kind: "canonical"; readonly consent: Snapshot<Device["consent"]>;
-      readonly note: Snapshot<Device["upgradeNote"]>;
-      readonly settings: Snapshot<Settings>; readonly syncOn: boolean }
-  | { readonly kind: "retained"; readonly consent: Snapshot<Device["consent"]>;
-      readonly historicalAuthorization: HistoricalFact;
-      readonly priorCredentialPresence: HistoricalFact;
-      readonly recovery: "available" | "unavailable";
-      readonly agreement: "required" | "confirmed";
+  | {
+      readonly kind: "held"
+      readonly consent: Snapshot<Device["consent"]>
+      readonly work: readonly import("./consent-recovery").HeldWorkView[]
+      readonly allowedChoice: "disclosure"
+      readonly activation: "held"
+    }
+  | { readonly kind: "canonical"; readonly consent: Snapshot<Device["consent"]>; readonly note: Snapshot<Device["upgradeNote"]>; readonly settings: Snapshot<Settings>; readonly syncOn: boolean }
+  | {
+      readonly kind: "retained"
+      readonly consent: Snapshot<Device["consent"]>
+      readonly historicalAuthorization: HistoricalFact
+      readonly priorCredentialPresence: HistoricalFact
+      readonly recovery: "available" | "unavailable"
+      readonly agreement: "required" | "confirmed"
       readonly details:
         | { readonly kind: "blocked" }
-        | { readonly kind: "available";
-            readonly percentage: InterimConversionNote["percentage"];
-            readonly feedback: InterimConversionNote["feedback"];
-            readonly globals: "explicit-review-required" | "unclaimed-source" };
-      readonly activation: "held" }
+        | {
+            readonly kind: "available"
+            readonly percentage: InterimConversionNote["percentage"]
+            readonly feedback: InterimConversionNote["feedback"]
+            readonly globals: "explicit-review-required" | "unclaimed-source"
+          }
+      readonly activation: "held"
+    }
 export type AgreementRead =
-  | { readonly kind: "review"; readonly version: number;
-      readonly review: AgreementReview; readonly presentation: AgreementPresentation }
-  | { readonly kind: "pending"; readonly consent: Snapshot<NonNullable<Device["consent"]>>;
-      readonly action: "resume-retained-agreement"; readonly activation: "held" }
+  | { readonly kind: "review"; readonly version: number; readonly review: AgreementReview; readonly presentation: AgreementPresentation }
+  | { readonly kind: "pending"; readonly consent: Snapshot<NonNullable<Device["consent"]>>; readonly action: "resume-retained-agreement"; readonly activation: "held" }
   | { readonly kind: "invalid"; readonly field: "records" | "schema" | "device" | "settings" | "sync" }
   | AgreementUnavailable
 export type AgreementUnavailableReason =
-  | "consent-held" | "startup" | "newer-layout" | "disposed" | "stale" | "creation-context"
-  | "upgrade-note" | "newer-consent" | "sync-writer-required" | "join-required"
-  | "retention" | "pending-removal" | "pending-agreement" | "pending-join"
+  | "consent-held"
+  | "startup"
+  | "newer-layout"
+  | "disposed"
+  | "stale"
+  | "creation-context"
+  | "upgrade-note"
+  | "newer-consent"
+  | "sync-writer-required"
+  | "join-required"
+  | "retention"
+  | "pending-removal"
+  | "pending-agreement"
+  | "pending-join"
 export type AgreementUnavailable = {
-  readonly kind: "unavailable"; readonly reason: AgreementUnavailableReason
+  readonly kind: "unavailable"
+  readonly reason: AgreementUnavailableReason
 }
-export type AgreementWrite =
-  | { readonly kind: "resolved" }
-  | { readonly kind: "rejected"; readonly error: unknown }
+export type AgreementWrite = { readonly kind: "resolved" } | { readonly kind: "rejected"; readonly error: unknown }
 export type AgreementStage = "consent-only" | "canonical" | "accept" | "device" | "record"
 export type AgreementResult =
   | Extract<SyncJoinPreparation, { kind: "choice-required" }>
-  | { readonly kind: "joined"; readonly consent: NonNullable<Device["consent"]>; readonly join: Extract<SyncJoinResult, { kind: "committed" }>; readonly activation: "ordinary-gates"; readonly settingsChanged: boolean; readonly applications: readonly AgreementApplication[]; readonly blocked: readonly PresetConflict[] }
+  | {
+      readonly kind: "joined"
+      readonly consent: NonNullable<Device["consent"]>
+      readonly join: Extract<SyncJoinResult, { kind: "committed" }>
+      readonly activation: "ordinary-gates"
+      readonly settingsChanged: boolean
+      readonly applications: readonly AgreementApplication[]
+      readonly blocked: readonly PresetConflict[]
+    }
   | Exclude<SyncJoinResult, { kind: "committed" | "cancelled" }>
-  | { readonly kind: "committed"; readonly consent: NonNullable<Device["consent"]>;
-      readonly settingsChanged: boolean; readonly blocked: readonly PresetConflict[];
-      readonly applications: readonly AgreementApplication[];
-      readonly mutations: readonly { readonly stage: AgreementStage; readonly write: AgreementWrite }[];
-      readonly activation: "ordinary-gates" | "held" }
-  | { readonly kind: "unchanged"; readonly reason: "already-agreed";
-      readonly consent: NonNullable<Device["consent"]>; readonly activation: "ordinary-gates" | "held" }
+  | {
+      readonly kind: "committed"
+      readonly consent: NonNullable<Device["consent"]>
+      readonly settingsChanged: boolean
+      readonly blocked: readonly PresetConflict[]
+      readonly applications: readonly AgreementApplication[]
+      readonly mutations: readonly { readonly stage: AgreementStage; readonly write: AgreementWrite }[]
+      readonly activation: "ordinary-gates" | "held"
+    }
+  | { readonly kind: "unchanged"; readonly reason: "already-agreed"; readonly consent: NonNullable<Device["consent"]>; readonly activation: "ordinary-gates" | "held" }
   | { readonly kind: "refused"; readonly reason: "invalid" | "update-needed" | "sync-full" }
   | AgreementUnavailable
-  | { readonly kind: "failed"; readonly stage: "before-set";
-      readonly error: unknown }
-  | { readonly kind: "failed"; readonly stage: AgreementStage;
-      readonly write: Extract<AgreementWrite, { kind: "rejected" }> }
-  | { readonly kind: "unconfirmed"; readonly stage: AgreementStage;
-      readonly write: AgreementWrite; readonly cause:
-        { readonly kind: "readback" | "stopped" }
-        | { readonly kind: "read-failed"; readonly error: unknown } }
+  | { readonly kind: "failed"; readonly stage: "before-set"; readonly error: unknown }
+  | { readonly kind: "failed"; readonly stage: AgreementStage; readonly write: Extract<AgreementWrite, { kind: "rejected" }> }
+  | {
+      readonly kind: "unconfirmed"
+      readonly stage: AgreementStage
+      readonly write: AgreementWrite
+      readonly cause: { readonly kind: "readback" | "stopped" } | { readonly kind: "read-failed"; readonly error: unknown }
+    }
 
 export function agreementObject(raw: unknown): raw is JsonObject {
   return raw !== null && typeof raw === "object" && !Array.isArray(raw) && isJsonValue(raw)
@@ -109,47 +137,91 @@ export function freezeAgreement<T>(raw: T): Snapshot<T> {
   while (pending.length) {
     const value = pending.pop()
     if (value === null || typeof value !== "object") continue
-    pending.push(...Object.values(value)); Object.freeze(value)
+    pending.push(...Object.values(value))
+    Object.freeze(value)
   }
   return copy as Snapshot<T>
 }
 export function agreementOrigin(raw: unknown): raw is UiOrigin {
-  return agreementObject(raw) && Object.keys(raw).length === 3 && raw.kind === "ui" && typeof raw.windowId === "number" && Number.isSafeInteger(raw.windowId) && raw.windowId >= 0 && typeof raw.incognito === "boolean"
+  return (
+    agreementObject(raw) &&
+    Object.keys(raw).length === 3 &&
+    raw.kind === "ui" &&
+    typeof raw.windowId === "number" &&
+    Number.isSafeInteger(raw.windowId) &&
+    raw.windowId >= 0 &&
+    typeof raw.incognito === "boolean"
+  )
 }
 export function agreementAccess(raw: unknown): raw is AgreementAccess {
   return agreementObject(raw) && Object.keys(raw).length === 3 && typeof raw.www === "boolean" && typeof raw.music === "boolean" && typeof raw.browserMenu === "boolean"
 }
 const featurePaths = {
-  "auto-add": "autoAdd", shortcuts: "shortcuts", "quick-save": "quickSave", "queue-button": "queueButton", "watch-button": "watchButton", "card-menu": "cardMenu", "browser-menu": "browserMenu",
-  "music-actions": "musicActions", "music-keys": "musicKeys", "any-tab-keys": "anyTabKeys", gather: "gather"
+  "auto-add": "autoAdd",
+  shortcuts: "shortcuts",
+  "quick-save": "quickSave",
+  "queue-button": "queueButton",
+  "watch-button": "watchButton",
+  "card-menu": "cardMenu",
+  "browser-menu": "browserMenu",
+  "music-actions": "musicActions",
+  "music-keys": "musicKeys",
+  "any-tab-keys": "anyTabKeys",
+  gather: "gather"
 } as const satisfies Record<PageFeatureId, keyof Settings>
 export const pageFeatures = Object.keys(featurePaths).filter(isPageFeature)
-function isPageFeature(raw: unknown): raw is PageFeatureId { return typeof raw === "string" && Object.hasOwn(featurePaths, raw) }
+function isPageFeature(raw: unknown): raw is PageFeatureId {
+  return typeof raw === "string" && Object.hasOwn(featurePaths, raw)
+}
 export function parseAgreementChoice(raw: unknown): AgreementChoice | AgreementUnavailable | { readonly kind: "refused"; readonly reason: "invalid" } {
   const invalid = { kind: "refused", reason: "invalid" } as const
   if (!agreementObject(raw)) return invalid
   if (raw.syncOn === true) {
     if ((raw.kind !== "first-run" && raw.kind !== "upgrade-note") || !agreementObject(raw.join)) return { kind: "unavailable", reason: "join-required" }
-    const base = parseAgreementChoice(Object.fromEntries(Object.entries(raw).filter(([key]) => key !== "join").map(([key, value]) => [key, key === "syncOn" ? false : value])))
+    const base = parseAgreementChoice(
+      Object.fromEntries(
+        Object.entries(raw)
+          .filter(([key]) => key !== "join")
+          .map(([key, value]) => [key, key === "syncOn" ? false : value])
+      )
+    )
     if (base.kind !== "first-run" && base.kind !== "upgrade-note") return invalid
     const join = raw.join
     if (join.kind === "prepare" && Object.keys(join).length === 1) return { ...base, syncOn: true, join: { kind: "prepare" } }
-    if (join.kind === "answer" && Object.keys(join).length === 3 && agreementObject(join.review) && join.review.kind === "sync-join-review" && (join.choice === "use-synced" || join.choice === "use-this-browser")) return { ...base, syncOn: true, join: { kind: "answer", review: join.review as SyncJoinReview, choice: join.choice } }
+    if (
+      join.kind === "answer" &&
+      Object.keys(join).length === 3 &&
+      agreementObject(join.review) &&
+      join.review.kind === "sync-join-review" &&
+      (join.choice === "use-synced" || join.choice === "use-this-browser")
+    )
+      return { ...base, syncOn: true, join: { kind: "answer", review: join.review as SyncJoinReview, choice: join.choice } }
     return invalid
   }
   switch (raw.kind) {
     case "first-run":
     case "upgrade-note": {
       const keys = raw.kind === "first-run" ? ["kind", "selected", "syncOn"] : ["kind", "selected", "syncOn", "percentage"]
-      if (Object.keys(raw).length !== keys.length || Object.keys(raw).some(key => !keys.includes(key)) || raw.syncOn !== false || !Array.isArray(raw.selected) || !raw.selected.every(isPageFeature) || new Set(raw.selected).size !== raw.selected.length) return invalid
+      if (
+        Object.keys(raw).length !== keys.length ||
+        Object.keys(raw).some(key => !keys.includes(key)) ||
+        raw.syncOn !== false ||
+        !Array.isArray(raw.selected) ||
+        !raw.selected.every(isPageFeature) ||
+        new Set(raw.selected).size !== raw.selected.length
+      )
+        return invalid
       if (raw.kind === "first-run") return { kind: raw.kind, selected: [...raw.selected], syncOn: false }
       if (raw.percentage !== "keep" && raw.percentage !== "immediate" && raw.percentage !== "half") return invalid
       return { kind: raw.kind, selected: [...raw.selected], syncOn: false, percentage: raw.percentage }
     }
-    case "feature": return Object.keys(raw).length === 2 && isPageFeature(raw.feature) ? { kind: "feature", feature: raw.feature } : invalid
+    case "feature":
+      return Object.keys(raw).length === 2 && isPageFeature(raw.feature) ? { kind: "feature", feature: raw.feature } : invalid
     case "disclosure":
-    case "retained-disclosure": return Object.keys(raw).length === 1 ? { kind: raw.kind } : invalid
-    default: return invalid
+    case "retained-disclosure":
+      return Object.keys(raw).length === 1 ? { kind: raw.kind } : invalid
+    default:
+      return invalid
   }
 }
 export type CanonicalAgreementState = {
@@ -159,13 +231,19 @@ export type CanonicalAgreementState = {
   readonly settings: Snapshot<Settings>
 }
 export function readCanonicalAgreement(records: JsonObject): CanonicalAgreementState | Extract<AgreementRead, { kind: "invalid" | "unavailable" }> {
-  if (records.schema !== STORAGE_SCHEMA_VERSION) return typeof records.schema === "number" && records.schema > STORAGE_SCHEMA_VERSION
-    ? { kind: "unavailable", reason: "newer-layout" } : { kind: "invalid", field: "schema" }
+  if (records.schema !== STORAGE_SCHEMA_VERSION)
+    return typeof records.schema === "number" && records.schema > STORAGE_SCHEMA_VERSION ? { kind: "unavailable", reason: "newer-layout" } : { kind: "invalid", field: "schema" }
   let device: Device | undefined, rawDevice: JsonObject | undefined
   if (Object.hasOwn(records, "device")) {
     const raw = records.device
     if (!agreementObject(raw) || !["id", "consent", "syncOn"].every(key => Object.hasOwn(raw, key))) return { kind: "invalid", field: "device" }
-    try { device = decodeDevice(raw); rawDevice = raw } catch (error) { if (error instanceof DecodeError) return { kind: "invalid", field: "device" }; throw error }
+    try {
+      device = decodeDevice(raw)
+      rawDevice = raw
+    } catch (error) {
+      if (error instanceof DecodeError) return { kind: "invalid", field: "device" }
+      throw error
+    }
     if (device.consent && device.consent.v > CONSENT_VERSION) return { kind: "unavailable", reason: "newer-consent" }
   }
   if (Object.hasOwn(records, "sync")) {
@@ -199,16 +277,24 @@ export function prepareCanonicalAgreement(input: {
   let settings = detachAgreement(state.settings) as Settings
   const original = prepareDocumentBody({ kind: "settings", data: settings })
   if (original.kind !== "prepared") return invalid
-  const applications: AgreementApplication[] = [], blocked: PresetConflict[] = []
+  const applications: AgreementApplication[] = [],
+    blocked: PresetConflict[] = []
   const reserved = new Set<ShortcutId>(settings.shortcuts.list.map(row => row.id).filter(isShortcutId))
   const unclaimed = readStoredUnclaimed(records.unclaimed)
   if (unclaimed.kind === "pending" && isShortcutId(unclaimed.data.originalShortcutId)) reserved.add(unclaimed.data.originalShortcutId)
   const selected = choice.kind === "feature" ? [choice.feature] : choice.kind === "disclosure" ? [] : choice.selected
   for (const feature of pageFeatures) {
-    if (choice.kind === "disclosure" || choice.kind === "feature" && choice.feature !== feature) continue
+    if (choice.kind === "disclosure" || (choice.kind === "feature" && choice.feature !== feature)) continue
     const path = featurePaths[feature]
     const chosen = selected.includes(feature)
-    const scopes: readonly ("www" | "music" | "browser")[] = feature === "browser-menu" ? ["browser"] : feature === "shortcuts" || feature === "any-tab-keys" ? ["www", "music"] : feature === "music-actions" || feature === "music-keys" ? ["music"] : ["www"]
+    const scopes: readonly ("www" | "music" | "browser")[] =
+      feature === "browser-menu"
+        ? ["browser"]
+        : feature === "shortcuts" || feature === "any-tab-keys"
+          ? ["www", "music"]
+          : feature === "music-actions" || feature === "music-keys"
+            ? ["music"]
+            : ["www"]
     const primary = feature === "browser-menu" ? access.www && access.browserMenu : feature === "music-actions" || feature === "music-keys" ? access.music : access.www
     const on = chosen && (choice.kind !== "feature" || primary || feature === "any-tab-keys")
     settings = { ...settings, [path]: { ...settings[path], on } }
@@ -217,13 +303,23 @@ export function prepareCanonicalAgreement(input: {
     for (const scope of scopes) {
       const allowed = scope === "browser" ? access.www && access.browserMenu : access[scope]
       const enabled = on && (feature !== "shortcuts" || scope !== "music" || settings.shortcuts.music)
-      applications.push({ feature, scope, state: allowed && enabled ? { kind: "enabled" } : enabled ? { kind: "held", reason: scope === "browser" && !access.browserMenu ? "browser-menu-permission" : "site-access" } : { kind: "off", reason: "denied-access" } })
+      applications.push({
+        feature,
+        scope,
+        state:
+          allowed && enabled
+            ? { kind: "enabled" }
+            : enabled
+              ? { kind: "held", reason: scope === "browser" && !access.browserMenu ? "browser-menu-permission" : "site-access" }
+              : { kind: "off", reason: "denied-access" }
+      })
     }
-    if (on && (feature === "shortcuts" && !settings.shortcuts.preset || feature === "music-keys" && !settings.musicKeys.preset)) {
+    if (on && ((feature === "shortcuts" && !settings.shortcuts.preset) || (feature === "music-keys" && !settings.musicKeys.preset))) {
       if (feature === "shortcuts" && !context) return { kind: "unavailable", reason: "creation-context" }
       if (feature === "shortcuts" && (!context || !isShortcutId(context.shortcutId) || reserved.has(context.shortcutId) || settings.shortcuts.list.length >= 20)) return invalid
       const preset = applyPresets(settings, feature === "shortcuts" && context ? { feature, shortcutId: context.shortcutId, reservedShortcutIds: reserved } : { feature: "music-keys" })
-      settings = detachAgreement(preset.settings) as Settings; blocked.push(...preset.blocked)
+      settings = detachAgreement(preset.settings) as Settings
+      blocked.push(...preset.blocked)
     }
     if (on && feature === "music-actions" && !settings.musicActions.preset) settings.musicActions = { ...settings.musicActions, preset: true }
   }
@@ -242,6 +338,12 @@ export function prepareCanonicalAgreement(input: {
   }
   const prepared = prepareDocumentBody({ kind: "settings", data: settings })
   if (prepared.kind !== "prepared") return invalid
-  return { kind: "prepared", device, settings: sameSyncJson(original.data, prepared.data) ? undefined : prepared.data, blocked, applications,
-    clearProgress: state.settings.autoAdd.on && !settings.autoAdd.on }
+  return {
+    kind: "prepared",
+    device,
+    settings: sameSyncJson(original.data, prepared.data) ? undefined : prepared.data,
+    blocked,
+    applications,
+    clearProgress: state.settings.autoAdd.on && !settings.autoAdd.on
+  }
 }

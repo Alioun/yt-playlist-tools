@@ -26,6 +26,9 @@ export function shortcutsMusicHeld(settings: Snapshot<Settings>, access: SiteAcc
   return settings.shortcuts.on && settings.shortcuts.music && settings.musicSection && !access.music
 }
 export const heldMessage = {
-  consent: "shell_waiting", "site-access": "held_siteAccess", "music-off": "held_musicOff", "browser-menu": "held_browserMenu"
+  consent: "shell_waiting",
+  "site-access": "held_siteAccess",
+  "music-off": "held_musicOff",
+  "browser-menu": "held_browserMenu"
 } as const satisfies Record<Held, string>
 export type { FeatureId }

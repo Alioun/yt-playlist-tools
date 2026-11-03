@@ -16,10 +16,16 @@ export type { SiteGateway } from "./jobs-gateway"
  * file (`startPage`); fixtures and tests that drive both halves together use this.
  */
 export function createGateway(options: {
-  site: SiteGateway; page: PageReadPort; requests?: GatewayRequestPort; queue?: WwwQueuePort; music?: MusicPagePort; clock?: GatewayClock;
-  signals?: (signal: BreakageSignal) => void; now?: () => number
+  site: SiteGateway
+  page: PageReadPort
+  requests?: GatewayRequestPort
+  queue?: WwwQueuePort
+  music?: MusicPagePort
+  clock?: GatewayClock
+  signals?: (signal: BreakageSignal) => void
+  now?: () => number
 }): Gateway {
-  const reads = createReadGateway({ site: options.site.id, page: options.page, ...options.signals && { signals: options.signals }, ...options.now && { now: options.now } })
+  const reads = createReadGateway({ site: options.site.id, page: options.page, ...(options.signals && { signals: options.signals }), ...(options.now && { now: options.now }) })
   const jobs = createJobsGateway({ ...options, reads })
   return composeGateway(reads, jobs)
 }

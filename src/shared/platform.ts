@@ -1,7 +1,9 @@
 import { isBuildId, type BuildId } from "./contracts/vocabulary"
 
 declare global {
-  interface ImportMetaEnv { readonly PP_BUILD: string }
+  interface ImportMetaEnv {
+    readonly PP_BUILD: string
+  }
 }
 
 export type Platform = {

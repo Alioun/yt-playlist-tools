@@ -35,30 +35,96 @@ function scenario(name: string, edit: (s: Settings) => void, base = defaultSetti
 export function scenarios(): readonly Scenario[] {
   return [
     scenario("all-off", () => {}),
-    scenario("auto-add-alone", s => { s.autoAdd.on = true }),
-    scenario("shortcuts-alone", s => { s.shortcuts.on = true }),
-    scenario("quick-save-alone", s => { s.quickSave.on = true }),
-    scenario("queue-button-alone", s => { s.queueButton.on = true }),
-    scenario("watch-button-alone", s => { s.watchButton.on = true }),
-    scenario("card-menu-alone", s => { s.cardMenu.on = true }),
-    scenario("browser-menu-alone", s => { s.browserMenu.on = true }),
-    scenario("gather-alone", s => { s.gather.on = true; s.gather.auto.count = true }),
-    scenario("music-actions-alone", s => { s.musicActions.on = true }),
-    scenario("music-keys-alone", s => { s.musicKeys.on = true }),
-    scenario("any-tab-keys-alone", s => { s.anyTabKeys.on = true }),
+    scenario("auto-add-alone", s => {
+      s.autoAdd.on = true
+    }),
+    scenario("shortcuts-alone", s => {
+      s.shortcuts.on = true
+    }),
+    scenario("quick-save-alone", s => {
+      s.quickSave.on = true
+    }),
+    scenario("queue-button-alone", s => {
+      s.queueButton.on = true
+    }),
+    scenario("watch-button-alone", s => {
+      s.watchButton.on = true
+    }),
+    scenario("card-menu-alone", s => {
+      s.cardMenu.on = true
+    }),
+    scenario("browser-menu-alone", s => {
+      s.browserMenu.on = true
+    }),
+    scenario("gather-alone", s => {
+      s.gather.on = true
+      s.gather.auto.count = true
+    }),
+    scenario("music-actions-alone", s => {
+      s.musicActions.on = true
+    }),
+    scenario("music-keys-alone", s => {
+      s.musicKeys.on = true
+    }),
+    scenario("any-tab-keys-alone", s => {
+      s.anyTabKeys.on = true
+    }),
     scenario("sync-alone", () => {}),
     scenario("everything", () => {}, everything()),
-    scenario("music-section-off", s => { s.musicSection = false }, everything()),
-    scenario("shortcuts-music-off", s => { s.shortcuts.music = false }, everything()),
-    scenario("shortcuts-music-off-alone", s => { s.shortcuts.on = true; s.shortcuts.music = false }),
-    scenario("shortcuts-off-other-music-on", s => { s.shortcuts.on = false }, everything()),
-    scenario("gather-no-triggers", s => { s.gather.on = true }),
-    scenario("gather-trigger-1-only", s => { s.gather.on = true; s.gather.auto.unvisited = true }),
-    scenario("gather-trigger-2-only", s => { s.gather.on = true; s.gather.auto.background = true }),
-    scenario("gather-trigger-3-only", s => { s.gather.on = true; s.gather.auto.count = true }),
-    scenario("gather-triggers-2-and-3", s => { s.gather.on = true; s.gather.auto.background = true; s.gather.auto.count = true }),
-    scenario("gather-off-with-triggers", s => { s.gather.auto.background = true; s.gather.auto.count = true }),
-    scenario("gather-and-card-menu", s => { s.gather.on = true; s.gather.auto.count = true; s.cardMenu.on = true }),
+    scenario(
+      "music-section-off",
+      s => {
+        s.musicSection = false
+      },
+      everything()
+    ),
+    scenario(
+      "shortcuts-music-off",
+      s => {
+        s.shortcuts.music = false
+      },
+      everything()
+    ),
+    scenario("shortcuts-music-off-alone", s => {
+      s.shortcuts.on = true
+      s.shortcuts.music = false
+    }),
+    scenario(
+      "shortcuts-off-other-music-on",
+      s => {
+        s.shortcuts.on = false
+      },
+      everything()
+    ),
+    scenario("gather-no-triggers", s => {
+      s.gather.on = true
+    }),
+    scenario("gather-trigger-1-only", s => {
+      s.gather.on = true
+      s.gather.auto.unvisited = true
+    }),
+    scenario("gather-trigger-2-only", s => {
+      s.gather.on = true
+      s.gather.auto.background = true
+    }),
+    scenario("gather-trigger-3-only", s => {
+      s.gather.on = true
+      s.gather.auto.count = true
+    }),
+    scenario("gather-triggers-2-and-3", s => {
+      s.gather.on = true
+      s.gather.auto.background = true
+      s.gather.auto.count = true
+    }),
+    scenario("gather-off-with-triggers", s => {
+      s.gather.auto.background = true
+      s.gather.auto.count = true
+    }),
+    scenario("gather-and-card-menu", s => {
+      s.gather.on = true
+      s.gather.auto.count = true
+      s.cardMenu.on = true
+    }),
     { ...scenario("consent-held", () => {}, everything()), consent: false },
     { ...scenario("schema-held", () => {}, everything()), schemaOk: false },
     { ...scenario("www-access-only", () => {}, everything()), access: { www: true, music: false } },

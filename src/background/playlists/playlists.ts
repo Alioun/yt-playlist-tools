@@ -1,11 +1,9 @@
-import { cacheIsFresh, cacheRows, type AccountCache, type AccountKey, type CacheSite,
-  type PlaylistId, type VideoId } from "../../shared/model"
+import { cacheIsFresh, cacheRows, type AccountCache, type AccountKey, type CacheSite, type PlaylistId, type VideoId } from "../../shared/model"
 import type { Job, JobData, JobInvocation, JobOf } from "../../shared/contracts/jobs"
 import type { Privacy } from "../../shared/contracts/vocabulary"
 import type { Listing } from "../../shared/picker/source"
 import type { Requester, RoutingNeed, TabJobOutcome, Tabs } from "../tabs/ports"
-import { planCacheAbsorption, type CacheAbsorption, type PlaylistCacheOwner, type PlaylistCacheRead,
-  type PlaylistCacheWrite, type PlaylistCacheCapture } from "../store/playlist-cache"
+import { planCacheAbsorption, type CacheAbsorption, type PlaylistCacheOwner, type PlaylistCacheRead, type PlaylistCacheWrite, type PlaylistCacheCapture } from "../store/playlist-cache"
 
 export type PlaylistRequest = {
   readonly site: CacheSite
@@ -40,10 +38,8 @@ export type Creation = { submit(playlist: NewPlaylist): Promise<CreationAnswer> 
 export type AbsorbScope =
   | { readonly kind: "eligible"; readonly capture: PlaylistCacheCapture; readonly acct: AccountKey; readonly site: CacheSite; readonly private: false }
   | { readonly kind: "caller-owned"; readonly reason: "private" | "no-setup"; readonly acct: AccountKey; readonly site: CacheSite; readonly private: boolean }
-export type AbsorbAnswer = { readonly kind: "list"; readonly rows: Readonly<JobData<ListJob>> } |
-  { readonly kind: "membership"; readonly rows: Readonly<JobData<JobOf<"membership">>> }
-export type AbsorbReceipt = { readonly kind: "membership"; readonly cache: CacheDisposition } |
-  { readonly kind: "list"; readonly cache: CacheDisposition; readonly present: ListPresent }
+export type AbsorbAnswer = { readonly kind: "list"; readonly rows: Readonly<JobData<ListJob>> } | { readonly kind: "membership"; readonly rows: Readonly<JobData<JobOf<"membership">>> }
+export type AbsorbReceipt = { readonly kind: "membership"; readonly cache: CacheDisposition } | { readonly kind: "list"; readonly cache: CacheDisposition; readonly present: ListPresent }
 export type Playlists = {
   list(acct: AccountKey, options: PlaylistRequest & { readonly refresh?: boolean }): Promise<ListOpen>
   create(acct: AccountKey, options: PlaylistRequest): Creation
@@ -71,11 +67,7 @@ function titleProblem(title: string): Extract<CreationAnswer, { kind: "invalid" 
   return [...trimmed].length > 150 ? "too-long" : null
 }
 
-export function createPlaylists(ports: {
-  readonly owner: PlaylistCacheOwner
-  readonly tabs: Pick<Tabs, "serve" | "runIn">
-  readonly now: () => number
-}): Playlists {
+export function createPlaylists(ports: { readonly owner: PlaylistCacheOwner; readonly tabs: Pick<Tabs, "serve" | "runIn">; readonly now: () => number }): Playlists {
   let disposed = false
   const refreshing = new Map<AccountKey, RefreshSlot>()
   const scopes = new WeakSet<AbsorbScope>()
@@ -105,7 +97,10 @@ export function createPlaylists(ports: {
     const scope = scopeOf(acct, { ...request, site: "www" }, read)
     // The existing playlists job is supported on www only. Display order remains scoped to the caller's site.
     const outcome = await run<ListJob>({ job: { kind: "playlists" }, acct }, request, accountNeed(acct, request, "www"))
-    if (outcome.kind !== "result" || !outcome.result.ok) { scopes.delete(scope); return { kind: "not-listed", outcome } }
+    if (outcome.kind !== "result" || !outcome.result.ok) {
+      scopes.delete(scope)
+      return { kind: "not-listed", outcome }
+    }
     const at = ports.now()
     const input: CacheAbsorption = { kind: "list", acct, site: "www", at, rows: outcome.result.data }
     const cache = await persist(scope, input)
@@ -122,52 +117,65 @@ export function createPlaylists(ports: {
     const work = fetchList(acct, request, read)
     const slot: RefreshSlot = { capture: read.authority.capture, originalTab: request.originalTab, work }
     refreshing.set(acct, slot)
-    const clear = () => { if (refreshing.get(acct) === slot) refreshing.delete(acct) }
+    const clear = () => {
+      if (refreshing.get(acct) === slot) refreshing.delete(acct)
+    }
     void work.then(clear, clear)
     return work
   }
   const service: Playlists = {
     async list(acct, options) {
       if (disposed) return { kind: "unavailable", read: { kind: "unavailable", reason: "disposed" } }
-      const request = copyRequest(options), explicit = options.refresh === true
+      const request = copyRequest(options),
+        explicit = options.refresh === true
       const read = await ports.owner.readPlaylistCache({ acct, private: request.req.incognito })
       if (read.kind !== "cache") return { kind: "unavailable", read }
       const cached = cachedListing(read.cache, request.site)
       const freshness = read.cache === null ? "absent" : cacheIsFresh(read.cache, ports.now()) ? "fresh" : "stale"
       if (disposed) return { kind: "unavailable", read: { kind: "unavailable", reason: "disposed" } }
       if (!explicit && freshness === "fresh") return { kind: "open", cached, freshness, refresh: null }
-      const answer = refresh(acct, request, read).then((work): ListRefresh => work.kind === "not-listed"
-        ? { kind: "not-listed", outcome: work.outcome, cached }
-        : { kind: "listed", listing: { rows: cacheRows(work.snapshot, request.site), at: work.at }, outcome: work.outcome, cache: work.cache,
-          present: { kind: "list-present", acct, site: "www", private: request.req.incognito, at: work.at, ids: [...work.ids] } })
+      const answer = refresh(acct, request, read).then((work): ListRefresh =>
+        work.kind === "not-listed"
+          ? { kind: "not-listed", outcome: work.outcome, cached }
+          : {
+              kind: "listed",
+              listing: { rows: cacheRows(work.snapshot, request.site), at: work.at },
+              outcome: work.outcome,
+              cache: work.cache,
+              present: { kind: "list-present", acct, site: "www", private: request.req.incognito, at: work.at, ids: [...work.ids] }
+            }
+      )
       return { kind: "open", cached, freshness, refresh: answer }
     },
     create(acct, options) {
       const request = copyRequest(options)
       let submitted: Promise<CreationAnswer> | undefined
-      return { submit(playlist) {
-        if (submitted) return submitted
-        const problem = titleProblem(playlist.title)
-        if (problem) return Promise.resolve({ kind: "invalid", problem })
-        const job: CreateJob = { kind: "create", title: playlist.title.trim(), privacy: playlist.privacy,
-          ...(playlist.videoId === undefined ? {} : { videoId: playlist.videoId }) }
-        submitted = (async (): Promise<CreationAnswer> => {
-          const read = await ports.owner.readPlaylistCache({ acct, private: request.req.incognito })
-          if (read.kind !== "cache") return { kind: "unavailable", read }
-          const scope = scopeOf(acct, request, read)
-          const outcome = await run<CreateJob>({ job, acct }, request, accountNeed(acct, request))
-          if (outcome.kind !== "result" || !outcome.result.ok) { scopes.delete(scope); return { kind: "not-created", outcome } }
-          const id = outcome.result.data.playlistId
-          const cache = await persist(scope, { kind: "created", acct, site: request.site, at: ports.now(), row: { id, title: job.title, privacy: job.privacy } })
-          return { kind: "created", id, outcome, cache }
-        })()
-        return submitted
-      } }
+      return {
+        submit(playlist) {
+          if (submitted) return submitted
+          const problem = titleProblem(playlist.title)
+          if (problem) return Promise.resolve({ kind: "invalid", problem })
+          const job: CreateJob = { kind: "create", title: playlist.title.trim(), privacy: playlist.privacy, ...(playlist.videoId === undefined ? {} : { videoId: playlist.videoId }) }
+          submitted = (async (): Promise<CreationAnswer> => {
+            const read = await ports.owner.readPlaylistCache({ acct, private: request.req.incognito })
+            if (read.kind !== "cache") return { kind: "unavailable", read }
+            const scope = scopeOf(acct, request, read)
+            const outcome = await run<CreateJob>({ job, acct }, request, accountNeed(acct, request))
+            if (outcome.kind !== "result" || !outcome.result.ok) {
+              scopes.delete(scope)
+              return { kind: "not-created", outcome }
+            }
+            const id = outcome.result.data.playlistId
+            const cache = await persist(scope, { kind: "created", acct, site: request.site, at: ports.now(), row: { id, title: job.title, privacy: job.privacy } })
+            return { kind: "created", id, outcome, cache }
+          })()
+          return submitted
+        }
+      }
     },
     resolveChannel(input, req, originalTab) {
       const request: PlaylistRequest = { site: "www", req: { ...req }, ...(originalTab === undefined ? {} : { originalTab }) }
-      return run<JobOf<"resolveChannel">>({ job: { kind: "resolveChannel", input: input.trim() } }, request,
-        { site: "www", req: request.req, account: { kind: "any" } })
+      return run<JobOf<"resolveChannel">>({ job: { kind: "resolveChannel", input: input.trim() } }, request, { site: "www", req: request.req, account: { kind: "any" } })
     },
     async capture(acct, request) {
       if (disposed) return { kind: "unavailable", reason: "disposed" }
@@ -176,12 +184,17 @@ export function createPlaylists(ports: {
       return disposed ? { kind: "unavailable", reason: "disposed" } : read.kind === "cache" ? scopeOf(acct, copy, read) : read
     },
     async absorb(scope, answer) {
-      const at = ports.now(), captured = structuredClone(answer)
+      const at = ports.now(),
+        captured = structuredClone(answer)
       const cache = await persist(scope, { ...captured, acct: scope.acct, site: scope.site, at })
-      return captured.kind === "membership" ? { kind: "membership", cache } : { kind: "list", cache,
-        present: { kind: "list-present", acct: scope.acct, site: scope.site, private: scope.private, at, ids: captured.rows.map(row => row.id) } }
+      return captured.kind === "membership"
+        ? { kind: "membership", cache }
+        : { kind: "list", cache, present: { kind: "list-present", acct: scope.acct, site: scope.site, private: scope.private, at, ids: captured.rows.map(row => row.id) } }
     },
-    dispose() { disposed = true; refreshing.clear() }
+    dispose() {
+      disposed = true
+      refreshing.clear()
+    }
   }
   return service
 }

@@ -83,7 +83,11 @@ describe("gather into the gather playlist", () => {
     f.window.open(11, watch(v[1]!), "Already - YouTube")
     f.window.open(12, watch(v[2]!), "Fails - YouTube")
     f.window.open(13, watch(v[3]!), "Navigates - YouTube")
-    f.yt.script.membership.push(() => undefined, () => undefined, () => no<"membership">("failed", 403))
+    f.yt.script.membership.push(
+      () => undefined,
+      () => undefined,
+      () => no<"membership">("failed", 403)
+    )
     f.yt.block("addBatch")
     const pending = f.gather.now(normalWindow)
     await f.drive(new Promise(resolve => setTimeout(resolve, 0)))
@@ -113,7 +117,8 @@ describe("gather into the gather playlist", () => {
     expect(f.yt.has(a, later, v[4]!)).toBe(true)
     expect(f.window.created().slice(before)).toEqual([
       { kind: "create", windowId: 1, url: watch(v[0]!), active: false, index: 0 },
-      { kind: "create", windowId: 1, url: watch(v[1]!), active: false, index: 1 }])
+      { kind: "create", windowId: 1, url: watch(v[1]!), active: false, index: 1 }
+    ])
     expect((await f.gather.last("normal")).kept.length).toBe(2)
 
     const gone = gatherFixture({ settings: { to: "playlist" } })

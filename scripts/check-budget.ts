@@ -37,14 +37,16 @@ const round = (kb: Kb) => Math.round(kb * 100) / 100
 
 /** Each site's pieces and their files, from the feature registry (ARC-REG-01): the page half, core, kit, then each feature file. */
 export function sitePieces(): Record<Site, { id: string; file: string; kit: boolean }[]> {
-  return Object.fromEntries(sites.map(site => {
-    const names = siteBundles[site]
-    const featureRows = features.flatMap(feature => {
-      const page = feature.pages[site]
-      return page?.file ? [{ id: feature.id, file: `${page.file}.js`, kit: page.needs.includes("kit") }] : []
+  return Object.fromEntries(
+    sites.map(site => {
+      const names = siteBundles[site]
+      const featureRows = features.flatMap(feature => {
+        const page = feature.pages[site]
+        return page?.file ? [{ id: feature.id, file: `${page.file}.js`, kit: page.needs.includes("kit") }] : []
+      })
+      return [site, [...libraries.map(library => ({ id: library, file: `${names[library]}.js`, kit: false })), ...featureRows]]
     })
-    return [site, [...libraries.map(library => ({ id: library, file: `${names[library]}.js`, kit: false })), ...featureRows]]
-  })) as Record<Site, { id: string; file: string; kit: boolean }[]>
+  ) as Record<Site, { id: string; file: string; kit: boolean }[]>
 }
 
 /** What's wrong with the file itself: pieces that differ from the registry's, totals that aren't their rows' sum, bad exceptions. */
@@ -130,15 +132,17 @@ function extensionPage(directory: string, html: string, size: (file: string) => 
     visited.add(file)
     for (const target of chunkGraph(directory, file).dynamic) {
       if (initial.has(target)) continue
-      importers.set(target, [...importers.get(target) ?? [], file])
+      importers.set(target, [...(importers.get(target) ?? []), file])
       queue.push(...closure(directory, [target]))
     }
   }
   // A lazy chunk weighs what it adds: when its import() runs, the importing chunk's static imports are loaded already.
-  const lazy = new Map([...importers].map(([target, from]) => {
-    const loaded = from.map(file => closure(directory, [file])).reduce((shared, next) => new Set([...shared].filter(item => next.has(item))))
-    return [target, new Set([...closure(directory, [target])].filter(item => !initial.has(item) && !loaded.has(item)))] as const
-  }))
+  const lazy = new Map(
+    [...importers].map(([target, from]) => {
+      const loaded = from.map(file => closure(directory, [file])).reduce((shared, next) => new Set([...shared].filter(item => next.has(item))))
+      return [target, new Set([...closure(directory, [target])].filter(item => !initial.has(item) && !loaded.has(item)))] as const
+    })
+  )
   const sum = (files: Iterable<string>) => [...files].reduce((total, file) => total + size(file), 0)
   const names = new Map<string, number>()
   const lazyRows = [...lazy].map(([target, files]) => {
@@ -149,10 +153,15 @@ function extensionPage(directory: string, html: string, size: (file: string) => 
   })
   // Q-PERF-35 rule 3: a chunk that imports an entry waiting on a top-level await waits forever, and the page renders blank.
   const all = [...new Set([...initial, ...lazyRows.flatMap(row => [...row.files])])]
-  const deadlocks = entries.filter(entry => hasTopLevelAwait(readFileSync(join(directory, entry), "utf8")))
+  const deadlocks = entries
+    .filter(entry => hasTopLevelAwait(readFileSync(join(directory, entry), "utf8")))
     .flatMap(entry => all.filter(file => chunkGraph(directory, file).imports.includes(entry)).map(file => `${html}: ${file} imports ${entry}, which has a top-level await (Q-PERF-35 rule 3)`))
   return {
-    js: sum(initial), css: sum(assets.styles), initial, lazy: lazyRows, deadlocks,
+    js: sum(initial),
+    css: sum(assets.styles),
+    initial,
+    lazy: lazyRows,
+    deadlocks,
     /** The first view plus a lazy part that loads before the first frame in some view. */
     with: (name: string) => {
       const part = lazyRows.find(row => row.name === name)
@@ -170,8 +179,10 @@ function provenanceProblems(directory: string, browser: Browser): string[] {
   if (!existsSync(evidenceDir)) return [`${browser}: no page-link evidence at ${evidenceDir}; build with wxt build`]
   const problems: string[] = []
   const kits = new Set<string>(sites.map(site => siteBundles[site].kit))
-  const featureFiles = new Set(features.flatMap(feature => Object.values(feature.pages).flatMap(page => page?.file ? [page.file] : [])))
-  for (const name of readdirSync(evidenceDir).filter(entry => entry.endsWith(".json")).sort()) {
+  const featureFiles = new Set(features.flatMap(feature => Object.values(feature.pages).flatMap(page => (page?.file ? [page.file] : []))))
+  for (const name of readdirSync(evidenceDir)
+    .filter(entry => entry.endsWith(".json"))
+    .sort()) {
     const label = name.replace(/\.json$/, "")
     const evidence = JSON.parse(readFileSync(join(evidenceDir, name), "utf8")) as Evidence
     for (const module of evidence.chunks.flatMap(chunk => chunk.modules)) {
@@ -199,14 +210,14 @@ export function checkBuild(directory: string, budget: PerfBudget): BuildReport {
   const cache = new Map<string, Kb>()
   const size = (file: string) => {
     let kb = cache.get(file)
-    if (kb === undefined) cache.set(file, kb = kbOf(gzipSync(readFileSync(join(directory, file)), { level: 9 }).byteLength))
+    if (kb === undefined) cache.set(file, (kb = kbOf(gzipSync(readFileSync(join(directory, file)), { level: 9 }).byteLength)))
     return kb
   }
   const exceptions = new Map(budget.exceptions.map(exception => [exception.row, exception]))
   const rows: Row[] = []
   const gated = (id: string, kind: Kind, budgetKb: Kb, kb: Kb) => {
     const exception = exceptions.get(id)
-    const row: Row = { id, kind, budget: budgetKb, limit: exception?.kb ?? budgetKb, kb, ...exception && { exception } }
+    const row: Row = { id, kind, budget: budgetKb, limit: exception?.kb ?? budgetKb, kb, ...(exception && { exception }) }
     rows.push(row)
     return row
   }
@@ -216,7 +227,7 @@ export function checkBuild(directory: string, budget: PerfBudget): BuildReport {
     const pieceRows = new Map(pieces[site].map(piece => [piece.id, gated(`${site}/${piece.id}`, "piece", budget.sites[site][piece.id] ?? 0, size(piece.file))]))
     const sum = (ids: readonly string[], key: "budget" | "limit" | "kb") => ids.reduce((total, id) => total + (pieceRows.get(id)?.[key] ?? 0), 0)
     for (const piece of pieces[site].slice(libraries.length)) {
-      const ids = ["page", "core", ...piece.kit ? ["kit"] : [], piece.id]
+      const ids = ["page", "core", ...(piece.kit ? ["kit"] : []), piece.id]
       rows.push({ id: `${site}/${piece.id} alone`, kind: "alone", budget: sum(ids, "budget"), limit: sum(ids, "limit"), kb: sum(ids, "kb") })
     }
     const all = pieces[site].map(piece => piece.id)
@@ -252,10 +263,12 @@ export function checkBuild(directory: string, budget: PerfBudget): BuildReport {
 
   const manifest = JSON.parse(readFileSync(join(directory, "manifest.json"), "utf8")) as Record<string, unknown>
   for (const key of ["content_scripts", "web_accessible_resources"]) if (key in manifest) failures.push(`${browser}: manifest has ${key} (Q-PERF-6)`)
-  const ownedCss = new Set([popup, settings, firstRun].flatMap(page => [
-    ...htmlAssets(directory, page === popup ? "popup.html" : page === settings ? "options.html" : "onboarding.html").styles,
-    ...[...page.initial, ...page.lazy.flatMap(part => [...part.files])].flatMap(file => [...readFileSync(join(directory, file), "utf8").matchAll(/assets\/[\w.-]+\.css/g)].map(match => match[0]))
-  ]))
+  const ownedCss = new Set(
+    [popup, settings, firstRun].flatMap(page => [
+      ...htmlAssets(directory, page === popup ? "popup.html" : page === settings ? "options.html" : "onboarding.html").styles,
+      ...[...page.initial, ...page.lazy.flatMap(part => [...part.files])].flatMap(file => [...readFileSync(join(directory, file), "utf8").matchAll(/assets\/[\w.-]+\.css/g)].map(match => match[0]))
+    ])
+  )
   failures.push(...[popup, settings, firstRun].flatMap(page => page.deadlocks.map(problem => `${browser}: ${problem}`)))
   for (const file of files.filter(file => file.endsWith(".css") && !ownedCss.has(file))) failures.push(`${browser}: ${file} belongs to no extension page; page scripts inject their CSS (Q-PERF-21)`)
   failures.push(...provenanceProblems(directory, browser))
@@ -282,11 +295,9 @@ export function table(reports: readonly BuildReport[]): string {
   for (const row of first.rows) {
     const measured = [row.kb, ...others.map(report => report.rows.find(item => item.id === row.id)?.kb ?? Number.NaN)]
     const worst = Math.max(...measured)
-    const status = row.limit === undefined ? "reported"
-      : worst > row.limit ? "**over**"
-      : row.budget !== undefined && worst > row.budget ? `excepted since ${row.exception?.since ?? "(pieces)"}`
-      : "ok"
-    const show = (kb: Kb | undefined) => kb === undefined ? "" : round(kb).toFixed(2)
+    const status =
+      row.limit === undefined ? "reported" : worst > row.limit ? "**over**" : row.budget !== undefined && worst > row.budget ? `excepted since ${row.exception?.since ?? "(pieces)"}` : "ok"
+    const show = (kb: Kb | undefined) => (kb === undefined ? "" : round(kb).toFixed(2))
     lines.push(`| ${row.id} | ${show(row.budget)} | ${show(row.limit)} | ${measured.map(show).join(" | ")} | ${status} |`)
   }
   return lines.join("\n")

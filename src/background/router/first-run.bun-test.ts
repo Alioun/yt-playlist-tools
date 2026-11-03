@@ -22,23 +22,33 @@ test("auto-add calls use the actual authenticated receiver and correlate the con
     const before = h.store.counters().generations
     expect(await backend.change(autoChange(captured, { kind: "auto-add", expected: false, chosen: false }))).toEqual({ kind: "refused", reason: "stale" })
     expect(h.store.counters().generations).toBe(before)
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 test("auto-add native sender and private refusal precede all owner reads and stamps", async () => {
   const h = await choiceHarness()
   try {
-    const normal = onboardingSender(), before = h.store.counters(), effects = h.store.effects.length
+    const normal = onboardingSender(),
+      before = h.store.counters(),
+      effects = h.store.effects.length
     const envelope = h.envelope({ change: { kind: "auto-add-read", acct: autoAcct, playlist: autoOne } })
     for (const sender of [
-      { ...normal, id: "foreign-extension" }, { ...normal, frameId: 2 }, { ...normal, tab: undefined },
-      { ...normal, url: "https://www.youtube.com/" }, { ...normal, url: normal.url + "?forged=1" }
-    ]) expect(await h.send(envelope, sender)).toBeUndefined()
+      { ...normal, id: "foreign-extension" },
+      { ...normal, frameId: 2 },
+      { ...normal, tab: undefined },
+      { ...normal, url: "https://www.youtube.com/" },
+      { ...normal, url: normal.url + "?forged=1" }
+    ])
+      expect(await h.send(envelope, sender)).toBeUndefined()
     h.privacy.set(1, true)
     expect(await h.send(envelope, { ...normal, tab: { ...normal.tab, incognito: true } })).toBeUndefined()
     expect(h.store.counters()).toEqual(before)
     expect(h.store.effects.length).toBe(effects)
     expect(h.store.batches).toEqual([])
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 test("auto-add raw DTO authority and whole-Setup replacements are rejected before native authentication", async () => {
   const h = await choiceHarness()
@@ -49,10 +59,13 @@ test("auto-add raw DTO authority and whole-Setup replacements are rejected befor
     }
     expect(h.stats().authenticationReads).toBe(before)
     expect(h.store.batches).toEqual([])
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 test("the deterministic consumer uses separate read and write paths with exact confirmation", async () => {
-  const first = await runFirstRunBackendConsumer(), second = await runFirstRunBackendConsumer()
+  const first = await runFirstRunBackendConsumer(),
+    second = await runFirstRunBackendConsumer()
   expect(first).toEqual(second)
   expect(first).toEqual([
     '{"case":"initial","localGets":1,"runtimeCalls":0,"implicitEffects":0}',
@@ -64,38 +77,61 @@ test("the deterministic consumer uses separate read and write paths with exact c
   ])
 })
 for (const [mode, kind, reason] of [
-  ["normal", "agreed", undefined], ["rejected-applied", "agreed", undefined],
-  ["ignored", "not-agreed", "unconfirmed"], ["rejected-unchanged", "not-agreed", "rejected"],
-  ["read-failed", "not-agreed", "unconfirmed"], ["rejected-read-failed", "not-agreed", "unconfirmed"]
-] as const) test(`semantic confirmation through native RPC ${mode}`, async () => {
-  const h = await createFirstRunHarness()
-  try {
-    h.store.mode(mode)
-    const answer = await h.openView().backend.change(selected)
-    expect(answer.kind).toBe(kind)
-    if (answer.kind === "not-agreed") { check(reason !== undefined, "refusal baseline"); expect(answer.reason).toBe(reason) }
-    const expected = kind === "agreed"
-      ? { kind: "agreed", attempt: 1, applications: [{ feature: "quick-save", state: "enabled" }] }
-      : { kind: "not-agreed", attempt: 1, reason }
-    const request: unknown = JSON.parse(h.requestBytes[0] ?? "null")
-    check(objectShape(request, { v: v => v === 1, build: v => v === buildId(),
-      id: v => typeof v === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}:1$/.test(v),
-      kind: v => v === "ui.change", payload: () => true }), "namespaced first request identity")
-    expect<unknown>(request).toEqual({ v: 1, build: buildId(), id: request.id, kind: "ui.change", payload: { change: selected } })
-    expect(h.answerBytes).toEqual([JSON.stringify({ v: 1, build: buildId(), id: request.id, kind: "ui.change", result: { kind: "agreement", outcome: expected } })])
-    expect(h.answerBytes.join("")).not.toMatch(/SENTINEL|stack|nested|mutations|agreement-review|fixture-device/)
-  } finally { await h.dispose() }
-})
+  ["normal", "agreed", undefined],
+  ["rejected-applied", "agreed", undefined],
+  ["ignored", "not-agreed", "unconfirmed"],
+  ["rejected-unchanged", "not-agreed", "rejected"],
+  ["read-failed", "not-agreed", "unconfirmed"],
+  ["rejected-read-failed", "not-agreed", "unconfirmed"]
+] as const)
+  test(`semantic confirmation through native RPC ${mode}`, async () => {
+    const h = await createFirstRunHarness()
+    try {
+      h.store.mode(mode)
+      const answer = await h.openView().backend.change(selected)
+      expect(answer.kind).toBe(kind)
+      if (answer.kind === "not-agreed") {
+        check(reason !== undefined, "refusal baseline")
+        expect(answer.reason).toBe(reason)
+      }
+      const expected = kind === "agreed" ? { kind: "agreed", attempt: 1, applications: [{ feature: "quick-save", state: "enabled" }] } : { kind: "not-agreed", attempt: 1, reason }
+      const request: unknown = JSON.parse(h.requestBytes[0] ?? "null")
+      check(
+        objectShape(request, {
+          v: v => v === 1,
+          build: v => v === buildId(),
+          id: v => typeof v === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}:1$/.test(v),
+          kind: v => v === "ui.change",
+          payload: () => true
+        }),
+        "namespaced first request identity"
+      )
+      expect<unknown>(request).toEqual({ v: 1, build: buildId(), id: request.id, kind: "ui.change", payload: { change: selected } })
+      expect(h.answerBytes).toEqual([JSON.stringify({ v: 1, build: buildId(), id: request.id, kind: "ui.change", result: { kind: "agreement", outcome: expected } })])
+      expect(h.answerBytes.join("")).not.toMatch(/SENTINEL|stack|nested|mutations|agreement-review|fixture-device/)
+    } finally {
+      await h.dispose()
+    }
+  })
 test("the scope expectation matches every application from the real canonical planner", async () => {
   const h = await createFirstRunHarness()
   try {
-    const records = h.store.records(), state = readCanonicalAgreement(records)
+    const records = h.store.records(),
+      state = readCanonicalAgreement(records)
     check(state.kind === "canonical-state", "canonical scope baseline")
-    const plan = prepareCanonicalAgreement({ records, state, choice: { kind: "first-run", selected: pageFeatures, syncOn: false },
-      access: { www: true, music: true, browserMenu: true }, consent: { v: 1, at: 200 }, context: h.store.deps.startup.context })
+    const plan = prepareCanonicalAgreement({
+      records,
+      state,
+      choice: { kind: "first-run", selected: pageFeatures, syncOn: false },
+      access: { www: true, music: true, browserMenu: true },
+      consent: { v: 1, at: 200 },
+      context: h.store.deps.startup.context
+    })
     check(plan.kind === "prepared", "canonical application plan")
     for (const feature of pageFeatures) expect(agreementScopes(feature)).toEqual(plan.applications.filter(row => row.feature === feature).map(row => row.scope))
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 test("a real unchanged agreement supplies no request-specific application proof", async () => {
   const h = await createFirstRunHarness()
@@ -105,29 +141,45 @@ test("a real unchanged agreement supplies no request-specific application proof"
     const before = h.store.batches.length
     expect(await view.backend.change({ ...selected, attempt: 2 })).toEqual({ kind: "not-agreed", attempt: 2, reason: "unconfirmed" })
     expect(h.store.batches.length).toBe(before)
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
-for (const feature of ["shortcuts", "any-tab-keys"] as const) for (const fault of ["missing", "duplicate", "unexpected", "off"] as const) {
-  test(`${feature} refuses ${fault} application proof`, async () => {
-    const h = await createFirstRunHarness({ owner: real => ({ ...real, async agree(origin, input) {
-      const result = await real.agree(origin, input)
-      check(result.kind === "committed", "actual canonical agreement")
-      const first = result.applications[0]
-      check(first, "canonical first scope")
-      const applications = fault === "missing" ? result.applications.filter(row => row.scope !== "music")
-        : fault === "duplicate" ? [first, first] : fault === "unexpected" ? [first, { ...first, scope: "browser" as const }]
-          : result.applications.map(row => row.scope === "music" ? { ...row, state: { kind: "off", reason: "denied-access" } as const } : row)
-      return { ...result, applications }
-    } }) })
-    try {
-      expect(await h.openView().backend.change({ ...selected, selected: [feature] })).toEqual({ kind: "not-agreed", attempt: 1, reason: "unconfirmed" })
-    } finally { await h.dispose() }
-  })
-}
+for (const feature of ["shortcuts", "any-tab-keys"] as const)
+  for (const fault of ["missing", "duplicate", "unexpected", "off"] as const) {
+    test(`${feature} refuses ${fault} application proof`, async () => {
+      const h = await createFirstRunHarness({
+        owner: real => ({
+          ...real,
+          async agree(origin, input) {
+            const result = await real.agree(origin, input)
+            check(result.kind === "committed", "actual canonical agreement")
+            const first = result.applications[0]
+            check(first, "canonical first scope")
+            const applications =
+              fault === "missing"
+                ? result.applications.filter(row => row.scope !== "music")
+                : fault === "duplicate"
+                  ? [first, first]
+                  : fault === "unexpected"
+                    ? [first, { ...first, scope: "browser" as const }]
+                    : result.applications.map(row => (row.scope === "music" ? { ...row, state: { kind: "off", reason: "denied-access" } as const } : row))
+            return { ...result, applications }
+          }
+        })
+      })
+      try {
+        expect(await h.openView().backend.change({ ...selected, selected: [feature] })).toEqual({ kind: "not-agreed", attempt: 1, reason: "unconfirmed" })
+      } finally {
+        await h.dispose()
+      }
+    })
+  }
 test("validation rejects forged Origin and copied reviews before native authentication", async () => {
   const h = await createFirstRunHarness()
   try {
-    const before = h.stats().authenticationReads, writes = h.store.batches.length
+    const before = h.stats().authenticationReads,
+      writes = h.store.batches.length
     for (const sender of [onboardingSender(), onboardingSender(11)]) {
       for (const payload of [
         { change: { ...selected, review: { kind: "agreement-review" } } },
@@ -135,21 +187,28 @@ test("validation rejects forged Origin and copied reviews before native authenti
         { change: { ...selected, origin: { kind: "ui", windowId: 1, incognito: false } } },
         { change: { ...selected, selected: ["quick-save", "quick-save"] } },
         { change: { ...selected, permissions: { www: true, music: true, browserMenu: true } } }
-      ]) expect(await h.send(h.envelope(payload), sender)).toBeUndefined()
+      ])
+        expect(await h.send(h.envelope(payload), sender)).toBeUndefined()
     }
     expect(await h.send({ ...h.envelope({ change: selected }), extra: true }, onboardingSender())).toBeUndefined()
     expect(h.stats().authenticationReads).toBe(before)
     expect(h.store.batches.length).toBe(writes)
     expect(h.nativeClaims.every(value => value === false)).toBe(true)
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 test("native sender restrictions run before every owner handler", async () => {
   const h = await createFirstRunHarness()
   try {
-    const normal = onboardingSender(), before = h.store.counters().reads
+    const normal = onboardingSender(),
+      before = h.store.counters().reads
     const senders = [
-      { ...normal, id: "foreign-extension" }, { ...normal, frameId: 2 }, { ...normal, frameId: undefined },
-      { ...normal, tab: undefined }, { ...normal, url: "https://www.youtube.com/watch?v=abcdefghijk" },
+      { ...normal, id: "foreign-extension" },
+      { ...normal, frameId: 2 },
+      { ...normal, frameId: undefined },
+      { ...normal, tab: undefined },
+      { ...normal, url: "https://www.youtube.com/watch?v=abcdefghijk" },
       { ...normal, url: "https://music.youtube.com/watch?v=abcdefghijk" },
       { ...normal, url: normal.url + "?forged=1" }
     ]
@@ -158,7 +217,9 @@ test("native sender restrictions run before every owner handler", async () => {
     expect(await h.send(h.envelope({ change: selected }), normal)).toBeUndefined()
     expect(h.store.counters().reads).toBe(before)
     expect(h.store.batches).toEqual([])
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 test("private UI writes never reach the owner", async () => {
   const h = await createFirstRunHarness()
@@ -170,7 +231,9 @@ test("private UI writes never reach the owner", async () => {
     expect((await h.openView(sender).backend.change(selected)).kind).toBe("not-agreed")
     expect(h.store.batches).toEqual([])
     expect(h.stats().accessReads).toBe(0)
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 test("popup window claims are verified and tab pages cannot supply them", async () => {
   const h = await createFirstRunHarness()
@@ -180,42 +243,72 @@ test("popup window claims are verified and tab pages cannot supply them", async 
     expect((await h.openView(onboardingSender(), 1).backend.change(selected)).kind).toBe("not-agreed")
     expect(h.store.batches).toEqual([])
     expect((await h.openView(popup, 1).backend.change(selected)).kind).toBe("agreed")
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 test("the handler passes the captured object without exporting or reconstructing it", async () => {
   const captures = new Set<AgreementReview>()
   let confirmations = 0
-  const h = await createFirstRunHarness({ owner: real => ({ ...real,
-    async readAgreement(origin) { const read = await real.readAgreement(origin); if (read.kind === "review") captures.add(read.review); return read },
-    async agree(origin, input) { expect(captures.has(input.review)).toBe(true); captures.delete(input.review); confirmations++; return real.agree(origin, input) }
-  }) })
+  const h = await createFirstRunHarness({
+    owner: real => ({
+      ...real,
+      async readAgreement(origin) {
+        const read = await real.readAgreement(origin)
+        if (read.kind === "review") captures.add(read.review)
+        return read
+      },
+      async agree(origin, input) {
+        expect(captures.has(input.review)).toBe(true)
+        captures.delete(input.review)
+        confirmations++
+        return real.agree(origin, input)
+      }
+    })
+  })
   try {
-    const a = h.openView(), b = h.openView(onboardingSender(11))
+    const a = h.openView(),
+      b = h.openView(onboardingSender(11))
     const answers = await Promise.all([a.backend.change(selected), b.backend.change({ ...selected, attempt: 2, selected: ["queue-button"] })])
     expect(confirmations).toBe(2)
     expect(answers.filter(answer => answer.kind === "agreed")).toHaveLength(1)
     expect(h.answerBytes.join("")).not.toContain("agreement-review")
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 test("the real owner refuses copied and stale review objects", async () => {
-  const h = await createFirstRunHarness(), origin = { kind: "ui", windowId: 1, incognito: false } as const
+  const h = await createFirstRunHarness(),
+    origin = { kind: "ui", windowId: 1, incognito: false } as const
   try {
     const read = await h.owner.readAgreement(origin)
     check(read.kind === "review", "real captured review")
-    const input = { displayedVersion: 1, choice: { kind: "first-run", selected: ["quick-save"], syncOn: false } as const,
-      access: Promise.resolve({ www: true, music: true, browserMenu: true }) }
+    const input = { displayedVersion: 1, choice: { kind: "first-run", selected: ["quick-save"], syncOn: false } as const, access: Promise.resolve({ www: true, music: true, browserMenu: true }) }
     expect(await h.owner.agree(origin, { ...input, review: { ...read.review } })).toEqual({ kind: "unavailable", reason: "stale" })
-    h.store.foreign(records => { records.foreign = true })
+    h.store.foreign(records => {
+      records.foreign = true
+    })
     expect(await h.owner.agree(origin, { ...input, review: read.review })).toEqual({ kind: "unavailable", reason: "stale" })
     expect(h.store.batches).toEqual([])
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 test("displayed version mismatch refuses without substituting the background version", async () => {
   let agreeCalls = 0
-  const h = await createFirstRunHarness({ owner: real => ({ ...real,
-    async readAgreement(origin) { const read = await real.readAgreement(origin); return read.kind === "review" ? { ...read, version: 2 } : read },
-    agree(origin, input) { agreeCalls++; return real.agree(origin, input) }
-  }) })
+  const h = await createFirstRunHarness({
+    owner: real => ({
+      ...real,
+      async readAgreement(origin) {
+        const read = await real.readAgreement(origin)
+        return read.kind === "review" ? { ...read, version: 2 } : read
+      },
+      agree(origin, input) {
+        agreeCalls++
+        return real.agree(origin, input)
+      }
+    })
+  })
   try {
     const view = h.openView()
     const answer = await view.firstRun.agree({ displayed: view.text.disclosure, attempt: 7, selected: ["quick-save"], syncOn: false, permissions: Promise.resolve({ music: true, browserMenu: true }) })
@@ -223,7 +316,9 @@ test("displayed version mismatch refuses without substituting the background ver
     expect(h.requestBytes[0]).toContain('"displayedVersion":1')
     expect(agreeCalls).toBe(0)
     expect(h.store.batches).toEqual([])
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 test("permission revocation after the click uses current receiver observations", async () => {
   const h = await createFirstRunHarness()
@@ -232,13 +327,22 @@ test("permission revocation after the click uses current receiver observations",
     h.permissionResult(true)
     const permissions = view.firstRun.requestPermissions({ music: true, browserMenu: true })
     await permissions
-    h.grants.music = false; h.grants.browserMenu = false
+    h.grants.music = false
+    h.grants.browserMenu = false
     const answer = await view.firstRun.agree({ displayed: view.text.disclosure, attempt: 1, selected: ["music-keys", "any-tab-keys", "browser-menu"], syncOn: false, permissions })
-    expect(answer).toEqual({ kind: "agreed", attempt: 1, applications: [
-      { feature: "music-keys", state: "held-site-access" }, { feature: "any-tab-keys", state: "held-site-access" }, { feature: "browser-menu", state: "held-browser-menu" }
-    ] })
+    expect(answer).toEqual({
+      kind: "agreed",
+      attempt: 1,
+      applications: [
+        { feature: "music-keys", state: "held-site-access" },
+        { feature: "any-tab-keys", state: "held-site-access" },
+        { feature: "browser-menu", state: "held-browser-menu" }
+      ]
+    })
     expect(h.requestBytes.join("")).not.toMatch(/permissions|Promise|browserMenu/)
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 test("failed native permission verification cannot authorize an agreement", async () => {
   const h = await createFirstRunHarness()
@@ -246,39 +350,77 @@ test("failed native permission verification cannot authorize an agreement", asyn
     h.accessFailure(true)
     expect(await h.openView().backend.change(selected)).toEqual({ kind: "not-agreed", attempt: 1, reason: "unavailable" })
     expect(h.store.batches).toEqual([])
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 test("held disclosure stays outside ordinary first-run activation", async () => {
   let calls = 0
-  const h = await createFirstRunHarness({ owner: real => ({ ...real,
-    async readAgreement(origin) { const read = await real.readAgreement(origin); return read.kind === "review" ? { ...read,
-      presentation: { kind: "held", consent: null, work: [], allowedChoice: "disclosure", activation: "held" } as const } : read },
-    agree(origin, input) { calls++; return real.agree(origin, input) }
-  }) })
+  const h = await createFirstRunHarness({
+    owner: real => ({
+      ...real,
+      async readAgreement(origin) {
+        const read = await real.readAgreement(origin)
+        return read.kind === "review" ? { ...read, presentation: { kind: "held", consent: null, work: [], allowedChoice: "disclosure", activation: "held" } as const } : read
+      },
+      agree(origin, input) {
+        calls++
+        return real.agree(origin, input)
+      }
+    })
+  })
   try {
     expect(await h.openView().backend.change(selected)).toEqual({ kind: "not-agreed", attempt: 1, reason: "unavailable" })
     expect(calls).toBe(0)
     expect(h.store.batches).toEqual([])
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 test("retained disclosure cannot be converted to ordinary first-run activation", async () => {
   let calls = 0
-  const h = await createFirstRunHarness({ owner: real => ({ ...real,
-    async readAgreement(origin) { const read = await real.readAgreement(origin); return read.kind === "review" ? { ...read,
-      presentation: { kind: "retained", consent: null, historicalAuthorization: { kind: "unknown" }, priorCredentialPresence: { kind: "unknown" },
-        recovery: "unavailable", agreement: "required", details: { kind: "blocked" }, activation: "held" } as const } : read },
-    agree(origin, input) { calls++; return real.agree(origin, input) }
-  }) })
+  const h = await createFirstRunHarness({
+    owner: real => ({
+      ...real,
+      async readAgreement(origin) {
+        const read = await real.readAgreement(origin)
+        return read.kind === "review"
+          ? {
+              ...read,
+              presentation: {
+                kind: "retained",
+                consent: null,
+                historicalAuthorization: { kind: "unknown" },
+                priorCredentialPresence: { kind: "unknown" },
+                recovery: "unavailable",
+                agreement: "required",
+                details: { kind: "blocked" },
+                activation: "held"
+              } as const
+            }
+          : read
+      },
+      agree(origin, input) {
+        calls++
+        return real.agree(origin, input)
+      }
+    })
+  })
   try {
     expect(await h.openView().backend.change(selected)).toEqual({ kind: "not-agreed", attempt: 1, reason: "unavailable" })
     expect(calls).toBe(0)
     expect(h.store.batches).toEqual([])
-  } finally { await h.dispose() }
+  } finally {
+    await h.dispose()
+  }
 })
 test("a real sync join choice returns join-required without a side or portable review", async () => {
-  const joining = syncJoinHarness({ local: {}, sync: { "s:meta": { v: 1, id: "history", created: 0 },
-    "s:settings": { v: 1, gen: "remote", at: 1, by: "fixture", data: { queueButton: { on: true } } } } })
-  const owner = joining.owner(); await owner.ready()
+  const joining = syncJoinHarness({
+    local: {},
+    sync: { "s:meta": { v: 1, id: "history", created: 0 }, "s:settings": { v: 1, gen: "remote", at: 1, by: "fixture", data: { queueButton: { on: true } } } }
+  })
+  const owner = joining.owner()
+  await owner.ready()
   const h = await createFirstRunHarness({ owner: () => owner })
   try {
     const before = joining.localSets.length
@@ -287,19 +429,30 @@ test("a real sync join choice returns join-required without a side or portable r
     expect(await pending).toEqual({ kind: "not-agreed", attempt: 1, reason: "join-required" })
     expect(joining.localSets.length).toBe(before)
     expect(h.answerBytes.join("")).not.toMatch(/review|defaultChoice|use-synced|history/)
-  } finally { await h.dispose(); await owner.dispose() }
+  } finally {
+    await h.dispose()
+    await owner.dispose()
+  }
 })
 test("disposal during confirmation drops late answers without claiming rollback", async () => {
-  const pause = gate(), entered = gate()
+  const pause = gate(),
+    entered = gate()
   const h = await createFirstRunHarness()
   try {
     const view = h.openView()
-    h.store.set(async () => { entered.release(); await pause.waiting })
+    h.store.set(async () => {
+      entered.release()
+      await pause.waiting
+    })
     const answer = view.firstRun.agree({ displayed: view.text.disclosure, attempt: 1, selected: ["quick-save"], syncOn: false, permissions: Promise.resolve({ music: true, browserMenu: true }) })
     await entered.waiting
-    view.dispose(); pause.release()
+    view.dispose()
+    pause.release()
     expect(await answer).toEqual({ kind: "not-agreed", attempt: 1, reason: "unavailable" })
     await turns()
     expect(h.stats().deadlines).toBe(0)
-  } finally { pause.release(); await h.dispose() }
+  } finally {
+    pause.release()
+    await h.dispose()
+  }
 })

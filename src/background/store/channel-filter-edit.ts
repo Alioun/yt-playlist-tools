@@ -2,9 +2,7 @@ import { decodeFilter, defaultFilter } from "../../shared/model"
 import { normalizeFilterForWrite } from "../../shared/model/normalize"
 import type { Filter } from "../../shared/model"
 
-type Snapshot<T> = T extends object
-  ? { readonly [P in keyof T]: Snapshot<T[P]> }
-  : T
+type Snapshot<T> = T extends object ? { readonly [P in keyof T]: Snapshot<T[P]> } : T
 
 export type FilterSettingInput = {
   readonly current: Snapshot<Filter> | undefined
@@ -12,10 +10,7 @@ export type FilterSettingInput = {
   readonly clearListedChannels: "not-confirmed" | "confirmed"
 }
 
-export type FilterSettingResult =
-  | { readonly kind: "unchanged" }
-  | { readonly kind: "confirmation-required" }
-  | { readonly kind: "changed"; readonly filter: Filter }
+export type FilterSettingResult = { readonly kind: "unchanged" } | { readonly kind: "confirmation-required" } | { readonly kind: "changed"; readonly filter: Filter }
 
 export function changeFilterSetting(input: FilterSettingInput): FilterSettingResult {
   const current = input.current ?? defaultFilter()
@@ -43,7 +38,7 @@ export type FilterChannelInput = {
 }
 export type FilterChannelResult = FilterSettingResult | { readonly kind: "invalid" }
 
-const entry = (channel: ChannelLabel): Filter["channels"][number] => channel[2] === undefined ? [channel[0], channel[1]] : [channel[0], channel[1], channel[2]]
+const entry = (channel: ChannelLabel): Filter["channels"][number] => (channel[2] === undefined ? [channel[0], channel[1]] : [channel[0], channel[1], channel[2]])
 const sameLabel = (left: Snapshot<Filter["channels"][number]>, right: ChannelLabel) => left[1] === right[1] && left[2] === right[2]
 // A stored row may carry fields a newer browser added after the handle, so a relabel keeps them (SYNC-22).
 function relabel(row: Snapshot<Filter["channels"][number]>, channel: ChannelLabel): Filter["channels"][number] {
@@ -75,7 +70,7 @@ export function changeFilterChannel(input: FilterChannelInput): FilterChannelRes
     if (input.clearListedChannels !== "confirmed") return { kind: "confirmation-required" }
     return { kind: "changed", filter: decodeFilter({ mode, on, channels: [entry(input.channel)] }) }
   }
-  const listed = index >= 0 ? channels.map((row, at) => at === index ? relabel(row, input.channel) : row) : [...channels, entry(input.channel)]
+  const listed = index >= 0 ? channels.map((row, at) => (at === index ? relabel(row, input.channel) : row)) : [...channels, entry(input.channel)]
   if (index >= 0 && on === current.on && mode === current.mode && sameLabel(current.channels[index]!, input.channel)) return { kind: "unchanged" }
   return { kind: "changed", filter: decodeFilter({ ...current, mode, on, channels: listed }) }
 }
@@ -86,6 +81,6 @@ export function refreshChannelLabel(current: Snapshot<Filter> | undefined, chann
   if (!current || index < 0 || sameLabel(current.channels[index]!, channel)) return { kind: "unchanged" }
   // Stored labels are cut to 100 and 30 characters, so a long title compares by its stored form.
   const before = normalizeFilterForWrite(decodeFilter(current))
-  const after = normalizeFilterForWrite(decodeFilter({ ...current, channels: current.channels.map((row, at) => at === index ? relabel(row, channel) : [...row]) }))
+  const after = normalizeFilterForWrite(decodeFilter({ ...current, channels: current.channels.map((row, at) => (at === index ? relabel(row, channel) : [...row])) }))
   return JSON.stringify(before) === JSON.stringify(after) ? { kind: "unchanged" } : { kind: "changed", filter: after }
 }

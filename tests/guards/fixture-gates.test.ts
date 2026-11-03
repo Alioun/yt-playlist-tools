@@ -11,8 +11,7 @@ const at = (gate: { fixture: string }, path: string) => join(root, gate.fixture,
 // and the .fixture-gate-<pid>.tsconfig.json a running negatives gate writes beside its project.
 function listFixtureFiles(directory: string) {
   return readdirSync(directory, { recursive: true, withFileTypes: true })
-    .filter(entry => entry.isFile() && entry.parentPath !== directory && !entry.name.startsWith(".fixture-gate-")
-      && !relative(directory, entry.parentPath).split(sep).includes(".wxt"))
+    .filter(entry => entry.isFile() && entry.parentPath !== directory && !entry.name.startsWith(".fixture-gate-") && !relative(directory, entry.parentPath).split(sep).includes(".wxt"))
     .map(entry => join(entry.parentPath, entry.name))
     .sort()
 }
@@ -27,22 +26,38 @@ const runnable: { pattern: RegExp; what: string }[] = [
 
 function covered(gate: FixtureGate): string[] {
   switch (gate.kind) {
-    case "suite": return gate.files.map(file => at(gate, file))
-    case "consumer": return [at(gate, "run.ts")]
-    case "library": return [at(gate, gate.file)]
-    case "types": return [at(gate, gate.project)]
-    case "negatives": return [at(gate, gate.project), ..."cases" in gate.source ? [at(gate, gate.source.cases)] : []]
-    case "script": return [at(gate, gate.file)]
+    case "suite":
+      return gate.files.map(file => at(gate, file))
+    case "consumer":
+      return [at(gate, "run.ts")]
+    case "library":
+      return [at(gate, gate.file)]
+    case "types":
+      return [at(gate, gate.project)]
+    case "negatives":
+      return [at(gate, gate.project), ...("cases" in gate.source ? [at(gate, gate.source.cases)] : [])]
+    case "script":
+      return [at(gate, gate.file)]
   }
 }
 
 function referenced(gate: FixtureGate): string[] {
   switch (gate.kind) {
-    case "suite": return [...covered(gate), at(gate, "bunfig.toml")]
-    case "consumer": return [...covered(gate), ...gate.expected ? [at(gate, gate.expected)] : []]
-    case "library": return [...covered(gate), gate.importedBy]
-    case "negatives": return [...covered(gate), ..."directivesIn" in gate.source ? [at(gate, gate.source.directivesIn)] : [], ..."svelteFiles" in gate.source ? Object.keys(gate.source.svelteFiles).map(file => at(gate, file)) : []]
-    case "types": case "script": return covered(gate)
+    case "suite":
+      return [...covered(gate), at(gate, "bunfig.toml")]
+    case "consumer":
+      return [...covered(gate), ...(gate.expected ? [at(gate, gate.expected)] : [])]
+    case "library":
+      return [...covered(gate), gate.importedBy]
+    case "negatives":
+      return [
+        ...covered(gate),
+        ...("directivesIn" in gate.source ? [at(gate, gate.source.directivesIn)] : []),
+        ...("svelteFiles" in gate.source ? Object.keys(gate.source.svelteFiles).map(file => at(gate, file)) : [])
+      ]
+    case "types":
+    case "script":
+      return covered(gate)
   }
 }
 
@@ -71,15 +86,19 @@ describe("fixture gate registry", () => {
   })
 
   test("a library consumer is imported by the suite named for it", () => {
-    const unimported = fixtureGates.flatMap(gate => gate.kind === "library" && !readFileSync(gate.importedBy, "utf8").includes(`tools/fixtures/${gate.fixture}/${gate.file.replace(/\.ts$/, "")}`) ? [gateId(gate)] : [])
+    const unimported = fixtureGates.flatMap(gate =>
+      gate.kind === "library" && !readFileSync(gate.importedBy, "utf8").includes(`tools/fixtures/${gate.fixture}/${gate.file.replace(/\.ts$/, "")}`) ? [gateId(gate)] : []
+    )
     expect(unimported).toEqual([])
   })
 
   test("every fixture bunfig preload exists", () => {
-    const missing = fixtureFiles.filter(file => file.endsWith("/bunfig.toml")).flatMap(file => {
-      const config = Bun.TOML.parse(readFileSync(file, "utf8")) as { preload?: string[]; test?: { preload?: string[] } }
-      return [...config.preload ?? [], ...config.test?.preload ?? []].filter(path => !existsSync(path)).map(path => `${file}: ${path}`)
-    })
+    const missing = fixtureFiles
+      .filter(file => file.endsWith("/bunfig.toml"))
+      .flatMap(file => {
+        const config = Bun.TOML.parse(readFileSync(file, "utf8")) as { preload?: string[]; test?: { preload?: string[] } }
+        return [...(config.preload ?? []), ...(config.test?.preload ?? [])].filter(path => !existsSync(path)).map(path => `${file}: ${path}`)
+      })
     expect(missing).toEqual([])
   })
 

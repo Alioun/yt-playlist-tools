@@ -4,8 +4,23 @@ import type { Snapshot } from "../../shared/model/settings-view"
 import { detachAgreement, freezeAgreement } from "./consent-agreement"
 import { readInterimInstallationHistory, type RetainedInstallationHistory } from "./interim-installation"
 import { interimConversionKey, isInterimCanonicalKey, isInterimSourceKey, readRetainedCheckpoint, type RetainedInterim } from "./interim-persistence"
-import { readRetainedRecovery, recoveryRetained, startingCanonical, validateArchivedReplacement, validateArchivedRestore, validateDiscardResolution, resolutionItem, recoveryLocatorIdentity, documentResolution, documentPending,
-  type RecoveryPending, type RecoveryResolution, type InstalledRetainedV3, type RecoveryStoredObject, type RetainedRecoveryV4 } from "./interim-recovery-execution"
+import {
+  readRetainedRecovery,
+  recoveryRetained,
+  startingCanonical,
+  validateArchivedReplacement,
+  validateArchivedRestore,
+  validateDiscardResolution,
+  resolutionItem,
+  recoveryLocatorIdentity,
+  documentResolution,
+  documentPending,
+  type RecoveryPending,
+  type RecoveryResolution,
+  type InstalledRetainedV3,
+  type RecoveryStoredObject,
+  type RetainedRecoveryV4
+} from "./interim-recovery-execution"
 import { LEGACY_DELETE_KEYS } from "./legacy"
 import { pendingSyncJoinKey, readSyncJoinCheckpoint } from "./sync-join-persistence"
 import { sameSyncJson } from "./sync-write-admission"
@@ -14,9 +29,7 @@ export type CompletedRecoveryV4 = Omit<RetainedRecoveryV4, "basis" | "pending"> 
   readonly basis: { readonly checkpoint: InstalledRetainedV3; readonly history: RecoveryStoredObject }
   readonly pending: { readonly kind: "none" }
 }
-export type RetainedArchiveV5 =
-  | { readonly kind: "installed-v3"; readonly checkpoint: InstalledRetainedV3 }
-  | { readonly kind: "completed-v4"; readonly checkpoint: CompletedRecoveryV4 }
+export type RetainedArchiveV5 = { readonly kind: "installed-v3"; readonly checkpoint: InstalledRetainedV3 } | { readonly kind: "completed-v4"; readonly checkpoint: CompletedRecoveryV4 }
 export type AuthorityAnchorV5 = {
   readonly canonical: JsonObject
   readonly history: RetainedInstallationHistory
@@ -35,28 +48,48 @@ export type RetainedCanonicalAuthorityV5 = {
   readonly pending: RecoveryPending
 }
 export type CanonicalAuthorityRecordRead = { readonly kind: "authority"; readonly checkpoint: Snapshot<RetainedCanonicalAuthorityV5> } | { readonly kind: "invalid" }
-export type RetainedAuthorityClass =
-  | { readonly kind: "none" }
-  | { readonly kind: "held" }
-  | { readonly kind: "canonical-archive"; readonly checkpoint: Snapshot<RetainedCanonicalAuthorityV5> }
+export type RetainedAuthorityClass = { readonly kind: "none" } | { readonly kind: "held" } | { readonly kind: "canonical-archive"; readonly checkpoint: Snapshot<RetainedCanonicalAuthorityV5> }
 
 export type RetainedControllerCapability = { assertCurrent(): Promise<"current" | "lost">; release(): Promise<void> }
 export type CanonicalOwnerCapability = { assertCurrent(): Promise<"current" | "lost">; release(): Promise<void> }
-export type CanonicalAuthorityHost = { readonly kind: "unavailable" } | {
-  readonly kind: "fixture"
-  observeSource(input: { readonly source: JsonObject }): Promise<{ readonly kind: "source-epoch"; readonly sourceEpoch: string } | { readonly kind: "unavailable" }>
-  begin(input: { readonly kind: "new"; readonly sourceEpoch: string } | { readonly kind: "resume"; readonly sourceEpoch: string; readonly handoffId: string }):
-    Promise<{ readonly kind: "controller"; readonly handoffId: string; readonly sourceEpoch: string; readonly capability: RetainedControllerCapability } | { readonly kind: "unavailable" }>
-  retire(input: { readonly handoffId: string; readonly sourceEpoch: string }): Promise<{ readonly kind: "retired"; readonly receipt: FixtureRetirementReceipt } | { readonly kind: "unconfirmed" }>
-  acquire(input: { readonly handoffId: string; readonly sourceEpoch: string }): Promise<{ readonly kind: "exclusive"; readonly capability: CanonicalOwnerCapability } | { readonly kind: "unavailable" }>
-}
+export type CanonicalAuthorityHost =
+  | { readonly kind: "unavailable" }
+  | {
+      readonly kind: "fixture"
+      observeSource(input: { readonly source: JsonObject }): Promise<{ readonly kind: "source-epoch"; readonly sourceEpoch: string } | { readonly kind: "unavailable" }>
+      begin(
+        input: { readonly kind: "new"; readonly sourceEpoch: string } | { readonly kind: "resume"; readonly sourceEpoch: string; readonly handoffId: string }
+      ): Promise<{ readonly kind: "controller"; readonly handoffId: string; readonly sourceEpoch: string; readonly capability: RetainedControllerCapability } | { readonly kind: "unavailable" }>
+      retire(input: { readonly handoffId: string; readonly sourceEpoch: string }): Promise<{ readonly kind: "retired"; readonly receipt: FixtureRetirementReceipt } | { readonly kind: "unconfirmed" }>
+      acquire(input: {
+        readonly handoffId: string
+        readonly sourceEpoch: string
+      }): Promise<{ readonly kind: "exclusive"; readonly capability: CanonicalOwnerCapability } | { readonly kind: "unavailable" }>
+    }
 
 export type CanonicalAuthorityReview = { readonly kind: "canonical-authority-review" }
 export type CanonicalAuthorityUnavailable = {
   readonly kind: "unavailable"
-  readonly reason: "consent-held" | "startup" | "disposed" | "stale" | "newer-layout" | "newer-version" | "retention" | "installation-required" | "pending-agreement"
-    | "pending-installation" | "pending-removal" | "pending-join" | "pending-recovery" | "uncertain" | "sync-writer-required" | "authority-host"
-    | "controller" | "inventory" | "history"
+  readonly reason:
+    | "consent-held"
+    | "startup"
+    | "disposed"
+    | "stale"
+    | "newer-layout"
+    | "newer-version"
+    | "retention"
+    | "installation-required"
+    | "pending-agreement"
+    | "pending-installation"
+    | "pending-removal"
+    | "pending-join"
+    | "pending-recovery"
+    | "uncertain"
+    | "sync-writer-required"
+    | "authority-host"
+    | "controller"
+    | "inventory"
+    | "history"
 }
 export type CanonicalAuthorityRead =
   | { readonly kind: "review"; readonly review: CanonicalAuthorityReview; readonly canonical: Snapshot<JsonObject>; readonly recovery: "retained-inactive"; readonly activation: "held" }
@@ -72,15 +105,29 @@ export type CanonicalAuthorityResult =
   | { readonly kind: "refused"; readonly reason: "private" | "invalid" }
   | { readonly kind: "failed"; readonly stage: "before-set"; readonly error: unknown }
   | { readonly kind: "failed"; readonly stage: CanonicalAuthorityStage; readonly write: Extract<CanonicalAuthorityWrite, { kind: "rejected" }> }
-  | { readonly kind: "unconfirmed"; readonly stage: CanonicalAuthorityStage; readonly write: CanonicalAuthorityWrite;
-      readonly cause: { readonly kind: "authority" | "readback" | "stopped" } | { readonly kind: "read-failed"; readonly error: unknown } }
+  | {
+      readonly kind: "unconfirmed"
+      readonly stage: CanonicalAuthorityStage
+      readonly write: CanonicalAuthorityWrite
+      readonly cause: { readonly kind: "authority" | "readback" | "stopped" } | { readonly kind: "read-failed"; readonly error: unknown }
+    }
 
-function object(raw: unknown): raw is JsonObject { return raw !== null && typeof raw === "object" && !Array.isArray(raw) && isJsonValue(raw) }
-function same(a: unknown, b: unknown): boolean { return isJsonValue(a) && isJsonValue(b) && sameSyncJson(a, b) }
-function exact(raw: JsonObject, keys: readonly string[]): boolean { return Object.keys(raw).length === keys.length && keys.every(key => Object.hasOwn(raw, key)) }
-function text(raw: unknown): raw is string { return typeof raw === "string" && raw.trim() !== "" }
+function object(raw: unknown): raw is JsonObject {
+  return raw !== null && typeof raw === "object" && !Array.isArray(raw) && isJsonValue(raw)
+}
+function same(a: unknown, b: unknown): boolean {
+  return isJsonValue(a) && isJsonValue(b) && sameSyncJson(a, b)
+}
+function exact(raw: JsonObject, keys: readonly string[]): boolean {
+  return Object.keys(raw).length === keys.length && keys.every(key => Object.hasOwn(raw, key))
+}
+function text(raw: unknown): raw is string {
+  return typeof raw === "string" && raw.trim() !== ""
+}
 const markerKeys = ["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"]
-export function isRetainedMarkerKey(key: string): boolean { return key === interimConversionKey || key.startsWith("account:") || markerKeys.includes(key) }
+export function isRetainedMarkerKey(key: string): boolean {
+  return key === interimConversionKey || key.startsWith("account:") || markerKeys.includes(key)
+}
 
 export function archiveRetained(archive: Snapshot<RetainedArchiveV5>): Snapshot<RetainedInterim> {
   return archive.kind === "installed-v3" ? archive.checkpoint.agreed.retained : recoveryRetained(archive.checkpoint)
@@ -90,11 +137,27 @@ export function archiveConsent(archive: Snapshot<RetainedArchiveV5>) {
 }
 type ArchivedReceipt =
   | { readonly kind: "discarded"; readonly item: import("./interim-recovery-execution").RecoveryLocator }
-  | { readonly kind: "filter-replaced"; readonly effect: { readonly item: import("./interim-recovery-execution").RecoveryLocator; readonly key: { readonly acct: string; readonly playlist: string }; readonly after: JsonObject; readonly history: { readonly after: RecoveryStoredObject } } }
-  | { readonly kind: "playlist-restored"; readonly effect: { readonly item: import("./interim-recovery-execution").RecoveryLocator; readonly key: { readonly acct: string }; readonly after: JsonObject; readonly history: { readonly after: RecoveryStoredObject } } }
+  | {
+      readonly kind: "filter-replaced"
+      readonly effect: {
+        readonly item: import("./interim-recovery-execution").RecoveryLocator
+        readonly key: { readonly acct: string; readonly playlist: string }
+        readonly after: JsonObject
+        readonly history: { readonly after: RecoveryStoredObject }
+      }
+    }
+  | {
+      readonly kind: "playlist-restored"
+      readonly effect: {
+        readonly item: import("./interim-recovery-execution").RecoveryLocator
+        readonly key: { readonly acct: string }
+        readonly after: JsonObject
+        readonly history: { readonly after: RecoveryStoredObject }
+      }
+    }
 export function archiveResolutions(archive: Snapshot<RetainedArchiveV5>): readonly ArchivedReceipt[] {
   // The archive reader validated these receipts; this view avoids recursively mapping JSON and branded strings.
-  return archive.kind === "completed-v4" ? archive.checkpoint.resolutions as unknown as readonly ArchivedReceipt[] : []
+  return archive.kind === "completed-v4" ? (archive.checkpoint.resolutions as unknown as readonly ArchivedReceipt[]) : []
 }
 
 // The historical after-image is derived once from evidence, never from today's canonical records.
@@ -106,7 +169,8 @@ function historicalAnchor(archive: Snapshot<RetainedArchiveV5>): { readonly cano
   let history = detachAgreement(initial) as RecoveryStoredObject
   for (const resolution of archiveResolutions(archive)) {
     switch (resolution.kind) {
-      case "discarded": break
+      case "discarded":
+        break
       case "filter-replaced":
         canonical[`doc:filter:${resolution.effect.key.acct}:${resolution.effect.key.playlist}`] = detachAgreement(resolution.effect.after)
         history = resolution.effect.history.after
@@ -115,7 +179,10 @@ function historicalAnchor(archive: Snapshot<RetainedArchiveV5>): { readonly cano
         canonical[`doc:setup:${resolution.effect.key.acct}`] = detachAgreement(resolution.effect.after)
         history = resolution.effect.history.after
         break
-      default: { const exhaustive: never = resolution; return exhaustive }
+      default: {
+        const exhaustive: never = resolution
+        return exhaustive
+      }
     }
   }
   return { canonical, history }
@@ -139,7 +206,12 @@ function readAnchor(raw: unknown, archive: Snapshot<RetainedArchiveV5>): Authori
   if (!object(raw) || !exact(raw, ["canonical", "history", "join"]) || !object(raw.canonical) || !object(raw.history) || !object(raw.join)) return
   const historical = historicalAnchor(archive)
   if (!historical || !same(raw.canonical, historical.canonical) || !same(raw.history, historical.history)) return
-  const history: JsonObject | undefined = raw.history.kind === "absent" && exact(raw.history, ["kind"]) ? {} : raw.history.kind === "present" && exact(raw.history, ["kind", "raw"]) && object(raw.history.raw) ? { sync: raw.history.raw } : undefined
+  const history: JsonObject | undefined =
+    raw.history.kind === "absent" && exact(raw.history, ["kind"])
+      ? {}
+      : raw.history.kind === "present" && exact(raw.history, ["kind", "raw"]) && object(raw.history.raw)
+        ? { sync: raw.history.raw }
+        : undefined
   const checked = history && readInterimInstallationHistory(history)
   if (checked?.kind !== "history") return
   let join: AuthorityAnchorV5["join"]
@@ -159,8 +231,14 @@ function readHandoff(raw: unknown, archive: Snapshot<RetainedArchiveV5>): Author
   if (raw.kind === "accepted" && exact(raw, ["kind", "handoffId", "sourceEpoch", "anchor"])) return { kind: "accepted", ...base }
   if (raw.kind !== "canonical" || !exact(raw, ["kind", "handoffId", "sourceEpoch", "anchor", "retirement"])) return
   const retirement = raw.retirement
-  if (!object(retirement) || !exact(retirement, ["kind", "handoffId", "sourceEpoch"]) || retirement.kind !== "fixture-producers-retired" ||
-    retirement.handoffId !== raw.handoffId || retirement.sourceEpoch !== raw.sourceEpoch) return
+  if (
+    !object(retirement) ||
+    !exact(retirement, ["kind", "handoffId", "sourceEpoch"]) ||
+    retirement.kind !== "fixture-producers-retired" ||
+    retirement.handoffId !== raw.handoffId ||
+    retirement.sourceEpoch !== raw.sourceEpoch
+  )
+    return
   return { kind: "canonical", ...base, retirement: { kind: "fixture-producers-retired", handoffId: raw.handoffId, sourceEpoch: raw.sourceEpoch } }
 }
 export function readCanonicalAuthorityRecord(raw: unknown): CanonicalAuthorityRecordRead {
@@ -170,7 +248,8 @@ export function readCanonicalAuthorityRecord(raw: unknown): CanonicalAuthorityRe
     const archive = readArchive(raw.archive)
     const handoff = archive && readHandoff(raw.handoff, archive)
     if (!archive || !handoff) return invalid
-    const original = archiveRetained(archive), anchor = handoff.anchor.canonical
+    const original = archiveRetained(archive),
+      anchor = handoff.anchor.canonical
     const occurrences = new Set(archiveResolutions(archive).map(x => recoveryLocatorIdentity(resolutionItem(x))))
     const resolutions: RecoveryResolution[] = []
     for (const resolution of raw.resolutions) {
@@ -179,13 +258,15 @@ export function readCanonicalAuthorityRecord(raw: unknown): CanonicalAuthorityRe
       if (discard) {
         const identity = recoveryLocatorIdentity(discard.item)
         if (occurrences.has(identity)) return invalid
-        occurrences.add(identity); resolutions.push(discard)
+        occurrences.add(identity)
+        resolutions.push(discard)
         continue
       }
       if (!object(resolution) || !exact(resolution, ["kind", "effect"]) || (resolution.kind !== "filter-replaced" && resolution.kind !== "playlist-restored")) return invalid
       const effect = resolution.kind === "playlist-restored" ? validateArchivedRestore(resolution.effect, original, anchor) : validateArchivedReplacement(resolution.effect, original, anchor)
       if (!effect || occurrences.has(recoveryLocatorIdentity(effect.item))) return invalid
-      occurrences.add(recoveryLocatorIdentity(effect.item)); resolutions.push(documentResolution(effect))
+      occurrences.add(recoveryLocatorIdentity(effect.item))
+      resolutions.push(documentResolution(effect))
     }
     let pending: RetainedCanonicalAuthorityV5["pending"]
     if (raw.pending.kind === "none" && exact(raw.pending, ["kind"])) pending = { kind: "none" }
@@ -194,9 +275,19 @@ export function readCanonicalAuthorityRecord(raw: unknown): CanonicalAuthorityRe
       if (!effect || occurrences.has(recoveryLocatorIdentity(effect.item))) return invalid
       pending = documentPending(effect)
     } else return invalid
-    const checkpoint: unknown = { ...raw, v: 5, kind: "retained-interim", archive: { kind: archive.kind, checkpoint: detachAgreement(raw.archive as JsonObject).checkpoint }, handoff, resolutions, pending }
+    const checkpoint: unknown = {
+      ...raw,
+      v: 5,
+      kind: "retained-interim",
+      archive: { kind: archive.kind, checkpoint: detachAgreement(raw.archive as JsonObject).checkpoint },
+      handoff,
+      resolutions,
+      pending
+    }
     return { kind: "authority", checkpoint: freezeAgreement(checkpoint) as Snapshot<RetainedCanonicalAuthorityV5> }
-  } catch { return invalid }
+  } catch {
+    return invalid
+  }
 }
 
 export function selectRecords(records: Readonly<Record<string, unknown>>, keep: (key: string) => boolean): JsonObject {

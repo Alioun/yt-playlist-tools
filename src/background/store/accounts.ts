@@ -1,22 +1,13 @@
-import {
-  decodeFilter, decodeSettings, decodeSetup, defaultSetup, isPercent, isPlaylistId,
-  isSetupEmpty, isShortcutId, normalizeSettingsForWrite, normalizeSetupForWrite
-} from "../../shared/model"
-import type {
-  AccountKey, AutoAddPlaylist, ClaimNoticeDetails, ClaimShortcutOutcome, DocumentKey, Filter, PlaylistId, Settings, Setup, SetupContext, ShortcutId, Unclaimed
-} from "../../shared/model"
+import { decodeFilter, decodeSettings, decodeSetup, defaultSetup, isPercent, isPlaylistId, isSetupEmpty, isShortcutId, normalizeSettingsForWrite, normalizeSetupForWrite } from "../../shared/model"
+import type { AccountKey, AutoAddPlaylist, ClaimNoticeDetails, ClaimShortcutOutcome, DocumentKey, Filter, PlaylistId, Settings, Setup, SetupContext, ShortcutId, Unclaimed } from "../../shared/model"
 
-type Snapshot<T> = T extends object
-  ? { readonly [P in keyof T]: Snapshot<T[P]> }
-  : T
+type Snapshot<T> = T extends object ? { readonly [P in keyof T]: Snapshot<T[P]> } : T
 
 export type AccountBodies = {
   setup: Setup
   filters: Record<string, Filter>
 }
-export type AccountSnapshot =
-  | { readonly kind: "absent" }
-  | { readonly kind: "present"; readonly bodies: Snapshot<AccountBodies> }
+export type AccountSnapshot = { readonly kind: "absent" } | { readonly kind: "present"; readonly bodies: Snapshot<AccountBodies> }
 
 export type AccountChoice =
   | { readonly kind: "auto-add"; readonly playlist: PlaylistId; readonly chosen: boolean }
@@ -46,9 +37,12 @@ function removalFor(acct: AccountKey, filters: Snapshot<AccountBodies["filters"]
     documents.push({ kind: "filter", acct, playlist })
   }
   return {
-    acct, documents, cacheKey: `cache:${acct}`,
+    acct,
+    documents,
+    cacheKey: `cache:${acct}`,
     progressKeys: Array.from({ length: 16 }, (_, shard) => `progress:${acct}:${shard}`),
-    clearAccountSession: true, clearLastAccountIfMatches: true
+    clearAccountSession: true,
+    clearLastAccountIfMatches: true
   }
 }
 
@@ -63,23 +57,27 @@ function finishChoice(input: {
   const hasKeptFilters = Object.keys(input.filters).some(playlist => !selected.has(playlist))
   if (isSetupEmpty(setup, hasKeptFilters)) return { kind: "remove", removal: removalFor(input.acct, input.filters) }
   return {
-    kind: "save", acct: input.acct,
+    kind: "save",
+    acct: input.acct,
     bodies: { setup, filters: Object.fromEntries(Object.entries(input.filters).map(([playlist, filter]) => [playlist, decodeFilter(filter)])) }
   }
 }
 
-export function changeAccountChoice(input: {
-  readonly acct: AccountKey
-  readonly current: AccountSnapshot
-  readonly choice: AccountChoice
-} & (
-  | { readonly settings: Snapshot<Settings>; readonly additionalChosenPlaylists: ReadonlySet<PlaylistId> }
-  | { readonly context: Readonly<Required<SetupContext>> }
-)): AccountChoiceResult {
+export function changeAccountChoice(
+  input: {
+    readonly acct: AccountKey
+    readonly current: AccountSnapshot
+    readonly choice: AccountChoice
+  } & ({ readonly settings: Snapshot<Settings>; readonly additionalChosenPlaylists: ReadonlySet<PlaylistId> } | { readonly context: Readonly<Required<SetupContext>> })
+): AccountChoiceResult {
   const { choice } = input
-  const context = "context" in input ? input.context : {
-    shortcutIds: new Set(input.settings.shortcuts.list.map(row => row.id)), additionalChosenPlaylists: input.additionalChosenPlaylists
-  }
+  const context =
+    "context" in input
+      ? input.context
+      : {
+          shortcutIds: new Set(input.settings.shortcuts.list.map(row => row.id)),
+          additionalChosenPlaylists: input.additionalChosenPlaylists
+        }
   const current = input.current.kind === "present" ? input.current.bodies.setup : undefined
   let setup: Setup
   switch (choice.kind) {
@@ -87,9 +85,7 @@ export function changeAccountChoice(input: {
       const exists = current?.autoAdd.some(entry => entry.pl === choice.playlist) ?? false
       if (exists === choice.chosen) return { kind: "unchanged" }
       setup = current === undefined ? defaultSetup() : decodeSetup(current)
-      setup.autoAdd = choice.chosen
-        ? [...setup.autoAdd, { pl: choice.playlist, takes: "videos" }]
-        : setup.autoAdd.filter(entry => entry.pl !== choice.playlist)
+      setup.autoAdd = choice.chosen ? [...setup.autoAdd, { pl: choice.playlist, takes: "videos" }] : setup.autoAdd.filter(entry => entry.pl !== choice.playlist)
       break
     }
     case "takes":
@@ -135,18 +131,15 @@ export function changeAccountChoice(input: {
     }
   }
   return finishChoice({
-    acct: input.acct, setup, context,
+    acct: input.acct,
+    setup,
+    context,
     filters: input.current.kind === "present" ? input.current.bodies.filters : {}
   })
 }
 
-export function planSetupRemoval(input: {
-  readonly acct: AccountKey
-  readonly current: AccountSnapshot
-}): { kind: "unchanged" } | { kind: "remove"; removal: SetupRemoval } {
-  return input.current.kind === "absent"
-    ? { kind: "unchanged" }
-    : { kind: "remove", removal: removalFor(input.acct, input.current.bodies.filters) }
+export function planSetupRemoval(input: { readonly acct: AccountKey; readonly current: AccountSnapshot }): { kind: "unchanged" } | { kind: "remove"; removal: SetupRemoval } {
+  return input.current.kind === "absent" ? { kind: "unchanged" } : { kind: "remove", removal: removalFor(input.acct, input.current.bodies.filters) }
 }
 
 export function removeSharedShortcut(input: {
@@ -160,22 +153,29 @@ export function removeSharedShortcut(input: {
 }):
   | { kind: "unchanged" }
   | {
-    kind: "removed"
-    settings: Settings
-    accounts: readonly Extract<AccountChoiceResult, { kind: "save" | "remove" }>[]
-  } {
+      kind: "removed"
+      settings: Settings
+      accounts: readonly Extract<AccountChoiceResult, { kind: "save" | "remove" }>[]
+    } {
   if (!input.settings.shortcuts.list.some(shortcut => shortcut.id === input.shortcut)) return { kind: "unchanged" }
   const decoded = decodeSettings(input.settings)
   const settings = normalizeSettingsForWrite({
-    ...decoded, shortcuts: { ...decoded.shortcuts, list: decoded.shortcuts.list.filter(shortcut => shortcut.id !== input.shortcut) }
+    ...decoded,
+    shortcuts: { ...decoded.shortcuts, list: decoded.shortcuts.list.filter(shortcut => shortcut.id !== input.shortcut) }
   })
   const accounts: Extract<AccountChoiceResult, { kind: "save" | "remove" }>[] = []
   for (const account of input.accounts) {
     if (account.current.kind === "absent" || !Object.hasOwn(account.current.bodies.setup.targets, input.shortcut)) continue
     const setup = decodeSetup(account.current.bodies.setup)
     delete setup.targets[input.shortcut]
-    accounts.push(finishChoice({ ...account, setup, filters: account.current.bodies.filters,
-      context: { shortcutIds: new Set(settings.shortcuts.list.map(row => row.id)), additionalChosenPlaylists: account.additionalChosenPlaylists } }))
+    accounts.push(
+      finishChoice({
+        ...account,
+        setup,
+        filters: account.current.bodies.filters,
+        context: { shortcutIds: new Set(settings.shortcuts.list.map(row => row.id)), additionalChosenPlaylists: account.additionalChosenPlaylists }
+      })
+    )
   }
   return { kind: "removed", settings, accounts }
 }
@@ -189,13 +189,11 @@ export type ClaimAccountEffect =
   | { readonly kind: "empty-absent" }
   | { readonly kind: "remove"; readonly removal: SetupRemoval }
   | {
-    readonly kind: "retain"
-    readonly setup: { readonly kind: "unchanged" } | { readonly kind: "save"; readonly data: Setup }
-    readonly filtersToAdd: readonly { readonly playlist: PlaylistId; readonly data: Filter }[]
-  }
-export type ClaimMergeResult =
-  | { readonly kind: "absent" | "empty-source" | "no-match" }
-  | { readonly kind: "matched"; readonly account: ClaimAccountEffect; readonly notice: ClaimMergeNotice }
+      readonly kind: "retain"
+      readonly setup: { readonly kind: "unchanged" } | { readonly kind: "save"; readonly data: Setup }
+      readonly filtersToAdd: readonly { readonly playlist: PlaylistId; readonly data: Filter }[]
+    }
+export type ClaimMergeResult = { readonly kind: "absent" | "empty-source" | "no-match" } | { readonly kind: "matched"; readonly account: ClaimAccountEffect; readonly notice: ClaimMergeNotice }
 
 export function mergeUnclaimedChoices(input: {
   readonly acct: AccountKey
@@ -234,27 +232,26 @@ export function mergeUnclaimedChoices(input: {
   else if (!input.settings.shortcuts.list.some(row => row.id === source.originalShortcutId)) {
     shortcut = { kind: "skipped", reason: "deleted-original" }
   } else if (Object.hasOwn(setup.targets, source.originalShortcutId)) {
-    shortcut = setup.targets[source.originalShortcutId] === source.shortcutPlaylist
-      ? { kind: "already-set", shortcut: source.originalShortcutId }
-      : { kind: "skipped", reason: "target-filled" }
+    shortcut = setup.targets[source.originalShortcutId] === source.shortcutPlaylist ? { kind: "already-set", shortcut: source.originalShortcutId } : { kind: "skipped", reason: "target-filled" }
   } else {
     Object.defineProperty(setup.targets, source.originalShortcutId, {
-      value: source.shortcutPlaylist, enumerable: true, configurable: true, writable: true
+      value: source.shortcutPlaylist,
+      enumerable: true,
+      configurable: true,
+      writable: true
     })
     shortcut = { kind: "filled", shortcut: source.originalShortcutId }
   }
   const notice: ClaimMergeNotice = {
-    acct: input.acct, dropped: [...sources].filter(playlist => !owned(playlist)).length,
+    acct: input.acct,
+    dropped: [...sources].filter(playlist => !owned(playlist)).length,
     claim: { autoAddAdded, filtersAdded: filtersToAdd.length, shortcut }
   }
   const shortcutIds = new Set(input.settings.shortcuts.list.map(row => row.id))
   const liveTargets = Object.fromEntries(Object.entries(setup.targets).filter(([id]) => shortcutIds.has(id)))
-  const hasKeptFilters = [...Object.keys(current?.filters ?? {}), ...filtersToAdd.map(filter => filter.playlist)]
-    .some(playlist => !selected.has(playlist))
+  const hasKeptFilters = [...Object.keys(current?.filters ?? {}), ...filtersToAdd.map(filter => filter.playlist)].some(playlist => !selected.has(playlist))
   if (isSetupEmpty({ ...setup, targets: liveTargets }, hasKeptFilters)) {
-    return { kind: "matched", notice, account: current
-      ? { kind: "remove", removal: removalFor(input.acct, current.filters) }
-      : { kind: "empty-absent" } }
+    return { kind: "matched", notice, account: current ? { kind: "remove", removal: removalFor(input.acct, current.filters) } : { kind: "empty-absent" } }
   }
   const changed = !current || autoAddAdded > 0 || shortcut.kind === "filled"
   if (!changed) return { kind: "matched", notice, account: { kind: "retain", setup: { kind: "unchanged" }, filtersToAdd } }
@@ -262,8 +259,13 @@ export function mergeUnclaimedChoices(input: {
   if (input.settings.shortcuts.list.some(row => row.watchLaterOnEveryAccount && !Object.hasOwn(liveTargets, row.id))) {
     additionalChosenPlaylists.add("WL")
   }
-  return { kind: "matched", notice, account: {
-    kind: "retain", filtersToAdd,
-    setup: { kind: "save", data: normalizeSetupForWrite(setup, { shortcutIds, additionalChosenPlaylists }) }
-  } }
+  return {
+    kind: "matched",
+    notice,
+    account: {
+      kind: "retain",
+      filtersToAdd,
+      setup: { kind: "save", data: normalizeSetupForWrite(setup, { shortcutIds, additionalChosenPlaylists }) }
+    }
+  }
 }

@@ -47,12 +47,17 @@ describe("review A1, layout overlap", () => {
     expect(findConflicts(settings, { kind: "music", action: "next" }, candidate)).toEqual([])
     expect(findConflicts(settings, { kind: "undo" }, candidate)).toEqual([{ target: { kind: "picker" }, sites: ["www"] }])
     expect(assignKey(settings, { kind: "undo" }, candidate).kind).toBe("conflict")
-    const step = recorder(recording, { kind: "keydown", facts: reversed ? facts("Dead", "KeyW") : facts("w", "KeyZ") }, {
-      ...context, settings, target: { kind: "undo" }
-    })
+    const step = recorder(
+      recording,
+      { kind: "keydown", facts: reversed ? facts("Dead", "KeyW") : facts("w", "KeyZ") },
+      {
+        ...context,
+        settings,
+        target: { kind: "undo" }
+      }
+    )
     expect(step.state.kind).toBe("conflict")
-    expect(recorder(step.state, { kind: "use-here" }, { ...context, settings, target: { kind: "undo" } }).outcome)
-      .toEqual({ kind: "commit", key: candidate, clear: [{ kind: "picker" }] })
+    expect(recorder(step.state, { kind: "use-here" }, { ...context, settings, target: { kind: "undo" } }).outcome).toEqual({ kind: "commit", key: candidate, clear: [{ kind: "picker" }] })
     const replaced = assignKey(settings, { kind: "undo" }, candidate, true)
     if (replaced.kind !== "assigned") throw new Error("Expected conflict replacement")
     expect(replaced.settings.shortcuts.picker).toBeNull()
@@ -158,15 +163,17 @@ describe("review A2, recorded characters", () => {
 })
 
 describe("review A3, YouTube list navigation warnings", () => {
-  test.each([["n", "Next video"], ["p", "Previous video"]])("warns for Shift+%s with exact modifiers", (char, action) => {
+  test.each([
+    ["n", "Next video"],
+    ["p", "Previous video"]
+  ])("warns for Shift+%s with exact modifiers", (char, action) => {
     const code = `Key${char.toUpperCase()}`
     for (let mask = 0; mask < 16; mask++) {
       const held = { ctrl: !!(mask & 1), alt: !!(mask & 2), shift: !!(mask & 4), meta: !!(mask & 8) }
       const warnings = shortcutWarnings({ code, char, ...held }, { sites: ["www"], platform, commands: [] })
       expect(warnings).toEqual(mask === 4 ? [{ kind: "site", site: "www", action }] : [])
     }
-    expect(shortcutWarnings({ code: "Comma", char, ...bare, shift: true }, { sites: ["www"], platform, commands: [] }))
-      .toEqual([{ kind: "site", site: "www", action }])
+    expect(shortcutWarnings({ code: "Comma", char, ...bare, shift: true }, { sites: ["www"], platform, commands: [] })).toEqual([{ kind: "site", site: "www", action }])
   })
 })
 
@@ -186,7 +193,6 @@ describe("review B1, browser Quit policy", () => {
     const key: Key = { code: "KeyQ", char: "q", ...bare, ...held }
     const quitPlatform = { browser, os }
     expect(isReserved(key, quitPlatform)).toBe(true)
-    expect(recorder(recording, { kind: "keydown", facts: facts("q", "KeyQ", held) }, { ...context, platform: quitPlatform }).state)
-      .toMatchObject({ kind: "recording", refusal: "reserved" })
+    expect(recorder(recording, { kind: "keydown", facts: facts("q", "KeyQ", held) }, { ...context, platform: quitPlatform }).state).toMatchObject({ kind: "recording", refusal: "reserved" })
   })
 })

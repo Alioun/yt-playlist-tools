@@ -20,8 +20,7 @@ export function recorder(state: RecorderState, event: RecorderEvent, context: Re
   if (event.kind === "use-here") {
     if (state.kind !== "conflict") return unchanged
     const conflicts = findConflicts(context.settings, context.target, state.candidate)
-    return { state: { kind: "idle", key: state.candidate }, consume: false,
-      outcome: { kind: "commit", key: state.candidate, clear: conflicts.map(conflict => conflict.target) } }
+    return { state: { kind: "idle", key: state.candidate }, consume: false, outcome: { kind: "commit", key: state.candidate, clear: conflicts.map(conflict => conflict.target) } }
   }
   const facts = event.facts
   if (isComposing(facts) || facts.repeat) return unchanged
@@ -30,7 +29,9 @@ export function recorder(state: RecorderState, event: RecorderEvent, context: Re
   if (state.kind === "conflict") return unchanged
   const held = modifiers(facts)
   const waiting = (refusal: Refusal | null, consume: boolean): RecorderStep => ({
-    state: { ...state, modifiers: held, refusal }, consume, outcome: { kind: "none" }
+    state: { ...state, modifiers: held, refusal },
+    consume,
+    outcome: { kind: "none" }
   })
   if (event.kind === "keyup") return waiting(state.refusal, false)
   if (modifierNames.has(facts.key) || /^(Control|Alt|Shift|Meta)(Left|Right)$/.test(facts.code)) return waiting(null, false)

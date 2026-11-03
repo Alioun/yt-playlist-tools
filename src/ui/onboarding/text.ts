@@ -12,9 +12,14 @@ export function createFirstRunText(i18n: I18n) {
       ...disclosure,
       headings: Object.freeze(disclosure.headings),
       closing: Object.freeze(disclosure.closing),
-      items: Object.freeze(disclosure.items.map(item => Object.freeze({
-        ...item, parts: Object.freeze(item.parts.map(part => Object.freeze(part)))
-      })))
+      items: Object.freeze(
+        disclosure.items.map(item =>
+          Object.freeze({
+            ...item,
+            parts: Object.freeze(item.parts.map(part => Object.freeze(part)))
+          })
+        )
+      )
     })
   })
 }

@@ -19,7 +19,7 @@ export const accepted: AddRequest[] = [
   { via: "shortcut", site: "music", video, shortcut },
   quick,
   { via: "picker", site: "www", video, playlist, opener: "watch-button" },
-  { via: "choose-shortcut", site: "www", video, playlist, opener: "shortcuts" },
+  { via: "choose-shortcut", site: "www", video, playlist, opener: "shortcuts" }
 ]
 export const report: Promise<AddReport> = flow.add(quick, origin)
 export const untick: Promise<RemoveReport> = flow.remove({ site: "www", video, playlist, opener: "quick-save", tick: null }, origin)
@@ -38,9 +38,14 @@ void flow.readPrivateSkips({ ...privateContext, context: { ...privateContext.con
 void privateSkips.then(read => read.memory)
 export const unreadable: Answer<"membership"> = { kind: "fact", fact: "unreadable" }
 export const removalHandle: UndoHandle = { kind: "remove", id: "engine:2" }
-export const observedBatch: Answer<"addBatch"> = { kind: "observed", results: [
-  { videoId: video, fact: "duplicate" }, { videoId: video, fact: "refused" }, { videoId: video, setVideoId: null }
-] }
+export const observedBatch: Answer<"addBatch"> = {
+  kind: "observed",
+  results: [
+    { videoId: video, fact: "duplicate" },
+    { videoId: video, fact: "refused" },
+    { videoId: video, setVideoId: null }
+  ]
+}
 export const stoppedBatch: BatchReport = { kind: "stopped", outcomes: [{ video, outcome: { kind: "added" } }], pending: [], undo: null }
 // @ts-expect-error A recognized duplicate cannot also be a confirmed addition.
 export const bothBatch: Answer<"addBatch"> = { kind: "observed", results: [{ videoId: video, fact: "duplicate", setVideoId: null }] }
@@ -68,7 +73,7 @@ export const rejected: AddRequest[] = [
   // @ts-expect-error The opener is a settled feature ID.
   { via: "picker", site: "www", video, playlist, opener: "toolbar" },
   // @ts-expect-error There is no duplicate-check bypass.
-  { via: "quick-save", site: "www", video, opener: "quick-save", allowDuplicate: true },
+  { via: "quick-save", site: "www", video, opener: "quick-save", allowDuplicate: true }
 ]
 
 // @ts-expect-error Facts are recognised domain observations, not raw YouTube statuses.
@@ -98,7 +103,10 @@ export const forced = flow.add(quick, origin, { force: true })
 export const privateSubscription: () => void = flow.subscribePrivateSkips(event => {
   const acct: AccountKey = event.acct
   const scope: "private" = event.scope
-  void acct; void scope
+  void acct
+  void scope
 })
 // @ts-expect-error negative: add-flow-private-scope. Private memory never emits normal session events.
-flow.subscribePrivateSkips((event: { acct: AccountKey; scope: "normal" }) => { void event })
+flow.subscribePrivateSkips((event: { acct: AccountKey; scope: "normal" }) => {
+  void event
+})

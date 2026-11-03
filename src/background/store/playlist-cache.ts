@@ -1,6 +1,21 @@
-import { decodeAccountCache, decodeDocument, decodeSetup, decodeFilter, DecodeError, documentKey, emptyAccountCache,
-  isAccountKey, isSetupEmpty, parseDocumentKey, visibleAccountCache, type AccountCache, type AccountKey, type CachePlaylist,
-  type CacheSite, type CreatedPlaylist } from "../../shared/model"
+import {
+  decodeAccountCache,
+  decodeDocument,
+  decodeSetup,
+  decodeFilter,
+  DecodeError,
+  documentKey,
+  emptyAccountCache,
+  isAccountKey,
+  isSetupEmpty,
+  parseDocumentKey,
+  visibleAccountCache,
+  type AccountCache,
+  type AccountKey,
+  type CachePlaylist,
+  type CacheSite,
+  type CreatedPlaylist
+} from "../../shared/model"
 import type { JobData, JobOf } from "../../shared/contracts/jobs"
 import { isJsonValue, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 import { sameSyncJson } from "./sync-write-admission"
@@ -10,17 +25,25 @@ export class PlaylistCacheCapture<A extends AccountKey = AccountKey> {
   readonly kind = "playlist-cache-capture"
   readonly #account: A
   readonly #authority: { readonly owner: object; readonly reset: number; readonly account: number } | undefined
-  constructor(acct: A, authority?: { readonly owner: object; readonly reset: number; readonly account: number }) { this.#account = acct; this.#authority = authority }
-  get acct(): A { return this.#account }
+  constructor(acct: A, authority?: { readonly owner: object; readonly reset: number; readonly account: number }) {
+    this.#account = acct
+    this.#authority = authority
+  }
+  get acct(): A {
+    return this.#account
+  }
   sharesAuthority(other: PlaylistCacheCapture): boolean {
-    const own = this.#authority, compared = other.#authority
+    const own = this.#authority,
+      compared = other.#authority
     return own !== undefined && compared !== undefined && own.owner === compared.owner && this.acct === other.acct && own.reset === compared.reset && own.account === compared.account
   }
 }
-export type CacheAuthority = { readonly kind: "eligible"; readonly capture: PlaylistCacheCapture } |
-  { readonly kind: "caller-owned"; readonly reason: "private" | "no-setup" }
-export type PlaylistCacheRead = { readonly kind: "cache"; readonly cache: AccountCache | null; readonly authority: CacheAuthority } |
-  TabProjectionUnavailable | TabProjectionInvalid | { readonly kind: "invalid"; readonly part: "cache" | "setup" }
+export type CacheAuthority = { readonly kind: "eligible"; readonly capture: PlaylistCacheCapture } | { readonly kind: "caller-owned"; readonly reason: "private" | "no-setup" }
+export type PlaylistCacheRead =
+  | { readonly kind: "cache"; readonly cache: AccountCache | null; readonly authority: CacheAuthority }
+  | TabProjectionUnavailable
+  | TabProjectionInvalid
+  | { readonly kind: "invalid"; readonly part: "cache" | "setup" }
 export type CacheAbsorption<A extends AccountKey = AccountKey> = { readonly acct: A; readonly site: CacheSite; readonly at: number } & (
   | { readonly kind: "list"; readonly rows: Readonly<JobData<JobOf<"playlists">>> }
   | { readonly kind: "membership"; readonly rows: Readonly<JobData<JobOf<"membership">>> }
@@ -31,7 +54,9 @@ export type PlaylistCacheWrite =
   | { readonly kind: "refused"; readonly reason: "capture" | "revoked" | "no-setup" | "invalid" }
   | { readonly kind: "failed"; readonly stage: "set" }
   | { readonly kind: "unconfirmed"; readonly write: "resolved" | "rejected"; readonly cause: "readback" | "stopped" }
-  | TabProjectionUnavailable | TabProjectionInvalid | { readonly kind: "invalid"; readonly part: "cache" | "setup" }
+  | TabProjectionUnavailable
+  | TabProjectionInvalid
+  | { readonly kind: "invalid"; readonly part: "cache" | "setup" }
 export type PlaylistCacheOwner = {
   readPlaylistCache(request: { readonly acct: AccountKey; readonly private: boolean }): Promise<PlaylistCacheRead>
   absorbPlaylistCache<A extends AccountKey>(capture: PlaylistCacheCapture<A>, input: CacheAbsorption<NoInfer<A>>): Promise<PlaylistCacheWrite>
@@ -56,7 +81,10 @@ export function cacheSetupState(records: Readonly<Record<string, unknown>>, acct
       if (filter.kind === "value" || filter.kind === "newer-version") return "live"
     }
     return "none"
-  } catch (error) { if (error instanceof DecodeError) return "invalid"; throw error }
+  } catch (error) {
+    if (error instanceof DecodeError) return "invalid"
+    throw error
+  }
 }
 export function readCacheRecord(records: Readonly<Record<string, unknown>>, acct: AccountKey, now: number): AccountCache | null {
   const raw = records[`cache:${acct}`]
@@ -66,7 +94,12 @@ export function readCacheRecord(records: Readonly<Record<string, unknown>>, acct
 }
 function thumbnail(value: string | undefined): string | undefined {
   if (value === undefined) return
-  try { const url = new URL(value); return (url.protocol === "https:" || url.protocol === "http:") && !url.username && !url.password ? value : undefined } catch { return }
+  try {
+    const url = new URL(value)
+    return (url.protocol === "https:" || url.protocol === "http:") && !url.username && !url.password ? value : undefined
+  } catch {
+    return
+  }
 }
 function facts(row: Pick<CachePlaylist, "id" | "title" | "privacy">): CachePlaylist {
   return { id: row.id, title: row.title, ...(row.privacy === undefined ? {} : { privacy: row.privacy }) }
@@ -76,19 +109,29 @@ export function planCacheAbsorption(cache: AccountCache | null, input: CacheAbso
   if (input.kind === "created") {
     const existing = previous.created.find(row => row.id === input.row.id)
     const row = { id: input.row.id, title: input.row.title, privacy: input.row.privacy, at: existing?.at ?? input.at }
-    return decodeAccountCache({ ...previous, created: previous.playlists.some(playlist => playlist.id === row.id) ? previous.created
-      : [...previous.created.filter(saved => saved.id !== row.id), row] })
+    return decodeAccountCache({
+      ...previous,
+      created: previous.playlists.some(playlist => playlist.id === row.id) ? previous.created : [...previous.created.filter(saved => saved.id !== row.id), row]
+    })
   }
-  const seen = new Set<string>(), old = new Map(previous.playlists.map(row => [row.id, row]))
+  const seen = new Set<string>(),
+    old = new Map(previous.playlists.map(row => [row.id, row]))
   const playlists: CachePlaylist[] = []
   for (const row of input.rows) {
     if (seen.has(row.id)) continue
     seen.add(row.id)
     const saved = old.get(row.id)
     const kept = Object.fromEntries(Object.entries(saved ?? {}).filter(([key]) => !["id", "title", "privacy", "count", "thumb"].includes(key)))
-    playlists.push(input.kind === "membership" ? { ...kept, ...facts(row),
-      ...(saved?.count === undefined ? {} : { count: saved.count }), ...(saved?.thumb === undefined ? {} : { thumb: saved.thumb }) }
-      : { ...kept, ...facts(row), ...(row.count === undefined ? {} : { count: row.count }), ...("thumb" in row && typeof row.thumb === "string" && thumbnail(row.thumb) !== undefined ? { thumb: thumbnail(row.thumb) } : {}) })
+    playlists.push(
+      input.kind === "membership"
+        ? { ...kept, ...facts(row), ...(saved?.count === undefined ? {} : { count: saved.count }), ...(saved?.thumb === undefined ? {} : { thumb: saved.thumb }) }
+        : {
+            ...kept,
+            ...facts(row),
+            ...(row.count === undefined ? {} : { count: row.count }),
+            ...("thumb" in row && typeof row.thumb === "string" && thumbnail(row.thumb) !== undefined ? { thumb: thumbnail(row.thumb) } : {})
+          }
+    )
   }
   const order = input.kind === "membership" ? { ...previous.order, [input.site]: playlists.map(row => row.id) } : previous.order
   const next = decodeAccountCache({ ...previous, playlists, order, created: previous.created.filter(row => !seen.has(row.id)) })

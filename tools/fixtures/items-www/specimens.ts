@@ -9,14 +9,14 @@ export function legacyData(videoId = firstVideo) {
 }
 export function lockupData(videoId = secondVideo) {
   return {
-    contentId: videoId, contentType: "LOCKUP_CONTENT_TYPE_VIDEO",
+    contentId: videoId,
+    contentType: "LOCKUP_CONTENT_TYPE_VIDEO",
     metadata: { lockupMetadataViewModel: { title: { content: "Synthetic lockup" } } },
     rendererContext: { commandContext: { onTap: { innertubeCommand: { watchEndpoint: { videoId } } } } }
   }
 }
 export function shortsData(videoId = shortVideo) {
-  return { onTap: { innertubeCommand: { reelWatchEndpoint: { videoId } } },
-    overlayMetadata: { primaryText: { content: "Synthetic Short" } } }
+  return { onTap: { innertubeCommand: { reelWatchEndpoint: { videoId } } }, overlayMetadata: { primaryText: { content: "Synthetic Short" } } }
 }
 export function card(tag = "ytd-video-renderer", videoId = firstVideo, parent: Element = document.body) {
   const element = document.createElement(tag)
@@ -30,8 +30,7 @@ export function card(tag = "ytd-video-renderer", videoId = firstVideo, parent: E
   button.textContent = "Synthetic action"
   element.append(anchor, button)
   parent.append(element)
-  defineRaw(element, "data", tag === "yt-lockup-view-model" ? lockupData(videoId) :
-    tag === "ytm-shorts-lockup-view-model" ? shortsData(videoId) : legacyData(videoId))
+  defineRaw(element, "data", tag === "yt-lockup-view-model" ? lockupData(videoId) : tag === "ytm-shorts-lockup-view-model" ? shortsData(videoId) : legacyData(videoId))
   return { element, anchor, button }
 }
 export function unknownCard(videoId = firstVideo, parent: Element = document.body) {

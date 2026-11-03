@@ -12,7 +12,9 @@ ok(run, "known consumer")
 const traces: unknown[] = []
 let generatedRequests = 0
 const stop = observeWireTrace(trace => {
-  const callers = new Map<string, string>(), operations = new Map<string, string>(), captures = new Map<string, string>()
+  const callers = new Map<string, string>(),
+    operations = new Map<string, string>(),
+    captures = new Map<string, string>()
   const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/
   function name(values: Map<string, string>, value: string, prefix: string) {
     if (!values.has(value)) values.set(value, `${prefix}-${values.size + 1}`)
@@ -27,7 +29,7 @@ const stop = observeWireTrace(trace => {
       return value
     }
     if (Array.isArray(value)) return value.map(item => normalize(item))
-    if (value !== null && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([field,item]) => [field,normalize(item,field)]))
+    if (value !== null && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([field, item]) => [field, normalize(item, field)]))
     return value
   }
   const events = trace.map((event: MemoryTrace) => {
@@ -38,7 +40,7 @@ const stop = observeWireTrace(trace => {
     if (event.event === "sent") {
       ok(contract.payload(packet.payload), "actual payload guard validates IDs before normalization")
       if (typeof packet.id === "string" && packet.id.includes(":")) {
-        const [caller,sequence] = packet.id.split(":")
+        const [caller, sequence] = packet.id.split(":")
         ok(uuid.test(caller ?? "") && /^[1-9]\d*$/.test(sequence ?? ""), "generated caller namespace and positive sequence")
         generatedRequests++
       }
@@ -53,4 +55,6 @@ try {
   deepStrictEqual(JSON.parse(output).at(-1), { case: "eof", nativeListeners: 0, localListeners: 0, deadlines: 0 })
   ok(generatedRequests > 0, "real browser Backend generated requests")
   process.stdout.write(JSON.stringify({ fixture, output, traces, generatedRequests }) + "\n")
-} finally { stop() }
+} finally {
+  stop()
+}

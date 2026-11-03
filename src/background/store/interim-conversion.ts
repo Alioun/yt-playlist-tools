@@ -16,9 +16,7 @@ import { inspectInterimProfile } from "./interim-profile"
 import { legacyShortcut } from "./legacy-shortcut"
 import type { MigrationContext } from "./legacy-startup"
 
-export type HistoricalFact =
-  | { readonly kind: "unknown" }
-  | { readonly kind: "known"; readonly value: boolean }
+export type HistoricalFact = { readonly kind: "unknown" } | { readonly kind: "known"; readonly value: boolean }
 
 export type InterimConversionInput = {
   readonly schema: unknown
@@ -70,20 +68,14 @@ export type InterimConversionNote = {
   readonly percentage: { readonly kind: "saved"; readonly value: number } | { readonly kind: "interim-fallback"; readonly value: 50 }
   readonly feedback: { readonly kind: "saved"; readonly value: boolean } | { readonly kind: "interim-fallback"; readonly value: true }
   readonly freshAgreementRequired: true
-  readonly globals:
-    | { readonly kind: "explicit-review-required"; readonly source: unknown }
-    | { readonly kind: "unclaimed-source"; readonly source: unknown }
+  readonly globals: { readonly kind: "explicit-review-required"; readonly source: unknown } | { readonly kind: "unclaimed-source"; readonly source: unknown }
 }
 
-export type ReviewInspection =
-  | { readonly kind: "not-inspected" }
-  | { readonly kind: "inspected"; readonly value: InterimProfileInspection }
+export type ReviewInspection = { readonly kind: "not-inspected" } | { readonly kind: "inspected"; readonly value: InterimProfileInspection }
 export type InterimReviewFacts = {
   readonly accounts: ReviewInspection
   readonly globals: ReviewInspection
-  readonly conversionShortcut:
-    | { readonly kind: "not-validated" }
-    | { readonly kind: "validated-context"; readonly id: ShortcutId }
+  readonly conversionShortcut: { readonly kind: "not-validated" } | { readonly kind: "validated-context"; readonly id: ShortcutId }
 }
 
 type Retention = { readonly kind: "keep-original-source"; readonly source: InterimConversionInput["source"] }
@@ -92,17 +84,29 @@ export type InterimConversionPlan =
   | { readonly kind: "not-interim" }
   | { readonly kind: "blocked"; readonly blockers: readonly InterimConversionBlocker[]; readonly retention: Retention; readonly reviewFacts: InterimReviewFacts }
   | {
-    readonly kind: "inactive-proposal"
-    readonly reviewFacts: InterimReviewFacts
-    readonly documents: readonly InterimDocumentCandidate[]
-    readonly caches: readonly InterimCacheCandidate[]
-    readonly retention: Retention
-    readonly note: InterimConversionNote
-    readonly activation: "requires-fresh-agreement-and-future-executor"
-  }
+      readonly kind: "inactive-proposal"
+      readonly reviewFacts: InterimReviewFacts
+      readonly documents: readonly InterimDocumentCandidate[]
+      readonly caches: readonly InterimCacheCandidate[]
+      readonly retention: Retention
+      readonly note: InterimConversionNote
+      readonly activation: "requires-fresh-agreement-and-future-executor"
+    }
 
 const sourceFields = ["accountBodies", "savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed", "globals"]
-const globalFields = ["playlists", "addToPlaylistID", "watchLaterShortcut", "requiredWatchPercentage", "toastEnabled", "channelFilters", "channelLabels", "cachedPlaylists", "preventDuplicates", "queueButtonEnabled", "cardContextMenu"]
+const globalFields = [
+  "playlists",
+  "addToPlaylistID",
+  "watchLaterShortcut",
+  "requiredWatchPercentage",
+  "toastEnabled",
+  "channelFilters",
+  "channelLabels",
+  "cachedPlaylists",
+  "preventDuplicates",
+  "queueButtonEnabled",
+  "cardContextMenu"
+]
 
 function dataRecord(raw: unknown, path: string, allowed?: readonly string[]): Record<string, unknown> {
   if (!isRecord(raw)) throw new DecodeError(path, "a plain data object")
@@ -153,8 +157,10 @@ function validateContext(context: InterimConversionContext): ShortcutId {
 
 function stamp<T>(path: string, data: T, context: InterimConversionContext): Stamped<T> {
   const envelope = {
-    v: DOCUMENT_VERSION, gen: Object.hasOwn(context.documentGenerations, path) ? context.documentGenerations[path] : undefined,
-    at: context.at, by: context.deviceId
+    v: DOCUMENT_VERSION,
+    gen: Object.hasOwn(context.documentGenerations, path) ? context.documentGenerations[path] : undefined,
+    at: context.at,
+    by: context.deviceId
   }
   return { ...decodeStamp(envelope, `context.stamp.${path}`), data }
 }
@@ -163,7 +169,12 @@ export function planInterimConversion(input: InterimConversionInput, context: In
   const blockers: InterimConversionBlocker[] = []
   let reviewFacts: InterimReviewFacts = { accounts: { kind: "not-inspected" }, globals: { kind: "not-inspected" }, conversionShortcut: { kind: "not-validated" } }
   // Retention references the caller's evidence. Malformed evidence must stay in its original store.
-  const blocked = (): InterimConversionPlan => ({ kind: "blocked", blockers, reviewFacts, retention: { kind: "keep-original-source", source: input !== null && typeof input === "object" ? Object.getOwnPropertyDescriptor(input, "source")?.value : undefined } })
+  const blocked = (): InterimConversionPlan => ({
+    kind: "blocked",
+    blockers,
+    reviewFacts,
+    retention: { kind: "keep-original-source", source: input !== null && typeof input === "object" ? Object.getOwnPropertyDescriptor(input, "source")?.value : undefined }
+  })
   try {
     if (!isRecord(input)) throw new DecodeError("input", "an explicit snapshot")
     const schemaProperty = Object.getOwnPropertyDescriptor(input, "schema")
@@ -175,8 +186,7 @@ export function planInterimConversion(input: InterimConversionInput, context: In
     const source = jsonRecord(input.source, "source", sourceFields)
     const bodies = dataRecord(source.accountBodies, "source.accountBodies")
     const globals = dataRecord(source.globals, "source.globals", globalFields)
-    const interim = Object.keys(bodies).some(key => key.startsWith("account:")) ||
-      ["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"].some(key => Object.hasOwn(source, key))
+    const interim = Object.keys(bodies).some(key => key.startsWith("account:")) || ["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"].some(key => Object.hasOwn(source, key))
     if (!interim) return { kind: "not-interim" }
     const authorization = historicalFact(input.historicalAuthorization, "historicalAuthorization")
     const credentials = historicalFact(input.priorCredentialPresence, "priorCredentialPresence")
@@ -196,30 +206,42 @@ export function planInterimConversion(input: InterimConversionInput, context: In
     const unclaimed = readStoredUnclaimed(canonical.unclaimed)
     const accountDocuments = Object.fromEntries(Object.entries(canonicalDocuments).filter(([path]) => path !== "doc:settings"))
     const inspection = inspectInterimProfile({
-      accountBodies: bodies, canonicalDocuments: accountDocuments,
+      accountBodies: bodies,
+      canonicalDocuments: accountDocuments,
       ...Object.fromEntries(["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"].filter(key => Object.hasOwn(source, key)).map(key => [key, source[key]])),
       ...(authorization.kind === "known" ? { historicalAuthorization: authorization.value } : {})
     })
     reviewFacts = { ...reviewFacts, accounts: { kind: "inspected", value: inspection } }
     blockers.push(...inspection.issues.map(issue => ({ kind: issue.kind, path: issue.field, reason: issue.reason })))
     const percentage: InterimConversionNote["percentage"] = Object.hasOwn(globals, "requiredWatchPercentage")
-      ? { kind: "saved", value: (() => {
-        if (!isPercent(globals.requiredWatchPercentage)) throw new DecodeError("source.globals.requiredWatchPercentage", "an integer percentage from 0 to 100")
-        return globals.requiredWatchPercentage
-      })() } : { kind: "interim-fallback", value: 50 }
+      ? {
+          kind: "saved",
+          value: (() => {
+            if (!isPercent(globals.requiredWatchPercentage)) throw new DecodeError("source.globals.requiredWatchPercentage", "an integer percentage from 0 to 100")
+            return globals.requiredWatchPercentage
+          })()
+        }
+      : { kind: "interim-fallback", value: 50 }
     const feedback: InterimConversionNote["feedback"] = Object.hasOwn(globals, "toastEnabled")
-      ? { kind: "saved", value: boolean(globals.toastEnabled, "source.globals.toastEnabled") } : { kind: "interim-fallback", value: true }
+      ? { kind: "saved", value: boolean(globals.toastEnabled, "source.globals.toastEnabled") }
+      : { kind: "interim-fallback", value: true }
     for (const field of ["preventDuplicates", "queueButtonEnabled", "cardContextMenu"]) {
       if (Object.hasOwn(globals, field)) boolean(globals[field], `source.globals.${field}`)
     }
     // Validate retained global choices with the same body contract, without converting or claiming them.
-    const globalInspection = inspectInterimProfile({ accountBodies: { "account:GLOBAL_SOURCE___": {
-      playlists: Object.hasOwn(globals, "playlists") ? globals.playlists : [],
-      shortcutPlaylistId: Object.hasOwn(globals, "addToPlaylistID") ? globals.addToPlaylistID : "",
-      filters: Object.hasOwn(globals, "channelFilters") ? globals.channelFilters : {},
-      labels: Object.hasOwn(globals, "channelLabels") ? globals.channelLabels : {},
-      cachedPlaylists: Object.hasOwn(globals, "cachedPlaylists") ? globals.cachedPlaylists : [], cachedAt: null
-    } }, canonicalDocuments: {} })
+    const globalInspection = inspectInterimProfile({
+      accountBodies: {
+        "account:GLOBAL_SOURCE___": {
+          playlists: Object.hasOwn(globals, "playlists") ? globals.playlists : [],
+          shortcutPlaylistId: Object.hasOwn(globals, "addToPlaylistID") ? globals.addToPlaylistID : "",
+          filters: Object.hasOwn(globals, "channelFilters") ? globals.channelFilters : {},
+          labels: Object.hasOwn(globals, "channelLabels") ? globals.channelLabels : {},
+          cachedPlaylists: Object.hasOwn(globals, "cachedPlaylists") ? globals.cachedPlaylists : [],
+          cachedAt: null
+        }
+      },
+      canonicalDocuments: {}
+    })
     reviewFacts = { ...reviewFacts, globals: { kind: "inspected", value: globalInspection } }
     blockers.push(...globalInspection.issues.map(issue => ({ kind: issue.kind, path: `source.globals.${issue.field}`, reason: issue.reason })))
     const rawKey = Object.hasOwn(globals, "watchLaterShortcut") ? text(globals.watchLaterShortcut, "source.globals.watchLaterShortcut") : ""
@@ -228,8 +250,9 @@ export function planInterimConversion(input: InterimConversionInput, context: In
     if (rawKey !== "" && key === null) blockers.push({ kind: "unsupported", path: "source.globals.watchLaterShortcut", reason: "unsupported-shortcut-encoding" })
     if (rawKey !== "" && !hasTarget) blockers.push({ kind: "unsupported", path: "source.globals.watchLaterShortcut", reason: "key-without-account-target" })
     let settingsState: ReturnType<typeof decodeDocument<Settings>>
-    try { settingsState = decodeDocument(canonicalDocuments["doc:settings"], decodeSettings) }
-    catch (error) {
+    try {
+      settingsState = decodeDocument(canonicalDocuments["doc:settings"], decodeSettings)
+    } catch (error) {
       if (!(error instanceof DecodeError)) throw error
       blockers.push({ kind: "collision", path: "doc:settings", reason: "invalid" })
       return blocked()
@@ -256,11 +279,21 @@ export function planInterimConversion(input: InterimConversionInput, context: In
     const accounts = inspection.accounts.filter(account => account.identity.kind === "representable" && account.body.kind === "inspection" && account.body.facts.choices === "present")
     const needsSettings = accounts.length > 0 || Object.hasOwn(globals, "requiredWatchPercentage") || Object.hasOwn(globals, "toastEnabled")
     if (needsSettings) {
-      if (settingsState.kind !== "absent") blockers.push({ kind: "collision", path: "doc:settings", reason: settingsState.kind === "value" ? "live" : settingsState.kind === "deleted" ? "tombstone" : "newer" })
+      if (settingsState.kind !== "absent")
+        blockers.push({ kind: "collision", path: "doc:settings", reason: settingsState.kind === "value" ? "live" : settingsState.kind === "deleted" ? "tombstone" : "newer" })
       const settings = defaultSettings()
-      settings.autoAdd = { ...settings.autoAdd, on: accounts.some(account => account.body.kind === "inspection" && account.body.facts.playlists.length > 0), pct: percentage.value, feedback: feedback.value }
-      settings.shortcuts = { ...settings.shortcuts, on: hasTarget && key !== null, feedback: feedback.value,
-        list: hasTarget ? [{ id: context.interimShortcutId, key, label: "", watchLaterOnEveryAccount: false }] : [] }
+      settings.autoAdd = {
+        ...settings.autoAdd,
+        on: accounts.some(account => account.body.kind === "inspection" && account.body.facts.playlists.length > 0),
+        pct: percentage.value,
+        feedback: feedback.value
+      }
+      settings.shortcuts = {
+        ...settings.shortcuts,
+        on: hasTarget && key !== null,
+        feedback: feedback.value,
+        list: hasTarget ? [{ id: context.interimShortcutId, key, label: "", watchLaterOnEveryAccount: false }] : []
+      }
       documents.push({ kind: "settings", path: "doc:settings", document: stamp("doc:settings", settings, context) })
     }
     for (const account of accounts) {
@@ -293,8 +326,14 @@ export function planInterimConversion(input: InterimConversionInput, context: In
       try {
         const raw = Object.hasOwn(canonicalDocuments, candidate.path) ? canonicalDocuments[candidate.path] : undefined
         const existing = candidate.kind === "settings" ? decodeDocument(raw, decodeSettings) : candidate.kind === "setup" ? decodeDocument(raw, decodeSetup) : decodeDocument(raw, decodeFilter)
-        if (candidate.kind !== "settings" && existing.kind !== "absent") blockers.push({ kind: "collision", path: candidate.path, reason: existing.kind === "value" ? "live" : existing.kind === "deleted" ? "tombstone" : "newer" })
-        const decoded = candidate.kind === "settings" ? decodeDocument(candidate.document, decodeSettings) : candidate.kind === "setup" ? decodeDocument(candidate.document, decodeSetup) : decodeDocument(candidate.document, decodeFilter)
+        if (candidate.kind !== "settings" && existing.kind !== "absent")
+          blockers.push({ kind: "collision", path: candidate.path, reason: existing.kind === "value" ? "live" : existing.kind === "deleted" ? "tombstone" : "newer" })
+        const decoded =
+          candidate.kind === "settings"
+            ? decodeDocument(candidate.document, decodeSettings)
+            : candidate.kind === "setup"
+              ? decodeDocument(candidate.document, decodeSetup)
+              : decodeDocument(candidate.document, decodeFilter)
         if (decoded.kind !== "value" || !isJsonValue(decoded.document)) throw new DecodeError(candidate.path, "a JSON canonical document")
       } catch (error) {
         if (!(error instanceof DecodeError)) throw error
@@ -303,9 +342,20 @@ export function planInterimConversion(input: InterimConversionInput, context: In
     }
     if (blockers.length) return blocked()
     return {
-      kind: "inactive-proposal", reviewFacts, documents, caches, retention: { kind: "keep-original-source", source: input.source },
-      note: { historicalAuthorization: authorization, priorCredentialPresence: credentials, cleanup: { kind: "not-attempted" }, percentage, feedback, freshAgreementRequired: true,
-        globals: { kind: source.legacyClaimed === true && Object.keys(globals).length > 0 ? "explicit-review-required" : "unclaimed-source", source: globals } },
+      kind: "inactive-proposal",
+      reviewFacts,
+      documents,
+      caches,
+      retention: { kind: "keep-original-source", source: input.source },
+      note: {
+        historicalAuthorization: authorization,
+        priorCredentialPresence: credentials,
+        cleanup: { kind: "not-attempted" },
+        percentage,
+        feedback,
+        freshAgreementRequired: true,
+        globals: { kind: source.legacyClaimed === true && Object.keys(globals).length > 0 ? "explicit-review-required" : "unclaimed-source", source: globals }
+      },
       activation: "requires-fresh-agreement-and-future-executor"
     }
   } catch (error) {

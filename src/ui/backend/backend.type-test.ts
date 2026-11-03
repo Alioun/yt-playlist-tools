@@ -6,7 +6,7 @@ import type { FirstRunOwner, AgreementRequest } from "../onboarding/owner"
 import type { createFirstRunOwner, FirstRunServices } from "./first-run-owner"
 import type { RpcCaller } from "../../shared/rpc/rpc"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 export type FirstRunBackendProofs = [
   Check<Equal<keyof ReadOnlyLocal, "get" | "all" | "onChanged">>,
@@ -18,8 +18,7 @@ export type FirstRunBackendProofs = [
   Check<Equal<AgreementRequest["permissions"], Promise<{ readonly music: boolean; readonly browserMenu: boolean }>>>
 ]
 
-function operations(backend: Backend, local: ReadOnlyLocal, acct: AccountKey, playlist: PlaylistId,
-  agree: AgreeChange, destination: DestinationChange, services: FirstRunServices) {
+function operations(backend: Backend, local: ReadOnlyLocal, acct: AccountKey, playlist: PlaylistId, agree: AgreeChange, destination: DestinationChange, services: FirstRunServices) {
   const agreement: Promise<AgreementAnswer> = backend.change(agree)
   const setup: Promise<DestinationAnswer> = backend.change(destination)
   const scope: ReadScope = { acct }
@@ -68,7 +67,13 @@ function autoAddOperations(backend: Backend, request: import("./backend").AutoAd
   // @ts-expect-error negative: auto-add-not-destination. Scalar destination calls require their own result.
   const destination: Promise<DestinationAnswer> = backend.change(request)
   // @ts-expect-error negative: destination-not-auto-add. A destination answer cannot prove an auto-add fact.
-  const wrong: Promise<import("./backend").AutoAddChoiceAnswer> = backend.change({ kind: "setup-destination", acct: request.acct, playlist: request.playlist, destination: { kind: "quick-save" }, expected: { setup: "none" } })
+  const wrong: Promise<import("./backend").AutoAddChoiceAnswer> = backend.change({
+    kind: "setup-destination",
+    acct: request.acct,
+    playlist: request.playlist,
+    destination: { kind: "quick-save" },
+    expected: { setup: "none" }
+  })
   void [choice, capture, agreement, destination, wrong]
 }
 void autoAddOperations

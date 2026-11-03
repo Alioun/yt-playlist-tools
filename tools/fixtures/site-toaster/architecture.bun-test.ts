@@ -15,6 +15,7 @@ test("kit-free runtime import closure contains no Svelte Bits UI or kit", () => 
       if (specifier.startsWith(".")) visit(resolve(dirname(path), specifier.endsWith(".ts") ? specifier : `${specifier}.ts`))
     }
   }
-  visit(resolve("src/site/core/notice/plain.ts")); visit(resolve("src/site/core/notice/index.ts"))
+  visit(resolve("src/site/core/notice/plain.ts"))
+  visit(resolve("src/site/core/notice/index.ts"))
   expect(seen.has(resolve("src/site/core/notice/host.ts"))).toBe(true)
 })

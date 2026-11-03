@@ -26,10 +26,11 @@ export type RegistrarBrowser = {
   }
   readonly windows: { getLastFocused(): Promise<Browser.windows.Window> }
   readonly runtime: { readonly onStartup: Subscription }
-  readonly permissions: Pick<NativeBrowser["permissions"], "contains"> & HostAccessRequests & {
-    readonly onAdded: Subscription
-    readonly onRemoved: Subscription
-  }
+  readonly permissions: Pick<NativeBrowser["permissions"], "contains"> &
+    HostAccessRequests & {
+      readonly onAdded: Subscription
+      readonly onRemoved: Subscription
+    }
 }
 export type BrowserRegistrarBindings = {
   readonly browser: RegistrarBrowser
@@ -53,16 +54,31 @@ function tabFact(tab: NativeTab, focusedWindow: number | undefined): TabLookup {
   if (tab.id === undefined || tab.url === undefined) return { kind: "unavailable" }
   const site = siteOf(tab.url)
   if (!site) return { kind: "unavailable" }
-  return { kind: "found", tab: {
-    id: tab.id, site, url: tab.url, active: tab.active, focusedWindow: tab.windowId === focusedWindow,
-    audible: tab.audible === true, lastAccessed: tab.lastAccessed ?? 0,
-    discarded: tab.discarded === true, frozen: "frozen" in tab && tab.frozen === true
-  } }
+  return {
+    kind: "found",
+    tab: {
+      id: tab.id,
+      site,
+      url: tab.url,
+      active: tab.active,
+      focusedWindow: tab.windowId === focusedWindow,
+      audible: tab.audible === true,
+      lastAccessed: tab.lastAccessed ?? 0,
+      discarded: tab.discarded === true,
+      frozen: "frozen" in tab && tab.frozen === true
+    }
+  }
 }
 function observed(script: NativeScript): ObservedScript {
   return {
-    id: script.id, matches: script.matches ?? [], js: script.js ?? [], css: script.css ?? [], excludeMatches: script.excludeMatches ?? [],
-    world: script.world ?? "ISOLATED", runAt: script.runAt ?? "document_idle", allFrames: script.allFrames ?? false,
+    id: script.id,
+    matches: script.matches ?? [],
+    js: script.js ?? [],
+    css: script.css ?? [],
+    excludeMatches: script.excludeMatches ?? [],
+    world: script.world ?? "ISOLATED",
+    runAt: script.runAt ?? "document_idle",
+    allFrames: script.allFrames ?? false,
     persistAcrossSessions: script.persistAcrossSessions ?? true,
     matchOriginAsFallback: "matchOriginAsFallback" in script && script.matchOriginAsFallback === true
   }
@@ -78,16 +94,29 @@ export function browserRegistrarPorts(bindings: BrowserRegistrarBindings): Regis
     return window.focused ? window.id : undefined
   }
   return {
-    build: bindings.build, registry: bindings.registry, owner: bindings.owner, probe: bindings.probe,
+    build: bindings.build,
+    registry: bindings.registry,
+    owner: bindings.owner,
+    probe: bindings.probe,
     backgroundError: error => bindings.backgroundError(error),
     scripting: {
-      async list() { return (await browser.scripting.getRegisteredContentScripts()).map(observed) },
-      async register(scripts) { await browser.scripting.registerContentScripts(nativeScripts(scripts)) },
-      async update(scripts) { await browser.scripting.updateContentScripts(nativeScripts(scripts)) },
-      async unregister(ids) { await browser.scripting.unregisterContentScripts({ ids: [...ids] }) },
+      async list() {
+        return (await browser.scripting.getRegisteredContentScripts()).map(observed)
+      },
+      async register(scripts) {
+        await browser.scripting.registerContentScripts(nativeScripts(scripts))
+      },
+      async update(scripts) {
+        await browser.scripting.updateContentScripts(nativeScripts(scripts))
+      },
+      async unregister(ids) {
+        await browser.scripting.unregisterContentScripts({ ids: [...ids] })
+      },
       async executeScript(injection) {
         const result = await browser.scripting.executeScript({
-          target: { tabId: injection.tabId, frameIds: [0] }, world: injection.world, files: [injection.file]
+          target: { tabId: injection.tabId, frameIds: [0] },
+          world: injection.world,
+          files: [injection.file]
         })
         const top = result.find(frame => frame.frameId === 0)
         if (!top || ("documentId" in top && top.documentId !== undefined && top.documentId !== injection.documentId)) throw Error("Registrar execution unconfirmed")
@@ -121,7 +150,11 @@ export function browserRegistrarPorts(bindings: BrowserRegistrarBindings): Regis
         return found
       },
       async get(tabId) {
-        try { return tabFact(await browser.tabs.get(tabId), undefined) } catch { return { kind: "unavailable" } }
+        try {
+          return tabFact(await browser.tabs.get(tabId), undefined)
+        } catch {
+          return { kind: "unavailable" }
+        }
       }
     },
     startup: {

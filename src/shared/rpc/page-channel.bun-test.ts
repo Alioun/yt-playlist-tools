@@ -32,7 +32,12 @@ test("DOM requests dispatch on the item and every other frame dispatches on docu
     channel.send("req", "document")
     channel.send("res", "answer", item)
     channel.send("retire", "retire", item)
-    expect(frames).toEqual([["req", "item", item], ["req", "document", null], ["res", "answer", null], ["retire", "retire", null]])
+    expect(frames).toEqual([
+      ["req", "item", item],
+      ["req", "document", null],
+      ["res", "answer", null],
+      ["retire", "retire", null]
+    ])
     expect(item.attributes).toHaveLength(0)
   } finally {
     stops.forEach(stop => stop())
@@ -62,7 +67,11 @@ test("direct frames reach only listeners of their wire, with the item only on re
   channel.send("retire", "c")
   stops.forEach(stop => stop())
   channel.send("req", "after")
-  expect(frames).toEqual([["req", "a", item], ["res", "b", null], ["retire", "c", null]])
+  expect(frames).toEqual([
+    ["req", "a", item],
+    ["res", "b", null],
+    ["retire", "c", null]
+  ])
 })
 
 test("direct delivery follows DOM listener order for removal and addition during dispatch", () => {
@@ -82,7 +91,9 @@ test("direct delivery follows DOM listener order for removal and addition during
 test("a throwing direct listener still lets the others run and surfaces its error", () => {
   const channel = createDirectPageChannel()
   const calls: string[] = []
-  channel.listen("res", () => { throw new Error("synthetic listener failure") })
+  channel.listen("res", () => {
+    throw new Error("synthetic listener failure")
+  })
   channel.listen("res", () => calls.push("after"))
   expect(() => channel.send("res", "x")).toThrow("synthetic listener failure")
   expect(calls).toEqual(["after"])

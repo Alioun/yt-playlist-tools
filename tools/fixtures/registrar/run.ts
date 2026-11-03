@@ -3,10 +3,18 @@ import { fixtureBuild, observedScript, scriptedRegistrar, settings, tabFact } fr
 
 export async function registrarConsumer() {
   const fake = scriptedRegistrar({ settings: settings("autoAdd", "musicActions") })
-  fake.scripts.set("unrelated", { ...observedScript({
-    id: "pp-www-page", js: ["unrelated.js"], matches: ["https://www.youtube.com/*"],
-    world: "MAIN", runAt: "document_start", allFrames: false, persistAcrossSessions: true
-  }), id: "unrelated" })
+  fake.scripts.set("unrelated", {
+    ...observedScript({
+      id: "pp-www-page",
+      js: ["unrelated.js"],
+      matches: ["https://www.youtube.com/*"],
+      world: "MAIN",
+      runAt: "document_start",
+      allFrames: false,
+      persistAcrossSessions: true
+    }),
+    id: "unrelated"
+  })
   fake.open(tabFact(1, { active: true, focusedWindow: true }))
   fake.open(tabFact(2, { site: "music", url: "https://music.youtube.com/", audible: true }))
   fake.open(tabFact(3, { discarded: true }))
@@ -35,7 +43,9 @@ export async function registrarConsumer() {
       maxConcurrentMutations: fake.maxMutationsActive,
       backgroundFailures: fake.errors.map(error => error.fact.kind)
     }
-  } finally { registrar.dispose() }
+  } finally {
+    registrar.dispose()
+  }
 }
 
 if (import.meta.main) console.log(JSON.stringify(await registrarConsumer()))

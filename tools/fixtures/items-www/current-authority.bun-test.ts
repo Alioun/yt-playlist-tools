@@ -4,7 +4,9 @@ import { itemsFixture } from "./harness"
 import { firstVideo, secondVideo, shortVideo } from "./specimens"
 
 const cleanups: (() => void)[] = []
-afterEach(() => { for (const cleanup of cleanups.splice(0).reverse()) cleanup() })
+afterEach(() => {
+  for (const cleanup of cleanups.splice(0).reverse()) cleanup()
+})
 
 test("watch ad player identity cannot replace the navigation content video", async () => {
   const h = await itemsFixture()
@@ -36,8 +38,17 @@ test("a Shorts ad navigation is not a content Short", async () => {
   const player = h.player()
   player.root.id = "shorts-player"
   player.update(rawPlayer(shortVideo))
-  h.navigate({ ...rawNavigation("shorts", shortVideo), endpoint: { reelWatchEndpoint: {
-    videoId: shortVideo, adClientParams: { isAd: true }
-  } } }, `/shorts/${shortVideo}`)
+  h.navigate(
+    {
+      ...rawNavigation("shorts", shortVideo),
+      endpoint: {
+        reelWatchEndpoint: {
+          videoId: shortVideo,
+          adClientParams: { isAd: true }
+        }
+      }
+    },
+    `/shorts/${shortVideo}`
+  )
   expect(await h.items.resolve()).toHaveProperty("kind", "current-unavailable")
 })

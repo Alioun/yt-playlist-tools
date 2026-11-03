@@ -20,13 +20,14 @@ export type TabJobMessages<J extends Job> = {
 
 const bool = (value: unknown) => typeof value === "boolean"
 export function isTabPing(value: unknown): value is TabPing {
-  return objectShape(value, { site: isSite, build: isBuildId, signedIn: v => v === true, acct: isAccountKey }) ||
+  return (
+    objectShape(value, { site: isSite, build: isBuildId, signedIn: v => v === true, acct: isAccountKey }) ||
     objectShape(value, { site: isSite, build: isBuildId, signedIn: v => v === false, acct: v => v === null })
+  )
 }
 export function isTabHello(value: unknown): value is TabHello {
   const fields = { site: isSite, build: isBuildId, hidden: bool, fresh: bool }
-  return objectShape(value, { ...fields, signedIn: v => v === true, acct: isAccountKey }) ||
-    objectShape(value, { ...fields, signedIn: v => v === false, acct: v => v === null })
+  return objectShape(value, { ...fields, signedIn: v => v === true, acct: isAccountKey }) || objectShape(value, { ...fields, signedIn: v => v === false, acct: v => v === null })
 }
 export function sameTabAccount(left: { readonly acct: AccountKey | null; readonly signedIn: boolean }, right: AccountData): boolean {
   return left.acct === right.acct && left.signedIn === right.signedIn
@@ -44,18 +45,22 @@ export function tabHelloMessages<View extends TabViewScope>(isView: (value: unkn
   return { "tab.hello": { payload: isTabHello, result: (v: unknown): v is View | null => v === null || isView(v), timeoutMs: 2_000 } }
 }
 export function tabJobMessages<J extends Job>(invocation: JobInvocation<J>, timeoutMs: number) {
-  return { "bg.job": {
-    payload: (value: unknown): value is JobInvocation<J> => isJobInvocation(value) && JSON.stringify(value) === JSON.stringify(invocation),
-    result: (value: unknown): value is JobResult<J> => isJobResultFor(invocation.job, value),
-    timeoutMs
-  } }
+  return {
+    "bg.job": {
+      payload: (value: unknown): value is JobInvocation<J> => isJobInvocation(value) && JSON.stringify(value) === JSON.stringify(invocation),
+      result: (value: unknown): value is JobResult<J> => isJobResultFor(invocation.job, value),
+      timeoutMs
+    }
+  }
 }
 
 // Only receivers use this contract. Callers must use tabJobMessages for their exact invocation.
 export function tabJobReceiverMessages() {
-  return { "bg.job": {
-    payload: isJobInvocation,
-    result: (_value: unknown): _value is never => false,
-    timeoutMs: 10_000
-  } }
+  return {
+    "bg.job": {
+      payload: isJobInvocation,
+      result: (_value: unknown): _value is never => false,
+      timeoutMs: 10_000
+    }
+  }
 }

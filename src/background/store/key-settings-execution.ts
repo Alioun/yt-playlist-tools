@@ -1,5 +1,4 @@
-import { decodeDocument, decodeSettings, decodeSetup, DOCUMENT_VERSION, parseDocumentKey, documentKey, isShortcutId,
-  type AccountKey, type ShortcutId, type Shortcut } from "../../shared/model"
+import { decodeDocument, decodeSettings, decodeSetup, DOCUMENT_VERSION, parseDocumentKey, documentKey, isShortcutId, type AccountKey, type ShortcutId, type Shortcut } from "../../shared/model"
 import { readSettingsView } from "../../shared/model/settings-view"
 import { type JsonObject } from "../../shared/contracts/json"
 import { isKeySettingChange, type KeySettingChange, type KeySettingAnswer, type KeySettingRefusal } from "../../shared/contracts/key-settings"
@@ -13,13 +12,24 @@ import { commitKeySettings, readKeySettingsProgress, keySettingsProgressKey, typ
 import type { LocalSettingsWriteResult } from "./shared-setting-execution"
 
 type UndoTarget = { readonly acct: AccountKey; readonly playlist: string; readonly revision: number }
-type UndoCapture = { readonly principal: string; readonly row: Shortcut; readonly index: number; readonly previous: string | undefined;
-  readonly next: string | undefined; readonly targets: readonly UndoTarget[]; readonly expires: number; readonly reset: number;
-  readonly authority: JsonObject; consumed: boolean }
-export type KeySettingsExecutionResult = { readonly answer: KeySettingAnswer; readonly settingsChanged: boolean; readonly accounts: readonly AccountKey[];
-  readonly uncertain: boolean }
+type UndoCapture = {
+  readonly principal: string
+  readonly row: Shortcut
+  readonly index: number
+  readonly previous: string | undefined
+  readonly next: string | undefined
+  readonly targets: readonly UndoTarget[]
+  readonly expires: number
+  readonly reset: number
+  readonly authority: JsonObject
+  consumed: boolean
+}
+export type KeySettingsExecutionResult = { readonly answer: KeySettingAnswer; readonly settingsChanged: boolean; readonly accounts: readonly AccountKey[]; readonly uncertain: boolean }
 type Dependencies = SettingsMutationDependencies & {
-  readonly monotonic: () => number; readonly allocate: () => string; readonly resetRevision: () => number; readonly accountRevision: (acct: AccountKey) => number
+  readonly monotonic: () => number
+  readonly allocate: () => string
+  readonly resetRevision: () => number
+  readonly accountRevision: (acct: AccountKey) => number
 }
 const result = (answer: KeySettingAnswer): KeySettingsExecutionResult => ({ answer, settingsChanged: false, accounts: [], uncertain: false })
 const refused = (reason: KeySettingRefusal) => result({ kind: "refused", reason })
@@ -32,15 +42,16 @@ function project(write: LocalSettingsWriteResult): KeySettingsExecutionResult {
 }
 function authorityOf(records: JsonObject): JsonObject | undefined {
   const read = readConsentDevice(records)
-  if (read.kind !== "supported" || !read.device.consent || read.control && read.control.state.kind !== "agreed") return
-  return { schema: records.schema!, device: read.device.id, consent: read.device.consent, syncOn: read.device.syncOn,
-    control: records["consent:state"] ?? null }
+  if (read.kind !== "supported" || !read.device.consent || (read.control && read.control.state.kind !== "agreed")) return
+  return { schema: records.schema!, device: read.device.id, consent: read.device.consent, syncOn: read.device.syncOn, control: records["consent:state"] ?? null }
 }
 function sameRow(left: Shortcut, right: Readonly<Shortcut>): boolean {
   return left.id === right.id && sameKey(left.key, right.key) && left.label === right.label && left.watchLaterOnEveryAccount === right.watchLaterOnEveryAccount
 }
 function withoutMarker(records: JsonObject): JsonObject {
-  const copy = structuredClone(records); delete copy[keySettingsProgressKey]; return copy
+  const copy = structuredClone(records)
+  delete copy[keySettingsProgressKey]
+  return copy
 }
 
 export function createKeySettingsExecution(deps: Dependencies) {
@@ -48,12 +59,18 @@ export function createKeySettingsExecution(deps: Dependencies) {
   let lastTime = -1
   function time(): number | undefined {
     const now = deps.monotonic()
-    if (!Number.isFinite(now) || now < 0 || now < lastTime) { undos.clear(); lastTime = now; return }
+    if (!Number.isFinite(now) || now < 0 || now < lastTime) {
+      undos.clear()
+      lastTime = now
+      return
+    }
     lastTime = now
     for (const [id, capture] of undos) if (capture.consumed || now >= capture.expires) undos.delete(id)
     return now
   }
-  function revoke() { undos.clear() }
+  function revoke() {
+    undos.clear()
+  }
   function invalidateAccount(acct: AccountKey) {
     for (const [id, capture] of undos) if (capture.targets.some(target => target.acct === acct)) undos.delete(id)
   }
@@ -64,15 +81,18 @@ export function createKeySettingsExecution(deps: Dependencies) {
       if (read.kind !== "absent" && (read.kind !== "valid" || read.record.state !== "terminal")) return { kind: "invalid", reason: "invalid-option" }
       const plan = planKeySetting({ current, records, change, retired: read.kind === "valid" ? read.record.retired : [], allocate: deps.allocate })
       planning.value = plan
-      return plan.kind === "answer" ? plan.answer.kind === "confirmed" ? { kind: "unchanged" } : { kind: "invalid", reason: "invalid-option" }
-        : { kind: "changed", settings: plan.settings }
+      return plan.kind === "answer" ? (plan.answer.kind === "confirmed" ? { kind: "unchanged" } : { kind: "invalid", reason: "invalid-option" }) : { kind: "changed", settings: plan.settings }
     })
     const plan = planning.value
-    if (plan?.kind === "answer" && (write.kind === "result" && write.result.refused === "invalid" || write.kind === "unchanged")) return result(plan.answer)
+    if (plan?.kind === "answer" && ((write.kind === "result" && write.result.refused === "invalid") || write.kind === "unchanged")) return result(plan.answer)
     if (write.kind !== "committed" && write.kind !== "unchanged") return project(write)
     if (!plan || plan.kind !== "edit") return refused("unconfirmed")
-    return { answer: plan.added ? { kind: "added", id: plan.added } : { kind: "confirmed", change, status: write.kind === "committed" ? "changed" : "unchanged" },
-      settingsChanged: write.kind === "committed", accounts: [], uncertain: false }
+    return {
+      answer: plan.added ? { kind: "added", id: plan.added } : { kind: "confirmed", change, status: write.kind === "committed" ? "changed" : "unchanged" },
+      settingsChanged: write.kind === "committed",
+      accounts: [],
+      uncertain: false
+    }
   }
 
   async function batch(change: Extract<KeySettingChange, { kind: "shortcut-remove" | "shortcut-undo" }>, principal: string): Promise<KeySettingsExecutionResult> {
@@ -80,11 +100,16 @@ export function createKeySettingsExecution(deps: Dependencies) {
     if (now === undefined) return refused("expired")
     const capture = change.kind === "shortcut-undo" ? undos.get(change.receipt) : undefined
     if (change.kind === "shortcut-undo" && (!capture || capture.consumed || capture.principal !== principal || capture.reset !== deps.resetRevision())) return refused("expired")
-    if (capture) { capture.consumed = true; undos.delete(change.kind === "shortcut-undo" ? change.receipt : "") }
+    if (capture) {
+      capture.consumed = true
+      undos.delete(change.kind === "shortcut-undo" ? change.receipt : "")
+    }
     try {
       const records = await deps.local.get(null)
       if (deps.disposed() || !consentObject(records)) return refused("unavailable")
-      const authority = deps.authority(records), consent = readConsentDevice(records), currentAuthority = authorityOf(records)
+      const authority = deps.authority(records),
+        consent = readConsentDevice(records),
+        currentAuthority = authorityOf(records)
       if (authority.kind !== "ready" || consent.kind !== "supported" || !consent.device.consent || !currentAuthority) return refused("unavailable")
       if (capture && !sameSyncJson(capture.authority, currentAuthority)) return refused("stale")
       const view = readSettingsView(records["doc:settings"])
@@ -107,7 +132,9 @@ export function createKeySettingsExecution(deps: Dependencies) {
         const position = next >= 0 ? next : previous >= 0 ? previous + 1 : Math.min(capture.index, settings.shortcuts.list.length)
         settings.shortcuts.list.splice(position, 0, structuredClone(row))
       }
-      const accounts: AccountKey[] = [], targets: UndoTarget[] = [], effect: JsonObject = {}
+      const accounts: AccountKey[] = [],
+        targets: UndoTarget[] = [],
+        effect: JsonObject = {}
       const documents: Extract<SyncWritePlanInput["intent"], { kind: "changed-batch" }>["documents"][number][] = []
       function envelope(name: string, data: JsonObject): JsonObject | undefined {
         const raw = records[name]
@@ -119,7 +146,8 @@ export function createKeySettingsExecution(deps: Dependencies) {
       if (!consentObject(settings)) return refused("invalid")
       const settingDocument = envelope("doc:settings", settings)
       if (!settingDocument) return refused("invalid")
-      effect["doc:settings"] = settingDocument; documents.push({ key: { kind: "settings" }, document: settingDocument })
+      effect["doc:settings"] = settingDocument
+      documents.push({ key: { kind: "settings" }, document: settingDocument })
       const seen = new Set<AccountKey>()
       for (const [name, raw] of Object.entries(records)) {
         if (!name.startsWith("doc:setup:")) continue
@@ -130,17 +158,22 @@ export function createKeySettingsExecution(deps: Dependencies) {
         if (decoded.kind === "deleted") continue
         if (decoded.kind !== "value" || !consentObject(raw.data) || !consentObject(raw.data.targets)) return refused("invalid")
         seen.add(key.acct)
-        const stored = raw.data.targets[shortcut], restore = capture?.targets.find(target => target.acct === key.acct)
+        const stored = raw.data.targets[shortcut],
+          restore = capture?.targets.find(target => target.acct === key.acct)
         if (change.kind === "shortcut-remove" ? stored === undefined : !restore) continue
         if (restore && (stored !== undefined || deps.accountRevision(key.acct) !== restore.revision)) return refused("stale")
         const desired = { ...raw.data.targets }
         if (change.kind === "shortcut-remove") {
           if (typeof stored !== "string") return refused("invalid")
-          targets.push({ acct: key.acct, playlist: stored, revision: deps.accountRevision(key.acct) }); delete desired[shortcut]
+          targets.push({ acct: key.acct, playlist: stored, revision: deps.accountRevision(key.acct) })
+          delete desired[shortcut]
         } else if (restore) desired[shortcut] = restore.playlist
-        const data = { ...raw.data, targets: desired }, document = envelope(name, data)
+        const data = { ...raw.data, targets: desired },
+          document = envelope(name, data)
         if (!document || decodeDocument(document, decodeSetup).kind !== "value") return refused("invalid")
-        effect[name] = document; documents.push({ key, document }); accounts.push(key.acct)
+        effect[name] = document
+        documents.push({ key, document })
+        accounts.push(key.acct)
       }
       if (capture?.targets.some(target => !seen.has(target.acct) || deps.accountRevision(target.acct) !== target.revision)) return refused("stale")
       if (authority.device.syncOn) {
@@ -166,10 +199,21 @@ export function createKeySettingsExecution(deps: Dependencies) {
       if (history.kind === "set") effect.sync = history.sync
       const checked = time()
       if (capture && (checked === undefined || checked >= capture.expires || capture.reset !== deps.resetRevision())) return refused("expired")
-      const retired = new Set<ShortcutId>(old.kind === "valid" ? old.record.retired : []); retired.add(shortcut)
-      const record: AcceptedKeySettings = { v: 1, kind: "key-settings-progress", id: deps.generation(), deviceId: authority.device.id,
-        original: consent.device.consent, retired: [...retired], state: "accepted", operation: change.kind === "shortcut-remove" ? "remove" : "restore",
-        shortcut, before: withoutMarker(records), effect }
+      const retired = new Set<ShortcutId>(old.kind === "valid" ? old.record.retired : [])
+      retired.add(shortcut)
+      const record: AcceptedKeySettings = {
+        v: 1,
+        kind: "key-settings-progress",
+        id: deps.generation(),
+        deviceId: authority.device.id,
+        original: consent.device.consent,
+        retired: [...retired],
+        state: "accepted",
+        operation: change.kind === "shortcut-remove" ? "remove" : "restore",
+        shortcut,
+        before: withoutMarker(records),
+        effect
+      }
       const write = await commitKeySettings({ local: deps.local, stopped: deps.disposed }, records, record)
       if (write.kind !== "committed") return project(write)
       if (change.kind === "shortcut-remove") {
@@ -177,15 +221,28 @@ export function createKeySettingsExecution(deps: Dependencies) {
         if (issued === undefined) return { ...refused("expired"), settingsChanged: true, accounts }
         const receipt = `undo:${crypto.randomUUID()}`
         const original = decodeSettings(view.settings)
-        undos.set(receipt, { principal, row: structuredClone(row), index, previous: original.shortcuts.list[index - 1]?.id,
-          next: original.shortcuts.list[index + 1]?.id, targets, expires: issued + 6000, reset: deps.resetRevision(), authority: currentAuthority, consumed: false })
+        undos.set(receipt, {
+          principal,
+          row: structuredClone(row),
+          index,
+          previous: original.shortcuts.list[index - 1]?.id,
+          next: original.shortcuts.list[index + 1]?.id,
+          targets,
+          expires: issued + 6000,
+          reset: deps.resetRevision(),
+          authority: currentAuthority,
+          consumed: false
+        })
         return { answer: { kind: "removed", id: shortcut, receipt, undoForMs: 6000 }, settingsChanged: true, accounts, uncertain: false }
       }
       return { answer: { kind: "confirmed", change, status: "changed" }, settingsChanged: true, accounts, uncertain: false }
-    } catch { return { ...refused("unconfirmed"), uncertain: true } }
+    } catch {
+      return { ...refused("unconfirmed"), uncertain: true }
+    }
   }
   return {
-    revoke, invalidateAccount,
+    revoke,
+    invalidateAccount,
     async change(change: KeySettingChange, principal: string | undefined): Promise<KeySettingsExecutionResult> {
       if (!isKeySettingChange(change) || deps.disposed()) return refused("invalid")
       if (change.kind !== "shortcut-remove" && change.kind !== "shortcut-undo") return ordinary(change)

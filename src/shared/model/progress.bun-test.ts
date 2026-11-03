@@ -1,7 +1,17 @@
 import { expect, test } from "bun:test"
 import {
-  decodeProgress, parseProgressKey, progressKey, progressShard, pruneProgress, rememberProgress, storedParts,
-  PROGRESS_KEEP_MS, PROGRESS_SHARDS, type Progress, type ProgressShard, type ProgressShards
+  decodeProgress,
+  parseProgressKey,
+  progressKey,
+  progressShard,
+  pruneProgress,
+  rememberProgress,
+  storedParts,
+  PROGRESS_KEEP_MS,
+  PROGRESS_SHARDS,
+  type Progress,
+  type ProgressShard,
+  type ProgressShards
 } from "./progress"
 import { isAccountKey, isVideoId, type VideoId } from "./validation"
 
@@ -13,8 +23,7 @@ function video(n: number): VideoId {
   return id
 }
 const day = 24 * 60 * 60 * 1000
-const emptyShards = (): Record<ProgressShard, Progress> =>
-  Object.fromEntries(PROGRESS_SHARDS.map(shard => [shard, {}])) as Record<ProgressShard, Progress>
+const emptyShards = (): Record<ProgressShard, Progress> => Object.fromEntries(PROGRESS_SHARDS.map(shard => [shard, {}])) as Record<ProgressShard, Progress>
 
 test("a video always maps to one of the 16 shards, and the shard key round-trips", () => {
   const seen = new Set<number>()
@@ -31,7 +40,20 @@ test("a video always maps to one of the 16 shards, and the shard key round-trips
 })
 
 test("stored stretches only ever shrink: clamped, rounded inwards to 0.1 s and merged", () => {
-  expect(storedParts([[0.04, 10.06], [9, 12], [-1, 0.2], [55, 70]], 60)).toEqual([[0, 12], [55, 60]])
+  expect(
+    storedParts(
+      [
+        [0.04, 10.06],
+        [9, 12],
+        [-1, 0.2],
+        [55, 70]
+      ],
+      60
+    )
+  ).toEqual([
+    [0, 12],
+    [55, 60]
+  ])
   expect(storedParts([[3.01, 3.09]], 60)).toEqual([])
   expect(storedParts([[0.3, 0.7]], 60)).toEqual([[0.3, 0.7]])
 })
@@ -47,15 +69,32 @@ test("beyond 100 stretches the shortest are dropped", () => {
 test("a save replaces the video's entry, and an empty save forgets it", () => {
   const first = rememberProgress({}, video(1), { len: 300, parts: [[0, 40]] }, 1_000)
   expect(first).toEqual({ [video(1)]: { len: 300, parts: [[0, 40]], at: 1_000 } })
-  const second = rememberProgress(first, video(1), { len: 300, parts: [[0, 40], [100, 160]] }, 2_000)
-  expect(second[video(1)]).toEqual({ len: 300, parts: [[0, 40], [100, 160]], at: 2_000 })
+  const second = rememberProgress(
+    first,
+    video(1),
+    {
+      len: 300,
+      parts: [
+        [0, 40],
+        [100, 160]
+      ]
+    },
+    2_000
+  )
+  expect(second[video(1)]).toEqual({
+    len: 300,
+    parts: [
+      [0, 40],
+      [100, 160]
+    ],
+    at: 2_000
+  })
   expect(rememberProgress(second, video(1), { len: 300, parts: [] }, 3_000)).toEqual({})
 })
 
 test("a shard that doesn't decode keeps only its readable entries", () => {
   const good = { len: 120, parts: [[0, 30]], at: 5 } as const
-  expect(decodeProgress({ [video(1)]: good, [video(2)]: { len: 120, parts: [[30, 10]], at: 5 }, nope: good, [video(3)]: { len: -1, parts: [], at: 1 } }))
-    .toEqual({ [video(1)]: good })
+  expect(decodeProgress({ [video(1)]: good, [video(2)]: { len: 120, parts: [[30, 10]], at: 5 }, nope: good, [video(3)]: { len: -1, parts: [], at: 1 } })).toEqual({ [video(1)]: good })
   expect(decodeProgress(null)).toEqual({})
   expect(decodeProgress([good])).toEqual({})
 })
@@ -63,7 +102,8 @@ test("a shard that doesn't decode keeps only its readable entries", () => {
 test("the prune drops entries 30 days after they last played and rewrites only their shards", () => {
   const shards = emptyShards()
   const now = 100 * day
-  const old = video(1), fresh = video(2)
+  const old = video(1),
+    fresh = video(2)
   shards[progressShard(old)] = { [old]: { len: 60, parts: [[0, 10]], at: now - PROGRESS_KEEP_MS } }
   shards[progressShard(fresh)] = { ...shards[progressShard(fresh)], [fresh]: { len: 60, parts: [[0, 10]], at: now - PROGRESS_KEEP_MS + 1 } }
   const changed = pruneProgress(shards, now)

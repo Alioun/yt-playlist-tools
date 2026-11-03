@@ -2,8 +2,7 @@ import type { SettingsFileRead, SettingsFileCheck } from "./settings-file-read"
 import type { SettingsFileSource, ImportPlan } from "../../shared/settings-file"
 import type { Device, ChannelId } from "../../shared/model"
 
-export function readTypeChecks(read: SettingsFileRead, checked: SettingsFileCheck, device: Device, channel: ChannelId,
-  raw: Readonly<Record<string, unknown>>, source: SettingsFileSource) {
+export function readTypeChecks(read: SettingsFileRead, checked: SettingsFileCheck, device: Device, channel: ChannelId, raw: Readonly<Record<string, unknown>>, source: SettingsFileSource) {
   // @ts-expect-error negative: raw-snapshot-is-not-a-public-source
   const rawSource: SettingsFileSource = raw
   // @ts-expect-error negative: device-is-not-export-data

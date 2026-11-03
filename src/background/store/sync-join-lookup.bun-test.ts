@@ -3,9 +3,18 @@ import { beginSyncedChoicesLookup, type SyncedChoicesResult } from "./sync-join-
 import { createLookupFixture, deferred, drainLookup, lookupSnapshot, runSyncJoinLookupFixture } from "../../../tools/fixtures/sync-join-lookup/run"
 
 const features = {
-  autoAdd: true, shortcuts: true, quickSave: false, queueButton: false, watchButton: false,
-  cardMenu: false, browserMenu: true, musicActions: true, musicKeys: false, anyTabKeys: false,
-  gather: true, musicSection: false
+  autoAdd: true,
+  shortcuts: true,
+  quickSave: false,
+  queueButton: false,
+  watchButton: false,
+  cardMenu: false,
+  browserMenu: true,
+  musicActions: true,
+  musicKeys: false,
+  anyTabKeys: false,
+  gather: true,
+  musicSection: false
 }
 function found(historyId = "synthetic-history-a", settingsGeneration = "settings-a"): Extract<SyncedChoicesResult, { kind: "found" }> {
   return { kind: "found", historyId, settingsGeneration, features }
@@ -13,7 +22,9 @@ function found(historyId = "synthetic-history-a", settingsGeneration = "settings
 
 describe("synthetic first-run command", () => {
   let report: Awaited<ReturnType<typeof runSyncJoinLookupFixture>>
-  beforeAll(async () => { report = await runSyncJoinLookupFixture() })
+  beforeAll(async () => {
+    report = await runSyncJoinLookupFixture()
+  })
 
   const expected: [string, SyncedChoicesResult, number][] = [
     ["complete", found(), 1],
@@ -55,26 +66,52 @@ describe("synthetic first-run command", () => {
   ]
   test.each(expected)("%s returns the complete observation and releases its resources", (name, result, reads) => {
     expect(report.cases.find(observation => observation.name === name)).toEqual({
-      name, result, effects: {
-        reads, subscriptions: 1, unsubscriptions: 1, delays: [10_000], timerCancellations: 1,
-        maxConcurrentReads: 1, forbidden: [], activeListeners: 0, activeTimers: 0
+      name,
+      result,
+      effects: {
+        reads,
+        subscriptions: 1,
+        unsubscriptions: 1,
+        delays: [10_000],
+        timerCancellations: 1,
+        maxConcurrentReads: 1,
+        forbidden: [],
+        activeListeners: 0,
+        activeTimers: 0
       }
     })
   })
   test("the actual consumer discards its From sync draft without persisting choices or resuming", () => {
     expect(report.cases).toHaveLength(expected.length)
     expect(report.firstRun).toEqual({
-      displayed: { kind: "draft", label: "From sync", features }, afterClose: null, saved: { local: {}, session: {} },
+      displayed: { kind: "draft", label: "From sync", features },
+      afterClose: null,
+      saved: { local: {}, session: {} },
       beforeExplicitLookup: {
-        reads: 0, subscriptions: 0, unsubscriptions: 0, delays: [], timerCancellations: 0,
-        maxConcurrentReads: 0, forbidden: [], activeListeners: 0, activeTimers: 0
+        reads: 0,
+        subscriptions: 0,
+        unsubscriptions: 0,
+        delays: [],
+        timerCancellations: 0,
+        maxConcurrentReads: 0,
+        forbidden: [],
+        activeListeners: 0,
+        activeTimers: 0
       },
       afterExplicitLookup: found("synthetic-history-restart", "settings-restart")
     })
     expect(report.replacement).toEqual({
-      result: found("synthetic-history-d", "settings-d"), effects: {
-        reads: 2, subscriptions: 2, unsubscriptions: 2, delays: [10_000, 10_000], timerCancellations: 2,
-        maxConcurrentReads: 2, forbidden: [], activeListeners: 0, activeTimers: 0
+      result: found("synthetic-history-d", "settings-d"),
+      effects: {
+        reads: 2,
+        subscriptions: 2,
+        unsubscriptions: 2,
+        delays: [10_000, 10_000],
+        timerCancellations: 2,
+        maxConcurrentReads: 2,
+        forbidden: [],
+        activeListeners: 0,
+        activeTimers: 0
       }
     })
     expect([report.writes, report.join, report.agree, report.productionRoute]).toEqual([0, "not-implemented", "not-implemented", "not-installed"])
@@ -105,7 +142,10 @@ test("subscription is attached before get, including synchronous delivery during
     fixture.change(lookupSnapshot())
     return stop
   }
-  fixture.deps.sync.get = () => { events.push("get"); return get() }
+  fixture.deps.sync.get = () => {
+    events.push("get")
+    return get()
+  }
   expect(await fixture.begin().result).toEqual(found())
   expect(events).toEqual(["subscribe", "get"])
 })
@@ -156,9 +196,18 @@ test.each(["get", "subscribe", "now", "after"] as const)("%s exceptions keep the
   const fixture = createLookupFixture()
   const error = { synthetic: port, diagnostic: "local only" }
   if (port === "get") fixture.deps.sync.get = () => Promise.reject(error)
-  if (port === "subscribe") fixture.deps.sync.subscribe = () => { throw error }
-  if (port === "now") fixture.deps.clock.now = () => { throw error }
-  if (port === "after") fixture.deps.clock.after = () => { throw error }
+  if (port === "subscribe")
+    fixture.deps.sync.subscribe = () => {
+      throw error
+    }
+  if (port === "now")
+    fixture.deps.clock.now = () => {
+      throw error
+    }
+  if (port === "after")
+    fixture.deps.clock.after = () => {
+      throw error
+    }
   const result = await fixture.begin().result
   expect(result).toEqual({ kind: "failed", stage: port === "get" ? "read" : port === "subscribe" ? "subscribe" : "clock", error })
   if (result.kind !== "failed") throw Error("Expected original port failure")
@@ -170,13 +219,17 @@ test.each(["get", "subscribe", "now", "after"] as const)("%s exceptions keep the
 test("synchronous read failure and later clock failure release the installed resources", async () => {
   const error = { synthetic: "synchronous read failure" }
   const fixture = createLookupFixture()
-  fixture.deps.sync.get = () => { throw error }
+  fixture.deps.sync.get = () => {
+    throw error
+  }
   expect(await fixture.begin().result).toEqual({ kind: "failed", stage: "read", error })
   expect(fixture.observation()).toMatchObject({ unsubscriptions: 1, timerCancellations: 1, activeListeners: 0, activeTimers: 0 })
   const clockFailure = createLookupFixture()
   const lookup = clockFailure.begin()
   await drainLookup()
-  clockFailure.deps.clock.now = () => { throw error }
+  clockFailure.deps.clock.now = () => {
+    throw error
+  }
   clockFailure.change(lookupSnapshot())
   expect(await lookup.result).toEqual({ kind: "failed", stage: "clock", error })
   expect(clockFailure.observation()).toMatchObject({ reads: 1, unsubscriptions: 1, timerCancellations: 1, activeListeners: 0, activeTimers: 0 })
@@ -205,8 +258,15 @@ test("lost caller lifetime before subscription prevents reads and still cancels 
   fixture.loseLifetime()
   expect(await fixture.begin().result).toEqual({ kind: "unavailable", reason: "stale" })
   expect(fixture.observation()).toEqual({
-    reads: 0, subscriptions: 0, unsubscriptions: 0, delays: [10_000], timerCancellations: 1,
-    maxConcurrentReads: 0, forbidden: [], activeListeners: 0, activeTimers: 0
+    reads: 0,
+    subscriptions: 0,
+    unsubscriptions: 0,
+    delays: [10_000],
+    timerCancellations: 1,
+    maxConcurrentReads: 0,
+    forbidden: [],
+    activeListeners: 0,
+    activeTimers: 0
   })
 })
 
@@ -233,7 +293,13 @@ test("the narrow port signature requires no mutation or native authority", async
 
 test("malformed boundary values are rejected without invoking getters", async () => {
   let getterCalls = 0
-  const raw = Object.defineProperty({}, "s:meta", { enumerable: true, get() { getterCalls++; throw Error("must not execute") } })
+  const raw = Object.defineProperty({}, "s:meta", {
+    enumerable: true,
+    get() {
+      getterCalls++
+      throw Error("must not execute")
+    }
+  })
   const fixture = createLookupFixture(raw)
   const lookup = fixture.begin()
   await drainLookup()
@@ -249,13 +315,19 @@ test.each(["subscribe", "clock"] as const)("%s teardown errors remain local and 
     const subscribe = fixture.deps.sync.subscribe
     fixture.deps.sync.subscribe = changed => {
       const stop = subscribe(changed)
-      return () => { stop(); throw error }
+      return () => {
+        stop()
+        throw error
+      }
     }
   } else {
     const after = fixture.deps.clock.after
     fixture.deps.clock.after = (milliseconds, run) => {
       const stop = after(milliseconds, run)
-      return () => { stop(); throw error }
+      return () => {
+        stop()
+        throw error
+      }
     }
   }
   expect(await fixture.begin().result).toEqual({ kind: "failed", stage, error })
@@ -269,7 +341,10 @@ test("an original read failure survives a secondary teardown failure", async () 
   const subscribe = fixture.deps.sync.subscribe
   fixture.deps.sync.subscribe = changed => {
     const stop = subscribe(changed)
-    return () => { stop(); throw Error("secondary cleanup failure") }
+    return () => {
+      stop()
+      throw Error("secondary cleanup failure")
+    }
   }
   expect(await fixture.begin().result).toEqual({ kind: "failed", stage: "read", error })
   expect(fixture.effects.timerCancellations).toBe(1)

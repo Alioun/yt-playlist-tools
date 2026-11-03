@@ -12,17 +12,26 @@ const { a, b } = accounts
 const { music, learning, later, old, fresh } = lists
 const video = videoAt(1)
 const tab1 = tabOrigin(1)
-const auto = (playlists = [music, learning], channel: typeof channels.listed | null = channels.listed) =>
-  ({ via: "auto-add", site: "www", video, playlists, channel }) as const
+const auto = (playlists = [music, learning], channel: typeof channels.listed | null = channels.listed) => ({ via: "auto-add", site: "www", video, playlists, channel }) as const
 const quick = { via: "quick-save", site: "www", video, opener: "quick-save" } as const
 const key = { via: "shortcut", site: "www", video, shortcut } as const
 const pick = (playlist = music) => ({ via: "picker", site: "www", video, playlist, opener: "quick-save" }) as const
-const stoppedAdd = (pending: readonly typeof music[] = [], found: Extract<AddReport, { kind: "stopped" }>["outcomes"] = {}): Extract<AddReport, { kind: "stopped" }> => ({ kind: "stopped", outcomes: found, pending, feedback: true, toast: null, undo: null })
+const stoppedAdd = (pending: readonly (typeof music)[] = [], found: Extract<AddReport, { kind: "stopped" }>["outcomes"] = {}): Extract<AddReport, { kind: "stopped" }> => ({
+  kind: "stopped",
+  outcomes: found,
+  pending,
+  feedback: true,
+  toast: null,
+  undo: null
+})
 const undoFailed = (completed: number, of: number, failure: ExplicitFailure): Extract<UndoReport, { kind: "failed" }> => ({
-  kind: "failed", completed, of, failure,
+  kind: "failed",
+  completed,
+  of,
+  failure,
   toast: { tone: "failure", auto: false, message: { kind: "undo-failed" }, action: null, remember: { tab: [], session: [] } }
 })
-const outcomes = (report: AddReport) => report.kind === "report" ? report.outcomes : null
+const outcomes = (report: AddReport) => (report.kind === "report" ? report.outcomes : null)
 
 function ready() {
   const h = harness()
@@ -36,8 +45,7 @@ function ready() {
 }
 
 describe("private skip projection", () => {
-  const context = (acct = a) => ({ tab: { tabId: 1, incognito: true as const, site: "www" as const },
-    info: { signedIn: true as const, acct, site: "www" as const, build } })
+  const context = (acct = a) => ({ tab: { tabId: 1, incognito: true as const, site: "www" as const }, info: { signedIn: true as const, acct, site: "www" as const, build } })
 
   test("detached skips come only from the requested account's actual private memory", async () => {
     const h = ready()
@@ -53,25 +61,34 @@ describe("private skip projection", () => {
       expect(await h.flow.readPrivateSkips({ context: context(), revision: emptySessionRevision })).toEqual({ kind: "skips", entries: [[video, [music]]] })
       expect(await h.flow.readPrivateSkips({ context: context(b), revision: emptySessionRevision })).toEqual({ kind: "skips", entries: [[videoAt(2), "all"]] })
       expect(h.calls).toEqual([])
-    } finally { await h.flow.quiesce() }
+    } finally {
+      await h.flow.quiesce()
+    }
   })
 
   test("read checks current revocation and disposal without writing or reviving old memory", async () => {
-    let revision: SessionRevision = emptySessionRevision, sequence = 0, writes = 0
+    let revision: SessionRevision = emptySessionRevision,
+      sequence = 0,
+      writes = 0
     let wait: (() => Promise<void>) | null = null
     const port: SessionPort = {
       async read() {
         const result = { kind: "memory", memory: emptySessionMemory, revision, sequence: ++sequence } as const
-        const pending = wait; wait = null
+        const pending = wait
+        wait = null
         if (pending) await pending()
         return result
       },
-      async change() { writes++; return { kind: "unavailable", reason: "stale" } }
+      async change() {
+        writes++
+        return { kind: "unavailable", reason: "stale" }
+      }
     }
     const h = harness({ session: port })
     try {
       await h.flow.skip({ kind: "skip", acct: a, video, playlists: [music] }, tabOrigin(1, true))
-      const gate = deferred(); wait = gate.wait
+      const gate = deferred()
+      wait = gate.wait
       const old = h.flow.readPrivateSkips({ context: context(), revision: emptySessionRevision })
       await gate.entered
       revision = { reset: 0, accounts: new Map([[a, 1]]) }
@@ -82,7 +99,9 @@ describe("private skip projection", () => {
       expect(writes).toBe(0)
       await h.flow.quiesce()
       expect((await h.flow.readPrivateSkips({ context: context(), revision })).kind).toBe("unavailable")
-    } finally { await h.flow.quiesce() }
+    } finally {
+      await h.flow.quiesce()
+    }
   })
 
   test("owner holds and a late private read stay unavailable", async () => {
@@ -92,10 +111,16 @@ describe("private skip projection", () => {
     expect((await h.flow.readPrivateSkips({ context: context(), revision: emptySessionRevision })).kind).toBe("unavailable")
     await h.flow.quiesce()
     const gate = deferred()
-    let block = false, sequence = 0
+    let block = false,
+      sequence = 0
     const port: SessionPort = {
-      async read() { if (block) await gate.wait(); return { kind: "memory", memory: emptySessionMemory, revision: emptySessionRevision, sequence: ++sequence } },
-      async change() { throw Error("Read wrote session") }
+      async read() {
+        if (block) await gate.wait()
+        return { kind: "memory", memory: emptySessionMemory, revision: emptySessionRevision, sequence: ++sequence }
+      },
+      async change() {
+        throw Error("Read wrote session")
+      }
     }
     const late = harness({ session: port })
     await late.flow.skip({ kind: "skip", acct: a, video, playlists: "all" }, tabOrigin(1, true))
@@ -156,8 +181,11 @@ describe("order of checks", () => {
     const h = ready()
     const allow: Filter = { mode: "allow", on: true, channels: [[channels.listed, "Listed"]] }
     const first = await h.flow.add(auto([music]), tab1)
-    expect(first.kind === "report" && await h.flow.undo(first.undo ?? { kind: "add", id: "none" }, tab1)).toEqual({ kind: "undone" })
-    h.setup(a, { kind: "auto-add" }, [{ playlist: music, filter: allow }, { playlist: learning, filter: allow }])
+    expect(first.kind === "report" && (await h.flow.undo(first.undo ?? { kind: "add", id: "none" }, tab1))).toEqual({ kind: "undone" })
+    h.setup(a, { kind: "auto-add" }, [
+      { playlist: music, filter: allow },
+      { playlist: learning, filter: allow }
+    ])
     const before = h.calls.length
     const report = await h.flow.add(auto([music, learning], null), tab1)
     expect(outcomes(report)).toEqual({ [music]: { kind: "skipped" }, [learning]: { kind: "filtered", decision: "filtered-unknown-channel" } })
@@ -199,7 +227,10 @@ describe("membership and the account guard", () => {
 
   test("unreadable membership: an explicit add goes ahead, auto-add holds with its own toast", async () => {
     const h = ready()
-    h.script.membership.push(() => fact<"membership">("unreadable"), () => fact<"membership">("unreadable"))
+    h.script.membership.push(
+      () => fact<"membership">("unreadable"),
+      () => fact<"membership">("unreadable")
+    )
     const held = await h.flow.add(auto(), tab1)
     expect(outcomes(held)).toEqual({ [music]: { kind: "failed", failure: "membership-unreadable" }, [learning]: { kind: "failed", failure: "membership-unreadable" } })
     expect(held.kind === "report" && held.toast?.message).toEqual({ kind: "failed", failure: "membership-unreadable", playlists: [music, learning] })
@@ -218,10 +249,16 @@ describe("adds", () => {
   test("targets are independent, one request at a time in the tab, and marks follow confirmed answers", async () => {
     const h = ready()
     h.setup(a, { kind: "shortcut", shortcut }, [{ playlist: old }, { playlist: music }, { playlist: learning }])
-    h.script.add.push(() => fact<"add">("missing"), () => undefined, () => no<"add">("unconfirmed"))
+    h.script.add.push(
+      () => fact<"add">("missing"),
+      () => undefined,
+      () => no<"add">("unconfirmed")
+    )
     const report = await h.flow.add(key, tabOrigin(1, true))
     expect(outcomes(report)).toEqual({
-      [old]: { kind: "failed", failure: "missing" }, [music]: { kind: "added" }, [learning]: { kind: "failed", failure: "unconfirmed" }
+      [old]: { kind: "failed", failure: "missing" },
+      [music]: { kind: "added" },
+      [learning]: { kind: "failed", failure: "unconfirmed" }
     })
     expect(h.count("add")).toBe(3)
     expect(h.peak("tab 1 load 1")).toBe(1)
@@ -328,14 +365,20 @@ describe("shown-once memory", () => {
     const h = ready()
     h.tab(3, a)
     h.setup(a, { kind: "auto-add" }, [{ playlist: old }])
-    h.script.add.push(() => fact<"add">("missing"), () => fact<"add">("missing"))
+    h.script.add.push(
+      () => fact<"add">("missing"),
+      () => fact<"add">("missing")
+    )
     const shown = async (request: AddRequest, origin: Origin) => {
       const report = await h.flow.add(request, origin)
-      return report.kind === "report" ? report.toast?.message.kind ?? null : report.kind
+      return report.kind === "report" ? (report.toast?.message.kind ?? null) : report.kind
     }
     expect(await shown(auto([old]), tab1)).toBe("failed")
     expect(await shown({ ...auto([old]), video: videoAt(2) }, tabOrigin(3))).toBeNull()
-    h.script.membership.push(() => no<"membership">("accountChanged"), () => no<"membership">("accountChanged"))
+    h.script.membership.push(
+      () => no<"membership">("accountChanged"),
+      () => no<"membership">("accountChanged")
+    )
     expect(await shown({ ...auto([old]), video: videoAt(3) }, tab1)).toBe("failed")
     expect(await shown({ ...auto([old]), video: videoAt(4) }, tab1)).toBeNull()
     expect(await shown({ ...auto([old]), video: videoAt(3) }, tabOrigin(3))).toBe("failed")
@@ -401,10 +444,10 @@ describe("Undo and removal", () => {
     const earlier = h.put(a, learning, video)
     const report = await h.flow.add(key, tab1)
     if (report.kind !== "report" || !report.undo) throw new Error("expected Undo")
-    const added = h.calls.flatMap(call => call.job.kind === "add" ? [call.job.playlistId] : [])
+    const added = h.calls.flatMap(call => (call.job.kind === "add" ? [call.job.playlistId] : []))
     expect(added).toEqual([music, later])
     expect(await h.flow.undo(report.undo, tab1)).toEqual({ kind: "undone" })
-    const removed = h.calls.flatMap(call => call.job.kind === "remove" ? [call.job.setVideoId] : [])
+    const removed = h.calls.flatMap(call => (call.job.kind === "remove" ? [call.job.setVideoId] : []))
     expect(removed).toHaveLength(2)
     expect(removed).not.toContain(earlier)
     expect(h.has(a, learning, video)).toBe(true)
@@ -426,7 +469,10 @@ describe("Undo and removal", () => {
     h.setup(a, { kind: "shortcut", shortcut }, [{ playlist: music }, { playlist: learning }])
     const report = await h.flow.add(key, tab1)
     if (report.kind !== "report" || !report.undo) throw new Error("expected Undo")
-    h.script.remove.push(() => undefined, () => no<"remove">("unconfirmed"))
+    h.script.remove.push(
+      () => undefined,
+      () => no<"remove">("unconfirmed")
+    )
     expect(await h.flow.undo(report.undo, tab1)).toEqual(undoFailed(1, 2, "unconfirmed"))
     expect(await h.flow.undo(report.undo, tab1)).toEqual({ kind: "undone" })
     expect(h.count("remove")).toBe(3)
@@ -493,7 +539,7 @@ describe("batch", () => {
     for (const n of [0, 60, 119]) h.put(a, later, many[n] ?? video)
     const report = await h.flow.batch({ playlist: later, videos: many, auto: false }, tab1)
     expect(h.count("membership")).toBe(120)
-    const chunks = h.calls.flatMap(call => call.job.kind === "addBatch" ? [call.job.videoIds] : [])
+    const chunks = h.calls.flatMap(call => (call.job.kind === "addBatch" ? [call.job.videoIds] : []))
     expect(chunks.map(chunk => chunk.length)).toEqual([CHUNK, CHUNK, 17])
     expect(chunks.flat()).toEqual(many.filter((_, n) => ![0, 60, 119].includes(n)))
     if (report.kind !== "report") throw new Error("expected a report")
@@ -504,12 +550,16 @@ describe("batch", () => {
 
   test("per-video failures stay per video, and a 429 pauses the account and fails the rest", async () => {
     const h = ready()
-    h.script.addBatch.push(call => ok<"addBatch">({
-      results: call.job.videoIds.map((videoId, n) => n === 0 ? { videoId, failure: { ok: false, reason: "failed" } } : { videoId, setVideoId: h.put(a, later, videoId) })
-    }), () => no<"addBatch">("failed", 429))
+    h.script.addBatch.push(
+      call =>
+        ok<"addBatch">({
+          results: call.job.videoIds.map((videoId, n) => (n === 0 ? { videoId, failure: { ok: false, reason: "failed" } } : { videoId, setVideoId: h.put(a, later, videoId) }))
+        }),
+      () => no<"addBatch">("failed", 429)
+    )
     const report = await h.flow.batch({ playlist: later, videos: many, auto: false }, tab1)
     if (report.kind !== "report") throw new Error("expected a report")
-    const kinds = report.outcomes.map(({ outcome }) => outcome.kind === "failed" ? outcome.failure : outcome.kind)
+    const kinds = report.outcomes.map(({ outcome }) => (outcome.kind === "failed" ? outcome.failure : outcome.kind))
     expect(kinds.slice(0, 2)).toEqual(["unrecognised", "added"])
     expect(kinds.slice(50, 100).every(kind => kind === "rate-limited")).toBe(true)
     expect(kinds.slice(100).every(kind => kind === "paused")).toBe(true)
@@ -533,7 +583,10 @@ describe("batch", () => {
     const report = await h.flow.batch({ playlist: later, videos: many, auto: false }, tab1)
     if (report.kind !== "report" || !report.undo) throw new Error("expected Undo")
     const reads = h.count("membership")
-    h.script.removeBatch.push(() => undefined, call => ok<"removeBatch">({ removed: call.job.setVideoIds.length - 1 }))
+    h.script.removeBatch.push(
+      () => undefined,
+      call => ok<"removeBatch">({ removed: call.job.setVideoIds.length - 1 })
+    )
     expect(await h.flow.undo(report.undo, tab1)).toEqual(undoFailed(99, 120, "unconfirmed"))
     expect(h.count("membership")).toBe(reads + 1)
     expect(await h.flow.undo(report.undo, tab1)).toEqual({ kind: "undone" })
@@ -569,12 +622,15 @@ describe("settled untick and restoration", () => {
         { acct: a, job: { kind: job, playlistId: music, videoId: video } }
       ])
       expect(removed).toEqual({
-        kind: "removed", playlist: music, video, feedback: true, undo: { kind: "remove", id: "engine:1" },
+        kind: "removed",
+        playlist: music,
+        video,
+        feedback: true,
+        undo: { kind: "remove", id: "engine:1" },
         toast: { tone: "confirmation", auto: false, message: { kind: "removed", playlist: music }, action: { kind: "undo" }, remember: { tab: [], session: [] } }
       })
       if (removed.kind !== "removed" || !removed.undo) throw new Error("expected removal Undo")
-      expect(await Promise.all([h.flow.undo(removed.undo, tab1), h.flow.undo(removed.undo, tab1)]))
-        .toEqual([{ kind: "undone" }, { kind: "expired" }])
+      expect(await Promise.all([h.flow.undo(removed.undo, tab1), h.flow.undo(removed.undo, tab1)])).toEqual([{ kind: "undone" }, { kind: "expired" }])
       expect(h.entries(a, music).map(({ video }) => video)).toEqual([other, video])
       expect(h.count(site === "www" ? "add" : "save")).toBe(1)
       expect(h.calls.at(-1)).toMatchObject({ acct: a, job: { kind: site === "www" ? "add" : "save", playlistId: music, videoId: video } })
@@ -601,8 +657,14 @@ describe("settled untick and restoration", () => {
 
   test("already absent settles without a write or an inverse write token", async () => {
     const h = ready()
-    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "quick-save", tick: null }, tab1))
-      .toEqual({ kind: "removed", playlist: music, video, feedback: true, toast: null, undo: null })
+    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "quick-save", tick: null }, tab1)).toEqual({
+      kind: "removed",
+      playlist: music,
+      video,
+      feedback: true,
+      toast: null,
+      undo: null
+    })
     expect(h.calls.map(({ job }) => job.kind)).toEqual(["membership"])
   })
 
@@ -610,11 +672,9 @@ describe("settled untick and restoration", () => {
     const h = ready()
     h.put(a, music, video)
     h.script.membership.push(() => fact<"membership">("unreadable"))
-    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "quick-save", tick: null }, tab1))
-      .toMatchObject({ kind: "removed", undo: { kind: "remove" } })
+    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "quick-save", tick: null }, tab1)).toMatchObject({ kind: "removed", undo: { kind: "remove" } })
     h.script.membership.push(() => no<"membership">("failed"))
-    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "quick-save", tick: null }, tab1))
-      .toEqual({ kind: "failed", failure: "unrecognised" })
+    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "quick-save", tick: null }, tab1)).toEqual({ kind: "failed", failure: "unrecognised" })
     expect(h.count("remove")).toBe(1)
   })
 
@@ -623,8 +683,7 @@ describe("settled untick and restoration", () => {
     const tick = await h.flow.add(pick(), tab1)
     if (tick.kind !== "report") throw new Error("expected tick")
     h.tab(1, b)
-    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "quick-save", tick: tick.undo }, tab1))
-      .toEqual({ kind: "failed", failure: "account-changed" })
+    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "quick-save", tick: tick.undo }, tab1)).toEqual({ kind: "failed", failure: "account-changed" })
     h.tab(1, null)
     expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "quick-save", tick: null }, tab1)).toEqual({ kind: "signed-out" })
     if (!tick.undo) throw new Error("expected Undo")
@@ -633,8 +692,7 @@ describe("settled untick and restoration", () => {
     h.script.add.push(() => no<"add">("failed", 429))
     await h.flow.add({ ...key, video: videoAt(71) }, tab1)
     const before = h.calls.length
-    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "quick-save", tick: null }, tab1))
-      .toEqual({ kind: "failed", failure: "paused" })
+    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "quick-save", tick: null }, tab1)).toEqual({ kind: "failed", failure: "paused" })
     expect(h.calls.length).toBe(before)
     expect(h.count("remove")).toBe(0)
   })
@@ -653,8 +711,7 @@ describe("settled untick and restoration", () => {
     const tick = await h.flow.add(pick(), tab1)
     if (tick.kind !== "report" || !tick.undo) throw new Error("expected tick")
     h.script.remove.push(() => no<"remove">("unconfirmed"))
-    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "quick-save", tick: tick.undo }, tab1))
-      .toEqual({ kind: "failed", failure: "unconfirmed" })
+    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "quick-save", tick: tick.undo }, tab1)).toEqual({ kind: "failed", failure: "unconfirmed" })
     expect(h.has(a, music, video)).toBe(true)
     expect(await h.flow.undo(tick.undo, tab1)).toEqual({ kind: "undone" })
   })
@@ -663,8 +720,14 @@ describe("settled untick and restoration", () => {
     const h = ready()
     h.feature("picker", { on: true, feedback: false })
     h.put(a, music, video)
-    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "shortcuts", tick: null }, tab1))
-      .toEqual({ kind: "removed", playlist: music, video, feedback: false, toast: null, undo: { kind: "remove", id: "engine:1" } })
+    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "shortcuts", tick: null }, tab1)).toEqual({
+      kind: "removed",
+      playlist: music,
+      video,
+      feedback: false,
+      toast: null,
+      undo: { kind: "remove", id: "engine:1" }
+    })
   })
 
   test("a removal handle survives six gathers, then expires through release", async () => {
@@ -710,7 +773,10 @@ describe("confirmed missing identity and partial progress", () => {
     test(`${site}: a confirmed add without an entry ID gets guarded video fallback`, async () => {
       const h = ready()
       const operation = site === "www" ? "add" : "save"
-      const missing = () => { h.put(a, music, video); return ok<typeof operation>({ setVideoId: null }) }
+      const missing = () => {
+        h.put(a, music, video)
+        return ok<typeof operation>({ setVideoId: null })
+      }
       if (site === "www") h.script.add.push(missing)
       else h.script.save.push(missing)
       const report = await h.flow.add({ ...pick(), site }, tab1)
@@ -725,7 +791,13 @@ describe("confirmed missing identity and partial progress", () => {
 
   test("uncertain writes grant no fallback, while unreadable membership still requires positive add confirmation", async () => {
     const h = ready()
-    h.script.add.push(() => no<"add">("unconfirmed"), () => { h.put(a, music, video); return ok<"add">({ setVideoId: null }) })
+    h.script.add.push(
+      () => no<"add">("unconfirmed"),
+      () => {
+        h.put(a, music, video)
+        return ok<"add">({ setVideoId: null })
+      }
+    )
     expect(await h.flow.add(pick(), tab1)).toMatchObject({ outcomes: { [music]: { kind: "failed", failure: "unconfirmed" } }, undo: null })
     h.script.membership.push(() => fact<"membership">("unreadable"))
     const confirmed = await h.flow.add(pick(), tab1)
@@ -739,7 +811,10 @@ describe("confirmed missing identity and partial progress", () => {
 
   test("a fallback Undo still refuses a failed account read before any removal", async () => {
     const h = ready()
-    h.script.add.push(() => { h.put(a, music, video); return ok<"add">({ setVideoId: null }) })
+    h.script.add.push(() => {
+      h.put(a, music, video)
+      return ok<"add">({ setVideoId: null })
+    })
     const added = await h.flow.add(pick(), tab1)
     if (added.kind !== "report" || !added.undo) throw new Error("expected fallback Undo")
     h.script.membership.push(() => no<"membership">("accountChanged"))
@@ -751,15 +826,18 @@ describe("confirmed missing identity and partial progress", () => {
   test("gather Undo correlates a missing entry ID to its own video alongside exact entries", async () => {
     const h = ready()
     const videos = [videoAt(420), videoAt(421)]
-    h.script.addBatch.push(call => ok<"addBatch">({ results: call.job.videoIds.map((videoId, index) => {
-      const entry = h.put(a, later, videoId)
-      return { videoId, setVideoId: index === 0 ? null : entry }
-    }) }))
+    h.script.addBatch.push(call =>
+      ok<"addBatch">({
+        results: call.job.videoIds.map((videoId, index) => {
+          const entry = h.put(a, later, videoId)
+          return { videoId, setVideoId: index === 0 ? null : entry }
+        })
+      })
+    )
     const added = await h.flow.batch({ playlist: later, videos, auto: false }, tab1)
     if (added.kind !== "report" || !added.undo) throw new Error("expected gather Undo")
     expect(await h.flow.undo(added.undo, tab1)).toEqual({ kind: "undone" })
-    expect(h.calls.filter(({ job }) => job.kind === "remove").map(({ job }) => job))
-      .toEqual([{ kind: "remove", playlistId: later, videoId: videoAt(420) }])
+    expect(h.calls.filter(({ job }) => job.kind === "remove").map(({ job }) => job)).toEqual([{ kind: "remove", playlistId: later, videoId: videoAt(420) }])
     expect(h.calls.filter(({ job }) => job.kind === "removeBatch")).toHaveLength(1)
     expect(h.entries(a, later)).toEqual([])
   })
@@ -767,17 +845,23 @@ describe("confirmed missing identity and partial progress", () => {
   test("recognized duplicate and refusal remain per-video facts beside confirmed additions", async () => {
     const h = ready()
     const videos: [typeof video, typeof video, typeof video] = [videoAt(400), videoAt(401), videoAt(402)]
-    h.script.addBatch.push(call => ({ kind: "observed", results: call.job.videoIds.map((videoId, n) =>
-      n === 0 ? { videoId, fact: "duplicate" } : n === 1 ? { videoId, fact: "refused" } : { videoId, setVideoId: h.put(a, later, videoId) }) }))
+    h.script.addBatch.push(call => ({
+      kind: "observed",
+      results: call.job.videoIds.map((videoId, n) => (n === 0 ? { videoId, fact: "duplicate" } : n === 1 ? { videoId, fact: "refused" } : { videoId, setVideoId: h.put(a, later, videoId) }))
+    }))
     const report = await h.flow.batch({ playlist: later, videos, auto: false }, tab1)
-    expect(report).toEqual({ kind: "report", outcomes: [
-      { video: videos[0], outcome: { kind: "already-in" } },
-      { video: videos[1], outcome: { kind: "failed", failure: "refused" } },
-      { video: videos[2], outcome: { kind: "added" } }
-    ], undo: { kind: "gather", id: "engine:1" } })
+    expect(report).toEqual({
+      kind: "report",
+      outcomes: [
+        { video: videos[0], outcome: { kind: "already-in" } },
+        { video: videos[1], outcome: { kind: "failed", failure: "refused" } },
+        { video: videos[2], outcome: { kind: "added" } }
+      ],
+      undo: { kind: "gather", id: "engine:1" }
+    })
     if (report.kind !== "report" || !report.undo) throw new Error("expected Undo")
     expect(await h.flow.undo(report.undo, tab1)).toEqual({ kind: "undone" })
-    const removed = h.calls.flatMap(({ job }) => job.kind === "removeBatch" ? job.setVideoIds : [])
+    const removed = h.calls.flatMap(({ job }) => (job.kind === "removeBatch" ? job.setVideoIds : []))
     expect(removed).toHaveLength(1)
     expect(h.has(a, later, videos[2] ?? video)).toBe(false)
   })
@@ -786,10 +870,12 @@ describe("confirmed missing identity and partial progress", () => {
     const h = ready()
     h.script.addBatch.push(call => ({ kind: "observed", results: call.job.videoIds.toReversed().map(videoId => ({ videoId, fact: "duplicate" })) }))
     expect(await h.flow.batch({ playlist: later, videos: [videoAt(410), videoAt(411)], auto: false }, tab1)).toEqual({
-      kind: "report", outcomes: [
+      kind: "report",
+      outcomes: [
         { video: videoAt(410), outcome: { kind: "failed", failure: "unrecognised" } },
         { video: videoAt(411), outcome: { kind: "failed", failure: "unrecognised" } }
-      ], undo: null
+      ],
+      undo: null
     })
   })
 
@@ -820,7 +906,10 @@ describe("confirmed missing identity and partial progress", () => {
       return ok<"addBatch">({ results })
     })
     expect(await h.flow.batch({ playlist: later, videos, auto: false }, tab1)).toEqual({
-      kind: "stopped", outcomes: videos.slice(0, 50).map(video => ({ video, outcome: { kind: "added" } })), pending: videos.slice(50), undo: null
+      kind: "stopped",
+      outcomes: videos.slice(0, 50).map(video => ({ video, outcome: { kind: "added" } })),
+      pending: videos.slice(50),
+      undo: null
     })
     expect(h.count("addBatch")).toBe(1)
     expect(h.has(a, later, videoAt(550))).toBe(false)
@@ -843,9 +932,11 @@ describe("confirmed missing identity and partial progress", () => {
   test("withdrawal after confirmed removal keeps that observation without granting restoration", async () => {
     const h = ready()
     h.put(a, music, video)
-    h.script.remove.push(() => { h.withdraw(); return ok<"remove">(null) })
-    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "quick-save", tick: null }, tab1))
-      .toEqual({ kind: "stopped", removed: true, playlist: music, video, undo: null })
+    h.script.remove.push(() => {
+      h.withdraw()
+      return ok<"remove">(null)
+    })
+    expect(await h.flow.remove({ site: "www", video, playlist: music, opener: "quick-save", tick: null }, tab1)).toEqual({ kind: "stopped", removed: true, playlist: music, video, undo: null })
     expect(h.count("remove")).toBe(1)
   })
 
@@ -854,7 +945,10 @@ describe("confirmed missing identity and partial progress", () => {
     h.setup(a, { kind: "shortcut", shortcut }, [{ playlist: music }, { playlist: learning }])
     const added = await h.flow.add(key, tab1)
     if (added.kind !== "report" || !added.undo) throw new Error("expected Undo")
-    h.script.remove.push(() => { h.withdraw(); return ok<"remove">(null) })
+    h.script.remove.push(() => {
+      h.withdraw()
+      return ok<"remove">(null)
+    })
     expect(await h.flow.undo(added.undo, tab1)).toEqual({ kind: "stopped", completed: 1, of: 2 })
     expect(h.count("remove")).toBe(1)
     const other = ready()

@@ -13,23 +13,45 @@ export async function runLifecycleConsumer() {
   let empty = 0
   const host = createFeatureHost<"www", { record(value: string): void }>({
     site: "www",
-    createScope() { const scope = new Scope({ document, onError: error => { errors.push(error) } }); scopes.push(scope); return scope },
-    createContext: () => ({ record: value => { events.push(value) } }),
-    onEmpty() { empty++ },
-    onError(error) { errors.push(error) }
+    createScope() {
+      const scope = new Scope({
+        document,
+        onError: error => {
+          errors.push(error)
+        }
+      })
+      scopes.push(scope)
+      return scope
+    },
+    createContext: () => ({
+      record: value => {
+        events.push(value)
+      }
+    }),
+    onEmpty() {
+      empty++
+    },
+    onError(error) {
+      errors.push(error)
+    }
   })
   try {
-    host.define({ id: "card-menu", start(context) {
-      const number = ++starts
-      context.record(`start:${number}`)
-      context.scope.add(() => { context.record(`stop:${number}`) })
-      context.scope.on(button, "click", () => {
-        const view = context.view.read()
-        const menu = view?.features.find(feature => feature.id === "card-menu")
-        const label = view?.setup?.kind === "live" ? view.setup.setup.label?.name : null
-        context.record(`click:${number}:${menu?.options.keepLinkMenu}:${label}`)
-      })
-    } })
+    host.define({
+      id: "card-menu",
+      start(context) {
+        const number = ++starts
+        context.record(`start:${number}`)
+        context.scope.add(() => {
+          context.record(`stop:${number}`)
+        })
+        context.scope.on(button, "click", () => {
+          const view = context.view.read()
+          const menu = view?.features.find(feature => feature.id === "card-menu")
+          const label = view?.setup?.kind === "live" ? view.setup.setup.label?.name : null
+          context.record(`click:${number}:${menu?.options.keepLinkMenu}:${label}`)
+        })
+      }
+    })
     host.connect(h.ext)
     await h.page.link.hello
     await settle()
@@ -37,7 +59,12 @@ export async function runLifecycleConsumer() {
     button.click()
     await h.push(wwwView(["card-menu"], false, "Second"))
     button.click()
-    host.define({ id: "card-menu", start() { events.push("duplicate") } })
+    host.define({
+      id: "card-menu",
+      start() {
+        events.push("duplicate")
+      }
+    })
     await h.push(wwwView(["queue-button"]))
     button.click()
     const waitingDidNotEndCore = empty === 0
@@ -48,10 +75,22 @@ export async function runLifecycleConsumer() {
     button.click()
     host.dispose()
     h.dispose()
-    return { fixture: "site-core-lifecycle", source: "real-ExtLink-memory-RPC-direct-PageLink-gateway",
-      events, starts, empty, waitingDidNotEndCore, owned: scopes.map(scope => scope.resourceCount),
-      rpcDeadlines: h.page.clock.count, pageListeners: h.page.tracked.listenerCount, errors: errors.length,
-      synthetic: ["complete-view-fixtures", "runtime-identity", "memory-transport", "direct-page-channel", "gateway-operations", "clock", "context-record-service"] }
-  } finally { host.dispose(); h.dispose() }
+    return {
+      fixture: "site-core-lifecycle",
+      source: "real-ExtLink-memory-RPC-direct-PageLink-gateway",
+      events,
+      starts,
+      empty,
+      waitingDidNotEndCore,
+      owned: scopes.map(scope => scope.resourceCount),
+      rpcDeadlines: h.page.clock.count,
+      pageListeners: h.page.tracked.listenerCount,
+      errors: errors.length,
+      synthetic: ["complete-view-fixtures", "runtime-identity", "memory-transport", "direct-page-channel", "gateway-operations", "clock", "context-record-service"]
+    }
+  } finally {
+    host.dispose()
+    h.dispose()
+  }
 }
 if (import.meta.main) process.stdout.write(JSON.stringify(await runLifecycleConsumer()) + "\n")

@@ -14,12 +14,11 @@ test("the key recorder names who already uses a key and what a clash replaces", 
   expect(text.conflict("Alt+W", ["Watch later"])).toBe("Watch later already uses Alt+W.")
   expect(text.conflict("Alt+P", ["Music", "Save to playlist (YouTube Music)"])).toBe("Music and Save to playlist (YouTube Music) already use Alt+P.")
   expect(text.warning({ kind: "site", site: "www", action: "Play/pause" }, "K", "Chrome")).toBe("YouTube uses K for Play/pause. This shortcut replaces it on YouTube.")
-  expect(text.warning({ kind: "site", site: "music", action: "Toggle queue" }, "Q", "Chrome"))
-    .toBe("YouTube Music uses Q for Toggle queue. This shortcut replaces it on YouTube Music.")
-  expect(text.warning({ kind: "browser", action: "go to the address bar" }, "Alt+D", "Chrome"))
-    .toBe("Chrome uses Alt+D to go to the address bar. This shortcut replaces it on YouTube pages.")
-  expect(text.warning({ kind: "command", command: "Save the playing song" }, "Alt+S", "Firefox"))
-    .toBe("Your browser uses Alt+S for Save the playing song (Keys from any tab), so this shortcut never reaches the page.")
+  expect(text.warning({ kind: "site", site: "music", action: "Toggle queue" }, "Q", "Chrome")).toBe("YouTube Music uses Q for Toggle queue. This shortcut replaces it on YouTube Music.")
+  expect(text.warning({ kind: "browser", action: "go to the address bar" }, "Alt+D", "Chrome")).toBe("Chrome uses Alt+D to go to the address bar. This shortcut replaces it on YouTube pages.")
+  expect(text.warning({ kind: "command", command: "Save the playing song" }, "Alt+S", "Firefox")).toBe(
+    "Your browser uses Alt+S for Save the playing song (Keys from any tab), so this shortcut never reaches the page."
+  )
 })
 
 test("the key recorder's refusals from Settings read as plain sentences", () => {

@@ -6,7 +6,10 @@ export interface GatewayClock {
 }
 export const systemClock: GatewayClock = {
   now: () => Date.now(),
-  after(ms, callback) { const timer = setTimeout(callback, ms); return () => clearTimeout(timer) }
+  after(ms, callback) {
+    const timer = setTimeout(callback, ms)
+    return () => clearTimeout(timer)
+  }
 }
 export type Lane = "playlist" | "app-state"
 export type JobScope = {
@@ -25,7 +28,10 @@ export function createLanes(clock: GatewayClock) {
   function pump(lane: Lane): void {
     if (disposed || running[lane]) return
     const next = queues[lane].shift()
-    if (next) { running[lane] = next; next.start() }
+    if (next) {
+      running[lane] = next
+      next.start()
+    }
   }
   return {
     run<T>(lane: Lane, work: (scope: JobScope) => Promise<T>, budget = 10_000): Promise<T | JobFailure> {
@@ -36,19 +42,31 @@ export function createLanes(clock: GatewayClock) {
         const cleanups = new Set<() => void>()
         const deadline = clock.now() + budget
         const scope: JobScope = {
-          deadline, get active() { return active && !disposed && clock.now() < deadline },
+          deadline,
+          get active() {
+            return active && !disposed && clock.now() < deadline
+          },
           remaining: () => Math.max(0, deadline - clock.now()),
           onClose(cleanup) {
-            if (!active) { cleanup(); return () => {} }
+            if (!active) {
+              cleanup()
+              return () => {}
+            }
             cleanups.add(cleanup)
-            return () => { cleanups.delete(cleanup) }
+            return () => {
+              cleanups.delete(cleanup)
+            }
           }
         }
         const finish = (result: T | JobFailure) => {
           if (!active) return
           active = false
           stopTimer()
-          for (const cleanup of cleanups) { try { cleanup() } catch {} }
+          for (const cleanup of cleanups) {
+            try {
+              cleanup()
+            } catch {}
+          }
           cleanups.clear()
           owned.delete(entry)
           const index = queues[lane].indexOf(entry)
@@ -59,11 +77,19 @@ export function createLanes(clock: GatewayClock) {
         }
         const entry: Entry = {
           start() {
-            if (!scope.active) { entry.expire(); return }
-            try { void work(scope).then(finish, () => finish({ ok: false, reason: "unconfirmed" })) }
-            catch { finish({ ok: false, reason: "unconfirmed" }) }
+            if (!scope.active) {
+              entry.expire()
+              return
+            }
+            try {
+              void work(scope).then(finish, () => finish({ ok: false, reason: "unconfirmed" }))
+            } catch {
+              finish({ ok: false, reason: "unconfirmed" })
+            }
           },
-          expire() { finish({ ok: false, reason: disposed ? "unavailable" : "unconfirmed" }) }
+          expire() {
+            finish({ ok: false, reason: disposed ? "unavailable" : "unconfirmed" })
+          }
         }
         owned.add(entry)
         stopTimer = clock.after(budget, entry.expire)

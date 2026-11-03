@@ -25,7 +25,12 @@ function negative(port: ConsentDevicePort, intent: WithdrawalIntentItems, pair: 
   // @ts-expect-error Withdrawal intent binds the original agreement.
   const preparing: ConsentStateV1["state"] = { kind: "withdrawing" }
   // @ts-expect-error Final storage confirmation requires a distinct confirmed intent observation.
-  const withoutIntent: WithdrawalResult = { kind: "withdrawn", write: { kind: "resolved" }, shutdown: { kind: "confirmed", owner: { kind: "no-owner" }, producers: { kind: "resolved" } }, activation: "held" }
+  const withoutIntent: WithdrawalResult = {
+    kind: "withdrawn",
+    write: { kind: "resolved" },
+    shutdown: { kind: "confirmed", owner: { kind: "no-owner" }, producers: { kind: "resolved" } },
+    activation: "held"
+  }
   void [stopped, withdrawn, state, preparing, withoutIntent]
 }
 void negative

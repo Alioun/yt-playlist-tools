@@ -1,8 +1,5 @@
 import { readFileSync } from "node:fs"
-import {
-  decodeDocument, decodeFilter, decodeSettings, decodeSetup, isAccountKey, isPlaylistId,
-  type AccountKey, type PlaylistId
-} from "../../../src/shared/model"
+import { decodeDocument, decodeFilter, decodeSettings, decodeSetup, isAccountKey, isPlaylistId, type AccountKey, type PlaylistId } from "../../../src/shared/model"
 import { parseJsonText } from "../../../src/shared/contracts/json"
 import { isRecord } from "../../../src/shared/model/codec"
 import type { SettingsFileSource } from "../../../src/shared/settings-file"
@@ -36,15 +33,21 @@ export function canonicalSource(): SettingsFileSource {
   return {
     kind: "settings-file-source",
     settings: decodeDocument({ ...stamp, data: raw.settings }, decodeSettings),
-    accounts: Object.entries(record(raw.accounts)).reverse().map(([id, value]) => {
-      const data = record(value)
-      return {
-        account: account(id), setup: decodeDocument({ ...stamp, data: data.setup }, decodeSetup),
-        filters: Object.entries(record(data.filters)).reverse().map(([pl, filter]) => ({
-          playlist: playlist(pl), document: decodeDocument({ ...stamp, data: filter }, decodeFilter)
-        }))
-      }
-    })
+    accounts: Object.entries(record(raw.accounts))
+      .reverse()
+      .map(([id, value]) => {
+        const data = record(value)
+        return {
+          account: account(id),
+          setup: decodeDocument({ ...stamp, data: data.setup }, decodeSetup),
+          filters: Object.entries(record(data.filters))
+            .reverse()
+            .map(([pl, filter]) => ({
+              playlist: playlist(pl),
+              document: decodeDocument({ ...stamp, data: filter }, decodeFilter)
+            }))
+        }
+      })
   }
 }
 

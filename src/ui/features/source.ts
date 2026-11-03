@@ -11,7 +11,12 @@ import type { ItemPort, PickerSource, Undo } from "../../shared/picker/source"
 
 /** The video or song the popup's picker sheet saves, in the tab that shows it, as that tab's account (UI-POP-08, YM-POP-2). */
 export type SheetTarget = {
-  readonly tabId: number; readonly acct: AccountKey; readonly site: Site; readonly video: VideoId; readonly title: string | null; readonly opener: PopupOpener
+  readonly tabId: number
+  readonly acct: AccountKey
+  readonly site: Site
+  readonly video: VideoId
+  readonly title: string | null
+  readonly opener: PopupOpener
 }
 
 /** A picker source for one account's setup, as the popup's and settings' choosers and lists read it. Lazy parts only. */
@@ -21,12 +26,21 @@ export function pickerSource(pageState: PageState, acct: AccountKey, site: Site,
   const settings = pageState.settings
   const backend = pageState.page.backend
   const confirmed = (answer: Awaited<ReturnType<typeof backend.call<"ui.device">>>): ChangeResult =>
-    answer.kind === "answered" && answer.result.kind === "confirmed" ? { ok: true }
+    answer.kind === "answered" && answer.result.kind === "confirmed"
+      ? { ok: true }
       : { refused: answer.kind === "answered" && answer.result.kind === "refused" && answer.result.reason === "private" ? "private" : "invalid" }
   return createPageSource(backend, {
-    acct, site, private: pageState.private, tab: pageState.tab, signedIn: pageState.signedIn, agreed: pageState.agreed, setup,
-    sortAZ: device?.pickerSortAZ ?? false, privacy: device?.newPlaylistVisibility ?? null,
-    keys: settings ? shortcutKeys(settings, setup) : new Map(), purpose,
+    acct,
+    site,
+    private: pageState.private,
+    tab: pageState.tab,
+    signedIn: pageState.signedIn,
+    agreed: pageState.agreed,
+    setup,
+    sortAZ: device?.pickerSortAZ ?? false,
+    privacy: device?.newPlaylistVisibility ?? null,
+    keys: settings ? shortcutKeys(settings, setup) : new Map(),
+    purpose,
     device: {
       saveSortAZ: async value => confirmed(await backend.call("ui.device", { change: { field: "pickerSortAZ", value } })),
       savePrivacy: async value => confirmed(await backend.call("ui.device", { change: { field: "newPlaylistVisibility", value } }))
@@ -43,10 +57,12 @@ export function sheetSource(pageState: PageState, target: SheetTarget): PickerSo
   const base = pickerSource(pageState, target.acct, target.site, { kind: "destination", destination: { kind: target.site === "music" ? "music-save" : "quick-save" } })
   const at = { tabId: target.tabId, acct: target.acct }
   const ticks = new Map<PlaylistId, UndoHandle>()
-  const undoOf = (handle: UndoHandle): Undo => async () => {
-    const answer = await backend.call("ui.addUndo", { ...at, handle, site: target.site })
-    return { kind: answer.kind === "answered" && answer.result.kind === "undone" ? "undone" : "failed" }
-  }
+  const undoOf =
+    (handle: UndoHandle): Undo =>
+    async () => {
+      const answer = await backend.call("ui.addUndo", { ...at, handle, site: target.site })
+      return { kind: answer.kind === "answered" && answer.result.kind === "undone" ? "undone" : "failed" }
+    }
   const request = { site: target.site, video: target.video, opener: target.opener, ...(target.title ? { title: target.title } : {}) }
   const item: ItemPort = {
     async membership() {
@@ -74,7 +90,9 @@ export function sheetSource(pageState: PageState, target: SheetTarget): PickerSo
       try {
         const answer = await creation.submit({ title: playlist.title, privacy: playlist.privacy, videoId: target.video })
         return answer.kind === "answered" && answer.result.kind === "created" ? { kind: "created", id: answer.result.id, undo: null } : { kind: "failed", reason: "failed" }
-      } finally { creation.dispose() }
+      } finally {
+        creation.dispose()
+      }
     }
   }
   return { ...base, tab: true, item }

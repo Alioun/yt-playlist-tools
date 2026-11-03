@@ -6,12 +6,37 @@ import type { CommandKeys } from "./controller"
 export type NativeCommands = { getAll(): Promise<readonly { readonly name?: string; readonly shortcut?: string }[]> }
 const symbols: Readonly<Record<string, "ctrl" | "alt" | "shift" | "meta">> = { "⌃": "ctrl", "⌥": "alt", "⇧": "shift", "⌘": "meta" }
 const words: Readonly<Record<string, "ctrl" | "alt" | "shift" | "meta">> = {
-  ctrl: "ctrl", macctrl: "ctrl", alt: "alt", option: "alt", shift: "shift", command: "meta", cmd: "meta", meta: "meta", super: "meta", search: "meta"
+  ctrl: "ctrl",
+  macctrl: "ctrl",
+  alt: "alt",
+  option: "alt",
+  shift: "shift",
+  command: "meta",
+  cmd: "meta",
+  meta: "meta",
+  super: "meta",
+  search: "meta"
 }
 const named: Readonly<Record<string, string>> = {
-  comma: "Comma", period: "Period", space: "Space", home: "Home", end: "End", pageup: "PageUp", pagedown: "PageDown",
-  insert: "Insert", delete: "Delete", up: "ArrowUp", down: "ArrowDown", left: "ArrowLeft", right: "ArrowRight",
-  ",": "Comma", ".": "Period", "↑": "ArrowUp", "↓": "ArrowDown", "←": "ArrowLeft", "→": "ArrowRight"
+  comma: "Comma",
+  period: "Period",
+  space: "Space",
+  home: "Home",
+  end: "End",
+  pageup: "PageUp",
+  pagedown: "PageDown",
+  insert: "Insert",
+  delete: "Delete",
+  up: "ArrowUp",
+  down: "ArrowDown",
+  left: "ArrowLeft",
+  right: "ArrowRight",
+  ",": "Comma",
+  ".": "Period",
+  "↑": "ArrowUp",
+  "↓": "ArrowDown",
+  "←": "ArrowLeft",
+  "→": "ArrowRight"
 }
 function code(token: string): { code: string; char?: string } | undefined {
   if (/^[a-z]$/i.test(token)) return { code: `Key${token.toUpperCase()}`, char: token.toLowerCase() }
@@ -27,7 +52,10 @@ export function parseCommandShortcut(text: string): Key | null {
   const key: Key = { code: "", ctrl: false, alt: false, shift: false, meta: false }
   let rest = trimmed
   if (!trimmed.includes("+")) {
-    while (rest.length > 1 && symbols[rest[0]!]) { key[symbols[rest[0]!]!] = true; rest = rest.slice(1) }
+    while (rest.length > 1 && symbols[rest[0]!]) {
+      key[symbols[rest[0]!]!] = true
+      rest = rest.slice(1)
+    }
   } else {
     const parts = trimmed.split("+")
     rest = parts.pop() ?? ""
@@ -45,14 +73,18 @@ export function parseCommandShortcut(text: string): Key | null {
 export function createCommandKeys(native: NativeCommands | undefined): CommandKeys & { readonly named: () => Promise<readonly { readonly name: string; readonly key: Key | null }[] | null> } {
   async function named() {
     if (!native) return null
-    try { return (await native.getAll()).flatMap(row => row.name ? [{ name: row.name, key: parseCommandShortcut(row.shortcut ?? "") }] : []) } catch { return null }
+    try {
+      return (await native.getAll()).flatMap(row => (row.name ? [{ name: row.name, key: parseCommandShortcut(row.shortcut ?? "") }] : []))
+    } catch {
+      return null
+    }
   }
   return {
     named,
     async read() {
       const rows = await named()
       if (!rows) return { kind: "unavailable" }
-      const keys: BrowserCommand[] = rows.flatMap(row => row.key ? [{ key: row.key, command: row.name }] : [])
+      const keys: BrowserCommand[] = rows.flatMap(row => (row.key ? [{ key: row.key, command: row.name }] : []))
       return { kind: "available", keys }
     }
   }

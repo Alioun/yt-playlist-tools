@@ -6,17 +6,20 @@ import { planInterimConversion } from "./interim-conversion"
 import type { MigrationContext } from "./legacy-startup"
 import type { HistoricalFact, InterimConversionContext, InterimConversionInput, InterimConversionPlan } from "./interim-conversion"
 
-export function exerciseInterimConversion(plan: typeof planInterimConversion, dependencies: {
-  decodeDocument: typeof decodeDocument
-  decodeFilter: typeof decodeFilter
-  decodeSettings: typeof decodeSettings
-  decodeSetup: typeof decodeSetup
-  defaultDevice: typeof defaultDevice
-  defaultSettings: typeof defaultSettings
-  defaultSetup: typeof defaultSetup
-  isJsonValue: typeof isJsonValue
-  convertLegacy: typeof convertLegacy
-}) {
+export function exerciseInterimConversion(
+  plan: typeof planInterimConversion,
+  dependencies: {
+    decodeDocument: typeof decodeDocument
+    decodeFilter: typeof decodeFilter
+    decodeSettings: typeof decodeSettings
+    decodeSetup: typeof decodeSetup
+    defaultDevice: typeof defaultDevice
+    defaultSettings: typeof defaultSettings
+    defaultSetup: typeof defaultSetup
+    isJsonValue: typeof isJsonValue
+    convertLegacy: typeof convertLegacy
+  }
+) {
   const assertions: string[] = []
   function check(value: unknown, label: string): asserts value {
     if (!value) throw new Error(label)
@@ -47,66 +50,183 @@ export function exerciseInterimConversion(plan: typeof planInterimConversion, de
     }
     return value
   }
-  const A = "AAAAAAAAAAAAAAAA", B = "BBBBBBBBBBBBBBBB", C = "CCCCCCCCCCCCCCCC", D = "DDDDDDDDDDDDDDDD"
-  const channel = "UCaaaaaaaaaaaaaaaaaaaaaa", unlabeled = "UCbbbbbbbbbbbbbbbbbbbbbb", spare = "UCcccccccccccccccccccccc"
+  const A = "AAAAAAAAAAAAAAAA",
+    B = "BBBBBBBBBBBBBBBB",
+    C = "CCCCCCCCCCCCCCCC",
+    D = "DDDDDDDDDDDDDDDD"
+  const channel = "UCaaaaaaaaaaaaaaaaaaaaaa",
+    unlabeled = "UCbbbbbbbbbbbbbbbbbbbbbb",
+    spare = "UCcccccccccccccccccccccc"
   const emptyBody = () => ({ playlists: [], shortcutPlaylistId: "", filters: {}, labels: {}, cachedPlaylists: [], cachedAt: null })
   const bodyA = {
-    playlists: ["PL_TWO", "PL_ONE"], shortcutPlaylistId: "WL",
+    playlists: ["PL_TWO", "PL_ONE"],
+    shortcutPlaylistId: "WL",
     filters: {
       PL_ONE: { mode: "allow", enabled: true, channels: [channel] },
       PL_KEPT: { mode: "deny", enabled: false, channels: [channel, unlabeled] },
       PL_ORPHAN: { mode: "allow", enabled: false, channels: [] }
     },
     labels: { [channel]: { title: "Synthetic channel", handle: "@synthetic" }, [spare]: { title: "Unreferenced retained label" } },
-    cachedPlaylists: [{ id: "PL_ONE", title: "Synthetic cached title" }], cachedAt: 7
+    cachedPlaylists: [{ id: "PL_ONE", title: "Synthetic cached title" }],
+    cachedAt: 7
   }
   const bodyB = { ...emptyBody(), playlists: ["PL_B"], shortcutPlaylistId: "PL_TARGET_B" }
   const source = {
     accountBodies: { [`account:${A}`]: bodyA, [`account:${B}`]: bodyB, [`account:${D}`]: { ...emptyBody(), cachedPlaylists: [{ id: "PL_ONLY_CACHE", title: "Never an account label" }], cachedAt: 9 } },
-    savedAccountKeys: [A, C], sessionConsent: 1, sessionGeneration: "", legacyClaimed: false,
-    globals: { playlists: ["PL_GLOBAL"], addToPlaylistID: "PL_GLOBAL_TARGET", watchLaterShortcut: "Control+Shift+S", requiredWatchPercentage: 82, toastEnabled: false, preventDuplicates: false, queueButtonEnabled: true, cardContextMenu: true }
+    savedAccountKeys: [A, C],
+    sessionConsent: 1,
+    sessionGeneration: "",
+    legacyClaimed: false,
+    globals: {
+      playlists: ["PL_GLOBAL"],
+      addToPlaylistID: "PL_GLOBAL_TARGET",
+      watchLaterShortcut: "Control+Shift+S",
+      requiredWatchPercentage: 82,
+      toastEnabled: false,
+      preventDuplicates: false,
+      queueButtonEnabled: true,
+      cardContextMenu: true
+    }
   }
-  const input: InterimConversionInput = { schema: 1, source, canonical: { documents: {}, caches: {}, device: undefined, unclaimed: undefined }, historicalAuthorization: { kind: "unknown" }, priorCredentialPresence: { kind: "unknown" } }
+  const input: InterimConversionInput = {
+    schema: 1,
+    source,
+    canonical: { documents: {}, caches: {}, device: undefined, unclaimed: undefined },
+    historicalAuthorization: { kind: "unknown" },
+    priorCredentialPresence: { kind: "unknown" }
+  }
   const paths = ["doc:settings", `doc:setup:${A}`, `doc:filter:${A}:PL_ONE`, `doc:filter:${A}:PL_KEPT`, `doc:filter:${A}:PL_ORPHAN`, `doc:setup:${B}`]
-  const context: InterimConversionContext = { deviceId: "synthetic-device", at: 123, platform: { browser: "firefox", os: "linux" }, commands: [], interimShortcutId: "conv01", documentGenerations: Object.fromEntries(paths.map((path, index) => [path, `generation-${index}`])) }
-  const snapshotBefore = JSON.stringify(input), contextBefore = JSON.stringify(context)
-  freeze(input); freeze(context)
+  const context: InterimConversionContext = {
+    deviceId: "synthetic-device",
+    at: 123,
+    platform: { browser: "firefox", os: "linux" },
+    commands: [],
+    interimShortcutId: "conv01",
+    documentGenerations: Object.fromEntries(paths.map((path, index) => [path, `generation-${index}`]))
+  }
+  const snapshotBefore = JSON.stringify(input),
+    contextBefore = JSON.stringify(context)
+  freeze(input)
+  freeze(context)
   const result = plan(input, context)
   check(result.kind === "inactive-proposal", "main fixture is an inactive proposal")
   const stamp = (index: number, data: unknown) => ({ v: 1, gen: `generation-${index}`, at: 123, by: "synthetic-device", data })
   const expectedSettings = dependencies.defaultSettings()
   expectedSettings.autoAdd = { on: true, feedback: false, pct: 82, toolbarTick: true, toolbarPaused: true }
-  expectedSettings.shortcuts = { on: true, feedback: false, music: true, preset: false, picker: null, list: [{ id: "conv01", key: { code: "KeyS", char: "s", ctrl: true, alt: false, shift: true, meta: false }, label: "", watchLaterOnEveryAccount: false }] }
+  expectedSettings.shortcuts = {
+    on: true,
+    feedback: false,
+    music: true,
+    preset: false,
+    picker: null,
+    list: [{ id: "conv01", key: { code: "KeyS", char: "s", ctrl: true, alt: false, shift: true, meta: false }, label: "", watchLaterOnEveryAccount: false }]
+  }
   const expectedDocuments = [
     { kind: "settings", path: "doc:settings", document: stamp(0, expectedSettings) },
-    { kind: "setup", path: `doc:setup:${A}`, document: stamp(1, { label: null, autoAdd: [{ pl: "PL_TWO", takes: "videos" }, { pl: "PL_ONE", takes: "videos" }], targets: { conv01: "WL" }, quickSave: null, musicSave: null, gather: null, marks: {} }) },
+    {
+      kind: "setup",
+      path: `doc:setup:${A}`,
+      document: stamp(1, {
+        label: null,
+        autoAdd: [
+          { pl: "PL_TWO", takes: "videos" },
+          { pl: "PL_ONE", takes: "videos" }
+        ],
+        targets: { conv01: "WL" },
+        quickSave: null,
+        musicSave: null,
+        gather: null,
+        marks: {}
+      })
+    },
     { kind: "filter", path: `doc:filter:${A}:PL_ONE`, document: stamp(2, { mode: "allow", on: true, channels: [[channel, "Synthetic channel", "@synthetic"]] }) },
-    { kind: "filter", path: `doc:filter:${A}:PL_KEPT`, document: stamp(3, { mode: "deny", on: false, channels: [[channel, "Synthetic channel", "@synthetic"], [unlabeled, ""]] }) },
+    {
+      kind: "filter",
+      path: `doc:filter:${A}:PL_KEPT`,
+      document: stamp(3, {
+        mode: "deny",
+        on: false,
+        channels: [
+          [channel, "Synthetic channel", "@synthetic"],
+          [unlabeled, ""]
+        ]
+      })
+    },
     { kind: "filter", path: `doc:filter:${A}:PL_ORPHAN`, document: stamp(4, { mode: "allow", on: false, channels: [] }) },
-    { kind: "setup", path: `doc:setup:${B}`, document: stamp(5, { label: null, autoAdd: [{ pl: "PL_B", takes: "videos" }], targets: { conv01: "PL_TARGET_B" }, quickSave: null, musicSave: null, gather: null, marks: {} }) }
+    {
+      kind: "setup",
+      path: `doc:setup:${B}`,
+      document: stamp(5, { label: null, autoAdd: [{ pl: "PL_B", takes: "videos" }], targets: { conv01: "PL_TARGET_B" }, quickSave: null, musicSave: null, gather: null, marks: {} })
+    }
   ]
   equal(result.documents, expectedDocuments, "complete canonical candidates preserve order, WL, shared identity, filters and unlabeled channels")
-  equal(result.caches, [{ path: `cache:${A}`, data: { listAt: 7, playlists: [{ id: "PL_ONE", title: "Synthetic cached title" }], order: {}, created: [], labelAt: null } }], "complete cache candidates exclude cache-only and index-only accounts")
-  equal(result.note, { historicalAuthorization: { kind: "unknown" }, priorCredentialPresence: { kind: "unknown" }, cleanup: { kind: "not-attempted" }, percentage: { kind: "saved", value: 82 }, feedback: { kind: "saved", value: false }, freshAgreementRequired: true, globals: { kind: "unclaimed-source", source: source.globals } }, "complete truthful local note retains inactive global controls")
+  equal(
+    result.caches,
+    [{ path: `cache:${A}`, data: { listAt: 7, playlists: [{ id: "PL_ONE", title: "Synthetic cached title" }], order: {}, created: [], labelAt: null } }],
+    "complete cache candidates exclude cache-only and index-only accounts"
+  )
+  equal(
+    result.note,
+    {
+      historicalAuthorization: { kind: "unknown" },
+      priorCredentialPresence: { kind: "unknown" },
+      cleanup: { kind: "not-attempted" },
+      percentage: { kind: "saved", value: 82 },
+      feedback: { kind: "saved", value: false },
+      freshAgreementRequired: true,
+      globals: { kind: "unclaimed-source", source: source.globals }
+    },
+    "complete truthful local note retains inactive global controls"
+  )
   check(result.retention.source === input.source, "retention is the exact original source")
   equal(Object.keys(result).sort(), ["activation", "caches", "documents", "kind", "note", "retention", "reviewFacts"], "proposal exposes no activation, cleanup or writer authority")
   check(result.reviewFacts.accounts.kind === "inspected" && result.reviewFacts.globals.kind === "inspected", "actual inspections are available for read-only review")
   equal(result.reviewFacts.conversionShortcut, { kind: "validated-context", id: "conv01" }, "validated allocation is explicit without original provenance")
-  equal(result.reviewFacts.accounts.value.accounts[0]?.body, { kind: "inspection", facts: {
-    playlists: bodyA.playlists, shortcut: { playlist: "WL", provenance: "not-supplied" },
-    filters: [
-      { playlist: "PL_ONE", mode: "allow", on: true, channels: [channel], kept: false },
-      { playlist: "PL_KEPT", mode: "deny", on: false, channels: [channel, unlabeled], kept: true },
-      { playlist: "PL_ORPHAN", mode: "allow", on: false, channels: [], kept: true }
-    ], labels: [{ channel, title: "Synthetic channel", handle: "@synthetic", referenced: true }, { channel: spare, title: "Unreferenced retained label", referenced: false }],
-    cache: { playlists: bodyA.cachedPlaylists, at: 7 }, choices: "present"
-  } }, "complete account inspection facts survive the proposal")
-  equal(result.reviewFacts.globals.value.accounts[0]?.body, { kind: "inspection", facts: {
-    playlists: ["PL_GLOBAL"], shortcut: { playlist: "PL_GLOBAL_TARGET", provenance: "not-supplied" }, filters: [], labels: [], cache: { playlists: [], at: null }, choices: "present"
-  } }, "global adapter retains facts without assigning ownership")
+  equal(
+    result.reviewFacts.accounts.value.accounts[0]?.body,
+    {
+      kind: "inspection",
+      facts: {
+        playlists: bodyA.playlists,
+        shortcut: { playlist: "WL", provenance: "not-supplied" },
+        filters: [
+          { playlist: "PL_ONE", mode: "allow", on: true, channels: [channel], kept: false },
+          { playlist: "PL_KEPT", mode: "deny", on: false, channels: [channel, unlabeled], kept: true },
+          { playlist: "PL_ORPHAN", mode: "allow", on: false, channels: [], kept: true }
+        ],
+        labels: [
+          { channel, title: "Synthetic channel", handle: "@synthetic", referenced: true },
+          { channel: spare, title: "Unreferenced retained label", referenced: false }
+        ],
+        cache: { playlists: bodyA.cachedPlaylists, at: 7 },
+        choices: "present"
+      }
+    },
+    "complete account inspection facts survive the proposal"
+  )
+  equal(
+    result.reviewFacts.globals.value.accounts[0]?.body,
+    {
+      kind: "inspection",
+      facts: {
+        playlists: ["PL_GLOBAL"],
+        shortcut: { playlist: "PL_GLOBAL_TARGET", provenance: "not-supplied" },
+        filters: [],
+        labels: [],
+        cache: { playlists: [], at: null },
+        choices: "present"
+      }
+    },
+    "global adapter retains facts without assigning ownership"
+  )
   equal(result.activation, "requires-fresh-agreement-and-future-executor", "activation requires a later executor and agreement")
   const decoded = result.documents.map(candidate => {
-    const value = candidate.kind === "settings" ? dependencies.decodeDocument(candidate.document, dependencies.decodeSettings) : candidate.kind === "setup" ? dependencies.decodeDocument(candidate.document, dependencies.decodeSetup) : dependencies.decodeDocument(candidate.document, dependencies.decodeFilter)
+    const value =
+      candidate.kind === "settings"
+        ? dependencies.decodeDocument(candidate.document, dependencies.decodeSettings)
+        : candidate.kind === "setup"
+          ? dependencies.decodeDocument(candidate.document, dependencies.decodeSetup)
+          : dependencies.decodeDocument(candidate.document, dependencies.decodeFilter)
     equal(value, { kind: "value", document: candidate.document }, `real canonical decoder ${candidate.path}`)
     return value
   })
@@ -130,10 +250,16 @@ export function exerciseInterimConversion(plan: typeof planInterimConversion, de
     check(planned.kind === "blocked", `${label} is blocked`)
     check(planned.retention.source === snapshot.source, `${label} retains original evidence`)
     equal(Object.keys(planned).sort(), ["blockers", "kind", "retention", "reviewFacts"], `${label} returns no partial candidate batch`)
-    if (path) check(planned.blockers.some(blocker => blocker.path === path && (reason === undefined || blocker.reason === reason)), `${label} reports exact conflict path and reason`)
+    if (path)
+      check(
+        planned.blockers.some(blocker => blocker.path === path && (reason === undefined || blocker.reason === reason)),
+        `${label} reports exact conflict path and reason`
+      )
     return planned
   }
-  function globalsCase(globals: unknown): InterimConversionInput { return { ...input, source: { ...source, globals } } }
+  function globalsCase(globals: unknown): InterimConversionInput {
+    return { ...input, source: { ...source, globals } }
+  }
   for (const field of ["savedAccountKeys", "sessionConsent", "sessionGeneration", "legacyClaimed"] as const) {
     const marker = field === "savedAccountKeys" ? [] : field === "sessionConsent" ? 0 : field === "sessionGeneration" ? "" : false
     const planned = observe(`presence ${field}`, { ...input, source: { accountBodies: {}, globals: {}, [field]: marker } })
@@ -144,7 +270,13 @@ export function exerciseInterimConversion(plan: typeof planInterimConversion, de
   check(accountMarker.kind === "inactive-proposal" && accountMarker.documents.length === 0, "account family recognizes without inventing an account")
   equal(observe("schema is not interim evidence", { ...input, source: { accountBodies: {}, globals: {} } }), { kind: "not-interim" }, "schema 1 alone is not interim")
   let hookCalls = 0
-  const poisoned = Object.defineProperty({ ...input, schema: 2 }, "source", { get() { hookCalls++; throw new Error("source getter invoked") }, enumerable: true })
+  const poisoned = Object.defineProperty({ ...input, schema: 2 }, "source", {
+    get() {
+      hookCalls++
+      throw new Error("source getter invoked")
+    },
+    enumerable: true
+  })
   equal(plan(poisoned, context), { kind: "newer-layout", version: 2 }, "newer schema short circuits poisoned fields")
   equal(hookCalls, 0, "newer schema invokes no later getter")
   for (const history of [{ kind: "unknown" }, { kind: "known", value: false }, { kind: "known", value: true }] satisfies HistoricalFact[]) {
@@ -178,15 +310,32 @@ export function exerciseInterimConversion(plan: typeof planInterimConversion, de
     const candidate = result.documents.find(value => value.path === path)
     check(candidate, "collision fixture has a real candidate")
     for (const state of ["live", "tombstone", "newer", "invalid"] as const) {
-      const raw = state === "live" ? candidate.document : state === "tombstone" ? { v: 1, gen: "later", at: 1, by: "other", deleted: true } : state === "newer" ? { v: 2, gen: "future", at: 1, by: "other", data: {} } : { bad: true }
+      const raw =
+        state === "live"
+          ? candidate.document
+          : state === "tombstone"
+            ? { v: 1, gen: "later", at: 1, by: "other", deleted: true }
+            : state === "newer"
+              ? { v: 2, gen: "future", at: 1, by: "other", data: {} }
+              : { bad: true }
       const planned = refused(`${state} ${path}`, { ...input, canonical: { ...input.canonical, documents: { [path]: raw } } })
-      check(planned.blockers.some(value => value.path === path && value.reason === state), "collision has the exact live/tombstone/newer/invalid reason")
+      check(
+        planned.blockers.some(value => value.path === path && value.reason === state),
+        "collision has the exact live/tombstone/newer/invalid reason"
+      )
     }
   }
-  const unrelated = observe("unrelated canonical account", { ...input, canonical: { ...input.canonical, documents: { [`doc:setup:${C}`]: { v: 1, gen: "existing", at: 0, by: "other", data: dependencies.defaultSetup() } } } })
+  const unrelated = observe("unrelated canonical account", {
+    ...input,
+    canonical: { ...input.canonical, documents: { [`doc:setup:${C}`]: { v: 1, gen: "existing", at: 0, by: "other", data: dependencies.defaultSetup() } } }
+  })
   equal({ ...unrelated, reviewFacts: result.reviewFacts }, result, "unrelated canonical setup need not block or change substantive conversion output")
   check(unrelated.kind === "inactive-proposal" && unrelated.reviewFacts.accounts.kind === "inspected", "unrelated setup preserves inspection facts")
-  equal(unrelated.reviewFacts.accounts.value.accounts.find(account => account.identity.kind === "representable" && account.identity.key === C)?.overlaps, [{ position: 0, kind: "live", document: "setup" }], "additive review honestly exposes index-only canonical overlap")
+  equal(
+    unrelated.reviewFacts.accounts.value.accounts.find(account => account.identity.kind === "representable" && account.identity.key === C)?.overlaps,
+    [{ position: 0, kind: "live", document: "setup" }],
+    "additive review honestly exposes index-only canonical overlap"
+  )
   refused("existing affected cache", { ...input, canonical: { ...input.canonical, caches: { [`cache:${A}`]: { untouched: true } } } }, `cache:${A}`, "existing-cache")
   refused("17 character account", { ...input, source: { ...source, accountBodies: { "account:AAAAAAAAAAAAAAAAA": bodyA } } })
   refused("101 character playlist", { ...input, source: { ...source, accountBodies: { [`account:${A}`]: { ...bodyA, playlists: ["P".repeat(101)] } } } })
@@ -195,15 +344,31 @@ export function exerciseInterimConversion(plan: typeof planInterimConversion, de
   refused("unsupported extra control", globalsCase({ requestedNewFeature: true }))
   for (const value of [null, "82", 82.5, -1, 101]) refused(`malformed percentage ${JSON.stringify(value)}`, globalsCase({ requiredWatchPercentage: value }))
   for (const value of [null, "true", 1]) refused(`malformed feedback ${JSON.stringify(value)}`, globalsCase({ toastEnabled: value }))
-  for (const raw of ["Shift++", "Control+Alt+S", "Tab"]) refused(`unsupported shortcut ${raw}`, globalsCase({ watchLaterShortcut: raw }), "source.globals.watchLaterShortcut", "unsupported-shortcut-encoding")
-  refused("key-only association", { ...input, source: { accountBodies: {}, sessionConsent: 1, globals: { watchLaterShortcut: "Shift+S" } } }, "source.globals.watchLaterShortcut", "key-without-account-target")
+  for (const raw of ["Shift++", "Control+Alt+S", "Tab"])
+    refused(`unsupported shortcut ${raw}`, globalsCase({ watchLaterShortcut: raw }), "source.globals.watchLaterShortcut", "unsupported-shortcut-encoding")
+  refused(
+    "key-only association",
+    { ...input, source: { accountBodies: {}, sessionConsent: 1, globals: { watchLaterShortcut: "Shift+S" } } },
+    "source.globals.watchLaterShortcut",
+    "key-without-account-target"
+  )
   for (const label of [{ title: "🙂".repeat(101) }, { title: "kept", handle: "x".repeat(31) }]) {
     refused("writer would truncate label", { ...input, source: { ...source, accountBodies: { [`account:${A}`]: { ...bodyA, labels: { [channel]: label } } } } })
   }
-  for (const ctx of [{ ...context, interimShortcutId: "short" }, { ...context, at: -1 }, { ...context, documentGenerations: {} }, { ...context, documentGenerations: { ...context.documentGenerations, "doc:settings": "" } }]) refused("invalid supplied stamp or identity", input, undefined, undefined, ctx)
+  for (const ctx of [
+    { ...context, interimShortcutId: "short" },
+    { ...context, at: -1 },
+    { ...context, documentGenerations: {} },
+    { ...context, documentGenerations: { ...context.documentGenerations, "doc:settings": "" } }
+  ])
+    refused("invalid supplied stamp or identity", input, undefined, undefined, ctx)
   const invalidContext = plan(input, { ...context, interimShortcutId: "short" })
   check(invalidContext.kind === "blocked", "invalid allocation blocks")
-  equal(invalidContext.reviewFacts, { accounts: { kind: "not-inspected" }, globals: { kind: "not-inspected" }, conversionShortcut: { kind: "not-validated" } }, "early validation failure does not invent inspections")
+  equal(
+    invalidContext.reviewFacts,
+    { accounts: { kind: "not-inspected" }, globals: { kind: "not-inspected" }, conversionShortcut: { kind: "not-validated" } },
+    "early validation failure does not invent inspections"
+  )
   const invalidBody = plan({ ...input, source: { ...source, accountBodies: { [`account:${A}`]: {} } } }, context)
   check(invalidBody.kind === "blocked" && invalidBody.reviewFacts.accounts.kind === "inspected", "invalid body still records returned inspection")
   equal(invalidBody.reviewFacts.accounts.value.accounts[0]?.body, { kind: "invalid" }, "invalid facts are not normalized")
@@ -222,10 +387,25 @@ export function exerciseInterimConversion(plan: typeof planInterimConversion, de
   check(duplicateChoices.kind === "inactive-proposal", "duplicate choices are representable without normalization")
   const duplicateSetup = duplicateChoices.documents.find(candidate => candidate.kind === "setup")
   check(duplicateSetup?.kind === "setup", "duplicate choices have their original setup")
-  equal(duplicateSetup.document.data.autoAdd, [{ pl: "PL_ONE", takes: "videos" }, { pl: "PL_ONE", takes: "videos" }], "duplicate choices are never silently deduplicated")
+  equal(
+    duplicateSetup.document.data.autoAdd,
+    [
+      { pl: "PL_ONE", takes: "videos" },
+      { pl: "PL_ONE", takes: "videos" }
+    ],
+    "duplicate choices are never silently deduplicated"
+  )
   const reservedOther = { ...dependencies.defaultSetup(), targets: { conv01: "PL_OLD" } }
-  refused("existing unrelated shortcut ID reservation", { ...input, canonical: { ...input.canonical, documents: { [`doc:setup:${C}`]: { v: 1, gen: "reserved", at: 0, by: "other", data: reservedOther } } } }, `doc:setup:${C}`, "reserved-shortcut-id")
-  const exactLabel = observe("maximum code point label", { ...input, source: { ...source, accountBodies: { [`account:${A}`]: { ...bodyA, labels: { [channel]: { title: "🙂".repeat(100), handle: "x".repeat(30) } } } } } })
+  refused(
+    "existing unrelated shortcut ID reservation",
+    { ...input, canonical: { ...input.canonical, documents: { [`doc:setup:${C}`]: { v: 1, gen: "reserved", at: 0, by: "other", data: reservedOther } } } },
+    `doc:setup:${C}`,
+    "reserved-shortcut-id"
+  )
+  const exactLabel = observe("maximum code point label", {
+    ...input,
+    source: { ...source, accountBodies: { [`account:${A}`]: { ...bodyA, labels: { [channel]: { title: "🙂".repeat(100), handle: "x".repeat(30) } } } } }
+  })
   check(exactLabel.kind === "inactive-proposal", "writer boundary accepts exactly 100 title code points and 30 handle code points")
   const unusual = JSON.parse('{"__proto__":{"keep":"exact"},"constructor":false}')
   const unusualSource = { ...source, globals: unusual }
@@ -233,24 +413,64 @@ export function exerciseInterimConversion(plan: typeof planInterimConversion, de
   equal(Object.getPrototypeOf(unusual), Object.prototype, "own __proto__ never mutates a prototype")
   const nullBodies = Object.assign(Object.create(null), source.accountBodies)
   equal(observe("null prototype body map", { ...input, source: { ...source, accountBodies: nullBodies } }), result, "plain null prototype maps remain safe")
-  const malformed: unknown[] = [undefined, [,], { nested: undefined }, { toJSON() { hookCalls++; return {} } }]
-  const cycle: { self?: unknown } = {}; cycle.self = cycle
-  malformed.push(cycle, Object.defineProperty({}, "value", { enumerable: true, get() { hookCalls++; return 1 } }))
+  const malformed: unknown[] = [
+    undefined,
+    [,],
+    { nested: undefined },
+    {
+      toJSON() {
+        hookCalls++
+        return {}
+      }
+    }
+  ]
+  const cycle: { self?: unknown } = {}
+  cycle.self = cycle
+  malformed.push(
+    cycle,
+    Object.defineProperty({}, "value", {
+      enumerable: true,
+      get() {
+        hookCalls++
+        return 1
+      }
+    })
+  )
   for (let index = 0; index < malformed.length; index++) {
     const snapshot = { ...input, source: { ...source, accountBodies: malformed[index] } }
     const planned = plan(snapshot, context)
     check(planned.kind === "blocked" && planned.retention.source === snapshot.source, `malformed evidence ${index} stays original without JSON roundtrip`)
     check(!Object.hasOwn(planned, "documents"), "malformed evidence produces no partial batch")
   }
-  const sourceAccessor = Object.defineProperty({ ...input }, "source", { enumerable: true, get() { hookCalls++; throw new Error("source accessor invoked") } })
-  const contextAccessor = Object.defineProperty({ ...context }, "commands", { enumerable: true, get() { hookCalls++; throw new Error("context accessor invoked") } })
+  const sourceAccessor = Object.defineProperty({ ...input }, "source", {
+    enumerable: true,
+    get() {
+      hookCalls++
+      throw new Error("source accessor invoked")
+    }
+  })
+  const contextAccessor = Object.defineProperty({ ...context }, "commands", {
+    enumerable: true,
+    get() {
+      hookCalls++
+      throw new Error("context accessor invoked")
+    }
+  })
   check(plan(sourceAccessor, context).kind === "blocked", "snapshot source accessor is refused without invocation")
   check(plan(input, contextAccessor).kind === "blocked", "context accessor is refused without invocation")
   equal(hookCalls, 0, "no getter or toJSON hook was invoked")
   for (const authorized of [false, true]) {
     const legacy = dependencies.convertLegacy({ presentKeys: authorized ? ["refreshToken"] : [], values: {}, refreshTokenWasNonempty: authorized })
     equal(legacy.pct.value, authorized ? 0 : 50, "original known legacy fallback is unchanged")
-    equal(dependencies.convertLegacy({ presentKeys: authorized ? ["refreshToken", "requiredWatchPercentage"] : ["requiredWatchPercentage"], values: { requiredWatchPercentage: 82 }, refreshTokenWasNonempty: authorized }).pct.value, 82, "original legacy saved percentage stays explicit")
+    equal(
+      dependencies.convertLegacy({
+        presentKeys: authorized ? ["refreshToken", "requiredWatchPercentage"] : ["requiredWatchPercentage"],
+        values: { requiredWatchPercentage: 82 },
+        refreshTokenWasNonempty: authorized
+      }).pct.value,
+      82,
+      "original legacy saved percentage stays explicit"
+    )
   }
   return { assertions, result, decoded, receipt, observations, hookCalls }
 }
@@ -263,10 +483,17 @@ test("interim conversion preserves complete proposals and refuses unsafe mapping
   expect(observation.hookCalls).toBe(0)
 })
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type ExpectedInput = {
   readonly schema: unknown
-  readonly source: { readonly accountBodies: unknown; readonly savedAccountKeys?: unknown; readonly sessionConsent?: unknown; readonly sessionGeneration?: unknown; readonly legacyClaimed?: unknown; readonly globals: unknown }
+  readonly source: {
+    readonly accountBodies: unknown
+    readonly savedAccountKeys?: unknown
+    readonly sessionConsent?: unknown
+    readonly sessionGeneration?: unknown
+    readonly legacyClaimed?: unknown
+    readonly globals: unknown
+  }
   readonly canonical: { readonly documents: unknown; readonly caches: unknown; readonly device: unknown; readonly unclaimed: unknown }
   readonly historicalAuthorization: HistoricalFact
   readonly priorCredentialPresence: HistoricalFact

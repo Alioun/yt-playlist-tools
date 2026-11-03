@@ -2,7 +2,7 @@ import type { AccountKey, DocumentKey, PlaylistId } from "../../shared/model"
 import type { ImportPlan } from "../../shared/settings-file"
 import type { ImportSyncFacts, SettingsImportPlan, SettingsImportPlanInput, SettingsImportPlanResult, planSettingsImport } from "./settings-import-plan"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 export type ImportPlanProofs = [
   Check<Equal<typeof planSettingsImport, (input: SettingsImportPlanInput) => SettingsImportPlanResult>>,
@@ -13,8 +13,7 @@ export type ImportPlanProofs = [
   Check<Equal<keyof typeof import("./settings-import-plan"), "planSettingsImport">>
 ]
 
-export function intendedLineNegatives(acct: AccountKey, playlist: PlaylistId, key: DocumentKey,
-  refusal: Extract<SettingsImportPlanResult, { kind: "refused" }>): void {
+export function intendedLineNegatives(acct: AccountKey, playlist: PlaylistId, key: DocumentKey, refusal: Extract<SettingsImportPlanResult, { kind: "refused" }>): void {
   // @ts-expect-error account identity cannot be a document address.
   const mixedAccount: AccountKey = key
   // @ts-expect-error a playlist identity cannot be an account identity.

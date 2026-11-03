@@ -17,18 +17,37 @@ test("the first-run subset accepts only complete JSON DTOs", () => {
   expect(isLookupPayload({})).toBe(true)
   expect(isAgreeChange({ ...change, selected: [] })).toBe(true)
   for (const invalid of [
-    { ...change, selected: ["shortcuts", "shortcuts"] }, { ...change, selected: ["sync"] },
-    { ...change, attempt: 0 }, { ...change, attempt: 0.5 }, { ...change, displayedVersion: 0 },
-    { ...change, displayedVersion: Infinity }, { ...change, syncOn: "false" },
-    { ...change, review: { kind: "agreement-review" } }, { ...change, origin: { kind: "ui", windowId: 1, incognito: false } },
-    { ...change, permissions: { music: true, browserMenu: true } }, { ...change, scope: "music" }
-  ]) expect(isAgreeChange(invalid)).toBe(false)
-  for (const invalid of [{ change, windowId: -1 }, { change, windowId: "1" }, { change, origin: {} }, { change, review: {} }]) expect(isChangePayload(invalid)).toBe(false)
+    { ...change, selected: ["shortcuts", "shortcuts"] },
+    { ...change, selected: ["sync"] },
+    { ...change, attempt: 0 },
+    { ...change, attempt: 0.5 },
+    { ...change, displayedVersion: 0 },
+    { ...change, displayedVersion: Infinity },
+    { ...change, syncOn: "false" },
+    { ...change, review: { kind: "agreement-review" } },
+    { ...change, origin: { kind: "ui", windowId: 1, incognito: false } },
+    { ...change, permissions: { music: true, browserMenu: true } },
+    { ...change, scope: "music" }
+  ])
+    expect(isAgreeChange(invalid)).toBe(false)
+  for (const invalid of [
+    { change, windowId: -1 },
+    { change, windowId: "1" },
+    { change, origin: {} },
+    { change, review: {} }
+  ])
+    expect(isChangePayload(invalid)).toBe(false)
   expect(isLookupPayload({ origin: {} })).toBe(false)
 })
 test("accessors and non-JSON values invoke no application getter", () => {
   let called = 0
-  const accessor = { ...change, get review() { called++; return {} } }
+  const accessor = {
+    ...change,
+    get review() {
+      called++
+      return {}
+    }
+  }
   expect(isAgreeChange(accessor)).toBe(false)
   expect(called).toBe(0)
   expect(isAgreeChange({ ...change, permissions: Promise.resolve(true) })).toBe(false)

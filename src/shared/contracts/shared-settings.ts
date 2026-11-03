@@ -3,34 +3,54 @@ import { isFirstRunFeature, type FirstRunFeature } from "./first-run"
 import type { Settings } from "../model"
 import type { featureSettings } from "../model/first-run-view"
 
-export type FeatureSettingChange = {
-  [Feature in FirstRunFeature]: {
-    readonly kind: "feature"
-    readonly feature: Feature
-    readonly value: Settings[(typeof featureSettings)[Feature]]["on"]
-  }
-}[FirstRunFeature]
+export type FeatureSettingChange =
+  | {
+      [Feature in FirstRunFeature]: {
+        readonly kind: "feature"
+        readonly feature: Feature
+        readonly value: Settings[(typeof featureSettings)[Feature]]["on"]
+      }
+    }[FirstRunFeature]
   | { readonly kind: "music-section"; readonly value: Settings["musicSection"] }
   | { readonly kind: "shortcuts-music"; readonly value: Settings["shortcuts"]["music"] }
 
 export type FeatureSettingAnswer =
-  | { readonly kind: "confirmed"; readonly change: FeatureSettingChange; readonly status: "changed" | "unchanged";
-      readonly limitedMusic: boolean; readonly conflicts: number; readonly menuPermission: "unchanged" | "released" }
-  | { readonly kind: "refused"; readonly reason: "invalid" | "unavailable" | "site-access" | "browser-menu-permission" |
-      "sync-full" | "update-needed" | "unconfirmed" | "rejected" | "permission-release" }
+  | {
+      readonly kind: "confirmed"
+      readonly change: FeatureSettingChange
+      readonly status: "changed" | "unchanged"
+      readonly limitedMusic: boolean
+      readonly conflicts: number
+      readonly menuPermission: "unchanged" | "released"
+    }
+  | {
+      readonly kind: "refused"
+      readonly reason: "invalid" | "unavailable" | "site-access" | "browser-menu-permission" | "sync-full" | "update-needed" | "unconfirmed" | "rejected" | "permission-release"
+    }
 
 export function isFeatureSettingChange(raw: unknown): raw is FeatureSettingChange {
-  return objectShape(raw, { kind: v => v === "feature", feature: isFirstRunFeature, value: v => typeof v === "boolean" })
-    || objectShape(raw, { kind: v => v === "music-section" || v === "shortcuts-music", value: v => typeof v === "boolean" })
+  return (
+    objectShape(raw, { kind: v => v === "feature", feature: isFirstRunFeature, value: v => typeof v === "boolean" }) ||
+    objectShape(raw, { kind: v => v === "music-section" || v === "shortcuts-music", value: v => typeof v === "boolean" })
+  )
 }
 
 export function isFeatureSettingAnswer(raw: unknown): raw is FeatureSettingAnswer {
-  return objectShape(raw, { kind: v => v === "confirmed", change: isFeatureSettingChange,
-    status: v => v === "changed" || v === "unchanged", limitedMusic: v => typeof v === "boolean",
-    conflicts: v => typeof v === "number" && Number.isSafeInteger(v) && v >= 0,
-    menuPermission: v => v === "unchanged" || v === "released" })
-    || objectShape(raw, { kind: v => v === "refused", reason: v => typeof v === "string" && ["invalid", "unavailable", "site-access",
-      "browser-menu-permission", "sync-full", "update-needed", "unconfirmed", "rejected", "permission-release"].includes(v) })
+  return (
+    objectShape(raw, {
+      kind: v => v === "confirmed",
+      change: isFeatureSettingChange,
+      status: v => v === "changed" || v === "unchanged",
+      limitedMusic: v => typeof v === "boolean",
+      conflicts: v => typeof v === "number" && Number.isSafeInteger(v) && v >= 0,
+      menuPermission: v => v === "unchanged" || v === "released"
+    }) ||
+    objectShape(raw, {
+      kind: v => v === "refused",
+      reason: v =>
+        typeof v === "string" && ["invalid", "unavailable", "site-access", "browser-menu-permission", "sync-full", "update-needed", "unconfirmed", "rejected", "permission-release"].includes(v)
+    })
+  )
 }
 
 export type SharedOptionValues = {
@@ -120,7 +140,7 @@ const optionChecks = {
   "gather.auto.background": boolean,
   "gather.auto.count": boolean,
   "gather.auto.after": v => v === "1h" || v === "1d" || v === "1w",
-  "gather.auto.n": v => v === 5 || v === 10 || v === 15 || v === 20 || v === 30 || v === 50,
+  "gather.auto.n": v => v === 5 || v === 10 || v === 15 || v === 20 || v === 30 || v === 50
 } satisfies Record<keyof SharedOptionValues, (value: unknown) => boolean>
 
 export function isSharedSettingChange(raw: unknown): raw is SharedSettingChange {
@@ -129,6 +149,8 @@ export function isSharedSettingChange(raw: unknown): raw is SharedSettingChange 
   return Object.entries(optionChecks).some(([field, check]) => objectShape(raw, { kind: v => v === "option", field: v => v === field, value: check }))
 }
 export function isSharedSettingAnswer(raw: unknown): raw is SharedSettingAnswer {
-  return objectShape(raw, { kind: v => v === "confirmed", change: isSharedSettingChange, status: v => v === "changed" || v === "unchanged" })
-    || objectShape(raw, { kind: v => v === "refused", reason: v => typeof v === "string" && ["invalid", "unavailable", "stale", "sync-full", "update-needed", "unconfirmed", "rejected"].includes(v) })
+  return (
+    objectShape(raw, { kind: v => v === "confirmed", change: isSharedSettingChange, status: v => v === "changed" || v === "unchanged" }) ||
+    objectShape(raw, { kind: v => v === "refused", reason: v => typeof v === "string" && ["invalid", "unavailable", "stale", "sync-full", "update-needed", "unconfirmed", "rejected"].includes(v) })
+  )
 }

@@ -7,17 +7,17 @@ import FirstRun from "./FirstRun.svelte"
 import { createFirstRun } from "./flow.svelte"
 import { createSetup } from "./setup.svelte"
 import type { BrowserKind } from "./features"
-import type {
-  AccessSite, AgreementOutcome, AgreementRequest, ChoiceOutcome, ChoiceRequest, Destination, FirstRunOwner,
-  PermissionGrant, PermissionNeeds, SetupView, SyncedChoices
-} from "./owner"
+import type { AccessSite, AgreementOutcome, AgreementRequest, ChoiceOutcome, ChoiceRequest, Destination, FirstRunOwner, PermissionGrant, PermissionNeeds, SetupView, SyncedChoices } from "./owner"
 
 type Deferred<T> = { promise: Promise<T>; resolve(value: T): void; reject(error: unknown): void }
 
 function deferred<T>(): Deferred<T> {
   let resolve!: (value: T) => void
   let reject!: (error: unknown) => void
-  const promise = new Promise<T>((yes, no) => { resolve = yes; reject = no })
+  const promise = new Promise<T>((yes, no) => {
+    resolve = yes
+    reject = no
+  })
   return { promise, resolve, reject }
 }
 
@@ -36,7 +36,13 @@ function scriptedOwner(browser: BrowserKind = "chrome") {
       log.push("lookup")
       const entry = { result: deferred<SyncedChoices>(), cancelled: false }
       lookups.push(entry)
-      return { result: entry.result.promise, cancel() { entry.cancelled = true; log.push("cancel") } }
+      return {
+        result: entry.result.promise,
+        cancel() {
+          entry.cancelled = true
+          log.push("cancel")
+        }
+      }
     },
     requestPermissions(needs) {
       log.push("permissions")
@@ -116,8 +122,12 @@ async function reachConsent(names: readonly string[]) {
   return user
 }
 
-const readyAccount = (rows: Extract<SetupView, { kind: "ready" }>["rows"], musicAccess: "granted" | "missing" | "not-needed" = "not-needed"): SetupView =>
-  ({ kind: "ready", youtube: { kind: "account", account: { name: "Synthetic Account", handle: "@synthetic" } }, musicAccess, rows })
+const readyAccount = (rows: Extract<SetupView, { kind: "ready" }>["rows"], musicAccess: "granted" | "missing" | "not-needed" = "not-needed"): SetupView => ({
+  kind: "ready",
+  youtube: { kind: "account", account: { name: "Synthetic Account", handle: "@synthetic" } },
+  musicAccess,
+  rows
+})
 
 describe("step 1, feature choice", () => {
   test("starts with every feature unticked and reads nothing before the user asks for sync", () => {
@@ -134,9 +144,11 @@ describe("step 1, feature choice", () => {
   test("feature cards carry exact names, descriptions and footprint tags, Gather tabs included", () => {
     show(scriptedOwner().owner)
     expect(choice("Gather tabs")).toHaveAccessibleDescription(
-      "Gathers the YouTube videos open in a window into one list or a playlist, and can close their tabs. It can also do it by itself. Doesn't change the page")
+      "Gathers the YouTube videos open in a window into one list or a playlist, and can close their tabs. It can also do it by itself. Doesn't change the page"
+    )
     expect(choice("Right-click for the video menu")).toHaveAccessibleDescription(
-      "Right-clicking a video opens YouTube's own ⋮ menu. Hold Shift for the browser's menu. Changes right-click on the page")
+      "Right-clicking a video opens YouTube's own ⋮ menu. Hold Shift for the browser's menu. Changes right-click on the page"
+    )
     expect(choice("Keys from any tab")).toHaveAccessibleDescription(/Keys only, doesn't change the page$/)
     expect(choice("Quick-save on thumbnails")).toHaveAccessibleDescription(/Adds buttons to the page$/)
     expect(screen.getByRole("heading", { level: 2, name: "Everywhere" })).toBeVisible()
@@ -264,7 +276,9 @@ describe("step 2, Before you start", () => {
     show(scriptedOwner("firefox").owner)
     await reachConsentWithout()
     const section = screen.getByRole("region", { name: "Before you start" })
-    const items = within(section).getAllByRole("listitem").map(item => item.textContent?.replace(/\s+/g, " ").trim())
+    const items = within(section)
+      .getAllByRole("listitem")
+      .map(item => item.textContent?.replace(/\s+/g, " ").trim())
     expect(items).toEqual([
       "reads what you watch and listen to there, meaning the video or song, its channel, and how much of it you've played;",
       "reads and changes your playlists as you, using YouTube's own requests. It lists them, checks which ones already hold a video, and adds or removes videos when you ask, or when auto-add or automatic gathering does;",
@@ -275,7 +289,11 @@ describe("step 2, Before you start", () => {
     ])
     expect(within(section).getAllByRole("listitem")[3]).toHaveAttribute("data-provisional", "ticket-25-cookie")
     expect(within(section).getByText("Perchling works inside your YouTube and YouTube Music tabs, as the account you're signed in to there. For the features you switch on, it:")).toBeVisible()
-    expect(within(section).getByText("Nothing is sent to us or to anyone but YouTube. There are no ads and no analytics. If you turn on Settings sync, your settings also travel through Firefox's own sync.")).toBeVisible()
+    expect(
+      within(section).getByText(
+        "Nothing is sent to us or to anyone but YouTube. There are no ads and no analytics. If you turn on Settings sync, your settings also travel through Firefox's own sync."
+      )
+    ).toBeVisible()
     const policy = within(section).getByRole("link", { name: "Privacy policy" })
     expect(policy).toHaveAttribute("href", "https://alioun.github.io/yt-playlist-tools/privacy/")
     expect(policy).toHaveAttribute("target", "_blank")
@@ -384,7 +402,14 @@ describe("Agree", () => {
     show(script.owner)
     await reachConsent(["Auto-add", "Gather tabs"])
     button("Agree and turn on 2 features").click()
-    script.agreements[0]!.outcome.resolve({ kind: "agreed", attempt: 7, applications: [{ feature: "auto-add", state: "enabled" }, { feature: "gather", state: "enabled" }] })
+    script.agreements[0]!.outcome.resolve({
+      kind: "agreed",
+      attempt: 7,
+      applications: [
+        { feature: "auto-add", state: "enabled" },
+        { feature: "gather", state: "enabled" }
+      ]
+    })
     await settle()
     expect(screen.getByRole("alert")).toHaveTextContent(/^Couldn't confirm your agreement/)
     button("Agree and turn on 2 features").click()
@@ -413,7 +438,9 @@ describe("step 3, Finish setting up", () => {
     expect(script.agreements[0]!.request.selected).toEqual(["auto-add", "shortcuts", "music-actions"])
     script.permissions[0]!.grant.resolve({ music: false, browserMenu: false })
     script.agreements[0]!.outcome.resolve({
-      kind: "agreed", attempt: 1, applications: [
+      kind: "agreed",
+      attempt: 1,
+      applications: [
         { feature: "auto-add", state: "enabled" },
         { feature: "shortcuts", state: "enabled", alsoOnMusic: "held-site-access" },
         { feature: "music-actions", state: "held-site-access" }
@@ -422,11 +449,16 @@ describe("step 3, Finish setting up", () => {
     const heading = await screen.findByRole("heading", { level: 1, name: "Finish setting up" })
     await settle()
     expect(document.activeElement).toBe(heading)
-    script.setups[0]!.resolve(readyAccount([
-      { feature: "auto-add", target: { purpose: "auto-add", selection: { kind: "none" } } },
-      { feature: "shortcuts", alsoOnMusicHeld: true, target: { purpose: "shortcut", key: "Alt+W", selection: { kind: "chosen", titles: ["Watch later"] } } },
-      { feature: "music-actions", held: "site-access" }
-    ], "missing"))
+    script.setups[0]!.resolve(
+      readyAccount(
+        [
+          { feature: "auto-add", target: { purpose: "auto-add", selection: { kind: "none" } } },
+          { feature: "shortcuts", alsoOnMusicHeld: true, target: { purpose: "shortcut", key: "Alt+W", selection: { kind: "chosen", titles: ["Watch later"] } } },
+          { feature: "music-actions", held: "site-access" }
+        ],
+        "missing"
+      )
+    )
     await settle()
     const music = screen.getByText("Quick actions").closest("li")!
     expect(within(music).getByText("Needs site access")).toBeVisible()
@@ -475,12 +507,16 @@ describe("step 3, Finish setting up", () => {
     script.setups[0]!.resolve(readyAccount([{ feature: "quick-save", target: { purpose: "quick-save", selection: { kind: "chosen", titles: ["Kept list"] } } }]))
     await settle()
     const row = screen.getByText("Quick-save on thumbnails").closest("li")!
-    within(row).getByRole("button", { name: /^Choose a playlist/ }).click()
+    within(row)
+      .getByRole("button", { name: /^Choose a playlist/ })
+      .click()
     script.choices[0]!.outcome.resolve({ kind: "failed", reason: "picker-unavailable" })
     await settle()
     expect(within(row).getByRole("alert")).toHaveTextContent("Couldn't open the playlist list. Try again.")
     expect(within(row).getByText("Kept list")).toBeVisible()
-    within(row).getByRole("button", { name: /^Choose a playlist/ }).click()
+    within(row)
+      .getByRole("button", { name: /^Choose a playlist/ })
+      .click()
     script.choices[1]!.outcome.resolve({ kind: "failed", reason: "unconfirmed" })
     await settle()
     expect(within(row).getByRole("alert")).toHaveTextContent("Couldn't confirm this choice was saved. Try again.")
@@ -490,7 +526,12 @@ describe("step 3, Finish setting up", () => {
   test("without an account, playlist rows wait for one and the YouTube state leads", async () => {
     const script = scriptedOwner()
     await agreed(script, ["Auto-add"], { kind: "agreed", attempt: 1, applications: [{ feature: "auto-add", state: "enabled" }] })
-    script.setups[0]!.resolve({ kind: "ready", youtube: { kind: "signed-out" }, musicAccess: "not-needed", rows: [{ feature: "auto-add", target: { purpose: "auto-add", selection: { kind: "none" } } }] })
+    script.setups[0]!.resolve({
+      kind: "ready",
+      youtube: { kind: "signed-out" },
+      musicAccess: "not-needed",
+      rows: [{ feature: "auto-add", target: { purpose: "auto-add", selection: { kind: "none" } } }]
+    })
     await settle()
     expect(screen.getByText("You're not signed in to YouTube.")).toBeVisible()
     expect(screen.getByText("Needs your YouTube account")).toBeVisible()
@@ -525,7 +566,6 @@ test("two first-run pages keep independent drafts", async () => {
   }
 })
 
-
 describe("view disposal", () => {
   test("a disposed flow ignores a pending agreement and starts no further requests", async () => {
     const script = scriptedOwner()
@@ -547,10 +587,13 @@ describe("view disposal", () => {
 
   test("a disposed flow keeps a permission-backed agreement local continuation silent", async () => {
     const script = scriptedOwner()
-    const owner: FirstRunOwner = { ...script.owner, async agree(request) {
-      await request.permissions
-      return { kind: "agreed", attempt: request.attempt, applications: [{ feature: "music-actions", state: "held-site-access" }] }
-    } }
+    const owner: FirstRunOwner = {
+      ...script.owner,
+      async agree(request) {
+        await request.permissions
+        return { kind: "agreed", attempt: request.attempt, applications: [{ feature: "music-actions", state: "held-site-access" }] }
+      }
+    }
     const flow = createFirstRun(owner, englishFirstRunText())
     flow.toggle("music-actions", true)
     flow.continue()
@@ -643,9 +686,14 @@ describe("view disposal", () => {
   })
 })
 
-
 test.each([
-  { label: "duplicate", applications: [{ feature: "gather", state: "enabled" }, { feature: "gather", state: "enabled" }] },
+  {
+    label: "duplicate",
+    applications: [
+      { feature: "gather", state: "enabled" },
+      { feature: "gather", state: "enabled" }
+    ]
+  },
   { label: "missing", applications: [] },
   { label: "unrelated", applications: [{ feature: "quick-save", state: "enabled" }] }
 ] satisfies readonly { label: string; applications: readonly import("./owner").FeatureApplication[] }[])("agreement rejects $label confirmations", async ({ applications }) => {

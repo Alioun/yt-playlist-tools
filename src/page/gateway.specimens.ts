@@ -38,8 +38,13 @@ export function rawNavigation(kind: "watch" | "shorts" | "other" = "watch", vide
 }
 export function rawPlayer(videoId = syntheticVideo, overrides: Record<string, unknown> = {}) {
   return {
-    videoData: { video_id: videoId }, response: rawResponse(videoId), currentTime: 15, duration: 120,
-    presentingPlayerType: 1, adShowing: false, adActive: false,
+    videoData: { video_id: videoId },
+    response: rawResponse(videoId),
+    currentTime: 15,
+    duration: 120,
+    presentingPlayerType: 1,
+    adShowing: false,
+    adActive: false,
     video: { currentTime: 901, duration: 999, paused: false, seeking: false, playbackRate: 1.25 },
     ...overrides
   }
@@ -49,13 +54,20 @@ export function rawMusicPlayer(videoId = syntheticVideo) {
 }
 export function rawSong(videoId = syntheticVideo, index = 7) {
   return {
-    title: { runs: [{ text: "Synthetic song" }] }, musicVideoType: "MUSIC_VIDEO_TYPE_ATV",
-    navigationEndpoint: { watchEndpoint: { videoId, index } }, selected: false, likeStatus: "INDIFFERENT",
-    menu: { menuRenderer: { items: [
-      { menuServiceItemRenderer: { serviceEndpoint: { queueAddEndpoint: { queueTarget: { videoId }, queueInsertPosition: "INSERT_AT_END" } } } },
-      { menuServiceItemRenderer: { serviceEndpoint: { addToPlaylistEndpoint: { videoId } } } },
-      { menuServiceItemRenderer: { serviceEndpoint: { queueAddEndpoint: { queueTarget: { videoId }, queueInsertPosition: "INSERT_AFTER_CURRENT_VIDEO" } } } }
-    ] } }
+    title: { runs: [{ text: "Synthetic song" }] },
+    musicVideoType: "MUSIC_VIDEO_TYPE_ATV",
+    navigationEndpoint: { watchEndpoint: { videoId, index } },
+    selected: false,
+    likeStatus: "INDIFFERENT",
+    menu: {
+      menuRenderer: {
+        items: [
+          { menuServiceItemRenderer: { serviceEndpoint: { queueAddEndpoint: { queueTarget: { videoId }, queueInsertPosition: "INSERT_AT_END" } } } },
+          { menuServiceItemRenderer: { serviceEndpoint: { addToPlaylistEndpoint: { videoId } } } },
+          { menuServiceItemRenderer: { serviceEndpoint: { queueAddEndpoint: { queueTarget: { videoId }, queueInsertPosition: "INSERT_AFTER_CURRENT_VIDEO" } } } }
+        ]
+      }
+    }
   }
 }
 export function rawQueueItem(videoId = syntheticVideo, index = 7, extra: Record<string, unknown> = {}) {
@@ -64,8 +76,11 @@ export function rawQueueItem(videoId = syntheticVideo, index = 7, extra: Record<
 
 export function scriptedPage(initial: Partial<Record<PageRead, unknown>> = {}) {
   const values: Partial<Record<PageRead, unknown>> = {
-    navigation: rawNavigation(), location: { pathname: "/watch", search: `?v=${syntheticVideo}` }, watchPlayer: rawPlayer(),
-    targetContext: { inAutomix: false }, ...initial
+    navigation: rawNavigation(),
+    location: { pathname: "/watch", search: `?v=${syntheticVideo}` },
+    watchPlayer: rawPlayer(),
+    targetContext: { inAutomix: false },
+    ...initial
   }
   const config: Record<string, unknown> = { LOGGED_IN: true, DATASYNC_ID: syntheticIdentity }
   const faults = new Set<PageRead | "config" | "has">()
@@ -87,7 +102,12 @@ export function scriptedPage(initial: Partial<Record<PageRead, unknown>> = {}) {
     on(event, changed) {
       const record = { event, changed, active: true, stops: 0 }
       callbacks.push(record)
-      return () => { if (record.active) { record.active = false; record.stops++ } }
+      return () => {
+        if (record.active) {
+          record.active = false
+          record.stops++
+        }
+      }
     },
     has(id) {
       if (faults.has("has")) throw new Error(syntheticIdentity)
@@ -97,9 +117,19 @@ export function scriptedPage(initial: Partial<Record<PageRead, unknown>> = {}) {
     }
   }
   return {
-    port, values, config, faults, reads, callbacks, configReads,
-    setQueueChanges(value: boolean) { queueChanges = value },
-    active() { return callbacks.filter(record => record.active).length },
+    port,
+    values,
+    config,
+    faults,
+    reads,
+    callbacks,
+    configReads,
+    setQueueChanges(value: boolean) {
+      queueChanges = value
+    },
+    active() {
+      return callbacks.filter(record => record.active).length
+    },
     emit(event: PageEvent, detail?: unknown) {
       for (const record of [...callbacks]) if (record.active && record.event === event) record.changed(detail)
     },

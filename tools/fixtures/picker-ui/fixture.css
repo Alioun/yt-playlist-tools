@@ -3,4 +3,6 @@
 @source "../../../src/ui/components";
 @source "../../../src/ui/picker";
 
-body { margin: 0; }
+body {
+  margin: 0;
+}

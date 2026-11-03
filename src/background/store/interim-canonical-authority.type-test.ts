@@ -1,12 +1,22 @@
-import type { CanonicalAuthorityHost, CanonicalOwnerCapability, RetainedControllerCapability, CanonicalAuthorityRead,
-  CanonicalAuthorityReview, CanonicalAuthorityResult, RetainedCanonicalAuthorityV5, RetainedArchiveV5, AuthorityAnchorV5, FixtureRetirementReceipt } from "./interim-canonical-authority"
+import type {
+  CanonicalAuthorityHost,
+  CanonicalOwnerCapability,
+  RetainedControllerCapability,
+  CanonicalAuthorityRead,
+  CanonicalAuthorityReview,
+  CanonicalAuthorityResult,
+  RetainedCanonicalAuthorityV5,
+  RetainedArchiveV5,
+  AuthorityAnchorV5,
+  FixtureRetirementReceipt
+} from "./interim-canonical-authority"
 import { createStartingLocalFilterWriter } from "./local-filter-writer"
 import type { UiOrigin } from "./account-removal-execution"
 import type { Snapshot } from "../../shared/model/settings-view"
 import type { RetainedInstallationV3 } from "./interim-installation"
 import type { RecoveryTransactionResult } from "./interim-recovery-execution"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 type Owner = ReturnType<typeof createStartingLocalFilterWriter>
 export type AuthorityProofs = [
@@ -23,7 +33,15 @@ export type AuthorityProofs = [
   Check<Equal<RetainedCanonicalAuthorityV5["resolutions"][number]["kind"], "filter-replaced" | "playlist-restored" | "discarded">>,
   Check<Equal<Parameters<typeof createStartingLocalFilterWriter>[0]["canonicalAuthority"], CanonicalAuthorityHost | undefined>>
 ]
-function negative(owner: Owner, origin: UiOrigin, review: CanonicalAuthorityReview, checkpoint: Snapshot<RetainedCanonicalAuthorityV5>, pendingV3: RetainedInstallationV3, anchor: AuthorityAnchorV5, controller: RetainedControllerCapability) {
+function negative(
+  owner: Owner,
+  origin: UiOrigin,
+  review: CanonicalAuthorityReview,
+  checkpoint: Snapshot<RetainedCanonicalAuthorityV5>,
+  pendingV3: RetainedInstallationV3,
+  anchor: AuthorityAnchorV5,
+  controller: RetainedControllerCapability
+) {
   // @ts-expect-error A review is not a live exclusive owner capability.
   const exclusive: CanonicalOwnerCapability = review
   // @ts-expect-error A release result is not an initialized owner.
@@ -42,6 +60,10 @@ function negative(owner: Owner, origin: UiOrigin, review: CanonicalAuthorityRevi
   owner.discardInterimItem(origin, { sourceKey: "playlists", path: [0] })
   // @ts-expect-error The owner has no arbitrary destination restore mutation.
   owner.restoreGlobalFilter(origin, { account: "AAAAAAAAAAAAAAAA", playlist: "PL_ONE" })
-  void exclusive; void durable; void nested; void pending; void noHistory
+  void exclusive
+  void durable
+  void nested
+  void pending
+  void noHistory
 }
 void negative

@@ -4,8 +4,14 @@ import type { PlaylistId } from "../../shared/model"
 
 const other = "PL_other" as PlaylistId
 const worlds: ReturnType<typeof projectionWorld>[] = []
-afterEach(async () => { for (const world of worlds.splice(0)) await world.owner.dispose() })
-function world() { const created = projectionWorld(); worlds.push(created); return created }
+afterEach(async () => {
+  for (const world of worlds.splice(0)) await world.owner.dispose()
+})
+function world() {
+  const created = projectionWorld()
+  worlds.push(created)
+  return created
+}
 async function marks(store: ReturnType<typeof world>) {
   const read = await store.owner.readSetup(a)
   if (read.kind !== "value" || read.view.kind !== "live") throw Error("Expected a's live setup")
@@ -31,8 +37,7 @@ test("a mark on a playlist the setup doesn't choose, or one already in place, wr
 
 test("a private window records no mark (FT-12)", async () => {
   const store = world()
-  expect(await store.owner.markPlaylists({ acct: a, private: true, marks: [{ playlist: beta, mark: "full" }] }))
-    .toEqual({ kind: "result", result: { refused: "private" } })
+  expect(await store.owner.markPlaylists({ acct: a, private: true, marks: [{ playlist: beta, mark: "full" }] })).toEqual({ kind: "result", result: { refused: "private" } })
   expect(await marks(store)).toEqual({ [alpha]: "missing" })
 })
 
@@ -41,8 +46,7 @@ test("a list read that shows a Missing playlist again clears its mark; one that 
     const store = world()
     const read = await store.owner.readPlaylistCache({ acct: a, private: false })
     if (read.kind !== "cache" || read.authority.kind !== "eligible") throw Error("Expected an eligible cache capture")
-    const write = await store.owner.absorbPlaylistCache(read.authority.capture, { kind: "list", acct: a, site: "www", at: 50,
-      rows: listed.map(id => ({ id, title: id })) as never })
+    const write = await store.owner.absorbPlaylistCache(read.authority.capture, { kind: "list", acct: a, site: "www", at: 50, rows: listed.map(id => ({ id, title: id })) as never })
     expect(write.kind).toBe("committed")
     expect(await marks(store)).toEqual(listed.length === 2 ? {} : { [alpha]: "missing" })
   }

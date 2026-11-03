@@ -49,27 +49,45 @@ export function createToolbarBadge(ports: BadgePorts): ToolbarBadge {
   const perTab = new Map<number, Badge>()
   const flashes = new Map<number, () => void>()
   const ticks = new Set<number>()
-  let running: Promise<void> | undefined, again = false, disposed = false
+  let running: Promise<void> | undefined,
+    again = false,
+    disposed = false
 
   function title(badge: Badge): string | null {
     switch (badge.reason) {
-      case "consent": return i18n.message("badge_waiting")
-      case "access": return i18n.message("badge_access")
-      case "marks": return i18n.message("badge_marks")
-      case "paused": return i18n.message("badge_paused")
-      case "ticked": return i18n.message("badge_ticked")
+      case "consent":
+        return i18n.message("badge_waiting")
+      case "access":
+        return i18n.message("badge_access")
+      case "marks":
+        return i18n.message("badge_marks")
+      case "paused":
+        return i18n.message("badge_paused")
+      case "ticked":
+        return i18n.message("badge_ticked")
       case "not-working": {
         const [first] = badge.features
-        return badge.features.length === 1 && first ? i18n.message("badge_notWorking_one", { feature: featureName(first) })
+        return badge.features.length === 1 && first
+          ? i18n.message("badge_notWorking_one", { feature: featureName(first) })
           : i18n.message("badge_notWorking_other", { count: i18n.number(badge.features.length) })
       }
-      default: return null
+      default:
+        return null
     }
   }
   const names: Readonly<Record<FeatureId, SimpleMessageKey>> = {
-    "auto-add": "feature_name_1", shortcuts: "feature_name_2", "quick-save": "feature_name_3", "queue-button": "feature_name_4", "watch-button": "feature_name_5",
-    "card-menu": "feature_name_6", "browser-menu": "feature_name_7", gather: "feature_name_8", "music-actions": "feature_name_9", "music-keys": "feature_name_10",
-    "any-tab-keys": "feature_name_11", sync: "feature_name_12"
+    "auto-add": "feature_name_1",
+    shortcuts: "feature_name_2",
+    "quick-save": "feature_name_3",
+    "queue-button": "feature_name_4",
+    "watch-button": "feature_name_5",
+    "card-menu": "feature_name_6",
+    "browser-menu": "feature_name_7",
+    gather: "feature_name_8",
+    "music-actions": "feature_name_9",
+    "music-keys": "feature_name_10",
+    "any-tab-keys": "feature_name_11",
+    sync: "feature_name_12"
   }
   const featureName = (feature: FeatureId) => i18n.message(names[feature])
   async function paint(badge: Badge, tabId?: number) {
@@ -93,20 +111,22 @@ export function createToolbarBadge(ports: BadgePorts): ToolbarBadge {
     if (consentPending || view.settings.kind !== "value") return { facts: { ...clear, consentPending }, tabs: [] }
     const settings = decodeSettings(view.settings.settings)
     const [www, music, session] = await Promise.all([ports.access("www"), ports.access("music"), ports.owner.readSession()])
-    const accessMissing = !www && needsAccess("www", settings) || !music && needsAccess("music", settings)
+    const accessMissing = (!www && needsAccess("www", settings)) || (!music && needsAccess("music", settings))
     const marks = view.setups.some(entry => Object.keys(entry.setup.marks).length > 0)
     const memory = session.kind === "memory" ? session.memory : null
     // Pausing auto-add clears the ticks, so "paused" shows on every tab (ARC-MOD-38).
     if (memory?.paused) ticks.clear()
     const ticked = settings.autoAdd.on && settings.autoAdd.toolbarTick ? new Set([...ticks].filter(tabId => memory?.tabs.has(tabId))) : new Set<number>()
     const notWorking = new Map<number, FeatureId[]>()
-    if (memory) await Promise.all([...memory.tabs].slice(0, 50).map(async ([tabId, record]) => {
-      const broken = (await readTabStatuses(ports, settings, tabId, record, null)).filter(row => row.state === "not-working").map(row => row.feature)
-      if (broken.length) notWorking.set(tabId, broken)
-    }))
+    if (memory)
+      await Promise.all(
+        [...memory.tabs].slice(0, 50).map(async ([tabId, record]) => {
+          const broken = (await readTabStatuses(ports, settings, tabId, record, null)).filter(row => row.state === "not-working").map(row => row.feature)
+          if (broken.length) notWorking.set(tabId, broken)
+        })
+      )
     return {
-      facts: { consentPending, accessMissing, marks, notWorking, ticked,
-        paused: settings.autoAdd.on && settings.autoAdd.toolbarPaused && memory?.paused === true },
+      facts: { consentPending, accessMissing, marks, notWorking, ticked, paused: settings.autoAdd.on && settings.autoAdd.toolbarPaused && memory?.paused === true },
       tabs: memory ? [...memory.tabs.keys()] : []
     }
   }
@@ -114,20 +134,37 @@ export function createToolbarBadge(ports: BadgePorts): ToolbarBadge {
     const read = await facts()
     if (disposed) return
     const next = everyTabBadge(read.facts)
-    if (!sameBadge(next, shown)) { shown = next; await paint(next) }
+    if (!sameBadge(next, shown)) {
+      shown = next
+      await paint(next)
+    }
     for (const tabId of new Set([...read.tabs, ...perTab.keys()])) {
       if (flashes.has(tabId)) continue
       const own = badgeFor(read.facts, tabId)
       if (!sameBadge(own, next)) {
-        if (!sameBadge(own, perTab.get(tabId) ?? next)) { perTab.set(tabId, own); await paint(own, tabId).catch(() => {}) }
+        if (!sameBadge(own, perTab.get(tabId) ?? next)) {
+          perTab.set(tabId, own)
+          await paint(own, tabId).catch(() => {})
+        }
       } else if (perTab.delete(tabId)) await reset(tabId).catch(() => {})
     }
   }
   function refresh(): Promise<void> {
     if (disposed) return Promise.resolve()
-    if (running) { again = true; return running }
+    if (running) {
+      again = true
+      return running
+    }
     running = (async () => {
-      try { do { again = false; await run() } while (again && !disposed) } catch {} finally { running = undefined }
+      try {
+        do {
+          again = false
+          await run()
+        } while (again && !disposed)
+      } catch {
+      } finally {
+        running = undefined
+      }
     })()
     return running
   }
@@ -136,12 +173,17 @@ export function createToolbarBadge(ports: BadgePorts): ToolbarBadge {
     flash(tabId, ok, label) {
       if (disposed) return
       flashes.get(tabId)?.()
-      void ports.action.setBadgeText({ text: ok ? "✓" : "✕", tabId }).then(() => ports.action.setBadgeBackgroundColor({ color: ok ? badgeColors.teal : badgeColors.crimson, tabId }))
-        .then(() => ports.action.setTitle({ title: label, tabId })).catch(() => {})
+      void ports.action
+        .setBadgeText({ text: ok ? "✓" : "✕", tabId })
+        .then(() => ports.action.setBadgeBackgroundColor({ color: ok ? badgeColors.teal : badgeColors.crimson, tabId }))
+        .then(() => ports.action.setTitle({ title: label, tabId }))
+        .catch(() => {})
       const stop = ports.clock.after(3000, () => {
         flashes.delete(tabId)
         perTab.delete(tabId)
-        void reset(tabId).catch(() => {}).then(() => refresh())
+        void reset(tabId)
+          .catch(() => {})
+          .then(() => refresh())
       })
       flashes.set(tabId, stop)
     },
@@ -155,7 +197,9 @@ export function createToolbarBadge(ports: BadgePorts): ToolbarBadge {
       ticks.delete(tabId)
       if (flashes.has(tabId)) return
       perTab.delete(tabId)
-      void reset(tabId).catch(() => {}).then(() => refresh())
+      void reset(tabId)
+        .catch(() => {})
+        .then(() => refresh())
     },
     loaded(tabId) {
       ticks.delete(tabId)

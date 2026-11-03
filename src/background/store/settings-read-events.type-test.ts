@@ -2,7 +2,7 @@ import { createLocalFilterWriter, createStartingLocalFilterWriter, type Settings
 import type { Origin } from "../../shared/contracts/results"
 import type { SharedSettingChange } from "./settings-edit"
 import type { LocalSettingsWriteResult } from "./shared-setting-execution"
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 type Writer = ReturnType<typeof createLocalFilterWriter>
 export type OwnerSettingsProofs = [

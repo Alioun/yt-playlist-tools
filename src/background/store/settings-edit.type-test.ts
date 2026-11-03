@@ -1,20 +1,21 @@
 import type { Settings } from "../../shared/model"
 import type { changeSharedSetting, SharedSettingChange, SharedSettingResult, SharedOptionChange, SharedOptionValues } from "./settings-edit"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 type Snapshot<T> = T extends object ? { readonly [P in keyof T]: Snapshot<T[P]> } : T
 type Input = Parameters<typeof changeSharedSetting>[0]
 
 export type SharedSettingProofs = [
-  Check<Equal<SharedSettingChange,
-    | { readonly kind: "theme"; readonly value: Settings["theme"] }
-    | { readonly kind: "default-percentage"; readonly value: Settings["autoAdd"]["pct"] }
-    | SharedOptionChange>>,
-  Check<Equal<SharedSettingResult,
-    | { readonly kind: "unchanged" }
-    | { readonly kind: "invalid"; readonly reason: "invalid-percentage" | "invalid-option" }
-    | { readonly kind: "changed"; readonly settings: Settings }>>,
+  Check<
+    Equal<SharedSettingChange, { readonly kind: "theme"; readonly value: Settings["theme"] } | { readonly kind: "default-percentage"; readonly value: Settings["autoAdd"]["pct"] } | SharedOptionChange>
+  >,
+  Check<
+    Equal<
+      SharedSettingResult,
+      { readonly kind: "unchanged" } | { readonly kind: "invalid"; readonly reason: "invalid-percentage" | "invalid-option" } | { readonly kind: "changed"; readonly settings: Settings }
+    >
+  >,
   Check<Equal<Input, { readonly current: Snapshot<Settings>; readonly change: SharedSettingChange }>>,
   Check<Equal<ReturnType<typeof changeSharedSetting>, SharedSettingResult>>,
   Check<Equal<keyof typeof import("./settings-edit"), "changeSharedSetting">>
@@ -55,9 +56,12 @@ function invalidUses(change: typeof changeSharedSetting, input: Input, result: S
     result.reason
   }
   switch (result.kind) {
-    case "unchanged": return
-    case "invalid": return result.reason
-    case "changed": return result.settings
+    case "unchanged":
+      return
+    case "invalid":
+      return result.reason
+    case "changed":
+      return result.settings
     default: {
       const exhaustive: never = result
       return exhaustive

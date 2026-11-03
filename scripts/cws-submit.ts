@@ -20,25 +20,14 @@ const SCOPE = "https://www.googleapis.com/auth/chromewebstore"
 const POLL_SECONDS = 10
 const UPLOAD_TIMEOUT_MINUTES = 10
 
-const {
-  CHROME_PUBLISHER_ID,
-  CHROME_EXTENSION_ID,
-  CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL,
-  CHROME_SERVICE_ACCOUNT_PRIVATE_KEY,
-  CHROME_PUBLISH_TYPE = "DEFAULT_PUBLISH"
-} = process.env
+const { CHROME_PUBLISHER_ID, CHROME_EXTENSION_ID, CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL, CHROME_SERVICE_ACCOUNT_PRIVATE_KEY, CHROME_PUBLISH_TYPE = "DEFAULT_PUBLISH" } = process.env
 
 const [zip, version] = process.argv.slice(2)
 if (!zip || !version) {
   console.error("usage: cws-submit.ts <chrome zip> <version>")
   process.exit(2)
 }
-if (
-  !CHROME_PUBLISHER_ID ||
-  !CHROME_EXTENSION_ID ||
-  !CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL ||
-  !CHROME_SERVICE_ACCOUNT_PRIVATE_KEY
-) {
+if (!CHROME_PUBLISHER_ID || !CHROME_EXTENSION_ID || !CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL || !CHROME_SERVICE_ACCOUNT_PRIVATE_KEY) {
   console.error("the CHROME_* publisher, extension and service-account variables must be set")
   process.exit(2)
 }
@@ -91,8 +80,7 @@ type Status = {
 }
 
 const fetchStatus = () => call<Status>("GET", `${API}/v2/${item}:fetchStatus`)
-const has = (revision: Revision | undefined) =>
-  revision?.distributionChannels?.some((channel) => channel.crxVersion === version) ?? false
+const has = (revision: Revision | undefined) => revision?.distributionChannels?.some(channel => channel.crxVersion === version) ?? false
 
 const before = await fetchStatus()
 if (has(before.submittedItemRevisionStatus) || has(before.publishedItemRevisionStatus)) {
@@ -101,12 +89,7 @@ if (has(before.submittedItemRevisionStatus) || has(before.publishedItemRevisionS
 }
 
 console.log(`Uploading ${zip}`)
-const upload = await call<{ uploadState?: string; crxVersion?: string }>(
-  "POST",
-  `${API}/upload/v2/${item}:upload`,
-  Bun.file(zip),
-  "application/zip"
-)
+const upload = await call<{ uploadState?: string; crxVersion?: string }>("POST", `${API}/upload/v2/${item}:upload`, Bun.file(zip), "application/zip")
 
 let state = upload.uploadState
 const deadline = Date.now() + UPLOAD_TIMEOUT_MINUTES * 60_000

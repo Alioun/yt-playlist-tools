@@ -19,11 +19,18 @@ export function createMusicQueueEdits(ctx: MusicContext) {
     if (index < 0) return failed
     const noisy = ctx.quiet(scope)
     if (!ctx.fire(route, () => ctx.port.remove(String(job.id)))) return unavailable
-    const gone = await ctx.until(scope, () => {
-      const now = ctx.snapshot(route)
-      return now !== undefined && indexOf(now, job.id) < 0
-    }, true)
-    if (!gone) { ctx.notice("no-effect", route); return failed }
+    const gone = await ctx.until(
+      scope,
+      () => {
+        const now = ctx.snapshot(route)
+        return now !== undefined && indexOf(now, job.id) < 0
+      },
+      true
+    )
+    if (!gone) {
+      ctx.notice("no-effect", route)
+      return failed
+    }
     if (noisy()) ctx.notice("quiet-route-noisy", route)
     return { ok: true, data: { index }, route: route.id }
   }
@@ -32,7 +39,10 @@ export function createMusicQueueEdits(ctx: MusicContext) {
     try {
       const data = ctx.port.panel()
       return { data, current: ctx.port.current(), fresh: Array.isArray(data) && data === field(ctx.port.state(), "queue", "items") }
-    } catch { ctx.notice("threw", route); return undefined }
+    } catch {
+      ctx.notice("threw", route)
+      return undefined
+    }
   }
   async function moveEntry(route: HandlerRoute, id: QueueItemId, to: JobOf<"queueMove">["to"], scope: JobScope, settle = false): Promise<Moved> {
     if (settle) await ctx.until(scope, () => readPanel(route)?.fresh === true, false)
@@ -40,19 +50,29 @@ export function createMusicQueueEdits(ctx: MusicContext) {
     if (!read) return unavailable
     if (!read.fresh) return failed
     const panel = parseQueueSnapshot(read.data, read.current)
-    if (!panel) { ctx.notice("unrecognised", route, read.data); return unavailable }
+    if (!panel) {
+      ctx.notice("unrecognised", route, read.data)
+      return unavailable
+    }
     const from = indexOf(panel, id)
     if (from < 0 || from === panel.current) return failed
-    const target = to === "next" ? from > panel.current ? panel.current + 1 : panel.current : to === "end" ? panel.entries.length - 1 : to
+    const target = to === "next" ? (from > panel.current ? panel.current + 1 : panel.current) : to === "end" ? panel.entries.length - 1 : to
     const entry = panel.entries[from]
     if (!entry || target < 0 || target >= panel.entries.length) return failed
     if (target === from) return { ok: true, from, moved: false }
     if (!ctx.fire(route, () => ctx.port.drop(entry.raw, target))) return unavailable
-    const moved = await ctx.until(scope, () => {
-      const now = ctx.snapshot(route)
-      return now !== undefined && indexOf(now, id) === target
-    }, true)
-    if (!moved) { ctx.notice("no-effect", route); return failed }
+    const moved = await ctx.until(
+      scope,
+      () => {
+        const now = ctx.snapshot(route)
+        return now !== undefined && indexOf(now, id) === target
+      },
+      true
+    )
+    if (!moved) {
+      ctx.notice("no-effect", route)
+      return failed
+    }
     return { ok: true, from, moved: true }
   }
 
@@ -64,7 +84,8 @@ export function createMusicQueueEdits(ctx: MusicContext) {
   }
 
   async function reinsert(job: JobOf<"queueReinsert">, scope: JobScope): Promise<PageJobResult<JobOf<"queueReinsert">>> {
-    const route = ctx.handlers("queueReinsert")[0], mover = ctx.handlers("queueMove")[0]
+    const route = ctx.handlers("queueReinsert")[0],
+      mover = ctx.handlers("queueMove")[0]
     if (!route || !mover || ctx.casting() || !ctx.present(route) || !ctx.present(mover)) return unavailable
     const before = ctx.snapshot(route)
     if (!before) return unavailable

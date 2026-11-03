@@ -45,27 +45,25 @@ export type GatherTab = {
   readonly pinned: boolean
   readonly audible: boolean
 }
-export type GatherTabRead =
-  | { readonly kind: "tab"; readonly tab: GatherTab; readonly status: "loading" | "complete" }
-  | { readonly kind: "gone" | "unavailable" }
+export type GatherTabRead = { readonly kind: "tab"; readonly tab: GatherTab; readonly status: "loading" | "complete" } | { readonly kind: "gone" | "unavailable" }
 export type GatherNativePort = {
   // `null` reads every window at once, for automatic gathering's unvisited check (ARC-ACC-72).
   queryVideos(windowId: number | null, patterns: readonly string[]): Promise<{ readonly kind: "tabs"; readonly tabs: readonly GatherTab[] } | { readonly kind: "unavailable" }>
   read(tabId: number): Promise<GatherTabRead>
   // `reopened` marks an Undo reopen. Firefox opens it unloaded with its old title (ARC-ACC-76); other browsers ignore it.
-  create(props: { readonly windowId: number; readonly url: string; readonly active: boolean; readonly index?: number },
-    reopened?: { readonly title: string }): Promise<{ readonly kind: "created"; readonly tabId: number } | { readonly kind: "window-gone" | "unavailable" }>
+  create(
+    props: { readonly windowId: number; readonly url: string; readonly active: boolean; readonly index?: number },
+    reopened?: { readonly title: string }
+  ): Promise<{ readonly kind: "created"; readonly tabId: number } | { readonly kind: "window-gone" | "unavailable" }>
   createWindow(urls: readonly [string, ...string[]]): Promise<{ readonly kind: "created"; readonly tabIds: readonly number[] } | { readonly kind: "unavailable" }>
   remove(tabIds: readonly [number, ...number[]]): Promise<{ readonly kind: "removed" | "unavailable" }>
 }
-export type TabContext ={ readonly tab: NativeTab & { readonly site: Site }; readonly info: TabPing }
+export type TabContext = { readonly tab: NativeTab & { readonly site: Site }; readonly info: TabPing }
 export type TabViewProducer<View extends TabViewScope> = {
   produce(context: TabContext): Promise<{ readonly kind: "view"; readonly view: View } | { readonly kind: "unavailable" }>
   isView(value: unknown): value is View
 }
-export type AccountNeed =
-  | { readonly kind: "any" }
-  | { readonly kind: "account"; readonly acct: AccountKey; readonly signedIn: boolean }
+export type AccountNeed = { readonly kind: "any" } | { readonly kind: "account"; readonly acct: AccountKey; readonly signedIn: boolean }
 export type RoutingNeed = { readonly site: Site; readonly req: Requester; readonly account: AccountNeed }
 export type RegistryResult = SessionWrite | { readonly kind: "remembered"; readonly scope: "private" }
 export type AccountInView =
@@ -77,9 +75,16 @@ export type TabGuard = { readonly kind: "guard"; readonly reason: "held" | "disp
 export type NoTab = { readonly kind: "no-tab"; readonly attempted: readonly number[] }
 export type TabJobOutcome<J extends Job> =
   | { readonly kind: "result"; readonly tabId: number; readonly result: JobResult<J> }
-  | { readonly kind: "transport"; readonly tabId: number; readonly failure: "gone" | Extract<RpcOutcome<never>, { kind: "failed" }>["failure"]; readonly delivery: "unknown"; readonly cleanup?: SessionWrite }
+  | {
+      readonly kind: "transport"
+      readonly tabId: number
+      readonly failure: "gone" | Extract<RpcOutcome<never>, { kind: "failed" }>["failure"]
+      readonly delivery: "unknown"
+      readonly cleanup?: SessionWrite
+    }
   | { readonly kind: "session"; readonly result: SessionRead | SessionWrite }
-  | NoTab | TabGuard
+  | NoTab
+  | TabGuard
 export type TabsPorts = {
   readonly session: SessionPort
   readonly native: TabNativePort
@@ -111,6 +116,9 @@ export type Tabs = {
   accountInView(req: Requester): Promise<AccountInView>
   serve<J extends Job>(invocation: JobInvocation<J>, need: RoutingNeed): Promise<TabJobOutcome<J>>
   runIn<J extends Job>(tabId: number, invocation: JobInvocation<J>, need: RoutingNeed): Promise<TabJobOutcome<J>>
-  push<View extends TabViewScope>(req: Requester, producer: TabViewProducer<View>): Promise<{ readonly sent: number; readonly failed: number } | TabGuard | { readonly kind: "session"; readonly result: SessionRead | SessionWrite }>
+  push<View extends TabViewScope>(
+    req: Requester,
+    producer: TabViewProducer<View>
+  ): Promise<{ readonly sent: number; readonly failed: number } | TabGuard | { readonly kind: "session"; readonly result: SessionRead | SessionWrite }>
   dispose(): void
 }

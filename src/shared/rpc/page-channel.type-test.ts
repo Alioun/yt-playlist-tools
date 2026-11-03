@@ -1,7 +1,7 @@
 import type { PageChannel, PageFrameListener, PageWire } from "./page-channel"
 import { createDirectPageChannel, createDomPageChannel } from "./page-channel"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Assert<T extends true> = T
 export type PageChannelRelationships = [
   Assert<Equal<PageWire, "req" | "res" | "retire">>,
@@ -18,7 +18,10 @@ declare const doc: Document
 export function positives(): void {
   channel.send("req", "{}", item)
   channel.send("res", "{}")
-  const stop: () => void = channel.listen("retire", (detail, target) => { void detail; void target })
+  const stop: () => void = channel.listen("retire", (detail, target) => {
+    void detail
+    void target
+  })
   stop()
   createDomPageChannel(doc)
 }

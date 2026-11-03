@@ -7,7 +7,7 @@ import { pagePicker } from "../ui/picker/page"
 
 export default defineUnlistedScript(() => {
   const global = pageGlobal()
-  const live = () => global.core && !global.core.disposed ? global.core : undefined
+  const live = () => (global.core && !global.core.disposed ? global.core : undefined)
   const core = live()
   if (global.popovers || !core) return
   global.loaded.set("popovers", core.build)

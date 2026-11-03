@@ -5,6 +5,9 @@ import { createLiveMusicPage, createLiveMusicRequests } from "./live-music"
 
 export function createLiveMusicJobs({ window, document, reads }: JobsHost): Jobs {
   return createJobsGateway({
-    site: musicGateway, reads, requests: createLiveMusicRequests({ window, document }), music: createLiveMusicPage({ window, document })
+    site: musicGateway,
+    reads,
+    requests: createLiveMusicRequests({ window, document }),
+    music: createLiveMusicPage({ window, document })
   })
 }

@@ -1,15 +1,16 @@
 import { CONTRACT_VERSION, parseJsonText, supportsStream } from "../shared/contracts"
+import type { BreakageSignal, BuildId, DiagnosticVocabulary, Job, MessageHeader, PageRequestId, PageWatchId, ProbeReport, Site, Stream, StreamData } from "../shared/contracts"
+import { isPageHelloAnswer, isPageProbeAnswerFor, isPageRequestMessage, isPageRetireMessage, isPageRunAnswerFor, isPageSignalEvent, isPageStreamEventFor } from "../shared/contracts/page"
 import type {
-  BreakageSignal, BuildId, DiagnosticVocabulary, Job, MessageHeader, PageRequestId, PageWatchId, ProbeReport, Site,
-  Stream, StreamData
-} from "../shared/contracts"
-import {
-  isPageHelloAnswer, isPageProbeAnswerFor, isPageRequestMessage, isPageRetireMessage, isPageRunAnswerFor,
-  isPageSignalEvent, isPageStreamEventFor
-} from "../shared/contracts/page"
-import type {
-  PageGatewayMessage, PageHelloAnswer, PageHelloSnapshot, PageJobResult, PageNeedEvent, PageProbeAnswer, PageRequestMessage,
-  PageRunAnswer, PageSignalEvent
+  PageGatewayMessage,
+  PageHelloAnswer,
+  PageHelloSnapshot,
+  PageJobResult,
+  PageNeedEvent,
+  PageProbeAnswer,
+  PageRequestMessage,
+  PageRunAnswer,
+  PageSignalEvent
 } from "../shared/contracts/page"
 import type { PageChannel } from "../shared/rpc/page-channel"
 
@@ -72,16 +73,22 @@ export function servePage(gateway: PageGatewayOperations, options: PageServeOpti
     else watch.stop = stop
   }
   function answerRun(id: PageRequestId, job: Job, target: Element | null): void {
-    void gateway.run(job, target ? { target } : undefined).then(result => {
-      const answer: PageRunAnswer = { ...header, kind: "run", id, result }
-      if (isPageRunAnswerFor({ id, job }, answer, build)) send(answer)
-    }).catch(() => {})
+    void gateway
+      .run(job, target ? { target } : undefined)
+      .then(result => {
+        const answer: PageRunAnswer = { ...header, kind: "run", id, result }
+        if (isPageRunAnswerFor({ id, job }, answer, build)) send(answer)
+      })
+      .catch(() => {})
   }
   function answerProbe(id: PageRequestId): void {
-    void gateway.probe().then(report => {
-      const answer: PageProbeAnswer = { ...header, kind: "probe", id, report }
-      if (isPageProbeAnswerFor({ id, site, watchIds: vocabulary().watchIds }, answer, build)) send(answer)
-    }).catch(() => {})
+    void gateway
+      .probe()
+      .then(report => {
+        const answer: PageProbeAnswer = { ...header, kind: "probe", id, report }
+        if (isPageProbeAnswerFor({ id, site, watchIds: vocabulary().watchIds }, answer, build)) send(answer)
+      })
+      .catch(() => {})
   }
   function receive(message: PageRequestMessage, target: Element | null): void {
     switch (message.kind) {
@@ -92,15 +99,19 @@ export function servePage(gateway: PageGatewayOperations, options: PageServeOpti
         if (isPageHelloAnswer(answer, { build, site })) send(answer)
         return
       }
-      case "run": return answerRun(message.id, message.job, target)
-      case "watch": return startWatch(message.id, message.stream)
+      case "run":
+        return answerRun(message.id, message.job, target)
+      case "watch":
+        return startWatch(message.id, message.stream)
       case "unwatch": {
         const watch = watches.get(message.id)
         if (watch) release(watch)
         return
       }
-      case "probe": return answerProbe(message.id)
-      case "loaded": return options.loaded?.(message.ok)
+      case "probe":
+        return answerProbe(message.id)
+      case "loaded":
+        return options.loaded?.(message.ok)
     }
   }
   function dispose(): void {
@@ -108,25 +119,35 @@ export function servePage(gateway: PageGatewayOperations, options: PageServeOpti
     disposed = true
     const errors: unknown[] = []
     for (const stop of [...owned.splice(0), ...[...watches.values()].map(watch => () => release(watch))]) {
-      try { stop() } catch (error) { errors.push(error) }
+      try {
+        stop()
+      } catch (error) {
+        errors.push(error)
+      }
     }
     if (errors.length > 0) throw errors[0]
   }
 
-  owned.push(channel.listen("req", (detail, target) => {
-    if (disposed) return
-    const parsed = parseJsonText(detail)
-    if (parsed.ok && isPageRequestMessage(parsed.value, build)) receive(parsed.value, target)
-  }))
-  owned.push(channel.listen("retire", detail => {
-    const parsed = parseJsonText(detail)
-    if (parsed.ok && isPageRetireMessage(parsed.value) && parsed.value.build !== build) dispose()
-  }))
+  owned.push(
+    channel.listen("req", (detail, target) => {
+      if (disposed) return
+      const parsed = parseJsonText(detail)
+      if (parsed.ok && isPageRequestMessage(parsed.value, build)) receive(parsed.value, target)
+    })
+  )
+  owned.push(
+    channel.listen("retire", detail => {
+      const parsed = parseJsonText(detail)
+      if (parsed.ok && isPageRetireMessage(parsed.value) && parsed.value.build !== build) dispose()
+    })
+  )
   try {
-    owned.push(options.signals(signal => {
-      const event: PageSignalEvent = { ...header, kind: "signal", signal }
-      if (isPageSignalEvent(event, { build, site, vocabulary: vocabulary() })) send(event)
-    }))
+    owned.push(
+      options.signals(signal => {
+        const event: PageSignalEvent = { ...header, kind: "signal", signal }
+        if (isPageSignalEvent(event, { build, site, vocabulary: vocabulary() })) send(event)
+      })
+    )
   } catch (error) {
     dispose()
     throw error
@@ -134,7 +155,9 @@ export function servePage(gateway: PageGatewayOperations, options: PageServeOpti
   if (disposed) owned.splice(0).forEach(stop => stop())
 
   return {
-    get disposed() { return disposed },
+    get disposed() {
+      return disposed
+    },
     dispose,
     need() {
       const event: PageNeedEvent = { ...header, kind: "need" }

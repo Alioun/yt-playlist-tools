@@ -8,7 +8,9 @@ export type QueueEntry = { id: QueueItemId; videoId: VideoId | undefined; raw: u
 export type QueueSnapshot = { entries: QueueEntry[]; current: number }
 export type QueueReplayAnswer = { items: unknown[]; params: unknown }
 
-export function sameItem(a: QueueItemId, b: QueueItemId): boolean { return String(a) === String(b) }
+export function sameItem(a: QueueItemId, b: QueueItemId): boolean {
+  return String(a) === String(b)
+}
 export function indexOf(snapshot: QueueSnapshot, id: QueueItemId): number {
   return snapshot.entries.findIndex(entry => sameItem(entry.id, id))
 }
@@ -20,7 +22,7 @@ export function parseQueueEntries(raw: unknown): QueueEntry[] | undefined {
     const renderer = queueRenderer(item)
     const id = field(renderer, "navigationEndpoint", "watchEndpoint", "index")
     const videoId = field(renderer, "videoId")
-    if (!isQueueItemId(id) || videoId !== undefined && !isVideoId(videoId)) return undefined
+    if (!isQueueItemId(id) || (videoId !== undefined && !isVideoId(videoId))) return undefined
     entries.push({ id, videoId, raw: item })
   }
   return new Set(entries.map(entry => String(entry.id))).size === entries.length ? entries : undefined

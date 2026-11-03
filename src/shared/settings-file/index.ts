@@ -1,7 +1,4 @@
-import {
-  defaultSettings, defaultSetup, DOCUMENT_VERSION, isAccountKey, isPlaylistId,
-  type AccountKey, type DecodedDocument, type Filter, type PlaylistId, type Settings, type Setup
-} from "../model"
+import { defaultSettings, defaultSetup, DOCUMENT_VERSION, isAccountKey, isPlaylistId, type AccountKey, type DecodedDocument, type Filter, type PlaylistId, type Settings, type Setup } from "../model"
 import { isRecord } from "../model/codec"
 import { filterData, settingsData, setupData, type FileFilter, type FileSetup } from "./data"
 import { parseFileJson } from "./json"
@@ -58,15 +55,17 @@ export type ExportFile = {
   readonly mime: typeof SETTINGS_FILE_MIME
   readonly text: string
 }
-export type ExportResult =
-  | { readonly kind: "exported"; readonly file: ExportFile }
-  | { readonly kind: "refused"; readonly reason: "invalid-source" | "unsupported-document" }
+export type ExportResult = { readonly kind: "exported"; readonly file: ExportFile } | { readonly kind: "refused"; readonly reason: "invalid-source" | "unsupported-document" }
 
-function invalid(): ImportRefusal { return { kind: "refused", reason: "invalid-file", copy: "DATA-55.invalid-file" } }
+function invalid(): ImportRefusal {
+  return { kind: "refused", reason: "invalid-file", copy: "DATA-55.invalid-file" }
+}
 
 function dateIsValid(date: unknown): date is string {
   if (typeof date !== "string" || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(date)) return false
-  const year = Number(date.slice(0, 4)), month = Number(date.slice(5, 7)), day = Number(date.slice(8, 10))
+  const year = Number(date.slice(0, 4)),
+    month = Number(date.slice(5, 7)),
+    day = Number(date.slice(8, 10))
   if (year < 1 || month < 1 || month > 12 || day < 1) return false
   const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)
   const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1]
@@ -82,8 +81,7 @@ function exact(raw: unknown, keys: readonly string[]): raw is Record<string, unk
 }
 
 function supported<T>(document: DecodedDocument<T>): boolean {
-  return document.kind !== "newer-version" &&
-    (document.kind === "absent" || document.document.v === DOCUMENT_VERSION)
+  return document.kind !== "newer-version" && (document.kind === "absent" || document.document.v === DOCUMENT_VERSION)
 }
 
 export function exportFile(input: { readonly source: SettingsFileSource; readonly version: string; readonly date: string }): ExportResult {
@@ -110,16 +108,27 @@ export function exportFile(input: { readonly source: SettingsFileSource; readonl
       }
       if (account.setup.kind !== "value" && filters.length === 0) continue
       const setup = setupData(account.setup.kind === "value" ? account.setup.document.data : defaultSetup(), settings, false)
-      accounts.push([account.account, { setup, filters: Object.fromEntries(filters.sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)) }])
+      accounts.push([account.account, { setup, filters: Object.fromEntries(filters.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) }])
     }
     const contents = {
-      format: SETTINGS_FILE_FORMAT, product: SETTINGS_FILE_PRODUCT, version: input.version, date: input.date,
-      settings, accounts: Object.fromEntries(accounts.sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0))
+      format: SETTINGS_FILE_FORMAT,
+      product: SETTINGS_FILE_PRODUCT,
+      version: input.version,
+      date: input.date,
+      settings,
+      accounts: Object.fromEntries(accounts.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
     }
-    return { kind: "exported", file: {
-      filename: `perchling-settings-${input.date}.json`, mime: SETTINGS_FILE_MIME, text: `${JSON.stringify(contents, null, 2)}\n`
-    } }
-  } catch { return { kind: "refused", reason: "invalid-source" } }
+    return {
+      kind: "exported",
+      file: {
+        filename: `perchling-settings-${input.date}.json`,
+        mime: SETTINGS_FILE_MIME,
+        text: `${JSON.stringify(contents, null, 2)}\n`
+      }
+    }
+  } catch {
+    return { kind: "refused", reason: "invalid-source" }
+  }
 }
 
 export function exportBlob(file: ExportFile): Blob {
@@ -135,8 +144,16 @@ export function createImportPlanner(window: ImportWindow): ImportPlanner {
       if (window !== "normal") return { kind: "refused", reason: "privacy-unavailable", copy: "DATA-54.private" }
       try {
         const raw = parseFileJson(text)
-        if (!isRecord(raw) || raw.product !== SETTINGS_FILE_PRODUCT || !versionIsValid(raw.version) || !dateIsValid(raw.date) ||
-          typeof raw.format !== "number" || !Number.isSafeInteger(raw.format) || raw.format < 1) return invalid()
+        if (
+          !isRecord(raw) ||
+          raw.product !== SETTINGS_FILE_PRODUCT ||
+          !versionIsValid(raw.version) ||
+          !dateIsValid(raw.date) ||
+          typeof raw.format !== "number" ||
+          !Number.isSafeInteger(raw.format) ||
+          raw.format < 1
+        )
+          return invalid()
         if (raw.format > SETTINGS_FILE_FORMAT) return { kind: "refused", reason: "newer-format", copy: "DATA-55.newer-format" }
         if (!exact(raw, ["format", "product", "version", "date", "settings", "accounts"]) || !isRecord(raw.accounts)) return invalid()
         const settings = settingsData(raw.settings, true)
@@ -154,12 +171,17 @@ export function createImportPlanner(window: ImportWindow): ImportPlanner {
           accounts.push({ account, setup, filters })
         }
         return {
-          kind: "import-plan", header: { format: 1, product: SETTINGS_FILE_PRODUCT, version: raw.version, date: raw.date },
-          settings, accounts, accountCount: accounts.length,
+          kind: "import-plan",
+          header: { format: 1, product: SETTINGS_FILE_PRODUCT, version: raw.version, date: raw.date },
+          settings,
+          accounts,
+          accountCount: accounts.length,
           replacement: { sharedSettings: "replace", includedAccounts: "replace-setup-and-all-filters", absentAccounts: "keep" },
           provenance: "fresh-edit-required"
         }
-      } catch { return invalid() }
+      } catch {
+        return invalid()
+      }
     }
   }
 }

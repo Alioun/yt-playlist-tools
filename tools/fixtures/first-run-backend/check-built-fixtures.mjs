@@ -15,10 +15,11 @@ for (const target of ["chrome-mv3", "firefox-mv3"]) {
   assert(names.includes("onboarding.html"))
   assert(names.some(name => name.endsWith(".svg")))
   const files = []
-  for (const name of names) if ((await stat(new URL(name, directory))).isFile()) {
-    const bytes = await readFile(new URL(name, directory))
-    files.push({ path: name, bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") })
-  }
+  for (const name of names)
+    if ((await stat(new URL(name, directory))).isFile()) {
+      const bytes = await readFile(new URL(name, directory))
+      files.push({ path: name, bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex") })
+    }
   const code = (await Promise.all(names.filter(name => name.endsWith(".js")).map(name => readFile(new URL(name, directory), "utf8")))).join("\n")
   const css = (await Promise.all(names.filter(name => name.endsWith(".css")).map(name => readFile(new URL(name, directory), "utf8")))).join("\n")
   assert(code.includes("What should Perchling do?"))

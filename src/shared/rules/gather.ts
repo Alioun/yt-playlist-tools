@@ -16,21 +16,22 @@ export type GatherOrderTab = Readonly<{
 export type GatherStart =
   | Readonly<{ kind: "unobserved" }>
   | Readonly<{
-    kind: "observed"
-    hidden: boolean
-    fresh: boolean
-    restored: boolean
-    loadedInStartupMinute: boolean
-    switchedToSincePageStart: boolean
-  }>
+      kind: "observed"
+      hidden: boolean
+      fresh: boolean
+      restored: boolean
+      loadedInStartupMinute: boolean
+      switchedToSincePageStart: boolean
+    }>
 
-export type GatherAutoTab = GatherOrderTab & Readonly<{
-  active: boolean
-  pinned: boolean
-  audible: boolean
-  incognito: boolean
-  start: GatherStart
-}>
+export type GatherAutoTab = GatherOrderTab &
+  Readonly<{
+    active: boolean
+    pinned: boolean
+    audible: boolean
+    incognito: boolean
+    start: GatherStart
+  }>
 
 export type GatherWindow = Readonly<{
   windowId: number
@@ -63,20 +64,28 @@ export type GatherPickMemory = Readonly<{
 }>
 
 export type GatherLeaveReason =
-  | "feature-off" | "trigger-off" | "check-not-due"
-  | "private" | "active" | "pinned" | "audible"
-  | "undo-kept" | "lasting-failure"
-  | "too-recent" | "not-in-background-burst"
-  | "start-unobserved" | "not-started-hidden" | "not-first-load"
-  | "restored" | "startup-minute" | "switched-since-page-start" | "below-count"
+  | "feature-off"
+  | "trigger-off"
+  | "check-not-due"
+  | "private"
+  | "active"
+  | "pinned"
+  | "audible"
+  | "undo-kept"
+  | "lasting-failure"
+  | "too-recent"
+  | "not-in-background-burst"
+  | "start-unobserved"
+  | "not-started-hidden"
+  | "not-first-load"
+  | "restored"
+  | "startup-minute"
+  | "switched-since-page-start"
+  | "below-count"
 
-export type GatherTabDecision =
-  | Readonly<{ kind: "picked"; tabId: number }>
-  | Readonly<{ kind: "left-out"; tabId: number; reasons: readonly GatherLeaveReason[] }>
+export type GatherTabDecision = Readonly<{ kind: "picked"; tabId: number }> | Readonly<{ kind: "left-out"; tabId: number; reasons: readonly GatherLeaveReason[] }>
 
-export type GatherPace =
-  | Readonly<{ kind: "allowed" }>
-  | Readonly<{ kind: "wait"; nextAllowedAt: number }>
+export type GatherPace = Readonly<{ kind: "allowed" }> | Readonly<{ kind: "wait"; nextAllowedAt: number }>
 
 export type GatherPick = Readonly<{
   unvisited: readonly GatherTabDecision[]
@@ -113,26 +122,26 @@ export function languageTitle(title: string): string {
   return title.replace(/^\(\d+\) /, "").replace(/ - YouTube(?: Music)?$/, "")
 }
 
-export function order(
-  tabs: readonly GatherOrderTab[],
-  gatherOrder: GatherOrder,
-  languages: GatherLanguages,
-  random: () => number,
-): readonly GatherOrderedVideo[] {
+export function order(tabs: readonly GatherOrderTab[], gatherOrder: GatherOrder, languages: GatherLanguages, random: () => number): readonly GatherOrderedVideo[] {
   const byIndex = [...tabs].sort((a, b) => a.index - b.index)
   const ordered = [...byIndex]
   switch (gatherOrder) {
-    case "newest": ordered.sort((a, b) => b.lastAccessed - a.lastAccessed); break
-    case "oldest": ordered.sort((a, b) => a.lastAccessed - b.lastAccessed); break
-    case "left-to-right": break
-    case "right-to-left": ordered.reverse(); break
+    case "newest":
+      ordered.sort((a, b) => b.lastAccessed - a.lastAccessed)
+      break
+    case "oldest":
+      ordered.sort((a, b) => a.lastAccessed - b.lastAccessed)
+      break
+    case "left-to-right":
+      break
+    case "right-to-left":
+      ordered.reverse()
+      break
     case "english":
     case "non-english": {
       const rank: Record<GatherLanguage, number> = { english: 0, "no-answer": 1, other: 2 }
       const direction = gatherOrder === "english" ? 1 : -1
-      ordered.sort((a, b) => direction * (
-        rank[languages.get(a.id) ?? "no-answer"] - rank[languages.get(b.id) ?? "no-answer"]
-      ))
+      ordered.sort((a, b) => direction * (rank[languages.get(a.id) ?? "no-answer"] - rank[languages.get(b.id) ?? "no-answer"]))
       break
     }
     case "shuffled":
@@ -171,12 +180,7 @@ function gate(feature: boolean, trigger: boolean, due: boolean): GatherLeaveReas
   return reasons
 }
 
-export function pick(
-  tabs: GatherWindow,
-  settings: Readonly<Settings["gather"]>,
-  now: number,
-  memory: GatherPickMemory,
-): GatherPick {
+export function pick(tabs: GatherWindow, settings: Readonly<Settings["gather"]>, now: number, memory: GatherPickMemory): GatherPick {
   const common = tabs.tabs.map(tab => {
     const reasons: GatherLeaveReason[] = []
     if (tabs.incognito || tab.incognito) reasons.push("private")
@@ -226,9 +230,10 @@ export function pick(
   }
   const nextAllowedAt = memory.lastGatherAt === null ? null : memory.lastGatherAt + 60_000
   return {
-    unvisited, background, count, selected: [...selected],
-    pace: nextAllowedAt !== null && now < nextAllowedAt
-      ? { kind: "wait", nextAllowedAt }
-      : { kind: "allowed" },
+    unvisited,
+    background,
+    count,
+    selected: [...selected],
+    pace: nextAllowedAt !== null && now < nextAllowedAt ? { kind: "wait", nextAllowedAt } : { kind: "allowed" }
   }
 }

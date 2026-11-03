@@ -7,7 +7,8 @@ export type Mode = "save" | "choose" | "many"
 export type PickerOptions = { readonly marks?: boolean } & (
   | { readonly source: PickerSource<ItemPort>; readonly site: Site; readonly mode: "save" }
   | { readonly source: PickerSource; readonly site: Site; readonly mode: "choose" }
-  | { readonly source: PickerSource<null>; readonly site: Site; readonly mode: "many" })
+  | { readonly source: PickerSource<null>; readonly site: Site; readonly mode: "many" }
+)
 
 export type Refusal = Extract<ChangeResult, { refused: string }>["refused"]
 export type TitleProblem = "required" | "too-long" | "angle-brackets"
@@ -34,9 +35,7 @@ export type PickerRow = {
   readonly pinned: boolean
   readonly mark: Mark | null
 }
-export type MembershipStatus =
-  | { readonly kind: "none" | "checking" | "unreadable" }
-  | { readonly kind: "known"; readonly count: number }
+export type MembershipStatus = { readonly kind: "none" | "checking" | "unreadable" } | { readonly kind: "known"; readonly count: number }
 export type ListStatus = { readonly at: number | null; readonly refreshing: boolean; readonly refreshable: boolean }
 export type Creation = "available" | "private" | "noTab" | "signedOut" | "noChannel"
 export type CreateState = { readonly kind: "idle" | "pending" } | { readonly kind: "failed"; readonly reason: CreateFailure }
@@ -69,7 +68,10 @@ export type CreateOutcome =
   | { readonly kind: "created"; readonly id: PlaylistId; readonly choice: ChangeResult | null }
   | { readonly kind: "invalid"; readonly problem: TitleProblem }
   | { readonly kind: "failed"; readonly reason: CreateFailure }
-  | Picked | Refused | Unavailable | Skip
+  | Picked
+  | Refused
+  | Unavailable
+  | Skip
 
 type Entry = {
   readonly id: PlaylistId
@@ -179,9 +181,15 @@ export class PickerModel {
     if (source.item && options.marks !== false) void this.#readMembership(source.item)
   }
 
-  get closed(): boolean { return this.#closed }
-  get sortAZ(): boolean { return this.#sortAZ }
-  get creating(): CreateState { return this.#creating }
+  get closed(): boolean {
+    return this.#closed
+  }
+  get sortAZ(): boolean {
+    return this.#sortAZ
+  }
+  get creating(): CreateState {
+    return this.#creating
+  }
   get pins(): "available" | "private" | "none" {
     if (this.mode === "many") return "none"
     return this.#options.source.private ? "private" : "available"
@@ -192,9 +200,12 @@ export class PickerModel {
     if (skip) return skip
     const options = this.#options
     switch (options.mode) {
-      case "save": return this.#save(options.source.item, id)
-      case "choose": return this.#pick(options.source.item, id)
-      case "many": return this.#toggle(id, true)
+      case "save":
+        return this.#save(options.source.item, id)
+      case "choose":
+        return this.#pick(options.source.item, id)
+      case "many":
+        return this.#toggle(id, true)
     }
   }
 
@@ -482,18 +493,19 @@ export class PickerModel {
     const members = this.#base === "members" ? this.#members : null
     const base: Entry[] = members
       ? members.map(row => {
-        const known = listed.get(row.id)
-        return {
-          id: row.id, title: row.title, privacy: row.privacy ?? known?.privacy,
-          count: row.count ?? known?.count, thumb: known?.thumb, listed: "listed" as const
-        }
-      })
+          const known = listed.get(row.id)
+          return {
+            id: row.id,
+            title: row.title,
+            privacy: row.privacy ?? known?.privacy,
+            count: row.count ?? known?.count,
+            thumb: known?.thumb,
+            listed: "listed" as const
+          }
+        })
       : listing.map(row => ({ ...row, listed: "listed" as const }))
     const present = new Set(base.map(entry => entry.id))
-    const entries: Entry[] = [
-      ...this.#created.filter(row => !present.has(row.id)).map(row => ({ ...row, listed: "new" as const })),
-      ...base
-    ]
+    const entries: Entry[] = [...this.#created.filter(row => !present.has(row.id)).map(row => ({ ...row, listed: "new" as const })), ...base]
     if (this.mode !== "save" && this.#listing) {
       const shown = new Set(entries.map(entry => entry.id))
       for (const id of this.#chosen) if (!shown.has(id)) entries.push({ id, title: null, listed: "gone" })
@@ -503,14 +515,11 @@ export class PickerModel {
       if (index > 0) entries.unshift(...entries.splice(index, 1))
     }
     if (this.#sortAZ) {
-      entries.sort((a, b) => Number(a.title === null) - Number(b.title === null)
-        || titleOrder.compare(a.title ?? "", b.title ?? ""))
+      entries.sort((a, b) => Number(a.title === null) - Number(b.title === null) || titleOrder.compare(a.title ?? "", b.title ?? ""))
     }
     const marks: ReadonlyMap<PlaylistId, Mark> = this.mode === "save" ? new Map() : this.#options.source.marks
     if (this.mode === "many") entries.sort((a, b) => Number(marks.has(b.id)) - Number(marks.has(a.id)))
-    const facts = this.#membership === "read" && this.#members
-      ? new Map(this.#members.map(row => [row.id, row.contains]))
-      : null
+    const facts = this.#membership === "read" && this.#members ? new Map(this.#members.map(row => [row.id, row.contains])) : null
     return entries.map(entry => this.#view(entry, marks.get(entry.id) ?? null, facts))
   }
 

@@ -1,10 +1,28 @@
 import { describe, expect, test } from "bun:test"
 import {
-  isRouteId, isSetVideoId, isQueueListId, isQueueItemId, isPageType, isMusicType,
-  isQueueInsertEndpoint, isLikeEndpoint, isLibraryEndpoint, isNavigationEndpoint,
-  isAddToPlaylistEndpoint, isRemoveFromQueueEndpoint, isVideoInfo, isNowPlaying,
-  isItemInfo, isLikeState, isJob, isJobDataFor, isJobResultFor, isJobInvocation,
-  isStreamData, supportsJob, supportsStream
+  isRouteId,
+  isSetVideoId,
+  isQueueListId,
+  isQueueItemId,
+  isPageType,
+  isMusicType,
+  isQueueInsertEndpoint,
+  isLikeEndpoint,
+  isLibraryEndpoint,
+  isNavigationEndpoint,
+  isAddToPlaylistEndpoint,
+  isRemoveFromQueueEndpoint,
+  isVideoInfo,
+  isNowPlaying,
+  isItemInfo,
+  isLikeState,
+  isJob,
+  isJobDataFor,
+  isJobResultFor,
+  isJobInvocation,
+  isStreamData,
+  supportsJob,
+  supportsStream
 } from "./index"
 import type { JobId, Job, JobOf, JobData, Stream, StreamData, ItemInfo, PlayerData } from "./index"
 import { isPageJobDataFor, isPageJobResultFor } from "./page"
@@ -14,7 +32,9 @@ function checked<T>(guard: (value: unknown) => value is T, value: unknown): T {
   if (!guard(value)) throw new Error("Invalid synthetic fixture")
   return value
 }
-function roundTrip(value: unknown): unknown { return JSON.parse(JSON.stringify(value)) }
+function roundTrip(value: unknown): unknown {
+  return JSON.parse(JSON.stringify(value))
+}
 const video = checked(isVideoId, "synthetic01")
 const video2 = checked(isVideoId, "synthetic02")
 const playlist = checked(isPlaylistId, "WL")
@@ -47,13 +67,18 @@ test("only positively confirmed additions can carry a normalized missing entry I
     expect(isJobResultFor(job, { ok: true, route, data: { setVideoId: null } })).toBe(true)
     expect(isPageJobResultFor(job, { ok: true, route, data: { setVideoId: null } })).toBe(true)
     for (const value of [
-      { ok: true, route, data: {} }, { ok: true, route, data: { setVideoId: undefined } },
+      { ok: true, route, data: {} },
+      { ok: true, route, data: { setVideoId: undefined } },
       { ok: false, reason: "unconfirmed", data: { setVideoId: null } },
       { ok: true, route, data: { setVideoId: null, failure: { ok: false, reason: "failed" } } }
-    ]) expect(isJobResultFor(job, value)).toBe(false)
+    ])
+      expect(isJobResultFor(job, value)).toBe(false)
   }
   const job = { kind: "addBatch", playlistId: playlist, videoIds: [video, video2] } satisfies JobOf<"addBatch">
-  const results = [{ videoId: video, setVideoId: null }, { videoId: video2, failure: { ok: false, reason: "failed" } }]
+  const results = [
+    { videoId: video, setVideoId: null },
+    { videoId: video2, failure: { ok: false, reason: "failed" } }
+  ]
   expect(isJobResultFor(job, { ok: true, route, data: { results } })).toBe(true)
   expect(isJobDataFor(job, { results: results.toReversed() })).toBe(false)
   expect(isJobDataFor(job, { results: [{ videoId: video, setVideoId: null, failure: { ok: false, reason: "failed" } }, results[1]] })).toBe(false)
@@ -65,7 +90,8 @@ const pageType = checked(isPageType, "synthetic-page-type")
 const musicType = checked(isMusicType, "synthetic-music-type")
 const next = checked(isQueueInsertEndpoint, {
   queueAddEndpoint: { queueInsertPosition: "INSERT_AFTER_CURRENT_VIDEO", queueTarget: { videoId: video }, onEmptyQueue: { native: true } },
-  clickTrackingParams: "synthetic", extraNative: [null, { preserved: true }]
+  clickTrackingParams: "synthetic",
+  extraNative: [null, { preserved: true }]
 })
 const end = checked(isQueueInsertEndpoint, {
   queueAddEndpoint: { queueInsertPosition: "INSERT_AT_END", queueTarget: { playlistId: playlist, native: 1 } }
@@ -79,9 +105,16 @@ const remove = checked(isRemoveFromQueueEndpoint, { removeFromQueueEndpoint: { n
 const videoInfo = { videoId: video, title: "", length: null, kind: "video" } satisfies JobData<JobOf<"videoInfo">>
 const song = { videoId: video, title: "Synthetic song", artist: "", album: "", artwork: "synthetic-artwork", pos: 1.5, len: null }
 const item = {
-  kind: "song", type: { kind: "music-video", musicVideoType: musicType }, title: "",
-  videoId: video, queueItemId: queueId, count: 0, selected: true, autoplay: false,
-  hasOwnLike: false, likeState: null,
+  kind: "song",
+  type: { kind: "music-video", musicVideoType: musicType },
+  title: "",
+  videoId: video,
+  queueItemId: queueId,
+  count: 0,
+  selected: true,
+  autoplay: false,
+  hasOwnLike: false,
+  likeState: null,
   endpoints: { next, end, remove, save, like, library: { inLibrary: true, endpoint: library }, mix, album: browse, artist: browse }
 } satisfies ItemInfo
 const fixtures = {
@@ -91,9 +124,15 @@ const fixtures = {
   playlists: { job: { kind: "playlists" }, data: [{ id: playlist, title: "", thumb: "synthetic-thumb", count: 0 }] },
   add: { job: { kind: "add", playlistId: playlist, videoId: video }, data: { setVideoId: setId } },
   remove: { job: { kind: "remove", playlistId: playlist, setVideoId: setId }, data: null },
-  addBatch: { job: { kind: "addBatch", playlistId: playlist, videoIds: [video, video2] }, data: {
-    results: [{ videoId: video, setVideoId: setId }, { videoId: video2, failure: { ok: false, reason: "failed", http: 429, status: "synthetic" } }]
-  } },
+  addBatch: {
+    job: { kind: "addBatch", playlistId: playlist, videoIds: [video, video2] },
+    data: {
+      results: [
+        { videoId: video, setVideoId: setId },
+        { videoId: video2, failure: { ok: false, reason: "failed", http: 429, status: "synthetic" } }
+      ]
+    }
+  },
   removeBatch: { job: { kind: "removeBatch", playlistId: playlist, setVideoIds: [setId] }, data: { removed: 1 } },
   save: { job: { kind: "save", playlistId: playlist, videoId: video }, data: { setVideoId: setId } },
   unsave: { job: { kind: "unsave", playlistId: playlist, setVideoId: setId }, data: null },
@@ -118,9 +157,21 @@ const fixtures = {
   castState: { job: { kind: "castState" }, data: { casting: false } }
 } satisfies { [K in JobId]: { job: JobOf<K>; data: JobData<JobOf<K>> } }
 const player = {
-  ad: false, at: 10.5, player: "watch", videoId: video, pos: 5.25, len: 10, listedLength: null,
-  rate: 1.25, playing: true, seeking: false, content: "video", isPostLiveDvr: false,
-  isLive: false, isUpcoming: false, isLiveContent: false
+  ad: false,
+  at: 10.5,
+  player: "watch",
+  videoId: video,
+  pos: 5.25,
+  len: 10,
+  listedLength: null,
+  rate: 1.25,
+  playing: true,
+  seeking: false,
+  content: "video",
+  isPostLiveDvr: false,
+  isLive: false,
+  isUpcoming: false,
+  isLiveContent: false
 } satisfies PlayerData
 const streamFixtures = {
   player,
@@ -128,7 +179,9 @@ const streamFixtures = {
   nowPlaying: song,
   queue: { ids: [queueId, numericId] }
 } satisfies { [S in Stream]: StreamData<S> }
-function success(data: unknown): unknown { return { ok: true, data, route } }
+function success(data: unknown): unknown {
+  return { ok: true, data, route }
+}
 
 for (const [kind, fixture] of Object.entries(fixtures)) {
   describe(kind, () => {
@@ -147,9 +200,22 @@ for (const [kind, fixture] of Object.entries(fixtures)) {
       expect(isJob({ ...fixture.job, target: new Date() })).toBe(false)
       for (const [key, field] of Object.entries(fixture.job)) {
         const invalidRepresentations: Record<string, unknown> = {
-          kind: "unknown", videoId: "bad", playlistId: "", setVideoId: "", listId: "", id: -1,
-          videoIds: ["bad"], setVideoIds: [""], ids: [-1], endpoint: { unknownEndpoint: { native: true } },
-          privacy: "unknown", position: "unknown", to: -1, index: 0.5, title: false, input: false
+          kind: "unknown",
+          videoId: "bad",
+          playlistId: "",
+          setVideoId: "",
+          listId: "",
+          id: -1,
+          videoIds: ["bad"],
+          setVideoIds: [""],
+          ids: [-1],
+          endpoint: { unknownEndpoint: { native: true } },
+          privacy: "unknown",
+          position: "unknown",
+          to: -1,
+          index: 0.5,
+          title: false,
+          input: false
         }
         expect(isJob({ ...fixture.job, [key]: invalidRepresentations[key] })).toBe(false)
         const missing: Record<string, unknown> = { ...fixture.job }
@@ -161,12 +227,18 @@ for (const [kind, fixture] of Object.entries(fixtures)) {
     })
     test("requires an exact success envelope and accepts only C0 failures", () => {
       for (const raw of [
-        { ok: true, data: fixture.data }, { ok: true, route }, { ok: 1, data: fixture.data, route },
-        { ok: true, data: fixture.data, route: "" }, { ok: true, data: { unrelated: true }, route },
+        { ok: true, data: fixture.data },
+        { ok: true, route },
+        { ok: 1, data: fixture.data, route },
+        { ok: true, data: fixture.data, route: "" },
+        { ok: true, data: { unrelated: true }, route },
         { ok: true, data: fixture.data, route, reason: "failed" },
-        { ok: true, data: undefined, route }, { ok: false, reason: "unknown" },
-        { ok: false, reason: "failed", data: fixture.data }, { ok: false, reason: "failed", http: 99 }
-      ]) expect(isJobResultFor(fixture.job, raw)).toBe(false)
+        { ok: true, data: undefined, route },
+        { ok: false, reason: "unknown" },
+        { ok: false, reason: "failed", data: fixture.data },
+        { ok: false, reason: "failed", http: 99 }
+      ])
+        expect(isJobResultFor(fixture.job, raw)).toBe(false)
       for (const reason of ["signedOut", "accountChanged", "unavailable", "unconfirmed", "failed"]) {
         expect(isJobResultFor(fixture.job, { ok: false, reason })).toBe(true)
         expect(isPageJobResultFor(fixture.job, { ok: false, reason })).toBe(true)
@@ -206,11 +278,16 @@ describe("pending job correlation and bounded batches", () => {
     const { job, data } = fixtures.addBatch
     expect(isJobDataFor(job, data)).toBe(true)
     for (const results of [
-      [...data.results].reverse(), data.results.slice(1), [...data.results, data.results[0]],
-      [data.results[0], data.results[0]], [{ videoId: video2, setVideoId: setId }, data.results[1]],
+      [...data.results].reverse(),
+      data.results.slice(1),
+      [...data.results, data.results[0]],
+      [data.results[0], data.results[0]],
+      [{ videoId: video2, setVideoId: setId }, data.results[1]],
       [{ videoId: video, setVideoId: setId, failure: { ok: false, reason: "failed" } }, data.results[1]],
-      [{ videoId: video }, data.results[1]], [{ videoId: video, failure: { ok: true } }, data.results[1]]
-    ]) expect(isJobDataFor(job, { results })).toBe(false)
+      [{ videoId: video }, data.results[1]],
+      [{ videoId: video, failure: { ok: true } }, data.results[1]]
+    ])
+      expect(isJobDataFor(job, { results })).toBe(false)
     const repeated = { kind: "addBatch", playlistId: playlist, videoIds: [video, video, video2] } satisfies Job
     expect(isJobDataFor(repeated, { results: [data.results[0], data.results[0], data.results[1]] })).toBe(true)
     expect(isJobDataFor(repeated, data)).toBe(false)
@@ -220,8 +297,15 @@ describe("pending job correlation and bounded batches", () => {
   })
   test("bounds removed and count against the pending input", () => {
     for (const [count, bounded, complete] of [
-      [0, true, false], [1, true, false], [2, true, true], [3, false, false],
-      [-1, false, false], [0.5, false, false], [NaN, false, false], [Infinity, false, false], [-Infinity, false, false]
+      [0, true, false],
+      [1, true, false],
+      [2, true, true],
+      [3, false, false],
+      [-1, false, false],
+      [0.5, false, false],
+      [NaN, false, false],
+      [Infinity, false, false],
+      [-Infinity, false, false]
     ] satisfies [number, boolean, boolean][]) {
       expect(isJobDataFor(fixtures.queueRemoveIds.job, { removed: count })).toBe(bounded)
       expect(isJobDataFor(fixtures.queueAddList.job, { confirmed: false, count })).toBe(bounded)
@@ -268,25 +352,41 @@ describe("opaque identifiers and native command slots", () => {
     }
     for (const value of ["", -1, 0.5, NaN, Infinity, -Infinity, Number.MAX_SAFE_INTEGER + 1]) expect(isQueueItemId(value)).toBe(false)
     for (const job of [
-      { kind: "membership", videoId: "bad" }, { kind: "add", playlistId: "", videoId: video },
-      { kind: "queueUndo", listId: "", setVideoId: setId }, { kind: "remove", playlistId: playlist, setVideoId: "" },
-      { kind: "queueMove", id: -1, to: "next" }, { kind: "queueMove", id: queueId, to: 0.5 },
+      { kind: "membership", videoId: "bad" },
+      { kind: "add", playlistId: "", videoId: video },
+      { kind: "queueUndo", listId: "", setVideoId: setId },
+      { kind: "remove", playlistId: playlist, setVideoId: "" },
+      { kind: "queueMove", id: -1, to: "next" },
+      { kind: "queueMove", id: queueId, to: 0.5 },
       { kind: "queueReinsert", videoId: video, index: -1 }
-    ]) expect(isJob(job)).toBe(false)
+    ])
+      expect(isJob(job)).toBe(false)
     expect(isJob({ kind: "queueMove", id: queueId, to: 0 })).toBe(true)
     expect(isJob({ kind: "queueMove", id: queueId, to: "end" })).toBe(true)
   })
   test("preserves native JSON extras while rejecting wrong and ambiguous families", () => {
     const cases = [
-      [isQueueInsertEndpoint, next, "queueAddEndpoint"], [isLikeEndpoint, like, "likeEndpoint"],
-      [isLibraryEndpoint, library, "feedbackEndpoint"], [isNavigationEndpoint, browse, "browseEndpoint"],
-      [isAddToPlaylistEndpoint, save, "addToPlaylistEndpoint"], [isRemoveFromQueueEndpoint, remove, "removeFromQueueEndpoint"]
+      [isQueueInsertEndpoint, next, "queueAddEndpoint"],
+      [isLikeEndpoint, like, "likeEndpoint"],
+      [isLibraryEndpoint, library, "feedbackEndpoint"],
+      [isNavigationEndpoint, browse, "browseEndpoint"],
+      [isAddToPlaylistEndpoint, save, "addToPlaylistEndpoint"],
+      [isRemoveFromQueueEndpoint, remove, "removeFromQueueEndpoint"]
     ] satisfies [(v: unknown) => boolean, unknown, string][]
     for (const [guard, valid, family] of cases) {
       expect(guard(valid)).toBe(true)
       expect(guard(roundTrip(valid))).toBe(true)
-      for (const value of ["native", [], {}, { [family]: {} }, { [family]: [] }, { unknownEndpoint: { native: true } },
-        { [family]: { native: true }, extra: () => 1 }, { [family]: { native: new Date() } }]) expect(guard(value)).toBe(false)
+      for (const value of [
+        "native",
+        [],
+        {},
+        { [family]: {} },
+        { [family]: [] },
+        { unknownEndpoint: { native: true } },
+        { [family]: { native: true }, extra: () => 1 },
+        { [family]: { native: new Date() } }
+      ])
+        expect(guard(value)).toBe(false)
       expect(guard({ ...checked((v): v is Record<string, unknown> => typeof v === "object" && v !== null, valid), extra: { preserved: [1, null, true] } })).toBe(true)
     }
     expect(isLikeEndpoint({ ...like, feedbackEndpoint: { native: true } })).toBe(false)
@@ -338,7 +438,13 @@ describe("media facts without invented capabilities", () => {
   })
   test("checks row metadata, account labels, and nullable channel branches exactly", () => {
     for (const [count, valid] of [
-      [0, true], [1, true], [0.5, false], [-1, false], [Number.MAX_SAFE_INTEGER + 1, false], [NaN, false], [Infinity, false]
+      [0, true],
+      [1, true],
+      [0.5, false],
+      [-1, false],
+      [Number.MAX_SAFE_INTEGER + 1, false],
+      [NaN, false],
+      [Infinity, false]
     ] satisfies [number, boolean][]) {
       expect(isJobDataFor(fixtures.membership.job, [{ id: playlist, title: "", contains: false, count }])).toBe(valid)
       expect(isJobDataFor(fixtures.playlists.job, [{ id: playlist, title: "", count }])).toBe(valid)
@@ -346,7 +452,11 @@ describe("media facts without invented capabilities", () => {
     expect(isJobDataFor(fixtures.membership.job, [])).toBe(true)
     expect(isJobDataFor(fixtures.playlists.job, [])).toBe(true)
     expect(isJobDataFor(fixtures.accountLabel.job, { name: "" })).toBe(true)
-    for (const data of [{ name: "", avatar: "" }, { name: "", handle: null }, { name: "", extra: true }]) {
+    for (const data of [
+      { name: "", avatar: "" },
+      { name: "", handle: null },
+      { name: "", extra: true }
+    ]) {
       expect(isJobDataFor(fixtures.accountLabel.job, data)).toBe(false)
     }
     expect(isJobDataFor(fixtures.playlists.job, [{ id: playlist, title: "", thumb: "" }])).toBe(false)
@@ -357,7 +467,12 @@ describe("media facts without invented capabilities", () => {
   test("keeps ad interruptions free of media fields and requires every content fact", () => {
     const ad = { ad: true, at: 0, player: "shorts" }
     expect(isStreamData("player", ad)).toBe(true)
-    for (const [key, value] of [["videoId", video], ["pos", 0], ["len", null], ["playing", false]]) {
+    for (const [key, value] of [
+      ["videoId", video],
+      ["pos", 0],
+      ["len", null],
+      ["playing", false]
+    ]) {
       expect(isStreamData("player", { ...ad, [String(key)]: value })).toBe(false)
     }
     for (const key of Object.keys(player)) {
@@ -366,16 +481,29 @@ describe("media facts without invented capabilities", () => {
       expect(isStreamData("player", missing)).toBe(false)
     }
     for (const facts of [
-      {}, { isLive: true, isLiveContent: true }, { isLive: true, isLiveContent: false },
-      { isUpcoming: true }, { isPostLiveDvr: true }, { isLiveContent: true, len: 120 },
-      { content: "clip" }, { content: "made-for-kids" }, { player: "shorts" }
-    ]) expect(isStreamData("player", { ...player, ...facts })).toBe(true)
+      {},
+      { isLive: true, isLiveContent: true },
+      { isLive: true, isLiveContent: false },
+      { isUpcoming: true },
+      { isPostLiveDvr: true },
+      { isLiveContent: true, len: 120 },
+      { content: "clip" },
+      { content: "made-for-kids" },
+      { player: "shorts" }
+    ])
+      expect(isStreamData("player", { ...player, ...facts })).toBe(true)
     expect(isStreamData("player", { ...player, player: "preview" })).toBe(false)
   })
   test("validates seconds, finite positions, multipliers and nullable positive durations", () => {
     for (const [value, nonnegative, positive] of [
-      [-1, false, false], [0, true, false], [0.25, true, true], [2, true, true],
-      [NaN, false, false], [Infinity, false, false], [-Infinity, false, false], [undefined, false, false]
+      [-1, false, false],
+      [0, true, false],
+      [0.25, true, true],
+      [2, true, true],
+      [NaN, false, false],
+      [Infinity, false, false],
+      [-Infinity, false, false],
+      [undefined, false, false]
     ] satisfies [number | undefined, boolean, boolean][]) {
       for (const field of ["at", "pos"]) expect(isStreamData("player", { ...player, [field]: value })).toBe(nonnegative)
       expect(isNowPlaying({ ...song, pos: value })).toBe(nonnegative)
@@ -462,23 +590,75 @@ describe("account boundary and catalogue support", () => {
 describe("descriptor safety through public boundaries", () => {
   test("rejects malformed objects without getters, toJSON or browser globals", () => {
     let calls = 0
-    const accessor = Object.defineProperty({}, "kind", { enumerable: true, get() { calls++; return "account" } })
-    const nested = Object.defineProperty({}, "native", { enumerable: true, get() { calls++; return true } })
+    const accessor = Object.defineProperty({}, "kind", {
+      enumerable: true,
+      get() {
+        calls++
+        return "account"
+      }
+    })
+    const nested = Object.defineProperty({}, "native", {
+      enumerable: true,
+      get() {
+        calls++
+        return true
+      }
+    })
     const cycle: Record<string, unknown> = {}
     cycle.self = cycle
-    class NonData { native = true }
+    class NonData {
+      native = true
+    }
     const revoked = Proxy.revocable({}, {})
     revoked.revoke()
-    const hostile = new Proxy({}, { ownKeys() { throw new Error("synthetic reflection error") } })
-    const malformed = [undefined, null, [], new Date(), new NonData(), cycle, [1, , 2], accessor, hostile, revoked.proxy,
-      { toJSON() { calls++; return {} } }, { hidden: undefined }, { native: () => true }, { native: 1n }, { native: Symbol("synthetic") }]
+    const hostile = new Proxy(
+      {},
+      {
+        ownKeys() {
+          throw new Error("synthetic reflection error")
+        }
+      }
+    )
+    const malformed = [
+      undefined,
+      null,
+      [],
+      new Date(),
+      new NonData(),
+      cycle,
+      [1, , 2],
+      accessor,
+      hostile,
+      revoked.proxy,
+      {
+        toJSON() {
+          calls++
+          return {}
+        }
+      },
+      { hidden: undefined },
+      { native: () => true },
+      { native: 1n },
+      { native: Symbol("synthetic") }
+    ]
     const guards = [
-      isJob, isJobInvocation, isVideoInfo, isNowPlaying, isItemInfo,
-      isQueueInsertEndpoint, isLikeEndpoint, isLibraryEndpoint, isNavigationEndpoint, isAddToPlaylistEndpoint, isRemoveFromQueueEndpoint,
+      isJob,
+      isJobInvocation,
+      isVideoInfo,
+      isNowPlaying,
+      isItemInfo,
+      isQueueInsertEndpoint,
+      isLikeEndpoint,
+      isLibraryEndpoint,
+      isNavigationEndpoint,
+      isAddToPlaylistEndpoint,
+      isRemoveFromQueueEndpoint,
       (v: unknown) => isJobResultFor(fixtures.membership.job, v),
       (v: unknown) => isPageJobResultFor(fixtures.account.job, v),
       (v: unknown) => isPageJobDataFor(fixtures.account.job, v),
-      (v: unknown) => isStreamData("player", v), (v: unknown) => isStreamData("nav", v), (v: unknown) => isStreamData("queue", v)
+      (v: unknown) => isStreamData("player", v),
+      (v: unknown) => isStreamData("nav", v),
+      (v: unknown) => isStreamData("queue", v)
     ]
     for (const guard of guards) for (const value of malformed) expect(guard(value)).toBe(false)
     for (const value of [nested, new NonData(), cycle, hostile, revoked.proxy]) {
@@ -507,7 +687,6 @@ describe("descriptor safety through public boundaries", () => {
     expect(isJob(hidden)).toBe(false)
   })
 })
-
 
 test("union-valued page kinds preserve raw account data through both guards", () => {
   const job: { kind: "account" | "accountLabel" } = { kind: "account" }

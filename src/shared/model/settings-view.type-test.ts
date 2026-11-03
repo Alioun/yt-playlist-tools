@@ -1,6 +1,6 @@
 import { readSettingsView, type SettingsView, type Snapshot } from "./settings-view"
 import type { Settings } from "./types"
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 export type SettingsViewProofs = [
   Check<Equal<typeof readSettingsView, (rawDocument: unknown) => SettingsView>>,

@@ -6,11 +6,7 @@ import { join, resolve } from "node:path"
 
 // Kept out of the G28 proof, which runs only code-owned files. Every value is a fake.
 const root = resolve(import.meta.dir, "../..")
-const notes = [
-  "**Test account:**",
-  "- {email} / {password}, with backup codes {code1}, {code2} for Google's sign-in check.",
-  "- Any Google account with a YouTube channel also works."
-].join("\n")
+const notes = ["**Test account:**", "- {email} / {password}, with backup codes {code1}, {code2} for Google's sign-in check.", "- Any Google account with a YouTube channel also works."].join("\n")
 const login = ["dummy-reviewer@example.invalid", "dummy-reviewer-password-0000", "0000 1111", "2222 3333"]
 
 const directories: string[] = []
@@ -34,7 +30,5 @@ test("the release build keeps the reviewer notes' placeholders, even with a logi
   const archived = readFileSync(join(dir, "dist/amo-metadata.json"), "utf8")
   expect(JSON.parse(archived).version.approval_notes).toBe(notes)
   const output = archived + build.stdout + build.stderr
-  expect(login.map((_, line) => ({ line, found: output.includes(login[line]!) || output.includes(login[line]!.replaceAll(" ", "")) }))).toEqual(
-    login.map((_, line) => ({ line, found: false }))
-  )
+  expect(login.map((_, line) => ({ line, found: output.includes(login[line]!) || output.includes(login[line]!.replaceAll(" ", "")) }))).toEqual(login.map((_, line) => ({ line, found: false })))
 })

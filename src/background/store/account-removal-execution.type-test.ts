@@ -1,10 +1,20 @@
 import type { AccountKey, Device, DocumentKey } from "../../shared/model"
 import type { Origin } from "../../shared/contracts/results"
 import { createLocalFilterWriter } from "./local-filter-writer"
-import { executeAccountRemoval, planAccountDocumentWrite, type AccountRemovalDependencies, type AccountRemovalHost, type AccountDocumentKey,
-  type PendingAccountRemoval, type RemovalConfirmation, type RemovalPreparation, type RemovalResult, type UiOrigin } from "./account-removal-execution"
+import {
+  executeAccountRemoval,
+  planAccountDocumentWrite,
+  type AccountRemovalDependencies,
+  type AccountRemovalHost,
+  type AccountDocumentKey,
+  type PendingAccountRemoval,
+  type RemovalConfirmation,
+  type RemovalPreparation,
+  type RemovalResult,
+  type UiOrigin
+} from "./account-removal-execution"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 export type RemovalProofs = [
   Check<Equal<UiOrigin, Extract<Origin, { kind: "ui" }>>>,
@@ -14,8 +24,14 @@ export type RemovalProofs = [
   Check<Equal<ReturnType<typeof createLocalFilterWriter>["removeAccountSetup"], (origin: UiOrigin, confirmation: RemovalConfirmation) => Promise<RemovalResult>>>,
   Check<Equal<PendingAccountRemoval["consent"], NonNullable<Device["consent"]>>>
 ]
-function negative(host: Extract<AccountRemovalHost, { kind: "fixture" }>, deps: AccountRemovalDependencies,
-  writer: ReturnType<typeof createLocalFilterWriter>, acct: AccountKey, origin: UiOrigin, before: Extract<PendingAccountRemoval, { mode: "local" }>["documents"][0]) {
+function negative(
+  host: Extract<AccountRemovalHost, { kind: "fixture" }>,
+  deps: AccountRemovalDependencies,
+  writer: ReturnType<typeof createLocalFilterWriter>,
+  acct: AccountKey,
+  origin: UiOrigin,
+  before: Extract<PendingAccountRemoval, { mode: "local" }>["documents"][0]
+) {
   // @ts-expect-error Canonical removal never accepts arbitrary physical strings.
   void host.removeLocal(["schema"])
   // @ts-expect-error Shared Settings cannot enter an account removal manifest.
@@ -46,6 +62,7 @@ function negative(host: Extract<AccountRemovalHost, { kind: "fixture" }>, deps: 
   void planAccountDocumentWrite({ local: {}, sync: {}, intent: { kind: "flush" } })
   // @ts-expect-error The account boundary cannot admit a shared Settings edit.
   void planAccountDocumentWrite({ local: {}, sync: {}, intent: { kind: "unchanged", key: { kind: "settings" } } })
-  void local; void empty
+  void local
+  void empty
 }
 void negative

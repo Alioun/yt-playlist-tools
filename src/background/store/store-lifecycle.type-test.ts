@@ -1,8 +1,16 @@
-import { createStoreLifecycle, clearMarkerKey, type BlockedState, type ClearAllResult, type LifecycleState, type StartingOwner, type StoreLifecycle,
-  type StoreLifecycleDependencies } from "./store-lifecycle"
+import {
+  createStoreLifecycle,
+  clearMarkerKey,
+  type BlockedState,
+  type ClearAllResult,
+  type LifecycleState,
+  type StartingOwner,
+  type StoreLifecycle,
+  type StoreLifecycleDependencies
+} from "./store-lifecycle"
 import type { createStartingLocalFilterWriter } from "./local-filter-writer"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 export type StoreLifecycleProofs = [
   Check<Equal<StartingOwner, ReturnType<typeof createStartingLocalFilterWriter>>>,

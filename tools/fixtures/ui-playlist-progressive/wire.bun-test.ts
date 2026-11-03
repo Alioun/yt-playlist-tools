@@ -26,9 +26,18 @@ test("all progressive list answers reject promises, callbacks, errors and captur
     { kind: "open", operation, cached: { rows: [], at: null }, freshness: "stale", refresh: { kind: "pending", generation: 0 } },
     { kind: "open", operation, cached: null, freshness: "absent", refresh: null },
     { kind: "refreshed", operation, generation: 0, refresh: { kind: "not-listed", outcome: { kind: "no-tab", attempted: [] }, cached: null } },
-    { kind: "refreshed", operation, generation: 1, refresh: { kind: "listed", listing: { rows: [], at: 1 },
-      outcome: { kind: "result", tabId: 1, result: { ok: true, route: "fixture", data: [] } }, cache: { kind: "failed", stage: "set" },
-      present: { kind: "list-present", acct: "AAAAAAAAAAAAAAAA", site: "www", private: false, at: 1, ids: [] } } },
+    {
+      kind: "refreshed",
+      operation,
+      generation: 1,
+      refresh: {
+        kind: "listed",
+        listing: { rows: [], at: 1 },
+        outcome: { kind: "result", tabId: 1, result: { ok: true, route: "fixture", data: [] } },
+        cache: { kind: "failed", stage: "set" },
+        present: { kind: "list-present", acct: "AAAAAAAAAAAAAAAA", site: "www", private: false, at: 1, ids: [] }
+      }
+    },
     { kind: "refreshed", operation, generation: 1, refresh: { kind: "withheld", confirmed: true, cache: { kind: "unconfirmed", write: "resolved", cause: "stopped" } } },
     { kind: "released", operation }
   ]

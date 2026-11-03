@@ -3,10 +3,21 @@ import { isTabHello, isTabPing, tabJobMessages, tabMessages } from "./tabs"
 import { a, b, build, isFixtureView, signedIn, signedOut } from "../../../tools/fixtures/tabs/harness"
 
 test("hello and ping accept complete signed-in and signed-out variants only", () => {
-  expect(isTabPing(signedIn())).toBe(true); expect(isTabPing(signedOut())).toBe(true)
+  expect(isTabPing(signedIn())).toBe(true)
+  expect(isTabPing(signedOut())).toBe(true)
   expect(isTabHello({ ...signedIn(), hidden: true, fresh: false })).toBe(true)
-  for (const value of [null, {}, { ...signedIn(), acct: null }, { ...signedOut(), acct: a }, { ...signedIn(), private: true },
-    { ...signedIn(), windowId: 1 }, { ...signedIn(), datasyncId: "raw" }, { ...signedIn(), site: "other" }, { ...signedIn(), build: "" }]) expect(isTabPing(value)).toBe(false)
+  for (const value of [
+    null,
+    {},
+    { ...signedIn(), acct: null },
+    { ...signedOut(), acct: a },
+    { ...signedIn(), private: true },
+    { ...signedIn(), windowId: 1 },
+    { ...signedIn(), datasyncId: "raw" },
+    { ...signedIn(), site: "other" },
+    { ...signedIn(), build: "" }
+  ])
+    expect(isTabPing(value)).toBe(false)
   expect(isTabHello({ ...signedIn(), hidden: true })).toBe(false)
   expect(isTabHello({ ...signedIn(), hidden: true, fresh: true, incognito: false })).toBe(false)
 })

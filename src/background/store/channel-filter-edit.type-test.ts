@@ -2,7 +2,7 @@ import type { Filter, Stamped } from "../../shared/model"
 import type { AccountBodies } from "./accounts"
 import type { changeFilterSetting, FilterSettingInput, FilterSettingResult } from "./channel-filter-edit"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 type ReadonlyBody<T> = T extends object ? { readonly [P in keyof T]: ReadonlyBody<T[P]> } : T
 type WritableKeys<T> = { [P in keyof T]-?: Equal<Pick<T, P>, Readonly<Pick<T, P>>> extends true ? never : P }[keyof T]
@@ -12,10 +12,7 @@ type ExpectedInput = {
   readonly desired: Readonly<Pick<Filter, "mode" | "on">>
   readonly clearListedChannels: "not-confirmed" | "confirmed"
 }
-type ExpectedResult =
-  | { readonly kind: "unchanged" }
-  | { readonly kind: "confirmation-required" }
-  | { readonly kind: "changed"; readonly filter: Filter }
+type ExpectedResult = { readonly kind: "unchanged" } | { readonly kind: "confirmation-required" } | { readonly kind: "changed"; readonly filter: Filter }
 
 export type FilterSettingProofs = [
   Check<Equal<FilterSettingInput, ExpectedInput>>,

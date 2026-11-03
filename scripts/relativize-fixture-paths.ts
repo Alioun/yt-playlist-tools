@@ -65,9 +65,14 @@ export async function relativizeFixtures(root = "tools/fixtures") {
   }
   if (unsupported.length) throw Error(`Derive these worktree paths from the file's own location by hand:\n${unsupported.join("\n")}`)
 
-  const headBlobs = new Map(Buffer.from(git(["ls-tree", "-r", "HEAD", root])).toString("utf8").trim().split("\n")
-    .map(line => line.split("\t"))
-    .map(([meta, path]) => [path!, meta!.split(" ")[2]!] as const))
+  const headBlobs = new Map(
+    Buffer.from(git(["ls-tree", "-r", "HEAD", root]))
+      .toString("utf8")
+      .trim()
+      .split("\n")
+      .map(line => line.split("\t"))
+      .map(([meta, path]) => [path!, meta!.split(" ")[2]!] as const)
+  )
   const start = new Map(files.map(file => [file, base.has(file) ? Buffer.from(base.get(file)!) : original.get(file)!] as const))
   const sealed = new Map<string, Identity>()
   const track = (file: string, bytes: Uint8Array) => {
@@ -80,15 +85,17 @@ export async function relativizeFixtures(root = "tools/fixtures") {
   let next = start
   for (let round = 0; ; round++) {
     if (round > 50) throw Error("Identity records reference each other in a cycle")
-    next = new Map([...start].map(([file, bytes]) => {
-      let text = Buffer.from(bytes).toString("utf8")
-      const before = text
-      for (const [sealedFile, from] of sealed) {
-        const to = estimate.get(sealedFile)
-        if (to && to.sha256 !== from.sha256 && text.includes(from.sha256)) text = reseal(text, from, to)
-      }
-      return [file, text === before ? bytes : Buffer.from(text)] as const
-    }))
+    next = new Map(
+      [...start].map(([file, bytes]) => {
+        let text = Buffer.from(bytes).toString("utf8")
+        const before = text
+        for (const [sealedFile, from] of sealed) {
+          const to = estimate.get(sealedFile)
+          if (to && to.sha256 !== from.sha256 && text.includes(from.sha256)) text = reseal(text, from, to)
+        }
+        return [file, text === before ? bytes : Buffer.from(text)] as const
+      })
+    )
     for (const [file, bytes] of next) track(file, bytes)
     const fresh = new Map([...sealed.keys()].map(file => [file, identify(next.get(file)!)] as const))
     if ([...fresh].every(([file, identity]) => estimate.get(file)?.sha256 === identity.sha256)) break

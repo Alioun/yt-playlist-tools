@@ -10,7 +10,10 @@ for (const target of ["chrome-mv3", "firefox-mv3"]) {
   }
   const files = await readdir(root, { recursive: true })
   assert(files.includes("picker.html"))
-  assert(files.some(file => file.endsWith(".svg")), "The packaged mark must be emitted")
+  assert(
+    files.some(file => file.endsWith(".svg")),
+    "The packaged mark must be emitted"
+  )
   const css = (await Promise.all(files.filter(file => file.endsWith(".css")).map(file => readFile(new URL(file, root), "utf8")))).join("\n")
   for (const token of ["--primary", "--success", "--card", ".dark", "prefers-reduced-motion"]) assert(css.includes(token), `Missing accepted theme rule ${token}`)
   const code = (await Promise.all(files.filter(file => file.endsWith(".js")).map(file => readFile(new URL(file, root), "utf8")))).join("\n")

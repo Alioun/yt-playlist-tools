@@ -13,6 +13,8 @@ export function nativeFirstRunAccess(permissions: FirstRunPermissionsPort): () =
       ])
       if (typeof www !== "boolean" || typeof music !== "boolean" || typeof browserMenu !== "boolean") return
       return { www, music, browserMenu }
-    } catch { return undefined }
+    } catch {
+      return undefined
+    }
   }
 }

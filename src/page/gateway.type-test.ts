@@ -72,5 +72,6 @@ export function endpointCorrelation(raw: unknown) {
   const mismatch: JobOf<"queueInsert"> = { kind: "queueInsert", endpoint: like, position: "next" }
   // @ts-expect-error negative:unparsed-endpoint-cannot-insert
   const unchecked: QueueInsertEndpoint = { queueAddEndpoint: { queueTarget: { videoId: "synthetic01" }, queueInsertPosition: "INSERT_AT_END" } }
-  void mismatch; void unchecked
+  void mismatch
+  void unchecked
 }

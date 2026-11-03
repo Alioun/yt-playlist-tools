@@ -34,8 +34,12 @@ const laneMargin = 100
 const unavailable: JobFailure = { ok: false, reason: "unavailable" }
 
 export function createWwwQueue(options: {
-  port: WwwQueuePort; clock: GatewayClock; routes: QueueRoutes; card(target: Element): unknown
-  check(): JobFailure | null; notice(kind: BreakageKind, route: RequestRoute | PageUiRoute, raw?: unknown): void
+  port: WwwQueuePort
+  clock: GatewayClock
+  routes: QueueRoutes
+  card(target: Element): unknown
+  check(): JobFailure | null
+  notice(kind: BreakageKind, route: RequestRoute | PageUiRoute, raw?: unknown): void
 }) {
   const { port, clock, routes, notice } = options
   const menus = new Set<() => void>()
@@ -43,20 +47,42 @@ export function createWwwQueue(options: {
 
   function panel(route: RequestRoute): QueuePanel | undefined {
     let raw: unknown
-    try { raw = port.panel() } catch { notice("threw", route); return undefined }
+    try {
+      raw = port.panel()
+    } catch {
+      notice("threw", route)
+      return undefined
+    }
     const value = parseQueuePanel(raw)
     if (!value && hasQueueList(raw)) notice("unrecognised", route, raw)
     return value
   }
   function miniplayer(): boolean | undefined {
-    try { return parseMiniplayer(port.miniplayer()) } catch { return undefined }
+    try {
+      return parseMiniplayer(port.miniplayer())
+    } catch {
+      return undefined
+    }
   }
   function listen(scope: JobScope, route: RequestRoute | PageUiRoute, seen: (detail: unknown) => void): () => void {
     let stop = () => {}
-    try { stop = port.onAction(seen) } catch { notice("threw", route) }
-    const release = () => { const current = stop; stop = () => {}; try { current() } catch {} }
+    try {
+      stop = port.onAction(seen)
+    } catch {
+      notice("threw", route)
+    }
+    const release = () => {
+      const current = stop
+      stop = () => {}
+      try {
+        current()
+      } catch {}
+    }
     const unregister = scope.onClose(release)
-    return () => { unregister(); release() }
+    return () => {
+      unregister()
+      release()
+    }
   }
   function send(command: QueueCommand, scope: JobScope, route: RequestRoute): Promise<Dispatched> {
     return new Promise(resolveDispatch => {
@@ -67,38 +93,70 @@ export function createWwwQueue(options: {
       let stopTimer = () => {}
       let stopScope = () => {}
       let settle: (value: Outcome) => void = () => {}
-      const settled = new Promise<Outcome>(resolve => { settle = resolve })
+      const settled = new Promise<Outcome>(resolve => {
+        settle = resolve
+      })
       const sent = (): Dispatched => ({ kind: "sent", outcome: () => outcome, settled, stop: () => finish({ kind: "timeout" }) })
       const finish = (value: Outcome | Exclude<Dispatched, { kind: "sent" }>) => {
         if (!active) return
         active = false
-        stopTimer(); stopScope()
-        try { cancel() } catch {}
-        if (value.kind === "not-sent" || value.kind === "blocked") { resolveDispatch(value); return }
+        stopTimer()
+        stopScope()
+        try {
+          cancel()
+        } catch {}
+        if (value.kind === "not-sent" || value.kind === "blocked") {
+          resolveDispatch(value)
+          return
+        }
         outcome = value
         settle(value)
-        if (!dispatched) { dispatched = true; resolveDispatch(sent()) }
+        if (!dispatched) {
+          dispatched = true
+          resolveDispatch(sent())
+        }
       }
       const context: AttemptContext = {
         check: () => options.check() ?? (!active || !scope.active || disposed ? { ok: false, reason: "unconfirmed" } : null),
-        notice: kind => { if (active && scope.active) notice(kind, route) },
+        notice: kind => {
+          if (active && scope.active) notice(kind, route)
+        },
         observe() {}
       }
       stopScope = scope.onClose(() => finish({ kind: "timeout" }))
       if (!active) return
       stopTimer = clock.after(scope.remaining(), () => finish({ kind: "timeout" }))
       const blocked = context.check()
-      if (blocked) { finish({ kind: "blocked", failure: blocked }); return }
+      if (blocked) {
+        finish({ kind: "blocked", failure: blocked })
+        return
+      }
       try {
-        Promise.resolve(port.resolve(command.endpoint, context)).then(dispatch => {
-          if (dispatch.kind !== "pending") { finish(dispatch); return }
-          cancel = dispatch.cancel
-          if (!active) { try { cancel() } catch {}; return }
-          dispatched = true
-          resolveDispatch(sent())
-          void dispatch.answer.then(answer => finish({ kind: "answer", answer, parsed: parseQueueAnswer(answer.body) }), () => finish({ kind: "lost" }))
-        }, () => finish({ kind: "lost" }))
-      } catch { finish({ kind: "lost" }) }
+        Promise.resolve(port.resolve(command.endpoint, context)).then(
+          dispatch => {
+            if (dispatch.kind !== "pending") {
+              finish(dispatch)
+              return
+            }
+            cancel = dispatch.cancel
+            if (!active) {
+              try {
+                cancel()
+              } catch {}
+              return
+            }
+            dispatched = true
+            resolveDispatch(sent())
+            void dispatch.answer.then(
+              answer => finish({ kind: "answer", answer, parsed: parseQueueAnswer(answer.body) }),
+              () => finish({ kind: "lost" })
+            )
+          },
+          () => finish({ kind: "lost" })
+        )
+      } catch {
+        finish({ kind: "lost" })
+      }
     })
   }
   function observe(scope: JobScope, checks: readonly number[], limit: number, look: () => boolean): Promise<boolean> {
@@ -112,7 +170,8 @@ export function createWwwQueue(options: {
       const finish = (found: boolean) => {
         if (!active) return
         active = false
-        stopTimer(); stopScope()
+        stopTimer()
+        stopScope()
         resolve(found)
       }
       stopScope = scope.onClose(() => finish(false))
@@ -120,13 +179,26 @@ export function createWwwQueue(options: {
       let index = 0
       const step = () => {
         if (!active) return
-        if (!scope.active || disposed) { finish(false); return }
+        if (!scope.active || disposed) {
+          finish(false)
+          return
+        }
         let found = false
-        try { found = look() } catch { found = false }
-        if (found) { finish(true); return }
+        try {
+          found = look()
+        } catch {
+          found = false
+        }
+        if (found) {
+          finish(true)
+          return
+        }
         index++
         const next = offsets[index]
-        if (next === undefined) { finish(false); return }
+        if (next === undefined) {
+          finish(false)
+          return
+        }
         stopTimer = clock.after(Math.max(0, next - (clock.now() - start)), step)
       }
       step()
@@ -134,7 +206,8 @@ export function createWwwQueue(options: {
   }
   function rejected(outcome: Outcome | undefined): JobFailure | undefined {
     if (outcome?.kind !== "answer") return undefined
-    const { http } = outcome.answer, { status } = outcome.parsed
+    const { http } = outcome.answer,
+      { status } = outcome.parsed
     if (http >= 400 || status === "STATUS_FAILED") {
       return { ok: false, reason: "failed", ...(http >= 400 && http <= 599 ? { http } : {}), ...(status ? { status } : {}) }
     }
@@ -142,7 +215,10 @@ export function createWwwQueue(options: {
   }
   function notSent(sent: Dispatched, route: RequestRoute): JobFailure | undefined {
     if (sent.kind === "blocked") return sent.failure
-    if (sent.kind === "not-sent") { notice(sent.cause === "missing" ? "missing" : "threw", route); return unavailable }
+    if (sent.kind === "not-sent") {
+      notice(sent.cause === "missing" ? "missing" : "threw", route)
+      return unavailable
+    }
     return undefined
   }
   function uncertain(outcome: Outcome | undefined, route: RequestRoute): void {
@@ -154,7 +230,13 @@ export function createWwwQueue(options: {
       let active = true
       let stopTimer = () => {}
       let stopScope = () => {}
-      const done = () => { if (!active) return; active = false; stopTimer(); stopScope(); resolve() }
+      const done = () => {
+        if (!active) return
+        active = false
+        stopTimer()
+        stopScope()
+        resolve()
+      }
       stopScope = scope.onClose(done)
       if (!active) return
       stopTimer = clock.after(Math.max(0, Math.min(ms, scope.remaining() - laneMargin)), done)
@@ -166,14 +248,24 @@ export function createWwwQueue(options: {
     const route = routes.add
     if (!target || !connected(target)) return unavailable
     let raw: unknown
-    try { raw = options.card(target) } catch { notice("threw", route); return unavailable }
+    try {
+      raw = options.card(target)
+    } catch {
+      notice("threw", route)
+      return unavailable
+    }
     const card = parseQueueCard(raw)
-    if (!card) { if (raw !== undefined) notice("unrecognised", route, raw); return unavailable }
+    if (!card) {
+      if (raw !== undefined) notice("unrecognised", route, raw)
+      return unavailable
+    }
     const before = panel(route)
     const known = new Set(before?.entries.map(entry => entry.setVideoId))
     const miniplayerBefore = before ? undefined : miniplayer()
     let noisy = false
-    const stopActions = listen(scope, route, detail => { if (isQueueToast(detail)) noisy = true })
+    const stopActions = listen(scope, route, detail => {
+      if (isQueueToast(detail)) noisy = true
+    })
     const sent = await send(before ? queueAddEdit(before.listId, card.videoId) : { endpoint: card.command }, scope, route)
     try {
       const blocked = notSent(sent, route)
@@ -194,15 +286,18 @@ export function createWwwQueue(options: {
         if (before && after.listId !== before.listId) return false
         const fresh = after.entries.filter(entry => entry.videoId === card.videoId && !known.has(entry.setVideoId))
         const returned = outcome?.kind === "answer" ? outcome.parsed.setVideoId : undefined
-        const entry = returned === undefined ? fresh.length === 1 ? fresh[0] : undefined : fresh.find(item => item.setVideoId === returned)
-        if (fresh.length === 0 || returned !== undefined && !entry) return false
+        const entry = returned === undefined ? (fresh.length === 1 ? fresh[0] : undefined) : fresh.find(item => item.setVideoId === returned)
+        if (fresh.length === 0 || (returned !== undefined && !entry)) return false
         confirmed = true
         undo = entry ? { listId: after.listId, setVideoId: entry.setVideoId } : undefined
         return true
       })
       const outcome = sent.outcome()
       if (outcome?.kind === "answer" && outcome.parsed.noisy) noisy = true
-      if (failure) { notice("rejected", route); return failure }
+      if (failure) {
+        notice("rejected", route)
+        return failure
+      }
       if (!scope.active || disposed) return { ok: false, reason: "unconfirmed" }
       if (!confirmed) {
         uncertain(outcome, route)
@@ -221,17 +316,22 @@ export function createWwwQueue(options: {
     const { listId, setVideoId } = job
     let last: QueuePanel | undefined
     const present = () => last?.listId === listId && last.entries.some(entry => entry.setVideoId === setVideoId)
-    const settled = await observe(scope, confirmChecks, confirmWindow, () => { last = panel(route); return present() })
+    const settled = await observe(scope, confirmChecks, confirmWindow, () => {
+      last = panel(route)
+      return present()
+    })
     if (!scope.active || disposed) return { ok: false, reason: "unconfirmed" }
     if (!settled) return last ? { ok: false, reason: "failed" } : unavailable
     let noisy = false
-    const stopActions = listen(scope, route, detail => { if (isQueueToast(detail)) noisy = true })
+    const stopActions = listen(scope, route, detail => {
+      if (isQueueToast(detail)) noisy = true
+    })
     const owned = new Set<() => void>()
     try {
       for (let round = 0; round < 2; round++) {
         const removal = await send(queueRemoveEdit(listId, setVideoId), scope, route)
         const blocked = notSent(removal, route)
-        if (blocked || removal.kind !== "sent") return round === 0 ? blocked ?? unavailable : { ok: false, reason: "failed" }
+        if (blocked || removal.kind !== "sent") return round === 0 ? (blocked ?? unavailable) : { ok: false, reason: "failed" }
         owned.add(removal.stop)
         await within(removal.settled, scope, removalAnswer)
         const answered = removal.outcome()
@@ -280,7 +380,7 @@ export function createWwwQueue(options: {
         failure = rejected(sent.outcome())
         if (failure) return true
         const after = panel(route)
-        if (!after || before && after.listId !== before.listId) return false
+        if (!after || (before && after.listId !== before.listId)) return false
         const found = new Map<VideoId, number>()
         for (const entry of after.entries) if (!known.has(entry.setVideoId)) found.set(entry.videoId, (found.get(entry.videoId) ?? 0) + 1)
         let matched = 0
@@ -288,18 +388,28 @@ export function createWwwQueue(options: {
         count = matched
         return count === job.videoIds.length
       })
-      if (failure) { notice("rejected", route); return failure }
+      if (failure) {
+        notice("rejected", route)
+        return failure
+      }
       if (!scope.active || disposed) return { ok: false, reason: "unconfirmed" }
       if (count < job.videoIds.length) uncertain(sent.outcome() ?? undefined, route)
       return { ok: true, data: { confirmed: count === job.videoIds.length, count }, route: route.id }
-    } finally { if (sent.kind === "sent") sent.stop() }
+    } finally {
+      if (sent.kind === "sent") sent.stop()
+    }
   }
 
   function menu(job: JobOf<"openCardMenu">, target: Element | undefined): Promise<PageJobResult<JobOf<"openCardMenu">>> {
     const route = routes.menu
     if (disposed || !target || !connected(target)) return Promise.resolve(unavailable)
     let raw: unknown
-    try { raw = options.card(target) } catch { notice("threw", route); return Promise.resolve(unavailable) }
+    try {
+      raw = options.card(target)
+    } catch {
+      notice("threw", route)
+      return Promise.resolve(unavailable)
+    }
     const shown = parseTargetVideo(raw)
     if (!shown && raw !== undefined) notice("unrecognised", route, raw)
     if (shown?.videoId !== job.videoId) return Promise.resolve(unavailable)
@@ -312,8 +422,11 @@ export function createWwwQueue(options: {
         active = false
         menus.delete(close)
         stopTimer()
-        const stop = stopActions; stopActions = () => {}
-        try { stop() } catch {}
+        const stop = stopActions
+        stopActions = () => {}
+        try {
+          stop()
+        } catch {}
         resolve(result)
       }
       const close = () => finish(unavailable)
@@ -322,19 +435,42 @@ export function createWwwQueue(options: {
         if (!active || !isMenuPopup(detail)) return
         finish({ ok: true, data: null, route: route.id })
       }
-      try { stopActions = port.onAction(seen) } catch { notice("threw", route); finish(unavailable); return }
+      try {
+        stopActions = port.onAction(seen)
+      } catch {
+        notice("threw", route)
+        finish(unavailable)
+        return
+      }
       let outcome: unknown
-      try { outcome = port.openMenu(target) } catch { notice("threw", route); finish(unavailable); return }
+      try {
+        outcome = port.openMenu(target)
+      } catch {
+        notice("threw", route)
+        finish(unavailable)
+        return
+      }
       if (!active) return
-      if (outcome !== "clicked") { notice("missing", route); finish(unavailable); return }
+      if (outcome !== "clicked") {
+        notice("missing", route)
+        finish(unavailable)
+        return
+      }
       stopTimer = clock.after(menuWindow, () => finish({ ok: false, reason: "unconfirmed" }))
     })
   }
   function connected(target: Element): boolean {
-    try { return port.connected(target) } catch { return false }
+    try {
+      return port.connected(target)
+    } catch {
+      return false
+    }
   }
   return {
-    add, undo, addList, menu,
+    add,
+    undo,
+    addList,
+    menu,
     dispose() {
       if (disposed) return
       disposed = true

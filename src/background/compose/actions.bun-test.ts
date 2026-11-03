@@ -27,32 +27,50 @@ import { englishI18n } from "../../../tools/fixtures/localization/scripted"
 type Listener = (message: unknown, sender: NativeSender, respond: (answer?: unknown) => void) => boolean
 const route = "fixture-route" as RouteId
 const disposers: (() => void | Promise<void>)[] = []
-afterEach(async () => { for (const dispose of disposers.splice(0)) await dispose() })
+afterEach(async () => {
+  for (const dispose of disposers.splice(0)) await dispose()
+})
 
 function seed(settings: Record<string, unknown> = {}) {
   const initial = projectionSeed()
   initial.local["doc:settings"] = doc({
-    shortcuts: { on: true, feedback: true, list: [
-      { id: "orig01", label: "Alpha shortcut", key: null, watchLaterOnEveryAccount: false },
-      { id: "later1", label: "Later", key: null, watchLaterOnEveryAccount: true }
-    ] },
-    quickSave: { on: true, feedback: true, shortsShelves: false }, ...settings
+    shortcuts: {
+      on: true,
+      feedback: true,
+      list: [
+        { id: "orig01", label: "Alpha shortcut", key: null, watchLaterOnEveryAccount: false },
+        { id: "later1", label: "Later", key: null, watchLaterOnEveryAccount: true }
+      ]
+    },
+    quickSave: { on: true, feedback: true, shortsShelves: false },
+    ...settings
   })
   return initial
 }
 
 function youtube() {
-  const lists = new Map<PlaylistId, Set<VideoId>>([[alpha, new Set()], [beta, new Set()], ["WL" as PlaylistId, new Set()]])
+  const lists = new Map<PlaylistId, Set<VideoId>>([
+    [alpha, new Set()],
+    [beta, new Set()],
+    ["WL" as PlaylistId, new Set()]
+  ])
   const jobs: string[] = []
   let entry = 0
   function answer<J extends Job>(invocation: JobInvocation<J>): JobResult<J> {
     const job = invocation.job as Job
     jobs.push(job.kind)
     switch (job.kind) {
-      case "membership": return { ok: true, route, data: [...lists].map(([id, videos]) => ({ id, title: id, contains: videos.has(job.videoId) })) } as unknown as JobResult<J>
-      case "add": case "save": lists.get(job.playlistId)?.add(job.videoId); return { ok: true, route, data: { setVideoId: `entry-${++entry}` as SetVideoId } } as unknown as JobResult<J>
-      case "remove": case "unsave": return { ok: true, route, data: null } as unknown as JobResult<J>
-      default: return { ok: false, reason: "unavailable" } as unknown as JobResult<J>
+      case "membership":
+        return { ok: true, route, data: [...lists].map(([id, videos]) => ({ id, title: id, contains: videos.has(job.videoId) })) } as unknown as JobResult<J>
+      case "add":
+      case "save":
+        lists.get(job.playlistId)?.add(job.videoId)
+        return { ok: true, route, data: { setVideoId: `entry-${++entry}` as SetVideoId } } as unknown as JobResult<J>
+      case "remove":
+      case "unsave":
+        return { ok: true, route, data: null } as unknown as JobResult<J>
+      default:
+        return { ok: false, reason: "unavailable" } as unknown as JobResult<J>
     }
   }
   return { lists, jobs, answer }
@@ -65,41 +83,103 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
   const store = projectionWorld(initial)
   const site = youtube()
   const listeners = new Set<Listener>()
-  const ensured: unknown[] = [], ticks: string[] = [], opened: unknown[] = []
+  const ensured: unknown[] = [],
+    ticks: string[] = [],
+    opened: unknown[] = []
   const known = { tabId: 9, acct: options.tabAccount === undefined ? a : options.tabAccount, privateTab: false } as unknown as KnownTab
   const tabs = {
-    async known() { return [known] },
+    async known() {
+      return [known]
+    },
     async runIn<J extends Job>(tabId: number, invocation: JobInvocation<J>): Promise<TabJobOutcome<J>> {
       return { kind: "result", tabId, result: site.answer(invocation) }
     },
-    async serve() { return { kind: "no-tab", attempted: [] } },
-    async accountInView() { return { kind: "none" } }
+    async serve() {
+      return { kind: "no-tab", attempted: [] }
+    },
+    async accountInView() {
+      return { kind: "none" }
+    }
   } as unknown as Tabs
   const playlists = {
-    async list() { return { kind: "open", cached: null, freshness: "absent",
-      refresh: Promise.resolve({ kind: "listed", listing: { rows: [{ id: alpha, title: "Alpha" }], at: 5 } }) } }
+    async list() {
+      return { kind: "open", cached: null, freshness: "absent", refresh: Promise.resolve({ kind: "listed", listing: { rows: [{ id: alpha, title: "Alpha" }], at: 5 } }) }
+    }
   } as unknown as Playlists
   const native = {
-    runtime: { id: "perchling", getURL: (path: string) => `chrome-extension://perchling${path}`, async sendMessage() {},
-      onMessage: { addListener: (listener: Listener) => { listeners.add(listener) }, removeListener: (listener: Listener) => { listeners.delete(listener) } } },
-    windows: { async get(id: number) { return { id, incognito: false } } }
+    runtime: {
+      id: "perchling",
+      getURL: (path: string) => `chrome-extension://perchling${path}`,
+      async sendMessage() {},
+      onMessage: {
+        addListener: (listener: Listener) => {
+          listeners.add(listener)
+        },
+        removeListener: (listener: Listener) => {
+          listeners.delete(listener)
+        }
+      }
+    },
+    windows: {
+      async get(id: number) {
+        return { id, incognito: false }
+      }
+    }
   }
   const closedListeners = new Set<(tabId: number) => void>()
-  const actions = composeActions({ native: native as never, build, owner: store.owner, tabs, playlists, writable: () => true,
-    closed: listener => { closedListeners.add(listener); return () => { closedListeners.delete(listener) } },
-    registrar: { async ensure(tabId, what) { ensured.push({ tabId, what }) } }, requester: async () => null, log: () => {},
-    ticked: tabId => { ticks.push(`tick ${tabId}`) }, openSettings: (hash, tabId) => { opened.push({ hash, tabId }) } })
-  const sender = { id: "perchling", frameId: 0, url: "https://www.youtube.com/watch?v=aaaaaaaaaaa",
-    tab: { id: 9, windowId: 3, incognito: false } } as NativeSender
-  const transport = { send: (message: unknown) => new Promise<unknown>(resolve => {
-    let claimed = false
-    for (const listener of [...listeners]) claimed = listener(message, sender, resolve) || claimed
-    if (!claimed) resolve(undefined)
-  }) }
-  const deadline = (ms: number, expire: () => void) => { const t = setTimeout(expire, ms); return () => clearTimeout(t) }
-  const progress = createAutoAddTabRouter({ transport: runtimeTransport(native.runtime as never), senders: native as never, build, deadline,
-    tabs, owner: store.owner, untick: tabId => { ticks.push(`untick ${tabId}`) }, now: () => Date.now() })
-  const page = createTabActions({ transport, build, deadline, account: () => options.pageAccount !== undefined ? options.pageAccount : known.acct })
+  const actions = composeActions({
+    native: native as never,
+    build,
+    owner: store.owner,
+    tabs,
+    playlists,
+    writable: () => true,
+    closed: listener => {
+      closedListeners.add(listener)
+      return () => {
+        closedListeners.delete(listener)
+      }
+    },
+    registrar: {
+      async ensure(tabId, what) {
+        ensured.push({ tabId, what })
+      }
+    },
+    requester: async () => null,
+    log: () => {},
+    ticked: tabId => {
+      ticks.push(`tick ${tabId}`)
+    },
+    openSettings: (hash, tabId) => {
+      opened.push({ hash, tabId })
+    }
+  })
+  const sender = { id: "perchling", frameId: 0, url: "https://www.youtube.com/watch?v=aaaaaaaaaaa", tab: { id: 9, windowId: 3, incognito: false } } as NativeSender
+  const transport = {
+    send: (message: unknown) =>
+      new Promise<unknown>(resolve => {
+        let claimed = false
+        for (const listener of [...listeners]) claimed = listener(message, sender, resolve) || claimed
+        if (!claimed) resolve(undefined)
+      })
+  }
+  const deadline = (ms: number, expire: () => void) => {
+    const t = setTimeout(expire, ms)
+    return () => clearTimeout(t)
+  }
+  const progress = createAutoAddTabRouter({
+    transport: runtimeTransport(native.runtime as never),
+    senders: native as never,
+    build,
+    deadline,
+    tabs,
+    owner: store.owner,
+    untick: tabId => {
+      ticks.push(`untick ${tabId}`)
+    },
+    now: () => Date.now()
+  })
+  const page = createTabActions({ transport, build, deadline, account: () => (options.pageAccount !== undefined ? options.pageAccount : known.acct) })
   const health = syntheticHealth()
   const producer = createTabViewProducer({ owner: store.owner, addFlow: actions.flow, statuses: health.statuses, notices: health.notices, build })
   async function view(): Promise<SiteView<"www">> {
@@ -107,12 +187,20 @@ function world(options: { settings?: Record<string, unknown>; tabAccount?: Accou
     if (produced.kind !== "view" || produced.view.site !== "www") throw Error("Expected the store's www tab view")
     return produced.view
   }
-  disposers.push(() => page.dispose(), () => progress.dispose(), () => producer.dispose(), () => actions.dispose(), () => store.owner.dispose())
+  disposers.push(
+    () => page.dispose(),
+    () => progress.dispose(),
+    () => producer.dispose(),
+    () => actions.dispose(),
+    () => store.owner.dispose()
+  )
   function recentAdds(): readonly unknown[] {
     const rows = store.removal.state().session.recentAdds
     return Array.isArray(rows) ? rows : []
   }
-  const closeTab = (tabId: number) => { for (const listener of [...closedListeners]) listener(tabId) }
+  const closeTab = (tabId: number) => {
+    for (const listener of [...closedListeners]) listener(tabId)
+  }
   return { store, site, page, actions, ensured, ticks, view, recentAdds, closeTab, opened }
 }
 
@@ -155,8 +243,10 @@ test("an Undo handle stops working once the page releases it, its tab closes, or
     const { page, site, actions, closeTab } = world()
     const report = await page.add({ site: "www", video, via: "shortcut", shortcut: "orig01" as never })
     if (report.kind !== "report" || !report.undo) throw Error("Expected an add with Undo")
-    if (end === "release") { page.release(report.undo); await new Promise(resolve => setTimeout(resolve, 0)) }
-    else if (end === "close") closeTab(9)
+    if (end === "release") {
+      page.release(report.undo)
+      await new Promise(resolve => setTimeout(resolve, 0))
+    } else if (end === "close") closeTab(9)
     else actions.pageStarted(9)
     expect(await page.undo(report.undo)).toEqual({ kind: "expired" })
     expect(site.jobs).not.toContain("remove")
@@ -188,9 +278,11 @@ test("a confirmed add to a playlist marked Missing clears its mark in the store 
 test("AddFlow learns when this browser created a playlist, so an add to it waits until it's 30 s old (YT-ADD-39)", async () => {
   // The fixture store's clock reads 100, so a playlist created at 90 is 10 ms old to it.
   const at = 90
-  const { store } = world({ prepare: initial => {
-    initial.local[`cache:${a}`] = { listAt: null, playlists: [], order: {}, created: [{ id: beta, title: "New one", privacy: "PRIVATE", at }], labelAt: null }
-  } })
+  const { store } = world({
+    prepare: initial => {
+      initial.local[`cache:${a}`] = { listAt: null, playlists: [], order: {}, created: [{ id: beta, title: "New one", privacy: "PRIVATE", at }], labelAt: null }
+    }
+  })
   const view = createAddFlowOwner(store.owner, () => true)
   await view.load(false, a, "www")
   expect(view.port.account({ kind: "shortcut", shortcut: "orig01" as never }, a)).toEqual({ targets: [{ playlist: beta }], created: { [beta]: at } })
@@ -267,19 +359,34 @@ test("the picker's cached list never reaches YouTube, a refresh does, and popove
   expect(site.jobs).toEqual([])
   expect(await page.need()).toBe(true)
   expect(await page.loadJobs()).toBe(true)
-  expect(ensured).toEqual([{ tabId: 9, what: { popovers: true } }, { tabId: 9, what: { jobs: true } }])
+  expect(ensured).toEqual([
+    { tabId: 9, what: { popovers: true } },
+    { tabId: 9, what: { jobs: true } }
+  ])
 })
 
-const allowed = "UCAAAAAAAAAAAAAAAAAAAAAA", elsewhere = `UC${"B".repeat(22)}`
+const allowed = "UCAAAAAAAAAAAAAAAAAAAAAA",
+  elsewhere = `UC${"B".repeat(22)}`
 // Playback isn't paused, the video has no session skip, Recent adds starts empty, and the account's playlist cache names both playlists.
 function autoAddSeed(initial: Seed) {
   initial.session.paused = false
   delete initial.session[`skips:${a}`]
   delete initial.session.recentAdds
-  initial.local[`cache:${a}`] = { listAt: 5, playlists: [{ id: alpha, title: "Alpha mix" }, { id: beta, title: "Beta talks" }], order: {}, created: [], labelAt: null }
+  initial.local[`cache:${a}`] = {
+    listAt: 5,
+    playlists: [
+      { id: alpha, title: "Alpha mix" },
+      { id: beta, title: "Beta talks" }
+    ],
+    order: {},
+    created: [],
+    labelAt: null
+  }
 }
 const autoAddWorld = (prepare: (initial: Seed) => void = autoAddSeed) => world({ settings: { autoAdd: { on: true, feedback: true, pct: 73 } }, prepare })
-async function drain(rounds = 40) { for (let n = 0; n < rounds; n++) await new Promise(resolve => setTimeout(resolve, 0)) }
+async function drain(rounds = 40) {
+  for (let n = 0; n < rounds; n++) await new Promise(resolve => setTimeout(resolve, 0))
+}
 async function until(check: () => boolean, what: string) {
   for (let n = 0; n < 400 && !check(); n++) await new Promise(resolve => setTimeout(resolve, 0))
   if (!check()) throw Error(`Timed out waiting for ${what}`)
@@ -287,39 +394,96 @@ async function until(check: () => boolean, what: string) {
 
 /** One visit to the watch page: the player's readings drive the real auto-add feature, which reaches the background through the tab client. */
 async function watchPage(w: ReturnType<typeof world>, channel: string) {
-  const scope = new Scope({ document, onError: error => { throw error } })
+  const scope = new Scope({
+    document,
+    onError: error => {
+      throw error
+    }
+  })
   const view = await w.view()
   const streams: { player?: (data: PlayerData) => void; nav?: (data: NavData) => void } = {}
-  const toasts: ToastContent[] = [], states: unknown[] = [], answers: unknown[] = []
+  const toasts: ToastContent[] = [],
+    states: unknown[] = [],
+    answers: unknown[] = []
   let now = 0
   const feedback = {
-    toaster: { show(content: ToastContent) { toasts.push(content); return { replace: () => true, release() {} } } },
-    format: (plan: ToastPlan, titles: { video?: string; playlists?: Record<string, string> }, action: unknown) =>
-      ({ text: `${plan.message.kind}:${titles.video ?? ""}:${Object.values(titles.playlists ?? {}).join(",")}`, tone: plan.tone, auto: plan.auto, action }),
+    toaster: {
+      show(content: ToastContent) {
+        toasts.push(content)
+        return { replace: () => true, release() {} }
+      }
+    },
+    format: (plan: ToastPlan, titles: { video?: string; playlists?: Record<string, string> }, action: unknown) => ({
+      text: `${plan.message.kind}:${titles.video ?? ""}:${Object.values(titles.playlists ?? {}).join(",")}`,
+      tone: plan.tone,
+      auto: plan.auto,
+      action
+    }),
     action: (kind: string, run: () => unknown) => ({ kind, label: kind, run })
   } as unknown as Feedback
-  const actions = { ...w.page, async add(request: Parameters<typeof w.page.add>[0]) { const answer = await w.page.add(request); answers.push(answer); return answer } }
-  void autoAdd.start({ site: "www", scope, document, actions, feedback: { use: () => feedback },
+  const actions = {
+    ...w.page,
+    async add(request: Parameters<typeof w.page.add>[0]) {
+      const answer = await w.page.add(request)
+      answers.push(answer)
+      return answer
+    }
+  }
+  void autoAdd.start({
+    site: "www",
+    scope,
+    document,
+    actions,
+    feedback: { use: () => feedback },
     view: { read: () => view, subscribe: () => () => {} },
     page: {
-      watch(stream: "player" | "nav", callback: (data: never) => void) { streams[stream] = callback as never; return () => { delete streams[stream] } },
+      watch(stream: "player" | "nav", callback: (data: never) => void) {
+        streams[stream] = callback as never
+        return () => {
+          delete streams[stream]
+        }
+      },
       onState(listener: (state: unknown) => void) {
         listener({ kind: "ready", snapshot: { signedIn: true, acct: a, pageType: "watch", startedHidden: false, navType: "navigate" } })
         return () => {}
       },
       run: async () => ({ ok: true, data: { channelId: channel } })
     } as never,
-    text: { cantMeasure: title => `cant-measure:${title ?? ""}` }, clock: { now: () => now }, status: state => { states.push(state) } })
+    text: { cantMeasure: title => `cant-measure:${title ?? ""}` },
+    clock: { now: () => now },
+    status: state => {
+      states.push(state)
+    }
+  })
   disposers.push(() => scope.dispose())
-  streams.nav?.({ pageType: "watch" as NavData["pageType"], video: { videoId: video, title: "First video", length: 100, kind: "video" },
-    navigation: { kind: "watch", videoId: video } })
+  streams.nav?.({ pageType: "watch" as NavData["pageType"], video: { videoId: video, title: "First video", length: 100, kind: "video" }, navigation: { kind: "watch", videoId: video } })
   return {
-    scope, toasts, states, answers,
-    navigate(to: VideoId) { streams.nav?.({ pageType: "watch" as NavData["pageType"], video: { videoId: to, title: "Next video", length: 100, kind: "video" }, navigation: { kind: "watch", videoId: to } }) },
+    scope,
+    toasts,
+    states,
+    answers,
+    navigate(to: VideoId) {
+      streams.nav?.({ pageType: "watch" as NavData["pageType"], video: { videoId: to, title: "Next video", length: 100, kind: "video" }, navigation: { kind: "watch", videoId: to } })
+    },
     async play(from: number, to: number) {
       for (let pos = from; pos <= to; pos++) {
-        streams.player?.({ ad: false, at: now, player: "watch", videoId: video, pos, len: 100, listedLength: 100, rate: 1, playing: true, seeking: false,
-          content: "video", isPostLiveDvr: false, isLive: false, isUpcoming: false, isLiveContent: false })
+        streams.player?.({
+          ad: false,
+          at: now,
+          player: "watch",
+          videoId: video,
+          pos,
+          len: 100,
+          listedLength: 100,
+          rate: 1,
+          playing: true,
+          seeking: false,
+          content: "video",
+          isPostLiveDvr: false,
+          isLive: false,
+          isUpcoming: false,
+          isLiveContent: false
+        })
         now += 1000
         await drain(2)
       }
@@ -332,9 +496,23 @@ test("every add is listed in Recent adds with its video and playlist titles, and
   const report = await on.page.add({ site: "www", video, via: "shortcut", shortcut: "orig01" as never, title: "First video" })
   expect(report.kind === "report" && report.titles).toEqual({ [beta]: "Beta talks" })
   await until(() => on.recentAdds().length === 1, "the Recent adds entry")
-  expect(on.recentAdds()).toEqual([{ kind: "single", acct: a, at: expect.any(Number), source: { kind: "feature", feature: "shortcuts" },
-    video: { id: video, title: "First video" }, playlists: [{ id: beta, title: "Beta talks" }], undo: expect.any(String) }])
-  const off = world({ prepare: initial => { autoAddSeed(initial); Object.assign(initial.local.device as object, { recentAdds: false }) } })
+  expect(on.recentAdds()).toEqual([
+    {
+      kind: "single",
+      acct: a,
+      at: expect.any(Number),
+      source: { kind: "feature", feature: "shortcuts" },
+      video: { id: video, title: "First video" },
+      playlists: [{ id: beta, title: "Beta talks" }],
+      undo: expect.any(String)
+    }
+  ])
+  const off = world({
+    prepare: initial => {
+      autoAddSeed(initial)
+      Object.assign(initial.local.device as object, { recentAdds: false })
+    }
+  })
   expect((await off.page.add({ site: "www", video, via: "shortcut", shortcut: "orig01" as never, title: "First video" })).kind).toBe("report")
   await drain()
   expect(off.site.lists.get(beta)?.has(video)).toBe(true)
@@ -351,8 +529,17 @@ test("auto-add: a video played to its playlist's goal is added by the background
   expect(w.site.lists.get(alpha)?.has(video)).toBe(true)
   expect(tab.toasts.map(toast => [toast.text, toast.action?.kind ?? null])).toEqual([["saved:First video:Alpha mix", "undo"]])
   expect(tab.states.at(-1)).toEqual({ kind: "added", playlists: [alpha] })
-  expect(w.recentAdds()).toEqual([{ kind: "single", acct: a, at: expect.any(Number), source: { kind: "feature", feature: "auto-add" },
-    video: { id: video, title: "First video" }, playlists: [{ id: alpha, title: "Alpha mix" }], undo: expect.any(String) }])
+  expect(w.recentAdds()).toEqual([
+    {
+      kind: "single",
+      acct: a,
+      at: expect.any(Number),
+      source: { kind: "feature", feature: "auto-add" },
+      video: { id: video, title: "First video" },
+      playlists: [{ id: alpha, title: "Alpha mix" }],
+      undo: expect.any(String)
+    }
+  ])
   await tab.toasts[0]?.action?.run()
   await until(() => w.recentAdds().length === 0, "Undo to drop the Recent adds entry")
   expect(w.site.jobs.filter(job => job === "add" || job === "remove")).toEqual(["add", "remove"])
@@ -377,8 +564,7 @@ test("auto-add: the background applies the playlist's channel filter, so another
   const tab = await watchPage(w, elsewhere)
   await tab.play(0, 30)
   await until(() => tab.answers.length > 0, "the background's answer")
-  expect(tab.answers).toEqual([expect.objectContaining({ kind: "report", outcomes: { [alpha]: { kind: "filtered", decision: "filtered" } }, undo: null,
-    titles: { [alpha]: "Alpha mix" } })])
+  expect(tab.answers).toEqual([expect.objectContaining({ kind: "report", outcomes: { [alpha]: { kind: "filtered", decision: "filtered" } }, undo: null, titles: { [alpha]: "Alpha mix" } })])
   await drain()
   expect(w.site.jobs).not.toContain("add")
   expect(w.recentAdds()).toEqual([])
@@ -416,8 +602,12 @@ test("Playing now's Save runs through AddFlow in the tab it read with Quick acti
   await until(() => w.recentAdds().length === 1, "the Recent adds entry")
   const pages = createPageReceiver({ session: { get: async () => w.recentAdds() } } as unknown as PageReceiverPorts)
   const ui = { ui: { kind: "ui", page: "popup", origin: { kind: "ui", windowId: 3, incognito: false } }, requester: popupWindow, principal: "p" }
-  expect(await pages["ui.recentAdds"]({ acct: b }, { ui, current: async () => ui } as never)).toEqual({ kind: "recent", entries: [{ at: expect.any(Number),
-    source: { kind: "feature", feature: "playing-now" }, playlists: [{ id: beta, title: "Beta talks" }], videos: [{ id: video, title: "First song" }], gather: false }] })
+  expect(await pages["ui.recentAdds"]({ acct: b }, { ui, current: async () => ui } as never)).toEqual({
+    kind: "recent",
+    entries: [
+      { at: expect.any(Number), source: { kind: "feature", feature: "playing-now" }, playlists: [{ id: beta, title: "Beta talks" }], videos: [{ id: video, title: "First song" }], gather: false }
+    ]
+  })
   expect(await save(popupWindow, { tabId: 9, acct: b, request: song })).toEqual({ kind: "already-in", text: expect.stringContaining("Beta talks") })
 })
 
@@ -441,8 +631,10 @@ test("the popup's picker sheet reads membership, saves and unticks in the tab's 
   const added = await save(popupWindow, { tabId: 9, acct: a, request: { ...request, via: "picker", playlist: beta } })
   if (added.kind !== "added" || !added.undo) throw Error("Expected a save with its handle")
   expect(w.site.lists.get(beta)?.has(video)).toBe(true)
-  expect(await item.remove(popupWindow, { tabId: 9, acct: a, request: { site: "www", video, playlist: beta, opener: "popup", tick: added.undo } }))
-    .toEqual({ kind: "removed", undo: { kind: "remove", id: expect.any(String) } })
+  expect(await item.remove(popupWindow, { tabId: 9, acct: a, request: { site: "www", video, playlist: beta, opener: "popup", tick: added.undo } })).toEqual({
+    kind: "removed",
+    undo: { kind: "remove", id: expect.any(String) }
+  })
   expect(w.site.jobs).toContain("remove")
   expect(await item.remove(popupWindow, { tabId: 9, acct: b, request: { site: "www", video, playlist: beta, opener: "popup", tick: null } })).toEqual({ kind: "account-changed" })
 })

@@ -15,14 +15,23 @@ export async function executeUpgradeNoteFlag(deps: { readonly local: LocalWriteS
   if (deps.isStopped()) return "unavailable"
   const loaded = await deps.local.get(["schema", "device"])
   if (loaded.schema !== STORAGE_SCHEMA_VERSION || !jsonObject(loaded.device)) return "unavailable"
-  try { decodeDevice(loaded.device) } catch (error) { if (error instanceof DecodeError) return "unavailable"; throw error }
+  try {
+    decodeDevice(loaded.device)
+  } catch (error) {
+    if (error instanceof DecodeError) return "unavailable"
+    throw error
+  }
   const note = loaded.device.upgradeNote
   if (!jsonObject(note) || note.state !== "pending") return "not-pending"
   if (note[deps.flag] === true) return "unchanged"
   const next: JsonObject = { ...loaded.device, upgradeNote: { ...note, [deps.flag]: true } }
   const preflight = await deps.local.get(["device"])
   if (deps.isStopped() || !jsonObject(preflight.device) || !sameSyncJson(preflight.device, loaded.device)) return "unavailable"
-  try { await deps.local.set({ device: next }) } catch { return "unconfirmed" }
+  try {
+    await deps.local.set({ device: next })
+  } catch {
+    return "unconfirmed"
+  }
   const readback = await deps.local.get(["device"]).catch(() => ({}))
   return jsonObject(readback) && jsonObject(readback.device) && sameSyncJson(readback.device, next) ? "set" : "unconfirmed"
 }

@@ -8,16 +8,23 @@ import { isAccountKey, isPlaylistId, type DocumentKey } from "../../shared/model
 import type { RawSyncItem, ReadSyncResult, SyncProjection, WireInvalid } from "./sync-codec"
 import { readSyncInventory, type SyncInventoryDocument, type SyncInventoryResult } from "./sync-inventory"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 export type InventoryProofs = [
   Check<Equal<keyof typeof import("./sync-inventory"), "readSyncInventory">>,
   Check<Equal<typeof readSyncInventory, (input: { readonly items: readonly RawSyncItem[] }) => SyncInventoryResult>>,
   Check<Equal<SyncInventoryDocument, { readonly key: DocumentKey; readonly baseKey: string; readonly result: ReadSyncResult }>>,
-  Check<Equal<SyncInventoryResult, WireInvalid | {
-    readonly kind: "read"; readonly documents: readonly SyncInventoryDocument[]
-    readonly occupancy: Exclude<SyncProjection, WireInvalid>
-  }>>
+  Check<
+    Equal<
+      SyncInventoryResult,
+      | WireInvalid
+      | {
+          readonly kind: "read"
+          readonly documents: readonly SyncInventoryDocument[]
+          readonly occupancy: Exclude<SyncProjection, WireInvalid>
+        }
+    >
+  >
 ]
 
 const matrix = String.raw`(api => {
@@ -193,7 +200,7 @@ async function sourceProgram(): Promise<string> {
     for (const imported of new Bun.Transpiler({ loader: "ts" }).scanImports(source)) {
       if (!imported.path.startsWith(".")) throw Error(`Nonlocal pure import ${imported.path}`)
       const base = resolve(dirname(file), imported.path)
-      const target = await Bun.file(`${base}.ts`).exists() ? `${base}.ts` : resolve(base, "index.ts")
+      const target = (await Bun.file(`${base}.ts`).exists()) ? `${base}.ts` : resolve(base, "index.ts")
       imports[imported.path] = target
       await visit(target)
     }
@@ -206,17 +213,29 @@ async function sourceProgram(): Promise<string> {
 }
 
 function nodeVM(script: string): { assertions: number; controls: number; caught: unknown[] } {
-  return JSON.parse(execFileSync("node", ["--input-type=module", "-e",
-    'import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'
-  ], { input: script, encoding: "utf8", timeout: 35000 }))
+  return JSON.parse(
+    execFileSync(
+      "node",
+      [
+        "--input-type=module",
+        "-e",
+        'import {readFileSync} from "node:fs";import {runInNewContext} from "node:vm";console.log(JSON.stringify(runInNewContext(readFileSync(0,"utf8"),{}, {timeout:30000})));'
+      ],
+      { input: script, encoding: "utf8", timeout: 35000 }
+    )
+  )
 }
 
 test("exact public source API accepts validated synthetic canonical IDs", () => {
-  const acct = "AAAAAAAAAAAAAAAA", playlist = "PL_P"
+  const acct = "AAAAAAAAAAAAAAAA",
+    playlist = "PL_P"
   if (!isAccountKey(acct) || !isPlaylistId(playlist)) throw Error("Invalid synthetic brands")
   const result = readSyncInventory({ items: [{ key: `s:filter:${acct}:${playlist}`, value: null }] })
-  expect(result).toEqual({ kind: "read", documents: [{ key: { kind: "filter", acct, playlist }, baseKey: `s:filter:${acct}:${playlist}`, result: { kind: "absent" } }],
-    occupancy: { kind: "fits", usage: { bytes: 38, items: 1, perItem: [{ key: `s:filter:${acct}:${playlist}`, bytes: 38 }] } } })
+  expect(result).toEqual({
+    kind: "read",
+    documents: [{ key: { kind: "filter", acct, playlist }, baseKey: `s:filter:${acct}:${playlist}`, result: { kind: "absent" } }],
+    occupancy: { kind: "fits", usage: { bytes: 38, items: 1, perItem: [{ key: `s:filter:${acct}:${playlist}`, bytes: 38 }] } }
+  })
 })
 
 test("literal matrix executes source and saved minified browser bytes in fresh Node VMs", async () => {
@@ -228,7 +247,7 @@ test("literal matrix executes source and saved minified browser bytes in fresh N
     const saved = resolve(folder, "browser.cjs")
     await writeFile(saved, await build.outputs[0]!.arrayBuffer().then(bytes => new Uint8Array(bytes)))
     const artifact = await readFile(saved, "utf8")
-    const source = guards + await sourceProgram() + `(${matrix})(api)`
+    const source = guards + (await sourceProgram()) + `(${matrix})(api)`
     const emitted = guards + `const module={exports:{}};${artifact};(${matrix})(module.exports)`
     const sourceResult = nodeVM(source)
     const emittedResult = nodeVM(emitted)

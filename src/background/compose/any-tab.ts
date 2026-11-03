@@ -12,12 +12,22 @@ import { siteBundles } from "../../shared/features/registration"
 import { createRpcCaller } from "../../shared/rpc/rpc"
 
 export type CandidateTab = {
-  readonly id: number; readonly windowId: number; readonly incognito: boolean; readonly active: boolean
-  readonly audible: boolean; readonly discarded: boolean; readonly lastAccessed: number
+  readonly id: number
+  readonly windowId: number
+  readonly incognito: boolean
+  readonly active: boolean
+  readonly audible: boolean
+  readonly discarded: boolean
+  readonly lastAccessed: number
 }
 export type NativeTab = {
-  readonly id?: number; readonly windowId?: number; readonly incognito?: boolean; readonly active?: boolean
-  readonly audible?: boolean; readonly discarded?: boolean; readonly lastAccessed?: number
+  readonly id?: number
+  readonly windowId?: number
+  readonly incognito?: boolean
+  readonly active?: boolean
+  readonly audible?: boolean
+  readonly discarded?: boolean
+  readonly lastAccessed?: number
 }
 type MenuInfo = { readonly menuItemId: string | number; readonly linkUrl?: string; readonly pageUrl?: string }
 
@@ -43,12 +53,21 @@ export function videoOfUrl(url: string | undefined): VideoId | null {
     if (parsed.hostname !== "www.youtube.com") return null
     const id = parsed.pathname === "/watch" ? parsed.searchParams.get("v") : parsed.pathname.startsWith("/shorts/") ? parsed.pathname.slice(8).split("/")[0] : null
     return isVideoId(id) ? id : null
-  } catch { return null }
+  } catch {
+    return null
+  }
 }
 export function candidate(tab: NativeTab): CandidateTab | null {
   if (typeof tab.id !== "number" || typeof tab.windowId !== "number") return null
-  return { id: tab.id, windowId: tab.windowId, incognito: tab.incognito === true, active: tab.active === true, audible: tab.audible === true,
-    discarded: tab.discarded === true, lastAccessed: typeof tab.lastAccessed === "number" ? tab.lastAccessed : 0 }
+  return {
+    id: tab.id,
+    windowId: tab.windowId,
+    incognito: tab.incognito === true,
+    active: tab.active === true,
+    audible: tab.audible === true,
+    discarded: tab.discarded === true,
+    lastAccessed: typeof tab.lastAccessed === "number" ? tab.lastAccessed : 0
+  }
 }
 function confirmed(answer: TabAddReport): boolean {
   return answer.kind === "report" && Object.values(answer.outcomes).some(outcome => outcome.kind === "added" || outcome.kind === "already-in")
@@ -77,16 +96,28 @@ export function composeAnyTab(deps: {
   let disposed = false
 
   async function inject(tabId: number): Promise<boolean> {
-    try { await deps.registrar.ensure(tabId, { core: true, kit: true }); return true } catch { return false }
+    try {
+      await deps.registrar.ensure(tabId, { core: true, kit: true })
+      return true
+    } catch {
+      return false
+    }
   }
   async function currentVideo(tab: CandidateTab): Promise<VideoInfo | null> {
-    const outcome = await deps.tabs.runIn<JobOf<"videoInfo">>(tab.id, { job: { kind: "videoInfo" } },
-      { site: "www", req: { windowId: tab.windowId, incognito: tab.incognito, activeTabId: tab.id }, account: { kind: "any" } })
+    const outcome = await deps.tabs.runIn<JobOf<"videoInfo">>(
+      tab.id,
+      { job: { kind: "videoInfo" } },
+      { site: "www", req: { windowId: tab.windowId, incognito: tab.incognito, activeTabId: tab.id }, account: { kind: "any" } }
+    )
     return outcome.kind === "result" && outcome.result.ok ? outcome.result.data : null
   }
   async function ask<K extends keyof TabAskMessages>(tabId: number, kind: K, payload: TabAskMessages[K]["payload"]) {
     const caller = createRpcCaller<TabAskMessages>(tabTarget(native.tabs, tabId), { build: deps.build, deadline: timerDeadline, contract: tabAskContract })
-    try { return await caller.call(kind, payload) } finally { caller.dispose() }
+    try {
+      return await caller.call(kind, payload)
+    } finally {
+      caller.dispose()
+    }
   }
   function flash(tabId: number | undefined, ok: boolean, text: string) {
     if (tabId !== undefined) deps.flash(tabId, ok, text)
@@ -115,15 +146,21 @@ export function composeAnyTab(deps: {
     const settings = await actions.settings(focused.incognito)
     if (!settings?.anyTabKeys.on) return
     const [shown] = await native.tabs.query({ active: true, windowId: focused.id }).catch(() => [] as NativeTab[])
-    if (!settings.musicSection) { flash(shown?.id, false, i18n.message("anyTab_musicOff")); return }
-    if (!await native.permissions.contains({ origins: [siteBundles.music.match] }).catch(() => false)) {
+    if (!settings.musicSection) {
+      flash(shown?.id, false, i18n.message("anyTab_musicOff"))
+      return
+    }
+    if (!(await native.permissions.contains({ origins: [siteBundles.music.match] }).catch(() => false))) {
       flash(shown?.id, false, i18n.message("anyTab_noMusicAccess"))
       return
     }
     const raw = await native.tabs.query({ url: siteBundles.music.match }).catch(() => [] as NativeTab[])
-    const tabs = raw.flatMap(tab => { const value = candidate(tab); return value ? [value] : [] })
+    const tabs = raw.flatMap(tab => {
+      const value = candidate(tab)
+      return value ? [value] : []
+    })
     for (const tabId of tabOrder(tabs, { windowId: focused.id, incognito: focused.incognito })) {
-      if (!await inject(tabId)) continue
+      if (!(await inject(tabId))) continue
       const answer = await ask(tabId, "bg.music", { action, feedback: settings.anyTabKeys.feedback })
       const result = answer.kind === "answered" ? answer.result : { kind: "failed", text: null }
       flash(shown?.id, result.kind === "done", result.text ?? i18n.message("anyTab_musicUnanswered"))
@@ -139,14 +176,19 @@ export function composeAnyTab(deps: {
     if (!settings?.anyTabKeys.on) return
     const raw = await native.tabs.query({ url: "https://www.youtube.com/*" }).catch(() => [] as NativeTab[])
     const [shown] = await native.tabs.query({ active: true, windowId: focused.id }).catch(() => [] as NativeTab[])
-    const tabs = raw.flatMap(tab => { const value = candidate(tab); return value ? [value] : [] })
+    const tabs = raw.flatMap(tab => {
+      const value = candidate(tab)
+      return value ? [value] : []
+    })
     for (const tabId of tabOrder(tabs, { windowId: focused.id, incognito: focused.incognito })) {
       const tab = tabs.find(entry => entry.id === tabId)
-      if (!tab || !await inject(tabId)) continue
+      if (!tab || !(await inject(tabId))) continue
       const info = await currentVideo(tab)
       if (!info) continue
-      const answer = await actions.addInTab({ tabId, incognito: tab.incognito, site: "www" },
-        { site: "www", video: info.videoId, via: "picker", opener: "any-tab-keys", playlist: watchLater, ...(info.title ? { title: info.title } : {}) })
+      const answer = await actions.addInTab(
+        { tabId, incognito: tab.incognito, site: "www" },
+        { site: "www", video: info.videoId, via: "picker", opener: "any-tab-keys", playlist: watchLater, ...(info.title ? { title: info.title } : {}) }
+      )
       void ask(tabId, "bg.toast", { answer, video: info.videoId, title: info.title || null, opener: "any-tab-keys" })
       flash(shown?.id, confirmed(answer), answerText(answer, info.title || null))
       return
@@ -158,7 +200,7 @@ export function composeAnyTab(deps: {
     const target = tab ? candidate(tab) : null
     if (disposed || !target || !deps.consented() || !Object.values(menuIds).includes(String(info.menuItemId) as never)) return
     const settings = await actions.settings(target.incognito)
-    if (!settings?.browserMenu.on || !await inject(target.id)) return
+    if (!settings?.browserMenu.on || !(await inject(target.id))) return
     const linked = videoOfUrl(info.linkUrl)
     const current = linked ? null : await currentVideo(target)
     const video = linked ?? current?.videoId ?? videoOfUrl(info.pageUrl)
@@ -174,14 +216,19 @@ export function composeAnyTab(deps: {
       return
     }
     const named = title ? { title } : {}
-    const answer = await actions.addInTab({ tabId: target.id, incognito: target.incognito, site: "www" }, info.menuItemId === menuIds.quickSave
-      ? { site: "www", video, via: "quick-save", opener: "browser-menu", ...named }
-      : { site: "www", video, via: "picker", opener: "browser-menu", playlist: watchLater, ...named })
+    const answer = await actions.addInTab(
+      { tabId: target.id, incognito: target.incognito, site: "www" },
+      info.menuItemId === menuIds.quickSave
+        ? { site: "www", video, via: "quick-save", opener: "browser-menu", ...named }
+        : { site: "www", video, via: "picker", opener: "browser-menu", playlist: watchLater, ...named }
+    )
     // With no quick-save playlist the item opens choose mode (YT-BM-03).
     if (answer.kind === "choose") await ask(target.id, "bg.picker", { video, title, choose: true, opener: "browser-menu" })
     else await ask(target.id, "bg.toast", { answer, video, title, opener: "browser-menu" })
   }
-  const onClicked = (info: MenuInfo, tab?: NativeTab) => { void clicked(info, tab) }
+  const onClicked = (info: MenuInfo, tab?: NativeTab) => {
+    void clicked(info, tab)
+  }
 
   /** Shows Save to ▸ while the feature is on, consent stands and the optional permission is held (YT-BM-02, YT-BM-07). */
   async function reconcileMenu(): Promise<void> {
@@ -192,20 +239,33 @@ export function composeAnyTab(deps: {
     try {
       await menus.removeAll()
       if (disposed || !settings?.browserMenu.on || !granted) return
-      if (!listening) { menus.onClicked.addListener(onClicked); listening = true }
+      if (!listening) {
+        menus.onClicked.addListener(onClicked)
+        listening = true
+      }
       const documentUrlPatterns = ["https://www.youtube.com/*"]
       menus.create({ id: menuIds.parent, title: i18n.message("browserMenu_saveTo"), contexts: ["link", "page", "video"], documentUrlPatterns })
-      for (const [id, title] of [[menuIds.quickSave, "browserMenu_quickSave"], [menuIds.watchLater, "picker_watchLater"], [menuIds.choose, "browserMenu_choose"]] as const) {
+      for (const [id, title] of [
+        [menuIds.quickSave, "browserMenu_quickSave"],
+        [menuIds.watchLater, "picker_watchLater"],
+        [menuIds.choose, "browserMenu_choose"]
+      ] as const) {
         menus.create({ id, parentId: menuIds.parent, title: i18n.message(title), contexts: ["link", "page", "video"], documentUrlPatterns })
       }
     } catch {}
   }
 
   return {
-    command, clicked, reconcileMenu,
+    command,
+    clicked,
+    reconcileMenu,
     dispose() {
       disposed = true
-      if (listening && !deps.menuClicksHeard) { try { native.contextMenus?.onClicked.removeListener(onClicked) } catch {} }
+      if (listening && !deps.menuClicksHeard) {
+        try {
+          native.contextMenus?.onClicked.removeListener(onClicked)
+        } catch {}
+      }
     }
   }
 }

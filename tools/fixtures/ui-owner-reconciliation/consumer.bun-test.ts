@@ -7,7 +7,8 @@ import { createFirstRunHarness, accountKey, playlistId } from "../first-run-back
 import { seed } from "../auto-add-choice/harness"
 
 test("reconciled canonical owner consumer matches through one LF and EOF", async () => {
-  const first = await reconciliationConsumer(), second = await reconciliationConsumer()
+  const first = await reconciliationConsumer(),
+    second = await reconciliationConsumer()
   expect(first).toBe(second)
   expect(first.endsWith("\n") && !first.endsWith("\n\n")).toBe(true)
   expect(first).not.toMatch(/SENTINEL|agreement-review|SessionRevision|playlist-cache-capture|lifetime/)
@@ -45,7 +46,10 @@ test("actual first-run fixture retains one listener and supports both Backend ca
     const created = await form.submit({ title: "No synthetic native tab", privacy: "PRIVATE" })
     expect(created).toEqual({ kind: "answered", result: { kind: "not-created", outcome: { kind: "no-tab", attempted: [] } } })
     expect(await form.status()).toEqual(created)
-    operation.dispose(); form.dispose()
-  } finally { await h.dispose() }
+    operation.dispose()
+    form.dispose()
+  } finally {
+    await h.dispose()
+  }
   expect(h.stats()).toMatchObject({ nativeListeners: 0, localListeners: 0, deadlines: 0 })
 })

@@ -1,4 +1,15 @@
-import { isRecentEntry, type DeviceSettingAnswer, type DeviceSettingChange, type FilterSettingAnswer, type PageMessages, type RecentEntry, type UiDiagnostics, type UiFeatureHealth, type UiSync, type UiTabFacts } from "../../shared/contracts/ui-pages"
+import {
+  isRecentEntry,
+  type DeviceSettingAnswer,
+  type DeviceSettingChange,
+  type FilterSettingAnswer,
+  type PageMessages,
+  type RecentEntry,
+  type UiDiagnostics,
+  type UiFeatureHealth,
+  type UiSync,
+  type UiTabFacts
+} from "../../shared/contracts/ui-pages"
 import type { SyncJoinOperation, SyncJoinPreparation, SyncJoinResult, SyncJoinReview, SyncJoinSide } from "../store/sync-join-execution"
 import type { FilterChannelChange, KeptFiltersResult, LocalFilterChange, LocalFilterWriteResult } from "../store/local-filter-writer"
 import type { RemovalConfirmation, RemovalPreparation, RemovalResult } from "../store/account-removal-execution"
@@ -27,8 +38,16 @@ function pausedJobs(work: readonly HeldWorkView[]): { readonly job: UiPausedJob;
   return work.flatMap((view, index) => {
     if (view.kind === "unsupported") return []
     const id = String(index + 1)
-    const job: UiPausedJob["job"] = view.kind === "account-removal" ? "removal" : view.kind === "sync-reset" ? "sync"
-      : view.kind === "key-settings" || view.kind === "feature-settings" ? "settings" : view.kind === "settings-import" ? "import" : "migration"
+    const job: UiPausedJob["job"] =
+      view.kind === "account-removal"
+        ? "removal"
+        : view.kind === "sync-reset"
+          ? "sync"
+          : view.kind === "key-settings" || view.kind === "feature-settings"
+            ? "settings"
+            : view.kind === "settings-import"
+              ? "import"
+              : "migration"
     const acct = view.kind === "account-removal" && isAccountKey(view.record.acct) ? view.record.acct : null
     return [{ job: { id, job, acct }, selection: view.selection }]
   })
@@ -38,15 +57,24 @@ function pausedJobs(work: readonly HeldWorkView[]): { readonly job: UiPausedJob;
 const changedJoin = new Set(["stale", "changed-generation", "incomplete", "ambiguous-history", "reset", "inventory"])
 function syncAnswer(result: Exclude<SyncJoinPreparation, { kind: "automatic" | "choice-required" }> | SyncJoinResult): UiSync {
   switch (result.kind) {
-    case "committed": return { kind: "on" }
-    case "cancelled": return { kind: "off" }
-    case "unconfirmed": return { kind: "refused", reason: "unconfirmed" }
-    case "failed": return { kind: "refused", reason: "failed" }
-    case "unavailable": return { kind: "refused", reason: changedJoin.has(result.reason) ? "changed" : "failed" }
+    case "committed":
+      return { kind: "on" }
+    case "cancelled":
+      return { kind: "off" }
+    case "unconfirmed":
+      return { kind: "refused", reason: "unconfirmed" }
+    case "failed":
+      return { kind: "refused", reason: "failed" }
+    case "unavailable":
+      return { kind: "refused", reason: changedJoin.has(result.reason) ? "changed" : "failed" }
     case "refused": {
       if (result.reason !== "sync-full") return { kind: "refused", reason: result.reason === "update-needed" ? "update-needed" : "failed" }
       const largest = result.quota?.largest
-      return { kind: "refused", reason: "sync-full", largest: largest && (largest.kind === "settings" || largest.kind === "setup" || largest.kind === "filter") ? { kind: largest.kind, bytes: largest.bytes } : null }
+      return {
+        kind: "refused",
+        reason: "sync-full",
+        largest: largest && (largest.kind === "settings" || largest.kind === "setup" || largest.kind === "filter") ? { kind: largest.kind, bytes: largest.bytes } : null
+      }
     }
   }
 }
@@ -75,7 +103,10 @@ export type PageReceiverPorts = {
     readWithdrawnWork(origin: UiOrigin): Promise<HeldWorkRead>
     recoverWithdrawnWork(origin: UiOrigin, input: { readonly review: WithdrawnWorkReview; readonly job: HeldJobSelection }): Promise<ExactRecoveryResult>
     beginSyncJoin(origin: UiOrigin): SyncJoinOperation
-    applySyncJoin(origin: UiOrigin, input: { readonly kind: "automatic"; readonly review: SyncJoinReview } | { readonly kind: "choice"; readonly review: SyncJoinReview; readonly choice: SyncJoinSide }): Promise<SyncJoinResult>
+    applySyncJoin(
+      origin: UiOrigin,
+      input: { readonly kind: "automatic"; readonly review: SyncJoinReview } | { readonly kind: "choice"; readonly review: SyncJoinReview; readonly choice: SyncJoinSide }
+    ): Promise<SyncJoinResult>
     cancelSyncJoin(origin: UiOrigin): Promise<SyncJoinResult>
     resumeSyncJoin(origin: UiOrigin): Promise<SyncJoinResult>
     /** Starts listening and pushing once a join commits; the store starts sync only at its own start (SYNC-06). */
@@ -124,7 +155,11 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
   // The join question waits on the page that asked it; a page that never answers lets its review go once 32 newer ones arrive.
   const joins = new Map<string, { readonly principal: string; readonly review: SyncJoinReview; readonly operation: SyncJoinOperation }>()
   function rememberJoin(principal: string, review: SyncJoinReview, operation: SyncJoinOperation) {
-    if (joins.size >= 32) { const [oldest, entry] = joins.entries().next().value!; joins.delete(oldest); entry.operation.cancel() }
+    if (joins.size >= 32) {
+      const [oldest, entry] = joins.entries().next().value!
+      joins.delete(oldest)
+      entry.operation.cancel()
+    }
     const token = crypto.randomUUID()
     joins.set(token, { principal, review, operation })
     return token
@@ -143,7 +178,10 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
   const paused = new Map<string, { readonly review: WithdrawnWorkReview; readonly selections: ReadonlyMap<string, HeldJobSelection> }>()
   async function readPaused(context: PageContext) {
     const read = await ports.owner.readWithdrawnWork(context.ui.ui.origin)
-    if (read.kind !== "held") { paused.delete(context.ui.principal); return read.kind === "none" ? [] : undefined }
+    if (read.kind !== "held") {
+      paused.delete(context.ui.principal)
+      return read.kind === "none" ? [] : undefined
+    }
     const jobs = pausedJobs(read.work)
     if (paused.size >= 32 && !paused.has(context.ui.principal)) paused.delete(paused.keys().next().value!)
     paused.set(context.ui.principal, { review: read.review, selections: new Map(jobs.map(entry => [entry.job.id, entry.selection])) })
@@ -158,7 +196,7 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
     async "ui.status"(_payload, context) {
       const [read, facts] = await Promise.all([ports.owner.readSession(), ports.status(context.ui)])
       if (read.kind !== "memory" || !facts) return unavailable("owner")
-      return await context.current() ? { kind: "status", paused: read.memory.paused, tab: facts.tab, health: facts.health } : unavailable("operation")
+      return (await context.current()) ? { kind: "status", paused: read.memory.paused, tab: facts.tab, health: facts.health } : unavailable("operation")
     },
     async "ui.pause"(payload, context) {
       if (context.ui.requester.incognito) return { kind: "refused", reason: "unavailable" }
@@ -169,10 +207,14 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
     },
     async "ui.recentAdds"(payload, context) {
       let raw: unknown
-      try { raw = await ports.session.get("recentAdds") } catch { return unavailable("owner") }
+      try {
+        raw = await ports.session.get("recentAdds")
+      } catch {
+        return unavailable("owner")
+      }
       const rows = Array.isArray(raw) ? raw : []
       const entries = rows.flatMap(row => recentEntry(row, payload.acct) ?? []).slice(0, 50)
-      return await context.current() ? { kind: "recent", entries } : unavailable("operation")
+      return (await context.current()) ? { kind: "recent", entries } : unavailable("operation")
     },
     async "ui.filter"({ change }, context): Promise<FilterSettingAnswer> {
       if (context.ui.requester.incognito) return { kind: "refused", reason: "private" }
@@ -196,17 +238,22 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
     async "ui.diagnostics"({ check }, context) {
       if (!ports.diagnostics) return unavailable("collaborator")
       const answer = await ports.diagnostics(context.ui, check)
-      return await context.current() ? answer : unavailable("operation")
+      return (await context.current()) ? answer : unavailable("operation")
     },
     async "ui.withdraw"({ expected }, context) {
       if (!settingsPage(context)) return unavailable("operation")
       const result = await ports.withdraw({ kind: "ui", page: "settings", origin: context.ui.ui.origin }, expected)
       switch (result.kind) {
-        case "withdrawn": return { kind: "withdrawn" }
-        case "unchanged": return { kind: "refused", reason: "not-agreed" }
-        case "unconfirmed": return { kind: "refused", reason: "unconfirmed" }
-        case "failed": return { kind: "refused", reason: "failed" }
-        default: return { kind: "refused", reason: "unavailable" }
+        case "withdrawn":
+          return { kind: "withdrawn" }
+        case "unchanged":
+          return { kind: "refused", reason: "not-agreed" }
+        case "unconfirmed":
+          return { kind: "refused", reason: "unconfirmed" }
+        case "failed":
+          return { kind: "refused", reason: "failed" }
+        default:
+          return { kind: "refused", reason: "unavailable" }
       }
     },
     async "ui.removeSetup"(payload, context) {
@@ -224,12 +271,18 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
       if (!saved || saved.principal !== context.ui.principal) return unavailable("operation")
       const result = await ports.owner.removeAccountSetup(origin, saved.confirmation)
       switch (result.kind) {
-        case "committed": return { kind: "removed" }
-        case "unchanged": return { kind: "unchanged" }
-        case "result": return { kind: "refused", reason: result.result.refused }
-        case "unconfirmed": return { kind: "refused", reason: "unconfirmed" }
-        case "failed": return { kind: "refused", reason: "failed" }
-        default: return { kind: "refused", reason: "unavailable" }
+        case "committed":
+          return { kind: "removed" }
+        case "unchanged":
+          return { kind: "unchanged" }
+        case "result":
+          return { kind: "refused", reason: result.result.refused }
+        case "unconfirmed":
+          return { kind: "refused", reason: "unconfirmed" }
+        case "failed":
+          return { kind: "refused", reason: "failed" }
+        default:
+          return { kind: "refused", reason: "unavailable" }
       }
     },
     async "ui.exportSettings"(_payload, context) {
@@ -246,7 +299,11 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
       if (payload.action === "prepare") {
         const prepared = await ports.owner.prepareSettingsImport(origin, payload.text)
         if (prepared.kind === "confirmation-required") return { kind: "confirm", token: remember(imports, context.ui.principal, prepared.confirmation), accounts: prepared.scope.accounts.length }
-        if (prepared.kind === "refused") return { kind: "refused", reason: prepared.reason === "private" ? "private" : prepared.reason === "invalid" ? "invalid-file" : prepared.reason === "update-needed" ? "newer-format" : "failed" }
+        if (prepared.kind === "refused")
+          return {
+            kind: "refused",
+            reason: prepared.reason === "private" ? "private" : prepared.reason === "invalid" ? "invalid-file" : prepared.reason === "update-needed" ? "newer-format" : "failed"
+          }
         return { kind: "refused", reason: "unavailable" }
       }
       const saved = imports.get(payload.token)
@@ -271,12 +328,19 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
         if (read.presentation.kind !== "canonical" || read.presentation.note?.state !== "pending") return refusal("unavailable")
         const access = await ports.readAccess()
         if (!access) return refusal("unavailable")
-        const result = await ports.owner.agree(origin, { review: read.review, displayedVersion: change.displayedVersion, access: Promise.resolve(access),
-          choice: change.syncOn ? { kind: "upgrade-note", selected: change.selected, syncOn: true, join: { kind: "prepare" }, percentage: change.percentage }
-            : { kind: "upgrade-note", selected: change.selected, syncOn: false, percentage: change.percentage } })
+        const result = await ports.owner.agree(origin, {
+          review: read.review,
+          displayedVersion: change.displayedVersion,
+          access: Promise.resolve(access),
+          choice: change.syncOn
+            ? { kind: "upgrade-note", selected: change.selected, syncOn: true, join: { kind: "prepare" }, percentage: change.percentage }
+            : { kind: "upgrade-note", selected: change.selected, syncOn: false, percentage: change.percentage }
+        })
         if (result.kind === "joined") void ports.owner.startSync().catch(() => {})
         return projectAgreement({ kind: "first-run-agree", displayedVersion: change.displayedVersion, attempt: change.attempt, selected: change.selected, syncOn: change.syncOn }, result, access)
-      } catch { return refusal("rejected") }
+      } catch {
+        return refusal("rejected")
+      }
     },
     async "ui.pausedWork"(payload, context) {
       if (!settingsPage(context)) return { kind: "refused", reason: "unavailable" }
@@ -285,10 +349,11 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
         const jobs = await readPaused(context)
         return jobs ? { kind: "work", jobs } : { kind: "refused", reason: "unavailable" }
       }
-      const saved = paused.get(context.ui.principal), selection = saved?.selections.get(payload.id)
+      const saved = paused.get(context.ui.principal),
+        selection = saved?.selections.get(payload.id)
       if (!saved || !selection) return { kind: "refused", reason: "unavailable" }
       const result = await ports.owner.recoverWithdrawnWork(context.ui.ui.origin, { review: saved.review, job: selection })
-      const jobs = await readPaused(context) ?? []
+      const jobs = (await readPaused(context)) ?? []
       const kind = result.kind
       if (kind === "recovered" || kind === "key-settings-recovered" || kind === "feature-settings-recovered") return { kind: "continued", jobs }
       return { kind: "refused", reason: kind === "authorized-pending" || kind === "key-settings-pending" || kind === "feature-settings-pending" ? "unconfirmed" : "failed" }
@@ -296,7 +361,8 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
     // SYNC-25: the switch and the join question work from a private window too.
     async "ui.sync"(payload, context) {
       if (!settingsPage(context)) return unavailable("operation")
-      const origin = context.ui.ui.origin, principal = context.ui.principal
+      const origin = context.ui.ui.origin,
+        principal = context.ui.principal
       switch (payload.action) {
         case "join": {
           const operation = ports.owner.beginSyncJoin(origin)
@@ -316,7 +382,8 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
           takeJoin(payload.token, principal)?.operation.cancel()
           return syncAnswer(await ports.owner.cancelSyncJoin(origin))
         }
-        case "off": return syncAnswer(await ports.owner.cancelSyncJoin(origin))
+        case "off":
+          return syncAnswer(await ports.owner.cancelSyncJoin(origin))
       }
     },
     async "ui.claimSeen"({ acct }, context) {

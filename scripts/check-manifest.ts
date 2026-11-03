@@ -36,12 +36,16 @@ export function expectedManifest(build: ManifestBuild, version: string): Record<
       "watch-later-current-video": { description: "__MSG_command_watchLaterCurrentVideo__" }
     },
     ...(firefox
-      ? { browser_specific_settings: { gecko: {
-        id: "{cc70cd21-2cc6-444b-bd89-496909346091}",
-        strict_min_version: "140.0",
-        data_collection_permissions: { required: ["none"] },
-        ...(build.beta && { update_url: betaUpdateUrl })
-      } } }
+      ? {
+          browser_specific_settings: {
+            gecko: {
+              id: "{cc70cd21-2cc6-444b-bd89-496909346091}",
+              strict_min_version: "140.0",
+              data_collection_permissions: { required: ["none"] },
+              ...(build.beta && { update_url: betaUpdateUrl })
+            }
+          }
+        }
       : { minimum_chrome_version: "121" })
   }
 }
@@ -49,7 +53,11 @@ export function expectedManifest(build: ManifestBuild, version: string): Record<
 function sorted(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(sorted)
   if (value === null || typeof value !== "object") return value
-  return Object.fromEntries(Object.keys(value).sort().map(key => [key, sorted((value as Record<string, unknown>)[key])]))
+  return Object.fromEntries(
+    Object.keys(value)
+      .sort()
+      .map(key => [key, sorted((value as Record<string, unknown>)[key])])
+  )
 }
 
 /** Every key whose value differs from the expectation, by top-level name. Empty means the manifest is exact. */

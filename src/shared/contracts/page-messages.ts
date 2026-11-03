@@ -42,7 +42,9 @@ export type PageRequestMessage = {
 export type PageRetireMessage = MessageHeader & { kind: "retire" }
 export type PageCoreMessage = PageRequestMessage | PageRetireMessage
 export type PageRunAnswer<J extends Job = Job> = MessageHeader & {
-  kind: "run"; id: PageRequestId; result: PageJobResult<J>
+  kind: "run"
+  id: PageRequestId
+  result: PageJobResult<J>
 }
 export type PageStreamEvent<S extends Stream = Stream> = {
   [K in S]: MessageHeader & { kind: "stream"; id: PageWatchId; data: StreamData<K> }
@@ -61,67 +63,87 @@ export type PageAnswerByKind = {
 }
 export type PageGatewayMessage = PageAnswerByKind[keyof PageAnswerByKind]
 
-function envelope(
-  value: unknown, build: BuildId, kind: string, fields: Record<string, (value: unknown) => boolean>
-): value is JsonObject {
-  return inspectMessageHeader(value, build).kind === "ok" && objectShape(value, {
-    v: v => v === CONTRACT_VERSION, build: v => v === build, kind: v => v === kind, ...fields
-  })
+function envelope(value: unknown, build: BuildId, kind: string, fields: Record<string, (value: unknown) => boolean>): value is JsonObject {
+  return (
+    inspectMessageHeader(value, build).kind === "ok" &&
+    objectShape(value, {
+      v: v => v === CONTRACT_VERSION,
+      build: v => v === build,
+      kind: v => v === kind,
+      ...fields
+    })
+  )
 }
 
 export function isPageRequestMessage(value: unknown, expectedBuild: BuildId): value is PageRequestMessage {
   try {
-    if (inspectMessageHeader(value, expectedBuild).kind !== "ok" || value === null ||
-        typeof value !== "object" || !Object.hasOwn(value, "kind")) return false
+    if (inspectMessageHeader(value, expectedBuild).kind !== "ok" || value === null || typeof value !== "object" || !Object.hasOwn(value, "kind")) return false
     const kind: unknown = Object.getOwnPropertyDescriptor(value, "kind")?.value
     switch (kind) {
-      case "hello": return envelope(value, expectedBuild, "hello", {})
-      case "run": return envelope(value, expectedBuild, "run", { id: isPageRequestId, job: isJob })
-      case "watch": return envelope(value, expectedBuild, "watch", { id: isPageWatchId, stream: isStream })
-      case "unwatch": return envelope(value, expectedBuild, "unwatch", { id: isPageWatchId })
-      case "probe": return envelope(value, expectedBuild, "probe", { id: isPageRequestId })
-      case "loaded": return envelope(value, expectedBuild, "loaded", { ok: v => typeof v === "boolean" })
-      default: return false
+      case "hello":
+        return envelope(value, expectedBuild, "hello", {})
+      case "run":
+        return envelope(value, expectedBuild, "run", { id: isPageRequestId, job: isJob })
+      case "watch":
+        return envelope(value, expectedBuild, "watch", { id: isPageWatchId, stream: isStream })
+      case "unwatch":
+        return envelope(value, expectedBuild, "unwatch", { id: isPageWatchId })
+      case "probe":
+        return envelope(value, expectedBuild, "probe", { id: isPageRequestId })
+      case "loaded":
+        return envelope(value, expectedBuild, "loaded", { ok: v => typeof v === "boolean" })
+      default:
+        return false
     }
-  } catch { return false }
+  } catch {
+    return false
+  }
 }
 
 function helloSnapshot(value: unknown): value is PageHelloSnapshot {
-  return objectShape(value, {
-    signedIn: v => typeof v === "boolean", datasyncId: v => v === null || typeof v === "string",
-    pageType: isPageType, startedHidden: v => typeof v === "boolean",
-    navType: v => v === null || v === "navigate" || v === "reload" || v === "back_forward" || v === "prerender"
-  }, { video: isVideoInfo }) && isPageJobDataFor({ kind: "account" }, {
-    signedIn: value.signedIn, datasyncId: value.datasyncId
-  })
+  return (
+    objectShape(
+      value,
+      {
+        signedIn: v => typeof v === "boolean",
+        datasyncId: v => v === null || typeof v === "string",
+        pageType: isPageType,
+        startedHidden: v => typeof v === "boolean",
+        navType: v => v === null || v === "navigate" || v === "reload" || v === "back_forward" || v === "prerender"
+      },
+      { video: isVideoInfo }
+    ) &&
+    isPageJobDataFor(
+      { kind: "account" },
+      {
+        signedIn: value.signedIn,
+        datasyncId: value.datasyncId
+      }
+    )
+  )
 }
 export function isPageHelloAnswer(value: unknown, expected: { build: BuildId; site: Site }): value is PageHelloAnswer {
   return envelope(value, expected.build, "hello", { site: v => isSite(v) && v === expected.site, snapshot: helloSnapshot })
 }
-export function isPageRunAnswerFor<J extends Job>(
-  pending: { id: PageRequestId; job: J }, value: unknown, expectedBuild: BuildId
-): value is PageRunAnswer<J> {
+export function isPageRunAnswerFor<J extends Job>(pending: { id: PageRequestId; job: J }, value: unknown, expectedBuild: BuildId): value is PageRunAnswer<J> {
   return envelope(value, expectedBuild, "run", {
-    id: v => isPageRequestId(v) && v === pending.id, result: v => isPageJobResultFor(pending.job, v)
+    id: v => isPageRequestId(v) && v === pending.id,
+    result: v => isPageJobResultFor(pending.job, v)
   })
 }
-export function isPageStreamEventFor<S extends Stream>(
-  watch: { id: PageWatchId; stream: S }, value: unknown, expectedBuild: BuildId
-): value is PageStreamEvent<S> {
+export function isPageStreamEventFor<S extends Stream>(watch: { id: PageWatchId; stream: S }, value: unknown, expectedBuild: BuildId): value is PageStreamEvent<S> {
   return envelope(value, expectedBuild, "stream", {
-    id: v => isPageWatchId(v) && v === watch.id, data: v => isStreamData(watch.stream, v)
+    id: v => isPageWatchId(v) && v === watch.id,
+    data: v => isStreamData(watch.stream, v)
   })
 }
-export function isPageProbeAnswerFor(
-  pending: { id: PageRequestId; site: Site; watchIds: readonly WatchId[] }, value: unknown, expectedBuild: BuildId
-): value is PageProbeAnswer {
+export function isPageProbeAnswerFor(pending: { id: PageRequestId; site: Site; watchIds: readonly WatchId[] }, value: unknown, expectedBuild: BuildId): value is PageProbeAnswer {
   return envelope(value, expectedBuild, "probe", {
-    id: v => isPageRequestId(v) && v === pending.id, report: v => isProbeReportFor(pending, v)
+    id: v => isPageRequestId(v) && v === pending.id,
+    report: v => isProbeReportFor(pending, v)
   })
 }
-export function isPageSignalEvent(
-  value: unknown, expected: { build: BuildId; site: Site; vocabulary: DiagnosticVocabulary }
-): value is PageSignalEvent {
+export function isPageSignalEvent(value: unknown, expected: { build: BuildId; site: Site; vocabulary: DiagnosticVocabulary }): value is PageSignalEvent {
   return envelope(value, expected.build, "signal", {
     signal: v => isBreakageSignal(v, expected.vocabulary) && v.site === expected.site
   })

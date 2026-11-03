@@ -29,14 +29,19 @@ const server = createServer(async (request, response) => {
   try {
     response.setHeader("Content-Type", type)
     response.end(await readFile(target))
-  } catch { response.writeHead(404).end() }
+  } catch {
+    response.writeHead(404).end()
+  }
 })
 let browser
 let listening = false
 try {
   await new Promise((resolve, reject) => {
     server.once("error", reject)
-    server.listen(0, "127.0.0.1", () => { listening = true; resolve() })
+    server.listen(0, "127.0.0.1", () => {
+      listening = true
+      resolve()
+    })
   })
   const address = server.address()
   assert(address && typeof address === "object", "E_LOOPBACK_ADDRESS")
@@ -45,7 +50,7 @@ try {
   for (const width of matrix.widths) {
     const context = await browser.newContext({ viewport: { width, height: matrix.height }, colorScheme: theme, reducedMotion: matrix.reducedMotion })
     try {
-      await context.route("**/*", route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort())
+      await context.route("**/*", route => (new URL(route.request().url()).origin === origin ? route.continue() : route.abort()))
       const page = await context.newPage()
       const errors = []
       page.on("pageerror", error => errors.push(error.message))
@@ -129,9 +134,11 @@ try {
         assert.deepEqual(errors, [], "E_PAGE_ERROR")
         await writeFile(resolve(evidence, `${scenario}-${width}.layout.json`), JSON.stringify({ synthetic: true, engine, theme, scenario, width, layout }, null, 2) + "\n")
       }
-    } finally { await context.close() }
+    } finally {
+      await context.close()
+    }
   }
 } finally {
   await browser?.close()
-  if (listening) await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
+  if (listening) await new Promise((resolve, reject) => server.close(error => (error ? reject(error) : resolve())))
 }

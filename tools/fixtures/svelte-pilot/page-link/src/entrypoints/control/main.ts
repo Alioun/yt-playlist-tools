@@ -11,7 +11,10 @@ lazyButton.addEventListener("click", () => {
 })
 
 const control = {
-  targetLazy(tabId: number) { lazyTarget = tabId; lazyLoad = undefined },
+  targetLazy(tabId: number) {
+    lazyTarget = tabId
+    lazyLoad = undefined
+  },
   lazyLoaded() {
     if (!lazyLoad) throw Error("Click the fixture lazy button first")
     return lazyLoad
@@ -19,12 +22,14 @@ const control = {
   plan: fixturePlan,
   async register(selection: Selection = "consumers") {
     const current = await browser.scripting.getRegisteredContentScripts()
-    if (current.length) await browser.scripting.unregisterContentScripts({ ids: current.map((entry) => entry.id) })
+    if (current.length) await browser.scripting.unregisterContentScripts({ ids: current.map(entry => entry.id) })
     const { expected } = fixturePlan(selection)
     if (expected.length) await browser.scripting.registerContentScripts(expected)
     return browser.scripting.getRegisteredContentScripts()
   },
-  async unregister() { await browser.scripting.unregisterContentScripts() },
+  async unregister() {
+    await browser.scripting.unregisterContentScripts()
+  },
   async tab(url: string) {
     const tabs = await browser.tabs.query({ url })
     const id = tabs[0]?.id
@@ -32,25 +37,41 @@ const control = {
     return id
   },
   async probe(tabId: number) {
-    return browser.scripting.executeScript({ target: { tabId }, world: "ISOLATED", func: () => ({ trace: globalThis.__pp?.core?.trace ?? [], kit: !!globalThis.__pp?.kit, host: !!document.querySelector("#fixture-host") }) })
+    return browser.scripting.executeScript({
+      target: { tabId },
+      world: "ISOLATED",
+      func: () => ({ trace: globalThis.__pp?.core?.trace ?? [], kit: !!globalThis.__pp?.kit, host: !!document.querySelector("#fixture-host") })
+    })
   },
   async inspect(tabId: number) {
-    return browser.scripting.executeScript({ target: { tabId }, world: "ISOLATED", func: () => ({
-      trace: globalThis.__pp.core.trace,
-      marker: globalThis.__pp.core.marker,
-      mainAtCore: globalThis.__pp.core.mainAtCore,
-      readyStateAtCore: globalThis.__pp.core.readyStateAtCore,
-      root: Object.keys(globalThis.__pp.svelte.root).sort(),
-      client: Object.keys(globalThis.__pp.svelte.client).sort(),
-      mounted: globalThis.__pp.kit.mounted,
-      events: globalThis.__pp.kit.events,
-      popovers: !!globalThis.__pp.popovers,
-      disclosed: [...window.__svelte?.v ?? []]
-    }) })
+    return browser.scripting.executeScript({
+      target: { tabId },
+      world: "ISOLATED",
+      func: () => ({
+        trace: globalThis.__pp.core.trace,
+        marker: globalThis.__pp.core.marker,
+        mainAtCore: globalThis.__pp.core.mainAtCore,
+        readyStateAtCore: globalThis.__pp.core.readyStateAtCore,
+        root: Object.keys(globalThis.__pp.svelte.root).sort(),
+        client: Object.keys(globalThis.__pp.svelte.client).sort(),
+        mounted: globalThis.__pp.kit.mounted,
+        events: globalThis.__pp.kit.events,
+        popovers: !!globalThis.__pp.popovers,
+        disclosed: [...(window.__svelte?.v ?? [])]
+      })
+    })
   },
-  async files(tabId: number, files: string[]) { return browser.scripting.executeScript({ target: { tabId }, world: "ISOLATED", files }) },
+  async files(tabId: number, files: string[]) {
+    return browser.scripting.executeScript({ target: { tabId }, world: "ISOLATED", files })
+  },
   async removeExport(tabId: number) {
-    return browser.scripting.executeScript({ target: { tabId }, world: "ISOLATED", func: () => { Reflect.deleteProperty(globalThis.__pp.svelte.client, "if") } })
+    return browser.scripting.executeScript({
+      target: { tabId },
+      world: "ISOLATED",
+      func: () => {
+        Reflect.deleteProperty(globalThis.__pp.svelte.client, "if")
+      }
+    })
   }
 }
 Object.assign(window, { fixture: control })

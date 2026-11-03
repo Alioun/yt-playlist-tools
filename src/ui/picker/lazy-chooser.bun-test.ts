@@ -10,17 +10,33 @@ import PlaylistChooser from "./PlaylistChooser.svelte"
 
 // The popover chunk is stood in for, so the test sees when PlaylistChooser first imports it (G43).
 const mounted: { readonly open: boolean }[] = []
-void mock.module(require.resolve("./ChooserPopover.svelte"), () => ({ default: (_anchor: unknown, props: { readonly open: boolean }) => { mounted.push(props) } }))
+void mock.module(require.resolve("./ChooserPopover.svelte"), () => ({
+  default: (_anchor: unknown, props: { readonly open: boolean }) => {
+    mounted.push(props)
+  }
+}))
 
-const account = (key => { if (!isAccountKey(key)) throw new Error("Invalid synthetic account"); return key })("synthetic_acct_1")
+const account = (key => {
+  if (!isAccountKey(key)) throw new Error("Invalid synthetic account")
+  return key
+})("synthetic_acct_1")
 const text = createPickerText(englishI18n())
 const loaded = () => new Promise(resolve => setTimeout(resolve, 0)).then(() => mounted.length)
 
 function props(overrides: Partial<PlaylistChooserProps> = {}): PlaylistChooserProps {
   return {
-    open: false, context: { account, site: "www", private: false, purpose: { kind: "quickSave" } }, current: { kind: "none" },
-    label: "Synthetic destination", availability: { kind: "available" }, createSource: () => chooserSource().source, text,
-    platform: "linux", onrequest: () => {}, onoutcome: () => {}, onrelease: event => event.picker.close(), ...overrides
+    open: false,
+    context: { account, site: "www", private: false, purpose: { kind: "quickSave" } },
+    current: { kind: "none" },
+    label: "Synthetic destination",
+    availability: { kind: "available" },
+    createSource: () => chooserSource().source,
+    text,
+    platform: "linux",
+    onrequest: () => {},
+    onoutcome: () => {},
+    onrelease: event => event.picker.close(),
+    ...overrides
   }
 }
 

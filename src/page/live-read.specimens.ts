@@ -4,16 +4,23 @@ import { rawPlayer } from "./gateway.specimens"
 export function defineRaw(target: object, key: string, value: unknown): () => void {
   const previous = Object.getOwnPropertyDescriptor(target, key)
   Object.defineProperty(target, key, { configurable: true, writable: true, value })
-  return () => { if (previous) Object.defineProperty(target, key, previous); else Reflect.deleteProperty(target, key) }
+  return () => {
+    if (previous) Object.defineProperty(target, key, previous)
+    else Reflect.deleteProperty(target, key)
+  }
 }
 
 export function installRawPlayer(doc: Document, id = "movie_player", initial: unknown = rawPlayer()) {
-  const root = doc.createElement("div"), video = doc.createElement("video")
+  const root = doc.createElement("div"),
+    video = doc.createElement("video")
   root.id = id
   root.append(video)
   let raw = initial
   const calls: string[] = []
-  const method = (name: string, key: string) => () => { calls.push(name); return field(raw, key) }
+  const method = (name: string, key: string) => () => {
+    calls.push(name)
+    return field(raw, key)
+  }
   Object.defineProperties(root, {
     getVideoData: { value: method("getVideoData", "videoData"), configurable: true },
     getPlayerResponse: { value: method("getPlayerResponse", "response"), configurable: true },
@@ -25,11 +32,19 @@ export function installRawPlayer(doc: Document, id = "movie_player", initial: un
     Object.defineProperty(video, key, { configurable: true, get: () => field(raw, "video", key) })
   }
   doc.body.append(root)
-  return { root, video, calls, update(value: unknown) { raw = value } }
+  return {
+    root,
+    video,
+    calls,
+    update(value: unknown) {
+      raw = value
+    }
+  }
 }
 
 export function trackNativeEvents(node: EventTarget) {
-  const originalAdd = node.addEventListener.bind(node), originalRemove = node.removeEventListener.bind(node)
+  const originalAdd = node.addEventListener.bind(node),
+    originalRemove = node.removeEventListener.bind(node)
   const records: { type: string; listener: EventListenerOrEventListenerObject; active: boolean; removals: number }[] = []
   node.addEventListener = (type, listener, options) => {
     if (listener) records.push({ type, listener, active: true, removals: 0 })
@@ -37,12 +52,17 @@ export function trackNativeEvents(node: EventTarget) {
   }
   node.removeEventListener = (type, listener, options) => {
     const record = records.find(value => value.type === type && value.listener === listener && value.active)
-    if (record) { record.active = false; record.removals++ }
+    if (record) {
+      record.active = false
+      record.removals++
+    }
     originalRemove(type, listener, options)
   }
   return {
     records,
-    active() { return records.filter(record => record.active).length },
+    active() {
+      return records.filter(record => record.active).length
+    },
     stale(type: string, event: Event) {
       for (const record of records) {
         if (record.type !== type || record.active) continue
@@ -50,6 +70,9 @@ export function trackNativeEvents(node: EventTarget) {
         else record.listener.handleEvent(event)
       }
     },
-    restore() { node.addEventListener = originalAdd; node.removeEventListener = originalRemove }
+    restore() {
+      node.addEventListener = originalAdd
+      node.removeEventListener = originalRemove
+    }
   }
 }

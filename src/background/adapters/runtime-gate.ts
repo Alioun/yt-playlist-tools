@@ -15,31 +15,45 @@ export function createRuntimeGate(native: RuntimePort) {
   function deliver(message: unknown, sender: Parameters<NativeListener>[1], sendResponse: Parameters<NativeListener>[2]): boolean {
     const respond = (value: unknown) => {
       sendResponse(value)
-      for (const listener of [...answered]) { try { listener() } catch {} }
+      for (const listener of [...answered]) {
+        try {
+          listener()
+        } catch {}
+      }
     }
     let claimed = false
     for (const listener of [...listeners]) {
-      try { if ((listener(message, sender, respond) as unknown) === true) claimed = true } catch {}
+      try {
+        if ((listener(message, sender, respond) as unknown) === true) claimed = true
+      } catch {}
     }
     return claimed
   }
   native.onMessage.addListener((message, sender, sendResponse) => {
     if (open) return deliver(message, sender, sendResponse)
-    waiting.push(() => { if (!deliver(message, sender, sendResponse)) sendResponse(undefined) })
+    waiting.push(() => {
+      if (!deliver(message, sender, sendResponse)) sendResponse(undefined)
+    })
     return true
   })
   return {
     runtime: {
       sendMessage: (message: unknown) => native.sendMessage(message),
       onMessage: {
-        addListener(listener: NativeListener) { listeners.add(listener) },
-        removeListener(listener: NativeListener) { listeners.delete(listener) }
+        addListener(listener: NativeListener) {
+          listeners.add(listener)
+        },
+        removeListener(listener: NativeListener) {
+          listeners.delete(listener)
+        }
       }
     } satisfies RuntimePort,
     /** Runs after each answer, so state that a message changed can be re-read. */
     onAnswered(listener: () => void) {
       answered.add(listener)
-      return () => { answered.delete(listener) }
+      return () => {
+        answered.delete(listener)
+      }
     },
     open() {
       if (open) return

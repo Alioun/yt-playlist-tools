@@ -33,9 +33,12 @@ const tabContract: RpcContract<TabCalls> = {
 const uiContract: RpcContract<UiCalls> = {
   "test.window": {
     payload: (value): value is UiCalls["test.window"]["payload"] => objectShape(value, { windowId: isNumber }),
-    result: (value): value is UiCalls["test.window"]["result"] => objectShape(value, {
-      page: page => page === "popup" || page === "settings" || page === "onboarding", windowId: isNumber, incognito: isFlag
-    }),
+    result: (value): value is UiCalls["test.window"]["result"] =>
+      objectShape(value, {
+        page: page => page === "popup" || page === "settings" || page === "onboarding",
+        windowId: isNumber,
+        incognito: isFlag
+      }),
     timeoutMs: 2_000
   }
 }
@@ -69,7 +72,9 @@ async function inTab(url: string, incognito = false): Promise<NativeTab> {
 async function deliver(message: unknown, sender: NativeSender) {
   const responses: unknown[] = []
   let answered!: () => void
-  const response = new Promise<void>(resolve => { answered = resolve })
+  const response = new Promise<void>(resolve => {
+    answered = resolve
+  })
   const claims: readonly unknown[] = await trigger(message, sender, value => {
     responses.push(value)
     answered()
@@ -129,7 +134,10 @@ test("tab authentication exposes the native site, tab, window and privacy of www
   expect((await deliver(request("2", "test.hello", { site: "www" }), music.sender)).responses).toEqual([
     answer("2", "test.hello", { site: "music", tabId: music.tabId, windowId: music.windowId, incognito: true })
   ])
-  expect(handled.map(context => [context.site, context.origin.incognito])).toEqual([["www", false], ["music", true]])
+  expect(handled.map(context => [context.site, context.origin.incognito])).toEqual([
+    ["www", false],
+    ["music", true]
+  ])
 })
 
 test("UI authentication admits the popup's natively verified window, settings and the first-run page", async () => {
@@ -182,20 +190,34 @@ test("foreign IDs, URL tricks, subframes and inconsistent window facts are rejec
   const missingWindow = { ...settings.tab }
   Object.assign(missingWindow, { windowId: undefined })
   const forgedTabs: NativeSender[] = [
-    { ...www.sender, id: "foreign-extension" }, { ...www.sender, id: undefined },
-    { ...www.sender, frameId: 2 }, { ...www.sender, frameId: undefined },
-    { ...www.sender, url: "https://www.youtube.com.evil.invalid/" }, { ...www.sender, url: "https://music.youtube.com.evil.invalid/" },
-    { ...www.sender, url: "https://music.youtube.com@evil.invalid/" }, { ...www.sender, url: "http://music.youtube.com/" },
-    { ...www.sender, url: "https://youtube.com/" }, { ...www.sender, url: "https://m.youtube.com/" }, { ...www.sender, url: undefined },
-    { ...www.sender, tab: undefined }, { ...www.sender, tab: { ...www.tab, id: -1 } },
-    { ...www.sender, tab: { ...www.tab, windowId: www.windowId + 1_000 } }, { ...www.sender, tab: { ...www.tab, incognito: true } }
+    { ...www.sender, id: "foreign-extension" },
+    { ...www.sender, id: undefined },
+    { ...www.sender, frameId: 2 },
+    { ...www.sender, frameId: undefined },
+    { ...www.sender, url: "https://www.youtube.com.evil.invalid/" },
+    { ...www.sender, url: "https://music.youtube.com.evil.invalid/" },
+    { ...www.sender, url: "https://music.youtube.com@evil.invalid/" },
+    { ...www.sender, url: "http://music.youtube.com/" },
+    { ...www.sender, url: "https://youtube.com/" },
+    { ...www.sender, url: "https://m.youtube.com/" },
+    { ...www.sender, url: undefined },
+    { ...www.sender, tab: undefined },
+    { ...www.sender, tab: { ...www.tab, id: -1 } },
+    { ...www.sender, tab: { ...www.tab, windowId: www.windowId + 1_000 } },
+    { ...www.sender, tab: { ...www.tab, incognito: true } }
   ]
   const forgedPages: NativeSender[] = [
-    { ...popup(), id: "foreign-extension" }, { ...popup(), frameId: 1 }, { ...popup(), tab: settings.tab },
-    { ...settings.sender, frameId: 1 }, { ...firstRun.sender, frameId: undefined }, { ...firstRun.sender, tab: undefined },
-    { ...firstRun.sender, url: `${firstRun.sender.url}?forged=1` }, { ...firstRun.sender, url: `${firstRun.sender.url}#forged` },
+    { ...popup(), id: "foreign-extension" },
+    { ...popup(), frameId: 1 },
+    { ...popup(), tab: settings.tab },
+    { ...settings.sender, frameId: 1 },
+    { ...firstRun.sender, frameId: undefined },
+    { ...firstRun.sender, tab: undefined },
+    { ...firstRun.sender, url: `${firstRun.sender.url}?forged=1` },
+    { ...firstRun.sender, url: `${firstRun.sender.url}#forged` },
     { ...firstRun.sender, url: fakeBrowser.runtime.getURL("/onboarding.html.forged") },
-    { ...firstRun.sender, tab: { ...firstRun.tab, incognito: true } }, { ...settings.sender, tab: missingWindow }
+    { ...firstRun.sender, tab: { ...firstRun.tab, incognito: true } },
+    { ...settings.sender, tab: missingWindow }
   ]
   for (const sender of forgedTabs) {
     expect(await deliver(request("1", "test.hello", { site: "www" }), sender)).toStrictEqual({ claims: [true, false], responses: [undefined] })
@@ -213,9 +235,7 @@ test("body-supplied Origin, sender, site, privacy and window claims never become
   const www = await inTab(WWW)
   const settings = await inTab(fakeBrowser.runtime.getURL("/options.html"))
   const privateWindow = await windowOf(true)
-  const forgedFields = [
-    { origin: { kind: "background" } }, { sender: { id: fakeBrowser.runtime.id, frameId: 0 } }, { incognito: true }, { tabId: www.tabId }
-  ]
+  const forgedFields = [{ origin: { kind: "background" } }, { sender: { id: fakeBrowser.runtime.id, frameId: 0 } }, { incognito: true }, { tabId: www.tabId }]
   for (const extra of [...forgedFields, { site: "music" }]) {
     expect(await deliver({ ...request("1", "test.hello", { site: "www" }), ...extra }, www.sender)).toStrictEqual({ claims: [false, false], responses: [] })
   }
@@ -241,7 +261,13 @@ test("unclaimed messages return literal false and leave the single reply to a le
   })
   const www = await inTab(WWW)
   expect(await deliver({ action: "getSession" }, www.sender)).toEqual({ claims: [false, true], responses: [{ legacy: "getSession" }] })
-  for (const message of [request("1", "test.unknown", {}), { ...request("2", "test.hello", { site: "www" }), v: 2 }, { ...request("3", "test.hello", { site: "www" }), build: "other" }, "text", null]) {
+  for (const message of [
+    request("1", "test.unknown", {}),
+    { ...request("2", "test.hello", { site: "www" }), v: 2 },
+    { ...request("3", "test.hello", { site: "www" }), build: "other" },
+    "text",
+    null
+  ]) {
     const { claims } = await deliver(message, www.sender)
     expect(claims).toEqual([false, false])
     expect(claims[0]).toBe(false)
@@ -273,7 +299,9 @@ test("a claim that never answers times out through the one-shot deadline and is 
 
 test("a receive that throws declines the message without answering", async () => {
   const sendResponse = mock(() => {})
-  runtimeTransport(fakeBrowser.runtime).listen(() => { throw Error("Synthetic receive failure") })
+  runtimeTransport(fakeBrowser.runtime).listen(() => {
+    throw Error("Synthetic receive failure")
+  })
   expect(await trigger(request("1", "test.hello", { site: "www" }), popup(), sendResponse)).toEqual([false])
   await wait()
   expect(sendResponse).not.toHaveBeenCalled()
@@ -281,19 +309,27 @@ test("a receive that throws declines the message without answering", async () =>
 
 test("a rejected claim answers undefined once and a throwing sendResponse stays contained", async () => {
   const unhandled: unknown[] = []
-  const record = (reason: unknown) => { unhandled.push(reason) }
+  const record = (reason: unknown) => {
+    unhandled.push(reason)
+  }
   process.on("unhandledRejection", record)
   try {
     const transport = runtimeTransport(fakeBrowser.runtime)
     const stopRejected = transport.listen(() => Promise.reject(Error("Synthetic claim failure")))
     const responses: unknown[] = []
-    expect(await trigger("message", popup(), value => { responses.push(value) })).toEqual([true])
+    expect(
+      await trigger("message", popup(), value => {
+        responses.push(value)
+      })
+    ).toEqual([true])
     await wait()
     expect(responses).toHaveLength(1)
     expect(responses[0]).toBeUndefined()
     stopRejected()
     transport.listen(() => Promise.resolve("answer"))
-    const closedPort = mock(() => { throw Error("Synthetic closed port") })
+    const closedPort = mock(() => {
+      throw Error("Synthetic closed port")
+    })
     expect(await trigger("message", popup(), closedPort)).toEqual([true])
     await wait()
     expect(closedPort).toHaveBeenCalledTimes(1)
@@ -307,9 +343,18 @@ test("a rejected claim answers undefined once and a throwing sendResponse stays 
 test("disposal removes the listener once, releases open claims as undefined and never publishes late results", async () => {
   const remove = spyOn(fakeBrowser.runtime.onMessage, "removeListener")
   let publish!: (value: unknown) => void
-  const stop = runtimeTransport(fakeBrowser.runtime).listen(() => new Promise(resolve => { publish = resolve }))
+  const stop = runtimeTransport(fakeBrowser.runtime).listen(
+    () =>
+      new Promise(resolve => {
+        publish = resolve
+      })
+  )
   const responses: unknown[] = []
-  expect(await trigger("message", popup(), value => { responses.push(value) })).toEqual([true])
+  expect(
+    await trigger("message", popup(), value => {
+      responses.push(value)
+    })
+  ).toEqual([true])
   expect(responses).toEqual([])
   stop()
   expect(responses).toHaveLength(1)
@@ -331,16 +376,22 @@ test("disposal from inside receive or sendResponse answers once and removes the 
     return Promise.resolve("late")
   })
   const released: unknown[] = []
-  expect(await trigger("message", popup(), value => { released.push(value) })).toEqual([true])
+  expect(
+    await trigger("message", popup(), value => {
+      released.push(value)
+    })
+  ).toEqual([true])
   await wait()
   expect(released).toHaveLength(1)
   expect(released[0]).toBeUndefined()
   const stopFromResponse = transport.listen(() => Promise.resolve("answer"))
   const answered: unknown[] = []
-  expect(await trigger("message", popup(), value => {
-    answered.push(value)
-    stopFromResponse()
-  })).toEqual([true])
+  expect(
+    await trigger("message", popup(), value => {
+      answered.push(value)
+      stopFromResponse()
+    })
+  ).toEqual([true])
   await wait()
   stopFromResponse()
   expect(answered).toEqual(["answer"])
@@ -350,12 +401,21 @@ test("disposal from inside receive or sendResponse answers once and removes the 
 
 test("disposing an RPC endpoint releases an authenticated in-flight request without publishing its late result", async () => {
   let finish!: (result: TabCalls["test.hello"]["result"]) => void
-  const handler = mock(() => new Promise<TabCalls["test.hello"]["result"]>(resolve => { finish = resolve }))
+  const handler = mock(
+    () =>
+      new Promise<TabCalls["test.hello"]["result"]>(resolve => {
+        finish = resolve
+      })
+  )
   const rpc = createRpc(runtimeTransport(fakeBrowser.runtime), { build, contract: tabContract, deadline: timerDeadline })
   rpc.handle({ authenticate: authenticateTab(fakeBrowser), handlers: { "test.hello": handler } })
   const www = await inTab(WWW)
   const responses: unknown[] = []
-  expect(await trigger(request("1", "test.hello", { site: "www" }), www.sender, value => { responses.push(value) })).toEqual([true])
+  expect(
+    await trigger(request("1", "test.hello", { site: "www" }), www.sender, value => {
+      responses.push(value)
+    })
+  ).toEqual([true])
   await wait()
   expect(handler).toHaveBeenCalledTimes(1)
   rpc.dispose()
@@ -380,7 +440,10 @@ test("a tab target sends every message to frame zero of its tab and returns the 
   const message = request("1", "test.hello", { site: "www" })
   expect(target.send(message)).toBe(native)
   expect(target.send("second")).toBe(native)
-  expect(calls).toEqual([[42, message, { frameId: 0 }], [42, "second", { frameId: 0 }]])
+  expect(calls).toEqual([
+    [42, message, { frameId: 0 }],
+    [42, "second", { frameId: 0 }]
+  ])
   expect(calls[0]?.[1]).toBe(message)
 })
 
@@ -388,7 +451,16 @@ test("a tab target preserves native rejections and synchronous failures", async 
   const rejection = Error("Synthetic closed tab")
   await expect(tabTarget({ sendMessage: () => Promise.reject(rejection) }, 1).send("message")).rejects.toBe(rejection)
   const thrown = Error("Synthetic synchronous failure")
-  expect(() => tabTarget({ sendMessage: () => { throw thrown } }, 1).send("message")).toThrow(thrown)
+  expect(() =>
+    tabTarget(
+      {
+        sendMessage: () => {
+          throw thrown
+        }
+      },
+      1
+    ).send("message")
+  ).toThrow(thrown)
   expect(() => tabTarget(fakeBrowser.tabs, 1).send("message")).toThrow()
 })
 
@@ -430,19 +502,29 @@ function nativeCallbacks(sender: NativeSender) {
   const sent: { tabId: number; message: unknown; options: { readonly frameId: 0 } }[] = []
   function deliver(message: unknown): Promise<unknown> {
     let respond!: (value: unknown) => void
-    const response = new Promise<unknown>(resolve => { respond = resolve })
-    const returned: readonly unknown[] = [...listeners].map(listener => listener(message, sender, value => {
-      responses.push(value)
-      respond(value)
-    }))
+    const response = new Promise<unknown>(resolve => {
+      respond = resolve
+    })
+    const returned: readonly unknown[] = [...listeners].map(listener =>
+      listener(message, sender, value => {
+        responses.push(value)
+        respond(value)
+      })
+    )
     claims.push([...returned])
     return returned.includes(true) ? response : Promise.resolve(undefined)
   }
   const runtime: RuntimePort = {
     sendMessage: deliver,
     onMessage: {
-      addListener(listener) { added.push(listener); listeners.add(listener) },
-      removeListener(listener) { removed.push(listener); listeners.delete(listener) }
+      addListener(listener) {
+        added.push(listener)
+        listeners.add(listener)
+      },
+      removeListener(listener) {
+        removed.push(listener)
+        listeners.delete(listener)
+      }
     }
   }
   const tabs: TabsPort = {
@@ -458,9 +540,17 @@ function manualDeadline() {
   const expirations = new Set<() => void>()
   const deadline: Deadline = (_ms, expire) => {
     expirations.add(expire)
-    return () => { expirations.delete(expire) }
+    return () => {
+      expirations.delete(expire)
+    }
   }
-  return { deadline, expirations, expire() { for (const expire of [...expirations]) expire() } }
+  return {
+    deadline,
+    expirations,
+    expire() {
+      for (const expire of [...expirations]) expire()
+    }
+  }
 }
 
 test("qualified native caller uses tabTarget without an inbound listener and correlates concurrent exact envelopes", async () => {
@@ -470,7 +560,12 @@ test("qualified native caller uses tabTarget without an inbound listener and cor
   const receiver = createRpc(runtimeTransport(native.runtime), { build, contract: tabContract, deadline: timerDeadline })
   receiver.handle({
     authenticate: authenticateTab(fakeBrowser),
-    handlers: { "test.hello": ({ site }) => new Promise(resolve => { pending.set(site, resolve) }) }
+    handlers: {
+      "test.hello": ({ site }) =>
+        new Promise(resolve => {
+          pending.set(site, resolve)
+        })
+    }
   })
   const target = tabTarget(native.tabs, www.tabId)
   expect(Object.keys(target)).toEqual(["send"])
@@ -505,7 +600,14 @@ test("native callbacks require literal true while unrelated maps decline and syn
   const native = nativeCallbacks(www.sender)
   const runtime = runtimeTransport(native.runtime)
   const receiver = createRpc(runtime, { build, contract: uiContract, deadline: timerDeadline })
-  receiver.handle({ authenticate: authenticateUi<UiCalls>(fakeBrowser, ({ payload }) => payload.windowId), handlers: { "test.window": () => { throw Error("Unrelated handler ran") } } })
+  receiver.handle({
+    authenticate: authenticateUi<UiCalls>(fakeBrowser, ({ payload }) => payload.windowId),
+    handlers: {
+      "test.window": () => {
+        throw Error("Unrelated handler ran")
+      }
+    }
+  })
   const result = { site: "www", tabId: www.tabId, windowId: www.windowId, incognito: false } satisfies TabCalls["test.hello"]["result"]
   native.runtime.onMessage.addListener((message, _sender, respond) => {
     if (!objectShape(message, { v: v => v === 1, build: v => v === build, id: v => v === "1", kind: v => v === "test.hello", payload: () => true })) return false
@@ -552,7 +654,15 @@ test("native receiver disposal and late publication cannot change the qualified 
   const native = nativeCallbacks(www.sender)
   let finish!: (value: TabCalls["test.hello"]["result"]) => void
   const receiver = createRpc(runtimeTransport(native.runtime), { build, contract: tabContract, deadline: timerDeadline })
-  receiver.handle({ authenticate: authenticateTab(fakeBrowser), handlers: { "test.hello": () => new Promise(resolve => { finish = resolve }) } })
+  receiver.handle({
+    authenticate: authenticateTab(fakeBrowser),
+    handlers: {
+      "test.hello": () =>
+        new Promise(resolve => {
+          finish = resolve
+        })
+    }
+  })
   const caller = createRpcCaller(tabTarget(native.tabs, www.tabId), { build, contract: tabContract, deadline: timerDeadline })
   const pending = caller.call("test.hello", { site: "www" })
   await wait()
@@ -576,16 +686,24 @@ test("authenticators ignore forged body origin and account even when a body is s
   }
   expect(await authenticateTab(fakeBrowser)(forged)).toStrictEqual({ kind: "rejected" })
   const ui = authenticateUi<UiCalls>(fakeBrowser, ({ payload }) => payload.windowId)
-  expect(await ui({
-    sender: www.sender, request: { kind: "test.window", payload: { windowId: www.windowId } }
-  })).toStrictEqual({ kind: "rejected" })
+  expect(
+    await ui({
+      sender: www.sender,
+      request: { kind: "test.window", payload: { windowId: www.windowId } }
+    })
+  ).toStrictEqual({ kind: "rejected" })
   expect(await authenticateTab(fakeBrowser)({ sender: popup() })).toStrictEqual({ kind: "rejected" })
 })
 
 test("qualified caller disposal and timeout ignore native answers that arrive later", async () => {
   for (const terminal of ["dispose", "timeout"] as const) {
     let finish!: (value: unknown) => void
-    const send = mock(() => new Promise<unknown>(resolve => { finish = resolve }))
+    const send = mock(
+      () =>
+        new Promise<unknown>(resolve => {
+          finish = resolve
+        })
+    )
     const time = manualDeadline()
     const caller = createRpcCaller(tabTarget({ sendMessage: send }, 42), { build, contract: tabContract, deadline: time.deadline })
     const pending = caller.call("test.hello", { site: "www" })

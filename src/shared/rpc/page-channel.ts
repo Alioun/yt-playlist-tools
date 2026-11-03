@@ -48,14 +48,20 @@ export function createDirectPageChannel(): PageChannel {
       const errors: unknown[] = []
       for (const listener of [...listeners[wire]]) {
         if (!listeners[wire].has(listener)) continue
-        try { listener(String(text), on) } catch (error) { errors.push(error) }
+        try {
+          listener(String(text), on)
+        } catch (error) {
+          errors.push(error)
+        }
       }
       if (errors.length > 0) throw errors[0]
     },
     listen(wire, onFrame) {
       const listener: PageFrameListener = (detail, target) => onFrame(detail, target)
       listeners[wire].add(listener)
-      return () => { listeners[wire].delete(listener) }
+      return () => {
+        listeners[wire].delete(listener)
+      }
     }
   }
 }

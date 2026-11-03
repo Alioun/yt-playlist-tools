@@ -23,8 +23,12 @@ test("wire validators reject forged authority and cross-kind answers", () => {
   expect(isUiCreationPayload({ action: "submit", operation, title: "Title", privacy: "PRIVATE", acct: "AAAAAAAAAAAAAAAA" })).toBe(false)
 })
 test("creation answers cannot invent confirmation or disagree about the created ID", () => {
-  const result = { kind: "created", id: "PL_alpha", outcome: { kind: "result", tabId: 1,
-    result: { ok: true, route: "fixture", data: { playlistId: "PL_alpha" } } }, cache: { kind: "unconfirmed", write: "resolved", cause: "stopped" } }
+  const result = {
+    kind: "created",
+    id: "PL_alpha",
+    outcome: { kind: "result", tabId: 1, result: { ok: true, route: "fixture", data: { playlistId: "PL_alpha" } } },
+    cache: { kind: "unconfirmed", write: "resolved", cause: "stopped" }
+  }
   expect(isUiCreationAnswer(result)).toBe(true)
   expect(isUiCreationAnswer({ ...result, id: "PL_other" })).toBe(false)
   expect(isUiCreationAnswer({ ...result, outcome: { kind: "transport", tabId: 1, failure: "timeout", delivery: "unknown" } })).toBe(false)

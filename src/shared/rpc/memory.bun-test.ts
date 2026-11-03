@@ -21,12 +21,18 @@ test("delivers fresh JSON copies of the message and the out-of-band sender to ev
   await caller.send(message)
   sender.frameId = 4
   expect(answer).toEqual({ echo: { list: [1], when: "1970-01-01T00:00:00.000Z" }, at: "1970-01-01T00:00:00.000Z" })
-  expect(deliveries.map(delivery => delivery.sender)).toEqual([{ context: "tab", frameId: 9 }, { context: "tab", frameId: 9 }])
+  expect(deliveries.map(delivery => delivery.sender)).toEqual([
+    { context: "tab", frameId: 9 },
+    { context: "tab", frameId: 9 }
+  ])
   expect(deliveries[0]!.sender).not.toBe(deliveries[1]!.sender)
   expect(deliveries[0]!.message).not.toBe(message)
   expect(deliveries[0]!.message).toStrictEqual({ list: [1], when: "1970-01-01T00:00:00.000Z" })
   const later: Delivery<Sender>[] = []
-  network.connect({ context: "settings", frameId: 0 }).listen(delivery => { later.push(delivery); return undefined })
+  network.connect({ context: "settings", frameId: 0 }).listen(delivery => {
+    later.push(delivery)
+    return undefined
+  })
   await caller.send(null)
   expect(later[0]!.sender).toEqual({ context: "tab", frameId: 0 })
 })
@@ -52,7 +58,10 @@ test("holds queued sends until each one-shot script step runs", async () => {
   const network = createMemoryNetwork<Sender>({ delivery: "queued" })
   const caller = network.connect({ context: "tab", frameId: 0 })
   let received = 0
-  network.connect({ context: "background", frameId: 0 }).listen(delivery => { received++; return Promise.resolve(delivery.message) })
+  network.connect({ context: "background", frameId: 0 }).listen(delivery => {
+    received++
+    return Promise.resolve(delivery.message)
+  })
   const first = caller.send("first")
   const second = caller.send("second")
   expect(network.queued().map(item => item.text)).toEqual(['"first"', '"second"'])

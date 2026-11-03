@@ -9,7 +9,17 @@ import type { StartingOwner } from "../store/store-lifecycle"
 import type { Requester, Tabs } from "../tabs/ports"
 import type { BuildId, FeatureId, Origin, Site } from "../../shared/contracts"
 import { toastPlan, type ExplicitOutcome } from "../../shared/rules/outcomes"
-import { tabActionContract, type PlaylistTitles, type TabActionMessages, type TabAddReport, type TabAddRequest, type TabCreated, type TabPlaylists, type TabUndoReport, type UndoHandle } from "../../shared/contracts/tab-actions"
+import {
+  tabActionContract,
+  type PlaylistTitles,
+  type TabActionMessages,
+  type TabAddReport,
+  type TabAddRequest,
+  type TabCreated,
+  type TabPlaylists,
+  type TabUndoReport,
+  type UndoHandle
+} from "../../shared/contracts/tab-actions"
 import type { PopupAddRequest, PopupRemoveRequest, UiMembershipAnswer, UiRemoveAnswer } from "../../shared/contracts/ui-add"
 import type { JobOf } from "../../shared/contracts"
 import { cacheRows } from "../../shared/model/account-cache"
@@ -19,13 +29,19 @@ import type { AccountKey, Filter, PlaylistId, Settings, Setup, VideoId } from ".
 import { createRpc } from "../../shared/rpc/rpc"
 
 type Switch = { readonly on: boolean; readonly feedback?: boolean }
-type AccountView = { readonly setup: Setup | null; readonly filters: ReadonlyMap<PlaylistId, Filter>; readonly titles: PlaylistTitles
-  readonly created: Readonly<Partial<Record<PlaylistId, number>>> }
+type AccountView = { readonly setup: Setup | null; readonly filters: ReadonlyMap<PlaylistId, Filter>; readonly titles: PlaylistTitles; readonly created: Readonly<Partial<Record<PlaylistId, number>>> }
 
 const switches: Partial<Record<FeatureId, (settings: Settings) => Switch>> = {
-  "auto-add": s => s.autoAdd, shortcuts: s => s.shortcuts, "quick-save": s => s.quickSave, "queue-button": s => s.queueButton,
-  "watch-button": s => s.watchButton, "browser-menu": s => s.browserMenu, "any-tab-keys": s => s.anyTabKeys,
-  "music-actions": s => s.musicActions, "music-keys": s => s.musicKeys, gather: s => s.gather
+  "auto-add": s => s.autoAdd,
+  shortcuts: s => s.shortcuts,
+  "quick-save": s => s.quickSave,
+  "queue-button": s => s.queueButton,
+  "watch-button": s => s.watchButton,
+  "browser-menu": s => s.browserMenu,
+  "any-tab-keys": s => s.anyTabKeys,
+  "music-actions": s => s.musicActions,
+  "music-keys": s => s.musicKeys,
+  gather: s => s.gather
 }
 
 /**
@@ -42,8 +58,14 @@ export function createAddFlowOwner(owner: Pick<StartingOwner, "readTabProjection
   async function cached(acct: AccountKey, incognito: boolean, site: Site): Promise<Pick<AccountView, "titles" | "created">> {
     const read = await owner.readPlaylistCache({ acct, private: incognito }).catch(() => null)
     if (read?.kind !== "cache" || read.cache === null) return { titles: {}, created: {} }
-    return { titles: Object.fromEntries(cacheRows(read.cache, site).filter(row => row.title).map(row => [row.id, row.title])),
-      created: Object.fromEntries(read.cache.created.map(row => [row.id, row.at])) }
+    return {
+      titles: Object.fromEntries(
+        cacheRows(read.cache, site)
+          .filter(row => row.title)
+          .map(row => [row.id, row.title])
+      ),
+      created: Object.fromEntries(read.cache.created.map(row => [row.id, row.at]))
+    }
   }
   async function load(incognito: boolean, acct: AccountKey | null, site: Site): Promise<void> {
     const read = await owner.readTabProjection({ private: incognito, account: acct === null ? { kind: "unknown" } : { kind: "signed-in", acct } })
@@ -58,24 +80,31 @@ export function createAddFlowOwner(owner: Pick<StartingOwner, "readTabProjection
       if (entry.state.kind === "value" || entry.state.kind === "default") filters.set(entry.playlist, structuredClone(entry.state.filter) as Filter)
     }
     accounts.set(projection.account.acct, {
-      setup: setup.kind === "value" && setup.view.kind === "live" ? structuredClone(setup.view.setup) as Setup : null, filters,
-      ...await cached(projection.account.acct, incognito, site)
+      setup: setup.kind === "value" && setup.view.kind === "live" ? (structuredClone(setup.view.setup) as Setup) : null,
+      filters,
+      ...(await cached(projection.account.acct, incognito, site))
     })
   }
   function opened(feature: Feature): Opener {
     switch (feature.kind) {
-      case "auto-add": return "auto-add"
-      case "shortcut": return "shortcuts"
-      case "quick-save": case "picker": return feature.opener
+      case "auto-add":
+        return "auto-add"
+      case "shortcut":
+        return "shortcuts"
+      case "quick-save":
+      case "picker":
+        return feature.opener
     }
   }
   function targets(feature: Feature, view: AccountView | undefined): readonly Target[] {
     const setup = view?.setup
     switch (feature.kind) {
-      case "auto-add": return (setup?.autoAdd ?? []).map(({ pl }) => {
-        const playlist = pl as PlaylistId, filter = view?.filters.get(playlist)
-        return filter ? { playlist, filter } : { playlist }
-      })
+      case "auto-add":
+        return (setup?.autoAdd ?? []).map(({ pl }) => {
+          const playlist = pl as PlaylistId,
+            filter = view?.filters.get(playlist)
+          return filter ? { playlist, filter } : { playlist }
+        })
       case "shortcut": {
         const shortcut = settings.shortcuts.list.find(entry => entry.id === feature.shortcut)
         if (!shortcut) return []
@@ -87,7 +116,8 @@ export function createAddFlowOwner(owner: Pick<StartingOwner, "readTabProjection
         const playlist = feature.site === "music" ? setup?.musicSave : setup?.quickSave
         return playlist ? [{ playlist: playlist as PlaylistId }] : []
       }
-      case "picker": return []
+      case "picker":
+        return []
     }
   }
   const port: Owner = {
@@ -100,7 +130,9 @@ export function createAddFlowOwner(owner: Pick<StartingOwner, "readTabProjection
       const current = switches[opener]?.(settings)
       return { on: current?.on === true, feedback: current?.feedback !== false }
     },
-    account(feature, acct): AccountSettings { return { targets: targets(feature, accounts.get(acct)), created: accounts.get(acct)?.created ?? {} } },
+    account(feature, acct): AccountSettings {
+      return { targets: targets(feature, accounts.get(acct)), created: accounts.get(acct)?.created ?? {} }
+    },
     writable,
     // A mark is the setup's own write, so it syncs; a private window writes none (YT-ADD-36).
     mark(change, origin) {
@@ -138,7 +170,10 @@ export type Actions = {
 export function composeActions(deps: {
   readonly native: SenderOriginPorts & { readonly runtime: SenderOriginPorts["runtime"] & RuntimePort }
   readonly build: BuildId
-  readonly owner: Pick<StartingOwner, "readTabProjection" | "readSession" | "changeSession" | "changeSetupDestination" | "readPlaylistCache" | "markPlaylists" | "changeDeviceSetting" | "refreshChannelLabels" | "changeFilterChannel">
+  readonly owner: Pick<
+    StartingOwner,
+    "readTabProjection" | "readSession" | "changeSession" | "changeSetupDestination" | "readPlaylistCache" | "markPlaylists" | "changeDeviceSetting" | "refreshChannelLabels" | "changeFilterChannel"
+  >
   readonly tabs: Tabs
   readonly playlists: Playlists
   readonly registrar: Pick<Registrar, "ensure">
@@ -159,7 +194,10 @@ export function composeActions(deps: {
     owner: view.port,
     session: { read: () => owner.readSession(), change: change => owner.changeSession(change) },
     now: () => Date.now(),
-    wait: ms => new Promise(resolve => { setTimeout(resolve, ms) }),
+    wait: ms =>
+      new Promise(resolve => {
+        setTimeout(resolve, ms)
+      }),
     generation: () => crypto.randomUUID()
   })
   const log = deps.log ?? (line => console.info(`[Perchling] ${line}`))
@@ -172,17 +210,24 @@ export function composeActions(deps: {
   function titlesOf(acct: AccountKey | null, ids: readonly PlaylistId[]): PlaylistTitles {
     if (acct === null) return {}
     const known = view.port.titles(acct)
-    return Object.fromEntries(ids.flatMap(id => known[id] ? [[id, known[id]]] : []))
+    return Object.fromEntries(ids.flatMap(id => (known[id] ? [[id, known[id]]] : [])))
   }
   async function addIn(tab: ActingTab, acct: AccountKey | null, request: TabAddRequest | PopupAddRequest): Promise<TabAddReport> {
     await view.load(tab.incognito, acct, tab.site)
     const { memory: _memory, ...report } = await flow.add(request, { kind: "tab", tabId: tab.tabId, incognito: tab.incognito })
     if (report.kind !== "report" && report.kind !== "stopped") return report
     const ids = Object.keys(report.outcomes) as PlaylistId[]
-    if (ids.length) log(`add (${request.via}) ${Object.entries(report.outcomes).map(([playlist, outcome]) => `${playlist}=${outcome.kind === "failed" ? outcome.failure : outcome.kind}`).join(" ")}`)
+    if (ids.length)
+      log(
+        `add (${request.via}) ${Object.entries(report.outcomes)
+          .map(([playlist, outcome]) => `${playlist}=${outcome.kind === "failed" ? outcome.failure : outcome.kind}`)
+          .join(" ")}`
+      )
     // A pick's toast belongs to its picker, but a save from the browser's menu or a key from any tab has no picker to plan it.
-    const toast = report.kind === "report" && report.toast === null && request.via === "picker" && (request.opener === "browser-menu" || request.opener === "any-tab-keys")
-      ? toastPlan({ kind: "quick-save", outcomes: report.outcomes as Record<PlaylistId, ExplicitOutcome> }, report.feedback) : report.toast
+    const toast =
+      report.kind === "report" && report.toast === null && request.via === "picker" && (request.opener === "browser-menu" || request.opener === "any-tab-keys")
+        ? toastPlan({ kind: "quick-save", outcomes: report.outcomes as Record<PlaylistId, ExplicitOutcome> }, report.feedback)
+        : report.toast
     return { ...report, toast, titles: titlesOf(acct, ids) } as TabAddReport
   }
   function requestOf(context: TabContext): Requester {
@@ -190,99 +235,125 @@ export function composeActions(deps: {
   }
   const pageEnded = (tabId: number) => flow.releaseTab(`tab:${tabId}`)
   const stopClosed = deps.closed?.(pageEnded) ?? (() => {})
-  const unbind = rpc.handle({ authenticate: authenticateTab(native), handlers: {
-    async "tab.add"({ acct, request }, context): Promise<TabAddReport> {
-      if (request.site !== context.site || !await pinned(context, acct)) return { kind: "no-tab" }
-      const report = await addIn({ tabId: context.origin.tabId, incognito: context.origin.incognito, site: context.site }, acct, request)
-      if (request.via === "auto-add" && report.kind === "report" && Object.values(report.outcomes).some(outcome => outcome.kind === "added")) {
-        deps.ticked?.(context.origin.tabId)
+  const unbind = rpc.handle({
+    authenticate: authenticateTab(native),
+    handlers: {
+      async "tab.add"({ acct, request }, context): Promise<TabAddReport> {
+        if (request.site !== context.site || !(await pinned(context, acct))) return { kind: "no-tab" }
+        const report = await addIn({ tabId: context.origin.tabId, incognito: context.origin.incognito, site: context.site }, acct, request)
+        if (request.via === "auto-add" && report.kind === "report" && Object.values(report.outcomes).some(outcome => outcome.kind === "added")) {
+          deps.ticked?.(context.origin.tabId)
+        }
+        return report
+      },
+      async "tab.remove"({ acct, request }, context) {
+        if (request.site !== context.site || !(await pinned(context, acct))) return { kind: "no-tab" }
+        await view.load(context.origin.incognito, acct, context.site)
+        const { memory: _memory, ...report } = await flow.remove(request, context.origin)
+        return report.kind === "removed" ? { ...report, titles: titlesOf(acct, [report.playlist]) } : report
+      },
+      async "tab.undo"({ acct, request }, context): Promise<TabUndoReport> {
+        if (!(await pinned(context, acct))) return { kind: "no-tab" }
+        const report = await flow.undo(request, context.origin)
+        switch (report.kind) {
+          case "undone":
+            return { kind: "undone" }
+          case "failed":
+            return { kind: "failed", completed: report.completed, of: report.of, failure: report.failure, toast: report.toast }
+          case "stopped":
+            return { kind: "stopped", completed: report.completed, of: report.of }
+          default:
+            return { kind: report.kind }
+        }
+      },
+      "tab.release"({ handle }) {
+        flow.release(handle)
+        return null
+      },
+      "tab.settings"({ feature, playlist }, context) {
+        deps.openSettings?.(playlist ? `feature-${feature}&playlist=${playlist}` : `feature-${feature}`, context.origin.tabId)
+        return null
+      },
+      async "tab.skip"({ acct, request }, context) {
+        if (acct === null || !(await pinned(context, acct))) return { kind: "refused" }
+        const report = await flow.skip(request.skip ? { kind: "skip", acct, video: request.video, playlists: "all" } : { kind: "unskip", acct, video: request.video }, context.origin)
+        return { kind: report.kind === "remembered" ? "done" : "refused" }
+      },
+      async "tab.pause"({ acct, request }, context) {
+        if (context.origin.incognito || !(await pinned(context, acct))) return { kind: "refused" }
+        return { kind: (await flow.pause(request.paused)).kind === "remembered" ? "done" : "refused" }
+      },
+      async "tab.filterChannel"({ acct, request }, context) {
+        if (acct === null || context.origin.incognito || !(await pinned(context, acct))) return { kind: "refused" }
+        const { clearListed, expectedGeneration, ...rest } = request
+        const change = clearListed ? { ...rest, acct, clearListedChannels: "confirmed" as const, expectedGeneration } : { ...rest, acct, clearListedChannels: "not-confirmed" as const }
+        try {
+          const answer = await owner.changeFilterChannel({ kind: "ui", windowId: context.windowId, incognito: false }, change)
+          return { kind: answer.kind === "result" && "ok" in answer.result ? "done" : "refused" }
+        } catch {
+          return { kind: "refused" }
+        }
+      },
+      async "tab.need"(request, context) {
+        try {
+          await registrar.ensure(context.origin.tabId, request)
+          return { kind: "ok" }
+        } catch {
+          return { kind: "failed" }
+        }
+      },
+      async "tab.playlists"({ acct, request }, context): Promise<TabPlaylists> {
+        if (acct === null || !(await pinned(context, acct))) return { kind: "noTab" }
+        // A cached read never reaches YouTube; the picker asks for a refresh itself when the list is stale (YT-PK-02).
+        if (!request.refresh) {
+          const read = await owner.readPlaylistCache({ acct, private: context.origin.incognito }).catch(() => null)
+          if (read?.kind !== "cache") return { kind: "failed" }
+          return { kind: "cached", listing: read.cache === null || read.cache.listAt === null ? null : { rows: cacheRows(read.cache, context.site), at: read.cache.listAt } }
+        }
+        const open = await playlists.list(acct, { site: context.site, req: requestOf(context), originalTab: context.origin.tabId, refresh: true })
+        if (open.kind !== "open") return { kind: "failed" }
+        const fresh = await (open.refresh ?? Promise.resolve(null))
+        if (fresh?.kind === "listed") return { kind: "listed", listing: { rows: fresh.listing.rows, at: fresh.listing.at } }
+        return { kind: fresh?.outcome.kind === "no-tab" ? "noTab" : "failed" }
+      },
+      async "tab.create"({ acct, request }, context): Promise<TabCreated> {
+        if (acct === null || !(await pinned(context, acct))) return { kind: "failed", reason: "failed" }
+        const answer = await playlists
+          .create(acct, { site: context.site, req: requestOf(context), originalTab: context.origin.tabId })
+          .submit({ title: request.title, privacy: request.privacy, ...(request.video === null ? {} : { videoId: request.video }) })
+        if (answer.kind === "created") return { kind: "created", id: answer.id }
+        const outcome = answer.kind === "not-created" ? answer.outcome : null
+        return { kind: "failed", reason: outcome?.kind === "result" && !outcome.result.ok && outcome.result.http === 429 ? "rateLimited" : "failed" }
+      },
+      async "tab.channelLabel"({ acct, request }, context) {
+        if (acct === null || !(await pinned(context, acct))) return null
+        await owner.refreshChannelLabels({ acct, private: context.origin.incognito, channel: request.channel }).catch(() => {})
+        return null
+      },
+      // A device choice belongs to this browser, not the tab's account, so no account pin is needed.
+      async "tab.device"({ change }, context) {
+        try {
+          const answer = await owner.changeDeviceSetting({ kind: "ui", windowId: context.windowId, incognito: context.origin.incognito }, change)
+          return answer.kind === "confirmed" ? { kind: "confirmed" } : answer
+        } catch {
+          return { kind: "refused", reason: "unavailable" }
+        }
+      },
+      async "tab.destination"({ acct, request }, context) {
+        if (acct === null || !(await pinned(context, acct))) return { kind: "refused", reason: "unavailable" }
+        const change = { kind: "setup-destination", acct, ...request } as const
+        try {
+          const result = await owner.changeSetupDestination(
+            { kind: "ui", windowId: context.windowId, incognito: context.origin.incognito },
+            { acct, destination: request.destination, expected: request.expected, playlist: request.playlist }
+          )
+          return projectDestination(change, result)
+        } catch {
+          return { kind: "refused", reason: "rejected" }
+        }
       }
-      return report
-    },
-    async "tab.remove"({ acct, request }, context) {
-      if (request.site !== context.site || !await pinned(context, acct)) return { kind: "no-tab" }
-      await view.load(context.origin.incognito, acct, context.site)
-      const { memory: _memory, ...report } = await flow.remove(request, context.origin)
-      return report.kind === "removed" ? { ...report, titles: titlesOf(acct, [report.playlist]) } : report
-    },
-    async "tab.undo"({ acct, request }, context): Promise<TabUndoReport> {
-      if (!await pinned(context, acct)) return { kind: "no-tab" }
-      const report = await flow.undo(request, context.origin)
-      switch (report.kind) {
-        case "undone": return { kind: "undone" }
-        case "failed": return { kind: "failed", completed: report.completed, of: report.of, failure: report.failure, toast: report.toast }
-        case "stopped": return { kind: "stopped", completed: report.completed, of: report.of }
-        default: return { kind: report.kind }
-      }
-    },
-    "tab.release"({ handle }) { flow.release(handle); return null },
-    "tab.settings"({ feature, playlist }, context) { deps.openSettings?.(playlist ? `feature-${feature}&playlist=${playlist}` : `feature-${feature}`, context.origin.tabId); return null },
-    async "tab.skip"({ acct, request }, context) {
-      if (acct === null || !await pinned(context, acct)) return { kind: "refused" }
-      const report = await flow.skip(request.skip ? { kind: "skip", acct, video: request.video, playlists: "all" } : { kind: "unskip", acct, video: request.video }, context.origin)
-      return { kind: report.kind === "remembered" ? "done" : "refused" }
-    },
-    async "tab.pause"({ acct, request }, context) {
-      if (context.origin.incognito || !await pinned(context, acct)) return { kind: "refused" }
-      return { kind: (await flow.pause(request.paused)).kind === "remembered" ? "done" : "refused" }
-    },
-    async "tab.filterChannel"({ acct, request }, context) {
-      if (acct === null || context.origin.incognito || !await pinned(context, acct)) return { kind: "refused" }
-      const { clearListed, expectedGeneration, ...rest } = request
-      const change = clearListed ? { ...rest, acct, clearListedChannels: "confirmed" as const, expectedGeneration }
-        : { ...rest, acct, clearListedChannels: "not-confirmed" as const }
-      try {
-        const answer = await owner.changeFilterChannel({ kind: "ui", windowId: context.windowId, incognito: false }, change)
-        return { kind: answer.kind === "result" && "ok" in answer.result ? "done" : "refused" }
-      } catch { return { kind: "refused" } }
-    },
-    async "tab.need"(request, context) {
-      try { await registrar.ensure(context.origin.tabId, request); return { kind: "ok" } } catch { return { kind: "failed" } }
-    },
-    async "tab.playlists"({ acct, request }, context): Promise<TabPlaylists> {
-      if (acct === null || !await pinned(context, acct)) return { kind: "noTab" }
-      // A cached read never reaches YouTube; the picker asks for a refresh itself when the list is stale (YT-PK-02).
-      if (!request.refresh) {
-        const read = await owner.readPlaylistCache({ acct, private: context.origin.incognito }).catch(() => null)
-        if (read?.kind !== "cache") return { kind: "failed" }
-        return { kind: "cached", listing: read.cache === null || read.cache.listAt === null ? null : { rows: cacheRows(read.cache, context.site), at: read.cache.listAt } }
-      }
-      const open = await playlists.list(acct, { site: context.site, req: requestOf(context), originalTab: context.origin.tabId, refresh: true })
-      if (open.kind !== "open") return { kind: "failed" }
-      const fresh = await (open.refresh ?? Promise.resolve(null))
-      if (fresh?.kind === "listed") return { kind: "listed", listing: { rows: fresh.listing.rows, at: fresh.listing.at } }
-      return { kind: fresh?.outcome.kind === "no-tab" ? "noTab" : "failed" }
-    },
-    async "tab.create"({ acct, request }, context): Promise<TabCreated> {
-      if (acct === null || !await pinned(context, acct)) return { kind: "failed", reason: "failed" }
-      const answer = await playlists.create(acct, { site: context.site, req: requestOf(context), originalTab: context.origin.tabId })
-        .submit({ title: request.title, privacy: request.privacy, ...(request.video === null ? {} : { videoId: request.video }) })
-      if (answer.kind === "created") return { kind: "created", id: answer.id }
-      const outcome = answer.kind === "not-created" ? answer.outcome : null
-      return { kind: "failed", reason: outcome?.kind === "result" && !outcome.result.ok && outcome.result.http === 429 ? "rateLimited" : "failed" }
-    },
-    async "tab.channelLabel"({ acct, request }, context) {
-      if (acct === null || !await pinned(context, acct)) return null
-      await owner.refreshChannelLabels({ acct, private: context.origin.incognito, channel: request.channel }).catch(() => {})
-      return null
-    },
-    // A device choice belongs to this browser, not the tab's account, so no account pin is needed.
-    async "tab.device"({ change }, context) {
-      try {
-        const answer = await owner.changeDeviceSetting({ kind: "ui", windowId: context.windowId, incognito: context.origin.incognito }, change)
-        return answer.kind === "confirmed" ? { kind: "confirmed" } : answer
-      } catch { return { kind: "refused", reason: "unavailable" } }
-    },
-    async "tab.destination"({ acct, request }, context) {
-      if (acct === null || !await pinned(context, acct)) return { kind: "refused", reason: "unavailable" }
-      const change = { kind: "setup-destination", acct, ...request } as const
-      try {
-        const result = await owner.changeSetupDestination({ kind: "ui", windowId: context.windowId, incognito: context.origin.incognito },
-          { acct, destination: request.destination, expected: request.expected, playlist: request.playlist })
-        return projectDestination(change, result)
-      } catch { return { kind: "refused", reason: "rejected" } }
     }
-  } })
+  })
   return {
     flow,
     async addInTab(tab, request) {
@@ -308,7 +379,11 @@ export function composeActions(deps: {
       const [known] = await tabs.known({ kind: "tab", tabId: tab.tabId })
       if (!known) return { kind: "no-tab" }
       if (known.acct !== acct || known.privateTab !== tab.incognito) return { kind: "account-changed" }
-      const outcome = await tabs.runIn<JobOf<"membership">>(tab.tabId, { job: { kind: "membership", videoId: video }, acct }, { site: tab.site, req, account: { kind: "account", acct, signedIn: true } })
+      const outcome = await tabs.runIn<JobOf<"membership">>(
+        tab.tabId,
+        { job: { kind: "membership", videoId: video }, acct },
+        { site: tab.site, req, account: { kind: "account", acct, signedIn: true } }
+      )
       return outcome.kind === "result" && outcome.result.ok ? { kind: "read", rows: outcome.result.data } : { kind: "unreadable" }
     },
     async undoFromPopup(tab, acct, handle) {
@@ -317,10 +392,14 @@ export function composeActions(deps: {
       if (known.acct !== acct || known.privateTab !== tab.incognito) return { kind: "account-changed" }
       const report = await flow.undo(handle, { kind: "tab", tabId: tab.tabId, incognito: tab.incognito })
       switch (report.kind) {
-        case "undone": return { kind: "undone" }
-        case "failed": return { kind: "failed", completed: report.completed, of: report.of, failure: report.failure, toast: report.toast }
-        case "stopped": return { kind: "stopped", completed: report.completed, of: report.of }
-        default: return { kind: report.kind }
+        case "undone":
+          return { kind: "undone" }
+        case "failed":
+          return { kind: "failed", completed: report.completed, of: report.of, failure: report.failure, toast: report.toast }
+        case "stopped":
+          return { kind: "stopped", completed: report.completed, of: report.of }
+        default:
+          return { kind: report.kind }
       }
     },
     async settings(incognito) {

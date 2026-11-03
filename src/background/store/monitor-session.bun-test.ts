@@ -13,7 +13,11 @@ function write(raw: JsonObject, now: number, sequence: number) {
   return planSessionChange(raw, { now, edits: [{ kind: "monitor", acct: a, scope: "normal", vocabulary, operations: [operation(sequence)] }] })
 }
 test("Monitor edits merge a fresh session and preserve unknown keys and other owners", () => {
-  const raw: JsonObject = { paused: true, future: { keep: true }, breakage: { v: 1, global: { extension: true }, accounts: { [a]: { extension: [1, 2] }, [b]: { extension: { keep: true } } }, extension: "outer" } }
+  const raw: JsonObject = {
+    paused: true,
+    future: { keep: true },
+    breakage: { v: 1, global: { extension: true }, accounts: { [a]: { extension: [1, 2] }, [b]: { extension: { keep: true } } }, extension: "outer" }
+  }
   const first = write(raw, 10_000, 1)
   if (!first) throw Error("Expected Monitor edit")
   const concurrent = { ...first.expected, paused: false, future: { keep: true, concurrent: 2 } }
@@ -45,7 +49,8 @@ test("account-removal cleanup owns the complete Monitor bucket and revision revo
   expect(removed.kind).toBe("supported")
   if (removed.kind !== "supported") throw Error("Expected compatible removal envelope")
   expect(parseSessionMemory(removed.expected)?.breakage.accounts.has(a)).toBe(false)
-  const captured = { reset: 0, accounts: new Map([[a, 0]]) }, current = { reset: 0, accounts: new Map([[a, 1]]) }
+  const captured = { reset: 0, accounts: new Map([[a, 0]]) },
+    current = { reset: 0, accounts: new Map([[a, 1]]) }
   expect(sessionEditAccount({ kind: "monitor", acct: a, scope: "normal", vocabulary, operations: [operation(1)] })).toBe(a)
   expect(sessionAccountCurrent(captured, current, a)).toBe(false)
   expect(sessionAccountCurrent(captured, current, b)).toBe(true)

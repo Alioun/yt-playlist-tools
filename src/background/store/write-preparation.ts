@@ -1,35 +1,46 @@
 import {
-  DecodeError, decodeFilter, decodeSettings, decodeSetup,
-  normalizeFilterForWrite, normalizeSettingsForWrite, normalizeSetupForWrite,
-  type Filter, type MusicAction, type Settings, type Setup, type SetupContext
+  DecodeError,
+  decodeFilter,
+  decodeSettings,
+  decodeSetup,
+  normalizeFilterForWrite,
+  normalizeSettingsForWrite,
+  normalizeSetupForWrite,
+  type Filter,
+  type MusicAction,
+  type Settings,
+  type Setup,
+  type SetupContext
 } from "../../shared/model"
 import { isJsonValue, type JsonObject } from "../../shared/contracts/json"
 
-type Snapshot<T> = T extends object
-  ? { readonly [P in keyof T]: Snapshot<T[P]> }
-  : T
+type Snapshot<T> = T extends object ? { readonly [P in keyof T]: Snapshot<T[P]> } : T
 
 export type PrepareBodyInput =
   | { readonly kind: "settings"; readonly data: Snapshot<Settings> }
   | {
-    readonly kind: "setup"
-    readonly data: Snapshot<Setup>
-    readonly context: Readonly<Required<SetupContext>>
-  }
+      readonly kind: "setup"
+      readonly data: Snapshot<Setup>
+      readonly context: Readonly<Required<SetupContext>>
+    }
   | { readonly kind: "filter"; readonly data: Snapshot<Filter> }
 
-export type PrepareBodyResult =
-  | { kind: "prepared"; data: JsonObject }
-  | { kind: "invalid"; reason: "json" | "shape" }
+export type PrepareBodyResult = { kind: "prepared"; data: JsonObject } | { kind: "invalid"; reason: "json" | "shape" }
 
-export type MaterializeBodyInput =
-  | Omit<Extract<PrepareBodyInput, { kind: "setup" }>, "context">
-  | Exclude<PrepareBodyInput, { kind: "setup" }>
+export type MaterializeBodyInput = Omit<Extract<PrepareBodyInput, { kind: "setup" }>, "context"> | Exclude<PrepareBodyInput, { kind: "setup" }>
 
 const invalidJson = Symbol("invalid JSON representation")
 const musicKeyNames = {
-  next: true, queue: true, save: true, like: true, remove: true,
-  library: true, mix: true, album: true, artist: true, picker: true
+  next: true,
+  queue: true,
+  save: true,
+  like: true,
+  remove: true,
+  library: true,
+  mix: true,
+  album: true,
+  artist: true,
+  picker: true
 } satisfies Record<MusicAction | "picker", true>
 
 function copyRecord(value: unknown): Record<string, unknown> | undefined {
@@ -170,9 +181,12 @@ export function prepareDocumentBody(input: PrepareBodyInput): PrepareBodyResult 
   if (candidate.kind !== "prepared") return candidate
   try {
     switch (input.kind) {
-      case "settings": return materializeDocumentBody({ kind: "settings", data: normalizeSettingsForWrite(decodeSettings(candidate.data)) })
-      case "setup": return materializeDocumentBody({ kind: "setup", data: normalizeSetupForWrite(decodeSetup(candidate.data), input.context) })
-      case "filter": return materializeDocumentBody({ kind: "filter", data: normalizeFilterForWrite(decodeFilter(candidate.data)) })
+      case "settings":
+        return materializeDocumentBody({ kind: "settings", data: normalizeSettingsForWrite(decodeSettings(candidate.data)) })
+      case "setup":
+        return materializeDocumentBody({ kind: "setup", data: normalizeSetupForWrite(decodeSetup(candidate.data), input.context) })
+      case "filter":
+        return materializeDocumentBody({ kind: "filter", data: normalizeFilterForWrite(decodeFilter(candidate.data)) })
     }
   } catch (error) {
     if (error === invalidJson) return { kind: "invalid", reason: "json" }

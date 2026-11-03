@@ -6,21 +6,29 @@ import type { AccountKey, PlaylistId } from "../../shared/model/validation"
 import { build } from "../../../tools/fixtures/page-link/support"
 import { englishI18n } from "../../../tools/fixtures/localization/scripted"
 
-const acct = "AAAAAAAAAAAAAAAA" as AccountKey, playlist = "PL_music" as PlaylistId
+const acct = "AAAAAAAAAAAAAAAA" as AccountKey,
+  playlist = "PL_music" as PlaylistId
 const channel = "UCAAAAAAAAAAAAAAAAAAAAAA"
 type Resolved = UiMessages["ui.resolveChannel"]["result"]
 function editor(resolved: Resolved) {
   const sent: unknown[] = []
   const respond: ScriptedResponders = {
     "ui.resolveChannel": () => resolved,
-    "ui.filterChannel": payload => { sent.push(payload.change); return { kind: "confirmed" } }
+    "ui.filterChannel": payload => {
+      sent.push(payload.change)
+      return { kind: "confirmed" }
+    }
   }
   const scripted = createScriptedBackend({ build, deadline: () => () => {}, answers: [], respond })
   return { channels: createChannelEditor(scripted.backend, englishI18n(), acct), sent }
 }
 
 test("a typed channel that a YouTube tab resolves is listed in the filter's own mode with its title and @handle", async () => {
-  const { channels, sent } = editor({ kind: "result", tabId: 4, result: { ok: true, route: "plain.resolveChannel" as never, data: { channelId: channel as never, title: "Lofi Girl", handle: "@LofiGirl" } } })
+  const { channels, sent } = editor({
+    kind: "result",
+    tabId: 4,
+    result: { ok: true, route: "plain.resolveChannel" as never, data: { channelId: channel as never, title: "Lofi Girl", handle: "@LofiGirl" } }
+  })
   expect(await channels.add(playlist, "@LofiGirl")).toEqual({ kind: "added" })
   expect(sent).toEqual([{ acct, playlist, channel: [channel, "Lofi Girl", "@LofiGirl"], action: "list", mode: null, clearListed: false, expectedGeneration: null }])
 })

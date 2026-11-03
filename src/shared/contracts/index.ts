@@ -18,7 +18,24 @@ export type { QueueInsertEndpoint, LikeEndpoint, LibraryEndpoint, NavigationEndp
 export { isQueueInsertEndpoint, isLikeEndpoint, isLibraryEndpoint, isNavigationEndpoint, isAddToPlaylistEndpoint, isRemoveFromQueueEndpoint } from "./endpoints"
 export type { VideoInfo, NowPlaying, LikeState, ItemKind, ItemType, ItemEndpoints, ItemInfo } from "./media"
 export { isVideoInfo, isNowPlaying, isLikeState, isItemInfo } from "./media"
-export type { RemovalIdentity, JobInputById, JobById, Job, JobOf, MembershipRow, PlaylistRow, BatchAddResult, AccountData, QueueAddData, JobDataById, JobData, JobResult, AccountJobId, AccountJob, JobInvocation } from "./jobs"
+export type {
+  RemovalIdentity,
+  JobInputById,
+  JobById,
+  Job,
+  JobOf,
+  MembershipRow,
+  PlaylistRow,
+  BatchAddResult,
+  AccountData,
+  QueueAddData,
+  JobDataById,
+  JobData,
+  JobResult,
+  AccountJobId,
+  AccountJob,
+  JobInvocation
+} from "./jobs"
 export { isJob, isJobDataFor, isJobResultFor, isJobInvocation, supportsJob } from "./jobs"
 export type { JobFailureFor } from "./jobs"
 export { isJobFailureFor } from "./jobs"

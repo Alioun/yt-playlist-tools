@@ -3,8 +3,14 @@ import type { Origin } from "../../shared/contracts/results"
 import type { AutoAddChoiceChange, AutoAddEdit, AutoAddReadAnswer } from "../../shared/contracts/auto-add-choice"
 import type { createLocalFilterWriter } from "./local-filter-writer"
 
-function typedChoices(owner: ReturnType<typeof createLocalFilterWriter>, ui: Extract<Origin, { kind: "ui" }>, acct: AccountKey,
-  playlist: PlaylistId, request: AutoAddChoiceChange, read: Extract<AutoAddReadAnswer, { kind: "value" }>) {
+function typedChoices(
+  owner: ReturnType<typeof createLocalFilterWriter>,
+  ui: Extract<Origin, { kind: "ui" }>,
+  acct: AccountKey,
+  playlist: PlaylistId,
+  request: AutoAddChoiceChange,
+  read: Extract<AutoAddReadAnswer, { kind: "value" }>
+) {
   void owner.readAutoAddChoice(ui, { kind: "auto-add-read", acct, playlist })
   void owner.changeAutoAddChoice(ui, request)
   // @ts-expect-error negative: auto-add-invalid-variant. Each edit changes one defined field.

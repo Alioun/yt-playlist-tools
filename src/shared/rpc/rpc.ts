@@ -18,17 +18,13 @@ export type RpcRequest<M extends RpcMap, K extends RpcKind<M> = RpcKind<M>> = {
 export type RpcHandlers<M extends RpcMap, Context> = {
   readonly [K in keyof M]: (payload: M[K]["payload"], context: Context) => M[K]["result"] | Promise<M[K]["result"]>
 }
-export type Authentication<Context> =
-  | { readonly kind: "accepted"; readonly context: Context }
-  | { readonly kind: "rejected" }
+export type Authentication<Context> = { readonly kind: "accepted"; readonly context: Context } | { readonly kind: "rejected" }
 export type RpcReceiver<M extends RpcMap, Sender, Context> = {
   authenticate(input: { readonly sender: Sender; readonly request: RpcRequest<M> }): Authentication<Context> | Promise<Authentication<Context>>
   readonly handlers: RpcHandlers<M, Context>
 }
 export type RpcFailure = "timeout" | "transport" | "invalid-answer" | "receiver-failed" | "disposed"
-export type RpcOutcome<Result> =
-  | { readonly kind: "answered"; readonly result: Result }
-  | { readonly kind: "failed"; readonly failure: RpcFailure }
+export type RpcOutcome<Result> = { readonly kind: "answered"; readonly result: Result } | { readonly kind: "failed"; readonly failure: RpcFailure }
 export type Deadline = (ms: number, expire: () => void) => () => void
 export type Rpc<M extends RpcMap, Sender> = {
   call<K extends RpcKind<M>>(kind: K, payload: M[K]["payload"]): Promise<RpcOutcome<M[K]["result"]>>
@@ -91,7 +87,10 @@ export function createRpcCaller<M extends RpcMap>(transport: Pick<Transport<neve
         abandon("transport")
         return
       }
-      sent.then(raw => settle(readAnswer(kind, id, raw)), () => abandon("transport"))
+      sent.then(
+        raw => settle(readAnswer(kind, id, raw)),
+        () => abandon("transport")
+      )
     })
   }
 
@@ -144,10 +143,16 @@ export function createRpc<M extends RpcMap, Sender>(transport: Transport<Sender>
 
     function receive({ message, sender }: Delivery<Sender>): Promise<unknown> | undefined {
       if (!active || inspectMessageHeader(message, build).kind !== "ok") return undefined
-      if (!objectShape(message, {
-        v: v => v === CONTRACT_VERSION, build: v => v === build,
-        id: v => typeof v === "string" && v.length > 0, kind: isKind, payload: () => true
-      })) return undefined
+      if (
+        !objectShape(message, {
+          v: v => v === CONTRACT_VERSION,
+          build: v => v === build,
+          id: v => typeof v === "string" && v.length > 0,
+          kind: isKind,
+          payload: () => true
+        })
+      )
+        return undefined
       const { id, kind, payload } = message
       if (typeof id !== "string" || !isKind(kind)) return undefined
       const answer = bind(kind, id, payload)

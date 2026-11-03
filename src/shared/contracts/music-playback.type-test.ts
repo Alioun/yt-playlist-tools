@@ -45,6 +45,27 @@ const driftedStream: StreamData<"nowPlaying"> = ad.detail
 // @ts-expect-error playback-page-answer-rejects-unrelated-job
 const unrelatedAnswer: PageRunAnswer<JobOf<"itemInfo">>["result"] = ad
 
-void [playback, pagePlayback, ordinaryItem, songSuccess, emptySuccess, songStream, emptyStream,
-  genericFailure, itemFailure, castFailure, accountFailure, pageItemFailure, wrongReason, unknownEvidence,
-  missingEvidence, httpConflict, statusConflict, extraDetail, adSuccess, driftedSuccess, driftedStream, unrelatedAnswer]
+void [
+  playback,
+  pagePlayback,
+  ordinaryItem,
+  songSuccess,
+  emptySuccess,
+  songStream,
+  emptyStream,
+  genericFailure,
+  itemFailure,
+  castFailure,
+  accountFailure,
+  pageItemFailure,
+  wrongReason,
+  unknownEvidence,
+  missingEvidence,
+  httpConflict,
+  statusConflict,
+  extraDetail,
+  adSuccess,
+  driftedSuccess,
+  driftedStream,
+  unrelatedAnswer
+]

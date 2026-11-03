@@ -41,15 +41,22 @@ const musicActionJobs = {
 
 export const features: readonly FeatureDef[] = [
   {
-    id: "auto-add", setting: "autoAdd", footprint: "none",
+    id: "auto-add",
+    setting: "autoAdd",
+    footprint: "none",
     pages: { www: { file: "feature-auto-add", needs: ["kit"] } },
-    health: { www: {
-      required: ["account", "membership", "add"],
-      optional: ["remove", "channelOf", "accountLabel"], anchors: []
-    } }
+    health: {
+      www: {
+        required: ["account", "membership", "add"],
+        optional: ["remove", "channelOf", "accountLabel"],
+        anchors: []
+      }
+    }
   },
   {
-    id: "shortcuts", setting: "shortcuts", footprint: "keys-only",
+    id: "shortcuts",
+    setting: "shortcuts",
+    footprint: "keys-only",
     pages: {
       www: { file: "feature-shortcuts-www", needs: ["kit"], lazy: "popovers" },
       music: { file: "feature-shortcuts-music", needs: ["kit"], lazy: "popovers", when: s => s.shortcuts.music }
@@ -58,80 +65,128 @@ export const features: readonly FeatureDef[] = [
       www: {
         required: ["account", "add"],
         optional: ["membership", "remove", "create", "videoInfo", "accountLabel"],
-        anchors: [], optionalAnchors: ["www-cards"]
+        anchors: [],
+        optionalAnchors: ["www-cards"]
       },
       music: {
         required: ["account", "save"],
         optional: ["membership", "unsave", "create", "itemInfo", "nowPlaying", "accountLabel"],
-        anchors: [], optionalAnchors: ["music-items"]
+        anchors: [],
+        optionalAnchors: ["music-items"]
       }
     }
   },
   {
-    id: "quick-save", setting: "quickSave", footprint: "adds-buttons",
+    id: "quick-save",
+    setting: "quickSave",
+    footprint: "adds-buttons",
     pages: { www: { file: "feature-quick-save", needs: ["kit"], lazy: "popovers" } },
-    health: { www: {
-      required: ["account", "add"], optional: ["membership", "remove", "create", "accountLabel"], anchors: ["www-cards"]
-    } }
+    health: {
+      www: {
+        required: ["account", "add"],
+        optional: ["membership", "remove", "create", "accountLabel"],
+        anchors: ["www-cards"]
+      }
+    }
   },
   {
-    id: "queue-button", setting: "queueButton", footprint: "adds-buttons",
+    id: "queue-button",
+    setting: "queueButton",
+    footprint: "adds-buttons",
     pages: { www: { file: "feature-queue-button", needs: ["kit"] } },
     health: { www: { required: ["queueAdd"], optional: ["queueUndo"], anchors: ["www-cards"] } }
   },
   {
-    id: "watch-button", setting: "watchButton", footprint: "adds-buttons",
+    id: "watch-button",
+    setting: "watchButton",
+    footprint: "adds-buttons",
     pages: { www: { file: "feature-watch-button", needs: ["kit"], lazy: "popovers" } },
-    health: { www: {
-      required: [], optional: ["account", "membership", "add", "remove", "create", "channelOf", "videoInfo", "accountLabel"],
-      anchors: ["www-watch-actions"]
-    } }
+    health: {
+      www: {
+        required: [],
+        optional: ["account", "membership", "add", "remove", "create", "channelOf", "videoInfo", "accountLabel"],
+        anchors: ["www-watch-actions"]
+      }
+    }
   },
   {
-    id: "card-menu", setting: "cardMenu", footprint: "changes-right-click",
+    id: "card-menu",
+    setting: "cardMenu",
+    footprint: "changes-right-click",
     pages: { www: { file: "feature-card-menu", needs: [] } },
     health: { www: { required: ["openCardMenu"], optional: [], anchors: ["www-cards"] } }
   },
   {
-    id: "browser-menu", setting: "browserMenu", footprint: "none", pages: {},
-    health: { www: {
-      required: ["account", "add"], optional: ["membership", "remove", "create", "videoInfo", "accountLabel"], anchors: []
-    } }
+    id: "browser-menu",
+    setting: "browserMenu",
+    footprint: "none",
+    pages: {},
+    health: {
+      www: {
+        required: ["account", "add"],
+        optional: ["membership", "remove", "create", "videoInfo", "accountLabel"],
+        anchors: []
+      }
+    }
   },
   {
-    id: "gather", setting: "gather", footprint: "none",
-    pages: { www: {
-      needs: [], matches: ["https://www.youtube.com/watch*", "https://www.youtube.com/live/*"],
-      when: s => s.gather.on && (s.gather.auto.background || s.gather.auto.count)
-    } },
+    id: "gather",
+    setting: "gather",
+    footprint: "none",
+    pages: {
+      www: {
+        needs: [],
+        matches: ["https://www.youtube.com/watch*", "https://www.youtube.com/live/*"],
+        when: s => s.gather.on && (s.gather.auto.background || s.gather.auto.count)
+      }
+    },
     health: { www: { required: [], optional: ["queueAddList", "membership", "addBatch", "removeBatch"], anchors: [] } }
   },
   {
-    id: "music-actions", setting: "musicActions", footprint: "adds-buttons",
+    id: "music-actions",
+    setting: "musicActions",
+    footprint: "adds-buttons",
     pages: { music: { file: "feature-music-actions", needs: ["kit"], lazy: "popovers" } },
-    health: { music: {
-      required: ["itemInfo"],
-      optional: ["membership", "unsave", "create", "accountLabel", "nowPlaying", "queueRemoveIds", "queueReinsert"],
-      anchors: [], optionalAnchors: ["music-items", "music-headers", "music-player-bar"], actions: musicActionJobs
-    } }
+    health: {
+      music: {
+        required: ["itemInfo"],
+        optional: ["membership", "unsave", "create", "accountLabel", "nowPlaying", "queueRemoveIds", "queueReinsert"],
+        anchors: [],
+        optionalAnchors: ["music-items", "music-headers", "music-player-bar"],
+        actions: musicActionJobs
+      }
+    }
   },
   {
-    id: "music-keys", setting: "musicKeys", footprint: "keys-only",
+    id: "music-keys",
+    setting: "musicKeys",
+    footprint: "keys-only",
     pages: { music: { file: "feature-music-keys", needs: ["kit"], lazy: "popovers" } },
-    health: { music: {
-      required: ["itemInfo"],
-      optional: ["membership", "unsave", "create", "accountLabel", "nowPlaying", "queueRemoveIds", "queueReinsert"],
-      anchors: [], optionalAnchors: ["music-items"], actions: musicActionJobs
-    } }
+    health: {
+      music: {
+        required: ["itemInfo"],
+        optional: ["membership", "unsave", "create", "accountLabel", "nowPlaying", "queueRemoveIds", "queueReinsert"],
+        anchors: [],
+        optionalAnchors: ["music-items"],
+        actions: musicActionJobs
+      }
+    }
   },
   {
-    id: "any-tab-keys", setting: "anyTabKeys", footprint: "keys-only", pages: {},
+    id: "any-tab-keys",
+    setting: "anyTabKeys",
+    footprint: "keys-only",
+    pages: {},
     health: {
       www: {
-        required: ["account", "videoInfo", "add"], optional: ["membership", "remove", "accountLabel"], anchors: []
+        required: ["account", "videoInfo", "add"],
+        optional: ["membership", "remove", "accountLabel"],
+        anchors: []
       },
       music: {
-        required: ["nowPlaying"], optional: ["membership", "unsave", "accountLabel"], anchors: [],
+        required: ["nowPlaying"],
+        optional: ["membership", "unsave", "accountLabel"],
+        anchors: [],
         actions: { save: ["account", "save"], like: ["account", "itemInfo", "like"] }
       }
     }

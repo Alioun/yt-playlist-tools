@@ -7,12 +7,17 @@ const later = <T>(value: T, ms = 400) => new Promise<T>(resolve => setTimeout(()
 
 function rowFor(feature: PageFeatureId, denied: boolean): SetupRow {
   switch (feature) {
-    case "auto-add": return { feature, target: { purpose: "auto-add", selection: { kind: "chosen", titles: ["Synthetic list A", "Synthetic list B"] } } }
-    case "shortcuts": return { feature, ...(denied && { alsoOnMusicHeld: true as const }), target: { purpose: "shortcut", key: "Alt+W", selection: { kind: "chosen", titles: ["Watch later"] } } }
-    case "quick-save": return { feature, target: { purpose: "quick-save", selection: { kind: "none" } } }
+    case "auto-add":
+      return { feature, target: { purpose: "auto-add", selection: { kind: "chosen", titles: ["Synthetic list A", "Synthetic list B"] } } }
+    case "shortcuts":
+      return { feature, ...(denied && { alsoOnMusicHeld: true as const }), target: { purpose: "shortcut", key: "Alt+W", selection: { kind: "chosen", titles: ["Watch later"] } } }
+    case "quick-save":
+      return { feature, target: { purpose: "quick-save", selection: { kind: "none" } } }
     case "music-actions":
-    case "music-keys": return denied ? { feature, held: "site-access" } : { feature, target: { purpose: "music-quick-save", selection: { kind: "none" } } }
-    default: return { feature }
+    case "music-keys":
+      return denied ? { feature, held: "site-access" } : { feature, target: { purpose: "music-quick-save", selection: { kind: "none" } } }
+    default:
+      return { feature }
   }
 }
 
@@ -23,10 +28,15 @@ export function syntheticOwner(scenario: Scenario, browser: BrowserKind): FirstR
     browser,
     lookupSyncedChoices() {
       let cancelled = false
-      const result = later(scenario === "synced"
-        ? { kind: "found" as const, features: ["auto-add", "music-actions"] as PageFeatureId[] }
-        : { kind: "not-found" as const }, 1500).then(found => cancelled ? { kind: "not-found" as const } : found)
-      return { result, cancel() { cancelled = true } }
+      const result = later(scenario === "synced" ? { kind: "found" as const, features: ["auto-add", "music-actions"] as PageFeatureId[] } : { kind: "not-found" as const }, 1500).then(found =>
+        cancelled ? { kind: "not-found" as const } : found
+      )
+      return {
+        result,
+        cancel() {
+          cancelled = true
+        }
+      }
     },
     requestPermissions(needs) {
       return later({ music: needs.music && musicGranted, browserMenu: needs.browserMenu })
@@ -39,9 +49,11 @@ export function syntheticOwner(scenario: Scenario, browser: BrowserKind): FirstR
       return later({
         kind: "agreed" as const,
         attempt: request.attempt,
-        applications: request.selected.map(feature => feature === "shortcuts"
-          ? { feature, state: "enabled" as const, alsoOnMusic: held ? "held-site-access" as const : "enabled" as const }
-          : { feature, state: held && (feature === "music-actions" || feature === "music-keys" || feature === "any-tab-keys") ? "held-site-access" as const : "enabled" as const })
+        applications: request.selected.map(feature =>
+          feature === "shortcuts"
+            ? { feature, state: "enabled" as const, alsoOnMusic: held ? ("held-site-access" as const) : ("enabled" as const) }
+            : { feature, state: held && (feature === "music-actions" || feature === "music-keys" || feature === "any-tab-keys") ? ("held-site-access" as const) : ("enabled" as const) }
+        )
       })
     },
     readSetup(): Promise<SetupView> {
@@ -59,9 +71,11 @@ export function syntheticOwner(scenario: Scenario, browser: BrowserKind): FirstR
       return later(true)
     },
     choosePlaylist() {
-      return later(scenario === "no-picker"
-        ? { kind: "failed" as const, reason: "picker-unavailable" as const }
-        : { kind: "confirmed" as const, selection: { kind: "chosen" as const, titles: ["Synthetic chosen list"] } })
+      return later(
+        scenario === "no-picker"
+          ? { kind: "failed" as const, reason: "picker-unavailable" as const }
+          : { kind: "confirmed" as const, selection: { kind: "chosen" as const, titles: ["Synthetic chosen list"] } }
+      )
     },
     open() {}
   }

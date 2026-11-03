@@ -1,8 +1,18 @@
 import {
-  decodeDocument, decodeFilter, decodeSettings, decodeSetup, decodeStamp,
-  DOCUMENT_VERSION, documentKey,
-  type DocumentKey, type Filter, type Settings, type Setup, type Stamp,
-  type Stamped, type Tombstone
+  decodeDocument,
+  decodeFilter,
+  decodeSettings,
+  decodeSetup,
+  decodeStamp,
+  DOCUMENT_VERSION,
+  documentKey,
+  type DocumentKey,
+  type Filter,
+  type Settings,
+  type Setup,
+  type Stamp,
+  type Stamped,
+  type Tombstone
 } from "../../shared/model"
 import { isJsonValue, parseJsonText, type JsonObject, type JsonValue } from "../../shared/contracts/json"
 
@@ -23,19 +33,9 @@ export type WireInvalid = {
   reason: "json" | "shape" | "duplicate-key" | "chunk-index" | "stamp-mismatch"
 }
 export type NewerSyncDocument = { kind: "newer-version"; version: number; raw: JsonObject }
-export type EncodedSyncDocument = { baseKey: string; gen: string } & (
-  | { mode: "single"; items: readonly [SyncItem] }
-  | { mode: "chunked"; items: readonly [SyncItem, SyncItem, ...SyncItem[]] }
-)
-export type EncodeSyncResult =
-  | { kind: "encoded"; encoded: EncodedSyncDocument }
-  | NewerSyncDocument
-  | WireInvalid
-  | { kind: "item-too-large"; key: string; bytes: number }
-export type KnownSyncValue =
-  | { kind: "settings"; document: Stamped<Settings> }
-  | { kind: "setup"; document: Stamped<Setup> }
-  | { kind: "filter"; document: Stamped<Filter> }
+export type EncodedSyncDocument = { baseKey: string; gen: string } & ({ mode: "single"; items: readonly [SyncItem] } | { mode: "chunked"; items: readonly [SyncItem, SyncItem, ...SyncItem[]] })
+export type EncodeSyncResult = { kind: "encoded"; encoded: EncodedSyncDocument } | NewerSyncDocument | WireInvalid | { kind: "item-too-large"; key: string; bytes: number }
+export type KnownSyncValue = { kind: "settings"; document: Stamped<Settings> } | { kind: "setup"; document: Stamped<Setup> } | { kind: "filter"; document: Stamped<Filter> }
 export type ReadSyncResult =
   | { kind: "absent" }
   | { kind: "incomplete"; gen: string; expected: number; received: number }
@@ -49,10 +49,7 @@ export type SyncUsage = {
   perItem: readonly { key: string; bytes: number }[]
 }
 export type SyncBound = "bytes" | "items" | "item-bytes"
-export type SyncProjection =
-  | { kind: "fits"; usage: SyncUsage }
-  | { kind: "full"; usage: SyncUsage; exceeded: readonly [SyncBound, ...SyncBound[]] }
-  | WireInvalid
+export type SyncProjection = { kind: "fits"; usage: SyncUsage } | { kind: "full"; usage: SyncUsage; exceeded: readonly [SyncBound, ...SyncBound[]] } | WireInvalid
 
 function invalid(field: WireInvalid["field"], reason: WireInvalid["reason"]): WireInvalid {
   return { kind: "invalid", field, reason }
@@ -228,7 +225,10 @@ export function readSyncDocument(input: { key: DocumentKey; items: readonly RawS
     chunks.set(index, item.value)
   }
   if (chunks.size !== n) return { kind: "incomplete", gen: stamp.gen, expected: n, received: chunks.size }
-  const text = [...chunks].sort(([left], [right]) => left - right).map(([, fragment]) => fragment).join("")
+  const text = [...chunks]
+    .sort(([left], [right]) => left - right)
+    .map(([, fragment]) => fragment)
+    .join("")
   const parsed = parseJsonText(text)
   if (!parsed.ok) return invalid("chunks", "json")
   if (!isObject(parsed.value)) return invalid("chunks", "shape")

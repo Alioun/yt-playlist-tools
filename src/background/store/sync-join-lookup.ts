@@ -13,11 +13,11 @@ export type SyncedFeatureChoices = Readonly<Record<SettingsPath, boolean>> & {
 
 export type SyncedChoicesResult =
   | {
-    readonly kind: "found"
-    readonly historyId: SyncMeta["id"]
-    readonly settingsGeneration: Stamp["gen"]
-    readonly features: Snapshot<SyncedFeatureChoices>
-  }
+      readonly kind: "found"
+      readonly historyId: SyncMeta["id"]
+      readonly settingsGeneration: Stamp["gen"]
+      readonly features: Snapshot<SyncedFeatureChoices>
+    }
   | { readonly kind: "not-found" }
   | { readonly kind: "cancelled" }
   | { readonly kind: "update-needed"; readonly target: "metadata" | "settings"; readonly version: number }
@@ -124,9 +124,12 @@ export function beginSyncedChoicesLookup(deps: {
       lastTime = deps.clock.now()
       deadline = lastTime + 10_000
       if (!Number.isFinite(lastTime) || !Number.isFinite(deadline)) throw new RangeError("Expected a finite monotonic time")
-      own(deps.clock.after(10_000, () => {
-        if (current()) finish(latest)
-      }), "clock")
+      own(
+        deps.clock.after(10_000, () => {
+          if (current()) finish(latest)
+        }),
+        "clock"
+      )
     } catch (error) {
       finish({ kind: "failed", stage: "clock", error })
       return
@@ -180,12 +183,15 @@ export function beginSyncedChoicesLookup(deps: {
 
     if (!live()) return
     try {
-      own(deps.sync.subscribe(() => {
-        if (!live()) return
-        revision++
-        latest = { kind: "unavailable", reason: "stale" }
-        if (listening) void read()
-      }), "subscribe")
+      own(
+        deps.sync.subscribe(() => {
+          if (!live()) return
+          revision++
+          latest = { kind: "unavailable", reason: "stale" }
+          if (listening) void read()
+        }),
+        "subscribe"
+      )
       listening = true
     } catch (error) {
       finish({ kind: "failed", stage: "subscribe", error })

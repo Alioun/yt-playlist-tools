@@ -3,7 +3,7 @@ import type { JsonObject } from "../../shared/contracts/json"
 import type { KnownSyncValue } from "./sync-codec"
 import type { PrepareBodyInput, PrepareBodyResult, prepareDocumentBody } from "./write-preparation"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 type ReadonlyBody<T> = T extends object ? { readonly [P in keyof T]: ReadonlyBody<T[P]> } : T
 type ExpectedInput =

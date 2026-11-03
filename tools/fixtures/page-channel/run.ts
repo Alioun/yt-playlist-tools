@@ -1,10 +1,6 @@
-import {
-  CONTRACT_VERSION, isBuildId, isPageRequestId, isPageType, isPageWatchId, isRouteId, isWatchId, parseJsonText
-} from "../../../src/shared/contracts"
+import { CONTRACT_VERSION, isBuildId, isPageRequestId, isPageType, isPageWatchId, isRouteId, isWatchId, parseJsonText } from "../../../src/shared/contracts"
 import type { Job, PageRequestId, PageWatchId, Stream, StreamData } from "../../../src/shared/contracts"
-import {
-  isPageHelloAnswer, isPageProbeAnswerFor, isPageRunAnswerFor, isPageStreamEventFor
-} from "../../../src/shared/contracts/page"
+import { isPageHelloAnswer, isPageProbeAnswerFor, isPageRunAnswerFor, isPageStreamEventFor } from "../../../src/shared/contracts/page"
 import type { PageJobResult } from "../../../src/shared/contracts/page"
 import { createDirectPageChannel } from "../../../src/shared/rpc/page-channel"
 import { servePage, type PageGatewayOperations } from "../../../src/page/channel"
@@ -30,9 +26,13 @@ export async function runPageChannelFixture(): Promise<FixtureRecord[]> {
     },
     watch<S extends Stream>(stream: S, onData: (data: StreamData<S>) => void) {
       if (stream === "nav") push = data => onData(data as StreamData<S>)
-      return () => { stopped.push(stream) }
+      return () => {
+        stopped.push(stream)
+      }
     },
-    async probe() { return { site: "www", entries: [{ id: dependency, present: true }] } }
+    async probe() {
+      return { site: "www", entries: [{ id: dependency, present: true }] }
+    }
   }
   const channel = createDirectPageChannel()
   const answers: unknown[] = []
@@ -40,11 +40,17 @@ export async function runPageChannelFixture(): Promise<FixtureRecord[]> {
     const parsed = parseJsonText(detail)
     if (parsed.ok) answers.push(parsed.value)
   })
-  const endpoint = servePage(gateway, {
-    site: "www", build, vocabulary: () => ({ routes: [route], watchIds: [dependency], schemaKeys: [] }),
-    snapshot: () => ({ signedIn: false, datasyncId: null, pageType: checked(isPageType, "HOME"), startedHidden: false, navType: "navigate" }),
-    signals: () => () => {}
-  }, channel)
+  const endpoint = servePage(
+    gateway,
+    {
+      site: "www",
+      build,
+      vocabulary: () => ({ routes: [route], watchIds: [dependency], schemaKeys: [] }),
+      snapshot: () => ({ signedIn: false, datasyncId: null, pageType: checked(isPageType, "HOME"), startedHidden: false, navType: "navigate" }),
+      signals: () => () => {}
+    },
+    channel
+  )
   const request = (payload: Record<string, unknown>) => channel.send("req", JSON.stringify({ ...header, ...payload }))
   const settle = () => new Promise<void>(resolve => setTimeout(resolve, 0))
   const take = () => answers.splice(0)

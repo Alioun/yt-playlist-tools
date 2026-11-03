@@ -2,9 +2,7 @@ import type { ChangeResult, Privacy, SetVideoId } from "../../../src/shared/cont
 import { isSetVideoId } from "../../../src/shared/contracts/identifiers"
 import type { Key, PlaylistId } from "../../../src/shared/model"
 import { isPlaylistId } from "../../../src/shared/model/validation"
-import type {
-  AddAnswer, CreateAnswer, ItemPort, ListAnswer, Listing, Mark, MembershipAnswer, PickerSource, RemoveAnswer, Undo
-} from "../../../src/shared/picker/source"
+import type { AddAnswer, CreateAnswer, ItemPort, ListAnswer, Listing, Mark, MembershipAnswer, PickerSource, RemoveAnswer, Undo } from "../../../src/shared/picker/source"
 
 export type Answers = {
   cachedList: Listing | null
@@ -62,9 +60,10 @@ export class Ledger {
   readonly #calls: Call[] = []
 
   port<P extends Port>(port: P): (...args: unknown[]) => Promise<Answers[P]> {
-    return (...args) => new Promise<Answers[P]>(resolve => {
-      this.#calls.push({ port, args, resolve: value => resolve(value as Answers[P]), settled: false })
-    })
+    return (...args) =>
+      new Promise<Answers[P]>(resolve => {
+        this.#calls.push({ port, args, resolve: value => resolve(value as Answers[P]), settled: false })
+      })
   }
 
   calls(port: Port): (readonly unknown[])[] {
@@ -87,15 +86,32 @@ export class Ledger {
 
 function facts(overrides: Partial<Facts>): Facts {
   return {
-    private: false, tab: true, creation: "available", sortAZ: false, privacy: null,
-    quickSave: null, chosen: [], keys: new Map(), marks: new Map(), now: NOW, authorized: true, ...overrides
+    private: false,
+    tab: true,
+    creation: "available",
+    sortAZ: false,
+    privacy: null,
+    quickSave: null,
+    chosen: [],
+    keys: new Map(),
+    marks: new Map(),
+    now: NOW,
+    authorized: true,
+    ...overrides
   }
 }
 
 function sourceFields(ledger: Ledger, facts: Facts) {
   return {
-    private: facts.private, tab: facts.tab, creation: facts.creation, sortAZ: facts.sortAZ,
-    privacy: facts.privacy, quickSave: facts.quickSave, chosen: facts.chosen, keys: facts.keys, marks: facts.marks,
+    private: facts.private,
+    tab: facts.tab,
+    creation: facts.creation,
+    sortAZ: facts.sortAZ,
+    privacy: facts.privacy,
+    quickSave: facts.quickSave,
+    chosen: facts.chosen,
+    keys: facts.keys,
+    marks: facts.marks,
     now: () => facts.now,
     authorized: () => facts.authorized,
     cachedList: ledger.port("cachedList"),

@@ -20,18 +20,45 @@ export type TabAddRequest = { readonly site: Site; readonly video: VideoId } & (
   | { readonly via: "picker" | "choose-quick-save" | "choose-shortcut"; readonly opener: FeatureId; readonly playlist: PlaylistId }
 )
 export type TabRemoveRequest = {
-  readonly site: Site; readonly video: VideoId; readonly playlist: PlaylistId; readonly opener: FeatureId; readonly tick: UndoHandle | null
+  readonly site: Site
+  readonly video: VideoId
+  readonly playlist: PlaylistId
+  readonly opener: FeatureId
+  readonly tick: UndoHandle | null
 }
 type Ended = { readonly kind: "signed-out" | "no-tab" }
 /** The cached titles of the playlists a report names, so the page's toast can name them (YT-ADD-23). */
 export type PlaylistTitles = Readonly<Record<PlaylistId, string>>
 export type TabAddReport =
-  | { readonly kind: "report"; readonly outcomes: Readonly<Record<PlaylistId, Outcome>>; readonly toast: ToastPlan | null; readonly feedback: boolean; readonly undo: UndoHandle | null; readonly titles: PlaylistTitles }
-  | { readonly kind: "stopped"; readonly outcomes: Readonly<Record<PlaylistId, Outcome>>; readonly pending: readonly PlaylistId[]; readonly feedback: boolean; readonly toast: null; readonly undo: null; readonly titles: PlaylistTitles }
+  | {
+      readonly kind: "report"
+      readonly outcomes: Readonly<Record<PlaylistId, Outcome>>
+      readonly toast: ToastPlan | null
+      readonly feedback: boolean
+      readonly undo: UndoHandle | null
+      readonly titles: PlaylistTitles
+    }
+  | {
+      readonly kind: "stopped"
+      readonly outcomes: Readonly<Record<PlaylistId, Outcome>>
+      readonly pending: readonly PlaylistId[]
+      readonly feedback: boolean
+      readonly toast: null
+      readonly undo: null
+      readonly titles: PlaylistTitles
+    }
   | { readonly kind: "choose" }
   | Ended
 export type TabRemoveReport =
-  | { readonly kind: "removed"; readonly playlist: PlaylistId; readonly video: VideoId; readonly feedback: boolean; readonly toast: ToastPlan | null; readonly undo: UndoHandle | null; readonly titles: PlaylistTitles }
+  | {
+      readonly kind: "removed"
+      readonly playlist: PlaylistId
+      readonly video: VideoId
+      readonly feedback: boolean
+      readonly toast: ToastPlan | null
+      readonly undo: UndoHandle | null
+      readonly titles: PlaylistTitles
+    }
   | { readonly kind: "failed"; readonly failure: ExplicitFailure }
   | { readonly kind: "stopped"; readonly removed: boolean; readonly playlist: PlaylistId; readonly video: VideoId; readonly undo: null }
   | Ended
@@ -46,10 +73,7 @@ export type TabListing = { readonly rows: readonly PlaylistRow[]; readonly at: n
 export type TabDeviceChange = { readonly field: "pickerSortAZ"; readonly value: boolean } | { readonly field: "newPlaylistVisibility"; readonly value: Privacy }
 export type TabDeviceAnswer = { readonly kind: "confirmed" } | { readonly kind: "refused"; readonly reason: "private" | "invalid" | "unavailable" | "unconfirmed" }
 /** `cached` answers a read without YouTube; `listed`, `noTab` and `failed` answer a refresh. */
-export type TabPlaylists =
-  | { readonly kind: "cached"; readonly listing: TabListing | null }
-  | { readonly kind: "listed"; readonly listing: TabListing }
-  | { readonly kind: "noTab" | "failed" }
+export type TabPlaylists = { readonly kind: "cached"; readonly listing: TabListing | null } | { readonly kind: "listed"; readonly listing: TabListing } | { readonly kind: "noTab" | "failed" }
 export type TabCreateFailure = "rateLimited" | "publicCap" | "noChannel" | "notAllowed" | "failed"
 export type TabCreated = { readonly kind: "created"; readonly id: PlaylistId } | { readonly kind: "failed"; readonly reason: TabCreateFailure }
 export type TabDestinationChange = { readonly destination: SetupDestination; readonly expected: DestinationExpectation; readonly playlist: PlaylistId | null }
@@ -97,10 +121,15 @@ export type TabProgressMessages = {
 type Check = (value: unknown) => boolean
 const bool: Check = value => typeof value === "boolean"
 const count: Check = value => typeof value === "number" && Number.isSafeInteger(value) && value >= 0
-const oneOf = (...values: readonly unknown[]): Check => value => values.includes(value)
-const nullable = (check: Check): Check => value => value === null || check(value)
-const record = (value: unknown, entry: Check) => value !== null && typeof value === "object" && !Array.isArray(value)
-  && Object.entries(value).every(([key, item]) => isPlaylistId(key) && entry(item))
+const oneOf =
+  (...values: readonly unknown[]): Check =>
+  value =>
+    values.includes(value)
+const nullable =
+  (check: Check): Check =>
+  value =>
+    value === null || check(value)
+const record = (value: unknown, entry: Check) => value !== null && typeof value === "object" && !Array.isArray(value) && Object.entries(value).every(([key, item]) => isPlaylistId(key) && entry(item))
 const playlists: Check = value => Array.isArray(value) && value.length <= 200 && value.every(isPlaylistId)
 const kinded: Check = value => value !== null && typeof value === "object" && typeof Reflect.get(value, "kind") === "string"
 const plan: Check = value => value !== null && typeof value === "object" && typeof Reflect.get(value, "tone") === "string" && kinded(Reflect.get(value, "message"))
@@ -111,11 +140,14 @@ export function isUndoHandle(value: unknown): value is UndoHandle {
   return objectShape(value, { kind: oneOf("add", "gather", "remove"), id: v => typeof v === "string" && v.length > 0 && v.length <= 200 })
 }
 export function isTabAddRequest(value: unknown): value is TabAddRequest {
-  const base = { site: isSite, video: isVideoId }
-  return objectShape(value, { ...base, via: oneOf("auto-add"), playlists, channel: nullable(isChannelId) })
-    || objectShape(value, { ...base, via: oneOf("shortcut"), shortcut: isShortcutId })
-    || objectShape(value, { ...base, via: oneOf("quick-save"), opener: isFeatureId })
-    || objectShape(value, { ...base, via: oneOf("picker", "choose-quick-save", "choose-shortcut"), opener: isFeatureId, playlist: isPlaylistId })
+  const base = { site: isSite, video: isVideoId },
+    named = { title }
+  return (
+    objectShape(value, { ...base, via: oneOf("auto-add"), playlists, channel: nullable(isChannelId) }, named) ||
+    objectShape(value, { ...base, via: oneOf("shortcut"), shortcut: isShortcutId }, named) ||
+    objectShape(value, { ...base, via: oneOf("quick-save"), opener: isFeatureId }, named) ||
+    objectShape(value, { ...base, via: oneOf("picker", "choose-quick-save", "choose-shortcut"), opener: isFeatureId, playlist: isPlaylistId }, named)
+  )
 }
 export function isTabRemoveRequest(value: unknown): value is TabRemoveRequest {
   return objectShape(value, { site: isSite, video: isVideoId, playlist: isPlaylistId, opener: isFeatureId, tick: nullable(isUndoHandle) })
@@ -126,20 +158,26 @@ function pinned(request: Check): Check {
 const undo = nullable(isUndoHandle)
 const titles: Check = value => record(value, item => typeof item === "string")
 export function isTabAddReport(value: unknown): value is TabAddReport {
-  return objectShape(value, { kind: oneOf("report"), outcomes: v => record(v, kinded), toast: nullable(plan), feedback: bool, undo, titles })
-    || objectShape(value, { kind: oneOf("stopped"), outcomes: v => record(v, kinded), pending: playlists, feedback: bool, toast: v => v === null, undo: v => v === null, titles })
-    || objectShape(value, { kind: oneOf("choose", "signed-out", "no-tab") })
+  return (
+    objectShape(value, { kind: oneOf("report"), outcomes: v => record(v, kinded), toast: nullable(plan), feedback: bool, undo, titles }) ||
+    objectShape(value, { kind: oneOf("stopped"), outcomes: v => record(v, kinded), pending: playlists, feedback: bool, toast: v => v === null, undo: v => v === null, titles }) ||
+    objectShape(value, { kind: oneOf("choose", "signed-out", "no-tab") })
+  )
 }
 export function isTabRemoveReport(value: unknown): value is TabRemoveReport {
-  return objectShape(value, { kind: oneOf("removed"), playlist: isPlaylistId, video: isVideoId, feedback: bool, toast: nullable(plan), undo, titles })
-    || objectShape(value, { kind: oneOf("failed"), failure: v => typeof v === "string" })
-    || objectShape(value, { kind: oneOf("stopped"), removed: bool, playlist: isPlaylistId, video: isVideoId, undo: v => v === null })
-    || objectShape(value, { kind: oneOf("signed-out", "no-tab") })
+  return (
+    objectShape(value, { kind: oneOf("removed"), playlist: isPlaylistId, video: isVideoId, feedback: bool, toast: nullable(plan), undo, titles }) ||
+    objectShape(value, { kind: oneOf("failed"), failure: v => typeof v === "string" }) ||
+    objectShape(value, { kind: oneOf("stopped"), removed: bool, playlist: isPlaylistId, video: isVideoId, undo: v => v === null }) ||
+    objectShape(value, { kind: oneOf("signed-out", "no-tab") })
+  )
 }
 export function isTabUndoReport(value: unknown): value is TabUndoReport {
-  return objectShape(value, { kind: oneOf("failed"), completed: count, of: count, failure: v => typeof v === "string", toast: nullable(plan) })
-    || objectShape(value, { kind: oneOf("stopped"), completed: count, of: count })
-    || objectShape(value, { kind: oneOf("undone", "expired", "signed-out", "no-tab") })
+  return (
+    objectShape(value, { kind: oneOf("failed"), completed: count, of: count, failure: v => typeof v === "string", toast: nullable(plan) }) ||
+    objectShape(value, { kind: oneOf("stopped"), completed: count, of: count }) ||
+    objectShape(value, { kind: oneOf("undone", "expired", "signed-out", "no-tab") })
+  )
 }
 function isRow(value: unknown): value is PlaylistRow {
   return objectShape(value, { id: isPlaylistId, title: v => typeof v === "string" }, { privacy: isPrivacy, count, thumb: v => typeof v === "string" })
@@ -148,45 +186,76 @@ function isListing(value: unknown): value is TabListing {
   return objectShape(value, { rows: v => Array.isArray(v) && v.every(isRow), at: count })
 }
 export function isTabPlaylists(value: unknown): value is TabPlaylists {
-  return objectShape(value, { kind: oneOf("cached"), listing: nullable(isListing) })
-    || objectShape(value, { kind: oneOf("listed"), listing: isListing })
-    || objectShape(value, { kind: oneOf("noTab", "failed") })
+  return (
+    objectShape(value, { kind: oneOf("cached"), listing: nullable(isListing) }) ||
+    objectShape(value, { kind: oneOf("listed"), listing: isListing }) ||
+    objectShape(value, { kind: oneOf("noTab", "failed") })
+  )
 }
 export function isTabCreated(value: unknown): value is TabCreated {
-  return objectShape(value, { kind: oneOf("created"), id: isPlaylistId })
-    || objectShape(value, { kind: oneOf("failed"), reason: oneOf("rateLimited", "publicCap", "noChannel", "notAllowed", "failed") })
+  return (
+    objectShape(value, { kind: oneOf("created"), id: isPlaylistId }) || objectShape(value, { kind: oneOf("failed"), reason: oneOf("rateLimited", "publicCap", "noChannel", "notAllowed", "failed") })
+  )
 }
 
 const isMemoryAnswer = (v: unknown): v is TabMemoryAnswer => objectShape(v, { kind: oneOf("done", "refused") })
 const label = (v: unknown) => typeof v === "string" && v.length <= 1000
 function isTabFilterChannel(value: unknown): value is TabFilterChannel {
-  return objectShape(value, { playlist: isPlaylistId, action: oneOf("list", "unlist"), mode: v => v === null || v === "allow" || v === "deny", clearListed: bool,
+  return objectShape(value, {
+    playlist: isPlaylistId,
+    action: oneOf("list", "unlist"),
+    mode: v => v === null || v === "allow" || v === "deny",
+    clearListed: bool,
     channel: v => Array.isArray(v) && (v.length === 2 || v.length === 3) && isChannelId(v[0]) && label(v[1]) && (v.length === 2 || label(v[2])),
-    expectedGeneration: v => v === null || typeof v === "string" && v.length > 0 && v.length <= 128 })
+    expectedGeneration: v => v === null || (typeof v === "string" && v.length > 0 && v.length <= 128)
+  })
 }
 export const tabActionContract: RpcContract<TabActionMessages> = {
   "tab.add": { payload: (v): v is TabActionMessages["tab.add"]["payload"] => pinned(isTabAddRequest)(v), result: isTabAddReport, timeoutMs: 60_000 },
   "tab.remove": { payload: (v): v is TabActionMessages["tab.remove"]["payload"] => pinned(isTabRemoveRequest)(v), result: isTabRemoveReport, timeoutMs: 60_000 },
   "tab.undo": { payload: (v): v is TabActionMessages["tab.undo"]["payload"] => pinned(isUndoHandle)(v), result: isTabUndoReport, timeoutMs: 60_000 },
   "tab.release": { payload: (v): v is TabActionMessages["tab.release"]["payload"] => objectShape(v, { handle: isUndoHandle }), result: (v): v is null => v === null, timeoutMs: 2_000 },
-  "tab.need": { payload: (v): v is TabActionMessages["tab.need"]["payload"] => objectShape(v, { popovers: oneOf(true) }) || objectShape(v, { jobs: oneOf(true) }),
-    result: (v): v is TabActionMessages["tab.need"]["result"] => objectShape(v, { kind: oneOf("ok", "failed") }), timeoutMs: 5_000 },
+  "tab.need": {
+    payload: (v): v is TabActionMessages["tab.need"]["payload"] => objectShape(v, { popovers: oneOf(true) }) || objectShape(v, { jobs: oneOf(true) }),
+    result: (v): v is TabActionMessages["tab.need"]["result"] => objectShape(v, { kind: oneOf("ok", "failed") }),
+    timeoutMs: 5_000
+  },
   "tab.playlists": { payload: (v): v is TabActionMessages["tab.playlists"]["payload"] => pinned(r => objectShape(r, { refresh: bool }))(v), result: isTabPlaylists, timeoutMs: 45_000 },
-  "tab.create": { payload: (v): v is TabActionMessages["tab.create"]["payload"] => pinned(r => objectShape(r, { title, privacy: isPrivacy, video: nullable(isVideoId) }))(v),
-    result: isTabCreated, timeoutMs: 45_000 },
-  "tab.destination": { payload: (v): v is TabActionMessages["tab.destination"]["payload"] => pinned(r => objectShape(r, {
-    destination: isSetupDestination, expected: isDestinationExpectation, playlist: nullable(isPlaylistId) }))(v), result: isDestinationAnswer, timeoutMs: 15_000 },
-  "tab.channelLabel": { payload: (v): v is TabActionMessages["tab.channelLabel"]["payload"] => pinned(r => objectShape(r, { channel: isTabChannelLabel }))(v),
-    result: (v): v is null => v === null, timeoutMs: 8_000 },
-  "tab.settings": { payload: (v): v is TabSettingsTarget => objectShape(v, { feature: oneOf("auto-add", "shortcuts", "gather", "watch-button") }, { playlist: isPlaylistId }),
-    result: (v): v is null => v === null, timeoutMs: 2_000 },
+  "tab.create": {
+    payload: (v): v is TabActionMessages["tab.create"]["payload"] => pinned(r => objectShape(r, { title, privacy: isPrivacy, video: nullable(isVideoId) }))(v),
+    result: isTabCreated,
+    timeoutMs: 45_000
+  },
+  "tab.destination": {
+    payload: (v): v is TabActionMessages["tab.destination"]["payload"] =>
+      pinned(r =>
+        objectShape(r, {
+          destination: isSetupDestination,
+          expected: isDestinationExpectation,
+          playlist: nullable(isPlaylistId)
+        })
+      )(v),
+    result: isDestinationAnswer,
+    timeoutMs: 15_000
+  },
+  "tab.channelLabel": {
+    payload: (v): v is TabActionMessages["tab.channelLabel"]["payload"] => pinned(r => objectShape(r, { channel: isTabChannelLabel }))(v),
+    result: (v): v is null => v === null,
+    timeoutMs: 8_000
+  },
+  "tab.settings": {
+    payload: (v): v is TabSettingsTarget => objectShape(v, { feature: oneOf("auto-add", "shortcuts", "gather", "watch-button") }, { playlist: isPlaylistId }),
+    result: (v): v is null => v === null,
+    timeoutMs: 2_000
+  },
   "tab.skip": { payload: (v): v is TabActionMessages["tab.skip"]["payload"] => pinned(r => objectShape(r, { video: isVideoId, skip: bool }))(v), result: isMemoryAnswer, timeoutMs: 8_000 },
   "tab.pause": { payload: (v): v is TabActionMessages["tab.pause"]["payload"] => pinned(r => objectShape(r, { paused: bool }))(v), result: isMemoryAnswer, timeoutMs: 8_000 },
-  "tab.filterChannel": { payload: (v): v is TabActionMessages["tab.filterChannel"]["payload"] =>
-    pinned(isTabFilterChannel)(v), result: isMemoryAnswer, timeoutMs: 12_000 },
-  "tab.device": { payload: (v): v is TabActionMessages["tab.device"]["payload"] => objectShape(v, { change: isTabDeviceChange }),
+  "tab.filterChannel": { payload: (v): v is TabActionMessages["tab.filterChannel"]["payload"] => pinned(isTabFilterChannel)(v), result: isMemoryAnswer, timeoutMs: 12_000 },
+  "tab.device": {
+    payload: (v): v is TabActionMessages["tab.device"]["payload"] => objectShape(v, { change: isTabDeviceChange }),
     result: (v): v is TabDeviceAnswer => objectShape(v, { kind: oneOf("confirmed") }) || objectShape(v, { kind: oneOf("refused"), reason: oneOf("private", "invalid", "unavailable", "unconfirmed") }),
-    timeoutMs: 8_000 }
+    timeoutMs: 8_000
+  }
 }
 function isTabChannelLabel(value: unknown): value is TabChannelLabel {
   return Array.isArray(value) && (value.length === 2 || value.length === 3) && isChannelId(value[0]) && title(value[1]) && (value.length === 2 || title(value[2]))
@@ -209,8 +278,11 @@ export function isGatherToastLine(value: unknown): value is GatherToastLine {
   return objectShape(value, { text: toastText, tone: oneOf("confirmation", "failure") })
 }
 export const tabGatherContract: RpcContract<TabGatherMessages> = {
-  "tab.gatherUndo": { payload: (v): v is TabGatherMessages["tab.gatherUndo"]["payload"] => pinned(r => objectShape(r, { id: gatherId }))(v),
-    result: (v): v is GatherToastLine | null => v === null || isGatherToastLine(v), timeoutMs: 60_000 }
+  "tab.gatherUndo": {
+    payload: (v): v is TabGatherMessages["tab.gatherUndo"]["payload"] => pinned(r => objectShape(r, { id: gatherId }))(v),
+    result: (v): v is GatherToastLine | null => v === null || isGatherToastLine(v),
+    timeoutMs: 60_000
+  }
 }
 
 const position = (value: unknown) => typeof value === "number" && Number.isFinite(value) && value >= 0
@@ -219,14 +291,22 @@ export function isTabProgress(value: unknown): value is TabProgress {
   return objectShape(value, { len: v => typeof v === "number" && Number.isFinite(v) && v > 0, parts: v => Array.isArray(v) && v.length <= 1_000 && v.every(part) })
 }
 export const tabProgressContract: RpcContract<TabProgressMessages> = {
-  "tab.progress.load": { payload: (v): v is TabProgressMessages["tab.progress.load"]["payload"] => pinned(r => objectShape(r, { video: isVideoId }))(v),
-    result: (v): v is TabProgress | null => v === null || isTabProgress(v), timeoutMs: 5_000 },
-  "tab.progress.save": { payload: (v): v is TabProgressMessages["tab.progress.save"]["payload"] => pinned(r => objectShape(r, { video: isVideoId, progress: isTabProgress }))(v),
-    result: (v): v is null => v === null, timeoutMs: 5_000 },
-  "tab.cantMeasure": { payload: (v): v is TabProgressMessages["tab.cantMeasure"]["payload"] => pinned(r => r === null)(v),
-    result: (v): v is { readonly show: boolean } => objectShape(v, { show: bool }), timeoutMs: 5_000 },
-  "tab.videoChanged": { payload: (v): v is TabProgressMessages["tab.videoChanged"]["payload"] => pinned(r => r === null)(v),
-    result: (v): v is null => v === null, timeoutMs: 5_000 }
+  "tab.progress.load": {
+    payload: (v): v is TabProgressMessages["tab.progress.load"]["payload"] => pinned(r => objectShape(r, { video: isVideoId }))(v),
+    result: (v): v is TabProgress | null => v === null || isTabProgress(v),
+    timeoutMs: 5_000
+  },
+  "tab.progress.save": {
+    payload: (v): v is TabProgressMessages["tab.progress.save"]["payload"] => pinned(r => objectShape(r, { video: isVideoId, progress: isTabProgress }))(v),
+    result: (v): v is null => v === null,
+    timeoutMs: 5_000
+  },
+  "tab.cantMeasure": {
+    payload: (v): v is TabProgressMessages["tab.cantMeasure"]["payload"] => pinned(r => r === null)(v),
+    result: (v): v is { readonly show: boolean } => objectShape(v, { show: bool }),
+    timeoutMs: 5_000
+  },
+  "tab.videoChanged": { payload: (v): v is TabProgressMessages["tab.videoChanged"]["payload"] => pinned(r => r === null)(v), result: (v): v is null => v === null, timeoutMs: 5_000 }
 }
 
 /**
@@ -246,14 +326,30 @@ export type TabAskMessages = {
 /** `done` is the ✓ and `failed` the ✕ on the toolbar icon; `text` is the answer's tooltip (YM-ANY-4). */
 export type MusicAskAnswer = { readonly kind: "done" | "failed"; readonly text: string | null }
 export const tabAskContract: RpcContract<TabAskMessages> = {
-  "bg.toast": { payload: (v): v is TabAskMessages["bg.toast"]["payload"] => objectShape(v, { answer: isTabAddReport, video: isVideoId, title: nullable(title), opener: isFeatureId }),
-    result: (v): v is null => v === null, timeoutMs: 2_000 },
-  "bg.picker": { payload: (v): v is TabAskMessages["bg.picker"]["payload"] => objectShape(v, { video: isVideoId, title: nullable(title), choose: bool, opener: isFeatureId }),
-    result: (v): v is TabAskMessages["bg.picker"]["result"] => objectShape(v, { kind: oneOf("opened", "failed") }), timeoutMs: 8_000 },
-  "bg.gatherToast": { payload: (v): v is TabAskMessages["bg.gatherToast"]["payload"] => objectShape(v, { text: toastText, tone: oneOf("confirmation", "failure"), auto: bool,
-    undo: v => v === null || gatherId(v) }, { settings: isPlaylistId }), result: (v): v is null => v === null, timeoutMs: 2_000 },
-  "bg.music": { payload: (v): v is TabAskMessages["bg.music"]["payload"] => objectShape(v, { action: oneOf("save", "like"), feedback: bool }),
-    result: (v): v is MusicAskAnswer => objectShape(v, { kind: oneOf("done", "failed"), text: nullable(title) }), timeoutMs: 30_000 },
-  "bg.query": { payload: (v): v is TabAskMessages["bg.query"]["payload"] => objectShape(v, { name: oneOf("auto-add") }),
-    result: (v): v is ThisVideo | null => v === null || isThisVideo(v), timeoutMs: 8_000 }
+  "bg.toast": {
+    payload: (v): v is TabAskMessages["bg.toast"]["payload"] => objectShape(v, { answer: isTabAddReport, video: isVideoId, title: nullable(title), opener: isFeatureId }),
+    result: (v): v is null => v === null,
+    timeoutMs: 2_000
+  },
+  "bg.picker": {
+    payload: (v): v is TabAskMessages["bg.picker"]["payload"] => objectShape(v, { video: isVideoId, title: nullable(title), choose: bool, opener: isFeatureId }),
+    result: (v): v is TabAskMessages["bg.picker"]["result"] => objectShape(v, { kind: oneOf("opened", "failed") }),
+    timeoutMs: 8_000
+  },
+  "bg.gatherToast": {
+    payload: (v): v is TabAskMessages["bg.gatherToast"]["payload"] =>
+      objectShape(v, { text: toastText, tone: oneOf("confirmation", "failure"), auto: bool, undo: v => v === null || gatherId(v) }, { settings: isPlaylistId }),
+    result: (v): v is null => v === null,
+    timeoutMs: 2_000
+  },
+  "bg.music": {
+    payload: (v): v is TabAskMessages["bg.music"]["payload"] => objectShape(v, { action: oneOf("save", "like"), feedback: bool }),
+    result: (v): v is MusicAskAnswer => objectShape(v, { kind: oneOf("done", "failed"), text: nullable(title) }),
+    timeoutMs: 30_000
+  },
+  "bg.query": {
+    payload: (v): v is TabAskMessages["bg.query"]["payload"] => objectShape(v, { name: oneOf("auto-add") }),
+    result: (v): v is ThisVideo | null => v === null || isThisVideo(v),
+    timeoutMs: 8_000
+  }
 }

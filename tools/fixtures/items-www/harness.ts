@@ -15,17 +15,27 @@ import type { WwwItemFailure, WwwSettleObservation } from "../../../src/site/cor
 import { ManualClock } from "../page-link/support"
 import { hitStack, move } from "../pointer-keys/harness"
 
-export async function flush(): Promise<void> { for (let n = 0; n < 12; n++) await Promise.resolve() }
+export async function flush(): Promise<void> {
+  for (let n = 0; n < 12; n++) await Promise.resolve()
+}
 
 export function manualTimers() {
-  let at = 0, serial = 0
+  let at = 0,
+    serial = 0
   const pending = new Map<number, { at: number; run(): void }>()
   const restoreSet = defineRaw(window, "setTimeout", (handler: TimerHandler, ms = 0, ...args: unknown[]) => {
     const id = ++serial
-    pending.set(id, { at: at + ms, run() { if (typeof handler === "function") Reflect.apply(handler, window, args) } })
+    pending.set(id, {
+      at: at + ms,
+      run() {
+        if (typeof handler === "function") Reflect.apply(handler, window, args)
+      }
+    })
     return id
   })
-  const restoreClear = defineRaw(window, "clearTimeout", (id: number) => { pending.delete(id) })
+  const restoreClear = defineRaw(window, "clearTimeout", (id: number) => {
+    pending.delete(id)
+  })
   return {
     advance(ms: number) {
       at += ms
@@ -33,15 +43,21 @@ export function manualTimers() {
         if (timer.at <= at && pending.delete(id)) timer.run()
       }
     },
-    get count() { return pending.size },
-    restore() { restoreSet(); restoreClear(); pending.clear() }
+    get count() {
+      return pending.size
+    },
+    restore() {
+      restoreSet()
+      restoreClear()
+      pending.clear()
+    }
   }
 }
 
 export async function itemsFixture(dom = false) {
   const oldUrl = window.location.href
   window.history.replaceState(null, "", "https://www.youtube.com/")
-  const restoreConfig = defineRaw(window, "ytcfg", { get: (key: string) => key === "LOGGED_IN" ? false : undefined })
+  const restoreConfig = defineRaw(window, "ytcfg", { get: (key: string) => (key === "LOGGED_IN" ? false : undefined) })
   let navigation: unknown = rawNavigation("other")
   const page = createLiveReadPort({ site: "www", document, window, bindings: { navigation: { read: () => navigation } } })
   const gateway = createGateway({ site: wwwGateway, page, now: () => 0 })
@@ -50,7 +66,9 @@ export async function itemsFixture(dom = false) {
   if (!isBuildId(build) || !isPageType(pageType)) throw Error("Invalid synthetic header")
   const inner = dom ? createDomPageChannel(document) : createDirectPageChannel()
   const held: (() => void)[] = []
-  let delayed = false, navStarts = 0, navStops = 0
+  let delayed = false,
+    navStarts = 0,
+    navStops = 0
   const reads: { job: string; target: Element | undefined }[] = []
   const channel: PageChannel = {
     send(wire, text, target) {
@@ -63,33 +81,95 @@ export async function itemsFixture(dom = false) {
         if (wire === "req" && value.kind === "run" && job !== null && typeof job === "object" && !Array.isArray(job) && typeof job.kind === "string") {
           reads.push({ job: job.kind, target })
         }
-        if (wire === "res" && value.kind === "run" && delayed) { held.push(() => inner.send(wire, text, target)); return }
+        if (wire === "res" && value.kind === "run" && delayed) {
+          held.push(() => inner.send(wire, text, target))
+          return
+        }
       }
       inner.send(wire, text, target)
     },
     listen: (wire, listener) => inner.listen(wire, listener)
   }
-  const endpoint = servePage(gateway, { site: "www", build, vocabulary: () => gateway.vocabulary,
-    snapshot: () => ({ signedIn: false, datasyncId: null, pageType, startedHidden: false, navType: "navigate" }),
-    signals: listener => gateway.onSignal(listener) }, channel)
+  const endpoint = servePage(
+    gateway,
+    {
+      site: "www",
+      build,
+      vocabulary: () => gateway.vocabulary,
+      snapshot: () => ({ signedIn: false, datasyncId: null, pageType, startedHidden: false, navType: "navigate" }),
+      signals: listener => gateway.onSignal(listener)
+    },
+    channel
+  )
   const clock = new ManualClock()
   const link = createPageLink({ site: "www", build, vocabulary: gateway.vocabulary, clock }, channel)
   const hello = await link.hello
   if (!hello.ok) throw Error("Synthetic PageLink hello failed")
-  const errors: unknown[] = [], failures: WwwItemFailure[] = [], observations: WwwSettleObservation[] = []
-  const scopeOptions = { document, onError: (error: unknown) => { errors.push(error) } }
+  const errors: unknown[] = [],
+    failures: WwwItemFailure[] = [],
+    observations: WwwSettleObservation[] = []
+  const scopeOptions = {
+    document,
+    onError: (error: unknown) => {
+      errors.push(error)
+    }
+  }
   const pointer = new Pointer(scopeOptions)
-  const items = new WwwItems({ ...scopeOptions, pointer, page: link, report: {
-    itemUnrecognised: facts => { failures.push(facts) }, pageSettled: facts => { observations.push(facts) }
-  } })
-  const stack = hitStack(), timers = manualTimers(), owners: Scope[] = []
+  const items = new WwwItems({
+    ...scopeOptions,
+    pointer,
+    page: link,
+    report: {
+      itemUnrecognised: facts => {
+        failures.push(facts)
+      },
+      pageSettled: facts => {
+        observations.push(facts)
+      }
+    }
+  })
+  const stack = hitStack(),
+    timers = manualTimers(),
+    owners: Scope[] = []
   return {
-    items, pointer, page, gateway, link, clock, errors, failures, observations, stack, timers, reads, owners,
-    get navStarts() { return navStarts }, get navStops() { return navStops }, get heldAnswers() { return held.length },
-    owner() { const scope = new Scope(scopeOptions); owners.push(scope); return scope },
-    point(element: Element, rest: readonly Element[] = []) { stack.set([element, ...rest]); move(element) },
-    delayAnswers(value = true) { delayed = value },
-    releaseAnswers() { delayed = false; for (const deliver of held.splice(0)) deliver() },
+    items,
+    pointer,
+    page,
+    gateway,
+    link,
+    clock,
+    errors,
+    failures,
+    observations,
+    stack,
+    timers,
+    reads,
+    owners,
+    get navStarts() {
+      return navStarts
+    },
+    get navStops() {
+      return navStops
+    },
+    get heldAnswers() {
+      return held.length
+    },
+    owner() {
+      const scope = new Scope(scopeOptions)
+      owners.push(scope)
+      return scope
+    },
+    point(element: Element, rest: readonly Element[] = []) {
+      stack.set([element, ...rest])
+      move(element)
+    },
+    delayAnswers(value = true) {
+      delayed = value
+    },
+    releaseAnswers() {
+      delayed = false
+      for (const deliver of held.splice(0)) deliver()
+    },
     navigate(raw: unknown = rawNavigation("other"), path = "/") {
       navigation = raw
       window.history.replaceState(null, "", `https://www.youtube.com${path}`)
@@ -97,10 +177,17 @@ export async function itemsFixture(dom = false) {
     },
     player: () => installRawPlayer(document),
     dispose() {
-      items.dispose(); pointer.dispose(); for (const scope of owners) scope.dispose()
-      link.dispose(); endpoint.dispose(); gateway.dispose(); page.dispose()
+      items.dispose()
+      pointer.dispose()
+      for (const scope of owners) scope.dispose()
+      link.dispose()
+      endpoint.dispose()
+      gateway.dispose()
+      page.dispose()
       held.length = 0
-      stack.restore(); timers.restore(); restoreConfig()
+      stack.restore()
+      timers.restore()
+      restoreConfig()
       window.history.replaceState(null, "", oldUrl)
       document.body.replaceChildren()
     }

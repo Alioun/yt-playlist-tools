@@ -21,7 +21,9 @@ export class GatherRow {
     this.#page = page
     this.#stop = page.backend.watchGather(push => this.#pushed(push))
   }
-  #mine(push: GatherPush): boolean { return typeof this.#page.windowId === "number" && push.windowId === this.#page.windowId }
+  #mine(push: GatherPush): boolean {
+    return typeof this.#page.windowId === "number" && push.windowId === this.#page.windowId
+  }
   #pushed(push: GatherPush): boolean {
     if (this.#disposed) return false
     if (this.#mine(push)) {
@@ -37,7 +39,11 @@ export class GatherRow {
     const version = this.#version
     const answer = await this.#page.backend.call("ui.gathers", {})
     if (this.#disposed || this.#own || version !== this.#version) return
-    if (answer.kind !== "answered" || answer.result.kind !== "gathers") { this.line = null; this.running = false; return }
+    if (answer.kind !== "answered" || answer.result.kind !== "gathers") {
+      this.line = null
+      this.running = false
+      return
+    }
     this.running = answer.result.running
     this.line = answer.result.line
   }

@@ -5,11 +5,26 @@ import { world, seed } from "../accounts-label/harness"
 export { a, b, alpha, beta, epoch, origin, object, success, deferred, signedOut } from "../accounts-label/harness"
 
 export function compose(initial = seed()) {
-  const h = world(initial), events: ConfirmedViewChange[] = []
+  const h = world(initial),
+    events: ConfirmedViewChange[] = []
   let revocations = 0
-  const unsubscribe = h.owner.subscribeView(event => events.push(event), () => { revocations++ })
-  return { h, events, get revocations() { return revocations },
-    async dispose() { unsubscribe(); await h.dispose() } }
+  const unsubscribe = h.owner.subscribeView(
+    event => events.push(event),
+    () => {
+      revocations++
+    }
+  )
+  return {
+    h,
+    events,
+    get revocations() {
+      return revocations
+    },
+    async dispose() {
+      unsubscribe()
+      await h.dispose()
+    }
+  }
 }
 
 export function reservation(seen: AccountLabelSeen) {

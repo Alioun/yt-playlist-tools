@@ -18,18 +18,29 @@ export type ViewPublication = { readonly ready: Promise<void>; dispose(): void }
 
 export function viewChangeTarget(event: ConfirmedViewChange): ViewTarget {
   switch (event.kind) {
-    case "settings-changed": case "pause-changed": return { kind: "all" }
-    case "setup-changed": case "filter-changed": case "account-removed": return { kind: "account", acct: event.acct, scope: "all" }
-    case "skips-changed": return { kind: "account", acct: event.acct, scope: event.scope }
+    case "settings-changed":
+    case "pause-changed":
+      return { kind: "all" }
+    case "setup-changed":
+    case "filter-changed":
+    case "account-removed":
+      return { kind: "account", acct: event.acct, scope: "all" }
+    case "skips-changed":
+      return { kind: "account", acct: event.acct, scope: event.scope }
   }
 }
 
 export function createViewPublication(ports: PublicationPorts): ViewPublication {
   type Pending = {
-    tab: KnownTab; version: number; dirtyAt: number | undefined; lastSend: number | undefined
-    running: boolean; cancel: (() => void) | undefined
+    tab: KnownTab
+    version: number
+    dirtyAt: number | undefined
+    lastSend: number | undefined
+    running: boolean
+    cancel: (() => void) | undefined
   }
-  const pending = new Map<number, Pending>(), subscriptions: (() => void)[] = []
+  const pending = new Map<number, Pending>(),
+    subscriptions: (() => void)[] = []
   const lifetime = new AbortController()
   let disposed = false
   function dispose() {
@@ -47,7 +58,10 @@ export function createViewPublication(ports: PublicationPorts): ViewPublication 
   function arm(row: Pending) {
     if (disposed || row.running || row.cancel || row.dirtyAt === undefined) return
     const due = Math.max(row.dirtyAt + VIEW_PUBLICATION_MS, row.lastSend === undefined ? 0 : row.lastSend + VIEW_PUBLICATION_MS)
-    if (due <= ports.clock.now()) { void deliver(row); return }
+    if (due <= ports.clock.now()) {
+      void deliver(row)
+      return
+    }
     row.cancel = ports.clock.after(Math.max(0, due - ports.clock.now()), () => {
       row.cancel = undefined
       if (!disposed) void deliver(row)
@@ -62,40 +76,53 @@ export function createViewPublication(ports: PublicationPorts): ViewPublication 
     if (disposed || row.running || row.dirtyAt === undefined) return
     row.running = true
     row.dirtyAt = undefined
-    const version = row.version, tab = row.tab
+    const version = row.version,
+      tab = row.tab
     try {
       await ports.tabs.publish(tab, ports.producer, lifetime.signal, () => {
         if (disposed || row.version !== version || row.tab !== tab) return false
         row.lastSend = ports.clock.now()
         return true
       })
-    } catch { /* A failed attempt is not a receipt or a reason to poll. */ }
-    finally {
+    } catch {
+      /* A failed attempt is not a receipt or a reason to poll. */
+    } finally {
       row.running = false
       arm(row)
     }
   }
   function request(target: ViewTarget) {
     if (disposed) return
-    const at = ports.clock.now(), marked = new Set<Pending>()
-    for (const row of pending.values()) if (matchesViewTarget(row.tab, target)) { mark(row); marked.add(row) }
-    void ports.tabs.known(target, lifetime.signal).then(tabs => {
-      if (disposed) return
-      for (const tab of tabs) {
-        let row = pending.get(tab.tabId)
-        if (!row) {
-          row = { tab, version: 0, dirtyAt: undefined, lastSend: undefined, running: false, cancel: undefined }
-          pending.set(tab.tabId, row)
-        } else if (row.tab !== tab) {
-          row.tab = tab
-          row.version++
-        }
-        if (!marked.has(row)) mark(row, at)
+    const at = ports.clock.now(),
+      marked = new Set<Pending>()
+    for (const row of pending.values())
+      if (matchesViewTarget(row.tab, target)) {
+        mark(row)
+        marked.add(row)
       }
-    }, () => {})
+    void ports.tabs.known(target, lifetime.signal).then(
+      tabs => {
+        if (disposed) return
+        for (const tab of tabs) {
+          let row = pending.get(tab.tabId)
+          if (!row) {
+            row = { tab, version: 0, dirtyAt: undefined, lastSend: undefined, running: false, cancel: undefined }
+            pending.set(tab.tabId, row)
+          } else if (row.tab !== tab) {
+            row.tab = tab
+            row.version++
+          }
+          if (!marked.has(row)) mark(row, at)
+        }
+      },
+      () => {}
+    )
   }
   // The read joins the owner's lane before a caller can enqueue a removal.
-  const ready = ports.tabs.known({ kind: "all" }, lifetime.signal).then(() => {}, () => {})
+  const ready = ports.tabs.known({ kind: "all" }, lifetime.signal).then(
+    () => {},
+    () => {}
+  )
   subscribe(ports.owner.subscribeView(event => request(viewChangeTarget(event)), dispose))
   subscribe(ports.monitor.subscribeView(event => request(event), dispose))
   subscribe(ports.privateSkips.subscribePrivateSkips(event => request({ kind: "account", acct: event.acct, scope: event.scope }), dispose))

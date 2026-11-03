@@ -80,7 +80,7 @@ export function storedParts(parts: ProgressParts, len: number): ProgressParts {
     else merged.push([start, end])
   }
   if (merged.length <= PROGRESS_PARTS) return merged
-  const kept = new Set([...merged].sort((a, b) => (b[1] - b[0]) - (a[1] - a[0]) || a[0] - b[0]).slice(0, PROGRESS_PARTS))
+  const kept = new Set([...merged].sort((a, b) => b[1] - b[0] - (a[1] - a[0]) || a[0] - b[0]).slice(0, PROGRESS_PARTS))
   return merged.filter(part => kept.has(part))
 }
 

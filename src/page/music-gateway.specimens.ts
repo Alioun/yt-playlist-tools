@@ -31,11 +31,15 @@ export class ManualClock implements GatewayClock {
   private at = 0
   private serial = 0
   private timers = new Map<number, { at: number; callback: () => void }>()
-  now() { return this.at }
+  now() {
+    return this.at
+  }
   after(ms: number, callback: () => void) {
     const id = ++this.serial
     this.timers.set(id, { at: this.at + ms, callback })
-    return () => { this.timers.delete(id) }
+    return () => {
+      this.timers.delete(id)
+    }
   }
   advance(ms: number) {
     const end = this.at + ms
@@ -48,20 +52,26 @@ export class ManualClock implements GatewayClock {
     }
     this.at = end
   }
-  get count() { return this.timers.size }
+  get count() {
+    return this.timers.size
+  }
 }
-export async function settle(): Promise<void> { for (let i = 0; i < 40; i++) await Promise.resolve() }
+export async function settle(): Promise<void> {
+  for (let i = 0; i < 40; i++) await Promise.resolve()
+}
 
 export function queueEntry(videoId: string, index: number | undefined) {
   const watchEndpoint = index === undefined ? { videoId } : { videoId, index }
   return { playlistPanelVideoRenderer: { videoId, title: { runs: [{ text: `Song ${videoId}` }] }, navigationEndpoint: { watchEndpoint } } }
 }
 export function insertEndpoint(position: "next" | "end", target: { videoId: string } | { playlistId: string } = { videoId: "inserted001" }) {
-  return { queueAddEndpoint: {
-    queueTarget: { ...target, onEmptyQueue: { watchEndpoint: target } },
-    queueInsertPosition: position === "next" ? "INSERT_AFTER_CURRENT_VIDEO" : "INSERT_AT_END",
-    commands: [{ addToToastAction: { item: { notificationTextRenderer: { successResponseText: { runs: [{ text: "Song will play next" }] } } } } }]
-  } }
+  return {
+    queueAddEndpoint: {
+      queueTarget: { ...target, onEmptyQueue: { watchEndpoint: target } },
+      queueInsertPosition: position === "next" ? "INSERT_AFTER_CURRENT_VIDEO" : "INSERT_AT_END",
+      commands: [{ addToToastAction: { item: { notificationTextRenderer: { successResponseText: { runs: [{ text: "Song will play next" }] } } } } }]
+    }
+  }
 }
 
 type Fault = "menu-item-throws" | "menu-item-noop" | "remove-noop" | "drop-noop" | "service-noop" | "navigate-noop" | "toast" | "stale-panel"
@@ -79,12 +89,22 @@ export function musicWorld(videos: string[] = [syntheticVideo, "queued00002", "q
   }
   state.queue.nextQueueItemId = serial
   const world = {
-    clock, page, state, current, itemReads: 0, calls: [] as Call[], signals: [] as BreakageSignal[],
-    handlers: new Set<MusicHandler>(musicHandlers), faults: new Set<Fault>(),
+    clock,
+    page,
+    state,
+    current,
+    itemReads: 0,
+    calls: [] as Call[],
+    signals: [] as BreakageSignal[],
+    handlers: new Set<MusicHandler>(musicHandlers),
+    faults: new Set<Fault>(),
     toast: undefined as (() => void) | undefined,
     ids: () => state.queue.items.map(item => field(item, "playlistPanelVideoRenderer", "navigationEndpoint", "watchEndpoint", "index")),
     videos: () => state.queue.items.map(item => field(item, "playlistPanelVideoRenderer", "videoId")),
-    setItems(items: unknown[]) { state.queue = { ...state.queue, items }; page.emit("queue") },
+    setItems(items: unknown[]) {
+      state.queue = { ...state.queue, items }
+      page.emit("queue")
+    },
     addItems(entries: unknown[], index: number) {
       const items = [...state.queue.items]
       const stamped = entries.map(item => {
@@ -99,19 +119,32 @@ export function musicWorld(videos: string[] = [syntheticVideo, "queued00002", "q
   }
   const port: MusicPagePort = {
     has: handler => world.handlers.has(handler),
-    items: () => { world.itemReads++; return state.queue.items },
+    items: () => {
+      world.itemReads++
+      return state.queue.items
+    },
     current: () => world.current,
     state: () => state,
-    onToast(seen) { world.toast = seen; return () => { world.toast = undefined } },
+    onToast(seen) {
+      world.toast = seen
+      return () => {
+        world.toast = undefined
+      }
+    },
     menuItem(command) {
       world.calls.push({ kind: "menuItem", args: command })
       if (world.faults.has("menu-item-throws")) throw new Error("menu item threw")
       if (world.faults.has("menu-item-noop")) return
-      const body = field(command, "queueAddEndpoint"), target = field(body, "queueTarget")
-      const videoId = field(target, "videoId"), playlistId = field(target, "playlistId")
+      const body = field(command, "queueAddEndpoint"),
+        target = field(body, "queueTarget")
+      const videoId = field(target, "videoId"),
+        playlistId = field(target, "playlistId")
       const added = typeof videoId === "string" ? [videoId] : playlistId === albumId ? albumTracks : []
       const next = field(body, "queueInsertPosition") === "INSERT_AFTER_CURRENT_VIDEO"
-      world.addItems(added.map(id => queueEntry(id, undefined)), next ? world.current + 1 : state.queue.items.length)
+      world.addItems(
+        added.map(id => queueEntry(id, undefined)),
+        next ? world.current + 1 : state.queue.items.length
+      )
     },
     fetchQueue(body) {
       world.calls.push({ kind: "fetchQueue", args: body })
@@ -123,7 +156,8 @@ export function musicWorld(videos: string[] = [syntheticVideo, "queued00002", "q
       world.calls.push({ kind: "dispatch", args: action })
       if (action.type === "SET_QUEUE_CONTEXT_PARAMS") state.queue = { ...state.queue, queueContextParams: String(action.payload) }
       if (action.type === "ADD_ITEMS") {
-        const items = field(action.payload, "items"), index = field(action.payload, "index")
+        const items = field(action.payload, "items"),
+          index = field(action.payload, "index")
         if (Array.isArray(items) && typeof index === "number") world.addItems(items, index)
       }
     },
@@ -131,7 +165,7 @@ export function musicWorld(videos: string[] = [syntheticVideo, "queued00002", "q
       world.calls.push({ kind: "remove", args: id })
       if (!world.faults.has("remove-noop")) world.setItems(state.queue.items.filter((_, index) => String(world.ids()[index]) !== id))
     },
-    panel: () => world.faults.has("stale-panel") ? [...state.queue.items] : state.queue.items,
+    panel: () => (world.faults.has("stale-panel") ? [...state.queue.items] : state.queue.items),
     drop(entry, to) {
       world.calls.push({ kind: "drop", args: { entry, to } })
       if (world.faults.has("drop-noop")) return
@@ -141,7 +175,8 @@ export function musicWorld(videos: string[] = [syntheticVideo, "queued00002", "q
     },
     service(endpoint) {
       world.calls.push({ kind: "service", args: endpoint })
-      const status = field(endpoint, "likeEndpoint", "status"), videoId = field(endpoint, "likeEndpoint", "target", "videoId")
+      const status = field(endpoint, "likeEndpoint", "status"),
+        videoId = field(endpoint, "likeEndpoint", "target", "videoId")
       if (!world.faults.has("service-noop") && typeof status === "string" && typeof videoId === "string") state.likeStatus.videos[videoId] = status
     },
     navigate(endpoint) {

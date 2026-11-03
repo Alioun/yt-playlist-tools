@@ -11,10 +11,7 @@ import { readSettingsView, type SettingsView, type Snapshot } from "./settings-v
 import type { Device, Filter, Setup, SyncState, Unclaimed } from "./types"
 import { isAccountKey, parseDocumentKey, type AccountKey, type PlaylistId } from "./validation"
 
-export type PageDevice =
-  | { readonly kind: "missing" | "invalid" }
-  | { readonly kind: "newer-version"; readonly version: number }
-  | { readonly kind: "current"; readonly device: Snapshot<Device> }
+export type PageDevice = { readonly kind: "missing" | "invalid" } | { readonly kind: "newer-version"; readonly version: number } | { readonly kind: "current"; readonly device: Snapshot<Device> }
 /** One account setup this browser holds, with what it knows of the account and its playlists. */
 export type PageSetup = {
   readonly acct: AccountKey
@@ -30,20 +27,20 @@ export type PageSetup = {
  */
 export type PageView =
   | {
-    readonly kind: "view"
-    readonly layout: "missing" | "current" | "invalid" | "newer-version"
-    readonly device: PageDevice
-    readonly settings: SettingsView
-    readonly setups: readonly PageSetup[]
-    readonly unclaimed: Snapshot<Unclaimed> | null
-    readonly sync: Snapshot<SyncState> | null
-    readonly lastAccount: AccountKey | null
-    /**
-     * An earlier version's choices are kept, unused, for review (ACC-48). Restore and Discard need the interim
-     * conversion and checked playlist ownership, which stay off until ticket 25's live checks (G29).
-     */
-    readonly leftBehind: boolean
-  }
+      readonly kind: "view"
+      readonly layout: "missing" | "current" | "invalid" | "newer-version"
+      readonly device: PageDevice
+      readonly settings: SettingsView
+      readonly setups: readonly PageSetup[]
+      readonly unclaimed: Snapshot<Unclaimed> | null
+      readonly sync: Snapshot<SyncState> | null
+      readonly lastAccount: AccountKey | null
+      /**
+       * An earlier version's choices are kept, unused, for review (ACC-48). Restore and Discard need the interim
+       * conversion and checked playlist ownership, which stay off until ticket 25's live checks (G29).
+       */
+      readonly leftBehind: boolean
+    }
   | { readonly kind: "unavailable"; readonly reason: "read" | "disposed" }
 
 const pageKeys = new Set(["schema", "device", "lastAccount", "unclaimed", "sync", "pending:sync-join", "interimConversion"])
@@ -60,7 +57,9 @@ export function pageViewKeeps(key: string): boolean {
 }
 
 function attempt<T>(read: () => T): T | null {
-  try { return read() } catch (error) {
+  try {
+    return read()
+  } catch (error) {
     if (error instanceof DecodeError) return null
     throw error
   }
@@ -99,22 +98,37 @@ export function readPageView(records: Readonly<Record<string, unknown>>): PageVi
   const stored = attempt(() => readStoredUnclaimed(records.unclaimed))
   return {
     kind: "view",
-    layout: schema === undefined ? "missing" : schema === STORAGE_SCHEMA_VERSION ? "current"
-      : typeof schema === "number" && Number.isSafeInteger(schema) && schema > STORAGE_SCHEMA_VERSION ? "newer-version" : "invalid",
+    layout:
+      schema === undefined
+        ? "missing"
+        : schema === STORAGE_SCHEMA_VERSION
+          ? "current"
+          : typeof schema === "number" && Number.isSafeInteger(schema) && schema > STORAGE_SCHEMA_VERSION
+            ? "newer-version"
+            : "invalid",
     device: pageDevice(records.device),
     settings: readSettingsView(records["doc:settings"]),
-    setups: [...setups].map(([acct, setup]) => {
-      const cacheKey = `cache:${acct}`
-      const own = [...filters.get(acct) ?? []]
-      return { acct, setup, filters: new Map(own.map(([playlist, entry]) => [playlist, entry.filter])),
-        filterGens: new Map(own.map(([playlist, entry]) => [playlist, entry.gen])),
-        cache: Object.hasOwn(records, cacheKey) ? attempt(() => decodeAccountCache(records[cacheKey])) : null }
-    }).sort((a, b) => (a.setup.label?.name ?? "").localeCompare(b.setup.label?.name ?? "") || a.acct.localeCompare(b.acct)),
+    setups: [...setups]
+      .map(([acct, setup]) => {
+        const cacheKey = `cache:${acct}`
+        const own = [...(filters.get(acct) ?? [])]
+        return {
+          acct,
+          setup,
+          filters: new Map(own.map(([playlist, entry]) => [playlist, entry.filter])),
+          filterGens: new Map(own.map(([playlist, entry]) => [playlist, entry.gen])),
+          cache: Object.hasOwn(records, cacheKey) ? attempt(() => decodeAccountCache(records[cacheKey])) : null
+        }
+      })
+      .sort((a, b) => (a.setup.label?.name ?? "").localeCompare(b.setup.label?.name ?? "") || a.acct.localeCompare(b.acct)),
     unclaimed: stored?.kind === "pending" ? stored.data : null,
-    sync: records.sync === undefined ? null : attempt(() => {
-      const state = decodeSyncState(records.sync)
-      return joinWaiting(records["pending:sync-join"]) ? { ...state, status: "waiting" } : state
-    }),
+    sync:
+      records.sync === undefined
+        ? null
+        : attempt(() => {
+            const state = decodeSyncState(records.sync)
+            return joinWaiting(records["pending:sync-join"]) ? { ...state, status: "waiting" } : state
+          }),
     lastAccount: attempt(() => decodeLastAccount(records)),
     leftBehind: Object.hasOwn(records, "interimConversion")
   }

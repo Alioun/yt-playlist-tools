@@ -5,11 +5,16 @@ import { expectedPuts, expectedTombstones, expectedSession, removedNames } from 
 import { world, initial, payload, fileText, ui, object, A, B, C, D, E, F, settingsImportKey } from "./harness"
 
 export async function consume(syncOn: boolean) {
-  const seed = initial(syncOn), h = world(syncOn, seed)
+  const seed = initial(syncOn),
+    h = world(syncOn, seed)
   try {
     const omitted = Object.fromEntries(Object.entries(seed.local).filter(([key]) => key.includes(C)))
     const prepared = await h.prepare()
-    deepStrictEqual(prepared.scope, { sharedSettings: "replace", includedAccounts: "replace-setup-and-all-filters", absentAccounts: "keep", accounts: [A, B, D, E, F] }, "complete exact replacement scope")
+    deepStrictEqual(
+      prepared.scope,
+      { sharedSettings: "replace", includedAccounts: "replace-setup-and-all-filters", absentAccounts: "keep", accounts: [A, B, D, E, F] },
+      "complete exact replacement scope"
+    )
     strictEqual(h.counts().writes, 0, "preparation is a read")
     const checked = await h.owner.importCheck(ui, fileText())
     strictEqual(checked.kind, "import-plan", "actual owner parser remains a read")
@@ -37,17 +42,26 @@ export async function consume(syncOn: boolean) {
     ok(h.counts().writes <= 36 && h.counts().reads <= 500, "finite complete consumer call bounds")
     strictEqual(h.counts().remoteReads, syncOn ? 2 : 0, "sync-off has no remote read")
     strictEqual(h.counts().generation, Object.keys(expectedPuts()).length + (syncOn ? Object.keys(expectedTombstones()).length : 0), "each admitted document receives one stable stamp")
-    deepStrictEqual(h.events.map(row => row.event), [
-      { kind: "settings-changed", source: "local" }, { kind: "setup-changed", acct: A, source: "local" },
-      { kind: "account-removed", acct: B, source: "local" }, { kind: "account-removed", acct: D, source: "local" }, { kind: "setup-changed", acct: E, source: "local" },
-      { kind: "setup-changed", acct: F, source: "local" }
-    ], "one confirmed publication sequence")
+    deepStrictEqual(
+      h.events.map(row => row.event),
+      [
+        { kind: "settings-changed", source: "local" },
+        { kind: "setup-changed", acct: A, source: "local" },
+        { kind: "account-removed", acct: B, source: "local" },
+        { kind: "account-removed", acct: D, source: "local" },
+        { kind: "setup-changed", acct: E, source: "local" },
+        { kind: "setup-changed", acct: F, source: "local" }
+      ],
+      "one confirmed publication sequence"
+    )
     for (const row of h.events) deepStrictEqual(payload(row.state), payload(h.h.state()), "publication follows complete cleanup and terminal confirmation")
-    const stable = h.h.state(), count = h.counts()
+    const stable = h.h.state(),
+      count = h.counts()
     strictEqual((await h.owner.resumeSettingsImport(ui)).kind, "idle", "retired import is idempotent")
     deepStrictEqual(h.h.state(), stable, "resume writes nothing after terminal completion")
     strictEqual(h.counts().writes, count.writes, "no repeated effect after completion")
-    return { case: syncOn ? "complete-sync" : "complete-local", changedDocuments: 11,
-      includedAccounts: 5, omittedAccounts: 1, emptiedAccounts: 2, receipt: true, publication: 6 }
-  } finally { await h.dispose() }
+    return { case: syncOn ? "complete-sync" : "complete-local", changedDocuments: 11, includedAccounts: 5, omittedAccounts: 1, emptiedAccounts: 2, receipt: true, publication: 6 }
+  } finally {
+    await h.dispose()
+  }
 }

@@ -1,10 +1,33 @@
 import type {
-  BuildId, RouteId, PageRequestId, PageWatchId, WatchId, Job, JobOf, JobId, JobInputById, JobDataById,
-  JobData, JobResult, MembershipRow, Stream, StreamDataById, StreamData, JobInvocation
+  BuildId,
+  RouteId,
+  PageRequestId,
+  PageWatchId,
+  WatchId,
+  Job,
+  JobOf,
+  JobId,
+  JobInputById,
+  JobDataById,
+  JobData,
+  JobResult,
+  MembershipRow,
+  Stream,
+  StreamDataById,
+  StreamData,
+  JobInvocation
 } from "./index"
 import type {
-  PageHelloSnapshot, PageHelloAnswer, PageRequestPayloadByKind, PageCoreMessage,
-  PageAnswerByKind, PageGatewayMessage, PageRunAnswer, PageStreamEvent, PageJobData, PageAccountData
+  PageHelloSnapshot,
+  PageHelloAnswer,
+  PageRequestPayloadByKind,
+  PageCoreMessage,
+  PageAnswerByKind,
+  PageGatewayMessage,
+  PageRunAnswer,
+  PageStreamEvent,
+  PageJobData,
+  PageAccountData
 } from "./page"
 import { isPageHelloAnswer, isPageRunAnswerFor, isPageStreamEventFor } from "./page"
 import type { AccountKey, VideoId, PlaylistId } from "../model"
@@ -19,11 +42,10 @@ import { isPageRunAnswerFor as rootRunGuard } from "./index"
 // @ts-expect-error Hello guards belong to the page entrypoint.
 import { isPageHelloAnswer as rootHelloGuard } from "./index"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Assert<T extends true> = T
 type Distinct<A, B> = A extends B ? false : B extends A ? false : true
-type Pairwise<Values extends unknown[]> = Values extends [infer Head, ...infer Tail]
-  ? Distinct<Head, Tail[number]> extends true ? Pairwise<Tail> : false : true
+type Pairwise<Values extends unknown[]> = Values extends [infer Head, ...infer Tail] ? (Distinct<Head, Tail[number]> extends true ? Pairwise<Tail> : false) : true
 type PageReads = { kind: "account" | "accountLabel" }
 export type PageRelationships = [
   Assert<Equal<keyof PageRequestPayloadByKind, "hello" | "run" | "watch" | "unwatch" | "probe" | "loaded">>,
@@ -121,7 +143,9 @@ export function membershipCorrelation(raw: unknown) {
 }
 
 export function genericPending<J extends Job>(pending: { id: PageRequestId; job: J }, accept: (answer: PageRunAnswer<J>) => void) {
-  return (raw: unknown) => { if (isPageRunAnswerFor(pending, raw, build)) accept(raw) }
+  return (raw: unknown) => {
+    if (isPageRunAnswerFor(pending, raw, build)) accept(raw)
+  }
 }
 export function unionPending(job: PageReads, raw: unknown) {
   if (isPageRunAnswerFor({ id, job }, raw, build) && raw.result.ok && "signedIn" in raw.result.data && raw.result.data.signedIn) {
@@ -133,7 +157,10 @@ export function unionPending(job: PageReads, raw: unknown) {
 }
 export function specialisedPending<J extends Job & { trace: "synthetic" }>(pending: { id: PageRequestId; job: J }) {
   const trace: "synthetic" = pending.job.trace
-  genericPending(pending, answer => { const result: PageRunAnswer<J> = answer; void result })
+  genericPending(pending, answer => {
+    const result: PageRunAnswer<J> = answer
+    void result
+  })
   return trace
 }
 export function pinsRemainRequired() {

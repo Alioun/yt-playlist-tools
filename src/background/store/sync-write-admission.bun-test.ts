@@ -4,41 +4,55 @@ import { encodeSyncDocument, projectSyncWrite } from "./sync-codec"
 import { isAccountKey, isPlaylistId, type DocumentKey } from "../../shared/model"
 import type { JsonObject } from "../../shared/contracts/json"
 
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false
 type Check<T extends true> = T
 export type AdmissionProofs = [
   Check<Equal<typeof planSyncWrite, (input: SyncWritePlanInput) => SyncWritePlan>>,
   Check<Equal<keyof typeof import("./sync-write-admission"), "planSyncWrite" | "sameSyncJson" | "deferSyncDocument">>,
-  Check<Equal<SyncWritePlanInput, {
-    readonly local: Readonly<Record<string, unknown>>
-    readonly sync: Readonly<Record<string, unknown>>
-    readonly allowance?: "headroom"
-    readonly intent: { readonly kind: "flush" } | { readonly kind: "unchanged"; readonly key: DocumentKey }
-      | { readonly kind: "changed"; readonly key: DocumentKey; readonly document: JsonObject }
-      | { readonly kind: "changed-batch"; readonly documents: readonly [
-        { readonly key: DocumentKey; readonly document: JsonObject },
-        ...{ readonly key: DocumentKey; readonly document: JsonObject }[]
-      ] }
-  }>>
+  Check<
+    Equal<
+      SyncWritePlanInput,
+      {
+        readonly local: Readonly<Record<string, unknown>>
+        readonly sync: Readonly<Record<string, unknown>>
+        readonly allowance?: "headroom"
+        readonly intent:
+          | { readonly kind: "flush" }
+          | { readonly kind: "unchanged"; readonly key: DocumentKey }
+          | { readonly kind: "changed"; readonly key: DocumentKey; readonly document: JsonObject }
+          | {
+              readonly kind: "changed-batch"
+              readonly documents: readonly [{ readonly key: DocumentKey; readonly document: JsonObject }, ...{ readonly key: DocumentKey; readonly document: JsonObject }[]]
+            }
+      }
+    >
+  >
 ]
-const acct = "AAAAAAAAAAAAAAAA", playlist = "PL_P"
+const acct = "AAAAAAAAAAAAAAAA",
+  playlist = "PL_P"
 if (!isAccountKey(acct) || !isPlaylistId(playlist)) throw Error("Invalid synthetic brands")
 const key: DocumentKey = { kind: "filter", acct, playlist }
-const localKey = "doc:filter:AAAAAAAAAAAAAAAA:PL_P", base = "s:filter:AAAAAAAAAAAAAAAA:PL_P"
+const localKey = "doc:filter:AAAAAAAAAAAAAAAA:PL_P",
+  base = "s:filter:AAAAAAAAAAAAAAAA:PL_P"
 const keptKey = "doc:filter:AAAAAAAAAAAAAAAA:PL_kept"
 const stamp = { v: 1, gen: "old", at: 1, by: "old" }
 const old = { ...stamp, data: { mode: "deny", on: true, channels: [] } }
 const candidate = { ...stamp, gen: "g1", at: 100, by: "device", data: { mode: "deny", on: false, channels: [] } }
 function fixture(): SyncWritePlanInput {
-  return { local: { sync: { joined: "history", pushed: { [localKey]: "old" }, status: "ok", editedSinceOff: false }, [localKey]: old },
-    sync: { "s:meta": { v: 1, id: "history", created: 0 }, [base]: old }, intent: { kind: "changed", key, document: candidate } }
+  return {
+    local: { sync: { joined: "history", pushed: { [localKey]: "old" }, status: "ok", editedSinceOff: false }, [localKey]: old },
+    sync: { "s:meta": { v: 1, id: "history", created: 0 }, [base]: old },
+    intent: { kind: "changed", key, document: candidate }
+  }
 }
 function encoded(key: DocumentKey, document: JsonObject) {
   const result = encodeSyncDocument({ key, document })
   if (result.kind !== "encoded") throw Error("Invalid fixture encoding")
   return result.encoded.items
 }
-const admitted = { kind: "planned" } as const, unavailable = { kind: "unavailable" } as const, full = { kind: "refused", reason: "sync-full" } as const
+const admitted = { kind: "planned" } as const,
+  unavailable = { kind: "unavailable" } as const,
+  full = { kind: "refused", reason: "sync-full" } as const
 
 test("complete pending and physical disappearance exceed budget together while each fits", () => {
   const one = { ...stamp, gen: "one", data: { future: "x".repeat(51000) } }
@@ -54,7 +68,8 @@ test("complete pending and physical disappearance exceed budget together while e
 })
 
 test("candidate replaces a large unsent pending document before any encoding", () => {
-  const f = fixture(), superseded = { ...old, gen: "huge", data: { ...old.data, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "L".repeat(99000)]] } }
+  const f = fixture(),
+    superseded = { ...old, gen: "huge", data: { ...old.data, channels: [["UCaaaaaaaaaaaaaaaaaaaaaa", "L".repeat(99000)]] } }
   expect(planSyncWrite({ ...f, local: { ...f.local, [localKey]: superseded }, sync: { "s:meta": f.sync["s:meta"] } })).toMatchObject(admitted)
   const chunks = encoded(key, superseded)
   expect(projectSyncWrite({ current: Object.entries(f.sync).map(([key, value]) => ({ key, value })), set: [...chunks, ...encoded(key, candidate)] }).kind).toBe("invalid")
@@ -63,7 +78,8 @@ test("candidate replaces a large unsent pending document before any encoding", (
 })
 
 test("known chunk delivery, null base and orphan occupancy stay distinct", () => {
-  const f = fixture(), large = { ...old, data: { ...old.data, future: "x".repeat(15000) } }
+  const f = fixture(),
+    large = { ...old, data: { ...old.data, future: "x".repeat(15000) } }
   const items = encoded(key, large)
   expect(items.length).toBeGreaterThan(2)
   const sync = { "s:meta": f.sync["s:meta"], ...Object.fromEntries(items.slice(0, -1).map(item => [item.key, item.value])) }
@@ -86,7 +102,12 @@ test("one projection charges exact count, per-item limit and smaller replacement
 
 test("same generation must retain full stamp, body and extensions", () => {
   const f = fixture()
-  for (const remote of [{ ...old, at: 2 }, { ...old, by: "other" }, { ...old, extra: true }, { ...old, data: { ...old.data, on: false } }]) {
+  for (const remote of [
+    { ...old, at: 2 },
+    { ...old, by: "other" },
+    { ...old, extra: true },
+    { ...old, data: { ...old.data, on: false } }
+  ]) {
     expect(planSyncWrite({ ...f, sync: { ...f.sync, [base]: remote } })).toEqual(unavailable)
     expect(planSyncWrite({ ...f, sync: { ...f.sync, [base]: remote }, intent: { kind: "unchanged", key } })).toEqual(unavailable)
   }
@@ -98,23 +119,41 @@ test("invalid candidate is a refusal and unknown snapshots cannot invoke own get
   const f = fixture()
   expect(planSyncWrite({ ...f, intent: { kind: "changed", key, document: {} } })).toEqual({ kind: "refused", reason: "invalid" })
   let calls = 0
-  const accessor = Object.defineProperty({}, "bad", { enumerable: true, get() { calls++; throw Error("accessor") } })
+  const accessor = Object.defineProperty({}, "bad", {
+    enumerable: true,
+    get() {
+      calls++
+      throw Error("accessor")
+    }
+  })
   expect(planSyncWrite({ ...f, local: { ...f.local, [keptKey]: accessor } })).toEqual(unavailable)
-  expect(planSyncWrite({ ...f, sync: Object.defineProperty({}, "s:meta", { enumerable: true, get() { calls++; throw Error("meta") } }) })).toEqual(unavailable)
+  expect(
+    planSyncWrite({
+      ...f,
+      sync: Object.defineProperty({}, "s:meta", {
+        enumerable: true,
+        get() {
+          calls++
+          throw Error("meta")
+        }
+      })
+    })
+  ).toEqual(unavailable)
   expect(calls).toBe(0)
 })
 
-
 test("future local pointers and supported addressed incoming-only no-ops remain unavailable", () => {
-  const f = fixture(), pointer = { v: 2, gen: "future", at: 2, by: "future", n: 2 }
-  expect(planSyncWrite({ ...f, local: { ...f.local, [keptKey]: pointer },
-    sync: { ...f.sync, [keptKey.replace("doc:", "s:")]: pointer } })).toEqual(unavailable)
+  const f = fixture(),
+    pointer = { v: 2, gen: "future", at: 2, by: "future", n: 2 }
+  expect(planSyncWrite({ ...f, local: { ...f.local, [keptKey]: pointer }, sync: { ...f.sync, [keptKey.replace("doc:", "s:")]: pointer } })).toEqual(unavailable)
   const { [localKey]: omitted, ...local } = f.local
   expect(planSyncWrite({ ...f, local, intent: { kind: "unchanged", key } })).toEqual(unavailable)
 })
 
 test("history and metadata must be physical own snapshot records", () => {
-  const f = fixture(), { "s:meta": meta, ...sync } = f.sync, { sync: state, ...local } = f.local
+  const f = fixture(),
+    { "s:meta": meta, ...sync } = f.sync,
+    { sync: state, ...local } = f.local
   Object.defineProperty(Object.prototype, "s:meta", { configurable: true, value: meta })
   Object.defineProperty(Object.prototype, "sync", { configurable: true, value: state })
   try {
@@ -128,39 +167,67 @@ test("history and metadata must be physical own snapshot records", () => {
 })
 
 test("consumed plan separates exact readback repair from candidate and actual sends", () => {
-  const f = fixture(), metadata = { v: 1, id: "history", created: 0 }, rawHistory = { joined: "history", pushed: { [localKey]: "g0" }, status: "ok", editedSinceOff: false }
+  const f = fixture(),
+    metadata = { v: 1, id: "history", created: 0 },
+    rawHistory = { joined: "history", pushed: { [localKey]: "g0" }, status: "ok", editedSinceOff: false }
   const record = { key, name: localKey, gen: "old", document: old }
   const debt = { ...f, local: { ...f.local, sync: rawHistory } }
   expect(planSyncWrite({ ...debt, intent: { kind: "flush" } })).toEqual({ kind: "planned", items: [], sent: [], repairs: [record], metadata })
-  expect(planSyncWrite(debt)).toEqual({ kind: "planned", items: [{ key: base, value: candidate }],
-    sent: [{ ...record, gen: "g1", document: candidate }], repairs: [record], metadata })
+  expect(planSyncWrite(debt)).toEqual({ kind: "planned", items: [{ key: base, value: candidate }], sent: [{ ...record, gen: "g1", document: candidate }], repairs: [record], metadata })
   expect(planSyncWrite({ ...debt, intent: { kind: "unchanged", key } })).toEqual({ kind: "unchanged" })
-  expect(planSyncWrite({ ...debt, local: { ...debt.local, sync: rawHistory }, sync: { ...f.sync,
-    ...Object.fromEntries(Array.from({ length: 481 }, (_, i) => [`unknown:${i}`, 0])) }, intent: { kind: "flush" } })).toEqual({ kind: "planned", items: [], sent: [], repairs: [record], metadata })
+  expect(
+    planSyncWrite({
+      ...debt,
+      local: { ...debt.local, sync: rawHistory },
+      sync: { ...f.sync, ...Object.fromEntries(Array.from({ length: 481 }, (_, i) => [`unknown:${i}`, 0])) },
+      intent: { kind: "flush" }
+    })
+  ).toEqual({ kind: "planned", items: [], sent: [], repairs: [record], metadata })
 })
 
 function batchFixture(): SyncWritePlanInput & { intent: Extract<SyncWritePlanInput["intent"], { kind: "changed-batch" }> } {
-  const f = fixture(), settingsKey: DocumentKey = { kind: "settings" }
-  const settings = { ...stamp, data: {} }, nextSettings = { ...settings, gen: "settings-next", extension: "kept" }
-  return { ...f, local: { ...f.local, "doc:settings": settings }, sync: { ...f.sync, "s:settings": settings },
-    intent: { kind: "changed-batch", documents: [{ key, document: candidate }, { key: settingsKey, document: nextSettings }] } satisfies SyncWritePlanInput["intent"] }
+  const f = fixture(),
+    settingsKey: DocumentKey = { kind: "settings" }
+  const settings = { ...stamp, data: {} },
+    nextSettings = { ...settings, gen: "settings-next", extension: "kept" }
+  return {
+    ...f,
+    local: { ...f.local, "doc:settings": settings },
+    sync: { ...f.sync, "s:settings": settings },
+    intent: {
+      kind: "changed-batch",
+      documents: [
+        { key, document: candidate },
+        { key: settingsKey, document: nextSettings }
+      ]
+    } satisfies SyncWritePlanInput["intent"]
+  }
 }
 
 test("batch replaces all addressed records and retains exact envelopes without acknowledging", () => {
-  const f = batchFixture(), before = JSON.stringify(f)
+  const f = batchFixture(),
+    before = JSON.stringify(f)
   const result = planSyncWrite(f)
-  expect(result).toEqual({ kind: "planned", items: [
-    { key: base, value: candidate }, { key: "s:settings", value: f.intent.documents[1]!.document }
-  ], sent: [
-    { key, name: localKey, gen: candidate.gen, document: candidate },
-    { key: { kind: "settings" }, name: "doc:settings", gen: "settings-next", document: f.intent.documents[1]!.document }
-  ], repairs: [{ key: { kind: "settings" }, name: "doc:settings", gen: "old", document: { ...stamp, data: {} } }], metadata: { v: 1, id: "history", created: 0 } })
+  expect(result).toEqual({
+    kind: "planned",
+    items: [
+      { key: base, value: candidate },
+      { key: "s:settings", value: f.intent.documents[1]!.document }
+    ],
+    sent: [
+      { key, name: localKey, gen: candidate.gen, document: candidate },
+      { key: { kind: "settings" }, name: "doc:settings", gen: "settings-next", document: f.intent.documents[1]!.document }
+    ],
+    repairs: [{ key: { kind: "settings" }, name: "doc:settings", gen: "old", document: { ...stamp, data: {} } }],
+    metadata: { v: 1, id: "history", created: 0 }
+  })
   expect(JSON.stringify(f)).toBe(before)
   expect(planSyncWrite({ ...fixture(), intent: { kind: "changed-batch", documents: [{ key, document: candidate }] } })).toEqual(planSyncWrite(fixture()))
 })
 
 test("any addressed newer document refuses the batch regardless of order", () => {
-  const f = batchFixture(), future = { v: 2, gen: "future", at: 2, by: "other", data: {} }
+  const f = batchFixture(),
+    future = { v: 2, gen: "future", at: 2, by: "other", data: {} }
   for (const name of [base, "s:settings"]) expect(planSyncWrite({ ...f, sync: { ...f.sync, [name]: future } })).toEqual({ kind: "refused", reason: "update-needed" })
   expect(planSyncWrite({ ...f, sync: { ...f.sync, [base]: {}, "s:settings": future } })).toEqual({ kind: "refused", reason: "update-needed" })
   expect(planSyncWrite({ ...f, sync: { ...f.sync, "s:setup:BBBBBBBBBBBBBBBB": future } })).toMatchObject(admitted)
@@ -170,15 +237,28 @@ test("batch candidate sets reject runtime empty duplicate malformed and accessor
   const f = batchFixture()
   const call = (intent: unknown) => Reflect.apply(planSyncWrite, undefined, [{ ...f, intent }])
   let calls = 0
-  const accessor = Object.defineProperty({}, "document", { enumerable: true, get() { calls++; throw Error("candidate accessor") } })
-  for (const documents of [[], [f.intent.documents[0], { ...f.intent.documents[0], document: { ...candidate, gen: "different" } }],
-    [null], [{ key: null, document: candidate }], [{ key: { kind: "filter", acct: "bad", playlist }, document: candidate }],
+  const accessor = Object.defineProperty({}, "document", {
+    enumerable: true,
+    get() {
+      calls++
+      throw Error("candidate accessor")
+    }
+  })
+  for (const documents of [
+    [],
+    [f.intent.documents[0], { ...f.intent.documents[0], document: { ...candidate, gen: "different" } }],
+    [null],
+    [{ key: null, document: candidate }],
+    [{ key: { kind: "filter", acct: "bad", playlist }, document: candidate }],
     [{ key: { kind: "unknown" }, document: candidate }],
     [{ key: { kind: "setup", acct: { toString: "inert" } }, document: candidate }],
     [{ key: { kind: "filter", acct, playlist: { toString: "inert" } }, document: candidate }],
-    [accessor], [{ key, document: {} }],
+    [accessor],
+    [{ key, document: {} }],
     [{ key, document: { ...candidate, v: 2 } }],
-    ...["name", "gen", "stamp", "origin", "local", "remove"].map(field => [{ key, document: candidate, [field]: "forbidden" }]), null]) {
+    ...["name", "gen", "stamp", "origin", "local", "remove"].map(field => [{ key, document: candidate, [field]: "forbidden" }]),
+    null
+  ]) {
     expect(call({ kind: "changed-batch", documents })).toEqual({ kind: "refused", reason: "invalid" })
   }
   expect(calls).toBe(0)
@@ -186,7 +266,10 @@ test("batch candidate sets reject runtime empty duplicate malformed and accessor
 
 test("each batch address must have complete remote baseline lineage", () => {
   const f = batchFixture()
-  for (const [name, raw] of [[base, old], ["s:settings", { ...stamp, data: {} }]] as const) {
+  for (const [name, raw] of [
+    [base, old],
+    ["s:settings", { ...stamp, data: {} }]
+  ] as const) {
     for (const remote of [null, {}, { ...stamp, gen: "parts", n: 2 }, { ...raw, extra: true }, { ...raw, gen: "unadopted" }]) {
       expect(planSyncWrite({ ...f, sync: { ...f.sync, [name]: remote } })).toEqual(unavailable)
     }
@@ -207,7 +290,8 @@ test("one combined batch projection charges count and retains superseded physica
 })
 
 test("batch preserves own extension-bearing tombstones and nonenumerable rejection", () => {
-  const f = batchFixture(), document = JSON.parse('{"v":1,"gen":"dead","at":2,"by":"fixture","deleted":true,"__proto__":{"keep":true},"toJSON":"inert","extension":[null,1]}')
+  const f = batchFixture(),
+    document = JSON.parse('{"v":1,"gen":"dead","at":2,"by":"fixture","deleted":true,"__proto__":{"keep":true},"toJSON":"inert","extension":[null,1]}')
   const input = { ...f, intent: { kind: "changed-batch", documents: [{ key, document }] } satisfies SyncWritePlanInput["intent"] }
   const before = Object.getOwnPropertyDescriptors(document)
   const result = planSyncWrite(input)
@@ -222,7 +306,9 @@ test("batch preserves own extension-bearing tombstones and nonenumerable rejecti
 })
 
 test("a tombstone only sync holds lets edits and flushes through while a live document only sync holds still blocks them", () => {
-  const f = fixture(), gone = "s:filter:AAAAAAAAAAAAAAAA:PL_gone", dead = { v: 1, gen: "dead", at: 2, by: "elsewhere", deleted: true }
+  const f = fixture(),
+    gone = "s:filter:AAAAAAAAAAAAAAAA:PL_gone",
+    dead = { v: 1, gen: "dead", at: 2, by: "elsewhere", deleted: true }
   const chunked = encoded({ kind: "filter", acct, playlist: "PL_gone" as typeof playlist }, { ...dead, extension: "x".repeat(9000) })
   expect(chunked.length).toBeGreaterThan(1)
   for (const remote of [{ [gone]: dead }, Object.fromEntries(chunked.map(item => [item.key, item.value]))]) {
@@ -259,5 +345,8 @@ test("a mark or label refresh saved past the quota waits outside admission, and 
   expect(planSyncWrite({ ...flush, sync: crowded }), "a flush leaves it waiting while it doesn't fit").toMatchObject({ kind: "planned", items: [], sent: [], repairs: [] })
   expect(planSyncWrite({ ...flush, sync: f.sync }), "with room again, the next flush sends it").toMatchObject({ kind: "planned", sent: [{ name: keptKey, gen: "held" }] })
   const edited = { ...held, gen: "newer", data: { mode: "allow", on: true, channels: [] } }
-  expect(planSyncWrite({ ...flush, local: { ...local, [keptKey]: edited }, sync: crowded }), "a later edit to the document is ordinary again").toMatchObject({ kind: "planned", sent: [{ name: keptKey, gen: "newer" }] })
+  expect(planSyncWrite({ ...flush, local: { ...local, [keptKey]: edited }, sync: crowded }), "a later edit to the document is ordinary again").toMatchObject({
+    kind: "planned",
+    sent: [{ name: keptKey, gen: "newer" }]
+  })
 })

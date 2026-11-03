@@ -14,5 +14,7 @@ test("Discard deletes the unclaimed 1.x setup once and leaves everything else", 
     expect(removal.state().local).toEqual({ ...initial.local, unclaimed: null })
     expect(await owner.discardUnclaimed(popup)).toEqual({ kind: "absent" })
     expect(await owner.discardUnclaimed({ kind: "tab", tabId: 1, incognito: false } as never)).toEqual({ kind: "refused", reason: "invalid" })
-  } finally { await owner.dispose() }
+  } finally {
+    await owner.dispose()
+  }
 })

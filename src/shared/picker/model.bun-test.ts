@@ -3,9 +3,7 @@ import { flushSync } from "svelte"
 import { toStore } from "svelte/store"
 import type { MembershipRow, PlaylistRow, Site } from "../contracts"
 import type { Key, PlaylistId } from "../model"
-import {
-  chooserSource, entry, itemSource, NOW, playlist, settle, undoing, type Facts, type Ledger
-} from "../../../tools/fixtures/picker-model/fake-source"
+import { chooserSource, entry, itemSource, NOW, playlist, settle, undoing, type Facts, type Ledger } from "../../../tools/fixtures/picker-model/fake-source"
 import { PickerModel, titleProblem, type Mode, type PickerRow, type RowStatus, type TickOutcome } from "./model.svelte"
 import type { AddAnswer, Listing, Mark } from "./source"
 
@@ -79,7 +77,11 @@ describe("loading", () => {
     expect(row(picker, ROAD)).toMatchObject({ privacy: "PRIVATE", count: 12, thumb: "https://i.ytimg.com/road.jpg", listed: "listed" })
     ledger.answer("membership", { kind: "read", rows: MEMBERS })
     await settle()
-    expect(picker.rows.map(item => [item.title, item.check])).toEqual([["Watch later", "off"], ["Road trip", "off"], ["mix tape", "on"]])
+    expect(picker.rows.map(item => [item.title, item.check])).toEqual([
+      ["Watch later", "off"],
+      ["Road trip", "off"],
+      ["mix tape", "on"]
+    ])
     expect(picker.membership).toEqual({ kind: "known", count: 1 })
     expect(ledger.calls("freshList")).toEqual([])
   })
@@ -240,7 +242,10 @@ describe("save mode", () => {
     const second = picker.untick(MIX)
     ledger.answer("remove", { kind: "removed", undo: undoing() })
     await second
-    expect(ledger.calls("remove")).toEqual([[ROAD, entry("sv-road")], [MIX, null]])
+    expect(ledger.calls("remove")).toEqual([
+      [ROAD, entry("sv-road")],
+      [MIX, null]
+    ])
   })
 
   test("a busy row ignores another tick or untick, and an unknown row is ignored, so no effect repeats", async () => {
@@ -256,7 +261,9 @@ describe("save mode", () => {
 
   test("pins go through the source, live keys show and marks stay hidden", async () => {
     const { picker, ledger } = await openedSave("www", {
-      quickSave: ROAD, keys: new Map([[MIX, KEY]]), marks: new Map<PlaylistId, Mark>([[ROAD, "missing"]])
+      quickSave: ROAD,
+      keys: new Map([[MIX, KEY]]),
+      marks: new Map<PlaylistId, Mark>([[ROAD, "missing"]])
     })
     expect(picker.pins).toBe("available")
     expect(row(picker, ROAD)).toMatchObject({ pinned: true, mark: null })
@@ -324,7 +331,10 @@ describe("choose mode", () => {
     ledger.answer("choose", { ok: true })
     expect(await retry).toEqual({ kind: "picked", id: MIX, save: "added", undo, choice: { ok: true } })
     expect(ledger.calls("add")).toEqual([[MIX]])
-    expect(ledger.calls("choose")).toEqual([[MIX, true], [MIX, true]])
+    expect(ledger.calls("choose")).toEqual([
+      [MIX, true],
+      [MIX, true]
+    ])
     expect(checked(picker)).toEqual([MIX])
     expect(row(picker, MIX).status).toEqual({ kind: "added" })
   })
@@ -354,7 +364,14 @@ describe("choose mode", () => {
     await settle()
     const undone: string[] = []
     const picking = picker.tick(MIX)
-    ledger.answer("add", { kind: "added", entry: entry("sv-mix"), undo: () => { undone.push("sv-mix"); return Promise.resolve({ kind: "undone" }) } })
+    ledger.answer("add", {
+      kind: "added",
+      entry: entry("sv-mix"),
+      undo: () => {
+        undone.push("sv-mix")
+        return Promise.resolve({ kind: "undone" })
+      }
+    })
     await settle()
     ledger.answer("choose", { refused: "sync-full" })
     await picking
@@ -422,7 +439,11 @@ describe("choose mode", () => {
     ledger.answer("choose", { ok: true })
     expect(await cleared).toEqual({ kind: "changed" })
     expect(checked(picker)).toEqual([])
-    expect(ledger.calls("choose")).toEqual([[MIX, true], [MIX, false], [MIX, false]])
+    expect(ledger.calls("choose")).toEqual([
+      [MIX, true],
+      [MIX, false],
+      [MIX, false]
+    ])
   })
 
   test("a chooser in a private window offers no setup change", async () => {
@@ -445,14 +466,20 @@ describe("many mode", () => {
     const GONE = playlist("PLgone")
     const { picker, ledger } = openChooser("many", {
       chosen: [MIX, GONE],
-      marks: new Map<PlaylistId, Mark>([[MIX, "full"], [GONE, "missing"]]),
+      marks: new Map<PlaylistId, Mark>([
+        [MIX, "full"],
+        [GONE, "missing"]
+      ]),
       quickSave: MIX,
       keys: new Map([[ROAD, KEY]])
     })
     ledger.answer("cachedList", listing())
     await settle()
     expect(picker.rows.map(item => [item.id, item.mark, item.check, item.listed])).toEqual([
-      [MIX, "full", "on", "listed"], [GONE, "missing", "on", "gone"], [WL, null, "off", "listed"], [ROAD, null, "off", "listed"]
+      [MIX, "full", "on", "listed"],
+      [GONE, "missing", "on", "gone"],
+      [WL, null, "off", "listed"],
+      [ROAD, null, "off", "listed"]
     ])
     expect(row(picker, GONE).title).toBeNull()
     expect(row(picker, ROAD).key).toEqual(KEY)
@@ -469,7 +496,10 @@ describe("many mode", () => {
     ledger.answer("choose", { refused: "update-needed" })
     expect(await removing).toEqual({ kind: "refused", reason: "update-needed" })
     expect(checked(picker)).toEqual([MIX, GONE, ROAD])
-    expect(ledger.calls("choose")).toEqual([[ROAD, true], [GONE, false]])
+    expect(ledger.calls("choose")).toEqual([
+      [ROAD, true],
+      [GONE, false]
+    ])
   })
 })
 
@@ -826,8 +856,9 @@ describe("lifecycle", () => {
 test("Svelte effects see rows and membership change as answers arrive", async () => {
   const { picker, ledger } = open("save")
   const seen: string[] = []
-  const stop = toStore(() => `${picker.membership.kind}:${picker.rows.map(item => `${item.title}=${item.check}`).join(",")}`)
-    .subscribe(value => { seen.push(value) })
+  const stop = toStore(() => `${picker.membership.kind}:${picker.rows.map(item => `${item.title}=${item.check}`).join(",")}`).subscribe(value => {
+    seen.push(value)
+  })
   ledger.answer("cachedList", listing())
   await settle()
   flushSync()
@@ -837,14 +868,8 @@ test("Svelte effects see rows and membership change as answers arrive", async ()
   picker.query = "mix"
   flushSync()
   stop()
-  expect(seen).toEqual([
-    "checking:",
-    "checking:Watch later=loading,Road trip=loading,mix tape=loading",
-    "known:Watch later=off,Road trip=off,mix tape=on",
-    "known:mix tape=on"
-  ])
+  expect(seen).toEqual(["checking:", "checking:Watch later=loading,Road trip=loading,mix tape=loading", "known:Watch later=off,Road trip=off,mix tape=on", "known:mix tape=on"])
 })
-
 
 test.each(["list-first", "membership-first"] as const)("item choose membership is independent of choices with %s answers", async order => {
   const { picker, ledger } = open("choose", "www", { chosen: [ROAD] })

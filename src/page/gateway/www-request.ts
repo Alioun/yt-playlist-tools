@@ -5,7 +5,11 @@ import type { AttemptContext, Dispatch, HttpAnswer, RequestSpec } from "./port"
 
 export type CookieName = "SAPISID" | "__Secure-1PAPISID" | "__Secure-3PAPISID"
 export type NativeRequest = {
-  method: "POST"; credentials: "same-origin"; headers: Record<string, string>; body: string; signal: AbortSignal
+  method: "POST"
+  credentials: "same-origin"
+  headers: Record<string, string>
+  body: string
+  signal: AbortSignal
 }
 export interface WwwRequestBoundary {
   readonly site: Site
@@ -32,13 +36,18 @@ function contextAndHeaders(port: WwwRequestBoundary, signed: boolean): { context
   if (!context || !object(context.client)) return undefined
   const clientName = stringValue(port.config("INNERTUBE_CONTEXT_CLIENT_NAME"))
   const clientVersion = stringValue(port.config("INNERTUBE_CONTEXT_CLIENT_VERSION"))
-  const visitor = stringValue(port.config("VISITOR_DATA")), loggedIn = port.config("LOGGED_IN")
+  const visitor = stringValue(port.config("VISITOR_DATA")),
+    loggedIn = port.config("LOGGED_IN")
   const authUser = stringValue(port.config("SESSION_INDEX"))
-  if (!clientName || !clientVersion || !visitor || typeof loggedIn !== "boolean" || signed && !authUser) return undefined
+  if (!clientName || !clientVersion || !visitor || typeof loggedIn !== "boolean" || (signed && !authUser)) return undefined
   const headers: Record<string, string> = {
-    "Content-Type": "application/json", "X-Goog-Visitor-Id": visitor,
-    "X-Youtube-Bootstrap-Logged-In": String(loggedIn), "X-Youtube-Client-Name": clientName,
-    "X-Youtube-Client-Version": clientVersion, "X-Origin": port.origin(), ...(authUser ? { "X-Goog-AuthUser": authUser } : {})
+    "Content-Type": "application/json",
+    "X-Goog-Visitor-Id": visitor,
+    "X-Youtube-Bootstrap-Logged-In": String(loggedIn),
+    "X-Youtube-Client-Name": clientName,
+    "X-Youtube-Client-Version": clientVersion,
+    "X-Origin": port.origin(),
+    ...(authUser ? { "X-Goog-AuthUser": authUser } : {})
   }
   const delegated = stringValue(port.config("DELEGATED_SESSION_ID"))
   const user = object(context.user) ? context.user : {}
@@ -56,9 +65,7 @@ function contextAndHeaders(port: WwwRequestBoundary, signed: boolean): { context
   return { context, headers, ...(session ? { session } : {}) }
 }
 
-export async function dispatchWwwRequest(options: {
-  port: WwwRequestBoundary; spec: RequestSpec; signed: boolean; context: AttemptContext
-}): Promise<Dispatch> {
+export async function dispatchWwwRequest(options: { port: WwwRequestBoundary; spec: RequestSpec; signed: boolean; context: AttemptContext }): Promise<Dispatch> {
   const { port, spec, signed, context } = options
   if (port.site !== "www") return { kind: "not-sent", cause: "missing" }
   let controller: AbortController | undefined
@@ -98,13 +105,21 @@ export async function dispatchWwwRequest(options: {
     controller = new AbortController()
     const signal = controller.signal
     // A native fetch invocation may send before it throws. Its failure cannot authorize a write fallback.
-    const answer = Promise.resolve().then(() => {
-      const failure = context.check()
-      if (failure) throw new Error("Request admission closed")
-      return port.fetch(`https://www.youtube.com/youtubei/v1/${spec.path}?prettyPrint=false`, {
-        method: "POST", credentials: "same-origin", headers: built.headers, body, signal
+    const answer = Promise.resolve()
+      .then(() => {
+        const failure = context.check()
+        if (failure) throw new Error("Request admission closed")
+        return port.fetch(`https://www.youtube.com/youtubei/v1/${spec.path}?prettyPrint=false`, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: built.headers,
+          body,
+          signal
+        })
       })
-    }).catch(() => { throw new Error("Request answer lost") })
+      .catch(() => {
+        throw new Error("Request answer lost")
+      })
     return { kind: "pending", answer, cancel: () => controller?.abort() }
   } catch {
     controller?.abort()

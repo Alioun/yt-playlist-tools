@@ -28,11 +28,18 @@ export function composePlayingNow(deps: {
     const settings = await deps.actions.settings(req.incognito)
     if (!settings) return { kind: "unavailable" }
     if (!settings.musicSection) return { kind: "off" }
-    if (!await native.permissions.contains({ origins: [siteBundles.music.match] }).catch(() => false)) return { kind: "no-access" }
+    if (!(await native.permissions.contains({ origins: [siteBundles.music.match] }).catch(() => false))) return { kind: "no-access" }
     const raw: NativeTab[] = await native.tabs.query({ url: siteBundles.music.match }).catch(() => [])
-    const tabs = raw.flatMap(tab => { const value = candidate(tab); return value ? [value] : [] })
+    const tabs = raw.flatMap(tab => {
+      const value = candidate(tab)
+      return value ? [value] : []
+    })
     for (const tabId of tabOrder(tabs, { windowId: req.windowId, incognito: req.incognito })) {
-      try { await deps.registrar.ensure(tabId, { core: true }) } catch { continue }
+      try {
+        await deps.registrar.ensure(tabId, { core: true })
+      } catch {
+        continue
+      }
       const [known] = await deps.tabs.known({ kind: "tab", tabId })
       if (known && known.acct === null) return { kind: "signed-out", tabId }
       const outcome = await deps.tabs.runIn<JobOf<"nowPlaying">>(tabId, { job: { kind: "nowPlaying" } }, { site: "music", req, account: { kind: "any" } })
@@ -49,11 +56,7 @@ export function composePlayingNow(deps: {
  * Playing now's Save (`ui.add`): AddFlow runs it in the tab the row read, as the account it was read with, and the
  * row shows its answer in YM-SAVE's words (YM-POP-3, YM-POP-5). It never falls back to another tab.
  */
-export function createPlayingSave(deps: {
-  readonly actions: Pick<Actions, "addFromPopup">
-  readonly i18n: I18n
-  readonly consented: () => boolean
-}) {
+export function createPlayingSave(deps: { readonly actions: Pick<Actions, "addFromPopup">; readonly i18n: I18n; readonly consented: () => boolean }) {
   return async function save(req: Requester, payload: UiAddPayload): Promise<UiAddAnswer> {
     if (!deps.consented()) return { kind: "unavailable" }
     const report = await deps.actions.addFromPopup({ tabId: payload.tabId, incognito: req.incognito, site: payload.request.site }, payload.acct, payload.request)
@@ -67,18 +70,20 @@ export function createPlayingSave(deps: {
 }
 
 /** Undo of Playing now's save, in the tab it saved in, while that tab still shows the same account (YM-POP-3). */
-export function createPlayingUndo(deps: {
-  readonly actions: Pick<Actions, "undoFromPopup">
-  readonly i18n: I18n
-  readonly consented: () => boolean
-}) {
+export function createPlayingUndo(deps: { readonly actions: Pick<Actions, "undoFromPopup">; readonly i18n: I18n; readonly consented: () => boolean }) {
   return async function undo(req: Requester, payload: UiAddUndoPayload): Promise<UiAddUndoAnswer> {
     if (!deps.consented()) return { kind: "unavailable" }
     const report = await deps.actions.undoFromPopup({ tabId: payload.tabId, incognito: req.incognito, site: payload.site ?? "music" }, payload.acct, payload.handle)
     switch (report.kind) {
-      case "undone": case "expired": case "no-tab": case "account-changed": return { kind: report.kind }
-      case "failed": return { kind: "failed", text: deps.i18n.message("feedback_www_manual_untitled_undo_failed") }
-      default: return { kind: "unavailable" }
+      case "undone":
+      case "expired":
+      case "no-tab":
+      case "account-changed":
+        return { kind: report.kind }
+      case "failed":
+        return { kind: "failed", text: deps.i18n.message("feedback_www_manual_untitled_undo_failed") }
+      default:
+        return { kind: "unavailable" }
     }
   }
 }

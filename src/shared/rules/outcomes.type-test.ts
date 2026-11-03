@@ -13,7 +13,7 @@ export const accepted: Report[] = [
   { kind: "no-playlist" },
   { kind: "removed", playlist },
   { kind: "undo-failed" },
-  { kind: "picker", outcomes: { [playlist]: { kind: "failed", failure: "missing" } } },
+  { kind: "picker", outcomes: { [playlist]: { kind: "failed", failure: "missing" } } }
 ]
 
 export const rejected: Report[] = [
@@ -30,7 +30,7 @@ export const rejected: Report[] = [
   // @ts-expect-error Explicit actions carry no suppression memory.
   { kind: "picker", outcomes: {}, shown },
   // @ts-expect-error A filter pass is not an outcome.
-  { kind: "auto-add", outcomes: { [playlist]: { kind: "filtered", decision: "pass" } }, shown },
+  { kind: "auto-add", outcomes: { [playlist]: { kind: "filtered", decision: "pass" } }, shown }
 ]
 
 // @ts-expect-error Failures are the settled table's, not free strings.
