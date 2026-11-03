@@ -3303,8 +3303,8 @@ test("receiver wrong alternatives fail at their intended observable assertions",
       name: "split-sets",
       assertion: "one exact two-key set",
       source: original.replace(
-        "await guardedLocal.set({ ...clearsLastAccount ? { [LAST_ACCOUNT_KEY]: null } : {}, [name]: document, sync: next })",
-        "await guardedLocal.set({ ...clearsLastAccount ? { [LAST_ACCOUNT_KEY]: null } : {}, [name]: document }); await guardedLocal.set({ sync: next })"
+        "await guardedLocal.set({ ...(clearsLastAccount ? { [LAST_ACCOUNT_KEY]: null } : {}), [name]: document, sync: next })",
+        "await guardedLocal.set({ ...(clearsLastAccount ? { [LAST_ACCOUNT_KEY]: null } : {}), [name]: document }); await guardedLocal.set({ sync: next })"
       )
     },
     {
@@ -5804,7 +5804,7 @@ function keptIncomingFaults(original: string) {
     {
       name: "editable-kept",
       assertion: "kept UI selection remains required",
-      source: original.replace(' || change.scope === "auto-add" && !setup.document.data.autoAdd.some(entry => entry.pl === change.playlist)', "")
+      source: original.replace(' || (change.scope === "auto-add" && !setup.document.data.autoAdd.some(entry => entry.pl === change.playlist))', "")
     },
     { name: "outside-kept-lane", assertion: "kept same lane held IO L0", source: original.replace("return enqueue(() => receiveAttempt(key))", "return receiveAttempt(key)") },
     {
@@ -5824,8 +5824,8 @@ function keptIncomingFaults(original: string) {
       name: "split-kept-history",
       assertion: "kept one exact Filter-history batch",
       source: original.replace(
-        "await guardedLocal.set({ ...clearsLastAccount ? { [LAST_ACCOUNT_KEY]: null } : {}, [name]: document, sync: next })",
-        "await guardedLocal.set({ ...clearsLastAccount ? { [LAST_ACCOUNT_KEY]: null } : {}, [name]: document }); await guardedLocal.set({ sync: next })"
+        "await guardedLocal.set({ ...(clearsLastAccount ? { [LAST_ACCOUNT_KEY]: null } : {}), [name]: document, sync: next })",
+        "await guardedLocal.set({ ...(clearsLastAccount ? { [LAST_ACCOUNT_KEY]: null } : {}), [name]: document }); await guardedLocal.set({ sync: next })"
       )
     },
     {
@@ -6906,14 +6906,14 @@ function setupIncomingFaults(original: string) {
     {
       name: "no-target-precommit-equality",
       assertion: "Setup target authority stale R0doc:setup:AAAAAAAAAAAAAAAA",
-      source: original.replace("sameSelection(current.selection) && sameSyncJson(current.raw, baseline.raw)", "sameSelection(current.selection)")
+      source: original.replace("sameSelection(current.selection) &&\n      sameSyncJson(current.raw, baseline.raw)", "sameSelection(current.selection)")
     },
     {
       name: "split-Setup-history",
       assertion: "Setup one exact target-history batch",
       source: original.replace(
-        "await guardedLocal.set({ ...clearsLastAccount ? { [LAST_ACCOUNT_KEY]: null } : {}, [name]: document, sync: next })",
-        "await guardedLocal.set({ ...clearsLastAccount ? { [LAST_ACCOUNT_KEY]: null } : {}, [name]: document }); await guardedLocal.set({ sync: next })"
+        "await guardedLocal.set({ ...(clearsLastAccount ? { [LAST_ACCOUNT_KEY]: null } : {}), [name]: document, sync: next })",
+        "await guardedLocal.set({ ...(clearsLastAccount ? { [LAST_ACCOUNT_KEY]: null } : {}), [name]: document }); await guardedLocal.set({ sync: next })"
       )
     },
     {

@@ -206,8 +206,8 @@ test("retention oracles reject chunk deletion and speculative admission credit",
     {
       name: "delete-chunks",
       file: "local-filter-writer",
-      from: "try { await deps.sync.set(Object.fromEntries(plan.items.map(item => [item.key, item.value]))) }",
-      to: 'try { await deps.sync.set(Object.fromEntries(plan.items.map(item => [item.key, item.value]))); await deps.sync.remove(Object.keys(await deps.sync.get()).filter(key => key.includes("@"))) }',
+      from: "await deps.sync.set(Object.fromEntries(plan.items.map(item => [item.key, item.value])))",
+      to: 'await deps.sync.set(Object.fromEntries(plan.items.map(item => [item.key, item.value]))); await deps.sync.remove(Object.keys(await deps.sync.get()).filter(key => key.includes("@")))',
       failure: "retained old generation remains readable"
     },
     {
