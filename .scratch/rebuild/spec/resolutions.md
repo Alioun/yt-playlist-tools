@@ -791,3 +791,28 @@ G31 put every user-facing string through unslop, pinned ones included. These rec
   - **Waiting jobs.** None runs before both the file and the confirmation arrive. Each keeps what is left of its 10 s, so expired work never starts. A refusal, or no answer within 10 s, fails them as `unavailable`, never sent, and the next job asks again.
   - **Accounts, restarts and Clear all.** The jobs use the identity the page half pinned at load, so a file that arrives after an account switch answers `accountChanged` and sends nothing. The Registrar keeps no record of which tabs have the file. After a worker restart it probes again, so it finds the file a tab still has and loads it into a tab that lost it. Clear all disposes the Registrar, so `ensure` refuses until the next consent. A retire disposes the jobs with the page half.
   - **Size elsewhere.** The relay adds 0.08 KB to each core, so the `www/core` and `music/core` exceptions rise by 0.1 KB, to 28.3 and 28.8. The background's additions fit under its 227.2 KB ceiling (R199), at 227.20 KB, because the probe no longer re-checks the types of the isolated world's own records and the Registrar picks the page world by a file's `page-` name.
+
+## Budgets re-baselined, 2026-11-03 (R201)
+
+- **R201. The weight budgets are the sizes measured after the lazy jobs file and the lazy picker.** G45, after G41 to G43. The original rows were set against stubs and a rough build. With the page halves' job code lazy (R200) and the picker loaded on open, what remains is real code: the gateway's streams, the cores' contract validators (kept because the page world can forge messages) and Svelte's runtime. `perf-budget.json` is the authority, and `check:budget` fails any build above it. The rows:
+  - `www/page`: 13.8 KB
+  - `www/core`: 28.3 KB
+  - `www/kit`: 28 KB
+  - `www/auto-add`: 5.5 KB
+  - `www/shortcuts`: 2.0 KB
+  - `www/quick-save`: 3.6 KB
+  - `www/queue-button`: 3.6 KB
+  - `www/watch-button`: 4.5 KB
+  - `www/card-menu`: 1.6 KB
+  - `music/page`: 14.0 KB
+  - `music/core`: 28.8 KB
+  - `music/kit`: 31.7 KB
+  - `music/shortcuts`: 1 KB
+  - `music/music-actions`: 7.7 KB
+  - `music/music-keys`: 1 KB
+  - Totals: YouTube everything on 90.9 KB, YouTube Music everything on 84.2 KB.
+  - Popup first view: 57.4 KB on YouTube, 67.6 KB on YouTube Music.
+  - First run: 62.5 KB, and 66.3 KB with the upgrade note.
+  - Lazy jobs files: 20 KB for YouTube and 18 KB for YouTube Music.
+  - Background: a 230 KB ceiling (G46), replacing R199's 227.2 KB, for the queued sync follow-ups.
+

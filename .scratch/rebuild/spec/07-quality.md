@@ -573,6 +573,8 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 | `feature-card-menu.js` | `contextmenu` handler, no kit | on | 1.25 | 1.18 (built 2026-11-01, Items external; the owner raised the budget from 0.5) |
 | **Everything on** | | | **49.75** (rows sum to 49.75) | **39.6**, without auto-add and the real gateway |
 
+These budgets were re-baselined to measured sizes on 2026-11-03 (R201). `perf-budget.json` holds the enforced numbers, and `check:budget` fails any growth.
+
 - **Q-PERF-13.** YouTube Music (`music.youtube.com`), rows set from the measured build (Q-PERF-15). (R1, R30)
 
 | File | Contents | Loads while | Budget | Measured, rough build (ticket 27) |
@@ -584,6 +586,8 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 | `feature-music-keys.js` | bindings | on | 1 | not built |
 | `feature-shortcuts-music.js` | bindings and actions | on, with "Also on YouTube Music" | 1 | not built |
 | **Everything on** | | | **43** (rows sum to 43) | **35.2** |
+
+These budgets were re-baselined to measured sizes on 2026-11-03 (R201). `perf-budget.json` holds the enforced numbers, and `check:budget` fails any growth.
 
 - **Q-PERF-14.** Lazy, both sites:
 

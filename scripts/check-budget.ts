@@ -18,7 +18,7 @@ export type PerfBudget = {
   readonly lazy: Readonly<Record<LazyFile, Kb>>
   readonly popup: { readonly www: JsCss; readonly music: JsCss; readonly lazy: Kb }
   readonly settings: JsCss & { readonly lazy: Kb }
-  readonly firstRun: { readonly js: Kb }
+  readonly firstRun: { readonly js: Kb; readonly upgrade: Kb }
   readonly background: Kb
   readonly exceptions: readonly BudgetException[]
 }
@@ -238,7 +238,7 @@ export function checkBuild(directory: string, budget: PerfBudget): BuildReport {
 
   const firstRun = extensionPage(directory, "onboarding.html", size)
   gated("first-run/js", "page", budget.firstRun.js, firstRun.js)
-  gated("first-run/upgrade/js", "page", budget.firstRun.js, firstRun.with("UpgradeNote"))
+  gated("first-run/upgrade/js", "page", budget.firstRun.upgrade, firstRun.with("UpgradeNote"))
   rows.push({ id: "first-run/css", kind: "reported", kb: firstRun.css })
   for (const part of firstRun.lazy) rows.push({ id: `first-run/lazy/${part.name}`, kind: "reported", kb: part.kb })
 

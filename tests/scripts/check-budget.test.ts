@@ -19,7 +19,7 @@ const budget: PerfBudget = {
   lazy: { popovers: 50, "page-jobs-www": 20, "page-jobs-music": 18 },
   popup: { www: { js: 40, css: 8 }, music: { js: 40, css: 8 }, lazy: 45 },
   settings: { js: 60, css: 10, lazy: 45 },
-  firstRun: { js: 30 },
+  firstRun: { js: 30, upgrade: 30 },
   background: 25,
   exceptions: []
 }

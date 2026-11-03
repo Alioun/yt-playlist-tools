@@ -246,7 +246,7 @@
       "id": "G41",
       "topic": "Site totals (Q-PERF-12, 13, 16)",
       "answer": "Keep the original budgets as the target; build the lazy MAIN-world jobs file and the lazy picker first, then revisit re-baselining.",
-      "landed": "pending"
+      "landed": "re-baselined after G42 and G43, R201"
     },
     {
       "id": "G42",
@@ -265,6 +265,24 @@
       "topic": "Background budget",
       "answer": "Replace the provisional 25 KB with a 227.2 KB ceiling the gate enforces.",
       "landed": "perf-budget.json"
+    },
+    {
+      "id": "G45",
+      "topic": "Re-baseline the weight budgets",
+      "answer": "Set every over-budget row to its measured size after the lazy jobs file and lazy picker; the gate holds them there.",
+      "landed": "R201"
+    },
+    {
+      "id": "G46",
+      "topic": "Background ceiling headroom",
+      "answer": "Raise the background ceiling from 227.2 to 230 KB.",
+      "landed": "R201"
+    },
+    {
+      "id": "G47",
+      "topic": "Lazy jobs file budgets",
+      "answer": "20 KB for page-jobs-www.js and 18 KB for page-jobs-music.js.",
+      "landed": "R200"
     }
   ],
   "coordinatorCalls": [

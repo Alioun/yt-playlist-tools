@@ -1,28 +1,28 @@
 {
   "sites": {
     "www": {
-      "page": 5,
-      "core": 5,
+      "page": 13.8,
+      "core": 28.3,
       "kit": 28,
-      "auto-add": 3,
-      "shortcuts": 1,
-      "quick-save": 2,
-      "queue-button": 1,
-      "watch-button": 3.5,
-      "card-menu": 1.25
+      "auto-add": 5.5,
+      "shortcuts": 2.0,
+      "quick-save": 3.6,
+      "queue-button": 3.6,
+      "watch-button": 4.5,
+      "card-menu": 1.6
     },
     "music": {
-      "page": 5,
-      "core": 4,
-      "kit": 27,
+      "page": 14.0,
+      "core": 28.8,
+      "kit": 31.7,
       "shortcuts": 1,
-      "music-actions": 5,
+      "music-actions": 7.7,
       "music-keys": 1
     }
   },
   "totals": {
-    "www": 49.75,
-    "music": 43
+    "www": 90.9,
+    "music": 84.2
   },
   "lazy": {
     "popovers": 50,
@@ -31,11 +31,11 @@
   },
   "popup": {
     "www": {
-      "js": 40,
+      "js": 57.4,
       "css": 8
     },
     "music": {
-      "js": 40,
+      "js": 67.6,
       "css": 8
     },
     "lazy": 45
@@ -46,105 +46,9 @@
     "lazy": 45
   },
   "firstRun": {
-    "js": 30
+    "js": 62.5,
+    "upgrade": 66.3
   },
-  "background": 227.2,
-  "exceptions": [
-    {
-      "row": "www/page",
-      "kb": 13.8,
-      "since": "2026-11-02",
-      "why": "The jobs moved to page-jobs-www.js, which loads on a page's first job (G42). What stays is what start-up needs: the page channel, hello, the account, the streams the features watch from the start with their parsers and the live read port, and the contract checks on what the page sends."
-    },
-    {
-      "row": "www/core",
-      "kb": 28.3,
-      "since": "2026-11-02",
-      "why": "The real core carries the whole message-parameter table, contract validators and the page channel; the 4.12 KB rough core had none. Raised from 28.2 by the jobs-file relay (G42), 0.08 KB, which took 12.8 KB off www/page."
-    },
-    {
-      "row": "www/auto-add",
-      "kb": 5.5,
-      "since": "2026-11-02",
-      "why": "The watch tracker, player feed and status measure over the row set before auto-add was built. It links the outcome rules from the kit."
-    },
-    {
-      "row": "www/shortcuts",
-      "kb": 2.0,
-      "since": "2026-11-02",
-      "why": "Bindings, actions and the hint copy measure over the 1 KB row; explicit-add, Scope and the picker anchor are linked from the kit."
-    },
-    {
-      "row": "www/quick-save",
-      "kb": 3.6,
-      "since": "2026-11-02",
-      "why": "The split button with its states and tooltip measures over the row; Items, explicit-add and key display are linked from the core and kit."
-    },
-    {
-      "row": "www/queue-button",
-      "kb": 3.6,
-      "since": "2026-11-02",
-      "why": "The queue button with its states, glyphs and toasts measures over the 1 KB row; Items and the outcome rules are linked from the core and kit."
-    },
-    {
-      "row": "www/watch-button",
-      "kb": 4.5,
-      "since": "2026-11-02",
-      "why": "The built pill measures over the row set from the rough build; key display is linked from the kit."
-    },
-    {
-      "row": "www/card-menu",
-      "kb": 1.6,
-      "since": "2026-11-02",
-      "why": "The decision table and the page-side click measure 0.27 KB over the 1.25 KB row with Items linked from the core."
-    },
-    {
-      "row": "music/page",
-      "kb": 14.0,
-      "since": "2026-11-02",
-      "why": "The jobs moved to page-jobs-music.js, which loads on a page's first job (G42). What stays is what start-up needs: the page channel, hello, the account, the streams the features watch from the start with their parsers and the live read port, and the contract checks on what the page sends."
-    },
-    {
-      "row": "music/core",
-      "kb": 28.8,
-      "since": "2026-11-02",
-      "why": "The real core carries the whole message-parameter table, contract validators and the page channel; the 1.3 KB rough core had none. Raised from 28.7 by the jobs-file relay (G42), 0.08 KB, which took 11.2 KB off music/page."
-    },
-    {
-      "row": "music/kit",
-      "kb": 31.7,
-      "since": "2026-11-02",
-      "why": "YouTube Music's quick-action table and the shared copy table ride in the kit, which also exports the code features link to instead of bundling."
-    },
-    {
-      "row": "music/music-actions",
-      "kb": 7.7,
-      "since": "2026-11-02",
-      "why": "R85's four more actions and the icons landed in this file."
-    },
-    {
-      "row": "popup/www/js",
-      "kb": 57.4,
-      "since": "2026-11-02",
-      "why": "Svelte runtime 18 KB, the backend, about 6 KB of RPC contract validators, model decoders, key display and icons, in a long tail no single cut removes. Lowered from 63.3 when the first view became one chunk and the picker loaded on first open (G43)."
-    },
-    {
-      "row": "popup/music/js",
-      "kb": 67.6,
-      "since": "2026-11-02",
-      "why": "The first view plus the YouTube Music tab, whose destination chooser now loads only its button and the picker's text; the picker loads on first open (G43). Lowered from 109.1."
-    },
-    {
-      "row": "first-run/js",
-      "kb": 62.4,
-      "since": "2026-11-02",
-      "why": "Svelte runtime, the backend and first-run owner, contract validators and the first view, built on its own page build."
-    },
-    {
-      "row": "first-run/upgrade/js",
-      "kb": 66.3,
-      "since": "2026-11-02",
-      "why": "As first-run/js, plus the upgrade note. Lowered from 66.6 when the note stopped loading the key recorder through the keys barrel."
-    }
-  ]
+  "background": 230,
+  "exceptions": []
 }
