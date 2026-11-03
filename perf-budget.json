@@ -25,7 +25,9 @@
     "music": 43
   },
   "lazy": {
-    "popovers": 50
+    "popovers": 50,
+    "page-jobs-www": 20,
+    "page-jobs-music": 18
   },
   "popup": {
     "www": {
@@ -50,15 +52,15 @@
   "exceptions": [
     {
       "row": "www/page",
-      "kb": 26.6,
+      "kb": 13.8,
       "since": "2026-11-02",
-      "why": "The real gateway, its job parsers and the contract checks on what it sends replaced a 0.69 KB stub. A MAIN-world script cannot load code later without a new injected file, so all of it loads with the page."
+      "why": "The jobs moved to page-jobs-www.js, which loads on a page's first job (G42). What stays is what start-up needs: the page channel, hello, the account, the streams the features watch from the start with their parsers and the live read port, and the contract checks on what the page sends."
     },
     {
       "row": "www/core",
-      "kb": 28.2,
+      "kb": 28.3,
       "since": "2026-11-02",
-      "why": "The real core carries the whole message-parameter table, contract validators and the page channel; the 4.12 KB rough core had none."
+      "why": "The real core carries the whole message-parameter table, contract validators and the page channel; the 4.12 KB rough core had none. Raised from 28.2 by the jobs-file relay (G42), 0.08 KB, which took 12.8 KB off www/page."
     },
     {
       "row": "www/auto-add",
@@ -98,15 +100,15 @@
     },
     {
       "row": "music/page",
-      "kb": 25.2,
+      "kb": 14.0,
       "since": "2026-11-02",
-      "why": "The real gateway, its job parsers and the contract checks on what it sends replaced the rough build queue-only jobs. A MAIN-world script cannot load code later without a new injected file, so all of it loads with the page."
+      "why": "The jobs moved to page-jobs-music.js, which loads on a page's first job (G42). What stays is what start-up needs: the page channel, hello, the account, the streams the features watch from the start with their parsers and the live read port, and the contract checks on what the page sends."
     },
     {
       "row": "music/core",
-      "kb": 28.7,
+      "kb": 28.8,
       "since": "2026-11-02",
-      "why": "The real core carries the whole message-parameter table, contract validators and the page channel; the 1.3 KB rough core had none."
+      "why": "The real core carries the whole message-parameter table, contract validators and the page channel; the 1.3 KB rough core had none. Raised from 28.7 by the jobs-file relay (G42), 0.08 KB, which took 11.2 KB off music/page."
     },
     {
       "row": "music/kit",

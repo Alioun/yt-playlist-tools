@@ -16,7 +16,7 @@ const budget: PerfBudget = {
     music: { page: 5, core: 4, kit: 27, shortcuts: 1, "music-actions": 5, "music-keys": 1 }
   },
   totals: { www: 49.75, music: 43 },
-  lazy: { popovers: 50 },
+  lazy: { popovers: 50, "page-jobs-www": 20, "page-jobs-music": 18 },
   popup: { www: { js: 40, css: 8 }, music: { js: 40, css: 8 }, lazy: 45 },
   settings: { js: 60, css: 10, lazy: 45 },
   firstRun: { js: 30 },
@@ -52,6 +52,8 @@ async function build(browser: "chrome" | "firefox", overrides: Overrides = {}) {
     "manifest.json": JSON.stringify(overrides.manifest ?? { manifest_version: 3 }),
     "background.js": weighing(1),
     "popovers.js": weighing(2),
+    "page-jobs-www.js": weighing(3),
+    "page-jobs-music.js": weighing(2.5),
     "popup.html": `<script type="module" src="/chunks/popup-AAAAAAAA.js"></script><link rel="modulepreload" href="/chunks/shared-BBBBBBBB.js"><link rel="stylesheet" href="/assets/popup-CCCCCCCC.css">`,
     "chunks/popup-AAAAAAAA.js": `import{a}from"./shared-BBBBBBBB.js";import(\`./MusicTab-DDDDDDDD.js\`);${weighing(3)}`,
     "chunks/shared-BBBBBBBB.js": weighing(1),
@@ -72,7 +74,7 @@ async function build(browser: "chrome" | "firefox", overrides: Overrides = {}) {
   }
   const evidenceDir = join(root, "page-link", `${browser}-build`)
   await mkdir(evidenceDir, { recursive: true })
-  const labels = [...new Set([...Object.values(sitePieces()).flat().map(piece => piece.file.replace(/\.js$/, "")), "popovers"])]
+  const labels = [...new Set([...Object.values(sitePieces()).flat().map(piece => piece.file.replace(/\.js$/, "")), "popovers", "page-jobs-www", "page-jobs-music"])]
   for (const label of labels) {
     const modules = overrides.evidence?.[label] ?? [`/repo/src/${label}.ts`]
     await writeFile(join(evidenceDir, `${label}.json`), JSON.stringify({ chunks: [{ file: `${label}.js`, modules }] }))
@@ -87,6 +89,7 @@ describe("check:budget", () => {
     const result = checkBudget([await build("chrome"), await build("firefox")], budget)
     expect(result.failures).toEqual([])
     expect(row(result, "www/card-menu")?.kb).toBeCloseTo(0.5, 2)
+    expect([row(result, "page-jobs-www")?.kind, row(result, "page-jobs-music")?.kb]).toEqual(["lazy", expect.closeTo(2.5, 1)])
     expect(row(result, "popup/lazy/MusicTab")?.kb).toBeCloseTo(row(result, "popup/music/js")!.kb - row(result, "popup/www/js")!.kb, 5)
   })
 

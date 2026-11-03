@@ -8,12 +8,14 @@ import { features } from "../src/shared/features/registry"
 
 type Kb = number
 type JsCss = { readonly js: Kb; readonly css: Kb }
+/** Files a page loads only on use: the picker, and each site's jobs file on a page's first job (G42). */
+type LazyFile = typeof popoversBundle | (typeof siteBundles)[Site]["jobs"]
 export type BudgetException = { readonly row: string; readonly kb: Kb; readonly since: string; readonly why: string }
 /** `perf-budget.json` (Q-PERF-36): the decided numbers, keyed by site and registry ID or library name, and dated exceptions. */
 export type PerfBudget = {
   readonly sites: Readonly<Record<Site, Readonly<Record<string, Kb>>>>
   readonly totals: Readonly<Record<Site, Kb>>
-  readonly lazy: { readonly [popoversBundle]: Kb }
+  readonly lazy: Readonly<Record<LazyFile, Kb>>
   readonly popup: { readonly www: JsCss; readonly music: JsCss; readonly lazy: Kb }
   readonly settings: JsCss & { readonly lazy: Kb }
   readonly firstRun: { readonly js: Kb }
@@ -28,6 +30,7 @@ export type BuildReport = { readonly browser: Browser; readonly rows: readonly R
 
 const sites = Object.keys(siteBundles) as Site[]
 const libraries = ["page", "core", "kit"] as const
+const lazyFiles: readonly LazyFile[] = [popoversBundle, ...sites.map(site => siteBundles[site].jobs)]
 const slackKb = 0.5
 const kbOf = (bytes: number) => bytes / 1024
 const round = (kb: Kb) => Math.round(kb * 100) / 100
@@ -219,7 +222,7 @@ export function checkBuild(directory: string, budget: PerfBudget): BuildReport {
     const all = pieces[site].map(piece => piece.id)
     rows.push({ id: `${site} everything on`, kind: "site", budget: budget.totals[site], limit: sum(all, "limit"), kb: sum(all, "kb") })
   }
-  gated(popoversBundle, "lazy", budget.lazy[popoversBundle], size(`${popoversBundle}.js`))
+  for (const file of lazyFiles) gated(file, "lazy", budget.lazy[file], size(`${file}.js`))
 
   const popup = extensionPage(directory, "popup.html", size)
   gated("popup/www/js", "page", budget.popup.www.js, popup.js)
