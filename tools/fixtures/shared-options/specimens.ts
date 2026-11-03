@@ -1876,6 +1876,198 @@ export const cases: readonly { readonly name: string; readonly change: SharedOpt
     }
   },
   {
+    "name": "gather.auto.unvisited",
+    "change": { "kind": "option", "field": "gather.auto.unvisited", "value": false },
+    "expectedSettings": {
+      "theme": "system",
+      "undoKey": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+      "autoAdd": { "on": false, "feedback": true, "pct": 50, "toolbarTick": true, "toolbarPaused": true, "futureAuto": { "keep": true } },
+      "shortcuts": {
+        "on": false,
+        "feedback": true,
+        "music": false,
+        "preset": true,
+        "picker": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+        "list": [
+          {
+            "id": "save01",
+            "key": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+            "label": "Kept shortcut",
+            "watchLaterOnEveryAccount": true,
+            "futureRow": ["keep"]
+          }
+        ]
+      },
+      "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
+      "queueButton": { "on": false, "feedback": true },
+      "watchButton": { "on": false, "feedback": true, "shorts": false },
+      "cardMenu": { "on": false, "keepLinkMenu": false },
+      "browserMenu": { "on": false, "feedback": true },
+      "musicSection": false,
+      "musicActions": {
+        "on": false,
+        "feedback": true,
+        "preset": true,
+        "buttons": { "next": true, "queue": true, "save": false, "like": false, "remove": false, "bar": false, "library": false, "mix": false, "album": false, "artist": false, "futureButton": true }
+      },
+      "musicKeys": {
+        "on": false,
+        "feedback": true,
+        "preset": true,
+        "keys": {
+          "next": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "queue": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "save": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "picker": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "like": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "remove": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "library": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "mix": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "album": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "artist": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } }
+        }
+      },
+      "anyTabKeys": { "on": false, "feedback": true },
+      "gather": {
+        "on": false,
+        "feedback": true,
+        "to": "player",
+        "order": "newest",
+        "close": false,
+        "auto": { "unvisited": false, "after": "1d", "background": true, "count": true, "n": 10, "futureTrigger": ["keep"] }
+      },
+      "futureRoot": { "keep": ["unknown", 0, null] }
+    }
+  },
+  {
+    "name": "gather.auto.background",
+    "change": { "kind": "option", "field": "gather.auto.background", "value": false },
+    "expectedSettings": {
+      "theme": "system",
+      "undoKey": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+      "autoAdd": { "on": false, "feedback": true, "pct": 50, "toolbarTick": true, "toolbarPaused": true, "futureAuto": { "keep": true } },
+      "shortcuts": {
+        "on": false,
+        "feedback": true,
+        "music": false,
+        "preset": true,
+        "picker": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+        "list": [
+          {
+            "id": "save01",
+            "key": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+            "label": "Kept shortcut",
+            "watchLaterOnEveryAccount": true,
+            "futureRow": ["keep"]
+          }
+        ]
+      },
+      "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
+      "queueButton": { "on": false, "feedback": true },
+      "watchButton": { "on": false, "feedback": true, "shorts": false },
+      "cardMenu": { "on": false, "keepLinkMenu": false },
+      "browserMenu": { "on": false, "feedback": true },
+      "musicSection": false,
+      "musicActions": {
+        "on": false,
+        "feedback": true,
+        "preset": true,
+        "buttons": { "next": true, "queue": true, "save": false, "like": false, "remove": false, "bar": false, "library": false, "mix": false, "album": false, "artist": false, "futureButton": true }
+      },
+      "musicKeys": {
+        "on": false,
+        "feedback": true,
+        "preset": true,
+        "keys": {
+          "next": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "queue": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "save": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "picker": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "like": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "remove": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "library": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "mix": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "album": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "artist": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } }
+        }
+      },
+      "anyTabKeys": { "on": false, "feedback": true },
+      "gather": {
+        "on": false,
+        "feedback": true,
+        "to": "player",
+        "order": "newest",
+        "close": false,
+        "auto": { "unvisited": true, "after": "1d", "background": false, "count": true, "n": 10, "futureTrigger": ["keep"] }
+      },
+      "futureRoot": { "keep": ["unknown", 0, null] }
+    }
+  },
+  {
+    "name": "gather.auto.count",
+    "change": { "kind": "option", "field": "gather.auto.count", "value": false },
+    "expectedSettings": {
+      "theme": "system",
+      "undoKey": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+      "autoAdd": { "on": false, "feedback": true, "pct": 50, "toolbarTick": true, "toolbarPaused": true, "futureAuto": { "keep": true } },
+      "shortcuts": {
+        "on": false,
+        "feedback": true,
+        "music": false,
+        "preset": true,
+        "picker": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+        "list": [
+          {
+            "id": "save01",
+            "key": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+            "label": "Kept shortcut",
+            "watchLaterOnEveryAccount": true,
+            "futureRow": ["keep"]
+          }
+        ]
+      },
+      "quickSave": { "on": false, "feedback": true, "shortsShelves": false },
+      "queueButton": { "on": false, "feedback": true },
+      "watchButton": { "on": false, "feedback": true, "shorts": false },
+      "cardMenu": { "on": false, "keepLinkMenu": false },
+      "browserMenu": { "on": false, "feedback": true },
+      "musicSection": false,
+      "musicActions": {
+        "on": false,
+        "feedback": true,
+        "preset": true,
+        "buttons": { "next": true, "queue": true, "save": false, "like": false, "remove": false, "bar": false, "library": false, "mix": false, "album": false, "artist": false, "futureButton": true }
+      },
+      "musicKeys": {
+        "on": false,
+        "feedback": true,
+        "preset": true,
+        "keys": {
+          "next": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "queue": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "save": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "picker": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "like": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "remove": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "library": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "mix": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "album": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } },
+          "artist": { "char": "n", "code": "KeyN", "ctrl": false, "alt": true, "shift": false, "meta": false, "futureKey": { "keep": [1, null] } }
+        }
+      },
+      "anyTabKeys": { "on": false, "feedback": true },
+      "gather": {
+        "on": false,
+        "feedback": true,
+        "to": "player",
+        "order": "newest",
+        "close": false,
+        "auto": { "unvisited": true, "after": "1d", "background": true, "count": false, "n": 10, "futureTrigger": ["keep"] }
+      },
+      "futureRoot": { "keep": ["unknown", 0, null] }
+    }
+  },
+  {
     "name": "gather.auto.after",
     "change": { "kind": "option", "field": "gather.auto.after", "value": "1w" },
     "expectedSettings": {

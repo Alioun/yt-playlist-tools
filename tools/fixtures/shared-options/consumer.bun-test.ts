@@ -13,5 +13,5 @@ test("both real owner routes match every independent JSONL record through EOF", 
       .split("\n")
       .map(line => JSON.parse(line))
   )
-  expect(observations).toHaveLength(60)
+  expect(observations).toHaveLength(66)
 })
