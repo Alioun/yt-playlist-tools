@@ -252,7 +252,7 @@
       "id": "G42",
       "topic": "Lazy MAIN-world jobs file",
       "answer": "Build it now, before the beta: the background injects the gateway's job code on a page's first job.",
-      "landed": "pending"
+      "landed": "2.0/lazy-jobs, R200"
     },
     {
       "id": "G43",
