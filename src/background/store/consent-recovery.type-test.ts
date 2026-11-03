@@ -78,10 +78,10 @@ function retainedNegative(
     ],
     remaining: []
   }
-  // @ts-expect-error Failed retained execution cannot be a recovered completion.
   const failed: ExactRecoveryResult = {
     kind: "recovered",
     job: identity,
+    // @ts-expect-error Failed retained execution cannot be a recovered completion.
     completion: { operation: "retained-agreement", result: { kind: "failed", stage: "record", write: { kind: "rejected", error: null } } },
     permissionWrites: [
       { stage: "prepare", write: { kind: "resolved" } },
@@ -187,9 +187,9 @@ function v1Negative(
   ports.setAccepted({ interimConversion: descriptor.accepted })
   // @ts-expect-error A V1 record is not an accepted V2 batch.
   const v1Batch: RetainedV1AcceptanceBatch = { interimConversion: descriptor.retained, "consent:jobs": { v: 1, kind: "consent-jobs", deviceId: descriptor.deviceId, next: 0, jobs: [] } }
-  // @ts-expect-error Failed receipt execution cannot inhabit a V1 confirmed completion.
   const failed: RetainedV1RecoveryCompletion = {
     operation: "retained-v1-acceptance",
+    // @ts-expect-error Failed receipt execution cannot inhabit a V1 confirmed completion.
     result: { kind: "confirmed", acceptance: { kind: "already-present" }, receipt: { kind: "failed", stage: "record", write: { kind: "rejected", error: null } }, activation: "held" }
   }
   // @ts-expect-error The public resume method accepts no V1 permit.
@@ -277,10 +277,10 @@ function installationNegative(
     ],
     remaining: []
   }
-  // @ts-expect-error A failed installation cannot claim completion.
   const failed: ExactRecoveryResult = {
     kind: "recovered",
     job: identity,
+    // @ts-expect-error A failed installation cannot claim completion.
     completion: { operation: "retained-installation", result: { kind: "failed", stage: "record", write: { kind: "rejected", error: null }, mutations: [] } },
     permissionWrites: [
       { stage: "prepare", write: { kind: "resolved" } },
@@ -376,10 +376,10 @@ function installationAcceptanceNegative(
   ports.setAccepted({ interimConversion: descriptor.accepted })
   // @ts-expect-error Confirmed V2 cannot substitute for accepted V3.
   const batch: RetainedInstallationAcceptanceBatch = { interimConversion: v2, "consent:jobs": { v: 1, kind: "consent-jobs", deviceId: descriptor.deviceId, next: 0, jobs: [] } }
-  // @ts-expect-error Partial executor results cannot be successful acceptance completions.
   const partial: Extract<ExactRecoveryResult, { kind: "recovered"; job: RetainedInstallationAcceptanceJob }> = {
     kind: "recovered",
     job,
+    // @ts-expect-error Partial executor results cannot be successful acceptance completions.
     completion: { operation: "retained-installation-acceptance", result: { kind: "confirmed", acceptance: { kind: "already-present" }, installation, activation: "held" } },
     permissionWrites: [
       { stage: "prepare", write: { kind: "resolved" } },

@@ -10,14 +10,14 @@ export const concrete: TabViewProducer<TabView> = createTabViewProducer(ports)
 void createTabViewProducer(noHealth)
 // @ts-expect-error Missing due-notice production cannot become an empty default.
 void createTabViewProducer(noNotices)
-// @ts-expect-error Status facts require the actual tab/account/site/build/privacy context.
 export const unboundStatus: StatusProducer = {
+  // @ts-expect-error Status facts require the actual tab/account/site/build/privacy context.
   async read() {
     return { kind: "statuses", statuses: [] }
   }
 }
-// @ts-expect-error Notice facts require the actual context.
 export const unboundNotice: NoticeProducer = {
+  // @ts-expect-error Notice facts require the actual context.
   async read() {
     return { kind: "notices", notices: [] }
   }

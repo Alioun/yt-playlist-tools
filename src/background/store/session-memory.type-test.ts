@@ -69,9 +69,9 @@ export const gatherWithClosed: SessionChange = {
     }
   ]
 }
-// @ts-expect-error negative: session-gather-recent-one-write. A Recent entry rides only on its gather edit, never as its own edit.
 export const loneRecent: SessionChange = {
   revision: emptySessionRevision,
   now: 1,
+  // @ts-expect-error negative: session-gather-recent-one-write. A Recent entry rides only on its gather edit, never as its own edit.
   edits: [{ kind: "recent-add", recent: { at: 1, playlist: { id: playlist, title: "Later" }, videos: [{ id: video, title: "x" }] } }]
 }

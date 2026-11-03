@@ -142,17 +142,17 @@ function negative(
   owner.recoverWithdrawnWork({ kind: "ui", windowId: 1, incognito: false }, { review: { kind: "withdrawn-work-review" }, job: { kind: "held-job-selection" }, effect: accepted.pending.effect })
   // @ts-expect-error A public recovery input cannot choose an account.
   owner.recoverWithdrawnWork({ kind: "ui", windowId: 1, incognito: false }, { review: { kind: "withdrawn-work-review" }, job: { kind: "held-job-selection" }, acct: playlist.key.acct })
-  // @ts-expect-error A filter completion cannot use installation operation correlation.
   const mixed: ExactRecoveryResult = {
     kind: "recovered",
     job: identity,
+    // @ts-expect-error A filter completion cannot use installation operation correlation.
     completion: { operation: "retained-installation", result: { kind: "confirmed", identity, original: identity.original, current: identity.original, activation: "held", mutations: [] } },
     remaining: []
   }
-  // @ts-expect-error A failed filter execution cannot be recovered.
   const failed: ExactRecoveryResult = {
     kind: "recovered",
     job: identity,
+    // @ts-expect-error A failed filter execution cannot be recovered.
     completion: { operation: "retained-filter-replacement", result: { kind: "failed", identity, stage: "documents", write: { kind: "rejected", error: null }, mutations: [] } },
     remaining: []
   }
@@ -379,17 +379,17 @@ function playlistNegative(
   owner.recoverWithdrawnWork({ kind: "ui", windowId: 1, incognito: false }, { review: { kind: "withdrawn-work-review" }, job: { kind: "held-job-selection" }, body: {} })
   // @ts-expect-error Recovery cannot accept a new generation.
   owner.recoverWithdrawnWork({ kind: "ui", windowId: 1, incognito: false }, { review: { kind: "withdrawn-work-review" }, job: { kind: "held-job-selection" }, generation: 3 })
-  // @ts-expect-error A recovered playlist must keep playlist operation correlation.
   const mixed: ExactRecoveryResult = {
     kind: "recovered",
     job: identity,
+    // @ts-expect-error A recovered playlist must keep playlist operation correlation.
     completion: { operation: "retained-filter-replacement", result: { kind: "confirmed", identity, original: identity.original, current: identity.original, activation: "held", mutations: [] } },
     remaining: []
   }
-  // @ts-expect-error A recovered playlist cannot contain a failed execution.
   const failed: ExactRecoveryResult = {
     kind: "recovered",
     job: identity,
+    // @ts-expect-error A recovered playlist cannot contain a failed execution.
     completion: { operation: "retained-playlist-restore", result: { kind: "failed", identity, stage: "documents", write: { kind: "rejected", error: null }, mutations: [] } },
     remaining: []
   }
