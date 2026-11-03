@@ -536,7 +536,7 @@ The user-facing side is in [04 §5](04-features-accounts-data.md#5-breakage-stat
 ### 7.6.1 How the budgets count
 
 - **Q-PERF-1.** **Weight** is the gzip level 9 size of built files. Every weight budget holds for both the Chrome and the Firefox store build (they measured byte for byte the same). Budgets apply to store builds; development builds aren't checked (their kit exports the whole Svelte namespace, §7.8.1).
-- **Q-PERF-2.** **Eager** code loads with the page; **lazy** code loads on first use (the popovers, Diagnostics, the popup's and settings' later parts). Each lazy piece has a weight budget, and the ones a user waits for also have a first-use time budget. The one exception is the first-run page's lazy step 3, which is reported, not gated (Q-PERF-31).
+- **Q-PERF-2.** **Eager** code loads with the page; **lazy** code loads on first use (the popovers, each site's jobs file (R200), Diagnostics, the popup's and settings' later parts). Each lazy piece has a weight budget, and the ones a user waits for also have a first-use time budget. The one exception is the first-run page's lazy step 3, which is reported, not gated (Q-PERF-31).
 - **Q-PERF-3.** **Time** is main-thread time, net of what the same page costs with nothing of ours injected, measured as the change in the Chrome DevTools Protocol's `Performance.getMetrics` `TaskDuration` across injection plus 400–500 ms of settling, in a fresh page each run. It's measured on the **reference machine** (Ryzen 5 5600X, Chromium 156) at 1× and at 4× CPU throttling; 4× stands in for a slow laptop. Time budgets are gated on Chromium only. Firefox has none of these methods, so it records the same cases with `performance.mark` for information, and is gated on sizes and behaviour (Q-TEST-19). (R31)
 - **Q-PERF-4.** In-page CSS ships inside the script (Svelte injects it into our shadow roots), so it counts as JS. Icons are inline SVG paths and count. Fonts cost nothing: in-page UI uses the Roboto and YouTube Sans the site already loads, and bundles none.
 
@@ -562,7 +562,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 
 | File | Contents | Loads while | Budget | Measured, rough build (ticket 14) |
 |---|---|---|---|---|
-| `page-www.js` (MAIN) | Gateway, route table, parsers, live page adapter, page channel | any www feature is on, or the on-demand probe runs | 5 | 0.69 (a stub gateway; the real one isn't built) |
+| `page-www.js` (MAIN) | Page channel, hello, the account, the streams with their parsers and live read port, and the stub that loads `page-jobs-www.js` on the first job (R200) | any www feature is on, or the on-demand probe runs | 5 | 0.69 (a stub gateway; the real one isn't built). 13.78 with the jobs in their own file (2026-11-03; R200) |
 | `core-www.js` | Site core: links, view, feature host, scope, items, pointer, keys (the undo key included, R2), and the card menu's kit-free notice (about 0.5 KB, R28) | same | 5 | 4.12 (before the notice) |
 | `kit-www.js` | Svelte runtime (linked exports), hosts, toaster, overlay, components, YouTube skin, icons | any www feature but the card menu is on | 28 | 27.84 (about 6 % prototype stand-ins) |
 | `feature-auto-add.js` | watch tracker, player feed, status | on | 3 | not built |
@@ -577,7 +577,7 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 
 | File | Contents | Loads while | Budget | Measured, rough build (ticket 27) |
 |---|---|---|---|---|
-| `page-music.js` (MAIN) | Gateway, route table, queue-state code, parsers, live adapter | the section switch is on (R1) and any YouTube Music feature, or playlist shortcuts with "Also on YouTube Music", is on; or the on-demand probe runs | 5 | 2.7 (the queue jobs; the playlist jobs weren't built) |
+| `page-music.js` (MAIN) | Page channel, hello, the account, the streams with their parsers and live read port, and the stub that loads `page-jobs-music.js` on the first job (R200) | the section switch is on (R1) and any YouTube Music feature, or playlist shortcuts with "Also on YouTube Music", is on; or the on-demand probe runs | 5 | 2.7 (the queue jobs; the playlist jobs weren't built). 14.00 with the jobs in their own file (2026-11-03; R200) |
 | `core-music.js` | as `core-www.js`, with YouTube Music's items and no card-menu notice | same | 4 | 1.3 (a minimal rough core) |
 | `kit-music.js` | as `kit-www.js`, with the YouTube Music skin | same, except the probe | 27 | 26.6 (it also held the controls' components) |
 | `feature-music-actions.js` | one hover overlay, availability, actions | on | 5 | 4.6 |
@@ -590,6 +590,8 @@ Budgets are KB, eager, per page. Each piece counts once per page, however many f
 | File | Contents | Loads | Budget | Measured, rough builds |
 |---|---|---|---|---|
 | `popovers.js` | the playlist picker and the watch-page button's menu, with its own Svelte copy and Bits UI; never linked to the kit's Svelte (R29) | on first open, or on hover intent over a Save ▾ or the watch-page pill, by `scripting.executeScript` | 50 | 48.92 (YouTube build, picker only); **54.5, over** (YouTube Music build): Q-PERF-42 applies |
+| `page-jobs-www.js` (MAIN) | The gateway's jobs: requests, route table, lanes, account guard, playlist and queue parsers, the live request and queue adapters, the reads of a pointed card and of a video's channel, and the diagnostic probe (R200) | once per page, on that page's first job, by `Registrar.ensure` | 20 | 19.20 (2026-11-03) |
+| `page-jobs-music.js` (MAIN) | As `page-jobs-www.js`, with YouTube Music's handlers, queue-state code and item reads (R200) | same | 18 | 17.60 (2026-11-03) |
 
 - **Q-PERF-15.** **How the rows were set.** The rough builds put the kit at 27.84 KB (YouTube) and 26.6 KB (YouTube Music) against an 18 KB line: about 72 % of it Svelte's runtime and about 6 % prototype stand-ins, which the real kit drops. The feature files came in far under their rows. So: (R30)
   - **The kit rows** are 28 KB on YouTube and 27 KB on YouTube Music.

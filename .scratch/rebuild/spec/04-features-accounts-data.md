@@ -93,7 +93,7 @@ Requirements are numbered `FT-`, `ACC-`, `SYNC-`, `DATA-` and `HEALTH-`. Each is
   - It never runs on music.youtube.com while the YouTube Music section switch is off (FT-06). (R1, R8)
 - **FT-17** **Some features on:** only those features' files load, plus what they share: the site core, and the UI kit if one of them draws. The card menu draws nothing of its own and needs no kit; its not-working notice is the site core's tiny kit-free notice (HEALTH-13). A switched-off feature's own files never load. (R28)
 - **FT-18** **The shared site core** ([ticket 17](../issues/17-modules.md) D1, D6) isn't split per feature.
-  - Its page half, the gateway, carries every job of its site, including jobs that only switched-off features use.
+  - Its page half, the gateway, carries every job of its site, including jobs that only switched-off features use. The jobs load from their own file on a page's first job, so a page that runs no job loads none of them ([ARC-MAN-26](06-architecture.md#633-runtime-script-registration); R200).
   - Its isolated half carries the machinery several features share: item recognition, pointer and focus tracking, and the one key listener.
   - So while any feature on a site is on, a switched-off feature's share of that code is present but inert. "Off costs nothing" holds by effect: the core adds no listener, observer or element until a feature that's on asks for one. A switched-off feature leaves no element, style, listener, observer, timer or request.
   - The core's code loads only while some feature on that site is on, or through the probe (FT-16).

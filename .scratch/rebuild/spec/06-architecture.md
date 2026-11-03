@@ -40,9 +40,10 @@ This chapter says how 2.0 reaches YouTube and YouTube Music, what ships in each 
  │   popovers.js      lazy, by scripting.executeScript: playlist picker + watch-page menu (own Svelte + Bits UI)             │
  │        ▲▼ PageChannel: CustomEvents with JSON-string detail; item jobs are dispatched on the item's element               │
  │ MAIN world, registration pp-www-page:                                                                                     │
- │   page-www.js      Gateway: route table · lanes · account guard · parsers · effect checks ── PagePort (live) ── YouTube    │
+ │   page-www.js      Gateway's page half: page channel · hello · account · streams ── PagePort (live) ── YouTube            │
+ │   page-jobs-www.js lazy, on the page's first job: route table · lanes · account guard · parsers · effect checks (R200)    │
  └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
- A YouTube Music tab has the same shape: page-music.js, core-music.js, kit-music.js and its features.
+ A YouTube Music tab has the same shape: page-music.js, page-jobs-music.js, core-music.js, kit-music.js and its features.
 ```
 
 **Runtime contexts:**
@@ -692,6 +693,12 @@ Page code is WXT **unlisted scripts** (`defineUnlistedScript`), registered by th
   - It's the only code that reaches a YouTube page while every feature is off, and only after the user opens the popup or settings.
   - **Injection on use** (R88, R91): keys from any tab and the browser menu, which register nothing, call `Registrar.ensure(tabId, { core: true, kit: true })` before their job, so the tab can show the answer's toast ([FT-59](04-features-accounts-data.md#13-off-costs-nothing), ARC-ACC-69). It's allowed only after consent, and the injected code stays inert until reload.
 - **ARC-MAN-16. Popovers:** `ctx.popovers()` → `tab.need { popovers: true }` → `Registrar.ensure(tabId, { popovers: true })` → `executeScript` of `popovers.js`.
+- **ARC-MAN-26. The jobs file** (G42, R200): the page half asks for `page-jobs-<site>.js` on its page's first job, and only then.
+  - The page half sends `need` to the core, the core sends `tab.need { jobs: true }`, and the background runs `Registrar.ensure(tabId, { jobs: true })`. It injects the file into the page's world (`world: "MAIN"`) of that one tab, once, and only behind the page half and core of the current build. It's never registered, so a tab that loads afterwards gets it only on its own first job.
+  - The file offers itself to the page half of its own build with a `ppt:jobs-offer` event on `document`, whose detail is the offer. The page half takes it only while it is asking, and then answers the Registrar's `ppt:jobs` presence check for that build. The core answers `need` with `loaded { ok }` once `ensure` returns.
+  - Jobs that arrive meanwhile wait, and none runs before both the file and that confirmation arrive. Each keeps what is left of its 10 s, so expired work never starts. A refusal, or no answer within 10 s, fails the waiting jobs as never sent (`unavailable`), and the next job asks again.
+  - The jobs half uses the account the page half pinned at load. A jobs file that arrives after an account switch answers `accountChanged` and sends nothing.
+  - Nothing is written into the page: the offer and the presence check are events on `document`, like the page channel. A retire disposes the jobs with the page half. After Clear all disposes the Registrar, `ensure` refuses, so the file can't load again until the page reloads under a new consent.
 - **ARC-MAN-17. After an extension update** (PROVISIONAL until the real-browser layer runs an update in both browsers):
   - the start-up reconcile registers everything again and injects the current files into open tabs;
   - the new core announces itself with a `ppt:retire { build }` event on `document`, and every older core and gateway in the tab disposes itself;
@@ -890,7 +897,7 @@ type TrackerUpdate = { state: TrackerState; counted: number; due: PlaylistId[]; 
 ```ts
 interface Registrar {
   reconcile(): Promise<void>   // idempotent, serialised; on start (which covers install and update), on store changes, on access changes
-  ensure(tabId: number, what: { core?: boolean; kit?: boolean; popovers?: boolean }): Promise<void>  // on-demand probe; injection on use (R88, R91); lazy popovers
+  ensure(tabId: number, what: { core?: boolean; kit?: boolean; popovers?: boolean; jobs?: boolean }): Promise<void>  // on-demand probe; injection on use (R88, R91); lazy popovers; the jobs file (R200)
 }
 ```
 
@@ -1067,7 +1074,7 @@ interface Backend {
 
 ### 6.5.1 The gateway
 
-There's one gateway per tab, created by `page-www.js` or `page-music.js`. It's the only code in YouTube's own JavaScript world: it logs nothing, imports no Svelte and holds no settings.
+There's one gateway per tab, created by `page-www.js` or `page-music.js`. Its jobs half loads from `page-jobs-www.js` or `page-jobs-music.js` on the page's first job (ARC-MAN-26; R200). It's the only code in YouTube's own JavaScript world: it logs nothing, imports no Svelte and holds no settings.
 
 ```ts
 interface Gateway {
@@ -1209,7 +1216,8 @@ type FeatureDef = {
 
 | File | World | Contents | Loads while |
 |---|---|---|---|
-| `page-www.js` | MAIN | Gateway, www route table, parsers, live www adapter, page channel | any www feature is on, or the popup's on-demand probe |
+| `page-www.js` | MAIN | Gateway's page half: page channel, hello, account, streams, their parsers and the live read port | any www feature is on, or the popup's on-demand probe |
+| `page-jobs-www.js` | MAIN, lazy | Gateway's jobs: www route table, lanes, account guard, playlist and queue parsers, live www request and queue adapters (R200) | a page's first job, injected into that tab once (ARC-MAN-26) |
 | `core-www.js` | isolated | SiteCore with www items, and the card menu's kit-free notice (ARC-MOD-32) | same |
 | `kit-www.js` | isolated | Svelte runtime (linked exports), hosts, toaster, overlay, components, YouTube skin, icons | any www feature that needs the kit is on: every www feature except the card menu |
 | `feature-auto-add.js` | isolated | tracker, player feed, status | on |
@@ -1218,7 +1226,8 @@ type FeatureDef = {
 | `feature-queue-button.js` | isolated | queue button | on |
 | `feature-watch-button.js` | isolated | the pill | on |
 | `feature-card-menu.js` | isolated | `contextmenu` handler | on |
-| `page-music.js` | MAIN | Gateway, music route table, queue-state code, parsers, live music adapter | any music page entry is on and the section switch is on |
+| `page-music.js` | MAIN | Gateway's page half, as `page-www.js`, with YouTube Music's read bindings | any music page entry is on and the section switch is on |
+| `page-jobs-music.js` | MAIN, lazy | Gateway's jobs: music route table, handlers, queue-state code, item reads, live music adapter (R200) | a page's first job, injected into that tab once (ARC-MAN-26) |
 | `core-music.js` | isolated | SiteCore with music items | same |
 | `kit-music.js` | isolated | as `kit-www`, with the YouTube Music skin | same |
 | `feature-music-actions.js` | isolated | overlay, availability, actions | on |
@@ -1227,7 +1236,7 @@ type FeatureDef = {
 | `popovers.js` | isolated, lazy | picker and watch-page menu, with their own Svelte and Bits UI | first open, or hover intent |
 
 - **ARC-MOD-09.** With every feature off, no file in this table reaches any page, except the on-demand probe's page half and core in one tab, once the user opens the popup or settings (ARC-MAN-15, [FT-16](04-features-accounts-data.md#13-off-costs-nothing)). With the section switch off, no `*-music.js` file reaches music.youtube.com (R1).
-- **ARC-MOD-10.** The gateway carries every job of its site and stays inert until asked, so a little unused job code loads with the site core (ADR-0007).
+- **ARC-MOD-10.** The gateway carries every job of its site and stays inert until asked (ADR-0007). Its jobs half loads on a page's first job, so a page that runs no job loads no job code (ARC-MAN-26; R200).
 - **Size budgets** per file, per site and for the lazy picker, with the CI size gate, are in [07 §7.6](07-quality.md#76-performance-budgets): [Q-PERF-12](07-quality.md#763-in-page-weight) to Q-PERF-14 and [Q-PERF-37](07-quality.md#767-enforcement).
 
 ### 6.7.2 Linking Svelte
@@ -1306,7 +1315,8 @@ sequenceDiagram
 | `hello { build }` | `{ site, build, snapshot: { signedIn, datasyncId \| null, pageType, video?, startedHidden, navType } }`; the last two are read by the page half at `document_start` (ARC-MSG-15; R133) |
 | `run { id, job }` | `{ id, result: JobResult }` |
 | `watch { id, stream }` / `unwatch { id }` | `stream { id, data }` events until unwatched |
-| `probe { id }` | `{ id, report: ProbeReport }` |
+| `probe { id }` | `{ id, report: ProbeReport }`; it loads the jobs file first, which answers it (R200) |
+| `loaded { ok }`, the core's answer to the page half's `need` | whether the background loaded and confirmed the jobs file (ARC-MAN-26; R200) |
 | — | unsolicited `signal { BreakageSignal }` |
 | `retire { build }` (on `document`) | older cores and gateways stop and dispose themselves |
 
@@ -1325,7 +1335,7 @@ sequenceDiagram
 | `tab.change { Change }` | `ChangeResult` | Pause, "Don't auto-add this video", channel filter edits from the watch-page menu |
 | `tab.progress.load { video }` / `tab.progress.save { video, len, parts }` | `Parts \| null` / — | Refused for private tabs, which keep progress in memory |
 | `tab.signals { signals[], successes[] }` | — | Batched |
-| `tab.need { popovers: true }` | `ok` | |
+| `tab.need { popovers: true }` or `tab.need { jobs: true }` | `ok` | The picker, or the page's jobs file on its first job (ARC-MAN-16, ARC-MAN-26) |
 | `tab.noticeShown { features }` | — | |
 
 | Message (background → tab, frame 0) | Answer | Notes |

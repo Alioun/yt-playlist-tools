@@ -38,7 +38,7 @@ WXT, on Vite, compiles the TypeScript and Svelte sources in `src/` and bundles e
 |---|---|
 | `src/entrypoints/` | Thin WXT entrypoints |
 | `src/background/` | Storage, script registration and adds |
-| `src/page/` | The page-world gateway that calls YouTube's own client |
+| `src/page/` | The page-world gateway that calls YouTube's own client. Its jobs build into a second file per site, which the background injects into a tab when that page runs its first job. |
 | `src/site/` | The isolated-world core, the UI kit and the features |
 | `src/ui/` | The popup, settings and the first-run page |
 | `src/shared/` | Code the other folders share |
