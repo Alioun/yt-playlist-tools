@@ -19,10 +19,10 @@ The pilot adds five Bun tests in `tests/integration`.
 The cleanup prevents stale diagnostics from deleted Svelte files in svelte-check 4.7.7.
 
 ```sh
-svelte-check --tsgo --workspace tools/fixtures/svelte-pilot --tsconfig ./tsconfig.json --fail-on-warnings
+node scripts/svelte-check.mjs --tsgo --workspace tools/fixtures/svelte-pilot --tsconfig ./tsconfig.json --fail-on-warnings
 ```
 
-`typescript@~6.0.3` supplies the JavaScript API required by Svelte tooling.
+`typescript6@npm:typescript@6.0.3` supplies the JavaScript API that svelte-check needs. `scripts/svelte-check.mjs` serves svelte-check's `typescript` imports from it.
 `@typescript/native@npm:typescript@7.0.2` supplies the native checker.
 The existing `compile` script selects the native binary explicitly to avoid the two packages' shared `tsc` executable name.
 

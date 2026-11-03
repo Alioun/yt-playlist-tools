@@ -10,5 +10,5 @@ Run these from the repository root. They have not been run yet.
 
 ```sh
 bun test --no-env-file --isolate --conditions=browser ./src/shared/picker/consumer.bun-test.ts
-node node_modules/svelte-check/bin/svelte-check --workspace . --tsconfig ./tools/fixtures/picker-model/tsconfig.json --fail-on-warnings
+node scripts/svelte-check.mjs --workspace . --tsconfig ./tools/fixtures/picker-model/tsconfig.json --fail-on-warnings
 ```

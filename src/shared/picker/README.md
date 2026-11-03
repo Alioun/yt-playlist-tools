@@ -60,7 +60,7 @@ Containers own keyboard handling and focus (UI-PICK-12), copy, toasts, the popup
 ```sh
 bun test --no-env-file --isolate --conditions=browser ./src/shared/picker/model.bun-test.ts ./src/shared/picker/consumer.bun-test.ts
 bun run compile
-node node_modules/svelte-check/bin/svelte-check --tsgo --workspace tools/fixtures/picker-model --tsconfig ./tsconfig.json --fail-on-warnings
+node scripts/svelte-check.mjs --tsgo --workspace tools/fixtures/picker-model --tsconfig ./tsconfig.json --fail-on-warnings
 bun test --no-env-file --isolate --conditions=browser ./tests/guards
 ```
 

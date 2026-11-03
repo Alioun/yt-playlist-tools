@@ -20,6 +20,8 @@ Bun ignores `[test] timeout` in `bunfig.toml`, so both runners pass `--timeout` 
 
 [`.oxlintrc.json`](../../.oxlintrc.json) makes floating promises and awaits of non-promises errors. Its other rules only warn for now.
 
+`bun run compile` and the fixture `tsc` gates check with TypeScript 7 through `@typescript/native`. TypeScript 7's npm package has no compiler API, so `package.json` also installs TypeScript 6 as `typescript6`. svelte-check 4.7 accepts only TypeScript 5 or 6, so run it through [`scripts/svelte-check.mjs`](../../scripts/svelte-check.mjs), which serves its `typescript` imports from `typescript6`. Its `--tsgo` flag still finds TypeScript 7. The seven test files that parse source with the compiler API import `typescript6` directly. They are five `*.bun-test.ts` files in `src/background/store/`, plus `tests/guards/checker.ts` and `tests/guards/forbidden.ts`. Remove the alias and the launcher once svelte-check supports TypeScript 7 and those tests have moved off the compiler API.
+
 [`.oxfmtrc.json`](../../.oxfmtrc.json) holds the house style: no semicolons, double quotes, no trailing commas, lines up to 200 characters. It leaves Svelte files alone, because oxfmt's Svelte support is experimental, and it skips prose, fixture records and the files the G28 approval covers. The one commit that reformatted the repo is listed in [`.git-blame-ignore-revs`](../../.git-blame-ignore-revs). Run `git config blame.ignoreRevsFile .git-blame-ignore-revs` once, and `git blame` skips it.
 
 ## CI
