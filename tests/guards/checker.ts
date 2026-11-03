@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync } from "node:fs"
 import { posix, resolve } from "node:path"
 import { parse } from "svelte/compiler"
-import ts from "typescript"
+// TypeScript 7's package has no compiler API, so this parser uses the TypeScript 6 alias.
+import ts from "typescript6"
 
 export const rules = ["imports", "env", "page-console", "entrypoints", "storage-writes", "running-cost"] as const
 export type Rule = (typeof rules)[number]

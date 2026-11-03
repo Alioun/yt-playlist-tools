@@ -1,4 +1,5 @@
-import ts from "typescript"
+// TypeScript 7's package has no compiler API, so this parser uses the TypeScript 6 alias.
+import ts from "typescript6"
 import { scriptText, type Source } from "./checker"
 
 export type ForbiddenRule = "update-listener" | "item-migrations" | "oauth" | "outbound" | "container-id" | "state-identity"

@@ -2,7 +2,8 @@ import { describe, expect, test } from "bun:test"
 import { readFile } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
 import { runInNewContext } from "node:vm"
-import ts from "typescript"
+// TypeScript 7's package has no compiler API, so this parser uses the TypeScript 6 alias.
+import ts from "typescript6"
 import {
   decodeDocument,
   decodeFilter,

@@ -7,7 +7,7 @@ rmSync(new URL("../../../.svelte-check/", import.meta.url), { recursive: true, f
 const result = spawnSync(
   process.execPath,
   [
-    fileURLToPath(new URL("../../../node_modules/svelte-check/bin/svelte-check", import.meta.url)),
+    fileURLToPath(new URL("../../../scripts/svelte-check.mjs", import.meta.url)),
     "--workspace",
     fileURLToPath(new URL("../../../", import.meta.url)),
     "--tsconfig",

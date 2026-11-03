@@ -105,7 +105,7 @@ async function check(checker: Checker, project: string, deadline: number): Promi
   const argv =
     checker === "tsc"
       ? ["node", "node_modules/@typescript/native/bin/tsc", "--noEmit", "--pretty", "false", "-p", project]
-      : ["node", "node_modules/svelte-check/bin/svelte-check", "--workspace", ".", "--tsconfig", `./${project}`, "--fail-on-warnings", "--output", "machine"]
+      : ["node", "scripts/svelte-check.mjs", "--workspace", ".", "--tsconfig", `./${project}`, "--fail-on-warnings", "--output", "machine"]
   const result = await run(argv, deadline)
   const lines = (result.stdout.toString() + result.stderr).split("\n")
   const diagnostics =
