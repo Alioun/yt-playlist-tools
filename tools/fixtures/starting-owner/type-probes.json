@@ -3,80 +3,80 @@
   "probes": [
     {
       "path": "src/background/adapters/starting-owner.type-test.ts",
-      "directiveLine": 33,
-      "diagnosticLine": 34,
+      "directiveLine": 42,
+      "diagnosticLine": 43,
       "directive": "// @ts-expect-error Missing safe local is not a native raw-storage fallback.",
       "statement": "void createBrowserStartingLocalFilterWriter(native, withoutLocal)",
       "state": "authored-unexecuted"
     },
     {
       "path": "src/background/adapters/starting-owner.type-test.ts",
-      "directiveLine": 35,
-      "diagnosticLine": 36,
+      "directiveLine": 44,
+      "diagnosticLine": 45,
       "directive": "// @ts-expect-error Missing startup cannot construct a preinitialized owner.",
       "statement": "void createBrowserStartingLocalFilterWriter(native, withoutStartup)",
       "state": "authored-unexecuted"
     },
     {
       "path": "src/background/adapters/starting-owner.type-test.ts",
-      "directiveLine": 37,
-      "diagnosticLine": 38,
+      "directiveLine": 46,
+      "diagnosticLine": 47,
       "directive": "// @ts-expect-error Session accepts canonical edits rather than arbitrary storage keys.",
       "statement": "void owner.session.change({ ...change, edits: [{ kind: \"invented-session-key\", value: true }] })",
       "state": "authored-unexecuted"
     },
     {
       "path": "src/background/adapters/starting-owner.type-test.ts",
-      "directiveLine": 39,
-      "diagnosticLine": 40,
+      "directiveLine": 48,
+      "diagnosticLine": 49,
       "directive": "// @ts-expect-error The session facade exposes no raw storage writer.",
       "statement": "void owner.session.set({ paused: true })",
       "state": "authored-unexecuted"
     },
     {
       "path": "src/background/adapters/starting-owner.type-test.ts",
-      "directiveLine": 41,
-      "diagnosticLine": 42,
+      "directiveLine": 50,
+      "diagnosticLine": 51,
       "directive": "// @ts-expect-error Invented methods cannot appear on the complete derived owner.",
       "statement": "void owner.activateNativeAuthority()",
       "state": "authored-unexecuted"
     },
     {
       "path": "src/background/adapters/starting-owner.type-test.ts",
-      "directiveLine": 43,
-      "diagnosticLine": 44,
+      "directiveLine": 52,
+      "diagnosticLine": 53,
       "directive": "// @ts-expect-error Fixture claim authority cannot enter native configuration.",
       "statement": "void createBrowserStartingLocalFilterWriter(native, { ...options, claim })",
       "state": "authored-unexecuted"
     },
     {
       "path": "src/background/adapters/starting-owner.type-test.ts",
-      "directiveLine": 45,
-      "diagnosticLine": 46,
+      "directiveLine": 54,
+      "diagnosticLine": 55,
       "directive": "// @ts-expect-error Fixture removal authority cannot enter native configuration.",
       "statement": "void createBrowserStartingLocalFilterWriter(native, { ...options, removal })",
       "state": "authored-unexecuted"
     },
     {
       "path": "src/background/adapters/starting-owner.type-test.ts",
-      "directiveLine": 47,
-      "diagnosticLine": 48,
+      "directiveLine": 56,
+      "diagnosticLine": 57,
       "directive": "// @ts-expect-error Fixture join authority cannot enter native configuration.",
       "statement": "void createBrowserStartingLocalFilterWriter(native, { ...options, join })",
       "state": "authored-unexecuted"
     },
     {
       "path": "src/background/adapters/starting-owner.type-test.ts",
-      "directiveLine": 49,
-      "diagnosticLine": 50,
+      "directiveLine": 58,
+      "diagnosticLine": 59,
       "directive": "// @ts-expect-error Fixture recovery authority cannot enter native configuration.",
       "statement": "void createBrowserStartingLocalFilterWriter(native, { ...options, recovery })",
       "state": "authored-unexecuted"
     },
     {
       "path": "src/background/adapters/starting-owner.type-test.ts",
-      "directiveLine": 51,
-      "diagnosticLine": 52,
+      "directiveLine": 60,
+      "diagnosticLine": 61,
       "directive": "// @ts-expect-error Fixture canonical authority cannot enter native configuration.",
       "statement": "void createBrowserStartingLocalFilterWriter(native, { ...options, canonicalAuthority })",
       "state": "authored-unexecuted"

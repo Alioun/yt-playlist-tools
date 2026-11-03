@@ -1110,7 +1110,7 @@
             "before": "if (change.confirmation.kind === \"use-here\" && !sameConflicts(conflicts, change.confirmation.conflicts)) return refused(\"stale\")",
             "after": "if (false) return refused(\"stale\")",
             "occurrence": 1,
-            "line": 43
+            "line": 49
           }
         ],
         "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
@@ -1168,7 +1168,7 @@
             "before": "if (change.confirmation.kind === \"use-here\" && !sameConflicts(conflicts, change.confirmation.conflicts)) return refused(\"stale\")",
             "after": "if (false) return refused(\"stale\")",
             "occurrence": 1,
-            "line": 43
+            "line": 49
           }
         ],
         "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
@@ -1222,7 +1222,7 @@
             "before": "if (settings.shortcuts.list.length >= 20) return refused(\"limit\")",
             "after": "if (settings.shortcuts.list.length >= 21) return refused(\"limit\")",
             "occurrence": 1,
-            "line": 50
+            "line": 56
           }
         ],
         "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
@@ -1280,7 +1280,7 @@
             "before": "if (settings.shortcuts.list.length >= 20) return refused(\"limit\")",
             "after": "if (settings.shortcuts.list.length >= 21) return refused(\"limit\")",
             "occurrence": 1,
-            "line": 50
+            "line": 56
           }
         ],
         "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
@@ -1334,7 +1334,7 @@
             "before": "        seen.add(key.acct)",
             "after": "        if (key.acct === \"BBBBBBBBBBBBBBBB\") continue\n        seen.add(key.acct)",
             "occurrence": 1,
-            "line": 132
+            "line": 160
           }
         ],
         "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
@@ -1392,7 +1392,7 @@
             "before": "        seen.add(key.acct)",
             "after": "        if (key.acct === \"BBBBBBBBBBBBBBBB\") continue\n        seen.add(key.acct)",
             "occurrence": 1,
-            "line": 132
+            "line": 160
           }
         ],
         "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
@@ -1446,7 +1446,7 @@
             "before": "expires: issued + 6000",
             "after": "expires: issued + 60000",
             "occurrence": 1,
-            "line": 181
+            "line": 231
           }
         ],
         "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
@@ -1504,7 +1504,7 @@
             "before": "expires: issued + 6000",
             "after": "expires: issued + 60000",
             "occurrence": 1,
-            "line": 181
+            "line": 231
           }
         ],
         "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
@@ -1558,7 +1558,7 @@
             "before": "    if (!jsonObject(edit.settings)) return invalid",
             "after": "    edit.settings.shortcuts.list.forEach(row => { row.label = row.label.trim() })\n    if (!jsonObject(edit.settings)) return invalid",
             "occurrence": 1,
-            "line": 43
+            "line": 44
           }
         ],
         "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
@@ -1616,7 +1616,7 @@
             "before": "    if (!jsonObject(edit.settings)) return invalid",
             "after": "    edit.settings.shortcuts.list.forEach(row => { row.label = row.label.trim() })\n    if (!jsonObject(edit.settings)) return invalid",
             "occurrence": 1,
-            "line": 43
+            "line": 44
           }
         ],
         "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
@@ -1670,7 +1670,7 @@
             "before": "return consentObject(observed) && sameSyncJson(observed, { ...before, ...items }) ? { kind: \"committed\" } : { kind: \"unconfirmed\", cause: { kind: \"readback\" } }",
             "after": "return { kind: \"committed\" }",
             "occurrence": 1,
-            "line": 137
+            "line": 177
           }
         ],
         "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
@@ -1728,7 +1728,7 @@
             "before": "return consentObject(observed) && sameSyncJson(observed, { ...before, ...items }) ? { kind: \"committed\" } : { kind: \"unconfirmed\", cause: { kind: \"readback\" } }",
             "after": "return { kind: \"committed\" }",
             "occurrence": 1,
-            "line": 137
+            "line": 177
           }
         ],
         "testFile": "tools/fixtures/key-settings/owner.bun-test.ts",
@@ -2950,7 +2950,7 @@
             "before": "    case \"autoAdd.feedback\":\n      if (typeof change.value !== \"boolean\") return { kind: \"invalid\", reason: \"invalid-option\" }",
             "after": "    case \"autoAdd.feedback\":",
             "occurrence": 1,
-            "line": 49
+            "line": 45
           },
           {
             "before": "settings.autoAdd.feedback = change.value",
@@ -3049,7 +3049,7 @@
             "before": "    case \"autoAdd.feedback\":\n      if (typeof change.value !== \"boolean\") return { kind: \"invalid\", reason: \"invalid-option\" }",
             "after": "    case \"autoAdd.feedback\":",
             "occurrence": 1,
-            "line": 49
+            "line": 45
           },
           {
             "before": "settings.autoAdd.feedback = change.value",
@@ -3330,7 +3330,7 @@
               "before": "if (!jsonObject(confirmed) || !sameSyncJson(readSettingsSnapshot(confirmed), { ...baseline, ...items }))",
               "after": "if (!jsonObject(confirmed))",
               "occurrence": 1,
-              "line": 100
+              "line": 107
             }
           ],
           "namedAssertion": "native ignore never substitutes a write promise for a confirmed receipt",
@@ -3417,7 +3417,7 @@
               "before": "if (!jsonObject(confirmed) || !sameSyncJson(readSettingsSnapshot(confirmed), { ...baseline, ...items }))",
               "after": "if (!jsonObject(confirmed))",
               "occurrence": 1,
-              "line": 100
+              "line": 107
             }
           ],
           "namedAssertion": "native ignore never substitutes a write promise for a confirmed receipt",
@@ -3484,7 +3484,7 @@
             "before": "settings.musicActions.buttons.next = change.value",
             "after": "settings.musicActions.buttons.queue = change.value",
             "occurrence": 1,
-            "line": 143
+            "line": 139
           }
         ],
         "namedAssertion": "native confirms musicActions.buttons.next and preserves the complete independent inventory",
@@ -3571,7 +3571,7 @@
             "before": "settings.musicActions.buttons.next = change.value",
             "after": "settings.musicActions.buttons.queue = change.value",
             "occurrence": 1,
-            "line": 143
+            "line": 139
           }
         ],
         "namedAssertion": "native confirms musicActions.buttons.next and preserves the complete independent inventory",
@@ -3807,7 +3807,7 @@
             "line": 1353
           },
           {
-            "before": "      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })",
+            "before": "      try {\n        await guardedLocal.set(items)\n      } catch (error) {\n        uncertain({ kind: \"readback\" })",
             "after": "      emitView({ kind: \"filter-changed\", source: \"local\", acct: change.acct, playlist: change.playlist })\n      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })",
             "occurrence": 1,
             "line": 1344
@@ -3829,7 +3829,7 @@
             },
             {
               "path": "src/background/store/local-filter-writer.ts",
-              "old": "      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })",
+              "old": "      try {\n        await guardedLocal.set(items)\n      } catch (error) {\n        uncertain({ kind: \"readback\" })",
               "new": "      emitView({ kind: \"filter-changed\", source: \"local\", acct: change.acct, playlist: change.playlist })\n      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })"
             }
           ],
@@ -3895,7 +3895,7 @@
             "line": 1353
           },
           {
-            "before": "      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })",
+            "before": "      try {\n        await guardedLocal.set(items)\n      } catch (error) {\n        uncertain({ kind: \"readback\" })",
             "after": "      emitView({ kind: \"filter-changed\", source: \"local\", acct: change.acct, playlist: change.playlist })\n      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })",
             "occurrence": 1,
             "line": 1344
@@ -3917,7 +3917,7 @@
             },
             {
               "path": "src/background/store/local-filter-writer.ts",
-              "old": "      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })",
+              "old": "      try {\n        await guardedLocal.set(items)\n      } catch (error) {\n        uncertain({ kind: \"readback\" })",
               "new": "      emitView({ kind: \"filter-changed\", source: \"local\", acct: change.acct, playlist: change.playlist })\n      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })"
             }
           ],

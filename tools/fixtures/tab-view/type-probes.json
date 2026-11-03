@@ -36,8 +36,8 @@
     },
     {
       "path": "src/background/tab-view/producer.bun-test.ts",
-      "directiveLine": 84,
-      "diagnosticLine": 85,
+      "directiveLine": 150,
+      "diagnosticLine": 151,
       "directive": "// @ts-expect-error Unknown identity is not a Tabs-authenticated account.",
       "statement": "    expect(await h.producer.produce(unknown)).toEqual({ kind: \"unavailable\" })",
       "state": "authored-unexecuted"
@@ -60,18 +60,18 @@
     },
     {
       "path": "src/background/tab-view/producer.type-test.ts",
-      "directiveLine": 13,
-      "diagnosticLine": 14,
+      "directiveLine": 14,
+      "diagnosticLine": 15,
       "directive": "// @ts-expect-error Status facts require the actual tab/account/site/build/privacy context.",
-      "statement": "export const unboundStatus: StatusProducer = { async read() { return { kind: \"statuses\", statuses: [] } } }",
+      "statement": "export const unboundStatus: StatusProducer = {\n  // @ts-expect-error Status facts require the actual tab/account/site/build/privacy context.\n  async read() {\n    return { kind: \"statuses\", statuses: [] }\n  }\n}",
       "state": "authored-unexecuted"
     },
     {
       "path": "src/background/tab-view/producer.type-test.ts",
-      "directiveLine": 15,
-      "diagnosticLine": 16,
+      "directiveLine": 20,
+      "diagnosticLine": 21,
       "directive": "// @ts-expect-error Notice facts require the actual context.",
-      "statement": "export const unboundNotice: NoticeProducer = { async read() { return { kind: \"notices\", notices: [] } } }",
+      "statement": "export const unboundNotice: NoticeProducer = {\n  // @ts-expect-error Notice facts require the actual context.\n  async read() {\n    return { kind: \"notices\", notices: [] }\n  }\n}",
       "state": "authored-unexecuted"
     },
     {

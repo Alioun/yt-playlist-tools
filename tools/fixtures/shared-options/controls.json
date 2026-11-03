@@ -122,7 +122,7 @@
           "before": "if (!jsonObject(confirmed) || !sameSyncJson(readSettingsSnapshot(confirmed), { ...baseline, ...items }))",
           "after": "if (!jsonObject(confirmed))",
           "occurrence": 1,
-          "line": 100
+          "line": 107
         }
       ],
       "namedAssertion": "native ignore never substitutes a write promise for a confirmed receipt",

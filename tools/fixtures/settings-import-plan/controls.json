@@ -167,7 +167,7 @@
     "id": "reused-old-generations",
     "path": "src/background/store/settings-import-plan.ts",
     "mutation": {
-      "before": "try { gen = input.generation(key) } catch { return }\n    if (typeof gen !== \"string\" || gen.length === 0 || generations.has(gen)) return",
+      "before": "try {\n      gen = input.generation(key)\n    } catch {\n      return\n    }\n    if (typeof gen !== \"string\" || gen.length === 0 || generations.has(gen)) return",
       "after": "try { gen = before.kind === \"present\" && typeof before.document.gen === \"string\" ? before.document.gen : input.generation(key) } catch { return }\n    if (typeof gen !== \"string\" || gen.length === 0) return",
       "requiredOccurrences": 1
     },

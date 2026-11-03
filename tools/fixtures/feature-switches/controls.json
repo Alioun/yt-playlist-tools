@@ -13,7 +13,7 @@
           "before": "    settings.musicSection = change.value",
           "after": "    settings.musicSection = change.value\n    settings.musicActions.on = change.value",
           "occurrence": 1,
-          "line": 26
+          "line": 29
         }
       ],
       "testFile": "tools/fixtures/feature-switches/owner.bun-test.ts",
@@ -32,7 +32,7 @@
           "before": "observation = await deps.access?.read()",
           "after": "observation = { www: true, music: true, browserMenu: true }",
           "occurrence": 1,
-          "line": 23
+          "line": 27
         }
       ],
       "testFile": "tools/fixtures/feature-switches/owner.bun-test.ts",
@@ -70,7 +70,7 @@
           "before": "    const path = featureSettings[change.feature]",
           "after": "    const path = featureSettings[change.feature]\n    if (change.value && change.feature === \"shortcuts\") settings.shortcuts.preset = false",
           "occurrence": 1,
-          "line": 31
+          "line": 34
         }
       ],
       "testFile": "tools/fixtures/feature-switches/owner.bun-test.ts",
@@ -86,10 +86,10 @@
       "mode": "100644",
       "anchors": [
         {
-          "before": "return joinProgressPlan(records, []).map(({ acct, shard })",
+          "before": "return joinProgressPlan(records, [])\n    .map(({ acct, shard })",
           "after": "return joinProgressPlan(records, []).filter(({ acct, shard }) => acct !== \"BBBBBBBBBBBBBBBB\" && shard !== 15).map(({ acct, shard })",
           "occurrence": 1,
-          "line": 27
+          "line": 32
         }
       ],
       "testFile": "tools/fixtures/feature-switches/owner.bun-test.ts",
@@ -127,7 +127,7 @@
           "before": "  let settings = decodeSettings(input.current)",
           "after": "  let settings = decodeSettings({})",
           "occurrence": 1,
-          "line": 22
+          "line": 25
         }
       ],
       "testFile": "tools/fixtures/feature-switches/owner.bun-test.ts",

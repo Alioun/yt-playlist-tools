@@ -344,7 +344,7 @@
           "before": "    case \"autoAdd.feedback\":\n      if (typeof change.value !== \"boolean\") return { kind: \"invalid\", reason: \"invalid-option\" }",
           "after": "    case \"autoAdd.feedback\":",
           "occurrence": 1,
-          "line": 49
+          "line": 45
         },
         {
           "before": "settings.autoAdd.feedback = change.value",
@@ -470,7 +470,7 @@
             "before": "if (!jsonObject(confirmed) || !sameSyncJson(readSettingsSnapshot(confirmed), { ...baseline, ...items }))",
             "after": "if (!jsonObject(confirmed))",
             "occurrence": 1,
-            "line": 100
+            "line": 107
           }
         ],
         "namedAssertion": "native ignore never substitutes a write promise for a confirmed receipt",
@@ -503,7 +503,7 @@
           "before": "settings.musicActions.buttons.next = change.value",
           "after": "settings.musicActions.buttons.queue = change.value",
           "occurrence": 1,
-          "line": 143
+          "line": 139
         }
       ],
       "namedAssertion": "native confirms musicActions.buttons.next and preserves the complete independent inventory",
@@ -594,7 +594,7 @@
           "line": 1353
         },
         {
-          "before": "      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })",
+          "before": "      try {\n        await guardedLocal.set(items)\n      } catch (error) {\n        uncertain({ kind: \"readback\" })",
           "after": "      emitView({ kind: \"filter-changed\", source: \"local\", acct: change.acct, playlist: change.playlist })\n      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })",
           "occurrence": 1,
           "line": 1344
@@ -616,7 +616,7 @@
           },
           {
             "path": "src/background/store/local-filter-writer.ts",
-            "old": "      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })",
+            "old": "      try {\n        await guardedLocal.set(items)\n      } catch (error) {\n        uncertain({ kind: \"readback\" })",
             "new": "      emitView({ kind: \"filter-changed\", source: \"local\", acct: change.acct, playlist: change.playlist })\n      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })"
           }
         ],

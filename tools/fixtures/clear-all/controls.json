@@ -12,7 +12,7 @@
       },
       "anchors": [
         {
-          "text": "session: { clear: () => native.storage.session.clear(), async names()",
+          "text": "session: {\n      clear: () => native.storage.session.clear(),\n      async names()",
           "occurrences": 1,
           "firstLine": 86
         }
@@ -126,7 +126,7 @@
       },
       "anchors": [
         {
-          "text": "stage = \"marker\"\n    try { await host.removeLocal([receivedResetKey]) }",
+          "text": "stage = \"marker\"\n    try {\n      await host.removeLocal([receivedResetKey])\n    }",
           "occurrences": 1,
           "firstLine": 205
         }
@@ -166,12 +166,12 @@
         {
           "text": "ports.pace.nextInvocation = invoked.mono + 5000",
           "occurrences": 1,
-          "firstLine": 150
+          "firstLine": 179
         },
         {
           "text": "Math.max(invoked.wall + 5000, outcome.kind",
           "occurrences": 1,
-          "firstLine": 166
+          "firstLine": 198
         }
       ],
       "patch": "tools/fixtures/clear-all/controls/forgotten-pacing.patch",
@@ -321,7 +321,7 @@
       },
       "anchors": [
         {
-          "text": "accounts: [...accounts].sort(), targets, phase: \"session\"",
+          "text": "accounts: [...accounts].sort(),\n        targets,\n        phase: \"session\"",
           "occurrences": 1,
           "firstLine": 139
         }

@@ -7,7 +7,7 @@
       "edits": [
         {
           "path": "src/background/add-flow/add-flow.ts",
-          "before": "const entries = [...privateMemory.skips.get(acct) ?? []]",
+          "before": "const entries = [...(privateMemory.skips.get(acct) ?? [])]",
           "after": "const entries = [...normal.memory.skips.get(acct) ?? []]"
         }
       ],

@@ -126,8 +126,8 @@
       ],
       "seconds": 180,
       "path": "src/shared/contracts/ui.type-test.ts",
-      "annotationLine": 13,
-      "intendedLine": 14,
+      "annotationLine": 52,
+      "intendedLine": 53,
       "annotation": "// @ts-expect-error negative: invented-message. Every UI call is in the composed catalogue.",
       "meaning": "invented-message"
     },
@@ -146,8 +146,8 @@
       ],
       "seconds": 180,
       "path": "src/shared/contracts/ui.type-test.ts",
-      "annotationLine": 15,
-      "intendedLine": 16,
+      "annotationLine": 54,
+      "intendedLine": 55,
       "annotation": "// @ts-expect-error negative: cross-kind-answer. Account answers cannot be playlist creation answers.",
       "meaning": "cross-kind-answer"
     },
@@ -166,8 +166,8 @@
       ],
       "seconds": 180,
       "path": "src/shared/contracts/ui.type-test.ts",
-      "annotationLine": 17,
-      "intendedLine": 18,
+      "annotationLine": 56,
+      "intendedLine": 57,
       "annotation": "// @ts-expect-error negative: narrow-first-run. New catalogue members do not widen the first-run handler.",
       "meaning": "narrow-first-run"
     },
@@ -426,8 +426,8 @@
       ],
       "seconds": 180,
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 31,
-      "intendedLine": 32,
+      "annotationLine": 30,
+      "intendedLine": 31,
       "annotation": "// @ts-expect-error negative: readonly-local-set. UI storage cannot write.",
       "meaning": "readonly-local-set"
     },
@@ -446,8 +446,8 @@
       ],
       "seconds": 180,
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 33,
-      "intendedLine": 34,
+      "annotationLine": 32,
+      "intendedLine": 33,
       "annotation": "// @ts-expect-error negative: readonly-local-remove. UI storage cannot remove.",
       "meaning": "readonly-local-remove"
     },
@@ -466,8 +466,8 @@
       ],
       "seconds": 180,
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 35,
-      "intendedLine": 36,
+      "annotationLine": 34,
+      "intendedLine": 35,
       "annotation": "// @ts-expect-error negative: readonly-local-clear. UI storage cannot clear.",
       "meaning": "readonly-local-clear"
     },
@@ -486,8 +486,8 @@
       ],
       "seconds": 180,
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 37,
-      "intendedLine": 38,
+      "annotationLine": 36,
+      "intendedLine": 37,
       "annotation": "// @ts-expect-error negative: readonly-local-all. A read names its canonical keys.",
       "meaning": "readonly-local-all"
     },
@@ -506,8 +506,8 @@
       ],
       "seconds": 180,
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 39,
-      "intendedLine": 40,
+      "annotationLine": 38,
+      "intendedLine": 39,
       "annotation": "// @ts-expect-error negative: dto-origin. Origin comes from the native sender.",
       "meaning": "dto-origin"
     },
@@ -526,8 +526,8 @@
       ],
       "seconds": 180,
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 41,
-      "intendedLine": 42,
+      "annotationLine": 40,
+      "intendedLine": 41,
       "annotation": "// @ts-expect-error negative: dto-review. The review cannot cross the wire.",
       "meaning": "dto-review"
     },
@@ -546,8 +546,8 @@
       ],
       "seconds": 180,
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 43,
-      "intendedLine": 44,
+      "annotationLine": 42,
+      "intendedLine": 43,
       "annotation": "// @ts-expect-error negative: dto-promise. Permission evidence stays in its process.",
       "meaning": "dto-promise"
     },
@@ -566,8 +566,8 @@
       ],
       "seconds": 180,
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 45,
-      "intendedLine": 46,
+      "annotationLine": 44,
+      "intendedLine": 45,
       "annotation": "// @ts-expect-error negative: operation-result. Setup and agreement answers differ.",
       "meaning": "operation-result"
     },
@@ -586,8 +586,8 @@
       ],
       "seconds": 180,
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 47,
-      "intendedLine": 48,
+      "annotationLine": 46,
+      "intendedLine": 47,
       "annotation": "// @ts-expect-error negative: operation-args. The pre-consent lookup accepts no agreement body.",
       "meaning": "operation-args"
     },
@@ -606,8 +606,8 @@
       ],
       "seconds": 180,
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 49,
-      "intendedLine": 50,
+      "annotationLine": 48,
+      "intendedLine": 49,
       "annotation": "// @ts-expect-error negative: subset. Remaining unbuilt calls have no successful placeholder.",
       "meaning": "subset"
     },
@@ -626,8 +626,8 @@
       ],
       "seconds": 180,
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 51,
-      "intendedLine": 52,
+      "annotationLine": 50,
+      "intendedLine": 51,
       "annotation": "// @ts-expect-error negative: account-brand. A native account identifier is not an AccountKey.",
       "meaning": "account-brand"
     },
@@ -646,8 +646,8 @@
       ],
       "seconds": 180,
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 53,
-      "intendedLine": 54,
+      "annotationLine": 52,
+      "intendedLine": 53,
       "annotation": "// @ts-expect-error negative: playlist-brand. A raw string has not passed validation.",
       "meaning": "playlist-brand"
     },
@@ -666,8 +666,8 @@
       ],
       "seconds": 180,
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 55,
-      "intendedLine": 56,
+      "annotationLine": 54,
+      "intendedLine": 55,
       "annotation": "// @ts-expect-error negative: music-scopes. Shortcuts needs an explicit Music disposition.",
       "meaning": "music-scopes"
     },
@@ -686,8 +686,8 @@
       ],
       "seconds": 180,
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 57,
-      "intendedLine": 58,
+      "annotationLine": 56,
+      "intendedLine": 57,
       "annotation": "// @ts-expect-error negative: no-chooser. Playlist choices require an actual chooser port.",
       "meaning": "no-chooser"
     },
@@ -795,7 +795,7 @@
       "failureNeedle": "expect(result.result.cache.kind).toBe(\"unconfirmed\")",
       "replacements": [
         {
-          "before": "case \"unconfirmed\": return { kind: \"unconfirmed\", write: value.write, cause: value.cause }",
+          "before": "case \"unconfirmed\":\n      return { kind: \"unconfirmed\", write: value.write, cause: value.cause }",
           "after": "case \"unconfirmed\": return { kind: \"committed\" }"
         }
       ],
@@ -821,7 +821,7 @@
       "failureNeedle": "expect(h.h.runs(\"create\")).toHaveLength(1)",
       "replacements": [
         {
-          "before": "payload.action === \"status\" || payload.action === \"submit\" && existing?.answer",
+          "before": "payload.action === \"status\" || (payload.action === \"submit\" && existing?.answer",
           "after": "payload.action === \"status\""
         },
         {

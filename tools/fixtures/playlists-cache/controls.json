@@ -5,7 +5,7 @@
     {
       "id": "membership-persistence",
       "path": "src/background/store/local-filter-writer.ts",
-      "find": "const key = `cache:${saved.acct}`, value = cacheJson(planned)",
+      "find": "const key = `cache:${saved.acct}`,\n      value = cacheJson(planned)",
       "replace": "const key = `cache:${saved.acct}`, value = cacheJson(planned)\n    value.membership = { contains: true, videoId: \"aaaaaaaaaaa\", setVideoIds: [\"entry\"] }",
       "test": "src/background/store/playlist-cache.bun-test.ts",
       "name": "membership stores only addable playlist facts and preserves complete unrelated storage",

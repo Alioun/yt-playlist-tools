@@ -112,7 +112,7 @@
         {
           "originalRemovedLine": "          ? planAccountLabel(records, input.acct, lookup.label, label) : { kind: \"stale\", reason: \"setup\" }",
           "finalLines": [
-            1899
+            3325
           ]
         }
       ],
@@ -137,7 +137,7 @@
         {
           "originalRemovedLine": "    read.control.generation === permission.generation && sameSyncJson(read.control.state.current, permission.current)",
           "finalLines": [
-            45
+            60
           ]
         }
       ],
@@ -230,7 +230,7 @@
         {
           "originalRemovedLine": "          case \"local-remove\": for (const name of effect.names) delete local[name]; apply = () => deps.cleanup.removeLocal(effect.keys); break",
           "finalLines": [
-            186
+            246
           ]
         }
       ],
@@ -305,7 +305,7 @@
         {
           "originalRemovedLine": "          case \"local-set\": local = { ...local, ...effect.items }; apply = () => deps.local.set(effect.items); break",
           "finalLines": [
-            185
+            242
           ]
         }
       ],
@@ -447,7 +447,7 @@
         {
           "originalRemovedLine": "      if (!jsonObject(confirmed) || !sameSyncJson(readSettingsSnapshot(confirmed), { ...baseline, ...items })) return { kind: \"unconfirmed\", cause: { kind: \"readback\" } }",
           "finalLines": [
-            100
+            107
           ]
         }
       ],

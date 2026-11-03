@@ -7128,7 +7128,7 @@
       },
       "edits": [
         {
-          "before": "  nowPlaying: v => v === null || isNowPlaying(v), castState:",
+          "before": "  nowPlaying: v => v === null || isNowPlaying(v),\n  castState:",
           "after": "  nowPlaying: v => v === null || isNowPlaying(v) || shape(v, { kind: x => x === \"ad-playing\", evidence: x => x === \"adShowing\" }), castState:"
         }
       ],
@@ -7568,7 +7568,7 @@
       },
       "edits": [
         {
-          "before": "  if (!isVideoId(videoId) || fallback !== undefined && primaryId !== undefined && fallbackId !== primaryId) return undefined",
+          "before": "  if (!isVideoId(videoId) || (fallback !== undefined && primaryId !== undefined && fallbackId !== primaryId)) return undefined",
           "after": "  if (!isVideoId(videoId)) return undefined"
         }
       ],

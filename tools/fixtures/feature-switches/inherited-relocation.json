@@ -14600,7 +14600,7 @@
           "line": 77
         },
         {
-          "text": "export type ConfirmedViewChange = SettingsEvent | SetupEvent |",
+          "text": "export type ConfirmedViewChange =\n  | SettingsEvent\n  | SetupEvent\n  |",
           "line": 78
         },
         {
@@ -14731,7 +14731,7 @@
           "line": 72
         },
         {
-          "text": "export type ConsentJobs = ConsentJobsBase & { readonly retainedV1?: ConsentRetainedV1Proposal; readonly retainedInstallation?: ConsentRetainedInstallationProposal; readonly retainedDocuments?: RegisteredDocumentWitness[] }",
+          "text": "export type ConsentJobs = ConsentJobsBase & {\n  readonly retainedV1?: ConsentRetainedV1Proposal\n  readonly retainedInstallation?: ConsentRetainedInstallationProposal\n  readonly retainedDocuments?: RegisteredDocumentWitness[]\n}",
           "line": 75
         },
         {
@@ -14895,7 +14895,7 @@
           "line": 1316
         },
         {
-          "text": "export async function executeExactRetainedInstallationAcceptance(permit: ExactRetainedInstallationAcceptancePermit, ports: RetainedInstallationAcceptancePorts): Promise<RetainedInstallationAcceptanceExecution> {",
+          "text": "export async function executeExactRetainedInstallationAcceptance(\n  permit: ExactRetainedInstallationAcceptancePermit,\n  ports: RetainedInstallationAcceptancePorts\n): Promise<RetainedInstallationAcceptanceExecution> {",
           "line": 1327
         }
       ]
@@ -14944,8 +14944,8 @@
           "line": 11
         },
         {
-          "text": "export async function executeSharedSetting(deps: {",
-          "line": 30
+          "text": "export async function executeSharedSetting(\n  deps: {",
+          "line": 31
         }
       ]
     },

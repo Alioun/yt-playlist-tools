@@ -23,7 +23,7 @@
       "edits": [
         {
           "path": "src/background/store/session-memory.ts",
-          "before": "const next = copy(raw), touched = new Set<RemovalSessionCollection>()",
+          "before": "const next = copy(raw),\n    touched = new Set<RemovalSessionCollection>()",
           "after": "const next = copy({ breakage: raw.breakage ?? { v: 1, global: {}, accounts: {} } }), touched = new Set<RemovalSessionCollection>()"
         }
       ],

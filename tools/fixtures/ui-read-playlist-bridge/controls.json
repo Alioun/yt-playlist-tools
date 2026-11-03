@@ -61,7 +61,7 @@
       "failureNeedle": "expect(result.result.cache.kind).toBe(\"unconfirmed\")",
       "replacements": [
         {
-          "before": "case \"unconfirmed\": return { kind: \"unconfirmed\", write: value.write, cause: value.cause }",
+          "before": "case \"unconfirmed\":\n      return { kind: \"unconfirmed\", write: value.write, cause: value.cause }",
           "after": "case \"unconfirmed\": return { kind: \"committed\" }"
         }
       ],
@@ -87,7 +87,7 @@
       "failureNeedle": "expect(h.h.runs(\"create\")).toHaveLength(1)",
       "replacements": [
         {
-          "before": "payload.action === \"status\" || payload.action === \"submit\" && existing?.answer",
+          "before": "payload.action === \"status\" || (payload.action === \"submit\" && existing?.answer",
           "after": "payload.action === \"status\""
         },
         {

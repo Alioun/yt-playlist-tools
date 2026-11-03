@@ -69,7 +69,7 @@
           "after": "if (payload.action === \"refresh\") {"
         },
         {
-          "before": "if (payload.generation !== (work?.generation ?? 0) + 1 || work && !work.settled) return unavailable(\"operation\")",
+          "before": "if (payload.generation !== (work?.generation ?? 0) + 1 || (work && !work.settled)) return unavailable(\"operation\")",
           "after": "if (!existing.active) return unavailable(\"operation\")"
         }
       ],
@@ -97,7 +97,7 @@
       "failureNeedle": ".toBe(",
       "replacements": [
         {
-          "before": "case \"failed\": return { kind: \"failed\", stage: value.stage }",
+          "before": "case \"failed\":\n      return { kind: \"failed\", stage: value.stage }",
           "after": "case \"failed\": return { kind: \"committed\" }"
         }
       ],

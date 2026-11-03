@@ -60,7 +60,7 @@
       "edits": [
         {
           "path": "src/background/adapters/starting-owner.ts",
-          "before": "try { event.removeListener(listener) }",
+          "before": "try {\n              event.removeListener(listener)\n            }",
           "after": "try { void listener }"
         }
       ],

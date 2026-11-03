@@ -405,10 +405,10 @@
           "originalIntendedLine": 122,
           "directive": "  // @ts-expect-error Setup requires its account address.",
           "finalDirectiveLines": [
-            123
+            241
           ],
           "finalIntendedLines": [
-            124
+            242
           ],
           "statement": "  void writer.receiveSyncDocument({ kind: \"setup\" })"
         },
@@ -417,10 +417,10 @@
           "originalIntendedLine": 124,
           "directive": "  // @ts-expect-error Setup accounts require the validated brand.",
           "finalDirectiveLines": [
-            125
+            243
           ],
           "finalIntendedLines": [
-            126
+            244
           ],
           "statement": "  void adapter.receiveSyncDocument({ kind: \"setup\", acct: \"AAAAAAAAAAAAAAAA\" })"
         },
@@ -429,10 +429,10 @@
           "originalIntendedLine": 126,
           "directive": "  // @ts-expect-error Other document kinds are outside the receiver.",
           "finalDirectiveLines": [
-            127
+            245
           ],
           "finalIntendedLines": [
-            128
+            246
           ],
           "statement": "  void writer.receiveSyncDocument({ kind: \"device\", acct })"
         },
@@ -441,10 +441,10 @@
           "originalIntendedLine": 128,
           "directive": "  // @ts-expect-error Filter addresses require a branded account value.",
           "finalDirectiveLines": [
-            129
+            247
           ],
           "finalIntendedLines": [
-            130
+            248
           ],
           "statement": "  void writer.receiveSyncDocument({ kind: \"filter\", acct: \"AAAAAAAAAAAAAAAA\", playlist })"
         },
@@ -453,10 +453,10 @@
           "originalIntendedLine": 130,
           "directive": "  // @ts-expect-error Filter addresses require a branded playlist value.",
           "finalDirectiveLines": [
-            131
+            249
           ],
           "finalIntendedLines": [
-            132
+            250
           ],
           "statement": "  void writer.receiveSyncDocument({ kind: \"filter\", acct, playlist: \"PL_P\" })"
         },
@@ -465,10 +465,10 @@
           "originalIntendedLine": 133,
           "directive": "    // @ts-expect-error The adopted record cannot be replaced.",
           "finalDirectiveLines": [
-            134
+            252
           ],
           "finalIntendedLines": [
-            135
+            253
           ],
           "statement": "    result.received = result.received"
         },
@@ -477,10 +477,10 @@
           "originalIntendedLine": 136,
           "directive": "  // @ts-expect-error Receive outcomes are immutable.",
           "finalDirectiveLines": [
-            137
+            255
           ],
           "finalIntendedLines": [
-            138
+            256
           ],
           "statement": "  result.kind = \"idle\""
         },
@@ -489,10 +489,10 @@
           "originalIntendedLine": 140,
           "directive": "  // @ts-expect-error Immutable caller keys stay immutable.",
           "finalDirectiveLines": [
-            141
+            259
           ],
           "finalIntendedLines": [
-            142
+            260
           ],
           "statement": "  key.playlist = playlist"
         },
@@ -501,10 +501,10 @@
           "originalIntendedLine": 148,
           "directive": "  // @ts-expect-error Wall time is required independently of monotonic time.",
           "finalDirectiveLines": [
-            149
+            266
           ],
           "finalIntendedLines": [
-            150
+            267
           ],
           "statement": "  const incomplete: SyncClock = { now: () => 0, after: () => () => {} }"
         },
@@ -513,10 +513,10 @@
           "originalIntendedLine": 150,
           "directive": "  // @ts-expect-error Durable deadlines are numeric Unix milliseconds.",
           "finalDirectiveLines": [
-            151
+            268
           ],
           "finalIntendedLines": [
-            152
+            269
           ],
           "statement": "  const invalid: SyncOpaqueWrite = { gate: { kind: \"held\", notBefore: \"60000\" }, diagnostic: null }"
         },
@@ -525,10 +525,10 @@
           "originalIntendedLine": 159,
           "directive": "  // @ts-expect-error Every core host must choose its claim capability.",
           "finalDirectiveLines": [
-            160
+            277
           ],
           "finalIntendedLines": [
-            161
+            278
           ],
           "statement": "  createLocalFilterWriter(withoutClaim)"
         },
@@ -537,10 +537,10 @@
           "originalIntendedLine": 168,
           "directive": "    // @ts-expect-error Unconfirmed persistence cannot claim success.",
           "finalDirectiveLines": [
-            169
+            286
           ],
           "finalIntendedLines": [
-            170
+            287
           ],
           "statement": "    void result.result.ok"
         },
@@ -549,10 +549,10 @@
           "originalIntendedLine": 170,
           "directive": "    // @ts-expect-error Readback cause is immutable.",
           "finalDirectiveLines": [
-            171
+            288
           ],
           "finalIntendedLines": [
-            172
+            289
           ],
           "statement": "    result.cause.kind = \"authority\""
         },
@@ -561,10 +561,10 @@
           "originalIntendedLine": 173,
           "directive": "  // @ts-expect-error Read failure must retain its original error.",
           "finalDirectiveLines": [
-            174
+            291
           ],
           "finalIntendedLines": [
-            175
+            292
           ],
           "statement": "  const missing: LocalFilterWriteResult = { kind: \"unconfirmed\", cause: { kind: \"read-failed\" } }"
         },
@@ -573,10 +573,10 @@
           "originalIntendedLine": 184,
           "directive": "    // @ts-expect-error Confirmed deletion has no live Setup body.",
           "finalDirectiveLines": [
-            185
+            302
           ],
           "finalIntendedLines": [
-            186
+            303
           ],
           "statement": "    void result.view.setup"
         },
@@ -585,10 +585,10 @@
           "originalIntendedLine": 188,
           "directive": "    // @ts-expect-error A partial cleanup result never carries a committed view.",
           "finalDirectiveLines": [
-            189
+            306
           ],
           "finalIntendedLines": [
-            190
+            307
           ],
           "statement": "    void result.view"
         },
@@ -597,10 +597,10 @@
           "originalIntendedLine": 191,
           "directive": "  // @ts-expect-error Account-specific events require the validated account key.",
           "finalDirectiveLines": [
-            192
+            309
           ],
           "finalIntendedLines": [
-            193
+            310
           ],
           "statement": "  const unaddressed: SetupEvent = { kind: \"setup-changed\", source: \"sync\" }"
         },
@@ -609,10 +609,10 @@
           "originalIntendedLine": 204,
           "directive": "    // @ts-expect-error Caller-owned reads cannot authorize persistence.",
           "finalDirectiveLines": [
-            205
+            322
           ],
           "finalIntendedLines": [
-            206
+            323
           ],
           "statement": "    void writer.absorbPlaylistCache(read.authority.capture, { kind: \"list\", acct, site: \"www\", at: 1, rows: [] })"
         },
@@ -621,10 +621,10 @@
           "originalIntendedLine": 207,
           "directive": "  // @ts-expect-error Cache reads require the authenticated privacy fact.",
           "finalDirectiveLines": [
-            208
+            325
           ],
           "finalIntendedLines": [
-            209
+            326
           ],
           "statement": "  void writer.readPlaylistCache({ acct })"
         },
@@ -633,10 +633,10 @@
           "originalIntendedLine": 209,
           "directive": "  // @ts-expect-error Cache writes require an owner-minted capture, never an account string.",
           "finalDirectiveLines": [
-            210
+            327
           ],
           "finalIntendedLines": [
-            211
+            328
           ],
           "statement": "  void writer.absorbPlaylistCache(acct, { kind: \"list\", acct, site: \"www\", at: 1, rows: [] })"
         },
@@ -645,10 +645,10 @@
           "originalIntendedLine": 222,
           "directive": "  // @ts-expect-error negative: owner-view-no-fake-account. Confirmed view events retain branded account identities.",
           "finalDirectiveLines": [
-            223
+            355
           ],
           "finalIntendedLines": [
-            224
+            356
           ],
           "statement": "  const fake: import(\"./local-filter-writer\").ConfirmedViewChange = { kind: \"account-removed\", acct: \"raw\", source: \"local\" }"
         },
@@ -657,10 +657,10 @@
           "originalIntendedLine": 224,
           "directive": "  // @ts-expect-error negative: owner-view-no-cache-event. Cache bookkeeping cannot become a confirmed view change.",
           "finalDirectiveLines": [
-            225
+            357
           ],
           "finalIntendedLines": [
-            226
+            358
           ],
           "statement": "  const cache: import(\"./local-filter-writer\").ConfirmedViewChange = { kind: \"cache-changed\", acct }"
         },
@@ -669,10 +669,10 @@
           "originalIntendedLine": 243,
           "directive": "  // @ts-expect-error negative: reconciliation-private-sighting",
           "finalDirectiveLines": [
-            244
+            376
           ],
           "finalIntendedLines": [
-            245
+            377
           ],
           "statement": "  void owner.seeAccountLabel({ acct, private: true, at: 1 })"
         },
@@ -681,10 +681,10 @@
           "originalIntendedLine": 245,
           "directive": "  // @ts-expect-error negative: reconciliation-forged-capture",
           "finalDirectiveLines": [
-            246
+            378
           ],
           "finalIntendedLines": [
-            247
+            379
           ],
           "statement": "  void owner.completeAccountLabel({ kind: \"playlist-cache-capture\", acct }, { acct, label: { name: \"Label\" } })"
         },
@@ -693,10 +693,10 @@
           "originalIntendedLine": 247,
           "directive": "  // @ts-expect-error negative: reconciliation-label-shape",
           "finalDirectiveLines": [
-            248
+            380
           ],
           "finalIntendedLines": [
-            249
+            381
           ],
           "statement": "  void owner.completeAccountLabel(capture, { acct, label: { name: 3 } })"
         },
@@ -705,10 +705,10 @@
           "originalIntendedLine": 249,
           "directive": "  // @ts-expect-error negative: reconciliation-native-origin",
           "finalDirectiveLines": [
-            250
+            382
           ],
           "finalIntendedLines": [
-            251
+            383
           ],
           "statement": "  void owner.importCheck({ privacy: \"normal\" }, \"{}\")"
         },
@@ -717,10 +717,10 @@
           "originalIntendedLine": 251,
           "directive": "  // @ts-expect-error negative: reconciliation-plan-no-write",
           "finalDirectiveLines": [
-            252
+            384
           ],
           "finalIntendedLines": [
-            253
+            385
           ],
           "statement": "  void owner.executeImport(normal, {})"
         }
@@ -927,10 +927,10 @@
           "originalIntendedLine": 14,
           "directive": "  // @ts-expect-error negative: invented-message. Every UI call is in the composed catalogue.",
           "finalDirectiveLines": [
-            13
+            52
           ],
           "finalIntendedLines": [
-            14
+            53
           ],
           "statement": "  const invented: RpcRequest<UiMessages> = { kind: \"ui.invented\", payload: {} }"
         },
@@ -939,10 +939,10 @@
           "originalIntendedLine": 16,
           "directive": "  // @ts-expect-error negative: cross-kind-answer. Account answers cannot be playlist creation answers.",
           "finalDirectiveLines": [
-            15
+            54
           ],
           "finalIntendedLines": [
-            16
+            55
           ],
           "statement": "  const wrong: UiMessages[\"ui.accountInView\"][\"result\"] = { kind: \"created\", id: \"PL_alpha\" }"
         },
@@ -951,10 +951,10 @@
           "originalIntendedLine": 18,
           "directive": "  // @ts-expect-error negative: narrow-first-run. New catalogue members do not widen the first-run handler.",
           "finalDirectiveLines": [
-            17
+            56
           ],
           "finalIntendedLines": [
-            18
+            57
           ],
           "statement": "  handlers[\"ui.change\"]({ change: { kind: \"create\", title: \"Wrong domain\" } }, undefined)"
         }

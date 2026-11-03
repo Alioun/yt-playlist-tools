@@ -93,8 +93,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/shared/contracts/ui.type-test.ts",
-      "annotationLine": 13,
-      "intendedLine": 14,
+      "annotationLine": 52,
+      "intendedLine": 53,
       "annotation": "// @ts-expect-error negative: invented-message. Every UI call is in the composed catalogue.",
       "command": [
         "/usr/bin/timeout",
@@ -142,8 +142,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/shared/contracts/ui.type-test.ts",
-      "annotationLine": 15,
-      "intendedLine": 16,
+      "annotationLine": 54,
+      "intendedLine": 55,
       "annotation": "// @ts-expect-error negative: cross-kind-answer. Account answers cannot be playlist creation answers.",
       "command": [
         "/usr/bin/timeout",
@@ -191,8 +191,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/shared/contracts/ui.type-test.ts",
-      "annotationLine": 17,
-      "intendedLine": 18,
+      "annotationLine": 56,
+      "intendedLine": 57,
       "annotation": "// @ts-expect-error negative: narrow-first-run. New catalogue members do not widen the first-run handler.",
       "command": [
         "/usr/bin/timeout",
@@ -828,8 +828,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 31,
-      "intendedLine": 32,
+      "annotationLine": 30,
+      "intendedLine": 31,
       "annotation": "// @ts-expect-error negative: readonly-local-set. UI storage cannot write.",
       "command": [
         "/usr/bin/timeout",
@@ -877,8 +877,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 33,
-      "intendedLine": 34,
+      "annotationLine": 32,
+      "intendedLine": 33,
       "annotation": "// @ts-expect-error negative: readonly-local-remove. UI storage cannot remove.",
       "command": [
         "/usr/bin/timeout",
@@ -926,8 +926,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 35,
-      "intendedLine": 36,
+      "annotationLine": 34,
+      "intendedLine": 35,
       "annotation": "// @ts-expect-error negative: readonly-local-clear. UI storage cannot clear.",
       "command": [
         "/usr/bin/timeout",
@@ -975,8 +975,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 37,
-      "intendedLine": 38,
+      "annotationLine": 36,
+      "intendedLine": 37,
       "annotation": "// @ts-expect-error negative: readonly-local-all. A read names its canonical keys.",
       "command": [
         "/usr/bin/timeout",
@@ -1024,8 +1024,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 39,
-      "intendedLine": 40,
+      "annotationLine": 38,
+      "intendedLine": 39,
       "annotation": "// @ts-expect-error negative: dto-origin. Origin comes from the native sender.",
       "command": [
         "/usr/bin/timeout",
@@ -1073,8 +1073,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 41,
-      "intendedLine": 42,
+      "annotationLine": 40,
+      "intendedLine": 41,
       "annotation": "// @ts-expect-error negative: dto-review. The review cannot cross the wire.",
       "command": [
         "/usr/bin/timeout",
@@ -1122,8 +1122,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 43,
-      "intendedLine": 44,
+      "annotationLine": 42,
+      "intendedLine": 43,
       "annotation": "// @ts-expect-error negative: dto-promise. Permission evidence stays in its process.",
       "command": [
         "/usr/bin/timeout",
@@ -1171,8 +1171,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 45,
-      "intendedLine": 46,
+      "annotationLine": 44,
+      "intendedLine": 45,
       "annotation": "// @ts-expect-error negative: operation-result. Setup and agreement answers differ.",
       "command": [
         "/usr/bin/timeout",
@@ -1220,8 +1220,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 47,
-      "intendedLine": 48,
+      "annotationLine": 46,
+      "intendedLine": 47,
       "annotation": "// @ts-expect-error negative: operation-args. The pre-consent lookup accepts no agreement body.",
       "command": [
         "/usr/bin/timeout",
@@ -1269,8 +1269,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 49,
-      "intendedLine": 50,
+      "annotationLine": 48,
+      "intendedLine": 49,
       "annotation": "// @ts-expect-error negative: subset. Remaining unbuilt calls have no successful placeholder.",
       "command": [
         "/usr/bin/timeout",
@@ -1318,8 +1318,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 51,
-      "intendedLine": 52,
+      "annotationLine": 50,
+      "intendedLine": 51,
       "annotation": "// @ts-expect-error negative: account-brand. A native account identifier is not an AccountKey.",
       "command": [
         "/usr/bin/timeout",
@@ -1367,8 +1367,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 53,
-      "intendedLine": 54,
+      "annotationLine": 52,
+      "intendedLine": 53,
       "annotation": "// @ts-expect-error negative: playlist-brand. A raw string has not passed validation.",
       "command": [
         "/usr/bin/timeout",
@@ -1416,8 +1416,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 55,
-      "intendedLine": 56,
+      "annotationLine": 54,
+      "intendedLine": 55,
       "annotation": "// @ts-expect-error negative: music-scopes. Shortcuts needs an explicit Music disposition.",
       "command": [
         "/usr/bin/timeout",
@@ -1465,8 +1465,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 57,
-      "intendedLine": 58,
+      "annotationLine": 56,
+      "intendedLine": 57,
       "annotation": "// @ts-expect-error negative: no-chooser. Playlist choices require an actual chooser port.",
       "command": [
         "/usr/bin/timeout",
@@ -1685,7 +1685,7 @@
       "path": "src/background/router/ui-playlists/wire.ts",
       "replacements": [
         {
-          "before": "case \"unconfirmed\": return { kind: \"unconfirmed\", write: value.write, cause: value.cause }",
+          "before": "case \"unconfirmed\":\n      return { kind: \"unconfirmed\", write: value.write, cause: value.cause }",
           "after": "case \"unconfirmed\": return { kind: \"committed\" }"
         }
       ],
@@ -1741,7 +1741,7 @@
       "path": "src/background/router/ui-playlists/index.ts",
       "replacements": [
         {
-          "before": "payload.action === \"status\" || payload.action === \"submit\" && existing?.answer",
+          "before": "payload.action === \"status\" || (payload.action === \"submit\" && existing?.answer",
           "after": "payload.action === \"status\""
         },
         {
@@ -2182,8 +2182,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
-      "annotationLine": 17,
-      "intendedLine": 18,
+      "annotationLine": 15,
+      "intendedLine": 16,
       "annotation": "// @ts-expect-error negative: list-open-account. Opening a list requires its account.",
       "command": [
         "/usr/bin/timeout",
@@ -2231,8 +2231,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
-      "annotationLine": 19,
-      "intendedLine": 20,
+      "annotationLine": 17,
+      "intendedLine": 18,
       "annotation": "// @ts-expect-error negative: list-await-generation. Waiting names the exact refresh generation.",
       "command": [
         "/usr/bin/timeout",
@@ -2280,8 +2280,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
-      "annotationLine": 21,
-      "intendedLine": 22,
+      "annotationLine": 19,
+      "intendedLine": 20,
       "annotation": "// @ts-expect-error negative: list-refresh-authority. Refresh cannot replace the captured account.",
       "command": [
         "/usr/bin/timeout",
@@ -2329,8 +2329,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
-      "annotationLine": 23,
-      "intendedLine": 24,
+      "annotationLine": 21,
+      "intendedLine": 22,
       "annotation": "// @ts-expect-error negative: list-release-no-work. Release cannot carry a refresh generation.",
       "command": [
         "/usr/bin/timeout",
@@ -2378,8 +2378,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
-      "annotationLine": 25,
-      "intendedLine": 26,
+      "annotationLine": 23,
+      "intendedLine": 24,
       "annotation": "// @ts-expect-error negative: list-id-brand. Creation and list operations have different identities.",
       "command": [
         "/usr/bin/timeout",
@@ -2426,9 +2426,9 @@
       "id": "progressive-negative-list-owner-capture",
       "category": "intended-line-negative",
       "status": "unexecuted",
-      "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
-      "annotationLine": 27,
-      "intendedLine": 28,
+      "path": "tools/fixtures/ui-playlist-progressive/owner-capture.type-test.ts",
+      "annotationLine": 6,
+      "intendedLine": 7,
       "annotation": "// @ts-expect-error negative: list-owner-capture. Owner capture is never a wire operation identity.",
       "command": [
         "/usr/bin/timeout",
@@ -2476,8 +2476,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
-      "annotationLine": 29,
-      "intendedLine": 30,
+      "annotationLine": 25,
+      "intendedLine": 26,
       "annotation": "// @ts-expect-error negative: list-pending-finite. An open answer carries finite refresh metadata.",
       "command": [
         "/usr/bin/timeout",
@@ -2525,8 +2525,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
-      "annotationLine": 31,
-      "intendedLine": 32,
+      "annotationLine": 27,
+      "intendedLine": 28,
       "annotation": "// @ts-expect-error negative: list-refreshed-finite. A completed refresh cannot carry a native callback.",
       "command": [
         "/usr/bin/timeout",
@@ -2574,8 +2574,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
-      "annotationLine": 33,
-      "intendedLine": 34,
+      "annotationLine": 29,
+      "intendedLine": 30,
       "annotation": "// @ts-expect-error negative: list-release-identity. A released answer still names its operation.",
       "command": [
         "/usr/bin/timeout",
@@ -2623,8 +2623,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
-      "annotationLine": 35,
-      "intendedLine": 36,
+      "annotationLine": 31,
+      "intendedLine": 32,
       "annotation": "// @ts-expect-error negative: list-withheld-no-rows. Refused authority cannot expose refreshed rows.",
       "command": [
         "/usr/bin/timeout",
@@ -2672,8 +2672,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
-      "annotationLine": 37,
-      "intendedLine": 38,
+      "annotationLine": 33,
+      "intendedLine": 34,
       "annotation": "// @ts-expect-error negative: list-readonly-time. Picker timestamps remain readonly.",
       "command": [
         "/usr/bin/timeout",
@@ -2721,8 +2721,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/playlist-list/protocol.type-test.ts",
-      "annotationLine": 39,
-      "intendedLine": 40,
+      "annotationLine": 35,
+      "intendedLine": 36,
       "annotation": "// @ts-expect-error negative: list-refresh-native-privacy. A caller cannot set native privacy.",
       "command": [
         "/usr/bin/timeout",
@@ -2892,7 +2892,7 @@
           "after": "if (payload.action === \"refresh\") {"
         },
         {
-          "before": "if (payload.generation !== (work?.generation ?? 0) + 1 || work && !work.settled) return unavailable(\"operation\")",
+          "before": "if (payload.generation !== (work?.generation ?? 0) + 1 || (work && !work.settled)) return unavailable(\"operation\")",
           "after": "if (!existing.active) return unavailable(\"operation\")"
         }
       ],
@@ -2950,7 +2950,7 @@
       "path": "src/background/router/ui-playlists/wire.ts",
       "replacements": [
         {
-          "before": "case \"failed\": return { kind: \"failed\", stage: value.stage }",
+          "before": "case \"failed\":\n      return { kind: \"failed\", stage: value.stage }",
           "after": "case \"failed\": return { kind: \"committed\" }"
         }
       ],
@@ -3146,8 +3146,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
-      "annotationLine": 25,
-      "intendedLine": 26,
+      "annotationLine": 31,
+      "intendedLine": 32,
       "annotation": "// @ts-expect-error negative: missing-auto-add-read. The receiver needs the canonical read method.",
       "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation.",
       "command": [
@@ -3196,8 +3196,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
-      "annotationLine": 27,
-      "intendedLine": 28,
+      "annotationLine": 33,
+      "intendedLine": 34,
       "annotation": "// @ts-expect-error negative: missing-auto-add-edit. The receiver needs the canonical edit method.",
       "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation.",
       "command": [
@@ -3246,8 +3246,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
-      "annotationLine": 31,
-      "intendedLine": 32,
+      "annotationLine": 37,
+      "intendedLine": 38,
       "annotation": "// @ts-expect-error negative: create-as-list. List release needs a list operation identity.",
       "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation.",
       "command": [
@@ -3296,8 +3296,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
-      "annotationLine": 33,
-      "intendedLine": 34,
+      "annotationLine": 39,
+      "intendedLine": 40,
       "annotation": "// @ts-expect-error negative: list-as-create. Creation status needs a creation identity.",
       "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation.",
       "command": [
@@ -3346,8 +3346,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
-      "annotationLine": 35,
-      "intendedLine": 36,
+      "annotationLine": 41,
+      "intendedLine": 42,
       "annotation": "// @ts-expect-error negative: auto-add-origin. Native authentication owns origin.",
       "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation.",
       "command": [
@@ -3396,8 +3396,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
-      "annotationLine": 37,
-      "intendedLine": 38,
+      "annotationLine": 43,
+      "intendedLine": 44,
       "annotation": "// @ts-expect-error negative: auto-add-sender. A body cannot provide the native sender.",
       "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation.",
       "command": [
@@ -3446,8 +3446,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
-      "annotationLine": 39,
-      "intendedLine": 40,
+      "annotationLine": 45,
+      "intendedLine": 46,
       "annotation": "// @ts-expect-error negative: auto-add-privacy. A message cannot claim its privacy.",
       "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation.",
       "command": [
@@ -3496,8 +3496,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "tools/fixtures/ui-owner-reconciliation/catalogue.type-test.ts",
-      "annotationLine": 41,
-      "intendedLine": 42,
+      "annotationLine": 47,
+      "intendedLine": 48,
       "annotation": "// @ts-expect-error negative: auto-add-account-body. A message cannot supply a native account fact.",
       "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation.",
       "command": [
@@ -3546,8 +3546,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 66,
-      "intendedLine": 67,
+      "annotationLine": 65,
+      "intendedLine": 66,
       "annotation": "// @ts-expect-error negative: auto-add-not-agreement. Agreement cannot satisfy a choice.",
       "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation.",
       "command": [
@@ -3596,8 +3596,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 68,
-      "intendedLine": 69,
+      "annotationLine": 67,
+      "intendedLine": 68,
       "annotation": "// @ts-expect-error negative: auto-add-not-destination. Scalar destination calls require their own result.",
       "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation.",
       "command": [
@@ -3646,8 +3646,8 @@
       "category": "intended-line-negative",
       "status": "unexecuted",
       "path": "src/ui/backend/backend.type-test.ts",
-      "annotationLine": 70,
-      "intendedLine": 71,
+      "annotationLine": 69,
+      "intendedLine": 70,
       "annotation": "// @ts-expect-error negative: destination-not-auto-add. A destination answer cannot prove an auto-add fact.",
       "procedure": "Passing baseline, remove only this directive, require diagnostics only on intendedLine, restore exact bytes and mode, then restored passing compilation.",
       "command": [

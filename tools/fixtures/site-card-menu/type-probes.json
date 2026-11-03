@@ -3,7 +3,7 @@
   "probes": [
     {
       "path": "src/site/features/card-menu/card-menu.type-test.ts",
-      "directiveLine": 18,
+      "directiveLine": 20,
       "errorLine": 19,
       "name": "music-site-definition",
       "directive": "// @ts-expect-error music-site-definition",
@@ -70,7 +70,7 @@
     },
     {
       "path": "src/site/features/card-menu/card-menu.type-test.ts",
-      "directiveLine": 20,
+      "directiveLine": 22,
       "errorLine": 21,
       "name": "services-require-document",
       "directive": "// @ts-expect-error services-require-document",
@@ -137,7 +137,7 @@
     },
     {
       "path": "src/site/features/card-menu/card-menu.type-test.ts",
-      "directiveLine": 22,
+      "directiveLine": 24,
       "errorLine": 23,
       "name": "page-requires-state",
       "directive": "// @ts-expect-error page-requires-state",
@@ -204,7 +204,7 @@
     },
     {
       "path": "src/site/features/card-menu/card-menu.type-test.ts",
-      "directiveLine": 24,
+      "directiveLine": 26,
       "errorLine": 25,
       "name": "notice-requires-due-notice",
       "directive": "// @ts-expect-error notice-requires-due-notice",
@@ -271,7 +271,7 @@
     },
     {
       "path": "src/site/features/card-menu/card-menu.type-test.ts",
-      "directiveLine": 26,
+      "directiveLine": 28,
       "errorLine": 27,
       "name": "open-requires-target",
       "directive": "// @ts-expect-error open-requires-target",
@@ -338,7 +338,7 @@
     },
     {
       "path": "src/site/features/card-menu/card-menu.type-test.ts",
-      "directiveLine": 28,
+      "directiveLine": 30,
       "errorLine": 29,
       "name": "keep-reason-is-closed",
       "directive": "// @ts-expect-error keep-reason-is-closed",
@@ -405,7 +405,7 @@
     },
     {
       "path": "src/site/features/card-menu/card-menu.type-test.ts",
-      "directiveLine": 30,
+      "directiveLine": 32,
       "errorLine": 31,
       "name": "decision-requires-www-view",
       "directive": "// @ts-expect-error decision-requires-www-view",

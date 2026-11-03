@@ -3,38 +3,38 @@
   "baseline": "unexecuted",
   "probes": [
     {
-      "directiveLine": 18,
-      "diagnosticLine": 19,
+      "directiveLine": 17,
+      "diagnosticLine": 18,
       "purpose": "account identity cannot be a document address.",
       "status": "unexecuted"
     },
     {
-      "directiveLine": 20,
-      "diagnosticLine": 21,
+      "directiveLine": 19,
+      "diagnosticLine": 20,
       "purpose": "a playlist identity cannot be an account identity.",
       "status": "unexecuted"
     },
     {
-      "directiveLine": 22,
-      "diagnosticLine": 23,
+      "directiveLine": 21,
+      "diagnosticLine": 22,
       "purpose": "parsed imports require fresh provenance.",
       "status": "unexecuted"
     },
     {
-      "directiveLine": 24,
-      "diagnosticLine": 25,
+      "directiveLine": 23,
+      "diagnosticLine": 24,
       "purpose": "the executable document batch has a Settings member.",
       "status": "unexecuted"
     },
     {
-      "directiveLine": 26,
-      "diagnosticLine": 27,
+      "directiveLine": 25,
+      "diagnosticLine": 26,
       "purpose": "refusal contains no executable document replacement.",
       "status": "unexecuted"
     },
     {
-      "directiveLine": 28,
-      "diagnosticLine": 29,
+      "directiveLine": 27,
+      "diagnosticLine": 28,
       "purpose": "sync-off inputs carry no already-read remote inventory.",
       "status": "unexecuted"
     }

@@ -5,162 +5,162 @@
     {
       "name": "raw-snapshot-is-not-a-public-source",
       "file": "src/background/store/settings-file-read.type-test.ts",
-      "directiveLine": 7,
-      "intendedDiagnosticLine": 8,
+      "directiveLine": 6,
+      "intendedDiagnosticLine": 7,
       "state": "unexecuted"
     },
     {
       "name": "device-is-not-export-data",
       "file": "src/background/store/settings-file-read.type-test.ts",
-      "directiveLine": 9,
-      "intendedDiagnosticLine": 10,
+      "directiveLine": 8,
+      "intendedDiagnosticLine": 9,
       "state": "unexecuted"
     },
     {
       "name": "channel-is-not-an-account",
       "file": "src/background/store/settings-file-read.type-test.ts",
-      "directiveLine": 11,
-      "intendedDiagnosticLine": 12,
+      "directiveLine": 10,
+      "intendedDiagnosticLine": 11,
       "state": "unexecuted"
     },
     {
       "name": "unchecked-read-is-not-a-source",
       "file": "src/background/store/settings-file-read.type-test.ts",
-      "directiveLine": 13,
-      "intendedDiagnosticLine": 14,
+      "directiveLine": 12,
+      "intendedDiagnosticLine": 13,
       "state": "unexecuted"
     },
     {
       "name": "unchecked-check-is-not-a-plan",
       "file": "src/background/store/settings-file-read.type-test.ts",
-      "directiveLine": 15,
-      "intendedDiagnosticLine": 16,
+      "directiveLine": 14,
+      "intendedDiagnosticLine": 15,
       "state": "unexecuted"
     },
     {
       "name": "public-source-has-no-device",
       "file": "src/background/store/settings-file-read.type-test.ts",
-      "directiveLine": 17,
-      "intendedDiagnosticLine": 18,
+      "directiveLine": 16,
+      "intendedDiagnosticLine": 17,
       "state": "unexecuted"
     },
     {
       "name": "omitted-filter-inventory",
       "file": "src/background/store/settings-file-read.type-test.ts",
-      "directiveLine": 25,
-      "intendedDiagnosticLine": 26,
-      "state": "unexecuted"
-    },
-    {
-      "name": "stale-result-cannot-expose-source",
-      "file": "src/background/store/settings-file-read.type-test.ts",
-      "directiveLine": 27,
-      "intendedDiagnosticLine": 28,
-      "state": "unexecuted"
-    },
-    {
-      "name": "tab-cannot-call-owner-export",
-      "file": "src/background/store/settings-file-owner.type-test.ts",
-      "directiveLine": 11,
-      "intendedDiagnosticLine": 12,
-      "state": "unexecuted"
-    },
-    {
-      "name": "file-plan-is-not-native-origin",
-      "file": "src/background/store/settings-file-owner.type-test.ts",
-      "directiveLine": 13,
-      "intendedDiagnosticLine": 14,
-      "state": "unexecuted"
-    },
-    {
-      "name": "payload-privacy-is-not-native-origin",
-      "file": "src/background/store/settings-file-owner.type-test.ts",
-      "directiveLine": 15,
-      "intendedDiagnosticLine": 16,
-      "state": "unexecuted"
-    },
-    {
-      "name": "import-application-is-not-authorized",
-      "file": "src/background/store/settings-file-owner.type-test.ts",
-      "directiveLine": 17,
-      "intendedDiagnosticLine": 18,
-      "state": "unexecuted"
-    },
-    {
-      "name": "export-has-no-consent-parameter",
-      "file": "src/background/store/settings-file-owner.type-test.ts",
       "directiveLine": 24,
       "intendedDiagnosticLine": 25,
       "state": "unexecuted"
     },
     {
-      "name": "imported-plan-cannot-select-check-privacy",
-      "file": "src/background/store/settings-file-owner.type-test.ts",
+      "name": "stale-result-cannot-expose-source",
+      "file": "src/background/store/settings-file-read.type-test.ts",
       "directiveLine": 26,
       "intendedDiagnosticLine": 27,
       "state": "unexecuted"
     },
     {
+      "name": "tab-cannot-call-owner-export",
+      "file": "src/background/store/settings-file-owner.type-test.ts",
+      "directiveLine": 12,
+      "intendedDiagnosticLine": 13,
+      "state": "unexecuted"
+    },
+    {
+      "name": "file-plan-is-not-native-origin",
+      "file": "src/background/store/settings-file-owner.type-test.ts",
+      "directiveLine": 14,
+      "intendedDiagnosticLine": 15,
+      "state": "unexecuted"
+    },
+    {
+      "name": "payload-privacy-is-not-native-origin",
+      "file": "src/background/store/settings-file-owner.type-test.ts",
+      "directiveLine": 16,
+      "intendedDiagnosticLine": 17,
+      "state": "unexecuted"
+    },
+    {
+      "name": "import-application-is-not-authorized",
+      "file": "src/background/store/settings-file-owner.type-test.ts",
+      "directiveLine": 18,
+      "intendedDiagnosticLine": 19,
+      "state": "unexecuted"
+    },
+    {
+      "name": "export-has-no-consent-parameter",
+      "file": "src/background/store/settings-file-owner.type-test.ts",
+      "directiveLine": 25,
+      "intendedDiagnosticLine": 26,
+      "state": "unexecuted"
+    },
+    {
+      "name": "imported-plan-cannot-select-check-privacy",
+      "file": "src/background/store/settings-file-owner.type-test.ts",
+      "directiveLine": 27,
+      "intendedDiagnosticLine": 28,
+      "state": "unexecuted"
+    },
+    {
       "name": "raw-storage-export",
       "file": "tools/fixtures/settings-file/native.type-test.ts",
-      "directiveLine": 7,
-      "intendedDiagnosticLine": 8,
+      "directiveLine": 6,
+      "intendedDiagnosticLine": 7,
       "state": "unexecuted"
     },
     {
       "name": "invented-plan-variant",
       "file": "tools/fixtures/settings-file/native.type-test.ts",
-      "directiveLine": 9,
-      "intendedDiagnosticLine": 10,
+      "directiveLine": 8,
+      "intendedDiagnosticLine": 9,
       "state": "unexecuted"
     },
     {
       "name": "channel-as-account",
       "file": "tools/fixtures/settings-file/native.type-test.ts",
-      "directiveLine": 11,
-      "intendedDiagnosticLine": 12,
+      "directiveLine": 10,
+      "intendedDiagnosticLine": 11,
       "state": "unexecuted"
     },
     {
       "name": "account-as-playlist",
       "file": "tools/fixtures/settings-file/native.type-test.ts",
-      "directiveLine": 13,
-      "intendedDiagnosticLine": 14,
+      "directiveLine": 12,
+      "intendedDiagnosticLine": 13,
       "state": "unexecuted"
     },
     {
       "name": "playlist-as-channel",
       "file": "tools/fixtures/settings-file/native.type-test.ts",
-      "directiveLine": 15,
-      "intendedDiagnosticLine": 16,
+      "directiveLine": 14,
+      "intendedDiagnosticLine": 15,
       "state": "unexecuted"
     },
     {
       "name": "newer-format-type",
       "file": "tools/fixtures/settings-file/native.type-test.ts",
-      "directiveLine": 17,
-      "intendedDiagnosticLine": 18,
+      "directiveLine": 16,
+      "intendedDiagnosticLine": 17,
       "state": "unexecuted"
     },
     {
       "name": "plan-is-not-owner-confirmation",
       "file": "tools/fixtures/settings-file/native.type-test.ts",
-      "directiveLine": 19,
-      "intendedDiagnosticLine": 20,
+      "directiveLine": 18,
+      "intendedDiagnosticLine": 19,
       "state": "unexecuted"
     },
     {
       "name": "payload-is-not-bound-parser",
       "file": "tools/fixtures/settings-file/native.type-test.ts",
-      "directiveLine": 21,
-      "intendedDiagnosticLine": 22,
+      "directiveLine": 20,
+      "intendedDiagnosticLine": 21,
       "state": "unexecuted"
     },
     {
       "name": "payload-cannot-select-native-privacy",
       "file": "tools/fixtures/settings-file/native.type-test.ts",
-      "directiveLine": 23,
-      "intendedDiagnosticLine": 24,
+      "directiveLine": 22,
+      "intendedDiagnosticLine": 23,
       "state": "unexecuted"
     }
   ]

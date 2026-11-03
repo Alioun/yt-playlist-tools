@@ -9,7 +9,7 @@
   },
   {
     "id": "wrong-setting",
-    "before": "id: \"auto-add\", setting: \"autoAdd\"",
+    "before": "id: \"auto-add\",\n    setting: \"autoAdd\"",
     "after": "id: \"auto-add\", setting: \"quickSave\"",
     "test": "planner and eager files agree with fixed records for auto-add-alone",
     "path": "src/shared/features/registry.ts",
@@ -25,7 +25,7 @@
   },
   {
     "id": "gather-file",
-    "before": "needs: [], matches: [\"https://www.youtube.com/watch*\", \"https://www.youtube.com/live/*\"]",
+    "before": "needs: [],\n        matches: [\"https://www.youtube.com/watch*\", \"https://www.youtube.com/live/*\"]",
     "after": "file: \"feature-gather\", needs: [], matches: [\"https://www.youtube.com/watch*\", \"https://www.youtube.com/live/*\"]",
     "test": "planner and eager files agree with fixed records for gather-alone",
     "path": "src/shared/features/registry.ts",

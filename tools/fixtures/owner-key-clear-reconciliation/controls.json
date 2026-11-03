@@ -8,8 +8,8 @@
    "sha256": "607b8eabe6a5ccacc6bbabf301291521dea40d897a891d5f1875d435f35e95f8",
    "gitBlob": "94455adbdaf078a301975a7b1df1871fbed7b8a9"
   },
-  "anchorLine": 129,
-  "anchorText": "        keySettingsPending(records) || featureProgressPending(records)) return held(\"authority\")\n",
+  "anchorLine": 172,
+  "anchorText": "        keySettingsPending(records) ||\n        featureProgressPending(records)\n      )\n        return held(\"authority\")\n",
   "patch": "tools/fixtures/owner-key-clear-reconciliation/controls/drop-key-progress-reset-hold.patch",
   "patchIdentity": {
    "mode": "100644",
@@ -185,7 +185,7 @@
    "sha256": "607b8eabe6a5ccacc6bbabf301291521dea40d897a891d5f1875d435f35e95f8",
    "gitBlob": "94455adbdaf078a301975a7b1df1871fbed7b8a9"
   },
-  "anchorLine": 189,
+  "anchorLine": 254,
   "anchorText": "      if (!read || names.some(name => Object.hasOwn(read, name))) return held(\"local\", error)\n",
   "patch": "tools/fixtures/owner-key-clear-reconciliation/controls/early-reset-success.patch",
   "patchIdentity": {
@@ -244,7 +244,7 @@
    "sha256": "607b8eabe6a5ccacc6bbabf301291521dea40d897a891d5f1875d435f35e95f8",
    "gitBlob": "94455adbdaf078a301975a7b1df1871fbed7b8a9"
   },
-  "anchorLine": 116,
+  "anchorLine": 158,
   "anchorText": "    if (marker && (marker.recovery.kind === \"prepared\" || !sameSyncJson(marker.authority, current))) return held(\"authority\")\n",
   "patch": "tools/fixtures/owner-key-clear-reconciliation/controls/renewed-agreement-replay.patch",
   "patchIdentity": {

@@ -142,17 +142,17 @@
     {
       "id": "monitor-view-not-generic",
       "path": "src/background/monitor/monitor.type-test.ts",
-      "directiveLine": 53,
-      "diagnosticLine": 54,
+      "directiveLine": 56,
+      "diagnosticLine": 57,
       "directive": "// @ts-expect-error negative: monitor-view-not-generic. Projected changes identify the affected tab.",
-      "statement": "monitor.subscribeView((event: { kind: \"all\" }) => { void event })",
+      "statement": "monitor.subscribeView((event: { kind: \"all\" }) => {\n  void event\n})",
       "state": "authored-unexecuted"
     },
     {
       "id": "owner-view-no-fake-account",
       "path": "src/background/store/local-filter-writer.type-test.ts",
-      "directiveLine": 220,
-      "diagnosticLine": 221,
+      "directiveLine": 355,
+      "diagnosticLine": 356,
       "directive": "  // @ts-expect-error negative: owner-view-no-fake-account. Confirmed view events retain branded account identities.",
       "statement": "  const fake: import(\"./local-filter-writer\").ConfirmedViewChange = { kind: \"account-removed\", acct: \"raw\", source: \"local\" }",
       "state": "authored-unexecuted"
@@ -160,8 +160,8 @@
     {
       "id": "owner-view-no-cache-event",
       "path": "src/background/store/local-filter-writer.type-test.ts",
-      "directiveLine": 222,
-      "diagnosticLine": 223,
+      "directiveLine": 357,
+      "diagnosticLine": 358,
       "directive": "  // @ts-expect-error negative: owner-view-no-cache-event. Cache bookkeeping cannot become a confirmed view change.",
       "statement": "  const cache: import(\"./local-filter-writer\").ConfirmedViewChange = { kind: \"cache-changed\", acct }",
       "state": "authored-unexecuted"
@@ -179,10 +179,10 @@
       "id": "add-flow-private-scope",
       "path": "src/background/add-flow/add-flow.type-test.ts",
       "state": "authored-unexecuted",
-      "directiveLine": 103,
-      "diagnosticLine": 104,
+      "directiveLine": 109,
+      "diagnosticLine": 110,
       "directive": "// @ts-expect-error negative: add-flow-private-scope. Private memory never emits normal session events.",
-      "statement": "flow.subscribePrivateSkips((event: { acct: AccountKey; scope: \"normal\" }) => { void event })"
+      "statement": "flow.subscribePrivateSkips((event: { acct: AccountKey; scope: \"normal\" }) => {\n  void event\n})"
     }
   ]
 }

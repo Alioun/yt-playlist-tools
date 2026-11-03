@@ -24,7 +24,7 @@
     {
       "name": "optimistic-confirmation",
       "path": "src/background/router/first-run-results.ts",
-      "before": "    case \"unconfirmed\":\n    case \"unchanged\": return refused(\"unconfirmed\")",
+      "before": "    case \"unconfirmed\":\n    case \"unchanged\":\n      return refused(\"unconfirmed\")",
       "after": "    case \"unconfirmed\": {\n      const applications: FeatureApplication[] = change.selected.map(feature => feature === \"shortcuts\"\n        ? { feature, state: \"enabled\", alsoOnMusic: \"enabled\" } : { feature, state: \"enabled\" })\n      return { kind: \"agreed\", attempt: change.attempt, applications }\n    }\n    case \"unchanged\": return refused(\"unconfirmed\")",
       "test": "semantic confirmation through native RPC ignored",
       "replaceCount": 1,

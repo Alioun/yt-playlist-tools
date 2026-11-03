@@ -32,7 +32,7 @@
       "edits": [
         {
           "path": "src/background/store/tab-projection.ts",
-          "before": "request.private ? [] : memory.skips.get(acct) ?? []",
+          "before": "request.private ? [] : (memory.skips.get(acct) ?? []",
           "after": "memory.skips.get(acct) ?? []"
         },
         {
@@ -49,7 +49,7 @@
       "edits": [
         {
           "path": "src/background/store/tab-projection.ts",
-          "before": ": doc.kind === \"newer-version\" ? { kind: \"newer-version\", version: doc.version }",
+          "before": ": doc.kind === \"newer-version\"\n              ? { kind: \"newer-version\", version: doc.version }",
           "after": ": doc.kind === \"newer-version\" ? { kind: \"default\", filter: defaultFilter() }"
         }
       ]

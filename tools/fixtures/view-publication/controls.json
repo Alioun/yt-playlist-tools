@@ -109,7 +109,7 @@
         },
         {
           "path": "src/background/store/local-filter-writer.ts",
-          "old": "      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })",
+          "old": "      try {\n        await guardedLocal.set(items)\n      } catch (error) {\n        uncertain({ kind: \"readback\" })",
           "new": "      emitView({ kind: \"filter-changed\", source: \"local\", acct: change.acct, playlist: change.playlist })\n      try { await guardedLocal.set(items) } catch (error) {\n        uncertain({ kind: \"readback\" })"
         }
       ],
@@ -141,7 +141,7 @@
       "edits": [
         {
           "path": "src/background/monitor/monitor.ts",
-          "old": "    for (const row of observedViews.values()) { row.dirty = true; void refreshView(row) }",
+          "old": "    for (const row of observedViews.values()) {\n      row.dirty = true\n      void refreshView(row)\n    }",
           "new": "    for (const row of observedViews.values()) { for (const listener of viewListeners) listener({ kind: \"tab\", tabId: row.context.tab.tabId }); row.dirty = true; void refreshView(row) }"
         }
       ],
@@ -189,7 +189,7 @@
       "edits": [
         {
           "path": "src/background/add-flow/add-flow.ts",
-          "old": "        if (work.auto) for (const { playlist, video } of work.entries) {\n          const edits = [{ kind: \"skip\", acct: work.acct, video, playlists: [playlist] }] as const\n          if (scope === \"private\") await remember(scope, edits, authorities.get(exec))\n          else note(scope, edits, authorities.get(exec))\n        }\n",
+          "old": "            if (work.auto)\n              for (const { playlist, video } of work.entries) {\n                const edits = [{ kind: \"skip\", acct: work.acct, video, playlists: [playlist] }] as const\n                if (scope === \"private\") await remember(scope, edits, authorities.get(exec))\n                else note(scope, edits, authorities.get(exec))\n              }\n",
           "new": "        if (work.auto) for (const { playlist, video } of work.entries) {\n          const edits = [{ kind: \"skip\", acct: work.acct, video, playlists: [playlist] }] as const\n          if (scope === \"private\") {\n            const listeners = [...privateSkipListeners]\n            privateSkipListeners.clear()\n            try { await remember(scope, edits, authorities.get(exec)) }\n            finally { for (const listener of listeners) privateSkipListeners.add(listener) }\n          }\n          else note(scope, edits, authorities.get(exec))\n        }\n"
         }
       ],

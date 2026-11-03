@@ -4,7 +4,7 @@
     "file": "src/shared/settings-file/index.ts",
     "replacements": [
       {
-        "before": "settings, accounts: Object.fromEntries(accounts.sort",
+        "before": "settings,\n      accounts: Object.fromEntries(accounts.sort",
         "after": "device: { syncOn: true }, settings, accounts: Object.fromEntries(accounts.sort"
       }
     ],

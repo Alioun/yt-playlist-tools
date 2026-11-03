@@ -48,7 +48,7 @@
       "gitBlob": "4415325feeeca39f87d1e3d1d7b802994baae2db",
       "mode": "100644"
     },
-    "line": 48,
+    "line": 70,
     "old": "!hidden && (!fullscreen || !entry.content.auto)",
     "new": "!hidden",
     "occurrences": 1,
@@ -68,7 +68,7 @@
       "gitBlob": "4415325feeeca39f87d1e3d1d7b802994baae2db",
       "mode": "100644"
     },
-    "line": 126,
+    "line": 242,
     "old": "revision !== version || current !== target || ",
     "new": "",
     "occurrences": 1,

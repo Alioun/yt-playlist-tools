@@ -12,7 +12,7 @@
     "id": "removal-revision",
     "path": "src/background/store/session-memory.ts",
     "baselineSha256": "28333b9941b3106a0282cf806f58e6d14e3cc0006d7f46447f1a061899ea987c",
-    "before": "case \"tab-seen\": return edit.info.acct",
+    "before": "case \"tab-seen\":\n      return edit.info.acct",
     "after": "case \"tab-seen\": return null",
     "testName": "account removal rejects only captured edits for that account",
     "status": "authored-not-compiled-or-executed"
@@ -75,7 +75,7 @@
     "id": "original-tab-reselection",
     "path": "src/background/tabs/tabs.ts",
     "baselineSha256": "7222e841722767b4ac50523d1fb1586ef0b77496739ffce75afb42e5a78b669c",
-    "before": ": found.kind === \"session\" || found.kind === \"guard\" ? found : { kind: \"no-tab\", attempted: [tabId] }",
+    "before": ": found.kind === \"session\" || found.kind === \"guard\"\n        ? found\n        : { kind: \"no-tab\", attempted: [tabId] }",
     "after": ": found.kind === \"session\" || found.kind === \"guard\" ? found : serve(invocation, need)",
     "testName": "a gone original tab evicts its row and never falls back",
     "status": "authored-not-compiled-or-executed"

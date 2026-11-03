@@ -6,7 +6,7 @@
       {
         "before": "for (const name of Object.keys(records).sort()) {",
         "after": "for (const name of Object.keys(records).sort().filter(name => !name.endsWith(\":PL_kept\"))) {",
-        "intendedLine": 71
+        "intendedLine": 89
       }
     ],
     "test": "complete canonical enumeration includes kept filters and an account without Setup",
@@ -21,7 +21,7 @@
       {
         "before": "source: { kind: \"settings-file-source\", settings,",
         "after": "source: { ...{ device: records.device }, kind: \"settings-file-source\", settings,",
-        "intendedLine": 84
+        "intendedLine": 101
       }
     ],
     "test": "source and file contain only declared canonical fields",
@@ -51,7 +51,7 @@
       {
         "before": "  const planner = createImportPlanner(window)",
         "after": "  createImportPlanner(\"normal\").importFile(text)\n  const planner = createImportPlanner(window)",
-        "intendedLine": 34
+        "intendedLine": 50
       }
     ],
     "test": "private and unavailable checking never call JSON parsing",
@@ -66,12 +66,12 @@
       {
         "before": "const changed = input.unavailable() ?? input.unavailableRecords(initial)",
         "after": "const changed = input.unavailableRecords(initial)",
-        "intendedLine": 102
+        "intendedLine": 117
       },
       {
         "before": "const stopped = input.unavailable() ?? input.unavailableRecords(current)",
         "after": "const stopped = input.unavailableRecords(current)",
-        "intendedLine": 107
+        "intendedLine": 122
       }
     ],
     "test": "a lifecycle change during a read cannot expose a stale source",
