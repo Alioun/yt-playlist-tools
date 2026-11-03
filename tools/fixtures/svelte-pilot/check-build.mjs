@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { readFile, readdir } from "node:fs/promises"
-import "./check-archives.mjs"
+import { pilotMarkers, pilotName } from "./check-archives.mjs"
 
 const fixtureRoot = new URL("./.output/", import.meta.url)
 const productionRoot = new URL("../../../.output/", import.meta.url)
@@ -22,10 +22,10 @@ for (const target of ["chrome-mv3", "firefox-mv3"]) {
   assert(code.includes("rgb(20, 80, 140)"), "missing injected component styles")
   const production = new URL(`${target}/`, productionRoot)
   for (const file of await readdir(production, { recursive: true })) {
-    assert(!/pilot|svelte/i.test(file), `fixture artifact leaked into production: ${file}`)
+    assert(!pilotName.test(file), `fixture artifact leaked into production: ${file}`)
     if (/\.(html|js|css|json)$/.test(file)) {
       const contents = await readFile(new URL(file, production), "utf8")
-      assert(!contents.includes("Svelte pilot popover") && !contents.includes("Svelte build pilot"), `fixture code leaked into production: ${file}`)
+      assert(!pilotMarkers.some(marker => contents.includes(marker)), `fixture code leaked into production: ${file}`)
     }
   }
   console.log(`${target}: fixture has injected styles and no manifest injection; production excludes the fixture`)
