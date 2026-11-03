@@ -10,8 +10,8 @@
     "noUncheckedIndexedAccess": true,
     "verbatimModuleSyntax": true,
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "types": ["svelte"]
+    "types": ["svelte", "vite/client"]
   },
-  "include": ["*.ts", "*.svelte", "entrypoints/**/*", "../../../src/ui/**/*", "wxt.config.ts"],
+  "include": ["*.ts", "*.svelte", "entrypoints/**/*", "../../../src/ui/**/*", "../../../.wxt/types/globals.d.ts", "wxt.config.ts"],
   "exclude": ["../../../src/ui/**/*.bun-test.ts"]
 }
