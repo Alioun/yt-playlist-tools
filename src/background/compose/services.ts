@@ -11,7 +11,8 @@ import { runtimeTransport, tabTarget, timerDeadline, type RuntimePort } from "..
 import { createBrowserTabs } from "../adapters/tabs"
 import { createPlaylists } from "../playlists/playlists"
 import type { Registrar } from "../registrar/ports"
-import { createUiRouter } from "../router/ui-playlists"
+import { createUiRouter, type UiRouterPorts } from "../router/ui-playlists"
+import { createAutoAddTabRouter } from "../router/tab-auto-add"
 import { createPageStatus } from "./page-status"
 import { createToolbarBadge, type ToolbarBadge } from "./badge"
 import { composeMonitor } from "./monitor"
@@ -25,6 +26,29 @@ import { createViewPublication } from "../tab-view/publication"
 import { createTabs } from "../tabs/tabs"
 import type { BuildId } from "../../shared/contracts"
 import { siteBundles } from "../../shared/features/registration"
+
+async function readAccess(native: NativeBrowser) {
+  const has = (origins: string[]) => native.permissions.contains({ origins })
+  return { www: await has([siteBundles.www.match]), music: await has([siteBundles.music.match]), browserMenu: await native.permissions.contains({ permissions: ["contextMenus"] }) }
+}
+function firstRunPorts(native: NativeBrowser, owner: StartingOwner): UiRouterPorts["firstRun"] {
+  return {
+    readAccess: () => readAccess(native),
+    startSync: () => owner.startSync(),
+    lookup: {
+      sync: {
+        get: () => native.storage.sync.get(null),
+        subscribe(changed) {
+          const listener = () => changed()
+          native.storage.sync.onChanged.addListener(listener)
+          return () => native.storage.sync.onChanged.removeListener(listener)
+        }
+      },
+      clock: { now: () => performance.now(), after: timerDeadline },
+      isCurrent: () => true
+    }
+  }
+}
 
 export type Services = {
   readonly tabs: ReturnType<typeof createTabs>
@@ -210,32 +234,13 @@ export function composeServices(deps: {
     untick: tabId => badge.untick(tabId),
     now: () => Date.now()
   })
-  async function readAccess() {
-    const has = (origins: string[]) => native.permissions.contains({ origins })
-    return { www: await has([siteBundles.www.match]), music: await has([siteBundles.music.match]), browserMenu: await native.permissions.contains({ permissions: ["contextMenus"] }) }
-  }
   const router = createUiRouter({
     lifecycle: deps.lifecycle,
     sharedSettings: owner,
     owner,
     native: { runtime, windows: native.windows, tabs: native.tabs },
     services: { kind: "ready", tabs, playlists },
-    firstRun: {
-      readAccess,
-      startSync: () => owner.startSync(),
-      lookup: {
-        sync: {
-          get: () => native.storage.sync.get(null),
-          subscribe(changed) {
-            const listener = () => changed()
-            native.storage.sync.onChanged.addListener(listener)
-            return () => native.storage.sync.onChanged.removeListener(listener)
-          }
-        },
-        clock,
-        isCurrent: () => true
-      }
-    },
+    firstRun: firstRunPorts(native, owner),
     transport: runtimeTransport(deps.runtime),
     rpc: { build, deadline: timerDeadline },
     playingNow: composePlayingNow({ native, tabs, registrar, actions, consented: deps.consented }),
@@ -275,7 +280,7 @@ export function composeServices(deps: {
       }),
       diagnostics: (_ui, check) => diagnostics.read(check),
       withdraw: (origin, expected) => deps.lifecycle.withdrawConsent(origin, expected),
-      readAccess: () => readAccess(),
+      readAccess: () => readAccess(native),
       version: () => native.runtime.getManifest().version,
       now: () => Date.now()
     }
@@ -326,4 +331,38 @@ export function composeServices(deps: {
       }
     }
   }
+}
+
+/**
+ * The UI routes while consent is held (R167, R181). Settings reads and continues paused work, the disclosure and Clear all
+ * stay available, and every feature service stays stopped. The held owner refuses ordinary edits itself.
+ */
+export function composeHeldRoutes(deps: {
+  readonly native: NativeBrowser
+  readonly runtime: RuntimePort
+  readonly build: BuildId
+  readonly owner: StartingOwner
+  readonly lifecycle: StoreLifecycle
+}): { dispose(): void } {
+  const { native, build, owner } = deps
+  const runtime = { ...deps.runtime, id: native.runtime.id, getURL: (path: string) => native.runtime.getURL(path as never) }
+  const router = createUiRouter({
+    lifecycle: deps.lifecycle,
+    owner,
+    native: { runtime, windows: native.windows, tabs: native.tabs },
+    services: { kind: "unavailable" },
+    firstRun: firstRunPorts(native, owner),
+    transport: runtimeTransport(deps.runtime),
+    rpc: { build, deadline: timerDeadline },
+    pages: {
+      owner,
+      session: { get: async key => (await native.storage.session.get(key))[key] },
+      status: async () => undefined,
+      withdraw: (origin, expected) => deps.lifecycle.withdrawConsent(origin, expected),
+      readAccess: () => readAccess(native),
+      version: () => native.runtime.getManifest().version,
+      now: () => Date.now()
+    }
+  })
+  return { dispose: () => router.retire() }
 }

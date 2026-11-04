@@ -40,3 +40,35 @@ test("Clear all in Settings answers that it cleared this browser, after the open
     result: { kind: "reviewed" }
   })
 })
+
+test("after withdrawing, Settings still reads paused work from the held store, also after the worker restarts, and features stay stopped", async () => {
+  const { world, w } = await queueButtonTab()
+  const read = { action: "read" } as const
+  const work = { kind: "answered", result: { kind: "work", jobs: [] } } as const
+  expect(await w.settings.call("ui.pausedWork", read)).toEqual(work)
+
+  expect(await w.settings.call("ui.withdraw", { expected: { v: 1, at: 1 } })).toEqual({ kind: "answered", result: { kind: "withdrawn" } })
+  expect(await w.settings.call("ui.pausedWork", read), "after withdrawal").toEqual(work)
+  expect(await w.popup.call("ui.gather", {}), "Gather stays stopped").toMatchObject({ kind: "answered", result: { kind: "unavailable" } })
+
+  await w.background.dispose()
+  const again = world.worker()
+  running.push(again.background)
+  await again.background.ready
+  expect(await again.settings.call("ui.pausedWork", read), "after the worker restarts").toEqual(work)
+  expect(await again.popup.call("ui.gather", {}), "Gather stays stopped after the restart").toMatchObject({ kind: "answered", result: { kind: "unavailable" } })
+})
+
+test("while consent is held after a restart, Clear all in Settings still clears this browser", async () => {
+  const { world, w } = await queueButtonTab()
+  expect(await w.settings.call("ui.withdraw", { expected: { v: 1, at: 1 } })).toEqual({ kind: "answered", result: { kind: "withdrawn" } })
+  await w.background.dispose()
+  const again = world.worker()
+  running.push(again.background)
+  await again.background.ready
+
+  const review = await again.settings.call("ui.clearAll", { action: "review", alsoSynced: false })
+  if (review.kind !== "answered" || review.result.kind !== "reviewed") throw new Error(`No review: ${JSON.stringify(review)}`)
+  const cleared = await again.settings.call("ui.clearAll", { action: "confirm", review: review.result.review, alsoSynced: false })
+  expect(cleared).toMatchObject({ kind: "answered", result: { kind: "clear-result", erasure: "confirmed", outcome: "cleared" } })
+})

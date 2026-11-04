@@ -5,7 +5,7 @@ import { createRuntimeGate } from "./adapters/runtime-gate"
 import { createBrowserTabs } from "./adapters/tabs"
 import { createClearAllTeardown } from "./adapters/store-lifecycle"
 import { composeRegistrar, registrarOwner } from "./compose/registrar"
-import { composeServices, type Services } from "./compose/services"
+import { composeHeldRoutes, composeServices, type Services } from "./compose/services"
 import { composeStore } from "./compose/store"
 import type { StoreLifecycle } from "./store/store-lifecycle"
 import type { Platform } from "../shared/platform"
@@ -53,15 +53,14 @@ export function boot(native: NativeBrowser, platform: Platform, sites?: SiteDiag
     void ready.then(() => services?.gather.woke("startup"))
   })
   let services: Services | undefined
+  // While consent is held only the UI routes run, on the held owner, and every feature service stays stopped (R167).
+  let held: { dispose(): void } | undefined
   const lifecycle = composeStore(native, platform, () =>
     createClearAllTeardown({
       registrar: current.registrar,
       extLinks: [],
       scripting: current.scripting,
-      get tabs() {
-        if (!services) throw new Error("Clear all before the tab services started")
-        return services.tabs
-      },
+      tabs: { dispose: () => services?.tabs.dispose() },
       async drainInvokedWork() {
         await services?.actions.flow.quiesce()
         return "drained"
@@ -85,9 +84,31 @@ export function boot(native: NativeBrowser, platform: Platform, sites?: SiteDiag
     return snapshot.kind === "ok" && snapshot.consent && snapshot.schemaOk
   }
   let stopOwner = () => {}
+  // Clear all and withdrawal replace the owner, so once one settles the routes move to the owner that follows it.
+  const routed: StoreLifecycle = {
+    ...lifecycle,
+    async clearAll(origin, options) {
+      const result = await lifecycle.clearAll(origin, options)
+      rebind()
+      return result
+    },
+    async withdrawConsent(origin, expected) {
+      const result = await lifecycle.withdrawConsent(origin, expected)
+      rebind()
+      return result
+    }
+  }
+  function rebind() {
+    const next = lifecycle.state().kind
+    if ((next === "active" || next === "held") && services === undefined && held === undefined) restart()
+  }
 
   function start() {
     const state = lifecycle.state()
+    if (state.kind === "held") {
+      held = composeHeldRoutes({ native, runtime: gate.runtime, build: platform.build, owner: state.owner, lifecycle: routed })
+      return
+    }
     if (state.kind !== "active") return
     stopOwner()
     const refresh = () => {
@@ -107,14 +128,7 @@ export function boot(native: NativeBrowser, platform: Platform, sites?: SiteDiag
       consented,
       menuClicksHeard,
       sites,
-      lifecycle: {
-        ...lifecycle,
-        async clearAll(origin, options) {
-          const result = await lifecycle.clearAll(origin, options)
-          if (lifecycle.state().kind === "active" && services === undefined) restart()
-          return result
-        }
-      }
+      lifecycle: routed
     })
   }
   function restart() {
@@ -123,11 +137,13 @@ export function boot(native: NativeBrowser, platform: Platform, sites?: SiteDiag
     start()
     if (lifecycle.state().kind === "active") void lifecycle.owner()?.startSync()
   }
-  lifecycle.subscribe(event => {
-    if (event.kind !== "cleared") return
+  // Both lifecycle events mean the owner the routes and services use is gone.
+  lifecycle.subscribe(() => {
     stopOwner()
     services?.dispose()
     services = undefined
+    held?.dispose()
+    held = undefined
   })
   gate.onAnswered(() => {
     void owner.refresh()
@@ -145,6 +161,7 @@ export function boot(native: NativeBrowser, platform: Platform, sites?: SiteDiag
     async dispose() {
       stopOwner()
       services?.dispose()
+      held?.dispose()
       current.registrar.dispose()
       await lifecycle.dispose()
     }

@@ -23,7 +23,7 @@ export type ClearAllTeardown = { quiesce(): Promise<ClearAllTeardownReceipt> }
 
 export function createClearAllTeardown(ports: {
   readonly registrar: Registrar
-  readonly tabs: Tabs
+  readonly tabs: Pick<Tabs, "dispose">
   readonly extLinks: readonly { dispose(): void }[]
   readonly scripting: Pick<ScriptingPort, "list" | "unregister">
   drainInvokedWork(): Promise<"drained" | "unconfirmed">
