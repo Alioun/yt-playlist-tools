@@ -73,7 +73,10 @@ export type LifecycleState =
   | { readonly kind: "held"; readonly owner: StartingOwner }
   | { readonly kind: "active"; readonly owner: StartingOwner }
   | BlockedState
-export type LifecycleEvent = { readonly kind: "cleared"; readonly next: "first-run" } | { readonly kind: "consent-withdrawn"; readonly shutdown: Extract<Shutdown, { kind: "confirmed" }> }
+export type LifecycleEvent =
+  | { readonly kind: "cleared"; readonly next: "first-run" }
+  | { readonly kind: "consent-withdrawn"; readonly shutdown: Extract<Shutdown, { kind: "confirmed" }> }
+  | { readonly kind: "reactivating" }
 type Stop = { readonly owner: StartingOwner | null; readonly ownerStop: Outcome | { readonly kind: "no-owner" }; readonly producerStop: Outcome }
 export type Shutdown =
   | { readonly kind: "confirmed"; readonly owner: { readonly kind: "resolved" | "no-owner" }; readonly producers: { readonly kind: "resolved" } }
@@ -125,6 +128,12 @@ export type StoreLifecycle = {
   ready(): Promise<LifecycleState>
   clearAll(origin: SettingsPageOrigin, options: ClearAllOptions): Promise<ClearAllResult>
   withdrawConsent(origin: SettingsPageOrigin, expected: Agreement | null): Promise<WithdrawalResult>
+  /**
+   * Replaces a held owner with a fresh one that starts as it would at startup, so an agreement or recovery made while held
+   * takes effect without a restart. Work that still holds the store keeps the fresh owner held (R167). Any other state is
+   * returned unchanged, and concurrent calls share one replacement.
+   */
+  activate(): Promise<LifecycleState>
   subscribe(listener: (event: LifecycleEvent) => void): () => void
   dispose(): Promise<void>
 }
@@ -243,6 +252,7 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
   const listeners = new Set<(event: LifecycleEvent) => void>()
   const operations = new Set<Promise<unknown>>()
   let disposal: Promise<void> | undefined
+  let reactivation: Promise<LifecycleState> | undefined
 
   function state(): LifecycleState {
     switch (phase.kind) {
@@ -305,21 +315,7 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
       if (phase !== gate) return
       const fresh = start()
       if (fresh.kind === "started" && held) {
-        const opening = {
-          kind: "opening-held",
-          owner: fresh.owner,
-          stopping: Promise.resolve<Stop>({ owner: null, ownerStop: { kind: "no-owner" }, producerStop: { kind: "resolved" } }),
-          withdrawal: null
-        } as const
-        phase = opening
-        let classified: "active" | "held" = "active"
-        try {
-          await fresh.owner.ready()
-        } catch (error) {
-          if (error instanceof StartupReadinessError && error.result.kind === "consent-held") classified = "held"
-          else if (phase === opening) phase = { kind: "blocked", state: { kind: "blocked", reason: "owner-start-failed", error }, retiring: fresh.owner }
-        }
-        if (phase === opening) phase = { kind: classified, owner: fresh.owner }
+        await open(fresh.owner)
         settleStartup(state())
         return
       }
@@ -328,6 +324,25 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
     else phase = { kind: "blocked", state: { kind: "blocked", reason: "marker-read-failed", read: presence === "unknown" ? { kind: "invalid" } : presence }, retiring: null }
     settleStartup(state())
   })()
+
+  // A store with consent records opens held until the fresh owner's readiness says its features may run.
+  async function open(owner: StartingOwner): Promise<void> {
+    const opening = {
+      kind: "opening-held",
+      owner,
+      stopping: Promise.resolve<Stop>({ owner: null, ownerStop: { kind: "no-owner" }, producerStop: { kind: "resolved" } }),
+      withdrawal: null
+    } as const
+    phase = opening
+    let classified: "active" | "held" = "active"
+    try {
+      await owner.ready()
+    } catch (error) {
+      if (error instanceof StartupReadinessError && error.result.kind === "consent-held") classified = "held"
+      else if (phase === opening) phase = { kind: "blocked", state: { kind: "blocked", reason: "owner-start-failed", error }, retiring: owner }
+    }
+    if (phase === opening) phase = { kind: classified, owner }
+  }
 
   function start(): { readonly kind: "started"; readonly owner: StartingOwner } | { readonly kind: "rejected"; readonly error: unknown } {
     try {
@@ -668,6 +683,32 @@ export function createStoreLifecycle(deps: StoreLifecycleDependencies): StoreLif
         }
       )
       return operation
+    },
+    activate() {
+      if (reactivation) return reactivation
+      if (phase.kind !== "held") return Promise.resolve(state())
+      const held = phase.owner
+      const disposed = attempt(() => held.dispose())
+      const retiring = { kind: "opening-held", owner: held, stopping: disposed.then((ownerStop): Stop => ({ owner: held, ownerStop, producerStop: resolved })), withdrawal: null } as const
+      phase = retiring
+      emit({ kind: "reactivating" })
+      reactivation = track(
+        (async () => {
+          const stop = await disposed
+          if (phase !== retiring) return state()
+          // Two owners never share the store, so a held owner that didn't stop stays for Clear all to stop again.
+          if (stop.kind === "rejected") phase = { kind: "blocked", state: { kind: "blocked", reason: "owner-start-failed", error: stop.error }, retiring: held }
+          else {
+            const fresh = start()
+            if (fresh.kind === "started") await open(fresh.owner)
+            else phase = { kind: "blocked", state: { kind: "blocked", reason: "owner-start-failed", error: fresh.error }, retiring: null }
+          }
+          return state()
+        })().finally(() => {
+          reactivation = undefined
+        })
+      )
+      return reactivation
     },
     subscribe(listener) {
       if (phase.kind === "disposed") return () => {}

@@ -84,7 +84,7 @@ export function boot(native: NativeBrowser, platform: Platform, sites?: SiteDiag
     return snapshot.kind === "ok" && snapshot.consent && snapshot.schemaOk
   }
   let stopOwner = () => {}
-  // Clear all and withdrawal replace the owner, so once one settles the routes move to the owner that follows it.
+  // Clear all, withdrawal and activation replace the owner, so once one settles the routes move to the owner that follows it.
   const routed: StoreLifecycle = {
     ...lifecycle,
     async clearAll(origin, options) {
@@ -94,6 +94,11 @@ export function boot(native: NativeBrowser, platform: Platform, sites?: SiteDiag
     },
     async withdrawConsent(origin, expected) {
       const result = await lifecycle.withdrawConsent(origin, expected)
+      rebind()
+      return result
+    },
+    async activate() {
+      const result = await lifecycle.activate()
       rebind()
       return result
     }
@@ -132,12 +137,13 @@ export function boot(native: NativeBrowser, platform: Platform, sites?: SiteDiag
     })
   }
   function restart() {
+    current.registrar.dispose()
     current = composeRegistrar(native, platform.build, owner.port)
     void owner.refresh()
     start()
     if (lifecycle.state().kind === "active") void lifecycle.owner()?.startSync()
   }
-  // Both lifecycle events mean the owner the routes and services use is gone.
+  // Every lifecycle event means the owner the routes and services use is gone.
   lifecycle.subscribe(() => {
     stopOwner()
     services?.dispose()

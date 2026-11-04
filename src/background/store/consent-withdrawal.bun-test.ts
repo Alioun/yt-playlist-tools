@@ -3,6 +3,7 @@ import { readConsentDevice, parseConsentState, withdrawalItems, withdrawalIntent
 import { createStoreLifecycle } from "./store-lifecycle"
 import { sameSyncJson } from "./sync-write-admission"
 import { createLifecycleHarness, lifecycleSeeds, settingsOrigin, unticked, runConsentWithdrawalFaults } from "../../../tools/fixtures/device-lifecycle/run"
+import { accepted } from "../../../tools/fixtures/consent-recovery/cases"
 
 const device = { id: "withdrawal-device", consent: { v: 1, at: 10 }, syncOn: false, extension: { kept: true } }
 test("withdrawal preserves raw Device omissions and extensions and advances a durable generation", () => {
@@ -429,3 +430,57 @@ for (const deviceApplied of [false, true])
     expect(final.device.consent).toBeNull()
     await next.dispose()
   })
+
+const ui = { kind: "ui", windowId: 1, incognito: false } as const
+async function agreeWhileHeld(owner: ReturnType<typeof createStoreLifecycle>["owner"] extends () => infer O ? NonNullable<O> : never) {
+  const review = await owner.readAgreement(ui)
+  if (review.kind !== "review" || review.presentation.kind !== "held") throw Error("Missing held agreement")
+  expect((await owner.agree(ui, { review: review.review, displayedVersion: 1, choice: { kind: "disclosure" }, access: new Promise(() => {}) })).kind).toBe("committed")
+}
+
+test("after agreeing again while held, one activation replaces the held owner with one that runs, and repeat or concurrent calls start no other (R167)", async () => {
+  const h = createLifecycleHarness(lifecycleSeeds.current()),
+    supervisor = createStoreLifecycle(h.deps())
+  await supervisor.ready()
+  const first = readConsentDevice(h.stores().local)
+  if (first.kind !== "supported" || !first.device.consent) throw Error("Missing Device")
+  expect((await supervisor.withdrawConsent(settingsOrigin, first.device.consent)).kind).toBe("withdrawn")
+  const events: string[] = []
+  supervisor.subscribe(event => events.push(event.kind))
+  expect((await supervisor.activate()).kind, "without a new agreement the fresh owner stays held").toBe("held")
+  const held = supervisor.owner()
+  if (!held) throw Error("Missing held owner")
+  await agreeWhileHeld(held)
+  const started = h.ledger.ownersStarted
+
+  const [one, two] = await Promise.all([supervisor.activate(), supervisor.activate()])
+  expect(one.kind).toBe("active")
+  expect(two).toBe(one)
+  const active = supervisor.owner()
+  expect(active === held, "the held owner is replaced").toBe(false)
+  expect(h.ledger.ownersStarted, "concurrent calls share one replacement").toBe(started + 1)
+  expect(await supervisor.activate()).toEqual({ kind: "active", owner: active! })
+  expect(h.ledger.ownersStarted, "an active store starts no owner").toBe(started + 1)
+  expect(h.ledger.maxLiveOwners, "two owners never share the store").toBe(1)
+  expect(events).toEqual(["reactivating", "reactivating"])
+  await supervisor.dispose()
+})
+
+test("with a removal withdrawal paused, activation after agreeing again keeps the fresh owner held with the removal waiting (R167)", async () => {
+  const withdrawn = await accepted()
+  const h = createLifecycleHarness({ local: withdrawn.local, session: withdrawn.session, database: "present" }),
+    supervisor = createStoreLifecycle(h.deps())
+  expect((await supervisor.ready()).kind).toBe("held")
+  const held = supervisor.owner()
+  if (!held) throw Error("Missing held owner")
+  await agreeWhileHeld(held)
+
+  const after = await supervisor.activate()
+  expect(after.kind).toBe("held")
+  const fresh = supervisor.owner()
+  if (!fresh || fresh === held) throw Error("The held owner was not replaced")
+  const work = await fresh.readWithdrawnWork(ui)
+  expect(work.kind === "held" ? work.work.map(view => view.kind) : work).toEqual(["account-removal"])
+  expect(h.ledger.hostCalls, "Agree alone continues no removal").toBe(0)
+  await supervisor.dispose()
+})

@@ -50,6 +50,10 @@ function firstRunPorts(native: NativeBrowser, owner: StartingOwner): UiRouterPor
   }
 }
 
+async function activate(lifecycle: StoreLifecycle): Promise<"on" | "held"> {
+  return (await lifecycle.activate()).kind === "active" ? "on" : "held"
+}
+
 export type Services = {
   readonly tabs: ReturnType<typeof createTabs>
   readonly actions: Actions
@@ -280,6 +284,7 @@ export function composeServices(deps: {
       }),
       diagnostics: (_ui, check) => diagnostics.read(check),
       withdraw: (origin, expected) => deps.lifecycle.withdrawConsent(origin, expected),
+      activate: () => activate(deps.lifecycle),
       readAccess: () => readAccess(native),
       version: () => native.runtime.getManifest().version,
       now: () => Date.now()
@@ -359,6 +364,7 @@ export function composeHeldRoutes(deps: {
       session: { get: async key => (await native.storage.session.get(key))[key] },
       status: async () => undefined,
       withdraw: (origin, expected) => deps.lifecycle.withdrawConsent(origin, expected),
+      activate: () => activate(deps.lifecycle),
       readAccess: () => readAccess(native),
       version: () => native.runtime.getManifest().version,
       now: () => Date.now()

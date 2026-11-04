@@ -101,8 +101,15 @@ function openFirstRunPage(backend: Backend) {
   render(OnboardingPage, { ...startFirstRun(page as never), markSrc: "mark.svg" })
 }
 
-test("after withdrawing, Review's page asks only to agree again, saves consent alone, and the features start with the next worker", async () => {
-  const { world, w } = await queueButtonTab()
+// The browser listeners the running background holds, which a second set of services or a leftover Registrar would add to.
+function permissionListeners(w: { native: unknown }) {
+  const { onAdded, onRemoved } = (w.native as { permissions: Record<"onAdded" | "onRemoved", { listeners: Set<unknown> }> }).permissions
+  return onAdded.listeners.size + onRemoved.listeners.size
+}
+
+test("after withdrawing, Review's page asks only to agree again, saves consent alone, and the running worker turns the features back on once", async () => {
+  const { w } = await queueButtonTab()
+  const listening = permissionListeners(w)
   expect(await w.settings.call("ui.withdraw", { expected: { v: 1, at: 1 } })).toEqual({ kind: "answered", result: { kind: "withdrawn" } })
   const settingsBefore = (await fakeBrowser.storage.local.get("doc:settings"))["doc:settings"]
 
@@ -111,21 +118,19 @@ test("after withdrawing, Review's page asks only to agree again, saves consent a
   expect(screen.getByText("You withdrew your consent, so Perchling reads nothing from YouTube. It kept your settings. Agree again to turn your features back on.")).toBeTruthy()
   await userEvent.click(screen.getByRole("button", { name: "Agree" }))
   await screen.findByText("You agreed again.", undefined, { timeout: 10_000 })
+  expect(screen.getByText("Perchling is on again.")).toBeTruthy()
 
   const { device } = await fakeBrowser.storage.local.get("device")
   expect((device as { consent: { v: number; at: number } | null }).consent).toMatchObject({ v: 1 })
   expect((await fakeBrowser.storage.local.get("doc:settings"))["doc:settings"], "Agree changes no settings").toEqual(settingsBefore)
-  expect(await w.popup.call("ui.gather", {}), "this worker's features stay stopped").toMatchObject({ kind: "answered", result: { kind: "unavailable" } })
-
-  await w.background.dispose()
-  const again = world.worker()
-  running.push(again.background)
-  await started(again)
-  const hello = (await again.hello(1)) as { result: { features: { id: string }[] } | null }
+  const hello = (await w.hello(1)) as { result: { features: { id: string }[] } | null }
   expect(
     hello.result?.features.map(feature => feature.id),
-    "the next worker runs the features"
+    "the same worker runs the features again"
   ).toEqual(["queue-button"])
+
+  expect(await w.onboarding.call("ui.heldAgree", { action: "agree", displayedVersion: 1 }), "a second Agree finds consent no longer held").toEqual({ kind: "answered", result: { kind: "not-held" } })
+  expect(permissionListeners(w), "one set of services and one Registrar listen, as before the withdrawal").toBe(listening)
 })
 
 test("after withdrawing with the 1.x note still pending, Review's page asks only to agree again instead of showing the note", async () => {

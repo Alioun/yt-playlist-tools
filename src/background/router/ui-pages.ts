@@ -114,6 +114,8 @@ export type PageReceiverPorts = {
   }
   readonly readAccess: () => Promise<AgreementAccess | undefined>
   readonly withdraw: (origin: SettingsPageOrigin, expected: { readonly v: number; readonly at: number }) => Promise<WithdrawalResult>
+  /** Replaces a held owner in the running background, and says whether the features run again or work still holds them (R167). */
+  readonly activate: () => Promise<"on" | "held">
   /** The version a settings file names (DATA-53). */
   readonly version: () => string
   /** Raw `storage.session` reads, for the recent adds the session planner keeps but doesn't decode. */
@@ -354,7 +356,7 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
       const access = await ports.readAccess()
       if (!access) return { kind: "refused", reason: "unavailable" }
       const result = await ports.owner.agree(origin, { review: read.review, displayedVersion: payload.displayedVersion, choice: { kind: "disclosure" }, access: Promise.resolve(access) })
-      if (result.kind === "committed") return { kind: "agreed", paused }
+      if (result.kind === "committed") return { kind: "agreed", paused, features: await ports.activate() }
       if (result.kind === "unconfirmed" || result.kind === "failed") return { kind: "refused", reason: result.kind }
       return { kind: "refused", reason: result.kind === "unavailable" && result.reason === "newer-consent" ? "update-needed" : "unavailable" }
     },

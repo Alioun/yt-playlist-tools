@@ -28,7 +28,12 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
     { kind: "unsupported", operation: "legacy", reason: "invalid" }
   ]
   let paused = false
-  const agreement: { presentation: unknown; result: unknown } = { presentation: { kind: "canonical", note: { state: "pending" } }, result: { kind: "agreed" } }
+  const agreement: { presentation: unknown; result: unknown; features: "on" | "held"; activations: number } = {
+    presentation: { kind: "canonical", note: { state: "pending" } },
+    result: { kind: "agreed" },
+    features: "on",
+    activations: 0
+  }
   const sync = {
     preparation: { kind: "automatic", review: { kind: "sync-join-review" }, reason: "empty-copy" } as SyncJoinPreparation,
     calls: [] as string[],
@@ -118,6 +123,10 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
     },
     readAccess: async () => ({ www: true, music: false, browserMenu: false }),
     withdraw: async () => ({ kind: "withdrawn" }) as never,
+    async activate() {
+      agreement.activations++
+      return agreement.features
+    },
     version: () => "2.0.0",
     session: { get: async () => [] },
     status: async () => ({ tab: { kind: "site", site: "www", tabId: 9, signedIn: true, acct }, health: [{ feature: "auto-add", site: "www", state: "not-working", gaps: [] }] }),
@@ -323,7 +332,7 @@ test("withdrawal runs only from Settings, and an unusable import file is refused
   expect(await handlers["ui.importSettings"]({ action: "prepare", text: "{}" }, context(true, "settings"))).toEqual({ kind: "refused", reason: "private" })
 })
 
-test("after a withdrawal, only the first-run page agrees again, with the disclosure alone, and the paused jobs stay paused (FT-35, R167)", async () => {
+test("after a withdrawal, only the first-run page agrees again, with the disclosure alone, turns the features back on, and the paused jobs stay paused (FT-35, R167)", async () => {
   const { handlers, agreements, agreement, held, recovered, context } = receiver()
   expect(await handlers["ui.heldAgree"]({ action: "read" }, context(false, "onboarding")), "canonical consent is first run's own").toEqual({ kind: "not-held" })
   agreement.presentation = { kind: "held", consent: null, work: held, allowedChoice: "disclosure", activation: "held" }
@@ -332,12 +341,21 @@ test("after a withdrawal, only the first-run page agrees again, with the disclos
   expect(await handlers["ui.heldAgree"]({ action: "agree", displayedVersion: 1 }, context(false, "settings"))).toEqual({ kind: "refused", reason: "unavailable" })
   expect(await handlers["ui.heldAgree"]({ action: "agree", displayedVersion: 2 }, context(false, "onboarding"))).toEqual({ kind: "refused", reason: "update-needed" })
   expect(agreements).toEqual([])
-  expect(await handlers["ui.heldAgree"]({ action: "agree", displayedVersion: 1 }, context(false, "onboarding"))).toEqual({ kind: "agreed", paused: 2 })
+  expect(agreement.activations, "a refused Agree activates nothing").toBe(0)
+  expect(await handlers["ui.heldAgree"]({ action: "agree", displayedVersion: 1 }, context(false, "onboarding"))).toEqual({ kind: "agreed", paused: 2, features: "on" })
   expect(agreements).toEqual([{ kind: "disclosure" }])
+  expect(agreement.activations, "the running background replaces its held owner once").toBe(1)
   expect(recovered).toEqual([])
   expect(await handlers["ui.pausedWork"]({ action: "read" }, context(false, "settings"))).toMatchObject({ kind: "work", jobs: [{ job: "removal" }, { job: "sync" }] })
+  agreement.features = "held"
+  expect(await handlers["ui.heldAgree"]({ action: "agree", displayedVersion: 1 }, context(false, "onboarding")), "work that still holds the store keeps the features off").toEqual({
+    kind: "agreed",
+    paused: 2,
+    features: "held"
+  })
   agreement.result = { kind: "unconfirmed", stage: "consent-only" }
   expect(await handlers["ui.heldAgree"]({ action: "agree", displayedVersion: 1 }, context(false, "onboarding"))).toEqual({ kind: "refused", reason: "unconfirmed" })
+  expect(agreement.activations, "an unconfirmed Agree activates nothing").toBe(2)
 })
 
 test("only the first-run page marks the note seen, and its Agree carries the question's answer as the note's choice", async () => {

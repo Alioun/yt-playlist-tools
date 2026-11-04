@@ -4533,8 +4533,11 @@
   "held_done": {
     "message": "You agreed again."
   },
-  "held_done_restart": {
-    "message": "Perchling turns your features back on the next time it starts, such as when you restart the browser."
+  "held_done_on": {
+    "message": "Perchling is on again."
+  },
+  "held_done_held": {
+    "message": "Your features stay off until you continue the paused changes in Settings."
   },
   "note_outcome_claimed": {
     "message": "Your auto-add playlists and shortcut from 1.x are now set up for $ACCOUNT$: $TITLES$.",

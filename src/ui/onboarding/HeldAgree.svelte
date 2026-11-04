@@ -7,13 +7,14 @@
   import type { PageState } from "../lib/page-state.svelte"
   import type { FirstRunText } from "./text"
 
-  // Review after a withdrawal (FT-35, R167): the disclosure again, with no feature choices. Agree saves consent alone,
-  // and each job the withdrawal paused waits for its own Continue in Settings › Privacy & data (R181).
+  // Review after a withdrawal (FT-35, R167): the disclosure again, with no feature choices. Agree saves consent and turns
+  // the features back on, and each job the withdrawal paused waits for its own Continue in Settings › Privacy & data (R181).
   let { pageState, text, markSrc, paused }: { pageState: PageState; text: FirstRunText; markSrc: string; paused: number } = $props()
   const { i18n, backend, platform } = untrack(() => pageState.page)
   let phase = $state<"review" | "agreeing" | "done">("review")
   let failure = $state<string | null>(null)
   let left = $state(untrack(() => paused))
+  let features = $state<"on" | "held">("on")
 
   async function agree() {
     if (phase !== "review") return
@@ -21,7 +22,7 @@
     failure = null
     if (!matchesRenderedDisclosure(platform.browser, text.disclosure)) { phase = "review"; failure = text.copy.consent.refused.unavailable; return }
     const result = await backend.call("ui.heldAgree", { action: "agree", displayedVersion: FIRST_RUN_DISCLOSURE_VERSION })
-    if (result.kind === "answered" && result.result.kind === "agreed") { left = result.result.paused; phase = "done"; return }
+    if (result.kind === "answered" && result.result.kind === "agreed") { left = result.result.paused; features = result.result.features; phase = "done"; return }
     phase = "review"
     const reason = result.kind === "answered" && result.result.kind === "refused" ? result.result.reason : "unavailable"
     failure = text.copy.consent.refused[reason === "failed" ? "rejected" : reason]
@@ -35,8 +36,9 @@
     {#if phase === "done"}
       <section class="bg-card flex flex-col gap-3 rounded-2xl border p-6" role="status">
         <h1 class="text-xl font-semibold">{i18n.message("held_done")}</h1>
-        <p class="text-[14.5px]">{pausedLine ?? i18n.message("held_done_restart")}</p>
-        {#if pausedLine}
+        <p class="text-[14.5px]">{i18n.message(features === "on" ? "held_done_on" : "held_done_held")}</p>
+        {#if features === "on" && pausedLine}<p class="text-[14.5px]">{pausedLine}</p>{/if}
+        {#if features === "held" || pausedLine}
           <Button variant="outline" class="self-start" onclick={() => pageState.page.openSettings("privacy")}>{i18n.message("firstRun_finish_openSettings")}</Button>
         {/if}
       </section>
