@@ -54,7 +54,7 @@ test("every YouTube tab whose core answers gets the view, and tabs without a cor
     4: { kind: "gone" }
   })
   expect(await tearDownOpenTabs(world.port)).toBe("torn-down")
-  expect(world.pinged.sort()).toEqual([1, 2, 3, 4])
+  expect(world.pinged).toEqual([1, 2, 3, 4])
   expect(world.sent.map(({ tabId, view }) => [tabId, view])).toEqual([
     [1, emptyTabView({ site: "www", build, signedIn: true, acct }, false)],
     [2, emptyTabView({ site: "music", build, signedIn: false, acct: null }, true)]
