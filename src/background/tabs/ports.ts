@@ -5,6 +5,7 @@ import type { TabHello, TabPing, TabViewScope } from "../../shared/contracts/tab
 import type { Deadline, RpcOutcome } from "../../shared/rpc/rpc"
 import type { KnownTab } from "./tabs"
 import type { SessionPort, SessionRead, SessionWrite } from "../store/session-memory"
+import type { NormalWindowRouting } from "../store/tab-projection"
 
 export type NativeTab = {
   readonly tabId: number
@@ -92,7 +93,7 @@ export type TabsPorts = {
     ensure(tabId: number, need: { readonly site: Site; readonly core: true; readonly signal: AbortSignal }): Promise<{ readonly kind: "ready" | "unavailable" }>
   }
   readonly accounts: {
-    lastAccount(): Promise<AccountKey | null>
+    lastAccount(scope: NormalWindowRouting): Promise<AccountKey | null>
     hasSetup(acct: AccountKey): Promise<boolean>
   }
   readonly clock: { now(): number; wallNow(): number; readonly after: Deadline }

@@ -13,7 +13,11 @@ export function readStorageForTab(owner: Owner, context: TabContext): Promise<Ta
   return owner.readTabProjection({ private: context.tab.incognito, account: context.info.signedIn ? { kind: "signed-in", acct: context.info.acct } : { kind: "signed-out" } })
 }
 
-export function bindNativeRoutingAccounts(input: { readonly owner: Owner; readonly native: NativeTabs; readonly sender: NativeSender; readonly popupWindowId: unknown }): TabsPorts["accounts"] {
+// The binding reads its normal-window scope from its own sender, so its last-account read needs none from Tabs.
+export function bindNativeRoutingAccounts(input: { readonly owner: Owner; readonly native: NativeTabs; readonly sender: NativeSender; readonly popupWindowId: unknown }): {
+  lastAccount(): ReturnType<TabsPorts["accounts"]["lastAccount"]>
+  hasSetup: TabsPorts["accounts"]["hasSetup"]
+} {
   const { owner, native, sender, popupWindowId } = input
   async function normalRequester() {
     const result = await native.requester(sender, popupWindowId)

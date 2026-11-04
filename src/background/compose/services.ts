@@ -67,7 +67,10 @@ export function composeServices(deps: {
       }
     },
     accounts: {
-      lastAccount: async () => null,
+      async lastAccount(scope) {
+        const read = await owner.readLastAccount(scope)
+        return read.kind === "account" ? read.acct : null
+      },
       async hasSetup(acct) {
         const read = await owner.readSetup(acct)
         return read.kind === "value" && read.view.kind === "live"

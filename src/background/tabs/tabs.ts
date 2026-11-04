@@ -339,7 +339,7 @@ export function createTabs(ports: TabsPorts): Tabs {
     }
     if (req.incognito) return { kind: "none" }
     const fallback = await bounded(CANDIDATE_MS, async () => {
-      const acct = await ports.accounts.lastAccount()
+      const acct = await ports.accounts.lastAccount({ kind: "normal-window", windowId: req.windowId, incognito: false })
       return acct !== null && (await ports.accounts.hasSetup(acct)) ? acct : null
     })
     if (guard()) return { kind: "unavailable", reason: disposed ? "disposed" : "held" }
