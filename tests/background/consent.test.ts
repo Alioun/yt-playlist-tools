@@ -26,3 +26,17 @@ test("withdrawing consent in Settings sends every open YouTube tab a view with n
   expect(await w.settings.call("ui.withdraw", { expected: { v: 1, at: 1 } })).toEqual({ kind: "answered", result: { kind: "withdrawn" } })
   expect(world.site.views.at(-1)).toMatchObject({ site: "www", signedIn: true, acct, features: [], statuses: [], notices: [] })
 })
+
+test("Clear all in Settings answers that it cleared this browser, after the open tab's features are torn down", async () => {
+  const { world, w } = await queueButtonTab()
+
+  const review = await w.settings.call("ui.clearAll", { action: "review", alsoSynced: false })
+  if (review.kind !== "answered" || review.result.kind !== "reviewed") throw new Error(`No review: ${JSON.stringify(review)}`)
+  const cleared = await w.settings.call("ui.clearAll", { action: "confirm", review: review.result.review, alsoSynced: false })
+  expect(cleared).toMatchObject({ kind: "answered", result: { kind: "clear-result", scope: "local", erasure: "confirmed", outcome: "cleared", stage: "complete" } })
+  expect(world.site.views.at(-1)).toMatchObject({ acct, features: [] })
+  expect(await w.settings.call("ui.clearAll", { action: "review", alsoSynced: false }), "the fresh routes take the next request").toMatchObject({
+    kind: "answered",
+    result: { kind: "reviewed" }
+  })
+})

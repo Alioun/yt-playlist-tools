@@ -302,7 +302,7 @@ export function composeServices(deps: {
         () => native.permissions.onAdded.removeListener(repaint),
         () => native.permissions.onRemoved.removeListener(repaint),
         () => badge.dispose(),
-        () => router.dispose(),
+        () => router.retire(),
         () => autoAddRoutes.dispose(),
         () => healthRoutes.dispose(),
         () => accounts.dispose(),

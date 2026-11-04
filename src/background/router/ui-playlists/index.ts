@@ -99,7 +99,8 @@ type RequestEntry = { readonly text: string; readonly kind: "pending"; readonly 
 const unavailable = (reason: UiUnavailable["reason"]): UiUnavailable => ({ kind: "unavailable", reason })
 
 export function createUiRouter(ports: UiRouterPorts) {
-  let active = true
+  let active = true,
+    retiring = false
   const operations = new Map<CreationId, Operation>()
   const lists = new Map<ListOperationId, ListOperation>()
   const releasedLists = new Set<ListOperationId>()
@@ -521,6 +522,7 @@ export function createUiRouter(ports: UiRouterPorts) {
           sender = delivery.sender
         if (
           !active ||
+          retiring ||
           inspectMessageHeader(message, ports.rpc.build).kind !== "ok" ||
           !objectShape(message, {
             v: v => v === CONTRACT_VERSION,
@@ -554,25 +556,36 @@ export function createUiRouter(ports: UiRouterPorts) {
   }
   const rpc = createRpc(transport, { ...ports.rpc, contract: uiContract })
   const unhandle = rpc.handle(receiver)
+  function dispose() {
+    if (!active) return
+    active = false
+    for (const operation of operations.values()) operation.active = false
+    operations.clear()
+    retired.clear()
+    requests.clear()
+    for (const operation of lists.values()) {
+      operation.active = false
+      operation.authority = undefined
+      operation.work = null
+    }
+    lists.clear()
+    releasedLists.clear()
+    clearAll.dispose()
+    firstRun.dispose()
+    unhandle()
+    rpc.dispose()
+  }
   return {
-    dispose() {
-      if (!active) return
-      active = false
-      for (const operation of operations.values()) operation.active = false
-      operations.clear()
-      retired.clear()
-      requests.clear()
-      for (const operation of lists.values()) {
-        operation.active = false
-        operation.authority = undefined
-        operation.work = null
-      }
-      lists.clear()
-      releasedLists.clear()
-      clearAll.dispose()
-      firstRun.dispose()
-      unhandle()
-      rpc.dispose()
+    dispose,
+    /**
+     * Takes no new requests, then disposes once the ones in flight have answered. A request whose own work ended this
+     * router, such as Clear all, still gets its answer.
+     */
+    retire() {
+      if (!active || retiring) return
+      retiring = true
+      const answers = [...requests.values()].flatMap(entry => (entry.kind === "pending" ? [entry.answer] : []))
+      void Promise.allSettled(answers).then(dispose)
     }
   }
 }

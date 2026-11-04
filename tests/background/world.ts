@@ -192,13 +192,26 @@ function youtube() {
 function omitAbsentKeys() {
   for (const area of [fakeBrowser.storage.local, fakeBrowser.storage.session, fakeBrowser.storage.sync]) {
     const get = area.get.bind(area)
-    Object.assign(area, {
-      async get(keys?: unknown) {
-        const found: Record<string, unknown> = await get(keys as never)
-        return Object.fromEntries(Object.entries(found).filter(([, value]) => value !== undefined))
-      }
-    })
+    const present = async (keys?: unknown) => {
+      const found: Record<string, unknown> = await get(keys as never)
+      return Object.fromEntries(Object.entries(found).filter(([, value]) => value !== undefined))
+    }
+    // WXT's fake also lacks getKeys, the key inventory Clear all reads back to confirm its erase.
+    Object.assign(area, { get: present, getKeys: async () => Object.keys(await present(null)) })
   }
+}
+// The test DOM has no IndexedDB. Clear all deletes the retired 1.x database, which a browser reports as deleted when it's absent.
+function absentIndexedDb() {
+  if ("indexedDB" in globalThis) return
+  Object.assign(globalThis, {
+    indexedDB: {
+      deleteDatabase() {
+        const request: { onsuccess?: () => void } = {}
+        setTimeout(() => request.onsuccess?.())
+        return request
+      }
+    }
+  })
 }
 export function documented(name: string, data: Record<string, unknown>) {
   return { v: 1, gen: `gen-${name}`, at: 1, by: "e2e-device", data }
@@ -207,6 +220,7 @@ export function documented(name: string, data: Record<string, unknown>) {
 // One browser: storage, the tab strip and YouTube outlive any background, as they do when the worker stops.
 export function browser(gather: Record<string, unknown>) {
   omitAbsentKeys()
+  absentIndexedDb()
   const tabs = strip(),
     site = youtube()
   const servingTabs = new Set([1])
