@@ -42,7 +42,7 @@ export function composeGather(deps: {
   readonly owner: Owner
   readonly tabs: Tabs
   readonly nativeTabs: Pick<TabNativePort, "query" | "get">
-  readonly addFlow: AddFlow
+  readonly addFlow: Pick<AddFlow, "batch" | "undo" | "settle">
   readonly settings: (incognito: boolean) => Promise<Settings | null>
   readonly registrar: Pick<Registrar, "ensure">
   readonly i18n: I18n

@@ -162,7 +162,7 @@ export function composeServices(deps: {
     owner,
     tabs,
     nativeTabs: browserTabs.port,
-    addFlow: actions.flow,
+    addFlow: { batch: actions.batch, undo: actions.flow.undo, settle: actions.flow.settle },
     settings: incognito => actions.settings(incognito),
     registrar,
     monitor,

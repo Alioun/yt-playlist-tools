@@ -41,6 +41,21 @@ test("Gather in the popup saves the window's video tabs to the gather playlist, 
   expect(await w.popup.call("ui.gathers", {})).toEqual({ kind: "answered", result: { kind: "gathers", running: false, line: null } })
 })
 
+test("with Keep a list of recent adds off, the first gather after the worker starts lists nothing in the popup's Recent adds", async () => {
+  const world = browser({})
+  await world.seed({ device: { id: "e2e-device", consent: { v: 1, at: 1 }, syncOn: false, recentAdds: false } })
+  world.tabs.open(1, "https://www.youtube.com/", { active: true })
+  for (const n of [1, 2]) world.tabs.open(9 + n, watch(n))
+  const w = world.worker()
+  running.push(w.background)
+  await w.background.ready
+  await w.hello(1)
+
+  expect(await w.line(w.popup.call("ui.gather", {}))).toMatchObject({ text: "Saved 2 videos to Watch later and closed their tabs." })
+  expect([...world.site.later.values()]).toEqual([video(1), video(2)])
+  expect(await w.popup.call("ui.recentAdds", { acct: acct as never })).toEqual({ kind: "answered", result: { kind: "recent", entries: [] } })
+})
+
 test("a worker that stops after closing the tabs, before it read them back, still undoes the gather from the saved plan", async () => {
   const world = browser({})
   await world.seed()

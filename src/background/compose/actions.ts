@@ -151,6 +151,8 @@ export function createAddFlowOwner(owner: Pick<StartingOwner, "readTabProjection
 export type ActingTab = { readonly tabId: number; readonly incognito: boolean; readonly site: Site }
 export type Actions = {
   readonly flow: AddFlow
+  /** A gather's batch, once the projection is loaded, so it records Recent adds only while Keep a list of recent adds is on (DATA-52). */
+  batch: AddFlow["batch"]
   /** An explicit add in a tab the background chose, as that tab's account (YT-ANY-05, YT-BM-04). */
   addInTab(tab: ActingTab, request: TabAddRequest): Promise<TabAddReport>
   /** Playing now's save in the tab it read, only while that tab still shows `acct` in the popup's window kind (ARC-ACC-68). */
@@ -401,6 +403,10 @@ export function composeActions(deps: {
         default:
           return { kind: report.kind }
       }
+    },
+    async batch(request, origin) {
+      await view.load(origin.kind === "tab" || origin.kind === "ui" ? origin.incognito : false, request.acct ?? null, "www")
+      return flow.batch(request, origin)
     },
     async settings(incognito) {
       const read = await owner.readTabProjection({ private: incognito, account: { kind: "unknown" } }).catch(() => null)
