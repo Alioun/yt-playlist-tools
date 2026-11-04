@@ -44,6 +44,7 @@ export type CatalogueProofs = [
       | "ui.remove"
       | "ui.membership"
       | "ui.pausedWork"
+      | "ui.heldAgree"
       | "ui.sync"
     >
   >

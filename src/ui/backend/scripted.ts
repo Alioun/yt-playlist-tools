@@ -67,6 +67,7 @@ export function createScriptedBackend(options: ScriptedBackendOptions) {
       "ui.remove": payload => take("ui.remove", payload),
       "ui.membership": payload => take("ui.membership", payload),
       "ui.pausedWork": payload => take("ui.pausedWork", payload),
+      "ui.heldAgree": payload => take("ui.heldAgree", payload),
       "ui.sync": payload => take("ui.sync", payload)
     }
   })

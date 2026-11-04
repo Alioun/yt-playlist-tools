@@ -26,6 +26,7 @@ test("one catalogue authenticates private shared key/options/feature edits and r
       "ui.gather",
       "ui.gatherUndo",
       "ui.gathers",
+      "ui.heldAgree",
       "ui.importSettings",
       "ui.membership",
       "ui.noteAgree",

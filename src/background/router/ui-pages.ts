@@ -342,6 +342,22 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
         return refusal("rejected")
       }
     },
+    async "ui.heldAgree"(payload, context) {
+      if (context.ui.ui.page !== "onboarding") return { kind: "refused", reason: "unavailable" }
+      const origin = context.ui.ui.origin
+      const read = await ports.owner.readAgreement(origin)
+      if (read.kind !== "review") return { kind: "refused", reason: "unavailable" }
+      if (read.presentation.kind !== "held") return { kind: "not-held" }
+      const paused = pausedJobs(read.presentation.work).length
+      if (payload.action === "read") return { kind: "held", paused }
+      if (payload.displayedVersion !== read.version) return { kind: "refused", reason: "update-needed" }
+      const access = await ports.readAccess()
+      if (!access) return { kind: "refused", reason: "unavailable" }
+      const result = await ports.owner.agree(origin, { review: read.review, displayedVersion: payload.displayedVersion, choice: { kind: "disclosure" }, access: Promise.resolve(access) })
+      if (result.kind === "committed") return { kind: "agreed", paused }
+      if (result.kind === "unconfirmed" || result.kind === "failed") return { kind: "refused", reason: result.kind }
+      return { kind: "refused", reason: result.kind === "unavailable" && result.reason === "newer-consent" ? "update-needed" : "unavailable" }
+    },
     async "ui.pausedWork"(payload, context) {
       if (!settingsPage(context)) return { kind: "refused", reason: "unavailable" }
       if (context.ui.requester.incognito) return { kind: "refused", reason: "private" }

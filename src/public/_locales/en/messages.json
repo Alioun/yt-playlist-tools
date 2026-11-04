@@ -4511,6 +4511,31 @@
   "note_done": {
     "message": "You're all set."
   },
+  "held_lead": {
+    "message": "You withdrew your consent, so Perchling reads nothing from YouTube. It kept your settings. Agree again to turn your features back on."
+  },
+  "held_paused_one": {
+    "message": "$COUNT$ change that stopped when you withdrew stays paused until you continue it in Settings, under Waiting for your review.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "held_paused_other": {
+    "message": "$COUNT$ changes that stopped when you withdrew stay paused until you continue them in Settings, under Waiting for your review.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "held_done": {
+    "message": "You agreed again."
+  },
+  "held_done_restart": {
+    "message": "Perchling turns your features back on the next time it starts, such as when you restart the browser."
+  },
   "note_outcome_claimed": {
     "message": "Your auto-add playlists and shortcut from 1.x are now set up for $ACCOUNT$: $TITLES$.",
     "placeholders": {

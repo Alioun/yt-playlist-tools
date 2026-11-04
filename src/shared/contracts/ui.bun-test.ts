@@ -22,6 +22,7 @@ test("one composed UI catalogue preserves first-run entries by identity", () => 
     "ui.gather",
     "ui.gatherUndo",
     "ui.gathers",
+    "ui.heldAgree",
     "ui.importSettings",
     "ui.membership",
     "ui.noteAgree",

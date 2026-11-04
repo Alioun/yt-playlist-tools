@@ -1,9 +1,17 @@
 import { afterEach, expect, test } from "bun:test"
+import { cleanup, render, screen } from "@testing-library/svelte"
+import userEvent from "@testing-library/user-event"
+import { fakeBrowser } from "wxt/testing/fake-browser"
 import type { Background } from "../../src/background/boot"
+import type { Backend } from "../../src/ui/backend/backend"
+import { OnboardingPage } from "../../src/ui/onboarding"
+import { startFirstRun } from "../../src/ui/onboarding/start"
+import { englishI18n } from "../../tools/fixtures/localization/scripted"
 import { acct, browser, documented, started } from "./world"
 
 const running: Background[] = []
 afterEach(async () => {
+  cleanup()
   for (const background of running.splice(0)) await background.dispose().catch(() => {})
 })
 
@@ -71,4 +79,51 @@ test("while consent is held after a restart, Clear all in Settings still clears 
   if (review.kind !== "answered" || review.result.kind !== "reviewed") throw new Error(`No review: ${JSON.stringify(review)}`)
   const cleared = await again.settings.call("ui.clearAll", { action: "confirm", review: review.result.review, alsoSynced: false })
   expect(cleared).toMatchObject({ kind: "answered", result: { kind: "clear-result", erasure: "confirmed", outcome: "cleared" } })
+})
+
+// The first-run page in its own tab, which the popup's and Settings' Review opens.
+function openFirstRunPage(backend: Backend) {
+  const page = {
+    backend,
+    i18n: englishI18n(),
+    platform: { browser: "chrome", os: "linux" } as const,
+    private: false,
+    windowId: null,
+    version: "2.0.0",
+    beta: false,
+    open() {},
+    openSettings() {},
+    openFirstRun() {},
+    applyTheme() {},
+    canonical: async () => englishI18n(),
+    commands: { read: async () => ({ kind: "unavailable" }) as const, named: async () => null }
+  }
+  render(OnboardingPage, { ...startFirstRun(page as never), markSrc: "mark.svg" })
+}
+
+test("after withdrawing, Review's page asks only to agree again, saves consent alone, and the features start with the next worker", async () => {
+  const { world, w } = await queueButtonTab()
+  expect(await w.settings.call("ui.withdraw", { expected: { v: 1, at: 1 } })).toEqual({ kind: "answered", result: { kind: "withdrawn" } })
+  const settingsBefore = (await fakeBrowser.storage.local.get("doc:settings"))["doc:settings"]
+
+  openFirstRunPage(w.onboarding)
+  await screen.findByRole("heading", { name: "Before you continue" }, { timeout: 10_000 })
+  expect(screen.getByText("You withdrew your consent, so Perchling reads nothing from YouTube. It kept your settings. Agree again to turn your features back on.")).toBeTruthy()
+  await userEvent.click(screen.getByRole("button", { name: "Agree" }))
+  await screen.findByText("You agreed again.", undefined, { timeout: 10_000 })
+
+  const { device } = await fakeBrowser.storage.local.get("device")
+  expect((device as { consent: { v: number; at: number } | null }).consent).toMatchObject({ v: 1 })
+  expect((await fakeBrowser.storage.local.get("doc:settings"))["doc:settings"], "Agree changes no settings").toEqual(settingsBefore)
+  expect(await w.popup.call("ui.gather", {}), "this worker's features stay stopped").toMatchObject({ kind: "answered", result: { kind: "unavailable" } })
+
+  await w.background.dispose()
+  const again = world.worker()
+  running.push(again.background)
+  await started(again)
+  const hello = (await again.hello(1)) as { result: { features: { id: string }[] } | null }
+  expect(
+    hello.result?.features.map(feature => feature.id),
+    "the next worker runs the features"
+  ).toEqual(["queue-button"])
 })

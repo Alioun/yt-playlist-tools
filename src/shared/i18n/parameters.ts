@@ -731,6 +731,11 @@ export type MessageParameters = {
   "note_question_unknown": readonly []
   "note_question_half": readonly []
   "note_done": readonly []
+  "held_lead": readonly []
+  "held_paused_one": readonly ["count"]
+  "held_paused_other": readonly ["count"]
+  "held_done": readonly []
+  "held_done_restart": readonly []
   "note_outcome_claimed": readonly ["account", "titles"]
   "note_outcome_checked": readonly ["account"]
   "note_outcome_shortcutDeleted": readonly []
@@ -1561,6 +1566,8 @@ export const messagePlaceholders: { readonly [K in keyof MessageParameters]?: Me
   "note_shortcuts_ctrlFixed": ["key"],
   "note_shortcuts_unconvertible": ["raw"],
   "note_shortcuts_noPlaylist": ["key"],
+  "held_paused_one": ["count"],
+  "held_paused_other": ["count"],
   "note_outcome_claimed": ["account", "titles"],
   "note_outcome_checked": ["account"],
   "note_outcome_dropped_one": ["count"],

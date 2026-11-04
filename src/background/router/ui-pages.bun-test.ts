@@ -28,6 +28,7 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
     { kind: "unsupported", operation: "legacy", reason: "invalid" }
   ]
   let paused = false
+  const agreement: { presentation: unknown; result: unknown } = { presentation: { kind: "canonical", note: { state: "pending" } }, result: { kind: "agreed" } }
   const sync = {
     preparation: { kind: "automatic", review: { kind: "sync-join-review" }, reason: "empty-copy" } as SyncJoinPreparation,
     calls: [] as string[],
@@ -68,10 +69,10 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
         marked.push(flag)
         return "set"
       },
-      readAgreement: async () => ({ kind: "review", version: 1, review: {} as never, presentation: { kind: "canonical", note: { state: "pending" } } }) as never,
+      readAgreement: async () => ({ kind: "review", version: 1, review: {} as never, presentation: agreement.presentation }) as never,
       async agree(_origin, input) {
         agreements.push(input.choice)
-        return { kind: "agreed" } as never
+        return agreement.result as never
       },
       readClaimNotice: async () => ({ kind: "pending", notice: { acct: "AAAAAAAAAAAAAAAA", dropped: 1 } }) as never,
       async acknowledgeClaimNotice(origin, expected) {
@@ -124,7 +125,7 @@ function receiver(overrides: Partial<PageReceiverPorts> = {}) {
     ...overrides
   }
   const context = (incognito = false, page = "popup", principal = "p") => ({ ui: ui(incognito, page, principal), current: async () => ui(incognito, page, principal) })
-  return { handlers: createPageReceiver(ports), changes, filters, removed, marked, agreements, acknowledged, discarded, recovered, removalJob, context, sync }
+  return { handlers: createPageReceiver(ports), changes, filters, removed, marked, agreements, agreement, held, acknowledged, discarded, recovered, removalJob, context, sync }
 }
 
 test("status answers Pause, the popup's tab and its feature health", async () => {
@@ -320,6 +321,23 @@ test("withdrawal runs only from Settings, and an unusable import file is refused
   expect(await handlers["ui.withdraw"]({ expected: { v: 1, at: 1 } }, context(false, "settings"))).toEqual({ kind: "withdrawn" })
   expect(await handlers["ui.importSettings"]({ action: "prepare", text: "{}" }, context(false, "settings"))).toEqual({ kind: "refused", reason: "invalid-file" })
   expect(await handlers["ui.importSettings"]({ action: "prepare", text: "{}" }, context(true, "settings"))).toEqual({ kind: "refused", reason: "private" })
+})
+
+test("after a withdrawal, only the first-run page agrees again, with the disclosure alone, and the paused jobs stay paused (FT-35, R167)", async () => {
+  const { handlers, agreements, agreement, held, recovered, context } = receiver()
+  expect(await handlers["ui.heldAgree"]({ action: "read" }, context(false, "onboarding")), "canonical consent is first run's own").toEqual({ kind: "not-held" })
+  agreement.presentation = { kind: "held", consent: null, work: held, allowedChoice: "disclosure", activation: "held" }
+  agreement.result = { kind: "committed", activation: "held" }
+  expect(await handlers["ui.heldAgree"]({ action: "read" }, context(false, "onboarding"))).toEqual({ kind: "held", paused: 2 })
+  expect(await handlers["ui.heldAgree"]({ action: "agree", displayedVersion: 1 }, context(false, "settings"))).toEqual({ kind: "refused", reason: "unavailable" })
+  expect(await handlers["ui.heldAgree"]({ action: "agree", displayedVersion: 2 }, context(false, "onboarding"))).toEqual({ kind: "refused", reason: "update-needed" })
+  expect(agreements).toEqual([])
+  expect(await handlers["ui.heldAgree"]({ action: "agree", displayedVersion: 1 }, context(false, "onboarding"))).toEqual({ kind: "agreed", paused: 2 })
+  expect(agreements).toEqual([{ kind: "disclosure" }])
+  expect(recovered).toEqual([])
+  expect(await handlers["ui.pausedWork"]({ action: "read" }, context(false, "settings"))).toMatchObject({ kind: "work", jobs: [{ job: "removal" }, { job: "sync" }] })
+  agreement.result = { kind: "unconfirmed", stage: "consent-only" }
+  expect(await handlers["ui.heldAgree"]({ action: "agree", displayedVersion: 1 }, context(false, "onboarding"))).toEqual({ kind: "refused", reason: "unconfirmed" })
 })
 
 test("only the first-run page marks the note seen, and its Agree carries the question's answer as the note's choice", async () => {

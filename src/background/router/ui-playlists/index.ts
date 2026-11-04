@@ -443,6 +443,7 @@ export function createUiRouter(ports: UiRouterPorts) {
       "ui.claimSeen": (payload, context) => page("ui.claimSeen", payload, context),
       "ui.discardUnclaimed": (payload, context) => page("ui.discardUnclaimed", payload, context),
       "ui.pausedWork": (payload, context) => page("ui.pausedWork", payload, context),
+      "ui.heldAgree": (payload, context) => page("ui.heldAgree", payload, context),
       "ui.sync": (payload, context) => page("ui.sync", payload, context),
       async "ui.playingNow"(_payload, context) {
         const ui = requireUi(context)

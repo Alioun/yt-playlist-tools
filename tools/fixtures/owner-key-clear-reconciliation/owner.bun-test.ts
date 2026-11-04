@@ -149,6 +149,7 @@ test("single catalogue carries ui.clearAll and ui.change without a parallel feat
     "ui.gather",
     "ui.gatherUndo",
     "ui.gathers",
+    "ui.heldAgree",
     "ui.importSettings",
     "ui.membership",
     "ui.noteAgree",

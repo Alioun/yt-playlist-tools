@@ -149,7 +149,14 @@ export type PageMessages = {
   readonly "ui.sync": { readonly payload: WindowClaim & SyncPayload; readonly result: UiSync }
   /** Work that withdrawal paused, which only an explicit Continue resumes (R167, UI-SET-16). */
   readonly "ui.pausedWork": { readonly payload: WindowClaim & ({ readonly action: "read" } | { readonly action: "continue"; readonly id: string }); readonly result: UiPausedWork }
+  /** The disclosure again after a withdrawal (FT-35, R167). Agree saves consent alone, and paused work waits for its own Continue. */
+  readonly "ui.heldAgree": { readonly payload: WindowClaim & ({ readonly action: "read" } | { readonly action: "agree"; readonly displayedVersion: number }); readonly result: UiHeldAgreement }
 }
+/** `paused` counts the jobs withdrawal paused, which Agree leaves paused. `not-held` means first run's own Agree applies. */
+export type UiHeldAgreement =
+  | { readonly kind: "held" | "agreed"; readonly paused: number }
+  | { readonly kind: "not-held" }
+  | { readonly kind: "refused"; readonly reason: "update-needed" | "unconfirmed" | "failed" | "unavailable" }
 /** One paused job as Privacy & data names it: bringing over 1.x settings, removing a setup, joining sync, a settings change or an import. */
 export type UiPausedJob = { readonly id: string; readonly job: "migration" | "removal" | "sync" | "settings" | "import"; readonly acct: AccountKey | null }
 export type UiPausedWork =
@@ -363,6 +370,13 @@ export const pageContract: RpcContract<PageMessages> = {
         kind: oneOf("work", "continued"),
         jobs: list(job => objectShape(job, { id: token, job: oneOf("migration", "removal", "sync", "settings", "import"), acct: a => a === null || isAccountKey(a) }), 50)
       }) || refusal("failed", "unconfirmed", "unavailable", "private")(v),
+    timeoutMs: 60_000
+  },
+  "ui.heldAgree": {
+    payload: (v): v is PageMessages["ui.heldAgree"]["payload"] =>
+      objectShape(v, { action: x => x === "read" }, windowClaim) || objectShape(v, { action: x => x === "agree", displayedVersion: natural }, windowClaim),
+    result: (v): v is UiHeldAgreement =>
+      objectShape(v, { kind: oneOf("held", "agreed"), paused: natural }) || objectShape(v, { kind: x => x === "not-held" }) || refusal("update-needed", "unconfirmed", "failed", "unavailable")(v),
     timeoutMs: 60_000
   },
   "ui.sync": {

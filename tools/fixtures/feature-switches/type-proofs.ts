@@ -50,6 +50,7 @@ export type Proofs = [
       | "ui.remove"
       | "ui.membership"
       | "ui.pausedWork"
+      | "ui.heldAgree"
       | "ui.sync"
     >
   >,
