@@ -163,8 +163,8 @@ test("Discard deletes the unclaimed setup, and a private window can't (ACC-33)",
   expect(discarded).toEqual(["discard"])
 })
 
-test("Privacy & data lists the work withdrawal paused, and Continue resumes only the job that page read (R167)", async () => {
-  const { handlers, recovered, removalJob, context } = receiver()
+test("Privacy & data lists the work withdrawal paused, Continue resumes only the job that page read, and the last one turns the features back on (R167)", async () => {
+  const { handlers, recovered, removalJob, agreement, context } = receiver()
   expect(await handlers["ui.pausedWork"]({ action: "read" }, context(false, "popup"))).toEqual({ kind: "refused", reason: "unavailable" })
   expect(await handlers["ui.pausedWork"]({ action: "continue", id: "1" }, context(false, "settings", "other"))).toEqual({ kind: "refused", reason: "unavailable" })
   expect(await handlers["ui.pausedWork"]({ action: "read" }, context(false, "settings"))).toEqual({
@@ -176,6 +176,9 @@ test("Privacy & data lists the work withdrawal paused, and Continue resumes only
   })
   expect(await handlers["ui.pausedWork"]({ action: "continue", id: "1" }, context(false, "settings"))).toEqual({ kind: "continued", jobs: [{ id: "1", job: "sync", acct: null }] })
   expect(recovered).toEqual([removalJob])
+  expect(agreement.activations, "while work still waits the store stays as it is").toBe(0)
+  expect(await handlers["ui.pausedWork"]({ action: "continue", id: "1" }, context(false, "settings"))).toEqual({ kind: "continued", jobs: [] })
+  expect(agreement.activations, "the last Continue replaces the held owner in the running background").toBe(1)
 })
 
 test("the sync switch joins at once when nothing needs choosing, starts syncing, and switches off (SYNC-08, SYNC-19)", async () => {

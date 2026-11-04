@@ -371,9 +371,14 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
         selection = saved?.selections.get(payload.id)
       if (!saved || !selection) return { kind: "refused", reason: "unavailable" }
       const result = await ports.owner.recoverWithdrawnWork(context.ui.ui.origin, { review: saved.review, job: selection })
-      const jobs = (await readPaused(context)) ?? []
+      const left = await readPaused(context),
+        jobs = left ?? []
       const kind = result.kind
-      if (kind === "recovered" || kind === "key-settings-recovered" || kind === "feature-settings-recovered") return { kind: "continued", jobs }
+      if (kind === "recovered" || kind === "key-settings-recovered" || kind === "feature-settings-recovered") {
+        // Paused work holds the store until its last job continues, and then the features may run again.
+        if (left?.length === 0) await ports.activate()
+        return { kind: "continued", jobs }
+      }
       return { kind: "refused", reason: kind === "authorized-pending" || kind === "key-settings-pending" || kind === "feature-settings-pending" ? "unconfirmed" : "failed" }
     },
     // SYNC-25: the switch and the join question work from a private window too.
