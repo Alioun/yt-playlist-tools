@@ -158,7 +158,7 @@ export type PageMessages = {
  */
 export type UiHeldAgreement =
   | { readonly kind: "held"; readonly paused: number }
-  | { readonly kind: "agreed"; readonly paused: number; readonly features: "on" | "held" }
+  | { readonly kind: "agreed"; readonly paused: number; readonly features: boolean }
   | { readonly kind: "not-held" }
   | { readonly kind: "refused"; readonly reason: "update-needed" | "unconfirmed" | "failed" | "unavailable" }
 /** One paused job as Privacy & data names it: bringing over 1.x settings, removing a setup, joining sync, a settings change or an import. */
@@ -381,7 +381,7 @@ export const pageContract: RpcContract<PageMessages> = {
       objectShape(v, { action: x => x === "read" }, windowClaim) || objectShape(v, { action: x => x === "agree", displayedVersion: natural }, windowClaim),
     result: (v): v is UiHeldAgreement =>
       objectShape(v, { kind: x => x === "held", paused: natural }) ||
-      objectShape(v, { kind: x => x === "agreed", paused: natural, features: oneOf("on", "held") }) ||
+      objectShape(v, { kind: x => x === "agreed", paused: natural, features: bool }) ||
       objectShape(v, { kind: x => x === "not-held" }) ||
       refusal("update-needed", "unconfirmed", "failed", "unavailable")(v),
     timeoutMs: 60_000

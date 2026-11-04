@@ -14,7 +14,7 @@
   let phase = $state<"review" | "agreeing" | "done">("review")
   let failure = $state<string | null>(null)
   let left = $state(untrack(() => paused))
-  let features = $state<"on" | "held">("on")
+  let features = $state(true)
 
   async function agree() {
     if (phase !== "review") return
@@ -36,9 +36,9 @@
     {#if phase === "done"}
       <section class="bg-card flex flex-col gap-3 rounded-2xl border p-6" role="status">
         <h1 class="text-xl font-semibold">{i18n.message("held_done")}</h1>
-        <p class="text-[14.5px]">{i18n.message(features === "on" ? "held_done_on" : "held_done_held")}</p>
-        {#if features === "on" && pausedLine}<p class="text-[14.5px]">{pausedLine}</p>{/if}
-        {#if features === "held" || pausedLine}
+        <p class="text-[14.5px]">{i18n.message(features ? "held_done_on" : "held_done_held")}</p>
+        {#if features && pausedLine}<p class="text-[14.5px]">{pausedLine}</p>{/if}
+        {#if !features || pausedLine}
           <Button variant="outline" class="self-start" onclick={() => pageState.page.openSettings("privacy")}>{i18n.message("firstRun_finish_openSettings")}</Button>
         {/if}
       </section>

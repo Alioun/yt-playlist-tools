@@ -356,7 +356,7 @@ export function createPageReceiver(ports: PageReceiverPorts): RpcHandlers<PageMe
       const access = await ports.readAccess()
       if (!access) return { kind: "refused", reason: "unavailable" }
       const result = await ports.owner.agree(origin, { review: read.review, displayedVersion: payload.displayedVersion, choice: { kind: "disclosure" }, access: Promise.resolve(access) })
-      if (result.kind === "committed") return { kind: "agreed", paused, features: await ports.activate() }
+      if (result.kind === "committed") return { kind: "agreed", paused, features: (await ports.activate()) === "on" }
       if (result.kind === "unconfirmed" || result.kind === "failed") return { kind: "refused", reason: result.kind }
       return { kind: "refused", reason: result.kind === "unavailable" && result.reason === "newer-consent" ? "update-needed" : "unavailable" }
     },

@@ -16,7 +16,7 @@ const build = (() => {
 afterEach(() => cleanup())
 
 type HeldPayload = UiMessages["ui.heldAgree"]["payload"]
-function heldPage(paused: number, sent: HeldPayload[], opened: string[], features: "on" | "held" = "on") {
+function heldPage(paused: number, sent: HeldPayload[], opened: string[], features = true) {
   const scripted = createScriptedBackend({
     build,
     deadline: () => () => {},
@@ -75,7 +75,7 @@ test("with nothing paused, agreeing again says Perchling is on again", async () 
 
 test("when paused work still holds the features, agreeing again says they stay off until it continues in Settings", async () => {
   const opened: string[] = []
-  heldPage(1, [], opened, "held")
+  heldPage(1, [], opened, false)
   await userEvent.click(await screen.findByRole("button", { name: "Agree" }, { timeout: 5000 }))
   expect(await screen.findByText("Your features stay off until you continue the paused changes in Settings.", {}, { timeout: 5000 })).toBeTruthy()
   expect(screen.queryByText("Perchling is on again.")).toBeNull()

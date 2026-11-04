@@ -49,3 +49,12 @@ test("one composed UI catalogue preserves first-run entries by identity", () => 
   expect(uiContract["ui.playlists"]).toBe(playlistUiContract["ui.playlists"])
   expect(firstRunContract["ui.change"].payload({ change: { kind: "create", title: "Wrong handler" } })).toBe(false)
 })
+
+test("held Agree reports whether features run as a boolean and rejects missing or invalid activation results", () => {
+  const accepts = uiContract["ui.heldAgree"].result
+  expect(accepts({ kind: "held", paused: 2 })).toBe(true)
+  for (const features of [true, false]) expect(accepts({ kind: "agreed", paused: 2, features })).toBe(true)
+  for (const features of [undefined, null, "on", "held", 0, 1]) expect(accepts({ kind: "agreed", paused: 2, features })).toBe(false)
+  expect(accepts({ kind: "agreed", paused: -1, features: true })).toBe(false)
+  expect(accepts({ kind: "agreed", paused: 0.5, features: false })).toBe(false)
+})

@@ -345,7 +345,7 @@ test("after a withdrawal, only the first-run page agrees again, with the disclos
   expect(await handlers["ui.heldAgree"]({ action: "agree", displayedVersion: 2 }, context(false, "onboarding"))).toEqual({ kind: "refused", reason: "update-needed" })
   expect(agreements).toEqual([])
   expect(agreement.activations, "a refused Agree activates nothing").toBe(0)
-  expect(await handlers["ui.heldAgree"]({ action: "agree", displayedVersion: 1 }, context(false, "onboarding"))).toEqual({ kind: "agreed", paused: 2, features: "on" })
+  expect(await handlers["ui.heldAgree"]({ action: "agree", displayedVersion: 1 }, context(false, "onboarding"))).toEqual({ kind: "agreed", paused: 2, features: true })
   expect(agreements).toEqual([{ kind: "disclosure" }])
   expect(agreement.activations, "the running background replaces its held owner once").toBe(1)
   expect(recovered).toEqual([])
@@ -354,7 +354,7 @@ test("after a withdrawal, only the first-run page agrees again, with the disclos
   expect(await handlers["ui.heldAgree"]({ action: "agree", displayedVersion: 1 }, context(false, "onboarding")), "work that still holds the store keeps the features off").toEqual({
     kind: "agreed",
     paused: 2,
-    features: "held"
+    features: false
   })
   agreement.result = { kind: "unconfirmed", stage: "consent-only" }
   expect(await handlers["ui.heldAgree"]({ action: "agree", displayedVersion: 1 }, context(false, "onboarding"))).toEqual({ kind: "refused", reason: "unconfirmed" })
