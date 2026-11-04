@@ -6,14 +6,15 @@
   import FirstRun from "./FirstRun.svelte"
 
   // onboarding.html shows first run, the upgrade note, or after a withdrawal the disclosure alone, decided when the page
-  // opens; Agree never switches it (UI-ONB-01, REL-CON-03, FT-35).
+  // opens; Agree never switches it (UI-ONB-01, REL-CON-03, FT-35). A withdrawal keeps a pending note, and the note's
+  // Agree needs consent that isn't held, so held consent comes first.
   let { pageState, owner, text, markSrc }: { pageState: PageState; owner: FirstRunOwner; text: FirstRunText; markSrc: string } = $props()
   const { backend } = untrack(() => pageState.page)
-  const decided = backend.loadPage().then(async view => {
+  const decided = backend.call("ui.heldAgree", { action: "read" }).then(async held => {
+    if (held.kind === "answered" && held.result.kind === "held") return held.result
+    const view = await backend.loadPage()
     const note = view.kind === "view" && view.device.kind === "current" ? view.device.device.upgradeNote : null
-    if (note?.state === "pending") return { kind: "note", details: note.details } as const
-    const held = await backend.call("ui.heldAgree", { action: "read" })
-    return held.kind === "answered" ? held.result : null
+    return note?.state === "pending" ? ({ kind: "note", details: note.details } as const) : null
   })
 </script>
 

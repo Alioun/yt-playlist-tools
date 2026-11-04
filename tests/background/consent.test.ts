@@ -127,3 +127,31 @@ test("after withdrawing, Review's page asks only to agree again, saves consent a
     "the next worker runs the features"
   ).toEqual(["queue-button"])
 })
+
+test("after withdrawing with the 1.x note still pending, Review's page asks only to agree again instead of showing the note", async () => {
+  const details = {
+    from: "1.4.5",
+    autoAdd: { kept: 0, dropped: 0 },
+    pct: { value: 50, wasUnset: false, authorised: true },
+    feedback: true,
+    shortcut: { raw: "", key: null, playlist: false, note: "none" },
+    credentialsDeleted: true
+  }
+  const upgradeNote = { state: "pending", details, opened: true, seen: true, reopened: false }
+  const world = browser({})
+  await world.seed({ device: { id: "e2e-device", consent: { v: 1, at: 1 }, syncOn: false, upgradeNote } })
+  const w = world.worker()
+  running.push(w.background)
+  await w.background.ready
+  expect(await w.settings.call("ui.withdraw", { expected: { v: 1, at: 1 } })).toEqual({ kind: "answered", result: { kind: "withdrawn" } })
+
+  openFirstRunPage(w.onboarding)
+  await screen.findByText("You withdrew your consent, so Perchling reads nothing from YouTube. It kept your settings. Agree again to turn your features back on.", undefined, {
+    timeout: 10_000
+  })
+  expect(screen.queryByText("YouTube Playlist Tools is now Perchling")).toBeNull()
+  await userEvent.click(screen.getByRole("button", { name: "Agree" }))
+  await screen.findByText("You agreed again.", undefined, { timeout: 10_000 })
+  const { device } = await fakeBrowser.storage.local.get("device")
+  expect(device, "the note waits for its own Agree once consent is back").toMatchObject({ consent: { v: 1 }, upgradeNote: { state: "pending" } })
+})
