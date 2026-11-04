@@ -39,7 +39,8 @@ export function registrarOwner(lifecycle: StoreLifecycle) {
   }
   const port: OwnerPort = {
     async ready() {
-      const state = await lifecycle.ready()
+      await lifecycle.ready()
+      const state = lifecycle.state()
       if (state.kind === "active") await state.owner.ready().catch(() => undefined)
       await refresh()
       return state.kind === "active" && snapshot.kind === "ok" ? "ok" : "held"

@@ -99,6 +99,7 @@ export function boot(native: NativeBrowser, platform: Platform, sites?: SiteDiag
     },
     async activate() {
       const result = await lifecycle.activate()
+      await owner.refresh()
       rebind()
       return result
     }

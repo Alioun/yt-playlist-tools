@@ -8,6 +8,7 @@ import { OnboardingPage } from "../../src/ui/onboarding"
 import { startFirstRun } from "../../src/ui/onboarding/start"
 import { englishI18n } from "../../tools/fixtures/localization/scripted"
 import { acct, browser, documented, started } from "./world"
+import { accepted } from "../../tools/fixtures/consent-recovery/cases"
 
 const running: Background[] = []
 afterEach(async () => {
@@ -159,4 +160,51 @@ test("after withdrawing with the 1.x note still pending, Review's page asks only
   await screen.findByText("You agreed again.", undefined, { timeout: 10_000 })
   const { device } = await fakeBrowser.storage.local.get("device")
   expect(device, "the note waits for its own Agree once consent is back").toMatchObject({ consent: { v: 1 }, upgradeNote: { state: "pending" } })
+})
+
+test("two held Agrees arriving while the worker starts activate one set of services", async () => {
+  const { world, w } = await queueButtonTab()
+  const listening = permissionListeners(w)
+  await w.settings.call("ui.withdraw", { expected: { v: 1, at: 1 } })
+  await w.background.dispose()
+
+  const again = world.worker()
+  running.push(again.background)
+  const agrees = await Promise.all([again.onboarding.call("ui.heldAgree", { action: "agree", displayedVersion: 1 }), again.onboarding.call("ui.heldAgree", { action: "agree", displayedVersion: 1 })])
+  await again.background.ready
+  expect(agrees.filter(answer => answer.kind === "answered" && answer.result.kind === "agreed")).toHaveLength(1)
+  expect(agrees).toContainEqual({ kind: "answered", result: { kind: "agreed", paused: 0, features: true } })
+  expect(again.background.lifecycle.state().kind).toBe("active")
+  expect(permissionListeners(again), "startup and concurrent Agree bind only one Registrar and one set of services").toBe(listening)
+  const hello = (await again.hello(1)) as { result: { features: { id: string }[] } | null }
+  expect(hello.result?.features.map(feature => feature.id)).toEqual(["queue-button"])
+  expect(await again.onboarding.call("ui.heldAgree", { action: "agree", displayedVersion: 1 })).toEqual({ kind: "answered", result: { kind: "not-held" } })
+  expect(permissionListeners(again)).toBe(listening)
+})
+
+test("after held Agree leaves a removal paused, the last Continue activates the running worker once", async () => {
+  const withdrawn = await accepted()
+  // WXT's fake storage reads a stored null as absent, so this removal starts without a remembered account to clear.
+  delete withdrawn.local.lastAccount
+  const world = browser({})
+  await world.seed(withdrawn.local)
+  await fakeBrowser.storage.session.set(withdrawn.session)
+  world.tabs.open(1, "https://www.youtube.com/", { active: true })
+  const w = world.worker()
+  running.push(w.background)
+  await w.background.ready
+  expect(w.background.lifecycle.state().kind).toBe("held")
+  expect(await w.onboarding.call("ui.heldAgree", { action: "agree", displayedVersion: 1 })).toEqual({ kind: "answered", result: { kind: "agreed", paused: 1, features: false } })
+  expect(w.background.lifecycle.state().kind).toBe("held")
+  const work = await w.settings.call("ui.pausedWork", { action: "read" })
+  if (work.kind !== "answered" || work.result.kind !== "work" || work.result.jobs.length !== 1) throw Error("Missing paused removal")
+  expect(work.result.jobs[0]?.job).toBe("removal")
+  const payload = { action: "continue", id: work.result.jobs[0]!.id } as const
+  expect(await w.settings.call("ui.pausedWork", payload)).toEqual({ kind: "answered", result: { kind: "continued", jobs: [] } })
+  expect(w.background.lifecycle.state().kind).toBe("active")
+  const listening = permissionListeners(w)
+  const hello = (await w.hello(1)) as { result: { features: unknown[] } | null }
+  expect(hello.result, "feature routes answer after Continue without a restart").toMatchObject({ features: [] })
+  expect(await w.settings.call("ui.pausedWork", payload), "the old Continue cannot run twice").toEqual({ kind: "answered", result: { kind: "refused", reason: "unavailable" } })
+  expect(permissionListeners(w)).toBe(listening)
 })
