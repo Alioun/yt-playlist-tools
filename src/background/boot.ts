@@ -1,6 +1,8 @@
 import { openFirstRun, openNoteTab, releaseBrowserMenu, type NativeBrowser } from "./adapters/browser"
 import { openUpgradeNote } from "./compose/note-opener"
+import { timerDeadline } from "./adapters/runtime"
 import { createRuntimeGate } from "./adapters/runtime-gate"
+import { createBrowserTabs } from "./adapters/tabs"
 import { createClearAllTeardown } from "./adapters/store-lifecycle"
 import { composeRegistrar, registrarOwner } from "./compose/registrar"
 import { composeServices, type Services } from "./compose/services"
@@ -8,6 +10,7 @@ import { composeStore } from "./compose/store"
 import type { StoreLifecycle } from "./store/store-lifecycle"
 import type { Platform } from "../shared/platform"
 import type { SiteDiagnostics } from "./monitor/ports"
+import { tearDownOpenTabs } from "./tabs/teardown"
 
 /**
  * The composition root (06 §6.4.3, ARC-MOD-39). Every listener the background needs is added in this first
@@ -59,8 +62,19 @@ export function boot(native: NativeBrowser, platform: Platform, sites?: SiteDiag
         if (!services) throw new Error("Clear all before the tab services started")
         return services.tabs
       },
-      drainInvokedWork: async () => "drained",
-      tearDownAllOpenTabs: async () => "torn-down",
+      async drainInvokedWork() {
+        await services?.actions.flow.quiesce()
+        return "drained"
+      },
+      async tearDownAllOpenTabs() {
+        const runtime = { ...gate.runtime, id: native.runtime.id, getURL: (path: string) => native.runtime.getURL(path as never) }
+        const tabs = createBrowserTabs({ ...native, runtime }, { build: platform.build, deadline: timerDeadline })
+        try {
+          return await tearDownOpenTabs(tabs.port)
+        } finally {
+          tabs.dispose()
+        }
+      },
       releaseBrowserMenu: () => releaseBrowserMenu(native)
     })
   )

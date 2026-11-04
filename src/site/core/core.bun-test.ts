@@ -20,6 +20,7 @@ import queueButtonEntry from "../../entrypoints/feature-queue-button"
 import autoAddEntry from "../../entrypoints/feature-auto-add"
 import { pageGlobal } from "../global"
 import { startKit } from "../kit/start"
+import { emptyTabView } from "../../background/tabs/teardown"
 import { startSiteCore } from "./core"
 import { WwwItems } from "./items-www"
 
@@ -113,6 +114,27 @@ test("the assembled core runs the real queue-button and card-menu files once the
   const plain = new MouseEvent("contextmenu", { bubbles: true, composed: true, cancelable: true })
   first.heading.dispatchEvent(plain)
   expect(plain.defaultPrevented).toBe(false)
+})
+
+test("the view the background sends at withdrawal or Clear all removes every feature the tab drew", async () => {
+  const view = withCardMenu(queueView())
+  const tab = await startTab(view)
+  startKit("www", {}, {})
+  queueButtonEntry.main()
+  cardMenuEntry.main()
+  await settle()
+  const first = card()
+  tab.stack.set([first.thumbnail, first.element])
+  first.thumbnail.dispatchEvent(new PointerEvent("pointerover", { clientX: 12, clientY: 18, bubbles: true, composed: true }))
+  await settle()
+  expect(tab.button()).not.toBeNull()
+
+  await tab.publish(emptyTabView(view.signedIn ? { site: "www", build: view.build, signedIn: true, acct: view.acct } : { site: "www", build: view.build, signedIn: false, acct: null }, view.private))
+  expect(tab.core.link.view?.features).toEqual([])
+  expect(tab.button()).toBeNull()
+  const rightClick = new MouseEvent("contextmenu", { bubbles: true, composed: true, cancelable: true })
+  first.heading.dispatchEvent(rightClick)
+  expect(rightClick.defaultPrevented).toBe(false)
 })
 
 test("the background's bg.query reads auto-add's view of the playing video from the page, and nothing without one", async () => {

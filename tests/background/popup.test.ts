@@ -1,16 +1,8 @@
 import { afterEach, expect, test } from "bun:test"
 import type { Background } from "../../src/background/boot"
-import { acct, browser, eventually } from "./world"
+import { acct, browser, started } from "./world"
 
 const running: Background[] = []
-// The popup's routes answer once the store owner is ready and reports consent.
-async function started(w: ReturnType<ReturnType<typeof browser>["worker"]>) {
-  await w.background.ready
-  await eventually(async () => {
-    const status = await w.popup.call("ui.status", {})
-    return status.kind === "answered" && status.result.kind === "status"
-  }, "the popup's status")
-}
 afterEach(async () => {
   for (const background of running.splice(0)) await background.dispose().catch(() => {})
 })

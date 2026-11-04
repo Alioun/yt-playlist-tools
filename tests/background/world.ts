@@ -200,7 +200,7 @@ function omitAbsentKeys() {
     })
   }
 }
-function documented(name: string, data: Record<string, unknown>) {
+export function documented(name: string, data: Record<string, unknown>) {
   return { v: 1, gen: `gen-${name}`, at: 1, by: "e2e-device", data }
 }
 
@@ -385,4 +385,13 @@ export async function eventually(check: () => boolean | Promise<boolean>, what: 
     await new Promise(resolve => setTimeout(resolve, 5))
   }
   throw new Error(`Timed out waiting: ${what}`)
+}
+
+// The popup's routes and the tab registry answer once the store owner is ready and reports consent.
+export async function started(w: ReturnType<ReturnType<typeof browser>["worker"]>) {
+  await w.background.ready
+  await eventually(async () => {
+    const status = await w.popup.call("ui.status", {})
+    return status.kind === "answered" && status.result.kind === "status"
+  }, "the popup's status")
 }
